@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import NiceModal from '@ebay/nice-modal-react';
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
 import FormatIndentDecreaseIcon from '@mui/icons-material/FormatIndentDecrease';
 import FormatIndentIncreaseIcon from '@mui/icons-material/FormatIndentIncrease';
@@ -13,12 +14,12 @@ import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
-import { noop } from 'lodash-es';
 import { apiSaveMedia, UserUploadedFile } from '../api/media';
 import { renderMarkdown } from '../api/wiki';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
 import { TabPanel } from './TabPanel';
+import { ModalFileUpload } from './modal';
 
 interface MDEditorProps {
     initialBodyMDValue: string;
@@ -54,7 +55,7 @@ export const MDEditor = ({
     }, [bodyMD]);
 
     const onFileSave = useCallback(
-        async (v: UserUploadedFile, onSuccess: () => void) => {
+        async (v: UserUploadedFile, onSuccess?: () => void) => {
             try {
                 const resp = await apiSaveMedia(v);
                 if (!resp.author_id) {
@@ -103,21 +104,12 @@ export const MDEditor = ({
                                     component="span"
                                     variant={'text'}
                                     onClick={async () => {
-                                        // const resp = await NiceModal.show<
-                                        //     UserUploadedFile,
-                                        //     FileUploadModalProps
-                                        // >(FileUploadModal, {});
-                                        // onFileSave(resp, onFileSave);
-                                        alert('fixme');
-                                        await onFileSave(
-                                            {
-                                                content: '',
-                                                name: '',
-                                                mime: '',
-                                                size: 0
-                                            },
-                                            noop
-                                        );
+                                        const resp =
+                                            await NiceModal.show<UserUploadedFile>(
+                                                ModalFileUpload,
+                                                {}
+                                            );
+                                        await onFileSave(resp);
                                     }}
                                     startIcon={<ImageIcon />}
                                 >

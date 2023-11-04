@@ -27,7 +27,8 @@ import {
     IAPIBanASNRecord,
     IAPIBanCIDRRecord,
     IAPIBanGroupRecord,
-    IAPIBanRecordProfile
+    IAPIBanRecordProfile,
+    IAPIBanRecord
 } from '../api';
 import { DataTable, RowsPerPage } from '../component/DataTable';
 import {
@@ -40,12 +41,13 @@ import {
     ModalBanASN,
     ModalBanCIDR,
     ModalBanGroup,
-    ModalBanSteam
+    ModalBanSteam,
+    ModalUnbanASN,
+    ModalUnbanCIDR,
+    ModalUnbanGroup,
+    ModalUnbanSteam
 } from '../component/modal';
-import { UnbanASNModal } from '../component/modal/UnbanASNModal';
-import { UnbanCIDRModal } from '../component/modal/UnbanCIDRModal';
-import { UnbanGroupModal } from '../component/modal/UnbanGroupModal';
-import { UnbanSteamModal } from '../component/modal/UnbanSteamModal';
+import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
 import { steamIdQueryValue } from '../util/text';
 
@@ -56,6 +58,7 @@ export const AdminBan = () => {
     const [banCIDRs, setBanCIDRs] = useState<IAPIBanCIDRRecord[]>([]);
     const [banASNs, setBanASNs] = useState<IAPIBanASNRecord[]>([]);
     const [value, setValue] = React.useState<number>(0);
+    const { sendFlash } = useUserFlashCtx();
     const navigate = useNavigate();
 
     const loadBansGroup = useCallback((abortController: AbortController) => {
@@ -113,7 +116,18 @@ export const AdminBan = () => {
                     startIcon={<GavelIcon />}
                     sx={{ marginRight: 2 }}
                     onClick={async () => {
-                        await NiceModal.show(ModalBanSteam, {});
+                        try {
+                            const ban = await NiceModal.show<IAPIBanRecord>(
+                                ModalBanSteam,
+                                {}
+                            );
+                            sendFlash(
+                                'success',
+                                `Created steam ban successfully #${ban.ban_id}`
+                            );
+                        } catch (e) {
+                            sendFlash('error', `Failed to save ban: ${e}`);
+                        }
                     }}
                 >
                     Steam
@@ -362,14 +376,25 @@ export const AdminBan = () => {
                                                 <IconButton
                                                     color={'success'}
                                                     onClick={async () => {
-                                                        await NiceModal.show(
-                                                            UnbanSteamModal,
-                                                            {
-                                                                banId: row.ban_id,
-                                                                personaName:
-                                                                    row.personaname
-                                                            }
-                                                        );
+                                                        try {
+                                                            await NiceModal.show(
+                                                                ModalUnbanSteam,
+                                                                {
+                                                                    banId: row.ban_id,
+                                                                    personaName:
+                                                                        row.personaname
+                                                                }
+                                                            );
+                                                            sendFlash(
+                                                                'success',
+                                                                'Unbanned successfully'
+                                                            );
+                                                        } catch (e) {
+                                                            sendFlash(
+                                                                'error',
+                                                                `Failed to unban: ${e}`
+                                                            );
+                                                        }
                                                     }}
                                                 >
                                                     <Tooltip
@@ -550,12 +575,23 @@ export const AdminBan = () => {
                                         <IconButton
                                             color={'success'}
                                             onClick={async () => {
-                                                await NiceModal.show(
-                                                    UnbanCIDRModal,
-                                                    {
-                                                        record: row
-                                                    }
-                                                );
+                                                try {
+                                                    await NiceModal.show(
+                                                        ModalUnbanCIDR,
+                                                        {
+                                                            banId: row.net_id
+                                                        }
+                                                    );
+                                                    sendFlash(
+                                                        'success',
+                                                        'Unbanned CIDR successfully'
+                                                    );
+                                                } catch (e) {
+                                                    sendFlash(
+                                                        'error',
+                                                        `Failed to unban: ${e}`
+                                                    );
+                                                }
                                             }}
                                         >
                                             <Tooltip title={'Remove CIDR Ban'}>
@@ -703,12 +739,23 @@ export const AdminBan = () => {
                                         <IconButton
                                             color={'success'}
                                             onClick={async () => {
-                                                await NiceModal.show(
-                                                    UnbanASNModal,
-                                                    {
-                                                        record: row
-                                                    }
-                                                );
+                                                try {
+                                                    await NiceModal.show(
+                                                        ModalUnbanASN,
+                                                        {
+                                                            banId: row.as_num
+                                                        }
+                                                    );
+                                                    sendFlash(
+                                                        'success',
+                                                        'Unbanned ASN successfully'
+                                                    );
+                                                } catch (e) {
+                                                    sendFlash(
+                                                        'error',
+                                                        `Failed to unban SN: ${e}`
+                                                    );
+                                                }
                                             }}
                                         >
                                             <Tooltip title={'Remove CIDR Ban'}>
@@ -849,12 +896,23 @@ export const AdminBan = () => {
                                         <IconButton
                                             color={'success'}
                                             onClick={async () => {
-                                                await NiceModal.show(
-                                                    UnbanGroupModal,
-                                                    {
-                                                        record: row
-                                                    }
-                                                );
+                                                try {
+                                                    await NiceModal.show(
+                                                        ModalUnbanGroup,
+                                                        {
+                                                            banId: row.ban_group_id
+                                                        }
+                                                    );
+                                                    sendFlash(
+                                                        'success',
+                                                        'Unbanned ASN successfully'
+                                                    );
+                                                } catch (e) {
+                                                    sendFlash(
+                                                        'error',
+                                                        `Failed to unban SN: ${e}`
+                                                    );
+                                                }
                                             }}
                                         >
                                             <Tooltip title={'Remove Ban'}>

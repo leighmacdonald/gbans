@@ -18,7 +18,11 @@ interface BanReasonTextFieldProps {
     reason_text: BanReason;
 }
 
-export const BanReasonTextField = <T,>() => {
+export const BanReasonTextField = <T,>({
+    paired = true
+}: {
+    paired?: boolean;
+}) => {
     const { values, touched, errors, handleChange } = useFormikContext<
         T & BanReasonTextFieldProps & BanReasonFieldProps
     >();
@@ -29,7 +33,7 @@ export const BanReasonTextField = <T,>() => {
             id="reason_text"
             name={'reason_text'}
             label="Custom Reason"
-            disabled={values.reason != BanReason.Custom}
+            disabled={paired ? values.reason != BanReason.Custom : false}
             value={values.reason_text}
             onChange={handleChange}
             error={touched.reason_text && Boolean(errors.reason_text)}

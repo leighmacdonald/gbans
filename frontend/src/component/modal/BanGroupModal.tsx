@@ -12,13 +12,14 @@ import { Formik } from 'formik';
 import * as yup from 'yup';
 import {
     apiCreateBanGroup,
+    BanReason,
     BanType,
     Duration,
     IAPIBanGroupRecord
 } from '../../api';
-import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
-import { logErr } from '../../util/errors';
 import { Heading } from '../Heading';
+import { BanReasonField } from '../formik/BanReasonField';
+import { BanReasonTextField } from '../formik/BanReasonTextField';
 import {
     DurationCustomField,
     DurationCustomFieldValidator
@@ -41,9 +42,11 @@ export interface BanGroupFormValues {
     duration: Duration;
     duration_custom: string;
     note: string;
+    reason: BanReason;
+    reason_text: string;
 }
 
-const validationSchema = yup.object({
+export const validationSchema = yup.object({
     steam_id: steamIdValidator,
     groupId: GroupIdFieldValidator,
     duration: DurationFieldValidator,
@@ -52,27 +55,27 @@ const validationSchema = yup.object({
 });
 
 export const BanGroupModal = NiceModal.create(() => {
-    const { sendFlash } = useUserFlashCtx();
     const modal = useModal();
     const onSubmit = useCallback(
         async (values: BanGroupFormValues) => {
             try {
-                await apiCreateBanGroup({
+                const record = await apiCreateBanGroup({
                     group_id: values.group_id,
                     note: values.note,
                     ban_type: BanType.Banned,
                     duration: values.duration,
-                    target_id: values.steam_id
+                    target_id: values.steam_id,
+                    reason: values.reason,
+                    reason_text: values.reason_text
                 });
-                sendFlash('success', 'Ban created successfully');
+                modal.resolve(record);
             } catch (e) {
-                logErr(e);
-                sendFlash('error', 'Error saving ban');
+                modal.reject(e);
             } finally {
                 await modal.hide();
             }
         },
-        [modal, sendFlash]
+        [modal]
     );
 
     const formId = 'banGroupForm';
@@ -85,12 +88,14 @@ export const BanGroupModal = NiceModal.create(() => {
                 steam_id: '',
                 duration: Duration.dur2w,
                 duration_custom: '',
+                reason: BanReason.Cheating,
+                reason_text: '',
                 note: '',
                 group_id: ''
             }}
             validateOnBlur={true}
             validateOnChange={false}
-            validationSchema={validationSchema}
+            //validationSchema={validationSchema}
         >
             <Dialog fullWidth {...muiDialogV5(modal)}>
                 <DialogTitle component={Heading} iconLeft={<GavelIcon />}>
@@ -102,6 +107,8 @@ export const BanGroupModal = NiceModal.create(() => {
                         <Stack spacing={3} alignItems={'center'}>
                             <SteamIdField fullWidth />
                             <GroupIdField />
+                            <BanReasonField />
+                            <BanReasonTextField />
                             <DurationField />
                             <DurationCustomField<BanGroupFormValues> />
                             <NoteField />
