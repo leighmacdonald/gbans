@@ -2,11 +2,13 @@ FROM golang:alpine
 LABEL maintainer="Leigh MacDonald <leigh.macdonald@gmail.com>"
 WORKDIR /build
 RUN apk add make git build-base dumb-init yarn
+COPY Makefile .
 COPY frontend/package.json frontend/package.json
 COPY frontend/yarn.lock yarn.lock
 RUN cd frontend && yarn install --frozen-lockfile
 COPY go.mod go.sum ./
 RUN go mod download
 COPY internal pkg ./
+
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["make", "test"]
