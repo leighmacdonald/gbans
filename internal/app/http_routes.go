@@ -87,7 +87,7 @@ type jsConfig struct {
 	BuildDate    string `json:"build_date"`
 }
 
-//nolint:contextcheck
+//nolint:contextcheck,maintidx
 func createRouter(ctx context.Context, app *App) *gin.Engine {
 	engine := gin.New()
 
@@ -254,6 +254,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		authed.POST("/api/contests/:contest_id/upload", onAPISaveContestEntryMedia(app))
 		authed.GET("/api/contests/:contest_id/vote/:contest_entry_id/:direction", onAPISaveContestEntryVote(app))
 		authed.POST("/api/contests/:contest_id/submit", onAPISaveContestEntrySubmit(app))
+		authed.DELETE("/api/contest_entry/:contest_entry_id", onAPIDeleteContestEntry(app))
 	}
 
 	editorGrp := engine.Group("/")

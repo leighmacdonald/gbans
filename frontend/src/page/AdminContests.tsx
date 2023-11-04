@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -6,8 +7,10 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import { IconButton } from '@mui/material';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
+import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Grid from '@mui/material/Unstable_Grid2';
+import { useTheme } from '@mui/material/styles';
 import { apiContestDelete, apiContests, Contest } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { LazyTableSimple } from '../component/LazyTableSimple';
@@ -16,6 +19,7 @@ import { logErr } from '../util/errors';
 
 export const AdminContests = () => {
     const modal = useModal(ModalConfirm);
+    const theme = useTheme();
 
     const onEditContest = useCallback(async (contest_id?: string) => {
         try {
@@ -68,7 +72,22 @@ export const AdminContests = () => {
                                 sortKey: 'title',
                                 label: 'title',
                                 tooltip: 'unique contest identifier',
-                                align: 'left'
+                                align: 'left',
+                                renderer: (obj) => {
+                                    return (
+                                        <Link
+                                            component={RouterLink}
+                                            variant={'subtitle2'}
+                                            to={`/contests/${obj.contest_id}`}
+                                            sx={{
+                                                color: theme.palette.text
+                                                    .primary
+                                            }}
+                                        >
+                                            {obj.title}
+                                        </Link>
+                                    );
+                                }
                             },
                             {
                                 sortKey: 'description',
@@ -121,6 +140,7 @@ export const AdminContests = () => {
                                 sortType: 'date',
                                 label: 'Starting',
                                 tooltip: 'Starting date',
+                                sortable: true,
                                 align: 'left',
                                 renderer: (obj) => {
                                     return obj.date_start.toISOString();
@@ -129,11 +149,12 @@ export const AdminContests = () => {
                             {
                                 sortKey: 'date_end',
                                 sortType: 'date',
+                                sortable: true,
                                 label: 'Ending',
                                 tooltip: 'Ending date',
                                 align: 'left',
                                 renderer: (obj) => {
-                                    return obj.date_start.toISOString();
+                                    return obj.date_end.toISOString();
                                 }
                             },
                             {
@@ -189,7 +210,8 @@ export const AdminContests = () => {
                                 }
                             }
                         ]}
-                        defaultSortColumn={'date_start'}
+                        defaultSortColumn={'date_end'}
+                        defaultSortDir={'desc'}
                     />
                 </Stack>
             </ContainerWithHeader>

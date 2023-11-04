@@ -20,6 +20,8 @@ import {
     apiContestEntries,
     apiContestEntryVote,
     ContestEntry,
+    ErrorCode,
+    PermissionLevel,
     useContest
 } from '../api';
 import { Asset } from '../api/media';
@@ -29,17 +31,26 @@ import { LoadingPlaceholder } from '../component/LoadingPlaceholder';
 import { LoadingSpinner } from '../component/LoadingSpinner';
 import { PersonCell } from '../component/PersonCell';
 import { VCenterBox } from '../component/VCenterBox';
-import { ModalAssetViewer, ModalContestEntry } from '../component/modal';
+import {
+    ModalAssetViewer,
+    ModalContestEntry,
+    ModalContestEntryDelete
+} from '../component/modal';
 import { mediaType, MediaTypes } from '../component/modal/AssetViewer';
+import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
-import { humanCount } from '../util/text';
+import { humanFileSize } from '../util/text';
 import { PageNotFound } from './PageNotFound';
 
 export const ContestPage = () => {
     const { contest_id } = useParams();
-    const { loading, contest } = useContest(contest_id);
+    const { loading, contest, error } = useContest(contest_id);
     const [entries, setEntries] = useState<ContestEntry[]>([]);
     const [entriesLoading, setEntriesLoading] = useState(false);
+    const { currentUser } = useCurrentUserCtx();
+    const { sendFlash } = useUserFlashCtx();
+
     const onEnter = useCallback(async (contest_id: string) => {
         try {
             await NiceModal.show(ModalContestEntry, { contest_id });
@@ -69,9 +80,10 @@ export const ContestPage = () => {
 
     const showEntries = useMemo(() => {
         return (
-            contest && contest.hide_submissions && !isAfter(contest.date_end)
+            (contest && !contest.hide_submissions) ||
+            currentUser.permission_level >= PermissionLevel.Moderator
         );
-    }, [contest]);
+    }, [contest, currentUser.permission_level]);
 
     const vote = useCallback(
         async (contest_entry_id: string, up_vote: boolean) => {
@@ -96,10 +108,36 @@ export const ContestPage = () => {
         await NiceModal.show(ModalAssetViewer, asset);
     }, []);
 
+    const onDeleteEntry = useCallback(
+        async (contest_entry_id: string) => {
+            try {
+                await NiceModal.show(ModalContestEntryDelete, {
+                    contest_entry_id
+                });
+                setEntries((prevState) => {
+                    return prevState.filter(
+                        (v) => v.contest_entry_id != contest_entry_id
+                    );
+                });
+                sendFlash('success', `Entry deleted successfully`);
+            } catch (e) {
+                sendFlash('error', `Failed to delete entry: ${e}`);
+            }
+        },
+        [sendFlash]
+    );
+
     if (!contest_id) {
         return <PageNotFound error={'Invalid Contest ID'} />;
     }
-
+    if (error && error.code == ErrorCode.PermissionDenied) {
+        return (
+            <PageNotFound
+                heading={'Cannot Load Contest'}
+                error={error.message}
+            />
+        );
+    }
     return loading ? (
         <LoadingPlaceholder />
     ) : (
@@ -155,7 +193,7 @@ export const ContestPage = () => {
                             <InfoBar
                                 title={'Remaining'}
                                 value={
-                                    isAfter(contest.date_end)
+                                    isAfter(contest.date_end, new Date())
                                         ? 'Expired'
                                         : formatDistanceToNowStrict(
                                               contest.date_end
@@ -190,160 +228,242 @@ export const ContestPage = () => {
                         </Stack>
                     </ContainerWithHeader>
                 </Grid>
-                {showEntries ? (
-                    <Grid xs={12}>
-                        <Paper>
-                            <Typography
-                                variant={'subtitle1'}
-                                align={'center'}
-                                padding={4}
-                            >
-                                Entries are hidden until contest has expired.
-                            </Typography>
-                        </Paper>
-                    </Grid>
-                ) : entriesLoading ? (
+                {entriesLoading ? (
                     <LoadingSpinner />
                 ) : (
-                    <Grid xs={12}>
-                        <Stack spacing={2}>
-                            {entries.map((entry) => {
-                                return (
-                                    <Stack key={entry.contest_entry_id}>
-                                        <Paper elevation={2}>
-                                            <Grid container>
-                                                <Grid xs={8} padding={2}>
-                                                    <Typography
-                                                        variant={'subtitle1'}
-                                                    >
-                                                        Description
-                                                    </Typography>
-                                                    <Typography
-                                                        variant={'body1'}
-                                                    >
-                                                        {entry.description != ''
-                                                            ? entry.description
-                                                            : 'No description provided'}
-                                                    </Typography>
-                                                </Grid>
-                                                <Grid xs={4} padding={2}>
-                                                    <PersonCell
-                                                        steam_id={
-                                                            entry.steam_id
+                    <>
+                        {!showEntries && (
+                            <Grid xs={12}>
+                                <Paper>
+                                    <Typography
+                                        variant={'subtitle1'}
+                                        align={'center'}
+                                        padding={4}
+                                    >
+                                        Entries from other contestants are
+                                        hidden.
+                                    </Typography>
+                                </Paper>
+                            </Grid>
+                        )}
+                        <Grid xs={12}>
+                            <Stack spacing={2}>
+                                {entries
+                                    .filter(
+                                        (e) =>
+                                            showEntries ||
+                                            e.steam_id == currentUser.steam_id
+                                    )
+                                    .map((entry) => {
+                                        return (
+                                            <Stack key={entry.contest_entry_id}>
+                                                <Paper elevation={2}>
+                                                    <Grid container>
+                                                        <Grid
+                                                            xs={8}
+                                                            padding={2}
+                                                        >
+                                                            <Typography
+                                                                variant={
+                                                                    'subtitle1'
+                                                                }
+                                                            >
+                                                                Description
+                                                            </Typography>
+                                                            <Typography
+                                                                variant={
+                                                                    'body1'
+                                                                }
+                                                            >
+                                                                {entry.description !=
+                                                                ''
+                                                                    ? entry.description
+                                                                    : 'No description provided'}
+                                                            </Typography>
+                                                        </Grid>
+                                                        <Grid
+                                                            xs={4}
+                                                            padding={2}
+                                                        >
+                                                            <PersonCell
+                                                                steam_id={
+                                                                    entry.steam_id
+                                                                }
+                                                                personaname={
+                                                                    entry.personaname
+                                                                }
+                                                                avatar_hash={
+                                                                    entry.avatar_hash
+                                                                }
+                                                            />
+                                                            <Typography
+                                                                variant={
+                                                                    'subtitle1'
+                                                                }
+                                                            >
+                                                                File Details
+                                                            </Typography>
+                                                            <Typography
+                                                                variant={
+                                                                    'body2'
+                                                                }
+                                                            >
+                                                                {
+                                                                    entry.asset
+                                                                        .name
+                                                                }
+                                                            </Typography>
+                                                            <Typography
+                                                                variant={
+                                                                    'body2'
+                                                                }
+                                                            >
+                                                                {
+                                                                    entry.asset
+                                                                        .mime_type
+                                                                }
+                                                            </Typography>
+                                                            <Typography
+                                                                variant={
+                                                                    'body2'
+                                                                }
+                                                            >
+                                                                {humanFileSize(
+                                                                    entry.asset
+                                                                        .size
+                                                                )}
+                                                            </Typography>
+                                                            <ButtonGroup
+                                                                fullWidth
+                                                            >
+                                                                <Button
+                                                                    disabled={
+                                                                        !(
+                                                                            currentUser.permission_level >=
+                                                                                PermissionLevel.Moderator ||
+                                                                            currentUser.steam_id ==
+                                                                                entry.steam_id
+                                                                        )
+                                                                    }
+                                                                    color={
+                                                                        'error'
+                                                                    }
+                                                                    variant={
+                                                                        'contained'
+                                                                    }
+                                                                    onClick={async () => {
+                                                                        await onDeleteEntry(
+                                                                            entry.contest_entry_id
+                                                                        );
+                                                                    }}
+                                                                >
+                                                                    Delete
+                                                                </Button>
+
+                                                                {mediaType(
+                                                                    entry.asset
+                                                                        .mime_type
+                                                                ) !=
+                                                                MediaTypes.other ? (
+                                                                    <Button
+                                                                        startIcon={
+                                                                            <PageviewIcon />
+                                                                        }
+                                                                        fullWidth
+                                                                        variant={
+                                                                            'contained'
+                                                                        }
+                                                                        color={
+                                                                            'success'
+                                                                        }
+                                                                        onClick={async () => {
+                                                                            await onViewAsset(
+                                                                                entry.asset
+                                                                            );
+                                                                        }}
+                                                                    >
+                                                                        View
+                                                                    </Button>
+                                                                ) : (
+                                                                    <Button>
+                                                                        Download
+                                                                    </Button>
+                                                                )}
+                                                            </ButtonGroup>
+                                                        </Grid>
+                                                    </Grid>
+                                                </Paper>
+                                                <Stack
+                                                    direction={'row'}
+                                                    padding={1}
+                                                    spacing={2}
+                                                >
+                                                    <ButtonGroup
+                                                        disabled={
+                                                            !contest.voting ||
+                                                            isAfter(
+                                                                contest.date_end,
+                                                                new Date()
+                                                            )
                                                         }
-                                                        personaname={
-                                                            entry.personaname
-                                                        }
-                                                        avatar_hash={
-                                                            entry.avatarhash
-                                                        }
-                                                    />
-                                                    <Typography
-                                                        variant={'subtitle1'}
                                                     >
-                                                        File Details
-                                                    </Typography>
-                                                    <Typography
-                                                        variant={'body2'}
-                                                    >
-                                                        {entry.asset.name}
-                                                    </Typography>
-                                                    <Typography
-                                                        variant={'body2'}
-                                                    >
-                                                        {entry.asset.mime_type}
-                                                    </Typography>
-                                                    <Typography
-                                                        variant={'body2'}
-                                                    >
-                                                        {humanCount(
-                                                            entry.asset.size
-                                                        )}
-                                                    </Typography>
-                                                    {mediaType(
-                                                        entry.asset.mime_type
-                                                    ) != MediaTypes.other ? (
                                                         <Button
-                                                            startIcon={
-                                                                <PageviewIcon />
-                                                            }
-                                                            fullWidth
+                                                            size={'small'}
                                                             variant={
                                                                 'contained'
                                                             }
+                                                            startIcon={
+                                                                <ThumbUpIcon />
+                                                            }
                                                             color={'success'}
                                                             onClick={async () => {
-                                                                await onViewAsset(
-                                                                    entry.asset
+                                                                await vote(
+                                                                    entry.contest_entry_id,
+                                                                    true
                                                                 );
                                                             }}
                                                         >
-                                                            View
+                                                            {entry.votes_up}
                                                         </Button>
-                                                    ) : (
-                                                        <Button>
-                                                            Download
+                                                        <Button
+                                                            size={'small'}
+                                                            variant={
+                                                                'contained'
+                                                            }
+                                                            startIcon={
+                                                                <ThumbDownIcon />
+                                                            }
+                                                            color={'error'}
+                                                            disabled={
+                                                                !contest.down_votes
+                                                            }
+                                                            onClick={async () => {
+                                                                await vote(
+                                                                    entry.contest_entry_id,
+                                                                    false
+                                                                );
+                                                            }}
+                                                        >
+                                                            {entry.votes_down}
                                                         </Button>
-                                                    )}
-                                                </Grid>
-                                            </Grid>
-                                        </Paper>
-                                        <Stack
-                                            direction={'row'}
-                                            padding={1}
-                                            spacing={2}
-                                        >
-                                            <ButtonGroup
-                                                disabled={!contest.voting}
-                                            >
-                                                <Button
-                                                    size={'small'}
-                                                    variant={'contained'}
-                                                    startIcon={<ThumbUpIcon />}
-                                                    color={'success'}
-                                                    onClick={async () => {
-                                                        await vote(
-                                                            entry.contest_entry_id,
-                                                            true
-                                                        );
-                                                    }}
-                                                >
-                                                    {entry.votes_up}
-                                                </Button>
-                                                <Button
-                                                    size={'small'}
-                                                    variant={'contained'}
-                                                    startIcon={
-                                                        <ThumbDownIcon />
-                                                    }
-                                                    color={'error'}
-                                                    disabled={
-                                                        !contest.down_votes
-                                                    }
-                                                    onClick={async () => {
-                                                        await vote(
-                                                            entry.contest_entry_id,
-                                                            false
-                                                        );
-                                                    }}
-                                                >
-                                                    {entry.votes_down}
-                                                </Button>
-                                            </ButtonGroup>
-                                            <VCenterBox>
-                                                <Typography variant={'caption'}>
-                                                    {`Updated: ${format(
-                                                        entry.updated_on,
-                                                        'dd/MM/yy H:m'
-                                                    )}`}
-                                                </Typography>
-                                            </VCenterBox>
-                                        </Stack>
-                                    </Stack>
-                                );
-                            })}
-                        </Stack>
-                    </Grid>
+                                                    </ButtonGroup>
+                                                    <VCenterBox>
+                                                        <Typography
+                                                            variant={'caption'}
+                                                        >
+                                                            {`Updated: ${format(
+                                                                entry.updated_on,
+                                                                'dd/MM/yy H:m'
+                                                            )}`}
+                                                        </Typography>
+                                                    </VCenterBox>
+                                                </Stack>
+                                            </Stack>
+                                        );
+                                    })}
+                            </Stack>
+                        </Grid>
+                    </>
                 )}
             </Grid>
         )

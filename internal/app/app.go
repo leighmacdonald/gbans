@@ -769,7 +769,7 @@ type logFilePayload struct {
 }
 
 // logReader is the fan-out orchestrator for game log events
-// Registering receivers can be accomplished with app.eb.Broadcaster
+// Registering receivers can be accomplished with app.eb.Broadcaster.
 func (app *App) logReader(ctx context.Context, writeUnhandled bool) {
 	var (
 		log  = app.log.Named("logReader")

@@ -81,7 +81,7 @@ export class APIError extends Error {
  * @throws APIError
  */
 export const apiCall = async <
-    TResponse,
+    TResponse = EmptyBody,
     TRequestBody = Record<string, unknown> | object
 >(
     url: string,

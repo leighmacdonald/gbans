@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { logErr } from '../util/errors';
 import {
     apiCall,
+    APIError,
     DateRange,
     PermissionLevel,
     TimeStamped,
@@ -12,7 +13,7 @@ import { EmptyUUID } from './const';
 import { Asset } from './media';
 import { LazyResult } from './stats';
 
-export interface Contest extends DateRange {
+export interface Contest extends DateRange, TimeStamped {
     contest_id: string;
     title: string;
     description: string;
@@ -39,7 +40,9 @@ export const apiContestSave = async (contest: Contest) =>
 export const apiContests = async () => {
     const resp = await apiCall<LazyResult<Contest>>(`/api/contests`, 'GET');
     if (resp.data) {
-        resp.data = resp.data.map(transformDateRange);
+        resp.data = resp.data
+            .map(transformDateRange)
+            .map(transformTimeStampedDates);
     }
 
     return resp;
@@ -59,8 +62,7 @@ export const apiContestEntries = async (contest_id: string) => {
             `/api/contests/${contest_id}/entries`,
             'GET'
         );
-        const mapped = entries.map(transformTimeStampedDates);
-        return mapped;
+        return entries.map(transformTimeStampedDates);
     } catch (e) {
         logErr(e);
         return [];
@@ -77,11 +79,14 @@ export interface ContestEntry extends TimeStamped {
     steam_id: string;
     placement: number;
     personaname: string;
-    avatarhash: string;
+    avatar_hash: string;
     votes_up: number;
     votes_down: number;
     asset: Asset;
 }
+
+export const apiContestEntryDelete = async (contest_entry_id: string) =>
+    await apiCall(`/api/contest_entry/${contest_entry_id}`, 'DELETE');
 
 export const apiContestEntrySave = async (
     contest_id: string,
@@ -133,6 +138,7 @@ export const useContests = () => {
 export const useContest = (contest_id?: string) => {
     const [loading, setLoading] = useState(false);
     const [contest, setContest] = useState<Contest>();
+    const [error, setError] = useState<APIError>();
 
     useEffect(() => {
         if (!contest_id) {
@@ -143,11 +149,13 @@ export const useContest = (contest_id?: string) => {
             .then((contest) => {
                 setContest(contest);
             })
-            .catch(logErr)
+            .catch((reason) => {
+                setError(reason as APIError);
+            })
             .finally(() => {
                 setLoading(false);
             });
     }, [contest_id]);
 
-    return { loading, contest };
+    return { loading, contest, error };
 };

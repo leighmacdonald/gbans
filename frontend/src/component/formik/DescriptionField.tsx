@@ -2,7 +2,7 @@ import React from 'react';
 import FormControl from '@mui/material/FormControl';
 import FormHelperText from '@mui/material/FormHelperText';
 import TextField from '@mui/material/TextField';
-import { FormikHandlers, FormikState } from 'formik/dist/types';
+import { useFormikContext } from 'formik';
 import * as yup from 'yup';
 
 export const descriptionValidator = yup
@@ -10,29 +10,31 @@ export const descriptionValidator = yup
     .label('Description of the game')
     .optional();
 
-export const DescriptionField = ({
-    formik
-}: {
-    formik: FormikState<{
-        description: string;
-    }> &
-        FormikHandlers;
-}) => {
+export interface DescriptionFieldProps {
+    description: string;
+}
+
+export const DescriptionField = <T,>() => {
+    const { isSubmitting, values, touched, errors, handleChange } =
+        useFormikContext<T & DescriptionFieldProps>();
     return (
         <FormControl fullWidth>
             <TextField
                 fullWidth
-                disabled={formik.isSubmitting}
+                disabled={isSubmitting}
                 id={'description'}
                 label={'description'}
                 name={'description'}
                 multiline={true}
                 rows={10}
-                value={formik.values.description}
-                onChange={formik.handleChange}
+                value={values.description}
+                onChange={handleChange}
+                error={touched.description && Boolean(errors.description)}
             />
             <FormHelperText>
-                {formik.touched.description && formik.errors.description}
+                {touched.description &&
+                    errors.description &&
+                    `${errors.description}`}
             </FormHelperText>
         </FormControl>
     );

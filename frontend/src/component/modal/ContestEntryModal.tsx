@@ -151,6 +151,7 @@ export const ContestEntryModal = NiceModal.create(
                     } else {
                         logErr(err);
                     }
+                    await modal.hide();
                 }
             },
             [assetID, modal, sendFlash]

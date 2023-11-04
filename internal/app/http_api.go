@@ -2784,7 +2784,9 @@ func onAPISaveContestEntrySubmit(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
+		user := currentUserProfile(ctx)
 		contest, success := contestFromCtx(ctx, app)
+
 		if !success {
 			return
 		}
@@ -2804,6 +2806,27 @@ func onAPISaveContestEntrySubmit(app *App) gin.HandlerFunc {
 
 			if !contest.MimeTypeAcceptable(media.MimeType) {
 				responseErr(ctx, http.StatusFailedDependency, errors.New("Invalid Mime Type"))
+
+				return
+			}
+		}
+
+		existingEntries, errEntries := app.db.ContestEntries(ctx, contest.ContestID)
+		if errEntries != nil && !errors.Is(errEntries, store.ErrNoResult) {
+			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not load existing contest entries"))
+
+			return
+		}
+
+		own := 0
+
+		for _, entry := range existingEntries {
+			if entry.SteamID == user.SteamID {
+				own++
+			}
+
+			if own >= contest.MaxSubmissions {
+				responseErr(ctx, http.StatusForbidden, errors.New("Current entries count exceed max_submissions"))
 
 				return
 			}
@@ -4086,5 +4109,83 @@ func onAPIGetContestEntries(app *App) gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusOK, entries)
+	}
+}
+
+func onAPIDeleteContestEntry(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		user := currentUserProfile(ctx)
+
+		contestEntryID, idErr := getUUIDParam(ctx, "contest_entry_id")
+		if idErr != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		var entry store.ContestEntry
+
+		if errContest := app.db.ContestEntry(ctx, contestEntryID, &entry); errContest != nil {
+			if errors.Is(errContest, store.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, consts.ErrUnknownID)
+
+				return
+			}
+
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			log.Error("Error getting contest entry for deletion", zap.Error(errContest))
+
+			return
+		}
+
+		// Only >=moderators or the entry author are allowed to delete entries.
+		if !(user.PermissionLevel >= consts.PModerator || user.SteamID == entry.SteamID) {
+			responseErr(ctx, http.StatusForbidden, consts.ErrPermissionDenied)
+
+			return
+		}
+
+		var contest store.Contest
+
+		if errContest := app.db.ContestByID(ctx, entry.ContestID, &contest); errContest != nil {
+			if errors.Is(errContest, store.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, consts.ErrUnknownID)
+
+				return
+			}
+
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			log.Error("Error getting contest", zap.Error(errContest))
+
+			return
+		}
+
+		// Only allow mods to delete entries from expired contests.
+		if user.SteamID == entry.SteamID && time.Since(contest.DateEnd) > 0 {
+			responseErr(ctx, http.StatusForbidden, consts.ErrPermissionDenied)
+
+			log.Error("User tried to delete entry from expired contest")
+
+			return
+		}
+
+		if errDelete := app.db.ContestEntryDelete(ctx, entry.ContestEntryID); errDelete != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			log.Error("Error deleting contest entry", zap.Error(errDelete))
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{})
+
+		log.Info("Contest deleted",
+			zap.String("contest_id", entry.ContestID.String()),
+			zap.String("contest_entry_id", entry.ContestEntryID.String()),
+			zap.String("title", contest.Title))
 	}
 }
