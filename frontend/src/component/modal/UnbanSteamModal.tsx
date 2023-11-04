@@ -13,7 +13,7 @@ import { BanReasonTextField } from '../formik/BanReasonTextField';
 import { CancelButton, SaveButton } from './Buttons';
 
 export interface UnbanModalProps {
-    banId: number;
+    banId: number; // common placeholder for any primary key id for a ban
     personaName?: string;
 }
 

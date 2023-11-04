@@ -7,6 +7,7 @@ import { BanSteamModal } from './BanSteamModal';
 import { ConfirmDeleteFilterModal } from './ConfirmDeleteFilterModal';
 import { ConfirmationModal } from './ConfirmationModal';
 import { ContestEditor } from './ContestEditor';
+import { ContestEntryDeleteModal } from './ContestEntryDeleteModal';
 import { ContestEntryModal } from './ContestEntryModal';
 import { FileUploadModal } from './FileUploadModal';
 import { FilterEditModal } from './FilterEditModal';
@@ -20,6 +21,7 @@ import { UnbanSteamModal } from './UnbanSteamModal';
 
 export const ModalContestEditor = 'modal-contest-editor';
 export const ModalContestEntry = 'modal-contest-entry';
+export const ModalContestEntryDelete = 'modal-contest-entry-delete';
 export const ModalConfirm = 'modal-confirm';
 export const ModalAssetViewer = 'modal-asset-viewer';
 export const ModalBanSteam = 'modal-ban-steam';
@@ -37,6 +39,7 @@ export const ModalFileUpload = 'modal-file-upload';
 export const ModalFilterDelete = 'modal-filter-delete';
 export const ModalFilterEditor = 'modal-filter-editor';
 
+NiceModal.register(ModalContestEntryDelete, ContestEntryDeleteModal);
 NiceModal.register(ModalContestEditor, ContestEditor);
 NiceModal.register(ModalContestEntry, ContestEntryModal);
 NiceModal.register(ModalAssetViewer, AssetViewer);

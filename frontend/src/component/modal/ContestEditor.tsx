@@ -26,7 +26,9 @@ import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
 import { logErr } from '../../util/errors';
 import { Heading } from '../Heading';
 import { LoadingSpinner } from '../LoadingSpinner';
+import { DescriptionField } from '../formik/DescriptionField';
 import { BaseFormikInputProps } from '../formik/SteamIdField';
+import { TitleField } from '../formik/TitleField';
 import {
     boolDefinedValidator,
     dateAfterValidator,
@@ -102,7 +104,9 @@ export const ContestEditor = NiceModal.create(
                         public: values.public,
                         min_permission_level: values.min_permission_level,
                         deleted: false,
-                        num_entries: 0
+                        num_entries: 0,
+                        updated_on: new Date(),
+                        created_on: new Date()
                     });
                     sendFlash(
                         'success',
@@ -161,11 +165,8 @@ export const ContestEditor = NiceModal.create(
                             <LoadingSpinner />
                         ) : (
                             <Stack spacing={2}>
-                                <TitleField fullWidth isReadOnly={false} />
-                                <DescriptionField
-                                    fullWidth
-                                    isReadOnly={false}
-                                />
+                                <TitleField />
+                                <DescriptionField />
                                 <Stack direction={'row'} spacing={2}>
                                     <PublicField fullWidth isReadOnly={false} />
                                     <HideSubmissionsField
@@ -276,9 +277,7 @@ const DateEndField = ({ isReadOnly }: BaseFormikInputProps) => {
         <DatePicker
             disabled={isReadOnly ?? false}
             label="Date End"
-            format="DD/MM/YYYY"
             value={values.date_end}
-            //onChange={formik.handleChange}
             formatDensity={'dense'}
             //onError={(newError) => setError(newError)}
             onChange={async (value) => {
@@ -295,17 +294,15 @@ const DateEndField = ({ isReadOnly }: BaseFormikInputProps) => {
 };
 
 const DateStartField = ({ isReadOnly }: BaseFormikInputProps) => {
-    const { errors, touched, values, handleChange } =
+    const { errors, setFieldValue, touched, values } =
         useFormikContext<ContestEditorFormValues>();
     return (
         <DatePicker
             disabled={isReadOnly ?? false}
             label="Date Start"
-            format="DD/MM/YYYY"
             value={values.date_start}
-            onChange={handleChange}
-            //onError={(newError) => setError(newError)}
-            //onChange={(value) => formik.setFieldValue("date_end", value, true)}
+            //onError={(newError) => setFieldError('date_end', newError)}
+            onChange={(value) => setFieldValue('date_start', value, true)}
             slotProps={{
                 textField: {
                     variant: 'outlined',
@@ -394,46 +391,6 @@ const DownVotesField = ({ isReadOnly }: BaseFormikInputProps) => {
                 onChange={handleChange}
             />
         </FormGroup>
-    );
-};
-
-const TitleField = ({ isReadOnly }: BaseFormikInputProps) => {
-    const { errors, touched, values, handleBlur, handleChange } =
-        useFormikContext<ContestEditorFormValues>();
-    return (
-        <TextField
-            fullWidth
-            disabled={isReadOnly ?? false}
-            name={'title'}
-            id={'title'}
-            label={'Title'}
-            value={values.title}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            error={touched.title && Boolean(errors.title)}
-            helperText={touched.title && errors.title}
-        />
-    );
-};
-
-const DescriptionField = ({ isReadOnly }: BaseFormikInputProps) => {
-    const { errors, touched, values, handleBlur, handleChange } =
-        useFormikContext<ContestEditorFormValues>();
-    return (
-        <TextField
-            fullWidth
-            multiline
-            minRows={10}
-            disabled={isReadOnly ?? false}
-            name={'description'}
-            id={'description'}
-            label={'Description'}
-            value={values.description}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            error={touched.description && Boolean(errors.description)}
-            helperText={touched.description && errors.description}
-        />
     );
 };
 

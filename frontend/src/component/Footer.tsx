@@ -4,6 +4,7 @@ import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
+import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 
 export const Footer = (): JSX.Element => {
@@ -28,28 +29,42 @@ export const Footer = (): JSX.Element => {
                 height: '100%'
             }}
         >
-            <Stack>
-                <Typography variant={'subtitle2'} color={'text'}>
-                    Copyright &copy; {window.gbans.site_name || 'gbans'}{' '}
-                    {new Date().getFullYear()}{' '}
-                </Typography>
-                <Link
-                    component={RouterLink}
-                    variant={'subtitle2'}
-                    to={gbansUrl}
-                    sx={{ color: theme.palette.text.primary }}
-                >
-                    {window.gbans.build_version}
-                </Link>
-                <Link
-                    component={RouterLink}
-                    variant={'subtitle2'}
-                    to={'/privacy-policy'}
-                    sx={{ color: theme.palette.text.primary }}
-                >
-                    Privacy Policy
-                </Link>
-            </Stack>
+            <Grid
+                container
+                spacing={0}
+                direction="column"
+                alignItems="center"
+                justifyContent="center"
+            >
+                <Grid xs={3}>
+                    <Typography variant={'subtitle2'} color={'text'}>
+                        Copyright &copy; {window.gbans.site_name || 'gbans'}{' '}
+                        {new Date().getFullYear()}{' '}
+                    </Typography>
+                    <Stack
+                        // direction={'row'}
+                        alignItems="center"
+                        justifyContent="center"
+                    >
+                        <Link
+                            component={RouterLink}
+                            variant={'subtitle2'}
+                            to={gbansUrl}
+                            sx={{ color: theme.palette.text.primary }}
+                        >
+                            {window.gbans.build_version}
+                        </Link>
+                        <Link
+                            component={RouterLink}
+                            variant={'subtitle2'}
+                            to={'/privacy-policy'}
+                            sx={{ color: theme.palette.text.primary }}
+                        >
+                            Privacy Policy
+                        </Link>
+                    </Stack>
+                </Grid>
+            </Grid>
         </Box>
     );
 };

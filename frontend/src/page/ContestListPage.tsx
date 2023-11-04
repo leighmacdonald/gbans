@@ -32,6 +32,8 @@ export const ContestListPage = () => {
                     <LazyTableSimple<Contest>
                         fetchData={apiContests}
                         showPager={true}
+                        defaultSortDir={'desc'}
+                        defaultSortColumn={'date_end'}
                         columns={[
                             {
                                 sortKey: 'title',
@@ -131,7 +133,6 @@ export const ContestListPage = () => {
                                 }
                             }
                         ]}
-                        defaultSortColumn={'date_start'}
                     />
                 </Grid>
             </Grid>
