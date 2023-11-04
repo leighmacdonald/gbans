@@ -4,6 +4,7 @@ WORKDIR /build
 RUN apk add make git build-base dumb-init yarn
 COPY Makefile .
 COPY frontend/package.json frontend/package.json
+COPY frontend/.yarnrc.yml frontend/.yarnrc.yml
 COPY frontend/yarn.lock yarn.lock
 RUN cd frontend && yarn install --immutable
 COPY go.mod go.sum ./

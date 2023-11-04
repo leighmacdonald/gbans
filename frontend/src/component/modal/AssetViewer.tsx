@@ -2,19 +2,20 @@ import React, { useMemo } from 'react';
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import PermMediaIcon from '@mui/icons-material/PermMedia';
 import {
-    CardActionArea, CardMedia,
+    CardActionArea,
+    CardMedia,
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle
 } from '@mui/material';
 import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
 import { Player } from 'video-react';
 import 'video-react/dist/video-react.css';
 import { Asset } from '../../api/media';
 import { Heading } from '../Heading';
 import { CloseButton } from './Buttons';
-import Card from '@mui/material/Card';
 
 export enum MediaTypes {
     video,
@@ -46,19 +47,19 @@ export const VideoAsset = ({ asset }: AssetViewerProps) => (
     </Box>
 );
 
-// export const ImageAsset =  ({ asset }: AssetViewerProps ) => {
-//     return <RImage src={assetUrl(window.gbans.bucket_media, asset)} showLoading ><></></RImage>
-// };
-export const ImageAsset =  ({ asset }: AssetViewerProps ) => {
-    return <Card>
-        <CardActionArea>
-            <CardMedia
-                component="img"
-                //height="140"
-                image={assetUrl(window.gbans.bucket_media, asset)}
-                alt={asset.name}
-            /></CardActionArea></Card>
-
+export const ImageAsset = ({ asset }: AssetViewerProps) => {
+    return (
+        <Card>
+            <CardActionArea>
+                <CardMedia
+                    component="img"
+                    //height="140"
+                    image={assetUrl(window.gbans.bucket_media, asset)}
+                    alt={asset.name}
+                />
+            </CardActionArea>
+        </Card>
+    );
 };
 interface AssetViewerProps {
     asset: Asset;
@@ -79,7 +80,11 @@ export const AssetViewer = NiceModal.create((asset: Asset) => {
     }, [asset]);
 
     return (
-        <Dialog fullWidth {...muiDialogV5(modal)} fullScreen={mediaType(asset.mime_type) == MediaTypes.image}>
+        <Dialog
+            fullWidth
+            {...muiDialogV5(modal)}
+            fullScreen={mediaType(asset.mime_type) == MediaTypes.image}
+        >
             <DialogTitle component={Heading} iconLeft={<PermMediaIcon />}>
                 {`${asset.name}`}
             </DialogTitle>

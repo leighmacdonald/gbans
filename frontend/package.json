@@ -1,6 +1,6 @@
 {
   "name": "gbans",
-  "version": "0.0.1",
+  "version": "0.4.3",
   "description": "gbans",
   "main": "src/index.tsx",
   "repository": "github.com/leighmacdonald/gbans",
