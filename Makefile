@@ -22,7 +22,7 @@ build_debug:
 
 bump_deps:
 	go get -u ./...
-	cd frontend && yarn upgrade-interactive --latest
+	cd frontend && yarn upgrade-interactive
 
 build: linux64
 

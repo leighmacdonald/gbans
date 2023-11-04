@@ -6,7 +6,7 @@ COPY frontend/package.json frontend/package.json
 COPY frontend/yarn.lock yarn.lock
 COPY frontend frontend
 WORKDIR /build/frontend
-RUN yarn install --frozen-lockfile
+RUN yarn install --immutable
 RUN yarn build
 
 FROM golang:1.21-alpine as build
