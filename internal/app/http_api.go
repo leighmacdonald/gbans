@@ -481,6 +481,7 @@ func onAPIPostBansGroupCreate(app *App) gin.HandlerFunc {
 		Reason     store.Reason    `json:"reason"`
 		ReasonText string          `json:"reason_text"`
 		Note       string          `json:"note"`
+		ValidUntil time.Time       `json:"valid_until"`
 	}
 
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
@@ -503,10 +504,17 @@ func onAPIPostBansGroupCreate(app *App) gin.HandlerFunc {
 			sid           = currentUserProfile(ctx).SteamID
 		)
 
+		duration, errDuration := calcDuration(req.Duration, req.ValidUntil)
+		if errDuration != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
 		if errBanSteamGroup := store.NewBanSteamGroup(ctx,
 			store.StringSID(sid.String()),
 			req.TargetID,
-			store.Duration(req.Duration),
+			duration,
 			req.Reason,
 			req.ReasonText,
 			req.Note,
@@ -547,6 +555,7 @@ func onAPIPostBansASNCreate(app *App) gin.HandlerFunc {
 		Reason     store.Reason    `json:"reason"`
 		ReasonText string          `json:"reason_text"`
 		ASNum      int64           `json:"as_num"`
+		ValidUntil time.Time       `json:"valid_until"`
 	}
 
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
@@ -562,10 +571,17 @@ func onAPIPostBansASNCreate(app *App) gin.HandlerFunc {
 			sid    = currentUserProfile(ctx).SteamID
 		)
 
+		duration, errDuration := calcDuration(req.Duration, req.ValidUntil)
+		if errDuration != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
 		if errBanSteamGroup := store.NewBanASN(ctx,
 			store.StringSID(sid.String()),
 			req.TargetID,
-			store.Duration(req.Duration),
+			duration,
 			req.Reason,
 			req.ReasonText,
 			req.Note,
@@ -606,6 +622,7 @@ func onAPIPostBansCIDRCreate(app *App) gin.HandlerFunc {
 		Reason     store.Reason    `json:"reason"`
 		ReasonText string          `json:"reason_text"`
 		CIDR       string          `json:"cidr"`
+		ValidUntil time.Time       `json:"valid_until"`
 	}
 
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
@@ -621,10 +638,17 @@ func onAPIPostBansCIDRCreate(app *App) gin.HandlerFunc {
 			sid     = currentUserProfile(ctx).SteamID
 		)
 
+		duration, errDuration := calcDuration(req.Duration, req.ValidUntil)
+		if errDuration != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
 		if errBanCIDR := store.NewBanCIDR(ctx,
 			store.StringSID(sid.String()),
 			req.TargetID,
-			store.Duration(req.Duration),
+			duration,
 			req.Reason,
 			req.ReasonText,
 			req.Note,
@@ -660,6 +684,7 @@ func onAPIPostBanSteamCreate(app *App) gin.HandlerFunc {
 		SourceID       store.StringSID `json:"source_id"`
 		TargetID       store.StringSID `json:"target_id"`
 		Duration       string          `json:"duration"`
+		ValidUntil     time.Time       `json:"valid_until"`
 		BanType        store.BanType   `json:"ban_type"`
 		Reason         store.Reason    `json:"reason"`
 		ReasonText     string          `json:"reason_text"`
@@ -690,11 +715,18 @@ func onAPIPostBanSteamCreate(app *App) gin.HandlerFunc {
 			origin = store.InGame
 		}
 
+		duration, errDuration := calcDuration(req.Duration, req.ValidUntil)
+		if errDuration != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
 		var banSteam store.BanSteam
 		if errBanSteam := store.NewBanSteam(ctx,
 			sourceID,
 			req.TargetID,
-			store.Duration(req.Duration),
+			duration,
 			req.Reason,
 			req.ReasonText,
 			req.Note,

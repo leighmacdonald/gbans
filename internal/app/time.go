@@ -2,8 +2,17 @@ package app
 
 import (
 	"fmt"
+	"github.com/leighmacdonald/gbans/internal/consts"
+	"github.com/pkg/errors"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
+)
+
+var (
+	reDuration         = regexp.MustCompile(`^(\d+)([smhdwMy])$`)
+	errInvalidDuration = errors.New("Invalid duration")
 )
 
 // FmtTimeShort returns a common format for time display.
@@ -46,7 +55,7 @@ func FmtDuration(t time.Time) string {
 }
 
 func diff(timeFrom time.Time, timeTo time.Time) (int, int, int, int, int, int) {
-	var year, month, day, hour, min, sec int
+	var year, month, day, hour, minute, sec int
 
 	if timeFrom.Location() != timeTo.Location() {
 		timeTo = timeTo.In(timeFrom.Location())
@@ -66,17 +75,17 @@ func diff(timeFrom time.Time, timeTo time.Time) (int, int, int, int, int, int) {
 	month = int(Month2 - Month1)
 	day = day2 - day1
 	hour = hour2 - hour1
-	min = minute2 - minute1
+	minute = minute2 - minute1
 	sec = second2 - second1
 
 	// Normalize negative values
 	if sec < 0 {
 		sec += 60
-		min--
+		minute--
 	}
 
-	if min < 0 {
-		min += 60
+	if minute < 0 {
+		minute += 60
 		hour--
 	}
 
@@ -97,5 +106,82 @@ func diff(timeFrom time.Time, timeTo time.Time) (int, int, int, int, int, int) {
 		year--
 	}
 
-	return year, month, day, hour, min, sec
+	return year, month, day, hour, minute, sec
+}
+
+// ParseUserStringDuration works exactly like time.ParseDuration except that
+// it supports durations longer than hours
+// Formats: s, m, h, d, w, M, y.
+func ParseUserStringDuration(durationString string) (time.Duration, error) {
+	if durationString == "0" {
+		return 0, nil
+	}
+
+	matchDuration := reDuration.FindStringSubmatch(durationString)
+	if matchDuration == nil {
+		return 0, errInvalidDuration
+	}
+
+	valueInt, errParseInt := strconv.ParseInt(matchDuration[1], 10, 64)
+	if errParseInt != nil {
+		return 0, errInvalidDuration
+	}
+
+	var (
+		value = time.Duration(valueInt)
+		day   = time.Hour * 24
+	)
+
+	switch matchDuration[2] {
+	case "s":
+		return time.Second * value, nil
+	case "m":
+		return time.Minute * value, nil
+	case "h":
+		return time.Hour * value, nil
+	case "d":
+		return day * value, nil
+	case "w":
+		return day * 7 * value, nil
+	case "M":
+		return day * 31 * value, nil
+	case "y":
+		return day * 365 * value, nil
+	}
+
+	return 0, errInvalidDuration
+}
+
+func ParseDuration(value string) (time.Duration, error) {
+	duration, errDuration := ParseUserStringDuration(value)
+	if errDuration != nil {
+		return 0, consts.ErrInvalidDuration
+	}
+
+	if duration < 0 {
+		return 0, consts.ErrInvalidDuration
+	}
+
+	if duration == 0 {
+		duration = time.Hour * 24 * 365 * 10
+	}
+
+	return duration, nil
+}
+
+func calcDuration(durationString string, validUntil time.Time) (time.Duration, error) {
+	if durationString == "custom" {
+		dur := time.Until(validUntil)
+		if dur < 0 {
+			return 0, errInvalidDuration
+		}
+
+		return dur, nil
+	} else {
+		dur, errDuration := ParseDuration(durationString)
+		if errDuration != nil {
+			return 0, errDuration
+		}
+		return dur, nil
+	}
 }

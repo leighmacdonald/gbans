@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -26,7 +27,7 @@ func serveCmd() *cobra.Command {
 
 			var conf app.Config
 			if errConfig := app.ReadConfig(&conf, false); errConfig != nil {
-				panic("Failed to read config")
+				panic(fmt.Sprintf("Failed to read config: %v", errConfig))
 			}
 
 			rootLogger := app.MustCreateLogger(&conf)

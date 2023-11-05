@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -65,7 +64,7 @@ type BanList struct {
 }
 
 // Import is used to download and load block lists into memory.
-func Import(ctx context.Context, list BanList, cachePath string, maxAge string) (int, error) {
+func Import(ctx context.Context, list BanList, cachePath string, maxAge time.Duration) (int, error) {
 	if !golib.Exists(cachePath) {
 		if errMkDir := os.MkdirAll(cachePath, 0o755); errMkDir != nil {
 			return 0, errors.Wrapf(errMkDir, "Failed to create cache dir (%s): %v", cachePath, errMkDir)
@@ -73,11 +72,6 @@ func Import(ctx context.Context, list BanList, cachePath string, maxAge string) 
 	}
 
 	filePath := path.Join(cachePath, list.Name)
-
-	maxAgeDuration, errParseDuration := store.ParseDuration(maxAge)
-	if errParseDuration != nil {
-		return 0, errors.Wrapf(errParseDuration, "Failed to parse cache max age")
-	}
 
 	expired := false
 
@@ -87,7 +81,7 @@ func Import(ctx context.Context, list BanList, cachePath string, maxAge string) 
 			return 0, errors.Wrapf(errStat, "Failed to stat cached file")
 		}
 
-		if time.Since(fileInfo.ModTime()) > maxAgeDuration {
+		if time.Since(fileInfo.ModTime()) > maxAge {
 			expired = true
 		}
 	} else {

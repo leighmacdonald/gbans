@@ -74,47 +74,6 @@ func TestStore(t *testing.T) {
 	t.Run("filters", testFilters(database))
 }
 
-func TestParseDuration(t *testing.T) {
-	tests := []struct {
-		input    string
-		expected string
-	}{
-		{
-			"3s",
-			"3s",
-		},
-		{
-			"3m",
-			"3m0s",
-		},
-		{
-			"3h",
-			"3h0m0s",
-		},
-		{
-			"3d",
-			"72h0m0s",
-		},
-		{
-			"3w",
-			"504h0m0s",
-		},
-		{
-			"3M",
-			"2232h0m0s",
-		},
-		{
-			"3y",
-			"26280h0m0s",
-		},
-	}
-	for _, test := range tests {
-		d, errParseDuration := store.ParseDuration(test.input)
-		require.NoError(t, errParseDuration, "Failed to parse: %s", test.input)
-		require.Equal(t, test.expected, d.String(), "Failed to parse: %s", test.input)
-	}
-}
-
 func testServerTest(database *store.Store) func(t *testing.T) {
 	return func(t *testing.T) {
 		serverA := store.Server{
@@ -216,7 +175,7 @@ func testBanNet(database *store.Store) func(t *testing.T) {
 		var banCidr store.BanCIDR
 
 		require.NoError(t, store.NewBanCIDR(ctx, store.StringSID("76561198003911389"),
-			"76561198044052046", "10m", store.Custom,
+			"76561198044052046", time.Minute*10, store.Custom,
 			"custom reason", "", store.System, fmt.Sprintf("%s/32", rip), store.Banned, &banCidr))
 		require.NoError(t, database.SaveBanNet(ctx, &banCidr))
 		require.Less(t, int64(0), banCidr.NetID)
@@ -255,7 +214,7 @@ func testBanSteam(database *store.Store) func(t *testing.T) {
 			ctx,
 			store.StringSID("76561198003911389"),
 			"76561198044052046",
-			"1M",
+			time.Hour*24*31,
 			store.Cheating,
 			store.Cheating.String(),
 			"Mod Note",
@@ -418,7 +377,7 @@ func testBanASN(database *store.Store) func(t *testing.T) {
 
 		require.NoError(t, store.NewBanASN(ctx,
 			store.StringSID(author.SteamID.String()), "0",
-			"10m", store.Cheating, "", "", store.System, rand.Int63n(23455), store.Banned, &banASN)) //nolint:gosec
+			time.Minute*10, store.Cheating, "", "", store.System, rand.Int63n(23455), store.Banned, &banASN)) //nolint:gosec
 
 		require.NoError(t, database.SaveBanASN(context.Background(), &banASN))
 		require.True(t, banASN.BanASNId > 0)
@@ -444,7 +403,7 @@ func testBanGroup(database *store.Store) func(t *testing.T) {
 			ctx,
 			store.StringSID("76561198083950960"),
 			"0",
-			"10m",
+			time.Minute*10,
 			store.Cheating,
 			"",
 			"",
