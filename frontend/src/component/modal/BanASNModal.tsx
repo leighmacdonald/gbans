@@ -52,11 +52,11 @@ interface BanASNFormValues extends SteamIDInputValue {
 
 export const validationSchema = yup.object({
     steam_id: steamIdValidator,
-    asNum: ASNumberFieldValidator,
+    as_num: ASNumberFieldValidator,
     reason: BanReasonFieldValidator,
-    reasonText: BanReasonTextFieldValidator,
+    reason_text: BanReasonTextFieldValidator,
     duration: DurationFieldValidator,
-    durationCustom: DurationCustomFieldValidator,
+    duration_custom: DurationCustomFieldValidator,
     note: NoteFieldValidator
 });
 
@@ -120,8 +120,8 @@ export const BanASNModal = NiceModal.create(
                     as_num: existing ? existing.as_num : 0
                 }}
                 validateOnBlur={true}
-                //validateOnChange={false}
-                //validationSchema={validationSchema}
+                validateOnChange={false}
+                validationSchema={validationSchema}
             >
                 <Dialog fullWidth {...muiDialogV5(modal)}>
                     <DialogTitle component={Heading} iconLeft={<LanIcon />}>

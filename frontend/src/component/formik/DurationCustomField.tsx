@@ -1,5 +1,5 @@
 import React from 'react';
-import { DatePicker } from '@mui/x-date-pickers';
+import { DateTimePicker } from '@mui/x-date-pickers';
 import { useFormikContext } from 'formik';
 import * as yup from 'yup';
 import { Duration } from '../../api';
@@ -15,7 +15,7 @@ export const DurationCustomField = () => {
     const { errors, touched, values, setFieldValue } =
         useFormikContext<DurationCustomFieldProps>();
     return (
-        <DatePicker
+        <DateTimePicker
             disabled={values.duration != Duration.durCustom}
             label="Custom Expiration Date"
             value={values.duration_custom}

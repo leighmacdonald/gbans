@@ -43,7 +43,7 @@ export const DurationField = <T,>() => {
             >
                 {Durations.map((v) => (
                     <MenuItem key={`time-${v}`} value={v}>
-                        {v}
+                        {v != Duration.durInf ? v : 'Permanent'}
                     </MenuItem>
                 ))}
             </Select>

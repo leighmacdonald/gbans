@@ -5,7 +5,8 @@ import * as yup from 'yup';
 
 export const GroupIdFieldValidator = yup
     .string()
-    .length(18, 'Must be positive integer');
+    .required('Group ID cannot be empty')
+    .length(18, 'Must be positive integer with a length of 18');
 
 interface GroupIDFieldProps {
     group_id: string;
