@@ -11,6 +11,7 @@ export const ASNumberFieldValidator = yup
 
 interface ASNumberFieldProps {
     as_num: number;
+    ban_asn_id?: number;
 }
 
 export const ASNumberField = <T,>() => {
@@ -19,6 +20,7 @@ export const ASNumberField = <T,>() => {
     >();
     return (
         <TextField
+            disabled={values.ban_asn_id != undefined && values.ban_asn_id > 0}
             type={'number'}
             fullWidth
             label={'Autonomous System Number'}

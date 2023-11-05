@@ -4,9 +4,7 @@ import { useFormikContext } from 'formik';
 import * as yup from 'yup';
 import { Duration } from '../../api';
 
-export const DurationCustomFieldValidator = yup
-    .string()
-    .label('Custom duration');
+export const DurationCustomFieldValidator = yup.date().label('Custom duration');
 
 interface DurationCustomFieldProps {
     duration: Duration;

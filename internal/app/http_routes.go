@@ -282,20 +282,28 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		modRoute.GET("/api/messages/:steam_id", onAPIGetPersonMessages(app))
 		modRoute.GET("/api/message/:person_message_id/context/:padding", onAPIQueryMessageContext(app))
 		modRoute.POST("/api/appeals", onAPIGetAppeals(app))
+
 		modRoute.POST("/api/bans/steam", onAPIGetBansSteam(app))
 		modRoute.POST("/api/bans/steam/create", onAPIPostBanSteamCreate(app))
 		modRoute.DELETE("/api/bans/steam/:ban_id", onAPIPostBanDelete(app))
 		modRoute.POST("/api/bans/steam/:ban_id", onAPIPostBanUpdate(app))
 		modRoute.POST("/api/bans/steam/:ban_id/status", onAPIPostSetBanAppealStatus(app))
+
 		modRoute.POST("/api/bans/cidr/create", onAPIPostBansCIDRCreate(app))
 		modRoute.POST("/api/bans/cidr", onAPIGetBansCIDR(app))
 		modRoute.DELETE("/api/bans/cidr/:net_id", onAPIDeleteBansCIDR(app))
+		modRoute.POST("/api/bans/cidr/:net_id", onAPIPostBansCIDRUpdate(app))
+
 		modRoute.POST("/api/bans/asn/create", onAPIPostBansASNCreate(app))
 		modRoute.POST("/api/bans/asn", onAPIGetBansASN(app))
 		modRoute.DELETE("/api/bans/asn/:asn_id", onAPIDeleteBansASN(app))
+		modRoute.POST("/api/bans/asn/:asn_id", onAPIPostBansASNUpdate(app))
+
 		modRoute.POST("/api/bans/group/create", onAPIPostBansGroupCreate(app))
 		modRoute.POST("/api/bans/group", onAPIGetBansGroup(app))
 		modRoute.DELETE("/api/bans/group/:ban_group_id", onAPIDeleteBansGroup(app))
+		modRoute.POST("/api/bans/group/:ban_group_id", onAPIPostBansGroupUpdate(app))
+
 		modRoute.GET("/api/patreon/pledges", onAPIGetPatreonPledges(app))
 
 		modRoute.POST("/api/contests", onAPIPostContest(app))

@@ -52,6 +52,9 @@ import {
     ModalUnbanGroup,
     ModalUnbanSteam
 } from '../component/modal';
+import { BanASNModalProps } from '../component/modal/BanASNModal';
+import { BanCIDRModalProps } from '../component/modal/BanCIDRModal';
+import { BanGroupModalProps } from '../component/modal/BanGroupModal';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
 import { steamIdQueryValue } from '../util/text';
@@ -101,7 +104,7 @@ export const AdminBan = () => {
             .catch(logErr);
     }, []);
 
-    const onUnban = useCallback(
+    const onUnbanSteam = useCallback(
         async (ban: IAPIBanRecordProfile) => {
             try {
                 await NiceModal.show(ModalUnbanSteam, {
@@ -116,7 +119,7 @@ export const AdminBan = () => {
         [sendFlash]
     );
 
-    const onEdit = useCallback(
+    const onEditSteam = useCallback(
         async (ban: IAPIBanRecordProfile) => {
             try {
                 await NiceModal.show(ModalBanSteam, {
@@ -131,6 +134,153 @@ export const AdminBan = () => {
         },
         [sendFlash]
     );
+
+    const onEditCIDR = useCallback(
+        async (existing: IAPIBanCIDRRecord) => {
+            try {
+                await NiceModal.show<IAPIBanCIDRRecord, BanCIDRModalProps>(
+                    ModalBanCIDR,
+                    {
+                        existing
+                    }
+                );
+                sendFlash('success', 'Updated CIDR ban successfully');
+            } catch (e) {
+                sendFlash('error', `Failed to update ban: ${e}`);
+            }
+        },
+        [sendFlash]
+    );
+
+    const onUnbanCIDR = useCallback(
+        async (net_id: number) => {
+            try {
+                await NiceModal.show(ModalUnbanCIDR, {
+                    banId: net_id
+                });
+                sendFlash('success', 'Unbanned CIDR successfully');
+            } catch (e) {
+                sendFlash('error', `Failed to unban: ${e}`);
+            }
+        },
+        [sendFlash]
+    );
+
+    const onUnbanASN = useCallback(
+        async (as_num: number) => {
+            try {
+                await NiceModal.show(ModalUnbanASN, {
+                    banId: as_num
+                });
+                sendFlash('success', 'Unbanned ASN successfully');
+            } catch (e) {
+                sendFlash('error', `Failed to unban ASN: ${e}`);
+            }
+        },
+        [sendFlash]
+    );
+
+    const onEditASN = useCallback(
+        async (existing: IAPIBanASNRecord) => {
+            try {
+                await NiceModal.show<IAPIBanASNRecord, BanASNModalProps>(
+                    ModalBanASN,
+                    {
+                        existing
+                    }
+                );
+                sendFlash('success', 'Updated ASN ban successfully');
+            } catch (e) {
+                sendFlash('error', `Failed to update ASN ban: ${e}`);
+            }
+        },
+        [sendFlash]
+    );
+
+    const onEditGroup = useCallback(
+        async (existing: IAPIBanGroupRecord) => {
+            try {
+                await NiceModal.show<IAPIBanGroupRecord, BanGroupModalProps>(
+                    ModalBanGroup,
+                    {
+                        existing
+                    }
+                );
+                sendFlash('success', 'Updated steam group ban successfully');
+            } catch (e) {
+                sendFlash('error', `Failed to update steam group ban: ${e}`);
+            }
+        },
+        [sendFlash]
+    );
+
+    const onUnbanGroup = useCallback(
+        async (ban_group_id: number) => {
+            try {
+                await NiceModal.show(ModalUnbanGroup, {
+                    banId: ban_group_id
+                });
+                sendFlash('success', 'Unbanned Group successfully');
+            } catch (e) {
+                sendFlash('error', `Failed to unban Group: ${e}`);
+            }
+        },
+        [sendFlash]
+    );
+
+    const onNewBanSteam = useCallback(async () => {
+        try {
+            const ban = await NiceModal.show<IAPIBanRecord>(ModalBanSteam, {});
+            sendFlash(
+                'success',
+                `Created steam ban successfully #${ban.ban_id}`
+            );
+        } catch (e) {
+            sendFlash('error', `Failed to save ban: ${e}`);
+        }
+    }, [sendFlash]);
+
+    const onNewBanCIDR = useCallback(async () => {
+        try {
+            const ban = await NiceModal.show<IAPIBanCIDRRecord>(
+                ModalBanCIDR,
+                {}
+            );
+            sendFlash(
+                'success',
+                `Created CIDR ban successfully #${ban.net_id}`
+            );
+        } catch (e) {
+            sendFlash('error', `Failed to save CIDR ban: ${e}`);
+        }
+    }, [sendFlash]);
+
+    const onNewBanASN = useCallback(async () => {
+        try {
+            const ban = await NiceModal.show<IAPIBanASNRecord>(ModalBanASN, {});
+            sendFlash(
+                'success',
+                `Created ASN ban successfully #${ban.ban_asn_id}`
+            );
+        } catch (e) {
+            sendFlash('error', `Failed to save ASN ban: ${e}`);
+        }
+    }, [sendFlash]);
+
+    const onNewBanGroup = useCallback(async () => {
+        try {
+            const ban = await NiceModal.show<IAPIBanGroupRecord>(
+                ModalBanGroup,
+                {}
+            );
+            sendFlash(
+                'success',
+                `Created steam group ban successfully #${ban.ban_group_id}`
+            );
+        } catch (e) {
+            sendFlash('error', `Failed to save group ban: ${e}`);
+        }
+    }, [sendFlash]);
 
     useEffect(() => {
         const abortController = new AbortController();
@@ -153,24 +303,7 @@ export const AdminBan = () => {
                             color={'secondary'}
                             startIcon={<DirectionsRunIcon />}
                             sx={{ marginRight: 2 }}
-                            onClick={async () => {
-                                try {
-                                    const ban =
-                                        await NiceModal.show<IAPIBanRecord>(
-                                            ModalBanSteam,
-                                            {}
-                                        );
-                                    sendFlash(
-                                        'success',
-                                        `Created steam ban successfully #${ban.ban_id}`
-                                    );
-                                } catch (e) {
-                                    sendFlash(
-                                        'error',
-                                        `Failed to save ban: ${e}`
-                                    );
-                                }
-                            }}
+                            onClick={onNewBanSteam}
                         >
                             Steam
                         </Button>
@@ -179,9 +312,7 @@ export const AdminBan = () => {
                             color={'secondary'}
                             startIcon={<RouterIcon />}
                             sx={{ marginRight: 2 }}
-                            onClick={async () => {
-                                await NiceModal.show(ModalBanCIDR, {});
-                            }}
+                            onClick={onNewBanCIDR}
                         >
                             CIDR
                         </Button>
@@ -190,9 +321,7 @@ export const AdminBan = () => {
                             color={'secondary'}
                             startIcon={<LanIcon />}
                             sx={{ marginRight: 2 }}
-                            onClick={async () => {
-                                await NiceModal.show(ModalBanASN, {});
-                            }}
+                            onClick={onNewBanASN}
                         >
                             ASN
                         </Button>
@@ -201,9 +330,7 @@ export const AdminBan = () => {
                             color={'secondary'}
                             startIcon={<GroupsIcon />}
                             sx={{ marginRight: 2 }}
-                            onClick={async () => {
-                                await NiceModal.show(ModalBanGroup, {});
-                            }}
+                            onClick={onNewBanGroup}
                         >
                             Group
                         </Button>
@@ -446,7 +573,7 @@ export const AdminBan = () => {
                                                         <IconButton
                                                             color={'warning'}
                                                             onClick={async () => {
-                                                                await onEdit(
+                                                                await onEditSteam(
                                                                     row
                                                                 );
                                                             }}
@@ -462,7 +589,7 @@ export const AdminBan = () => {
                                                         <IconButton
                                                             color={'success'}
                                                             onClick={async () => {
-                                                                await onUnban(
+                                                                await onUnbanSteam(
                                                                     row
                                                                 );
                                                             }}
@@ -641,7 +768,12 @@ export const AdminBan = () => {
                                         align: 'left',
                                         renderer: (row) => (
                                             <ButtonGroup fullWidth>
-                                                <IconButton color={'warning'}>
+                                                <IconButton
+                                                    color={'warning'}
+                                                    onClick={async () => {
+                                                        await onEditCIDR(row);
+                                                    }}
+                                                >
                                                     <Tooltip
                                                         title={'Edit CIDR Ban'}
                                                     >
@@ -651,23 +783,9 @@ export const AdminBan = () => {
                                                 <IconButton
                                                     color={'success'}
                                                     onClick={async () => {
-                                                        try {
-                                                            await NiceModal.show(
-                                                                ModalUnbanCIDR,
-                                                                {
-                                                                    banId: row.net_id
-                                                                }
-                                                            );
-                                                            sendFlash(
-                                                                'success',
-                                                                'Unbanned CIDR successfully'
-                                                            );
-                                                        } catch (e) {
-                                                            sendFlash(
-                                                                'error',
-                                                                `Failed to unban: ${e}`
-                                                            );
-                                                        }
+                                                        await onUnbanCIDR(
+                                                            row.net_id
+                                                        );
                                                     }}
                                                 >
                                                     <Tooltip
@@ -811,34 +929,25 @@ export const AdminBan = () => {
                                         align: 'left',
                                         renderer: (row) => (
                                             <ButtonGroup fullWidth>
-                                                <IconButton color={'warning'}>
+                                                <IconButton
+                                                    color={'warning'}
+                                                    onClick={async () =>
+                                                        await onEditASN(row)
+                                                    }
+                                                >
                                                     <Tooltip
-                                                        title={'Edit CIDR Ban'}
+                                                        title={'Edit ASN Ban'}
                                                     >
                                                         <EditIcon />
                                                     </Tooltip>
                                                 </IconButton>
                                                 <IconButton
                                                     color={'success'}
-                                                    onClick={async () => {
-                                                        try {
-                                                            await NiceModal.show(
-                                                                ModalUnbanASN,
-                                                                {
-                                                                    banId: row.as_num
-                                                                }
-                                                            );
-                                                            sendFlash(
-                                                                'success',
-                                                                'Unbanned ASN successfully'
-                                                            );
-                                                        } catch (e) {
-                                                            sendFlash(
-                                                                'error',
-                                                                `Failed to unban SN: ${e}`
-                                                            );
-                                                        }
-                                                    }}
+                                                    onClick={async () =>
+                                                        await onUnbanASN(
+                                                            row.as_num
+                                                        )
+                                                    }
                                                 >
                                                     <Tooltip
                                                         title={
@@ -875,15 +984,29 @@ export const AdminBan = () => {
                                         )
                                     },
                                     {
-                                        label: 'GroupID',
-                                        tooltip: 'GroupID',
+                                        label: 'SteamID',
+                                        tooltip:
+                                            'SteamID of the primary target',
                                         sortKey: 'target_id',
                                         sortable: true,
                                         align: 'left',
                                         queryValue: (o) => `${o.target_id}`,
                                         renderer: (row) => (
                                             <Typography variant={'body1'}>
-                                                {row.target_id.toString()}
+                                                {row.target_id}
+                                            </Typography>
+                                        )
+                                    },
+                                    {
+                                        label: 'GroupID',
+                                        tooltip: 'GroupID',
+                                        sortKey: 'group_id',
+                                        sortable: true,
+                                        align: 'left',
+                                        queryValue: (o) => `${o.target_id}`,
+                                        renderer: (row) => (
+                                            <Typography variant={'body1'}>
+                                                {row.group_id}
                                             </Typography>
                                         )
                                     },
@@ -974,7 +1097,12 @@ export const AdminBan = () => {
                                         align: 'left',
                                         renderer: (row) => (
                                             <ButtonGroup fullWidth>
-                                                <IconButton color={'warning'}>
+                                                <IconButton
+                                                    color={'warning'}
+                                                    onClick={async () => {
+                                                        await onEditGroup(row);
+                                                    }}
+                                                >
                                                     <Tooltip title={'Edit Ban'}>
                                                         <EditIcon />
                                                     </Tooltip>
@@ -982,23 +1110,9 @@ export const AdminBan = () => {
                                                 <IconButton
                                                     color={'success'}
                                                     onClick={async () => {
-                                                        try {
-                                                            await NiceModal.show(
-                                                                ModalUnbanGroup,
-                                                                {
-                                                                    banId: row.ban_group_id
-                                                                }
-                                                            );
-                                                            sendFlash(
-                                                                'success',
-                                                                'Unbanned ASN successfully'
-                                                            );
-                                                        } catch (e) {
-                                                            sendFlash(
-                                                                'error',
-                                                                `Failed to unban SN: ${e}`
-                                                            );
-                                                        }
+                                                        await onUnbanGroup(
+                                                            row.ban_group_id
+                                                        );
                                                     }}
                                                 >
                                                     <Tooltip

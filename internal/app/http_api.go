@@ -476,10 +476,7 @@ func onAPIPostBansGroupCreate(app *App) gin.HandlerFunc {
 	type apiBanRequest struct {
 		TargetID   store.StringSID `json:"target_id"`
 		GroupID    steamid.GID     `json:"group_id"`
-		BanType    store.BanType   `json:"ban_type"`
 		Duration   string          `json:"duration"`
-		Reason     store.Reason    `json:"reason"`
-		ReasonText string          `json:"reason_text"`
 		Note       string          `json:"note"`
 		ValidUntil time.Time       `json:"valid_until"`
 	}
@@ -515,13 +512,11 @@ func onAPIPostBansGroupCreate(app *App) gin.HandlerFunc {
 			store.StringSID(sid.String()),
 			req.TargetID,
 			duration,
-			req.Reason,
-			req.ReasonText,
 			req.Note,
 			store.Web,
 			req.GroupID,
 			"",
-			req.BanType,
+			store.Banned,
 			&banSteamGroup,
 		); errBanSteamGroup != nil {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
@@ -546,15 +541,71 @@ func onAPIPostBansGroupCreate(app *App) gin.HandlerFunc {
 	}
 }
 
+func onAPIPostBansGroupUpdate(app *App) gin.HandlerFunc {
+	type apiBanUpdateRequest struct {
+		TargetID   store.StringSID `json:"target_id"`
+		Note       string          `json:"note"`
+		ValidUntil time.Time       `json:"valid_until"`
+	}
+
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		banGroupID, banIDErr := getInt64Param(ctx, "ban_group_id")
+		if banIDErr != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
+
+			return
+		}
+
+		var req apiBanUpdateRequest
+		if !bind(ctx, log, &req) {
+			return
+		}
+
+		sid, errSID := req.TargetID.SID64(ctx)
+		if errSID != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
+
+			return
+		}
+
+		var ban store.BanGroup
+
+		if errExist := app.db.GetBanGroupByID(ctx, banGroupID, &ban); errExist != nil {
+			if !errors.Is(errExist, store.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+
+				return
+			}
+
+			responseErr(ctx, http.StatusConflict, consts.ErrDuplicate)
+
+			return
+		}
+
+		ban.Note = req.Note
+		ban.ValidUntil = req.ValidUntil
+		ban.TargetID = sid
+
+		if errSave := app.db.SaveBanGroup(ctx, &ban); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, ban)
+	}
+}
+
 func onAPIPostBansASNCreate(app *App) gin.HandlerFunc {
 	type apiBanRequest struct {
 		TargetID   store.StringSID `json:"target_id"`
-		BanType    store.BanType   `json:"ban_type"`
-		Duration   string          `json:"duration"`
 		Note       string          `json:"note"`
 		Reason     store.Reason    `json:"reason"`
 		ReasonText string          `json:"reason_text"`
 		ASNum      int64           `json:"as_num"`
+		Duration   string          `json:"duration"`
 		ValidUntil time.Time       `json:"valid_until"`
 	}
 
@@ -587,7 +638,7 @@ func onAPIPostBansASNCreate(app *App) gin.HandlerFunc {
 			req.Note,
 			store.Web,
 			req.ASNum,
-			req.BanType,
+			store.Banned,
 			&banASN,
 		); errBanSteamGroup != nil {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
@@ -613,10 +664,75 @@ func onAPIPostBansASNCreate(app *App) gin.HandlerFunc {
 	}
 }
 
+func onAPIPostBansASNUpdate(app *App) gin.HandlerFunc {
+	type apiBanRequest struct {
+		TargetID   store.StringSID `json:"target_id"`
+		Note       string          `json:"note"`
+		Reason     store.Reason    `json:"reason"`
+		ReasonText string          `json:"reason_text"`
+		ValidUntil time.Time       `json:"valid_until"`
+	}
+
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		asnID, asnIDErr := getInt64Param(ctx, "asn_id")
+		if asnIDErr != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
+
+			return
+		}
+
+		var ban store.BanASN
+		if errBan := app.db.GetBanASN(ctx, asnID, &ban); errBan != nil {
+			if errors.Is(errBan, store.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+
+				return
+			}
+
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			return
+		}
+
+		var req apiBanRequest
+		if !bind(ctx, log, &req) {
+			return
+		}
+
+		if ban.Reason == store.Custom && req.ReasonText == "" {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		sid, errSID := req.TargetID.SID64(ctx)
+		if errSID != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		ban.Note = req.Note
+		ban.ValidUntil = req.ValidUntil
+		ban.TargetID = sid
+		ban.Reason = req.Reason
+		ban.ReasonText = req.ReasonText
+
+		if errSave := app.db.SaveBanASN(ctx, &ban); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, ban)
+	}
+}
+
 func onAPIPostBansCIDRCreate(app *App) gin.HandlerFunc {
 	type apiBanRequest struct {
 		TargetID   store.StringSID `json:"target_id"`
-		BanType    store.BanType   `json:"ban_type"`
 		Duration   string          `json:"duration"`
 		Note       string          `json:"note"`
 		Reason     store.Reason    `json:"reason"`
@@ -654,7 +770,7 @@ func onAPIPostBansCIDRCreate(app *App) gin.HandlerFunc {
 			req.Note,
 			store.Web,
 			req.CIDR,
-			req.BanType,
+			store.Banned,
 			&banCIDR,
 		); errBanCIDR != nil {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
@@ -676,6 +792,80 @@ func onAPIPostBansCIDRCreate(app *App) gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusCreated, banCIDR)
+	}
+}
+
+func onAPIPostBansCIDRUpdate(app *App) gin.HandlerFunc {
+	type apiUpdateBanRequest struct {
+		TargetID   store.StringSID `json:"target_id"`
+		Note       string          `json:"note"`
+		Reason     store.Reason    `json:"reason"`
+		ReasonText string          `json:"reason_text"`
+		CIDR       string          `json:"cidr"`
+		ValidUntil time.Time       `json:"valid_until"`
+	}
+
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		netID, banIDErr := getInt64Param(ctx, "net_id")
+		if banIDErr != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
+
+			return
+		}
+
+		var ban store.BanCIDR
+
+		if errBan := app.db.GetBanNetByID(ctx, netID, &ban); errBan != nil {
+			if errors.Is(errBan, store.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+			}
+
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			return
+		}
+
+		var req apiUpdateBanRequest
+		if !bind(ctx, log, &req) {
+			return
+		}
+
+		sid, errSID := req.TargetID.SID64(ctx)
+		if errSID != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
+
+			return
+		}
+
+		if req.Reason == store.Custom && req.ReasonText == "" {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
+
+			return
+		}
+
+		_, ipNet, errParseCIDR := net.ParseCIDR(req.CIDR)
+		if errParseCIDR != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
+
+			return
+		}
+
+		ban.Reason = req.Reason
+		ban.ReasonText = req.ReasonText
+		ban.CIDR = ipNet
+		ban.Note = req.Note
+		ban.ValidUntil = req.ValidUntil
+		ban.TargetID = sid
+
+		if errSave := app.db.SaveBanNet(ctx, &ban); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, ban)
 	}
 }
 

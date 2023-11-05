@@ -2,12 +2,13 @@ package app
 
 import (
 	"fmt"
-	"github.com/leighmacdonald/gbans/internal/consts"
-	"github.com/pkg/errors"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/leighmacdonald/gbans/internal/consts"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -182,6 +183,7 @@ func calcDuration(durationString string, validUntil time.Time) (time.Duration, e
 		if errDuration != nil {
 			return 0, errDuration
 		}
+
 		return dur, nil
 	}
 }
