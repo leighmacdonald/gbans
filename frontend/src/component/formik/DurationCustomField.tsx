@@ -1,38 +1,39 @@
 import React from 'react';
-import TextField from '@mui/material/TextField';
+import { DatePicker } from '@mui/x-date-pickers';
 import { useFormikContext } from 'formik';
 import * as yup from 'yup';
 import { Duration } from '../../api';
-import { DurationInputField } from './DurationField';
 
 export const DurationCustomFieldValidator = yup
     .string()
     .label('Custom duration');
 
-export interface DurationCustomInputField {
-    duration_custom: string;
+interface DurationCustomFieldProps {
+    duration: Duration;
+    duration_custom: Date;
 }
 
-export const DurationCustomField = <T,>() => {
-    const { values, touched, errors, handleChange } = useFormikContext<
-        T & DurationCustomInputField & DurationInputField
-    >();
-
+export const DurationCustomField = () => {
+    const { errors, touched, values, setFieldValue } =
+        useFormikContext<DurationCustomFieldProps>();
     return (
-        <TextField
-            fullWidth
-            label={'Custom Duration'}
-            id={'duration_custom'}
-            name={'duration_custom'}
+        <DatePicker
             disabled={values.duration != Duration.durCustom}
+            label="Custom Expiration Date"
             value={values.duration_custom}
-            onChange={handleChange}
-            error={touched.duration_custom && Boolean(errors.duration_custom)}
-            helperText={
-                touched.duration_custom &&
-                errors.duration_custom &&
-                `${errors.duration_custom}`
-            }
+            formatDensity={'dense'}
+            //onError={(newError) => setError(newError)}
+            onChange={async (value) => {
+                await setFieldValue('duration_custom', value);
+            }}
+            slotProps={{
+                textField: {
+                    variant: 'outlined',
+                    error:
+                        touched.duration_custom &&
+                        Boolean(errors.duration_custom)
+                }
+            }}
         />
     );
 };

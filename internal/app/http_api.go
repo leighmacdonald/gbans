@@ -404,6 +404,74 @@ func onAPIPostBanDelete(app *App) gin.HandlerFunc {
 	}
 }
 
+func onAPIPostBanUpdate(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	type updateBanRequest struct {
+		TargetID       store.StringSID `json:"target_id"`
+		BanType        store.BanType   `json:"ban_type"`
+		Reason         store.Reason    `json:"reason"`
+		ReasonText     string          `json:"reason_text"`
+		Note           string          `json:"note"`
+		IncludeFriends bool            `json:"include_friends"`
+		ValidUntil     time.Time       `json:"valid_until"`
+	}
+
+	return func(ctx *gin.Context) {
+		banID, banIDErr := getInt64Param(ctx, "ban_id")
+		if banIDErr != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
+
+			return
+		}
+
+		var req updateBanRequest
+		if !bind(ctx, log, &req) {
+			return
+		}
+
+		if time.Since(req.ValidUntil) > 0 {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		bannedPerson := store.NewBannedPerson()
+		if banErr := app.db.GetBanByBanID(ctx, banID, &bannedPerson, false); banErr != nil {
+			responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+
+			return
+		}
+
+		if req.Reason == store.Custom {
+			if req.ReasonText == "" {
+				responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+				return
+			}
+
+			bannedPerson.Ban.ReasonText = req.ReasonText
+		} else {
+			bannedPerson.Ban.ReasonText = ""
+		}
+
+		bannedPerson.Ban.Note = req.Note
+		bannedPerson.Ban.BanType = req.BanType
+		bannedPerson.Ban.Reason = req.Reason
+		bannedPerson.Ban.IncludeFriends = req.IncludeFriends
+		bannedPerson.Ban.ValidUntil = req.ValidUntil
+
+		if errSave := app.db.SaveBan(ctx, &bannedPerson.Ban); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			log.Error("Failed to save updated ban", zap.Error(errSave))
+
+			return
+		}
+
+		ctx.JSON(http.StatusAccepted, bannedPerson)
+	}
+}
+
 func onAPIPostBansGroupCreate(app *App) gin.HandlerFunc {
 	type apiBanRequest struct {
 		TargetID   store.StringSID `json:"target_id"`

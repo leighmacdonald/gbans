@@ -10,7 +10,14 @@ import {
 import Stack from '@mui/material/Stack';
 import { Formik } from 'formik';
 import * as yup from 'yup';
-import { apiCreateBanSteam, BanReason, BanType, Duration } from '../../api';
+import {
+    apiCreateBanSteam,
+    apiUpdateBanSteam,
+    BanReason,
+    BanType,
+    Duration,
+    IAPIBanRecordProfile
+} from '../../api';
 import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
 import { logErr } from '../../util/errors';
 import { Heading } from '../Heading';
@@ -39,10 +46,9 @@ import {
 import { CancelButton, ResetButton, SaveButton } from './Buttons';
 
 export interface BanModalProps {
-    open: boolean;
-    setOpen: (open: boolean) => void;
     reportId?: number;
     steamId?: string;
+    existing?: IAPIBanRecordProfile;
 }
 
 interface BanSteamFormValues extends SteamIDInputValue {
@@ -51,9 +57,10 @@ interface BanSteamFormValues extends SteamIDInputValue {
     reason: BanReason;
     reason_text: string;
     duration: Duration;
-    duration_custom: string;
+    duration_custom: Date;
     note: string;
     include_friends: boolean;
+    existing?: IAPIBanRecordProfile;
 }
 
 export const validationSchema = yup.object({
@@ -68,54 +75,88 @@ export const validationSchema = yup.object({
 });
 
 export const BanSteamModal = NiceModal.create(
-    ({ steamId, reportId }: BanModalProps) => {
+    ({ steamId, reportId, existing }: BanModalProps) => {
         const { sendFlash } = useUserFlashCtx();
         const modal = useModal();
+
         const isReadOnlySid = useMemo(() => {
-            return !!steamId;
-        }, [steamId]);
+            return !!steamId || (existing && existing?.ban_id > 0);
+        }, [existing, steamId]);
+
         const onSumit = useCallback(
             async (values: BanSteamFormValues) => {
-                try {
-                    const ban_record = await apiCreateBanSteam({
-                        note: values.note,
-                        ban_type: values.ban_type,
-                        duration: values.duration,
-                        reason: values.reason,
-                        reason_text: values.reason_text,
-                        report_id: values.report_id,
-                        target_id: values.steam_id,
-                        include_friends: values.include_friends
-                    });
-                    modal.resolve(ban_record);
-                    sendFlash('success', 'Ban created successfully');
-                    await modal.hide();
-                } catch (e) {
-                    logErr(e);
-                    modal.reject(e);
-                    sendFlash('error', 'Error saving ban');
+                if (existing && existing?.ban_id > 0) {
+                    try {
+                        const ban_record = await apiUpdateBanSteam(
+                            existing.ban_id,
+                            {
+                                note: values.note,
+                                ban_type: values.ban_type,
+                                reason: values.reason,
+                                reason_text: values.reason_text,
+                                include_friends: values.include_friends,
+                                valid_until: values.duration_custom
+                            }
+                        );
+                        modal.resolve(ban_record);
+                        sendFlash('success', 'Ban created successfully');
+                        await modal.hide();
+                    } catch (e) {
+                        logErr(e);
+                        modal.reject(e);
+                        sendFlash('error', 'Error saving ban');
+                    }
+                } else {
+                    try {
+                        const ban_record = await apiCreateBanSteam({
+                            note: values.note,
+                            ban_type: values.ban_type,
+                            duration: values.duration,
+                            reason: values.reason,
+                            reason_text: values.reason_text,
+                            report_id: values.report_id,
+                            target_id: values.steam_id,
+                            include_friends: values.include_friends
+                        });
+                        modal.resolve(ban_record);
+                        sendFlash('success', 'Ban created successfully');
+                        await modal.hide();
+                    } catch (e) {
+                        logErr(e);
+                        modal.reject(e);
+                        sendFlash('error', 'Error saving ban');
+                    }
                 }
             },
-            [modal, sendFlash]
+            [existing, modal, sendFlash]
         );
 
         const formId = 'banSteamForm';
+
+        const iv = {
+            ban_type: existing?.ban_type ?? BanType.NoComm,
+            duration:
+                existing?.ban_id && existing?.ban_id > 0
+                    ? Duration.durCustom
+                    : Duration.dur2w,
+            duration_custom:
+                existing?.ban_id && existing?.ban_id > 0
+                    ? existing?.valid_until
+                    : new Date(),
+            note: existing?.note ?? '',
+            reason: existing?.reason ?? BanReason.Cheating,
+            steam_id: existing?.target_id ?? steamId ?? '',
+            reason_text: existing?.reason_text ?? '',
+            report_id: existing?.report_id ?? reportId,
+            include_friends: existing?.include_friends ?? false,
+            existing: existing
+        };
 
         return (
             <Formik
                 onSubmit={onSumit}
                 id={formId}
-                initialValues={{
-                    ban_type: BanType.NoComm,
-                    duration: Duration.dur2w,
-                    duration_custom: '',
-                    note: '',
-                    reason: BanReason.Cheating,
-                    steam_id: steamId ?? '',
-                    reason_text: '',
-                    report_id: reportId,
-                    include_friends: false
-                }}
+                initialValues={iv}
                 validateOnBlur={true}
                 validateOnChange={true}
                 //validationSchema={validationSchema}

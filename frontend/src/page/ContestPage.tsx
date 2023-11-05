@@ -170,9 +170,8 @@ export const ContestPage = () => {
                 </Grid>
                 <Grid xs={4}>
                     <ContainerWithHeader
-                        align={'flex-end'}
                         title={`Contest Details`}
-                        iconRight={loading ? <LoadingSpinner /> : <InfoIcon />}
+                        iconLeft={loading ? <LoadingSpinner /> : <InfoIcon />}
                     >
                         <Stack spacing={2}>
                             <InfoBar
