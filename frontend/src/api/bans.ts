@@ -163,6 +163,7 @@ export interface BannedPerson {
 export interface BanBase extends TimeStamped {
     valid_until: Date;
     reason: BanReason;
+    ban_type: BanType;
     reason_text: string;
     source_id: string;
     target_id: string;
@@ -178,13 +179,6 @@ export interface IAPIBanRecord extends BanBase {
     report_id: number;
     ban_type: BanType;
     include_friends: boolean;
-}
-
-export interface SimplePerson {
-    steam_id: string;
-    persona_name: string;
-    avatar: string;
-    avatar_full: string;
 }
 
 export interface AppealOverview extends IAPIBanRecord {
@@ -209,7 +203,7 @@ export interface IAPIBanCIDRRecord extends BanBase {
 }
 
 export interface IAPIBanASNRecord extends BanBase {
-    ban_asn_id: bigint;
+    ban_asn_id: number;
     as_num: number;
 }
 
@@ -244,7 +238,7 @@ export interface UnbanPayload {
 export interface BanBasePayload {
     target_id: string;
     duration: string;
-    ban_type: BanType;
+    valid_until: Date;
     note: string;
 }
 
@@ -256,6 +250,7 @@ interface BanReasonPayload {
 export interface BanPayloadSteam extends BanBasePayload, BanReasonPayload {
     report_id?: number;
     include_friends: boolean;
+    ban_type: BanType;
 }
 
 export interface BanPayloadCIDR extends BanBasePayload, BanReasonPayload {
@@ -266,7 +261,7 @@ export interface BanPayloadASN extends BanBasePayload, BanReasonPayload {
     as_num: number;
 }
 
-export interface BanPayloadGroup extends BanBasePayload, BanReasonPayload {
+export interface BanPayloadGroup extends BanBasePayload {
     group_id: string;
 }
 
@@ -363,21 +358,22 @@ export const apiCreateBanSteam = async (p: BanPayloadSteam) =>
         p
     );
 
-interface UpdateBanSteamPayload {
-    ban_type: BanType;
+interface UpdateBanPayload {
     reason: BanReason;
     reason_text: string;
     note: string;
-    include_friends: boolean;
     valid_until: Date;
 }
 
 export const apiUpdateBanSteam = async (
     ban_id: number,
-    payload: UpdateBanSteamPayload
+    payload: UpdateBanPayload & {
+        include_friends: boolean;
+        ban_type: BanType;
+    }
 ) =>
     transformTimeStampedDates(
-        await apiCall<IAPIBanRecord, UpdateBanSteamPayload>(
+        await apiCall<IAPIBanRecord, UpdateBanPayload>(
             `/api/bans/steam/${ban_id}`,
             'POST',
             payload
@@ -391,9 +387,41 @@ export const apiCreateBanCIDR = async (payload: BanPayloadCIDR) =>
         payload
     );
 
+export const apiUpdateBanCIDR = async (
+    ban_id: number,
+    payload: UpdateBanPayload & {
+        cidr: string;
+        target_id: string;
+    }
+) =>
+    transformTimeStampedDates(
+        await apiCall<IAPIBanCIDRRecord, UpdateBanPayload>(
+            `/api/bans/cidr/${ban_id}`,
+            'POST',
+            payload
+        )
+    );
 export const apiCreateBanASN = async (payload: BanPayloadASN) =>
     await apiCall<IAPIBanASNRecord, BanPayloadASN>(
         `/api/bans/asn/create`,
+        'POST',
+        payload
+    );
+
+interface UpdateBanASNPayload {
+    target_id: string;
+    reason: BanReason;
+    reason_text: string;
+    note: string;
+    valid_until: Date;
+}
+
+export const apiUpdateBanASN = async (
+    asn: number,
+    payload: UpdateBanASNPayload
+) =>
+    await apiCall<IAPIBanASNRecord, UpdateBanASNPayload>(
+        `/api/bans/asn/${asn}`,
         'POST',
         payload
     );
@@ -405,6 +433,21 @@ export const apiCreateBanGroup = async (payload: BanPayloadGroup) =>
         payload
     );
 
+interface UpdateBanGroupPayload {
+    target_id: string;
+    note: string;
+    valid_until: Date;
+}
+
+export const apiUpdateBanGroup = async (
+    ban_group_id: number,
+    payload: UpdateBanGroupPayload
+) =>
+    await apiCall<IAPIBanGroupRecord, UpdateBanGroupPayload>(
+        `/api/bans/group/${ban_group_id}`,
+        'POST',
+        payload
+    );
 export const apiDeleteBan = async (ban_id: number, unban_reason_text: string) =>
     await apiCall<null, UnbanPayload>(`/api/bans/steam/${ban_id}`, 'DELETE', {
         unban_reason_text

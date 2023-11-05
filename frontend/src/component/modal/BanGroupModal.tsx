@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
-import GavelIcon from '@mui/icons-material/Gavel';
+import GroupsIcon from '@mui/icons-material/Groups';
 import {
     Dialog,
     DialogActions,
@@ -12,14 +12,11 @@ import { Formik } from 'formik';
 import * as yup from 'yup';
 import {
     apiCreateBanGroup,
-    BanReason,
-    BanType,
+    apiUpdateBanGroup,
     Duration,
     IAPIBanGroupRecord
 } from '../../api';
 import { Heading } from '../Heading';
-import { BanReasonField } from '../formik/BanReasonField';
-import { BanReasonTextField } from '../formik/BanReasonTextField';
 import {
     DurationCustomField,
     DurationCustomFieldValidator
@@ -29,21 +26,14 @@ import { GroupIdField, GroupIdFieldValidator } from '../formik/GroupIdField';
 import { NoteField, NoteFieldValidator } from '../formik/NoteField';
 import { SteamIdField, steamIdValidator } from '../formik/SteamIdField';
 import { CancelButton, ResetButton, SaveButton } from './Buttons';
-import { ConfirmationModalProps } from './ConfirmationModal';
-
-export interface BanGroupModalProps
-    extends ConfirmationModalProps<IAPIBanGroupRecord> {
-    asnNum?: number;
-}
 
 export interface BanGroupFormValues {
+    ban_group_id?: number;
     steam_id: string;
     group_id: string;
     duration: Duration;
     duration_custom: Date;
     note: string;
-    reason: BanReason;
-    reason_text: string;
 }
 
 export const validationSchema = yup.object({
@@ -54,73 +44,82 @@ export const validationSchema = yup.object({
     note: NoteFieldValidator
 });
 
-export const BanGroupModal = NiceModal.create(() => {
-    const modal = useModal();
-    const onSubmit = useCallback(
-        async (values: BanGroupFormValues) => {
-            try {
-                const record = await apiCreateBanGroup({
-                    group_id: values.group_id,
-                    note: values.note,
-                    ban_type: BanType.Banned,
-                    duration: values.duration,
-                    target_id: values.steam_id,
-                    reason: values.reason,
-                    reason_text: values.reason_text
-                });
-                modal.resolve(record);
-            } catch (e) {
-                modal.reject(e);
-            } finally {
-                await modal.hide();
-            }
-        },
-        [modal]
-    );
+export interface BanGroupModalProps {
+    existing?: IAPIBanGroupRecord;
+}
 
-    const formId = 'banGroupForm';
+export const BanGroupModal = NiceModal.create(
+    ({ existing }: BanGroupModalProps) => {
+        const modal = useModal();
+        const onSubmit = useCallback(
+            async (values: BanGroupFormValues) => {
+                try {
+                    if (existing != undefined && existing.ban_group_id > 0) {
+                        modal.resolve(
+                            await apiUpdateBanGroup(existing.ban_group_id, {
+                                note: values.note,
+                                valid_until: values.duration_custom,
+                                target_id: values.steam_id
+                            })
+                        );
+                    } else {
+                        modal.resolve(
+                            await apiCreateBanGroup({
+                                group_id: values.group_id,
+                                note: values.note,
+                                duration: values.duration,
+                                valid_until: values.duration_custom,
+                                target_id: values.steam_id
+                            })
+                        );
+                    }
+                    await modal.hide();
+                } catch (e) {
+                    modal.reject(e);
+                }
+            },
+            [existing, modal]
+        );
 
-    return (
-        <Formik
-            onSubmit={onSubmit}
-            id={formId}
-            initialValues={{
-                steam_id: '',
-                duration: Duration.dur2w,
-                duration_custom: new Date(),
-                reason: BanReason.Cheating,
-                reason_text: '',
-                note: '',
-                group_id: ''
-            }}
-            validateOnBlur={true}
-            validateOnChange={false}
-            //validationSchema={validationSchema}
-        >
-            <Dialog fullWidth {...muiDialogV5(modal)}>
-                <DialogTitle component={Heading} iconLeft={<GavelIcon />}>
-                    Ban Steam Group
-                </DialogTitle>
+        return (
+            <Formik
+                onSubmit={onSubmit}
+                id={'banGroupForm'}
+                initialValues={{
+                    ban_group_id: existing?.ban_group_id,
+                    steam_id: existing ? existing.target_id : '',
+                    duration: existing ? Duration.durCustom : Duration.dur2w,
+                    duration_custom: existing
+                        ? existing.valid_until
+                        : new Date(),
+                    note: existing ? existing.note : '',
+                    group_id: existing ? existing.group_id : ''
+                }}
+                validateOnBlur={true}
+                validateOnChange={false}
+                //validationSchema={validationSchema}
+            >
+                <Dialog fullWidth {...muiDialogV5(modal)}>
+                    <DialogTitle component={Heading} iconLeft={<GroupsIcon />}>
+                        Ban Steam Group
+                    </DialogTitle>
 
-                <DialogContent>
-                    <Stack spacing={2}>
-                        <Stack spacing={3} alignItems={'center'}>
+                    <DialogContent>
+                        <Stack spacing={2}>
                             <SteamIdField fullWidth />
                             <GroupIdField />
-                            <BanReasonField />
-                            <BanReasonTextField />
                             <DurationField />
                             <DurationCustomField />
                             <NoteField />
                         </Stack>
-                    </Stack>
-                </DialogContent>
-                <DialogActions>
-                    <CancelButton />
-                    <ResetButton />
-                    <SaveButton />
-                </DialogActions>
-            </Dialog>
-        </Formik>
-    );
-});
+                    </DialogContent>
+                    <DialogActions>
+                        <CancelButton />
+                        <ResetButton />
+                        <SaveButton />
+                    </DialogActions>
+                </Dialog>
+            </Formik>
+        );
+    }
+);

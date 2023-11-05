@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
-import GavelIcon from '@mui/icons-material/Gavel';
+import LanIcon from '@mui/icons-material/Lan';
 import {
     Dialog,
     DialogActions,
@@ -10,7 +10,13 @@ import {
 import Stack from '@mui/material/Stack';
 import { Formik } from 'formik';
 import * as yup from 'yup';
-import { apiCreateBanASN, BanReason, BanType, Duration } from '../../api';
+import {
+    apiCreateBanASN,
+    apiUpdateBanASN,
+    BanReason,
+    Duration,
+    IAPIBanASNRecord
+} from '../../api';
 import { Heading } from '../Heading';
 import { ASNumberField, ASNumberFieldValidator } from '../formik/ASNumberField';
 import {
@@ -21,7 +27,6 @@ import {
     BanReasonTextField,
     BanReasonTextFieldValidator
 } from '../formik/BanReasonTextField';
-import { BanTypeField, BanTypeFieldValidator } from '../formik/BanTypeField';
 import {
     DurationCustomField,
     DurationCustomFieldValidator
@@ -35,25 +40,19 @@ import {
 } from '../formik/SteamIdField';
 import { CancelButton, ResetButton, SaveButton } from './Buttons';
 
-export interface BanASNModalProps {
-    open: boolean;
-    setOpen: (open: boolean) => void;
-}
-
 interface BanASNFormValues extends SteamIDInputValue {
+    ban_asn_id?: number;
     as_num: number;
-    ban_type: BanType;
     reason: BanReason;
     reason_text: string;
     duration: Duration;
-    duration_custom: string;
+    duration_custom: Date;
     note: string;
 }
 
 export const validationSchema = yup.object({
     steam_id: steamIdValidator,
     asNum: ASNumberFieldValidator,
-    banType: BanTypeFieldValidator,
     reason: BanReasonFieldValidator,
     reasonText: BanReasonTextFieldValidator,
     duration: DurationFieldValidator,
@@ -61,73 +60,92 @@ export const validationSchema = yup.object({
     note: NoteFieldValidator
 });
 
-export const BanASNModal = NiceModal.create(() => {
-    const modal = useModal();
-    const onSubmit = useCallback(
-        async (values: BanASNFormValues) => {
-            try {
-                const record = await apiCreateBanASN({
-                    note: values.note,
-                    ban_type: values.ban_type,
-                    duration: values.duration,
-                    reason: values.reason,
-                    reason_text: values.reason_text,
-                    target_id: values.steam_id,
-                    as_num: values.as_num
-                });
-                modal.resolve(record);
-            } catch (e) {
-                modal.resolve(e);
-            } finally {
-                await modal.hide();
-            }
-        },
-        [modal]
-    );
+export interface BanASNModalProps {
+    existing?: IAPIBanASNRecord;
+}
 
-    const formId = 'banASNForm';
+export const BanASNModal = NiceModal.create(
+    ({ existing }: BanASNModalProps) => {
+        const modal = useModal();
+        const onSubmit = useCallback(
+            async (values: BanASNFormValues) => {
+                try {
+                    if (existing && existing.as_num > 0) {
+                        modal.resolve(
+                            await apiUpdateBanASN(existing.as_num, {
+                                note: values.note,
+                                valid_until: values.duration_custom,
+                                reason: values.reason,
+                                reason_text: values.reason_text,
+                                target_id: values.steam_id
+                            })
+                        );
+                    } else {
+                        modal.resolve(
+                            await apiCreateBanASN({
+                                note: values.note,
+                                duration: values.duration,
+                                valid_until: values.duration_custom,
+                                reason: values.reason,
+                                reason_text: values.reason_text,
+                                target_id: values.steam_id,
+                                as_num: values.as_num
+                            })
+                        );
+                    }
+                    await modal.hide();
+                } catch (e) {
+                    modal.resolve(e);
+                }
+            },
+            [existing, modal]
+        );
 
-    return (
-        <Formik
-            onSubmit={onSubmit}
-            id={formId}
-            initialValues={{
-                ban_type: BanType.NoComm,
-                duration: Duration.dur2w,
-                duration_custom: '',
-                note: '',
-                reason: BanReason.Cheating,
-                steam_id: '',
-                reason_text: '',
-                as_num: 0
-            }}
-            validateOnBlur={true}
-            //validateOnChange={false}
-            //validationSchema={validationSchema}
-        >
-            <Dialog fullWidth {...muiDialogV5(modal)}>
-                <DialogTitle component={Heading} iconLeft={<GavelIcon />}>
-                    Ban Steam Profile
-                </DialogTitle>
+        const formId = 'banASNForm';
 
-                <DialogContent>
-                    <Stack spacing={2}>
-                        <SteamIdField fullWidth isReadOnly={false} />
-                        <ASNumberField />
-                        <BanTypeField />
-                        <BanReasonField />
-                        <BanReasonTextField />
-                        <DurationField />
-                        <DurationCustomField />
-                        <NoteField />
-                    </Stack>
-                </DialogContent>
-                <DialogActions>
-                    <CancelButton />
-                    <ResetButton />
-                    <SaveButton />
-                </DialogActions>
-            </Dialog>
-        </Formik>
-    );
-});
+        return (
+            <Formik
+                onSubmit={onSubmit}
+                id={formId}
+                initialValues={{
+                    ban_asn_id: existing?.ban_asn_id,
+                    duration: existing ? Duration.durCustom : Duration.dur2w,
+                    duration_custom: existing
+                        ? existing.valid_until
+                        : new Date(),
+                    note: existing ? existing.note : '',
+                    reason: existing ? existing.reason : BanReason.Cheating,
+                    steam_id: existing ? existing.target_id : '',
+                    reason_text: existing ? existing.reason_text : '',
+                    as_num: existing ? existing.as_num : 0
+                }}
+                validateOnBlur={true}
+                //validateOnChange={false}
+                //validationSchema={validationSchema}
+            >
+                <Dialog fullWidth {...muiDialogV5(modal)}>
+                    <DialogTitle component={Heading} iconLeft={<LanIcon />}>
+                        Ban Autonomous System Number Range
+                    </DialogTitle>
+
+                    <DialogContent>
+                        <Stack spacing={2}>
+                            <SteamIdField fullWidth isReadOnly={false} />
+                            <ASNumberField />
+                            <BanReasonField />
+                            <BanReasonTextField />
+                            <DurationField />
+                            <DurationCustomField />
+                            <NoteField />
+                        </Stack>
+                    </DialogContent>
+                    <DialogActions>
+                        <CancelButton />
+                        <ResetButton />
+                        <SaveButton />
+                    </DialogActions>
+                </Dialog>
+            </Formik>
+        );
+    }
+);

@@ -281,12 +281,12 @@ func NewBanCIDR(ctx context.Context, source SteamIDProvider, target StringSID, d
 }
 
 func NewBanSteamGroup(ctx context.Context, source SteamIDProvider, target StringSID, duration time.Duration,
-	reason Reason, reasonText string, modNote string, origin Origin, groupID steamid.GID, groupName string,
+	modNote string, origin Origin, groupID steamid.GID, groupName string,
 	banType BanType, banGroup *BanGroup,
 ) error {
 	var opts BanSteamGroupOpts
 
-	errBaseOpts := newBaseBanOpts(ctx, source, target, duration, reason, reasonText, modNote, origin, banType, &opts.BaseBanOpts)
+	errBaseOpts := newBaseBanOpts(ctx, source, target, duration, Custom, "Group Ban", modNote, origin, banType, &opts.BaseBanOpts)
 	if errBaseOpts != nil {
 		return errBaseOpts
 	}
@@ -1253,6 +1253,7 @@ func (db *Store) updateBanGroup(ctx context.Context, banGroup *BanGroup) error {
 
 func (db *Store) DropBanGroup(ctx context.Context, banGroup *BanGroup) error {
 	banGroup.IsEnabled = false
+	banGroup.Deleted = true
 
 	return db.SaveBanGroup(ctx, banGroup)
 }

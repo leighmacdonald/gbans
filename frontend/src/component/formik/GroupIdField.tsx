@@ -7,17 +7,21 @@ export const GroupIdFieldValidator = yup
     .string()
     .length(18, 'Must be positive integer');
 
-interface BanGroupFormValuesProps {
+interface GroupIDFieldProps {
     group_id: string;
+    ban_group_id?: number;
 }
 
 export const GroupIdField = <T,>() => {
     const { values, touched, errors, handleChange } = useFormikContext<
-        T & BanGroupFormValuesProps
+        T & GroupIDFieldProps
     >();
     return (
         <TextField
             fullWidth
+            disabled={
+                values.ban_group_id != undefined && values.ban_group_id > 0
+            }
             id="group_id"
             name={'group_id'}
             label="Steam Group ID"

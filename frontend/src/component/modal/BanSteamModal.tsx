@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
-import GavelIcon from '@mui/icons-material/Gavel';
+import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import {
     Dialog,
     DialogActions,
@@ -83,10 +83,14 @@ export const BanSteamModal = NiceModal.create(
             return !!steamId || (existing && existing?.ban_id > 0);
         }, [existing, steamId]);
 
+        const isUpdate = useMemo(() => {
+            return existing && existing?.ban_id > 0;
+        }, [existing]);
+
         const onSumit = useCallback(
             async (values: BanSteamFormValues) => {
-                if (existing && existing?.ban_id > 0) {
-                    try {
+                try {
+                    if (isUpdate && existing) {
                         const ban_record = await apiUpdateBanSteam(
                             existing.ban_id,
                             {
@@ -99,19 +103,12 @@ export const BanSteamModal = NiceModal.create(
                             }
                         );
                         modal.resolve(ban_record);
-                        sendFlash('success', 'Ban created successfully');
-                        await modal.hide();
-                    } catch (e) {
-                        logErr(e);
-                        modal.reject(e);
-                        sendFlash('error', 'Error saving ban');
-                    }
-                } else {
-                    try {
+                    } else {
                         const ban_record = await apiCreateBanSteam({
                             note: values.note,
                             ban_type: values.ban_type,
                             duration: values.duration,
+                            valid_until: values.duration_custom,
                             reason: values.reason,
                             reason_text: values.reason_text,
                             report_id: values.report_id,
@@ -119,50 +116,48 @@ export const BanSteamModal = NiceModal.create(
                             include_friends: values.include_friends
                         });
                         modal.resolve(ban_record);
-                        sendFlash('success', 'Ban created successfully');
-                        await modal.hide();
-                    } catch (e) {
-                        logErr(e);
-                        modal.reject(e);
-                        sendFlash('error', 'Error saving ban');
                     }
+                    await modal.hide();
+                } catch (e) {
+                    logErr(e);
+                    modal.reject(e);
+                    sendFlash('error', `Error saving ban: ${e}`);
                 }
             },
-            [existing, modal, sendFlash]
+            [existing, isUpdate, modal, sendFlash]
         );
-
-        const formId = 'banSteamForm';
-
-        const iv = {
-            ban_type: existing?.ban_type ?? BanType.NoComm,
-            duration:
-                existing?.ban_id && existing?.ban_id > 0
-                    ? Duration.durCustom
-                    : Duration.dur2w,
-            duration_custom:
-                existing?.ban_id && existing?.ban_id > 0
-                    ? existing?.valid_until
-                    : new Date(),
-            note: existing?.note ?? '',
-            reason: existing?.reason ?? BanReason.Cheating,
-            steam_id: existing?.target_id ?? steamId ?? '',
-            reason_text: existing?.reason_text ?? '',
-            report_id: existing?.report_id ?? reportId,
-            include_friends: existing?.include_friends ?? false,
-            existing: existing
-        };
 
         return (
             <Formik
                 onSubmit={onSumit}
-                id={formId}
-                initialValues={iv}
+                id={'banSteamForm'}
+                initialValues={{
+                    ban_type: existing?.ban_type ?? BanType.NoComm,
+                    duration:
+                        existing?.ban_id && existing?.ban_id > 0
+                            ? Duration.durCustom
+                            : Duration.dur2w,
+                    duration_custom:
+                        existing?.ban_id && existing?.ban_id > 0
+                            ? existing?.valid_until
+                            : new Date(),
+                    note: existing?.note ?? '',
+                    reason: existing?.reason ?? BanReason.Cheating,
+                    steam_id: existing?.target_id ?? steamId ?? '',
+                    reason_text: existing?.reason_text ?? '',
+                    report_id: existing?.report_id ?? reportId,
+                    include_friends: existing?.include_friends ?? false,
+                    existing: existing
+                }}
                 validateOnBlur={true}
-                validateOnChange={true}
-                //validationSchema={validationSchema}
+                validateOnChange={false}
+                // validationSchema={validationSchema}
             >
                 <Dialog fullWidth {...muiDialogV5(modal)}>
-                    <DialogTitle component={Heading} iconLeft={<GavelIcon />}>
+                    <DialogTitle
+                        component={Heading}
+                        iconLeft={<DirectionsRunIcon />}
+                    >
                         Ban Steam Profile
                     </DialogTitle>
 

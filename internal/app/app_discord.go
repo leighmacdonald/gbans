@@ -1560,7 +1560,6 @@ func makeOnMute(app *App) discord.CommandHandler {
 func onBanASN(ctx context.Context, app *App, _ *discordgo.Session,
 	interaction *discordgo.InteractionCreate,
 ) (*discordgo.MessageEmbed, error) {
-
 	var (
 		opts     = discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 		asNumStr = opts[discord.OptASN].StringValue()

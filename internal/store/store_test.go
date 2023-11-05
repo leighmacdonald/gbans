@@ -404,8 +404,6 @@ func testBanGroup(database *store.Store) func(t *testing.T) {
 			store.StringSID("76561198083950960"),
 			"0",
 			time.Minute*10,
-			store.Cheating,
-			"",
 			"",
 			store.System,
 			steamid.NewGID(103000000000000000+int64(rand.Int())), //nolint:gosec
@@ -424,6 +422,7 @@ func testBanGroup(database *store.Store) func(t *testing.T) {
 
 		var bgDeleted store.BanGroup
 
-		require.EqualError(t, store.ErrNoResult, database.GetBanGroup(context.TODO(), banGroup.GroupID, &bgDeleted).Error())
+		getErr := database.GetBanGroup(context.TODO(), banGroup.GroupID, &bgDeleted)
+		require.EqualError(t, store.ErrNoResult, getErr.Error())
 	}
 }
