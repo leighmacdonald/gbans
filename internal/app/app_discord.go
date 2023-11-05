@@ -1516,7 +1516,12 @@ func makeOnMute(app *App) discord.CommandHandler {
 		}
 
 		reason = store.Reason(reasonValueOpt.IntValue())
-		duration := store.Duration(opts[discord.OptDuration].StringValue())
+
+		duration, errDuration := ParseDuration(opts[discord.OptDuration].StringValue())
+		if errDuration != nil {
+			return nil, consts.ErrInvalidDuration
+		}
+
 		modNote := opts[discord.OptNote].StringValue()
 
 		author, errAuthor := getDiscordAuthor(ctx, app.db, interaction)
@@ -1555,15 +1560,20 @@ func makeOnMute(app *App) discord.CommandHandler {
 func onBanASN(ctx context.Context, app *App, _ *discordgo.Session,
 	interaction *discordgo.InteractionCreate,
 ) (*discordgo.MessageEmbed, error) {
+
 	var (
 		opts     = discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 		asNumStr = opts[discord.OptASN].StringValue()
-		duration = store.Duration(opts[discord.OptDuration].StringValue())
 		reason   = store.Reason(opts[discord.OptBanReason].IntValue())
 		targetID = store.StringSID(opts[discord.OptUserIdentifier].StringValue())
 		modNote  = opts[discord.OptNote].StringValue()
 		author   = store.NewPerson("")
 	)
+
+	duration, errDuration := ParseDuration(opts[discord.OptDuration].StringValue())
+	if errDuration != nil {
+		return nil, consts.ErrInvalidDuration
+	}
 
 	if errGetPersonByDiscordID := app.db.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID, &author); errGetPersonByDiscordID != nil {
 		if errors.Is(errGetPersonByDiscordID, store.ErrNoResult) {
@@ -1634,7 +1644,11 @@ func onBanIP(ctx context.Context, app *App, _ *discordgo.Session,
 		return nil, errors.Wrap(errParseCIDR, "Invalid CIDR")
 	}
 
-	duration := store.Duration(opts[discord.OptDuration].StringValue())
+	duration, errDuration := ParseDuration(opts[discord.OptDuration].StringValue())
+	if errDuration != nil {
+		return nil, errors.New("Invalid duration")
+	}
+
 	modNote := opts[discord.OptNote].StringValue()
 
 	author := store.NewPerson("")
@@ -1692,12 +1706,16 @@ func onBanSteam(ctx context.Context, app *App, _ *discordgo.Session,
 	interaction *discordgo.InteractionCreate,
 ) (*discordgo.MessageEmbed, error) {
 	var (
-		opts     = discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
-		target   = opts[discord.OptUserIdentifier].StringValue()
-		reason   = store.Reason(opts[discord.OptBanReason].IntValue())
-		modNote  = opts[discord.OptNote].StringValue()
-		duration = store.Duration(opts[discord.OptDuration].StringValue())
+		opts    = discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
+		target  = opts[discord.OptUserIdentifier].StringValue()
+		reason  = store.Reason(opts[discord.OptBanReason].IntValue())
+		modNote = opts[discord.OptNote].StringValue()
 	)
+
+	duration, errDuration := ParseDuration(opts[discord.OptDuration].StringValue())
+	if errDuration != nil {
+		return nil, consts.ErrInvalidDuration
+	}
 
 	author, errAuthor := getDiscordAuthor(ctx, app.db, interaction)
 	if errAuthor != nil {

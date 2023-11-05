@@ -462,7 +462,7 @@ func (app *App) warnWorker(ctx context.Context) { //nolint:maintidx
 
 	warningHandler := func() {
 		for {
-			warnDur := app.conf.General.WarningTimeout.Duration()
+			warnDur := app.conf.General.WarningTimeoutValue
 			select {
 			case now := <-ticker.C:
 				for steamID := range warnings {
@@ -541,7 +541,7 @@ func (app *App) warnWorker(ctx context.Context) { //nolint:maintidx
 
 						if errNewBan := store.NewBanSteam(ctx, store.StringSID(app.conf.General.Owner.String()),
 							store.StringSID(newWarn.userMessage.SteamID.String()),
-							store.Duration(app.conf.General.WarningExceededDuration),
+							app.conf.General.WarningExceededDurationValue,
 							newWarn.WarnReason,
 							"",
 							"Automatic warning ban",
@@ -985,8 +985,13 @@ func resolveSID(ctx context.Context, sidStr string) (steamid.SID64, error) {
 }
 
 func initNetBans(ctx context.Context, conf *Config) error {
+	maxAgeDuration, errParseDuration := ParseUserStringDuration(conf.NetBans.MaxAge)
+	if errParseDuration != nil {
+		return errors.Wrapf(errParseDuration, "Failed to parse max age")
+	}
+
 	for _, banList := range conf.NetBans.Sources {
-		if _, errImport := thirdparty.Import(ctx, banList, conf.NetBans.CachePath, conf.NetBans.MaxAge); errImport != nil {
+		if _, errImport := thirdparty.Import(ctx, banList, conf.NetBans.CachePath, maxAgeDuration); errImport != nil {
 			return errors.Wrap(errImport, "Failed to import net bans")
 		}
 	}

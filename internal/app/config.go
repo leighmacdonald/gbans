@@ -70,15 +70,15 @@ type patreonConfig struct {
 }
 
 type httpConfig struct {
-	Host                  string         `mapstructure:"host"`
-	Port                  int            `mapstructure:"port"`
-	TLS                   bool           `mapstructure:"tls"`
-	TLSAuto               bool           `mapstructure:"tls_auto"`
-	StaticPath            string         `mapstructure:"static_path"`
-	CookieKey             string         `mapstructure:"cookie_key"`
-	ClientTimeout         string         `mapstructure:"client_timeout"`
-	ClientTimeoutDuration StringDuration `json:"client_timeout_duration"`
-	CorsOrigins           []string       `mapstructure:"cors_origins"`
+	Host               string        `mapstructure:"host"`
+	Port               int           `mapstructure:"port"`
+	TLS                bool          `mapstructure:"tls"`
+	TLSAuto            bool          `mapstructure:"tls_auto"`
+	StaticPath         string        `mapstructure:"static_path"`
+	CookieKey          string        `mapstructure:"cookie_key"`
+	ClientTimeout      string        `mapstructure:"client_timeout"`
+	ClientTimeoutValue time.Duration `json:"-"`
+	CorsOrigins        []string      `mapstructure:"cors_origins"`
 }
 
 // Addr returns the address in host:port format.
@@ -110,31 +110,22 @@ const (
 	Ban  Action = "ban"
 )
 
-type StringDuration string
-
-func (sb StringDuration) Duration() time.Duration {
-	duration, errDuration := store.ParseDuration(string(sb))
-	if errDuration != nil {
-		panic(errDuration)
-	}
-
-	return duration
-}
-
 type generalConfig struct {
-	SiteName                     string         `mapstructure:"site_name"`
-	SteamKey                     string         `mapstructure:"steam_key"`
-	Owner                        steamid.SID64  `mapstructure:"owner"`
-	Mode                         RunMode        `mapstructure:"mode"`
-	WarningTimeout               StringDuration `mapstructure:"warning_timeout"`
-	WarningLimit                 int            `mapstructure:"warning_limit"`
-	WarningExceededAction        Action         `mapstructure:"warning_exceeded_action"`
-	WarningExceededDuration      StringDuration `mapstructure:"warning_exceeded_duration"`
-	UseUTC                       bool           `mapstructure:"use_utc"`
-	ServerStatusUpdateFreq       string         `mapstructure:"server_status_update_freq"`
-	MasterServerStatusUpdateFreq string         `mapstructure:"master_server_status_update_freq"`
-	DefaultMaps                  []string       `mapstructure:"default_maps"`
-	ExternalURL                  string         `mapstructure:"external_url"`
+	SiteName                     string        `mapstructure:"site_name"`
+	SteamKey                     string        `mapstructure:"steam_key"`
+	Owner                        steamid.SID64 `mapstructure:"owner"`
+	Mode                         RunMode       `mapstructure:"mode"`
+	WarningTimeout               string        `mapstructure:"warning_timeout"`
+	WarningTimeoutValue          time.Duration `mapstructure:"-"`
+	WarningLimit                 int           `mapstructure:"warning_limit"`
+	WarningExceededAction        Action        `mapstructure:"warning_exceeded_action"`
+	WarningExceededDuration      string        `mapstructure:"warning_exceeded_duration"`
+	WarningExceededDurationValue time.Duration `mapstructure:"-"`
+	UseUTC                       bool          `mapstructure:"use_utc"`
+	ServerStatusUpdateFreq       string        `mapstructure:"server_status_update_freq"`
+	MasterServerStatusUpdateFreq string        `mapstructure:"master_server_status_update_freq"`
+	DefaultMaps                  []string      `mapstructure:"default_maps"`
+	ExternalURL                  string        `mapstructure:"external_url"`
 }
 
 type discordConfig struct {
@@ -218,6 +209,27 @@ func ReadConfig(conf *Config, noFileOk bool) error {
 	if errMaterDuration != nil {
 		return errors.Wrap(errMaterDuration, "Failed to parse mater_server_status_update_freq")
 	}
+
+	warnDuration, errWarnDuration := time.ParseDuration(conf.General.WarningExceededDuration)
+	if errWarnDuration != nil {
+		return errors.Wrap(errWarnDuration, "Failed to parse warning duration")
+	}
+
+	conf.General.WarningExceededDurationValue = warnDuration
+
+	warnTimeoutDuration, errWarnTimeoutDuration := time.ParseDuration(conf.General.WarningTimeout)
+	if errWarnTimeoutDuration != nil {
+		return errors.Wrap(errWarnTimeoutDuration, "Failed to parse warning timeout")
+	}
+
+	conf.General.WarningTimeoutValue = warnTimeoutDuration
+
+	clientTimeoutDuration, errClientTimeoutDuration := time.ParseDuration(conf.HTTP.ClientTimeout)
+	if errClientTimeoutDuration != nil {
+		return errors.Wrap(errClientTimeoutDuration, "Failed to parse client timeout duration")
+	}
+
+	conf.HTTP.ClientTimeoutValue = clientTimeoutDuration
 
 	return nil
 }

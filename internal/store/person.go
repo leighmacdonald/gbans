@@ -886,7 +886,7 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 	if !query.Unrestricted {
 		unrTime := now.AddDate(0, 0, -14)
 		if query.SentAfter != nil && query.SentAfter.Before(unrTime) {
-			return nil, 0, errInvalidDuration
+			return nil, 0, consts.ErrInvalidDuration
 		}
 	}
 

@@ -38,27 +38,6 @@ func (t StringSID) SID64(ctx context.Context) (steamid.SID64, error) {
 	return sid64, nil
 }
 
-// Duration defines the length of time the action should be valid for
-// A Duration of 0 will be interpreted as permanent and set to 10 years in the future.
-type Duration string
-
-func (value Duration) Value() (time.Duration, error) {
-	duration, errDuration := ParseDuration(string(value))
-	if errDuration != nil {
-		return 0, consts.ErrInvalidDuration
-	}
-
-	if duration < 0 {
-		return 0, consts.ErrInvalidDuration
-	}
-
-	if duration == 0 {
-		duration = time.Hour * 24 * 365 * 10
-	}
-
-	return duration, nil
-}
-
 // BanType defines the state of the ban for a user, 0 being no ban.
 type BanType int
 
@@ -171,7 +150,7 @@ func NewBannedPerson() BannedPerson {
 	}
 }
 
-func newBaseBanOpts(ctx context.Context, source SteamIDProvider, target StringSID, duration Duration,
+func newBaseBanOpts(ctx context.Context, source SteamIDProvider, target StringSID, duration time.Duration,
 	reason Reason, reasonText string, modNote string, origin Origin,
 	banType BanType, opts *BaseBanOpts,
 ) error {
@@ -195,9 +174,8 @@ func newBaseBanOpts(ctx context.Context, source SteamIDProvider, target StringSI
 		return errors.New("New ban must be ban or nocomm")
 	}
 
-	durationActual, errDuration := duration.Value()
-	if errDuration != nil {
-		return errors.Wrapf(errDuration, "Unable to determine expiration")
+	if duration <= 0 {
+		return errors.New("Insufficient duration")
 	}
 
 	if reason == Custom && reasonText == "" {
@@ -206,7 +184,7 @@ func newBaseBanOpts(ctx context.Context, source SteamIDProvider, target StringSI
 
 	opts.TargetID = targetSid
 	opts.SourceID = sourceSid
-	opts.Duration = durationActual
+	opts.Duration = duration
 	opts.ModNote = modNote
 	opts.Reason = reason
 	opts.ReasonText = reasonText
@@ -218,7 +196,7 @@ func newBaseBanOpts(ctx context.Context, source SteamIDProvider, target StringSI
 	return nil
 }
 
-func NewBanSteam(ctx context.Context, source SteamIDProvider, target StringSID, duration Duration,
+func NewBanSteam(ctx context.Context, source SteamIDProvider, target StringSID, duration time.Duration,
 	reason Reason, reasonText string, modNote string, origin Origin, reportID int64, banType BanType,
 	includeFriends bool, banSteam *BanSteam,
 ) error {
@@ -242,7 +220,7 @@ func NewBanSteam(ctx context.Context, source SteamIDProvider, target StringSID, 
 	return nil
 }
 
-func NewBanASN(ctx context.Context, source SteamIDProvider, target StringSID, duration Duration,
+func NewBanASN(ctx context.Context, source SteamIDProvider, target StringSID, duration time.Duration,
 	reason Reason, reasonText string, modNote string, origin Origin, asNum int64, banType BanType, banASN *BanASN,
 ) error {
 	var opts BanASNOpts
@@ -282,7 +260,7 @@ func NewBanASN(ctx context.Context, source SteamIDProvider, target StringSID, du
 	return banASN.Apply(opts)
 }
 
-func NewBanCIDR(ctx context.Context, source SteamIDProvider, target StringSID, duration Duration,
+func NewBanCIDR(ctx context.Context, source SteamIDProvider, target StringSID, duration time.Duration,
 	reason Reason, reasonText string, modNote string, origin Origin, cidr string,
 	banType BanType, banCIDR *BanCIDR,
 ) error {
@@ -302,7 +280,7 @@ func NewBanCIDR(ctx context.Context, source SteamIDProvider, target StringSID, d
 	return banCIDR.Apply(opts)
 }
 
-func NewBanSteamGroup(ctx context.Context, source SteamIDProvider, target StringSID, duration Duration,
+func NewBanSteamGroup(ctx context.Context, source SteamIDProvider, target StringSID, duration time.Duration,
 	reason Reason, reasonText string, modNote string, origin Origin, groupID steamid.GID, groupName string,
 	banType BanType, banGroup *BanGroup,
 ) error {
