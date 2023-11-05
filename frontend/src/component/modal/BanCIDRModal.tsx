@@ -56,13 +56,13 @@ interface BanCIDRFormValues extends SteamIDInputValue {
     existing?: IAPIBanCIDRRecord;
 }
 
-export const validationSchema = yup.object({
+const validationSchema = yup.object({
     steam_id: steamIdValidator,
     cidr: NetworkRangeFieldValidator,
     reason: BanReasonFieldValidator,
-    reasonText: BanReasonTextFieldValidator,
+    reason_text: BanReasonTextFieldValidator,
     duration: DurationFieldValidator,
-    durationCustom: DurationCustomFieldValidator,
+    duration_custom: DurationCustomFieldValidator,
     note: NoteFieldValidator
 });
 
@@ -131,7 +131,7 @@ export const BanCIDRModal = NiceModal.create(
                 }}
                 validateOnBlur={true}
                 validateOnChange={false}
-                //validationSchema={validationSchema}
+                validationSchema={validationSchema}
             >
                 <Dialog fullWidth {...muiDialogV5(modal)}>
                     <DialogTitle component={Heading} iconLeft={<RouterIcon />}>

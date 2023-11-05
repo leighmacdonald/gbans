@@ -36,11 +36,11 @@ export interface BanGroupFormValues {
     note: string;
 }
 
-export const validationSchema = yup.object({
+const validationSchema = yup.object({
     steam_id: steamIdValidator,
-    groupId: GroupIdFieldValidator,
+    group_id: GroupIdFieldValidator,
     duration: DurationFieldValidator,
-    durationCustom: DurationCustomFieldValidator,
+    duration_custom: DurationCustomFieldValidator,
     note: NoteFieldValidator
 });
 
@@ -97,7 +97,7 @@ export const BanGroupModal = NiceModal.create(
                 }}
                 validateOnBlur={true}
                 validateOnChange={false}
-                //validationSchema={validationSchema}
+                validationSchema={validationSchema}
             >
                 <Dialog fullWidth {...muiDialogV5(modal)}>
                     <DialogTitle component={Heading} iconLeft={<GroupsIcon />}>

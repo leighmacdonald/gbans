@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import TextField from '@mui/material/TextField';
 import { useFormikContext } from 'formik';
 import * as yup from 'yup';
 
 export const ASNumberFieldValidator = yup
     .number()
-    .required()
+    .label('AS Number')
+    .required('AS Number Required')
     .positive()
     .integer();
 
@@ -18,6 +19,10 @@ export const ASNumberField = <T,>() => {
     const { values, handleChange, touched, errors } = useFormikContext<
         T & ASNumberFieldProps
     >();
+
+    useEffect(() => {
+        console.log(errors);
+    }, [errors]);
     return (
         <TextField
             disabled={values.ban_asn_id != undefined && values.ban_asn_id > 0}

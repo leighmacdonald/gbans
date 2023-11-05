@@ -9,7 +9,7 @@ import * as yup from 'yup';
 import { BanReason, BanReasons, banReasonsList } from '../../api';
 
 export const BanReasonFieldValidator = yup
-    .number()
+    .string()
     .label('Select a reason')
     .required('reason is required');
 

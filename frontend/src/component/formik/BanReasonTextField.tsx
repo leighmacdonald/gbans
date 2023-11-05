@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import TextField from '@mui/material/TextField';
 import { useFormikContext } from 'formik';
 import * as yup from 'yup';
@@ -8,11 +8,20 @@ import { BanReasonFieldProps } from './BanReasonField';
 export const BanReasonTextFieldValidator = yup
     .string()
     .when('reason', {
-        is: BanReason.Custom,
-        then: (schema) => schema.required(),
-        otherwise: (schema) => schema.notRequired()
+        is: `${BanReason.Custom}`, // TODO Make BanReason enum work
+        then: () =>
+            yup.string().required('Custom reason cannot be empty').min(1),
+        otherwise: () =>
+            yup
+                .string()
+                .required('Reason cannot be empty')
+                .min(1, 'Reason cannot be blank')
     })
     .label('Custom reason');
+
+export const unbanValidationSchema = yup.object({
+    reason_text: BanReasonTextFieldValidator
+});
 
 interface BanReasonTextFieldProps {
     reason_text: BanReason;
@@ -27,6 +36,17 @@ export const BanReasonTextField = <T,>({
         T & BanReasonTextFieldProps & BanReasonFieldProps
     >();
 
+    const isError = useMemo(() => {
+        if (paired) {
+            return (
+                values.reason == BanReason.Custom &&
+                touched.reason_text &&
+                Boolean(errors.reason_text)
+            );
+        }
+        return touched.reason_text && Boolean(errors.reason_text);
+    }, [errors.reason_text, paired, touched.reason_text, values.reason]);
+
     return (
         <TextField
             fullWidth
@@ -36,7 +56,7 @@ export const BanReasonTextField = <T,>({
             disabled={paired ? values.reason != BanReason.Custom : false}
             value={values.reason_text}
             onChange={handleChange}
-            error={touched.reason_text && Boolean(errors.reason_text)}
+            error={isError}
             helperText={
                 touched.reason_text &&
                 errors.reason_text &&

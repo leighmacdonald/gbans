@@ -490,10 +490,12 @@ func onAPIPostBansGroupCreate(app *App) gin.HandlerFunc {
 		}
 
 		var existing store.BanGroup
-		if errExist := app.db.GetBanGroup(ctx, req.GroupID, &existing); errExist != nil && !errors.Is(errExist, store.ErrNoResult) {
-			responseErr(ctx, http.StatusConflict, consts.ErrDuplicate)
+		if errExist := app.db.GetBanGroup(ctx, req.GroupID, &existing); errExist != nil {
+			if !errors.Is(errExist, store.ErrNoResult) {
+				responseErr(ctx, http.StatusConflict, consts.ErrDuplicate)
 
-			return
+				return
+			}
 		}
 
 		var (

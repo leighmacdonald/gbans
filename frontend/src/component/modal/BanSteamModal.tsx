@@ -63,14 +63,14 @@ interface BanSteamFormValues extends SteamIDInputValue {
     existing?: IAPIBanRecordProfile;
 }
 
-export const validationSchema = yup.object({
+const validationSchema = yup.object({
     steam_id: steamIdValidator,
     reportId: ReportIdFieldValidator,
-    banType: BanTypeFieldValidator,
+    ban_type: BanTypeFieldValidator,
     reason: BanReasonFieldValidator,
-    reasonText: BanReasonTextFieldValidator,
+    reason_text: BanReasonTextFieldValidator,
     duration: DurationFieldValidator,
-    durationCustom: DurationCustomFieldValidator,
+    duration_custom: DurationCustomFieldValidator,
     note: NoteFieldValidator
 });
 
@@ -132,7 +132,7 @@ export const BanSteamModal = NiceModal.create(
                 onSubmit={onSumit}
                 id={'banSteamForm'}
                 initialValues={{
-                    ban_type: existing?.ban_type ?? BanType.NoComm,
+                    ban_type: existing?.ban_type ?? BanType.Banned,
                     duration:
                         existing?.ban_id && existing?.ban_id > 0
                             ? Duration.durCustom
@@ -151,7 +151,7 @@ export const BanSteamModal = NiceModal.create(
                 }}
                 validateOnBlur={true}
                 validateOnChange={false}
-                // validationSchema={validationSchema}
+                validationSchema={validationSchema}
             >
                 <Dialog fullWidth {...muiDialogV5(modal)}>
                     <DialogTitle

@@ -5,8 +5,8 @@ import * as yup from 'yup';
 
 export const ReportIdFieldValidator = yup
     .number()
-    .min(0, 'Must be positive integer')
-    .nullable();
+    .nullable()
+    .min(0, 'Must be positive integer');
 
 interface ReportIdFieldProps {
     report_id: number;

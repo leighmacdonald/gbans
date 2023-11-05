@@ -23,8 +23,8 @@ export const steamIdValidator = yup
             return false;
         }
     })
-    .label('Enter your steam_id')
-    .required('steam_id is required');
+    .label('Enter your Steam ID')
+    .required('Steam ID is required');
 
 export interface BaseFormikInputProps {
     id?: string;
@@ -52,7 +52,9 @@ export const SteamIdField = <T,>({ isReadOnly }: BaseFormikInputProps) => {
             value={values.steam_id}
             onChange={handleChange}
             error={touched.steam_id && Boolean(errors.steam_id)}
-            //helperText={touched.steam_id && errors.steam_id}
+            helperText={
+                touched.steam_id && errors.steam_id && `${errors.steam_id}`
+            }
         />
     );
 };

@@ -9,7 +9,10 @@ import {
 import Stack from '@mui/material/Stack';
 import { Formik } from 'formik';
 import { apiDeleteASNBan } from '../../api';
-import { BanReasonTextField } from '../formik/BanReasonTextField';
+import {
+    BanReasonTextField,
+    unbanValidationSchema
+} from '../formik/BanReasonTextField';
 import { CancelButton, SaveButton } from './Buttons';
 import { UnbanFormValues, UnbanModalProps } from './UnbanSteamModal';
 
@@ -39,6 +42,7 @@ export const UnbanASNModal = NiceModal.create(({ banId }: UnbanModalProps) => {
         <Formik<UnbanFormValues>
             initialValues={{ reason_text: '' }}
             onSubmit={onSubmit}
+            validationSchema={unbanValidationSchema}
         >
             <Dialog {...muiDialogV5(modal)}>
                 <DialogTitle>Unban ASN (#{banId})</DialogTitle>
