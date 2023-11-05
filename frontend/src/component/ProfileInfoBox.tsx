@@ -5,19 +5,17 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { format, fromUnixTime } from 'date-fns';
 import { PlayerProfile } from '../api';
-import { ContainerWithHeader, JustifyTypes } from './ContainerWithHeader';
+import { ContainerWithHeader } from './ContainerWithHeader';
 
 export interface ProfileInfoBoxProps {
     profile: PlayerProfile;
-    align?: JustifyTypes;
 }
 
-export const ProfileInfoBox = ({ profile, align }: ProfileInfoBoxProps) => {
+export const ProfileInfoBox = ({ profile }: ProfileInfoBoxProps) => {
     return (
         <ContainerWithHeader
             title={'Profile'}
             iconLeft={<PregnantWomanIcon />}
-            align={align}
             marginTop={0}
         >
             <Stack direction={'row'} spacing={3} marginTop={0}>

@@ -203,7 +203,7 @@ export const MDEditor = ({
                 <ButtonGroup>
                     <Button
                         variant={'contained'}
-                        color={'primary'}
+                        color={'success'}
                         onClick={() => {
                             if (bodyMD === '') {
                                 sendFlash('error', 'Body cannot be empty');

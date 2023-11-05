@@ -40,7 +40,7 @@ export interface BanGroupFormValues {
     steam_id: string;
     group_id: string;
     duration: Duration;
-    duration_custom: string;
+    duration_custom: Date;
     note: string;
     reason: BanReason;
     reason_text: string;
@@ -87,7 +87,7 @@ export const BanGroupModal = NiceModal.create(() => {
             initialValues={{
                 steam_id: '',
                 duration: Duration.dur2w,
-                duration_custom: '',
+                duration_custom: new Date(),
                 reason: BanReason.Cheating,
                 reason_text: '',
                 note: '',
@@ -110,7 +110,7 @@ export const BanGroupModal = NiceModal.create(() => {
                             <BanReasonField />
                             <BanReasonTextField />
                             <DurationField />
-                            <DurationCustomField<BanGroupFormValues> />
+                            <DurationCustomField />
                             <NoteField />
                         </Stack>
                     </Stack>

@@ -79,10 +79,7 @@ export const Profile = () => {
             <>
                 <Grid xs={12} md={8}>
                     <Box width={'100%'}>
-                        <ProfileInfoBox
-                            profile={profile}
-                            align={'flex-start'}
-                        />
+                        <ProfileInfoBox profile={profile} />
                     </Box>
                 </Grid>
                 <Grid xs={6} md={2}>
@@ -167,7 +164,6 @@ export const Profile = () => {
                     <ContainerWithHeader
                         title={'External Links'}
                         iconLeft={<LinkIcon />}
-                        align={'flex-start'}
                     >
                         <Grid container spacing={1} paddingLeft={1}>
                             {createExternalLinks(profile.player.steam_id).map(

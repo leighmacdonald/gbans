@@ -108,9 +108,8 @@ const PlayerClassHoverStats = ({ stats }: PlayerClassHoverStatsProps) => {
                 disableRestoreFocus
             >
                 <ContainerWithHeader
-                    iconRight={<PlayerClassImg cls={stats.player_class} />}
+                    iconLeft={<PlayerClassImg cls={stats.player_class} />}
                     title={'Class Stats'}
-                    align={'space-between'}
                 >
                     <TableContainer>
                         <Table padding={'none'}>
@@ -272,10 +271,7 @@ const PlayerWeaponHoverStats = ({ stats }: PlayerWeaponHoverStatsProps) => {
                 onClose={handlePopoverClose}
                 disableRestoreFocus
             >
-                <ContainerWithHeader
-                    title={'Weapon Stats'}
-                    align={'space-between'}
-                >
+                <ContainerWithHeader title={'Weapon Stats'}>
                     <TableContainer>
                         <Table padding={'checkbox'} size={'small'}>
                             <TableHead>

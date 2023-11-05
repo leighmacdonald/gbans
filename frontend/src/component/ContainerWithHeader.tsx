@@ -13,8 +13,6 @@ interface ContainerWithHeaderProps {
     title: string;
     children?: JSX.Element[] | JSX.Element | string;
     iconLeft?: React.ReactNode;
-    iconRight?: React.ReactNode;
-    align?: JustifyTypes;
     spacing?: number;
     elevation?: number;
     marginTop?: number;
@@ -25,8 +23,6 @@ export const ContainerWithHeader = ({
     title,
     children,
     iconLeft,
-    iconRight,
-    align = 'flex-start',
     spacing = 2,
     elevation = 1,
     marginTop = 0,
@@ -34,9 +30,7 @@ export const ContainerWithHeader = ({
 }: ContainerWithHeaderProps) => {
     return (
         <Paper elevation={elevation}>
-            <Heading iconLeft={iconLeft} iconRight={iconRight} align={align}>
-                {title}
-            </Heading>
+            <Heading iconLeft={iconLeft}>{title}</Heading>
             <Stack spacing={spacing} sx={{ marginTop }} padding={padding}>
                 {children}
             </Stack>

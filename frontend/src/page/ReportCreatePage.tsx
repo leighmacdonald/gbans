@@ -155,8 +155,7 @@ export const ReportCreatePage = (): JSX.Element => {
             <Grid xs={12} md={4}>
                 <ContainerWithHeader
                     title={'Reporting Guide'}
-                    iconRight={<InfoIcon />}
-                    align={'flex-end'}
+                    iconLeft={<InfoIcon />}
                 >
                     <List>
                         <ListItem>

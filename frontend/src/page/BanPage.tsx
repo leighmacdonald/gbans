@@ -40,7 +40,7 @@ import { ProfileInfoBox } from '../component/ProfileInfoBox';
 import { SourceBansList } from '../component/SourceBansList';
 import { SteamIDList } from '../component/SteamIDList';
 import { UserMessageView } from '../component/UserMessageView';
-import { ModalBanSteam } from '../component/modal';
+import { ModalBanSteam, ModalUnbanSteam } from '../component/modal';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
@@ -141,6 +141,7 @@ export const BanPage = (): JSX.Element => {
         },
         [loadMessages, sendFlash]
     );
+
     const onSaveAppealState = useCallback(() => {
         apiSetBanAppealState(id, appealState)
             .then(() => {
@@ -152,6 +153,21 @@ export const BanPage = (): JSX.Element => {
                 return;
             });
     }, [appealState, id, sendFlash]);
+
+    const onUnban = useCallback(async () => {
+        await NiceModal.show(ModalUnbanSteam, {
+            banId: ban?.ban.ban_id,
+            personaName: ban?.person.personaname
+        });
+    }, [ban?.ban.ban_id, ban?.person.personaname]);
+
+    const onEditBan = useCallback(async () => {
+        await NiceModal.show(ModalBanSteam, {
+            banId: ban?.ban.ban_id,
+            personaName: ban?.person.personaname,
+            existing: ban?.ban
+        });
+    }, [ban]);
 
     return (
         <Grid container spacing={2}>
@@ -232,8 +248,7 @@ export const BanPage = (): JSX.Element => {
                     {ban && (
                         <ContainerWithHeader
                             title={'Ban Details'}
-                            iconRight={<InfoIcon />}
-                            align={'flex-end'}
+                            iconLeft={<InfoIcon />}
                         >
                             <List dense={true}>
                                 <ListItem>
@@ -305,8 +320,7 @@ export const BanPage = (): JSX.Element => {
                         ban.ban.note != '' && (
                             <ContainerWithHeader
                                 title={'Mod Notes'}
-                                iconRight={<DocumentScannerIcon />}
-                                align={'flex-end'}
+                                iconLeft={<DocumentScannerIcon />}
                             >
                                 <Typography variant={'body2'} padding={2}>
                                     {ban.ban.note}
@@ -318,8 +332,7 @@ export const BanPage = (): JSX.Element => {
                         PermissionLevel.Moderator && (
                         <ContainerWithHeader
                             title={'Moderation Tools'}
-                            iconRight={<AddModeratorIcon />}
-                            align={'flex-end'}
+                            iconLeft={<AddModeratorIcon />}
                         >
                             <Stack spacing={2} padding={2}>
                                 <Stack direction={'row'} spacing={2}>
@@ -382,20 +395,13 @@ export const BanPage = (): JSX.Element => {
                                     Ext. Chat Logs
                                 </Button>
                                 <ButtonGroup fullWidth variant={'contained'}>
-                                    <Button color={'warning'}>Edit Ban</Button>
                                     <Button
-                                        color={'success'}
-                                        onClick={async () => {
-                                            // TODO make work
-                                            await NiceModal.show(
-                                                ModalBanSteam,
-                                                {
-                                                    steamId:
-                                                        ban?.person.steam_id
-                                                }
-                                            );
-                                        }}
+                                        color={'warning'}
+                                        onClick={onEditBan}
                                     >
+                                        Edit Ban
+                                    </Button>
+                                    <Button color={'success'} onClick={onUnban}>
                                         Unban
                                     </Button>
                                 </ButtonGroup>

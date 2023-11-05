@@ -17,7 +17,6 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
-import { DatePicker } from '@mui/x-date-pickers';
 import { Formik, useFormikContext } from 'formik';
 import * as yup from 'yup';
 import { EmptyUUID, PermissionLevel, useContest } from '../../api';
@@ -26,6 +25,8 @@ import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
 import { logErr } from '../../util/errors';
 import { Heading } from '../Heading';
 import { LoadingSpinner } from '../LoadingSpinner';
+import { DateEndField } from '../formik/DateEndField';
+import { DateStartField } from '../formik/DateStartField';
 import { DescriptionField } from '../formik/DescriptionField';
 import { BaseFormikInputProps } from '../formik/SteamIdField';
 import { TitleField } from '../formik/TitleField';
@@ -229,7 +230,6 @@ const MaxSubmissionsField = ({ isReadOnly }: BaseFormikInputProps) => {
                 label={'Maximum Submissions Per User'}
                 value={values.max_submissions}
                 onChange={(event) => {
-                    console.log(event.target.value);
                     values.max_submissions = event.target.value as number;
                 }}
             >
@@ -267,50 +267,6 @@ const MinPermissionLevelField = ({ isReadOnly }: BaseFormikInputProps) => {
                 <MenuItem value={PermissionLevel.Admin}>Admin</MenuItem>
             </Select>
         </FormControl>
-    );
-};
-
-const DateEndField = ({ isReadOnly }: BaseFormikInputProps) => {
-    const { errors, touched, values, setFieldValue } =
-        useFormikContext<ContestEditorFormValues>();
-    return (
-        <DatePicker
-            disabled={isReadOnly ?? false}
-            label="Date End"
-            value={values.date_end}
-            formatDensity={'dense'}
-            //onError={(newError) => setError(newError)}
-            onChange={async (value) => {
-                await setFieldValue('date_end', value);
-            }}
-            slotProps={{
-                textField: {
-                    variant: 'outlined',
-                    error: touched.date_end && Boolean(errors.date_end)
-                }
-            }}
-        />
-    );
-};
-
-const DateStartField = ({ isReadOnly }: BaseFormikInputProps) => {
-    const { errors, setFieldValue, touched, values } =
-        useFormikContext<ContestEditorFormValues>();
-    return (
-        <DatePicker
-            disabled={isReadOnly ?? false}
-            label="Date Start"
-            value={values.date_start}
-            //onError={(newError) => setFieldError('date_end', newError)}
-            onChange={(value) => setFieldValue('date_start', value, true)}
-            slotProps={{
-                textField: {
-                    variant: 'outlined',
-                    error: touched.date_start && Boolean(errors.date_start)
-                    //helperText: formik.touched.date_end && formik.errors.date_end
-                }
-            }}
-        />
     );
 };
 

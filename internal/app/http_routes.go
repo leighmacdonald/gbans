@@ -285,6 +285,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		modRoute.POST("/api/bans/steam", onAPIGetBansSteam(app))
 		modRoute.POST("/api/bans/steam/create", onAPIPostBanSteamCreate(app))
 		modRoute.DELETE("/api/bans/steam/:ban_id", onAPIPostBanDelete(app))
+		modRoute.POST("/api/bans/steam/:ban_id", onAPIPostBanUpdate(app))
 		modRoute.POST("/api/bans/steam/:ban_id/status", onAPIPostSetBanAppealStatus(app))
 		modRoute.POST("/api/bans/cidr/create", onAPIPostBansCIDRCreate(app))
 		modRoute.POST("/api/bans/cidr", onAPIGetBansCIDR(app))
