@@ -312,9 +312,11 @@ func (app *App) showReportMeta(ctx context.Context) {
 		case <-ticker.C:
 			updateChan <- true
 		case <-updateChan:
-			reports, errReports := app.db.GetReports(ctx, store.AuthorQueryFilter{
-				QueryFilter: store.QueryFilter{
-					Limit: 0,
+			reports, _, errReports := app.db.GetReports(ctx, store.ReportQueryFilter{
+				AuthorQueryFilter: store.AuthorQueryFilter{
+					QueryFilter: store.QueryFilter{
+						Limit: 0,
+					},
 				},
 			})
 			if errReports != nil {

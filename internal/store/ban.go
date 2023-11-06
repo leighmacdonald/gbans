@@ -650,7 +650,7 @@ func (db *Store) GetExpiredBans(ctx context.Context) ([]BanSteam, error) {
 	return bans, nil
 }
 
-func (db *Store) GetAppealsByCreatedOn(ctx context.Context, _ QueryFilter) ([]AppealOverview, error) {
+func (db *Store) GetAppealsByActivity(ctx context.Context, _ QueryFilter) ([]AppealOverview, error) {
 	const query = `
 	SELECT
 		b.ban_id, b.target_id, b.source_id, b.ban_type, b.reason, b.reason_text, b.note, b.valid_until, b.origin,
@@ -676,7 +676,7 @@ func (db *Store) GetAppealsByCreatedOn(ctx context.Context, _ QueryFilter) ([]Ap
 		FROM appeals
 		GROUP BY ban_id
 	) AND deleted = false
-	ORDER BY b.created_on DESC
+	ORDER BY b.updated_on DESC
 	`
 
 	overviews := []AppealOverview{}
@@ -891,11 +891,25 @@ func (db *Store) GetBansOlderThan(ctx context.Context, filter QueryFilter, since
 }
 
 func (db *Store) SaveBanMessage(ctx context.Context, message *UserMessage) error {
+	var err error
 	if message.MessageID > 0 {
-		return db.updateBanMessage(ctx, message)
+		err = db.updateBanMessage(ctx, message)
+	} else {
+		err = db.insertBanMessage(ctx, message)
 	}
 
-	return db.insertBanMessage(ctx, message)
+	bannedPerson := NewBannedPerson()
+	if errBan := db.GetBanByBanID(ctx, message.ParentID, &bannedPerson, true); errBan != nil {
+		return ErrNoResult
+	}
+
+	bannedPerson.Ban.UpdatedOn = time.Now()
+
+	if errUpdate := db.updateBan(ctx, &bannedPerson.Ban); errUpdate != nil {
+		return errUpdate
+	}
+
+	return err
 }
 
 func (db *Store) updateBanMessage(ctx context.Context, message *UserMessage) error {

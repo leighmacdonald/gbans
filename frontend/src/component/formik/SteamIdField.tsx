@@ -1,10 +1,10 @@
 import React from 'react';
 import TextField from '@mui/material/TextField';
 import { useFormikContext } from 'formik';
-import SteamID from 'steamid';
 import * as yup from 'yup';
-import { apiGetProfile, PlayerProfile } from '../../api';
+import { PlayerProfile } from '../../api';
 import { logErr } from '../../util/errors';
+import { steamIDOrEmptyString } from '../../util/text';
 import { Nullable } from '../../util/types';
 
 export const steamIdValidator = yup
@@ -14,9 +14,11 @@ export const steamIdValidator = yup
             return false;
         }
         try {
-            const resp = await apiGetProfile(steamId);
-            const sid = new SteamID(resp.player.steam_id);
-            ctx.parent.value = sid.getSteamID64();
+            const sid = await steamIDOrEmptyString(steamId);
+            if (sid == '') {
+                return false;
+            }
+            ctx.parent.value = sid;
             return true;
         } catch (e) {
             logErr(e);

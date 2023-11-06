@@ -33,7 +33,7 @@ import { LinearProgressWithLabel } from '../LinearProgresWithLabel';
 import { LoadingSpinner } from '../LoadingSpinner';
 import { BaseFormikInputProps } from '../formik/SteamIdField';
 import { minStringValidator } from '../formik/Validator';
-import { CancelButton, ResetButton, SaveButton } from './Buttons';
+import { CancelButton, ResetButton, SubmitButton } from './Buttons';
 
 interface ContestEntryFormValues {
     contest_id: string;
@@ -277,7 +277,7 @@ export const ContestEntryModal = NiceModal.create(
                     <DialogActions>
                         <CancelButton />
                         <ResetButton />
-                        <SaveButton disabled={uploadInProgress} />
+                        <SubmitButton disabled={uploadInProgress} />
                     </DialogActions>
                 </Dialog>
             </Formik>

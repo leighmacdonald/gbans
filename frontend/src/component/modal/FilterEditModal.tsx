@@ -13,7 +13,7 @@ import { Heading } from '../Heading';
 import { FilterPatternField } from '../formik/FilterPatternField';
 import { FilterTestField } from '../formik/FilterTestField';
 import { IsRegexPatternField } from '../formik/IsRegexPatternField';
-import { CancelButton, SaveButton } from './Buttons';
+import { CancelButton, SubmitButton } from './Buttons';
 
 interface FilterEditModalProps {
     filter?: Filter;
@@ -71,7 +71,7 @@ export const FilterEditModal = NiceModal.create(
                     </DialogContent>
                     <DialogActions>
                         <CancelButton />
-                        <SaveButton />
+                        <SubmitButton />
                     </DialogActions>
                 </Dialog>
             </Formik>

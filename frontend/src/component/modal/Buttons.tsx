@@ -27,15 +27,21 @@ export const CancelButton = ({ onClick }: onClickProps) => {
     );
 };
 
-export const SaveButton = ({
+export const SubmitButton = ({
     onClick,
     formId,
-    disabled = false
-}: onClickProps & { disabled?: boolean }) => {
+    disabled = false,
+    label = 'Save',
+    startIcon = <SaveIcon />
+}: onClickProps & {
+    disabled?: boolean;
+    label?: string;
+    startIcon?: React.ReactNode;
+}) => {
     const { submitForm } = useFormikContext();
     return (
         <Button
-            startIcon={<SaveIcon />}
+            startIcon={startIcon}
             color={'success'}
             variant={'contained'}
             onClick={onClick ?? submitForm}
@@ -43,7 +49,7 @@ export const SaveButton = ({
             type={'submit'}
             form={formId}
         >
-            Save
+            {label}
         </Button>
     );
 };

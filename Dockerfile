@@ -4,7 +4,7 @@ WORKDIR /build
 RUN apk add --no-cache python3 make g++
 COPY frontend/package.json frontend/package.json
 COPY frontend/.yarnrc.yml frontend/.yarnrc.yml
-COPY frontend/yarn.lock yarn.lock
+COPY frontend/yarn.lock frontend/yarn.lock
 COPY frontend frontend
 WORKDIR /build/frontend
 RUN yarn install --immutable
@@ -23,7 +23,7 @@ FROM alpine:latest
 
 LABEL maintainer="Leigh MacDonald <leigh.macdonald@gmail.com>"
 LABEL org.opencontainers.image.source="https://github.com/leighmacdonald/gbans"
-LABEL org.opencontainers.image.version="v0.3.2"
+LABEL org.opencontainers.image.version="v0.4.2"
 LABEL org.opencontainers.image.licenses="MIT"
 LABEL org.opencontainers.image.description="Centralized community backend for Team Fortress 2"
 

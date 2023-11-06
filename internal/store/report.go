@@ -222,19 +222,46 @@ func (db *Store) DropReportMessage(ctx context.Context, message *UserMessage) er
 
 type AuthorQueryFilter struct {
 	QueryFilter
-	AuthorID steamid.SID64 `json:"author_id"`
+	AuthorID StringSID `json:"author_id"`
 }
 
 type ReportQueryFilter struct {
 	AuthorQueryFilter
 	ReportStatus ReportStatus `json:"report_status"`
+	TargetID     StringSID    `json:"target_id"`
 }
 
-func (db *Store) GetReports(ctx context.Context, opts AuthorQueryFilter) ([]Report, error) {
+func (db *Store) GetReports(ctx context.Context, opts ReportQueryFilter) ([]Report, int64, error) {
 	conditions := sq.And{sq.Eq{"deleted": opts.Deleted}}
 
-	if opts.AuthorID.Valid() {
-		conditions = append(conditions, sq.Eq{"author_id": opts.AuthorID})
+	if opts.AuthorID != "" {
+		authorID, errAuthorID := opts.AuthorID.SID64(ctx)
+		if errAuthorID != nil {
+			return nil, 0, errAuthorID
+		}
+
+		conditions = append(conditions, sq.Eq{"r.author_id": authorID.Int64()})
+	}
+
+	if opts.TargetID != "" {
+		targetID, errTargetID := opts.TargetID.SID64(ctx)
+		if errTargetID != nil {
+			return nil, 0, errTargetID
+		}
+
+		conditions = append(conditions, sq.Eq{"r.reported_id": targetID.Int64()})
+	}
+
+	if opts.ReportStatus >= 0 {
+		conditions = append(conditions, sq.Eq{"r.report_status": opts.ReportStatus})
+	}
+
+	counterQuery, counterArgs, errCounter := db.sb.
+		Select("count(r.report_id) as total").
+		From("report r").
+		Where(conditions).ToSql()
+	if errCounter != nil {
+		return nil, 0, Err(errCounter)
 	}
 
 	builder := db.sb.
@@ -245,24 +272,40 @@ func (db *Store) GetReports(ctx context.Context, opts AuthorQueryFilter) ([]Repo
 		Where(conditions).
 		LeftJoin("demo d on d.title = r.demo_name")
 
+	if opts.Offset > 0 {
+		builder = builder.Offset(opts.Offset)
+	}
+
 	if opts.Limit > 0 {
 		builder = builder.Limit(opts.Limit)
+	} else {
+		builder = builder.Limit(50)
 	}
-	// if opts.OrderBy != "" {
-	//	if opts.Desc {
-	//		builder = builder.OrderBy(fmt.Sprintf("%s DESC", opts.OrderBy))
-	//	} else {
-	//		builder = builder.OrderBy(fmt.Sprintf("%s ASC", opts.OrderBy))
-	//	}
-	//}
+
+	order := "r.updated_on"
+	if opts.OrderBy != "" {
+		order = fmt.Sprintf("r.%s", opts.OrderBy)
+	}
+
+	if opts.Desc {
+		builder = builder.OrderBy(fmt.Sprintf("%s DESC", order))
+	} else {
+		builder = builder.OrderBy(fmt.Sprintf("%s ASC", order))
+	}
+
+	count, errCount := db.GetCount(ctx, counterQuery, counterArgs...)
+	if errCount != nil {
+		return nil, 0, Err(errCount)
+	}
+
 	q, a, errSQL := builder.ToSql()
 	if errSQL != nil {
-		return nil, Err(errSQL)
+		return nil, 0, Err(errSQL)
 	}
 
 	rows, errQuery := db.Query(ctx, q, a...)
 	if errQuery != nil {
-		return nil, Err(errQuery)
+		return nil, 0, Err(errQuery)
 	}
 
 	defer rows.Close()
@@ -293,7 +336,7 @@ func (db *Store) GetReports(ctx context.Context, opts AuthorQueryFilter) ([]Repo
 			&report.DemoID,
 			&personMessageID,
 		); errScan != nil {
-			return nil, Err(errScan)
+			return nil, 0, Err(errScan)
 		}
 
 		if personMessageID != nil {
@@ -306,7 +349,7 @@ func (db *Store) GetReports(ctx context.Context, opts AuthorQueryFilter) ([]Repo
 		reports = append(reports, report)
 	}
 
-	return reports, nil
+	return reports, count, nil
 }
 
 // GetReportBySteamID returns any open report for the user by the author.

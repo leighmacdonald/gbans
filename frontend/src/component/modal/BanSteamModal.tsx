@@ -43,7 +43,7 @@ import {
     SteamIDInputValue,
     steamIdValidator
 } from '../formik/SteamIdField';
-import { CancelButton, ResetButton, SaveButton } from './Buttons';
+import { CancelButton, ResetButton, SubmitButton } from './Buttons';
 
 export interface BanModalProps {
     reportId?: number;
@@ -180,7 +180,7 @@ export const BanSteamModal = NiceModal.create(
                     <DialogActions>
                         <CancelButton />
                         <ResetButton />
-                        <SaveButton />
+                        <SubmitButton />
                     </DialogActions>
                 </Dialog>
             </Formik>

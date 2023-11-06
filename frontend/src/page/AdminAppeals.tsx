@@ -1,5 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import DoNotDisturbIcon from '@mui/icons-material/DoNotDisturb';
+import FiberNewIcon from '@mui/icons-material/FiberNew';
+import GppGoodIcon from '@mui/icons-material/GppGood';
+import SnoozeIcon from '@mui/icons-material/Snooze';
 import { TablePagination } from '@mui/material';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -9,8 +13,8 @@ import CardContent from '@mui/material/CardContent';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
-import Paper from '@mui/material/Paper';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
+import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import format from 'date-fns/format';
@@ -23,9 +27,11 @@ import {
     appealStateString,
     BanReason
 } from '../api';
+import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { Order, RowsPerPage } from '../component/DataTable';
-import { Heading } from '../component/Heading';
 import { LazyTable } from '../component/LazyTable';
+import { LazyTablePaginator } from '../component/LazyTablePaginator';
+import { LoadingSpinner } from '../component/LoadingSpinner';
 import { PersonCell } from '../component/PersonCell';
 import { logErr } from '../util/errors';
 import { steamIdQueryValue } from '../util/text';
@@ -36,6 +42,7 @@ interface BasicStatCardProps {
     desc: string;
     actionLabel?: string;
     onAction?: () => void;
+    icon?: ReactNode;
 }
 
 const BasicStatCard = ({
@@ -43,17 +50,21 @@ const BasicStatCard = ({
     value,
     desc,
     actionLabel,
-    onAction
+    onAction,
+    icon
 }: BasicStatCardProps) => (
     <Card sx={{ minWidth: 275 }} variant={'outlined'}>
         <CardContent>
-            <Typography
-                sx={{ fontSize: 14 }}
-                color="text.secondary"
-                gutterBottom
-            >
-                {title}
-            </Typography>
+            <Stack direction={'row'} spacing={1}>
+                {icon}
+                <Typography
+                    sx={{ fontSize: 14 }}
+                    color="text.secondary"
+                    gutterBottom
+                >
+                    {title}
+                </Typography>
+            </Stack>
             <Typography variant="h1" component="div">
                 {value}
             </Typography>
@@ -76,24 +87,26 @@ export const AdminAppeals = () => {
     const [sortOrder, setSortOrder] = useState<Order>('desc');
     const [sortColumn, setSortColumn] =
         useState<keyof AppealOverview>('ban_id');
-    const [appeals, setAppeals] = useState<AppealOverview[]>([]);
     const [rowPerPageCount, setRowPerPageCount] = useState<number>(
         RowsPerPage.Fifty
     );
     const [page, setPage] = useState(0);
+    const [appeals, setAppeals] = useState<AppealOverview[]>([]);
     const [appealState, setAppealState] = useState<AppealState>(
         AppealState.Any
     );
+    const [loading, setLoading] = useState(false);
     const [totalRows] = useState<number>(0);
 
     useEffect(() => {
         const abortController = new AbortController();
-
+        setLoading(true);
         apiGetAppeals(undefined, abortController)
             .then((response) => {
                 setAppeals(response);
             })
-            .catch(logErr);
+            .catch(logErr)
+            .finally(() => setLoading(false));
 
         return () => abortController.abort();
     }, []);
@@ -151,6 +164,22 @@ export const AdminAppeals = () => {
         });
     }, []);
 
+    const tableIcon = useMemo(() => {
+        if (loading) {
+            return <LoadingSpinner />;
+        }
+        switch (appealState) {
+            case AppealState.Accepted:
+                return <GppGoodIcon />;
+            case AppealState.Open:
+                return <FiberNewIcon />;
+            case AppealState.Denied:
+                return <DoNotDisturbIcon />;
+            default:
+                return <SnoozeIcon />;
+        }
+    }, [appealState, loading]);
+
     return (
         <Grid container spacing={3}>
             <Grid container spacing={2}>
@@ -159,6 +188,7 @@ export const AdminAppeals = () => {
                         value={newAppeals}
                         title={'New/Open Appeals'}
                         desc={'Recently created & open appeals'}
+                        icon={<FiberNewIcon />}
                     />
                 </Grid>
 
@@ -169,6 +199,7 @@ export const AdminAppeals = () => {
                         desc={
                             'Appeals with no activity for >2days, but not resolved'
                         }
+                        icon={<SnoozeIcon />}
                     />
                 </Grid>
 
@@ -177,6 +208,7 @@ export const AdminAppeals = () => {
                         value={deniedAppeals}
                         title={'Denied'}
                         desc={'Number of Denied & No Appeal '}
+                        icon={<DoNotDisturbIcon />}
                     />
                 </Grid>
 
@@ -185,6 +217,7 @@ export const AdminAppeals = () => {
                         value={resolvedAppeals}
                         title={'Accepted'}
                         desc={'Users with accept appeals'}
+                        icon={<GppGoodIcon />}
                     />
                 </Grid>
             </Grid>
@@ -220,6 +253,25 @@ export const AdminAppeals = () => {
                     </Box>
                 </Grid>
                 <Grid xs={'auto'}>
+                    <LazyTablePaginator
+                        page={page}
+                        total={totalRows}
+                        loading={loading}
+                        rowsPerPage={rowPerPageCount}
+                        onRowsPerPageChange={(
+                            event: React.ChangeEvent<
+                                HTMLInputElement | HTMLTextAreaElement
+                            >
+                        ) => {
+                            setRowPerPageCount(
+                                parseInt(event.target.value, 10)
+                            );
+                            setPage(0);
+                        }}
+                        onPageChange={(_, newPage) => {
+                            setPage(newPage);
+                        }}
+                    />
                     <TablePagination
                         component="div"
                         variant={'head'}
@@ -245,8 +297,10 @@ export const AdminAppeals = () => {
                 </Grid>
             </Grid>
             <Grid xs={12}>
-                <Paper>
-                    <Heading>Recent Open Appeal Activity</Heading>
+                <ContainerWithHeader
+                    title={'Recent Open Appeal Activity'}
+                    iconLeft={tableIcon}
+                >
                     <LazyTable<AppealOverview>
                         rows={rows}
                         sortOrder={sortOrder}
@@ -266,8 +320,9 @@ export const AdminAppeals = () => {
                                 queryValue: (o) => `${o.ban_id}`,
                                 renderer: (obj) => (
                                     <Button
+                                        fullWidth
                                         component={Link}
-                                        variant={'contained'}
+                                        variant={'text'}
                                         to={`/ban/${obj.ban_id}`}
                                     >
                                         #{obj.ban_id}
@@ -348,8 +403,9 @@ export const AdminAppeals = () => {
                                 }
                             },
                             {
-                                label: 'Updated',
-                                tooltip: 'Updated On',
+                                label: 'Last Activity',
+                                tooltip:
+                                    'Updated when a user sends/edits an appeal message',
                                 sortable: true,
                                 align: 'left',
                                 width: '150px',
@@ -357,8 +413,8 @@ export const AdminAppeals = () => {
                                     return (
                                         <Typography variant={'body1'}>
                                             {format(
-                                                obj.created_on,
-                                                'yyyy-MM-dd'
+                                                obj.updated_on,
+                                                'yyyy-MM-dd HH:mm'
                                             )}
                                         </Typography>
                                     );
@@ -366,7 +422,7 @@ export const AdminAppeals = () => {
                             }
                         ]}
                     />
-                </Paper>
+                </ContainerWithHeader>
             </Grid>
         </Grid>
     );

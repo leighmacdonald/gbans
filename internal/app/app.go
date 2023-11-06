@@ -278,9 +278,11 @@ func (app *App) migrateS3Media(ctx context.Context) error {
 		return errBucket
 	}
 
-	reports, errReports := app.db.GetReports(ctx, store.AuthorQueryFilter{
-		QueryFilter: store.QueryFilter{
-			Limit: 100000,
+	reports, _, errReports := app.db.GetReports(ctx, store.ReportQueryFilter{
+		AuthorQueryFilter: store.AuthorQueryFilter{
+			QueryFilter: store.QueryFilter{
+				Limit: 100000,
+			},
 		},
 	})
 	if errReports != nil && !errors.Is(errReports, store.ErrNoResult) {

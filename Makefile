@@ -1,10 +1,10 @@
 .PHONY: all test clean build install frontend sourcemod
 BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 TAGGED_IMAGE = ghcr.io/leighmacdonald/gbans:$(BRANCH)
-
+VERSION=v0.4.2
 GO_CMD=go
 GO_BUILD=$(GO_CMD) build
-GO_FLAGS = -trimpath
+GO_FLAGS = -trimpath -ldflags="-s -w -X github.com/leighmacdonald/gbans/internal/app.BuildVersion=$(VERSION)"
 DEBUG_FLAGS = -gcflags "all=-N -l"
 
 all: frontend sourcemod build
@@ -30,7 +30,7 @@ frontend:
 	cd frontend && yarn && yarn run build
 
 linux64:
-	GOOS=linux GOARCH=amd64 $(GO_BUILD) $(GO_FLAGS) -o build/linux64/gbans main.go
+	GOOS=linux GOARCH=amd64 $(GO_BUILD) $(GO_FLAGS) -o build/linux64/gbans  main.go
 
 windows64:
 	GOOS=windows GOARCH=amd64 $(GO_BUILD) $(GO_FLAGS) -o build/win64/gbans.exe main.go

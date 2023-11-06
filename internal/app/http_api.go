@@ -1824,7 +1824,7 @@ func onAPIGetAppeals(app *App) gin.HandlerFunc {
 			return
 		}
 
-		bans, errBans := app.db.GetAppealsByCreatedOn(ctx, req)
+		bans, errBans := app.db.GetAppealsByActivity(ctx, req)
 		if errBans != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to fetch bans", zap.Error(errBans))
@@ -2476,6 +2476,15 @@ func onAPIPostReportMessage(app *App) gin.HandlerFunc {
 			return
 		}
 
+		report.UpdatedOn = time.Now()
+
+		if errSave := app.db.SaveReport(ctx, &report); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			log.Error("Failed to update report activity", zap.Error(errSave))
+
+			return
+		}
+
 		ctx.JSON(http.StatusCreated, msg)
 
 		msgEmbed := discord.
@@ -2744,14 +2753,14 @@ func onAPIGetReportMessages(app *App) gin.HandlerFunc {
 type reportWithAuthor struct {
 	Author  store.Person `json:"author"`
 	Subject store.Person `json:"subject"`
-	Report  store.Report `json:"report"`
+	store.Report
 }
 
 func onAPIGetReports(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var req store.AuthorQueryFilter
+		var req store.ReportQueryFilter
 		if !bind(ctx, log, &req) {
 			return
 		}
@@ -2762,7 +2771,7 @@ func onAPIGetReports(app *App) gin.HandlerFunc {
 
 		var userReports []reportWithAuthor
 
-		reports, errReports := app.db.GetReports(ctx, req)
+		reports, count, errReports := app.db.GetReports(ctx, req)
 		if errReports != nil {
 			if errors.Is(store.Err(errReports), store.ErrNoResult) {
 				ctx.JSON(http.StatusNoContent, nil)
@@ -2811,11 +2820,10 @@ func onAPIGetReports(app *App) gin.HandlerFunc {
 			})
 		}
 
-		sort.SliceStable(userReports, func(i, j int) bool {
-			return userReports[i].Report.ReportID > userReports[j].Report.ReportID
+		ctx.JSON(http.StatusOK, LazyResult{
+			Count: count,
+			Data:  userReports,
 		})
-
-		ctx.JSON(http.StatusOK, userReports)
 	}
 }
 
@@ -3560,7 +3568,7 @@ func onAPIGetStatsWeaponsOverall(ctx context.Context, app *App) gin.HandlerFunc 
 		stats := updater.Data()
 
 		ctx.JSON(http.StatusOK, LazyResult{
-			Count: len(stats),
+			Count: int64(len(stats)),
 			Data:  stats,
 		})
 	}
@@ -3582,7 +3590,7 @@ func onAPIGetStatsPlayersOverall(ctx context.Context, app *App) gin.HandlerFunc 
 
 	return func(ctx *gin.Context) {
 		stats := updater.Data()
-		ctx.JSON(http.StatusOK, LazyResult{Count: len(stats), Data: stats})
+		ctx.JSON(http.StatusOK, LazyResult{Count: int64(len(stats)), Data: stats})
 	}
 }
 
@@ -3602,7 +3610,7 @@ func onAPIGetStatsHealersOverall(ctx context.Context, app *App) gin.HandlerFunc 
 
 	return func(ctx *gin.Context) {
 		stats := updater.Data()
-		ctx.JSON(http.StatusOK, LazyResult{Count: len(stats), Data: stats})
+		ctx.JSON(http.StatusOK, LazyResult{Count: int64(len(stats)), Data: stats})
 	}
 }
 
@@ -3631,15 +3639,15 @@ func onAPIGetPlayerWeaponStatsOverall(app *App) gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusOK, LazyResult{
-			Count: len(weaponStats),
+			Count: int64(len(weaponStats)),
 			Data:  weaponStats,
 		})
 	}
 }
 
 type LazyResult struct {
-	Count int `json:"count"`
-	Data  any `json:"data"`
+	Count int64 `json:"count"`
+	Data  any   `json:"data"`
 }
 
 func onAPIGetPlayerClassStatsOverall(app *App) gin.HandlerFunc {
@@ -3666,7 +3674,7 @@ func onAPIGetPlayerClassStatsOverall(app *App) gin.HandlerFunc {
 			classStats = []store.PlayerClassOverallResult{}
 		}
 
-		ctx.JSON(http.StatusOK, LazyResult{Count: len(classStats), Data: classStats})
+		ctx.JSON(http.StatusOK, LazyResult{Count: int64(len(classStats)), Data: classStats})
 	}
 }
 
@@ -3735,7 +3743,7 @@ func onAPIGetsStatsWeapon(app *App) gin.HandlerFunc {
 
 		ctx.JSON(http.StatusOK, resp{
 			LazyResult: LazyResult{
-				Count: len(weaponStats),
+				Count: int64(len(weaponStats)),
 				Data:  weaponStats,
 			}, Weapon: weapon,
 		})
@@ -4369,7 +4377,7 @@ func onAPIGetContests(app *App) gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusOK, LazyResult{
-			Count: len(contests),
+			Count: int64(len(contests)),
 			Data:  contests,
 		})
 	}

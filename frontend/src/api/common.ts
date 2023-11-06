@@ -215,4 +215,5 @@ export interface AuthorQueryFilter<T> extends QueryFilter<T> {
 
 export interface ReportQueryFilter<T> extends AuthorQueryFilter<T> {
     report_status?: ReportStatus;
+    target_id?: string;
 }

@@ -10,7 +10,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { Formik } from 'formik';
 import { apiContestEntryDelete } from '../../api';
-import { CancelButton, SaveButton } from './Buttons';
+import { CancelButton, SubmitButton } from './Buttons';
 
 export const ContestEntryDeleteModal = NiceModal.create(
     ({ contest_entry_id }: { contest_entry_id: string }) => {
@@ -46,7 +46,7 @@ export const ContestEntryDeleteModal = NiceModal.create(
 
                     <DialogActions>
                         <CancelButton />
-                        <SaveButton />
+                        <SubmitButton />
                     </DialogActions>
                 </Dialog>
             </Formik>

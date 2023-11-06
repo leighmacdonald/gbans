@@ -13,7 +13,7 @@ import {
     BanReasonTextField,
     unbanValidationSchema
 } from '../formik/BanReasonTextField';
-import { CancelButton, SaveButton } from './Buttons';
+import { CancelButton, SubmitButton } from './Buttons';
 
 export interface UnbanModalProps {
     banId: number; // common placeholder for any primary key id for a ban
@@ -66,7 +66,7 @@ export const UnbanSteamModal = NiceModal.create(
 
                     <DialogActions>
                         <CancelButton />
-                        <SaveButton />
+                        <SubmitButton />
                     </DialogActions>
                 </Dialog>
             </Formik>
