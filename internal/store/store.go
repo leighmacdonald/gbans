@@ -197,6 +197,15 @@ func (db *Store) Close() error {
 	return nil
 }
 
+func (db *Store) GetCount(ctx context.Context, query string, args ...any) (int64, error) {
+	var count int64
+	if errCount := db.QueryRow(ctx, query, args...).Scan(&count); errCount != nil {
+		return 0, Err(errCount)
+	}
+
+	return count, nil
+}
+
 func (db *Store) truncateTable(ctx context.Context, table tableName) error {
 	query, args, errQueryArgs := sq.Delete(string(table)).ToSql()
 	if errQueryArgs != nil {

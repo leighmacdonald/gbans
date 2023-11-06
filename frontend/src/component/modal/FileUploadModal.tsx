@@ -21,7 +21,7 @@ import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
 import { Nullable } from '../../util/types';
 import { Heading } from '../Heading';
 import { NameField } from '../formik/NameField';
-import { CancelButton, ResetButton, SaveButton } from './Buttons';
+import { CancelButton, ResetButton, SubmitButton } from './Buttons';
 
 const MethodPaper = styled(Paper)(({ theme }) => ({
     padding: theme.spacing(1),
@@ -237,7 +237,7 @@ export const FileUploadModal = NiceModal.create((): JSX.Element => {
                 <DialogActions>
                     <CancelButton />
                     <ResetButton />
-                    <SaveButton onClick={handleSave} />
+                    <SubmitButton onClick={handleSave} />
                 </DialogActions>
             </Dialog>
         </Formik>

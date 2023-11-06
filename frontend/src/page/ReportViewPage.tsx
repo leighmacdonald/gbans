@@ -63,7 +63,7 @@ export const ReportViewPage = (): JSX.Element => {
         apiGetReport(id)
             .then((response) => {
                 setReport(response);
-                setStateAction(response.report.report_status);
+                setStateAction(response.report_status);
             })
             .catch((e) => {
                 sendFlash(
@@ -77,19 +77,19 @@ export const ReportViewPage = (): JSX.Element => {
     }, [report_id, setReport, id, sendFlash, navigate]);
 
     const loadBans = useCallback(() => {
-        if (!report?.report.target_id) {
+        if (!report?.target_id) {
             return;
         }
         apiGetBansSteam({
             limit: 100,
             deleted: true,
-            steam_id: report?.report.target_id
+            steam_id: report?.target_id
         }).then((history) => {
             setBanHistory(history);
             const cur = history.filter((b) => !b.deleted).pop();
             setCurrentBan(cur);
         });
-    }, [report?.report.target_id]);
+    }, [report?.target_id]);
 
     useEffect(() => {
         loadBans();
@@ -101,12 +101,12 @@ export const ReportViewPage = (): JSX.Element => {
                 sendFlash(
                     'success',
                     `State changed from ${reportStatusString(
-                        report?.report.report_status ?? ReportStatus.Opened
+                        report?.report_status ?? ReportStatus.Opened
                     )} => ${reportStatusString(stateAction)}`
                 );
             })
             .catch(logErr);
-    }, [id, report?.report.report_status, sendFlash, stateAction]);
+    }, [id, report?.report_status, sendFlash, stateAction]);
 
     const renderBan = (ban: IAPIBanRecordProfile) => {
         switch (ban.ban_type) {
@@ -127,10 +127,7 @@ export const ReportViewPage = (): JSX.Element => {
         <Grid container spacing={2}>
             <Grid xs={12} md={8}>
                 {report && (
-                    <ReportComponent
-                        report={report.report}
-                        banHistory={banHistory}
-                    />
+                    <ReportComponent report={report} banHistory={banHistory} />
                 )}
             </Grid>
             <Grid xs={12} md={4}>
@@ -171,15 +168,14 @@ export const ReportViewPage = (): JSX.Element => {
                             sx={{
                                 color: '#111111',
                                 backgroundColor: reportStatusColour(
-                                    report?.report.report_status ??
+                                    report?.report_status ??
                                         ReportStatus.Opened,
                                     theme
                                 )
                             }}
                         >
                             {reportStatusString(
-                                report?.report.report_status ??
-                                    ReportStatus.Opened
+                                report?.report_status ?? ReportStatus.Opened
                             )}
                         </Typography>
                     </Paper>
@@ -211,7 +207,7 @@ export const ReportViewPage = (): JSX.Element => {
                                     secondary={report?.author.personaname}
                                 />
                             </ListItem>
-                            {report?.report.reason && (
+                            {report?.reason && (
                                 <ListItem
                                     sx={{
                                         '&:hover': {
@@ -223,32 +219,26 @@ export const ReportViewPage = (): JSX.Element => {
                                 >
                                     <ListItemText
                                         primary={'Reason'}
-                                        secondary={
-                                            BanReasons[report?.report.reason]
-                                        }
+                                        secondary={BanReasons[report?.reason]}
                                     />
                                 </ListItem>
                             )}
-                            {report?.report.reason &&
-                                report?.report.reason_text != '' && (
-                                    <ListItem
-                                        sx={{
-                                            '&:hover': {
-                                                cursor: 'pointer',
-                                                backgroundColor:
-                                                    theme.palette.background
-                                                        .paper
-                                            }
-                                        }}
-                                    >
-                                        <ListItemText
-                                            primary={'Custom Reason'}
-                                            secondary={
-                                                report?.report.reason_text
-                                            }
-                                        />
-                                    </ListItem>
-                                )}
+                            {report?.reason && report?.reason_text != '' && (
+                                <ListItem
+                                    sx={{
+                                        '&:hover': {
+                                            cursor: 'pointer',
+                                            backgroundColor:
+                                                theme.palette.background.paper
+                                        }
+                                    }}
+                                >
+                                    <ListItemText
+                                        primary={'Custom Reason'}
+                                        secondary={report?.reason_text}
+                                    />
+                                </ListItem>
+                            )}
                         </List>
                     </Paper>
                     {currentUser.permission_level >=
@@ -305,9 +295,7 @@ export const ReportViewPage = (): JSX.Element => {
                                                                 ModalBanSteam,
                                                                 {
                                                                     reportId:
-                                                                        report
-                                                                            .report
-                                                                            .report_id,
+                                                                        report.report_id,
                                                                     steamId:
                                                                         report
                                                                             ?.subject

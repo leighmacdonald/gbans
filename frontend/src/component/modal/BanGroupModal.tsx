@@ -25,7 +25,7 @@ import { DurationField, DurationFieldValidator } from '../formik/DurationField';
 import { GroupIdField, GroupIdFieldValidator } from '../formik/GroupIdField';
 import { NoteField, NoteFieldValidator } from '../formik/NoteField';
 import { SteamIdField, steamIdValidator } from '../formik/SteamIdField';
-import { CancelButton, ResetButton, SaveButton } from './Buttons';
+import { CancelButton, ResetButton, SubmitButton } from './Buttons';
 
 export interface BanGroupFormValues {
     ban_group_id?: number;
@@ -116,7 +116,7 @@ export const BanGroupModal = NiceModal.create(
                     <DialogActions>
                         <CancelButton />
                         <ResetButton />
-                        <SaveButton />
+                        <SubmitButton />
                     </DialogActions>
                 </Dialog>
             </Formik>

@@ -44,7 +44,7 @@ import {
     SteamIDInputValue,
     steamIdValidator
 } from '../formik/SteamIdField';
-import { CancelButton, ResetButton, SaveButton } from './Buttons';
+import { CancelButton, ResetButton, SubmitButton } from './Buttons';
 
 interface BanCIDRFormValues extends SteamIDInputValue {
     cidr: string;
@@ -152,7 +152,7 @@ export const BanCIDRModal = NiceModal.create(
                     <DialogActions>
                         <CancelButton />
                         <ResetButton />
-                        <SaveButton />
+                        <SubmitButton />
                     </DialogActions>
                 </Dialog>
             </Formik>

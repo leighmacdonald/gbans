@@ -1,7 +1,8 @@
 import { formatDistance, parseISO, parseJSON } from 'date-fns';
 import format from 'date-fns/format';
 import SteamID from 'steamid';
-import { Person } from '../api';
+import { apiGetProfile, Person } from '../api';
+import { emptyOrNullString } from './types';
 
 export const parseDateTime = (t: string): Date => {
     return parseISO(t);
@@ -121,5 +122,18 @@ export const isValidHttpURL = (value: string): boolean => {
         return url.protocol === 'http:' || url.protocol === 'https:';
     } catch (_) {
         return false;
+    }
+};
+
+export const steamIDOrEmptyString = async (steamId: string) => {
+    if (emptyOrNullString(steamId)) {
+        return '';
+    }
+    try {
+        const resp = await apiGetProfile(steamId);
+        const sid = new SteamID(resp.player.steam_id);
+        return sid.getSteamID64();
+    } catch (e) {
+        return '';
     }
 };

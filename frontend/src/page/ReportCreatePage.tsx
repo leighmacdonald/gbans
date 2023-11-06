@@ -41,7 +41,7 @@ export const ReportCreatePage = (): JSX.Element => {
                 desc: true
             })
                 .then((resp) => {
-                    setReportHistory(resp);
+                    setReportHistory(resp.data);
                 })
                 .catch(logErr);
         }
@@ -80,23 +80,19 @@ export const ReportCreatePage = (): JSX.Element => {
                                 {
                                     label: 'Status',
                                     tooltip: 'Report Status',
-                                    sortKey: 'report',
+                                    sortKey: 'report_status',
                                     sortable: true,
                                     align: 'left',
                                     queryValue: (o) =>
-                                        reportStatusString(
-                                            o.report.report_status
-                                        ),
+                                        reportStatusString(o.report_status),
                                     renderer: (obj) => (
                                         <Stack direction={'row'} spacing={1}>
                                             <ReportStatusIcon
-                                                reportStatus={
-                                                    obj.report.report_status
-                                                }
+                                                reportStatus={obj.report_status}
                                             />
                                             <Typography variant={'body1'}>
                                                 {reportStatusString(
-                                                    obj.report.report_status
+                                                    obj.report_status
                                                 )}
                                             </Typography>
                                         </Stack>
@@ -133,7 +129,7 @@ export const ReportCreatePage = (): JSX.Element => {
                                                 color={'primary'}
                                                 onClick={() => {
                                                     navigate(
-                                                        `/report/${row.report.report_id}`
+                                                        `/report/${row.report_id}`
                                                     );
                                                 }}
                                             >
@@ -145,7 +141,7 @@ export const ReportCreatePage = (): JSX.Element => {
                                     )
                                 }
                             ]}
-                            defaultSortColumn={'report'}
+                            defaultSortColumn={'report_id'}
                             rowsPerPage={10}
                             rows={reportHistory || []}
                         />

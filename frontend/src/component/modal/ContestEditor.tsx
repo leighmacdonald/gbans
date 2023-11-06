@@ -39,7 +39,7 @@ import {
     numberValidator,
     permissionValidator
 } from '../formik/Validator';
-import { CancelButton, ResetButton, SaveButton } from './Buttons';
+import { CancelButton, ResetButton, SubmitButton } from './Buttons';
 
 interface ContestEditorFormValues {
     contest_id: string;
@@ -207,7 +207,7 @@ export const ContestEditor = NiceModal.create(
                     <DialogActions>
                         <CancelButton />
                         <ResetButton />
-                        <SaveButton />
+                        <SubmitButton />
                     </DialogActions>
                 </Dialog>
             </Formik>

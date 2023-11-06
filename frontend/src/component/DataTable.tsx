@@ -102,6 +102,20 @@ export const descendingComparator = <T,>(a: T, b: T, orderBy: keyof T) =>
 
 export type Order = 'asc' | 'desc';
 
+/**
+ * Deprecated, use LazyTable/LazyTableSimple
+ *
+ * @param columns
+ * @param rows
+ * @param defaultSortColumn
+ * @param rowsPerPage
+ * @param onRowClick
+ * @param isLoading
+ * @param defaultSortOrder
+ * @param preSelectIndex
+ * @param filterFn
+ * @constructor
+ */
 export const DataTable = <T,>({
     columns,
     rows,

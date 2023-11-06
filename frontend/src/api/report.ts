@@ -1,7 +1,8 @@
 import { Theme } from '@mui/material';
 import { BanReason } from './bans';
-import { apiCall, AuthorQueryFilter, TimeStamped } from './common';
+import { apiCall, ReportQueryFilter, TimeStamped } from './common';
 import { Person, UserProfile } from './profile';
+import { LazyResult } from './stats';
 
 export enum ReportStatus {
     Any = -1,
@@ -76,9 +77,8 @@ export interface CreateReportRequest {
     person_message_id: number;
 }
 
-export interface ReportWithAuthor {
+export interface ReportWithAuthor extends Report {
     author: Person;
-    report: Report;
     subject: Person;
 }
 
@@ -89,15 +89,13 @@ export const apiGetReport = async (report_id: number) =>
     await apiCall<ReportWithAuthor>(`/api/report/${report_id}`, 'GET');
 
 export const apiGetReports = async (
-    opts?: AuthorQueryFilter<Report>,
+    opts?: ReportQueryFilter<ReportWithAuthor>,
     abortController?: AbortController
 ) =>
-    await apiCall<ReportWithAuthor[], AuthorQueryFilter<Report>>(
-        `/api/reports`,
-        'POST',
-        opts,
-        abortController
-    );
+    await apiCall<
+        LazyResult<ReportWithAuthor>,
+        ReportQueryFilter<ReportWithAuthor>
+    >(`/api/reports`, 'POST', opts, abortController);
 
 export const apiGetReportMessages = async (
     report_id: number,
