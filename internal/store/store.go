@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"embed"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -80,15 +79,6 @@ type QueryFilter struct {
 	Query   string `json:"query,omitempty" uri:"query"`
 	OrderBy string `json:"order_by,omitempty" uri:"order_by"`
 	Deleted bool   `json:"deleted,omitempty" uri:"deleted"`
-}
-
-func (queryFilter *QueryFilter) orderString() string {
-	dir := "DESC"
-	if !queryFilter.Desc {
-		dir = "ASC"
-	}
-
-	return fmt.Sprintf("%s %s", queryFilter.OrderBy, dir)
 }
 
 func NewTimeStamped() TimeStamped {
@@ -197,9 +187,16 @@ func (db *Store) Close() error {
 	return nil
 }
 
-func (db *Store) GetCount(ctx context.Context, query string, args ...any) (int64, error) {
+func (db *Store) GetCount(ctx context.Context, builder sq.SelectBuilder) (int64, error) {
+	countQuery, argsCount, errCountQuery := builder.ToSql()
+	if errCountQuery != nil {
+		return 0, errors.Wrap(errCountQuery, "Failed to create count query")
+	}
+
 	var count int64
-	if errCount := db.QueryRow(ctx, query, args...).Scan(&count); errCount != nil {
+	if errCount := db.
+		QueryRow(ctx, countQuery, argsCount...).
+		Scan(&count); errCount != nil {
 		return 0, Err(errCount)
 	}
 

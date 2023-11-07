@@ -721,16 +721,12 @@ func (db *Store) GetAppealsByActivity(ctx context.Context, opts AppealQueryFilte
 
 	ands = append(ands, sq.Eq{"b.ban_id": banIds})
 
-	counterQuery, counterArgs, errCounter := db.sb.
+	counterQuery := db.sb.
 		Select("COUNT(b.ban_id)").
 		From("ban b").
-		Where(ands).
-		ToSql()
-	if errCounter != nil {
-		return nil, 0, Err(errCounter)
-	}
+		Where(ands)
 
-	count, errCount := db.GetCount(ctx, counterQuery, counterArgs...)
+	count, errCount := db.GetCount(ctx, counterQuery)
 	if errCount != nil {
 		return nil, 0, Err(errCount)
 	}

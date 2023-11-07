@@ -1297,32 +1297,26 @@ func onAPIGetServerStates(app *App) gin.HandlerFunc {
 	}
 }
 
-func queryFilterFromContext(ctx *gin.Context) (store.QueryFilter, error) {
-	var queryFilter store.QueryFilter
-	if errBind := ctx.BindUri(&queryFilter); errBind != nil {
-		return queryFilter, errors.Wrap(errBind, "Failed to bind URI parameters")
-	}
+func onAPISearchPlayers(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
-	return queryFilter, nil
-}
-
-func onAPIGetPlayers(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		queryFilter, errFilterFromContext := queryFilterFromContext(ctx)
-		if errFilterFromContext != nil {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
-
+		var query store.PlayerQuery
+		if !bind(ctx, log, &query) {
 			return
 		}
 
-		people, errGetPeople := app.db.GetPeople(ctx, queryFilter)
+		people, count, errGetPeople := app.db.GetPeople(ctx, query)
 		if errGetPeople != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
 		}
 
-		ctx.JSON(http.StatusOK, people)
+		ctx.JSON(http.StatusOK, LazyResult{
+			Count: count,
+			Data:  people,
+		})
 	}
 }
 

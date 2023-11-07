@@ -25,10 +25,11 @@ export interface LazyTableProps<T> {
         event: React.MouseEvent<HTMLButtonElement> | null,
         page: number
     ) => void;
+    // Current page, used to calculate db offset
     page?: number;
+    // Total rows in query without paging.
     count?: number;
     rowsPerPage?: RowsPerPage;
-    loading?: boolean;
 }
 
 export interface TableBodyRows<T> {

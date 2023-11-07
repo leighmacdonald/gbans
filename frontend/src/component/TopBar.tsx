@@ -13,6 +13,7 @@ import LiveHelpIcon from '@mui/icons-material/LiveHelp';
 import MailIcon from '@mui/icons-material/Mail';
 import MenuIcon from '@mui/icons-material/Menu';
 import NewspaperIcon from '@mui/icons-material/Newspaper';
+import PersonIcon from '@mui/icons-material/Person';
 import ReportIcon from '@mui/icons-material/Report';
 import SettingsIcon from '@mui/icons-material/Settings';
 import StorageIcon from '@mui/icons-material/Storage';
@@ -224,7 +225,7 @@ export const TopBar = () => {
             items.push({
                 to: '/admin/people',
                 text: 'People',
-                icon: <EmojiEventsIcon sx={colourOpts} />
+                icon: <PersonIcon sx={colourOpts} />
             });
         }
         if (currentUser.permission_level >= PermissionLevel.Admin) {
