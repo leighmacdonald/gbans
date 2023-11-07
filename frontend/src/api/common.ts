@@ -19,6 +19,25 @@ export enum PermissionLevel {
     Admin = 100
 }
 
+export const permissionLevelString = (level: PermissionLevel) => {
+    switch (level) {
+        case PermissionLevel.Admin:
+            return 'Admin';
+        case PermissionLevel.Editor:
+            return 'Editor';
+        case PermissionLevel.Banned:
+            return 'Banned';
+        case PermissionLevel.User:
+            return 'User';
+        case PermissionLevel.Moderator:
+            return 'Moderator';
+        case PermissionLevel.Guest:
+            return 'Guest';
+        default:
+            return 'Unknown';
+    }
+};
+
 export interface DataCount {
     count: number;
 }

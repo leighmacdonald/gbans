@@ -270,7 +270,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		editorRoute.DELETE("/api/filters/:word_id", onAPIDeleteWordFilter(app))
 		editorRoute.POST("/api/filter_match", onAPIPostWordMatch(app))
 		editorRoute.GET("/export/bans/valve/network", onAPIExportBansValveIP(app))
-		editorRoute.GET("/api/players", onAPIGetPlayers(app))
+		editorRoute.POST("/api/players", onAPISearchPlayers(app))
 	}
 
 	modGrp := engine.Group("/")

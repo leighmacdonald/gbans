@@ -438,37 +438,76 @@ func (db *Store) GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collec
 	return people, nil
 }
 
-func (db *Store) GetPeople(ctx context.Context, queryFilter QueryFilter) (People, error) {
-	queryBuilder := db.sb.Select(profileColumns...).From("person")
-	if queryFilter.Query != "" {
-		// TODO add lower-cased functional index to avoid tableName scan
-		queryBuilder = queryBuilder.Where(sq.ILike{"personaname": strings.ToLower(queryFilter.Query)})
+type PlayerQuery struct {
+	QueryFilter
+	SteamID     StringSID `json:"steam_id"`
+	Personaname string    `json:"personaname"`
+}
+
+func (db *Store) GetPeople(ctx context.Context, queryFilter PlayerQuery) (People, int64, error) {
+	queryBuilder := db.sb.
+		Select("p.steam_id", "p.created_on", "p.updated_on",
+			"p.communityvisibilitystate", "p.profilestate", "p.personaname", "p.profileurl", "p.avatar",
+			"p.avatarmedium", "p.avatarfull", "p.avatarhash", "p.personastate", "p.realname", "p.timecreated",
+			"p.loccountrycode", "p.locstatecode", "p.loccityid", "p.permission_level", "p.discord_id",
+			"p.community_banned", "p.vac_bans", "p.game_bans", "p.economy_ban", "p.days_since_last_ban",
+			"p.updated_on_steam", "p.muted").
+		From("person p")
+
+	conditions := sq.And{}
+
+	if queryFilter.SteamID != "" {
+		steamID, errSteamID := queryFilter.SteamID.SID64(ctx)
+		if errSteamID != nil {
+			return nil, 0, errors.Wrap(errSteamID, "Invalid Steam ID")
+		}
+
+		conditions = append(conditions, sq.Eq{"p.steam_id": steamID.Int64()})
 	}
+
+	if queryFilter.Personaname != "" {
+		// TODO add lower-cased functional index to avoid table scan
+		conditions = append(conditions, sq.ILike{"p.personaname": strings.ToLower(queryFilter.Personaname)})
+	}
+
+	limit := uint64(25)
+
+	if queryFilter.Limit == 0 && queryFilter.Limit <= 100 {
+		limit = queryFilter.Limit
+	}
+
+	queryBuilder = queryBuilder.Limit(limit)
 
 	if queryFilter.Offset > 0 {
-		queryBuilder = queryBuilder.Offset(queryFilter.Offset)
+		queryBuilder = queryBuilder.Offset(queryFilter.Offset * limit)
 	}
 
+	direction := "DESC"
+	if !queryFilter.Desc {
+		direction = "ASC"
+	}
+
+	var orderBy string
 	if queryFilter.OrderBy != "" {
-		queryBuilder = queryBuilder.OrderBy(queryFilter.orderString())
+		orderBy = fmt.Sprintf("p.%s", queryFilter.OrderBy)
+	} else {
+		orderBy = "p.updated_on_steam"
 	}
 
-	if queryFilter.Limit == 0 {
-		queryBuilder = queryBuilder.Limit(100)
-	} else {
-		queryBuilder = queryBuilder.Limit(queryFilter.Limit)
-	}
+	queryBuilder = queryBuilder.
+		OrderBy(fmt.Sprintf("%s %s", orderBy, direction)).
+		Where(conditions)
 
 	query, args, errQueryArgs := queryBuilder.ToSql()
 	if errQueryArgs != nil {
-		return nil, errors.Wrapf(errQueryArgs, "Failed to create query")
+		return nil, 0, errors.Wrap(errQueryArgs, "Failed to create query")
 	}
 
 	var people People
 
 	rows, errQuery := db.Query(ctx, query, args...)
 	if errQuery != nil {
-		return nil, Err(errQuery)
+		return nil, 0, errQuery
 	}
 
 	defer rows.Close()
@@ -487,7 +526,7 @@ func (db *Store) GetPeople(ctx context.Context, queryFilter QueryFilter) (People
 				&person.LocCityID, &person.PermissionLevel, &person.DiscordID, &person.CommunityBanned,
 				&person.VACBans, &person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan,
 				&person.UpdatedOnSteam, &person.Muted); errScan != nil {
-			return nil, errors.Wrapf(errScan, "Failed to scan person")
+			return nil, 0, errors.Wrapf(errScan, "Failed to scan person")
 		}
 
 		person.SteamID = steamid.New(steamID)
@@ -495,7 +534,15 @@ func (db *Store) GetPeople(ctx context.Context, queryFilter QueryFilter) (People
 		people = append(people, person)
 	}
 
-	return people, nil
+	count, errCount := db.GetCount(ctx, db.sb.
+		Select("COUNT(p.steam_id)").
+		From("person p").
+		Where(conditions))
+	if errCount != nil {
+		return nil, 0, errors.Wrap(errCount, "Failed to exec count query")
+	}
+
+	return people, count, nil
 }
 
 // GetOrCreatePersonBySteamID returns a person by their steam_id, creating a new person if the steam_id

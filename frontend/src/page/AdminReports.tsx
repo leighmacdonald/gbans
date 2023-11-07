@@ -100,7 +100,7 @@ export const AdminReports = () => {
         target
     ]);
 
-    const onFilterSumbit = useCallback((values: FilterValues) => {
+    const onFilterSubmit = useCallback((values: FilterValues) => {
         setAuthor(values.author_id);
         setTarget(values.target_id);
         setFilterStatus(values.report_status);
@@ -120,7 +120,7 @@ export const AdminReports = () => {
                     iconLeft={<FilterListIcon />}
                 >
                     <Formik<FilterValues>
-                        onSubmit={onFilterSumbit}
+                        onSubmit={onFilterSubmit}
                         onReset={onFilterReset}
                         initialValues={{
                             report_status: filterStatus,
@@ -165,7 +165,6 @@ export const AdminReports = () => {
                         showPager={true}
                         count={totalRows}
                         rows={reports}
-                        loading={loading}
                         page={page}
                         rowsPerPage={rowPerPageCount}
                         sortOrder={sortOrder}

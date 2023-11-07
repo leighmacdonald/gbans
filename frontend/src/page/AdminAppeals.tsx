@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import CheckIcon from '@mui/icons-material/Check';
 import DoNotDisturbIcon from '@mui/icons-material/DoNotDisturb';
 import FiberNewIcon from '@mui/icons-material/FiberNew';
 import FilterListIcon from '@mui/icons-material/FilterList';
@@ -33,11 +32,11 @@ import {
     AuthorIDField,
     authorIdValidator
 } from '../component/formik/AuthorIdField';
+import { FilterButtons } from '../component/formik/FilterButtons';
 import {
     TargetIDField,
     targetIdValidator
 } from '../component/formik/TargetIdField';
-import { ResetButton, SubmitButton } from '../component/modal/Buttons';
 import { logErr } from '../util/errors';
 import { steamIdQueryValue } from '../util/text';
 
@@ -158,17 +157,7 @@ export const AdminAppeals = () => {
                                 </Stack>
                             </Grid>
                             <Grid xs={12} padding={2}>
-                                <Stack
-                                    direction={'row'}
-                                    spacing={2}
-                                    flexDirection={'row-reverse'}
-                                >
-                                    <SubmitButton
-                                        label={'Apply'}
-                                        startIcon={<CheckIcon />}
-                                    />
-                                    <ResetButton />
-                                </Stack>
+                                <FilterButtons />
                             </Grid>
                         </Grid>
                     </Formik>

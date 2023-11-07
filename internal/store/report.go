@@ -256,13 +256,10 @@ func (db *Store) GetReports(ctx context.Context, opts ReportQueryFilter) ([]Repo
 		conditions = append(conditions, sq.Eq{"r.report_status": opts.ReportStatus})
 	}
 
-	counterQuery, counterArgs, errCounter := db.sb.
+	counterQuery := db.sb.
 		Select("count(r.report_id) as total").
 		From("report r").
-		Where(conditions).ToSql()
-	if errCounter != nil {
-		return nil, 0, Err(errCounter)
-	}
+		Where(conditions)
 
 	builder := db.sb.
 		Select("r.report_id", "r.author_id", "r.reported_id", "r.report_status",
@@ -293,7 +290,7 @@ func (db *Store) GetReports(ctx context.Context, opts ReportQueryFilter) ([]Repo
 		builder = builder.OrderBy(fmt.Sprintf("%s ASC", order))
 	}
 
-	count, errCount := db.GetCount(ctx, counterQuery, counterArgs...)
+	count, errCount := db.GetCount(ctx, counterQuery)
 	if errCount != nil {
 		return nil, 0, Err(errCount)
 	}

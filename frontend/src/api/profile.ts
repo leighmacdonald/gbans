@@ -4,8 +4,10 @@ import {
     DataCount,
     PermissionLevel,
     QueryFilter,
-    TimeStamped
+    TimeStamped,
+    transformTimeStampedDates
 } from './common';
+import { LazyResult } from './stats';
 
 export const defaultAvatarHash = 'fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb';
 
@@ -114,8 +116,24 @@ export const apiGetCurrentProfile = async (abortController: AbortController) =>
         abortController
     );
 
-export const apiGetPeople = async (abortController?: AbortController) =>
-    await apiCall<Person[]>(`/api/players`, 'GET', undefined, abortController);
+export interface PlayerQuery extends QueryFilter<Person> {
+    steam_id: string;
+    personaname: string;
+}
+
+export const apiSearchPeople = async (
+    opts: PlayerQuery,
+    abortController?: AbortController
+) => {
+    const people = await apiCall<LazyResult<Person>>(
+        `/api/players`,
+        'POST',
+        opts,
+        abortController
+    );
+    people.data = people.data.map(transformTimeStampedDates);
+    return people;
+};
 
 export const apiLinkDiscord = async (opts: { code: string }) =>
     await apiCall(`/api/auth/discord?code=${opts.code}`, 'GET');
