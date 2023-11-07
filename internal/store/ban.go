@@ -764,7 +764,7 @@ func (db *Store) GetAppealsByActivity(ctx context.Context, opts AppealQueryFilte
 
 	offset := uint64(0)
 	if opts.Offset > 0 {
-		offset = opts.Offset
+		offset = opts.Offset * limit
 	}
 
 	builder = builder.Limit(limit).Offset(offset)

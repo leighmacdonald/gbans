@@ -60,22 +60,24 @@ export const TopBar = () => {
     const navigate = useNavigate();
     const { currentUser } = useCurrentUserCtx();
     const { notifications } = useNotifications();
+    const theme = useTheme();
+    const colourMode = useColourModeCtx();
 
     const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
         null
     );
+
     const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(
         null
     );
+
     const [anchorElAdmin, setAnchorElAdmin] =
         React.useState<null | HTMLElement>(null);
-
-    const theme = useTheme();
-    const colourMode = useColourModeCtx();
 
     const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorElNav(event.currentTarget);
     };
+
     const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorElUser(event.currentTarget);
     };
@@ -91,9 +93,11 @@ export const TopBar = () => {
     const handleCloseUserMenu = () => {
         setAnchorElUser(null);
     };
+
     const handleCloseAdminMenu = () => {
         setAnchorElAdmin(null);
     };
+
     const loadRoute = useCallback(
         (route: string) => {
             navigate(route);
@@ -136,18 +140,6 @@ export const TopBar = () => {
                 icon: <ReportIcon sx={topColourOpts} />
             });
         }
-        // if (currentUser.permission_level >= PermissionLevel.Admin) {
-        //     items.push({
-        //         to: '/pug',
-        //         text: 'PUGs',
-        //         icon: <SportsKabaddiIcon sx={topColourOpts} />
-        //     });
-        //     items.push({
-        //         to: '/logs',
-        //         text: 'Logs',
-        //         icon: <QueryStatsIcon sx={topColourOpts} />
-        //     });
-        // }
         if (currentUser.ban_id > 0) {
             items.push({
                 to: `/ban/${currentUser.ban_id}`,
@@ -227,6 +219,11 @@ export const TopBar = () => {
             items.push({
                 to: '/admin/contests',
                 text: 'Contests',
+                icon: <EmojiEventsIcon sx={colourOpts} />
+            });
+            items.push({
+                to: '/admin/people',
+                text: 'People',
                 icon: <EmojiEventsIcon sx={colourOpts} />
             });
         }

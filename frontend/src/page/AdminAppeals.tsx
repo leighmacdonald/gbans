@@ -1,12 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import CheckIcon from '@mui/icons-material/Check';
 import DoNotDisturbIcon from '@mui/icons-material/DoNotDisturb';
 import FiberNewIcon from '@mui/icons-material/FiberNew';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import GppGoodIcon from '@mui/icons-material/GppGood';
 import SnoozeIcon from '@mui/icons-material/Snooze';
-import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
@@ -26,6 +24,7 @@ import { Order, RowsPerPage } from '../component/DataTable';
 import { LazyTable } from '../component/LazyTable';
 import { LoadingSpinner } from '../component/LoadingSpinner';
 import { PersonCell } from '../component/PersonCell';
+import { TableCellLink } from '../component/TableCellLink';
 import {
     AppealStateField,
     appealStateFielValidator
@@ -216,14 +215,10 @@ export const AdminAppeals = () => {
                                 align: 'left',
                                 queryValue: (o) => `${o.ban_id}`,
                                 renderer: (obj) => (
-                                    <Button
-                                        fullWidth
-                                        component={Link}
-                                        variant={'text'}
+                                    <TableCellLink
+                                        label={`#${obj.ban_id}`}
                                         to={`/ban/${obj.ban_id}`}
-                                    >
-                                        #{obj.ban_id}
-                                    </Button>
+                                    />
                                 )
                             },
                             {
