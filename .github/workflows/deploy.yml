@@ -23,7 +23,6 @@ jobs:
         run: yarn install --immutable
 
       - name: Prettier
-        working-directory: ./frontend
         run: make lint_ts
 
   lint-golangci:
