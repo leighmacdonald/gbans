@@ -120,7 +120,7 @@ export const LazyTableSimple = <T,>({
                 rowsPerPage={rowsPerPage}
                 rows={rows}
                 showPager={showPager}
-                onRowsPerPagerChange={onPagerRowsPerPageChange}
+                onRowsPerPageChange={onPagerRowsPerPageChange}
                 onPageChange={onPagerRowsChange}
             />
         </Stack>

@@ -13,6 +13,7 @@ import {
     UserProfile
 } from './profile';
 import { UserMessage } from './report';
+import { LazyResult } from './stats';
 
 export enum AppealState {
     Any = -1,
@@ -338,17 +339,22 @@ export const apiGetBanSteam = async (ban_id: number, deleted = false) => {
     return resp;
 };
 
+export interface AppealQueryFilter extends QueryFilter<AppealOverview> {
+    author_id?: string;
+    target_id?: string;
+    appeal_state: AppealState;
+}
+
 export const apiGetAppeals = async (
-    opts?: BansQueryFilter,
+    opts: AppealQueryFilter,
     abortController?: AbortController
 ) => {
-    const resp = await apiCall<AppealOverview[]>(
-        `/api/appeals`,
-        'POST',
-        opts ?? {},
-        abortController
-    );
-    return resp.map((r) => applyDateTime(r));
+    const appeals = await apiCall<
+        LazyResult<AppealOverview>,
+        AppealQueryFilter
+    >(`/api/appeals`, 'POST', opts, abortController);
+    appeals.data = appeals.data.map((r) => applyDateTime(r));
+    return appeals;
 };
 
 export const apiCreateBanSteam = async (p: BanPayloadSteam) =>

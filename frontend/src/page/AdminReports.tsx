@@ -135,7 +135,7 @@ export const AdminReports = () => {
                     >
                         <Grid container>
                             <Grid xs={12} padding={2}>
-                                <Stack direction={'row'} spacing={3}>
+                                <Stack direction={'row'} spacing={2}>
                                     <ReportStatusField />
                                     <AuthorIDField />
                                     <TargetIDField />
@@ -181,7 +181,7 @@ export const AdminReports = () => {
                         onPageChange={(_, newPage: number) => {
                             setPage(newPage);
                         }}
-                        onRowsPerPagerChange={(
+                        onRowsPerPageChange={(
                             event: React.ChangeEvent<
                                 HTMLInputElement | HTMLTextAreaElement
                             >
