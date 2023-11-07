@@ -2,6 +2,7 @@ package discord
 
 import (
 	"fmt"
+	"sync/atomic"
 
 	"github.com/bwmarrin/discordgo"
 	embed "github.com/leighmacdonald/discordgo-embed"
@@ -16,7 +17,7 @@ var ErrCommandFailed = errors.New("Command failed")
 type Bot struct {
 	log               *zap.Logger
 	session           *discordgo.Session
-	isReady           bool
+	isReady           atomic.Bool
 	commandHandlers   map[Cmd]CommandHandler
 	Colour            LevelColors
 	unregisterOnStart bool
@@ -71,7 +72,7 @@ func New(logger *zap.Logger, token string, appID string, unregisterOnStart bool,
 	bot := &Bot{
 		log:               logger.Named("discord"),
 		session:           session,
-		isReady:           false,
+		isReady:           atomic.Bool{},
 		unregisterOnStart: unregisterOnStart,
 		appID:             appID,
 		extURL:            extURL,
@@ -175,11 +176,11 @@ func (bot *Bot) onConnect(_ *discordgo.Session, _ *discordgo.Connect) {
 
 	bot.log.Info("Service state changed", zap.String("state", "connected"))
 
-	bot.isReady = true
+	bot.isReady.Store(true)
 }
 
 func (bot *Bot) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
-	bot.isReady = false
+	bot.isReady.Store(false)
 
 	bot.log.Info("Service state changed", zap.String("state", "disconnected"))
 }
@@ -225,7 +226,7 @@ func (bot *Bot) sendInteractionResponse(session *discordgo.Session, interaction 
 }
 
 func (bot *Bot) SendPayload(payload Payload) {
-	if !bot.isReady {
+	if !bot.isReady.Load() {
 		return
 	}
 

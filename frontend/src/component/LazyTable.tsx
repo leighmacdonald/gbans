@@ -198,7 +198,7 @@ export const LazyTable = <T,>({
                     bgColor={theme.palette.background.paper}
                     onSortOrderChanged={onSortOrderChanged}
                 />
-                {<LazyTableBody rows={rows} columns={columns} />}
+                <LazyTableBody rows={rows} columns={columns} />
                 {showPager &&
                 page != undefined &&
                 count != undefined &&

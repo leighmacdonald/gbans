@@ -1,19 +1,17 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
 import CheckIcon from '@mui/icons-material/Check';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import ReportIcon from '@mui/icons-material/Report';
-import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import { useTheme } from '@mui/material/styles';
 import { parseISO } from 'date-fns';
 import format from 'date-fns/format';
 import { Formik } from 'formik';
 import * as yup from 'yup';
 import {
     apiGetReports,
+    BanReasons,
     ReportQueryFilter,
     ReportStatus,
     reportStatusString,
@@ -24,6 +22,7 @@ import { Order, RowsPerPage } from '../component/DataTable';
 import { LazyTable } from '../component/LazyTable';
 import { LoadingSpinner } from '../component/LoadingSpinner';
 import { PersonCell } from '../component/PersonCell';
+import { TableCellLink } from '../component/TableCellLink';
 import {
     AuthorIDField,
     authorIdValidator
@@ -65,7 +64,6 @@ export const AdminReports = () => {
     const [totalRows, setTotalRows] = useState<number>(0);
     const [author, setAuthor] = useState('');
     const [target, setTarget] = useState('');
-    const theme = useTheme();
 
     useEffect(() => {
         const opts: ReportQueryFilter<ReportWithAuthor> = {
@@ -201,16 +199,10 @@ export const AdminReports = () => {
                                 align: 'left',
                                 queryValue: (o) => `${o.report_id}`,
                                 renderer: (obj) => (
-                                    <Link
-                                        component={RouterLink}
-                                        variant={'subtitle2'}
+                                    <TableCellLink
                                         to={`/report/${obj.report_id}`}
-                                        sx={{
-                                            color: theme.palette.text.primary
-                                        }}
-                                    >
-                                        #{obj.report_id}
-                                    </Link>
+                                        label={`#${obj.report_id}`}
+                                    />
                                 )
                             },
                             {
@@ -231,6 +223,50 @@ export const AdminReports = () => {
                                         </Typography>
                                     );
                                 }
+                            },
+                            {
+                                label: 'Reporter',
+                                tooltip: 'Reporter',
+                                sortType: 'string',
+                                align: 'left',
+                                queryValue: (o) =>
+                                    o.subject.personaname + o.subject.steam_id,
+                                renderer: (row) => (
+                                    <PersonCell
+                                        steam_id={row.author.steam_id}
+                                        personaname={row.author.personaname}
+                                        avatar_hash={row.author.avatar}
+                                    ></PersonCell>
+                                )
+                            },
+                            {
+                                label: 'Subject',
+                                tooltip: 'Subject',
+                                sortType: 'string',
+                                align: 'left',
+                                width: '250px',
+                                queryValue: (o) =>
+                                    o.subject.personaname + o.subject.steam_id,
+                                renderer: (row) => (
+                                    <PersonCell
+                                        steam_id={row.subject.steam_id}
+                                        personaname={row.subject.personaname}
+                                        avatar_hash={row.subject.avatar}
+                                    ></PersonCell>
+                                )
+                            },
+                            {
+                                label: 'Reason',
+                                tooltip: 'Reason For Report',
+                                sortType: 'number',
+                                sortKey: 'reason',
+                                align: 'left',
+                                width: '250px',
+                                renderer: (row) => (
+                                    <Typography variant={'body1'}>
+                                        {BanReasons[row.reason]}
+                                    </Typography>
+                                )
                             },
                             {
                                 label: 'Created',
@@ -273,37 +309,6 @@ export const AdminReports = () => {
                                         </Typography>
                                     );
                                 }
-                            },
-                            {
-                                label: 'Subject',
-                                tooltip: 'Subject',
-                                sortType: 'string',
-                                align: 'left',
-                                width: '250px',
-                                queryValue: (o) =>
-                                    o.subject.personaname + o.subject.steam_id,
-                                renderer: (row) => (
-                                    <PersonCell
-                                        steam_id={row.subject.steam_id}
-                                        personaname={row.subject.personaname}
-                                        avatar_hash={row.subject.avatar}
-                                    ></PersonCell>
-                                )
-                            },
-                            {
-                                label: 'Reporter',
-                                tooltip: 'Reporter',
-                                sortType: 'string',
-                                align: 'left',
-                                queryValue: (o) =>
-                                    o.subject.personaname + o.subject.steam_id,
-                                renderer: (row) => (
-                                    <PersonCell
-                                        steam_id={row.author.steam_id}
-                                        personaname={row.author.personaname}
-                                        avatar_hash={row.author.avatar}
-                                    ></PersonCell>
-                                )
                             }
                         ]}
                     />
