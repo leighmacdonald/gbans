@@ -20,7 +20,7 @@ jobs:
 
       - name: Install modules
         working-directory: ./frontend
-        run: yarn install --immutable
+        run: yarn
 
       - name: Prettier
         run: make lint_ts
