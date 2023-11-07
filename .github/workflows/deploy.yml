@@ -12,7 +12,7 @@ permissions: write-all
 
 jobs:
   lint-ts:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       GBANS_GENERAL_STEAM_KEY: ${{ secrets.GBANS_GENERAL_STEAM_KEY }}
     steps:
@@ -20,13 +20,13 @@ jobs:
 
       - name: Install modules
         working-directory: ./frontend
-        run: yarn
+        run: yarn install
 
       - name: Prettier
         run: make lint_ts
 
   lint-golangci:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
@@ -41,7 +41,7 @@ jobs:
           args: --timeout=10m
 
   staticcheck:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
@@ -52,7 +52,7 @@ jobs:
 
   lint-codeql:
     name: Analyze
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     strategy:
       fail-fast: false
@@ -80,7 +80,7 @@ jobs:
 
   docker-test:
     needs: [lint-ts, lint-golangci, lint-codeql, staticcheck]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       GBANS_GENERAL_STEAM_KEY: ${{ secrets.GBANS_GENERAL_STEAM_KEY }}
     steps:
