@@ -18,7 +18,7 @@ export interface LazyTableProps<T> {
     sortOrder: Order;
     rows: T[];
     showPager?: boolean;
-    onRowsPerPagerChange?: React.ChangeEventHandler<
+    onRowsPerPageChange?: React.ChangeEventHandler<
         HTMLTextAreaElement | HTMLInputElement
     >;
     onPageChange?: (
@@ -178,7 +178,7 @@ export const LazyTable = <T,>({
     rows,
     onSortColumnChanged,
     onSortOrderChanged,
-    onRowsPerPagerChange,
+    onRowsPerPageChange,
     onPageChange,
     showPager,
     page,
@@ -212,7 +212,7 @@ export const LazyTable = <T,>({
                                 showFirstButton
                                 showLastButton
                                 rowsPerPage={rowsPerPage}
-                                onRowsPerPageChange={onRowsPerPagerChange}
+                                onRowsPerPageChange={onRowsPerPageChange}
                                 onPageChange={onPageChange}
                             />
                         </TableRow>

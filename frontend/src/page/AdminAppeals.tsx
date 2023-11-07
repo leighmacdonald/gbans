@@ -1,28 +1,22 @@
-import React, { ReactNode, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import CheckIcon from '@mui/icons-material/Check';
 import DoNotDisturbIcon from '@mui/icons-material/DoNotDisturb';
 import FiberNewIcon from '@mui/icons-material/FiberNew';
+import FilterListIcon from '@mui/icons-material/FilterList';
 import GppGoodIcon from '@mui/icons-material/GppGood';
 import SnoozeIcon from '@mui/icons-material/Snooze';
-import { TablePagination } from '@mui/material';
-import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Card from '@mui/material/Card';
-import CardActions from '@mui/material/CardActions';
-import CardContent from '@mui/material/CardContent';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import MenuItem from '@mui/material/MenuItem';
-import Select, { SelectChangeEvent } from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import format from 'date-fns/format';
-import { addDays, isAfter, isBefore } from 'date-fns/fp';
-import { noop } from 'lodash-es';
+import { Formik } from 'formik';
+import * as yup from 'yup';
 import {
     apiGetAppeals,
     AppealOverview,
+    AppealQueryFilter,
     AppealState,
     appealStateString,
     BanReason
@@ -30,58 +24,35 @@ import {
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { Order, RowsPerPage } from '../component/DataTable';
 import { LazyTable } from '../component/LazyTable';
-import { LazyTablePaginator } from '../component/LazyTablePaginator';
 import { LoadingSpinner } from '../component/LoadingSpinner';
 import { PersonCell } from '../component/PersonCell';
+import {
+    AppealStateField,
+    appealStateFielValidator
+} from '../component/formik/AppealStateField';
+import {
+    AuthorIDField,
+    authorIdValidator
+} from '../component/formik/AuthorIdField';
+import {
+    TargetIDField,
+    targetIdValidator
+} from '../component/formik/TargetIdField';
+import { ResetButton, SubmitButton } from '../component/modal/Buttons';
 import { logErr } from '../util/errors';
 import { steamIdQueryValue } from '../util/text';
 
-interface BasicStatCardProps {
-    title: string;
-    value: string | number;
-    desc: string;
-    actionLabel?: string;
-    onAction?: () => void;
-    icon?: ReactNode;
+interface AppealFilterValues {
+    appeal_state: AppealState;
+    author_id: string;
+    target_id: string;
 }
 
-const BasicStatCard = ({
-    title,
-    value,
-    desc,
-    actionLabel,
-    onAction,
-    icon
-}: BasicStatCardProps) => (
-    <Card sx={{ minWidth: 275 }} variant={'outlined'}>
-        <CardContent>
-            <Stack direction={'row'} spacing={1}>
-                {icon}
-                <Typography
-                    sx={{ fontSize: 14 }}
-                    color="text.secondary"
-                    gutterBottom
-                >
-                    {title}
-                </Typography>
-            </Stack>
-            <Typography variant="h1" component="div">
-                {value}
-            </Typography>
-            {/*<Typography sx={{ mb: 1.5 }} color="text.secondary">*/}
-            {/*    adjective*/}
-            {/*</Typography>*/}
-            <Typography variant="body2">{desc}</Typography>
-        </CardContent>
-        {actionLabel && (
-            <CardActions>
-                <Button size="small" onClick={onAction ?? noop}>
-                    {actionLabel}
-                </Button>
-            </CardActions>
-        )}
-    </Card>
-);
+const validationSchema = yup.object({
+    appeal_state: appealStateFielValidator,
+    author_id: authorIdValidator,
+    target_id: targetIdValidator
+});
 
 export const AdminAppeals = () => {
     const [sortOrder, setSortOrder] = useState<Order>('desc');
@@ -96,73 +67,42 @@ export const AdminAppeals = () => {
         AppealState.Any
     );
     const [loading, setLoading] = useState(false);
-    const [totalRows] = useState<number>(0);
+    const [totalRows, setTotalRows] = useState<number>(0);
+    const [author, setAuthor] = useState('');
+    const [target, setTarget] = useState('');
 
     useEffect(() => {
         const abortController = new AbortController();
+
+        const opts: AppealQueryFilter = {
+            desc: sortOrder == 'desc',
+            order_by: sortColumn,
+            author_id: author,
+            target_id: target,
+            offset: page,
+            limit: rowPerPageCount,
+            appeal_state: appealState
+        };
+
         setLoading(true);
-        apiGetAppeals(undefined, abortController)
+        apiGetAppeals(opts, abortController)
             .then((response) => {
-                setAppeals(response);
+                setAppeals(response.data);
+                setTotalRows(response.count);
             })
             .catch(logErr)
             .finally(() => setLoading(false));
 
         return () => abortController.abort();
-    }, []);
-
-    const rows = useMemo(() => {
-        if (appealState == AppealState.Any) {
-            return appeals;
-        }
-        return appeals.filter((f) => f.appeal_state == appealState);
-    }, [appealState, appeals]);
-
-    const newAppeals = useMemo(() => {
-        return appeals.filter(
-            (value) =>
-                value.appeal_state == AppealState.Open &&
-                isAfter(addDays(-2, new Date()), value.updated_on)
-        ).length;
-    }, [appeals]);
-
-    const deniedAppeals = useMemo(() => {
-        return appeals.filter(
-            (value) =>
-                value.appeal_state == AppealState.Denied ||
-                value.appeal_state == AppealState.NoAppeal
-        ).length;
-    }, [appeals]);
-
-    const oldAppeals = useMemo(() => {
-        return appeals.filter(
-            (value) =>
-                value.appeal_state == AppealState.Open &&
-                isBefore(addDays(-2, new Date()), value.updated_on)
-        ).length;
-    }, [appeals]);
-
-    const resolvedAppeals = useMemo(() => {
-        return appeals.filter((value) => value.appeal_state != AppealState.Open)
-            .length;
-    }, [appeals]);
-
-    const selectItems = useMemo(() => {
-        return [
-            AppealState.Any,
-            AppealState.Open,
-            AppealState.Denied,
-            AppealState.Accepted,
-            AppealState.Reduced,
-            AppealState.NoAppeal
-        ].map((as) => {
-            return (
-                <MenuItem value={as} key={`as-${as}`}>
-                    {appealStateString(as)}
-                </MenuItem>
-            );
-        });
-    }, []);
+    }, [
+        appealState,
+        author,
+        page,
+        rowPerPageCount,
+        sortColumn,
+        sortOrder,
+        target
+    ]);
 
     const tableIcon = useMemo(() => {
         if (loading) {
@@ -180,129 +120,73 @@ export const AdminAppeals = () => {
         }
     }, [appealState, loading]);
 
+    const onSubmit = useCallback((values: AppealFilterValues) => {
+        setAppealState(values.appeal_state);
+        setAuthor(values.author_id);
+        setTarget(values.target_id);
+    }, []);
+
+    const onReset = useCallback(() => {
+        setAppealState(AppealState.Any);
+        setAuthor('');
+        setTarget('');
+    }, []);
+
     return (
         <Grid container spacing={3}>
-            <Grid container spacing={2}>
-                <Grid xs={6} md={3}>
-                    <BasicStatCard
-                        value={newAppeals}
-                        title={'New/Open Appeals'}
-                        desc={'Recently created & open appeals'}
-                        icon={<FiberNewIcon />}
-                    />
-                </Grid>
-
-                <Grid xs={6} md={3}>
-                    <BasicStatCard
-                        value={oldAppeals}
-                        title={'Old/Open'}
-                        desc={
-                            'Appeals with no activity for >2days, but not resolved'
-                        }
-                        icon={<SnoozeIcon />}
-                    />
-                </Grid>
-
-                <Grid xs={6} md={3}>
-                    <BasicStatCard
-                        value={deniedAppeals}
-                        title={'Denied'}
-                        desc={'Number of Denied & No Appeal '}
-                        icon={<DoNotDisturbIcon />}
-                    />
-                </Grid>
-
-                <Grid xs={6} md={3}>
-                    <BasicStatCard
-                        value={resolvedAppeals}
-                        title={'Accepted'}
-                        desc={'Users with accept appeals'}
-                        icon={<GppGoodIcon />}
-                    />
-                </Grid>
+            <Grid xs={12}>
+                <ContainerWithHeader
+                    title={'Recent Open Appeal Activity'}
+                    iconLeft={<FilterListIcon />}
+                >
+                    <Formik<AppealFilterValues>
+                        initialValues={{
+                            appeal_state: appealState,
+                            author_id: author,
+                            target_id: target
+                        }}
+                        onReset={onReset}
+                        onSubmit={onSubmit}
+                        validationSchema={validationSchema}
+                        validateOnChange={true}
+                    >
+                        <Grid container>
+                            <Grid xs={12} padding={2}>
+                                <Stack direction={'row'} spacing={2}>
+                                    <AppealStateField />
+                                    <AuthorIDField />
+                                    <TargetIDField />
+                                </Stack>
+                            </Grid>
+                            <Grid xs={12} padding={2}>
+                                <Stack
+                                    direction={'row'}
+                                    spacing={2}
+                                    flexDirection={'row-reverse'}
+                                >
+                                    <SubmitButton
+                                        label={'Apply'}
+                                        startIcon={<CheckIcon />}
+                                    />
+                                    <ResetButton />
+                                </Stack>
+                            </Grid>
+                        </Grid>
+                    </Formik>
+                </ContainerWithHeader>
             </Grid>
-            <Grid
-                xs={12}
-                container
-                justifyContent="space-between"
-                alignItems="center"
-                flexDirection={{ xs: 'column', sm: 'row' }}
-            >
-                <Grid xs={3}>
-                    <Box sx={{ width: 120 }}>
-                        <FormControl fullWidth>
-                            <InputLabel id="appeal-state-label">
-                                Appeal State
-                            </InputLabel>
-                            <Select<AppealState>
-                                labelId="appeal-state-label"
-                                id="appeal-state"
-                                label="Appeal State"
-                                value={appealState ?? AppealState.Any}
-                                onChange={(
-                                    event: SelectChangeEvent<AppealState>
-                                ) => {
-                                    setAppealState(
-                                        event.target.value as AppealState
-                                    );
-                                }}
-                            >
-                                {selectItems}
-                            </Select>
-                        </FormControl>
-                    </Box>
-                </Grid>
-                <Grid xs={'auto'}>
-                    <LazyTablePaginator
-                        page={page}
-                        total={totalRows}
-                        loading={loading}
-                        rowsPerPage={rowPerPageCount}
-                        onRowsPerPageChange={(
-                            event: React.ChangeEvent<
-                                HTMLInputElement | HTMLTextAreaElement
-                            >
-                        ) => {
-                            setRowPerPageCount(
-                                parseInt(event.target.value, 10)
-                            );
-                            setPage(0);
-                        }}
-                        onPageChange={(_, newPage) => {
-                            setPage(newPage);
-                        }}
-                    />
-                    <TablePagination
-                        component="div"
-                        variant={'head'}
-                        page={page}
-                        count={totalRows}
-                        showFirstButton
-                        showLastButton
-                        rowsPerPage={rowPerPageCount}
-                        onRowsPerPageChange={(
-                            event: React.ChangeEvent<
-                                HTMLInputElement | HTMLTextAreaElement
-                            >
-                        ) => {
-                            setRowPerPageCount(
-                                parseInt(event.target.value, 10)
-                            );
-                            setPage(0);
-                        }}
-                        onPageChange={(_, newPage) => {
-                            setPage(newPage);
-                        }}
-                    />
-                </Grid>
-            </Grid>
+
             <Grid xs={12}>
                 <ContainerWithHeader
                     title={'Recent Open Appeal Activity'}
                     iconLeft={tableIcon}
                 >
                     <LazyTable<AppealOverview>
-                        rows={rows}
+                        rows={appeals}
+                        showPager
+                        page={page}
+                        rowsPerPage={rowPerPageCount}
+                        count={totalRows}
                         sortOrder={sortOrder}
                         sortColumn={sortColumn}
                         onSortColumnChanged={async (column) => {
@@ -310,6 +194,19 @@ export const AdminAppeals = () => {
                         }}
                         onSortOrderChanged={async (direction) => {
                             setSortOrder(direction);
+                        }}
+                        onRowsPerPageChange={(
+                            event: React.ChangeEvent<
+                                HTMLInputElement | HTMLTextAreaElement
+                            >
+                        ) => {
+                            setRowPerPageCount(
+                                parseInt(event.target.value, 10)
+                            );
+                            setPage(0);
+                        }}
+                        onPageChange={(_, newPage) => {
+                            setPage(newPage);
                         }}
                         columns={[
                             {
@@ -327,6 +224,18 @@ export const AdminAppeals = () => {
                                     >
                                         #{obj.ban_id}
                                     </Button>
+                                )
+                            },
+                            {
+                                label: 'Appeal State',
+                                tooltip: 'Appeal State',
+                                sortable: true,
+                                sortKey: 'appeal_state',
+                                align: 'left',
+                                renderer: (row) => (
+                                    <Typography variant={'body1'}>
+                                        {appealStateString(row.appeal_state)}
+                                    </Typography>
                                 )
                             },
                             {

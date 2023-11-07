@@ -1819,12 +1819,12 @@ func onAPIGetAppeals(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var req store.QueryFilter
+		var req store.AppealQueryFilter
 		if !bind(ctx, log, &req) {
 			return
 		}
 
-		bans, errBans := app.db.GetAppealsByActivity(ctx, req)
+		bans, total, errBans := app.db.GetAppealsByActivity(ctx, req)
 		if errBans != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to fetch bans", zap.Error(errBans))
@@ -1832,7 +1832,10 @@ func onAPIGetAppeals(app *App) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, bans)
+		ctx.JSON(http.StatusOK, LazyResult{
+			Count: total,
+			Data:  bans,
+		})
 	}
 }
 
