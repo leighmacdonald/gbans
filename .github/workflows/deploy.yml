@@ -20,15 +20,11 @@ jobs:
 
       - name: Install modules
         working-directory: ./frontend
-        run: yarn
+        run: yarn install --immutable
 
       - name: Prettier
         working-directory: ./frontend
-        run: yarn run prettier:check
-
-      - name: ESLint
-        working-directory: ./frontend
-        run: yarn run eslint:check
+        run: make lint_ts
 
   lint-golangci:
     runs-on: ubuntu-20.04
