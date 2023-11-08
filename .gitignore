@@ -52,10 +52,9 @@ sm
 
 yarn-error.log
 frontend/.yarn/*
-frontend/*.pnp.*
-frontend/!.yarn/cache
-frontend/!.yarn/patches
-frontend/!.yarn/plugins
-frontend/!.yarn/releases
-frontend/!.yarn/sdks
-frontend/!.yarn/versions
+!frontend/.yarn/cache
+!frontend/.yarn/patches
+!frontend/.yarn/plugins
+!frontend/.yarn/releases
+!frontend/.yarn/sdks
+!frontend/.yarn/versions
