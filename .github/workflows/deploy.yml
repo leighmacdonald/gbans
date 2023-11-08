@@ -20,10 +20,10 @@ jobs:
 
       - name: Setup nodejs
         uses: actions/setup-node@v3
-        working-directory: ./frontend
         with:
           node-version: '20.x'
           cache: 'yarn'
+          cache-dependency-path: 'frontend/yarn.lock'
 
       - name: corepack
         run: corepack enable
