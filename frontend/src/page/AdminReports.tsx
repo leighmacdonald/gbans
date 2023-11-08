@@ -20,7 +20,7 @@ import {
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { Order, RowsPerPage } from '../component/DataTable';
 import { LazyTable } from '../component/LazyTable';
-import { LoadingSpinner } from '../component/LoadingSpinner';
+import { LoadingIcon } from '../component/LoadingIcon';
 import { PersonCell } from '../component/PersonCell';
 import { TableCellLink } from '../component/TableCellLink';
 import {
@@ -146,6 +146,7 @@ export const AdminReports = () => {
                                     flexDirection={'row-reverse'}
                                 >
                                     <SubmitButton
+                                        disabled={loading}
                                         label={'Apply'}
                                         startIcon={<CheckIcon />}
                                     />
@@ -159,7 +160,7 @@ export const AdminReports = () => {
             <Grid xs={12}>
                 <ContainerWithHeader
                     title={'Current User Reports'}
-                    iconLeft={loading ? <LoadingSpinner /> : <ReportIcon />}
+                    iconLeft={loading ? <LoadingIcon /> : <ReportIcon />}
                 >
                     <LazyTable
                         showPager={true}

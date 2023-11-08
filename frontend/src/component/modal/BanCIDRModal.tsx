@@ -140,7 +140,7 @@ export const BanCIDRModal = NiceModal.create(
 
                     <DialogContent>
                         <Stack spacing={2}>
-                            <SteamIdField fullWidth />
+                            <SteamIdField />
                             <NetworkRangeField />
                             <BanReasonField />
                             <BanReasonTextField />

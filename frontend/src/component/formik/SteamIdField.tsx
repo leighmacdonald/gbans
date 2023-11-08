@@ -32,7 +32,6 @@ export interface BaseFormikInputProps {
     id?: string;
     label?: string;
     initialValue?: string;
-    fullWidth: boolean;
     isReadOnly?: boolean;
     onProfileSuccess?: (profile: Nullable<PlayerProfile>) => void;
 }
@@ -40,7 +39,9 @@ export interface SteamIDInputValue {
     steam_id: string;
 }
 
-export const SteamIdField = <T,>({ isReadOnly }: BaseFormikInputProps) => {
+export const SteamIdField = <T,>({
+    isReadOnly = false
+}: BaseFormikInputProps) => {
     const { values, touched, errors, handleChange } = useFormikContext<
         T & SteamIDInputValue
     >();

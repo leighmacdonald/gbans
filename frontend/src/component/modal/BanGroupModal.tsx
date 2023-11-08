@@ -106,7 +106,7 @@ export const BanGroupModal = NiceModal.create(
 
                     <DialogContent>
                         <Stack spacing={2}>
-                            <SteamIdField fullWidth />
+                            <SteamIdField />
                             <GroupIdField />
                             <DurationField />
                             <DurationCustomField />

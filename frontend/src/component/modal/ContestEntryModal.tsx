@@ -188,10 +188,7 @@ export const ContestEntryModal = NiceModal.create(
                         ) : (
                             <Grid container spacing={2}>
                                 <Grid xs={12}>
-                                    <DescriptionField
-                                        fullWidth
-                                        isReadOnly={false}
-                                    />
+                                    <DescriptionField />
                                 </Grid>
                                 <Grid xs={4}>
                                     <label htmlFor="contained-button-file">
