@@ -5,7 +5,8 @@ RUN apk add make git build-base dumb-init yarn
 COPY Makefile .
 COPY frontend/package.json frontend/package.json
 COPY frontend/.yarnrc.yml frontend/.yarnrc.yml
-COPY frontend/yarn.lock yarn.lock
+COPY frontend/yarn.lock frontend/yarn.lock
+COPY frontend/.yarn frontend/.yarn
 RUN cd frontend && yarn install --immutable
 COPY go.mod go.sum ./
 RUN go mod download
