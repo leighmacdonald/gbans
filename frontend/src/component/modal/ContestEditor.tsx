@@ -146,7 +146,9 @@ export const ContestEditor = NiceModal.create(
                     voting: contest?.voting ?? false,
                     down_votes: contest?.down_votes ?? false,
                     min_permission_level:
-                        contest?.min_permission_level ?? PermissionLevel.User
+                        contest?.min_permission_level != undefined
+                            ? contest?.min_permission_level
+                            : PermissionLevel.User
                 }}
             >
                 <Dialog fullWidth {...muiDialogV5(modal)}>
@@ -169,38 +171,22 @@ export const ContestEditor = NiceModal.create(
                                 <TitleField />
                                 <DescriptionField />
                                 <Stack direction={'row'} spacing={2}>
-                                    <PublicField fullWidth isReadOnly={false} />
-                                    <HideSubmissionsField
-                                        fullWidth
-                                        isReadOnly={false}
-                                    />
-                                    <MaxSubmissionsField
-                                        fullWidth
-                                        isReadOnly={false}
-                                    />
-                                    <MinPermissionLevelField
-                                        fullWidth
-                                        isReadOnly={false}
-                                    />
+                                    <PublicField />
+                                    <HideSubmissionsField />
+                                    <MaxSubmissionsField />
+                                    <MinPermissionLevelField />
                                 </Stack>
                                 <Stack direction={'row'} spacing={2}>
-                                    <VotingField fullWidth isReadOnly={false} />
-
-                                    <DownVotesField fullWidth />
+                                    <VotingField />
+                                    <DownVotesField />
                                 </Stack>
 
                                 <Stack direction={'row'} spacing={2}>
-                                    <DateStartField
-                                        fullWidth
-                                        isReadOnly={false}
-                                    />
-                                    <DateEndField
-                                        fullWidth
-                                        isReadOnly={false}
-                                    />
+                                    <DateStartField />
+                                    <DateEndField />
                                 </Stack>
 
-                                <MimeTypeField fullWidth isReadOnly={false} />
+                                <MimeTypeField />
                             </Stack>
                         )}
                     </DialogContent>
@@ -215,48 +201,52 @@ export const ContestEditor = NiceModal.create(
     }
 );
 
-const MaxSubmissionsField = ({ isReadOnly }: BaseFormikInputProps) => {
-    const { values } = useFormikContext<ContestEditorFormValues>();
+const MaxSubmissionsField = () => {
+    const { handleChange, values, touched, errors } =
+        useFormikContext<ContestEditorFormValues>();
     return (
         <FormControl fullWidth>
-            <InputLabel id="max-subs-select-label">
+            <InputLabel id="max_submissions-label">
                 Maximum Submissions Per User
             </InputLabel>
             <Select<number>
-                name={`max-subs`}
-                labelId={`max-subs-select-label`}
-                id={`max-subs-selects`}
-                disabled={isReadOnly ?? false}
+                name={`max_submissions`}
+                labelId={`max_submissions-label`}
+                id={`max_submissions`}
                 label={'Maximum Submissions Per User'}
+                error={
+                    touched.max_submissions && Boolean(errors.max_submissions)
+                }
                 value={values.max_submissions}
-                onChange={(event) => {
-                    values.max_submissions = event.target.value as number;
-                }}
+                onChange={handleChange}
             >
                 {[-1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((c) => (
                     <MenuItem key={`max-subs-${c}`} value={c}>
-                        {c}
+                        {c < 0 ? 'Unlimited' : c}
                     </MenuItem>
                 ))}
             </Select>
-            <FormHelperText>-1 indicates unlimited</FormHelperText>
+            <FormHelperText>
+                {touched.max_submissions &&
+                    Boolean(errors.max_submissions) &&
+                    errors.max_submissions}
+            </FormHelperText>
         </FormControl>
     );
 };
 
-const MinPermissionLevelField = ({ isReadOnly }: BaseFormikInputProps) => {
-    const { values, handleChange } =
+const MinPermissionLevelField = () => {
+    const { values, touched, errors, handleChange } =
         useFormikContext<ContestEditorFormValues>();
     return (
         <FormControl fullWidth>
-            <InputLabel id="plevel-label">
+            <InputLabel id="min_permission_level-label">
                 Minimum permissions required to submit
             </InputLabel>
             <Select<number>
-                name={`plevel`}
-                labelId={`plevel-label`}
-                id={`plevel`}
-                disabled={isReadOnly ?? false}
+                name={`min_permission_level`}
+                labelId={`min_permission_level-label`}
+                id={`min_permission_level`}
                 label={'Minimum permissions required to submit'}
                 value={values.min_permission_level}
                 onChange={handleChange}
@@ -266,22 +256,22 @@ const MinPermissionLevelField = ({ isReadOnly }: BaseFormikInputProps) => {
                 <MenuItem value={PermissionLevel.Moderator}>Moderator</MenuItem>
                 <MenuItem value={PermissionLevel.Admin}>Admin</MenuItem>
             </Select>
+            <FormHelperText>
+                {touched.min_permission_level &&
+                    Boolean(errors.min_permission_level) &&
+                    errors.min_permission_level}
+            </FormHelperText>
         </FormControl>
     );
 };
 
-const PublicField = ({ isReadOnly }: BaseFormikInputProps) => {
+const PublicField = () => {
     const { values, handleChange } =
         useFormikContext<ContestEditorFormValues>();
     return (
         <FormGroup>
             <FormControlLabel
-                control={
-                    <Checkbox
-                        checked={values.public}
-                        disabled={isReadOnly ?? false}
-                    />
-                }
+                control={<Checkbox checked={values.public} />}
                 label="Public"
                 name={'public'}
                 onChange={handleChange}
@@ -290,18 +280,13 @@ const PublicField = ({ isReadOnly }: BaseFormikInputProps) => {
     );
 };
 
-const HideSubmissionsField = ({ isReadOnly }: BaseFormikInputProps) => {
+const HideSubmissionsField = () => {
     const { values, handleChange } =
         useFormikContext<ContestEditorFormValues>();
     return (
         <FormGroup>
             <FormControlLabel
-                control={
-                    <Checkbox
-                        disabled={isReadOnly ?? false}
-                        checked={values.hide_submissions}
-                    />
-                }
+                control={<Checkbox checked={values.hide_submissions} />}
                 label="Hide Submissions"
                 name={'hide_submissions'}
                 onChange={handleChange}
@@ -310,18 +295,13 @@ const HideSubmissionsField = ({ isReadOnly }: BaseFormikInputProps) => {
     );
 };
 
-const VotingField = ({ isReadOnly }: BaseFormikInputProps) => {
+const VotingField = () => {
     const { values, handleChange } =
         useFormikContext<ContestEditorFormValues>();
     return (
         <FormGroup>
             <FormControlLabel
-                control={
-                    <Checkbox
-                        disabled={isReadOnly ?? false}
-                        checked={values.voting}
-                    />
-                }
+                control={<Checkbox checked={values.voting} />}
                 label="Voting Allowed"
                 name={'voting'}
                 onChange={handleChange}
@@ -330,18 +310,15 @@ const VotingField = ({ isReadOnly }: BaseFormikInputProps) => {
     );
 };
 
-const DownVotesField = ({ isReadOnly }: BaseFormikInputProps) => {
+const DownVotesField = () => {
     const { values, handleChange } =
         useFormikContext<ContestEditorFormValues>();
+
     return (
         <FormGroup>
             <FormControlLabel
-                control={
-                    <Checkbox
-                        disabled={isReadOnly ?? false}
-                        checked={values.down_votes}
-                    />
-                }
+                disabled={!values.voting}
+                control={<Checkbox checked={values.down_votes} />}
                 label="Down Votes Allowed"
                 name={'down_votes'}
                 onChange={handleChange}

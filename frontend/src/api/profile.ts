@@ -205,12 +205,12 @@ export const apiGetMessageContext = async (
 };
 
 export interface MessageQuery extends QueryFilter<PersonMessage> {
-    persona_name?: string;
+    personaname?: string;
     steam_id?: string;
     query?: string;
     server_id?: number;
-    sent_after?: Date;
-    sent_before?: Date;
+    date_start?: Date;
+    date_end?: Date;
 }
 
 export interface pagedQueryResults<T> extends DataCount {

@@ -777,7 +777,7 @@ func (db *Store) QueryConnectionHistory(ctx context.Context, query ConnectionHis
 		return nil, 0, errors.Wrap(errCount, "Failed to perform count query")
 	}
 
-	messages := []QueryConnectionHistoryResult{}
+	var messages []QueryConnectionHistoryResult
 
 	if totalRows == 0 {
 		return messages, 0, nil
@@ -817,6 +817,10 @@ func (db *Store) QueryConnectionHistory(ctx context.Context, query ConnectionHis
 		messages = append(messages, connHistory)
 	}
 
+	if messages == nil {
+		return []QueryConnectionHistoryResult{}, 0, nil
+	}
+
 	return messages, totalRows, nil
 }
 
@@ -824,11 +828,11 @@ var errLimit = errors.New("Requested too many")
 
 type ChatHistoryQueryFilter struct {
 	QueryFilter
-	PersonaName   string     `json:"persona_name,omitempty"`
+	Personaname   string     `json:"personaname,omitempty"`
 	SteamID       string     `json:"steam_id,omitempty"`
 	ServerID      int        `json:"server_id,omitempty"`
-	SentAfter     *time.Time `json:"sent_after,omitempty"`
-	SentBefore    *time.Time `json:"sent_before,omitempty"`
+	DateStart     *time.Time `json:"date_start,omitempty"`
+	DateEnd       *time.Time `json:"date_end,omitempty"`
 	Unrestricted  bool       `json:"-"`
 	DontCalcTotal bool       `json:"-"`
 	FlaggedOnly   bool       `json:"flagged_only"`
@@ -862,16 +866,12 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 
 	countCols := []string{"count(m.created_on) as count"}
 
-	if query.Query != "" {
-		if len(query.Query) < minQueryLen {
-			return nil, 0, errors.New("Query value too short")
-		}
+	if query.Query != "" && len(query.Query) < minQueryLen {
+		return nil, 0, errors.New("Query value too short")
 	}
 
-	if query.PersonaName != "" {
-		if len(query.PersonaName) < minQueryLen {
-			return nil, 0, errors.New("Name value too short")
-		}
+	if query.Personaname != "" && len(query.Personaname) < minQueryLen {
+		return nil, 0, errors.New("Name value too short")
 	}
 
 	count := db.sb.
@@ -919,7 +919,7 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 			groupBy = append(groupBy, "m.message_search")
 		}
 
-		if query.PersonaName != "" {
+		if query.Personaname != "" {
 			groupBy = append(groupBy, "m.name_search")
 		}
 
@@ -932,18 +932,18 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 
 	if !query.Unrestricted {
 		unrTime := now.AddDate(0, 0, -14)
-		if query.SentAfter != nil && query.SentAfter.Before(unrTime) {
+		if query.DateStart != nil && query.DateStart.Before(unrTime) {
 			return nil, 0, consts.ErrInvalidDuration
 		}
 	}
 
 	switch {
-	case query.SentAfter != nil && query.SentBefore != nil:
-		ands = append(ands, sq.Expr("m.created_on BETWEEN ? AND ?", query.SentAfter, query.SentBefore))
-	case query.SentAfter != nil:
-		ands = append(ands, sq.Expr("? > m.created_on", query.SentAfter))
-	case query.SentBefore != nil:
-		ands = append(ands, sq.Expr("? < m.created_on", query.SentBefore))
+	case query.DateStart != nil && query.DateEnd != nil:
+		ands = append(ands, sq.Expr("m.created_on BETWEEN ? AND ?", query.DateStart, query.DateEnd))
+	case query.DateStart != nil:
+		ands = append(ands, sq.Expr("? > m.created_on", query.DateStart))
+	case query.DateEnd != nil:
+		ands = append(ands, sq.Expr("? < m.created_on", query.DateEnd))
 	}
 
 	if query.ServerID > 0 {
@@ -959,8 +959,8 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 		ands = append(ands, sq.Eq{"m.steam_id": sid.Int64()})
 	}
 
-	if query.PersonaName != "" {
-		ands = append(ands, sq.Expr(`name_search @@ websearch_to_tsquery('simple', ?)`, query.PersonaName))
+	if query.Personaname != "" {
+		ands = append(ands, sq.Expr(`name_search @@ websearch_to_tsquery('simple', ?)`, query.Personaname))
 	}
 
 	if query.Query != "" {
@@ -987,7 +987,7 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 		}
 	}
 
-	messages := []QueryChatHistoryResult{}
+	var messages []QueryChatHistoryResult
 
 	if totalRows == 0 && !query.DontCalcTotal {
 		return messages, 0, nil
@@ -1036,6 +1036,11 @@ func (db *Store) QueryChatHistory(ctx context.Context, query ChatHistoryQueryFil
 		message.SteamID = steamid.New(steamID)
 
 		messages = append(messages, message)
+	}
+
+	if messages == nil {
+		// Return empty list instead of null
+		messages = []QueryChatHistoryResult{}
 	}
 
 	return messages, totalRows, nil
@@ -1292,7 +1297,7 @@ type NotificationQuery struct {
 }
 
 func (db *Store) GetPersonNotifications(ctx context.Context, steamID steamid.SID64) ([]UserNotification, error) {
-	notifications := []UserNotification{}
+	var notifications []UserNotification
 
 	query, args, errQuery := db.sb.
 		Select("person_notification_id", "steam_id", "read", "deleted", "severity", "message", "link", "count", "created_on").
@@ -1301,12 +1306,12 @@ func (db *Store) GetPersonNotifications(ctx context.Context, steamID steamid.SID
 		OrderBy("person_notification_id desc").
 		ToSql()
 	if errQuery != nil {
-		return notifications, Err(errQuery)
+		return []UserNotification{}, Err(errQuery)
 	}
 
 	rows, errRows := db.Query(ctx, query, args...)
 	if errRows != nil {
-		return notifications, errRows
+		return []UserNotification{}, errRows
 	}
 
 	defer rows.Close()
@@ -1319,12 +1324,16 @@ func (db *Store) GetPersonNotifications(ctx context.Context, steamID steamid.SID
 
 		if errScan := rows.Scan(&notif.PersonNotificationID, &outSteamID, &notif.Read, &notif.Deleted,
 			&notif.Severity, &notif.Message, &notif.Link, &notif.Count, &notif.CreatedOn); errScan != nil {
-			return notifications, errors.Wrapf(errScan, "Failed to scan notification")
+			return []UserNotification{}, errors.Wrapf(errScan, "Failed to scan notification")
 		}
 
 		notif.SteamID = steamid.New(outSteamID)
 
 		notifications = append(notifications, notif)
+	}
+
+	if notifications == nil {
+		return []UserNotification{}, nil
 	}
 
 	return notifications, nil

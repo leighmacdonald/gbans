@@ -110,7 +110,7 @@ export const AdminPeople = (): JSX.Element => {
                         <Grid container>
                             <Grid xs={12} padding={2}>
                                 <Stack direction={'row'} spacing={2}>
-                                    <SteamIdField fullWidth />
+                                    <SteamIdField />
                                     <PersonanameField />
                                 </Stack>
                             </Grid>
@@ -205,7 +205,7 @@ export const AdminPeople = (): JSX.Element => {
                             },
                             {
                                 label: 'Comm. Ban',
-                                tooltip: 'Amount of vac bans',
+                                tooltip: 'Is the player community banned',
                                 sortKey: 'vac_bans',
                                 align: 'left',
                                 sortable: true,

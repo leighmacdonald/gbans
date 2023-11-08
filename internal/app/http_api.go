@@ -3761,17 +3761,20 @@ func onAPIQueryMessages(app *App) gin.HandlerFunc {
 		}
 
 		user := currentUserProfile(ctx)
+
 		if user.PermissionLevel <= consts.PUser {
 			req.Unrestricted = false
 			beforeLimit := time.Now().Add(-time.Minute * 20)
 
-			if req.SentBefore != nil && req.SentBefore.After(beforeLimit) {
-				req.SentBefore = &beforeLimit
+			if req.DateEnd != nil && req.DateEnd.After(beforeLimit) {
+				req.DateEnd = &beforeLimit
 			}
 
-			if req.SentBefore == nil {
-				req.SentBefore = &beforeLimit
+			if req.DateEnd == nil {
+				req.DateEnd = &beforeLimit
 			}
+		} else {
+			req.Unrestricted = true
 		}
 
 		messages, totalMessages, errChat := app.db.QueryChatHistory(ctx, req)

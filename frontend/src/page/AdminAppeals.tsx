@@ -21,6 +21,7 @@ import {
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { Order, RowsPerPage } from '../component/DataTable';
 import { LazyTable } from '../component/LazyTable';
+import { LoadingIcon } from '../component/LoadingIcon';
 import { LoadingSpinner } from '../component/LoadingSpinner';
 import { PersonCell } from '../component/PersonCell';
 import { TableCellLink } from '../component/TableCellLink';
@@ -167,7 +168,7 @@ export const AdminAppeals = () => {
             <Grid xs={12}>
                 <ContainerWithHeader
                     title={'Recent Open Appeal Activity'}
-                    iconLeft={tableIcon}
+                    iconLeft={loading ? <LoadingIcon /> : tableIcon}
                 >
                     <LazyTable<AppealOverview>
                         rows={appeals}

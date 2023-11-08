@@ -163,10 +163,7 @@ export const BanSteamModal = NiceModal.create(
 
                     <DialogContent>
                         <Stack spacing={2}>
-                            <SteamIdField
-                                fullWidth
-                                isReadOnly={isReadOnlySid}
-                            />
+                            <SteamIdField isReadOnly={isReadOnlySid} />
                             <ReportIdField />
                             <BanTypeField />
                             <BanReasonField />
