@@ -88,6 +88,9 @@ func (app *App) initLogAddress() {
 
 	time.Sleep(time.Second * 60)
 
+	app.state.connectionsMu.RLock()
+	defer app.state.connectionsMu.RUnlock()
+
 	for _, server := range app.state.connections {
 		if server.RemoteConsole == nil {
 			continue
