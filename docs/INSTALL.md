@@ -38,8 +38,10 @@ Precompiled binaries will be provided once the project is in a more stable state
 - [PostgreSQL](https://www.postgresql.org/) is used as the data store. Version 12 is the only version currently tested
   against. However i believe anything 10 and up should work. Please let me know if this is not the case.
     - [PostGIS](https://postgis.net/) extension is also used for some GIS functionality.
-- [NodeJS 14+](https://nodejs.org/en/) To build frontend
-    - [yarn](https://yarnpkg.com/) JS package manager
+- [NodeJS >=18.17.1](https://nodejs.org/en/) To build frontend
+    - [yarn4](https://yarnpkg.com/) JS package manager (If you have problems try: `cd frontend && corepack enable && yarn set version stable && yarn install`)
+- [Sourcemod 1.11+](https://www.sourcemod.net/) - Sourcemod SDK path. [sourcemod/Makefile](sourcemod/Makefile) expects your 
+  installation path to be `~/sdk/sourcemod/addons/sourcemod` with `spcomp64` in your $PATH 
 
 Basic steps to build the binary packages:
 
@@ -56,7 +58,7 @@ sudo docker run -d --restart unless-stopped \
     --dns=1.1.1.1 \
     -v /home/ubuntu/gbans/gbans.yml:/app/gbans.yml:ro \
     --name gbans \
-    ghcr.io/leighmacdonald/gbans:master
+    ghcr.io/leighmacdonald/gbans:0.4.2
 ```
 
 Substitute `master` for a specific tag if desired, and `/home/ubuntu/gbans/gbans.yml` with the location of your config.

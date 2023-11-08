@@ -1,6 +1,6 @@
 .PHONY: all build fmt copy
 
-SM_HOME=$(HOME)/sdk/sourcemod-1.11.0/addons/sourcemod
+SM_HOME=$(HOME)/sdk/sourcemod/addons/sourcemod
 
 all: build
 

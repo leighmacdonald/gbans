@@ -4,7 +4,7 @@
 
 `make fmt` Format go code with go fmt
 
-`make lint` will run the golangci-lint tool
+`make check` will run the go & typescript linters & static analyzers
 
 ## Updating Dependencies
 
