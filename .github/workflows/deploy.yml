@@ -18,6 +18,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup nodejs
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+          cache: 'yarn'
+
+      - name: corepack
+        run: corepack enable
+
+      - name: setup yarn
+        working-directory: ./frontend
+        run: yarn set version stable
+
       - name: Install modules
         working-directory: ./frontend
         run: yarn install
