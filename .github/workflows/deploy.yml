@@ -18,10 +18,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install modules
-        working-directory: ./frontend
-        run: yarn install
-
       - name: Setup nodejs
         uses: actions/setup-node@v4
         with:
@@ -31,10 +27,6 @@ jobs:
 
       - name: corepack
         run: corepack enable
-
-      - name: setup yarn
-        working-directory: ./frontend
-        run: yarn set version stable
 
       - name: Install modules
         working-directory: ./frontend
