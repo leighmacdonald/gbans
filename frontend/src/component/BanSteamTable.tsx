@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import NiceModal from '@ebay/nice-modal-react';
 import EditIcon from '@mui/icons-material/Edit';
 import UndoIcon from '@mui/icons-material/Undo';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import IconButton from '@mui/material/IconButton';
@@ -14,11 +13,10 @@ import {
     apiGetBansSteam,
     BanQueryFilter,
     BanReason,
-    IAPIBanRecordProfile
+    SteamBanRecord
 } from '../api';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
-import { steamIdQueryValue } from '../util/text';
 import { Order, RowsPerPage } from './DataTable';
 import {
     DataTableRelativeDateField,
@@ -26,13 +24,14 @@ import {
 } from './DataTableRelativeDateField';
 import { LazyTable } from './LazyTable';
 import { PersonCell } from './PersonCell';
+import { TableCellLink } from './TableCellLink';
 import { ModalBanSteam, ModalUnbanSteam } from './modal';
 
 export const BanSteamTable = () => {
-    const [bans, setBans] = useState<IAPIBanRecordProfile[]>([]);
+    const [bans, setBans] = useState<SteamBanRecord[]>([]);
     const [sortOrder, setSortOrder] = useState<Order>('desc');
     const [sortColumn, setSortColumn] =
-        useState<keyof IAPIBanRecordProfile>('ban_id');
+        useState<keyof SteamBanRecord>('ban_id');
     const [rowPerPageCount, setRowPerPageCount] = useState<number>(
         RowsPerPage.TwentyFive
     );
@@ -42,11 +41,11 @@ export const BanSteamTable = () => {
     const navigate = useNavigate();
 
     const onUnbanSteam = useCallback(
-        async (ban: IAPIBanRecordProfile) => {
+        async (ban: SteamBanRecord) => {
             try {
                 await NiceModal.show(ModalUnbanSteam, {
                     banId: ban.ban_id,
-                    personaName: ban.personaname
+                    personaName: ban.target_personaname
                 });
                 sendFlash('success', 'Unbanned successfully');
             } catch (e) {
@@ -57,11 +56,11 @@ export const BanSteamTable = () => {
     );
 
     const onEditSteam = useCallback(
-        async (ban: IAPIBanRecordProfile) => {
+        async (ban: SteamBanRecord) => {
             try {
                 await NiceModal.show(ModalBanSteam, {
                     banId: ban.ban_id,
-                    personaName: ban.personaname,
+                    personaName: ban.target_personaname,
                     existing: ban
                 });
                 sendFlash('success', 'Updated ban successfully');
@@ -74,7 +73,7 @@ export const BanSteamTable = () => {
 
     useEffect(() => {
         const abortController = new AbortController();
-        const opts: BanQueryFilter<IAPIBanRecordProfile> = {
+        const opts: BanQueryFilter<SteamBanRecord> = {
             limit: rowPerPageCount,
             offset: page * rowPerPageCount,
             order_by: sortColumn,
@@ -94,7 +93,7 @@ export const BanSteamTable = () => {
     }, [page, rowPerPageCount, sortColumn, sortOrder]);
 
     return (
-        <LazyTable<IAPIBanRecordProfile>
+        <LazyTable<SteamBanRecord>
             showPager={true}
             count={totalRows}
             rows={bans}
@@ -124,24 +123,40 @@ export const BanSteamTable = () => {
                     sortKey: 'ban_id',
                     sortable: true,
                     align: 'left',
-                    queryValue: (o) => `${o.ban_id}`,
-                    renderer: (obj) => (
-                        <Typography variant={'body1'}>#{obj.ban_id}</Typography>
+                    renderer: (row) => (
+                        <TableCellLink
+                            label={`#${row.ban_id.toString()}`}
+                            to={`/ban/${row.ban_id}`}
+                        />
                     )
                 },
                 {
-                    label: 'Name',
-                    tooltip: 'Persona Name',
-                    sortKey: 'personaname',
+                    label: 'A',
+                    tooltip: 'Ban Author',
+                    sortKey: 'source_personaname',
+                    sortable: true,
+                    align: 'center',
+                    renderer: (row) => (
+                        <Tooltip title={row.source_personaname}>
+                            <PersonCell
+                                steam_id={row.source_id}
+                                personaname={''}
+                                avatar_hash={row.source_avatarhash}
+                            />
+                        </Tooltip>
+                    )
+                },
+                {
+                    label: 'Target',
+                    tooltip: 'Steam Name',
+                    sortKey: 'target_personaname',
                     sortable: true,
                     align: 'left',
-                    queryValue: (o) =>
-                        `${o.personaname}-` + steamIdQueryValue(o.target_id),
                     renderer: (row) => (
                         <PersonCell
                             steam_id={row.target_id}
-                            personaname={row.personaname}
-                            avatar_hash={row.avatar}
+                            personaname={row.target_personaname}
+                            avatar_hash={row.target_avatarhash}
                         />
                     )
                 },
@@ -151,7 +166,6 @@ export const BanSteamTable = () => {
                     sortKey: 'reason',
                     sortable: true,
                     align: 'left',
-                    queryValue: (o) => BanReason[o.reason],
                     renderer: (row) => (
                         <Typography variant={'body1'}>
                             {BanReason[row.reason]}
@@ -221,7 +235,7 @@ export const BanSteamTable = () => {
                     }
                 },
                 {
-                    label: 'Friends Incl.',
+                    label: 'FL',
                     tooltip: 'Are friends also included in the ban',
                     align: 'left',
                     width: '150px',
@@ -265,16 +279,6 @@ export const BanSteamTable = () => {
                     align: 'left',
                     renderer: (row) => (
                         <ButtonGroup fullWidth>
-                            <IconButton
-                                color={'primary'}
-                                onClick={() => {
-                                    navigate(`/ban/${row.ban_id}`);
-                                }}
-                            >
-                                <Tooltip title={'View'}>
-                                    <VisibilityIcon />
-                                </Tooltip>
-                            </IconButton>
                             <IconButton
                                 color={'warning'}
                                 onClick={async () => {

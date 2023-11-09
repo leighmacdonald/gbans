@@ -6,7 +6,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import { useFormikContext } from 'formik';
 import * as yup from 'yup';
-import { Duration, Durations, IAPIBanRecordProfile } from '../../api';
+import { Duration, Durations, SteamBanRecord } from '../../api';
 
 export const DurationFieldValidator = yup
     .string()
@@ -15,7 +15,7 @@ export const DurationFieldValidator = yup
 
 export interface DurationInputField {
     duration: Duration;
-    existing?: IAPIBanRecordProfile;
+    existing?: SteamBanRecord;
 }
 
 export const DurationField = <T,>() => {

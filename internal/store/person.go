@@ -136,14 +136,10 @@ type PersonIPRecord struct {
 type AppealOverview struct {
 	BanSteam
 
-	// FIXME source/target steamids Needed?
-	SourceSteamID     steamid.SID64 `json:"source_steam_id"`
-	SourcePersonaName string        `json:"source_persona_name"`
-	SourceAvatar      string        `json:"source_avatar"`
-
-	TargetSteamID     steamid.SID64 `json:"target_steam_id"`
-	TargetPersonaName string        `json:"target_persona_name"`
-	TargetAvatar      string        `json:"target_avatar"`
+	SourcePersonaname string `json:"source_personaname"`
+	SourceAvatarhash  string `json:"source_avatarhash"`
+	TargetPersonaname string `json:"target_personaname"`
+	TargetAvatarhash  string `json:"target_avatarhash"`
 }
 
 type UserMessage struct {

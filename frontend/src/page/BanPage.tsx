@@ -28,10 +28,10 @@ import {
     AppealStateCollection,
     appealStateString,
     AuthorMessage,
-    BannedPerson,
     BanReasons,
     banTypeString,
     PermissionLevel,
+    SteamBanRecord,
     UserMessage
 } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
@@ -48,7 +48,7 @@ import { renderDateTime, renderTimeDistance } from '../util/text';
 import { NotNull } from '../util/types';
 
 export const BanPage = (): JSX.Element => {
-    const [ban, setBan] = React.useState<NotNull<BannedPerson>>();
+    const [ban, setBan] = React.useState<NotNull<SteamBanRecord>>();
     const [messages, setMessages] = useState<AuthorMessage[]>([]);
     const [appealState, setAppealState] = useState<AppealState>(
         AppealState.Open
@@ -62,8 +62,8 @@ export const BanPage = (): JSX.Element => {
     const canPost = useMemo(() => {
         return (
             currentUser.permission_level >= PermissionLevel.Moderator ||
-            (ban?.ban.appeal_state == AppealState.Open &&
-                ban?.person.steam_id == currentUser.steam_id)
+            (ban?.appeal_state == AppealState.Open &&
+                ban?.target_id == currentUser.steam_id)
         );
     }, [ban, currentUser]);
 
@@ -74,7 +74,10 @@ export const BanPage = (): JSX.Element => {
         }
         apiGetBanSteam(id, true)
             .then((banPerson) => {
-                setAppealState(banPerson.ban.appeal_state);
+                if (!banPerson) {
+                    return;
+                }
+                setAppealState(banPerson.appeal_state);
                 setBan(banPerson);
                 loadMessages();
             })
@@ -102,7 +105,7 @@ export const BanPage = (): JSX.Element => {
             if (!ban) {
                 return;
             }
-            apiCreateBanMessage(ban?.ban.ban_id, message)
+            apiCreateBanMessage(ban?.ban_id, message)
                 .then((response) => {
                     setMessages([
                         ...messages,
@@ -156,16 +159,16 @@ export const BanPage = (): JSX.Element => {
 
     const onUnban = useCallback(async () => {
         await NiceModal.show(ModalUnbanSteam, {
-            banId: ban?.ban.ban_id,
-            personaName: ban?.person.personaname
+            banId: ban?.ban_id,
+            personaName: ban?.target_personaname
         });
-    }, [ban?.ban.ban_id, ban?.person.personaname]);
+    }, [ban?.ban_id, ban?.target_personaname]);
 
     const onEditBan = useCallback(async () => {
         await NiceModal.show(ModalBanSteam, {
-            banId: ban?.ban.ban_id,
-            personaName: ban?.person.personaname,
-            existing: ban?.ban
+            banId: ban?.ban_id,
+            personaName: ban?.target_personaname,
+            existing: ban
         });
     }, [ban]);
 
@@ -190,7 +193,7 @@ export const BanPage = (): JSX.Element => {
                         currentUser.permission_level >=
                             PermissionLevel.Moderator && (
                             <SourceBansList
-                                steam_id={ban?.ban.source_id}
+                                steam_id={ban?.source_id}
                                 is_reporter={true}
                             />
                         )}
@@ -199,7 +202,7 @@ export const BanPage = (): JSX.Element => {
                         currentUser.permission_level >=
                             PermissionLevel.Moderator && (
                             <SourceBansList
-                                steam_id={ban?.ban.target_id}
+                                steam_id={ban?.target_id}
                                 is_reporter={false}
                             />
                         )}
@@ -232,7 +235,7 @@ export const BanPage = (): JSX.Element => {
                                 textAlign={'center'}
                             >
                                 The ban appeal is closed:{' '}
-                                {appealStateString(ban.ban.appeal_state)}
+                                {appealStateString(ban.appeal_state)}
                             </Typography>
                         </Paper>
                     )}
@@ -240,11 +243,7 @@ export const BanPage = (): JSX.Element => {
             </Grid>
             <Grid xs={4}>
                 <Stack spacing={2}>
-                    {ban && (
-                        <ProfileInfoBox
-                            profile={{ player: ban?.person, friends: [] }}
-                        />
-                    )}
+                    {ban && <ProfileInfoBox steam_id={ban.target_id} />}
                     {ban && (
                         <ContainerWithHeader
                             title={'Ban Details'}
@@ -254,22 +253,20 @@ export const BanPage = (): JSX.Element => {
                                 <ListItem>
                                     <ListItemText
                                         primary={'Reason'}
-                                        secondary={BanReasons[ban.ban.reason]}
+                                        secondary={BanReasons[ban.reason]}
                                     />
                                 </ListItem>
                                 <ListItem>
                                     <ListItemText
                                         primary={'Ban Type'}
-                                        secondary={banTypeString(
-                                            ban.ban.ban_type
-                                        )}
+                                        secondary={banTypeString(ban.ban_type)}
                                     />
                                 </ListItem>
-                                {ban.ban.reason_text != '' && (
+                                {ban.reason_text != '' && (
                                     <ListItem>
                                         <ListItemText
                                             primary={'Reason (Custom)'}
-                                            secondary={ban.ban.reason_text}
+                                            secondary={ban.reason_text}
                                         />
                                     </ListItem>
                                 )}
@@ -278,7 +275,7 @@ export const BanPage = (): JSX.Element => {
                                     <ListItemText
                                         primary={'Created At'}
                                         secondary={renderDateTime(
-                                            ban.ban.created_on
+                                            ban.created_on
                                         )}
                                     />
                                 </ListItem>
@@ -286,7 +283,7 @@ export const BanPage = (): JSX.Element => {
                                     <ListItemText
                                         primary={'Expires At'}
                                         secondary={renderDateTime(
-                                            ban.ban.valid_until
+                                            ban.valid_until
                                         )}
                                     />
                                 </ListItem>
@@ -294,7 +291,7 @@ export const BanPage = (): JSX.Element => {
                                     <ListItemText
                                         primary={'Expires'}
                                         secondary={renderTimeDistance(
-                                            ban.ban.valid_until
+                                            ban.valid_until
                                         )}
                                     />
                                 </ListItem>
@@ -304,7 +301,7 @@ export const BanPage = (): JSX.Element => {
                                         <ListItem>
                                             <ListItemText
                                                 primary={'Author'}
-                                                secondary={ban.ban.source_id.toString()}
+                                                secondary={ban.source_id.toString()}
                                             />
                                         </ListItem>
                                     )}
@@ -312,18 +309,18 @@ export const BanPage = (): JSX.Element => {
                         </ContainerWithHeader>
                     )}
 
-                    {ban && <SteamIDList steam_id={ban?.ban.target_id} />}
+                    {ban && <SteamIDList steam_id={ban?.target_id} />}
 
                     {ban &&
                         currentUser.permission_level >=
                             PermissionLevel.Moderator &&
-                        ban.ban.note != '' && (
+                        ban.note != '' && (
                             <ContainerWithHeader
                                 title={'Mod Notes'}
                                 iconLeft={<DocumentScannerIcon />}
                             >
                                 <Typography variant={'body2'} padding={2}>
-                                    {ban.ban.note}
+                                    {ban.note}
                                 </Typography>
                             </ContainerWithHeader>
                         )}
@@ -372,25 +369,25 @@ export const BanPage = (): JSX.Element => {
                                     </Button>
                                 </Stack>
 
-                                {ban && ban?.ban.report_id > 0 && (
+                                {ban && ban?.report_id > 0 && (
                                     <Button
                                         fullWidth
                                         color={'secondary'}
                                         variant={'contained'}
                                         onClick={() => {
                                             navigate(
-                                                `/report/${ban?.ban.report_id}`
+                                                `/report/${ban?.report_id}`
                                             );
                                         }}
                                     >
-                                        View Report #{ban?.ban.report_id}
+                                        View Report #{ban?.report_id}
                                     </Button>
                                 )}
                                 <Button
                                     variant={'contained'}
                                     color={'secondary'}
                                     component={Link}
-                                    href={`https://logs.viora.sh/messages?q[for_player]=${ban?.person.steam_id.toString()}`}
+                                    href={`https://logs.viora.sh/messages?q[for_player]=${ban?.target_id.toString()}`}
                                 >
                                     Ext. Chat Logs
                                 </Button>

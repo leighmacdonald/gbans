@@ -91,11 +91,16 @@ func (db *Store) GetBanNetByID(ctx context.Context, netID int64, banNet *BanCIDR
 }
 
 // GetBansNet returns the BanCIDR matching intersecting the supplied ip.
-func (db *Store) GetBansNet(ctx context.Context, filter CIDRBansQueryFilter) ([]BanCIDR, int64, error) {
+func (db *Store) GetBansNet(ctx context.Context, filter CIDRBansQueryFilter) ([]BannedCIDRPerson, int64, error) {
 	builder := db.sb.Select("b.net_id", "b.cidr", "b.origin", "b.created_on", "b.updated_on",
 		"b.reason", "b.reason_text", "b.valid_until", "b.deleted", "b.note", "b.unban_reason_text",
-		"b.is_enabled", "b.target_id", "b.source_id", "b.appeal_state").
-		From("ban_net b")
+		"b.is_enabled", "b.target_id", "b.source_id", "b.appeal_state",
+		"s.personaname", "s.avatarhash",
+		"t.personaname", "t.avatarhash", "t.community_banned", "t.vac_bans", "t.game_bans",
+	).
+		From("ban_net b").
+		LeftJoin("person s ON s.steam_id = b.source_id").
+		LeftJoin("person t ON t.steam_id = b.target_id")
 
 	var constraints sq.And
 
@@ -159,30 +164,35 @@ func (db *Store) GetBansNet(ctx context.Context, filter CIDRBansQueryFilter) ([]
 		return nil, 0, Err(errQuery)
 	}
 
-	var nets []BanCIDR
+	var nets []BannedCIDRPerson
 
-	rows, errQuery := db.Query(ctx, query, args...)
-	if errQuery != nil {
-		return nil, 0, Err(errQuery)
+	rows, errRows := db.Query(ctx, query, args...)
+	if errRows != nil {
+		return nil, 0, Err(errRows)
 	}
 
 	defer rows.Close()
 
 	for rows.Next() {
 		var (
-			banNet   BanCIDR
+			banNet   BannedCIDRPerson
 			sourceID int64
 			targetID int64
+			cidr     *net.IPNet
 		)
 
 		if errScan := rows.
-			Scan(&banNet.NetID, &banNet.CIDR, &banNet.Origin,
+			Scan(&banNet.NetID, &cidr, &banNet.Origin,
 				&banNet.CreatedOn, &banNet.UpdatedOn, &banNet.Reason, &banNet.ReasonText,
 				&banNet.ValidUntil, &banNet.Deleted, &banNet.Note, &banNet.UnbanReasonText,
-				&banNet.IsEnabled, &targetID, &sourceID, &banNet.AppealState); errScan != nil {
+				&banNet.IsEnabled, &targetID, &sourceID, &banNet.AppealState,
+				&banNet.SourceTarget.SourcePersonaname, &banNet.SourceTarget.SourceAvatarhash,
+				&banNet.SourceTarget.TargetPersonaname, &banNet.SourceTarget.TargetAvatarhash,
+				&banNet.CommunityBanned, &banNet.VacBans, &banNet.GameBans); errScan != nil {
 			return nil, 0, Err(errScan)
 		}
 
+		banNet.CIDR = cidr.String()
 		banNet.SourceID = steamid.New(sourceID)
 		banNet.TargetID = steamid.New(targetID)
 
@@ -196,17 +206,17 @@ func (db *Store) GetBansNet(ctx context.Context, filter CIDRBansQueryFilter) ([]
 
 	if errCount != nil {
 		if errors.Is(errCount, ErrNoResult) {
-			return []BanCIDR{}, 0, nil
+			return []BannedCIDRPerson{}, 0, nil
 		}
 
 		return nil, count, errCount
 	}
 
 	if nets == nil {
-		return []BanCIDR{}, 0, nil
+		return []BannedCIDRPerson{}, 0, nil
 	}
 
-	return nets, 0, nil
+	return nets, count, nil
 }
 
 func (db *Store) updateBanNet(ctx context.Context, banNet *BanCIDR) error {
@@ -625,11 +635,15 @@ func (db *Store) GetBanASN(ctx context.Context, asNum int64, banASN *BanASN) err
 	return nil
 }
 
-func (db *Store) GetBansASN(ctx context.Context, filter ASNBansQueryFilter) ([]BanASN, int64, error) {
+func (db *Store) GetBansASN(ctx context.Context, filter ASNBansQueryFilter) ([]BannedASNPerson, int64, error) {
 	builder := db.sb.Select("b.ban_asn_id", "b.as_num", "b.origin", "b.source_id",
 		"b.target_id", "b.reason_text", "b.valid_until", "b.created_on", "b.updated_on",
-		"b.deleted", "b.reason", "b.is_enabled", "b.unban_reason_text", "b.appeal_state").
-		From("ban_asn b")
+		"b.deleted", "b.reason", "b.is_enabled", "b.unban_reason_text", "b.appeal_state",
+		"s.personaname", "s.avatarhash",
+		"t.personaname", "t.avatarhash", "t.community_banned", "t.vac_bans", "t.game_bans").
+		From("ban_asn b").
+		LeftJoin("person s on s.steam_id = b.source_id").
+		LeftJoin("person t on t.steam_id = b.target_id")
 
 	var constraints sq.And
 
@@ -691,7 +705,7 @@ func (db *Store) GetBansASN(ctx context.Context, filter ASNBansQueryFilter) ([]B
 	rows, errRows := db.Query(ctx, query, args...)
 	if errRows != nil {
 		if errors.Is(errRows, ErrNoResult) {
-			return []BanASN{}, 0, nil
+			return []BannedASNPerson{}, 0, nil
 		}
 
 		return nil, 0, Err(errRows)
@@ -699,18 +713,22 @@ func (db *Store) GetBansASN(ctx context.Context, filter ASNBansQueryFilter) ([]B
 
 	defer rows.Close()
 
-	var records []BanASN
+	var records []BannedASNPerson
 
 	for rows.Next() {
 		var (
-			ban      BanASN
+			ban      BannedASNPerson
 			targetID int64
 			sourceID int64
 		)
 
 		if errScan := rows.
 			Scan(&ban.BanASNId, &ban.ASNum, &ban.Origin, &sourceID, &targetID, &ban.ReasonText, &ban.ValidUntil,
-				&ban.CreatedOn, &ban.UpdatedOn, &ban.Deleted, &ban.Reason, &ban.IsEnabled, &ban.UnbanReasonText, &ban.AppealState); errQuery != nil {
+				&ban.CreatedOn, &ban.UpdatedOn, &ban.Deleted, &ban.Reason, &ban.IsEnabled,
+				&ban.UnbanReasonText, &ban.AppealState,
+				&ban.SourceTarget.SourcePersonaname, &ban.SourceTarget.SourceAvatarhash,
+				&ban.SourceTarget.TargetPersonaname, &ban.SourceTarget.TargetAvatarhash,
+				&ban.CommunityBanned, &ban.VacBans, &ban.GameBans); errQuery != nil {
 			return nil, 0, Err(errScan)
 		}
 
@@ -727,14 +745,14 @@ func (db *Store) GetBansASN(ctx context.Context, filter ASNBansQueryFilter) ([]B
 
 	if errCount != nil {
 		if errors.Is(errCount, ErrNoResult) {
-			return []BanASN{}, 0, nil
+			return []BannedASNPerson{}, 0, nil
 		}
 
 		return nil, 0, errCount
 	}
 
 	if records == nil {
-		records = []BanASN{}
+		records = []BannedASNPerson{}
 	}
 
 	return records, count, nil

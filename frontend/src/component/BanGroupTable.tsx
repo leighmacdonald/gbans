@@ -8,19 +8,20 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { formatDuration, intervalToDuration } from 'date-fns';
 import format from 'date-fns/format';
-import { apiGetBansGroups, BanQueryFilter, IAPIBanGroupRecord } from '../api';
+import { apiGetBansGroups, BanQueryFilter, GroupBanRecord } from '../api';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
 import { Order, RowsPerPage } from './DataTable';
 import { LazyTable } from './LazyTable';
+import { PersonCell } from './PersonCell';
 import { ModalBanGroup, ModalUnbanGroup } from './modal';
 import { BanGroupModalProps } from './modal/BanGroupModal';
 
 export const BanGroupTable = () => {
-    const [bans, setBans] = useState<IAPIBanGroupRecord[]>([]);
+    const [bans, setBans] = useState<GroupBanRecord[]>([]);
     const [sortOrder, setSortOrder] = useState<Order>('desc');
     const [sortColumn, setSortColumn] =
-        useState<keyof IAPIBanGroupRecord>('ban_group_id');
+        useState<keyof GroupBanRecord>('ban_group_id');
     const [rowPerPageCount, setRowPerPageCount] = useState<number>(
         RowsPerPage.TwentyFive
     );
@@ -29,9 +30,9 @@ export const BanGroupTable = () => {
     const { sendFlash } = useUserFlashCtx();
 
     const onEditGroup = useCallback(
-        async (existing: IAPIBanGroupRecord) => {
+        async (existing: GroupBanRecord) => {
             try {
-                await NiceModal.show<IAPIBanGroupRecord, BanGroupModalProps>(
+                await NiceModal.show<GroupBanRecord, BanGroupModalProps>(
                     ModalBanGroup,
                     {
                         existing
@@ -61,7 +62,7 @@ export const BanGroupTable = () => {
 
     useEffect(() => {
         const abortController = new AbortController();
-        const opts: BanQueryFilter<IAPIBanGroupRecord> = {
+        const opts: BanQueryFilter<GroupBanRecord> = {
             limit: rowPerPageCount,
             offset: page * rowPerPageCount,
             order_by: sortColumn,
@@ -81,7 +82,7 @@ export const BanGroupTable = () => {
     }, [page, rowPerPageCount, sortColumn, sortOrder]);
 
     return (
-        <LazyTable<IAPIBanGroupRecord>
+        <LazyTable<GroupBanRecord>
             showPager={true}
             count={totalRows}
             rows={bans}
@@ -119,16 +120,31 @@ export const BanGroupTable = () => {
                     )
                 },
                 {
-                    label: 'SteamID',
-                    tooltip: 'SteamID of the primary target',
-                    sortKey: 'target_id',
+                    label: 'A',
+                    tooltip: 'Ban Author Name',
+                    sortKey: 'source_personaname',
                     sortable: true,
                     align: 'left',
-                    queryValue: (o) => `${o.target_id}`,
                     renderer: (row) => (
-                        <Typography variant={'body1'}>
-                            {row.target_id}
-                        </Typography>
+                        <PersonCell
+                            steam_id={row.source_id}
+                            personaname={''}
+                            avatar_hash={row.source_avatarhash}
+                        />
+                    )
+                },
+                {
+                    label: 'Name',
+                    tooltip: 'Persona Name',
+                    sortKey: 'target_personaname',
+                    sortable: true,
+                    align: 'left',
+                    renderer: (row) => (
+                        <PersonCell
+                            steam_id={row.target_id}
+                            personaname={row.target_personaname}
+                            avatar_hash={row.target_avatarhash}
+                        />
                     )
                 },
                 {

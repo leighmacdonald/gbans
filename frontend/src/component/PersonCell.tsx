@@ -55,7 +55,7 @@ export const PersonCell = ({
                 alignContent={'center'}
                 alignItems={'center'}
                 display={'inline-block'}
-                marginLeft={2}
+                marginLeft={personaname == '' ? 0 : 2}
             >
                 <Typography variant={'body1'}>{personaname}</Typography>
             </Box>

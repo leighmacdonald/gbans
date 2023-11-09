@@ -224,22 +224,22 @@ func testBanSteam(database *store.Store) func(t *testing.T) {
 
 		b1Fetched := store.NewBannedPerson()
 		require.NoError(t, database.GetBanBySteamID(ctx, steamid.New(76561198044052046), &b1Fetched, false))
-		banEqual(&banSteam, &b1Fetched.Ban)
+		banEqual(&banSteam, &b1Fetched.BanSteam)
 
 		b1duplicate := banSteam
 		b1duplicate.BanID = 0
 		require.True(t, errors.Is(database.SaveBan(ctx, &b1duplicate), store.ErrDuplicate), "Was able to add duplicate ban")
 
-		b1Fetched.Ban.SourceID = steamid.New(76561198057999536)
-		b1Fetched.Ban.ReasonText = "test reason"
-		b1Fetched.Ban.ValidUntil = time.Now().Add(time.Minute * 10)
-		b1Fetched.Ban.Note = "test note"
-		b1Fetched.Ban.Origin = store.Web
-		require.NoError(t, database.SaveBan(ctx, &b1Fetched.Ban), "Failed to edit ban")
+		b1Fetched.SourceID = steamid.New(76561198057999536)
+		b1Fetched.ReasonText = "test reason"
+		b1Fetched.ValidUntil = time.Now().Add(time.Minute * 10)
+		b1Fetched.Note = "test note"
+		b1Fetched.Origin = store.Web
+		require.NoError(t, database.SaveBan(ctx, &b1Fetched.BanSteam), "Failed to edit ban")
 
 		b1FetchedUpdated := store.NewBannedPerson()
 		require.NoError(t, database.GetBanBySteamID(ctx, steamid.New(76561198044052046), &b1FetchedUpdated, false))
-		banEqual(&b1Fetched.Ban, &b1FetchedUpdated.Ban)
+		banEqual(&b1Fetched.BanSteam, &b1FetchedUpdated.BanSteam)
 
 		require.NoError(t, database.DropBan(ctx, &banSteam, false), "Failed to drop ban")
 

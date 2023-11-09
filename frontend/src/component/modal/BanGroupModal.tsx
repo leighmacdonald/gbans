@@ -14,7 +14,7 @@ import {
     apiCreateBanGroup,
     apiUpdateBanGroup,
     Duration,
-    IAPIBanGroupRecord
+    GroupBanRecord
 } from '../../api';
 import { Heading } from '../Heading';
 import {
@@ -45,7 +45,7 @@ const validationSchema = yup.object({
 });
 
 export interface BanGroupModalProps {
-    existing?: IAPIBanGroupRecord;
+    existing?: GroupBanRecord;
 }
 
 export const BanGroupModal = NiceModal.create(

@@ -13,10 +13,10 @@ import Tabs from '@mui/material/Tabs';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import {
-    IAPIBanASNRecord,
-    IAPIBanCIDRRecord,
-    IAPIBanGroupRecord,
-    IAPIBanRecord
+    ASNBanRecord,
+    CIDRBanRecord,
+    GroupBanRecord,
+    SteamBanRecord
 } from '../api';
 import { BanASNTable } from '../component/BanASNTable';
 import { BanCIDRTable } from '../component/BanCIDRTable';
@@ -39,7 +39,7 @@ export const AdminBan = () => {
 
     const onNewBanSteam = useCallback(async () => {
         try {
-            const ban = await NiceModal.show<IAPIBanRecord>(ModalBanSteam, {});
+            const ban = await NiceModal.show<SteamBanRecord>(ModalBanSteam, {});
             sendFlash(
                 'success',
                 `Created steam ban successfully #${ban.ban_id}`
@@ -51,10 +51,7 @@ export const AdminBan = () => {
 
     const onNewBanCIDR = useCallback(async () => {
         try {
-            const ban = await NiceModal.show<IAPIBanCIDRRecord>(
-                ModalBanCIDR,
-                {}
-            );
+            const ban = await NiceModal.show<CIDRBanRecord>(ModalBanCIDR, {});
             sendFlash(
                 'success',
                 `Created CIDR ban successfully #${ban.net_id}`
@@ -66,7 +63,7 @@ export const AdminBan = () => {
 
     const onNewBanASN = useCallback(async () => {
         try {
-            const ban = await NiceModal.show<IAPIBanASNRecord>(ModalBanASN, {});
+            const ban = await NiceModal.show<ASNBanRecord>(ModalBanASN, {});
             sendFlash(
                 'success',
                 `Created ASN ban successfully #${ban.ban_asn_id}`
@@ -78,10 +75,7 @@ export const AdminBan = () => {
 
     const onNewBanGroup = useCallback(async () => {
         try {
-            const ban = await NiceModal.show<IAPIBanGroupRecord>(
-                ModalBanGroup,
-                {}
-            );
+            const ban = await NiceModal.show<GroupBanRecord>(ModalBanGroup, {});
             sendFlash(
                 'success',
                 `Created steam group ban successfully #${ban.ban_group_id}`
