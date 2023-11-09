@@ -83,10 +83,10 @@ export const ReportViewPage = (): JSX.Element => {
         apiGetBansSteam({
             limit: 100,
             deleted: true,
-            steam_id: report?.target_id
+            target_id: report?.target_id
         }).then((history) => {
-            setBanHistory(history);
-            const cur = history.filter((b) => !b.deleted).pop();
+            setBanHistory(history.data);
+            const cur = history.data.filter((b) => !b.deleted).pop();
             setCurrentBan(cur);
         });
     }, [report?.target_id]);

@@ -154,12 +154,12 @@ func (app *App) updateSteamBanMembers(ctx context.Context) (map[int64]steamid.Co
 	localCtx, cancel := context.WithTimeout(ctx, time.Second*120)
 	defer cancel()
 
-	opts := store.BansQueryFilter{
-		QueryFilter:        store.QueryFilter{Deleted: false},
+	opts := store.SteamBansQueryFilter{
+		BansQueryFilter:    store.BansQueryFilter{QueryFilter: store.QueryFilter{Deleted: false}},
 		IncludeFriendsOnly: true,
 	}
 
-	steamBans, errSteam := app.db.GetBansSteam(ctx, opts)
+	steamBans, _, errSteam := app.db.GetBansSteam(ctx, opts)
 	if errSteam != nil {
 		if errors.Is(errSteam, store.ErrNoResult) {
 			return newMap, nil
@@ -207,7 +207,7 @@ func (app *App) updateGroupBanMembers(ctx context.Context) (map[int64]steamid.Co
 	localCtx, cancel := context.WithTimeout(ctx, time.Second*120)
 	defer cancel()
 
-	groups, errGroups := app.db.GetBanGroups(ctx)
+	groups, _, errGroups := app.db.GetBanGroups(ctx, store.GroupBansQueryFilter{})
 	if errGroups != nil {
 		if errors.Is(errGroups, store.ErrNoResult) {
 			return newMap, nil

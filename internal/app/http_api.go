@@ -1393,8 +1393,8 @@ func onAPICurrentProfile(app *App) gin.HandlerFunc {
 
 func onAPIExportBansValveSteamID(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		bans, errBans := app.db.GetBansSteam(ctx, store.BansQueryFilter{
-			PermanentOnly: true,
+		bans, _, errBans := app.db.GetBansSteam(ctx, store.SteamBansQueryFilter{
+			BansQueryFilter: store.BansQueryFilter{PermanentOnly: true},
 		})
 
 		if errBans != nil {
@@ -1420,7 +1420,7 @@ func onAPIExportBansValveSteamID(app *App) gin.HandlerFunc {
 
 func onAPIExportBansValveIP(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		bans, errBans := app.db.GetBansNet(ctx)
+		bans, _, errBans := app.db.GetBansNet(ctx, store.CIDRBansQueryFilter{})
 		if errBans != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -1494,9 +1494,12 @@ func onAPIExportSourcemodSimpleAdmins(app *App) gin.HandlerFunc {
 func onAPIExportBansTF2BD(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// TODO limit / make specialized query since this returns all results
-		bans, errBans := app.db.GetBansSteam(ctx, store.BansQueryFilter{
-			QueryFilter: store.QueryFilter{},
-			SteamID:     "",
+		bans, _, errBans := app.db.GetBansSteam(ctx, store.SteamBansQueryFilter{
+			BansQueryFilter: store.BansQueryFilter{
+				QueryFilter: store.QueryFilter{
+					Deleted: false,
+				},
+			},
 		})
 
 		if errBans != nil {
@@ -1837,12 +1840,12 @@ func onAPIGetBansSteam(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var req store.BansQueryFilter
+		var req store.SteamBansQueryFilter
 		if !bind(ctx, log, &req) {
 			return
 		}
 
-		bans, errBans := app.db.GetBansSteam(ctx, req)
+		bans, count, errBans := app.db.GetBansSteam(ctx, req)
 		if errBans != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to fetch bans", zap.Error(errBans))
@@ -1850,7 +1853,10 @@ func onAPIGetBansSteam(app *App) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, bans)
+		ctx.JSON(http.StatusOK, LazyResult{
+			Count: count,
+			Data:  bans,
+		})
 	}
 }
 
@@ -1858,13 +1864,12 @@ func onAPIGetBansCIDR(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var req store.BansQueryFilter
+		var req store.CIDRBansQueryFilter
 		if !bind(ctx, log, &req) {
 			return
 		}
 
-		// TODO filters
-		bans, errBans := app.db.GetBansNet(ctx)
+		bans, count, errBans := app.db.GetBansNet(ctx, req)
 		if errBans != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to fetch bans", zap.Error(errBans))
@@ -1872,7 +1877,10 @@ func onAPIGetBansCIDR(app *App) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, bans)
+		ctx.JSON(http.StatusOK, LazyResult{
+			Count: count,
+			Data:  bans,
+		})
 	}
 }
 
@@ -1919,13 +1927,12 @@ func onAPIGetBansGroup(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var req store.BansQueryFilter
+		var req store.GroupBansQueryFilter
 		if !bind(ctx, log, &req) {
 			return
 		}
 
-		// TODO filters
-		banGroups, errBans := app.db.GetBanGroups(ctx)
+		banGroups, count, errBans := app.db.GetBanGroups(ctx, req)
 		if errBans != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to fetch banGroups", zap.Error(errBans))
@@ -1933,7 +1940,10 @@ func onAPIGetBansGroup(app *App) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, banGroups)
+		ctx.JSON(http.StatusOK, LazyResult{
+			Count: count,
+			Data:  banGroups,
+		})
 	}
 }
 
@@ -1979,13 +1989,12 @@ func onAPIGetBansASN(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var req store.BansQueryFilter
+		var req store.ASNBansQueryFilter
 		if !bind(ctx, log, &req) {
 			return
 		}
 
-		// TODO filters
-		banASN, errBans := app.db.GetBansASN(ctx)
+		bansASN, count, errBans := app.db.GetBansASN(ctx, req)
 		if errBans != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to fetch banASN", zap.Error(errBans))
@@ -1993,7 +2002,10 @@ func onAPIGetBansASN(app *App) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, banASN)
+		ctx.JSON(http.StatusOK, LazyResult{
+			Count: count,
+			Data:  bansASN,
+		})
 	}
 }
 

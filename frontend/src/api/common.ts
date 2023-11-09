@@ -232,6 +232,11 @@ export interface AuthorQueryFilter<T> extends QueryFilter<T> {
     author_id?: string;
 }
 
+export interface BanQueryFilter<T> extends AuthorQueryFilter<T> {
+    source_id?: ReportStatus;
+    target_id?: string;
+}
+
 export interface ReportQueryFilter<T> extends AuthorQueryFilter<T> {
     report_status?: ReportStatus;
     target_id?: string;
