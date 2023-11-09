@@ -128,11 +128,12 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 			}
 		}
 
-		q := store.NewBansQueryFilter(sid)
-		q.Deleted = true
-
-		// TODO Get count of old bans
-		oldBans, errOld := app.db.GetBansSteam(ctx, q)
+		oldBans, _, errOld := app.db.GetBansSteam(ctx, store.SteamBansQueryFilter{
+			BansQueryFilter: store.BansQueryFilter{
+				QueryFilter: store.QueryFilter{Deleted: true},
+				TargetID:    store.StringSID(sid),
+			},
+		})
 		if errOld != nil {
 			if !errors.Is(errOld, store.ErrNoResult) {
 				app.log.Error("Failed to fetch old bans", zap.Error(errOld))

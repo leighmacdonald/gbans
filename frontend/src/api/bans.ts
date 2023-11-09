@@ -2,6 +2,7 @@ import { parseDateTime } from '../util/text';
 import { IpRecord } from '../util/types';
 import {
     apiCall,
+    BanQueryFilter,
     QueryFilter,
     TimeStamped,
     transformTimeStampedDates
@@ -208,8 +209,6 @@ export interface IAPIBanASNRecord extends BanBase {
     as_num: number;
 }
 
-export type IAPIResponseBans = BannedPerson[];
-
 export interface IAPIBanRecordProfile extends IAPIBanRecord {
     communityvisibilitystate: communityVisibilityState;
     profilestate: profileState;
@@ -226,10 +225,6 @@ export interface IAPIBanRecordProfile extends IAPIBanRecord {
 
     // Custom attributes
     ip_addr: string;
-}
-
-export interface BansQueryFilter extends QueryFilter<IAPIBanRecordProfile> {
-    steam_id?: string;
 }
 
 export interface UnbanPayload {
@@ -267,17 +262,15 @@ export interface BanPayloadGroup extends BanBasePayload {
 }
 
 export const apiGetBansSteam = async (
-    opts?: BansQueryFilter,
+    opts: BanQueryFilter<IAPIBanRecordProfile>,
     abortController?: AbortController
-): Promise<IAPIBanRecordProfile[]> => {
-    const resp = await apiCall<IAPIResponseBans, BansQueryFilter>(
-        `/api/bans/steam`,
-        'POST',
-        opts ?? {},
-        abortController
-    );
-    return (resp ?? [])
-        .map((b): IAPIBanRecordProfile => {
+) => {
+    const resp = await apiCall<
+        LazyResult<BannedPerson>,
+        BanQueryFilter<IAPIBanRecordProfile>
+    >(`/api/bans/steam`, 'POST', opts, abortController);
+    const mappedResult = resp.data
+        .map((b) => {
             return {
                 source_id: b.ban.source_id,
                 avatar: b.person.avatar,
@@ -311,6 +304,11 @@ export const apiGetBansSteam = async (
             };
         })
         .map(applyDateTime);
+
+    return {
+        data: mappedResult,
+        count: resp.count
+    } as LazyResult<IAPIBanRecordProfile>;
 };
 
 export function applyDateTime<T>(row: T & TimeStamped) {
@@ -504,42 +502,44 @@ export const apiGetBansCIDR = async (
     opts: QueryFilter<IAPIBanCIDRRecord>,
     abortController?: AbortController
 ) => {
-    const resp = await apiCall<IAPIBanCIDRRecord[]>(
+    const resp = await apiCall<LazyResult<IAPIBanCIDRRecord>>(
         '/api/bans/cidr',
         'POST',
         opts,
         abortController
     );
 
-    return resp.map((record) => applyDateTime(record));
+    resp.data = resp.data.map((record) => applyDateTime(record));
+    return resp;
 };
 
 export const apiGetBansASN = async (
     opts: QueryFilter<IAPIBanASNRecord>,
     abortController?: AbortController
 ) => {
-    const resp = await apiCall<IAPIBanASNRecord[]>(
+    const resp = await apiCall<LazyResult<IAPIBanASNRecord>>(
         '/api/bans/asn',
         'POST',
         opts,
         abortController
     );
-
-    return resp.map((record) => applyDateTime(record));
+    resp.data = resp.data.map((record) => applyDateTime(record));
+    return resp;
 };
 
 export const apiGetBansGroups = async (
     opts: QueryFilter<IAPIBanGroupRecord>,
     abortController?: AbortController
 ) => {
-    const resp = await apiCall<IAPIBanGroupRecord[]>(
+    const resp = await apiCall<LazyResult<IAPIBanGroupRecord>>(
         '/api/bans/group',
         'POST',
         opts,
         abortController
     );
 
-    return resp.map((record) => applyDateTime(record));
+    resp.data = resp.data.map((record) => applyDateTime(record));
+    return resp;
 };
 
 export const apiDeleteCIDRBan = async (

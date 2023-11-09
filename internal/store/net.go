@@ -25,7 +25,7 @@ func (db *Store) GetBanNetByAddress(ctx context.Context, ipAddr net.IP) ([]BanCI
 		FROM ban_net
 		WHERE $1 <<= cidr AND deleted = false AND is_enabled = true`
 
-	nets := []BanCIDR{}
+	var nets []BanCIDR
 
 	rows, errQuery := db.Query(ctx, query, ipAddr.String())
 	if errQuery != nil {
@@ -53,6 +53,10 @@ func (db *Store) GetBanNetByAddress(ctx context.Context, ipAddr net.IP) ([]BanCI
 		banNet.TargetID = steamid.New(targetID)
 
 		nets = append(nets, banNet)
+	}
+
+	if nets == nil {
+		return []BanCIDR{}, nil
 	}
 
 	return nets, nil
@@ -87,18 +91,79 @@ func (db *Store) GetBanNetByID(ctx context.Context, netID int64, banNet *BanCIDR
 }
 
 // GetBansNet returns the BanCIDR matching intersecting the supplied ip.
-func (db *Store) GetBansNet(ctx context.Context) ([]BanCIDR, error) {
-	const query = `
-		SELECT net_id, cidr, origin, created_on, updated_on, reason, reason_text, valid_until, deleted, 
-		       note, unban_reason_text, is_enabled, target_id, source_id, appeal_state 
-		FROM ban_net
-		WHERE deleted = false`
+func (db *Store) GetBansNet(ctx context.Context, filter CIDRBansQueryFilter) ([]BanCIDR, int64, error) {
+	builder := db.sb.Select("b.net_id", "b.cidr", "b.origin", "b.created_on", "b.updated_on",
+		"b.reason", "b.reason_text", "b.valid_until", "b.deleted", "b.note", "b.unban_reason_text",
+		"b.is_enabled", "b.target_id", "b.source_id", "b.appeal_state").
+		From("ban_net b")
 
-	nets := []BanCIDR{}
+	var constraints sq.And
 
-	rows, errQuery := db.Query(ctx, query)
+	if !filter.Deleted {
+		constraints = append(constraints, sq.Eq{"b.deleted": false})
+	}
+
+	if filter.Reason > 0 {
+		constraints = append(constraints, sq.Eq{"b.reason": filter.Reason})
+	}
+
+	if filter.PermanentOnly {
+		constraints = append(constraints, sq.Gt{"b.valid_until": time.Now()})
+	}
+
+	if filter.TargetID != "" {
+		targetID, errTargetID := filter.TargetID.SID64(ctx)
+		if errTargetID != nil {
+			return nil, 0, errTargetID
+		}
+
+		constraints = append(constraints, sq.Eq{"b.target_id": targetID.Int64()})
+	}
+
+	if filter.SourceID != "" {
+		sourceID, errSourceID := filter.SourceID.SID64(ctx)
+		if errSourceID != nil {
+			return nil, 0, errSourceID
+		}
+
+		constraints = append(constraints, sq.Eq{"b.source_id": sourceID.Int64()})
+	}
+
+	if filter.Address != "" {
+		_, cidr, errCidr := net.ParseCIDR(filter.Address)
+		if errCidr != nil {
+			return nil, 0, errors.Wrap(errCidr, "Failed to parse CIDR")
+		}
+
+		constraints = append(constraints, sq.Expr("? <<= cidr", cidr))
+	}
+
+	if filter.OrderBy != "" {
+		if filter.Desc {
+			builder = builder.OrderBy(fmt.Sprintf("b.%s DESC", filter.OrderBy))
+		} else {
+			builder = builder.OrderBy(fmt.Sprintf("b.%s ASC", filter.OrderBy))
+		}
+	}
+
+	if filter.Limit > 0 {
+		builder = builder.Limit(filter.Limit)
+	}
+
+	if filter.Offset > 0 {
+		builder = builder.Offset(filter.Offset)
+	}
+
+	query, args, errQuery := builder.Where(constraints).ToSql()
 	if errQuery != nil {
-		return nil, Err(errQuery)
+		return nil, 0, Err(errQuery)
+	}
+
+	var nets []BanCIDR
+
+	rows, errQuery := db.Query(ctx, query, args...)
+	if errQuery != nil {
+		return nil, 0, Err(errQuery)
 	}
 
 	defer rows.Close()
@@ -115,7 +180,7 @@ func (db *Store) GetBansNet(ctx context.Context) ([]BanCIDR, error) {
 				&banNet.CreatedOn, &banNet.UpdatedOn, &banNet.Reason, &banNet.ReasonText,
 				&banNet.ValidUntil, &banNet.Deleted, &banNet.Note, &banNet.UnbanReasonText,
 				&banNet.IsEnabled, &targetID, &sourceID, &banNet.AppealState); errScan != nil {
-			return nil, Err(errScan)
+			return nil, 0, Err(errScan)
 		}
 
 		banNet.SourceID = steamid.New(sourceID)
@@ -124,7 +189,24 @@ func (db *Store) GetBansNet(ctx context.Context) ([]BanCIDR, error) {
 		nets = append(nets, banNet)
 	}
 
-	return nets, nil
+	count, errCount := db.GetCount(ctx, db.sb.
+		Select("COUNT(b.net_id)").
+		From("ban_net b").
+		Where(constraints))
+
+	if errCount != nil {
+		if errors.Is(errCount, ErrNoResult) {
+			return []BanCIDR{}, 0, nil
+		}
+
+		return nil, count, errCount
+	}
+
+	if nets == nil {
+		return []BanCIDR{}, 0, nil
+	}
+
+	return nets, 0, nil
 }
 
 func (db *Store) updateBanNet(ctx context.Context, banNet *BanCIDR) error {
@@ -204,7 +286,7 @@ func (db *Store) GetExpiredNetBans(ctx context.Context) ([]BanCIDR, error) {
 		FROM ban_net
 		WHERE valid_until < $1`
 
-	bans := []BanCIDR{}
+	var bans []BanCIDR
 
 	rows, errQuery := db.Query(ctx, query, time.Now())
 	if errQuery != nil {
@@ -234,6 +316,10 @@ func (db *Store) GetExpiredNetBans(ctx context.Context) ([]BanCIDR, error) {
 		bans = append(bans, banNet)
 	}
 
+	if bans == nil {
+		return []BanCIDR{}, nil
+	}
+
 	return bans, nil
 }
 
@@ -244,7 +330,7 @@ func (db *Store) GetExpiredASNBans(ctx context.Context) ([]BanASN, error) {
 		FROM ban_asn
 		WHERE valid_until < $1 AND deleted = false`
 
-	bans := []BanASN{}
+	var bans []BanASN
 
 	rows, errQuery := db.conn.Query(ctx, query, time.Now())
 	if errQuery != nil {
@@ -271,6 +357,10 @@ func (db *Store) GetExpiredASNBans(ctx context.Context) ([]BanASN, error) {
 		banASN.SourceID = steamid.New(sourceID)
 
 		bans = append(bans, banASN)
+	}
+
+	if bans == nil {
+		bans = []BanASN{}
 	}
 
 	return bans, nil
@@ -535,21 +625,81 @@ func (db *Store) GetBanASN(ctx context.Context, asNum int64, banASN *BanASN) err
 	return nil
 }
 
-func (db *Store) GetBansASN(ctx context.Context) ([]BanASN, error) {
-	const query = `
-		SELECT ban_asn_id, as_num, origin, source_id, target_id, reason_text, valid_until, created_on, updated_on, 
-		       deleted, reason, is_enabled, unban_reason_text, appeal_state
-		FROM ban_asn 
-		WHERE deleted = false`
+func (db *Store) GetBansASN(ctx context.Context, filter ASNBansQueryFilter) ([]BanASN, int64, error) {
+	builder := db.sb.Select("b.ban_asn_id", "b.as_num", "b.origin", "b.source_id",
+		"b.target_id", "b.reason_text", "b.valid_until", "b.created_on", "b.updated_on",
+		"b.deleted", "b.reason", "b.is_enabled", "b.unban_reason_text", "b.appeal_state").
+		From("ban_asn b")
 
-	rows, errRows := db.Query(ctx, query)
+	var constraints sq.And
+
+	if !filter.Deleted {
+		constraints = append(constraints, sq.Eq{"b.deleted": false})
+	}
+
+	if filter.Reason > 0 {
+		constraints = append(constraints, sq.Eq{"b.reason": filter.Reason})
+	}
+
+	if filter.PermanentOnly {
+		constraints = append(constraints, sq.Gt{"b.valid_until": time.Now()})
+	}
+
+	if filter.TargetID != "" {
+		targetID, errTargetID := filter.TargetID.SID64(ctx)
+		if errTargetID != nil {
+			return nil, 0, errTargetID
+		}
+
+		constraints = append(constraints, sq.Eq{"b.target_id": targetID.Int64()})
+	}
+
+	if filter.SourceID != "" {
+		sourceID, errSourceID := filter.SourceID.SID64(ctx)
+		if errSourceID != nil {
+			return nil, 0, errSourceID
+		}
+
+		constraints = append(constraints, sq.Eq{"b.source_id": sourceID.Int64()})
+	}
+
+	if filter.ASNum > 0 {
+		constraints = append(constraints, sq.Eq{"b.as_num": filter.ASNum})
+	}
+
+	if filter.OrderBy != "" {
+		if filter.Desc {
+			builder = builder.OrderBy(fmt.Sprintf("b.%s DESC", filter.OrderBy))
+		} else {
+			builder = builder.OrderBy(fmt.Sprintf("b.%s ASC", filter.OrderBy))
+		}
+	}
+
+	if filter.Limit > 0 {
+		builder = builder.Limit(filter.Limit)
+	}
+
+	if filter.Offset > 0 {
+		builder = builder.Offset(filter.Offset)
+	}
+
+	query, args, errQuery := builder.Where(constraints).ToSql()
+	if errQuery != nil {
+		return nil, 0, Err(errQuery)
+	}
+
+	rows, errRows := db.Query(ctx, query, args...)
 	if errRows != nil {
-		return nil, Err(errRows)
+		if errors.Is(errRows, ErrNoResult) {
+			return []BanASN{}, 0, nil
+		}
+
+		return nil, 0, Err(errRows)
 	}
 
 	defer rows.Close()
 
-	records := []BanASN{}
+	var records []BanASN
 
 	for rows.Next() {
 		var (
@@ -558,10 +708,10 @@ func (db *Store) GetBansASN(ctx context.Context) ([]BanASN, error) {
 			sourceID int64
 		)
 
-		if errQuery := rows.
+		if errScan := rows.
 			Scan(&ban.BanASNId, &ban.ASNum, &ban.Origin, &sourceID, &targetID, &ban.ReasonText, &ban.ValidUntil,
 				&ban.CreatedOn, &ban.UpdatedOn, &ban.Deleted, &ban.Reason, &ban.IsEnabled, &ban.UnbanReasonText, &ban.AppealState); errQuery != nil {
-			return nil, Err(errQuery)
+			return nil, 0, Err(errScan)
 		}
 
 		ban.SourceID = steamid.New(sourceID)
@@ -570,7 +720,24 @@ func (db *Store) GetBansASN(ctx context.Context) ([]BanASN, error) {
 		records = append(records, ban)
 	}
 
-	return records, nil
+	count, errCount := db.GetCount(ctx, db.sb.
+		Select("COUNT(b.ban_asn_id)").
+		From("ban_asn b").
+		Where(constraints))
+
+	if errCount != nil {
+		if errors.Is(errCount, ErrNoResult) {
+			return []BanASN{}, 0, nil
+		}
+
+		return nil, 0, errCount
+	}
+
+	if records == nil {
+		records = []BanASN{}
+	}
+
+	return records, count, nil
 }
 
 func (db *Store) SaveBanASN(ctx context.Context, banASN *BanASN) error {
