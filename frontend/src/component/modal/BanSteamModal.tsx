@@ -16,7 +16,7 @@ import {
     BanReason,
     BanType,
     Duration,
-    IAPIBanRecordProfile
+    SteamBanRecord
 } from '../../api';
 import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
 import { logErr } from '../../util/errors';
@@ -48,7 +48,7 @@ import { CancelButton, ResetButton, SubmitButton } from './Buttons';
 export interface BanModalProps {
     reportId?: number;
     steamId?: string;
-    existing?: IAPIBanRecordProfile;
+    existing?: SteamBanRecord;
 }
 
 interface BanSteamFormValues extends SteamIDInputValue {
@@ -60,7 +60,7 @@ interface BanSteamFormValues extends SteamIDInputValue {
     duration_custom: Date;
     note: string;
     include_friends: boolean;
-    existing?: IAPIBanRecordProfile;
+    existing?: SteamBanRecord;
 }
 
 const validationSchema = yup.object({

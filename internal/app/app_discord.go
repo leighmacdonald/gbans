@@ -161,10 +161,10 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 		)
 
 		// TODO Show the longest remaining ban.
-		if ban.Ban.BanID > 0 {
-			banned = ban.Ban.BanType == store.Banned
-			muted = ban.Ban.BanType == store.NoComm
-			reason = ban.Ban.ReasonText
+		if ban.BanID > 0 {
+			banned = ban.BanType == store.Banned
+			muted = ban.BanType == store.NoComm
+			reason = ban.ReasonText
 
 			if len(reason) == 0 {
 				// in case authorProfile ban without authorProfile reason ever makes its way here, we make sure
@@ -172,18 +172,18 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 				reason = "none"
 			}
 
-			expiry = ban.Ban.ValidUntil
-			createdAt = ban.Ban.CreatedOn.Format(time.RFC3339)
+			expiry = ban.ValidUntil
+			createdAt = ban.CreatedOn.Format(time.RFC3339)
 
-			if ban.Ban.SourceID.Valid() {
-				if errGetProfile := app.PersonBySID(ctx, ban.Ban.SourceID, &authorProfile); errGetProfile != nil {
+			if ban.SourceID.Valid() {
+				if errGetProfile := app.PersonBySID(ctx, ban.SourceID, &authorProfile); errGetProfile != nil {
 					app.log.Error("Failed to load author for ban", zap.Error(errGetProfile))
 				} else {
-					app.addAuthor(ctx, msgEmbed, ban.Ban.SourceID)
+					app.addAuthor(ctx, msgEmbed, ban.SourceID)
 				}
 			}
 
-			msgEmbed.SetURL(app.ExtURL(ban.Ban))
+			msgEmbed.SetURL(app.ExtURL(ban.BanSteam))
 		}
 
 		banStateStr := "no"
@@ -258,10 +258,10 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 
 		title := player.PersonaName
 
-		if ban.Ban.BanID > 0 {
-			if ban.Ban.BanType == store.Banned {
+		if ban.BanID > 0 {
+			if ban.BanType == store.Banned {
 				title = fmt.Sprintf("%s (BANNED)", title)
-			} else if ban.Ban.BanType == store.NoComm {
+			} else if ban.BanType == store.NoComm {
 				title = fmt.Sprintf("%s (MUTED)", title)
 			}
 		}
@@ -296,7 +296,7 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 			numMutes, numBans := 0, 0
 
 			for _, oldBan := range oldBans {
-				if oldBan.Ban.BanType == store.Banned {
+				if oldBan.BanType == store.Banned {
 					numBans++
 				} else {
 					numMutes++
@@ -309,9 +309,9 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 
 		msgEmbed.InlineAllFields()
 
-		if ban.Ban.BanID > 0 {
+		if ban.BanID > 0 {
 			msgEmbed.AddField("Reason", reason)
-			msgEmbed.AddField("Created", FmtTimeShort(ban.Ban.CreatedOn)).MakeFieldInline()
+			msgEmbed.AddField("Created", FmtTimeShort(ban.CreatedOn)).MakeFieldInline()
 
 			if time.Until(expiry) > time.Hour*24*365*5 {
 				msgEmbed.AddField("Expires", "Permanent").MakeFieldInline()
@@ -321,11 +321,11 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 
 			msgEmbed.AddField("Author", fmt.Sprintf("<@%s>", authorProfile.DiscordID)).MakeFieldInline()
 
-			if ban.Ban.Note != "" {
-				msgEmbed.AddField("Mod Note", ban.Ban.Note).MakeFieldInline()
+			if ban.Note != "" {
+				msgEmbed.AddField("Mod Note", ban.Note).MakeFieldInline()
 			}
 
-			app.addAuthor(ctx, msgEmbed, ban.Ban.SourceID)
+			app.addAuthor(ctx, msgEmbed, ban.SourceID)
 		}
 
 		if player.IPAddr != nil {

@@ -15,7 +15,7 @@ import {
     apiUpdateBanASN,
     BanReason,
     Duration,
-    IAPIBanASNRecord
+    ASNBanRecord
 } from '../../api';
 import { Heading } from '../Heading';
 import { ASNumberField, ASNumberFieldValidator } from '../formik/ASNumberField';
@@ -61,7 +61,7 @@ export const validationSchema = yup.object({
 });
 
 export interface BanASNModalProps {
-    existing?: IAPIBanASNRecord;
+    existing?: ASNBanRecord;
 }
 
 export const BanASNModal = NiceModal.create(

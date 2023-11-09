@@ -79,7 +79,7 @@ export const Profile = () => {
             <>
                 <Grid xs={12} md={8}>
                     <Box width={'100%'}>
-                        <ProfileInfoBox profile={profile} />
+                        <ProfileInfoBox steam_id={profile.player.steam_id} />
                     </Box>
                 </Grid>
                 <Grid xs={6} md={2}>

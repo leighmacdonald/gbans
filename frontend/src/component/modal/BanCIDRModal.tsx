@@ -16,7 +16,7 @@ import {
     BanReason,
     BanType,
     Duration,
-    IAPIBanCIDRRecord
+    CIDRBanRecord
 } from '../../api';
 import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
 import { logErr } from '../../util/errors';
@@ -53,7 +53,7 @@ interface BanCIDRFormValues extends SteamIDInputValue {
     duration: Duration;
     duration_custom: Date;
     note: string;
-    existing?: IAPIBanCIDRRecord;
+    existing?: CIDRBanRecord;
 }
 
 const validationSchema = yup.object({
@@ -67,7 +67,7 @@ const validationSchema = yup.object({
 });
 
 export interface BanCIDRModalProps {
-    existing?: IAPIBanCIDRRecord;
+    existing?: CIDRBanRecord;
 }
 
 export const BanCIDRModal = NiceModal.create(
@@ -127,7 +127,7 @@ export const BanCIDRModal = NiceModal.create(
                     reason: existing ? existing.reason : BanReason.Cheating,
                     steam_id: existing ? existing.target_id : '',
                     reason_text: existing ? existing.reason_text : '',
-                    cidr: existing ? existing.cidr.IP : ''
+                    cidr: existing ? existing.cidr : ''
                 }}
                 validateOnBlur={true}
                 validateOnChange={false}

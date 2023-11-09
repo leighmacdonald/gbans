@@ -25,12 +25,12 @@ import {
     apiReportSetState,
     BanReasons,
     BanType,
-    IAPIBanRecordProfile,
     PermissionLevel,
     ReportStatus,
     reportStatusColour,
     reportStatusString,
-    ReportWithAuthor
+    ReportWithAuthor,
+    SteamBanRecord
 } from '../api';
 import { Heading } from '../component/Heading';
 import { LoadingSpinner } from '../component/LoadingSpinner';
@@ -40,7 +40,6 @@ import { ModalBanSteam } from '../component/modal';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
-import { Nullable } from '../util/types';
 
 export const ReportViewPage = (): JSX.Element => {
     const { report_id } = useParams();
@@ -48,9 +47,8 @@ export const ReportViewPage = (): JSX.Element => {
     const id = parseInt(report_id || '');
     const [report, setReport] = useState<ReportWithAuthor>();
     const [stateAction, setStateAction] = useState(ReportStatus.Opened);
-    const [banHistory, setBanHistory] = useState<IAPIBanRecordProfile[]>([]);
-    const [currentBan, setCurrentBan] =
-        useState<Nullable<IAPIBanRecordProfile>>();
+    const [banHistory, setBanHistory] = useState<SteamBanRecord[]>([]);
+    const [currentBan, setCurrentBan] = useState<SteamBanRecord>();
     const { currentUser } = useCurrentUserCtx();
     const { sendFlash } = useUserFlashCtx();
     const navigate = useNavigate();
@@ -108,7 +106,7 @@ export const ReportViewPage = (): JSX.Element => {
             .catch(logErr);
     }, [id, report?.report_status, sendFlash, stateAction]);
 
-    const renderBan = (ban: IAPIBanRecordProfile) => {
+    const renderBan = (ban: SteamBanRecord) => {
         switch (ban.ban_type) {
             case BanType.Banned:
                 return (

@@ -702,7 +702,7 @@ func authMiddleware(app *App, level consts.Privilege) gin.HandlerFunc {
 				Avatar:          loggedInPerson.Avatar,
 				Avatarfull:      loggedInPerson.AvatarFull,
 				Muted:           loggedInPerson.Muted,
-				BanID:           bannedPerson.Ban.BanID,
+				BanID:           bannedPerson.BanID,
 			}
 			ctx.Set(ctxKeyUserProfile, profile)
 		} else {

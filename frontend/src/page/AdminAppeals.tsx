@@ -12,11 +12,11 @@ import { Formik } from 'formik';
 import * as yup from 'yup';
 import {
     apiGetAppeals,
-    AppealOverview,
     AppealQueryFilter,
     AppealState,
     appealStateString,
-    BanReason
+    BanReason,
+    SteamBanRecord
 } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { Order, RowsPerPage } from '../component/DataTable';
@@ -56,12 +56,12 @@ const validationSchema = yup.object({
 export const AdminAppeals = () => {
     const [sortOrder, setSortOrder] = useState<Order>('desc');
     const [sortColumn, setSortColumn] =
-        useState<keyof AppealOverview>('ban_id');
+        useState<keyof SteamBanRecord>('ban_id');
     const [rowPerPageCount, setRowPerPageCount] = useState<number>(
         RowsPerPage.Fifty
     );
     const [page, setPage] = useState(0);
-    const [appeals, setAppeals] = useState<AppealOverview[]>([]);
+    const [appeals, setAppeals] = useState<SteamBanRecord[]>([]);
     const [appealState, setAppealState] = useState<AppealState>(
         AppealState.Any
     );
@@ -170,7 +170,7 @@ export const AdminAppeals = () => {
                     title={'Recent Open Appeal Activity'}
                     iconLeft={loading ? <LoadingIcon /> : tableIcon}
                 >
-                    <LazyTable<AppealOverview>
+                    <LazyTable<SteamBanRecord>
                         rows={appeals}
                         showPager
                         page={page}
@@ -234,10 +234,10 @@ export const AdminAppeals = () => {
                                     <PersonCell
                                         steam_id={row.source_id}
                                         personaname={
-                                            row.source_persona_name ||
-                                            row.source_id.toString()
+                                            row.source_personaname ||
+                                            row.source_id
                                         }
-                                        avatar_hash={row.source_avatar}
+                                        avatar_hash={row.source_avatarhash}
                                     ></PersonCell>
                                 )
                             },
@@ -246,16 +246,14 @@ export const AdminAppeals = () => {
                                 tooltip: 'Target',
                                 sortable: true,
                                 align: 'left',
-                                queryValue: (o) =>
-                                    steamIdQueryValue(o.target_id),
                                 renderer: (row) => (
                                     <PersonCell
                                         steam_id={row.target_id}
                                         personaname={
-                                            row.target_persona_name ||
-                                            row.target_id.toString()
+                                            row.target_personaname ||
+                                            row.target_id
                                         }
-                                        avatar_hash={row.target_avatar}
+                                        avatar_hash={row.target_avatarhash}
                                     ></PersonCell>
                                 )
                             },

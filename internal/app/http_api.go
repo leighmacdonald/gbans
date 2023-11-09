@@ -340,16 +340,16 @@ func onAPIPostSetBanAppealStatus(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if bannedPerson.Ban.AppealState == req.AppealState {
+		if bannedPerson.AppealState == req.AppealState {
 			responseErr(ctx, http.StatusConflict, errors.New("State must be different than previous"))
 
 			return
 		}
 
-		original := bannedPerson.Ban.AppealState
-		bannedPerson.Ban.AppealState = req.AppealState
+		original := bannedPerson.AppealState
+		bannedPerson.AppealState = req.AppealState
 
-		if errSave := app.db.SaveBan(ctx, &bannedPerson.Ban); errSave != nil {
+		if errSave := app.db.SaveBan(ctx, &bannedPerson.BanSteam); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
@@ -387,7 +387,7 @@ func onAPIPostBanDelete(app *App) gin.HandlerFunc {
 			return
 		}
 
-		changed, errSave := app.Unban(ctx, bannedPerson.Person.SteamID, req.UnbanReasonText)
+		changed, errSave := app.Unban(ctx, bannedPerson.TargetID, req.UnbanReasonText)
 		if errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -450,18 +450,18 @@ func onAPIPostBanUpdate(app *App) gin.HandlerFunc {
 				return
 			}
 
-			bannedPerson.Ban.ReasonText = req.ReasonText
+			bannedPerson.ReasonText = req.ReasonText
 		} else {
-			bannedPerson.Ban.ReasonText = ""
+			bannedPerson.ReasonText = ""
 		}
 
-		bannedPerson.Ban.Note = req.Note
-		bannedPerson.Ban.BanType = req.BanType
-		bannedPerson.Ban.Reason = req.Reason
-		bannedPerson.Ban.IncludeFriends = req.IncludeFriends
-		bannedPerson.Ban.ValidUntil = req.ValidUntil
+		bannedPerson.Note = req.Note
+		bannedPerson.BanType = req.BanType
+		bannedPerson.Reason = req.Reason
+		bannedPerson.IncludeFriends = req.IncludeFriends
+		bannedPerson.ValidUntil = req.ValidUntil
 
-		if errSave := app.db.SaveBan(ctx, &bannedPerson.Ban); errSave != nil {
+		if errSave := app.db.SaveBan(ctx, &bannedPerson.BanSteam); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to save updated ban", zap.Error(errSave))
 
@@ -856,7 +856,7 @@ func onAPIPostBansCIDRUpdate(app *App) gin.HandlerFunc {
 
 		ban.Reason = req.Reason
 		ban.ReasonText = req.ReasonText
-		ban.CIDR = ipNet
+		ban.CIDR = ipNet.String()
 		ban.Note = req.Note
 		ban.ValidUntil = req.ValidUntil
 		ban.TargetID = sid
@@ -1152,21 +1152,21 @@ func onAPIPostServerCheck(app *App) gin.HandlerFunc {
 			return
 		}
 
-		resp.BanType = bannedPerson.Ban.BanType
+		resp.BanType = bannedPerson.BanType
 
 		var reason string
 
 		switch {
-		case bannedPerson.Ban.Reason == store.Custom && bannedPerson.Ban.ReasonText != "":
-			reason = bannedPerson.Ban.ReasonText
-		case bannedPerson.Ban.Reason == store.Custom && bannedPerson.Ban.ReasonText == "":
+		case bannedPerson.Reason == store.Custom && bannedPerson.ReasonText != "":
+			reason = bannedPerson.ReasonText
+		case bannedPerson.Reason == store.Custom && bannedPerson.ReasonText == "":
 			reason = "Banned"
 		default:
-			reason = bannedPerson.Ban.Reason.String()
+			reason = bannedPerson.Reason.String()
 		}
 
-		resp.Msg = fmt.Sprintf("Banned\nReason: %s\nAppeal: %s\nRemaining: %s", reason, app.ExtURL(bannedPerson.Ban),
-			time.Until(bannedPerson.Ban.ValidUntil).Round(time.Minute).String())
+		resp.Msg = fmt.Sprintf("Banned\nReason: %s\nAppeal: %s\nRemaining: %s", reason, app.ExtURL(bannedPerson.BanSteam),
+			time.Until(bannedPerson.ValidUntil).Round(time.Minute).String())
 
 		ctx.JSON(http.StatusOK, resp)
 
@@ -1406,12 +1406,12 @@ func onAPIExportBansValveSteamID(app *App) gin.HandlerFunc {
 		var entries []string
 
 		for _, ban := range bans {
-			if ban.Ban.Deleted ||
-				!ban.Ban.IsEnabled {
+			if ban.Deleted ||
+				!ban.IsEnabled {
 				continue
 			}
 
-			entries = append(entries, fmt.Sprintf("banid 0 %s", steamid.SID64ToSID(ban.Person.SteamID)))
+			entries = append(entries, fmt.Sprintf("banid 0 %s", steamid.SID64ToSID(ban.TargetID)))
 		}
 
 		ctx.Data(http.StatusOK, "text/plain", []byte(strings.Join(entries, "\n")))
@@ -1434,8 +1434,8 @@ func onAPIExportBansValveIP(app *App) gin.HandlerFunc {
 				!ban.IsEnabled {
 				continue
 			}
-
-			entries = append(entries, fmt.Sprintf("addip 0 %s", ban.CIDR.IP.String()))
+			// TODO Shouldn't be cidr?
+			entries = append(entries, fmt.Sprintf("addip 0 %s", ban.CIDR))
 		}
 
 		ctx.Data(http.StatusOK, "text/plain", []byte(strings.Join(entries, "\n")))
@@ -1508,12 +1508,12 @@ func onAPIExportBansTF2BD(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var filtered []store.BannedPerson
+		var filtered []store.BannedSteamPerson
 
 		for _, ban := range bans {
-			if ban.Ban.Reason != store.Cheating ||
-				ban.Ban.Deleted ||
-				!ban.Ban.IsEnabled {
+			if ban.Reason != store.Cheating ||
+				ban.Deleted ||
+				!ban.IsEnabled {
 				continue
 			}
 
@@ -1534,10 +1534,10 @@ func onAPIExportBansTF2BD(app *App) gin.HandlerFunc {
 		for _, ban := range filtered {
 			out.Players = append(out.Players, thirdparty.Players{
 				Attributes: []string{"cheater"},
-				Steamid:    ban.Ban.TargetID,
+				Steamid:    ban.TargetID,
 				LastSeen: thirdparty.LastSeen{
-					PlayerName: ban.Person.PersonaName,
-					Time:       int(ban.Ban.UpdatedOn.Unix()),
+					PlayerName: ban.TargetPersonaname,
+					Time:       int(ban.UpdatedOn.Unix()),
 				},
 			})
 		}
@@ -1767,7 +1767,7 @@ func onAPIGetStats(app *App) gin.HandlerFunc {
 	}
 }
 
-func loadBanMeta(_ *store.BannedPerson) {
+func loadBanMeta(_ *store.BannedSteamPerson) {
 }
 
 func onAPIGetBanByID(app *App) gin.HandlerFunc {
@@ -1798,12 +1798,12 @@ func onAPIGetBanByID(app *App) gin.HandlerFunc {
 		bannedPerson := store.NewBannedPerson()
 		if errGetBan := app.db.GetBanByBanID(ctx, banID, &bannedPerson, deletedOk); errGetBan != nil {
 			responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
-			log.Error("Failed to fetch bans", zap.Error(errGetBan))
+			log.Error("Failed to fetch steam ban", zap.Error(errGetBan))
 
 			return
 		}
 
-		if !checkPrivilege(ctx, curUser, steamid.Collection{bannedPerson.Person.SteamID}, consts.PModerator) {
+		if !checkPrivilege(ctx, curUser, steamid.Collection{bannedPerson.TargetID}, consts.PModerator) {
 			return
 		}
 
@@ -1824,7 +1824,7 @@ func onAPIGetAppeals(app *App) gin.HandlerFunc {
 		bans, total, errBans := app.db.GetAppealsByActivity(ctx, req)
 		if errBans != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
-			log.Error("Failed to fetch bans", zap.Error(errBans))
+			log.Error("Failed to fetch appeals", zap.Error(errBans))
 
 			return
 		}
@@ -1848,7 +1848,7 @@ func onAPIGetBansSteam(app *App) gin.HandlerFunc {
 		bans, count, errBans := app.db.GetBansSteam(ctx, req)
 		if errBans != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
-			log.Error("Failed to fetch bans", zap.Error(errBans))
+			log.Error("Failed to fetch steam bans", zap.Error(errBans))
 
 			return
 		}
@@ -1872,7 +1872,7 @@ func onAPIGetBansCIDR(app *App) gin.HandlerFunc {
 		bans, count, errBans := app.db.GetBansNet(ctx, req)
 		if errBans != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
-			log.Error("Failed to fetch bans", zap.Error(errBans))
+			log.Error("Failed to fetch cidr bans", zap.Error(errBans))
 
 			return
 		}
@@ -3869,7 +3869,7 @@ func onAPIGetBanMessages(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{banPerson.Ban.TargetID, banPerson.Ban.SourceID}, consts.PModerator) {
+		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{banPerson.TargetID, banPerson.SourceID}, consts.PModerator) {
 			return
 		}
 
@@ -4062,10 +4062,10 @@ func onAPIPostBanMessage(app *App) gin.HandlerFunc {
 		}
 
 		curUserProfile := currentUserProfile(ctx)
-		if bannedPerson.Ban.AppealState != store.Open && curUserProfile.PermissionLevel < consts.PModerator {
+		if bannedPerson.AppealState != store.Open && curUserProfile.PermissionLevel < consts.PModerator {
 			responseErr(ctx, http.StatusForbidden, consts.ErrPermissionDenied)
 			log.Warn("User tried to bypass posting restriction",
-				zap.Int64("ban_id", bannedPerson.Ban.BanID), zap.Int64("steam_id", bannedPerson.Person.SteamID.Int64()))
+				zap.Int64("ban_id", bannedPerson.BanID), zap.Int64("target_id", bannedPerson.TargetID.Int64()))
 
 			return
 		}
@@ -4083,9 +4083,9 @@ func onAPIPostBanMessage(app *App) gin.HandlerFunc {
 		msgEmbed := discord.
 			NewEmbed("New ban appeal message posted").
 			SetColor(app.bot.Colour.Info).
-			SetThumbnail(bannedPerson.Person.AvatarFull).
+			// SetThumbnail(bannedPerson.TargetAvatarhash).
 			SetDescription(msg.Contents).
-			SetURL(app.ExtURL(bannedPerson.Ban))
+			SetURL(app.ExtURL(bannedPerson.BanSteam))
 
 		app.addAuthorUserProfile(msgEmbed, curUserProfile).Truncate()
 

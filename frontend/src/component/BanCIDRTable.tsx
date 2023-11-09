@@ -11,22 +11,21 @@ import {
     apiGetBansCIDR,
     BanQueryFilter,
     BanReason,
-    IAPIBanCIDRRecord
+    CIDRBanRecord
 } from '../api';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
-import { steamIdQueryValue } from '../util/text';
 import { Order, RowsPerPage } from './DataTable';
 import { DataTableRelativeDateField } from './DataTableRelativeDateField';
 import { LazyTable } from './LazyTable';
+import { PersonCell } from './PersonCell';
 import { ModalBanCIDR, ModalUnbanCIDR } from './modal';
 import { BanCIDRModalProps } from './modal/BanCIDRModal';
 
 export const BanCIDRTable = () => {
-    const [bans, setBans] = useState<IAPIBanCIDRRecord[]>([]);
+    const [bans, setBans] = useState<CIDRBanRecord[]>([]);
     const [sortOrder, setSortOrder] = useState<Order>('desc');
-    const [sortColumn, setSortColumn] =
-        useState<keyof IAPIBanCIDRRecord>('net_id');
+    const [sortColumn, setSortColumn] = useState<keyof CIDRBanRecord>('net_id');
     const [rowPerPageCount, setRowPerPageCount] = useState<number>(
         RowsPerPage.TwentyFive
     );
@@ -49,9 +48,9 @@ export const BanCIDRTable = () => {
     );
 
     const onEditCIDR = useCallback(
-        async (existing: IAPIBanCIDRRecord) => {
+        async (existing: CIDRBanRecord) => {
             try {
-                await NiceModal.show<IAPIBanCIDRRecord, BanCIDRModalProps>(
+                await NiceModal.show<CIDRBanRecord, BanCIDRModalProps>(
                     ModalBanCIDR,
                     {
                         existing
@@ -67,7 +66,7 @@ export const BanCIDRTable = () => {
 
     useEffect(() => {
         const abortController = new AbortController();
-        const opts: BanQueryFilter<IAPIBanCIDRRecord> = {
+        const opts: BanQueryFilter<CIDRBanRecord> = {
             limit: rowPerPageCount,
             offset: page * rowPerPageCount,
             order_by: sortColumn,
@@ -87,7 +86,7 @@ export const BanCIDRTable = () => {
     }, [page, rowPerPageCount, sortColumn, sortOrder]);
 
     return (
-        <LazyTable<IAPIBanCIDRRecord>
+        <LazyTable<CIDRBanRecord>
             showPager={true}
             count={totalRows}
             rows={bans}
@@ -117,7 +116,6 @@ export const BanCIDRTable = () => {
                     sortKey: 'net_id',
                     sortable: true,
                     align: 'left',
-                    queryValue: (o) => `${o.net_id}`,
                     renderer: (obj) => (
                         <Typography variant={'body1'}>
                             #{obj.net_id.toString()}
@@ -125,29 +123,31 @@ export const BanCIDRTable = () => {
                     )
                 },
                 {
-                    label: 'Author',
-                    tooltip: 'Author ID',
+                    label: 'A',
+                    tooltip: ' BanAuthor',
                     sortKey: 'source_id',
                     sortable: true,
                     align: 'left',
-                    queryValue: (o) => steamIdQueryValue(o.source_id),
-                    renderer: (obj) => (
-                        <Typography variant={'body1'}>
-                            {obj.source_id.toString()}
-                        </Typography>
+                    renderer: (row) => (
+                        <PersonCell
+                            steam_id={row.source_id}
+                            personaname={''}
+                            avatar_hash={row.source_avatarhash}
+                        />
                     )
                 },
                 {
                     label: 'Target',
-                    tooltip: 'Target SID',
+                    tooltip: 'Steam Name',
                     sortKey: 'target_id',
                     sortable: true,
                     align: 'left',
-                    queryValue: (o) => steamIdQueryValue(o.target_id),
-                    renderer: (obj) => (
-                        <Typography variant={'body1'}>
-                            {obj.target_id.toString()}
-                        </Typography>
+                    renderer: (row) => (
+                        <PersonCell
+                            steam_id={row.target_id}
+                            personaname={row.target_personaname}
+                            avatar_hash={row.target_avatarhash}
+                        />
                     )
                 },
                 {
@@ -156,12 +156,11 @@ export const BanCIDRTable = () => {
                     sortKey: 'cidr',
                     sortable: true,
                     align: 'left',
-                    queryValue: (o) => `${o.target_id}`,
                     renderer: (obj) => {
                         try {
                             return (
                                 <Typography variant={'body1'}>
-                                    {obj.cidr.IP}
+                                    {obj.cidr}
                                 </Typography>
                             );
                         } catch (e) {
@@ -175,7 +174,6 @@ export const BanCIDRTable = () => {
                     sortKey: 'reason',
                     sortable: true,
                     align: 'left',
-                    queryValue: (o) => BanReason[o.reason],
                     renderer: (row) => (
                         <Typography variant={'body1'}>
                             {BanReason[row.reason]}
@@ -188,7 +186,11 @@ export const BanCIDRTable = () => {
                     sortKey: 'reason_text',
                     sortable: false,
                     align: 'left',
-                    queryValue: (o) => o.reason_text
+                    renderer: (row) => (
+                        <Typography variant={'body1'}>
+                            {row.reason_text}
+                        </Typography>
+                    )
                 },
                 {
                     label: 'Created',

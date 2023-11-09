@@ -27,7 +27,7 @@ func (app *App) BanSteam(ctx context.Context, banSteam *store.BanSteam) error {
 
 	errGetExistingBan := app.db.GetBanBySteamID(ctx, banSteam.TargetID, &existing, false)
 
-	if existing.Ban.BanID > 0 {
+	if existing.BanID > 0 {
 		return store.ErrDuplicate
 	}
 
@@ -147,8 +147,13 @@ func (app *App) BanCIDR(ctx context.Context, banNet *store.BanCIDR) error {
 	// if err2 == nil {
 	//	return "", consts.ErrDuplicateBan
 	// }
-	if banNet.CIDR == nil {
+	if banNet.CIDR == "" {
 		return errors.New("CIDR unset")
+	}
+
+	_, realCIDR, errCIDR := net.ParseCIDR(banNet.CIDR)
+	if errCIDR != nil {
+		return errors.Wrap(errCIDR, "Invalid CIDR")
 	}
 
 	if errSaveBanNet := app.db.SaveBanNet(ctx, banNet); errSaveBanNet != nil {
@@ -157,7 +162,7 @@ func (app *App) BanCIDR(ctx context.Context, banNet *store.BanCIDR) error {
 
 	go func(_ *net.IPNet, reason store.Reason) {
 		state := app.state.current()
-		foundPlayers := state.find(findOpts{CIDR: banNet.CIDR})
+		foundPlayers := state.find(findOpts{CIDR: realCIDR})
 
 		if len(foundPlayers) == 0 {
 			return
@@ -168,12 +173,12 @@ func (app *App) BanCIDR(ctx context.Context, banNet *store.BanCIDR) error {
 				app.log.Error("Failed to kick player", zap.Error(errKick))
 			}
 		}
-	}(banNet.CIDR, banNet.Reason)
+	}(realCIDR, banNet.Reason)
 
 	msgEmbed := discord.
 		NewEmbed("CIDR Banned Successfully").
 		SetColor(app.bot.Colour.Success).
-		AddField("cidr", banNet.CIDR.String()).
+		AddField("cidr", realCIDR.String()).
 		AddField("net_id", fmt.Sprintf("%d", banNet.NetID)).
 		AddField("Reason", banNet.Reason.String())
 
@@ -219,10 +224,10 @@ func (app *App) Unban(ctx context.Context, target steamid.SID64, reason string) 
 		return false, errors.Wrapf(errGetBan, "Failed to get ban")
 	}
 
-	bannedPerson.Ban.Deleted = true
-	bannedPerson.Ban.UnbanReasonText = reason
+	bannedPerson.Deleted = true
+	bannedPerson.UnbanReasonText = reason
 
-	if errSaveBan := app.db.SaveBan(ctx, &bannedPerson.Ban); errSaveBan != nil {
+	if errSaveBan := app.db.SaveBan(ctx, &bannedPerson.BanSteam); errSaveBan != nil {
 		return false, errors.Wrapf(errSaveBan, "Failed to save unban")
 	}
 
@@ -231,12 +236,12 @@ func (app *App) Unban(ctx context.Context, target steamid.SID64, reason string) 
 	msgEmbed := discord.
 		NewEmbed("User Unbanned Successfully").
 		SetColor(app.bot.Colour.Success).
-		SetURL(app.ExtURL(bannedPerson.Ban)).
-		AddField("ban_id", fmt.Sprintf("%d", bannedPerson.Ban.BanID)).AddField("Reason", reason)
+		SetURL(app.ExtURL(bannedPerson.BanSteam)).
+		AddField("ban_id", fmt.Sprintf("%d", bannedPerson.BanID)).AddField("Reason", reason)
 
-	app.addTarget(ctx, msgEmbed, bannedPerson.Person.SteamID)
+	app.addTarget(ctx, msgEmbed, bannedPerson.TargetID)
 
-	discord.AddFieldsSteamID(msgEmbed, bannedPerson.Person.SteamID)
+	discord.AddFieldsSteamID(msgEmbed, bannedPerson.TargetID)
 
 	app.bot.SendPayload(discord.Payload{
 		ChannelID: app.conf.Discord.LogChannelID,

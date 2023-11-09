@@ -18,12 +18,12 @@ import {
     apiGetReportMessages,
     apiUpdateReportMessage,
     BanReasons,
-    IAPIBanRecordProfile,
     PermissionLevel,
     PersonConnection,
     PersonMessage,
     Report,
     ReportMessagesResponse,
+    SteamBanRecord,
     UserMessage
 } from '../api';
 import { renderMarkdown } from '../api/wiki';
@@ -42,7 +42,7 @@ import { UserMessageView } from './UserMessageView';
 
 interface ReportComponentProps {
     report: Report;
-    banHistory: IAPIBanRecordProfile[];
+    banHistory: SteamBanRecord[];
 }
 
 export const ReportComponent = ({

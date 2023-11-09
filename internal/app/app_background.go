@@ -169,7 +169,7 @@ func (app *App) updateSteamBanMembers(ctx context.Context) (map[int64]steamid.Co
 	}
 
 	for _, steamBan := range steamBans {
-		friends, errFriends := steamweb.GetFriendList(localCtx, steamBan.Ban.TargetID)
+		friends, errFriends := steamweb.GetFriendList(localCtx, steamBan.TargetID)
 		if errFriends != nil {
 			return nil, errors.Wrap(errFriends, "Failed to fetch friends")
 		}
@@ -184,8 +184,8 @@ func (app *App) updateSteamBanMembers(ctx context.Context) (map[int64]steamid.Co
 			sids = append(sids, friend.SteamID)
 		}
 
-		memberList := store.NewMembersList(steamBan.Person.SteamID.Int64(), sids)
-		if errQuery := app.db.GetMembersList(ctx, steamBan.Person.SteamID.Int64(), &memberList); errQuery != nil {
+		memberList := store.NewMembersList(steamBan.TargetID.Int64(), sids)
+		if errQuery := app.db.GetMembersList(ctx, steamBan.TargetID.Int64(), &memberList); errQuery != nil {
 			if !errors.Is(errQuery, store.ErrNoResult) {
 				return nil, errors.Wrap(errQuery, "Failed to fetch members list")
 			}
@@ -195,7 +195,7 @@ func (app *App) updateSteamBanMembers(ctx context.Context) (map[int64]steamid.Co
 			return nil, errors.Wrap(errSave, "Failed to save banned steam friend member list")
 		}
 
-		newMap[steamBan.Person.SteamID.Int64()] = memberList.Members
+		newMap[steamBan.TargetID.Int64()] = memberList.Members
 	}
 
 	return newMap, nil

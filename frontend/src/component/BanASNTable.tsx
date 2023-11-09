@@ -8,24 +8,20 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { formatDuration, intervalToDuration } from 'date-fns';
 import format from 'date-fns/format';
-import {
-    apiGetBansASN,
-    BanQueryFilter,
-    BanReason,
-    IAPIBanASNRecord
-} from '../api';
+import { apiGetBansASN, BanQueryFilter, BanReason, ASNBanRecord } from '../api';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
 import { Order, RowsPerPage } from './DataTable';
 import { LazyTable } from './LazyTable';
+import { PersonCell } from './PersonCell';
 import { ModalBanASN, ModalUnbanASN } from './modal';
 import { BanASNModalProps } from './modal/BanASNModal';
 
 export const BanASNTable = () => {
-    const [bans, setBans] = useState<IAPIBanASNRecord[]>([]);
+    const [bans, setBans] = useState<ASNBanRecord[]>([]);
     const [sortOrder, setSortOrder] = useState<Order>('desc');
     const [sortColumn, setSortColumn] =
-        useState<keyof IAPIBanASNRecord>('ban_asn_id');
+        useState<keyof ASNBanRecord>('ban_asn_id');
     const [rowPerPageCount, setRowPerPageCount] = useState<number>(
         RowsPerPage.TwentyFive
     );
@@ -48,9 +44,9 @@ export const BanASNTable = () => {
     );
 
     const onEditASN = useCallback(
-        async (existing: IAPIBanASNRecord) => {
+        async (existing: ASNBanRecord) => {
             try {
-                await NiceModal.show<IAPIBanASNRecord, BanASNModalProps>(
+                await NiceModal.show<ASNBanRecord, BanASNModalProps>(
                     ModalBanASN,
                     {
                         existing
@@ -66,7 +62,7 @@ export const BanASNTable = () => {
 
     useEffect(() => {
         const abortController = new AbortController();
-        const opts: BanQueryFilter<IAPIBanASNRecord> = {
+        const opts: BanQueryFilter<ASNBanRecord> = {
             limit: rowPerPageCount,
             offset: page * rowPerPageCount,
             order_by: sortColumn,
@@ -86,7 +82,7 @@ export const BanASNTable = () => {
     }, [page, rowPerPageCount, sortColumn, sortOrder]);
 
     return (
-        <LazyTable<IAPIBanASNRecord>
+        <LazyTable<ASNBanRecord>
             showPager={true}
             count={totalRows}
             rows={bans}
@@ -116,11 +112,38 @@ export const BanASNTable = () => {
                     sortKey: 'ban_asn_id',
                     sortable: true,
                     align: 'left',
-                    queryValue: (o) => `${o.ban_asn_id}`,
                     renderer: (obj) => (
                         <Typography variant={'body1'}>
                             #{obj.ban_asn_id.toString()}
                         </Typography>
+                    )
+                },
+                {
+                    label: 'A',
+                    tooltip: 'Ban Author Name',
+                    sortKey: 'source_personaname',
+                    sortable: true,
+                    align: 'left',
+                    renderer: (row) => (
+                        <PersonCell
+                            steam_id={row.source_id}
+                            personaname={''}
+                            avatar_hash={row.source_avatarhash}
+                        />
+                    )
+                },
+                {
+                    label: 'Name',
+                    tooltip: 'Persona Name',
+                    sortKey: 'target_personaname',
+                    sortable: true,
+                    align: 'left',
+                    renderer: (row) => (
+                        <PersonCell
+                            steam_id={row.target_id}
+                            personaname={row.target_personaname}
+                            avatar_hash={row.target_avatarhash}
+                        />
                     )
                 },
                 {
@@ -129,7 +152,6 @@ export const BanASNTable = () => {
                     sortKey: 'as_num',
                     sortable: true,
                     align: 'left',
-                    queryValue: (o) => `${o.as_num}`,
                     renderer: (row) => (
                         <Typography variant={'body1'}>{row.as_num}</Typography>
                     )
@@ -140,7 +162,6 @@ export const BanASNTable = () => {
                     sortKey: 'reason',
                     sortable: true,
                     align: 'left',
-                    queryValue: (o) => BanReason[o.reason],
                     renderer: (row) => (
                         <Typography variant={'body1'}>
                             {BanReason[row.reason]}
@@ -152,8 +173,7 @@ export const BanASNTable = () => {
                     tooltip: 'Custom',
                     sortKey: 'reason_text',
                     sortable: false,
-                    align: 'left',
-                    queryValue: (o) => o.reason_text
+                    align: 'left'
                 },
                 {
                     label: 'Created',
