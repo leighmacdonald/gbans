@@ -1,7 +1,7 @@
 import { parseDateTime } from '../util/text';
 import {
     apiCall,
-    BanQueryFilter,
+    BanSteamQueryFilter,
     QueryFilter,
     TimeStamped,
     transformTimeStampedDates
@@ -227,13 +227,15 @@ export interface BanPayloadGroup extends BanBasePayload {
 }
 
 export const apiGetBansSteam = async (
-    opts: BanQueryFilter<SteamBanRecord>,
+    opts: BanSteamQueryFilter,
     abortController?: AbortController
 ) => {
-    const resp = await apiCall<
-        LazyResult<SteamBanRecord>,
-        BanQueryFilter<SteamBanRecord>
-    >(`/api/bans/steam`, 'POST', opts, abortController);
+    const resp = await apiCall<LazyResult<SteamBanRecord>, BanSteamQueryFilter>(
+        `/api/bans/steam`,
+        'POST',
+        opts,
+        abortController
+    );
     resp.data = resp.data.map(applyDateTime);
 
     return resp;

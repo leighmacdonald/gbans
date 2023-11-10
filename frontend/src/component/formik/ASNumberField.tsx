@@ -1,13 +1,20 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import TextField from '@mui/material/TextField';
 import { useFormikContext } from 'formik';
 import * as yup from 'yup';
 
-export const ASNumberFieldValidator = yup
+export const asNumberFieldValidator = yup
     .number()
     .label('AS Number')
-    .required('AS Number Required')
-    .positive()
+    .test('valid_asn', (value, ctx) => {
+        if (value == undefined) {
+            return true;
+        }
+        if (value <= 0) {
+            return ctx.createError({ message: 'Invalid ASN' });
+        }
+        return true;
+    })
     .integer();
 
 interface ASNumberFieldProps {
@@ -19,13 +26,9 @@ export const ASNumberField = <T,>() => {
     const { values, handleChange, touched, errors } = useFormikContext<
         T & ASNumberFieldProps
     >();
-
-    useEffect(() => {
-        console.log(errors);
-    }, [errors]);
     return (
         <TextField
-            disabled={values.ban_asn_id != undefined && values.ban_asn_id > 0}
+            // disabled={values.ban_asn_id != undefined && values.ban_asn_id > 0}
             type={'number'}
             fullWidth
             label={'Autonomous System Number'}
@@ -34,7 +37,9 @@ export const ASNumberField = <T,>() => {
             value={values.as_num}
             onChange={handleChange}
             error={touched.as_num && Boolean(errors.as_num)}
-            helperText={touched.as_num && errors.as_num && `${errors.as_num}`}
+            helperText={
+                touched.as_num && Boolean(errors.as_num) && `${errors.as_num}`
+            }
         />
     );
 };

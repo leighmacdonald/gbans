@@ -134,13 +134,23 @@ func (db *Store) GetBansNet(ctx context.Context, filter CIDRBansQueryFilter) ([]
 		constraints = append(constraints, sq.Eq{"b.source_id": sourceID.Int64()})
 	}
 
-	if filter.Address != "" {
-		_, cidr, errCidr := net.ParseCIDR(filter.Address)
+	if filter.IP != "" {
+		var addr string
+
+		_, cidr, errCidr := net.ParseCIDR(filter.IP)
+
 		if errCidr != nil {
-			return nil, 0, errors.Wrap(errCidr, "Failed to parse CIDR")
+			ip := net.ParseIP(filter.IP)
+			if ip == nil {
+				return nil, 0, errors.Wrap(errCidr, "Failed to parse CIDR")
+			}
+
+			addr = ip.String()
+		} else {
+			addr = cidr.String()
 		}
 
-		constraints = append(constraints, sq.Expr("? <<= cidr", cidr))
+		constraints = append(constraints, sq.Expr("? <<= cidr", addr))
 	}
 
 	if filter.OrderBy != "" {

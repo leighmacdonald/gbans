@@ -21,12 +21,12 @@ import { Order, RowsPerPage } from '../component/DataTable';
 import { LazyTable } from '../component/LazyTable';
 import { LoadingSpinner } from '../component/LoadingSpinner';
 import { PersonCell } from '../component/PersonCell';
-import { nonResolvingSteamIDInputTest } from '../component/formik/AuthorIdField';
 import { FilterButtons } from '../component/formik/FilterButtons';
 import {
     PersonanameField,
     personanameFieldValidator
 } from '../component/formik/PersonanameField';
+import { nonResolvingSteamIDInputTest } from '../component/formik/SourceIdField';
 import { SteamIdField } from '../component/formik/SteamIdField';
 import { logErr } from '../util/errors';
 

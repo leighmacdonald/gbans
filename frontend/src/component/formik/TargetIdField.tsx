@@ -2,7 +2,7 @@ import React from 'react';
 import TextField from '@mui/material/TextField';
 import { useFormikContext } from 'formik';
 import * as yup from 'yup';
-import { nonResolvingSteamIDInputTest } from './AuthorIdField';
+import { nonResolvingSteamIDInputTest } from './SourceIdField';
 
 export const targetIdValidator = yup
     .string()

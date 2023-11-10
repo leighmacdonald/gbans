@@ -848,7 +848,7 @@ type BansQueryFilter struct {
 
 type CIDRBansQueryFilter struct {
 	BansQueryFilter
-	Address string `json:"address,omitempty"`
+	IP string `json:"ip,omitempty"`
 }
 
 type ASNBansQueryFilter struct {
@@ -858,7 +858,7 @@ type ASNBansQueryFilter struct {
 
 type GroupBansQueryFilter struct {
 	BansQueryFilter
-	GroupID string
+	GroupID string `json:"group_id"`
 }
 
 type SteamBansQueryFilter struct {
@@ -1287,15 +1287,24 @@ func (db *Store) GetBanGroups(ctx context.Context, filter GroupBansQueryFilter) 
 	var constraints sq.And
 
 	if !filter.Deleted {
-		constraints = append(constraints, sq.Eq{"deleted": false})
+		constraints = append(constraints, sq.Eq{"b.deleted": false})
 	}
 
 	if filter.Reason > 0 {
-		constraints = append(constraints, sq.Eq{"reason": filter.Reason})
+		constraints = append(constraints, sq.Eq{"b.reason": filter.Reason})
 	}
 
 	if filter.PermanentOnly {
-		constraints = append(constraints, sq.Gt{"valid_until": time.Now()})
+		constraints = append(constraints, sq.Gt{"b.valid_until": time.Now()})
+	}
+
+	if filter.GroupID != "" {
+		gid := steamid.NewGID(filter.GroupID)
+		if !gid.Valid() {
+			return nil, 0, steamid.ErrInvalidGID
+		}
+
+		constraints = append(constraints, sq.Eq{"b.group_id": gid.Int64()})
 	}
 
 	if filter.TargetID != "" {
@@ -1318,9 +1327,9 @@ func (db *Store) GetBanGroups(ctx context.Context, filter GroupBansQueryFilter) 
 
 	if filter.OrderBy != "" {
 		if filter.Desc {
-			builder = builder.OrderBy(fmt.Sprintf("%s DESC", filter.OrderBy))
+			builder = builder.OrderBy(fmt.Sprintf("b.%s DESC", filter.OrderBy))
 		} else {
-			builder = builder.OrderBy(fmt.Sprintf("%s ASC", filter.OrderBy))
+			builder = builder.OrderBy(fmt.Sprintf("b.%s ASC", filter.OrderBy))
 		}
 	}
 
@@ -1388,8 +1397,8 @@ func (db *Store) GetBanGroups(ctx context.Context, filter GroupBansQueryFilter) 
 	}
 
 	count, errCount := db.GetCount(ctx, db.sb.
-		Select("g.ban_group_id").
-		From("ban_group g").
+		Select("b.ban_group_id").
+		From("ban_group b").
 		Where(constraints))
 	if errCount != nil {
 		if errors.Is(errCount, ErrNoResult) {

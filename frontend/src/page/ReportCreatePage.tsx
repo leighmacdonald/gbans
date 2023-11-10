@@ -35,7 +35,7 @@ export const ReportCreatePage = (): JSX.Element => {
     useEffect(() => {
         if (canReport) {
             apiGetReports({
-                author_id: currentUser.steam_id.toString(),
+                source_id: currentUser.steam_id.toString(),
                 limit: 1000,
                 order_by: 'created_on',
                 desc: true

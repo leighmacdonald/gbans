@@ -6,7 +6,6 @@ import UndoIcon from '@mui/icons-material/Undo';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import IconButton from '@mui/material/IconButton';
-import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
@@ -16,7 +15,7 @@ import * as yup from 'yup';
 import {
     apiGetBansSteam,
     AppealState,
-    BanQueryFilter,
+    BanSteamQueryFilter,
     BanReason,
     SteamBanRecord
 } from '../api';
@@ -29,27 +28,29 @@ import {
 } from './DataTableRelativeDateField';
 import { LazyTable } from './LazyTable';
 import { PersonCell } from './PersonCell';
+import { TableCellBool } from './TableCellBool';
 import { TableCellLink } from './TableCellLink';
+import { VCenterBox } from './VCenterBox';
 import {
     AppealStateField,
     appealStateFielValidator
 } from './formik/AppealStateField';
-import { AuthorIDField, authorIdValidator } from './formik/AuthorIdField';
 import { DeletedField, deletedValidator } from './formik/DeletedField';
 import { FilterButtons } from './formik/FilterButtons';
+import { SourceIdField, sourceIdValidator } from './formik/SourceIdField';
 import { TargetIDField, targetIdValidator } from './formik/TargetIdField';
 import { ModalBanSteam, ModalUnbanSteam } from './modal';
 
 interface SteamBanFilterValues {
     appeal_state: AppealState;
-    author_id: string;
+    source_id: string;
     target_id: string;
     deleted: boolean;
 }
 
 const validationSchema = yup.object({
     appeal_state: appealStateFielValidator,
-    author_id: authorIdValidator,
+    source_id: sourceIdValidator,
     target_id: targetIdValidator,
     deleted: deletedValidator
 });
@@ -64,7 +65,7 @@ export const BanSteamTable = () => {
     );
     const [page, setPage] = useState(0);
     const [totalRows, setTotalRows] = useState<number>(0);
-    const [author, setAuthor] = useState('');
+    const [source, setSource] = useState('');
     const [target, setTarget] = useState('');
     const [deleted, setDeleted] = useState(false);
     const [appealState, setAppealState] = useState<AppealState>(
@@ -106,12 +107,12 @@ export const BanSteamTable = () => {
 
     useEffect(() => {
         const abortController = new AbortController();
-        const opts: BanQueryFilter<SteamBanRecord> = {
+        const opts: BanSteamQueryFilter = {
             limit: rowPerPageCount,
             offset: page * rowPerPageCount,
             order_by: sortColumn,
             desc: sortOrder == 'desc',
-            source_id: author,
+            source_id: source,
             target_id: target,
             appeal_state: appealState,
             deleted: deleted
@@ -132,7 +133,7 @@ export const BanSteamTable = () => {
         return () => abortController.abort();
     }, [
         appealState,
-        author,
+        source,
         deleted,
         page,
         rowPerPageCount,
@@ -143,24 +144,24 @@ export const BanSteamTable = () => {
 
     const iv: SteamBanFilterValues = {
         appeal_state: AppealState.Any,
-        author_id: '',
+        source_id: '',
         target_id: '',
         deleted: false
     };
 
     const onSubmit = useCallback((values: SteamBanFilterValues) => {
         setAppealState(values.appeal_state);
-        setAuthor(values.author_id);
+        setSource(values.source_id);
         setTarget(values.target_id);
         setDeleted(values.deleted);
     }, []);
 
     const onReset = useCallback(() => {
         setAppealState(iv.appeal_state);
-        setAuthor(iv.author_id);
+        setSource(iv.source_id);
         setTarget(iv.target_id);
         setDeleted(iv.deleted);
-    }, [iv.appeal_state, iv.author_id, iv.deleted, iv.target_id]);
+    }, [iv.appeal_state, iv.source_id, iv.deleted, iv.target_id]);
 
     return (
         <Formik<SteamBanFilterValues>
@@ -172,15 +173,25 @@ export const BanSteamTable = () => {
         >
             <Grid container spacing={3}>
                 <Grid xs={12}>
-                    <Grid container>
-                        <Grid xs={12} padding={2}>
-                            <Stack direction={'row'} spacing={2}>
-                                <AppealStateField />
-                                <AuthorIDField />
-                                <TargetIDField />
+                    <Grid container spacing={2}>
+                        <Grid xs>
+                            <SourceIdField />
+                        </Grid>
+                        <Grid xs>
+                            <TargetIDField />
+                        </Grid>
+                        <Grid xs>
+                            <AppealStateField />
+                        </Grid>
+                        <Grid xs>
+                            <VCenterBox>
                                 <DeletedField />
+                            </VCenterBox>
+                        </Grid>
+                        <Grid xs>
+                            <VCenterBox>
                                 <FilterButtons />
-                            </Stack>
+                            </VCenterBox>
                         </Grid>
                     </Grid>
                 </Grid>
@@ -235,7 +246,7 @@ export const BanSteamTable = () => {
                                 renderer: (row) => (
                                     <PersonCell
                                         onClick={() => {
-                                            setAuthor(row.source_id);
+                                            setSource(row.source_id);
                                         }}
                                         steam_id={row.source_id}
                                         personaname={''}
@@ -338,24 +349,33 @@ export const BanSteamTable = () => {
                                 }
                             },
                             {
-                                label: 'FL',
+                                label: 'F',
                                 tooltip: 'Are friends also included in the ban',
-                                align: 'left',
-                                width: '150px',
+                                align: 'center',
+                                width: '50px',
                                 sortKey: 'include_friends',
-                                renderer: (row) => {
-                                    return (
-                                        <Typography variant={'body1'}>
-                                            {row.include_friends ? 'yes' : 'no'}
-                                        </Typography>
-                                    );
-                                }
+                                renderer: (row) => (
+                                    <TableCellBool
+                                        enabled={row.include_friends}
+                                    />
+                                )
+                            },
+                            {
+                                label: 'A',
+                                tooltip:
+                                    'Is this ban active (not deleted/inactive/unbanned)',
+                                align: 'center',
+                                width: '50px',
+                                sortKey: 'deleted',
+                                renderer: (row) => (
+                                    <TableCellBool enabled={!row.deleted} />
+                                )
                             },
                             {
                                 label: 'Rep.',
                                 tooltip: 'Report',
                                 sortable: false,
-                                align: 'left',
+                                align: 'center',
                                 width: '20px',
                                 queryValue: (o) => `${o.report_id}`,
                                 renderer: (row) =>
@@ -381,7 +401,7 @@ export const BanSteamTable = () => {
                                 tooltip: 'Actions',
                                 sortKey: 'reason',
                                 sortable: false,
-                                align: 'left',
+                                align: 'center',
                                 renderer: (row) => (
                                     <ButtonGroup fullWidth>
                                         <IconButton

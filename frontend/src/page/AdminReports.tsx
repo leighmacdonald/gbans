@@ -24,13 +24,13 @@ import { LoadingIcon } from '../component/LoadingIcon';
 import { PersonCell } from '../component/PersonCell';
 import { TableCellLink } from '../component/TableCellLink';
 import {
-    AuthorIDField,
-    authorIdValidator
-} from '../component/formik/AuthorIdField';
-import {
     ReportStatusField,
     reportStatusFielValidator
 } from '../component/formik/ReportStatusField';
+import {
+    SourceIdField,
+    sourceIdValidator
+} from '../component/formik/SourceIdField';
 import {
     TargetIDField,
     targetIdValidator
@@ -46,7 +46,7 @@ interface FilterValues {
 
 const validationSchema = yup.object({
     report_status: reportStatusFielValidator,
-    author_id: authorIdValidator,
+    author_id: sourceIdValidator,
     target_id: targetIdValidator
 });
 
@@ -66,13 +66,13 @@ export const AdminReports = () => {
     const [target, setTarget] = useState('');
 
     useEffect(() => {
-        const opts: ReportQueryFilter<ReportWithAuthor> = {
+        const opts: ReportQueryFilter = {
             limit: rowPerPageCount,
             offset: page * rowPerPageCount,
             order_by: sortColumn,
             desc: sortOrder == 'desc',
             report_status: filterStatus,
-            author_id: author,
+            source_id: author,
             target_id: target
         };
         setLoading(true);
@@ -135,7 +135,7 @@ export const AdminReports = () => {
                             <Grid xs={12} padding={2}>
                                 <Stack direction={'row'} spacing={2}>
                                     <ReportStatusField />
-                                    <AuthorIDField />
+                                    <SourceIdField />
                                     <TargetIDField />
                                 </Stack>
                             </Grid>
