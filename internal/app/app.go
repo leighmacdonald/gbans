@@ -657,7 +657,7 @@ func (app *App) LoadFilters(ctx context.Context) error {
 	localCtx, cancel := context.WithTimeout(ctx, time.Second*15)
 	defer cancel()
 
-	words, errGetFilters := app.db.GetFilters(localCtx)
+	words, count, errGetFilters := app.db.GetFilters(localCtx, store.FiltersQueryFilter{})
 	if errGetFilters != nil {
 		if errors.Is(errGetFilters, store.ErrNoResult) {
 			return nil
@@ -668,7 +668,7 @@ func (app *App) LoadFilters(ctx context.Context) error {
 
 	app.wordFilters.importFilteredWords(words)
 
-	app.log.Debug("Loaded word filters", zap.Int("count", len(words)))
+	app.log.Debug("Loaded word filters", zap.Int64("count", count))
 
 	return nil
 }

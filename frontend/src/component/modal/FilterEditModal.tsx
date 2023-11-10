@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import {
     Dialog,
     DialogActions,
@@ -61,7 +62,12 @@ export const FilterEditModal = NiceModal.create(
                 }}
             >
                 <Dialog {...muiDialogV5(modal)} fullWidth maxWidth={'sm'}>
-                    <DialogTitle component={Heading}>Filter Editor</DialogTitle>
+                    <DialogTitle
+                        component={Heading}
+                        iconLeft={<FilterAltIcon />}
+                    >
+                        Filter Editor
+                    </DialogTitle>
                     <DialogContent>
                         <Stack spacing={2}>
                             <FilterPatternField />

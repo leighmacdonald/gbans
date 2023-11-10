@@ -1599,16 +1599,26 @@ func onAPIProfile(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIGetWordFilters(app *App) gin.HandlerFunc {
+func onAPIQueryWordFilters(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
 	return func(ctx *gin.Context) {
-		words, errGetFilters := app.db.GetFilters(ctx)
+		var opts store.FiltersQueryFilter
+		if !bind(ctx, log, &opts) {
+			return
+		}
+
+		words, count, errGetFilters := app.db.GetFilters(ctx, opts)
 		if errGetFilters != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
 		}
 
-		ctx.JSON(http.StatusOK, words)
+		ctx.JSON(http.StatusOK, LazyResult{
+			Count: count,
+			Data:  words,
+		})
 	}
 }
 
@@ -1625,7 +1635,7 @@ func onAPIPostWordMatch(app *App) gin.HandlerFunc {
 			return
 		}
 
-		words, errGetFilters := app.db.GetFilters(ctx)
+		words, _, errGetFilters := app.db.GetFilters(ctx, store.FiltersQueryFilter{})
 		if errGetFilters != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 

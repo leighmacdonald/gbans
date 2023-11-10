@@ -1,4 +1,5 @@
-import { apiCall } from './common';
+import { LazyResult } from '../component/LazyTableSimple';
+import { apiCall, QueryFilter } from './common';
 
 export const wordFilterSeparator = '---';
 
@@ -13,8 +14,18 @@ export interface Filter {
     updated_on?: Date;
 }
 
-export const apiGetFilters = async (abortController?: AbortController) =>
-    await apiCall<Filter[]>(`/api/filters`, 'GET', undefined, abortController);
+interface FiltersQueryFilter extends QueryFilter<Filter> {}
+
+export const apiGetFilters = async (
+    opts: FiltersQueryFilter,
+    abortController?: AbortController
+) =>
+    await apiCall<LazyResult<Filter>>(
+        `/api/filters/query`,
+        'POST',
+        opts,
+        abortController
+    );
 
 export const apiGetFilter = async (
     filter_id: number,
