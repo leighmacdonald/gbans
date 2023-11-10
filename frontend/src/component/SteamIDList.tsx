@@ -17,6 +17,10 @@ export const SteamIDList = ({ steam_id }: SteamIDListProps) => {
     const { sendFlash } = useUserFlashCtx();
     const sid = new SteamID(steam_id);
 
+    if (steam_id == '') {
+        return <></>;
+    }
+
     return (
         <ContainerWithHeader
             title={'Steam ID'}

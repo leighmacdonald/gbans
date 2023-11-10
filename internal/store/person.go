@@ -762,7 +762,6 @@ func (db *Store) QueryConnectionHistory(ctx context.Context, opts ConnectionHist
 				&connHistory.IPAddr,
 				&connHistory.PersonaName,
 				&connHistory.CreatedOn,
-				&connHistory.Count,
 			}
 		)
 

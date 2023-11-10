@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState, JSX } from 'react';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import ReportIcon from '@mui/icons-material/Report';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
@@ -16,21 +17,19 @@ import {
     apiGetMessages,
     apiGetReportMessages,
     apiUpdateReportMessage,
-    BanReasons,
     PermissionLevel,
     PersonMessage,
     Report,
     ReportMessagesResponse,
-    SteamBanRecord,
     UserMessage
 } from '../api';
 import { renderMarkdown } from '../api/wiki';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
+import { BanHistoryTable } from './BanHistoryTable';
 import { ConnectionHistoryTable } from './ConnectionHistoryTable';
 import { ContainerWithHeader } from './ContainerWithHeader';
-import { DataTable, RowsPerPage } from './DataTable';
 import { MDEditor } from './MDEditor';
 import { PersonMessageTable } from './PersonMessageTable';
 import { PlayerMessageContext } from './PlayerMessageContext';
@@ -41,12 +40,10 @@ import { UserMessageView } from './UserMessageView';
 
 interface ReportComponentProps {
     report: Report;
-    banHistory: SteamBanRecord[];
 }
 
 export const ReportComponent = ({
-    report,
-    banHistory
+    report
 }: ReportComponentProps): JSX.Element => {
     const theme = useTheme();
     const [messages, setMessages] = useState<ReportMessagesResponse[]>([]);
@@ -129,7 +126,10 @@ export const ReportComponent = ({
         <Grid container>
             <Grid xs={12}>
                 <Stack spacing={2}>
-                    <Paper elevation={1} sx={{ width: '100%', minHeight: 400 }}>
+                    <ContainerWithHeader
+                        title={'Report Overview'}
+                        iconLeft={<ReportIcon />}
+                    >
                         <Box
                             sx={{
                                 borderBottom: 1,
@@ -155,9 +155,7 @@ export const ReportComponent = ({
                                 )}
                                 {currentUser.permission_level >=
                                     PermissionLevel.Moderator && (
-                                    <Tab
-                                        label={`Ban History (${banHistory.length})`}
-                                    />
+                                    <Tab label={`Ban History`} />
                                 )}
                             </Tabs>
                         </Box>
@@ -185,72 +183,9 @@ export const ReportComponent = ({
                             />
                         </TabPanel>
                         <TabPanel value={value} index={3}>
-                            <DataTable
-                                columns={[
-                                    {
-                                        label: 'Created',
-                                        tooltip: 'Created On',
-                                        sortKey: 'created_on',
-                                        sortType: 'date',
-                                        sortable: true,
-                                        align: 'left',
-                                        width: '150px'
-                                    },
-                                    {
-                                        label: 'Expires',
-                                        tooltip: 'Expires',
-                                        sortKey: 'valid_until',
-                                        sortType: 'date',
-                                        sortable: true,
-                                        align: 'left'
-                                    },
-                                    {
-                                        label: 'Ban Author',
-                                        tooltip: 'Ban Author',
-                                        sortKey: 'source_id',
-                                        sortType: 'string',
-                                        align: 'left',
-                                        width: '150px',
-                                        renderer: (row) => (
-                                            <Typography variant={'body1'}>
-                                                {row.source_id}
-                                            </Typography>
-                                        )
-                                    },
-                                    {
-                                        label: 'Reason',
-                                        tooltip: 'Reason',
-                                        sortKey: 'reason',
-                                        sortable: true,
-                                        sortType: 'string',
-                                        align: 'left',
-                                        renderer: (row) => (
-                                            <Typography variant={'body1'}>
-                                                {BanReasons[row.reason]}
-                                            </Typography>
-                                        )
-                                    },
-                                    {
-                                        label: 'Custom',
-                                        tooltip: 'Custom Reason',
-                                        sortKey: 'reason_text',
-                                        sortType: 'string',
-                                        align: 'left'
-                                    },
-                                    {
-                                        label: 'Unban Reason',
-                                        tooltip: 'Unban Reason',
-                                        sortKey: 'unban_reason_text',
-                                        sortType: 'string',
-                                        align: 'left'
-                                    }
-                                ]}
-                                defaultSortColumn={'created_on'}
-                                rowsPerPage={RowsPerPage.TwentyFive}
-                                rows={banHistory}
-                            />
+                            <BanHistoryTable steam_id={report.target_id} />
                         </TabPanel>
-                    </Paper>
+                    </ContainerWithHeader>
                     {report.demo_name != '' && (
                         <Paper>
                             <Stack direction={'row'} padding={1}>
