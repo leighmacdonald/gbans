@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"strings"
 	"time"
@@ -120,14 +121,44 @@ func (db *Store) GetFilterByID(ctx context.Context, wordID int64, filter *Filter
 	return nil
 }
 
-func (db *Store) GetFilters(ctx context.Context) ([]Filter, error) {
-	const query = `
-		SELECT filter_id, author_id, pattern, is_regex, is_enabled, trigger_count, created_on, updated_on
-		FROM filtered_word`
+type FiltersQueryFilter struct {
+	QueryFilter
+}
 
-	rows, errQuery := db.Query(ctx, query)
+func (db *Store) GetFilters(ctx context.Context, opts FiltersQueryFilter) ([]Filter, int64, error) {
+	builder := db.sb.
+		Select("f.filter_id", "f.author_id", "f.pattern", "f.is_regex",
+			"f.is_enabled", "f.trigger_count", "f.created_on", "f.updated_on").
+		From("filtered_word f")
+
+	orderBy := "filter_id"
+	if opts.OrderBy != "" {
+		orderBy = opts.OrderBy
+	}
+
+	order := "ASC"
+	if opts.Desc {
+		order = "DESC"
+	}
+
+	builder = builder.OrderBy(fmt.Sprintf("f.%s %s", orderBy, order))
+
+	if opts.Limit > 0 {
+		builder = builder.Limit(opts.Limit)
+	}
+
+	if opts.Offset > 0 {
+		builder = builder.Offset(opts.Offset)
+	}
+
+	query, args, errQuery := builder.ToSql()
 	if errQuery != nil {
-		return nil, Err(errQuery)
+		return nil, 0, Err(errQuery)
+	}
+
+	rows, errExec := db.Query(ctx, query, args...)
+	if errExec != nil {
+		return nil, 0, Err(errExec)
 	}
 
 	defer rows.Close()
@@ -142,7 +173,7 @@ func (db *Store) GetFilters(ctx context.Context) ([]Filter, error) {
 
 		if errQuery = rows.Scan(&filter.FilterID, &authorID, &filter.Pattern, &filter.IsRegex,
 			&filter.IsEnabled, &filter.TriggerCount, &filter.CreatedOn, &filter.UpdatedOn); errQuery != nil {
-			return nil, Err(errQuery)
+			return nil, 0, Err(errQuery)
 		}
 
 		filter.AuthorID = steamid.New(authorID)
@@ -152,7 +183,14 @@ func (db *Store) GetFilters(ctx context.Context) ([]Filter, error) {
 		filters = append(filters, filter)
 	}
 
-	return filters, nil
+	count, errCount := db.GetCount(ctx, db.sb.
+		Select("count(filter_id)").
+		From("filtered_word f"))
+	if errCount != nil {
+		return nil, 0, errCount
+	}
+
+	return filters, count, nil
 }
 
 func (db *Store) AddMessageFilterMatch(ctx context.Context, messageID int64, filterID int64) error {
