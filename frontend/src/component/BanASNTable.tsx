@@ -55,11 +55,11 @@ export const BanASNTable = () => {
     );
     const [page, setPage] = useState(0);
     const [totalRows, setTotalRows] = useState<number>(0);
-    const { sendFlash } = useUserFlashCtx();
     const [asNum, setASNum] = useState<number>();
     const [source, setSource] = useState('');
     const [target, setTarget] = useState('');
     const [deleted, setDeleted] = useState(false);
+    const { sendFlash } = useUserFlashCtx();
 
     const onUnbanASN = useCallback(
         async (as_num: number) => {

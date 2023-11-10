@@ -580,7 +580,10 @@ func (app *App) stateUpdater(ctx context.Context) {
 		case <-updateTicker.C:
 			trigger <- true
 		case <-trigger:
-			servers, errServers := app.db.GetServers(ctx, false)
+			servers, _, errServers := app.db.GetServers(ctx, store.ServerQueryFilter{
+				QueryFilter:     store.QueryFilter{Deleted: false},
+				IncludeDisabled: false,
+			})
 			if errServers != nil && !errors.Is(errServers, store.ErrNoResult) {
 				log.Error("Failed to fetch servers, cannot update state", zap.Error(errServers))
 
@@ -591,8 +594,8 @@ func (app *App) stateUpdater(ctx context.Context) {
 			for _, server := range servers {
 				configs = append(configs, newServerConfig(
 					server.ServerID,
-					server.ServerName,
-					server.ServerNameLong,
+					server.ShortName,
+					server.Name,
 					server.Address,
 					server.Port,
 					server.RCON,

@@ -37,8 +37,6 @@ export const fmtWhenGt = (
 };
 
 export const PlayersOverallContainer = () => {
-    const fetchStats = () => apiGetPlayersOverall();
-
     return (
         <ContainerWithHeader
             title={'Top 1000 Players By Kills'}
@@ -47,7 +45,7 @@ export const PlayersOverallContainer = () => {
             <Grid container>
                 <Grid xs={12}>
                     <LazyTableSimple<PlayerWeaponStats>
-                        fetchData={fetchStats}
+                        fetchData={apiGetPlayersOverall}
                         defaultSortDir={'asc'}
                         defaultSortColumn={'rank'}
                         columns={[

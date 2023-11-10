@@ -38,8 +38,7 @@ export const ServerDeleteModal = ({
             <Stack spacing={2}>
                 <Heading>
                     <>
-                        Delete Server?: ({server.server_name}){' '}
-                        {server.server_name_long}
+                        Delete Server?: ({server.short_name}) {server.name}
                     </>
                 </Heading>
             </Stack>

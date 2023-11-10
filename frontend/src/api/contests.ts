@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { LazyResult } from '../component/LazyTableSimple';
 import { logErr } from '../util/errors';
 import {
     apiCall,
@@ -11,7 +12,6 @@ import {
 } from './common';
 import { EmptyUUID } from './const';
 import { Asset } from './media';
-import { LazyResult } from './stats';
 
 export interface Contest extends DateRange, TimeStamped {
     contest_id: string;

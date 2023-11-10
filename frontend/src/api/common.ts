@@ -50,7 +50,7 @@ export interface DataCount {
 
 export class EmptyBody {}
 
-// isRefresh is to track if the token is being used as a auth refresh token. In that
+// isRefresh is to track if the token is being used as an auth refresh token. In that
 // case its returned instead of the standard access token.
 const getAccessToken = async (isRefresh: boolean) => {
     if (

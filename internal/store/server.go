@@ -20,7 +20,7 @@ type ServerPermission struct {
 
 func NewServer(name string, address string, port int) Server {
 	return Server{
-		ServerName:     name,
+		ShortName:      name,
 		Address:        address,
 		Port:           port,
 		RCON:           "",
@@ -36,9 +36,9 @@ func NewServer(name string, address string, port int) Server {
 type Server struct {
 	// Auto generated id
 	ServerID int `db:"server_id" json:"server_id"`
-	// ServerName is a short reference name for the server eg: us-1
-	ServerName     string `json:"server_name"`
-	ServerNameLong string `json:"server_name_long"`
+	// ShortName is a short reference name for the server eg: us-1
+	ShortName string `json:"short_name"`
+	Name      string `json:"name"`
 	// Address is the ip of the server
 	Address string `db:"address" json:"address"`
 	// Port is the port of the server
@@ -101,7 +101,7 @@ func (db *Store) GetServer(ctx context.Context, serverID int, server *Server) er
 
 	if errRow := db.
 		QueryRow(ctx, query, args...).
-		Scan(&server.ServerID, &server.ServerName, &server.ServerNameLong, &server.Address, &server.Port, &server.RCON,
+		Scan(&server.ServerID, &server.ShortName, &server.Name, &server.Address, &server.Port, &server.RCON,
 			&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn,
 			&server.ReservedSlots, &server.IsEnabled, &server.Region, &server.CC,
 			&server.Latitude, &server.Longitude,
@@ -163,50 +163,88 @@ func (db *Store) GetServerPermissions(ctx context.Context) ([]ServerPermission, 
 	return perms, nil
 }
 
-func (db *Store) GetServers(ctx context.Context, includeDisabled bool) ([]Server, error) {
-	var servers []Server
+type ServerQueryFilter struct {
+	QueryFilter
+	IncludeDisabled bool `json:"include_disabled"`
+}
 
+func (db *Store) GetServers(ctx context.Context, filter ServerQueryFilter) ([]Server, int64, error) {
 	builder := db.sb.
-		Select(columnsServer...).
-		From(string(tableServer))
-	cond := sq.And{sq.Eq{"deleted": false}}
+		Select("s.server_id", "s.short_name", "s.name", "s.address", "s.port", "s.rcon", "s.password",
+			"s.token_created_on", "s.created_on", "s.updated_on", "s.reserved_slots", "s.is_enabled", "s.region", "s.cc",
+			"s.latitude", "s.longitude", "s.deleted", "s.log_secret").
+		From("server s")
 
-	if !includeDisabled {
-		cond = append(cond, sq.Eq{"is_enabled": true})
+	var constraints sq.And
+
+	if !filter.Deleted {
+		constraints = append(constraints, sq.Eq{"s.deleted": false})
 	}
 
-	builder = builder.Where(cond)
+	if !filter.IncludeDisabled {
+		constraints = append(constraints, sq.Eq{"s.is_enabled": true})
+	}
 
-	query, args, errQuery := builder.ToSql()
+	orderBy := "short_name"
+	if filter.OrderBy != "" {
+		orderBy = filter.OrderBy
+	}
+
+	order := "ASC"
+	if filter.Desc {
+		order = "DESC"
+	}
+
+	builder = builder.OrderBy(fmt.Sprintf("s.%s %s", orderBy, order))
+
+	if filter.Limit > 0 {
+		builder = builder.Limit(filter.Limit)
+	}
+
+	if filter.Offset > 0 {
+		builder = builder.Offset(filter.Offset)
+	}
+
+	query, args, errQuery := builder.Where(constraints).ToSql()
 	if errQuery != nil {
-		return nil, Err(errQuery)
+		return nil, 0, Err(errQuery)
 	}
 
 	rows, errQueryExec := db.Query(ctx, query, args...)
 	if errQueryExec != nil {
-		return []Server{}, Err(errQueryExec)
+		return []Server{}, 0, Err(errQueryExec)
 	}
 
 	defer rows.Close()
 
+	var servers []Server
+
 	for rows.Next() {
 		var server Server
 		if errScan := rows.
-			Scan(&server.ServerID, &server.ServerName, &server.ServerNameLong, &server.Address, &server.Port, &server.RCON,
+			Scan(&server.ServerID, &server.ShortName, &server.Name, &server.Address, &server.Port, &server.RCON,
 				&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn, &server.ReservedSlots,
 				&server.IsEnabled, &server.Region, &server.CC, &server.Latitude, &server.Longitude,
 				&server.Deleted, &server.LogSecret); errScan != nil {
-			return nil, errors.Wrap(errScan, "Failed to scan server")
+			return nil, 0, errors.Wrap(errScan, "Failed to scan server")
 		}
 
 		servers = append(servers, server)
 	}
 
 	if rows.Err() != nil {
-		return nil, Err(rows.Err())
+		return nil, 0, Err(rows.Err())
 	}
 
-	return servers, nil
+	count, errCount := db.GetCount(ctx, db.sb.
+		Select("count(s.server_id)").
+		From("server s").
+		Where(constraints))
+	if errCount != nil {
+		return nil, 0, Err(errCount)
+	}
+
+	return servers, count, nil
 }
 
 func (db *Store) GetServerByName(ctx context.Context, serverName string, server *Server, disabledOk bool, deletedOk bool) error {
@@ -232,8 +270,8 @@ func (db *Store) GetServerByName(ctx context.Context, serverName string, server 
 	return Err(db.QueryRow(ctx, query, args...).
 		Scan(
 			&server.ServerID,
-			&server.ServerName,
-			&server.ServerNameLong,
+			&server.ShortName,
+			&server.Name,
 			&server.Address,
 			&server.Port,
 			&server.RCON,
@@ -263,7 +301,7 @@ func (db *Store) insertServer(ctx context.Context, server *Server) error {
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
 		RETURNING server_id;`
 
-	err := db.QueryRow(ctx, query, server.ServerName, server.ServerNameLong, server.Address, server.Port,
+	err := db.QueryRow(ctx, query, server.ShortName, server.Name, server.Address, server.Port,
 		server.RCON, server.TokenCreatedOn, server.ReservedSlots, server.CreatedOn, server.UpdatedOn,
 		server.Password, server.IsEnabled, server.Region, server.CC,
 		server.Latitude, server.Longitude, server.Deleted, &server.LogSecret).Scan(&server.ServerID)
@@ -278,8 +316,8 @@ func (db *Store) updateServer(ctx context.Context, server *Server) error {
 	server.UpdatedOn = time.Now()
 
 	query, args, errQueryArgs := db.sb.Update(string(tableServer)).
-		Set("short_name", server.ServerName).
-		Set("name", server.ServerNameLong).
+		Set("short_name", server.ShortName).
+		Set("name", server.Name).
 		Set("address", server.Address).
 		Set("port", server.Port).
 		Set("rcon", server.RCON).

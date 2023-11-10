@@ -1,4 +1,5 @@
-import { apiCall, DataCount } from './common';
+import { LazyResult } from '../component/LazyTableSimple';
+import { apiCall } from './common';
 
 export interface DatabaseStats {
     bans: number;
@@ -214,10 +215,6 @@ export const apiGetPlayerStats = async (
         abortController
     );
 };
-
-export interface LazyResult<T> extends DataCount {
-    data: T[];
-}
 
 export const apiGetPlayerClassOverallStats = async (steam_id: string) => {
     return await apiCall<LazyResult<PlayerClassOverallResult>>(
