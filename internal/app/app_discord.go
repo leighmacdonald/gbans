@@ -1176,7 +1176,7 @@ func onStatsPlayer(ctx context.Context, app *App, _ *discordgo.Session, interact
 //		if stats.Hits > 0 && stats.Shots > 0 {
 //			acc = float64(stats.Hits) / float64(stats.Shots) * 100
 //		}
-//		embed := respOk(response, fmt.Sprintf("Server stats for %s ", server.ServerName))
+//		embed := respOk(response, fmt.Sprintf("Server stats for %s ", server.ShortName))
 //		addFieldInline(embed, "Kills", fmt.Sprintf("%d", stats.Kills))
 //		addFieldInline(embed, "Assists", fmt.Sprintf("%d", stats.Assists))
 //		addFieldInline(embed, "Damage", fmt.Sprintf("%d", stats.Damage))
@@ -1354,7 +1354,7 @@ func makeOnFind(app *App) discord.CommandHandler {
 
 			msgEmbed.
 				AddField("Name", player.Player.Name).
-				AddField("Server", server.ServerName).MakeFieldInline().
+				AddField("Server", server.ShortName).MakeFieldInline().
 				AddField("steam", fmt.Sprintf("https://steamcommunity.com/profiles/%d", player.Player.SID.Int64())).
 				AddField("connect", fmt.Sprintf("connect %s", server.Addr()))
 		}

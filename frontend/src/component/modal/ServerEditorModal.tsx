@@ -25,10 +25,10 @@ export const ServerEditorModal = NiceModal.create(
     ({ onSuccess, server }: ServerEditorModalProps) => {
         const [serverId, setServerId] = useState<number>(0);
         const [serverName, setServerName] = useState<string>(
-            server?.server_name ?? ''
+            server?.short_name ?? ''
         );
         const [serverNameLong, setServerNameLong] = useState<string>(
-            server?.server_name_long ?? ''
+            server?.name ?? ''
         );
         const [address, setAddress] = useState<string>('');
         const [port, setPort] = useState<number>(7015);
@@ -44,8 +44,8 @@ export const ServerEditorModal = NiceModal.create(
 
         useEffect(() => {
             setServerId(server?.server_id ?? 0);
-            setServerName(server?.server_name ?? '');
-            setServerNameLong(server?.server_name_long ?? '');
+            setServerName(server?.short_name ?? '');
+            setServerNameLong(server?.name ?? '');
             setAddress(server?.address ?? '');
             setPort(server?.port ?? 27015);
             setPassword(server?.password ?? '');
@@ -95,7 +95,7 @@ export const ServerEditorModal = NiceModal.create(
                     .then((response) => {
                         sendFlash(
                             'success',
-                            `Server saved successfully: ${response.server_name}`
+                            `Server saved successfully: ${response.short_name}`
                         );
                         onSuccess && onSuccess(response);
                     })
@@ -107,7 +107,7 @@ export const ServerEditorModal = NiceModal.create(
                     .then((response) => {
                         sendFlash(
                             'success',
-                            `Server created successfully: ${response.server_name}`
+                            `Server created successfully: ${response.short_name}`
                         );
                         onSuccess && onSuccess(response);
                     })

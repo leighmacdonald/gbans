@@ -1,4 +1,5 @@
-import { apiCall, TimeStamped } from './common';
+import { LazyResult } from '../component/LazyTableSimple';
+import { apiCall, QueryFilter, TimeStamped } from './common';
 
 export interface BaseServer {
     server_id: number;
@@ -43,8 +44,8 @@ export interface ServerSimple {
 
 export interface Server extends TimeStamped {
     server_id: number;
-    server_name: string;
-    server_name_long: string;
+    short_name: string;
+    name: string;
     address: string;
     port: number;
     password: string;
@@ -102,11 +103,18 @@ export const apiSaveServer = async (server_id: number, opts: SaveServerOpts) =>
         opts
     );
 
-export const apiGetServersAdmin = async (abortController: AbortController) =>
-    await apiCall<Server[]>(
+export interface ServerQueryFilter extends QueryFilter<Server> {
+    include_disabled?: boolean;
+}
+
+export const apiGetServersAdmin = async (
+    opts: ServerQueryFilter,
+    abortController?: AbortController
+) =>
+    await apiCall<LazyResult<Server>>(
         `/api/servers_admin`,
-        'GET',
-        undefined,
+        'POST',
+        opts,
         abortController
     );
 

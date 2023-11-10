@@ -1,8 +1,8 @@
 import { Theme } from '@mui/material';
+import { LazyResult } from '../component/LazyTableSimple';
 import { BanReason } from './bans';
 import { apiCall, ReportQueryFilter, TimeStamped } from './common';
 import { Person, UserProfile } from './profile';
-import { LazyResult } from './stats';
 
 export enum ReportStatus {
     Any = -1,

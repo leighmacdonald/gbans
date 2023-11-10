@@ -1,3 +1,4 @@
+import { LazyResult } from '../component/LazyTableSimple';
 import { parseDateTime } from '../util/text';
 import {
     apiCall,
@@ -7,7 +8,6 @@ import {
     TimeStamped,
     transformTimeStampedDates
 } from './common';
-import { LazyResult } from './stats';
 
 export const defaultAvatarHash = 'fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb';
 

@@ -1,3 +1,4 @@
+import { LazyResult } from '../component/LazyTableSimple';
 import { parseDateTime } from '../util/text';
 import {
     apiCall,
@@ -8,7 +9,6 @@ import {
 } from './common';
 import { UserProfile } from './profile';
 import { UserMessage } from './report';
-import { LazyResult } from './stats';
 
 export enum AppealState {
     Any = -1,
@@ -65,11 +65,6 @@ export enum BanReason {
     ItemDescriptions = 11,
     BotHost = 12
 }
-
-export const ip2int = (ip: string): number =>
-    ip
-        .split('.')
-        .reduce((ipInt, octet) => (ipInt << 8) + parseInt(octet, 10), 0) >>> 0;
 
 export enum Duration {
     dur15m = '15m',
@@ -278,7 +273,7 @@ export const apiGetAppeals = async (
         LazyResult<SteamBanRecord>,
         AppealQueryFilter
     >(`/api/appeals`, 'POST', opts, abortController);
-    appeals.data = appeals.data.map((r) => applyDateTime(r));
+    appeals.data = appeals.data.map(applyDateTime);
     return appeals;
 };
 
@@ -450,7 +445,7 @@ export const apiGetBansASN = async (
         opts,
         abortController
     );
-    resp.data = resp.data.map((record) => applyDateTime(record));
+    resp.data = resp.data.map(applyDateTime);
     return resp;
 };
 
@@ -465,7 +460,7 @@ export const apiGetBansGroups = async (
         abortController
     );
 
-    resp.data = resp.data.map((record) => applyDateTime(record));
+    resp.data = resp.data.map(applyDateTime);
     return resp;
 };
 

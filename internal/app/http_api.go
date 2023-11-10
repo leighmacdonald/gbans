@@ -1008,7 +1008,7 @@ func onSAPIPostServerAuth(app *App) gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusOK, authResp{Status: true, Token: accessToken})
-		log.Info("Server authenticated successfully", zap.String("server", server.ServerName))
+		log.Info("Server authenticated successfully", zap.String("server", server.ShortName))
 	}
 }
 
@@ -1196,7 +1196,7 @@ func onAPIGetPrometheusHosts(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var staticConfigs []promStaticConfig
 
-		servers, errGetServers := app.db.GetServers(ctx, true)
+		servers, _, errGetServers := app.db.GetServers(ctx, store.ServerQueryFilter{})
 		if errGetServers != nil {
 			log.Error("Failed to fetch servers", zap.Error(errGetServers))
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
@@ -2049,15 +2049,25 @@ func onAPIDeleteBansASN(app *App) gin.HandlerFunc {
 }
 
 func onAPIGetServersAdmin(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
 	return func(ctx *gin.Context) {
-		servers, errServers := app.db.GetServers(ctx, true)
+		var filter store.ServerQueryFilter
+		if !bind(ctx, log, &filter) {
+			return
+		}
+
+		servers, count, errServers := app.db.GetServers(ctx, filter)
 		if errServers != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
 		}
 
-		ctx.JSON(http.StatusOK, servers)
+		ctx.JSON(http.StatusOK, LazyResult{
+			Count: count,
+			Data:  servers,
+		})
 	}
 }
 
@@ -2070,7 +2080,7 @@ type serverInfoSafe struct {
 
 func onAPIGetServers(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		fullServers, errServers := app.db.GetServers(ctx, false)
+		fullServers, _, errServers := app.db.GetServers(ctx, store.ServerQueryFilter{})
 		if errServers != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -2080,8 +2090,8 @@ func onAPIGetServers(app *App) gin.HandlerFunc {
 		var servers []serverInfoSafe
 		for _, server := range fullServers {
 			servers = append(servers, serverInfoSafe{
-				ServerNameLong: server.ServerNameLong,
-				ServerName:     server.ServerName,
+				ServerNameLong: server.Name,
+				ServerName:     server.ShortName,
 				ServerID:       server.ServerID,
 				Colour:         "",
 			})
@@ -2142,8 +2152,8 @@ func onAPIPostServerUpdate(app *App) gin.HandlerFunc {
 			return
 		}
 
-		server.ServerName = req.ServerNameShort
-		server.ServerNameLong = req.ServerName
+		server.ShortName = req.ServerNameShort
+		server.Name = req.ServerName
 		server.Address = req.Host
 		server.Port = req.Port
 		server.ReservedSlots = req.ReservedSlots
@@ -2165,7 +2175,7 @@ func onAPIPostServerUpdate(app *App) gin.HandlerFunc {
 
 		log.Info("Server config updated",
 			zap.Int("server_id", server.ServerID),
-			zap.String("name", server.ServerName))
+			zap.String("name", server.ShortName))
 	}
 }
 
@@ -2199,7 +2209,7 @@ func onAPIPostServerDelete(app *App) gin.HandlerFunc {
 		ctx.JSON(http.StatusOK, server)
 		log.Info("Server config deleted",
 			zap.Int("server_id", server.ServerID),
-			zap.String("name", server.ServerName))
+			zap.String("name", server.ShortName))
 	}
 }
 
@@ -2213,7 +2223,7 @@ func onAPIPostServer(app *App) gin.HandlerFunc {
 		}
 
 		server := store.NewServer(req.ServerNameShort, req.Host, req.Port)
-		server.ServerNameLong = req.ServerName
+		server.Name = req.ServerName
 		server.ReservedSlots = req.ReservedSlots
 		server.RCON = req.RCON
 		server.Latitude = req.Lat
@@ -2233,7 +2243,7 @@ func onAPIPostServer(app *App) gin.HandlerFunc {
 
 		log.Info("Server config created",
 			zap.Int("server_id", server.ServerID),
-			zap.String("name", server.ServerName))
+			zap.String("name", server.ShortName))
 	}
 }
 

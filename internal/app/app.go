@@ -150,7 +150,7 @@ func firstTimeSetup(ctx context.Context, conf *Config, database *store.Store) er
 		server.RCON = "example_rcon"
 		server.Latitude = 35.652832
 		server.Longitude = 139.839478
-		server.ServerNameLong = "Example Server"
+		server.Name = "Example Server"
 		server.LogSecret = 12345678
 		server.Region = "asia"
 
@@ -501,7 +501,7 @@ func (app *App) chatRecorder(ctx context.Context) {
 
 				// log.Debug("Chat message",
 				//	zap.Int64("id", msg.PersonMessageID),
-				//	zap.String("server", evt.ServerName),
+				//	zap.String("server", evt.ShortName),
 				//	zap.String("name", newServerEvent.Name),
 				//	zap.String("steam_id", newServerEvent.SID.String()),
 				//	zap.Bool("team", msg.Team),
@@ -716,7 +716,10 @@ func (app *App) updateSrcdsLogSecrets(ctx context.Context) {
 
 	defer cancelServers()
 
-	servers, errServers := app.db.GetServers(serversCtx, true)
+	servers, _, errServers := app.db.GetServers(serversCtx, store.ServerQueryFilter{
+		IncludeDisabled: false,
+		QueryFilter:     store.QueryFilter{Deleted: false},
+	})
 	if errServers != nil {
 		app.log.Error("Failed to update srcds log secrets", zap.Error(errServers))
 
@@ -726,7 +729,7 @@ func (app *App) updateSrcdsLogSecrets(ctx context.Context) {
 	for _, server := range servers {
 		newSecrets[server.LogSecret] = logparse.ServerIDMap{
 			ServerID:   server.ServerID,
-			ServerName: server.ServerName,
+			ServerName: server.ShortName,
 		}
 	}
 

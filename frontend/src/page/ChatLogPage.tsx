@@ -49,9 +49,9 @@ import { logErr } from '../util/errors';
 import { Nullable } from '../util/types';
 
 const anyServer: Server = {
-    server_name: 'Any',
+    short_name: 'Any',
     server_id: 0,
-    server_name_long: 'Any',
+    name: 'Any',
     address: '',
     port: 27015,
     longitude: 0.0,

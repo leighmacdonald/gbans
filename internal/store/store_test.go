@@ -77,7 +77,7 @@ func TestStore(t *testing.T) {
 func testServerTest(database *store.Store) func(t *testing.T) {
 	return func(t *testing.T) {
 		serverA := store.Server{
-			ServerName:     fmt.Sprintf("test-%s", golib.RandomString(10)),
+			ShortName:      fmt.Sprintf("test-%s", golib.RandomString(10)),
 			Address:        "172.16.1.100",
 			Port:           27015,
 			RCON:           "test",
@@ -100,7 +100,7 @@ func testServerTest(database *store.Store) func(t *testing.T) {
 
 		require.NoError(t, database.GetServer(ctx, serverA.ServerID, &s1Get))
 		require.Equal(t, serverA.ServerID, s1Get.ServerID)
-		require.Equal(t, serverA.ServerName, s1Get.ServerName)
+		require.Equal(t, serverA.ShortName, s1Get.ShortName)
 		require.Equal(t, serverA.Address, s1Get.Address)
 		require.Equal(t, serverA.Port, s1Get.Port)
 		require.Equal(t, serverA.RCON, s1Get.RCON)

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Stack from '@mui/material/Stack';
 import { noop } from 'lodash-es';
-import { LazyResult } from '../api';
+import { DataCount } from '../api';
 import { logErr } from '../util/errors';
 import {
     compare,
@@ -17,6 +17,10 @@ export interface LazyFetchOpts<T> {
     column: keyof T;
     order: Order;
     page: number;
+}
+
+export interface LazyResult<T> extends DataCount {
+    data: T[];
 }
 
 interface LazyTableSimpleProps<T> {

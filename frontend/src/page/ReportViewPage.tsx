@@ -84,7 +84,7 @@ export const ReportViewPage = (): JSX.Element => {
             target_id: report?.target_id
         }).then((history) => {
             setBanHistory(history.data);
-            const cur = history.data.filter((b) => !b.deleted).pop();
+            const cur = history.data.pop();
             setCurrentBan(cur);
         });
     }, [report?.target_id]);

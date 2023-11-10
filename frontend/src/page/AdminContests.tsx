@@ -65,7 +65,7 @@ export const AdminContests = () => {
                 iconLeft={<EmojiEventsIcon />}
             >
                 <Stack>
-                    <LazyTableSimple
+                    <LazyTableSimple<Contest>
                         fetchData={apiContests}
                         columns={[
                             {
