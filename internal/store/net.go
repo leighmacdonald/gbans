@@ -142,7 +142,7 @@ func (db *Store) GetBansNet(ctx context.Context, filter CIDRBansQueryFilter) ([]
 		if errCidr != nil {
 			ip := net.ParseIP(filter.IP)
 			if ip == nil {
-				return nil, 0, errors.Wrap(errCidr, "Failed to parse CIDR")
+				return nil, 0, errors.Wrap(errCidr, "Failed to parse IP")
 			}
 
 			addr = ip.String()

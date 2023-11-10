@@ -14,12 +14,10 @@ import {
     apiCreateReportMessage,
     apiDeleteReportMessage,
     apiGetMessages,
-    apiGetPersonConnections,
     apiGetReportMessages,
     apiUpdateReportMessage,
     BanReasons,
     PermissionLevel,
-    PersonConnection,
     PersonMessage,
     Report,
     ReportMessagesResponse,
@@ -30,6 +28,7 @@ import { renderMarkdown } from '../api/wiki';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
+import { ConnectionHistoryTable } from './ConnectionHistoryTable';
 import { ContainerWithHeader } from './ContainerWithHeader';
 import { DataTable, RowsPerPage } from './DataTable';
 import { MDEditor } from './MDEditor';
@@ -51,7 +50,6 @@ export const ReportComponent = ({
 }: ReportComponentProps): JSX.Element => {
     const theme = useTheme();
     const [messages, setMessages] = useState<ReportMessagesResponse[]>([]);
-    const [connections, setConnections] = useState<PersonConnection[]>([]);
     const [chatHistory, setChatHistory] = useState<PersonMessage[]>([]);
 
     const [value, setValue] = React.useState<number>(0);
@@ -120,14 +118,6 @@ export const ReportComponent = ({
     }, [loadMessages, report]);
 
     useEffect(() => {
-        apiGetPersonConnections(report.target_id)
-            .then((response) => {
-                setConnections(response);
-            })
-            .catch(logErr);
-    }, [report]);
-
-    useEffect(() => {
         apiGetMessages({ steam_id: report.target_id, order_by: 'created_on' })
             .then((response) => {
                 setChatHistory(response.messages);
@@ -161,9 +151,7 @@ export const ReportComponent = ({
                                 )}
                                 {currentUser.permission_level >=
                                     PermissionLevel.Moderator && (
-                                    <Tab
-                                        label={`Connections (${connections.length})`}
-                                    />
+                                    <Tab label={`Connection History`} />
                                 )}
                                 {currentUser.permission_level >=
                                     PermissionLevel.Moderator && (
@@ -192,37 +180,8 @@ export const ReportComponent = ({
                             <PersonMessageTable messages={chatHistory} />
                         </TabPanel>
                         <TabPanel value={value} index={2}>
-                            <DataTable
-                                columns={[
-                                    {
-                                        label: 'Created',
-                                        tooltip: 'Created On',
-                                        sortKey: 'created_on',
-                                        sortType: 'date',
-                                        align: 'left',
-                                        width: '150px'
-                                    },
-                                    {
-                                        label: 'Name',
-                                        tooltip: 'Name',
-                                        sortKey: 'persona_name',
-                                        sortType: 'string',
-                                        align: 'left',
-                                        width: '150px',
-                                        queryValue: (row) => row.persona_name
-                                    },
-                                    {
-                                        label: 'IP Address',
-                                        tooltip: 'IP Address',
-                                        sortKey: 'ip_addr',
-                                        sortType: 'string',
-                                        align: 'left',
-                                        queryValue: (row) => row.ip_addr
-                                    }
-                                ]}
-                                defaultSortColumn={'created_on'}
-                                rowsPerPage={RowsPerPage.TwentyFive}
-                                rows={connections}
+                            <ConnectionHistoryTable
+                                steam_id={report.target_id}
                             />
                         </TabPanel>
                         <TabPanel value={value} index={3}>

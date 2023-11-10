@@ -164,7 +164,7 @@ export interface PersonIPRecord {
 }
 
 export interface PersonConnection {
-    connection_id: bigint;
+    person_connection_id: bigint;
     ip_addr: string;
     steam_id: string;
     persona_name: string;
@@ -184,9 +184,6 @@ export interface PersonMessage {
     auto_filter_flagged: boolean;
     avatar_hash: string;
 }
-
-export const apiGetPersonConnections = async (steam_id: string) =>
-    await apiCall<PersonConnection[]>(`/api/connections/${steam_id}`, 'GET');
 
 export const apiGetMessageContext = async (
     messageId: number,
@@ -250,11 +247,19 @@ export const apiGetNotifications = async (
 
 export interface PersonConnectionQuery extends QueryFilter<PersonConnection> {
     cidr?: string;
-    steam_id?: string;
+    source_id?: string;
     server_id?: number;
     asn?: number;
 }
 
-export const apiGetConnections = async (opts: PersonConnectionQuery) => {
-    return await apiCall<UserNotification[]>(`/api/connections`, 'POST', opts);
+export const apiGetConnections = async (
+    opts: PersonConnectionQuery,
+    abortController: AbortController
+) => {
+    return await apiCall<LazyResult<PersonConnection>, PersonConnectionQuery>(
+        `/api/connections`,
+        'POST',
+        opts,
+        abortController
+    );
 };

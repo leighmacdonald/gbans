@@ -696,7 +696,7 @@ func (app *App) banSweeper(ctx context.Context) {
 						if errDropBanNet := app.db.DropBanNet(ctx, &expiredBan); errDropBanNet != nil {
 							log.Error("Failed to drop expired network expiredNetBan", zap.Error(errDropBanNet))
 						} else {
-							log.Info("CIDR ban expired", zap.String("cidr", expiredBan.String()))
+							log.Info("IP ban expired", zap.String("cidr", expiredBan.String()))
 						}
 					}
 				}

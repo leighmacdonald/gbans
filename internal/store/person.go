@@ -688,105 +688,66 @@ func (db *Store) GetPersonMessageByID(ctx context.Context, personMessageID int64
 
 type ConnectionHistoryQueryFilter struct {
 	QueryFilter
-	CIDR    string        `json:"cidr"`
-	SteamID steamid.SID64 `json:"steam_id"`
+	IP       string    `json:"ip"`
+	SourceID StringSID `json:"source_id"`
 }
 
 type QueryConnectionHistoryResult struct {
 	PersonConnection
+	Count int64 `json:"count"`
 }
 
-func (db *Store) QueryConnectionHistory(ctx context.Context, query ConnectionHistoryQueryFilter) ([]QueryConnectionHistoryResult, int64, error) {
-	if query.Limit > 1000 {
-		return nil, 0, errLimit
-	}
-
-	columns := []string{"c.person_connection_id", "c.steam_id", "c.ip_addr", "c.persona_name", "c.created_on"}
-	countCols := []string{"count(c.person_connection_id) as count"}
-
-	count := db.sb.
-		Select(countCols...).
-		From("person_connections c")
-
+// TODO add server_id to connection hist
+func (db *Store) QueryConnectionHistory(ctx context.Context, opts ConnectionHistoryQueryFilter) ([]QueryConnectionHistoryResult, int64, error) {
 	builder := db.sb.
-		Select(columns...).
-		From("person_connections c")
+		Select("c.person_connection_id", "c.steam_id",
+			"c.ip_addr", "c.persona_name", "c.created_on").
+		From("person_connections c").
+		GroupBy("c.person_connection_id, c.ip_addr")
 
-	if query.Offset > 0 {
-		builder = builder.Offset(query.Offset)
-	}
+	var constraints sq.And
 
-	if query.Limit > 0 {
-		builder = builder.Limit(query.Limit)
-	} else {
-		builder = builder.Limit(50)
-	}
-
-	if query.OrderBy != "person_connection_id" {
-		return nil, 0, errors.New("Sort only allowed on person_connection_id")
-	}
-
-	prefix := "c."
-
-	query.OrderBy = prefix + query.OrderBy
-
-	if query.OrderBy != "" {
-		orderBy := []string{query.OrderBy}
-
-		if query.Desc {
-			builder = builder.OrderBy(strings.Join(orderBy, ",") + " DESC")
-		} else {
-			builder = builder.OrderBy(strings.Join(orderBy, ",") + " ASC")
-		}
-
-		groupBy := []string{"c.person_connection_id", query.OrderBy}
-
-		builder = builder.GroupBy(groupBy...)
-	}
-
-	var ands sq.And
-
-	if query.SteamID != "" {
-		sid := steamid.New(query.SteamID)
-		if !sid.Valid() {
+	if opts.SourceID != "" {
+		sid, errSID := opts.SourceID.SID64(ctx)
+		if errSID != nil {
 			return nil, 0, errors.Wrap(steamid.ErrInvalidSID, "Invalid steam id in query")
 		}
 
-		ands = append(ands, sq.Eq{"c.steam_id": sid.Int64()})
-	}
-	//
-	// if query.Query != "" {
-	//	ands = append(ands, sq.Expr(`message_search @@ websearch_to_tsquery('simple', ?)`, query.Query))
-	// }
-
-	count = count.Where(ands)
-	builder = builder.Where(ands)
-
-	var totalRows int64
-
-	countQuery, countQueryArgs, countQueryErr := count.ToSql()
-	if countQueryErr != nil {
-		return nil, 0, errors.Wrap(countQueryErr, "Failed to build count query")
+		constraints = append(constraints, sq.Eq{"c.steam_id": sid.Int64()})
 	}
 
-	if errCount := db.QueryRow(ctx, countQuery, countQueryArgs...).Scan(&totalRows); errCount != nil {
-		return nil, 0, errors.Wrap(errCount, "Failed to perform count query")
+	if opts.Offset > 0 {
+		builder = builder.Offset(opts.Offset)
 	}
+
+	if opts.Limit > 0 && opts.Limit <= 100 {
+		builder = builder.Limit(opts.Limit)
+	} else {
+		builder = builder.Limit(25)
+	}
+
+	orderBy := "filter_id"
+	if opts.OrderBy != "" {
+		orderBy = opts.OrderBy
+	}
+
+	order := "ASC"
+	if opts.Desc {
+		order = "DESC"
+	}
+
+	builder = builder.OrderBy(fmt.Sprintf("c.%s %s", orderBy, order))
 
 	var messages []QueryConnectionHistoryResult
 
-	if totalRows == 0 {
-		return messages, 0, nil
-	}
-
-	rowsQuery, rowsArgs, rowsQueryErr := builder.ToSql()
+	rowsQuery, rowsArgs, rowsQueryErr := builder.Where(constraints).ToSql()
 	if rowsQueryErr != nil {
 		return nil, 0, errors.Wrap(rowsQueryErr, "Failed to build rows query")
 	}
 
 	rows, errQuery := db.Query(ctx, rowsQuery, rowsArgs...)
 	if errQuery != nil {
-		return nil, totalRows, Err(errQuery)
+		return nil, 0, Err(errQuery)
 	}
 
 	defer rows.Close()
@@ -799,8 +760,9 @@ func (db *Store) QueryConnectionHistory(ctx context.Context, query ConnectionHis
 				&connHistory.PersonConnectionID,
 				&steamID,
 				&connHistory.IPAddr,
-				&connHistory.PersonConnectionID,
+				&connHistory.PersonaName,
 				&connHistory.CreatedOn,
+				&connHistory.Count,
 			}
 		)
 
@@ -817,7 +779,16 @@ func (db *Store) QueryConnectionHistory(ctx context.Context, query ConnectionHis
 		return []QueryConnectionHistoryResult{}, 0, nil
 	}
 
-	return messages, totalRows, nil
+	count, errCount := db.GetCount(ctx, db.sb.
+		Select("count(c.person_connection_id)").
+		From("person_connections c").
+		Where(constraints))
+
+	if errCount != nil {
+		return nil, 0, errCount
+	}
+
+	return messages, count, nil
 }
 
 var errLimit = errors.New("Requested too many")

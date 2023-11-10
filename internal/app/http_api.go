@@ -3508,11 +3508,6 @@ type ResultsCount struct {
 	Count int64 `json:"count"`
 }
 
-type connectionQueryResults struct {
-	ResultsCount
-	Connections []store.QueryConnectionHistoryResult `json:"connections"`
-}
-
 func onAPIQueryPersonConnections(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
@@ -3530,9 +3525,9 @@ func onAPIQueryPersonConnections(app *App) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, connectionQueryResults{
-			ResultsCount: ResultsCount{Count: totalCount},
-			Connections:  ipHist,
+		ctx.JSON(http.StatusOK, LazyResult{
+			Count: totalCount,
+			Data:  ipHist,
 		})
 	}
 }

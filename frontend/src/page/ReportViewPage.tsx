@@ -201,8 +201,8 @@ export const ReportViewPage = (): JSX.Element => {
                                     </Avatar>
                                 </ListItemAvatar>
                                 <ListItemText
-                                    primary={'Author'}
-                                    secondary={report?.author.personaname}
+                                    primary={report?.author.personaname}
+                                    secondary={'Author'}
                                 />
                             </ListItem>
                             {report?.reason && (
