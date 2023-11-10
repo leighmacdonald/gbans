@@ -7,6 +7,7 @@ import {
     readRefreshToken,
     refreshToken
 } from './auth';
+import { AppealState } from './bans';
 import { MatchResult } from './match';
 import { ReportStatus } from './report';
 
@@ -233,8 +234,9 @@ export interface AuthorQueryFilter<T> extends QueryFilter<T> {
 }
 
 export interface BanQueryFilter<T> extends AuthorQueryFilter<T> {
-    source_id?: ReportStatus;
+    source_id?: string;
     target_id?: string;
+    appeal_state?: AppealState;
 }
 
 export interface ReportQueryFilter<T> extends AuthorQueryFilter<T> {

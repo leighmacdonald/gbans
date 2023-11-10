@@ -39,7 +39,6 @@ import {
     targetIdValidator
 } from '../component/formik/TargetIdField';
 import { logErr } from '../util/errors';
-import { steamIdQueryValue } from '../util/text';
 
 interface AppealFilterValues {
     appeal_state: AppealState;
@@ -228,8 +227,6 @@ export const AdminAppeals = () => {
                                 tooltip: 'Author',
                                 sortable: true,
                                 align: 'left',
-                                queryValue: (o) =>
-                                    steamIdQueryValue(o.source_id),
                                 renderer: (row) => (
                                     <PersonCell
                                         steam_id={row.source_id}
@@ -263,7 +260,6 @@ export const AdminAppeals = () => {
                                 sortKey: 'reason',
                                 sortable: true,
                                 align: 'left',
-                                queryValue: (o) => BanReason[o.reason],
                                 renderer: (row) => (
                                     <Typography variant={'body1'}>
                                         {BanReason[row.reason]}

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 
@@ -40,16 +41,18 @@ export const PersonCell = ({
                 }
             }}
         >
-            <Avatar
-                alt={personaname}
-                src={
-                    avatar_hash.startsWith('https://')
-                        ? avatar_hash
-                        : `https://avatars.akamai.steamstatic.com/${avatar_hash}.jpg`
-                }
-                variant={'square'}
-                sx={{ height: '32px', width: '32px' }}
-            />
+            <Tooltip title={personaname}>
+                <Avatar
+                    alt={personaname}
+                    src={
+                        avatar_hash.startsWith('https://')
+                            ? avatar_hash
+                            : `https://avatars.akamai.steamstatic.com/${avatar_hash}.jpg`
+                    }
+                    variant={'square'}
+                    sx={{ height: '32px', width: '32px' }}
+                />
+            </Tooltip>
             <Box
                 height={'100%'}
                 alignContent={'center'}
