@@ -148,12 +148,12 @@ func (app *App) BanCIDR(ctx context.Context, banNet *store.BanCIDR) error {
 	//	return "", consts.ErrDuplicateBan
 	// }
 	if banNet.CIDR == "" {
-		return errors.New("CIDR unset")
+		return errors.New("IP unset")
 	}
 
 	_, realCIDR, errCIDR := net.ParseCIDR(banNet.CIDR)
 	if errCIDR != nil {
-		return errors.Wrap(errCIDR, "Invalid CIDR")
+		return errors.Wrap(errCIDR, "Invalid IP")
 	}
 
 	if errSaveBanNet := app.db.SaveBanNet(ctx, banNet); errSaveBanNet != nil {
@@ -176,7 +176,7 @@ func (app *App) BanCIDR(ctx context.Context, banNet *store.BanCIDR) error {
 	}(realCIDR, banNet.Reason)
 
 	msgEmbed := discord.
-		NewEmbed("CIDR Banned Successfully").
+		NewEmbed("IP Banned Successfully").
 		SetColor(app.bot.Colour.Success).
 		AddField("cidr", realCIDR.String()).
 		AddField("net_id", fmt.Sprintf("%d", banNet.NetID)).

@@ -1641,7 +1641,7 @@ func onBanIP(ctx context.Context, app *App, _ *discordgo.Session,
 
 	_, network, errParseCIDR := net.ParseCIDR(cidr)
 	if errParseCIDR != nil {
-		return nil, errors.Wrap(errParseCIDR, "Invalid CIDR")
+		return nil, errors.Wrap(errParseCIDR, "Invalid IP")
 	}
 
 	duration, errDuration := ParseDuration(opts[discord.OptDuration].StringValue())
