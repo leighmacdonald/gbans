@@ -89,13 +89,15 @@ export const apiGetReport = async (report_id: number) =>
     await apiCall<ReportWithAuthor>(`/api/report/${report_id}`, 'GET');
 
 export const apiGetReports = async (
-    opts?: ReportQueryFilter<ReportWithAuthor>,
+    opts?: ReportQueryFilter,
     abortController?: AbortController
 ) =>
-    await apiCall<
-        LazyResult<ReportWithAuthor>,
-        ReportQueryFilter<ReportWithAuthor>
-    >(`/api/reports`, 'POST', opts, abortController);
+    await apiCall<LazyResult<ReportWithAuthor>, ReportQueryFilter>(
+        `/api/reports`,
+        'POST',
+        opts,
+        abortController
+    );
 
 export const apiGetReportMessages = async (
     report_id: number,

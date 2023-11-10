@@ -137,3 +137,8 @@ export const steamIDOrEmptyString = async (steamId: string) => {
         return '';
     }
 };
+
+const ipRegex =
+    /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/gi;
+
+export const validIP = (value: string): boolean => ipRegex.test(value);

@@ -41,7 +41,6 @@ export const SubmitButton = ({
     const { submitForm } = useFormikContext();
     return (
         <Button
-            size={'small'}
             startIcon={startIcon}
             color={'success'}
             variant={'contained'}
@@ -92,7 +91,6 @@ export const ResetButton = ({
 
     return (
         <Button
-            size={'small'}
             onClick={() => resetForm()}
             startIcon={<RestartAltIcon />}
             color={'warning'}

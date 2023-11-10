@@ -20,16 +20,16 @@ export const nonResolvingSteamIDInputTest = async (
     }
 };
 
-export const authorIdValidator = yup
+export const sourceIdValidator = yup
     .string()
     .label('Author Steam ID')
-    .test('author_id', 'Invalid author steamid', nonResolvingSteamIDInputTest);
+    .test('source_id', 'Invalid author steamid', nonResolvingSteamIDInputTest);
 
 interface AuthorIDFieldValue {
-    author_id: string;
+    source_id: string;
 }
 
-export const AuthorIDField = <T,>() => {
+export const SourceIdField = <T,>() => {
     const { values, touched, errors, handleChange } = useFormikContext<
         T & AuthorIDFieldValue
     >();
@@ -37,14 +37,14 @@ export const AuthorIDField = <T,>() => {
         <TextField
             variant={'outlined'}
             fullWidth
-            name={'author_id'}
-            id={'author_id'}
+            name={'source_id'}
+            id={'source_id'}
             label={'Author Steam ID'}
-            value={values.author_id}
+            value={values.source_id}
             onChange={handleChange}
-            error={touched.author_id && Boolean(errors.author_id)}
+            error={touched.source_id && Boolean(errors.source_id)}
             helperText={
-                touched.author_id && errors.author_id && `${errors.author_id}`
+                touched.source_id && errors.source_id && `${errors.source_id}`
             }
         />
     );

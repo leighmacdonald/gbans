@@ -1,11 +1,25 @@
 import React from 'react';
 import TextField from '@mui/material/TextField';
 import { useFormikContext } from 'formik';
+import SteamID, { Type } from 'steamid';
 import * as yup from 'yup';
+import { logErr } from '../../util/errors';
+import { emptyOrNullString } from '../../util/types';
 
-export const GroupIdFieldValidator = yup
+export const groupIdFieldValidator = yup
     .string()
-    .required('Group ID cannot be empty')
+    .test('valid_group', 'Invalid group ID', (value) => {
+        if (emptyOrNullString(value)) {
+            return true;
+        }
+        try {
+            const id = new SteamID(value as string);
+            return id.isValid() && id.type == Type.CLAN;
+        } catch (e) {
+            logErr(e);
+            return false;
+        }
+    })
     .length(18, 'Must be positive integer with a length of 18');
 
 interface GroupIDFieldProps {

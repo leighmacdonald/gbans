@@ -1,4 +1,3 @@
-import { format, parseISO } from 'date-fns';
 import { parseDateTime } from '../util/text';
 import { emptyOrNullString } from '../util/types';
 import {
@@ -7,9 +6,15 @@ import {
     readRefreshToken,
     refreshToken
 } from './auth';
-import { AppealState } from './bans';
+import {
+    AppealState,
+    ASNBanRecord,
+    CIDRBanRecord,
+    GroupBanRecord,
+    SteamBanRecord
+} from './bans';
 import { MatchResult } from './match';
-import { ReportStatus } from './report';
+import { ReportStatus, ReportWithAuthor } from './report';
 
 export enum PermissionLevel {
     Banned = 0,
@@ -208,18 +213,6 @@ export const transformMatchDates = (item: MatchResult) => {
     return item;
 };
 
-export const renderDate = (d: Date | string): string => {
-    switch (typeof d) {
-        case 'object': {
-            return format(d, 'yyyy-MM-dd');
-        }
-        case 'string':
-            return format(parseISO(d), 'yyyy-MM-dd');
-        default:
-            return `${d}`;
-    }
-};
-
 export interface QueryFilter<T> {
     offset?: number;
     limit?: number;
@@ -229,17 +222,29 @@ export interface QueryFilter<T> {
     deleted?: boolean;
 }
 
-export interface AuthorQueryFilter<T> extends QueryFilter<T> {
-    author_id?: string;
-}
-
-export interface BanQueryFilter<T> extends AuthorQueryFilter<T> {
+export interface BanQueryCommon<T> extends QueryFilter<T> {
     source_id?: string;
     target_id?: string;
     appeal_state?: AppealState;
+    deleted?: boolean;
 }
 
-export interface ReportQueryFilter<T> extends AuthorQueryFilter<T> {
+export type BanSteamQueryFilter = BanQueryCommon<SteamBanRecord>;
+
+export interface BanCIDRQueryFilter extends BanQueryCommon<CIDRBanRecord> {
+    ip?: string;
+}
+
+export interface BanGroupQueryFilter extends BanQueryCommon<GroupBanRecord> {
+    group_id?: string;
+}
+
+export interface BanASNQueryFilter extends BanQueryCommon<ASNBanRecord> {
+    as_num?: number;
+}
+
+export interface ReportQueryFilter extends QueryFilter<ReportWithAuthor> {
     report_status?: ReportStatus;
+    source_id?: string;
     target_id?: string;
 }

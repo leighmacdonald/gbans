@@ -29,11 +29,11 @@ import {
     AppealStateField,
     appealStateFielValidator
 } from '../component/formik/AppealStateField';
-import {
-    AuthorIDField,
-    authorIdValidator
-} from '../component/formik/AuthorIdField';
 import { FilterButtons } from '../component/formik/FilterButtons';
+import {
+    SourceIdField,
+    sourceIdValidator
+} from '../component/formik/SourceIdField';
 import {
     TargetIDField,
     targetIdValidator
@@ -48,7 +48,7 @@ interface AppealFilterValues {
 
 const validationSchema = yup.object({
     appeal_state: appealStateFielValidator,
-    author_id: authorIdValidator,
+    author_id: sourceIdValidator,
     target_id: targetIdValidator
 });
 
@@ -152,7 +152,7 @@ export const AdminAppeals = () => {
                             <Grid xs={12} padding={2}>
                                 <Stack direction={'row'} spacing={2}>
                                     <AppealStateField />
-                                    <AuthorIDField />
+                                    <SourceIdField />
                                     <TargetIDField />
                                 </Stack>
                             </Grid>

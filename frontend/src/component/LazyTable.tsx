@@ -6,6 +6,7 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import { defaultRenderer, HeadingCell, Order, RowsPerPage } from './DataTable';
@@ -149,20 +150,22 @@ export const LazyTableHeader = <T,>({
                                     </Typography>
                                 </TableSortLabel>
                             ) : (
-                                <Typography
-                                    padding={0}
-                                    sx={{
-                                        textDecoration:
-                                            col.sortKey != sortColumn
-                                                ? 'none'
-                                                : order == 'asc'
-                                                ? 'underline'
-                                                : 'overline'
-                                    }}
-                                    variant={'button'}
-                                >
-                                    {col.label}
-                                </Typography>
+                                <Tooltip title={col.tooltip}>
+                                    <Typography
+                                        padding={0}
+                                        sx={{
+                                            textDecoration:
+                                                col.sortKey != sortColumn
+                                                    ? 'none'
+                                                    : order == 'asc'
+                                                    ? 'underline'
+                                                    : 'overline'
+                                        }}
+                                        variant={'button'}
+                                    >
+                                        {col.label}
+                                    </Typography>
+                                </Tooltip>
                             )}
                         </TableCell>
                     );

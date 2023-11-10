@@ -22,9 +22,11 @@ export const AppealStateField = <T,>() => {
         T & AppealStateFieldProps
     >();
     return (
-        <FormControl sx={{ width: 450 }}>
+        <FormControl fullWidth>
             <InputLabel id="appeal_state-label">Appeal Status</InputLabel>
             <Select<AppealState>
+                fullWidth
+                label={'Appeal Status'}
                 labelId="appeal_state-label"
                 id="appeal_state"
                 value={values.appeal_state}

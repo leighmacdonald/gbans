@@ -22,7 +22,7 @@ import {
     DurationCustomFieldValidator
 } from '../formik/DurationCustomField';
 import { DurationField, DurationFieldValidator } from '../formik/DurationField';
-import { GroupIdField, GroupIdFieldValidator } from '../formik/GroupIdField';
+import { GroupIdField, groupIdFieldValidator } from '../formik/GroupIdField';
 import { NoteField, NoteFieldValidator } from '../formik/NoteField';
 import { SteamIdField, steamIdValidator } from '../formik/SteamIdField';
 import { CancelButton, ResetButton, SubmitButton } from './Buttons';
@@ -38,7 +38,7 @@ export interface BanGroupFormValues {
 
 const validationSchema = yup.object({
     steam_id: steamIdValidator,
-    group_id: GroupIdFieldValidator,
+    group_id: groupIdFieldValidator,
     duration: DurationFieldValidator,
     duration_custom: DurationCustomFieldValidator,
     note: NoteFieldValidator
