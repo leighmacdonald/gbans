@@ -1,7 +1,10 @@
 import React, { useCallback, useEffect, useState, JSX } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import NiceModal from '@ebay/nice-modal-react';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import GavelIcon from '@mui/icons-material/Gavel';
+import InfoIcon from '@mui/icons-material/Info';
+import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import SendIcon from '@mui/icons-material/Send';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
@@ -13,26 +16,22 @@ import ListItem from '@mui/material/ListItem';
 import ListItemAvatar from '@mui/material/ListItemAvatar';
 import ListItemText from '@mui/material/ListItemText';
 import MenuItem from '@mui/material/MenuItem';
-import Paper from '@mui/material/Paper';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import {
-    apiGetBansSteam,
     apiGetReport,
     apiReportSetState,
     BanReasons,
-    BanType,
     PermissionLevel,
     ReportStatus,
     reportStatusColour,
     reportStatusString,
-    ReportWithAuthor,
-    SteamBanRecord
+    ReportWithAuthor
 } from '../api';
-import { Heading } from '../component/Heading';
+import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { LoadingSpinner } from '../component/LoadingSpinner';
 import { ReportComponent } from '../component/ReportComponent';
 import { SteamIDList } from '../component/SteamIDList';
@@ -47,8 +46,6 @@ export const ReportViewPage = (): JSX.Element => {
     const id = parseInt(report_id || '');
     const [report, setReport] = useState<ReportWithAuthor>();
     const [stateAction, setStateAction] = useState(ReportStatus.Opened);
-    const [banHistory, setBanHistory] = useState<SteamBanRecord[]>([]);
-    const [currentBan, setCurrentBan] = useState<SteamBanRecord>();
     const { currentUser } = useCurrentUserCtx();
     const { sendFlash } = useUserFlashCtx();
     const navigate = useNavigate();
@@ -74,25 +71,6 @@ export const ReportViewPage = (): JSX.Element => {
             });
     }, [report_id, setReport, id, sendFlash, navigate]);
 
-    const loadBans = useCallback(() => {
-        if (!report?.target_id) {
-            return;
-        }
-        apiGetBansSteam({
-            limit: 100,
-            deleted: true,
-            target_id: report?.target_id
-        }).then((history) => {
-            setBanHistory(history.data);
-            const cur = history.data.pop();
-            setCurrentBan(cur);
-        });
-    }, [report?.target_id]);
-
-    useEffect(() => {
-        loadBans();
-    }, [loadBans, report]);
-
     const onSetReportState = useCallback(() => {
         apiReportSetState(id, stateAction)
             .then(() => {
@@ -106,39 +84,37 @@ export const ReportViewPage = (): JSX.Element => {
             .catch(logErr);
     }, [id, report?.report_status, sendFlash, stateAction]);
 
-    const renderBan = (ban: SteamBanRecord) => {
-        switch (ban.ban_type) {
-            case BanType.Banned:
-                return (
-                    <Heading bgColor={theme.palette.error.main}>Banned</Heading>
-                );
-            default:
-                return (
-                    <Heading bgColor={theme.palette.warning.main}>
-                        Muted
-                    </Heading>
-                );
-        }
-    };
+    // const renderBan = (ban: SteamBanRecord) => {
+    //     switch (ban.ban_type) {
+    //         case BanType.Banned:
+    //             return (
+    //                 <Heading bgColor={theme.palette.error.main}>Banned</Heading>
+    //             );
+    //         default:
+    //             return (
+    //                 <Heading bgColor={theme.palette.warning.main}>
+    //                     Muted
+    //                 </Heading>
+    //             );
+    //     }
+    // };
 
     return (
         <Grid container spacing={2}>
             <Grid xs={12} md={8}>
-                {report && (
-                    <ReportComponent report={report} banHistory={banHistory} />
-                )}
+                {report && <ReportComponent report={report} />}
             </Grid>
             <Grid xs={12} md={4}>
                 <Stack spacing={2}>
-                    <Paper elevation={1}>
+                    <ContainerWithHeader
+                        title={report?.subject.personaname ?? 'Loading'}
+                        iconLeft={<PersonSearchIcon />}
+                    >
                         <Stack>
                             {!report?.subject.steam_id ? (
                                 <LoadingSpinner />
                             ) : (
                                 <>
-                                    <Heading>
-                                        {report?.subject.personaname}
-                                    </Heading>
                                     <Avatar
                                         variant={'square'}
                                         alt={report?.subject.personaname}
@@ -148,17 +124,18 @@ export const ReportViewPage = (): JSX.Element => {
                                             height: '100%'
                                         }}
                                     />
-                                    {currentBan && renderBan(currentBan)}
-                                    <SteamIDList
-                                        steam_id={report?.subject.steam_id}
-                                    />
+                                    {/*currentBan && renderBan(currentBan)*/}
                                 </>
                             )}
                         </Stack>
-                    </Paper>
+                    </ContainerWithHeader>
 
-                    <Paper elevation={1}>
-                        <Heading>Report Status</Heading>
+                    <SteamIDList steam_id={report?.subject.steam_id ?? ''} />
+
+                    <ContainerWithHeader
+                        title={'Report Status'}
+                        iconLeft={<AccountBalanceIcon />}
+                    >
                         <Typography
                             padding={2}
                             variant={'h4'}
@@ -176,10 +153,11 @@ export const ReportViewPage = (): JSX.Element => {
                                 report?.report_status ?? ReportStatus.Opened
                             )}
                         </Typography>
-                    </Paper>
-                    <Paper elevation={1} sx={{ width: '100%' }}>
-                        <Heading>Details</Heading>
-
+                    </ContainerWithHeader>
+                    <ContainerWithHeader
+                        title={'Details'}
+                        iconLeft={<InfoIcon />}
+                    >
                         <List sx={{ width: '100%' }}>
                             <ListItem
                                 sx={{
@@ -238,12 +216,11 @@ export const ReportViewPage = (): JSX.Element => {
                                 </ListItem>
                             )}
                         </List>
-                    </Paper>
+                    </ContainerWithHeader>
                     {currentUser.permission_level >=
                         PermissionLevel.Moderator && (
                         <>
-                            <Paper elevation={1}>
-                                <Heading>Resolve Report</Heading>
+                            <ContainerWithHeader title={'Resolve Report'}>
                                 <List>
                                     <ListItem>
                                         <Stack
@@ -317,7 +294,7 @@ export const ReportViewPage = (): JSX.Element => {
                                         </Stack>
                                     </ListItem>
                                 </List>
-                            </Paper>
+                            </ContainerWithHeader>
                         </>
                     )}
                 </Stack>
