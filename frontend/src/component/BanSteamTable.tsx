@@ -21,12 +21,11 @@ import {
 } from '../api';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
-import { Order, RowsPerPage } from './DataTable';
 import {
     DataTableRelativeDateField,
     isPermanentBan
 } from './DataTableRelativeDateField';
-import { LazyTable } from './LazyTable';
+import { LazyTable, Order, RowsPerPage } from './LazyTable';
 import { PersonCell } from './PersonCell';
 import { TableCellBool } from './TableCellBool';
 import { TableCellLink } from './TableCellLink';
@@ -377,7 +376,6 @@ export const BanSteamTable = () => {
                                 sortable: false,
                                 align: 'center',
                                 width: '20px',
-                                queryValue: (o) => `${o.report_id}`,
                                 renderer: (row) =>
                                     row.report_id > 0 ? (
                                         <Tooltip title={'View Report'}>

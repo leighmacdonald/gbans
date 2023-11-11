@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState, JSX } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import NiceModal from '@ebay/nice-modal-react';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import AutoFixNormalIcon from '@mui/icons-material/AutoFixNormal';
 import GavelIcon from '@mui/icons-material/Gavel';
 import InfoIcon from '@mui/icons-material/Info';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
@@ -220,7 +221,10 @@ export const ReportViewPage = (): JSX.Element => {
                     {currentUser.permission_level >=
                         PermissionLevel.Moderator && (
                         <>
-                            <ContainerWithHeader title={'Resolve Report'}>
+                            <ContainerWithHeader
+                                title={'Resolve Report'}
+                                iconLeft={<AutoFixNormalIcon />}
+                            >
                                 <List>
                                     <ListItem>
                                         <Stack

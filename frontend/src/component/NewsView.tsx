@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { Pagination } from '@mui/material';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
-import { noop } from 'lodash-es';
 import { apiGetNewsLatest, NewsEntry } from '../api/news';
 import { renderMarkdown } from '../api/wiki';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
@@ -32,7 +31,7 @@ export const NewsView = ({ itemsPerPage }: NewsViewProps) => {
             }
         };
 
-        fetchNews().then(noop);
+        fetchNews().catch(logErr);
 
         return () => abortController.abort();
     }, [itemsPerPage, sendFlash]);

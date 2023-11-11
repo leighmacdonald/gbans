@@ -1,6 +1,10 @@
 import React, { useCallback, useEffect, useState, JSX } from 'react';
+import DescriptionIcon from '@mui/icons-material/Description';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import LanIcon from '@mui/icons-material/Lan';
+import MessageIcon from '@mui/icons-material/Message';
 import ReportIcon from '@mui/icons-material/Report';
+import ReportGmailerrorredIcon from '@mui/icons-material/ReportGmailerrorred';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
@@ -14,11 +18,9 @@ import { useTheme } from '@mui/material/styles';
 import {
     apiCreateReportMessage,
     apiDeleteReportMessage,
-    apiGetMessages,
     apiGetReportMessages,
     apiUpdateReportMessage,
     PermissionLevel,
-    PersonMessage,
     Report,
     ReportMessagesResponse,
     UserMessage
@@ -47,7 +49,6 @@ export const ReportComponent = ({
 }: ReportComponentProps): JSX.Element => {
     const theme = useTheme();
     const [messages, setMessages] = useState<ReportMessagesResponse[]>([]);
-    const [chatHistory, setChatHistory] = useState<PersonMessage[]>([]);
 
     const [value, setValue] = React.useState<number>(0);
     const { currentUser } = useCurrentUserCtx();
@@ -114,14 +115,6 @@ export const ReportComponent = ({
         loadMessages();
     }, [loadMessages, report]);
 
-    useEffect(() => {
-        apiGetMessages({ steam_id: report.target_id, order_by: 'created_on' })
-            .then((response) => {
-                setChatHistory(response.messages);
-            })
-            .catch(logErr);
-    }, [report]);
-
     return (
         <Grid container>
             <Grid xs={12}>
@@ -139,23 +132,39 @@ export const ReportComponent = ({
                         >
                             <Tabs
                                 value={value}
+                                variant={'fullWidth'}
                                 onChange={handleChange}
                                 aria-label="ReportCreatePage detail tabs"
                             >
-                                <Tab label="Description" />
+                                <Tab
+                                    label="Description"
+                                    icon={<DescriptionIcon />}
+                                    iconPosition={'start'}
+                                />
                                 {currentUser.permission_level >=
                                     PermissionLevel.Moderator && (
                                     <Tab
-                                        label={`Chat Logs (${chatHistory.length})`}
+                                        sx={{ height: 20 }}
+                                        label={`Chat Logs`}
+                                        icon={<MessageIcon />}
+                                        iconPosition={'start'}
                                     />
                                 )}
                                 {currentUser.permission_level >=
                                     PermissionLevel.Moderator && (
-                                    <Tab label={`Connection History`} />
+                                    <Tab
+                                        label={`Connections`}
+                                        icon={<LanIcon />}
+                                        iconPosition={'start'}
+                                    />
                                 )}
                                 {currentUser.permission_level >=
                                     PermissionLevel.Moderator && (
-                                    <Tab label={`Ban History`} />
+                                    <Tab
+                                        label={`Ban History`}
+                                        icon={<ReportGmailerrorredIcon />}
+                                        iconPosition={'start'}
+                                    />
                                 )}
                             </Tabs>
                         </Box>
@@ -175,7 +184,7 @@ export const ReportComponent = ({
                         </TabPanel>
 
                         <TabPanel value={value} index={1}>
-                            <PersonMessageTable messages={chatHistory} />
+                            <PersonMessageTable steam_id={report.target_id} />
                         </TabPanel>
                         <TabPanel value={value} index={2}>
                             <ConnectionHistoryTable

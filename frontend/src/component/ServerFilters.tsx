@@ -1,9 +1,9 @@
 import React, { ChangeEvent, useCallback, useEffect } from 'react';
+import FilterListIcon from '@mui/icons-material/FilterList';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
-import Paper from '@mui/material/Paper';
 import { SelectChangeEvent } from '@mui/material/Select';
 import Select from '@mui/material/Select';
 import Slider from '@mui/material/Slider';
@@ -12,7 +12,7 @@ import Grid from '@mui/material/Unstable_Grid2';
 import styled from '@mui/system/styled';
 import { uniq } from 'lodash-es';
 import { useMapStateCtx } from '../contexts/MapStateCtx';
-import { Heading } from './Heading';
+import { ContainerWithHeader } from './ContainerWithHeader';
 
 export const ServerFilters = () => {
     const {
@@ -149,7 +149,7 @@ export const ServerFilters = () => {
     ];
 
     return (
-        <Paper elevation={1}>
+        <ContainerWithHeader title={'Filters'} iconLeft={<FilterListIcon />}>
             <Grid
                 container
                 spacing={2}
@@ -161,9 +161,6 @@ export const ServerFilters = () => {
                     // justifyContent: 'center'
                 }}
             >
-                <Grid xs={2}>
-                    <Heading>Filters</Heading>
-                </Grid>
                 <Grid xs>
                     <FormControlLabel
                         control={
@@ -229,7 +226,7 @@ export const ServerFilters = () => {
                     />
                 </Grid>
             </Grid>
-        </Paper>
+        </ContainerWithHeader>
     );
 };
 

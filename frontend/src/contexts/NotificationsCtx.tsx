@@ -58,7 +58,7 @@ export const NotificationsProvider = ({
             }
         };
 
-        fetchNotifications().then(noop);
+        fetchNotifications().catch(logErr);
 
         return () => abortController.abort();
     }, [currentUser.steam_id]);

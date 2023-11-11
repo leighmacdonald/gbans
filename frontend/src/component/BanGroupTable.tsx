@@ -15,8 +15,7 @@ import * as yup from 'yup';
 import { apiGetBansGroups, BanGroupQueryFilter, GroupBanRecord } from '../api';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
-import { Order, RowsPerPage } from './DataTable';
-import { LazyTable } from './LazyTable';
+import { LazyTable, Order, RowsPerPage } from './LazyTable';
 import { PersonCell } from './PersonCell';
 import { TableCellBool } from './TableCellBool';
 import { VCenterBox } from './VCenterBox';
@@ -211,7 +210,6 @@ export const BanGroupTable = () => {
                                 sortKey: 'ban_group_id',
                                 sortable: true,
                                 align: 'left',
-                                queryValue: (o) => `${o.ban_group_id}`,
                                 renderer: (obj) => (
                                     <Typography variant={'body1'}>
                                         #{obj.ban_group_id.toString()}
@@ -252,7 +250,6 @@ export const BanGroupTable = () => {
                                 sortKey: 'group_id',
                                 sortable: true,
                                 align: 'left',
-                                queryValue: (o) => `${o.target_id}`,
                                 renderer: (row) => (
                                     <Typography variant={'body1'}>
                                         {row.group_id}
@@ -265,7 +262,6 @@ export const BanGroupTable = () => {
                                 sortKey: 'note',
                                 sortable: false,
                                 align: 'left',
-                                queryValue: (row) => row.note,
                                 renderer: (row) => (
                                     <Typography variant={'body1'}>
                                         {row.note}

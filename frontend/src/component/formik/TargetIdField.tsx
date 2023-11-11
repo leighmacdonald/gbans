@@ -17,7 +17,11 @@ interface TargetIDInputValue {
     target_id: string;
 }
 
-export const TargetIDField = <T,>() => {
+export const TargetIDField = <T,>({
+    label = 'Target Steam ID'
+}: {
+    label?: string;
+}) => {
     const { values, touched, errors, handleChange } = useFormikContext<
         T & TargetIDInputValue
     >();
@@ -26,7 +30,7 @@ export const TargetIDField = <T,>() => {
             fullWidth
             name={'target_id'}
             id={'target_id'}
-            label={'Target Steam ID'}
+            label={label}
             value={values.target_id}
             onChange={handleChange}
             error={touched.target_id && Boolean(errors.target_id)}

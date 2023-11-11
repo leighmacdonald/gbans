@@ -12,8 +12,8 @@ import { PieChart } from '@mui/x-charts';
 import { apiGetMapUsage } from '../api';
 import { logErr } from '../util/errors';
 import { ContainerWithHeader } from './ContainerWithHeader';
-import { compare, Order, RowsPerPage, stableSort } from './DataTable';
-import { LazyTable } from './LazyTable';
+import { LazyTable, Order, RowsPerPage } from './LazyTable';
+import { compare, stableSort } from './LazyTableSimple';
 import { LoadingSpinner } from './LoadingSpinner';
 
 interface MapUseChartProps {

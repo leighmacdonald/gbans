@@ -215,7 +215,7 @@ func onAPIPostDemosQuery(app *App) gin.HandlerFunc {
 			return
 		}
 
-		demos, errDemos := app.db.GetDemos(ctx, req)
+		demos, count, errDemos := app.db.GetDemos(ctx, req)
 		if errDemos != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to query demos", zap.Error(errDemos))
@@ -223,7 +223,10 @@ func onAPIPostDemosQuery(app *App) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, demos)
+		ctx.JSON(http.StatusCreated, LazyResult{
+			Count: count,
+			Data:  demos,
+		})
 	}
 }
 
@@ -3784,7 +3787,7 @@ func onAPIQueryMessages(app *App) gin.HandlerFunc {
 		}
 
 		if req.Limit <= 0 || req.Limit > 1000 {
-			req.Limit = 1000
+			req.Limit = 50
 		}
 
 		user := currentUserProfile(ctx)
@@ -3804,61 +3807,18 @@ func onAPIQueryMessages(app *App) gin.HandlerFunc {
 			req.Unrestricted = true
 		}
 
-		messages, totalMessages, errChat := app.db.QueryChatHistory(ctx, req)
+		messages, count, errChat := app.db.QueryChatHistory(ctx, req)
 		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
 			log.Error("Failed to query messages history",
-				zap.Error(errChat), zap.String("sid", req.SteamID))
+				zap.Error(errChat), zap.String("sid", string(req.SourceID)))
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
 		}
 
-		if messages == nil {
-			messages = []store.QueryChatHistoryResult{}
-		}
-
-		ctx.JSON(http.StatusOK, messageQueryResults{
-			ResultsCount: ResultsCount{Count: totalMessages},
-			Messages:     messages,
-		})
-	}
-}
-
-type messageQueryResults struct {
-	ResultsCount
-	Messages []store.QueryChatHistoryResult `json:"messages"`
-}
-
-func onAPIGetPersonMessages(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
-	return func(ctx *gin.Context) {
-		steamID, errID := getSID64Param(ctx, "steam_id")
-		if errID != nil {
-			log.Error("Invalid steam_id value", zap.Error(errID))
-			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
-
-			return
-		}
-
-		messages, totalMessages, errChat := app.db.QueryChatHistory(ctx, store.ChatHistoryQueryFilter{
-			SteamID: steamID.String(),
-			QueryFilter: store.QueryFilter{
-				Limit: 1000,
-			},
-		})
-
-		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
-			log.Error("Failed to query messages history",
-				zap.Error(errChat), zap.Int64("sid64", steamID.Int64()))
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, messageQueryResults{
-			ResultsCount: ResultsCount{Count: totalMessages},
-			Messages:     messages,
+		ctx.JSON(http.StatusOK, LazyResult{
+			Count: count,
+			Data:  messages,
 		})
 	}
 }

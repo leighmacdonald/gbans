@@ -19,8 +19,7 @@ import {
 } from '../api';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
-import { Order, RowsPerPage } from './DataTable';
-import { LazyTable } from './LazyTable';
+import { LazyTable, Order, RowsPerPage } from './LazyTable';
 import { PersonCell } from './PersonCell';
 import { TableCellBool } from './TableCellBool';
 import { ASNumberField, asNumberFieldValidator } from './formik/ASNumberField';

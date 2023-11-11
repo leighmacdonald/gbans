@@ -1,51 +1,28 @@
-import React, { useEffect, useMemo, useState, JSX } from 'react';
+import React, { useMemo, JSX } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import HistoryIcon from '@mui/icons-material/History';
 import InfoIcon from '@mui/icons-material/Info';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
-import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import Stack from '@mui/material/Stack';
-import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import { apiGetReports, reportStatusString, ReportWithAuthor } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { DataTable } from '../component/DataTable';
-import { PersonCell } from '../component/PersonCell';
 import { ReportForm } from '../component/ReportForm';
-import { ReportStatusIcon } from '../component/ReportStatusIcon';
+import { UserReportHistory } from '../component/UserReportHistory';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
-import { logErr } from '../util/errors';
 
 export const ReportCreatePage = (): JSX.Element => {
     const { currentUser } = useCurrentUserCtx();
-    const [reportHistory, setReportHistory] = useState<ReportWithAuthor[]>([]);
     const navigate = useNavigate();
 
     const canReport = useMemo(() => {
         return currentUser.steam_id && currentUser.ban_id == 0;
     }, [currentUser.ban_id, currentUser.steam_id]);
-
-    useEffect(() => {
-        if (canReport) {
-            apiGetReports({
-                source_id: currentUser.steam_id.toString(),
-                limit: 1000,
-                order_by: 'created_on',
-                desc: true
-            })
-                .then((resp) => {
-                    setReportHistory(resp.data);
-                })
-                .catch(logErr);
-        }
-    }, [canReport, currentUser]);
 
     return (
         <Grid container spacing={3}>
@@ -75,76 +52,7 @@ export const ReportCreatePage = (): JSX.Element => {
                         title={'Your Report History'}
                         iconLeft={<HistoryIcon />}
                     >
-                        <DataTable
-                            columns={[
-                                {
-                                    label: 'Status',
-                                    tooltip: 'Report Status',
-                                    sortKey: 'report_status',
-                                    sortable: true,
-                                    align: 'left',
-                                    queryValue: (o) =>
-                                        reportStatusString(o.report_status),
-                                    renderer: (obj) => (
-                                        <Stack direction={'row'} spacing={1}>
-                                            <ReportStatusIcon
-                                                reportStatus={obj.report_status}
-                                            />
-                                            <Typography variant={'body1'}>
-                                                {reportStatusString(
-                                                    obj.report_status
-                                                )}
-                                            </Typography>
-                                        </Stack>
-                                    )
-                                },
-                                {
-                                    label: 'Player',
-                                    tooltip: 'Reported Player',
-                                    sortKey: 'subject',
-                                    sortable: true,
-                                    align: 'left',
-                                    queryValue: (o) =>
-                                        `${o.subject.steam_id} ${o.subject.personaname}`,
-                                    renderer: (row) => (
-                                        <PersonCell
-                                            steam_id={row.subject.steam_id}
-                                            personaname={
-                                                row.subject.personaname
-                                            }
-                                            avatar_hash={row.subject.avatarhash}
-                                        />
-                                    )
-                                },
-                                {
-                                    label: 'View',
-                                    tooltip: 'View your report',
-                                    sortable: false,
-                                    virtual: true,
-                                    virtualKey: 'actions',
-                                    align: 'right',
-                                    renderer: (row) => (
-                                        <ButtonGroup>
-                                            <IconButton
-                                                color={'primary'}
-                                                onClick={() => {
-                                                    navigate(
-                                                        `/report/${row.report_id}`
-                                                    );
-                                                }}
-                                            >
-                                                <Tooltip title={'View'}>
-                                                    <VisibilityIcon />
-                                                </Tooltip>
-                                            </IconButton>
-                                        </ButtonGroup>
-                                    )
-                                }
-                            ]}
-                            defaultSortColumn={'report_id'}
-                            rowsPerPage={10}
-                            rows={reportHistory || []}
-                        />
+                        <UserReportHistory steam_id={currentUser.steam_id} />
                     </ContainerWithHeader>
                 </Stack>
             </Grid>

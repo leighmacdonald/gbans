@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Typography from '@mui/material/Typography';
 import { apiGetBansSteam, BanReasons, SteamBanRecord } from '../api';
 import { logErr } from '../util/errors';
-import { Order, RowsPerPage } from './DataTable';
-import { LazyTable } from './LazyTable';
+import { LazyTable, Order, RowsPerPage } from './LazyTable';
 import { PersonCell } from './PersonCell';
 import { TableCellBool } from './TableCellBool';
 

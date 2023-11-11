@@ -6,19 +6,20 @@ import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { cleanMapName } from '../api';
+import { BaseServer, cleanMapName } from '../api';
 import { useMapStateCtx } from '../contexts/MapStateCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { tf2Fonts } from '../theme';
 import { logErr } from '../util/errors';
 import { ContainerWithHeader } from './ContainerWithHeader';
-import { DataTable, RowsPerPage } from './DataTable';
 import { Flag } from './Flag';
+import { LazyTable, RowsPerPage } from './LazyTable';
 import { LoadingSpinner } from './LoadingSpinner';
 
 export const ServerList = () => {
     const { sendFlash } = useUserFlashCtx();
     const { selectedServers } = useMapStateCtx();
+
     if (selectedServers.length === 0) {
         return (
             <ContainerWithHeader
@@ -29,10 +30,15 @@ export const ServerList = () => {
             </ContainerWithHeader>
         );
     }
+
     return (
         <ContainerWithHeader title={'Servers'} iconLeft={<StorageIcon />}>
-            <DataTable
-                defaultSortOrder={'asc'}
+            <LazyTable<BaseServer>
+                rows={selectedServers}
+                sortOrder={'asc'}
+                onSortColumnChanged={() => {}}
+                onSortOrderChanged={() => {}}
+                sortColumn={'distance'}
                 rowsPerPage={RowsPerPage.Hundred}
                 columns={[
                     {
@@ -40,8 +46,7 @@ export const ServerList = () => {
                         tooltip: 'Country Code',
                         sortKey: 'cc',
                         sortType: 'string',
-                        sortable: true,
-                        queryValue: (obj) => obj.cc,
+                        sortable: false,
                         renderer: (_, value) => (
                             <Flag countryCode={value as string} />
                         )
@@ -51,10 +56,9 @@ export const ServerList = () => {
                         tooltip: 'Server Name',
                         sortKey: 'name',
                         sortType: 'string',
-                        sortable: true,
+                        sortable: false,
                         align: 'left',
                         width: '100%',
-                        queryValue: (obj) => obj.name + obj.name_short,
                         renderer: (_, value) => (
                             <Typography
                                 variant={'button'}
@@ -69,8 +73,7 @@ export const ServerList = () => {
                         tooltip: 'Map Name',
                         sortKey: 'map',
                         sortType: 'string',
-                        sortable: true,
-                        queryValue: (obj) => obj.map,
+                        sortable: false,
                         renderer: (obj) => {
                             return (
                                 <Typography variant={'body2'}>
@@ -83,7 +86,7 @@ export const ServerList = () => {
                         label: 'Players',
                         tooltip: 'Current Players',
                         sortKey: 'players',
-                        sortable: true,
+                        sortable: false,
                         renderer: (obj, value) => {
                             return (
                                 <Typography variant={'body2'}>
@@ -96,7 +99,7 @@ export const ServerList = () => {
                         label: 'Dist',
                         tooltip: `Distance to the server`,
                         sortKey: 'distance',
-                        sortable: true,
+                        sortable: false,
                         renderer: (obj) => {
                             return (
                                 <Tooltip
@@ -167,8 +170,6 @@ export const ServerList = () => {
                         }
                     }
                 ]}
-                defaultSortColumn={'distance'}
-                rows={selectedServers}
             />
         </ContainerWithHeader>
     );

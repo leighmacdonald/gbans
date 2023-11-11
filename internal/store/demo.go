@@ -2,7 +2,7 @@ package store
 
 import (
 	"context"
-	"fmt"
+	"strings"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -97,54 +97,65 @@ func (db *Store) GetDemoByName(ctx context.Context, demoName string, demoFile *D
 }
 
 type GetDemosOptions struct {
-	SteamID   string `json:"steam_id"`
-	ServerIds []int  `json:"server_ids"`
-	MapName   string `json:"map_name"`
+	QueryFilter
+	SteamID   StringSID `json:"steam_id"`
+	ServerIds []int     `json:"server_ids"`
+	MapName   string    `json:"map_name"`
 }
 
-func (db *Store) GetDemos(ctx context.Context, opts GetDemosOptions) ([]DemoFile, error) {
-	demos := []DemoFile{}
+func (db *Store) GetDemos(ctx context.Context, opts GetDemosOptions) ([]DemoFile, int64, error) {
+	var (
+		demos       []DemoFile
+		constraints sq.And
+	)
 
 	builder := db.sb.
 		Select("d.demo_id", "d.server_id", "d.title", "d.created_on", "d.size", "d.downloads",
 			"d.map_name", "d.archive", "d.stats", "s.short_name", "s.name", "d.asset_id").
 		From("demo d").
-		LeftJoin("server s ON s.server_id = d.server_id").
-		OrderBy("created_on DESC").
-		Limit(1000)
+		LeftJoin("server s ON s.server_id = d.server_id")
 
 	if opts.MapName != "" {
-		builder = builder.Where(sq.Eq{"map_name": opts.MapName})
+		constraints = append(constraints, sq.ILike{"d.map_name": "%" + strings.ToLower(opts.MapName) + "%"})
 	}
 
 	if opts.SteamID != "" {
-		sid64, errSid := steamid.SID64FromString(opts.SteamID)
+		sid64, errSid := opts.SteamID.SID64(ctx)
 		if errSid != nil {
-			return nil, consts.ErrInvalidSID
+			return nil, 0, consts.ErrInvalidSID
 		}
-		// FIXME Can this be done with normal parameters + sb?
-		builder = builder.Where(fmt.Sprintf("stats @?? '$ ?? (exists (@.\"%d\"))'", sid64.Int64()))
+
+		constraints = append(constraints, sq.Expr("stats ?? ?", sid64.String()))
 	}
 
-	if len(opts.ServerIds) > 0 {
-		// 0 = all
-		if opts.ServerIds[0] != 0 {
-			builder = builder.Where(sq.Eq{"d.server_id": opts.ServerIds})
+	if len(opts.ServerIds) > 0 && opts.ServerIds[0] != 0 {
+		anyServer := false
+
+		for _, serverID := range opts.ServerIds {
+			if serverID == 0 {
+				anyServer = true
+
+				break
+			}
+		}
+
+		if !anyServer {
+			constraints = append(constraints, sq.Eq{"d.server_id": opts.ServerIds})
 		}
 	}
 
-	query, args, errQueryArgs := builder.ToSql()
+	query, args, errQueryArgs := builder.Where(constraints).ToSql()
 	if errQueryArgs != nil {
-		return nil, Err(errQueryArgs)
+		return nil, 0, Err(errQueryArgs)
 	}
 
 	rows, errQuery := db.Query(ctx, query, args...)
 	if errQuery != nil {
 		if errors.Is(errQuery, ErrNoResult) {
-			return demos, nil
+			return demos, 0, nil
 		}
 
-		return nil, Err(errQuery)
+		return nil, 0, Err(errQuery)
 	}
 
 	defer rows.Close()
@@ -158,7 +169,7 @@ func (db *Store) GetDemos(ctx context.Context, opts GetDemosOptions) ([]DemoFile
 		if errScan := rows.Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title, &demoFile.CreatedOn,
 			&demoFile.Size, &demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats,
 			&demoFile.ServerNameShort, &demoFile.ServerNameLong, &uuidScan); errScan != nil {
-			return nil, Err(errScan)
+			return nil, 0, Err(errScan)
 		}
 
 		if uuidScan != nil {
@@ -168,7 +179,27 @@ func (db *Store) GetDemos(ctx context.Context, opts GetDemosOptions) ([]DemoFile
 		demos = append(demos, demoFile)
 	}
 
-	return demos, nil
+	if demos == nil {
+		return []DemoFile{}, 0, nil
+	}
+
+	counter := db.sb.Select("count(d.demo_id)").
+		From("demo d").
+		Where(constraints)
+
+	countQuery, argsCount, errCountQuery := counter.ToSql()
+	if errCountQuery != nil {
+		return []DemoFile{}, 0, errors.Wrap(errCountQuery, "Failed to create count query")
+	}
+
+	var count int64
+	if errCount := db.
+		QueryRow(ctx, countQuery, argsCount...).
+		Scan(&count); errCount != nil {
+		return []DemoFile{}, 0, Err(errCount)
+	}
+
+	return demos, count, nil
 }
 
 func (db *Store) SaveDemo(ctx context.Context, demoFile *DemoFile) error {

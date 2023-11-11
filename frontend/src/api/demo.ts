@@ -1,5 +1,5 @@
-import { parseDateTime } from '../util/text';
-import { apiCall } from './common';
+import { LazyResult } from '../component/LazyTableSimple';
+import { apiCall, QueryFilter, transformCreatedOnDate } from './common';
 import { Asset } from './media';
 
 export interface DemoFile {
@@ -16,26 +16,22 @@ export interface DemoFile {
     asset: Asset;
 }
 
-export interface demoFilters {
+export interface DemoQueryFilter extends QueryFilter<DemoFile> {
     steam_id: string;
     map_name: string;
     server_ids: number[];
 }
 
 export const apiGetDemos = async (
-    opts: demoFilters,
-    abortController: AbortController
+    opts: DemoQueryFilter,
+    abortController?: AbortController
 ) => {
-    const demos = await apiCall<DemoFile[]>(
+    const resp = await apiCall<LazyResult<DemoFile>, DemoQueryFilter>(
         '/api/demos',
         'POST',
         opts,
         abortController
     );
-    return demos.map((d) => {
-        return {
-            ...d,
-            created_on: parseDateTime(d.created_on as unknown as string)
-        };
-    });
+    resp.data = resp.data.map(transformCreatedOnDate);
+    return resp;
 };

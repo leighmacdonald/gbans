@@ -17,8 +17,7 @@ import {
     PlayerQuery
 } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { Order, RowsPerPage } from '../component/DataTable';
-import { LazyTable } from '../component/LazyTable';
+import { LazyTable, Order, RowsPerPage } from '../component/LazyTable';
 import { LoadingSpinner } from '../component/LoadingSpinner';
 import { PersonCell } from '../component/PersonCell';
 import { FilterButtons } from '../component/formik/FilterButtons';

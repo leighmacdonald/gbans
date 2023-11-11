@@ -8,7 +8,7 @@ import {
     Weapon
 } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { RowsPerPage } from '../component/DataTable';
+import { RowsPerPage } from '../component/LazyTable';
 import { LazyTableSimple } from '../component/LazyTableSimple';
 import { PersonCell } from '../component/PersonCell';
 import { fmtWhenGt } from '../component/PlayersOverallContainer';

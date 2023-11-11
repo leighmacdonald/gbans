@@ -152,10 +152,27 @@ export const AdminBan = () => {
                             }}
                             aria-label="ReportCreatePage detail tabs"
                         >
-                            <Tab label={'Steam Bans'} color={'text'} />
-                            <Tab label={`CIDR Bans`} />
-                            <Tab label={`ASN Bans`} />
-                            <Tab label={`Group Bans`} />
+                            <Tab
+                                label={'Steam Bans'}
+                                color={'text'}
+                                icon={<DirectionsRunIcon />}
+                                iconPosition={'start'}
+                            />
+                            <Tab
+                                label={`CIDR Bans`}
+                                icon={<RouterIcon />}
+                                iconPosition={'start'}
+                            />
+                            <Tab
+                                label={`ASN Bans`}
+                                icon={<LanIcon />}
+                                iconPosition={'start'}
+                            />
+                            <Tab
+                                label={`Group Bans`}
+                                icon={<GroupsIcon />}
+                                iconPosition={'start'}
+                            />
                         </Tabs>
                     </Box>
 

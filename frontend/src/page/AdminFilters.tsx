@@ -11,8 +11,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Grid from '@mui/material/Unstable_Grid2';
 import { apiGetFilters, Filter } from '../api/filters';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { Order, RowsPerPage } from '../component/DataTable';
-import { LazyTable } from '../component/LazyTable';
+import { LazyTable, Order, RowsPerPage } from '../component/LazyTable';
 import { ModalFilterDelete, ModalFilterEditor } from '../component/modal';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
@@ -121,7 +120,6 @@ export const AdminFilters = () => {
                                 sortKey: 'pattern',
                                 sortable: true,
                                 align: 'left',
-                                queryValue: (o) => `${o.filter_id}`,
                                 renderer: (row) => {
                                     return row.pattern as string;
                                 }
@@ -165,7 +163,6 @@ export const AdminFilters = () => {
                                 sortable: false,
                                 align: 'right',
                                 virtual: true,
-                                queryValue: (o) => `${o.filter_id}`,
                                 renderer: (row) => {
                                     return (
                                         <ButtonGroup>

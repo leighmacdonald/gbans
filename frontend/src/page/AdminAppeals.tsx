@@ -19,8 +19,7 @@ import {
     SteamBanRecord
 } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { Order, RowsPerPage } from '../component/DataTable';
-import { LazyTable } from '../component/LazyTable';
+import { LazyTable, Order, RowsPerPage } from '../component/LazyTable';
 import { LoadingIcon } from '../component/LoadingIcon';
 import { LoadingSpinner } from '../component/LoadingSpinner';
 import { PersonCell } from '../component/PersonCell';
@@ -202,7 +201,6 @@ export const AdminAppeals = () => {
                                 tooltip: 'Ban ID',
                                 sortable: true,
                                 align: 'left',
-                                queryValue: (o) => `${o.ban_id}`,
                                 renderer: (obj) => (
                                     <TableCellLink
                                         label={`#${obj.ban_id}`}

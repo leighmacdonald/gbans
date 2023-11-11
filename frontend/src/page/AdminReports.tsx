@@ -18,8 +18,7 @@ import {
     ReportWithAuthor
 } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { Order, RowsPerPage } from '../component/DataTable';
-import { LazyTable } from '../component/LazyTable';
+import { LazyTable, Order, RowsPerPage } from '../component/LazyTable';
 import { LoadingIcon } from '../component/LoadingIcon';
 import { PersonCell } from '../component/PersonCell';
 import { TableCellLink } from '../component/TableCellLink';
@@ -197,7 +196,6 @@ export const AdminReports = () => {
                                 sortKey: 'report_id',
                                 sortable: true,
                                 align: 'left',
-                                queryValue: (o) => `${o.report_id}`,
                                 renderer: (obj) => (
                                     <TableCellLink
                                         to={`/report/${obj.report_id}`}
@@ -212,8 +210,6 @@ export const AdminReports = () => {
                                 sortable: true,
                                 align: 'left',
                                 width: '200px',
-                                queryValue: (o) =>
-                                    reportStatusString(o.report_status),
                                 renderer: (obj) => {
                                     return (
                                         <Typography variant={'subtitle1'}>
@@ -229,8 +225,6 @@ export const AdminReports = () => {
                                 tooltip: 'Reporter',
                                 sortType: 'string',
                                 align: 'left',
-                                queryValue: (o) =>
-                                    o.subject.personaname + o.subject.steam_id,
                                 renderer: (row) => (
                                     <PersonCell
                                         steam_id={row.author.steam_id}
@@ -245,8 +239,6 @@ export const AdminReports = () => {
                                 sortType: 'string',
                                 align: 'left',
                                 width: '250px',
-                                queryValue: (o) =>
-                                    o.subject.personaname + o.subject.steam_id,
                                 renderer: (row) => (
                                     <PersonCell
                                         steam_id={row.subject.steam_id}

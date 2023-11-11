@@ -14,7 +14,7 @@ import Grid2 from '@mui/material/Unstable_Grid2';
 import { parseISO } from 'date-fns';
 import { UserNotification } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { RowsPerPage } from '../component/DataTable';
+import { RowsPerPage } from '../component/LazyTable';
 import { useNotifications } from '../contexts/NotificationsCtx';
 import { renderDateTime } from '../util/text';
 
