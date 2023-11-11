@@ -5,11 +5,13 @@ import GavelIcon from '@mui/icons-material/Gavel';
 import GroupsIcon from '@mui/icons-material/Groups';
 import LanIcon from '@mui/icons-material/Lan';
 import RouterIcon from '@mui/icons-material/Router';
+import TabContext from '@mui/lab/TabContext';
+import TabList from '@mui/lab/TabList';
+import TabPanel from '@mui/lab/TabPanel';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import Tab from '@mui/material/Tab';
-import Tabs from '@mui/material/Tabs';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import {
@@ -23,7 +25,7 @@ import { BanCIDRTable } from '../component/BanCIDRTable';
 import { BanGroupTable } from '../component/BanGroupTable';
 import { BanSteamTable } from '../component/BanSteamTable';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { TabPanel } from '../component/TabPanel';
+//import { TabPanel } from '../component/TabPanel';
 import {
     ModalBanASN,
     ModalBanCIDR,
@@ -34,8 +36,12 @@ import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 
 export const AdminBan = () => {
     const theme = useTheme();
-    const [value, setValue] = React.useState<number>(0);
+    const [value, setValue] = React.useState<string>('0');
     const { sendFlash } = useUserFlashCtx();
+
+    const handleChange = (_: React.SyntheticEvent, newValue: string) => {
+        setValue(newValue);
+    };
 
     const onNewBanSteam = useCallback(async () => {
         try {
@@ -135,62 +141,78 @@ export const AdminBan = () => {
                     marginTop={0}
                     iconLeft={<GavelIcon />}
                 >
-                    <Box
-                        sx={{
-                            borderBottom: 1,
-                            borderColor: 'divider',
-                            backgroundColor: theme.palette.background.paper
-                        }}
-                    >
-                        <Tabs
-                            value={value}
-                            onChange={(
-                                _: React.SyntheticEvent,
-                                newValue: number
-                            ) => {
-                                setValue(newValue);
+                    <TabContext value={value}>
+                        <Box
+                            sx={{
+                                borderBottom: 1,
+                                borderColor: 'divider',
+                                backgroundColor: theme.palette.background.paper
                             }}
-                            aria-label="ReportCreatePage detail tabs"
                         >
-                            <Tab
-                                label={'Steam Bans'}
-                                color={'text'}
-                                icon={<DirectionsRunIcon />}
-                                iconPosition={'start'}
-                            />
-                            <Tab
-                                label={`CIDR Bans`}
-                                icon={<RouterIcon />}
-                                iconPosition={'start'}
-                            />
-                            <Tab
-                                label={`ASN Bans`}
-                                icon={<LanIcon />}
-                                iconPosition={'start'}
-                            />
-                            <Tab
-                                label={`Group Bans`}
-                                icon={<GroupsIcon />}
-                                iconPosition={'start'}
-                            />
-                        </Tabs>
-                    </Box>
+                            <TabList onChange={handleChange}>
+                                <Tab
+                                    label={'Steam Bans'}
+                                    color={'text'}
+                                    icon={<DirectionsRunIcon />}
+                                    iconPosition={'start'}
+                                    value={'0'}
+                                />
+                                <Tab
+                                    label={`CIDR Bans`}
+                                    icon={<RouterIcon />}
+                                    iconPosition={'start'}
+                                    value={'1'}
+                                />
+                                <Tab
+                                    label={`ASN Bans`}
+                                    icon={<LanIcon />}
+                                    iconPosition={'start'}
+                                    value={'2'}
+                                />
+                                <Tab
+                                    label={`Group Bans`}
+                                    icon={<GroupsIcon />}
+                                    iconPosition={'start'}
+                                    value={'3'}
+                                />
+                            </TabList>
+                        </Box>
 
-                    <TabPanel value={value} index={0}>
-                        <BanSteamTable />
-                    </TabPanel>
+                        <TabPanel value={value} sx={{ padding: 0 }}>
+                            <div
+                                style={{
+                                    padding: 0,
+                                    margin: 0,
+                                    display: '0' == value ? 'block' : 'none'
+                                }}
+                            >
+                                <BanSteamTable />
+                            </div>
+                            <div
+                                style={{
+                                    display: '1' == value ? 'block' : 'none'
+                                }}
+                            >
+                                <BanCIDRTable />
+                            </div>
 
-                    <TabPanel value={value} index={1}>
-                        <BanCIDRTable />
-                    </TabPanel>
+                            <div
+                                style={{
+                                    display: '2' == value ? 'block' : 'none'
+                                }}
+                            >
+                                <BanASNTable />
+                            </div>
 
-                    <TabPanel value={value} index={2}>
-                        <BanASNTable />
-                    </TabPanel>
-
-                    <TabPanel value={value} index={3}>
-                        <BanGroupTable />
-                    </TabPanel>
+                            <div
+                                style={{
+                                    display: '3' == value ? 'block' : 'none'
+                                }}
+                            >
+                                <BanGroupTable />
+                            </div>
+                        </TabPanel>
+                    </TabContext>
                 </ContainerWithHeader>
             </Grid>
         </Grid>

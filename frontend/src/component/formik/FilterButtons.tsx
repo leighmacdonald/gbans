@@ -5,7 +5,7 @@ import { ResetButton, SubmitButton } from '../modal/Buttons';
 
 export const FilterButtons = () => {
     return (
-        <ButtonGroup>
+        <ButtonGroup fullWidth>
             <ResetButton />
             <SubmitButton label={'Apply'} startIcon={<CheckIcon />} />
         </ButtonGroup>

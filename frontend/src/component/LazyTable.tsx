@@ -73,6 +73,7 @@ export interface LazyTableProps<T> {
     rows: T[];
     loading?: boolean;
     showPager?: boolean;
+    hideHeader?: boolean;
     onRowsPerPageChange?: React.ChangeEventHandler<
         HTMLTextAreaElement | HTMLInputElement
     >;
@@ -242,21 +243,24 @@ export const LazyTable = <T,>({
     page,
     count,
     rowsPerPage,
-    loading
+    loading,
+    hideHeader
 }: LazyTableProps<T>) => {
     const theme = useTheme();
 
     return (
         <TableContainer>
             <Table size={'small'}>
-                <LazyTableHeader<T>
-                    columns={columns}
-                    sortColumn={sortColumn}
-                    onSortColumnChanged={onSortColumnChanged}
-                    order={sortOrder}
-                    bgColor={theme.palette.background.paper}
-                    onSortOrderChanged={onSortOrderChanged}
-                />
+                {!hideHeader && (
+                    <LazyTableHeader<T>
+                        columns={columns}
+                        sortColumn={sortColumn}
+                        onSortColumnChanged={onSortColumnChanged}
+                        order={sortOrder}
+                        bgColor={theme.palette.background.paper}
+                        onSortOrderChanged={onSortOrderChanged}
+                    />
+                )}
                 <LazyTableBody rows={rows} columns={columns} />
                 {showPager &&
                 page != undefined &&

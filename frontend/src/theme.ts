@@ -77,15 +77,15 @@ export const createThemeByMode = (mode: PaletteMode) => {
                 styleOverrides: {
                     body: darkScrollbar()
                 }
-            },
-            MuiButton: {
-                variants: [
-                    {
-                        props: { variant: 'contained' },
-                        style: tf2Fonts
-                    }
-                ]
             }
+            // MuiButton: {
+            //     variants: [
+            //         {
+            //             props: { variant: 'contained' },
+            //             style: tf2Fonts
+            //         }
+            //     ]
+            // }
         },
         typography: {
             fontFamily: [
