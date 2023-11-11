@@ -16,7 +16,6 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { fromByteArray } from 'base64-js';
 import { Formik, useFormikContext } from 'formik';
-import { noop } from 'lodash-es';
 import * as yup from 'yup';
 import {
     apiContestEntrySave,
@@ -122,7 +121,7 @@ export const ContestEntryModal = NiceModal.create(
                 }
             };
 
-            uploadMedia().then(noop);
+            uploadMedia().catch(logErr);
 
             return () => abortController.abort();
         }, [contest_id, userUpload]);

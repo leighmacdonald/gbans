@@ -23,7 +23,6 @@ import {
     apiGetMessages,
     apiGetServers,
     defaultAvatarHash,
-    MessageQuery,
     PermissionLevel,
     PersonMessage,
     Server,
@@ -32,8 +31,7 @@ import {
     sessionKeyReportSteamID
 } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { Order, RowsPerPage } from '../component/DataTable';
-import { LazyTable } from '../component/LazyTable';
+import { LazyTable, Order, RowsPerPage } from '../component/LazyTable';
 import { AutoRefreshField } from '../component/formik/AutoRefreshField';
 import { AutoSubmitPaginationField } from '../component/formik/AutoSubmitPaginationField';
 import { DateEndField } from '../component/formik/DateEndField';
@@ -187,23 +185,21 @@ export const ChatLogPage = () => {
 
     const onSubmit = useCallback(
         (values: ChatLogFormValues) => {
-            const opts: MessageQuery = {
+            setLoading(true);
+            apiGetMessages({
                 server_id: values.server_id > 0 ? values.server_id : undefined,
                 personaname: values.personaname,
                 query: values.message,
-                steam_id: values.steam_id,
+                source_id: values.steam_id,
                 date_start: values.date_start ?? undefined,
                 date_end: values.date_end ?? undefined,
                 limit: rowPerPageCount,
                 offset: page * rowPerPageCount,
                 order_by: sortColumn,
                 desc: sortOrder == 'desc'
-            };
-
-            setLoading(true);
-            apiGetMessages(opts)
+            })
                 .then((resp) => {
-                    setRows(resp.messages || []);
+                    setRows(resp.data || []);
                     setTotalRows(resp.count);
                     if (page * rowPerPageCount > resp.count) {
                         setPage(0);
@@ -379,7 +375,6 @@ export const ChatLogPage = () => {
                                         sortKey: 'persona_name',
                                         width: 250,
                                         align: 'left',
-                                        queryValue: (o) => `${o.persona_name}`,
                                         renderer: (row) => (
                                             <PersonCellField
                                                 steam_id={row.steam_id}
@@ -397,7 +392,6 @@ export const ChatLogPage = () => {
                                         tooltip: 'Message',
                                         sortKey: 'body',
                                         align: 'left',
-                                        queryValue: (o) => o.body,
                                         renderer: (row) => {
                                             return (
                                                 <Grid container>
@@ -409,7 +403,8 @@ export const ChatLogPage = () => {
                                                         </Typography>
                                                     </Grid>
 
-                                                    {row.auto_filter_flagged && (
+                                                    {row.auto_filter_flagged >
+                                                        0 && (
                                                         <Grid
                                                             xs={'auto'}
                                                             padding={1}
@@ -435,7 +430,8 @@ export const ChatLogPage = () => {
                                                     >
                                                         <ChatContextMenu
                                                             flagged={
-                                                                row.auto_filter_flagged
+                                                                row.auto_filter_flagged >
+                                                                0
                                                             }
                                                             steamId={
                                                                 row.steam_id

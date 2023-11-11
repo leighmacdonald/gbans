@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
+import Typography from '@mui/material/Typography';
 import {
     apiGetConnections,
     PersonConnection,
     PersonConnectionQuery
 } from '../api';
 import { logErr } from '../util/errors';
-import { Order, RowsPerPage } from './DataTable';
-import { LazyTable } from './LazyTable';
+import { renderDateTime } from '../util/text';
+import { LazyTable, Order, RowsPerPage } from './LazyTable';
 
 export const ConnectionHistoryTable = ({ steam_id }: { steam_id?: string }) => {
     const [bans, setBans] = useState<PersonConnection[]>([]);
@@ -75,7 +76,12 @@ export const ConnectionHistoryTable = ({ steam_id }: { steam_id?: string }) => {
                     sortType: 'date',
                     align: 'left',
                     width: '150px',
-                    sortable: true
+                    sortable: true,
+                    renderer: (obj) => (
+                        <Typography variant={'body1'}>
+                            {renderDateTime(obj.created_on)}
+                        </Typography>
+                    )
                 },
                 {
                     label: 'Name',

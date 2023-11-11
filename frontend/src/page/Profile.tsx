@@ -9,7 +9,6 @@ import Chip from '@mui/material/Chip';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Grid from '@mui/material/Unstable_Grid2';
-import { noop } from 'lodash-es';
 import SteamID from 'steamid';
 import {
     apiGetPlayerWeaponsOverall,
@@ -66,7 +65,7 @@ export const Profile = () => {
             }
         };
 
-        loadProfile().then(noop);
+        loadProfile().catch(logErr);
 
         return () => abortController.abort();
     }, [sendFlash, steam_id]);

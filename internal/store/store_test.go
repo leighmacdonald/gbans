@@ -110,9 +110,9 @@ func testServerTest(database *store.Store) func(t *testing.T) {
 		require.Equal(t, serverA.UpdatedOn.Second(), s1Get.UpdatedOn.Second())
 
 		// Fetch all enabled servers
-		sLenA, errGetServers := database.GetServers(ctx, false)
+		sLenA, count, errGetServers := database.GetServers(ctx, store.ServerQueryFilter{})
 		require.NoError(t, errGetServers, "Failed to fetch enabled servers")
-		require.True(t, len(sLenA) > 0, "Empty server results")
+		require.Equal(t, count, len(sLenA), "Mismatches counts")
 		// Delete a server
 		require.NoError(t, database.DropServer(ctx, serverA.ServerID))
 
@@ -120,7 +120,7 @@ func testServerTest(database *store.Store) func(t *testing.T) {
 
 		require.True(t, errors.Is(database.GetServer(ctx, serverA.ServerID, &server), store.ErrNoResult))
 
-		sLenB, _ := database.GetServers(ctx, false)
+		sLenB, _, _ := database.GetServers(ctx, store.ServerQueryFilter{})
 		require.True(t, len(sLenA)-1 == len(sLenB))
 	}
 }
@@ -325,7 +325,7 @@ func testFilters(database *store.Store) func(t *testing.T) {
 
 		require.NoError(t, database.SavePerson(ctx, &player1))
 
-		existingFilters, errGetFilters := database.GetFilters(context.Background())
+		existingFilters, _, errGetFilters := database.GetFilters(context.Background(), store.FiltersQueryFilter{})
 		require.NoError(t, errGetFilters)
 
 		var (
@@ -348,7 +348,7 @@ func testFilters(database *store.Store) func(t *testing.T) {
 			savedFilters[index] = filter
 		}
 
-		currentFilters, errGetCurrentFilters := database.GetFilters(ctx)
+		currentFilters, _, errGetCurrentFilters := database.GetFilters(ctx, store.FiltersQueryFilter{})
 		require.NoError(t, errGetCurrentFilters)
 		require.Equal(t, len(existingFilters)+len(words), len(currentFilters))
 		require.NoError(t, database.DropFilter(ctx, &savedFilters[0]))
@@ -359,7 +359,7 @@ func testFilters(database *store.Store) func(t *testing.T) {
 		require.Equal(t, savedFilters[1].FilterID, byID.FilterID)
 		require.Equal(t, savedFilters[1].Pattern, byID.Pattern)
 
-		droppedFilters, errGetDroppedFilters := database.GetFilters(ctx)
+		droppedFilters, _, errGetDroppedFilters := database.GetFilters(ctx, store.FiltersQueryFilter{})
 		require.NoError(t, errGetDroppedFilters)
 		require.Equal(t, len(existingFilters)+len(words)-1, len(droppedFilters))
 	}

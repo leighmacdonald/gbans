@@ -1,17 +1,38 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Stack from '@mui/material/Stack';
-import { noop } from 'lodash-es';
 import { DataCount } from '../api';
 import { logErr } from '../util/errors';
 import {
-    compare,
+    descendingComparator,
     HeadingCell,
+    LazyTable,
     Order,
-    RowsPerPage,
-    stableSort
-} from './DataTable';
-import { LazyTable } from './LazyTable';
+    RowsPerPage
+} from './LazyTable';
 import { LoadingPlaceholder } from './LoadingPlaceholder';
+
+export const compare = <T,>(
+    order: Order,
+    orderBy: keyof T
+): ((a: T, b: T) => number) =>
+    order === 'desc'
+        ? (a, b) => descendingComparator(a, b, orderBy)
+        : (a, b) => -descendingComparator(a, b, orderBy);
+
+export const stableSort = <T,>(
+    array: T[],
+    comparator: (a: T, b: T) => number
+) => {
+    const stabilizedThis = array.map((el, index) => [el, index] as [T, number]);
+    stabilizedThis.sort((a, b) => {
+        const order = comparator(a[0], b[0]);
+        if (order !== 0) {
+            return order;
+        }
+        return a[1] - b[1];
+    });
+    return stabilizedThis.map((el) => el[0]);
+};
 
 export interface LazyFetchOpts<T> {
     column: keyof T;
@@ -80,7 +101,7 @@ export const LazyTableSimple = <T,>({
             }
         };
 
-        fetchNewData().then(noop);
+        fetchNewData().catch(logErr);
 
         return () => abortController.abort();
     }, [data, fetchData, hasLoaded, page, paged, sortColumn, sortOrder]);

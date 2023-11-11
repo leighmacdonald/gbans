@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
+import EditIcon from '@mui/icons-material/Edit';
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
 import FormatIndentDecreaseIcon from '@mui/icons-material/FormatIndentDecrease';
 import FormatIndentIncreaseIcon from '@mui/icons-material/FormatIndentIncrease';
 import FormatUnderlinedIcon from '@mui/icons-material/FormatUnderlined';
 import ImageIcon from '@mui/icons-material/Image';
+import PreviewIcon from '@mui/icons-material/Preview';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
@@ -89,8 +91,17 @@ export const MDEditor = ({
                     onChange={handleChange}
                     aria-label="Markdown & HTML Preview"
                 >
-                    <Tab label="Edit" />
-                    <Tab label="Preview" color={'warning'} />
+                    <Tab
+                        label="Edit"
+                        icon={<EditIcon />}
+                        iconPosition={'start'}
+                    />
+                    <Tab
+                        label="Preview"
+                        color={'warning'}
+                        icon={<PreviewIcon />}
+                        iconPosition={'start'}
+                    />
                 </Tabs>
             </Box>
             <TabPanel value={setTabValue} index={0}>

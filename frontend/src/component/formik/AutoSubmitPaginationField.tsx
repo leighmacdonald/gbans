@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import React from 'react';
 import { useFormikContext } from 'formik';
 import { logErr } from '../../util/errors';
-import { RowsPerPage } from '../DataTable';
+import { RowsPerPage } from '../LazyTable';
 
 export const AutoSubmitPaginationField = ({
     page,

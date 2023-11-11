@@ -27,9 +27,9 @@ import {
     Team
 } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { compare, Order, stableSort } from '../component/DataTable';
 import { Heading } from '../component/Heading';
-import { LazyTable } from '../component/LazyTable';
+import { LazyTable, Order } from '../component/LazyTable';
+import { compare, stableSort } from '../component/LazyTableSimple';
 import { LoadingSpinner } from '../component/LoadingSpinner';
 import { PersonCell } from '../component/PersonCell';
 import { PlayerClassImg } from '../component/PlayerClassImg';

@@ -2,10 +2,10 @@ import { LazyResult } from '../component/LazyTableSimple';
 import { parseDateTime } from '../util/text';
 import {
     apiCall,
-    DataCount,
     PermissionLevel,
     QueryFilter,
     TimeStamped,
+    transformCreatedOnDate,
     transformTimeStampedDates
 } from './common';
 
@@ -181,8 +181,9 @@ export interface PersonMessage {
     body: string;
     team: boolean;
     created_on: Date;
-    auto_filter_flagged: boolean;
+    auto_filter_flagged: number;
     avatar_hash: string;
+    pattern: string;
 }
 
 export const apiGetMessageContext = async (
@@ -203,31 +204,31 @@ export const apiGetMessageContext = async (
 
 export interface MessageQuery extends QueryFilter<PersonMessage> {
     personaname?: string;
-    steam_id?: string;
+    source_id?: string;
     query?: string;
     server_id?: number;
     date_start?: Date;
     date_end?: Date;
 }
 
-export interface pagedQueryResults<T> extends DataCount {
-    messages: T[];
-}
-
-export const apiGetMessages = async (opts: MessageQuery) => {
-    const resp = await apiCall<pagedQueryResults<PersonMessage>>(
+export const apiGetMessages = async (
+    opts: MessageQuery,
+    abortController?: AbortController
+) => {
+    const resp = await apiCall<LazyResult<PersonMessage>, MessageQuery>(
         `/api/messages`,
         'POST',
-        opts
+        opts,
+        abortController
     );
-    if (resp?.messages) {
-        resp.messages = resp.messages.map((msg) => {
-            return {
-                ...msg,
-                created_on: parseDateTime(msg.created_on as unknown as string)
-            };
-        });
-    }
+
+    resp.data = resp.data.map((msg) => {
+        return {
+            ...msg,
+            created_on: parseDateTime(msg.created_on as unknown as string)
+        };
+    });
+
     return resp;
 };
 
@@ -256,10 +257,11 @@ export const apiGetConnections = async (
     opts: PersonConnectionQuery,
     abortController: AbortController
 ) => {
-    return await apiCall<LazyResult<PersonConnection>, PersonConnectionQuery>(
-        `/api/connections`,
-        'POST',
-        opts,
-        abortController
-    );
+    const resp = await apiCall<
+        LazyResult<PersonConnection>,
+        PersonConnectionQuery
+    >(`/api/connections`, 'POST', opts, abortController);
+
+    resp.data = resp.data.map(transformCreatedOnDate);
+    return resp;
 };

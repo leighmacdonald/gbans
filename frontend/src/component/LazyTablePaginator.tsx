@@ -1,6 +1,6 @@
 import React from 'react';
 import { TablePagination } from '@mui/material';
-import { RowsPerPage } from './DataTable';
+import { RowsPerPage } from './LazyTable';
 
 interface LazyTablePaginatorProps {
     loading: boolean;
