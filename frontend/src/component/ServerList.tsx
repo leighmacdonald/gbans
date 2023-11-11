@@ -1,4 +1,5 @@
 import React from 'react';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import StorageIcon from '@mui/icons-material/Storage';
 import Button from '@mui/material/Button';
@@ -34,6 +35,7 @@ export const ServerList = () => {
     return (
         <ContainerWithHeader title={'Servers'} iconLeft={<StorageIcon />}>
             <LazyTable<BaseServer>
+                hideHeader={true}
                 rows={selectedServers}
                 sortOrder={'asc'}
                 onSortColumnChanged={() => {}}
@@ -159,6 +161,7 @@ export const ServerList = () => {
                         renderer: (serverState) => {
                             return (
                                 <Button
+                                    endIcon={<ChevronRightIcon />}
                                     component={Link}
                                     href={`steam://connect/${serverState.ip}:${serverState.port}`}
                                     variant={'contained'}
