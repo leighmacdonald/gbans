@@ -1,4 +1,4 @@
-import { formatDistance, parseISO, parseJSON } from 'date-fns';
+import { formatDistance, isBefore, parseISO, parseJSON } from 'date-fns';
 import format from 'date-fns/format';
 import SteamID from 'steamid';
 import { apiGetProfile, Person } from '../api';
@@ -9,16 +9,15 @@ export const parseDateTime = (t: string): Date => {
 };
 
 export const renderDateTime = (t: Date): string => {
-    return format(t, 'Y-M-d HH:mm');
+    return format(t, 'yyyy-MM-dd HH:mm');
 };
 
 export const renderDate = (t: Date): string => {
-    return format(t, 'Y-MM-dd');
+    return format(t, 'yyyy-MM-dd');
 };
 
-export const renderTime = (t: Date): string => {
-    return format(t, 'HH:mm');
-};
+export const isValidSteamDate = (date: Date) =>
+    isBefore(date, new Date(2000, 0, 0));
 
 export const renderTimeDistance = (
     t1: Date | string,
@@ -49,33 +48,6 @@ export const filterPerson = (people: Person[], query: string): Person[] => {
         return false;
     });
 };
-
-export const steamIdQueryValue = (sid: string): string => {
-    try {
-        const s = new SteamID(sid);
-        return `${s.getSteamID64()}-${s.getSteam2RenderedID()}-${s.getSteam3RenderedID()}`;
-    } catch (_) {
-        return '';
-    }
-};
-
-export const stringHexNumber = (input: string) =>
-    (
-        '#' +
-        (
-            (('000000' as never) +
-                parseInt(
-                    // 2
-                    parseInt(input, 36) // 3
-                        .toExponential() // 4
-                        .slice(2, -5), // 5
-                    10
-                )) &
-            0xffffff
-        ) // 6
-            .toString(16)
-            .toUpperCase()
-    ).slice(-6); // "32EF01"     // 7
 
 const humanize = (count: number, thresh: number, dp = 1, units: string[]) => {
     let u = -1;
