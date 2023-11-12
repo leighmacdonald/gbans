@@ -6,6 +6,7 @@ import Typography from '@mui/material/Typography';
 import { format, fromUnixTime } from 'date-fns';
 import { apiGetProfile, PlayerProfile } from '../api';
 import { logErr } from '../util/errors';
+import { isValidSteamDate } from '../util/text';
 import { ContainerWithHeader } from './ContainerWithHeader';
 import { LoadingPlaceholder } from './LoadingPlaceholder';
 
@@ -53,14 +54,17 @@ export const ProfileInfoBox = ({ steam_id }: { steam_id: string }) => {
                                 .filter((x) => x)
                                 .join(',')}
                         </Typography>
-                        {}
-                        <Typography variant={'body1'}>
-                            Created:{' '}
-                            {format(
-                                fromUnixTime(profile.player.timecreated),
-                                'yyyy-MM-dd'
-                            )}
-                        </Typography>
+                        {isValidSteamDate(
+                            fromUnixTime(profile.player.timecreated)
+                        ) && (
+                            <Typography variant={'body1'}>
+                                Created:{' '}
+                                {format(
+                                    fromUnixTime(profile.player.timecreated),
+                                    'yyyy-MM-dd'
+                                )}
+                            </Typography>
+                        )}
                     </Stack>
                 </Stack>
             )}

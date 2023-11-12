@@ -20,6 +20,7 @@ export enum PermissionLevel {
     Banned = 0,
     Guest = 1,
     User = 10,
+    Reserved = 15,
     Editor = 25,
     Moderator = 50,
     Admin = 100
@@ -37,6 +38,8 @@ export const permissionLevelString = (level: PermissionLevel) => {
             return 'User';
         case PermissionLevel.Moderator:
             return 'Moderator';
+        case PermissionLevel.Reserved:
+            return 'Reserved Slot';
         case PermissionLevel.Guest:
             return 'Guest';
         default:

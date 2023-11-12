@@ -1,5 +1,6 @@
-import { formatDistance, isBefore, parseISO, parseJSON } from 'date-fns';
+import { formatDistance, parseISO, parseJSON } from 'date-fns';
 import format from 'date-fns/format';
+import { isAfter } from 'date-fns/fp';
 import SteamID from 'steamid';
 import { apiGetProfile, Person } from '../api';
 import { emptyOrNullString } from './types';
@@ -17,7 +18,7 @@ export const renderDate = (t: Date): string => {
 };
 
 export const isValidSteamDate = (date: Date) =>
-    isBefore(date, new Date(2000, 0, 0));
+    isAfter(new Date(2000, 0, 0), date);
 
 export const renderTimeDistance = (
     t1: Date | string,
@@ -113,4 +114,4 @@ export const steamIDOrEmptyString = async (steamId: string) => {
 const ipRegex =
     /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/gi;
 
-export const validIP = (value: string): boolean => ipRegex.test(value);
+export const isValidIP = (value: string): boolean => ipRegex.test(value);

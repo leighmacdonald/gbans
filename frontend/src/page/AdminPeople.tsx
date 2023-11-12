@@ -11,15 +11,14 @@ import {
     communityVisibilityState,
     defaultAvatarHash,
     permissionLevelString,
-    Person,
-    PlayerQuery
+    Person
 } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { LazyTable, Order, RowsPerPage } from '../component/LazyTable';
 import { LoadingSpinner } from '../component/LoadingSpinner';
 import { PersonCell } from '../component/PersonCell';
 import { FilterButtons } from '../component/formik/FilterButtons';
-import { IPField } from '../component/formik/IPField';
+import { IPField, ipFieldValidator } from '../component/formik/IPField';
 import {
     PersonanameField,
     personanameFieldValidator
@@ -36,12 +35,14 @@ export const steamIDValidatorSimple = yup
 
 const validationSchema = yup.object({
     steam_id: steamIDValidatorSimple,
-    personaname: personanameFieldValidator
+    personaname: personanameFieldValidator,
+    ip: ipFieldValidator
 });
 
 interface PeopleFilterValues {
     steam_id: string;
     personaname: string;
+    ip: string;
 }
 
 export const AdminPeople = (): JSX.Element => {
@@ -56,20 +57,24 @@ export const AdminPeople = (): JSX.Element => {
     const [people, setPeople] = useState<Person[]>([]);
     const [steamId, setSteamId] = useState('');
     const [personaname, setPersonaname] = useState('');
+    const [ip, setIP] = useState('');
 
     useEffect(() => {
         const abortController = new AbortController();
-        const opts: PlayerQuery = {
-            personaname: personaname,
-            deleted: false,
-            desc: sortOrder == 'desc',
-            offset: page,
-            limit: rowPerPageCount,
-            order_by: sortColumn,
-            steam_id: steamId
-        };
         setLoading(true);
-        apiSearchPeople(opts, abortController)
+        apiSearchPeople(
+            {
+                personaname: personaname,
+                deleted: false,
+                desc: sortOrder == 'desc',
+                offset: page,
+                limit: rowPerPageCount,
+                order_by: sortColumn,
+                steam_id: steamId,
+                ip: ip
+            },
+            abortController
+        )
             .then((response) => {
                 setPeople(response.data);
                 setTotalRows(response.count);
@@ -80,16 +85,26 @@ export const AdminPeople = (): JSX.Element => {
             .finally(() => setLoading(false));
 
         return () => abortController.abort('Cancelled');
-    }, [page, personaname, rowPerPageCount, sortColumn, sortOrder, steamId]);
+    }, [
+        ip,
+        page,
+        personaname,
+        rowPerPageCount,
+        sortColumn,
+        sortOrder,
+        steamId
+    ]);
 
     const onFilterSubmit = useCallback((values: PeopleFilterValues) => {
         setSteamId(values.steam_id);
         setPersonaname(values.personaname);
+        setIP(values.ip);
     }, []);
 
     const onFilterReset = useCallback(() => {
         setSteamId('');
         setPersonaname('');
+        setIP('');
     }, []);
 
     return (
@@ -102,13 +117,17 @@ export const AdminPeople = (): JSX.Element => {
                     <Formik
                         onSubmit={onFilterSubmit}
                         onReset={onFilterReset}
-                        initialValues={{ personaname: '', steam_id: '' }}
+                        initialValues={{
+                            personaname: '',
+                            steam_id: '',
+                            ip: ''
+                        }}
                         validateOnChange={true}
+                        validateOnBlur={true}
                         validationSchema={validationSchema}
                     >
                         <Grid container spacing={2}>
                             <Grid xs>
-                                {' '}
                                 <SteamIdField />
                             </Grid>
                             <Grid xs>
@@ -229,7 +248,7 @@ export const AdminPeople = (): JSX.Element => {
                                         {!isValidSteamDate(
                                             fromUnixTime(row.timecreated)
                                         )
-                                            ? 'Hidden'
+                                            ? 'Unknown'
                                             : renderDate(
                                                   fromUnixTime(row.timecreated)
                                               )}

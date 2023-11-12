@@ -9,7 +9,6 @@ import TextField from '@mui/material/TextField';
 import Grid from '@mui/material/Unstable_Grid2';
 import IPCIDR from 'ip-cidr';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { a11yProps } from '../component/ProfilePanel';
 import { TabPanel } from '../component/TabPanel';
 
 interface NetworkInputProps {
@@ -103,8 +102,8 @@ export const AdminNetworkPage = () => {
                             onChange={handleChange}
                             aria-label="basic tabs example"
                         >
-                            <Tab label="Find Players" {...a11yProps(0)} />
-                            <Tab label="IP Info" {...a11yProps(1)} />
+                            <Tab label="Find Players" />
+                            <Tab label="IP Info" />
                         </Tabs>
                     </Box>
                     <TabPanel value={value} index={0}>

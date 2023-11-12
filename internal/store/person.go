@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 	"net"
+	"regexp"
 	"strings"
 	"time"
 
@@ -434,10 +435,49 @@ func (db *Store) GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collec
 	return people, nil
 }
 
+func normalizeStringLikeQuery(input string) string {
+	space := regexp.MustCompile(`\s+`)
+
+	return fmt.Sprintf("%%%s%%", strings.ToLower(strings.Trim(space.ReplaceAllString(input, "%"), "%")))
+}
+
+func (db *Store) GetSteamsAtAddress(ctx context.Context, addr net.IP) (steamid.Collection, error) {
+	var ids steamid.Collection
+
+	query, args, errQuery := db.sb.
+		Select("DISTINCT steam_id").
+		From("person_connections").
+		Where(sq.Expr(fmt.Sprintf("ip_addr::inet >>= '::ffff:%s'::CIDR OR ip_addr::inet <<= '::ffff:%s'::CIDR", addr.String(), addr.String()))).
+		ToSql()
+
+	if errQuery != nil {
+		return nil, Err(errQuery)
+	}
+
+	rows, errRows := db.Query(ctx, query, args...)
+	if errRows != nil {
+		return nil, errRows
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var sid int64
+		if errScan := rows.Scan(&sid); errScan != nil {
+			return nil, Err(errScan)
+		}
+
+		ids = append(ids, steamid.New(sid))
+	}
+
+	return ids, nil
+}
+
 type PlayerQuery struct {
 	QueryFilter
 	SteamID     StringSID `json:"steam_id"`
 	Personaname string    `json:"personaname"`
+	IP          string    `json:"ip"`
 }
 
 func (db *Store) GetPeople(ctx context.Context, queryFilter PlayerQuery) (People, int64, error) {
@@ -452,6 +492,24 @@ func (db *Store) GetPeople(ctx context.Context, queryFilter PlayerQuery) (People
 
 	conditions := sq.And{}
 
+	if queryFilter.IP != "" {
+		addr := net.ParseIP(queryFilter.IP)
+		if addr == nil {
+			return nil, 0, errors.New("Invalid IP")
+		}
+
+		foundIds, errFoundIds := db.GetSteamsAtAddress(ctx, addr)
+		if errFoundIds != nil {
+			if errors.Is(errFoundIds, ErrNoResult) {
+				return People{}, 0, nil
+			}
+
+			return nil, 0, Err(errFoundIds)
+		}
+
+		conditions = append(conditions, sq.Eq{"p.steam_id": foundIds})
+	}
+
 	if queryFilter.SteamID != "" {
 		steamID, errSteamID := queryFilter.SteamID.SID64(ctx)
 		if errSteamID != nil {
@@ -463,7 +521,7 @@ func (db *Store) GetPeople(ctx context.Context, queryFilter PlayerQuery) (People
 
 	if queryFilter.Personaname != "" {
 		// TODO add lower-cased functional index to avoid table scan
-		conditions = append(conditions, sq.ILike{"p.personaname": strings.ToLower(queryFilter.Personaname)})
+		conditions = append(conditions, sq.ILike{"p.personaname": normalizeStringLikeQuery(queryFilter.Personaname)})
 	}
 
 	limit := uint64(25)

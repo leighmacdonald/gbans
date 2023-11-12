@@ -119,6 +119,7 @@ export const apiGetCurrentProfile = async (abortController: AbortController) =>
 export interface PlayerQuery extends QueryFilter<Person> {
     steam_id: string;
     personaname: string;
+    ip: string;
 }
 
 export const apiSearchPeople = async (

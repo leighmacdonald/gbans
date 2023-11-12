@@ -35,8 +35,8 @@ import {
 } from '../formik/DurationCustomField';
 import { DurationField, DurationFieldValidator } from '../formik/DurationField';
 import {
-    NetworkRangeField,
-    NetworkRangeFieldValidator
+    makeNetworkRangeFieldValidator,
+    NetworkRangeField
 } from '../formik/NetworkRangeField';
 import { NoteField, NoteFieldValidator } from '../formik/NoteField';
 import {
@@ -58,7 +58,7 @@ interface BanCIDRFormValues extends SteamIDInputValue {
 
 const validationSchema = yup.object({
     steam_id: steamIdValidator,
-    cidr: NetworkRangeFieldValidator,
+    cidr: makeNetworkRangeFieldValidator(true),
     reason: BanReasonFieldValidator,
     reason_text: banReasonTextFieldValidator,
     duration: DurationFieldValidator,
@@ -78,6 +78,9 @@ export const BanCIDRModal = NiceModal.create(
         const onSubmit = useCallback(
             async (values: BanCIDRFormValues) => {
                 try {
+                    const realCidr = values.cidr.includes('/')
+                        ? values.cidr
+                        : `${values.cidr}/32`;
                     if (existing && existing?.net_id > 0) {
                         modal.resolve(
                             await apiUpdateBanCIDR(existing?.net_id, {
@@ -86,7 +89,7 @@ export const BanCIDRModal = NiceModal.create(
                                 valid_until: values.duration_custom,
                                 reason_text: values.reason_text,
                                 target_id: values.steam_id,
-                                cidr: values.cidr
+                                cidr: realCidr
                             })
                         );
                     } else {
@@ -98,7 +101,7 @@ export const BanCIDRModal = NiceModal.create(
                                 reason: values.reason,
                                 reason_text: values.reason_text,
                                 target_id: values.steam_id,
-                                cidr: values.cidr
+                                cidr: realCidr
                             })
                         );
                     }
