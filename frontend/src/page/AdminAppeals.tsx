@@ -4,7 +4,6 @@ import FiberNewIcon from '@mui/icons-material/FiberNew';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import GppGoodIcon from '@mui/icons-material/GppGood';
 import SnoozeIcon from '@mui/icons-material/Snooze';
-import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import format from 'date-fns/format';
@@ -22,7 +21,6 @@ import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { LazyTable, Order, RowsPerPage } from '../component/LazyTable';
 import { LoadingIcon } from '../component/LoadingIcon';
 import { LoadingSpinner } from '../component/LoadingSpinner';
-import { PersonCell } from '../component/PersonCell';
 import { TableCellLink } from '../component/TableCellLink';
 import {
     AppealStateField,
@@ -33,6 +31,7 @@ import {
     SourceIdField,
     sourceIdValidator
 } from '../component/formik/SourceIdField';
+import { SteamIDSelectField } from '../component/formik/SteamIDSelectField';
 import {
     TargetIDField,
     targetIdValidator
@@ -41,13 +40,13 @@ import { logErr } from '../util/errors';
 
 interface AppealFilterValues {
     appeal_state: AppealState;
-    author_id: string;
+    source_id: string;
     target_id: string;
 }
 
 const validationSchema = yup.object({
     appeal_state: appealStateFielValidator,
-    author_id: sourceIdValidator,
+    source_id: sourceIdValidator,
     target_id: targetIdValidator
 });
 
@@ -74,7 +73,7 @@ export const AdminAppeals = () => {
         const opts: AppealQueryFilter = {
             desc: sortOrder == 'desc',
             order_by: sortColumn,
-            author_id: author,
+            source_id: author,
             target_id: target,
             offset: page,
             limit: rowPerPageCount,
@@ -119,7 +118,7 @@ export const AdminAppeals = () => {
 
     const onSubmit = useCallback((values: AppealFilterValues) => {
         setAppealState(values.appeal_state);
-        setAuthor(values.author_id);
+        setAuthor(values.source_id);
         setTarget(values.target_id);
     }, []);
 
@@ -130,186 +129,192 @@ export const AdminAppeals = () => {
     }, []);
 
     return (
-        <Grid container spacing={3}>
-            <Grid xs={12}>
-                <ContainerWithHeader
-                    title={'Recent Open Appeal Activity'}
-                    iconLeft={<FilterListIcon />}
-                >
-                    <Formik<AppealFilterValues>
-                        initialValues={{
-                            appeal_state: appealState,
-                            author_id: author,
-                            target_id: target
-                        }}
-                        onReset={onReset}
-                        onSubmit={onSubmit}
-                        validationSchema={validationSchema}
-                        validateOnChange={true}
+        <Formik<AppealFilterValues>
+            initialValues={{
+                appeal_state: appealState,
+                source_id: author,
+                target_id: target
+            }}
+            onReset={onReset}
+            onSubmit={onSubmit}
+            validationSchema={validationSchema}
+            validateOnChange={true}
+        >
+            <Grid container spacing={3}>
+                <Grid xs={12}>
+                    <ContainerWithHeader
+                        title={'Appeal Activity Filters'}
+                        iconLeft={<FilterListIcon />}
                     >
-                        <Grid container>
-                            <Grid xs={12} padding={2}>
-                                <Stack direction={'row'} spacing={2}>
-                                    <AppealStateField />
-                                    <SourceIdField />
-                                    <TargetIDField />
-                                </Stack>
+                        <Grid container spacing={2}>
+                            <Grid xs>
+                                <AppealStateField />
                             </Grid>
-                            <Grid xs={12} padding={2}>
+                            <Grid xs>
+                                <SourceIdField />
+                            </Grid>
+                            <Grid xs>
+                                <TargetIDField />
+                            </Grid>
+                            <Grid xs>
                                 <FilterButtons />
                             </Grid>
                         </Grid>
-                    </Formik>
-                </ContainerWithHeader>
-            </Grid>
+                    </ContainerWithHeader>
+                </Grid>
 
-            <Grid xs={12}>
-                <ContainerWithHeader
-                    title={'Recent Open Appeal Activity'}
-                    iconLeft={loading ? <LoadingIcon /> : tableIcon}
-                >
-                    <LazyTable<SteamBanRecord>
-                        rows={appeals}
-                        showPager
-                        page={page}
-                        rowsPerPage={rowPerPageCount}
-                        count={totalRows}
-                        sortOrder={sortOrder}
-                        sortColumn={sortColumn}
-                        onSortColumnChanged={async (column) => {
-                            setSortColumn(column);
-                        }}
-                        onSortOrderChanged={async (direction) => {
-                            setSortOrder(direction);
-                        }}
-                        onRowsPerPageChange={(
-                            event: React.ChangeEvent<
-                                HTMLInputElement | HTMLTextAreaElement
-                            >
-                        ) => {
-                            setRowPerPageCount(
-                                parseInt(event.target.value, 10)
-                            );
-                            setPage(0);
-                        }}
-                        onPageChange={(_, newPage) => {
-                            setPage(newPage);
-                        }}
-                        columns={[
-                            {
-                                label: '#',
-                                tooltip: 'Ban ID',
-                                sortable: true,
-                                align: 'left',
-                                renderer: (obj) => (
-                                    <TableCellLink
-                                        label={`#${obj.ban_id}`}
-                                        to={`/ban/${obj.ban_id}`}
-                                    />
-                                )
-                            },
-                            {
-                                label: 'Appeal State',
-                                tooltip: 'Appeal State',
-                                sortable: true,
-                                sortKey: 'appeal_state',
-                                align: 'left',
-                                renderer: (row) => (
-                                    <Typography variant={'body1'}>
-                                        {appealStateString(row.appeal_state)}
-                                    </Typography>
-                                )
-                            },
-                            {
-                                label: 'Author',
-                                tooltip: 'Author',
-                                sortable: true,
-                                align: 'left',
-                                renderer: (row) => (
-                                    <PersonCell
-                                        steam_id={row.source_id}
-                                        personaname={
-                                            row.source_personaname ||
-                                            row.source_id
-                                        }
-                                        avatar_hash={row.source_avatarhash}
-                                    ></PersonCell>
-                                )
-                            },
-                            {
-                                label: 'Target',
-                                tooltip: 'Target',
-                                sortable: true,
-                                align: 'left',
-                                renderer: (row) => (
-                                    <PersonCell
-                                        steam_id={row.target_id}
-                                        personaname={
-                                            row.target_personaname ||
-                                            row.target_id
-                                        }
-                                        avatar_hash={row.target_avatarhash}
-                                    ></PersonCell>
-                                )
-                            },
-                            {
-                                label: 'Reason',
-                                tooltip: 'Reason',
-                                sortKey: 'reason',
-                                sortable: true,
-                                align: 'left',
-                                renderer: (row) => (
-                                    <Typography variant={'body1'}>
-                                        {BanReason[row.reason]}
-                                    </Typography>
-                                )
-                            },
-                            {
-                                label: 'Custom Reason',
-                                tooltip: 'Custom',
-                                sortKey: 'reason_text',
-                                sortable: false,
-                                align: 'left'
-                            },
-                            {
-                                label: 'Created',
-                                tooltip: 'Created On',
-                                sortable: true,
-                                align: 'left',
-                                width: '150px',
-                                renderer: (obj) => {
-                                    return (
+                <Grid xs={12}>
+                    <ContainerWithHeader
+                        title={'Recent Open Appeal Activity'}
+                        iconLeft={loading ? <LoadingIcon /> : tableIcon}
+                    >
+                        <LazyTable<SteamBanRecord>
+                            rows={appeals}
+                            showPager
+                            page={page}
+                            rowsPerPage={rowPerPageCount}
+                            count={totalRows}
+                            sortOrder={sortOrder}
+                            sortColumn={sortColumn}
+                            onSortColumnChanged={async (column) => {
+                                setSortColumn(column);
+                            }}
+                            onSortOrderChanged={async (direction) => {
+                                setSortOrder(direction);
+                            }}
+                            onRowsPerPageChange={(
+                                event: React.ChangeEvent<
+                                    HTMLInputElement | HTMLTextAreaElement
+                                >
+                            ) => {
+                                setRowPerPageCount(
+                                    parseInt(event.target.value, 10)
+                                );
+                                setPage(0);
+                            }}
+                            onPageChange={(_, newPage) => {
+                                setPage(newPage);
+                            }}
+                            columns={[
+                                {
+                                    label: '#',
+                                    tooltip: 'Ban ID',
+                                    sortable: true,
+                                    align: 'left',
+                                    renderer: (obj) => (
+                                        <TableCellLink
+                                            label={`#${obj.ban_id}`}
+                                            to={`/ban/${obj.ban_id}`}
+                                        />
+                                    )
+                                },
+                                {
+                                    label: 'Appeal',
+                                    tooltip: 'Appeal State',
+                                    sortable: true,
+                                    sortKey: 'appeal_state',
+                                    align: 'left',
+                                    renderer: (row) => (
                                         <Typography variant={'body1'}>
-                                            {format(
-                                                obj.created_on,
-                                                'yyyy-MM-dd'
+                                            {appealStateString(
+                                                row.appeal_state
                                             )}
                                         </Typography>
-                                    );
-                                }
-                            },
-                            {
-                                label: 'Last Activity',
-                                tooltip:
-                                    'Updated when a user sends/edits an appeal message',
-                                sortable: true,
-                                align: 'left',
-                                width: '150px',
-                                renderer: (obj) => {
-                                    return (
+                                    )
+                                },
+                                {
+                                    label: 'Author',
+                                    tooltip: 'Author',
+                                    sortable: true,
+                                    align: 'left',
+                                    renderer: (row) => (
+                                        <SteamIDSelectField
+                                            steam_id={row.source_id}
+                                            personaname={
+                                                row.source_personaname ||
+                                                row.source_id
+                                            }
+                                            avatarhash={row.source_avatarhash}
+                                            field_name={'source_id'}
+                                        />
+                                    )
+                                },
+                                {
+                                    label: 'Target',
+                                    tooltip: 'Target',
+                                    sortable: true,
+                                    align: 'left',
+                                    renderer: (row) => (
+                                        <SteamIDSelectField
+                                            steam_id={row.target_id}
+                                            personaname={
+                                                row.target_personaname ||
+                                                row.target_id
+                                            }
+                                            avatarhash={row.target_avatarhash}
+                                            field_name={'target_id'}
+                                        />
+                                    )
+                                },
+                                {
+                                    label: 'Reason',
+                                    tooltip: 'Reason',
+                                    sortKey: 'reason',
+                                    sortable: true,
+                                    align: 'left',
+                                    renderer: (row) => (
                                         <Typography variant={'body1'}>
-                                            {format(
-                                                obj.updated_on,
-                                                'yyyy-MM-dd HH:mm'
-                                            )}
+                                            {BanReason[row.reason]}
                                         </Typography>
-                                    );
+                                    )
+                                },
+                                {
+                                    label: 'Custom Reason',
+                                    tooltip: 'Custom',
+                                    sortKey: 'reason_text',
+                                    sortable: false,
+                                    align: 'left'
+                                },
+                                {
+                                    label: 'Created',
+                                    tooltip: 'Created On',
+                                    sortable: true,
+                                    align: 'left',
+                                    width: '150px',
+                                    renderer: (obj) => {
+                                        return (
+                                            <Typography variant={'body1'}>
+                                                {format(
+                                                    obj.created_on,
+                                                    'yyyy-MM-dd'
+                                                )}
+                                            </Typography>
+                                        );
+                                    }
+                                },
+                                {
+                                    label: 'Last Activity',
+                                    tooltip:
+                                        'Updated when a user sends/edits an appeal message',
+                                    sortable: true,
+                                    align: 'left',
+                                    width: '150px',
+                                    renderer: (obj) => {
+                                        return (
+                                            <Typography variant={'body1'}>
+                                                {format(
+                                                    obj.updated_on,
+                                                    'yyyy-MM-dd HH:mm'
+                                                )}
+                                            </Typography>
+                                        );
+                                    }
                                 }
-                            }
-                        ]}
-                    />
-                </ContainerWithHeader>
+                            ]}
+                        />
+                    </ContainerWithHeader>
+                </Grid>
             </Grid>
-        </Grid>
+        </Formik>
     );
 };

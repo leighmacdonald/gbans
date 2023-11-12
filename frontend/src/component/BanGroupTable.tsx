@@ -16,13 +16,12 @@ import { apiGetBansGroups, BanGroupQueryFilter, GroupBanRecord } from '../api';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
 import { LazyTable, Order, RowsPerPage } from './LazyTable';
-import { PersonCell } from './PersonCell';
 import { TableCellBool } from './TableCellBool';
-import { VCenterBox } from './VCenterBox';
 import { DeletedField, deletedValidator } from './formik/DeletedField';
 import { FilterButtons } from './formik/FilterButtons';
 import { GroupIdField, groupIdFieldValidator } from './formik/GroupIdField';
 import { SourceIdField, sourceIdValidator } from './formik/SourceIdField';
+import { SteamIDSelectField } from './formik/SteamIDSelectField';
 import { TargetIDField, targetIdValidator } from './formik/TargetIdField';
 import { ModalBanGroup, ModalUnbanGroup } from './modal';
 import { BanGroupModalProps } from './modal/BanGroupModal';
@@ -164,14 +163,10 @@ export const BanGroupTable = () => {
                             <GroupIdField />
                         </Grid>
                         <Grid xs>
-                            <VCenterBox>
-                                <DeletedField />
-                            </VCenterBox>
+                            <DeletedField />
                         </Grid>
                         <Grid xs>
-                            <VCenterBox>
-                                <FilterButtons />
-                            </VCenterBox>
+                            <FilterButtons />
                         </Grid>
                     </Grid>
                 </Grid>
@@ -223,10 +218,11 @@ export const BanGroupTable = () => {
                                 sortable: true,
                                 align: 'left',
                                 renderer: (row) => (
-                                    <PersonCell
+                                    <SteamIDSelectField
                                         steam_id={row.source_id}
-                                        personaname={''}
-                                        avatar_hash={row.source_avatarhash}
+                                        personaname={row.source_personaname}
+                                        avatarhash={row.source_avatarhash}
+                                        field_name={'source_id'}
                                     />
                                 )
                             },
@@ -237,10 +233,11 @@ export const BanGroupTable = () => {
                                 sortable: true,
                                 align: 'left',
                                 renderer: (row) => (
-                                    <PersonCell
+                                    <SteamIDSelectField
                                         steam_id={row.target_id}
                                         personaname={row.target_personaname}
-                                        avatar_hash={row.target_avatarhash}
+                                        avatarhash={row.target_avatarhash}
+                                        field_name={'target_id'}
                                     />
                                 )
                             },

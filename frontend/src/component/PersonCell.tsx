@@ -25,6 +25,7 @@ export const PersonCell = ({
 
     return (
         <Stack
+            minWidth={200}
             direction={'row'}
             alignItems={'center'}
             onClick={

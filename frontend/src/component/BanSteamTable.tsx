@@ -1,9 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import NiceModal from '@ebay/nice-modal-react';
 import EditIcon from '@mui/icons-material/Edit';
 import UndoIcon from '@mui/icons-material/Undo';
-import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
@@ -26,10 +24,8 @@ import {
     isPermanentBan
 } from './DataTableRelativeDateField';
 import { LazyTable, Order, RowsPerPage } from './LazyTable';
-import { PersonCell } from './PersonCell';
 import { TableCellBool } from './TableCellBool';
 import { TableCellLink } from './TableCellLink';
-import { VCenterBox } from './VCenterBox';
 import {
     AppealStateField,
     appealStateFielValidator
@@ -37,6 +33,7 @@ import {
 import { DeletedField, deletedValidator } from './formik/DeletedField';
 import { FilterButtons } from './formik/FilterButtons';
 import { SourceIdField, sourceIdValidator } from './formik/SourceIdField';
+import { SteamIDSelectField } from './formik/SteamIDSelectField';
 import { TargetIDField, targetIdValidator } from './formik/TargetIdField';
 import { ModalBanSteam, ModalUnbanSteam } from './modal';
 
@@ -71,7 +68,6 @@ export const BanSteamTable = () => {
         AppealState.Any
     );
     const { sendFlash } = useUserFlashCtx();
-    const navigate = useNavigate();
 
     const onUnbanSteam = useCallback(
         async (ban: SteamBanRecord) => {
@@ -183,14 +179,10 @@ export const BanSteamTable = () => {
                             <AppealStateField />
                         </Grid>
                         <Grid xs>
-                            <VCenterBox>
-                                <DeletedField />
-                            </VCenterBox>
+                            <DeletedField />
                         </Grid>
                         <Grid xs>
-                            <VCenterBox>
-                                <FilterButtons />
-                            </VCenterBox>
+                            <FilterButtons />
                         </Grid>
                     </Grid>
                 </Grid>
@@ -243,13 +235,11 @@ export const BanSteamTable = () => {
                                 sortable: true,
                                 align: 'center',
                                 renderer: (row) => (
-                                    <PersonCell
-                                        onClick={() => {
-                                            setSource(row.source_id);
-                                        }}
+                                    <SteamIDSelectField
                                         steam_id={row.source_id}
-                                        personaname={''}
-                                        avatar_hash={row.source_avatarhash}
+                                        personaname={row.source_personaname}
+                                        avatarhash={row.source_avatarhash}
+                                        field_name={'source_id'}
                                     />
                                 )
                             },
@@ -260,13 +250,11 @@ export const BanSteamTable = () => {
                                 sortable: true,
                                 align: 'left',
                                 renderer: (row) => (
-                                    <PersonCell
-                                        onClick={() => {
-                                            setTarget(row.target_id);
-                                        }}
+                                    <SteamIDSelectField
                                         steam_id={row.target_id}
                                         personaname={row.target_personaname}
-                                        avatar_hash={row.target_avatarhash}
+                                        avatarhash={row.target_avatarhash}
+                                        field_name={'target_id'}
                                     />
                                 )
                             },
@@ -379,16 +367,10 @@ export const BanSteamTable = () => {
                                 renderer: (row) =>
                                     row.report_id > 0 ? (
                                         <Tooltip title={'View Report'}>
-                                            <Button
-                                                variant={'text'}
-                                                onClick={() => {
-                                                    navigate(
-                                                        `/report/${row.report_id}`
-                                                    );
-                                                }}
-                                            >
-                                                #{row.report_id}
-                                            </Button>
+                                            <TableCellLink
+                                                label={`#${row.report_id}`}
+                                                to={`/report/${row.report_id}`}
+                                            />
                                         </Tooltip>
                                     ) : (
                                         <></>
