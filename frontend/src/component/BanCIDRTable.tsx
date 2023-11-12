@@ -19,9 +19,9 @@ import {
 } from '../api';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
-import { DataTableRelativeDateField } from './DataTableRelativeDateField';
 import { LazyTable, Order, RowsPerPage } from './LazyTable';
 import { TableCellBool } from './TableCellBool';
+import { TableCellRelativeDateField } from './TableCellRelativeDateField';
 import { DeletedField, deletedValidator } from './formik/DeletedField';
 import { FilterButtons } from './formik/FilterButtons';
 import { IPField, ipFieldValidator } from './formik/IPField';
@@ -322,7 +322,7 @@ export const BanCIDRTable = () => {
                                 virtualKey: 'created_on',
                                 renderer: (obj) => {
                                     return (
-                                        <DataTableRelativeDateField
+                                        <TableCellRelativeDateField
                                             date={obj.created_on}
                                             suffix={true}
                                         />
@@ -340,7 +340,7 @@ export const BanCIDRTable = () => {
                                 sortable: true,
                                 renderer: (obj) => {
                                     return (
-                                        <DataTableRelativeDateField
+                                        <TableCellRelativeDateField
                                             date={obj.valid_until}
                                         />
                                     );

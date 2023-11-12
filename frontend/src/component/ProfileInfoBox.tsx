@@ -53,6 +53,7 @@ export const ProfileInfoBox = ({ steam_id }: { steam_id: string }) => {
                                 .filter((x) => x)
                                 .join(',')}
                         </Typography>
+                        {}
                         <Typography variant={'body1'}>
                             Created:{' '}
                             {format(

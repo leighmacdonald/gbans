@@ -1,11 +1,9 @@
 import React, { useEffect, useState, JSX, useCallback } from 'react';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import PersonIcon from '@mui/icons-material/Person';
-import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { fromUnixTime } from 'date-fns';
-import format from 'date-fns/format';
 import { Formik } from 'formik';
 import * as yup from 'yup';
 import {
@@ -21,6 +19,7 @@ import { LazyTable, Order, RowsPerPage } from '../component/LazyTable';
 import { LoadingSpinner } from '../component/LoadingSpinner';
 import { PersonCell } from '../component/PersonCell';
 import { FilterButtons } from '../component/formik/FilterButtons';
+import { IPField } from '../component/formik/IPField';
 import {
     PersonanameField,
     personanameFieldValidator
@@ -28,6 +27,7 @@ import {
 import { nonResolvingSteamIDInputTest } from '../component/formik/SourceIdField';
 import { SteamIdField } from '../component/formik/SteamIdField';
 import { logErr } from '../util/errors';
+import { isValidSteamDate, renderDate } from '../util/text';
 
 export const steamIDValidatorSimple = yup
     .string()
@@ -106,14 +106,18 @@ export const AdminPeople = (): JSX.Element => {
                         validateOnChange={true}
                         validationSchema={validationSchema}
                     >
-                        <Grid container>
-                            <Grid xs={12} padding={2}>
-                                <Stack direction={'row'} spacing={2}>
-                                    <SteamIdField />
-                                    <PersonanameField />
-                                </Stack>
+                        <Grid container spacing={2}>
+                            <Grid xs>
+                                {' '}
+                                <SteamIdField />
                             </Grid>
-                            <Grid xs={12} padding={2}>
+                            <Grid xs>
+                                <PersonanameField />
+                            </Grid>
+                            <Grid xs>
+                                <IPField />
+                            </Grid>
+                            <Grid xs>
                                 <FilterButtons />
                             </Grid>
                         </Grid>
@@ -222,15 +226,18 @@ export const AdminPeople = (): JSX.Element => {
                                 sortable: true,
                                 renderer: (row) => (
                                     <Typography variant={'body1'}>
-                                        {format(
-                                            fromUnixTime(row.timecreated),
-                                            'yyyy-MM-dd'
-                                        )}
+                                        {!isValidSteamDate(
+                                            fromUnixTime(row.timecreated)
+                                        )
+                                            ? 'Hidden'
+                                            : renderDate(
+                                                  fromUnixTime(row.timecreated)
+                                              )}
                                     </Typography>
                                 )
                             },
                             {
-                                label: 'Created',
+                                label: 'First Seen',
                                 tooltip: 'When the user was first seen',
                                 sortable: true,
                                 sortKey: 'created_on',
@@ -239,10 +246,7 @@ export const AdminPeople = (): JSX.Element => {
                                 renderer: (obj) => {
                                     return (
                                         <Typography variant={'body1'}>
-                                            {format(
-                                                obj.created_on,
-                                                'yyyy-MM-dd'
-                                            )}
+                                            {renderDate(obj.created_on)}
                                         </Typography>
                                     );
                                 }

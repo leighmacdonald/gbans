@@ -19,7 +19,7 @@ interface DataTableRelativeDateFieldProps {
     suffix?: boolean;
 }
 
-export const DataTableRelativeDateField = ({
+export const TableCellRelativeDateField = ({
     date,
     compareDate,
     suffix = false
