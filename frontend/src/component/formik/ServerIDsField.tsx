@@ -29,27 +29,11 @@ export const ServerIDsField = () => {
         return () => abortController.abort();
     }, []);
 
-    // const containsAll = (f: number[]): boolean =>
-    //     f.filter((f) => f == 0).length > 0;
-    //
-    // const handleChange = (event: SelectChangeEvent<number[]>) => {
-    //     let newValue: number[];
-    //     const values = event.target.value as number[];
-    //     if (!values || (!containsAll(selectedServers) && containsAll(values))) {
-    //         newValue = [0];
-    //     } else if (values.length > 1) {
-    //         newValue = values.filter((f) => f != 0);
-    //     } else {
-    //         newValue = values;
-    //     }
-    //     setSelectedServers(newValue);
-    //     setServerIDs(newValue);
-    // };
-
     return (
         <FormControl fullWidth>
             <InputLabel id="server-select-label">Servers</InputLabel>
             <Select
+                fullWidth
                 labelId="server_ids-label"
                 multiple
                 id="server_ids"

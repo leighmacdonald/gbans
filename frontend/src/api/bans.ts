@@ -260,7 +260,7 @@ export const apiGetBanSteam = async (ban_id: number, deleted = false) => {
 };
 
 export interface AppealQueryFilter extends QueryFilter<SteamBanRecord> {
-    author_id?: string;
+    source_id?: string;
     target_id?: string;
     appeal_state: AppealState;
 }

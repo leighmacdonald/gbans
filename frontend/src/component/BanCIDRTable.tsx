@@ -21,12 +21,12 @@ import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
 import { DataTableRelativeDateField } from './DataTableRelativeDateField';
 import { LazyTable, Order, RowsPerPage } from './LazyTable';
-import { PersonCell } from './PersonCell';
 import { TableCellBool } from './TableCellBool';
 import { DeletedField, deletedValidator } from './formik/DeletedField';
 import { FilterButtons } from './formik/FilterButtons';
 import { IPField, ipFieldValidator } from './formik/IPField';
 import { SourceIdField, sourceIdValidator } from './formik/SourceIdField';
+import { SteamIDSelectField } from './formik/SteamIDSelectField';
 import { TargetIDField, targetIdValidator } from './formik/TargetIdField';
 import { ModalBanCIDR, ModalUnbanCIDR } from './modal';
 import { BanCIDRModalProps } from './modal/BanCIDRModal';
@@ -223,10 +223,11 @@ export const BanCIDRTable = () => {
                                 sortable: true,
                                 align: 'left',
                                 renderer: (row) => (
-                                    <PersonCell
+                                    <SteamIDSelectField
                                         steam_id={row.source_id}
-                                        personaname={''}
-                                        avatar_hash={row.source_avatarhash}
+                                        personaname={row.source_personaname}
+                                        avatarhash={row.source_avatarhash}
+                                        field_name={'source_id'}
                                     />
                                 )
                             },
@@ -237,10 +238,11 @@ export const BanCIDRTable = () => {
                                 sortable: true,
                                 align: 'left',
                                 renderer: (row) => (
-                                    <PersonCell
+                                    <SteamIDSelectField
                                         steam_id={row.target_id}
                                         personaname={row.target_personaname}
-                                        avatar_hash={row.target_avatarhash}
+                                        avatarhash={row.target_avatarhash}
+                                        field_name={'target_id'}
                                     />
                                 )
                             },

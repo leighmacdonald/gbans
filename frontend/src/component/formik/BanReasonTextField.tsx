@@ -5,22 +5,18 @@ import * as yup from 'yup';
 import { BanReason } from '../../api';
 import { BanReasonFieldProps } from './BanReasonField';
 
-export const BanReasonTextFieldValidator = yup
+export const banReasonTextFieldValidator = yup
     .string()
-    .when('reason', {
-        is: `${BanReason.Custom}`, // TODO Make BanReason enum work
-        then: () =>
-            yup.string().required('Custom reason cannot be empty').min(1),
-        otherwise: () =>
-            yup
-                .string()
-                .required('Reason cannot be empty')
-                .min(1, 'Reason cannot be blank')
-    })
-    .label('Custom reason');
+    .test('reason_text', '${path} invalid', (value, context) => {
+        if (context.parent.reason != BanReason.Custom) {
+            return true;
+        } else {
+            return value != undefined && value.length > 3;
+        }
+    });
 
 export const unbanValidationSchema = yup.object({
-    reason_text: BanReasonTextFieldValidator
+    reason_text: banReasonTextFieldValidator
 });
 
 interface BanReasonTextFieldProps {

@@ -220,22 +220,18 @@ func (db *Store) DropReportMessage(ctx context.Context, message *UserMessage) er
 	return nil
 }
 
-type AuthorQueryFilter struct {
-	QueryFilter
-	AuthorID StringSID `json:"author_id"`
-}
-
 type ReportQueryFilter struct {
-	AuthorQueryFilter
+	QueryFilter
 	ReportStatus ReportStatus `json:"report_status"`
+	SourceID     StringSID    `json:"source_id"`
 	TargetID     StringSID    `json:"target_id"`
 }
 
 func (db *Store) GetReports(ctx context.Context, opts ReportQueryFilter) ([]Report, int64, error) {
 	conditions := sq.And{sq.Eq{"deleted": opts.Deleted}}
 
-	if opts.AuthorID != "" {
-		authorID, errAuthorID := opts.AuthorID.SID64(ctx)
+	if opts.SourceID != "" {
+		authorID, errAuthorID := opts.SourceID.SID64(ctx)
 		if errAuthorID != nil {
 			return nil, 0, errAuthorID
 		}

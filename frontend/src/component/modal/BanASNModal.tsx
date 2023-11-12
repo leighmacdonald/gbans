@@ -25,7 +25,7 @@ import {
 } from '../formik/BanReasonField';
 import {
     BanReasonTextField,
-    BanReasonTextFieldValidator
+    banReasonTextFieldValidator
 } from '../formik/BanReasonTextField';
 import {
     DurationCustomField,
@@ -54,7 +54,7 @@ export const validationSchema = yup.object({
     steam_id: steamIdValidator,
     as_num: asNumberFieldValidator,
     reason: BanReasonFieldValidator,
-    reason_text: BanReasonTextFieldValidator,
+    reason_text: banReasonTextFieldValidator,
     duration: DurationFieldValidator,
     duration_custom: DurationCustomFieldValidator,
     note: NoteFieldValidator

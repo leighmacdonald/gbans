@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import FlagIcon from '@mui/icons-material/Flag';
@@ -9,12 +9,13 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { Formik } from 'formik';
 import * as yup from 'yup';
 import { apiGetDemos, DemoFile } from '../api';
+import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { logErr } from '../util/errors';
 import { humanFileSize, renderDateTime } from '../util/text';
 import { LazyTable, Order, RowsPerPage } from './LazyTable';
-import { VCenterBox } from './VCenterBox';
 import { FilterButtons } from './formik/FilterButtons';
-import { MapNameField, MapNameFieldValidator } from './formik/MapNameField';
+import { MapNameField, mapNameFieldValidator } from './formik/MapNameField';
+import { SelectOwnField, selectOwnValidator } from './formik/SelectOwnField';
 import { ServerIDsField, serverIDsValidator } from './formik/ServerIDsField';
 import { SourceIdField, sourceIdValidator } from './formik/SourceIdField';
 
@@ -22,12 +23,14 @@ interface STVFormValues {
     source_id: string;
     server_ids: number[];
     map_name: string;
+    select_own: boolean;
 }
 
 const validationSchema = yup.object({
     source_id: sourceIdValidator,
     server_ids: serverIDsValidator,
-    map_name: MapNameFieldValidator
+    map_name: mapNameFieldValidator,
+    select_own: selectOwnValidator
 });
 
 export const STVTable = () => {
@@ -41,6 +44,11 @@ export const STVTable = () => {
     const [demos, setDemos] = useState<DemoFile[]>([]);
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
+    const { currentUser } = useCurrentUserCtx();
+
+    const selectOwnDisabled = useMemo(() => {
+        return currentUser.steam_id == '';
+    }, [currentUser.steam_id]);
 
     const onSubmit = useCallback(
         async (values: STVFormValues) => {
@@ -70,10 +78,11 @@ export const STVTable = () => {
         },
         [page, rowPerPageCount, sortColumn, sortOrder]
     );
-    const iv = {
+    const iv: STVFormValues = {
         source_id: '',
         server_ids: [],
-        map_name: ''
+        map_name: '',
+        select_own: false
     };
 
     useEffect(() => {
@@ -91,19 +100,20 @@ export const STVTable = () => {
             <Grid container spacing={3}>
                 <Grid xs={12}>
                     <Grid container spacing={2}>
-                        <Grid xs>
+                        <Grid md>
                             <ServerIDsField />
                         </Grid>
-                        <Grid xs>
+                        <Grid md>
                             <MapNameField />
                         </Grid>
-                        <Grid xs>
+                        <Grid md>
                             <SourceIdField />
                         </Grid>
-                        <Grid xs>
-                            <VCenterBox>
-                                <FilterButtons />
-                            </VCenterBox>
+                        <Grid md>
+                            <SelectOwnField disabled={selectOwnDisabled} />
+                        </Grid>
+                        <Grid md>
+                            <FilterButtons />
                         </Grid>
                     </Grid>
                 </Grid>

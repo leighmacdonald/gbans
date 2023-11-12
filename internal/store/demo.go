@@ -96,14 +96,14 @@ func (db *Store) GetDemoByName(ctx context.Context, demoName string, demoFile *D
 	return nil
 }
 
-type GetDemosOptions struct {
+type DemoFilter struct {
 	QueryFilter
 	SteamID   StringSID `json:"steam_id"`
 	ServerIds []int     `json:"server_ids"`
 	MapName   string    `json:"map_name"`
 }
 
-func (db *Store) GetDemos(ctx context.Context, opts GetDemosOptions) ([]DemoFile, int64, error) {
+func (db *Store) GetDemos(ctx context.Context, opts DemoFilter) ([]DemoFile, int64, error) {
 	var (
 		demos       []DemoFile
 		constraints sq.And

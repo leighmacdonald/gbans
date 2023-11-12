@@ -210,7 +210,7 @@ func onAPIPostDemosQuery(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var req store.GetDemosOptions
+		var req store.DemoFilter
 		if !bind(ctx, log, &req) {
 			return
 		}

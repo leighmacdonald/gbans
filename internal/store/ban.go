@@ -675,8 +675,9 @@ func (db *Store) GetExpiredBans(ctx context.Context) ([]BanSteam, error) {
 }
 
 type AppealQueryFilter struct {
-	AuthorQueryFilter
+	QueryFilter
 	AppealState AppealState `json:"appeal_state"`
+	SourceID    StringSID   `json:"source_id"`
 	TargetID    StringSID   `json:"target_id"`
 }
 
@@ -716,21 +717,23 @@ func (db *Store) GetAppealsByActivity(ctx context.Context, opts AppealQueryFilte
 		return nil, 0, errBanIds
 	}
 
-	ands := sq.And{
-		sq.Eq{"b.deleted": opts.Deleted},
+	var constraints sq.And
+
+	if !opts.Deleted {
+		constraints = append(constraints, sq.Eq{"b.deleted": opts.Deleted})
 	}
 
 	if opts.AppealState > AnyState {
-		ands = append(ands, sq.Eq{"b.appeal_state": opts.AppealState})
+		constraints = append(constraints, sq.Eq{"b.appeal_state": opts.AppealState})
 	}
 
-	if opts.AuthorID != "" {
-		authorID, errAuthorID := opts.AuthorID.SID64(ctx)
+	if opts.SourceID != "" {
+		authorID, errAuthorID := opts.SourceID.SID64(ctx)
 		if errAuthorID != nil {
 			return nil, 0, errAuthorID
 		}
 
-		ands = append(ands, sq.Eq{"b.source_id": authorID.Int64()})
+		constraints = append(constraints, sq.Eq{"b.source_id": authorID.Int64()})
 	}
 
 	if opts.TargetID != "" {
@@ -739,15 +742,15 @@ func (db *Store) GetAppealsByActivity(ctx context.Context, opts AppealQueryFilte
 			return nil, 0, errTargetID
 		}
 
-		ands = append(ands, sq.Eq{"b.target_id": targetID.Int64()})
+		constraints = append(constraints, sq.Eq{"b.target_id": targetID.Int64()})
 	}
 
-	ands = append(ands, sq.Eq{"b.ban_id": banIds})
+	constraints = append(constraints, sq.Eq{"b.ban_id": banIds})
 
 	counterQuery := db.sb.
 		Select("COUNT(b.ban_id)").
 		From("ban b").
-		Where(ands)
+		Where(constraints)
 
 	count, errCount := db.GetCount(ctx, counterQuery)
 	if errCount != nil {
@@ -764,7 +767,7 @@ func (db *Store) GetAppealsByActivity(ctx context.Context, opts AppealQueryFilte
 			"target.steam_id as target_steam_id", "target.personaname as target_personaname",
 			"target.avatarhash as target_avatar").
 		From("ban b").
-		Where(ands).
+		Where(constraints).
 		LeftJoin("person source on source.steam_id = b.source_id").
 		LeftJoin("person target on target.steam_id = b.target_id")
 

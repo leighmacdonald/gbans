@@ -27,7 +27,7 @@ import {
 } from '../formik/BanReasonField';
 import {
     BanReasonTextField,
-    BanReasonTextFieldValidator
+    banReasonTextFieldValidator
 } from '../formik/BanReasonTextField';
 import { BanTypeField, BanTypeFieldValidator } from '../formik/BanTypeField';
 import {
@@ -68,7 +68,7 @@ const validationSchema = yup.object({
     reportId: ReportIdFieldValidator,
     ban_type: BanTypeFieldValidator,
     reason: BanReasonFieldValidator,
-    reason_text: BanReasonTextFieldValidator,
+    reason_text: banReasonTextFieldValidator,
     duration: DurationFieldValidator,
     duration_custom: DurationCustomFieldValidator,
     note: NoteFieldValidator
@@ -167,7 +167,7 @@ export const BanSteamModal = NiceModal.create(
                             <ReportIdField />
                             <BanTypeField />
                             <BanReasonField />
-                            <BanReasonTextField />
+                            <BanReasonTextField paired={true} />
                             <IncludeFriendsField />
                             <DurationField />
                             <DurationCustomField />

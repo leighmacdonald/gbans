@@ -5,7 +5,7 @@ import { useFormikContext } from 'formik';
 import * as yup from 'yup';
 import { emptyOrNullString } from '../../util/types';
 
-export const MapNameFieldValidator = yup
+export const mapNameFieldValidator = yup
     .string()
     .label('Select a map')
     .min(3, 'Minimum 3 characters required')
