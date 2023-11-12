@@ -6,7 +6,6 @@ import GppGoodIcon from '@mui/icons-material/GppGood';
 import SnoozeIcon from '@mui/icons-material/Snooze';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import format from 'date-fns/format';
 import { Formik } from 'formik';
 import * as yup from 'yup';
 import {
@@ -37,6 +36,7 @@ import {
     targetIdValidator
 } from '../component/formik/TargetIdField';
 import { logErr } from '../util/errors';
+import { renderDate, renderDateTime } from '../util/text';
 
 interface AppealFilterValues {
     appeal_state: AppealState;
@@ -284,10 +284,7 @@ export const AdminAppeals = () => {
                                     renderer: (obj) => {
                                         return (
                                             <Typography variant={'body1'}>
-                                                {format(
-                                                    obj.created_on,
-                                                    'yyyy-MM-dd'
-                                                )}
+                                                {renderDate(obj.created_on)}
                                             </Typography>
                                         );
                                     }
@@ -302,10 +299,7 @@ export const AdminAppeals = () => {
                                     renderer: (obj) => {
                                         return (
                                             <Typography variant={'body1'}>
-                                                {format(
-                                                    obj.updated_on,
-                                                    'yyyy-MM-dd HH:mm'
-                                                )}
+                                                {renderDateTime(obj.updated_on)}
                                             </Typography>
                                         );
                                     }

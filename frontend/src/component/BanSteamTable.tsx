@@ -7,7 +7,6 @@ import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import format from 'date-fns/format';
 import { Formik } from 'formik';
 import * as yup from 'yup';
 import {
@@ -19,13 +18,14 @@ import {
 } from '../api';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
-import {
-    DataTableRelativeDateField,
-    isPermanentBan
-} from './DataTableRelativeDateField';
+import { renderDate } from '../util/text';
 import { LazyTable, Order, RowsPerPage } from './LazyTable';
 import { TableCellBool } from './TableCellBool';
 import { TableCellLink } from './TableCellLink';
+import {
+    TableCellRelativeDateField,
+    isPermanentBan
+} from './TableCellRelativeDateField';
 import {
     AppealStateField,
     appealStateFielValidator
@@ -288,10 +288,7 @@ export const BanSteamTable = () => {
                                 renderer: (obj) => {
                                     return (
                                         <Typography variant={'body1'}>
-                                            {format(
-                                                obj.created_on,
-                                                'yyyy-MM-dd'
-                                            )}
+                                            {renderDate(obj.created_on)}
                                         </Typography>
                                     );
                                 }
@@ -307,7 +304,7 @@ export const BanSteamTable = () => {
                                 sortable: true,
                                 renderer: (obj) => {
                                     return (
-                                        <DataTableRelativeDateField
+                                        <TableCellRelativeDateField
                                             date={obj.valid_until}
                                         />
                                     );
@@ -328,7 +325,7 @@ export const BanSteamTable = () => {
                                     ) ? (
                                         'Permanent'
                                     ) : (
-                                        <DataTableRelativeDateField
+                                        <TableCellRelativeDateField
                                             date={row.created_on}
                                             compareDate={row.valid_until}
                                         />

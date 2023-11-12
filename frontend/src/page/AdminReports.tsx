@@ -4,7 +4,6 @@ import ReportIcon from '@mui/icons-material/Report';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { parseISO } from 'date-fns';
-import format from 'date-fns/format';
 import { Formik } from 'formik';
 import * as yup from 'yup';
 import {
@@ -34,6 +33,7 @@ import {
     targetIdValidator
 } from '../component/formik/TargetIdField';
 import { logErr } from '../util/errors';
+import { renderDateTime } from '../util/text';
 
 interface FilterValues {
     report_status: ReportStatus;
@@ -267,11 +267,10 @@ export const AdminReports = () => {
                                     renderer: (obj) => {
                                         return (
                                             <Typography variant={'body1'}>
-                                                {format(
+                                                {renderDateTime(
                                                     parseISO(
                                                         obj.created_on as never as string
-                                                    ),
-                                                    'yyyy-MM-dd HH:mm'
+                                                    )
                                                 )}
                                             </Typography>
                                         );
@@ -288,11 +287,10 @@ export const AdminReports = () => {
                                     renderer: (obj) => {
                                         return (
                                             <Typography variant={'body1'}>
-                                                {format(
+                                                {renderDateTime(
                                                     parseISO(
                                                         obj.updated_on as never as string
-                                                    ),
-                                                    'yyyy-MM-dd HH:mm'
+                                                    )
                                                 )}
                                             </Typography>
                                         );
