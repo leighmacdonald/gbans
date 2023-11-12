@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -128,6 +129,18 @@ func (db *Store) GetDemos(ctx context.Context, opts DemoFilter) ([]DemoFile, int
 		constraints = append(constraints, sq.Expr("stats ?? ?", sid64.String()))
 	}
 
+	orderBy := "demo_id"
+	if opts.OrderBy != "" {
+		orderBy = opts.OrderBy
+	}
+
+	order := "ASC"
+	if opts.Desc {
+		order = "DESC"
+	}
+
+	builder = builder.OrderBy(fmt.Sprintf("d.%s %s", orderBy, order))
+
 	if len(opts.ServerIds) > 0 && opts.ServerIds[0] != 0 {
 		anyServer := false
 
@@ -144,7 +157,15 @@ func (db *Store) GetDemos(ctx context.Context, opts DemoFilter) ([]DemoFile, int
 		}
 	}
 
-	query, args, errQueryArgs := builder.Where(constraints).ToSql()
+	var limit uint64
+
+	if opts.Limit <= 0 || opts.Limit > 100 {
+		limit = 50
+	} else {
+		limit = opts.Limit
+	}
+
+	query, args, errQueryArgs := builder.Limit(limit).Offset(opts.Offset).Where(constraints).ToSql()
 	if errQueryArgs != nil {
 		return nil, 0, Err(errQueryArgs)
 	}
