@@ -40,7 +40,7 @@ Precompiled binaries will be provided once the project is in a more stable state
     - [PostGIS](https://postgis.net/) extension is also used for some GIS functionality.
 - [NodeJS >=18.17.1](https://nodejs.org/en/) To build frontend
     - [yarn4](https://yarnpkg.com/) JS package manager (If you have problems try: `cd frontend && corepack enable && yarn set version stable && yarn install`)
-- [Sourcemod 1.11+](https://www.sourcemod.net/) - Sourcemod SDK path. [sourcemod/Makefile](sourcemod/Makefile) expects your 
+- [Sourcemod 1.11+](https://www.sourcemod.net/) - Sourcemod SDK path. [sourcemod/Makefile](../sourcemod/Makefile) expects your 
   installation path to be `~/sdk/sourcemod/addons/sourcemod` with `spcomp64` in your $PATH 
 
 Basic steps to build the binary packages:
@@ -58,7 +58,7 @@ sudo docker run -d --restart unless-stopped \
     --dns=1.1.1.1 \
     -v /home/ubuntu/gbans/gbans.yml:/app/gbans.yml:ro \
     --name gbans \
-    ghcr.io/leighmacdonald/gbans:0.4.2
+    ghcr.io/leighmacdonald/gbans:v0.5.0
 ```
 
 Substitute `master` for a specific tag if desired, and `/home/ubuntu/gbans/gbans.yml` with the location of your config.
@@ -134,8 +134,7 @@ console. With a message like below on successful authentication with the server.
 ### Discord
 
 To use discord you need to [create a discord application](https://discord.com/developers/applications). You will need
-the
-following values from your application:
+the following values from your application:
 
 - Application ID (General -> Application ID)
 - Token  (Bot -> Token)
