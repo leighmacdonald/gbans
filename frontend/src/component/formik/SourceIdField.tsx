@@ -29,7 +29,11 @@ interface AuthorIDFieldValue {
     source_id: string;
 }
 
-export const SourceIdField = <T,>() => {
+export const SourceIdField = <T,>({
+    disabled = false
+}: {
+    disabled?: boolean;
+}) => {
     const { values, touched, errors, handleChange } = useFormikContext<
         T & AuthorIDFieldValue
     >();
@@ -37,6 +41,7 @@ export const SourceIdField = <T,>() => {
         <TextField
             variant={'outlined'}
             fullWidth
+            disabled={disabled}
             name={'source_id'}
             id={'source_id'}
             label={'Author Steam ID'}
