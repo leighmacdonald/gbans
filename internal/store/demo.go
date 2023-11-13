@@ -203,22 +203,25 @@ func (db *Store) GetDemos(ctx context.Context, opts DemoFilter) ([]DemoFile, int
 	if demos == nil {
 		return []DemoFile{}, 0, nil
 	}
-
-	counter := db.sb.Select("count(d.demo_id)").
+	count, errCount := db.GetCount(ctx, db.sb.Select("count(d.demo_id)").
 		From("demo d").
-		Where(constraints)
-
-	countQuery, argsCount, errCountQuery := counter.ToSql()
-	if errCountQuery != nil {
-		return []DemoFile{}, 0, errors.Wrap(errCountQuery, "Failed to create count query")
-	}
-
-	var count int64
-	if errCount := db.
-		QueryRow(ctx, countQuery, argsCount...).
-		Scan(&count); errCount != nil {
+		Where(constraints))
+	if errCount != nil {
 		return []DemoFile{}, 0, Err(errCount)
 	}
+	//
+	//
+	//countQuery, argsCount, errCountQuery := counter.ToSql()
+	//if errCountQuery != nil {
+	//	return []DemoFile{}, 0, errors.Wrap(errCountQuery, "Failed to create count query")
+	//}
+	//
+	//var count int64
+	//if errCount := db.
+	//	QueryRow(ctx, countQuery, argsCount...).
+	//	Scan(&count); errCount != nil {
+	//	return []DemoFile{}, 0, Err(errCount)
+	//}
 
 	return demos, count, nil
 }

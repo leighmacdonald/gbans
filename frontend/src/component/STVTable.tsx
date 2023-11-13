@@ -12,6 +12,7 @@ import { apiGetDemos, DemoFile } from '../api';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { logErr } from '../util/errors';
 import { humanFileSize, renderDateTime } from '../util/text';
+import { emptyOrNullString } from '../util/types';
 import { LazyTable, Order, RowsPerPage } from './LazyTable';
 import { FilterButtons } from './formik/FilterButtons';
 import { MapNameField, mapNameFieldValidator } from './formik/MapNameField';
@@ -41,6 +42,10 @@ export const STVTable = () => {
     );
     const [page, setPage] = useState(0);
     const [totalRows, setTotalRows] = useState<number>(0);
+    const [source, setSource] = useState('');
+    const [mapName, setMapName] = useState('');
+    const [serverIds, setServerIds] = useState<number[]>();
+    const [selectOwn, setSelectOwn] = useState(false);
     const [demos, setDemos] = useState<DemoFile[]>([]);
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
@@ -50,34 +55,51 @@ export const STVTable = () => {
         return currentUser.steam_id == '';
     }, [currentUser.steam_id]);
 
-    const onSubmit = useCallback(
-        async (values: STVFormValues) => {
-            const abortController = new AbortController();
-            setLoading(true);
-            try {
-                const resp = await apiGetDemos(
-                    {
-                        limit: rowPerPageCount,
-                        offset: page * rowPerPageCount,
-                        order_by: sortColumn,
-                        desc: sortOrder == 'desc',
-                        steam_id: values.source_id,
-                        map_name: values.map_name,
-                        server_ids: values.server_ids
-                    },
-                    abortController
-                );
+    useEffect(() => {
+        const abortController = new AbortController();
+        setLoading(true);
+        let sourceID = '';
+        if (selectOwn) {
+            sourceID = currentUser.steam_id;
+        } else if (!emptyOrNullString(source)) {
+            sourceID = source;
+        }
+        apiGetDemos(
+            {
+                limit: rowPerPageCount,
+                offset: page * rowPerPageCount,
+                order_by: sortColumn,
+                desc: sortOrder == 'desc',
+                steam_id: sourceID,
+                map_name: mapName,
+                server_ids: serverIds ?? []
+            },
+            abortController
+        )
+            .then((resp) => {
                 setDemos(resp.data);
                 setTotalRows(resp.count);
-            } catch (e) {
+            })
+            .catch((e) => {
                 logErr(e);
-            } finally {
+            })
+            .finally(() => {
                 setLoading(false);
-            }
-            return () => abortController.abort();
-        },
-        [page, rowPerPageCount, sortColumn, sortOrder]
-    );
+            });
+
+        return () => abortController.abort();
+    }, [
+        currentUser.steam_id,
+        mapName,
+        page,
+        rowPerPageCount,
+        selectOwn,
+        serverIds,
+        sortColumn,
+        sortOrder,
+        source
+    ]);
+
     const iv: STVFormValues = {
         source_id: '',
         server_ids: [],
@@ -85,13 +107,23 @@ export const STVTable = () => {
         select_own: false
     };
 
-    useEffect(() => {
-        onSubmit(iv).catch(logErr);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+    const onReset = useCallback(() => {
+        setSource(iv.source_id);
+        setMapName(iv.map_name);
+        setServerIds(iv.server_ids);
+        setSelectOwn(iv.select_own);
+    }, [iv.map_name, iv.select_own, iv.server_ids, iv.source_id]);
+
+    const onSubmit = useCallback((values: STVFormValues) => {
+        setSource(values.source_id);
+        setMapName(values.map_name);
+        setServerIds(values.server_ids);
+        setSelectOwn(values.select_own);
     }, []);
 
     return (
-        <Formik
+        <Formik<STVFormValues>
+            onReset={onReset}
             onSubmit={onSubmit}
             validationSchema={validationSchema}
             validateOnChange={true}
