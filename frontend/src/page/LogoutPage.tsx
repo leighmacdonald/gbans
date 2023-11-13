@@ -4,7 +4,7 @@ import { logout } from '../api';
 import { GuestProfile, useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { logErr } from '../util/errors';
 
-export const Logout = (): JSX.Element => {
+export const LogoutPage = (): JSX.Element => {
     const { setCurrentUser } = useCurrentUserCtx();
 
     useEffect(() => {

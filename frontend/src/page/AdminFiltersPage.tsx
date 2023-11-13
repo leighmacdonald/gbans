@@ -16,7 +16,7 @@ import { ModalFilterDelete, ModalFilterEditor } from '../component/modal';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
 
-export const AdminFilters = () => {
+export const AdminFiltersPage = () => {
     const [filters, setFilters] = useState<Filter[]>([]);
     const [sortOrder, setSortOrder] = useState<Order>('desc');
     const [sortColumn, setSortColumn] = useState<keyof Filter>('filter_id');

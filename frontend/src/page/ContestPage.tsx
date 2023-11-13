@@ -41,7 +41,7 @@ import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
 import { humanFileSize } from '../util/text';
-import { PageNotFound } from './PageNotFound';
+import { PageNotFoundPage } from './PageNotFoundPage';
 
 export const ContestPage = () => {
     const { contest_id } = useParams();
@@ -128,11 +128,11 @@ export const ContestPage = () => {
     );
 
     if (!contest_id) {
-        return <PageNotFound error={'Invalid Contest ID'} />;
+        return <PageNotFoundPage error={'Invalid Contest ID'} />;
     }
     if (error && error.code == ErrorCode.PermissionDenied) {
         return (
-            <PageNotFound
+            <PageNotFoundPage
                 heading={'Cannot Load Contest'}
                 error={error.message}
             />

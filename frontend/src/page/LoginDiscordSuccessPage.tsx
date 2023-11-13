@@ -4,7 +4,7 @@ import Typography from '@mui/material/Typography';
 import { apiLinkDiscord } from '../api';
 import { logErr } from '../util/errors';
 
-export const LoginDiscordSuccess = () => {
+export const LoginDiscordSuccessPage = () => {
     const navigate = useNavigate();
     const [inProgress, setInProgress] = useState(true);
     const next_url = '/settings';

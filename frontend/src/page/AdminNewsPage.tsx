@@ -19,7 +19,7 @@ import { TabPanel } from '../component/TabPanel';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
 
-export const AdminNews = () => {
+export const AdminNewsPage = () => {
     const [setTabValue, setTabSetTabValue] = React.useState(0);
     const { sendFlash } = useUserFlashCtx();
     const handleChange = (_: React.SyntheticEvent, newValue: number) => {
@@ -34,6 +34,7 @@ export const AdminNews = () => {
         created_on: new Date(),
         updated_on: new Date()
     });
+
     const onSave = useCallback(() => {
         apiNewsSave(selectedNewsEntry)
             .then((response) => {

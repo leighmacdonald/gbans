@@ -27,10 +27,10 @@ import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
 import { createExternalLinks } from '../util/history';
 import { Nullable } from '../util/types';
-import { Login } from './Login';
-import { PageNotFound } from './PageNotFound';
+import { LoginPage } from './LoginPage';
+import { PageNotFoundPage } from './PageNotFoundPage';
 
-export const Profile = () => {
+export const ProfilePage = () => {
     const [profile, setProfile] = React.useState<Nullable<PlayerProfile>>(null);
     const [loading, setLoading] = React.useState<boolean>(true);
     const [error, setError] = useState('');
@@ -72,7 +72,7 @@ export const Profile = () => {
 
     const renderedProfile = useMemo(() => {
         if (!profile) {
-            return <PageNotFound error={error} />;
+            return <PageNotFoundPage error={error} />;
         }
         return (
             <>
@@ -136,7 +136,9 @@ export const Profile = () => {
                             steam_id={profile.player.steam_id}
                         />
                     ) : (
-                        <Login message={'Please login to see player stats'} />
+                        <LoginPage
+                            message={'Please login to see player stats'}
+                        />
                     )}
                 </Grid>
                 <Grid xs={12}>

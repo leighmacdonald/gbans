@@ -17,7 +17,7 @@ import { LazyTableSimple } from '../component/LazyTableSimple';
 import { ModalConfirm, ModalContestEditor } from '../component/modal';
 import { logErr } from '../util/errors';
 
-export const AdminContests = () => {
+export const AdminContestsPage = () => {
     const modal = useModal(ModalConfirm);
     const theme = useTheme();
 

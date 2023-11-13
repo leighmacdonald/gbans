@@ -17,7 +17,7 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { NewsView } from '../component/NewsView';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 
-export const Home = (): JSX.Element => {
+export const HomePage = (): JSX.Element => {
     const navigate = useNavigate();
     const { currentUser } = useCurrentUserCtx();
     return (

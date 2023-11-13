@@ -2,7 +2,7 @@ import React, { JSX } from 'react';
 import { useParams } from 'react-router-dom';
 import Grid from '@mui/material/Unstable_Grid2';
 import { PlayerClassStatsContainer } from '../component/PlayerClassStatsContainer';
-import { PageNotFound } from './PageNotFound';
+import { PageNotFoundPage } from './PageNotFoundPage';
 
 export const PlayerStatsPage = (): JSX.Element => {
     const { steam_id } = useParams();
@@ -10,7 +10,7 @@ export const PlayerStatsPage = (): JSX.Element => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
 
     if (!steam_id) {
-        return <PageNotFound error={'Invalid steam id'} />;
+        return <PageNotFoundPage error={'Invalid steam id'} />;
     }
 
     return (

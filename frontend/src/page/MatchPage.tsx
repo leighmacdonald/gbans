@@ -37,7 +37,7 @@ import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import bluLogoImg from '../icons/blu_logo.png';
 import redLogoImg from '../icons/red_logo.png';
 import { logErr } from '../util/errors';
-import { PageNotFound } from './PageNotFound';
+import { PageNotFoundPage } from './PageNotFoundPage';
 
 interface PlayerClassHoverStatsProps {
     stats: MatchPlayerClass;
@@ -377,7 +377,7 @@ export const MatchPage = () => {
     }
 
     if (!match) {
-        return <PageNotFound error={'Unknown match id'} />;
+        return <PageNotFoundPage error={'Unknown match id'} />;
     }
 
     return (
