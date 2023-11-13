@@ -2852,6 +2852,10 @@ func onAPIGetReports(app *App) gin.HandlerFunc {
 			})
 		}
 
+		if userReports == nil {
+			userReports = []reportWithAuthor{}
+		}
+
 		ctx.JSON(http.StatusOK, LazyResult{
 			Count: count,
 			Data:  userReports,
