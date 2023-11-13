@@ -15,7 +15,7 @@ export interface LoginFormProps {
     message?: string;
 }
 
-export const Login = ({ message }: LoginFormProps) => {
+export const LoginPage = ({ message }: LoginFormProps) => {
     const { currentUser } = useCurrentUserCtx();
 
     const loggedInUser = useMemo(() => {

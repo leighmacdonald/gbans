@@ -21,37 +21,37 @@ import { ColourModeContext } from './contexts/ColourModeContext';
 import { CurrentUserCtx, GuestProfile } from './contexts/CurrentUserCtx';
 import { NotificationsProvider } from './contexts/NotificationsCtx';
 import { UserFlashCtx } from './contexts/UserFlashCtx';
-import { AdminAppeals } from './page/AdminAppeals';
-import { AdminBan } from './page/AdminBan';
-import { AdminContests } from './page/AdminContests';
-import { AdminFilters } from './page/AdminFilters';
-import { AdminImport } from './page/AdminImport';
+import { AdminAppealsPage } from './page/AdminAppealsPage';
+import { AdminBanPage } from './page/AdminBanPage';
+import { AdminContestsPage } from './page/AdminContestsPage';
+import { AdminFiltersPage } from './page/AdminFiltersPage';
+import { AdminImportPage } from './page/AdminImportPage';
 import { AdminNetworkPage } from './page/AdminNetworkPage';
-import { AdminNews } from './page/AdminNews';
-import { AdminPeople } from './page/AdminPeople';
-import { AdminReports } from './page/AdminReports';
-import { AdminServers } from './page/AdminServers';
+import { AdminNewsPage } from './page/AdminNewsPage';
+import { AdminPeoplePage } from './page/AdminPeoplePage';
+import { AdminReportsPage } from './page/AdminReportsPage';
+import { AdminServersPage } from './page/AdminServersPage';
 import { BanPage } from './page/BanPage';
 import { ChatLogPage } from './page/ChatLogPage';
 import { ContestListPage } from './page/ContestListPage';
 import { ContestPage } from './page/ContestPage';
-import { Home } from './page/Home';
-import { Login } from './page/Login';
-import { LoginDiscordSuccess } from './page/LoginDiscordSuccess';
-import { LoginSteamSuccess } from './page/LoginSteamSuccess';
-import { Logout } from './page/Logout';
+import { HomePage } from './page/HomePage';
+import { LoginDiscordSuccessPage } from './page/LoginDiscordSuccessPage';
+import { LoginPage } from './page/LoginPage';
+import { LoginSteamSuccessPage } from './page/LoginSteamSuccessPage';
+import { LogoutPage } from './page/LogoutPage';
 import { MatchListPage } from './page/MatchListPage';
 import { MatchPage } from './page/MatchPage';
 import { NotificationsPage } from './page/NotificationsPage';
-import { PageNotFound } from './page/PageNotFound';
+import { PageNotFoundPage } from './page/PageNotFoundPage';
 import { PlayerStatsPage } from './page/PlayerStatsPage';
 import { PrivacyPolicyPage } from './page/PrivacyPolicyPage';
-import { Profile } from './page/Profile';
+import { ProfilePage } from './page/ProfilePage';
 import { ProfileSettingsPage } from './page/ProfileSettingsPage';
 import { ReportCreatePage } from './page/ReportCreatePage';
 import { ReportViewPage } from './page/ReportViewPage';
 import { STVPage } from './page/STVPage';
-import { Servers } from './page/Servers';
+import { ServersPage } from './page/ServersPage';
 import { StatsPage } from './page/StatsPage';
 import { StatsWeaponOverallPage } from './page/StatsWeaponOverallPage';
 import { WikiPage } from './page/WikiPage';
@@ -151,7 +151,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                     path={'/'}
                                                                     element={
                                                                         <ErrorBoundary>
-                                                                            <Home />
+                                                                            <HomePage />
                                                                         </ErrorBoundary>
                                                                     }
                                                                 />
@@ -161,7 +161,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                     }
                                                                     element={
                                                                         <ErrorBoundary>
-                                                                            <Servers />
+                                                                            <ServersPage />
                                                                         </ErrorBoundary>
                                                                     }
                                                                 />
@@ -181,7 +181,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                     }
                                                                     element={
                                                                         <ErrorBoundary>
-                                                                            <LoginSteamSuccess />
+                                                                            <LoginSteamSuccessPage />
                                                                         </ErrorBoundary>
                                                                     }
                                                                 />
@@ -209,7 +209,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                     path={'/'}
                                                                     element={
                                                                         <ErrorBoundary>
-                                                                            <Home />
+                                                                            <HomePage />
                                                                         </ErrorBoundary>
                                                                     }
                                                                 />
@@ -220,7 +220,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                     }
                                                                     element={
                                                                         <ErrorBoundary>
-                                                                            <Servers />
+                                                                            <ServersPage />
                                                                         </ErrorBoundary>
                                                                     }
                                                                 />
@@ -241,7 +241,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                     }
                                                                     element={
                                                                         <ErrorBoundary>
-                                                                            <LoginSteamSuccess />
+                                                                            <LoginSteamSuccessPage />
                                                                         </ErrorBoundary>
                                                                     }
                                                                 />
@@ -442,7 +442,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                     }
                                                                     element={
                                                                         <ErrorBoundary>
-                                                                            <Profile />
+                                                                            <ProfilePage />
                                                                         </ErrorBoundary>
                                                                     }
                                                                 />
@@ -481,7 +481,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                                     PermissionLevel.Moderator
                                                                                 }
                                                                             >
-                                                                                <AdminBan />
+                                                                                <AdminBanPage />
                                                                             </PrivateRoute>
                                                                         </ErrorBoundary>
                                                                     }
@@ -497,7 +497,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                                     PermissionLevel.Editor
                                                                                 }
                                                                             >
-                                                                                <AdminFilters />
+                                                                                <AdminFiltersPage />
                                                                             </PrivateRoute>
                                                                         </ErrorBoundary>
                                                                     }
@@ -529,7 +529,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                                     PermissionLevel.Moderator
                                                                                 }
                                                                             >
-                                                                                <AdminReports />
+                                                                                <AdminReportsPage />
                                                                             </PrivateRoute>
                                                                         </ErrorBoundary>
                                                                     }
@@ -545,7 +545,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                                     PermissionLevel.Moderator
                                                                                 }
                                                                             >
-                                                                                <AdminContests />
+                                                                                <AdminContestsPage />
                                                                             </PrivateRoute>
                                                                         </ErrorBoundary>
                                                                     }
@@ -561,7 +561,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                                     PermissionLevel.Moderator
                                                                                 }
                                                                             >
-                                                                                <AdminAppeals />
+                                                                                <AdminAppealsPage />
                                                                             </PrivateRoute>
                                                                         </ErrorBoundary>
                                                                     }
@@ -577,7 +577,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                                     PermissionLevel.Admin
                                                                                 }
                                                                             >
-                                                                                <AdminImport />
+                                                                                <AdminImportPage />
                                                                             </PrivateRoute>
                                                                         </ErrorBoundary>
                                                                     }
@@ -593,7 +593,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                                     PermissionLevel.Editor
                                                                                 }
                                                                             >
-                                                                                <AdminNews />
+                                                                                <AdminNewsPage />
                                                                             </PrivateRoute>
                                                                         </ErrorBoundary>
                                                                     }
@@ -625,7 +625,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                                     PermissionLevel.Admin
                                                                                 }
                                                                             >
-                                                                                <AdminPeople />
+                                                                                <AdminPeoplePage />
                                                                             </PrivateRoute>
                                                                         </ErrorBoundary>
                                                                     }
@@ -641,7 +641,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                                     PermissionLevel.Admin
                                                                                 }
                                                                             >
-                                                                                <AdminPeople />
+                                                                                <AdminPeoplePage />
                                                                             </PrivateRoute>
                                                                         </ErrorBoundary>
                                                                     }
@@ -657,7 +657,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                                     PermissionLevel.Admin
                                                                                 }
                                                                             >
-                                                                                <AdminServers />
+                                                                                <AdminServersPage />
                                                                             </PrivateRoute>
                                                                         </ErrorBoundary>
                                                                     }
@@ -668,7 +668,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                     }
                                                                     element={
                                                                         <ErrorBoundary>
-                                                                            <Login />
+                                                                            <LoginPage />
                                                                         </ErrorBoundary>
                                                                     }
                                                                 />
@@ -683,7 +683,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                                     PermissionLevel.User
                                                                                 }
                                                                             >
-                                                                                <LoginDiscordSuccess />
+                                                                                <LoginDiscordSuccessPage />
                                                                             </PrivateRoute>
                                                                         </ErrorBoundary>
                                                                     }
@@ -694,7 +694,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                     }
                                                                     element={
                                                                         <ErrorBoundary>
-                                                                            <Logout />
+                                                                            <LogoutPage />
                                                                         </ErrorBoundary>
                                                                     }
                                                                 />
@@ -702,7 +702,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                     path="/404"
                                                                     element={
                                                                         <ErrorBoundary>
-                                                                            <PageNotFound />
+                                                                            <PageNotFoundPage />
                                                                         </ErrorBoundary>
                                                                     }
                                                                 />

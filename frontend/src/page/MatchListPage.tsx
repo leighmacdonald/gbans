@@ -14,7 +14,7 @@ import { LazyTable, Order, RowsPerPage } from '../component/LazyTable';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
-import { PageNotFound } from './PageNotFound';
+import { PageNotFoundPage } from './PageNotFoundPage';
 
 interface MatchSummaryTableProps {
     steam_id: string;
@@ -209,7 +209,7 @@ export const MatchListPage = (): JSX.Element => {
     const { steam_id } = useParams();
 
     if (!steam_id) {
-        return <PageNotFound error={'Invalid steam id'} />;
+        return <PageNotFoundPage error={'Invalid steam id'} />;
     }
 
     return (

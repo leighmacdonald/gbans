@@ -25,7 +25,6 @@ import { BanCIDRTable } from '../component/BanCIDRTable';
 import { BanGroupTable } from '../component/BanGroupTable';
 import { BanSteamTable } from '../component/BanSteamTable';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-//import { TabPanel } from '../component/TabPanel';
 import {
     ModalBanASN,
     ModalBanCIDR,
@@ -34,7 +33,7 @@ import {
 } from '../component/modal';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 
-export const AdminBan = () => {
+export const AdminBanPage = () => {
     const theme = useTheme();
     const [value, setValue] = React.useState<string>('0');
     const { sendFlash } = useUserFlashCtx();

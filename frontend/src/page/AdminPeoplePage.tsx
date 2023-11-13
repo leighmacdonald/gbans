@@ -45,7 +45,7 @@ interface PeopleFilterValues {
     ip: string;
 }
 
-export const AdminPeople = (): JSX.Element => {
+export const AdminPeoplePage = (): JSX.Element => {
     const [sortOrder, setSortOrder] = useState<Order>('desc');
     const [sortColumn, setSortColumn] = useState<keyof Person>('created_on');
     const [rowPerPageCount, setRowPerPageCount] = useState<number>(

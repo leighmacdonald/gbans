@@ -18,7 +18,7 @@ import { ModalServerDelete, ModalServerEditor } from '../component/modal';
 import { ServerEditorModal } from '../component/modal/ServerEditorModal';
 import { logErr } from '../util/errors';
 
-export const AdminServers = () => {
+export const AdminServersPage = () => {
     const [bans, setBans] = useState<Server[]>([]);
     const [sortOrder, setSortOrder] = useState<Order>('desc');
     const [sortColumn, setSortColumn] = useState<keyof Server>('short_name');

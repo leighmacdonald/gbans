@@ -12,7 +12,7 @@ import { GuestProfile, useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 
 const defaultLocation = '/';
 
-export const LoginSteamSuccess = () => {
+export const LoginSteamSuccessPage = () => {
     const navigate = useNavigate();
     const { setCurrentUser } = useCurrentUserCtx();
 

@@ -1,28 +1,31 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import DoNotDisturbIcon from '@mui/icons-material/DoNotDisturb';
+import FiberNewIcon from '@mui/icons-material/FiberNew';
 import FilterListIcon from '@mui/icons-material/FilterList';
-import ReportIcon from '@mui/icons-material/Report';
+import GppGoodIcon from '@mui/icons-material/GppGood';
+import SnoozeIcon from '@mui/icons-material/Snooze';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import { parseISO } from 'date-fns';
 import { Formik } from 'formik';
 import * as yup from 'yup';
 import {
-    apiGetReports,
-    BanReasons,
-    ReportQueryFilter,
-    ReportStatus,
-    reportStatusString,
-    ReportWithAuthor
+    apiGetAppeals,
+    AppealQueryFilter,
+    AppealState,
+    appealStateString,
+    BanReason,
+    SteamBanRecord
 } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { LazyTable, Order, RowsPerPage } from '../component/LazyTable';
 import { LoadingIcon } from '../component/LoadingIcon';
+import { LoadingSpinner } from '../component/LoadingSpinner';
 import { TableCellLink } from '../component/TableCellLink';
-import { FilterButtons } from '../component/formik/FilterButtons';
 import {
-    ReportStatusField,
-    reportStatusFielValidator
-} from '../component/formik/ReportStatusField';
+    AppealStateField,
+    appealStateFielValidator
+} from '../component/formik/AppealStateField';
+import { FilterButtons } from '../component/formik/FilterButtons';
 import {
     SourceIdField,
     sourceIdValidator
@@ -33,63 +36,63 @@ import {
     targetIdValidator
 } from '../component/formik/TargetIdField';
 import { logErr } from '../util/errors';
-import { renderDateTime } from '../util/text';
+import { renderDate, renderDateTime } from '../util/text';
 
-interface FilterValues {
-    report_status: ReportStatus;
+interface AppealFilterValues {
+    appeal_state: AppealState;
     source_id: string;
     target_id: string;
 }
 
 const validationSchema = yup.object({
-    report_status: reportStatusFielValidator,
+    appeal_state: appealStateFielValidator,
     source_id: sourceIdValidator,
     target_id: targetIdValidator
 });
 
-export const AdminReports = () => {
-    const [reports, setReports] = useState<ReportWithAuthor[]>([]);
-    const [filterStatus, setFilterStatus] = useState(ReportStatus.Any);
+export const AdminAppealsPage = () => {
     const [sortOrder, setSortOrder] = useState<Order>('desc');
     const [sortColumn, setSortColumn] =
-        useState<keyof ReportWithAuthor>('report_id');
+        useState<keyof SteamBanRecord>('ban_id');
     const [rowPerPageCount, setRowPerPageCount] = useState<number>(
         RowsPerPage.Fifty
     );
     const [page, setPage] = useState(0);
+    const [appeals, setAppeals] = useState<SteamBanRecord[]>([]);
+    const [appealState, setAppealState] = useState<AppealState>(
+        AppealState.Any
+    );
     const [loading, setLoading] = useState(false);
     const [totalRows, setTotalRows] = useState<number>(0);
     const [author, setAuthor] = useState('');
     const [target, setTarget] = useState('');
 
     useEffect(() => {
-        const opts: ReportQueryFilter = {
-            limit: rowPerPageCount,
-            offset: page * rowPerPageCount,
-            order_by: sortColumn,
+        const abortController = new AbortController();
+
+        const opts: AppealQueryFilter = {
             desc: sortOrder == 'desc',
-            report_status: filterStatus,
+            order_by: sortColumn,
             source_id: author,
-            target_id: target
+            target_id: target,
+            offset: page,
+            limit: rowPerPageCount,
+            appeal_state: appealState
         };
+
         setLoading(true);
-        apiGetReports(opts)
-            .then((resp) => {
-                setReports(resp.data || []);
-                setTotalRows(resp.count);
-                if (page * rowPerPageCount > resp.count) {
-                    setPage(0);
-                }
+        apiGetAppeals(opts, abortController)
+            .then((response) => {
+                setAppeals(response.data);
+                setTotalRows(response.count);
             })
-            .catch((e) => {
-                logErr(e);
-            })
-            .finally(() => {
-                setLoading(false);
-            });
+            .catch(logErr)
+            .finally(() => setLoading(false));
+
+        return () => abortController.abort();
     }, [
+        appealState,
         author,
-        filterStatus,
         page,
         rowPerPageCount,
         sortColumn,
@@ -97,38 +100,56 @@ export const AdminReports = () => {
         target
     ]);
 
-    const onFilterSubmit = useCallback((values: FilterValues) => {
+    const tableIcon = useMemo(() => {
+        if (loading) {
+            return <LoadingSpinner />;
+        }
+        switch (appealState) {
+            case AppealState.Accepted:
+                return <GppGoodIcon />;
+            case AppealState.Open:
+                return <FiberNewIcon />;
+            case AppealState.Denied:
+                return <DoNotDisturbIcon />;
+            default:
+                return <SnoozeIcon />;
+        }
+    }, [appealState, loading]);
+
+    const onSubmit = useCallback((values: AppealFilterValues) => {
+        setAppealState(values.appeal_state);
         setAuthor(values.source_id);
         setTarget(values.target_id);
-        setFilterStatus(values.report_status);
     }, []);
 
-    const onFilterReset = useCallback(() => {
+    const onReset = useCallback(() => {
+        setAppealState(AppealState.Any);
         setAuthor('');
         setTarget('');
-        setFilterStatus(ReportStatus.Any);
     }, []);
 
     return (
-        <Formik<FilterValues>
-            onSubmit={onFilterSubmit}
-            onReset={onFilterReset}
+        <Formik<AppealFilterValues>
             initialValues={{
-                report_status: filterStatus,
+                appeal_state: appealState,
                 source_id: author,
                 target_id: target
             }}
+            onReset={onReset}
+            onSubmit={onSubmit}
             validationSchema={validationSchema}
             validateOnChange={true}
-            validateOnBlur={true}
         >
-            <Grid container spacing={2}>
+            <Grid container spacing={3}>
                 <Grid xs={12}>
                     <ContainerWithHeader
-                        title={'Filters'}
+                        title={'Appeal Activity Filters'}
                         iconLeft={<FilterListIcon />}
                     >
                         <Grid container spacing={2}>
+                            <Grid xs>
+                                <AppealStateField />
+                            </Grid>
                             <Grid xs>
                                 <SourceIdField />
                             </Grid>
@@ -136,25 +157,23 @@ export const AdminReports = () => {
                                 <TargetIDField />
                             </Grid>
                             <Grid xs>
-                                <ReportStatusField />
-                            </Grid>
-                            <Grid xs>
                                 <FilterButtons />
                             </Grid>
                         </Grid>
                     </ContainerWithHeader>
                 </Grid>
+
                 <Grid xs={12}>
                     <ContainerWithHeader
-                        title={'Current User Reports'}
-                        iconLeft={loading ? <LoadingIcon /> : <ReportIcon />}
+                        title={'Recent Open Appeal Activity'}
+                        iconLeft={loading ? <LoadingIcon /> : tableIcon}
                     >
-                        <LazyTable
-                            showPager={true}
-                            count={totalRows}
-                            rows={reports}
+                        <LazyTable<SteamBanRecord>
+                            rows={appeals}
+                            showPager
                             page={page}
                             rowsPerPage={rowPerPageCount}
+                            count={totalRows}
                             sortOrder={sortOrder}
                             sortColumn={sortColumn}
                             onSortColumnChanged={async (column) => {
@@ -162,9 +181,6 @@ export const AdminReports = () => {
                             }}
                             onSortOrderChanged={async (direction) => {
                                 setSortOrder(direction);
-                            }}
-                            onPageChange={(_, newPage: number) => {
-                                setPage(newPage);
                             }}
                             onRowsPerPageChange={(
                                 event: React.ChangeEvent<
@@ -176,122 +192,114 @@ export const AdminReports = () => {
                                 );
                                 setPage(0);
                             }}
+                            onPageChange={(_, newPage) => {
+                                setPage(newPage);
+                            }}
                             columns={[
                                 {
-                                    label: 'ID',
-                                    tooltip: 'Report ID',
-                                    sortType: 'number',
-                                    sortKey: 'report_id',
+                                    label: '#',
+                                    tooltip: 'Ban ID',
                                     sortable: true,
                                     align: 'left',
                                     renderer: (obj) => (
                                         <TableCellLink
-                                            to={`/report/${obj.report_id}`}
-                                            label={`#${obj.report_id}`}
+                                            label={`#${obj.ban_id}`}
+                                            to={`/ban/${obj.ban_id}`}
                                         />
                                     )
                                 },
                                 {
-                                    label: 'Status',
-                                    tooltip: 'Status',
-                                    sortKey: 'report_status',
+                                    label: 'Appeal',
+                                    tooltip: 'Appeal State',
                                     sortable: true,
+                                    sortKey: 'appeal_state',
                                     align: 'left',
-                                    width: '200px',
-                                    renderer: (obj) => {
-                                        return (
-                                            <Typography variant={'subtitle1'}>
-                                                {reportStatusString(
-                                                    obj.report_status
-                                                )}
-                                            </Typography>
-                                        );
-                                    }
+                                    renderer: (row) => (
+                                        <Typography variant={'body1'}>
+                                            {appealStateString(
+                                                row.appeal_state
+                                            )}
+                                        </Typography>
+                                    )
                                 },
                                 {
-                                    label: 'Reporter',
-                                    tooltip: 'Reporter',
-                                    sortType: 'string',
+                                    label: 'Author',
+                                    tooltip: 'Author',
+                                    sortable: true,
                                     align: 'left',
                                     renderer: (row) => (
                                         <SteamIDSelectField
-                                            steam_id={row.author.steam_id}
+                                            steam_id={row.source_id}
                                             personaname={
-                                                row.author.personaname ||
+                                                row.source_personaname ||
                                                 row.source_id
                                             }
-                                            avatarhash={row.author.avatarhash}
+                                            avatarhash={row.source_avatarhash}
                                             field_name={'source_id'}
                                         />
                                     )
                                 },
                                 {
-                                    label: 'Subject',
-                                    tooltip: 'Subject',
-                                    sortType: 'string',
+                                    label: 'Target',
+                                    tooltip: 'Target',
+                                    sortable: true,
                                     align: 'left',
-                                    width: '250px',
                                     renderer: (row) => (
                                         <SteamIDSelectField
-                                            steam_id={row.subject.steam_id}
+                                            steam_id={row.target_id}
                                             personaname={
-                                                row.subject.personaname ||
+                                                row.target_personaname ||
                                                 row.target_id
                                             }
-                                            avatarhash={row.subject.avatarhash}
+                                            avatarhash={row.target_avatarhash}
                                             field_name={'target_id'}
                                         />
                                     )
                                 },
                                 {
                                     label: 'Reason',
-                                    tooltip: 'Reason For Report',
-                                    sortType: 'number',
+                                    tooltip: 'Reason',
                                     sortKey: 'reason',
+                                    sortable: true,
                                     align: 'left',
-                                    width: '250px',
                                     renderer: (row) => (
                                         <Typography variant={'body1'}>
-                                            {BanReasons[row.reason]}
+                                            {BanReason[row.reason]}
                                         </Typography>
                                     )
                                 },
                                 {
+                                    label: 'Custom Reason',
+                                    tooltip: 'Custom',
+                                    sortKey: 'reason_text',
+                                    sortable: false,
+                                    align: 'left'
+                                },
+                                {
                                     label: 'Created',
                                     tooltip: 'Created On',
-                                    sortType: 'date',
+                                    sortable: true,
                                     align: 'left',
                                     width: '150px',
-                                    sortable: true,
-                                    sortKey: 'created_on',
                                     renderer: (obj) => {
                                         return (
                                             <Typography variant={'body1'}>
-                                                {renderDateTime(
-                                                    parseISO(
-                                                        obj.created_on as never as string
-                                                    )
-                                                )}
+                                                {renderDate(obj.created_on)}
                                             </Typography>
                                         );
                                     }
                                 },
                                 {
                                     label: 'Last Activity',
-                                    tooltip: 'Last Activity',
-                                    sortType: 'date',
+                                    tooltip:
+                                        'Updated when a user sends/edits an appeal message',
+                                    sortable: true,
                                     align: 'left',
                                     width: '150px',
-                                    sortable: true,
-                                    sortKey: 'updated_on',
                                     renderer: (obj) => {
                                         return (
                                             <Typography variant={'body1'}>
-                                                {renderDateTime(
-                                                    parseISO(
-                                                        obj.updated_on as never as string
-                                                    )
-                                                )}
+                                                {renderDateTime(obj.updated_on)}
                                             </Typography>
                                         );
                                     }

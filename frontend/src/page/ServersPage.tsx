@@ -114,7 +114,7 @@ export const ServerStats = () => {
     );
 };
 
-export const Servers = () => {
+export const ServersPage = () => {
     const [servers, setServers] = useState<BaseServer[]>([]);
     const [pos, setPos] = useState<LatLngLiteral>({
         lat: 0.0,

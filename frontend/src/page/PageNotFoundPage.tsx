@@ -7,7 +7,7 @@ interface PageNotFoundProps {
     error?: string;
 }
 
-export const PageNotFound = ({
+export const PageNotFoundPage = ({
     error,
     heading = 'Not Found'
 }: PageNotFoundProps) => {
