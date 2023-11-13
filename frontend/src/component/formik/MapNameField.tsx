@@ -24,13 +24,12 @@ interface MapNameFieldProps {
 }
 
 export const MapNameField = () => {
-    const { isSubmitting, values, handleChange, touched, errors } =
+    const { values, handleChange, touched, errors } =
         useFormikContext<MapNameFieldProps>();
     return (
         <FormControl fullWidth>
             <TextField
                 fullWidth
-                disabled={isSubmitting}
                 name={'map_name'}
                 id={'map_name'}
                 label={'Map Name'}

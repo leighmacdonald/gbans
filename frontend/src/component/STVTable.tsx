@@ -139,7 +139,7 @@ export const STVTable = () => {
                             <MapNameField />
                         </Grid>
                         <Grid md>
-                            <SourceIdField />
+                            <SourceIdField disabled={selectOwn} />
                         </Grid>
                         <Grid md>
                             <SelectOwnField disabled={selectOwnDisabled} />
