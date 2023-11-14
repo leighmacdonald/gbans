@@ -10,42 +10,37 @@ import (
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/consts"
-	"github.com/leighmacdonald/srcdsup/srcdsup"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
-type DemoFile struct {
-	DemoID          int64                                 `json:"demo_id"`
-	ServerID        int                                   `json:"server_id"`
-	ServerNameShort string                                `json:"server_name_short"`
-	ServerNameLong  string                                `json:"server_name_long"`
-	Title           string                                `json:"title"`
-	Data            []byte                                `json:"-"` // Dont send mega data to frontend by accident
-	CreatedOn       time.Time                             `json:"created_on"`
-	Size            int64                                 `json:"size"`
-	Downloads       int64                                 `json:"downloads"`
-	MapName         string                                `json:"map_name"`
-	Archive         bool                                  `json:"archive"` // When true, will not get auto deleted when flushing old demos
-	Stats           map[steamid.SID64]srcdsup.PlayerStats `json:"stats"`
-	AssetID         uuid.UUID                             `json:"asset_id"`
+type DemoPlayerStats struct {
+	Score      int `json:"score"`
+	ScoreTotal int `json:"score_total"`
+	Deaths     int `json:"deaths"`
 }
 
-// func NewDemoFile(serverId int64, title string, rawData []byte) (DemoFile, error) {
-//	size := int64(len(rawData))
-//	if size == 0 {
-//		return DemoFile{}, errors.New("Empty demo")
-//	}
-//	return DemoFile{
-//		ServerID:  serverId,
-//		Title:     title,
-//		Data:      rawData,
-//		CreatedOn: config.Now(),
-//		Size:      size,
-//		Downloads: 0,
-//	}, nil
-//}
+type DemoMetaData struct {
+	MapName string                     `json:"map_name"`
+	Scores  map[string]DemoPlayerStats `json:"scores"`
+}
+
+type DemoFile struct {
+	DemoID          int64                             `json:"demo_id"`
+	ServerID        int                               `json:"server_id"`
+	ServerNameShort string                            `json:"server_name_short"`
+	ServerNameLong  string                            `json:"server_name_long"`
+	Title           string                            `json:"title"`
+	Data            []byte                            `json:"-"` // Dont send mega data to frontend by accident
+	CreatedOn       time.Time                         `json:"created_on"`
+	Size            int64                             `json:"size"`
+	Downloads       int64                             `json:"downloads"`
+	MapName         string                            `json:"map_name"`
+	Archive         bool                              `json:"archive"` // When true, will not get auto deleted when flushing old demos
+	Stats           map[steamid.SID64]DemoPlayerStats `json:"stats"`
+	AssetID         uuid.UUID                         `json:"asset_id"`
+}
 
 func (db *Store) FlushDemos(ctx context.Context) error {
 	query, args, errQuery := db.sb.

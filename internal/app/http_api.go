@@ -6,17 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
-	"math"
-	"net"
-	"net/http"
-	"regexp"
-	"runtime"
-	"sort"
-	"strconv"
-	"strings"
-	"time"
-
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/consts"
@@ -27,52 +16,101 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/gbans/pkg/wiki"
-	"github.com/leighmacdonald/srcdsup/srcdsup"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/pkg/errors"
+	"github.com/ulikunitz/xz"
 	"go.uber.org/zap"
+	"io"
+	"math"
+	"net"
+	"net/http"
+	"regexp"
+	"runtime"
+	"sort"
+	"strconv"
+	"strings"
+	"time"
 )
 
 func onAPIPostDemo(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
+	// {"76561198084134025": {"score": 0, "deaths": 0, "score_total": 0}}
+	type demoForm struct {
+		Stats      string `form:"stats"`
+		ServerName string `form:"server_name"`
+		MapName    string `form:"map_name"`
+	}
+
 	return func(ctx *gin.Context) {
-		var req srcdsup.ServerLogUpload
-		if !bind(ctx, log, &req) {
+		var form demoForm
+		if err := ctx.ShouldBind(&form); err != nil {
+			ctx.String(http.StatusBadRequest, "bad request: %v", err)
+
 			return
 		}
 
-		if req.ServerName == "" || req.Body == "" {
+		if form.ServerName == "" || form.MapName == "" {
 			log.Error("Missing demo params",
-				zap.String("server_name", util.SanitizeLog(req.ServerName)),
-				zap.String("map_name", util.SanitizeLog(req.MapName)),
-				zap.Int("body_len", len(req.Body)))
+				zap.String("server_name", util.SanitizeLog(form.ServerName)),
+				zap.String("map_name", util.SanitizeLog(form.MapName)))
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		demoFile, errDemoFile := ctx.FormFile("demo")
+		if errDemoFile != nil {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
 
 			return
 		}
 
 		var server store.Server
-		if errGetServer := app.db.GetServerByName(ctx, req.ServerName, &server, false, false); errGetServer != nil {
-			log.Error("Server not found", zap.String("server", util.SanitizeLog(req.ServerName)))
+		if errGetServer := app.db.GetServerByName(ctx, form.ServerName, &server, false, false); errGetServer != nil {
+			log.Error("Server not found", zap.String("server", util.SanitizeLog(form.ServerName)))
 			responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 
 			return
 		}
 
-		rawDemo, errDecode := base64.StdEncoding.DecodeString(req.Body)
-		if errDecode != nil {
+		demoReader, errDemoReader := demoFile.Open()
+		if errDemoReader != nil {
+			log.Error("Failed to open demo file from form", zap.Error(errDemoReader))
+			responseErr(ctx, http.StatusBadRequest, consts.ErrNotFound)
+
+			return
+		}
+
+		reader, errReader := xz.NewReader(demoReader)
+		if errReader != nil {
+			log.Error("Failed to open xz demo reader", zap.Error(errReader))
+			responseErr(ctx, http.StatusBadRequest, consts.ErrNotFound)
+
+			return
+		}
+
+		rawDemo, errRawDemo := io.ReadAll(reader)
+		if errRawDemo != nil {
+			log.Error("Failed to read demo from xz reader", zap.Error(errRawDemo))
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		var metaData store.DemoMetaData
+		if errJSON := json.Unmarshal([]byte(form.Stats), &metaData); errJSON != nil {
+			log.Error("Failed to read demo from xz reader", zap.Error(errRawDemo))
 			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
 
 			return
 		}
 
 		// Convert string based sid to int64
-		// NOTE Should probably be sent as a string but sourcemod BigNum is ???
-		intStats := map[steamid.SID64]srcdsup.PlayerStats{}
+		intStats := map[steamid.SID64]store.DemoPlayerStats{}
 
-		for steamID, PlayerStat := range req.Scores {
+		for steamID, PlayerStat := range metaData.Scores {
 			sid64, errSid := steamid.SID64FromString(steamID)
 			if errSid != nil {
 				log.Error("Failed to parse score steam id", zap.Error(errSid))
@@ -83,7 +121,7 @@ func onAPIPostDemo(app *App) gin.HandlerFunc {
 			intStats[sid64] = PlayerStat
 		}
 
-		asset, errAsset := store.NewAsset(rawDemo, app.conf.S3.BucketDemo, req.DemoName)
+		asset, errAsset := store.NewAsset(rawDemo, app.conf.S3.BucketDemo, demoFile.Filename)
 		if errAsset != nil {
 			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save asset"))
 
@@ -106,11 +144,11 @@ func onAPIPostDemo(app *App) gin.HandlerFunc {
 
 		newDemo := store.DemoFile{
 			ServerID:  server.ServerID,
-			Title:     req.DemoName,
+			Title:     asset.Name,
 			Data:      rawDemo,
 			Size:      int64(len(rawDemo)),
 			CreatedOn: time.Now(),
-			MapName:   req.MapName,
+			MapName:   form.MapName,
 			Stats:     intStats,
 			AssetID:   asset.AssetID,
 		}
@@ -1320,37 +1358,6 @@ func onAPISearchPlayers(app *App) gin.HandlerFunc {
 			Count: count,
 			Data:  people,
 		})
-	}
-}
-
-func onAPIGetResolveProfile(app *App) gin.HandlerFunc {
-	type queryParam struct {
-		Query string `json:"query"`
-	}
-
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
-	return func(ctx *gin.Context) {
-		var req queryParam
-		if !bind(ctx, log, &req) {
-			return
-		}
-
-		steamID, errResolve := steamid.ResolveSID64(ctx, req.Query)
-		if errResolve != nil {
-			responseErr(ctx, http.StatusOK, nil)
-
-			return
-		}
-
-		var person store.Person
-		if errPerson := app.PersonBySID(ctx, steamID, &person); errPerson != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, person)
 	}
 }
 

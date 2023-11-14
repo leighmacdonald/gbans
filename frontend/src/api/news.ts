@@ -12,10 +12,6 @@ export interface NewsEntry extends TimeStamped {
     is_published: boolean;
 }
 
-// export interface Abortable {
-//     abortController?: AbortController;
-// }
-
 export const apiGetNewsLatest = async (abortController?: AbortController) =>
     transformTimeStampedDatesList(
         await apiCall<NewsEntry[]>(
