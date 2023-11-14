@@ -84,19 +84,6 @@ export interface PlayerProfile {
     friends?: Person[];
 }
 
-//const validSteamIdKeys = ['target_id', 'source_id', 'steam_id', 'author_id'];
-
-// export const applySteamId = (key: string, value: unknown) => {
-//     if (validSteamIdKeys.includes(key)) {
-//         try {
-//             return new SteamID(`${value}`);
-//         } catch (e) {
-//             return new SteamID('');
-//         }
-//     }
-//     return value;
-// };
-
 export const apiGetProfile = async (
     query: string,
     abortController?: AbortController
@@ -138,17 +125,6 @@ export const apiSearchPeople = async (
 
 export const apiLinkDiscord = async (opts: { code: string }) =>
     await apiCall(`/api/auth/discord?code=${opts.code}`, 'GET');
-
-export interface FindProfileProps {
-    query: string;
-}
-
-export const apiGetResolveProfile = async (opts: FindProfileProps) =>
-    await apiCall<Person, FindProfileProps>(
-        '/api/resolve_profile',
-        'POST',
-        opts
-    );
 
 export interface PersonIPRecord {
     ip_addr: string;

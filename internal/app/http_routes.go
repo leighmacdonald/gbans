@@ -231,7 +231,6 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		authed.POST("/api/report/:report_id/messages", onAPIPostReportMessage(app))
 		authed.POST("/api/report/message/:report_message_id", onAPIEditReportMessage(app))
 		authed.DELETE("/api/report/message/:report_message_id", onAPIDeleteReportMessage(app))
-		authed.POST("/api/resolve_profile", onAPIGetResolveProfile(app))
 		authed.GET("/api/bans/steam/:ban_id", onAPIGetBanByID(app))
 		authed.GET("/api/bans/:ban_id/messages", onAPIGetBanMessages(app))
 		authed.POST("/api/bans/:ban_id/messages", onAPIPostBanMessage(app))
