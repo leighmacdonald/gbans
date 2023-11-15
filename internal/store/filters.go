@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"fmt"
 	"regexp"
 	"strings"
 	"time"
@@ -131,17 +130,10 @@ func (db *Store) GetFilters(ctx context.Context, opts FiltersQueryFilter) ([]Fil
 			"f.is_enabled", "f.trigger_count", "f.created_on", "f.updated_on").
 		From("filtered_word f")
 
-	orderBy := "filter_id"
-	if opts.OrderBy != "" {
-		orderBy = opts.OrderBy
-	}
-
-	order := "ASC"
-	if opts.Desc {
-		order = "DESC"
-	}
-
-	builder = builder.OrderBy(fmt.Sprintf("f.%s %s", orderBy, order))
+	builder = applySafeOrder(builder, opts.QueryFilter, map[string][]string{
+		"f": {"filter_id", "author_id", "pattern", "is_regex",
+			"is_enabled", "trigger_count", "created_on", "updated_on"},
+	}, "filter_id")
 
 	if opts.Limit > 0 {
 		builder = builder.Limit(opts.Limit)

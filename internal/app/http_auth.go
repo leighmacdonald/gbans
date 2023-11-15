@@ -34,7 +34,7 @@ func (n *noOpDiscoveryCache) Put(_ string, _ openid.DiscoveredInfo) {}
 // Get always returns nil.
 //
 //nolint:ireturn
-func (n *noOpDiscoveryCache) Get(id string) openid.DiscoveredInfo {
+func (n *noOpDiscoveryCache) Get(_ string) openid.DiscoveredInfo {
 	return nil
 }
 
@@ -42,8 +42,8 @@ func authServerMiddleWare(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		authHeader := ctx.GetHeader("Authorization")
-		if authHeader == "" {
+		reqAuthHeader := ctx.GetHeader("Authorization")
+		if reqAuthHeader == "" {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 
 			return
@@ -51,7 +51,7 @@ func authServerMiddleWare(app *App) gin.HandlerFunc {
 
 		claims := &serverAuthClaims{}
 
-		parsedToken, errParseClaims := jwt.ParseWithClaims(authHeader, claims, makeGetTokenKey(app.conf.HTTP.CookieKey))
+		parsedToken, errParseClaims := jwt.ParseWithClaims(reqAuthHeader, claims, makeGetTokenKey(app.conf.HTTP.CookieKey))
 		if errParseClaims != nil {
 			if errors.Is(errParseClaims, jwt.ErrSignatureInvalid) {
 				log.Error("jwt signature invalid!", zap.Error(errParseClaims))

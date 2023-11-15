@@ -165,8 +165,6 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 	engine.GET("/api/wiki/slug/*slug", onAPIGetWikiSlug(app))
 	engine.POST("/api/news_latest", onAPIGetNewsLatest(app))
 
-	engine.GET("/demos/name/:demo_name", onAPIGetDemoDownloadByName(app))
-	engine.GET("/demos/:demo_id", onAPIGetDemoDownload(app))
 	engine.GET("/api/patreon/campaigns", onAPIGetPatreonCampaigns(app))
 
 	engine.GET("/media/:media_id", onGetMediaByID(app))

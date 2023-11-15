@@ -480,8 +480,8 @@ type PlayerQuery struct {
 	IP          string    `json:"ip"`
 }
 
-func (db *Store) GetPeople(ctx context.Context, queryFilter PlayerQuery) (People, int64, error) {
-	queryBuilder := db.sb.
+func (db *Store) GetPeople(ctx context.Context, filter PlayerQuery) (People, int64, error) {
+	builder := db.sb.
 		Select("p.steam_id", "p.created_on", "p.updated_on",
 			"p.communityvisibilitystate", "p.profilestate", "p.personaname", "p.profileurl", "p.avatar",
 			"p.avatarmedium", "p.avatarfull", "p.avatarhash", "p.personastate", "p.realname", "p.timecreated",
@@ -492,8 +492,8 @@ func (db *Store) GetPeople(ctx context.Context, queryFilter PlayerQuery) (People
 
 	conditions := sq.And{}
 
-	if queryFilter.IP != "" {
-		addr := net.ParseIP(queryFilter.IP)
+	if filter.IP != "" {
+		addr := net.ParseIP(filter.IP)
 		if addr == nil {
 			return nil, 0, errors.New("Invalid IP")
 		}
@@ -510,8 +510,8 @@ func (db *Store) GetPeople(ctx context.Context, queryFilter PlayerQuery) (People
 		conditions = append(conditions, sq.Eq{"p.steam_id": foundIds})
 	}
 
-	if queryFilter.SteamID != "" {
-		steamID, errSteamID := queryFilter.SteamID.SID64(ctx)
+	if filter.SteamID != "" {
+		steamID, errSteamID := filter.SteamID.SID64(ctx)
 		if errSteamID != nil {
 			return nil, 0, errors.Wrap(errSteamID, "Invalid Steam ID")
 		}
@@ -519,40 +519,33 @@ func (db *Store) GetPeople(ctx context.Context, queryFilter PlayerQuery) (People
 		conditions = append(conditions, sq.Eq{"p.steam_id": steamID.Int64()})
 	}
 
-	if queryFilter.Personaname != "" {
+	if filter.Personaname != "" {
 		// TODO add lower-cased functional index to avoid table scan
-		conditions = append(conditions, sq.ILike{"p.personaname": normalizeStringLikeQuery(queryFilter.Personaname)})
+		conditions = append(conditions, sq.ILike{"p.personaname": normalizeStringLikeQuery(filter.Personaname)})
 	}
 
 	limit := uint64(25)
 
-	if queryFilter.Limit == 0 && queryFilter.Limit <= 100 {
-		limit = queryFilter.Limit
+	if filter.Limit == 0 && filter.Limit <= 100 {
+		limit = filter.Limit
 	}
 
-	queryBuilder = queryBuilder.Limit(limit)
+	builder = builder.Limit(limit)
 
-	if queryFilter.Offset > 0 {
-		queryBuilder = queryBuilder.Offset(queryFilter.Offset * limit)
+	if filter.Offset > 0 {
+		builder = builder.Offset(filter.Offset * limit)
 	}
 
-	direction := "DESC"
-	if !queryFilter.Desc {
-		direction = "ASC"
-	}
+	builder = applySafeOrder(builder, filter.QueryFilter, map[string][]string{
+		"p.": {"steam_id", "created_on", "updated_on",
+			"communityvisibilitystate", "profilestate", "personaname", "profileurl", "avatar",
+			"avatarmedium", "avatarfull", "avatarhash", "personastate", "realname", "timecreated",
+			"loccountrycode", "locstatecode", "loccityid", "p.permission_level", "discord_id",
+			"community_banned", "vac_bans", "game_bans", "economy_ban", "days_since_last_ban",
+			"updated_on_steam", "muted"},
+	}, "steam_id")
 
-	var orderBy string
-	if queryFilter.OrderBy != "" {
-		orderBy = fmt.Sprintf("p.%s", queryFilter.OrderBy)
-	} else {
-		orderBy = "p.updated_on_steam"
-	}
-
-	queryBuilder = queryBuilder.
-		OrderBy(fmt.Sprintf("%s %s", orderBy, direction)).
-		Where(conditions)
-
-	query, args, errQueryArgs := queryBuilder.ToSql()
+	query, args, errQueryArgs := builder.Where(conditions).ToSql()
 	if errQueryArgs != nil {
 		return nil, 0, errors.Wrap(errQueryArgs, "Failed to create query")
 	}
@@ -774,6 +767,10 @@ func (db *Store) QueryConnectionHistory(ctx context.Context, opts ConnectionHist
 		constraints = append(constraints, sq.Eq{"c.steam_id": sid.Int64()})
 	}
 
+	builder = applySafeOrder(builder, opts.QueryFilter, map[string][]string{
+		"c.": {"person_connection_id", "steam_id", "ip_addr", "persona_name", "created_on"},
+	}, "person_connection_id")
+
 	if opts.Offset > 0 {
 		builder = builder.Offset(opts.Offset)
 	}
@@ -783,18 +780,6 @@ func (db *Store) QueryConnectionHistory(ctx context.Context, opts ConnectionHist
 	} else {
 		builder = builder.Limit(25)
 	}
-
-	orderBy := "filter_id"
-	if opts.OrderBy != "" {
-		orderBy = opts.OrderBy
-	}
-
-	order := "ASC"
-	if opts.Desc {
-		order = "DESC"
-	}
-
-	builder = builder.OrderBy(fmt.Sprintf("c.%s %s", orderBy, order))
 
 	var messages []QueryConnectionHistoryResult
 
@@ -896,6 +881,10 @@ func (db *Store) QueryChatHistory(ctx context.Context, filters ChatHistoryQueryF
 		LeftJoin("filtered_word f USING(filter_id)").
 		LeftJoin("person p USING(steam_id)")
 
+	builder = applySafeOrder(builder, filters.QueryFilter, map[string][]string{
+		"m.": {"persona_name", "person_message_id"},
+	}, "person_message_id")
+
 	var limit uint64
 
 	if filters.Limit <= 0 || filters.Limit > 100 {
@@ -905,14 +894,6 @@ func (db *Store) QueryChatHistory(ctx context.Context, filters ChatHistoryQueryF
 	}
 
 	builder = builder.Limit(limit).Offset(filters.Offset)
-
-	if filters.OrderBy != "created_on" && filters.OrderBy != "person_message_id" {
-		return nil, 0, errors.New("Sort only allowed on created_on")
-	}
-
-	prefix := "m."
-
-	filters.OrderBy = prefix + filters.OrderBy
 
 	var conditions sq.And
 

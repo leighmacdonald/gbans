@@ -345,7 +345,7 @@ export const ChatLogPage = () => {
                                         tooltip: 'Server',
                                         sortKey: 'server_id',
                                         align: 'center',
-                                        width: 100,
+                                        width: 120,
                                         renderer: (row) => (
                                             <ServerIDCell
                                                 server_id={row.server_id}
@@ -360,7 +360,7 @@ export const ChatLogPage = () => {
                                         sortType: 'date',
                                         sortable: false,
                                         align: 'center',
-                                        width: 180,
+                                        width: 220,
                                         renderer: (row) => (
                                             <Typography variant={'body1'}>
                                                 {`${formatISO9075(

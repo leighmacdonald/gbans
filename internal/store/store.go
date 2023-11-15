@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"embed"
+	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -314,4 +316,40 @@ func (db *Store) migrate(action MigrationAction, dsn string) error {
 	}
 
 	return nil
+}
+
+// applySafeOrder is used to ensure that a user requested column is valid. This
+// is used to prevent potential injection attacks as there is no parameterized
+// order by value.
+func applySafeOrder(builder sq.SelectBuilder, qf QueryFilter, validColumns map[string][]string, fallback string) sq.SelectBuilder {
+	if qf.OrderBy == "" {
+		qf.OrderBy = fallback
+	}
+
+	qf.OrderBy = strings.ToLower(qf.OrderBy)
+
+	isValid := false
+
+	for prefix, columns := range validColumns {
+		for _, name := range columns {
+			if name == qf.OrderBy {
+				qf.OrderBy = prefix + qf.OrderBy
+				isValid = true
+
+				break
+			}
+		}
+
+		if isValid {
+			break
+		}
+	}
+
+	if qf.Desc {
+		builder = builder.OrderBy(fmt.Sprintf("%s DESC", qf.OrderBy))
+	} else {
+		builder = builder.OrderBy(fmt.Sprintf("%s ASC", qf.OrderBy))
+	}
+
+	return builder
 }

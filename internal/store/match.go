@@ -1324,28 +1324,10 @@ func (db *Store) Matches(ctx context.Context, opts MatchesQueryOpts) ([]MatchSum
 		countBuilder = countBuilder.Where(sq.Eq{"mp.steam_id": opts.SteamID.Int64()})
 	}
 
-	var orderCol string
-
-	direction := "ASC"
-
-	switch opts.OrderBy {
-	case "is_winner":
-		orderCol = "winner"
-	case "title":
-		orderCol = "m.title"
-	case "map_name":
-		orderCol = "m.map"
-	case "time_start":
-		orderCol = "m.time_start"
-	default:
-		orderCol = "m.match_id"
-	}
-
-	if opts.Desc {
-		direction = "DESC"
-	}
-
-	builder = builder.OrderBy(fmt.Sprintf("%s %s", orderCol, direction))
+	builder = applySafeOrder(builder, opts.QueryFilter, map[string][]string{
+		"":   {"winner"},
+		"m.": {"match_id", "server_id", "map", "score_blu", "score_red", "time_start", "time_end"},
+	}, "match_id")
 
 	if opts.Limit > 0 {
 		builder = builder.Limit(opts.Limit)
