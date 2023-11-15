@@ -185,10 +185,12 @@ func (db *Store) GetServers(ctx context.Context, filter ServerQueryFilter) ([]Se
 		constraints = append(constraints, sq.Eq{"s.is_enabled": true})
 	}
 
-	builder = applySafeOrder(builder, filter.QueryFilter, map[string][]string{
-		"s.": {"server_id", "short_name", "name", "address", "port",
+	builder = filter.QueryFilter.applySafeOrder(builder, map[string][]string{
+		"s.": {
+			"server_id", "short_name", "name", "address", "port",
 			"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
-			"latitude", "longitude", "deleted"},
+			"latitude", "longitude", "deleted",
+		},
 	}, "short_name")
 
 	if filter.Limit > 0 {
