@@ -8,6 +8,18 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
+	"math"
+	"mime/multipart"
+	"net"
+	"net/http"
+	"regexp"
+	"runtime"
+	"sort"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/consts"
@@ -22,17 +34,6 @@ import (
 	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"io"
-	"math"
-	"mime/multipart"
-	"net"
-	"net/http"
-	"regexp"
-	"runtime"
-	"sort"
-	"strconv"
-	"strings"
-	"time"
 )
 
 type demoUploadContent struct {
@@ -74,13 +75,13 @@ func readDemoZipContainer(log *zap.Logger, demoContainerZip *multipart.FileHeade
 		if file.Name == "stats.json" {
 			log.Info("Got stats", zap.String("stats", file.Name))
 
-			size, err = io.Copy(rawJSONWriter, reader)
+			size, err = io.CopyN(rawJSONWriter, reader, file.FileInfo().Size())
 		} else {
 			log.Info("Got demo", zap.String("demo", file.Name))
 
 			demoName = file.Name
 
-			size, err = io.Copy(rawDemoWriter, reader)
+			size, err = io.CopyN(rawDemoWriter, reader, file.FileInfo().Size())
 		}
 
 		if err != nil {
