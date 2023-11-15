@@ -1,6 +1,8 @@
 package app
 
 import (
+	"archive/zip"
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/base64"
@@ -19,10 +21,10 @@ import (
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/pkg/errors"
-	"github.com/ulikunitz/xz"
 	"go.uber.org/zap"
 	"io"
 	"math"
+	"mime/multipart"
 	"net"
 	"net/http"
 	"regexp"
@@ -32,6 +34,72 @@ import (
 	"strings"
 	"time"
 )
+
+type demoUploadContent struct {
+	demoName string
+	demoRaw  []byte
+	jsonRaw  []byte
+}
+
+func readDemoZipContainer(log *zap.Logger, demoContainerZip *multipart.FileHeader) (*demoUploadContent, error) {
+	zipHandle, errZipHandle := demoContainerZip.Open()
+	if errZipHandle != nil {
+		return nil, errors.Wrap(errZipHandle, "Failed to open zip container")
+	}
+
+	zipReader, errContainer := zip.NewReader(zipHandle, demoContainerZip.Size)
+	if errContainer != nil {
+		return nil, errors.Wrap(errContainer, "Cannot open zip reader")
+	}
+
+	var (
+		rawDemoBuffer = &bytes.Buffer{}
+		rawJSONBuffer = &bytes.Buffer{}
+		rawDemoWriter = bufio.NewWriter(rawDemoBuffer)
+		rawJSONWriter = bufio.NewWriter(rawJSONBuffer)
+		demoName      string
+	)
+
+	for _, file := range zipReader.File {
+		reader, errReader := file.Open()
+		if errReader != nil {
+			return nil, errors.Wrap(errReader, "Cannot open zip file")
+		}
+
+		var (
+			err  error
+			size int64
+		)
+
+		if file.Name == "stats.json" {
+			log.Info("Got stats", zap.String("stats", file.Name))
+
+			size, err = io.Copy(rawJSONWriter, reader)
+		} else {
+			log.Info("Got demo", zap.String("demo", file.Name))
+
+			demoName = file.Name
+
+			size, err = io.Copy(rawDemoWriter, reader)
+		}
+
+		if err != nil {
+			return nil, errors.Wrap(errContainer, "Failed to read zip file content")
+		}
+
+		log.Debug("Copied contents", zap.Int64("size", size))
+
+		if errClose := reader.Close(); errClose != nil {
+			return nil, errors.Wrap(errContainer, "Failed to close reader")
+		}
+	}
+
+	return &demoUploadContent{
+		demoName: demoName,
+		demoRaw:  rawDemoBuffer.Bytes(),
+		jsonRaw:  rawJSONBuffer.Bytes(),
+	}, nil
+}
 
 func onAPIPostDemo(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
@@ -60,9 +128,17 @@ func onAPIPostDemo(app *App) gin.HandlerFunc {
 			return
 		}
 
-		demoFile, errDemoFile := ctx.FormFile("demo")
+		demoContainerZip, errDemoFile := ctx.FormFile("demo")
 		if errDemoFile != nil {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		result, errZip := readDemoZipContainer(log, demoContainerZip)
+		if errZip != nil {
+			log.Error("Could not read demo zip", zap.Error(errZip))
+			responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 
 			return
 		}
@@ -75,33 +151,9 @@ func onAPIPostDemo(app *App) gin.HandlerFunc {
 			return
 		}
 
-		demoReader, errDemoReader := demoFile.Open()
-		if errDemoReader != nil {
-			log.Error("Failed to open demo file from form", zap.Error(errDemoReader))
-			responseErr(ctx, http.StatusBadRequest, consts.ErrNotFound)
-
-			return
-		}
-
-		reader, errReader := xz.NewReader(demoReader)
-		if errReader != nil {
-			log.Error("Failed to open xz demo reader", zap.Error(errReader))
-			responseErr(ctx, http.StatusBadRequest, consts.ErrNotFound)
-
-			return
-		}
-
-		rawDemo, errRawDemo := io.ReadAll(reader)
-		if errRawDemo != nil {
-			log.Error("Failed to read demo from xz reader", zap.Error(errRawDemo))
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
-
-			return
-		}
-
 		var metaData store.DemoMetaData
-		if errJSON := json.Unmarshal([]byte(form.Stats), &metaData); errJSON != nil {
-			log.Error("Failed to read demo from xz reader", zap.Error(errRawDemo))
+		if errJSON := json.Unmarshal(result.jsonRaw, &metaData); errJSON != nil {
+			log.Error("Failed to unmarshal meta data", zap.Error(errJSON))
 			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
 
 			return
@@ -121,14 +173,14 @@ func onAPIPostDemo(app *App) gin.HandlerFunc {
 			intStats[sid64] = PlayerStat
 		}
 
-		asset, errAsset := store.NewAsset(rawDemo, app.conf.S3.BucketDemo, demoFile.Filename)
+		asset, errAsset := store.NewAsset(result.demoRaw, app.conf.S3.BucketDemo, result.demoName)
 		if errAsset != nil {
 			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save asset"))
 
 			return
 		}
 
-		if errPut := app.assetStore.Put(ctx, app.conf.S3.BucketDemo, asset.Name, bytes.NewReader(rawDemo), asset.Size, asset.MimeType); errPut != nil {
+		if errPut := app.assetStore.Put(ctx, app.conf.S3.BucketDemo, asset.Name, bytes.NewReader(result.demoRaw), asset.Size, asset.MimeType); errPut != nil {
 			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save media"))
 
 			log.Error("Failed to save user media to s3 backend", zap.Error(errPut))
@@ -145,8 +197,6 @@ func onAPIPostDemo(app *App) gin.HandlerFunc {
 		newDemo := store.DemoFile{
 			ServerID:  server.ServerID,
 			Title:     asset.Name,
-			Data:      rawDemo,
-			Size:      int64(len(rawDemo)),
 			CreatedOn: time.Now(),
 			MapName:   form.MapName,
 			Stats:     intStats,
@@ -161,86 +211,6 @@ func onAPIPostDemo(app *App) gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusCreated, gin.H{"demo_id": newDemo.DemoID})
-	}
-}
-
-func onAPIGetDemoDownload(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
-	return func(ctx *gin.Context) {
-		demoID, errID := getInt64Param(ctx, "demo_id")
-		if errID != nil || demoID <= 0 {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
-			log.Error("Invalid demo id requested", zap.Error(errID))
-
-			return
-		}
-
-		var demo store.DemoFile
-		if errGet := app.db.GetDemoByID(ctx, demoID, &demo); errGet != nil {
-			if errors.Is(errGet, store.ErrNoResult) {
-				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
-
-				return
-			}
-
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
-
-			log.Error("Error fetching demo", zap.Error(errGet))
-
-			return
-		}
-
-		ctx.Header("Content-Description", "File Transfer")
-		ctx.Header("Content-Transfer-Encoding", "binary")
-		ctx.Header("Content-Disposition", "attachment; filename="+demo.Title)
-		ctx.Data(http.StatusOK, "application/octet-stream", demo.Data)
-
-		demo.Downloads++
-
-		if errSave := app.db.SaveDemo(ctx, &demo); errSave != nil {
-			log.Error("Failed to increment download count for demo", zap.Error(errSave))
-		}
-	}
-}
-
-func onAPIGetDemoDownloadByName(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
-	return func(ctx *gin.Context) {
-		demoName := ctx.Param("demo_name")
-		if demoName == "" {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
-			log.Error("Invalid demo name requested", zap.String("demo_name", ""))
-
-			return
-		}
-
-		var demo store.DemoFile
-
-		if errGet := app.db.GetDemoByName(ctx, demoName, &demo); errGet != nil {
-			if errors.Is(errGet, store.ErrNoResult) {
-				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
-
-				return
-			}
-
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
-			log.Error("Error fetching demo", zap.Error(errGet))
-
-			return
-		}
-
-		ctx.Header("Content-Description", "File Transfer")
-		ctx.Header("Content-Transfer-Encoding", "binary")
-		ctx.Header("Content-Disposition", "attachment; filename="+demo.Title)
-		ctx.Data(http.StatusOK, "application/octet-stream", demo.Data)
-
-		demo.Downloads++
-
-		if errSave := app.db.SaveDemo(ctx, &demo); errSave != nil {
-			log.Error("Failed to increment download count for demo", zap.Error(errSave))
-		}
 	}
 }
 
@@ -1287,7 +1257,6 @@ func getDefaultFloat64(s string, def float64) float64 {
 	return def
 }
 
-// onAPIGetServerStates returns the current known cached server state.
 func onAPIGetServerStates(app *App) gin.HandlerFunc {
 	type UserServers struct {
 		Servers []baseServer        `json:"servers"`

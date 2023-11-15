@@ -1,0 +1,8 @@
+BEGIN;
+
+ALTER TABLE demo
+    DROP COLUMN raw_data;
+ALTER TABLE demo
+    DROP COLUMN size;
+
+COMMIT;

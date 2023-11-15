@@ -265,6 +265,10 @@ func (db *Store) GetReports(ctx context.Context, opts ReportQueryFilter) ([]Repo
 		Where(conditions).
 		LeftJoin("demo d on d.title = r.demo_name")
 
+	builder = applySafeOrder(builder, opts.QueryFilter, map[string][]string{
+		"r.": {"report_id", "author_id", "reported_id", "report_status", "deleted", "created_on", "updated_on", "reason"},
+	}, "report_id")
+
 	if opts.Offset > 0 {
 		builder = builder.Offset(opts.Offset)
 	}
@@ -273,17 +277,6 @@ func (db *Store) GetReports(ctx context.Context, opts ReportQueryFilter) ([]Repo
 		builder = builder.Limit(opts.Limit)
 	} else {
 		builder = builder.Limit(50)
-	}
-
-	order := "r.updated_on"
-	if opts.OrderBy != "" {
-		order = fmt.Sprintf("r.%s", opts.OrderBy)
-	}
-
-	if opts.Desc {
-		builder = builder.OrderBy(fmt.Sprintf("%s DESC", order))
-	} else {
-		builder = builder.OrderBy(fmt.Sprintf("%s ASC", order))
 	}
 
 	count, errCount := db.GetCount(ctx, counterQuery)

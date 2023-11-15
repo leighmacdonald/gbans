@@ -92,12 +92,20 @@ func (db *Store) GetBanNetByID(ctx context.Context, netID int64, banNet *BanCIDR
 
 // GetBansNet returns the BanCIDR matching intersecting the supplied ip.
 func (db *Store) GetBansNet(ctx context.Context, filter CIDRBansQueryFilter) ([]BannedCIDRPerson, int64, error) {
-	builder := db.sb.Select("b.net_id", "b.cidr", "b.origin", "b.created_on", "b.updated_on",
-		"b.reason", "b.reason_text", "b.valid_until", "b.deleted", "b.note", "b.unban_reason_text",
-		"b.is_enabled", "b.target_id", "b.source_id", "b.appeal_state",
-		"s.personaname", "s.avatarhash",
-		"t.personaname", "t.avatarhash", "t.community_banned", "t.vac_bans", "t.game_bans",
-	).
+	var validColumns = map[string][]string{
+		"b.": {"net_id", "cidr", "origin", "created_on", "updated_on",
+			"reason", "valid_until", "deleted", "is_enabled", "target_id", "source_id", "appeal_state"},
+		"s.": {"source_personaname"},
+		"t.": {"target_personaname", "community_banned", "vac_bans", "game_bans"},
+	}
+
+	builder := db.sb.
+		Select("b.net_id", "b.cidr", "b.origin", "b.created_on", "b.updated_on",
+			"b.reason", "b.reason_text", "b.valid_until", "b.deleted", "b.note", "b.unban_reason_text",
+			"b.is_enabled", "b.target_id", "b.source_id", "b.appeal_state",
+			"s.personaname as source_personaname", "s.avatarhash",
+			"t.personaname as target_personaname", "t.avatarhash", "t.community_banned", "t.vac_bans", "t.game_bans",
+		).
 		From("ban_net b").
 		LeftJoin("person s ON s.steam_id = b.source_id").
 		LeftJoin("person t ON t.steam_id = b.target_id")
@@ -153,13 +161,7 @@ func (db *Store) GetBansNet(ctx context.Context, filter CIDRBansQueryFilter) ([]
 		constraints = append(constraints, sq.Expr("? <<= cidr", addr))
 	}
 
-	if filter.OrderBy != "" {
-		if filter.Desc {
-			builder = builder.OrderBy(fmt.Sprintf("b.%s DESC", filter.OrderBy))
-		} else {
-			builder = builder.OrderBy(fmt.Sprintf("b.%s ASC", filter.OrderBy))
-		}
-	}
+	builder = applySafeOrder(builder, filter.QueryFilter, validColumns, "net_id")
 
 	if filter.Limit > 0 {
 		builder = builder.Limit(filter.Limit)
@@ -649,8 +651,8 @@ func (db *Store) GetBansASN(ctx context.Context, filter ASNBansQueryFilter) ([]B
 	builder := db.sb.Select("b.ban_asn_id", "b.as_num", "b.origin", "b.source_id",
 		"b.target_id", "b.reason_text", "b.valid_until", "b.created_on", "b.updated_on",
 		"b.deleted", "b.reason", "b.is_enabled", "b.unban_reason_text", "b.appeal_state",
-		"s.personaname", "s.avatarhash",
-		"t.personaname", "t.avatarhash", "t.community_banned", "t.vac_bans", "t.game_bans").
+		"s.personaname as source_personaname", "s.avatarhash",
+		"t.personaname as target_personaname", "t.avatarhash", "t.community_banned", "t.vac_bans", "t.game_bans").
 		From("ban_asn b").
 		LeftJoin("person s on s.steam_id = b.source_id").
 		LeftJoin("person t on t.steam_id = b.target_id")
@@ -691,13 +693,12 @@ func (db *Store) GetBansASN(ctx context.Context, filter ASNBansQueryFilter) ([]B
 		constraints = append(constraints, sq.Eq{"b.as_num": filter.ASNum})
 	}
 
-	if filter.OrderBy != "" {
-		if filter.Desc {
-			builder = builder.OrderBy(fmt.Sprintf("b.%s DESC", filter.OrderBy))
-		} else {
-			builder = builder.OrderBy(fmt.Sprintf("b.%s ASC", filter.OrderBy))
-		}
-	}
+	builder = applySafeOrder(builder, filter.QueryFilter, map[string][]string{
+		"b.": {"ban_asn_id", "as_num", "origin", "source_id", "target_id", "valid_until", "created_on", "updated_on",
+			"deleted", "reason", "is_enabled", "appeal_state"},
+		"s.": {"source_personaname"},
+		"t.": {"target_personaname", "community_banned", "vac_bans", "game_bans"},
+	}, "ban_asn_id")
 
 	if filter.Limit > 0 {
 		builder = builder.Limit(filter.Limit)

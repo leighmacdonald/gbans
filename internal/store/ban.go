@@ -514,8 +514,8 @@ func (db *Store) getBanByColumn(ctx context.Context, column string, identifier a
 		"b.reason_text", "b.note", "b.origin", "b.valid_until", "b.created_on", "b.updated_on", "b.include_friends",
 		"b.deleted", "case WHEN b.report_id is null THEN 0 ELSE b.report_id END",
 		"b.unban_reason_text", "b.is_enabled", "b.appeal_state",
-		"s.personaname", "s.avatarhash",
-		"t.personaname", "t.avatarhash", "t.community_banned", "t.vac_bans", "t.game_bans",
+		"s.personaname as source_personaname", "s.avatarhash",
+		"t.personaname as target_personaname", "t.avatarhash", "t.community_banned", "t.vac_bans", "t.game_bans",
 	).
 		From("ban b").
 		LeftJoin("person s on s.steam_id = b.source_id").
@@ -771,10 +771,10 @@ func (db *Store) GetAppealsByActivity(ctx context.Context, opts AppealQueryFilte
 		LeftJoin("person source on source.steam_id = b.source_id").
 		LeftJoin("person target on target.steam_id = b.target_id")
 
-	order := "desc"
-	if !opts.Desc {
-		order = "asc"
-	}
+	builder = applySafeOrder(builder, opts.QueryFilter, map[string][]string{
+		"b.": {"ban_id", "target_id", "source_id", "ban_type", "reason", "valid_until", "origin", "created_on",
+			"updated_on", "deleted", "is_enabled", "appeal_state"},
+	}, "updated_on")
 
 	var limit uint64
 
@@ -790,13 +790,6 @@ func (db *Store) GetAppealsByActivity(ctx context.Context, opts AppealQueryFilte
 	}
 
 	builder = builder.Limit(limit).Offset(offset)
-
-	orderBy := "b.updated_on"
-	if opts.OrderBy != "" {
-		orderBy = fmt.Sprintf("b.%s", opts.OrderBy)
-	}
-
-	builder = builder.OrderBy(fmt.Sprintf("%s %s", orderBy, order))
 
 	query, args, errBuilder := builder.ToSql()
 	if errBuilder != nil {
@@ -877,8 +870,8 @@ func (db *Store) GetBansSteam(ctx context.Context, filter SteamBansQueryFilter) 
 		"b.reason_text", "b.note", "b.origin", "b.valid_until", "b.created_on", "b.updated_on", "b.include_friends",
 		"b.deleted", "case WHEN b.report_id is null THEN 0 ELSE b.report_id END",
 		"b.unban_reason_text", "b.is_enabled", "b.appeal_state",
-		"s.personaname", "s.avatarhash",
-		"t.personaname", "t.avatarhash", "t.community_banned", "t.vac_bans", "t.game_bans").
+		"s.personaname as source_personaname", "s.avatarhash",
+		"t.personaname as target_personaname", "t.avatarhash", "t.community_banned", "t.vac_bans", "t.game_bans").
 		From("ban b").
 		JoinClause("LEFT JOIN person s on s.steam_id = b.source_id").
 		JoinClause("LEFT JOIN person t on t.steam_id = b.target_id")
@@ -923,13 +916,13 @@ func (db *Store) GetBansSteam(ctx context.Context, filter SteamBansQueryFilter) 
 		builder = builder.Where(ands)
 	}
 
-	if filter.OrderBy != "" {
-		if filter.Desc {
-			builder = builder.OrderBy(fmt.Sprintf("b.%s DESC", filter.OrderBy))
-		} else {
-			builder = builder.OrderBy(fmt.Sprintf("b.%s ASC", filter.OrderBy))
-		}
-	}
+	builder = applySafeOrder(builder, filter.QueryFilter, map[string][]string{
+		"b.": {"ban_id", "target_id", "source_id", "ban_type", "reason",
+			"origin", "valid_until", "created_on", "updated_on", "include_friends",
+			"deleted", "report_id", "is_enabled", "appeal_state"},
+		"s.": {"source_personaname"},
+		"t.": {"target_personaname", "community_banned", "vac_bans", "game_bans"},
+	}, "ban_id")
 
 	if filter.Limit > 0 {
 		builder = builder.Limit(filter.Limit)
@@ -1281,8 +1274,8 @@ func (db *Store) GetBanGroups(ctx context.Context, filter GroupBansQueryFilter) 
 		Select("b.ban_group_id", "b.source_id", "b.target_id", "b.group_name", "b.is_enabled", "b.deleted",
 			"b.note", "b.unban_reason_text", "b.origin", "b.created_on", "b.updated_on", "b.valid_until",
 			"b.appeal_state", "b.group_id",
-			"s.personaname", "s.avatarhash",
-			"t.personaname", "t.avatarhash", "t.community_banned", "t.vac_bans", "t.game_bans").
+			"s.personaname as source_personaname", "s.avatarhash",
+			"t.personaname as target_personaname", "t.avatarhash", "t.community_banned", "t.vac_bans", "t.game_bans").
 		From("ban_group b").
 		LeftJoin("person s ON s.steam_id = b.source_id").
 		LeftJoin("person t ON t.steam_id = b.target_id")
@@ -1328,13 +1321,12 @@ func (db *Store) GetBanGroups(ctx context.Context, filter GroupBansQueryFilter) 
 		constraints = append(constraints, sq.Eq{"b.source_id": sourceID.Int64()})
 	}
 
-	if filter.OrderBy != "" {
-		if filter.Desc {
-			builder = builder.OrderBy(fmt.Sprintf("b.%s DESC", filter.OrderBy))
-		} else {
-			builder = builder.OrderBy(fmt.Sprintf("b.%s ASC", filter.OrderBy))
-		}
-	}
+	builder = applySafeOrder(builder, filter.QueryFilter, map[string][]string{
+		"b.": {"ban_group_id", "source_id", "target_id", "group_name", "is_enabled", "deleted",
+			"origin", "created_on", "updated_on", "valid_until", "appeal_state", "group_id"},
+		"s.": {"source_personaname"},
+		"t.": {"target_personaname", "community_banned", "vac_bans", "game_bans"},
+	}, "ban_group_id")
 
 	if filter.Limit > 0 {
 		builder = builder.Limit(filter.Limit)

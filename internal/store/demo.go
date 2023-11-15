@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -32,9 +31,7 @@ type DemoFile struct {
 	ServerNameShort string                            `json:"server_name_short"`
 	ServerNameLong  string                            `json:"server_name_long"`
 	Title           string                            `json:"title"`
-	Data            []byte                            `json:"-"` // Dont send mega data to frontend by accident
 	CreatedOn       time.Time                         `json:"created_on"`
-	Size            int64                             `json:"size"`
 	Downloads       int64                             `json:"downloads"`
 	MapName         string                            `json:"map_name"`
 	Archive         bool                              `json:"archive"` // When true, will not get auto deleted when flushing old demos
@@ -58,7 +55,7 @@ func (db *Store) FlushDemos(ctx context.Context) error {
 
 func (db *Store) GetDemoByID(ctx context.Context, demoID int64, demoFile *DemoFile) error {
 	query, args, errQueryArgs := db.sb.
-		Select("demo_id", "server_id", "title", "raw_data", "created_on", "size", "downloads", "map_name", "archive", "stats").
+		Select("demo_id", "server_id", "title", "created_on", "downloads", "map_name", "archive", "stats").
 		From("demo").
 		Where(sq.Eq{"demo_id": demoID}).
 		ToSql()
@@ -66,8 +63,11 @@ func (db *Store) GetDemoByID(ctx context.Context, demoID int64, demoFile *DemoFi
 		return Err(errQueryArgs)
 	}
 
-	if errQuery := db.QueryRow(ctx, query, args...).Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title, &demoFile.Data,
-		&demoFile.CreatedOn, &demoFile.Size, &demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats); errQuery != nil {
+	if errQuery := db.
+		QueryRow(ctx, query, args...).
+		Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title,
+			&demoFile.CreatedOn, &demoFile.Downloads, &demoFile.MapName,
+			&demoFile.Archive, &demoFile.Stats); errQuery != nil {
 		return Err(errQuery)
 	}
 
@@ -76,7 +76,7 @@ func (db *Store) GetDemoByID(ctx context.Context, demoID int64, demoFile *DemoFi
 
 func (db *Store) GetDemoByName(ctx context.Context, demoName string, demoFile *DemoFile) error {
 	query, args, errQueryArgs := db.sb.
-		Select("demo_id", "server_id", "title", "raw_data", "created_on", "size", "downloads", "map_name", "archive", "stats").
+		Select("demo_id", "server_id", "title", "created_on", "downloads", "map_name", "archive", "stats").
 		From("demo").
 		Where(sq.Eq{"title": demoName}).
 		ToSql()
@@ -84,8 +84,8 @@ func (db *Store) GetDemoByName(ctx context.Context, demoName string, demoFile *D
 		return Err(errQueryArgs)
 	}
 
-	if errQuery := db.QueryRow(ctx, query, args...).Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title, &demoFile.Data,
-		&demoFile.CreatedOn, &demoFile.Size, &demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats); errQuery != nil {
+	if errQuery := db.QueryRow(ctx, query, args...).Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title,
+		&demoFile.CreatedOn, &demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats); errQuery != nil {
 		return Err(errQuery)
 	}
 
@@ -124,18 +124,6 @@ func (db *Store) GetDemos(ctx context.Context, opts DemoFilter) ([]DemoFile, int
 		constraints = append(constraints, sq.Expr("stats ?? ?", sid64.String()))
 	}
 
-	orderBy := "demo_id"
-	if opts.OrderBy != "" {
-		orderBy = opts.OrderBy
-	}
-
-	order := "ASC"
-	if opts.Desc {
-		order = "DESC"
-	}
-
-	builder = builder.OrderBy(fmt.Sprintf("d.%s %s", orderBy, order))
-
 	if len(opts.ServerIds) > 0 && opts.ServerIds[0] != 0 {
 		anyServer := false
 
@@ -151,6 +139,10 @@ func (db *Store) GetDemos(ctx context.Context, opts DemoFilter) ([]DemoFile, int
 			constraints = append(constraints, sq.Eq{"d.server_id": opts.ServerIds})
 		}
 	}
+
+	builder = applySafeOrder(builder, opts.QueryFilter, map[string][]string{
+		"d.": {"demo_id", "server_id", "title", "created_on", "size", "downloads", "map_name"},
+	}, "demo_id")
 
 	var limit uint64
 
@@ -183,7 +175,7 @@ func (db *Store) GetDemos(ctx context.Context, opts DemoFilter) ([]DemoFile, int
 		)
 
 		if errScan := rows.Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title, &demoFile.CreatedOn,
-			&demoFile.Size, &demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats,
+			&demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats,
 			&demoFile.ServerNameShort, &demoFile.ServerNameLong, &uuidScan); errScan != nil {
 			return nil, 0, Err(errScan)
 		}
@@ -257,9 +249,9 @@ func (db *Store) SaveDemo(ctx context.Context, demoFile *DemoFile) error {
 func (db *Store) insertDemo(ctx context.Context, demoFile *DemoFile) error {
 	query, args, errQueryArgs := db.sb.
 		Insert(string(tableDemo)).
-		Columns("server_id", "title", "raw_data", "created_on", "size", "downloads", "map_name", "archive", "stats", "asset_id").
-		Values(demoFile.ServerID, demoFile.Title, demoFile.Data, demoFile.CreatedOn,
-			demoFile.Size, demoFile.Downloads, demoFile.MapName, demoFile.Archive, demoFile.Stats, demoFile.AssetID).
+		Columns("server_id", "title", "created_on", "downloads", "map_name", "archive", "stats", "asset_id").
+		Values(demoFile.ServerID, demoFile.Title, demoFile.CreatedOn,
+			demoFile.Downloads, demoFile.MapName, demoFile.Archive, demoFile.Stats, demoFile.AssetID).
 		Suffix("RETURNING demo_id").
 		ToSql()
 	if errQueryArgs != nil {
@@ -280,7 +272,6 @@ func (db *Store) updateDemo(ctx context.Context, demoFile *DemoFile) error {
 	query, args, errQueryArgs := db.sb.
 		Update(string(tableDemo)).
 		Set("title", demoFile.Title).
-		Set("size", demoFile.Size).
 		Set("downloads", demoFile.Downloads).
 		Set("map_name", demoFile.MapName).
 		Set("archive", demoFile.Archive).
