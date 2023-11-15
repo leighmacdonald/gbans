@@ -265,7 +265,7 @@ func (db *Store) GetReports(ctx context.Context, opts ReportQueryFilter) ([]Repo
 		Where(conditions).
 		LeftJoin("demo d on d.title = r.demo_name")
 
-	builder = applySafeOrder(builder, opts.QueryFilter, map[string][]string{
+	builder = opts.QueryFilter.applySafeOrder(builder, map[string][]string{
 		"r.": {"report_id", "author_id", "reported_id", "report_status", "deleted", "created_on", "updated_on", "reason"},
 	}, "report_id")
 

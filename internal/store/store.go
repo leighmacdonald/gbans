@@ -36,6 +36,8 @@ var (
 	migrations embed.FS
 )
 
+const maxResultsDefault = 100
+
 type tableName string
 
 const (
@@ -83,6 +85,62 @@ type QueryFilter struct {
 	Deleted bool   `json:"deleted,omitempty" uri:"deleted"`
 }
 
+// applySafeOrder is used to ensure that a user requested column is valid. This
+// is used to prevent potential injection attacks as there is no parameterized
+// order by value.
+func (qf QueryFilter) applySafeOrder(builder sq.SelectBuilder, validColumns map[string][]string, fallback string) sq.SelectBuilder {
+	if qf.OrderBy == "" {
+		qf.OrderBy = fallback
+	}
+
+	qf.OrderBy = strings.ToLower(qf.OrderBy)
+
+	isValid := false
+
+	for prefix, columns := range validColumns {
+		for _, name := range columns {
+			if name == qf.OrderBy {
+				qf.OrderBy = prefix + qf.OrderBy
+				isValid = true
+
+				break
+			}
+		}
+
+		if isValid {
+			break
+		}
+	}
+
+	if qf.Desc {
+		builder = builder.OrderBy(fmt.Sprintf("%s DESC", qf.OrderBy))
+	} else {
+		builder = builder.OrderBy(fmt.Sprintf("%s ASC", qf.OrderBy))
+	}
+
+	return builder
+}
+
+func (qf QueryFilter) applyLimitOffsetDefault(builder sq.SelectBuilder) sq.SelectBuilder {
+	return qf.applyLimitOffset(builder, maxResultsDefault)
+}
+
+func (qf QueryFilter) applyLimitOffset(builder sq.SelectBuilder, maxLimit uint64) sq.SelectBuilder {
+	if qf.Limit > maxLimit {
+		qf.Limit = maxLimit
+	}
+
+	if qf.Limit > 0 {
+		builder = builder.Limit(qf.Limit)
+	}
+
+	if qf.Offset > 0 {
+		builder = builder.Offset(qf.Offset)
+	}
+
+	return builder
+}
+
 func NewTimeStamped() TimeStamped {
 	now := time.Now()
 
@@ -95,19 +153,6 @@ func NewTimeStamped() TimeStamped {
 type TimeStamped struct {
 	CreatedOn time.Time `json:"created_on"`
 	UpdatedOn time.Time `json:"updated_on"`
-}
-
-const maxQuerySize = 1000
-
-func NewQueryFilter(query string) QueryFilter {
-	return QueryFilter{
-		Limit:   maxQuerySize,
-		Offset:  0,
-		Desc:    true,
-		OrderBy: "created_on",
-		Query:   query,
-		Deleted: false,
-	}
 }
 
 type dbQueryTracer struct {
@@ -170,11 +215,66 @@ func (db *Store) Query(ctx context.Context, query string, args ...any) (pgx.Rows
 }
 
 //nolint:ireturn
+func (db *Store) QueryBuilder(ctx context.Context, builder sq.SelectBuilder) (pgx.Rows, error) {
+	query, args, errQuery := builder.ToSql()
+	if errQuery != nil {
+		return nil, Err(errQuery)
+	}
+
+	rows, err := db.conn.Query(ctx, query, args...)
+
+	return rows, Err(err)
+}
+
+//nolint:ireturn
 func (db *Store) QueryRow(ctx context.Context, query string, args ...any) pgx.Row {
 	return db.conn.QueryRow(ctx, query, args...)
 }
 
+//nolint:ireturn
+func (db *Store) QueryRowBuilder(ctx context.Context, builder sq.SelectBuilder) (pgx.Row, error) {
+	query, args, errQuery := builder.ToSql()
+	if errQuery != nil {
+		return nil, Err(errQuery)
+	}
+
+	return db.conn.QueryRow(ctx, query, args...), nil
+}
+
 func (db *Store) Exec(ctx context.Context, query string, args ...any) error {
+	_, err := db.conn.Exec(ctx, query, args...)
+
+	return Err(err)
+}
+
+func (db *Store) ExecInsertBuilder(ctx context.Context, builder sq.InsertBuilder) error {
+	query, args, errQuery := builder.ToSql()
+	if errQuery != nil {
+		return Err(errQuery)
+	}
+
+	_, err := db.conn.Exec(ctx, query, args...)
+
+	return Err(err)
+}
+
+func (db *Store) ExecDeleteBuilder(ctx context.Context, builder sq.DeleteBuilder) error {
+	query, args, errQuery := builder.ToSql()
+	if errQuery != nil {
+		return Err(errQuery)
+	}
+
+	_, err := db.conn.Exec(ctx, query, args...)
+
+	return Err(err)
+}
+
+func (db *Store) ExecUpdateBuilder(ctx context.Context, builder sq.UpdateBuilder) error {
+	query, args, errQuery := builder.ToSql()
+	if errQuery != nil {
+		return Err(errQuery)
+	}
+
 	_, err := db.conn.Exec(ctx, query, args...)
 
 	return Err(err)
@@ -316,40 +416,4 @@ func (db *Store) migrate(action MigrationAction, dsn string) error {
 	}
 
 	return nil
-}
-
-// applySafeOrder is used to ensure that a user requested column is valid. This
-// is used to prevent potential injection attacks as there is no parameterized
-// order by value.
-func applySafeOrder(builder sq.SelectBuilder, qf QueryFilter, validColumns map[string][]string, fallback string) sq.SelectBuilder {
-	if qf.OrderBy == "" {
-		qf.OrderBy = fallback
-	}
-
-	qf.OrderBy = strings.ToLower(qf.OrderBy)
-
-	isValid := false
-
-	for prefix, columns := range validColumns {
-		for _, name := range columns {
-			if name == qf.OrderBy {
-				qf.OrderBy = prefix + qf.OrderBy
-				isValid = true
-
-				break
-			}
-		}
-
-		if isValid {
-			break
-		}
-	}
-
-	if qf.Desc {
-		builder = builder.OrderBy(fmt.Sprintf("%s DESC", qf.OrderBy))
-	} else {
-		builder = builder.OrderBy(fmt.Sprintf("%s ASC", qf.OrderBy))
-	}
-
-	return builder
 }

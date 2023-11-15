@@ -40,17 +40,12 @@ type DemoFile struct {
 }
 
 func (db *Store) FlushDemos(ctx context.Context) error {
-	query, args, errQuery := db.sb.
+	return db.ExecDeleteBuilder(ctx, db.sb.
 		Delete("demo").
 		Where(sq.And{
 			sq.Eq{"archive": false},
 			sq.Lt{"created_on": time.Now().Add(-(time.Hour * 24 * 14))},
-		}).ToSql()
-	if errQuery != nil {
-		return errors.Wrap(errQuery, "Failed to create query")
-	}
-
-	return Err(db.Exec(ctx, query, args...))
+		}))
 }
 
 func (db *Store) GetDemoByID(ctx context.Context, demoID int64, demoFile *DemoFile) error {
@@ -140,24 +135,13 @@ func (db *Store) GetDemos(ctx context.Context, opts DemoFilter) ([]DemoFile, int
 		}
 	}
 
-	builder = applySafeOrder(builder, opts.QueryFilter, map[string][]string{
+	builder = opts.QueryFilter.applySafeOrder(builder, map[string][]string{
 		"d.": {"demo_id", "server_id", "title", "created_on", "size", "downloads", "map_name"},
 	}, "demo_id")
 
-	var limit uint64
+	builder = opts.QueryFilter.applyLimitOffsetDefault(builder).Where(constraints)
 
-	if opts.Limit <= 0 || opts.Limit > 100 {
-		limit = 50
-	} else {
-		limit = opts.Limit
-	}
-
-	query, args, errQueryArgs := builder.Limit(limit).Offset(opts.Offset).Where(constraints).ToSql()
-	if errQueryArgs != nil {
-		return nil, 0, Err(errQueryArgs)
-	}
-
-	rows, errQuery := db.Query(ctx, query, args...)
+	rows, errQuery := db.QueryBuilder(ctx, builder)
 	if errQuery != nil {
 		if errors.Is(errQuery, ErrNoResult) {
 			return demos, 0, nil
@@ -190,25 +174,13 @@ func (db *Store) GetDemos(ctx context.Context, opts DemoFilter) ([]DemoFile, int
 	if demos == nil {
 		return []DemoFile{}, 0, nil
 	}
+
 	count, errCount := db.GetCount(ctx, db.sb.Select("count(d.demo_id)").
 		From("demo d").
 		Where(constraints))
 	if errCount != nil {
 		return []DemoFile{}, 0, Err(errCount)
 	}
-	//
-	//
-	//countQuery, argsCount, errCountQuery := counter.ToSql()
-	//if errCountQuery != nil {
-	//	return []DemoFile{}, 0, errors.Wrap(errCountQuery, "Failed to create count query")
-	//}
-	//
-	//var count int64
-	//if errCount := db.
-	//	QueryRow(ctx, countQuery, argsCount...).
-	//	Scan(&count); errCount != nil {
-	//	return []DemoFile{}, 0, Err(errCount)
-	//}
 
 	return demos, count, nil
 }
@@ -269,7 +241,7 @@ func (db *Store) insertDemo(ctx context.Context, demoFile *DemoFile) error {
 }
 
 func (db *Store) updateDemo(ctx context.Context, demoFile *DemoFile) error {
-	query, args, errQueryArgs := db.sb.
+	query := db.sb.
 		Update(string(tableDemo)).
 		Set("title", demoFile.Title).
 		Set("downloads", demoFile.Downloads).
@@ -277,13 +249,9 @@ func (db *Store) updateDemo(ctx context.Context, demoFile *DemoFile) error {
 		Set("archive", demoFile.Archive).
 		Set("stats", demoFile.Stats).
 		Set("asset_id", demoFile.AssetID).
-		Where(sq.Eq{"demo_id": demoFile.DemoID}).
-		ToSql()
-	if errQueryArgs != nil {
-		return Err(errQueryArgs)
-	}
+		Where(sq.Eq{"demo_id": demoFile.DemoID})
 
-	if errExec := db.Exec(ctx, query, args...); errExec != nil {
+	if errExec := db.ExecUpdateBuilder(ctx, query); errExec != nil {
 		return Err(errExec)
 	}
 
@@ -293,15 +261,9 @@ func (db *Store) updateDemo(ctx context.Context, demoFile *DemoFile) error {
 }
 
 func (db *Store) DropDemo(ctx context.Context, demoFile *DemoFile) error {
-	query, args, errQueryArgs := db.sb.
+	if errExec := db.ExecDeleteBuilder(ctx, db.sb.
 		Delete(string(tableDemo)).
-		Where(sq.Eq{"demo_id": demoFile.DemoID}).
-		ToSql()
-	if errQueryArgs != nil {
-		return Err(errQueryArgs)
-	}
-
-	if errExec := db.Exec(ctx, query, args...); errExec != nil {
+		Where(sq.Eq{"demo_id": demoFile.DemoID})); errExec != nil {
 		return Err(errExec)
 	}
 
@@ -347,18 +309,8 @@ func NewAsset(content []byte, bucket string, name string) (Asset, error) {
 }
 
 func (db *Store) SaveAsset(ctx context.Context, asset *Asset) error {
-	query, args, errQueryArgs := db.sb.Insert("asset").
+	return db.ExecInsertBuilder(ctx, db.sb.
+		Insert("asset").
 		Columns("asset_id", "bucket", "path", "name", "mime_type", "size", "old_id").
-		Values(asset.AssetID, asset.Bucket, asset.Path, asset.Name, asset.MimeType, asset.Size, asset.OldID).
-		ToSql()
-
-	if errQueryArgs != nil {
-		return Err(errQueryArgs)
-	}
-
-	if err := db.Exec(ctx, query, args...); err != nil {
-		return Err(err)
-	}
-
-	return nil
+		Values(asset.AssetID, asset.Bucket, asset.Path, asset.Name, asset.MimeType, asset.Size, asset.OldID))
 }

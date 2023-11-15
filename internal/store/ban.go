@@ -500,7 +500,7 @@ func (db *Store) DropBan(ctx context.Context, ban *BanSteam, hardDelete bool) er
 
 func (db *Store) getBanByColumn(ctx context.Context, column string, identifier any, person *BannedSteamPerson, deletedOk bool) error {
 	whereClauses := sq.And{
-		sq.Eq{fmt.Sprintf("b.%s", column): identifier},
+		sq.Eq{fmt.Sprintf("b.%s", column): identifier}, // valid columns are immutable
 	}
 
 	if !deletedOk {
@@ -509,7 +509,7 @@ func (db *Store) getBanByColumn(ctx context.Context, column string, identifier a
 		whereClauses = append(whereClauses, sq.Gt{"b.valid_until": time.Now()})
 	}
 
-	builder := db.sb.Select(
+	query := db.sb.Select(
 		"b.ban_id", "b.target_id", "b.source_id", "b.ban_type", "b.reason",
 		"b.reason_text", "b.note", "b.origin", "b.valid_until", "b.created_on", "b.updated_on", "b.include_friends",
 		"b.deleted", "case WHEN b.report_id is null THEN 0 ELSE b.report_id END",
@@ -524,9 +524,9 @@ func (db *Store) getBanByColumn(ctx context.Context, column string, identifier a
 		OrderBy("b.created_on DESC").
 		Limit(1)
 
-	query, args, queryErr := builder.ToSql()
-	if queryErr != nil {
-		return errors.Wrap(queryErr, "Failed to create query")
+	row, errQuery := db.QueryRowBuilder(ctx, query)
+	if errQuery != nil {
+		return errQuery
 	}
 
 	var (
@@ -534,8 +534,7 @@ func (db *Store) getBanByColumn(ctx context.Context, column string, identifier a
 		targetID int64
 	)
 
-	if errQuery := db.conn.
-		QueryRow(ctx, query, args...).
+	if errScan := row.
 		Scan(&person.BanID, &targetID, &sourceID, &person.BanType, &person.Reason,
 			&person.ReasonText, &person.Note, &person.Origin, &person.ValidUntil, &person.CreatedOn,
 			&person.UpdatedOn, &person.IncludeFriends, &person.Deleted, &person.ReportID, &person.UnbanReasonText,
@@ -543,8 +542,8 @@ func (db *Store) getBanByColumn(ctx context.Context, column string, identifier a
 			&person.SourceTarget.SourcePersonaname, &person.SourceTarget.SourceAvatarhash,
 			&person.SourceTarget.TargetPersonaname, &person.SourceTarget.TargetAvatarhash,
 			&person.CommunityBanned, &person.VacBans, &person.GameBans,
-		); errQuery != nil {
-		return Err(errQuery)
+		); errScan != nil {
+		return Err(errScan)
 	}
 
 	person.SourceID = steamid.New(sourceID)
@@ -618,32 +617,36 @@ func (db *Store) insertBan(ctx context.Context, ban *BanSteam) error {
 }
 
 func (db *Store) updateBan(ctx context.Context, ban *BanSteam) error {
-	const query = `
-		UPDATE ban
-		SET source_id = $2, reason = $3, reason_text = $4, note = $5, valid_until = $6, updated_on = $7, 
-			origin = $8, ban_type = $9, deleted = $10, report_id = case WHEN $11 = 0 THEN null ELSE $11 END, 
-			unban_reason_text = $12, is_enabled = $13, target_id = $14, appeal_state = $15, include_friends = $16
-		WHERE ban_id = $1`
+	query := db.sb.Update("ban").
+		Set("source_id", ban.SourceID.Int64()).
+		Set("reason", ban.Reason).
+		Set("reason_text", ban.ReasonText).
+		Set("note", ban.Note).
+		Set("valid_until", ban.ValidUntil).
+		Set("updated_on", ban.UpdatedOn).
+		Set("origin", ban.Origin).
+		Set("ban_type", ban.BanType).
+		Set("deleted", ban.Deleted).
+		Set("report_id", ban.ReportID).
+		Set("unban_reason_text", ban.UnbanReasonText).
+		Set("is_enabled", ban.IsEnabled).
+		Set("target_id", ban.TargetID.Int64()).
+		Set("appeal_state", ban.AppealState).
+		Set("include_friends", ban.IncludeFriends).
+		Where(sq.Eq{"ban_id": ban.BanID})
 
-	if errExec := db.
-		Exec(ctx, query, ban.BanID, ban.SourceID.Int64(), ban.Reason, ban.ReasonText, ban.Note, ban.ValidUntil,
-			ban.UpdatedOn, ban.Origin, ban.BanType, ban.Deleted, ban.ReportID, ban.UnbanReasonText, ban.IsEnabled,
-			ban.TargetID.Int64(), ban.AppealState, ban.IncludeFriends); errExec != nil {
-		return Err(errExec)
-	}
-
-	return nil
+	return Err(db.ExecUpdateBuilder(ctx, query))
 }
 
 func (db *Store) GetExpiredBans(ctx context.Context) ([]BanSteam, error) {
-	const query = `
-		SELECT ban_id, target_id, source_id, ban_type, reason, reason_text, note, valid_until, origin, 
-		       created_on, updated_on, deleted, case WHEN report_id is null THEN 0 ELSE report_id END, 
-		       unban_reason_text, is_enabled, appeal_state, include_friends
-		FROM ban
-       	WHERE valid_until < $1 AND deleted = false`
+	query := db.sb.
+		Select("ban_id", "target_id", "source_id", "ban_type", "reason", "reason_text", "note",
+			"valid_until", "origin", "created_on", "updated_on", "deleted", "case WHEN report_id is null THEN 0 ELSE report_id END",
+			"unban_reason_text", "is_enabled", "appeal_state", "include_friends").
+		From("ban").
+		Where(sq.And{sq.Lt{"valid_until": time.Now()}, sq.Eq{"deleteed": false}})
 
-	rows, errQuery := db.Query(ctx, query, time.Now())
+	rows, errQuery := db.QueryBuilder(ctx, query)
 	if errQuery != nil {
 		return nil, errQuery
 	}
@@ -682,14 +685,14 @@ type AppealQueryFilter struct {
 }
 
 func (db *Store) getActiveAppealsIDs(ctx context.Context) ([]int64, error) {
-	const appealedBansQuery = `
-		SELECT a.ban_id 
-		FROM ban b 
-			LEFT JOIN ban_appeal a USING (ban_id) 
-		WHERE b.deleted = false AND a.deleted = false 
-		GROUP BY a.ban_id`
+	query := db.sb.
+		Select("a.ban_id").
+		From("ban b").
+		LeftJoin("ban_appeal a USING (ban_id)").
+		Where(sq.And{sq.Eq{"b.deleted": false}, sq.Eq{"a.deleted": false}}).
+		GroupBy("a.ban_id")
 
-	idRows, errIds := db.Query(ctx, appealedBansQuery)
+	idRows, errIds := db.QueryBuilder(ctx, query)
 	if errIds != nil {
 		return nil, Err(errIds)
 	}
@@ -771,39 +774,23 @@ func (db *Store) GetAppealsByActivity(ctx context.Context, opts AppealQueryFilte
 		LeftJoin("person source on source.steam_id = b.source_id").
 		LeftJoin("person target on target.steam_id = b.target_id")
 
-	builder = applySafeOrder(builder, opts.QueryFilter, map[string][]string{
-		"b.": {"ban_id", "target_id", "source_id", "ban_type", "reason", "valid_until", "origin", "created_on",
-			"updated_on", "deleted", "is_enabled", "appeal_state"},
+	builder = opts.QueryFilter.applySafeOrder(builder, map[string][]string{
+		"b.": {
+			"ban_id", "target_id", "source_id", "ban_type", "reason", "valid_until", "origin", "created_on",
+			"updated_on", "deleted", "is_enabled", "appeal_state",
+		},
 	}, "updated_on")
 
-	var limit uint64
+	builder = opts.QueryFilter.applyLimitOffsetDefault(builder)
 
-	if opts.Limit <= 0 || opts.Limit > 100 {
-		limit = 50
-	} else {
-		limit = opts.Limit
-	}
-
-	offset := uint64(0)
-	if opts.Offset > 0 {
-		offset = opts.Offset * limit
-	}
-
-	builder = builder.Limit(limit).Offset(offset)
-
-	query, args, errBuilder := builder.ToSql()
-	if errBuilder != nil {
-		return nil, 0, Err(errBuilder)
-	}
-
-	overviews := []AppealOverview{}
-
-	rows, errQuery := db.Query(ctx, query, args...)
+	rows, errQuery := db.QueryBuilder(ctx, builder)
 	if errQuery != nil {
 		return nil, 0, Err(errQuery)
 	}
 
 	defer rows.Close()
+
+	overviews := []AppealOverview{}
 
 	for rows.Next() {
 		var (
@@ -916,38 +903,33 @@ func (db *Store) GetBansSteam(ctx context.Context, filter SteamBansQueryFilter) 
 		builder = builder.Where(ands)
 	}
 
-	builder = applySafeOrder(builder, filter.QueryFilter, map[string][]string{
-		"b.": {"ban_id", "target_id", "source_id", "ban_type", "reason",
+	builder = filter.QueryFilter.applySafeOrder(builder, map[string][]string{
+		"b.": {
+			"ban_id", "target_id", "source_id", "ban_type", "reason",
 			"origin", "valid_until", "created_on", "updated_on", "include_friends",
-			"deleted", "report_id", "is_enabled", "appeal_state"},
+			"deleted", "report_id", "is_enabled", "appeal_state",
+		},
 		"s.": {"source_personaname"},
 		"t.": {"target_personaname", "community_banned", "vac_bans", "game_bans"},
 	}, "ban_id")
 
-	if filter.Limit > 0 {
-		builder = builder.Limit(filter.Limit)
-	}
-
-	if filter.Offset > 0 {
-		builder = builder.Offset(filter.Offset)
-	}
-
-	query, args, errQueryBuilder := builder.ToSql()
-	if errQueryBuilder != nil {
-		return nil, 0, Err(errQueryBuilder)
-	}
+	builder = filter.QueryFilter.applyLimitOffsetDefault(builder)
 
 	count, errCount := db.GetCount(ctx, db.sb.
 		Select("COUNT(b.ban_id)").
 		From("ban b").
 		Where(ands))
 	if errCount != nil {
-		return nil, 0, Err(errQueryBuilder)
+		return nil, 0, Err(errCount)
+	}
+
+	if count == 0 {
+		return []BannedSteamPerson{}, 0, nil
 	}
 
 	var bans []BannedSteamPerson
 
-	rows, errQuery := db.Query(ctx, query, args...)
+	rows, errQuery := db.QueryBuilder(ctx, builder)
 	if errQuery != nil {
 		return nil, 0, Err(errQuery)
 	}
@@ -961,13 +943,14 @@ func (db *Store) GetBansSteam(ctx context.Context, filter SteamBansQueryFilter) 
 			targetID int64
 		)
 
-		if errScan := rows.Scan(&person.BanID, &targetID, &sourceID, &person.BanType, &person.Reason,
-			&person.ReasonText, &person.Note, &person.Origin, &person.ValidUntil, &person.CreatedOn,
-			&person.UpdatedOn, &person.IncludeFriends, &person.Deleted, &person.ReportID, &person.UnbanReasonText,
-			&person.IsEnabled, &person.AppealState,
-			&person.SourceTarget.SourcePersonaname, &person.SourceTarget.SourceAvatarhash,
-			&person.SourceTarget.TargetPersonaname, &person.SourceTarget.TargetAvatarhash,
-			&person.CommunityBanned, &person.VacBans, &person.GameBans); errScan != nil {
+		if errScan := rows.
+			Scan(&person.BanID, &targetID, &sourceID, &person.BanType, &person.Reason,
+				&person.ReasonText, &person.Note, &person.Origin, &person.ValidUntil, &person.CreatedOn,
+				&person.UpdatedOn, &person.IncludeFriends, &person.Deleted, &person.ReportID, &person.UnbanReasonText,
+				&person.IsEnabled, &person.AppealState,
+				&person.SourceTarget.SourcePersonaname, &person.SourceTarget.SourceAvatarhash,
+				&person.SourceTarget.TargetPersonaname, &person.SourceTarget.TargetAvatarhash,
+				&person.CommunityBanned, &person.VacBans, &person.GameBans); errScan != nil {
 			return nil, 0, Err(errScan)
 		}
 
@@ -985,29 +968,22 @@ func (db *Store) GetBansSteam(ctx context.Context, filter SteamBansQueryFilter) 
 }
 
 func (db *Store) GetBansOlderThan(ctx context.Context, filter QueryFilter, since time.Time) ([]BanSteam, error) {
-	query, args, queryErr := db.sb.
+	query := db.sb.
 		Select("b.ban_id", "b.target_id", "b.source_id", "b.ban_type", "b.reason",
 			"b.reason_text", "b.note", "b.origin", "b.valid_until", "b.created_on", "b.updated_on", "b.deleted",
 			"case WHEN b.report_id is null THEN 0 ELSE b.report_id END", "b.unban_reason_text", "b.is_enabled",
 			"b.appeal_state", "b.include_friends").
 		From("ban b").
-		Where(sq.And{sq.Lt{"updated_on": since}, sq.Eq{"deleted": false}}).
-		Limit(filter.Limit).
-		Offset(filter.Offset).
-		ToSql()
+		Where(sq.And{sq.Lt{"updated_on": since}, sq.Eq{"deleted": false}})
 
-	if queryErr != nil {
-		return nil, Err(queryErr)
-	}
-
-	bans := []BanSteam{}
-
-	rows, errQuery := db.Query(ctx, query, args...)
+	rows, errQuery := db.QueryBuilder(ctx, filter.applyLimitOffsetDefault(query))
 	if errQuery != nil {
 		return nil, errQuery
 	}
 
 	defer rows.Close()
+
+	bans := []BanSteam{}
 
 	for rows.Next() {
 		var (
@@ -1054,20 +1030,16 @@ func (db *Store) SaveBanMessage(ctx context.Context, message *UserMessage) error
 }
 
 func (db *Store) updateBanMessage(ctx context.Context, message *UserMessage) error {
-	const query = `
-	UPDATE ban_appeal
-	SET deleted = $2, author_id = $3, updated_on = $4, message_md = $5
-	WHERE ban_message_id = $1`
-
 	message.UpdatedOn = time.Now()
 
-	if errQuery := db.Exec(ctx, query,
-		message.MessageID,
-		message.Deleted,
-		message.AuthorID.Int64(),
-		message.UpdatedOn,
-		message.Contents,
-	); errQuery != nil {
+	query := db.sb.Update("ban_appeal").
+		Set("deleted", message.Deleted).
+		Set("author_id", message.AuthorID.Int64()).
+		Set("updated_on", message.UpdatedOn).
+		Set("message_md", message.Contents).
+		Where(sq.Eq{"ban_message_id": message.MessageID})
+
+	if errQuery := db.ExecUpdateBuilder(ctx, query); errQuery != nil {
 		return Err(errQuery)
 	}
 
@@ -1108,14 +1080,13 @@ func (db *Store) insertBanMessage(ctx context.Context, message *UserMessage) err
 }
 
 func (db *Store) GetBanMessages(ctx context.Context, banID int64) ([]UserMessage, error) {
-	const query = `
-	SELECT
-	ban_message_id, ban_id, author_id, message_md, deleted, created_on, updated_on
-	FROM ban_appeal
-	WHERE deleted = false AND ban_id = $1
-	ORDER BY created_on`
+	query := db.sb.
+		Select("ban_message_id", "ban_id", "author_id", "message_md", "deleted", "created_on", "updated_on").
+		From("ban_appeal").
+		Where(sq.And{sq.Eq{"deleted": false}, sq.Eq{"ban_id": banID}}).
+		OrderBy("created_on")
 
-	rows, errQuery := db.Query(ctx, query, banID)
+	rows, errQuery := db.QueryBuilder(ctx, query)
 	if errQuery != nil {
 		if errors.Is(Err(errQuery), ErrNoResult) {
 			return nil, nil
@@ -1153,14 +1124,19 @@ func (db *Store) GetBanMessages(ctx context.Context, banID int64) ([]UserMessage
 }
 
 func (db *Store) GetBanMessageByID(ctx context.Context, banMessageID int, message *UserMessage) error {
-	const query = `
-	SELECT
-		ban_message_id, ban_id, author_id, message_md, deleted, created_on, updated_on
-	FROM ban_appeal
-	WHERE ban_message_id = $1`
+	query := db.sb.
+		Select("ban_message_id", "ban_id", "author_id", "message_md", "deleted", "created_on", "updated_on").
+		From("ban_appeal").
+		Where(sq.Eq{"ban_message_id": banMessageID})
 
 	var authorID int64
-	if errQuery := db.QueryRow(ctx, query, banMessageID).Scan(
+
+	row, errQuery := db.QueryRowBuilder(ctx, query)
+	if errQuery != nil {
+		return errQuery
+	}
+
+	if errScan := row.Scan(
 		&message.MessageID,
 		&message.ParentID,
 		&authorID,
@@ -1168,8 +1144,8 @@ func (db *Store) GetBanMessageByID(ctx context.Context, banMessageID int, messag
 		&message.Deleted,
 		&message.CreatedOn,
 		&message.UpdatedOn,
-	); errQuery != nil {
-		return Err(errQuery)
+	); errScan != nil {
+		return Err(errScan)
 	}
 
 	message.AuthorID = steamid.New(authorID)
@@ -1178,8 +1154,12 @@ func (db *Store) GetBanMessageByID(ctx context.Context, banMessageID int, messag
 }
 
 func (db *Store) DropBanMessage(ctx context.Context, message *UserMessage) error {
-	const q = `UPDATE ban_appeal SET deleted = true WHERE ban_message_id = $1`
-	if errExec := db.Exec(ctx, q, message.MessageID); errExec != nil {
+	query := db.sb.
+		Update("ban_appeal").
+		Set("deleted", true).
+		Where(sq.Eq{"ban_message_id": message.MessageID})
+
+	if errExec := db.ExecUpdateBuilder(ctx, query); errExec != nil {
 		return Err(errExec)
 	}
 
@@ -1190,11 +1170,11 @@ func (db *Store) DropBanMessage(ctx context.Context, message *UserMessage) error
 }
 
 func (db *Store) GetBanGroup(ctx context.Context, groupID steamid.GID, banGroup *BanGroup) error {
-	const query = `
-	SELECT ban_group_id, source_id, target_id, group_name, is_enabled, deleted,
-	note, unban_reason_text, origin, created_on, updated_on, valid_until, appeal_state, group_id
-	FROM ban_group
-	WHERE group_id = $1 AND deleted = false`
+	query := db.sb.
+		Select("ban_group_id", "source_id", "target_id", "group_name", "is_enabled", "deleted",
+			"note", "unban_reason_text", "origin", "created_on", "updated_on", "valid_until", "appeal_state", "group_id").
+		From("ban_group").
+		Where(sq.And{sq.Eq{"group_id": groupID.Int64()}, sq.Eq{"deleted": false}})
 
 	var (
 		sourceID   int64
@@ -1202,24 +1182,15 @@ func (db *Store) GetBanGroup(ctx context.Context, groupID steamid.GID, banGroup 
 		newGroupID int64
 	)
 
-	errQuery := db.QueryRow(ctx, query, groupID.Int64()).
-		Scan(
-			&banGroup.BanGroupID,
-			&sourceID,
-			&targetID,
-			&banGroup.GroupName,
-			&banGroup.IsEnabled,
-			&banGroup.Deleted,
-			&banGroup.Note,
-			&banGroup.UnbanReasonText,
-			&banGroup.Origin,
-			&banGroup.CreatedOn,
-			&banGroup.UpdatedOn,
-			&banGroup.ValidUntil,
-			&banGroup.AppealState,
-			&newGroupID)
+	row, errQuery := db.QueryRowBuilder(ctx, query)
 	if errQuery != nil {
-		return Err(errQuery)
+		return errQuery
+	}
+
+	if errScan := row.Scan(&banGroup.BanGroupID, &sourceID, &targetID, &banGroup.GroupName, &banGroup.IsEnabled,
+		&banGroup.Deleted, &banGroup.Note, &banGroup.UnbanReasonText, &banGroup.Origin, &banGroup.CreatedOn,
+		&banGroup.UpdatedOn, &banGroup.ValidUntil, &banGroup.AppealState, &newGroupID); errScan != nil {
+		return Err(errScan)
 	}
 
 	banGroup.SourceID = steamid.New(sourceID)
@@ -1230,11 +1201,11 @@ func (db *Store) GetBanGroup(ctx context.Context, groupID steamid.GID, banGroup 
 }
 
 func (db *Store) GetBanGroupByID(ctx context.Context, banGroupID int64, banGroup *BanGroup) error {
-	const query = `
-	SELECT ban_group_id, source_id, target_id, group_name, is_enabled, deleted,
-	note, unban_reason_text, origin, created_on, updated_on, valid_until, appeal_state, group_id
-	FROM ban_group
-	WHERE ban_group_id = $1 AND is_enabled = true AND deleted = false`
+	query := db.sb.
+		Select("ban_group_id", "source_id", "target_id", "group_name", "is_enabled", "deleted",
+			"note", "unban_reason_text", "origin", "created_on", "updated_on", "valid_until", "appeal_state", "group_id").
+		From("ban_group").
+		Where(sq.And{sq.Eq{"ban_group_id": banGroupID}, sq.Eq{"is_enabled": true}, sq.Eq{"deleted": false}})
 
 	var (
 		groupID  int64
@@ -1242,24 +1213,27 @@ func (db *Store) GetBanGroupByID(ctx context.Context, banGroupID int64, banGroup
 		targetID int64
 	)
 
-	errQuery := db.QueryRow(ctx, query, banGroupID).
-		Scan(
-			&banGroup.BanGroupID,
-			&sourceID,
-			&targetID,
-			&banGroup.GroupName,
-			&banGroup.IsEnabled,
-			&banGroup.Deleted,
-			&banGroup.Note,
-			&banGroup.UnbanReasonText,
-			&banGroup.Origin,
-			&banGroup.CreatedOn,
-			&banGroup.UpdatedOn,
-			&banGroup.ValidUntil,
-			&banGroup.AppealState,
-			&groupID)
+	row, errQuery := db.QueryRowBuilder(ctx, query)
 	if errQuery != nil {
-		return Err(errQuery)
+		return errQuery
+	}
+
+	if errScan := row.Scan(
+		&banGroup.BanGroupID,
+		&sourceID,
+		&targetID,
+		&banGroup.GroupName,
+		&banGroup.IsEnabled,
+		&banGroup.Deleted,
+		&banGroup.Note,
+		&banGroup.UnbanReasonText,
+		&banGroup.Origin,
+		&banGroup.CreatedOn,
+		&banGroup.UpdatedOn,
+		&banGroup.ValidUntil,
+		&banGroup.AppealState,
+		&groupID); errScan != nil {
+		return Err(errScan)
 	}
 
 	banGroup.SourceID = steamid.New(sourceID)
@@ -1321,27 +1295,18 @@ func (db *Store) GetBanGroups(ctx context.Context, filter GroupBansQueryFilter) 
 		constraints = append(constraints, sq.Eq{"b.source_id": sourceID.Int64()})
 	}
 
-	builder = applySafeOrder(builder, filter.QueryFilter, map[string][]string{
-		"b.": {"ban_group_id", "source_id", "target_id", "group_name", "is_enabled", "deleted",
-			"origin", "created_on", "updated_on", "valid_until", "appeal_state", "group_id"},
+	builder = filter.QueryFilter.applySafeOrder(builder, map[string][]string{
+		"b.": {
+			"ban_group_id", "source_id", "target_id", "group_name", "is_enabled", "deleted",
+			"origin", "created_on", "updated_on", "valid_until", "appeal_state", "group_id",
+		},
 		"s.": {"source_personaname"},
 		"t.": {"target_personaname", "community_banned", "vac_bans", "game_bans"},
 	}, "ban_group_id")
 
-	if filter.Limit > 0 {
-		builder = builder.Limit(filter.Limit)
-	}
+	builder = filter.applyLimitOffsetDefault(builder).Where(constraints)
 
-	if filter.Offset > 0 {
-		builder = builder.Offset(filter.Offset)
-	}
-
-	query, args, errQuery := builder.Where(constraints).ToSql()
-	if errQuery != nil {
-		return nil, 0, Err(errQuery)
-	}
-
-	rows, errRows := db.Query(ctx, query, args...)
+	rows, errRows := db.QueryBuilder(ctx, builder)
 	if errRows != nil {
 		if errors.Is(errRows, ErrNoResult) {
 			return []BannedGroupPerson{}, 0, nil
@@ -1430,18 +1395,15 @@ func NewMembersList(parentID int64, members steamid.Collection) MembersList {
 }
 
 func (db *Store) GetMembersList(ctx context.Context, parentID int64, list *MembersList) error {
-	query, args, errQuery := db.sb.
+	row, err := db.QueryRowBuilder(ctx, db.sb.
 		Select("members_id", "parent_id", "members", "created_on", "updated_on").
 		From("members").
-		Where(sq.Eq{"parent_id": parentID}).
-		ToSql()
-	if errQuery != nil {
-		return Err(errQuery)
+		Where(sq.Eq{"parent_id": parentID}))
+	if err != nil {
+		return err
 	}
 
-	return Err(db.
-		QueryRow(ctx, query, args...).
-		Scan(&list.MembersID, &list.ParentID, &list.Members, &list.CreatedOn, &list.UpdatedOn))
+	return Err(row.Scan(&list.MembersID, &list.ParentID, &list.Members, &list.CreatedOn, &list.UpdatedOn))
 }
 
 func (db *Store) SaveMembersList(ctx context.Context, list *MembersList) error {
@@ -1482,17 +1444,23 @@ func (db *Store) insertBanGroup(ctx context.Context, banGroup *BanGroup) error {
 }
 
 func (db *Store) updateBanGroup(ctx context.Context, banGroup *BanGroup) error {
-	const query = `
-	UPDATE ban_group
-	SET source_id = $2, target_id = $3, group_name = $4, is_enabled = $5, deleted = $6, note = $7, unban_reason_text = $8,
-	origin = $9, updated_on = $10, group_id = $11, valid_until = $12, appeal_state = $13
-	WHERE ban_group_id = $1`
-
 	banGroup.UpdatedOn = time.Now()
 
-	return Err(db.Exec(ctx, query, banGroup.BanGroupID, banGroup.SourceID.Int64(), banGroup.TargetID.Int64(),
-		banGroup.GroupName, banGroup.IsEnabled, banGroup.Deleted, banGroup.Note, banGroup.UnbanReasonText,
-		banGroup.Origin, banGroup.UpdatedOn, banGroup.GroupID.Int64(), banGroup.ValidUntil, banGroup.AppealState))
+	return Err(db.ExecUpdateBuilder(ctx, db.sb.
+		Update("ban_group").
+		Set("source_id", banGroup.SourceID.Int64()).
+		Set("target_id", banGroup.TargetID.Int64()).
+		Set("group_name", banGroup.GroupName).
+		Set("is_enabled", banGroup.IsEnabled).
+		Set("deleted", banGroup.Deleted).
+		Set("note", banGroup.Note).
+		Set("unban_reason_text", banGroup.UnbanReasonText).
+		Set("origin", banGroup.Origin).
+		Set("updated_on", banGroup.UpdatedOn).
+		Set("group_id", banGroup.GroupID.Int64()).
+		Set("valid_until", banGroup.ValidUntil).
+		Set("appeal_state", banGroup.AppealState).
+		Where(sq.Eq{"ban_group_id": banGroup.BanGroupID})))
 }
 
 func (db *Store) DropBanGroup(ctx context.Context, banGroup *BanGroup) error {

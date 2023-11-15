@@ -1324,18 +1324,12 @@ func (db *Store) Matches(ctx context.Context, opts MatchesQueryOpts) ([]MatchSum
 		countBuilder = countBuilder.Where(sq.Eq{"mp.steam_id": opts.SteamID.Int64()})
 	}
 
-	builder = applySafeOrder(builder, opts.QueryFilter, map[string][]string{
+	builder = opts.QueryFilter.applySafeOrder(builder, map[string][]string{
 		"":   {"winner"},
 		"m.": {"match_id", "server_id", "map", "score_blu", "score_red", "time_start", "time_end"},
 	}, "match_id")
 
-	if opts.Limit > 0 {
-		builder = builder.Limit(opts.Limit)
-	}
-
-	if opts.Offset > 0 {
-		builder = builder.Offset(opts.Offset)
-	}
+	builder = opts.applyLimitOffsetDefault(builder)
 
 	countQuery, countArgs, errCountArgs := countBuilder.ToSql()
 	if errCountArgs != nil {
@@ -1350,12 +1344,7 @@ func (db *Store) Matches(ctx context.Context, opts MatchesQueryOpts) ([]MatchSum
 		return nil, 0, Err(errCount)
 	}
 
-	query, args, errQueryArgs := builder.ToSql()
-	if errQueryArgs != nil {
-		return nil, 0, errors.Wrapf(errQueryArgs, "Failed to build query")
-	}
-
-	rows, errQuery := db.Query(ctx, query, args...)
+	rows, errQuery := db.QueryBuilder(ctx, builder)
 	if errQuery != nil {
 		return nil, 0, errors.Wrapf(errQuery, "Failed to query matches")
 	}

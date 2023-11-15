@@ -225,16 +225,9 @@ type PersonMessage struct {
 type PersonMessages []PersonMessage
 
 func (db *Store) DropPerson(ctx context.Context, steamID steamid.SID64) error {
-	query, args, errQueryArgs := db.sb.Delete("person").Where(sq.Eq{"steam_id": steamID.Int64()}).ToSql()
-	if errQueryArgs != nil {
-		return errors.Wrapf(errQueryArgs, "Failed to create query")
-	}
-
-	if errExec := db.Exec(ctx, query, args...); errExec != nil {
-		return Err(errExec)
-	}
-
-	return nil
+	return db.ExecDeleteBuilder(ctx, db.sb.
+		Delete("person").
+		Where(sq.Eq{"steam_id": steamID.Int64()}))
 }
 
 // SavePerson will insert or update the person record.
@@ -536,13 +529,15 @@ func (db *Store) GetPeople(ctx context.Context, filter PlayerQuery) (People, int
 		builder = builder.Offset(filter.Offset * limit)
 	}
 
-	builder = applySafeOrder(builder, filter.QueryFilter, map[string][]string{
-		"p.": {"steam_id", "created_on", "updated_on",
+	builder = filter.QueryFilter.applySafeOrder(builder, map[string][]string{
+		"p.": {
+			"steam_id", "created_on", "updated_on",
 			"communityvisibilitystate", "profilestate", "personaname", "profileurl", "avatar",
 			"avatarmedium", "avatarfull", "avatarhash", "personastate", "realname", "timecreated",
 			"loccountrycode", "locstatecode", "loccityid", "p.permission_level", "discord_id",
 			"community_banned", "vac_bans", "game_bans", "economy_ban", "days_since_last_ban",
-			"updated_on_steam", "muted"},
+			"updated_on_steam", "muted",
+		},
 	}, "steam_id")
 
 	query, args, errQueryArgs := builder.Where(conditions).ToSql()
@@ -767,7 +762,7 @@ func (db *Store) QueryConnectionHistory(ctx context.Context, opts ConnectionHist
 		constraints = append(constraints, sq.Eq{"c.steam_id": sid.Int64()})
 	}
 
-	builder = applySafeOrder(builder, opts.QueryFilter, map[string][]string{
+	builder = opts.QueryFilter.applySafeOrder(builder, map[string][]string{
 		"c.": {"person_connection_id", "steam_id", "ip_addr", "persona_name", "created_on"},
 	}, "person_connection_id")
 
@@ -881,7 +876,7 @@ func (db *Store) QueryChatHistory(ctx context.Context, filters ChatHistoryQueryF
 		LeftJoin("filtered_word f USING(filter_id)").
 		LeftJoin("person p USING(steam_id)")
 
-	builder = applySafeOrder(builder, filters.QueryFilter, map[string][]string{
+	builder = filters.QueryFilter.applySafeOrder(builder, map[string][]string{
 		"m.": {"persona_name", "person_message_id"},
 	}, "person_message_id")
 

@@ -7,15 +7,10 @@ import (
 )
 
 func (db *Store) SetPatreonAuth(ctx context.Context, accessToken string, refreshToken string) error {
-	query, args, errQuery := db.sb.
+	return Err(db.ExecUpdateBuilder(ctx, db.sb.
 		Update("patreon_auth").
 		Set("creator_access_token", accessToken).
-		Set("creator_refresh_token", refreshToken).ToSql()
-	if errQuery != nil {
-		return errors.Wrap(errQuery, "Failed to create patreon auth update query")
-	}
-
-	return Err(db.Exec(ctx, query, args...))
+		Set("creator_refresh_token", refreshToken)))
 }
 
 func (db *Store) GetPatreonAuth(ctx context.Context) (string, string, error) {

@@ -20,26 +20,23 @@ type NewsEntry struct {
 }
 
 func (db *Store) GetNewsLatest(ctx context.Context, limit int, includeUnpublished bool) ([]NewsEntry, error) {
-	var articles []NewsEntry
-
 	builder := db.sb.Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
 		From("news").
-		OrderBy("created_on DESC")
+		OrderBy("created_on DESC").
+		Limit(uint64(limit))
+
 	if !includeUnpublished {
 		builder = builder.Where(sq.Eq{"is_published": true})
 	}
 
-	query, args, errQueryArgs := builder.Limit(uint64(limit)).ToSql()
-	if errQueryArgs != nil {
-		return nil, Err(errQueryArgs)
-	}
-
-	rows, errQuery := db.Query(ctx, query, args...)
+	rows, errQuery := db.QueryBuilder(ctx, builder)
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}
 
 	defer rows.Close()
+
+	var articles []NewsEntry
 
 	for rows.Next() {
 		var entry NewsEntry
@@ -118,18 +115,13 @@ func (db *Store) insertNewsArticle(ctx context.Context, entry *NewsEntry) error 
 }
 
 func (db *Store) updateNewsArticle(ctx context.Context, entry *NewsEntry) error {
-	query, args, errQueryArgs := db.sb.Update("news").
+	if errExec := db.ExecUpdateBuilder(ctx, db.sb.
+		Update("news").
 		Set("title", entry.Title).
 		Set("body_md", entry.BodyMD).
 		Set("is_published", entry.IsPublished).
 		Set("updated_on", time.Now()).
-		Where(sq.Eq{"news_id": entry.NewsID}).
-		ToSql()
-	if errQueryArgs != nil {
-		return errors.Wrapf(errQueryArgs, "Failed to create query")
-	}
-
-	if errExec := db.Exec(ctx, query, args...); errExec != nil {
+		Where(sq.Eq{"news_id": entry.NewsID})); errExec != nil {
 		return errors.Wrapf(errExec, "Failed to update article")
 	}
 
@@ -139,12 +131,9 @@ func (db *Store) updateNewsArticle(ctx context.Context, entry *NewsEntry) error 
 }
 
 func (db *Store) DropNewsArticle(ctx context.Context, newsID int) error {
-	query, args, errQueryArgs := db.sb.Delete("news").Where(sq.Eq{"news_id": newsID}).ToSql()
-	if errQueryArgs != nil {
-		return errors.Wrapf(errQueryArgs, "Failed to create query")
-	}
-
-	if errExec := db.Exec(ctx, query, args...); errExec != nil {
+	if errExec := db.ExecDeleteBuilder(ctx, db.sb.
+		Delete("news").
+		Where(sq.Eq{"news_id": newsID})); errExec != nil {
 		return Err(errExec)
 	}
 

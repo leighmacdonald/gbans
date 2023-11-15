@@ -148,47 +148,35 @@ func (db *Store) ContestByID(ctx context.Context, contestID uuid.UUID, contest *
 		return errors.New("Invalid contest id")
 	}
 
-	query, args := db.sb.
+	query := db.sb.
 		Select("contest_id", "title", "public", "description", "date_start",
 			"date_end", "max_submissions", "media_types", "deleted", "voting", "min_permission_level", "down_votes",
 			"created_on", "updated_on", "hide_submissions").
 		From("contest").
-		Where(sq.And{sq.Eq{"deleted": false}, sq.Eq{"contest_id": contestID.String()}}).
-		MustSql()
+		Where(sq.And{sq.Eq{"deleted": false}, sq.Eq{"contest_id": contestID.String()}})
 
-	if errScan := db.QueryRow(ctx, query, args...).
-		Scan(&contest.ContestID, &contest.Title, &contest.Public, &contest.Description,
-			&contest.DateStart, &contest.DateEnd, &contest.MaxSubmissions, &contest.MediaTypes,
-			&contest.Deleted, &contest.Voting, &contest.MinPermissionLevel, &contest.DownVotes,
-			&contest.CreatedOn, &contest.UpdatedOn, &contest.HideSubmissions); errScan != nil {
-		return Err(errScan)
+	row, errQuery := db.QueryRowBuilder(ctx, query)
+	if errQuery != nil {
+		return errQuery
 	}
 
-	return nil
+	return Err(row.Scan(&contest.ContestID, &contest.Title, &contest.Public, &contest.Description,
+		&contest.DateStart, &contest.DateEnd, &contest.MaxSubmissions, &contest.MediaTypes,
+		&contest.Deleted, &contest.Voting, &contest.MinPermissionLevel, &contest.DownVotes,
+		&contest.CreatedOn, &contest.UpdatedOn, &contest.HideSubmissions))
 }
 
 func (db *Store) ContestDelete(ctx context.Context, contestID uuid.UUID) error {
-	const query = `
-		UPDATE contest SET deleted = true 
-    	WHERE contest_id = $1`
-
-	if errExec := db.Exec(ctx, query, contestID); errExec != nil {
-		return Err(errExec)
-	}
-
-	return nil
+	return db.ExecUpdateBuilder(ctx, db.sb.
+		Update("contest").
+		Set("deleted", true).
+		Where(sq.Eq{"contest_id": contestID}))
 }
 
 func (db *Store) ContestEntryDelete(ctx context.Context, contestEntryID uuid.UUID) error {
-	const query = `
-		DELETE FROM contest_entry 
-    	WHERE contest_entry_id = $1`
-
-	if errExec := db.Exec(ctx, query, contestEntryID); errExec != nil {
-		return Err(errExec)
-	}
-
-	return nil
+	return db.ExecDeleteBuilder(ctx, db.sb.
+		Delete("contest_entry").
+		Where(sq.Eq{"contest_entry_id": contestEntryID}))
 }
 
 func (db *Store) Contests(ctx context.Context, publicOnly bool) ([]Contest, error) {
@@ -209,12 +197,7 @@ func (db *Store) Contests(ctx context.Context, publicOnly bool) ([]Contest, erro
 		ands = append(ands, sq.Eq{"c.public": true})
 	}
 
-	query, args, errQuery := builder.Where(ands).ToSql()
-	if errQuery != nil {
-		return nil, Err(errQuery)
-	}
-
-	rows, errRows := db.Query(ctx, query, args...)
+	rows, errRows := db.QueryBuilder(ctx, builder.Where(ands))
 	if errRows != nil {
 		if errors.Is(errRows, ErrNoResult) {
 			return contests, nil
@@ -241,23 +224,12 @@ func (db *Store) Contests(ctx context.Context, publicOnly bool) ([]Contest, erro
 }
 
 func (db *Store) ContestEntrySave(ctx context.Context, entry ContestEntry) error {
-	query, args, errQuery := db.sb.
+	return db.ExecInsertBuilder(ctx, db.sb.
 		Insert("contest_entry").
 		Columns("contest_entry_id", "contest_id", "steam_id", "asset_id", "description",
 			"placement", "deleted", "created_on", "updated_on").
 		Values(entry.ContestEntryID, entry.ContestID, entry.SteamID, entry.AssetID, entry.Description,
-			entry.Placement, entry.Deleted, entry.CreatedOn, entry.UpdatedOn).
-		ToSql()
-
-	if errQuery != nil {
-		return Err(errQuery)
-	}
-
-	if errExec := db.Exec(ctx, query, args...); errExec != nil {
-		return Err(errExec)
-	}
-
-	return nil
+			entry.Placement, entry.Deleted, entry.CreatedOn, entry.UpdatedOn))
 }
 
 func (db *Store) ContestSave(ctx context.Context, contest *Contest) error {
@@ -276,7 +248,7 @@ func (db *Store) ContestSave(ctx context.Context, contest *Contest) error {
 }
 
 func (db *Store) contestInsert(ctx context.Context, contest *Contest) error {
-	query, args, errQuery := db.sb.
+	query := db.sb.
 		Insert("contest").
 		Columns("contest_id", "title", "public", "description", "date_start",
 			"date_end", "max_submissions", "media_types", "deleted", "voting", "min_permission_level", "down_votes",
@@ -284,14 +256,9 @@ func (db *Store) contestInsert(ctx context.Context, contest *Contest) error {
 		Values(contest.ContestID, contest.Title, contest.Public, contest.Description, contest.DateStart,
 			contest.DateEnd, contest.MaxSubmissions, contest.MediaTypes, contest.Deleted,
 			contest.Voting, contest.MinPermissionLevel, contest.DownVotes,
-			contest.CreatedOn, contest.UpdatedOn, contest.HideSubmissions).
-		ToSql()
+			contest.CreatedOn, contest.UpdatedOn, contest.HideSubmissions)
 
-	if errQuery != nil {
-		return Err(errQuery)
-	}
-
-	if errExec := db.Exec(ctx, query, args...); errExec != nil {
+	if errExec := db.ExecInsertBuilder(ctx, query); errExec != nil {
 		return Err(errExec)
 	}
 
@@ -303,7 +270,7 @@ func (db *Store) contestInsert(ctx context.Context, contest *Contest) error {
 func (db *Store) contestUpdate(ctx context.Context, contest *Contest) error {
 	contest.UpdatedOn = time.Now()
 
-	query, args, errQuery := db.sb.
+	return db.ExecUpdateBuilder(ctx, db.sb.
 		Update("contest").
 		Set("title", contest.Title).
 		Set("public", contest.Public).
@@ -318,18 +285,7 @@ func (db *Store) contestUpdate(ctx context.Context, contest *Contest) error {
 		Set("media_types", contest.MediaTypes).
 		Set("deleted", contest.Deleted).
 		Set("updated_on", contest.UpdatedOn).
-		Where(sq.Eq{"contest_id": contest.ContestID}).
-		ToSql()
-
-	if errQuery != nil {
-		return Err(errQuery)
-	}
-
-	if errExec := db.Exec(ctx, query, args...); errExec != nil {
-		return Err(errExec)
-	}
-
-	return nil
+		Where(sq.Eq{"contest_id": contest.ContestID}))
 }
 
 func (db *Store) ContestEntry(ctx context.Context, contestID uuid.UUID, entry *ContestEntry) error {
@@ -453,21 +409,21 @@ type ContentVoteRecord struct {
 }
 
 func (db *Store) ContestEntryVoteGet(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SID64, record *ContentVoteRecord) error {
-	query, args, errQuery := db.sb.
+	query := db.sb.
 		Select("contest_entry_vote_id", "contest_entry_id", "steam_id",
 			"vote", "created_on", "updated_on").
 		From("contest_entry_vote").
-		Where(sq.And{sq.Eq{"contest_entry_id": contestEntryID}, sq.Eq{"steam_id": steamID}}).
-		ToSql()
+		Where(sq.And{sq.Eq{"contest_entry_id": contestEntryID}, sq.Eq{"steam_id": steamID}})
+
+	row, errQuery := db.QueryRowBuilder(ctx, query)
 	if errQuery != nil {
-		return Err(errQuery)
+		return errQuery
 	}
 
-	if errExec := db.
-		QueryRow(ctx, query, args...).
+	if errScan := row.
 		Scan(&record.ContestEntryVoteID, &record.ContestEntryID,
-			&record.SteamID, &record.Vote, &record.CreatedOn, &record.UpdatedOn); errExec != nil {
-		return Err(errExec)
+			&record.SteamID, &record.Vote, &record.CreatedOn, &record.UpdatedOn); errScan != nil {
+		return Err(errScan)
 	}
 
 	return nil
@@ -491,19 +447,10 @@ func (db *Store) ContestEntryVote(ctx context.Context, contestEntryID uuid.UUID,
 
 		now := time.Now()
 
-		query, args, errQuery := db.sb.
+		return db.ExecInsertBuilder(ctx, db.sb.
 			Insert("contest_entry_vote").
 			Columns("contest_entry_id", "steam_id", "vote", "created_on", "updated_on").
-			Values(contestEntryID, steamID, vote, now, now).ToSql()
-		if errQuery != nil {
-			return Err(errQuery)
-		}
-
-		if errExec := db.Exec(ctx, query, args...); errExec != nil {
-			return errExec
-		}
-
-		return nil
+			Values(contestEntryID, steamID, vote, now, now))
 	}
 
 	if record.Vote == vote {
@@ -523,35 +470,15 @@ func (db *Store) ContestEntryVote(ctx context.Context, contestEntryID uuid.UUID,
 }
 
 func (db *Store) ContestEntryVoteDelete(ctx context.Context, contestEntryVoteID int64) error {
-	query, args, errQuery := db.sb.
+	return db.ExecDeleteBuilder(ctx, db.sb.
 		Delete("contest_entry_vote").
-		Where(sq.Eq{"contest_entry_vote_id": contestEntryVoteID}).
-		ToSql()
-	if errQuery != nil {
-		return Err(errQuery)
-	}
-
-	if errExec := db.Exec(ctx, query, args...); errExec != nil {
-		return errExec
-	}
-
-	return nil
+		Where(sq.Eq{"contest_entry_vote_id": contestEntryVoteID}))
 }
 
 func (db *Store) ContestEntryVoteUpdate(ctx context.Context, contestEntryVoteID int64, newVote bool) error {
-	query, args, errQuery := db.sb.
+	return db.ExecUpdateBuilder(ctx, db.sb.
 		Update("contest_entry_vote").
 		Set("vote", newVote).
 		Set("updated_on", time.Now()).
-		Where(sq.Eq{"contest_entry_vote_id": contestEntryVoteID}).
-		ToSql()
-	if errQuery != nil {
-		return Err(errQuery)
-	}
-
-	if errExec := db.Exec(ctx, query, args...); errExec != nil {
-		return errExec
-	}
-
-	return nil
+		Where(sq.Eq{"contest_entry_vote_id": contestEntryVoteID}))
 }
