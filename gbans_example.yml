@@ -1,7 +1,7 @@
 general:
   # The site name. Shows in the copyright footer, in the title bar, and as the "logo" text.
   site_name: "gbans"
-  # Web API key from https://steamcommunity.com/dev. Be awqare that each Steam account can only have one API key, which
+  # Web API key from https://steamcommunity.com/dev. Be aware that each Steam account can only have one API key, which
   # needs to be linked to a URL. The key can be used, theoretically, on multiple sites, but any rate limiting will be
   # shared amongst them all.
   steam_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -29,8 +29,8 @@ debug:
   add_rcon_log_address:
   # Skip validation of openid responses
   # This is mostly helpful to ignore mismatch hosts
-  skip_open_id_validation: true
-  # When receiving a unknown log line over udp it will get written to ./unhandled_messages.log
+  skip_open_id_validation: false
+  # When receiving an unknown log line over udp it will get written to ./unhandled_messages.log
   write_unhandled_log_events: true
 
 http:

@@ -84,47 +84,35 @@ func (s Server) Slots(statusSlots int) int {
 	return statusSlots - s.ReservedSlots
 }
 
-var columnsServer = []string{ //nolint:gochecknoglobals
-	"server_id", "short_name", "name", "address", "port", "rcon", "password",
-	"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
-	"latitude", "longitude", "deleted", "log_secret",
-}
-
 func (db *Store) GetServer(ctx context.Context, serverID int, server *Server) error {
-	query, args, errQuery := db.sb.Select(columnsServer...).
+	row, rowErr := db.QueryRowBuilder(ctx, db.sb.
+		Select("server_id", "short_name", "name", "address", "port", "rcon", "password",
+			"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
+			"latitude", "longitude", "deleted", "log_secret").
 		From(string(tableServer)).
-		Where(sq.And{sq.Eq{"server_id": serverID}, sq.Eq{"deleted": false}}).
-		ToSql()
-	if errQuery != nil {
-		return Err(errQuery)
+		Where(sq.And{sq.Eq{"server_id": serverID}, sq.Eq{"deleted": false}}))
+	if rowErr != nil {
+		return rowErr
 	}
 
-	if errRow := db.
-		QueryRow(ctx, query, args...).
-		Scan(&server.ServerID, &server.ShortName, &server.Name, &server.Address, &server.Port, &server.RCON,
-			&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn,
-			&server.ReservedSlots, &server.IsEnabled, &server.Region, &server.CC,
-			&server.Latitude, &server.Longitude,
-			&server.Deleted, &server.LogSecret); errRow != nil {
-		return Err(errRow)
+	if errScan := row.Scan(&server.ServerID, &server.ShortName, &server.Name, &server.Address, &server.Port, &server.RCON,
+		&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn,
+		&server.ReservedSlots, &server.IsEnabled, &server.Region, &server.CC,
+		&server.Latitude, &server.Longitude,
+		&server.Deleted, &server.LogSecret); errScan != nil {
+		return Err(errScan)
 	}
 
 	return nil
 }
 
 func (db *Store) GetServerPermissions(ctx context.Context) ([]ServerPermission, error) {
-	query, args, errQuery := db.sb.
+	rows, errRows := db.QueryBuilder(ctx, db.sb.
 		Select("steam_id", "permission_level").From("person").
 		Where(sq.GtOrEq{"permission_level": consts.PReserved}).
-		OrderBy("permission_level desc").
-		ToSql()
-	if errQuery != nil {
-		return nil, Err(errQuery)
-	}
-
-	rows, errRows := db.Query(ctx, query, args...)
+		OrderBy("permission_level desc"))
 	if errRows != nil {
-		return nil, Err(errRows)
+		return nil, errRows
 	}
 
 	defer rows.Close()
@@ -185,7 +173,7 @@ func (db *Store) GetServers(ctx context.Context, filter ServerQueryFilter) ([]Se
 		constraints = append(constraints, sq.Eq{"s.is_enabled": true})
 	}
 
-	builder = filter.QueryFilter.applySafeOrder(builder, map[string][]string{
+	builder = filter.applySafeOrder(builder, map[string][]string{
 		"s.": {
 			"server_id", "short_name", "name", "address", "port",
 			"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
@@ -193,20 +181,9 @@ func (db *Store) GetServers(ctx context.Context, filter ServerQueryFilter) ([]Se
 		},
 	}, "short_name")
 
-	if filter.Limit > 0 {
-		builder = builder.Limit(filter.Limit)
-	}
+	builder = filter.applyLimitOffset(builder, 250).Where(constraints)
 
-	if filter.Offset > 0 {
-		builder = builder.Offset(filter.Offset)
-	}
-
-	query, args, errQuery := builder.Where(constraints).ToSql()
-	if errQuery != nil {
-		return nil, 0, Err(errQuery)
-	}
-
-	rows, errQueryExec := db.Query(ctx, query, args...)
+	rows, errQueryExec := db.QueryBuilder(ctx, builder)
 	if errQueryExec != nil {
 		return []Server{}, 0, Err(errQueryExec)
 	}
@@ -253,27 +230,26 @@ func (db *Store) GetServerByName(ctx context.Context, serverName string, server 
 		and = append(and, sq.Eq{"deleted": false})
 	}
 
-	builder := db.sb.
-		Select(columnsServer...).
+	row, errRow := db.QueryRowBuilder(ctx, db.sb.
+		Select("server_id", "short_name", "name", "address", "port", "rcon", "password",
+			"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
+			"latitude", "longitude", "deleted", "log_secret").
 		From(string(tableServer)).
-		Where(and)
-
-	query, args, errQueryArgs := builder.ToSql()
-	if errQueryArgs != nil {
-		return Err(errQueryArgs)
+		Where(and))
+	if errRow != nil {
+		return errRow
 	}
 
-	return Err(db.QueryRow(ctx, query, args...).
-		Scan(
-			&server.ServerID,
-			&server.ShortName,
-			&server.Name,
-			&server.Address,
-			&server.Port,
-			&server.RCON,
-			&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn, &server.ReservedSlots,
-			&server.IsEnabled, &server.Region, &server.CC, &server.Latitude, &server.Longitude,
-			&server.Deleted, &server.LogSecret))
+	return Err(row.Scan(
+		&server.ServerID,
+		&server.ShortName,
+		&server.Name,
+		&server.Address,
+		&server.Port,
+		&server.RCON,
+		&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn, &server.ReservedSlots,
+		&server.IsEnabled, &server.Region, &server.CC, &server.Latitude, &server.Longitude,
+		&server.Deleted, &server.LogSecret))
 }
 
 // SaveServer updates or creates the server data in the database.
@@ -311,7 +287,8 @@ func (db *Store) insertServer(ctx context.Context, server *Server) error {
 func (db *Store) updateServer(ctx context.Context, server *Server) error {
 	server.UpdatedOn = time.Now()
 
-	query, args, errQueryArgs := db.sb.Update(string(tableServer)).
+	return db.ExecUpdateBuilder(ctx, db.sb.
+		Update("server").
 		Set("short_name", server.ShortName).
 		Set("name", server.Name).
 		Set("address", server.Address).
@@ -328,24 +305,12 @@ func (db *Store) updateServer(ctx context.Context, server *Server) error {
 		Set("latitude", server.Latitude).
 		Set("longitude", server.Longitude).
 		Set("log_secret", server.LogSecret).
-		Where(sq.Eq{"server_id": server.ServerID}).
-		ToSql()
-	if errQueryArgs != nil {
-		return Err(errQueryArgs)
-	}
-
-	if errExec := db.Exec(ctx, query, args...); errExec != nil {
-		return errors.Wrapf(errExec, "Failed to update server")
-	}
-
-	return nil
+		Where(sq.Eq{"server_id": server.ServerID}))
 }
 
 func (db *Store) DropServer(ctx context.Context, serverID int) error {
-	const query = `UPDATE server set deleted = true WHERE server_id = $1`
-	if errExec := db.Exec(ctx, query, serverID); errExec != nil {
-		return errExec
-	}
-
-	return nil
+	return db.ExecUpdateBuilder(ctx, db.sb.
+		Update("server").
+		Set("deleted", true).
+		Where(sq.Eq{"server_id": serverID}))
 }

@@ -53,36 +53,23 @@ type Media struct {
 }
 
 func (db *Store) GetWikiPageBySlug(ctx context.Context, slug string, page *wiki.Page) error {
-	query, args, errQueryArgs := db.sb.
+	row, errQuery := db.QueryRowBuilder(ctx, db.sb.
 		Select("slug", "body_md", "revision", "created_on", "updated_on").
 		From("wiki").
 		Where(sq.Eq{"lower(slug)": strings.ToLower(slug)}).
 		OrderBy("revision desc").
-		Limit(1).
-		ToSql()
-	if errQueryArgs != nil {
-		return Err(errQueryArgs)
+		Limit(1))
+	if errQuery != nil {
+		return errQuery
 	}
 
-	if errQuery := db.QueryRow(ctx, query, args...).Scan(&page.Slug, &page.BodyMD, &page.Revision,
-		&page.CreatedOn, &page.UpdatedOn); errQuery != nil {
-		return Err(errQuery)
-	}
-
-	return nil
+	return Err(row.Scan(&page.Slug, &page.BodyMD, &page.Revision, &page.CreatedOn, &page.UpdatedOn))
 }
 
 func (db *Store) DeleteWikiPageBySlug(ctx context.Context, slug string) error {
-	query, args, errQueryArgs := db.sb.
+	if errExec := db.ExecDeleteBuilder(ctx, db.sb.
 		Delete("wiki").
-		Where(sq.Eq{"slug": slug}).
-		ToSql()
-
-	if errQueryArgs != nil {
-		return errors.Wrap(errQueryArgs, "Failed to generate query")
-	}
-
-	if errExec := db.Exec(ctx, query, args...); errExec != nil {
+		Where(sq.Eq{"slug": slug})); errExec != nil {
 		return Err(errExec)
 	}
 
@@ -92,16 +79,10 @@ func (db *Store) DeleteWikiPageBySlug(ctx context.Context, slug string) error {
 }
 
 func (db *Store) SaveWikiPage(ctx context.Context, page *wiki.Page) error {
-	query, args, errQueryArgs := db.sb.
+	errQueryRow := db.ExecInsertBuilder(ctx, db.sb.
 		Insert("wiki").
 		Columns("slug", "body_md", "revision", "created_on", "updated_on").
-		Values(page.Slug, page.BodyMD, page.Revision, page.CreatedOn, page.UpdatedOn).
-		ToSql()
-	if errQueryArgs != nil {
-		return errors.Wrap(errQueryArgs, "Failed to generate query")
-	}
-
-	errQueryRow := db.Exec(ctx, query, args...)
+		Values(page.Slug, page.BodyMD, page.Revision, page.CreatedOn, page.UpdatedOn))
 	if errQueryRow != nil {
 		return Err(errQueryRow)
 	}
@@ -113,15 +94,17 @@ func (db *Store) SaveWikiPage(ctx context.Context, page *wiki.Page) error {
 
 func (db *Store) SaveMedia(ctx context.Context, media *Media) error {
 	if media.MediaID > 0 {
-		const query = `
-			UPDATE media 
-			SET author_id = $2, mime_type = $3, name = $4, contents = $5, size = $6, deleted = $7, updated_on = $8, asset_id = $9
-			WHERE media_id = $1`
-
-		if errQuery := db.Exec(ctx, query, media.MediaID, media.AuthorID, media.MimeType, media.Name,
-			media.Contents, media.Size, media.Deleted, media.UpdatedOn, media.Asset.AssetID); errQuery != nil {
-			return errQuery
-		}
+		return db.ExecUpdateBuilder(ctx, db.sb.
+			Update("media").
+			Set("author_id", media.AuthorID).
+			Set("mime_type", media.MimeType).
+			Set("name", media.Name).
+			Set("contents", media.Contents).
+			Set("size", media.Size).
+			Set("deleted", media.Deleted).
+			Set("updated_on", media.UpdatedOn).
+			Set("asset_id", media.Asset.AssetID).
+			Where(sq.Eq{"media_id": media.MediaID}))
 	} else {
 		const query = `
 		INSERT INTO media (
@@ -158,20 +141,22 @@ func (db *Store) SaveMedia(ctx context.Context, media *Media) error {
 }
 
 func (db *Store) GetMediaByAssetID(ctx context.Context, uuid uuid.UUID, media *Media) error {
-	const query = `
-		SELECT 
-		   m.media_id, m.author_id, m.name, m.size, m.mime_type, m.contents, m.deleted, m.created_on, m.updated_on,
-		   a.name, a.size, a.mime_type, a.path, a.bucket, a.old_id
-		FROM media m
-		LEFT JOIN asset a on a.asset_id = m.asset_id
-		WHERE deleted = false AND m.asset_id = $1`
+	row, errRow := db.QueryRowBuilder(ctx, db.sb.
+		Select("m.media_id", "m.author_id", "m.name", "m.size", "m.mime_type", "m.contents",
+			"m.deleted", "m.created_on", "m.updated_on", "a.name", "a.size", "a.mime_type", "a.path",
+			"a.bucket", "a.old_id").
+		From("media m").
+		LeftJoin("asset a USING(asset_id)").
+		Where(sq.And{sq.Eq{"deleted": false}, sq.Eq{"m.asset_id": uuid}}))
+	if errRow != nil {
+		return errRow
+	}
 
 	media.Asset = Asset{AssetID: uuid}
 
 	var authorID int64
 
-	if errRow := db.
-		QueryRow(ctx, query, uuid).Scan(
+	if errScan := row.Scan(
 		&media.MediaID,
 		&authorID,
 		&media.Name,
@@ -187,8 +172,8 @@ func (db *Store) GetMediaByAssetID(ctx context.Context, uuid uuid.UUID, media *M
 		&media.Asset.Path,
 		&media.Asset.Bucket,
 		&media.Asset.OldID,
-	); errRow != nil {
-		return Err(errRow)
+	); errScan != nil {
+		return Err(errScan)
 	}
 
 	media.AuthorID = steamid.New(authorID)
@@ -197,15 +182,18 @@ func (db *Store) GetMediaByAssetID(ctx context.Context, uuid uuid.UUID, media *M
 }
 
 func (db *Store) GetMediaByName(ctx context.Context, name string, media *Media) error {
-	const query = `
-		SELECT 
-		   media_id, author_id, name, size, mime_type, contents, deleted, created_on, updated_on
-		FROM media
-		WHERE deleted = false AND name = $1`
+	row, errRow := db.QueryRowBuilder(ctx, db.sb.
+		Select("media_id", "author_id", "name", "size", "mime_type", "contents", "deleted",
+			"created_on", "updated_on").
+		From("media").
+		Where(sq.And{sq.Eq{"deleted": false}, sq.Eq{"name": name}}))
+	if errRow != nil {
+		return errRow
+	}
 
 	var authorID int64
 
-	if errRow := db.QueryRow(ctx, query, name).Scan(
+	if errScan := row.Scan(
 		&media.MediaID,
 		&authorID,
 		&media.Name,
@@ -215,8 +203,8 @@ func (db *Store) GetMediaByName(ctx context.Context, name string, media *Media) 
 		&media.Deleted,
 		&media.CreatedOn,
 		&media.UpdatedOn,
-	); errRow != nil {
-		return Err(errRow)
+	); errScan != nil {
+		return Err(errScan)
 	}
 
 	media.AuthorID = steamid.New(authorID)
@@ -225,17 +213,20 @@ func (db *Store) GetMediaByName(ctx context.Context, name string, media *Media) 
 }
 
 func (db *Store) GetMediaByID(ctx context.Context, mediaID int, media *Media) error {
-	const query = `
-		SELECT 
-		   m.media_id, m.author_id, m.name, m.size, m.mime_type, m.contents, m.deleted, m.created_on, m.updated_on,
-		    a.name, a.size, a.mime_type, a.path, a.bucket, a.old_id
-		FROM media m
-		LEFT JOIN asset a on a.asset_id = m.asset_id
-		WHERE deleted = false AND m.media_id = $1`
+	row, errRow := db.QueryRowBuilder(ctx, db.sb.
+		Select("m.media_id", "m.author_id", "m.name", "m.size", "m.mime_type", "m.contents",
+			"m.deleted", "m.created_on", "m.updated_on", "a.name", "a.size", "a.mime_type",
+			"a.path", "a.bucket", "a.old_id").
+		From("media m").
+		LeftJoin("asset a USING(asset_id)").
+		Where(sq.And{sq.Eq{"deleted": false}, sq.Eq{"m.media_id": mediaID}}))
+	if errRow != nil {
+		return errRow
+	}
 
 	var authorID int64
 
-	if errRow := db.QueryRow(ctx, query, mediaID).Scan(
+	if errScan := row.Scan(
 		&media.MediaID,
 		&authorID,
 		&media.Name,
@@ -251,8 +242,8 @@ func (db *Store) GetMediaByID(ctx context.Context, mediaID int, media *Media) er
 		&media.Asset.Path,
 		&media.Asset.Bucket,
 		&media.Asset.OldID,
-	); errRow != nil {
-		return Err(errRow)
+	); errScan != nil {
+		return Err(errScan)
 	}
 
 	media.AuthorID = steamid.New(authorID)
