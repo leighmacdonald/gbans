@@ -103,12 +103,6 @@ func (db *Store) insertReport(ctx context.Context, report *Report) error {
 }
 
 func (db *Store) updateReport(ctx context.Context, report *Report) error {
-	const query = `
-		UPDATE report 
-		SET author_id = $1, reported_id = $2, report_status = $3, description = $4,
-            deleted = $5, updated_on = $6, reason = $7, reason_text = $8, demo_name = $9, demo_tick = $10, person_message_id = $11
-        WHERE report_id = $12`
-
 	report.UpdatedOn = time.Now()
 
 	var msgID *int64
@@ -116,9 +110,19 @@ func (db *Store) updateReport(ctx context.Context, report *Report) error {
 		msgID = &report.PersonMessageID
 	}
 
-	return Err(db.Exec(ctx, query, report.SourceID, report.TargetID, report.ReportStatus, report.Description,
-		report.Deleted, report.UpdatedOn, report.Reason, report.ReasonText,
-		report.DemoName, report.DemoTick, msgID, report.ReportID))
+	return db.ExecUpdateBuilder(ctx, db.sb.Update("report").
+		Set("author_id", report.SourceID).
+		Set("reported_id", report.TargetID).
+		Set("report_status", report.ReportStatus).
+		Set("description", report.Description).
+		Set("deleted", report.Deleted).
+		Set("updated_on", report.UpdatedOn).
+		Set("reason", report.Reason).
+		Set("reason_text", report.ReasonText).
+		Set("demo_name", report.DemoName).
+		Set("demo_tick", report.DemoTick).
+		Set("person_message_id", msgID).
+		Where(sq.Eq{"report_id": report.ReportID}))
 }
 
 func (db *Store) SaveReport(ctx context.Context, report *Report) error {
@@ -138,21 +142,14 @@ func (db *Store) SaveReportMessage(ctx context.Context, message *UserMessage) er
 }
 
 func (db *Store) updateReportMessage(ctx context.Context, message *UserMessage) error {
-	const query = `
-		UPDATE report_message 
-		SET deleted = $2, author_id = $3, updated_on = $4, message_md = $5
-		WHERE report_message_id = $1
-	`
-
 	message.UpdatedOn = time.Now()
 
-	if errQuery := db.Exec(ctx, query,
-		message.MessageID,
-		message.Deleted,
-		message.AuthorID,
-		message.UpdatedOn,
-		message.Contents,
-	); errQuery != nil {
+	if errQuery := db.ExecUpdateBuilder(ctx, db.sb.Update("report_message").
+		Set("deleted", message.Deleted).
+		Set("author_id", message.AuthorID).
+		Set("updated_on", message.UpdatedOn).
+		Set("message_md", message.Contents).
+		Where(sq.Eq{"report_message_id": message.MessageID})); errQuery != nil {
 		return Err(errQuery)
 	}
 
@@ -193,13 +190,14 @@ func (db *Store) insertReportMessage(ctx context.Context, message *UserMessage) 
 }
 
 func (db *Store) DropReport(ctx context.Context, report *Report) error {
-	const q = `UPDATE report SET deleted = true WHERE report_id = $1`
+	report.Deleted = true
 
-	if errExec := db.Exec(ctx, q, report.ReportID); errExec != nil {
+	if errExec := db.ExecUpdateBuilder(ctx, db.sb.
+		Update("report").
+		Set("deleted", report.Deleted).
+		Where(sq.Eq{"report_id": report.ReportID})); errExec != nil {
 		return Err(errExec)
 	}
-
-	report.Deleted = true
 
 	db.log.Info("Report deleted", zap.Int64("report_id", report.ReportID))
 
@@ -207,13 +205,14 @@ func (db *Store) DropReport(ctx context.Context, report *Report) error {
 }
 
 func (db *Store) DropReportMessage(ctx context.Context, message *UserMessage) error {
-	const query = `UPDATE report_message SET deleted = true WHERE report_message_id = $1`
+	message.Deleted = true
 
-	if errExec := db.Exec(ctx, query, message.Contents); errExec != nil {
+	if errExec := db.ExecUpdateBuilder(ctx, db.sb.
+		Update("report_message").
+		Set("deleted", message.Deleted).
+		Where(sq.Eq{"report_message_id": message.MessageID})); errExec != nil {
 		return Err(errExec)
 	}
-
-	message.Deleted = true
 
 	db.log.Info("Report message deleted", zap.Int64("report_message_id", message.MessageID))
 
@@ -228,7 +227,7 @@ type ReportQueryFilter struct {
 }
 
 func (db *Store) GetReports(ctx context.Context, opts ReportQueryFilter) ([]Report, int64, error) {
-	conditions := sq.And{sq.Eq{"deleted": opts.Deleted}}
+	constraints := sq.And{sq.Eq{"deleted": opts.Deleted}}
 
 	if opts.SourceID != "" {
 		authorID, errAuthorID := opts.SourceID.SID64(ctx)
@@ -236,7 +235,7 @@ func (db *Store) GetReports(ctx context.Context, opts ReportQueryFilter) ([]Repo
 			return nil, 0, errAuthorID
 		}
 
-		conditions = append(conditions, sq.Eq{"r.author_id": authorID.Int64()})
+		constraints = append(constraints, sq.Eq{"r.author_id": authorID.Int64()})
 	}
 
 	if opts.TargetID != "" {
@@ -245,51 +244,38 @@ func (db *Store) GetReports(ctx context.Context, opts ReportQueryFilter) ([]Repo
 			return nil, 0, errTargetID
 		}
 
-		conditions = append(conditions, sq.Eq{"r.reported_id": targetID.Int64()})
+		constraints = append(constraints, sq.Eq{"r.reported_id": targetID.Int64()})
 	}
 
 	if opts.ReportStatus >= 0 {
-		conditions = append(conditions, sq.Eq{"r.report_status": opts.ReportStatus})
+		constraints = append(constraints, sq.Eq{"r.report_status": opts.ReportStatus})
 	}
 
 	counterQuery := db.sb.
 		Select("count(r.report_id) as total").
 		From("report r").
-		Where(conditions)
+		Where(constraints)
 
 	builder := db.sb.
 		Select("r.report_id", "r.author_id", "r.reported_id", "r.report_status",
 			"r.description", "r.deleted", "r.created_on", "r.updated_on", "r.reason", "r.reason_text",
 			"r.demo_name", "r.demo_tick", "coalesce(d.demo_id, 0)", "r.person_message_id").
 		From("report r").
-		Where(conditions).
+		Where(constraints).
 		LeftJoin("demo d on d.title = r.demo_name")
 
-	builder = opts.QueryFilter.applySafeOrder(builder, map[string][]string{
+	builder = opts.applySafeOrder(builder, map[string][]string{
 		"r.": {"report_id", "author_id", "reported_id", "report_status", "deleted", "created_on", "updated_on", "reason"},
 	}, "report_id")
 
-	if opts.Offset > 0 {
-		builder = builder.Offset(opts.Offset)
-	}
-
-	if opts.Limit > 0 {
-		builder = builder.Limit(opts.Limit)
-	} else {
-		builder = builder.Limit(50)
-	}
+	builder = opts.applyLimitOffsetDefault(builder)
 
 	count, errCount := db.GetCount(ctx, counterQuery)
 	if errCount != nil {
 		return nil, 0, Err(errCount)
 	}
 
-	q, a, errSQL := builder.ToSql()
-	if errSQL != nil {
-		return nil, 0, Err(errSQL)
-	}
-
-	rows, errQuery := db.Query(ctx, q, a...)
+	rows, errQuery := db.QueryBuilder(ctx, builder)
 	if errQuery != nil {
 		return nil, 0, Err(errQuery)
 	}
@@ -340,38 +326,45 @@ func (db *Store) GetReports(ctx context.Context, opts ReportQueryFilter) ([]Repo
 
 // GetReportBySteamID returns any open report for the user by the author.
 func (db *Store) GetReportBySteamID(ctx context.Context, authorID steamid.SID64, steamID steamid.SID64, report *Report) error {
-	const query = `
-		SELECT 
-		   r.report_id, r.author_id, r.reported_id, r.report_status, r.description, 
-		   r.deleted, r.created_on, r.updated_on, r.reason, r.reason_text, r.demo_name, r.demo_tick, 
-		   coalesce(d.demo_id, 0), coalesce(r.person_message_id, 0)
-		FROM report r
-		LEFT JOIN demo d on r.demo_name = d.title
-		WHERE deleted = false AND reported_id = $1 AND report_status <= $2 AND author_id = $3`
+	row, errRow := db.QueryRowBuilder(ctx, db.sb.
+		Select("r.report_id", "r.author_id", "r.reported_id", "r.report_status", "r.description",
+			"r.deleted", "r.created_on", "r.updated_on", "r.reason", "r.reason_text", "r.demo_name", "r.demo_tick",
+			"coalesce(d.demo_id, 0)", "coalesce(r.person_message_id, 0)").
+		From("report r").
+		LeftJoin("demo d on r.demo_name = d.title").
+		Where(sq.And{
+			sq.Eq{"r.deleted": false},
+			sq.Eq{"r.reported_id": steamID},
+			sq.LtOrEq{"r.report_status": NeedMoreInfo},
+			sq.Eq{"r.author_id": authorID},
+		}))
+
+	if errRow != nil {
+		return errRow
+	}
 
 	var (
 		sourceID int64
 		targetID int64
 	)
 
-	if errQuery := db.QueryRow(ctx, query, steamID, NeedMoreInfo, authorID).
-		Scan(
-			&report.ReportID,
-			&sourceID,
-			&targetID,
-			&report.ReportStatus,
-			&report.Description,
-			&report.Deleted,
-			&report.CreatedOn,
-			&report.UpdatedOn,
-			&report.Reason,
-			&report.ReasonText,
-			&report.DemoName,
-			&report.DemoTick,
-			&report.DemoID,
-			&report.PersonMessageID,
-		); errQuery != nil {
-		return Err(errQuery)
+	if errScan := row.Scan(
+		&report.ReportID,
+		&sourceID,
+		&targetID,
+		&report.ReportStatus,
+		&report.Description,
+		&report.Deleted,
+		&report.CreatedOn,
+		&report.UpdatedOn,
+		&report.Reason,
+		&report.ReasonText,
+		&report.DemoName,
+		&report.DemoTick,
+		&report.DemoID,
+		&report.PersonMessageID,
+	); errScan != nil {
+		return Err(errScan)
 	}
 
 	report.SourceID = steamid.New(sourceID)
@@ -381,38 +374,38 @@ func (db *Store) GetReportBySteamID(ctx context.Context, authorID steamid.SID64,
 }
 
 func (db *Store) GetReport(ctx context.Context, reportID int64, report *Report) error {
-	const query = `
-		SELECT 
-		   r.report_id, r.author_id, r.reported_id, r.report_status, r.description, 
-		   r.deleted, r.created_on, r.updated_on, r.reason, r.reason_text, r.demo_name, r.demo_tick, 
-		   coalesce(d.demo_id, 0), coalesce(r.person_message_id, 0)
-		FROM report r
-		LEFT JOIN demo d on r.demo_name = d.title
-		WHERE deleted = false AND report_id = $1`
+	row, errRow := db.QueryRowBuilder(ctx, db.sb.Select("r.report_id", "r.author_id", "r.reported_id", "r.report_status", "r.description",
+		"r.deleted", "r.created_on", "r.updated_on", "r.reason", "r.reason_text", "r.demo_name", "r.demo_tick",
+		"coalesce(d.demo_id, 0)", "coalesce(r.person_message_id, 0)").
+		From("report r").LeftJoin("demo d on r.demo_name = d.title").
+		Where(sq.And{sq.Eq{"deleted": false}, sq.Eq{"report_id": reportID}}))
+
+	if errRow != nil {
+		return errRow
+	}
 
 	var (
 		sourceID int64
 		targetID int64
 	)
 
-	if errQuery := db.QueryRow(ctx, query, reportID).
-		Scan(
-			&report.ReportID,
-			&sourceID,
-			&targetID,
-			&report.ReportStatus,
-			&report.Description,
-			&report.Deleted,
-			&report.CreatedOn,
-			&report.UpdatedOn,
-			&report.Reason,
-			&report.ReasonText,
-			&report.DemoName,
-			&report.DemoTick,
-			&report.DemoID,
-			&report.PersonMessageID,
-		); errQuery != nil {
-		return Err(errQuery)
+	if errScan := row.Scan(
+		&report.ReportID,
+		&sourceID,
+		&targetID,
+		&report.ReportStatus,
+		&report.Description,
+		&report.Deleted,
+		&report.CreatedOn,
+		&report.UpdatedOn,
+		&report.Reason,
+		&report.ReasonText,
+		&report.DemoName,
+		&report.DemoTick,
+		&report.DemoID,
+		&report.PersonMessageID,
+	); errScan != nil {
+		return Err(errScan)
 	}
 
 	report.SourceID = steamid.New(sourceID)
@@ -422,17 +415,14 @@ func (db *Store) GetReport(ctx context.Context, reportID int64, report *Report) 
 }
 
 func (db *Store) GetReportMessages(ctx context.Context, reportID int64) ([]UserMessage, error) {
-	const query = `
-		SELECT 
-		   report_message_id, report_id, author_id, message_md, deleted, created_on, updated_on
-		FROM report_message
-		WHERE deleted = false AND report_id = $1 
-		ORDER BY created_on`
-
-	rows, errQuery := db.Query(ctx, query, reportID)
+	rows, errQuery := db.QueryBuilder(ctx, db.sb.
+		Select("report_message_id", "report_id", "author_id", "message_md", "deleted", "created_on", "updated_on").
+		From("report_message").
+		Where(sq.And{sq.And{sq.Eq{"deleted": false}, sq.Eq{"report_id": reportID}}}).
+		OrderBy("created_on"))
 	if errQuery != nil {
 		if errors.Is(Err(errQuery), ErrNoResult) {
-			return nil, nil
+			return []UserMessage{}, nil
 		}
 	}
 
@@ -467,25 +457,25 @@ func (db *Store) GetReportMessages(ctx context.Context, reportID int64) ([]UserM
 }
 
 func (db *Store) GetReportMessageByID(ctx context.Context, reportMessageID int64, message *UserMessage) error {
-	const query = `
-		SELECT 
-		   report_message_id, report_id, author_id, message_md, deleted, created_on, updated_on
-		FROM report_message
-		WHERE report_message_id = $1`
+	row, errRow := db.QueryRowBuilder(ctx, db.sb.
+		Select("report_message_id", "report_id", "author_id", "message_md", "deleted", "created_on", "updated_on").
+		From("report_message").Where(sq.Eq{"report_message_id": reportMessageID}))
+	if errRow != nil {
+		return errRow
+	}
 
 	var authorID int64
 
-	if errQuery := db.QueryRow(ctx, query, reportMessageID).
-		Scan(
-			&message.MessageID,
-			&message.ParentID,
-			&authorID,
-			&message.Contents,
-			&message.Deleted,
-			&message.CreatedOn,
-			&message.UpdatedOn,
-		); errQuery != nil {
-		return Err(errQuery)
+	if errScan := row.Scan(
+		&message.MessageID,
+		&message.ParentID,
+		&authorID,
+		&message.Contents,
+		&message.Deleted,
+		&message.CreatedOn,
+		&message.UpdatedOn,
+	); errScan != nil {
+		return Err(errScan)
 	}
 
 	message.AuthorID = steamid.New(authorID)

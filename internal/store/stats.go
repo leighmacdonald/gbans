@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -56,43 +55,35 @@ type Weapon struct {
 }
 
 func (db *Store) GetWeaponByKey(ctx context.Context, key logparse.Weapon, weapon *Weapon) error {
-	const q = `SELECT weapon_id, key, name FROM weapon WHERE key = $1`
-
-	if errQuery := db.QueryRow(ctx, q, key).Scan(&weapon.WeaponID, &weapon.Key, &weapon.Name); errQuery != nil {
-		return Err(errQuery)
+	row, errRow := db.QueryRowBuilder(ctx, db.sb.
+		Select("weapon_id", "key", "name").
+		From("weapon").
+		Where(sq.Eq{"key": key}))
+	if errRow != nil {
+		return errRow
 	}
 
-	return nil
+	return Err(row.Scan(&weapon.WeaponID, &weapon.Key, &weapon.Name))
 }
 
 func (db *Store) GetWeaponByID(ctx context.Context, weaponID int, weapon *Weapon) error {
-	const q = `SELECT weapon_id, key, name FROM weapon WHERE weapon_id = $1`
-
-	if errQuery := db.QueryRow(ctx, q, weaponID).Scan(&weapon.WeaponID, &weapon.Key, &weapon.Name); errQuery != nil {
-		return Err(errQuery)
+	row, errRow := db.QueryRowBuilder(ctx, db.sb.
+		Select("weapon_id", "key", "name").
+		From("weapon").Where(sq.Eq{"weapon_id": weaponID}))
+	if errRow != nil {
+		return errRow
 	}
 
-	return nil
+	return Err(row.Scan(&weapon.WeaponID, &weapon.Key, &weapon.Name))
 }
 
 func (db *Store) SaveWeapon(ctx context.Context, weapon *Weapon) error {
 	if weapon.WeaponID > 0 {
-		updateQuery, updateArgs, errUpdateQuery := db.sb.
+		return db.ExecUpdateBuilder(ctx, db.sb.
 			Update("weapon").
 			Set("key", weapon.Key).
 			Set("name", weapon.Name).
-			Where(sq.Eq{"weapon_id": weapon.WeaponID}).
-			ToSql()
-
-		if errUpdateQuery != nil {
-			return errors.Wrap(errUpdateQuery, "Failed to make query")
-		}
-
-		if errSave := db.Exec(ctx, updateQuery, updateArgs...); errSave != nil {
-			return errSave
-		}
-
-		return nil
+			Where(sq.Eq{"weapon_id": weapon.WeaponID}))
 	}
 
 	const wq = `INSERT INTO weapon (key, name) VALUES ($1, $2) RETURNING weapon_id`
@@ -107,19 +98,13 @@ func (db *Store) SaveWeapon(ctx context.Context, weapon *Weapon) error {
 }
 
 func (db *Store) Weapons(ctx context.Context) ([]Weapon, error) {
-	query, args, errQuery := db.sb.
+	rows, errRows := db.QueryBuilder(ctx, db.sb.
 		Select("weapon_id", "key", "name").
-		From("weapon").
-		ToSql()
-
-	if errQuery != nil {
-		return nil, errors.Wrap(errQuery, "Failed to make weapons query")
-	}
-
-	rows, errRows := db.Query(ctx, query, args...)
+		From("weapon"))
 	if errRows != nil {
 		return nil, errRows
 	}
+
 	defer rows.Close()
 
 	var weapons []Weapon
@@ -163,30 +148,6 @@ func (db *Store) GetStats(ctx context.Context, stats *Stats) error {
 
 	return nil
 }
-
-func HourlyIndex(t time.Time) (time.Time, int) {
-	curYear, curMon, curDay := t.Date()
-	curHour, _, _ := t.Clock()
-	curTime := time.Date(curYear, curMon, curDay, curHour, 0, 0, 0, t.Location())
-
-	return curTime, curHour
-}
-
-// func DailyIndex(t time.Time) (time.Time, int) {
-// 	curYear, curMon, curDay := t.Date()
-// 	curTime := time.Date(curYear, curMon, curDay, 0, 0, 0, 0, t.Location())
-//
-// 	return curTime, curDay
-// }
-
-// // currentHourlyTime calculates the absolute start of the current hour.
-// func currentHourlyTime() time.Time {
-//	now := time.Now()
-//	year, mon, day := now.Date()
-//	hour, _, _ := now.Clock()
-//
-//	return time.Date(year, mon, day, hour, 0, 0, 0, now.Location())
-// }
 
 type MapUseDetail struct {
 	Map      string  `json:"map"`
@@ -242,16 +203,14 @@ type TopChatterResult struct {
 	Count   int
 }
 
-func (db *Store) TopChatters(ctx context.Context, count int) ([]TopChatterResult, error) {
-	const query = `SELECT
-    	p.personaname, p.steam_id, count(person_message_id) as total
-		FROM person_messages m
-		LEFT JOIN public.person p on m.steam_id = p.steam_id
-		GROUP BY p.steam_id
-		ORDER BY total DESC
-		LIMIT $1`
-
-	rows, errRows := db.Query(ctx, query, count)
+func (db *Store) TopChatters(ctx context.Context, count uint64) ([]TopChatterResult, error) {
+	rows, errRows := db.QueryBuilder(ctx, db.sb.
+		Select("p.personaname", "p.steam_id", "count(person_message_id) as total").
+		From("person_messages m").
+		LeftJoin("public.person p USING(steam_id)").
+		GroupBy("p.steam_id").
+		OrderBy("total DESC").
+		Limit(count))
 	if errRows != nil {
 		return nil, Err(errRows)
 	}
@@ -394,23 +353,22 @@ type PlayerWeaponResult struct {
 }
 
 func (db *Store) WeaponsOverallTopPlayers(ctx context.Context, weaponID int) ([]PlayerWeaponResult, error) {
-	const query = `
-		SELECT row_number() over (order by SUM(mw.kills) desc nulls last) as rank,
-		       p.steam_id, p.personaname, p.avatarhash,
-			   SUM(mw.kills) as kills, sum(mw.damage) as damage,
-			   sum(mw.shots) as shots, sum(mw.hits) as hits,
-			   sum(mw.backstabs) as backstabs,
-			   sum(mw.headshots) as headshots,
-			   sum(mw.airshots) as airshots
-		FROM match_weapon mw
-		LEFT JOIN weapon w on w.weapon_id = mw.weapon_id
-		LEFT JOIN match_player mp on mp.match_player_id = mw.match_player_id
-		LEFT JOIN person p on mp.steam_id = p.steam_id
-		WHERE w.weapon_id = $1
-		GROUP BY p.steam_id, w.weapon_id ORDER BY kills DESC
-		LIMIT 250`
-
-	rows, errQuery := db.Query(ctx, query, weaponID)
+	rows, errQuery := db.QueryBuilder(ctx, db.sb.
+		Select("row_number() over (order by SUM(mw.kills) desc nulls last) as rank",
+			"p.steam_id", "p.personaname", "p.avatarhash",
+			"SUM(mw.kills) as kills", "sum(mw.damage) as damage",
+			"sum(mw.shots) as shots", "sum(mw.hits) as hits",
+			"sum(mw.backstabs) as backstabs",
+			"sum(mw.headshots) as headshots",
+			"sum(mw.airshots) as airshots").
+		From("match_weapon mw").
+		LeftJoin("weapon w on w.weapon_id = mw.weapon_id").
+		LeftJoin("match_player mp on mp.match_player_id = mw.match_player_id").
+		LeftJoin("person p on mp.steam_id = p.steam_id").
+		Where(sq.Eq{"w.weapon_id": weaponID}).
+		GroupBy("p.steam_id", "w.weapon_id").
+		OrderBy("kills DESC").
+		Limit(250))
 	if errQuery != nil {
 		return nil, Err(errQuery)
 	}

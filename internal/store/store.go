@@ -2,9 +2,11 @@ package store
 
 import (
 	"context"
+	"crypto/rand"
 	"database/sql"
 	"embed"
 	"fmt"
+	"math/big"
 	"net/http"
 	"strings"
 	"time"
@@ -416,4 +418,21 @@ func (db *Store) migrate(action MigrationAction, dsn string) error {
 	}
 
 	return nil
+}
+
+func SecureRandomString(n int) string {
+	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-"
+
+	ret := make([]byte, n)
+
+	for currentChar := 0; currentChar < n; currentChar++ {
+		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(letters))))
+		if err != nil {
+			return ""
+		}
+
+		ret[currentChar] = letters[num.Int64()]
+	}
+
+	return string(ret)
 }

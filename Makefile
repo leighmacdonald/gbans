@@ -1,6 +1,4 @@
 .PHONY: all test clean build install frontend sourcemod
-BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
-TAGGED_IMAGE = ghcr.io/leighmacdonald/gbans:$(BRANCH)
 VERSION=v0.5.2
 GO_CMD=go
 GO_BUILD=$(GO_CMD) build

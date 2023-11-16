@@ -633,8 +633,9 @@ func (db *Store) GetBansASN(ctx context.Context, filter ASNBansQueryFilter) ([]B
 	builder := db.sb.Select("b.ban_asn_id", "b.as_num", "b.origin", "b.source_id",
 		"b.target_id", "b.reason_text", "b.valid_until", "b.created_on", "b.updated_on",
 		"b.deleted", "b.reason", "b.is_enabled", "b.unban_reason_text", "b.appeal_state",
-		"s.personaname as source_personaname", "s.avatarhash",
-		"t.personaname as target_personaname", "t.avatarhash", "t.community_banned", "t.vac_bans", "t.game_bans").
+		"coalesce(s.personaname, '') as source_personaname", "coalesce(s.avatarhash, '')",
+		"coalesce(t.personaname, '') as target_personaname", "coalesce(t.avatarhash, '')",
+		"coalesce(t.community_banned, false)", "coalesce(t.vac_bans, 0)", "coalesce(t.game_bans, 0)").
 		From("ban_asn b").
 		LeftJoin("person s on s.steam_id = b.source_id").
 		LeftJoin("person t on t.steam_id = b.target_id")
