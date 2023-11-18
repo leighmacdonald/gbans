@@ -644,7 +644,7 @@ func (db *Store) GetExpiredBans(ctx context.Context) ([]BanSteam, error) {
 			"valid_until", "origin", "created_on", "updated_on", "deleted", "case WHEN report_id is null THEN 0 ELSE report_id END",
 			"unban_reason_text", "is_enabled", "appeal_state", "include_friends").
 		From("ban").
-		Where(sq.And{sq.Lt{"valid_until": time.Now()}, sq.Eq{"deleteed": false}})
+		Where(sq.And{sq.Lt{"valid_until": time.Now()}, sq.Eq{"deleted": false}})
 
 	rows, errQuery := db.QueryBuilder(ctx, query)
 	if errQuery != nil {
