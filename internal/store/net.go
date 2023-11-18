@@ -3,11 +3,11 @@ package store
 import (
 	"context"
 	"fmt"
-	"github.com/jackc/pgtype"
 	"net"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -315,6 +315,7 @@ func (db *Store) GetExpiredNetBans(ctx context.Context) ([]BanCIDR, error) {
 				&banNet.Reason, &banNet.AppealState); errScan != nil {
 			return nil, Err(errScan)
 		}
+
 		banNet.CIDR = cidr.IPNet.String()
 		banNet.TargetID = steamid.New(targetID)
 		banNet.SourceID = steamid.New(sourceID)

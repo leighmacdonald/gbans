@@ -171,7 +171,7 @@ func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 			if !found {
 				lastTime, ok := rejects[int(logPayload.source)]
 				if !ok || time.Since(lastTime) > time.Minute*5 {
-					remoteSrc.logger.Error("Rejecting unknown secret log author")
+					remoteSrc.logger.Warn("Rejecting unknown secret log author")
 
 					rejects[int(logPayload.source)] = time.Now()
 				}
