@@ -40,6 +40,9 @@ ConVar gHost = null;
 ConVar gServerName = null;
 ConVar gServerKey = null;
 
+// Balancing options
+ConVar gDisableAutoTeam = null;
+
 // STV options
 ConVar gTvEnabled = null;
 ConVar gAutoRecord = null;
