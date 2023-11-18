@@ -1,3 +1,4 @@
+import { logErr } from '../util/errors';
 import { parseDateTime } from '../util/text';
 import { emptyOrNullString } from '../util/types';
 import {
@@ -126,10 +127,13 @@ export const apiCall = async <
         credentials: 'include',
         method: method.toUpperCase()
     };
-
-    const accessToken = await getAccessToken(isRefresh ?? false);
-
-    if (accessToken != '') {
+    let accessToken = '';
+    try {
+        accessToken = await getAccessToken(isRefresh ?? false);
+    } catch (e) {
+        logErr(e);
+    }
+    if (!emptyOrNullString(accessToken)) {
         headers['Authorization'] = `Bearer ${accessToken}`;
     }
 

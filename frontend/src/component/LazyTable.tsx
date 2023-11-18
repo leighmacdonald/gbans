@@ -213,8 +213,8 @@ export const LazyTableHeader = <T,>({
                                                 col.sortKey != sortColumn
                                                     ? 'none'
                                                     : order == 'asc'
-                                                    ? 'underline'
-                                                    : 'overline'
+                                                      ? 'underline'
+                                                      : 'overline'
                                         }}
                                         variant={'button'}
                                     >
