@@ -73,19 +73,22 @@ signs:
       - "--detach-sign"
       - "${artifact}"
 
-announce:
-  discord:
-    enabled: true
-    message_template: 'gbans {{.Tag}} is out!'
+sboms:
+  - artifacts: archive
 
-    # Set author of the embed.
-    # Defaults to `GoReleaser`
-    author: 'Leigh MacDonald'
-    # color: ''
-
-    # URL to an image to use as the icon for the embed.
-    # Defaults to `https://goreleaser.com/static/avatar.png`
-    # icon_url: ''
+#announce:
+#  discord:
+#    enabled: true
+#    message_template: 'gbans {{.Tag}} is out!'
+#
+#    # Set author of the embed.
+#    # Defaults to `GoReleaser`
+#    author: 'Leigh MacDonald'
+#    # color: ''
+#
+#    # URL to an image to use as the icon for the embed.
+#    # Defaults to `https://goreleaser.com/static/avatar.png`
+#    # icon_url: ''
 
 # yaml-language-server: $schema=https://goreleaser.com/static/schema-pro.json
 # vim: set ts=2 sw=2 tw=0 fo=cnqoj
