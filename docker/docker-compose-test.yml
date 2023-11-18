@@ -21,7 +21,7 @@ services:
     expose:
       - "5434"
     ports:
-      - 5434:5434
+      - "5434:5434"
     environment:
       POSTGRES_USER: gbans
       POSTGRES_DB: gbans
@@ -29,6 +29,19 @@ services:
     networks:
       - test_network
     command: "-p 5434"
+  minio:
+    # Files are currently designed to be served from
+    image: docker.io/bitnami/minio:2023
+    restart: always
+    environment:
+      # *must* be >= 8 chars or minio will not start
+      - MINIO_ROOT_USER=gbansgbans
+      - MINIO_ROOT_PASSWORD=gbansgbans
+    ports:
+      - '127.0.0.1:9000:9000'
+      - '127.0.0.1:9001:9001'
+    networks:
+      - prod_network
 
 networks:
   test_network:
