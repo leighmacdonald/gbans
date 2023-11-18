@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"fmt"
+	"github.com/jackc/pgtype"
 	"net"
 	"time"
 
@@ -304,16 +305,17 @@ func (db *Store) GetExpiredNetBans(ctx context.Context) ([]BanCIDR, error) {
 			banNet   BanCIDR
 			targetID int64
 			sourceID int64
+			cidr     pgtype.CIDR
 		)
 
 		if errScan := rows.
-			Scan(&banNet.NetID, &banNet.CIDR, &banNet.Origin, &banNet.CreatedOn,
+			Scan(&banNet.NetID, &cidr, &banNet.Origin, &banNet.CreatedOn,
 				&banNet.UpdatedOn, &banNet.ReasonText, &banNet.ValidUntil, &banNet.Deleted, &banNet.Note,
 				&banNet.UnbanReasonText, &banNet.IsEnabled, &targetID, &sourceID,
 				&banNet.Reason, &banNet.AppealState); errScan != nil {
 			return nil, Err(errScan)
 		}
-
+		banNet.CIDR = cidr.IPNet.String()
 		banNet.TargetID = steamid.New(targetID)
 		banNet.SourceID = steamid.New(sourceID)
 
