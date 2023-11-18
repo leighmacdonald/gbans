@@ -41,7 +41,7 @@ services:
       - '127.0.0.1:9000:9000'
       - '127.0.0.1:9001:9001'
     networks:
-      - prod_network
+      - test_network
 
 networks:
   test_network:
