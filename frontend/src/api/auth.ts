@@ -1,5 +1,7 @@
+import 'core-js/stable/atob';
 import { jwtDecode, JwtPayload } from 'jwt-decode';
 import { logErr } from '../util/errors';
+import { emptyOrNullString } from '../util/types';
 import { apiCall, EmptyBody } from './common';
 
 export const refreshKey = 'refresh';
@@ -34,19 +36,23 @@ export const refreshToken = async () => {
 };
 
 export const isTokenExpired = (token: string): boolean => {
-    if (!token || token == '') {
+    if (emptyOrNullString(token)) {
         return true;
     }
 
-    const claims: JwtPayload = jwtDecode(token);
-    if (!claims || !claims.exp) {
-        return true;
-    }
-
-    const expirationTimeInSeconds = claims.exp * 1000;
     const now = new Date();
 
-    return expirationTimeInSeconds <= now.getTime();
+    try {
+        const claims: JwtPayload = jwtDecode(token);
+        if (!claims || !claims.exp) {
+            return true;
+        }
+
+        const expirationTimeInSeconds = claims.exp * 1000;
+        return expirationTimeInSeconds <= now.getTime();
+    } catch (e) {
+        return true;
+    }
 };
 
 export const writeAccessToken = (token: string) => {
