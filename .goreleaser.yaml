@@ -73,9 +73,6 @@ signs:
       - "--detach-sign"
       - "${artifact}"
 
-sboms:
-  - artifacts: archive
-
 announce:
   discord:
     enabled: true
