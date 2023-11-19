@@ -242,3 +242,21 @@ export const apiGetConnections = async (
     resp.data = resp.data.map(transformCreatedOnDate);
     return resp;
 };
+
+interface PermissionUpdate {
+    permission_level: PermissionLevel;
+}
+
+export const apiUpdatePlayerPermission = async (
+    steamId: string,
+    args: PermissionUpdate,
+    abortController: AbortController
+) =>
+    transformTimeStampedDates(
+        await apiCall<Person, PermissionUpdate>(
+            `/api/player/${steamId}/permissions`,
+            'PUT',
+            args,
+            abortController
+        )
+    );

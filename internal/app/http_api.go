@@ -4457,3 +4457,56 @@ func onAPIDeleteContestEntry(app *App) gin.HandlerFunc {
 			zap.String("title", contest.Title))
 	}
 }
+
+func onAPIPutPlayerPermission(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	type updatePpermissionLevel struct {
+		PermissionLevel consts.Privilege
+	}
+
+	return func(ctx *gin.Context) {
+		steamID, errParam := getSID64Param(ctx, "")
+		if errParam != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		var req updatePpermissionLevel
+		if !bind(ctx, log, &req) {
+			return
+		}
+
+		var person store.Person
+		if errGet := app.db.GetPersonBySteamID(ctx, steamID, &person); errGet != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			log.Error("Failed to load person", zap.Error(errGet))
+
+			return
+		}
+
+		if steamID == app.conf.General.Owner {
+			responseErr(ctx, http.StatusConflict, errors.New("Cannot alter site owner permissions"))
+
+			return
+		}
+
+		person.PermissionLevel = req.PermissionLevel
+
+		if errSave := app.db.SavePerson(ctx, &person); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			log.Error("Failed to save person", zap.Error(errSave))
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, person)
+
+		log.Info("Player permission updated",
+			zap.Int64("steam_id", steamID.Int64()),
+			zap.String("permissions", person.PermissionLevel.String()))
+	}
+}

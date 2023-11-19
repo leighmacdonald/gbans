@@ -1,6 +1,10 @@
 import React, { useEffect, useState, JSX, useCallback } from 'react';
+import NiceModal from '@ebay/nice-modal-react';
+import EditIcon from '@mui/icons-material/Edit';
 import FilterListIcon from '@mui/icons-material/FilterList';
-import PersonIcon from '@mui/icons-material/Person';
+import PersonSearchIcon from '@mui/icons-material/PersonSearch';
+import { IconButton } from '@mui/material';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { fromUnixTime } from 'date-fns';
@@ -10,6 +14,7 @@ import {
     apiSearchPeople,
     communityVisibilityState,
     defaultAvatarHash,
+    PermissionLevel,
     permissionLevelString,
     Person
 } from '../api';
@@ -25,6 +30,8 @@ import {
 } from '../component/formik/PersonanameField';
 import { nonResolvingSteamIDInputTest } from '../component/formik/SourceIdField';
 import { SteamIdField } from '../component/formik/SteamIdField';
+import { ModalPersonEditor } from '../component/modal';
+import { PersonEditModalProps } from '../component/modal/PersonEditModal';
 import { logErr } from '../util/errors';
 import { isValidSteamDate, renderDate } from '../util/text';
 
@@ -107,6 +114,20 @@ export const AdminPeoplePage = (): JSX.Element => {
         setIP('');
     }, []);
 
+    const onEditPerson = useCallback(
+        async (steam_id: string, permission_level: PermissionLevel) => {
+            try {
+                await NiceModal.show<PersonEditModalProps>(ModalPersonEditor, {
+                    steam_id,
+                    permission_level
+                });
+            } catch (e) {
+                logErr(e);
+            }
+        },
+        []
+    );
+
     return (
         <Grid container spacing={2}>
             <Grid xs={12}>
@@ -146,7 +167,9 @@ export const AdminPeoplePage = (): JSX.Element => {
             <Grid xs={12}>
                 <ContainerWithHeader
                     title={'Player Search'}
-                    iconLeft={loading ? <LoadingSpinner /> : <PersonIcon />}
+                    iconLeft={
+                        loading ? <LoadingSpinner /> : <PersonSearchIcon />
+                    }
                 >
                     <LazyTable
                         count={totalRows}
@@ -283,6 +306,34 @@ export const AdminPeoplePage = (): JSX.Element => {
                                         )}
                                     </Typography>
                                 )
+                            },
+                            {
+                                virtual: true,
+                                virtualKey: 'actions',
+                                label: '',
+                                tooltip: '',
+                                align: 'right',
+                                renderer: (obj) => {
+                                    return (
+                                        <ButtonGroup>
+                                            <IconButton
+                                                color={'warning'}
+                                                onClick={async () => {
+                                                    try {
+                                                        await onEditPerson(
+                                                            obj.steam_id,
+                                                            obj.permission_level
+                                                        );
+                                                    } catch (e) {
+                                                        logErr(e);
+                                                    }
+                                                }}
+                                            >
+                                                <EditIcon />
+                                            </IconButton>
+                                        </ButtonGroup>
+                                    );
+                                }
                             }
                         ]}
                     />
