@@ -2,10 +2,6 @@ package app
 
 import (
 	"context"
-	"net/http"
-	"path/filepath"
-	"runtime"
-
 	"github.com/Depado/ginprom"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/pprof"
@@ -17,6 +13,9 @@ import (
 	"github.com/unrolled/secure"
 	"github.com/unrolled/secure/cspbuilder"
 	"go.uber.org/zap"
+	"net/http"
+	"path/filepath"
+	"runtime"
 )
 
 func prometheusHandler() gin.HandlerFunc {
@@ -116,30 +115,19 @@ func createRouter(ctx context.Context, app *App) (*gin.Engine, error) {
 	})
 	engine.Use(prom.Instrument())
 
-	var absStaticPath string
-
 	if app.conf.HTTP.StaticPath != "" {
-		customStaticPath, errStaticPath := filepath.Abs(app.conf.HTTP.StaticPath)
+		absStaticPath, errStaticPath := filepath.Abs(app.conf.HTTP.StaticPath)
 		if errStaticPath != nil {
 			app.log.Fatal("Invalid static path", zap.Error(errStaticPath), zap.String("path", absStaticPath))
 		}
 
-		absStaticPath = customStaticPath
 		engine.StaticFS("/dist", http.Dir(absStaticPath))
+		engine.LoadHTMLFiles(filepath.Join(absStaticPath, "index.html"))
 	} else {
 		if errStatic := assets.StaticRoutes(engine, app.conf.General.Mode == TestMode); errStatic != nil {
 			return nil, errors.Wrap(errStatic, "failed to setup static routes")
 		}
-
-		embedStaticPath, errStaticPath := filepath.Abs("./internal/assets/dist")
-		if errStaticPath != nil {
-			app.log.Fatal("Invalid static path", zap.Error(errStaticPath))
-		}
-
-		absStaticPath = embedStaticPath
 	}
-
-	engine.LoadHTMLFiles(filepath.Join(absStaticPath, "index.html"))
 
 	// These should match routes defined in the frontend. This allows us to use the browser
 	// based routing when serving the SPA.
