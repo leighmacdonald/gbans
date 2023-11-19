@@ -292,65 +292,54 @@ var profileColumns = []string{ //nolint:gochecknoglobals
 // GetPersonBySteamID returns a person by their steam_id. ErrNoResult is returned if the steam_id
 // is not known.
 func (db *Store) GetPersonBySteamID(ctx context.Context, sid64 steamid.SID64, person *Person) error {
-	const query = `
-    	SELECT p.created_on,
-			p.updated_on,
-			p.communityvisibilitystate,
-			p.profilestate,
-			p.personaname,
-			p.profileurl,
-			p.avatar,
-			p.avatarmedium,
-			p.avatarfull,
-			p.avatarhash,
-			p.personastate,
-			p.realname,
-			p.timecreated,
-			p.loccountrycode,
-			p.locstatecode,
-			p.loccityid,
-			p.permission_level,
-			p.discord_id,
-			/*		   //(
-			//   SELECT (e.meta_data ->> 'address')::inet
-			//   FROM server_log e
-			//   WHERE e.event_type = 1004
-			//	 AND e.source_id = person.steam_id
-			//   ORDER BY e.created_on DESC
-			//   LIMIT 1
-			//),*/
-			p.community_banned,
-			p.vac_bans,
-			p.game_bans,
-			p.economy_ban,
-			p.days_since_last_ban,
-			p.updated_on_steam,
-			p.muted
-	FROM person p
-	WHERE p.steam_id = $1;`
-
 	if !sid64.Valid() {
 		return consts.ErrInvalidSID
+	}
+
+	row, errRow := db.QueryRowBuilder(ctx, db.sb.
+		Select("p.created_on",
+			"p.updated_on",
+			"p.communityvisibilitystate",
+			"p.profilestate",
+			"p.personaname",
+			"p.profileurl",
+			"p.avatar",
+			"p.avatarmedium",
+			"p.avatarfull",
+			"p.avatarhash",
+			"p.personastate",
+			"p.realname",
+			"p.timecreated",
+			"p.loccountrycode",
+			"p.locstatecode",
+			"p.loccityid",
+			"p.permission_level",
+			"p.discord_id",
+			"p.community_banned",
+			"p.vac_bans",
+			"p.game_bans",
+			"p.economy_ban",
+			"p.days_since_last_ban",
+			"p.updated_on_steam",
+			"p.muted").
+		From("person p").
+		Where(sq.Eq{"p.steam_id": sid64.Int64()}))
+
+	if errRow != nil {
+		return errRow
 	}
 
 	person.IsNew = false
 	person.PlayerSummary = &steamweb.PlayerSummary{}
 	person.SteamID = sid64
 
-	errQuery := db.
-		QueryRow(ctx, query, sid64.Int64()).
-		Scan(&person.CreatedOn,
-			&person.UpdatedOn, &person.CommunityVisibilityState, &person.ProfileState, &person.PersonaName,
-			&person.ProfileURL, &person.Avatar, &person.AvatarMedium, &person.AvatarFull, &person.AvatarHash,
-			&person.PersonaState, &person.RealName, &person.TimeCreated, &person.LocCountryCode, &person.LocStateCode,
-			&person.LocCityID, &person.PermissionLevel, &person.DiscordID /*&person.IPAddr,*/, &person.CommunityBanned,
-			&person.VACBans, &person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan, &person.UpdatedOnSteam,
-			&person.Muted)
-	if errQuery != nil {
-		return Err(errQuery)
-	}
-
-	return nil
+	return Err(row.Scan(&person.CreatedOn,
+		&person.UpdatedOn, &person.CommunityVisibilityState, &person.ProfileState, &person.PersonaName,
+		&person.ProfileURL, &person.Avatar, &person.AvatarMedium, &person.AvatarFull, &person.AvatarHash,
+		&person.PersonaState, &person.RealName, &person.TimeCreated, &person.LocCountryCode, &person.LocStateCode,
+		&person.LocCityID, &person.PermissionLevel, &person.DiscordID, &person.CommunityBanned,
+		&person.VACBans, &person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan, &person.UpdatedOnSteam,
+		&person.Muted))
 }
 
 func (db *Store) GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collection) (People, error) {
