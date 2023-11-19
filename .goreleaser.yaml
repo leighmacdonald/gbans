@@ -9,6 +9,9 @@ env_files:
 builds:
   - id: gbans
     env: [CGO_ENABLED=0]
+    flags:
+      - -trimpath
+      - -tags=release
     goos:
       - linux
       - windows
