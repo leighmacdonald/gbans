@@ -270,7 +270,7 @@ func setDefaultConfigValues() {
 		"http.port":                                6006,
 		"http.tls":                                 false,
 		"http.tls_auto":                            false,
-		"http.static_path":                         "frontend/dist",
+		"http.static_path":                         "",
 		"http.cookie_key":                          store.SecureRandomString(32),
 		"http.client_timeout":                      "10s",
 		"debug.update_srcds_log_secrets":           true,

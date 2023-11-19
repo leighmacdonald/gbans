@@ -1,6 +1,8 @@
 .cache
-frontend/node_modules
+**/node_modules
+**/lib
 frontend/dist
 .idea
+build
 tf2server
 uncletopia-prod/tf2server/

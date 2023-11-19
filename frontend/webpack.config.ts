@@ -1,9 +1,9 @@
+import CopyPlugin from 'copy-webpack-plugin';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
 import * as path from 'path';
 import * as webpack from 'webpack';
-import HtmlWebpackPlugin from 'html-webpack-plugin';
-import CopyPlugin from 'copy-webpack-plugin';
 
-const outPath = path.resolve('../dist');
+const outPath = path.resolve('../internal/assets/dist');
 
 const devMode = process.env.NODE_ENV !== 'production';
 const paths = {

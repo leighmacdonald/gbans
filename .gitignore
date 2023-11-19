@@ -21,7 +21,6 @@ sourcemod/.vscode/
 /gbans.yaml
 *.txt
 /gbans
-/frontend/dist/
 /frontend/node_modules/
 /tf2server/
 /.cache/
@@ -32,8 +31,6 @@ sourcemod/.vscode/
 *.js
 *.jsx
 /dist
-!/internal/web/dist/.gitkeep
-/out/production/gbans/
 /build/
 /*.zip
 node_modules
@@ -58,3 +55,5 @@ frontend/.yarn/*
 !frontend/.yarn/releases
 !frontend/.yarn/sdks
 !frontend/.yarn/versions
+
+/internal/assets/dist/

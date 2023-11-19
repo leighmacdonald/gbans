@@ -617,7 +617,8 @@ func (db *Store) insertBan(ctx context.Context, ban *BanSteam) error {
 }
 
 func (db *Store) updateBan(ctx context.Context, ban *BanSteam) error {
-	query := db.sb.Update("ban").
+	return db.ExecUpdateBuilder(ctx, db.sb.
+		Update("ban").
 		Set("source_id", ban.SourceID.Int64()).
 		Set("reason", ban.Reason).
 		Set("reason_text", ban.ReasonText).
@@ -633,9 +634,7 @@ func (db *Store) updateBan(ctx context.Context, ban *BanSteam) error {
 		Set("target_id", ban.TargetID.Int64()).
 		Set("appeal_state", ban.AppealState).
 		Set("include_friends", ban.IncludeFriends).
-		Where(sq.Eq{"ban_id": ban.BanID})
-
-	return Err(db.ExecUpdateBuilder(ctx, query))
+		Where(sq.Eq{"ban_id": ban.BanID}))
 }
 
 func (db *Store) GetExpiredBans(ctx context.Context) ([]BanSteam, error) {

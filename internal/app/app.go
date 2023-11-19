@@ -222,7 +222,10 @@ func (app *App) StartHTTP(ctx context.Context) error {
 		gin.SetMode(gin.DebugMode)
 	}
 
-	httpServer := newHTTPServer(ctx, app)
+	httpServer, errHTTP := newHTTPServer(ctx, app)
+	if errHTTP != nil {
+		return errHTTP
+	}
 
 	go func() {
 		<-ctx.Done()

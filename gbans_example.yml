@@ -39,8 +39,11 @@ http:
   host: 0.0.0.0
   # Listen on this port
   port: 6006
-  # The path the frontend files are in. DO NOT change if using the official Docker image.
-  static_path: ./dist/
+  # The path the frontend files are located. DO NOT change if using the official Docker image.
+  # When using a release build, assets are embedded inside the binary, when this is
+  # set to an actual path (non-empty string), it will instead load files directly from
+  # the filesystem using that path. This is the default for test and debug builds.
+  static_path: ""
   # Default timeout when making outboung http calls
   client_timeout: 20s
   # Encryption key for JWT. https://numbergenerator.org/random-64-digit-hex-codes-generator is a good option.

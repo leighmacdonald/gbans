@@ -39,10 +39,15 @@ func bind(ctx *gin.Context, log *zap.Logger, target any) bool {
 	return true
 }
 
-func newHTTPServer(ctx context.Context, app *App) *http.Server {
+func newHTTPServer(ctx context.Context, app *App) (*http.Server, error) {
+	router, errRouter := createRouter(ctx, app)
+	if errRouter != nil {
+		return nil, errRouter
+	}
+
 	httpServer := &http.Server{
 		Addr:           app.conf.HTTP.Addr(),
-		Handler:        createRouter(ctx, app),
+		Handler:        router,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   120 * time.Second,
 		MaxHeaderBytes: 1 << 20,
@@ -68,7 +73,7 @@ func newHTTPServer(ctx context.Context, app *App) *http.Server {
 		httpServer.TLSConfig = tlsVar
 	}
 
-	return httpServer
+	return httpServer, nil
 }
 
 // userProfile is the model used in the webui representing the logged-in user.

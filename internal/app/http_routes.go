@@ -10,7 +10,9 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/assets"
 	"github.com/leighmacdonald/gbans/internal/consts"
+	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/unrolled/secure"
 	"github.com/unrolled/secure/cspbuilder"
@@ -88,7 +90,7 @@ type jsConfig struct {
 }
 
 //nolint:contextcheck,maintidx
-func createRouter(ctx context.Context, app *App) *gin.Engine {
+func createRouter(ctx context.Context, app *App) (*gin.Engine, error) {
 	engine := gin.New()
 
 	if app.conf.General.Mode != ReleaseMode {
@@ -114,17 +116,29 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 	})
 	engine.Use(prom.Instrument())
 
-	staticPath := app.conf.HTTP.StaticPath
-	if staticPath == "" {
-		staticPath = "./dist"
+	var absStaticPath string
+
+	if app.conf.HTTP.StaticPath != "" {
+		customStaticPath, errStaticPath := filepath.Abs(app.conf.HTTP.StaticPath)
+		if errStaticPath != nil {
+			app.log.Fatal("Invalid static path", zap.Error(errStaticPath), zap.String("path", absStaticPath))
+		}
+
+		absStaticPath = customStaticPath
+		engine.StaticFS("/dist", http.Dir(absStaticPath))
+	} else {
+		if errStatic := assets.StaticRoutes(engine, app.conf.General.Mode == TestMode); errStatic != nil {
+			return nil, errors.Wrap(errStatic, "failed to setup static routes")
+		}
+
+		embedStaticPath, errStaticPath := filepath.Abs("./internal/assets/dist")
+		if errStaticPath != nil {
+			app.log.Fatal("Invalid static path", zap.Error(errStaticPath))
+		}
+
+		absStaticPath = embedStaticPath
 	}
 
-	absStaticPath, errStaticPath := filepath.Abs(staticPath)
-	if errStaticPath != nil {
-		app.log.Fatal("Invalid static path", zap.Error(errStaticPath))
-	}
-
-	engine.StaticFS("/dist", http.Dir(absStaticPath))
 	engine.LoadHTMLFiles(filepath.Join(absStaticPath, "index.html"))
 
 	// These should match routes defined in the frontend. This allows us to use the browser
@@ -317,5 +331,5 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		adminRoute.POST("/api/servers_admin", onAPIGetServersAdmin(app))
 	}
 
-	return engine
+	return engine, nil
 }
