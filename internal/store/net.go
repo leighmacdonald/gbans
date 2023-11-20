@@ -40,16 +40,18 @@ func (db *Store) GetBanNetByAddress(ctx context.Context, ipAddr net.IP) ([]BanCI
 			banNet   BanCIDR
 			sourceID int64
 			targetID int64
+			cidr     *net.IPNet
 		)
 
 		if errScan := rows.
-			Scan(&banNet.NetID, &banNet.CIDR, &banNet.Origin,
+			Scan(&banNet.NetID, &cidr, &banNet.Origin,
 				&banNet.CreatedOn, &banNet.UpdatedOn, &banNet.Reason, &banNet.ReasonText,
 				&banNet.ValidUntil, &banNet.Deleted, &banNet.Note, &banNet.UnbanReasonText,
 				&banNet.IsEnabled, &targetID, &sourceID, &banNet.AppealState); errScan != nil {
 			return nil, Err(errScan)
 		}
 
+		banNet.CIDR = cidr.String()
 		banNet.SourceID = steamid.New(sourceID)
 		banNet.TargetID = steamid.New(targetID)
 

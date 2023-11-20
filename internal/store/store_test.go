@@ -112,7 +112,7 @@ func testServerTest(database *store.Store) func(t *testing.T) {
 		// Fetch all enabled servers
 		sLenA, count, errGetServers := database.GetServers(ctx, store.ServerQueryFilter{})
 		require.NoError(t, errGetServers, "Failed to fetch enabled servers")
-		require.Equal(t, count, len(sLenA), "Mismatches counts")
+		require.Equal(t, count, int64(len(sLenA)), "Mismatches counts")
 		// Delete a server
 		require.NoError(t, database.DropServer(ctx, serverA.ServerID))
 
