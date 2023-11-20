@@ -43,17 +43,20 @@ export const PersonCell = ({
             }}
         >
             <Tooltip title={personaname}>
-                <Avatar
-                    alt={personaname}
-                    src={
-                        avatar_hash.startsWith('https://')
-                            ? avatar_hash
-                            : `https://avatars.akamai.steamstatic.com/${avatar_hash}.jpg`
-                    }
-                    variant={'square'}
-                    sx={{ height: '32px', width: '32px' }}
-                />
+                <>
+                    <Avatar
+                        alt={personaname}
+                        src={
+                            avatar_hash.startsWith('https://')
+                                ? avatar_hash
+                                : `https://avatars.akamai.steamstatic.com/${avatar_hash}.jpg`
+                        }
+                        variant={'square'}
+                        sx={{ height: '32px', width: '32px' }}
+                    />
+                </>
             </Tooltip>
+
             <Box
                 height={'100%'}
                 alignContent={'center'}
