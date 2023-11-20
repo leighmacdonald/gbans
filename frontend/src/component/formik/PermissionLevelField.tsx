@@ -6,11 +6,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import { useFormikContext } from 'formik';
 import * as yup from 'yup';
-import {
-    PermissionLevel,
-    permissionLevelList,
-    permissionLevelString
-} from '../../api';
+import { PermissionLevel, permissionLevelString } from '../../api';
 
 export const PermissionLevelFieldValidator = yup
     .string()
@@ -41,7 +37,13 @@ export const PermissionLevelField = <T,>() => {
                     touched.permission_level && Boolean(errors.permission_level)
                 }
             >
-                {permissionLevelList.map((v) => (
+                {[
+                    PermissionLevel.User,
+                    PermissionLevel.Reserved,
+                    PermissionLevel.Editor,
+                    PermissionLevel.Moderator,
+                    PermissionLevel.Admin
+                ].map((v) => (
                     <MenuItem key={`time-${v}`} value={v}>
                         {permissionLevelString(v)}
                     </MenuItem>

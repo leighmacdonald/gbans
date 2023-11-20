@@ -1,8 +1,8 @@
 import React, { useEffect, useState, JSX, useCallback } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
-import EditIcon from '@mui/icons-material/Edit';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import { IconButton } from '@mui/material';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import Typography from '@mui/material/Typography';
@@ -31,7 +31,6 @@ import {
 import { nonResolvingSteamIDInputTest } from '../component/formik/SourceIdField';
 import { SteamIdField } from '../component/formik/SteamIdField';
 import { ModalPersonEditor } from '../component/modal';
-import { PersonEditModalProps } from '../component/modal/PersonEditModal';
 import { logErr } from '../util/errors';
 import { isValidSteamDate, renderDate } from '../util/text';
 
@@ -117,15 +116,23 @@ export const AdminPeoplePage = (): JSX.Element => {
     const onEditPerson = useCallback(
         async (steam_id: string, permission_level: PermissionLevel) => {
             try {
-                await NiceModal.show<PersonEditModalProps>(ModalPersonEditor, {
-                    steam_id,
-                    permission_level
-                });
+                const newPerson = await NiceModal.show<Person>(
+                    ModalPersonEditor,
+                    {
+                        steam_id,
+                        permission_level
+                    }
+                );
+                setPeople(
+                    people.map((p) => {
+                        return p.steam_id == newPerson.steam_id ? newPerson : p;
+                    })
+                );
             } catch (e) {
                 logErr(e);
             }
         },
-        []
+        [people]
     );
 
     return (
@@ -329,7 +336,7 @@ export const AdminPeoplePage = (): JSX.Element => {
                                                     }
                                                 }}
                                             >
-                                                <EditIcon />
+                                                <VpnKeyIcon />
                                             </IconButton>
                                         </ButtonGroup>
                                     );
