@@ -18,14 +18,14 @@ type ServerPermission struct {
 	Flags           string           `json:"flags"`
 }
 
-func NewServer(name string, address string, port int) Server {
+func NewServer(shortName string, address string, port int) Server {
 	return Server{
-		ShortName:      name,
+		ShortName:      shortName,
 		Address:        address,
 		Port:           port,
-		RCON:           "",
+		RCON:           SecureRandomString(10),
 		ReservedSlots:  0,
-		Password:       "",
+		Password:       SecureRandomString(10),
 		IsEnabled:      true,
 		TokenCreatedOn: time.Unix(0, 0),
 		CreatedOn:      time.Now(),

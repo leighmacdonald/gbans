@@ -95,16 +95,15 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		pprof.Register(engine)
 	}
 
-	engine.Use(httpErrorHandler(app.log), gin.Recovery())
-	engine.Use(useSecure(app.conf.General.Mode, app.conf.S3.ExternalURL))
-
-	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowOrigins = app.conf.HTTP.CorsOrigins
-	corsConfig.AllowHeaders = append(corsConfig.AllowHeaders, "Authorization")
-	corsConfig.AllowWildcard = false
-	corsConfig.AllowCredentials = false
-
 	if app.conf.General.Mode != TestMode {
+		engine.Use(httpErrorHandler(app.log), gin.Recovery())
+		engine.Use(useSecure(app.conf.General.Mode, app.conf.S3.ExternalURL))
+
+		corsConfig := cors.DefaultConfig()
+		corsConfig.AllowOrigins = app.conf.HTTP.CorsOrigins
+		corsConfig.AllowHeaders = append(corsConfig.AllowHeaders, "Authorization")
+		corsConfig.AllowWildcard = false
+		corsConfig.AllowCredentials = false
 		engine.Use(cors.New(corsConfig))
 	}
 
@@ -125,7 +124,10 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 	}
 
 	engine.StaticFS("/dist", http.Dir(absStaticPath))
-	engine.LoadHTMLFiles(filepath.Join(absStaticPath, "index.html"))
+
+	if app.conf.General.Mode != TestMode {
+		engine.LoadHTMLFiles(filepath.Join(absStaticPath, "index.html"))
+	}
 
 	// These should match routes defined in the frontend. This allows us to use the browser
 	// based routing when serving the SPA.
@@ -205,15 +207,10 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		serverAuth.POST("/api/state_update", onAPIPostServerState(app))
 	}
 
-	connectionManager := newWSConnectionManager(ctx, app.log)
-
 	authedGrp := engine.Group("/")
 	{
 		// Basic logged-in user
 		authed := authedGrp.Use(authMiddleware(app, consts.PUser))
-		authed.GET("/ws", func(c *gin.Context) {
-			wsConnHandler(c.Writer, c.Request, connectionManager, currentUserProfile(c), app.log)
-		})
 		authed.POST("/api/auth/refresh", onTokenRefresh(app))
 		authed.GET("/api/auth/discord", onOAuthDiscordCallback(app))
 		authed.GET("/api/auth/logout", onAPILogout(app))

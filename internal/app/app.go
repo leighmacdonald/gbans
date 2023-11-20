@@ -47,12 +47,12 @@ type App struct {
 	eb                   *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 	wordFilters          *wordFilters
 	mc                   *metricCollector
-	assetStore           *S3Client
+	assetStore           AssetStore
 	logListener          *logparse.UDPLogListener
 	matchUUIDMap         fp.MutexMap[int, uuid.UUID]
 }
 
-func New(conf *Config, database *store.Store, bot *discord.Bot, logger *zap.Logger, assetStore *S3Client) App {
+func New(conf *Config, database *store.Store, bot *discord.Bot, logger *zap.Logger, assetStore AssetStore) App {
 	application := App{
 		bot:                  bot,
 		eb:                   fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent](),
@@ -171,6 +171,10 @@ func firstTimeSetup(ctx context.Context, conf *Config, database *store.Store) er
 		}
 	}
 
+	if errWeapons := database.LoadWeapons(ctx); errWeapons != nil {
+		return errors.Wrap(errWeapons, "Failed to load weapons")
+	}
+
 	return nil
 }
 
@@ -182,10 +186,6 @@ func (app *App) Init(ctx context.Context) error {
 
 	if setupErr := firstTimeSetup(ctx, app.conf, app.db); setupErr != nil {
 		app.log.Fatal("Failed to do first time setup", zap.Error(setupErr))
-	}
-
-	if errWeapons := app.db.LoadWeapons(ctx); errWeapons != nil {
-		app.log.Fatal("Failed to load weapons", zap.Error(errWeapons))
 	}
 
 	// Load in the external network block / ip ban lists to memory if enabled
