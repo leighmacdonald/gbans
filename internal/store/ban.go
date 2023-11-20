@@ -617,6 +617,11 @@ func (db *Store) insertBan(ctx context.Context, ban *BanSteam) error {
 }
 
 func (db *Store) updateBan(ctx context.Context, ban *BanSteam) error {
+	var reportID *int64
+	if ban.ReportID > 0 {
+		reportID = &ban.ReportID
+	}
+
 	query := db.sb.Update("ban").
 		Set("source_id", ban.SourceID.Int64()).
 		Set("reason", ban.Reason).
@@ -627,7 +632,7 @@ func (db *Store) updateBan(ctx context.Context, ban *BanSteam) error {
 		Set("origin", ban.Origin).
 		Set("ban_type", ban.BanType).
 		Set("deleted", ban.Deleted).
-		Set("report_id", ban.ReportID).
+		Set("report_id", reportID).
 		Set("unban_reason_text", ban.UnbanReasonText).
 		Set("is_enabled", ban.IsEnabled).
 		Set("target_id", ban.TargetID.Int64()).
