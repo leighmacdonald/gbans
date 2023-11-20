@@ -62,40 +62,41 @@ func (app *App) BanSteam(ctx context.Context, banSteam *store.BanSteam) error {
 		app.log.Info("Report state set to closed", zap.Int64("report_id", banSteam.ReportID))
 	}
 
-	go func() {
-		var (
-			title  string
-			colour int
-		)
+	if app.conf.Discord.Enabled {
+		go func() {
+			var (
+				title  string
+				colour int
+			)
 
-		if banSteam.BanType == store.NoComm {
-			title = fmt.Sprintf("User Muted (#%d)", banSteam.BanID)
-			colour = app.bot.Colour.Warn
-		} else {
-			title = fmt.Sprintf("User Banned (#%d)", banSteam.BanID)
-			colour = app.bot.Colour.Error
-		}
+			if banSteam.BanType == store.NoComm {
+				title = fmt.Sprintf("User Muted (#%d)", banSteam.BanID)
+				colour = app.bot.Colour.Warn
+			} else {
+				title = fmt.Sprintf("User Banned (#%d)", banSteam.BanID)
+				colour = app.bot.Colour.Error
+			}
 
-		msgEmbed := discord.
-			NewEmbed(title).
-			SetColor(colour).
-			SetURL(fmt.Sprintf("https://steamcommunity.com/profiles/%s", banSteam.TargetID))
+			msgEmbed := discord.
+				NewEmbed(title).
+				SetColor(colour).
+				SetURL(fmt.Sprintf("https://steamcommunity.com/profiles/%s", banSteam.TargetID))
 
-		discord.AddFieldsSteamID(msgEmbed, banSteam.TargetID)
+			discord.AddFieldsSteamID(msgEmbed, banSteam.TargetID)
 
-		expIn := "Permanent"
-		expAt := "Permanent"
+			expIn := "Permanent"
+			expAt := "Permanent"
 
-		if banSteam.ValidUntil.Year()-time.Now().Year() < 5 {
-			expIn = FmtDuration(banSteam.ValidUntil)
-			expAt = FmtTimeShort(banSteam.ValidUntil)
-		}
+			if banSteam.ValidUntil.Year()-time.Now().Year() < 5 {
+				expIn = FmtDuration(banSteam.ValidUntil)
+				expAt = FmtTimeShort(banSteam.ValidUntil)
+			}
 
-		msgEmbed.AddField("Expires In", expIn)
-		msgEmbed.AddField("Expires At", expAt)
-		app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.PublicLogChannelID, Embed: msgEmbed.Truncate().MessageEmbed})
-	}()
-
+			msgEmbed.AddField("Expires In", expIn)
+			msgEmbed.AddField("Expires At", expAt)
+			app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.PublicLogChannelID, Embed: msgEmbed.Truncate().MessageEmbed})
+		}()
+	}
 	// TODO mute player currently in-game w/o kicking
 	if banSteam.BanType == store.Banned {
 		if errKick := app.Kick(ctx, store.System,

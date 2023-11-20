@@ -13,6 +13,10 @@ import (
 	"go.uber.org/zap"
 )
 
+type AssetStore interface {
+	Put(ctx context.Context, bucket string, name string, body io.Reader, size int64, contentType string) error
+}
+
 type S3Client struct {
 	*minio.Client
 	log    *zap.Logger

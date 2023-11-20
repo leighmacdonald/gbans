@@ -102,15 +102,14 @@ func readDemoZipContainer(log *zap.Logger, demoContainerZip *multipart.FileHeade
 	}, nil
 }
 
+type demoForm struct {
+	// Stats      string `form:"stats"` // {"76561198084134025": {"score": 0, "deaths": 0, "score_total": 0}}
+	ServerName string `form:"server_name"`
+	MapName    string `form:"map_name"`
+}
+
 func onAPIPostDemo(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
-	// {"76561198084134025": {"score": 0, "deaths": 0, "score_total": 0}}
-	type demoForm struct {
-		Stats      string `form:"stats"`
-		ServerName string `form:"server_name"`
-		MapName    string `form:"map_name"`
-	}
 
 	return func(ctx *gin.Context) {
 		var form demoForm
@@ -181,7 +180,8 @@ func onAPIPostDemo(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if errPut := app.assetStore.Put(ctx, app.conf.S3.BucketDemo, asset.Name, bytes.NewReader(result.demoRaw), asset.Size, asset.MimeType); errPut != nil {
+		if errPut := app.assetStore.Put(ctx, app.conf.S3.BucketDemo, asset.Name,
+			bytes.NewReader(result.demoRaw), asset.Size, asset.MimeType); errPut != nil {
 			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save media"))
 
 			log.Error("Failed to save user media to s3 backend", zap.Error(errPut))
@@ -252,15 +252,15 @@ func onAPIGetServerAdmins(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIPostPingMod(app *App) gin.HandlerFunc {
-	type pingReq struct {
-		ServerName string        `json:"server_name"`
-		Name       string        `json:"name"`
-		SteamID    steamid.SID64 `json:"steam_id"`
-		Reason     string        `json:"reason"`
-		Client     int           `json:"client"`
-	}
+type pingReq struct {
+	ServerName string        `json:"server_name"`
+	Name       string        `json:"name"`
+	SteamID    steamid.SID64 `json:"steam_id"`
+	Reason     string        `json:"reason"`
+	Client     int           `json:"client"`
+}
 
+func onAPIPostPingMod(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
@@ -272,10 +272,19 @@ func onAPIPostPingMod(app *App) gin.HandlerFunc {
 		state := app.state.current()
 		players := state.find(findOpts{SteamID: req.SteamID})
 
-		if len(players) == 0 {
+		if len(players) == 0 && app.conf.General.Mode != TestMode {
 			log.Error("Failed to find player on /mod call")
 			responseErr(ctx, http.StatusFailedDependency, consts.ErrInternal)
 
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{
+			"client":  req.Client,
+			"message": "Moderators have been notified",
+		})
+
+		if !app.conf.Discord.Enabled {
 			return
 		}
 
@@ -287,11 +296,6 @@ func onAPIPostPingMod(app *App) gin.HandlerFunc {
 		app.addAuthor(ctx, msgEmbed, req.SteamID).Truncate()
 
 		app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.LogChannelID, Embed: msgEmbed.MessageEmbed})
-
-		ctx.JSON(http.StatusOK, gin.H{
-			"client":  req.Client,
-			"message": "Moderators have been notified",
-		})
 	}
 }
 
@@ -883,22 +887,22 @@ func onAPIPostBansCIDRUpdate(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIPostBanSteamCreate(app *App) gin.HandlerFunc {
-	type apiBanRequest struct {
-		SourceID       store.StringSID `json:"source_id"`
-		TargetID       store.StringSID `json:"target_id"`
-		Duration       string          `json:"duration"`
-		ValidUntil     time.Time       `json:"valid_until"`
-		BanType        store.BanType   `json:"ban_type"`
-		Reason         store.Reason    `json:"reason"`
-		ReasonText     string          `json:"reason_text"`
-		Note           string          `json:"note"`
-		ReportID       int64           `json:"report_id"`
-		DemoName       string          `json:"demo_name"`
-		DemoTick       int             `json:"demo_tick"`
-		IncludeFriends bool            `json:"include_friends"`
-	}
+type apiBanRequest struct {
+	SourceID       store.StringSID `json:"source_id"`
+	TargetID       store.StringSID `json:"target_id"`
+	Duration       string          `json:"duration"`
+	ValidUntil     time.Time       `json:"valid_until"`
+	BanType        store.BanType   `json:"ban_type"`
+	Reason         store.Reason    `json:"reason"`
+	ReasonText     string          `json:"reason_text"`
+	Note           string          `json:"note"`
+	ReportID       int64           `json:"report_id"`
+	DemoName       string          `json:"demo_name"`
+	DemoTick       int             `json:"demo_tick"`
+	IncludeFriends bool            `json:"include_friends"`
+}
 
+func onAPIPostBanSteamCreate(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
@@ -965,21 +969,21 @@ func onAPIPostBanSteamCreate(app *App) gin.HandlerFunc {
 	}
 }
 
+type ServerAuthReq struct {
+	ServerName string `json:"server_name"`
+	Key        string `json:"key"`
+}
+
+type ServerAuthResp struct {
+	Status bool   `json:"status"`
+	Token  string `json:"token"`
+}
+
 func onSAPIPostServerAuth(app *App) gin.HandlerFunc {
-	type authReq struct {
-		ServerName string `json:"server_name"`
-		Key        string `json:"key"`
-	}
-
-	type authResp struct {
-		Status bool   `json:"status"`
-		Token  string `json:"token"`
-	}
-
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var req authReq
+		var req ServerAuthReq
 		if !bind(ctx, log, &req) {
 			return
 		}
@@ -988,15 +992,15 @@ func onSAPIPostServerAuth(app *App) gin.HandlerFunc {
 
 		errGetServer := app.db.GetServerByName(ctx, req.ServerName, &server, true, false)
 		if errGetServer != nil {
+			responseErr(ctx, http.StatusUnauthorized, consts.ErrPermissionDenied)
 			log.Warn("Failed to find server auth by name",
 				zap.String("name", req.ServerName), zap.Error(errGetServer))
-			responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 
 			return
 		}
 
 		if server.Password != req.Key {
-			responseErr(ctx, http.StatusForbidden, consts.ErrPermissionDenied)
+			responseErr(ctx, http.StatusUnauthorized, consts.ErrPermissionDenied)
 			log.Error("Invalid server key used",
 				zap.String("server", util.SanitizeLog(req.ServerName)))
 
@@ -1005,7 +1009,7 @@ func onSAPIPostServerAuth(app *App) gin.HandlerFunc {
 
 		accessToken, errToken := newServerToken(server.ServerID, app.conf.HTTP.CookieKey)
 		if errToken != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			responseErr(ctx, http.StatusUnauthorized, consts.ErrPermissionDenied)
 			log.Error("Failed to create new server access token", zap.Error(errToken))
 
 			return
@@ -1013,39 +1017,39 @@ func onSAPIPostServerAuth(app *App) gin.HandlerFunc {
 
 		server.TokenCreatedOn = time.Now()
 		if errSaveServer := app.db.SaveServer(ctx, &server); errSaveServer != nil {
+			responseErr(ctx, http.StatusUnauthorized, consts.ErrPermissionDenied)
 			log.Error("Failed to updated server token", zap.Error(errSaveServer))
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
 		}
 
-		ctx.JSON(http.StatusOK, authResp{Status: true, Token: accessToken})
+		ctx.JSON(http.StatusOK, ServerAuthResp{Status: true, Token: accessToken})
 		log.Info("Server authenticated successfully", zap.String("server", server.ShortName))
 	}
 }
 
+type CheckRequest struct {
+	ClientID int         `json:"client_id"`
+	SteamID  steamid.SID `json:"steam_id"`
+	IP       net.IP      `json:"ip"`
+	Name     string      `json:"name,omitempty"`
+}
+
+type CheckResponse struct {
+	ClientID        int              `json:"client_id"`
+	SteamID         steamid.SID      `json:"steam_id"`
+	BanType         store.BanType    `json:"ban_type"`
+	PermissionLevel consts.Privilege `json:"permission_level"`
+	Msg             string           `json:"msg"`
+}
+
 func onAPIPostServerCheck(app *App) gin.HandlerFunc {
-	type checkRequest struct {
-		ClientID int         `json:"client_id"`
-		SteamID  steamid.SID `json:"steam_id"`
-		IP       net.IP      `json:"ip"`
-		Name     string      `json:"name,omitempty"`
-	}
-
-	type checkResponse struct {
-		ClientID        int              `json:"client_id"`
-		SteamID         steamid.SID      `json:"steam_id"`
-		BanType         store.BanType    `json:"ban_type"`
-		PermissionLevel consts.Privilege `json:"permission_level"`
-		Msg             string           `json:"msg"`
-	}
-
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var request checkRequest
+		var request CheckRequest
 		if errBind := ctx.BindJSON(&request); errBind != nil { // we don't currently use bind() for server api
-			ctx.JSON(http.StatusInternalServerError, checkResponse{
+			ctx.JSON(http.StatusInternalServerError, CheckResponse{
 				BanType: store.Unknown,
 				Msg:     "Error determining state",
 			})
@@ -1053,7 +1057,7 @@ func onAPIPostServerCheck(app *App) gin.HandlerFunc {
 			return
 		}
 
-		resp := checkResponse{
+		resp := CheckResponse{
 			ClientID: request.ClientID,
 			SteamID:  request.SteamID,
 			BanType:  store.Unknown,
@@ -1084,7 +1088,7 @@ func onAPIPostServerCheck(app *App) gin.HandlerFunc {
 
 		var person store.Person
 		if errPerson := app.PersonBySID(responseCtx, steamID, &person); errPerson != nil {
-			ctx.JSON(http.StatusInternalServerError, checkResponse{
+			ctx.JSON(http.StatusInternalServerError, CheckResponse{
 				BanType: store.Unknown,
 				Msg:     "Error updating profile state",
 			})
@@ -1106,7 +1110,7 @@ func onAPIPostServerCheck(app *App) gin.HandlerFunc {
 		// Check IP first
 		banNet, errGetBanNet := app.db.GetBanNetByAddress(responseCtx, request.IP)
 		if errGetBanNet != nil {
-			ctx.JSON(http.StatusInternalServerError, checkResponse{
+			ctx.JSON(http.StatusInternalServerError, CheckResponse{
 				BanType: store.Unknown,
 				Msg:     "Error determining state",
 			})
@@ -2237,24 +2241,24 @@ func onAPIPostServer(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIPostReportCreate(app *App) gin.HandlerFunc {
-	type createReport struct {
-		SourceID        store.StringSID `json:"source_id"`
-		TargetID        store.StringSID `json:"target_id"`
-		Description     string          `json:"description"`
-		Reason          store.Reason    `json:"reason"`
-		ReasonText      string          `json:"reason_text"`
-		DemoName        string          `json:"demo_name"`
-		DemoTick        int             `json:"demo_tick"`
-		PersonMessageID int64           `json:"person_message_id"`
-	}
+type apiCreateReportReq struct {
+	SourceID        store.StringSID `json:"source_id"`
+	TargetID        store.StringSID `json:"target_id"`
+	Description     string          `json:"description"`
+	Reason          store.Reason    `json:"reason"`
+	ReasonText      string          `json:"reason_text"`
+	DemoName        string          `json:"demo_name"`
+	DemoTick        int             `json:"demo_tick"`
+	PersonMessageID int64           `json:"person_message_id"`
+}
 
+func onAPIPostReportCreate(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		currentUser := currentUserProfile(ctx)
 
-		var req createReport
+		var req apiCreateReportReq
 		if !bind(ctx, log, &req) {
 			return
 		}
@@ -2306,7 +2310,7 @@ func onAPIPostReportCreate(app *App) gin.HandlerFunc {
 
 		// Ensure the user doesn't already have an open report against the user
 		var existing store.Report
-		if errReports := app.db.GetReportBySteamID(ctx, currentUser.SteamID, targetID, &existing); errReports != nil {
+		if errReports := app.db.GetReportBySteamID(ctx, personSource.SteamID, targetID, &existing); errReports != nil {
 			if !errors.Is(errReports, store.ErrNoResult) {
 				log.Error("Failed to query reports by steam id", zap.Error(errReports))
 				responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
@@ -2343,6 +2347,12 @@ func onAPIPostReportCreate(app *App) gin.HandlerFunc {
 
 		ctx.JSON(http.StatusCreated, report)
 
+		log.Info("New report created successfully", zap.Int64("report_id", report.ReportID))
+
+		if !app.conf.Discord.Enabled {
+			return
+		}
+
 		msgEmbed := discord.
 			NewEmbed("New User Report Created").
 			SetDescription(report.Description).
@@ -2375,8 +2385,6 @@ func onAPIPostReportCreate(app *App) gin.HandlerFunc {
 			ChannelID: app.conf.Discord.LogChannelID,
 			Embed:     msgEmbed.Truncate().MessageEmbed,
 		})
-
-		log.Info("New report created successfully", zap.Int64("report_id", report.ReportID))
 	}
 }
 
@@ -4226,7 +4234,7 @@ func onAPIPostServerState(app *App) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusNoContent, "")
+		ctx.AbortWithStatus(http.StatusNoContent)
 	}
 }
 

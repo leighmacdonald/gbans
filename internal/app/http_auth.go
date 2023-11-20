@@ -49,6 +49,17 @@ func authServerMiddleWare(app *App) gin.HandlerFunc {
 			return
 		}
 
+		if strings.HasPrefix(reqAuthHeader, "Bearer ") {
+			parts := strings.Split(reqAuthHeader, " ")
+			if len(parts) != 2 {
+				ctx.AbortWithStatus(http.StatusUnauthorized)
+
+				return
+			}
+
+			reqAuthHeader = parts[1]
+		}
+
 		claims := &serverAuthClaims{}
 
 		parsedToken, errParseClaims := jwt.ParseWithClaims(reqAuthHeader, claims, makeGetTokenKey(app.conf.HTTP.CookieKey))
