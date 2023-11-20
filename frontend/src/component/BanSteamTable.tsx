@@ -1,7 +1,8 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import EditIcon from '@mui/icons-material/Edit';
 import UndoIcon from '@mui/icons-material/Undo';
+import Box from '@mui/material/Box';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
@@ -12,8 +13,8 @@ import * as yup from 'yup';
 import {
     apiGetBansSteam,
     AppealState,
-    BanSteamQueryFilter,
     BanReason,
+    BanSteamQueryFilter,
     SteamBanRecord
 } from '../api';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
@@ -23,8 +24,8 @@ import { LazyTable, Order, RowsPerPage } from './LazyTable';
 import { TableCellBool } from './TableCellBool';
 import { TableCellLink } from './TableCellLink';
 import {
-    TableCellRelativeDateField,
-    isPermanentBan
+    isPermanentBan,
+    TableCellRelativeDateField
 } from './TableCellRelativeDateField';
 import {
     AppealStateField,
@@ -51,7 +52,7 @@ const validationSchema = yup.object({
     deleted: deletedValidator
 });
 
-export const BanSteamTable = () => {
+export const BanSteamTable = ({ newBans }: { newBans: SteamBanRecord[] }) => {
     const [bans, setBans] = useState<SteamBanRecord[]>([]);
     const [sortOrder, setSortOrder] = useState<Order>('desc');
     const [sortColumn, setSortColumn] =
@@ -59,6 +60,7 @@ export const BanSteamTable = () => {
     const [rowPerPageCount, setRowPerPageCount] = useState<number>(
         RowsPerPage.TwentyFive
     );
+    const [hasNew, setHasNew] = useState(false);
     const [page, setPage] = useState(0);
     const [totalRows, setTotalRows] = useState<number>(0);
     const [source, setSource] = useState('');
@@ -68,6 +70,14 @@ export const BanSteamTable = () => {
         AppealState.Any
     );
     const { sendFlash } = useUserFlashCtx();
+
+    const allBans = useMemo(() => {
+        if (newBans.length > 0 && hasNew) {
+            return [...newBans, ...bans];
+        }
+
+        return bans;
+    }, [bans, hasNew, newBans]);
 
     const onUnbanSteam = useCallback(
         async (ban: SteamBanRecord) => {
@@ -101,6 +111,10 @@ export const BanSteamTable = () => {
     );
 
     useEffect(() => {
+        if (newBans.length > 0) {
+            setHasNew(false);
+        }
+
         const abortController = new AbortController();
         const opts: BanSteamQueryFilter = {
             limit: rowPerPageCount,
@@ -134,7 +148,8 @@ export const BanSteamTable = () => {
         rowPerPageCount,
         sortColumn,
         sortOrder,
-        target
+        target,
+        newBans.length
     ]);
 
     const iv: SteamBanFilterValues = {
@@ -190,7 +205,7 @@ export const BanSteamTable = () => {
                     <LazyTable<SteamBanRecord>
                         showPager={true}
                         count={totalRows}
-                        rows={bans}
+                        rows={allBans}
                         page={page}
                         rowsPerPage={rowPerPageCount}
                         sortOrder={sortOrder}
@@ -265,17 +280,20 @@ export const BanSteamTable = () => {
                                 sortable: true,
                                 align: 'left',
                                 renderer: (row) => (
-                                    <Typography variant={'body1'}>
-                                        {BanReason[row.reason]}
-                                    </Typography>
+                                    <Box>
+                                        <Tooltip
+                                            title={
+                                                row.reason == BanReason.Custom
+                                                    ? row.reason_text
+                                                    : BanReason[row.reason]
+                                            }
+                                        >
+                                            <Typography variant={'body1'}>
+                                                {`${BanReason[row.reason]}`}
+                                            </Typography>
+                                        </Tooltip>
+                                    </Box>
                                 )
-                            },
-                            {
-                                label: 'Custom Reason',
-                                tooltip: 'Custom',
-                                sortKey: 'reason_text',
-                                sortable: false,
-                                align: 'left'
                             },
                             {
                                 label: 'Created',
@@ -364,10 +382,12 @@ export const BanSteamTable = () => {
                                 renderer: (row) =>
                                     row.report_id > 0 ? (
                                         <Tooltip title={'View Report'}>
-                                            <TableCellLink
-                                                label={`#${row.report_id}`}
-                                                to={`/report/${row.report_id}`}
-                                            />
+                                            <>
+                                                <TableCellLink
+                                                    label={`#${row.report_id}`}
+                                                    to={`/report/${row.report_id}`}
+                                                />
+                                            </>
                                         </Tooltip>
                                     ) : (
                                         <></>

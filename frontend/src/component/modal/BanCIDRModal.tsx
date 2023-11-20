@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import RouterIcon from '@mui/icons-material/Router';
 import {
@@ -16,10 +16,9 @@ import {
     BanReason,
     BanType,
     Duration,
-    CIDRBanRecord
+    CIDRBanRecord,
+    APIError
 } from '../../api';
-import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
-import { logErr } from '../../util/errors';
 import { Heading } from '../Heading';
 import {
     BanReasonField,
@@ -34,6 +33,7 @@ import {
     DurationCustomFieldValidator
 } from '../formik/DurationCustomField';
 import { DurationField, DurationFieldValidator } from '../formik/DurationField';
+import { ErrorField } from '../formik/ErrorField';
 import {
     makeNetworkRangeFieldValidator,
     NetworkRangeField
@@ -72,7 +72,7 @@ export interface BanCIDRModalProps {
 
 export const BanCIDRModal = NiceModal.create(
     ({ existing }: BanCIDRModalProps) => {
-        const { sendFlash } = useUserFlashCtx();
+        const [error, setError] = useState<string>();
         const modal = useModal();
 
         const onSubmit = useCallback(
@@ -106,12 +106,17 @@ export const BanCIDRModal = NiceModal.create(
                         );
                     }
                     await modal.hide();
+                    setError(undefined);
                 } catch (e) {
-                    logErr(e);
-                    sendFlash('error', 'Error saving ban');
+                    modal.reject(e);
+                    if (e instanceof APIError) {
+                        setError(e.message);
+                    } else {
+                        setError('Unknown internal error');
+                    }
                 }
             },
-            [existing, modal, sendFlash]
+            [existing, modal]
         );
 
         const formId = 'banCIDRForm';
@@ -150,6 +155,7 @@ export const BanCIDRModal = NiceModal.create(
                             <DurationField />
                             <DurationCustomField />
                             <NoteField />
+                            <ErrorField error={error} />
                         </Stack>
                     </DialogContent>
                     <DialogActions>

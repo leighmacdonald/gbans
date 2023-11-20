@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 import Stack from '@mui/material/Stack';
 import { Formik } from 'formik';
-import { apiUpdatePlayerPermission, PermissionLevel } from '../../api';
+import { apiUpdatePlayerPermission, PermissionLevel, Person } from '../../api';
 import { emptyOrNullString } from '../../util/types';
 import { Heading } from '../Heading';
 import { PermissionLevelField } from '../formik/PermissionLevelField';
@@ -17,8 +17,7 @@ import { SteamIdField } from '../formik/SteamIdField';
 import { CancelButton, SubmitButton } from './Buttons';
 
 export interface PersonEditModalProps {
-    steam_id: string;
-    permission_level: PermissionLevel;
+    person: Person;
 }
 
 interface PersonEditFormValues {
@@ -27,7 +26,7 @@ interface PersonEditFormValues {
 }
 
 export const PersonEditModal = NiceModal.create(
-    ({ steam_id, permission_level }: PersonEditModalProps) => {
+    ({ person }: PersonEditModalProps) => {
         const modal = useModal();
 
         const onSave = useCallback(
@@ -35,7 +34,7 @@ export const PersonEditModal = NiceModal.create(
                 const abortConroller = new AbortController();
                 try {
                     const resp = await apiUpdatePlayerPermission(
-                        steam_id,
+                        person.steam_id,
                         {
                             permission_level: values.permission_level
                         },
@@ -47,25 +46,26 @@ export const PersonEditModal = NiceModal.create(
                     modal.reject(e);
                 }
             },
-            [modal, steam_id]
+            [modal, person.steam_id]
         );
 
         return (
             <Formik<PersonEditFormValues>
                 onSubmit={onSave}
                 initialValues={{
-                    permission_level: permission_level ?? PermissionLevel.User,
-                    steam_id: steam_id
+                    permission_level:
+                        person.permission_level ?? PermissionLevel.User,
+                    steam_id: person.steam_id
                 }}
             >
                 <Dialog {...muiDialogV5(modal)} fullWidth maxWidth={'sm'}>
                     <DialogTitle component={Heading} iconLeft={<PersonIcon />}>
-                        Person Editor
+                        Person Editor: {person.personaname}
                     </DialogTitle>
                     <DialogContent>
                         <Stack spacing={2}>
                             <SteamIdField
-                                isReadOnly={!emptyOrNullString(steam_id)}
+                                isReadOnly={!emptyOrNullString(person.steam_id)}
                             />
                             <PermissionLevelField />
                         </Stack>

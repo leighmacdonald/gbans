@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import EditIcon from '@mui/icons-material/Edit';
+import InfoIcon from '@mui/icons-material/Info';
 import LinkIcon from '@mui/icons-material/Link';
 import UndoIcon from '@mui/icons-material/Undo';
 import ButtonGroup from '@mui/material/ButtonGroup';
@@ -40,7 +41,7 @@ const validationSchema = yup.object({
     deleted: deletedValidator
 });
 
-export const BanGroupTable = () => {
+export const BanGroupTable = ({ newBans }: { newBans: GroupBanRecord[] }) => {
     const [bans, setBans] = useState<GroupBanRecord[]>([]);
     const [sortOrder, setSortOrder] = useState<Order>('desc');
     const [sortColumn, setSortColumn] =
@@ -48,6 +49,7 @@ export const BanGroupTable = () => {
     const [rowPerPageCount, setRowPerPageCount] = useState<number>(
         RowsPerPage.TwentyFive
     );
+    const [hasNew, setHasNew] = useState(false);
     const [page, setPage] = useState(0);
     const [totalRows, setTotalRows] = useState<number>(0);
     const [source, setSource] = useState('');
@@ -55,6 +57,14 @@ export const BanGroupTable = () => {
     const [target, setTarget] = useState('');
     const [deleted, setDeleted] = useState(false);
     const { sendFlash } = useUserFlashCtx();
+
+    const allBans = useMemo(() => {
+        if (newBans.length > 0 && hasNew) {
+            return [...newBans, ...bans];
+        }
+
+        return bans;
+    }, [bans, hasNew, newBans]);
 
     const onEditGroup = useCallback(
         async (existing: GroupBanRecord) => {
@@ -88,6 +98,9 @@ export const BanGroupTable = () => {
     );
 
     useEffect(() => {
+        if (newBans.length > 0) {
+            setHasNew(false);
+        }
         const abortController = new AbortController();
         const opts: BanGroupQueryFilter = {
             limit: rowPerPageCount,
@@ -113,6 +126,7 @@ export const BanGroupTable = () => {
     }, [
         deleted,
         group,
+        newBans.length,
         page,
         rowPerPageCount,
         sortColumn,
@@ -174,7 +188,7 @@ export const BanGroupTable = () => {
                     <LazyTable<GroupBanRecord>
                         showPager={true}
                         count={totalRows}
-                        rows={bans}
+                        rows={allBans}
                         page={page}
                         rowsPerPage={rowPerPageCount}
                         sortOrder={sortOrder}
@@ -258,11 +272,11 @@ export const BanGroupTable = () => {
                                 tooltip: 'Mod Note',
                                 sortKey: 'note',
                                 sortable: false,
-                                align: 'left',
+                                align: 'center',
                                 renderer: (row) => (
-                                    <Typography variant={'body1'}>
-                                        {row.note}
-                                    </Typography>
+                                    <Tooltip title={row.note}>
+                                        <InfoIcon />
+                                    </Tooltip>
                                 )
                             },
                             {
