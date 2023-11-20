@@ -33,6 +33,7 @@ type DemoFile struct {
 	Title           string                            `json:"title"`
 	CreatedOn       time.Time                         `json:"created_on"`
 	Downloads       int64                             `json:"downloads"`
+	Size            int64                             `json:"size"`
 	MapName         string                            `json:"map_name"`
 	Archive         bool                              `json:"archive"` // When true, will not get auto deleted when flushing old demos
 	Stats           map[steamid.SID64]DemoPlayerStats `json:"stats"`
@@ -49,39 +50,56 @@ func (db *Store) FlushDemos(ctx context.Context) error {
 }
 
 func (db *Store) GetDemoByID(ctx context.Context, demoID int64, demoFile *DemoFile) error {
-	query, args, errQueryArgs := db.sb.
-		Select("demo_id", "server_id", "title", "created_on", "downloads", "map_name", "archive", "stats").
-		From("demo").
-		Where(sq.Eq{"demo_id": demoID}).
-		ToSql()
-	if errQueryArgs != nil {
-		return Err(errQueryArgs)
+	row, errRow := db.QueryRowBuilder(ctx, db.sb.
+		Select("d.demo_id", "d.server_id", "d.title", "d.created_on", "d.downloads",
+			"d.map_name", "d.archive", "d.stats", "d.asset_id", "a.size", "s.short_name", "s.name").
+		From("demo d").
+		LeftJoin("server s ON s.server_id = d.server_id").
+		LeftJoin("asset a ON a.asset_id = d.asset_id").
+		Where(sq.Eq{"demo_id": demoID}))
+	if errRow != nil {
+		return errRow
 	}
 
-	if errQuery := db.
-		QueryRow(ctx, query, args...).
-		Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title,
-			&demoFile.CreatedOn, &demoFile.Downloads, &demoFile.MapName,
-			&demoFile.Archive, &demoFile.Stats); errQuery != nil {
+	var uuidScan *uuid.UUID
+
+	if errQuery := row.Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title,
+		&demoFile.CreatedOn, &demoFile.Downloads, &demoFile.MapName,
+		&demoFile.Archive, &demoFile.Stats, uuidScan, &demoFile.Size, &demoFile.ServerNameShort,
+		&demoFile.ServerNameLong); errQuery != nil {
 		return Err(errQuery)
+	}
+
+	if uuidScan != nil {
+		demoFile.AssetID = *uuidScan
 	}
 
 	return nil
 }
 
 func (db *Store) GetDemoByName(ctx context.Context, demoName string, demoFile *DemoFile) error {
-	query, args, errQueryArgs := db.sb.
-		Select("demo_id", "server_id", "title", "created_on", "downloads", "map_name", "archive", "stats").
-		From("demo").
-		Where(sq.Eq{"title": demoName}).
-		ToSql()
-	if errQueryArgs != nil {
-		return Err(errQueryArgs)
+	row, errRow := db.QueryRowBuilder(ctx, db.sb.
+		Select("d.demo_id", "d.server_id", "d.title", "d.created_on", "d.downloads",
+			"d.map_name", "d.archive", "d.stats", "d.asset_id", "a.size", "s.short_name", "s.name").
+		From("demo d").
+		LeftJoin("server s ON s.server_id = d.server_id").
+		LeftJoin("asset a ON a.asset_id = d.asset_id").
+		Where(sq.Eq{"title": demoName}))
+	if errRow != nil {
+		return errRow
 	}
 
-	if errQuery := db.QueryRow(ctx, query, args...).Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title,
-		&demoFile.CreatedOn, &demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats); errQuery != nil {
+	var uuidScan *uuid.UUID
+
+	if errQuery := row.Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title,
+		&demoFile.CreatedOn, &demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats,
+		&demoFile.Stats, &uuidScan, &demoFile.Size, &demoFile.ServerNameShort,
+		&demoFile.ServerNameLong); errQuery != nil {
 		return Err(errQuery)
+	}
+
+	if uuidScan != nil {
+		demoFile.AssetID = *uuidScan
 	}
 
 	return nil
@@ -101,10 +119,11 @@ func (db *Store) GetDemos(ctx context.Context, opts DemoFilter) ([]DemoFile, int
 	)
 
 	builder := db.sb.
-		Select("d.demo_id", "d.server_id", "d.title", "d.created_on", "d.size", "d.downloads",
-			"d.map_name", "d.archive", "d.stats", "s.short_name", "s.name", "d.asset_id").
+		Select("d.demo_id", "d.server_id", "d.title", "d.created_on", "d.downloads",
+			"d.map_name", "d.archive", "d.stats", "s.short_name", "s.name", "d.asset_id", "a.size").
 		From("demo d").
-		LeftJoin("server s ON s.server_id = d.server_id")
+		LeftJoin("server s ON s.server_id = d.server_id").
+		LeftJoin("asset a ON a.asset_id = d.asset_id")
 
 	if opts.MapName != "" {
 		constraints = append(constraints, sq.ILike{"d.map_name": "%" + strings.ToLower(opts.MapName) + "%"})
@@ -116,7 +135,7 @@ func (db *Store) GetDemos(ctx context.Context, opts DemoFilter) ([]DemoFile, int
 			return nil, 0, consts.ErrInvalidSID
 		}
 
-		constraints = append(constraints, sq.Expr("stats ?? ?", sid64.String()))
+		constraints = append(constraints, sq.Expr("d.stats ?? ?", sid64.String()))
 	}
 
 	if len(opts.ServerIds) > 0 && opts.ServerIds[0] != 0 {
@@ -136,7 +155,9 @@ func (db *Store) GetDemos(ctx context.Context, opts DemoFilter) ([]DemoFile, int
 	}
 
 	builder = opts.QueryFilter.applySafeOrder(builder, map[string][]string{
-		"d.": {"demo_id", "server_id", "title", "created_on", "size", "downloads", "map_name"},
+		"d.": {"demo_id", "server_id", "title", "created_on", "downloads", "map_name"},
+		"s.": {"short_name", "name"},
+		"a.": {"size"},
 	}, "demo_id")
 
 	builder = opts.QueryFilter.applyLimitOffsetDefault(builder).Where(constraints)
@@ -160,7 +181,7 @@ func (db *Store) GetDemos(ctx context.Context, opts DemoFilter) ([]DemoFile, int
 
 		if errScan := rows.Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title, &demoFile.CreatedOn,
 			&demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats,
-			&demoFile.ServerNameShort, &demoFile.ServerNameLong, &uuidScan); errScan != nil {
+			&demoFile.ServerNameShort, &demoFile.ServerNameLong, &uuidScan, &demoFile.Size); errScan != nil {
 			return nil, 0, Err(errScan)
 		}
 
@@ -190,17 +211,16 @@ func (db *Store) SaveDemo(ctx context.Context, demoFile *DemoFile) error {
 	// deleted during cleanup.
 	// Reports can happen mid-game which is why this is checked when the demo is saved and not during the report where
 	// we have no completed demo instance/id yet.
-	query, args, queryErr := db.sb.
+	reportRow, reportRowErr := db.QueryRowBuilder(ctx, db.sb.
 		Select("count(report_id)").
 		From("report").
-		Where(sq.Eq{"demo_name": demoFile.Title}).
-		ToSql()
-	if queryErr != nil {
-		return errors.Wrap(queryErr, "Failed to select reports")
+		Where(sq.Eq{"demo_name": demoFile.Title}))
+	if reportRowErr != nil {
+		return errors.Wrap(reportRowErr, "Failed to select reports")
 	}
 
 	var count int
-	if errScan := db.QueryRow(ctx, query, args...).Scan(&count); errScan != nil && !errors.Is(errScan, ErrNoResult) {
+	if errScan := reportRow.Scan(&count); errScan != nil && !errors.Is(errScan, ErrNoResult) {
 		return Err(errScan)
 	}
 
@@ -220,8 +240,8 @@ func (db *Store) SaveDemo(ctx context.Context, demoFile *DemoFile) error {
 
 func (db *Store) insertDemo(ctx context.Context, demoFile *DemoFile) error {
 	query, args, errQueryArgs := db.sb.
-		Insert(string(tableDemo)).
-		Columns("server_id", "title", "created_on", "downloads", "map_name", "archive", "stats", "asset_id").
+		Insert("demo d").
+		Columns("d.server_id", "d.title", "d.created_on", "d.downloads", "d.map_name", "d.archive", "d.stats", "d.asset_id").
 		Values(demoFile.ServerID, demoFile.Title, demoFile.CreatedOn,
 			demoFile.Downloads, demoFile.MapName, demoFile.Archive, demoFile.Stats, demoFile.AssetID).
 		Suffix("RETURNING demo_id").
@@ -242,7 +262,7 @@ func (db *Store) insertDemo(ctx context.Context, demoFile *DemoFile) error {
 
 func (db *Store) updateDemo(ctx context.Context, demoFile *DemoFile) error {
 	query := db.sb.
-		Update(string(tableDemo)).
+		Update("demo").
 		Set("title", demoFile.Title).
 		Set("downloads", demoFile.Downloads).
 		Set("map_name", demoFile.MapName).
@@ -252,7 +272,7 @@ func (db *Store) updateDemo(ctx context.Context, demoFile *DemoFile) error {
 		Where(sq.Eq{"demo_id": demoFile.DemoID})
 
 	if errExec := db.ExecUpdateBuilder(ctx, query); errExec != nil {
-		return Err(errExec)
+		return errExec
 	}
 
 	db.log.Info("Demo updated", zap.String("name", demoFile.Title))
@@ -262,7 +282,7 @@ func (db *Store) updateDemo(ctx context.Context, demoFile *DemoFile) error {
 
 func (db *Store) DropDemo(ctx context.Context, demoFile *DemoFile) error {
 	if errExec := db.ExecDeleteBuilder(ctx, db.sb.
-		Delete(string(tableDemo)).
+		Delete("demo").
 		Where(sq.Eq{"demo_id": demoFile.DemoID})); errExec != nil {
 		return Err(errExec)
 	}

@@ -48,7 +48,6 @@ const (
 	tableNetASN      tableName = "net_asn"
 
 	tableServer tableName = "server"
-	tableDemo   tableName = "demo"
 )
 
 // EmptyUUID is used as a placeholder value for signaling the entity is new.
