@@ -27,16 +27,6 @@ export enum PermissionLevel {
     Admin = 100
 }
 
-export const permissionLevelList = [
-    PermissionLevel.Banned,
-    PermissionLevel.Guest,
-    PermissionLevel.User,
-    PermissionLevel.Reserved,
-    PermissionLevel.Editor,
-    PermissionLevel.Moderator,
-    PermissionLevel.Admin
-];
-
 export const permissionLevelString = (level: PermissionLevel) => {
     switch (level) {
         case PermissionLevel.Admin:

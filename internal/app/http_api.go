@@ -4462,11 +4462,11 @@ func onAPIPutPlayerPermission(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	type updatePpermissionLevel struct {
-		PermissionLevel consts.Privilege
+		PermissionLevel consts.Privilege `json:"permission_level"`
 	}
 
 	return func(ctx *gin.Context) {
-		steamID, errParam := getSID64Param(ctx, "")
+		steamID, errParam := getSID64Param(ctx, "steam_id")
 		if errParam != nil {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
 
