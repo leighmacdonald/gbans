@@ -134,3 +134,12 @@ func checkPrivilege(ctx *gin.Context, person userProfile, allowedSteamIds steami
 
 	return false
 }
+
+type ResultsCount struct {
+	Count int64 `json:"count"`
+}
+
+type LazyResult struct {
+	Count int64 `json:"count"`
+	Data  any   `json:"data"`
+}
