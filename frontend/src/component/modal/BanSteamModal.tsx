@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import {
@@ -12,14 +12,13 @@ import { Formik } from 'formik';
 import * as yup from 'yup';
 import {
     apiCreateBanSteam,
+    APIError,
     apiUpdateBanSteam,
     BanReason,
     BanType,
     Duration,
     SteamBanRecord
 } from '../../api';
-import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
-import { logErr } from '../../util/errors';
 import { Heading } from '../Heading';
 import {
     BanReasonField,
@@ -35,6 +34,7 @@ import {
     DurationCustomFieldValidator
 } from '../formik/DurationCustomField';
 import { DurationField, DurationFieldValidator } from '../formik/DurationField';
+import { ErrorField } from '../formik/ErrorField';
 import { IncludeFriendsField } from '../formik/IncludeFriendsField';
 import { NoteField, NoteFieldValidator } from '../formik/NoteField';
 import { ReportIdField, ReportIdFieldValidator } from '../formik/ReportIdField';
@@ -76,7 +76,7 @@ const validationSchema = yup.object({
 
 export const BanSteamModal = NiceModal.create(
     ({ steamId, reportId, existing }: BanModalProps) => {
-        const { sendFlash } = useUserFlashCtx();
+        const [error, setError] = useState<string>();
         const modal = useModal();
 
         const isReadOnlySid = useMemo(() => {
@@ -118,13 +118,17 @@ export const BanSteamModal = NiceModal.create(
                         modal.resolve(ban_record);
                     }
                     await modal.hide();
+                    setError(undefined);
                 } catch (e) {
-                    logErr(e);
                     modal.reject(e);
-                    sendFlash('error', `Error saving ban: ${e}`);
+                    if (e instanceof APIError) {
+                        setError(e.message);
+                    } else {
+                        setError('Unknown internal error');
+                    }
                 }
             },
-            [existing, isUpdate, modal, sendFlash]
+            [existing, isUpdate, modal]
         );
 
         return (
@@ -172,6 +176,7 @@ export const BanSteamModal = NiceModal.create(
                             <DurationField />
                             <DurationCustomField />
                             <NoteField />
+                            <ErrorField error={error} />
                         </Stack>
                     </DialogContent>
                     <DialogActions>

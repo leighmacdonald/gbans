@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import GroupsIcon from '@mui/icons-material/Groups';
 import {
@@ -12,6 +12,7 @@ import { Formik } from 'formik';
 import * as yup from 'yup';
 import {
     apiCreateBanGroup,
+    APIError,
     apiUpdateBanGroup,
     Duration,
     GroupBanRecord
@@ -22,6 +23,7 @@ import {
     DurationCustomFieldValidator
 } from '../formik/DurationCustomField';
 import { DurationField, DurationFieldValidator } from '../formik/DurationField';
+import { ErrorField } from '../formik/ErrorField';
 import { GroupIdField, groupIdFieldValidator } from '../formik/GroupIdField';
 import { NoteField, NoteFieldValidator } from '../formik/NoteField';
 import { SteamIdField, steamIdValidator } from '../formik/SteamIdField';
@@ -50,6 +52,7 @@ export interface BanGroupModalProps {
 
 export const BanGroupModal = NiceModal.create(
     ({ existing }: BanGroupModalProps) => {
+        const [error, setError] = useState<string>();
         const modal = useModal();
         const onSubmit = useCallback(
             async (values: BanGroupFormValues) => {
@@ -74,8 +77,14 @@ export const BanGroupModal = NiceModal.create(
                         );
                     }
                     await modal.hide();
+                    setError(undefined);
                 } catch (e) {
                     modal.reject(e);
+                    if (e instanceof APIError) {
+                        setError(e.message);
+                    } else {
+                        setError('Unknown internal error');
+                    }
                 }
             },
             [existing, modal]
@@ -111,6 +120,7 @@ export const BanGroupModal = NiceModal.create(
                             <DurationField />
                             <DurationCustomField />
                             <NoteField />
+                            <ErrorField error={error} />
                         </Stack>
                     </DialogContent>
                     <DialogActions>

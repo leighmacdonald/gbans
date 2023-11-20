@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import EditIcon from '@mui/icons-material/Edit';
 import UndoIcon from '@mui/icons-material/Undo';
@@ -13,9 +13,9 @@ import IPCIDR from 'ip-cidr';
 import * as yup from 'yup';
 import {
     apiGetBansCIDR,
+    BanCIDRQueryFilter,
     BanReason,
-    CIDRBanRecord,
-    BanCIDRQueryFilter
+    CIDRBanRecord
 } from '../api';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
@@ -45,13 +45,14 @@ const validationSchema = yup.object({
     deleted: deletedValidator
 });
 
-export const BanCIDRTable = () => {
+export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
     const [bans, setBans] = useState<CIDRBanRecord[]>([]);
     const [sortOrder, setSortOrder] = useState<Order>('desc');
     const [sortColumn, setSortColumn] = useState<keyof CIDRBanRecord>('net_id');
     const [rowPerPageCount, setRowPerPageCount] = useState<number>(
         RowsPerPage.TwentyFive
     );
+    const [hasNew, setHasNew] = useState(false);
     const [page, setPage] = useState(0);
     const [totalRows, setTotalRows] = useState<number>(0);
     const [source, setSource] = useState('');
@@ -59,6 +60,14 @@ export const BanCIDRTable = () => {
     const [deleted, setDeleted] = useState(false);
     const [ip, setIp] = useState('');
     const { sendFlash } = useUserFlashCtx();
+
+    const allBans = useMemo(() => {
+        if (newBans.length > 0 && hasNew) {
+            return [...newBans, ...bans];
+        }
+
+        return bans;
+    }, [bans, hasNew, newBans]);
 
     const onUnbanCIDR = useCallback(
         async (net_id: number) => {
@@ -92,6 +101,10 @@ export const BanCIDRTable = () => {
     );
 
     useEffect(() => {
+        if (newBans.length > 0) {
+            setHasNew(false);
+        }
+
         const abortController = new AbortController();
         const opts: BanCIDRQueryFilter = {
             limit: rowPerPageCount,
@@ -122,7 +135,8 @@ export const BanCIDRTable = () => {
         sortColumn,
         sortOrder,
         target,
-        ip
+        ip,
+        newBans.length
     ]);
 
     const iv: CIDRBanFilterValues = {
@@ -179,7 +193,7 @@ export const BanCIDRTable = () => {
                     <LazyTable<CIDRBanRecord>
                         showPager={true}
                         count={totalRows}
-                        rows={bans}
+                        rows={allBans}
                         page={page}
                         rowsPerPage={rowPerPageCount}
                         sortOrder={sortOrder}
@@ -295,21 +309,17 @@ export const BanCIDRTable = () => {
                                 sortable: true,
                                 align: 'left',
                                 renderer: (row) => (
-                                    <Typography variant={'body1'}>
-                                        {BanReason[row.reason]}
-                                    </Typography>
-                                )
-                            },
-                            {
-                                label: 'Custom Reason',
-                                tooltip: 'Custom',
-                                sortKey: 'reason_text',
-                                sortable: false,
-                                align: 'left',
-                                renderer: (row) => (
-                                    <Typography variant={'body1'}>
-                                        {row.reason_text}
-                                    </Typography>
+                                    <Tooltip
+                                        title={
+                                            row.reason == BanReason.Custom
+                                                ? row.reason_text
+                                                : BanReason[row.reason]
+                                        }
+                                    >
+                                        <Typography variant={'body1'}>
+                                            {BanReason[row.reason]}
+                                        </Typography>
+                                    </Tooltip>
                                 )
                             },
                             {

@@ -99,6 +99,11 @@ export class APIError extends Error {
     }
 }
 
+interface errorMessage {
+    message: string;
+    code?: number;
+}
+
 /**
  * All api requests are handled through this interface.
  *
@@ -151,6 +156,7 @@ export const apiCall = async <
         new URL(url, `${location.protocol}//${location.host}`),
         requestOptions
     );
+
     switch (response.status) {
         case 415:
             throw new APIError(ErrorCode.InvalidMimetype);
@@ -163,7 +169,13 @@ export const apiCall = async <
     }
 
     if (!response.ok) {
-        throw new APIError(ErrorCode.Unknown);
+        let err: errorMessage = { message: 'Error', code: ErrorCode.Unknown };
+        try {
+            err = (await response.json()) as errorMessage;
+        } catch (e) {
+            throw new APIError(ErrorCode.Unknown);
+        }
+        throw new APIError(err.code ?? ErrorCode.Unknown, err.message);
     }
 
     return (await response.json()) as TResponse;

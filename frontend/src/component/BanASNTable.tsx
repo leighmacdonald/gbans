@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import EditIcon from '@mui/icons-material/Edit';
 import UndoIcon from '@mui/icons-material/Undo';
@@ -12,9 +12,9 @@ import { Formik } from 'formik';
 import * as yup from 'yup';
 import {
     apiGetBansASN,
-    BanReason,
     ASNBanRecord,
-    BanASNQueryFilter
+    BanASNQueryFilter,
+    BanReason
 } from '../api';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
@@ -44,7 +44,7 @@ const validationSchema = yup.object({
     deleted: deletedValidator
 });
 
-export const BanASNTable = () => {
+export const BanASNTable = ({ newBans }: { newBans: ASNBanRecord[] }) => {
     const [bans, setBans] = useState<ASNBanRecord[]>([]);
     const [sortOrder, setSortOrder] = useState<Order>('desc');
     const [sortColumn, setSortColumn] =
@@ -52,6 +52,8 @@ export const BanASNTable = () => {
     const [rowPerPageCount, setRowPerPageCount] = useState<number>(
         RowsPerPage.TwentyFive
     );
+    const [hasNew, setHasNew] = useState(false);
+
     const [page, setPage] = useState(0);
     const [totalRows, setTotalRows] = useState<number>(0);
     const [asNum, setASNum] = useState<number>();
@@ -59,6 +61,14 @@ export const BanASNTable = () => {
     const [target, setTarget] = useState('');
     const [deleted, setDeleted] = useState(false);
     const { sendFlash } = useUserFlashCtx();
+
+    const allBans = useMemo(() => {
+        if (newBans.length > 0 && hasNew) {
+            return [...newBans, ...bans];
+        }
+
+        return bans;
+    }, [bans, hasNew, newBans]);
 
     const onUnbanASN = useCallback(
         async (as_num: number) => {
@@ -92,6 +102,10 @@ export const BanASNTable = () => {
     );
 
     useEffect(() => {
+        if (newBans.length > 0) {
+            setHasNew(false);
+        }
+
         const abortController = new AbortController();
         const opts: BanASNQueryFilter = {
             limit: rowPerPageCount,
@@ -117,6 +131,7 @@ export const BanASNTable = () => {
     }, [
         asNum,
         deleted,
+        newBans.length,
         page,
         rowPerPageCount,
         sortColumn,
@@ -178,7 +193,7 @@ export const BanASNTable = () => {
                     <LazyTable<ASNBanRecord>
                         showPager={true}
                         count={totalRows}
-                        rows={bans}
+                        rows={allBans}
                         page={page}
                         rowsPerPage={rowPerPageCount}
                         sortOrder={sortOrder}
@@ -264,17 +279,18 @@ export const BanASNTable = () => {
                                 sortable: true,
                                 align: 'left',
                                 renderer: (row) => (
-                                    <Typography variant={'body1'}>
-                                        {BanReason[row.reason]}
-                                    </Typography>
+                                    <Tooltip
+                                        title={
+                                            row.reason == BanReason.Custom
+                                                ? row.reason_text
+                                                : BanReason[row.reason]
+                                        }
+                                    >
+                                        <Typography variant={'body1'}>
+                                            {BanReason[row.reason]}
+                                        </Typography>
+                                    </Tooltip>
                                 )
-                            },
-                            {
-                                label: 'Custom Reason',
-                                tooltip: 'Custom',
-                                sortKey: 'reason_text',
-                                sortable: false,
-                                align: 'left'
                             },
                             {
                                 label: 'Created',

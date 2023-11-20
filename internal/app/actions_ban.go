@@ -157,7 +157,7 @@ func (app *App) BanCIDR(ctx context.Context, banNet *store.BanCIDR) error {
 	}
 
 	if errSaveBanNet := app.db.SaveBanNet(ctx, banNet); errSaveBanNet != nil {
-		return errors.Wrapf(errSaveBanNet, "Failed to save ban net")
+		return errors.Wrap(errSaveBanNet, "Failed to save ban")
 	}
 
 	go func(_ *net.IPNet, reason store.Reason) {

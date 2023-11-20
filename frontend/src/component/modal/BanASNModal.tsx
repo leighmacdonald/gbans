@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import LanIcon from '@mui/icons-material/Lan';
 import {
@@ -15,7 +15,8 @@ import {
     apiUpdateBanASN,
     BanReason,
     Duration,
-    ASNBanRecord
+    ASNBanRecord,
+    APIError
 } from '../../api';
 import { Heading } from '../Heading';
 import { ASNumberField, asNumberFieldValidator } from '../formik/ASNumberField';
@@ -32,6 +33,7 @@ import {
     DurationCustomFieldValidator
 } from '../formik/DurationCustomField';
 import { DurationField, DurationFieldValidator } from '../formik/DurationField';
+import { ErrorField } from '../formik/ErrorField';
 import { NoteField, NoteFieldValidator } from '../formik/NoteField';
 import {
     SteamIdField,
@@ -66,6 +68,7 @@ export interface BanASNModalProps {
 
 export const BanASNModal = NiceModal.create(
     ({ existing }: BanASNModalProps) => {
+        const [error, setError] = useState<string>();
         const modal = useModal();
         const onSubmit = useCallback(
             async (values: BanASNFormValues) => {
@@ -94,19 +97,23 @@ export const BanASNModal = NiceModal.create(
                         );
                     }
                     await modal.hide();
+                    setError(undefined);
                 } catch (e) {
                     modal.resolve(e);
+                    if (e instanceof APIError) {
+                        setError(e.message);
+                    } else {
+                        setError('Unknown internal error');
+                    }
                 }
             },
             [existing, modal]
         );
 
-        const formId = 'banASNForm';
-
         return (
             <Formik
                 onSubmit={onSubmit}
-                id={formId}
+                id={'banASNForm'}
                 initialValues={{
                     ban_asn_id: existing?.ban_asn_id,
                     duration: existing ? Duration.durCustom : Duration.dur2w,
@@ -137,6 +144,7 @@ export const BanASNModal = NiceModal.create(
                             <DurationField />
                             <DurationCustomField />
                             <NoteField />
+                            <ErrorField error={error} />
                         </Stack>
                     </DialogContent>
                     <DialogActions>

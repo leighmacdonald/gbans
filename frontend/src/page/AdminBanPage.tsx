@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import GavelIcon from '@mui/icons-material/Gavel';
@@ -32,11 +32,16 @@ import {
     ModalBanSteam
 } from '../component/modal';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { logErr } from '../util/errors';
 
 export const AdminBanPage = () => {
     const theme = useTheme();
     const [value, setValue] = React.useState<string>('0');
     const { sendFlash } = useUserFlashCtx();
+    const [newSteamBans, setNewSteamBans] = useState<SteamBanRecord[]>([]);
+    const [newCIDRBans, setNewCIDRBans] = useState<CIDRBanRecord[]>([]);
+    const [newASNBans, setNewASNBans] = useState<ASNBanRecord[]>([]);
+    const [newGroupBans, setNewGroupBans] = useState<GroupBanRecord[]>([]);
 
     const handleChange = (_: React.SyntheticEvent, newValue: string) => {
         setValue(newValue);
@@ -45,48 +50,60 @@ export const AdminBanPage = () => {
     const onNewBanSteam = useCallback(async () => {
         try {
             const ban = await NiceModal.show<SteamBanRecord>(ModalBanSteam, {});
+            setNewSteamBans((prevState) => {
+                return [ban, ...prevState];
+            });
             sendFlash(
                 'success',
                 `Created steam ban successfully #${ban.ban_id}`
             );
         } catch (e) {
-            sendFlash('error', `Failed to save ban: ${e}`);
+            logErr(e);
         }
     }, [sendFlash]);
 
     const onNewBanCIDR = useCallback(async () => {
         try {
             const ban = await NiceModal.show<CIDRBanRecord>(ModalBanCIDR, {});
+            setNewCIDRBans((prevState) => {
+                return [ban, ...prevState];
+            });
             sendFlash(
                 'success',
                 `Created CIDR ban successfully #${ban.net_id}`
             );
         } catch (e) {
-            sendFlash('error', `Failed to save CIDR ban: ${e}`);
+            logErr(e);
         }
     }, [sendFlash]);
 
     const onNewBanASN = useCallback(async () => {
         try {
             const ban = await NiceModal.show<ASNBanRecord>(ModalBanASN, {});
+            setNewASNBans((prevState) => {
+                return [ban, ...prevState];
+            });
             sendFlash(
                 'success',
                 `Created ASN ban successfully #${ban.ban_asn_id}`
             );
         } catch (e) {
-            sendFlash('error', `Failed to save ASN ban: ${e}`);
+            logErr(e);
         }
     }, [sendFlash]);
 
     const onNewBanGroup = useCallback(async () => {
         try {
             const ban = await NiceModal.show<GroupBanRecord>(ModalBanGroup, {});
+            setNewGroupBans((prevState) => {
+                return [ban, ...prevState];
+            });
             sendFlash(
                 'success',
                 `Created steam group ban successfully #${ban.ban_group_id}`
             );
         } catch (e) {
-            sendFlash('error', `Failed to save group ban: ${e}`);
+            logErr(e);
         }
     }, [sendFlash]);
 
@@ -185,14 +202,14 @@ export const AdminBanPage = () => {
                                     display: '0' == value ? 'block' : 'none'
                                 }}
                             >
-                                <BanSteamTable />
+                                <BanSteamTable newBans={newSteamBans} />
                             </div>
                             <div
                                 style={{
                                     display: '1' == value ? 'block' : 'none'
                                 }}
                             >
-                                <BanCIDRTable />
+                                <BanCIDRTable newBans={newCIDRBans} />
                             </div>
 
                             <div
@@ -200,7 +217,7 @@ export const AdminBanPage = () => {
                                     display: '2' == value ? 'block' : 'none'
                                 }}
                             >
-                                <BanASNTable />
+                                <BanASNTable newBans={newASNBans} />
                             </div>
 
                             <div
@@ -208,7 +225,7 @@ export const AdminBanPage = () => {
                                     display: '3' == value ? 'block' : 'none'
                                 }}
                             >
-                                <BanGroupTable />
+                                <BanGroupTable newBans={newGroupBans} />
                             </div>
                         </TabPanel>
                     </TabContext>

@@ -14,7 +14,6 @@ import {
     apiSearchPeople,
     communityVisibilityState,
     defaultAvatarHash,
-    PermissionLevel,
     permissionLevelString,
     Person
 } from '../api';
@@ -114,13 +113,12 @@ export const AdminPeoplePage = (): JSX.Element => {
     }, []);
 
     const onEditPerson = useCallback(
-        async (steam_id: string, permission_level: PermissionLevel) => {
+        async (person: Person) => {
             try {
                 const newPerson = await NiceModal.show<Person>(
                     ModalPersonEditor,
                     {
-                        steam_id,
-                        permission_level
+                        person
                     }
                 );
                 setPeople(
@@ -327,10 +325,7 @@ export const AdminPeoplePage = (): JSX.Element => {
                                                 color={'warning'}
                                                 onClick={async () => {
                                                     try {
-                                                        await onEditPerson(
-                                                            obj.steam_id,
-                                                            obj.permission_level
-                                                        );
+                                                        await onEditPerson(obj);
                                                     } catch (e) {
                                                         logErr(e);
                                                     }
