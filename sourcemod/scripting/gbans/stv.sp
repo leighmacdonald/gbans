@@ -256,22 +256,11 @@ void saveClientScore(int client)
 		gbLog("Invalid entity: %d", ent);
 		return ;
 	}
-	// TODO These props fail?
-	// int assists = GetEntProp(ent, Prop_Send, "m_iKillAssists", _, client);
-	// gbLog("Assists: %d", assists);
-	// int captures = GetEntProp(ent, Prop_Send, "m_iCaptures", _, client);
-	// gbLog("captures: %d", captures);
-	// int defenses = GetEntProp(ent, Prop_Send, "m_iDefenses", _, client);
-	// gbLog("defenses: %d", defenses);
-	// values.SetInt("score", GetEntProp(ent, Prop_Send, "m_iScore"));
-	values.SetInt("score", GetEntProp(ent, Prop_Send, "m_iScore", _, client));
-	values.SetInt("score_total", GetEntProp(ent, Prop_Send, "m_iTotalScore", _, client));
-	// values.SetInt("assists", assists);
-	values.SetInt("deaths", GetEntProp(ent, Prop_Send, "m_iDeaths", _, client));
-	// values.SetInt("captures", captures);
-	// values.SetInt("defenses", defenses);
-	//  Only trigger for client indexes actually in the game
-	// int score = TF2_GetPlayerResourceData(client, TFResource_TotalScore);
+
+	values.SetInt("score", 0);
+	values.SetInt("score_total", 0);
+	values.SetInt("deaths", 0);
+
 	gScores.SetObject(authId, values);
 }
 
