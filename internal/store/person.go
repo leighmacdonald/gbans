@@ -80,7 +80,7 @@ func NewPerson(sid64 steamid.SID64) Person {
 		GameBans:         0,
 		EconomyBan:       "none",
 		DaysSinceLastBan: 0,
-		UpdatedOnSteam:   curTime,
+		UpdatedOnSteam:   time.Unix(0, 0),
 		PlayerSummary: &steamweb.PlayerSummary{
 			SteamID: sid64,
 		},
@@ -569,9 +569,15 @@ func (db *Store) GetExpiredProfiles(ctx context.Context, limit uint64) ([]Person
 	var people []Person
 
 	rows, errQuery := db.QueryBuilder(ctx, db.sb.
-		Select(profileColumns...).
+		Select("steam_id", "created_on", "updated_on",
+			"communityvisibilitystate", "profilestate", "personaname", "profileurl", "avatar",
+			"avatarmedium", "avatarfull", "avatarhash", "personastate", "realname", "timecreated",
+			"loccountrycode", "locstatecode", "loccityid", "permission_level", "discord_id",
+			"community_banned", "vac_bans", "game_bans", "economy_ban", "days_since_last_ban", "updated_on_steam",
+			"muted").
 		From("person").
-		OrderBy("updated_on_steam").
+		OrderBy("updated_on_steam ASC").
+		Where(sq.Lt{"updated_on_steam": time.Now().AddDate(0, 0, -7)}).
 		Limit(limit))
 	if errQuery != nil {
 		return nil, errQuery

@@ -756,7 +756,7 @@ func (app *App) PersonBySID(ctx context.Context, sid steamid.SID64, person *stor
 			// return errors.Errorf("Failed to fetch Player summary for %d", sid)
 		}
 
-		vac, errBans := thirdparty.FetchPlayerBans(ctx, steamid.Collection{sid})
+		vac, errBans := thirdparty.FetchPlayerBans(ctx, app.log, steamid.Collection{sid})
 		if errBans != nil || len(vac) != 1 {
 			app.log.Warn("Failed to update ban status", zap.Error(errBans), zap.Int64("sid", sid.Int64()))
 		} else {

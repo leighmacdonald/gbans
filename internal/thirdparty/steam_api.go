@@ -9,13 +9,14 @@ import (
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 )
 
 const steamQueryMaxResults = 100
 
 const chunkSize = 100
 
-func FetchPlayerBans(ctx context.Context, steamIDs []steamid.SID64) ([]steamweb.PlayerBanState, error) {
+func FetchPlayerBans(ctx context.Context, log *zap.Logger, steamIDs []steamid.SID64) ([]steamweb.PlayerBanState, error) {
 	var (
 		waitGroup = &sync.WaitGroup{}
 		results   []steamweb.PlayerBanState
@@ -38,6 +39,7 @@ func FetchPlayerBans(ctx context.Context, steamIDs []steamid.SID64) ([]steamweb.
 			bans, errGetPlayerBans := steamweb.GetPlayerBans(ctx, ids)
 			if errGetPlayerBans != nil {
 				atomic.AddInt32(&hasErr, 1)
+				log.Warn("Failed to fetch player bans", zap.Error(errGetPlayerBans))
 			}
 
 			resultsMu.Lock()
