@@ -1,7 +1,7 @@
+import { LazyResult } from '../component/LazyTableSimple';
 import { parseDateTime } from '../util/text';
 import {
     apiCall,
-    DataCount,
     MatchTimes,
     QueryFilter,
     transformMatchDates
@@ -126,21 +126,17 @@ export interface MatchesQueryOpts extends QueryFilter<MatchSummary> {
     time_end?: Date;
 }
 
-interface MatchSummaryResults extends DataCount {
-    matches: MatchSummary[];
-}
-
 export const apiGetMatches = async (
     opts: MatchesQueryOpts,
     abortController: AbortController
 ) => {
-    const resp = await apiCall<MatchSummaryResults, MatchesQueryOpts>(
+    const resp = await apiCall<LazyResult<MatchSummary>, MatchesQueryOpts>(
         `/api/logs`,
         'POST',
         opts,
         abortController
     );
-    resp.matches = resp.matches.map((m) => {
+    resp.data = resp.data.map((m) => {
         m.time_start = parseDateTime(m.time_start as unknown as string);
         m.time_end = parseDateTime(m.time_end as unknown as string);
         return m;

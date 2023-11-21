@@ -497,10 +497,7 @@ func onAPIGetReports(app *App) gin.HandlerFunc {
 			userReports = []reportWithAuthor{}
 		}
 
-		ctx.JSON(http.StatusOK, LazyResult{
-			Count: count,
-			Data:  userReports,
-		})
+		ctx.JSON(http.StatusOK, newLazyResult(count, userReports))
 	}
 }
 
@@ -1269,11 +1266,6 @@ func onAPIGetMatch(app *App) gin.HandlerFunc {
 	}
 }
 
-type MatchQueryResults struct {
-	ResultsCount
-	Matches []store.MatchSummary `json:"matches"`
-}
-
 func onAPIGetMatches(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
@@ -1307,10 +1299,7 @@ func onAPIGetMatches(app *App) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, MatchQueryResults{
-			ResultsCount: ResultsCount{Count: totalCount},
-			Matches:      matches,
-		})
+		ctx.JSON(http.StatusOK, newLazyResult(totalCount, matches))
 	}
 }
 
@@ -1353,10 +1342,7 @@ func onAPIQueryMessages(app *App) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, LazyResult{
-			Count: count,
-			Data:  messages,
-		})
+		ctx.JSON(http.StatusOK, newLazyResult(count, messages))
 	}
 }
 
@@ -1381,10 +1367,7 @@ func onAPIGetStatsWeaponsOverall(ctx context.Context, app *App) gin.HandlerFunc 
 	return func(ctx *gin.Context) {
 		stats := updater.Data()
 
-		ctx.JSON(http.StatusOK, LazyResult{
-			Count: int64(len(stats)),
-			Data:  stats,
-		})
+		ctx.JSON(http.StatusOK, newLazyResult(int64(len(stats)), stats))
 	}
 }
 
@@ -1427,12 +1410,7 @@ func onAPIGetsStatsWeapon(app *App) gin.HandlerFunc {
 			weaponStats = []store.PlayerWeaponResult{}
 		}
 
-		ctx.JSON(http.StatusOK, resp{
-			LazyResult: LazyResult{
-				Count: int64(len(weaponStats)),
-				Data:  weaponStats,
-			}, Weapon: weapon,
-		})
+		ctx.JSON(http.StatusOK, resp{LazyResult: newLazyResult(int64(len(weaponStats)), weaponStats), Weapon: weapon})
 	}
 }
 
@@ -1452,7 +1430,7 @@ func onAPIGetStatsPlayersOverall(ctx context.Context, app *App) gin.HandlerFunc 
 
 	return func(ctx *gin.Context) {
 		stats := updater.Data()
-		ctx.JSON(http.StatusOK, LazyResult{Count: int64(len(stats)), Data: stats})
+		ctx.JSON(http.StatusOK, newLazyResult(int64(len(stats)), stats))
 	}
 }
 
@@ -1472,7 +1450,7 @@ func onAPIGetStatsHealersOverall(ctx context.Context, app *App) gin.HandlerFunc 
 
 	return func(ctx *gin.Context) {
 		stats := updater.Data()
-		ctx.JSON(http.StatusOK, LazyResult{Count: int64(len(stats)), Data: stats})
+		ctx.JSON(http.StatusOK, newLazyResult(int64(len(stats)), stats))
 	}
 }
 
@@ -1500,10 +1478,7 @@ func onAPIGetPlayerWeaponStatsOverall(app *App) gin.HandlerFunc {
 			weaponStats = []store.WeaponsOverallResult{}
 		}
 
-		ctx.JSON(http.StatusOK, LazyResult{
-			Count: int64(len(weaponStats)),
-			Data:  weaponStats,
-		})
+		ctx.JSON(http.StatusOK, newLazyResult(int64(len(weaponStats)), weaponStats))
 	}
 }
 
@@ -1531,7 +1506,7 @@ func onAPIGetPlayerClassStatsOverall(app *App) gin.HandlerFunc {
 			classStats = []store.PlayerClassOverallResult{}
 		}
 
-		ctx.JSON(http.StatusOK, LazyResult{Count: int64(len(classStats)), Data: classStats})
+		ctx.JSON(http.StatusOK, newLazyResult(int64(len(classStats)), classStats))
 	}
 }
 

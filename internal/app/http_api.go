@@ -44,10 +44,7 @@ func onAPIPostDemosQuery(app *App) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, LazyResult{
-			Count: count,
-			Data:  demos,
-		})
+		ctx.JSON(http.StatusCreated, newLazyResult(count, demos))
 	}
 }
 
@@ -640,10 +637,7 @@ func onAPIGetContests(app *App) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, LazyResult{
-			Count: int64(len(contests)),
-			Data:  contests,
-		})
+		ctx.JSON(http.StatusOK, newLazyResult(int64(len(contests)), contests))
 	}
 }
 

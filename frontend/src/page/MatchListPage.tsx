@@ -46,7 +46,7 @@ const MatchSummaryTable = ({ steam_id }: MatchSummaryTableProps) => {
         apiGetMatches(opts, abortController)
             .then((resp) => {
                 setTotalRows(resp.count);
-                setRows(resp.matches);
+                setRows(resp.data);
             })
             .catch((e) => {
                 logErr(e);

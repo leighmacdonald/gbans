@@ -164,10 +164,7 @@ func onAPIQueryWordFilters(app *App) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, LazyResult{
-			Count: count,
-			Data:  words,
-		})
+		ctx.JSON(http.StatusOK, newLazyResult(count, words))
 	}
 }
 
@@ -351,10 +348,7 @@ func onAPISearchPlayers(app *App) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, LazyResult{
-			Count: count,
-			Data:  people,
-		})
+		ctx.JSON(http.StatusOK, newLazyResult(count, people))
 	}
 }
 
@@ -405,10 +399,7 @@ func onAPIQueryPersonConnections(app *App) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, LazyResult{
-			Count: totalCount,
-			Data:  ipHist,
-		})
+		ctx.JSON(http.StatusOK, newLazyResult(totalCount, ipHist))
 	}
 }
 
@@ -467,10 +458,7 @@ func onAPIGetAppeals(app *App) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, LazyResult{
-			Count: total,
-			Data:  bans,
-		})
+		ctx.JSON(http.StatusOK, newLazyResult(total, bans))
 	}
 }
 
@@ -491,10 +479,7 @@ func onAPIGetBansSteam(app *App) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, LazyResult{
-			Count: count,
-			Data:  bans,
-		})
+		ctx.JSON(http.StatusOK, newLazyResult(count, bans))
 	}
 }
 
@@ -739,10 +724,7 @@ func onAPIGetBansCIDR(app *App) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, LazyResult{
-			Count: count,
-			Data:  bans,
-		})
+		ctx.JSON(http.StatusOK, newLazyResult(count, bans))
 	}
 }
 
@@ -942,10 +924,7 @@ func onAPIGetBansASN(app *App) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, LazyResult{
-			Count: count,
-			Data:  bansASN,
-		})
+		ctx.JSON(http.StatusOK, newLazyResult(count, bansASN))
 	}
 }
 
@@ -1142,10 +1121,7 @@ func onAPIGetBansGroup(app *App) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, LazyResult{
-			Count: count,
-			Data:  banGroups,
-		})
+		ctx.JSON(http.StatusOK, newLazyResult(count, banGroups))
 	}
 }
 

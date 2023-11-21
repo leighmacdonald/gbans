@@ -39,6 +39,14 @@ func bind(ctx *gin.Context, log *zap.Logger, target any) bool {
 	return true
 }
 
+func newLazyResult(count int64, data any) LazyResult {
+	if count == 0 {
+		return LazyResult{0, []interface{}{}}
+	}
+
+	return LazyResult{Count: count, Data: data}
+}
+
 func newHTTPServer(ctx context.Context, app *App) *http.Server {
 	httpServer := &http.Server{
 		Addr:           app.conf.HTTP.Addr(),
