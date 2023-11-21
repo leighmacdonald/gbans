@@ -1,4 +1,4 @@
-import React, { useEffect, useState, JSX, useCallback } from 'react';
+import React, { JSX, useCallback, useEffect, useMemo, useState } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
@@ -14,6 +14,7 @@ import {
     apiSearchPeople,
     communityVisibilityState,
     defaultAvatarHash,
+    PermissionLevel,
     permissionLevelString,
     Person
 } from '../api';
@@ -30,6 +31,7 @@ import {
 import { nonResolvingSteamIDInputTest } from '../component/formik/SourceIdField';
 import { SteamIdField } from '../component/formik/SteamIdField';
 import { ModalPersonEditor } from '../component/modal';
+import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { logErr } from '../util/errors';
 import { isValidSteamDate, renderDate } from '../util/text';
 
@@ -63,6 +65,11 @@ export const AdminPeoplePage = (): JSX.Element => {
     const [steamId, setSteamId] = useState('');
     const [personaname, setPersonaname] = useState('');
     const [ip, setIP] = useState('');
+    const { currentUser } = useCurrentUserCtx();
+
+    const isAdmin = useMemo(() => {
+        return currentUser.permission_level == PermissionLevel.Admin;
+    }, [currentUser.permission_level]);
 
     useEffect(() => {
         const abortController = new AbortController();
@@ -322,6 +329,7 @@ export const AdminPeoplePage = (): JSX.Element => {
                                     return (
                                         <ButtonGroup>
                                             <IconButton
+                                                disabled={!isAdmin}
                                                 color={'warning'}
                                                 onClick={async () => {
                                                     try {

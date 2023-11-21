@@ -426,7 +426,7 @@ func cleanupTasks(ctx context.Context, database *store.Store, logger *zap.Logger
 				log.Error("Error pruning expired refresh tokens", zap.Error(err))
 			}
 		case <-ctx.Done():
-			log.Debug("profileUpdater shutting down")
+			log.Debug("cleanupTasks shutting down")
 
 			return
 		}
@@ -463,8 +463,8 @@ func (app *App) updateProfiles(ctx context.Context, people store.People) error {
 	)
 
 	errGroup.Go(func() error {
-		newBanStates, errBans := thirdparty.FetchPlayerBans(cancelCtx, steamIDs)
-		if errBans != nil || len(newBanStates) != 1 {
+		newBanStates, errBans := thirdparty.FetchPlayerBans(cancelCtx, app.log, steamIDs)
+		if errBans != nil {
 			return errors.Wrap(errBans, "Failed to fetch ban status from steamapi")
 		}
 
@@ -490,6 +490,7 @@ func (app *App) updateProfiles(ctx context.Context, people store.People) error {
 
 	for _, curPerson := range people {
 		person := curPerson
+		person.IsNew = false
 		person.UpdatedOnSteam = time.Now()
 
 		for _, newSummary := range summaries {
@@ -521,6 +522,8 @@ func (app *App) updateProfiles(ctx context.Context, people store.People) error {
 		}
 	}
 
+	app.log.Debug("Updated steam profiles and vac data", zap.Int("count", len(people)))
+
 	return nil
 }
 
@@ -532,6 +535,10 @@ func (app *App) profileUpdater(ctx context.Context) {
 		run    = make(chan any)
 		ticker = time.NewTicker(time.Second * 60)
 	)
+
+	go func() {
+		run <- true
+	}()
 
 	for {
 		select {
