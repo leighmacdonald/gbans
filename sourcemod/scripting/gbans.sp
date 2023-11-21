@@ -65,7 +65,7 @@ public void onPluginStartCore()
 	RegConsoleCmd("gb_mod", onCmdMod, "Ping a moderator");
 	RegConsoleCmd("mod", onCmdMod, "Ping a moderator");
 	RegConsoleCmd("report", onCmdReport, "Report a player");
-	RegConsoleCmd("autoteam", onCmdAutoTeamAction, "Disabled");
+	RegConsoleCmd("autoteam", onCmdAutoTeamAction);
 
 	RegAdminCmd("gb_ban", onAdminCmdBan, ADMFLAG_BAN);
 	RegAdminCmd("gb_reauth", onAdminCmdReauth, ADMFLAG_ROOT);
