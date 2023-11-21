@@ -160,17 +160,14 @@ func onAPIGetServersAdmin(app *App) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, LazyResult{
-			Count: count,
-			Data:  servers,
-		})
+		ctx.JSON(http.StatusOK, newLazyResult(count, servers))
 	}
 }
 
 func onAPIPutPlayerPermission(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
-	type updatePpermissionLevel struct {
+	type updatePermissionLevel struct {
 		PermissionLevel consts.Privilege `json:"permission_level"`
 	}
 
@@ -182,7 +179,7 @@ func onAPIPutPlayerPermission(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var req updatePpermissionLevel
+		var req updatePermissionLevel
 		if !bind(ctx, log, &req) {
 			return
 		}
