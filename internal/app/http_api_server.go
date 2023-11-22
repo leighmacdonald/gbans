@@ -240,7 +240,7 @@ func onAPIPostServerCheck(app *App) gin.HandlerFunc {
 
 		if len(banNet) > 0 {
 			resp.BanType = store.Banned
-			resp.Msg = fmt.Sprintf("Network banned (C: %d)", len(banNet))
+			resp.Msg = "Banned"
 
 			ctx.JSON(http.StatusOK, resp)
 
