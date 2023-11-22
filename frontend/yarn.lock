@@ -6470,7 +6470,6 @@ __metadata:
     marked-mangle: "npm:^1.1.5"
     mini-css-extract-plugin: "npm:^2.7.6"
     minimatch: "npm:^9.0.3"
-    moment: "npm:^2.29.4"
     node-sass: "npm:^9.0.0"
     prettier: "npm:^3.1.0"
     pretty-bytes: "npm:^6.1.1"
@@ -9123,13 +9122,6 @@ __metadata:
     _mocha: ./bin/_mocha
     mocha: ./bin/mocha
   checksum: c5478b830be43d80e3f9d385a47bf0d31b5c25626e5d746ebdf738cef794a5301cf086e8ff2d73cd02dabd4b7933e44ff88b7594c003acc6a1f795a9a7272296
-  languageName: node
-  linkType: hard
-
-"moment@npm:^2.29.4":
-  version: 2.29.4
-  resolution: "moment@npm:2.29.4"
-  checksum: 844c6f3ce42862ac9467c8ca4f5e48a00750078682cc5bda1bc0e50cc7ca88e2115a0f932d65a06e4a90e26cb78892be9b3ca3dd6546ca2c4d994cebb787fc2b
   languageName: node
   linkType: hard
 
