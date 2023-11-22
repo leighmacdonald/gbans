@@ -201,6 +201,10 @@ func (app *App) updateSteamBanMembers(ctx context.Context) (map[int64]steamid.Co
 	return newMap, nil
 }
 
+// updateGroupBanMembers handles fetching and updating the member lists of steam groups. This does
+// NOT use the steam API, so be careful to not call too often.
+//
+// Group IDs can be found using https://steamcommunity.com/groups/<GROUP_NAME>/memberslistxml/?xml=1
 func (app *App) updateGroupBanMembers(ctx context.Context) (map[int64]steamid.Collection, error) {
 	newMap := map[int64]steamid.Collection{}
 
@@ -238,6 +242,11 @@ func (app *App) updateGroupBanMembers(ctx context.Context) (map[int64]steamid.Co
 		}
 
 		newMap[group.GroupID.Int64()] = members
+
+		// Group info doesn't use the steam api so its *heavily* rate limited. Let's try to minimize the ability to
+		// get banned incase there is a lot of banned groups. This probably need to be increased if you are blocked a
+		// large amount of groups.
+		time.Sleep(time.Second * 5)
 	}
 
 	return newMap, nil
@@ -257,34 +266,38 @@ func (app *App) steamGroupMembershipUpdater(ctx context.Context) {
 		case <-ticker.C:
 			updateChan <- true
 		case <-updateChan:
-			newMap := map[int64]steamid.Collection{}
-			total := 0
-
-			groupEntries, errGroupEntries := app.updateGroupBanMembers(ctx)
-			if errGroupEntries == nil {
-				for k, v := range groupEntries {
-					newMap[k] = v
-				}
-			}
-
-			friendEntries, errFriendEntries := app.updateSteamBanMembers(ctx)
-			if errFriendEntries == nil {
-				for k, v := range friendEntries {
-					newMap[k] = v
-				}
-			}
-
-			app.bannedGroupMembersMu.Lock()
-			app.bannedGroupMembers = newMap
-			app.bannedGroupMembersMu.Unlock()
-
-			log.Debug("Updated group member ban list", zap.Int("count", total))
+			app.updateBanChildren(ctx)
 		case <-ctx.Done():
 			log.Debug("steamGroupMembershipUpdater shutting down")
 
 			return
 		}
 	}
+}
+
+func (app *App) updateBanChildren(ctx context.Context) {
+	newMap := map[int64]steamid.Collection{}
+	total := 0
+
+	groupEntries, errGroupEntries := app.updateGroupBanMembers(ctx)
+	if errGroupEntries == nil {
+		for k, v := range groupEntries {
+			newMap[k] = v
+		}
+	}
+
+	friendEntries, errFriendEntries := app.updateSteamBanMembers(ctx)
+	if errFriendEntries == nil {
+		for k, v := range friendEntries {
+			newMap[k] = v
+		}
+	}
+
+	app.bannedGroupMembersMu.Lock()
+	app.bannedGroupMembers = newMap
+	app.bannedGroupMembersMu.Unlock()
+
+	app.log.Debug("Updated group & friend list member bans", zap.Int("count", total))
 }
 
 func (app *App) showReportMeta(ctx context.Context) {

@@ -176,6 +176,11 @@ func onAPIPostServerCheck(app *App) gin.HandlerFunc {
 			return
 		}
 
+		log.Debug("Player connecting",
+			zap.String("ip", request.IP.String()),
+			zap.Int64("sid64", steamid.SIDToSID64(request.SteamID).Int64()),
+			zap.String("name", request.Name))
+
 		resp := CheckResponse{
 			ClientID: request.ClientID,
 			SteamID:  request.SteamID,
@@ -197,7 +202,13 @@ func onAPIPostServerCheck(app *App) gin.HandlerFunc {
 
 		if parentID, banned := app.IsGroupBanned(steamID); banned {
 			resp.BanType = store.Banned
-			resp.Msg = fmt.Sprintf("Group/Steam Friend Ban (source: %d)", parentID)
+
+			if parentID >= steamid.BaseGID {
+				resp.Msg = fmt.Sprintf("Group Banned (gid: %d)", parentID)
+			} else {
+				resp.Msg = fmt.Sprintf("Banned (sid: %d)", parentID)
+			}
+
 			ctx.JSON(http.StatusOK, resp)
 			log.Info("Player dropped", zap.String("drop_type", "group"),
 				zap.Int64("sid64", steamID.Int64()))
