@@ -50,7 +50,6 @@ export const UnbanSteamModal = NiceModal.create(
             <Formik
                 initialValues={{ unban_reason: '' }}
                 onSubmit={onSubmit}
-                id
                 validateOnChange={true}
                 validationSchema={unbanValidationSchema}
             >
