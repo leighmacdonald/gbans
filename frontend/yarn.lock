@@ -4847,7 +4847,7 @@ __metadata:
   linkType: hard
 
 "content-disposition@npm:0.5.4":
-  version: 0.5.4
+  version: 0.5.5
   resolution: "content-disposition@npm:0.5.4"
   dependencies:
     safe-buffer: "npm:5.2.1"
