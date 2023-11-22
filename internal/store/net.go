@@ -75,11 +75,12 @@ func (db *Store) GetBanNetByID(ctx context.Context, netID int64, banNet *BanCIDR
 	var (
 		sourceID int64
 		targetID int64
+		cidr     *net.IPNet
 	)
 
 	errQuery := db.
 		QueryRow(ctx, query, netID).
-		Scan(&banNet.NetID, &banNet.CIDR, &banNet.Origin,
+		Scan(&banNet.NetID, &cidr, &banNet.Origin,
 			&banNet.CreatedOn, &banNet.UpdatedOn, &banNet.Reason, &banNet.ReasonText,
 			&banNet.ValidUntil, &banNet.Deleted, &banNet.Note, &banNet.UnbanReasonText,
 			&banNet.IsEnabled, &targetID, &sourceID, &banNet.AppealState)
@@ -87,6 +88,7 @@ func (db *Store) GetBanNetByID(ctx context.Context, netID int64, banNet *BanCIDR
 		return Err(errQuery)
 	}
 
+	banNet.CIDR = cidr.String()
 	banNet.SourceID = steamid.New(sourceID)
 	banNet.TargetID = steamid.New(targetID)
 
