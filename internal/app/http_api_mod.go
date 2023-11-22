@@ -1101,6 +1101,9 @@ func onAPIPostBansGroupCreate(app *App) gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusCreated, banSteamGroup)
+
+		// Immediately update group members
+		go app.updateBanChildren(ctx)
 	}
 }
 
@@ -1160,6 +1163,8 @@ func onAPIDeleteBansGroup(app *App) gin.HandlerFunc {
 
 		banGroup.BanGroupID = 0
 		ctx.JSON(http.StatusOK, banGroup)
+
+		go app.updateBanChildren(ctx)
 	}
 }
 

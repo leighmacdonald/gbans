@@ -43,6 +43,7 @@ export const UnbanCIDRModal = NiceModal.create(({ banId }: UnbanModalProps) => {
             initialValues={{ reason_text: '' }}
             onSubmit={onSubmit}
             validateOnChange={true}
+            validateOnBlur={true}
             validationSchema={unbanValidationSchema}
         >
             <Dialog {...muiDialogV5(modal)}>
