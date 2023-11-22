@@ -261,6 +261,10 @@ void saveClientScore(int client)
 	values.SetInt("score_total", 0);
 	values.SetInt("deaths", 0);
 
+	if (gScores == INVALID_HANDLE) {
+		gScores = new JSON_Object();
+	}
+
 	gScores.SetObject(authId, values);
 }
 
