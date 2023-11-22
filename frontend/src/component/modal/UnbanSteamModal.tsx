@@ -10,9 +10,9 @@ import Stack from '@mui/material/Stack';
 import { Formik } from 'formik';
 import { apiDeleteBan } from '../../api';
 import {
-    BanReasonTextField,
+    UnbanReasonTextField,
     unbanValidationSchema
-} from '../formik/BanReasonTextField';
+} from '../formik/UnbanReasonTextField';
 import { CancelButton, SubmitButton } from './Buttons';
 
 export interface UnbanModalProps {
@@ -21,7 +21,7 @@ export interface UnbanModalProps {
 }
 
 export interface UnbanFormValues {
-    reason_text: string;
+    unban_reason: string;
 }
 
 export const UnbanSteamModal = NiceModal.create(
@@ -30,12 +30,12 @@ export const UnbanSteamModal = NiceModal.create(
 
         const onSubmit = useCallback(
             async (values: UnbanFormValues) => {
-                if (values.reason_text == '') {
+                if (values.unban_reason == '') {
                     modal.reject({ error: 'Reason cannot be empty' });
                     return;
                 }
                 try {
-                    await apiDeleteBan(banId, values.reason_text);
+                    await apiDeleteBan(banId, values.unban_reason);
                     modal.resolve();
                 } catch (e) {
                     modal.reject(e);
@@ -47,9 +47,10 @@ export const UnbanSteamModal = NiceModal.create(
         );
 
         return (
-            <Formik<UnbanFormValues>
-                initialValues={{ reason_text: '' }}
+            <Formik
+                initialValues={{ unban_reason: '' }}
                 onSubmit={onSubmit}
+                id
                 validateOnChange={true}
                 validationSchema={unbanValidationSchema}
             >
@@ -60,7 +61,7 @@ export const UnbanSteamModal = NiceModal.create(
 
                     <DialogContent>
                         <Stack spacing={2}>
-                            <BanReasonTextField paired={false} />
+                            <UnbanReasonTextField />
                         </Stack>
                     </DialogContent>
 

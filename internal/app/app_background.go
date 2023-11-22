@@ -276,12 +276,15 @@ func (app *App) steamGroupMembershipUpdater(ctx context.Context) {
 }
 
 func (app *App) updateBanChildren(ctx context.Context) {
-	newMap := map[int64]steamid.Collection{}
-	total := 0
+	var (
+		newMap = map[int64]steamid.Collection{}
+		total  = 0
+	)
 
 	groupEntries, errGroupEntries := app.updateGroupBanMembers(ctx)
 	if errGroupEntries == nil {
 		for k, v := range groupEntries {
+			total += len(v)
 			newMap[k] = v
 		}
 	}
@@ -289,6 +292,7 @@ func (app *App) updateBanChildren(ctx context.Context) {
 	friendEntries, errFriendEntries := app.updateSteamBanMembers(ctx)
 	if errFriendEntries == nil {
 		for k, v := range friendEntries {
+			total += len(v)
 			newMap[k] = v
 		}
 	}
@@ -297,7 +301,9 @@ func (app *App) updateBanChildren(ctx context.Context) {
 	app.bannedGroupMembers = newMap
 	app.bannedGroupMembersMu.Unlock()
 
-	app.log.Debug("Updated group & friend list member bans", zap.Int("count", total))
+	app.log.Debug("Updated group & friend list member bans",
+		zap.Int("groups", len(groupEntries)),
+		zap.Int("friends", len(friendEntries)))
 }
 
 func (app *App) showReportMeta(ctx context.Context) {

@@ -15,7 +15,7 @@ export const banReasonTextFieldValidator = yup
         }
     });
 
-export const unbanValidationSchema = yup.object({
+export const banValidationSchema = yup.object({
     reason_text: banReasonTextFieldValidator
 });
 
