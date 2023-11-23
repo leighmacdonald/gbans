@@ -115,6 +115,21 @@ func (app *App) matchSummarizer(ctx context.Context) {
 					matchContext.match.Title = server.Name
 				}
 
+				var fullServer store.Server
+				if err := app.db.GetServer(ctx, evt.ServerID, &fullServer); err != nil {
+					app.log.Error("Failed to load match server",
+						zap.Int("server", matchContext.match.ServerID), zap.Error(err))
+					delete(matches, evt.ServerID)
+
+					continue
+				}
+
+				if !fullServer.EnableStats {
+					delete(matches, evt.ServerID)
+
+					continue
+				}
+
 				if errSave := app.db.MatchSave(ctx, &matchContext.match); errSave != nil {
 					app.log.Error("Failed to save match",
 						zap.Int("server", matchContext.match.ServerID), zap.Error(errSave))

@@ -58,6 +58,8 @@ type serverUpdateRequest struct {
 	DefaultMap      string  `json:"default_map"`
 	Region          string  `json:"region"`
 	IsEnabled       bool    `json:"is_enabled"`
+	EnableStats     bool    `json:"enable_stats"`
+	LogSecret       int     `json:"log_secret"`
 }
 
 func onAPIPostServerUpdate(app *App) gin.HandlerFunc {
@@ -94,6 +96,8 @@ func onAPIPostServerUpdate(app *App) gin.HandlerFunc {
 		server.CC = req.CC
 		server.Region = req.Region
 		server.IsEnabled = req.IsEnabled
+		server.LogSecret = req.LogSecret
+		server.EnableStats = req.EnableStats
 
 		if errSave := app.db.SaveServer(ctx, &server); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)

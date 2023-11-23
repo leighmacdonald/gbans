@@ -149,6 +149,20 @@ export const AdminServersPage = () => {
                                     sortable: true
                                 },
                                 {
+                                    tooltip: 'Stats Recording Enabled',
+                                    label: 'Stats',
+                                    sortKey: 'enable_stats',
+                                    align: 'left',
+                                    sortable: true,
+                                    renderer: (row) => {
+                                        return (
+                                            <TableCellBool
+                                                enabled={row.enable_stats}
+                                            />
+                                        );
+                                    }
+                                },
+                                {
                                     tooltip: 'Enabled',
                                     label: 'En.',
                                     sortKey: 'is_enabled',

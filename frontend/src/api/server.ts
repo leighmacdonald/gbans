@@ -59,6 +59,8 @@ export interface Server extends TimeStamped {
     players_max: number;
     is_enabled: boolean;
     colour: string;
+    enable_stats: boolean;
+    log_secret: number;
 }
 
 export interface Location {
@@ -91,6 +93,8 @@ export interface SaveServerOpts {
     lat: number;
     lon: number;
     is_enabled: boolean;
+    enable_stats: boolean;
+    log_secret: number;
 }
 
 export const apiCreateServer = async (opts: SaveServerOpts) =>
