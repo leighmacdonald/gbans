@@ -162,6 +162,8 @@ type CheckResponse struct {
 	Msg             string           `json:"msg"`
 }
 
+// onAPIPostServerCheck takes care of checking if the player connecting to the server is
+// allowed to connect, or otherwise has restrictions such as being mutes.
 func onAPIPostServerCheck(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
@@ -180,6 +182,16 @@ func onAPIPostServerCheck(app *App) gin.HandlerFunc {
 			zap.String("ip", request.IP.String()),
 			zap.Int64("sid64", steamid.SIDToSID64(request.SteamID).Int64()),
 			zap.String("name", request.Name))
+
+		if errAddHist := app.db.AddConnectionHistory(ctx, &store.PersonConnection{
+			IPAddr:      request.IP,
+			SteamID:     steamid.SIDToSID64(request.SteamID),
+			PersonaName: request.Name,
+			CreatedOn:   time.Now(),
+			ServerID:    ctx.GetInt("server_id"),
+		}); errAddHist != nil {
+			log.Error("Failed to add conn history", zap.Error(errAddHist))
+		}
 
 		resp := CheckResponse{
 			ClientID: request.ClientID,
@@ -227,15 +239,6 @@ func onAPIPostServerCheck(app *App) gin.HandlerFunc {
 		}
 
 		resp.PermissionLevel = person.PermissionLevel
-
-		if errAddHist := app.db.AddConnectionHistory(ctx, &store.PersonConnection{
-			IPAddr:      request.IP,
-			SteamID:     steamid.SIDToSID64(request.SteamID),
-			PersonaName: request.Name,
-			CreatedOn:   time.Now(),
-		}); errAddHist != nil {
-			log.Error("Failed to add conn history", zap.Error(errAddHist))
-		}
 
 		// Check IP first
 		banNet, errGetBanNet := app.db.GetBanNetByAddress(responseCtx, request.IP)

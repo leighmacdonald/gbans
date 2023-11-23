@@ -1029,7 +1029,7 @@ func (db *Store) AddConnectionHistory(ctx context.Context, conn *PersonConnectio
 		RETURNING person_connection_id`
 
 	if errQuery := db.
-		QueryRow(ctx, query, conn.SteamID.Int64(), conn.IPAddr, conn.PersonaName, conn.CreatedOn).
+		QueryRow(ctx, query, conn.SteamID.Int64(), conn.IPAddr, conn.PersonaName, conn.CreatedOn, conn.ServerID).
 		Scan(&conn.PersonConnectionID); errQuery != nil {
 		return Err(errQuery)
 	}
