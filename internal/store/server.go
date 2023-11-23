@@ -27,6 +27,7 @@ func NewServer(shortName string, address string, port int) Server {
 		ReservedSlots:  0,
 		Password:       SecureRandomString(10),
 		IsEnabled:      true,
+		EnableStats:    true,
 		TokenCreatedOn: time.Unix(0, 0),
 		CreatedOn:      time.Now(),
 		UpdatedOn:      time.Now(),
@@ -47,14 +48,15 @@ type Server struct {
 	RCON          string `db:"rcon" json:"rcon"`
 	ReservedSlots int    `db:"reserved_slots" json:"reserved_slots"`
 	// Password is what the server uses to generate a token to make authenticated calls (permanent refresh token)
-	Password  string  `db:"password" json:"password"`
-	IsEnabled bool    `json:"is_enabled"`
-	Deleted   bool    `json:"deleted"`
-	Region    string  `json:"region"`
-	CC        string  `json:"cc"`
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
-	LogSecret int     `json:"log_secret"`
+	Password    string  `db:"password" json:"password"`
+	IsEnabled   bool    `json:"is_enabled"`
+	Deleted     bool    `json:"deleted"`
+	Region      string  `json:"region"`
+	CC          string  `json:"cc"`
+	Latitude    float64 `json:"latitude"`
+	Longitude   float64 `json:"longitude"`
+	LogSecret   int     `json:"log_secret"`
+	EnableStats bool    `json:"enable_stats"`
 	// TokenCreatedOn is set when changing the token
 	TokenCreatedOn time.Time `db:"token_created_on" json:"token_created_on"`
 	CreatedOn      time.Time `db:"created_on" json:"created_on"`
@@ -88,7 +90,7 @@ func (db *Store) GetServer(ctx context.Context, serverID int, server *Server) er
 	row, rowErr := db.QueryRowBuilder(ctx, db.sb.
 		Select("server_id", "short_name", "name", "address", "port", "rcon", "password",
 			"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
-			"latitude", "longitude", "deleted", "log_secret").
+			"latitude", "longitude", "deleted", "log_secret", "enable_stats").
 		From(string(tableServer)).
 		Where(sq.And{sq.Eq{"server_id": serverID}, sq.Eq{"deleted": false}}))
 	if rowErr != nil {
@@ -99,7 +101,7 @@ func (db *Store) GetServer(ctx context.Context, serverID int, server *Server) er
 		&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn,
 		&server.ReservedSlots, &server.IsEnabled, &server.Region, &server.CC,
 		&server.Latitude, &server.Longitude,
-		&server.Deleted, &server.LogSecret); errScan != nil {
+		&server.Deleted, &server.LogSecret, &server.EnableStats); errScan != nil {
 		return Err(errScan)
 	}
 
@@ -160,7 +162,7 @@ func (db *Store) GetServers(ctx context.Context, filter ServerQueryFilter) ([]Se
 	builder := db.sb.
 		Select("s.server_id", "s.short_name", "s.name", "s.address", "s.port", "s.rcon", "s.password",
 			"s.token_created_on", "s.created_on", "s.updated_on", "s.reserved_slots", "s.is_enabled", "s.region", "s.cc",
-			"s.latitude", "s.longitude", "s.deleted", "s.log_secret").
+			"s.latitude", "s.longitude", "s.deleted", "s.log_secret", "s.enable_stats").
 		From("server s")
 
 	var constraints sq.And
@@ -177,7 +179,7 @@ func (db *Store) GetServers(ctx context.Context, filter ServerQueryFilter) ([]Se
 		"s.": {
 			"server_id", "short_name", "name", "address", "port",
 			"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
-			"latitude", "longitude", "deleted",
+			"latitude", "longitude", "deleted", "enable_stats",
 		},
 	}, "short_name")
 
@@ -198,7 +200,7 @@ func (db *Store) GetServers(ctx context.Context, filter ServerQueryFilter) ([]Se
 			Scan(&server.ServerID, &server.ShortName, &server.Name, &server.Address, &server.Port, &server.RCON,
 				&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn, &server.ReservedSlots,
 				&server.IsEnabled, &server.Region, &server.CC, &server.Latitude, &server.Longitude,
-				&server.Deleted, &server.LogSecret); errScan != nil {
+				&server.Deleted, &server.LogSecret, &server.EnableStats); errScan != nil {
 			return nil, 0, errors.Wrap(errScan, "Failed to scan server")
 		}
 
@@ -233,7 +235,7 @@ func (db *Store) GetServerByName(ctx context.Context, serverName string, server 
 	row, errRow := db.QueryRowBuilder(ctx, db.sb.
 		Select("server_id", "short_name", "name", "address", "port", "rcon", "password",
 			"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
-			"latitude", "longitude", "deleted", "log_secret").
+			"latitude", "longitude", "deleted", "log_secret", "enabled_stats").
 		From(string(tableServer)).
 		Where(and))
 	if errRow != nil {
@@ -249,7 +251,7 @@ func (db *Store) GetServerByName(ctx context.Context, serverName string, server 
 		&server.RCON,
 		&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn, &server.ReservedSlots,
 		&server.IsEnabled, &server.Region, &server.CC, &server.Latitude, &server.Longitude,
-		&server.Deleted, &server.LogSecret))
+		&server.Deleted, &server.LogSecret, &server.EnableStats))
 }
 
 // SaveServer updates or creates the server data in the database.
@@ -269,14 +271,15 @@ func (db *Store) insertServer(ctx context.Context, server *Server) error {
 		INSERT INTO server (
 		    short_name, name, address, port, rcon, token_created_on, 
 		    reserved_slots, created_on, updated_on, password, is_enabled, region, cc, latitude, longitude, 
-			deleted, log_secret) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+			deleted, log_secret, enable_stats) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
 		RETURNING server_id;`
 
 	err := db.QueryRow(ctx, query, server.ShortName, server.Name, server.Address, server.Port,
 		server.RCON, server.TokenCreatedOn, server.ReservedSlots, server.CreatedOn, server.UpdatedOn,
 		server.Password, server.IsEnabled, server.Region, server.CC,
-		server.Latitude, server.Longitude, server.Deleted, &server.LogSecret).Scan(&server.ServerID)
+		server.Latitude, server.Longitude, server.Deleted, &server.LogSecret, &server.EnableStats).
+		Scan(&server.ServerID)
 	if err != nil {
 		return Err(err)
 	}
@@ -305,6 +308,7 @@ func (db *Store) updateServer(ctx context.Context, server *Server) error {
 		Set("latitude", server.Latitude).
 		Set("longitude", server.Longitude).
 		Set("log_secret", server.LogSecret).
+		Set("enable_stats", server.EnableStats).
 		Where(sq.Eq{"server_id": server.ServerID}))
 }
 

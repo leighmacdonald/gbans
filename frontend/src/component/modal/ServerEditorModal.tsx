@@ -1,5 +1,6 @@
 import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
+import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
 import Stack from '@mui/material/Stack';
@@ -15,6 +16,7 @@ import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
 import { logErr } from '../../util/errors';
 import { Nullable } from '../../util/types';
 import { Heading } from '../Heading';
+import { VCenterBox } from '../VCenterBox';
 import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
 
 export interface ServerEditorModalProps extends ConfirmationModalProps<Server> {
@@ -41,6 +43,8 @@ export const ServerEditorModal = NiceModal.create(
         const [reservedSlots, setReservedSlots] = useState<number>(0);
         const [playersMax, setPlayersMax] = useState<number>(24);
         const [isEnabled, setIsEnabled] = useState<boolean>(false);
+        const [enableStats, setEnableStats] = useState<boolean>(false);
+        const [logSecret, setLogSecret] = useState<number>(0);
 
         useEffect(() => {
             setServerId(server?.server_id ?? 0);
@@ -52,9 +56,10 @@ export const ServerEditorModal = NiceModal.create(
             setRcon(server?.rcon ?? '');
             setRegion(server?.region ?? '');
             setCountryCode(server?.cc ?? '');
-
+            setEnableStats(server?.enable_stats ?? false);
             setReservedSlots(server?.reserved_slots ?? 0);
             setPlayersMax(server?.players_max ?? 24);
+            setLogSecret(server?.log_secret ?? 0);
             if (server) {
                 setLatitude(server?.latitude);
                 setLongitude(server?.longitude);
@@ -88,7 +93,9 @@ export const ServerEditorModal = NiceModal.create(
                 server_name_short: serverName,
                 region: region,
                 reserved_slots: reservedSlots,
-                is_enabled: isEnabled
+                is_enabled: isEnabled,
+                enable_stats: enableStats,
+                log_secret: logSecret
             };
             if (serverId > 0) {
                 apiSaveServer(serverId, opts)
@@ -122,11 +129,13 @@ export const ServerEditorModal = NiceModal.create(
             rcon,
             countryCode,
             port,
-            longitude,
             latitude,
+            longitude,
             region,
             reservedSlots,
             isEnabled,
+            enableStats,
+            logSecret,
             serverId,
             sendFlash,
             onSuccess
@@ -215,6 +224,37 @@ export const ServerEditorModal = NiceModal.create(
                             value={rcon}
                             onChange={(evt: ChangeEvent<HTMLInputElement>) => {
                                 setRcon(evt.target.value);
+                            }}
+                        />
+                        <VCenterBox>
+                            <FormControl fullWidth>
+                                <FormGroup>
+                                    <FormControlLabel
+                                        value={enableStats}
+                                        id={'enable_stats'}
+                                        name={'enable_stats'}
+                                        onChange={(_, value) => {
+                                            setEnableStats(value);
+                                        }}
+                                        control={
+                                            <Switch checked={enableStats} />
+                                        }
+                                        label="Enable Stats"
+                                    />
+                                </FormGroup>
+                            </FormControl>
+                        </VCenterBox>
+                        <TextField
+                            fullWidth
+                            id={'log_secret'}
+                            label={'Log Secret'}
+                            value={logSecret}
+                            onChange={(evt: ChangeEvent<HTMLInputElement>) => {
+                                try {
+                                    setLogSecret(parseInt(evt.target.value));
+                                } catch (e) {
+                                    logErr(e);
+                                }
                             }}
                         />
 

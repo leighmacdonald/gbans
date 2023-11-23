@@ -45,8 +45,8 @@ type serverDetails struct {
 	ReservedSlots int       `json:"reserved_slots"`
 	Protocol      uint8     `json:"protocol"`
 	RconPassword  string    `json:"rcon_password"`
-
-	Map string `json:"map"`
+	EnableStats   bool      `json:"enable_stats"`
+	Map           string    `json:"map"`
 	// Name of the folder containing the game files.
 	Folder string `json:"folder"`
 	// Full name of the game.

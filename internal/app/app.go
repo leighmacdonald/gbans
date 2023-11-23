@@ -559,6 +559,7 @@ func (app *App) playerConnectionWriter(ctx context.Context) {
 				SteamID:     newServerEvent.SID,
 				PersonaName: strings.ToValidUTF8(newServerEvent.Name, "_"),
 				CreatedOn:   newServerEvent.CreatedOn,
+				ServerID:    evt.ServerID,
 			}
 
 			lCtx, cancel := context.WithTimeout(ctx, time.Second*5)

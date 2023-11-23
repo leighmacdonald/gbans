@@ -175,6 +175,7 @@ type PersonConnection struct {
 	IPAddr             net.IP        `json:"ip_addr"`
 	SteamID            steamid.SID64 `json:"steam_id"`
 	PersonaName        string        `json:"persona_name"`
+	ServerID           int           `json:"server_id"`
 	CreatedOn          time.Time     `json:"created_on"`
 }
 
@@ -674,10 +675,9 @@ type QueryConnectionHistoryResult struct {
 }
 
 func (db *Store) QueryConnectionHistory(ctx context.Context, opts ConnectionHistoryQueryFilter) ([]QueryConnectionHistoryResult, int64, error) {
-	// TODO add server_id to connection hist.
 	builder := db.sb.
 		Select("c.person_connection_id", "c.steam_id",
-			"c.ip_addr", "c.persona_name", "c.created_on").
+			"c.ip_addr", "c.persona_name", "c.created_on", "c.server_id").
 		From("person_connections c").
 		GroupBy("c.person_connection_id, c.ip_addr")
 
@@ -715,6 +715,7 @@ func (db *Store) QueryConnectionHistory(ctx context.Context, opts ConnectionHist
 				&connHistory.IPAddr,
 				&connHistory.PersonaName,
 				&connHistory.CreatedOn,
+				&connHistory.ServerID,
 			}
 		)
 
@@ -984,7 +985,8 @@ func (db *Store) GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, li
 			"pc.person_connection_id",
 			"pc.steam_id",
 			"pc.ip_addr",
-			"pc.created_on").
+			"pc.created_on",
+			"pc.server_id").
 		From("person_connections pc").
 		LeftJoin("net_location loc ON pc.ip_addr <@ loc.ip_range").
 		// Join("LEFT JOIN net_proxy proxy ON pc.ip_addr <@ proxy.ip_range").
@@ -1007,7 +1009,8 @@ func (db *Store) GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, li
 			steamID int64
 		)
 
-		if errScan := rows.Scan(&conn.PersonaName, &conn.PersonConnectionID, &steamID, &conn.IPAddr, &conn.CreatedOn); errScan != nil {
+		if errScan := rows.Scan(&conn.PersonaName, &conn.PersonConnectionID, &steamID,
+			&conn.IPAddr, &conn.CreatedOn, &conn.ServerID); errScan != nil {
 			return nil, Err(errScan)
 		}
 
@@ -1021,8 +1024,8 @@ func (db *Store) GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, li
 
 func (db *Store) AddConnectionHistory(ctx context.Context, conn *PersonConnection) error {
 	const query = `
-		INSERT INTO person_connections (steam_id, ip_addr, persona_name, created_on) 
-		VALUES ($1, $2, $3, $4) 
+		INSERT INTO person_connections (steam_id, ip_addr, persona_name, created_on, server_id) 
+		VALUES ($1, $2, $3, $4, $5) 
 		RETURNING person_connection_id`
 
 	if errQuery := db.

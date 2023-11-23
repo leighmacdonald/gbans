@@ -63,6 +63,8 @@ const anyServer: Server = {
     region: '',
     reserved_slots: 8,
     colour: '',
+    enable_stats: true,
+    log_secret: 0,
     updated_on: new Date(),
     created_on: new Date()
 };
