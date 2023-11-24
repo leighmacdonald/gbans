@@ -2,7 +2,7 @@ BEGIN;
 
 CREATE TABLE forum_category
 (
-    category_id serial primary key,
+    forum_category_id serial primary key,
     title       text        not null unique,
     description text        not null default '',
     ordering    int         not null default 0,
@@ -13,8 +13,8 @@ CREATE TABLE forum_category
 CREATE TABLE forum
 (
     forum_id       serial primary key,
-    category_id    int         not null references forum_category (category_id),
-    last_thread_id bigint references forum_thread (thread_id),
+    forum_category_id    int         not null references forum_category (forum_category_id),
+    last_thread_id bigint,
     title          text        not null unique,
     description    text        not null default '',
     ordering       int         not null default 0,
@@ -24,11 +24,11 @@ CREATE TABLE forum
     updated_on     timestamptz not null
 );
 
-CREATE UNIQUE INDEX ON forum (category_id, title);
+CREATE UNIQUE INDEX ON forum (forum_category_id, title);
 
 CREATE TABLE forum_thread
 (
-    thread_id  bigserial primary key,
+    forum_thread_id  bigserial primary key,
     forum_id   int         not null references forum (forum_id),
     source_id  bigserial   not null references person (steam_id),
     title          text        not null unique,
@@ -39,12 +39,17 @@ CREATE TABLE forum_thread
     updated_on timestamptz not null
 );
 
+
 CREATE UNIQUE INDEX ON forum_thread (forum_id, title);
+
+ALTER TABLE forum
+    ADD CONSTRAINT fk_last_thread_id
+    FOREIGN KEY (last_thread_id) REFERENCES forum_thread (forum_thread_id) ON DELETE SET NULL;
 
 CREATE TABLE forum_message
 (
-    message_id bigserial primary key,
-    thread_id  bigserial references forum_thread (thread_id),
+    forum_message_id bigserial primary key,
+    forum_thread_id  bigserial references forum_thread (forum_thread_id),
     source_id  bigserial   not null references person (steam_id),
     body_md    text        not null,
     created_on timestamptz not null,
@@ -53,11 +58,14 @@ CREATE TABLE forum_message
 
 CREATE TABLE forum_message_vote
 (
-    message_id bigserial primary key,
+    forum_message_vote_id bigserial primary key,
+    forum_message_id bigserial references forum_message (forum_message_id) ON DELETE CASCADE,
     source_id  bigserial   not null references person (steam_id),
-    vote       integer     not null CHECK ( vote == 1 OR vote == -1 ),
+    vote       integer     not null CHECK ( vote = 1 OR vote = -1 ),
     created_on timestamptz not null,
     updated_on timestamptz not null
 );
+
+CREATE UNIQUE INDEX ON forum_message_vote (forum_message_id, source_id);
 
 COMMIT;

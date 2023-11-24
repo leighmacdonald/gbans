@@ -72,6 +72,7 @@ func TestStore(t *testing.T) {
 	t.Run("person", testPerson(database))
 	t.Run("chat_hist", testChatHistory(database))
 	t.Run("filters", testFilters(database))
+	t.Run("forum", testForum(database))
 }
 
 func testServerTest(database *store.Store) func(t *testing.T) {
@@ -424,5 +425,145 @@ func testBanGroup(database *store.Store) func(t *testing.T) {
 
 		getErr := database.GetBanGroup(context.TODO(), banGroup.GroupID, &bgDeleted)
 		require.EqualError(t, store.ErrNoResult, getErr.Error())
+	}
+}
+
+func testForum(database *store.Store) func(t *testing.T) {
+	ctx := context.Background()
+
+	return func(t *testing.T) {
+		t.Run("category", func(t *testing.T) {
+			forumCategory1 := store.ForumCategory{
+				Title:       "test category",
+				Description: "test description",
+				Ordering:    2,
+				TimeStamped: store.NewTimeStamped(),
+			}
+			require.NoError(t, database.ForumCategorySave(ctx, &forumCategory1))
+			require.Greater(t, forumCategory1.ForumCategoryID, 0)
+
+			var forumCategory2 store.ForumCategory
+
+			require.NoError(t, database.ForumCategory(ctx, forumCategory1.ForumCategoryID, &forumCategory2))
+			require.Equal(t, forumCategory1.Title, forumCategory2.Title)
+			require.Equal(t, forumCategory1.Description, forumCategory2.Description)
+			require.Equal(t, forumCategory1.Ordering, forumCategory2.Ordering)
+
+			forumCategory2.Title += forumCategory2.Title
+			forumCategory2.Description += forumCategory2.Description
+			forumCategory2.Ordering = 3
+
+			require.NoError(t, database.ForumCategorySave(ctx, &forumCategory2))
+
+			var forumCategory3 store.ForumCategory
+
+			require.NoError(t, database.ForumCategory(ctx, forumCategory1.ForumCategoryID, &forumCategory3))
+
+			require.Equal(t, forumCategory2.Title, forumCategory3.Title)
+			require.Equal(t, forumCategory2.Description, forumCategory3.Description)
+			require.Equal(t, forumCategory2.Ordering, forumCategory3.Ordering)
+
+			require.NoError(t, database.ForumCategoryDelete(ctx, forumCategory3.ForumCategoryID))
+
+			var forumCategory4 store.ForumCategory
+			require.ErrorIs(t, store.ErrNoResult, database.ForumCategory(ctx, forumCategory3.ForumCategoryID, &forumCategory4))
+		})
+		t.Run("forum", func(t *testing.T) {
+			validCategory := store.ForumCategory{
+				Title:       "valid category",
+				Description: "test description",
+				Ordering:    1,
+				TimeStamped: store.NewTimeStamped(),
+			}
+			require.NoError(t, database.ForumCategorySave(ctx, &validCategory))
+
+			forum := validCategory.NewForum("Forum Title", "Forum Description")
+
+			require.NoError(t, database.ForumSave(ctx, &forum))
+			require.True(t, forum.ForumID > 0)
+
+			forum.Title = "new title"
+
+			require.NoError(t, database.ForumSave(ctx, &forum))
+
+			var updatedForum store.Forum
+
+			require.NoError(t, database.Forum(ctx, forum.ForumID, &updatedForum))
+			require.Equal(t, forum.Title, updatedForum.Title)
+			require.NoError(t, database.ForumDelete(ctx, updatedForum.ForumID))
+			require.ErrorIs(t, store.ErrNoResult, database.Forum(ctx, forum.ForumID, &updatedForum))
+		})
+		t.Run("thread", func(t *testing.T) {
+			validCategory := store.ForumCategory{
+				Title: "new valid category", Description: "test description", TimeStamped: store.NewTimeStamped(),
+			}
+			require.NoError(t, database.ForumCategorySave(ctx, &validCategory))
+			validForum := validCategory.NewForum("forum", "")
+			require.NoError(t, database.ForumSave(ctx, &validForum))
+			require.True(t, validForum.ForumID > 0)
+			var person store.Person
+			require.NoError(t, database.GetOrCreatePersonBySteamID(ctx,
+				steamid.New(76561198057999536), &person))
+			thread := validForum.NewThread("thread title", person.SteamID)
+			require.NoError(t, database.ForumThreadSave(ctx, &thread))
+
+			thread.Title = "new title"
+
+			require.NoError(t, database.ForumThreadSave(ctx, &thread))
+			var updatedThread store.ForumThread
+			require.NoError(t, database.ForumThread(ctx, thread.ForumThreadID, &updatedThread))
+			require.Equal(t, thread.Title, updatedThread.Title)
+			require.NoError(t, database.ForumThreadDelete(ctx, updatedThread.ForumThreadID))
+			require.ErrorIs(t, store.ErrNoResult, database.ForumThread(ctx, thread.ForumThreadID, &updatedThread))
+		})
+
+		t.Run("message", func(t *testing.T) {
+			validCategory := store.ForumCategory{
+				Title: "new valid category 2", Description: "test description", TimeStamped: store.NewTimeStamped(),
+			}
+			require.NoError(t, database.ForumCategorySave(ctx, &validCategory))
+			validForum := validCategory.NewForum("forum messages", "")
+			require.NoError(t, database.ForumSave(ctx, &validForum))
+			var person store.Person
+			require.NoError(t, database.GetOrCreatePersonBySteamID(ctx,
+				steamid.New(76561198057999536), &person))
+			validThread := validForum.NewThread("thread title", person.SteamID)
+			require.NoError(t, database.ForumThreadSave(ctx, &validThread))
+
+			message := validThread.NewMessage(person.SteamID, "test *body*")
+			require.NoError(t, database.ForumMessageSave(ctx, &message))
+			require.True(t, message.ForumMessageID > 0)
+			message.BodyMD += "blah"
+			require.NoError(t, database.ForumMessageSave(ctx, &message))
+
+			var updatedMessage store.ForumMessage
+			require.NoError(t, database.ForumMessage(ctx, message.ForumMessageID, &updatedMessage))
+			require.Equal(t, message.BodyMD, updatedMessage.BodyMD)
+
+			require.NoError(t, database.ForumMessageDelete(ctx, message.ForumMessageID))
+
+			require.ErrorIs(t, store.ErrNoResult, database.ForumMessage(ctx, updatedMessage.ForumMessageID, &updatedMessage))
+		})
+
+		t.Run("vote", func(t *testing.T) {
+			validCategory := store.ForumCategory{
+				Title: "new valid category 3", Description: "test description", TimeStamped: store.NewTimeStamped(),
+			}
+			require.NoError(t, database.ForumCategorySave(ctx, &validCategory))
+			validForum := validCategory.NewForum("forum messages 2", "")
+			require.NoError(t, database.ForumSave(ctx, &validForum))
+			var person store.Person
+			require.NoError(t, database.GetOrCreatePersonBySteamID(ctx,
+				steamid.New(76561198057999536), &person))
+			validThread := validForum.NewThread("thread title ", person.SteamID)
+			require.NoError(t, database.ForumThreadSave(ctx, &validThread))
+
+			message := validThread.NewMessage(person.SteamID, "test *body*")
+			require.NoError(t, database.ForumMessageSave(ctx, &message))
+
+			// upVote := message.NewVote(person.SteamID, store.VoteUp)
+			//
+			// require.NoError(t, database.ForumMessageVote(ctx, upVote))
+		})
 	}
 }
