@@ -281,6 +281,21 @@ func (db *Store) ExecUpdateBuilder(ctx context.Context, builder sq.UpdateBuilder
 	return Err(err)
 }
 
+func (db *Store) ExecInsertBuilderWithReturnValue(ctx context.Context, builder sq.InsertBuilder, outID any) error {
+	query, args, errQuery := builder.ToSql()
+	if errQuery != nil {
+		return Err(errQuery)
+	}
+
+	if errScan := db.
+		QueryRow(ctx, query, args...).
+		Scan(outID); errScan != nil {
+		return Err(errScan)
+	}
+
+	return nil
+}
+
 // Close will close the underlying database connection if it exists.
 func (db *Store) Close() error {
 	if db.conn != nil {
