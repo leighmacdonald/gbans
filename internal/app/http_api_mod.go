@@ -1357,3 +1357,158 @@ func onAPIUpdateContest(app *App) gin.HandlerFunc {
 			zap.String("title", contest.Title))
 	}
 }
+
+type ForumCategoryRequest struct {
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Ordering    int    `json:"ordering"`
+}
+
+func onAPICreateForumCategory(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		var req ForumCategoryRequest
+		if !bind(ctx, log, &req) {
+			return
+		}
+
+		category := store.ForumCategory{
+			Title:       req.Title,
+			Description: req.Description,
+			Ordering:    req.Ordering,
+			TimeStamped: store.NewTimeStamped(),
+		}
+
+		if errSave := app.db.ForumCategorySave(ctx, &category); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			log.Error("Error creating new forum category", zap.Error(errSave))
+
+			return
+		}
+
+		ctx.JSON(http.StatusCreated, category)
+
+		log.Info("New forum category created", zap.String("title", category.Title))
+	}
+}
+
+func onAPIUpdateForumCategory(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		categoryID, errCategoryID := getIntParam(ctx, "forum_category_id")
+		if errCategoryID != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		var category store.ForumCategory
+		if errGet := app.db.ForumCategory(ctx, categoryID, &category); errGet != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			return
+		}
+
+		var req ForumCategoryRequest
+		if !bind(ctx, log, &req) {
+			return
+		}
+
+		category.Title = req.Title
+		category.Description = req.Description
+		category.Ordering = req.Ordering
+
+		if errSave := app.db.ForumCategorySave(ctx, &category); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			log.Error("Error creating new forum category", zap.Error(errSave))
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, category)
+
+		log.Info("New forum category updated", zap.String("title", category.Title))
+	}
+}
+
+type ForumForumRequest struct {
+	ForumCategoryID int `json:"forum_category_id"`
+	ForumCategoryRequest
+}
+
+func onAPICreateForumForum(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		var req ForumForumRequest
+		if !bind(ctx, log, &req) {
+			return
+		}
+
+		forum := store.Forum{
+			ForumCategoryID: req.ForumCategoryID,
+			Title:           req.Title,
+			Description:     req.Description,
+			Ordering:        req.Ordering,
+			TimeStamped:     store.NewTimeStamped(),
+		}
+
+		if errSave := app.db.ForumSave(ctx, &forum); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			log.Error("Error creating new forum", zap.Error(errSave))
+
+			return
+		}
+
+		ctx.JSON(http.StatusCreated, forum)
+
+		log.Info("New forum created", zap.String("title", forum.Title))
+	}
+}
+
+func onAPIUpdateForumForum(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		categoryID, errCategoryID := getIntParam(ctx, "forum_category_id")
+		if errCategoryID != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		var forum store.Forum
+		if errGet := app.db.Forum(ctx, categoryID, &forum); errGet != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			return
+		}
+
+		var req ForumForumRequest
+		if !bind(ctx, log, &req) {
+			return
+		}
+
+		forum.ForumCategoryID = req.ForumCategoryID
+		forum.Title = req.Title
+		forum.Description = req.Description
+		forum.Ordering = req.Ordering
+
+		if errSave := app.db.ForumSave(ctx, &forum); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			log.Error("Error updating forum", zap.Error(errSave))
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, forum)
+
+		log.Info("Forum updated", zap.String("title", forum.Title))
+	}
+}

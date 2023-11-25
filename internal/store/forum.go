@@ -10,10 +10,11 @@ import (
 )
 
 type ForumCategory struct {
-	ForumCategoryID int    `json:"forum_category_id"`
-	Title           string `json:"title"`
-	Description     string `json:"description"`
-	Ordering        int    `json:"ordering"`
+	ForumCategoryID int     `json:"forum_category_id"`
+	Title           string  `json:"title"`
+	Description     string  `json:"description"`
+	Ordering        int     `json:"ordering"`
+	Forums          []Forum `json:"forums"`
 	TimeStamped
 }
 
@@ -96,6 +97,31 @@ type ForumMessageVote struct {
 	TimeStamped
 }
 
+func (db *Store) ForumCategories(ctx context.Context) ([]ForumCategory, error) {
+	rows, errRows := db.QueryBuilder(ctx,
+		db.sb.Select("forum_category_id", "title", "description", "ordering", "updated_on", "created_on").
+			From("forum_category").
+			OrderBy("ordering"))
+	if errRows != nil {
+		return nil, errRows
+	}
+
+	defer rows.Close()
+
+	var categories []ForumCategory
+
+	for rows.Next() {
+		var fc ForumCategory
+		if errScan := rows.Scan(&fc.ForumCategoryID, &fc.Title, &fc.Description, &fc.Ordering, &fc.UpdatedOn, &fc.CreatedOn); errScan != nil {
+			return nil, Err(errScan)
+		}
+
+		categories = append(categories, fc)
+	}
+
+	return categories, nil
+}
+
 func (db *Store) ForumCategorySave(ctx context.Context, category *ForumCategory) error {
 	category.UpdatedOn = time.Now()
 	if category.ForumCategoryID > 0 {
@@ -110,7 +136,7 @@ func (db *Store) ForumCategorySave(ctx context.Context, category *ForumCategory)
 			Where(sq.Eq{"forum_category_id": category.ForumCategoryID}))
 	}
 
-	category.CreatedOn = time.Now()
+	category.CreatedOn = category.UpdatedOn
 
 	return db.ExecInsertBuilderWithReturnValue(ctx, db.sb.
 		Insert("forum_category").
@@ -141,6 +167,34 @@ func (db *Store) ForumCategoryDelete(ctx context.Context, categoryID int) error 
 	return db.ExecDeleteBuilder(ctx, db.sb.
 		Delete("forum_category").
 		Where(sq.Eq{"forum_category_id": categoryID}))
+}
+
+func (db *Store) Forums(ctx context.Context) ([]Forum, error) {
+	rows, errRows := db.QueryBuilder(ctx, db.sb.
+		Select("forum_category_id", "title", "description", "last_thread_id",
+			"count_threads", "count_messages", "ordering", "created_on", "updated_on").
+		From("forum").
+		OrderBy("ordering"))
+	if errRows != nil {
+		return nil, errRows
+	}
+
+	defer rows.Close()
+
+	var forums []Forum
+
+	for rows.Next() {
+		var forum Forum
+		if errScan := rows.Scan(&forum.ForumCategoryID, &forum.ForumID, &forum.Title, &forum.Description,
+			&forum.LastThreadID, &forum.CountThreads, &forum.CountMessages, &forum.CountThreads,
+			&forum.Ordering, &forum.CreatedOn, &forum.UpdatedOn); errScan != nil {
+			return nil, Err(errScan)
+		}
+
+		forums = append(forums, forum)
+	}
+
+	return forums, nil
 }
 
 func (db *Store) ForumSave(ctx context.Context, forum *Forum) error {
@@ -322,10 +376,11 @@ type Vote int
 
 const (
 	VoteUp   = 1
+	VoteNone = 0
 	VoteDown = -1
 )
 
-func (db *Store) ForumMessageVote(ctx context.Context, messageVote ForumMessageVote) error {
+func (db *Store) ForumMessageVoteApply(ctx context.Context, messageVote *ForumMessageVote) error {
 	var existingVote ForumMessageVote
 
 	row, errRow := db.QueryRowBuilder(ctx, db.sb.
@@ -336,23 +391,27 @@ func (db *Store) ForumMessageVote(ctx context.Context, messageVote ForumMessageV
 		if !errors.Is(errRow, ErrNoResult) {
 			return errRow
 		}
-	} else {
-		if errScan := row.Scan(&existingVote.ForumMessageVoteID, &existingVote.ForumMessageID, &existingVote.SourceID,
-			&existingVote.Vote, &existingVote.CreatedOn, &existingVote.UpdatedOn); errScan != nil {
+	}
+
+	errScan := Err(row.Scan(&existingVote.ForumMessageVoteID, &existingVote.ForumMessageID, &existingVote.SourceID,
+		&existingVote.Vote, &existingVote.CreatedOn, &existingVote.UpdatedOn))
+	if errScan != nil {
+		if !errors.Is(errScan, ErrNoResult) {
 			return Err(errScan)
 		}
-		// If the vote exists and is the same vote, delete it. Otherwise, update the existing vote
-		if existingVote.ForumMessageVoteID > 0 {
-			if existingVote.Vote == messageVote.Vote {
-				return db.ExecDeleteBuilder(ctx, db.sb.
-					Delete("forum_message_vote").
-					Where(sq.Eq{"forum_message_vote_id": existingVote.ForumMessageVoteID}))
-			} else {
-				return db.ExecUpdateBuilder(ctx, db.sb.
-					Update("forum_message_vote").
-					Set("vote", messageVote.Vote).
-					Where(sq.Eq{"forum_message_vote": existingVote.ForumMessageVoteID}))
-			}
+	}
+
+	// If the vote exists and is the same vote, delete it. Otherwise, update the existing vote
+	if existingVote.ForumMessageVoteID > 0 {
+		if existingVote.Vote == messageVote.Vote {
+			return db.ExecDeleteBuilder(ctx, db.sb.
+				Delete("forum_message_vote").
+				Where(sq.Eq{"forum_message_vote_id": existingVote.ForumMessageVoteID}))
+		} else {
+			return db.ExecUpdateBuilder(ctx, db.sb.
+				Update("forum_message_vote").
+				Set("vote", messageVote.Vote).
+				Where(sq.Eq{"forum_message_vote_id": existingVote.ForumMessageVoteID}))
 		}
 	}
 
@@ -362,5 +421,20 @@ func (db *Store) ForumMessageVote(ctx context.Context, messageVote ForumMessageV
 			"forum_message_id": messageVote.ForumMessageID,
 			"source_id":        messageVote.SourceID.Int64(),
 			"vote":             messageVote.Vote,
-		}), &messageVote.ForumMessageVoteID)
+			"created_on":       messageVote.CreatedOn,
+			"updated_on":       messageVote.UpdatedOn,
+		}).
+		Suffix("RETURNING forum_message_vote_id"), &messageVote.ForumMessageVoteID)
+}
+
+func (db *Store) ForumMessageVoteByID(ctx context.Context, messageVoteID int64, messageVote *ForumMessageVote) error {
+	row, errRow := db.QueryRowBuilder(ctx, db.sb.
+		Select("forum_message_vote_id", "forum_message_id", "source_id", "vote", "created_on", "updated_on").
+		From("forum_message_vote").Where(sq.Eq{"forum_message_vote_id": messageVoteID}))
+	if errRow != nil {
+		return errRow
+	}
+
+	return Err(row.Scan(&messageVote.ForumMessageVoteID, &messageVote.ForumMessageID,
+		&messageVote.SourceID, &messageVote.Vote, &messageVote.CreatedOn, &messageVote.UpdatedOn))
 }

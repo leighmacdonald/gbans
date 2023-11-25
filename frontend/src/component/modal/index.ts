@@ -11,6 +11,7 @@ import { ContestEntryDeleteModal } from './ContestEntryDeleteModal';
 import { ContestEntryModal } from './ContestEntryModal';
 import { FileUploadModal } from './FileUploadModal';
 import { FilterEditModal } from './FilterEditModal';
+import { ForumCategoryEditorModal } from './ForumCategoryEditorModal';
 import { MessageContextModal } from './MessageContextModal';
 import { PersonEditModal } from './PersonEditModal';
 import { ServerDeleteModal } from './ServerDeleteModal';
@@ -40,7 +41,10 @@ export const ModalFileUpload = 'modal-file-upload';
 export const ModalFilterDelete = 'modal-filter-delete';
 export const ModalFilterEditor = 'modal-filter-editor';
 export const ModalPersonEditor = 'modal-person-editor';
+export const ModalForumCategoryEditor = 'modal-forum-category-editor';
+export const ModalForumForumEditor = 'modal-forum-forum-editor';
 
+NiceModal.register(ModalForumCategoryEditor, ForumCategoryEditorModal);
 NiceModal.register(ModalContestEntryDelete, ContestEntryDeleteModal);
 NiceModal.register(ModalContestEditor, ContestEditor);
 NiceModal.register(ModalContestEntry, ContestEntryModal);

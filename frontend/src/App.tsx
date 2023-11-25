@@ -35,6 +35,7 @@ import { BanPage } from './page/BanPage';
 import { ChatLogPage } from './page/ChatLogPage';
 import { ContestListPage } from './page/ContestListPage';
 import { ContestPage } from './page/ContestPage';
+import { ForumPage } from './page/ForumPage';
 import { HomePage } from './page/HomePage';
 import { LoginDiscordSuccessPage } from './page/LoginDiscordSuccessPage';
 import { LoginPage } from './page/LoginPage';
@@ -311,6 +312,23 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                                 }
                                                                             >
                                                                                 <StatsWeaponOverallPage />
+                                                                            </PrivateRoute>
+                                                                        </ErrorBoundary>
+                                                                    }
+                                                                />
+
+                                                                <Route
+                                                                    path={
+                                                                        '/forums'
+                                                                    }
+                                                                    element={
+                                                                        <ErrorBoundary>
+                                                                            <PrivateRoute
+                                                                                permission={
+                                                                                    PermissionLevel.Moderator
+                                                                                }
+                                                                            >
+                                                                                <ForumPage />
                                                                             </PrivateRoute>
                                                                         </ErrorBoundary>
                                                                     }

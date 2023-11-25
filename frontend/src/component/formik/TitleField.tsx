@@ -1,6 +1,13 @@
 import React from 'react';
 import TextField from '@mui/material/TextField';
 import { useFormikContext } from 'formik';
+import * as yup from 'yup';
+
+export const titleFieldValidator = yup
+    .string()
+    .min(5, 'Title to short')
+    .label('Title')
+    .required('Title is required');
 
 interface TitleFieldProps {
     title: string;

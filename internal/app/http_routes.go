@@ -138,6 +138,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		"/wiki/*slug", "/log/:match_id", "/logs/:steam_id", "/logs", "/ban/:ban_id", "/chatlogs", "/admin/appeals", "/login",
 		"/pug", "/quickplay", "/global_stats", "/stv", "/login/discord", "/notifications", "/admin/network", "/stats",
 		"/stats/weapon/:weapon_id", "/stats/player/:steam_id", "/privacy-policy", "/admin/contests", "/contests", "/contests/:contest_id",
+		"/forums",
 	}
 	for _, rt := range jsRoutes {
 		engine.GET(rt, func(c *gin.Context) {
@@ -183,6 +184,8 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 	engine.POST("/api/server/auth", onSAPIPostServerAuth(app))
 
 	engine.GET("/export/sourcemod/admins_simple.ini", onAPIExportSourcemodSimpleAdmins(app))
+
+	engine.GET("/api/forum/overview", onAPIForumOverview(app))
 
 	// This allows use of the user profile on endpoints that have optional authentication
 	optionalAuth := engine.Group("/")
@@ -302,6 +305,11 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		modRoute.POST("/api/contests", onAPIPostContest(app))
 		modRoute.DELETE("/api/contests/:contest_id", onAPIDeleteContest(app))
 		modRoute.PUT("/api/contests/:contest_id", onAPIUpdateContest(app))
+
+		modRoute.POST("/api/forum/category", onAPICreateForumCategory(app))
+		modRoute.POST("/api/forum/category/:forum_category_id", onAPIUpdateForumCategory(app))
+		modRoute.POST("/api/forum/forum", onAPICreateForumForum(app))
+		modRoute.POST("/api/forum/forum/:forum_id", onAPIUpdateForumForum(app))
 	}
 
 	adminGrp := engine.Group("/")
