@@ -669,3 +669,39 @@ func onAPIGetContestEntries(app *App) gin.HandlerFunc {
 		ctx.JSON(http.StatusOK, entries)
 	}
 }
+
+func onAPIForumOverview(app *App) gin.HandlerFunc {
+	type Overview struct {
+		Categories []store.ForumCategory `json:"categories"`
+	}
+
+	return func(ctx *gin.Context) {
+		categories, errCats := app.db.ForumCategories(ctx)
+		if errCats != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			app.log.Error("Could not load categories")
+
+			return
+		}
+
+		forums, errForums := app.db.Forums(ctx)
+		if errForums != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			app.log.Error("Could not load forums")
+
+			return
+		}
+
+		for _, category := range categories {
+			for _, forum := range forums {
+				if category.ForumCategoryID == forum.ForumCategoryID {
+					category.Forums = append(category.Forums, forum)
+				}
+			}
+		}
+
+		ctx.JSON(http.StatusOK, Overview{Categories: categories})
+	}
+}

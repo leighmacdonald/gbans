@@ -561,9 +561,24 @@ func testForum(database *store.Store) func(t *testing.T) {
 			message := validThread.NewMessage(person.SteamID, "test *body*")
 			require.NoError(t, database.ForumMessageSave(ctx, &message))
 
-			// upVote := message.NewVote(person.SteamID, store.VoteUp)
-			//
-			// require.NoError(t, database.ForumMessageVote(ctx, upVote))
+			upVote := message.NewVote(person.SteamID, store.VoteUp)
+
+			require.NoError(t, database.ForumMessageVoteApply(ctx, &upVote))
+
+			var fetchedUpVote store.ForumMessageVote
+			require.NoError(t, database.ForumMessageVoteByID(ctx, upVote.ForumMessageVoteID, &fetchedUpVote))
+			require.Equal(t, upVote.Vote, fetchedUpVote.Vote)
+
+			downVote := message.NewVote(person.SteamID, store.VoteDown)
+			require.NoError(t, database.ForumMessageVoteApply(ctx, &downVote))
+			var fetchedDownVote store.ForumMessageVote
+			require.NoError(t, database.ForumMessageVoteByID(ctx, upVote.ForumMessageVoteID, &fetchedDownVote))
+			require.Equal(t, downVote.Vote, fetchedDownVote.Vote)
+
+			downVote2 := message.NewVote(person.SteamID, store.VoteDown)
+			require.NoError(t, database.ForumMessageVoteApply(ctx, &downVote2))
+			var fetchedDownVote2 store.ForumMessageVote
+			require.ErrorIs(t, store.ErrNoResult, database.ForumMessageVoteByID(ctx, upVote.ForumMessageVoteID, &fetchedDownVote2))
 		})
 	}
 }

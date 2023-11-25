@@ -8,6 +8,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import DnsIcon from '@mui/icons-material/Dns';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import ForumIcon from '@mui/icons-material/Forum';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import LiveHelpIcon from '@mui/icons-material/LiveHelp';
 import MailIcon from '@mui/icons-material/Mail';
@@ -129,6 +130,11 @@ export const TopBar = () => {
                 icon: <StorageIcon sx={topColourOpts} />
             });
         }
+        items.push({
+            to: '/forums',
+            text: 'Forums',
+            icon: <ForumIcon sx={topColourOpts} />
+        });
         items.push({
             to: '/wiki',
             text: 'Wiki',
