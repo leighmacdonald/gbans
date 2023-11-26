@@ -671,6 +671,8 @@ func onAPIGetContestEntries(app *App) gin.HandlerFunc {
 }
 
 func onAPIForumOverview(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
 	type Overview struct {
 		Categories []store.ForumCategory `json:"categories"`
 	}
@@ -680,7 +682,7 @@ func onAPIForumOverview(app *App) gin.HandlerFunc {
 		if errCats != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
-			app.log.Error("Could not load categories")
+			log.Error("Could not load categories")
 
 			return
 		}
@@ -689,19 +691,72 @@ func onAPIForumOverview(app *App) gin.HandlerFunc {
 		if errForums != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
-			app.log.Error("Could not load forums")
+			log.Error("Could not load forums")
 
 			return
 		}
 
-		for _, category := range categories {
+		for index := range categories {
 			for _, forum := range forums {
-				if category.ForumCategoryID == forum.ForumCategoryID {
-					category.Forums = append(category.Forums, forum)
+				if categories[index].ForumCategoryID == forum.ForumCategoryID {
+					categories[index].Forums = append(categories[index].Forums, forum)
 				}
+			}
+			if categories[index].Forums == nil {
+				categories[index].Forums = []store.Forum{}
 			}
 		}
 
 		ctx.JSON(http.StatusOK, Overview{Categories: categories})
+	}
+}
+
+func onAPIForumThreads(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		var tqf store.ThreadQueryFilter
+		if !bind(ctx, log, &tqf) {
+			return
+		}
+
+		threads, count, errThreads := app.db.ForumThreads(ctx, tqf)
+		if errThreads != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			log.Error("Could not load threads")
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, LazyResult{
+			Count: count,
+			Data:  threads,
+		})
+	}
+}
+
+func onAPIForum(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		forumID, errForumID := getIntParam(ctx, "forum_id")
+		if errForumID != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		var forum store.Forum
+
+		if errForum := app.db.Forum(ctx, forumID, &forum); errForum != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			log.Error("Could not load forum")
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, forum)
 	}
 }

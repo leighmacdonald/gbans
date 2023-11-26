@@ -59,6 +59,7 @@ type ForumThread struct {
 	Sticky        bool          `json:"sticky"`
 	Locked        bool          `json:"locked"`
 	Views         int64         `json:"views"`
+	Replies       int64         `json:"replies"`
 	TimeStamped
 }
 
@@ -171,7 +172,7 @@ func (db *Store) ForumCategoryDelete(ctx context.Context, categoryID int) error 
 
 func (db *Store) Forums(ctx context.Context) ([]Forum, error) {
 	rows, errRows := db.QueryBuilder(ctx, db.sb.
-		Select("forum_category_id", "title", "description", "last_thread_id",
+		Select("forum_category_id", "forum_id", "title", "description", "last_thread_id",
 			"count_threads", "count_messages", "ordering", "created_on", "updated_on").
 		From("forum").
 		OrderBy("ordering"))
@@ -184,11 +185,18 @@ func (db *Store) Forums(ctx context.Context) ([]Forum, error) {
 	var forums []Forum
 
 	for rows.Next() {
-		var forum Forum
+		var (
+			lastID *int64
+			forum  Forum
+		)
+
 		if errScan := rows.Scan(&forum.ForumCategoryID, &forum.ForumID, &forum.Title, &forum.Description,
-			&forum.LastThreadID, &forum.CountThreads, &forum.CountMessages, &forum.CountThreads,
+			&lastID, &forum.CountThreads, &forum.CountMessages,
 			&forum.Ordering, &forum.CreatedOn, &forum.UpdatedOn); errScan != nil {
 			return nil, Err(errScan)
+		}
+		if lastID != nil {
+			forum.LastThreadID = *lastID
 		}
 
 		forums = append(forums, forum)
@@ -323,6 +331,76 @@ func (db *Store) ForumThreadDelete(ctx context.Context, forumThreadID int64) err
 	return db.ExecDeleteBuilder(ctx, db.sb.
 		Delete("forum_thread").
 		Where(sq.Eq{"forum_thread_id": forumThreadID}))
+}
+
+type ThreadWithSource struct {
+	ForumThread
+	Personaname string `json:"personaname"`
+	AvatarHash  string `json:"avatar_hash"`
+}
+
+type ThreadQueryFilter struct {
+	QueryFilter
+	ForumID int `json:"forum_id"`
+}
+
+func (db *Store) ForumThreads(ctx context.Context, filter ThreadQueryFilter) ([]ThreadWithSource, int64, error) {
+	if filter.ForumID <= 0 {
+		return nil, 0, errors.New("Invalid Thread")
+	}
+
+	constraints := sq.And{sq.Eq{"forum_id": filter.ForumID}}
+
+	builder := db.sb.
+		Select("t.forum_thread_id", "t.forum_id", "t.source_id", "t.title", "t.sticky",
+			"t.locked", "t.views", "t.created_on", "t.updated_on", "p.personaname", "p.avatar_hash").
+		From("forum_thread t").
+		LeftJoin("person p ON p.steam_id = t.source_id")
+
+	builder = filter.applySafeOrder(builder, map[string][]string{
+		"t.": {
+			"forum_thread_id", "forum_id", "source_id", "title", "sticky",
+			"locked", "views", "created_on", "updated_on",
+		},
+		"p.": {"personaname", "avatar_hash"},
+	}, "short_name")
+
+	builder = filter.applyLimitOffset(builder, 100).Where(constraints)
+
+	count, errCount := db.GetCount(ctx, db.sb.
+		Select("COUNT(forum_thread_id)").
+		From("forum_thread").
+		Where(constraints))
+
+	if errCount != nil {
+		return nil, 0, errCount
+	}
+
+	if count == 0 {
+		return []ThreadWithSource{}, 0, nil
+	}
+
+	rows, errRows := db.QueryBuilder(ctx, builder)
+	if errRows != nil {
+		return nil, 0, errRows
+	}
+
+	defer rows.Close()
+
+	var threads []ThreadWithSource
+
+	for rows.Next() {
+		var tws ThreadWithSource
+		if errScan := rows.
+			Scan(&tws.ForumThreadID, &tws.ForumID, &tws.SourceID, &tws.Title, &tws.Sticky,
+				&tws.Locked, &tws.Views, &tws.CreatedOn, &tws.UpdatedOn, &tws.Personaname, &tws.AvatarHash); errScan != nil {
+			return nil, 0, Err(errScan)
+		}
+
+		threads = append(threads, tws)
+	}
+
+	return threads, count, nil
 }
 
 func (db *Store) ForumMessageSave(ctx context.Context, message *ForumMessage) error {

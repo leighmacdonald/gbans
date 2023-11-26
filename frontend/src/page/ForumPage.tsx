@@ -1,115 +1,91 @@
-import React, { JSX, useCallback, useEffect, useState } from 'react';
-import NiceModal from '@ebay/nice-modal-react';
-import ChatIcon from '@mui/icons-material/Chat';
-import Button from '@mui/material/Button';
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import MessageIcon from '@mui/icons-material/Message';
+import { TablePagination } from '@mui/material';
 import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import {
-    apiGetForumOverview,
-    ForumCategory,
-    ForumOverview
-} from '../api/forum';
+import { apiForum, apiGetThreads, Forum, ForumThread } from '../api/forum';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { ModalForumCategoryEditor } from '../component/modal';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { RowsPerPage } from '../component/LazyTable';
 import { logErr } from '../util/errors';
 
-const CategoryBlock = ({ category }: { category: ForumCategory }) => {
+const ForumThreadRow = ({ thread }: { thread: ForumThread }) => {
     return (
-        <ContainerWithHeader
-            key={`cat-${category.forum_category_id}`}
-            title={category.title}
-        >
-            <Grid container>
-                {category.forums.map((f) => {
-                    return (
-                        <Grid xs key={`forum-${f.forum_id}`}>
-                            <Grid container>
-                                <Grid xs={6}>
-                                    <Stack direction={'row'}>
-                                        <ChatIcon />
-                                        <Typography variant={'h2'}>
-                                            {f.title}
-                                        </Typography>
-                                    </Stack>
-                                </Grid>
-                                <Grid xs={6}>
-                                    <Stack direction={'row'}>
-                                        <Typography variant={'h5'}>
-                                            {f.count_threads}
-                                        </Typography>
-                                        <Typography variant={'h5'}>
-                                            {f.count_messages}
-                                        </Typography>
-                                    </Stack>
-                                </Grid>
-                            </Grid>
-                        </Grid>
-                    );
-                })}
-            </Grid>
-        </ContainerWithHeader>
+        <Grid container>
+            <Grid xs>{thread.title}</Grid>
+        </Grid>
     );
 };
 
-export const ForumPage = (): JSX.Element => {
-    const [overview, setOverview] = useState<ForumOverview>();
-    const { sendFlash } = useUserFlashCtx();
+export const ForumPage = () => {
+    const { forum_id } = useParams();
+    const [forum, setForum] = useState<Forum>();
+    const [threads, setThreads] = useState<ForumThread[]>();
+    const [count, setCount] = useState(0);
+    const [loading, setLoading] = useState(false);
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState<RowsPerPage>(
+        RowsPerPage.TwentyFive
+    );
+    const id = parseInt(forum_id as string);
 
     useEffect(() => {
+        setLoading(true);
         const abortController = new AbortController();
-        apiGetForumOverview(abortController)
-            .then((resp) => {
-                setOverview(resp);
-            })
-            .catch((e) => logErr(e));
-        return () => abortController.abort();
-    }, []);
 
-    const onNewCategory = useCallback(async () => {
-        try {
-            await NiceModal.show<ForumCategory>(ModalForumCategoryEditor, {});
-            sendFlash('success', 'Created new category successfully');
-        } catch (e) {
-            logErr(e);
-        }
-    }, [sendFlash]);
+        apiForum(id, abortController)
+            .then((f) => {
+                setForum(f);
+            })
+            .catch((e) => {
+                logErr(e);
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+
+        return () => abortController.abort();
+    }, [id]);
+
+    useEffect(() => {
+        apiGetThreads({
+            forum_id: id,
+            offset: page * rowsPerPage,
+            limit: rowsPerPage,
+            order_by: 'updated_on',
+            desc: true
+        }).then((resp) => {
+            setThreads(resp.data);
+            setCount(resp.count);
+        });
+    }, [id, page, rowsPerPage]);
 
     return (
-        <Grid container spacing={3}>
-            <Grid xs={12}>
-                <Typography variant={'h2'}>
-                    {window.gbans.site_name} community
-                </Typography>
-            </Grid>
-            <Grid xs={9}>
-                <Grid container>
-                    <Grid xs>
-                        {overview?.categories.map((cat) => {
-                            return (
-                                <CategoryBlock
-                                    category={cat}
-                                    key={`category-${cat.forum_category_id}`}
-                                />
-                            );
-                        })}
-                    </Grid>
-                </Grid>
-            </Grid>
-            <Grid xs={3}>
-                <Stack spacing={3}>
-                    <ContainerWithHeader title={'Mod Tools'}>
-                        <Button
-                            onClick={onNewCategory}
-                            variant={'contained'}
-                            color={'success'}
-                        >
-                            New Category
-                        </Button>
-                    </ContainerWithHeader>
-                </Stack>
-            </Grid>
-        </Grid>
+        <ContainerWithHeader
+            title={loading ? 'Loading...' : forum?.title ?? 'Forum'}
+            iconLeft={<MessageIcon />}
+        >
+            <Stack>
+                {threads?.map((t) => {
+                    return (
+                        <ForumThreadRow
+                            thread={t}
+                            key={`ft-${t.forum_thread_id}`}
+                        />
+                    );
+                })}
+                <TablePagination
+                    rowsPerPage={rowsPerPage}
+                    count={count}
+                    page={page}
+                    onRowsPerPageChange={(event) => {
+                        setRowsPerPage(parseInt(event.target.value));
+                    }}
+                    onPageChange={(_, newPage) => {
+                        setPage(newPage);
+                    }}
+                />
+            </Stack>
+        </ContainerWithHeader>
     );
 };

@@ -138,7 +138,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		"/wiki/*slug", "/log/:match_id", "/logs/:steam_id", "/logs", "/ban/:ban_id", "/chatlogs", "/admin/appeals", "/login",
 		"/pug", "/quickplay", "/global_stats", "/stv", "/login/discord", "/notifications", "/admin/network", "/stats",
 		"/stats/weapon/:weapon_id", "/stats/player/:steam_id", "/privacy-policy", "/admin/contests", "/contests", "/contests/:contest_id",
-		"/forums",
+		"/forums", "/forums/:thread_id",
 	}
 	for _, rt := range jsRoutes {
 		engine.GET(rt, func(c *gin.Context) {
@@ -186,6 +186,8 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 	engine.GET("/export/sourcemod/admins_simple.ini", onAPIExportSourcemodSimpleAdmins(app))
 
 	engine.GET("/api/forum/overview", onAPIForumOverview(app))
+	engine.GET("/api/forum/forum/:forum_id", onAPIForum(app))
+	engine.POST("/api/forum/threads", onAPIForumThreads(app))
 
 	// This allows use of the user profile on endpoints that have optional authentication
 	optionalAuth := engine.Group("/")
