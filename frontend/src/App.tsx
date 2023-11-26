@@ -35,6 +35,7 @@ import { BanPage } from './page/BanPage';
 import { ChatLogPage } from './page/ChatLogPage';
 import { ContestListPage } from './page/ContestListPage';
 import { ContestPage } from './page/ContestPage';
+import { ForumOverviewPage } from './page/ForumOverviewPage';
 import { ForumPage } from './page/ForumPage';
 import { HomePage } from './page/HomePage';
 import { LoginDiscordSuccessPage } from './page/LoginDiscordSuccessPage';
@@ -320,6 +321,23 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                 <Route
                                                                     path={
                                                                         '/forums'
+                                                                    }
+                                                                    element={
+                                                                        <ErrorBoundary>
+                                                                            <PrivateRoute
+                                                                                permission={
+                                                                                    PermissionLevel.Moderator
+                                                                                }
+                                                                            >
+                                                                                <ForumOverviewPage />
+                                                                            </PrivateRoute>
+                                                                        </ErrorBoundary>
+                                                                    }
+                                                                />
+
+                                                                <Route
+                                                                    path={
+                                                                        '/forums/:forum_id'
                                                                     }
                                                                     element={
                                                                         <ErrorBoundary>

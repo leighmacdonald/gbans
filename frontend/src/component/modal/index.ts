@@ -12,6 +12,7 @@ import { ContestEntryModal } from './ContestEntryModal';
 import { FileUploadModal } from './FileUploadModal';
 import { FilterEditModal } from './FilterEditModal';
 import { ForumCategoryEditorModal } from './ForumCategoryEditorModal';
+import { ForumForumEditorModal } from './ForumForumEditorModal';
 import { MessageContextModal } from './MessageContextModal';
 import { PersonEditModal } from './PersonEditModal';
 import { ServerDeleteModal } from './ServerDeleteModal';
@@ -44,6 +45,7 @@ export const ModalPersonEditor = 'modal-person-editor';
 export const ModalForumCategoryEditor = 'modal-forum-category-editor';
 export const ModalForumForumEditor = 'modal-forum-forum-editor';
 
+NiceModal.register(ModalForumForumEditor, ForumForumEditorModal);
 NiceModal.register(ModalForumCategoryEditor, ForumCategoryEditorModal);
 NiceModal.register(ModalContestEntryDelete, ContestEntryDeleteModal);
 NiceModal.register(ModalContestEditor, ContestEditor);
