@@ -16,7 +16,6 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import {
-    apiCreateReportMessage,
     apiDeleteReportMessage,
     apiGetReportMessages,
     apiUpdateReportMessage,
@@ -66,23 +65,23 @@ export const ReportComponent = ({
             .catch(logErr);
     }, [report.report_id]);
 
-    const onSave = useCallback(
-        (message: string, onSuccess?: () => void) => {
-            apiCreateReportMessage(report.report_id, message)
-                .then((response) => {
-                    setMessages([
-                        ...messages,
-                        { author: currentUser, message: response }
-                    ]);
-                    onSuccess && onSuccess();
-                })
-                .catch((e) => {
-                    sendFlash('error', 'Failed to save report message');
-                    logErr(e);
-                });
-        },
-        [report.report_id, messages, currentUser, sendFlash]
-    );
+    // const onSave = useCallback(
+    //     (message: string, onSuccess?: () => void) => {
+    //         apiCreateReportMessage(report.report_id, message)
+    //             .then((response) => {
+    //                 setMessages([
+    //                     ...messages,
+    //                     { author: currentUser, message: response }
+    //                 ]);
+    //                 onSuccess && onSuccess();
+    //             })
+    //             .catch((e) => {
+    //                 sendFlash('error', 'Failed to save report message');
+    //                 logErr(e);
+    //             });
+    //     },
+    //     [report.report_id, messages, currentUser, sendFlash]
+    // );
 
     const onEdit = useCallback(
         (message: UserMessage) => {
@@ -262,11 +261,7 @@ export const ReportComponent = ({
                     ))}
                     <Paper elevation={1}>
                         <Stack spacing={2}>
-                            <MDEditor
-                                initialBodyMDValue={''}
-                                onSave={onSave}
-                                saveLabel={'Send Message'}
-                            />
+                            <MDEditor />
                         </Stack>
                     </Paper>
                 </Stack>

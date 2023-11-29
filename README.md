@@ -1,8 +1,7 @@
 # gbans
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Test, Build & Publish](https://github.com/leighmacdonald/gbans/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/leighmacdonald/gbans/actions/workflows/build.yml)
-[![release](https://github.com/leighmacdonald/gbans/actions/workflows/release.yml/badge.svg?event=release)](https://github.com/leighmacdonald/gbans/actions/workflows/release.yml)
+[![Test, Build & Publish](https://github.com/leighmacdonald/gbans/actions/workflows/deploy.yml/badge.svg?branch=master)](https://github.com/leighmacdonald/gbans/actions/workflows/deploy.yml)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/f06234b0551a49cc8ac111d7b77827b2)](https://www.codacy.com/manual/leighmacdonald/gbans?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=leighmacdonald/gbans&amp;utm_campaign=Badge_Grade)
 [![Go Report Card](https://goreportcard.com/badge/github.com/leighmacdonald/gbans)](https://goreportcard.com/report/github.com/leighmacdonald/gbans)
 [![GoDoc](https://godoc.org/github.com/leighmacdonald/gbans?status.svg)](https://pkg.go.dev/github.com/leighmacdonald/gbans)
@@ -10,7 +9,7 @@
 [![Discord chat](https://img.shields.io/discord/704508824320475218)](https://discord.gg/YEWed3wY3F)
 
 gbans is a centralized game administration system for Team Fortress 2 that incorporates a global ban system similar to
-[sourcebans++](https://sbpp.dev) as well as some additional basic community tools like news & wikis.
+[sourcebans++](https://sbpp.dev) as well as some additional basic community tools like news, forums & wikis.
 The project was initially only intended to be a more modern & secure replacement for sourcebans, but has evolved to
 handle broader community aspects.
 
@@ -18,9 +17,7 @@ handle broader community aspects.
 
 While we currently are [dogfooding](https://en.wikipedia.org/wiki/Eating_your_own_dog_food) the project on a
 community with around 50 servers, I would not recommend non-developers use the project yet. It's still in fairly
-major development mode and large sections are still incomplete or function but very rough. This is
-very notable for the web frontend which we don't really use yet. Sticking with the discord command interface is the
-best current way to interact with the system.
+major development mode and large sections are still incomplete or function but very rough.
 
 Before we tag a 1.0.0 release, we will write some proper user-facing documentation.
 

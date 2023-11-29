@@ -37,6 +37,7 @@ import { ContestListPage } from './page/ContestListPage';
 import { ContestPage } from './page/ContestPage';
 import { ForumOverviewPage } from './page/ForumOverviewPage';
 import { ForumPage } from './page/ForumPage';
+import { ForumThreadPage } from './page/ForumThreadPage';
 import { HomePage } from './page/HomePage';
 import { LoginDiscordSuccessPage } from './page/LoginDiscordSuccessPage';
 import { LoginPage } from './page/LoginPage';
@@ -324,13 +325,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                     }
                                                                     element={
                                                                         <ErrorBoundary>
-                                                                            <PrivateRoute
-                                                                                permission={
-                                                                                    PermissionLevel.Moderator
-                                                                                }
-                                                                            >
-                                                                                <ForumOverviewPage />
-                                                                            </PrivateRoute>
+                                                                            <ForumOverviewPage />
                                                                         </ErrorBoundary>
                                                                     }
                                                                 />
@@ -341,17 +336,20 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                     }
                                                                     element={
                                                                         <ErrorBoundary>
-                                                                            <PrivateRoute
-                                                                                permission={
-                                                                                    PermissionLevel.Moderator
-                                                                                }
-                                                                            >
-                                                                                <ForumPage />
-                                                                            </PrivateRoute>
+                                                                            <ForumPage />
                                                                         </ErrorBoundary>
                                                                     }
                                                                 />
-
+                                                                <Route
+                                                                    path={
+                                                                        '/forums/thread/:forum_thread_id'
+                                                                    }
+                                                                    element={
+                                                                        <ErrorBoundary>
+                                                                            <ForumThreadPage />
+                                                                        </ErrorBoundary>
+                                                                    }
+                                                                />
                                                                 <Route
                                                                     path={
                                                                         '/wiki'

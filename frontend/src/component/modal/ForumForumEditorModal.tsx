@@ -9,10 +9,12 @@ import {
 import Stack from '@mui/material/Stack';
 import { Formik } from 'formik';
 import * as yup from 'yup';
+import { PermissionLevel } from '../../api';
 import { apiCreateForum, apiForum, apiSaveForum, Forum } from '../../api/forum';
 import { DescriptionField } from '../formik/DescriptionField';
 import { ForumCategorySelectField } from '../formik/ForumCategorySelectField';
 import { OrderingField } from '../formik/OrderingField';
+import { PermissionLevelField } from '../formik/PermissionLevelField';
 import { TitleField, titleFieldValidator } from '../formik/TitleField';
 import { CancelButton, SubmitButton } from './Buttons';
 
@@ -21,6 +23,7 @@ interface ForumEditorValues {
     title: string;
     description: string;
     ordering: number;
+    permission_level: PermissionLevel;
 }
 
 interface ForumEditorProps {
@@ -48,7 +51,8 @@ export const ForumForumEditorModal = NiceModal.create(
             forum_category_id: forum?.forum_category_id ?? 0,
             title: forum?.title ?? '',
             description: forum?.description ?? '',
-            ordering: forum?.ordering ?? 0
+            ordering: forum?.ordering ?? 0,
+            permission_level: forum?.permission_level ?? PermissionLevel.Guest
         };
 
         const onSubmit = useCallback(
@@ -61,7 +65,8 @@ export const ForumForumEditorModal = NiceModal.create(
                                 values.forum_category_id,
                                 values.title,
                                 values.description,
-                                values.ordering
+                                values.ordering,
+                                values.permission_level
                             )
                         );
                     } else {
@@ -70,7 +75,8 @@ export const ForumForumEditorModal = NiceModal.create(
                                 values.forum_category_id,
                                 values.title,
                                 values.description,
-                                values.ordering
+                                values.ordering,
+                                values.permission_level
                             )
                         );
                     }
@@ -89,7 +95,7 @@ export const ForumForumEditorModal = NiceModal.create(
                 onSubmit={onSubmit}
                 validationSchema={validationSchema}
             >
-                <Dialog {...muiDialogV5(modal)}>
+                <Dialog {...muiDialogV5(modal)} fullWidth maxWidth={'lg'}>
                     <DialogTitle>Category Editor</DialogTitle>
 
                     <DialogContent>
@@ -98,6 +104,16 @@ export const ForumForumEditorModal = NiceModal.create(
                             <TitleField />
                             <DescriptionField />
                             <OrderingField />
+                            <PermissionLevelField
+                                levels={[
+                                    PermissionLevel.Guest,
+                                    PermissionLevel.User,
+                                    PermissionLevel.Reserved,
+                                    PermissionLevel.Editor,
+                                    PermissionLevel.Moderator,
+                                    PermissionLevel.Admin
+                                ]}
+                            />
                         </Stack>
                     </DialogContent>
 

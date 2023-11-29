@@ -73,6 +73,22 @@ export const createThemeByMode = (mode: PaletteMode) => {
                     }
                 }
             },
+            MuiTabs: {
+                styleOverrides: {
+                    root: {
+                        minHeight: 36,
+                        height: 36
+                    }
+                }
+            },
+            MuiTab: {
+                styleOverrides: {
+                    root: {
+                        minHeight: 36,
+                        height: 36
+                    }
+                }
+            },
             MuiCssBaseline: {
                 styleOverrides: {
                     body: darkScrollbar()

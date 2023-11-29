@@ -1436,7 +1436,8 @@ func onAPIUpdateForumCategory(app *App) gin.HandlerFunc {
 }
 
 type ForumForumRequest struct {
-	ForumCategoryID int `json:"forum_category_id"`
+	ForumCategoryID int              `json:"forum_category_id"`
+	PermissionLevel consts.Privilege `json:"permission_level"`
 	ForumCategoryRequest
 }
 
@@ -1454,6 +1455,7 @@ func onAPICreateForumForum(app *App) gin.HandlerFunc {
 			Title:           req.Title,
 			Description:     req.Description,
 			Ordering:        req.Ordering,
+			PermissionLevel: req.PermissionLevel,
 			TimeStamped:     store.NewTimeStamped(),
 		}
 

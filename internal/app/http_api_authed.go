@@ -1821,3 +1821,160 @@ func onAPIDeleteContestEntry(app *App) gin.HandlerFunc {
 			zap.String("title", contest.Title))
 	}
 }
+
+func onAPIThreadCreate(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	type CreateThreadRequest struct {
+		Title  string `json:"title"`
+		BodyMD string `json:"body_md"`
+		Sticky bool   `json:"sticky"`
+		Locked bool   `json:"locked"`
+	}
+
+	type ThreadWithMessage struct {
+		store.ForumThread
+		Message store.ForumMessage `json:"message"`
+	}
+
+	return func(ctx *gin.Context) {
+		user := currentUserProfile(ctx)
+		forumID, errForumID := getIntParam(ctx, "forum_id")
+		if errForumID != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		var req CreateThreadRequest
+		if !bind(ctx, log, &req) {
+			return
+		}
+
+		if len(req.BodyMD) <= 1 {
+			responseErr(ctx, http.StatusBadRequest, errors.New("Message too short"))
+
+			return
+		}
+
+		if len(req.Title) <= 4 {
+			responseErr(ctx, http.StatusBadRequest, errors.New("Title too short"))
+
+			return
+		}
+
+		var forum store.Forum
+		if errForum := app.db.Forum(ctx, forumID, &forum); errForum != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			return
+		}
+
+		thread := forum.NewThread(req.Title, user.SteamID)
+		thread.Sticky = req.Sticky
+		thread.Locked = req.Locked
+
+		if errSaveThread := app.db.ForumThreadSave(ctx, &thread); errSaveThread != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			log.Error("Failed to save new thread", zap.Error(errSaveThread))
+
+			return
+		}
+
+		message := thread.NewMessage(user.SteamID, req.BodyMD)
+
+		if errSaveMessage := app.db.ForumMessageSave(ctx, &message); errSaveMessage != nil {
+			// Drop created thread.
+			// TODO transaction
+			if errRollback := app.db.ForumThreadDelete(ctx, thread.ForumThreadID); errRollback != nil {
+				log.Error("Failed to rollback new thread", zap.Error(errRollback))
+			}
+
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			log.Error("Failed to save new forum message", zap.Error(errSaveMessage))
+
+			return
+		}
+
+		if errIncr := app.db.ForumIncrMessageCount(ctx, forum.ForumID, true); errIncr != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			log.Error("Failed to increment message count", zap.Error(errIncr))
+
+			return
+		}
+
+		ctx.JSON(http.StatusCreated, ThreadWithMessage{
+			ForumThread: thread,
+			Message:     message,
+		})
+
+		log.Info("Thread created")
+	}
+}
+
+func onAPIThreadCreateReply(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	type ThreadReply struct {
+		BodyMD string `json:"body_md"`
+	}
+
+	return func(ctx *gin.Context) {
+		currentUser := currentUserProfile(ctx)
+		forumThreadID, errForumID := getInt64Param(ctx, "forum_thread_id")
+		if errForumID != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		var thread store.ForumThread
+		if errThread := app.db.ForumThread(ctx, forumThreadID, &thread); errThread != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			return
+		}
+
+		if thread.Locked && currentUser.PermissionLevel < consts.PEditor {
+			responseErr(ctx, http.StatusForbidden, errors.New("Cannot reply to locked threads"))
+
+			return
+		}
+
+		var req ThreadReply
+		if !bind(ctx, log, &req) {
+			return
+		}
+
+		if len(req.BodyMD) < 3 {
+			responseErr(ctx, http.StatusBadRequest, errors.New("Body too short"))
+
+			return
+		}
+
+		newMessage := thread.NewMessage(currentUser.SteamID, req.BodyMD)
+		if errSave := app.db.ForumMessageSave(ctx, &newMessage); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			return
+		}
+
+		var message store.ForumMessage
+		if errFetch := app.db.ForumMessage(ctx, newMessage.ForumMessageID, &message); errFetch != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			return
+		}
+
+		if errIncr := app.db.ForumIncrMessageCount(ctx, thread.ForumID, true); errIncr != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			log.Error("Failed to increment message count", zap.Error(errIncr))
+		}
+
+		ctx.JSON(http.StatusCreated, newMessage)
+	}
+}

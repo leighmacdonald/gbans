@@ -138,7 +138,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		"/wiki/*slug", "/log/:match_id", "/logs/:steam_id", "/logs", "/ban/:ban_id", "/chatlogs", "/admin/appeals", "/login",
 		"/pug", "/quickplay", "/global_stats", "/stv", "/login/discord", "/notifications", "/admin/network", "/stats",
 		"/stats/weapon/:weapon_id", "/stats/player/:steam_id", "/privacy-policy", "/admin/contests", "/contests", "/contests/:contest_id",
-		"/forums", "/forums/:thread_id",
+		"/forums", "/forums/:forum_id", "/forums/thread/:forum_thread_id",
 	}
 	for _, rt := range jsRoutes {
 		engine.GET(rt, func(c *gin.Context) {
@@ -185,9 +185,10 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 
 	engine.GET("/export/sourcemod/admins_simple.ini", onAPIExportSourcemodSimpleAdmins(app))
 
-	engine.GET("/api/forum/overview", onAPIForumOverview(app))
 	engine.GET("/api/forum/forum/:forum_id", onAPIForum(app))
 	engine.POST("/api/forum/threads", onAPIForumThreads(app))
+	engine.POST("/api/forum/messages", onAPIForumMessages(app))
+	engine.GET("/api/forum/thread/:forum_thread_id", onAPIForumThread(app))
 
 	// This allows use of the user profile on endpoints that have optional authentication
 	optionalAuth := engine.Group("/")
@@ -196,6 +197,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		optionalAuth.GET("/api/contests", onAPIGetContests(app))
 		optionalAuth.GET("/api/contests/:contest_id", onAPIGetContest(app))
 		optionalAuth.GET("/api/contests/:contest_id/entries", onAPIGetContestEntries(app))
+		optionalAuth.GET("/api/forum/overview", onAPIForumOverview(app))
 	}
 
 	srvGrp := engine.Group("/")
@@ -254,6 +256,9 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		authed.GET("/api/contests/:contest_id/vote/:contest_entry_id/:direction", onAPISaveContestEntryVote(app))
 		authed.POST("/api/contests/:contest_id/submit", onAPISaveContestEntrySubmit(app))
 		authed.DELETE("/api/contest_entry/:contest_entry_id", onAPIDeleteContestEntry(app))
+
+		authed.POST("/api/forum/forum/:forum_id/thread", onAPIThreadCreate(app))
+		authed.POST("/api/forum/thread/:forum_thread_id/message", onAPIThreadCreateReply(app))
 	}
 
 	editorGrp := engine.Group("/")

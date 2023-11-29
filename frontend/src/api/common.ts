@@ -40,7 +40,7 @@ export const permissionLevelString = (level: PermissionLevel) => {
         case PermissionLevel.Moderator:
             return 'Moderator';
         case PermissionLevel.Reserved:
-            return 'Reserved Slot';
+            return 'VIP';
         case PermissionLevel.Guest:
             return 'Guest';
         default:

@@ -45,19 +45,20 @@ export const ConfirmationModal = NiceModal.create(
                             if (onCancel != undefined) {
                                 onCancel();
                             }
+                            modal.resolve(false);
                             await modal.hide();
                         }}
                     />
-                    {onAccept && (
-                        <ConfirmButton
-                            onClick={async () => {
-                                if (onAccept != undefined) {
-                                    onAccept();
-                                }
-                                await modal.hide();
-                            }}
-                        />
-                    )}
+
+                    <ConfirmButton
+                        onClick={async () => {
+                            if (onAccept != undefined) {
+                                onAccept();
+                            }
+                            modal.resolve(true);
+                            await modal.hide();
+                        }}
+                    />
                 </DialogActions>
             </Dialog>
         );

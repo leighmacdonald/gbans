@@ -89,7 +89,7 @@ export const ForumCategoryEditorModal = NiceModal.create(
                 onSubmit={onSubmit}
                 validationSchema={validationSchema}
             >
-                <Dialog {...muiDialogV5(modal)}>
+                <Dialog {...muiDialogV5(modal)} fullWidth maxWidth={'lg'}>
                     <DialogTitle>Category Editor</DialogTitle>
 
                     <DialogContent>

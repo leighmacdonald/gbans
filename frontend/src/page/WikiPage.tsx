@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, JSX } from 'react';
+import React, { useEffect, useMemo, JSX } from 'react';
 import { useParams } from 'react-router';
 import ArticleIcon from '@mui/icons-material/Article';
 import Box from '@mui/material/Box';
@@ -7,18 +7,12 @@ import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { PermissionLevel } from '../api';
-import {
-    apiGetWikiPage,
-    apiSaveWikiPage,
-    Page,
-    renderMarkdown
-} from '../api/wiki';
+import { apiGetWikiPage, Page, renderMarkdown } from '../api/wiki';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { LoadingSpinner } from '../component/LoadingSpinner';
 import { MDEditor } from '../component/MDEditor';
 import { RenderedMarkdownBox } from '../component/RenderedMarkdownBox';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
 
 const defaultPage: Page = {
@@ -36,7 +30,7 @@ export const WikiPage = (): JSX.Element => {
     const [editMode, setEditMode] = React.useState<boolean>(false);
     const { slug } = useParams();
     const { currentUser } = useCurrentUserCtx();
-    const { sendFlash } = useUserFlashCtx();
+    // const { sendFlash } = useUserFlashCtx();
 
     useEffect(() => {
         const abortController = new AbortController();
@@ -60,21 +54,21 @@ export const WikiPage = (): JSX.Element => {
         return () => abortController.abort();
     }, [slug]);
 
-    const onSave = useCallback(
-        (new_body_md: string) => {
-            const newPage = page;
-            newPage.slug = slug || 'home';
-            newPage.body_md = new_body_md;
-            apiSaveWikiPage(newPage)
-                .then((response) => {
-                    setPage(response);
-                    sendFlash('success', `Slug ${response.slug} updated`);
-                    setEditMode(false);
-                })
-                .catch(logErr);
-        },
-        [page, sendFlash, slug]
-    );
+    // const onSave = useCallback(
+    //     (new_body_md: string) => {
+    //         const newPage = page;
+    //         newPage.slug = slug || 'home';
+    //         newPage.body_md = new_body_md;
+    //         apiSaveWikiPage(newPage)
+    //             .then((response) => {
+    //                 setPage(response);
+    //                 sendFlash('success', `Slug ${response.slug} updated`);
+    //                 setEditMode(false);
+    //             })
+    //             .catch(logErr);
+    //     },
+    //     [page, sendFlash, slug]
+    // );
 
     const bodyHTML = useMemo(() => {
         return page.revision > 0 && page.body_md
@@ -141,10 +135,7 @@ export const WikiPage = (): JSX.Element => {
             {!loading && editMode && (
                 <Grid xs={12}>
                     <Paper elevation={1}>
-                        <MDEditor
-                            initialBodyMDValue={page.body_md}
-                            onSave={onSave}
-                        />
+                        <MDEditor />
                     </Paper>
                 </Grid>
             )}
