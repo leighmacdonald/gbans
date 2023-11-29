@@ -188,6 +188,11 @@ export interface ForumThread extends TimeStamped {
     personaname: string;
     avatarhash: string;
     message?: ForumMessage;
+    recent_forum_message_id?: number;
+    recent_created_on: Date;
+    recent_steam_id: string;
+    recent_personaname: string;
+    recent_avatarhash: string;
 }
 
 export interface ThreadMessageQueryOpts extends QueryFilter<ForumMessage> {
@@ -222,7 +227,13 @@ export const apiGetThreads = async (
         opts,
         abortController
     );
-    resp.data = resp.data.map(transformTimeStampedDates);
+    resp.data = resp.data.map((t) => {
+        const thread = transformTimeStampedDates(t);
+        thread.recent_created_on = parseDateTime(
+            thread.recent_created_on as unknown as string
+        );
+        return thread;
+    });
     return resp;
 };
 
