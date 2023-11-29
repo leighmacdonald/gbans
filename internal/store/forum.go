@@ -5,6 +5,7 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
 )
@@ -31,14 +32,21 @@ func (category ForumCategory) NewForum(title string, description string) Forum {
 }
 
 type Forum struct {
-	ForumID         int    `json:"forum_id"`
-	ForumCategoryID int    `json:"forum_category_id"`
-	LastThreadID    int64  `json:"last_thread_id"`
-	Title           string `json:"title"`
-	Description     string `json:"description"`
-	Ordering        int    `json:"ordering"`
-	CountThreads    int64  `json:"count_threads"`
-	CountMessages   int64  `json:"count_messages"`
+	ForumID             int              `json:"forum_id"`
+	ForumCategoryID     int              `json:"forum_category_id"`
+	LastThreadID        int64            `json:"last_thread_id"`
+	Title               string           `json:"title"`
+	Description         string           `json:"description"`
+	Ordering            int              `json:"ordering"`
+	CountThreads        int64            `json:"count_threads"`
+	CountMessages       int64            `json:"count_messages"`
+	PermissionLevel     consts.Privilege `json:"permission_level"`
+	RecentForumThreadId int64            `json:"recent_forum_thread_id"`
+	RecentForumTitle    string           `json:"recent_forum_title"`
+	RecentSourceID      steamid.SID64    `json:"recent_source_id"`
+	RecentPersonaname   string           `json:"recent_personaname"`
+	RecentAvatarHash    string           `json:"recent_avatarhash"`
+	RecentCreatedOn     time.Time        `json:"recent_created_on"`
 	TimeStamped
 }
 
@@ -51,6 +59,12 @@ func (forum Forum) NewThread(title string, sourceID steamid.SID64) ForumThread {
 	}
 }
 
+type SimplePerson struct {
+	Personaname     string           `json:"personaname"`
+	AvatarHash      string           `json:"avatarhash"`
+	PermissionLevel consts.Privilege `json:"permission_level"`
+}
+
 type ForumThread struct {
 	ForumThreadID int64         `json:"forum_thread_id"`
 	ForumID       int           `json:"forum_id"`
@@ -60,6 +74,7 @@ type ForumThread struct {
 	Locked        bool          `json:"locked"`
 	Views         int64         `json:"views"`
 	Replies       int64         `json:"replies"`
+	SimplePerson
 	TimeStamped
 }
 
@@ -78,6 +93,7 @@ type ForumMessage struct {
 	ForumThreadID  int64         `json:"forum_thread_id"`
 	SourceID       steamid.SID64 `json:"source_id"`
 	BodyMD         string        `json:"body_md"`
+	SimplePerson
 	TimeStamped
 }
 
@@ -172,10 +188,14 @@ func (db *Store) ForumCategoryDelete(ctx context.Context, categoryID int) error 
 
 func (db *Store) Forums(ctx context.Context) ([]Forum, error) {
 	rows, errRows := db.QueryBuilder(ctx, db.sb.
-		Select("forum_category_id", "forum_id", "title", "description", "last_thread_id",
-			"count_threads", "count_messages", "ordering", "created_on", "updated_on").
-		From("forum").
-		OrderBy("ordering"))
+		Select("f.forum_category_id", "f.forum_id", "f.title", "f.description", "f.last_thread_id",
+			"f.count_threads", "f.count_messages", "f.ordering", "f.created_on", "f.updated_on", "f.permission_level",
+			"t.forum_thread_id", "t.source_id", "p.personaname", "p.avatarhash", "t.created_on", "t.title").
+		From("forum f").
+		LeftJoin("forum_thread t ON f.last_thread_id = t.forum_thread_id").
+		LeftJoin("forum_message m ON t.forum_thread_id = m.forum_thread_id").
+		LeftJoin("person p ON p.steam_id = m.source_id").
+		OrderBy("f.ordering"))
 	if errRows != nil {
 		return nil, errRows
 	}
@@ -186,17 +206,35 @@ func (db *Store) Forums(ctx context.Context) ([]Forum, error) {
 
 	for rows.Next() {
 		var (
-			lastID *int64
-			forum  Forum
+			lastID           *int64
+			forum            Forum
+			lastForumTheadId *int64
+			lastSourceID     *steamid.SID64
+			lastPersonaname  *string
+			lastAvatarhash   *string
+			lastCreatedOn    *time.Time
+			lastTitle        *string
 		)
 
 		if errScan := rows.Scan(&forum.ForumCategoryID, &forum.ForumID, &forum.Title, &forum.Description,
 			&lastID, &forum.CountThreads, &forum.CountMessages,
-			&forum.Ordering, &forum.CreatedOn, &forum.UpdatedOn); errScan != nil {
+			&forum.Ordering, &forum.CreatedOn, &forum.UpdatedOn, &forum.PermissionLevel,
+			&lastForumTheadId, &lastSourceID, &lastPersonaname, &lastAvatarhash,
+			&lastCreatedOn, &lastTitle); errScan != nil {
 			return nil, Err(errScan)
 		}
+
 		if lastID != nil {
 			forum.LastThreadID = *lastID
+		}
+
+		if lastForumTheadId != nil {
+			forum.RecentForumThreadId = *lastForumTheadId
+			forum.RecentSourceID = *lastSourceID
+			forum.RecentPersonaname = *lastPersonaname
+			forum.RecentAvatarHash = *lastAvatarhash
+			forum.RecentCreatedOn = *lastCreatedOn
+			forum.RecentForumTitle = *lastTitle
 		}
 
 		forums = append(forums, forum)
@@ -225,6 +263,7 @@ func (db *Store) ForumSave(ctx context.Context, forum *Forum) error {
 				"count_threads":     forum.CountThreads,
 				"count_messages":    forum.CountMessages,
 				"ordering":          forum.Ordering,
+				"permission_level":  forum.PermissionLevel,
 				"updated_on":        forum.UpdatedOn,
 			}).
 			Where(sq.Eq{"forum_id": forum.ForumID}))
@@ -242,6 +281,7 @@ func (db *Store) ForumSave(ctx context.Context, forum *Forum) error {
 			"count_threads":     forum.CountThreads,
 			"count_messages":    forum.CountMessages,
 			"ordering":          forum.Ordering,
+			"permission_level":  forum.PermissionLevel,
 			"created_on":        forum.CreatedOn,
 			"updated_on":        forum.UpdatedOn,
 		}).
@@ -297,7 +337,7 @@ func (db *Store) ForumThreadSave(ctx context.Context, thread *ForumThread) error
 
 	thread.CreatedOn = time.Now()
 
-	return db.ExecInsertBuilderWithReturnValue(ctx, db.sb.
+	if errInsert := db.ExecInsertBuilderWithReturnValue(ctx, db.sb.
 		Insert("forum_thread").
 		SetMap(map[string]interface{}{
 			"forum_id":   thread.ForumID,
@@ -309,22 +349,38 @@ func (db *Store) ForumThreadSave(ctx context.Context, thread *ForumThread) error
 			"created_on": thread.CreatedOn,
 			"updated_on": thread.UpdatedOn,
 		}).
-		Suffix("RETURNING forum_thread_id"), &thread.ForumThreadID)
+		Suffix("RETURNING forum_thread_id"), &thread.ForumThreadID); errInsert != nil {
+		return errInsert
+	}
+
+	return db.ExecUpdateBuilder(ctx, db.sb.Update("forum").
+		Set("count_threads", sq.Expr("count_threads+1")).
+		Set("last_thread_id", thread.ForumThreadID).
+		Where(sq.Eq{"forum_id": thread.ForumID}))
 }
 
 func (db *Store) ForumThread(ctx context.Context, forumThreadID int64, thread *ForumThread) error {
 	row, errRow := db.QueryRowBuilder(ctx, db.sb.
-		Select("forum_thread_id", "forum_id", "source_id", "title", "sticky",
-			"locked", "views", "created_on", "updated_on").
-		From("forum_thread").
-		Where(sq.Eq{"forum_thread_id": forumThreadID}))
+		Select("t.forum_thread_id", "t.forum_id", "t.source_id", "t.title", "t.sticky",
+			"t.locked", "t.views", "t.created_on", "t.updated_on", "p.personaname", "p.avatarhash",
+			"p.permission_level").
+		From("forum_thread t").
+		LeftJoin("person p ON p.steam_id = t.source_id").
+		Where(sq.Eq{"t.forum_thread_id": forumThreadID}))
 	if errRow != nil {
 		return errRow
 	}
 
 	return Err(row.Scan(&thread.ForumThreadID, &thread.ForumID, &thread.SourceID, &thread.Title,
 		&thread.Sticky, &thread.Locked, &thread.Views, &thread.CreatedOn,
-		&thread.UpdatedOn))
+		&thread.UpdatedOn, &thread.Personaname, &thread.AvatarHash, &thread.PermissionLevel))
+}
+
+func (db *Store) ForumThreadIncrView(ctx context.Context, forumThreadID int64) error {
+	return db.ExecUpdateBuilder(ctx, db.sb.
+		Update("forum_thread").
+		Set("views", sq.Expr("views+1")).
+		Where(sq.Eq{"forum_thread_id": forumThreadID}))
 }
 
 func (db *Store) ForumThreadDelete(ctx context.Context, forumThreadID int64) error {
@@ -335,8 +391,7 @@ func (db *Store) ForumThreadDelete(ctx context.Context, forumThreadID int64) err
 
 type ThreadWithSource struct {
 	ForumThread
-	Personaname string `json:"personaname"`
-	AvatarHash  string `json:"avatar_hash"`
+	SimplePerson
 }
 
 type ThreadQueryFilter struct {
@@ -353,7 +408,7 @@ func (db *Store) ForumThreads(ctx context.Context, filter ThreadQueryFilter) ([]
 
 	builder := db.sb.
 		Select("t.forum_thread_id", "t.forum_id", "t.source_id", "t.title", "t.sticky",
-			"t.locked", "t.views", "t.created_on", "t.updated_on", "p.personaname", "p.avatar_hash").
+			"t.locked", "t.views", "t.created_on", "t.updated_on", "p.personaname", "p.avatarhash", "p.permission_level").
 		From("forum_thread t").
 		LeftJoin("person p ON p.steam_id = t.source_id")
 
@@ -362,7 +417,7 @@ func (db *Store) ForumThreads(ctx context.Context, filter ThreadQueryFilter) ([]
 			"forum_thread_id", "forum_id", "source_id", "title", "sticky",
 			"locked", "views", "created_on", "updated_on",
 		},
-		"p.": {"personaname", "avatar_hash"},
+		"p.": {"personaname", "avatar_hash", "permission_level"},
 	}, "short_name")
 
 	builder = filter.applyLimitOffset(builder, 100).Where(constraints)
@@ -393,7 +448,8 @@ func (db *Store) ForumThreads(ctx context.Context, filter ThreadQueryFilter) ([]
 		var tws ThreadWithSource
 		if errScan := rows.
 			Scan(&tws.ForumThreadID, &tws.ForumID, &tws.SourceID, &tws.Title, &tws.Sticky,
-				&tws.Locked, &tws.Views, &tws.CreatedOn, &tws.UpdatedOn, &tws.Personaname, &tws.AvatarHash); errScan != nil {
+				&tws.Locked, &tws.Views, &tws.CreatedOn, &tws.UpdatedOn, &tws.Personaname, &tws.AvatarHash,
+				&tws.PermissionLevel); errScan != nil {
 			return nil, 0, Err(errScan)
 		}
 
@@ -401,6 +457,19 @@ func (db *Store) ForumThreads(ctx context.Context, filter ThreadQueryFilter) ([]
 	}
 
 	return threads, count, nil
+}
+
+func (db *Store) ForumIncrMessageCount(ctx context.Context, forumID int, incr bool) error {
+	builder := db.sb.Update("forum").
+		Where(sq.Eq{"forum_id": forumID})
+
+	if incr {
+		builder = builder.Set("count_messages", sq.Expr("count_messages+1"))
+	} else {
+		builder = builder.Set("count_messages", sq.Expr("count_messages-1"))
+	}
+
+	return db.ExecUpdateBuilder(ctx, builder)
 }
 
 func (db *Store) ForumMessageSave(ctx context.Context, message *ForumMessage) error {
@@ -433,15 +502,62 @@ func (db *Store) ForumMessageSave(ctx context.Context, message *ForumMessage) er
 
 func (db *Store) ForumMessage(ctx context.Context, messageID int64, forumMessage *ForumMessage) error {
 	row, errRow := db.QueryRowBuilder(ctx, db.sb.
-		Select("forum_message_id", "forum_thread_id", "source_id", "body_md", "created_on", "updated_on").
-		From("forum_message").
+		Select("m.forum_message_id", "m.forum_thread_id", "m.source_id", "m.body_md", "m.created_on", "m.updated_on",
+			"p.personaname", "p.avatarhash", "p.permission_level").
+		From("forum_message m").
+		LeftJoin("person p ON p.steam_id = m.source_id").
 		Where(sq.Eq{"forum_message_id": messageID}))
 	if errRow != nil {
 		return errRow
 	}
 
-	return Err(row.Scan(&forumMessage.ForumMessageID, &forumMessage.ForumThreadID, &forumMessage.SourceID, &forumMessage.BodyMD,
-		&forumMessage.CreatedOn, &forumMessage.UpdatedOn))
+	return Err(row.Scan(&forumMessage.ForumMessageID, &forumMessage.ForumThreadID, &forumMessage.SourceID,
+		&forumMessage.BodyMD, &forumMessage.CreatedOn, &forumMessage.UpdatedOn, &forumMessage.Personaname,
+		&forumMessage.AvatarHash, &forumMessage.PermissionLevel))
+}
+
+type ThreadMessagesQueryFilter struct {
+	QueryFilter
+	ForumThreadID int64 `json:"forum_thread_id"`
+}
+
+func (db *Store) ForumMessages(ctx context.Context, filters ThreadMessagesQueryFilter) ([]ForumMessage, int64, error) {
+	constraints := sq.And{sq.Eq{"forum_thread_id": filters.ForumThreadID}}
+
+	rows, errRows := db.QueryBuilder(ctx, db.sb.
+		Select("m.forum_message_id", "m.forum_thread_id", "m.source_id", "m.body_md", "m.created_on",
+			"m.updated_on", "p.personaname", "p.avatarhash", "p.permission_level").
+		From("forum_message m").
+		LeftJoin("person p ON p.steam_id = m.source_id").
+		Where(constraints))
+	if errRows != nil {
+		return nil, 0, errRows
+	}
+
+	defer rows.Close()
+
+	var messages []ForumMessage
+
+	for rows.Next() {
+		var m ForumMessage
+		if errScan := rows.Scan(&m.ForumMessageID, &m.ForumThreadID, &m.SourceID, &m.BodyMD, &m.CreatedOn, &m.UpdatedOn,
+			&m.Personaname, &m.AvatarHash, &m.PermissionLevel); errScan != nil {
+			return nil, 0, Err(errScan)
+		}
+
+		messages = append(messages, m)
+	}
+
+	count, errCount := db.GetCount(ctx, db.sb.
+		Select("COUNT(m.forum_message_id)").
+		From("forum_message m").
+		Where(constraints))
+
+	if errCount != nil {
+		return nil, 0, errCount
+	}
+
+	return messages, count, nil
 }
 
 func (db *Store) ForumMessageDelete(ctx context.Context, messageID int64) error {

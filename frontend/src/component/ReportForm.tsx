@@ -1,5 +1,4 @@
-import React, { JSX, useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { JSX, useEffect, useState } from 'react';
 import EditNotificationsIcon from '@mui/icons-material/EditNotifications';
 import Box from '@mui/material/Box';
 import FormControl from '@mui/material/FormControl';
@@ -9,16 +8,12 @@ import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import {
-    apiCreateReport,
     BanReason,
     BanReasons,
-    PlayerProfile,
     sessionKeyDemoName,
     sessionKeyReportPersonMessageIdName,
     sessionKeyReportSteamID
 } from '../api';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
-import { logErr } from '../util/errors';
 import { ContainerWithHeader } from './ContainerWithHeader';
 import { MDEditor } from './MDEditor';
 import { PlayerMessageContext } from './PlayerMessageContext';
@@ -30,10 +25,9 @@ export const ReportForm = (): JSX.Element => {
             ? BanReason.Language
             : BanReason.Cheating
     );
-    const [body, setBody] = useState<string>('');
     const [reasonText, setReasonText] = useState<string>('');
     const [demoTick, setDemoTick] = useState(0);
-    const [profile, setProfile] = useState<PlayerProfile | null>();
+    //const [profile, setProfile] = useState<PlayerProfile | null>();
     const [inputSteamID, setInputSteamID] = useState<string>(
         sessionStorage.getItem(sessionKeyReportSteamID) ?? ''
     );
@@ -46,8 +40,8 @@ export const ReportForm = (): JSX.Element => {
     const [demoName] = useState(
         sessionStorage.getItem(sessionKeyDemoName) ?? ''
     );
-    const { sendFlash } = useUserFlashCtx();
-    const navigate = useNavigate();
+    // const { sendFlash } = useUserFlashCtx();
+    // const navigate = useNavigate();
 
     useEffect(() => {
         return () => {
@@ -57,47 +51,48 @@ export const ReportForm = (): JSX.Element => {
         };
     }, []);
 
-    const onSave = useCallback(
-        (body_md: string) => {
-            setBody(body_md);
-            if (!profile || !profile.player.steam_id) {
-                sendFlash('error', 'Invalid steam profile');
-                return;
-            }
-            if (profile && body_md) {
-                if (reason == BanReason.Custom && reasonText == '') {
-                    sendFlash('error', 'Custom reason cannot be empty');
-                    return;
-                }
-                apiCreateReport({
-                    target_id: profile?.player.steam_id.toString(),
-                    description: body_md,
-                    reason: reason,
-                    reason_text: reasonText,
-                    demo_name: demoName,
-                    demo_tick: demoTick,
-                    person_message_id: personMessageID
-                })
-                    .then((response) => {
-                        navigate(`/report/${response.report_id}`);
-                    })
-                    .catch((e) => {
-                        sendFlash('error', `Failed to create report`);
-                        logErr(e);
-                    });
-            }
-        },
-        [
-            demoName,
-            demoTick,
-            navigate,
-            personMessageID,
-            profile,
-            reason,
-            reasonText,
-            sendFlash
-        ]
-    );
+    // TODO
+    // const onSave = useCallback(
+    //     (body_md: string) => {
+    //         setBody(body_md);
+    //         if (!profile || !profile.player.steam_id) {
+    //             sendFlash('error', 'Invalid steam profile');
+    //             return;
+    //         }
+    //         if (profile && body_md) {
+    //             if (reason == BanReason.Custom && reasonText == '') {
+    //                 sendFlash('error', 'Custom reason cannot be empty');
+    //                 return;
+    //             }
+    //             apiCreateReport({
+    //                 target_id: profile?.player.steam_id.toString(),
+    //                 description: body_md,
+    //                 reason: reason,
+    //                 reason_text: reasonText,
+    //                 demo_name: demoName,
+    //                 demo_tick: demoTick,
+    //                 person_message_id: personMessageID
+    //             })
+    //                 .then((response) => {
+    //                     navigate(`/report/${response.report_id}`);
+    //                 })
+    //                 .catch((e) => {
+    //                     sendFlash('error', `Failed to create report`);
+    //                     logErr(e);
+    //                 });
+    //         }
+    //     },
+    //     [
+    //         demoName,
+    //         demoTick,
+    //         navigate,
+    //         personMessageID,
+    //         profile,
+    //         reason,
+    //         reasonText,
+    //         sendFlash
+    //     ]
+    // );
 
     return (
         <ContainerWithHeader
@@ -110,8 +105,8 @@ export const ReportForm = (): JSX.Element => {
                     fullWidth
                     input={inputSteamID}
                     setInput={setInputSteamID}
-                    onProfileSuccess={(profile1) => {
-                        setProfile(profile1);
+                    onProfileSuccess={(_) => {
+                        //setProfile(profile1);
                     }}
                 />
                 <FormControl margin={'normal'} variant={'filled'} fullWidth>
@@ -192,11 +187,7 @@ export const ReportForm = (): JSX.Element => {
                     />
                 )}
             </Box>
-            <MDEditor
-                initialBodyMDValue={body}
-                onSave={onSave}
-                saveLabel={'Create Report'}
-            />
+            <MDEditor />
         </ContainerWithHeader>
     );
 };

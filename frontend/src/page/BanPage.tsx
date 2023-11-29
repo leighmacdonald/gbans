@@ -18,7 +18,6 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import {
-    apiCreateBanMessage,
     apiDeleteBanMessage,
     apiGetBanMessages,
     apiGetBanSteam,
@@ -100,26 +99,26 @@ export const BanPage = (): JSX.Element => {
             .catch(logErr);
     }, [id]);
 
-    const onSave = useCallback(
-        (message: string, onSuccess?: () => void) => {
-            if (!ban) {
-                return;
-            }
-            apiCreateBanMessage(ban?.ban_id, message)
-                .then((response) => {
-                    setMessages([
-                        ...messages,
-                        { author: currentUser, message: response }
-                    ]);
-                    onSuccess && onSuccess();
-                })
-                .catch((e) => {
-                    sendFlash('error', 'Failed to create message');
-                    logErr(e);
-                });
-        },
-        [ban, messages, currentUser, sendFlash]
-    );
+    // const onSave = useCallback(
+    //     (message: string, onSuccess?: () => void) => {
+    //         if (!ban) {
+    //             return;
+    //         }
+    //         apiCreateBanMessage(ban?.ban_id, message)
+    //             .then((response) => {
+    //                 setMessages([
+    //                     ...messages,
+    //                     { author: currentUser, message: response }
+    //                 ]);
+    //                 onSuccess && onSuccess();
+    //             })
+    //             .catch((e) => {
+    //                 sendFlash('error', 'Failed to create message');
+    //                 logErr(e);
+    //             });
+    //     },
+    //     [ban, messages, currentUser, sendFlash]
+    // );
 
     const onEdit = useCallback(
         (message: UserMessage) => {
@@ -219,11 +218,7 @@ export const BanPage = (): JSX.Element => {
                     {canPost && (
                         <Paper elevation={1}>
                             <Stack spacing={2}>
-                                <MDEditor
-                                    initialBodyMDValue={''}
-                                    onSave={onSave}
-                                    saveLabel={'Send Message'}
-                                />
+                                <MDEditor />
                             </Stack>
                         </Paper>
                     )}

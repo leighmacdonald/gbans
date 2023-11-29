@@ -25,7 +25,6 @@ export interface UserMessageViewProps {
 export const UserMessageView = ({
     author,
     message,
-    onSave,
     onDelete
 }: UserMessageViewProps) => {
     const theme = useTheme();
@@ -45,19 +44,7 @@ export const UserMessageView = ({
     if (editing) {
         return (
             <Box component={Paper} padding={1}>
-                <MDEditor
-                    cancelEnabled
-                    onCancel={() => {
-                        setEditing(false);
-                    }}
-                    initialBodyMDValue={message.contents}
-                    onSave={(body_md) => {
-                        const newMsg = { ...message, contents: body_md };
-                        onSave(newMsg);
-                        message = newMsg;
-                        setEditing(false);
-                    }}
-                />
+                <MDEditor />
             </Box>
         );
     } else {

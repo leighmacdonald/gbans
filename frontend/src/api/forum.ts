@@ -1,6 +1,8 @@
 import { LazyResult } from '../component/LazyTableSimple';
+import { parseDateTime } from '../util/text';
 import {
     apiCall,
+    PermissionLevel,
     QueryFilter,
     TimeStamped,
     transformTimeStampedDates
@@ -15,6 +17,13 @@ export interface Forum extends TimeStamped {
     ordering: number;
     count_threads: number;
     count_messages: number;
+    permission_level: PermissionLevel;
+    recent_forum_thread_id?: number;
+    recent_forum_title?: string;
+    recent_source_id?: string;
+    recent_avatarhash?: string;
+    recent_personaname?: string;
+    recent_created_on?: Date;
 }
 
 export interface ForumCategory extends TimeStamped {
@@ -75,6 +84,7 @@ export const apiCreateForum = async (
     title: string,
     description: string,
     ordering: number,
+    permission_level: PermissionLevel,
     abortContriller?: AbortController
 ) => {
     return await apiCall<Forum>(
@@ -84,7 +94,8 @@ export const apiCreateForum = async (
             forum_category_id,
             title,
             description,
-            ordering
+            ordering,
+            permission_level
         },
         abortContriller
     );
@@ -108,6 +119,7 @@ export const apiSaveForum = async (
     title: string,
     description: string,
     ordering: number,
+    permission_level: PermissionLevel,
     abortContriller?: AbortController
 ) => {
     return await apiCall<Forum>(
@@ -117,7 +129,8 @@ export const apiSaveForum = async (
             forum_category_id,
             title,
             description,
-            ordering
+            ordering,
+            permission_level
         },
         abortContriller
     );
@@ -136,13 +149,32 @@ export const apiGetForumOverview = async (
         undefined,
         abortController
     );
-    resp.categories.map((c) => {
-        return transformTimeStampedDates(c).forums.map(
-            transformTimeStampedDates
-        );
+    resp.categories = resp.categories.map((category) => {
+        const cat = transformTimeStampedDates(category);
+        cat.forums = cat.forums.map((forum) => {
+            const f = transformTimeStampedDates(forum);
+            if (f.recent_created_on) {
+                f.recent_created_on = parseDateTime(
+                    f.recent_created_on as unknown as string
+                );
+            }
+            return f;
+        });
+        return cat;
     });
+
     return resp;
 };
+
+export interface ForumMessage extends TimeStamped {
+    forum_message_id: number;
+    forum_thread_id: number;
+    source_id: string;
+    body_md: string;
+    personaname: string;
+    avatarhash: string;
+    permission_level: PermissionLevel;
+}
 
 export interface ForumThread extends TimeStamped {
     forum_thread_id: number;
@@ -154,8 +186,27 @@ export interface ForumThread extends TimeStamped {
     views: number;
     replies: number;
     personaname: string;
-    avatar_hash: string;
+    avatarhash: string;
+    message?: ForumMessage;
 }
+
+export interface ThreadMessageQueryOpts extends QueryFilter<ForumMessage> {
+    forum_thread_id: number;
+}
+
+export const apiGetThreadMessages = async (
+    opts: ThreadMessageQueryOpts,
+    abortController?: AbortController
+) => {
+    const resp = await apiCall<LazyResult<ForumMessage>>(
+        `/api/forum/messages`,
+        'POST',
+        opts,
+        abortController
+    );
+    resp.data = resp.data.map(transformTimeStampedDates);
+    return resp;
+};
 
 export interface ThreadQueryOpts extends QueryFilter<ForumThread> {
     forum_id: number;
@@ -173,4 +224,66 @@ export const apiGetThreads = async (
     );
     resp.data = resp.data.map(transformTimeStampedDates);
     return resp;
+};
+
+export const apiGetThread = async (
+    thread_id: number,
+    abortController?: AbortController
+) => {
+    const resp = await apiCall<ForumThread>(
+        `/api/forum/thread/${thread_id}`,
+        'GET',
+        undefined,
+        abortController
+    );
+    return transformTimeStampedDates(resp);
+};
+
+export const apiSaveThread = async (
+    thread_id: number,
+    title: string,
+    body_md: string,
+    sticky: boolean,
+    locked: boolean,
+    abortController?: AbortController
+) => {
+    const resp = await apiCall<ForumThread>(
+        `/api/forum/thread/${thread_id}`,
+        'POST',
+        { title, body_md, sticky, locked },
+        abortController
+    );
+    return transformTimeStampedDates(resp);
+};
+
+export const apiCreateThread = async (
+    forum_id: number,
+    title: string,
+    body_md: string,
+    sticky: boolean,
+    locked: boolean,
+    abortController?: AbortController
+) => {
+    const resp = await apiCall<ForumThread>(
+        `/api/forum/forum/${forum_id}/thread`,
+        'POST',
+        { title, body_md, sticky, locked },
+        abortController
+    );
+    return transformTimeStampedDates(resp);
+};
+
+export const apiCreateThreadReply = async (
+    forum_thread_id: number,
+    body_md: string,
+    abortController?: AbortController
+) => {
+    return transformTimeStampedDates(
+        await apiCall<ForumMessage>(
+            `/api/forum/thread/${forum_thread_id}/message`,
+            'POST',
+            { body_md },
+            abortController
+        )
+    );
 };

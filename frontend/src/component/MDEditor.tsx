@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import EditIcon from '@mui/icons-material/Edit';
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
@@ -16,45 +16,30 @@ import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
+import { useFormikContext } from 'formik';
 import { apiSaveMedia, UserUploadedFile } from '../api/media';
-import { renderMarkdown } from '../api/wiki';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
+import { MarkDownRenderer } from './MarkdownRenderer';
 import { TabPanel } from './TabPanel';
 import { ModalFileUpload } from './modal';
 
-interface MDEditorProps {
-    initialBodyMDValue: string;
-    // onSave is called when the save / accept button is hit. The onSuccess
-    // function should be called if the save succeeded to clean up the message state
-    // of the editor
-    onSave: (body_md: string, onSuccess?: () => void) => void;
-    cancelEnabled?: boolean;
-    onCancel?: () => void;
-    saveLabel?: string;
-    cancelLabel?: string;
+interface BodyMDFieldProps {
+    body_md: string;
 }
 
-export const MDEditor = ({
-    onSave,
-    onCancel,
-    cancelEnabled,
-    initialBodyMDValue,
-    saveLabel,
-    cancelLabel
-}: MDEditorProps) => {
+export const MDEditor = <T,>() => {
     const [setTabValue, setTabSetTabValue] = useState(0);
-    const [bodyHTML, setBodyHTML] = useState('');
-    const [bodyMD, setBodyMD] = useState(initialBodyMDValue);
+    const [bodyMD, setBodyMD] = useState('');
     const [cursorPos, setCursorPos] = useState(0);
+    const { values, touched, setFieldValue, errors } = useFormikContext<
+        T & BodyMDFieldProps
+    >();
     const { sendFlash } = useUserFlashCtx();
     const extraButtons = false;
-    const handleChange = (_: React.SyntheticEvent, newValue: number) =>
-        setTabSetTabValue(newValue);
 
-    useEffect(() => {
-        setBodyHTML(renderMarkdown(bodyMD));
-    }, [bodyMD]);
+    const handleTabChange = (_: React.SyntheticEvent, newValue: number) =>
+        setTabSetTabValue(newValue);
 
     const onFileSave = useCallback(
         async (v: UserUploadedFile, onSuccess?: () => void) => {
@@ -86,9 +71,9 @@ export const MDEditor = ({
                 }}
             >
                 <Tabs
-                    variant={'fullWidth'}
+                    variant={'standard'}
                     value={setTabValue}
-                    onChange={handleChange}
+                    onChange={handleTabChange}
                     aria-label="Markdown & HTML Preview"
                 >
                     <Tab
@@ -180,64 +165,34 @@ export const MDEditor = ({
                                 minHeight: 350,
                                 height: '100%'
                             }}
-                            id="body"
+                            id="body_md"
+                            name={'body_md'}
                             label="Body (Markdown)"
                             fullWidth
                             multiline
                             rows={20}
-                            value={bodyMD ?? ''}
-                            onChange={(event) => {
+                            value={values.body_md}
+                            error={touched.body_md && Boolean(errors.body_md)}
+                            helperText={
+                                touched.body_md &&
+                                errors.body_md &&
+                                `${errors.body_md}`
+                            }
+                            onChange={async (event) => {
                                 const body = event.target.value;
                                 setCursorPos(event.target.selectionEnd ?? 0);
                                 setBodyMD(body);
+                                await setFieldValue('body_md', body);
                             }}
                         />
                     </Box>
                 </Stack>
             </TabPanel>
             <TabPanel value={setTabValue} index={1}>
-                <Box
-                    padding={2}
-                    sx={(theme) => {
-                        return {
-                            minHeight: 450,
-                            a: {
-                                color: theme.palette.text.primary
-                            }
-                        };
-                    }}
-                >
-                    <article dangerouslySetInnerHTML={{ __html: bodyHTML }} />
+                <Box padding={2}>
+                    <MarkDownRenderer body_md={bodyMD} />
                 </Box>
             </TabPanel>
-            <Box padding={2}>
-                <ButtonGroup>
-                    <Button
-                        variant={'contained'}
-                        color={'success'}
-                        onClick={() => {
-                            if (bodyMD === '') {
-                                sendFlash('error', 'Body cannot be empty');
-                            } else {
-                                onSave(bodyMD, () => {
-                                    setBodyMD('');
-                                });
-                            }
-                        }}
-                    >
-                        {saveLabel ?? 'Save'}
-                    </Button>
-                    {cancelEnabled && (
-                        <Button
-                            variant={'contained'}
-                            color={'error'}
-                            onClick={onCancel}
-                        >
-                            {cancelLabel ?? 'Cancel'}
-                        </Button>
-                    )}
-                </ButtonGroup>
-            </Box>
         </Stack>
     );
 };

@@ -678,6 +678,8 @@ func onAPIForumOverview(app *App) gin.HandlerFunc {
 	}
 
 	return func(ctx *gin.Context) {
+		currentUser := currentUserProfile(ctx)
+
 		categories, errCats := app.db.ForumCategories(ctx)
 		if errCats != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
@@ -691,13 +693,17 @@ func onAPIForumOverview(app *App) gin.HandlerFunc {
 		if errForums != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
-			log.Error("Could not load forums")
+			log.Error("Could not load forums", zap.Error(errForums))
 
 			return
 		}
 
 		for index := range categories {
 			for _, forum := range forums {
+				if currentUser.PermissionLevel < forum.PermissionLevel {
+					continue
+				}
+
 				if categories[index].ForumCategoryID == forum.ForumCategoryID {
 					categories[index].Forums = append(categories[index].Forums, forum)
 				}
@@ -736,6 +742,34 @@ func onAPIForumThreads(app *App) gin.HandlerFunc {
 	}
 }
 
+func onAPIForumThread(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		forumThreadID, errID := getInt64Param(ctx, "forum_thread_id")
+		if errID != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
+
+			return
+		}
+
+		var thread store.ForumThread
+		if errThreads := app.db.ForumThread(ctx, forumThreadID, &thread); errThreads != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			log.Error("Could not load threads")
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, thread)
+
+		if err := app.db.ForumThreadIncrView(ctx, forumThreadID); err != nil {
+			log.Error("Failed to increment thread view count", zap.Error(err))
+		}
+	}
+}
+
 func onAPIForum(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
@@ -758,5 +792,30 @@ func onAPIForum(app *App) gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusOK, forum)
+	}
+}
+
+func onAPIForumMessages(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		var tmqf store.ThreadMessagesQueryFilter
+		if !bind(ctx, log, &tmqf) {
+			return
+		}
+
+		threads, count, errThreads := app.db.ForumMessages(ctx, tmqf)
+		if errThreads != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			log.Error("Could not load thread messages")
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, LazyResult{
+			Count: count,
+			Data:  threads,
+		})
 	}
 }

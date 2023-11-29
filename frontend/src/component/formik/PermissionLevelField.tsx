@@ -17,7 +17,11 @@ export interface PermissionLevelFieldProps {
     permission_level: PermissionLevel;
 }
 
-export const PermissionLevelField = <T,>() => {
+export const PermissionLevelField = <T,>({
+    levels
+}: {
+    levels?: PermissionLevel[];
+}) => {
     const { values, touched, errors, handleChange } = useFormikContext<
         T & PermissionLevelFieldProps
     >();
@@ -37,13 +41,16 @@ export const PermissionLevelField = <T,>() => {
                     touched.permission_level && Boolean(errors.permission_level)
                 }
             >
-                {[
-                    PermissionLevel.User,
-                    PermissionLevel.Reserved,
-                    PermissionLevel.Editor,
-                    PermissionLevel.Moderator,
-                    PermissionLevel.Admin
-                ].map((v) => (
+                {(levels
+                    ? levels
+                    : [
+                          PermissionLevel.User,
+                          PermissionLevel.Reserved,
+                          PermissionLevel.Editor,
+                          PermissionLevel.Moderator,
+                          PermissionLevel.Admin
+                      ]
+                ).map((v) => (
                     <MenuItem key={`time-${v}`} value={v}>
                         {permissionLevelString(v)}
                     </MenuItem>
