@@ -21,6 +21,7 @@ import { ModalForumThreadEditor } from '../component/modal';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
+import { renderDateTime } from '../util/text';
 
 const ForumThreadRow = ({ thread }: { thread: ForumThread }) => {
     return (
@@ -75,14 +76,39 @@ const ForumThreadRow = ({ thread }: { thread: ForumThread }) => {
                         <Typography variant={'body2'}>Views:</Typography>
                     </Grid>
                     <Grid xs={6} alignContent={'flex-end'}>
-                        <Typography variant={'body1'} align={'right'}>
+                        <Typography variant={'body2'} align={'right'}>
                             {thread.views}
                         </Typography>
                     </Grid>
                 </Grid>
             </Grid>
             <Grid md={3} xs={6}>
-                {thread.title}
+                {thread.recent_forum_message_id &&
+                thread.recent_forum_message_id > 0 ? (
+                    <Stack direction={'row'}>
+                        <Stack>
+                            <Typography variant={'body1'}>
+                                {renderDateTime(thread.recent_created_on)}
+                            </Typography>
+                            <Typography variant={'body1'}>
+                                {thread.recent_personaname}
+                            </Typography>
+                        </Stack>
+                        <VCenteredElement
+                            icon={
+                                <Avatar
+                                    alt={thread.recent_personaname}
+                                    src={`https://avatars.akamai.steamstatic.com/${
+                                        thread.recent_avatarhash ??
+                                        defaultAvatarHash
+                                    }.jpg`}
+                                />
+                            }
+                        />
+                    </Stack>
+                ) : (
+                    <></>
+                )}
             </Grid>
         </Grid>
     );

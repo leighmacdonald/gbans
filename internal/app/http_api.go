@@ -730,7 +730,7 @@ func onAPIForumThreads(app *App) gin.HandlerFunc {
 		if errThreads != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
-			log.Error("Could not load threads")
+			log.Error("Could not load threads", zap.Error(errThreads))
 
 			return
 		}
