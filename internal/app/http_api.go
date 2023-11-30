@@ -819,3 +819,24 @@ func onAPIForumMessages(app *App) gin.HandlerFunc {
 		})
 	}
 }
+
+func onAPIForumMessagesRecent(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		messages, errThreads := app.db.ForumRecentActivity(ctx, 5)
+		if errThreads != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			log.Error("Could not load thread messages")
+
+			return
+		}
+
+		if messages == nil {
+			messages = []store.ForumMessage{}
+		}
+
+		ctx.JSON(http.StatusOK, messages)
+	}
+}

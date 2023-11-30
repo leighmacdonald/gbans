@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Stack from '@mui/material/Stack';
-import { DataCount } from '../api';
-import { logErr } from '../util/errors';
+import { DataCount } from '../../api';
+import { logErr } from '../../util/errors';
+import { LoadingPlaceholder } from '../LoadingPlaceholder';
 import {
     descendingComparator,
     HeadingCell,
@@ -9,7 +10,6 @@ import {
     Order,
     RowsPerPage
 } from './LazyTable';
-import { LoadingPlaceholder } from './LoadingPlaceholder';
 
 export const compare = <T,>(
     order: Order,

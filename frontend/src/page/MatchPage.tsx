@@ -28,11 +28,11 @@ import {
 } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { Heading } from '../component/Heading';
-import { LazyTable, Order } from '../component/LazyTable';
-import { compare, stableSort } from '../component/LazyTableSimple';
 import { LoadingSpinner } from '../component/LoadingSpinner';
 import { PersonCell } from '../component/PersonCell';
 import { PlayerClassImg } from '../component/PlayerClassImg';
+import { LazyTable, Order } from '../component/table/LazyTable';
+import { compare, stableSort } from '../component/table/LazyTableSimple';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import bluLogoImg from '../icons/blu_logo.png';
 import redLogoImg from '../icons/red_logo.png';

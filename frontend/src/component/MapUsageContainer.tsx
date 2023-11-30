@@ -12,9 +12,9 @@ import { PieChart } from '@mui/x-charts';
 import { apiGetMapUsage } from '../api';
 import { logErr } from '../util/errors';
 import { ContainerWithHeader } from './ContainerWithHeader';
-import { LazyTable, Order, RowsPerPage } from './LazyTable';
-import { compare, stableSort } from './LazyTableSimple';
 import { LoadingSpinner } from './LoadingSpinner';
+import { LazyTable, Order, RowsPerPage } from './table/LazyTable';
+import { compare, stableSort } from './table/LazyTableSimple';
 
 interface MapUseChartProps {
     details: SeriesData[];

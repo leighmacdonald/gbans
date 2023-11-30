@@ -11,8 +11,8 @@ import Tooltip from '@mui/material/Tooltip';
 import Grid from '@mui/material/Unstable_Grid2';
 import { apiGetFilters, Filter } from '../api/filters';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { LazyTable, Order, RowsPerPage } from '../component/LazyTable';
 import { ModalFilterDelete, ModalFilterEditor } from '../component/modal';
+import { LazyTable, Order, RowsPerPage } from '../component/table/LazyTable';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
 

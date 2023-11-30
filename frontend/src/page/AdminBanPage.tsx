@@ -20,10 +20,6 @@ import {
     GroupBanRecord,
     SteamBanRecord
 } from '../api';
-import { BanASNTable } from '../component/BanASNTable';
-import { BanCIDRTable } from '../component/BanCIDRTable';
-import { BanGroupTable } from '../component/BanGroupTable';
-import { BanSteamTable } from '../component/BanSteamTable';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import {
     ModalBanASN,
@@ -31,6 +27,10 @@ import {
     ModalBanGroup,
     ModalBanSteam
 } from '../component/modal';
+import { BanASNTable } from '../component/table/BanASNTable';
+import { BanCIDRTable } from '../component/table/BanCIDRTable';
+import { BanGroupTable } from '../component/table/BanGroupTable';
+import { BanSteamTable } from '../component/table/BanSteamTable';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
 

@@ -2,73 +2,64 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import EditIcon from '@mui/icons-material/Edit';
 import UndoIcon from '@mui/icons-material/Undo';
-import Box from '@mui/material/Box';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
+import { formatDuration, intervalToDuration } from 'date-fns';
 import { Formik } from 'formik';
 import * as yup from 'yup';
 import {
-    apiGetBansSteam,
-    AppealState,
-    BanReason,
-    BanSteamQueryFilter,
-    SteamBanRecord
-} from '../api';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
-import { logErr } from '../util/errors';
-import { renderDate } from '../util/text';
+    apiGetBansASN,
+    ASNBanRecord,
+    BanASNQueryFilter,
+    BanReason
+} from '../../api';
+import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
+import { logErr } from '../../util/errors';
+import { renderDate } from '../../util/text';
+import { ASNumberField, asNumberFieldValidator } from '../formik/ASNumberField';
+import { DeletedField, deletedValidator } from '../formik/DeletedField';
+import { FilterButtons } from '../formik/FilterButtons';
+import { SourceIdField, sourceIdValidator } from '../formik/SourceIdField';
+import { SteamIDSelectField } from '../formik/SteamIDSelectField';
+import { TargetIDField, targetIdValidator } from '../formik/TargetIdField';
+import { ModalBanASN, ModalUnbanASN } from '../modal';
+import { BanASNModalProps } from '../modal/BanASNModal';
 import { LazyTable, Order, RowsPerPage } from './LazyTable';
 import { TableCellBool } from './TableCellBool';
-import { TableCellLink } from './TableCellLink';
-import {
-    isPermanentBan,
-    TableCellRelativeDateField
-} from './TableCellRelativeDateField';
-import {
-    AppealStateField,
-    appealStateFielValidator
-} from './formik/AppealStateField';
-import { DeletedField, deletedValidator } from './formik/DeletedField';
-import { FilterButtons } from './formik/FilterButtons';
-import { SourceIdField, sourceIdValidator } from './formik/SourceIdField';
-import { SteamIDSelectField } from './formik/SteamIDSelectField';
-import { TargetIDField, targetIdValidator } from './formik/TargetIdField';
-import { ModalBanSteam, ModalUnbanSteam } from './modal';
 
-interface SteamBanFilterValues {
-    appeal_state: AppealState;
+interface ASNFilterValues {
+    as_num?: number;
     source_id: string;
     target_id: string;
     deleted: boolean;
 }
 
 const validationSchema = yup.object({
-    appeal_state: appealStateFielValidator,
+    as_num: asNumberFieldValidator,
     source_id: sourceIdValidator,
     target_id: targetIdValidator,
     deleted: deletedValidator
 });
 
-export const BanSteamTable = ({ newBans }: { newBans: SteamBanRecord[] }) => {
-    const [bans, setBans] = useState<SteamBanRecord[]>([]);
+export const BanASNTable = ({ newBans }: { newBans: ASNBanRecord[] }) => {
+    const [bans, setBans] = useState<ASNBanRecord[]>([]);
     const [sortOrder, setSortOrder] = useState<Order>('desc');
     const [sortColumn, setSortColumn] =
-        useState<keyof SteamBanRecord>('ban_id');
+        useState<keyof ASNBanRecord>('ban_asn_id');
     const [rowPerPageCount, setRowPerPageCount] = useState<number>(
         RowsPerPage.TwentyFive
     );
     const [hasNew, setHasNew] = useState(false);
+
     const [page, setPage] = useState(0);
     const [totalRows, setTotalRows] = useState<number>(0);
+    const [asNum, setASNum] = useState<number>();
     const [source, setSource] = useState('');
     const [target, setTarget] = useState('');
     const [deleted, setDeleted] = useState(false);
-    const [appealState, setAppealState] = useState<AppealState>(
-        AppealState.Any
-    );
     const { sendFlash } = useUserFlashCtx();
 
     const allBans = useMemo(() => {
@@ -79,32 +70,32 @@ export const BanSteamTable = ({ newBans }: { newBans: SteamBanRecord[] }) => {
         return bans;
     }, [bans, hasNew, newBans]);
 
-    const onUnbanSteam = useCallback(
-        async (ban: SteamBanRecord) => {
+    const onUnbanASN = useCallback(
+        async (as_num: number) => {
             try {
-                await NiceModal.show(ModalUnbanSteam, {
-                    banId: ban.ban_id,
-                    personaName: ban.target_personaname
+                await NiceModal.show(ModalUnbanASN, {
+                    banId: as_num
                 });
-                sendFlash('success', 'Unbanned successfully');
+                sendFlash('success', 'Unbanned ASN successfully');
             } catch (e) {
-                sendFlash('error', `Failed to unban: ${e}`);
+                sendFlash('error', `Failed to unban ASN: ${e}`);
             }
         },
         [sendFlash]
     );
 
-    const onEditSteam = useCallback(
-        async (ban: SteamBanRecord) => {
+    const onEditASN = useCallback(
+        async (existing: ASNBanRecord) => {
             try {
-                await NiceModal.show(ModalBanSteam, {
-                    banId: ban.ban_id,
-                    personaName: ban.target_personaname,
-                    existing: ban
-                });
-                sendFlash('success', 'Updated ban successfully');
+                await NiceModal.show<ASNBanRecord, BanASNModalProps>(
+                    ModalBanASN,
+                    {
+                        existing
+                    }
+                );
+                sendFlash('success', 'Updated ASN ban successfully');
             } catch (e) {
-                sendFlash('error', `Failed to update ban: ${e}`);
+                sendFlash('error', `Failed to update ASN ban: ${e}`);
             }
         },
         [sendFlash]
@@ -116,65 +107,62 @@ export const BanSteamTable = ({ newBans }: { newBans: SteamBanRecord[] }) => {
         }
 
         const abortController = new AbortController();
-        const opts: BanSteamQueryFilter = {
+        const opts: BanASNQueryFilter = {
             limit: rowPerPageCount,
             offset: page * rowPerPageCount,
             order_by: sortColumn,
             desc: sortOrder == 'desc',
+            deleted: deleted,
             source_id: source,
             target_id: target,
-            appeal_state: appealState,
-            deleted: deleted
+            as_num: asNum
         };
-
-        apiGetBansSteam(opts, abortController)
-            .then((bans) => {
-                setBans(bans.data);
-                setTotalRows(bans.count);
-                if (page * rowPerPageCount > bans.count) {
+        apiGetBansASN(opts, abortController)
+            .then((resp) => {
+                setBans(resp.data);
+                setTotalRows(resp.count);
+                if (page * rowPerPageCount > resp.count) {
                     setPage(0);
                 }
             })
-            .catch((reason) => {
-                logErr(reason);
+            .catch((e) => {
+                logErr(e);
             });
-
-        return () => abortController.abort();
     }, [
-        appealState,
-        source,
+        asNum,
         deleted,
+        newBans.length,
         page,
         rowPerPageCount,
         sortColumn,
         sortOrder,
-        target,
-        newBans.length
+        source,
+        target
     ]);
 
-    const iv: SteamBanFilterValues = {
-        appeal_state: AppealState.Any,
+    const iv: ASNFilterValues = {
+        as_num: undefined,
         source_id: '',
         target_id: '',
         deleted: false
     };
 
-    const onSubmit = useCallback((values: SteamBanFilterValues) => {
-        setAppealState(values.appeal_state);
+    const onSubmit = useCallback((values: ASNFilterValues) => {
+        setASNum(values.as_num);
         setSource(values.source_id);
         setTarget(values.target_id);
         setDeleted(values.deleted);
     }, []);
 
     const onReset = useCallback(() => {
-        setAppealState(iv.appeal_state);
+        setASNum(iv.as_num);
         setSource(iv.source_id);
         setTarget(iv.target_id);
         setDeleted(iv.deleted);
-    }, [iv.appeal_state, iv.source_id, iv.deleted, iv.target_id]);
+    }, [iv.as_num, iv.source_id, iv.deleted, iv.target_id]);
 
     return (
-        <Formik<SteamBanFilterValues>
+        <Formik
             initialValues={iv}
             onReset={onReset}
             onSubmit={onSubmit}
@@ -185,13 +173,13 @@ export const BanSteamTable = ({ newBans }: { newBans: SteamBanRecord[] }) => {
                 <Grid xs={12}>
                     <Grid container spacing={2}>
                         <Grid xs>
+                            <ASNumberField />
+                        </Grid>
+                        <Grid xs>
                             <SourceIdField />
                         </Grid>
                         <Grid xs>
                             <TargetIDField />
-                        </Grid>
-                        <Grid xs>
-                            <AppealStateField />
                         </Grid>
                         <Grid xs>
                             <DeletedField />
@@ -202,7 +190,7 @@ export const BanSteamTable = ({ newBans }: { newBans: SteamBanRecord[] }) => {
                     </Grid>
                 </Grid>
                 <Grid xs={12}>
-                    <LazyTable<SteamBanRecord>
+                    <LazyTable<ASNBanRecord>
                         showPager={true}
                         count={totalRows}
                         rows={allBans}
@@ -233,22 +221,21 @@ export const BanSteamTable = ({ newBans }: { newBans: SteamBanRecord[] }) => {
                             {
                                 label: '#',
                                 tooltip: 'Ban ID',
-                                sortKey: 'ban_id',
+                                sortKey: 'ban_asn_id',
                                 sortable: true,
                                 align: 'left',
-                                renderer: (row) => (
-                                    <TableCellLink
-                                        label={`#${row.ban_id.toString()}`}
-                                        to={`/ban/${row.ban_id}`}
-                                    />
+                                renderer: (obj) => (
+                                    <Typography variant={'body1'}>
+                                        #{obj.ban_asn_id.toString()}
+                                    </Typography>
                                 )
                             },
                             {
                                 label: 'A',
-                                tooltip: 'Ban Author',
+                                tooltip: 'Ban Author Name',
                                 sortKey: 'source_personaname',
                                 sortable: true,
-                                align: 'center',
+                                align: 'left',
                                 renderer: (row) => (
                                     <SteamIDSelectField
                                         steam_id={row.source_id}
@@ -259,8 +246,8 @@ export const BanSteamTable = ({ newBans }: { newBans: SteamBanRecord[] }) => {
                                 )
                             },
                             {
-                                label: 'Target',
-                                tooltip: 'Steam Name',
+                                label: 'Name',
+                                tooltip: 'Persona Name',
                                 sortKey: 'target_personaname',
                                 sortable: true,
                                 align: 'left',
@@ -274,25 +261,35 @@ export const BanSteamTable = ({ newBans }: { newBans: SteamBanRecord[] }) => {
                                 )
                             },
                             {
+                                label: 'ASN',
+                                tooltip: 'Autonomous System Numbers',
+                                sortKey: 'as_num',
+                                sortable: true,
+                                align: 'left',
+                                renderer: (row) => (
+                                    <Typography variant={'body1'}>
+                                        {row.as_num}
+                                    </Typography>
+                                )
+                            },
+                            {
                                 label: 'Reason',
                                 tooltip: 'Reason',
                                 sortKey: 'reason',
                                 sortable: true,
                                 align: 'left',
                                 renderer: (row) => (
-                                    <Box>
-                                        <Tooltip
-                                            title={
-                                                row.reason == BanReason.Custom
-                                                    ? row.reason_text
-                                                    : BanReason[row.reason]
-                                            }
-                                        >
-                                            <Typography variant={'body1'}>
-                                                {`${BanReason[row.reason]}`}
-                                            </Typography>
-                                        </Tooltip>
-                                    </Box>
+                                    <Tooltip
+                                        title={
+                                            row.reason == BanReason.Custom
+                                                ? row.reason_text
+                                                : BanReason[row.reason]
+                                        }
+                                    >
+                                        <Typography variant={'body1'}>
+                                            {BanReason[row.reason]}
+                                        </Typography>
+                                    </Tooltip>
                                 )
                             },
                             {
@@ -322,9 +319,9 @@ export const BanSteamTable = ({ newBans }: { newBans: SteamBanRecord[] }) => {
                                 sortable: true,
                                 renderer: (obj) => {
                                     return (
-                                        <TableCellRelativeDateField
-                                            date={obj.valid_until}
-                                        />
+                                        <Typography variant={'body1'}>
+                                            {renderDate(obj.valid_until)}
+                                        </Typography>
                                     );
                                 }
                             },
@@ -337,30 +334,23 @@ export const BanSteamTable = ({ newBans }: { newBans: SteamBanRecord[] }) => {
                                 virtual: true,
                                 virtualKey: 'duration',
                                 renderer: (row) => {
-                                    return isPermanentBan(
-                                        row.created_on,
-                                        row.valid_until
-                                    ) ? (
-                                        'Permanent'
-                                    ) : (
-                                        <TableCellRelativeDateField
-                                            date={row.created_on}
-                                            compareDate={row.valid_until}
-                                        />
+                                    const dur = intervalToDuration({
+                                        start: row.created_on,
+                                        end: row.valid_until
+                                    });
+                                    const durationText =
+                                        dur.years && dur.years > 5
+                                            ? 'Permanent'
+                                            : formatDuration(dur);
+                                    return (
+                                        <Typography
+                                            variant={'body1'}
+                                            overflow={'hidden'}
+                                        >
+                                            {durationText}
+                                        </Typography>
                                     );
                                 }
-                            },
-                            {
-                                label: 'F',
-                                tooltip: 'Are friends also included in the ban',
-                                align: 'center',
-                                width: '50px',
-                                sortKey: 'include_friends',
-                                renderer: (row) => (
-                                    <TableCellBool
-                                        enabled={row.include_friends}
-                                    />
-                                )
                             },
                             {
                                 label: 'A',
@@ -374,50 +364,30 @@ export const BanSteamTable = ({ newBans }: { newBans: SteamBanRecord[] }) => {
                                 )
                             },
                             {
-                                label: 'Rep.',
-                                tooltip: 'Report',
-                                sortable: false,
-                                align: 'center',
-                                width: '20px',
-                                renderer: (row) =>
-                                    row.report_id > 0 ? (
-                                        <Tooltip title={'View Report'}>
-                                            <>
-                                                <TableCellLink
-                                                    label={`#${row.report_id}`}
-                                                    to={`/report/${row.report_id}`}
-                                                />
-                                            </>
-                                        </Tooltip>
-                                    ) : (
-                                        <></>
-                                    )
-                            },
-                            {
                                 label: 'Act.',
                                 tooltip: 'Actions',
                                 sortKey: 'reason',
                                 sortable: false,
-                                align: 'center',
+                                align: 'left',
                                 renderer: (row) => (
                                     <ButtonGroup fullWidth>
                                         <IconButton
                                             color={'warning'}
-                                            onClick={async () => {
-                                                await onEditSteam(row);
-                                            }}
+                                            onClick={async () =>
+                                                await onEditASN(row)
+                                            }
                                         >
-                                            <Tooltip title={'Edit Ban'}>
+                                            <Tooltip title={'Edit ASN Ban'}>
                                                 <EditIcon />
                                             </Tooltip>
                                         </IconButton>
                                         <IconButton
                                             color={'success'}
-                                            onClick={async () => {
-                                                await onUnbanSteam(row);
-                                            }}
+                                            onClick={async () =>
+                                                await onUnbanASN(row.as_num)
+                                            }
                                         >
-                                            <Tooltip title={'Remove Ban'}>
+                                            <Tooltip title={'Remove CIDR Ban'}>
                                                 <UndoIcon />
                                             </Tooltip>
                                         </IconButton>

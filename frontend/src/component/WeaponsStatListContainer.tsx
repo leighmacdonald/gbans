@@ -7,8 +7,12 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { WeaponsOverallResult } from '../api';
 import { defaultFloatFmtPct, humanCount } from '../util/text';
 import { ContainerWithHeader } from './ContainerWithHeader';
-import { LazyFetchOpts, LazyResult, LazyTableSimple } from './LazyTableSimple';
 import { fmtWhenGt } from './PlayersOverallContainer';
+import {
+    LazyFetchOpts,
+    LazyResult,
+    LazyTableSimple
+} from './table/LazyTableSimple';
 
 interface WeaponsOverallContainerProps {
     title: string;

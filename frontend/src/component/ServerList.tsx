@@ -14,8 +14,8 @@ import { tf2Fonts } from '../theme';
 import { logErr } from '../util/errors';
 import { ContainerWithHeader } from './ContainerWithHeader';
 import { Flag } from './Flag';
-import { LazyTable, RowsPerPage } from './LazyTable';
 import { LoadingSpinner } from './LoadingSpinner';
+import { LazyTable, RowsPerPage } from './table/LazyTable';
 
 export const ServerList = () => {
     const { sendFlash } = useUserFlashCtx();

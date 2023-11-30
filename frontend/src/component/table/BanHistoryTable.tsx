@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import Typography from '@mui/material/Typography';
-import { apiGetBansSteam, BanReasons, SteamBanRecord } from '../api';
-import { logErr } from '../util/errors';
+import { apiGetBansSteam, BanReasons, SteamBanRecord } from '../../api';
+import { logErr } from '../../util/errors';
+import { PersonCell } from '../PersonCell';
 import { LazyTable, Order, RowsPerPage } from './LazyTable';
-import { PersonCell } from './PersonCell';
 import { TableCellBool } from './TableCellBool';
 
 export const BanHistoryTable = ({ steam_id }: { steam_id?: string }) => {

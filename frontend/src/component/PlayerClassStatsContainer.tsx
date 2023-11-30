@@ -8,9 +8,9 @@ import {
 } from '../api';
 import { defaultFloatFmt, humanCount } from '../util/text';
 import { ContainerWithHeader } from './ContainerWithHeader';
-import { LazyTableSimple } from './LazyTableSimple';
 import { PlayerClassImg } from './PlayerClassImg';
 import { fmtWhenGt } from './PlayersOverallContainer';
+import { LazyTableSimple } from './table/LazyTableSimple';
 
 interface PlayerClassStatsContainerProps {
     steam_id: string;

@@ -2,53 +2,61 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import EditIcon from '@mui/icons-material/Edit';
 import UndoIcon from '@mui/icons-material/Undo';
+import Box from '@mui/material/Box';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import { formatDuration, intervalToDuration } from 'date-fns';
 import { Formik } from 'formik';
-import IPCIDR from 'ip-cidr';
 import * as yup from 'yup';
 import {
-    apiGetBansCIDR,
-    BanCIDRQueryFilter,
+    apiGetBansSteam,
+    AppealState,
     BanReason,
-    CIDRBanRecord
-} from '../api';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
-import { logErr } from '../util/errors';
+    BanSteamQueryFilter,
+    SteamBanRecord
+} from '../../api';
+import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
+import { logErr } from '../../util/errors';
+import { renderDate } from '../../util/text';
+import {
+    AppealStateField,
+    appealStateFielValidator
+} from '../formik/AppealStateField';
+import { DeletedField, deletedValidator } from '../formik/DeletedField';
+import { FilterButtons } from '../formik/FilterButtons';
+import { SourceIdField, sourceIdValidator } from '../formik/SourceIdField';
+import { SteamIDSelectField } from '../formik/SteamIDSelectField';
+import { TargetIDField, targetIdValidator } from '../formik/TargetIdField';
+import { ModalBanSteam, ModalUnbanSteam } from '../modal';
 import { LazyTable, Order, RowsPerPage } from './LazyTable';
 import { TableCellBool } from './TableCellBool';
-import { TableCellRelativeDateField } from './TableCellRelativeDateField';
-import { DeletedField, deletedValidator } from './formik/DeletedField';
-import { FilterButtons } from './formik/FilterButtons';
-import { IPField, ipFieldValidator } from './formik/IPField';
-import { SourceIdField, sourceIdValidator } from './formik/SourceIdField';
-import { SteamIDSelectField } from './formik/SteamIDSelectField';
-import { TargetIDField, targetIdValidator } from './formik/TargetIdField';
-import { ModalBanCIDR, ModalUnbanCIDR } from './modal';
-import { BanCIDRModalProps } from './modal/BanCIDRModal';
+import { TableCellLink } from './TableCellLink';
+import {
+    isPermanentBan,
+    TableCellRelativeDateField
+} from './TableCellRelativeDateField';
 
-interface CIDRBanFilterValues {
-    ip: string;
+interface SteamBanFilterValues {
+    appeal_state: AppealState;
     source_id: string;
     target_id: string;
     deleted: boolean;
 }
 
 const validationSchema = yup.object({
-    ip: ipFieldValidator,
+    appeal_state: appealStateFielValidator,
     source_id: sourceIdValidator,
     target_id: targetIdValidator,
     deleted: deletedValidator
 });
 
-export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
-    const [bans, setBans] = useState<CIDRBanRecord[]>([]);
+export const BanSteamTable = ({ newBans }: { newBans: SteamBanRecord[] }) => {
+    const [bans, setBans] = useState<SteamBanRecord[]>([]);
     const [sortOrder, setSortOrder] = useState<Order>('desc');
-    const [sortColumn, setSortColumn] = useState<keyof CIDRBanRecord>('net_id');
+    const [sortColumn, setSortColumn] =
+        useState<keyof SteamBanRecord>('ban_id');
     const [rowPerPageCount, setRowPerPageCount] = useState<number>(
         RowsPerPage.TwentyFive
     );
@@ -58,7 +66,9 @@ export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
     const [source, setSource] = useState('');
     const [target, setTarget] = useState('');
     const [deleted, setDeleted] = useState(false);
-    const [ip, setIp] = useState('');
+    const [appealState, setAppealState] = useState<AppealState>(
+        AppealState.Any
+    );
     const { sendFlash } = useUserFlashCtx();
 
     const allBans = useMemo(() => {
@@ -69,13 +79,14 @@ export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
         return bans;
     }, [bans, hasNew, newBans]);
 
-    const onUnbanCIDR = useCallback(
-        async (net_id: number) => {
+    const onUnbanSteam = useCallback(
+        async (ban: SteamBanRecord) => {
             try {
-                await NiceModal.show(ModalUnbanCIDR, {
-                    banId: net_id
+                await NiceModal.show(ModalUnbanSteam, {
+                    banId: ban.ban_id,
+                    personaName: ban.target_personaname
                 });
-                sendFlash('success', 'Unbanned CIDR successfully');
+                sendFlash('success', 'Unbanned successfully');
             } catch (e) {
                 sendFlash('error', `Failed to unban: ${e}`);
             }
@@ -83,16 +94,15 @@ export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
         [sendFlash]
     );
 
-    const onEditCIDR = useCallback(
-        async (existing: CIDRBanRecord) => {
+    const onEditSteam = useCallback(
+        async (ban: SteamBanRecord) => {
             try {
-                await NiceModal.show<CIDRBanRecord, BanCIDRModalProps>(
-                    ModalBanCIDR,
-                    {
-                        existing
-                    }
-                );
-                sendFlash('success', 'Updated CIDR ban successfully');
+                await NiceModal.show(ModalBanSteam, {
+                    banId: ban.ban_id,
+                    personaName: ban.target_personaname,
+                    existing: ban
+                });
+                sendFlash('success', 'Updated ban successfully');
             } catch (e) {
                 sendFlash('error', `Failed to update ban: ${e}`);
             }
@@ -106,28 +116,32 @@ export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
         }
 
         const abortController = new AbortController();
-        const opts: BanCIDRQueryFilter = {
+        const opts: BanSteamQueryFilter = {
             limit: rowPerPageCount,
             offset: page * rowPerPageCount,
             order_by: sortColumn,
             desc: sortOrder == 'desc',
             source_id: source,
             target_id: target,
-            deleted: deleted,
-            ip: ip
+            appeal_state: appealState,
+            deleted: deleted
         };
-        apiGetBansCIDR(opts, abortController)
-            .then((resp) => {
-                setBans(resp.data);
-                setTotalRows(resp.count);
-                if (page * rowPerPageCount > resp.count) {
+
+        apiGetBansSteam(opts, abortController)
+            .then((bans) => {
+                setBans(bans.data);
+                setTotalRows(bans.count);
+                if (page * rowPerPageCount > bans.count) {
                     setPage(0);
                 }
             })
-            .catch((e) => {
-                logErr(e);
+            .catch((reason) => {
+                logErr(reason);
             });
+
+        return () => abortController.abort();
     }, [
+        appealState,
         source,
         deleted,
         page,
@@ -135,39 +149,37 @@ export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
         sortColumn,
         sortOrder,
         target,
-        ip,
         newBans.length
     ]);
 
-    const iv: CIDRBanFilterValues = {
-        ip: '',
+    const iv: SteamBanFilterValues = {
+        appeal_state: AppealState.Any,
         source_id: '',
         target_id: '',
         deleted: false
     };
 
-    const onSubmit = useCallback((values: CIDRBanFilterValues) => {
+    const onSubmit = useCallback((values: SteamBanFilterValues) => {
+        setAppealState(values.appeal_state);
         setSource(values.source_id);
         setTarget(values.target_id);
         setDeleted(values.deleted);
-        setIp(values.ip);
     }, []);
 
     const onReset = useCallback(() => {
+        setAppealState(iv.appeal_state);
         setSource(iv.source_id);
         setTarget(iv.target_id);
         setDeleted(iv.deleted);
-        setIp(iv.ip);
-    }, [iv.source_id, iv.target_id, iv.deleted, iv.ip]);
+    }, [iv.appeal_state, iv.source_id, iv.deleted, iv.target_id]);
 
     return (
-        <Formik
-            onSubmit={onSubmit}
+        <Formik<SteamBanFilterValues>
             initialValues={iv}
             onReset={onReset}
+            onSubmit={onSubmit}
             validationSchema={validationSchema}
             validateOnChange={true}
-            validateOnBlur={true}
         >
             <Grid container spacing={3}>
                 <Grid xs={12}>
@@ -179,7 +191,7 @@ export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
                             <TargetIDField />
                         </Grid>
                         <Grid xs>
-                            <IPField />
+                            <AppealStateField />
                         </Grid>
                         <Grid xs>
                             <DeletedField />
@@ -190,7 +202,7 @@ export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
                     </Grid>
                 </Grid>
                 <Grid xs={12}>
-                    <LazyTable<CIDRBanRecord>
+                    <LazyTable<SteamBanRecord>
                         showPager={true}
                         count={totalRows}
                         rows={allBans}
@@ -221,21 +233,22 @@ export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
                             {
                                 label: '#',
                                 tooltip: 'Ban ID',
-                                sortKey: 'net_id',
+                                sortKey: 'ban_id',
                                 sortable: true,
                                 align: 'left',
-                                renderer: (obj) => (
-                                    <Typography variant={'body1'}>
-                                        #{obj.net_id.toString()}
-                                    </Typography>
+                                renderer: (row) => (
+                                    <TableCellLink
+                                        label={`#${row.ban_id.toString()}`}
+                                        to={`/ban/${row.ban_id}`}
+                                    />
                                 )
                             },
                             {
                                 label: 'A',
-                                tooltip: ' BanAuthor',
-                                sortKey: 'source_id',
+                                tooltip: 'Ban Author',
+                                sortKey: 'source_personaname',
                                 sortable: true,
-                                align: 'left',
+                                align: 'center',
                                 renderer: (row) => (
                                     <SteamIDSelectField
                                         steam_id={row.source_id}
@@ -248,7 +261,7 @@ export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
                             {
                                 label: 'Target',
                                 tooltip: 'Steam Name',
-                                sortKey: 'target_id',
+                                sortKey: 'target_personaname',
                                 sortable: true,
                                 align: 'left',
                                 renderer: (row) => (
@@ -261,65 +274,25 @@ export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
                                 )
                             },
                             {
-                                label: 'CIDR',
-                                tooltip: 'CIDR Range',
-                                sortKey: 'cidr',
-                                sortable: true,
-                                align: 'left',
-                                renderer: (obj) => {
-                                    try {
-                                        return (
-                                            <Typography variant={'body1'}>
-                                                {obj.cidr}
-                                            </Typography>
-                                        );
-                                    } catch (e) {
-                                        return <>?</>;
-                                    }
-                                }
-                            },
-                            {
-                                label: 'Hosts',
-                                tooltip: 'Total hosts in CIDR range',
-                                sortable: false,
-                                align: 'left',
-                                renderer: (obj) => {
-                                    try {
-                                        const network = new IPCIDR(obj.cidr);
-                                        const hosts = network.toArray().length;
-                                        return (
-                                            <Typography variant={'body1'}>
-                                                {hosts}
-                                            </Typography>
-                                        );
-                                    } catch (e) {
-                                        logErr(e);
-                                    }
-                                    return (
-                                        <Typography variant={'body1'}>
-                                            ?
-                                        </Typography>
-                                    );
-                                }
-                            },
-                            {
                                 label: 'Reason',
                                 tooltip: 'Reason',
                                 sortKey: 'reason',
                                 sortable: true,
                                 align: 'left',
                                 renderer: (row) => (
-                                    <Tooltip
-                                        title={
-                                            row.reason == BanReason.Custom
-                                                ? row.reason_text
-                                                : BanReason[row.reason]
-                                        }
-                                    >
-                                        <Typography variant={'body1'}>
-                                            {BanReason[row.reason]}
-                                        </Typography>
-                                    </Tooltip>
+                                    <Box>
+                                        <Tooltip
+                                            title={
+                                                row.reason == BanReason.Custom
+                                                    ? row.reason_text
+                                                    : BanReason[row.reason]
+                                            }
+                                        >
+                                            <Typography variant={'body1'}>
+                                                {`${BanReason[row.reason]}`}
+                                            </Typography>
+                                        </Tooltip>
+                                    </Box>
                                 )
                             },
                             {
@@ -332,10 +305,9 @@ export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
                                 virtualKey: 'created_on',
                                 renderer: (obj) => {
                                     return (
-                                        <TableCellRelativeDateField
-                                            date={obj.created_on}
-                                            suffix={true}
-                                        />
+                                        <Typography variant={'body1'}>
+                                            {renderDate(obj.created_on)}
+                                        </Typography>
                                     );
                                 }
                             },
@@ -365,23 +337,30 @@ export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
                                 virtual: true,
                                 virtualKey: 'duration',
                                 renderer: (row) => {
-                                    const dur = intervalToDuration({
-                                        start: row.created_on,
-                                        end: row.valid_until
-                                    });
-                                    const durationText =
-                                        dur.years && dur.years > 5
-                                            ? 'Permanent'
-                                            : formatDuration(dur);
-                                    return (
-                                        <Typography
-                                            variant={'body1'}
-                                            overflow={'hidden'}
-                                        >
-                                            {durationText}
-                                        </Typography>
+                                    return isPermanentBan(
+                                        row.created_on,
+                                        row.valid_until
+                                    ) ? (
+                                        'Permanent'
+                                    ) : (
+                                        <TableCellRelativeDateField
+                                            date={row.created_on}
+                                            compareDate={row.valid_until}
+                                        />
                                     );
                                 }
+                            },
+                            {
+                                label: 'F',
+                                tooltip: 'Are friends also included in the ban',
+                                align: 'center',
+                                width: '50px',
+                                sortKey: 'include_friends',
+                                renderer: (row) => (
+                                    <TableCellBool
+                                        enabled={row.include_friends}
+                                    />
+                                )
                             },
                             {
                                 label: 'A',
@@ -395,30 +374,50 @@ export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
                                 )
                             },
                             {
+                                label: 'Rep.',
+                                tooltip: 'Report',
+                                sortable: false,
+                                align: 'center',
+                                width: '20px',
+                                renderer: (row) =>
+                                    row.report_id > 0 ? (
+                                        <Tooltip title={'View Report'}>
+                                            <>
+                                                <TableCellLink
+                                                    label={`#${row.report_id}`}
+                                                    to={`/report/${row.report_id}`}
+                                                />
+                                            </>
+                                        </Tooltip>
+                                    ) : (
+                                        <></>
+                                    )
+                            },
+                            {
                                 label: 'Act.',
                                 tooltip: 'Actions',
                                 sortKey: 'reason',
                                 sortable: false,
-                                align: 'left',
+                                align: 'center',
                                 renderer: (row) => (
                                     <ButtonGroup fullWidth>
                                         <IconButton
                                             color={'warning'}
                                             onClick={async () => {
-                                                await onEditCIDR(row);
+                                                await onEditSteam(row);
                                             }}
                                         >
-                                            <Tooltip title={'Edit CIDR Ban'}>
+                                            <Tooltip title={'Edit Ban'}>
                                                 <EditIcon />
                                             </Tooltip>
                                         </IconButton>
                                         <IconButton
                                             color={'success'}
                                             onClick={async () => {
-                                                await onUnbanCIDR(row.net_id);
+                                                await onUnbanSteam(row);
                                             }}
                                         >
-                                            <Tooltip title={'Remove CIDR Ban'}>
+                                            <Tooltip title={'Remove Ban'}>
                                                 <UndoIcon />
                                             </Tooltip>
                                         </IconButton>

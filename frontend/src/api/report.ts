@@ -1,5 +1,5 @@
 import { Theme } from '@mui/material';
-import { LazyResult } from '../component/LazyTableSimple';
+import { LazyResult } from '../component/table/LazyTableSimple';
 import { BanReason } from './bans';
 import { apiCall, ReportQueryFilter, TimeStamped } from './common';
 import { Person, UserProfile } from './profile';

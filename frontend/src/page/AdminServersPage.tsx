@@ -12,10 +12,10 @@ import Tooltip from '@mui/material/Tooltip';
 import Grid from '@mui/material/Unstable_Grid2';
 import { apiGetServersAdmin, Server, ServerQueryFilter } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { LazyTable, Order, RowsPerPage } from '../component/LazyTable';
-import { TableCellBool } from '../component/TableCellBool';
 import { ModalServerDelete, ModalServerEditor } from '../component/modal';
 import { ServerEditorModal } from '../component/modal/ServerEditorModal';
+import { LazyTable, Order, RowsPerPage } from '../component/table/LazyTable';
+import { TableCellBool } from '../component/table/TableCellBool';
 import { logErr } from '../util/errors';
 
 export const AdminServersPage = () => {

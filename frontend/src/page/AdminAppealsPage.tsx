@@ -17,10 +17,8 @@ import {
     SteamBanRecord
 } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { LazyTable, Order, RowsPerPage } from '../component/LazyTable';
 import { LoadingIcon } from '../component/LoadingIcon';
 import { LoadingSpinner } from '../component/LoadingSpinner';
-import { TableCellLink } from '../component/TableCellLink';
 import {
     AppealStateField,
     appealStateFielValidator
@@ -35,6 +33,8 @@ import {
     TargetIDField,
     targetIdValidator
 } from '../component/formik/TargetIdField';
+import { LazyTable, Order, RowsPerPage } from '../component/table/LazyTable';
+import { TableCellLink } from '../component/table/TableCellLink';
 import { logErr } from '../util/errors';
 import { renderDate, renderDateTime } from '../util/text';
 

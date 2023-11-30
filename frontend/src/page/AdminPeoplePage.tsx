@@ -19,7 +19,6 @@ import {
     Person
 } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { LazyTable, Order, RowsPerPage } from '../component/LazyTable';
 import { LoadingSpinner } from '../component/LoadingSpinner';
 import { PersonCell } from '../component/PersonCell';
 import { FilterButtons } from '../component/formik/FilterButtons';
@@ -31,6 +30,7 @@ import {
 import { nonResolvingSteamIDInputTest } from '../component/formik/SourceIdField';
 import { SteamIdField } from '../component/formik/SteamIdField';
 import { ModalPersonEditor } from '../component/modal';
+import { LazyTable, Order, RowsPerPage } from '../component/table/LazyTable';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { logErr } from '../util/errors';
 import { isValidSteamDate, renderDate } from '../util/text';

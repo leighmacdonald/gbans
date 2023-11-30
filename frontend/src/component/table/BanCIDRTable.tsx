@@ -9,57 +9,56 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { formatDuration, intervalToDuration } from 'date-fns';
 import { Formik } from 'formik';
+import IPCIDR from 'ip-cidr';
 import * as yup from 'yup';
 import {
-    apiGetBansASN,
-    ASNBanRecord,
-    BanASNQueryFilter,
-    BanReason
-} from '../api';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
-import { logErr } from '../util/errors';
-import { renderDate } from '../util/text';
+    apiGetBansCIDR,
+    BanCIDRQueryFilter,
+    BanReason,
+    CIDRBanRecord
+} from '../../api';
+import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
+import { logErr } from '../../util/errors';
+import { DeletedField, deletedValidator } from '../formik/DeletedField';
+import { FilterButtons } from '../formik/FilterButtons';
+import { IPField, ipFieldValidator } from '../formik/IPField';
+import { SourceIdField, sourceIdValidator } from '../formik/SourceIdField';
+import { SteamIDSelectField } from '../formik/SteamIDSelectField';
+import { TargetIDField, targetIdValidator } from '../formik/TargetIdField';
+import { ModalBanCIDR, ModalUnbanCIDR } from '../modal';
+import { BanCIDRModalProps } from '../modal/BanCIDRModal';
 import { LazyTable, Order, RowsPerPage } from './LazyTable';
 import { TableCellBool } from './TableCellBool';
-import { ASNumberField, asNumberFieldValidator } from './formik/ASNumberField';
-import { DeletedField, deletedValidator } from './formik/DeletedField';
-import { FilterButtons } from './formik/FilterButtons';
-import { SourceIdField, sourceIdValidator } from './formik/SourceIdField';
-import { SteamIDSelectField } from './formik/SteamIDSelectField';
-import { TargetIDField, targetIdValidator } from './formik/TargetIdField';
-import { ModalBanASN, ModalUnbanASN } from './modal';
-import { BanASNModalProps } from './modal/BanASNModal';
+import { TableCellRelativeDateField } from './TableCellRelativeDateField';
 
-interface ASNFilterValues {
-    as_num?: number;
+interface CIDRBanFilterValues {
+    ip: string;
     source_id: string;
     target_id: string;
     deleted: boolean;
 }
 
 const validationSchema = yup.object({
-    as_num: asNumberFieldValidator,
+    ip: ipFieldValidator,
     source_id: sourceIdValidator,
     target_id: targetIdValidator,
     deleted: deletedValidator
 });
 
-export const BanASNTable = ({ newBans }: { newBans: ASNBanRecord[] }) => {
-    const [bans, setBans] = useState<ASNBanRecord[]>([]);
+export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
+    const [bans, setBans] = useState<CIDRBanRecord[]>([]);
     const [sortOrder, setSortOrder] = useState<Order>('desc');
-    const [sortColumn, setSortColumn] =
-        useState<keyof ASNBanRecord>('ban_asn_id');
+    const [sortColumn, setSortColumn] = useState<keyof CIDRBanRecord>('net_id');
     const [rowPerPageCount, setRowPerPageCount] = useState<number>(
         RowsPerPage.TwentyFive
     );
     const [hasNew, setHasNew] = useState(false);
-
     const [page, setPage] = useState(0);
     const [totalRows, setTotalRows] = useState<number>(0);
-    const [asNum, setASNum] = useState<number>();
     const [source, setSource] = useState('');
     const [target, setTarget] = useState('');
     const [deleted, setDeleted] = useState(false);
+    const [ip, setIp] = useState('');
     const { sendFlash } = useUserFlashCtx();
 
     const allBans = useMemo(() => {
@@ -70,32 +69,32 @@ export const BanASNTable = ({ newBans }: { newBans: ASNBanRecord[] }) => {
         return bans;
     }, [bans, hasNew, newBans]);
 
-    const onUnbanASN = useCallback(
-        async (as_num: number) => {
+    const onUnbanCIDR = useCallback(
+        async (net_id: number) => {
             try {
-                await NiceModal.show(ModalUnbanASN, {
-                    banId: as_num
+                await NiceModal.show(ModalUnbanCIDR, {
+                    banId: net_id
                 });
-                sendFlash('success', 'Unbanned ASN successfully');
+                sendFlash('success', 'Unbanned CIDR successfully');
             } catch (e) {
-                sendFlash('error', `Failed to unban ASN: ${e}`);
+                sendFlash('error', `Failed to unban: ${e}`);
             }
         },
         [sendFlash]
     );
 
-    const onEditASN = useCallback(
-        async (existing: ASNBanRecord) => {
+    const onEditCIDR = useCallback(
+        async (existing: CIDRBanRecord) => {
             try {
-                await NiceModal.show<ASNBanRecord, BanASNModalProps>(
-                    ModalBanASN,
+                await NiceModal.show<CIDRBanRecord, BanCIDRModalProps>(
+                    ModalBanCIDR,
                     {
                         existing
                     }
                 );
-                sendFlash('success', 'Updated ASN ban successfully');
+                sendFlash('success', 'Updated CIDR ban successfully');
             } catch (e) {
-                sendFlash('error', `Failed to update ASN ban: ${e}`);
+                sendFlash('error', `Failed to update ban: ${e}`);
             }
         },
         [sendFlash]
@@ -107,17 +106,17 @@ export const BanASNTable = ({ newBans }: { newBans: ASNBanRecord[] }) => {
         }
 
         const abortController = new AbortController();
-        const opts: BanASNQueryFilter = {
+        const opts: BanCIDRQueryFilter = {
             limit: rowPerPageCount,
             offset: page * rowPerPageCount,
             order_by: sortColumn,
             desc: sortOrder == 'desc',
-            deleted: deleted,
             source_id: source,
             target_id: target,
-            as_num: asNum
+            deleted: deleted,
+            ip: ip
         };
-        apiGetBansASN(opts, abortController)
+        apiGetBansCIDR(opts, abortController)
             .then((resp) => {
                 setBans(resp.data);
                 setTotalRows(resp.count);
@@ -129,57 +128,58 @@ export const BanASNTable = ({ newBans }: { newBans: ASNBanRecord[] }) => {
                 logErr(e);
             });
     }, [
-        asNum,
+        source,
         deleted,
-        newBans.length,
         page,
         rowPerPageCount,
         sortColumn,
         sortOrder,
-        source,
-        target
+        target,
+        ip,
+        newBans.length
     ]);
 
-    const iv: ASNFilterValues = {
-        as_num: undefined,
+    const iv: CIDRBanFilterValues = {
+        ip: '',
         source_id: '',
         target_id: '',
         deleted: false
     };
 
-    const onSubmit = useCallback((values: ASNFilterValues) => {
-        setASNum(values.as_num);
+    const onSubmit = useCallback((values: CIDRBanFilterValues) => {
         setSource(values.source_id);
         setTarget(values.target_id);
         setDeleted(values.deleted);
+        setIp(values.ip);
     }, []);
 
     const onReset = useCallback(() => {
-        setASNum(iv.as_num);
         setSource(iv.source_id);
         setTarget(iv.target_id);
         setDeleted(iv.deleted);
-    }, [iv.as_num, iv.source_id, iv.deleted, iv.target_id]);
+        setIp(iv.ip);
+    }, [iv.source_id, iv.target_id, iv.deleted, iv.ip]);
 
     return (
         <Formik
+            onSubmit={onSubmit}
             initialValues={iv}
             onReset={onReset}
-            onSubmit={onSubmit}
             validationSchema={validationSchema}
             validateOnChange={true}
+            validateOnBlur={true}
         >
             <Grid container spacing={3}>
                 <Grid xs={12}>
                     <Grid container spacing={2}>
                         <Grid xs>
-                            <ASNumberField />
-                        </Grid>
-                        <Grid xs>
                             <SourceIdField />
                         </Grid>
                         <Grid xs>
                             <TargetIDField />
+                        </Grid>
+                        <Grid xs>
+                            <IPField />
                         </Grid>
                         <Grid xs>
                             <DeletedField />
@@ -190,7 +190,7 @@ export const BanASNTable = ({ newBans }: { newBans: ASNBanRecord[] }) => {
                     </Grid>
                 </Grid>
                 <Grid xs={12}>
-                    <LazyTable<ASNBanRecord>
+                    <LazyTable<CIDRBanRecord>
                         showPager={true}
                         count={totalRows}
                         rows={allBans}
@@ -221,19 +221,19 @@ export const BanASNTable = ({ newBans }: { newBans: ASNBanRecord[] }) => {
                             {
                                 label: '#',
                                 tooltip: 'Ban ID',
-                                sortKey: 'ban_asn_id',
+                                sortKey: 'net_id',
                                 sortable: true,
                                 align: 'left',
                                 renderer: (obj) => (
                                     <Typography variant={'body1'}>
-                                        #{obj.ban_asn_id.toString()}
+                                        #{obj.net_id.toString()}
                                     </Typography>
                                 )
                             },
                             {
                                 label: 'A',
-                                tooltip: 'Ban Author Name',
-                                sortKey: 'source_personaname',
+                                tooltip: ' BanAuthor',
+                                sortKey: 'source_id',
                                 sortable: true,
                                 align: 'left',
                                 renderer: (row) => (
@@ -246,9 +246,9 @@ export const BanASNTable = ({ newBans }: { newBans: ASNBanRecord[] }) => {
                                 )
                             },
                             {
-                                label: 'Name',
-                                tooltip: 'Persona Name',
-                                sortKey: 'target_personaname',
+                                label: 'Target',
+                                tooltip: 'Steam Name',
+                                sortKey: 'target_id',
                                 sortable: true,
                                 align: 'left',
                                 renderer: (row) => (
@@ -261,16 +261,46 @@ export const BanASNTable = ({ newBans }: { newBans: ASNBanRecord[] }) => {
                                 )
                             },
                             {
-                                label: 'ASN',
-                                tooltip: 'Autonomous System Numbers',
-                                sortKey: 'as_num',
+                                label: 'CIDR',
+                                tooltip: 'CIDR Range',
+                                sortKey: 'cidr',
                                 sortable: true,
                                 align: 'left',
-                                renderer: (row) => (
-                                    <Typography variant={'body1'}>
-                                        {row.as_num}
-                                    </Typography>
-                                )
+                                renderer: (obj) => {
+                                    try {
+                                        return (
+                                            <Typography variant={'body1'}>
+                                                {obj.cidr}
+                                            </Typography>
+                                        );
+                                    } catch (e) {
+                                        return <>?</>;
+                                    }
+                                }
+                            },
+                            {
+                                label: 'Hosts',
+                                tooltip: 'Total hosts in CIDR range',
+                                sortable: false,
+                                align: 'left',
+                                renderer: (obj) => {
+                                    try {
+                                        const network = new IPCIDR(obj.cidr);
+                                        const hosts = network.toArray().length;
+                                        return (
+                                            <Typography variant={'body1'}>
+                                                {hosts}
+                                            </Typography>
+                                        );
+                                    } catch (e) {
+                                        logErr(e);
+                                    }
+                                    return (
+                                        <Typography variant={'body1'}>
+                                            ?
+                                        </Typography>
+                                    );
+                                }
                             },
                             {
                                 label: 'Reason',
@@ -302,9 +332,10 @@ export const BanASNTable = ({ newBans }: { newBans: ASNBanRecord[] }) => {
                                 virtualKey: 'created_on',
                                 renderer: (obj) => {
                                     return (
-                                        <Typography variant={'body1'}>
-                                            {renderDate(obj.created_on)}
-                                        </Typography>
+                                        <TableCellRelativeDateField
+                                            date={obj.created_on}
+                                            suffix={true}
+                                        />
                                     );
                                 }
                             },
@@ -319,9 +350,9 @@ export const BanASNTable = ({ newBans }: { newBans: ASNBanRecord[] }) => {
                                 sortable: true,
                                 renderer: (obj) => {
                                     return (
-                                        <Typography variant={'body1'}>
-                                            {renderDate(obj.valid_until)}
-                                        </Typography>
+                                        <TableCellRelativeDateField
+                                            date={obj.valid_until}
+                                        />
                                     );
                                 }
                             },
@@ -373,19 +404,19 @@ export const BanASNTable = ({ newBans }: { newBans: ASNBanRecord[] }) => {
                                     <ButtonGroup fullWidth>
                                         <IconButton
                                             color={'warning'}
-                                            onClick={async () =>
-                                                await onEditASN(row)
-                                            }
+                                            onClick={async () => {
+                                                await onEditCIDR(row);
+                                            }}
                                         >
-                                            <Tooltip title={'Edit ASN Ban'}>
+                                            <Tooltip title={'Edit CIDR Ban'}>
                                                 <EditIcon />
                                             </Tooltip>
                                         </IconButton>
                                         <IconButton
                                             color={'success'}
-                                            onClick={async () =>
-                                                await onUnbanASN(row.as_num)
-                                            }
+                                            onClick={async () => {
+                                                await onUnbanCIDR(row.net_id);
+                                            }}
                                         >
                                             <Tooltip title={'Remove CIDR Ban'}>
                                                 <UndoIcon />
