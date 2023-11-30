@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { LazyResult } from '../component/LazyTableSimple';
+import { LazyResult } from '../component/table/LazyTableSimple';
 import { logErr } from '../util/errors';
 import {
     apiCall,

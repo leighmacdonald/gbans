@@ -6,8 +6,8 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { apiGetPlayersOverall, PlayerWeaponStats } from '../api';
 import { defaultFloatFmt, defaultFloatFmtPct, humanCount } from '../util/text';
 import { ContainerWithHeader } from './ContainerWithHeader';
-import { LazyTableSimple } from './LazyTableSimple';
 import { PersonCell } from './PersonCell';
+import { LazyTableSimple } from './table/LazyTableSimple';
 
 export const fmtWhenGt = (
     value: number,

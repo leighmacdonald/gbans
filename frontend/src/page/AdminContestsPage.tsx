@@ -13,8 +13,8 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import { apiContestDelete, apiContests, Contest } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { LazyTableSimple } from '../component/LazyTableSimple';
 import { ModalConfirm, ModalContestEditor } from '../component/modal';
+import { LazyTableSimple } from '../component/table/LazyTableSimple';
 import { logErr } from '../util/errors';
 
 export const AdminContestsPage = () => {

@@ -531,7 +531,38 @@ func (db *Store) ForumMessageSave(ctx context.Context, message *ForumMessage) er
 		Update("forum_thread").
 		Set("last_forum_message_id", message.ForumMessageID).
 		Where(sq.Eq{"forum_thread_id": message.ForumThreadID}))
+}
 
+func (db *Store) ForumRecentActivity(ctx context.Context, limit uint64) ([]ForumMessage, error) {
+	rows, errRows := db.QueryBuilder(ctx, db.sb.
+		Select("DISTINCT ON (m.forum_thread_id) m.forum_thread_id", "m.forum_message_id",
+			"m.source_id", "m.body_md", "m.created_on", "m.updated_on", "p.personaname",
+			"p.avatarhash", "p.permission_level").
+		From("forum_message m").
+		LeftJoin("forum_thread t USING (forum_thread_id)").
+		LeftJoin("person p on p.steam_id = m.source_id").
+		OrderBy("forum_thread_id DESC").
+		Limit(limit))
+	if errRows != nil {
+		return nil, errRows
+	}
+
+	defer rows.Close()
+
+	var messages []ForumMessage
+
+	for rows.Next() {
+		var msg ForumMessage
+		if errScan := rows.Scan(&msg.ForumThreadID, &msg.ForumMessageID, &msg.SourceID,
+			&msg.BodyMD, &msg.CreatedOn, &msg.UpdatedOn, &msg.Personaname,
+			&msg.AvatarHash, &msg.PermissionLevel); errScan != nil {
+			return nil, Err(errScan)
+		}
+
+		messages = append(messages, msg)
+	}
+
+	return messages, nil
 }
 
 func (db *Store) ForumMessage(ctx context.Context, messageID int64, forumMessage *ForumMessage) error {

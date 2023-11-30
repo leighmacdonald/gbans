@@ -1,4 +1,4 @@
-import { LazyResult } from '../component/LazyTableSimple';
+import { LazyResult } from '../component/table/LazyTableSimple';
 import { parseDateTime } from '../util/text';
 import {
     apiCall,

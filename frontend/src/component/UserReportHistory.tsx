@@ -8,9 +8,9 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { apiGetReports, reportStatusString, ReportWithAuthor } from '../api';
 import { logErr } from '../util/errors';
-import { LazyTable, Order, RowsPerPage } from './LazyTable';
 import { PersonCell } from './PersonCell';
 import { ReportStatusIcon } from './ReportStatusIcon';
+import { LazyTable, Order, RowsPerPage } from './table/LazyTable';
 
 export const UserReportHistory = ({ steam_id }: { steam_id: string }) => {
     const [reportHistory, setReportHistory] = useState<ReportWithAuthor[]>([]);

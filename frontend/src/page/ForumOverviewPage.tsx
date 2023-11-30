@@ -13,9 +13,11 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { defaultAvatarHash, PermissionLevel } from '../api';
 import {
+    apiForumRecentActivity,
     apiGetForumOverview,
     Forum,
     ForumCategory,
+    ForumMessage,
     ForumOverview
 } from '../api/forum';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
@@ -164,6 +166,7 @@ export const ForumOverviewPage = (): JSX.Element => {
     const [overview, setOverview] = useState<ForumOverview>();
     const { sendFlash } = useUserFlashCtx();
     const { currentUser } = useCurrentUserCtx();
+
     useEffect(() => {
         const abortController = new AbortController();
         apiGetForumOverview(abortController)
@@ -215,10 +218,6 @@ export const ForumOverviewPage = (): JSX.Element => {
             </Grid>
             <Grid md={3} xs={12}>
                 <Stack spacing={3}>
-                    <ContainerWithHeader
-                        title={'Latest Activity'}
-                        iconLeft={<TodayIcon />}
-                    ></ContainerWithHeader>
                     {currentUser.permission_level >=
                         PermissionLevel.Moderator && (
                         <ContainerWithHeader
@@ -244,5 +243,74 @@ export const ForumOverviewPage = (): JSX.Element => {
                 </Stack>
             </Grid>
         </Grid>
+    );
+};
+
+export const RecentMessageActivity = () => {
+    const [recent, setRecent] = useState<ForumMessage[]>([]);
+
+    useEffect(() => {
+        const abortController = new AbortController();
+        apiForumRecentActivity()
+            .then((act) => {
+                setRecent(act);
+            })
+            .catch((e) => logErr(e));
+
+        return () => abortController.abort();
+    }, []);
+    return (
+        <ContainerWithHeader title={'Latest Activity'} iconLeft={<TodayIcon />}>
+            <Stack>
+                {recent.map((m) => {
+                    return (
+                        <Stack direction={'row'}>
+                            <VCenteredElement
+                                icon={
+                                    <Avatar
+                                        alt={m.personaname}
+                                        src={`https://avatars.akamai.steamstatic.com/${
+                                            m.avatarhash ?? defaultAvatarHash
+                                        }.jpg`}
+                                    />
+                                }
+                            />
+                            <Stack>
+                                <ForumRowLink
+                                    label={m.source_id ?? ''}
+                                    to={`/forums/thread/${f.recent_forum_thread_id}`}
+                                />
+
+                                <Stack direction={'row'} spacing={1}>
+                                    <AccessTimeIcon />
+                                    <VCenterBox>
+                                        <Typography variant={'body2'}>
+                                            {renderDateTime(
+                                                f.recent_created_on ??
+                                                    new Date()
+                                            )}
+                                        </Typography>
+                                    </VCenterBox>
+                                    <Person2 />
+                                    <VCenterBox>
+                                        <Typography
+                                            color={(theme) => {
+                                                return theme.palette.text
+                                                    .secondary;
+                                            }}
+                                            component={RouterLink}
+                                            to={`/profile/${f.recent_source_id}`}
+                                            variant={'body2'}
+                                        >
+                                            {f.recent_personaname}
+                                        </Typography>
+                                    </VCenterBox>
+                                </Stack>
+                            </Stack>
+                        </Stack>
+                    );
+                })}
+            </Stack>
+        </ContainerWithHeader>
     );
 };

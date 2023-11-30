@@ -188,6 +188,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 	engine.GET("/api/forum/forum/:forum_id", onAPIForum(app))
 	engine.POST("/api/forum/threads", onAPIForumThreads(app))
 	engine.POST("/api/forum/messages", onAPIForumMessages(app))
+	engine.GET("/api/forum/messages/recent", onAPIForumMessagesRecent(app))
 	engine.GET("/api/forum/thread/:forum_thread_id", onAPIForumThread(app))
 
 	// This allows use of the user profile on endpoints that have optional authentication

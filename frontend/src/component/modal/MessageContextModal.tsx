@@ -3,7 +3,7 @@ import Stack from '@mui/material/Stack';
 import { ASNBanRecord } from '../../api';
 import { Heading } from '../Heading';
 import { LoadingSpinner } from '../LoadingSpinner';
-import { PersonMessageTable } from '../PersonMessageTable';
+import { PersonMessageTable } from '../table/PersonMessageTable';
 import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
 
 export interface UnbanASNModalProps

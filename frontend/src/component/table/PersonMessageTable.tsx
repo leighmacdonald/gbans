@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import Button from '@mui/material/Button';
 import { format } from 'date-fns';
 import stc from 'string-to-color';
-import { apiGetMessages, PersonMessage } from '../api';
-import { logErr } from '../util/errors';
+import { apiGetMessages, PersonMessage } from '../../api';
+import { logErr } from '../../util/errors';
+import { PersonCell } from '../PersonCell';
 import { LazyTable, Order, RowsPerPage } from './LazyTable';
-import { PersonCell } from './PersonCell';
 
 export interface PersonMessageTableProps {
     steam_id: string;

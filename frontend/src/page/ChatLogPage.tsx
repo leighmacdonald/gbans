@@ -31,7 +31,6 @@ import {
     sessionKeyReportSteamID
 } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { LazyTable, Order, RowsPerPage } from '../component/LazyTable';
 import { AutoRefreshField } from '../component/formik/AutoRefreshField';
 import { AutoSubmitPaginationField } from '../component/formik/AutoSubmitPaginationField';
 import { DateEndField } from '../component/formik/DateEndField';
@@ -42,6 +41,7 @@ import { PersonanameField } from '../component/formik/PersonanameField';
 import { ServerIDCell, ServerIDField } from '../component/formik/ServerIDField';
 import { SteamIdField } from '../component/formik/SteamIdField';
 import { ResetButton, SubmitButton } from '../component/modal/Buttons';
+import { LazyTable, Order, RowsPerPage } from '../component/table/LazyTable';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { logErr } from '../util/errors';
 import { Nullable } from '../util/types';

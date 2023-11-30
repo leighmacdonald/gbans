@@ -8,17 +8,17 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { Formik } from 'formik';
 import * as yup from 'yup';
-import { apiGetDemos, DemoFile } from '../api';
-import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
-import { logErr } from '../util/errors';
-import { humanFileSize, renderDateTime } from '../util/text';
-import { emptyOrNullString } from '../util/types';
+import { apiGetDemos, DemoFile } from '../../api';
+import { useCurrentUserCtx } from '../../contexts/CurrentUserCtx';
+import { logErr } from '../../util/errors';
+import { humanFileSize, renderDateTime } from '../../util/text';
+import { emptyOrNullString } from '../../util/types';
+import { FilterButtons } from '../formik/FilterButtons';
+import { MapNameField, mapNameFieldValidator } from '../formik/MapNameField';
+import { SelectOwnField, selectOwnValidator } from '../formik/SelectOwnField';
+import { ServerIDsField, serverIDsValidator } from '../formik/ServerIDsField';
+import { SourceIdField, sourceIdValidator } from '../formik/SourceIdField';
 import { LazyTable, Order, RowsPerPage } from './LazyTable';
-import { FilterButtons } from './formik/FilterButtons';
-import { MapNameField, mapNameFieldValidator } from './formik/MapNameField';
-import { SelectOwnField, selectOwnValidator } from './formik/SelectOwnField';
-import { ServerIDsField, serverIDsValidator } from './formik/ServerIDsField';
-import { SourceIdField, sourceIdValidator } from './formik/SourceIdField';
 
 interface STVFormValues {
     source_id: string;

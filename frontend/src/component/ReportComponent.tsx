@@ -28,16 +28,16 @@ import { renderMarkdown } from '../api/wiki';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
-import { BanHistoryTable } from './BanHistoryTable';
-import { ConnectionHistoryTable } from './ConnectionHistoryTable';
 import { ContainerWithHeader } from './ContainerWithHeader';
 import { MDEditor } from './MDEditor';
-import { PersonMessageTable } from './PersonMessageTable';
 import { PlayerMessageContext } from './PlayerMessageContext';
 import { RenderedMarkdownBox } from './RenderedMarkdownBox';
 import { SourceBansList } from './SourceBansList';
 import { TabPanel } from './TabPanel';
 import { UserMessageView } from './UserMessageView';
+import { BanHistoryTable } from './table/BanHistoryTable';
+import { ConnectionHistoryTable } from './table/ConnectionHistoryTable';
+import { PersonMessageTable } from './table/PersonMessageTable';
 
 interface ReportComponentProps {
     report: Report;

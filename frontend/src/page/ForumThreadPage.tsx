@@ -19,9 +19,9 @@ import {
 } from '../api/forum';
 import { ForumRowLink } from '../component/ForumRowLink';
 import { ForumThreadReplyBox } from '../component/ForumThreadReplyBox';
-import { RowsPerPage } from '../component/LazyTable';
 import { MarkDownRenderer } from '../component/MarkdownRenderer';
 import { VCenterBox } from '../component/VCenterBox';
+import { RowsPerPage } from '../component/table/LazyTable';
 import { logErr } from '../util/errors';
 import { renderDateTime } from '../util/text';
 

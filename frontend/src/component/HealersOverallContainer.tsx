@@ -4,9 +4,9 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { apiGetHealersOverall, HealingOverallResult } from '../api';
 import { defaultFloatFmt, defaultFloatFmtPct, humanCount } from '../util/text';
 import { ContainerWithHeader } from './ContainerWithHeader';
-import { LazyTableSimple } from './LazyTableSimple';
 import { PersonCell } from './PersonCell';
 import { fmtWhenGt } from './PlayersOverallContainer';
+import { LazyTableSimple } from './table/LazyTableSimple';
 
 export const HealersOverallContainer = () => {
     const fetchStats = () => apiGetHealersOverall();

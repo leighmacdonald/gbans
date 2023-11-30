@@ -1,4 +1,4 @@
-import { LazyResult } from '../component/LazyTableSimple';
+import { LazyResult } from '../component/table/LazyTableSimple';
 import { apiCall, QueryFilter, TimeStamped } from './common';
 
 export interface BaseServer {

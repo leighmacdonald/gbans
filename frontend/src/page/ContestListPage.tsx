@@ -12,8 +12,8 @@ import formatDistanceToNowStrict from 'date-fns/formatDistanceToNowStrict';
 import { isAfter } from 'date-fns/fp';
 import { apiContests, Contest } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { LazyTableSimple } from '../component/LazyTableSimple';
 import { ModalContestEntry } from '../component/modal';
+import { LazyTableSimple } from '../component/table/LazyTableSimple';
 import { logErr } from '../util/errors';
 
 export const ContestListPage = () => {

@@ -4,9 +4,9 @@ import {
     apiGetConnections,
     PersonConnection,
     PersonConnectionQuery
-} from '../api';
-import { logErr } from '../util/errors';
-import { renderDateTime } from '../util/text';
+} from '../../api';
+import { logErr } from '../../util/errors';
+import { renderDateTime } from '../../util/text';
 import { LazyTable, Order, RowsPerPage } from './LazyTable';
 
 export const ConnectionHistoryTable = ({ steam_id }: { steam_id?: string }) => {

@@ -1,4 +1,4 @@
-import { LazyResult } from '../component/LazyTableSimple';
+import { LazyResult } from '../component/table/LazyTableSimple';
 import { parseDateTime } from '../util/text';
 import {
     apiCall,
@@ -297,4 +297,17 @@ export const apiCreateThreadReply = async (
             abortController
         )
     );
+};
+
+export const apiForumRecentActivity = async (
+    abortController?: AbortController
+) => {
+    return (
+        await apiCall<ForumMessage[]>(
+            `/api/forum/messages/recent`,
+            'GET',
+            undefined,
+            abortController
+        )
+    ).map(transformTimeStampedDates);
 };
