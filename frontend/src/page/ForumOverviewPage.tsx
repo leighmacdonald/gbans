@@ -1,4 +1,4 @@
-import React, { JSX, useCallback, useEffect, useState } from 'react';
+import React, { JSX, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import NiceModal from '@ebay/nice-modal-react';
 import { Person2 } from '@mui/icons-material';
@@ -38,6 +38,8 @@ import { logErr } from '../util/errors';
 import { humanCount, renderDateTime, renderTime } from '../util/text';
 
 const CategoryBlock = ({ category }: { category: ForumCategory }) => {
+    const { currentUser } = useCurrentUserCtx();
+
     const onEdit = useCallback(async () => {
         try {
             await NiceModal.show(ModalForumCategoryEditor, {
@@ -48,22 +50,28 @@ const CategoryBlock = ({ category }: { category: ForumCategory }) => {
         }
     }, [category.forum_category_id]);
 
+    const buttons = useMemo(() => {
+        return currentUser.permission_level >= PermissionLevel.Moderator
+            ? [
+                  <Button
+                      size={'small'}
+                      variant={'contained'}
+                      color={'warning'}
+                      key={`cat-edit-${category.forum_category_id}`}
+                      startIcon={<ConstructionIcon />}
+                      onClick={onEdit}
+                  >
+                      Edit
+                  </Button>
+              ]
+            : [];
+    }, [category.forum_category_id, currentUser.permission_level, onEdit]);
+
     return (
         <ContainerWithHeaderAndButtons
             title={category.title}
             iconLeft={<CategoryIcon />}
-            buttons={[
-                <Button
-                    size={'small'}
-                    variant={'contained'}
-                    color={'warning'}
-                    key={`cat-edit-${category.forum_category_id}`}
-                    startIcon={<ConstructionIcon />}
-                    onClick={onEdit}
-                >
-                    Edit
-                </Button>
-            ]}
+            buttons={buttons}
         >
             <Stack
                 spacing={1}
@@ -154,6 +162,7 @@ const CategoryBlock = ({ category }: { category: ForumCategory }) => {
                                         />
                                         <Stack>
                                             <ForumRowLink
+                                                variant={'body1'}
                                                 label={
                                                     f.recent_forum_title ?? ''
                                                 }
@@ -338,6 +347,7 @@ export const RecentMessageActivity = () => {
                                     }}
                                 >
                                     <ForumRowLink
+                                        variant={'body1'}
                                         label={m.title ?? ''}
                                         to={`/forums/thread/${m.forum_thread_id}`}
                                     />
