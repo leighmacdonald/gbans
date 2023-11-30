@@ -105,7 +105,7 @@ export const ReportForm = (): JSX.Element => {
                     fullWidth
                     input={inputSteamID}
                     setInput={setInputSteamID}
-                    onProfileSuccess={(_) => {
+                    onProfileSuccess={() => {
                         //setProfile(profile1);
                     }}
                 />

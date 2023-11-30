@@ -23,6 +23,7 @@ import { MarkDownRenderer } from '../component/MarkdownRenderer';
 import { VCenterBox } from '../component/VCenterBox';
 import { RowsPerPage } from '../component/table/LazyTable';
 import { logErr } from '../util/errors';
+import { useScrollToLocation } from '../util/history';
 import { renderDateTime } from '../util/text';
 
 const ForumAvatar = ({ ...props }) => (
@@ -36,7 +37,7 @@ const ForumAvatar = ({ ...props }) => (
 const ThreadMessageContainer = ({ message }: { message: ForumMessage }) => {
     const theme = useTheme();
     return (
-        <Paper elevation={1}>
+        <Paper elevation={1} id={`${message.forum_message_id}`}>
             <Grid container>
                 <Grid
                     xs={2}
@@ -103,6 +104,8 @@ export const ForumThreadPage = (): JSX.Element => {
     const [page, setPage] = useState(1);
     const { forum_thread_id } = useParams();
     const thread_id = parseInt(forum_thread_id ?? '');
+
+    useScrollToLocation();
 
     useEffect(() => {
         const abortController = new AbortController();
