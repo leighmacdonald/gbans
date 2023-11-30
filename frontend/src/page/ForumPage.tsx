@@ -16,7 +16,10 @@ import { apiForum, apiGetThreads, Forum, ForumThread } from '../api/forum';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons';
 import { ForumRowLink } from '../component/ForumRowLink';
 import { VCenteredElement } from '../component/Heading';
-import { ModalForumThreadEditor } from '../component/modal';
+import {
+    ModalForumForumEditor,
+    ModalForumThreadEditor
+} from '../component/modal';
 import { RowsPerPage } from '../component/table/LazyTable';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
@@ -174,6 +177,17 @@ export const ForumPage = () => {
         }
     }, [id, modal, navigate, sendFlash]);
 
+    const onEditForum = useCallback(async () => {
+        try {
+            const forum = await NiceModal.show<Forum>(ModalForumForumEditor, {
+                initial_forum_id: id
+            });
+            setForum(forum);
+        } catch (e) {
+            logErr(e);
+        }
+    }, [forum_id]);
+
     const headerButtons = useMemo(() => {
         const buttons = [];
 
@@ -185,8 +199,9 @@ export const ForumPage = () => {
                     variant={'contained'}
                     size={'small'}
                     key={'btn-edit-forum'}
+                    onClick={onEditForum}
                 >
-                    Edit Forum
+                    Edit
                 </Button>
             );
         }

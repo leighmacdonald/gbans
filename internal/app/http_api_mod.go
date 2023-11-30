@@ -1394,6 +1394,31 @@ func onAPICreateForumCategory(app *App) gin.HandlerFunc {
 	}
 }
 
+func onAPIForumCategory(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		forumCategoryID, errCategoryID := getIntParam(ctx, "forum_category_id")
+		if errCategoryID != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		var category store.ForumCategory
+
+		if errGet := app.db.ForumCategory(ctx, forumCategoryID, &category); errGet != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			log.Error("Error fetching forum category", zap.Error(errGet))
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, category)
+	}
+}
+
 func onAPIUpdateForumCategory(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
@@ -1477,15 +1502,15 @@ func onAPIUpdateForumForum(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		categoryID, errCategoryID := getIntParam(ctx, "forum_category_id")
-		if errCategoryID != nil {
+		forumID, errForumID := getIntParam(ctx, "forum_id")
+		if errForumID != nil {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
 
 			return
 		}
 
 		var forum store.Forum
-		if errGet := app.db.Forum(ctx, categoryID, &forum); errGet != nil {
+		if errGet := app.db.Forum(ctx, forumID, &forum); errGet != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return

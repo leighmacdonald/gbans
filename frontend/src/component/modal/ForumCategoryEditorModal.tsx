@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import {
     Dialog,
@@ -7,7 +7,7 @@ import {
     DialogTitle
 } from '@mui/material';
 import Stack from '@mui/material/Stack';
-import { Formik } from 'formik';
+import { Formik, useFormikContext } from 'formik';
 import * as yup from 'yup';
 import {
     apiCreateForumCategory,
@@ -15,6 +15,7 @@ import {
     apiSaveForumCategory,
     ForumCategory
 } from '../../api/forum';
+import { logErr } from '../../util/errors';
 import { DescriptionField } from '../formik/DescriptionField';
 import { OrderingField } from '../formik/OrderingField';
 import { TitleField, titleFieldValidator } from '../formik/TitleField';
@@ -36,22 +37,7 @@ const validationSchema = yup.object({
 
 export const ForumCategoryEditorModal = NiceModal.create(
     ({ initial_forum_category_id }: ForumCategoryEditorProps) => {
-        const [category, setCategory] = useState<ForumCategory>();
         const modal = useModal();
-
-        useEffect(() => {
-            if (initial_forum_category_id) {
-                apiGetForumCategory(initial_forum_category_id).then((cat) => {
-                    setCategory(cat);
-                });
-            }
-        }, [initial_forum_category_id]);
-
-        const iv: ForumCategoryEditorValues = {
-            title: category?.title ?? '',
-            description: category?.description ?? '',
-            ordering: category?.ordering ?? 0
-        };
 
         const onSubmit = useCallback(
             async (values: ForumCategoryEditorValues) => {
@@ -85,7 +71,11 @@ export const ForumCategoryEditorModal = NiceModal.create(
 
         return (
             <Formik<ForumCategoryEditorValues>
-                initialValues={iv}
+                initialValues={{
+                    title: '',
+                    description: '',
+                    ordering: 0
+                }}
                 onSubmit={onSubmit}
                 validationSchema={validationSchema}
             >
@@ -93,6 +83,11 @@ export const ForumCategoryEditorModal = NiceModal.create(
                     <DialogTitle>Category Editor</DialogTitle>
 
                     <DialogContent>
+                        <CatLoader
+                            initial_forum_category_id={
+                                initial_forum_category_id ?? 0
+                            }
+                        />
                         <Stack spacing={2}>
                             <TitleField />
                             <DescriptionField />
@@ -109,3 +104,24 @@ export const ForumCategoryEditorModal = NiceModal.create(
         );
     }
 );
+export const CatLoader = ({
+    initial_forum_category_id
+}: {
+    initial_forum_category_id: number;
+}) => {
+    const { setFieldValue } = useFormikContext<ForumCategory>();
+
+    useEffect(() => {
+        if (initial_forum_category_id) {
+            apiGetForumCategory(initial_forum_category_id).then((cat) => {
+                setFieldValue('title', cat.title).then(() => {
+                    setFieldValue('description', cat.description).then(() => {
+                        setFieldValue('ordering', cat.ordering).catch(logErr);
+                    });
+                });
+            });
+        }
+    }, [initial_forum_category_id, setFieldValue]);
+
+    return <></>;
+};

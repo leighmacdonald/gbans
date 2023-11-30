@@ -315,6 +315,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		modRoute.PUT("/api/contests/:contest_id", onAPIUpdateContest(app))
 
 		modRoute.POST("/api/forum/category", onAPICreateForumCategory(app))
+		modRoute.GET("/api/forum/category/:forum_category_id", onAPIForumCategory(app))
 		modRoute.POST("/api/forum/category/:forum_category_id", onAPIUpdateForumCategory(app))
 		modRoute.POST("/api/forum/forum", onAPICreateForumForum(app))
 		modRoute.POST("/api/forum/forum/:forum_id", onAPIUpdateForumForum(app))

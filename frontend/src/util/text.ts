@@ -17,6 +17,10 @@ export const renderDate = (t: Date): string => {
     return format(t, 'yyyy-MM-dd');
 };
 
+export const renderTime = (t: Date): string => {
+    return format(t, 'HH:mm');
+};
+
 export const isValidSteamDate = (date: Date) =>
     isAfter(new Date(2000, 0, 0), date);
 

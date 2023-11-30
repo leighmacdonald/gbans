@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import {
     Dialog,
@@ -7,10 +7,16 @@ import {
     DialogTitle
 } from '@mui/material';
 import Stack from '@mui/material/Stack';
-import { Formik } from 'formik';
+import { Formik, useFormikContext } from 'formik';
 import * as yup from 'yup';
 import { PermissionLevel } from '../../api';
-import { apiCreateForum, apiForum, apiSaveForum, Forum } from '../../api/forum';
+import {
+    apiCreateForum,
+    apiForum,
+    apiSaveForum,
+    ForumCategory
+} from '../../api/forum';
+import { logErr } from '../../util/errors';
 import { DescriptionField } from '../formik/DescriptionField';
 import { ForumCategorySelectField } from '../formik/ForumCategorySelectField';
 import { OrderingField } from '../formik/OrderingField';
@@ -34,26 +40,27 @@ const validationSchema = yup.object({
     title: titleFieldValidator
 });
 
+const ForumLoader = ({ forum_id }: { forum_id: number }) => {
+    const { setFieldValue } = useFormikContext<ForumCategory>();
+    useEffect(() => {
+        if (forum_id) {
+            apiForum(forum_id).then((f) => {
+                Promise.all([
+                    setFieldValue('forum_category_id', f.forum_category_id),
+                    setFieldValue('title', f.title),
+                    setFieldValue('description', f.description),
+                    setFieldValue('ordering', f.ordering)
+                ]).catch(logErr);
+            });
+        }
+    }, [forum_id, setFieldValue]);
+
+    return <></>;
+};
+
 export const ForumForumEditorModal = NiceModal.create(
     ({ initial_forum_id }: ForumEditorProps) => {
-        const [forum, setForum] = useState<Forum>();
         const modal = useModal();
-
-        useEffect(() => {
-            if (initial_forum_id) {
-                apiForum(initial_forum_id).then((f) => {
-                    setForum(f);
-                });
-            }
-        }, [initial_forum_id]);
-
-        const iv: ForumEditorValues = {
-            forum_category_id: forum?.forum_category_id ?? 0,
-            title: forum?.title ?? '',
-            description: forum?.description ?? '',
-            ordering: forum?.ordering ?? 0,
-            permission_level: forum?.permission_level ?? PermissionLevel.Guest
-        };
 
         const onSubmit = useCallback(
             async (values: ForumEditorValues) => {
@@ -91,7 +98,13 @@ export const ForumForumEditorModal = NiceModal.create(
 
         return (
             <Formik<ForumEditorValues>
-                initialValues={iv}
+                initialValues={{
+                    forum_category_id: 0,
+                    title: '',
+                    description: '',
+                    ordering: 0,
+                    permission_level: PermissionLevel.Guest
+                }}
                 onSubmit={onSubmit}
                 validationSchema={validationSchema}
             >
@@ -100,6 +113,9 @@ export const ForumForumEditorModal = NiceModal.create(
 
                     <DialogContent>
                         <Stack spacing={2}>
+                            {initial_forum_id && initial_forum_id > 0 && (
+                                <ForumLoader forum_id={initial_forum_id} />
+                            )}
                             <ForumCategorySelectField />
                             <TitleField />
                             <DescriptionField />

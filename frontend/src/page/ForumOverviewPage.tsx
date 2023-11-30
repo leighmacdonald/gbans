@@ -3,12 +3,15 @@ import { Link as RouterLink } from 'react-router-dom';
 import NiceModal from '@ebay/nice-modal-react';
 import { Person2 } from '@mui/icons-material';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import CategoryIcon from '@mui/icons-material/Category';
 import ChatIcon from '@mui/icons-material/Chat';
 import ConstructionIcon from '@mui/icons-material/Construction';
 import TodayIcon from '@mui/icons-material/Today';
 import Avatar from '@mui/material/Avatar';
+import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { defaultAvatarHash, PermissionLevel } from '../api';
@@ -21,6 +24,7 @@ import {
     ForumOverview
 } from '../api/forum';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
+import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons';
 import { ForumRowLink } from '../component/ForumRowLink';
 import { VCenteredElement } from '../component/Heading';
 import { VCenterBox } from '../component/VCenterBox';
@@ -31,12 +35,45 @@ import {
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
-import { humanCount, renderDateTime } from '../util/text';
+import { humanCount, renderDateTime, renderTime } from '../util/text';
 
 const CategoryBlock = ({ category }: { category: ForumCategory }) => {
+    const onEdit = useCallback(async () => {
+        try {
+            await NiceModal.show(ModalForumCategoryEditor, {
+                initial_forum_category_id: category.forum_category_id
+            });
+        } catch (e) {
+            logErr(e);
+        }
+    }, [category.forum_category_id]);
+
     return (
-        <ContainerWithHeader title={category.title}>
-            <Stack spacing={1}>
+        <ContainerWithHeaderAndButtons
+            title={category.title}
+            iconLeft={<CategoryIcon />}
+            buttons={[
+                <Button
+                    size={'small'}
+                    variant={'contained'}
+                    color={'warning'}
+                    key={`cat-edit-${category.forum_category_id}`}
+                    startIcon={<ConstructionIcon />}
+                    onClick={onEdit}
+                >
+                    Edit
+                </Button>
+            ]}
+        >
+            <Stack
+                spacing={1}
+                sx={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    width: '100%'
+                }}
+            >
                 {category.forums.map((f) => {
                     return (
                         <Grid
@@ -54,14 +91,19 @@ const CategoryBlock = ({ category }: { category: ForumCategory }) => {
                                 <VCenterBox justify={'left'}>
                                     <Stack direction={'row'} spacing={1}>
                                         <VCenteredElement icon={<ChatIcon />} />
+
                                         <Stack>
-                                            <ForumRowLink
-                                                label={f.title}
-                                                to={`/forums/${f.forum_id}`}
-                                            />
-                                            <Typography variant={'body2'}>
-                                                {f.description}
-                                            </Typography>
+                                            <VCenterBox>
+                                                <ForumRowLink
+                                                    label={f.title}
+                                                    to={`/forums/${f.forum_id}`}
+                                                />
+                                            </VCenterBox>
+                                            <VCenterBox>
+                                                <Typography variant={'body2'}>
+                                                    {f.description}
+                                                </Typography>
+                                            </VCenterBox>
                                         </Stack>
                                     </Stack>
                                 </VCenterBox>
@@ -158,7 +200,7 @@ const CategoryBlock = ({ category }: { category: ForumCategory }) => {
                     );
                 })}
             </Stack>
-        </ContainerWithHeader>
+        </ContainerWithHeaderAndButtons>
     );
 };
 
@@ -218,6 +260,7 @@ export const ForumOverviewPage = (): JSX.Element => {
             </Grid>
             <Grid md={3} xs={12}>
                 <Stack spacing={3}>
+                    <RecentMessageActivity />
                     {currentUser.permission_level >=
                         PermissionLevel.Moderator && (
                         <ContainerWithHeader
@@ -261,10 +304,20 @@ export const RecentMessageActivity = () => {
     }, []);
     return (
         <ContainerWithHeader title={'Latest Activity'} iconLeft={<TodayIcon />}>
-            <Stack>
+            <Stack spacing={1}>
                 {recent.map((m) => {
                     return (
-                        <Stack direction={'row'}>
+                        <Stack
+                            direction={'row'}
+                            key={`message-${m.forum_message_id}`}
+                            spacing={1}
+                            sx={{
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                width: '100%'
+                            }}
+                        >
                             <VCenteredElement
                                 icon={
                                     <Avatar
@@ -276,33 +329,45 @@ export const RecentMessageActivity = () => {
                                 }
                             />
                             <Stack>
-                                <ForumRowLink
-                                    label={m.source_id ?? ''}
-                                    to={`/forums/thread/${f.recent_forum_thread_id}`}
-                                />
-
+                                <Box
+                                    sx={{
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
+                                        width: '100%'
+                                    }}
+                                >
+                                    <ForumRowLink
+                                        label={m.title ?? ''}
+                                        to={`/forums/thread/${m.forum_thread_id}`}
+                                    />
+                                </Box>
                                 <Stack direction={'row'} spacing={1}>
-                                    <AccessTimeIcon />
+                                    <AccessTimeIcon scale={0.5} />
                                     <VCenterBox>
-                                        <Typography variant={'body2'}>
-                                            {renderDateTime(
-                                                f.recent_created_on ??
-                                                    new Date()
-                                            )}
-                                        </Typography>
+                                        <Tooltip
+                                            title={renderDateTime(m.created_on)}
+                                        >
+                                            <Typography variant={'body2'}>
+                                                {renderTime(
+                                                    m.created_on ?? new Date()
+                                                )}
+                                            </Typography>
+                                        </Tooltip>
                                     </VCenterBox>
-                                    <Person2 />
+                                    <Person2 scale={0.5} />
                                     <VCenterBox>
                                         <Typography
+                                            overflow={'hidden'}
                                             color={(theme) => {
                                                 return theme.palette.text
                                                     .secondary;
                                             }}
                                             component={RouterLink}
-                                            to={`/profile/${f.recent_source_id}`}
+                                            to={`/profile/${m.source_id}`}
                                             variant={'body2'}
                                         >
-                                            {f.recent_personaname}
+                                            {m.personaname}
                                         </Typography>
                                     </VCenterBox>
                                 </Stack>

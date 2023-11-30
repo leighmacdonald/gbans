@@ -708,6 +708,7 @@ func onAPIForumOverview(app *App) gin.HandlerFunc {
 					categories[index].Forums = append(categories[index].Forums, forum)
 				}
 			}
+
 			if categories[index].Forums == nil {
 				categories[index].Forums = []store.Forum{}
 			}

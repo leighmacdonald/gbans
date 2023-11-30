@@ -93,6 +93,7 @@ type ForumMessage struct {
 	ForumThreadID  int64         `json:"forum_thread_id"`
 	SourceID       steamid.SID64 `json:"source_id"`
 	BodyMD         string        `json:"body_md"`
+	Title          string        `json:"title"`
 	SimplePerson
 	TimeStamped
 }
@@ -187,15 +188,18 @@ func (db *Store) ForumCategoryDelete(ctx context.Context, categoryID int) error 
 }
 
 func (db *Store) Forums(ctx context.Context) ([]Forum, error) {
-	rows, errRows := db.QueryBuilder(ctx, db.sb.
-		Select("DISTINCT f.forum_id", "f.forum_category_id", "f.title", "f.description", "f.last_thread_id",
-			"f.count_threads", "f.count_messages", "f.ordering", "f.created_on", "f.updated_on", "f.permission_level",
-			"t.forum_thread_id", "t.source_id", "p.personaname", "p.avatarhash", "t.created_on", "t.title").
+	fq := db.sb.Select("DISTINCT ON (f.forum_id) f.forum_id", "f.forum_category_id", "f.title", "f.description", "f.last_thread_id",
+		"f.count_threads", "f.count_messages", "f.ordering", "f.created_on", "f.updated_on", "f.permission_level",
+		"t.forum_thread_id", "t.source_id", "p.personaname", "p.avatarhash", "t.created_on", "t.title").
 		From("forum f").
 		LeftJoin("forum_thread t ON f.last_thread_id = t.forum_thread_id").
 		LeftJoin("forum_message m ON t.forum_thread_id = m.forum_thread_id").
-		LeftJoin("person p ON p.steam_id = m.source_id").
-		OrderBy("f.ordering"))
+		LeftJoin("person p ON p.steam_id = m.source_id")
+
+	rows, errRows := db.QueryBuilder(ctx, db.sb.
+		Select("x.*").
+		FromSelect(fq, "x").
+		OrderBy("x.ordering"))
 	if errRows != nil {
 		return nil, errRows
 	}
@@ -208,7 +212,7 @@ func (db *Store) Forums(ctx context.Context) ([]Forum, error) {
 		var (
 			lastID           *int64
 			forum            Forum
-			lastForumTheadId *int64
+			lastForumTheadID *int64
 			lastSourceID     *steamid.SID64
 			lastPersonaname  *string
 			lastAvatarhash   *string
@@ -219,7 +223,7 @@ func (db *Store) Forums(ctx context.Context) ([]Forum, error) {
 		if errScan := rows.Scan(&forum.ForumID, &forum.ForumCategoryID, &forum.Title, &forum.Description,
 			&lastID, &forum.CountThreads, &forum.CountMessages,
 			&forum.Ordering, &forum.CreatedOn, &forum.UpdatedOn, &forum.PermissionLevel,
-			&lastForumTheadId, &lastSourceID, &lastPersonaname, &lastAvatarhash,
+			&lastForumTheadID, &lastSourceID, &lastPersonaname, &lastAvatarhash,
 			&lastCreatedOn, &lastTitle); errScan != nil {
 			return nil, Err(errScan)
 		}
@@ -228,8 +232,8 @@ func (db *Store) Forums(ctx context.Context) ([]Forum, error) {
 			forum.LastThreadID = *lastID
 		}
 
-		if lastForumTheadId != nil {
-			forum.RecentForumThreadId = *lastForumTheadId
+		if lastForumTheadID != nil {
+			forum.RecentForumThreadId = *lastForumTheadID
 			forum.RecentSourceID = *lastSourceID
 			forum.RecentPersonaname = *lastPersonaname
 			forum.RecentAvatarHash = *lastAvatarhash
@@ -537,7 +541,7 @@ func (db *Store) ForumRecentActivity(ctx context.Context, limit uint64) ([]Forum
 	rows, errRows := db.QueryBuilder(ctx, db.sb.
 		Select("DISTINCT ON (m.forum_thread_id) m.forum_thread_id", "m.forum_message_id",
 			"m.source_id", "m.body_md", "m.created_on", "m.updated_on", "p.personaname",
-			"p.avatarhash", "p.permission_level").
+			"p.avatarhash", "p.permission_level", "t.title").
 		From("forum_message m").
 		LeftJoin("forum_thread t USING (forum_thread_id)").
 		LeftJoin("person p on p.steam_id = m.source_id").
@@ -555,7 +559,7 @@ func (db *Store) ForumRecentActivity(ctx context.Context, limit uint64) ([]Forum
 		var msg ForumMessage
 		if errScan := rows.Scan(&msg.ForumThreadID, &msg.ForumMessageID, &msg.SourceID,
 			&msg.BodyMD, &msg.CreatedOn, &msg.UpdatedOn, &msg.Personaname,
-			&msg.AvatarHash, &msg.PermissionLevel); errScan != nil {
+			&msg.AvatarHash, &msg.PermissionLevel, &msg.Title); errScan != nil {
 			return nil, Err(errScan)
 		}
 
