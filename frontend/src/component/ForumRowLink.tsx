@@ -6,16 +6,24 @@ interface ForumRowLinkProps {
     label: string;
     to: string;
     align?: 'inherit' | 'left' | 'center' | 'right' | 'justify';
+    variant?: 'body2' | 'body1' | 'h6';
 }
 
-export const ForumRowLink = ({ to, label, align }: ForumRowLinkProps) => {
+export const ForumRowLink = ({
+    to,
+    label,
+    align,
+    variant = 'h6'
+}: ForumRowLinkProps) => {
     return (
         <Typography
             noWrap
+            sx={{ textDecoration: 'none' }}
+            fontWeight={700}
             width={'100%'}
             component={RouterLink}
             textOverflow={'ellipsis'}
-            variant={'h6'}
+            variant={variant}
             to={to}
             align={align}
             color={(theme) => {

@@ -1,13 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router-dom';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import BuildIcon from '@mui/icons-material/Build';
 import MessageIcon from '@mui/icons-material/Message';
 import PostAddIcon from '@mui/icons-material/PostAdd';
-import { TablePagination } from '@mui/material';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
+import Pagination from '@mui/material/Pagination';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
@@ -88,12 +89,27 @@ const ForumThreadRow = ({ thread }: { thread: ForumThread }) => {
             <Grid md={3} xs={6}>
                 {thread.recent_forum_message_id &&
                 thread.recent_forum_message_id > 0 ? (
-                    <Stack direction={'row'}>
+                    <Stack direction={'row'} justifyContent={'end'} spacing={1}>
                         <Stack>
-                            <Typography variant={'body1'}>
+                            <Typography
+                                variant={'body2'}
+                                align={'right'}
+                                fontWeight={700}
+                                sx={{ textDecoration: 'none' }}
+                                color={(theme) => theme.palette.text.primary}
+                                component={RouterLink}
+                                to={`/forums/thread/${thread.forum_thread_id}#${thread.recent_forum_message_id}`}
+                            >
                                 {renderDateTime(thread.recent_created_on)}
                             </Typography>
-                            <Typography variant={'body1'}>
+                            <Typography
+                                align={'right'}
+                                color={(theme) => theme.palette.text.secondary}
+                                variant={'body2'}
+                                sx={{ textDecoration: 'none' }}
+                                component={RouterLink}
+                                to={`/profile/${thread.recent_steam_id}`}
+                            >
                                 {thread.recent_personaname}
                             </Typography>
                         </Stack>
@@ -124,14 +140,12 @@ export const ForumPage = () => {
     const [count, setCount] = useState(0);
     const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState<RowsPerPage>(
-        RowsPerPage.TwentyFive
-    );
     const modal = useModal(ModalForumThreadEditor);
     const { currentUser } = useCurrentUserCtx();
     const { sendFlash } = useUserFlashCtx();
     const navigate = useNavigate();
     const id = parseInt(forum_id as string);
+    const rpp = RowsPerPage.TwentyFive;
 
     useEffect(() => {
         setLoading(true);
@@ -154,15 +168,15 @@ export const ForumPage = () => {
     useEffect(() => {
         apiGetThreads({
             forum_id: id,
-            offset: page * rowsPerPage,
-            limit: rowsPerPage,
+            offset: page * rpp,
+            limit: rpp,
             order_by: 'updated_on',
             desc: true
         }).then((resp) => {
             setThreads(resp.data);
             setCount(resp.count);
         });
-    }, [id, page, rowsPerPage]);
+    }, [id, page, rpp]);
 
     const onNewThread = useCallback(async () => {
         try {
@@ -186,7 +200,7 @@ export const ForumPage = () => {
         } catch (e) {
             logErr(e);
         }
-    }, [forum_id]);
+    }, [id]);
 
     const headerButtons = useMemo(() => {
         const buttons = [];
@@ -219,7 +233,7 @@ export const ForumPage = () => {
             </Button>
         );
         return [<ButtonGroup key={'forum-header-btns'}>{buttons}</ButtonGroup>];
-    }, [currentUser.permission_level, onNewThread]);
+    }, [currentUser.permission_level, onEditForum, onNewThread]);
 
     return (
         <ContainerWithHeaderAndButtons
@@ -236,15 +250,10 @@ export const ForumPage = () => {
                         />
                     );
                 })}
-                <TablePagination
-                    component={'div'} // Stops error since this is not a real <Table>
-                    rowsPerPage={rowsPerPage}
-                    count={count}
+                <Pagination
+                    count={count > 0 ? Math.ceil(count / rpp) : 0}
                     page={page}
-                    onRowsPerPageChange={(event) => {
-                        setRowsPerPage(parseInt(event.target.value));
-                    }}
-                    onPageChange={(_, newPage) => {
+                    onChange={(_, newPage) => {
                         setPage(newPage);
                     }}
                 />
