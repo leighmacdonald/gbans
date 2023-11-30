@@ -11,7 +11,10 @@ interface ForumRowLinkProps {
 export const ForumRowLink = ({ to, label, align }: ForumRowLinkProps) => {
     return (
         <Typography
+            noWrap
+            width={'100%'}
             component={RouterLink}
+            textOverflow={'ellipsis'}
             variant={'h6'}
             to={to}
             align={align}

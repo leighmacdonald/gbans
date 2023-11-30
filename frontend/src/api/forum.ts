@@ -103,13 +103,13 @@ export const apiCreateForum = async (
 
 export const apiForum = async (
     forum_id: number,
-    abortContriller?: AbortController
+    abortController?: AbortController
 ) => {
     return await apiCall<Forum>(
         `/api/forum/forum/${forum_id}`,
         'GET',
         undefined,
-        abortContriller
+        abortController
     );
 };
 
@@ -120,7 +120,7 @@ export const apiSaveForum = async (
     description: string,
     ordering: number,
     permission_level: PermissionLevel,
-    abortContriller?: AbortController
+    abortController?: AbortController
 ) => {
     return await apiCall<Forum>(
         `/api/forum/forum/${forum_id}`,
@@ -132,7 +132,7 @@ export const apiSaveForum = async (
             ordering,
             permission_level
         },
-        abortContriller
+        abortController
     );
 };
 
@@ -173,6 +173,7 @@ export interface ForumMessage extends TimeStamped {
     body_md: string;
     personaname: string;
     avatarhash: string;
+    title: string;
     permission_level: PermissionLevel;
 }
 
