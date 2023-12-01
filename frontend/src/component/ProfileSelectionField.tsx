@@ -1,10 +1,11 @@
-import React, { ChangeEvent, useState } from 'react';
+import React, { ChangeEvent, useCallback, useState } from 'react';
 import { useTimer } from 'react-timer-hook';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import HourglassBottomIcon from '@mui/icons-material/HourglassBottom';
 import Avatar from '@mui/material/Avatar';
 import InputAdornment from '@mui/material/InputAdornment';
 import TextField from '@mui/material/TextField';
+import { useFormikContext } from 'formik';
 import { apiGetProfile, PlayerProfile } from '../api';
 import { logErr } from '../util/errors';
 import { Nullable } from '../util/types';
@@ -13,39 +14,41 @@ export interface ProfileSelectionInputProps {
     id?: string;
     label?: string;
     initialValue?: string;
-    fullWidth: boolean;
-    onProfileSuccess: (profile: Nullable<PlayerProfile>) => void;
-    input: string;
-    setInput: (input: string) => void;
 }
 
-export const ProfileSelectionInput = ({
-    onProfileSuccess,
+interface ProfileSelectionFieldProps {
+    steam_id: string;
+}
+
+export const ProfileSelectionField = <T,>({
     id,
-    label,
-    fullWidth,
-    input,
-    setInput
+    label
 }: ProfileSelectionInputProps) => {
     const debounceRate = 1;
+    const [input, setInput] = useState('');
     const [loading, setLoading] = useState<boolean>(false);
     const [lProfile, setLProfile] = useState<Nullable<PlayerProfile>>();
 
-    const loadProfile = () => {
+    const { setFieldValue, touched, errors } = useFormikContext<
+        T & ProfileSelectionFieldProps
+    >();
+
+    const loadProfile = useCallback(async () => {
         if (input) {
             setLoading(true);
-            apiGetProfile(input)
-                .then((response) => {
-                    onProfileSuccess(response);
-                    setLProfile(response);
-                    setLoading(false);
-                })
-                .catch((e) => {
-                    setLProfile(undefined);
-                    logErr(e);
-                });
+            try {
+                const resp = await apiGetProfile(input);
+                await setFieldValue('steam_id', resp?.player.steam_id);
+                setLProfile(resp);
+                setLoading(false);
+            } catch (e) {
+                setLProfile(undefined);
+                logErr(e);
+            } finally {
+                setLoading(false);
+            }
         }
-    };
+    }, [input, setFieldValue]);
 
     const { restart, pause } = useTimer({
         expiryTimestamp: new Date(),
@@ -57,7 +60,6 @@ export const ProfileSelectionInput = ({
         const { value: nextValue } = evt.target;
         setInput(nextValue);
         if (nextValue == '') {
-            onProfileSuccess(null);
             setLoading(false);
             setLProfile(null);
             pause();
@@ -69,23 +71,21 @@ export const ProfileSelectionInput = ({
         restart(time);
     };
 
-    const isError =
-        input != '' && !loading && (!lProfile || !lProfile?.player.steam_id);
     return (
         <>
             <TextField
                 value={input}
-                error={isError}
-                fullWidth={fullWidth}
+                fullWidth
                 id={id ?? 'query'}
                 label={label ?? 'Steam ID / Profile URL'}
                 onChange={onChangeInput}
                 onBlur={loadProfile}
                 color={lProfile?.player.steam_id ? 'success' : 'primary'}
+                error={touched.steam_id && Boolean(errors.steam_id)}
                 InputProps={{
                     startAdornment: (
                         <InputAdornment position="start">
-                            {isError ? (
+                            {touched.steam_id && Boolean(errors.steam_id) ? (
                                 <ErrorOutlineIcon
                                     color={'error'}
                                     sx={{ width: 40 }}

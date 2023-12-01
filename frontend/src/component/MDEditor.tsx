@@ -158,7 +158,7 @@ export const MDEditor = <T,>() => {
                             </ButtonGroup>
                         )}
                     </Stack>
-                    <Box paddingRight={2} paddingLeft={2}>
+                    <Box>
                         <TextField
                             sx={{
                                 padding: 0,
