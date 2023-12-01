@@ -611,6 +611,12 @@ func onAPIPostReportCreate(app *App) gin.HandlerFunc {
 			return
 		}
 
+		if req.Description == "" || len(req.Description) < 10 {
+			responseErr(ctx, http.StatusBadRequest, errors.New("Description too short"))
+
+			return
+		}
+
 		// Server initiated requests will have a sourceID set by the server
 		// Web based reports the source should not be set, the reporter will be taken from the
 		// current session information instead

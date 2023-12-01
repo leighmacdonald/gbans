@@ -7,6 +7,7 @@ import ReportIcon from '@mui/icons-material/Report';
 import ReportGmailerrorredIcon from '@mui/icons-material/ReportGmailerrorred';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
@@ -15,7 +16,10 @@ import Tabs from '@mui/material/Tabs';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
+import { Formik } from 'formik';
+import { FormikHelpers } from 'formik/dist/types';
 import {
+    apiCreateReportMessage,
     apiDeleteReportMessage,
     apiGetReportMessages,
     apiUpdateReportMessage,
@@ -35,6 +39,7 @@ import { RenderedMarkdownBox } from './RenderedMarkdownBox';
 import { SourceBansList } from './SourceBansList';
 import { TabPanel } from './TabPanel';
 import { UserMessageView } from './UserMessageView';
+import { ResetButton, SubmitButton } from './modal/Buttons';
 import { BanHistoryTable } from './table/BanHistoryTable';
 import { ConnectionHistoryTable } from './table/ConnectionHistoryTable';
 import { PersonMessageTable } from './table/PersonMessageTable';
@@ -43,7 +48,11 @@ interface ReportComponentProps {
     report: Report;
 }
 
-export const ReportComponent = ({
+interface ReportViewValues {
+    body_md: string;
+}
+
+export const ReportViewComponent = ({
     report
 }: ReportComponentProps): JSX.Element => {
     const theme = useTheme();
@@ -65,24 +74,29 @@ export const ReportComponent = ({
             .catch(logErr);
     }, [report.report_id]);
 
-    // const onSave = useCallback(
-    //     (message: string, onSuccess?: () => void) => {
-    //         apiCreateReportMessage(report.report_id, message)
-    //             .then((response) => {
-    //                 setMessages([
-    //                     ...messages,
-    //                     { author: currentUser, message: response }
-    //                 ]);
-    //                 onSuccess && onSuccess();
-    //             })
-    //             .catch((e) => {
-    //                 sendFlash('error', 'Failed to save report message');
-    //                 logErr(e);
-    //             });
-    //     },
-    //     [report.report_id, messages, currentUser, sendFlash]
-    // );
-
+    const onSubmit = useCallback(
+        async (
+            values: ReportViewValues,
+            formikHelpers: FormikHelpers<ReportViewValues>
+        ) => {
+            try {
+                const message = await apiCreateReportMessage(
+                    report.report_id,
+                    values.body_md
+                );
+                setMessages((prevState) => {
+                    return [
+                        ...prevState,
+                        { author: currentUser, message: message }
+                    ];
+                });
+                formikHelpers.resetForm();
+            } catch (e) {
+                logErr(e);
+            }
+        },
+        []
+    );
     const onEdit = useCallback(
         (message: UserMessage) => {
             apiUpdateReportMessage(message.message_id, message.contents)
@@ -260,9 +274,18 @@ export const ReportComponent = ({
                         />
                     ))}
                     <Paper elevation={1}>
-                        <Stack spacing={2}>
-                            <MDEditor />
-                        </Stack>
+                        <Formik<ReportViewValues>
+                            initialValues={{ body_md: '' }}
+                            onSubmit={onSubmit}
+                        >
+                            <Stack spacing={2} padding={1}>
+                                <MDEditor />
+                                <ButtonGroup>
+                                    <ResetButton />
+                                    <SubmitButton />
+                                </ButtonGroup>
+                            </Stack>
+                        </Formik>
                     </Paper>
                 </Stack>
             </Grid>

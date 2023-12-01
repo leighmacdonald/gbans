@@ -22,7 +22,7 @@ import {
 import { Heading } from '../Heading';
 import {
     BanReasonField,
-    BanReasonFieldValidator
+    banReasonFieldValidator
 } from '../formik/BanReasonField';
 import {
     BanReasonTextField,
@@ -59,7 +59,7 @@ interface BanCIDRFormValues extends SteamIDInputValue {
 const validationSchema = yup.object({
     steam_id: steamIdValidator,
     cidr: makeNetworkRangeFieldValidator(true),
-    reason: BanReasonFieldValidator,
+    reason: banReasonFieldValidator,
     reason_text: banReasonTextFieldValidator,
     duration: DurationFieldValidator,
     duration_custom: DurationCustomFieldValidator,

@@ -12,7 +12,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { ReportForm } from '../component/ReportForm';
+import { ReportCreateForm } from '../component/ReportCreateForm';
 import { UserReportHistory } from '../component/UserReportHistory';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 
@@ -28,7 +28,7 @@ export const ReportCreatePage = (): JSX.Element => {
         <Grid container spacing={3}>
             <Grid xs={12} md={8}>
                 <Stack spacing={2}>
-                    {canReport && <ReportForm />}
+                    {canReport && <ReportCreateForm />}
                     {!canReport && (
                         <ContainerWithHeader title={'Permission Denied'}>
                             <Typography variant={'body1'} padding={2}>

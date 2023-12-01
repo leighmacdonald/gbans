@@ -1,17 +1,28 @@
-import React, { useEffect, useMemo, JSX } from 'react';
+import React, { useEffect, useMemo, JSX, useCallback } from 'react';
 import { useParams } from 'react-router';
 import ArticleIcon from '@mui/icons-material/Article';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
+import { Formik } from 'formik';
+import * as yup from 'yup';
 import { PermissionLevel } from '../api';
-import { apiGetWikiPage, Page, renderMarkdown } from '../api/wiki';
+import {
+    apiGetWikiPage,
+    apiSaveWikiPage,
+    Page,
+    renderMarkdown
+} from '../api/wiki';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { LoadingSpinner } from '../component/LoadingSpinner';
 import { MDEditor } from '../component/MDEditor';
 import { RenderedMarkdownBox } from '../component/RenderedMarkdownBox';
+import { bodyMDValidator } from '../component/formik/BodyMDField';
+import { SubmitButton } from '../component/modal/Buttons';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { logErr } from '../util/errors';
 
@@ -24,13 +35,21 @@ const defaultPage: Page = {
     title: ''
 };
 
+interface WikiValues {
+    slug: string;
+    body_md: string;
+}
+
+const validationSchema = yup.object({
+    body_md: bodyMDValidator
+});
+
 export const WikiPage = (): JSX.Element => {
     const [page, setPage] = React.useState<Page>(defaultPage);
     const [loading, setLoading] = React.useState<boolean>(true);
     const [editMode, setEditMode] = React.useState<boolean>(false);
     const { slug } = useParams();
     const { currentUser } = useCurrentUserCtx();
-    // const { sendFlash } = useUserFlashCtx();
 
     useEffect(() => {
         const abortController = new AbortController();
@@ -54,21 +73,23 @@ export const WikiPage = (): JSX.Element => {
         return () => abortController.abort();
     }, [slug]);
 
-    // const onSave = useCallback(
-    //     (new_body_md: string) => {
-    //         const newPage = page;
-    //         newPage.slug = slug || 'home';
-    //         newPage.body_md = new_body_md;
-    //         apiSaveWikiPage(newPage)
-    //             .then((response) => {
-    //                 setPage(response);
-    //                 sendFlash('success', `Slug ${response.slug} updated`);
-    //                 setEditMode(false);
-    //             })
-    //             .catch(logErr);
-    //     },
-    //     [page, sendFlash, slug]
-    // );
+    const onSubmit = useCallback(
+        async (values: WikiValues) => {
+            try {
+                const newPage = {
+                    ...page,
+                    body_md: values.body_md,
+                    slug: values.slug
+                };
+                const resp = await apiSaveWikiPage(newPage);
+                setPage(resp);
+                setEditMode(false);
+            } catch (e) {
+                logErr(e);
+            }
+        },
+        [page]
+    );
 
     const bodyHTML = useMemo(() => {
         return page.revision > 0 && page.body_md
@@ -134,9 +155,24 @@ export const WikiPage = (): JSX.Element => {
             )}
             {!loading && editMode && (
                 <Grid xs={12}>
-                    <Paper elevation={1}>
-                        <MDEditor />
-                    </Paper>
+                    <Formik<WikiValues>
+                        onSubmit={onSubmit}
+                        validationSchema={validationSchema}
+                        validateOnBlur={true}
+                        initialValues={{
+                            slug: page.slug,
+                            body_md: page.body_md
+                        }}
+                    >
+                        <Paper elevation={1}>
+                            <Stack spacing={1} padding={1}>
+                                <MDEditor />
+                                <ButtonGroup>
+                                    <SubmitButton />
+                                </ButtonGroup>
+                            </Stack>
+                        </Paper>
+                    </Formik>
                 </Grid>
             )}
         </Grid>
