@@ -8,7 +8,7 @@ import { useFormikContext } from 'formik';
 import * as yup from 'yup';
 import { BanReason, BanReasons, banReasonsList } from '../../api';
 
-export const BanReasonFieldValidator = yup
+export const banReasonFieldValidator = yup
     .string()
     .label('Select a reason')
     .required('reason is required');

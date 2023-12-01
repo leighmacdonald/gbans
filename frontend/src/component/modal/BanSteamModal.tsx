@@ -22,7 +22,7 @@ import {
 import { Heading } from '../Heading';
 import {
     BanReasonField,
-    BanReasonFieldValidator
+    banReasonFieldValidator
 } from '../formik/BanReasonField';
 import {
     BanReasonTextField,
@@ -67,7 +67,7 @@ const validationSchema = yup.object({
     steam_id: steamIdValidator,
     reportId: ReportIdFieldValidator,
     ban_type: BanTypeFieldValidator,
-    reason: BanReasonFieldValidator,
+    reason: banReasonFieldValidator,
     reason_text: banReasonTextFieldValidator,
     duration: DurationFieldValidator,
     duration_custom: DurationCustomFieldValidator,

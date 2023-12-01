@@ -11,7 +11,6 @@ import { logErr } from '../util/errors';
 import { Nullable } from '../util/types';
 
 export interface ProfileSelectionInputProps {
-    id?: string;
     label?: string;
     initialValue?: string;
 }
@@ -21,7 +20,6 @@ interface ProfileSelectionFieldProps {
 }
 
 export const ProfileSelectionField = <T,>({
-    id,
     label
 }: ProfileSelectionInputProps) => {
     const debounceRate = 1;
@@ -76,7 +74,8 @@ export const ProfileSelectionField = <T,>({
             <TextField
                 value={input}
                 fullWidth
-                id={id ?? 'query'}
+                id={'steam_id'}
+                name={'steam_id'}
                 label={label ?? 'Steam ID / Profile URL'}
                 onChange={onChangeInput}
                 onBlur={loadProfile}

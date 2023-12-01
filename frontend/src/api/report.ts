@@ -85,8 +85,15 @@ export interface ReportWithAuthor extends Report {
 export const apiCreateReport = async (opts: CreateReportRequest) =>
     await apiCall<Report, CreateReportRequest>('/api/report', 'POST', opts);
 
-export const apiGetReport = async (report_id: number) =>
-    await apiCall<ReportWithAuthor>(`/api/report/${report_id}`, 'GET');
+export const apiGetReport = async (
+    report_id: number,
+    abortController?: AbortController
+) =>
+    await apiCall<ReportWithAuthor>(
+        `/api/report/${report_id}`,
+        'GET',
+        abortController
+    );
 
 export const apiGetReports = async (
     opts?: ReportQueryFilter,

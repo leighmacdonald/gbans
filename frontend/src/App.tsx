@@ -656,7 +656,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                         <ErrorBoundary>
                                                                             <PrivateRoute
                                                                                 permission={
-                                                                                    PermissionLevel.Admin
+                                                                                    PermissionLevel.Moderator
                                                                                 }
                                                                             >
                                                                                 <AdminPeoplePage />
@@ -664,22 +664,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                         </ErrorBoundary>
                                                                     }
                                                                 />
-                                                                <Route
-                                                                    path={
-                                                                        '/admin/people'
-                                                                    }
-                                                                    element={
-                                                                        <ErrorBoundary>
-                                                                            <PrivateRoute
-                                                                                permission={
-                                                                                    PermissionLevel.Admin
-                                                                                }
-                                                                            >
-                                                                                <AdminPeoplePage />
-                                                                            </PrivateRoute>
-                                                                        </ErrorBoundary>
-                                                                    }
-                                                                />
+
                                                                 <Route
                                                                     path={
                                                                         '/admin/servers'

@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import EditNotificationsIcon from '@mui/icons-material/EditNotifications';
 import SendIcon from '@mui/icons-material/Send';
 import ButtonGroup from '@mui/material/ButtonGroup';
-import FormControl from '@mui/material/FormControl';
 import Stack from '@mui/material/Stack';
-import TextField from '@mui/material/TextField';
 import { Formik } from 'formik';
+import { FormikHelpers } from 'formik/dist/types';
+import * as yup from 'yup';
 import {
     apiCreateReport,
     BanReason,
@@ -19,23 +19,43 @@ import { ContainerWithHeader } from './ContainerWithHeader';
 import { MDEditor } from './MDEditor';
 import { PlayerMessageContext } from './PlayerMessageContext';
 import { ProfileSelectionField } from './ProfileSelectionField';
-import { BanReasonField } from './formik/BanReasonField';
-import { BanReasonTextField } from './formik/BanReasonTextField';
+import {
+    BanReasonField,
+    banReasonFieldValidator
+} from './formik/BanReasonField';
+import {
+    BanReasonTextField,
+    banReasonTextFieldValidator
+} from './formik/BanReasonTextField';
+import { DemoNameField } from './formik/DemoNameField';
+import { DemTickField } from './formik/DemoTickField';
+import { steamIdValidator } from './formik/SteamIdField';
 import { ResetButton, SubmitButton } from './modal/Buttons';
 
 interface ReportValues {
     steam_id: string;
-    description: string;
+    body_md: string;
     reason: BanReason;
     reason_text: string;
     demo_name: string;
-    demo_tick: number;
+    demo_tick?: number;
     person_message_id: number;
 }
 
-export const ReportForm = (): JSX.Element => {
-    const [demoTick, setDemoTick] = useState(0);
+const validationSchema = yup.object({
+    steam_id: steamIdValidator,
+    body_md: yup
+        .string()
+        .min(10, 'Message too short (min 10)')
+        .required('Description is required'),
+    reason: banReasonFieldValidator,
+    reason_text: banReasonTextFieldValidator,
+    //person_message_id: yup.number().min(1, 'Invalid message id').optional()
+    demo_name: yup.string().optional(),
+    demo_tick: yup.number().min(0, 'invalid demo tick value').optional()
+});
 
+export const ReportCreateForm = (): JSX.Element => {
     const [personMessageID] = useState(
         parseInt(
             sessionStorage.getItem(sessionKeyReportPersonMessageIdName) ?? '0',
@@ -57,18 +77,22 @@ export const ReportForm = (): JSX.Element => {
     }, []);
 
     const onSubmit = useCallback(
-        async (values: ReportValues) => {
+        async (
+            values: ReportValues,
+            formikHelpers: FormikHelpers<ReportValues>
+        ) => {
             try {
                 const report = await apiCreateReport({
                     demo_name: values.demo_name,
-                    demo_tick: values.demo_tick,
-                    description: values.description,
+                    demo_tick: values.demo_tick ?? 0,
+                    description: values.body_md,
                     reason_text: values.reason_text,
                     target_id: values.steam_id,
                     person_message_id: values.person_message_id,
                     reason: values.reason
                 });
                 navigate(`/report/${report.report_id}`);
+                formikHelpers.resetForm();
             } catch (e) {
                 logErr(e);
             }
@@ -84,11 +108,13 @@ export const ReportForm = (): JSX.Element => {
         >
             <Formik<ReportValues>
                 onSubmit={onSubmit}
+                validateOnBlur={true}
+                validationSchema={validationSchema}
                 initialValues={{
-                    demo_name: '',
-                    demo_tick: 0,
-                    person_message_id: 0,
-                    description: '',
+                    demo_name: demoName,
+                    demo_tick: undefined,
+                    person_message_id: personMessageID,
+                    body_md: '',
                     reason: BanReason.Cheating,
                     reason_text: '',
                     steam_id: ''
@@ -97,33 +123,13 @@ export const ReportForm = (): JSX.Element => {
                 <Stack spacing={1}>
                     <ProfileSelectionField />
                     <BanReasonField />
-                    <BanReasonTextField />
+                    <BanReasonTextField paired />
+                    <Stack direction={'row'} spacing={1}>
+                        <DemoNameField />
+                        <DemTickField />
+                    </Stack>
 
-                    {demoName != '' && (
-                        <Stack direction={'row'} spacing={2}>
-                            <FormControl fullWidth>
-                                <TextField
-                                    label={'Demo Name'}
-                                    value={demoName}
-                                    disabled={true}
-                                    fullWidth
-                                />
-                            </FormControl>
-                            <FormControl fullWidth>
-                                <TextField
-                                    label={'Demo Tick'}
-                                    value={demoTick}
-                                    fullWidth
-                                    onChange={(event) => {
-                                        setDemoTick(
-                                            parseInt(event.target.value)
-                                        );
-                                    }}
-                                />
-                            </FormControl>
-                        </Stack>
-                    )}
-                    {personMessageID > 0 && (
+                    {personMessageID != undefined && personMessageID > 0 && (
                         <PlayerMessageContext
                             playerMessageId={personMessageID}
                             padding={5}
