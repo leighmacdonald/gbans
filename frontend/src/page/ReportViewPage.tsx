@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, JSX } from 'react';
+import React, { useCallback, useEffect, useState, JSX, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import NiceModal from '@ebay/nice-modal-react';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
@@ -22,19 +22,24 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
+import { isBefore } from 'date-fns';
 import {
+    apiGetBansSteam,
     apiGetReport,
     apiReportSetState,
     BanReasons,
+    BanType,
     PermissionLevel,
     ReportStatus,
     reportStatusColour,
     reportStatusString,
-    ReportWithAuthor
+    ReportWithAuthor,
+    SteamBanRecord
 } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
+import { Heading } from '../component/Heading';
 import { LoadingSpinner } from '../component/LoadingSpinner';
-import { ReportComponent } from '../component/ReportComponent';
+import { ReportViewComponent } from '../component/ReportViewComponent';
 import { SteamIDList } from '../component/SteamIDList';
 import { ModalBanSteam } from '../component/modal';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
@@ -48,6 +53,7 @@ export const ReportViewPage = (): JSX.Element => {
     const [report, setReport] = useState<ReportWithAuthor>();
     const [stateAction, setStateAction] = useState(ReportStatus.Opened);
     const { currentUser } = useCurrentUserCtx();
+    const [ban, setBan] = useState<SteamBanRecord>();
     const { sendFlash } = useUserFlashCtx();
     const navigate = useNavigate();
 
@@ -56,7 +62,8 @@ export const ReportViewPage = (): JSX.Element => {
     };
 
     useEffect(() => {
-        apiGetReport(id)
+        const abortController = new AbortController();
+        apiGetReport(id, abortController)
             .then((response) => {
                 setReport(response);
                 setStateAction(response.report_status);
@@ -70,7 +77,25 @@ export const ReportViewPage = (): JSX.Element => {
                 navigate(`/report`);
                 return;
             });
+
+        return () => abortController.abort();
     }, [report_id, setReport, id, sendFlash, navigate]);
+
+    useEffect(() => {
+        const abortController = new AbortController();
+        apiGetBansSteam(
+            { target_id: report?.target_id, desc: true },
+            abortController
+        ).then((bans) => {
+            const active = bans.data.filter((b) =>
+                isBefore(new Date(), b.valid_until)
+            );
+            if (active.length > 0) {
+                setBan(active[0]);
+            }
+        });
+        return () => abortController.abort();
+    }, [report?.target_id]);
 
     const onSetReportState = useCallback(() => {
         apiReportSetState(id, stateAction)
@@ -85,25 +110,29 @@ export const ReportViewPage = (): JSX.Element => {
             .catch(logErr);
     }, [id, report?.report_status, sendFlash, stateAction]);
 
-    // const renderBan = (ban: SteamBanRecord) => {
-    //     switch (ban.ban_type) {
-    //         case BanType.Banned:
-    //             return (
-    //                 <Heading bgColor={theme.palette.error.main}>Banned</Heading>
-    //             );
-    //         default:
-    //             return (
-    //                 <Heading bgColor={theme.palette.warning.main}>
-    //                     Muted
-    //                 </Heading>
-    //             );
-    //     }
-    // };
+    const renderBan = useMemo(() => {
+        if (!ban) {
+            return null;
+        }
+
+        switch (ban.ban_type) {
+            case BanType.Banned:
+                return (
+                    <Heading bgColor={theme.palette.error.main}>Banned</Heading>
+                );
+            default:
+                return (
+                    <Heading bgColor={theme.palette.warning.main}>
+                        Muted
+                    </Heading>
+                );
+        }
+    }, [ban, theme.palette.error.main, theme.palette.warning.main]);
 
     return (
         <Grid container spacing={2}>
             <Grid xs={12} md={8}>
-                {report && <ReportComponent report={report} />}
+                {report && <ReportViewComponent report={report} />}
             </Grid>
             <Grid xs={12} md={4}>
                 <Stack spacing={2}>
@@ -125,7 +154,7 @@ export const ReportViewPage = (): JSX.Element => {
                                             height: '100%'
                                         }}
                                     />
-                                    {/*currentBan && renderBan(currentBan)*/}
+                                    {renderBan}
                                 </>
                             )}
                         </Stack>
