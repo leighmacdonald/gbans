@@ -95,7 +95,7 @@ export const ReportViewComponent = ({
                 logErr(e);
             }
         },
-        []
+        [currentUser, report.report_id]
     );
     const onEdit = useCallback(
         (message: UserMessage) => {

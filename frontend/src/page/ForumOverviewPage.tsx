@@ -349,7 +349,7 @@ export const RecentMessageActivity = () => {
                                     <ForumRowLink
                                         variant={'body1'}
                                         label={m.title ?? ''}
-                                        to={`/forums/thread/${m.forum_thread_id}`}
+                                        to={`/forums/thread/${m.forum_thread_id}#${m.forum_message_id}`}
                                     />
                                 </Box>
                                 <Stack direction={'row'} spacing={1}>

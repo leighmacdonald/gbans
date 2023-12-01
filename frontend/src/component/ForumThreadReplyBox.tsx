@@ -50,7 +50,7 @@ export const ForumThreadReplyBox = ({
                 validateOnBlur={true}
                 validationSchema={validationSchema}
             >
-                <Stack spacing={1}>
+                <Stack spacing={1} padding={1}>
                     <MDEditor />
                     <Stack direction={'row'} padding={1}>
                         <SubmitButton />

@@ -1916,6 +1916,59 @@ func onAPIThreadCreate(app *App) gin.HandlerFunc {
 	}
 }
 
+func onAPIThreadMessageUpdate(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	type MessageUpdate struct {
+		BodyMD string `json:"body_md"`
+	}
+
+	return func(ctx *gin.Context) {
+		currentUser := currentUserProfile(ctx)
+
+		forumMessageID, errForumMessageID := getInt64Param(ctx, "forum_message_id")
+		if errForumMessageID != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		var req MessageUpdate
+		if !bind(ctx, log, &req) {
+			return
+		}
+
+		var message store.ForumMessage
+		if errMessage := app.db.ForumMessage(ctx, forumMessageID, &message); errMessage != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			return
+		}
+
+		if message.SourceID != currentUser.SteamID && !(currentUser.PermissionLevel >= consts.PModerator) {
+			responseErr(ctx, http.StatusForbidden, consts.ErrInternal)
+
+			return
+		}
+
+		if len(req.BodyMD) < 10 {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		message.BodyMD = req.BodyMD
+
+		if errSave := app.db.ForumMessageSave(ctx, &message); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, message)
+	}
+}
+
 func onAPIThreadCreateReply(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
