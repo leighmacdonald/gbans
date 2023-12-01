@@ -418,15 +418,22 @@ func (db *Store) ForumThreads(ctx context.Context, filter ThreadQueryFilter) ([]
 	builder := db.sb.
 		Select("t.forum_thread_id", "t.forum_id", "t.source_id", "t.title", "t.sticky",
 			"t.locked", "t.views", "t.created_on", "t.updated_on", "p.personaname", "p.avatarhash", "p.permission_level",
-			"a.steam_id", "a.personaname", "a.avatarhash", "a.forum_message_id", "a.created_on").
+			"a.steam_id", "a.personaname", "a.avatarhash", "a.forum_message_id", "a.created_on", "c.message_count").
 		From("forum_thread t").
 		LeftJoin("person p ON p.steam_id = t.source_id").
-		InnerJoin("LATERAL (SELECT m.*, p2.personaname, p2.avatarhash, p2.steam_id " +
-			"FROM forum_message m " +
-			"LEFT JOIN public.person p2 on m.source_id = p2.steam_id " +
-			"WHERE m.forum_thread_id = t.forum_thread_id " +
-			"ORDER BY m.forum_message_id DESC " +
-			"LIMIT 1) a ON TRUE")
+		InnerJoin(`
+			LATERAL (SELECT m.*, p2.personaname, p2.avatarhash, p2.steam_id 
+					 FROM forum_message m 
+					 LEFT JOIN public.person p2 on m.source_id = p2.steam_id 
+                     WHERE m.forum_thread_id = t.forum_thread_id 
+			         ORDER BY m.forum_message_id DESC 
+			         LIMIT 1) a ON TRUE`).
+		InnerJoin(`
+			LATERAL (SELECT count(m.forum_message_id) as message_count
+                     FROM forum_message m
+                     WHERE m.forum_thread_id = t.forum_thread_id
+					) c ON TRUE`).
+		OrderBy("t.sticky DESC, a.created_on")
 
 	builder = filter.applySafeOrder(builder, map[string][]string{
 		"t.": {
@@ -476,7 +483,7 @@ func (db *Store) ForumThreads(ctx context.Context, filter ThreadQueryFilter) ([]
 			Scan(&tws.ForumThreadID, &tws.ForumID, &tws.SourceID, &tws.Title, &tws.Sticky,
 				&tws.Locked, &tws.Views, &tws.CreatedOn, &tws.UpdatedOn, &tws.Personaname, &tws.Avatarhash,
 				&tws.PermissionLevel, &RecentSteamID, &RecentPersonaname, &RecentAvatarHash, &RecentForumMessageID,
-				&RecentCreatedOn); errScan != nil {
+				&RecentCreatedOn, &tws.Replies); errScan != nil {
 			return nil, 0, Err(errScan)
 		}
 
@@ -598,16 +605,18 @@ type ThreadMessagesQueryFilter struct {
 func (db *Store) ForumMessages(ctx context.Context, filters ThreadMessagesQueryFilter) ([]ForumMessage, int64, error) {
 	constraints := sq.And{sq.Eq{"forum_thread_id": filters.ForumThreadID}}
 
-	rows, errRows := db.QueryBuilder(ctx, db.sb.
+	builder := db.sb.
 		Select("m.forum_message_id", "m.forum_thread_id", "m.source_id", "m.body_md", "m.created_on",
 			"m.updated_on", "p.personaname", "p.avatarhash", "p.permission_level").
 		From("forum_message m").
 		LeftJoin("person p ON p.steam_id = m.source_id").
-		Where(constraints))
+		Where(constraints).
+		OrderBy("m.forum_message_id")
+
+	rows, errRows := db.QueryBuilder(ctx, filters.applyLimitOffset(builder, 100).Where(constraints))
 	if errRows != nil {
 		return nil, 0, errRows
 	}
-
 	defer rows.Close()
 
 	var messages []ForumMessage

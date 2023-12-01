@@ -3,8 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Link as RouterLink } from 'react-router-dom';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import BuildIcon from '@mui/icons-material/Build';
+import LockIcon from '@mui/icons-material/Lock';
 import MessageIcon from '@mui/icons-material/Message';
 import PostAddIcon from '@mui/icons-material/PostAdd';
+import PushPinIcon from '@mui/icons-material/PushPin';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
@@ -17,6 +19,7 @@ import { apiForum, apiGetThreads, Forum, ForumThread } from '../api/forum';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons';
 import { ForumRowLink } from '../component/ForumRowLink';
 import { VCenteredElement } from '../component/Heading';
+import { VCenterBox } from '../component/VCenterBox';
 import {
     ModalForumForumEditor,
     ModalForumThreadEditor
@@ -51,12 +54,23 @@ const ForumThreadRow = ({ thread }: { thread: ForumThread }) => {
                         }
                     />
                     <Stack>
-                        <ForumRowLink
-                            label={thread.title}
-                            to={`/forums/thread/${thread.forum_thread_id}`}
-                        />
-
-                        <Stack direction={'row'}>
+                        <Stack direction={'row'} justifyContent="space-between">
+                            <ForumRowLink
+                                label={thread.title}
+                                to={`/forums/thread/${thread.forum_thread_id}`}
+                            />
+                        </Stack>
+                        <Stack direction={'row'} spacing={1}>
+                            {thread.sticky && (
+                                <VCenterBox>
+                                    <PushPinIcon fontSize={'small'} />
+                                </VCenterBox>
+                            )}
+                            {thread.locked && (
+                                <VCenterBox>
+                                    <LockIcon fontSize={'small'} />
+                                </VCenterBox>
+                            )}
                             <Typography variant={'body2'}>
                                 {thread.personaname}
                             </Typography>
@@ -139,7 +153,7 @@ export const ForumPage = () => {
     const [threads, setThreads] = useState<ForumThread[]>();
     const [count, setCount] = useState(0);
     const [loading, setLoading] = useState(false);
-    const [page, setPage] = useState(0);
+    const [page, setPage] = useState(1);
     const modal = useModal(ModalForumThreadEditor);
     const { currentUser } = useCurrentUserCtx();
     const { sendFlash } = useUserFlashCtx();
@@ -168,7 +182,7 @@ export const ForumPage = () => {
     useEffect(() => {
         apiGetThreads({
             forum_id: id,
-            offset: page * rpp,
+            offset: (page - 1) * rpp,
             limit: rpp,
             order_by: 'updated_on',
             desc: true

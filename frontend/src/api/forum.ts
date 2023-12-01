@@ -214,6 +214,20 @@ export const apiGetThreadMessages = async (
     return resp;
 };
 
+export const apiSaveThreadMessage = async (
+    forum_message_id: number,
+    body_md: string,
+    abortController?: AbortController
+) => {
+    const resp = await apiCall<ForumMessage>(
+        `/api/forum/message/${forum_message_id}`,
+        'POST',
+        { body_md },
+        abortController
+    );
+    return transformTimeStampedDates(resp);
+};
+
 export interface ThreadQueryOpts extends QueryFilter<ForumThread> {
     forum_id: number;
 }

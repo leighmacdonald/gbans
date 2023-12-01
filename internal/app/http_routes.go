@@ -260,6 +260,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 
 		authed.POST("/api/forum/forum/:forum_id/thread", onAPIThreadCreate(app))
 		authed.POST("/api/forum/thread/:forum_thread_id/message", onAPIThreadCreateReply(app))
+		authed.POST("/api/forum/message/:forum_message_id", onAPIThreadMessageUpdate(app))
 	}
 
 	editorGrp := engine.Group("/")
