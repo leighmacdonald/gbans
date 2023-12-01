@@ -736,10 +736,7 @@ func onAPIForumThreads(app *App) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, LazyResult{
-			Count: count,
-			Data:  threads,
-		})
+		ctx.JSON(http.StatusOK, newLazyResult(count, threads))
 	}
 }
 
@@ -814,10 +811,7 @@ func onAPIForumMessages(app *App) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, LazyResult{
-			Count: count,
-			Data:  threads,
-		})
+		ctx.JSON(http.StatusOK, newLazyResult(count, threads))
 	}
 }
 

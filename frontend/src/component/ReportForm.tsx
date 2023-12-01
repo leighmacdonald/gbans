@@ -1,36 +1,41 @@
-import React, { JSX, useEffect, useState } from 'react';
+import React, { JSX, useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import EditNotificationsIcon from '@mui/icons-material/EditNotifications';
-import Box from '@mui/material/Box';
+import SendIcon from '@mui/icons-material/Send';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import MenuItem from '@mui/material/MenuItem';
-import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
+import { Formik } from 'formik';
 import {
+    apiCreateReport,
     BanReason,
-    BanReasons,
     sessionKeyDemoName,
     sessionKeyReportPersonMessageIdName,
     sessionKeyReportSteamID
 } from '../api';
+import { logErr } from '../util/errors';
 import { ContainerWithHeader } from './ContainerWithHeader';
 import { MDEditor } from './MDEditor';
 import { PlayerMessageContext } from './PlayerMessageContext';
-import { ProfileSelectionInput } from './ProfileSelectionInput';
+import { ProfileSelectionField } from './ProfileSelectionField';
+import { BanReasonField } from './formik/BanReasonField';
+import { BanReasonTextField } from './formik/BanReasonTextField';
+import { ResetButton, SubmitButton } from './modal/Buttons';
+
+interface ReportValues {
+    steam_id: string;
+    description: string;
+    reason: BanReason;
+    reason_text: string;
+    demo_name: string;
+    demo_tick: number;
+    person_message_id: number;
+}
 
 export const ReportForm = (): JSX.Element => {
-    const [reason, setReason] = useState<BanReason>(
-        sessionStorage.getItem(sessionKeyReportPersonMessageIdName)
-            ? BanReason.Language
-            : BanReason.Cheating
-    );
-    const [reasonText, setReasonText] = useState<string>('');
     const [demoTick, setDemoTick] = useState(0);
-    //const [profile, setProfile] = useState<PlayerProfile | null>();
-    const [inputSteamID, setInputSteamID] = useState<string>(
-        sessionStorage.getItem(sessionKeyReportSteamID) ?? ''
-    );
+
     const [personMessageID] = useState(
         parseInt(
             sessionStorage.getItem(sessionKeyReportPersonMessageIdName) ?? '0',
@@ -40,8 +45,8 @@ export const ReportForm = (): JSX.Element => {
     const [demoName] = useState(
         sessionStorage.getItem(sessionKeyDemoName) ?? ''
     );
-    // const { sendFlash } = useUserFlashCtx();
-    // const navigate = useNavigate();
+
+    const navigate = useNavigate();
 
     useEffect(() => {
         return () => {
@@ -51,48 +56,25 @@ export const ReportForm = (): JSX.Element => {
         };
     }, []);
 
-    // TODO
-    // const onSave = useCallback(
-    //     (body_md: string) => {
-    //         setBody(body_md);
-    //         if (!profile || !profile.player.steam_id) {
-    //             sendFlash('error', 'Invalid steam profile');
-    //             return;
-    //         }
-    //         if (profile && body_md) {
-    //             if (reason == BanReason.Custom && reasonText == '') {
-    //                 sendFlash('error', 'Custom reason cannot be empty');
-    //                 return;
-    //             }
-    //             apiCreateReport({
-    //                 target_id: profile?.player.steam_id.toString(),
-    //                 description: body_md,
-    //                 reason: reason,
-    //                 reason_text: reasonText,
-    //                 demo_name: demoName,
-    //                 demo_tick: demoTick,
-    //                 person_message_id: personMessageID
-    //             })
-    //                 .then((response) => {
-    //                     navigate(`/report/${response.report_id}`);
-    //                 })
-    //                 .catch((e) => {
-    //                     sendFlash('error', `Failed to create report`);
-    //                     logErr(e);
-    //                 });
-    //         }
-    //     },
-    //     [
-    //         demoName,
-    //         demoTick,
-    //         navigate,
-    //         personMessageID,
-    //         profile,
-    //         reason,
-    //         reasonText,
-    //         sendFlash
-    //     ]
-    // );
+    const onSubmit = useCallback(
+        async (values: ReportValues) => {
+            try {
+                const report = await apiCreateReport({
+                    demo_name: values.demo_name,
+                    demo_tick: values.demo_tick,
+                    description: values.description,
+                    reason_text: values.reason_text,
+                    target_id: values.steam_id,
+                    person_message_id: values.person_message_id,
+                    reason: values.reason
+                });
+                navigate(`/report/${report.report_id}`);
+            } catch (e) {
+                logErr(e);
+            }
+        },
+        [navigate]
+    );
 
     return (
         <ContainerWithHeader
@@ -100,94 +82,63 @@ export const ReportForm = (): JSX.Element => {
             iconLeft={<EditNotificationsIcon />}
             spacing={2}
         >
-            <Box paddingLeft={2} paddingRight={2} paddingTop={3} width={'100%'}>
-                <ProfileSelectionInput
-                    fullWidth
-                    input={inputSteamID}
-                    setInput={setInputSteamID}
-                    onProfileSuccess={() => {
-                        //setProfile(profile1);
-                    }}
-                />
-                <FormControl margin={'normal'} variant={'filled'} fullWidth>
-                    <InputLabel id="select_ban_reason_label">
-                        Report Reason
-                    </InputLabel>
-                    <Select<BanReason>
-                        labelId="select_ban_reason_label"
-                        id="select_ban_reason"
-                        value={reason}
-                        fullWidth
-                        variant={'outlined'}
-                        label={'Ban Reason'}
-                        onChange={(v) => {
-                            setReason(v.target.value as BanReason);
-                        }}
-                    >
-                        {[
-                            BanReason.Custom,
-                            BanReason.External,
-                            BanReason.Cheating,
-                            BanReason.Racism,
-                            BanReason.Harassment,
-                            BanReason.Exploiting,
-                            BanReason.WarningsExceeded,
-                            BanReason.Spam,
-                            BanReason.Language,
-                            BanReason.Profile,
-                            BanReason.ItemDescriptions,
-                            BanReason.BotHost
-                        ].map((v) => {
-                            return (
-                                <MenuItem value={v} key={v}>
-                                    {BanReasons[v]}
-                                </MenuItem>
-                            );
-                        })}
-                    </Select>
-                </FormControl>
-                {reason == BanReason.Custom && (
-                    <FormControl fullWidth>
-                        <TextField
-                            label={'Custom Reason'}
-                            value={reasonText}
-                            fullWidth
-                            onChange={(event) => {
-                                setReasonText(event.target.value);
-                            }}
+            <Formik<ReportValues>
+                onSubmit={onSubmit}
+                initialValues={{
+                    demo_name: '',
+                    demo_tick: 0,
+                    person_message_id: 0,
+                    description: '',
+                    reason: BanReason.Cheating,
+                    reason_text: '',
+                    steam_id: ''
+                }}
+            >
+                <Stack spacing={1}>
+                    <ProfileSelectionField />
+                    <BanReasonField />
+                    <BanReasonTextField />
+
+                    {demoName != '' && (
+                        <Stack direction={'row'} spacing={2}>
+                            <FormControl fullWidth>
+                                <TextField
+                                    label={'Demo Name'}
+                                    value={demoName}
+                                    disabled={true}
+                                    fullWidth
+                                />
+                            </FormControl>
+                            <FormControl fullWidth>
+                                <TextField
+                                    label={'Demo Tick'}
+                                    value={demoTick}
+                                    fullWidth
+                                    onChange={(event) => {
+                                        setDemoTick(
+                                            parseInt(event.target.value)
+                                        );
+                                    }}
+                                />
+                            </FormControl>
+                        </Stack>
+                    )}
+                    {personMessageID > 0 && (
+                        <PlayerMessageContext
+                            playerMessageId={personMessageID}
+                            padding={5}
                         />
-                    </FormControl>
-                )}
-                {demoName != '' && (
-                    <Stack direction={'row'} spacing={2}>
-                        <FormControl fullWidth>
-                            <TextField
-                                label={'Demo Name'}
-                                value={demoName}
-                                disabled={true}
-                                fullWidth
-                            />
-                        </FormControl>
-                        <FormControl fullWidth>
-                            <TextField
-                                label={'Demo Tick'}
-                                value={demoTick}
-                                fullWidth
-                                onChange={(event) => {
-                                    setDemoTick(parseInt(event.target.value));
-                                }}
-                            />
-                        </FormControl>
-                    </Stack>
-                )}
-                {personMessageID > 0 && (
-                    <PlayerMessageContext
-                        playerMessageId={personMessageID}
-                        padding={5}
-                    />
-                )}
-            </Box>
-            <MDEditor />
+                    )}
+                    <MDEditor />
+                    <ButtonGroup>
+                        <ResetButton />
+                        <SubmitButton
+                            label={'Report'}
+                            startIcon={<SendIcon />}
+                        />
+                    </ButtonGroup>
+                </Stack>
+            </Formik>
         </ContainerWithHeader>
     );
 };
