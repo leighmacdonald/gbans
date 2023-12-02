@@ -376,6 +376,12 @@ export const RecentMessageActivity = () => {
                                             component={RouterLink}
                                             to={`/profile/${m.source_id}`}
                                             variant={'body2'}
+                                            sx={{
+                                                textDecoration: 'none',
+                                                '&:hover': {
+                                                    textDecoration: 'underline'
+                                                }
+                                            }}
                                         >
                                             {m.personaname}
                                         </Typography>

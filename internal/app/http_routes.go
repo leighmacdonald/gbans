@@ -188,7 +188,6 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 	engine.GET("/api/forum/forum/:forum_id", onAPIForum(app))
 	engine.POST("/api/forum/threads", onAPIForumThreads(app))
 	engine.POST("/api/forum/messages", onAPIForumMessages(app))
-	engine.GET("/api/forum/messages/recent", onAPIForumMessagesRecent(app))
 	engine.GET("/api/forum/thread/:forum_thread_id", onAPIForumThread(app))
 
 	// This allows use of the user profile on endpoints that have optional authentication
@@ -199,6 +198,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		optionalAuth.GET("/api/contests/:contest_id", onAPIGetContest(app))
 		optionalAuth.GET("/api/contests/:contest_id/entries", onAPIGetContestEntries(app))
 		optionalAuth.GET("/api/forum/overview", onAPIForumOverview(app))
+		optionalAuth.GET("/api/forum/messages/recent", onAPIForumMessagesRecent(app))
 	}
 
 	srvGrp := engine.Group("/")
@@ -261,6 +261,8 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		authed.POST("/api/forum/forum/:forum_id/thread", onAPIThreadCreate(app))
 		authed.POST("/api/forum/thread/:forum_thread_id/message", onAPIThreadCreateReply(app))
 		authed.POST("/api/forum/message/:forum_message_id", onAPIThreadMessageUpdate(app))
+		authed.DELETE("/api/forum/thread/:forum_thread_id", onAPIThreadDelete(app))
+		authed.POST("/api/forum/thread/:forum_thread_id", onAPIThreadUpdate(app))
 	}
 
 	editorGrp := engine.Group("/")

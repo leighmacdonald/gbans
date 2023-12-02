@@ -51,7 +51,7 @@ ALTER TABLE forum
 CREATE TABLE forum_message
 (
     forum_message_id bigserial primary key,
-    forum_thread_id  bigserial references forum_thread (forum_thread_id),
+    forum_thread_id  bigserial references forum_thread (forum_thread_id) ON DELETE CASCADE  ON UPDATE CASCADE,
     source_id        bigserial   not null references person (steam_id),
     body_md          text        not null,
     created_on       timestamptz not null,

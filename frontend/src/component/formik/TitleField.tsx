@@ -5,7 +5,7 @@ import * as yup from 'yup';
 
 export const titleFieldValidator = yup
     .string()
-    .min(5, 'Title to short')
+    .min(3, 'Title to short')
     .label('Title')
     .required('Title is required');
 

@@ -1,8 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link as RouterLink, useParams } from 'react-router-dom';
+import React, { useCallback, useEffect, useMemo, useState, JSX } from 'react';
+import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
+import NiceModal from '@ebay/nice-modal-react';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ConstructionIcon from '@mui/icons-material/Construction';
 import EditIcon from '@mui/icons-material/Edit';
+import LockIcon from '@mui/icons-material/Lock';
 import Person2Icon from '@mui/icons-material/Person2';
 import { IconButton } from '@mui/material';
 import Avatar from '@mui/material/Avatar';
@@ -32,9 +34,11 @@ import { MDEditor } from '../component/MDEditor';
 import { MarkDownRenderer } from '../component/MarkdownRenderer';
 import { VCenterBox } from '../component/VCenterBox';
 import { bodyMDValidator } from '../component/formik/BodyMDField';
+import { ModalForumThreadEditor } from '../component/modal';
 import { SubmitButton } from '../component/modal/Buttons';
 import { RowsPerPage } from '../component/table/LazyTable';
-import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import { hasPermission, useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
 import { useScrollToLocation } from '../util/history';
 import { renderDateTime } from '../util/text';
@@ -49,7 +53,7 @@ const ForumAvatar = ({ ...props }) => (
 
 const ThreadMessageContainer = ({ message }: { message: ForumMessage }) => {
     const [edit, setEdit] = useState(false);
-    const [updatedMessage, setUpdatedMEssage] = useState<ForumMessage>();
+    const [updatedMessage, setUpdatedMessage] = useState<ForumMessage>();
     const { currentUser } = useCurrentUserCtx();
     const theme = useTheme();
 
@@ -61,7 +65,7 @@ const ThreadMessageContainer = ({ message }: { message: ForumMessage }) => {
     }, [message, updatedMessage]);
 
     const onUpdate = useCallback((updated: ForumMessage) => {
-        setUpdatedMEssage(updated);
+        setUpdatedMessage(updated);
         setEdit(false);
     }, []);
 
@@ -242,7 +246,10 @@ export const ForumThreadPage = (): JSX.Element => {
     const [count, setCount] = useState(0);
     const [page, setPage] = useState(1);
     const { forum_thread_id } = useParams();
+    const { currentUser } = useCurrentUserCtx();
     const thread_id = parseInt(forum_thread_id ?? '');
+    const navigate = useNavigate();
+    const { sendFlash } = useUserFlashCtx();
 
     useScrollToLocation();
 
@@ -252,12 +259,13 @@ export const ForumThreadPage = (): JSX.Element => {
             .then((resp) => {
                 setThread(resp);
             })
-            .catch((e) => logErr(e));
+            .catch((e) => {
+                logErr(e);
+            });
         return () => abortController.abort();
-    }, [thread_id]);
+    }, [navigate, sendFlash, thread_id]);
 
     useEffect(() => {
-        console.log(page);
         const abortController = new AbortController();
         apiGetThreadMessages(
             {
@@ -275,12 +283,36 @@ export const ForumThreadPage = (): JSX.Element => {
         return () => abortController.abort();
     }, [page, thread_id]);
 
+    const isMod = useMemo(() => {
+        return hasPermission(currentUser, PermissionLevel.Moderator);
+    }, [currentUser]);
+
+    const onEditThread = useCallback(async () => {
+        try {
+            const newThread = await NiceModal.show<ForumThread>(
+                ModalForumThreadEditor,
+                {
+                    thread
+                }
+            );
+            if (newThread.forum_thread_id > 0) {
+                setThread(newThread);
+            } else {
+                navigate('/forums/');
+            }
+        } catch (e) {
+            logErr(e);
+        }
+    }, [navigate, thread]);
+
     return (
         <Stack spacing={1}>
             <Stack direction={'row'}>
-                <IconButton color={'warning'}>
-                    <ConstructionIcon fontSize={'small'} />
-                </IconButton>
+                {isMod && (
+                    <IconButton color={'warning'} onClick={onEditThread}>
+                        <ConstructionIcon fontSize={'small'} />
+                    </IconButton>
+                )}
                 <Typography variant={'h3'}>{thread?.title}</Typography>
             </Stack>
             <Stack direction={'row'} spacing={1}>
@@ -305,7 +337,7 @@ export const ForumThreadPage = (): JSX.Element => {
             {messages.map((m) => (
                 <ThreadMessageContainer
                     message={m}
-                    key={`tmid-${m.forum_message_id}`}
+                    key={`thread-message-id-${m.forum_message_id}`}
                 />
             ))}
             <Pagination
@@ -315,8 +347,14 @@ export const ForumThreadPage = (): JSX.Element => {
                     setPage(newPage);
                 }}
             />
-
-            {thread?.forum_thread_id && (
+            {thread?.locked && (
+                <Paper>
+                    <Typography variant={'h4'} textAlign={'center'} padding={1}>
+                        <LockIcon /> Thread Locked
+                    </Typography>
+                </Paper>
+            )}
+            {thread?.forum_thread_id && !thread?.locked && (
                 <ForumThreadReplyBox
                     forum_thread_id={thread?.forum_thread_id}
                     onSuccess={(message) => {

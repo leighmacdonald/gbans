@@ -30,4 +30,11 @@ export const CurrentUserCtx = createContext<CurrentUser>({
     }
 });
 
+export const hasPermission = (
+    profile: UserProfile,
+    permission: PermissionLevel
+): boolean => {
+    return profile.permission_level >= permission;
+};
+
 export const useCurrentUserCtx = () => useContext(CurrentUserCtx);

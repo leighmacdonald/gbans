@@ -753,9 +753,12 @@ func onAPIForumThread(app *App) gin.HandlerFunc {
 
 		var thread store.ForumThread
 		if errThreads := app.db.ForumThread(ctx, forumThreadID, &thread); errThreads != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
-
-			log.Error("Could not load threads")
+			if errors.Is(errThreads, store.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+			} else {
+				responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+				log.Error("Could not load threads")
+			}
 
 			return
 		}
@@ -819,7 +822,9 @@ func onAPIForumMessagesRecent(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		messages, errThreads := app.db.ForumRecentActivity(ctx, 5)
+		user := currentUserProfile(ctx)
+
+		messages, errThreads := app.db.ForumRecentActivity(ctx, 5, user.PermissionLevel)
 		if errThreads != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
