@@ -4,8 +4,8 @@ package util
 import (
 	"fmt"
 	"strings"
-	"unicode"
 
+	"github.com/microcosm-cc/bluemonday"
 	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
@@ -65,12 +65,6 @@ func DiffString(s1, s2 string) string {
 	return fmt.Sprintf("```diff\n%s```", diffs)
 }
 
-func ASCIISafe(input string) string {
-	return strings.Map(func(r rune) rune {
-		if r > unicode.MaxASCII {
-			return -1
-		}
-
-		return r
-	}, input)
+func SanitizeUGC(body string) string {
+	return bluemonday.UGCPolicy().Sanitize(body)
 }

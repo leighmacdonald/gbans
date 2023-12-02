@@ -14,6 +14,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/gbans/pkg/wiki"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
@@ -1374,8 +1375,8 @@ func onAPICreateForumCategory(app *App) gin.HandlerFunc {
 		}
 
 		category := store.ForumCategory{
-			Title:       req.Title,
-			Description: req.Description,
+			Title:       util.SanitizeUGC(req.Title),
+			Description: util.SanitizeUGC(req.Description),
 			Ordering:    req.Ordering,
 			TimeStamped: store.NewTimeStamped(),
 		}
@@ -1442,8 +1443,8 @@ func onAPIUpdateForumCategory(app *App) gin.HandlerFunc {
 			return
 		}
 
-		category.Title = req.Title
-		category.Description = req.Description
+		category.Title = util.SanitizeUGC(req.Title)
+		category.Description = util.SanitizeUGC(req.Description)
 		category.Ordering = req.Ordering
 
 		if errSave := app.db.ForumCategorySave(ctx, &category); errSave != nil {
@@ -1477,8 +1478,8 @@ func onAPICreateForumForum(app *App) gin.HandlerFunc {
 
 		forum := store.Forum{
 			ForumCategoryID: req.ForumCategoryID,
-			Title:           req.Title,
-			Description:     req.Description,
+			Title:           util.SanitizeUGC(req.Title),
+			Description:     util.SanitizeUGC(req.Description),
 			Ordering:        req.Ordering,
 			PermissionLevel: req.PermissionLevel,
 			TimeStamped:     store.NewTimeStamped(),
@@ -1522,9 +1523,10 @@ func onAPIUpdateForumForum(app *App) gin.HandlerFunc {
 		}
 
 		forum.ForumCategoryID = req.ForumCategoryID
-		forum.Title = req.Title
-		forum.Description = req.Description
+		forum.Title = util.SanitizeUGC(req.Title)
+		forum.Description = util.SanitizeUGC(req.Description)
 		forum.Ordering = req.Ordering
+		forum.PermissionLevel = req.PermissionLevel
 
 		if errSave := app.db.ForumSave(ctx, &forum); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)

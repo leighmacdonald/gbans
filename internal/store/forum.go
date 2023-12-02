@@ -6,6 +6,7 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/consts"
+	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
 )
@@ -83,7 +84,7 @@ func (thread ForumThread) NewMessage(sourceID steamid.SID64, body string) ForumM
 		ForumMessageID: 0,
 		ForumThreadID:  thread.ForumThreadID,
 		SourceID:       sourceID,
-		BodyMD:         body,
+		BodyMD:         util.SanitizeUGC(body),
 		TimeStamped:    NewTimeStamped(),
 	}
 }
@@ -433,7 +434,7 @@ func (db *Store) ForumThreads(ctx context.Context, filter ThreadQueryFilter) ([]
                      FROM forum_message m
                      WHERE m.forum_thread_id = t.forum_thread_id
 					) c ON TRUE`).
-		OrderBy("t.sticky DESC, a.created_on")
+		OrderBy("t.sticky DESC, a.updated_on DESC")
 
 	builder = filter.applySafeOrder(builder, map[string][]string{
 		"t.": {
@@ -546,19 +547,43 @@ func (db *Store) ForumMessageSave(ctx context.Context, message *ForumMessage) er
 	return db.ExecUpdateBuilder(ctx, db.sb.
 		Update("forum_thread").
 		Set("last_forum_message_id", message.ForumMessageID).
+		Set("updated_on", message.CreatedOn).
 		Where(sq.Eq{"forum_thread_id": message.ForumThreadID}))
 }
 
-func (db *Store) ForumRecentActivity(ctx context.Context, limit uint64) ([]ForumMessage, error) {
-	rows, errRows := db.QueryBuilder(ctx, db.sb.
-		Select("DISTINCT ON (m.forum_thread_id) m.forum_thread_id", "m.forum_message_id",
-			"m.source_id", "m.body_md", "m.created_on", "m.updated_on", "p.personaname",
-			"p.avatarhash", "p.permission_level", "t.title").
-		From("forum_message m").
-		LeftJoin("forum_thread t USING (forum_thread_id)").
-		LeftJoin("person p on p.steam_id = m.source_id").
-		OrderBy("forum_thread_id DESC").
-		Limit(limit))
+func (db *Store) ForumRecentActivity(ctx context.Context, limit uint64, permissionLevel consts.Privilege) ([]ForumMessage, error) {
+	expr, _, errExpr := sq.Expr(`
+			LATERAL (
+				SELECT m.forum_message_id,
+					   m.forum_thread_id,
+					   m.created_on,
+					   m.updated_on,
+					   p.steam_id,
+					   p.personaname,
+					   p.avatarhash,
+					   p.permission_level
+				FROM forum_message m
+				LEFT JOIN person p on m.source_id = p.steam_id
+				WHERE m.forum_thread_id = t.forum_thread_id AND $1 >= f.permission_level
+				ORDER BY m.forum_message_id DESC
+				LIMIT 1
+				) m on TRUE`, permissionLevel).ToSql()
+	if errExpr != nil {
+		return nil, Err(errExpr)
+	}
+
+	builder := db.sb.
+		Select("t.forum_thread_id", "m.forum_message_id",
+			"m.steam_id", "m.created_on", "m.updated_on", "m.personaname",
+			"m.avatarhash", "f.permission_level", "t.title").
+		From("forum_thread t").
+		LeftJoin("forum f ON f.forum_id = t.forum_id").
+		InnerJoin(expr).
+		Where(sq.GtOrEq{"m.permission_level": permissionLevel}).
+		OrderBy("t.updated_on DESC").
+		Limit(limit)
+
+	rows, errRows := db.QueryBuilder(ctx, builder)
 	if errRows != nil {
 		return nil, errRows
 	}
@@ -570,7 +595,7 @@ func (db *Store) ForumRecentActivity(ctx context.Context, limit uint64) ([]Forum
 	for rows.Next() {
 		var msg ForumMessage
 		if errScan := rows.Scan(&msg.ForumThreadID, &msg.ForumMessageID, &msg.SourceID,
-			&msg.BodyMD, &msg.CreatedOn, &msg.UpdatedOn, &msg.Personaname,
+			&msg.CreatedOn, &msg.UpdatedOn, &msg.Personaname,
 			&msg.Avatarhash, &msg.PermissionLevel, &msg.Title); errScan != nil {
 			return nil, Err(errScan)
 		}

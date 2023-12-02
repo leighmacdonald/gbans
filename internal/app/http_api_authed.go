@@ -1916,6 +1916,113 @@ func onAPIThreadCreate(app *App) gin.HandlerFunc {
 	}
 }
 
+func onAPIThreadUpdate(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	type threadUpdate struct {
+		Title  string `json:"title"`
+		Sticky bool   `json:"sticky"`
+		Locked bool   `json:"locked"`
+	}
+
+	return func(ctx *gin.Context) {
+		forumThreadID, errForumTheadID := getInt64Param(ctx, "forum_thread_id")
+		if errForumTheadID != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		var req threadUpdate
+		if !bind(ctx, log, &req) {
+			return
+		}
+
+		req.Title = util.SanitizeUGC(req.Title)
+
+		if len(req.Title) < 2 {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		var thread store.ForumThread
+		if errGet := app.db.ForumThread(ctx, forumThreadID, &thread); errGet != nil {
+			if errors.Is(errGet, store.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+			} else {
+				responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			}
+
+			return
+		}
+
+		thread.Title = req.Title
+		thread.Sticky = req.Sticky
+		thread.Locked = req.Locked
+
+		if errDelete := app.db.ForumThreadSave(ctx, &thread); errDelete != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			log.Error("Failed to update thread", zap.Error(errDelete))
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, thread)
+		log.Info("Thread updated", zap.Int64("forum_thread_id", thread.ForumThreadID))
+	}
+}
+
+func onAPIThreadDelete(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		forumThreadID, errForumTheadID := getInt64Param(ctx, "forum_thread_id")
+		if errForumTheadID != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		var thread store.ForumThread
+		if errGet := app.db.ForumThread(ctx, forumThreadID, &thread); errGet != nil {
+			if errors.Is(errGet, store.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+			} else {
+				responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			}
+
+			return
+		}
+
+		if errDelete := app.db.ForumThreadDelete(ctx, thread.ForumThreadID); errDelete != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			log.Error("Failed to delete thread", zap.Error(errDelete))
+
+			return
+		}
+
+		var forum store.Forum
+		if errForum := app.db.Forum(ctx, thread.ForumID, &forum); errForum != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			log.Error("Failed to load forum", zap.Error(errForum))
+
+			return
+		}
+
+		forum.CountThreads -= 1
+
+		if errSave := app.db.ForumSave(ctx, &forum); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			log.Error("Failed to save thread count", zap.Error(errSave))
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{})
+	}
+}
+
 func onAPIThreadMessageUpdate(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
@@ -1950,6 +2057,8 @@ func onAPIThreadMessageUpdate(app *App) gin.HandlerFunc {
 
 			return
 		}
+
+		req.BodyMD = util.SanitizeUGC(req.BodyMD)
 
 		if len(req.BodyMD) < 10 {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
@@ -2003,6 +2112,8 @@ func onAPIThreadCreateReply(app *App) gin.HandlerFunc {
 		if !bind(ctx, log, &req) {
 			return
 		}
+
+		req.BodyMD = util.SanitizeUGC(req.BodyMD)
 
 		if len(req.BodyMD) < 3 {
 			responseErr(ctx, http.StatusBadRequest, errors.New("Body too short"))

@@ -22,7 +22,7 @@ import { VCenteredElement } from '../component/Heading';
 import { VCenterBox } from '../component/VCenterBox';
 import {
     ModalForumForumEditor,
-    ModalForumThreadEditor
+    ModalForumThreadCreator
 } from '../component/modal';
 import { RowsPerPage } from '../component/table/LazyTable';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
@@ -71,7 +71,16 @@ const ForumThreadRow = ({ thread }: { thread: ForumThread }) => {
                                     <LockIcon fontSize={'small'} />
                                 </VCenterBox>
                             )}
-                            <Typography variant={'body2'}>
+                            <Typography
+                                variant={'body2'}
+                                component={RouterLink}
+                                to={`/profile/${thread.source_id}`}
+                                color={(theme) => theme.palette.text.secondary}
+                                sx={{
+                                    textDecoration: 'none',
+                                    '&:hover': { textDecoration: 'underline' }
+                                }}
+                            >
                                 {thread.personaname}
                             </Typography>
                         </Stack>
@@ -154,7 +163,7 @@ export const ForumPage = () => {
     const [count, setCount] = useState(0);
     const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(1);
-    const modal = useModal(ModalForumThreadEditor);
+    const modalCreate = useModal(ModalForumThreadCreator);
     const { currentUser } = useCurrentUserCtx();
     const { sendFlash } = useUserFlashCtx();
     const navigate = useNavigate();
@@ -194,16 +203,15 @@ export const ForumPage = () => {
 
     const onNewThread = useCallback(async () => {
         try {
-            const thread = await NiceModal.show<ForumThread>(
-                ModalForumThreadEditor,
-                { forum_id: id }
-            );
+            const thread = (await modalCreate.show({
+                forum_id: id
+            })) as ForumThread;
             navigate(`/forums/thread/${thread.forum_thread_id}`);
-            await modal.hide();
+            await modalCreate.hide();
         } catch (e) {
             sendFlash('error', `${e}`);
         }
-    }, [id, modal, navigate, sendFlash]);
+    }, [id, modalCreate, navigate, sendFlash]);
 
     const onEditForum = useCallback(async () => {
         try {
@@ -246,7 +254,9 @@ export const ForumPage = () => {
                 New Post
             </Button>
         );
-        return [<ButtonGroup key={'forum-header-btns'}>{buttons}</ButtonGroup>];
+        return [
+            <ButtonGroup key={'forum-header-buttons'}>{buttons}</ButtonGroup>
+        ];
     }, [currentUser.permission_level, onEditForum, onNewThread]);
 
     return (

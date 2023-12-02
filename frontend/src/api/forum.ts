@@ -65,7 +65,7 @@ export const apiCreateForumCategory = async (
     title: string,
     description: string,
     ordering: number,
-    abortContriller?: AbortController
+    abortController?: AbortController
 ) => {
     return await apiCall<ForumCategory>(
         `/api/forum/category`,
@@ -75,7 +75,7 @@ export const apiCreateForumCategory = async (
             description,
             ordering
         },
-        abortContriller
+        abortController
     );
 };
 
@@ -85,7 +85,7 @@ export const apiCreateForum = async (
     description: string,
     ordering: number,
     permission_level: PermissionLevel,
-    abortContriller?: AbortController
+    abortController?: AbortController
 ) => {
     return await apiCall<Forum>(
         `/api/forum/forum`,
@@ -97,7 +97,7 @@ export const apiCreateForum = async (
             ordering,
             permission_level
         },
-        abortContriller
+        abortController
     );
 };
 
@@ -265,10 +265,21 @@ export const apiGetThread = async (
     return transformTimeStampedDates(resp);
 };
 
-export const apiSaveThread = async (
+export const apiDeleteThread = async (
+    thread_id: number,
+    abortController?: AbortController
+) => {
+    return await apiCall(
+        `/api/forum/thread/${thread_id}`,
+        'DELETE',
+        undefined,
+        abortController
+    );
+};
+
+export const apiUpdateThread = async (
     thread_id: number,
     title: string,
-    body_md: string,
     sticky: boolean,
     locked: boolean,
     abortController?: AbortController
@@ -276,7 +287,7 @@ export const apiSaveThread = async (
     const resp = await apiCall<ForumThread>(
         `/api/forum/thread/${thread_id}`,
         'POST',
-        { title, body_md, sticky, locked },
+        { title, sticky, locked },
         abortController
     );
     return transformTimeStampedDates(resp);
