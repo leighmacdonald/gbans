@@ -680,6 +680,8 @@ func onAPIForumOverview(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		currentUser := currentUserProfile(ctx)
 
+		app.touchPerson(currentUser)
+
 		categories, errCats := app.db.ForumCategories(ctx)
 		if errCats != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
@@ -722,6 +724,10 @@ func onAPIForumThreads(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
+		currentUser := currentUserProfile(ctx)
+
+		app.touchPerson(currentUser)
+
 		var tqf store.ThreadQueryFilter
 		if !bind(ctx, log, &tqf) {
 			return
@@ -744,6 +750,10 @@ func onAPIForumThread(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
+		currentUser := currentUserProfile(ctx)
+
+		app.touchPerson(currentUser)
+
 		forumThreadID, errID := getInt64Param(ctx, "forum_thread_id")
 		if errID != nil {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
@@ -815,6 +825,34 @@ func onAPIForumMessages(app *App) gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusOK, newLazyResult(count, threads))
+	}
+}
+
+func onAPIActiveUsers(app *App) gin.HandlerFunc {
+	type userActivity struct {
+		SteamID         steamid.SID64    `json:"steam_id"`
+		Personaname     string           `json:"personaname"`
+		PermissionLevel consts.Privilege `json:"permission_level"`
+		CreatedOn       time.Time        `json:"created_on"`
+	}
+
+	return func(ctx *gin.Context) {
+		var results []userActivity
+
+		app.activityMu.RLock()
+
+		for _, act := range app.activity {
+			results = append(results, userActivity{
+				SteamID:         act.person.SteamID,
+				Personaname:     act.person.Name,
+				PermissionLevel: act.person.PermissionLevel,
+				CreatedOn:       act.lastActivity,
+			})
+		}
+
+		app.activityMu.RUnlock()
+
+		ctx.JSON(http.StatusOK, results)
 	}
 }
 

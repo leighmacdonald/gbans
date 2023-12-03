@@ -1840,6 +1840,8 @@ func onAPIThreadCreate(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		user := currentUserProfile(ctx)
 
+		app.touchPerson(user)
+
 		forumID, errForumID := getIntParam(ctx, "forum_id")
 		if errForumID != nil {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
@@ -2033,6 +2035,8 @@ func onAPIThreadMessageUpdate(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		currentUser := currentUserProfile(ctx)
 
+		app.touchPerson(currentUser)
+
 		forumMessageID, errForumMessageID := getInt64Param(ctx, "forum_message_id")
 		if errForumMessageID != nil {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
@@ -2177,6 +2181,8 @@ func onAPIThreadCreateReply(app *App) gin.HandlerFunc {
 
 	return func(ctx *gin.Context) {
 		currentUser := currentUserProfile(ctx)
+
+		app.touchPerson(currentUser)
 
 		forumThreadID, errForumID := getInt64Param(ctx, "forum_thread_id")
 		if errForumID != nil {

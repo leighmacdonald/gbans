@@ -5,6 +5,7 @@ import {
     PermissionLevel,
     QueryFilter,
     TimeStamped,
+    transformCreatedOnDate,
     transformTimeStampedDates
 } from './common';
 
@@ -348,4 +349,23 @@ export const apiForumRecentActivity = async (
             abortController
         )
     ).map(transformTimeStampedDates);
+};
+
+export interface ActiveUser {
+    steam_id: string;
+    personaname: string;
+    permission_level: PermissionLevel;
+    created_on: Date;
+}
+
+export const apiForumActiveUsers = async (
+    abortController?: AbortController
+) => {
+    const resp = await apiCall<ActiveUser[]>(
+        `/api/forum/active_users`,
+        'GET',
+        undefined,
+        abortController
+    );
+    return resp.map(transformCreatedOnDate);
 };
