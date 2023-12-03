@@ -2078,6 +2078,96 @@ func onAPIThreadMessageUpdate(app *App) gin.HandlerFunc {
 	}
 }
 
+func onAPIMessageDelete(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		forumMessageID, errForumMessageID := getInt64Param(ctx, "forum_message_id")
+		if errForumMessageID != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		var message store.ForumMessage
+		if err := app.db.ForumMessage(ctx, forumMessageID, &message); err != nil {
+			if errors.Is(err, store.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+			} else {
+				responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			}
+
+			return
+		}
+
+		var thread store.ForumThread
+		if err := app.db.ForumThread(ctx, message.ForumThreadID, &thread); err != nil {
+			if errors.Is(err, store.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+			} else {
+				responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			}
+
+			return
+		}
+
+		if thread.Locked {
+			responseErr(ctx, http.StatusForbidden, errors.New("Locked thread"))
+
+			return
+		}
+
+		messages, count, errMessage := app.db.ForumMessages(ctx, store.ThreadMessagesQueryFilter{ForumThreadID: message.ForumThreadID})
+		if errMessage != nil || count <= 0 {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			return
+		}
+
+		isThreadParent := messages[0].ForumMessageID == message.ForumMessageID
+
+		if isThreadParent {
+			if err := app.db.ForumThreadDelete(ctx, message.ForumThreadID); err != nil {
+				responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+				log.Error("Failed to delete forum thread", zap.Error(err))
+
+				return
+			}
+
+			// Delete the thread if it's the first message
+			var forum store.Forum
+			if errForum := app.db.Forum(ctx, thread.ForumID, &forum); errForum != nil {
+				responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+				log.Error("Failed to load forum", zap.Error(errForum))
+
+				return
+			}
+
+			forum.CountThreads -= 1
+
+			if errSave := app.db.ForumSave(ctx, &forum); errSave != nil {
+				responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+				log.Error("Failed to save thread count", zap.Error(errSave))
+
+				return
+			}
+
+			log.Error("Thread deleted due to parent deletion", zap.Int64("forum_thread_id", thread.ForumThreadID))
+		} else {
+			if errDelete := app.db.ForumMessageDelete(ctx, message.ForumMessageID); errDelete != nil {
+				responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+				log.Error("Failed to delete message", zap.Error(errDelete))
+
+				return
+			}
+
+			log.Error("Thread message deleted", zap.Int64("forum_message_id", message.ForumMessageID))
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{})
+	}
+}
+
 func onAPIThreadCreateReply(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 

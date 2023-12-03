@@ -262,6 +262,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		authed.POST("/api/forum/thread/:forum_thread_id/message", onAPIThreadCreateReply(app))
 		authed.POST("/api/forum/message/:forum_message_id", onAPIThreadMessageUpdate(app))
 		authed.DELETE("/api/forum/thread/:forum_thread_id", onAPIThreadDelete(app))
+		authed.DELETE("/api/forum/message/:forum_message_id", onAPIMessageDelete(app))
 		authed.POST("/api/forum/thread/:forum_thread_id", onAPIThreadUpdate(app))
 	}
 

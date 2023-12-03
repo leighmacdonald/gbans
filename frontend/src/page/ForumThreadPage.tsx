@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState, JSX } from 'react';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
-import NiceModal from '@ebay/nice-modal-react';
+import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ConstructionIcon from '@mui/icons-material/Construction';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import EditIcon from '@mui/icons-material/Edit';
 import LockIcon from '@mui/icons-material/Lock';
 import Person2Icon from '@mui/icons-material/Person2';
@@ -22,6 +23,7 @@ import { Formik } from 'formik';
 import * as yup from 'yup';
 import { PermissionLevel, permissionLevelString } from '../api';
 import {
+    apiDeleteMessage,
     apiGetThread,
     apiGetThreadMessages,
     apiSaveThreadMessage,
@@ -34,7 +36,7 @@ import { MDEditor } from '../component/MDEditor';
 import { MarkDownRenderer } from '../component/MarkdownRenderer';
 import { VCenterBox } from '../component/VCenterBox';
 import { bodyMDValidator } from '../component/formik/BodyMDField';
-import { ModalForumThreadEditor } from '../component/modal';
+import { ModalConfirm, ModalForumThreadEditor } from '../component/modal';
 import { SubmitButton } from '../component/modal/Buttons';
 import { RowsPerPage } from '../component/table/LazyTable';
 import { hasPermission, useCurrentUserCtx } from '../contexts/CurrentUserCtx';
@@ -51,11 +53,21 @@ const ForumAvatar = ({ ...props }) => (
     />
 );
 
-const ThreadMessageContainer = ({ message }: { message: ForumMessage }) => {
+const ThreadMessageContainer = ({
+    message,
+    isFirstMessage,
+    onDeleteSuccess
+}: {
+    message: ForumMessage;
+    onDeleteSuccess: (forum_message_id: number) => void;
+    isFirstMessage: boolean;
+}) => {
     const [edit, setEdit] = useState(false);
     const [updatedMessage, setUpdatedMessage] = useState<ForumMessage>();
+    const confirmModal = useModal(ModalConfirm);
     const { currentUser } = useCurrentUserCtx();
     const theme = useTheme();
+    const navigate = useNavigate();
 
     const activeMessage = useMemo(() => {
         if (updatedMessage != undefined) {
@@ -75,6 +87,49 @@ const ThreadMessageContainer = ({ message }: { message: ForumMessage }) => {
             currentUser.permission_level >= PermissionLevel.Moderator
         );
     }, [currentUser.permission_level, currentUser.steam_id, message.source_id]);
+
+    const onDelete = useCallback(async () => {
+        try {
+            const confirmed = await confirmModal.show({
+                title: 'Delete Post?',
+                children: (
+                    <Box>
+                        {isFirstMessage && (
+                            <Typography
+                                variant={'body1'}
+                                fontWeight={700}
+                                color={theme.palette.error.dark}
+                            >
+                                Please be aware that by deleting the first post
+                                in the thread, this will result in the deletion
+                                of the <i>entire thread</i>.
+                            </Typography>
+                        )}
+                        <Typography variant={'body1'}>
+                            This action cannot be undone.
+                        </Typography>
+                    </Box>
+                )
+            });
+            if (confirmed) {
+                await apiDeleteMessage(activeMessage.forum_message_id);
+                onDeleteSuccess(activeMessage.forum_message_id);
+            }
+            await confirmModal.hide();
+            if (isFirstMessage) {
+                navigate('/forums');
+            }
+        } catch (e) {
+            logErr(e);
+        }
+    }, [
+        activeMessage.forum_message_id,
+        confirmModal,
+        isFirstMessage,
+        navigate,
+        onDeleteSuccess,
+        theme.palette.error.dark
+    ]);
 
     return (
         <Paper elevation={1} id={`${activeMessage.forum_message_id}`}>
@@ -143,6 +198,12 @@ const ThreadMessageContainer = ({ message }: { message: ForumMessage }) => {
                                 </Grid>
                                 <Grid xs={6}>
                                     <Stack direction="row" justifyContent="end">
+                                        <IconButton
+                                            color={'error'}
+                                            onClick={onDelete}
+                                        >
+                                            <DeleteForeverIcon />
+                                        </IconButton>
                                         {editable && (
                                             <IconButton
                                                 title={'Edit Post'}
@@ -283,6 +344,16 @@ export const ForumThreadPage = (): JSX.Element => {
         return () => abortController.abort();
     }, [page, thread_id]);
 
+    const firstPostID = useMemo(() => {
+        if (page > 1) {
+            return -1;
+        }
+        if (messages.length > 0) {
+            return messages[0].forum_message_id;
+        }
+        return -1;
+    }, [messages, page]);
+
     const isMod = useMemo(() => {
         return hasPermission(currentUser, PermissionLevel.Moderator);
     }, [currentUser]);
@@ -304,6 +375,14 @@ export const ForumThreadPage = (): JSX.Element => {
             logErr(e);
         }
     }, [navigate, thread]);
+
+    const onMessageDeleted = useCallback((forum_message_id: number) => {
+        setMessages((prevState) => {
+            return prevState.filter(
+                (m) => m.forum_message_id != forum_message_id
+            );
+        });
+    }, []);
 
     return (
         <Stack spacing={1}>
@@ -338,6 +417,8 @@ export const ForumThreadPage = (): JSX.Element => {
                 <ThreadMessageContainer
                     message={m}
                     key={`thread-message-id-${m.forum_message_id}`}
+                    onDeleteSuccess={onMessageDeleted}
+                    isFirstMessage={firstPostID == m.forum_message_id}
                 />
             ))}
             <Pagination

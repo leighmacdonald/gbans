@@ -325,6 +325,18 @@ export const apiCreateThreadReply = async (
     );
 };
 
+export const apiDeleteMessage = async (
+    forum_message_id: number,
+    abortController?: AbortController
+) => {
+    return await apiCall(
+        `/api/forum/message/${forum_message_id}`,
+        'DELETE',
+        undefined,
+        abortController
+    );
+};
+
 export const apiForumRecentActivity = async (
     abortController?: AbortController
 ) => {
