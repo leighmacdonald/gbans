@@ -50,6 +50,8 @@ type App struct {
 	assetStore           AssetStore
 	logListener          *logparse.UDPLogListener
 	matchUUIDMap         fp.MutexMap[int, uuid.UUID]
+	activityMu           *sync.RWMutex
+	activity             []forumActivity
 }
 
 func New(conf *Config, database *store.Store, bot *discord.Bot, logger *zap.Logger, assetStore AssetStore) App {
@@ -70,6 +72,7 @@ func New(conf *Config, database *store.Store, bot *discord.Bot, logger *zap.Logg
 		wordFilters:          newWordFilters(),
 		mc:                   newMetricCollector(),
 		state:                newServerStateCollector(logger),
+		activityMu:           &sync.RWMutex{},
 	}
 
 	if conf.Discord.Enabled {
@@ -691,6 +694,7 @@ func (app *App) startWorkers(ctx context.Context) {
 	go app.notificationSender(ctx)
 	go demoCleaner(ctx, app.db, app.log)
 	go app.stateUpdater(ctx)
+	go app.forumActivityUpdater(ctx)
 }
 
 // UDP log sink.

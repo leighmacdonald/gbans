@@ -14,8 +14,11 @@ import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
+import { useTheme } from '@mui/material/styles';
 import { defaultAvatarHash, PermissionLevel } from '../api';
 import {
+    ActiveUser,
+    apiForumActiveUsers,
     apiForumRecentActivity,
     apiGetForumOverview,
     Forum,
@@ -270,6 +273,7 @@ export const ForumOverviewPage = (): JSX.Element => {
             <Grid md={3} xs={12}>
                 <Stack spacing={3}>
                     <RecentMessageActivity />
+                    <RecentUserActivity />
                     {currentUser.permission_level >=
                         PermissionLevel.Moderator && (
                         <ContainerWithHeader
@@ -295,6 +299,47 @@ export const ForumOverviewPage = (): JSX.Element => {
                 </Stack>
             </Grid>
         </Grid>
+    );
+};
+
+export const RecentUserActivity = () => {
+    const [active, setActive] = useState<ActiveUser[]>();
+    const theme = useTheme();
+
+    useEffect(() => {
+        const abortController = new AbortController();
+
+        apiForumActiveUsers()
+            .then((activity) => {
+                setActive(activity);
+            })
+            .catch((e) => {
+                logErr(e);
+            });
+
+        return () => abortController.abort();
+    }, []);
+
+    return (
+        <ContainerWithHeader title={'Active Users'}>
+            {active?.map((a) => {
+                return (
+                    <Typography
+                        sx={{
+                            textDecoration: 'none',
+                            '&:hover': {
+                                textDecoration: 'underline'
+                            }
+                        }}
+                        key={`activity-${a.steam_id}`}
+                        variant={'body2'}
+                        color={theme.palette.text.secondary}
+                        component={RouterLink}
+                        to={`/profile/${a.steam_id}`}
+                    ></Typography>
+                );
+            })}
+        </ContainerWithHeader>
     );
 };
 

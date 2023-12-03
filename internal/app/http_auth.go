@@ -355,18 +355,16 @@ func authMiddleware(app *App, level consts.Privilege) gin.HandlerFunc {
 
 	return func(ctx *gin.Context) {
 		var token string
-		if ctx.FullPath() == "/ws" {
-			token = ctx.Query("token")
-		} else {
-			hdrToken, errToken := tokenFromHeader(ctx)
-			if errToken != nil {
-				ctx.AbortWithStatus(http.StatusForbidden)
 
-				return
-			}
+		hdrToken, errToken := tokenFromHeader(ctx)
+		if errToken != nil {
+			ctx.Set(ctxKeyUserProfile, userProfile{PermissionLevel: consts.PGuest, Name: "Guest"})
+			ctx.Next()
 
-			token = hdrToken
+			return
 		}
+
+		token = hdrToken
 
 		if level >= consts.PGuest {
 			sid, errFromToken := sid64FromJWTToken(token, app.conf.HTTP.CookieKey)

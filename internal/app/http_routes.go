@@ -186,9 +186,8 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 	engine.GET("/export/sourcemod/admins_simple.ini", onAPIExportSourcemodSimpleAdmins(app))
 
 	engine.GET("/api/forum/forum/:forum_id", onAPIForum(app))
-	engine.POST("/api/forum/threads", onAPIForumThreads(app))
 	engine.POST("/api/forum/messages", onAPIForumMessages(app))
-	engine.GET("/api/forum/thread/:forum_thread_id", onAPIForumThread(app))
+	engine.GET("/api/forum/active_users", onAPIActiveUsers(app))
 
 	// This allows use of the user profile on endpoints that have optional authentication
 	optionalAuth := engine.Group("/")
@@ -199,6 +198,8 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		optionalAuth.GET("/api/contests/:contest_id/entries", onAPIGetContestEntries(app))
 		optionalAuth.GET("/api/forum/overview", onAPIForumOverview(app))
 		optionalAuth.GET("/api/forum/messages/recent", onAPIForumMessagesRecent(app))
+		optionalAuth.POST("/api/forum/threads", onAPIForumThreads(app))
+		optionalAuth.GET("/api/forum/thread/:forum_thread_id", onAPIForumThread(app))
 	}
 
 	srvGrp := engine.Group("/")

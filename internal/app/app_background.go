@@ -767,3 +767,63 @@ func (app *App) banSweeper(ctx context.Context) {
 		}
 	}
 }
+
+type forumActivity struct {
+	person       userProfile
+	lastActivity time.Time
+}
+
+func (activity forumActivity) expired() bool {
+	return time.Since(activity.lastActivity) > time.Minute*5
+}
+
+func (app *App) touchPerson(person userProfile) {
+	if !person.SteamID.Valid() {
+		return
+	}
+
+	valid := []forumActivity{{lastActivity: time.Now(), person: person}}
+
+	app.activityMu.Lock()
+	defer app.activityMu.Unlock()
+
+	for _, activity := range app.activity {
+		if activity.person.SteamID == person.SteamID {
+			continue
+		}
+
+		valid = append(valid, activity)
+	}
+
+	app.activity = valid
+}
+
+func (app *App) forumActivityUpdater(ctx context.Context) {
+	ticker := time.NewTicker(time.Second * 30)
+	log := app.log.Named("forumActivityUpdater")
+
+	for {
+		select {
+		case <-ticker.C:
+			var current []forumActivity
+
+			app.activityMu.Lock()
+
+			for _, entry := range app.activity {
+				if entry.expired() {
+					log.Debug("Player forum activity expired", zap.Int64("steam_id", entry.person.SteamID.Int64()))
+
+					continue
+				}
+
+				current = append(current, entry)
+			}
+
+			app.activity = current
+
+			app.activityMu.Unlock()
+		case <-ctx.Done():
+			return
+		}
+	}
+}
