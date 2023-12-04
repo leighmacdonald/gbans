@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, JSX } from 'react';
+import React, { JSX, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import ArticleIcon from '@mui/icons-material/Article';
@@ -130,11 +130,13 @@ export const TopBar = () => {
                 icon: <StorageIcon sx={topColourOpts} />
             });
         }
-        items.push({
-            to: '/forums',
-            text: 'Forums',
-            icon: <ForumIcon sx={topColourOpts} />
-        });
+        if (currentUser.permission_level >= PermissionLevel.Moderator) {
+            items.push({
+                to: '/forums',
+                text: 'Forums',
+                icon: <ForumIcon sx={topColourOpts} />
+            });
+        }
         items.push({
             to: '/wiki',
             text: 'Wiki',
@@ -155,7 +157,7 @@ export const TopBar = () => {
             });
         }
         return items;
-    }, [currentUser.ban_id, topColourOpts]);
+    }, [currentUser.ban_id, currentUser.permission_level, topColourOpts]);
 
     const userItems: menuRoute[] = useMemo(
         () => [
