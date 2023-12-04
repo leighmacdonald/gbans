@@ -5,7 +5,7 @@ import { Formik } from 'formik';
 import * as yup from 'yup';
 import { apiCreateThreadReply, ForumMessage } from '../api/forum';
 import { logErr } from '../util/errors';
-import { MDEditor } from './MDEditor';
+import { MDBodyField } from './MDBodyField';
 import { SubmitButton } from './modal/Buttons';
 
 interface ThreadReplyValues {
@@ -51,7 +51,7 @@ export const ForumThreadReplyBox = ({
                 validationSchema={validationSchema}
             >
                 <Stack spacing={1} padding={1}>
-                    <MDEditor />
+                    <MDBodyField />
                     <Stack direction={'row'} padding={1}>
                         <SubmitButton />
                     </Stack>

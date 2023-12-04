@@ -189,6 +189,8 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 	engine.POST("/api/forum/messages", onAPIForumMessages(app))
 	engine.GET("/api/forum/active_users", onAPIActiveUsers(app))
 
+	engine.POST("/api/auth/refresh", onTokenRefresh(app))
+
 	// This allows use of the user profile on endpoints that have optional authentication
 	optionalAuth := engine.Group("/")
 	{
@@ -220,7 +222,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 	{
 		// Basic logged-in user
 		authed := authedGrp.Use(authMiddleware(app, consts.PUser))
-		authed.POST("/api/auth/refresh", onTokenRefresh(app))
+
 		authed.GET("/api/auth/discord", onOAuthDiscordCallback(app))
 		authed.GET("/api/auth/logout", onAPILogout(app))
 		authed.GET("/api/current_profile", onAPICurrentProfile(app))

@@ -11,17 +11,11 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { Formik } from 'formik';
 import * as yup from 'yup';
 import { PermissionLevel } from '../api';
-import {
-    apiGetWikiPage,
-    apiSaveWikiPage,
-    Page,
-    renderMarkdown
-} from '../api/wiki';
+import { apiGetWikiPage, apiSaveWikiPage, Page } from '../api/wiki';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { LoadingSpinner } from '../component/LoadingSpinner';
-import { MDEditor } from '../component/MDEditor';
-import { RenderedMarkdownBox } from '../component/RenderedMarkdownBox';
-import { bodyMDValidator } from '../component/formik/BodyMDField';
+import { bodyMDValidator, MDBodyField } from '../component/MDBodyField';
+import { MarkDownRenderer } from '../component/MarkdownRenderer';
 import { SubmitButton } from '../component/modal/Buttons';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { logErr } from '../util/errors';
@@ -92,9 +86,11 @@ export const WikiPage = (): JSX.Element => {
     );
 
     const bodyHTML = useMemo(() => {
-        return page.revision > 0 && page.body_md
-            ? renderMarkdown(page.body_md)
-            : '';
+        return page.revision > 0 && page.body_md ? (
+            <MarkDownRenderer body_md={page.body_md} />
+        ) : (
+            ''
+        );
     }, [page.body_md, page.revision]);
 
     return (
@@ -112,16 +108,7 @@ export const WikiPage = (): JSX.Element => {
                         title={page.slug}
                         iconLeft={<ArticleIcon />}
                     >
-                        <Box padding={2}>
-                            <RenderedMarkdownBox
-                                bodyHTML={bodyHTML}
-                                readonly={
-                                    currentUser.permission_level <
-                                    PermissionLevel.Moderator
-                                }
-                                setEditMode={setEditMode}
-                            />
-                        </Box>
+                        <Box padding={2}>{bodyHTML}</Box>
                     </ContainerWithHeader>
                 </Grid>
             )}
@@ -166,7 +153,7 @@ export const WikiPage = (): JSX.Element => {
                     >
                         <Paper elevation={1}>
                             <Stack spacing={1} padding={1}>
-                                <MDEditor />
+                                <MDBodyField />
                                 <ButtonGroup>
                                     <SubmitButton />
                                 </ButtonGroup>

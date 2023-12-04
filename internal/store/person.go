@@ -126,11 +126,10 @@ type PersonIPRecord struct {
 type AppealOverview struct {
 	BanSteam
 
-	SourcePersonaname string    `json:"source_personaname"`
-	SourceAvatarhash  string    `json:"source_avatarhash"`
-	TargetPersonaname string    `json:"target_personaname"`
-	TargetAvatarhash  string    `json:"target_avatarhash"`
-	LastActivity      time.Time `json:"last_activity"`
+	SourcePersonaname string `json:"source_personaname"`
+	SourceAvatarhash  string `json:"source_avatarhash"`
+	TargetPersonaname string `json:"target_personaname"`
+	TargetAvatarhash  string `json:"target_avatarhash"`
 }
 
 type UserMessage struct {
@@ -178,6 +177,8 @@ type PersonConnection struct {
 	PersonaName        string        `json:"persona_name"`
 	ServerID           int           `json:"server_id"`
 	CreatedOn          time.Time     `json:"created_on"`
+	ServerNameShort    string        `json:"server_name_short"`
+	ServerName         string        `json:"server_name"`
 }
 
 type PersonConnections []PersonConnection
@@ -670,17 +671,13 @@ type ConnectionHistoryQueryFilter struct {
 	SourceID StringSID `json:"source_id"`
 }
 
-type QueryConnectionHistoryResult struct {
-	PersonConnection
-	Count int64 `json:"count"`
-}
-
-func (db *Store) QueryConnectionHistory(ctx context.Context, opts ConnectionHistoryQueryFilter) ([]QueryConnectionHistoryResult, int64, error) {
+func (db *Store) QueryConnectionHistory(ctx context.Context, opts ConnectionHistoryQueryFilter) ([]PersonConnection, int64, error) {
 	builder := db.sb.
 		Select("c.person_connection_id", "c.steam_id",
-			"c.ip_addr", "c.persona_name", "c.created_on", "c.server_id").
+			"c.ip_addr", "c.persona_name", "c.created_on", "c.server_id", "s.short_name", "s.name").
 		From("person_connections c").
-		GroupBy("c.person_connection_id, c.ip_addr")
+		LeftJoin("server s USING(server_id)").
+		GroupBy("c.person_connection_id, c.ip_addr, s.short_name", "s.name")
 
 	var constraints sq.And
 
@@ -695,9 +692,10 @@ func (db *Store) QueryConnectionHistory(ctx context.Context, opts ConnectionHist
 
 	builder = opts.applySafeOrder(opts.applyLimitOffsetDefault(builder), map[string][]string{
 		"c.": {"person_connection_id", "steam_id", "ip_addr", "persona_name", "created_on"},
+		"s.": {"short_name", "name"},
 	}, "person_connection_id")
 
-	var messages []QueryConnectionHistoryResult
+	var messages []PersonConnection
 
 	rows, errQuery := db.QueryBuilder(ctx, builder.Where(constraints))
 	if errQuery != nil {
@@ -708,20 +706,27 @@ func (db *Store) QueryConnectionHistory(ctx context.Context, opts ConnectionHist
 
 	for rows.Next() {
 		var (
-			connHistory QueryConnectionHistoryResult
+			connHistory PersonConnection
 			steamID     int64
-			target      = []any{
-				&connHistory.PersonConnectionID,
-				&steamID,
-				&connHistory.IPAddr,
-				&connHistory.PersonaName,
-				&connHistory.CreatedOn,
-				&connHistory.ServerID,
-			}
+			serverID    *int
+			shortName   *string
+			name        *string
 		)
 
-		if errScan := rows.Scan(target...); errScan != nil {
+		if errScan := rows.Scan(&connHistory.PersonConnectionID,
+			&steamID,
+			&connHistory.IPAddr,
+			&connHistory.PersonaName,
+			&connHistory.CreatedOn,
+			&serverID, &shortName, &name); errScan != nil {
 			return nil, 0, Err(errScan)
+		}
+
+		// Added later in dev, so can be legacy data w/o a server_id
+		if serverID != nil && shortName != nil && name != nil {
+			connHistory.ServerID = *serverID
+			connHistory.ServerNameShort = *shortName
+			connHistory.ServerName = *name
 		}
 
 		connHistory.SteamID = steamid.New(steamID)
@@ -730,7 +735,7 @@ func (db *Store) QueryConnectionHistory(ctx context.Context, opts ConnectionHist
 	}
 
 	if messages == nil {
-		return []QueryConnectionHistoryResult{}, 0, nil
+		return []PersonConnection{}, 0, nil
 	}
 
 	count, errCount := db.GetCount(ctx, db.sb.

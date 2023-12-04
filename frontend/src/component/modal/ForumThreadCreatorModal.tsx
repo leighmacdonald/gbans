@@ -13,7 +13,7 @@ import { Formik } from 'formik';
 import * as yup from 'yup';
 import { apiCreateThread } from '../../api/forum';
 import { logErr } from '../../util/errors';
-import { BodyMDField, bodyMDValidator } from '../formik/BodyMDField';
+import { bodyMDValidator, MDBodyField } from '../MDBodyField';
 import { LockedField } from '../formik/LockedField';
 import { StickyField } from '../formik/StickyField';
 import { TitleField, titleFieldValidator } from '../formik/TitleField';
@@ -113,7 +113,7 @@ export const ForumThreadCreatorModal = NiceModal.create(
                     <DialogContent>
                         <Stack spacing={2}>
                             <TitleField />
-                            <BodyMDField />
+                            <MDBodyField />
                             <StickyField />
                             <LockedField />
                         </Stack>

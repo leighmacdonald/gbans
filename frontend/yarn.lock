@@ -6556,9 +6556,6 @@ __metadata:
     leaflet: "npm:^1.9.4"
     lodash-es: "npm:^4.17.21"
     markdown-to-jsx: "npm:^7.3.2"
-    marked: "npm:^10.0.0"
-    marked-gfm-heading-id: "npm:^3.1.2"
-    marked-mangle: "npm:^1.1.6"
     mini-css-extract-plugin: "npm:^2.7.6"
     minimatch: "npm:^9.0.3"
     mui-markdown: "npm:^1.1.11"
@@ -6652,13 +6649,6 @@ __metadata:
     call-bind: "npm:^1.0.2"
     get-intrinsic: "npm:^1.1.1"
   checksum: 23bc3b44c221cdf7669a88230c62f4b9e30393b61eb21ba4400cb3e346801bd8f95fe4330ee78dbae37aecd874646d53e3e76a17a654d0c84c77f6690526d6bb
-  languageName: node
-  linkType: hard
-
-"github-slugger@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "github-slugger@npm:2.0.0"
-  checksum: 21b912b6b1e48f1e5a50b2292b48df0ff6abeeb0691b161b3d93d84f4ae6b1acd6ae23702e914af7ea5d441c096453cf0f621b72d57893946618d21dd1a1c486
   languageName: node
   linkType: hard
 
@@ -8838,35 +8828,6 @@ __metadata:
   peerDependencies:
     react: ">= 0.14.0"
   checksum: 191b9a9defeed02e12dd340cebf279f577266dac7b34574fa44ce4d64ee8536f9967d455b8303c853f84413feb473118290a6160d8221eeaf3b9e4961b8980e3
-  languageName: node
-  linkType: hard
-
-"marked-gfm-heading-id@npm:^3.1.2":
-  version: 3.1.2
-  resolution: "marked-gfm-heading-id@npm:3.1.2"
-  dependencies:
-    github-slugger: "npm:^2.0.0"
-  peerDependencies:
-    marked: ">=4 <12"
-  checksum: 382660a1f42eb2a98cf6d7f146ab32f6bc61cded848ac1c0d199bc2af2c248f6618f8db7fd93d921c28f3e0b35e394215204a69780bea11f4b5e6bd90c08e5bb
-  languageName: node
-  linkType: hard
-
-"marked-mangle@npm:^1.1.6":
-  version: 1.1.6
-  resolution: "marked-mangle@npm:1.1.6"
-  peerDependencies:
-    marked: ">=4 <12"
-  checksum: 952e08abdec08b8a6e20fc5d73e683d169cb0f34dee368f29aefc2ee40f0755d149bb8d7fd09940538a86dfdfd186e7fe1a13b03d19a61d80571427ec1299e26
-  languageName: node
-  linkType: hard
-
-"marked@npm:^10.0.0":
-  version: 10.0.0
-  resolution: "marked@npm:10.0.0"
-  bin:
-    marked: bin/marked.js
-  checksum: 5882b04a5f0d619757b281f09a67eb8f9e966299083748b51b144b482c56527161cc4dee3ef8e334926c84b7c6ad2bb5c48af5855a52c6ae460131175e3fb93f
   languageName: node
   linkType: hard
 

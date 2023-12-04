@@ -32,10 +32,9 @@ import {
 } from '../api/forum';
 import { ForumRowLink } from '../component/ForumRowLink';
 import { ForumThreadReplyBox } from '../component/ForumThreadReplyBox';
-import { MDEditor } from '../component/MDEditor';
+import { bodyMDValidator, MDBodyField } from '../component/MDBodyField';
 import { MarkDownRenderer } from '../component/MarkdownRenderer';
 import { VCenterBox } from '../component/VCenterBox';
-import { bodyMDValidator } from '../component/formik/BodyMDField';
 import { ModalConfirm, ModalForumThreadEditor } from '../component/modal';
 import { SubmitButton } from '../component/modal/Buttons';
 import { RowsPerPage } from '../component/table/LazyTable';
@@ -285,7 +284,7 @@ const MessageEditor = ({
             validateOnBlur={true}
         >
             <Stack padding={1}>
-                <MDEditor />
+                <MDBodyField />
                 <ButtonGroup>
                     <Button
                         variant={'contained'}

@@ -4,11 +4,10 @@ import { Pagination } from '@mui/material';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import { apiGetNewsLatest, NewsEntry } from '../api/news';
-import { renderMarkdown } from '../api/wiki';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
 import { renderDate } from '../util/text';
-import { RenderedMarkdownBox } from './RenderedMarkdownBox';
+import { MarkDownRenderer } from './MarkdownRenderer';
 import { SplitHeading } from './SplitHeading';
 
 export interface NewsViewProps {
@@ -50,13 +49,7 @@ export const NewsView = ({ itemsPerPage }: NewsViewProps) => {
                                 left={article.title}
                                 right={renderDate(article.created_on)}
                             />
-                            <RenderedMarkdownBox
-                                bodyHTML={renderMarkdown(article.body_md)}
-                                readonly={true}
-                                setEditMode={() => {
-                                    return;
-                                }}
-                            />
+                            <MarkDownRenderer body_md={article.body_md} />
                         </Paper>
                     );
                 })}

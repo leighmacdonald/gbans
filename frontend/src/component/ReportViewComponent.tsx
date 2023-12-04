@@ -22,20 +22,17 @@ import {
     apiCreateReportMessage,
     apiDeleteReportMessage,
     apiGetReportMessages,
-    apiUpdateReportMessage,
     PermissionLevel,
     Report,
-    ReportMessagesResponse,
-    UserMessage
+    ReportMessagesResponse
 } from '../api';
-import { renderMarkdown } from '../api/wiki';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
 import { ContainerWithHeader } from './ContainerWithHeader';
-import { MDEditor } from './MDEditor';
+import { MDBodyField } from './MDBodyField';
+import { MarkDownRenderer } from './MarkdownRenderer';
 import { PlayerMessageContext } from './PlayerMessageContext';
-import { RenderedMarkdownBox } from './RenderedMarkdownBox';
 import { SourceBansList } from './SourceBansList';
 import { TabPanel } from './TabPanel';
 import { UserMessageView } from './UserMessageView';
@@ -96,17 +93,6 @@ export const ReportViewComponent = ({
             }
         },
         [currentUser, report.report_id]
-    );
-    const onEdit = useCallback(
-        (message: UserMessage) => {
-            apiUpdateReportMessage(message.message_id, message.contents)
-                .then(() => {
-                    sendFlash('success', 'Updated message successfully');
-                    loadMessages();
-                })
-                .catch(logErr);
-        },
-        [loadMessages, sendFlash]
     );
 
     const onDelete = useCallback(
@@ -184,28 +170,32 @@ export const ReportViewComponent = ({
 
                         <TabPanel value={value} index={0}>
                             {report && (
-                                <RenderedMarkdownBox
-                                    bodyHTML={renderMarkdown(
-                                        report.description
-                                    )}
-                                    readonly={true}
-                                    setEditMode={() => {
-                                        return false;
-                                    }}
-                                />
+                                <Box minHeight={300}>
+                                    <MarkDownRenderer
+                                        body_md={report.description}
+                                    />
+                                </Box>
                             )}
                         </TabPanel>
 
                         <TabPanel value={value} index={1}>
-                            <PersonMessageTable steam_id={report.target_id} />
+                            <Box minHeight={300}>
+                                <PersonMessageTable
+                                    steam_id={report.target_id}
+                                />
+                            </Box>
                         </TabPanel>
                         <TabPanel value={value} index={2}>
-                            <ConnectionHistoryTable
-                                steam_id={report.target_id}
-                            />
+                            <Box minHeight={300}>
+                                <ConnectionHistoryTable
+                                    steam_id={report.target_id}
+                                />
+                            </Box>
                         </TabPanel>
                         <TabPanel value={value} index={3}>
-                            <BanHistoryTable steam_id={report.target_id} />
+                            <Box minHeight={300}>
+                                <BanHistoryTable steam_id={report.target_id} />
+                            </Box>
                         </TabPanel>
                     </ContainerWithHeader>
                     {report.demo_name != '' && (
@@ -266,7 +256,6 @@ export const ReportViewComponent = ({
 
                     {messages.map((m) => (
                         <UserMessageView
-                            onSave={onEdit}
                             onDelete={onDelete}
                             author={m.author}
                             message={m.message}
@@ -279,7 +268,9 @@ export const ReportViewComponent = ({
                             onSubmit={onSubmit}
                         >
                             <Stack spacing={2} padding={1}>
-                                <MDEditor />
+                                <Box minHeight={465}>
+                                    <MDBodyField />
+                                </Box>
                                 <ButtonGroup>
                                     <ResetButton />
                                     <SubmitButton />

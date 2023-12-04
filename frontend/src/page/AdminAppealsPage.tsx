@@ -53,7 +53,7 @@ const validationSchema = yup.object({
 export const AdminAppealsPage = () => {
     const [sortOrder, setSortOrder] = useState<Order>('desc');
     const [sortColumn, setSortColumn] =
-        useState<keyof SteamBanRecord>('last_activity');
+        useState<keyof SteamBanRecord>('updated_on');
     const [rowPerPageCount, setRowPerPageCount] = useState<number>(
         RowsPerPage.Fifty
     );
@@ -294,15 +294,13 @@ export const AdminAppealsPage = () => {
                                     tooltip:
                                         'Updated when a user sends/edits an appeal message',
                                     sortable: true,
-                                    sortKey: 'last_activity',
+                                    sortKey: 'updated_on',
                                     align: 'left',
                                     width: '150px',
                                     renderer: (obj) => {
                                         return (
                                             <Typography variant={'body1'}>
-                                                {renderDateTime(
-                                                    obj.last_activity
-                                                )}
+                                                {renderDateTime(obj.updated_on)}
                                             </Typography>
                                         );
                                     }
