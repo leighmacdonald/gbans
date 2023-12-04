@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import {
     apiGetConnections,
@@ -99,6 +100,23 @@ export const ConnectionHistoryTable = ({ steam_id }: { steam_id?: string }) => {
                     sortType: 'string',
                     align: 'left',
                     sortable: true
+                },
+                {
+                    label: 'Server',
+                    tooltip: 'IP Address',
+                    sortKey: 'ip_addr',
+                    sortType: 'string',
+                    align: 'left',
+                    sortable: true,
+                    renderer: (obj) => {
+                        return (
+                            <Tooltip title={obj.server_name ?? 'Unknown'}>
+                                <Typography variant={'body1'}>
+                                    {obj.server_name_short ?? 'Unknown'}
+                                </Typography>
+                            </Tooltip>
+                        );
+                    }
                 }
             ]}
         />

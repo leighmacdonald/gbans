@@ -17,12 +17,14 @@ import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
+import { Formik } from 'formik';
+import { FormikHelpers } from 'formik/dist/types';
 import {
+    apiCreateBanMessage,
     apiDeleteBanMessage,
     apiGetBanMessages,
     apiGetBanSteam,
     apiSetBanAppealState,
-    apiUpdateBanMessage,
     AppealState,
     AppealStateCollection,
     appealStateString,
@@ -30,21 +32,25 @@ import {
     BanReasons,
     banTypeString,
     PermissionLevel,
-    SteamBanRecord,
-    UserMessage
+    SteamBanRecord
 } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { MDEditor } from '../component/MDEditor';
+import { MDBodyField } from '../component/MDBodyField';
 import { ProfileInfoBox } from '../component/ProfileInfoBox';
 import { SourceBansList } from '../component/SourceBansList';
 import { SteamIDList } from '../component/SteamIDList';
 import { UserMessageView } from '../component/UserMessageView';
 import { ModalBanSteam, ModalUnbanSteam } from '../component/modal';
+import { ResetButton, SubmitButton } from '../component/modal/Buttons';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
 import { renderDateTime, renderTimeDistance } from '../util/text';
 import { NotNull } from '../util/types';
+
+interface NewReplyValues {
+    body_md: string;
+}
 
 export const BanPage = (): JSX.Element => {
     const [ban, setBan] = React.useState<NotNull<SteamBanRecord>>();
@@ -99,37 +105,30 @@ export const BanPage = (): JSX.Element => {
             .catch(logErr);
     }, [id]);
 
-    // const onSave = useCallback(
-    //     (message: string, onSuccess?: () => void) => {
-    //         if (!ban) {
-    //             return;
-    //         }
-    //         apiCreateBanMessage(ban?.ban_id, message)
-    //             .then((response) => {
-    //                 setMessages([
-    //                     ...messages,
-    //                     { author: currentUser, message: response }
-    //                 ]);
-    //                 onSuccess && onSuccess();
-    //             })
-    //             .catch((e) => {
-    //                 sendFlash('error', 'Failed to create message');
-    //                 logErr(e);
-    //             });
-    //     },
-    //     [ban, messages, currentUser, sendFlash]
-    // );
-
-    const onEdit = useCallback(
-        (message: UserMessage) => {
-            apiUpdateBanMessage(message.message_id, message.contents)
-                .then(() => {
-                    sendFlash('success', 'Updated message successfully');
-                    loadMessages();
-                })
-                .catch(logErr);
+    const onSubmit = useCallback(
+        async (
+            values: NewReplyValues,
+            helpers: FormikHelpers<NewReplyValues>
+        ) => {
+            if (!ban) {
+                return;
+            }
+            try {
+                const msg = await apiCreateBanMessage(
+                    ban?.ban_id,
+                    values.body_md
+                );
+                setMessages([
+                    ...messages,
+                    { author: currentUser, message: msg }
+                ]);
+                helpers.resetForm();
+            } catch (e) {
+                sendFlash('error', 'Failed to create message');
+                logErr(e);
+            }
         },
-        [loadMessages, sendFlash]
+        [ban, messages, currentUser, sendFlash]
     );
 
     const onDelete = useCallback(
@@ -208,7 +207,6 @@ export const BanPage = (): JSX.Element => {
 
                     {messages.map((m) => (
                         <UserMessageView
-                            onSave={onEdit}
                             onDelete={onDelete}
                             author={m.author}
                             message={m.message}
@@ -217,9 +215,18 @@ export const BanPage = (): JSX.Element => {
                     ))}
                     {canPost && (
                         <Paper elevation={1}>
-                            <Stack spacing={2}>
-                                <MDEditor />
-                            </Stack>
+                            <Formik<NewReplyValues>
+                                onSubmit={onSubmit}
+                                initialValues={{ body_md: '' }}
+                            >
+                                <Stack spacing={2} padding={1}>
+                                    <MDBodyField />
+                                    <ButtonGroup>
+                                        <ResetButton />
+                                        <SubmitButton />
+                                    </ButtonGroup>
+                                </Stack>
+                            </Formik>
                         </Paper>
                     )}
                     {!canPost && ban && (

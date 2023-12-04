@@ -17,6 +17,7 @@ import Tabs from '@mui/material/Tabs';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 import { useFormikContext } from 'formik';
+import * as yup from 'yup';
 import { apiSaveMedia, UserUploadedFile } from '../api/media';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
@@ -24,13 +25,15 @@ import { MarkDownRenderer } from './MarkdownRenderer';
 import { TabPanel } from './TabPanel';
 import { ModalFileUpload } from './modal';
 
+export const bodyMDValidator = yup.string().min(3, 'Message to short');
+
 interface BodyMDFieldProps {
     body_md: string;
 }
 
-export const MDEditor = <T,>() => {
+export const MDBodyField = <T,>() => {
     const [setTabValue, setTabSetTabValue] = useState(0);
-    const [bodyMD, setBodyMD] = useState('');
+    //const [bodyMD, setBodyMD] = useState('');
     const [cursorPos, setCursorPos] = useState(0);
     const { values, touched, setFieldValue, errors } = useFormikContext<
         T & BodyMDFieldProps
@@ -49,17 +52,17 @@ export const MDEditor = <T,>() => {
                     return;
                 }
                 const newBody =
-                    bodyMD.slice(0, cursorPos) +
+                    values.body_md.slice(0, cursorPos) +
                     `![${resp.asset.name}](media://${resp.asset.asset_id})` +
-                    bodyMD.slice(cursorPos);
-                setBodyMD(newBody);
+                    values.body_md.slice(cursorPos);
+                await setFieldValue('body_md', newBody);
                 onSuccess && onSuccess();
             } catch (e) {
                 logErr(e);
                 sendFlash('error', 'Failed to save media');
             }
         },
-        [bodyMD, cursorPos, sendFlash]
+        [cursorPos, sendFlash, setFieldValue, values.body_md]
     );
 
     return (
@@ -181,7 +184,6 @@ export const MDEditor = <T,>() => {
                             onChange={async (event) => {
                                 const body = event.target.value;
                                 setCursorPos(event.target.selectionEnd ?? 0);
-                                setBodyMD(body);
                                 await setFieldValue('body_md', body);
                             }}
                         />
@@ -190,7 +192,7 @@ export const MDEditor = <T,>() => {
             </TabPanel>
             <TabPanel value={setTabValue} index={1}>
                 <Box padding={2}>
-                    <MarkDownRenderer body_md={bodyMD} />
+                    <MarkDownRenderer body_md={values.body_md} />
                 </Box>
             </TabPanel>
         </Stack>

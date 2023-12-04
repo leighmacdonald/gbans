@@ -1,25 +1,32 @@
-import React, { MouseEvent, useState } from 'react';
+import React, { MouseEvent, useCallback, useState } from 'react';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Card from '@mui/material/Card';
 import CardHeader from '@mui/material/CardHeader';
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
 import { useTheme } from '@mui/material/styles';
 import { formatDistance, parseJSON } from 'date-fns';
-import { UserMessage, UserProfile } from '../api';
-import { renderMarkdown } from '../api/wiki';
-import { MDEditor } from './MDEditor';
-import { RenderedMarkdownBox } from './RenderedMarkdownBox';
+import { Formik } from 'formik';
+import { apiUpdateBanMessage, UserMessage, UserProfile } from '../api';
+import { logErr } from '../util/errors';
+import { MDBodyField } from './MDBodyField';
+import { MarkDownRenderer } from './MarkdownRenderer';
+import { ResetButton, SubmitButton } from './modal/Buttons';
 
 export interface UserMessageViewProps {
     author: UserProfile;
     message: UserMessage;
-    onSave: (message: UserMessage) => void;
     onDelete: (report_message_id: number) => void;
+}
+
+interface UserMessageValues {
+    body_md: string;
 }
 
 export const UserMessageView = ({
@@ -32,19 +39,46 @@ export const UserMessageView = ({
     const open = Boolean(anchorEl);
     const [editing, setEditing] = useState<boolean>(false);
     const [deleted, setDeleted] = useState<boolean>(false);
+
+    const onSubmit = useCallback(
+        async (values: UserMessageValues) => {
+            apiUpdateBanMessage(message.message_id, values.body_md)
+                .then(() => {
+                    message.contents = values.body_md;
+                })
+                .catch(logErr);
+        },
+        [message]
+    );
+
     const handleClick = (event: MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
     };
+
     const handleClose = () => {
         setAnchorEl(null);
     };
+
     if (deleted) {
         return <></>;
     }
+
     if (editing) {
         return (
             <Box component={Paper} padding={1}>
-                <MDEditor />
+                <Formik<UserMessageValues>
+                    onSubmit={onSubmit}
+                    initialValues={{ body_md: message.contents }}
+                >
+                    <Stack spacing={1}>
+                        <MDBodyField />
+
+                        <ButtonGroup>
+                            <ResetButton />
+                            <SubmitButton />
+                        </ButtonGroup>
+                    </Stack>
+                </Formik>
             </Box>
         );
     } else {
@@ -71,11 +105,7 @@ export const UserMessageView = ({
                     subheader={d1}
                 />
 
-                <RenderedMarkdownBox
-                    bodyHTML={renderMarkdown(message.contents)}
-                    readonly={true}
-                    setEditMode={setEditing}
-                />
+                <MarkDownRenderer body_md={message.contents} />
 
                 <Menu
                     anchorEl={anchorEl}

@@ -2,6 +2,7 @@ import React, { JSX, useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import EditNotificationsIcon from '@mui/icons-material/EditNotifications';
 import SendIcon from '@mui/icons-material/Send';
+import Box from '@mui/material/Box';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import Stack from '@mui/material/Stack';
 import { Formik } from 'formik';
@@ -16,7 +17,7 @@ import {
 } from '../api';
 import { logErr } from '../util/errors';
 import { ContainerWithHeader } from './ContainerWithHeader';
-import { MDEditor } from './MDEditor';
+import { MDBodyField } from './MDBodyField';
 import { PlayerMessageContext } from './PlayerMessageContext';
 import { ProfileSelectionField } from './ProfileSelectionField';
 import {
@@ -135,7 +136,9 @@ export const ReportCreateForm = (): JSX.Element => {
                             padding={5}
                         />
                     )}
-                    <MDEditor />
+                    <Box minHeight={365}>
+                        <MDBodyField />
+                    </Box>
                     <ButtonGroup>
                         <ResetButton />
                         <SubmitButton

@@ -147,6 +147,9 @@ export interface PersonConnection {
     persona_name: string;
     created_on: Date;
     ip_info: PersonIPRecord;
+    server_id?: number;
+    server_name_short?: string;
+    server_name?: string;
 }
 
 export interface PersonMessage {

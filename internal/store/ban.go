@@ -690,17 +690,6 @@ type AppealQueryFilter struct {
 }
 
 func (db *Store) GetAppealsByActivity(ctx context.Context, opts AppealQueryFilter) ([]AppealOverview, int64, error) {
-	expr, _, errExpr := sq.Expr(`
-			LATERAL (
-				SELECT a.created_on as last_activity FROM ban_appeal a
-				WHERE a.ban_id = b.ban_id
-				ORDER BY a.updated_on
-				LIMIT 1
-			) ba ON TRUE`).ToSql()
-	if errExpr != nil {
-		return nil, 0, Err(errExpr)
-	}
-
 	var constraints sq.And
 
 	if !opts.Deleted {
@@ -747,19 +736,17 @@ func (db *Store) GetAppealsByActivity(ctx context.Context, opts AppealQueryFilte
 			"source.steam_id as source_steam_id", "source.personaname as source_personaname",
 			"source.avatarhash as source_avatar",
 			"target.steam_id as target_steam_id", "target.personaname as target_personaname",
-			"target.avatarhash as target_avatar", "ba.last_activity").
+			"target.avatarhash as target_avatar").
 		From("ban b").
 		Where(constraints).
 		LeftJoin("person source on source.steam_id = b.source_id").
-		LeftJoin("person target on target.steam_id = b.target_id").
-		InnerJoin(expr)
+		LeftJoin("person target on target.steam_id = b.target_id")
 
 	builder = opts.QueryFilter.applySafeOrder(builder, map[string][]string{
 		"b.": {
 			"ban_id", "target_id", "source_id", "ban_type", "reason", "valid_until", "origin", "created_on",
 			"updated_on", "deleted", "is_enabled", "appeal_state",
 		},
-		"ba.": {"last_activity"},
 	}, "updated_on")
 
 	builder = opts.QueryFilter.applyLimitOffsetDefault(builder)
@@ -788,7 +775,7 @@ func (db *Store) GetAppealsByActivity(ctx context.Context, opts AppealQueryFilte
 			&overview.Origin, &overview.CreatedOn, &overview.UpdatedOn, &overview.Deleted,
 			&overview.ReportID, &overview.UnbanReasonText, &overview.IsEnabled, &overview.AppealState,
 			&SourceSteamID, &overview.SourcePersonaname, &overview.SourceAvatarhash,
-			&TargetSteamID, &overview.TargetPersonaname, &overview.TargetAvatarhash, &overview.LastActivity,
+			&TargetSteamID, &overview.TargetPersonaname, &overview.TargetAvatarhash,
 		); errScan != nil {
 			return nil, 0, errors.Wrap(errScan, "Failed to scan appeal overview")
 		}

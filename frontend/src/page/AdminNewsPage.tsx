@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import PublishedWithChangesIcon from '@mui/icons-material/PublishedWithChanges';
 import SaveIcon from '@mui/icons-material/Save';
 import UnpublishedIcon from '@mui/icons-material/Unpublished';
@@ -13,7 +13,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { apiNewsSave, NewsEntry } from '../api/news';
-import { renderMarkdown } from '../api/wiki';
+import { MarkDownRenderer } from '../component/MarkdownRenderer';
 import { NewsList } from '../component/NewsList';
 import { TabPanel } from '../component/TabPanel';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
@@ -25,7 +25,6 @@ export const AdminNewsPage = () => {
     const handleChange = (_: React.SyntheticEvent, newValue: number) => {
         setTabSetTabValue(newValue);
     };
-    const [bodyHTML, setBodyHTML] = React.useState('');
     const [selectedNewsEntry, setSelectedNewsEntry] = useState<NewsEntry>({
         news_id: 0,
         body_md: '',
@@ -49,15 +48,6 @@ export const AdminNewsPage = () => {
                 logErr(e);
             });
     }, [selectedNewsEntry, sendFlash]);
-
-    useEffect(() => {
-        try {
-            setBodyHTML(renderMarkdown(selectedNewsEntry.body_md));
-        } catch (e) {
-            setBodyHTML('Error rendering markdown');
-            logErr(e);
-        }
-    }, [selectedNewsEntry.body_md]);
 
     return (
         <Grid container spacing={2}>
@@ -114,8 +104,8 @@ export const AdminNewsPage = () => {
                             />
                         </TabPanel>
                         <TabPanel value={setTabValue} index={1}>
-                            <article
-                                dangerouslySetInnerHTML={{ __html: bodyHTML }}
+                            <MarkDownRenderer
+                                body_md={selectedNewsEntry.body_md}
                             />
                         </TabPanel>
                     </Stack>
