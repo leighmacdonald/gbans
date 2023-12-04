@@ -169,6 +169,7 @@ export interface SteamBanRecord extends BanBase {
     report_id: number;
     ban_type: BanType;
     include_friends: boolean;
+    last_activity: Date;
 }
 
 export interface GroupBanRecord extends BanBase {
@@ -273,7 +274,12 @@ export const apiGetAppeals = async (
         LazyResult<SteamBanRecord>,
         AppealQueryFilter
     >(`/api/appeals`, 'POST', opts, abortController);
-    appeals.data = appeals.data.map(applyDateTime);
+    appeals.data = appeals.data.map((a) => {
+        a = applyDateTime(a);
+        a.last_activity = parseDateTime(a.last_activity as unknown as string);
+        return a;
+    });
+
     return appeals;
 };
 
