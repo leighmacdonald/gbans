@@ -126,10 +126,11 @@ type PersonIPRecord struct {
 type AppealOverview struct {
 	BanSteam
 
-	SourcePersonaname string `json:"source_personaname"`
-	SourceAvatarhash  string `json:"source_avatarhash"`
-	TargetPersonaname string `json:"target_personaname"`
-	TargetAvatarhash  string `json:"target_avatarhash"`
+	SourcePersonaname string    `json:"source_personaname"`
+	SourceAvatarhash  string    `json:"source_avatarhash"`
+	TargetPersonaname string    `json:"target_personaname"`
+	TargetAvatarhash  string    `json:"target_avatarhash"`
+	LastActivity      time.Time `json:"last_activity"`
 }
 
 type UserMessage struct {

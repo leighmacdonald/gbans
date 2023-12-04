@@ -689,40 +689,16 @@ type AppealQueryFilter struct {
 	TargetID    StringSID   `json:"target_id"`
 }
 
-func (db *Store) getActiveAppealsIDs(ctx context.Context) ([]int64, error) {
-	query := db.sb.
-		Select("a.ban_id").
-		From("ban b").
-		LeftJoin("ban_appeal a USING (ban_id)").
-		Where(sq.And{sq.Eq{"b.deleted": false}, sq.Eq{"a.deleted": false}}).
-		GroupBy("a.ban_id")
-
-	idRows, errIds := db.QueryBuilder(ctx, query)
-	if errIds != nil {
-		return nil, Err(errIds)
-	}
-
-	defer idRows.Close()
-
-	var banIds []int64
-
-	for idRows.Next() {
-		var validID int64
-
-		if errScan := idRows.Scan(&validID); errScan != nil {
-			return nil, Err(errScan)
-		}
-
-		banIds = append(banIds, validID)
-	}
-
-	return banIds, nil
-}
-
 func (db *Store) GetAppealsByActivity(ctx context.Context, opts AppealQueryFilter) ([]AppealOverview, int64, error) {
-	banIds, errBanIds := db.getActiveAppealsIDs(ctx)
-	if errBanIds != nil {
-		return nil, 0, errBanIds
+	expr, _, errExpr := sq.Expr(`
+			LATERAL (
+				SELECT a.created_on as last_activity FROM ban_appeal a
+				WHERE a.ban_id = b.ban_id
+				ORDER BY a.updated_on
+				LIMIT 1
+			) ba ON TRUE`).ToSql()
+	if errExpr != nil {
+		return nil, 0, Err(errExpr)
 	}
 
 	var constraints sq.And
@@ -753,8 +729,6 @@ func (db *Store) GetAppealsByActivity(ctx context.Context, opts AppealQueryFilte
 		constraints = append(constraints, sq.Eq{"b.target_id": targetID.Int64()})
 	}
 
-	constraints = append(constraints, sq.Eq{"b.ban_id": banIds})
-
 	counterQuery := db.sb.
 		Select("COUNT(b.ban_id)").
 		From("ban b").
@@ -773,17 +747,19 @@ func (db *Store) GetAppealsByActivity(ctx context.Context, opts AppealQueryFilte
 			"source.steam_id as source_steam_id", "source.personaname as source_personaname",
 			"source.avatarhash as source_avatar",
 			"target.steam_id as target_steam_id", "target.personaname as target_personaname",
-			"target.avatarhash as target_avatar").
+			"target.avatarhash as target_avatar", "ba.last_activity").
 		From("ban b").
 		Where(constraints).
 		LeftJoin("person source on source.steam_id = b.source_id").
-		LeftJoin("person target on target.steam_id = b.target_id")
+		LeftJoin("person target on target.steam_id = b.target_id").
+		InnerJoin(expr)
 
 	builder = opts.QueryFilter.applySafeOrder(builder, map[string][]string{
 		"b.": {
 			"ban_id", "target_id", "source_id", "ban_type", "reason", "valid_until", "origin", "created_on",
 			"updated_on", "deleted", "is_enabled", "appeal_state",
 		},
+		"ba.": {"last_activity"},
 	}, "updated_on")
 
 	builder = opts.QueryFilter.applyLimitOffsetDefault(builder)
@@ -812,7 +788,7 @@ func (db *Store) GetAppealsByActivity(ctx context.Context, opts AppealQueryFilte
 			&overview.Origin, &overview.CreatedOn, &overview.UpdatedOn, &overview.Deleted,
 			&overview.ReportID, &overview.UnbanReasonText, &overview.IsEnabled, &overview.AppealState,
 			&SourceSteamID, &overview.SourcePersonaname, &overview.SourceAvatarhash,
-			&TargetSteamID, &overview.TargetPersonaname, &overview.TargetAvatarhash,
+			&TargetSteamID, &overview.TargetPersonaname, &overview.TargetAvatarhash, &overview.LastActivity,
 		); errScan != nil {
 			return nil, 0, errors.Wrap(errScan, "Failed to scan appeal overview")
 		}
