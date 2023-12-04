@@ -136,17 +136,16 @@ const ForumThreadRow = ({ thread }: { thread: ForumThread }) => {
                                 {thread.recent_personaname}
                             </Typography>
                         </Stack>
-                        <VCenteredElement
-                            icon={
-                                <Avatar
-                                    alt={thread.recent_personaname}
-                                    src={`https://avatars.akamai.steamstatic.com/${
-                                        thread.recent_avatarhash ??
-                                        defaultAvatarHash
-                                    }.jpg`}
-                                />
-                            }
-                        />
+                        <VCenterBox>
+                            <Avatar
+                                sx={{ height: '32px', width: '32px' }}
+                                alt={thread.recent_personaname}
+                                src={`https://avatars.akamai.steamstatic.com/${
+                                    thread.recent_avatarhash ??
+                                    defaultAvatarHash
+                                }.jpg`}
+                            />
+                        </VCenterBox>
                     </Stack>
                 ) : (
                     <></>

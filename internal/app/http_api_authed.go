@@ -1928,6 +1928,8 @@ func onAPIThreadUpdate(app *App) gin.HandlerFunc {
 	}
 
 	return func(ctx *gin.Context) {
+		currentUser := currentUserProfile(ctx)
+
 		forumThreadID, errForumTheadID := getInt64Param(ctx, "forum_thread_id")
 		if errForumTheadID != nil {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
@@ -1955,6 +1957,12 @@ func onAPIThreadUpdate(app *App) gin.HandlerFunc {
 			} else {
 				responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			}
+
+			return
+		}
+
+		if thread.SourceID != currentUser.SteamID && !(currentUser.PermissionLevel >= consts.PModerator) {
+			responseErr(ctx, http.StatusForbidden, consts.ErrInternal)
 
 			return
 		}

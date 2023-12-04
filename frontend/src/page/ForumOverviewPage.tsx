@@ -321,24 +321,34 @@ export const RecentUserActivity = () => {
     }, []);
 
     return (
-        <ContainerWithHeader title={'Active Users'}>
-            {active?.map((a) => {
-                return (
-                    <Typography
-                        sx={{
-                            textDecoration: 'none',
-                            '&:hover': {
-                                textDecoration: 'underline'
-                            }
-                        }}
-                        key={`activity-${a.steam_id}`}
-                        variant={'body2'}
-                        color={theme.palette.text.secondary}
-                        component={RouterLink}
-                        to={`/profile/${a.steam_id}`}
-                    ></Typography>
-                );
-            })}
+        <ContainerWithHeader title={'Users Online'}>
+            <Grid container>
+                {active?.map((a) => {
+                    return (
+                        <Grid
+                            xs={'auto'}
+                            spacing={1}
+                            key={`activity-${a.steam_id}`}
+                        >
+                            <Typography
+                                sx={{
+                                    display: 'inline',
+                                    textDecoration: 'none',
+                                    '&:hover': {
+                                        textDecoration: 'underline'
+                                    }
+                                }}
+                                variant={'body2'}
+                                color={theme.palette.text.secondary}
+                                component={RouterLink}
+                                to={`/profile/${a.steam_id}`}
+                            >
+                                {a.personaname}
+                            </Typography>
+                        </Grid>
+                    );
+                })}
+            </Grid>
         </ContainerWithHeader>
     );
 };
