@@ -58,3 +58,4 @@ frontend/.yarn/*
 !frontend/.yarn/releases
 !frontend/.yarn/sdks
 !frontend/.yarn/versions
+parse_demo
