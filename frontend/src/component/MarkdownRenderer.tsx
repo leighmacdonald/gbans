@@ -2,7 +2,7 @@ import React, { JSX } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import { MuiMarkdown } from 'mui-markdown';
+import { getOverrides, MuiMarkdown } from 'mui-markdown';
 import { Highlight, themes } from 'prism-react-renderer';
 
 export const renderLinks = (body_md: string): string => {
@@ -61,6 +61,11 @@ export const MarkDownRenderer = ({ body_md }: { body_md: string }) => {
             <MuiMarkdown
                 options={{
                     overrides: {
+                        ...getOverrides({
+                            Highlight,
+                            themes,
+                            theme: themes.github
+                        }),
                         a: {
                             component: MDLink
                         },
@@ -69,8 +74,6 @@ export const MarkDownRenderer = ({ body_md }: { body_md: string }) => {
                         }
                     }
                 }}
-                Highlight={Highlight}
-                themes={themes}
                 prismTheme={themes.github}
             >
                 {renderLinks(body_md)}
