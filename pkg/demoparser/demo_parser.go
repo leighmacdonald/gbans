@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"os/exec"
@@ -93,7 +94,7 @@ func Parse(ctx context.Context, demoPath string, info *DemoInfo) error {
 	return nil
 }
 
-func exists(path string) bool {
+func Exists(path string) bool {
 	_, err := os.Stat(path)
 
 	return err == nil
@@ -102,7 +103,7 @@ func exists(path string) bool {
 func ensureBinary(ctx context.Context) error {
 	fullPath := fullBinPath()
 
-	if exists(fullPath) {
+	if Exists(fullPath) {
 		return nil
 	}
 
@@ -124,7 +125,7 @@ func ensureBinary(ctx context.Context) error {
 
 	_ = resp.Body.Close()
 
-	openFile, err := os.OpenFile(fullPath, os.O_CREATE|os.O_RDWR|os.O_EXCL, 0x775)
+	openFile, err := os.OpenFile(fullPath, os.O_CREATE|os.O_RDWR|os.O_EXCL, 0x777)
 	if err != nil {
 		return errors.Wrap(err, "Failed to create new fd")
 	}
@@ -140,10 +141,22 @@ func ensureBinary(ctx context.Context) error {
 	return nil
 }
 
-func fullBinPath() string {
-	dir, _ := os.Getwd()
+func appDir() string {
+	dir, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
 
-	return filepath.Join(dir, binPath)
+	fullDir := filepath.Join(dir, ".config", "parse_demo")
+	if errMkdir := os.MkdirAll(fullDir, fs.ModePerm); errMkdir != nil {
+		panic(errMkdir)
+	}
+
+	return fullDir
+}
+
+func fullBinPath() string {
+	return filepath.Join(appDir(), binPath)
 }
 
 func callBin(arg string) ([]byte, error) {

@@ -1,3 +1,4 @@
 * text eol=lf
 /frontend/.yarn/releases/** binary
 /frontend/.yarn/plugins/** binary
+*.dem binary
