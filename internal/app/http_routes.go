@@ -90,6 +90,7 @@ type jsConfig struct {
 //nolint:contextcheck,maintidx
 func createRouter(ctx context.Context, app *App) *gin.Engine {
 	engine := gin.New()
+	engine.MaxMultipartMemory = 8 << 24
 
 	if app.conf.General.Mode != ReleaseMode {
 		pprof.Register(engine)
@@ -129,7 +130,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		engine.LoadHTMLFiles(filepath.Join(absStaticPath, "index.html"))
 	}
 
-	// These should match routes defined in the frontend. This allows us to use the browser
+	// These should match  defined in the frontend. This allows us to use the browser
 	// based routing when serving the SPA.
 	jsRoutes := []string{
 		"/", "/servers", "/profile/:steam_id", "/bans", "/appeal", "/settings", "/report",

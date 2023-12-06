@@ -22,11 +22,12 @@ const (
 	downloadURL = "https://github.com/demostf/parser/releases/download/v0.4.0/parse_demo"
 )
 
+//nolint:tagliatelle
 type Player struct {
 	Classes map[string]int `json:"classes"` // class -> count?
 	Name    string         `json:"name"`
-	UserID  int            `json:"user_id"`
-	SteamID string         `json:"steam_id"`
+	UserID  int            `json:"userId"`
+	SteamID string         `json:"steamId"`
 	Team    string         `json:"team"`
 }
 
@@ -50,20 +51,21 @@ type Round struct {
 	EndTick int     `json:"end_tick"`
 }
 
+//nolint:tagliatelle
 type DemoInfo struct {
 	Chat            []Message         `json:"chat"`
 	Users           map[string]Player `json:"users"` // userid -> player
 	Deaths          []Death           `json:"deaths"`
 	Rounds          []Round           `json:"rounds"`
-	StartTick       int               `json:"start_tick"`
-	IntervalPerTick float64           `json:"interval_per_tick"`
+	StartTick       int               `json:"startTick"`
+	IntervalPerTick float64           `json:"intervalPerTick"`
 }
 
 func (d DemoInfo) SteamIDs() steamid.Collection {
 	var ids steamid.Collection
 
-	for key := range d.Users {
-		sid64 := steamid.New(key)
+	for _, user := range d.Users {
+		sid64 := steamid.New(user.SteamID)
 		if !sid64.Valid() {
 			continue
 		}
