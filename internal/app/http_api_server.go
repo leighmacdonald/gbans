@@ -3,16 +3,14 @@ package app
 // Server API
 
 import (
-	"archive/zip"
-	"bufio"
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
-	"mime/multipart"
 	"net"
 	"net/http"
+	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -21,16 +19,15 @@ import (
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/pkg/demoparser"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
-	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
 type ServerAuthReq struct {
-	ServerName string `json:"server_name"`
-	Key        string `json:"key"`
+	Key string `json:"key"`
 }
 
 type ServerAuthResp struct {
@@ -49,19 +46,17 @@ func onSAPIPostServerAuth(app *App) gin.HandlerFunc {
 
 		var server store.Server
 
-		errGetServer := app.db.GetServerByName(ctx, req.ServerName, &server, true, false)
+		errGetServer := app.db.GetServerByPassword(ctx, req.Key, &server, true, false)
 		if errGetServer != nil {
 			responseErr(ctx, http.StatusUnauthorized, consts.ErrPermissionDenied)
-			log.Warn("Failed to find server auth by name",
-				zap.String("name", req.ServerName), zap.Error(errGetServer))
+			log.Warn("Failed to find server auth by password", zap.Error(errGetServer))
 
 			return
 		}
 
 		if server.Password != req.Key {
 			responseErr(ctx, http.StatusUnauthorized, consts.ErrPermissionDenied)
-			log.Error("Invalid server key used",
-				zap.String("server", util.SanitizeLog(req.ServerName)))
+			log.Error("Invalid server key used")
 
 			return
 		}
@@ -328,144 +323,94 @@ func onAPIPostServerCheck(app *App) gin.HandlerFunc {
 	}
 }
 
-type demoUploadContent struct {
-	demoName string
-	demoRaw  []byte
-	jsonRaw  []byte
-}
-
-func readDemoZipContainer(log *zap.Logger, demoContainerZip *multipart.FileHeader) (*demoUploadContent, error) {
-	zipHandle, errZipHandle := demoContainerZip.Open()
-	if errZipHandle != nil {
-		return nil, errors.Wrap(errZipHandle, "Failed to open zip container")
-	}
-
-	zipReader, errContainer := zip.NewReader(zipHandle, demoContainerZip.Size)
-	if errContainer != nil {
-		return nil, errors.Wrap(errContainer, "Cannot open zip reader")
-	}
-
-	var (
-		rawDemoBuffer = &bytes.Buffer{}
-		rawJSONBuffer = &bytes.Buffer{}
-		rawDemoWriter = bufio.NewWriter(rawDemoBuffer)
-		rawJSONWriter = bufio.NewWriter(rawJSONBuffer)
-		demoName      string
-	)
-
-	for _, file := range zipReader.File {
-		reader, errReader := file.Open()
-		if errReader != nil {
-			return nil, errors.Wrap(errReader, "Cannot open zip file")
-		}
-
-		var (
-			err  error
-			size int64
-		)
-
-		if file.Name == "stats.json" {
-			log.Info("Got stats", zap.String("stats", file.Name))
-
-			size, err = io.CopyN(rawJSONWriter, reader, file.FileInfo().Size())
-		} else {
-			log.Info("Got demo", zap.String("demo", file.Name))
-
-			demoName = file.Name
-
-			size, err = io.CopyN(rawDemoWriter, reader, file.FileInfo().Size())
-		}
-
-		if err != nil {
-			return nil, errors.Wrap(errContainer, "Failed to read zip file content")
-		}
-
-		log.Debug("Copied contents", zap.Int64("size", size))
-
-		if errClose := reader.Close(); errClose != nil {
-			return nil, errors.Wrap(errContainer, "Failed to close reader")
-		}
-	}
-
-	return &demoUploadContent{
-		demoName: demoName,
-		demoRaw:  rawDemoBuffer.Bytes(),
-		jsonRaw:  rawJSONBuffer.Bytes(),
-	}, nil
-}
-
-type demoForm struct {
-	// Stats      string `form:"stats"` // {"76561198084134025": {"score": 0, "deaths": 0, "score_total": 0}}
-	ServerName string `form:"server_name"`
-	MapName    string `form:"map_name"`
-}
-
 func onAPIPostDemo(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var form demoForm
-		if err := ctx.ShouldBind(&form); err != nil {
-			ctx.String(http.StatusBadRequest, "bad request: %v", err)
+		serverID := serverFromCtx(ctx)
+		if serverID <= 0 {
+			responseErr(ctx, http.StatusNotFound, consts.ErrBadRequest)
 
 			return
 		}
 
-		if form.ServerName == "" || form.MapName == "" {
-			log.Error("Missing demo params",
-				zap.String("server_name", util.SanitizeLog(form.ServerName)),
-				zap.String("map_name", util.SanitizeLog(form.MapName)))
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+		var server store.Server
+		if errGetServer := app.db.GetServer(ctx, serverID, &server); errGetServer != nil {
+			log.Error("Server not found", zap.Int("server_id", serverID))
+			responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 
 			return
 		}
 
-		demoContainerZip, errDemoFile := ctx.FormFile("demo")
+		demoFormFile, errDemoFile := ctx.FormFile("demo")
 		if errDemoFile != nil {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
 
 			return
 		}
 
-		result, errZip := readDemoZipContainer(log, demoContainerZip)
-		if errZip != nil {
-			log.Error("Could not read demo zip", zap.Error(errZip))
-			responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
-
-			return
-		}
-
-		var server store.Server
-		if errGetServer := app.db.GetServerByName(ctx, form.ServerName, &server, false, false); errGetServer != nil {
-			log.Error("Server not found", zap.String("server", util.SanitizeLog(form.ServerName)))
-			responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
-
-			return
-		}
-
-		var metaData store.DemoMetaData
-		if errJSON := json.Unmarshal(result.jsonRaw, &metaData); errJSON != nil {
-			log.Error("Failed to unmarshal meta data", zap.Error(errJSON))
+		demoHandle, errDemoHandle := demoFormFile.Open()
+		if errDemoHandle != nil {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
 
 			return
 		}
 
-		// Convert string based sid to int64
-		intStats := map[steamid.SID64]store.DemoPlayerStats{}
+		demoContent, errRead := io.ReadAll(demoHandle)
+		if errRead != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
 
-		for steamID, PlayerStat := range metaData.Scores {
-			sid64, errSid := steamid.SID64FromString(steamID)
-			if errSid != nil {
-				log.Error("Failed to parse score steam id", zap.Error(errSid))
-
-				continue
-			}
-
-			intStats[sid64] = PlayerStat
+			return
 		}
 
-		asset, errAsset := store.NewAsset(result.demoRaw, app.conf.S3.BucketDemo, result.demoName)
+		dir, errDir := os.MkdirTemp("", "gbans-demo")
+		if errDir != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		defer func() {
+			if err := os.RemoveAll(dir); err != nil {
+				log.Error("Failed to cleanup temp demo path", zap.Error(err))
+			}
+		}()
+		// 20231112-063943-koth_harvest_final.dem
+		namePartsAll := strings.Split(demoFormFile.Filename, "-")
+		nameParts := strings.Split(namePartsAll[2], ".")
+		mapName := nameParts[0]
+
+		tempPath := filepath.Join(dir, demoFormFile.Filename)
+
+		localFile, errLocalFile := os.Create(tempPath)
+		if errLocalFile != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		if _, err := localFile.Write(demoContent); err != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		_ = localFile.Close()
+
+		var demoInfo demoparser.DemoInfo
+		if errParse := demoparser.Parse(ctx, tempPath, &demoInfo); errParse != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		intStats := map[steamid.SID64]gin.H{}
+
+		for _, steamID := range demoInfo.SteamIDs() {
+			intStats[steamID] = gin.H{}
+		}
+
+		asset, errAsset := store.NewAsset(demoContent, app.conf.S3.BucketDemo, demoFormFile.Filename)
 		if errAsset != nil {
 			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save asset"))
 
@@ -473,7 +418,7 @@ func onAPIPostDemo(app *App) gin.HandlerFunc {
 		}
 
 		if errPut := app.assetStore.Put(ctx, app.conf.S3.BucketDemo, asset.Name,
-			bytes.NewReader(result.demoRaw), asset.Size, asset.MimeType); errPut != nil {
+			bytes.NewReader(demoContent), asset.Size, asset.MimeType); errPut != nil {
 			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save media"))
 
 			log.Error("Failed to save user media to s3 backend", zap.Error(errPut))
@@ -488,10 +433,10 @@ func onAPIPostDemo(app *App) gin.HandlerFunc {
 		}
 
 		newDemo := store.DemoFile{
-			ServerID:  server.ServerID,
+			ServerID:  serverID,
 			Title:     asset.Name,
 			CreatedOn: time.Now(),
-			MapName:   form.MapName,
+			MapName:   mapName,
 			Stats:     intStats,
 			AssetID:   asset.AssetID,
 		}

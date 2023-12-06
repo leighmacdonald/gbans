@@ -235,7 +235,39 @@ func (db *Store) GetServerByName(ctx context.Context, serverName string, server 
 	row, errRow := db.QueryRowBuilder(ctx, db.sb.
 		Select("server_id", "short_name", "name", "address", "port", "rcon", "password",
 			"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
-			"latitude", "longitude", "deleted", "log_secret", "enabled_stats").
+			"latitude", "longitude", "deleted", "log_secret", "enable_stats").
+		From(string(tableServer)).
+		Where(and))
+	if errRow != nil {
+		return errRow
+	}
+
+	return Err(row.Scan(
+		&server.ServerID,
+		&server.ShortName,
+		&server.Name,
+		&server.Address,
+		&server.Port,
+		&server.RCON,
+		&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn, &server.ReservedSlots,
+		&server.IsEnabled, &server.Region, &server.CC, &server.Latitude, &server.Longitude,
+		&server.Deleted, &server.LogSecret, &server.EnableStats))
+}
+
+func (db *Store) GetServerByPassword(ctx context.Context, serverPassword string, server *Server, disabledOk bool, deletedOk bool) error {
+	and := sq.And{sq.Eq{"password": serverPassword}}
+	if !disabledOk {
+		and = append(and, sq.Eq{"is_enabled": true})
+	}
+
+	if !deletedOk {
+		and = append(and, sq.Eq{"deleted": false})
+	}
+
+	row, errRow := db.QueryRowBuilder(ctx, db.sb.
+		Select("server_id", "short_name", "name", "address", "port", "rcon", "password",
+			"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
+			"latitude", "longitude", "deleted", "log_secret", "enable_stats").
 		From(string(tableServer)).
 		Where(and))
 	if errRow != nil {

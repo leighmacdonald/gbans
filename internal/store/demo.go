@@ -7,6 +7,7 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gabriel-vasile/mimetype"
+	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -26,18 +27,18 @@ type DemoMetaData struct {
 }
 
 type DemoFile struct {
-	DemoID          int64                             `json:"demo_id"`
-	ServerID        int                               `json:"server_id"`
-	ServerNameShort string                            `json:"server_name_short"`
-	ServerNameLong  string                            `json:"server_name_long"`
-	Title           string                            `json:"title"`
-	CreatedOn       time.Time                         `json:"created_on"`
-	Downloads       int64                             `json:"downloads"`
-	Size            int64                             `json:"size"`
-	MapName         string                            `json:"map_name"`
-	Archive         bool                              `json:"archive"` // When true, will not get auto deleted when flushing old demos
-	Stats           map[steamid.SID64]DemoPlayerStats `json:"stats"`
-	AssetID         uuid.UUID                         `json:"asset_id"`
+	DemoID          int64                   `json:"demo_id"`
+	ServerID        int                     `json:"server_id"`
+	ServerNameShort string                  `json:"server_name_short"`
+	ServerNameLong  string                  `json:"server_name_long"`
+	Title           string                  `json:"title"`
+	CreatedOn       time.Time               `json:"created_on"`
+	Downloads       int64                   `json:"downloads"`
+	Size            int64                   `json:"size"`
+	MapName         string                  `json:"map_name"`
+	Archive         bool                    `json:"archive"` // When true, will not get auto deleted when flushing old demos
+	Stats           map[steamid.SID64]gin.H `json:"stats"`
+	AssetID         uuid.UUID               `json:"asset_id"`
 }
 
 func (db *Store) FlushDemos(ctx context.Context) error {
@@ -240,8 +241,8 @@ func (db *Store) SaveDemo(ctx context.Context, demoFile *DemoFile) error {
 
 func (db *Store) insertDemo(ctx context.Context, demoFile *DemoFile) error {
 	query, args, errQueryArgs := db.sb.
-		Insert("demo d").
-		Columns("d.server_id", "d.title", "d.created_on", "d.downloads", "d.map_name", "d.archive", "d.stats", "d.asset_id").
+		Insert("demo").
+		Columns("server_id", "title", "created_on", "downloads", "map_name", "archive", "stats", "asset_id").
 		Values(demoFile.ServerID, demoFile.Title, demoFile.CreatedOn,
 			demoFile.Downloads, demoFile.MapName, demoFile.Archive, demoFile.Stats, demoFile.AssetID).
 		Suffix("RETURNING demo_id").
