@@ -690,7 +690,7 @@ type AppealQueryFilter struct {
 }
 
 func (db *Store) GetAppealsByActivity(ctx context.Context, opts AppealQueryFilter) ([]AppealOverview, int64, error) {
-	var constraints sq.And
+	constraints := sq.And{sq.Gt{"m.count": 0}}
 
 	if !opts.Deleted {
 		constraints = append(constraints, sq.Eq{"b.deleted": opts.Deleted})
@@ -721,7 +721,13 @@ func (db *Store) GetAppealsByActivity(ctx context.Context, opts AppealQueryFilte
 	counterQuery := db.sb.
 		Select("COUNT(b.ban_id)").
 		From("ban b").
-		Where(constraints)
+		Where(constraints).
+		InnerJoin(`
+			LATERAL (
+				SELECT count(a.ban_message_id) as count 
+				FROM ban_appeal a
+				WHERE b.ban_id = a.ban_id
+			) m ON TRUE`)
 
 	count, errCount := db.GetCount(ctx, counterQuery)
 	if errCount != nil {
@@ -739,6 +745,12 @@ func (db *Store) GetAppealsByActivity(ctx context.Context, opts AppealQueryFilte
 			"target.avatarhash as target_avatar").
 		From("ban b").
 		Where(constraints).
+		InnerJoin(`
+			LATERAL (
+				SELECT count(a.ban_message_id) as count 
+				FROM ban_appeal a
+				WHERE b.ban_id = a.ban_id
+			) m ON TRUE`).
 		LeftJoin("person source on source.steam_id = b.source_id").
 		LeftJoin("person target on target.steam_id = b.target_id")
 
