@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState, JSX } from 'react';
+import React, { useCallback, useMemo, useState, JSX } from 'react';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
@@ -24,8 +24,6 @@ import * as yup from 'yup';
 import { PermissionLevel, permissionLevelString } from '../api';
 import {
     apiDeleteMessage,
-    apiGetThread,
-    apiGetThreadMessages,
     apiSaveThreadMessage,
     ForumMessage,
     ForumThread
@@ -39,7 +37,8 @@ import { ModalConfirm, ModalForumThreadEditor } from '../component/modal';
 import { SubmitButton } from '../component/modal/Buttons';
 import { RowsPerPage } from '../component/table/LazyTable';
 import { hasPermission, useCurrentUserCtx } from '../contexts/CurrentUserCtx';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { useThread } from '../hooks/useThread';
+import { useThreadMessages } from '../hooks/useThreadMessages';
 import { logErr } from '../util/errors';
 import { useScrollToLocation } from '../util/history';
 import { renderDateTime } from '../util/text';
@@ -301,47 +300,31 @@ const MessageEditor = ({
 };
 
 export const ForumThreadPage = (): JSX.Element => {
-    const [thread, setThread] = useState<ForumThread>();
-    const [messages, setMessages] = useState<ForumMessage[]>([]);
-    const [count, setCount] = useState(0);
+    const [updatedMessages, setUpdatedMessages] = useState<ForumMessage[]>();
+    const [updatedThread, setUpdatedThread] = useState<ForumThread>();
     const [page, setPage] = useState(1);
     const { forum_thread_id } = useParams();
     const { currentUser } = useCurrentUserCtx();
     const thread_id = parseInt(forum_thread_id ?? '');
     const navigate = useNavigate();
-    const { sendFlash } = useUserFlashCtx();
+    const { data: threadOrig } = useThread(thread_id);
+    const { data: messagesOrig, count } = useThreadMessages({
+        forum_thread_id: thread_id,
+        offset: (page - 1) * RowsPerPage.Ten,
+        limit: RowsPerPage.Ten,
+        order_by: 'forum_message_id',
+        desc: false
+    });
+
+    const messages = useMemo(() => {
+        return updatedMessages ?? messagesOrig;
+    }, [messagesOrig, updatedMessages]);
+
+    const activeThread = useMemo(() => {
+        return updatedThread ?? threadOrig;
+    }, [threadOrig, updatedThread]);
 
     useScrollToLocation();
-
-    useEffect(() => {
-        const abortController = new AbortController();
-        apiGetThread(thread_id, abortController)
-            .then((resp) => {
-                setThread(resp);
-            })
-            .catch((e) => {
-                logErr(e);
-            });
-        return () => abortController.abort();
-    }, [navigate, sendFlash, thread_id]);
-
-    useEffect(() => {
-        const abortController = new AbortController();
-        apiGetThreadMessages(
-            {
-                forum_thread_id: thread_id,
-                offset: (page - 1) * RowsPerPage.Ten,
-                limit: RowsPerPage.Ten,
-                order_by: 'forum_message_id',
-                desc: false
-            },
-            abortController
-        ).then((m) => {
-            setMessages(m.data);
-            setCount(m.count);
-        });
-        return () => abortController.abort();
-    }, [page, thread_id]);
 
     const firstPostID = useMemo(() => {
         if (page > 1) {
@@ -362,26 +345,29 @@ export const ForumThreadPage = (): JSX.Element => {
             const newThread = await NiceModal.show<ForumThread>(
                 ModalForumThreadEditor,
                 {
-                    thread
+                    activeThread
                 }
             );
             if (newThread.forum_thread_id > 0) {
-                setThread(newThread);
+                setUpdatedThread(newThread);
             } else {
                 navigate('/forums/');
             }
         } catch (e) {
             logErr(e);
         }
-    }, [navigate, thread]);
+    }, [navigate, activeThread]);
 
-    const onMessageDeleted = useCallback((forum_message_id: number) => {
-        setMessages((prevState) => {
-            return prevState.filter(
-                (m) => m.forum_message_id != forum_message_id
-            );
-        });
-    }, []);
+    const onMessageDeleted = useCallback(
+        (forum_message_id: number) => {
+            setUpdatedMessages(() => {
+                return messages.filter(
+                    (m) => m.forum_message_id != forum_message_id
+                );
+            });
+        },
+        [messages]
+    );
 
     return (
         <Stack spacing={1}>
@@ -391,7 +377,7 @@ export const ForumThreadPage = (): JSX.Element => {
                         <ConstructionIcon fontSize={'small'} />
                     </IconButton>
                 )}
-                <Typography variant={'h3'}>{thread?.title}</Typography>
+                <Typography variant={'h3'}>{activeThread?.title}</Typography>
             </Stack>
             <Stack direction={'row'} spacing={1}>
                 <Person2Icon />
@@ -400,15 +386,15 @@ export const ForumThreadPage = (): JSX.Element => {
                         variant={'body2'}
                         component={RouterLink}
                         color={(theme) => theme.palette.text.primary}
-                        to={`/profile/${thread?.source_id}`}
+                        to={`/profile/${activeThread?.source_id}`}
                     >
-                        {thread?.personaname ?? ''}
+                        {activeThread?.personaname ?? ''}
                     </Typography>
                 </VCenterBox>
                 <AccessTimeIcon />
                 <VCenterBox>
                     <Typography variant={'body2'}>
-                        {renderDateTime(thread?.created_on ?? new Date())}
+                        {renderDateTime(activeThread?.created_on ?? new Date())}
                     </Typography>
                 </VCenterBox>
             </Stack>
@@ -427,19 +413,19 @@ export const ForumThreadPage = (): JSX.Element => {
                     setPage(newPage);
                 }}
             />
-            {thread?.locked && (
+            {activeThread?.locked && (
                 <Paper>
                     <Typography variant={'h4'} textAlign={'center'} padding={1}>
                         <LockIcon /> Thread Locked
                     </Typography>
                 </Paper>
             )}
-            {thread?.forum_thread_id && !thread?.locked && (
+            {activeThread?.forum_thread_id && !activeThread?.locked && (
                 <ForumThreadReplyBox
-                    forum_thread_id={thread?.forum_thread_id}
+                    forum_thread_id={activeThread?.forum_thread_id}
                     onSuccess={(message) => {
-                        setMessages((prevState) => {
-                            return [...prevState, message];
+                        setUpdatedMessages(() => {
+                            return [...messages, message];
                         });
                     }}
                 />

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import EditIcon from '@mui/icons-material/Edit';
 import UndoIcon from '@mui/icons-material/Undo';
@@ -10,15 +10,9 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { Formik } from 'formik';
 import * as yup from 'yup';
-import {
-    apiGetBansSteam,
-    AppealState,
-    BanReason,
-    BanSteamQueryFilter,
-    SteamBanRecord
-} from '../../api';
+import { AppealState, BanReason, SteamBanRecord } from '../../api';
 import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
-import { logErr } from '../../util/errors';
+import { useBansSteam } from '../../hooks/useBansSteam';
 import { renderDate } from '../../util/text';
 import {
     AppealStateField,
@@ -53,16 +47,13 @@ const validationSchema = yup.object({
 });
 
 export const BanSteamTable = ({ newBans }: { newBans: SteamBanRecord[] }) => {
-    const [bans, setBans] = useState<SteamBanRecord[]>([]);
     const [sortOrder, setSortOrder] = useState<Order>('desc');
     const [sortColumn, setSortColumn] =
         useState<keyof SteamBanRecord>('ban_id');
     const [rowPerPageCount, setRowPerPageCount] = useState<number>(
         RowsPerPage.TwentyFive
     );
-    const [hasNew, setHasNew] = useState(false);
     const [page, setPage] = useState(0);
-    const [totalRows, setTotalRows] = useState<number>(0);
     const [source, setSource] = useState('');
     const [target, setTarget] = useState('');
     const [deleted, setDeleted] = useState(false);
@@ -70,14 +61,6 @@ export const BanSteamTable = ({ newBans }: { newBans: SteamBanRecord[] }) => {
         AppealState.Any
     );
     const { sendFlash } = useUserFlashCtx();
-
-    const allBans = useMemo(() => {
-        if (newBans.length > 0 && hasNew) {
-            return [...newBans, ...bans];
-        }
-
-        return bans;
-    }, [bans, hasNew, newBans]);
 
     const onUnbanSteam = useCallback(
         async (ban: SteamBanRecord) => {
@@ -110,47 +93,24 @@ export const BanSteamTable = ({ newBans }: { newBans: SteamBanRecord[] }) => {
         [sendFlash]
     );
 
-    useEffect(() => {
+    const { data, count } = useBansSteam({
+        limit: rowPerPageCount,
+        offset: page * rowPerPageCount,
+        order_by: sortColumn,
+        desc: sortOrder == 'desc',
+        source_id: source,
+        target_id: target,
+        appeal_state: appealState,
+        deleted: deleted
+    });
+
+    const allBans = useMemo(() => {
         if (newBans.length > 0) {
-            setHasNew(false);
+            return [...newBans, ...data];
         }
 
-        const abortController = new AbortController();
-        const opts: BanSteamQueryFilter = {
-            limit: rowPerPageCount,
-            offset: page * rowPerPageCount,
-            order_by: sortColumn,
-            desc: sortOrder == 'desc',
-            source_id: source,
-            target_id: target,
-            appeal_state: appealState,
-            deleted: deleted
-        };
-
-        apiGetBansSteam(opts, abortController)
-            .then((bans) => {
-                setBans(bans.data);
-                setTotalRows(bans.count);
-                if (page * rowPerPageCount > bans.count) {
-                    setPage(0);
-                }
-            })
-            .catch((reason) => {
-                logErr(reason);
-            });
-
-        return () => abortController.abort();
-    }, [
-        appealState,
-        source,
-        deleted,
-        page,
-        rowPerPageCount,
-        sortColumn,
-        sortOrder,
-        target,
-        newBans.length
-    ]);
+        return data;
+    }, [data, newBans]);
 
     const iv: SteamBanFilterValues = {
         appeal_state: AppealState.Any,
@@ -204,7 +164,7 @@ export const BanSteamTable = ({ newBans }: { newBans: SteamBanRecord[] }) => {
                 <Grid xs={12}>
                     <LazyTable<SteamBanRecord>
                         showPager={true}
-                        count={totalRows}
+                        count={count}
                         rows={allBans}
                         page={page}
                         rowsPerPage={rowPerPageCount}

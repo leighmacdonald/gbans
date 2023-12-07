@@ -546,7 +546,6 @@ func (db *Store) ForumMessageSave(ctx context.Context, message *ForumMessage) er
 
 	return db.ExecUpdateBuilder(ctx, db.sb.
 		Update("forum_thread").
-		Set("last_forum_message_id", message.ForumMessageID).
 		Set("updated_on", message.CreatedOn).
 		Where(sq.Eq{"forum_thread_id": message.ForumThreadID}))
 }

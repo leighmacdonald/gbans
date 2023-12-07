@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Link as RouterLink } from 'react-router-dom';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
@@ -15,7 +15,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { defaultAvatarHash, PermissionLevel } from '../api';
-import { apiForum, apiGetThreads, Forum, ForumThread } from '../api/forum';
+import { Forum, ForumThread } from '../api/forum';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons';
 import { ForumRowLink } from '../component/ForumRowLink';
 import { VCenteredElement } from '../component/Heading';
@@ -27,6 +27,8 @@ import {
 import { RowsPerPage } from '../component/table/LazyTable';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { useForum } from '../hooks/useForum';
+import { useThreads } from '../hooks/useThreads';
 import { logErr } from '../util/errors';
 import { renderDateTime } from '../util/text';
 
@@ -157,10 +159,6 @@ const ForumThreadRow = ({ thread }: { thread: ForumThread }) => {
 
 export const ForumPage = () => {
     const { forum_id } = useParams();
-    const [forum, setForum] = useState<Forum>();
-    const [threads, setThreads] = useState<ForumThread[]>();
-    const [count, setCount] = useState(0);
-    const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(1);
     const modalCreate = useModal(ModalForumThreadCreator);
     const { currentUser } = useCurrentUserCtx();
@@ -168,37 +166,20 @@ export const ForumPage = () => {
     const navigate = useNavigate();
     const id = parseInt(forum_id as string);
     const rpp = RowsPerPage.TwentyFive;
+    const [forumUpdated, setForumUpdated] = useState<Forum>();
 
-    useEffect(() => {
-        setLoading(true);
-        const abortController = new AbortController();
+    const { data: forum, loading } = useForum(id);
+    const { data: threads, count } = useThreads({
+        forum_id: id,
+        offset: (page - 1) * rpp,
+        limit: rpp,
+        order_by: 'updated_on',
+        desc: true
+    });
 
-        apiForum(id, abortController)
-            .then((f) => {
-                setForum(f);
-            })
-            .catch((e) => {
-                logErr(e);
-            })
-            .finally(() => {
-                setLoading(false);
-            });
-
-        return () => abortController.abort();
-    }, [id]);
-
-    useEffect(() => {
-        apiGetThreads({
-            forum_id: id,
-            offset: (page - 1) * rpp,
-            limit: rpp,
-            order_by: 'updated_on',
-            desc: true
-        }).then((resp) => {
-            setThreads(resp.data);
-            setCount(resp.count);
-        });
-    }, [id, page, rpp]);
+    const currentForum = useMemo(() => {
+        return forumUpdated ?? forum;
+    }, [forum, forumUpdated]);
 
     const onNewThread = useCallback(async () => {
         try {
@@ -217,7 +198,7 @@ export const ForumPage = () => {
             const forum = await NiceModal.show<Forum>(ModalForumForumEditor, {
                 initial_forum_id: id
             });
-            setForum(forum);
+            setForumUpdated(forum);
         } catch (e) {
             logErr(e);
         }
@@ -260,7 +241,7 @@ export const ForumPage = () => {
 
     return (
         <ContainerWithHeaderAndButtons
-            title={loading ? 'Loading...' : forum?.title ?? 'Forum'}
+            title={loading ? 'Loading...' : currentForum?.title ?? 'Forum'}
             iconLeft={<MessageIcon />}
             buttons={headerButtons}
         >

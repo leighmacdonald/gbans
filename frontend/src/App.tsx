@@ -25,7 +25,6 @@ import { AdminAppealsPage } from './page/AdminAppealsPage';
 import { AdminBanPage } from './page/AdminBanPage';
 import { AdminContestsPage } from './page/AdminContestsPage';
 import { AdminFiltersPage } from './page/AdminFiltersPage';
-import { AdminImportPage } from './page/AdminImportPage';
 import { AdminNetworkPage } from './page/AdminNetworkPage';
 import { AdminNewsPage } from './page/AdminNewsPage';
 import { AdminPeoplePage } from './page/AdminPeoplePage';
@@ -600,22 +599,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                         </ErrorBoundary>
                                                                     }
                                                                 />
-                                                                <Route
-                                                                    path={
-                                                                        '/admin/import'
-                                                                    }
-                                                                    element={
-                                                                        <ErrorBoundary>
-                                                                            <PrivateRoute
-                                                                                permission={
-                                                                                    PermissionLevel.Admin
-                                                                                }
-                                                                            >
-                                                                                <AdminImportPage />
-                                                                            </PrivateRoute>
-                                                                        </ErrorBoundary>
-                                                                    }
-                                                                />
+
                                                                 <Route
                                                                     path={
                                                                         '/admin/news'

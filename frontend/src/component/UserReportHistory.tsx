@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import ButtonGroup from '@mui/material/ButtonGroup';
@@ -6,14 +6,13 @@ import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { apiGetReports, reportStatusString, ReportWithAuthor } from '../api';
-import { logErr } from '../util/errors';
+import { reportStatusString, ReportWithAuthor } from '../api';
+import { useReports } from '../hooks/useReports';
 import { PersonCell } from './PersonCell';
 import { ReportStatusIcon } from './ReportStatusIcon';
 import { LazyTable, Order, RowsPerPage } from './table/LazyTable';
 
 export const UserReportHistory = ({ steam_id }: { steam_id: string }) => {
-    const [reportHistory, setReportHistory] = useState<ReportWithAuthor[]>([]);
     const [sortOrder, setSortOrder] = useState<Order>('desc');
     const [sortColumn, setSortColumn] =
         useState<keyof ReportWithAuthor>('created_on');
@@ -21,37 +20,21 @@ export const UserReportHistory = ({ steam_id }: { steam_id: string }) => {
         RowsPerPage.TwentyFive
     );
     const [page, setPage] = useState(0);
-    const [totalRows, setTotalRows] = useState<number>(0);
 
-    useEffect(() => {
-        const abortController = new AbortController();
-        apiGetReports(
-            {
-                order_by: 'created_on',
-                source_id: steam_id,
-                deleted: false,
-                offset: page * rowPerPageCount,
-                limit: rowPerPageCount,
-                desc: sortOrder == 'desc'
-            },
-            abortController
-        )
-            .then((resp) => {
-                setReportHistory(resp.data);
-                setTotalRows(resp.count);
-            })
-            .catch((e) => {
-                logErr(e);
-            });
-
-        return () => abortController.abort();
-    }, [page, rowPerPageCount, sortOrder, steam_id]);
+    const { data, count } = useReports({
+        order_by: 'created_on',
+        source_id: steam_id,
+        deleted: false,
+        offset: page * rowPerPageCount,
+        limit: rowPerPageCount,
+        desc: sortOrder == 'desc'
+    });
 
     return (
         <LazyTable
             showPager={true}
-            count={totalRows}
-            rows={reportHistory}
+            count={count}
+            rows={data}
             page={page}
             rowsPerPage={rowPerPageCount}
             sortOrder={sortOrder}

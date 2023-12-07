@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import DoNotDisturbIcon from '@mui/icons-material/DoNotDisturb';
 import FiberNewIcon from '@mui/icons-material/FiberNew';
 import FilterListIcon from '@mui/icons-material/FilterList';
@@ -9,8 +9,6 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { Formik } from 'formik';
 import * as yup from 'yup';
 import {
-    apiGetAppeals,
-    AppealQueryFilter,
     AppealState,
     appealStateString,
     BanReason,
@@ -35,7 +33,7 @@ import {
 } from '../component/formik/TargetIdField';
 import { LazyTable, Order, RowsPerPage } from '../component/table/LazyTable';
 import { TableCellLink } from '../component/table/TableCellLink';
-import { logErr } from '../util/errors';
+import { useAppeals } from '../hooks/useAppeals';
 import { renderDate, renderDateTime } from '../util/text';
 
 interface AppealFilterValues {
@@ -58,47 +56,22 @@ export const AdminAppealsPage = () => {
         RowsPerPage.Fifty
     );
     const [page, setPage] = useState(0);
-    const [appeals, setAppeals] = useState<SteamBanRecord[]>([]);
     const [appealState, setAppealState] = useState<AppealState>(
         AppealState.Any
     );
-    const [loading, setLoading] = useState(false);
-    const [totalRows, setTotalRows] = useState<number>(0);
+
     const [author, setAuthor] = useState('');
     const [target, setTarget] = useState('');
 
-    useEffect(() => {
-        const abortController = new AbortController();
-
-        const opts: AppealQueryFilter = {
-            desc: sortOrder == 'desc',
-            order_by: sortColumn,
-            source_id: author,
-            target_id: target,
-            offset: page * rowPerPageCount,
-            limit: rowPerPageCount,
-            appeal_state: appealState
-        };
-
-        setLoading(true);
-        apiGetAppeals(opts, abortController)
-            .then((response) => {
-                setAppeals(response.data);
-                setTotalRows(response.count);
-            })
-            .catch(logErr)
-            .finally(() => setLoading(false));
-
-        return () => abortController.abort();
-    }, [
-        appealState,
-        author,
-        page,
-        rowPerPageCount,
-        sortColumn,
-        sortOrder,
-        target
-    ]);
+    const { appeals, count, loading } = useAppeals({
+        desc: sortOrder == 'desc',
+        order_by: sortColumn,
+        source_id: author,
+        target_id: target,
+        offset: page * rowPerPageCount,
+        limit: rowPerPageCount,
+        appeal_state: appealState
+    });
 
     const tableIcon = useMemo(() => {
         if (loading) {
@@ -173,7 +146,7 @@ export const AdminAppealsPage = () => {
                             showPager
                             page={page}
                             rowsPerPage={rowPerPageCount}
-                            count={totalRows}
+                            count={count}
                             sortOrder={sortOrder}
                             sortColumn={sortColumn}
                             onSortColumnChanged={async (column) => {

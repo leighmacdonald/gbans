@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import EditIcon from '@mui/icons-material/Edit';
 import UndoIcon from '@mui/icons-material/Undo';
@@ -10,14 +10,9 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { formatDuration, intervalToDuration } from 'date-fns';
 import { Formik } from 'formik';
 import * as yup from 'yup';
-import {
-    apiGetBansASN,
-    ASNBanRecord,
-    BanASNQueryFilter,
-    BanReason
-} from '../../api';
+import { ASNBanRecord, BanReason } from '../../api';
 import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
-import { logErr } from '../../util/errors';
+import { useBansASN } from '../../hooks/useBansASN';
 import { renderDate } from '../../util/text';
 import { ASNumberField, asNumberFieldValidator } from '../formik/ASNumberField';
 import { DeletedField, deletedValidator } from '../formik/DeletedField';
@@ -45,30 +40,37 @@ const validationSchema = yup.object({
 });
 
 export const BanASNTable = ({ newBans }: { newBans: ASNBanRecord[] }) => {
-    const [bans, setBans] = useState<ASNBanRecord[]>([]);
     const [sortOrder, setSortOrder] = useState<Order>('desc');
     const [sortColumn, setSortColumn] =
         useState<keyof ASNBanRecord>('ban_asn_id');
     const [rowPerPageCount, setRowPerPageCount] = useState<number>(
         RowsPerPage.TwentyFive
     );
-    const [hasNew, setHasNew] = useState(false);
-
     const [page, setPage] = useState(0);
-    const [totalRows, setTotalRows] = useState<number>(0);
     const [asNum, setASNum] = useState<number>();
     const [source, setSource] = useState('');
     const [target, setTarget] = useState('');
     const [deleted, setDeleted] = useState(false);
     const { sendFlash } = useUserFlashCtx();
 
+    const { data, count } = useBansASN({
+        limit: rowPerPageCount,
+        offset: page * rowPerPageCount,
+        order_by: sortColumn,
+        desc: sortOrder == 'desc',
+        deleted: deleted,
+        source_id: source,
+        target_id: target,
+        as_num: asNum
+    });
+
     const allBans = useMemo(() => {
-        if (newBans.length > 0 && hasNew) {
-            return [...newBans, ...bans];
+        if (newBans.length > 0) {
+            return [...newBans, ...data];
         }
 
-        return bans;
-    }, [bans, hasNew, newBans]);
+        return data;
+    }, [data, newBans]);
 
     const onUnbanASN = useCallback(
         async (as_num: number) => {
@@ -100,45 +102,6 @@ export const BanASNTable = ({ newBans }: { newBans: ASNBanRecord[] }) => {
         },
         [sendFlash]
     );
-
-    useEffect(() => {
-        if (newBans.length > 0) {
-            setHasNew(false);
-        }
-
-        const abortController = new AbortController();
-        const opts: BanASNQueryFilter = {
-            limit: rowPerPageCount,
-            offset: page * rowPerPageCount,
-            order_by: sortColumn,
-            desc: sortOrder == 'desc',
-            deleted: deleted,
-            source_id: source,
-            target_id: target,
-            as_num: asNum
-        };
-        apiGetBansASN(opts, abortController)
-            .then((resp) => {
-                setBans(resp.data);
-                setTotalRows(resp.count);
-                if (page * rowPerPageCount > resp.count) {
-                    setPage(0);
-                }
-            })
-            .catch((e) => {
-                logErr(e);
-            });
-    }, [
-        asNum,
-        deleted,
-        newBans.length,
-        page,
-        rowPerPageCount,
-        sortColumn,
-        sortOrder,
-        source,
-        target
-    ]);
 
     const iv: ASNFilterValues = {
         as_num: undefined,
@@ -192,7 +155,7 @@ export const BanASNTable = ({ newBans }: { newBans: ASNBanRecord[] }) => {
                 <Grid xs={12}>
                     <LazyTable<ASNBanRecord>
                         showPager={true}
-                        count={totalRows}
+                        count={count}
                         rows={allBans}
                         page={page}
                         rowsPerPage={rowPerPageCount}

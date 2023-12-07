@@ -433,6 +433,8 @@ func onAPIGetReports(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
+		user := currentUserProfile(ctx)
+
 		var req store.ReportQueryFilter
 		if !bind(ctx, log, &req) {
 			return
@@ -440,6 +442,19 @@ func onAPIGetReports(app *App) gin.HandlerFunc {
 
 		if req.Limit <= 0 && req.Limit > 100 {
 			req.Limit = 25
+		}
+
+		sourceID, errSourceID := req.SourceID.SID64(ctx)
+		if errSourceID != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		if user.SteamID != sourceID {
+			responseErr(ctx, http.StatusForbidden, consts.ErrPermissionDenied)
+
+			return
 		}
 
 		var userReports []reportWithAuthor
@@ -2173,7 +2188,7 @@ func onAPIMessageDelete(app *App) gin.HandlerFunc {
 				return
 			}
 
-			log.Error("Thread message deleted", zap.Int64("forum_message_id", message.ForumMessageID))
+			log.Info("Thread message deleted", zap.Int64("forum_message_id", message.ForumMessageID))
 		}
 
 		ctx.JSON(http.StatusOK, gin.H{})

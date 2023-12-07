@@ -1,4 +1,4 @@
-import React, { JSX, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { JSX, useCallback, useMemo } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import NiceModal from '@ebay/nice-modal-react';
 import { Person2 } from '@mui/icons-material';
@@ -6,6 +6,7 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import CategoryIcon from '@mui/icons-material/Category';
 import ChatIcon from '@mui/icons-material/Chat';
 import ConstructionIcon from '@mui/icons-material/Construction';
+import PeopleIcon from '@mui/icons-material/People';
 import TodayIcon from '@mui/icons-material/Today';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
@@ -16,16 +17,7 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import { defaultAvatarHash, PermissionLevel } from '../api';
-import {
-    ActiveUser,
-    apiForumActiveUsers,
-    apiForumRecentActivity,
-    apiGetForumOverview,
-    Forum,
-    ForumCategory,
-    ForumMessage,
-    ForumOverview
-} from '../api/forum';
+import { Forum, ForumCategory } from '../api/forum';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons';
 import { ForumRowLink } from '../component/ForumRowLink';
@@ -37,6 +29,9 @@ import {
 } from '../component/modal';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { useForumOverview } from '../hooks/useForumOverview';
+import { useForumRecentMessageActivity } from '../hooks/useForumRecentMessageActivity';
+import { useForumRecentUserActivity } from '../hooks/useForumRecentUserActivity';
 import { logErr } from '../util/errors';
 import { humanCount, renderDateTime, renderTime } from '../util/text';
 
@@ -217,19 +212,9 @@ const CategoryBlock = ({ category }: { category: ForumCategory }) => {
 };
 
 export const ForumOverviewPage = (): JSX.Element => {
-    const [overview, setOverview] = useState<ForumOverview>();
     const { sendFlash } = useUserFlashCtx();
     const { currentUser } = useCurrentUserCtx();
-
-    useEffect(() => {
-        const abortController = new AbortController();
-        apiGetForumOverview(abortController)
-            .then((resp) => {
-                setOverview(resp);
-            })
-            .catch((e) => logErr(e));
-        return () => abortController.abort();
-    }, []);
+    const { data: overview } = useForumOverview();
 
     const onNewCategory = useCallback(async () => {
         try {
@@ -303,27 +288,16 @@ export const ForumOverviewPage = (): JSX.Element => {
 };
 
 export const RecentUserActivity = () => {
-    const [active, setActive] = useState<ActiveUser[]>();
+    const { data } = useForumRecentUserActivity();
     const theme = useTheme();
 
-    useEffect(() => {
-        const abortController = new AbortController();
-
-        apiForumActiveUsers()
-            .then((activity) => {
-                setActive(activity);
-            })
-            .catch((e) => {
-                logErr(e);
-            });
-
-        return () => abortController.abort();
-    }, []);
-
     return (
-        <ContainerWithHeader title={'Users Online'}>
+        <ContainerWithHeader
+            title={`Users Online ${data?.length ?? 0}`}
+            iconLeft={<PeopleIcon />}
+        >
             <Grid container>
-                {active?.map((a) => {
+                {data?.map((a) => {
                     return (
                         <Grid
                             xs={'auto'}
@@ -354,22 +328,12 @@ export const RecentUserActivity = () => {
 };
 
 export const RecentMessageActivity = () => {
-    const [recent, setRecent] = useState<ForumMessage[]>([]);
+    const { data } = useForumRecentMessageActivity();
 
-    useEffect(() => {
-        const abortController = new AbortController();
-        apiForumRecentActivity()
-            .then((act) => {
-                setRecent(act);
-            })
-            .catch((e) => logErr(e));
-
-        return () => abortController.abort();
-    }, []);
     return (
         <ContainerWithHeader title={'Latest Activity'} iconLeft={<TodayIcon />}>
             <Stack spacing={1}>
-                {recent.map((m) => {
+                {data.map((m) => {
                     return (
                         <Stack
                             direction={'row'}
