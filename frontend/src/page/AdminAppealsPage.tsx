@@ -75,7 +75,7 @@ export const AdminAppealsPage = () => {
             order_by: sortColumn,
             source_id: author,
             target_id: target,
-            offset: page,
+            offset: page * rowPerPageCount,
             limit: rowPerPageCount,
             appeal_state: appealState
         };
