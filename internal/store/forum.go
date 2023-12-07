@@ -297,7 +297,7 @@ func (db *Store) ForumSave(ctx context.Context, forum *Forum) error {
 func (db *Store) Forum(ctx context.Context, forumID int, forum *Forum) error {
 	row, errRow := db.QueryRowBuilder(ctx, db.sb.
 		Select("forum_id", "forum_category_id", "title", "description", "last_thread_id",
-			"count_threads", "count_messages", "ordering", "created_on", "updated_on").
+			"count_threads", "count_messages", "ordering", "created_on", "updated_on", "permission_level").
 		From("forum").
 		Where(sq.Eq{"forum_id": forumID}))
 	if errRow != nil {
@@ -307,7 +307,7 @@ func (db *Store) Forum(ctx context.Context, forumID int, forum *Forum) error {
 	var lastThreadID *int64
 	if err := row.Scan(&forum.ForumID, &forum.ForumCategoryID, &forum.Title, &forum.Description,
 		&lastThreadID, &forum.CountThreads, &forum.CountMessages, &forum.Ordering,
-		&forum.CreatedOn, &forum.UpdatedOn); err != nil {
+		&forum.CreatedOn, &forum.UpdatedOn, &forum.PermissionLevel); err != nil {
 		return Err(err)
 	}
 

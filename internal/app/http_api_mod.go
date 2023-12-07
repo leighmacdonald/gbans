@@ -51,7 +51,9 @@ func onAPISaveWikiSlug(app *App) gin.HandlerFunc {
 			page = page.NewRevision()
 		}
 
+		page.PermissionLevel = req.PermissionLevel
 		page.BodyMD = req.BodyMD
+
 		if errSave := app.db.SaveWikiPage(ctx, &page); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 

@@ -504,6 +504,8 @@ func contestFromCtx(ctx *gin.Context, app *App) (store.Contest, bool) {
 
 func onAPIGetWikiSlug(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		currentUser := currentUserProfile(ctx)
+
 		slug := strings.ToLower(ctx.Param("slug"))
 		if slug[0] == '/' {
 			slug = slug[1:]
@@ -518,6 +520,12 @@ func onAPIGetWikiSlug(app *App) gin.HandlerFunc {
 			}
 
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			return
+		}
+
+		if page.PermissionLevel > currentUser.PermissionLevel {
+			responseErr(ctx, http.StatusForbidden, consts.ErrPermissionDenied)
 
 			return
 		}
@@ -742,6 +750,23 @@ func onAPIForumThreads(app *App) gin.HandlerFunc {
 			return
 		}
 
+		var forum store.Forum
+		if err := app.db.Forum(ctx, tqf.ForumID, &forum); err != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			log.Error("Could not load forum", zap.Error(errThreads))
+
+			return
+		}
+
+		if forum.PermissionLevel > currentUser.PermissionLevel {
+			responseErr(ctx, http.StatusUnauthorized, consts.ErrPermissionDenied)
+
+			log.Error("User does not have access to forum")
+
+			return
+		}
+
 		ctx.JSON(http.StatusOK, newLazyResult(count, threads))
 	}
 }
@@ -785,6 +810,8 @@ func onAPIForum(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
+		currentUser := currentUserProfile(ctx)
+
 		forumID, errForumID := getIntParam(ctx, "forum_id")
 		if errForumID != nil {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
@@ -798,6 +825,12 @@ func onAPIForum(app *App) gin.HandlerFunc {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			log.Error("Could not load forum")
+
+			return
+		}
+
+		if forum.PermissionLevel > currentUser.PermissionLevel {
+			responseErr(ctx, http.StatusForbidden, consts.ErrPermissionDenied)
 
 			return
 		}

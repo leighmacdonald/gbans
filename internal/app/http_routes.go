@@ -166,7 +166,6 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 	engine.GET("/api/servers/state", onAPIGetServerStates(app))
 	engine.GET("/api/stats", onAPIGetStats(app))
 
-	engine.GET("/api/wiki/slug/*slug", onAPIGetWikiSlug(app))
 	engine.POST("/api/news_latest", onAPIGetNewsLatest(app))
 
 	engine.GET("/api/patreon/campaigns", onAPIGetPatreonCampaigns(app))
@@ -186,8 +185,6 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 
 	engine.GET("/export/sourcemod/admins_simple.ini", onAPIExportSourcemodSimpleAdmins(app))
 
-	engine.GET("/api/forum/forum/:forum_id", onAPIForum(app))
-	engine.POST("/api/forum/messages", onAPIForumMessages(app))
 	engine.GET("/api/forum/active_users", onAPIActiveUsers(app))
 
 	engine.POST("/api/auth/refresh", onTokenRefresh(app))
@@ -195,14 +192,17 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 	// This allows use of the user profile on endpoints that have optional authentication
 	optionalAuth := engine.Group("/")
 	{
-		optionalAuth.Use(authMiddleware(app, consts.PGuest))
-		optionalAuth.GET("/api/contests", onAPIGetContests(app))
-		optionalAuth.GET("/api/contests/:contest_id", onAPIGetContest(app))
-		optionalAuth.GET("/api/contests/:contest_id/entries", onAPIGetContestEntries(app))
-		optionalAuth.GET("/api/forum/overview", onAPIForumOverview(app))
-		optionalAuth.GET("/api/forum/messages/recent", onAPIForumMessagesRecent(app))
-		optionalAuth.POST("/api/forum/threads", onAPIForumThreads(app))
-		optionalAuth.GET("/api/forum/thread/:forum_thread_id", onAPIForumThread(app))
+		optional := optionalAuth.Use(authMiddleware(app, consts.PGuest))
+		optional.GET("/api/contests", onAPIGetContests(app))
+		optional.GET("/api/contests/:contest_id", onAPIGetContest(app))
+		optional.GET("/api/contests/:contest_id/entries", onAPIGetContestEntries(app))
+		optional.GET("/api/forum/overview", onAPIForumOverview(app))
+		optional.GET("/api/forum/messages/recent", onAPIForumMessagesRecent(app))
+		optional.POST("/api/forum/threads", onAPIForumThreads(app))
+		optional.GET("/api/forum/thread/:forum_thread_id", onAPIForumThread(app))
+		optional.GET("/api/wiki/slug/*slug", onAPIGetWikiSlug(app))
+		optional.GET("/api/forum/forum/:forum_id", onAPIForum(app))
+		optional.POST("/api/forum/messages", onAPIForumMessages(app))
 	}
 
 	srvGrp := engine.Group("/")

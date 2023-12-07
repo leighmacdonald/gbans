@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import BuildIcon from '@mui/icons-material/Build';
 import LockIcon from '@mui/icons-material/Lock';
@@ -14,11 +13,12 @@ import Pagination from '@mui/material/Pagination';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import { PermissionLevel } from '../api';
+import { ErrorCode, PermissionLevel } from '../api';
 import { Forum, ForumThread } from '../api/forum';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons';
 import { ForumRowLink } from '../component/ForumRowLink';
 import { VCenteredElement } from '../component/Heading';
+import { PermissionDenied } from '../component/PermissionDenied';
 import { VCenterBox } from '../component/VCenterBox';
 import {
     ModalForumForumEditor,
@@ -168,7 +168,7 @@ export const ForumPage = () => {
     const rpp = RowsPerPage.TwentyFive;
     const [forumUpdated, setForumUpdated] = useState<Forum>();
 
-    const { data: forum, loading } = useForum(id);
+    const { data: forum, loading, error } = useForum(id);
     const { data: threads, count } = useThreads({
         forum_id: id,
         offset: (page - 1) * rpp,
@@ -176,6 +176,17 @@ export const ForumPage = () => {
         order_by: 'updated_on',
         desc: true
     });
+
+    const showLogin = useMemo(() => {
+        if (forum && currentUser.permission_level < forum?.permission_level) {
+            return true;
+        }
+        return !!(
+            error &&
+            (error.code == ErrorCode.PermissionDenied ||
+                error.code == ErrorCode.LoginRequired)
+        );
+    }, [forum, currentUser.permission_level, error]);
 
     const currentForum = useMemo(() => {
         return forumUpdated ?? forum;
@@ -238,6 +249,10 @@ export const ForumPage = () => {
             <ButtonGroup key={'forum-header-buttons'}>{buttons}</ButtonGroup>
         ];
     }, [currentUser.permission_level, onEditForum, onNewThread]);
+
+    if (showLogin && error) {
+        return <PermissionDenied error={error} />;
+    }
 
     return (
         <ContainerWithHeaderAndButtons

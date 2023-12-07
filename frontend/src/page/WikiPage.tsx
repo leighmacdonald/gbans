@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, JSX, useCallback } from 'react';
+import React, { JSX, useCallback, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 import ArticleIcon from '@mui/icons-material/Article';
-import Box from '@mui/material/Box';
+import BuildIcon from '@mui/icons-material/Build';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import Paper from '@mui/material/Paper';
@@ -10,62 +10,60 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { Formik } from 'formik';
 import * as yup from 'yup';
-import { PermissionLevel } from '../api';
-import { apiGetWikiPage, apiSaveWikiPage, Page } from '../api/wiki';
+import { ErrorCode, PermissionLevel } from '../api';
+import { apiSaveWikiPage, Page } from '../api/wiki';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { LoadingSpinner } from '../component/LoadingSpinner';
+import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons';
 import { bodyMDValidator, MDBodyField } from '../component/MDBodyField';
 import { MarkDownRenderer } from '../component/MarkdownRenderer';
+import { PermissionLevelField } from '../component/formik/PermissionLevelField';
 import { SubmitButton } from '../component/modal/Buttons';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import { useWiki } from '../hooks/useWiki';
 import { logErr } from '../util/errors';
-
-const defaultPage: Page = {
-    slug: '',
-    body_md: '',
-    created_on: new Date(),
-    updated_on: new Date(),
-    revision: 0,
-    title: ''
-};
+import { LoginPage } from './LoginPage';
+import { PageNotFoundPage } from './PageNotFoundPage';
 
 interface WikiValues {
-    slug: string;
     body_md: string;
+    permission_level: PermissionLevel;
 }
 
 const validationSchema = yup.object({
-    body_md: bodyMDValidator
+    body_md: bodyMDValidator,
+    permission_level: yup
+        .number()
+        .oneOf([
+            PermissionLevel.Guest,
+            PermissionLevel.User,
+            PermissionLevel.Reserved,
+            PermissionLevel.Editor,
+            PermissionLevel.Moderator,
+            PermissionLevel.Admin
+        ])
+        .label('Permission Level')
+        .required('Minimum permission value required')
 });
 
 export const WikiPage = (): JSX.Element => {
-    const [page, setPage] = React.useState<Page>(defaultPage);
-    const [loading, setLoading] = React.useState<boolean>(true);
     const [editMode, setEditMode] = React.useState<boolean>(false);
     const { slug } = useParams();
     const { currentUser } = useCurrentUserCtx();
+    const [updatedPage, setUpdatedPage] = useState<Page>();
 
-    useEffect(() => {
-        const abortController = new AbortController();
-        setLoading(true);
-        const fetchWiki = async () => {
-            try {
-                const page = await apiGetWikiPage(
-                    slug || 'home',
-                    abortController
-                );
-                setPage(page);
-            } catch (e) {
-                logErr(e);
-            } finally {
-                setLoading(false);
-            }
-        };
+    const { data, loading, error } = useWiki(slug);
 
-        fetchWiki().catch(logErr);
+    const isPermDenied = useMemo(() => {
+        if (!error) {
+            return false;
+        }
 
-        return () => abortController.abort();
-    }, [slug]);
+        return error.code == ErrorCode.PermissionDenied;
+    }, [error]);
+
+    const page = useMemo(() => {
+        return updatedPage ?? data;
+    }, [data, updatedPage]);
 
     const onSubmit = useCallback(
         async (values: WikiValues) => {
@@ -73,16 +71,17 @@ export const WikiPage = (): JSX.Element => {
                 const newPage = {
                     ...page,
                     body_md: values.body_md,
-                    slug: values.slug
+                    slug: slug ?? 'home',
+                    permission_level: values.permission_level
                 };
                 const resp = await apiSaveWikiPage(newPage);
-                setPage(resp);
+                setUpdatedPage(resp);
                 setEditMode(false);
             } catch (e) {
                 logErr(e);
             }
         },
-        [page]
+        [page, slug]
     );
 
     const bodyHTML = useMemo(() => {
@@ -95,24 +94,31 @@ export const WikiPage = (): JSX.Element => {
 
     return (
         <Grid container spacing={3}>
-            {loading && (
-                <Grid xs={12} alignContent={'center'}>
-                    <Paper elevation={1}>
-                        <LoadingSpinner />
-                    </Paper>
-                </Grid>
-            )}
             {!loading && !editMode && page.revision > 0 && (
                 <Grid xs={12}>
-                    <ContainerWithHeader
+                    <ContainerWithHeaderAndButtons
                         title={page.slug}
                         iconLeft={<ArticleIcon />}
+                        buttons={[
+                            <ButtonGroup key={`wiki-buttons`}>
+                                <Button
+                                    startIcon={<BuildIcon />}
+                                    variant={'contained'}
+                                    color={'warning'}
+                                    onClick={() => {
+                                        setEditMode(true);
+                                    }}
+                                >
+                                    Edit
+                                </Button>
+                            </ButtonGroup>
+                        ]}
                     >
-                        <Box padding={2}>{bodyHTML}</Box>
-                    </ContainerWithHeader>
+                        {bodyHTML}
+                    </ContainerWithHeaderAndButtons>
                 </Grid>
             )}
-            {!loading && !editMode && page.revision == 0 && (
+            {!loading && !editMode && page.revision == 0 && !isPermDenied && (
                 <Grid xs={12}>
                     <ContainerWithHeader
                         title={'Wiki Entry Not Found'}
@@ -140,21 +146,52 @@ export const WikiPage = (): JSX.Element => {
                     </ContainerWithHeader>
                 </Grid>
             )}
-            {!loading && editMode && (
+            {isPermDenied &&
+                currentUser.permission_level > PermissionLevel.Guest && (
+                    <Grid xs={12}>
+                        <PageNotFoundPage heading={'Permission Denied'} />
+                    </Grid>
+                )}
+            {isPermDenied &&
+                currentUser.permission_level == PermissionLevel.Guest && (
+                    <Grid xs={12}>
+                        <LoginPage />
+                    </Grid>
+                )}
+            {!loading && editMode && !isPermDenied && (
                 <Grid xs={12}>
                     <Formik<WikiValues>
                         onSubmit={onSubmit}
                         validationSchema={validationSchema}
                         validateOnBlur={true}
                         initialValues={{
-                            slug: page.slug,
-                            body_md: page.body_md
+                            body_md: page.body_md,
+                            permission_level: page.permission_level
                         }}
                     >
                         <Paper elevation={1}>
                             <Stack spacing={1} padding={1}>
                                 <MDBodyField />
+                                <PermissionLevelField
+                                    levels={[
+                                        PermissionLevel.Guest,
+                                        PermissionLevel.User,
+                                        PermissionLevel.Reserved,
+                                        PermissionLevel.Editor,
+                                        PermissionLevel.Moderator,
+                                        PermissionLevel.Admin
+                                    ]}
+                                />
                                 <ButtonGroup>
+                                    <Button
+                                        color={'warning'}
+                                        variant={'contained'}
+                                        onClick={() => {
+                                            setEditMode(false);
+                                        }}
+                                    >
+                                        Cancel
+                                    </Button>
                                     <SubmitButton />
                                 </ButtonGroup>
                             </Stack>

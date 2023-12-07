@@ -49,7 +49,7 @@ func onTokenRefresh(app *App) gin.HandlerFunc {
 			return
 		}
 
-		refreshTokenString, errToken := tokenFromHeader(ctx)
+		refreshTokenString, errToken := tokenFromHeader(ctx, false)
 		if errToken != nil {
 			ctx.AbortWithStatus(http.StatusForbidden)
 
@@ -2263,6 +2263,7 @@ func onAPIThreadCreateReply(app *App) gin.HandlerFunc {
 		newMessage.Personaname = currentUser.Name
 		newMessage.Avatarhash = currentUser.Avatarhash
 		newMessage.PermissionLevel = currentUser.PermissionLevel
+		newMessage.Online = true
 
 		ctx.JSON(http.StatusCreated, newMessage)
 	}

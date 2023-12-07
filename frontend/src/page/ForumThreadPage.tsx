@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState, JSX } from 'react';
+import React, { JSX, useCallback, useMemo, useState } from 'react';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
@@ -43,6 +43,7 @@ import { useThreadMessages } from '../hooks/useThreadMessages';
 import { logErr } from '../util/errors';
 import { useScrollToLocation } from '../util/history';
 import { avatarHashToURL, renderDateTime } from '../util/text';
+import { LoginPage } from './LoginPage';
 
 const ForumAvatar = ({
     src,
@@ -429,6 +430,35 @@ export const ForumThreadPage = (): JSX.Element => {
         [messages]
     );
 
+    const replyContainer = useMemo(() => {
+        if (currentUser.permission_level == PermissionLevel.Guest) {
+            return (
+                <LoginPage
+                    title={'Create Reply'}
+                    message={'Please login to reply to this thread'}
+                />
+            );
+        } else if (activeThread?.forum_thread_id && !activeThread?.locked) {
+            return (
+                <ForumThreadReplyBox
+                    forum_thread_id={activeThread?.forum_thread_id}
+                    onSuccess={(message) => {
+                        setUpdatedMessages(() => {
+                            return [...messages, message];
+                        });
+                    }}
+                />
+            );
+        } else {
+            return <></>;
+        }
+    }, [
+        activeThread?.forum_thread_id,
+        activeThread?.locked,
+        currentUser.permission_level,
+        messages
+    ]);
+
     return (
         <Stack spacing={1}>
             <Stack direction={'row'}>
@@ -480,16 +510,7 @@ export const ForumThreadPage = (): JSX.Element => {
                     </Typography>
                 </Paper>
             )}
-            {activeThread?.forum_thread_id && !activeThread?.locked && (
-                <ForumThreadReplyBox
-                    forum_thread_id={activeThread?.forum_thread_id}
-                    onSuccess={(message) => {
-                        setUpdatedMessages(() => {
-                            return [...messages, message];
-                        });
-                    }}
-                />
-            )}
+            {replyContainer}
         </Stack>
     );
 };
