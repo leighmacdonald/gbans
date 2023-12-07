@@ -74,7 +74,10 @@ func (app *App) addAuthorUserProfile(msgEmbed *embed.Embed, profile userProfile)
 		name = fmt.Sprintf("<@%s> | ", profile.DiscordID) + name
 	}
 
-	return msgEmbed.SetAuthor(name, profile.Avatarfull, app.ExtURL(profile))
+	return msgEmbed.SetAuthor(
+		name,
+		fmt.Sprintf("https://avatars.akamai.steamstatic.com/%s.jpg", profile.Avatarhash),
+		app.ExtURL(profile))
 }
 
 // OnFindExec is a helper function used to execute rcon commands against any players found in the query.

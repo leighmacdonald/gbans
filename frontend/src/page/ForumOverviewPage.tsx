@@ -16,7 +16,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
-import { defaultAvatarHash, PermissionLevel } from '../api';
+import { PermissionLevel } from '../api';
 import { Forum, ForumCategory } from '../api/forum';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons';
@@ -33,7 +33,12 @@ import { useForumOverview } from '../hooks/useForumOverview';
 import { useForumRecentMessageActivity } from '../hooks/useForumRecentMessageActivity';
 import { useForumRecentUserActivity } from '../hooks/useForumRecentUserActivity';
 import { logErr } from '../util/errors';
-import { humanCount, renderDateTime, renderTime } from '../util/text';
+import {
+    avatarHashToURL,
+    humanCount,
+    renderDateTime,
+    renderTime
+} from '../util/text';
 
 const CategoryBlock = ({ category }: { category: ForumCategory }) => {
     const { currentUser } = useCurrentUserCtx();
@@ -151,10 +156,10 @@ const CategoryBlock = ({ category }: { category: ForumCategory }) => {
                                             icon={
                                                 <Avatar
                                                     alt={f.recent_personaname}
-                                                    src={`https://avatars.akamai.steamstatic.com/${
-                                                        f.recent_avatarhash ??
-                                                        defaultAvatarHash
-                                                    }.jpg`}
+                                                    src={avatarHashToURL(
+                                                        f.recent_avatarhash,
+                                                        'medium'
+                                                    )}
                                                 />
                                             }
                                         />
@@ -350,9 +355,10 @@ export const RecentMessageActivity = () => {
                                 icon={
                                     <Avatar
                                         alt={m.personaname}
-                                        src={`https://avatars.akamai.steamstatic.com/${
-                                            m.avatarhash ?? defaultAvatarHash
-                                        }.jpg`}
+                                        src={avatarHashToURL(
+                                            m.avatarhash,
+                                            'medium'
+                                        )}
                                     />
                                 }
                             />

@@ -15,7 +15,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import { Person } from '../api';
-import { filterPerson } from '../util/text';
+import { avatarHashToURL, filterPerson } from '../util/text';
 import { Heading } from './Heading';
 import { LoadingSpinner } from './LoadingSpinner';
 
@@ -102,7 +102,7 @@ export const FriendList = ({ friends, limit = 25 }: FriendListProps) => {
                                     <ListItemAvatar>
                                         <Avatar
                                             alt={'Profile Picture'}
-                                            src={p.avatar}
+                                            src={avatarHashToURL(p.avatarhash)}
                                         />
                                     </ListItemAvatar>
                                     <ListItemText

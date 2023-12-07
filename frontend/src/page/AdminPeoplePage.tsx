@@ -224,7 +224,7 @@ export const AdminPeoplePage = (): JSX.Element => {
                             {
                                 label: 'Comm. Ban',
                                 tooltip: 'Is the player community banned',
-                                sortKey: 'vac_bans',
+                                sortKey: 'community_banned',
                                 align: 'left',
                                 sortable: true,
                                 renderer: (row) => (

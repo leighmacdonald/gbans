@@ -11,11 +11,10 @@ import {
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
-import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { fromByteArray } from 'base64-js';
-import { Formik, useFormikContext } from 'formik';
+import { Formik } from 'formik';
 import * as yup from 'yup';
 import {
     apiContestEntrySave,
@@ -30,17 +29,17 @@ import { Nullable } from '../../util/types';
 import { Heading } from '../Heading';
 import { LinearProgressWithLabel } from '../LinearProgresWithLabel';
 import { LoadingSpinner } from '../LoadingSpinner';
-import { BaseFormikInputProps } from '../formik/SteamIdField';
+import { MDBodyField } from '../MDBodyField';
 import { minStringValidator } from '../formik/Validator';
 import { CancelButton, ResetButton, SubmitButton } from './Buttons';
 
 interface ContestEntryFormValues {
     contest_id: string;
-    description: string;
+    body_md: string;
 }
 
 const validationSchema = yup.object({
-    description: minStringValidator('Description', 1)
+    body_md: minStringValidator('Description', 1)
 });
 
 export const ContestEntryModal = NiceModal.create(
@@ -136,7 +135,7 @@ export const ContestEntryModal = NiceModal.create(
                 try {
                     const contest = await apiContestEntrySave(
                         values.contest_id,
-                        values.description,
+                        values.body_md,
                         assetID
                     );
                     sendFlash(
@@ -164,7 +163,7 @@ export const ContestEntryModal = NiceModal.create(
                 id={formId}
                 initialValues={{
                     contest_id: contest?.contest_id ?? EmptyUUID,
-                    description: ''
+                    body_md: ''
                 }}
                 validateOnBlur={false}
                 validateOnChange={false}
@@ -187,7 +186,7 @@ export const ContestEntryModal = NiceModal.create(
                         ) : (
                             <Grid container spacing={2}>
                                 <Grid xs={12}>
-                                    <DescriptionField />
+                                    <MDBodyField fileUpload={false} />
                                 </Grid>
                                 <Grid xs={4}>
                                     <label htmlFor="contained-button-file">
@@ -280,23 +279,3 @@ export const ContestEntryModal = NiceModal.create(
         );
     }
 );
-
-const DescriptionField = ({ isReadOnly }: BaseFormikInputProps) => {
-    const { errors, touched, values, handleChange, handleBlur } =
-        useFormikContext<ContestEntryFormValues>();
-    return (
-        <TextField
-            fullWidth
-            multiline
-            minRows={10}
-            disabled={isReadOnly ?? false}
-            name={'description'}
-            label={'Description'}
-            value={values.description}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            error={touched.description && Boolean(errors.description)}
-            helperText={touched.description && errors.description}
-        />
-    );
-};

@@ -409,8 +409,7 @@ func authMiddleware(app *App, level consts.Privilege) gin.HandlerFunc {
 				PermissionLevel: loggedInPerson.PermissionLevel,
 				DiscordID:       loggedInPerson.DiscordID,
 				Name:            loggedInPerson.PersonaName,
-				Avatar:          loggedInPerson.Avatar,
-				Avatarfull:      loggedInPerson.AvatarFull,
+				Avatarhash:      loggedInPerson.AvatarHash,
 				Muted:           loggedInPerson.Muted,
 				BanID:           bannedPerson.BanID,
 			}

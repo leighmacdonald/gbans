@@ -29,6 +29,7 @@ import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { InfoBar } from '../component/InfoBar';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder';
 import { LoadingSpinner } from '../component/LoadingSpinner';
+import { MarkDownRenderer } from '../component/MarkdownRenderer';
 import { PersonCell } from '../component/PersonCell';
 import { VCenterBox } from '../component/VCenterBox';
 import {
@@ -269,16 +270,14 @@ export const ContestPage = () => {
                                                             >
                                                                 Description
                                                             </Typography>
-                                                            <Typography
-                                                                variant={
-                                                                    'body1'
+                                                            <MarkDownRenderer
+                                                                body_md={
+                                                                    entry.description !=
+                                                                    ''
+                                                                        ? entry.description
+                                                                        : 'No description provided'
                                                                 }
-                                                            >
-                                                                {entry.description !=
-                                                                ''
-                                                                    ? entry.description
-                                                                    : 'No description provided'}
-                                                            </Typography>
+                                                            />
                                                         </Grid>
                                                         <Grid
                                                             xs={4}

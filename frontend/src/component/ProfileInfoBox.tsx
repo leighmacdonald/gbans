@@ -6,7 +6,7 @@ import Typography from '@mui/material/Typography';
 import { format, fromUnixTime } from 'date-fns';
 import { apiGetProfile, PlayerProfile } from '../api';
 import { logErr } from '../util/errors';
-import { isValidSteamDate } from '../util/text';
+import { avatarHashToURL, isValidSteamDate } from '../util/text';
 import { ContainerWithHeader } from './ContainerWithHeader';
 import { LoadingPlaceholder } from './LoadingPlaceholder';
 
@@ -35,7 +35,7 @@ export const ProfileInfoBox = ({ steam_id }: { steam_id: string }) => {
                 <Stack direction={'row'} spacing={3} marginTop={0}>
                     <Avatar
                         variant={'square'}
-                        src={profile.player.avatarfull}
+                        src={avatarHashToURL(profile.player.avatarhash)}
                         alt={'Profile Avatar'}
                         sx={{ width: 160, height: 160 }}
                     />

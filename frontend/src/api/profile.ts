@@ -45,8 +45,7 @@ export interface UserProfile extends TimeStamped {
     permission_level: PermissionLevel;
     discord_id: string;
     name: string;
-    avatar: string;
-    avatarfull: string;
+    avatarhash: string;
     ban_id: number;
     muted: boolean;
 }

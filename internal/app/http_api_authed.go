@@ -2260,6 +2260,10 @@ func onAPIThreadCreateReply(app *App) gin.HandlerFunc {
 			log.Error("Failed to increment message count", zap.Error(errIncr))
 		}
 
+		newMessage.Personaname = currentUser.Name
+		newMessage.Avatarhash = currentUser.Avatarhash
+		newMessage.PermissionLevel = currentUser.PermissionLevel
+
 		ctx.JSON(http.StatusCreated, newMessage)
 	}
 }

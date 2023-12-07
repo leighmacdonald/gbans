@@ -95,6 +95,7 @@ type ForumMessage struct {
 	SourceID       steamid.SID64 `json:"source_id"`
 	BodyMD         string        `json:"body_md"`
 	Title          string        `json:"title"`
+	Online         bool          `json:"online"`
 	SimplePerson
 	TimeStamped
 }

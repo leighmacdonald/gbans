@@ -87,8 +87,7 @@ type userProfile struct {
 	PermissionLevel consts.Privilege `json:"permission_level"`
 	DiscordID       string           `json:"discord_id"`
 	Name            string           `json:"name"`
-	Avatar          string           `json:"avatar"`
-	Avatarfull      string           `json:"avatarfull"`
+	Avatarhash      string           `json:"avatarhash"`
 	BanID           int64            `json:"ban_id"`
 	Muted           bool             `json:"muted"`
 }

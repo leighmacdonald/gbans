@@ -1,13 +1,17 @@
 import { createContext, useContext } from 'react';
-import { PermissionLevel, userKey, UserProfile } from '../api';
+import {
+    defaultAvatarHash,
+    PermissionLevel,
+    userKey,
+    UserProfile
+} from '../api';
 
 export const GuestProfile: UserProfile = {
     updated_on: new Date(),
     created_on: new Date(),
     permission_level: PermissionLevel.Guest,
     discord_id: '',
-    avatar: '',
-    avatarfull: '',
+    avatarhash: defaultAvatarHash,
     steam_id: '',
     ban_id: 0,
     name: 'Guest',

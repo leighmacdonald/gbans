@@ -14,7 +14,7 @@ import Pagination from '@mui/material/Pagination';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import { defaultAvatarHash, PermissionLevel } from '../api';
+import { PermissionLevel } from '../api';
 import { Forum, ForumThread } from '../api/forum';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons';
 import { ForumRowLink } from '../component/ForumRowLink';
@@ -30,7 +30,7 @@ import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { useForum } from '../hooks/useForum';
 import { useThreads } from '../hooks/useThreads';
 import { logErr } from '../util/errors';
-import { renderDateTime } from '../util/text';
+import { avatarHashToURL, renderDateTime } from '../util/text';
 
 const ForumThreadRow = ({ thread }: { thread: ForumThread }) => {
     return (
@@ -49,9 +49,10 @@ const ForumThreadRow = ({ thread }: { thread: ForumThread }) => {
                         icon={
                             <Avatar
                                 alt={thread.personaname}
-                                src={`https://avatars.akamai.steamstatic.com/${
-                                    thread.avatarhash ?? defaultAvatarHash
-                                }.jpg`}
+                                src={avatarHashToURL(
+                                    thread.avatarhash,
+                                    'medium'
+                                )}
                             />
                         }
                     />
@@ -141,11 +142,10 @@ const ForumThreadRow = ({ thread }: { thread: ForumThread }) => {
                         <VCenterBox>
                             <Avatar
                                 sx={{ height: '32px', width: '32px' }}
-                                alt={thread.recent_personaname}
-                                src={`https://avatars.akamai.steamstatic.com/${
-                                    thread.recent_avatarhash ??
-                                    defaultAvatarHash
-                                }.jpg`}
+                                alt={avatarHashToURL(
+                                    thread.recent_avatarhash,
+                                    'small'
+                                )}
                             />
                         </VCenterBox>
                     </Stack>
