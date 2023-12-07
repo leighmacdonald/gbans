@@ -1,5 +1,5 @@
 import React, { useEffect, useState, JSX } from 'react';
-import Paper from '@mui/material/Paper';
+import HistoryIcon from '@mui/icons-material/History';
 import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -10,6 +10,7 @@ import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
 import { apiGetSourceBans, sbBanRecord } from '../api';
 import { logErr } from '../util/errors';
+import { ContainerWithHeader } from './ContainerWithHeader';
 
 interface SourceBansListProps {
     steam_id: string;
@@ -35,8 +36,11 @@ export const SourceBansList = ({
     }
 
     return (
-        <Paper elevation={1}>
-            <Stack padding={2} spacing={1}>
+        <ContainerWithHeader
+            title={'Suspect SourceBans History'}
+            iconLeft={<HistoryIcon />}
+        >
+            <Stack spacing={1}>
                 <Typography variant={'h5'}>
                     {is_reporter
                         ? 'Reporter SourceBans History'
@@ -56,7 +60,7 @@ export const SourceBansList = ({
                         <TableBody>
                             {bans.map((ban) => {
                                 return (
-                                    <TableRow key={`ban-${ban.ban_id}`}>
+                                    <TableRow key={`ban-${ban.ban_id}`} hover>
                                         <TableCell>{ban.created_on}</TableCell>
                                         <TableCell>{ban.site_name}</TableCell>
                                         <TableCell>
@@ -73,6 +77,6 @@ export const SourceBansList = ({
                     </Table>
                 </TableContainer>
             </Stack>
-        </Paper>
+        </ContainerWithHeader>
     );
 };
