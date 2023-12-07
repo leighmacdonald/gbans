@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import CreateIcon from '@mui/icons-material/Create';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -10,47 +10,32 @@ import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import Grid from '@mui/material/Unstable_Grid2';
-import { apiGetServersAdmin, Server, ServerQueryFilter } from '../api';
+import { Server } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { ModalServerDelete, ModalServerEditor } from '../component/modal';
 import { ServerEditorModal } from '../component/modal/ServerEditorModal';
 import { LazyTable, Order, RowsPerPage } from '../component/table/LazyTable';
 import { TableCellBool } from '../component/table/TableCellBool';
-import { logErr } from '../util/errors';
+import { useServersAdmin } from '../hooks/useServersAdmin';
 
 export const AdminServersPage = () => {
-    const [bans, setBans] = useState<Server[]>([]);
     const [sortOrder, setSortOrder] = useState<Order>('desc');
     const [sortColumn, setSortColumn] = useState<keyof Server>('short_name');
     const [rowPerPageCount, setRowPerPageCount] = useState<number>(
         RowsPerPage.TwentyFive
     );
     const [page, setPage] = useState(0);
-    const [totalRows, setTotalRows] = useState<number>(0);
     const [deleted] = useState(false);
 
-    useEffect(() => {
-        const abortController = new AbortController();
-        const opts: ServerQueryFilter = {
-            limit: rowPerPageCount,
-            offset: page * rowPerPageCount,
-            order_by: sortColumn,
-            desc: sortOrder == 'desc',
-            deleted: deleted,
-            include_disabled: true
-        };
-        apiGetServersAdmin(opts, abortController)
-            .then((resp) => {
-                setBans(resp.data);
-                setTotalRows(resp.count);
-                if (page * rowPerPageCount > resp.count) {
-                    setPage(0);
-                }
-            })
-            .catch((e) => {
-                logErr(e);
-            });
-    }, [deleted, page, rowPerPageCount, sortColumn, sortOrder]);
+    const { data, count } = useServersAdmin({
+        limit: rowPerPageCount,
+        offset: page * rowPerPageCount,
+        order_by: sortColumn,
+        desc: sortOrder == 'desc',
+        deleted: deleted,
+        include_disabled: true
+    });
+
     return (
         <Grid container spacing={2}>
             <Grid xs={12}>
@@ -74,8 +59,8 @@ export const AdminServersPage = () => {
                     >
                         <LazyTable<Server>
                             showPager={true}
-                            count={totalRows}
-                            rows={bans}
+                            count={count}
+                            rows={data}
                             page={page}
                             rowsPerPage={rowPerPageCount}
                             sortOrder={sortOrder}

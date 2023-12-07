@@ -2,6 +2,9 @@ import { LazyResult } from '../component/table/LazyTableSimple';
 import { parseDateTime } from '../util/text';
 import {
     apiCall,
+    BanASNQueryFilter,
+    BanCIDRQueryFilter,
+    BanGroupQueryFilter,
     BanSteamQueryFilter,
     QueryFilter,
     TimeStamped,
@@ -421,7 +424,7 @@ export const apiDeleteBanMessage = async (ban_message_id: number) =>
     await apiCall(`/api/bans/message/${ban_message_id}`, 'DELETE', {});
 
 export const apiGetBansCIDR = async (
-    opts: QueryFilter<CIDRBanRecord>,
+    opts: BanCIDRQueryFilter,
     abortController?: AbortController
 ) => {
     const resp = await apiCall<LazyResult<CIDRBanRecord>>(
@@ -436,7 +439,7 @@ export const apiGetBansCIDR = async (
 };
 
 export const apiGetBansASN = async (
-    opts: QueryFilter<ASNBanRecord>,
+    opts: BanASNQueryFilter,
     abortController?: AbortController
 ) => {
     const resp = await apiCall<LazyResult<ASNBanRecord>>(
@@ -450,7 +453,7 @@ export const apiGetBansASN = async (
 };
 
 export const apiGetBansGroups = async (
-    opts: QueryFilter<GroupBanRecord>,
+    opts: BanGroupQueryFilter,
     abortController?: AbortController
 ) => {
     const resp = await apiCall<LazyResult<GroupBanRecord>>(

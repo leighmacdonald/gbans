@@ -1,4 +1,4 @@
-import React, { JSX, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { JSX, useCallback, useMemo, useState } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
@@ -11,7 +11,6 @@ import { fromUnixTime } from 'date-fns';
 import { Formik } from 'formik';
 import * as yup from 'yup';
 import {
-    apiSearchPeople,
     communityVisibilityState,
     defaultAvatarHash,
     PermissionLevel,
@@ -32,6 +31,7 @@ import { SteamIdField } from '../component/formik/SteamIdField';
 import { ModalPersonEditor } from '../component/modal';
 import { LazyTable, Order, RowsPerPage } from '../component/table/LazyTable';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import { usePeople } from '../hooks/usePeople';
 import { logErr } from '../util/errors';
 import { isValidSteamDate, renderDate } from '../util/text';
 
@@ -59,9 +59,6 @@ export const AdminPeoplePage = (): JSX.Element => {
         RowsPerPage.TwentyFive
     );
     const [page, setPage] = useState(0);
-    const [loading, setLoading] = useState(false);
-    const [totalRows, setTotalRows] = useState<number>(0);
-    const [people, setPeople] = useState<Person[]>([]);
     const [steamId, setSteamId] = useState('');
     const [personaname, setPersonaname] = useState('');
     const [ip, setIP] = useState('');
@@ -71,41 +68,16 @@ export const AdminPeoplePage = (): JSX.Element => {
         return currentUser.permission_level == PermissionLevel.Admin;
     }, [currentUser.permission_level]);
 
-    useEffect(() => {
-        const abortController = new AbortController();
-        setLoading(true);
-        apiSearchPeople(
-            {
-                personaname: personaname,
-                deleted: false,
-                desc: sortOrder == 'desc',
-                offset: page,
-                limit: rowPerPageCount,
-                order_by: sortColumn,
-                steam_id: steamId,
-                ip: ip
-            },
-            abortController
-        )
-            .then((response) => {
-                setPeople(response.data);
-                setTotalRows(response.count);
-            })
-            .catch((reason) => {
-                logErr(reason);
-            })
-            .finally(() => setLoading(false));
-
-        return () => abortController.abort('Cancelled');
-    }, [
-        ip,
-        page,
-        personaname,
-        rowPerPageCount,
-        sortColumn,
-        sortOrder,
-        steamId
-    ]);
+    const { data, count, loading } = usePeople({
+        personaname: personaname,
+        deleted: false,
+        desc: sortOrder == 'desc',
+        offset: page,
+        limit: rowPerPageCount,
+        order_by: sortColumn,
+        steam_id: steamId,
+        ip: ip
+    });
 
     const onFilterSubmit = useCallback((values: PeopleFilterValues) => {
         setSteamId(values.steam_id);
@@ -119,26 +91,15 @@ export const AdminPeoplePage = (): JSX.Element => {
         setIP('');
     }, []);
 
-    const onEditPerson = useCallback(
-        async (person: Person) => {
-            try {
-                const newPerson = await NiceModal.show<Person>(
-                    ModalPersonEditor,
-                    {
-                        person
-                    }
-                );
-                setPeople(
-                    people.map((p) => {
-                        return p.steam_id == newPerson.steam_id ? newPerson : p;
-                    })
-                );
-            } catch (e) {
-                logErr(e);
-            }
-        },
-        [people]
-    );
+    const onEditPerson = useCallback(async (person: Person) => {
+        try {
+            await NiceModal.show<Person>(ModalPersonEditor, {
+                person
+            });
+        } catch (e) {
+            logErr(e);
+        }
+    }, []);
 
     return (
         <Grid container spacing={2}>
@@ -184,7 +145,7 @@ export const AdminPeoplePage = (): JSX.Element => {
                     }
                 >
                     <LazyTable
-                        count={totalRows}
+                        count={count}
                         sortOrder={sortOrder}
                         sortColumn={sortColumn}
                         onSortColumnChanged={async (column) => {
@@ -206,7 +167,7 @@ export const AdminPeoplePage = (): JSX.Element => {
                         onPageChange={(_, newPage) => {
                             setPage(newPage);
                         }}
-                        rows={people}
+                        rows={data}
                         showPager
                         page={page}
                         rowsPerPage={rowPerPageCount}

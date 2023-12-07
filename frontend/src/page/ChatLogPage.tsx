@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ChatIcon from '@mui/icons-material/Chat';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
@@ -21,7 +21,6 @@ import { formatISO9075 } from 'date-fns/fp';
 import { Formik } from 'formik';
 import {
     apiGetMessages,
-    apiGetServers,
     defaultAvatarHash,
     PermissionLevel,
     PersonMessage,
@@ -43,6 +42,7 @@ import { SteamIdField } from '../component/formik/SteamIdField';
 import { ResetButton, SubmitButton } from '../component/modal/Buttons';
 import { LazyTable, Order, RowsPerPage } from '../component/table/LazyTable';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import { useServers } from '../hooks/useServers';
 import { logErr } from '../util/errors';
 import { Nullable } from '../util/types';
 
@@ -140,8 +140,13 @@ export const ChatLogPage = () => {
     );
     const [totalRows, setTotalRows] = useState<number>(0);
     const [loading, setLoading] = useState(false);
-    const [servers, setServers] = useState<ServerSimple[]>([]);
     const { currentUser } = useCurrentUserCtx();
+
+    const { data: realServers } = useServers();
+
+    const servers = useMemo(() => {
+        return [anyServerSimple, ...realServers];
+    }, [realServers]);
 
     const saveState = useCallback(
         (values: ChatLogFormValues) => {
@@ -163,27 +168,6 @@ export const ChatLogPage = () => {
         },
         [page, rowPerPageCount, sortColumn, sortOrder]
     );
-
-    useEffect(() => {
-        const abortController = new AbortController();
-
-        apiGetServers(abortController)
-            .then((resp) => {
-                setServers([
-                    anyServerSimple,
-                    ...resp.sort((a: ServerSimple, b: ServerSimple) => {
-                        return a.server_name.localeCompare(b.server_name);
-                    })
-                ]);
-            })
-            .then(() => {
-                onSubmit(iv);
-            })
-            .catch(logErr);
-
-        return () => abortController.abort();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
 
     const onSubmit = useCallback(
         (values: ChatLogFormValues) => {

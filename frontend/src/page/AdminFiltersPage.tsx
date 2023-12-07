@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
@@ -9,45 +9,28 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Grid from '@mui/material/Unstable_Grid2';
-import { apiGetFilters, Filter } from '../api/filters';
+import { Filter } from '../api/filters';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { ModalFilterDelete, ModalFilterEditor } from '../component/modal';
 import { LazyTable, Order, RowsPerPage } from '../component/table/LazyTable';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
-import { logErr } from '../util/errors';
+import { useWordFilters } from '../hooks/useWordFilters';
 
 export const AdminFiltersPage = () => {
-    const [filters, setFilters] = useState<Filter[]>([]);
     const [sortOrder, setSortOrder] = useState<Order>('desc');
     const [sortColumn, setSortColumn] = useState<keyof Filter>('filter_id');
     const [rowPerPageCount, setRowPerPageCount] = useState<number>(
         RowsPerPage.TwentyFive
     );
     const [page, setPage] = useState(0);
-    const [totalRows, setTotalRows] = useState<number>(0);
-
     const { sendFlash } = useUserFlashCtx();
 
-    useEffect(() => {
-        const abortController = new AbortController();
-
-        apiGetFilters(
-            {
-                order_by: sortColumn,
-                desc: sortOrder == 'desc',
-                limit: rowPerPageCount,
-                offset: page * rowPerPageCount
-            },
-            abortController
-        )
-            .then((resp) => {
-                setFilters(resp.data);
-                setTotalRows(resp.count);
-            })
-            .catch(logErr);
-
-        return () => abortController.abort();
-    }, [page, rowPerPageCount, sortColumn, sortOrder]);
+    const { data, count } = useWordFilters({
+        order_by: sortColumn,
+        desc: sortOrder == 'desc',
+        limit: rowPerPageCount,
+        offset: page * rowPerPageCount
+    });
 
     return (
         <Grid container spacing={2}>
@@ -88,8 +71,8 @@ export const AdminFiltersPage = () => {
                 >
                     <LazyTable<Filter>
                         showPager={true}
-                        count={totalRows}
-                        rows={filters}
+                        count={count}
+                        rows={data}
                         page={page}
                         rowsPerPage={rowPerPageCount}
                         sortOrder={sortOrder}

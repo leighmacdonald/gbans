@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import EditIcon from '@mui/icons-material/Edit';
 import InfoIcon from '@mui/icons-material/Info';
@@ -12,13 +12,9 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { formatDuration, intervalToDuration } from 'date-fns';
 import { Formik } from 'formik';
 import * as yup from 'yup';
-import {
-    apiGetBansGroups,
-    BanGroupQueryFilter,
-    GroupBanRecord
-} from '../../api';
+import { GroupBanRecord } from '../../api';
 import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
-import { logErr } from '../../util/errors';
+import { useBansGroup } from '../../hooks/useBansGroup';
 import { renderDate } from '../../util/text';
 import { DeletedField, deletedValidator } from '../formik/DeletedField';
 import { FilterButtons } from '../formik/FilterButtons';
@@ -46,29 +42,37 @@ const validationSchema = yup.object({
 });
 
 export const BanGroupTable = ({ newBans }: { newBans: GroupBanRecord[] }) => {
-    const [bans, setBans] = useState<GroupBanRecord[]>([]);
     const [sortOrder, setSortOrder] = useState<Order>('desc');
     const [sortColumn, setSortColumn] =
         useState<keyof GroupBanRecord>('ban_group_id');
     const [rowPerPageCount, setRowPerPageCount] = useState<number>(
         RowsPerPage.TwentyFive
     );
-    const [hasNew, setHasNew] = useState(false);
     const [page, setPage] = useState(0);
-    const [totalRows, setTotalRows] = useState<number>(0);
     const [source, setSource] = useState('');
     const [group, setGroup] = useState('');
     const [target, setTarget] = useState('');
     const [deleted, setDeleted] = useState(false);
     const { sendFlash } = useUserFlashCtx();
 
+    const { data, count } = useBansGroup({
+        limit: rowPerPageCount,
+        offset: page * rowPerPageCount,
+        order_by: sortColumn,
+        desc: sortOrder == 'desc',
+        deleted: deleted,
+        source_id: source,
+        target_id: target,
+        group_id: group
+    });
+
     const allBans = useMemo(() => {
-        if (newBans.length > 0 && hasNew) {
-            return [...newBans, ...bans];
+        if (newBans.length > 0) {
+            return [...newBans, ...data];
         }
 
-        return bans;
-    }, [bans, hasNew, newBans]);
+        return data;
+    }, [data, newBans]);
 
     const onEditGroup = useCallback(
         async (existing: GroupBanRecord) => {
@@ -100,44 +104,6 @@ export const BanGroupTable = ({ newBans }: { newBans: GroupBanRecord[] }) => {
         },
         [sendFlash]
     );
-
-    useEffect(() => {
-        if (newBans.length > 0) {
-            setHasNew(false);
-        }
-        const abortController = new AbortController();
-        const opts: BanGroupQueryFilter = {
-            limit: rowPerPageCount,
-            offset: page * rowPerPageCount,
-            order_by: sortColumn,
-            desc: sortOrder == 'desc',
-            deleted: deleted,
-            source_id: source,
-            target_id: target,
-            group_id: group
-        };
-        apiGetBansGroups(opts, abortController)
-            .then((resp) => {
-                setBans(resp.data);
-                setTotalRows(resp.count);
-                if (page * rowPerPageCount > resp.count) {
-                    setPage(0);
-                }
-            })
-            .catch((e) => {
-                logErr(e);
-            });
-    }, [
-        deleted,
-        group,
-        newBans.length,
-        page,
-        rowPerPageCount,
-        sortColumn,
-        sortOrder,
-        source,
-        target
-    ]);
 
     const iv: GroupBanFilterValues = {
         group_id: '',
@@ -191,7 +157,7 @@ export const BanGroupTable = ({ newBans }: { newBans: GroupBanRecord[] }) => {
                 <Grid xs={12}>
                     <LazyTable<GroupBanRecord>
                         showPager={true}
-                        count={totalRows}
+                        count={count}
                         rows={allBans}
                         page={page}
                         rowsPerPage={rowPerPageCount}

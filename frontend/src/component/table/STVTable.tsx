@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import FlagIcon from '@mui/icons-material/Flag';
@@ -8,9 +8,9 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { Formik } from 'formik';
 import * as yup from 'yup';
-import { apiGetDemos, DemoFile } from '../../api';
+import { DemoFile } from '../../api';
 import { useCurrentUserCtx } from '../../contexts/CurrentUserCtx';
-import { logErr } from '../../util/errors';
+import { useDemos } from '../../hooks/useDemos';
 import { humanFileSize, renderDateTime } from '../../util/text';
 import { emptyOrNullString } from '../../util/types';
 import { FilterButtons } from '../formik/FilterButtons';
@@ -41,13 +41,10 @@ export const STVTable = () => {
         RowsPerPage.TwentyFive
     );
     const [page, setPage] = useState(0);
-    const [totalRows, setTotalRows] = useState<number>(0);
     const [source, setSource] = useState('');
     const [mapName, setMapName] = useState('');
-    const [serverIds, setServerIds] = useState<number[]>();
+    const [serverIds, setServerIds] = useState<number[]>([]);
     const [selectOwn, setSelectOwn] = useState(false);
-    const [demos, setDemos] = useState<DemoFile[]>([]);
-    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
     const { currentUser } = useCurrentUserCtx();
 
@@ -55,50 +52,25 @@ export const STVTable = () => {
         return currentUser.steam_id == '';
     }, [currentUser.steam_id]);
 
-    useEffect(() => {
-        const abortController = new AbortController();
-        setLoading(true);
+    const sourceId = useMemo(() => {
         let sourceID = '';
         if (selectOwn) {
             sourceID = currentUser.steam_id;
         } else if (!emptyOrNullString(source)) {
             sourceID = source;
         }
-        apiGetDemos(
-            {
-                limit: rowPerPageCount,
-                offset: page * rowPerPageCount,
-                order_by: sortColumn,
-                desc: sortOrder == 'desc',
-                steam_id: sourceID,
-                map_name: mapName,
-                server_ids: serverIds ?? []
-            },
-            abortController
-        )
-            .then((resp) => {
-                setDemos(resp.data);
-                setTotalRows(resp.count);
-            })
-            .catch((e) => {
-                logErr(e);
-            })
-            .finally(() => {
-                setLoading(false);
-            });
+        return sourceID;
+    }, [currentUser.steam_id, selectOwn, source]);
 
-        return () => abortController.abort();
-    }, [
-        currentUser.steam_id,
-        mapName,
-        page,
-        rowPerPageCount,
-        selectOwn,
-        serverIds,
-        sortColumn,
-        sortOrder,
-        source
-    ]);
+    const { data, count } = useDemos({
+        limit: rowPerPageCount,
+        offset: page * rowPerPageCount,
+        order_by: sortColumn,
+        desc: sortOrder == 'desc',
+        steam_id: sourceId,
+        map_name: mapName,
+        server_ids: serverIds
+    });
 
     const iv: STVFormValues = {
         source_id: '',
@@ -151,10 +123,9 @@ export const STVTable = () => {
                 </Grid>
                 <Grid xs={12}>
                     <LazyTable
-                        loading={loading}
                         showPager={true}
-                        count={totalRows}
-                        rows={demos}
+                        count={count}
+                        rows={data}
                         page={page}
                         rowsPerPage={rowPerPageCount}
                         sortOrder={sortOrder}

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import EditIcon from '@mui/icons-material/Edit';
 import UndoIcon from '@mui/icons-material/Undo';
@@ -11,13 +11,9 @@ import { formatDuration, intervalToDuration } from 'date-fns';
 import { Formik } from 'formik';
 import IPCIDR from 'ip-cidr';
 import * as yup from 'yup';
-import {
-    apiGetBansCIDR,
-    BanCIDRQueryFilter,
-    BanReason,
-    CIDRBanRecord
-} from '../../api';
+import { BanReason, CIDRBanRecord } from '../../api';
 import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
+import { useBansCIDR } from '../../hooks/useBansCIDR';
 import { logErr } from '../../util/errors';
 import { DeletedField, deletedValidator } from '../formik/DeletedField';
 import { FilterButtons } from '../formik/FilterButtons';
@@ -46,28 +42,17 @@ const validationSchema = yup.object({
 });
 
 export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
-    const [bans, setBans] = useState<CIDRBanRecord[]>([]);
     const [sortOrder, setSortOrder] = useState<Order>('desc');
     const [sortColumn, setSortColumn] = useState<keyof CIDRBanRecord>('net_id');
     const [rowPerPageCount, setRowPerPageCount] = useState<number>(
         RowsPerPage.TwentyFive
     );
-    const [hasNew, setHasNew] = useState(false);
     const [page, setPage] = useState(0);
-    const [totalRows, setTotalRows] = useState<number>(0);
     const [source, setSource] = useState('');
     const [target, setTarget] = useState('');
     const [deleted, setDeleted] = useState(false);
     const [ip, setIp] = useState('');
     const { sendFlash } = useUserFlashCtx();
-
-    const allBans = useMemo(() => {
-        if (newBans.length > 0 && hasNew) {
-            return [...newBans, ...bans];
-        }
-
-        return bans;
-    }, [bans, hasNew, newBans]);
 
     const onUnbanCIDR = useCallback(
         async (net_id: number) => {
@@ -99,45 +84,24 @@ export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
         },
         [sendFlash]
     );
+    const { data, count } = useBansCIDR({
+        limit: rowPerPageCount,
+        offset: page * rowPerPageCount,
+        order_by: sortColumn,
+        desc: sortOrder == 'desc',
+        source_id: source,
+        target_id: target,
+        deleted: deleted,
+        ip: ip
+    });
 
-    useEffect(() => {
+    const allBans = useMemo(() => {
         if (newBans.length > 0) {
-            setHasNew(false);
+            return [...newBans, ...data];
         }
 
-        const abortController = new AbortController();
-        const opts: BanCIDRQueryFilter = {
-            limit: rowPerPageCount,
-            offset: page * rowPerPageCount,
-            order_by: sortColumn,
-            desc: sortOrder == 'desc',
-            source_id: source,
-            target_id: target,
-            deleted: deleted,
-            ip: ip
-        };
-        apiGetBansCIDR(opts, abortController)
-            .then((resp) => {
-                setBans(resp.data);
-                setTotalRows(resp.count);
-                if (page * rowPerPageCount > resp.count) {
-                    setPage(0);
-                }
-            })
-            .catch((e) => {
-                logErr(e);
-            });
-    }, [
-        source,
-        deleted,
-        page,
-        rowPerPageCount,
-        sortColumn,
-        sortOrder,
-        target,
-        ip,
-        newBans.length
-    ]);
+        return data;
+    }, [data, newBans]);
 
     const iv: CIDRBanFilterValues = {
         ip: '',
@@ -192,7 +156,7 @@ export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
                 <Grid xs={12}>
                     <LazyTable<CIDRBanRecord>
                         showPager={true}
-                        count={totalRows}
+                        count={count}
                         rows={allBans}
                         page={page}
                         rowsPerPage={rowPerPageCount}

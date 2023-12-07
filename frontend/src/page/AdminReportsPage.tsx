@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import ReportIcon from '@mui/icons-material/Report';
 import Typography from '@mui/material/Typography';
@@ -7,9 +7,7 @@ import { parseISO } from 'date-fns';
 import { Formik } from 'formik';
 import * as yup from 'yup';
 import {
-    apiGetReports,
     BanReasons,
-    ReportQueryFilter,
     ReportStatus,
     reportStatusString,
     ReportWithAuthor
@@ -32,7 +30,7 @@ import {
 } from '../component/formik/TargetIdField';
 import { LazyTable, Order, RowsPerPage } from '../component/table/LazyTable';
 import { TableCellLink } from '../component/table/TableCellLink';
-import { logErr } from '../util/errors';
+import { useReports } from '../hooks/useReports';
 import { renderDateTime } from '../util/text';
 
 interface FilterValues {
@@ -48,7 +46,6 @@ const validationSchema = yup.object({
 });
 
 export const AdminReportsPage = () => {
-    const [reports, setReports] = useState<ReportWithAuthor[]>([]);
     const [filterStatus, setFilterStatus] = useState(ReportStatus.Any);
     const [sortOrder, setSortOrder] = useState<Order>('desc');
     const [sortColumn, setSortColumn] =
@@ -57,45 +54,19 @@ export const AdminReportsPage = () => {
         RowsPerPage.Fifty
     );
     const [page, setPage] = useState(0);
-    const [loading, setLoading] = useState(false);
-    const [totalRows, setTotalRows] = useState<number>(0);
+
     const [author, setAuthor] = useState('');
     const [target, setTarget] = useState('');
 
-    useEffect(() => {
-        const opts: ReportQueryFilter = {
-            limit: rowPerPageCount,
-            offset: page * rowPerPageCount,
-            order_by: sortColumn,
-            desc: sortOrder == 'desc',
-            report_status: filterStatus,
-            source_id: author,
-            target_id: target
-        };
-        setLoading(true);
-        apiGetReports(opts)
-            .then((resp) => {
-                setReports(resp.data || []);
-                setTotalRows(resp.count);
-                if (page * rowPerPageCount > resp.count) {
-                    setPage(0);
-                }
-            })
-            .catch((e) => {
-                logErr(e);
-            })
-            .finally(() => {
-                setLoading(false);
-            });
-    }, [
-        author,
-        filterStatus,
-        page,
-        rowPerPageCount,
-        sortColumn,
-        sortOrder,
-        target
-    ]);
+    const { data, count, loading } = useReports({
+        limit: rowPerPageCount,
+        offset: page * rowPerPageCount,
+        order_by: sortColumn,
+        desc: sortOrder == 'desc',
+        report_status: filterStatus,
+        source_id: author,
+        target_id: target
+    });
 
     const onFilterSubmit = useCallback((values: FilterValues) => {
         setAuthor(values.source_id);
@@ -151,8 +122,8 @@ export const AdminReportsPage = () => {
                     >
                         <LazyTable
                             showPager={true}
-                            count={totalRows}
-                            rows={reports}
+                            count={count}
+                            rows={data}
                             page={page}
                             rowsPerPage={rowPerPageCount}
                             sortOrder={sortOrder}

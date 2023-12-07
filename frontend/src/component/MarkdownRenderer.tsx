@@ -1,11 +1,12 @@
 import React, { JSX } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
+import { PaletteMode } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { getOverrides, MuiMarkdown } from 'mui-markdown';
 import { Highlight, themes } from 'prism-react-renderer';
 
-export const renderLinks = (body_md: string): string => {
+const renderLinks = (body_md: string): string => {
     return body_md
         .replace('/^[\u200B\u200C\u200D\u200E\u200F\uFEFF]/', '')
         .replace(/(wiki:\/\/)/gi, '/wiki/')
@@ -56,6 +57,8 @@ const MDLink = ({ children, href, title }: MDLnkProps) => {
 };
 
 export const MarkDownRenderer = ({ body_md }: { body_md: string }) => {
+    const theme = (localStorage.getItem('theme') as PaletteMode) || 'dark';
+
     return (
         <Box padding={2} maxWidth={'100%'}>
             <MuiMarkdown
@@ -64,7 +67,8 @@ export const MarkDownRenderer = ({ body_md }: { body_md: string }) => {
                         ...getOverrides({
                             Highlight,
                             themes,
-                            theme: themes.github
+                            theme:
+                                theme == 'dark' ? themes.vsDark : themes.vsLight
                         }),
                         a: {
                             component: MDLink
@@ -74,7 +78,6 @@ export const MarkDownRenderer = ({ body_md }: { body_md: string }) => {
                         }
                     }
                 }}
-                prismTheme={themes.github}
             >
                 {renderLinks(body_md)}
             </MuiMarkdown>

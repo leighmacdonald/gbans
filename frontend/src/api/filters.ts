@@ -12,7 +12,7 @@ export interface Filter {
     updated_on?: Date;
 }
 
-interface FiltersQueryFilter extends QueryFilter<Filter> {}
+export interface FiltersQueryFilter extends QueryFilter<Filter> {}
 
 export const apiGetFilters = async (
     opts: FiltersQueryFilter,
