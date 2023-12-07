@@ -81,4 +81,4 @@ int gReportStartedAtTime = -1;
 bool gStvMapChanged = false;
 bool gIsRecording = false;
 bool gIsManual = false;
-JSON_Object gScores = null;
+
