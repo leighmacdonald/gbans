@@ -9,6 +9,7 @@ import LockIcon from '@mui/icons-material/Lock';
 import Person2Icon from '@mui/icons-material/Person2';
 import { IconButton } from '@mui/material';
 import Avatar from '@mui/material/Avatar';
+import Badge from '@mui/material/Badge';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
@@ -41,15 +42,68 @@ import { useThread } from '../hooks/useThread';
 import { useThreadMessages } from '../hooks/useThreadMessages';
 import { logErr } from '../util/errors';
 import { useScrollToLocation } from '../util/history';
-import { renderDateTime } from '../util/text';
+import { avatarHashToURL, renderDateTime } from '../util/text';
 
-const ForumAvatar = ({ ...props }) => (
-    <Avatar
-        variant={'square'}
-        sx={{ height: '120px', width: '120px' }}
-        {...props}
-    />
-);
+const ForumAvatar = ({
+    src,
+    alt,
+    online
+}: {
+    src: string;
+    alt: string;
+    online: boolean;
+}) => {
+    const theme = useTheme();
+
+    return (
+        <Badge
+            overlap={'circular'}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            variant="dot"
+            sx={{
+                '& .MuiBadge-badge': {
+                    backgroundColor: online
+                        ? theme.palette.success.light
+                        : theme.palette.error.dark,
+                    color: online
+                        ? theme.palette.success.light
+                        : theme.palette.error.dark,
+                    boxShadow: `0 0 0 2px ${theme.palette.background.paper}`,
+                    '&::after': {
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        borderRadius: '50%',
+                        animation: online
+                            ? 'ripple 1.2s infinite ease-in-out'
+                            : undefined,
+                        border: '1px solid currentColor',
+                        content: '""'
+                    }
+                },
+                '@keyframes ripple': {
+                    '0%': {
+                        transform: 'scale(.8)',
+                        opacity: 1
+                    },
+                    '100%': {
+                        transform: 'scale(2.4)',
+                        opacity: 0
+                    }
+                }
+            }}
+        >
+            <Avatar
+                variant={'circular'}
+                sx={{ height: '120px', width: '120px' }}
+                src={src}
+                alt={alt}
+            />
+        </Badge>
+    );
+};
 
 const ThreadMessageContainer = ({
     message,
@@ -139,8 +193,14 @@ const ThreadMessageContainer = ({
                 >
                     <Stack alignItems={'center'}>
                         <ForumAvatar
-                            src={`https://avatars.akamai.steamstatic.com/${activeMessage.avatarhash}_full.jpg`}
+                            alt={activeMessage.personaname}
+                            online={activeMessage.online}
+                            src={avatarHashToURL(
+                                activeMessage.avatarhash,
+                                'medium'
+                            )}
                         />
+
                         <ForumRowLink
                             label={activeMessage.personaname}
                             to={`/profile/${activeMessage.source_id}`}
@@ -345,7 +405,7 @@ export const ForumThreadPage = (): JSX.Element => {
             const newThread = await NiceModal.show<ForumThread>(
                 ModalForumThreadEditor,
                 {
-                    activeThread
+                    thread: activeThread
                 }
             );
             if (newThread.forum_thread_id > 0) {

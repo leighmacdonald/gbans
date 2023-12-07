@@ -15,6 +15,7 @@ import { formatDistance, parseJSON } from 'date-fns';
 import { Formik } from 'formik';
 import { apiUpdateBanMessage, UserMessage, UserProfile } from '../api';
 import { logErr } from '../util/errors';
+import { avatarHashToURL } from '../util/text';
 import { MDBodyField } from './MDBodyField';
 import { MarkDownRenderer } from './MarkdownRenderer';
 import { ResetButton, SubmitButton } from './modal/Buttons';
@@ -92,7 +93,10 @@ export const UserMessageView = ({
                         backgroundColor: theme.palette.background.paper
                     }}
                     avatar={
-                        <Avatar aria-label="Avatar" src={author.avatar}>
+                        <Avatar
+                            aria-label="Avatar"
+                            src={avatarHashToURL(author.avatarhash)}
+                        >
                             ?
                         </Avatar>
                     }

@@ -815,8 +815,8 @@ func onAPIForumMessages(app *App) gin.HandlerFunc {
 			return
 		}
 
-		threads, count, errThreads := app.db.ForumMessages(ctx, tmqf)
-		if errThreads != nil {
+		messages, count, errMessages := app.db.ForumMessages(ctx, tmqf)
+		if errMessages != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			log.Error("Could not load thread messages")
@@ -824,7 +824,19 @@ func onAPIForumMessages(app *App) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, newLazyResult(count, threads))
+		activeUsers := app.currentActiveUsers()
+
+		for idx := range messages {
+			for _, activity := range activeUsers {
+				if messages[idx].SourceID == activity.person.SteamID {
+					messages[idx].Online = true
+
+					break
+				}
+			}
+		}
+
+		ctx.JSON(http.StatusOK, newLazyResult(count, messages))
 	}
 }
 

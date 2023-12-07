@@ -6,6 +6,7 @@ import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
+import { avatarHashToURL } from '../util/text';
 
 export interface PersonCellProps {
     steam_id: string;
@@ -46,11 +47,7 @@ export const PersonCell = ({
                 <>
                     <Avatar
                         alt={personaname}
-                        src={
-                            avatar_hash.startsWith('https://')
-                                ? avatar_hash
-                                : `https://avatars.akamai.steamstatic.com/${avatar_hash}.jpg`
-                        }
+                        src={avatarHashToURL(avatar_hash, 'small')}
                         variant={'square'}
                         sx={{ height: '32px', width: '32px' }}
                     />

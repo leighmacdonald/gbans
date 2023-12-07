@@ -2,7 +2,7 @@ import { formatDistance, parseISO, parseJSON } from 'date-fns';
 import format from 'date-fns/format';
 import { isAfter } from 'date-fns/fp';
 import SteamID from 'steamid';
-import { apiGetProfile, Person } from '../api';
+import { apiGetProfile, defaultAvatarHash, Person } from '../api';
 import { emptyOrNullString } from './types';
 
 export const parseDateTime = (t: string): Date => {
@@ -119,3 +119,11 @@ const ipRegex =
     /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/gi;
 
 export const isValidIP = (value: string): boolean => ipRegex.test(value);
+
+type avatarSize = 'small' | 'medium' | 'full';
+
+export const avatarHashToURL = (hash?: string, size: avatarSize = 'full') => {
+    return `https://avatars.steamstatic.com/${hash ?? defaultAvatarHash}${
+        size == 'small' ? '' : `_${size}`
+    }.jpg`;
+};

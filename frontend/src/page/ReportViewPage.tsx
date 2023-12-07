@@ -45,6 +45,7 @@ import { ModalBanSteam } from '../component/modal';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
+import { avatarHashToURL } from '../util/text';
 
 export const ReportViewPage = (): JSX.Element => {
     const { report_id } = useParams();
@@ -148,7 +149,9 @@ export const ReportViewPage = (): JSX.Element => {
                                     <Avatar
                                         variant={'square'}
                                         alt={report?.subject.personaname}
-                                        src={report?.subject.avatarfull}
+                                        src={avatarHashToURL(
+                                            report?.subject.avatarhash
+                                        )}
                                         sx={{
                                             width: '100%',
                                             height: '100%'
@@ -204,7 +207,11 @@ export const ReportViewPage = (): JSX.Element => {
                                 }}
                             >
                                 <ListItemAvatar>
-                                    <Avatar src={report?.author.avatar}>
+                                    <Avatar
+                                        src={avatarHashToURL(
+                                            report?.author.avatarhash
+                                        )}
+                                    >
                                         <SendIcon />
                                     </Avatar>
                                 </ListItemAvatar>

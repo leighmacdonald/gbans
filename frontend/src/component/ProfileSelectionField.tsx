@@ -8,6 +8,7 @@ import TextField from '@mui/material/TextField';
 import { useFormikContext } from 'formik';
 import { apiGetProfile, PlayerProfile } from '../api';
 import { logErr } from '../util/errors';
+import { avatarHashToURL } from '../util/text';
 import { Nullable } from '../util/types';
 
 export interface ProfileSelectionInputProps {
@@ -93,7 +94,9 @@ export const ProfileSelectionField = <T,>({
                                 <HourglassBottomIcon sx={{ width: 40 }} />
                             ) : (
                                 <Avatar
-                                    src={lProfile?.player.avatar}
+                                    src={avatarHashToURL(
+                                        lProfile?.player.avatarhash
+                                    )}
                                     variant={'square'}
                                 />
                             )}

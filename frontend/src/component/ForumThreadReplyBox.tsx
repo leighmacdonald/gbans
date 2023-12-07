@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import { Formik } from 'formik';
+import { FormikHelpers } from 'formik/dist/types';
 import * as yup from 'yup';
 import { apiCreateThreadReply, ForumMessage } from '../api/forum';
 import { logErr } from '../util/errors';
@@ -27,13 +28,17 @@ export const ForumThreadReplyBox = ({
     onSuccess: (message: ForumMessage) => void;
 }) => {
     const onSubmit = useCallback(
-        async (values: ThreadReplyValues) => {
+        async (
+            values: ThreadReplyValues,
+            formikHelpers: FormikHelpers<ThreadReplyValues>
+        ) => {
             try {
                 const message = await apiCreateThreadReply(
                     forum_thread_id,
                     values.body_md
                 );
                 onSuccess(message);
+                formikHelpers.resetForm();
             } catch (e) {
                 logErr(e);
             }

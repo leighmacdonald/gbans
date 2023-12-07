@@ -6,7 +6,7 @@ import {
     DialogContent,
     DialogTitle
 } from '@mui/material';
-import { Breakpoint } from '@mui/system';
+import { Breakpoint } from '@mui/material';
 import { CancelButton, ConfirmButton } from './Buttons';
 
 export interface ConfirmationModalProps<T> {

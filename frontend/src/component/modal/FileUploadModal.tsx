@@ -13,7 +13,7 @@ import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
-import styled from '@mui/system/styled';
+import { styled } from '@mui/material/styles';
 import { fromByteArray } from 'base64-js';
 import { Formik } from 'formik';
 import { UserUploadedFile } from '../../api/media';

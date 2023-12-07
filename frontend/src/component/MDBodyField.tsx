@@ -31,9 +31,12 @@ interface BodyMDFieldProps {
     body_md: string;
 }
 
-export const MDBodyField = <T,>() => {
+export const MDBodyField = <T,>({
+    fileUpload = true
+}: {
+    fileUpload?: boolean;
+}) => {
     const [setTabValue, setTabSetTabValue] = useState(0);
-    //const [bodyMD, setBodyMD] = useState('');
     const [cursorPos, setCursorPos] = useState(0);
     const { values, touched, setFieldValue, errors } = useFormikContext<
         T & BodyMDFieldProps
@@ -94,73 +97,85 @@ export const MDBodyField = <T,>() => {
             </Box>
             <TabPanel value={setTabValue} index={0}>
                 <Stack>
-                    <Stack direction={'row'} alignItems={'center'} padding={2}>
-                        <ButtonGroup>
-                            <Tooltip title={'Insert image at current location'}>
-                                <Button
-                                    color="primary"
-                                    aria-label="Upload Image Button"
-                                    component="span"
-                                    variant={'text'}
-                                    onClick={async () => {
-                                        const resp =
-                                            await NiceModal.show<UserUploadedFile>(
-                                                ModalFileUpload,
-                                                {}
-                                            );
-                                        await onFileSave(resp);
-                                    }}
-                                    startIcon={<ImageIcon />}
-                                >
-                                    Insert Image
-                                </Button>
-                            </Tooltip>
-                        </ButtonGroup>
-                        {extraButtons && (
+                    {fileUpload && (
+                        <Stack
+                            direction={'row'}
+                            alignItems={'center'}
+                            padding={2}
+                        >
                             <ButtonGroup>
-                                <Tooltip title={'Embolden selected text'}>
-                                    <IconButton
-                                        color="primary"
-                                        aria-label="Bold"
-                                        component="span"
-                                    >
-                                        <FormatBoldIcon />
-                                    </IconButton>
-                                </Tooltip>
-                                <Tooltip title={'Underline selected text'}>
-                                    <IconButton
-                                        color="primary"
-                                        aria-label="Underline"
-                                        component="span"
-                                    >
-                                        <FormatUnderlinedIcon />
-                                    </IconButton>
-                                </Tooltip>
                                 <Tooltip
-                                    title={'Decrease indent of selected text'}
+                                    title={'Insert image at current location'}
                                 >
-                                    <IconButton
+                                    <Button
                                         color="primary"
-                                        aria-label="Decrease indent"
+                                        aria-label="Upload Image Button"
                                         component="span"
+                                        variant={'text'}
+                                        onClick={async () => {
+                                            const resp =
+                                                await NiceModal.show<UserUploadedFile>(
+                                                    ModalFileUpload,
+                                                    {}
+                                                );
+                                            await onFileSave(resp);
+                                        }}
+                                        startIcon={<ImageIcon />}
                                     >
-                                        <FormatIndentDecreaseIcon />
-                                    </IconButton>
-                                </Tooltip>
-                                <Tooltip
-                                    title={'Increase indent of  selected text'}
-                                >
-                                    <IconButton
-                                        color="primary"
-                                        aria-label="Increase indent"
-                                        component="span"
-                                    >
-                                        <FormatIndentIncreaseIcon />
-                                    </IconButton>
+                                        Insert Image
+                                    </Button>
                                 </Tooltip>
                             </ButtonGroup>
-                        )}
-                    </Stack>
+                            {extraButtons && (
+                                <ButtonGroup>
+                                    <Tooltip title={'Embolden selected text'}>
+                                        <IconButton
+                                            color="primary"
+                                            aria-label="Bold"
+                                            component="span"
+                                        >
+                                            <FormatBoldIcon />
+                                        </IconButton>
+                                    </Tooltip>
+                                    <Tooltip title={'Underline selected text'}>
+                                        <IconButton
+                                            color="primary"
+                                            aria-label="Underline"
+                                            component="span"
+                                        >
+                                            <FormatUnderlinedIcon />
+                                        </IconButton>
+                                    </Tooltip>
+                                    <Tooltip
+                                        title={
+                                            'Decrease indent of selected text'
+                                        }
+                                    >
+                                        <IconButton
+                                            color="primary"
+                                            aria-label="Decrease indent"
+                                            component="span"
+                                        >
+                                            <FormatIndentDecreaseIcon />
+                                        </IconButton>
+                                    </Tooltip>
+                                    <Tooltip
+                                        title={
+                                            'Increase indent of  selected text'
+                                        }
+                                    >
+                                        <IconButton
+                                            color="primary"
+                                            aria-label="Increase indent"
+                                            component="span"
+                                        >
+                                            <FormatIndentIncreaseIcon />
+                                        </IconButton>
+                                    </Tooltip>
+                                </ButtonGroup>
+                            )}
+                        </Stack>
+                    )}
                     <Box>
                         <TextField
                             sx={{

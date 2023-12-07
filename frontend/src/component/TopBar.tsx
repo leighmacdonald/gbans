@@ -476,7 +476,7 @@ export const TopBar = () => {
                                         >
                                             <Avatar
                                                 alt={currentUser.name}
-                                                src={currentUser.avatar}
+                                                src={currentUser.avatarhash}
                                             />
                                         </IconButton>
                                     </Tooltip>

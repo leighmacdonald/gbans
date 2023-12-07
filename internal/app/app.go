@@ -878,6 +878,13 @@ func (app *App) SendNotification(ctx context.Context, notification NotificationP
 	return nil
 }
 
+func (app *App) currentActiveUsers() []forumActivity {
+	app.activityMu.RLock()
+	defer app.activityMu.RUnlock()
+
+	return app.activity
+}
+
 // validateLink is used in the case of discord origin actions that require mapping the
 // discord member ID to a SteamID so that we can track its use and apply permissions, etc.
 //

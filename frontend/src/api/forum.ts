@@ -174,6 +174,7 @@ export interface ForumMessage extends TimeStamped {
     body_md: string;
     personaname: string;
     avatarhash: string;
+    online: boolean;
     title: string;
     permission_level: PermissionLevel;
 }
