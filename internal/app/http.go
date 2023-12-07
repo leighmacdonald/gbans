@@ -137,7 +137,7 @@ func checkPrivilege(ctx *gin.Context, person userProfile, allowedSteamIds steami
 		return true
 	}
 
-	ctx.JSON(http.StatusUnauthorized, consts.ErrPermissionDenied.Error())
+	ctx.JSON(http.StatusForbidden, consts.ErrPermissionDenied.Error())
 
 	return false
 }

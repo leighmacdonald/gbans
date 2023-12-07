@@ -72,7 +72,8 @@ export enum ErrorCode {
     InvalidMimetype,
     DependencyMissing,
     PermissionDenied,
-    Unknown
+    Unknown,
+    LoginRequired
 }
 
 export class APIError extends Error {
@@ -89,6 +90,9 @@ export class APIError extends Error {
                     break;
                 case ErrorCode.PermissionDenied:
                     message = 'Permission Denied';
+                    break;
+                case ErrorCode.LoginRequired:
+                    message = 'Please Login';
                     break;
                 default:
                     message = 'Unhandled Error';
@@ -162,6 +166,11 @@ export const apiCall = async <
             throw new APIError(ErrorCode.InvalidMimetype);
         case 424:
             throw new APIError(ErrorCode.DependencyMissing);
+        case 401:
+            if (accessToken != '') {
+                throw new APIError(ErrorCode.LoginRequired);
+            }
+            break;
         case 403:
             if (accessToken != '') {
                 throw new APIError(ErrorCode.PermissionDenied);

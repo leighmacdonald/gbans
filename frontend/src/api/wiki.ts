@@ -1,10 +1,11 @@
-import { apiCall, TimeStamped } from './common';
+import { apiCall, PermissionLevel, TimeStamped } from './common';
 
 export interface Page extends TimeStamped {
     slug: string;
     title: string;
     body_md: string;
     revision: number;
+    permission_level: PermissionLevel;
 }
 
 export const apiGetWikiPage = async (

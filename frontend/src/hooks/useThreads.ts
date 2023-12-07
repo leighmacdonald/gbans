@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { apiGetThreads, ForumThread, ThreadQueryOpts } from '../api/forum';
-import { logErr } from '../util/errors';
 
 export const useThreads = (opts: ThreadQueryOpts) => {
     const [data, setData] = useState<ForumThread[]>([]);
@@ -27,7 +26,6 @@ export const useThreads = (opts: ThreadQueryOpts) => {
             })
             .catch((reason) => {
                 setError(reason);
-                logErr(reason);
             })
             .finally(() => {
                 setLoading(false);

@@ -332,7 +332,7 @@ type authHeader struct {
 	Authorization string `header:"Authorization"`
 }
 
-func tokenFromHeader(ctx *gin.Context) (string, error) {
+func tokenFromHeader(ctx *gin.Context, emptyOK bool) (string, error) {
 	hdr := authHeader{}
 	if errBind := ctx.ShouldBindHeader(&hdr); errBind != nil {
 		return "", errors.Wrap(errBind, "Failed to bind auth header")
@@ -340,6 +340,10 @@ func tokenFromHeader(ctx *gin.Context) (string, error) {
 
 	pcs := strings.Split(hdr.Authorization, " ")
 	if len(pcs) != 2 || pcs[1] == "" {
+		if emptyOK {
+			return "", nil
+		}
+
 		ctx.AbortWithStatus(http.StatusForbidden)
 
 		return "", errors.New("Invalid auth header")
@@ -348,74 +352,70 @@ func tokenFromHeader(ctx *gin.Context) (string, error) {
 	return pcs[1], nil
 }
 
-// authMiddleware handles client authentication to the HTTP & websocket api.
-// websocket clients must pass the key as a query parameter called "token".
+// authMiddleware handles client authentication to the HTTP API.
 func authMiddleware(app *App, level consts.Privilege) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		var token string
 
-		hdrToken, errToken := tokenFromHeader(ctx)
-		if errToken != nil {
+		hdrToken, errToken := tokenFromHeader(ctx, level == consts.PGuest)
+		if errToken != nil || hdrToken == "" {
 			ctx.Set(ctxKeyUserProfile, userProfile{PermissionLevel: consts.PGuest, Name: "Guest"})
-			ctx.Next()
+		} else {
+			token = hdrToken
 
-			return
-		}
+			if level >= consts.PGuest {
+				sid, errFromToken := sid64FromJWTToken(token, app.conf.HTTP.CookieKey)
+				if errFromToken != nil {
+					if errors.Is(errFromToken, consts.ErrExpired) {
+						ctx.AbortWithStatus(http.StatusUnauthorized)
 
-		token = hdrToken
+						return
+					}
 
-		if level >= consts.PGuest {
-			sid, errFromToken := sid64FromJWTToken(token, app.conf.HTTP.CookieKey)
-			if errFromToken != nil {
-				if errors.Is(errFromToken, consts.ErrExpired) {
-					ctx.AbortWithStatus(http.StatusUnauthorized)
+					log.Error("Failed to load sid from access token", zap.Error(errFromToken))
+					ctx.AbortWithStatus(http.StatusForbidden)
 
 					return
 				}
 
-				log.Error("Failed to load sid from access token", zap.Error(errFromToken))
-				ctx.AbortWithStatus(http.StatusForbidden)
+				loggedInPerson := store.NewPerson(sid)
+				if errGetPerson := app.PersonBySID(ctx, sid, &loggedInPerson); errGetPerson != nil {
+					log.Error("Failed to load person during auth", zap.Error(errGetPerson))
+					ctx.AbortWithStatus(http.StatusForbidden)
 
-				return
-			}
-
-			loggedInPerson := store.NewPerson(sid)
-			if errGetPerson := app.PersonBySID(ctx, sid, &loggedInPerson); errGetPerson != nil {
-				log.Error("Failed to load person during auth", zap.Error(errGetPerson))
-				ctx.AbortWithStatus(http.StatusForbidden)
-
-				return
-			}
-
-			if level > loggedInPerson.PermissionLevel {
-				ctx.AbortWithStatus(http.StatusForbidden)
-
-				return
-			}
-
-			bannedPerson := store.NewBannedPerson()
-			if errBan := app.db.GetBanBySteamID(ctx, sid, &bannedPerson, false); errBan != nil {
-				if !errors.Is(errBan, store.ErrNoResult) {
-					log.Error("Failed to fetch authed user ban", zap.Error(errBan))
+					return
 				}
-			}
 
-			profile := userProfile{
-				SteamID:         loggedInPerson.SteamID,
-				CreatedOn:       loggedInPerson.CreatedOn,
-				UpdatedOn:       loggedInPerson.UpdatedOn,
-				PermissionLevel: loggedInPerson.PermissionLevel,
-				DiscordID:       loggedInPerson.DiscordID,
-				Name:            loggedInPerson.PersonaName,
-				Avatarhash:      loggedInPerson.AvatarHash,
-				Muted:           loggedInPerson.Muted,
-				BanID:           bannedPerson.BanID,
+				if level > loggedInPerson.PermissionLevel {
+					ctx.AbortWithStatus(http.StatusForbidden)
+
+					return
+				}
+
+				bannedPerson := store.NewBannedPerson()
+				if errBan := app.db.GetBanBySteamID(ctx, sid, &bannedPerson, false); errBan != nil {
+					if !errors.Is(errBan, store.ErrNoResult) {
+						log.Error("Failed to fetch authed user ban", zap.Error(errBan))
+					}
+				}
+
+				profile := userProfile{
+					SteamID:         loggedInPerson.SteamID,
+					CreatedOn:       loggedInPerson.CreatedOn,
+					UpdatedOn:       loggedInPerson.UpdatedOn,
+					PermissionLevel: loggedInPerson.PermissionLevel,
+					DiscordID:       loggedInPerson.DiscordID,
+					Name:            loggedInPerson.PersonaName,
+					Avatarhash:      loggedInPerson.AvatarHash,
+					Muted:           loggedInPerson.Muted,
+					BanID:           bannedPerson.BanID,
+				}
+				ctx.Set(ctxKeyUserProfile, profile)
+			} else {
+				ctx.Set(ctxKeyUserProfile, userProfile{PermissionLevel: consts.PGuest, Name: "Guest"})
 			}
-			ctx.Set(ctxKeyUserProfile, profile)
-		} else {
-			ctx.Set(ctxKeyUserProfile, userProfile{PermissionLevel: consts.PGuest, Name: "Guest"})
 		}
 
 		ctx.Next()

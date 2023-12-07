@@ -54,7 +54,7 @@ type Media struct {
 
 func (db *Store) GetWikiPageBySlug(ctx context.Context, slug string, page *wiki.Page) error {
 	row, errQuery := db.QueryRowBuilder(ctx, db.sb.
-		Select("slug", "body_md", "revision", "created_on", "updated_on").
+		Select("slug", "body_md", "revision", "created_on", "updated_on", "permission_level").
 		From("wiki").
 		Where(sq.Eq{"lower(slug)": strings.ToLower(slug)}).
 		OrderBy("revision desc").
@@ -63,7 +63,7 @@ func (db *Store) GetWikiPageBySlug(ctx context.Context, slug string, page *wiki.
 		return errQuery
 	}
 
-	return Err(row.Scan(&page.Slug, &page.BodyMD, &page.Revision, &page.CreatedOn, &page.UpdatedOn))
+	return Err(row.Scan(&page.Slug, &page.BodyMD, &page.Revision, &page.CreatedOn, &page.UpdatedOn, &page.PermissionLevel))
 }
 
 func (db *Store) DeleteWikiPageBySlug(ctx context.Context, slug string) error {
@@ -81,8 +81,8 @@ func (db *Store) DeleteWikiPageBySlug(ctx context.Context, slug string) error {
 func (db *Store) SaveWikiPage(ctx context.Context, page *wiki.Page) error {
 	errQueryRow := db.ExecInsertBuilder(ctx, db.sb.
 		Insert("wiki").
-		Columns("slug", "body_md", "revision", "created_on", "updated_on").
-		Values(page.Slug, page.BodyMD, page.Revision, page.CreatedOn, page.UpdatedOn))
+		Columns("slug", "body_md", "revision", "created_on", "updated_on", "permission_level").
+		Values(page.Slug, page.BodyMD, page.Revision, page.CreatedOn, page.UpdatedOn, page.PermissionLevel))
 	if errQueryRow != nil {
 		return Err(errQueryRow)
 	}

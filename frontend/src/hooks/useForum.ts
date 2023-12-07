@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
+import { APIError } from '../api';
 import { apiForum, Forum } from '../api/forum';
-import { logErr } from '../util/errors';
 
 export const useForum = (forumId: number) => {
     const [data, setData] = useState<Forum>();
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState();
+    const [error, setError] = useState<APIError>();
 
     useEffect(() => {
         const abortController = new AbortController();
@@ -16,7 +16,6 @@ export const useForum = (forumId: number) => {
             })
             .catch((reason) => {
                 setError(reason);
-                logErr(reason);
             })
             .finally(() => {
                 setLoading(false);

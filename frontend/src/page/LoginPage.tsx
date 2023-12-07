@@ -13,9 +13,13 @@ import steamLogo from '../icons/steam_login_lg.png';
 
 export interface LoginFormProps {
     message?: string;
+    title?: string;
 }
 
-export const LoginPage = ({ message }: LoginFormProps) => {
+export const LoginPage = ({
+    message = 'To access this page, please login using your steam account below.',
+    title = 'Permission Denied'
+}: LoginFormProps) => {
     const { currentUser } = useCurrentUserCtx();
 
     const loggedInUser = useMemo(() => {
@@ -26,10 +30,7 @@ export const LoginPage = ({ message }: LoginFormProps) => {
     return (
         <Grid container justifyContent={'center'} alignItems={'center'}>
             <Grid xs={12}>
-                <ContainerWithHeader
-                    title={'Permission Denied'}
-                    iconLeft={<DoDisturbIcon />}
-                >
+                <ContainerWithHeader title={title} iconLeft={<DoDisturbIcon />}>
                     <>
                         {loggedInUser && (
                             <Typography variant={'body1'} padding={2}>
@@ -43,8 +44,7 @@ export const LoginPage = ({ message }: LoginFormProps) => {
                                     padding={2}
                                     paddingBottom={0}
                                 >
-                                    {message ??
-                                        'To access this page, please login using your steam account below.'}
+                                    {message}
                                 </Typography>
                                 <Stack
                                     justifyContent="center"
