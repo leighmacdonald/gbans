@@ -133,7 +133,7 @@ export const BanSteamModal = NiceModal.create(
                     }
                 }
             },
-            [existing, isUpdate, modal]
+            [existing, isUpdate, modal, sendFlash]
         );
 
         return (
