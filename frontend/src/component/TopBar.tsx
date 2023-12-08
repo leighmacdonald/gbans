@@ -50,7 +50,6 @@ import {
 import steamLogo from '../icons/steam_login_sm.png';
 import { tf2Fonts } from '../theme';
 import { logErr } from '../util/errors';
-import { Flashes } from './Flashes';
 
 interface menuRoute {
     to: string;
@@ -510,7 +509,6 @@ export const TopBar = () => {
                     </Box>
                 </Toolbar>
             </Container>
-            <Flashes />
         </AppBar>
     );
 };
