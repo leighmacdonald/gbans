@@ -45,7 +45,7 @@ import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 // import LegendToggleIcon from '@mui/icons-material/LegendToggle';
 import {
     NotificationsProvider,
-    useNotifications
+    useNotificationsCtx
 } from '../contexts/NotificationsCtx';
 import steamLogo from '../icons/steam_login_sm.png';
 import { tf2Fonts } from '../theme';
@@ -61,7 +61,7 @@ interface menuRoute {
 export const TopBar = () => {
     const navigate = useNavigate();
     const { currentUser } = useCurrentUserCtx();
-    const { notifications } = useNotifications();
+    const { notifications } = useNotificationsCtx();
     const theme = useTheme();
     const colourMode = useColourModeCtx();
 

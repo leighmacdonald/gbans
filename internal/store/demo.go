@@ -155,13 +155,13 @@ func (db *Store) GetDemos(ctx context.Context, opts DemoFilter) ([]DemoFile, int
 		}
 	}
 
-	builder = opts.QueryFilter.applySafeOrder(builder, map[string][]string{
+	builder = opts.applySafeOrder(builder, map[string][]string{
 		"d.": {"demo_id", "server_id", "title", "created_on", "downloads", "map_name"},
 		"s.": {"short_name", "name"},
 		"a.": {"size"},
 	}, "demo_id")
 
-	builder = opts.QueryFilter.applyLimitOffsetDefault(builder).Where(constraints)
+	builder = opts.applyLimitOffsetDefault(builder).Where(constraints)
 
 	rows, errQuery := db.QueryBuilder(ctx, builder)
 	if errQuery != nil {

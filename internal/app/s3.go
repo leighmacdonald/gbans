@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"sync"
 
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/minio/minio-go/v7"
@@ -18,6 +19,7 @@ type AssetStore interface {
 }
 
 type S3Client struct {
+	*sync.RWMutex
 	*minio.Client
 	log    *zap.Logger
 	region string
@@ -34,10 +36,13 @@ func NewS3Client(log *zap.Logger, endpoint string, accessKey string, secretKey s
 		return nil, errors.Wrap(err, "Failed to initialize minio client")
 	}
 
-	return &S3Client{Client: minioClient, log: log, region: region, ssl: useSSL}, nil
+	return &S3Client{Client: minioClient, log: log, region: region, ssl: useSSL, RWMutex: &sync.RWMutex{}}, nil
 }
 
 func (s3 *S3Client) CreateBucketIfNotExists(ctx context.Context, name string) error {
+	s3.Lock()
+	defer s3.Unlock()
+
 	errMake := s3.MakeBucket(ctx, name, minio.MakeBucketOptions{Region: s3.region})
 	if errMake != nil {
 		// Check to see if we already own this bucket (which happens if you run this twice)
@@ -75,6 +80,9 @@ func (s3 *S3Client) CreateBucketIfNotExists(ctx context.Context, name string) er
 }
 
 func (s3 *S3Client) Put(ctx context.Context, bucket string, name string, body io.Reader, size int64, contentType string) error {
+	s3.Lock()
+	defer s3.Unlock()
+
 	_, err := s3.PutObject(ctx, bucket, name, body, size, minio.PutObjectOptions{
 		ContentType: contentType,
 	})
@@ -90,6 +98,9 @@ func (s3 *S3Client) Put(ctx context.Context, bucket string, name string, body io
 }
 
 func (s3 *S3Client) Remove(ctx context.Context, bucket string, name string) error {
+	s3.Lock()
+	defer s3.Unlock()
+
 	if err := s3.RemoveObject(ctx, bucket, name, minio.RemoveObjectOptions{ForceDelete: true}); err != nil {
 		return errors.Wrap(err, "Failed to delete object")
 	}

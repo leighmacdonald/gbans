@@ -342,10 +342,19 @@ func onAPICurrentProfile(app *App) gin.HandlerFunc {
 }
 
 func onAPICurrentProfileNotifications(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
 	return func(ctx *gin.Context) {
 		currentProfile := currentUserProfile(ctx)
 
-		notifications, errNot := app.db.GetPersonNotifications(ctx, currentProfile.SteamID)
+		var req store.NotificationQuery
+		if !bind(ctx, log, &req) {
+			return
+		}
+
+		req.SteamID = currentProfile.SteamID
+
+		notifications, count, errNot := app.db.GetPersonNotifications(ctx, req)
 		if errNot != nil {
 			if errors.Is(errNot, store.ErrNoResult) {
 				ctx.JSON(http.StatusOK, []store.UserNotification{})
@@ -358,7 +367,10 @@ func onAPICurrentProfileNotifications(app *App) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, notifications)
+		ctx.JSON(http.StatusOK, LazyResult{
+			Count: count,
+			Data:  notifications,
+		})
 	}
 }
 

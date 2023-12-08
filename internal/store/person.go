@@ -1102,14 +1102,32 @@ type NotificationQuery struct {
 	SteamID steamid.SID64 `json:"steam_id"`
 }
 
-func (db *Store) GetPersonNotifications(ctx context.Context, steamID steamid.SID64) ([]UserNotification, error) {
-	rows, errRows := db.QueryBuilder(ctx, db.sb.
-		Select("person_notification_id", "steam_id", "read", "deleted", "severity", "message", "link", "count", "created_on").
-		From("person_notification").
-		Where(sq.And{sq.Eq{"steam_id": steamID}, sq.Eq{"deleted": false}}).
-		OrderBy("person_notification_id desc"))
+func (db *Store) GetPersonNotifications(ctx context.Context, filters NotificationQuery) ([]UserNotification, int64, error) {
+	builder := db.sb.
+		Select("p.person_notification_id", "p.steam_id", "p.read", "p.deleted", "p.severity",
+			"p.message", "p.link", "p.count", "p.created_on").
+		From("person_notification p").
+		OrderBy("p.person_notification_id desc")
+
+	constraints := sq.And{sq.Eq{"p.deleted": false}, sq.Eq{"p.steam_id": filters.SteamID}}
+
+	builder = filters.applySafeOrder(builder, map[string][]string{
+		"p.": {"person_notification_id", "steam_id", "read", "deleted", "severity", "message", "link", "count", "created_on"},
+	}, "person_notification_id")
+
+	builder = filters.applyLimitOffsetDefault(builder).Where(constraints)
+
+	count, errCount := db.GetCount(ctx, db.sb.
+		Select("count(p.person_notification_id)").
+		From("person_notification p").
+		Where(constraints))
+	if errCount != nil {
+		return nil, 0, errCount
+	}
+
+	rows, errRows := db.QueryBuilder(ctx, builder.Where(constraints))
 	if errRows != nil {
-		return []UserNotification{}, errRows
+		return nil, 0, errRows
 	}
 
 	defer rows.Close()
@@ -1124,7 +1142,7 @@ func (db *Store) GetPersonNotifications(ctx context.Context, steamID steamid.SID
 
 		if errScan := rows.Scan(&notif.PersonNotificationID, &outSteamID, &notif.Read, &notif.Deleted,
 			&notif.Severity, &notif.Message, &notif.Link, &notif.Count, &notif.CreatedOn); errScan != nil {
-			return []UserNotification{}, errors.Wrapf(errScan, "Failed to scan notification")
+			return nil, 0, errors.Wrapf(errScan, "Failed to scan notification")
 		}
 
 		notif.SteamID = steamid.New(outSteamID)
@@ -1132,11 +1150,7 @@ func (db *Store) GetPersonNotifications(ctx context.Context, steamID steamid.SID
 		notifications = append(notifications, notif)
 	}
 
-	if notifications == nil {
-		return []UserNotification{}, nil
-	}
-
-	return notifications, nil
+	return notifications, count, nil
 }
 
 func (db *Store) SetNotificationsRead(ctx context.Context, notificationIds []int64) error {

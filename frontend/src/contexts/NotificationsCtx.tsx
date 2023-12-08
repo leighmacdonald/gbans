@@ -4,28 +4,19 @@ import React, {
     SetStateAction,
     useContext,
     useState,
-    JSX,
-    useEffect
+    JSX
 } from 'react';
 import { noop } from 'lodash-es';
-import {
-    apiGetNotifications,
-    NotificationsQuery,
-    UserNotification
-} from '../api';
-import { logErr } from '../util/errors';
-import { useCurrentUserCtx } from './CurrentUserCtx';
+import { UserNotification } from '../api';
 
 export type NotificationState = {
     notifications: UserNotification[];
-    setNotifications: Dispatch<SetStateAction<UserNotification[]>>;
     selectedIds: number[];
     setSelectedIds: Dispatch<SetStateAction<number[]>>;
 };
 
 export const NotificationsCtx = createContext<NotificationState>({
     notifications: [],
-    setNotifications: () => noop,
     selectedIds: [],
     setSelectedIds: () => noop
 });
@@ -35,38 +26,13 @@ export const NotificationsProvider = ({
 }: {
     children: JSX.Element;
 }) => {
-    const [notifications, setNotifications] = useState<UserNotification[]>([]);
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
-    // NOTE: you *might* need to memoize this value
-    // Learn more in http://kcd.im/optimize-context
-    const { currentUser } = useCurrentUserCtx();
 
-    useEffect(() => {
-        const abortController = new AbortController();
-        const fetchNotifications = async () => {
-            if (currentUser.steam_id != '') {
-                try {
-                    const query: NotificationsQuery = {};
-                    const notifications = await apiGetNotifications(
-                        query,
-                        abortController
-                    );
-                    setNotifications(notifications ?? []);
-                } catch (e) {
-                    logErr(e);
-                }
-            }
-        };
-
-        fetchNotifications().catch(logErr);
-
-        return () => abortController.abort();
-    }, [currentUser.steam_id]);
+    const { notifications } = useNotificationsCtx();
 
     return (
         <NotificationsCtx.Provider
             value={{
-                setNotifications,
                 notifications,
                 selectedIds,
                 setSelectedIds
@@ -77,7 +43,7 @@ export const NotificationsProvider = ({
     );
 };
 
-export const useNotifications = () => {
+export const useNotificationsCtx = () => {
     const context = useContext(NotificationsCtx);
     if (context === undefined) {
         throw new Error(

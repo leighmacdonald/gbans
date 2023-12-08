@@ -217,7 +217,7 @@ export const apiGetNotifications = async (
     opts: NotificationsQuery,
     abortController: AbortController
 ) => {
-    return await apiCall<UserNotification[]>(
+    return await apiCall<LazyResult<UserNotification>>(
         `/api/current_profile/notifications`,
         'POST',
         opts,
