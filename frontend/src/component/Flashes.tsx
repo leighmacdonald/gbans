@@ -44,7 +44,7 @@ export const PositionedSnackbar = ({
     return (
         <Snackbar
             open={state.open}
-            autoHideDuration={6000}
+            autoHideDuration={10000}
             onClose={handleClose}
         >
             <Alert severity={notification.level} sx={{ width: '100%' }}>

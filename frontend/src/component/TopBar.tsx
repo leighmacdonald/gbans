@@ -42,7 +42,6 @@ import SteamID from 'steamid';
 import { handleOnLogin, PermissionLevel, UserNotification } from '../api';
 import { useColourModeCtx } from '../contexts/ColourModeContext';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
-// import LegendToggleIcon from '@mui/icons-material/LegendToggle';
 import {
     NotificationsProvider,
     useNotificationsCtx
