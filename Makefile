@@ -1,5 +1,5 @@
 .PHONY: all test clean build install frontend sourcemod
-VERSION=v0.5.8
+VERSION=v0.5.9
 GO_CMD=go
 GO_BUILD=$(GO_CMD) build
 GO_FLAGS = -trimpath -ldflags="-s -w -X github.com/leighmacdonald/gbans/internal/app.BuildVersion=$(VERSION)"
