@@ -1,52 +1,83 @@
-import React, { JSX } from 'react';
-import AddLinkIcon from '@mui/icons-material/AddLink';
-import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
-import LinkIcon from '@mui/icons-material/Link';
-import Button from '@mui/material/Button';
-import Link from '@mui/material/Link';
-import Stack from '@mui/material/Stack';
-import Tooltip from '@mui/material/Tooltip';
+import React, { JSX, useCallback } from 'react';
+import ConstructionIcon from '@mui/icons-material/Construction';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { Accordion, AccordionDetails, AccordionSummary } from '@mui/material';
 import Typography from '@mui/material/Typography';
-import { discordLoginURL } from '../api';
+import { Formik } from 'formik';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+
+interface SettingsValues {
+    signature: string;
+}
 
 export const ProfileSettingsPage = (): JSX.Element => {
-    const { currentUser } = useCurrentUserCtx();
-    const loginUrl = discordLoginURL();
+    const [expanded, setExpanded] = React.useState<string | false>(false);
+
+    const handleChange =
+        (panel: string) => (_: React.SyntheticEvent, isExpanded: boolean) => {
+            setExpanded(isExpanded ? panel : false);
+        };
+
+    const onSubmit = useCallback(async () => {}, []);
+
     return (
         <ContainerWithHeader
-            title={'Discord Settings'}
-            iconLeft={<ChatBubbleIcon />}
+            title={'User Settings'}
+            iconLeft={<ConstructionIcon />}
         >
-            <Stack padding={2} paddingTop={0} spacing={2}>
-                <Tooltip title={`id: ${currentUser.steam_id}`}>
-                    <Button
-                        component={Link}
-                        href={loginUrl}
-                        variant={'contained'}
-                        disabled={currentUser.discord_id != ''}
-                        startIcon={
-                            currentUser.discord_id == '' ? (
-                                <AddLinkIcon />
-                            ) : (
-                                <LinkIcon />
-                            )
-                        }
+            <Formik<SettingsValues>
+                initialValues={{ signature: '' }}
+                onSubmit={onSubmit}
+            >
+                <Accordion
+                    expanded={expanded === 'panel1'}
+                    onChange={handleChange('panel1')}
+                >
+                    <AccordionSummary
+                        expandIcon={<ExpandMoreIcon />}
+                        aria-controls="panel1bh-content"
+                        id="panel1bh-header"
                     >
-                        {currentUser.discord_id != ''
-                            ? 'Already Linked!'
-                            : 'Link Discord'}
-                    </Button>
-                </Tooltip>
-                <Typography variant={'body1'}>
-                    By linking your discord account, you will unlock certain
-                    functionality available on the discord platform. This
-                    currently includes functionality related to reporting
-                    primarily, but will be extended to include other
-                    functionality in the future.
-                </Typography>
-            </Stack>
+                        <Typography sx={{ width: '33%', flexShrink: 0 }}>
+                            General settings
+                        </Typography>
+                        <Typography sx={{ color: 'text.secondary' }}>
+                            I am an accordion
+                        </Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        <Typography>
+                            Nulla facilisi. Phasellus sollicitudin nulla et quam
+                            mattis feugiat. Aliquam eget maximus est, id
+                            dignissim quam.
+                        </Typography>
+                    </AccordionDetails>
+                </Accordion>
+                <Accordion
+                    expanded={expanded === 'panel2'}
+                    onChange={handleChange('panel2')}
+                >
+                    <AccordionSummary
+                        expandIcon={<ExpandMoreIcon />}
+                        aria-controls="panel2bh-content"
+                        id="panel2bh-header"
+                    >
+                        <Typography sx={{ width: '33%', flexShrink: 0 }}>
+                            Users
+                        </Typography>
+                        <Typography sx={{ color: 'text.secondary' }}>
+                            You are currently not an owner
+                        </Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        <Typography>
+                            Donec placerat, lectus sed mattis semper, neque
+                            lectus feugiat lectus, varius pulvinar diam eros in
+                            elit. Pellentesque convallis laoreet laoreet.
+                        </Typography>
+                    </AccordionDetails>
+                </Accordion>
+            </Formik>
         </ContainerWithHeader>
     );
 };

@@ -164,16 +164,12 @@ export const TopBar = () => {
                 text: 'Profile',
                 icon: <AccountCircleIcon sx={colourOpts} />
             },
-            // {
-            //     to: '/settings',
-            //     text: 'Settings',
-            //     icon: <SettingsIcon sx={colourOpts} />
-            // },
-            // {
-            //     to: `/stats/player/${currentUser?.steam_id}`,
-            //     text: 'Your Stats',
-            //     icon: <LegendToggleIcon sx={colourOpts} />
-            // },
+            {
+                to: '/settings',
+                text: 'Settings',
+                icon: <SettingsIcon sx={colourOpts} />
+            },
+
             {
                 to: `/logs/${currentUser?.steam_id}`,
                 text: 'Match History',
