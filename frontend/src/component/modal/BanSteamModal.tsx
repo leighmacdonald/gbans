@@ -17,8 +17,10 @@ import {
     BanReason,
     BanType,
     Duration,
-    SteamBanRecord
+    SteamBanRecord,
+    transformTimeStampedDates
 } from '../../api';
+import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
 import { Heading } from '../Heading';
 import {
     BanReasonField,
@@ -77,6 +79,7 @@ const validationSchema = yup.object({
 export const BanSteamModal = NiceModal.create(
     ({ steamId, reportId, existing }: BanModalProps) => {
         const [error, setError] = useState<string>();
+        const { sendFlash } = useUserFlashCtx();
         const modal = useModal();
 
         const isReadOnlySid = useMemo(() => {
@@ -102,7 +105,8 @@ export const BanSteamModal = NiceModal.create(
                                 valid_until: values.duration_custom
                             }
                         );
-                        modal.resolve(ban_record);
+                        sendFlash('success', 'Updated ban successfully');
+                        modal.resolve(transformTimeStampedDates(ban_record));
                     } else {
                         const ban_record = await apiCreateBanSteam({
                             note: values.note,
@@ -115,7 +119,8 @@ export const BanSteamModal = NiceModal.create(
                             target_id: values.steam_id,
                             include_friends: values.include_friends
                         });
-                        modal.resolve(ban_record);
+                        sendFlash('success', 'Created ban successfully');
+                        modal.resolve(transformTimeStampedDates(ban_record));
                     }
                     await modal.hide();
                     setError(undefined);

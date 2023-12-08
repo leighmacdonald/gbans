@@ -11,7 +11,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { PermissionLevel, UserProfile } from './api';
 import { ErrorBoundary } from './component/ErrorBoundary';
-import { Flash } from './component/Flashes';
+import { Flash, Flashes } from './component/Flashes';
 import { Footer } from './component/Footer';
 import { LogoutHandler } from './component/LogoutHandler';
 import { PrivateRoute } from './component/PrivateRoute';
@@ -714,6 +714,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                     </div>
                                                     <Footer />
                                                 </Container>
+                                                <Flashes />
                                             </NiceModal.Provider>
                                         </React.StrictMode>
                                     </NotificationsProvider>

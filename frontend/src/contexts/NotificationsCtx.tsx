@@ -12,11 +12,13 @@ import { UserNotification } from '../api';
 export type NotificationState = {
     notifications: UserNotification[];
     selectedIds: number[];
+    setNotifications: Dispatch<SetStateAction<UserNotification[]>>;
     setSelectedIds: Dispatch<SetStateAction<number[]>>;
 };
 
 export const NotificationsCtx = createContext<NotificationState>({
     notifications: [],
+    setNotifications: () => noop,
     selectedIds: [],
     setSelectedIds: () => noop
 });
@@ -27,12 +29,12 @@ export const NotificationsProvider = ({
     children: JSX.Element;
 }) => {
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
-
-    const { notifications } = useNotificationsCtx();
+    const [notifications, setNotifications] = useState<UserNotification[]>([]);
 
     return (
         <NotificationsCtx.Provider
             value={{
+                setNotifications,
                 notifications,
                 selectedIds,
                 setSelectedIds

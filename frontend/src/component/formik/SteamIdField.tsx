@@ -10,7 +10,6 @@ import { Nullable } from '../../util/types';
 export const steamIdValidator = yup
     .string()
     .test('checkSteamId', 'Invalid steamid/vanity', async (steamId, ctx) => {
-        console.log(steamId, ctx);
         if (!steamId) {
             return false;
         }
