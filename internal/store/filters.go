@@ -11,12 +11,22 @@ import (
 	"go.uber.org/zap"
 )
 
+type FilterAction int
+
+const (
+	Kick FilterAction = iota
+	Mute
+	Ban
+)
+
 type Filter struct {
 	FilterID     int64          `json:"filter_id"`
 	AuthorID     steamid.SID64  `json:"author_id"`
 	Pattern      string         `json:"pattern"`
 	IsRegex      bool           `json:"is_regex"`
 	IsEnabled    bool           `json:"is_enabled"`
+	Action       FilterAction   `json:"action"`
+	Duration     string         `json:"duration"`
 	Regex        *regexp.Regexp `json:"-"`
 	TriggerCount int64          `json:"trigger_count"`
 	CreatedOn    time.Time      `json:"created_on"`
@@ -47,12 +57,12 @@ func (db *Store) SaveFilter(ctx context.Context, filter *Filter) error {
 
 func (db *Store) insertFilter(ctx context.Context, filter *Filter) error {
 	const query = `
-		INSERT INTO filtered_word (author_id, pattern, is_regex, is_enabled, trigger_count, created_on, updated_on) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7) 
+		INSERT INTO filtered_word (author_id, pattern, is_regex, is_enabled, trigger_count, created_on, updated_on, action, duration) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
 		RETURNING filter_id`
 
 	if errQuery := db.QueryRow(ctx, query, filter.AuthorID.Int64(), filter.Pattern,
-		filter.IsRegex, filter.IsEnabled, filter.TriggerCount, filter.CreatedOn, filter.UpdatedOn).
+		filter.IsRegex, filter.IsEnabled, filter.TriggerCount, filter.CreatedOn, filter.UpdatedOn, filter.Action, filter.Duration).
 		Scan(&filter.FilterID); errQuery != nil {
 		return Err(errQuery)
 	}
@@ -70,6 +80,8 @@ func (db *Store) updateFilter(ctx context.Context, filter *Filter) error {
 		Set("is_regex", filter.IsRegex).
 		Set("is_enabled", filter.IsEnabled).
 		Set("trigger_count", filter.TriggerCount).
+		Set("action", filter.Action).
+		Set("duration", filter.Duration).
 		Set("created_on", filter.CreatedOn).
 		Set("updated_on", filter.UpdatedOn).
 		Where(sq.Eq{"filter_id": filter.FilterID})
@@ -101,7 +113,7 @@ func (db *Store) DropFilter(ctx context.Context, filter *Filter) error {
 func (db *Store) GetFilterByID(ctx context.Context, filterID int64, filter *Filter) error {
 	query := db.sb.
 		Select("filter_id", "author_id", "pattern", "is_regex",
-			"is_enabled", "trigger_count", "created_on", "updated_on").
+			"is_enabled", "trigger_count", "created_on", "updated_on", "action", "duration").
 		From("filtered_word").
 		Where(sq.Eq{"filter_id": filterID})
 
@@ -113,7 +125,8 @@ func (db *Store) GetFilterByID(ctx context.Context, filterID int64, filter *Filt
 	var authorID int64
 
 	if errScan := row.Scan(&filter.FilterID, &authorID, &filter.Pattern,
-		&filter.IsRegex, &filter.IsEnabled, &filter.TriggerCount, &filter.CreatedOn, &filter.UpdatedOn); errScan != nil {
+		&filter.IsRegex, &filter.IsEnabled, &filter.TriggerCount, &filter.CreatedOn, &filter.UpdatedOn,
+		&filter.Action, &filter.Duration); errScan != nil {
 		db.log.Error("Failed to fetch filter", zap.Error(errScan))
 
 		return Err(errScan)
@@ -133,11 +146,14 @@ type FiltersQueryFilter struct {
 func (db *Store) GetFilters(ctx context.Context, opts FiltersQueryFilter) ([]Filter, int64, error) {
 	builder := db.sb.
 		Select("f.filter_id", "f.author_id", "f.pattern", "f.is_regex",
-			"f.is_enabled", "f.trigger_count", "f.created_on", "f.updated_on").
+			"f.is_enabled", "f.trigger_count", "f.created_on", "f.updated_on", "f.action", "f.duration").
 		From("filtered_word f")
 
 	builder = opts.QueryFilter.applySafeOrder(builder, map[string][]string{
-		"f.": {"filter_id", "author_id", "pattern", "is_regex", "is_enabled", "trigger_count", "created_on", "updated_on"},
+		"f.": {
+			"filter_id", "author_id", "pattern", "is_regex", "is_enabled", "trigger_count",
+			"created_on", "updated_on", "action", "duration",
+		},
 	}, "filter_id")
 
 	builder = opts.QueryFilter.applyLimitOffset(builder, maxResultsDefault)
@@ -158,7 +174,7 @@ func (db *Store) GetFilters(ctx context.Context, opts FiltersQueryFilter) ([]Fil
 		)
 
 		if errScan := rows.Scan(&filter.FilterID, &authorID, &filter.Pattern, &filter.IsRegex,
-			&filter.IsEnabled, &filter.TriggerCount, &filter.CreatedOn, &filter.UpdatedOn); errScan != nil {
+			&filter.IsEnabled, &filter.TriggerCount, &filter.CreatedOn, &filter.UpdatedOn, &filter.Action, &filter.Duration); errScan != nil {
 			return nil, 0, Err(errScan)
 		}
 

@@ -186,6 +186,13 @@ func onAPIPostWordFilter(app *App) gin.HandlerFunc {
 			return
 		}
 
+		_, errDur := ParseDuration(req.Duration)
+		if errDur != nil {
+			responseErr(ctx, http.StatusBadRequest, errors.New("invalid duration format"))
+
+			return
+		}
+
 		if req.IsRegex {
 			_, compErr := regexp.Compile(req.Pattern)
 			if compErr != nil {
@@ -215,6 +222,8 @@ func onAPIPostWordFilter(app *App) gin.HandlerFunc {
 			existingFilter.Pattern = req.Pattern
 			existingFilter.IsRegex = req.IsRegex
 			existingFilter.IsEnabled = req.IsEnabled
+			existingFilter.Action = req.Action
+			existingFilter.Duration = req.Duration
 
 			if errSave := app.FilterAdd(ctx, &existingFilter); errSave != nil {
 				responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
@@ -228,6 +237,8 @@ func onAPIPostWordFilter(app *App) gin.HandlerFunc {
 			newFilter := store.Filter{
 				AuthorID:  profile.SteamID,
 				Pattern:   req.Pattern,
+				Action:    req.Action,
+				Duration:  req.Duration,
 				CreatedOn: now,
 				UpdatedOn: now,
 				IsRegex:   req.IsRegex,

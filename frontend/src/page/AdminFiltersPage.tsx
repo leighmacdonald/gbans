@@ -9,7 +9,7 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Grid from '@mui/material/Unstable_Grid2';
-import { Filter } from '../api/filters';
+import { Filter, FilterAction, filterActionString } from '../api/filters';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { ModalFilterDelete, ModalFilterEditor } from '../component/modal';
 import { LazyTable, Order, RowsPerPage } from '../component/table/LazyTable';
@@ -118,13 +118,26 @@ export const AdminFiltersPage = () => {
                                 }
                             },
                             {
-                                label: 'Enabled',
-                                tooltip: 'Filter enabled',
-                                sortKey: 'is_enabled',
+                                label: 'Action',
+                                tooltip: 'What will happen when its triggered',
+                                sortKey: 'action',
+                                sortable: true,
+                                align: 'right',
+                                renderer: (row) => {
+                                    return filterActionString(row.action);
+                                }
+                            },
+                            {
+                                label: 'Duration',
+                                tooltip:
+                                    'Duration when the action is triggered',
+                                sortKey: 'duration',
                                 sortable: false,
                                 align: 'right',
                                 renderer: (row) => {
-                                    return row.is_enabled ? 'true' : 'false';
+                                    return row.action == FilterAction.Kick
+                                        ? ''
+                                        : row.duration;
                                 }
                             },
                             {

@@ -118,9 +118,6 @@ type generalConfig struct {
 	WarningTimeout               string        `mapstructure:"warning_timeout"`
 	WarningTimeoutValue          time.Duration `mapstructure:"-"`
 	WarningLimit                 int           `mapstructure:"warning_limit"`
-	WarningExceededAction        Action        `mapstructure:"warning_exceeded_action"`
-	WarningExceededDuration      string        `mapstructure:"warning_exceeded_duration"`
-	WarningExceededDurationValue time.Duration `mapstructure:"-"`
 	UseUTC                       bool          `mapstructure:"use_utc"`
 	ServerStatusUpdateFreq       string        `mapstructure:"server_status_update_freq"`
 	MasterServerStatusUpdateFreq string        `mapstructure:"master_server_status_update_freq"`
@@ -209,13 +206,6 @@ func ReadConfig(conf *Config, noFileOk bool) error {
 	if errMaterDuration != nil {
 		return errors.Wrap(errMaterDuration, "Failed to parse mater_server_status_update_freq")
 	}
-
-	warnDuration, errWarnDuration := time.ParseDuration(conf.General.WarningExceededDuration)
-	if errWarnDuration != nil {
-		return errors.Wrap(errWarnDuration, "Failed to parse warning duration")
-	}
-
-	conf.General.WarningExceededDurationValue = warnDuration
 
 	warnTimeoutDuration, errWarnTimeoutDuration := time.ParseDuration(conf.General.WarningTimeout)
 	if errWarnTimeoutDuration != nil {
