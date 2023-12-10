@@ -352,37 +352,48 @@ func (app *App) warnWorker(ctx context.Context) { //nolint:maintidx
 							expAt    = expIn
 						)
 
-						if errNewBan := store.NewBanSteam(ctx, store.StringSID(app.conf.General.Owner.String()),
-							store.StringSID(newWarn.userMessage.SteamID.String()),
-							app.conf.General.WarningExceededDurationValue,
-							newWarn.WarnReason,
-							"",
-							"Automatic warning ban",
-							store.System,
-							0,
-							store.NoComm,
-							false,
-							&banSteam); errNewBan != nil {
-							log.Error("Failed to create warning ban", zap.Error(errNewBan))
+						if newWarn.MatchedFilter.Action == store.Ban || newWarn.MatchedFilter.Action == store.Mute {
+							duration, errDuration := ParseDuration(newWarn.MatchedFilter.Duration)
+							if errDuration != nil {
+								log.Error("Failed to parse word filter duration value", zap.Error(errDuration))
 
-							continue
+								continue
+							}
+
+							if errNewBan := store.NewBanSteam(ctx, store.StringSID(app.conf.General.Owner.String()),
+								store.StringSID(newWarn.userMessage.SteamID.String()),
+								duration,
+								newWarn.WarnReason,
+								"",
+								"Automatic warning ban",
+								store.System,
+								0,
+								store.NoComm,
+								false,
+								&banSteam); errNewBan != nil {
+								log.Error("Failed to create warning ban", zap.Error(errNewBan))
+
+								continue
+							}
 						}
 
-						switch app.conf.General.WarningExceededAction {
-						case Gag:
+						switch newWarn.MatchedFilter.Action {
+						case store.Mute:
 							banSteam.BanType = store.NoComm
 							errBan = app.BanSteam(ctx, &banSteam)
-						case Ban:
+						case store.Ban:
 							banSteam.BanType = store.Banned
 							errBan = app.BanSteam(ctx, &banSteam)
-						case Kick:
+						case store.Kick:
 							errBan = app.Kick(ctx, store.System, newWarn.userMessage.SteamID, app.conf.General.Owner, newWarn.WarnReason)
 						}
 
 						if errBan != nil {
 							log.Error("Failed to apply warning action",
 								zap.Error(errBan),
-								zap.String("action", string(app.conf.General.WarningExceededAction)))
+								zap.Int("action", int(newWarn.MatchedFilter.Action)))
+
+							continue
 						}
 
 						msgEmbed.AddField("Name", person.PersonaName)

@@ -9,8 +9,10 @@ import {
 } from '@mui/material';
 import Stack from '@mui/material/Stack';
 import { Formik } from 'formik';
-import { apiSaveFilter, Filter } from '../../api/filters';
+import { apiSaveFilter, Filter, FilterAction } from '../../api/filters';
 import { Heading } from '../Heading';
+import { DurationStringField } from '../formik/DurationStringField';
+import { FilterActionField } from '../formik/FilterActionField';
 import { FilterPatternField } from '../formik/FilterPatternField';
 import { FilterTestField } from '../formik/FilterTestField';
 import { IsRegexPatternField } from '../formik/IsRegexPatternField';
@@ -25,6 +27,8 @@ interface FilterEditFormValues {
     pattern: RegExp | string;
     is_regex: boolean;
     is_enabled?: boolean;
+    action: FilterAction;
+    duration: string;
 }
 
 export const FilterEditModal = NiceModal.create(
@@ -38,11 +42,12 @@ export const FilterEditModal = NiceModal.create(
                         is_enabled: values.is_enabled,
                         filter_id: values.filter_id,
                         is_regex: values.is_regex,
-                        pattern: values.pattern
+                        pattern: values.pattern,
+                        action: values.action,
+                        duration: values.duration
                     });
                     modal.resolve(resp);
                     await modal.hide();
-                    window.location.reload();
                 } catch (e) {
                     modal.reject(e);
                 }
@@ -58,10 +63,12 @@ export const FilterEditModal = NiceModal.create(
                     is_regex: filter?.is_regex ?? false,
                     filter_id: filter?.filter_id ?? undefined,
                     author_id: filter?.author_id ?? undefined,
-                    is_enabled: filter?.is_enabled ?? true
+                    is_enabled: filter?.is_enabled ?? true,
+                    duration: filter?.duration ?? '1w',
+                    action: filter?.action ?? FilterAction.Mute
                 }}
             >
-                <Dialog {...muiDialogV5(modal)} fullWidth maxWidth={'sm'}>
+                <Dialog {...muiDialogV5(modal)} fullWidth maxWidth={'md'}>
                     <DialogTitle
                         component={Heading}
                         iconLeft={<FilterAltIcon />}
@@ -71,6 +78,8 @@ export const FilterEditModal = NiceModal.create(
                     <DialogContent>
                         <Stack spacing={2}>
                             <FilterPatternField />
+                            <FilterActionField />
+                            <DurationStringField />
                             <IsRegexPatternField />
                             <FilterTestField />
                         </Stack>
