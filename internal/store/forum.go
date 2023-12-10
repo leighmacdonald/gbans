@@ -96,6 +96,7 @@ type ForumMessage struct {
 	BodyMD         string        `json:"body_md"`
 	Title          string        `json:"title"`
 	Online         bool          `json:"online"`
+	Signature      string        `json:"signature"`
 	SimplePerson
 	TimeStamped
 }
@@ -609,9 +610,10 @@ func (db *Store) ForumRecentActivity(ctx context.Context, limit uint64, permissi
 func (db *Store) ForumMessage(ctx context.Context, messageID int64, forumMessage *ForumMessage) error {
 	row, errRow := db.QueryRowBuilder(ctx, db.sb.
 		Select("m.forum_message_id", "m.forum_thread_id", "m.source_id", "m.body_md", "m.created_on", "m.updated_on",
-			"p.personaname", "p.avatarhash", "p.permission_level").
+			"p.personaname", "p.avatarhash", "p.permission_level", "coalesce(s.forum_signature, '')").
 		From("forum_message m").
 		LeftJoin("person p ON p.steam_id = m.source_id").
+		LeftJoin("person_settings s ON s.steam_id = m.source_id").
 		Where(sq.Eq{"forum_message_id": messageID}))
 	if errRow != nil {
 		return errRow
@@ -619,7 +621,7 @@ func (db *Store) ForumMessage(ctx context.Context, messageID int64, forumMessage
 
 	return Err(row.Scan(&forumMessage.ForumMessageID, &forumMessage.ForumThreadID, &forumMessage.SourceID,
 		&forumMessage.BodyMD, &forumMessage.CreatedOn, &forumMessage.UpdatedOn, &forumMessage.Personaname,
-		&forumMessage.Avatarhash, &forumMessage.PermissionLevel))
+		&forumMessage.Avatarhash, &forumMessage.PermissionLevel, &forumMessage.Signature))
 }
 
 type ThreadMessagesQueryFilter struct {
@@ -632,9 +634,10 @@ func (db *Store) ForumMessages(ctx context.Context, filters ThreadMessagesQueryF
 
 	builder := db.sb.
 		Select("m.forum_message_id", "m.forum_thread_id", "m.source_id", "m.body_md", "m.created_on",
-			"m.updated_on", "p.personaname", "p.avatarhash", "p.permission_level").
+			"m.updated_on", "p.personaname", "p.avatarhash", "p.permission_level", "coalesce(s.forum_signature, '')").
 		From("forum_message m").
 		LeftJoin("person p ON p.steam_id = m.source_id").
+		LeftJoin("person_settings s ON s.steam_id = m.source_id").
 		Where(constraints).
 		OrderBy("m.forum_message_id")
 
@@ -649,7 +652,7 @@ func (db *Store) ForumMessages(ctx context.Context, filters ThreadMessagesQueryF
 	for rows.Next() {
 		var msg ForumMessage
 		if errScan := rows.Scan(&msg.ForumMessageID, &msg.ForumThreadID, &msg.SourceID, &msg.BodyMD, &msg.CreatedOn, &msg.UpdatedOn,
-			&msg.Personaname, &msg.Avatarhash, &msg.PermissionLevel); errScan != nil {
+			&msg.Personaname, &msg.Avatarhash, &msg.PermissionLevel, &msg.Signature); errScan != nil {
 			return nil, 0, Err(errScan)
 		}
 

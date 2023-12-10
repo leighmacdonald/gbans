@@ -177,6 +177,7 @@ export interface ForumMessage extends TimeStamped {
     online: boolean;
     title: string;
     permission_level: PermissionLevel;
+    signature: string;
 }
 
 export interface ForumThread extends TimeStamped {
