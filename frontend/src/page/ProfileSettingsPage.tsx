@@ -1,17 +1,44 @@
-import React, { JSX, useCallback } from 'react';
+import React, { JSX, ReactNode, useCallback } from 'react';
 import ConstructionIcon from '@mui/icons-material/Construction';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import { Accordion, AccordionDetails, AccordionSummary } from '@mui/material';
+import Box from '@mui/material/Box';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import Typography from '@mui/material/Typography';
+import Grid from '@mui/material/Unstable_Grid2';
 import { Formik } from 'formik';
+import {
+    Accordion,
+    AccordionDetails,
+    AccordionSummary
+} from '../component/Accordian';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
+import { MDBodyField } from '../component/MDBodyField';
+import { ResetButton, SubmitButton } from '../component/modal/Buttons';
 
 interface SettingsValues {
-    signature: string;
+    body_md: string;
 }
 
+const SettingRow = ({
+    title,
+    children
+}: {
+    title: string;
+    children: ReactNode;
+}) => {
+    return (
+        <>
+            <Grid xs={2}>
+                <Typography sx={{ width: '15%', flexShrink: 0 }}>
+                    {title}
+                </Typography>
+            </Grid>
+            <Grid xs={10}>{children}</Grid>
+        </>
+    );
+};
 export const ProfileSettingsPage = (): JSX.Element => {
-    const [expanded, setExpanded] = React.useState<string | false>(false);
+    const [expanded, setExpanded] = React.useState<string | false>('general');
 
     const handleChange =
         (panel: string) => (_: React.SyntheticEvent, isExpanded: boolean) => {
@@ -26,57 +53,66 @@ export const ProfileSettingsPage = (): JSX.Element => {
             iconLeft={<ConstructionIcon />}
         >
             <Formik<SettingsValues>
-                initialValues={{ signature: '' }}
+                initialValues={{ body_md: '' }}
                 onSubmit={onSubmit}
             >
-                <Accordion
-                    expanded={expanded === 'panel1'}
-                    onChange={handleChange('panel1')}
-                >
-                    <AccordionSummary
-                        expandIcon={<ExpandMoreIcon />}
-                        aria-controls="panel1bh-content"
-                        id="panel1bh-header"
+                <>
+                    <Accordion
+                        expanded={expanded === 'general'}
+                        onChange={handleChange('general')}
                     >
-                        <Typography sx={{ width: '33%', flexShrink: 0 }}>
-                            General settings
-                        </Typography>
-                        <Typography sx={{ color: 'text.secondary' }}>
-                            I am an accordion
-                        </Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                        <Typography>
-                            Nulla facilisi. Phasellus sollicitudin nulla et quam
-                            mattis feugiat. Aliquam eget maximus est, id
-                            dignissim quam.
-                        </Typography>
-                    </AccordionDetails>
-                </Accordion>
-                <Accordion
-                    expanded={expanded === 'panel2'}
-                    onChange={handleChange('panel2')}
-                >
-                    <AccordionSummary
-                        expandIcon={<ExpandMoreIcon />}
-                        aria-controls="panel2bh-content"
-                        id="panel2bh-header"
+                        <AccordionSummary
+                            expandIcon={<ExpandMoreIcon />}
+                            aria-controls="general-content"
+                            id="general-header"
+                        >
+                            <Typography sx={{ width: '16%', flexShrink: 0 }}>
+                                General
+                            </Typography>
+                            <Typography sx={{ color: 'text.secondary' }}>
+                                General account settings
+                            </Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            <Typography>
+                                Nulla facilisi. Phasellus sollicitudin nulla et
+                                quam mattis feugiat. Aliquam eget maximus est,
+                                id dignissim quam.
+                            </Typography>
+                        </AccordionDetails>
+                    </Accordion>
+                    <Accordion
+                        expanded={expanded === 'forum'}
+                        onChange={handleChange('forum')}
                     >
-                        <Typography sx={{ width: '33%', flexShrink: 0 }}>
-                            Users
-                        </Typography>
-                        <Typography sx={{ color: 'text.secondary' }}>
-                            You are currently not an owner
-                        </Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                        <Typography>
-                            Donec placerat, lectus sed mattis semper, neque
-                            lectus feugiat lectus, varius pulvinar diam eros in
-                            elit. Pellentesque convallis laoreet laoreet.
-                        </Typography>
-                    </AccordionDetails>
-                </Accordion>
+                        <AccordionSummary
+                            expandIcon={<ExpandMoreIcon />}
+                            aria-controls="forum-content"
+                            id="forum-header"
+                        >
+                            <Typography sx={{ width: '16%', flexShrink: 0 }}>
+                                Forum
+                            </Typography>
+                            <Typography sx={{ color: 'text.secondary' }}>
+                                Configure forum signature and notification
+                            </Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            <Grid container>
+                                <SettingRow title={'Signature'}>
+                                    <MDBodyField />
+                                </SettingRow>
+                            </Grid>
+                        </AccordionDetails>
+                    </Accordion>
+
+                    <Box>
+                        <ButtonGroup>
+                            <ResetButton />
+                            <SubmitButton label={'Save Settings'} />
+                        </ButtonGroup>
+                    </Box>
+                </>
             </Formik>
         </ContainerWithHeader>
     );
