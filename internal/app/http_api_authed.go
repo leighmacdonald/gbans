@@ -2286,3 +2286,64 @@ func onAPIThreadCreateReply(app *App) gin.HandlerFunc {
 		ctx.JSON(http.StatusCreated, newMessage)
 	}
 }
+
+func onAPIGetPersonSettings(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		user := currentUserProfile(ctx)
+
+		var settings store.PersonSettings
+
+		if err := app.db.GetPersonSettings(ctx, user.SteamID, &settings); err != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			log.Error("Failed to fetch person settings", zap.Error(err), zap.Int64("steam_id", user.SteamID.Int64()))
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, settings)
+	}
+}
+
+func onAPIPostPersonSettings(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	type settingsUpdateReq struct {
+		ForumSignature       string `json:"forum_signature"`
+		ForumProfileMessages bool   `json:"forum_profile_messages"`
+		StatsHidden          bool   `json:"stats_hidden"`
+	}
+
+	return func(ctx *gin.Context) {
+		user := currentUserProfile(ctx)
+
+		var req settingsUpdateReq
+
+		if !bind(ctx, log, &req) {
+			return
+		}
+
+		var settings store.PersonSettings
+
+		if err := app.db.GetPersonSettings(ctx, user.SteamID, &settings); err != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			log.Error("Failed to fetch person settings", zap.Error(err), zap.Int64("steam_id", user.SteamID.Int64()))
+
+			return
+		}
+
+		settings.ForumProfileMessages = req.ForumProfileMessages
+		settings.StatsHidden = req.StatsHidden
+		settings.ForumSignature = util.SanitizeUGC(req.ForumSignature)
+
+		if err := app.db.SavePersonSettings(ctx, &settings); err != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			log.Error("Failed to save person settings", zap.Error(err), zap.Int64("steam_id", user.SteamID.Int64()))
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, settings)
+	}
+}

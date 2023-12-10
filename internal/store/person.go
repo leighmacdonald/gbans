@@ -1184,3 +1184,75 @@ func (db *Store) GetSteamIdsAbove(ctx context.Context, privilege consts.Privileg
 
 	return ids, nil
 }
+
+type PersonSettings struct {
+	PersonSettingsID     int64         `json:"person_settings_id"`
+	SteamID              steamid.SID64 `json:"steam_id"`
+	ForumSignature       string        `json:"forum_signature"`
+	ForumProfileMessages bool          `json:"forum_profile_messages"`
+	StatsHidden          bool          `json:"stats_hidden"`
+	CreatedOn            time.Time     `json:"created_on"`
+	UpdatedOn            time.Time     `json:"updated_on"`
+}
+
+func (db *Store) GetPersonSettings(ctx context.Context, steamID steamid.SID64, settings *PersonSettings) error {
+	row, errRow := db.QueryRowBuilder(ctx, db.sb.
+		Select("person_settings_id", "forum_signature", "forum_profile_messages",
+			"stats_hidden", "created_on", "updated_on").
+		From("person_settings").
+		Where(sq.Eq{"steam_id": steamID.Int64()}))
+	if errRow != nil {
+		return errRow
+	}
+
+	settings.SteamID = steamID
+
+	if errScan := row.Scan(&settings.PersonSettingsID, &settings.ForumSignature,
+		&settings.ForumProfileMessages, &settings.StatsHidden, &settings.CreatedOn, &settings.UpdatedOn); errScan != nil {
+		if errors.Is(Err(errScan), ErrNoResult) {
+			settings.ForumProfileMessages = true
+
+			return nil
+		}
+
+		return Err(errScan)
+	}
+
+	return nil
+}
+
+func (db *Store) SavePersonSettings(ctx context.Context, settings *PersonSettings) error {
+	if !settings.SteamID.Valid() {
+		return consts.ErrInvalidSID
+	}
+
+	settings.UpdatedOn = time.Now()
+
+	if settings.PersonSettingsID == 0 {
+		settings.CreatedOn = settings.UpdatedOn
+
+		return db.ExecInsertBuilderWithReturnValue(ctx,
+			db.sb.
+				Insert("person_settings").
+				SetMap(map[string]interface{}{
+					"steam_id":               settings.SteamID.Int64(),
+					"forum_signature":        settings.ForumSignature,
+					"forum_profile_messages": settings.ForumProfileMessages,
+					"stats_hidden":           settings.StatsHidden,
+					"created_on":             settings.CreatedOn,
+					"updated_on":             settings.UpdatedOn,
+				}).
+				Suffix("RETURNING person_settings_id"),
+			&settings.PersonSettingsID)
+	} else {
+		return db.ExecUpdateBuilder(ctx, db.sb.
+			Update("person_settings").
+			SetMap(map[string]interface{}{
+				"forum_signature":        settings.ForumSignature,
+				"forum_profile_messages": settings.ForumProfileMessages,
+				"stats_hidden":           settings.StatsHidden,
+				"updated_on":             settings.UpdatedOn,
+			}).
+			Where(sq.Eq{"steam_id": settings.SteamID.Int64()}))
+	}
+}

@@ -1,4 +1,4 @@
-import React, { JSX, ReactNode, useCallback } from 'react';
+import React, { JSX, ReactNode, useCallback, useMemo, useState } from 'react';
 import ConstructionIcon from '@mui/icons-material/Construction';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Box from '@mui/material/Box';
@@ -6,17 +6,26 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { Formik } from 'formik';
+import { apSavePersonSettings, PersonSettings } from '../api';
 import {
     Accordion,
     AccordionDetails,
     AccordionSummary
 } from '../component/Accordian';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
+import { LoadingHeaderIcon } from '../component/LoadingHeaderIcon';
 import { MDBodyField } from '../component/MDBodyField';
+import { ForumProfileMessagesField } from '../component/formik/ForumProfileMessagesField';
+import { StatsHiddenField } from '../component/formik/StatsHiddenField';
 import { ResetButton, SubmitButton } from '../component/modal/Buttons';
+import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { usePersonSettings } from '../hooks/usePersonSettings';
+import { logErr } from '../util/errors';
 
 interface SettingsValues {
     body_md: string;
+    forum_profile_messages: boolean;
+    stats_hidden: boolean;
 }
 
 const SettingRow = ({
@@ -37,83 +46,126 @@ const SettingRow = ({
         </>
     );
 };
+
 export const ProfileSettingsPage = (): JSX.Element => {
     const [expanded, setExpanded] = React.useState<string | false>('general');
+    const { data, loading } = usePersonSettings();
+    const [newSettings, setNewSettings] = useState<PersonSettings>();
+    const { sendFlash } = useUserFlashCtx();
+
+    const settings = useMemo(() => {
+        return newSettings ?? data;
+    }, [data, newSettings]);
 
     const handleChange =
         (panel: string) => (_: React.SyntheticEvent, isExpanded: boolean) => {
             setExpanded(isExpanded ? panel : false);
         };
 
-    const onSubmit = useCallback(async () => {}, []);
+    const onSubmit = useCallback(
+        async (values: SettingsValues) => {
+            try {
+                const resp = await apSavePersonSettings(
+                    values.body_md,
+                    values.forum_profile_messages,
+                    values.stats_hidden
+                );
+                setNewSettings(resp);
+                sendFlash('success', 'Updated settings successfully');
+            } catch (e) {
+                logErr(e);
+                sendFlash('error', 'Error updating settings');
+            }
+        },
+        [sendFlash]
+    );
 
     return (
         <ContainerWithHeader
             title={'User Settings'}
-            iconLeft={<ConstructionIcon />}
+            iconLeft={
+                <LoadingHeaderIcon
+                    icon={<ConstructionIcon />}
+                    loading={loading}
+                />
+            }
         >
-            <Formik<SettingsValues>
-                initialValues={{ body_md: '' }}
-                onSubmit={onSubmit}
-            >
-                <>
-                    <Accordion
-                        expanded={expanded === 'general'}
-                        onChange={handleChange('general')}
-                    >
-                        <AccordionSummary
-                            expandIcon={<ExpandMoreIcon />}
-                            aria-controls="general-content"
-                            id="general-header"
+            {!loading && settings && (
+                <Formik<SettingsValues>
+                    initialValues={{
+                        body_md: settings.forum_signature ?? '',
+                        forum_profile_messages:
+                            settings.forum_profile_messages ?? true,
+                        stats_hidden: settings.stats_hidden ?? false
+                    }}
+                    onSubmit={onSubmit}
+                >
+                    <>
+                        <Accordion
+                            expanded={expanded === 'general'}
+                            onChange={handleChange('general')}
                         >
-                            <Typography sx={{ width: '16%', flexShrink: 0 }}>
-                                General
-                            </Typography>
-                            <Typography sx={{ color: 'text.secondary' }}>
-                                General account settings
-                            </Typography>
-                        </AccordionSummary>
-                        <AccordionDetails>
-                            <Typography>
-                                Nulla facilisi. Phasellus sollicitudin nulla et
-                                quam mattis feugiat. Aliquam eget maximus est,
-                                id dignissim quam.
-                            </Typography>
-                        </AccordionDetails>
-                    </Accordion>
-                    <Accordion
-                        expanded={expanded === 'forum'}
-                        onChange={handleChange('forum')}
-                    >
-                        <AccordionSummary
-                            expandIcon={<ExpandMoreIcon />}
-                            aria-controls="forum-content"
-                            id="forum-header"
+                            <AccordionSummary
+                                expandIcon={<ExpandMoreIcon />}
+                                aria-controls="general-content"
+                                id="general-header"
+                            >
+                                <Typography
+                                    sx={{ width: '16%', flexShrink: 0 }}
+                                >
+                                    General
+                                </Typography>
+                                <Typography sx={{ color: 'text.secondary' }}>
+                                    General account settings
+                                </Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <Grid container>
+                                    <SettingRow title={''}>
+                                        <ForumProfileMessagesField />
+                                    </SettingRow>
+                                    <SettingRow title={''}>
+                                        <StatsHiddenField />
+                                    </SettingRow>
+                                </Grid>
+                            </AccordionDetails>
+                        </Accordion>
+                        <Accordion
+                            expanded={expanded === 'forum'}
+                            onChange={handleChange('forum')}
                         >
-                            <Typography sx={{ width: '16%', flexShrink: 0 }}>
-                                Forum
-                            </Typography>
-                            <Typography sx={{ color: 'text.secondary' }}>
-                                Configure forum signature and notification
-                            </Typography>
-                        </AccordionSummary>
-                        <AccordionDetails>
-                            <Grid container>
-                                <SettingRow title={'Signature'}>
-                                    <MDBodyField />
-                                </SettingRow>
-                            </Grid>
-                        </AccordionDetails>
-                    </Accordion>
+                            <AccordionSummary
+                                expandIcon={<ExpandMoreIcon />}
+                                aria-controls="forum-content"
+                                id="forum-header"
+                            >
+                                <Typography
+                                    sx={{ width: '16%', flexShrink: 0 }}
+                                >
+                                    Forum
+                                </Typography>
+                                <Typography sx={{ color: 'text.secondary' }}>
+                                    Configure forum signature and notification
+                                </Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <Grid container>
+                                    <SettingRow title={'Signature'}>
+                                        <MDBodyField />
+                                    </SettingRow>
+                                </Grid>
+                            </AccordionDetails>
+                        </Accordion>
 
-                    <Box>
-                        <ButtonGroup>
-                            <ResetButton />
-                            <SubmitButton label={'Save Settings'} />
-                        </ButtonGroup>
-                    </Box>
-                </>
-            </Formik>
+                        <Box>
+                            <ButtonGroup>
+                                <ResetButton />
+                                <SubmitButton label={'Save Settings'} />
+                            </ButtonGroup>
+                        </Box>
+                    </>
+                </Formik>
+            )}
         </ContainerWithHeader>
     );
 };

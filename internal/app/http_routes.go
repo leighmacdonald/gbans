@@ -228,6 +228,10 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		authed.GET("/api/auth/logout", onAPILogout(app))
 		authed.GET("/api/current_profile", onAPICurrentProfile(app))
 		authed.POST("/api/current_profile/notifications", onAPICurrentProfileNotifications(app))
+
+		authed.GET("/api/current_profile/settings", onAPIGetPersonSettings(app))
+		authed.POST("/api/current_profile/settings", onAPIPostPersonSettings(app))
+
 		authed.POST("/api/report", onAPIPostReportCreate(app))
 		authed.GET("/api/report/:report_id", onAPIGetReport(app))
 		authed.POST("/api/reports", onAPIGetReports(app))
