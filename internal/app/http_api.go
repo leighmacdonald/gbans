@@ -302,8 +302,9 @@ func onAPIProfile(app *App) gin.HandlerFunc {
 	}
 
 	type resp struct {
-		Player  *store.Person     `json:"player"`
-		Friends []steamweb.Friend `json:"friends"`
+		Player   *store.Person        `json:"player"`
+		Friends  []steamweb.Friend    `json:"friends"`
+		Settings store.PersonSettings `json:"settings"`
 	}
 
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
@@ -331,8 +332,6 @@ func onAPIProfile(app *App) gin.HandlerFunc {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to create person", zap.Error(errGetProfile))
 
-			log.Error("Failed to create new profile", zap.Error(errGetProfile))
-
 			return
 		}
 
@@ -344,6 +343,16 @@ func onAPIProfile(app *App) gin.HandlerFunc {
 		}
 
 		response.Player = &person
+
+		var settings store.PersonSettings
+		if err := app.db.GetPersonSettings(ctx, sid, &settings); err != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			log.Error("Failed to load person settings", zap.Error(err))
+
+			return
+		}
+
+		response.Settings = settings
 
 		ctx.JSON(http.StatusOK, response)
 	}
