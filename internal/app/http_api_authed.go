@@ -456,17 +456,23 @@ func onAPIGetReports(app *App) gin.HandlerFunc {
 			req.Limit = 25
 		}
 
-		sourceID, errSourceID := req.SourceID.SID64(ctx)
-		if errSourceID != nil {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+		var sourceID steamid.SID64
 
-			return
+		if user.PermissionLevel < consts.PModerator {
+			sourceID = user.SteamID
+		} else if req.SourceID != "" {
+			sid, errSourceID := req.SourceID.SID64(ctx)
+			if errSourceID != nil {
+				responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+				return
+			}
+
+			sourceID = sid
 		}
 
-		if user.SteamID != sourceID {
-			responseErr(ctx, http.StatusForbidden, consts.ErrPermissionDenied)
-
-			return
+		if sourceID.Valid() {
+			req.SourceID = store.StringSID(sourceID.String())
 		}
 
 		var userReports []reportWithAuthor
