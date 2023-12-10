@@ -7,7 +7,7 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import EditIcon from '@mui/icons-material/Edit';
 import LockIcon from '@mui/icons-material/Lock';
 import Person2Icon from '@mui/icons-material/Person2';
-import { IconButton } from '@mui/material';
+import { Divider, IconButton } from '@mui/material';
 import Avatar from '@mui/material/Avatar';
 import Badge from '@mui/material/Badge';
 import Box from '@mui/material/Box';
@@ -295,6 +295,15 @@ const ThreadMessageContainer = ({
                                 <MarkDownRenderer
                                     body_md={activeMessage.body_md}
                                 />
+
+                                {activeMessage.signature != '' && (
+                                    <>
+                                        <Divider />
+                                        <MarkDownRenderer
+                                            body_md={activeMessage.signature}
+                                        />
+                                    </>
+                                )}
                             </Grid>
                         </Box>
                     )}

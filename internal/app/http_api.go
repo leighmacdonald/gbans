@@ -861,7 +861,7 @@ func onAPIForumMessages(app *App) gin.HandlerFunc {
 		if errMessages != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
-			log.Error("Could not load thread messages")
+			log.Error("Could not load thread messages", zap.Error(errMessages))
 
 			return
 		}
