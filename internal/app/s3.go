@@ -16,6 +16,7 @@ import (
 
 type AssetStore interface {
 	Put(ctx context.Context, bucket string, name string, body io.Reader, size int64, contentType string) error
+	Remove(ctx context.Context, bucket string, name string) error
 }
 
 type S3Client struct {

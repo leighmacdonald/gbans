@@ -703,7 +703,7 @@ func (app *App) startWorkers(ctx context.Context) {
 	go cleanupTasks(ctx, app.db, app.log)
 	go app.showReportMeta(ctx)
 	go app.notificationSender(ctx)
-	go demoCleaner(ctx, app.db, app.log)
+	go app.demoCleaner(ctx)
 	go app.stateUpdater(ctx)
 	go app.forumActivityUpdater(ctx)
 }
