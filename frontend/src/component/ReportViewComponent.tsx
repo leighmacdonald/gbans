@@ -220,7 +220,7 @@ export const ReportViewComponent = ({
                                     startIcon={<FileDownloadIcon />}
                                     component={Link}
                                     variant={'text'}
-                                    href={`/demos/${report.demo_id}`}
+                                    href={`${window.gbans.asset_url}/${window.gbans.bucket_demo}/${report.demo_name}`}
                                     color={'primary'}
                                 >
                                     {report.demo_name}
