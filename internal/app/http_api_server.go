@@ -375,10 +375,19 @@ func onAPIPostDemo(app *App) gin.HandlerFunc {
 				log.Error("Failed to cleanup temp demo path", zap.Error(err))
 			}
 		}()
-		// 20231112-063943-koth_harvest_final.dem
+
 		namePartsAll := strings.Split(demoFormFile.Filename, "-")
-		nameParts := strings.Split(namePartsAll[2], ".")
-		mapName := nameParts[0]
+
+		var mapName string
+
+		if strings.Contains(demoFormFile.Filename, "workshop-") {
+			// 20231221-042605-workshop-cp_overgrown_rc8-ugc503939302.dem
+			mapName = namePartsAll[3]
+		} else {
+			// 20231112-063943-koth_harvest_final.dem
+			nameParts := strings.Split(namePartsAll[2], ".")
+			mapName = nameParts[0]
+		}
 
 		tempPath := filepath.Join(dir, demoFormFile.Filename)
 
