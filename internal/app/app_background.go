@@ -418,14 +418,12 @@ func (app *App) showReportMeta(ctx context.Context) {
 	}
 }
 
-func demoCleaner(ctx context.Context, database *store.Store, logger *zap.Logger) {
-	var (
-		log         = logger.Named("demoCleaner")
-		ticker      = time.NewTicker(time.Hour * 24)
-		triggerChan = make(chan any)
-	)
+func (app *App) demoCleaner(ctx context.Context) {
+	log := app.log.Named("demoCleaner")
+	ticker := time.NewTicker(time.Hour)
+	triggerChan := make(chan any)
 
-	defer func() {
+	go func() {
 		triggerChan <- true
 	}()
 
@@ -434,11 +432,48 @@ func demoCleaner(ctx context.Context, database *store.Store, logger *zap.Logger)
 		case <-ticker.C:
 			triggerChan <- true
 		case <-triggerChan:
-			if err := database.FlushDemos(ctx); err != nil && !errors.Is(err, store.ErrNoResult) {
-				log.Error("Error pruning expired refresh tokens", zap.Error(err))
+			if !app.conf.General.DemoCleanupEnabled {
+				continue
 			}
 
-			log.Info("Old demos flushed")
+			log.Debug("Starting demo cleanup")
+
+			expired, errExpired := app.db.ExpiredDemos(ctx, app.conf.General.DemoCountLimit)
+			if errExpired != nil {
+				if errors.Is(errExpired, store.ErrNoResult) {
+					continue
+				}
+
+				log.Error("Failed to fetch expired demos", zap.Error(errExpired))
+			}
+
+			if len(expired) == 0 {
+				continue
+			}
+
+			count := 0
+
+			for _, demo := range expired {
+				if errRemove := app.assetStore.Remove(ctx, app.conf.S3.BucketDemo, demo.Title); errRemove != nil {
+					log.Error("Failed to remove demo asset from S3",
+						zap.Error(errRemove), zap.String("bucket", app.conf.S3.BucketDemo), zap.String("name", demo.Title))
+
+					continue
+				}
+
+				if errDrop := app.db.DropDemo(ctx, &store.DemoFile{DemoID: demo.DemoID, Title: demo.Title}); errDrop != nil {
+					log.Error("Failed to remove demo", zap.Error(errDrop),
+						zap.String("bucket", app.conf.S3.BucketDemo), zap.String("name", demo.Title))
+
+					continue
+				}
+
+				log.Info("Demo expired and removed",
+					zap.String("bucket", app.conf.S3.BucketDemo), zap.String("name", demo.Title))
+				count++
+			}
+
+			log.Info("Old demos flushed", zap.Int("count", count))
 		case <-ctx.Done():
 			log.Debug("demoCleaner shutting down")
 

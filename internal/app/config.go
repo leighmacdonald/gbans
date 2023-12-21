@@ -123,6 +123,8 @@ type generalConfig struct {
 	MasterServerStatusUpdateFreq string        `mapstructure:"master_server_status_update_freq"`
 	DefaultMaps                  []string      `mapstructure:"default_maps"`
 	ExternalURL                  string        `mapstructure:"external_url"`
+	DemoCleanupEnabled           bool          `mapstructure:"demo_cleanup_enabled"`
+	DemoCountLimit               uint64        `mapstructure:"demo_count_limit"`
 }
 
 type discordConfig struct {
@@ -251,6 +253,8 @@ func setDefaultConfigValues() {
 		"general.external_url":                     "http://gbans.localhost:6006",
 		"general.banned_steam_group_ids":           []steamid.GID{},
 		"general.banned_server_addresses":          []string{},
+		"general.demo_cleanup_enabled":             true,
+		"general.demo_count_limit":                 10000,
 		"patreon.enabled":                          false,
 		"patreon.client_id":                        "",
 		"patreon.client_secret":                    "",

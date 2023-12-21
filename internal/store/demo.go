@@ -41,13 +41,37 @@ type DemoFile struct {
 	AssetID         uuid.UUID               `json:"asset_id"`
 }
 
-func (db *Store) FlushDemos(ctx context.Context) error {
-	return db.ExecDeleteBuilder(ctx, db.sb.
-		Delete("demo").
-		Where(sq.And{
-			sq.Eq{"archive": false},
-			sq.Lt{"created_on": time.Now().Add(-(time.Hour * 24 * 14))},
-		}))
+type DemoInfo struct {
+	DemoID  int64
+	Title   string
+	AssetID uuid.UUID
+}
+
+func (db *Store) ExpiredDemos(ctx context.Context, limit uint64) ([]DemoInfo, error) {
+	rows, errRow := db.QueryBuilder(ctx, db.sb.
+		Select("d.demo_id", "d.title", "d.asset_id").
+		From("demo d").
+		Where(sq.NotEq{"d.archive": true}).
+		OrderBy("d.created_on desc").
+		Offset(limit))
+	if errRow != nil {
+		return nil, errRow
+	}
+
+	defer rows.Close()
+
+	var demos []DemoInfo
+
+	for rows.Next() {
+		var demo DemoInfo
+		if err := rows.Scan(&demo.DemoID, &demo.Title, &demo.AssetID); err != nil {
+			return nil, Err(err)
+		}
+
+		demos = append(demos, demo)
+	}
+
+	return demos, nil
 }
 
 func (db *Store) GetDemoByID(ctx context.Context, demoID int64, demoFile *DemoFile) error {
