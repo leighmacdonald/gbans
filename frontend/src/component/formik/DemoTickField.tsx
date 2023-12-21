@@ -15,6 +15,7 @@ export const DemTickField = <T,>() => {
         <FormControl fullWidth>
             <TextField
                 fullWidth
+                type={'number'}
                 disabled={isSubmitting}
                 id={'demo_tick'}
                 label={'Demo Tick'}
