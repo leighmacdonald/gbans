@@ -191,15 +191,6 @@ func (app *App) Init(ctx context.Context) error {
 		app.log.Fatal("Failed to do first time setup", zap.Error(setupErr))
 	}
 
-	// Load in the external network block / ip ban lists to memory if enabled
-	if app.conf.NetBans.Enabled {
-		if errNetBans := initNetBans(ctx, app.conf); errNetBans != nil {
-			return errors.Wrap(errNetBans, "Failed to load net bans")
-		}
-	} else {
-		app.log.Warn("External Network ban lists not enabled")
-	}
-
 	// start the background goroutine workers
 	app.startWorkers(ctx)
 
@@ -811,21 +802,6 @@ func resolveSID(ctx context.Context, sidStr string) (steamid.SID64, error) {
 	}
 
 	return sid, nil
-}
-
-func initNetBans(ctx context.Context, conf *Config) error {
-	maxAgeDuration, errParseDuration := ParseUserStringDuration(conf.NetBans.MaxAge)
-	if errParseDuration != nil {
-		return errors.Wrapf(errParseDuration, "Failed to parse max age")
-	}
-
-	for _, banList := range conf.NetBans.Sources {
-		if _, errImport := thirdparty.Import(ctx, banList, conf.NetBans.CachePath, maxAgeDuration); errImport != nil {
-			return errors.Wrap(errImport, "Failed to import net bans")
-		}
-	}
-
-	return nil
 }
 
 type NotificationHandler struct{}

@@ -816,3 +816,171 @@ func (db *Store) GetSteamIDsAtIP(ctx context.Context, ipNet *net.IPNet) (steamid
 
 	return ids, nil
 }
+
+type CIDRBlockSource struct {
+	CIDRBlockSourceID int    `json:"cidr_block_source_id"`
+	Name              string `json:"name"`
+	URL               string `json:"url"`
+	Enabled           bool   `json:"enabled"`
+	TimeStamped
+}
+
+func (db *Store) GetCIDRBlockSources(ctx context.Context) ([]CIDRBlockSource, error) {
+	blocks := make([]CIDRBlockSource, 0)
+
+	rows, errRows := db.QueryBuilder(ctx, db.sb.
+		Select("cidr_block_source_id", "name", "url", "enabled", "created_on", "updated_on").
+		From("cidr_block_source"))
+	if errRows != nil {
+		if errors.Is(errRows, ErrNoResult) {
+			return blocks, nil
+		}
+
+		return nil, errRows
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var block CIDRBlockSource
+		if errScan := rows.Scan(&block.CIDRBlockSourceID, &block.Name, &block.URL, &block.Enabled, &block.CreatedOn, &block.UpdatedOn); errScan != nil {
+			return nil, Err(errScan)
+		}
+
+		blocks = append(blocks, block)
+	}
+
+	return blocks, nil
+}
+
+func (db *Store) GetCIDRBlockSource(ctx context.Context, sourceID int, block *CIDRBlockSource) error {
+	row, errRow := db.QueryRowBuilder(ctx, db.sb.
+		Select("cidr_block_source_id", "name", "url", "enabled", "created_on", "updated_on").
+		From("cidr_block_source").
+		Where(sq.Eq{"cidr_block_source_id": sourceID}))
+	if errRow != nil {
+		return errRow
+	}
+
+	if errScan := row.Scan(&block.CIDRBlockSourceID, &block.Name, &block.URL, &block.Enabled, &block.CreatedOn, &block.UpdatedOn); errScan != nil {
+		return Err(errScan)
+	}
+
+	return nil
+}
+
+func (db *Store) SaveCIDRBlockSources(ctx context.Context, block *CIDRBlockSource) error {
+	now := time.Now()
+
+	block.UpdatedOn = now
+
+	if block.CIDRBlockSourceID > 0 {
+		return db.ExecUpdateBuilder(ctx, db.sb.
+			Update("cidr_block_source_id").
+			SetMap(map[string]interface{}{
+				"name":       block.Name,
+				"url":        block.URL,
+				"enabled":    block.Enabled,
+				"updated_on": block.UpdatedOn,
+			}))
+	}
+
+	block.CreatedOn = now
+
+	return db.ExecInsertBuilderWithReturnValue(ctx, db.sb.
+		Insert("cidr_block_source").
+		SetMap(map[string]interface{}{
+			"name":       block.Name,
+			"url":        block.URL,
+			"enabled":    block.Enabled,
+			"created_on": block.CreatedOn,
+			"updated_on": block.UpdatedOn,
+		}), &block.CIDRBlockSourceID)
+}
+
+func (db *Store) DeleteCIDRBlockSources(ctx context.Context, blockSourceID int) error {
+	return db.ExecDeleteBuilder(ctx, db.sb.
+		Delete("cidr_block_source").
+		Where(sq.Eq{"cidr_block_source_id": blockSourceID}))
+}
+
+type CIDRBlockWhitelist struct {
+	CIDRBlockWhitelistID int        `json:"cidr_block_whitelist_id"`
+	Address              *net.IPNet `json:"address"`
+	TimeStamped
+}
+
+func (db *Store) GetCIDRBlockWhitelists(ctx context.Context) ([]CIDRBlockWhitelist, error) {
+	whitelists := make([]CIDRBlockWhitelist, 0)
+
+	rows, errRows := db.QueryBuilder(ctx, db.sb.
+		Select("cidr_block_whitelist_id", "address", "created_on", "updated_on").
+		From("cidr_block_whitelist"))
+	if errRows != nil {
+		if errors.Is(errRows, ErrNoResult) {
+			return whitelists, nil
+		}
+
+		return nil, errRows
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var whitelist CIDRBlockWhitelist
+		if errScan := rows.Scan(&whitelist.CIDRBlockWhitelistID, &whitelist.Address, &whitelist.CreatedOn, &whitelist.UpdatedOn); errScan != nil {
+			return nil, Err(errScan)
+		}
+
+		whitelists = append(whitelists, whitelist)
+	}
+
+	return whitelists, nil
+}
+
+func (db *Store) GetCIDRBlockWhitelist(ctx context.Context, whitelistID int, whitelist *CIDRBlockWhitelist) error {
+	rows, errRow := db.QueryRowBuilder(ctx, db.sb.
+		Select("cidr_block_whitelist_id", "address", "created_on", "updated_on").
+		From("cidr_block_whitelist").
+		Where(sq.Eq{"cidr_block_whitelist_id": whitelistID}))
+	if errRow != nil {
+		return errRow
+	}
+
+	if errScan := rows.Scan(&whitelist.CIDRBlockWhitelistID, &whitelist.Address, &whitelist.CreatedOn, &whitelist.UpdatedOn); errScan != nil {
+		return Err(errScan)
+	}
+
+	return nil
+}
+
+func (db *Store) SaveCIDRBlockWhitelist(ctx context.Context, whitelist *CIDRBlockWhitelist) error {
+	now := time.Now()
+
+	whitelist.UpdatedOn = now
+
+	if whitelist.CIDRBlockWhitelistID > 0 {
+		return db.ExecUpdateBuilder(ctx, db.sb.
+			Update("cidr_block_whitelist").
+			SetMap(map[string]interface{}{
+				"address":    whitelist.Address.String(),
+				"updated_on": whitelist.UpdatedOn,
+			}))
+	}
+
+	whitelist.CreatedOn = now
+
+	return db.ExecInsertBuilderWithReturnValue(ctx, db.sb.
+		Insert("cidr_block_whitelist").
+		SetMap(map[string]interface{}{
+			"address":    whitelist.Address.String(),
+			"created_on": whitelist.CreatedOn,
+			"updated_on": whitelist.UpdatedOn,
+		}), &whitelist.CIDRBlockWhitelistID)
+}
+
+func (db *Store) DeleteCIDRBlockWhitelist(ctx context.Context, whitelistID int) error {
+	return db.ExecDeleteBuilder(ctx, db.sb.
+		Delete("cidr_block_whitelist").
+		Where(sq.Eq{"cidr_block_whitelist_id": whitelistID}))
+}
