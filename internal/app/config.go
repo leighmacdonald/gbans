@@ -9,7 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/bd/pkg/util"
 	"github.com/leighmacdonald/gbans/internal/store"
-	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/mitchellh/go-homedir"
@@ -31,16 +30,16 @@ type filterConfig struct {
 //	export general.steam_key=STEAM_KEY_STEAM_KEY_STEAM_KEY
 //	./gbans serve
 type Config struct {
-	General generalConfig `mapstructure:"general"`
-	HTTP    httpConfig    `mapstructure:"http"`
-	Filter  filterConfig  `mapstructure:"word_filter"`
-	DB      dbConfig      `mapstructure:"database"`
-	Discord discordConfig `mapstructure:"discord"`
-	Log     LogConfig     `mapstructure:"logging"`
-	NetBans netBans       `mapstructure:"network_bans"`
-	Debug   debugConfig   `mapstructure:"debug"`
-	Patreon patreonConfig `mapstructure:"patreon"`
-	S3      s3Config      `mapstructure:"s3"`
+	General     generalConfig   `mapstructure:"general"`
+	HTTP        httpConfig      `mapstructure:"http"`
+	Filter      filterConfig    `mapstructure:"word_filter"`
+	DB          dbConfig        `mapstructure:"database"`
+	Discord     discordConfig   `mapstructure:"discord"`
+	Log         LogConfig       `mapstructure:"logging"`
+	IP2Location ip2locationConf `mapstructure:"ip2location"`
+	Debug       debugConfig     `mapstructure:"debug"`
+	Patreon     patreonConfig   `mapstructure:"patreon"`
+	S3          s3Config        `mapstructure:"s3"`
 }
 
 type s3Config struct {
@@ -157,16 +156,9 @@ type debugConfig struct {
 	AddRCONLogAddress       string `mapstructure:"add_rcon_log_address"`
 }
 
-type netBans struct {
-	Enabled     bool                 `mapstructure:"enabled"`
-	MaxAge      string               `mapstructure:"max_age"`
-	CachePath   string               `mapstructure:"cache_path"`
-	Sources     []thirdparty.BanList `mapstructure:"sources"`
-	IP2Location ip2locationConf      `mapstructure:"ip2location"`
-}
-
 type ip2locationConf struct {
 	Enabled      bool   `mapstructure:"enabled"`
+	CachePath    string `mapstructure:"cache_path"`
 	Token        string `mapstructure:"token"`
 	ASNEnabled   bool   `mapstructure:"asn_enabled"`
 	IPEnabled    bool   `mapstructure:"ip_enabled"`
@@ -286,15 +278,11 @@ func setDefaultConfigValues() {
 		"discord.log_channel_id":                   "",
 		"discord.mod_ping_role_id":                 "",
 		"discord.unregister_on_start":              false,
-		"network_bans.enabled":                     false,
-		"network_bans.max_age":                     "1d",
-		"network_bans.cache_path":                  ".cache",
-		"network_bans.sources":                     nil,
-		"network_bans.ip2location.enabled":         false,
-		"network_bans.ip2location.token":           "",
-		"network_bans.ip2location.asn_enabled":     false,
-		"network_bans.ip2location.ip_enabled":      false,
-		"network_bans.ip2location.proxy_enabled":   false,
+		"ip2location.enabled":                      false,
+		"ip2location.token":                        "",
+		"ip2location.asn_enabled":                  false,
+		"ip2location.ip_enabled":                   false,
+		"ip2location.proxy_enabled":                false,
 		"log.level":                                "info",
 		"log.report_caller":                        false,
 		"log.full_timestamp":                       false,
