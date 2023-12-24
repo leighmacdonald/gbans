@@ -331,6 +331,11 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		modRoute.POST("/api/forum/category/:forum_category_id", onAPIUpdateForumCategory(app))
 		modRoute.POST("/api/forum/forum", onAPICreateForumForum(app))
 		modRoute.POST("/api/forum/forum/:forum_id", onAPIUpdateForumForum(app))
+
+		modRoute.POST("/api/block_list/whitelist", onAPIPostBlockListWhitelistCreate(app))
+		modRoute.POST("/api/block_list/whitelist/:cidr_block_whitelist_id", onAPIPostBlockListWhitelistUpdate(app))
+		modRoute.DELETE("/api/block_list/whitelist/:cidr_block_whitelist_id", onAPIDeleteBlockListWhitelist(app))
+		modRoute.GET("/api/block_list", onAPIGetBlockLists(app))
 	}
 
 	adminGrp := engine.Group("/")
@@ -342,6 +347,10 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		adminRoute.DELETE("/api/servers/:server_id", onAPIPostServerDelete(app))
 		adminRoute.POST("/api/servers_admin", onAPIGetServersAdmin(app))
 		adminRoute.PUT("/api/player/:steam_id/permissions", onAPIPutPlayerPermission(app))
+
+		adminRoute.POST("/api/block_list", onAPIPostBlockListCreate(app))
+		adminRoute.POST("/api/block_list/:cidr_block_source_id", onAPIPostBlockListUpdate(app))
+		adminRoute.DELETE("/api/block_list/:cidr_block_source_id", onAPIDeleteBlockList(app))
 	}
 
 	return engine

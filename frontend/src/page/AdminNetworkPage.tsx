@@ -9,6 +9,7 @@ import TextField from '@mui/material/TextField';
 import Grid from '@mui/material/Unstable_Grid2';
 import IPCIDR from 'ip-cidr';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
+import { NetworkBlockSources } from '../component/NetworkBlockSources';
 import { TabPanel } from '../component/TabPanel';
 
 interface NetworkInputProps {
@@ -104,6 +105,7 @@ export const AdminNetworkPage = () => {
                         >
                             <Tab label="Find Players" />
                             <Tab label="IP Info" />
+                            <Tab label={'VPN Bans Sources'} />
                         </Tabs>
                     </Box>
                     <TabPanel value={value} index={0}>
@@ -111,6 +113,9 @@ export const AdminNetworkPage = () => {
                     </TabPanel>
                     <TabPanel value={value} index={1}>
                         IPInfo
+                    </TabPanel>
+                    <TabPanel value={value} index={2}>
+                        <NetworkBlockSources />
                     </TabPanel>
                 </ContainerWithHeader>
             </Grid>
@@ -121,13 +126,13 @@ export const AdminNetworkPage = () => {
                             <ListItemText
                                 primary={'Find Players'}
                                 secondary={`Query players using a particular ip or cidr range.`}
-                            ></ListItemText>
+                            />
                         </ListItem>
                         <ListItem>
                             <ListItemText
                                 primary={'IP Info'}
                                 secondary={`Look up metadata for an ip/network`}
-                            ></ListItemText>
+                            />
                         </ListItem>
                     </List>
                 </ContainerWithHeader>

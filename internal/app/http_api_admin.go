@@ -1,7 +1,9 @@
 package app
 
 import (
+	"net"
 	"net/http"
+	"net/url"
 	"runtime"
 
 	"github.com/gin-gonic/gin"
@@ -218,5 +220,275 @@ func onAPIPutPlayerPermission(app *App) gin.HandlerFunc {
 		log.Info("Player permission updated",
 			zap.Int64("steam_id", steamID.Int64()),
 			zap.String("permissions", person.PermissionLevel.String()))
+	}
+}
+
+func onAPIDeleteBlockList(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		sourceID, errSourceID := getIntParam(ctx, "cidr_block_source_id")
+		if errSourceID != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		if err := app.db.DeleteCIDRBlockWhitelist(ctx, sourceID); err != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			log.Error("Failed to delete blocklist", zap.Error(err))
+
+			return
+		}
+
+		log.Info("Blocklist deleted", zap.Int("cidr_block_source_id", sourceID))
+
+		ctx.JSON(http.StatusOK, nil)
+	}
+}
+
+func onAPIGetBlockLists(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	type BlockSources struct {
+		Sources   []store.CIDRBlockSource
+		Whitelist []store.CIDRBlockWhitelist
+	}
+
+	return func(ctx *gin.Context) {
+		blockLists, err := app.db.GetCIDRBlockSources(ctx)
+		if err != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			log.Error("Failed to load blocklist", zap.Error(err))
+
+			return
+		}
+
+		whiteLists, errWl := app.db.GetCIDRBlockWhitelists(ctx)
+		if errWl != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			log.Error("Failed to load blocklist", zap.Error(err))
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, BlockSources{Sources: blockLists, Whitelist: whiteLists})
+	}
+}
+
+func onAPIPostBlockListCreate(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	type createRequest struct {
+		Name    string `json:"name"`
+		URL     string `json:"url"`
+		Enabled bool   `json:"enabled"`
+	}
+
+	return func(ctx *gin.Context) {
+		var req createRequest
+		if !bind(ctx, log, &req) {
+			return
+		}
+
+		if req.Name == "" {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		parsedURL, errURL := url.Parse(req.URL)
+		if errURL != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		blockList := store.CIDRBlockSource{
+			Name:        req.Name,
+			URL:         parsedURL.String(),
+			Enabled:     req.Enabled,
+			TimeStamped: store.NewTimeStamped(),
+		}
+
+		if errSave := app.db.SaveCIDRBlockSources(ctx, &blockList); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			log.Error("Failed to save blocklist", zap.Error(errSave))
+
+			return
+		}
+
+		ctx.JSON(http.StatusCreated, blockList)
+	}
+}
+
+func onAPIPostBlockListUpdate(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	type updateRequest struct {
+		Name    string `json:"name"`
+		URL     string `json:"url"`
+		Enabled bool   `json:"enabled"`
+	}
+
+	return func(ctx *gin.Context) {
+		sourceID, err := getIntParam(ctx, "cidr_block_source_id")
+		if err != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		var blockSource store.CIDRBlockSource
+
+		if errSource := app.db.GetCIDRBlockSource(ctx, sourceID, &blockSource); errSource != nil {
+			if errors.Is(errSource, store.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+			} else {
+				responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+			}
+
+			return
+		}
+
+		var req updateRequest
+		if !bind(ctx, log, &req) {
+			return
+		}
+
+		testBlocker := newNetworkBlocker()
+		if count, errTest := testBlocker.AddRemoteSource(ctx, req.Name, req.URL); errTest != nil || count == 0 {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			if errTest != nil {
+				log.Error("Failed to validate blocklist url", zap.Error(errTest))
+			} else {
+				log.Error("Blocklist returned no valid results")
+			}
+
+			return
+		}
+
+		blockSource.Enabled = req.Enabled
+		blockSource.Name = req.Name
+		blockSource.URL = req.URL
+
+		if errUpdate := app.db.SaveCIDRBlockSources(ctx, &blockSource); errUpdate != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, blockSource)
+	}
+}
+
+func onAPIPostBlockListWhitelistCreate(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	type createRequest struct {
+		Address string `json:"address"`
+	}
+
+	return func(ctx *gin.Context) {
+		var req createRequest
+		if !bind(ctx, log, &req) {
+			return
+		}
+
+		_, cidr, errParse := net.ParseCIDR(req.Address)
+		if errParse != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		whitelist := store.CIDRBlockWhitelist{
+			Address:     cidr,
+			TimeStamped: store.NewTimeStamped(),
+		}
+
+		if errSave := app.db.SaveCIDRBlockWhitelist(ctx, &whitelist); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			return
+		}
+
+		ctx.JSON(http.StatusCreated, whitelist)
+	}
+}
+
+func onAPIPostBlockListWhitelistUpdate(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	type updateRequest struct {
+		Address string `json:"address"`
+	}
+
+	return func(ctx *gin.Context) {
+		whitelistID, errID := getIntParam(ctx, "cidr_block_whitelist_id")
+		if errID != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		var req updateRequest
+		if !bind(ctx, log, &req) {
+			return
+		}
+
+		_, cidr, errParse := net.ParseCIDR(req.Address)
+		if errParse != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		var whitelist store.CIDRBlockWhitelist
+		if errGet := app.db.GetCIDRBlockWhitelist(ctx, whitelistID, &whitelist); errGet != nil {
+			responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+
+			return
+		}
+
+		whitelist.Address = cidr
+
+		if errSave := app.db.SaveCIDRBlockWhitelist(ctx, &whitelist); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			log.Error("Failed to save whitelist", zap.Error(errSave))
+
+			return
+		}
+	}
+}
+
+func onAPIDeleteBlockListWhitelist(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		sourceID, errSourceID := getIntParam(ctx, "cidr_block_whitelist_id")
+		if errSourceID != nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		if err := app.db.DeleteCIDRBlockWhitelist(ctx, sourceID); err != nil {
+			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+
+			log.Error("Failed to delete blocklist", zap.Error(err))
+
+			return
+		}
+
+		log.Info("Blocklist deleted", zap.Int("cidr_block_source_id", sourceID))
+
+		ctx.JSON(http.StatusOK, nil)
 	}
 }

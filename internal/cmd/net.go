@@ -45,17 +45,18 @@ func netUpdateCmd() *cobra.Command {
 			if errConnect := database.Connect(connCtx); errConnect != nil {
 				rootLogger.Fatal("Failed to connect to database", zap.Error(errConnect))
 			}
+
 			defer func() {
 				if errClose := database.Close(); errClose != nil {
 					rootLogger.Error("Failed to close database cleanly", zap.Error(errClose))
 				}
 			}()
 
-			if errUpdate := ip2location.Update(ctx, conf.NetBans.CachePath, conf.NetBans.IP2Location.Token); errUpdate != nil {
+			if errUpdate := ip2location.Update(ctx, conf.IP2Location.CachePath, conf.IP2Location.Token); errUpdate != nil {
 				rootLogger.Fatal("Failed to update", zap.Error(errUpdate))
 			}
 			rootLogger.Info("Reading data")
-			blockListData, errRead := ip2location.Read(conf.NetBans.CachePath)
+			blockListData, errRead := ip2location.Read(conf.IP2Location.CachePath)
 			if errRead != nil {
 				rootLogger.Fatal("Failed to read data", zap.Error(errRead))
 			}
