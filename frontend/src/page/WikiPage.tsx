@@ -92,6 +92,26 @@ export const WikiPage = (): JSX.Element => {
         );
     }, [page.body_md, page.revision]);
 
+    const buttons = useMemo(() => {
+        if (currentUser.permission_level < PermissionLevel.Editor) {
+            return [];
+        }
+        return [
+            <ButtonGroup key={`wiki-buttons`}>
+                <Button
+                    startIcon={<BuildIcon />}
+                    variant={'contained'}
+                    color={'warning'}
+                    onClick={() => {
+                        setEditMode(true);
+                    }}
+                >
+                    Edit
+                </Button>
+            </ButtonGroup>
+        ];
+    }, [currentUser.permission_level]);
+
     return (
         <Grid container spacing={3}>
             {!loading && !editMode && page.revision > 0 && (
@@ -99,20 +119,7 @@ export const WikiPage = (): JSX.Element => {
                     <ContainerWithHeaderAndButtons
                         title={page.slug}
                         iconLeft={<ArticleIcon />}
-                        buttons={[
-                            <ButtonGroup key={`wiki-buttons`}>
-                                <Button
-                                    startIcon={<BuildIcon />}
-                                    variant={'contained'}
-                                    color={'warning'}
-                                    onClick={() => {
-                                        setEditMode(true);
-                                    }}
-                                >
-                                    Edit
-                                </Button>
-                            </ButtonGroup>
-                        ]}
+                        buttons={buttons}
                     >
                         {bodyHTML}
                     </ContainerWithHeaderAndButtons>
