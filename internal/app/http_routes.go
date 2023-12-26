@@ -336,6 +336,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		modRoute.POST("/api/block_list/whitelist/:cidr_block_whitelist_id", onAPIPostBlockListWhitelistUpdate(app))
 		modRoute.DELETE("/api/block_list/whitelist/:cidr_block_whitelist_id", onAPIDeleteBlockListWhitelist(app))
 		modRoute.GET("/api/block_list", onAPIGetBlockLists(app))
+		modRoute.POST("/api/block_list/checker", onAPIPostBlocklistCheck(app))
 	}
 
 	adminGrp := engine.Group("/")

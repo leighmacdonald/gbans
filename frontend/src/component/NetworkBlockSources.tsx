@@ -8,21 +8,17 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import {
-    apiDeleteCIDRBlockSource,
-    CIDRBlockSource,
-    CIDRBlockWhitelist
-} from '../api';
+import { apiDeleteCIDRBlockSource, CIDRBlockSource } from '../api';
 import { useCIDRBlocks } from '../hooks/useCIDRBlocks';
 import { logErr } from '../util/errors';
 import { LoadingPlaceholder } from './LoadingPlaceholder';
+import { VCenterBox } from './VCenterBox';
 import { ModalCIDRBlockEditor, ModalConfirm } from './modal';
-import { LazyTable } from './table/LazyTable';
+import { CIDRWhitelistSection } from './table/CIDRWhitelistSection';
 
 export const NetworkBlockSources = () => {
     const { loading, data } = useCIDRBlocks();
     const [newSources, setNewSources] = useState<CIDRBlockSource[]>([]);
-    const [newWhitelist, setNewWhitelist] = useState<CIDRBlockWhitelist[]>([]);
     const confirmModal = useModal(ModalConfirm);
     const editorModal = useModal(ModalCIDRBlockEditor);
 
@@ -33,30 +29,26 @@ export const NetworkBlockSources = () => {
         return [...newSources, ...(data?.sources ?? [])];
     }, [data?.sources, loading, newSources]);
 
-    const whitelists = useMemo(() => {
-        if (loading) {
-            return [];
-        }
-        return [...newWhitelist, ...(data?.whitelist ?? [])];
-    }, []);
-
-    const onDeleteSource = useCallback(async (cidr_block_source_id: number) => {
-        try {
-            const confirmed = await confirmModal.show({
-                title: 'Delete CIDR Block Source?',
-                children: 'This action is permanent'
-            });
-            if (confirmed) {
-                await apiDeleteCIDRBlockSource(cidr_block_source_id);
-                await confirmModal.hide();
-                await editorModal.hide();
-            } else {
-                await confirmModal.hide();
+    const onDeleteSource = useCallback(
+        async (cidr_block_source_id: number) => {
+            try {
+                const confirmed = await confirmModal.show({
+                    title: 'Delete CIDR Block Source?',
+                    children: 'This action is permanent'
+                });
+                if (confirmed) {
+                    await apiDeleteCIDRBlockSource(cidr_block_source_id);
+                    await confirmModal.hide();
+                    await editorModal.hide();
+                } else {
+                    await confirmModal.hide();
+                }
+            } catch (e) {
+                logErr(e);
             }
-        } catch (e) {
-            logErr(e);
-        }
-    }, []);
+        },
+        [confirmModal, editorModal]
+    );
 
     const onEdit = useCallback(async (source?: CIDRBlockSource) => {
         try {
@@ -83,21 +75,28 @@ export const NetworkBlockSources = () => {
     }, []);
 
     return (
-        <Stack>
+        <Stack spacing={2}>
             <Grid container spacing={1}>
                 <Grid xs={12}>
-                    <ButtonGroup>
-                        <Button
-                            startIcon={<LibraryAddIcon />}
-                            variant={'contained'}
-                            color={'success'}
-                            onClick={async () => {
-                                await onEdit();
-                            }}
-                        >
-                            Add New
-                        </Button>
-                    </ButtonGroup>
+                    <Stack direction={'row'} spacing={1}>
+                        <ButtonGroup size={'small'}>
+                            <Button
+                                startIcon={<LibraryAddIcon />}
+                                variant={'contained'}
+                                color={'success'}
+                                onClick={async () => {
+                                    await onEdit();
+                                }}
+                            >
+                                Add CIDR Source
+                            </Button>
+                        </ButtonGroup>
+                        <VCenterBox>
+                            <Typography variant={'h6'} textAlign={'right'}>
+                                CIDR Blocklists
+                            </Typography>
+                        </VCenterBox>
+                    </Stack>
                 </Grid>
                 {loading ? (
                     <LoadingPlaceholder />
@@ -135,26 +134,28 @@ export const NetworkBlockSources = () => {
                                         </Button>
                                     </ButtonGroup>
 
-                                    <Typography variant={'body1'} padding={1}>
-                                        {s.name}
-                                    </Typography>
-
-                                    <Typography variant={'body2'} padding={1}>
-                                        {s.enabled ? 'Enabled' : 'Disabled'}
-                                    </Typography>
-
-                                    <Typography variant={'body2'} padding={1}>
-                                        {s.url}
-                                    </Typography>
+                                    <VCenterBox>
+                                        <Typography variant={'body1'}>
+                                            {s.name}
+                                        </Typography>
+                                    </VCenterBox>
+                                    <VCenterBox>
+                                        <Typography variant={'body2'}>
+                                            {s.enabled ? 'Enabled' : 'Disabled'}
+                                        </Typography>
+                                    </VCenterBox>
+                                    <VCenterBox>
+                                        <Typography variant={'body2'}>
+                                            {s.url}
+                                        </Typography>
+                                    </VCenterBox>
                                 </Stack>
                             );
                         })}
                     </Grid>
                 )}
             </Grid>
-            <Grid container>
-                <Grid xs={12}></Grid>
-            </Grid>
+            <CIDRWhitelistSection rows={data?.whitelist ?? []} />
         </Stack>
     );
 };

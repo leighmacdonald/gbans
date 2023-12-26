@@ -122,3 +122,20 @@ export const apiDeleteCIDRBlockWhitelist = async (
         abortController
     );
 };
+
+export interface CIDRBlockCheckResponse {
+    blocked: boolean;
+    source: string;
+}
+
+export const apiCIDRBlockCheck = async (
+    address: string,
+    abortController?: AbortController
+) => {
+    return await apiCall<CIDRBlockCheckResponse>(
+        `/api/block_list/checker`,
+        'POST',
+        { address },
+        abortController
+    );
+};

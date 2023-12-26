@@ -40,6 +40,10 @@ type MockAssetStore struct {
 	buckets map[string][]mockAsset
 }
 
+func (s *MockAssetStore) Remove(_ context.Context, _ string, _ string) error {
+	return nil
+}
+
 func (s *MockAssetStore) Put(_ context.Context, bucket string, name string, body io.Reader, size int64, contentType string) error {
 	_, ok := s.buckets[bucket]
 	if !ok {
@@ -151,8 +155,7 @@ func testServerAPI(app *App) func(t *testing.T) {
 		t.Run("auth_valid", func(t *testing.T) {
 			t.Parallel()
 			req := newTestReq("POST", "/api/server/auth", ServerAuthReq{
-				ServerName: testServer.ShortName,
-				Key:        testServer.Password,
+				Key: testServer.Password,
 			}, "")
 			w := httptest.NewRecorder()
 			httpServer.Handler.ServeHTTP(w, req)
@@ -166,8 +169,7 @@ func testServerAPI(app *App) func(t *testing.T) {
 		t.Run("auth_invalid", func(t *testing.T) {
 			t.Parallel()
 			req := newTestReq(http.MethodPost, "/api/server/auth", ServerAuthReq{
-				ServerName: testServer.ShortName,
-				Key:        "xxxxx",
+				Key: "xxxxx",
 			}, "xxxxxxxxxxxxxxx")
 			w := httptest.NewRecorder()
 			httpServer.Handler.ServeHTTP(w, req)

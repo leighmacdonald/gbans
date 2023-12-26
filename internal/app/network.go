@@ -14,7 +14,7 @@ import (
 )
 
 // NetworkBlocker provides a simple interface for blocking users connecting from banned IPs. Its designed to
-// download list of, for example, VPN CIDR blocks, parse them and block any ip that is contained withing any of those
+// download list of, for example, VPN CIDR blocks, parse them and block any ip that is contained within any of those
 // network blocks.
 //
 // IPs can be individually whitelisted if a remote/3rd party source cannot be changed.
