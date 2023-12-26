@@ -28,13 +28,16 @@ export const CIDRWhitelistSection = ({
     const [rowPerPageCount, setRowPerPageCount] = useState<number>(
         RowsPerPage.TwentyFive
     );
+    const [deletedIds, setDeletedIds] = useState<number[]>([]);
     const [newWhitelist, setNewWhitelist] = useState<CIDRBlockWhitelist[]>([]);
     const confirmModal = useModal(ModalConfirm);
     const editorModal = useModal(ModalCIDRWhitelistEditor);
 
     const whitelists = useMemo(() => {
-        return [...newWhitelist, ...(rows ?? [])];
-    }, [rows, newWhitelist]);
+        return [...newWhitelist, ...(rows ?? [])].filter(
+            (w) => !deletedIds.includes(w.cidr_block_whitelist_id)
+        );
+    }, [newWhitelist, rows, deletedIds]);
 
     const sorted = useMemo(() => {
         return stableSort(whitelists, compare(sortOrder, sortColumn)).slice(
@@ -76,6 +79,9 @@ export const CIDRWhitelistSection = ({
                 });
                 if (confirmed) {
                     await apiDeleteCIDRBlockWhitelist(cidr_block_whitelist_id);
+                    setDeletedIds((prevState) => {
+                        return [...prevState, cidr_block_whitelist_id];
+                    });
                     await confirmModal.hide();
                     await editorModal.hide();
                 } else {

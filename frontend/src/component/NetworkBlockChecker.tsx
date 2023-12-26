@@ -50,7 +50,7 @@ export const NetworkBlockChecker = () => {
         >
             <Grid container spacing={1}>
                 <Grid xs={12}>
-                    <Typography variant={'body2'}>
+                    <Typography variant={'body2'} padding={1}>
                         Check if an IP is currently blocked via cidr ban
                         sources.
                     </Typography>

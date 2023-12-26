@@ -21,14 +21,15 @@ import (
 type NetworkBlocker struct {
 	cidrRx      *regexp.Regexp
 	blocks      map[string][]*net.IPNet
-	whitelisted []*net.IPNet
+	whitelisted map[int]*net.IPNet
 	sync.RWMutex
 }
 
 func NewNetworkBlocker() *NetworkBlocker {
 	return &NetworkBlocker{
-		blocks: make(map[string][]*net.IPNet),
-		cidrRx: regexp.MustCompile(`^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(/(3[0-2]|2[0-9]|1[0-9]|[0-9]))?$`),
+		blocks:      make(map[string][]*net.IPNet),
+		whitelisted: make(map[int]*net.IPNet),
+		cidrRx:      regexp.MustCompile(`^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(/(3[0-2]|2[0-9]|1[0-9]|[0-9]))?$`),
 	}
 }
 
@@ -60,17 +61,18 @@ func (b *NetworkBlocker) RemoveSource(name string) {
 	delete(b.blocks, name)
 }
 
-func (b *NetworkBlocker) AddWhitelist(network *net.IPNet) {
-	b.RLock()
-	defer b.RUnlock()
+func (b *NetworkBlocker) RemoveWhitelist(id int) {
+	b.Lock()
+	defer b.Unlock()
 
-	for _, existing := range b.whitelisted {
-		if existing.String() == network.String() {
-			return
-		}
-	}
+	delete(b.whitelisted, id)
+}
 
-	b.whitelisted = append(b.whitelisted, network)
+func (b *NetworkBlocker) AddWhitelist(id int, network *net.IPNet) {
+	b.Lock()
+	defer b.Unlock()
+
+	b.whitelisted[id] = network
 }
 
 func (b *NetworkBlocker) AddRemoteSource(ctx context.Context, name string, url string) (int64, error) {
