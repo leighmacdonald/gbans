@@ -8,7 +8,12 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import { apiDeleteCIDRBlockSource, CIDRBlockSource } from '../api';
+import {
+    apiDeleteCIDRBlockSource,
+    CIDRBlockSource,
+    PermissionLevel
+} from '../api';
+import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useCIDRBlocks } from '../hooks/useCIDRBlocks';
 import { logErr } from '../util/errors';
 import { LoadingPlaceholder } from './LoadingPlaceholder';
@@ -21,6 +26,7 @@ export const NetworkBlockSources = () => {
     const [newSources, setNewSources] = useState<CIDRBlockSource[]>([]);
     const confirmModal = useModal(ModalConfirm);
     const editorModal = useModal(ModalCIDRBlockEditor);
+    const { currentUser } = useCurrentUserCtx();
 
     const sources = useMemo(() => {
         if (loading) {
@@ -109,11 +115,21 @@ export const NetworkBlockSources = () => {
                                     direction={'row'}
                                     key={`cidr-source-${s.cidr_block_source_id}`}
                                 >
-                                    <ButtonGroup size={'small'}>
+                                    <ButtonGroup
+                                        size={'small'}
+                                        disabled={
+                                            currentUser.permission_level !=
+                                            PermissionLevel.Admin
+                                        }
+                                    >
                                         <Button
                                             startIcon={<EditIcon />}
                                             variant={'contained'}
                                             color={'warning'}
+                                            disabled={
+                                                currentUser.permission_level !=
+                                                PermissionLevel.Admin
+                                            }
                                             onClick={async () => {
                                                 await onEdit(s);
                                             }}

@@ -444,7 +444,7 @@ func onAPIPostBlockListWhitelistCreate(app *App) gin.HandlerFunc {
 			TimeStamped:          whitelist.TimeStamped,
 		})
 
-		app.netBlock.AddWhitelist(cidr)
+		app.netBlock.AddWhitelist(whitelist.CIDRBlockWhitelistID, cidr)
 	}
 }
 
@@ -498,24 +498,26 @@ func onAPIDeleteBlockListWhitelist(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		sourceID, errSourceID := getIntParam(ctx, "cidr_block_whitelist_id")
-		if errSourceID != nil {
+		whitelistID, errWhitelistID := getIntParam(ctx, "cidr_block_whitelist_id")
+		if errWhitelistID != nil {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
 
 			return
 		}
 
-		if err := app.db.DeleteCIDRBlockWhitelist(ctx, sourceID); err != nil {
+		if err := app.db.DeleteCIDRBlockWhitelist(ctx, whitelistID); err != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
-			log.Error("Failed to delete blocklist", zap.Error(err))
+			log.Error("Failed to delete whitelist", zap.Error(err))
 
 			return
 		}
 
-		log.Info("Blocklist deleted", zap.Int("cidr_block_source_id", sourceID))
+		log.Info("Blocklist deleted", zap.Int("cidr_block_source_id", whitelistID))
 
 		ctx.JSON(http.StatusOK, nil)
+
+		app.netBlock.RemoveWhitelist(whitelistID)
 	}
 }
 

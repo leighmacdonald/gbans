@@ -235,6 +235,17 @@ func onAPIPostServerCheck(app *App) gin.HandlerFunc {
 
 		resp.PermissionLevel = person.PermissionLevel
 
+		if cidrBanned, source := app.netBlock.IsMatch(request.IP); cidrBanned {
+			resp.BanType = store.Network
+			resp.Msg = "Network Range Banned.\nIf you using a VPN try disabling it"
+
+			ctx.JSON(http.StatusOK, resp)
+			log.Info("Player network blocked", zap.Int64("sid64", steamID.Int64()),
+				zap.String("source", source), zap.String("ip", request.IP.String()))
+
+			return
+		}
+
 		// Check IP first
 		banNet, errGetBanNet := app.db.GetBanNetByAddress(responseCtx, request.IP)
 		if errGetBanNet != nil {
@@ -298,8 +309,6 @@ func onAPIPostServerCheck(app *App) gin.HandlerFunc {
 
 		resp.BanType = bannedPerson.BanType
 
-		cidrBanned, source := app.netBlock.IsMatch(request.IP)
-
 		var reason string
 
 		switch {
@@ -311,21 +320,13 @@ func onAPIPostServerCheck(app *App) gin.HandlerFunc {
 			reason = bannedPerson.Reason.String()
 		}
 
-		if cidrBanned {
-			resp.BanType = store.Network
-			resp.Msg = "Network Range Banned.\nIf you using a VPN try disabling it."
-		} else {
-			resp.Msg = fmt.Sprintf("Banned\nReason: %s\nAppeal: %s\nRemaining: %s", reason, app.ExtURL(bannedPerson.BanSteam),
-				time.Until(bannedPerson.ValidUntil).Round(time.Minute).String())
-		}
+		resp.Msg = fmt.Sprintf("Banned\nReason: %s\nAppeal: %s\nRemaining: %s", reason, app.ExtURL(bannedPerson.BanSteam),
+			time.Until(bannedPerson.ValidUntil).Round(time.Minute).String())
 
 		ctx.JSON(http.StatusOK, resp)
 
 		//goland:noinspection GoSwitchMissingCasesForIotaConsts
 		switch resp.BanType {
-		case store.Network:
-			log.Info("Player network blocked", zap.Int64("sid64", steamID.Int64()),
-				zap.String("source", source), zap.String("ip", request.IP.String()))
 		case store.NoComm:
 			log.Info("Player muted", zap.Int64("sid64", steamID.Int64()))
 		case store.Banned:

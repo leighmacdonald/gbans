@@ -244,6 +244,11 @@ func (app *App) loadNetBlocks(ctx context.Context) error {
 
 	waitGroup.Wait()
 
+	app.netBlock.Lock()
+	_, netBlock, _ := net.ParseCIDR("192.168.0.0/24")
+	app.netBlock.blocks["local"] = []*net.IPNet{netBlock}
+	app.netBlock.Unlock()
+
 	whitelists, errWhitelists := app.db.GetCIDRBlockWhitelists(ctx)
 	if errWhitelists != nil {
 		if !errors.Is(errWhitelists, store.ErrNoResult) {
@@ -252,7 +257,7 @@ func (app *App) loadNetBlocks(ctx context.Context) error {
 	}
 
 	for _, whitelist := range whitelists {
-		app.netBlock.AddWhitelist(whitelist.Address)
+		app.netBlock.AddWhitelist(whitelist.CIDRBlockWhitelistID, whitelist.Address)
 	}
 
 	app.log.Info("Loaded cidr block lists",
