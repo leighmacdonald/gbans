@@ -50,6 +50,8 @@ const (
 	NoComm
 	// Banned means the player cannot join the server at all.
 	Banned
+	// Network is used when a client connected from a banned CIDR block.
+	Network
 )
 
 // Origin defines the origin of the ban or action.

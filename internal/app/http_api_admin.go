@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"runtime"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/consts"
@@ -248,12 +249,18 @@ func onAPIDeleteBlockList(app *App) gin.HandlerFunc {
 	}
 }
 
+type CIDRBlockWhitelistExport struct {
+	CIDRBlockWhitelistID int    `json:"cidr_block_whitelist_id"`
+	Address              string `json:"address"`
+	store.TimeStamped
+}
+
 func onAPIGetBlockLists(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	type BlockSources struct {
 		Sources   []store.CIDRBlockSource    `json:"sources"`
-		Whitelist []store.CIDRBlockWhitelist `json:"whitelist"`
+		Whitelist []CIDRBlockWhitelistExport `json:"whitelist"`
 	}
 
 	return func(ctx *gin.Context) {
@@ -275,7 +282,16 @@ func onAPIGetBlockLists(app *App) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, BlockSources{Sources: blockLists, Whitelist: whiteLists})
+		var wlExported []CIDRBlockWhitelistExport
+		for _, whitelist := range whiteLists {
+			wlExported = append(wlExported, CIDRBlockWhitelistExport{
+				CIDRBlockWhitelistID: whitelist.CIDRBlockWhitelistID,
+				Address:              whitelist.Address.String(),
+				TimeStamped:          whitelist.TimeStamped,
+			})
+		}
+
+		ctx.JSON(http.StatusOK, BlockSources{Sources: blockLists, Whitelist: wlExported})
 	}
 }
 
@@ -400,6 +416,10 @@ func onAPIPostBlockListWhitelistCreate(app *App) gin.HandlerFunc {
 			return
 		}
 
+		if !strings.Contains(req.Address, "/") {
+			req.Address += "/32"
+		}
+
 		_, cidr, errParse := net.ParseCIDR(req.Address)
 		if errParse != nil {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
@@ -418,7 +438,13 @@ func onAPIPostBlockListWhitelistCreate(app *App) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, whitelist)
+		ctx.JSON(http.StatusCreated, CIDRBlockWhitelistExport{
+			CIDRBlockWhitelistID: whitelist.CIDRBlockWhitelistID,
+			Address:              whitelist.Address.String(),
+			TimeStamped:          whitelist.TimeStamped,
+		})
+
+		app.netBlock.AddWhitelist(cidr)
 	}
 }
 
@@ -490,5 +516,39 @@ func onAPIDeleteBlockListWhitelist(app *App) gin.HandlerFunc {
 		log.Info("Blocklist deleted", zap.Int("cidr_block_source_id", sourceID))
 
 		ctx.JSON(http.StatusOK, nil)
+	}
+}
+
+func onAPIPostBlocklistCheck(app *App) gin.HandlerFunc {
+	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	type checkReq struct {
+		Address string `json:"address"`
+	}
+
+	type checkResp struct {
+		Blocked bool   `json:"blocked"`
+		Source  string `json:"source"`
+	}
+
+	return func(ctx *gin.Context) {
+		var req checkReq
+		if !bind(ctx, log, &req) {
+			return
+		}
+
+		ipAddr := net.ParseIP(req.Address)
+		if ipAddr == nil {
+			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+
+			return
+		}
+
+		isBlocked, source := app.netBlock.IsMatch(ipAddr)
+
+		ctx.JSON(http.StatusOK, checkResp{
+			Blocked: isBlocked,
+			Source:  source,
+		})
 	}
 }

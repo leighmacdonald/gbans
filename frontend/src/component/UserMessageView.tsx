@@ -11,7 +11,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import { useTheme } from '@mui/material/styles';
-import { formatDistance, parseJSON } from 'date-fns';
+import { formatDistance } from 'date-fns';
 import { Formik } from 'formik';
 import { apiUpdateBanMessage, UserMessage, UserProfile } from '../api';
 import { logErr } from '../util/errors';
@@ -83,7 +83,7 @@ export const UserMessageView = ({
             </Box>
         );
     } else {
-        const d1 = formatDistance(parseJSON(message.created_on), new Date(), {
+        const d1 = formatDistance(message.created_on, new Date(), {
             addSuffix: true
         });
         return (

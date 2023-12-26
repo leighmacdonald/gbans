@@ -978,7 +978,7 @@ func (db *Store) SaveCIDRBlockWhitelist(ctx context.Context, whitelist *CIDRBloc
 			"address":    whitelist.Address.String(),
 			"created_on": whitelist.CreatedOn,
 			"updated_on": whitelist.UpdatedOn,
-		}), &whitelist.CIDRBlockWhitelistID)
+		}).Suffix("RETURNING cidr_block_whitelist_id"), &whitelist.CIDRBlockWhitelistID)
 }
 
 func (db *Store) DeleteCIDRBlockWhitelist(ctx context.Context, whitelistID int) error {

@@ -216,22 +216,23 @@ func (app *App) Init(ctx context.Context) error {
 func (app *App) loadNetBlocks(ctx context.Context) error {
 	sources, errSource := app.db.GetCIDRBlockSources(ctx)
 	if errSource != nil {
-		return errSource
+		return errors.Wrap(errSource, "Failed to load block sources")
 	}
 
 	var total atomic.Int64
 
-	wg := sync.WaitGroup{}
+	waitGroup := sync.WaitGroup{}
 
 	for _, source := range sources {
 		if !source.Enabled {
 			continue
 		}
 
-		wg.Add(1)
+		waitGroup.Add(1)
 
 		go func(src store.CIDRBlockSource) {
-			defer wg.Done()
+			defer waitGroup.Done()
+
 			count, errAdd := app.netBlock.AddRemoteSource(ctx, src.Name, src.URL)
 			if errAdd != nil {
 				app.log.Error("Could not load remote source URL")
@@ -241,12 +242,12 @@ func (app *App) loadNetBlocks(ctx context.Context) error {
 		}(source)
 	}
 
-	wg.Wait()
+	waitGroup.Wait()
 
 	whitelists, errWhitelists := app.db.GetCIDRBlockWhitelists(ctx)
 	if errWhitelists != nil {
 		if !errors.Is(errWhitelists, store.ErrNoResult) {
-			return errWhitelists
+			return errors.Wrap(errWhitelists, "Failed to load cidr block whitelists")
 		}
 	}
 

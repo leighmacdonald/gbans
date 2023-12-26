@@ -68,7 +68,7 @@
     "core-js": "3.34.0",
     "cross-env": "^7.0.3",
     "css-loader": "^6.8.1",
-    "date-fns": "^3.0.6",
+    "date-fns": "2.25.0",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-jest": "^27.6.0",

@@ -1,14 +1,19 @@
 import React from 'react';
+import HelpIcon from '@mui/icons-material/Help';
+import LeakAddIcon from '@mui/icons-material/LeakAdd';
+import VpnLockIcon from '@mui/icons-material/VpnLock';
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
+import Stack from '@mui/material/Stack';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import TextField from '@mui/material/TextField';
 import Grid from '@mui/material/Unstable_Grid2';
 import IPCIDR from 'ip-cidr';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
+import { NetworkBlockChecker } from '../component/NetworkBlockChecker';
 import { NetworkBlockSources } from '../component/NetworkBlockSources';
 import { TabPanel } from '../component/TabPanel';
 
@@ -96,7 +101,10 @@ export const AdminNetworkPage = () => {
     return (
         <Grid container padding={0} spacing={2}>
             <Grid xs={9}>
-                <ContainerWithHeader title={'Network Query Tools'}>
+                <ContainerWithHeader
+                    title={'Network Tools'}
+                    iconLeft={<LeakAddIcon />}
+                >
                     <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                         <Tabs
                             value={value}
@@ -120,22 +128,40 @@ export const AdminNetworkPage = () => {
                 </ContainerWithHeader>
             </Grid>
             <Grid xs={3}>
-                <ContainerWithHeader title={'Tool Overview'}>
-                    <List>
-                        <ListItem>
-                            <ListItemText
-                                primary={'Find Players'}
-                                secondary={`Query players using a particular ip or cidr range.`}
-                            />
-                        </ListItem>
-                        <ListItem>
-                            <ListItemText
-                                primary={'IP Info'}
-                                secondary={`Look up metadata for an ip/network`}
-                            />
-                        </ListItem>
-                    </List>
-                </ContainerWithHeader>
+                <Stack spacing={2}>
+                    <ContainerWithHeader
+                        title={'Tool Overview'}
+                        iconLeft={<HelpIcon />}
+                    >
+                        <List>
+                            <ListItem>
+                                <ListItemText
+                                    primary={'Find Players'}
+                                    secondary={`Query players using a particular ip or cidr range.`}
+                                />
+                            </ListItem>
+                            <ListItem>
+                                <ListItemText
+                                    primary={'IP Info'}
+                                    secondary={`Look up metadata for an ip/network`}
+                                />
+                            </ListItem>
+                            <ListItem>
+                                <ListItemText
+                                    primary={'External CIDR Bans'}
+                                    secondary={`Used for banning large range of address blocks using 3rd party URL sources. Response should be in the 
+                                format of 1 cidr address per line. Invalid lines are discarded. Use the whitelist to override blocked addresses you want to allow.`}
+                                />
+                            </ListItem>
+                        </List>
+                    </ContainerWithHeader>
+                    <ContainerWithHeader
+                        title={'Blocked IP Checker'}
+                        iconLeft={<VpnLockIcon />}
+                    >
+                        <NetworkBlockChecker />
+                    </ContainerWithHeader>
+                </Stack>
             </Grid>
         </Grid>
     );
