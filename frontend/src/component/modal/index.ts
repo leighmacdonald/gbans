@@ -4,6 +4,8 @@ import { BanASNModal } from './BanASNModal';
 import { BanCIDRModal } from './BanCIDRModal';
 import { BanGroupModal } from './BanGroupModal';
 import { BanSteamModal } from './BanSteamModal';
+import { CIDRBlockEditorModal } from './CIDRBlockEditorModal';
+import { CIDRWhitelistEditorModal } from './CIDRWhitelistEditorModal';
 import { ConfirmDeleteFilterModal } from './ConfirmDeleteFilterModal';
 import { ConfirmationModal } from './ConfirmationModal';
 import { ContestEditor } from './ContestEditor';
@@ -24,6 +26,8 @@ import { UnbanCIDRModal } from './UnbanCIDRModal';
 import { UnbanGroupModal } from './UnbanGroupModal';
 import { UnbanSteamModal } from './UnbanSteamModal';
 
+export const ModalCIDRWhitelistEditor = 'modal-cidr-whitelist-editor';
+export const ModalCIDRBlockEditor = 'modal-cidr-block-editor';
 export const ModalContestEditor = 'modal-contest-editor';
 export const ModalContestEntry = 'modal-contest-entry';
 export const ModalContestEntryDelete = 'modal-contest-entry-delete';
@@ -49,6 +53,8 @@ export const ModalForumForumEditor = 'modal-forum-forum-editor';
 export const ModalForumThreadCreator = 'modal-forum-thread-creator';
 export const ModalForumThreadEditor = 'modal-forum-thread-editor';
 
+NiceModal.register(ModalCIDRWhitelistEditor, CIDRWhitelistEditorModal);
+NiceModal.register(ModalCIDRBlockEditor, CIDRBlockEditorModal);
 NiceModal.register(ModalForumThreadEditor, ForumThreadEditorModal);
 NiceModal.register(ModalForumThreadCreator, ForumThreadCreatorModal);
 NiceModal.register(ModalForumForumEditor, ForumForumEditorModal);

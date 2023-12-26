@@ -876,13 +876,14 @@ func (db *Store) SaveCIDRBlockSources(ctx context.Context, block *CIDRBlockSourc
 
 	if block.CIDRBlockSourceID > 0 {
 		return db.ExecUpdateBuilder(ctx, db.sb.
-			Update("cidr_block_source_id").
+			Update("cidr_block_source").
 			SetMap(map[string]interface{}{
 				"name":       block.Name,
 				"url":        block.URL,
 				"enabled":    block.Enabled,
 				"updated_on": block.UpdatedOn,
-			}))
+			}).
+			Where(sq.Eq{"cidr_block_source_id": block.CIDRBlockSourceID}))
 	}
 
 	block.CreatedOn = now
@@ -895,7 +896,8 @@ func (db *Store) SaveCIDRBlockSources(ctx context.Context, block *CIDRBlockSourc
 			"enabled":    block.Enabled,
 			"created_on": block.CreatedOn,
 			"updated_on": block.UpdatedOn,
-		}), &block.CIDRBlockSourceID)
+		}).
+		Suffix("RETURNING cidr_block_source_id"), &block.CIDRBlockSourceID)
 }
 
 func (db *Store) DeleteCIDRBlockSources(ctx context.Context, blockSourceID int) error {

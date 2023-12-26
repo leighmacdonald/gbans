@@ -232,7 +232,7 @@ export const transformTimeStampedDates = <T>(item: T & TimeStamped) => {
 export const transformTimeStampedDatesList = <T>(
     items: (T & TimeStamped)[]
 ) => {
-    return items.map(transformTimeStampedDates);
+    return items ? items.map(transformTimeStampedDates) : items;
 };
 
 export const transformMatchDates = (item: MatchResult) => {

@@ -105,7 +105,7 @@ export const AdminNetworkPage = () => {
                         >
                             <Tab label="Find Players" />
                             <Tab label="IP Info" />
-                            <Tab label={'VPN Bans Sources'} />
+                            <Tab label={'External CIDR Bans'} />
                         </Tabs>
                     </Box>
                     <TabPanel value={value} index={0}>
