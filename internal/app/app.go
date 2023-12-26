@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -52,6 +53,7 @@ type App struct {
 	matchUUIDMap         fp.MutexMap[int, uuid.UUID]
 	activityMu           *sync.RWMutex
 	activity             []forumActivity
+	netBlock             *NetworkBlocker
 }
 
 func New(conf *Config, database *store.Store, bot *discord.Bot, logger *zap.Logger, assetStore AssetStore) App {
@@ -73,6 +75,7 @@ func New(conf *Config, database *store.Store, bot *discord.Bot, logger *zap.Logg
 		mc:                   newMetricCollector(),
 		state:                newServerStateCollector(logger),
 		activityMu:           &sync.RWMutex{},
+		netBlock:             NewNetworkBlocker(),
 	}
 
 	if conf.Discord.Enabled {
@@ -202,6 +205,57 @@ func (app *App) Init(ctx context.Context) error {
 
 		app.log.Info("Loaded filter list", zap.Int("count", len(app.wordFilters.wordFilters)))
 	}
+
+	if errBlocklist := app.loadNetBlocks(ctx); errBlocklist != nil {
+		app.log.Error("Could not load CIDR block list", zap.Error(errBlocklist))
+	}
+
+	return nil
+}
+
+func (app *App) loadNetBlocks(ctx context.Context) error {
+	sources, errSource := app.db.GetCIDRBlockSources(ctx)
+	if errSource != nil {
+		return errSource
+	}
+
+	var total atomic.Int64
+
+	wg := sync.WaitGroup{}
+
+	for _, source := range sources {
+		if !source.Enabled {
+			continue
+		}
+
+		wg.Add(1)
+
+		go func(src store.CIDRBlockSource) {
+			defer wg.Done()
+			count, errAdd := app.netBlock.AddRemoteSource(ctx, src.Name, src.URL)
+			if errAdd != nil {
+				app.log.Error("Could not load remote source URL")
+			}
+
+			total.Add(count)
+		}(source)
+	}
+
+	wg.Wait()
+
+	whitelists, errWhitelists := app.db.GetCIDRBlockWhitelists(ctx)
+	if errWhitelists != nil {
+		if !errors.Is(errWhitelists, store.ErrNoResult) {
+			return errWhitelists
+		}
+	}
+
+	for _, whitelist := range whitelists {
+		app.netBlock.AddWhitelist(whitelist.Address)
+	}
+
+	app.log.Info("Loaded cidr block lists",
+		zap.Int64("cidr_blocks", total.Load()), zap.Int("whitelisted", len(whitelists)))
 
 	return nil
 }

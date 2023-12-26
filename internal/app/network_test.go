@@ -1,17 +1,18 @@
-package app
+package app_test
 
 import (
 	"context"
 	"net"
 	"testing"
 
+	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/stretchr/testify/require"
 )
 
 func TestNetworkBlocker(t *testing.T) {
 	testName := "test"
 	testSource := "https://raw.githubusercontent.com/X4BNet/lists_vpn/main/output/datacenter/ipv4.txt"
-	blocker := newNetworkBlocker()
+	blocker := app.NewNetworkBlocker()
 
 	count, errAdd := blocker.AddRemoteSource(context.Background(), testName, testSource)
 	require.NoError(t, errAdd)

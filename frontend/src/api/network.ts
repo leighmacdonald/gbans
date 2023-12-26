@@ -18,7 +18,7 @@ export interface CIDRBlockLists {
     whitelist: CIDRBlockWhitelist[];
 }
 
-export const apiGetCIDRBlockSources = async (
+export const apiGetCIDRBlockLists = async (
     abortController?: AbortController
 ) => {
     const resp = await apiCall<CIDRBlockLists>(

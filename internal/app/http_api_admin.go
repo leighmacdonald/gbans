@@ -234,7 +234,7 @@ func onAPIDeleteBlockList(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if err := app.db.DeleteCIDRBlockWhitelist(ctx, sourceID); err != nil {
+		if err := app.db.DeleteCIDRBlockSources(ctx, sourceID); err != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			log.Error("Failed to delete blocklist", zap.Error(err))
@@ -252,8 +252,8 @@ func onAPIGetBlockLists(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	type BlockSources struct {
-		Sources   []store.CIDRBlockSource
-		Whitelist []store.CIDRBlockWhitelist
+		Sources   []store.CIDRBlockSource    `json:"sources"`
+		Whitelist []store.CIDRBlockWhitelist `json:"whitelist"`
 	}
 
 	return func(ctx *gin.Context) {
@@ -360,7 +360,7 @@ func onAPIPostBlockListUpdate(app *App) gin.HandlerFunc {
 			return
 		}
 
-		testBlocker := newNetworkBlocker()
+		testBlocker := NewNetworkBlocker()
 		if count, errTest := testBlocker.AddRemoteSource(ctx, req.Name, req.URL); errTest != nil || count == 0 {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
 

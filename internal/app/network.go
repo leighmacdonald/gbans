@@ -13,6 +13,11 @@ import (
 	"github.com/pkg/errors"
 )
 
+// NetworkBlocker provides a simple interface for blocking users connecting from banned IPs. Its designed to
+// download list of, for example, VPN CIDR blocks, parse them and block any ip that is contained withing any of those
+// network blocks.
+//
+// IPs can be individually whitelisted if a remote/3rd party source cannot be changed.
 type NetworkBlocker struct {
 	cidrRx      *regexp.Regexp
 	blocks      map[string][]*net.IPNet
@@ -20,7 +25,7 @@ type NetworkBlocker struct {
 	sync.RWMutex
 }
 
-func newNetworkBlocker() *NetworkBlocker {
+func NewNetworkBlocker() *NetworkBlocker {
 	return &NetworkBlocker{
 		blocks: make(map[string][]*net.IPNet),
 		cidrRx: regexp.MustCompile(`^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(/(3[0-2]|2[0-9]|1[0-9]|[0-9]))?$`),
