@@ -99,6 +99,7 @@ const (
 	Profile
 	ItemDescriptions
 	BotHost
+	Evading
 )
 
 func (r Reason) String() string {
@@ -115,6 +116,7 @@ func (r Reason) String() string {
 		Profile:          "Profile",
 		ItemDescriptions: "Item Name or Descriptions",
 		BotHost:          "BotHost",
+		Evading:          "Evading",
 	}[r]
 }
 
@@ -460,12 +462,13 @@ func (banCIDR *BanCIDR) String() string {
 
 type BanSteam struct {
 	BanBase
-	BanID           int64 `db:"ban_id" json:"ban_id"`
-	ReportID        int64 `json:"report_id"`
-	IncludeFriends  bool  `json:"include_friends"`
-	CommunityBanned bool  `json:"community_banned"`
-	VacBans         int   `json:"vac_bans"`
-	GameBans        int   `json:"game_bans"`
+	BanID           int64  `db:"ban_id" json:"ban_id"`
+	ReportID        int64  `json:"report_id"`
+	IncludeFriends  bool   `json:"include_friends"`
+	CommunityBanned bool   `json:"community_banned"`
+	VacBans         int    `json:"vac_bans"`
+	GameBans        int    `json:"game_bans"`
+	LastIP          net.IP `json:"last_ip"`
 }
 
 //goland:noinspection ALL
@@ -515,7 +518,7 @@ func (db *Store) getBanByColumn(ctx context.Context, column string, identifier a
 		"b.ban_id", "b.target_id", "b.source_id", "b.ban_type", "b.reason",
 		"b.reason_text", "b.note", "b.origin", "b.valid_until", "b.created_on", "b.updated_on", "b.include_friends",
 		"b.deleted", "case WHEN b.report_id is null THEN 0 ELSE b.report_id END",
-		"b.unban_reason_text", "b.is_enabled", "b.appeal_state",
+		"b.unban_reason_text", "b.is_enabled", "b.appeal_state", "b.last_ip",
 		"s.personaname as source_personaname", "s.avatarhash",
 		"t.personaname as target_personaname", "t.avatarhash", "t.community_banned", "t.vac_bans", "t.game_bans",
 	).
@@ -540,7 +543,7 @@ func (db *Store) getBanByColumn(ctx context.Context, column string, identifier a
 		Scan(&person.BanID, &targetID, &sourceID, &person.BanType, &person.Reason,
 			&person.ReasonText, &person.Note, &person.Origin, &person.ValidUntil, &person.CreatedOn,
 			&person.UpdatedOn, &person.IncludeFriends, &person.Deleted, &person.ReportID, &person.UnbanReasonText,
-			&person.IsEnabled, &person.AppealState,
+			&person.IsEnabled, &person.AppealState, &person.LastIP,
 			&person.SourceTarget.SourcePersonaname, &person.SourceTarget.SourceAvatarhash,
 			&person.SourceTarget.TargetPersonaname, &person.SourceTarget.TargetAvatarhash,
 			&person.CommunityBanned, &person.VacBans, &person.GameBans,
@@ -560,6 +563,10 @@ func (db *Store) GetBanBySteamID(ctx context.Context, sid64 steamid.SID64, banne
 
 func (db *Store) GetBanByBanID(ctx context.Context, banID int64, bannedPerson *BannedSteamPerson, deletedOk bool) error {
 	return db.getBanByColumn(ctx, "ban_id", banID, bannedPerson, deletedOk)
+}
+
+func (db *Store) GetBanByLastIP(ctx context.Context, lastIP net.IP, bannedPerson *BannedSteamPerson, deletedOk bool) error {
+	return db.getBanByColumn(ctx, "last_ip", fmt.Sprintf("::ffff:%s", lastIP.String()), bannedPerson, deletedOk)
 }
 
 // SaveBan will insert or update the ban record
@@ -596,19 +603,22 @@ func (db *Store) SaveBan(ctx context.Context, ban *BanSteam) error {
 		}
 	}
 
+	ban.LastIP = db.GetPlayerMostRecentIP(ctx, ban.TargetID)
+
 	return db.insertBan(ctx, ban)
 }
 
 func (db *Store) insertBan(ctx context.Context, ban *BanSteam) error {
 	const query = `
 		INSERT INTO ban (target_id, source_id, ban_type, reason, reason_text, note, valid_until, 
-		                 created_on, updated_on, origin, report_id, appeal_state, include_friends)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, case WHEN $11 = 0 THEN null ELSE $11 END, $12, $13)
+		                 created_on, updated_on, origin, report_id, appeal_state, include_friends, last_ip)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, case WHEN $11 = 0 THEN null ELSE $11 END, $12, $13, $14)
 		RETURNING ban_id`
 
 	errQuery := db.
 		QueryRow(ctx, query, ban.TargetID.Int64(), ban.SourceID.Int64(), ban.BanType, ban.Reason, ban.ReasonText,
-			ban.Note, ban.ValidUntil, ban.CreatedOn, ban.UpdatedOn, ban.Origin, ban.ReportID, ban.AppealState, ban.IncludeFriends).
+			ban.Note, ban.ValidUntil, ban.CreatedOn, ban.UpdatedOn, ban.Origin, ban.ReportID, ban.AppealState,
+			ban.IncludeFriends, &ban.LastIP).
 		Scan(&ban.BanID)
 
 	if errQuery != nil {

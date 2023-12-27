@@ -1,0 +1,5 @@
+BEGIN;
+
+ALTER TABLE ban ADD COLUMN last_ip inet;
+
+COMMIT;
