@@ -932,6 +932,55 @@ func (app *App) currentActiveUsers() []forumActivity {
 	return app.activity
 }
 
+// isOnIPWithBan checks if the address matches an existing user who is currently banned already. This
+// function will always fail-open and allow players in if an error occurs.
+func (app *App) isOnIPWithBan(ctx context.Context, steamID steamid.SID64, address net.IP) bool {
+	existing := store.NewBannedPerson()
+	if errMatch := app.db.GetBanByLastIP(ctx, address, &existing, false); errMatch != nil {
+		if errors.Is(errMatch, store.ErrNoResult) {
+			return false
+		}
+
+		app.log.Error("Could not load player by ip", zap.Error(errMatch))
+
+		return false
+	}
+
+	duration, errDuration := ParseUserStringDuration("10y")
+	if errDuration != nil {
+		app.log.Error("Could not parse ban duration", zap.Error(errDuration))
+
+		return false
+	}
+
+	existing.BanSteam.ValidUntil = time.Now().Add(duration)
+
+	if errSave := app.db.SaveBan(ctx, &existing.BanSteam); errSave != nil {
+		app.log.Error("Could not update previous ban.", zap.Error(errSave))
+
+		return false
+	}
+
+	var newBan store.BanSteam
+	if errNewBan := store.NewBanSteam(ctx,
+		store.StringSID(app.conf.General.Owner.String()),
+		store.StringSID(steamID.String()), duration, store.Evading, store.Evading.String(),
+		"Connecting from same IP as banned player", store.System,
+		0, store.Banned, false, &newBan); errNewBan != nil {
+		app.log.Error("Could not create evade ban", zap.Error(errDuration))
+
+		return false
+	}
+
+	if errSave := app.BanSteam(ctx, &newBan); errSave != nil {
+		app.log.Error("Could not save evade ban", zap.Error(errSave))
+
+		return false
+	}
+
+	return true
+}
+
 // validateLink is used in the case of discord origin actions that require mapping the
 // discord member ID to a SteamID so that we can track its use and apply permissions, etc.
 //

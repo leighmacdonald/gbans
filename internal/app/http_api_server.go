@@ -158,7 +158,18 @@ type CheckResponse struct {
 }
 
 // onAPIPostServerCheck takes care of checking if the player connecting to the server is
-// allowed to connect, or otherwise has restrictions such as being mutes.
+// allowed to connect, or otherwise has restrictions such as being mutes. It performs
+// the following actions/checks in order:
+//
+// - Add ip to connection history
+// - Check if is a part of a steam group ban
+// - Check if ip belongs to banned 3rd party CIDR block, like VPNs.
+// - Check if ip belongs to one or more local CIDR bans
+// - Check if ip belongs to a banned AS Number range
+// - Check if steam_id is part of a local steam ban
+// - Check if player is connecting from a IP that belongs to a banned player
+//
+// Returns a ok/muted/banned status for the player.
 func onAPIPostServerCheck(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
@@ -293,6 +304,19 @@ func onAPIPostServerCheck(app *App) gin.HandlerFunc {
 		bannedPerson := store.NewBannedPerson()
 		if errGetBan := app.db.GetBanBySteamID(responseCtx, steamID, &bannedPerson, false); errGetBan != nil {
 			if errors.Is(errGetBan, store.ErrNoResult) {
+				if app.isOnIPWithBan(ctx, steamid.SIDToSID64(request.SteamID), request.IP) {
+					log.Info("Player connected from IP of a banned player",
+						zap.String("steam_id", steamid.SIDToSID64(request.SteamID).String()),
+						zap.String("ip", request.IP.String()))
+
+					resp.BanType = store.Banned
+					resp.Msg = "Ban evasion. Previous ban updated to permanent if not already permanent"
+
+					ctx.JSON(http.StatusOK, resp)
+
+					return
+				}
+
 				// No ban, exit early
 				resp.BanType = store.OK
 				ctx.JSON(http.StatusOK, resp)

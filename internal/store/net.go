@@ -95,6 +95,32 @@ func (db *Store) GetBanNetByID(ctx context.Context, netID int64, banNet *BanCIDR
 	return nil
 }
 
+func (db *Store) GetPlayerMostRecentIP(ctx context.Context, steamID steamid.SID64) net.IP {
+	row, errRow := db.QueryRowBuilder(ctx, db.sb.Select("c.ip_addr").
+		From("person_connections c").
+		Where(sq.Eq{"c.steam_id": steamID.Int64()}).
+		OrderBy("c.created_on desc").
+		Limit(1))
+	if errRow != nil {
+		if errors.Is(errRow, ErrNoResult) {
+			return nil
+		}
+
+		db.log.Error("Failed to load last IP", zap.Error(errRow))
+
+		return nil
+	}
+
+	var addr net.IP
+	if errScan := row.Scan(&addr); errScan != nil {
+		db.log.Error("Failed to scan last IP", zap.Error(errRow))
+
+		return nil
+	}
+
+	return addr
+}
+
 // GetBansNet returns the BanCIDR matching intersecting the supplied ip.
 func (db *Store) GetBansNet(ctx context.Context, filter CIDRBansQueryFilter) ([]BannedCIDRPerson, int64, error) {
 	validColumns := map[string][]string{
