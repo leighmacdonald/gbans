@@ -31,6 +31,7 @@
     "test:coverage": "jest --coverage --colors"
   },
   "devDependencies": {
+    "@ahooksjs/use-url-state": "^3.5.1",
     "@babel/core": "^7.23.6",
     "@babel/preset-env": "^7.23.6",
     "@date-io/date-fns": "^2.17.0",

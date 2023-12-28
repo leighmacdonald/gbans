@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import useUrlState from '@ahooksjs/use-url-state';
 import ChatIcon from '@mui/icons-material/Chat';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import FlagIcon from '@mui/icons-material/Flag';
@@ -16,7 +17,7 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import { parseISO } from 'date-fns';
+//import { parseISO } from 'date-fns';
 import { formatISO9075 } from 'date-fns/fp';
 import { Formik } from 'formik';
 import {
@@ -24,7 +25,6 @@ import {
     defaultAvatarHash,
     PermissionLevel,
     PersonMessage,
-    Server,
     ServerSimple,
     sessionKeyReportPersonMessageIdName,
     sessionKeyReportSteamID
@@ -40,81 +40,17 @@ import { PersonanameField } from '../component/formik/PersonanameField';
 import { ServerIDCell, ServerIDField } from '../component/formik/ServerIDField';
 import { SteamIdField } from '../component/formik/SteamIdField';
 import { ResetButton, SubmitButton } from '../component/modal/Buttons';
-import { LazyTable, Order, RowsPerPage } from '../component/table/LazyTable';
+import { LazyTable, RowsPerPage } from '../component/table/LazyTable';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useServers } from '../hooks/useServers';
 import { logErr } from '../util/errors';
 import { Nullable } from '../util/types';
-
-const anyServer: Server = {
-    short_name: 'Any',
-    server_id: 0,
-    name: 'Any',
-    address: '',
-    port: 27015,
-    longitude: 0.0,
-    latitude: 0.0,
-    is_enabled: true,
-    cc: '',
-    default_map: '',
-    password: '',
-    rcon: '',
-    players_max: 24,
-    region: '',
-    reserved_slots: 8,
-    colour: '',
-    enable_stats: true,
-    log_secret: 0,
-    updated_on: new Date(),
-    created_on: new Date()
-};
 
 const anyServerSimple: ServerSimple = {
     server_name: 'Any',
     server_id: 0,
     server_name_long: 'Any',
     colour: ''
-};
-
-interface ChatQueryState<T> {
-    startDate: Nullable<Date>;
-    endDate: Nullable<Date>;
-    steamId: string;
-    nameQuery: string;
-    messageQuery: string;
-    sortOrder: Order;
-    sortColumn: keyof T;
-    page: number;
-    rowPerPageCount: number;
-    selectedServer: number;
-}
-
-const localStorageKey = 'chat_query_state';
-
-const loadState = () => {
-    let config: ChatQueryState<PersonMessage> = {
-        startDate: null,
-        endDate: null,
-        sortOrder: 'desc',
-        sortColumn: 'person_message_id',
-        selectedServer: anyServer.server_id,
-        rowPerPageCount: RowsPerPage.TwentyFive,
-        nameQuery: '',
-        messageQuery: '',
-        steamId: '',
-        page: 0
-    };
-    const item = localStorage.getItem(localStorageKey);
-    if (item) {
-        config = JSON.parse(item);
-        if (config.startDate) {
-            config.startDate = parseISO(config.startDate as unknown as string);
-        }
-        if (config.endDate) {
-            config.endDate = parseISO(config.endDate as unknown as string);
-        }
-    }
-    return config;
 };
 
 interface ChatLogFormValues {
@@ -128,16 +64,20 @@ interface ChatLogFormValues {
 }
 
 export const ChatLogPage = () => {
-    const init = loadState();
-    const [sortOrder, setSortOrder] = useState<Order>(init.sortOrder);
-    const [sortColumn, setSortColumn] = useState<keyof PersonMessage>(
-        init.sortColumn
-    );
+    const [state, setState] = useUrlState({
+        sortOrder: 'desc',
+        sortColumn: 'person_message_id',
+        page: '0',
+        rowPerPageCount: `${RowsPerPage.TwentyFive}`,
+        selectedServer: undefined,
+        personaName: undefined,
+        message: undefined,
+        dateStart: undefined,
+        dateEnd: undefined,
+        steamID: undefined
+    });
+
     const [rows, setRows] = useState<PersonMessage[]>([]);
-    const [page, setPage] = useState(init.page);
-    const [rowPerPageCount, setRowPerPageCount] = useState<number>(
-        init.rowPerPageCount
-    );
     const [totalRows, setTotalRows] = useState<number>(0);
     const [loading, setLoading] = useState(false);
     const { currentUser } = useCurrentUserCtx();
@@ -148,80 +88,66 @@ export const ChatLogPage = () => {
         return [anyServerSimple, ...realServers];
     }, [realServers]);
 
-    const saveState = useCallback(
-        (values: ChatLogFormValues) => {
-            localStorage.setItem(
-                localStorageKey,
-                JSON.stringify({
-                    endDate: values.date_end,
-                    steamId: values.steam_id,
-                    messageQuery: values.message,
-                    nameQuery: values.personaname,
-                    page,
-                    rowPerPageCount,
+    const onSubmit = useCallback((values: ChatLogFormValues) => {
+        setLoading(true);
+        apiGetMessages({
+            server_id: values.server_id > 0 ? values.server_id : undefined,
+            personaname: values.personaname,
+            query: values.message,
+            source_id: values.steam_id,
+            date_start: values.date_start ?? undefined,
+            date_end: values.date_end ?? undefined,
+            limit: Number(state.rowPerPageCount),
+            offset: Number(state.page) * Number(state.rowPerPageCount),
+            order_by: state.sortColumn,
+            desc: state.sortOrder == 'desc'
+        })
+            .then((resp) => {
+                setRows(resp.data || []);
+                setTotalRows(resp.count);
+
+                setState({
                     selectedServer: values.server_id,
-                    sortColumn,
-                    sortOrder,
-                    startDate: values.date_start
-                } as ChatQueryState<PersonMessage>)
-            );
-        },
-        [page, rowPerPageCount, sortColumn, sortOrder]
-    );
-
-    const onSubmit = useCallback(
-        (values: ChatLogFormValues) => {
-            setLoading(true);
-            apiGetMessages({
-                server_id: values.server_id > 0 ? values.server_id : undefined,
-                personaname: values.personaname,
-                query: values.message,
-                source_id: values.steam_id,
-                date_start: values.date_start ?? undefined,
-                date_end: values.date_end ?? undefined,
-                limit: rowPerPageCount,
-                offset: page * rowPerPageCount,
-                order_by: sortColumn,
-                desc: sortOrder == 'desc'
-            })
-                .then((resp) => {
-                    setRows(resp.data || []);
-                    setTotalRows(resp.count);
-                    if (page * rowPerPageCount > resp.count) {
-                        setPage(0);
-                    }
-                })
-                .catch((e) => {
-                    logErr(e);
-                })
-                .finally(() => {
-                    setLoading(false);
+                    steamID: values.steam_id,
+                    personaName: values.personaname,
+                    message: values.message,
+                    dateStart: values.date_start,
+                    dateEnd: values.date_end,
+                    page:
+                        Number(state.page) * Number(state.rowPerPageCount) >
+                        resp.count
+                            ? 0
+                            : state.page
                 });
-
-            saveState(values);
-        },
-        [page, rowPerPageCount, sortColumn, sortOrder, saveState]
-    );
-    const iv: ChatLogFormValues = {
-        personaname: '',
-        message: '',
-        steam_id: '',
-        date_start: null,
-        date_end: null,
-        auto_refresh: 0,
-        server_id: 0
-    };
+            })
+            .catch((e) => {
+                logErr(e);
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+    }, []);
 
     const onReset = () => {
-        setPage(0);
-        setSortColumn('person_message_id');
-        setSortOrder('desc');
+        setState({
+            page: undefined,
+            sortColumn: 'person_message_id',
+            sortOrder: 'desc'
+        });
     };
 
     return (
         <Formik<ChatLogFormValues>
             onSubmit={onSubmit}
-            initialValues={iv}
+            initialValues={{
+                personaname: state.personaName ?? '',
+                message: state.message ?? '',
+                steam_id: state.steamID ?? '',
+                date_start: state.dateStart ?? '',
+                date_end: state.dateEnd ?? '',
+                auto_refresh: 0,
+                server_id: state.selectedServer ?? ''
+            }}
             onReset={onReset}
         >
             <Grid container spacing={2}>
@@ -239,13 +165,14 @@ export const ChatLogPage = () => {
                         >
                             <Grid xs={6} md={3}>
                                 <AutoSubmitPaginationField
-                                    page={page}
-                                    rowsPerPage={rowPerPageCount}
+                                    page={Number(state.page)}
+                                    rowsPerPage={Number(state.rowPerPageCount)}
                                 />
                                 <PersonanameField />
                             </Grid>
                             <Grid xs={6} md={3}>
                                 <SteamIdField />
+                                if the
                             </Grid>
                             <Grid xs={6} md={3}>
                                 <MessageField />
@@ -301,29 +228,31 @@ export const ChatLogPage = () => {
                         >
                             <LazyTable<PersonMessage>
                                 showPager
-                                page={page}
+                                page={Number(state.page ?? '0')}
                                 count={totalRows}
-                                rowsPerPage={rowPerPageCount}
-                                sortOrder={sortOrder}
-                                sortColumn={sortColumn}
+                                rowsPerPage={Number(state.rowPerPageCount)}
+                                sortOrder={state.sortOrder}
+                                sortColumn={state.sortColumn}
                                 onSortColumnChanged={async (column) => {
-                                    setSortColumn(column);
+                                    setState({ sortColumn: column });
                                 }}
                                 onSortOrderChanged={async (direction) => {
-                                    setSortOrder(direction);
+                                    setState({ sortOrder: direction });
                                 }}
                                 onRowsPerPageChange={(
                                     event: React.ChangeEvent<
                                         HTMLInputElement | HTMLTextAreaElement
                                     >
                                 ) => {
-                                    setRowPerPageCount(
-                                        parseInt(event.target.value, 10)
-                                    );
-                                    setPage(0);
+                                    setState({
+                                        rowPerPageCount: Number(
+                                            event.target.value
+                                        ),
+                                        page: '0'
+                                    });
                                 }}
                                 onPageChange={(_, newPage) => {
-                                    setPage(newPage);
+                                    setState({ page: `${newPage}` });
                                 }}
                                 columns={[
                                     {
