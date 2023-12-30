@@ -1,5 +1,5 @@
-import React, { JSX, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { JSX, useMemo } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import ArticleIcon from '@mui/icons-material/Article';
 import BlockIcon from '@mui/icons-material/Block';
@@ -57,7 +57,6 @@ interface menuRoute {
 }
 
 export const TopBar = () => {
-    const navigate = useNavigate();
     const { currentUser } = useCurrentUserCtx();
     const { notifications } = useNotificationsCtx();
     const theme = useTheme();
@@ -97,13 +96,6 @@ export const TopBar = () => {
     const handleCloseAdminMenu = () => {
         setAnchorElAdmin(null);
     };
-
-    const loadRoute = useCallback(
-        (route: string) => {
-            navigate(route);
-        },
-        [navigate]
-    );
 
     const colourOpts = useMemo(() => {
         return { color: theme.palette.primary.dark };
@@ -256,11 +248,12 @@ export const TopBar = () => {
         icon: JSX.Element
     ) => (
         <MenuItem
+            component={RouterLink}
+            to={route}
             onClick={() => {
                 setAnchorElNav(null);
                 setAnchorElUser(null);
                 setAnchorElAdmin(null);
-                loadRoute(route);
             }}
             key={route + text}
         >
@@ -388,10 +381,9 @@ export const TopBar = () => {
                                 PermissionLevel.Admin && (
                                 <NotificationsProvider>
                                     <IconButton
+                                        component={RouterLink}
+                                        to={'/notifications'}
                                         color={'inherit'}
-                                        onClick={() => {
-                                            loadRoute('/notifications');
-                                        }}
                                     >
                                         <Badge
                                             badgeContent={
