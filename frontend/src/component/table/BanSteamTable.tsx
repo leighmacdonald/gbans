@@ -10,6 +10,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { Formik } from 'formik';
+import { FormikHelpers } from 'formik/dist/types';
 import * as yup from 'yup';
 import { AppealState, BanReason, SteamBanRecord } from '../../api';
 import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
@@ -126,22 +127,30 @@ export const BanSteamTable = ({ newBans }: { newBans: SteamBanRecord[] }) => {
         [setState]
     );
 
-    const onReset = useCallback(() => {
-        setState({
-            appealState: undefined,
-            source: undefined,
-            target: undefined,
-            deleted: undefined
-        });
-    }, [setState]);
+    const onReset = useCallback(
+        async (
+            _: SteamBanFilterValues,
+            formikHelpers: FormikHelpers<SteamBanFilterValues>
+        ) => {
+            setState({
+                appealState: undefined,
+                source: undefined,
+                target: undefined,
+                deleted: undefined
+            });
+            await formikHelpers.setFieldValue('source_id', '');
+            await formikHelpers.setFieldValue('target_id', '');
+        },
+        [setState]
+    );
 
     return (
         <Formik<SteamBanFilterValues>
             initialValues={{
                 appeal_state: Number(state.appealState ?? AppealState.Any),
-                source_id: state.source,
-                target_id: state.target,
-                deleted: Boolean(state.deleted)
+                source_id: state.source ?? '',
+                target_id: state.target ?? '',
+                deleted: Boolean(state.deleted ?? false)
             }}
             onReset={onReset}
             onSubmit={onSubmit}

@@ -8,10 +8,10 @@ import {
     BanSteamQueryFilter,
     QueryFilter,
     TimeStamped,
-    transformTimeStampedDates
+    transformTimeStampedDates,
+    transformTimeStampedDatesList
 } from './common';
-import { UserProfile } from './profile';
-import { UserMessage } from './report';
+import { BanAppealMessage } from './report';
 
 export enum AppealState {
     Any = -1,
@@ -253,10 +253,16 @@ export function applyDateTime<T>(row: T & TimeStamped) {
     return record;
 }
 
-export const apiGetBanSteam = async (ban_id: number, deleted = false) => {
+export const apiGetBanSteam = async (
+    ban_id: number,
+    deleted = false,
+    abortController?: AbortController
+) => {
     const resp = await apiCall<SteamBanRecord>(
         `/api/bans/steam/${ban_id}?deleted=${deleted}`,
-        'GET'
+        'GET',
+        undefined,
+        abortController
     );
 
     return resp ? transformTimeStampedDates(resp) : undefined;
@@ -382,43 +388,40 @@ export const apiDeleteBan = async (ban_id: number, unban_reason_text: string) =>
         unban_reason_text
     });
 
-export interface AuthorMessage {
-    message: UserMessage;
-    author: UserProfile;
-}
-
 export const apiGetBanMessages = async (ban_id: number) => {
-    const resp = await apiCall<AuthorMessage[]>(
+    const resp = await apiCall<BanAppealMessage[]>(
         `/api/bans/${ban_id}/messages`,
         'GET'
     );
 
-    return resp.map((r) => {
-        return {
-            message: applyDateTime(r.message),
-            author: applyDateTime(r.author)
-        };
-    });
+    return transformTimeStampedDatesList(resp);
 };
 
 export interface CreateBanMessage {
     message: string;
 }
 
-export const apiCreateBanMessage = async (ban_id: number, message: string) =>
-    await apiCall<UserMessage, CreateBanMessage>(
+export const apiCreateBanMessage = async (ban_id: number, message: string) => {
+    const resp = await apiCall<BanAppealMessage, CreateBanMessage>(
         `/api/bans/${ban_id}/messages`,
         'POST',
         { message }
     );
 
+    return transformTimeStampedDates(resp);
+};
+
 export const apiUpdateBanMessage = async (
     ban_message_id: number,
     message: string
 ) =>
-    await apiCall(`/api/bans/message/${ban_message_id}`, 'POST', {
-        body_md: message
-    });
+    await apiCall<{ body_md: string }>(
+        `/api/bans/message/${ban_message_id}`,
+        'POST',
+        {
+            body_md: message
+        }
+    );
 
 export const apiDeleteBanMessage = async (ban_message_id: number) =>
     await apiCall(`/api/bans/message/${ban_message_id}`, 'DELETE', {});

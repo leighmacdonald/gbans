@@ -8,6 +8,7 @@ import {
 } from '../../api';
 import { logErr } from '../../util/errors';
 import { renderDateTime } from '../../util/text';
+import { LoadingPlaceholder } from '../LoadingPlaceholder';
 import { LazyTable, Order, RowsPerPage } from './LazyTable';
 
 export const ConnectionHistoryTable = ({ steam_id }: { steam_id?: string }) => {
@@ -16,6 +17,7 @@ export const ConnectionHistoryTable = ({ steam_id }: { steam_id?: string }) => {
     const [sortColumn, setSortColumn] = useState<keyof PersonConnection>(
         'person_connection_id'
     );
+    const [loading, setLoading] = useState(false);
     const [rowPerPageCount, setRowPerPageCount] = useState<number>(
         RowsPerPage.Ten
     );
@@ -31,6 +33,7 @@ export const ConnectionHistoryTable = ({ steam_id }: { steam_id?: string }) => {
             desc: sortOrder == 'desc',
             source_id: steam_id
         };
+        setLoading(true);
         apiGetConnections(opts, abortController)
             .then((resp) => {
                 setBans(resp.data);
@@ -41,10 +44,16 @@ export const ConnectionHistoryTable = ({ steam_id }: { steam_id?: string }) => {
             })
             .catch((e) => {
                 logErr(e);
+            })
+            .finally(() => {
+                setLoading(false);
             });
         return () => abortController.abort();
     }, [page, rowPerPageCount, sortColumn, sortOrder, steam_id]);
 
+    if (loading) {
+        return <LoadingPlaceholder />;
+    }
     return (
         <LazyTable<PersonConnection>
             showPager={true}

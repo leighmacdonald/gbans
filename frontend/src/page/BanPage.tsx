@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState, JSX } from 'react';
+import React, { useCallback, useMemo, useState, JSX } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import NiceModal from '@ebay/nice-modal-react';
 import AddModeratorIcon from '@mui/icons-material/AddModerator';
@@ -22,47 +22,53 @@ import { FormikHelpers } from 'formik/dist/types';
 import {
     apiCreateBanMessage,
     apiDeleteBanMessage,
-    apiGetBanMessages,
-    apiGetBanSteam,
     apiSetBanAppealState,
     AppealState,
     AppealStateCollection,
     appealStateString,
-    AuthorMessage,
+    BanAppealMessage,
     BanReasons,
     banTypeString,
-    PermissionLevel,
-    SteamBanRecord
+    PermissionLevel
 } from '../api';
+import { AppealMessageView } from '../component/AppealMessageView';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { MDBodyField } from '../component/MDBodyField';
 import { ProfileInfoBox } from '../component/ProfileInfoBox';
 import { SourceBansList } from '../component/SourceBansList';
 import { SteamIDList } from '../component/SteamIDList';
-import { UserMessageView } from '../component/UserMessageView';
 import { ModalBanSteam, ModalUnbanSteam } from '../component/modal';
 import { ResetButton, SubmitButton } from '../component/modal/Buttons';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { useBan } from '../hooks/useBan';
+import { useBanAppealMessages } from '../hooks/useBanAppealMessages';
 import { logErr } from '../util/errors';
 import { renderDateTime, renderTimeDistance } from '../util/text';
-import { NotNull } from '../util/types';
 
 interface NewReplyValues {
     body_md: string;
 }
 
 export const BanPage = (): JSX.Element => {
-    const [ban, setBan] = React.useState<NotNull<SteamBanRecord>>();
-    const [messages, setMessages] = useState<AuthorMessage[]>([]);
     const [appealState, setAppealState] = useState<AppealState>(
         AppealState.Open
     );
+    const [newMessages, setNewMessages] = useState<BanAppealMessage[]>([]);
     const { currentUser } = useCurrentUserCtx();
     const { sendFlash } = useUserFlashCtx();
     const { ban_id } = useParams();
     const navigate = useNavigate();
-    const id = useMemo(() => parseInt(ban_id || '0'), [ban_id]);
+    const id = useMemo(() => Number(ban_id || '0'), [ban_id]);
+    const [deletedMessages, setDeletedMessages] = useState<number[]>([]);
+    const { data: ban } = useBan(id);
+    const { data: messagesServer } = useBanAppealMessages(ban?.ban_id ?? 0);
+
+    const messages = useMemo(() => {
+        return [...messagesServer, ...newMessages].filter(
+            (m) => !deletedMessages.includes(m.ban_message_id)
+        );
+    }, [deletedMessages, messagesServer, newMessages]);
 
     const canPost = useMemo(() => {
         return (
@@ -71,39 +77,6 @@ export const BanPage = (): JSX.Element => {
                 ban?.target_id == currentUser.steam_id)
         );
     }, [ban, currentUser]);
-
-    useEffect(() => {
-        if (id <= 0) {
-            navigate('/');
-            return;
-        }
-        apiGetBanSteam(id, true)
-            .then((banPerson) => {
-                if (!banPerson) {
-                    return;
-                }
-                setAppealState(banPerson.appeal_state);
-                setBan(banPerson);
-                loadMessages();
-            })
-            .catch(() => {
-                sendFlash('error', 'Failed to get ban, permission denied');
-                navigate('/');
-                return;
-            });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [id, navigate, sendFlash]);
-
-    const loadMessages = useCallback(() => {
-        if (!id) {
-            return;
-        }
-        apiGetBanMessages(id)
-            .then((response) => {
-                setMessages(response);
-            })
-            .catch(logErr);
-    }, [id]);
 
     const onSubmit = useCallback(
         async (
@@ -118,29 +91,32 @@ export const BanPage = (): JSX.Element => {
                     ban?.ban_id,
                     values.body_md
                 );
-                setMessages([
-                    ...messages,
-                    { author: currentUser, message: msg }
-                ]);
+                setNewMessages((prevState) => {
+                    return [...prevState, msg];
+                });
                 helpers.resetForm();
             } catch (e) {
                 sendFlash('error', 'Failed to create message');
                 logErr(e);
             }
         },
-        [ban, messages, currentUser, sendFlash]
+        [ban, sendFlash]
     );
 
     const onDelete = useCallback(
-        (message_id: number) => {
-            apiDeleteBanMessage(message_id)
-                .then(() => {
-                    sendFlash('success', 'Deleted message successfully');
-                    loadMessages();
-                })
-                .catch(logErr);
+        async (message_id: number) => {
+            try {
+                await apiDeleteBanMessage(message_id);
+                setDeletedMessages((prevState) => {
+                    return [...prevState, message_id];
+                });
+                sendFlash('success', 'Deleted message successfully');
+            } catch (e) {
+                logErr(e);
+                sendFlash('error', 'Failed to delete message');
+            }
         },
-        [loadMessages, sendFlash]
+        [sendFlash]
     );
 
     const onSaveAppealState = useCallback(() => {
@@ -206,11 +182,10 @@ export const BanPage = (): JSX.Element => {
                         )}
 
                     {messages.map((m) => (
-                        <UserMessageView
+                        <AppealMessageView
                             onDelete={onDelete}
-                            author={m.author}
-                            message={m.message}
-                            key={m.message.message_id}
+                            message={m}
+                            key={`ban-appeal-msg-${m.ban_message_id}`}
                         />
                     ))}
                     {canPost && (

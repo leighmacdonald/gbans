@@ -13,28 +13,26 @@ import Stack from '@mui/material/Stack';
 import { useTheme } from '@mui/material/styles';
 import { formatDistance } from 'date-fns';
 import { Formik } from 'formik';
-import { apiUpdateBanMessage, UserMessage, UserProfile } from '../api';
+import { apiUpdateReportMessage, ReportMessage } from '../api';
 import { logErr } from '../util/errors';
 import { avatarHashToURL } from '../util/text';
 import { MDBodyField } from './MDBodyField';
 import { MarkDownRenderer } from './MarkdownRenderer';
 import { ResetButton, SubmitButton } from './modal/Buttons';
 
-export interface UserMessageViewProps {
-    author: UserProfile;
-    message: UserMessage;
+export interface ReportMessageViewProps {
+    message: ReportMessage;
     onDelete: (report_message_id: number) => void;
 }
 
-interface UserMessageValues {
+interface ReportMessageValues {
     body_md: string;
 }
 
-export const UserMessageView = ({
-    author,
+export const ReportMessageView = ({
     message,
     onDelete
-}: UserMessageViewProps) => {
+}: ReportMessageViewProps) => {
     const theme = useTheme();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
@@ -42,12 +40,17 @@ export const UserMessageView = ({
     const [deleted, setDeleted] = useState<boolean>(false);
 
     const onSubmit = useCallback(
-        async (values: UserMessageValues) => {
-            apiUpdateBanMessage(message.message_id, values.body_md)
-                .then(() => {
-                    message.contents = values.body_md;
-                })
-                .catch(logErr);
+        async (values: ReportMessageValues) => {
+            try {
+                await apiUpdateReportMessage(
+                    message.report_message_id,
+                    values.body_md
+                );
+                message.message_md = values.body_md;
+                setEditing(false);
+            } catch (e) {
+                logErr(e);
+            }
         },
         [message]
     );
@@ -67,9 +70,9 @@ export const UserMessageView = ({
     if (editing) {
         return (
             <Box component={Paper} padding={1}>
-                <Formik<UserMessageValues>
+                <Formik<ReportMessageValues>
                     onSubmit={onSubmit}
-                    initialValues={{ body_md: message.contents }}
+                    initialValues={{ body_md: message.message_md }}
                 >
                     <Stack spacing={1}>
                         <MDBodyField />
@@ -95,7 +98,7 @@ export const UserMessageView = ({
                     avatar={
                         <Avatar
                             aria-label="Avatar"
-                            src={avatarHashToURL(author.avatarhash)}
+                            src={avatarHashToURL(message.avatarhash)}
                         >
                             ?
                         </Avatar>
@@ -105,11 +108,11 @@ export const UserMessageView = ({
                             <MoreVertIcon />
                         </IconButton>
                     }
-                    title={author.name}
+                    title={message.personaname}
                     subheader={d1}
                 />
 
-                <MarkDownRenderer body_md={message.contents} />
+                <MarkDownRenderer body_md={message.message_md} />
 
                 <Menu
                     anchorEl={anchorEl}
@@ -155,7 +158,7 @@ export const UserMessageView = ({
                     </MenuItem>
                     <MenuItem
                         onClick={() => {
-                            onDelete(message.message_id);
+                            onDelete(message.report_message_id);
                             setDeleted(true);
                         }}
                     >

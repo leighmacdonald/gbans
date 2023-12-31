@@ -198,7 +198,12 @@ export const apiGetMessages = async (
     const resp = await apiCall<LazyResult<PersonMessage>, MessageQuery>(
         `/api/messages`,
         'POST',
-        opts,
+        {
+            ...opts,
+            date_start:
+                (opts.date_start ?? '') == '' ? undefined : opts.date_start,
+            date_end: (opts.date_end ?? '') == '' ? undefined : opts.date_end
+        },
         abortController
     );
 
