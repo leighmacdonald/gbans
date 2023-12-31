@@ -135,6 +135,7 @@ func (db *Store) SaveReport(ctx context.Context, report *Report) error {
 
 func NewReportMessage(reportID int64, authorID steamid.SID64, messageMD string) ReportMessage {
 	now := time.Now()
+
 	return ReportMessage{
 		ReportID:     reportID,
 		AuthorID:     authorID,

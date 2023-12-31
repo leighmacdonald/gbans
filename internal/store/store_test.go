@@ -148,8 +148,8 @@ func testReport(database *store.Store) func(t *testing.T) {
 
 		require.NoError(t, database.SaveReport(context.TODO(), &report))
 
-		msg1 := store.NewUserMessage(report.ReportID, author.SteamID, golib.RandomString(100))
-		msg2 := store.NewUserMessage(report.ReportID, author.SteamID, golib.RandomString(100))
+		msg1 := store.NewReportMessage(report.ReportID, author.SteamID, golib.RandomString(100))
+		msg2 := store.NewReportMessage(report.ReportID, author.SteamID, golib.RandomString(100))
 
 		require.NoError(t, database.SaveReportMessage(context.Background(), &msg1))
 		require.NoError(t, database.SaveReportMessage(context.Background(), &msg2))

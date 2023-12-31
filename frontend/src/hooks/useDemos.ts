@@ -19,7 +19,10 @@ export const useDemos = (opts: DemoQueryFilter) => {
                 desc: opts.desc,
                 steam_id: opts.steam_id,
                 map_name: opts.map_name,
-                server_ids: opts.server_ids
+                server_ids: (Array.isArray(opts.server_ids)
+                    ? opts.server_ids
+                    : [opts.server_ids]
+                ).map((i) => Number(i))
             },
             abortController
         )
