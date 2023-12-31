@@ -2,19 +2,21 @@ import React, { JSX, useMemo } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import ArticleIcon from '@mui/icons-material/Article';
-import BlockIcon from '@mui/icons-material/Block';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import DnsIcon from '@mui/icons-material/Dns';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import ForumIcon from '@mui/icons-material/Forum';
+import GroupsIcon from '@mui/icons-material/Groups';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import LiveHelpIcon from '@mui/icons-material/LiveHelp';
 import MailIcon from '@mui/icons-material/Mail';
 import MenuIcon from '@mui/icons-material/Menu';
 import NewspaperIcon from '@mui/icons-material/Newspaper';
+import NoAccountsIcon from '@mui/icons-material/NoAccounts';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
+import PublicOffIcon from '@mui/icons-material/PublicOff';
 import ReportIcon from '@mui/icons-material/Report';
 import SettingsIcon from '@mui/icons-material/Settings';
 import StorageIcon from '@mui/icons-material/Storage';
@@ -22,6 +24,7 @@ import SubjectIcon from '@mui/icons-material/Subject';
 import SupportIcon from '@mui/icons-material/Support';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import TravelExploreIcon from '@mui/icons-material/TravelExplore';
+import WifiOffIcon from '@mui/icons-material/WifiOff';
 import AppBar from '@mui/material/AppBar';
 import Avatar from '@mui/material/Avatar';
 import Badge from '@mui/material/Badge';
@@ -187,9 +190,24 @@ export const TopBar = () => {
         }
         if (currentUser.permission_level >= PermissionLevel.Moderator) {
             items.push({
-                to: '/admin/ban',
-                text: 'Ban Player/Net',
-                icon: <BlockIcon sx={colourOpts} />
+                to: '/admin/ban/steam',
+                text: 'Ban Steam',
+                icon: <NoAccountsIcon sx={colourOpts} />
+            });
+            items.push({
+                to: '/admin/ban/cidr',
+                text: 'Ban CIDR',
+                icon: <WifiOffIcon sx={colourOpts} />
+            });
+            items.push({
+                to: '/admin/ban/asn',
+                text: 'Ban ASN',
+                icon: <PublicOffIcon sx={colourOpts} />
+            });
+            items.push({
+                to: '/admin/ban/group',
+                text: 'Ban Steam Group',
+                icon: <GroupsIcon sx={colourOpts} />
             });
             items.push({
                 to: '/admin/reports',
