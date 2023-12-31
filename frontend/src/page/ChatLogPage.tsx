@@ -17,7 +17,6 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-//import { parseISO } from 'date-fns';
 import { formatISO9075 } from 'date-fns/fp';
 import { Formik } from 'formik';
 import {
@@ -44,7 +43,6 @@ import { LazyTable, RowsPerPage } from '../component/table/LazyTable';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useServers } from '../hooks/useServers';
 import { logErr } from '../util/errors';
-import { Nullable } from '../util/types';
 
 const anyServerSimple: ServerSimple = {
     server_name: 'Any',
@@ -54,8 +52,8 @@ const anyServerSimple: ServerSimple = {
 };
 
 interface ChatLogFormValues {
-    date_start: Nullable<Date>;
-    date_end: Nullable<Date>;
+    date_start?: Date;
+    date_end?: Date;
     steam_id: string;
     personaname: string;
     message: string;
@@ -67,9 +65,9 @@ export const ChatLogPage = () => {
     const [state, setState] = useUrlState({
         sortOrder: 'desc',
         sortColumn: 'person_message_id',
-        page: '0',
+        page: undefined,
         rowPerPageCount: `${RowsPerPage.TwentyFive}`,
-        selectedServer: undefined,
+        server: undefined,
         personaName: undefined,
         message: undefined,
         dateStart: undefined,
@@ -88,51 +86,65 @@ export const ChatLogPage = () => {
         return [anyServerSimple, ...realServers];
     }, [realServers]);
 
-    const onSubmit = useCallback((values: ChatLogFormValues) => {
-        setLoading(true);
-        apiGetMessages({
-            server_id: values.server_id > 0 ? values.server_id : undefined,
-            personaname: values.personaname,
-            query: values.message,
-            source_id: values.steam_id,
-            date_start: values.date_start ?? undefined,
-            date_end: values.date_end ?? undefined,
-            limit: Number(state.rowPerPageCount),
-            offset: Number(state.page) * Number(state.rowPerPageCount),
-            order_by: state.sortColumn,
-            desc: state.sortOrder == 'desc'
-        })
-            .then((resp) => {
-                setRows(resp.data || []);
-                setTotalRows(resp.count);
-
-                setState({
-                    selectedServer: values.server_id,
-                    steamID: values.steam_id,
-                    personaName: values.personaname,
-                    message: values.message,
-                    dateStart: values.date_start,
-                    dateEnd: values.date_end,
-                    page:
-                        Number(state.page) * Number(state.rowPerPageCount) >
-                        resp.count
-                            ? 0
-                            : state.page
+    const onSubmit = useCallback(
+        (values: ChatLogFormValues) => {
+            setLoading(true);
+            apiGetMessages({
+                server_id:
+                    (values.server_id ?? anyServerSimple.server_id) > 0
+                        ? values.server_id
+                        : undefined,
+                personaname: values.personaname,
+                query: values.message,
+                source_id: values.steam_id,
+                date_start: values.date_start,
+                date_end: values.date_end,
+                limit: Number(state.rowPerPageCount),
+                offset: Number(state.page) * Number(state.rowPerPageCount),
+                order_by: state.sortColumn,
+                desc: state.sortOrder == 'desc'
+            })
+                .then((resp) => {
+                    setRows(resp.data || []);
+                    setTotalRows(resp.count);
+                    setState({
+                        server:
+                            (values.server_id ?? 0) > 0
+                                ? values.server_id
+                                : undefined,
+                        steamID: values.steam_id ?? undefined,
+                        personaName: values.personaname ?? undefined,
+                        message: values.message ?? undefined,
+                        dateStart: values.date_start ?? undefined,
+                        dateEnd: values.date_end ?? undefined,
+                        page:
+                            Number(state.page) * Number(state.rowPerPageCount) >
+                            resp.count
+                                ? undefined
+                                : state.page
+                    });
+                })
+                .catch((e) => {
+                    logErr(e);
+                })
+                .finally(() => {
+                    setLoading(false);
                 });
-            })
-            .catch((e) => {
-                logErr(e);
-            })
-            .finally(() => {
-                setLoading(false);
-            });
-    }, []);
+        },
+        [
+            setState,
+            state.page,
+            state.rowPerPageCount,
+            state.sortColumn,
+            state.sortOrder
+        ]
+    );
 
     const onReset = () => {
         setState({
             page: undefined,
-            sortColumn: 'person_message_id',
-            sortOrder: 'desc'
+            sortColumn: undefined,
+            sortOrder: undefined
         });
     };
 
@@ -140,13 +152,13 @@ export const ChatLogPage = () => {
         <Formik<ChatLogFormValues>
             onSubmit={onSubmit}
             initialValues={{
-                personaname: state.personaName ?? '',
-                message: state.message ?? '',
-                steam_id: state.steamID ?? '',
-                date_start: state.dateStart ?? '',
-                date_end: state.dateEnd ?? '',
+                personaname: state.personaName,
+                message: state.message,
+                steam_id: state.steamID,
+                date_start: state.dateStart,
+                date_end: state.dateEnd,
                 auto_refresh: 0,
-                server_id: state.selectedServer ?? ''
+                server_id: state.server ?? anyServerSimple.server_id
             }}
             onReset={onReset}
         >
@@ -172,7 +184,6 @@ export const ChatLogPage = () => {
                             </Grid>
                             <Grid xs={6} md={3}>
                                 <SteamIdField />
-                                if the
                             </Grid>
                             <Grid xs={6} md={3}>
                                 <MessageField />

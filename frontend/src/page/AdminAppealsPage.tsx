@@ -1,4 +1,5 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
+import useUrlState from '@ahooksjs/use-url-state';
 import DoNotDisturbIcon from '@mui/icons-material/DoNotDisturb';
 import FiberNewIcon from '@mui/icons-material/FiberNew';
 import FilterListIcon from '@mui/icons-material/FilterList';
@@ -31,15 +32,15 @@ import {
     TargetIDField,
     targetIdValidator
 } from '../component/formik/TargetIdField';
-import { LazyTable, Order, RowsPerPage } from '../component/table/LazyTable';
+import { LazyTable, RowsPerPage } from '../component/table/LazyTable';
 import { TableCellLink } from '../component/table/TableCellLink';
 import { useAppeals } from '../hooks/useAppeals';
 import { renderDate, renderDateTime } from '../util/text';
 
 interface AppealFilterValues {
-    appeal_state: AppealState;
-    source_id: string;
-    target_id: string;
+    appeal_state?: AppealState;
+    source_id?: string;
+    target_id?: string;
 }
 
 const validationSchema = yup.object({
@@ -49,35 +50,31 @@ const validationSchema = yup.object({
 });
 
 export const AdminAppealsPage = () => {
-    const [sortOrder, setSortOrder] = useState<Order>('desc');
-    const [sortColumn, setSortColumn] =
-        useState<keyof SteamBanRecord>('updated_on');
-    const [rowPerPageCount, setRowPerPageCount] = useState<number>(
-        RowsPerPage.Fifty
-    );
-    const [page, setPage] = useState(0);
-    const [appealState, setAppealState] = useState<AppealState>(
-        AppealState.Any
-    );
-
-    const [author, setAuthor] = useState('');
-    const [target, setTarget] = useState('');
+    const [state, setState] = useUrlState({
+        page: undefined,
+        source: undefined,
+        target: undefined,
+        appealState: undefined,
+        rows: undefined,
+        sortOrder: undefined,
+        sortColumn: undefined
+    });
 
     const { appeals, count, loading } = useAppeals({
-        desc: sortOrder == 'desc',
-        order_by: sortColumn,
-        source_id: author,
-        target_id: target,
-        offset: page * rowPerPageCount,
-        limit: rowPerPageCount,
-        appeal_state: appealState
+        limit: Number(state.rows ?? RowsPerPage.Ten),
+        offset: Number((state.page ?? 0) * (state.rows ?? RowsPerPage.Ten)),
+        order_by: state.sortColumn ?? 'ban_id',
+        desc: (state.sortOrder ?? 'desc') == 'desc',
+        source_id: state.source ?? '',
+        target_id: state.target ?? '',
+        appeal_state: Number(state.appealState ?? AppealState.Any)
     });
 
     const tableIcon = useMemo(() => {
         if (loading) {
             return <LoadingSpinner />;
         }
-        switch (appealState) {
+        switch (state.appealState) {
             case AppealState.Accepted:
                 return <GppGoodIcon />;
             case AppealState.Open:
@@ -87,26 +84,36 @@ export const AdminAppealsPage = () => {
             default:
                 return <SnoozeIcon />;
         }
-    }, [appealState, loading]);
+    }, [loading, state.appealState]);
 
-    const onSubmit = useCallback((values: AppealFilterValues) => {
-        setAppealState(values.appeal_state);
-        setAuthor(values.source_id);
-        setTarget(values.target_id);
-    }, []);
+    const onSubmit = useCallback(
+        (values: AppealFilterValues) => {
+            setState({
+                appealState:
+                    values.appeal_state != AppealState.Any
+                        ? values.appeal_state
+                        : undefined,
+                source: values.source_id != '' ? values.source_id : undefined,
+                target: values.target_id != '' ? values.target_id : undefined
+            });
+        },
+        [setState]
+    );
 
     const onReset = useCallback(() => {
-        setAppealState(AppealState.Any);
-        setAuthor('');
-        setTarget('');
-    }, []);
+        setState({
+            appealState: undefined,
+            source: undefined,
+            target: undefined
+        });
+    }, [setState]);
 
     return (
         <Formik<AppealFilterValues>
             initialValues={{
-                appeal_state: appealState,
-                source_id: author,
-                target_id: target
+                appeal_state: Number(state.appealState ?? AppealState.Any),
+                source_id: state.source,
+                target_id: state.target
             }}
             onReset={onReset}
             onSubmit={onSubmit}
@@ -144,29 +151,29 @@ export const AdminAppealsPage = () => {
                         <LazyTable<SteamBanRecord>
                             rows={appeals}
                             showPager
-                            page={page}
-                            rowsPerPage={rowPerPageCount}
+                            page={Number(state.page ?? 0)}
+                            rowsPerPage={Number(state.rows ?? RowsPerPage.Ten)}
                             count={count}
-                            sortOrder={sortOrder}
-                            sortColumn={sortColumn}
+                            sortOrder={state.sortOrder}
+                            sortColumn={state.sortColumn}
                             onSortColumnChanged={async (column) => {
-                                setSortColumn(column);
+                                setState({ sortColumn: column });
                             }}
                             onSortOrderChanged={async (direction) => {
-                                setSortOrder(direction);
+                                setState({ sortOrder: direction });
                             }}
                             onRowsPerPageChange={(
                                 event: React.ChangeEvent<
                                     HTMLInputElement | HTMLTextAreaElement
                                 >
                             ) => {
-                                setRowPerPageCount(
-                                    parseInt(event.target.value, 10)
-                                );
-                                setPage(0);
+                                setState({
+                                    rows: Number(event.target.value),
+                                    page: 0
+                                });
                             }}
                             onPageChange={(_, newPage) => {
-                                setPage(newPage);
+                                setState({ page: newPage });
                             }}
                             columns={[
                                 {

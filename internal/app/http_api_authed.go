@@ -681,11 +681,6 @@ func onAPISaveMedia(app *App) gin.HandlerFunc {
 	}
 }
 
-type AuthorMessage struct {
-	Author  store.Person      `json:"author"`
-	Message store.UserMessage `json:"message"`
-}
-
 func onAPIGetReportMessages(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		reportID, errParam := getInt64Param(ctx, "report_id")
@@ -713,31 +708,11 @@ func onAPIGetReportMessages(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var ids steamid.Collection
-		for _, msg := range reportMessages {
-			ids = append(ids, msg.AuthorID)
+		if reportMessages == nil {
+			reportMessages = []store.ReportMessage{}
 		}
 
-		authors, authorsErr := app.db.GetPeopleBySteamID(ctx, ids)
-		if authorsErr != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
-
-			return
-		}
-
-		var (
-			authorsMap     = authors.AsMap()
-			authorMessages []AuthorMessage
-		)
-
-		for _, message := range reportMessages {
-			authorMessages = append(authorMessages, AuthorMessage{
-				Author:  authorsMap[message.AuthorID],
-				Message: message,
-			})
-		}
-
-		ctx.JSON(http.StatusOK, authorMessages)
+		ctx.JSON(http.StatusOK, reportMessages)
 	}
 }
 
@@ -782,7 +757,7 @@ func onAPIPostReportMessage(app *App) gin.HandlerFunc {
 		}
 
 		person := currentUserProfile(ctx)
-		msg := store.NewUserMessage(reportID, person.SteamID, req.Message)
+		msg := store.NewReportMessage(reportID, person.SteamID, req.Message)
 
 		if errSave := app.db.SaveReportMessage(ctx, &msg); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
@@ -804,7 +779,7 @@ func onAPIPostReportMessage(app *App) gin.HandlerFunc {
 
 		msgEmbed := discord.
 			NewEmbed("New report message posted").
-			SetDescription(msg.Contents).
+			SetDescription(msg.MessageMD).
 			SetColor(app.bot.Colour.Success).
 			SetURL(app.ExtURL(report))
 
@@ -832,7 +807,7 @@ func onAPIEditReportMessage(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var existing store.UserMessage
+		var existing store.ReportMessage
 		if errExist := app.db.GetReportMessageByID(ctx, reportMessageID, &existing); errExist != nil {
 			if errors.Is(errExist, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrPlayerNotFound)
@@ -861,13 +836,13 @@ func onAPIEditReportMessage(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if req.BodyMD == existing.Contents {
+		if req.BodyMD == existing.MessageMD {
 			responseErr(ctx, http.StatusConflict, consts.ErrDuplicate)
 
 			return
 		}
 
-		existing.Contents = req.BodyMD
+		existing.MessageMD = req.BodyMD
 		if errSave := app.db.SaveReportMessage(ctx, &existing); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to save report message", zap.Error(errSave))
@@ -881,8 +856,8 @@ func onAPIEditReportMessage(app *App) gin.HandlerFunc {
 			NewEmbed("New report message edited").
 			SetDescription(req.BodyMD).
 			SetColor(app.bot.Colour.Warn).
-			AddField("Old Message", existing.Contents).
-			SetURL(app.ExtURLRaw("/report/%d", existing.ParentID))
+			AddField("Old Message", existing.MessageMD).
+			SetURL(app.ExtURLRaw("/report/%d", existing.ReportID))
 
 		app.addAuthorUserProfile(msgEmbed, curUser).Truncate()
 
@@ -904,7 +879,7 @@ func onAPIDeleteReportMessage(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var existing store.UserMessage
+		var existing store.ReportMessage
 		if errExist := app.db.GetReportMessageByID(ctx, reportMessageID, &existing); errExist != nil {
 			if errors.Is(errExist, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
@@ -934,7 +909,7 @@ func onAPIDeleteReportMessage(app *App) gin.HandlerFunc {
 
 		msgEmbed := discord.
 			NewEmbed("User report message deleted").
-			SetDescription(existing.Contents).
+			SetDescription(existing.MessageMD).
 			SetColor(app.bot.Colour.Warn)
 
 		app.addAuthorUserProfile(msgEmbed, curUser).
@@ -989,11 +964,6 @@ func onAPIGetBanByID(app *App) gin.HandlerFunc {
 	}
 }
 
-type AuthorBanMessage struct {
-	Author  store.Person      `json:"author"`
-	Message store.UserMessage `json:"message"`
-}
-
 func onAPIGetBanMessages(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		banID, errParam := getInt64Param(ctx, "ban_id")
@@ -1021,29 +991,7 @@ func onAPIGetBanMessages(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var ids steamid.Collection
-		for _, msg := range banMessages {
-			ids = append(ids, msg.AuthorID)
-		}
-
-		authors, authorsErr := app.db.GetPeopleBySteamID(ctx, ids)
-		if authorsErr != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
-
-			return
-		}
-
-		authorsMap := authors.AsMap()
-
-		var authorMessages []AuthorBanMessage
-		for _, message := range banMessages {
-			authorMessages = append(authorMessages, AuthorBanMessage{
-				Author:  authorsMap[message.AuthorID],
-				Message: message,
-			})
-		}
-
-		ctx.JSON(http.StatusOK, authorMessages)
+		ctx.JSON(http.StatusOK, banMessages)
 	}
 }
 
@@ -1096,7 +1044,7 @@ func onAPIPostBanMessage(app *App) gin.HandlerFunc {
 			return
 		}
 
-		msg := store.NewUserMessage(banID, curUserProfile.SteamID, req.Message)
+		msg := store.NewBanAppealMessage(banID, curUserProfile.SteamID, req.Message)
 		if errSave := app.db.SaveBanMessage(ctx, &msg); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to save ban appeal message", zap.Error(errSave))
@@ -1104,13 +1052,17 @@ func onAPIPostBanMessage(app *App) gin.HandlerFunc {
 			return
 		}
 
+		msg.PermissionLevel = curUserProfile.PermissionLevel
+		msg.Personaname = curUserProfile.Name
+		msg.Avatarhash = curUserProfile.Avatarhash
+
 		ctx.JSON(http.StatusCreated, msg)
 
 		msgEmbed := discord.
 			NewEmbed("New ban appeal message posted").
 			SetColor(app.bot.Colour.Info).
 			// SetThumbnail(bannedPerson.TargetAvatarhash).
-			SetDescription(msg.Contents).
+			SetDescription(msg.MessageMD).
 			SetURL(app.ExtURL(bannedPerson.BanSteam))
 
 		app.addAuthorUserProfile(msgEmbed, curUserProfile).Truncate()
@@ -1137,7 +1089,7 @@ func onAPIEditBanMessage(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var existing store.UserMessage
+		var existing store.BanAppealMessage
 		if errExist := app.db.GetBanMessageByID(ctx, reportMessageID, &existing); errExist != nil {
 			if errors.Is(errExist, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
@@ -1167,13 +1119,13 @@ func onAPIEditBanMessage(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if req.BodyMD == existing.Contents {
+		if req.BodyMD == existing.MessageMD {
 			responseErr(ctx, http.StatusConflict, consts.ErrDuplicate)
 
 			return
 		}
 
-		existing.Contents = req.BodyMD
+		existing.MessageMD = req.BodyMD
 		if errSave := app.db.SaveBanMessage(ctx, &existing); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to save ban appeal message", zap.Error(errSave))
@@ -1185,7 +1137,7 @@ func onAPIEditBanMessage(app *App) gin.HandlerFunc {
 
 		msgEmbed := discord.
 			NewEmbed("Ban appeal message edited").
-			SetDescription(util.DiffString(existing.Contents, req.BodyMD)).
+			SetDescription(util.DiffString(existing.MessageMD, req.BodyMD)).
 			SetColor(app.bot.Colour.Warn)
 
 		app.addAuthorUserProfile(msgEmbed, curUser).Truncate()
@@ -1208,7 +1160,7 @@ func onAPIDeleteBanMessage(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var existing store.UserMessage
+		var existing store.BanAppealMessage
 		if errExist := app.db.GetBanMessageByID(ctx, banMessageID, &existing); errExist != nil {
 			if errors.Is(errExist, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
@@ -1238,7 +1190,7 @@ func onAPIDeleteBanMessage(app *App) gin.HandlerFunc {
 
 		msgEmbed := discord.
 			NewEmbed("User appeal message deleted").
-			SetDescription(existing.Contents)
+			SetDescription(existing.MessageMD)
 
 		app.addAuthorUserProfile(msgEmbed, curUser).Truncate()
 

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, JSX } from 'react';
+import React, { useCallback, useState, JSX, useMemo } from 'react';
 import DescriptionIcon from '@mui/icons-material/Description';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import LanIcon from '@mui/icons-material/Lan';
@@ -21,21 +21,21 @@ import { FormikHelpers } from 'formik/dist/types';
 import {
     apiCreateReportMessage,
     apiDeleteReportMessage,
-    apiGetReportMessages,
     PermissionLevel,
     Report,
-    ReportMessagesResponse
+    ReportMessage
 } from '../api';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { useReportMessages } from '../hooks/useReportMessages';
 import { logErr } from '../util/errors';
 import { ContainerWithHeader } from './ContainerWithHeader';
 import { MDBodyField } from './MDBodyField';
 import { MarkDownRenderer } from './MarkdownRenderer';
 import { PlayerMessageContext } from './PlayerMessageContext';
+import { ReportMessageView } from './ReportMessageView';
 import { SourceBansList } from './SourceBansList';
 import { TabPanel } from './TabPanel';
-import { UserMessageView } from './UserMessageView';
 import { ResetButton, SubmitButton } from './modal/Buttons';
 import { BanHistoryTable } from './table/BanHistoryTable';
 import { ConnectionHistoryTable } from './table/ConnectionHistoryTable';
@@ -53,23 +53,23 @@ export const ReportViewComponent = ({
     report
 }: ReportComponentProps): JSX.Element => {
     const theme = useTheme();
-    const [messages, setMessages] = useState<ReportMessagesResponse[]>([]);
-
+    const { data: messagesServer } = useReportMessages(report.report_id);
+    const [newMessages, setNewMessages] = useState<ReportMessage[]>([]);
+    const [deletedMessages, setDeletedMessages] = useState<number[]>([]);
     const [value, setValue] = React.useState<number>(0);
+
     const { currentUser } = useCurrentUserCtx();
     const { sendFlash } = useUserFlashCtx();
+
+    const messages = useMemo(() => {
+        return [...messagesServer, ...newMessages].filter(
+            (m) => !deletedMessages.includes(m.report_message_id)
+        );
+    }, [deletedMessages, messagesServer, newMessages]);
 
     const handleChange = (_: React.SyntheticEvent, newValue: number) => {
         setValue(newValue);
     };
-
-    const loadMessages = useCallback(() => {
-        apiGetReportMessages(report.report_id)
-            .then((response) => {
-                setMessages(response || []);
-            })
-            .catch(logErr);
-    }, [report.report_id]);
 
     const onSubmit = useCallback(
         async (
@@ -81,38 +81,32 @@ export const ReportViewComponent = ({
                     report.report_id,
                     values.body_md
                 );
-                setMessages((prevState) => {
-                    return [
-                        ...prevState,
-                        { author: currentUser, message: message }
-                    ];
+                setNewMessages((prevState) => {
+                    return [...prevState, message];
                 });
                 formikHelpers.resetForm();
             } catch (e) {
                 logErr(e);
+                sendFlash('error', 'Error trying to create message');
             }
         },
-        [currentUser, report.report_id]
+        [report.report_id, sendFlash]
     );
 
     const onDelete = useCallback(
-        (message_id: number) => {
-            apiDeleteReportMessage(message_id)
-                .then(() => {
-                    sendFlash('success', 'Deleted message successfully');
-                    loadMessages();
-                })
-                .catch((e) => {
-                    sendFlash('error', 'Failed to delete message');
-                    logErr(e);
+        async (message_id: number) => {
+            try {
+                await apiDeleteReportMessage(message_id);
+                setDeletedMessages((prevState) => {
+                    return [...prevState, message_id];
                 });
+            } catch (e) {
+                logErr(e);
+                sendFlash('error', 'Failed to delete message');
+            }
         },
-        [loadMessages, sendFlash]
+        [sendFlash]
     );
-
-    useEffect(() => {
-        loadMessages();
-    }, [loadMessages, report]);
 
     return (
         <Grid container>
@@ -255,11 +249,10 @@ export const ReportViewComponent = ({
                     )}
 
                     {messages.map((m) => (
-                        <UserMessageView
+                        <ReportMessageView
                             onDelete={onDelete}
-                            author={m.author}
-                            message={m.message}
-                            key={m.message.message_id}
+                            message={m}
+                            key={`report-msg-${m.report_message_id}`}
                         />
                     ))}
                     <Paper elevation={1}>

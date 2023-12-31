@@ -10,6 +10,7 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { formatDuration, intervalToDuration } from 'date-fns';
 import { Formik } from 'formik';
+import { FormikHelpers } from 'formik/dist/types';
 import * as yup from 'yup';
 import { ASNBanRecord, BanReason } from '../../api';
 import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
@@ -56,7 +57,7 @@ export const BanASNTable = ({ newBans }: { newBans: ASNBanRecord[] }) => {
     const { data, count } = useBansASN({
         limit: Number(state.rows ?? RowsPerPage.Ten),
         offset: Number((state.page ?? 0) * (state.rows ?? RowsPerPage.Ten)),
-        order_by: state.sortColumn ?? 'ban_id',
+        order_by: state.sortColumn ?? 'ban_asn_id',
         desc: (state.sortOrder ?? 'desc') == 'desc',
         source_id: state.source ?? '',
         target_id: state.target ?? '',
@@ -116,14 +117,22 @@ export const BanASNTable = ({ newBans }: { newBans: ASNBanRecord[] }) => {
         [setState]
     );
 
-    const onReset = useCallback(() => {
-        setState({
-            asNum: undefined,
-            source: undefined,
-            target: undefined,
-            deleted: undefined
-        });
-    }, [setState]);
+    const onReset = useCallback(
+        async (
+            _: ASNFilterValues,
+            formikHelpers: FormikHelpers<ASNFilterValues>
+        ) => {
+            setState({
+                asNum: undefined,
+                source: undefined,
+                target: undefined,
+                deleted: undefined
+            });
+            await formikHelpers.setFieldValue('source_id', undefined);
+            await formikHelpers.setFieldValue('target_id', undefined);
+        },
+        [setState]
+    );
 
     return (
         <Formik

@@ -7,7 +7,7 @@ import { ResetButton, SubmitButton } from '../modal/Buttons';
 export const FilterButtons = () => {
     return (
         <VCenterBox>
-            <ButtonGroup fullWidth>
+            <ButtonGroup fullWidth size={'medium'}>
                 <ResetButton />
                 <SubmitButton label={'Apply'} startIcon={<CheckIcon />} />
             </ButtonGroup>

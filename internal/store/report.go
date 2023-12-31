@@ -133,35 +133,48 @@ func (db *Store) SaveReport(ctx context.Context, report *Report) error {
 	return db.insertReport(ctx, report)
 }
 
-func (db *Store) SaveReportMessage(ctx context.Context, message *UserMessage) error {
-	if message.MessageID > 0 {
+func NewReportMessage(reportID int64, authorID steamid.SID64, messageMD string) ReportMessage {
+	now := time.Now()
+	return ReportMessage{
+		ReportID:     reportID,
+		AuthorID:     authorID,
+		MessageMD:    messageMD,
+		Deleted:      false,
+		CreatedOn:    now,
+		UpdatedOn:    now,
+		SimplePerson: SimplePerson{},
+	}
+}
+
+func (db *Store) SaveReportMessage(ctx context.Context, message *ReportMessage) error {
+	if message.ReportMessageID > 0 {
 		return db.updateReportMessage(ctx, message)
 	}
 
 	return db.insertReportMessage(ctx, message)
 }
 
-func (db *Store) updateReportMessage(ctx context.Context, message *UserMessage) error {
+func (db *Store) updateReportMessage(ctx context.Context, message *ReportMessage) error {
 	message.UpdatedOn = time.Now()
 
 	if errQuery := db.ExecUpdateBuilder(ctx, db.sb.Update("report_message").
 		Set("deleted", message.Deleted).
 		Set("author_id", message.AuthorID).
 		Set("updated_on", message.UpdatedOn).
-		Set("message_md", message.Contents).
-		Where(sq.Eq{"report_message_id": message.MessageID})); errQuery != nil {
+		Set("message_md", message.MessageMD).
+		Where(sq.Eq{"report_message_id": message.ReportMessageID})); errQuery != nil {
 		return Err(errQuery)
 	}
 
 	db.log.Info("Report message updated",
-		zap.Int64("report_id", message.ParentID),
-		zap.Int64("message_id", message.MessageID),
+		zap.Int64("report_id", message.ReportID),
+		zap.Int64("message_id", message.ReportMessageID),
 		zap.Int64("author_id", message.AuthorID.Int64()))
 
 	return nil
 }
 
-func (db *Store) insertReportMessage(ctx context.Context, message *UserMessage) error {
+func (db *Store) insertReportMessage(ctx context.Context, message *ReportMessage) error {
 	const query = `
 		INSERT INTO report_message (
 		    report_id, author_id, message_md, deleted, created_on, updated_on
@@ -171,19 +184,19 @@ func (db *Store) insertReportMessage(ctx context.Context, message *UserMessage) 
 	`
 
 	if errQuery := db.QueryRow(ctx, query,
-		message.ParentID,
+		message.ReportID,
 		message.AuthorID,
-		message.Contents,
+		message.MessageMD,
 		message.Deleted,
 		message.CreatedOn,
 		message.UpdatedOn,
-	).Scan(&message.MessageID); errQuery != nil {
+	).Scan(&message.ReportMessageID); errQuery != nil {
 		return Err(errQuery)
 	}
 
 	db.log.Info("Report message created",
-		zap.Int64("report_id", message.ParentID),
-		zap.Int64("message_id", message.MessageID),
+		zap.Int64("report_id", message.ReportID),
+		zap.Int64("message_id", message.ReportMessageID),
 		zap.Int64("author_id", message.AuthorID.Int64()))
 
 	return nil
@@ -204,17 +217,17 @@ func (db *Store) DropReport(ctx context.Context, report *Report) error {
 	return nil
 }
 
-func (db *Store) DropReportMessage(ctx context.Context, message *UserMessage) error {
+func (db *Store) DropReportMessage(ctx context.Context, message *ReportMessage) error {
 	message.Deleted = true
 
 	if errExec := db.ExecUpdateBuilder(ctx, db.sb.
 		Update("report_message").
 		Set("deleted", message.Deleted).
-		Where(sq.Eq{"report_message_id": message.MessageID})); errExec != nil {
+		Where(sq.Eq{"report_message_id": message.ReportMessageID})); errExec != nil {
 		return Err(errExec)
 	}
 
-	db.log.Info("Report message deleted", zap.Int64("report_message_id", message.MessageID))
+	db.log.Info("Report message deleted", zap.Int64("report_message_id", message.ReportMessageID))
 
 	return nil
 }
@@ -414,36 +427,41 @@ func (db *Store) GetReport(ctx context.Context, reportID int64, report *Report) 
 	return nil
 }
 
-func (db *Store) GetReportMessages(ctx context.Context, reportID int64) ([]UserMessage, error) {
+func (db *Store) GetReportMessages(ctx context.Context, reportID int64) ([]ReportMessage, error) {
 	rows, errQuery := db.QueryBuilder(ctx, db.sb.
-		Select("report_message_id", "report_id", "author_id", "message_md", "deleted", "created_on", "updated_on").
-		From("report_message").
-		Where(sq.And{sq.And{sq.Eq{"deleted": false}, sq.Eq{"report_id": reportID}}}).
-		OrderBy("created_on"))
+		Select("r.report_message_id", "r.report_id", "r.author_id", "r.message_md", "r.deleted",
+			"r.created_on", "r.updated_on", "p.avatarhash", "p.personaname", "p.permission_level").
+		From("report_message r").
+		LeftJoin("person p ON r.author_id = p.steam_id").
+		Where(sq.And{sq.And{sq.Eq{"r.deleted": false}, sq.Eq{"r.report_id": reportID}}}).
+		OrderBy("r.created_on"))
 	if errQuery != nil {
 		if errors.Is(Err(errQuery), ErrNoResult) {
-			return []UserMessage{}, nil
+			return []ReportMessage{}, nil
 		}
 	}
 
 	defer rows.Close()
 
-	var messages []UserMessage
+	var messages []ReportMessage
 
 	for rows.Next() {
 		var (
-			msg      UserMessage
+			msg      ReportMessage
 			authorID int64
 		)
 
 		if errScan := rows.Scan(
-			&msg.MessageID,
-			&msg.ParentID,
+			&msg.ReportMessageID,
+			&msg.ReportID,
 			&authorID,
-			&msg.Contents,
+			&msg.MessageMD,
 			&msg.Deleted,
 			&msg.CreatedOn,
 			&msg.UpdatedOn,
+			&msg.Avatarhash,
+			&msg.Personaname,
+			&msg.PermissionLevel,
 		); errScan != nil {
 			return nil, Err(errQuery)
 		}
@@ -456,10 +474,13 @@ func (db *Store) GetReportMessages(ctx context.Context, reportID int64) ([]UserM
 	return messages, nil
 }
 
-func (db *Store) GetReportMessageByID(ctx context.Context, reportMessageID int64, message *UserMessage) error {
+func (db *Store) GetReportMessageByID(ctx context.Context, reportMessageID int64, message *ReportMessage) error {
 	row, errRow := db.QueryRowBuilder(ctx, db.sb.
-		Select("report_message_id", "report_id", "author_id", "message_md", "deleted", "created_on", "updated_on").
-		From("report_message").Where(sq.Eq{"report_message_id": reportMessageID}))
+		Select("r.report_message_id", "r.report_id", "r.author_id", "r.message_md", "r.deleted",
+			"r.created_on", "r.updated_on", "p.avatarhash", "p.personaname", "p.permission_level").
+		From("report_message r").
+		LeftJoin("person p ON r.author_id = p.steam_id").
+		Where(sq.Eq{"r.report_message_id": reportMessageID}))
 	if errRow != nil {
 		return errRow
 	}
@@ -467,13 +488,16 @@ func (db *Store) GetReportMessageByID(ctx context.Context, reportMessageID int64
 	var authorID int64
 
 	if errScan := row.Scan(
-		&message.MessageID,
-		&message.ParentID,
+		&message.ReportMessageID,
+		&message.ReportID,
 		&authorID,
-		&message.Contents,
+		&message.MessageMD,
 		&message.Deleted,
 		&message.CreatedOn,
 		&message.UpdatedOn,
+		&message.Avatarhash,
+		&message.Personaname,
+		&message.PermissionLevel,
 	); errScan != nil {
 		return Err(errScan)
 	}

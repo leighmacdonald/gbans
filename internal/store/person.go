@@ -132,21 +132,33 @@ type AppealOverview struct {
 	TargetAvatarhash  string `json:"target_avatarhash"`
 }
 
-type UserMessage struct {
-	ParentID  int64         `json:"parent_id"`
-	MessageID int64         `json:"message_id"`
-	AuthorID  steamid.SID64 `json:"author_id"`
-	Contents  string        `json:"contents"`
-	Deleted   bool          `json:"deleted"`
-	CreatedOn time.Time     `json:"created_on"`
-	UpdatedOn time.Time     `json:"updated_on"`
+type ReportMessage struct {
+	ReportID        int64         `json:"report_id"`
+	ReportMessageID int64         `json:"report_message_id"`
+	AuthorID        steamid.SID64 `json:"author_id"`
+	MessageMD       string        `json:"message_md"`
+	Deleted         bool          `json:"deleted"`
+	CreatedOn       time.Time     `json:"created_on"`
+	UpdatedOn       time.Time     `json:"updated_on"`
+	SimplePerson
 }
 
-func NewUserMessage(parentID int64, authorID steamid.SID64, message string) UserMessage {
-	return UserMessage{
-		ParentID:  parentID,
+type BanAppealMessage struct {
+	BanID        int64         `json:"ban_id"`
+	BanMessageID int64         `json:"ban_message_id"`
+	AuthorID     steamid.SID64 `json:"author_id"`
+	MessageMD    string        `json:"message_md"`
+	Deleted      bool          `json:"deleted"`
+	CreatedOn    time.Time     `json:"created_on"`
+	UpdatedOn    time.Time     `json:"updated_on"`
+	SimplePerson
+}
+
+func NewBanAppealMessage(banID int64, authorID steamid.SID64, message string) BanAppealMessage {
+	return BanAppealMessage{
+		BanID:     banID,
 		AuthorID:  authorID,
-		Contents:  message,
+		MessageMD: message,
 		CreatedOn: time.Now(),
 		UpdatedOn: time.Now(),
 	}

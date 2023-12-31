@@ -12,6 +12,7 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { formatDuration, intervalToDuration } from 'date-fns';
 import { Formik } from 'formik';
+import { FormikHelpers } from 'formik/dist/types';
 import * as yup from 'yup';
 import { GroupBanRecord } from '../../api';
 import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
@@ -58,7 +59,7 @@ export const BanGroupTable = ({ newBans }: { newBans: GroupBanRecord[] }) => {
     const { data, count } = useBansGroup({
         limit: Number(state.rows ?? RowsPerPage.Ten),
         offset: Number((state.page ?? 0) * (state.rows ?? RowsPerPage.Ten)),
-        order_by: state.sortColumn ?? 'ban_id',
+        order_by: state.sortColumn ?? 'ban_group_id',
         desc: (state.sortOrder ?? 'desc') == 'desc',
         source_id: state.source ?? '',
         target_id: state.target ?? '',
@@ -118,14 +119,22 @@ export const BanGroupTable = ({ newBans }: { newBans: GroupBanRecord[] }) => {
         [setState]
     );
 
-    const onReset = useCallback(() => {
-        setState({
-            group: undefined,
-            source: undefined,
-            target: undefined,
-            deleted: undefined
-        });
-    }, [setState]);
+    const onReset = useCallback(
+        async (
+            _: GroupBanFilterValues,
+            formikHelpers: FormikHelpers<GroupBanFilterValues>
+        ) => {
+            setState({
+                group: undefined,
+                source: undefined,
+                target: undefined,
+                deleted: undefined
+            });
+            await formikHelpers.setFieldValue('source_id', undefined);
+            await formikHelpers.setFieldValue('target_id', undefined);
+        },
+        [setState]
+    );
 
     return (
         <Formik<GroupBanFilterValues>

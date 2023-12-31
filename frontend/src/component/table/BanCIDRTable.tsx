@@ -10,6 +10,7 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { formatDuration, intervalToDuration } from 'date-fns';
 import { Formik } from 'formik';
+import { FormikHelpers } from 'formik/dist/types';
 import IPCIDR from 'ip-cidr';
 import * as yup from 'yup';
 import { BanReason, CIDRBanRecord } from '../../api';
@@ -88,7 +89,7 @@ export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
     const { data, count } = useBansCIDR({
         limit: Number(state.rows ?? RowsPerPage.Ten),
         offset: Number((state.page ?? 0) * (state.rows ?? RowsPerPage.Ten)),
-        order_by: state.sortColumn ?? 'ban_id',
+        order_by: state.sortColumn ?? 'net_id',
         desc: (state.sortOrder ?? 'desc') == 'desc',
         source_id: state.source ?? '',
         target_id: state.target ?? '',
@@ -117,14 +118,23 @@ export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
         [setState]
     );
 
-    const onReset = useCallback(() => {
-        setState({
-            ip: undefined,
-            source: undefined,
-            target: undefined,
-            deleted: undefined
-        });
-    }, [setState]);
+    const onReset = useCallback(
+        async (
+            _: CIDRBanFilterValues,
+            formikHelpers: FormikHelpers<CIDRBanFilterValues>
+        ) => {
+            setState({
+                ip: undefined,
+                source: undefined,
+                target: undefined,
+                deleted: undefined
+            });
+            await formikHelpers.setFieldValue('source_id', '');
+            await formikHelpers.setFieldValue('target_id', '');
+            await formikHelpers.setFieldValue('ip', '');
+        },
+        [setState]
+    );
 
     return (
         <Formik

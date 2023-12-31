@@ -1004,16 +1004,16 @@ func (db *Store) GetBansOlderThan(ctx context.Context, filter QueryFilter, since
 	return bans, nil
 }
 
-func (db *Store) SaveBanMessage(ctx context.Context, message *UserMessage) error {
+func (db *Store) SaveBanMessage(ctx context.Context, message *BanAppealMessage) error {
 	var err error
-	if message.MessageID > 0 {
+	if message.BanMessageID > 0 {
 		err = db.updateBanMessage(ctx, message)
 	} else {
 		err = db.insertBanMessage(ctx, message)
 	}
 
 	bannedPerson := NewBannedPerson()
-	if errBan := db.GetBanByBanID(ctx, message.ParentID, &bannedPerson, true); errBan != nil {
+	if errBan := db.GetBanByBanID(ctx, message.BanID, &bannedPerson, true); errBan != nil {
 		return ErrNoResult
 	}
 
@@ -1026,29 +1026,29 @@ func (db *Store) SaveBanMessage(ctx context.Context, message *UserMessage) error
 	return err
 }
 
-func (db *Store) updateBanMessage(ctx context.Context, message *UserMessage) error {
+func (db *Store) updateBanMessage(ctx context.Context, message *BanAppealMessage) error {
 	message.UpdatedOn = time.Now()
 
 	query := db.sb.Update("ban_appeal").
 		Set("deleted", message.Deleted).
 		Set("author_id", message.AuthorID.Int64()).
 		Set("updated_on", message.UpdatedOn).
-		Set("message_md", message.Contents).
-		Where(sq.Eq{"ban_message_id": message.MessageID})
+		Set("message_md", message.MessageMD).
+		Where(sq.Eq{"ban_message_id": message.BanMessageID})
 
 	if errQuery := db.ExecUpdateBuilder(ctx, query); errQuery != nil {
 		return Err(errQuery)
 	}
 
 	db.log.Info("Ban appeal message updated",
-		zap.Int64("ban_id", message.ParentID),
-		zap.Int64("message_id", message.MessageID),
+		zap.Int64("ban_id", message.BanID),
+		zap.Int64("message_id", message.BanMessageID),
 		zap.Int64("author_id", message.AuthorID.Int64()))
 
 	return nil
 }
 
-func (db *Store) insertBanMessage(ctx context.Context, message *UserMessage) error {
+func (db *Store) insertBanMessage(ctx context.Context, message *BanAppealMessage) error {
 	const query = `
 	INSERT INTO ban_appeal (
 		ban_id, author_id, message_md, deleted, created_on, updated_on
@@ -1058,30 +1058,32 @@ func (db *Store) insertBanMessage(ctx context.Context, message *UserMessage) err
 	`
 
 	if errQuery := db.QueryRow(ctx, query,
-		message.ParentID,
+		message.BanID,
 		message.AuthorID.Int64(),
-		message.Contents,
+		message.MessageMD,
 		message.Deleted,
 		message.CreatedOn,
 		message.UpdatedOn,
-	).Scan(&message.MessageID); errQuery != nil {
+	).Scan(&message.BanMessageID); errQuery != nil {
 		return Err(errQuery)
 	}
 
 	db.log.Info("Ban appeal message created",
-		zap.Int64("ban_id", message.ParentID),
-		zap.Int64("message_id", message.MessageID),
+		zap.Int64("ban_id", message.BanID),
+		zap.Int64("message_id", message.BanMessageID),
 		zap.Int64("author_id", message.AuthorID.Int64()))
 
 	return nil
 }
 
-func (db *Store) GetBanMessages(ctx context.Context, banID int64) ([]UserMessage, error) {
+func (db *Store) GetBanMessages(ctx context.Context, banID int64) ([]BanAppealMessage, error) {
 	query := db.sb.
-		Select("ban_message_id", "ban_id", "author_id", "message_md", "deleted", "created_on", "updated_on").
-		From("ban_appeal").
-		Where(sq.And{sq.Eq{"deleted": false}, sq.Eq{"ban_id": banID}}).
-		OrderBy("created_on")
+		Select("a.ban_message_id", "a.ban_id", "a.author_id", "a.message_md", "a.deleted",
+			"a.created_on", "a.updated_on", "p.avatarhash", "p.personaname", "p.permission_level").
+		From("ban_appeal a").
+		LeftJoin("person p ON a.author_id = p.steam_id").
+		Where(sq.And{sq.Eq{"a.deleted": false}, sq.Eq{"a.ban_id": banID}}).
+		OrderBy("a.created_on")
 
 	rows, errQuery := db.QueryBuilder(ctx, query)
 	if errQuery != nil {
@@ -1092,22 +1094,25 @@ func (db *Store) GetBanMessages(ctx context.Context, banID int64) ([]UserMessage
 
 	defer rows.Close()
 
-	messages := []UserMessage{}
+	messages := []BanAppealMessage{}
 
 	for rows.Next() {
 		var (
-			msg      UserMessage
+			msg      BanAppealMessage
 			authorID int64
 		)
 
 		if errScan := rows.Scan(
-			&msg.MessageID,
-			&msg.ParentID,
+			&msg.BanMessageID,
+			&msg.BanID,
 			&authorID,
-			&msg.Contents,
+			&msg.MessageMD,
 			&msg.Deleted,
 			&msg.CreatedOn,
 			&msg.UpdatedOn,
+			&msg.Avatarhash,
+			&msg.Personaname,
+			&msg.PermissionLevel,
 		); errScan != nil {
 			return nil, Err(errQuery)
 		}
@@ -1120,11 +1125,13 @@ func (db *Store) GetBanMessages(ctx context.Context, banID int64) ([]UserMessage
 	return messages, nil
 }
 
-func (db *Store) GetBanMessageByID(ctx context.Context, banMessageID int, message *UserMessage) error {
+func (db *Store) GetBanMessageByID(ctx context.Context, banMessageID int, message *BanAppealMessage) error {
 	query := db.sb.
-		Select("ban_message_id", "ban_id", "author_id", "message_md", "deleted", "created_on", "updated_on").
-		From("ban_appeal").
-		Where(sq.Eq{"ban_message_id": banMessageID})
+		Select("a.ban_message_id", "a.ban_id", "a.author_id", "a.message_md", "a.deleted", "a.created_on",
+			"a.updated_on", "p.avatarhash", "p.personaname", "p.permission_level").
+		From("ban_appeal a").
+		LeftJoin("person p ON a.author_id = p.steam_id").
+		Where(sq.Eq{"a.ban_message_id": banMessageID})
 
 	var authorID int64
 
@@ -1134,13 +1141,16 @@ func (db *Store) GetBanMessageByID(ctx context.Context, banMessageID int, messag
 	}
 
 	if errScan := row.Scan(
-		&message.MessageID,
-		&message.ParentID,
+		&message.BanMessageID,
+		&message.BanID,
 		&authorID,
-		&message.Contents,
+		&message.MessageMD,
 		&message.Deleted,
 		&message.CreatedOn,
 		&message.UpdatedOn,
+		&message.Avatarhash,
+		&message.Personaname,
+		&message.PermissionLevel,
 	); errScan != nil {
 		return Err(errScan)
 	}
@@ -1150,17 +1160,17 @@ func (db *Store) GetBanMessageByID(ctx context.Context, banMessageID int, messag
 	return nil
 }
 
-func (db *Store) DropBanMessage(ctx context.Context, message *UserMessage) error {
+func (db *Store) DropBanMessage(ctx context.Context, message *BanAppealMessage) error {
 	query := db.sb.
 		Update("ban_appeal").
 		Set("deleted", true).
-		Where(sq.Eq{"ban_message_id": message.MessageID})
+		Where(sq.Eq{"ban_message_id": message.BanMessageID})
 
 	if errExec := db.ExecUpdateBuilder(ctx, query); errExec != nil {
 		return Err(errExec)
 	}
 
-	db.log.Info("Appeal message deleted", zap.Int64("ban_message_id", message.MessageID))
+	db.log.Info("Appeal message deleted", zap.Int64("ban_message_id", message.BanMessageID))
 	message.Deleted = true
 
 	return nil
