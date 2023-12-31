@@ -1,4 +1,5 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
+import useUrlState from '@ahooksjs/use-url-state';
 import NiceModal from '@ebay/nice-modal-react';
 import EditIcon from '@mui/icons-material/Edit';
 import UndoIcon from '@mui/icons-material/Undo';
@@ -24,7 +25,7 @@ import { SourceIdField, sourceIdValidator } from '../formik/SourceIdField';
 import { SteamIDSelectField } from '../formik/SteamIDSelectField';
 import { TargetIDField, targetIdValidator } from '../formik/TargetIdField';
 import { ModalBanSteam, ModalUnbanSteam } from '../modal';
-import { LazyTable, Order, RowsPerPage } from './LazyTable';
+import { LazyTable, RowsPerPage } from './LazyTable';
 import { TableCellBool } from './TableCellBool';
 import { TableCellLink } from './TableCellLink';
 import {
@@ -47,19 +48,16 @@ const validationSchema = yup.object({
 });
 
 export const BanSteamTable = ({ newBans }: { newBans: SteamBanRecord[] }) => {
-    const [sortOrder, setSortOrder] = useState<Order>('desc');
-    const [sortColumn, setSortColumn] =
-        useState<keyof SteamBanRecord>('ban_id');
-    const [rowPerPageCount, setRowPerPageCount] = useState<number>(
-        RowsPerPage.TwentyFive
-    );
-    const [page, setPage] = useState(0);
-    const [source, setSource] = useState('');
-    const [target, setTarget] = useState('');
-    const [deleted, setDeleted] = useState(false);
-    const [appealState, setAppealState] = useState<AppealState>(
-        AppealState.Any
-    );
+    const [state, setState] = useUrlState({
+        page: undefined,
+        source: undefined,
+        target: undefined,
+        deleted: undefined,
+        appealState: undefined,
+        rowPerPageCount: undefined,
+        sortOrder: undefined,
+        sortColumn: undefined
+    });
     const { sendFlash } = useUserFlashCtx();
 
     const onUnbanSteam = useCallback(
@@ -94,14 +92,14 @@ export const BanSteamTable = ({ newBans }: { newBans: SteamBanRecord[] }) => {
     );
 
     const { data, count } = useBansSteam({
-        limit: rowPerPageCount,
-        offset: page * rowPerPageCount,
-        order_by: sortColumn,
-        desc: sortOrder == 'desc',
-        source_id: source,
-        target_id: target,
-        appeal_state: appealState,
-        deleted: deleted
+        limit: state.rowPerPageCount ?? RowsPerPage.Ten,
+        offset: (state.page ?? 0) * (state.rowPerPageCount ?? RowsPerPage.Ten),
+        order_by: state.sortColumn ?? 'ban_id',
+        desc: (state.sortOrder ?? 'desc') == 'desc',
+        source_id: state.source ?? '',
+        target_id: state.target ?? '',
+        appeal_state: Number(state.appealState ?? AppealState.Any),
+        deleted: state.deleted != '' ? Boolean(state.deleted) : false
     });
 
     const allBans = useMemo(() => {
@@ -112,30 +110,40 @@ export const BanSteamTable = ({ newBans }: { newBans: SteamBanRecord[] }) => {
         return data;
     }, [data, newBans]);
 
-    const iv: SteamBanFilterValues = {
-        appeal_state: AppealState.Any,
-        source_id: '',
-        target_id: '',
-        deleted: false
-    };
-
-    const onSubmit = useCallback((values: SteamBanFilterValues) => {
-        setAppealState(values.appeal_state);
-        setSource(values.source_id);
-        setTarget(values.target_id);
-        setDeleted(values.deleted);
-    }, []);
+    const onSubmit = useCallback(
+        (values: SteamBanFilterValues) => {
+            const newState = {
+                appealState:
+                    values.appeal_state != AppealState.Any
+                        ? values.appeal_state
+                        : undefined,
+                source: values.source_id != '' ? values.source_id : undefined,
+                target: values.target_id != '' ? values.target_id : undefined,
+                deleted: values.deleted ? true : undefined
+            };
+            console.log(newState);
+            setState(newState);
+        },
+        [setState]
+    );
 
     const onReset = useCallback(() => {
-        setAppealState(iv.appeal_state);
-        setSource(iv.source_id);
-        setTarget(iv.target_id);
-        setDeleted(iv.deleted);
-    }, [iv.appeal_state, iv.source_id, iv.deleted, iv.target_id]);
+        setState({
+            appealState: undefined,
+            source: undefined,
+            target: undefined,
+            deleted: undefined
+        });
+    }, [setState]);
 
     return (
         <Formik<SteamBanFilterValues>
-            initialValues={iv}
+            initialValues={{
+                appeal_state: Number(state.appealState ?? AppealState.Any),
+                source_id: state.source,
+                target_id: state.target,
+                deleted: Boolean(state.deleted)
+            }}
             onReset={onReset}
             onSubmit={onSubmit}
             validationSchema={validationSchema}
@@ -166,28 +174,33 @@ export const BanSteamTable = ({ newBans }: { newBans: SteamBanRecord[] }) => {
                         showPager={true}
                         count={count}
                         rows={allBans}
-                        page={page}
-                        rowsPerPage={rowPerPageCount}
-                        sortOrder={sortOrder}
-                        sortColumn={sortColumn}
+                        page={Number(state.page ?? 0)}
+                        rowsPerPage={Number(
+                            state.rowPerPageCount ?? RowsPerPage.Ten
+                        )}
+                        sortOrder={state.sortOrder}
+                        sortColumn={state.sortColumn}
                         onSortColumnChanged={async (column) => {
-                            setSortColumn(column);
+                            setState({ sortColumn: column });
                         }}
                         onSortOrderChanged={async (direction) => {
-                            setSortOrder(direction);
+                            setState({ sortOrder: direction });
                         }}
                         onPageChange={(_, newPage: number) => {
-                            setPage(newPage);
+                            setState({ page: newPage });
                         }}
                         onRowsPerPageChange={(
                             event: React.ChangeEvent<
                                 HTMLInputElement | HTMLTextAreaElement
                             >
                         ) => {
-                            setRowPerPageCount(
-                                parseInt(event.target.value, 10)
-                            );
-                            setPage(0);
+                            setState({
+                                rowPerPageCount: parseInt(
+                                    event.target.value,
+                                    10
+                                ),
+                                page: 0
+                            });
                         }}
                         columns={[
                             {

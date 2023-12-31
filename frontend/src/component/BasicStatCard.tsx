@@ -31,7 +31,7 @@ export const BasicStatCard = ({
                 <Typography
                     sx={{ fontSize: 14 }}
                     color="text.secondary"
-                    gutterBottom
+                    gutterBottom={true}
                 >
                     {title}
                 </Typography>

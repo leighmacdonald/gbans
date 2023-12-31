@@ -22,7 +22,10 @@ import { CurrentUserCtx, GuestProfile } from './contexts/CurrentUserCtx';
 import { NotificationsProvider } from './contexts/NotificationsCtx';
 import { UserFlashCtx } from './contexts/UserFlashCtx';
 import { AdminAppealsPage } from './page/AdminAppealsPage';
-import { AdminBanPage } from './page/AdminBanPage';
+import { AdminBanASNPage } from './page/AdminBanASNPage';
+import { AdminBanCIDRPage } from './page/AdminBanCIDRPage';
+import { AdminBanGroupPage } from './page/AdminBanGroupPage';
+import { AdminBanSteamPage } from './page/AdminBanSteamPage';
 import { AdminContestsPage } from './page/AdminContestsPage';
 import { AdminFiltersPage } from './page/AdminFiltersPage';
 import { AdminNetworkPage } from './page/AdminNetworkPage';
@@ -505,7 +508,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                 />
                                                                 <Route
                                                                     path={
-                                                                        '/admin/ban'
+                                                                        '/admin/ban/steam'
                                                                     }
                                                                     element={
                                                                         <ErrorBoundary>
@@ -514,7 +517,55 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                                     PermissionLevel.Moderator
                                                                                 }
                                                                             >
-                                                                                <AdminBanPage />
+                                                                                <AdminBanSteamPage />
+                                                                            </PrivateRoute>
+                                                                        </ErrorBoundary>
+                                                                    }
+                                                                />
+                                                                <Route
+                                                                    path={
+                                                                        '/admin/ban/cidr'
+                                                                    }
+                                                                    element={
+                                                                        <ErrorBoundary>
+                                                                            <PrivateRoute
+                                                                                permission={
+                                                                                    PermissionLevel.Moderator
+                                                                                }
+                                                                            >
+                                                                                <AdminBanCIDRPage />
+                                                                            </PrivateRoute>
+                                                                        </ErrorBoundary>
+                                                                    }
+                                                                />
+                                                                <Route
+                                                                    path={
+                                                                        '/admin/ban/asn'
+                                                                    }
+                                                                    element={
+                                                                        <ErrorBoundary>
+                                                                            <PrivateRoute
+                                                                                permission={
+                                                                                    PermissionLevel.Moderator
+                                                                                }
+                                                                            >
+                                                                                <AdminBanASNPage />
+                                                                            </PrivateRoute>
+                                                                        </ErrorBoundary>
+                                                                    }
+                                                                />
+                                                                <Route
+                                                                    path={
+                                                                        '/admin/ban/group'
+                                                                    }
+                                                                    element={
+                                                                        <ErrorBoundary>
+                                                                            <PrivateRoute
+                                                                                permission={
+                                                                                    PermissionLevel.Moderator
+                                                                                }
+                                                                            >
+                                                                                <AdminBanGroupPage />
                                                                             </PrivateRoute>
                                                                         </ErrorBoundary>
                                                                     }
