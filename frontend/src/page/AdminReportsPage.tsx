@@ -1,4 +1,5 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
+import useUrlState from '@ahooksjs/use-url-state';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import ReportIcon from '@mui/icons-material/Report';
 import Typography from '@mui/material/Typography';
@@ -6,12 +7,7 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { parseISO } from 'date-fns';
 import { Formik } from 'formik';
 import * as yup from 'yup';
-import {
-    BanReasons,
-    ReportStatus,
-    reportStatusString,
-    ReportWithAuthor
-} from '../api';
+import { BanReasons, ReportStatus, reportStatusString } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { LoadingIcon } from '../component/LoadingIcon';
 import { FilterButtons } from '../component/formik/FilterButtons';
@@ -28,7 +24,7 @@ import {
     TargetIDField,
     targetIdValidator
 } from '../component/formik/TargetIdField';
-import { LazyTable, Order, RowsPerPage } from '../component/table/LazyTable';
+import { LazyTable, RowsPerPage } from '../component/table/LazyTable';
 import { TableCellLink } from '../component/table/TableCellLink';
 import { useReports } from '../hooks/useReports';
 import { renderDateTime } from '../util/text';
@@ -46,48 +42,56 @@ const validationSchema = yup.object({
 });
 
 export const AdminReportsPage = () => {
-    const [filterStatus, setFilterStatus] = useState(ReportStatus.Any);
-    const [sortOrder, setSortOrder] = useState<Order>('desc');
-    const [sortColumn, setSortColumn] =
-        useState<keyof ReportWithAuthor>('report_id');
-    const [rowPerPageCount, setRowPerPageCount] = useState<number>(
-        RowsPerPage.Fifty
-    );
-    const [page, setPage] = useState(0);
-
-    const [author, setAuthor] = useState('');
-    const [target, setTarget] = useState('');
-
-    const { data, count, loading } = useReports({
-        limit: rowPerPageCount,
-        offset: page * rowPerPageCount,
-        order_by: sortColumn,
-        desc: sortOrder == 'desc',
-        report_status: filterStatus,
-        source_id: author,
-        target_id: target
+    const [state, setState] = useUrlState({
+        page: undefined,
+        source: undefined,
+        target: undefined,
+        reportStatus: undefined,
+        rows: undefined,
+        sortOrder: undefined,
+        sortColumn: undefined
     });
 
-    const onFilterSubmit = useCallback((values: FilterValues) => {
-        setAuthor(values.source_id);
-        setTarget(values.target_id);
-        setFilterStatus(values.report_status);
-    }, []);
+    const { data, count, loading } = useReports({
+        limit: Number(state.rows ?? RowsPerPage.Ten),
+        offset: Number((state.page ?? 0) * (state.rows ?? RowsPerPage.Ten)),
+        order_by: state.sortColumn ?? 'report_id',
+        desc: (state.sortOrder ?? 'desc') == 'desc',
+        source_id: state.source ?? '',
+        target_id: state.target ?? '',
+        report_status: Number(state.reportStatus ?? ReportStatus.Any)
+    });
+
+    const onFilterSubmit = useCallback(
+        (values: FilterValues) => {
+            setState({
+                reportStatus:
+                    values.report_status != ReportStatus.Any
+                        ? values.report_status
+                        : undefined,
+                source: values.source_id != '' ? values.source_id : undefined,
+                target: values.target_id != '' ? values.target_id : undefined
+            });
+        },
+        [setState]
+    );
 
     const onFilterReset = useCallback(() => {
-        setAuthor('');
-        setTarget('');
-        setFilterStatus(ReportStatus.Any);
-    }, []);
+        setState({
+            reportStatus: undefined,
+            source: undefined,
+            target: undefined
+        });
+    }, [setState]);
 
     return (
         <Formik<FilterValues>
             onSubmit={onFilterSubmit}
             onReset={onFilterReset}
             initialValues={{
-                report_status: filterStatus,
-                source_id: author,
-                target_id: target
+                report_status: Number(state.reportStatus ?? ReportStatus.Any),
+                source_id: state.source,
+                target_id: state.target
             }}
             validationSchema={validationSchema}
             validateOnChange={true}
@@ -124,28 +128,28 @@ export const AdminReportsPage = () => {
                             showPager={true}
                             count={count}
                             rows={data}
-                            page={page}
-                            rowsPerPage={rowPerPageCount}
-                            sortOrder={sortOrder}
-                            sortColumn={sortColumn}
+                            page={Number(state.page ?? 0)}
+                            rowsPerPage={Number(state.rows ?? RowsPerPage.Ten)}
+                            sortOrder={state.sortOrder}
+                            sortColumn={state.sortColumn}
                             onSortColumnChanged={async (column) => {
-                                setSortColumn(column);
+                                setState({ sortColumn: column });
                             }}
                             onSortOrderChanged={async (direction) => {
-                                setSortOrder(direction);
+                                setState({ sortOrder: direction });
                             }}
                             onPageChange={(_, newPage: number) => {
-                                setPage(newPage);
+                                setState({ page: newPage });
                             }}
                             onRowsPerPageChange={(
                                 event: React.ChangeEvent<
                                     HTMLInputElement | HTMLTextAreaElement
                                 >
                             ) => {
-                                setRowPerPageCount(
-                                    parseInt(event.target.value, 10)
-                                );
-                                setPage(0);
+                                setState({
+                                    rows: Number(event.target.value),
+                                    page: 0
+                                });
                             }}
                             columns={[
                                 {
