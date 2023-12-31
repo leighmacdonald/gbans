@@ -840,7 +840,8 @@ type SteamBansQueryFilter struct {
 	BansQueryFilter
 	// IncludeFriendsOnly Return results that have "deep" bans where players friends list is
 	// also banned while the primary targets ban has not expired.
-	IncludeFriendsOnly bool
+	IncludeFriendsOnly bool        `json:"include_friends_only"`
+	AppealState        AppealState `json:"appeal_state"`
 }
 
 // GetBansSteam returns all bans that fit the filter criteria passed in.
@@ -889,6 +890,10 @@ func (db *Store) GetBansSteam(ctx context.Context, filter SteamBansQueryFilter) 
 
 	if filter.IncludeFriendsOnly {
 		ands = append(ands, sq.Eq{"b.include_friends": true})
+	}
+
+	if filter.AppealState > AnyState {
+		ands = append(ands, sq.Eq{"b.appeal_state": filter.AppealState})
 	}
 
 	if len(ands) > 0 {

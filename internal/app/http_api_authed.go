@@ -456,6 +456,8 @@ func onAPIGetReports(app *App) gin.HandlerFunc {
 			req.Limit = 25
 		}
 
+		// Make sure the person requesting is either a moderator, or a user
+		// only able to request their own reports
 		var sourceID steamid.SID64
 
 		if user.PermissionLevel < consts.PModerator {

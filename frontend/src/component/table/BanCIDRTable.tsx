@@ -1,4 +1,5 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
+import useUrlState from '@ahooksjs/use-url-state';
 import NiceModal from '@ebay/nice-modal-react';
 import EditIcon from '@mui/icons-material/Edit';
 import UndoIcon from '@mui/icons-material/Undo';
@@ -23,7 +24,7 @@ import { SteamIDSelectField } from '../formik/SteamIDSelectField';
 import { TargetIDField, targetIdValidator } from '../formik/TargetIdField';
 import { ModalBanCIDR, ModalUnbanCIDR } from '../modal';
 import { BanCIDRModalProps } from '../modal/BanCIDRModal';
-import { LazyTable, Order, RowsPerPage } from './LazyTable';
+import { LazyTable, RowsPerPage } from './LazyTable';
 import { TableCellBool } from './TableCellBool';
 import { TableCellRelativeDateField } from './TableCellRelativeDateField';
 
@@ -42,16 +43,16 @@ const validationSchema = yup.object({
 });
 
 export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
-    const [sortOrder, setSortOrder] = useState<Order>('desc');
-    const [sortColumn, setSortColumn] = useState<keyof CIDRBanRecord>('net_id');
-    const [rowPerPageCount, setRowPerPageCount] = useState<number>(
-        RowsPerPage.TwentyFive
-    );
-    const [page, setPage] = useState(0);
-    const [source, setSource] = useState('');
-    const [target, setTarget] = useState('');
-    const [deleted, setDeleted] = useState(false);
-    const [ip, setIp] = useState('');
+    const [state, setState] = useUrlState({
+        page: undefined,
+        source: undefined,
+        target: undefined,
+        deleted: undefined,
+        ip: undefined,
+        rows: undefined,
+        sortOrder: undefined,
+        sortColumn: undefined
+    });
     const { sendFlash } = useUserFlashCtx();
 
     const onUnbanCIDR = useCallback(
@@ -85,14 +86,14 @@ export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
         [sendFlash]
     );
     const { data, count } = useBansCIDR({
-        limit: rowPerPageCount,
-        offset: page * rowPerPageCount,
-        order_by: sortColumn,
-        desc: sortOrder == 'desc',
-        source_id: source,
-        target_id: target,
-        deleted: deleted,
-        ip: ip
+        limit: Number(state.rows ?? RowsPerPage.Ten),
+        offset: Number((state.page ?? 0) * (state.rows ?? RowsPerPage.Ten)),
+        order_by: state.sortColumn ?? 'ban_id',
+        desc: (state.sortOrder ?? 'desc') == 'desc',
+        source_id: state.source ?? '',
+        target_id: state.target ?? '',
+        ip: state.ip ?? '',
+        deleted: state.deleted != '' ? Boolean(state.deleted) : false
     });
 
     const allBans = useMemo(() => {
@@ -103,31 +104,37 @@ export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
         return data;
     }, [data, newBans]);
 
-    const iv: CIDRBanFilterValues = {
-        ip: '',
-        source_id: '',
-        target_id: '',
-        deleted: false
-    };
-
-    const onSubmit = useCallback((values: CIDRBanFilterValues) => {
-        setSource(values.source_id);
-        setTarget(values.target_id);
-        setDeleted(values.deleted);
-        setIp(values.ip);
-    }, []);
+    const onSubmit = useCallback(
+        (values: CIDRBanFilterValues) => {
+            const newState = {
+                ip: values.ip != '' ? values.ip : undefined,
+                source: values.source_id != '' ? values.source_id : undefined,
+                target: values.target_id != '' ? values.target_id : undefined,
+                deleted: values.deleted ? true : undefined
+            };
+            setState(newState);
+        },
+        [setState]
+    );
 
     const onReset = useCallback(() => {
-        setSource(iv.source_id);
-        setTarget(iv.target_id);
-        setDeleted(iv.deleted);
-        setIp(iv.ip);
-    }, [iv.source_id, iv.target_id, iv.deleted, iv.ip]);
+        setState({
+            ip: undefined,
+            source: undefined,
+            target: undefined,
+            deleted: undefined
+        });
+    }, [setState]);
 
     return (
         <Formik
             onSubmit={onSubmit}
-            initialValues={iv}
+            initialValues={{
+                ip: state.ip,
+                source_id: state.source,
+                target_id: state.target,
+                deleted: Boolean(state.deleted)
+            }}
             onReset={onReset}
             validationSchema={validationSchema}
             validateOnChange={true}
@@ -158,28 +165,28 @@ export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
                         showPager={true}
                         count={count}
                         rows={allBans}
-                        page={page}
-                        rowsPerPage={rowPerPageCount}
-                        sortOrder={sortOrder}
-                        sortColumn={sortColumn}
+                        page={Number(state.page ?? 0)}
+                        rowsPerPage={Number(state.rows ?? RowsPerPage.Ten)}
+                        sortOrder={state.sortOrder}
+                        sortColumn={state.sortColumn}
                         onSortColumnChanged={async (column) => {
-                            setSortColumn(column);
+                            setState({ sortColumn: column });
                         }}
                         onSortOrderChanged={async (direction) => {
-                            setSortOrder(direction);
+                            setState({ sortOrder: direction });
                         }}
                         onPageChange={(_, newPage: number) => {
-                            setPage(newPage);
+                            setState({ page: newPage });
                         }}
                         onRowsPerPageChange={(
                             event: React.ChangeEvent<
                                 HTMLInputElement | HTMLTextAreaElement
                             >
                         ) => {
-                            setRowPerPageCount(
-                                parseInt(event.target.value, 10)
-                            );
-                            setPage(0);
+                            setState({
+                                rows: Number(event.target.value),
+                                page: 0
+                            });
                         }}
                         columns={[
                             {

@@ -1,4 +1,5 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
+import useUrlState from '@ahooksjs/use-url-state';
 import NiceModal from '@ebay/nice-modal-react';
 import EditIcon from '@mui/icons-material/Edit';
 import InfoIcon from '@mui/icons-material/Info';
@@ -24,7 +25,7 @@ import { SteamIDSelectField } from '../formik/SteamIDSelectField';
 import { TargetIDField, targetIdValidator } from '../formik/TargetIdField';
 import { ModalBanGroup, ModalUnbanGroup } from '../modal';
 import { BanGroupModalProps } from '../modal/BanGroupModal';
-import { LazyTable, Order, RowsPerPage } from './LazyTable';
+import { LazyTable, RowsPerPage } from './LazyTable';
 import { TableCellBool } from './TableCellBool';
 
 interface GroupBanFilterValues {
@@ -42,28 +43,27 @@ const validationSchema = yup.object({
 });
 
 export const BanGroupTable = ({ newBans }: { newBans: GroupBanRecord[] }) => {
-    const [sortOrder, setSortOrder] = useState<Order>('desc');
-    const [sortColumn, setSortColumn] =
-        useState<keyof GroupBanRecord>('ban_group_id');
-    const [rowPerPageCount, setRowPerPageCount] = useState<number>(
-        RowsPerPage.TwentyFive
-    );
-    const [page, setPage] = useState(0);
-    const [source, setSource] = useState('');
-    const [group, setGroup] = useState('');
-    const [target, setTarget] = useState('');
-    const [deleted, setDeleted] = useState(false);
+    const [state, setState] = useUrlState({
+        page: undefined,
+        source: undefined,
+        target: undefined,
+        deleted: undefined,
+        group: undefined,
+        rows: undefined,
+        sortOrder: undefined,
+        sortColumn: undefined
+    });
     const { sendFlash } = useUserFlashCtx();
 
     const { data, count } = useBansGroup({
-        limit: rowPerPageCount,
-        offset: page * rowPerPageCount,
-        order_by: sortColumn,
-        desc: sortOrder == 'desc',
-        deleted: deleted,
-        source_id: source,
-        target_id: target,
-        group_id: group
+        limit: Number(state.rows ?? RowsPerPage.Ten),
+        offset: Number((state.page ?? 0) * (state.rows ?? RowsPerPage.Ten)),
+        order_by: state.sortColumn ?? 'ban_id',
+        desc: (state.sortOrder ?? 'desc') == 'desc',
+        source_id: state.source ?? '',
+        target_id: state.target ?? '',
+        group_id: state.group ?? '',
+        deleted: state.deleted != '' ? Boolean(state.deleted) : false
     });
 
     const allBans = useMemo(() => {
@@ -105,30 +105,36 @@ export const BanGroupTable = ({ newBans }: { newBans: GroupBanRecord[] }) => {
         [sendFlash]
     );
 
-    const iv: GroupBanFilterValues = {
-        group_id: '',
-        source_id: '',
-        target_id: '',
-        deleted: false
-    };
-
-    const onSubmit = useCallback((values: GroupBanFilterValues) => {
-        setGroup(values.group_id);
-        setSource(values.source_id);
-        setTarget(values.target_id);
-        setDeleted(values.deleted);
-    }, []);
+    const onSubmit = useCallback(
+        (values: GroupBanFilterValues) => {
+            const newState = {
+                group: values.group_id != '' ? values.group_id : undefined,
+                source: values.source_id != '' ? values.source_id : undefined,
+                target: values.target_id != '' ? values.target_id : undefined,
+                deleted: values.deleted ? true : undefined
+            };
+            setState(newState);
+        },
+        [setState]
+    );
 
     const onReset = useCallback(() => {
-        setGroup(iv.group_id);
-        setSource(iv.source_id);
-        setTarget(iv.target_id);
-        setDeleted(iv.deleted);
-    }, [iv.group_id, iv.source_id, iv.deleted, iv.target_id]);
+        setState({
+            group: undefined,
+            source: undefined,
+            target: undefined,
+            deleted: undefined
+        });
+    }, [setState]);
 
     return (
         <Formik<GroupBanFilterValues>
-            initialValues={iv}
+            initialValues={{
+                group_id: '',
+                source_id: '',
+                target_id: '',
+                deleted: false
+            }}
             onReset={onReset}
             onSubmit={onSubmit}
             validationSchema={validationSchema}
@@ -159,28 +165,28 @@ export const BanGroupTable = ({ newBans }: { newBans: GroupBanRecord[] }) => {
                         showPager={true}
                         count={count}
                         rows={allBans}
-                        page={page}
-                        rowsPerPage={rowPerPageCount}
-                        sortOrder={sortOrder}
-                        sortColumn={sortColumn}
+                        page={Number(state.page ?? 0)}
+                        rowsPerPage={Number(state.rows ?? RowsPerPage.Ten)}
+                        sortOrder={state.sortOrder}
+                        sortColumn={state.sortColumn}
                         onSortColumnChanged={async (column) => {
-                            setSortColumn(column);
+                            setState({ sortColumn: column });
                         }}
                         onSortOrderChanged={async (direction) => {
-                            setSortOrder(direction);
+                            setState({ sortOrder: direction });
                         }}
                         onPageChange={(_, newPage: number) => {
-                            setPage(newPage);
+                            setState({ page: newPage });
                         }}
                         onRowsPerPageChange={(
                             event: React.ChangeEvent<
                                 HTMLInputElement | HTMLTextAreaElement
                             >
                         ) => {
-                            setRowPerPageCount(
-                                parseInt(event.target.value, 10)
-                            );
-                            setPage(0);
+                            setState({
+                                rows: Number(event.target.value),
+                                page: 0
+                            });
                         }}
                         columns={[
                             {

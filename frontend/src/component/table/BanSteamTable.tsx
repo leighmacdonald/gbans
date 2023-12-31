@@ -54,7 +54,7 @@ export const BanSteamTable = ({ newBans }: { newBans: SteamBanRecord[] }) => {
         target: undefined,
         deleted: undefined,
         appealState: undefined,
-        rowPerPageCount: undefined,
+        rows: undefined,
         sortOrder: undefined,
         sortColumn: undefined
     });
@@ -92,8 +92,8 @@ export const BanSteamTable = ({ newBans }: { newBans: SteamBanRecord[] }) => {
     );
 
     const { data, count } = useBansSteam({
-        limit: state.rowPerPageCount ?? RowsPerPage.Ten,
-        offset: (state.page ?? 0) * (state.rowPerPageCount ?? RowsPerPage.Ten),
+        limit: Number(state.rows ?? RowsPerPage.Ten),
+        offset: Number((state.page ?? 0) * (state.rows ?? RowsPerPage.Ten)),
         order_by: state.sortColumn ?? 'ban_id',
         desc: (state.sortOrder ?? 'desc') == 'desc',
         source_id: state.source ?? '',
@@ -121,7 +121,6 @@ export const BanSteamTable = ({ newBans }: { newBans: SteamBanRecord[] }) => {
                 target: values.target_id != '' ? values.target_id : undefined,
                 deleted: values.deleted ? true : undefined
             };
-            console.log(newState);
             setState(newState);
         },
         [setState]
@@ -175,9 +174,7 @@ export const BanSteamTable = ({ newBans }: { newBans: SteamBanRecord[] }) => {
                         count={count}
                         rows={allBans}
                         page={Number(state.page ?? 0)}
-                        rowsPerPage={Number(
-                            state.rowPerPageCount ?? RowsPerPage.Ten
-                        )}
+                        rowsPerPage={Number(state.rows ?? RowsPerPage.Ten)}
                         sortOrder={state.sortOrder}
                         sortColumn={state.sortColumn}
                         onSortColumnChanged={async (column) => {
@@ -195,10 +192,7 @@ export const BanSteamTable = ({ newBans }: { newBans: SteamBanRecord[] }) => {
                             >
                         ) => {
                             setState({
-                                rowPerPageCount: parseInt(
-                                    event.target.value,
-                                    10
-                                ),
+                                rows: Number(event.target.value),
                                 page: 0
                             });
                         }}

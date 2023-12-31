@@ -1,4 +1,5 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
+import useUrlState from '@ahooksjs/use-url-state';
 import NiceModal from '@ebay/nice-modal-react';
 import EditIcon from '@mui/icons-material/Edit';
 import UndoIcon from '@mui/icons-material/Undo';
@@ -22,7 +23,7 @@ import { SteamIDSelectField } from '../formik/SteamIDSelectField';
 import { TargetIDField, targetIdValidator } from '../formik/TargetIdField';
 import { ModalBanASN, ModalUnbanASN } from '../modal';
 import { BanASNModalProps } from '../modal/BanASNModal';
-import { LazyTable, Order, RowsPerPage } from './LazyTable';
+import { LazyTable, RowsPerPage } from './LazyTable';
 import { TableCellBool } from './TableCellBool';
 
 interface ASNFilterValues {
@@ -40,28 +41,27 @@ const validationSchema = yup.object({
 });
 
 export const BanASNTable = ({ newBans }: { newBans: ASNBanRecord[] }) => {
-    const [sortOrder, setSortOrder] = useState<Order>('desc');
-    const [sortColumn, setSortColumn] =
-        useState<keyof ASNBanRecord>('ban_asn_id');
-    const [rowPerPageCount, setRowPerPageCount] = useState<number>(
-        RowsPerPage.TwentyFive
-    );
-    const [page, setPage] = useState(0);
-    const [asNum, setASNum] = useState<number>();
-    const [source, setSource] = useState('');
-    const [target, setTarget] = useState('');
-    const [deleted, setDeleted] = useState(false);
+    const [state, setState] = useUrlState({
+        page: undefined,
+        source: undefined,
+        target: undefined,
+        deleted: undefined,
+        asNum: undefined,
+        rows: undefined,
+        sortOrder: undefined,
+        sortColumn: undefined
+    });
     const { sendFlash } = useUserFlashCtx();
 
     const { data, count } = useBansASN({
-        limit: rowPerPageCount,
-        offset: page * rowPerPageCount,
-        order_by: sortColumn,
-        desc: sortOrder == 'desc',
-        deleted: deleted,
-        source_id: source,
-        target_id: target,
-        as_num: asNum
+        limit: Number(state.rows ?? RowsPerPage.Ten),
+        offset: Number((state.page ?? 0) * (state.rows ?? RowsPerPage.Ten)),
+        order_by: state.sortColumn ?? 'ban_id',
+        desc: (state.sortOrder ?? 'desc') == 'desc',
+        source_id: state.source ?? '',
+        target_id: state.target ?? '',
+        as_num: Number(state.asNum ?? 0),
+        deleted: state.deleted != '' ? Boolean(state.deleted) : false
     });
 
     const allBans = useMemo(() => {
@@ -103,30 +103,36 @@ export const BanASNTable = ({ newBans }: { newBans: ASNBanRecord[] }) => {
         [sendFlash]
     );
 
-    const iv: ASNFilterValues = {
-        as_num: undefined,
-        source_id: '',
-        target_id: '',
-        deleted: false
-    };
-
-    const onSubmit = useCallback((values: ASNFilterValues) => {
-        setASNum(values.as_num);
-        setSource(values.source_id);
-        setTarget(values.target_id);
-        setDeleted(values.deleted);
-    }, []);
+    const onSubmit = useCallback(
+        (values: ASNFilterValues) => {
+            const newState = {
+                asNum: values.as_num != 0 ? values.as_num : undefined,
+                source: values.source_id != '' ? values.source_id : undefined,
+                target: values.target_id != '' ? values.target_id : undefined,
+                deleted: values.deleted ? true : undefined
+            };
+            setState(newState);
+        },
+        [setState]
+    );
 
     const onReset = useCallback(() => {
-        setASNum(iv.as_num);
-        setSource(iv.source_id);
-        setTarget(iv.target_id);
-        setDeleted(iv.deleted);
-    }, [iv.as_num, iv.source_id, iv.deleted, iv.target_id]);
+        setState({
+            asNum: undefined,
+            source: undefined,
+            target: undefined,
+            deleted: undefined
+        });
+    }, [setState]);
 
     return (
         <Formik
-            initialValues={iv}
+            initialValues={{
+                as_num: Number(state.asNum),
+                source_id: state.source,
+                target_id: state.target,
+                deleted: Boolean(state.deleted)
+            }}
             onReset={onReset}
             onSubmit={onSubmit}
             validationSchema={validationSchema}
@@ -157,28 +163,28 @@ export const BanASNTable = ({ newBans }: { newBans: ASNBanRecord[] }) => {
                         showPager={true}
                         count={count}
                         rows={allBans}
-                        page={page}
-                        rowsPerPage={rowPerPageCount}
-                        sortOrder={sortOrder}
-                        sortColumn={sortColumn}
+                        page={Number(state.page ?? 0)}
+                        rowsPerPage={Number(state.rows ?? RowsPerPage.Ten)}
+                        sortOrder={state.sortOrder}
+                        sortColumn={state.sortColumn}
                         onSortColumnChanged={async (column) => {
-                            setSortColumn(column);
+                            setState({ sortColumn: column });
                         }}
                         onSortOrderChanged={async (direction) => {
-                            setSortOrder(direction);
+                            setState({ sortOrder: direction });
                         }}
                         onPageChange={(_, newPage: number) => {
-                            setPage(newPage);
+                            setState({ page: newPage });
                         }}
                         onRowsPerPageChange={(
                             event: React.ChangeEvent<
                                 HTMLInputElement | HTMLTextAreaElement
                             >
                         ) => {
-                            setRowPerPageCount(
-                                parseInt(event.target.value, 10)
-                            );
-                            setPage(0);
+                            setState({
+                                rows: Number(event.target.value),
+                                page: 0
+                            });
                         }}
                         columns={[
                             {
