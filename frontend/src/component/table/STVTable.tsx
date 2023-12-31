@@ -1,5 +1,6 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import useUrlState from '@ahooksjs/use-url-state';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import FlagIcon from '@mui/icons-material/Flag';
 import IconButton from '@mui/material/IconButton';
@@ -7,8 +8,8 @@ import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { Formik } from 'formik';
+import { FormikHelpers } from 'formik/dist/types';
 import * as yup from 'yup';
-import { DemoFile } from '../../api';
 import { useCurrentUserCtx } from '../../contexts/CurrentUserCtx';
 import { useDemos } from '../../hooks/useDemos';
 import { humanFileSize, renderDateTime } from '../../util/text';
@@ -18,7 +19,7 @@ import { MapNameField, mapNameFieldValidator } from '../formik/MapNameField';
 import { SelectOwnField, selectOwnValidator } from '../formik/SelectOwnField';
 import { ServerIDsField, serverIDsValidator } from '../formik/ServerIDsField';
 import { SourceIdField, sourceIdValidator } from '../formik/SourceIdField';
-import { LazyTable, Order, RowsPerPage } from './LazyTable';
+import { LazyTable, RowsPerPage } from './LazyTable';
 
 interface STVFormValues {
     source_id: string;
@@ -35,16 +36,17 @@ const validationSchema = yup.object({
 });
 
 export const STVTable = () => {
-    const [sortOrder, setSortOrder] = useState<Order>('desc');
-    const [sortColumn, setSortColumn] = useState<keyof DemoFile>('created_on');
-    const [rowPerPageCount, setRowPerPageCount] = useState<number>(
-        RowsPerPage.TwentyFive
-    );
-    const [page, setPage] = useState(0);
-    const [source, setSource] = useState('');
-    const [mapName, setMapName] = useState('');
-    const [serverIds, setServerIds] = useState<number[]>([]);
-    const [selectOwn, setSelectOwn] = useState(false);
+    const [state, setState] = useUrlState({
+        page: undefined,
+        source: undefined,
+        target: undefined,
+        own: undefined,
+        mapName: undefined,
+        rows: undefined,
+        sortOrder: undefined,
+        sortColumn: undefined,
+        serverIds: undefined
+    });
     const navigate = useNavigate();
     const { currentUser } = useCurrentUserCtx();
 
@@ -52,46 +54,54 @@ export const STVTable = () => {
         return currentUser.steam_id == '';
     }, [currentUser.steam_id]);
 
-    const sourceId = useMemo(() => {
-        let sourceID = '';
-        if (selectOwn) {
-            sourceID = currentUser.steam_id;
-        } else if (!emptyOrNullString(source)) {
-            sourceID = source;
-        }
-        return sourceID;
-    }, [currentUser.steam_id, selectOwn, source]);
-
     const { data, count } = useDemos({
-        limit: rowPerPageCount,
-        offset: page * rowPerPageCount,
-        order_by: sortColumn,
-        desc: sortOrder == 'desc',
-        steam_id: sourceId,
-        map_name: mapName,
-        server_ids: serverIds
+        limit: Number(state.rows ?? RowsPerPage.Ten),
+        offset: Number((state.page ?? 0) * (state.rows ?? RowsPerPage.Ten)),
+        order_by: state.sortColumn ?? 'created_on',
+        desc: (state.sortOrder ?? 'desc') == 'desc',
+        steam_id: state.own
+            ? currentUser.steam_id
+            : !emptyOrNullString(state.source)
+              ? state.source
+              : '',
+        map_name: state.mapName ?? '',
+        server_ids: state.serverIds ?? undefined
     });
 
-    const iv: STVFormValues = {
-        source_id: '',
-        server_ids: [],
-        map_name: '',
-        select_own: false
-    };
+    const onReset = useCallback(
+        async (
+            _: STVFormValues,
+            formikHelpers: FormikHelpers<STVFormValues>
+        ) => {
+            setState({
+                own: undefined,
+                source: undefined,
+                target: undefined,
+                mapName: undefined,
+                serverIds: []
+            });
+            await formikHelpers.setFieldValue('map_name', undefined);
+            await formikHelpers.setFieldValue('source_id', undefined);
+            await formikHelpers.setFieldValue('server_ids', []);
+            await formikHelpers.setFieldValue('select_own', false);
+        },
+        [setState]
+    );
 
-    const onReset = useCallback(() => {
-        setSource(iv.source_id);
-        setMapName(iv.map_name);
-        setServerIds(iv.server_ids);
-        setSelectOwn(iv.select_own);
-    }, [iv.map_name, iv.select_own, iv.server_ids, iv.source_id]);
-
-    const onSubmit = useCallback((values: STVFormValues) => {
-        setSource(values.source_id);
-        setMapName(values.map_name);
-        setServerIds(values.server_ids);
-        setSelectOwn(values.select_own);
-    }, []);
+    const onSubmit = useCallback(
+        (values: STVFormValues) => {
+            setState({
+                own: values.select_own ? values.select_own : undefined,
+                source: values.source_id != '' ? values.source_id : undefined,
+                mapName: values.map_name != '' ? values.map_name : undefined,
+                serverIds:
+                    (values.server_ids ?? []).length > 0
+                        ? values.server_ids.map((i) => Number(i))
+                        : []
+            });
+        },
+        [setState]
+    );
 
     return (
         <Formik<STVFormValues>
@@ -99,7 +109,12 @@ export const STVTable = () => {
             onSubmit={onSubmit}
             validationSchema={validationSchema}
             validateOnChange={true}
-            initialValues={iv}
+            initialValues={{
+                source_id: '',
+                server_ids: [],
+                map_name: '',
+                select_own: false
+            }}
         >
             <Grid container spacing={3}>
                 <Grid xs={12}>
@@ -111,7 +126,7 @@ export const STVTable = () => {
                             <MapNameField />
                         </Grid>
                         <Grid md>
-                            <SourceIdField disabled={selectOwn} />
+                            <SourceIdField disabled={Boolean(state.own)} />
                         </Grid>
                         <Grid md>
                             <SelectOwnField disabled={selectOwnDisabled} />
@@ -126,28 +141,30 @@ export const STVTable = () => {
                         showPager={true}
                         count={count}
                         rows={data}
-                        page={page}
-                        rowsPerPage={rowPerPageCount}
-                        sortOrder={sortOrder}
-                        sortColumn={sortColumn}
+                        page={Number(state.page ?? 0)}
+                        rowsPerPage={Number(
+                            state.rows ?? RowsPerPage.TwentyFive
+                        )}
+                        sortOrder={state.sortOrder}
+                        sortColumn={state.sortColumn}
                         onSortColumnChanged={async (column) => {
-                            setSortColumn(column);
+                            setState({ sortColumn: column });
                         }}
                         onSortOrderChanged={async (direction) => {
-                            setSortOrder(direction);
+                            setState({ sortOrder: direction });
                         }}
                         onPageChange={(_, newPage: number) => {
-                            setPage(newPage);
+                            setState({ page: newPage });
                         }}
                         onRowsPerPageChange={(
                             event: React.ChangeEvent<
                                 HTMLInputElement | HTMLTextAreaElement
                             >
                         ) => {
-                            setRowPerPageCount(
-                                parseInt(event.target.value, 10)
-                            );
-                            setPage(0);
+                            setState({
+                                rows: Number(event.target.value),
+                                page: 0
+                            });
                         }}
                         columns={[
                             {
