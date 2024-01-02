@@ -80,10 +80,12 @@ export const STVTable = () => {
                 mapName: undefined,
                 serverIds: []
             });
+
             await formikHelpers.setFieldValue('map_name', undefined);
             await formikHelpers.setFieldValue('source_id', undefined);
             await formikHelpers.setFieldValue('server_ids', []);
             await formikHelpers.setFieldValue('select_own', false);
+            await formikHelpers.setTouched({ select_own: true }, false);
         },
         [setState]
     );
@@ -110,10 +112,10 @@ export const STVTable = () => {
             validationSchema={validationSchema}
             validateOnChange={true}
             initialValues={{
-                source_id: '',
-                server_ids: [],
-                map_name: '',
-                select_own: false
+                source_id: state.source,
+                server_ids: state.serverIds ? state.serverIds : [],
+                map_name: state.mapName,
+                select_own: Boolean(state.own)
             }}
         >
             <Grid container spacing={3}>
@@ -180,6 +182,7 @@ export const STVTable = () => {
                                 sortKey: 'created_on',
                                 align: 'left',
                                 width: '150px',
+                                hideSm: true,
                                 renderer: (row) => {
                                     return renderDateTime(row.created_on);
                                 }
