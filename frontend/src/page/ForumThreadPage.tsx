@@ -1,5 +1,6 @@
 import React, { JSX, useCallback, useMemo, useState } from 'react';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
+import useUrlState from '@ahooksjs/use-url-state';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ConstructionIcon from '@mui/icons-material/Construction';
@@ -372,7 +373,7 @@ const MessageEditor = ({
 export const ForumThreadPage = (): JSX.Element => {
     const [updatedMessages, setUpdatedMessages] = useState<ForumMessage[]>();
     const [updatedThread, setUpdatedThread] = useState<ForumThread>();
-    const [page, setPage] = useState(1);
+    const [state, setState] = useUrlState({ page: '1' });
     const { forum_thread_id } = useParams();
     const { currentUser } = useCurrentUserCtx();
     const thread_id = parseInt(forum_thread_id ?? '');
@@ -380,7 +381,7 @@ export const ForumThreadPage = (): JSX.Element => {
     const { data: threadOrig } = useThread(thread_id);
     const { data: messagesOrig, count } = useThreadMessages({
         forum_thread_id: thread_id,
-        offset: (page - 1) * RowsPerPage.Ten,
+        offset: (Number(state.page) - 1) * RowsPerPage.Ten,
         limit: RowsPerPage.Ten,
         order_by: 'forum_message_id',
         desc: false
@@ -397,14 +398,14 @@ export const ForumThreadPage = (): JSX.Element => {
     useScrollToLocation();
 
     const firstPostID = useMemo(() => {
-        if (page > 1) {
+        if (Number(state.page) > 1) {
             return -1;
         }
         if (messages.length > 0) {
             return messages[0].forum_message_id;
         }
         return -1;
-    }, [messages, page]);
+    }, [messages, state.page]);
 
     const isMod = useMemo(() => {
         return hasPermission(currentUser, PermissionLevel.Moderator);
@@ -507,9 +508,9 @@ export const ForumThreadPage = (): JSX.Element => {
             ))}
             <Pagination
                 count={count > 0 ? Math.ceil(count / RowsPerPage.Ten) : 0}
-                page={page}
+                page={Number(state.page)}
                 onChange={(_, newPage) => {
-                    setPage(newPage);
+                    setState({ page: String(newPage) });
                 }}
             />
             {activeThread?.locked && (
