@@ -9,23 +9,26 @@ import { steamIDOrEmptyString } from '../../util/validators';
 
 export const steamIdValidator = yup
     .string()
-    .test('checkSteamId', 'Invalid steamid/vanity', async (steamId, ctx) => {
-        if (!steamId) {
-            return false;
-        }
-        try {
-            const sid = await steamIDOrEmptyString(steamId);
-            if (sid == '') {
+    .test(
+        'checkSteamId',
+        'Invalid steamid or profile url',
+        async (steamId, ctx) => {
+            if (!steamId) {
                 return false;
             }
-            console.log(sid);
-            ctx.parent.value = sid;
-            return true;
-        } catch (e) {
-            logErr(e);
-            return false;
+            try {
+                const sid = await steamIDOrEmptyString(steamId);
+                if (sid == '') {
+                    return false;
+                }
+                ctx.parent.value = sid;
+                return true;
+            } catch (e) {
+                logErr(e);
+                return false;
+            }
         }
-    })
+    )
     .label('Enter your Steam ID')
     .required('Steam ID is required');
 
@@ -49,7 +52,7 @@ export const SteamIdField = ({ isReadOnly = false }: BaseFormikInputProps) => {
             disabled={isReadOnly}
             name={'steam_id'}
             id={'steam_id'}
-            label={'Steam ID / Profile'}
+            label={'Steam ID / Profile URL / Vanity Name'}
             value={values.steam_id}
             onChange={handleChange}
             error={touched.steam_id && Boolean(errors.steam_id)}

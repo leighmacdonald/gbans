@@ -20,6 +20,8 @@ const profileVanityRx = new RegExp(
     /https:\/\/steamcommunity.com\/id\/(\w+)\/?/
 );
 
+const hasWhiteSpace = (s: string) => /\s/.test(s);
+
 /**
  * Parse and validate any steamid input type, supports all steamid formats including:
  *
@@ -30,16 +32,21 @@ const profileVanityRx = new RegExp(
  * - SteamID32: [U:1:22202]
  * - SteamID: STEAM_0:0:11101
  *
- * @param steamIdInput
+ * @param input
  * @param individualOnly Only consider ids belonging to individuals in public universe as valid
  */
 export const steamIDOrEmptyString = async (
-    steamIdInput: string,
+    input: string,
     individualOnly: boolean = true
 ) => {
+    const steamIdInput = input.trimEnd();
+
     if (emptyOrNullString(steamIdInput)) {
         return '';
+    } else if (hasWhiteSpace(steamIdInput)) {
+        return '';
     }
+
     let steamId = '';
 
     // Initial basic check for bare steam ids
