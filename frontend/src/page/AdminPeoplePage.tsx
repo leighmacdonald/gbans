@@ -1,4 +1,5 @@
-import React, { JSX, useCallback, useMemo, useState } from 'react';
+import React, { JSX, useCallback, useMemo } from 'react';
+import useUrlState from '@ahooksjs/use-url-state';
 import NiceModal from '@ebay/nice-modal-react';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
@@ -29,7 +30,7 @@ import {
 import { nonResolvingSteamIDInputTest } from '../component/formik/SourceIdField';
 import { SteamIdField } from '../component/formik/SteamIdField';
 import { ModalPersonEditor } from '../component/modal';
-import { LazyTable, Order, RowsPerPage } from '../component/table/LazyTable';
+import { LazyTable, RowsPerPage } from '../component/table/LazyTable';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { usePeople } from '../hooks/usePeople';
 import { logErr } from '../util/errors';
@@ -53,15 +54,16 @@ interface PeopleFilterValues {
 }
 
 export const AdminPeoplePage = (): JSX.Element => {
-    const [sortOrder, setSortOrder] = useState<Order>('desc');
-    const [sortColumn, setSortColumn] = useState<keyof Person>('created_on');
-    const [rowPerPageCount, setRowPerPageCount] = useState<number>(
-        RowsPerPage.TwentyFive
-    );
-    const [page, setPage] = useState(0);
-    const [steamId, setSteamId] = useState('');
-    const [personaname, setPersonaname] = useState('');
-    const [ip, setIP] = useState('');
+    const [state, setState] = useUrlState({
+        page: undefined,
+        steam_id: undefined,
+        personaname: undefined,
+        ip: undefined,
+        rows: undefined,
+        sortOrder: undefined,
+        sortColumn: undefined
+    });
+
     const { currentUser } = useCurrentUserCtx();
 
     const isAdmin = useMemo(() => {
@@ -69,27 +71,31 @@ export const AdminPeoplePage = (): JSX.Element => {
     }, [currentUser.permission_level]);
 
     const { data, count, loading } = usePeople({
-        personaname: personaname,
+        personaname: state.personaname,
         deleted: false,
-        desc: sortOrder == 'desc',
-        offset: page,
-        limit: rowPerPageCount,
-        order_by: sortColumn,
-        steam_id: steamId,
-        ip: ip
+        desc: state.sortOrder == 'desc',
+        limit: Number(state.rows ?? RowsPerPage.Ten),
+        offset: Number((state.page ?? 0) * (state.rows ?? RowsPerPage.Ten)),
+        order_by: state.sortColumn ?? 'created_on',
+        steam_id: state.steam_id,
+        ip: state.ip
     });
 
-    const onFilterSubmit = useCallback((values: PeopleFilterValues) => {
-        setSteamId(values.steam_id);
-        setPersonaname(values.personaname);
-        setIP(values.ip);
-    }, []);
+    const onFilterSubmit = useCallback(
+        (values: PeopleFilterValues) => {
+            console.log(values);
+            setState(values);
+        },
+        [setState]
+    );
 
     const onFilterReset = useCallback(() => {
-        setSteamId('');
-        setPersonaname('');
-        setIP('');
-    }, []);
+        setState({
+            ip: '',
+            personaname: '',
+            steam_id: ''
+        });
+    }, [setState]);
 
     const onEditPerson = useCallback(async (person: Person) => {
         try {
@@ -116,8 +122,6 @@ export const AdminPeoplePage = (): JSX.Element => {
                             steam_id: '',
                             ip: ''
                         }}
-                        validateOnChange={true}
-                        validateOnBlur={true}
                         validationSchema={validationSchema}
                     >
                         <Grid container spacing={2}>
@@ -146,31 +150,33 @@ export const AdminPeoplePage = (): JSX.Element => {
                 >
                     <LazyTable
                         count={count}
-                        sortOrder={sortOrder}
-                        sortColumn={sortColumn}
+                        sortOrder={state.sortOrder}
+                        sortColumn={state.sortColumn}
                         onSortColumnChanged={async (column) => {
-                            setSortColumn(column);
+                            setState({ sortColumn: column });
                         }}
                         onSortOrderChanged={async (direction) => {
-                            setSortOrder(direction);
+                            setState({ sortOrder: direction });
                         }}
                         onRowsPerPageChange={(
                             event: React.ChangeEvent<
                                 HTMLInputElement | HTMLTextAreaElement
                             >
                         ) => {
-                            setRowPerPageCount(
-                                parseInt(event.target.value, 10)
-                            );
-                            setPage(0);
+                            setState({
+                                rows: Number(event.target.value),
+                                page: 0
+                            });
                         }}
                         onPageChange={(_, newPage) => {
-                            setPage(newPage);
+                            setState({ page: newPage });
                         }}
                         rows={data}
                         showPager
-                        page={page}
-                        rowsPerPage={rowPerPageCount}
+                        page={Number(state.page ?? 0)}
+                        rowsPerPage={Number(
+                            state.rows ?? RowsPerPage.TwentyFive
+                        )}
                         columns={[
                             {
                                 label: 'Steam ID',
