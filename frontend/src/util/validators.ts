@@ -39,7 +39,7 @@ export const steamIDOrEmptyString = async (
     input: string,
     individualOnly: boolean = true
 ) => {
-    const steamIdInput = input.trimEnd();
+    const steamIdInput = input.trim();
 
     if (emptyOrNullString(steamIdInput)) {
         return '';
