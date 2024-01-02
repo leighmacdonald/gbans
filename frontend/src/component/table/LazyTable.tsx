@@ -36,6 +36,7 @@ export interface HeadingCell<T> {
     renderer?: (obj: T, value: unknown, type: string) => ReactNode;
     style?: (obj: T) => SxProps<Theme> | undefined;
     onClick?: (row: T) => void;
+    hideSm?: boolean;
 }
 
 export const defaultRenderer = (
@@ -111,8 +112,18 @@ export const LazyTableBody = <T,>({ rows, columns }: TableBodyRows<T>) => {
                                 paddingTop: 0,
                                 paddingBottom: 0,
                                 width: col?.width ?? 'auto',
-                                ...(col?.style ? col.style(row) : {})
+                                ...(col?.style ? col.style(row) : {}),
+                                ...(col.hideSm
+                                    ? {
+                                          display: {
+                                              xs: 'none',
+                                              sm: 'none',
+                                              md: 'table-cell'
+                                          }
+                                      }
+                                    : {})
                             };
+
                             return (
                                 <TableCell
                                     variant="body"
@@ -170,7 +181,16 @@ export const LazyTableHeader = <T,>({
                             sx={{
                                 width: col?.width ?? 'auto',
                                 backgroundColor: bgColor,
-                                padding: 0.5
+                                padding: 0.5,
+                                ...(col.hideSm
+                                    ? {
+                                          display: {
+                                              xs: 'none',
+                                              sm: 'none',
+                                              md: 'table-cell'
+                                          }
+                                      }
+                                    : {})
                             }}
                         >
                             {col.sortable ? (
