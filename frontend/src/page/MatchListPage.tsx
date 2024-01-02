@@ -1,5 +1,6 @@
-import React, { JSX, useEffect, useState } from 'react';
+import React, { JSX } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import useUrlState from '@ahooksjs/use-url-state';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import TimelineIcon from '@mui/icons-material/Timeline';
@@ -8,12 +9,11 @@ import { IconButton, TablePagination } from '@mui/material';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import { apiGetMatches, MatchesQueryOpts, MatchSummary } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { LazyTable, Order, RowsPerPage } from '../component/table/LazyTable';
+import { LazyTable, RowsPerPage } from '../component/table/LazyTable';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
-import { logErr } from '../util/errors';
+import { useMatchHistory } from '../hooks/useMatchHistory';
 import { PageNotFoundPage } from './PageNotFoundPage';
 
 interface MatchSummaryTableProps {
@@ -21,38 +21,26 @@ interface MatchSummaryTableProps {
 }
 
 const MatchSummaryTable = ({ steam_id }: MatchSummaryTableProps) => {
-    const [sortOrder, setSortOrder] = useState<Order>('desc');
-    const [sortColumn, setSortColumn] =
-        useState<keyof MatchSummary>('match_id');
-    const [rows, setRows] = useState<MatchSummary[]>([]);
-    const [totalRows, setTotalRows] = useState<number>(0);
-    const [page, setPage] = useState(0);
-    const [rowPerPageCount, setRowPerPageCount] = useState<number>(
-        RowsPerPage.TwentyFive
-    );
+    const [state, setState] = useUrlState({
+        page: undefined,
+        rows: undefined,
+        sortOrder: undefined,
+        sortColumn: undefined,
+        map: undefined
+    });
+
     const { sendFlash } = useUserFlashCtx();
     const { currentUser } = useCurrentUserCtx();
     const navigate = useNavigate();
 
-    useEffect(() => {
-        const abortController = new AbortController();
-        const opts: MatchesQueryOpts = {
-            steam_id: steam_id,
-            limit: rowPerPageCount,
-            offset: page * rowPerPageCount,
-            order_by: sortColumn,
-            desc: sortOrder == 'desc'
-        };
-        apiGetMatches(opts, abortController)
-            .then((resp) => {
-                setTotalRows(resp.count);
-                setRows(resp.data);
-            })
-            .catch((e) => {
-                logErr(e);
-            });
-        return () => abortController.abort();
-    }, [page, rowPerPageCount, sortColumn, sortOrder, steam_id]);
+    const { data: matches, count } = useMatchHistory({
+        steam_id: currentUser.steam_id,
+        limit: Number(state.rows ?? RowsPerPage.Ten),
+        offset: Number((state.page ?? 0) * (state.rows ?? RowsPerPage.Ten)),
+        order_by: state.sortColumn ?? 'match_id',
+        desc: (state.sortOrder ?? 'desc') == 'desc',
+        map: state.map
+    });
 
     if (currentUser.steam_id != steam_id) {
         sendFlash(
@@ -69,21 +57,23 @@ const MatchSummaryTable = ({ steam_id }: MatchSummaryTableProps) => {
                 <TablePagination
                     component="div"
                     variant={'head'}
-                    page={page}
-                    count={totalRows}
+                    page={Number(state.page ?? 0)}
+                    count={count}
                     showFirstButton
                     showLastButton
-                    rowsPerPage={rowPerPageCount}
+                    rowsPerPage={Number(state.rows ?? RowsPerPage.Ten)}
                     onRowsPerPageChange={(
                         event: React.ChangeEvent<
                             HTMLInputElement | HTMLTextAreaElement
                         >
                     ) => {
-                        setRowPerPageCount(parseInt(event.target.value, 10));
-                        setPage(0);
+                        setState({
+                            rows: Number(event.target.value),
+                            page: 0
+                        });
                     }}
                     onPageChange={(_, newPage) => {
-                        setPage(newPage);
+                        setState({ page: newPage });
                     }}
                 />
             </Grid>
@@ -93,15 +83,15 @@ const MatchSummaryTable = ({ steam_id }: MatchSummaryTableProps) => {
                     iconLeft={<TimelineIcon />}
                 >
                     <LazyTable
-                        sortOrder={sortOrder}
-                        sortColumn={sortColumn}
+                        sortOrder={state.sortOrder}
+                        sortColumn={state.sortColumn}
                         onSortColumnChanged={async (column) => {
-                            setSortColumn(column);
+                            setState({ sortColumn: column });
                         }}
                         onSortOrderChanged={async (direction) => {
-                            setSortOrder(direction);
+                            setState({ sortOrder: direction });
                         }}
-                        rows={rows}
+                        rows={matches}
                         columns={[
                             {
                                 label: '',
