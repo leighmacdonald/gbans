@@ -4,8 +4,8 @@ import { useFormikContext } from 'formik';
 import * as yup from 'yup';
 import { PlayerProfile } from '../../api';
 import { logErr } from '../../util/errors';
-import { steamIDOrEmptyString } from '../../util/text';
 import { Nullable } from '../../util/types';
+import { steamIDOrEmptyString } from '../../util/validators';
 
 export const steamIdValidator = yup
     .string()
@@ -18,6 +18,7 @@ export const steamIdValidator = yup
             if (sid == '') {
                 return false;
             }
+            console.log(sid);
             ctx.parent.value = sid;
             return true;
         } catch (e) {
@@ -39,12 +40,9 @@ export interface SteamIDInputValue {
     steam_id: string;
 }
 
-export const SteamIdField = <T,>({
-    isReadOnly = false
-}: BaseFormikInputProps) => {
-    const { values, touched, errors, handleChange } = useFormikContext<
-        T & SteamIDInputValue
-    >();
+export const SteamIdField = ({ isReadOnly = false }: BaseFormikInputProps) => {
+    const { values, touched, errors, handleChange } =
+        useFormikContext<SteamIDInputValue>();
     return (
         <TextField
             fullWidth

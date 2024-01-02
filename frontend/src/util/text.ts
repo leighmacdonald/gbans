@@ -1,9 +1,7 @@
 import { formatDistance, parseISO, parseJSON } from 'date-fns';
 import format from 'date-fns/format';
 import { isAfter } from 'date-fns/fp';
-import SteamID from 'steamid';
-import { apiGetProfile, defaultAvatarHash, Person } from '../api';
-import { emptyOrNullString } from './types';
+import { defaultAvatarHash, Person } from '../api';
 
 export const parseDateTime = (t: string): Date => {
     return parseISO(t);
@@ -91,34 +89,8 @@ export const humanCount = (count: number, dp: number = 1): string => {
 };
 
 export const defaultFloatFmtPct = (value: number) => `${value.toFixed(2)}%`;
+
 export const defaultFloatFmt = (value: number) => value.toFixed(2);
-
-export const isValidHttpURL = (value: string): boolean => {
-    try {
-        const url = new URL(value);
-        return url.protocol === 'http:' || url.protocol === 'https:';
-    } catch (_) {
-        return false;
-    }
-};
-
-export const steamIDOrEmptyString = async (steamId: string) => {
-    if (emptyOrNullString(steamId)) {
-        return '';
-    }
-    try {
-        const resp = await apiGetProfile(steamId);
-        const sid = new SteamID(resp.player.steam_id);
-        return sid.getSteamID64();
-    } catch (e) {
-        return '';
-    }
-};
-
-const ipRegex =
-    /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/gi;
-
-export const isValidIP = (value: string): boolean => ipRegex.test(value);
 
 type avatarSize = 'small' | 'medium' | 'full';
 
