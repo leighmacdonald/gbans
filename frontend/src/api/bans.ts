@@ -316,10 +316,12 @@ export const apiUpdateBanSteam = async (
     );
 
 export const apiCreateBanCIDR = async (payload: BanPayloadCIDR) =>
-    await apiCall<CIDRBanRecord, BanPayloadCIDR>(
-        `/api/bans/cidr/create`,
-        'POST',
-        payload
+    transformTimeStampedDates(
+        await apiCall<CIDRBanRecord, BanPayloadCIDR>(
+            `/api/bans/cidr/create`,
+            'POST',
+            payload
+        )
     );
 
 export const apiUpdateBanCIDR = async (
@@ -337,10 +339,12 @@ export const apiUpdateBanCIDR = async (
         )
     );
 export const apiCreateBanASN = async (payload: BanPayloadASN) =>
-    await apiCall<ASNBanRecord, BanPayloadASN>(
-        `/api/bans/asn/create`,
-        'POST',
-        payload
+    transformTimeStampedDates(
+        await apiCall<ASNBanRecord, BanPayloadASN>(
+            `/api/bans/asn/create`,
+            'POST',
+            payload
+        )
     );
 
 interface UpdateBanASNPayload {
@@ -362,10 +366,12 @@ export const apiUpdateBanASN = async (
     );
 
 export const apiCreateBanGroup = async (payload: BanPayloadGroup) =>
-    await apiCall<GroupBanRecord, BanPayloadGroup>(
-        `/api/bans/group/create`,
-        'POST',
-        payload
+    transformTimeStampedDates(
+        await apiCall<GroupBanRecord, BanPayloadGroup>(
+            `/api/bans/group/create`,
+            'POST',
+            payload
+        )
     );
 
 interface UpdateBanGroupPayload {
