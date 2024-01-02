@@ -19,6 +19,7 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { formatISO9075 } from 'date-fns/fp';
 import { Formik } from 'formik';
+import { FormikHelpers } from 'formik/dist/types';
 import {
     apiGetMessages,
     defaultAvatarHash,
@@ -31,8 +32,6 @@ import {
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { AutoRefreshField } from '../component/formik/AutoRefreshField';
 import { AutoSubmitPaginationField } from '../component/formik/AutoSubmitPaginationField';
-import { DateEndField } from '../component/formik/DateEndField';
-import { DateStartField } from '../component/formik/DateStartField';
 import { MessageField } from '../component/formik/MessageField';
 import { PersonCellField } from '../component/formik/PersonCellField';
 import { PersonanameField } from '../component/formik/PersonanameField';
@@ -52,8 +51,6 @@ const anyServerSimple: ServerSimple = {
 };
 
 interface ChatLogFormValues {
-    date_start?: Date;
-    date_end?: Date;
     steam_id: string;
     personaname: string;
     message: string;
@@ -65,14 +62,12 @@ export const ChatLogPage = () => {
     const [state, setState] = useUrlState({
         sortOrder: 'desc',
         sortColumn: 'person_message_id',
-        page: undefined,
+        page: '0',
         rowPerPageCount: `${RowsPerPage.TwentyFive}`,
-        server: undefined,
-        personaName: undefined,
-        message: undefined,
-        dateStart: undefined,
-        dateEnd: undefined,
-        steamID: undefined
+        server: `${anyServerSimple.server_id}`,
+        personaName: '',
+        message: '',
+        steamId: ''
     });
 
     const [rows, setRows] = useState<PersonMessage[]>([]);
@@ -97,10 +92,8 @@ export const ChatLogPage = () => {
                 personaname: values.personaname,
                 query: values.message,
                 source_id: values.steam_id,
-                date_start: values.date_start,
-                date_end: values.date_end,
                 limit: Number(state.rowPerPageCount),
-                offset: Number(state.page) * Number(state.rowPerPageCount),
+                offset: Number(state.page ?? 0) * Number(state.rowPerPageCount),
                 order_by: state.sortColumn,
                 desc: state.sortOrder == 'desc'
             })
@@ -112,11 +105,8 @@ export const ChatLogPage = () => {
                             (values.server_id ?? 0) > 0
                                 ? values.server_id
                                 : undefined,
-                        steamID: values.steam_id ?? undefined,
-                        personaName: values.personaname ?? undefined,
-                        message: values.message ?? undefined,
-                        dateStart: values.date_start ?? undefined,
-                        dateEnd: values.date_end ?? undefined,
+                        personaName: values.personaname,
+                        message: values.message,
                         page:
                             Number(state.page) * Number(state.rowPerPageCount) >
                             resp.count
@@ -140,27 +130,37 @@ export const ChatLogPage = () => {
         ]
     );
 
-    const onReset = () => {
-        setState({
-            page: undefined,
-            sortColumn: undefined,
-            sortOrder: undefined
-        });
-    };
+    const onReset = useCallback(
+        async (
+            _: ChatLogFormValues,
+            formikHelpers: FormikHelpers<ChatLogFormValues>
+        ) => {
+            setState({
+                sortOrder: 'desc',
+                sortColumn: 'person_message_id',
+                page: '0',
+                rowPerPageCount: String(RowsPerPage.TwentyFive),
+                server: String(anyServerSimple.server_id),
+                personaName: '',
+                message: '',
+                steamId: ''
+            });
+            await formikHelpers.submitForm();
+        },
+        [setState]
+    );
 
     return (
         <Formik<ChatLogFormValues>
             onSubmit={onSubmit}
+            onReset={onReset}
             initialValues={{
                 personaname: state.personaName,
                 message: state.message,
-                steam_id: state.steamID,
-                date_start: state.dateStart,
-                date_end: state.dateEnd,
+                steam_id: state.steamId,
                 auto_refresh: 0,
-                server_id: state.server ?? anyServerSimple.server_id
+                server_id: state.server
             }}
-            onReset={onReset}
         >
             <Grid container spacing={2}>
                 <Grid xs={12}>
@@ -191,12 +191,6 @@ export const ChatLogPage = () => {
                             <Grid xs={6} md={3}>
                                 <ServerIDField servers={servers} />
                             </Grid>
-                            <Grid xs={6} md={3}>
-                                <DateStartField />
-                            </Grid>
-                            <Grid xs={6} md={3}>
-                                <DateEndField />
-                            </Grid>
                             <Grid xs={3}>
                                 {currentUser.permission_level >=
                                     PermissionLevel.Moderator && (
@@ -213,169 +207,147 @@ export const ChatLogPage = () => {
                     </ContainerWithHeader>
                 </Grid>
                 <Grid xs={12}>
-                    <Grid
-                        xs={12}
-                        container
-                        justifyContent="space-between"
-                        alignItems="center"
-                        flexDirection={{ xs: 'column', sm: 'row' }}
+                    <ContainerWithHeader
+                        iconLeft={
+                            loading ? (
+                                <CircularProgress color="inherit" size={20} />
+                            ) : (
+                                <ChatIcon />
+                            )
+                        }
+                        title={'Chat Logs'}
                     >
-                        <Grid xs={3}></Grid>
-                    </Grid>
+                        <LazyTable<PersonMessage>
+                            showPager
+                            page={Number(state.page ?? '0')}
+                            count={totalRows}
+                            rowsPerPage={Number(state.rowPerPageCount)}
+                            sortOrder={state.sortOrder}
+                            sortColumn={state.sortColumn}
+                            onSortColumnChanged={async (column) => {
+                                setState({ sortColumn: column });
+                            }}
+                            onSortOrderChanged={async (direction) => {
+                                setState({ sortOrder: direction });
+                            }}
+                            onRowsPerPageChange={(
+                                event: React.ChangeEvent<
+                                    HTMLInputElement | HTMLTextAreaElement
+                                >
+                            ) => {
+                                setState({
+                                    rowPerPageCount: Number(event.target.value),
+                                    page: '0'
+                                });
+                            }}
+                            onPageChange={(_, newPage) => {
+                                setState({ page: `${newPage}` });
+                            }}
+                            columns={[
+                                {
+                                    label: 'Server',
+                                    tooltip: 'Server',
+                                    sortKey: 'server_id',
+                                    align: 'center',
+                                    width: 120,
+                                    renderer: (row) => (
+                                        <ServerIDCell
+                                            server_id={row.server_id}
+                                            server_name={row.server_name}
+                                        />
+                                    )
+                                },
+                                {
+                                    label: 'Created',
+                                    tooltip: 'Time the message was sent',
+                                    sortKey: 'created_on',
+                                    sortType: 'date',
+                                    sortable: false,
+                                    align: 'center',
+                                    width: 220,
+                                    hideSm: true,
+                                    renderer: (row) => (
+                                        <Typography variant={'body1'}>
+                                            {`${formatISO9075(row.created_on)}`}
+                                        </Typography>
+                                    )
+                                },
+                                {
+                                    label: 'Name',
+                                    tooltip: 'Persona Name',
+                                    sortKey: 'persona_name',
+                                    width: 250,
+                                    align: 'left',
+                                    renderer: (row) => (
+                                        <PersonCellField
+                                            steam_id={row.steam_id}
+                                            avatar_hash={
+                                                row.avatar_hash != ''
+                                                    ? row.avatar_hash
+                                                    : defaultAvatarHash
+                                            }
+                                            personaname={row.persona_name}
+                                        />
+                                    )
+                                },
+                                {
+                                    label: 'Message',
+                                    tooltip: 'Message',
+                                    sortKey: 'body',
+                                    align: 'left',
+                                    renderer: (row) => {
+                                        return (
+                                            <Grid container>
+                                                <Grid xs padding={1}>
+                                                    <Typography
+                                                        variant={'body1'}
+                                                    >
+                                                        {row.body}
+                                                    </Typography>
+                                                </Grid>
 
-                    <Grid xs={12}>
-                        <ContainerWithHeader
-                            iconLeft={
-                                loading ? (
-                                    <CircularProgress
-                                        color="inherit"
-                                        size={20}
-                                    />
-                                ) : (
-                                    <ChatIcon />
-                                )
-                            }
-                            title={'Chat Logs'}
-                        >
-                            <LazyTable<PersonMessage>
-                                showPager
-                                page={Number(state.page ?? '0')}
-                                count={totalRows}
-                                rowsPerPage={Number(state.rowPerPageCount)}
-                                sortOrder={state.sortOrder}
-                                sortColumn={state.sortColumn}
-                                onSortColumnChanged={async (column) => {
-                                    setState({ sortColumn: column });
-                                }}
-                                onSortOrderChanged={async (direction) => {
-                                    setState({ sortOrder: direction });
-                                }}
-                                onRowsPerPageChange={(
-                                    event: React.ChangeEvent<
-                                        HTMLInputElement | HTMLTextAreaElement
-                                    >
-                                ) => {
-                                    setState({
-                                        rowPerPageCount: Number(
-                                            event.target.value
-                                        ),
-                                        page: '0'
-                                    });
-                                }}
-                                onPageChange={(_, newPage) => {
-                                    setState({ page: `${newPage}` });
-                                }}
-                                columns={[
-                                    {
-                                        label: 'Server',
-                                        tooltip: 'Server',
-                                        sortKey: 'server_id',
-                                        align: 'center',
-                                        width: 120,
-                                        renderer: (row) => (
-                                            <ServerIDCell
-                                                server_id={row.server_id}
-                                                server_name={row.server_name}
-                                            />
-                                        )
-                                    },
-                                    {
-                                        label: 'Created',
-                                        tooltip: 'Time the message was sent',
-                                        sortKey: 'created_on',
-                                        sortType: 'date',
-                                        sortable: false,
-                                        align: 'center',
-                                        width: 220,
-                                        renderer: (row) => (
-                                            <Typography variant={'body1'}>
-                                                {`${formatISO9075(
-                                                    row.created_on
-                                                )}`}
-                                            </Typography>
-                                        )
-                                    },
-                                    {
-                                        label: 'Name',
-                                        tooltip: 'Persona Name',
-                                        sortKey: 'persona_name',
-                                        width: 250,
-                                        align: 'left',
-                                        renderer: (row) => (
-                                            <PersonCellField
-                                                steam_id={row.steam_id}
-                                                avatar_hash={
-                                                    row.avatar_hash != ''
-                                                        ? row.avatar_hash
-                                                        : defaultAvatarHash
-                                                }
-                                                personaname={row.persona_name}
-                                            />
-                                        )
-                                    },
-                                    {
-                                        label: 'Message',
-                                        tooltip: 'Message',
-                                        sortKey: 'body',
-                                        align: 'left',
-                                        renderer: (row) => {
-                                            return (
-                                                <Grid container>
-                                                    <Grid xs padding={1}>
-                                                        <Typography
-                                                            variant={'body1'}
-                                                        >
-                                                            {row.body}
-                                                        </Typography>
-                                                    </Grid>
-
-                                                    {row.auto_filter_flagged >
-                                                        0 && (
-                                                        <Grid
-                                                            xs={'auto'}
-                                                            padding={1}
-                                                            display="flex"
-                                                            justifyContent="center"
-                                                            alignItems="center"
-                                                        >
-                                                            <>
-                                                                <FlagIcon
-                                                                    color={
-                                                                        'error'
-                                                                    }
-                                                                    fontSize="small"
-                                                                />
-                                                            </>
-                                                        </Grid>
-                                                    )}
+                                                {row.auto_filter_flagged >
+                                                    0 && (
                                                     <Grid
                                                         xs={'auto'}
+                                                        padding={1}
                                                         display="flex"
                                                         justifyContent="center"
                                                         alignItems="center"
                                                     >
-                                                        <ChatContextMenu
-                                                            flagged={
-                                                                row.auto_filter_flagged >
-                                                                0
-                                                            }
-                                                            steamId={
-                                                                row.steam_id
-                                                            }
-                                                            person_message_id={
-                                                                row.person_message_id
-                                                            }
-                                                        />
+                                                        <>
+                                                            <FlagIcon
+                                                                color={'error'}
+                                                                fontSize="small"
+                                                            />
+                                                        </>
                                                     </Grid>
+                                                )}
+                                                <Grid
+                                                    xs={'auto'}
+                                                    display="flex"
+                                                    justifyContent="center"
+                                                    alignItems="center"
+                                                >
+                                                    <ChatContextMenu
+                                                        flagged={
+                                                            row.auto_filter_flagged >
+                                                            0
+                                                        }
+                                                        steamId={row.steam_id}
+                                                        person_message_id={
+                                                            row.person_message_id
+                                                        }
+                                                    />
                                                 </Grid>
-                                            );
-                                        }
+                                            </Grid>
+                                        );
                                     }
-                                ]}
-                                rows={rows}
-                            />
-                        </ContainerWithHeader>
-                    </Grid>
+                                }
+                            ]}
+                            rows={rows}
+                        />
+                    </ContainerWithHeader>
                 </Grid>
             </Grid>
         </Formik>
