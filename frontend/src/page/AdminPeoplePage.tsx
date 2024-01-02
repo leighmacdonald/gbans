@@ -83,7 +83,6 @@ export const AdminPeoplePage = (): JSX.Element => {
 
     const onFilterSubmit = useCallback(
         (values: PeopleFilterValues) => {
-            console.log(values);
             setState(values);
         },
         [setState]
