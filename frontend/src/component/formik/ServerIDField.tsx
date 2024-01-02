@@ -47,7 +47,8 @@ export const ServerIDCell = ({
             fullWidth
             variant={'text'}
             sx={{
-                color: stc(server_name)
+                color: stc(server_name),
+                mixBlendMode: 'difference'
             }}
             onClick={async () => {
                 await setFieldValue('server_id', server_id);

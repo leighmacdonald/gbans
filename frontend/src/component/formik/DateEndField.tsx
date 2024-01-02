@@ -1,9 +1,10 @@
 import React from 'react';
 import { DatePicker } from '@mui/x-date-pickers';
+import { parseISO } from 'date-fns';
 import { useFormikContext } from 'formik';
 
 interface DateEndFieldProps {
-    date_end: Date;
+    date_end: string;
 }
 
 export const DateEndField = ({ maxDate }: { maxDate?: Date }) => {
@@ -14,7 +15,7 @@ export const DateEndField = ({ maxDate }: { maxDate?: Date }) => {
             maxDate={maxDate}
             closeOnSelect={true}
             label="Date End"
-            value={values.date_end}
+            value={values.date_end ? parseISO(values.date_end) : ''}
             formatDensity={'dense'}
             onChange={async (value) => {
                 await setFieldValue('date_end', value);
