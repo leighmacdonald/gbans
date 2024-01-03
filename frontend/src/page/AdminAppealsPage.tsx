@@ -127,16 +127,16 @@ export const AdminAppealsPage = () => {
                         iconLeft={<FilterListIcon />}
                     >
                         <Grid container spacing={2}>
-                            <Grid xs>
+                            <Grid xs={6} sm={4} md={3}>
                                 <AppealStateField />
                             </Grid>
-                            <Grid xs>
+                            <Grid xs={6} sm={4} md={3}>
                                 <SourceIdField />
                             </Grid>
-                            <Grid xs>
+                            <Grid xs={6} sm={4} md={3}>
                                 <TargetIDField />
                             </Grid>
-                            <Grid xs>
+                            <Grid xs={6} sm={4} md={3}>
                                 <FilterButtons />
                             </Grid>
                         </Grid>

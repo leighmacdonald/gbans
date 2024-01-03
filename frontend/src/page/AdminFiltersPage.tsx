@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
+import useUrlState from '@ahooksjs/use-url-state';
 import NiceModal from '@ebay/nice-modal-react';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
@@ -10,91 +11,100 @@ import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Grid from '@mui/material/Unstable_Grid2';
 import { Filter, FilterAction, filterActionString } from '../api/filters';
-import { ContainerWithHeader } from '../component/ContainerWithHeader';
+import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons';
 import { ModalFilterDelete, ModalFilterEditor } from '../component/modal';
-import { LazyTable, Order, RowsPerPage } from '../component/table/LazyTable';
+import { LazyTable, RowsPerPage } from '../component/table/LazyTable';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { useWordFilters } from '../hooks/useWordFilters';
 
 export const AdminFiltersPage = () => {
-    const [sortOrder, setSortOrder] = useState<Order>('desc');
-    const [sortColumn, setSortColumn] = useState<keyof Filter>('filter_id');
-    const [rowPerPageCount, setRowPerPageCount] = useState<number>(
-        RowsPerPage.TwentyFive
-    );
-    const [page, setPage] = useState(0);
+    const [newFilters, setNewFilters] = useState<Filter[]>([]);
+    const [state, setState] = useUrlState({
+        page: undefined,
+        rows: undefined,
+        sortOrder: undefined,
+        sortColumn: undefined
+    });
+
     const { sendFlash } = useUserFlashCtx();
 
     const { data, count } = useWordFilters({
-        order_by: sortColumn,
-        desc: sortOrder == 'desc',
-        limit: rowPerPageCount,
-        offset: page * rowPerPageCount
+        order_by: state.sortColumn ?? 'filter_id',
+        desc: (state.sortOrder ?? 'desc') == 'desc',
+        limit: Number(state.rows ?? RowsPerPage.Ten),
+        offset: Number((state.page ?? 0) * (state.rows ?? RowsPerPage.Ten))
     });
+
+    const allRows = useMemo(() => {
+        return [...newFilters, ...data];
+    }, [data, newFilters]);
+
+    const onCreate = useCallback(async () => {
+        try {
+            const resp = await NiceModal.show<Filter>(ModalFilterEditor, {
+                defaultPattern: '',
+                defaultIsRegex: false
+            });
+            sendFlash(
+                'success',
+                `Filter created successfully: ${resp.filter_id}`
+            );
+            setNewFilters((prevState) => {
+                return [resp, ...prevState];
+            });
+        } catch (e) {
+            sendFlash('error', `${e}`);
+        }
+    }, [sendFlash]);
 
     return (
         <Grid container spacing={2}>
             <Grid xs={12}>
-                <ButtonGroup
-                    variant="contained"
-                    aria-label="outlined primary button group"
-                >
-                    <Button
-                        startIcon={<AddBoxIcon />}
-                        color={'success'}
-                        onClick={async () => {
-                            try {
-                                const resp = await NiceModal.show<Filter>(
-                                    ModalFilterEditor,
-                                    {
-                                        defaultPattern: '',
-                                        defaultIsRegex: false
-                                    }
-                                );
-                                sendFlash(
-                                    'success',
-                                    `Filter created successfully: ${resp.filter_id}`
-                                );
-                            } catch (e) {
-                                sendFlash('error', `${e}`);
-                            }
-                        }}
-                    >
-                        New
-                    </Button>
-                </ButtonGroup>
-            </Grid>
-            <Grid xs={12}>
-                <ContainerWithHeader
+                <ContainerWithHeaderAndButtons
                     title={'Word Filters'}
                     iconLeft={<FilterAltIcon />}
+                    buttons={[
+                        <ButtonGroup
+                            variant="contained"
+                            aria-label="outlined primary button group"
+                            key={`btn-headers-filters`}
+                        >
+                            <Button
+                                startIcon={<AddBoxIcon />}
+                                color={'success'}
+                                onClick={onCreate}
+                            >
+                                New
+                            </Button>
+                        </ButtonGroup>
+                    ]}
                 >
                     <LazyTable<Filter>
                         showPager={true}
                         count={count}
-                        rows={data}
-                        page={page}
-                        rowsPerPage={rowPerPageCount}
-                        sortOrder={sortOrder}
-                        sortColumn={sortColumn}
+                        rows={allRows}
+                        page={Number(state.page ?? 0)}
+                        rowsPerPage={Number(state.rows ?? RowsPerPage.Ten)}
+                        sortOrder={state.sortOrder}
+                        sortColumn={state.sortColumn}
                         onSortColumnChanged={async (column) => {
-                            setSortColumn(column);
+                            setState({ sortColumn: column });
                         }}
                         onSortOrderChanged={async (direction) => {
-                            setSortOrder(direction);
+                            setState({ sortOrder: direction });
                         }}
                         onPageChange={(_, newPage: number) => {
-                            setPage(newPage);
+                            setState({ page: newPage });
                         }}
                         onRowsPerPageChange={(
                             event: React.ChangeEvent<
                                 HTMLInputElement | HTMLTextAreaElement
                             >
                         ) => {
-                            setRowPerPageCount(
-                                parseInt(event.target.value, 10)
-                            );
-                            setPage(0);
+                            setState({
+                                rows: Number(event.target.value),
+                                page: 0
+                            });
                         }}
                         columns={[
                             {
@@ -198,7 +208,7 @@ export const AdminFiltersPage = () => {
                             }
                         ]}
                     />
-                </ContainerWithHeader>
+                </ContainerWithHeaderAndButtons>
             </Grid>
         </Grid>
     );
