@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
+import useUrlState from '@ahooksjs/use-url-state';
 import NiceModal from '@ebay/nice-modal-react';
-import CreateIcon from '@mui/icons-material/Create';
+import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import StorageIcon from '@mui/icons-material/Storage';
@@ -11,78 +12,122 @@ import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import Grid from '@mui/material/Unstable_Grid2';
 import { Server } from '../api';
-import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { ModalServerDelete, ModalServerEditor } from '../component/modal';
-import { ServerEditorModal } from '../component/modal/ServerEditorModal';
-import { LazyTable, Order, RowsPerPage } from '../component/table/LazyTable';
+import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons';
+import { ModalServerEditor } from '../component/modal';
+import { LazyTable, RowsPerPage } from '../component/table/LazyTable';
 import { TableCellBool } from '../component/table/TableCellBool';
+import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { useServersAdmin } from '../hooks/useServersAdmin';
 
 export const AdminServersPage = () => {
-    const [sortOrder, setSortOrder] = useState<Order>('desc');
-    const [sortColumn, setSortColumn] = useState<keyof Server>('short_name');
-    const [rowPerPageCount, setRowPerPageCount] = useState<number>(
-        RowsPerPage.TwentyFive
-    );
-    const [page, setPage] = useState(0);
-    const [deleted] = useState(false);
-
+    const [newServers, setNewServers] = useState<Server[]>([]);
+    const [state, setState] = useUrlState({
+        page: undefined,
+        deleted: undefined,
+        rows: undefined,
+        sortOrder: undefined,
+        sortColumn: undefined
+    });
+    const { sendFlash } = useUserFlashCtx();
     const { data, count } = useServersAdmin({
-        limit: rowPerPageCount,
-        offset: page * rowPerPageCount,
-        order_by: sortColumn,
-        desc: sortOrder == 'desc',
-        deleted: deleted,
+        limit: Number(state.rows ?? RowsPerPage.TwentyFive),
+        offset: Number(
+            (state.page ?? 0) * (state.rows ?? RowsPerPage.TwentyFive)
+        ),
+        order_by: state.sortColumn ?? 'short_name',
+        desc: state.sortOrder == 'desc',
+        deleted: false,
         include_disabled: true
     });
+
+    const servers = useMemo(() => {
+        return [...newServers, ...data];
+    }, [data, newServers]);
+
+    const onCreate = useCallback(async () => {
+        try {
+            const newServer = await NiceModal.show<Server>(
+                ModalServerEditor,
+                {}
+            );
+            setNewServers((prevState) => {
+                return [newServer, ...prevState];
+            });
+
+            sendFlash('success', 'Server created successfully');
+        } catch (e) {
+            sendFlash('error', `Failed to create new server: ${e}`);
+        }
+    }, [sendFlash]);
+
+    const onEdit = useCallback(
+        async (server: Server) => {
+            try {
+                const newServer = await NiceModal.show<Server>(
+                    ModalServerEditor,
+                    { server }
+                );
+                setNewServers((prevState) => {
+                    return [newServer, ...prevState];
+                });
+
+                sendFlash('success', 'Server edited successfully');
+            } catch (e) {
+                sendFlash('error', `Failed to edit server: ${e}`);
+            }
+        },
+        [sendFlash]
+    );
 
     return (
         <Grid container spacing={2}>
             <Grid xs={12}>
                 <Stack spacing={2}>
-                    <ButtonGroup>
-                        <Button
-                            variant={'contained'}
-                            color={'secondary'}
-                            startIcon={<CreateIcon />}
-                            sx={{ marginRight: 2 }}
-                            onClick={async () => {
-                                await NiceModal.show(ServerEditorModal, {});
-                            }}
-                        >
-                            Create Server
-                        </Button>
-                    </ButtonGroup>
-                    <ContainerWithHeader
+                    <ContainerWithHeaderAndButtons
                         title={'Servers'}
                         iconLeft={<StorageIcon />}
+                        buttons={[
+                            <ButtonGroup key={`server-header-buttons`}>
+                                <Button
+                                    variant={'contained'}
+                                    color={'success'}
+                                    startIcon={<AddIcon />}
+                                    sx={{ marginRight: 2 }}
+                                    onClick={onCreate}
+                                >
+                                    Create Server
+                                </Button>
+                            </ButtonGroup>
+                        ]}
                     >
                         <LazyTable<Server>
                             showPager={true}
                             count={count}
-                            rows={data}
-                            page={page}
-                            rowsPerPage={rowPerPageCount}
-                            sortOrder={sortOrder}
-                            sortColumn={sortColumn}
+                            rows={servers}
+                            page={Number(state.page ?? 0)}
+                            rowsPerPage={Number(
+                                state.rows ?? RowsPerPage.TwentyFive
+                            )}
+                            sortOrder={state.sortOrder}
+                            sortColumn={state.sortColumn}
                             onSortColumnChanged={async (column) => {
-                                setSortColumn(column);
+                                setState({ sortColumn: column });
                             }}
                             onSortOrderChanged={async (direction) => {
-                                setSortOrder(direction);
+                                setState({ sortOrder: direction });
                             }}
                             onPageChange={(_, newPage: number) => {
-                                setPage(newPage);
+                                setState({ page: newPage });
                             }}
                             onRowsPerPageChange={(
                                 event: React.ChangeEvent<
                                     HTMLInputElement | HTMLTextAreaElement
                                 >
                             ) => {
-                                setRowPerPageCount(
-                                    parseInt(event.target.value, 10)
-                                );
-                                setPage(0);
+                                setState({
+                                    rows: Number(event.target.value),
+                                    page: 0
+                                });
                             }}
                             columns={[
                                 {
@@ -184,10 +229,7 @@ export const AdminServersPage = () => {
                                             <IconButton
                                                 color={'warning'}
                                                 onClick={async () => {
-                                                    await NiceModal.show(
-                                                        ModalServerDelete,
-                                                        { server: row }
-                                                    );
+                                                    await onEdit(row);
                                                 }}
                                             >
                                                 <Tooltip
@@ -203,7 +245,7 @@ export const AdminServersPage = () => {
                                 }
                             ]}
                         />
-                    </ContainerWithHeader>
+                    </ContainerWithHeaderAndButtons>
                 </Stack>
             </Grid>
         </Grid>
