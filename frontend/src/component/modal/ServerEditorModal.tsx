@@ -1,5 +1,5 @@
 import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
-import NiceModal from '@ebay/nice-modal-react';
+import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
@@ -10,21 +10,22 @@ import {
     apiCreateServer,
     SaveServerOpts,
     Server,
-    apiSaveServer
+    apiSaveServer,
+    APIError
 } from '../../api';
 import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
 import { logErr } from '../../util/errors';
-import { Nullable } from '../../util/types';
 import { Heading } from '../Heading';
 import { VCenterBox } from '../VCenterBox';
+import { ErrorField } from '../formik/ErrorField';
 import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
 
 export interface ServerEditorModalProps extends ConfirmationModalProps<Server> {
-    server: Nullable<Server>;
+    server?: Server;
 }
 
 export const ServerEditorModal = NiceModal.create(
-    ({ onSuccess, server }: ServerEditorModalProps) => {
+    ({ server }: ServerEditorModalProps) => {
         const [serverId, setServerId] = useState<number>(0);
         const [serverName, setServerName] = useState<string>(
             server?.short_name ?? ''
@@ -45,6 +46,9 @@ export const ServerEditorModal = NiceModal.create(
         const [isEnabled, setIsEnabled] = useState<boolean>(false);
         const [enableStats, setEnableStats] = useState<boolean>(false);
         const [logSecret, setLogSecret] = useState<number>(0);
+        const [error, setError] = useState<string>();
+
+        const modal = useModal();
 
         useEffect(() => {
             setServerId(server?.server_id ?? 0);
@@ -69,7 +73,7 @@ export const ServerEditorModal = NiceModal.create(
 
         const { sendFlash } = useUserFlashCtx();
 
-        const handleSubmit = useCallback(() => {
+        const handleSubmit = useCallback(async () => {
             if (
                 !serverName ||
                 !serverNameLong ||
@@ -97,30 +101,21 @@ export const ServerEditorModal = NiceModal.create(
                 enable_stats: enableStats,
                 log_secret: logSecret
             };
-            if (serverId > 0) {
-                apiSaveServer(serverId, opts)
-                    .then((response) => {
-                        sendFlash(
-                            'success',
-                            `Server saved successfully: ${response.short_name}`
-                        );
-                        onSuccess && onSuccess(response);
-                    })
-                    .catch((err) => {
-                        sendFlash('error', `Failed to save server: ${err}`);
-                    });
-            } else {
-                apiCreateServer(opts)
-                    .then((response) => {
-                        sendFlash(
-                            'success',
-                            `Server created successfully: ${response.short_name}`
-                        );
-                        onSuccess && onSuccess(response);
-                    })
-                    .catch((err) => {
-                        sendFlash('error', `Failed to create server: ${err}`);
-                    });
+            try {
+                if (serverId > 0) {
+                    modal.resolve(await apiSaveServer(serverId, opts));
+                } else {
+                    modal.resolve(await apiCreateServer(opts));
+                }
+                await modal.hide();
+                setError(undefined);
+            } catch (e) {
+                modal.reject(e);
+                if (e instanceof APIError) {
+                    setError(e.message);
+                } else {
+                    setError('Unknown internal error');
+                }
             }
         }, [
             serverName,
@@ -136,17 +131,15 @@ export const ServerEditorModal = NiceModal.create(
             isEnabled,
             enableStats,
             logSecret,
-            serverId,
             sendFlash,
-            onSuccess
+            serverId,
+            modal
         ]);
 
         return (
             <ConfirmationModal
                 id={'modal-server-editor'}
-                onAccept={() => {
-                    handleSubmit();
-                }}
+                onAccept={handleSubmit}
                 aria-labelledby="modal-title"
                 aria-describedby="modal-description"
             >
@@ -345,6 +338,7 @@ export const ServerEditorModal = NiceModal.create(
                                 }
                             }}
                         />
+                        <ErrorField error={error} />
                     </Stack>
                 </Stack>
             </ConfirmationModal>
