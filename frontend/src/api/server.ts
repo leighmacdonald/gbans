@@ -1,5 +1,10 @@
 import { LazyResult } from '../component/table/LazyTableSimple';
-import { apiCall, QueryFilter, TimeStamped } from './common';
+import {
+    apiCall,
+    QueryFilter,
+    TimeStamped,
+    transformTimeStampedDates
+} from './common';
 
 export interface BaseServer {
     server_id: number;
@@ -98,13 +103,17 @@ export interface SaveServerOpts {
 }
 
 export const apiCreateServer = async (opts: SaveServerOpts) =>
-    await apiCall<Server, SaveServerOpts>(`/api/servers`, 'POST', opts);
+    transformTimeStampedDates(
+        await apiCall<Server, SaveServerOpts>(`/api/servers`, 'POST', opts)
+    );
 
 export const apiSaveServer = async (server_id: number, opts: SaveServerOpts) =>
-    await apiCall<Server, SaveServerOpts>(
-        `/api/servers/${server_id}`,
-        'POST',
-        opts
+    transformTimeStampedDates(
+        await apiCall<Server, SaveServerOpts>(
+            `/api/servers/${server_id}`,
+            'POST',
+            opts
+        )
     );
 
 export interface ServerQueryFilter extends QueryFilter<Server> {

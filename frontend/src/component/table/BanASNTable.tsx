@@ -150,19 +150,19 @@ export const BanASNTable = ({ newBans }: { newBans: ASNBanRecord[] }) => {
             <Grid container spacing={3}>
                 <Grid xs={12}>
                     <Grid container spacing={2}>
-                        <Grid xs>
+                        <Grid xs={4} sm={3} md={2}>
                             <ASNumberField />
                         </Grid>
-                        <Grid xs>
+                        <Grid xs={4} sm={3} md={2}>
                             <SourceIdField />
                         </Grid>
-                        <Grid xs>
+                        <Grid xs={4} sm={3} md={2}>
                             <TargetIDField />
                         </Grid>
-                        <Grid xs>
+                        <Grid xs={4} sm={3} md={2}>
                             <DeletedField />
                         </Grid>
-                        <Grid xs>
+                        <Grid xs={4} sm={3} md={2}>
                             <FilterButtons />
                         </Grid>
                     </Grid>

@@ -21,8 +21,8 @@ export const DurationStringField = () => {
         <FormControl fullWidth>
             <TextField
                 fullWidth
-                id={'demo_name'}
-                label={'Demo Name'}
+                id={'duration'}
+                label={'Duration'}
                 name={'duration'}
                 value={values.duration}
                 onChange={handleChange}

@@ -22,10 +22,10 @@ export const HomePage = (): JSX.Element => {
     const { currentUser } = useCurrentUserCtx();
     return (
         <Grid container spacing={3}>
-            <Grid xs={9}>
+            <Grid xs={12} sm={12} md={9}>
                 <NewsView itemsPerPage={3} />
             </Grid>
-            <Grid xs={3}>
+            <Grid xs={12} sm={12} md={3}>
                 <Stack spacing={3}>
                     {currentUser.ban_id == 0 ? (
                         <Button

@@ -17,8 +17,7 @@ import {
     BanReason,
     BanType,
     Duration,
-    SteamBanRecord,
-    transformTimeStampedDates
+    SteamBanRecord
 } from '../../api';
 import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
 import { Heading } from '../Heading';
@@ -106,7 +105,7 @@ export const BanSteamModal = NiceModal.create(
                             }
                         );
                         sendFlash('success', 'Updated ban successfully');
-                        modal.resolve(transformTimeStampedDates(ban_record));
+                        modal.resolve(ban_record);
                     } else {
                         const ban_record = await apiCreateBanSteam({
                             note: values.note,
@@ -120,7 +119,7 @@ export const BanSteamModal = NiceModal.create(
                             include_friends: values.include_friends
                         });
                         sendFlash('success', 'Created ban successfully');
-                        modal.resolve(transformTimeStampedDates(ban_record));
+                        modal.resolve(ban_record);
                     }
                     await modal.hide();
                     setError(undefined);

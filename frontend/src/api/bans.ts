@@ -287,10 +287,12 @@ export const apiGetAppeals = async (
 };
 
 export const apiCreateBanSteam = async (p: BanPayloadSteam) =>
-    await apiCall<SteamBanRecord, BanPayloadSteam>(
-        `/api/bans/steam/create`,
-        'POST',
-        p
+    transformTimeStampedDates(
+        await apiCall<SteamBanRecord, BanPayloadSteam>(
+            `/api/bans/steam/create`,
+            'POST',
+            p
+        )
     );
 
 interface UpdateBanPayload {
