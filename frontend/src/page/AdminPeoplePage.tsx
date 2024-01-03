@@ -124,16 +124,16 @@ export const AdminPeoplePage = (): JSX.Element => {
                         validationSchema={validationSchema}
                     >
                         <Grid container spacing={2}>
-                            <Grid xs>
+                            <Grid xs={6} sm={4} md={3}>
                                 <SteamIdField />
                             </Grid>
-                            <Grid xs>
+                            <Grid xs={6} sm={4} md={3}>
                                 <PersonanameField />
                             </Grid>
-                            <Grid xs>
+                            <Grid xs={6} sm={4} md={3}>
                                 <IPField />
                             </Grid>
-                            <Grid xs>
+                            <Grid xs={6} sm={4} md={3}>
                                 <FilterButtons />
                             </Grid>
                         </Grid>
