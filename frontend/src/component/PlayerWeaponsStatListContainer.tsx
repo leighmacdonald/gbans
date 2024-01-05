@@ -5,21 +5,25 @@ import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
 import Tooltip from '@mui/material/Tooltip';
 import { WeaponsOverallResult } from '../api';
-import { useWeaponsOverallStats } from '../hooks/useWeaponsOverallStats';
+import { usePlayerWeaponsOverallStats } from '../hooks/usePlayerWeaponsOverallStats';
 import { defaultFloatFmtPct, humanCount } from '../util/text';
 import { ContainerWithHeader } from './ContainerWithHeader';
 import { LoadingPlaceholder } from './LoadingPlaceholder';
 import { fmtWhenGt } from './PlayersOverallContainer';
 import { LazyTable, Order, RowsPerPage } from './table/LazyTable';
 
-export const WeaponsStatListContainer = () => {
+export const PlayerWeaponsStatListContainer = ({
+    steamId
+}: {
+    steamId: string;
+}) => {
     const [page, setPage] = useState(0);
     const [sortOrder, setSortOrder] = useState<Order>('desc');
     const [rows, setRows] = useState<RowsPerPage>(RowsPerPage.TwentyFive);
     const [sortColumn, setSortColumn] =
         useState<keyof WeaponsOverallResult>('kills');
 
-    const { data, loading, count } = useWeaponsOverallStats({
+    const { data, loading, count } = usePlayerWeaponsOverallStats(steamId, {
         offset: page * rows,
         limit: rows,
         order_by: sortColumn,
@@ -30,7 +34,7 @@ export const WeaponsStatListContainer = () => {
 
     return (
         <ContainerWithHeader
-            title={'Overall Weapon Stats'}
+            title={'Overall Player Weapon Stats'}
             iconLeft={<InsightsIcon />}
         >
             {loading ? (
