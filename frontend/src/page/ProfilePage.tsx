@@ -1,6 +1,5 @@
 import React from 'react';
 import { useParams } from 'react-router';
-import InsightsIcon from '@mui/icons-material/Insights';
 import LinkIcon from '@mui/icons-material/Link';
 import LocalLibraryIcon from '@mui/icons-material/LocalLibrary';
 import Box from '@mui/material/Box';
@@ -10,14 +9,13 @@ import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import { apiGetPlayerWeaponsOverall } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder';
 import { PlayerClassStatsContainer } from '../component/PlayerClassStatsContainer';
 import { PlayerStatsOverallContainer } from '../component/PlayerStatsOverallContainer';
+import { PlayerWeaponsStatListContainer } from '../component/PlayerWeaponsStatListContainer';
 import { ProfileInfoBox } from '../component/ProfileInfoBox';
 import { SteamIDList } from '../component/SteamIDList';
-import { WeaponsStatListContainer } from '../component/WeaponsStatListContainer';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useProfile } from '../hooks/useProfile';
 import { createExternalLinks } from '../util/history';
@@ -122,14 +120,8 @@ export const ProfilePage = () => {
                     </Grid>
                     <Grid xs={12}>
                         {currentUser.permission_level >= 10 && (
-                            <WeaponsStatListContainer
-                                title={'Overall Player Weapon Stats'}
-                                icon={<InsightsIcon />}
-                                fetchData={() =>
-                                    apiGetPlayerWeaponsOverall(
-                                        data?.player.steam_id
-                                    )
-                                }
+                            <PlayerWeaponsStatListContainer
+                                steamId={data.player.steam_id}
                             />
                         )}
                     </Grid>

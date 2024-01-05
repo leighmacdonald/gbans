@@ -43,15 +43,15 @@ export interface Weapon {
     name: string;
 }
 
-export interface BaseWeaponStats {
-    kills: number;
-    damage: number;
-    headshots: number;
-    airshots: number;
-    backstabs: number;
-    shots: number;
-    hits: number;
-}
+// export interface BaseWeaponStats {
+//     kills: number;
+//     damage: number;
+//     headshots: number;
+//     airshots: number;
+//     backstabs: number;
+//     shots: number;
+//     hits: number;
+// }
 
 export interface WeaponsOverallResult extends Weapon, BaseWeaponStats {
     kills_pct: number;

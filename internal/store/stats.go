@@ -471,8 +471,7 @@ func (db *Store) WeaponsOverallByPlayer(ctx context.Context, steamID steamid.SID
 }
 
 func (db *Store) PlayersOverallByKills(ctx context.Context, count int) ([]PlayerWeaponResult, error) {
-	const query = `
-		SELECT row_number() over (order by c.assists + w.kills desc nulls last) as rank,
+	const query = `SELECT row_number() over (order by c.assists + w.kills desc nulls last) as rank,
 			   p.personaname,
 			   p.steam_id,
 			   p.avatarhash,
