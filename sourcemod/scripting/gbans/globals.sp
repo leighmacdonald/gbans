@@ -11,7 +11,7 @@
 #define _gbans_globals_included 
 
 #define PLUGIN_AUTHOR "Leigh MacDonald"
-#define PLUGIN_VERSION "0.5.12"
+#define PLUGIN_VERSION "0.5.11"
 #define PLUGIN_NAME "gbans"
 
 #define MAX_SCORES 256
@@ -53,12 +53,6 @@ ConVar gTimeStop = null;
 ConVar gFinishMap = null;
 ConVar gDemoPathActive = null;
 ConVar gDemoPathComplete = null;
-
-// Stopwatch options
-ConVar gStopwatchEnabled = null;
-ConVar gStopwatchNameRed = null;
-ConVar gStopwatchNameBlu = null;
-ConVar gStopwatchChangelvlTime = null;
 
 // Game ruleset options
 ConVar gRulesRoundTime = null;
