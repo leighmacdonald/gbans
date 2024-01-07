@@ -592,7 +592,7 @@ func (db *Store) GetExpiredProfiles(ctx context.Context, limit uint64) ([]Person
 			"muted").
 		From("person").
 		OrderBy("updated_on_steam ASC").
-		Where(sq.Lt{"updated_on_steam": time.Now().AddDate(0, 0, -7)}).
+		Where(sq.Lt{"updated_on_steam": time.Now().AddDate(0, 0, -30)}).
 		Limit(limit))
 	if errQuery != nil {
 		return nil, errQuery
