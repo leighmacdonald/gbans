@@ -602,7 +602,7 @@ func (app *App) profileUpdater(ctx context.Context) {
 	var (
 		log    = app.log.Named("profileUpdate")
 		run    = make(chan any)
-		ticker = time.NewTicker(time.Second * 60)
+		ticker = time.NewTicker(time.Second * 300)
 	)
 
 	go func() {
