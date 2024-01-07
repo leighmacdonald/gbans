@@ -189,16 +189,6 @@ func onAPIPostServerCheck(app *App) gin.HandlerFunc {
 			zap.Int64("sid64", steamid.SIDToSID64(request.SteamID).Int64()),
 			zap.String("name", request.Name))
 
-		if errAddHist := app.db.AddConnectionHistory(ctx, &store.PersonConnection{
-			IPAddr:      request.IP,
-			SteamID:     steamid.SIDToSID64(request.SteamID),
-			PersonaName: request.Name,
-			CreatedOn:   time.Now(),
-			ServerID:    ctx.GetInt("server_id"),
-		}); errAddHist != nil {
-			log.Error("Failed to add conn history", zap.Error(errAddHist))
-		}
-
 		resp := CheckResponse{
 			ClientID: request.ClientID,
 			SteamID:  request.SteamID,
@@ -209,13 +199,32 @@ func onAPIPostServerCheck(app *App) gin.HandlerFunc {
 		responseCtx, cancelResponse := context.WithTimeout(ctx, time.Second*15)
 		defer cancelResponse()
 
-		// Check SteamID
 		steamID := steamid.SIDToSID64(request.SteamID)
 		if !steamID.Valid() {
 			resp.Msg = "Invalid steam id"
 			ctx.JSON(http.StatusBadRequest, resp)
 
 			return
+		}
+
+		var person store.Person
+		if errPerson := app.PersonBySID(responseCtx, steamID, &person); errPerson != nil {
+			ctx.JSON(http.StatusInternalServerError, CheckResponse{
+				BanType: store.Unknown,
+				Msg:     "Error updating profile state",
+			})
+
+			return
+		}
+
+		if errAddHist := app.db.AddConnectionHistory(ctx, &store.PersonConnection{
+			IPAddr:      request.IP,
+			SteamID:     steamID,
+			PersonaName: request.Name,
+			CreatedOn:   time.Now(),
+			ServerID:    ctx.GetInt("server_id"),
+		}); errAddHist != nil {
+			log.Error("Failed to add conn history", zap.Error(errAddHist))
 		}
 
 		if parentID, banned := app.IsGroupBanned(steamID); banned {
@@ -230,16 +239,6 @@ func onAPIPostServerCheck(app *App) gin.HandlerFunc {
 			ctx.JSON(http.StatusOK, resp)
 			log.Info("Player dropped", zap.String("drop_type", "group"),
 				zap.Int64("sid64", steamID.Int64()))
-
-			return
-		}
-
-		var person store.Person
-		if errPerson := app.PersonBySID(responseCtx, steamID, &person); errPerson != nil {
-			ctx.JSON(http.StatusInternalServerError, CheckResponse{
-				BanType: store.Unknown,
-				Msg:     "Error updating profile state",
-			})
 
 			return
 		}

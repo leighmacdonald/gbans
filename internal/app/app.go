@@ -539,7 +539,7 @@ func (app *App) chatRecorder(ctx context.Context) {
 				}
 
 				var author store.Person
-				if errPerson := app.PersonBySID(ctx, newServerEvent.SID, &author); errPerson != nil {
+				if errPerson := app.db.GetPersonBySteamID(ctx, newServerEvent.SID, &author); errPerson != nil {
 					log.Error("Failed to add chat history, could not get author", zap.Error(errPerson))
 
 					continue
@@ -809,7 +809,7 @@ func (app *App) PersonBySID(ctx context.Context, sid steamid.SID64, person *stor
 		return errors.Wrapf(errGetPerson, "Failed to get person instance: %s", sid)
 	}
 
-	if person.IsNew || time.Since(person.UpdatedOnSteam) > time.Hour*24 {
+	if person.IsNew || time.Since(person.UpdatedOnSteam) > time.Hour*24*30 {
 		summaries, errSummaries := steamweb.PlayerSummaries(ctx, steamid.Collection{sid})
 		if errSummaries != nil {
 			return errors.Wrapf(errSummaries, "Failed to get Player summary: %v", errSummaries)
