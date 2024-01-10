@@ -14,3 +14,7 @@ export const PersonCellField = <T,>(props: PersonCellProps) => {
 
     return <PersonCell {...props} onClick={onClick} />;
 };
+
+export const PersonCellFieldNonInteractive = (props: PersonCellProps) => {
+    return <PersonCell {...props} />;
+};
