@@ -1,6 +1,9 @@
 import { createTheme, PaletteMode, PaletteOptions } from '@mui/material';
 import darkScrollbar from '@mui/material/darkScrollbar';
 
+export const blu = '#547d8c';
+export const red = '#a7584b';
+
 const baseFontSet = [
     '"Helvetica Neue"',
     'Helvetica',

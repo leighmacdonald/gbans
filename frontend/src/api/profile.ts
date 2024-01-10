@@ -189,6 +189,7 @@ export interface MessageQuery extends QueryFilter<PersonMessage> {
     server_id?: number;
     date_start?: Date;
     date_end?: Date;
+    match_id?: string;
 }
 
 export const apiGetMessages = async (

@@ -38,9 +38,10 @@ const (
 )
 
 type matchTrigger struct {
-	Type   matchTriggerType
-	UUID   uuid.UUID
-	Server store.Server
+	Type     matchTriggerType
+	UUID     uuid.UUID
+	Server   store.Server
+	DemoName string
 }
 
 // summarizer is the central collection point for summarizing matches live from UDP log events.
@@ -59,6 +60,7 @@ func (mh *MatchHandler) summarizer(ctx context.Context) {
 					log:            mh.log.Named(trigger.Server.ShortName),
 					incomingEvents: make(chan logparse.ServerEvent),
 					server:         trigger.Server,
+					demoFile:       trigger.DemoName,
 				}
 
 				go matchContext.start(cancelCtx)
@@ -93,8 +95,7 @@ func (mh *MatchHandler) summarizer(ctx context.Context) {
 
 			matchContext.incomingEvents <- evt
 
-			switch evt.EventType {
-			case logparse.WTeamFinalScore:
+			if evt.EventType == logparse.WTeamFinalScore {
 				matchContext.finalScores++
 				if matchContext.finalScores < 2 {
 					continue

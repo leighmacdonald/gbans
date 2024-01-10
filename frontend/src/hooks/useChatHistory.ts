@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { apiSearchPeople, Person, PlayerQuery } from '../api';
+import { apiGetMessages, MessageQuery, PersonMessage } from '../api';
 import { logErr } from '../util/errors';
 
-export const usePeople = (opts: PlayerQuery) => {
-    const [data, setData] = useState<Person[]>([]);
+export const useChatHistory = (opts: MessageQuery) => {
+    const [data, setData] = useState<PersonMessage[]>([]);
     const [count, setCount] = useState(0);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState();
@@ -11,7 +11,7 @@ export const usePeople = (opts: PlayerQuery) => {
     useEffect(() => {
         const abortController = new AbortController();
         setLoading(true);
-        apiSearchPeople(
+        apiGetMessages(
             {
                 personaname: opts.personaname,
                 deleted: opts.deleted,
@@ -19,8 +19,12 @@ export const usePeople = (opts: PlayerQuery) => {
                 offset: opts.offset,
                 limit: opts.limit,
                 order_by: opts.order_by,
-                steam_id: opts.steam_id,
-                ip: opts.ip
+                match_id: opts.match_id,
+                date_start: opts.date_start,
+                date_end: opts.date_end,
+                server_id: opts.server_id,
+                source_id: opts.source_id,
+                query: opts.query
             },
             abortController
         )
@@ -40,12 +44,16 @@ export const usePeople = (opts: PlayerQuery) => {
     }, [
         opts.deleted,
         opts.desc,
-        opts.ip,
+        opts.match_id,
         opts.limit,
         opts.offset,
         opts.order_by,
         opts.personaname,
-        opts.steam_id
+        opts.date_start,
+        opts.date_end,
+        opts.server_id,
+        opts.source_id,
+        opts.query
     ]);
 
     return { data, count, loading, error };
