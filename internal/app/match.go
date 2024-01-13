@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"strings"
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/store"
@@ -41,7 +42,17 @@ type matchTrigger struct {
 	Type     matchTriggerType
 	UUID     uuid.UUID
 	Server   store.Server
+	MapName  string
 	DemoName string
+}
+
+func parseMapName(name string) string {
+	if strings.HasPrefix(name, "workshop/") {
+		parts := strings.Split(strings.TrimPrefix(name, "workshop/"), ".ugc")
+		name = parts[0]
+	}
+
+	return name
 }
 
 // summarizer is the central collection point for summarizing matches live from UDP log events.
@@ -54,13 +65,16 @@ func (mh *MatchHandler) summarizer(ctx context.Context) {
 			switch trigger.Type {
 			case matchTriggerStart:
 				cancelCtx, cancel := context.WithCancel(ctx)
+				match := logparse.NewMatch(trigger.Server.ServerID, trigger.Server.Name)
+				match.MapName = parseMapName(trigger.MapName)
+				match.DemoName = trigger.DemoName
+
 				matchContext := &activeMatchContext{
-					match:          logparse.NewMatch(trigger.Server.ServerID, trigger.Server.Name),
+					match:          match,
 					cancel:         cancel,
 					log:            mh.log.Named(trigger.Server.ShortName),
 					incomingEvents: make(chan logparse.ServerEvent),
 					server:         trigger.Server,
-					demoFile:       trigger.DemoName,
 				}
 
 				go matchContext.start(cancelCtx)
