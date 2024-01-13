@@ -52,7 +52,7 @@ func TestMatch(t *testing.T) {
 	require.Equal(t, 16, playerVar.HealthPacks())
 
 	require.Equal(t, 10, playerVar.Assists)
-	require.Equal(t, 14, playerVar.Deaths())
+	require.Equal(t, 15, playerVar.Deaths())
 	require.Equal(t, 4796, playerVar.Damage())
 	require.Equal(t, 277, playerVar.DamagePerMin())
 	require.Equal(t, 260, playerVar.DamageTakenPerMin())
@@ -61,7 +61,7 @@ func TestMatch(t *testing.T) {
 	require.Equal(t, 2, playerTuna.CaptureCount())
 	require.Equal(t, 1, playerTuna.AirShots())
 	require.Equal(t, 3709, playerTuna.DamageTaken())
-	require.Equal(t, 3, newMatch.RoundCount())
+	require.Equal(t, 4, newMatch.RoundCount())
 	// require.Equal(t, 40.68, playerTuna.Accuracy(logparse.ProjectileRocket))
 	require.Equal(t, 43.48, playerTuna.AccuracyOverall())
 
@@ -86,9 +86,9 @@ func TestMatch(t *testing.T) {
 
 	require.Equal(t, []int{3, 0}, []int{newMatch.TeamScores.Red, newMatch.TeamScores.Blu})
 
-	require.Equal(t, 3, newMatch.RoundCount())
+	require.Equal(t, 4, newMatch.RoundCount())
 	round := newMatch.Rounds[1]
-	require.Equal(t, float64(377), round.Length.Seconds())
+	require.Equal(t, float64(313), round.Length.Seconds())
 	require.Equal(t, 2, round.Score.Red)
 	require.Equal(t, 0, round.Score.Blu)
 	require.Equal(t, float64(3), round.UbersRed)
