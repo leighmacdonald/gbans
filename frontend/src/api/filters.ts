@@ -27,6 +27,7 @@ export interface Filter {
     trigger_count?: number;
     action: FilterAction;
     duration: string;
+    weight: number;
     created_on?: Date;
     updated_on?: Date;
 }

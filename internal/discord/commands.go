@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -564,7 +565,7 @@ func (bot *Bot) onInteractionCreate(session *discordgo.Session, interaction *dis
 
 		response, errHandleCommand := handler(commandCtx, session, interaction)
 		if errHandleCommand != nil || response == nil {
-			errEmbed := NewEmbed("Error Returned").
+			errEmbed := NewEmbed(config.Config{}, "Error Returned").Embed().
 				SetColor(bot.Colour.Error).
 				AddField("command", string(command)).
 				SetDescription(errHandleCommand.Error())

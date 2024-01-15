@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/leighmacdonald/gbans/internal/app"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/spf13/cobra"
@@ -25,12 +26,12 @@ func serveCmd() *cobra.Command {
 			rootCtx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 			defer stop()
 
-			var conf app.Config
-			if errConfig := app.ReadConfig(&conf, false); errConfig != nil {
+			var conf config.Config
+			if errConfig := config.Read(&conf, false); errConfig != nil {
 				panic(fmt.Sprintf("Failed to read config: %v", errConfig))
 			}
 
-			rootLogger := app.MustCreateLogger(&conf)
+			rootLogger := config.MustCreateLogger(&conf)
 			defer func() {
 				if conf.Log.File != "" {
 					_ = rootLogger.Sync()
@@ -48,8 +49,7 @@ func serveCmd() *cobra.Command {
 				}
 			}()
 
-			bot, errBot := discord.New(rootLogger, conf.Discord.Token,
-				conf.Discord.AppID, conf.Discord.UnregisterOnStart, conf.General.ExternalURL)
+			bot, errBot := discord.New(rootLogger, conf)
 			if errBot != nil {
 				rootLogger.Fatal("Failed to connect to perform initial discord connection")
 			}
@@ -59,7 +59,7 @@ func serveCmd() *cobra.Command {
 				rootLogger.Fatal("Failed to setup S3 client", zap.Error(errClient))
 			}
 
-			application := app.New(&conf, database, bot, rootLogger, s3Client)
+			application := app.New(conf, database, bot, rootLogger, s3Client)
 
 			if errInit := application.Init(rootCtx); errInit != nil {
 				rootLogger.Fatal("Failed to init app", zap.Error(errInit))

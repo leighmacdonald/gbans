@@ -12,14 +12,17 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/bwmarrin/discordgo"
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
+	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/gbans/pkg/wiki"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
@@ -34,19 +37,20 @@ var (
 )
 
 type App struct {
-	conf                 *Config
-	bot                  *discord.Bot
+	conf                 config.Config
+	confMu               sync.RWMutex
+	discord              ChatBot
 	db                   *store.Store
 	log                  *zap.Logger
 	logFileChan          chan *logFilePayload
 	notificationChan     chan NotificationPayload
-	incomingGameChat     chan store.PersonMessage
 	state                *serverStateCollector
 	bannedGroupMembers   map[int64]steamid.Collection
 	bannedGroupMembersMu *sync.RWMutex
 	patreon              *patreonManager
 	eb                   *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 	wordFilters          *wordFilters
+	warningTracker       *WarningTracker
 	mc                   *metricCollector
 	assetStore           AssetStore
 	logListener          *logparse.UDPLogListener
@@ -56,9 +60,16 @@ type App struct {
 	netBlock             *NetworkBlocker
 }
 
-func New(conf *Config, database *store.Store, bot *discord.Bot, logger *zap.Logger, assetStore AssetStore) App {
-	application := App{
-		bot:                  bot,
+type ChatBot interface {
+	SendPayload(payload discord.Payload)
+	RegisterHandler(cmd discord.Cmd, handler discord.CommandHandler) error
+}
+
+type CommandHandler func(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error)
+
+func New(conf config.Config, database *store.Store, bot ChatBot, logger *zap.Logger, assetStore AssetStore) *App {
+	application := &App{
+		discord:              bot,
 		eb:                   fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent](),
 		db:                   database,
 		conf:                 conf,
@@ -66,7 +77,6 @@ func New(conf *Config, database *store.Store, bot *discord.Bot, logger *zap.Logg
 		log:                  logger,
 		logFileChan:          make(chan *logFilePayload, 10),
 		notificationChan:     make(chan NotificationPayload, 5),
-		incomingGameChat:     make(chan store.PersonMessage, 5),
 		bannedGroupMembers:   map[int64]steamid.Collection{},
 		bannedGroupMembersMu: &sync.RWMutex{},
 		matchUUIDMap:         fp.NewMutexMap[int, uuid.UUID](),
@@ -78,6 +88,12 @@ func New(conf *Config, database *store.Store, bot *discord.Bot, logger *zap.Logg
 		netBlock:             NewNetworkBlocker(),
 	}
 
+	application.setConfig(conf)
+
+	application.warningTracker = newWarningTracker(logger, database, conf.Filter,
+		onWarningHandler(application),
+		onWarningExceeded(application))
+
 	if conf.Discord.Enabled {
 		if errReg := application.registerDiscordHandlers(); errReg != nil {
 			panic(errReg)
@@ -87,8 +103,28 @@ func New(conf *Config, database *store.Store, bot *discord.Bot, logger *zap.Logg
 	return application
 }
 
+func (app *App) bot() ChatBot { // nolint:ireturn
+	return app.discord
+}
+
+func (app *App) config() config.Config {
+	app.confMu.RLock()
+	defer app.confMu.RUnlock()
+
+	return app.conf
+}
+
+func (app *App) setConfig(conf config.Config) {
+	app.confMu.Lock()
+	defer app.confMu.Unlock()
+
+	app.conf = conf
+}
+
 func (app *App) initLogAddress() {
-	if app.conf.Debug.AddRCONLogAddress == "" {
+	conf := app.config()
+
+	if conf.Debug.AddRCONLogAddress == "" {
 		return
 	}
 
@@ -102,22 +138,14 @@ func (app *App) initLogAddress() {
 			continue
 		}
 
-		_, errExec := server.Exec(fmt.Sprintf("logaddress_add %s", app.conf.Debug.AddRCONLogAddress))
+		_, errExec := server.Exec(fmt.Sprintf("logaddress_add %s", conf.Debug.AddRCONLogAddress))
 		if errExec != nil {
 			app.log.Error("Failed to set logaddress")
 		}
 	}
 }
 
-type userWarning struct {
-	WarnReason    store.Reason
-	Message       string
-	Matched       string
-	MatchedFilter *store.Filter
-	CreatedOn     time.Time
-}
-
-func firstTimeSetup(ctx context.Context, conf *Config, database *store.Store) error {
+func firstTimeSetup(ctx context.Context, conf config.Config, database *store.Store) error {
 	if !conf.General.Owner.Valid() {
 		return errors.New("Configured owner is not a valid steam64")
 	}
@@ -198,7 +226,7 @@ func (app *App) Init(ctx context.Context) error {
 	app.startWorkers(ctx)
 
 	// Load the filtered word set into memory
-	if app.conf.Filter.Enabled {
+	if app.config().Filter.Enabled {
 		if errFilter := app.LoadFilters(ctx); errFilter != nil {
 			return errors.Wrap(errFilter, "Failed to load filters")
 		}
@@ -270,7 +298,7 @@ func (app *App) StartHTTP(ctx context.Context) error {
 	app.log.Info("Service status changed", zap.String("state", "ready"))
 	defer app.log.Info("Service status changed", zap.String("state", "stopped"))
 
-	if app.conf.General.Mode == ReleaseMode {
+	if app.config().General.Mode == config.ReleaseMode {
 		gin.SetMode(gin.ReleaseMode)
 	} else {
 		gin.SetMode(gin.DebugMode)
@@ -298,212 +326,9 @@ func (app *App) StartHTTP(ctx context.Context) error {
 	return nil
 }
 
-type LinkablePath interface {
-	Path() string
-}
-
-func (app *App) ExtURL(obj LinkablePath) string {
-	return app.ExtURLRaw(obj.Path())
-}
-
-func (app *App) ExtURLRaw(path string, args ...any) string {
-	return strings.TrimRight(app.conf.General.ExternalURL, "/") + fmt.Sprintf(strings.TrimLeft(path, "."), args...)
-}
-
 type newUserWarning struct {
 	userMessage store.PersonMessage
 	userWarning
-}
-
-// warnWorker handles tracking and applying warnings based on incoming events.
-func (app *App) warnWorker(ctx context.Context) { //nolint:maintidx
-	var (
-		log         = app.log.Named("warnWorker")
-		warnings    = map[steamid.SID64][]userWarning{}
-		ticker      = time.NewTicker(1 * time.Second)
-		warningChan = make(chan newUserWarning)
-	)
-
-	warningHandler := func() {
-		for {
-			warnDur := app.conf.General.WarningTimeoutValue
-			select {
-			case now := <-ticker.C:
-				for steamID := range warnings {
-					for warnIdx, warning := range warnings[steamID] {
-						if now.Sub(warning.CreatedOn) > warnDur {
-							if len(warnings[steamID]) > 1 {
-								warnings[steamID] = append(warnings[steamID][:warnIdx], warnings[steamID][warnIdx+1])
-							} else {
-								delete(warnings, steamID)
-							}
-						}
-					}
-				}
-			case newWarn := <-warningChan:
-				if !newWarn.userMessage.SteamID.Valid() {
-					continue
-				}
-
-				newWarn.MatchedFilter.TriggerCount++
-				if errSave := app.db.SaveFilter(ctx, newWarn.MatchedFilter); errSave != nil {
-					log.Error("Failed to update filter trigger count", zap.Error(errSave))
-				}
-
-				var person store.Person
-				if personErr := app.PersonBySID(ctx, newWarn.userMessage.SteamID, &person); personErr != nil {
-					log.Error("Failed to get person for warning", zap.Error(personErr))
-
-					continue
-				}
-
-				if !newWarn.MatchedFilter.IsEnabled {
-					continue
-				}
-
-				title := fmt.Sprintf("Language Warning (#%d/%d)", len(warnings[newWarn.userMessage.SteamID])+1, app.conf.General.WarningLimit)
-				if app.conf.Filter.Dry {
-					title = "[DRYRUN] " + title
-				}
-
-				msgEmbed := discord.
-					NewEmbed(title).
-					SetDescription(newWarn.userWarning.Message).
-					SetColor(app.bot.Colour.Warn).
-					AddField("Filter ID", fmt.Sprintf("%d", newWarn.MatchedFilter.FilterID)).
-					AddField("Matched", newWarn.Matched).
-					AddField("Server", newWarn.userMessage.ServerName).InlineAllFields().
-					AddField("Pattern", newWarn.MatchedFilter.Pattern)
-
-				app.addAuthor(ctx, msgEmbed, newWarn.userMessage.SteamID)
-
-				discord.AddFieldsSteamID(msgEmbed, newWarn.userMessage.SteamID)
-
-				if !newWarn.MatchedFilter.IsEnabled {
-					continue
-				}
-
-				if !app.conf.Filter.Dry {
-					_, found := warnings[newWarn.userMessage.SteamID]
-					if !found {
-						warnings[newWarn.userMessage.SteamID] = []userWarning{}
-					}
-
-					warnings[newWarn.userMessage.SteamID] = append(warnings[newWarn.userMessage.SteamID], newWarn.userWarning)
-
-					if len(warnings[newWarn.userMessage.SteamID]) > app.conf.General.WarningLimit {
-						log.Info("Warn limit exceeded",
-							zap.Int64("sid64", newWarn.userMessage.SteamID.Int64()),
-							zap.Int("count", len(warnings[newWarn.userMessage.SteamID])))
-
-						var (
-							errBan   error
-							banSteam store.BanSteam
-							expIn    = "Permanent"
-							expAt    = expIn
-						)
-
-						if newWarn.MatchedFilter.Action == store.Ban || newWarn.MatchedFilter.Action == store.Mute {
-							duration, errDuration := ParseDuration(newWarn.MatchedFilter.Duration)
-							if errDuration != nil {
-								log.Error("Failed to parse word filter duration value", zap.Error(errDuration))
-
-								continue
-							}
-
-							if errNewBan := store.NewBanSteam(ctx, store.StringSID(app.conf.General.Owner.String()),
-								store.StringSID(newWarn.userMessage.SteamID.String()),
-								duration,
-								newWarn.WarnReason,
-								"",
-								"Automatic warning ban",
-								store.System,
-								0,
-								store.NoComm,
-								false,
-								&banSteam); errNewBan != nil {
-								log.Error("Failed to create warning ban", zap.Error(errNewBan))
-
-								continue
-							}
-						}
-
-						switch newWarn.MatchedFilter.Action {
-						case store.Mute:
-							banSteam.BanType = store.NoComm
-							errBan = app.BanSteam(ctx, &banSteam)
-						case store.Ban:
-							banSteam.BanType = store.Banned
-							errBan = app.BanSteam(ctx, &banSteam)
-						case store.Kick:
-							errBan = app.Kick(ctx, store.System, newWarn.userMessage.SteamID, app.conf.General.Owner, newWarn.WarnReason)
-						}
-
-						if errBan != nil {
-							log.Error("Failed to apply warning action",
-								zap.Error(errBan),
-								zap.Int("action", int(newWarn.MatchedFilter.Action)))
-
-							continue
-						}
-
-						msgEmbed.AddField("Name", person.PersonaName)
-
-						if banSteam.ValidUntil.Year()-time.Now().Year() < 5 {
-							expIn = FmtDuration(banSteam.ValidUntil)
-							expAt = FmtTimeShort(banSteam.ValidUntil)
-						}
-
-						msgEmbed.AddField("Expires In", expIn)
-						msgEmbed.AddField("Expires At", expAt)
-					} else {
-						msg := fmt.Sprintf("[WARN #%d] Please refrain from using slurs/toxicity (see: rules & MOTD). "+
-							"Further offenses will result in mutes/bans", len(warnings[newWarn.userMessage.SteamID]))
-
-						if errPSay := app.PSay(ctx, newWarn.userMessage.SteamID, msg); errPSay != nil {
-							log.Error("Failed to send user warning psay message", zap.Error(errPSay))
-						}
-					}
-				}
-
-				if app.conf.Filter.PingDiscord {
-					app.bot.SendPayload(discord.Payload{
-						ChannelID: app.conf.Discord.LogChannelID,
-						Embed:     msgEmbed.MessageEmbed,
-					})
-				}
-
-			case <-ctx.Done():
-				return
-			}
-		}
-	}
-
-	go warningHandler()
-
-	for {
-		select {
-		case userMessage := <-app.incomingGameChat:
-			matchedWord, matchedFilter := app.wordFilters.findFilteredWordMatch(userMessage.Body)
-			if matchedFilter != nil {
-				if errSaveMatch := app.db.AddMessageFilterMatch(ctx, userMessage.PersonMessageID, matchedFilter.FilterID); errSaveMatch != nil {
-					log.Error("Failed to save message match status", zap.Error(errSaveMatch))
-				}
-				warningChan <- newUserWarning{
-					userMessage: userMessage,
-					userWarning: userWarning{
-						WarnReason:    store.Language,
-						Message:       userMessage.Body,
-						Matched:       matchedWord,
-						MatchedFilter: matchedFilter,
-						CreatedOn:     time.Now(),
-					},
-				}
-			}
-		case <-ctx.Done():
-			return
-		}
-	}
 }
 
 func (app *App) chatRecorder(ctx context.Context) {
@@ -564,15 +389,37 @@ func (app *App) chatRecorder(ctx context.Context) {
 					continue
 				}
 
-				// log.Debug("Chat message",
-				//	zap.Int64("id", msg.PersonMessageID),
-				//	zap.String("server", evt.ShortName),
-				//	zap.String("name", newServerEvent.Name),
-				//	zap.String("steam_id", newServerEvent.SID.String()),
-				//	zap.Bool("team", msg.Team),
-				//	zap.String("message", msg.Body))
+				// app.incomingGameChat <- msg
 
-				app.incomingGameChat <- msg
+				go func(userMsg store.PersonMessage) {
+					if msg.ServerName == "localhost-1" {
+						log.Debug("Chat message",
+							zap.Int64("id", msg.PersonMessageID),
+							zap.String("server", evt.ServerName),
+							zap.String("name", newServerEvent.Name),
+							zap.String("steam_id", newServerEvent.SID.String()),
+							zap.Bool("team", msg.Team),
+							zap.String("message", msg.Body))
+					}
+
+					matchedWord, matchedFilter := app.wordFilters.findFilteredWordMatch(userMsg.Body)
+					if matchedFilter != nil {
+						if errSaveMatch := app.db.AddMessageFilterMatch(ctx, userMsg.PersonMessageID, matchedFilter.FilterID); errSaveMatch != nil {
+							log.Error("Failed to save message match status", zap.Error(errSaveMatch))
+						}
+
+						app.warningTracker.warningChan <- newUserWarning{
+							userMessage: userMsg,
+							userWarning: userWarning{
+								WarnReason:    store.Language,
+								Message:       userMsg.Body,
+								Matched:       matchedWord,
+								MatchedFilter: matchedFilter,
+								CreatedOn:     time.Now(),
+							},
+						}
+					}
+				}(msg)
 			}
 		}
 	}
@@ -743,8 +590,8 @@ func (app *App) startWorkers(ctx context.Context) {
 	go app.patreon.updater(ctx)
 	go app.banSweeper(ctx)
 	go app.profileUpdater(ctx)
-	go app.warnWorker(ctx)
-	go app.logReader(ctx, app.conf.Debug.WriteUnhandledLogEvents)
+	go app.warningTracker.start(ctx)
+	go app.logReader(ctx, app.config().Debug.WriteUnhandledLogEvents)
 	go app.initLogSrc(ctx)
 	go logMetricsConsumer(ctx, app.mc, app.eb, app.log)
 	go app.matchSummarizer(ctx)
@@ -761,9 +608,10 @@ func (app *App) startWorkers(ctx context.Context) {
 
 // UDP log sink.
 func (app *App) initLogSrc(ctx context.Context) {
-	logSrc, errLogSrc := logparse.NewUDPLogListener(app.log, app.conf.Log.SrcdsLogAddr, func(eventType logparse.EventType, event logparse.ServerEvent) {
-		app.eb.Emit(event.EventType, event)
-	})
+	logSrc, errLogSrc := logparse.NewUDPLogListener(app.log, app.config().Log.SrcdsLogAddr,
+		func(eventType logparse.EventType, event logparse.ServerEvent) {
+			app.eb.Emit(event.EventType, event)
+		})
 
 	if errLogSrc != nil {
 		app.log.Fatal("Failed to setup udp log src", zap.Error(errLogSrc))
@@ -902,12 +750,12 @@ func (app *App) SendNotification(ctx context.Context, notification NotificationP
 
 	go func(ids []string, payload NotificationPayload) {
 		for _, discordID := range ids {
-			msgEmbed := discord.NewEmbed("Notification", payload.Message)
+			msgEmbed := discord.NewEmbed(app.config(), "Notification", payload.Message)
 			if payload.Link != "" {
-				msgEmbed.SetURL(payload.Link)
+				msgEmbed.Embed().SetURL(payload.Link)
 			}
 
-			app.bot.SendPayload(discord.Payload{ChannelID: discordID, Embed: msgEmbed.Truncate().MessageEmbed})
+			app.discord.SendPayload(discord.Payload{ChannelID: discordID, Embed: msgEmbed.Embed().Truncate().MessageEmbed})
 		}
 	}(discordIds, notification)
 
@@ -946,7 +794,7 @@ func (app *App) isOnIPWithBan(ctx context.Context, steamID steamid.SID64, addres
 		return false
 	}
 
-	duration, errDuration := ParseUserStringDuration("10y")
+	duration, errDuration := util.ParseUserStringDuration("10y")
 	if errDuration != nil {
 		app.log.Error("Could not parse ban duration", zap.Error(errDuration))
 
@@ -961,9 +809,11 @@ func (app *App) isOnIPWithBan(ctx context.Context, steamID steamid.SID64, addres
 		return false
 	}
 
+	conf := app.config()
+
 	var newBan store.BanSteam
 	if errNewBan := store.NewBanSteam(ctx,
-		store.StringSID(app.conf.General.Owner.String()),
+		store.StringSID(conf.General.Owner.String()),
 		store.StringSID(steamID.String()), duration, store.Evading, store.Evading.String(),
 		"Connecting from same IP as banned player", store.System,
 		0, store.Banned, false, &newBan); errNewBan != nil {

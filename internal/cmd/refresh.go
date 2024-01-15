@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/app"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/spf13/cobra"
@@ -26,12 +27,12 @@ func refreshFiltersCmd() *cobra.Command {
 		Short: "refresh filters",
 		Long:  `refresh filters`,
 		Run: func(cmd *cobra.Command, args []string) {
-			var conf app.Config
-			if errConfig := app.ReadConfig(&conf, false); errConfig != nil {
+			var conf config.Config
+			if errConfig := config.Read(&conf, false); errConfig != nil {
 				panic("Failed to read config")
 			}
 			conf.Log.Level = "DEBUG"
-			rootLogger := app.MustCreateLogger(&conf)
+			rootLogger := config.MustCreateLogger(&conf)
 			defer func() {
 				_ = rootLogger.Sync()
 			}()
@@ -56,13 +57,12 @@ func refreshFiltersCmd() *cobra.Command {
 				rootLogger.Fatal("Failed to delete existing", zap.Error(errDelete))
 			}
 
-			bot, errBot := discord.New(rootLogger, conf.Discord.Token,
-				conf.Discord.AppID, conf.Discord.UnregisterOnStart, conf.General.ExternalURL)
+			bot, errBot := discord.New(rootLogger, conf)
 			if errBot != nil {
 				rootLogger.Fatal("Failed to connect to perform initial discord connection")
 			}
 
-			application := app.New(&conf, database, bot, rootLogger, nil)
+			application := app.New(conf, database, bot, rootLogger, nil)
 			if errFilters := application.LoadFilters(ctx); errFilters != nil {
 				rootLogger.Fatal("Failed to load filters", zap.Error(errFilters))
 			}

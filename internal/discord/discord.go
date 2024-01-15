@@ -5,9 +5,8 @@ import (
 	"sync/atomic"
 
 	"github.com/bwmarrin/discordgo"
-	embed "github.com/leighmacdonald/discordgo-embed"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/util"
-	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
@@ -19,10 +18,10 @@ type Bot struct {
 	session           *discordgo.Session
 	isReady           atomic.Bool
 	commandHandlers   map[Cmd]CommandHandler
-	Colour            LevelColors
 	unregisterOnStart bool
 	appID             string
 	extURL            string
+	Colour            LevelColors
 }
 
 const (
@@ -35,32 +34,9 @@ type Payload struct {
 	Embed     *discordgo.MessageEmbed
 }
 
-func NewEmbed(args ...string) *embed.Embed {
-	newEmbed := embed.
-		NewEmbed().
-		SetFooter(providerName, iconURL)
-
-	if len(args) == 2 {
-		newEmbed = newEmbed.SetTitle(args[0]).
-			SetDescription(args[1])
-	} else if len(args) == 1 {
-		newEmbed = newEmbed.SetTitle(args[0])
-	}
-
-	return newEmbed
-}
-
-func AddFieldsSteamID(embed *embed.Embed, steamID steamid.SID64) *embed.Embed {
-	embed.AddField("STEAM", string(steamid.SID64ToSID(steamID))).MakeFieldInline()
-	embed.AddField("STEAM3", string(steamid.SID64ToSID3(steamID))).MakeFieldInline()
-	embed.AddField("SID64", steamID.String()).MakeFieldInline()
-
-	return embed
-}
-
-func New(logger *zap.Logger, token string, appID string, unregisterOnStart bool, extURL string) (*Bot, error) {
+func New(logger *zap.Logger, conf config.Config) (*Bot, error) {
 	// Immediately connects
-	session, errNewSession := discordgo.New("Bot " + token)
+	session, errNewSession := discordgo.New("Bot " + conf.Discord.Token)
 	if errNewSession != nil {
 		return nil, errors.Wrapf(errNewSession, "Failed to connect to discord. discord unavailable")
 	}
@@ -73,17 +49,16 @@ func New(logger *zap.Logger, token string, appID string, unregisterOnStart bool,
 		log:               logger.Named("discord"),
 		session:           session,
 		isReady:           atomic.Bool{},
-		unregisterOnStart: unregisterOnStart,
-		appID:             appID,
-		extURL:            extURL,
+		unregisterOnStart: conf.Discord.UnregisterOnStart,
+		appID:             conf.Discord.AppID,
+		extURL:            conf.General.ExternalURL,
 		commandHandlers:   map[Cmd]CommandHandler{},
 		Colour: LevelColors{
-			Success: 302673,
-			Debug:   10170623,
-			Info:    3581519,
-			Warn:    14327864,
-			Error:   13631488,
-			Fatal:   13631488,
+			Debug:   conf.Discord.ColourDebug,
+			Success: conf.Discord.ColourSuccess,
+			Info:    conf.Discord.ColourInfo,
+			Warn:    conf.Discord.ColourWarn,
+			Error:   conf.Discord.ColourError,
 		},
 	}
 	bot.session.AddHandler(bot.onReady)
@@ -185,24 +160,6 @@ func (bot *Bot) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 	bot.log.Info("Service state changed", zap.String("state", "disconnected"))
 }
 
-// func sendChannelMessage(session *discordgo.Session, channelId string, msg string, wrap bool) error {
-//	if !isReady.Load() {
-//		log.Error("Tried to send message to disconnected client")
-//		return nil
-//	}
-//	if wrap {
-//		msg = discordMsgWrapper + msg + discordMsgWrapper
-//	}
-//	if len(msg) > discordMaxMsgLen {
-//		return ErrTooLarge
-//	}
-//	_, errChannelMessageSend := session.ChannelMessageSend(channelId, msg)
-//	if errChannelMessageSend != nil {
-//		return errors.Wrapf(errChannelMessageSend, "Failed sending success (paged) response for interaction")
-//	}
-//	return nil
-//}
-
 func (bot *Bot) sendInteractionResponse(session *discordgo.Session, interaction *discordgo.Interaction, response *discordgo.MessageEmbed) error {
 	resp := &discordgo.InteractionResponseData{
 		Embeds: []*discordgo.MessageEmbed{response},
@@ -242,5 +199,4 @@ type LevelColors struct {
 	Info    int
 	Warn    int
 	Error   int
-	Fatal   int
 }

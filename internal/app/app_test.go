@@ -148,7 +148,7 @@ func testServerAPI(app *App) func(t *testing.T) {
 		testServer := store.NewServer("test-1", "127.0.0.1", 27015)
 		testServer.Name = "Test Instance"
 		require.NoError(t, app.db.SaveServer(ctx, &testServer))
-		token, errToken := newServerToken(testServer.ServerID, app.conf.HTTP.CookieKey)
+		token, errToken := newServerToken(testServer.ServerID, app.config().HTTP.CookieKey)
 		require.NoError(t, errToken)
 		testBaddie := "76561197961279983"
 
@@ -203,7 +203,7 @@ func testServerAPI(app *App) func(t *testing.T) {
 			require.True(t, len(perms) >= 1)
 			ownerFound := false
 			for _, perm := range perms {
-				if steamid.SIDToSID64(perm.SteamID) == app.conf.General.Owner {
+				if steamid.SIDToSID64(perm.SteamID) == app.config().General.Owner {
 					ownerFound = true
 					break
 				}
@@ -214,7 +214,7 @@ func testServerAPI(app *App) func(t *testing.T) {
 		t.Run("sm_ban", func(t *testing.T) {
 			t.Parallel()
 			req := newTestReq(http.MethodPost, "/api/sm/bans/steam/create", apiBanRequest{
-				SourceID:       store.StringSID(app.conf.General.Owner.String()),
+				SourceID:       store.StringSID(app.config().General.Owner.String()),
 				TargetID:       store.StringSID(testBaddie),
 				Duration:       "custom",
 				ValidUntil:     time.Now().Add(time.Hour * 11),
@@ -238,7 +238,7 @@ func testServerAPI(app *App) func(t *testing.T) {
 		t.Run("sm_report", func(t *testing.T) {
 			t.Parallel()
 			req := newTestReq(http.MethodPost, "/api/sm/report/create", apiCreateReportReq{
-				SourceID:        store.StringSID(app.conf.General.Owner.String()),
+				SourceID:        store.StringSID(app.config().General.Owner.String()),
 				TargetID:        store.StringSID(testBaddie),
 				Description:     "User report message",
 				Reason:          store.Custom,

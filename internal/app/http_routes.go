@@ -10,6 +10,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/unrolled/secure"
@@ -37,7 +38,7 @@ func httpErrorHandler(logger *zap.Logger) gin.HandlerFunc {
 	}
 }
 
-func useSecure(mode RunMode, cspOrigin string) gin.HandlerFunc {
+func useSecure(mode config.RunMode, cspOrigin string) gin.HandlerFunc {
 	cspBuilder := cspbuilder.Builder{
 		Directives: map[string][]string{
 			cspbuilder.DefaultSrc: {"'self'", cspOrigin},
@@ -53,7 +54,7 @@ func useSecure(mode RunMode, cspOrigin string) gin.HandlerFunc {
 		FrameDeny:             true,
 		ContentTypeNosniff:    true,
 		ContentSecurityPolicy: cspBuilder.MustBuild(),
-		IsDevelopment:         mode != ReleaseMode,
+		IsDevelopment:         mode != config.ReleaseMode,
 	})
 
 	secureFunc := func(ctx *gin.Context) {
@@ -91,17 +92,18 @@ type jsConfig struct {
 func createRouter(ctx context.Context, app *App) *gin.Engine {
 	engine := gin.New()
 	engine.MaxMultipartMemory = 8 << 24
+	conf := app.config()
 
-	if app.conf.General.Mode != ReleaseMode {
+	if conf.General.Mode != config.ReleaseMode {
 		pprof.Register(engine)
 	}
 
-	if app.conf.General.Mode != TestMode {
+	if conf.General.Mode != config.TestMode {
 		engine.Use(httpErrorHandler(app.log), gin.Recovery())
-		engine.Use(useSecure(app.conf.General.Mode, app.conf.S3.ExternalURL))
+		engine.Use(useSecure(conf.General.Mode, conf.S3.ExternalURL))
 
 		corsConfig := cors.DefaultConfig()
-		corsConfig.AllowOrigins = app.conf.HTTP.CorsOrigins
+		corsConfig.AllowOrigins = conf.HTTP.CorsOrigins
 		corsConfig.AllowHeaders = append(corsConfig.AllowHeaders, "Authorization")
 		corsConfig.AllowWildcard = false
 		corsConfig.AllowCredentials = false
@@ -114,7 +116,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 	})
 	engine.Use(prom.Instrument())
 
-	staticPath := app.conf.HTTP.StaticPath
+	staticPath := conf.HTTP.StaticPath
 	if staticPath == "" {
 		staticPath = "./dist"
 	}
@@ -126,7 +128,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 
 	engine.StaticFS("/dist", http.Dir(absStaticPath))
 
-	if app.conf.General.Mode != TestMode {
+	if conf.General.Mode != config.TestMode {
 		engine.LoadHTMLFiles(filepath.Join(absStaticPath, "index.html"))
 	}
 
@@ -145,12 +147,12 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 	for _, rt := range jsRoutes {
 		engine.GET(rt, func(c *gin.Context) {
 			c.HTML(http.StatusOK, "index.html", jsConfig{
-				SiteName:        app.conf.General.SiteName,
-				DiscordClientID: app.conf.Discord.AppID,
-				DiscordLinkID:   app.conf.Discord.LinkID,
-				AssetURL:        app.conf.S3.ExternalURL,
-				BucketDemo:      app.conf.S3.BucketDemo,
-				BucketMedia:     app.conf.S3.BucketMedia,
+				SiteName:        conf.General.SiteName,
+				DiscordClientID: conf.Discord.AppID,
+				DiscordLinkID:   conf.Discord.LinkID,
+				AssetURL:        conf.S3.ExternalURL,
+				BucketDemo:      conf.S3.BucketDemo,
+				BucketMedia:     conf.S3.BucketMedia,
 				BuildVersion:    BuildVersion,
 				BuildCommit:     BuildCommit,
 				BuildDate:       BuildDate,

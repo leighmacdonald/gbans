@@ -12,7 +12,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/app"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -38,12 +38,12 @@ func importConnectionsCmd() *cobra.Command {
 			rootCtx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 			defer stop()
 
-			var conf app.Config
-			if errConfig := app.ReadConfig(&conf, false); errConfig != nil {
+			var conf config.Config
+			if errConfig := config.Read(&conf, false); errConfig != nil {
 				panic("Failed to read config")
 			}
 
-			rootLogger := app.MustCreateLogger(&conf)
+			rootLogger := config.MustCreateLogger(&conf)
 			defer func() {
 				if conf.Log.File != "" {
 					_ = rootLogger.Sync()
@@ -172,12 +172,12 @@ func importMessagesCmd() *cobra.Command {
 			rootCtx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 			defer stop()
 
-			var conf app.Config
-			if errConfig := app.ReadConfig(&conf, false); errConfig != nil {
+			var conf config.Config
+			if errConfig := config.Read(&conf, false); errConfig != nil {
 				panic("Failed to read config")
 			}
 
-			rootLogger := app.MustCreateLogger(&conf)
+			rootLogger := config.MustCreateLogger(&conf)
 			defer func() {
 				if conf.Log.File != "" {
 					_ = rootLogger.Sync()

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/common"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"go.uber.org/zap"
@@ -48,15 +49,17 @@ func newLazyResult(count int64, data any) LazyResult {
 }
 
 func newHTTPServer(ctx context.Context, app *App) *http.Server {
+	conf := app.config()
+
 	httpServer := &http.Server{
-		Addr:           app.conf.HTTP.Addr(),
+		Addr:           conf.HTTP.Addr(),
 		Handler:        createRouter(ctx, app),
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   120 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
 
-	if app.conf.HTTP.TLS {
+	if conf.HTTP.TLS {
 		tlsVar := &tls.Config{
 			// Only use curves which have assembly implementations
 			CurvePreferences: []tls.CurveID{
@@ -90,6 +93,22 @@ type userProfile struct {
 	Avatarhash      string           `json:"avatarhash"`
 	BanID           int64            `json:"ban_id"`
 	Muted           bool             `json:"muted"`
+}
+
+func (p userProfile) GetDiscordID() string {
+	return p.DiscordID
+}
+
+func (p userProfile) GetName() string {
+	return p.Name
+}
+
+func (p userProfile) GetAvatar() common.AvatarLinks {
+	return common.NewAvatarLinks(p.Avatarhash)
+}
+
+func (p userProfile) GetSteamID() steamid.SID64 {
+	return p.SteamID
 }
 
 func (p userProfile) Path() string {
