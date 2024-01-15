@@ -10,6 +10,7 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/internal/common"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -46,6 +47,22 @@ type Person struct {
 	DaysSinceLastBan int                   `json:"days_since_last_ban"`
 	UpdatedOnSteam   time.Time             `json:"updated_on_steam"`
 	*steamweb.PlayerSummary
+}
+
+func (p Person) GetDiscordID() string {
+	return p.DiscordID
+}
+
+func (p Person) GetName() string {
+	return p.PersonaName
+}
+
+func (p Person) GetAvatar() common.AvatarLinks {
+	return common.NewAvatarLinks(p.AvatarHash)
+}
+
+func (p Person) GetSteamID() steamid.SID64 {
+	return p.SteamID
 }
 
 func (p Person) Path() string {

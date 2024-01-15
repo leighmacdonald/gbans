@@ -81,10 +81,12 @@ func onAPIPostNewsCreate(app *App) gin.HandlerFunc {
 
 		ctx.JSON(http.StatusCreated, req)
 
-		go app.bot.SendPayload(discord.Payload{
-			ChannelID: app.conf.Discord.LogChannelID,
+		conf := app.config()
+
+		go app.discord.SendPayload(discord.Payload{
+			ChannelID: conf.Discord.LogChannelID,
 			Embed: discord.
-				NewEmbed("News Created").
+				NewEmbed(conf, "News Created").Embed().
 				SetDescription(req.BodyMD).
 				AddField("Title", req.Title).MessageEmbed,
 		})
@@ -127,10 +129,11 @@ func onAPIPostNewsUpdate(app *App) gin.HandlerFunc {
 
 		ctx.JSON(http.StatusAccepted, entry)
 
-		app.bot.SendPayload(discord.Payload{
-			ChannelID: app.conf.Discord.LogChannelID,
+		conf := app.config()
+		app.discord.SendPayload(discord.Payload{
+			ChannelID: conf.Discord.LogChannelID,
 			Embed: discord.
-				NewEmbed("News Updated").
+				NewEmbed(conf, "News Updated").Embed().
 				AddField("Title", entry.Title).
 				SetDescription(entry.BodyMD).
 				MessageEmbed,
@@ -186,7 +189,7 @@ func onAPIPostWordFilter(app *App) gin.HandlerFunc {
 			return
 		}
 
-		_, errDur := ParseDuration(req.Duration)
+		_, errDur := util.ParseDuration(req.Duration)
 		if errDur != nil {
 			responseErr(ctx, http.StatusBadRequest, errors.New("invalid duration format"))
 
@@ -200,6 +203,12 @@ func onAPIPostWordFilter(app *App) gin.HandlerFunc {
 
 				return
 			}
+		}
+
+		if req.Weight < 1 {
+			responseErr(ctx, http.StatusBadRequest, errors.New("invalid weight"))
+
+			return
 		}
 
 		now := time.Now()
@@ -224,6 +233,7 @@ func onAPIPostWordFilter(app *App) gin.HandlerFunc {
 			existingFilter.IsEnabled = req.IsEnabled
 			existingFilter.Action = req.Action
 			existingFilter.Duration = req.Duration
+			existingFilter.Weight = req.Weight
 
 			if errSave := app.FilterAdd(ctx, &existingFilter); errSave != nil {
 				responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
@@ -243,6 +253,7 @@ func onAPIPostWordFilter(app *App) gin.HandlerFunc {
 				UpdatedOn: now,
 				IsRegex:   req.IsRegex,
 				IsEnabled: req.IsEnabled,
+				Weight:    req.Weight,
 			}
 
 			if errSave := app.FilterAdd(ctx, &newFilter); errSave != nil {
@@ -388,7 +399,7 @@ func onAPIPostBanState(app *App) gin.HandlerFunc {
 			return
 		}
 
-		go app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.LogChannelID, Embed: nil})
+		go app.discord.SendPayload(discord.Payload{ChannelID: app.config().Discord.LogChannelID, Embed: nil})
 	}
 }
 
@@ -680,7 +691,7 @@ func onAPIPostBansCIDRCreate(app *App) gin.HandlerFunc {
 			sid     = currentUserProfile(ctx).SteamID
 		)
 
-		duration, errDuration := calcDuration(req.Duration, req.ValidUntil)
+		duration, errDuration := util.CalcDuration(req.Duration, req.ValidUntil)
 		if errDuration != nil {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
 
@@ -879,7 +890,7 @@ func onAPIPostBansASNCreate(app *App) gin.HandlerFunc {
 			sid    = currentUserProfile(ctx).SteamID
 		)
 
-		duration, errDuration := calcDuration(req.Duration, req.ValidUntil)
+		duration, errDuration := util.CalcDuration(req.Duration, req.ValidUntil)
 		if errDuration != nil {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
 
@@ -1078,7 +1089,7 @@ func onAPIPostBansGroupCreate(app *App) gin.HandlerFunc {
 			sid           = currentUserProfile(ctx).SteamID
 		)
 
-		duration, errDuration := calcDuration(req.Duration, req.ValidUntil)
+		duration, errDuration := util.CalcDuration(req.Duration, req.ValidUntil)
 		if errDuration != nil {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
 

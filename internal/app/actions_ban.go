@@ -10,6 +10,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/pkg/errors"
@@ -62,39 +63,44 @@ func (app *App) BanSteam(ctx context.Context, banSteam *store.BanSteam) error {
 		app.log.Info("Report state set to closed", zap.Int64("report_id", banSteam.ReportID))
 	}
 
-	if app.conf.Discord.Enabled {
+	if app.config().Discord.Enabled {
 		go func() {
 			var (
+				conf   = app.config()
 				title  string
 				colour int
 			)
 
 			if banSteam.BanType == store.NoComm {
 				title = fmt.Sprintf("User Muted (#%d)", banSteam.BanID)
-				colour = app.bot.Colour.Warn
+				colour = conf.Discord.ColourWarn
 			} else {
 				title = fmt.Sprintf("User Banned (#%d)", banSteam.BanID)
-				colour = app.bot.Colour.Error
+				colour = conf.Discord.ColourError
 			}
 
-			msgEmbed := discord.
-				NewEmbed(title).
+			msgEmbed := discord.NewEmbed(conf, title)
+			msgEmbed.Embed().
 				SetColor(colour).
 				SetURL(fmt.Sprintf("https://steamcommunity.com/profiles/%s", banSteam.TargetID))
 
-			discord.AddFieldsSteamID(msgEmbed, banSteam.TargetID)
+			msgEmbed.AddFieldsSteamID(banSteam.TargetID)
 
 			expIn := "Permanent"
 			expAt := "Permanent"
 
 			if banSteam.ValidUntil.Year()-time.Now().Year() < 5 {
-				expIn = FmtDuration(banSteam.ValidUntil)
-				expAt = FmtTimeShort(banSteam.ValidUntil)
+				expIn = util.FmtDuration(banSteam.ValidUntil)
+				expAt = util.FmtTimeShort(banSteam.ValidUntil)
 			}
 
-			msgEmbed.AddField("Expires In", expIn)
-			msgEmbed.AddField("Expires At", expAt)
-			app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.PublicLogChannelID, Embed: msgEmbed.Truncate().MessageEmbed})
+			msgEmbed.
+				Embed().
+				AddField("Expires In", expIn).
+				AddField("Expires At", expAt)
+			app.discord.SendPayload(discord.Payload{
+				ChannelID: conf.Discord.PublicLogChannelID, Embed: msgEmbed.Embed().Truncate().MessageEmbed,
+			})
 		}()
 	}
 	// TODO mute player currently in-game w/o kicking
@@ -176,19 +182,31 @@ func (app *App) BanCIDR(ctx context.Context, banNet *store.BanCIDR) error {
 		}
 	}(realCIDR, banNet.Reason)
 
-	msgEmbed := discord.
-		NewEmbed("IP Banned Successfully").
-		SetColor(app.bot.Colour.Success).
+	conf := app.config()
+
+	msgEmbed := discord.NewEmbed(conf, "IP Banned Successfully")
+	msgEmbed.Embed().
+		SetColor(conf.Discord.ColourSuccess).
 		AddField("cidr", realCIDR.String()).
 		AddField("net_id", fmt.Sprintf("%d", banNet.NetID)).
 		AddField("Reason", banNet.Reason.String())
 
-	app.addTarget(ctx, msgEmbed, banNet.TargetID)
-	app.addAuthor(ctx, msgEmbed, banNet.SourceID)
+	var author store.Person
+	if err := app.db.GetOrCreatePersonBySteamID(ctx, banNet.SourceID, &author); err != nil {
+		return errors.Wrap(err, "Failed to get author")
+	}
 
-	app.bot.SendPayload(discord.Payload{
-		ChannelID: app.conf.Discord.LogChannelID,
-		Embed:     msgEmbed.Truncate().MessageEmbed,
+	var target store.Person
+	if err := app.db.GetOrCreatePersonBySteamID(ctx, banNet.TargetID, &target); err != nil {
+		return errors.Wrap(err, "Failed to get target")
+	}
+
+	msgEmbed.AddTargetPerson(target)
+	msgEmbed.AddAuthorPerson(author)
+
+	app.discord.SendPayload(discord.Payload{
+		ChannelID: conf.Discord.LogChannelID,
+		Embed:     msgEmbed.Embed().Truncate().MessageEmbed,
 	})
 
 	return nil
@@ -213,9 +231,9 @@ func (app *App) BanSteamGroup(ctx context.Context, banGroup *store.BanGroup) err
 // Unban will set the current ban to now, making it expired.
 // Returns true, nil if the ban exists, and was successfully banned.
 // Returns false, nil if the ban does not exist.
-func (app *App) Unban(ctx context.Context, target steamid.SID64, reason string) (bool, error) {
+func (app *App) Unban(ctx context.Context, targetSID steamid.SID64, reason string) (bool, error) {
 	bannedPerson := store.NewBannedPerson()
-	errGetBan := app.db.GetBanBySteamID(ctx, target, &bannedPerson, false)
+	errGetBan := app.db.GetBanBySteamID(ctx, targetSID, &bannedPerson, false)
 
 	if errGetBan != nil {
 		if errors.Is(errGetBan, store.ErrNoResult) {
@@ -232,21 +250,29 @@ func (app *App) Unban(ctx context.Context, target steamid.SID64, reason string) 
 		return false, errors.Wrapf(errSaveBan, "Failed to save unban")
 	}
 
-	app.log.Info("Player unbanned", zap.Int64("sid64", target.Int64()), zap.String("reason", reason))
+	app.log.Info("Player unbanned", zap.Int64("sid64", targetSID.Int64()), zap.String("reason", reason))
+
+	conf := app.config()
 
 	msgEmbed := discord.
-		NewEmbed("User Unbanned Successfully").
-		SetColor(app.bot.Colour.Success).
-		SetURL(app.ExtURL(bannedPerson.BanSteam)).
+		NewEmbed(conf, "User Unbanned Successfully")
+	msgEmbed.Embed().
+		SetColor(conf.Discord.ColourSuccess).
+		SetURL(conf.ExtURL(bannedPerson.BanSteam)).
 		AddField("ban_id", fmt.Sprintf("%d", bannedPerson.BanID)).AddField("Reason", reason)
 
-	app.addTarget(ctx, msgEmbed, bannedPerson.TargetID)
+	var target store.Person
+	if err := app.db.GetPersonBySteamID(ctx, targetSID, &target); err != nil {
+		return false, errors.Wrap(err, "Failed to get target")
+	}
 
-	discord.AddFieldsSteamID(msgEmbed, bannedPerson.TargetID)
+	msgEmbed.AddTargetPerson(target)
 
-	app.bot.SendPayload(discord.Payload{
-		ChannelID: app.conf.Discord.LogChannelID,
-		Embed:     msgEmbed.Truncate().MessageEmbed,
+	msgEmbed.AddFieldsSteamID(bannedPerson.TargetID)
+
+	app.discord.SendPayload(discord.Payload{
+		ChannelID: conf.Discord.LogChannelID,
+		Embed:     msgEmbed.Embed().Truncate().MessageEmbed,
 	})
 
 	return true, nil
@@ -272,20 +298,27 @@ func (app *App) UnbanASN(ctx context.Context, asnNum string) (bool, error) {
 
 	app.log.Info("ASN unbanned", zap.Int64("ASN", asNum))
 
-	msgEmbed := discord.
-		NewEmbed("ASN Unbanned Successfully").
-		SetColor(app.bot.Colour.Success).
+	conf := app.config()
+
+	msgEmbed := discord.NewEmbed(conf, "ASN Unbanned Successfully")
+	msgEmbed.Embed().
+		SetColor(conf.Discord.ColourSuccess).
 		AddField("asn", asnNum).
 		AddField("ban_asn_id", fmt.Sprintf("%d", banASN.BanASNId)).
 		AddField("Reason", banASN.Reason.String())
 
 	if banASN.TargetID.Valid() {
-		app.addTarget(ctx, msgEmbed, banASN.TargetID)
+		var target store.Person
+		if err := app.db.GetOrCreatePersonBySteamID(ctx, banASN.TargetID, &target); err != nil {
+			return false, errors.Wrap(err, "Failed to get target")
+		}
+
+		msgEmbed.AddTargetPerson(target)
 	}
 
-	app.bot.SendPayload(discord.Payload{
-		ChannelID: app.conf.Discord.LogChannelID,
-		Embed:     msgEmbed.Truncate().MessageEmbed,
+	app.discord.SendPayload(discord.Payload{
+		ChannelID: conf.Discord.LogChannelID,
+		Embed:     msgEmbed.Embed().Truncate().MessageEmbed,
 	})
 
 	return true, nil

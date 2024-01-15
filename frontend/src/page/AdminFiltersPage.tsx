@@ -9,6 +9,7 @@ import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { Filter, FilterAction, filterActionString } from '../api/filters';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons';
@@ -50,12 +51,27 @@ export const AdminFiltersPage = () => {
                 `Filter created successfully: ${resp.filter_id}`
             );
             setNewFilters((prevState) => {
-                return [resp, ...prevState];
+                return [
+                    resp,
+                    ...prevState.filter((f) => f.filter_id != resp.filter_id)
+                ];
             });
         } catch (e) {
             sendFlash('error', `${e}`);
         }
     }, [sendFlash]);
+
+    const onEdit = useCallback(async (filter: Filter) => {
+        await NiceModal.show(ModalFilterEditor, {
+            filter
+        });
+    }, []);
+
+    const onDelete = useCallback(async (filter: Filter) => {
+        await NiceModal.show(ModalFilterDelete, {
+            record: filter
+        });
+    }, []);
 
     return (
         <Grid container spacing={2}>
@@ -121,7 +137,7 @@ export const AdminFiltersPage = () => {
                                 label: 'Regex',
                                 tooltip: 'Regular Expression',
                                 sortKey: 'is_regex',
-                                sortable: false,
+                                sortable: true,
                                 align: 'right',
                                 renderer: (row) => {
                                     return row.is_regex ? 'true' : 'false';
@@ -151,6 +167,20 @@ export const AdminFiltersPage = () => {
                                 }
                             },
                             {
+                                label: 'Weight',
+                                tooltip: 'Weight per match',
+                                sortKey: 'weight',
+                                sortable: true,
+                                align: 'right',
+                                renderer: (_, weight) => {
+                                    return (
+                                        <Typography variant={'body2'}>
+                                            {weight as number}
+                                        </Typography>
+                                    );
+                                }
+                            },
+                            {
                                 label: 'Triggered',
                                 tooltip:
                                     'Number of times the filter has been triggered',
@@ -176,12 +206,7 @@ export const AdminFiltersPage = () => {
                                                 <IconButton
                                                     color={'warning'}
                                                     onClick={async () => {
-                                                        await NiceModal.show(
-                                                            ModalFilterEditor,
-                                                            {
-                                                                filter: row
-                                                            }
-                                                        );
+                                                        await onEdit(row);
                                                     }}
                                                 >
                                                     <EditIcon />
@@ -191,12 +216,7 @@ export const AdminFiltersPage = () => {
                                                 <IconButton
                                                     color={'error'}
                                                     onClick={async () => {
-                                                        await NiceModal.show(
-                                                            ModalFilterDelete,
-                                                            {
-                                                                record: row
-                                                            }
-                                                        );
+                                                        await onDelete(row);
                                                     }}
                                                 >
                                                     <DeleteForeverIcon />

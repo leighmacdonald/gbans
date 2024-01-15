@@ -13,6 +13,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -58,7 +59,7 @@ func authServerMiddleWare(app *App) gin.HandlerFunc {
 
 		claims := &serverAuthClaims{}
 
-		parsedToken, errParseClaims := jwt.ParseWithClaims(reqAuthHeader, claims, makeGetTokenKey(app.conf.HTTP.CookieKey))
+		parsedToken, errParseClaims := jwt.ParseWithClaims(reqAuthHeader, claims, makeGetTokenKey(app.config().HTTP.CookieKey))
 		if errParseClaims != nil {
 			if errors.Is(errParseClaims, jwt.ErrSignatureInvalid) {
 				log.Error("jwt signature invalid!", zap.Error(errParseClaims))
@@ -119,9 +120,10 @@ func onOpenIDCallback(app *App) gin.HandlerFunc {
 		var idStr string
 
 		referralURL := referral(ctx)
-		fullURL := app.conf.General.ExternalURL + ctx.Request.URL.String()
+		conf := app.config()
+		fullURL := conf.General.ExternalURL + ctx.Request.URL.String()
 
-		if app.conf.Debug.SkipOpenIDValidation {
+		if conf.Debug.SkipOpenIDValidation {
 			// Pull the sid out of the query without doing a signature check
 			values, errParse := url.Parse(fullURL)
 			if errParse != nil {
@@ -166,7 +168,7 @@ func onOpenIDCallback(app *App) gin.HandlerFunc {
 			return
 		}
 
-		tokens, errToken := makeTokens(ctx, app.db, app.conf.HTTP.CookieKey, sid, true)
+		tokens, errToken := makeTokens(ctx, app.db, conf.HTTP.CookieKey, sid, true)
 		if errToken != nil {
 			ctx.Redirect(302, referralURL)
 			log.Error("Failed to create access token pair", zap.Error(errToken))
@@ -187,7 +189,7 @@ func onOpenIDCallback(app *App) gin.HandlerFunc {
 		query.Set("next_url", referralURL)
 		parsedURL.RawQuery = query.Encode()
 
-		parsedExternal, errExternal := url.Parse(app.conf.General.ExternalURL)
+		parsedExternal, errExternal := url.Parse(conf.General.ExternalURL)
 		if errExternal != nil {
 			ctx.Redirect(302, referralURL)
 			log.Error("Failed to parse ext url", zap.Error(errExternal))
@@ -196,7 +198,14 @@ func onOpenIDCallback(app *App) gin.HandlerFunc {
 		}
 		// TODO max age checks
 		ctx.SetSameSite(http.SameSiteStrictMode)
-		ctx.SetCookie(fingerprintCookieName, tokens.fingerprint, int(refreshTokenDuration.Seconds()), "/api", parsedExternal.Hostname(), app.conf.General.Mode == ReleaseMode, true)
+		ctx.SetCookie(
+			fingerprintCookieName,
+			tokens.fingerprint,
+			int(refreshTokenDuration.Seconds()),
+			"/api",
+			parsedExternal.Hostname(),
+			conf.General.Mode == config.ReleaseMode,
+			true)
 
 		ctx.Redirect(302, parsedURL.String())
 		log.Info("User logged in",
@@ -366,7 +375,7 @@ func authMiddleware(app *App, level consts.Privilege) gin.HandlerFunc {
 			token = hdrToken
 
 			if level >= consts.PGuest {
-				sid, errFromToken := sid64FromJWTToken(token, app.conf.HTTP.CookieKey)
+				sid, errFromToken := sid64FromJWTToken(token, app.config().HTTP.CookieKey)
 				if errFromToken != nil {
 					if errors.Is(errFromToken, consts.ErrExpired) {
 						ctx.AbortWithStatus(http.StatusUnauthorized)

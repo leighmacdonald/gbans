@@ -6,7 +6,6 @@ import (
 	"strings"
 	"sync"
 
-	embed "github.com/leighmacdonald/discordgo-embed"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/store"
@@ -15,70 +14,6 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
-
-func (app *App) addTarget(ctx context.Context, msgEmbed *embed.Embed, sid64 steamid.SID64) *embed.Embed {
-	if !sid64.Valid() {
-		return msgEmbed
-	}
-
-	var target store.Person
-	if errPerson := app.PersonBySID(ctx, sid64, &target); errPerson != nil {
-		app.log.Error("Failed to lookup auth for target embed",
-			zap.String("steam_id", sid64.String()),
-			zap.Error(errPerson))
-
-		return msgEmbed
-	}
-
-	return app.addTargetPerson(msgEmbed, target)
-}
-
-func (app *App) addTargetPerson(msgEmbed *embed.Embed, person store.Person) *embed.Embed {
-	name := person.PersonaName
-	if person.DiscordID != "" {
-		name = fmt.Sprintf("<@%s> | ", person.DiscordID) + name
-	}
-
-	return msgEmbed.AddField("Name", name).SetImage(person.AvatarFull)
-}
-
-func (app *App) addAuthor(ctx context.Context, msgEmbed *embed.Embed, sid64 steamid.SID64) *embed.Embed {
-	if !sid64.Valid() {
-		return msgEmbed
-	}
-
-	var author store.Person
-	if errPerson := app.PersonBySID(ctx, sid64, &author); errPerson != nil {
-		app.log.Error("Failed to lookup auth for author embed",
-			zap.String("steam_id", sid64.String()),
-			zap.Error(errPerson))
-
-		return msgEmbed
-	}
-
-	return app.addAuthorPerson(msgEmbed, author)
-}
-
-func (app *App) addAuthorPerson(msgEmbed *embed.Embed, person store.Person) *embed.Embed {
-	name := person.PersonaName
-	if person.DiscordID != "" {
-		name = fmt.Sprintf("<@%s> | ", person.DiscordID) + name
-	}
-
-	return msgEmbed.SetAuthor(name, person.AvatarFull, app.ExtURL(person))
-}
-
-func (app *App) addAuthorUserProfile(msgEmbed *embed.Embed, profile userProfile) *embed.Embed {
-	name := profile.Name
-	if profile.DiscordID != "" {
-		name = fmt.Sprintf("<@%s> | ", profile.DiscordID) + name
-	}
-
-	return msgEmbed.SetAuthor(
-		name,
-		fmt.Sprintf("https://avatars.akamai.steamstatic.com/%s.jpg", profile.Avatarhash),
-		app.ExtURL(profile))
-}
 
 // OnFindExec is a helper function used to execute rcon commands against any players found in the query.
 func (app *App) OnFindExec(_ context.Context, findOpts findOpts, onFoundCmd func(info playerServerInfo) string) error {
@@ -134,14 +69,28 @@ func (app *App) Kick(ctx context.Context, _ store.Origin, target steamid.SID64, 
 		return errExec
 	}
 
-	msgEmbed := discord.
-		NewEmbed("User Kicked Successfully").
-		SetColor(app.bot.Colour.Success).
-		AddField("servers", strings.Join(fp.Uniq(server), ","))
-	app.addTarget(ctx, msgEmbed, target)
-	app.addAuthor(ctx, msgEmbed, author)
+	conf := app.config()
 
-	app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.LogChannelID, Embed: msgEmbed.MessageEmbed})
+	msgEmbed := discord.NewEmbed(conf, "User Kicked Successfully")
+	msgEmbed.
+		Embed().
+		SetColor(conf.Discord.ColourSuccess).
+		AddField("servers", strings.Join(fp.Uniq(server), ","))
+
+	var targetUser store.Person
+	if errTargetUser := app.db.GetOrCreatePersonBySteamID(ctx, target, &targetUser); errTargetUser != nil {
+		return errors.Wrap(errTargetUser, "Failed to get target")
+	}
+
+	var authorUser store.Person
+	if errTargetUser := app.db.GetOrCreatePersonBySteamID(ctx, author, &authorUser); errTargetUser != nil {
+		return errors.Wrap(errTargetUser, "Failed to get author")
+	}
+
+	msgEmbed.AddTargetPerson(targetUser)
+	msgEmbed.AddAuthorPerson(authorUser)
+
+	app.discord.SendPayload(discord.Payload{ChannelID: conf.Discord.LogChannelID, Embed: msgEmbed.Embed().MessageEmbed})
 
 	return nil
 }
@@ -173,15 +122,27 @@ func (app *App) Silence(ctx context.Context, _ store.Origin, target steamid.SID6
 		return errExec
 	}
 
-	msgEmbed := discord.
-		NewEmbed("User Silenced Successfully").
-		SetColor(app.bot.Colour.Success).
+	conf := app.config()
+	msgEmbed := discord.NewEmbed(conf, "User Silenced Successfully")
+	msgEmbed.
+		Embed().
+		SetColor(conf.Discord.ColourSuccess).
 		AddField("users", strings.Join(fp.Uniq(users), ","))
 
-	app.addTarget(ctx, msgEmbed, target)
-	app.addAuthor(ctx, msgEmbed, author)
+	var targetUser store.Person
+	if errTargetUser := app.db.GetOrCreatePersonBySteamID(ctx, target, &targetUser); errTargetUser != nil {
+		return errors.Wrap(errTargetUser, "Failed to get target")
+	}
 
-	app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.LogChannelID, Embed: msgEmbed.MessageEmbed})
+	var authorUser store.Person
+	if errTargetUser := app.db.GetOrCreatePersonBySteamID(ctx, author, &authorUser); errTargetUser != nil {
+		return errors.Wrap(errTargetUser, "Failed to get author")
+	}
+
+	msgEmbed.AddTargetPerson(targetUser)
+	msgEmbed.AddAuthorPerson(authorUser)
+
+	app.discord.SendPayload(discord.Payload{ChannelID: conf.Discord.LogChannelID, Embed: msgEmbed.Message()})
 
 	return nil
 }
@@ -198,15 +159,23 @@ func (app *App) Say(ctx context.Context, author steamid.SID64, serverName string
 	app.state.broadcast(servers, fmt.Sprintf(`sm_say %s`, message))
 	app.log.Info("Server Message Sent Successfully", zap.Int64("author", author.Int64()), zap.String("msg", message))
 
-	msgEmbed := discord.
-		NewEmbed("Message sent successfully").
+	conf := app.config()
+
+	msgEmbed := discord.NewEmbed(conf, "Message sent successfully")
+	msgEmbed.
+		Embed().
 		SetDescription(message).
-		SetColor(app.bot.Colour.Success).
+		SetColor(conf.Discord.ColourSuccess).
 		AddField("servers", fmt.Sprintf("%d", len(servers)))
 
-	app.addAuthor(ctx, msgEmbed, author)
+	var authorUser store.Person
+	if errTargetUser := app.db.GetOrCreatePersonBySteamID(ctx, author, &authorUser); errTargetUser != nil {
+		return errors.Wrap(errTargetUser, "Failed to get author")
+	}
 
-	app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.LogChannelID, Embed: msgEmbed.MessageEmbed})
+	msgEmbed.AddAuthorPerson(authorUser)
+
+	app.discord.SendPayload(discord.Payload{ChannelID: conf.Discord.LogChannelID, Embed: msgEmbed.Message()})
 
 	return nil
 }
@@ -225,15 +194,22 @@ func (app *App) CSay(ctx context.Context, author steamid.SID64, serverName strin
 	app.log.Info("Server Center Message Sent Successfully", zap.Int64("author", author.Int64()),
 		zap.String("msg", message), zap.Int("servers", len(servers)))
 
-	msgEmbed := discord.
-		NewEmbed("center Message Sent Successfully").
+	conf := app.config()
+	msgEmbed := discord.NewEmbed(conf, "center Message Sent Successfully")
+	msgEmbed.
+		Embed().
 		SetDescription(message).
-		SetColor(app.bot.Colour.Success).
+		SetColor(conf.Discord.ColourSuccess).
 		AddField("servers", fmt.Sprintf("%d", len(servers)))
 
-	app.addAuthor(ctx, msgEmbed, author)
+	var authorUser store.Person
+	if errAuthor := app.db.GetOrCreatePersonBySteamID(ctx, author, &authorUser); errAuthor != nil {
+		return errors.Wrap(errAuthor, "Failed to get author")
+	}
 
-	app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.LogChannelID, Embed: msgEmbed.MessageEmbed})
+	msgEmbed.AddAuthorPerson(authorUser)
+
+	app.discord.SendPayload(discord.Payload{ChannelID: conf.Discord.LogChannelID, Embed: msgEmbed.Message()})
 
 	return nil
 }
@@ -250,19 +226,22 @@ func (app *App) PSay(ctx context.Context, target steamid.SID64, message string) 
 		return errExec
 	}
 
-	msgEmbed := discord.
-		NewEmbed("Private Message Sent Successfully").
-		SetDescription(message).
-		SetColor(app.bot.Colour.Success)
+	conf := app.config()
 
-	app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.LogChannelID, Embed: msgEmbed.MessageEmbed})
+	msgEmbed := discord.NewEmbed(conf, "Private Message Sent Successfully")
+	msgEmbed.
+		Embed().
+		SetDescription(message).
+		SetColor(conf.Discord.ColourSuccess)
+
+	app.discord.SendPayload(discord.Payload{ChannelID: conf.Discord.LogChannelID, Embed: msgEmbed.Message()})
 
 	return nil
 }
 
 // SetSteam is used to associate a discord user with either steam id. This is used
 // instead of requiring users to link their steam account to discord itself. It also
-// means the bot does not require more privileged intents.
+// means the discord does not require more privileged intents.
 func (app *App) SetSteam(ctx context.Context, sid64 steamid.SID64, discordID string) error {
 	newPerson := store.NewPerson(sid64)
 	if errGetPerson := app.db.GetOrCreatePersonBySteamID(ctx, sid64, &newPerson); errGetPerson != nil || !sid64.Valid() {
@@ -280,13 +259,22 @@ func (app *App) SetSteam(ctx context.Context, sid64 steamid.SID64, discordID str
 
 	app.log.Info("Discord steamid set", zap.Int64("sid64", sid64.Int64()), zap.String("discordId", discordID))
 
-	msgEmbed := discord.
-		NewEmbed("User Set Discord ID Successfully").
-		SetColor(app.bot.Colour.Success)
+	conf := app.config()
 
-	app.addAuthor(ctx, msgEmbed, sid64)
+	msgEmbed := discord.NewEmbed(conf, "User Set Discord ID Successfully")
+	msgEmbed.Embed().SetColor(conf.Discord.ColourSuccess)
 
-	app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.LogChannelID, Embed: msgEmbed.Truncate().MessageEmbed})
+	var authorUser store.Person
+	if errAuthor := app.db.GetOrCreatePersonBySteamID(ctx, sid64, &authorUser); errAuthor != nil {
+		return errors.Wrap(errAuthor, "Failed to get author")
+	}
+
+	msgEmbed.AddAuthorPerson(authorUser)
+
+	app.discord.SendPayload(discord.Payload{
+		ChannelID: conf.Discord.LogChannelID,
+		Embed:     msgEmbed.Embed().Truncate().MessageEmbed,
+	})
 
 	return nil
 }
@@ -308,15 +296,24 @@ func (app *App) FilterAdd(ctx context.Context, filter *store.Filter) error {
 	app.wordFilters.wordFilters = append(app.wordFilters.wordFilters, *filter)
 	app.wordFilters.Unlock()
 
-	msgEmbed := discord.NewEmbed("New Word Filter Created").
-		SetColor(app.bot.Colour.Success).
+	conf := app.config()
+
+	msgEmbed := discord.NewEmbed(conf, "New Word Filter Created")
+	msgEmbed.
+		Embed().
+		SetColor(conf.Discord.ColourSuccess).
 		AddField("Pattern", filter.Pattern).
 		AddField("filter_id", fmt.Sprintf("%d", filter.FilterID))
 
-	app.addAuthor(ctx, msgEmbed, filter.AuthorID)
+	var authorUser store.Person
+	if errAuthor := app.db.GetOrCreatePersonBySteamID(ctx, filter.AuthorID, &authorUser); errAuthor != nil {
+		return errors.Wrap(errAuthor, "Failed to get author")
+	}
 
-	app.bot.SendPayload(discord.Payload{
-		ChannelID: app.conf.Discord.LogChannelID, Embed: msgEmbed.MessageEmbed,
+	msgEmbed.AddAuthorPerson(authorUser)
+
+	app.discord.SendPayload(discord.Payload{
+		ChannelID: conf.Discord.LogChannelID, Embed: msgEmbed.Message(),
 	})
 
 	return nil
@@ -348,13 +345,17 @@ func (app *App) FilterDel(ctx context.Context, filterID int64) (bool, error) {
 
 	app.wordFilters.wordFilters = valid
 
-	msgEmbed := discord.NewEmbed("Filter Deleted").
-		SetColor(app.bot.Colour.Success).
+	conf := app.config()
+
+	msgEmbed := discord.NewEmbed(conf, "Filter Deleted")
+	msgEmbed.
+		Embed().
+		SetColor(conf.Discord.ColourSuccess).
 		AddField("Pattern", filter.Pattern).
 		AddField("filter_id", fmt.Sprintf("%d", filter.FilterID))
 
-	app.bot.SendPayload(discord.Payload{
-		ChannelID: app.conf.Discord.LogChannelID, Embed: msgEmbed.MessageEmbed,
+	app.discord.SendPayload(discord.Payload{
+		ChannelID: conf.Discord.LogChannelID, Embed: msgEmbed.Message(),
 	})
 
 	return true, nil

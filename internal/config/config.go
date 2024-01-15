@@ -1,27 +1,36 @@
-package app
+package config
 
 import (
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/bd/pkg/util"
 	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/mitchellh/go-homedir"
+	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
-type filterConfig struct {
-	Enabled     bool `mapstructure:"enabled"`
-	Dry         bool `mapstructure:"dry"`
-	PingDiscord bool `mapstructure:"ping_discord"`
+type LinkablePath interface {
+	Path() string
+}
+
+type Filter struct {
+	Enabled      bool          `mapstructure:"enabled"`
+	Dry          bool          `mapstructure:"dry"`
+	PingDiscord  bool          `mapstructure:"ping_discord"`
+	MaxWeight    int           `mapstructure:"max_weight"`
+	CheckTimeout time.Duration `mapstructure:"check_timeout"`
+	MatchTimeout time.Duration `mapstructure:"match_timeout"`
 }
 
 // Config is the root config container
@@ -30,19 +39,27 @@ type filterConfig struct {
 //	export general.steam_key=STEAM_KEY_STEAM_KEY_STEAM_KEY
 //	./gbans serve
 type Config struct {
-	General     generalConfig   `mapstructure:"general"`
-	HTTP        httpConfig      `mapstructure:"http"`
-	Filter      filterConfig    `mapstructure:"word_filter"`
-	DB          dbConfig        `mapstructure:"database"`
-	Discord     discordConfig   `mapstructure:"discord"`
-	Log         LogConfig       `mapstructure:"logging"`
-	IP2Location ip2locationConf `mapstructure:"ip2location"`
-	Debug       debugConfig     `mapstructure:"debug"`
-	Patreon     patreonConfig   `mapstructure:"patreon"`
-	S3          s3Config        `mapstructure:"s3"`
+	General     General     `mapstructure:"general"`
+	HTTP        HTTP        `mapstructure:"http"`
+	Filter      Filter      `mapstructure:"word_filter"`
+	DB          DB          `mapstructure:"database"`
+	Discord     Discord     `mapstructure:"discord"`
+	Log         Log         `mapstructure:"logging"`
+	IP2Location IP2Location `mapstructure:"ip2location"`
+	Debug       Debug       `mapstructure:"debug"`
+	Patreon     Patreon     `mapstructure:"patreon"`
+	S3          S3          `mapstructure:"s3"`
 }
 
-type s3Config struct {
+func (c Config) ExtURL(obj LinkablePath) string {
+	return c.ExtURLRaw(obj.Path())
+}
+
+func (c Config) ExtURLRaw(path string, args ...any) string {
+	return strings.TrimRight(c.General.ExternalURL, "/") + fmt.Sprintf(strings.TrimLeft(path, "."), args...)
+}
+
+type S3 struct {
 	Enabled     bool   `mapstructure:"enabled"`
 	AccessKey   string `mapstructure:"access_key"`
 	SecretKey   string `mapstructure:"secret_key"`
@@ -54,13 +71,13 @@ type s3Config struct {
 	BucketDemo  string `mapstructure:"bucket_demo"`
 }
 
-type dbConfig struct {
+type DB struct {
 	DSN         string `mapstructure:"dsn"`
 	AutoMigrate bool   `mapstructure:"auto_migrate"`
 	LogQueries  bool   `mapstructure:"log_queries"`
 }
 
-type patreonConfig struct {
+type Patreon struct {
 	Enabled             bool   `mapstructure:"enabled"`
 	ClientID            string `mapstructure:"client_id"`
 	ClientSecret        string `mapstructure:"client_secret"`
@@ -68,20 +85,19 @@ type patreonConfig struct {
 	CreatorRefreshToken string `mapstructure:"creator_refresh_token"`
 }
 
-type httpConfig struct {
-	Host               string        `mapstructure:"host"`
-	Port               int           `mapstructure:"port"`
-	TLS                bool          `mapstructure:"tls"`
-	TLSAuto            bool          `mapstructure:"tls_auto"`
-	StaticPath         string        `mapstructure:"static_path"`
-	CookieKey          string        `mapstructure:"cookie_key"`
-	ClientTimeout      string        `mapstructure:"client_timeout"`
-	ClientTimeoutValue time.Duration `json:"-"`
-	CorsOrigins        []string      `mapstructure:"cors_origins"`
+type HTTP struct {
+	Host          string        `mapstructure:"host"`
+	Port          int           `mapstructure:"port"`
+	TLS           bool          `mapstructure:"tls"`
+	TLSAuto       bool          `mapstructure:"tls_auto"`
+	StaticPath    string        `mapstructure:"static_path"`
+	CookieKey     string        `mapstructure:"cookie_key"`
+	ClientTimeout time.Duration `mapstructure:"client_timeout"`
+	CorsOrigins   []string      `mapstructure:"cors_origins"`
 }
 
 // Addr returns the address in host:port format.
-func (h httpConfig) Addr() string {
+func (h HTTP) Addr() string {
 	return fmt.Sprintf("%s:%d", h.Host, h.Port)
 }
 
@@ -109,24 +125,23 @@ const (
 	Ban  Action = "ban"
 )
 
-type generalConfig struct {
+type General struct {
 	SiteName                     string        `mapstructure:"site_name"`
 	SteamKey                     string        `mapstructure:"steam_key"`
 	Owner                        steamid.SID64 `mapstructure:"owner"`
 	Mode                         RunMode       `mapstructure:"mode"`
-	WarningTimeout               string        `mapstructure:"warning_timeout"`
-	WarningTimeoutValue          time.Duration `mapstructure:"-"`
+	WarningTimeout               time.Duration `mapstructure:"warning_timeout"`
 	WarningLimit                 int           `mapstructure:"warning_limit"`
 	UseUTC                       bool          `mapstructure:"use_utc"`
-	ServerStatusUpdateFreq       string        `mapstructure:"server_status_update_freq"`
-	MasterServerStatusUpdateFreq string        `mapstructure:"master_server_status_update_freq"`
+	ServerStatusUpdateFreq       time.Duration `mapstructure:"server_status_update_freq"`
+	MasterServerStatusUpdateFreq time.Duration `mapstructure:"master_server_status_update_freq"`
 	DefaultMaps                  []string      `mapstructure:"default_maps"`
 	ExternalURL                  string        `mapstructure:"external_url"`
 	DemoCleanupEnabled           bool          `mapstructure:"demo_cleanup_enabled"`
 	DemoCountLimit               uint64        `mapstructure:"demo_count_limit"`
 }
 
-type discordConfig struct {
+type Discord struct {
 	Enabled                 bool   `mapstructure:"enabled"`
 	AppID                   string `mapstructure:"app_id"`
 	AppSecret               string `mapstructure:"app_secret"`
@@ -139,9 +154,14 @@ type discordConfig struct {
 	PublicMatchLogChannelID string `mapstructure:"public_match_log_channel_id"`
 	ModPingRoleID           string `mapstructure:"mod_ping_role_id"`
 	UnregisterOnStart       bool   `mapstructure:"unregister_on_start"`
+	ColourDebug             int    `mapstructure:"colour_debug"`
+	ColourSuccess           int    `mapstructure:"colour_success"`
+	ColourInfo              int    `mapstructure:"colour_info"`
+	ColourWarn              int    `mapstructure:"colour_warn"`
+	ColourError             int    `mapstructure:"colour_error"`
 }
 
-type LogConfig struct {
+type Log struct {
 	Level         string `mapstructure:"level"`
 	File          string `mapstructure:"file"`
 	ReportCaller  bool   `mapstructure:"report_caller"`
@@ -149,14 +169,14 @@ type LogConfig struct {
 	SrcdsLogAddr  string `mapstructure:"srcds_log_addr"`
 }
 
-type debugConfig struct {
+type Debug struct {
 	UpdateSRCDSLogSecrets   bool   `mapstructure:"update_srcds_log_secrets"`
 	SkipOpenIDValidation    bool   `mapstructure:"skip_open_id_validation"`
 	WriteUnhandledLogEvents bool   `mapstructure:"write_unhandled_log_events"`
 	AddRCONLogAddress       string `mapstructure:"add_rcon_log_address"`
 }
 
-type ip2locationConf struct {
+type IP2Location struct {
 	Enabled      bool   `mapstructure:"enabled"`
 	CachePath    string `mapstructure:"cache_path"`
 	Token        string `mapstructure:"token"`
@@ -165,15 +185,35 @@ type ip2locationConf struct {
 	ProxyEnabled bool   `mapstructure:"proxy_enabled"`
 }
 
-// ReadConfig reads in config file and ENV variables if set.
-func ReadConfig(conf *Config, noFileOk bool) error {
+func decodeDuration() mapstructure.DecodeHookFuncType {
+	return func(f reflect.Type, target reflect.Type, data interface{}) (interface{}, error) {
+		if f.Kind() != reflect.String {
+			return data, nil
+		}
+
+		// t.TypeOf doesn't seem to work with time.Duration, so just grug it.
+		if !strings.HasSuffix(target.String(), "Duration") && !strings.HasSuffix(target.String(), "Freq") {
+			return data, nil
+		}
+
+		duration, errDuration := util.ParseUserStringDuration(data.(string))
+		if errDuration != nil {
+			return nil, errors.Wrap(errDuration, "Cannot parse invalid duration")
+		}
+
+		return duration, nil
+	}
+}
+
+// Read reads in config file and ENV variables if set.
+func Read(conf *Config, noFileOk bool) error {
 	setDefaultConfigValues()
 
 	if errReadConfig := viper.ReadInConfig(); errReadConfig != nil && !noFileOk {
 		return errors.Wrapf(errReadConfig, "Failed to read config file")
 	}
 
-	if errUnmarshal := viper.Unmarshal(conf); errUnmarshal != nil {
+	if errUnmarshal := viper.Unmarshal(conf, viper.DecodeHook(mapstructure.DecodeHookFunc(decodeDuration()))); errUnmarshal != nil {
 		return errors.Wrap(errUnmarshal, "Invalid config file format")
 	}
 
@@ -190,30 +230,6 @@ func ReadConfig(conf *Config, noFileOk bool) error {
 	if errSteamWeb := steamweb.SetKey(conf.General.SteamKey); errSteamWeb != nil {
 		return errors.Wrap(errSteamWeb, "Failed to set steamweb api key")
 	}
-
-	_, errDuration := time.ParseDuration(conf.General.ServerStatusUpdateFreq)
-	if errDuration != nil {
-		return errors.Errorf("Failed to parse server_status_update_freq: %v", errDuration)
-	}
-
-	_, errMaterDuration := time.ParseDuration(conf.General.MasterServerStatusUpdateFreq)
-	if errMaterDuration != nil {
-		return errors.Wrap(errMaterDuration, "Failed to parse mater_server_status_update_freq")
-	}
-
-	warnTimeoutDuration, errWarnTimeoutDuration := time.ParseDuration(conf.General.WarningTimeout)
-	if errWarnTimeoutDuration != nil {
-		return errors.Wrap(errWarnTimeoutDuration, "Failed to parse warning timeout")
-	}
-
-	conf.General.WarningTimeoutValue = warnTimeoutDuration
-
-	clientTimeoutDuration, errClientTimeoutDuration := time.ParseDuration(conf.HTTP.ClientTimeout)
-	if errClientTimeoutDuration != nil {
-		return errors.Wrap(errClientTimeoutDuration, "Failed to parse client timeout duration")
-	}
-
-	conf.HTTP.ClientTimeoutValue = clientTimeoutDuration
 
 	return nil
 }
@@ -262,9 +278,12 @@ func setDefaultConfigValues() {
 		"debug.update_srcds_log_secrets":           true,
 		"debug.skip_open_id_validation":            false,
 		"debug.write_unhandled_log_events":         false,
-		"filter.enabled":                           false,
-		"filter.dry":                               true,
-		"filter.ping_discord":                      false,
+		"word_filter.enabled":                      false,
+		"word_filter.dry":                          false,
+		"word_filter.ping_discord":                 false,
+		"word_filter.max_weight":                   6,
+		"word_filter.match_timeout":                "120m",
+		"word_filter.check_timeout":                "1s",
 		"discord.enabled":                          false,
 		"discord.app_id":                           0,
 		"discord.app_secret":                       "",
@@ -278,6 +297,11 @@ func setDefaultConfigValues() {
 		"discord.log_channel_id":                   "",
 		"discord.mod_ping_role_id":                 "",
 		"discord.unregister_on_start":              false,
+		"discord.colour_debug":                     10170623,
+		"discord.colour_success":                   302673,
+		"discord.colour_info":                      3581519,
+		"discord.colour_warn":                      14327864,
+		"discord.colour_error":                     13631488,
 		"ip2location.enabled":                      false,
 		"ip2location.token":                        "",
 		"ip2location.asn_enabled":                  false,

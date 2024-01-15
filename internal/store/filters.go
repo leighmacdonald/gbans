@@ -29,6 +29,7 @@ type Filter struct {
 	Duration     string         `json:"duration"`
 	Regex        *regexp.Regexp `json:"-"`
 	TriggerCount int64          `json:"trigger_count"`
+	Weight       int            `json:"weight"`
 	CreatedOn    time.Time      `json:"created_on"`
 	UpdatedOn    time.Time      `json:"updated_on"`
 }
@@ -57,8 +58,8 @@ func (db *Store) SaveFilter(ctx context.Context, filter *Filter) error {
 
 func (db *Store) insertFilter(ctx context.Context, filter *Filter) error {
 	const query = `
-		INSERT INTO filtered_word (author_id, pattern, is_regex, is_enabled, trigger_count, created_on, updated_on, action, duration) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+		INSERT INTO filtered_word (author_id, pattern, is_regex, is_enabled, trigger_count, created_on, updated_on, action, duration, weight) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
 		RETURNING filter_id`
 
 	if errQuery := db.QueryRow(ctx, query, filter.AuthorID.Int64(), filter.Pattern,
@@ -82,6 +83,7 @@ func (db *Store) updateFilter(ctx context.Context, filter *Filter) error {
 		Set("trigger_count", filter.TriggerCount).
 		Set("action", filter.Action).
 		Set("duration", filter.Duration).
+		Set("weight", filter.Weight).
 		Set("created_on", filter.CreatedOn).
 		Set("updated_on", filter.UpdatedOn).
 		Where(sq.Eq{"filter_id": filter.FilterID})
@@ -113,7 +115,7 @@ func (db *Store) DropFilter(ctx context.Context, filter *Filter) error {
 func (db *Store) GetFilterByID(ctx context.Context, filterID int64, filter *Filter) error {
 	query := db.sb.
 		Select("filter_id", "author_id", "pattern", "is_regex",
-			"is_enabled", "trigger_count", "created_on", "updated_on", "action", "duration").
+			"is_enabled", "trigger_count", "created_on", "updated_on", "action", "duration", "weight").
 		From("filtered_word").
 		Where(sq.Eq{"filter_id": filterID})
 
@@ -126,7 +128,7 @@ func (db *Store) GetFilterByID(ctx context.Context, filterID int64, filter *Filt
 
 	if errScan := row.Scan(&filter.FilterID, &authorID, &filter.Pattern,
 		&filter.IsRegex, &filter.IsEnabled, &filter.TriggerCount, &filter.CreatedOn, &filter.UpdatedOn,
-		&filter.Action, &filter.Duration); errScan != nil {
+		&filter.Action, &filter.Duration, &filter.Weight); errScan != nil {
 		db.log.Error("Failed to fetch filter", zap.Error(errScan))
 
 		return Err(errScan)
@@ -146,13 +148,13 @@ type FiltersQueryFilter struct {
 func (db *Store) GetFilters(ctx context.Context, opts FiltersQueryFilter) ([]Filter, int64, error) {
 	builder := db.sb.
 		Select("f.filter_id", "f.author_id", "f.pattern", "f.is_regex",
-			"f.is_enabled", "f.trigger_count", "f.created_on", "f.updated_on", "f.action", "f.duration").
+			"f.is_enabled", "f.trigger_count", "f.created_on", "f.updated_on", "f.action", "f.duration", "f.weight").
 		From("filtered_word f")
 
 	builder = opts.QueryFilter.applySafeOrder(builder, map[string][]string{
 		"f.": {
 			"filter_id", "author_id", "pattern", "is_regex", "is_enabled", "trigger_count",
-			"created_on", "updated_on", "action", "duration",
+			"created_on", "updated_on", "action", "duration", "weight",
 		},
 	}, "filter_id")
 
@@ -174,7 +176,8 @@ func (db *Store) GetFilters(ctx context.Context, opts FiltersQueryFilter) ([]Fil
 		)
 
 		if errScan := rows.Scan(&filter.FilterID, &authorID, &filter.Pattern, &filter.IsRegex,
-			&filter.IsEnabled, &filter.TriggerCount, &filter.CreatedOn, &filter.UpdatedOn, &filter.Action, &filter.Duration); errScan != nil {
+			&filter.IsEnabled, &filter.TriggerCount, &filter.CreatedOn, &filter.UpdatedOn, &filter.Action,
+			&filter.Duration, &filter.Weight); errScan != nil {
 			return nil, 0, Err(errScan)
 		}
 

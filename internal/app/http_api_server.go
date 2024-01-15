@@ -16,11 +16,13 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/demoparser"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
+	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -61,7 +63,7 @@ func onSAPIPostServerAuth(app *App) gin.HandlerFunc {
 			return
 		}
 
-		accessToken, errToken := newServerToken(server.ServerID, app.conf.HTTP.CookieKey)
+		accessToken, errToken := newServerToken(server.ServerID, app.config().HTTP.CookieKey)
 		if errToken != nil {
 			responseErr(ctx, http.StatusUnauthorized, consts.ErrPermissionDenied)
 			log.Error("Failed to create new server access token", zap.Error(errToken))
@@ -112,10 +114,11 @@ func onAPIPostPingMod(app *App) gin.HandlerFunc {
 			return
 		}
 
+		conf := app.config()
 		state := app.state.current()
 		players := state.find(findOpts{SteamID: req.SteamID})
 
-		if len(players) == 0 && app.conf.General.Mode != TestMode {
+		if len(players) == 0 && conf.General.Mode != config.TestMode {
 			log.Error("Failed to find player on /mod call")
 			responseErr(ctx, http.StatusFailedDependency, consts.ErrInternal)
 
@@ -127,18 +130,26 @@ func onAPIPostPingMod(app *App) gin.HandlerFunc {
 			"message": "Moderators have been notified",
 		})
 
-		if !app.conf.Discord.Enabled {
+		if !conf.Discord.Enabled {
 			return
 		}
 
-		msgEmbed := discord.
-			NewEmbed("New User In-Game Report").
-			SetDescription(fmt.Sprintf("%s | <@&%s>", req.Reason, app.conf.Discord.ModPingRoleID)).
+		msgEmbed := discord.NewEmbed(conf, "New User In-Game Report")
+		msgEmbed.
+			Embed().
+			SetDescription(fmt.Sprintf("%s | <@&%s>", req.Reason, conf.Discord.ModPingRoleID)).
 			AddField("server", req.ServerName)
 
-		app.addAuthor(ctx, msgEmbed, req.SteamID).Truncate()
+		var author store.Person
+		if err := app.db.GetOrCreatePersonBySteamID(ctx, req.SteamID, &author); err != nil {
+			log.Error("Failed to load user", zap.Error(err))
+		} else {
+			msgEmbed.AddAuthorPerson(author).Embed().Truncate()
+		}
 
-		app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.LogChannelID, Embed: msgEmbed.MessageEmbed})
+		app.discord.SendPayload(discord.Payload{
+			ChannelID: conf.Discord.LogChannelID, Embed: msgEmbed.Message(),
+		})
 	}
 }
 
@@ -343,7 +354,9 @@ func onAPIPostServerCheck(app *App) gin.HandlerFunc {
 			reason = bannedPerson.Reason.String()
 		}
 
-		resp.Msg = fmt.Sprintf("Banned\nReason: %s\nAppeal: %s\nRemaining: %s", reason, app.ExtURL(bannedPerson.BanSteam),
+		conf := app.config()
+
+		resp.Msg = fmt.Sprintf("Banned\nReason: %s\nAppeal: %s\nRemaining: %s", reason, conf.ExtURL(bannedPerson.BanSteam),
 			time.Until(bannedPerson.ValidUntil).Round(time.Minute).String())
 
 		ctx.JSON(http.StatusOK, resp)
@@ -455,14 +468,16 @@ func onAPIPostDemo(app *App) gin.HandlerFunc {
 			intStats[steamID] = gin.H{}
 		}
 
-		asset, errAsset := store.NewAsset(demoContent, app.conf.S3.BucketDemo, demoFormFile.Filename)
+		conf := app.config()
+
+		asset, errAsset := store.NewAsset(demoContent, conf.S3.BucketDemo, demoFormFile.Filename)
 		if errAsset != nil {
 			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save asset"))
 
 			return
 		}
 
-		if errPut := app.assetStore.Put(ctx, app.conf.S3.BucketDemo, asset.Name,
+		if errPut := app.assetStore.Put(ctx, conf.S3.BucketDemo, asset.Name,
 			bytes.NewReader(demoContent), asset.Size, asset.MimeType); errPut != nil {
 			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save media"))
 
@@ -544,7 +559,7 @@ func onAPIPostBanSteamCreate(app *App) gin.HandlerFunc {
 			origin = store.InGame
 		}
 
-		duration, errDuration := calcDuration(req.Duration, req.ValidUntil)
+		duration, errDuration := util.CalcDuration(req.Duration, req.ValidUntil)
 		if errDuration != nil {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
 
@@ -693,17 +708,20 @@ func onAPIPostReportCreate(app *App) gin.HandlerFunc {
 
 		log.Info("New report created successfully", zap.Int64("report_id", report.ReportID))
 
-		if !app.conf.Discord.Enabled {
+		conf := app.config()
+
+		if !conf.Discord.Enabled {
 			return
 		}
 
-		msgEmbed := discord.
-			NewEmbed("New User Report Created").
+		msgEmbed := discord.NewEmbed(conf, "New User Report Created")
+		msgEmbed.
+			Embed().
 			SetDescription(report.Description).
-			SetColor(app.bot.Colour.Success).
-			SetURL(app.ExtURL(report))
+			SetColor(conf.Discord.ColourSuccess).
+			SetURL(conf.ExtURL(report))
 
-		app.addAuthorUserProfile(msgEmbed, currentUser)
+		msgEmbed.AddAuthorUserProfile(currentUser)
 
 		name := personSource.PersonaName
 
@@ -711,23 +729,25 @@ func onAPIPostReportCreate(app *App) gin.HandlerFunc {
 			name = report.TargetID.String()
 		}
 
-		msgEmbed.AddField("Subject", name)
-		msgEmbed.AddField("Reason", report.Reason.String())
+		msgEmbed.
+			Embed().
+			AddField("Subject", name).
+			AddField("Reason", report.Reason.String())
 
 		if report.ReasonText != "" {
-			msgEmbed.AddField("Custom Reason", report.ReasonText)
+			msgEmbed.Embed().AddField("Custom Reason", report.ReasonText)
 		}
 
 		if report.DemoName != "" {
-			msgEmbed.AddField("Demo", app.ExtURLRaw("/demos/name/%s", report.DemoName))
-			msgEmbed.AddField("Demo Tick", fmt.Sprintf("%d", report.DemoTick))
+			msgEmbed.Embed().AddField("Demo", conf.ExtURLRaw("/demos/name/%s", report.DemoName))
+			msgEmbed.Embed().AddField("Demo Tick", fmt.Sprintf("%d", report.DemoTick))
 		}
 
-		discord.AddFieldsSteamID(msgEmbed, report.TargetID)
+		msgEmbed.AddFieldsSteamID(report.TargetID).Embed().Truncate()
 
-		app.bot.SendPayload(discord.Payload{
-			ChannelID: app.conf.Discord.LogChannelID,
-			Embed:     msgEmbed.Truncate().MessageEmbed,
+		app.discord.SendPayload(discord.Payload{
+			ChannelID: conf.Discord.LogChannelID,
+			Embed:     msgEmbed.Message(),
 		})
 	}
 }

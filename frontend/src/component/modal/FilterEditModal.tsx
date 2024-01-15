@@ -16,6 +16,7 @@ import { FilterActionField } from '../formik/FilterActionField';
 import { FilterPatternField } from '../formik/FilterPatternField';
 import { FilterTestField } from '../formik/FilterTestField';
 import { IsRegexPatternField } from '../formik/IsRegexPatternField';
+import { WeightField } from '../formik/WeightField';
 import { CancelButton, SubmitButton } from './Buttons';
 
 interface FilterEditModalProps {
@@ -29,6 +30,7 @@ interface FilterEditFormValues {
     is_enabled?: boolean;
     action: FilterAction;
     duration: string;
+    weight: number;
 }
 
 export const FilterEditModal = NiceModal.create(
@@ -44,7 +46,8 @@ export const FilterEditModal = NiceModal.create(
                         is_regex: values.is_regex,
                         pattern: values.pattern,
                         action: values.action,
-                        duration: values.duration
+                        duration: values.duration,
+                        weight: values.weight
                     });
                     modal.resolve(resp);
                     await modal.hide();
@@ -65,7 +68,8 @@ export const FilterEditModal = NiceModal.create(
                     author_id: filter?.author_id ?? undefined,
                     is_enabled: filter?.is_enabled ?? true,
                     duration: filter?.duration ?? '1w',
-                    action: filter?.action ?? FilterAction.Mute
+                    action: filter?.action ?? FilterAction.Mute,
+                    weight: filter?.weight ?? 1
                 }}
             >
                 <Dialog {...muiDialogV5(modal)} fullWidth maxWidth={'md'}>
@@ -80,6 +84,7 @@ export const FilterEditModal = NiceModal.create(
                             <FilterPatternField />
                             <FilterActionField />
                             <DurationStringField />
+                            <WeightField />
                             <IsRegexPatternField />
                             <FilterTestField />
                         </Stack>

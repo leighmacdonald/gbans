@@ -1,9 +1,9 @@
-package app_test
+package util_test
 
 import (
 	"testing"
 
-	"github.com/leighmacdonald/gbans/internal/app"
+	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/stretchr/testify/require"
 )
 
@@ -42,7 +42,7 @@ func TestParseDuration(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		d, errParseDuration := app.ParseUserStringDuration(test.input)
+		d, errParseDuration := util.ParseUserStringDuration(test.input)
 		require.NoError(t, errParseDuration, "Failed to parse: %s", test.input)
 		require.Equal(t, test.expected, d.String(), "Failed to parse: %s", test.input)
 	}

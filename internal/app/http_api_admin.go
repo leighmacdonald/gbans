@@ -200,7 +200,7 @@ func onAPIPutPlayerPermission(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if steamID == app.conf.General.Owner {
+		if steamID == app.config().General.Owner {
 			responseErr(ctx, http.StatusConflict, errors.New("Cannot alter site owner permissions"))
 
 			return

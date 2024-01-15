@@ -35,34 +35,6 @@ func (app *App) IsGroupBanned(steamID steamid.SID64) (int64, bool) {
 	return 0, false
 }
 
-// activeMatchContext represents the current match on any given server instance.
-type activeMatchContext struct {
-	match          logparse.Match
-	cancel         context.CancelFunc
-	incomingEvents chan logparse.ServerEvent
-	log            *zap.Logger
-	finalScores    int
-}
-
-func (am *activeMatchContext) start(ctx context.Context) {
-	am.log.Info("Match started", zap.String("match_id", am.match.MatchID.String()))
-
-	for {
-		select {
-		case evt := <-am.incomingEvents:
-			if errApply := am.match.Apply(evt.Results); errApply != nil && !errors.Is(errApply, logparse.ErrIgnored) {
-				am.log.Error("Error applying event",
-					zap.String("server", evt.ServerName),
-					zap.Error(errApply))
-			}
-		case <-ctx.Done():
-			am.log.Info("Match Closed", zap.String("match_id", am.match.MatchID.String()))
-
-			return
-		}
-	}
-}
-
 // matchSummarizer is the central collection point for summarizing matches live from UDP log events.
 func (app *App) matchSummarizer(ctx context.Context) {
 	log := app.log.Named("matchSum")
@@ -157,8 +129,10 @@ func (app *App) onMatchComplete(ctx context.Context, matchID uuid.UUID) {
 		return
 	}
 
-	app.bot.SendPayload(discord.Payload{
-		ChannelID: app.conf.Discord.PublicMatchLogChannelID,
+	conf := app.config()
+
+	app.discord.SendPayload(discord.Payload{
+		ChannelID: conf.Discord.PublicMatchLogChannelID,
 		Embed:     app.genDiscordMatchEmbed(result).MessageEmbed,
 	})
 }
@@ -389,27 +363,33 @@ func (app *App) showReportMeta(ctx context.Context) {
 				}
 			}
 
-			msgEmbed := discord.
-				NewEmbed("User Report Stats").
-				SetColor(app.bot.Colour.Success).
-				SetURL(app.ExtURLRaw("/admin/reports"))
+			conf := app.config()
+
+			msgEmbed := discord.NewEmbed(conf, "User Report Stats")
+			msgEmbed.
+				Embed().
+				SetColor(conf.Discord.ColourSuccess).
+				SetURL(conf.ExtURLRaw("/admin/reports"))
 
 			if meta.OpenWeek > 0 {
-				msgEmbed.SetColor(app.bot.Colour.Error)
+				msgEmbed.Embed().SetColor(conf.Discord.ColourError)
 			} else if meta.Open3Days > 0 {
-				msgEmbed.SetColor(app.bot.Colour.Warn)
+				msgEmbed.Embed().SetColor(conf.Discord.ColourWarn)
 			}
 
-			msgEmbed.SetDescription("Current Open Report Counts")
+			msgEmbed.Embed().
+				SetDescription("Current Open Report Counts").
+				AddField("New", fmt.Sprintf(" %d", meta.Open1Day)).MakeFieldInline().
+				AddField("Total Open", fmt.Sprintf(" %d", meta.TotalOpen)).MakeFieldInline().
+				AddField("Total Closed", fmt.Sprintf(" %d", meta.TotalClosed)).MakeFieldInline().
+				AddField(">1 Day", fmt.Sprintf(" %d", meta.Open1Day)).MakeFieldInline().
+				AddField(">3 Days", fmt.Sprintf(" %d", meta.Open3Days)).MakeFieldInline().
+				AddField(">1 Week", fmt.Sprintf(" %d", meta.OpenWeek)).MakeFieldInline()
 
-			msgEmbed.AddField("New", fmt.Sprintf(" %d", meta.Open1Day)).MakeFieldInline()
-			msgEmbed.AddField("Total Open", fmt.Sprintf(" %d", meta.TotalOpen)).MakeFieldInline()
-			msgEmbed.AddField("Total Closed", fmt.Sprintf(" %d", meta.TotalClosed)).MakeFieldInline()
-			msgEmbed.AddField(">1 Day", fmt.Sprintf(" %d", meta.Open1Day)).MakeFieldInline()
-			msgEmbed.AddField(">3 Days", fmt.Sprintf(" %d", meta.Open3Days)).MakeFieldInline()
-			msgEmbed.AddField(">1 Week", fmt.Sprintf(" %d", meta.OpenWeek)).MakeFieldInline()
-
-			app.bot.SendPayload(discord.Payload{ChannelID: app.conf.Discord.LogChannelID, Embed: msgEmbed.Truncate().MessageEmbed})
+			app.discord.SendPayload(discord.Payload{
+				ChannelID: conf.Discord.LogChannelID,
+				Embed:     msgEmbed.Embed().Truncate().MessageEmbed,
+			})
 		case <-ctx.Done():
 			app.log.Debug("showReportMeta shutting down")
 
@@ -432,13 +412,15 @@ func (app *App) demoCleaner(ctx context.Context) {
 		case <-ticker.C:
 			triggerChan <- true
 		case <-triggerChan:
-			if !app.conf.General.DemoCleanupEnabled {
+			conf := app.config()
+
+			if !conf.General.DemoCleanupEnabled {
 				continue
 			}
 
 			log.Debug("Starting demo cleanup")
 
-			expired, errExpired := app.db.ExpiredDemos(ctx, app.conf.General.DemoCountLimit)
+			expired, errExpired := app.db.ExpiredDemos(ctx, conf.General.DemoCountLimit)
 			if errExpired != nil {
 				if errors.Is(errExpired, store.ErrNoResult) {
 					continue
@@ -454,22 +436,22 @@ func (app *App) demoCleaner(ctx context.Context) {
 			count := 0
 
 			for _, demo := range expired {
-				if errRemove := app.assetStore.Remove(ctx, app.conf.S3.BucketDemo, demo.Title); errRemove != nil {
+				if errRemove := app.assetStore.Remove(ctx, conf.S3.BucketDemo, demo.Title); errRemove != nil {
 					log.Error("Failed to remove demo asset from S3",
-						zap.Error(errRemove), zap.String("bucket", app.conf.S3.BucketDemo), zap.String("name", demo.Title))
+						zap.Error(errRemove), zap.String("bucket", conf.S3.BucketDemo), zap.String("name", demo.Title))
 
 					continue
 				}
 
 				if errDrop := app.db.DropDemo(ctx, &store.DemoFile{DemoID: demo.DemoID, Title: demo.Title}); errDrop != nil {
 					log.Error("Failed to remove demo", zap.Error(errDrop),
-						zap.String("bucket", app.conf.S3.BucketDemo), zap.String("name", demo.Title))
+						zap.String("bucket", conf.S3.BucketDemo), zap.String("name", demo.Title))
 
 					continue
 				}
 
 				log.Info("Demo expired and removed",
-					zap.String("bucket", app.conf.S3.BucketDemo), zap.String("name", demo.Title))
+					zap.String("bucket", conf.S3.BucketDemo), zap.String("name", demo.Title))
 				count++
 			}
 
@@ -731,23 +713,26 @@ func (app *App) banSweeper(ctx context.Context) {
 								name = person.SteamID.String()
 							}
 
-							msgEmbed := discord.
-								NewEmbed("Steam Ban Expired").
-								SetColor(app.bot.Colour.Info).
+							conf := app.config()
+
+							msgEmbed := discord.NewEmbed(conf, "Steam Ban Expired")
+							msgEmbed.
+								Embed().
+								SetColor(conf.Discord.ColourInfo).
 								AddField("Type", banType).
 								SetImage(person.AvatarFull).
 								AddField("Name", person.PersonaName).
-								SetURL(app.ExtURL(ban))
+								SetURL(conf.ExtURL(ban))
 
-							discord.AddFieldsSteamID(msgEmbed, person.SteamID)
+							msgEmbed.AddFieldsSteamID(person.SteamID)
 
 							if expiredBan.BanType == store.NoComm {
-								msgEmbed.SetColor(app.bot.Colour.Warn)
+								msgEmbed.Embed().SetColor(conf.Discord.ColourWarn)
 							}
 
-							app.bot.SendPayload(discord.Payload{
-								ChannelID: app.conf.Discord.LogChannelID,
-								Embed:     msgEmbed.Truncate().MessageEmbed,
+							app.discord.SendPayload(discord.Payload{
+								ChannelID: conf.Discord.LogChannelID,
+								Embed:     msgEmbed.Embed().Truncate().MessageEmbed,
 							})
 
 							log.Info("Ban expired", zap.String("type", banType),
