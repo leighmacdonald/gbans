@@ -793,7 +793,7 @@ func onAPIPostReportMessage(app *App) gin.HandlerFunc {
 			SetColor(conf.Discord.ColourSuccess).
 			SetURL(conf.ExtURL(report))
 
-		msgEmbed.AddAuthorUserProfile(person).Embed().Truncate()
+		msgEmbed.AddAuthorPersonInfo(person).Embed().Truncate()
 
 		app.discord.SendPayload(discord.Payload{
 			ChannelID: conf.Discord.LogChannelID,
@@ -872,7 +872,7 @@ func onAPIEditReportMessage(app *App) gin.HandlerFunc {
 			AddField("Old Message", existing.MessageMD).
 			SetURL(conf.ExtURLRaw("/report/%d", existing.ReportID))
 
-		msgEmbed.AddAuthorUserProfile(curUser).Embed().Truncate()
+		msgEmbed.AddAuthorPersonInfo(curUser).Embed().Truncate()
 
 		app.discord.SendPayload(discord.Payload{
 			ChannelID: conf.Discord.LogChannelID,
@@ -928,7 +928,7 @@ func onAPIDeleteReportMessage(app *App) gin.HandlerFunc {
 			SetDescription(existing.MessageMD).
 			SetColor(conf.Discord.ColourWarn)
 
-		msgEmbed.AddAuthorUserProfile(curUser).Embed().Truncate()
+		msgEmbed.AddAuthorPersonInfo(curUser).Embed().Truncate()
 
 		app.discord.SendPayload(discord.Payload{
 			ChannelID: conf.Discord.LogChannelID,
@@ -1083,7 +1083,7 @@ func onAPIPostBanMessage(app *App) gin.HandlerFunc {
 			SetDescription(msg.MessageMD).
 			SetURL(conf.ExtURL(bannedPerson.BanSteam))
 
-		msgEmbed.AddAuthorUserProfile(curUserProfile).Embed().Truncate()
+		msgEmbed.AddAuthorPersonInfo(curUserProfile).Embed().Truncate()
 
 		app.discord.SendPayload(discord.Payload{
 			ChannelID: conf.Discord.LogChannelID,
@@ -1162,7 +1162,7 @@ func onAPIEditBanMessage(app *App) gin.HandlerFunc {
 			SetDescription(util.DiffString(existing.MessageMD, req.BodyMD)).
 			SetColor(conf.Discord.ColourWarn)
 
-		msgEmbed.AddAuthorUserProfile(curUser).Embed().Truncate()
+		msgEmbed.AddAuthorPersonInfo(curUser).Embed().Truncate()
 
 		app.discord.SendPayload(discord.Payload{
 			ChannelID: conf.Discord.LogChannelID,
@@ -1217,7 +1217,7 @@ func onAPIDeleteBanMessage(app *App) gin.HandlerFunc {
 		msgEmbed.
 			Embed().
 			SetDescription(existing.MessageMD)
-		msgEmbed.AddAuthorUserProfile(curUser).Embed().Truncate()
+		msgEmbed.AddAuthorPersonInfo(curUser).Embed().Truncate()
 
 		app.discord.SendPayload(discord.Payload{
 			ChannelID: conf.Discord.LogChannelID,

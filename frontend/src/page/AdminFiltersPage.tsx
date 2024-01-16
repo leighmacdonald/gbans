@@ -8,11 +8,12 @@ import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import IconButton from '@mui/material/IconButton';
+import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { Filter, FilterAction, filterActionString } from '../api/filters';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons';
+import { WarningStateContainer } from '../component/WarningStateContainer';
 import { ModalFilterDelete, ModalFilterEditor } from '../component/modal';
 import { LazyTable, RowsPerPage } from '../component/table/LazyTable';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
@@ -74,162 +75,160 @@ export const AdminFiltersPage = () => {
     }, []);
 
     return (
-        <Grid container spacing={2}>
-            <Grid xs={12}>
-                <ContainerWithHeaderAndButtons
-                    title={'Word Filters'}
-                    iconLeft={<FilterAltIcon />}
-                    buttons={[
-                        <ButtonGroup
-                            variant="contained"
-                            aria-label="outlined primary button group"
-                            key={`btn-headers-filters`}
+        <Stack spacing={2}>
+            <ContainerWithHeaderAndButtons
+                title={'Word Filters'}
+                iconLeft={<FilterAltIcon />}
+                buttons={[
+                    <ButtonGroup
+                        variant="contained"
+                        aria-label="outlined primary button group"
+                        key={`btn-headers-filters`}
+                    >
+                        <Button
+                            startIcon={<AddBoxIcon />}
+                            color={'success'}
+                            onClick={onCreate}
                         >
-                            <Button
-                                startIcon={<AddBoxIcon />}
-                                color={'success'}
-                                onClick={onCreate}
-                            >
-                                New
-                            </Button>
-                        </ButtonGroup>
-                    ]}
-                >
-                    <LazyTable<Filter>
-                        showPager={true}
-                        count={count}
-                        rows={allRows}
-                        page={Number(state.page ?? 0)}
-                        rowsPerPage={Number(state.rows ?? RowsPerPage.Ten)}
-                        sortOrder={state.sortOrder}
-                        sortColumn={state.sortColumn}
-                        onSortColumnChanged={async (column) => {
-                            setState({ sortColumn: column });
-                        }}
-                        onSortOrderChanged={async (direction) => {
-                            setState({ sortOrder: direction });
-                        }}
-                        onPageChange={(_, newPage: number) => {
-                            setState({ page: newPage });
-                        }}
-                        onRowsPerPageChange={(
-                            event: React.ChangeEvent<
-                                HTMLInputElement | HTMLTextAreaElement
-                            >
-                        ) => {
-                            setState({
-                                rows: Number(event.target.value),
-                                page: 0
-                            });
-                        }}
-                        columns={[
-                            {
-                                label: 'Pattern',
-                                tooltip: 'Pattern',
-                                sortKey: 'pattern',
-                                sortable: true,
-                                align: 'left',
-                                renderer: (row) => {
-                                    return row.pattern as string;
-                                }
-                            },
-                            {
-                                label: 'Regex',
-                                tooltip: 'Regular Expression',
-                                sortKey: 'is_regex',
-                                sortable: true,
-                                align: 'right',
-                                renderer: (row) => {
-                                    return row.is_regex ? 'true' : 'false';
-                                }
-                            },
-                            {
-                                label: 'Action',
-                                tooltip: 'What will happen when its triggered',
-                                sortKey: 'action',
-                                sortable: true,
-                                align: 'right',
-                                renderer: (row) => {
-                                    return filterActionString(row.action);
-                                }
-                            },
-                            {
-                                label: 'Duration',
-                                tooltip:
-                                    'Duration when the action is triggered',
-                                sortKey: 'duration',
-                                sortable: false,
-                                align: 'right',
-                                renderer: (row) => {
-                                    return row.action == FilterAction.Kick
-                                        ? ''
-                                        : row.duration;
-                                }
-                            },
-                            {
-                                label: 'Weight',
-                                tooltip: 'Weight per match',
-                                sortKey: 'weight',
-                                sortable: true,
-                                align: 'right',
-                                renderer: (_, weight) => {
-                                    return (
-                                        <Typography variant={'body2'}>
-                                            {weight as number}
-                                        </Typography>
-                                    );
-                                }
-                            },
-                            {
-                                label: 'Triggered',
-                                tooltip:
-                                    'Number of times the filter has been triggered',
-                                sortKey: 'trigger_count',
-                                sortable: true,
-                                sortType: 'number',
-                                align: 'right',
-                                renderer: (row) => {
-                                    return row.trigger_count;
-                                }
-                            },
-                            {
-                                label: 'Actions',
-                                tooltip: 'Action',
-                                virtualKey: 'actions',
-                                sortable: false,
-                                align: 'right',
-                                virtual: true,
-                                renderer: (row) => {
-                                    return (
-                                        <ButtonGroup>
-                                            <Tooltip title={'Edit filter'}>
-                                                <IconButton
-                                                    color={'warning'}
-                                                    onClick={async () => {
-                                                        await onEdit(row);
-                                                    }}
-                                                >
-                                                    <EditIcon />
-                                                </IconButton>
-                                            </Tooltip>
-                                            <Tooltip title={'Delete filter'}>
-                                                <IconButton
-                                                    color={'error'}
-                                                    onClick={async () => {
-                                                        await onDelete(row);
-                                                    }}
-                                                >
-                                                    <DeleteForeverIcon />
-                                                </IconButton>
-                                            </Tooltip>
-                                        </ButtonGroup>
-                                    );
-                                }
+                            New
+                        </Button>
+                    </ButtonGroup>
+                ]}
+            >
+                <LazyTable<Filter>
+                    showPager={true}
+                    count={count}
+                    rows={allRows}
+                    page={Number(state.page ?? 0)}
+                    rowsPerPage={Number(state.rows ?? RowsPerPage.Ten)}
+                    sortOrder={state.sortOrder}
+                    sortColumn={state.sortColumn}
+                    onSortColumnChanged={async (column) => {
+                        setState({ sortColumn: column });
+                    }}
+                    onSortOrderChanged={async (direction) => {
+                        setState({ sortOrder: direction });
+                    }}
+                    onPageChange={(_, newPage: number) => {
+                        setState({ page: newPage });
+                    }}
+                    onRowsPerPageChange={(
+                        event: React.ChangeEvent<
+                            HTMLInputElement | HTMLTextAreaElement
+                        >
+                    ) => {
+                        setState({
+                            rows: Number(event.target.value),
+                            page: 0
+                        });
+                    }}
+                    columns={[
+                        {
+                            label: 'Pattern',
+                            tooltip: 'Pattern',
+                            sortKey: 'pattern',
+                            sortable: true,
+                            align: 'left',
+                            renderer: (row) => {
+                                return row.pattern as string;
                             }
-                        ]}
-                    />
-                </ContainerWithHeaderAndButtons>
-            </Grid>
-        </Grid>
+                        },
+                        {
+                            label: 'Regex',
+                            tooltip: 'Regular Expression',
+                            sortKey: 'is_regex',
+                            sortable: true,
+                            align: 'right',
+                            renderer: (row) => {
+                                return row.is_regex ? 'true' : 'false';
+                            }
+                        },
+                        {
+                            label: 'Action',
+                            tooltip: 'What will happen when its triggered',
+                            sortKey: 'action',
+                            sortable: true,
+                            align: 'right',
+                            renderer: (row) => {
+                                return filterActionString(row.action);
+                            }
+                        },
+                        {
+                            label: 'Duration',
+                            tooltip: 'Duration when the action is triggered',
+                            sortKey: 'duration',
+                            sortable: false,
+                            align: 'right',
+                            renderer: (row) => {
+                                return row.action == FilterAction.Kick
+                                    ? ''
+                                    : row.duration;
+                            }
+                        },
+                        {
+                            label: 'Weight',
+                            tooltip: 'Weight per match',
+                            sortKey: 'weight',
+                            sortable: true,
+                            align: 'right',
+                            renderer: (_, weight) => {
+                                return (
+                                    <Typography variant={'body2'}>
+                                        {weight as number}
+                                    </Typography>
+                                );
+                            }
+                        },
+                        {
+                            label: 'Triggered',
+                            tooltip:
+                                'Number of times the filter has been triggered',
+                            sortKey: 'trigger_count',
+                            sortable: true,
+                            sortType: 'number',
+                            align: 'right',
+                            renderer: (row) => {
+                                return row.trigger_count;
+                            }
+                        },
+                        {
+                            label: 'Actions',
+                            tooltip: 'Action',
+                            virtualKey: 'actions',
+                            sortable: false,
+                            align: 'right',
+                            virtual: true,
+                            renderer: (row) => {
+                                return (
+                                    <ButtonGroup>
+                                        <Tooltip title={'Edit filter'}>
+                                            <IconButton
+                                                color={'warning'}
+                                                onClick={async () => {
+                                                    await onEdit(row);
+                                                }}
+                                            >
+                                                <EditIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                        <Tooltip title={'Delete filter'}>
+                                            <IconButton
+                                                color={'error'}
+                                                onClick={async () => {
+                                                    await onDelete(row);
+                                                }}
+                                            >
+                                                <DeleteForeverIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </ButtonGroup>
+                                );
+                            }
+                        }
+                    ]}
+                />
+            </ContainerWithHeaderAndButtons>
+            <WarningStateContainer />
+        </Stack>
     );
 };

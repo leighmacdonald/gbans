@@ -286,6 +286,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		editorRoute.POST("/api/news/:news_id", onAPIPostNewsUpdate(app))
 		editorRoute.POST("/api/news_all", onAPIGetNewsAll(app))
 		editorRoute.POST("/api/filters/query", onAPIQueryWordFilters(app))
+		editorRoute.GET("/api/filters/state", onAPIGetWarningState(app))
 		editorRoute.POST("/api/filters", onAPIPostWordFilter(app))
 		editorRoute.DELETE("/api/filters/:word_id", onAPIDeleteWordFilter(app))
 		editorRoute.POST("/api/filter_match", onAPIPostWordMatch(app))

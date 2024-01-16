@@ -38,6 +38,7 @@ type Message struct {
 	Text string `json:"text"`
 	Tick int    `json:"tick"`
 }
+
 type Death struct {
 	Weapon   string `json:"weapon"`
 	Victim   int    `json:"victim"`

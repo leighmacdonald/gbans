@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/config"
@@ -25,6 +26,7 @@ func newWarningTracker(log *zap.Logger, store FilterMatchStore, config config.Fi
 		store:              store,
 		onWarningsExceeded: exceededFunc,
 		onWarning:          issuedFunc,
+		warningMu:          &sync.RWMutex{},
 	}
 
 	tracker.SetConfig(config)
@@ -37,16 +39,23 @@ func (w *WarningTracker) SetConfig(config config.Filter) {
 }
 
 type userWarning struct {
-	WarnReason    store.Reason
-	Message       string
-	Matched       string
-	MatchedFilter *store.Filter
-	CreatedOn     time.Time
+	WarnReason    store.Reason  `json:"warn_reason"`
+	Message       string        `json:"message"`
+	Matched       string        `json:"matched"`
+	MatchedFilter *store.Filter `json:"matched_filter"`
+	CreatedOn     time.Time     `json:"created_on"`
+	Personaname   string        `json:"personaname"`
+	Avatar        string        `json:"avatar"`
+	ServerName    string        `json:"server_name"`
+	ServerID      int           `json:"server_id"`
+	SteamID       string        `json:"steam_id"`
+	CurrentTotal  int           `json:"current_total"`
 }
 
 type WarningTracker struct {
 	log                *zap.Logger
 	store              FilterMatchStore
+	warningMu          *sync.RWMutex
 	warnings           map[steamid.SID64][]userWarning
 	warningChan        chan newUserWarning
 	wordFilters        wordFilters
@@ -60,68 +69,113 @@ type FilterMatchStore interface {
 	GetPersonBySteamID(ctx context.Context, sid64 steamid.SID64, person *store.Person) error
 }
 
+// state returns a string key so its more easily portable to frontend js w/o using BigInt
+func (w *WarningTracker) state() map[string][]userWarning {
+	w.warningMu.RLock()
+	defer w.warningMu.RUnlock()
+
+	out := make(map[string][]userWarning)
+
+	for k, v := range w.warnings {
+		var warnings []userWarning
+
+		for _, warning := range v {
+			warnings = append(warnings, warning)
+		}
+
+		out[k.String()] = warnings
+	}
+
+	return out
+}
+
+func (w *WarningTracker) check(now time.Time) {
+	w.warningMu.Lock()
+	defer w.warningMu.Unlock()
+
+	for steamID := range w.warnings {
+		for warnIdx, warning := range w.warnings[steamID] {
+			if now.Sub(warning.CreatedOn) > w.config.MatchTimeout {
+				if len(w.warnings[steamID]) > 1 {
+					w.warnings[steamID] = append(w.warnings[steamID][:warnIdx], w.warnings[steamID][warnIdx+1])
+				} else {
+					delete(w.warnings, steamID)
+				}
+			}
+		}
+
+		var newSum int
+		for idx := range w.warnings[steamID] {
+			newSum += w.warnings[steamID][idx].MatchedFilter.Weight
+			w.warnings[steamID][idx].CurrentTotal = newSum
+		}
+	}
+}
+
+func (w *WarningTracker) trigger(ctx context.Context, newWarn newUserWarning) {
+	if !newWarn.userMessage.SteamID.Valid() {
+		return
+	}
+
+	newWarn.MatchedFilter.TriggerCount++
+	if errSave := w.store.SaveFilter(ctx, newWarn.MatchedFilter); errSave != nil {
+		w.log.Error("Failed to update filter trigger count", zap.Error(errSave))
+	}
+
+	if !newWarn.MatchedFilter.IsEnabled {
+		return
+	}
+
+	if !w.config.Dry {
+		w.warningMu.Lock()
+
+		_, found := w.warnings[newWarn.userMessage.SteamID]
+		if !found {
+			w.warnings[newWarn.userMessage.SteamID] = []userWarning{}
+		}
+
+		var (
+			currentWeight = newWarn.MatchedFilter.Weight
+			count         int
+		)
+
+		for _, existing := range w.warnings[newWarn.userMessage.SteamID] {
+			currentWeight += existing.MatchedFilter.Weight
+			count++
+		}
+
+		newWarn.CurrentTotal = currentWeight + newWarn.MatchedFilter.Weight
+
+		w.warnings[newWarn.userMessage.SteamID] = append(w.warnings[newWarn.userMessage.SteamID], newWarn.userWarning)
+
+		w.warningMu.Unlock()
+
+		if currentWeight > w.config.MaxWeight {
+			w.log.Info("Warn limit exceeded",
+				zap.Int64("sid64", newWarn.userMessage.SteamID.Int64()),
+				zap.Int("count", count), zap.Int("weight", currentWeight))
+
+			if err := w.onWarningsExceeded(ctx, w, newWarn); err != nil {
+				w.log.Error("Failed to execute warning exceeded handler", zap.Error(err))
+			}
+		} else {
+			if err := w.onWarning(ctx, w, newWarn); err != nil {
+				w.log.Error("Failed to execute warning handler", zap.Error(err))
+			}
+		}
+	}
+}
+
 func (w *WarningTracker) start(ctx context.Context) {
 	ticker := time.NewTicker(w.config.CheckTimeout)
 
 	for {
 		select {
 		case now := <-ticker.C:
-			for steamID := range w.warnings {
-				for warnIdx, warning := range w.warnings[steamID] {
-					if now.Sub(warning.CreatedOn) > w.config.MatchTimeout {
-						if len(w.warnings[steamID]) > 1 {
-							w.warnings[steamID] = append(w.warnings[steamID][:warnIdx], w.warnings[steamID][warnIdx+1])
-						} else {
-							delete(w.warnings, steamID)
-						}
-					}
-				}
-			}
-
+			w.check(now)
 			ticker.Reset(w.config.CheckTimeout)
-
 		case newWarn := <-w.warningChan:
-			if !newWarn.userMessage.SteamID.Valid() {
-				continue
-			}
-
-			newWarn.MatchedFilter.TriggerCount++
-			if errSave := w.store.SaveFilter(ctx, newWarn.MatchedFilter); errSave != nil {
-				w.log.Error("Failed to update filter trigger count", zap.Error(errSave))
-			}
-
-			if !newWarn.MatchedFilter.IsEnabled {
-				continue
-			}
-
-			if !w.config.Dry {
-				_, found := w.warnings[newWarn.userMessage.SteamID]
-				if !found {
-					w.warnings[newWarn.userMessage.SteamID] = []userWarning{}
-				}
-
-				w.warnings[newWarn.userMessage.SteamID] = append(w.warnings[newWarn.userMessage.SteamID], newWarn.userWarning)
-
-				var currentWeight int
-				for _, existing := range w.warnings[newWarn.userMessage.SteamID] {
-					currentWeight += existing.MatchedFilter.Weight
-				}
-
-				if currentWeight > w.config.MaxWeight {
-					w.log.Info("Warn limit exceeded",
-						zap.Int64("sid64", newWarn.userMessage.SteamID.Int64()),
-						zap.Int("count", len(w.warnings[newWarn.userMessage.SteamID])))
-
-					if err := w.onWarningsExceeded(ctx, w, newWarn); err != nil {
-						w.log.Error("Failed to execute warning exceeded handler", zap.Error(err))
-					}
-				} else {
-					if err := w.onWarning(ctx, w, newWarn); err != nil {
-						w.log.Error("Failed to execute warning handler", zap.Error(err))
-					}
-				}
-			}
-
+			w.trigger(ctx, newWarn)
 		case <-ctx.Done():
 			return
 		}

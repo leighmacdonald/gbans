@@ -1565,3 +1565,23 @@ func onAPIUpdateForumForum(app *App) gin.HandlerFunc {
 		log.Info("Forum updated", zap.String("title", forum.Title))
 	}
 }
+
+func onAPIGetWarningState(app *App) gin.HandlerFunc {
+	// log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+	type warningState struct {
+		MaxWeight int           `json:"max_weight"`
+		Current   []userWarning `json:"current"`
+	}
+
+	return func(ctx *gin.Context) {
+		state := app.warningTracker.state()
+
+		ws := warningState{MaxWeight: app.config().Filter.MaxWeight}
+
+		for _, warn := range state {
+			ws.Current = append(ws.Current, warn...)
+		}
+
+		ctx.JSON(http.StatusOK, ws)
+	}
+}

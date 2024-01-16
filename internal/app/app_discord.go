@@ -181,7 +181,7 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 				if errGetProfile := app.PersonBySID(ctx, ban.SourceID, &authorProfile); errGetProfile != nil {
 					app.log.Error("Failed to load author for ban", zap.Error(errGetProfile))
 				} else {
-					msgEmbed.AddAuthorPerson(authorProfile)
+					msgEmbed.AddAuthorPersonInfo(authorProfile)
 				}
 			}
 
@@ -328,7 +328,7 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 				msgEmbed.Embed().AddField("Mod Note", ban.Note).MakeFieldInline()
 			}
 
-			msgEmbed.AddAuthorPerson(authorProfile)
+			msgEmbed.AddAuthorPersonInfo(authorProfile)
 		}
 
 		if player.IPAddr != nil {
@@ -474,7 +474,7 @@ func (app *App) createDiscordBanEmbed(ctx context.Context, ban store.BanSteam) (
 		return nil, errTarget
 	}
 
-	msgEmbed.AddAuthorPerson(author)
+	msgEmbed.AddAuthorPersonInfo(author)
 
 	if ban.ValidUntil.Year()-time.Now().Year() > 5 {
 		msgEmbed.Embed().AddField("Expires In", "Permanent")
@@ -1190,7 +1190,7 @@ func onStatsPlayer(ctx context.Context, app *App, _ *discordgo.Session, interact
 		makeKillstreakStatsTable(killstreakStats),
 	))
 
-	emb.AddAuthorPerson(person)
+	emb.AddAuthorPersonInfo(person)
 
 	return emb.Embed().MessageEmbed, nil
 }
