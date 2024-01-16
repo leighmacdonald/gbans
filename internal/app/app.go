@@ -37,27 +37,26 @@ var (
 )
 
 type App struct {
-	conf                 config.Config
-	confMu               sync.RWMutex
-	discord              ChatBot
-	db                   *store.Store
-	log                  *zap.Logger
-	logFileChan          chan *logFilePayload
-	notificationChan     chan NotificationPayload
-	state                *serverStateCollector
-	bannedGroupMembers   map[int64]steamid.Collection
-	bannedGroupMembersMu *sync.RWMutex
-	patreon              *patreonManager
-	eb                   *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
-	wordFilters          *wordFilters
-	warningTracker       *WarningTracker
-	mc                   *metricCollector
-	assetStore           AssetStore
-	logListener          *logparse.UDPLogListener
-	matchUUIDMap         fp.MutexMap[int, uuid.UUID]
-	activityMu           *sync.RWMutex
-	activity             []forumActivity
-	netBlock             *NetworkBlocker
+	conf             config.Config
+	confMu           sync.RWMutex
+	discord          ChatBot
+	db               *store.Store
+	log              *zap.Logger
+	logFileChan      chan *logFilePayload
+	notificationChan chan NotificationPayload
+	state            *serverStateCollector
+	steamGroups      *steamGroupMemberships
+	patreon          *patreonManager
+	eb               *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
+	wordFilters      *wordFilters
+	warningTracker   *WarningTracker
+	mc               *metricCollector
+	assetStore       AssetStore
+	logListener      *logparse.UDPLogListener
+	matchUUIDMap     fp.MutexMap[int, uuid.UUID]
+	activityMu       *sync.RWMutex
+	activity         []forumActivity
+	netBlock         *NetworkBlocker
 }
 
 type ChatBot interface {
@@ -69,23 +68,22 @@ type CommandHandler func(ctx context.Context, s *discordgo.Session, m *discordgo
 
 func New(conf config.Config, database *store.Store, bot ChatBot, logger *zap.Logger, assetStore AssetStore) *App {
 	application := &App{
-		discord:              bot,
-		eb:                   fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent](),
-		db:                   database,
-		conf:                 conf,
-		assetStore:           assetStore,
-		log:                  logger,
-		logFileChan:          make(chan *logFilePayload, 10),
-		notificationChan:     make(chan NotificationPayload, 5),
-		bannedGroupMembers:   map[int64]steamid.Collection{},
-		bannedGroupMembersMu: &sync.RWMutex{},
-		matchUUIDMap:         fp.NewMutexMap[int, uuid.UUID](),
-		patreon:              newPatreonManager(logger, conf, database),
-		wordFilters:          newWordFilters(),
-		mc:                   newMetricCollector(),
-		state:                newServerStateCollector(logger),
-		activityMu:           &sync.RWMutex{},
-		netBlock:             NewNetworkBlocker(),
+		discord:          bot,
+		eb:               fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent](),
+		db:               database,
+		conf:             conf,
+		assetStore:       assetStore,
+		log:              logger,
+		logFileChan:      make(chan *logFilePayload, 10),
+		notificationChan: make(chan NotificationPayload, 5),
+		steamGroups:      newSteamGroupMemberships(logger, database),
+		matchUUIDMap:     fp.NewMutexMap[int, uuid.UUID](),
+		patreon:          newPatreonManager(logger, conf, database),
+		wordFilters:      newWordFilters(),
+		mc:               newMetricCollector(),
+		state:            newServerStateCollector(logger),
+		activityMu:       &sync.RWMutex{},
+		netBlock:         NewNetworkBlocker(),
 	}
 
 	application.setConfig(conf)
@@ -416,6 +414,11 @@ func (app *App) chatRecorder(ctx context.Context) {
 								Matched:       matchedWord,
 								MatchedFilter: matchedFilter,
 								CreatedOn:     time.Now(),
+								Personaname:   userMsg.PersonaName,
+								Avatar:        userMsg.AvatarHash,
+								ServerName:    userMsg.ServerName,
+								ServerID:      userMsg.ServerID,
+								SteamID:       userMsg.SteamID.String(),
 							},
 						}
 					}
@@ -597,7 +600,7 @@ func (app *App) startWorkers(ctx context.Context) {
 	go app.matchSummarizer(ctx)
 	go app.chatRecorder(ctx)
 	go app.playerConnectionWriter(ctx)
-	go app.steamGroupMembershipUpdater(ctx)
+	go app.steamGroups.start(ctx)
 	go cleanupTasks(ctx, app.db, app.log)
 	go app.showReportMeta(ctx)
 	go app.notificationSender(ctx)

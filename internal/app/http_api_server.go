@@ -144,7 +144,7 @@ func onAPIPostPingMod(app *App) gin.HandlerFunc {
 		if err := app.db.GetOrCreatePersonBySteamID(ctx, req.SteamID, &author); err != nil {
 			log.Error("Failed to load user", zap.Error(err))
 		} else {
-			msgEmbed.AddAuthorPerson(author).Embed().Truncate()
+			msgEmbed.AddAuthorPersonInfo(author).Embed().Truncate()
 		}
 
 		app.discord.SendPayload(discord.Payload{
@@ -238,7 +238,7 @@ func onAPIPostServerCheck(app *App) gin.HandlerFunc {
 			log.Error("Failed to add conn history", zap.Error(errAddHist))
 		}
 
-		if parentID, banned := app.IsGroupBanned(steamID); banned {
+		if parentID, banned := app.steamGroups.isMember(steamID); banned {
 			resp.BanType = store.Banned
 
 			if parentID >= steamid.BaseGID {
@@ -721,7 +721,7 @@ func onAPIPostReportCreate(app *App) gin.HandlerFunc {
 			SetColor(conf.Discord.ColourSuccess).
 			SetURL(conf.ExtURL(report))
 
-		msgEmbed.AddAuthorUserProfile(currentUser)
+		msgEmbed.AddAuthorPersonInfo(currentUser)
 
 		name := personSource.PersonaName
 
