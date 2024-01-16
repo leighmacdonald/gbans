@@ -18,23 +18,6 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// IsGroupBanned checks membership in the currently known banned group members or friends of banned users
-// marked with `include_friends`.
-func (app *App) IsGroupBanned(steamID steamid.SID64) (int64, bool) {
-	app.bannedGroupMembersMu.RLock()
-	defer app.bannedGroupMembersMu.RUnlock()
-
-	for parentID, groupMembers := range app.bannedGroupMembers {
-		for _, member := range groupMembers {
-			if steamID == member {
-				return parentID, true
-			}
-		}
-	}
-
-	return 0, false
-}
-
 // matchSummarizer is the central collection point for summarizing matches live from UDP log events.
 func (app *App) matchSummarizer(ctx context.Context) {
 	log := app.log.Named("matchSum")
@@ -190,93 +173,12 @@ func (app *App) updateSteamBanMembers(ctx context.Context) (map[int64]steamid.Co
 	return newMap, nil
 }
 
-// updateGroupBanMembers handles fetching and updating the member lists of steam groups. This does
-// NOT use the steam API, so be careful to not call too often.
-//
-// Group IDs can be found using https://steamcommunity.com/groups/<GROUP_NAME>/memberslistxml/?xml=1
-func (app *App) updateGroupBanMembers(ctx context.Context) (map[int64]steamid.Collection, error) {
-	newMap := map[int64]steamid.Collection{}
-
-	localCtx, cancel := context.WithTimeout(ctx, time.Second*120)
-	defer cancel()
-
-	groups, _, errGroups := app.db.GetBanGroups(ctx, store.GroupBansQueryFilter{})
-	if errGroups != nil {
-		if errors.Is(errGroups, store.ErrNoResult) {
-			return newMap, nil
-		}
-
-		return nil, errors.Wrap(errGroups, "Failed to fetch banned groups")
-	}
-
-	for _, group := range groups {
-		members, errMembers := steamweb.GetGroupMembers(localCtx, group.GroupID)
-		if errMembers != nil {
-			return nil, errors.Wrapf(errMembers, "Failed to fetch group members")
-		}
-
-		if len(members) == 0 {
-			continue
-		}
-
-		memberList := store.NewMembersList(group.GroupID.Int64(), members)
-		if errQuery := app.db.GetMembersList(ctx, group.GroupID.Int64(), &memberList); errQuery != nil {
-			if !errors.Is(errQuery, store.ErrNoResult) {
-				return nil, errors.Wrap(errQuery, "Failed to fetch members list")
-			}
-		}
-
-		if errSave := app.db.SaveMembersList(ctx, &memberList); errSave != nil {
-			return nil, errors.Wrap(errSave, "Failed to save banned groups member list")
-		}
-
-		newMap[group.GroupID.Int64()] = members
-
-		// Group info doesn't use the steam api so its *heavily* rate limited. Let's try to minimize the ability to
-		// get banned incase there is a lot of banned groups. This probably need to be increased if you are blocked a
-		// large amount of groups.
-		time.Sleep(time.Second * 5)
-	}
-
-	return newMap, nil
-}
-
-func (app *App) steamGroupMembershipUpdater(ctx context.Context) {
-	log := app.log.Named("steamGroupMembership")
-	ticker := time.NewTicker(time.Minute * 60)
-	updateChan := make(chan any)
-
-	go func() {
-		updateChan <- true
-	}()
-
-	for {
-		select {
-		case <-ticker.C:
-			updateChan <- true
-		case <-updateChan:
-			app.updateBanChildren(ctx)
-		case <-ctx.Done():
-			log.Debug("steamGroupMembershipUpdater shutting down")
-
-			return
-		}
-	}
-}
-
+// todo move to separate struct
 func (app *App) updateBanChildren(ctx context.Context) {
 	var (
 		newMap = map[int64]steamid.Collection{}
 		total  = 0
 	)
-
-	groupEntries, errGroupEntries := app.updateGroupBanMembers(ctx)
-	if errGroupEntries == nil {
-		for k, v := range groupEntries {
-			total += len(v)
-			newMap[k] = v
-		}
-	}
 
 	friendEntries, errFriendEntries := app.updateSteamBanMembers(ctx)
 	if errFriendEntries == nil {
@@ -286,12 +188,7 @@ func (app *App) updateBanChildren(ctx context.Context) {
 		}
 	}
 
-	app.bannedGroupMembersMu.Lock()
-	app.bannedGroupMembers = newMap
-	app.bannedGroupMembersMu.Unlock()
-
-	app.log.Debug("Updated group & friend list member bans",
-		zap.Int("groups", len(groupEntries)),
+	app.log.Debug("Updated friend list member bans",
 		zap.Int("friends", len(friendEntries)))
 }
 
