@@ -121,7 +121,13 @@ export const WarningStateTable = ({
                     renderer: (row) => {
                         return (
                             <Tooltip title={renderFilter(row.matched_filter)}>
-                                <Typography variant={'body1'}>
+                                <Typography
+                                    variant={'body1'}
+                                    sx={{
+                                        textDecoration: 'underline',
+                                        cursor: 'help'
+                                    }}
+                                >
                                     {row.matched}
                                 </Typography>
                             </Tooltip>
