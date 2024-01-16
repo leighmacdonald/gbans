@@ -173,7 +173,7 @@ func (app *App) updateSteamBanMembers(ctx context.Context) (map[int64]steamid.Co
 	return newMap, nil
 }
 
-// todo move to separate struct
+// todo move to separate struct.
 func (app *App) updateBanChildren(ctx context.Context) {
 	var (
 		newMap = map[int64]steamid.Collection{}

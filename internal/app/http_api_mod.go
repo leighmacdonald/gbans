@@ -1576,12 +1576,12 @@ func onAPIGetWarningState(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		state := app.warningTracker.state()
 
-		ws := warningState{MaxWeight: app.config().Filter.MaxWeight}
+		outputState := warningState{MaxWeight: app.config().Filter.MaxWeight}
 
 		for _, warn := range state {
-			ws.Current = append(ws.Current, warn...)
+			outputState.Current = append(outputState.Current, warn...)
 		}
 
-		ctx.JSON(http.StatusOK, ws)
+		ctx.JSON(http.StatusOK, outputState)
 	}
 }
