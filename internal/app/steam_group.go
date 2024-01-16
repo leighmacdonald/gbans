@@ -36,7 +36,7 @@ func newSteamGroupMemberships(log *zap.Logger, store groupMemberStore) *steamGro
 	}
 }
 
-// isMember checks membership in the currently known banned group members
+// isMember checks membership in the currently known banned group members.
 func (g *steamGroupMemberships) isMember(steamID steamid.SID64) (int64, bool) {
 	g.membersMu.RLock()
 	defer g.membersMu.RUnlock()
@@ -56,6 +56,7 @@ func (g *steamGroupMemberships) update(ctx context.Context) {
 	newMap := map[int64]steamid.Collection{}
 
 	var total int
+
 	groupEntries, errGroupEntries := g.updateGroupBanMembers(ctx)
 	if errGroupEntries == nil {
 		for k, v := range groupEntries {

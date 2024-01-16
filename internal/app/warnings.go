@@ -69,21 +69,19 @@ type FilterMatchStore interface {
 	GetPersonBySteamID(ctx context.Context, sid64 steamid.SID64, person *store.Person) error
 }
 
-// state returns a string key so its more easily portable to frontend js w/o using BigInt
+// state returns a string key so its more easily portable to frontend js w/o using BigInt.
 func (w *WarningTracker) state() map[string][]userWarning {
 	w.warningMu.RLock()
 	defer w.warningMu.RUnlock()
 
 	out := make(map[string][]userWarning)
 
-	for k, v := range w.warnings {
+	for steamID, v := range w.warnings {
 		var warnings []userWarning
 
-		for _, warning := range v {
-			warnings = append(warnings, warning)
-		}
+		warnings = append(warnings, v...)
 
-		out[k.String()] = warnings
+		out[steamID.String()] = warnings
 	}
 
 	return out
