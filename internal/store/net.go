@@ -481,7 +481,7 @@ func (db *Store) GetProxyRecord(ctx context.Context, ipAddr net.IP, proxyRecord 
 func (db *Store) loadASN(ctx context.Context, records []ip2location.ASNRecord) error {
 	curTime := time.Now()
 
-	if errTruncate := db.truncateTable(ctx, tableNetASN); errTruncate != nil {
+	if errTruncate := db.truncateTable(ctx, "net_asn"); errTruncate != nil {
 		return errTruncate
 	}
 
@@ -524,7 +524,7 @@ func (db *Store) loadASN(ctx context.Context, records []ip2location.ASNRecord) e
 func (db *Store) loadLocation(ctx context.Context, records []ip2location.LocationRecord, _ bool) error {
 	curTime := time.Now()
 
-	if errTruncate := db.truncateTable(ctx, tableNetLocation); errTruncate != nil {
+	if errTruncate := db.truncateTable(ctx, "net_location"); errTruncate != nil {
 		return errTruncate
 	}
 
@@ -567,7 +567,7 @@ func (db *Store) loadLocation(ctx context.Context, records []ip2location.Locatio
 func (db *Store) loadProxies(ctx context.Context, records []ip2location.ProxyRecord, _ bool) error {
 	curTime := time.Now()
 
-	if errTruncate := db.truncateTable(ctx, tableNetProxy); errTruncate != nil {
+	if errTruncate := db.truncateTable(ctx, "net_proxy"); errTruncate != nil {
 		return errTruncate
 	}
 

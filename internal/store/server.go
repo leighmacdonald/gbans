@@ -91,7 +91,7 @@ func (db *Store) GetServer(ctx context.Context, serverID int, server *Server) er
 		Select("server_id", "short_name", "name", "address", "port", "rcon", "password",
 			"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
 			"latitude", "longitude", "deleted", "log_secret", "enable_stats").
-		From(string(tableServer)).
+		From("server").
 		Where(sq.And{sq.Eq{"server_id": serverID}, sq.Eq{"deleted": false}}))
 	if rowErr != nil {
 		return rowErr
@@ -236,7 +236,7 @@ func (db *Store) GetServerByName(ctx context.Context, serverName string, server 
 		Select("server_id", "short_name", "name", "address", "port", "rcon", "password",
 			"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
 			"latitude", "longitude", "deleted", "log_secret", "enable_stats").
-		From(string(tableServer)).
+		From("server").
 		Where(and))
 	if errRow != nil {
 		return errRow
@@ -268,22 +268,16 @@ func (db *Store) GetServerByPassword(ctx context.Context, serverPassword string,
 		Select("server_id", "short_name", "name", "address", "port", "rcon", "password",
 			"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
 			"latitude", "longitude", "deleted", "log_secret", "enable_stats").
-		From(string(tableServer)).
+		From("server").
 		Where(and))
 	if errRow != nil {
 		return errRow
 	}
 
-	return Err(row.Scan(
-		&server.ServerID,
-		&server.ShortName,
-		&server.Name,
-		&server.Address,
-		&server.Port,
-		&server.RCON,
-		&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn, &server.ReservedSlots,
-		&server.IsEnabled, &server.Region, &server.CC, &server.Latitude, &server.Longitude,
-		&server.Deleted, &server.LogSecret, &server.EnableStats))
+	return Err(row.Scan(&server.ServerID, &server.ShortName, &server.Name, &server.Address, &server.Port,
+		&server.RCON, &server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn,
+		&server.ReservedSlots, &server.IsEnabled, &server.Region, &server.CC, &server.Latitude,
+		&server.Longitude, &server.Deleted, &server.LogSecret, &server.EnableStats))
 }
 
 // SaveServer updates or creates the server data in the database.

@@ -40,16 +40,6 @@ var (
 
 const maxResultsDefault = 100
 
-type tableName string
-
-const (
-	tableNetLocation tableName = "net_location"
-	tableNetProxy    tableName = "net_proxy"
-	tableNetASN      tableName = "net_asn"
-
-	tableServer tableName = "server"
-)
-
 // EmptyUUID is used as a placeholder value for signaling the entity is new.
 const EmptyUUID = "feb4bf16-7f55-4cb4-923c-4de69a093b79"
 
@@ -321,8 +311,8 @@ func (db *Store) GetCount(ctx context.Context, builder sq.SelectBuilder) (int64,
 	return count, nil
 }
 
-func (db *Store) truncateTable(ctx context.Context, table tableName) error {
-	query, args, errQueryArgs := sq.Delete(string(table)).ToSql()
+func (db *Store) truncateTable(ctx context.Context, table string) error {
+	query, args, errQueryArgs := sq.Delete(table).ToSql()
 	if errQueryArgs != nil {
 		return Err(errQueryArgs)
 	}
