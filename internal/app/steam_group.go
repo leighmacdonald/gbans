@@ -2,13 +2,14 @@ package app
 
 import (
 	"context"
+	"sync"
+	"time"
+
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"sync"
-	"time"
 )
 
 type groupMemberStore interface {
@@ -18,18 +19,20 @@ type groupMemberStore interface {
 }
 
 type steamGroupMemberships struct {
-	members   map[int64]steamid.Collection
-	membersMu *sync.RWMutex
-	log       *zap.Logger
-	store     groupMemberStore
+	members    map[int64]steamid.Collection
+	membersMu  *sync.RWMutex
+	log        *zap.Logger
+	store      groupMemberStore
+	updateFreq time.Duration
 }
 
 func newSteamGroupMemberships(log *zap.Logger, store groupMemberStore) *steamGroupMemberships {
 	return &steamGroupMemberships{
-		store:     store,
-		log:       log.Named("steamGroupMemberships"),
-		members:   map[int64]steamid.Collection{},
-		membersMu: &sync.RWMutex{},
+		store:      store,
+		log:        log.Named("steamGroupMemberships"),
+		members:    map[int64]steamid.Collection{},
+		membersMu:  &sync.RWMutex{},
+		updateFreq: time.Minute * 60,
 	}
 }
 
@@ -120,7 +123,7 @@ func (g *steamGroupMemberships) updateGroupBanMembers(ctx context.Context) (map[
 }
 
 func (g *steamGroupMemberships) start(ctx context.Context) {
-	ticker := time.NewTicker(time.Minute * 60)
+	ticker := time.NewTicker(g.updateFreq)
 	updateChan := make(chan any)
 
 	go func() {
@@ -133,8 +136,9 @@ func (g *steamGroupMemberships) start(ctx context.Context) {
 			updateChan <- true
 		case <-updateChan:
 			g.update(ctx)
+			ticker.Reset(g.updateFreq)
 		case <-ctx.Done():
-			g.log.Debug("steamGroupMembershipUpdater shutting down")
+			g.log.Debug("steamGroupMemberships shutting down")
 
 			return
 		}
