@@ -202,7 +202,7 @@ func (app *App) BanCIDR(ctx context.Context, banNet *store.BanCIDR) error {
 	}
 
 	msgEmbed.AddTargetPerson(target)
-	msgEmbed.AddAuthorPerson(author)
+	msgEmbed.AddAuthorPersonInfo(author)
 
 	app.discord.SendPayload(discord.Payload{
 		ChannelID: conf.Discord.LogChannelID,

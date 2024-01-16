@@ -88,7 +88,7 @@ func (app *App) Kick(ctx context.Context, _ store.Origin, target steamid.SID64, 
 	}
 
 	msgEmbed.AddTargetPerson(targetUser)
-	msgEmbed.AddAuthorPerson(authorUser)
+	msgEmbed.AddAuthorPersonInfo(authorUser)
 
 	app.discord.SendPayload(discord.Payload{ChannelID: conf.Discord.LogChannelID, Embed: msgEmbed.Embed().MessageEmbed})
 
@@ -140,7 +140,7 @@ func (app *App) Silence(ctx context.Context, _ store.Origin, target steamid.SID6
 	}
 
 	msgEmbed.AddTargetPerson(targetUser)
-	msgEmbed.AddAuthorPerson(authorUser)
+	msgEmbed.AddAuthorPersonInfo(authorUser)
 
 	app.discord.SendPayload(discord.Payload{ChannelID: conf.Discord.LogChannelID, Embed: msgEmbed.Message()})
 
@@ -173,7 +173,7 @@ func (app *App) Say(ctx context.Context, author steamid.SID64, serverName string
 		return errors.Wrap(errTargetUser, "Failed to get author")
 	}
 
-	msgEmbed.AddAuthorPerson(authorUser)
+	msgEmbed.AddAuthorPersonInfo(authorUser)
 
 	app.discord.SendPayload(discord.Payload{ChannelID: conf.Discord.LogChannelID, Embed: msgEmbed.Message()})
 
@@ -207,7 +207,7 @@ func (app *App) CSay(ctx context.Context, author steamid.SID64, serverName strin
 		return errors.Wrap(errAuthor, "Failed to get author")
 	}
 
-	msgEmbed.AddAuthorPerson(authorUser)
+	msgEmbed.AddAuthorPersonInfo(authorUser)
 
 	app.discord.SendPayload(discord.Payload{ChannelID: conf.Discord.LogChannelID, Embed: msgEmbed.Message()})
 
@@ -269,7 +269,7 @@ func (app *App) SetSteam(ctx context.Context, sid64 steamid.SID64, discordID str
 		return errors.Wrap(errAuthor, "Failed to get author")
 	}
 
-	msgEmbed.AddAuthorPerson(authorUser)
+	msgEmbed.AddAuthorPersonInfo(authorUser)
 
 	app.discord.SendPayload(discord.Payload{
 		ChannelID: conf.Discord.LogChannelID,
@@ -310,7 +310,7 @@ func (app *App) FilterAdd(ctx context.Context, filter *store.Filter) error {
 		return errors.Wrap(errAuthor, "Failed to get author")
 	}
 
-	msgEmbed.AddAuthorPerson(authorUser)
+	msgEmbed.AddAuthorPersonInfo(authorUser)
 
 	app.discord.SendPayload(discord.Payload{
 		ChannelID: conf.Discord.LogChannelID, Embed: msgEmbed.Message(),

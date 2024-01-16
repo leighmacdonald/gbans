@@ -62,24 +62,13 @@ func (e *Embed) AddTargetPerson(person common.PersonInfo) *Embed {
 	return e
 }
 
-func (e *Embed) AddAuthorPerson(person common.PersonInfo) *Embed {
+func (e *Embed) AddAuthorPersonInfo(person common.PersonInfo) *Embed {
 	name := person.GetName()
 	if person.GetDiscordID() != "" {
 		name = fmt.Sprintf("<@%s> | ", person.GetDiscordID()) + name
 	}
 
 	e.Embed().SetAuthor(name, person.GetAvatar().Full(), e.config.ExtURL(person))
-
-	return e
-}
-
-func (e *Embed) AddAuthorUserProfile(person common.PersonInfo) *Embed {
-	name := person.GetName()
-	if person.GetDiscordID() != "" {
-		name = fmt.Sprintf("<@%s> | ", person.GetDiscordID()) + name
-	}
-
-	e.Embed().SetAuthor(name, person.GetAvatar().Small(), e.config.ExtURL(person))
 
 	return e
 }

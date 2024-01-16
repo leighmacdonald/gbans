@@ -1,5 +1,6 @@
 import { LazyResult } from '../component/table/LazyTableSimple';
-import { apiCall, QueryFilter } from './common';
+import { BanReason } from './bans';
+import { apiCall, QueryFilter, transformCreatedOnDate } from './common';
 
 export enum FilterAction {
     Kick,
@@ -55,3 +56,35 @@ export interface FilterQuery {
 
 export const apiDeleteFilter = async (word_id: number) =>
     await apiCall(`/api/filters/${word_id}`, 'DELETE');
+
+export interface UserWarning {
+    warn_reason: BanReason;
+    message: string;
+    matched: string;
+    matched_filter: Filter;
+    created_on: Date;
+    personaname: string;
+    avatar: string;
+    server_name: string;
+    server_id: number;
+    steam_id: string;
+    current_total: number;
+}
+
+export interface warningState {
+    max_weight: number;
+    current: UserWarning[];
+}
+
+export const apiGetWarningState = async (abortController?: AbortController) => {
+    const resp = await apiCall<warningState>(
+        '/api/filters/state',
+        'GET',
+        undefined,
+        abortController
+    );
+
+    resp.current = resp.current.map(transformCreatedOnDate);
+
+    return resp;
+};
