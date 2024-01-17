@@ -86,8 +86,13 @@ func (app *App) matchSummarizer(ctx context.Context) {
 				}
 
 				if errSave := app.db.MatchSave(ctx, &matchContext.match); errSave != nil {
-					app.log.Error("Failed to save match",
-						zap.Int("server", matchContext.match.ServerID), zap.Error(errSave))
+					if errors.Is(errSave, store.ErrInsufficientPlayers) {
+						app.log.Warn("Failed to save match",
+							zap.Int("server", matchContext.match.ServerID), zap.Error(errSave))
+					} else {
+						app.log.Error("Failed to save match",
+							zap.Int("server", matchContext.match.ServerID), zap.Error(errSave))
+					}
 
 					delete(matches, evt.ServerID)
 

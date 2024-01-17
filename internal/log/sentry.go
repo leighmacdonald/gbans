@@ -3,6 +3,7 @@ package log
 import (
 	"github.com/TheZeroSlave/zapsentry"
 	"github.com/getsentry/sentry-go"
+	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -18,6 +19,7 @@ func NewSentryClient(dsn string, tracing bool, sampleRate float64) (*sentry.Clie
 		// of transactions for performance monitoring.
 		// We recommend adjusting this value in production,
 		TracesSampleRate: sampleRate,
+		Release:          app.BuildVersion,
 	})
 
 	if errClient != nil {

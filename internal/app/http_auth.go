@@ -3,6 +3,8 @@ package app
 import (
 	"crypto/sha256"
 	"fmt"
+	"github.com/getsentry/sentry-go"
+	sentrygin "github.com/getsentry/sentry-go/gin"
 	"net"
 	"net/http"
 	"net/url"
@@ -96,6 +98,16 @@ func authServerMiddleWare(app *App) gin.HandlerFunc {
 		}
 
 		ctx.Set("server_id", claims.ServerID)
+
+		if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
+			hub.WithScope(func(scope *sentry.Scope) {
+				scope.SetUser(sentry.User{
+					ID:        fmt.Sprintf("%d", server.ServerID),
+					IPAddress: server.Addr(),
+					Name:      server.ShortName,
+				})
+			})
+		}
 
 		ctx.Next()
 	}
@@ -421,7 +433,18 @@ func authMiddleware(app *App, level consts.Privilege) gin.HandlerFunc {
 					Muted:           loggedInPerson.Muted,
 					BanID:           bannedPerson.BanID,
 				}
+
 				ctx.Set(ctxKeyUserProfile, profile)
+
+				if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
+					hub.WithScope(func(scope *sentry.Scope) {
+						scope.SetUser(sentry.User{
+							ID:        sid.String(),
+							IPAddress: ctx.ClientIP(),
+							Username:  loggedInPerson.PersonaName,
+						})
+					})
+				}
 			} else {
 				ctx.Set(ctxKeyUserProfile, userProfile{PermissionLevel: consts.PGuest, Name: "Guest"})
 			}
