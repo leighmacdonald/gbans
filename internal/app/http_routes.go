@@ -7,6 +7,7 @@ import (
 	"runtime"
 
 	"github.com/Depado/ginprom"
+	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
@@ -86,13 +87,26 @@ type jsConfig struct {
 	BuildVersion string `json:"build_version"`
 	BuildCommit  string `json:"build_commit"`
 	BuildDate    string `json:"build_date"`
+	SentryDSN    string `json:"sentry_dsn"`
 }
 
 //nolint:contextcheck,maintidx
 func createRouter(ctx context.Context, app *App) *gin.Engine {
 	engine := gin.New()
 	engine.MaxMultipartMemory = 8 << 24
+	engine.Use(gin.Recovery())
+
 	conf := app.config()
+
+	if conf.Log.SentryDSN != "" {
+		engine.Use(sentrygin.New(sentrygin.Options{Repanic: true}))
+		engine.Use(func(ctx *gin.Context) {
+			if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
+				hub.Scope().SetTag("version", BuildVersion)
+			}
+			ctx.Next()
+		})
+	}
 
 	if conf.General.Mode != config.ReleaseMode {
 		pprof.Register(engine)
@@ -156,6 +170,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 				BuildVersion:    BuildVersion,
 				BuildCommit:     BuildCommit,
 				BuildDate:       BuildDate,
+				SentryDSN:       conf.Log.SentryDSNWeb,
 			})
 		})
 	}

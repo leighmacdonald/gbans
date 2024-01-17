@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/log"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -43,7 +44,7 @@ func importConnectionsCmd() *cobra.Command {
 				panic("Failed to read config")
 			}
 
-			rootLogger := config.MustCreateLogger(&conf)
+			rootLogger := log.MustCreate(&conf, nil)
 			defer func() {
 				if conf.Log.File != "" {
 					_ = rootLogger.Sync()
@@ -177,7 +178,7 @@ func importMessagesCmd() *cobra.Command {
 				panic("Failed to read config")
 			}
 
-			rootLogger := config.MustCreateLogger(&conf)
+			rootLogger := log.MustCreate(&conf, nil)
 			defer func() {
 				if conf.Log.File != "" {
 					_ = rootLogger.Sync()

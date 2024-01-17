@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/log"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/spf13/cobra"
@@ -30,7 +31,7 @@ func netUpdateCmd() *cobra.Command {
 			if errConfig := config.Read(&conf, false); errConfig != nil {
 				panic("Failed to read config")
 			}
-			rootLogger := config.MustCreateLogger(&conf)
+			rootLogger := log.MustCreate(&conf, nil)
 			defer func() {
 				_ = rootLogger.Sync()
 			}()

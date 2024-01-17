@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"os"
 	"reflect"
 	"strings"
 	"time"
@@ -16,8 +15,6 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 type LinkablePath interface {
@@ -162,11 +159,15 @@ type Discord struct {
 }
 
 type Log struct {
-	Level         string `mapstructure:"level"`
-	File          string `mapstructure:"file"`
-	ReportCaller  bool   `mapstructure:"report_caller"`
-	FullTimestamp bool   `mapstructure:"full_timestamp"`
-	SrcdsLogAddr  string `mapstructure:"srcds_log_addr"`
+	Level            string  `mapstructure:"level"`
+	File             string  `mapstructure:"file"`
+	ReportCaller     bool    `mapstructure:"report_caller"`
+	FullTimestamp    bool    `mapstructure:"full_timestamp"`
+	SrcdsLogAddr     string  `mapstructure:"srcds_log_addr"`
+	SentryDSN        string  `mapstructure:"sentry_dsn"`
+	SentryDSNWeb     string  `mapstructure:"sentry_dsn_web"`
+	SentryTrace      bool    `mapstructure:"sentry_trace"`
+	SentrySampleRate float64 `mapstructure:"sentry_sample_rate"`
 }
 
 type Debug struct {
@@ -311,6 +312,10 @@ func setDefaultConfigValues() {
 		"log.report_caller":                        false,
 		"log.full_timestamp":                       false,
 		"log.srcds_log_addr":                       ":27115",
+		"log.sentry_dsn":                           "",
+		"log.sentry_dsn_web":                       "",
+		"log.sentry_trace":                         true,
+		"log.sentry_sample_rate":                   1.0,
 		"database.dsn":                             "postgresql://gbans:gbans@localhost/gbans",
 		"database.auto_migrate":                    true,
 		"database.log_queries":                     false,
@@ -327,34 +332,4 @@ func setDefaultConfigValues() {
 	for configKey, value := range defaultConfig {
 		viper.SetDefault(configKey, value)
 	}
-}
-
-func MustCreateLogger(conf *Config) *zap.Logger {
-	var loggingConfig zap.Config
-	if conf.General.Mode == ReleaseMode {
-		loggingConfig = zap.NewProductionConfig()
-		loggingConfig.DisableCaller = true
-	} else {
-		loggingConfig = zap.NewDevelopmentConfig()
-		loggingConfig.DisableStacktrace = true
-		loggingConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-	}
-
-	if conf.Log.File != "" {
-		if util.Exists(conf.Log.File) {
-			if err := os.Remove(conf.Log.File); err != nil {
-				panic(fmt.Sprintf("Failed to remove log file: %v", err))
-			}
-		}
-
-		// loggingConfig.Level.SetLevel(zap.DebugLevel)
-		loggingConfig.OutputPaths = append(loggingConfig.OutputPaths, conf.Log.File)
-	}
-
-	l, errLogger := loggingConfig.Build()
-	if errLogger != nil {
-		panic("Failed to create log config")
-	}
-
-	return l.Named("gb")
 }

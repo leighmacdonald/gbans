@@ -7,8 +7,10 @@ toolchain go1.21.3
 require (
 	github.com/Depado/ginprom v1.8.0
 	github.com/Masterminds/squirrel v1.5.4
+	github.com/TheZeroSlave/zapsentry v1.20.2
 	github.com/bwmarrin/discordgo v0.27.1
 	github.com/gabriel-vasile/mimetype v1.4.3
+	github.com/getsentry/sentry-go v0.26.0
 	github.com/gin-contrib/cors v1.5.0
 	github.com/gin-contrib/pprof v1.4.0
 	github.com/gin-gonic/gin v1.9.1
@@ -21,7 +23,6 @@ require (
 	github.com/jackc/pgtype v1.14.0
 	github.com/jackc/pgx-gofrs-uuid v0.0.0-20230224015001-1d428863c2e2
 	github.com/jackc/pgx/v5 v5.5.1
-	github.com/leighmacdonald/bd v0.0.10
 	github.com/leighmacdonald/discordgo-embed v0.0.0-20230818080156-2fb99fe03f89
 	github.com/leighmacdonald/golib v1.1.0
 	github.com/leighmacdonald/rcon v1.0.10
