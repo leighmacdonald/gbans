@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/consts"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -23,7 +24,7 @@ func onAPIPostServer(app *App) gin.HandlerFunc {
 			return
 		}
 
-		server := store.NewServer(req.ServerNameShort, req.Host, req.Port)
+		server := model.NewServer(req.ServerNameShort, req.Host, req.Port)
 		server.Name = req.ServerName
 		server.ReservedSlots = req.ReservedSlots
 		server.RCON = req.RCON
@@ -76,7 +77,7 @@ func onAPIPostServerUpdate(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var server store.Server
+		var server model.Server
 		if errServer := app.db.GetServer(ctx, serverID, &server); errServer != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -128,7 +129,7 @@ func onAPIPostServerDelete(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var server store.Server
+		var server model.Server
 		if errServer := app.db.GetServer(ctx, serverID, &server); errServer != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -191,7 +192,7 @@ func onAPIPutPlayerPermission(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var person store.Person
+		var person model.Person
 		if errGet := app.db.GetPersonBySteamID(ctx, steamID, &person); errGet != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -252,14 +253,14 @@ func onAPIDeleteBlockList(app *App) gin.HandlerFunc {
 type CIDRBlockWhitelistExport struct {
 	CIDRBlockWhitelistID int    `json:"cidr_block_whitelist_id"`
 	Address              string `json:"address"`
-	store.TimeStamped
+	model.TimeStamped
 }
 
 func onAPIGetBlockLists(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	type BlockSources struct {
-		Sources   []store.CIDRBlockSource    `json:"sources"`
+		Sources   []model.CIDRBlockSource    `json:"sources"`
 		Whitelist []CIDRBlockWhitelistExport `json:"whitelist"`
 	}
 
@@ -323,11 +324,11 @@ func onAPIPostBlockListCreate(app *App) gin.HandlerFunc {
 			return
 		}
 
-		blockList := store.CIDRBlockSource{
+		blockList := model.CIDRBlockSource{
 			Name:        req.Name,
 			URL:         parsedURL.String(),
 			Enabled:     req.Enabled,
-			TimeStamped: store.NewTimeStamped(),
+			TimeStamped: model.NewTimeStamped(),
 		}
 
 		if errSave := app.db.SaveCIDRBlockSources(ctx, &blockList); errSave != nil {
@@ -359,7 +360,7 @@ func onAPIPostBlockListUpdate(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var blockSource store.CIDRBlockSource
+		var blockSource model.CIDRBlockSource
 
 		if errSource := app.db.GetCIDRBlockSource(ctx, sourceID, &blockSource); errSource != nil {
 			if errors.Is(errSource, store.ErrNoResult) {
@@ -427,9 +428,9 @@ func onAPIPostBlockListWhitelistCreate(app *App) gin.HandlerFunc {
 			return
 		}
 
-		whitelist := store.CIDRBlockWhitelist{
+		whitelist := model.CIDRBlockWhitelist{
 			Address:     cidr,
-			TimeStamped: store.NewTimeStamped(),
+			TimeStamped: model.NewTimeStamped(),
 		}
 
 		if errSave := app.db.SaveCIDRBlockWhitelist(ctx, &whitelist); errSave != nil {
@@ -475,7 +476,7 @@ func onAPIPostBlockListWhitelistUpdate(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var whitelist store.CIDRBlockWhitelist
+		var whitelist model.CIDRBlockWhitelist
 		if errGet := app.db.GetCIDRBlockWhitelist(ctx, whitelistID, &whitelist); errGet != nil {
 			responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 

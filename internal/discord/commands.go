@@ -6,7 +6,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
@@ -127,9 +127,9 @@ func (bot *Bot) botRegisterSlashCommands(appID string) error {
 		Required:    true,
 	}
 
-	reasonCollection := []store.Reason{
-		store.External, store.Cheating, store.Racism, store.Harassment, store.Exploiting,
-		store.WarningsExceeded, store.Spam, store.Language, store.Profile, store.ItemDescriptions, store.BotHost, store.Custom,
+	reasonCollection := []model.Reason{
+		model.External, model.Cheating, model.Racism, model.Harassment, model.Exploiting,
+		model.WarningsExceeded, model.Spam, model.Language, model.Profile, model.ItemDescriptions, model.BotHost, model.Custom,
 	}
 
 	reasons := make([]*discordgo.ApplicationCommandOptionChoice, len(reasonCollection))

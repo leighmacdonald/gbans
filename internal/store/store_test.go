@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -77,7 +78,7 @@ func TestStore(t *testing.T) {
 
 func testServerTest(database *store.Store) func(t *testing.T) {
 	return func(t *testing.T) {
-		serverA := store.Server{
+		serverA := model.Server{
 			ShortName:      fmt.Sprintf("test-%s", golib.RandomString(10)),
 			Address:        "172.16.1.100",
 			Port:           27015,
@@ -97,7 +98,7 @@ func testServerTest(database *store.Store) func(t *testing.T) {
 		require.True(t, serverA.ServerID > 0)
 
 		// Fetch saved server
-		var s1Get store.Server
+		var s1Get model.Server
 
 		require.NoError(t, database.GetServer(ctx, serverA.ServerID, &s1Get))
 		require.Equal(t, serverA.ServerID, s1Get.ServerID)
@@ -117,7 +118,7 @@ func testServerTest(database *store.Store) func(t *testing.T) {
 		// Delete a server
 		require.NoError(t, database.DropServer(ctx, serverA.ServerID))
 
-		var server store.Server
+		var server model.Server
 
 		require.True(t, errors.Is(database.GetServer(ctx, serverA.ServerID, &server), store.ErrNoResult))
 
@@ -132,15 +133,15 @@ func randIP() string {
 
 func testReport(database *store.Store) func(t *testing.T) {
 	return func(t *testing.T) {
-		var author store.Person
+		var author model.Person
 
 		require.NoError(t, database.GetOrCreatePersonBySteamID(context.TODO(), steamid.New(76561198003911389), &author))
 
-		var target store.Person
+		var target model.Person
 
 		require.NoError(t, database.GetOrCreatePersonBySteamID(context.TODO(), steamid.RandSID64(), &target))
 
-		report := store.NewReport()
+		report := model.NewReport()
 
 		report.SourceID = author.SteamID
 		report.TargetID = target.SteamID
@@ -148,8 +149,8 @@ func testReport(database *store.Store) func(t *testing.T) {
 
 		require.NoError(t, database.SaveReport(context.TODO(), &report))
 
-		msg1 := store.NewReportMessage(report.ReportID, author.SteamID, golib.RandomString(100))
-		msg2 := store.NewReportMessage(report.ReportID, author.SteamID, golib.RandomString(100))
+		msg1 := model.NewReportMessage(report.ReportID, author.SteamID, golib.RandomString(100))
+		msg2 := model.NewReportMessage(report.ReportID, author.SteamID, golib.RandomString(100))
 
 		require.NoError(t, database.SaveReportMessage(context.Background(), &msg1))
 		require.NoError(t, database.SaveReportMessage(context.Background(), &msg2))
@@ -164,7 +165,7 @@ func testReport(database *store.Store) func(t *testing.T) {
 func testBanNet(database *store.Store) func(t *testing.T) {
 	return func(t *testing.T) {
 		bgCtx := context.Background()
-		banNetEqual := func(b1, b2 store.BanCIDR) {
+		banNetEqual := func(b1, b2 model.BanCIDR) {
 			require.Equal(t, b1.Reason, b2.Reason)
 		}
 
@@ -173,11 +174,11 @@ func testBanNet(database *store.Store) func(t *testing.T) {
 
 		rip := randIP()
 
-		var banCidr store.BanCIDR
+		var banCidr model.BanCIDR
 
-		require.NoError(t, store.NewBanCIDR(ctx, store.StringSID("76561198003911389"),
-			"76561198044052046", time.Minute*10, store.Custom,
-			"custom reason", "", store.System, fmt.Sprintf("%s/32", rip), store.Banned, &banCidr))
+		require.NoError(t, model.NewBanCIDR(ctx, model.StringSID("76561198003911389"),
+			"76561198044052046", time.Minute*10, model.Custom,
+			"custom reason", "", model.System, fmt.Sprintf("%s/32", rip), model.Banned, &banCidr))
 		require.NoError(t, database.SaveBanNet(ctx, &banCidr))
 		require.Less(t, int64(0), banCidr.NetID)
 
@@ -192,7 +193,7 @@ func testBanNet(database *store.Store) func(t *testing.T) {
 func testBanSteam(database *store.Store) func(t *testing.T) {
 	return func(t *testing.T) {
 		bgCtx := context.Background()
-		banEqual := func(ban1, ban2 *store.BanSteam) {
+		banEqual := func(ban1, ban2 *model.BanSteam) {
 			require.Equal(t, ban1.BanID, ban2.BanID)
 			require.Equal(t, ban1.SourceID, ban2.SourceID)
 			require.Equal(t, ban1.Reason, ban2.Reason)
@@ -209,21 +210,21 @@ func testBanSteam(database *store.Store) func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(bgCtx, time.Second*20)
 		defer cancel()
 
-		var banSteam store.BanSteam
+		var banSteam model.BanSteam
 
-		require.NoError(t, store.NewBanSteam(
+		require.NoError(t, model.NewBanSteam(
 			ctx,
-			store.StringSID("76561198003911389"),
+			model.StringSID("76561198003911389"),
 			"76561198044052046",
 			time.Hour*24*31,
-			store.Cheating,
-			store.Cheating.String(),
+			model.Cheating,
+			model.Cheating.String(),
 			"Mod Note",
-			store.System, 0, store.Banned, false, &banSteam), "Failed to create ban opts")
+			model.System, 0, model.Banned, false, &banSteam), "Failed to create ban opts")
 
 		require.NoError(t, database.SaveBan(ctx, &banSteam), "Failed to add ban")
 
-		b1Fetched := store.NewBannedPerson()
+		b1Fetched := model.NewBannedPerson()
 		require.NoError(t, database.GetBanBySteamID(ctx, steamid.New(76561198044052046), &b1Fetched, false))
 		banEqual(&banSteam, &b1Fetched.BanSteam)
 
@@ -235,16 +236,16 @@ func testBanSteam(database *store.Store) func(t *testing.T) {
 		b1Fetched.ReasonText = "test reason"
 		b1Fetched.ValidUntil = time.Now().Add(time.Minute * 10)
 		b1Fetched.Note = "test note"
-		b1Fetched.Origin = store.Web
+		b1Fetched.Origin = model.Web
 		require.NoError(t, database.SaveBan(ctx, &b1Fetched.BanSteam), "Failed to edit ban")
 
-		b1FetchedUpdated := store.NewBannedPerson()
+		b1FetchedUpdated := model.NewBannedPerson()
 		require.NoError(t, database.GetBanBySteamID(ctx, steamid.New(76561198044052046), &b1FetchedUpdated, false))
 		banEqual(&b1Fetched.BanSteam, &b1FetchedUpdated.BanSteam)
 
 		require.NoError(t, database.DropBan(ctx, &banSteam, false), "Failed to drop ban")
 
-		vb := store.NewBannedPerson()
+		vb := model.NewBannedPerson()
 		errMissing := database.GetBanBySteamID(ctx, banSteam.TargetID, &vb, false)
 
 		require.Error(t, errMissing)
@@ -259,8 +260,8 @@ func randSID() steamid.SID64 {
 func testPerson(database *store.Store) func(t *testing.T) {
 	return func(t *testing.T) {
 		var (
-			person1 = store.NewPerson(randSID())
-			person2 = store.NewPerson(randSID())
+			person1 = model.NewPerson(randSID())
+			person2 = model.NewPerson(randSID())
 		)
 
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)
@@ -268,11 +269,11 @@ func testPerson(database *store.Store) func(t *testing.T) {
 
 		require.NoError(t, database.SavePerson(ctx, &person1))
 
-		p2Fetched := store.NewPerson(person2.SteamID)
+		p2Fetched := model.NewPerson(person2.SteamID)
 		require.NoError(t, database.GetOrCreatePersonBySteamID(ctx, person2.SteamID, &p2Fetched))
 		require.Equal(t, person2.SteamID, p2Fetched.SteamID)
 
-		pBadID := store.NewPerson("")
+		pBadID := model.NewPerson("")
 		require.Error(t, database.GetPersonBySteamID(ctx, "", &pBadID))
 
 		_, errHistory := database.GetPersonIPHistory(ctx, person1.SteamID, 1000)
@@ -285,7 +286,7 @@ func testChatHistory(database *store.Store) func(t *testing.T) {
 	return func(t *testing.T) {
 		ctx := context.Background()
 
-		newServer := store.NewServer(golib.RandomString(10), "localhost", rand.Intn(65535)) //nolint:gosec
+		newServer := model.NewServer(golib.RandomString(10), "localhost", rand.Intn(65535)) //nolint:gosec
 		// player := model.Person{
 		//	SteamID: sid,
 		//	PlayerSummary: &steamweb.PlayerSummary{
@@ -319,7 +320,7 @@ func testChatHistory(database *store.Store) func(t *testing.T) {
 
 func testFilters(database *store.Store) func(t *testing.T) {
 	return func(t *testing.T) {
-		player1 := store.NewPerson(randSID())
+		player1 := model.NewPerson(randSID())
 
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
@@ -331,11 +332,11 @@ func testFilters(database *store.Store) func(t *testing.T) {
 
 		var (
 			words        = []string{golib.RandomString(10), golib.RandomString(20)}
-			savedFilters = make([]store.Filter, len(words))
+			savedFilters = make([]model.Filter, len(words))
 		)
 
 		for index, word := range words {
-			filter := store.Filter{
+			filter := model.Filter{
 				IsEnabled: true,
 				IsRegex:   false,
 				AuthorID:  player1.SteamID,
@@ -354,7 +355,7 @@ func testFilters(database *store.Store) func(t *testing.T) {
 		require.Equal(t, len(existingFilters)+len(words), len(currentFilters))
 		require.NoError(t, database.DropFilter(ctx, &savedFilters[0]))
 
-		var byID store.Filter
+		var byID model.Filter
 
 		require.NoError(t, database.GetFilterByID(ctx, savedFilters[1].FilterID, &byID))
 		require.Equal(t, savedFilters[1].FilterID, byID.FilterID)
@@ -370,25 +371,25 @@ func testBanASN(database *store.Store) func(t *testing.T) {
 	return func(t *testing.T) {
 		ctx := context.Background()
 
-		var author store.Person
+		var author model.Person
 
 		require.NoError(t, database.GetOrCreatePersonBySteamID(ctx, steamid.New(76561198083950960), &author))
 
-		var banASN store.BanASN
+		var banASN model.BanASN
 
-		require.NoError(t, store.NewBanASN(ctx,
-			store.StringSID(author.SteamID.String()), "0",
-			time.Minute*10, store.Cheating, "", "", store.System, rand.Int63n(23455), store.Banned, &banASN)) //nolint:gosec
+		require.NoError(t, model.NewBanASN(ctx,
+			model.StringSID(author.SteamID.String()), "0",
+			time.Minute*10, model.Cheating, "", "", model.System, rand.Int63n(23455), model.Banned, &banASN)) //nolint:gosec
 
 		require.NoError(t, database.SaveBanASN(context.Background(), &banASN))
 		require.True(t, banASN.BanASNId > 0)
 
-		var banASN2 store.BanASN
+		var banASN2 model.BanASN
 
 		require.NoError(t, database.GetBanASN(context.TODO(), banASN.ASNum, &banASN2))
 		require.NoError(t, database.DropBanASN(context.TODO(), &banASN2))
 
-		var banASN3 store.BanASN
+		var banASN3 model.BanASN
 
 		require.Error(t, database.GetBanASN(context.TODO(), banASN.ASNum, &banASN3))
 	}
@@ -398,30 +399,30 @@ func testBanGroup(database *store.Store) func(t *testing.T) {
 	return func(t *testing.T) {
 		ctx := context.Background()
 
-		var banGroup store.BanGroup
+		var banGroup model.BanGroup
 
-		require.NoError(t, store.NewBanSteamGroup(
+		require.NoError(t, model.NewBanSteamGroup(
 			ctx,
-			store.StringSID("76561198083950960"),
+			model.StringSID("76561198083950960"),
 			"0",
 			time.Minute*10,
 			"",
-			store.System,
+			model.System,
 			steamid.NewGID(103000000000000000+int64(rand.Int())), //nolint:gosec
 			golib.RandomString(10),
-			store.Banned,
+			model.Banned,
 			&banGroup))
 
 		require.NoError(t, database.SaveBanGroup(context.TODO(), &banGroup))
 		require.True(t, banGroup.BanGroupID > 0)
 
-		var bgB store.BanGroup
+		var bgB model.BanGroup
 
 		require.NoError(t, database.GetBanGroup(context.TODO(), banGroup.GroupID, &bgB))
 		require.EqualValues(t, banGroup.BanGroupID, bgB.BanGroupID)
 		require.NoError(t, database.DropBanGroup(context.TODO(), &banGroup))
 
-		var bgDeleted store.BanGroup
+		var bgDeleted model.BanGroup
 
 		getErr := database.GetBanGroup(context.TODO(), banGroup.GroupID, &bgDeleted)
 		require.EqualError(t, store.ErrNoResult, getErr.Error())
@@ -433,16 +434,16 @@ func testForum(database *store.Store) func(t *testing.T) {
 
 	return func(t *testing.T) {
 		t.Run("category", func(t *testing.T) {
-			forumCategory1 := store.ForumCategory{
+			forumCategory1 := model.ForumCategory{
 				Title:       "test category",
 				Description: "test description",
 				Ordering:    2,
-				TimeStamped: store.NewTimeStamped(),
+				TimeStamped: model.NewTimeStamped(),
 			}
 			require.NoError(t, database.ForumCategorySave(ctx, &forumCategory1))
 			require.Greater(t, forumCategory1.ForumCategoryID, 0)
 
-			var forumCategory2 store.ForumCategory
+			var forumCategory2 model.ForumCategory
 
 			require.NoError(t, database.ForumCategory(ctx, forumCategory1.ForumCategoryID, &forumCategory2))
 			require.Equal(t, forumCategory1.Title, forumCategory2.Title)
@@ -455,7 +456,7 @@ func testForum(database *store.Store) func(t *testing.T) {
 
 			require.NoError(t, database.ForumCategorySave(ctx, &forumCategory2))
 
-			var forumCategory3 store.ForumCategory
+			var forumCategory3 model.ForumCategory
 
 			require.NoError(t, database.ForumCategory(ctx, forumCategory1.ForumCategoryID, &forumCategory3))
 
@@ -465,15 +466,15 @@ func testForum(database *store.Store) func(t *testing.T) {
 
 			require.NoError(t, database.ForumCategoryDelete(ctx, forumCategory3.ForumCategoryID))
 
-			var forumCategory4 store.ForumCategory
+			var forumCategory4 model.ForumCategory
 			require.ErrorIs(t, store.ErrNoResult, database.ForumCategory(ctx, forumCategory3.ForumCategoryID, &forumCategory4))
 		})
 		t.Run("forum", func(t *testing.T) {
-			validCategory := store.ForumCategory{
+			validCategory := model.ForumCategory{
 				Title:       "valid category",
 				Description: "test description",
 				Ordering:    1,
-				TimeStamped: store.NewTimeStamped(),
+				TimeStamped: model.NewTimeStamped(),
 			}
 			require.NoError(t, database.ForumCategorySave(ctx, &validCategory))
 
@@ -486,7 +487,7 @@ func testForum(database *store.Store) func(t *testing.T) {
 
 			require.NoError(t, database.ForumSave(ctx, &forum))
 
-			var updatedForum store.Forum
+			var updatedForum model.Forum
 
 			require.NoError(t, database.Forum(ctx, forum.ForumID, &updatedForum))
 			require.Equal(t, forum.Title, updatedForum.Title)
@@ -494,14 +495,14 @@ func testForum(database *store.Store) func(t *testing.T) {
 			require.ErrorIs(t, store.ErrNoResult, database.Forum(ctx, forum.ForumID, &updatedForum))
 		})
 		t.Run("thread", func(t *testing.T) {
-			validCategory := store.ForumCategory{
-				Title: "new valid category", Description: "test description", TimeStamped: store.NewTimeStamped(),
+			validCategory := model.ForumCategory{
+				Title: "new valid category", Description: "test description", TimeStamped: model.NewTimeStamped(),
 			}
 			require.NoError(t, database.ForumCategorySave(ctx, &validCategory))
 			validForum := validCategory.NewForum("forum", "")
 			require.NoError(t, database.ForumSave(ctx, &validForum))
 			require.True(t, validForum.ForumID > 0)
-			var person store.Person
+			var person model.Person
 			require.NoError(t, database.GetOrCreatePersonBySteamID(ctx,
 				steamid.New(76561198057999536), &person))
 			thread := validForum.NewThread("thread title", person.SteamID)
@@ -510,7 +511,7 @@ func testForum(database *store.Store) func(t *testing.T) {
 			thread.Title = "new title"
 
 			require.NoError(t, database.ForumThreadSave(ctx, &thread))
-			var updatedThread store.ForumThread
+			var updatedThread model.ForumThread
 			require.NoError(t, database.ForumThread(ctx, thread.ForumThreadID, &updatedThread))
 			require.Equal(t, thread.Title, updatedThread.Title)
 			require.NoError(t, database.ForumThreadDelete(ctx, updatedThread.ForumThreadID))
@@ -518,13 +519,13 @@ func testForum(database *store.Store) func(t *testing.T) {
 		})
 
 		t.Run("message", func(t *testing.T) {
-			validCategory := store.ForumCategory{
-				Title: "new valid category 2", Description: "test description", TimeStamped: store.NewTimeStamped(),
+			validCategory := model.ForumCategory{
+				Title: "new valid category 2", Description: "test description", TimeStamped: model.NewTimeStamped(),
 			}
 			require.NoError(t, database.ForumCategorySave(ctx, &validCategory))
 			validForum := validCategory.NewForum("forum messages", "")
 			require.NoError(t, database.ForumSave(ctx, &validForum))
-			var person store.Person
+			var person model.Person
 			require.NoError(t, database.GetOrCreatePersonBySteamID(ctx,
 				steamid.New(76561198057999536), &person))
 			validThread := validForum.NewThread("thread title", person.SteamID)
@@ -536,7 +537,7 @@ func testForum(database *store.Store) func(t *testing.T) {
 			message.BodyMD += "blah"
 			require.NoError(t, database.ForumMessageSave(ctx, &message))
 
-			var updatedMessage store.ForumMessage
+			var updatedMessage model.ForumMessage
 			require.NoError(t, database.ForumMessage(ctx, message.ForumMessageID, &updatedMessage))
 			require.Equal(t, message.BodyMD, updatedMessage.BodyMD)
 
@@ -546,13 +547,13 @@ func testForum(database *store.Store) func(t *testing.T) {
 		})
 
 		t.Run("vote", func(t *testing.T) {
-			validCategory := store.ForumCategory{
-				Title: "new valid category 3", Description: "test description", TimeStamped: store.NewTimeStamped(),
+			validCategory := model.ForumCategory{
+				Title: "new valid category 3", Description: "test description", TimeStamped: model.NewTimeStamped(),
 			}
 			require.NoError(t, database.ForumCategorySave(ctx, &validCategory))
 			validForum := validCategory.NewForum("forum messages 2", "")
 			require.NoError(t, database.ForumSave(ctx, &validForum))
-			var person store.Person
+			var person model.Person
 			require.NoError(t, database.GetOrCreatePersonBySteamID(ctx,
 				steamid.New(76561198057999536), &person))
 			validThread := validForum.NewThread("thread title ", person.SteamID)
@@ -561,23 +562,23 @@ func testForum(database *store.Store) func(t *testing.T) {
 			message := validThread.NewMessage(person.SteamID, "test *body*")
 			require.NoError(t, database.ForumMessageSave(ctx, &message))
 
-			upVote := message.NewVote(person.SteamID, store.VoteUp)
+			upVote := message.NewVote(person.SteamID, model.VoteUp)
 
 			require.NoError(t, database.ForumMessageVoteApply(ctx, &upVote))
 
-			var fetchedUpVote store.ForumMessageVote
+			var fetchedUpVote model.ForumMessageVote
 			require.NoError(t, database.ForumMessageVoteByID(ctx, upVote.ForumMessageVoteID, &fetchedUpVote))
 			require.Equal(t, upVote.Vote, fetchedUpVote.Vote)
 
-			downVote := message.NewVote(person.SteamID, store.VoteDown)
+			downVote := message.NewVote(person.SteamID, model.VoteDown)
 			require.NoError(t, database.ForumMessageVoteApply(ctx, &downVote))
-			var fetchedDownVote store.ForumMessageVote
+			var fetchedDownVote model.ForumMessageVote
 			require.NoError(t, database.ForumMessageVoteByID(ctx, upVote.ForumMessageVoteID, &fetchedDownVote))
 			require.Equal(t, downVote.Vote, fetchedDownVote.Vote)
 
-			downVote2 := message.NewVote(person.SteamID, store.VoteDown)
+			downVote2 := message.NewVote(person.SteamID, model.VoteDown)
 			require.NoError(t, database.ForumMessageVoteApply(ctx, &downVote2))
-			var fetchedDownVote2 store.ForumMessageVote
+			var fetchedDownVote2 model.ForumMessageVote
 			require.ErrorIs(t, store.ErrNoResult, database.ForumMessageVoteByID(ctx, upVote.ForumMessageVoteID, &fetchedDownVote2))
 		})
 	}

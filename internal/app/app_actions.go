@@ -8,6 +8,7 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -45,7 +46,7 @@ func (app *App) OnFindExec(_ context.Context, findOpts findOpts, onFoundCmd func
 }
 
 // Kick will kick the steam id from whatever server it is connected to.
-func (app *App) Kick(ctx context.Context, _ store.Origin, target steamid.SID64, author steamid.SID64, reason store.Reason) error {
+func (app *App) Kick(ctx context.Context, _ model.Origin, target steamid.SID64, author steamid.SID64, reason model.Reason) error {
 	if !author.Valid() {
 		return consts.ErrInvalidAuthorSID
 	}
@@ -77,12 +78,12 @@ func (app *App) Kick(ctx context.Context, _ store.Origin, target steamid.SID64, 
 		SetColor(conf.Discord.ColourSuccess).
 		AddField("servers", strings.Join(fp.Uniq(server), ","))
 
-	var targetUser store.Person
+	var targetUser model.Person
 	if errTargetUser := app.db.GetOrCreatePersonBySteamID(ctx, target, &targetUser); errTargetUser != nil {
 		return errors.Wrap(errTargetUser, "Failed to get target")
 	}
 
-	var authorUser store.Person
+	var authorUser model.Person
 	if errTargetUser := app.db.GetOrCreatePersonBySteamID(ctx, author, &authorUser); errTargetUser != nil {
 		return errors.Wrap(errTargetUser, "Failed to get author")
 	}
@@ -96,8 +97,8 @@ func (app *App) Kick(ctx context.Context, _ store.Origin, target steamid.SID64, 
 }
 
 // Silence will gag & mute a player.
-func (app *App) Silence(ctx context.Context, _ store.Origin, target steamid.SID64, author steamid.SID64,
-	reason store.Reason,
+func (app *App) Silence(ctx context.Context, _ model.Origin, target steamid.SID64, author steamid.SID64,
+	reason model.Reason,
 ) error {
 	if !author.Valid() {
 		return consts.ErrInvalidAuthorSID
@@ -129,12 +130,12 @@ func (app *App) Silence(ctx context.Context, _ store.Origin, target steamid.SID6
 		SetColor(conf.Discord.ColourSuccess).
 		AddField("users", strings.Join(fp.Uniq(users), ","))
 
-	var targetUser store.Person
+	var targetUser model.Person
 	if errTargetUser := app.db.GetOrCreatePersonBySteamID(ctx, target, &targetUser); errTargetUser != nil {
 		return errors.Wrap(errTargetUser, "Failed to get target")
 	}
 
-	var authorUser store.Person
+	var authorUser model.Person
 	if errTargetUser := app.db.GetOrCreatePersonBySteamID(ctx, author, &authorUser); errTargetUser != nil {
 		return errors.Wrap(errTargetUser, "Failed to get author")
 	}
@@ -168,7 +169,7 @@ func (app *App) Say(ctx context.Context, author steamid.SID64, serverName string
 		SetColor(conf.Discord.ColourSuccess).
 		AddField("servers", fmt.Sprintf("%d", len(servers)))
 
-	var authorUser store.Person
+	var authorUser model.Person
 	if errTargetUser := app.db.GetOrCreatePersonBySteamID(ctx, author, &authorUser); errTargetUser != nil {
 		return errors.Wrap(errTargetUser, "Failed to get author")
 	}
@@ -202,7 +203,7 @@ func (app *App) CSay(ctx context.Context, author steamid.SID64, serverName strin
 		SetColor(conf.Discord.ColourSuccess).
 		AddField("servers", fmt.Sprintf("%d", len(servers)))
 
-	var authorUser store.Person
+	var authorUser model.Person
 	if errAuthor := app.db.GetOrCreatePersonBySteamID(ctx, author, &authorUser); errAuthor != nil {
 		return errors.Wrap(errAuthor, "Failed to get author")
 	}
@@ -243,7 +244,7 @@ func (app *App) PSay(ctx context.Context, target steamid.SID64, message string) 
 // instead of requiring users to link their steam account to discord itself. It also
 // means the discord does not require more privileged intents.
 func (app *App) SetSteam(ctx context.Context, sid64 steamid.SID64, discordID string) error {
-	newPerson := store.NewPerson(sid64)
+	newPerson := model.NewPerson(sid64)
 	if errGetPerson := app.db.GetOrCreatePersonBySteamID(ctx, sid64, &newPerson); errGetPerson != nil || !sid64.Valid() {
 		return consts.ErrInvalidSID
 	}
@@ -264,7 +265,7 @@ func (app *App) SetSteam(ctx context.Context, sid64 steamid.SID64, discordID str
 	msgEmbed := discord.NewEmbed(conf, "User Set Discord ID Successfully")
 	msgEmbed.Embed().SetColor(conf.Discord.ColourSuccess)
 
-	var authorUser store.Person
+	var authorUser model.Person
 	if errAuthor := app.db.GetOrCreatePersonBySteamID(ctx, sid64, &authorUser); errAuthor != nil {
 		return errors.Wrap(errAuthor, "Failed to get author")
 	}
@@ -280,7 +281,7 @@ func (app *App) SetSteam(ctx context.Context, sid64 steamid.SID64, discordID str
 }
 
 // FilterAdd creates a new chat filter using a regex pattern.
-func (app *App) FilterAdd(ctx context.Context, filter *store.Filter) error {
+func (app *App) FilterAdd(ctx context.Context, filter *model.Filter) error {
 	if errSave := app.db.SaveFilter(ctx, filter); errSave != nil {
 		if errors.Is(errSave, store.ErrDuplicate) {
 			return store.ErrDuplicate
@@ -305,7 +306,7 @@ func (app *App) FilterAdd(ctx context.Context, filter *store.Filter) error {
 		AddField("Pattern", filter.Pattern).
 		AddField("filter_id", fmt.Sprintf("%d", filter.FilterID))
 
-	var authorUser store.Person
+	var authorUser model.Person
 	if errAuthor := app.db.GetOrCreatePersonBySteamID(ctx, filter.AuthorID, &authorUser); errAuthor != nil {
 		return errors.Wrap(errAuthor, "Failed to get author")
 	}
@@ -321,7 +322,7 @@ func (app *App) FilterAdd(ctx context.Context, filter *store.Filter) error {
 
 // FilterDel removed and existing chat filter.
 func (app *App) FilterDel(ctx context.Context, filterID int64) (bool, error) {
-	var filter store.Filter
+	var filter model.Filter
 	if errGetFilter := app.db.GetFilterByID(ctx, filterID, &filter); errGetFilter != nil {
 		return false, errors.Wrap(errGetFilter, "Failed to get filter")
 	}
@@ -333,7 +334,7 @@ func (app *App) FilterDel(ctx context.Context, filterID int64) (bool, error) {
 	app.wordFilters.Lock()
 	defer app.wordFilters.Unlock()
 
-	var valid []store.Filter //nolint:prealloc
+	var valid []model.Filter //nolint:prealloc
 
 	for _, f := range app.wordFilters.wordFilters {
 		if f.FilterID == filterID {
@@ -362,7 +363,7 @@ func (app *App) FilterDel(ctx context.Context, filterID int64) (bool, error) {
 }
 
 // FilterCheck can be used to check if a phrase will match any filters.
-func (app *App) FilterCheck(message string) []store.Filter {
+func (app *App) FilterCheck(message string) []model.Filter {
 	if message == "" {
 		return nil
 	}
@@ -372,7 +373,7 @@ func (app *App) FilterCheck(message string) []store.Filter {
 	app.wordFilters.RLock()
 	defer app.wordFilters.RUnlock()
 
-	var found []store.Filter
+	var found []model.Filter
 
 	for _, filter := range app.wordFilters.wordFilters {
 		for _, word := range words {

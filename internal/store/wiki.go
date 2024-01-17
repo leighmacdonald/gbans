@@ -3,54 +3,15 @@ package store
 import (
 	"context"
 	"strings"
-	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/gabriel-vasile/mimetype"
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/gbans/pkg/wiki"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
-
-const unknownMediaTag = "__unknown__"
-
-func NewMedia(author steamid.SID64, name string, mime string, content []byte) (Media, error) {
-	mType := mimetype.Detect(content)
-	if !mType.Is(mime) && mime != unknownMediaTag {
-		// Should never actually happen unless user is trying nefarious stuff.
-		return Media{}, errors.New("Detected mimetype different than provided")
-	}
-
-	curTime := time.Now()
-
-	return Media{
-		AuthorID:  author,
-		MimeType:  mType.String(),
-		Name:      strings.ReplaceAll(name, " ", "_"),
-		Size:      int64(len(content)),
-		Contents:  content,
-		Deleted:   false,
-		CreatedOn: curTime,
-		UpdatedOn: curTime,
-		Asset:     Asset{},
-	}, nil
-}
-
-type Media struct {
-	MediaID   int           `json:"media_id"`
-	AuthorID  steamid.SID64 `json:"author_id"`
-	MimeType  string        `json:"mime_type"`
-	Contents  []byte        `json:"-"`
-	Name      string        `json:"name"`
-	Size      int64         `json:"size"`
-	Deleted   bool          `json:"deleted"`
-	CreatedOn time.Time     `json:"created_on"`
-	UpdatedOn time.Time     `json:"updated_on"`
-	Asset     Asset         `json:"asset"`
-}
 
 func (db *Store) GetWikiPageBySlug(ctx context.Context, slug string, page *wiki.Page) error {
 	row, errQuery := db.QueryRowBuilder(ctx, db.sb.
@@ -92,7 +53,7 @@ func (db *Store) SaveWikiPage(ctx context.Context, page *wiki.Page) error {
 	return nil
 }
 
-func (db *Store) SaveMedia(ctx context.Context, media *Media) error {
+func (db *Store) SaveMedia(ctx context.Context, media *model.Media) error {
 	if media.MediaID > 0 {
 		return db.ExecUpdateBuilder(ctx, db.sb.
 			Update("media").
@@ -140,7 +101,7 @@ func (db *Store) SaveMedia(ctx context.Context, media *Media) error {
 	return nil
 }
 
-func (db *Store) GetMediaByAssetID(ctx context.Context, uuid uuid.UUID, media *Media) error {
+func (db *Store) GetMediaByAssetID(ctx context.Context, uuid uuid.UUID, media *model.Media) error {
 	row, errRow := db.QueryRowBuilder(ctx, db.sb.
 		Select("m.media_id", "m.author_id", "m.name", "m.size", "m.mime_type", "m.contents",
 			"m.deleted", "m.created_on", "m.updated_on", "a.name", "a.size", "a.mime_type", "a.path",
@@ -152,7 +113,7 @@ func (db *Store) GetMediaByAssetID(ctx context.Context, uuid uuid.UUID, media *M
 		return errRow
 	}
 
-	media.Asset = Asset{AssetID: uuid}
+	media.Asset = model.Asset{AssetID: uuid}
 
 	var authorID int64
 
@@ -181,7 +142,7 @@ func (db *Store) GetMediaByAssetID(ctx context.Context, uuid uuid.UUID, media *M
 	return nil
 }
 
-func (db *Store) GetMediaByName(ctx context.Context, name string, media *Media) error {
+func (db *Store) GetMediaByName(ctx context.Context, name string, media *model.Media) error {
 	row, errRow := db.QueryRowBuilder(ctx, db.sb.
 		Select("media_id", "author_id", "name", "size", "mime_type", "contents", "deleted",
 			"created_on", "updated_on").
@@ -212,7 +173,7 @@ func (db *Store) GetMediaByName(ctx context.Context, name string, media *Media) 
 	return nil
 }
 
-func (db *Store) GetMediaByID(ctx context.Context, mediaID int, media *Media) error {
+func (db *Store) GetMediaByID(ctx context.Context, mediaID int, media *model.Media) error {
 	row, errRow := db.QueryRowBuilder(ctx, db.sb.
 		Select("m.media_id", "m.author_id", "m.name", "m.size", "m.mime_type", "m.contents",
 			"m.deleted", "m.created_on", "m.updated_on", "a.name", "a.size", "a.mime_type",

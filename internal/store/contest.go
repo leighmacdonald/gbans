@@ -2,148 +2,16 @@ package store
 
 import (
 	"context"
-	"strings"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid/v5"
-	"github.com/leighmacdonald/gbans/internal/consts"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
 )
 
-type Contest struct {
-	TimeStamped
-	ContestID       uuid.UUID `json:"contest_id"`
-	Title           string    `json:"title"`
-	Description     string    `json:"description"`
-	Public          bool      `json:"public"`
-	HideSubmissions bool      `json:"hide_submissions"` // Are user submissions visible for the public
-	DateStart       time.Time `json:"date_start"`
-	DateEnd         time.Time `json:"date_end"`
-	MaxSubmissions  int       `json:"max_submissions"`
-	OwnSubmissions  int       `json:"own_submissions"`
-	MediaTypes      string    `json:"media_types"`
-	NumEntries      int       `json:"num_entries"`
-	Deleted         bool      `json:"-"`
-	// Allow voting
-	Voting bool `json:"voting"`
-	// Minimum permission level allowed to vote
-	MinPermissionLevel consts.Privilege `json:"min_permission_level"`
-	// Allow down voting
-	DownVotes bool `json:"down_votes"`
-	isNew     bool
-}
-
-func (c Contest) MimeTypeAcceptable(mediaType string) bool {
-	if c.MediaTypes == "" {
-		return true
-	}
-
-	for _, validType := range strings.Split(c.MediaTypes, ",") {
-		if strings.EqualFold(validType, mediaType) {
-			return true
-		}
-	}
-
-	return false
-}
-
-type ContestEntry struct {
-	TimeStamped
-	ContestEntryID uuid.UUID     `json:"contest_entry_id"`
-	ContestID      uuid.UUID     `json:"contest_id"`
-	SteamID        steamid.SID64 `json:"steam_id"`
-	Personaname    string        `json:"personaname"`
-	AvatarHash     string        `json:"avatar_hash"`
-	AssetID        uuid.UUID     `json:"asset_id"`
-	Description    string        `json:"description"`
-	Placement      int           `json:"placement"`
-	Deleted        bool          `json:"deleted"`
-	VotesUp        int           `json:"votes_up"`
-	VotesDown      int           `json:"votes_down"`
-	Asset          Asset         `json:"asset"`
-}
-
-type ContestEntryVote struct {
-	ContestEntryID uuid.UUID     `json:"contest_entry_id"`
-	SteamID        steamid.SID64 `json:"steam_id"`
-	Vote           int           `json:"vote"`
-	TimeStamped
-}
-
-func (c Contest) NewEntry(steamID steamid.SID64, assetID uuid.UUID, description string) (ContestEntry, error) {
-	if c.ContestID.IsNil() {
-		return ContestEntry{}, errors.New("Invalid contest id")
-	}
-
-	if !steamID.Valid() {
-		return ContestEntry{}, consts.ErrInvalidSID
-	}
-
-	if description == "" {
-		return ContestEntry{}, errors.New("Description cannot be empty")
-	}
-
-	newID, errID := uuid.NewV4()
-	if errID != nil {
-		return ContestEntry{}, errors.Wrap(errID, "Failed to generate new uuidv4")
-	}
-
-	return ContestEntry{
-		TimeStamped:    NewTimeStamped(),
-		ContestEntryID: newID,
-		ContestID:      c.ContestID,
-		SteamID:        steamID,
-		Personaname:    "",
-		AvatarHash:     "",
-		AssetID:        assetID,
-		Description:    description,
-		Placement:      0,
-		Deleted:        false,
-	}, nil
-}
-
-func NewContest(title string, description string, dateStart time.Time, dateEnd time.Time, public bool) (Contest, error) {
-	newID, errID := uuid.NewV4()
-	if errID != nil {
-		return Contest{}, errors.Wrap(errID, "Failed to generate uuid")
-	}
-
-	if title == "" {
-		return Contest{}, errors.New("Title cannot be empty")
-	}
-
-	if description == "" {
-		return Contest{}, errors.New("Title cannot be empty")
-	}
-
-	if dateEnd.Before(dateStart) {
-		return Contest{}, errors.New("End date cannot come before start date")
-	}
-
-	contest := Contest{
-		TimeStamped:        NewTimeStamped(),
-		ContestID:          newID,
-		Title:              title,
-		Description:        description,
-		Public:             public,
-		DateStart:          dateStart,
-		DateEnd:            dateEnd,
-		MaxSubmissions:     0,
-		HideSubmissions:    false,
-		MediaTypes:         "",
-		Deleted:            false,
-		Voting:             false,
-		MinPermissionLevel: consts.PUser,
-		DownVotes:          false,
-		isNew:              true,
-	}
-
-	return contest, nil
-}
-
-func (db *Store) ContestByID(ctx context.Context, contestID uuid.UUID, contest *Contest) error {
+func (db *Store) ContestByID(ctx context.Context, contestID uuid.UUID, contest *model.Contest) error {
 	if contestID.IsNil() {
 		return errors.New("Invalid contest id")
 	}
@@ -179,8 +47,8 @@ func (db *Store) ContestEntryDelete(ctx context.Context, contestEntryID uuid.UUI
 		Where(sq.Eq{"contest_entry_id": contestEntryID}))
 }
 
-func (db *Store) Contests(ctx context.Context, publicOnly bool) ([]Contest, error) {
-	contests := []Contest{}
+func (db *Store) Contests(ctx context.Context, publicOnly bool) ([]model.Contest, error) {
+	contests := []model.Contest{}
 
 	builder := db.sb.
 		Select("c.contest_id", "c.title", "c.public", "c.description", "c.date_start",
@@ -209,7 +77,7 @@ func (db *Store) Contests(ctx context.Context, publicOnly bool) ([]Contest, erro
 	defer rows.Close()
 
 	for rows.Next() {
-		var contest Contest
+		var contest model.Contest
 		if errScan := rows.Scan(&contest.ContestID, &contest.Title, &contest.Public, &contest.Description,
 			&contest.DateStart, &contest.DateEnd, &contest.MaxSubmissions, &contest.MediaTypes,
 			&contest.Deleted, &contest.Voting, &contest.MinPermissionLevel, &contest.DownVotes,
@@ -223,7 +91,7 @@ func (db *Store) Contests(ctx context.Context, publicOnly bool) ([]Contest, erro
 	return contests, nil
 }
 
-func (db *Store) ContestEntrySave(ctx context.Context, entry ContestEntry) error {
+func (db *Store) ContestEntrySave(ctx context.Context, entry model.ContestEntry) error {
 	return db.ExecInsertBuilder(ctx, db.sb.
 		Insert("contest_entry").
 		Columns("contest_entry_id", "contest_id", "steam_id", "asset_id", "description",
@@ -232,7 +100,7 @@ func (db *Store) ContestEntrySave(ctx context.Context, entry ContestEntry) error
 			entry.Placement, entry.Deleted, entry.CreatedOn, entry.UpdatedOn))
 }
 
-func (db *Store) ContestSave(ctx context.Context, contest *Contest) error {
+func (db *Store) ContestSave(ctx context.Context, contest *model.Contest) error {
 	if contest.ContestID == uuid.FromStringOrNil(EmptyUUID) {
 		newID, errID := uuid.NewV4()
 		if errID != nil {
@@ -247,7 +115,7 @@ func (db *Store) ContestSave(ctx context.Context, contest *Contest) error {
 	return db.contestUpdate(ctx, contest)
 }
 
-func (db *Store) contestInsert(ctx context.Context, contest *Contest) error {
+func (db *Store) contestInsert(ctx context.Context, contest *model.Contest) error {
 	query := db.sb.
 		Insert("contest").
 		Columns("contest_id", "title", "public", "description", "date_start",
@@ -262,12 +130,12 @@ func (db *Store) contestInsert(ctx context.Context, contest *Contest) error {
 		return Err(errExec)
 	}
 
-	contest.isNew = false
+	contest.IsNew = false
 
 	return nil
 }
 
-func (db *Store) contestUpdate(ctx context.Context, contest *Contest) error {
+func (db *Store) contestUpdate(ctx context.Context, contest *model.Contest) error {
 	contest.UpdatedOn = time.Now()
 
 	return db.ExecUpdateBuilder(ctx, db.sb.
@@ -288,7 +156,7 @@ func (db *Store) contestUpdate(ctx context.Context, contest *Contest) error {
 		Where(sq.Eq{"contest_id": contest.ContestID}))
 }
 
-func (db *Store) ContestEntry(ctx context.Context, contestID uuid.UUID, entry *ContestEntry) error {
+func (db *Store) ContestEntry(ctx context.Context, contestID uuid.UUID, entry *model.ContestEntry) error {
 	query := `
 		SELECT
 			c.contest_entry_id,
@@ -334,7 +202,7 @@ func (db *Store) ContestEntry(ctx context.Context, contestID uuid.UUID, entry *C
 	return nil
 }
 
-func (db *Store) ContestEntries(ctx context.Context, contestID uuid.UUID) ([]*ContestEntry, error) {
+func (db *Store) ContestEntries(ctx context.Context, contestID uuid.UUID) ([]*model.ContestEntry, error) {
 	query := `
 		SELECT
 			c.contest_entry_id,
@@ -370,7 +238,7 @@ func (db *Store) ContestEntries(ctx context.Context, contestID uuid.UUID) ([]*Co
 		WHERE c.contest_id = $1
 		ORDER BY c.created_on DESC`
 
-	entries := []*ContestEntry{}
+	entries := []*model.ContestEntry{}
 
 	rows, errRows := db.Query(ctx, query, contestID)
 	if errRows != nil {
@@ -384,7 +252,7 @@ func (db *Store) ContestEntries(ctx context.Context, contestID uuid.UUID) ([]*Co
 	defer rows.Close()
 
 	for rows.Next() {
-		var entry ContestEntry
+		var entry model.ContestEntry
 
 		if errScan := rows.Scan(&entry.ContestEntryID, &entry.ContestID, &entry.SteamID, &entry.AssetID, &entry.Description,
 			&entry.Placement, &entry.Deleted, &entry.CreatedOn, &entry.UpdatedOn,
@@ -400,15 +268,7 @@ func (db *Store) ContestEntries(ctx context.Context, contestID uuid.UUID) ([]*Co
 	return entries, nil
 }
 
-type ContentVoteRecord struct {
-	ContestEntryVoteID int64         `json:"contest_entry_vote_id"`
-	ContestEntryID     uuid.UUID     `json:"contest_entry_id"`
-	SteamID            steamid.SID64 `json:"steam_id"`
-	Vote               bool          `json:"vote"`
-	TimeStamped
-}
-
-func (db *Store) ContestEntryVoteGet(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SID64, record *ContentVoteRecord) error {
+func (db *Store) ContestEntryVoteGet(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SID64, record *model.ContentVoteRecord) error {
 	query := db.sb.
 		Select("contest_entry_vote_id", "contest_entry_id", "steam_id",
 			"vote", "created_on", "updated_on").
@@ -432,17 +292,17 @@ func (db *Store) ContestEntryVoteGet(ctx context.Context, contestEntryID uuid.UU
 var ErrVoteDeleted = errors.New("Vote deleted")
 
 func (db *Store) ContestEntryVote(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SID64, vote bool) error {
-	var record ContentVoteRecord
+	var record model.ContentVoteRecord
 	if errRecord := db.ContestEntryVoteGet(ctx, contestEntryID, steamID, &record); errRecord != nil {
 		if !errors.Is(errRecord, ErrNoResult) {
 			return Err(errRecord)
 		}
 
-		record = ContentVoteRecord{
+		record = model.ContentVoteRecord{
 			ContestEntryID: contestEntryID,
 			SteamID:        steamID,
 			Vote:           vote,
-			TimeStamped:    NewTimeStamped(),
+			TimeStamped:    model.NewTimeStamped(),
 		}
 
 		now := time.Now()

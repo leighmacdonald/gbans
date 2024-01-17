@@ -18,6 +18,7 @@ import (
 	embed "github.com/leighmacdonald/discordgo-embed"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
@@ -115,12 +116,12 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 			return nil, consts.ErrInvalidSID
 		}
 
-		player := store.NewPerson(sid)
+		player := model.NewPerson(sid)
 		if errGetPlayer := app.PersonBySID(ctx, sid, &player); errGetPlayer != nil {
 			return nil, discord.ErrCommandFailed
 		}
 
-		ban := store.NewBannedPerson()
+		ban := model.NewBannedPerson()
 		if errGetBanBySID := app.db.GetBanBySteamID(ctx, sid, &ban, false); errGetBanBySID != nil {
 			if !errors.Is(errGetBanBySID, store.ErrNoResult) {
 				app.log.Error("Failed to get ban by steamid", zap.Error(errGetBanBySID))
@@ -132,7 +133,7 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 		oldBans, _, errOld := app.db.GetBansSteam(ctx, store.SteamBansQueryFilter{
 			BansQueryFilter: store.BansQueryFilter{
 				QueryFilter: store.QueryFilter{Deleted: true},
-				TargetID:    store.StringSID(sid),
+				TargetID:    model.StringSID(sid),
 			},
 		})
 		if errOld != nil {
@@ -157,15 +158,15 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 			muted         = false
 			reason        = ""
 			createdAt     = ""
-			authorProfile = store.NewPerson(sid)
+			authorProfile = model.NewPerson(sid)
 			msgEmbed      = discord.NewEmbed(conf)
 			expiry        time.Time
 		)
 
 		// TODO Show the longest remaining ban.
 		if ban.BanID > 0 {
-			banned = ban.BanType == store.Banned
-			muted = ban.BanType == store.NoComm
+			banned = ban.BanType == model.Banned
+			muted = ban.BanType == model.NoComm
 			reason = ban.ReasonText
 
 			if len(reason) == 0 {
@@ -261,9 +262,9 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 		title := player.PersonaName
 
 		if ban.BanID > 0 {
-			if ban.BanType == store.Banned {
+			if ban.BanType == model.Banned {
 				title = fmt.Sprintf("%s (BANNED)", title)
-			} else if ban.BanType == store.NoComm {
+			} else if ban.BanType == model.NoComm {
 				title = fmt.Sprintf("%s (MUTED)", title)
 			}
 		}
@@ -299,7 +300,7 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 			numMutes, numBans := 0, 0
 
 			for _, oldBan := range oldBans {
-				if oldBan.BanType == store.Banned {
+				if oldBan.BanType == model.Banned {
 					numBans++
 				} else {
 					numMutes++
@@ -391,7 +392,7 @@ func onHistoryIP(ctx context.Context, app *App, _ *discordgo.Session, interactio
 		return nil, consts.ErrInvalidSID
 	}
 
-	person := store.NewPerson(steamID)
+	person := model.NewPerson(steamID)
 	if errPersonBySID := app.PersonBySID(ctx, steamID, &person); errPersonBySID != nil {
 		return nil, discord.ErrCommandFailed
 	}
@@ -448,7 +449,7 @@ func onHistoryIP(ctx context.Context, app *App, _ *discordgo.Session, interactio
 //	return nil
 // }
 
-func (app *App) createDiscordBanEmbed(ctx context.Context, ban store.BanSteam) (*embed.Embed, error) {
+func (app *App) createDiscordBanEmbed(ctx context.Context, ban model.BanSteam) (*embed.Embed, error) {
 	conf := app.config()
 	msgEmbed := discord.NewEmbed(conf)
 	msgEmbed.Embed().
@@ -461,14 +462,14 @@ func (app *App) createDiscordBanEmbed(ctx context.Context, ban store.BanSteam) (
 		msgEmbed.Embed().AddField("Reason", ban.ReasonText)
 	}
 
-	var target store.Person
+	var target model.Person
 	if errTarget := app.PersonBySID(ctx, ban.TargetID, &target); errTarget != nil {
 		return nil, errTarget
 	}
 
 	msgEmbed.Embed().SetImage(target.AvatarFull)
 
-	var author store.Person
+	var author model.Person
 
 	if errTarget := app.PersonBySID(ctx, ban.SourceID, &target); errTarget != nil {
 		return nil, errTarget
@@ -540,7 +541,7 @@ func onUnbanSteam(ctx context.Context, app *App, _ *discordgo.Session, interacti
 	msgEmbed := discord.NewEmbed(conf, "User Unbanned Successfully")
 	msgEmbed.Embed().SetColor(conf.Discord.ColourSuccess)
 
-	var user store.Person
+	var user model.Person
 	if errUser := app.PersonBySID(ctx, steamID, &user); errUser != nil {
 		app.log.Warn("Could not fetch unbanned person", zap.String("steam_id", steamID.String()), zap.Error(errUser))
 	} else {
@@ -597,8 +598,8 @@ func onUnbanASN(ctx context.Context, app *App, _ *discordgo.Session, interaction
 	return msgEmbed.MessageEmbed, nil
 }
 
-func getDiscordAuthor(ctx context.Context, db *store.Store, interaction *discordgo.InteractionCreate) (store.Person, error) {
-	author := store.NewPerson("")
+func getDiscordAuthor(ctx context.Context, db *store.Store, interaction *discordgo.InteractionCreate) (model.Person, error) {
+	author := model.NewPerson("")
 	if errPersonByDiscordID := db.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID, &author); errPersonByDiscordID != nil {
 		if errors.Is(errPersonByDiscordID, store.ErrNoResult) {
 			return author, errors.New("Must set steam id. See /set_steam")
@@ -614,8 +615,8 @@ func makeOnKick(app *App) discord.CommandHandler {
 	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 		var (
 			opts   = discord.OptionMap(interaction.ApplicationCommandData().Options)
-			target = store.StringSID(opts[discord.OptUserIdentifier].StringValue())
-			reason = store.Reason(opts[discord.OptBanReason].IntValue())
+			target = model.StringSID(opts[discord.OptUserIdentifier].StringValue())
+			reason = model.Reason(opts[discord.OptBanReason].IntValue())
 		)
 
 		targetSid64, errTarget := target.SID64(ctx)
@@ -640,7 +641,7 @@ func makeOnKick(app *App) discord.CommandHandler {
 		var err error
 
 		for _, player := range players {
-			if errKick := app.Kick(ctx, store.Bot, player.Player.SID, author.SteamID, reason); errKick != nil {
+			if errKick := app.Kick(ctx, model.Bot, player.Player.SID, author.SteamID, reason); errKick != nil {
 				err = gerrors.Join(err, errKick)
 
 				continue
@@ -704,7 +705,7 @@ func makeOnCSay(app *App) discord.CommandHandler {
 func makeOnPSay(app *App) discord.CommandHandler {
 	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 		opts := discord.OptionMap(interaction.ApplicationCommandData().Options)
-		player := store.StringSID(opts[discord.OptUserIdentifier].StringValue())
+		player := model.StringSID(opts[discord.OptUserIdentifier].StringValue())
 		msg := opts[discord.OptMessage].StringValue()
 
 		playerSid, errPlayerSid := player.SID64(ctx)
@@ -905,7 +906,7 @@ func onFilterAdd(ctx context.Context, app *App, _ *discordgo.Session, interactio
 		return nil, errAuthor
 	}
 
-	filter := store.Filter{
+	filter := model.Filter{
 		AuthorID:  author.SteamID,
 		Pattern:   pattern,
 		IsRegex:   isRegex,
@@ -936,7 +937,7 @@ func onFilterDel(ctx context.Context, app *App, _ *discordgo.Session, interactio
 		return nil, errors.New("Invalid filter id")
 	}
 
-	var filter store.Filter
+	var filter model.Filter
 	if errGetFilter := app.db.GetFilterByID(ctx, wordID, &filter); errGetFilter != nil {
 		return nil, discord.ErrCommandFailed
 	}
@@ -997,7 +998,7 @@ func makeOnStats(app *App) discord.CommandHandler {
 	}
 }
 
-func makeClassStatsTable(classes store.PlayerClassStatsCollection) string {
+func makeClassStatsTable(classes model.PlayerClassStatsCollection) string {
 	writer := &strings.Builder{}
 	table := defaultTable(writer)
 	table.SetHeader([]string{"Class", "K", "A", "D", "KD", "KAD", "DA", "DT", "Dom", "Time"})
@@ -1045,7 +1046,7 @@ func makeClassStatsTable(classes store.PlayerClassStatsCollection) string {
 	return strings.Trim(writer.String(), "\n")
 }
 
-func makeWeaponStatsTable(weapons []store.PlayerWeaponStats) string {
+func makeWeaponStatsTable(weapons []model.PlayerWeaponStats) string {
 	writer := &strings.Builder{}
 	table := defaultTable(writer)
 	table.SetHeader([]string{"Weapon", "K", "Dmg", "Sh", "Hi", "Acc", "B", "H", "A"})
@@ -1077,7 +1078,7 @@ func makeWeaponStatsTable(weapons []store.PlayerWeaponStats) string {
 	return writer.String()
 }
 
-func makeKillstreakStatsTable(killstreaks []store.PlayerKillstreakStats) string {
+func makeKillstreakStatsTable(killstreaks []model.PlayerKillstreakStats) string {
 	writer := &strings.Builder{}
 	table := defaultTable(writer)
 	table.SetHeader([]string{"Ks", "Class", "Dur", "Date"})
@@ -1104,7 +1105,7 @@ func makeKillstreakStatsTable(killstreaks []store.PlayerKillstreakStats) string 
 	return writer.String()
 }
 
-func makeMedicStatsTable(stats []store.PlayerMedicStats) string {
+func makeMedicStatsTable(stats []model.PlayerMedicStats) string {
 	writer := &strings.Builder{}
 	table := defaultTable(writer)
 	table.SetHeader([]string{"Healing", "Drop", "NearFull", "AvgLen", "U", "K", "V", "Q"})
@@ -1143,7 +1144,7 @@ func onStatsPlayer(ctx context.Context, app *App, _ *discordgo.Session, interact
 		return nil, consts.ErrInvalidSID
 	}
 
-	person := store.NewPerson(steamID)
+	person := model.NewPerson(steamID)
 	errAuthor := app.PersonBySID(ctx, steamID, &person)
 
 	if errAuthor != nil {
@@ -1243,7 +1244,7 @@ func onStatsPlayer(ctx context.Context, app *App, _ *discordgo.Session, interact
 //		return nil
 //	}
 
-func (app *App) genDiscordMatchEmbed(match store.MatchResult) *embed.Embed {
+func (app *App) genDiscordMatchEmbed(match model.MatchResult) *embed.Embed {
 	conf := app.config()
 
 	msgEmbed := discord.NewEmbed(conf, strings.Join([]string{match.Title, match.MapName}, " | "))
@@ -1346,7 +1347,7 @@ func makeOnLog(app *App) discord.CommandHandler {
 			return nil, discord.ErrCommandFailed
 		}
 
-		var match store.MatchResult
+		var match model.MatchResult
 
 		if errMatch := app.db.MatchGetByID(ctx, matchID, &match); errMatch != nil {
 			return nil, discord.ErrCommandFailed
@@ -1383,12 +1384,12 @@ func makeOnFind(app *App) discord.CommandHandler {
 		msgEmbed := discord.NewEmbed(conf, "Player(s) Found")
 
 		for _, player := range players {
-			var server store.Server
+			var server model.Server
 			if errServer := app.db.GetServer(ctx, player.ServerID, &server); errServer != nil {
 				return nil, errors.Wrapf(errServer, "Failed to get server")
 			}
 
-			person := store.NewPerson(player.Player.SID)
+			person := model.NewPerson(player.Player.SID)
 			if errPerson := app.PersonBySID(ctx, player.Player.SID, &person); errPerson != nil {
 				return nil, errPerson
 			}
@@ -1429,7 +1430,7 @@ func infString(f float64) string {
 
 const tableNameLen = 13
 
-func matchASCIITable(match store.MatchResult) string {
+func matchASCIITable(match model.MatchResult) string {
 	writerPlayers := &strings.Builder{}
 	tablePlayers := defaultTable(writerPlayers)
 	tablePlayers.SetHeader([]string{"T", "Name", "K", "A", "D", "KD", "KAD", "DA", "B/H/A/C"})
@@ -1548,8 +1549,8 @@ func makeOnMute(app *App) discord.CommandHandler {
 	) (*discordgo.MessageEmbed, error) {
 		var (
 			opts     = discord.OptionMap(interaction.ApplicationCommandData().Options)
-			playerID = store.StringSID(opts.String(discord.OptUserIdentifier))
-			reason   store.Reason
+			playerID = model.StringSID(opts.String(discord.OptUserIdentifier))
+			reason   model.Reason
 		)
 
 		reasonValueOpt, ok := opts[discord.OptBanReason]
@@ -1557,7 +1558,7 @@ func makeOnMute(app *App) discord.CommandHandler {
 			return nil, errors.New("Invalid mute reason")
 		}
 
-		reason = store.Reason(reasonValueOpt.IntValue())
+		reason = model.Reason(reasonValueOpt.IntValue())
 
 		duration, errDuration := util.ParseDuration(opts[discord.OptDuration].StringValue())
 		if errDuration != nil {
@@ -1571,17 +1572,17 @@ func makeOnMute(app *App) discord.CommandHandler {
 			return nil, errAuthor
 		}
 
-		var banSteam store.BanSteam
-		if errOpts := store.NewBanSteam(ctx,
-			store.StringSID(author.SteamID.String()),
+		var banSteam model.BanSteam
+		if errOpts := model.NewBanSteam(ctx,
+			model.StringSID(author.SteamID.String()),
 			playerID,
 			duration,
 			reason,
 			reason.String(),
 			modNote,
-			store.Bot,
+			model.Bot,
 			0,
-			store.NoComm,
+			model.NoComm,
 			false,
 			&banSteam,
 		); errOpts != nil {
@@ -1605,10 +1606,10 @@ func onBanASN(ctx context.Context, app *App, _ *discordgo.Session,
 	var (
 		opts     = discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 		asNumStr = opts[discord.OptASN].StringValue()
-		reason   = store.Reason(opts[discord.OptBanReason].IntValue())
-		targetID = store.StringSID(opts[discord.OptUserIdentifier].StringValue())
+		reason   = model.Reason(opts[discord.OptBanReason].IntValue())
+		targetID = model.StringSID(opts[discord.OptUserIdentifier].StringValue())
 		modNote  = opts[discord.OptNote].StringValue()
-		author   = store.NewPerson("")
+		author   = model.NewPerson("")
 	)
 
 	duration, errDuration := util.ParseDuration(opts[discord.OptDuration].StringValue())
@@ -1638,17 +1639,17 @@ func onBanASN(ctx context.Context, app *App, _ *discordgo.Session,
 		return nil, errors.New("Error fetching asn asnRecords")
 	}
 
-	var banASN store.BanASN
-	if errOpts := store.NewBanASN(ctx,
-		store.StringSID(author.SteamID.String()),
+	var banASN model.BanASN
+	if errOpts := model.NewBanASN(ctx,
+		model.StringSID(author.SteamID.String()),
 		targetID,
 		duration,
 		reason,
 		reason.String(),
 		modNote,
-		store.Bot,
+		model.Bot,
 		asNum,
-		store.Banned,
+		model.Banned,
 		&banASN,
 	); errOpts != nil {
 		return nil, errors.Wrapf(errOpts, "Failed to parse options")
@@ -1678,8 +1679,8 @@ func onBanIP(ctx context.Context, app *App, _ *discordgo.Session,
 	interaction *discordgo.InteractionCreate,
 ) (*discordgo.MessageEmbed, error) {
 	opts := discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
-	target := store.StringSID(opts[discord.OptUserIdentifier].StringValue())
-	reason := store.Reason(opts[discord.OptBanReason].IntValue())
+	target := model.StringSID(opts[discord.OptUserIdentifier].StringValue())
+	reason := model.Reason(opts[discord.OptBanReason].IntValue())
 	cidr := opts[discord.OptCIDR].StringValue()
 
 	_, network, errParseCIDR := net.ParseCIDR(cidr)
@@ -1694,7 +1695,7 @@ func onBanIP(ctx context.Context, app *App, _ *discordgo.Session,
 
 	modNote := opts[discord.OptNote].StringValue()
 
-	author := store.NewPerson("")
+	author := model.NewPerson("")
 	if errGetPerson := app.db.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID, &author); errGetPerson != nil {
 		if errors.Is(errGetPerson, store.ErrNoResult) {
 			return nil, errors.New("Must set steam id. See /set_steam")
@@ -1703,17 +1704,17 @@ func onBanIP(ctx context.Context, app *App, _ *discordgo.Session,
 		return nil, errors.New("Error fetching author info")
 	}
 
-	var banCIDR store.BanCIDR
-	if errOpts := store.NewBanCIDR(ctx,
-		store.StringSID(author.SteamID.String()),
+	var banCIDR model.BanCIDR
+	if errOpts := model.NewBanCIDR(ctx,
+		model.StringSID(author.SteamID.String()),
 		target,
 		duration,
 		reason,
 		reason.String(),
 		modNote,
-		store.Bot,
+		model.Bot,
 		cidr,
-		store.Banned,
+		model.Banned,
 		&banCIDR,
 	); errOpts != nil {
 		return nil, errors.Wrapf(errOpts, "Failed to parse options")
@@ -1731,7 +1732,7 @@ func onBanIP(ctx context.Context, app *App, _ *discordgo.Session,
 	}
 
 	for _, player := range players {
-		if errKick := app.Kick(ctx, store.Bot, player.Player.SID, author.SteamID, reason); errKick != nil {
+		if errKick := app.Kick(ctx, model.Bot, player.Player.SID, author.SteamID, reason); errKick != nil {
 			app.log.Error("Failed to perform kick", zap.Error(errKick))
 		}
 	}
@@ -1753,7 +1754,7 @@ func onBanSteam(ctx context.Context, app *App, _ *discordgo.Session,
 	var (
 		opts    = discord.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 		target  = opts[discord.OptUserIdentifier].StringValue()
-		reason  = store.Reason(opts[discord.OptBanReason].IntValue())
+		reason  = model.Reason(opts[discord.OptBanReason].IntValue())
 		modNote = opts[discord.OptNote].StringValue()
 	)
 
@@ -1767,17 +1768,17 @@ func onBanSteam(ctx context.Context, app *App, _ *discordgo.Session,
 		return nil, errAuthor
 	}
 
-	var banSteam store.BanSteam
-	if errOpts := store.NewBanSteam(ctx,
-		store.StringSID(author.SteamID.String()),
-		store.StringSID(target),
+	var banSteam model.BanSteam
+	if errOpts := model.NewBanSteam(ctx,
+		model.StringSID(author.SteamID.String()),
+		model.StringSID(target),
 		duration,
 		reason,
 		reason.String(),
 		modNote,
-		store.Bot,
+		model.Bot,
 		0,
-		store.Banned,
+		model.Banned,
 		false,
 		&banSteam,
 	); errOpts != nil {

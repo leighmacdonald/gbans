@@ -18,6 +18,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/fp"
@@ -151,21 +152,21 @@ func firstTimeSetup(ctx context.Context, conf config.Config, database *store.Sto
 	localCtx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 
-	var owner store.Person
+	var owner model.Person
 
 	if errRootUser := database.GetPersonBySteamID(localCtx, conf.General.Owner, &owner); errRootUser != nil {
 		if !errors.Is(errRootUser, store.ErrNoResult) {
 			return errors.Wrapf(errRootUser, "Failed first time setup")
 		}
 
-		newOwner := store.NewPerson(conf.General.Owner)
+		newOwner := model.NewPerson(conf.General.Owner)
 		newOwner.PermissionLevel = consts.PAdmin
 
 		if errSave := database.SavePerson(localCtx, &newOwner); errSave != nil {
 			return errors.Wrap(errSave, "Failed to create admin user")
 		}
 
-		newsEntry := store.NewsEntry{
+		newsEntry := model.NewsEntry{
 			Title:       "Welcome to gbans",
 			BodyMD:      "This is an *example* **news** entry.",
 			IsPublished: true,
@@ -177,7 +178,7 @@ func firstTimeSetup(ctx context.Context, conf config.Config, database *store.Sto
 			return errors.Wrap(errSave, "Failed to create sample news entry")
 		}
 
-		server := store.NewServer("server-1", "127.0.0.1", 27015)
+		server := model.NewServer("server-1", "127.0.0.1", 27015)
 		server.CC = "jp"
 		server.RCON = "example_rcon"
 		server.Latitude = 35.652832
@@ -256,7 +257,7 @@ func (app *App) loadNetBlocks(ctx context.Context) error {
 
 		waitGroup.Add(1)
 
-		go func(src store.CIDRBlockSource) {
+		go func(src model.CIDRBlockSource) {
 			defer waitGroup.Done()
 
 			count, errAdd := app.netBlock.AddRemoteSource(ctx, src.Name, src.URL)
@@ -325,7 +326,7 @@ func (app *App) StartHTTP(ctx context.Context) error {
 }
 
 type newUserWarning struct {
-	userMessage store.PersonMessage
+	userMessage model.PersonMessage
 	userWarning
 }
 
@@ -361,7 +362,7 @@ func (app *App) chatRecorder(ctx context.Context) {
 					continue
 				}
 
-				var author store.Person
+				var author model.Person
 				if errPerson := app.db.GetPersonBySteamID(ctx, newServerEvent.SID, &author); errPerson != nil {
 					log.Error("Failed to add chat history, could not get author", zap.Error(errPerson))
 
@@ -370,7 +371,7 @@ func (app *App) chatRecorder(ctx context.Context) {
 
 				matchID, _ := app.matchUUIDMap.Get(evt.ServerID)
 
-				msg := store.PersonMessage{
+				msg := model.PersonMessage{
 					SteamID:     newServerEvent.SID,
 					PersonaName: strings.ToValidUTF8(newServerEvent.Name, "_"),
 					ServerName:  evt.ServerName,
@@ -389,7 +390,7 @@ func (app *App) chatRecorder(ctx context.Context) {
 
 				// app.incomingGameChat <- msg
 
-				go func(userMsg store.PersonMessage) {
+				go func(userMsg model.PersonMessage) {
 					if msg.ServerName == "localhost-1" {
 						log.Debug("Chat message",
 							zap.Int64("id", msg.PersonMessageID),
@@ -409,7 +410,7 @@ func (app *App) chatRecorder(ctx context.Context) {
 						app.warningTracker.warningChan <- newUserWarning{
 							userMessage: userMsg,
 							userWarning: userWarning{
-								WarnReason:    store.Language,
+								WarnReason:    model.Language,
 								Message:       userMsg.Body,
 								Matched:       matchedWord,
 								MatchedFilter: matchedFilter,
@@ -462,14 +463,14 @@ func (app *App) playerConnectionWriter(ctx context.Context) {
 			}
 
 			// Maybe ignore these and wait for connect call to create?
-			var person store.Person
+			var person model.Person
 			if errPerson := app.PersonBySID(ctx, newServerEvent.SID, &person); errPerson != nil {
 				log.Error("Failed to load person", zap.Error(errPerson))
 
 				continue
 			}
 
-			conn := store.PersonConnection{
+			conn := model.PersonConnection{
 				IPAddr:      parsedAddr,
 				SteamID:     newServerEvent.SID,
 				PersonaName: strings.ToValidUTF8(newServerEvent.Name, "_"),
@@ -655,7 +656,7 @@ func (app *App) updateSrcdsLogSecrets(ctx context.Context) {
 }
 
 // PersonBySID fetches the person from the database, updating the PlayerSummary if it out of date.
-func (app *App) PersonBySID(ctx context.Context, sid steamid.SID64, person *store.Person) error {
+func (app *App) PersonBySID(ctx context.Context, sid steamid.SID64, person *model.Person) error {
 	if errGetPerson := app.db.GetOrCreatePersonBySteamID(ctx, sid, person); errGetPerson != nil {
 		return errors.Wrapf(errGetPerson, "Failed to get person instance: %s", sid)
 	}
@@ -786,7 +787,7 @@ func (app *App) currentActiveUsers() []forumActivity {
 // isOnIPWithBan checks if the address matches an existing user who is currently banned already. This
 // function will always fail-open and allow players in if an error occurs.
 func (app *App) isOnIPWithBan(ctx context.Context, steamID steamid.SID64, address net.IP) bool {
-	existing := store.NewBannedPerson()
+	existing := model.NewBannedPerson()
 	if errMatch := app.db.GetBanByLastIP(ctx, address, &existing, false); errMatch != nil {
 		if errors.Is(errMatch, store.ErrNoResult) {
 			return false
@@ -814,12 +815,12 @@ func (app *App) isOnIPWithBan(ctx context.Context, steamID steamid.SID64, addres
 
 	conf := app.config()
 
-	var newBan store.BanSteam
-	if errNewBan := store.NewBanSteam(ctx,
-		store.StringSID(conf.General.Owner.String()),
-		store.StringSID(steamID.String()), duration, store.Evading, store.Evading.String(),
-		"Connecting from same IP as banned player", store.System,
-		0, store.Banned, false, &newBan); errNewBan != nil {
+	var newBan model.BanSteam
+	if errNewBan := model.NewBanSteam(ctx,
+		model.StringSID(conf.General.Owner.String()),
+		model.StringSID(steamID.String()), duration, model.Evading, model.Evading.String(),
+		"Connecting from same IP as banned player", model.System,
+		0, model.Banned, false, &newBan); errNewBan != nil {
 		app.log.Error("Could not create evade ban", zap.Error(errDuration))
 
 		return false

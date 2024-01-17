@@ -13,6 +13,7 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/gbans/pkg/wiki"
@@ -68,7 +69,7 @@ func onAPIPostNewsCreate(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var req store.NewsEntry
+		var req model.NewsEntry
 		if !bind(ctx, log, &req) {
 			return
 		}
@@ -104,7 +105,7 @@ func onAPIPostNewsUpdate(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var entry store.NewsEntry
+		var entry model.NewsEntry
 		if errGet := app.db.GetNewsByID(ctx, newsID, &entry); errGet != nil {
 			if errors.Is(store.Err(errGet), store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
@@ -178,7 +179,7 @@ func onAPIPostWordFilter(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var req store.Filter
+		var req model.Filter
 		if !bind(ctx, log, &req) {
 			return
 		}
@@ -214,7 +215,7 @@ func onAPIPostWordFilter(app *App) gin.HandlerFunc {
 		now := time.Now()
 
 		if req.FilterID > 0 {
-			var existingFilter store.Filter
+			var existingFilter model.Filter
 			if errGet := app.db.GetFilterByID(ctx, req.FilterID, &existingFilter); errGet != nil {
 				if errors.Is(errGet, store.ErrNoResult) {
 					responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
@@ -244,7 +245,7 @@ func onAPIPostWordFilter(app *App) gin.HandlerFunc {
 			req = existingFilter
 		} else {
 			profile := currentUserProfile(ctx)
-			newFilter := store.Filter{
+			newFilter := model.Filter{
 				AuthorID:  profile.SteamID,
 				Pattern:   req.Pattern,
 				Action:    req.Action,
@@ -278,7 +279,7 @@ func onAPIDeleteWordFilter(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var filter store.Filter
+		var filter model.Filter
 		if errGet := app.db.GetFilterByID(ctx, wordID, &filter); errGet != nil {
 			if errors.Is(errGet, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
@@ -321,7 +322,7 @@ func onAPIPostWordMatch(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var matches []store.Filter
+		var matches []model.Filter
 
 		for _, filter := range words {
 			if filter.Match(req.Query) {
@@ -386,7 +387,7 @@ func onAPIPostBanState(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var report store.Report
+		var report model.Report
 		if errReport := app.db.GetReport(ctx, reportID, &report); errReport != nil {
 			if errors.Is(errReport, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
@@ -448,7 +449,7 @@ func onAPIQueryMessageContext(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var msg store.QueryChatHistoryResult
+		var msg model.QueryChatHistoryResult
 		if errMsg := app.db.GetPersonMessage(ctx, messageID, &msg); errMsg != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -524,7 +525,7 @@ func onAPIPostBanDelete(app *App) gin.HandlerFunc {
 			return
 		}
 
-		bannedPerson := store.NewBannedPerson()
+		bannedPerson := model.NewBannedPerson()
 		if banErr := app.db.GetBanByBanID(ctx, banID, &bannedPerson, false); banErr != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -552,9 +553,9 @@ func onAPIPostBanUpdate(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	type updateBanRequest struct {
-		TargetID       store.StringSID `json:"target_id"`
-		BanType        store.BanType   `json:"ban_type"`
-		Reason         store.Reason    `json:"reason"`
+		TargetID       model.StringSID `json:"target_id"`
+		BanType        model.BanType   `json:"ban_type"`
+		Reason         model.Reason    `json:"reason"`
 		ReasonText     string          `json:"reason_text"`
 		Note           string          `json:"note"`
 		IncludeFriends bool            `json:"include_friends"`
@@ -580,14 +581,14 @@ func onAPIPostBanUpdate(app *App) gin.HandlerFunc {
 			return
 		}
 
-		bannedPerson := store.NewBannedPerson()
+		bannedPerson := model.NewBannedPerson()
 		if banErr := app.db.GetBanByBanID(ctx, banID, &bannedPerson, false); banErr != nil {
 			responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 
 			return
 		}
 
-		if req.Reason == store.Custom {
+		if req.Reason == model.Custom {
 			if req.ReasonText == "" {
 				responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
 
@@ -618,7 +619,7 @@ func onAPIPostBanUpdate(app *App) gin.HandlerFunc {
 
 func onAPIPostSetBanAppealStatus(app *App) gin.HandlerFunc {
 	type setStatusReq struct {
-		AppealState store.AppealState `json:"appeal_state"`
+		AppealState model.AppealState `json:"appeal_state"`
 	}
 
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
@@ -636,7 +637,7 @@ func onAPIPostSetBanAppealStatus(app *App) gin.HandlerFunc {
 			return
 		}
 
-		bannedPerson := store.NewBannedPerson()
+		bannedPerson := model.NewBannedPerson()
 		if banErr := app.db.GetBanByBanID(ctx, banID, &bannedPerson, false); banErr != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -669,10 +670,10 @@ func onAPIPostSetBanAppealStatus(app *App) gin.HandlerFunc {
 
 func onAPIPostBansCIDRCreate(app *App) gin.HandlerFunc {
 	type apiBanRequest struct {
-		TargetID   store.StringSID `json:"target_id"`
+		TargetID   model.StringSID `json:"target_id"`
 		Duration   string          `json:"duration"`
 		Note       string          `json:"note"`
-		Reason     store.Reason    `json:"reason"`
+		Reason     model.Reason    `json:"reason"`
 		ReasonText string          `json:"reason_text"`
 		CIDR       string          `json:"cidr"`
 		ValidUntil time.Time       `json:"valid_until"`
@@ -687,7 +688,7 @@ func onAPIPostBansCIDRCreate(app *App) gin.HandlerFunc {
 		}
 
 		var (
-			banCIDR store.BanCIDR
+			banCIDR model.BanCIDR
 			sid     = currentUserProfile(ctx).SteamID
 		)
 
@@ -698,16 +699,16 @@ func onAPIPostBansCIDRCreate(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if errBanCIDR := store.NewBanCIDR(ctx,
-			store.StringSID(sid.String()),
+		if errBanCIDR := model.NewBanCIDR(ctx,
+			model.StringSID(sid.String()),
 			req.TargetID,
 			duration,
 			req.Reason,
 			req.ReasonText,
 			req.Note,
-			store.Web,
+			model.Web,
 			req.CIDR,
-			store.Banned,
+			model.Banned,
 			&banCIDR,
 		); errBanCIDR != nil {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
@@ -769,7 +770,7 @@ func onAPIDeleteBansCIDR(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var banCidr store.BanCIDR
+		var banCidr model.BanCIDR
 		if errFetch := app.db.GetBanNetByID(ctx, netID, &banCidr); errFetch != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -794,9 +795,9 @@ func onAPIDeleteBansCIDR(app *App) gin.HandlerFunc {
 
 func onAPIPostBansCIDRUpdate(app *App) gin.HandlerFunc {
 	type apiUpdateBanRequest struct {
-		TargetID   store.StringSID `json:"target_id"`
+		TargetID   model.StringSID `json:"target_id"`
 		Note       string          `json:"note"`
-		Reason     store.Reason    `json:"reason"`
+		Reason     model.Reason    `json:"reason"`
 		ReasonText string          `json:"reason_text"`
 		CIDR       string          `json:"cidr"`
 		ValidUntil time.Time       `json:"valid_until"`
@@ -812,7 +813,7 @@ func onAPIPostBansCIDRUpdate(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var ban store.BanCIDR
+		var ban model.BanCIDR
 
 		if errBan := app.db.GetBanNetByID(ctx, netID, &ban); errBan != nil {
 			if errors.Is(errBan, store.ErrNoResult) {
@@ -836,7 +837,7 @@ func onAPIPostBansCIDRUpdate(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if req.Reason == store.Custom && req.ReasonText == "" {
+		if req.Reason == model.Custom && req.ReasonText == "" {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
 
 			return
@@ -868,9 +869,9 @@ func onAPIPostBansCIDRUpdate(app *App) gin.HandlerFunc {
 
 func onAPIPostBansASNCreate(app *App) gin.HandlerFunc {
 	type apiBanRequest struct {
-		TargetID   store.StringSID `json:"target_id"`
+		TargetID   model.StringSID `json:"target_id"`
 		Note       string          `json:"note"`
-		Reason     store.Reason    `json:"reason"`
+		Reason     model.Reason    `json:"reason"`
 		ReasonText string          `json:"reason_text"`
 		ASNum      int64           `json:"as_num"`
 		Duration   string          `json:"duration"`
@@ -886,7 +887,7 @@ func onAPIPostBansASNCreate(app *App) gin.HandlerFunc {
 		}
 
 		var (
-			banASN store.BanASN
+			banASN model.BanASN
 			sid    = currentUserProfile(ctx).SteamID
 		)
 
@@ -897,16 +898,16 @@ func onAPIPostBansASNCreate(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if errBanSteamGroup := store.NewBanASN(ctx,
-			store.StringSID(sid.String()),
+		if errBanSteamGroup := model.NewBanASN(ctx,
+			model.StringSID(sid.String()),
 			req.TargetID,
 			duration,
 			req.Reason,
 			req.ReasonText,
 			req.Note,
-			store.Web,
+			model.Web,
 			req.ASNum,
-			store.Banned,
+			model.Banned,
 			&banASN,
 		); errBanSteamGroup != nil {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
@@ -969,7 +970,7 @@ func onAPIDeleteBansASN(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var banAsn store.BanASN
+		var banAsn model.BanASN
 		if errFetch := app.db.GetBanASN(ctx, asnID, &banAsn); errFetch != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -994,9 +995,9 @@ func onAPIDeleteBansASN(app *App) gin.HandlerFunc {
 
 func onAPIPostBansASNUpdate(app *App) gin.HandlerFunc {
 	type apiBanRequest struct {
-		TargetID   store.StringSID `json:"target_id"`
+		TargetID   model.StringSID `json:"target_id"`
 		Note       string          `json:"note"`
-		Reason     store.Reason    `json:"reason"`
+		Reason     model.Reason    `json:"reason"`
 		ReasonText string          `json:"reason_text"`
 		ValidUntil time.Time       `json:"valid_until"`
 	}
@@ -1011,7 +1012,7 @@ func onAPIPostBansASNUpdate(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var ban store.BanASN
+		var ban model.BanASN
 		if errBan := app.db.GetBanASN(ctx, asnID, &ban); errBan != nil {
 			if errors.Is(errBan, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
@@ -1029,7 +1030,7 @@ func onAPIPostBansASNUpdate(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if ban.Reason == store.Custom && req.ReasonText == "" {
+		if ban.Reason == model.Custom && req.ReasonText == "" {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
 
 			return
@@ -1060,7 +1061,7 @@ func onAPIPostBansASNUpdate(app *App) gin.HandlerFunc {
 
 func onAPIPostBansGroupCreate(app *App) gin.HandlerFunc {
 	type apiBanRequest struct {
-		TargetID   store.StringSID `json:"target_id"`
+		TargetID   model.StringSID `json:"target_id"`
 		GroupID    steamid.GID     `json:"group_id"`
 		Duration   string          `json:"duration"`
 		Note       string          `json:"note"`
@@ -1075,7 +1076,7 @@ func onAPIPostBansGroupCreate(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var existing store.BanGroup
+		var existing model.BanGroup
 		if errExist := app.db.GetBanGroup(ctx, req.GroupID, &existing); errExist != nil {
 			if !errors.Is(errExist, store.ErrNoResult) {
 				responseErr(ctx, http.StatusConflict, consts.ErrDuplicate)
@@ -1085,7 +1086,7 @@ func onAPIPostBansGroupCreate(app *App) gin.HandlerFunc {
 		}
 
 		var (
-			banSteamGroup store.BanGroup
+			banSteamGroup model.BanGroup
 			sid           = currentUserProfile(ctx).SteamID
 		)
 
@@ -1096,15 +1097,15 @@ func onAPIPostBansGroupCreate(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if errBanSteamGroup := store.NewBanSteamGroup(ctx,
-			store.StringSID(sid.String()),
+		if errBanSteamGroup := model.NewBanSteamGroup(ctx,
+			model.StringSID(sid.String()),
 			req.TargetID,
 			duration,
 			req.Note,
-			store.Web,
+			model.Web,
 			req.GroupID,
 			"",
-			store.Banned,
+			model.Banned,
 			&banSteamGroup,
 		); errBanSteamGroup != nil {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
@@ -1169,7 +1170,7 @@ func onAPIDeleteBansGroup(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var banGroup store.BanGroup
+		var banGroup model.BanGroup
 		if errFetch := app.db.GetBanGroupByID(ctx, groupID, &banGroup); errFetch != nil {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrInternal)
 
@@ -1195,7 +1196,7 @@ func onAPIDeleteBansGroup(app *App) gin.HandlerFunc {
 
 func onAPIPostBansGroupUpdate(app *App) gin.HandlerFunc {
 	type apiBanUpdateRequest struct {
-		TargetID   store.StringSID `json:"target_id"`
+		TargetID   model.StringSID `json:"target_id"`
 		Note       string          `json:"note"`
 		ValidUntil time.Time       `json:"valid_until"`
 	}
@@ -1222,7 +1223,7 @@ func onAPIPostBansGroupUpdate(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var ban store.BanGroup
+		var ban model.BanGroup
 
 		if errExist := app.db.GetBanGroupByID(ctx, banGroupID, &ban); errExist != nil {
 			if !errors.Is(errExist, store.ErrNoResult) {
@@ -1285,7 +1286,7 @@ func onAPIPostContest(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		newContest, _ := store.NewContest("", "", time.Now(), time.Now(), false)
+		newContest, _ := model.NewContest("", "", time.Now(), time.Now(), false)
 		if !bind(ctx, log, &newContest) {
 			return
 		}
@@ -1322,7 +1323,7 @@ func onAPIDeleteContest(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var contest store.Contest
+		var contest model.Contest
 
 		if errContest := app.db.ContestByID(ctx, contestID, &contest); errContest != nil {
 			if errors.Is(errContest, store.ErrNoResult) {
@@ -1362,7 +1363,7 @@ func onAPIUpdateContest(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var contest store.Contest
+		var contest model.Contest
 		if !bind(ctx, log, &contest) {
 			return
 		}
@@ -1398,11 +1399,11 @@ func onAPICreateForumCategory(app *App) gin.HandlerFunc {
 			return
 		}
 
-		category := store.ForumCategory{
+		category := model.ForumCategory{
 			Title:       util.SanitizeUGC(req.Title),
 			Description: util.SanitizeUGC(req.Description),
 			Ordering:    req.Ordering,
-			TimeStamped: store.NewTimeStamped(),
+			TimeStamped: model.NewTimeStamped(),
 		}
 
 		if errSave := app.db.ForumCategorySave(ctx, &category); errSave != nil {
@@ -1430,7 +1431,7 @@ func onAPIForumCategory(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var category store.ForumCategory
+		var category model.ForumCategory
 
 		if errGet := app.db.ForumCategory(ctx, forumCategoryID, &category); errGet != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
@@ -1455,7 +1456,7 @@ func onAPIUpdateForumCategory(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var category store.ForumCategory
+		var category model.ForumCategory
 		if errGet := app.db.ForumCategory(ctx, categoryID, &category); errGet != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -1500,13 +1501,13 @@ func onAPICreateForumForum(app *App) gin.HandlerFunc {
 			return
 		}
 
-		forum := store.Forum{
+		forum := model.Forum{
 			ForumCategoryID: req.ForumCategoryID,
 			Title:           util.SanitizeUGC(req.Title),
 			Description:     util.SanitizeUGC(req.Description),
 			Ordering:        req.Ordering,
 			PermissionLevel: req.PermissionLevel,
-			TimeStamped:     store.NewTimeStamped(),
+			TimeStamped:     model.NewTimeStamped(),
 		}
 
 		if errSave := app.db.ForumSave(ctx, &forum); errSave != nil {
@@ -1534,7 +1535,7 @@ func onAPIUpdateForumForum(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var forum store.Forum
+		var forum model.Forum
 		if errGet := app.db.Forum(ctx, forumID, &forum); errGet != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 

@@ -4,12 +4,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/internal/model"
 )
 
 type wordFilters struct {
 	*sync.RWMutex
-	wordFilters []store.Filter
+	wordFilters []model.Filter
 }
 
 func newWordFilters() *wordFilters {
@@ -19,7 +19,7 @@ func newWordFilters() *wordFilters {
 }
 
 // importFilteredWords loads the supplied word list into memory.
-func (f *wordFilters) importFilteredWords(filters []store.Filter) {
+func (f *wordFilters) importFilteredWords(filters []model.Filter) {
 	f.Lock()
 	defer f.Unlock()
 	f.wordFilters = filters
@@ -27,7 +27,7 @@ func (f *wordFilters) importFilteredWords(filters []store.Filter) {
 
 // findFilteredWordMatch checks to see if the body of text contains a known filtered word
 // It will only return the first matched filter found.
-func (f *wordFilters) findFilteredWordMatch(body string) (string, *store.Filter) {
+func (f *wordFilters) findFilteredWordMatch(body string) (string, *model.Filter) {
 	if body == "" {
 		return "", nil
 	}

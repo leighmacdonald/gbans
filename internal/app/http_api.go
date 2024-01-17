@@ -16,6 +16,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/consts"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
@@ -258,10 +259,10 @@ func onAPIExportBansTF2BD(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var filtered []store.BannedSteamPerson
+		var filtered []model.BannedSteamPerson
 
 		for _, ban := range bans {
-			if ban.Reason != store.Cheating ||
+			if ban.Reason != model.Cheating ||
 				ban.Deleted ||
 				!ban.IsEnabled {
 				continue
@@ -304,9 +305,9 @@ func onAPIProfile(app *App) gin.HandlerFunc {
 	}
 
 	type resp struct {
-		Player   *store.Person        `json:"player"`
+		Player   *model.Person        `json:"player"`
 		Friends  []steamweb.Friend    `json:"friends"`
-		Settings store.PersonSettings `json:"settings"`
+		Settings model.PersonSettings `json:"settings"`
 	}
 
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
@@ -329,7 +330,7 @@ func onAPIProfile(app *App) gin.HandlerFunc {
 			return
 		}
 
-		person := store.NewPerson(sid)
+		person := model.NewPerson(sid)
 		if errGetProfile := app.PersonBySID(requestCtx, sid, &person); errGetProfile != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to create person", zap.Error(errGetProfile))
@@ -346,7 +347,7 @@ func onAPIProfile(app *App) gin.HandlerFunc {
 
 		response.Player = &person
 
-		var settings store.PersonSettings
+		var settings model.PersonSettings
 		if err := app.db.GetPersonSettings(ctx, sid, &settings); err != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to load person settings", zap.Error(err))
@@ -362,7 +363,7 @@ func onAPIProfile(app *App) gin.HandlerFunc {
 
 func onAPIGetStats(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var stats store.Stats
+		var stats model.Stats
 		if errGetStats := app.db.GetStats(ctx, &stats); errGetStats != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -375,7 +376,7 @@ func onAPIGetStats(app *App) gin.HandlerFunc {
 	}
 }
 
-func loadBanMeta(_ *store.BannedSteamPerson) {
+func loadBanMeta(_ *model.BannedSteamPerson) {
 }
 
 type serverInfoSafe struct {
@@ -489,25 +490,25 @@ func onAPIGetNewsLatest(app *App) gin.HandlerFunc {
 	}
 }
 
-func contestFromCtx(ctx *gin.Context, app *App) (store.Contest, bool) {
+func contestFromCtx(ctx *gin.Context, app *App) (model.Contest, bool) {
 	contestID, idErr := getUUIDParam(ctx, "contest_id")
 	if idErr != nil {
 		responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
 
-		return store.Contest{}, false
+		return model.Contest{}, false
 	}
 
-	var contest store.Contest
+	var contest model.Contest
 	if errContests := app.db.ContestByID(ctx, contestID, &contest); errContests != nil {
 		responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
-		return store.Contest{}, false
+		return model.Contest{}, false
 	}
 
 	if !contest.Public && currentUserProfile(ctx).PermissionLevel < consts.PModerator {
 		responseErr(ctx, http.StatusForbidden, consts.ErrNotFound)
 
-		return store.Contest{}, false
+		return model.Contest{}, false
 	}
 
 	return contest, true
@@ -554,7 +555,7 @@ func onGetMediaByID(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var media store.Media
+		var media model.Media
 		if errMedia := app.db.GetMediaByID(ctx, mediaID, &media); errMedia != nil {
 			if errors.Is(store.Err(errMedia), store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
@@ -693,7 +694,7 @@ func onAPIForumOverview(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	type Overview struct {
-		Categories []store.ForumCategory `json:"categories"`
+		Categories []model.ForumCategory `json:"categories"`
 	}
 
 	return func(ctx *gin.Context) {
@@ -731,7 +732,7 @@ func onAPIForumOverview(app *App) gin.HandlerFunc {
 			}
 
 			if categories[index].Forums == nil {
-				categories[index].Forums = []store.Forum{}
+				categories[index].Forums = []model.Forum{}
 			}
 		}
 
@@ -761,7 +762,7 @@ func onAPIForumThreads(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var forum store.Forum
+		var forum model.Forum
 		if err := app.db.Forum(ctx, tqf.ForumID, &forum); err != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -797,7 +798,7 @@ func onAPIForumThread(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var thread store.ForumThread
+		var thread model.ForumThread
 		if errThreads := app.db.ForumThread(ctx, forumThreadID, &thread); errThreads != nil {
 			if errors.Is(errThreads, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
@@ -830,7 +831,7 @@ func onAPIForum(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var forum store.Forum
+		var forum model.Forum
 
 		if errForum := app.db.Forum(ctx, forumID, &forum); errForum != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
@@ -928,7 +929,7 @@ func onAPIForumMessagesRecent(app *App) gin.HandlerFunc {
 		}
 
 		if messages == nil {
-			messages = []store.ForumMessage{}
+			messages = []model.ForumMessage{}
 		}
 
 		ctx.JSON(http.StatusOK, messages)

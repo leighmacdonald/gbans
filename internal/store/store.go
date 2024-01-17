@@ -2,11 +2,9 @@ package store
 
 import (
 	"context"
-	"crypto/rand"
 	"database/sql"
 	"embed"
 	"fmt"
-	"math/big"
 	"net/http"
 	"strings"
 	"time"
@@ -130,20 +128,6 @@ func (qf QueryFilter) applyLimitOffset(builder sq.SelectBuilder, maxLimit uint64
 	}
 
 	return builder
-}
-
-func NewTimeStamped() TimeStamped {
-	now := time.Now()
-
-	return TimeStamped{
-		CreatedOn: now,
-		UpdatedOn: now,
-	}
-}
-
-type TimeStamped struct {
-	CreatedOn time.Time `json:"created_on"`
-	UpdatedOn time.Time `json:"updated_on"`
 }
 
 type dbQueryTracer struct {
@@ -422,21 +406,4 @@ func (db *Store) migrate(action MigrationAction, dsn string) error {
 	}
 
 	return nil
-}
-
-func SecureRandomString(n int) string {
-	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-"
-
-	ret := make([]byte, n)
-
-	for currentChar := 0; currentChar < n; currentChar++ {
-		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(letters))))
-		if err != nil {
-			return ""
-		}
-
-		ret[currentChar] = letters[num.Int64()]
-	}
-
-	return string(ret)
 }

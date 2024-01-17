@@ -3,51 +3,16 @@ package store
 import (
 	"context"
 	"strings"
-	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/gabriel-vasile/mimetype"
-	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/consts"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
-type DemoPlayerStats struct {
-	Score      int `json:"score"`
-	ScoreTotal int `json:"score_total"`
-	Deaths     int `json:"deaths"`
-}
-
-type DemoMetaData struct {
-	MapName string                     `json:"map_name"`
-	Scores  map[string]DemoPlayerStats `json:"scores"`
-}
-
-type DemoFile struct {
-	DemoID          int64                   `json:"demo_id"`
-	ServerID        int                     `json:"server_id"`
-	ServerNameShort string                  `json:"server_name_short"`
-	ServerNameLong  string                  `json:"server_name_long"`
-	Title           string                  `json:"title"`
-	CreatedOn       time.Time               `json:"created_on"`
-	Downloads       int64                   `json:"downloads"`
-	Size            int64                   `json:"size"`
-	MapName         string                  `json:"map_name"`
-	Archive         bool                    `json:"archive"` // When true, will not get auto deleted when flushing old demos
-	Stats           map[steamid.SID64]gin.H `json:"stats"`
-	AssetID         uuid.UUID               `json:"asset_id"`
-}
-
-type DemoInfo struct {
-	DemoID  int64
-	Title   string
-	AssetID uuid.UUID
-}
-
-func (db *Store) ExpiredDemos(ctx context.Context, limit uint64) ([]DemoInfo, error) {
+func (db *Store) ExpiredDemos(ctx context.Context, limit uint64) ([]model.DemoInfo, error) {
 	rows, errRow := db.QueryBuilder(ctx, db.sb.
 		Select("d.demo_id", "d.title", "d.asset_id").
 		From("demo d").
@@ -60,10 +25,10 @@ func (db *Store) ExpiredDemos(ctx context.Context, limit uint64) ([]DemoInfo, er
 
 	defer rows.Close()
 
-	var demos []DemoInfo
+	var demos []model.DemoInfo
 
 	for rows.Next() {
-		var demo DemoInfo
+		var demo model.DemoInfo
 		if err := rows.Scan(&demo.DemoID, &demo.Title, &demo.AssetID); err != nil {
 			return nil, Err(err)
 		}
@@ -74,7 +39,7 @@ func (db *Store) ExpiredDemos(ctx context.Context, limit uint64) ([]DemoInfo, er
 	return demos, nil
 }
 
-func (db *Store) GetDemoByID(ctx context.Context, demoID int64, demoFile *DemoFile) error {
+func (db *Store) GetDemoByID(ctx context.Context, demoID int64, demoFile *model.DemoFile) error {
 	row, errRow := db.QueryRowBuilder(ctx, db.sb.
 		Select("d.demo_id", "d.server_id", "d.title", "d.created_on", "d.downloads",
 			"d.map_name", "d.archive", "d.stats", "d.asset_id", "a.size", "s.short_name", "s.name").
@@ -102,7 +67,7 @@ func (db *Store) GetDemoByID(ctx context.Context, demoID int64, demoFile *DemoFi
 	return nil
 }
 
-func (db *Store) GetDemoByName(ctx context.Context, demoName string, demoFile *DemoFile) error {
+func (db *Store) GetDemoByName(ctx context.Context, demoName string, demoFile *model.DemoFile) error {
 	row, errRow := db.QueryRowBuilder(ctx, db.sb.
 		Select("d.demo_id", "d.server_id", "d.title", "d.created_on", "d.downloads",
 			"d.map_name", "d.archive", "d.stats", "d.asset_id", "a.size", "s.short_name", "s.name").
@@ -132,14 +97,14 @@ func (db *Store) GetDemoByName(ctx context.Context, demoName string, demoFile *D
 
 type DemoFilter struct {
 	QueryFilter
-	SteamID   StringSID `json:"steam_id"`
-	ServerIds []int     `json:"server_ids"`
-	MapName   string    `json:"map_name"`
+	SteamID   model.StringSID `json:"steam_id"`
+	ServerIds []int           `json:"server_ids"`
+	MapName   string          `json:"map_name"`
 }
 
-func (db *Store) GetDemos(ctx context.Context, opts DemoFilter) ([]DemoFile, int64, error) {
+func (db *Store) GetDemos(ctx context.Context, opts DemoFilter) ([]model.DemoFile, int64, error) {
 	var (
-		demos       []DemoFile
+		demos       []model.DemoFile
 		constraints sq.And
 	)
 
@@ -200,7 +165,7 @@ func (db *Store) GetDemos(ctx context.Context, opts DemoFilter) ([]DemoFile, int
 
 	for rows.Next() {
 		var (
-			demoFile DemoFile
+			demoFile model.DemoFile
 			uuidScan *uuid.UUID // TODO remove this and make column not-null once migrations are complete
 		)
 
@@ -218,20 +183,20 @@ func (db *Store) GetDemos(ctx context.Context, opts DemoFilter) ([]DemoFile, int
 	}
 
 	if demos == nil {
-		return []DemoFile{}, 0, nil
+		return []model.DemoFile{}, 0, nil
 	}
 
 	count, errCount := db.GetCount(ctx, db.sb.Select("count(d.demo_id)").
 		From("demo d").
 		Where(constraints))
 	if errCount != nil {
-		return []DemoFile{}, 0, Err(errCount)
+		return []model.DemoFile{}, 0, Err(errCount)
 	}
 
 	return demos, count, nil
 }
 
-func (db *Store) SaveDemo(ctx context.Context, demoFile *DemoFile) error {
+func (db *Store) SaveDemo(ctx context.Context, demoFile *model.DemoFile) error {
 	// Find open reports and if any are returned, mark the demo as archived so that it does not get auto
 	// deleted during cleanup.
 	// Reports can happen mid-game which is why this is checked when the demo is saved and not during the report where
@@ -263,7 +228,7 @@ func (db *Store) SaveDemo(ctx context.Context, demoFile *DemoFile) error {
 	return Err(err)
 }
 
-func (db *Store) insertDemo(ctx context.Context, demoFile *DemoFile) error {
+func (db *Store) insertDemo(ctx context.Context, demoFile *model.DemoFile) error {
 	query, args, errQueryArgs := db.sb.
 		Insert("demo").
 		Columns("server_id", "title", "created_on", "downloads", "map_name", "archive", "stats", "asset_id").
@@ -285,7 +250,7 @@ func (db *Store) insertDemo(ctx context.Context, demoFile *DemoFile) error {
 	return nil
 }
 
-func (db *Store) updateDemo(ctx context.Context, demoFile *DemoFile) error {
+func (db *Store) updateDemo(ctx context.Context, demoFile *model.DemoFile) error {
 	query := db.sb.
 		Update("demo").
 		Set("title", demoFile.Title).
@@ -305,7 +270,7 @@ func (db *Store) updateDemo(ctx context.Context, demoFile *DemoFile) error {
 	return nil
 }
 
-func (db *Store) DropDemo(ctx context.Context, demoFile *DemoFile) error {
+func (db *Store) DropDemo(ctx context.Context, demoFile *model.DemoFile) error {
 	if errExec := db.ExecDeleteBuilder(ctx, db.sb.
 		Delete("demo").
 		Where(sq.Eq{"demo_id": demoFile.DemoID})); errExec != nil {
@@ -319,41 +284,7 @@ func (db *Store) DropDemo(ctx context.Context, demoFile *DemoFile) error {
 	return nil
 }
 
-type Asset struct {
-	AssetID  uuid.UUID `json:"asset_id"`
-	Bucket   string    `json:"bucket"`
-	Path     string    `json:"path"`
-	Name     string    `json:"name"`
-	MimeType string    `json:"mime_type"`
-	Size     int64     `json:"size"`
-	OldID    int64     `json:"old_id"` // Pre S3 id
-}
-
-func NewAsset(content []byte, bucket string, name string) (Asset, error) {
-	detectedMime := mimetype.Detect(content)
-
-	newID, errID := uuid.NewV4()
-	if errID != nil {
-		return Asset{}, errors.Wrap(errID, "Failed to generate a new asset ID")
-	}
-
-	if name == "" {
-		name = newID.String()
-	}
-
-	asset := Asset{
-		AssetID:  newID,
-		Bucket:   bucket,
-		Path:     "/",
-		Name:     name,
-		MimeType: detectedMime.String(),
-		Size:     int64(len(content)),
-	}
-
-	return asset, nil
-}
-
-func (db *Store) SaveAsset(ctx context.Context, asset *Asset) error {
+func (db *Store) SaveAsset(ctx context.Context, asset *model.Asset) error {
 	return db.ExecInsertBuilder(ctx, db.sb.
 		Insert("asset").
 		Columns("asset_id", "bucket", "path", "name", "mime_type", "size", "old_id").
