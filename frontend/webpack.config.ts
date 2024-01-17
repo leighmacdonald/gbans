@@ -1,7 +1,8 @@
+import { sentryWebpackPlugin } from '@sentry/webpack-plugin';
+import CopyPlugin from 'copy-webpack-plugin';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
 import * as path from 'path';
 import * as webpack from 'webpack';
-import HtmlWebpackPlugin from 'html-webpack-plugin';
-import CopyPlugin from 'copy-webpack-plugin';
 
 const outPath = path.resolve('../dist');
 
@@ -19,7 +20,7 @@ const config: webpack.Configuration = {
         filename: devMode ? '[name].js' : '[name].[chunkhash:8].bundle.js',
         clean: false
     },
-    devtool: devMode ? 'inline-source-map' : false,
+    devtool: 'source-map',
     performance: {
         maxAssetSize: 1000000,
         maxEntrypointSize: 1000000
@@ -87,6 +88,12 @@ const config: webpack.Configuration = {
     //     port: 9000
     // },
     plugins: [
+        sentryWebpackPlugin({
+            org: process.env.SENTRY_ORG,
+            project: process.env.SENTRY_PROJECT,
+            authToken: process.env.SENTRY_AUTH_TOKEN,
+            telemetry: false
+        }),
         new CopyPlugin({
             // TODO dont hard code these
             patterns: [

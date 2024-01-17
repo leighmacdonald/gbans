@@ -9,6 +9,7 @@ import { ThemeProvider } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import * as Sentry from '@sentry/react';
 import { PermissionLevel, UserProfile } from './api';
 import { ErrorBoundary } from './component/ErrorBoundary';
 import { Flash, Flashes } from './component/Flashes';
@@ -65,6 +66,8 @@ import { createThemeByMode } from './theme';
 export interface AppProps {
     initialTheme: PaletteMode;
 }
+
+const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
 
 export const App = ({ initialTheme }: AppProps): JSX.Element => {
     const [currentUser, setCurrentUser] =
@@ -150,8 +153,8 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                             marginTop: 24
                                                         }}
                                                     >
-                                                        <ErrorBoundary>
-                                                            <Routes>
+                                                        <Sentry.ErrorBoundary>
+                                                            <SentryRoutes>
                                                                 <Route
                                                                     path={'/'}
                                                                     element={
@@ -760,8 +763,8 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                         </ErrorBoundary>
                                                                     }
                                                                 />
-                                                            </Routes>
-                                                        </ErrorBoundary>
+                                                            </SentryRoutes>
+                                                        </Sentry.ErrorBoundary>
                                                     </div>
                                                     <Footer />
                                                 </Container>
