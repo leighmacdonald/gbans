@@ -1,5 +1,11 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import {
+    createRoutesFromChildren,
+    matchRoutes,
+    useLocation,
+    useNavigationType
+} from 'react-router';
 import { PaletteMode } from '@mui/material';
 import * as Sentry from '@sentry/react';
 import { App } from './App';
@@ -28,18 +34,22 @@ if (window.gbans.sentry_dsn_web != '') {
     Sentry.init({
         dsn: window.gbans.sentry_dsn_web,
         integrations: [
+            new Sentry.BrowserProfilingIntegration(),
             new Sentry.BrowserTracing({
-                // Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
-                tracePropagationTargets: [
-                    'localhost',
-                    /^https:\/\/yourserver\.io\/api/
-                ]
+                routingInstrumentation: Sentry.reactRouterV6Instrumentation(
+                    React.useEffect,
+                    useLocation,
+                    useNavigationType,
+                    createRoutesFromChildren,
+                    matchRoutes
+                )
             }),
             new Sentry.Replay({
                 maskAllText: false,
                 blockAllMedia: false
             })
         ],
+        release: window.gbans.build_version,
         // Performance Monitoring
         tracesSampleRate: 1.0, //  Capture 100% of the transactions
         // Session Replay
