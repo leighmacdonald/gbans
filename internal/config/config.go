@@ -186,7 +186,7 @@ type IP2Location struct {
 	ProxyEnabled bool   `mapstructure:"proxy_enabled"`
 }
 
-// decodeDuration automatically parses the string duration type (1s,1m,1h,etc.) into a real time.Duration type
+// decodeDuration automatically parses the string duration type (1s,1m,1h,etc.) into a real time.Duration type.
 func decodeDuration() mapstructure.DecodeHookFuncType {
 	return func(f reflect.Type, target reflect.Type, data interface{}) (interface{}, error) {
 		if f.Kind() != reflect.String {
