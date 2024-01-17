@@ -160,6 +160,10 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 	}
 	for _, rt := range jsRoutes {
 		engine.GET(rt, func(c *gin.Context) {
+			if conf.Log.SentryDSNWeb != "" {
+				c.Header("Document-Policy", "js-profiling")
+			}
+
 			c.HTML(http.StatusOK, "index.html", jsConfig{
 				SiteName:        conf.General.SiteName,
 				DiscordClientID: conf.Discord.AppID,
