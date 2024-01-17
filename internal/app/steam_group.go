@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
@@ -13,9 +14,9 @@ import (
 )
 
 type groupMemberStore interface {
-	GetBanGroups(ctx context.Context, filter store.GroupBansQueryFilter) ([]store.BannedGroupPerson, int64, error)
-	GetMembersList(ctx context.Context, parentID int64, list *store.MembersList) error
-	SaveMembersList(ctx context.Context, list *store.MembersList) error
+	GetBanGroups(ctx context.Context, filter store.GroupBansQueryFilter) ([]model.BannedGroupPerson, int64, error)
+	GetMembersList(ctx context.Context, parentID int64, list *model.MembersList) error
+	SaveMembersList(ctx context.Context, list *model.MembersList) error
 }
 
 type steamGroupMemberships struct {
@@ -101,7 +102,7 @@ func (g *steamGroupMemberships) updateGroupBanMembers(ctx context.Context) (map[
 			continue
 		}
 
-		memberList := store.NewMembersList(group.GroupID.Int64(), members)
+		memberList := model.NewMembersList(group.GroupID.Int64(), members)
 		if errQuery := g.store.GetMembersList(ctx, group.GroupID.Int64(), &memberList); errQuery != nil {
 			if !errors.Is(errQuery, store.ErrNoResult) {
 				return nil, errors.Wrap(errQuery, "Failed to fetch members list")

@@ -6,119 +6,12 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/consts"
-	"github.com/leighmacdonald/gbans/pkg/util"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
 )
 
-type ForumCategory struct {
-	ForumCategoryID int     `json:"forum_category_id"`
-	Title           string  `json:"title"`
-	Description     string  `json:"description"`
-	Ordering        int     `json:"ordering"`
-	Forums          []Forum `json:"forums"`
-	TimeStamped
-}
-
-func (category ForumCategory) NewForum(title string, description string) Forum {
-	return Forum{
-		ForumID:         0,
-		ForumCategoryID: category.ForumCategoryID,
-		LastThreadID:    0,
-		Title:           title,
-		Description:     description,
-		Ordering:        0,
-		TimeStamped:     NewTimeStamped(),
-	}
-}
-
-type Forum struct {
-	ForumID             int              `json:"forum_id"`
-	ForumCategoryID     int              `json:"forum_category_id"`
-	LastThreadID        int64            `json:"last_thread_id"`
-	Title               string           `json:"title"`
-	Description         string           `json:"description"`
-	Ordering            int              `json:"ordering"`
-	CountThreads        int64            `json:"count_threads"`
-	CountMessages       int64            `json:"count_messages"`
-	PermissionLevel     consts.Privilege `json:"permission_level"`
-	RecentForumThreadID int64            `json:"recent_forum_thread_id"`
-	RecentForumTitle    string           `json:"recent_forum_title"`
-	RecentSourceID      steamid.SID64    `json:"recent_source_id"`
-	RecentPersonaname   string           `json:"recent_personaname"`
-	RecentAvatarhash    string           `json:"recent_avatarhash"`
-	RecentCreatedOn     time.Time        `json:"recent_created_on"`
-	TimeStamped
-}
-
-func (forum Forum) NewThread(title string, sourceID steamid.SID64) ForumThread {
-	return ForumThread{
-		ForumID:     forum.ForumID,
-		SourceID:    sourceID,
-		Title:       title,
-		TimeStamped: NewTimeStamped(),
-	}
-}
-
-type SimplePerson struct {
-	Personaname     string           `json:"personaname"`
-	Avatarhash      string           `json:"avatarhash"`
-	PermissionLevel consts.Privilege `json:"permission_level"`
-}
-
-type ForumThread struct {
-	ForumThreadID int64         `json:"forum_thread_id"`
-	ForumID       int           `json:"forum_id"`
-	SourceID      steamid.SID64 `json:"source_id"`
-	Title         string        `json:"title"`
-	Sticky        bool          `json:"sticky"`
-	Locked        bool          `json:"locked"`
-	Views         int64         `json:"views"`
-	Replies       int64         `json:"replies"`
-	SimplePerson
-	TimeStamped
-}
-
-func (thread ForumThread) NewMessage(sourceID steamid.SID64, body string) ForumMessage {
-	return ForumMessage{
-		ForumMessageID: 0,
-		ForumThreadID:  thread.ForumThreadID,
-		SourceID:       sourceID,
-		BodyMD:         util.SanitizeUGC(body),
-		TimeStamped:    NewTimeStamped(),
-	}
-}
-
-type ForumMessage struct {
-	ForumMessageID int64         `json:"forum_message_id"`
-	ForumThreadID  int64         `json:"forum_thread_id"`
-	SourceID       steamid.SID64 `json:"source_id"`
-	BodyMD         string        `json:"body_md"`
-	Title          string        `json:"title"`
-	Online         bool          `json:"online"`
-	Signature      string        `json:"signature"`
-	SimplePerson
-	TimeStamped
-}
-
-func (message ForumMessage) NewVote(sourceID steamid.SID64, vote Vote) ForumMessageVote {
-	return ForumMessageVote{
-		ForumMessageID: message.ForumMessageID,
-		SourceID:       sourceID,
-		Vote:           vote,
-		TimeStamped:    NewTimeStamped(),
-	}
-}
-
-type ForumMessageVote struct {
-	ForumMessageVoteID int64         `json:"forum_message_vote_id"`
-	ForumMessageID     int64         `json:"forum_message_id"`
-	SourceID           steamid.SID64 `json:"source_id"`
-	Vote               Vote          `json:"vote"` // -1/+1
-	TimeStamped
-}
-
-func (db *Store) ForumCategories(ctx context.Context) ([]ForumCategory, error) {
+func (db *Store) ForumCategories(ctx context.Context) ([]model.ForumCategory, error) {
 	rows, errRows := db.QueryBuilder(ctx,
 		db.sb.Select("forum_category_id", "title", "description", "ordering", "updated_on", "created_on").
 			From("forum_category").
@@ -129,10 +22,10 @@ func (db *Store) ForumCategories(ctx context.Context) ([]ForumCategory, error) {
 
 	defer rows.Close()
 
-	var categories []ForumCategory
+	var categories []model.ForumCategory
 
 	for rows.Next() {
-		var fc ForumCategory
+		var fc model.ForumCategory
 		if errScan := rows.Scan(&fc.ForumCategoryID, &fc.Title, &fc.Description, &fc.Ordering, &fc.UpdatedOn, &fc.CreatedOn); errScan != nil {
 			return nil, Err(errScan)
 		}
@@ -143,7 +36,7 @@ func (db *Store) ForumCategories(ctx context.Context) ([]ForumCategory, error) {
 	return categories, nil
 }
 
-func (db *Store) ForumCategorySave(ctx context.Context, category *ForumCategory) error {
+func (db *Store) ForumCategorySave(ctx context.Context, category *model.ForumCategory) error {
 	category.UpdatedOn = time.Now()
 	if category.ForumCategoryID > 0 {
 		return db.ExecUpdateBuilder(ctx, db.sb.
@@ -171,7 +64,7 @@ func (db *Store) ForumCategorySave(ctx context.Context, category *ForumCategory)
 		Suffix("RETURNING forum_category_id"), &category.ForumCategoryID)
 }
 
-func (db *Store) ForumCategory(ctx context.Context, categoryID int, category *ForumCategory) error {
+func (db *Store) ForumCategory(ctx context.Context, categoryID int, category *model.ForumCategory) error {
 	row, errRow := db.QueryRowBuilder(ctx, db.sb.
 		Select("forum_category_id", "title", "description", "ordering", "created_on", "created_on").
 		From("forum_category").
@@ -190,7 +83,7 @@ func (db *Store) ForumCategoryDelete(ctx context.Context, categoryID int) error 
 		Where(sq.Eq{"forum_category_id": categoryID}))
 }
 
-func (db *Store) Forums(ctx context.Context) ([]Forum, error) {
+func (db *Store) Forums(ctx context.Context) ([]model.Forum, error) {
 	fromSelect := db.sb.Select("DISTINCT ON (f.forum_id) f.forum_id", "f.forum_category_id", "f.title", "f.description", "f.last_thread_id",
 		"f.count_threads", "f.count_messages", "f.ordering", "f.created_on", "f.updated_on", "f.permission_level",
 		"t.forum_thread_id", "t.source_id", "p.personaname", "p.avatarhash", "t.created_on", "t.title").
@@ -209,12 +102,12 @@ func (db *Store) Forums(ctx context.Context) ([]Forum, error) {
 
 	defer rows.Close()
 
-	var forums []Forum
+	var forums []model.Forum
 
 	for rows.Next() {
 		var (
 			lastID           *int64
-			forum            Forum
+			forum            model.Forum
 			lastForumTheadID *int64
 			lastSourceID     *steamid.SID64
 			lastPersonaname  *string
@@ -250,7 +143,7 @@ func (db *Store) Forums(ctx context.Context) ([]Forum, error) {
 	return forums, nil
 }
 
-func (db *Store) ForumSave(ctx context.Context, forum *Forum) error {
+func (db *Store) ForumSave(ctx context.Context, forum *model.Forum) error {
 	forum.UpdatedOn = time.Now()
 
 	var lastThreadID *int64
@@ -295,7 +188,7 @@ func (db *Store) ForumSave(ctx context.Context, forum *Forum) error {
 		Suffix("RETURNING forum_id"), &forum.ForumID)
 }
 
-func (db *Store) Forum(ctx context.Context, forumID int, forum *Forum) error {
+func (db *Store) Forum(ctx context.Context, forumID int, forum *model.Forum) error {
 	row, errRow := db.QueryRowBuilder(ctx, db.sb.
 		Select("forum_id", "forum_category_id", "title", "description", "last_thread_id",
 			"count_threads", "count_messages", "ordering", "created_on", "updated_on", "permission_level").
@@ -325,7 +218,7 @@ func (db *Store) ForumDelete(ctx context.Context, forumID int) error {
 		Where(sq.Eq{"forum_id": forumID}))
 }
 
-func (db *Store) ForumThreadSave(ctx context.Context, thread *ForumThread) error {
+func (db *Store) ForumThreadSave(ctx context.Context, thread *model.ForumThread) error {
 	thread.UpdatedOn = time.Now()
 	if thread.ForumThreadID > 0 {
 		return db.ExecUpdateBuilder(ctx, db.sb.
@@ -366,7 +259,7 @@ func (db *Store) ForumThreadSave(ctx context.Context, thread *ForumThread) error
 		Where(sq.Eq{"forum_id": thread.ForumID}))
 }
 
-func (db *Store) ForumThread(ctx context.Context, forumThreadID int64, thread *ForumThread) error {
+func (db *Store) ForumThread(ctx context.Context, forumThreadID int64, thread *model.ForumThread) error {
 	row, errRow := db.QueryRowBuilder(ctx, db.sb.
 		Select("t.forum_thread_id", "t.forum_id", "t.source_id", "t.title", "t.sticky",
 			"t.locked", "t.views", "t.created_on", "t.updated_on", "p.personaname", "p.avatarhash",
@@ -396,22 +289,12 @@ func (db *Store) ForumThreadDelete(ctx context.Context, forumThreadID int64) err
 		Where(sq.Eq{"forum_thread_id": forumThreadID}))
 }
 
-type ThreadWithSource struct {
-	ForumThread
-	SimplePerson
-	RecentForumMessageID int64     `json:"recent_forum_message_id"`
-	RecentCreatedOn      time.Time `json:"recent_created_on"`
-	RecentSteamID        string    `json:"recent_steam_id"`
-	RecentPersonaname    string    `json:"recent_personaname"`
-	RecentAvatarhash     string    `json:"recent_avatarhash"`
-}
-
 type ThreadQueryFilter struct {
 	QueryFilter
 	ForumID int `json:"forum_id"`
 }
 
-func (db *Store) ForumThreads(ctx context.Context, filter ThreadQueryFilter) ([]ThreadWithSource, int64, error) {
+func (db *Store) ForumThreads(ctx context.Context, filter ThreadQueryFilter) ([]model.ThreadWithSource, int64, error) {
 	if filter.ForumID <= 0 {
 		return nil, 0, errors.New("Invalid Thread")
 	}
@@ -460,7 +343,7 @@ func (db *Store) ForumThreads(ctx context.Context, filter ThreadQueryFilter) ([]
 	}
 
 	if count == 0 {
-		return []ThreadWithSource{}, 0, nil
+		return []model.ThreadWithSource{}, 0, nil
 	}
 
 	rows, errRows := db.QueryBuilder(ctx, builder)
@@ -470,11 +353,11 @@ func (db *Store) ForumThreads(ctx context.Context, filter ThreadQueryFilter) ([]
 
 	defer rows.Close()
 
-	var threads []ThreadWithSource
+	var threads []model.ThreadWithSource
 
 	for rows.Next() {
 		var (
-			tws                  ThreadWithSource
+			tws                  model.ThreadWithSource
 			RecentForumMessageID *int64
 			RecentCreatedOn      *time.Time
 			RecentSteamID        *string
@@ -517,7 +400,7 @@ func (db *Store) ForumIncrMessageCount(ctx context.Context, forumID int, incr bo
 	return db.ExecUpdateBuilder(ctx, builder)
 }
 
-func (db *Store) ForumMessageSave(ctx context.Context, message *ForumMessage) error {
+func (db *Store) ForumMessageSave(ctx context.Context, message *model.ForumMessage) error {
 	message.UpdatedOn = time.Now()
 	if message.ForumMessageID > 0 {
 		return db.ExecUpdateBuilder(ctx, db.sb.
@@ -552,7 +435,7 @@ func (db *Store) ForumMessageSave(ctx context.Context, message *ForumMessage) er
 		Where(sq.Eq{"forum_thread_id": message.ForumThreadID}))
 }
 
-func (db *Store) ForumRecentActivity(ctx context.Context, limit uint64, permissionLevel consts.Privilege) ([]ForumMessage, error) {
+func (db *Store) ForumRecentActivity(ctx context.Context, limit uint64, permissionLevel consts.Privilege) ([]model.ForumMessage, error) {
 	expr, _, errExpr := sq.Expr(`
 			LATERAL (
 				SELECT m.forum_message_id,
@@ -591,10 +474,10 @@ func (db *Store) ForumRecentActivity(ctx context.Context, limit uint64, permissi
 
 	defer rows.Close()
 
-	var messages []ForumMessage
+	var messages []model.ForumMessage
 
 	for rows.Next() {
-		var msg ForumMessage
+		var msg model.ForumMessage
 		if errScan := rows.Scan(&msg.ForumThreadID, &msg.ForumMessageID, &msg.SourceID,
 			&msg.CreatedOn, &msg.UpdatedOn, &msg.Personaname,
 			&msg.Avatarhash, &msg.PermissionLevel, &msg.Title); errScan != nil {
@@ -607,7 +490,7 @@ func (db *Store) ForumRecentActivity(ctx context.Context, limit uint64, permissi
 	return messages, nil
 }
 
-func (db *Store) ForumMessage(ctx context.Context, messageID int64, forumMessage *ForumMessage) error {
+func (db *Store) ForumMessage(ctx context.Context, messageID int64, forumMessage *model.ForumMessage) error {
 	row, errRow := db.QueryRowBuilder(ctx, db.sb.
 		Select("m.forum_message_id", "m.forum_thread_id", "m.source_id", "m.body_md", "m.created_on", "m.updated_on",
 			"p.personaname", "p.avatarhash", "p.permission_level", "coalesce(s.forum_signature, '')").
@@ -629,7 +512,7 @@ type ThreadMessagesQueryFilter struct {
 	ForumThreadID int64 `json:"forum_thread_id"`
 }
 
-func (db *Store) ForumMessages(ctx context.Context, filters ThreadMessagesQueryFilter) ([]ForumMessage, int64, error) {
+func (db *Store) ForumMessages(ctx context.Context, filters ThreadMessagesQueryFilter) ([]model.ForumMessage, int64, error) {
 	constraints := sq.And{sq.Eq{"forum_thread_id": filters.ForumThreadID}}
 
 	builder := db.sb.
@@ -647,10 +530,10 @@ func (db *Store) ForumMessages(ctx context.Context, filters ThreadMessagesQueryF
 	}
 	defer rows.Close()
 
-	var messages []ForumMessage
+	var messages []model.ForumMessage
 
 	for rows.Next() {
-		var msg ForumMessage
+		var msg model.ForumMessage
 		if errScan := rows.Scan(&msg.ForumMessageID, &msg.ForumThreadID, &msg.SourceID, &msg.BodyMD, &msg.CreatedOn, &msg.UpdatedOn,
 			&msg.Personaname, &msg.Avatarhash, &msg.PermissionLevel, &msg.Signature); errScan != nil {
 			return nil, 0, Err(errScan)
@@ -677,16 +560,8 @@ func (db *Store) ForumMessageDelete(ctx context.Context, messageID int64) error 
 		Where(sq.Eq{"forum_message_id": messageID}))
 }
 
-type Vote int
-
-const (
-	VoteUp   = 1
-	VoteNone = 0
-	VoteDown = -1
-)
-
-func (db *Store) ForumMessageVoteApply(ctx context.Context, messageVote *ForumMessageVote) error {
-	var existingVote ForumMessageVote
+func (db *Store) ForumMessageVoteApply(ctx context.Context, messageVote *model.ForumMessageVote) error {
+	var existingVote model.ForumMessageVote
 
 	row, errRow := db.QueryRowBuilder(ctx, db.sb.
 		Select("forum_message_vote_id", "forum_message_id", "source_id", "vote", "created_on", "updated_on").
@@ -732,7 +607,7 @@ func (db *Store) ForumMessageVoteApply(ctx context.Context, messageVote *ForumMe
 		Suffix("RETURNING forum_message_vote_id"), &messageVote.ForumMessageVoteID)
 }
 
-func (db *Store) ForumMessageVoteByID(ctx context.Context, messageVoteID int64, messageVote *ForumMessageVote) error {
+func (db *Store) ForumMessageVoteByID(ctx context.Context, messageVoteID int64, messageVote *model.ForumMessageVote) error {
 	row, errRow := db.QueryRowBuilder(ctx, db.sb.
 		Select("forum_message_vote_id", "forum_message_id", "source_id", "vote", "created_on", "updated_on").
 		From("forum_message_vote").Where(sq.Eq{"forum_message_vote_id": messageVoteID}))

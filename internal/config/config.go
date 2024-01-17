@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
@@ -275,7 +274,7 @@ func setDefaultConfigValues() {
 		"http.tls":                                 false,
 		"http.tls_auto":                            false,
 		"http.static_path":                         "frontend/dist",
-		"http.cookie_key":                          store.SecureRandomString(32),
+		"http.cookie_key":                          util.SecureRandomString(32),
 		"http.client_timeout":                      "10s",
 		"debug.update_srcds_log_secrets":           true,
 		"debug.skip_open_id_validation":            false,

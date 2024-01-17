@@ -8,6 +8,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/discord"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -70,7 +71,7 @@ func (app *App) matchSummarizer(ctx context.Context) {
 					matchContext.match.Title = server.Name
 				}
 
-				var fullServer store.Server
+				var fullServer model.Server
 				if err := app.db.GetServer(ctx, evt.ServerID, &fullServer); err != nil {
 					app.log.Error("Failed to load match server",
 						zap.Int("server", matchContext.match.ServerID), zap.Error(err))
@@ -110,7 +111,7 @@ func (app *App) matchSummarizer(ctx context.Context) {
 }
 
 func (app *App) onMatchComplete(ctx context.Context, matchID uuid.UUID) {
-	var result store.MatchResult
+	var result model.MatchResult
 	if errResult := app.db.MatchGetByID(ctx, matchID, &result); errResult != nil {
 		app.log.Error("Failed to load match", zap.Error(errResult))
 
@@ -161,7 +162,7 @@ func (app *App) updateSteamBanMembers(ctx context.Context) (map[int64]steamid.Co
 			sids = append(sids, friend.SteamID)
 		}
 
-		memberList := store.NewMembersList(steamBan.TargetID.Int64(), sids)
+		memberList := model.NewMembersList(steamBan.TargetID.Int64(), sids)
 		if errQuery := app.db.GetMembersList(ctx, steamBan.TargetID.Int64(), &memberList); errQuery != nil {
 			if !errors.Is(errQuery, store.ErrNoResult) {
 				return nil, errors.Wrap(errQuery, "Failed to fetch members list")
@@ -239,7 +240,7 @@ func (app *App) showReportMeta(ctx context.Context) {
 			)
 
 			for _, report := range reports {
-				if report.ReportStatus == store.ClosedWithAction || report.ReportStatus == store.ClosedWithoutAction {
+				if report.ReportStatus == model.ClosedWithAction || report.ReportStatus == model.ClosedWithoutAction {
 					meta.TotalClosed++
 
 					continue
@@ -247,7 +248,7 @@ func (app *App) showReportMeta(ctx context.Context) {
 
 				meta.TotalOpen++
 
-				if report.ReportStatus == store.NeedMoreInfo {
+				if report.ReportStatus == model.NeedMoreInfo {
 					meta.NeedInfo++
 				} else {
 					meta.Open++
@@ -345,7 +346,7 @@ func (app *App) demoCleaner(ctx context.Context) {
 					continue
 				}
 
-				if errDrop := app.db.DropDemo(ctx, &store.DemoFile{DemoID: demo.DemoID, Title: demo.Title}); errDrop != nil {
+				if errDrop := app.db.DropDemo(ctx, &model.DemoFile{DemoID: demo.DemoID, Title: demo.Title}); errDrop != nil {
 					log.Error("Failed to remove demo", zap.Error(errDrop),
 						zap.String("bucket", conf.S3.BucketDemo), zap.String("name", demo.Title))
 
@@ -403,7 +404,7 @@ func (app *App) notificationSender(ctx context.Context) {
 	}
 }
 
-func (app *App) updateProfiles(ctx context.Context, people store.People) error {
+func (app *App) updateProfiles(ctx context.Context, people model.People) error {
 	if len(people) > 100 {
 		return errors.New("100 people max per call")
 	}
@@ -599,11 +600,11 @@ func (app *App) banSweeper(ctx context.Context) {
 							log.Error("Failed to drop expired expiredBan", zap.Error(errDrop))
 						} else {
 							banType := "Ban"
-							if ban.BanType == store.NoComm {
+							if ban.BanType == model.NoComm {
 								banType = "Mute"
 							}
 
-							var person store.Person
+							var person model.Person
 							if errPerson := app.PersonBySID(ctx, ban.TargetID, &person); errPerson != nil {
 								log.Error("Failed to get expired person", zap.Error(errPerson))
 
@@ -628,7 +629,7 @@ func (app *App) banSweeper(ctx context.Context) {
 
 							msgEmbed.AddFieldsSteamID(person.SteamID)
 
-							if expiredBan.BanType == store.NoComm {
+							if expiredBan.BanType == model.NoComm {
 								msgEmbed.Embed().SetColor(conf.Discord.ColourWarn)
 							}
 

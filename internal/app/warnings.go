@@ -8,7 +8,7 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
-	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
@@ -39,10 +39,10 @@ func (w *WarningTracker) SetConfig(config config.Filter) {
 }
 
 type userWarning struct {
-	WarnReason    store.Reason  `json:"warn_reason"`
+	WarnReason    model.Reason  `json:"warn_reason"`
 	Message       string        `json:"message"`
 	Matched       string        `json:"matched"`
-	MatchedFilter *store.Filter `json:"matched_filter"`
+	MatchedFilter *model.Filter `json:"matched_filter"`
 	CreatedOn     time.Time     `json:"created_on"`
 	Personaname   string        `json:"personaname"`
 	Avatar        string        `json:"avatar"`
@@ -65,8 +65,8 @@ type WarningTracker struct {
 }
 
 type FilterMatchStore interface {
-	SaveFilter(ctx context.Context, filter *store.Filter) error
-	GetPersonBySteamID(ctx context.Context, sid64 steamid.SID64, person *store.Person) error
+	SaveFilter(ctx context.Context, filter *model.Filter) error
+	GetPersonBySteamID(ctx context.Context, sid64 steamid.SID64, person *model.Person) error
 }
 
 // state returns a string key so its more easily portable to frontend js w/o using BigInt.
@@ -201,28 +201,28 @@ func onWarningExceeded(app WarnApplication) warningsExceededFunc {
 	return func(ctx context.Context, tracker *WarningTracker, newWarning newUserWarning) error {
 		var (
 			errBan   error
-			banSteam store.BanSteam
+			banSteam model.BanSteam
 			expIn    = "Permanent"
 			expAt    = expIn
 		)
 
 		conf := app.config()
 
-		if newWarning.MatchedFilter.Action == store.Ban || newWarning.MatchedFilter.Action == store.Mute {
+		if newWarning.MatchedFilter.Action == model.Ban || newWarning.MatchedFilter.Action == model.Mute {
 			duration, errDuration := util.ParseDuration(newWarning.MatchedFilter.Duration)
 			if errDuration != nil {
 				return errors.Wrap(errDuration, "Failed to parse word filter duration value")
 			}
 
-			if errNewBan := store.NewBanSteam(ctx, store.StringSID(conf.General.Owner.String()),
-				store.StringSID(newWarning.userMessage.SteamID.String()),
+			if errNewBan := model.NewBanSteam(ctx, model.StringSID(conf.General.Owner.String()),
+				model.StringSID(newWarning.userMessage.SteamID.String()),
 				duration,
 				newWarning.WarnReason,
 				"",
 				"Automatic warning ban",
-				store.System,
+				model.System,
 				0,
-				store.NoComm,
+				model.NoComm,
 				false,
 				&banSteam); errNewBan != nil {
 				return errors.Wrap(errNewBan, "Failed to create warning ban")
@@ -230,14 +230,14 @@ func onWarningExceeded(app WarnApplication) warningsExceededFunc {
 		}
 
 		switch newWarning.MatchedFilter.Action {
-		case store.Mute:
-			banSteam.BanType = store.NoComm
+		case model.Mute:
+			banSteam.BanType = model.NoComm
 			errBan = app.BanSteam(ctx, &banSteam)
-		case store.Ban:
-			banSteam.BanType = store.Banned
+		case model.Ban:
+			banSteam.BanType = model.Banned
 			errBan = app.BanSteam(ctx, &banSteam)
-		case store.Kick:
-			errBan = app.Kick(ctx, store.System, newWarning.userMessage.SteamID, conf.General.Owner, newWarning.WarnReason)
+		case model.Kick:
+			errBan = app.Kick(ctx, model.System, newWarning.userMessage.SteamID, conf.General.Owner, newWarning.WarnReason)
 		}
 
 		if errBan != nil {
@@ -249,7 +249,7 @@ func onWarningExceeded(app WarnApplication) warningsExceededFunc {
 			title = "[DRYRUN] " + title
 		}
 
-		var person store.Person
+		var person model.Person
 		if personErr := tracker.store.GetPersonBySteamID(ctx, newWarning.userMessage.SteamID, &person); personErr != nil {
 			return errors.Wrap(personErr, "Failed to get person for warning")
 		}
@@ -295,7 +295,7 @@ func onWarningExceeded(app WarnApplication) warningsExceededFunc {
 type WarnApplication interface {
 	config() config.Config
 	bot() ChatBot
-	BanSteam(ctx context.Context, steam *store.BanSteam) error
-	Kick(ctx context.Context, origin store.Origin, sid64 steamid.SID64, author steamid.SID64, reason store.Reason) error
+	BanSteam(ctx context.Context, steam *model.BanSteam) error
+	Kick(ctx context.Context, origin model.Origin, sid64 steamid.SID64, author steamid.SID64, reason model.Reason) error
 	PSay(ctx context.Context, target steamid.SID64, message string) error
 }

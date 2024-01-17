@@ -5,21 +5,13 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
-type NewsEntry struct {
-	NewsID      int       `json:"news_id"`
-	Title       string    `json:"title"`
-	BodyMD      string    `json:"body_md"`
-	IsPublished bool      `json:"is_published"`
-	CreatedOn   time.Time `json:"created_on,omitempty"`
-	UpdatedOn   time.Time `json:"updated_on,omitempty"`
-}
-
-func (db *Store) GetNewsLatest(ctx context.Context, limit int, includeUnpublished bool) ([]NewsEntry, error) {
+func (db *Store) GetNewsLatest(ctx context.Context, limit int, includeUnpublished bool) ([]model.NewsEntry, error) {
 	builder := db.sb.Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
 		From("news").
 		OrderBy("created_on DESC").
@@ -36,10 +28,10 @@ func (db *Store) GetNewsLatest(ctx context.Context, limit int, includeUnpublishe
 
 	defer rows.Close()
 
-	var articles []NewsEntry
+	var articles []model.NewsEntry
 
 	for rows.Next() {
-		var entry NewsEntry
+		var entry model.NewsEntry
 		if errScan := rows.Scan(&entry.NewsID, &entry.Title, &entry.BodyMD, &entry.IsPublished,
 			&entry.CreatedOn, &entry.UpdatedOn); errScan != nil {
 			return nil, Err(errScan)
@@ -51,7 +43,7 @@ func (db *Store) GetNewsLatest(ctx context.Context, limit int, includeUnpublishe
 	return articles, nil
 }
 
-func (db *Store) GetNewsLatestArticle(ctx context.Context, includeUnpublished bool, entry *NewsEntry) error {
+func (db *Store) GetNewsLatestArticle(ctx context.Context, includeUnpublished bool, entry *model.NewsEntry) error {
 	builder := db.sb.Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
 		From("news")
 	if !includeUnpublished {
@@ -71,7 +63,7 @@ func (db *Store) GetNewsLatestArticle(ctx context.Context, includeUnpublished bo
 	return nil
 }
 
-func (db *Store) GetNewsByID(ctx context.Context, newsID int, entry *NewsEntry) error {
+func (db *Store) GetNewsByID(ctx context.Context, newsID int, entry *model.NewsEntry) error {
 	query, args, errQueryArgs := db.sb.Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
 		From("news").Where(sq.Eq{"news_id": newsID}).ToSql()
 	if errQueryArgs != nil {
@@ -86,7 +78,7 @@ func (db *Store) GetNewsByID(ctx context.Context, newsID int, entry *NewsEntry) 
 	return nil
 }
 
-func (db *Store) SaveNewsArticle(ctx context.Context, entry *NewsEntry) error {
+func (db *Store) SaveNewsArticle(ctx context.Context, entry *model.NewsEntry) error {
 	if entry.NewsID > 0 {
 		return db.updateNewsArticle(ctx, entry)
 	} else {
@@ -94,7 +86,7 @@ func (db *Store) SaveNewsArticle(ctx context.Context, entry *NewsEntry) error {
 	}
 }
 
-func (db *Store) insertNewsArticle(ctx context.Context, entry *NewsEntry) error {
+func (db *Store) insertNewsArticle(ctx context.Context, entry *model.NewsEntry) error {
 	query, args, errQueryArgs := db.sb.Insert("news").
 		Columns("title", "body_md", "is_published", "created_on", "updated_on").
 		Values(entry.Title, entry.BodyMD, entry.IsPublished, entry.CreatedOn, entry.UpdatedOn).
@@ -114,7 +106,7 @@ func (db *Store) insertNewsArticle(ctx context.Context, entry *NewsEntry) error 
 	return nil
 }
 
-func (db *Store) updateNewsArticle(ctx context.Context, entry *NewsEntry) error {
+func (db *Store) updateNewsArticle(ctx context.Context, entry *model.NewsEntry) error {
 	if errExec := db.ExecUpdateBuilder(ctx, db.sb.
 		Update("news").
 		Set("title", entry.Title).

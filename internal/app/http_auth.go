@@ -17,7 +17,9 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
 	"github.com/yohcop/openid-go"
@@ -89,7 +91,7 @@ func authServerMiddleWare(app *App) gin.HandlerFunc {
 			return
 		}
 
-		var server store.Server
+		var server model.Server
 		if errGetServer := app.db.GetServer(ctx, claims.ServerID, &server); errGetServer != nil {
 			log.Error("Failed to load server during auth", zap.Error(errGetServer))
 			ctx.AbortWithStatus(http.StatusUnauthorized)
@@ -172,7 +174,7 @@ func onOpenIDCallback(app *App) gin.HandlerFunc {
 			return
 		}
 
-		person := store.NewPerson(sid)
+		person := model.NewPerson(sid)
 		if errGetProfile := app.PersonBySID(ctx, sid, &person); errGetProfile != nil {
 			log.Error("Failed to fetch user profile", zap.Error(errGetProfile))
 			ctx.Redirect(302, referralURL)
@@ -246,7 +248,7 @@ func makeTokens(ctx *gin.Context, database *store.Store, cookieKey string, sid s
 		return userTokens{}, errors.New("cookieKey or fingerprint empty")
 	}
 
-	fingerprint := store.SecureRandomString(40)
+	fingerprint := util.SecureRandomString(40)
 
 	accessToken, errJWT := newUserToken(sid, cookieKey, fingerprint, authTokenDuration)
 	if errJWT != nil {
@@ -266,7 +268,7 @@ func makeTokens(ctx *gin.Context, database *store.Store, cookieKey string, sid s
 			return userTokens{}, errors.New("Failed to parse IP")
 		}
 
-		personAuth := store.NewPersonAuth(sid, ipAddr, fingerprint)
+		personAuth := model.NewPersonAuth(sid, ipAddr, fingerprint)
 		if saveErr := database.SavePersonAuth(ctx, &personAuth); saveErr != nil {
 			return userTokens{}, errors.Wrap(saveErr, "Failed to save new createRefresh token")
 		}
@@ -401,7 +403,7 @@ func authMiddleware(app *App, level consts.Privilege) gin.HandlerFunc {
 					return
 				}
 
-				loggedInPerson := store.NewPerson(sid)
+				loggedInPerson := model.NewPerson(sid)
 				if errGetPerson := app.PersonBySID(ctx, sid, &loggedInPerson); errGetPerson != nil {
 					log.Error("Failed to load person during auth", zap.Error(errGetPerson))
 					ctx.AbortWithStatus(http.StatusForbidden)
@@ -415,7 +417,7 @@ func authMiddleware(app *App, level consts.Privilege) gin.HandlerFunc {
 					return
 				}
 
-				bannedPerson := store.NewBannedPerson()
+				bannedPerson := model.NewBannedPerson()
 				if errBan := app.db.GetBanBySteamID(ctx, sid, &bannedPerson, false); errBan != nil {
 					if !errors.Is(errBan, store.ErrNoResult) {
 						log.Error("Failed to fetch authed user ban", zap.Error(errBan))

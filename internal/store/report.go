@@ -2,74 +2,16 @@ package store
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
-type ReportStatus int
-
-const (
-	Opened ReportStatus = iota
-	NeedMoreInfo
-	ClosedWithoutAction
-	ClosedWithAction
-)
-
-func (status ReportStatus) String() string {
-	switch status {
-	case ClosedWithoutAction:
-		return "Closed without action"
-	case ClosedWithAction:
-		return "Closed with action"
-	case Opened:
-		return "Opened"
-	default:
-		return "Need more information"
-	}
-}
-
-type Report struct {
-	ReportID     int64         `json:"report_id"`
-	SourceID     steamid.SID64 `json:"source_id"`
-	TargetID     steamid.SID64 `json:"target_id"`
-	Description  string        `json:"description"`
-	ReportStatus ReportStatus  `json:"report_status"`
-	Reason       Reason        `json:"reason"`
-	ReasonText   string        `json:"reason_text"`
-	Deleted      bool          `json:"deleted"`
-	// Note that we do not use a foreign key here since the demos are not sent until completion
-	// and reports can happen mid-game
-	DemoName        string    `json:"demo_name"`
-	DemoTick        int       `json:"demo_tick"`
-	DemoID          int       `json:"demo_id"`
-	PersonMessageID int64     `json:"person_message_id"`
-	CreatedOn       time.Time `json:"created_on"`
-	UpdatedOn       time.Time `json:"updated_on"`
-}
-
-func (report Report) Path() string {
-	return fmt.Sprintf("/report/%d", report.ReportID)
-}
-
-func NewReport() Report {
-	return Report{
-		ReportID:     0,
-		SourceID:     "",
-		Description:  "",
-		ReportStatus: 0,
-		CreatedOn:    time.Now(),
-		UpdatedOn:    time.Now(),
-		DemoTick:     -1,
-		DemoName:     "",
-	}
-}
-
-func (db *Store) insertReport(ctx context.Context, report *Report) error {
+func (db *Store) insertReport(ctx context.Context, report *model.Report) error {
 	const query = `INSERT INTO report (
 		    author_id, reported_id, report_status, description, deleted, created_on, updated_on, reason, 
             reason_text, demo_name, demo_tick, person_message_id
@@ -102,7 +44,7 @@ func (db *Store) insertReport(ctx context.Context, report *Report) error {
 	return nil
 }
 
-func (db *Store) updateReport(ctx context.Context, report *Report) error {
+func (db *Store) updateReport(ctx context.Context, report *model.Report) error {
 	report.UpdatedOn = time.Now()
 
 	var msgID *int64
@@ -125,7 +67,7 @@ func (db *Store) updateReport(ctx context.Context, report *Report) error {
 		Where(sq.Eq{"report_id": report.ReportID}))
 }
 
-func (db *Store) SaveReport(ctx context.Context, report *Report) error {
+func (db *Store) SaveReport(ctx context.Context, report *model.Report) error {
 	if report.ReportID > 0 {
 		return db.updateReport(ctx, report)
 	}
@@ -133,21 +75,7 @@ func (db *Store) SaveReport(ctx context.Context, report *Report) error {
 	return db.insertReport(ctx, report)
 }
 
-func NewReportMessage(reportID int64, authorID steamid.SID64, messageMD string) ReportMessage {
-	now := time.Now()
-
-	return ReportMessage{
-		ReportID:     reportID,
-		AuthorID:     authorID,
-		MessageMD:    messageMD,
-		Deleted:      false,
-		CreatedOn:    now,
-		UpdatedOn:    now,
-		SimplePerson: SimplePerson{},
-	}
-}
-
-func (db *Store) SaveReportMessage(ctx context.Context, message *ReportMessage) error {
+func (db *Store) SaveReportMessage(ctx context.Context, message *model.ReportMessage) error {
 	if message.ReportMessageID > 0 {
 		return db.updateReportMessage(ctx, message)
 	}
@@ -155,7 +83,7 @@ func (db *Store) SaveReportMessage(ctx context.Context, message *ReportMessage) 
 	return db.insertReportMessage(ctx, message)
 }
 
-func (db *Store) updateReportMessage(ctx context.Context, message *ReportMessage) error {
+func (db *Store) updateReportMessage(ctx context.Context, message *model.ReportMessage) error {
 	message.UpdatedOn = time.Now()
 
 	if errQuery := db.ExecUpdateBuilder(ctx, db.sb.Update("report_message").
@@ -175,7 +103,7 @@ func (db *Store) updateReportMessage(ctx context.Context, message *ReportMessage
 	return nil
 }
 
-func (db *Store) insertReportMessage(ctx context.Context, message *ReportMessage) error {
+func (db *Store) insertReportMessage(ctx context.Context, message *model.ReportMessage) error {
 	const query = `
 		INSERT INTO report_message (
 		    report_id, author_id, message_md, deleted, created_on, updated_on
@@ -203,7 +131,7 @@ func (db *Store) insertReportMessage(ctx context.Context, message *ReportMessage
 	return nil
 }
 
-func (db *Store) DropReport(ctx context.Context, report *Report) error {
+func (db *Store) DropReport(ctx context.Context, report *model.Report) error {
 	report.Deleted = true
 
 	if errExec := db.ExecUpdateBuilder(ctx, db.sb.
@@ -218,7 +146,7 @@ func (db *Store) DropReport(ctx context.Context, report *Report) error {
 	return nil
 }
 
-func (db *Store) DropReportMessage(ctx context.Context, message *ReportMessage) error {
+func (db *Store) DropReportMessage(ctx context.Context, message *model.ReportMessage) error {
 	message.Deleted = true
 
 	if errExec := db.ExecUpdateBuilder(ctx, db.sb.
@@ -235,18 +163,18 @@ func (db *Store) DropReportMessage(ctx context.Context, message *ReportMessage) 
 
 type ReportQueryFilter struct {
 	QueryFilter
-	ReportStatus ReportStatus `json:"report_status"`
-	SourceID     StringSID    `json:"source_id"`
-	TargetID     StringSID    `json:"target_id"`
+	ReportStatus model.ReportStatus `json:"report_status"`
+	SourceID     model.StringSID    `json:"source_id"`
+	TargetID     model.StringSID    `json:"target_id"`
 }
 
-func (db *Store) GetReports(ctx context.Context, opts ReportQueryFilter) ([]Report, int64, error) {
+func (db *Store) GetReports(ctx context.Context, opts ReportQueryFilter) ([]model.Report, int64, error) {
 	constraints := sq.And{sq.Eq{"deleted": opts.Deleted}}
 
 	if opts.SourceID != "" {
 		authorID, errAuthorID := opts.SourceID.SID64(ctx)
 		if errAuthorID != nil {
-			return nil, 0, errAuthorID
+			return nil, 0, errors.Wrap(errAuthorID, "Invalid source id")
 		}
 
 		constraints = append(constraints, sq.Eq{"r.author_id": authorID.Int64()})
@@ -255,7 +183,7 @@ func (db *Store) GetReports(ctx context.Context, opts ReportQueryFilter) ([]Repo
 	if opts.TargetID != "" {
 		targetID, errTargetID := opts.TargetID.SID64(ctx)
 		if errTargetID != nil {
-			return nil, 0, errTargetID
+			return nil, 0, errors.Wrap(errTargetID, "Invalid target id")
 		}
 
 		constraints = append(constraints, sq.Eq{"r.reported_id": targetID.Int64()})
@@ -296,11 +224,11 @@ func (db *Store) GetReports(ctx context.Context, opts ReportQueryFilter) ([]Repo
 
 	defer rows.Close()
 
-	var reports []Report
+	var reports []model.Report
 
 	for rows.Next() {
 		var (
-			report          Report
+			report          model.Report
 			sourceID        int64
 			targetID        int64
 			personMessageID *int64
@@ -339,7 +267,7 @@ func (db *Store) GetReports(ctx context.Context, opts ReportQueryFilter) ([]Repo
 }
 
 // GetReportBySteamID returns any open report for the user by the author.
-func (db *Store) GetReportBySteamID(ctx context.Context, authorID steamid.SID64, steamID steamid.SID64, report *Report) error {
+func (db *Store) GetReportBySteamID(ctx context.Context, authorID steamid.SID64, steamID steamid.SID64, report *model.Report) error {
 	row, errRow := db.QueryRowBuilder(ctx, db.sb.
 		Select("r.report_id", "r.author_id", "r.reported_id", "r.report_status", "r.description",
 			"r.deleted", "r.created_on", "r.updated_on", "r.reason", "r.reason_text", "r.demo_name", "r.demo_tick",
@@ -349,7 +277,7 @@ func (db *Store) GetReportBySteamID(ctx context.Context, authorID steamid.SID64,
 		Where(sq.And{
 			sq.Eq{"r.deleted": false},
 			sq.Eq{"r.reported_id": steamID},
-			sq.LtOrEq{"r.report_status": NeedMoreInfo},
+			sq.LtOrEq{"r.report_status": model.NeedMoreInfo},
 			sq.Eq{"r.author_id": authorID},
 		}))
 
@@ -387,7 +315,7 @@ func (db *Store) GetReportBySteamID(ctx context.Context, authorID steamid.SID64,
 	return nil
 }
 
-func (db *Store) GetReport(ctx context.Context, reportID int64, report *Report) error {
+func (db *Store) GetReport(ctx context.Context, reportID int64, report *model.Report) error {
 	row, errRow := db.QueryRowBuilder(ctx, db.sb.Select("r.report_id", "r.author_id", "r.reported_id", "r.report_status", "r.description",
 		"r.deleted", "r.created_on", "r.updated_on", "r.reason", "r.reason_text", "r.demo_name", "r.demo_tick",
 		"coalesce(d.demo_id, 0)", "coalesce(r.person_message_id, 0)").
@@ -428,7 +356,7 @@ func (db *Store) GetReport(ctx context.Context, reportID int64, report *Report) 
 	return nil
 }
 
-func (db *Store) GetReportMessages(ctx context.Context, reportID int64) ([]ReportMessage, error) {
+func (db *Store) GetReportMessages(ctx context.Context, reportID int64) ([]model.ReportMessage, error) {
 	rows, errQuery := db.QueryBuilder(ctx, db.sb.
 		Select("r.report_message_id", "r.report_id", "r.author_id", "r.message_md", "r.deleted",
 			"r.created_on", "r.updated_on", "p.avatarhash", "p.personaname", "p.permission_level").
@@ -438,17 +366,17 @@ func (db *Store) GetReportMessages(ctx context.Context, reportID int64) ([]Repor
 		OrderBy("r.created_on"))
 	if errQuery != nil {
 		if errors.Is(Err(errQuery), ErrNoResult) {
-			return []ReportMessage{}, nil
+			return []model.ReportMessage{}, nil
 		}
 	}
 
 	defer rows.Close()
 
-	var messages []ReportMessage
+	var messages []model.ReportMessage
 
 	for rows.Next() {
 		var (
-			msg      ReportMessage
+			msg      model.ReportMessage
 			authorID int64
 		)
 
@@ -475,7 +403,7 @@ func (db *Store) GetReportMessages(ctx context.Context, reportID int64) ([]Repor
 	return messages, nil
 }
 
-func (db *Store) GetReportMessageByID(ctx context.Context, reportMessageID int64, message *ReportMessage) error {
+func (db *Store) GetReportMessageByID(ctx context.Context, reportMessageID int64, message *model.ReportMessage) error {
 	row, errRow := db.QueryRowBuilder(ctx, db.sb.
 		Select("r.report_message_id", "r.report_id", "r.author_id", "r.message_md", "r.deleted",
 			"r.created_on", "r.updated_on", "p.avatarhash", "p.personaname", "p.permission_level").

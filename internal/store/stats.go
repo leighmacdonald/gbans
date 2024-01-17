@@ -4,31 +4,16 @@ import (
 	"context"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
-type Stats struct {
-	BansTotal     int `json:"bans_total"`
-	BansDay       int `json:"bans_day"`
-	BansWeek      int `json:"bans_week"`
-	BansMonth     int `json:"bans_month"`
-	Bans3Month    int `json:"bans3_month"`
-	Bans6Month    int `json:"bans6_month"`
-	BansYear      int `json:"bans_year"`
-	BansCIDRTotal int `json:"bans_cidr_total"`
-	AppealsOpen   int `json:"appeals_open"`
-	AppealsClosed int `json:"appeals_closed"`
-	FilteredWords int `json:"filtered_words"`
-	ServersAlive  int `json:"servers_alive"`
-	ServersTotal  int `json:"servers_total"`
-}
-
 func (db *Store) LoadWeapons(ctx context.Context) error {
 	for weapon, name := range logparse.NewWeaponParser().NameMap() {
-		var newWeapon Weapon
+		var newWeapon model.Weapon
 		if errWeapon := db.GetWeaponByKey(ctx, weapon, &newWeapon); errWeapon != nil {
 			if !errors.Is(errWeapon, ErrNoResult) {
 				return errWeapon
@@ -48,13 +33,7 @@ func (db *Store) LoadWeapons(ctx context.Context) error {
 	return nil
 }
 
-type Weapon struct {
-	WeaponID int             `json:"weapon_id"`
-	Key      logparse.Weapon `json:"key"`
-	Name     string          `json:"name"`
-}
-
-func (db *Store) GetWeaponByKey(ctx context.Context, key logparse.Weapon, weapon *Weapon) error {
+func (db *Store) GetWeaponByKey(ctx context.Context, key logparse.Weapon, weapon *model.Weapon) error {
 	row, errRow := db.QueryRowBuilder(ctx, db.sb.
 		Select("weapon_id", "key", "name").
 		From("weapon").
@@ -66,7 +45,7 @@ func (db *Store) GetWeaponByKey(ctx context.Context, key logparse.Weapon, weapon
 	return Err(row.Scan(&weapon.WeaponID, &weapon.Key, &weapon.Name))
 }
 
-func (db *Store) GetWeaponByID(ctx context.Context, weaponID int, weapon *Weapon) error {
+func (db *Store) GetWeaponByID(ctx context.Context, weaponID int, weapon *model.Weapon) error {
 	row, errRow := db.QueryRowBuilder(ctx, db.sb.
 		Select("weapon_id", "key", "name").
 		From("weapon").Where(sq.Eq{"weapon_id": weaponID}))
@@ -77,7 +56,7 @@ func (db *Store) GetWeaponByID(ctx context.Context, weaponID int, weapon *Weapon
 	return Err(row.Scan(&weapon.WeaponID, &weapon.Key, &weapon.Name))
 }
 
-func (db *Store) SaveWeapon(ctx context.Context, weapon *Weapon) error {
+func (db *Store) SaveWeapon(ctx context.Context, weapon *model.Weapon) error {
 	if weapon.WeaponID > 0 {
 		return db.ExecUpdateBuilder(ctx, db.sb.
 			Update("weapon").
@@ -97,7 +76,7 @@ func (db *Store) SaveWeapon(ctx context.Context, weapon *Weapon) error {
 	return nil
 }
 
-func (db *Store) Weapons(ctx context.Context) ([]Weapon, error) {
+func (db *Store) Weapons(ctx context.Context) ([]model.Weapon, error) {
 	rows, errRows := db.QueryBuilder(ctx, db.sb.
 		Select("weapon_id", "key", "name").
 		From("weapon"))
@@ -107,10 +86,10 @@ func (db *Store) Weapons(ctx context.Context) ([]Weapon, error) {
 
 	defer rows.Close()
 
-	var weapons []Weapon
+	var weapons []model.Weapon
 
 	for rows.Next() {
-		var weapon Weapon
+		var weapon model.Weapon
 		if errScan := rows.Scan(&weapon.WeaponID, &weapon.Name); errScan != nil {
 			return nil, errors.Wrap(errScan, "Failed to scan weapon")
 		}
@@ -125,7 +104,7 @@ func (db *Store) Weapons(ctx context.Context) ([]Weapon, error) {
 	return weapons, nil
 }
 
-func (db *Store) GetStats(ctx context.Context, stats *Stats) error {
+func (db *Store) GetStats(ctx context.Context, stats *model.Stats) error {
 	const query = `
 	SELECT 
 		(SELECT COUNT(ban_id) FROM ban) as bans_total,
@@ -149,13 +128,7 @@ func (db *Store) GetStats(ctx context.Context, stats *Stats) error {
 	return nil
 }
 
-type MapUseDetail struct {
-	Map      string  `json:"map"`
-	Playtime int64   `json:"playtime"`
-	Percent  float64 `json:"percent"`
-}
-
-func (db *Store) GetMapUsageStats(ctx context.Context) ([]MapUseDetail, error) {
+func (db *Store) GetMapUsageStats(ctx context.Context) ([]model.MapUseDetail, error) {
 	const query = `SELECT m.map, m.playtime, (m.playtime::float / s.total::float) * 100 percent
 		FROM (
 			SELECT SUM(extract('epoch' from m.time_end - m.time_start)) as playtime, m.map FROM match m
@@ -166,7 +139,7 @@ func (db *Store) GetMapUsageStats(ctx context.Context) ([]MapUseDetail, error) {
 			LEFT JOIN public.match_player mpt on mt.match_id = mpt.match_id
 		) s ORDER BY percent DESC`
 
-	var details []MapUseDetail
+	var details []model.MapUseDetail
 
 	rows, errQuery := db.Query(ctx, query)
 	if errQuery != nil {
@@ -177,7 +150,7 @@ func (db *Store) GetMapUsageStats(ctx context.Context) ([]MapUseDetail, error) {
 
 	for rows.Next() {
 		var (
-			mud     MapUseDetail
+			mud     model.MapUseDetail
 			seconds int64
 		)
 
@@ -197,13 +170,7 @@ func (db *Store) GetMapUsageStats(ctx context.Context) ([]MapUseDetail, error) {
 	return details, nil
 }
 
-type TopChatterResult struct {
-	Name    string
-	SteamID steamid.SID64
-	Count   int
-}
-
-func (db *Store) TopChatters(ctx context.Context, count uint64) ([]TopChatterResult, error) {
+func (db *Store) TopChatters(ctx context.Context, count uint64) ([]model.TopChatterResult, error) {
 	rows, errRows := db.QueryBuilder(ctx, db.sb.
 		Select("p.personaname", "p.steam_id", "count(person_message_id) as total").
 		From("person_messages m").
@@ -217,11 +184,11 @@ func (db *Store) TopChatters(ctx context.Context, count uint64) ([]TopChatterRes
 
 	defer rows.Close()
 
-	var results []TopChatterResult
+	var results []model.TopChatterResult
 
 	for rows.Next() {
 		var (
-			tcr     TopChatterResult
+			tcr     model.TopChatterResult
 			steamID int64
 		)
 
@@ -236,30 +203,7 @@ func (db *Store) TopChatters(ctx context.Context, count uint64) ([]TopChatterRes
 	return results, nil
 }
 
-type RankedResult struct {
-	Rank int `json:"rank"`
-}
-
-type WeaponsOverallResult struct {
-	Weapon
-	RankedResult
-	Kills        int64   `json:"kills"`
-	KillsPct     float64 `json:"kills_pct"`
-	Damage       int64   `json:"damage"`
-	DamagePct    float64 `json:"damage_pct"`
-	Headshots    int64   `json:"headshots"`
-	HeadshotsPct float64 `json:"headshots_pct"`
-	Airshots     int64   `json:"airshots"`
-	AirshotsPct  float64 `json:"airshots_pct"`
-	Backstabs    int64   `json:"backstabs"`
-	BackstabsPct float64 `json:"backstabs_pct"`
-	Shots        int64   `json:"shots"`
-	ShotsPct     float64 `json:"shots_pct"`
-	Hits         int64   `json:"hits"`
-	HitsPct      float64 `json:"hits_pct"`
-}
-
-func (db *Store) WeaponsOverall(ctx context.Context) ([]WeaponsOverallResult, error) {
+func (db *Store) WeaponsOverall(ctx context.Context) ([]model.WeaponsOverallResult, error) {
 	const query = `
 		SELECT 
 		    s.weapon_id, s.name, s.key, 
@@ -301,10 +245,10 @@ func (db *Store) WeaponsOverall(ctx context.Context) ([]WeaponsOverallResult, er
 	}
 	defer rows.Close()
 
-	var results []WeaponsOverallResult
+	var results []model.WeaponsOverallResult
 
 	for rows.Next() {
-		var wor WeaponsOverallResult
+		var wor model.WeaponsOverallResult
 		if errScan := rows.
 			Scan(&wor.WeaponID, &wor.Name, &wor.Key,
 				&wor.Kills, &wor.KillsPct,
@@ -323,36 +267,7 @@ func (db *Store) WeaponsOverall(ctx context.Context) ([]WeaponsOverallResult, er
 	return results, nil
 }
 
-type PlayerWeaponResult struct {
-	Rank               int           `json:"rank"`
-	SteamID            steamid.SID64 `json:"steam_id"`
-	Personaname        string        `json:"personaname"`
-	AvatarHash         string        `json:"avatar_hash"`
-	KA                 int64         `json:"ka"`
-	Kills              int64         `json:"kills"`
-	Assists            int64         `json:"assists"`
-	Deaths             int64         `json:"deaths"`
-	KD                 float64       `json:"kd"`
-	KAD                float64       `json:"kad"`
-	DPM                float64       `json:"dpm"`
-	Shots              int64         `json:"shots"`
-	Hits               int64         `json:"hits"`
-	Accuracy           float64       `json:"accuracy"`
-	Airshots           int64         `json:"airshots"`
-	Backstabs          int64         `json:"backstabs"`
-	Headshots          int64         `json:"headshots"`
-	Playtime           int64         `json:"playtime"`
-	Dominations        int64         `json:"dominations"`
-	Dominated          int64         `json:"dominated"`
-	Revenges           int64         `json:"revenges"`
-	Damage             int64         `json:"damage"`
-	DamageTaken        int64         `json:"damage_taken"`
-	Captures           int64         `json:"captures"`
-	CapturesBlocked    int64         `json:"captures_blocked"`
-	BuildingsDestroyed int64         `json:"buildings_destroyed"`
-}
-
-func (db *Store) WeaponsOverallTopPlayers(ctx context.Context, weaponID int) ([]PlayerWeaponResult, error) {
+func (db *Store) WeaponsOverallTopPlayers(ctx context.Context, weaponID int) ([]model.PlayerWeaponResult, error) {
 	rows, errQuery := db.QueryBuilder(ctx, db.sb.
 		Select("row_number() over (order by SUM(mw.kills) desc nulls last) as rank",
 			"p.steam_id", "p.personaname", "p.avatarhash",
@@ -374,11 +289,11 @@ func (db *Store) WeaponsOverallTopPlayers(ctx context.Context, weaponID int) ([]
 	}
 	defer rows.Close()
 
-	var results []PlayerWeaponResult
+	var results []model.PlayerWeaponResult
 
 	for rows.Next() {
 		var (
-			pwr   PlayerWeaponResult
+			pwr   model.PlayerWeaponResult
 			sid64 int64
 		)
 
@@ -398,7 +313,7 @@ func (db *Store) WeaponsOverallTopPlayers(ctx context.Context, weaponID int) ([]
 	return results, nil
 }
 
-func (db *Store) WeaponsOverallByPlayer(ctx context.Context, steamID steamid.SID64) ([]WeaponsOverallResult, error) {
+func (db *Store) WeaponsOverallByPlayer(ctx context.Context, steamID steamid.SID64) ([]model.WeaponsOverallResult, error) {
 	const query = `
 		SELECT
 			row_number() over (order by s.kills desc nulls last) as rank,
@@ -447,10 +362,10 @@ func (db *Store) WeaponsOverallByPlayer(ctx context.Context, steamID steamid.SID
 	}
 	defer rows.Close()
 
-	var results []WeaponsOverallResult
+	var results []model.WeaponsOverallResult
 
 	for rows.Next() {
-		var wor WeaponsOverallResult
+		var wor model.WeaponsOverallResult
 		if errScan := rows.
 			Scan(&wor.Rank,
 				&wor.WeaponID, &wor.Name, &wor.Key,
@@ -470,7 +385,7 @@ func (db *Store) WeaponsOverallByPlayer(ctx context.Context, steamID steamid.SID
 	return results, nil
 }
 
-func (db *Store) PlayersOverallByKills(ctx context.Context, count int) ([]PlayerWeaponResult, error) {
+func (db *Store) PlayersOverallByKills(ctx context.Context, count int) ([]model.PlayerWeaponResult, error) {
 	const query = `SELECT row_number() over (order by c.assists + w.kills desc nulls last) as rank,
 			   p.personaname,
 			   p.steam_id,
@@ -537,11 +452,11 @@ func (db *Store) PlayersOverallByKills(ctx context.Context, count int) ([]Player
 	}
 	defer rows.Close()
 
-	var results []PlayerWeaponResult
+	var results []model.PlayerWeaponResult
 
 	for rows.Next() {
 		var (
-			wor   PlayerWeaponResult
+			wor   model.PlayerWeaponResult
 			sid64 int64
 		)
 
@@ -564,40 +479,7 @@ func (db *Store) PlayersOverallByKills(ctx context.Context, count int) ([]Player
 	return results, nil
 }
 
-type HealingOverallResult struct {
-	RankedResult
-	SteamID             steamid.SID64 `json:"steam_id"`
-	Personaname         string        `json:"personaname"`
-	AvatarHash          string        `json:"avatar_hash"`
-	Healing             int           `json:"healing"`
-	Drops               int           `json:"drops"`
-	NearFullChargeDeath int           `json:"near_full_charge_death"`
-	ChargesUber         int           `json:"charges_uber"`
-	ChargesKritz        int           `json:"charges_kritz"`
-	ChargesVacc         int           `json:"charges_vacc"`
-	ChargesQuickfix     int           `json:"charges_quickfix"`
-	AvgUberLength       float32       `json:"avg_uber_length"`
-	MajorAdvLost        int           `json:"major_adv_lost"`
-	BiggestAdvLost      int           `json:"biggest_adv_lost"`
-	Extinguishes        int64         `json:"extinguishes"`
-	HealthPacks         int64         `json:"health_packs"`
-	Assists             int64         `json:"assists"`
-	Deaths              int64         `json:"deaths"`
-	HPM                 float64       `json:"hpm"`
-	KA                  float64       `json:"ka"`
-	KAD                 float64       `json:"kad"`
-	Playtime            int64         `json:"playtime"`
-	Dominations         int64         `json:"dominations"`
-	Dominated           int64         `json:"dominated"`
-	Revenges            int64         `json:"revenges"`
-	DamageTaken         int64         `json:"damage_taken"`
-	DTM                 float64       `json:"dtm"`
-	Wins                int64         `json:"wins"`
-	Matches             int64         `json:"matches"`
-	WinRate             float64       `json:"win_rate"`
-}
-
-func (db *Store) HealersOverallByHealing(ctx context.Context, count int) ([]HealingOverallResult, error) {
+func (db *Store) HealersOverallByHealing(ctx context.Context, count int) ([]model.HealingOverallResult, error) {
 	const query = `
 		SELECT
             row_number() over (order by h.healing desc nulls last) as rank,
@@ -682,11 +564,11 @@ func (db *Store) HealersOverallByHealing(ctx context.Context, count int) ([]Heal
 	}
 	defer rows.Close()
 
-	var results []HealingOverallResult
+	var results []model.HealingOverallResult
 
 	for rows.Next() {
 		var (
-			wor   HealingOverallResult
+			wor   model.HealingOverallResult
 			sid64 int64
 		)
 
@@ -709,34 +591,7 @@ func (db *Store) HealersOverallByHealing(ctx context.Context, count int) ([]Heal
 	return results, nil
 }
 
-type PlayerClass struct {
-	PlayerClassID int    `json:"player_class_id"`
-	ClassName     string `json:"class_name"`
-	ClassKey      string `json:"class_key"`
-}
-
-type PlayerClassOverallResult struct {
-	PlayerClass
-	Kills              int64   `json:"kills"`
-	KA                 int64   `json:"ka"`
-	Assists            int64   `json:"assists"`
-	Deaths             int64   `json:"deaths"`
-	KD                 float64 `json:"kd"`
-	KAD                float64 `json:"kad"`
-	DPM                float64 `json:"dpm"`
-	Playtime           int64   `json:"playtime"`
-	Dominations        int64   `json:"dominations"`
-	Dominated          int64   `json:"dominated"`
-	Revenges           int64   `json:"revenges"`
-	Damage             int64   `json:"damage"`
-	DamageTaken        int64   `json:"damage_taken"`
-	HealingTaken       int64   `json:"healing_taken"`
-	Captures           int64   `json:"captures"`
-	CapturesBlocked    int64   `json:"captures_blocked"`
-	BuildingsDestroyed int64   `json:"buildings_destroyed"`
-}
-
-func (db *Store) PlayerOverallClassStats(ctx context.Context, steamID steamid.SID64) ([]PlayerClassOverallResult, error) {
+func (db *Store) PlayerOverallClassStats(ctx context.Context, steamID steamid.SID64) ([]model.PlayerClassOverallResult, error) {
 	const query = `
 		SELECT
 			c.player_class_id,
@@ -771,10 +626,10 @@ func (db *Store) PlayerOverallClassStats(ctx context.Context, steamID steamid.SI
 	}
 	defer rows.Close()
 
-	var results []PlayerClassOverallResult
+	var results []model.PlayerClassOverallResult
 
 	for rows.Next() {
-		var wor PlayerClassOverallResult
+		var wor model.PlayerClassOverallResult
 
 		if errScan := rows.
 			Scan(&wor.PlayerClassID, &wor.ClassName, &wor.ClassKey,
@@ -792,49 +647,7 @@ func (db *Store) PlayerOverallClassStats(ctx context.Context, steamID steamid.SI
 	return results, nil
 }
 
-type PlayerOverallResult struct {
-	Healing             int64   `json:"healing"`
-	Drops               int64   `json:"drops"`
-	NearFullChargeDeath int64   `json:"near_full_charge_death"`
-	AvgUberLen          float64 `json:"avg_uber_len"`
-	BiggestAdvLost      float64 `json:"biggest_adv_lost"`
-	MajorAdvLost        float64 `json:"major_adv_lost"`
-	ChargesUber         int64   `json:"charges_uber"`
-	ChargesKritz        int64   `json:"charges_kritz"`
-	ChargesVacc         int64   `json:"charges_vacc"`
-	ChargesQuickfix     int64   `json:"charges_quickfix"`
-	Buildings           int64   `json:"buildings"`
-	Extinguishes        int64   `json:"extinguishes"`
-	HealthPacks         int64   `json:"health_packs"`
-	KA                  int64   `json:"ka"`
-	Kills               int64   `json:"kills"`
-	Assists             int64   `json:"assists"`
-	Deaths              int64   `json:"deaths"`
-	KD                  float64 `json:"kd"`
-	KAD                 float64 `json:"kad"`
-	DPM                 float64 `json:"dpm"`
-	Shots               int64   `json:"shots"`
-	Hits                int64   `json:"hits"`
-	Accuracy            float64 `json:"accuracy"`
-	Airshots            int64   `json:"airshots"`
-	Backstabs           int64   `json:"backstabs"`
-	Headshots           int64   `json:"headshots"`
-	Playtime            int64   `json:"playtime"`
-	Dominations         int64   `json:"dominations"`
-	Dominated           int64   `json:"dominated"`
-	Revenges            int64   `json:"revenges"`
-	Damage              int64   `json:"damage"`
-	DamageTaken         int64   `json:"damage_taken"`
-	Captures            int64   `json:"captures"`
-	CapturesBlocked     int64   `json:"captures_blocked"`
-	BuildingsDestroyed  int64   `json:"buildings_destroyed"`
-	HealingTaken        int64   `json:"healing_taken"`
-	Wins                int64   `json:"wins"`
-	Matches             int64   `json:"matches"`
-	WinRate             float64 `json:"win_rate"`
-}
-
-func (db *Store) PlayerOverallStats(ctx context.Context, steamID steamid.SID64, por *PlayerOverallResult) error {
+func (db *Store) PlayerOverallStats(ctx context.Context, steamID steamid.SID64, por *model.PlayerOverallResult) error {
 	const query = `
 		SELECT coalesce(h.healing, 0),
 			   coalesce(h.drops, 0),

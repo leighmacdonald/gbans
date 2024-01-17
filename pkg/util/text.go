@@ -2,7 +2,9 @@
 package util
 
 import (
+	"crypto/rand"
 	"fmt"
+	"math/big"
 	"strings"
 
 	"github.com/microcosm-cc/bluemonday"
@@ -67,4 +69,21 @@ func DiffString(s1, s2 string) string {
 
 func SanitizeUGC(body string) string {
 	return bluemonday.UGCPolicy().Sanitize(body)
+}
+
+func SecureRandomString(n int) string {
+	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-"
+
+	ret := make([]byte, n)
+
+	for currentChar := 0; currentChar < n; currentChar++ {
+		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(letters))))
+		if err != nil {
+			return ""
+		}
+
+		ret[currentChar] = letters[num.Int64()]
+	}
+
+	return string(ret)
 }
