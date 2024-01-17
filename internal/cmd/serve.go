@@ -6,10 +6,13 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
+	"github.com/leighmacdonald/gbans/internal/log"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -31,12 +34,23 @@ func serveCmd() *cobra.Command {
 				panic(fmt.Sprintf("Failed to read config: %v", errConfig))
 			}
 
-			rootLogger := config.MustCreateLogger(&conf)
+			var sentryClient *sentry.Client
+			var errSentry error
+
+			sentryClient, errSentry = log.NewSentryClient(conf.Log.SentryDSN, conf.Log.SentryTrace, conf.Log.SentrySampleRate)
+
+			rootLogger := log.MustCreate(&conf, sentryClient)
 			defer func() {
 				if conf.Log.File != "" {
 					_ = rootLogger.Sync()
 				}
 			}()
+
+			if errSentry != nil {
+				rootLogger.Error("Failed to setup sentry client")
+			} else {
+				defer sentryClient.Flush(2 * time.Second)
+			}
 
 			database := store.New(rootLogger, conf.DB.DSN, conf.DB.AutoMigrate, conf.DB.LogQueries)
 			if errConnect := database.Connect(rootCtx); errConnect != nil {

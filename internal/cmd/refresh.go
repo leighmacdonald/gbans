@@ -8,6 +8,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
+	"github.com/leighmacdonald/gbans/internal/log"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -32,7 +33,7 @@ func refreshFiltersCmd() *cobra.Command {
 				panic("Failed to read config")
 			}
 			conf.Log.Level = "DEBUG"
-			rootLogger := config.MustCreateLogger(&conf)
+			rootLogger := log.MustCreate(&conf, nil)
 			defer func() {
 				_ = rootLogger.Sync()
 			}()
