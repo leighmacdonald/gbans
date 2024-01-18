@@ -290,6 +290,24 @@ func newServerStateCollector(logger *zap.Logger) *serverStateCollector {
 	}
 }
 
+func (c *serverStateCollector) logAddressAdd(logAddress string) {
+	time.Sleep(time.Second * 60)
+
+	c.connectionsMu.RLock()
+	defer c.connectionsMu.RUnlock()
+
+	for _, server := range c.connections {
+		if server.RemoteConsole == nil {
+			continue
+		}
+
+		_, errExec := server.Exec(fmt.Sprintf("logaddress_add %s", logAddress))
+		if errExec != nil {
+			c.log.Error("Failed to set logaddress")
+		}
+	}
+}
+
 func (c *serverStateCollector) rcon(serverID int, cmd string) (string, error) {
 	c.connectionsMu.RLock()
 
