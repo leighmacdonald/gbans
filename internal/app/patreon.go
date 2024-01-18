@@ -12,11 +12,6 @@ import (
 	"gopkg.in/mxpv/patreon-go.v1"
 )
 
-type patreonStore interface {
-	SetPatreonAuth(ctx context.Context, accessToken string, refreshToken string) error
-	GetPatreonAuth(ctx context.Context) (string, string, error)
-}
-
 type patreonManager struct {
 	patreonClient    *patreon.Client
 	patreonMu        *sync.RWMutex
@@ -24,10 +19,10 @@ type patreonManager struct {
 	patreonPledges   []patreon.Pledge
 	log              *zap.Logger
 	conf             config.Config
-	db               patreonStore
+	db               store.Store
 }
 
-func newPatreonManager(logger *zap.Logger, conf config.Config, db *store.Store) *patreonManager {
+func newPatreonManager(logger *zap.Logger, conf config.Config, db store.Store) *patreonManager {
 	return &patreonManager{
 		log:       logger.Named("patreon"),
 		conf:      conf,

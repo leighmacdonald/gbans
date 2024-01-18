@@ -79,12 +79,12 @@ func (app *App) Kick(ctx context.Context, _ model.Origin, target steamid.SID64, 
 		AddField("servers", strings.Join(fp.Uniq(server), ","))
 
 	var targetUser model.Person
-	if errTargetUser := app.db.GetOrCreatePersonBySteamID(ctx, target, &targetUser); errTargetUser != nil {
+	if errTargetUser := store.GetOrCreatePersonBySteamID(ctx, app.db, target, &targetUser); errTargetUser != nil {
 		return errors.Wrap(errTargetUser, "Failed to get target")
 	}
 
 	var authorUser model.Person
-	if errTargetUser := app.db.GetOrCreatePersonBySteamID(ctx, author, &authorUser); errTargetUser != nil {
+	if errTargetUser := store.GetOrCreatePersonBySteamID(ctx, app.db, author, &authorUser); errTargetUser != nil {
 		return errors.Wrap(errTargetUser, "Failed to get author")
 	}
 
@@ -131,12 +131,12 @@ func (app *App) Silence(ctx context.Context, _ model.Origin, target steamid.SID6
 		AddField("users", strings.Join(fp.Uniq(users), ","))
 
 	var targetUser model.Person
-	if errTargetUser := app.db.GetOrCreatePersonBySteamID(ctx, target, &targetUser); errTargetUser != nil {
+	if errTargetUser := store.GetOrCreatePersonBySteamID(ctx, app.db, target, &targetUser); errTargetUser != nil {
 		return errors.Wrap(errTargetUser, "Failed to get target")
 	}
 
 	var authorUser model.Person
-	if errTargetUser := app.db.GetOrCreatePersonBySteamID(ctx, author, &authorUser); errTargetUser != nil {
+	if errTargetUser := store.GetOrCreatePersonBySteamID(ctx, app.db, author, &authorUser); errTargetUser != nil {
 		return errors.Wrap(errTargetUser, "Failed to get author")
 	}
 
@@ -170,7 +170,7 @@ func (app *App) Say(ctx context.Context, author steamid.SID64, serverName string
 		AddField("servers", fmt.Sprintf("%d", len(servers)))
 
 	var authorUser model.Person
-	if errTargetUser := app.db.GetOrCreatePersonBySteamID(ctx, author, &authorUser); errTargetUser != nil {
+	if errTargetUser := store.GetOrCreatePersonBySteamID(ctx, app.db, author, &authorUser); errTargetUser != nil {
 		return errors.Wrap(errTargetUser, "Failed to get author")
 	}
 
@@ -204,7 +204,7 @@ func (app *App) CSay(ctx context.Context, author steamid.SID64, serverName strin
 		AddField("servers", fmt.Sprintf("%d", len(servers)))
 
 	var authorUser model.Person
-	if errAuthor := app.db.GetOrCreatePersonBySteamID(ctx, author, &authorUser); errAuthor != nil {
+	if errAuthor := store.GetOrCreatePersonBySteamID(ctx, app.db, author, &authorUser); errAuthor != nil {
 		return errors.Wrap(errAuthor, "Failed to get author")
 	}
 
@@ -245,7 +245,7 @@ func (app *App) PSay(ctx context.Context, target steamid.SID64, message string) 
 // means the discord does not require more privileged intents.
 func (app *App) SetSteam(ctx context.Context, sid64 steamid.SID64, discordID string) error {
 	newPerson := model.NewPerson(sid64)
-	if errGetPerson := app.db.GetOrCreatePersonBySteamID(ctx, sid64, &newPerson); errGetPerson != nil || !sid64.Valid() {
+	if errGetPerson := store.GetOrCreatePersonBySteamID(ctx, app.db, sid64, &newPerson); errGetPerson != nil || !sid64.Valid() {
 		return consts.ErrInvalidSID
 	}
 
@@ -254,7 +254,7 @@ func (app *App) SetSteam(ctx context.Context, sid64 steamid.SID64, discordID str
 	}
 
 	newPerson.DiscordID = discordID
-	if errSavePerson := app.db.SavePerson(ctx, &newPerson); errSavePerson != nil {
+	if errSavePerson := store.SavePerson(ctx, app.db, &newPerson); errSavePerson != nil {
 		return consts.ErrInternal
 	}
 
@@ -266,7 +266,7 @@ func (app *App) SetSteam(ctx context.Context, sid64 steamid.SID64, discordID str
 	msgEmbed.Embed().SetColor(conf.Discord.ColourSuccess)
 
 	var authorUser model.Person
-	if errAuthor := app.db.GetOrCreatePersonBySteamID(ctx, sid64, &authorUser); errAuthor != nil {
+	if errAuthor := store.GetOrCreatePersonBySteamID(ctx, app.db, sid64, &authorUser); errAuthor != nil {
 		return errors.Wrap(errAuthor, "Failed to get author")
 	}
 
@@ -282,7 +282,7 @@ func (app *App) SetSteam(ctx context.Context, sid64 steamid.SID64, discordID str
 
 // FilterAdd creates a new chat filter using a regex pattern.
 func (app *App) FilterAdd(ctx context.Context, filter *model.Filter) error {
-	if errSave := app.db.SaveFilter(ctx, filter); errSave != nil {
+	if errSave := store.SaveFilter(ctx, app.db, filter); errSave != nil {
 		if errors.Is(errSave, store.ErrDuplicate) {
 			return store.ErrDuplicate
 		}
@@ -307,7 +307,7 @@ func (app *App) FilterAdd(ctx context.Context, filter *model.Filter) error {
 		AddField("filter_id", fmt.Sprintf("%d", filter.FilterID))
 
 	var authorUser model.Person
-	if errAuthor := app.db.GetOrCreatePersonBySteamID(ctx, filter.AuthorID, &authorUser); errAuthor != nil {
+	if errAuthor := store.GetOrCreatePersonBySteamID(ctx, app.db, filter.AuthorID, &authorUser); errAuthor != nil {
 		return errors.Wrap(errAuthor, "Failed to get author")
 	}
 
@@ -323,11 +323,11 @@ func (app *App) FilterAdd(ctx context.Context, filter *model.Filter) error {
 // FilterDel removed and existing chat filter.
 func (app *App) FilterDel(ctx context.Context, filterID int64) (bool, error) {
 	var filter model.Filter
-	if errGetFilter := app.db.GetFilterByID(ctx, filterID, &filter); errGetFilter != nil {
+	if errGetFilter := store.GetFilterByID(ctx, app.db, filterID, &filter); errGetFilter != nil {
 		return false, errors.Wrap(errGetFilter, "Failed to get filter")
 	}
 
-	if errDropFilter := app.db.DropFilter(ctx, &filter); errDropFilter != nil {
+	if errDropFilter := store.DropFilter(ctx, app.db, &filter); errDropFilter != nil {
 		return false, errors.Wrapf(errDropFilter, "Failed to drop filter")
 	}
 
@@ -362,7 +362,7 @@ func (app *App) FilterDel(ctx context.Context, filterID int64) (bool, error) {
 	return true, nil
 }
 
-// FilterCheck can be used to check if a phrase will match any filters.
+// FilterCheck can be used to check if a phrase will findMatch any filters.
 func (app *App) FilterCheck(message string) []model.Filter {
 	if message == "" {
 		return nil

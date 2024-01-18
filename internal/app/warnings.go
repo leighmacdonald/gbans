@@ -9,13 +9,14 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
-func newWarningTracker(log *zap.Logger, store FilterMatchStore, config config.Filter,
+func newWarningTracker(log *zap.Logger, store store.Store, config config.Filter,
 	issuedFunc warningsIssuedFunc, exceededFunc warningsExceededFunc,
 ) *WarningTracker {
 	tracker := WarningTracker{
@@ -23,7 +24,7 @@ func newWarningTracker(log *zap.Logger, store FilterMatchStore, config config.Fi
 		warnings:           make(map[steamid.SID64][]userWarning),
 		warningChan:        make(chan newUserWarning),
 		wordFilters:        wordFilters{},
-		store:              store,
+		db:                 store,
 		onWarningsExceeded: exceededFunc,
 		onWarning:          issuedFunc,
 		warningMu:          &sync.RWMutex{},
@@ -59,7 +60,7 @@ type userWarning struct {
 
 type WarningTracker struct {
 	log                *zap.Logger
-	store              FilterMatchStore
+	db                 store.Store
 	warningMu          *sync.RWMutex
 	warnings           map[steamid.SID64][]userWarning
 	warningChan        chan newUserWarning
@@ -67,11 +68,6 @@ type WarningTracker struct {
 	config             config.Filter
 	onWarningsExceeded warningsExceededFunc
 	onWarning          warningsIssuedFunc
-}
-
-type FilterMatchStore interface {
-	SaveFilter(ctx context.Context, filter *model.Filter) error
-	GetPersonBySteamID(ctx context.Context, sid64 steamid.SID64, person *model.Person) error
 }
 
 // state returns a string key so its more easily portable to frontend js w/o using BigInt.
@@ -121,7 +117,7 @@ func (w *WarningTracker) trigger(ctx context.Context, newWarn newUserWarning) {
 	}
 
 	newWarn.MatchedFilter.TriggerCount++
-	if errSave := w.store.SaveFilter(ctx, newWarn.MatchedFilter); errSave != nil {
+	if errSave := store.SaveFilter(ctx, w.db, newWarn.MatchedFilter); errSave != nil {
 		w.log.Error("Failed to update filter trigger count", zap.Error(errSave))
 	}
 
@@ -255,7 +251,7 @@ func onWarningExceeded(app WarnApplication) warningsExceededFunc {
 		}
 
 		var person model.Person
-		if personErr := tracker.store.GetPersonBySteamID(ctx, newWarning.userMessage.SteamID, &person); personErr != nil {
+		if personErr := store.GetPersonBySteamID(ctx, tracker.db, newWarning.userMessage.SteamID, &person); personErr != nil {
 			return errors.Wrap(personErr, "Failed to get person for warning")
 		}
 

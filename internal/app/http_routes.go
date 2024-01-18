@@ -146,7 +146,7 @@ func createRouter(ctx context.Context, app *App) *gin.Engine {
 		engine.LoadHTMLFiles(filepath.Join(absStaticPath, "index.html"))
 	}
 
-	// These should match  defined in the frontend. This allows us to use the browser
+	// These should findMatch  defined in the frontend. This allows us to use the browser
 	// based routing when serving the SPA.
 	jsRoutes := []string{
 		"/", "/servers", "/profile/:steam_id", "/bans", "/appeal", "/settings", "/report",

@@ -64,7 +64,7 @@ func netUpdateCmd() *cobra.Command {
 			updateCtx, cancelUpdate := context.WithTimeout(ctx, time.Minute*30)
 			defer cancelUpdate()
 			rootLogger.Info("Starting import")
-			if errInsert := database.InsertBlockListData(updateCtx, blockListData); errInsert != nil {
+			if errInsert := store.InsertBlockListData(updateCtx, database, rootLogger, blockListData); errInsert != nil {
 				rootLogger.Fatal("Failed to import", zap.Error(errInsert))
 			}
 			rootLogger.Info("Import Complete")

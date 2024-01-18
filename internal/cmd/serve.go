@@ -13,6 +13,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/log"
+	"github.com/leighmacdonald/gbans/internal/s3"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -68,7 +69,7 @@ func serveCmd() *cobra.Command {
 				rootLogger.Fatal("Failed to connect to perform initial discord connection")
 			}
 
-			s3Client, errClient := app.NewS3Client(rootLogger, conf.S3.Endpoint, conf.S3.AccessKey, conf.S3.SecretKey, conf.S3.SSL, conf.S3.Region)
+			s3Client, errClient := s3.NewS3Client(rootLogger, conf.S3.Endpoint, conf.S3.AccessKey, conf.S3.SecretKey, conf.S3.SSL, conf.S3.Region)
 			if errClient != nil {
 				rootLogger.Fatal("Failed to setup S3 client", zap.Error(errClient))
 			}

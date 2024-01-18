@@ -8,10 +8,10 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
-	"go.uber.org/zap"
 )
 
 type MatchesQueryOpts struct {
@@ -23,7 +23,7 @@ type MatchesQueryOpts struct {
 	TimeEnd   *time.Time    `json:"time_end,omitempty"`
 }
 
-func (db *Store) matchGetPlayerClasses(ctx context.Context, matchID uuid.UUID) (map[steamid.SID64][]model.MatchPlayerClass, error) {
+func matchGetPlayerClasses(ctx context.Context, database Store, matchID uuid.UUID) (map[steamid.SID64][]model.MatchPlayerClass, error) {
 	const query = `
 		SELECT mp.steam_id, c.match_player_class_id, c.match_player_id, c.player_class_id, c.kills, 
 		   c.assists, c.deaths, c.playtime, c.dominations, c.dominated, c.revenges, c.damage, c.damage_taken, c.healing_taken,
@@ -32,9 +32,9 @@ func (db *Store) matchGetPlayerClasses(ctx context.Context, matchID uuid.UUID) (
 		LEFT JOIN match_player mp on mp.match_player_id = c.match_player_id
 		WHERE mp.match_id = $1`
 
-	rows, errQuery := db.Query(ctx, query, matchID)
+	rows, errQuery := database.Query(ctx, query, matchID)
 	if errQuery != nil {
-		return nil, Err(errQuery)
+		return nil, DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -52,7 +52,7 @@ func (db *Store) matchGetPlayerClasses(ctx context.Context, matchID uuid.UUID) (
 				&stats.Kills, &stats.Assists, &stats.Deaths, &stats.Playtime, &stats.Dominations, &stats.Dominated,
 				&stats.Revenges, &stats.Damage, &stats.DamageTaken, &stats.HealingTaken, &stats.Captures,
 				&stats.CapturesBlocked, &stats.BuildingDestroyed); errScan != nil {
-			return nil, Err(errScan)
+			return nil, DBErr(errScan)
 		}
 
 		sid := steamid.New(steamID)
@@ -66,13 +66,13 @@ func (db *Store) matchGetPlayerClasses(ctx context.Context, matchID uuid.UUID) (
 	}
 
 	if errRows := rows.Err(); errRows != nil {
-		return nil, Err(errRows)
+		return nil, DBErr(errRows)
 	}
 
 	return results, nil
 }
 
-func (db *Store) matchGetPlayerWeapons(ctx context.Context, matchID uuid.UUID) (map[steamid.SID64][]model.MatchPlayerWeapon, error) {
+func matchGetPlayerWeapons(ctx context.Context, database Store, matchID uuid.UUID) (map[steamid.SID64][]model.MatchPlayerWeapon, error) {
 	const query = `
 		SELECT mp.steam_id, mw.weapon_id, w.name, w.key,  mw.kills, mw.damage, mw.shots, mw.hits, mw.backstabs, mw.headshots, mw.airshots
 		FROM match m
@@ -84,9 +84,9 @@ func (db *Store) matchGetPlayerWeapons(ctx context.Context, matchID uuid.UUID) (
 
 	results := map[steamid.SID64][]model.MatchPlayerWeapon{}
 
-	rows, errRows := db.Query(ctx, query, matchID)
+	rows, errRows := database.Query(ctx, query, matchID)
 	if errRows != nil {
-		return nil, Err(errRows)
+		return nil, DBErr(errRows)
 	}
 
 	defer rows.Close()
@@ -100,7 +100,7 @@ func (db *Store) matchGetPlayerWeapons(ctx context.Context, matchID uuid.UUID) (
 		if errScan := rows.
 			Scan(&steamID, &mpw.WeaponID, &mpw.Weapon.Name, &mpw.Weapon.Key, &mpw.Kills, &mpw.Damage, &mpw.Shots,
 				&mpw.Hits, &mpw.Backstabs, &mpw.Headshots, &mpw.Airshots); errScan != nil {
-			return nil, Err(errScan)
+			return nil, DBErr(errScan)
 		}
 
 		sid := steamid.New(steamID)
@@ -116,16 +116,16 @@ func (db *Store) matchGetPlayerWeapons(ctx context.Context, matchID uuid.UUID) (
 	return results, nil
 }
 
-func (db *Store) matchGetPlayerKillstreak(ctx context.Context, matchID uuid.UUID) (map[steamid.SID64][]model.MatchPlayerKillstreak, error) {
+func matchGetPlayerKillstreak(ctx context.Context, database Store, matchID uuid.UUID) (map[steamid.SID64][]model.MatchPlayerKillstreak, error) {
 	const query = `
 		SELECT mp.steam_id, k.match_player_id, k.player_class_id, k.killstreak, k.duration
 		FROM match_player_killstreak k
 		LEFT JOIN match_player mp on mp.match_player_id = k.match_player_id
 		WHERE mp.match_id = $1`
 
-	rows, errRows := db.Query(ctx, query, matchID)
+	rows, errRows := database.Query(ctx, query, matchID)
 	if errRows != nil {
-		return nil, Err(errRows)
+		return nil, DBErr(errRows)
 	}
 
 	defer rows.Close()
@@ -140,7 +140,7 @@ func (db *Store) matchGetPlayerKillstreak(ctx context.Context, matchID uuid.UUID
 
 		if errScan := rows.
 			Scan(&steamID, &stats.MatchPlayerID, &stats.PlayerClass, &stats.Killstreak, &stats.Duration); errScan != nil {
-			return nil, Err(errScan)
+			return nil, DBErr(errScan)
 		}
 
 		sid := steamid.New(steamID)
@@ -156,7 +156,7 @@ func (db *Store) matchGetPlayerKillstreak(ctx context.Context, matchID uuid.UUID
 	return results, nil
 }
 
-func (db *Store) matchGetPlayers(ctx context.Context, matchID uuid.UUID) ([]*model.MatchPlayer, error) {
+func matchGetPlayers(ctx context.Context, database Store, matchID uuid.UUID) ([]*model.MatchPlayer, error) {
 	const queryPlayer = `
 		SELECT
 			p.match_player_id,
@@ -210,7 +210,7 @@ func (db *Store) matchGetPlayers(ctx context.Context, matchID uuid.UUID) ([]*mod
 
 	var players []*model.MatchPlayer
 
-	playerRows, errPlayer := db.Query(ctx, queryPlayer, matchID)
+	playerRows, errPlayer := database.Query(ctx, queryPlayer, matchID)
 	if errPlayer != nil {
 		if errors.Is(errPlayer, ErrNoResult) {
 			return []*model.MatchPlayer{}, nil
@@ -244,7 +244,7 @@ func (db *Store) matchGetPlayers(ctx context.Context, matchID uuid.UUID) ([]*mod
 	return players, nil
 }
 
-func (db *Store) matchGetMedics(ctx context.Context, matchID uuid.UUID) (map[steamid.SID64]model.MatchHealer, error) {
+func matchGetMedics(ctx context.Context, database Store, matchID uuid.UUID) (map[steamid.SID64]model.MatchHealer, error) {
 	const query = `
 		SELECT m.match_medic_id,
 			   mp.steam_id,
@@ -264,7 +264,7 @@ func (db *Store) matchGetMedics(ctx context.Context, matchID uuid.UUID) (map[ste
 
 	medics := map[steamid.SID64]model.MatchHealer{}
 
-	medicRows, errMedics := db.Query(ctx, query, matchID)
+	medicRows, errMedics := database.Query(ctx, query, matchID)
 	if errMedics != nil {
 		if errors.Is(errMedics, ErrNoResult) {
 			return medics, nil
@@ -301,7 +301,7 @@ func (db *Store) matchGetMedics(ctx context.Context, matchID uuid.UUID) (map[ste
 	return medics, nil
 }
 
-func (db *Store) matchGetChat(ctx context.Context, matchID uuid.UUID) (model.PersonMessages, error) {
+func matchGetChat(ctx context.Context, database Store, matchID uuid.UUID) (model.PersonMessages, error) {
 	const query = `
 		SELECT c.person_message_id, c.steam_id, c.server_id, c.body, c.persona_name, c.team, 
 		       c.created_on, c.match_id, COUNT(f.person_message_id)::int::boolean as flagged
@@ -313,7 +313,7 @@ func (db *Store) matchGetChat(ctx context.Context, matchID uuid.UUID) (model.Per
 
 	messages := model.PersonMessages{}
 
-	medicRows, errMedics := db.Query(ctx, query, matchID)
+	medicRows, errMedics := database.Query(ctx, query, matchID)
 	if errMedics != nil {
 		if errors.Is(errMedics, ErrNoResult) {
 			return messages, nil
@@ -348,12 +348,12 @@ func (db *Store) matchGetChat(ctx context.Context, matchID uuid.UUID) (model.Per
 	return messages, nil
 }
 
-func (db *Store) MatchGetByID(ctx context.Context, matchID uuid.UUID, match *model.MatchResult) error {
+func MatchGetByID(ctx context.Context, database Store, matchID uuid.UUID, match *model.MatchResult) error {
 	const query = `
 		SELECT match_id, server_id, map, title, score_red, score_blu, time_red, time_blu, time_start, time_end, winner
 		FROM match WHERE match_id = $1`
 
-	if errMatch := db.
+	if errMatch := database.
 		QueryRow(ctx, query, matchID).
 		Scan(&match.MatchID, &match.ServerID, &match.MapName, &match.Title,
 			&match.TeamScores.Red, &match.TeamScores.Blu, &match.TeamScores.BluTime, &match.TeamScores.BluTime,
@@ -361,14 +361,14 @@ func (db *Store) MatchGetByID(ctx context.Context, matchID uuid.UUID, match *mod
 		return errors.Wrapf(errMatch, "Failed to load root match")
 	}
 
-	playerStats, errPlayerStats := db.matchGetPlayers(ctx, matchID)
+	playerStats, errPlayerStats := matchGetPlayers(ctx, database, matchID)
 	if errPlayerStats != nil {
 		return errors.Wrap(errPlayerStats, "Failed to fetch match players")
 	}
 
 	match.Players = playerStats
 
-	playerClasses, errPlayerClasses := db.matchGetPlayerClasses(ctx, matchID)
+	playerClasses, errPlayerClasses := matchGetPlayerClasses(ctx, database, matchID)
 	if errPlayerClasses != nil {
 		return errors.Wrap(errPlayerClasses, "Failed to fetch player class stats")
 	}
@@ -379,7 +379,7 @@ func (db *Store) MatchGetByID(ctx context.Context, matchID uuid.UUID, match *mod
 		}
 	}
 
-	playerKillstreaks, errPlayerKillstreaks := db.matchGetPlayerKillstreak(ctx, matchID)
+	playerKillstreaks, errPlayerKillstreaks := matchGetPlayerKillstreak(ctx, database, matchID)
 	if errPlayerKillstreaks != nil {
 		return errors.Wrap(errPlayerKillstreaks, "Failed to fetch player killstreak stats")
 	}
@@ -390,7 +390,7 @@ func (db *Store) MatchGetByID(ctx context.Context, matchID uuid.UUID, match *mod
 		}
 	}
 
-	medicStats, errMedics := db.matchGetMedics(ctx, matchID)
+	medicStats, errMedics := matchGetMedics(ctx, database, matchID)
 	if errMedics != nil {
 		return errors.Wrap(errMedics, "Failed to fetch match medics")
 	}
@@ -407,7 +407,7 @@ func (db *Store) MatchGetByID(ctx context.Context, matchID uuid.UUID, match *mod
 		}
 	}
 
-	weaponStats, errWeapons := db.matchGetPlayerWeapons(ctx, matchID)
+	weaponStats, errWeapons := matchGetPlayerWeapons(ctx, database, matchID)
 	if errWeapons != nil {
 		return errors.Wrap(errMedics, "Failed to fetch match weapon stats")
 	}
@@ -424,7 +424,7 @@ func (db *Store) MatchGetByID(ctx context.Context, matchID uuid.UUID, match *mod
 		}
 	}
 
-	chat, errChat := db.matchGetChat(ctx, matchID)
+	chat, errChat := matchGetChat(ctx, database, matchID)
 
 	if errChat != nil && !errors.Is(errChat, ErrNoResult) {
 		return errors.Wrap(errMedics, "Failed to fetch match chat history")
@@ -460,7 +460,7 @@ var (
 
 const MinMedicHealing = 500
 
-func (db *Store) MatchSave(ctx context.Context, match *logparse.Match) error {
+func MatchSave(ctx context.Context, database Store, match *logparse.Match, weaponMap fp.MutexMap[logparse.Weapon, int]) error {
 	const (
 		minPlayers = 6
 		query      = `
@@ -477,7 +477,7 @@ func (db *Store) MatchSave(ctx context.Context, match *logparse.Match) error {
 		return ErrInsufficientPlayers
 	}
 
-	transaction, errTx := db.conn.Begin(ctx)
+	transaction, errTx := database.Begin(ctx)
 	if errTx != nil {
 		return errors.Wrap(errTx, "Failed to create match tx")
 	}
@@ -488,7 +488,7 @@ func (db *Store) MatchSave(ctx context.Context, match *logparse.Match) error {
 			match.TimeStart, match.TimeEnd, match.Winner()).
 		Scan(&match.MatchID); errQuery != nil {
 		if errRollback := transaction.Rollback(ctx); errRollback != nil {
-			db.log.Error("Failed to rollback tx", zap.Error(errRollback))
+			return errors.Wrap(errRollback, "Failed to rollback tx")
 		}
 
 		return errors.Wrap(errQuery, "Failed to create match")
@@ -501,50 +501,50 @@ func (db *Store) MatchSave(ctx context.Context, match *logparse.Match) error {
 		}
 
 		var loadPlayerTest model.Person
-		if errPlayer := db.GetOrCreatePersonBySteamID(ctx, player.SteamID, &loadPlayerTest); errPlayer != nil {
+		if errPlayer := GetOrCreatePersonBySteamID(ctx, database, player.SteamID, &loadPlayerTest); errPlayer != nil {
 			if errRollback := transaction.Rollback(ctx); errRollback != nil {
-				db.log.Error("Failed to rollback tx", zap.Error(errRollback))
+				return errors.Wrap(errRollback, "Failed to rollback tx")
 			}
 
 			return errors.Wrapf(errPlayer, "Failed to load person")
 		}
 
-		if errSave := db.saveMatchPlayerStats(ctx, transaction, match, player); errSave != nil {
+		if errSave := saveMatchPlayerStats(ctx, transaction, match, player); errSave != nil {
 			if errRollback := transaction.Rollback(ctx); errRollback != nil {
-				db.log.Error("Failed to rollback tx", zap.Error(errRollback))
+				return errors.Wrap(errRollback, "Failed to rollback tx")
 			}
 
 			return errSave
 		}
 
-		if errSave := db.saveMatchWeaponStats(ctx, transaction, player); errSave != nil {
+		if errSave := saveMatchWeaponStats(ctx, transaction, player, weaponMap); errSave != nil {
 			if errRollback := transaction.Rollback(ctx); errRollback != nil {
-				db.log.Error("Failed to rollback tx", zap.Error(errRollback))
+				return errors.Wrap(errRollback, "Failed to rollback tx")
 			}
 
 			return errSave
 		}
 
-		if errSave := db.saveMatchPlayerClassStats(ctx, transaction, player); errSave != nil {
+		if errSave := saveMatchPlayerClassStats(ctx, transaction, player); errSave != nil {
 			if errRollback := transaction.Rollback(ctx); errRollback != nil {
-				db.log.Error("Failed to rollback tx", zap.Error(errRollback))
+				return errors.Wrap(errRollback, "Failed to rollback tx")
 			}
 
 			return errSave
 		}
 
-		if errSave := db.saveMatchKillstreakStats(ctx, transaction, player); errSave != nil {
+		if errSave := saveMatchKillstreakStats(ctx, transaction, player); errSave != nil {
 			if errRollback := transaction.Rollback(ctx); errRollback != nil {
-				db.log.Error("Failed to rollback tx", zap.Error(errRollback))
+				return errors.Wrap(errRollback, "Failed to rollback tx")
 			}
 
 			return errSave
 		}
 
 		if player.HealingStats != nil && player.HealingStats.Healing >= MinMedicHealing {
-			if errSave := db.saveMatchMedicStats(ctx, transaction, player.MatchPlayerID, player.HealingStats); errSave != nil {
+			if errSave := saveMatchMedicStats(ctx, transaction, player.MatchPlayerID, player.HealingStats); errSave != nil {
 				if errRollback := transaction.Rollback(ctx); errRollback != nil {
-					db.log.Error("Failed to rollback tx", zap.Error(errRollback))
+					return errors.Wrap(errRollback, "Failed to rollback tx")
 				}
 
 				return errSave
@@ -559,7 +559,7 @@ func (db *Store) MatchSave(ctx context.Context, match *logparse.Match) error {
 	return nil
 }
 
-func (db *Store) saveMatchPlayerStats(ctx context.Context, transaction pgx.Tx, match *logparse.Match, stats *logparse.PlayerStats) error {
+func saveMatchPlayerStats(ctx context.Context, database pgx.Tx, match *logparse.Match, stats *logparse.PlayerStats) error {
 	const playerQuery = `
 		INSERT INTO match_player (
 			match_id, steam_id, team, time_start, time_end, health_packs, extinguishes, buildings
@@ -574,7 +574,7 @@ func (db *Store) saveMatchPlayerStats(ctx context.Context, transaction pgx.Tx, m
 		endTime = match.TimeEnd
 	}
 
-	if errPlayerExec := transaction.
+	if errPlayerExec := database.
 		QueryRow(ctx, playerQuery, match.MatchID, stats.SteamID.Int64(), stats.Team, stats.TimeStart,
 			endTime, stats.HealthPacks(), stats.Extinguishes(), stats.BuildingBuilt).
 		Scan(&stats.MatchPlayerID); errPlayerExec != nil {
@@ -584,7 +584,7 @@ func (db *Store) saveMatchPlayerStats(ctx context.Context, transaction pgx.Tx, m
 	return nil
 }
 
-func (db *Store) saveMatchMedicStats(ctx context.Context, transaction pgx.Tx, matchPlayerID int64, stats *logparse.HealingStats) error {
+func saveMatchMedicStats(ctx context.Context, transaction pgx.Tx, matchPlayerID int64, stats *logparse.HealingStats) error {
 	const medicQuery = `
 		INSERT INTO match_medic (
 			match_player_id, healing, drops, near_full_charge_death, avg_uber_length,  major_adv_lost, biggest_adv_lost, 
@@ -604,17 +604,16 @@ func (db *Store) saveMatchMedicStats(ctx context.Context, transaction pgx.Tx, ma
 	return nil
 }
 
-func (db *Store) saveMatchWeaponStats(ctx context.Context, transaction pgx.Tx, player *logparse.PlayerStats) error {
+func saveMatchWeaponStats(ctx context.Context, transaction pgx.Tx, player *logparse.PlayerStats, weaponMap fp.MutexMap[logparse.Weapon, int]) error {
 	const query = `
 		INSERT INTO match_weapon (match_player_id, weapon_id, kills, damage, shots, hits, backstabs, headshots, airshots) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
 		RETURNING player_weapon_id`
 
 	for weapon, info := range player.WeaponInfo {
-		weaponID, found := db.weaponMap.Get(weapon)
+		weaponID, found := weaponMap.Get(weapon)
 		if !found {
-			db.log.Error("Unknown weapon", zap.String("weapon", string(weapon)))
-
+			// db.log.Error("Unknown weapon", zap.String("weapon", string(weapon)))
 			continue
 		}
 
@@ -628,7 +627,7 @@ func (db *Store) saveMatchWeaponStats(ctx context.Context, transaction pgx.Tx, p
 	return nil
 }
 
-func (db *Store) saveMatchPlayerClassStats(ctx context.Context, transaction pgx.Tx, player *logparse.PlayerStats) error {
+func saveMatchPlayerClassStats(ctx context.Context, transaction pgx.Tx, player *logparse.PlayerStats) error {
 	const query = `
 		INSERT INTO match_player_class (
 			match_player_id, player_class_id, kills, assists, deaths, playtime, dominations, dominated, revenges, 
@@ -647,7 +646,7 @@ func (db *Store) saveMatchPlayerClassStats(ctx context.Context, transaction pgx.
 	return nil
 }
 
-func (db *Store) saveMatchKillstreakStats(ctx context.Context, transaction pgx.Tx, player *logparse.PlayerStats) error {
+func saveMatchKillstreakStats(ctx context.Context, transaction pgx.Tx, player *logparse.PlayerStats) error {
 	const query = `
 		INSERT INTO match_player_killstreak (match_player_id, player_class_id, killstreak, duration) 
 		VALUES ($1, $2, $3, $4)`
@@ -662,7 +661,7 @@ func (db *Store) saveMatchKillstreakStats(ctx context.Context, transaction pgx.T
 	return nil
 }
 
-func (db *Store) StatsPlayerClass(ctx context.Context, sid64 steamid.SID64) (model.PlayerClassStatsCollection, error) {
+func StatsPlayerClass(ctx context.Context, database Store, sid64 steamid.SID64) (model.PlayerClassStatsCollection, error) {
 	const query = `
 		SELECT c.player_class_id,
 			   coalesce(SUM(c.kills), 0)               as kill,
@@ -687,9 +686,9 @@ func (db *Store) StatsPlayerClass(ctx context.Context, sid64 steamid.SID64) (mod
 		GROUP BY p.steam_id, c.player_class_id
 		ORDER BY c.player_class_id`
 
-	rows, errQuery := db.Query(ctx, query, sid64.Int64())
+	rows, errQuery := database.Query(ctx, query, sid64.Int64())
 	if errQuery != nil {
-		return nil, Err(errQuery)
+		return nil, DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -703,7 +702,7 @@ func (db *Store) StatsPlayerClass(ctx context.Context, sid64 steamid.SID64) (mod
 				&class.Dominated, &class.Revenges, &class.DamageTaken, &class.HealingTaken, &class.HealthPacks,
 				&class.Captures, &class.CapturesBlocked, &class.Extinguishes, &class.BuildingsBuilt,
 				&class.BuildingsDestroyed, &class.Playtime); errScan != nil {
-			return nil, Err(errScan)
+			return nil, DBErr(errScan)
 		}
 
 		class.ClassName = class.Class.String()
@@ -713,7 +712,7 @@ func (db *Store) StatsPlayerClass(ctx context.Context, sid64 steamid.SID64) (mod
 	return stats, nil
 }
 
-func (db *Store) StatsPlayerWeapons(ctx context.Context, sid64 steamid.SID64) ([]model.PlayerWeaponStats, error) {
+func StatsPlayerWeapons(ctx context.Context, database Store, sid64 steamid.SID64) ([]model.PlayerWeaponStats, error) {
 	const query = `
 		SELECT n.key,
 			   n.name,
@@ -731,9 +730,9 @@ func (db *Store) StatsPlayerWeapons(ctx context.Context, sid64 steamid.SID64) ([
 		  AND w.weapon_id IS NOT NULL
 		GROUP BY w.weapon_id, n.weapon_id;`
 
-	rows, errQuery := db.Query(ctx, query, sid64.Int64())
+	rows, errQuery := database.Query(ctx, query, sid64.Int64())
 	if errQuery != nil {
-		return nil, Err(errQuery)
+		return nil, DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -745,7 +744,7 @@ func (db *Store) StatsPlayerWeapons(ctx context.Context, sid64 steamid.SID64) ([
 		if errScan := rows.
 			Scan(&class.Weapon, &class.WeaponName, &class.Kills, &class.Damage, &class.Shots, &class.Hits,
 				&class.Backstabs, &class.Headshots, &class.Airshots); errScan != nil {
-			return nil, Err(errScan)
+			return nil, DBErr(errScan)
 		}
 
 		stats = append(stats, class)
@@ -754,7 +753,7 @@ func (db *Store) StatsPlayerWeapons(ctx context.Context, sid64 steamid.SID64) ([
 	return stats, nil
 }
 
-func (db *Store) StatsPlayerKillstreaks(ctx context.Context, sid64 steamid.SID64) ([]model.PlayerKillstreakStats, error) {
+func StatsPlayerKillstreaks(ctx context.Context, database Store, sid64 steamid.SID64) ([]model.PlayerKillstreakStats, error) {
 	const query = `
 		SELECT k.player_class_id,
 			   SUM(k.killstreak) as killstreak,
@@ -770,9 +769,9 @@ func (db *Store) StatsPlayerKillstreaks(ctx context.Context, sid64 steamid.SID64
 		ORDER BY killstreak DESC
 		LIMIT 10;`
 
-	rows, errQuery := db.Query(ctx, query, sid64.Int64())
+	rows, errQuery := database.Query(ctx, query, sid64.Int64())
 	if errQuery != nil {
-		return nil, Err(errQuery)
+		return nil, DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -783,7 +782,7 @@ func (db *Store) StatsPlayerKillstreaks(ctx context.Context, sid64 steamid.SID64
 		var class model.PlayerKillstreakStats
 		if errScan := rows.
 			Scan(&class.Class, &class.Kills, &class.Duration, &class.CreatedOn); errScan != nil {
-			return nil, Err(errScan)
+			return nil, DBErr(errScan)
 		}
 
 		class.ClassName = class.Class.String()
@@ -793,7 +792,7 @@ func (db *Store) StatsPlayerKillstreaks(ctx context.Context, sid64 steamid.SID64
 	return stats, nil
 }
 
-func (db *Store) StatsPlayerMedic(ctx context.Context, sid64 steamid.SID64) ([]model.PlayerMedicStats, error) {
+func StatsPlayerMedic(ctx context.Context, database Store, sid64 steamid.SID64) ([]model.PlayerMedicStats, error) {
 	const query = `
 		SELECT coalesce(SUM(m.healing), 0)                as healing,
 			   coalesce(SUM(m.drops), 0)                  as drops,
@@ -808,9 +807,9 @@ func (db *Store) StatsPlayerMedic(ctx context.Context, sid64 steamid.SID64) ([]m
 		WHERE p.steam_id = $1
 		GROUP BY p.steam_id`
 
-	rows, errQuery := db.Query(ctx, query, sid64.Int64())
+	rows, errQuery := database.Query(ctx, query, sid64.Int64())
 	if errQuery != nil {
-		return nil, Err(errQuery)
+		return nil, DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -822,7 +821,7 @@ func (db *Store) StatsPlayerMedic(ctx context.Context, sid64 steamid.SID64) ([]m
 		if errScan := rows.
 			Scan(&class.Healing, &class.Drops, &class.NearFullChargeDeath, &class.AvgUberLength,
 				&class.ChargesUber, &class.ChargesKritz, &class.ChargesVacc, &class.ChargesQuickfix); errScan != nil {
-			return nil, Err(errScan)
+			return nil, DBErr(errScan)
 		}
 
 		stats = append(stats, class)
@@ -831,7 +830,7 @@ func (db *Store) StatsPlayerMedic(ctx context.Context, sid64 steamid.SID64) ([]m
 	return stats, nil
 }
 
-func (db *Store) PlayerStats(ctx context.Context, steamID steamid.SID64, stats *model.PlayerStats) error {
+func PlayerStats(ctx context.Context, database Store, steamID steamid.SID64, stats *model.PlayerStats) error {
 	const query = `
 		SELECT count(m.match_id)            as                     matches,
 			   sum(case when mp.team = m.winner then 1 else 0 end) wins,
@@ -866,14 +865,14 @@ func (db *Store) PlayerStats(ctx context.Context, steamID steamid.SID64, stats *
 		WHERE mp.steam_id = $1 AND
 			  m.time_start BETWEEN LOCALTIMESTAMP - INTERVAL '1 DAY' and LOCALTIMESTAMP`
 
-	if errQuery := db.
+	if errQuery := database.
 		QueryRow(ctx, query, steamID).
 		Scan(&stats.MatchesWon, &stats.MatchesWon, &stats.HealthPacks,
 			&stats.Extinguishes, &stats.BuildingBuilt, &stats.Kills, &stats.Assists, &stats.Damage, &stats.DamageTaken,
 			&stats.PlayTime, &stats.Captures, &stats.CapturesBlocked, &stats.Dominated, &stats.Dominations, &stats.Revenges,
 			&stats.Deaths, &stats.BuildingDestroyed, &stats.HealingTaken, &stats.Healing, &stats.Drops, &stats.ChargesUber,
 			&stats.ChargesKritz, &stats.ChargesQuickfix, &stats.ChargesVacc); errQuery != nil {
-		return Err(errQuery)
+		return DBErr(errQuery)
 	}
 
 	stats.SteamID = steamID
@@ -881,13 +880,16 @@ func (db *Store) PlayerStats(ctx context.Context, steamID steamid.SID64, stats *
 	return nil
 }
 
-func (db *Store) Matches(ctx context.Context, opts MatchesQueryOpts) ([]model.MatchSummary, int64, error) {
-	countBuilder := db.sb.Select("count(m.match_id) as count").
+func Matches(ctx context.Context, database Store, opts MatchesQueryOpts) ([]model.MatchSummary, int64, error) {
+	countBuilder := database.
+		Builder().
+		Select("count(m.match_id) as count").
 		From("match m").
 		LeftJoin("public.match_player mp on m.match_id = mp.match_id").
 		LeftJoin("public.server s on s.server_id = m.server_id")
 
-	builder := db.sb.
+	builder := database.
+		Builder().
 		Select(
 			"m.match_id",
 			"m.server_id",
@@ -927,13 +929,13 @@ func (db *Store) Matches(ctx context.Context, opts MatchesQueryOpts) ([]model.Ma
 
 	var count int64
 
-	if errCount := db.
+	if errCount := database.
 		QueryRow(ctx, countQuery, countArgs...).
 		Scan(&count); errCount != nil {
-		return nil, 0, Err(errCount)
+		return nil, 0, DBErr(errCount)
 	}
 
-	rows, errQuery := db.QueryBuilder(ctx, builder)
+	rows, errQuery := database.QueryBuilder(ctx, builder)
 	if errQuery != nil {
 		return nil, 0, errors.Wrapf(errQuery, "Failed to query matches")
 	}
@@ -953,9 +955,9 @@ func (db *Store) Matches(ctx context.Context, opts MatchesQueryOpts) ([]model.Ma
 		matches = append(matches, summary)
 	}
 
-	if rows.Err() != nil {
-		db.log.Error("Matches rows error", zap.Error(rows.Err()))
-	}
+	// if rows.DBErr() != nil {
+	//	 database.log.Error("Matches rows error", zap.Error(rows.DBErr()))
+	// }
 
 	return matches, count, nil
 }

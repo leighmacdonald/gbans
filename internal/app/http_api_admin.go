@@ -34,7 +34,7 @@ func onAPIPostServer(app *App) gin.HandlerFunc {
 		server.Region = req.Region
 		server.IsEnabled = req.IsEnabled
 
-		if errSave := app.db.SaveServer(ctx, &server); errSave != nil {
+		if errSave := store.SaveServer(ctx, app.db, &server); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to save new server", zap.Error(errSave))
 
@@ -78,7 +78,7 @@ func onAPIPostServerUpdate(app *App) gin.HandlerFunc {
 		}
 
 		var server model.Server
-		if errServer := app.db.GetServer(ctx, serverID, &server); errServer != nil {
+		if errServer := store.GetServer(ctx, app.db, serverID, &server); errServer != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
@@ -103,7 +103,7 @@ func onAPIPostServerUpdate(app *App) gin.HandlerFunc {
 		server.LogSecret = req.LogSecret
 		server.EnableStats = req.EnableStats
 
-		if errSave := app.db.SaveServer(ctx, &server); errSave != nil {
+		if errSave := store.SaveServer(ctx, app.db, &server); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to update server", zap.Error(errSave))
 
@@ -130,7 +130,7 @@ func onAPIPostServerDelete(app *App) gin.HandlerFunc {
 		}
 
 		var server model.Server
-		if errServer := app.db.GetServer(ctx, serverID, &server); errServer != nil {
+		if errServer := store.GetServer(ctx, app.db, serverID, &server); errServer != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
@@ -138,7 +138,7 @@ func onAPIPostServerDelete(app *App) gin.HandlerFunc {
 
 		server.Deleted = true
 
-		if errSave := app.db.SaveServer(ctx, &server); errSave != nil {
+		if errSave := store.SaveServer(ctx, app.db, &server); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to delete server", zap.Error(errSave))
 
@@ -161,7 +161,7 @@ func onAPIGetServersAdmin(app *App) gin.HandlerFunc {
 			return
 		}
 
-		servers, count, errServers := app.db.GetServers(ctx, filter)
+		servers, count, errServers := store.GetServers(ctx, app.db, filter)
 		if errServers != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -193,7 +193,7 @@ func onAPIPutPlayerPermission(app *App) gin.HandlerFunc {
 		}
 
 		var person model.Person
-		if errGet := app.db.GetPersonBySteamID(ctx, steamID, &person); errGet != nil {
+		if errGet := store.GetPersonBySteamID(ctx, app.db, steamID, &person); errGet != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			log.Error("Failed to load person", zap.Error(errGet))
@@ -209,7 +209,7 @@ func onAPIPutPlayerPermission(app *App) gin.HandlerFunc {
 
 		person.PermissionLevel = req.PermissionLevel
 
-		if errSave := app.db.SavePerson(ctx, &person); errSave != nil {
+		if errSave := store.SavePerson(ctx, app.db, &person); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			log.Error("Failed to save person", zap.Error(errSave))
@@ -236,7 +236,7 @@ func onAPIDeleteBlockList(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if err := app.db.DeleteCIDRBlockSources(ctx, sourceID); err != nil {
+		if err := store.DeleteCIDRBlockSources(ctx, app.db, sourceID); err != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			log.Error("Failed to delete blocklist", zap.Error(err))
@@ -265,7 +265,7 @@ func onAPIGetBlockLists(app *App) gin.HandlerFunc {
 	}
 
 	return func(ctx *gin.Context) {
-		blockLists, err := app.db.GetCIDRBlockSources(ctx)
+		blockLists, err := store.GetCIDRBlockSources(ctx, app.db)
 		if err != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -274,7 +274,7 @@ func onAPIGetBlockLists(app *App) gin.HandlerFunc {
 			return
 		}
 
-		whiteLists, errWl := app.db.GetCIDRBlockWhitelists(ctx)
+		whiteLists, errWl := store.GetCIDRBlockWhitelists(ctx, app.db)
 		if errWl != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -331,7 +331,7 @@ func onAPIPostBlockListCreate(app *App) gin.HandlerFunc {
 			TimeStamped: model.NewTimeStamped(),
 		}
 
-		if errSave := app.db.SaveCIDRBlockSources(ctx, &blockList); errSave != nil {
+		if errSave := store.SaveCIDRBlockSources(ctx, app.db, &blockList); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			log.Error("Failed to save blocklist", zap.Error(errSave))
@@ -362,7 +362,7 @@ func onAPIPostBlockListUpdate(app *App) gin.HandlerFunc {
 
 		var blockSource model.CIDRBlockSource
 
-		if errSource := app.db.GetCIDRBlockSource(ctx, sourceID, &blockSource); errSource != nil {
+		if errSource := store.GetCIDRBlockSource(ctx, app.db, sourceID, &blockSource); errSource != nil {
 			if errors.Is(errSource, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 			} else {
@@ -394,7 +394,7 @@ func onAPIPostBlockListUpdate(app *App) gin.HandlerFunc {
 		blockSource.Name = req.Name
 		blockSource.URL = req.URL
 
-		if errUpdate := app.db.SaveCIDRBlockSources(ctx, &blockSource); errUpdate != nil {
+		if errUpdate := store.SaveCIDRBlockSources(ctx, app.db, &blockSource); errUpdate != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
@@ -433,7 +433,7 @@ func onAPIPostBlockListWhitelistCreate(app *App) gin.HandlerFunc {
 			TimeStamped: model.NewTimeStamped(),
 		}
 
-		if errSave := app.db.SaveCIDRBlockWhitelist(ctx, &whitelist); errSave != nil {
+		if errSave := store.SaveCIDRBlockWhitelist(ctx, app.db, &whitelist); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
@@ -477,7 +477,7 @@ func onAPIPostBlockListWhitelistUpdate(app *App) gin.HandlerFunc {
 		}
 
 		var whitelist model.CIDRBlockWhitelist
-		if errGet := app.db.GetCIDRBlockWhitelist(ctx, whitelistID, &whitelist); errGet != nil {
+		if errGet := store.GetCIDRBlockWhitelist(ctx, app.db, whitelistID, &whitelist); errGet != nil {
 			responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 
 			return
@@ -485,7 +485,7 @@ func onAPIPostBlockListWhitelistUpdate(app *App) gin.HandlerFunc {
 
 		whitelist.Address = cidr
 
-		if errSave := app.db.SaveCIDRBlockWhitelist(ctx, &whitelist); errSave != nil {
+		if errSave := store.SaveCIDRBlockWhitelist(ctx, app.db, &whitelist); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			log.Error("Failed to save whitelist", zap.Error(errSave))
@@ -506,7 +506,7 @@ func onAPIDeleteBlockListWhitelist(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if err := app.db.DeleteCIDRBlockWhitelist(ctx, whitelistID); err != nil {
+		if err := store.DeleteCIDRBlockWhitelist(ctx, app.db, whitelistID); err != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			log.Error("Failed to delete whitelist", zap.Error(err))

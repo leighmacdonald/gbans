@@ -5,16 +5,16 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
-	"go.uber.org/zap"
 )
 
-func (db *Store) LoadWeapons(ctx context.Context) error {
+func LoadWeapons(ctx context.Context, database Store, weaponMap fp.MutexMap[logparse.Weapon, int]) error {
 	for weapon, name := range logparse.NewWeaponParser().NameMap() {
 		var newWeapon model.Weapon
-		if errWeapon := db.GetWeaponByKey(ctx, weapon, &newWeapon); errWeapon != nil {
+		if errWeapon := GetWeaponByKey(ctx, database, weapon, &newWeapon); errWeapon != nil {
 			if !errors.Is(errWeapon, ErrNoResult) {
 				return errWeapon
 			}
@@ -22,52 +22,55 @@ func (db *Store) LoadWeapons(ctx context.Context) error {
 			newWeapon.Key = weapon
 			newWeapon.Name = name
 
-			if errSave := db.SaveWeapon(ctx, &newWeapon); errSave != nil {
-				return Err(errSave)
+			if errSave := SaveWeapon(ctx, database, &newWeapon); errSave != nil {
+				return DBErr(errSave)
 			}
 		}
 
-		db.weaponMap.Set(weapon, newWeapon.WeaponID)
+		weaponMap.Set(weapon, newWeapon.WeaponID)
 	}
 
 	return nil
 }
 
-func (db *Store) GetWeaponByKey(ctx context.Context, key logparse.Weapon, weapon *model.Weapon) error {
-	row, errRow := db.QueryRowBuilder(ctx, db.sb.
+func GetWeaponByKey(ctx context.Context, database Store, key logparse.Weapon, weapon *model.Weapon) error {
+	row, errRow := database.QueryRowBuilder(ctx, database.
+		Builder().
 		Select("weapon_id", "key", "name").
 		From("weapon").
 		Where(sq.Eq{"key": key}))
 	if errRow != nil {
-		return errRow
+		return DBErr(errRow)
 	}
 
-	return Err(row.Scan(&weapon.WeaponID, &weapon.Key, &weapon.Name))
+	return DBErr(row.Scan(&weapon.WeaponID, &weapon.Key, &weapon.Name))
 }
 
-func (db *Store) GetWeaponByID(ctx context.Context, weaponID int, weapon *model.Weapon) error {
-	row, errRow := db.QueryRowBuilder(ctx, db.sb.
+func GetWeaponByID(ctx context.Context, database Store, weaponID int, weapon *model.Weapon) error {
+	row, errRow := database.QueryRowBuilder(ctx, database.
+		Builder().
 		Select("weapon_id", "key", "name").
 		From("weapon").Where(sq.Eq{"weapon_id": weaponID}))
 	if errRow != nil {
-		return errRow
+		return DBErr(errRow)
 	}
 
-	return Err(row.Scan(&weapon.WeaponID, &weapon.Key, &weapon.Name))
+	return DBErr(row.Scan(&weapon.WeaponID, &weapon.Key, &weapon.Name))
 }
 
-func (db *Store) SaveWeapon(ctx context.Context, weapon *model.Weapon) error {
+func SaveWeapon(ctx context.Context, database Store, weapon *model.Weapon) error {
 	if weapon.WeaponID > 0 {
-		return db.ExecUpdateBuilder(ctx, db.sb.
+		return DBErr(database.ExecUpdateBuilder(ctx, database.
+			Builder().
 			Update("weapon").
 			Set("key", weapon.Key).
 			Set("name", weapon.Name).
-			Where(sq.Eq{"weapon_id": weapon.WeaponID}))
+			Where(sq.Eq{"weapon_id": weapon.WeaponID})))
 	}
 
 	const wq = `INSERT INTO weapon (key, name) VALUES ($1, $2) RETURNING weapon_id`
 
-	if errSave := db.
+	if errSave := database.
 		QueryRow(ctx, wq, weapon.Key, weapon.Name).
 		Scan(&weapon.WeaponID); errSave != nil {
 		return errors.Wrap(errSave, "Failed to insert weapon")
@@ -76,12 +79,13 @@ func (db *Store) SaveWeapon(ctx context.Context, weapon *model.Weapon) error {
 	return nil
 }
 
-func (db *Store) Weapons(ctx context.Context) ([]model.Weapon, error) {
-	rows, errRows := db.QueryBuilder(ctx, db.sb.
+func Weapons(ctx context.Context, database Store) ([]model.Weapon, error) {
+	rows, errRows := database.QueryBuilder(ctx, database.
+		Builder().
 		Select("weapon_id", "key", "name").
 		From("weapon"))
 	if errRows != nil {
-		return nil, errRows
+		return nil, DBErr(errRows)
 	}
 
 	defer rows.Close()
@@ -104,7 +108,7 @@ func (db *Store) Weapons(ctx context.Context) ([]model.Weapon, error) {
 	return weapons, nil
 }
 
-func (db *Store) GetStats(ctx context.Context, stats *model.Stats) error {
+func GetStats(ctx context.Context, database Store, stats *model.Stats) error {
 	const query = `
 	SELECT 
 		(SELECT COUNT(ban_id) FROM ban) as bans_total,
@@ -118,17 +122,15 @@ func (db *Store) GetStats(ctx context.Context, stats *model.Stats) error {
 		(SELECT COUNT(filter_id) FROM filtered_word) as filtered_words,
 		(SELECT COUNT(server_id) FROM server) as servers_total`
 
-	if errQuery := db.QueryRow(ctx, query).
+	if errQuery := database.QueryRow(ctx, query).
 		Scan(&stats.BansTotal, &stats.BansDay, &stats.BansWeek, &stats.BansMonth, &stats.Bans3Month, &stats.Bans6Month, &stats.BansYear, &stats.BansCIDRTotal, &stats.FilteredWords, &stats.ServersTotal); errQuery != nil {
-		db.log.Error("Failed to fetch stats", zap.Error(errQuery))
-
-		return Err(errQuery)
+		return DBErr(errQuery)
 	}
 
 	return nil
 }
 
-func (db *Store) GetMapUsageStats(ctx context.Context) ([]model.MapUseDetail, error) {
+func GetMapUsageStats(ctx context.Context, database Store) ([]model.MapUseDetail, error) {
 	const query = `SELECT m.map, m.playtime, (m.playtime::float / s.total::float) * 100 percent
 		FROM (
 			SELECT SUM(extract('epoch' from m.time_end - m.time_start)) as playtime, m.map FROM match m
@@ -141,9 +143,9 @@ func (db *Store) GetMapUsageStats(ctx context.Context) ([]model.MapUseDetail, er
 
 	var details []model.MapUseDetail
 
-	rows, errQuery := db.Query(ctx, query)
+	rows, errQuery := database.Query(ctx, query)
 	if errQuery != nil {
-		return nil, Err(errQuery)
+		return nil, DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -155,7 +157,7 @@ func (db *Store) GetMapUsageStats(ctx context.Context) ([]model.MapUseDetail, er
 		)
 
 		if errScan := rows.Scan(&mud.Map, &seconds, &mud.Percent); errScan != nil {
-			return nil, Err(errScan)
+			return nil, DBErr(errScan)
 		}
 
 		mud.Playtime = seconds
@@ -170,8 +172,9 @@ func (db *Store) GetMapUsageStats(ctx context.Context) ([]model.MapUseDetail, er
 	return details, nil
 }
 
-func (db *Store) TopChatters(ctx context.Context, count uint64) ([]model.TopChatterResult, error) {
-	rows, errRows := db.QueryBuilder(ctx, db.sb.
+func TopChatters(ctx context.Context, database Store, count uint64) ([]model.TopChatterResult, error) {
+	rows, errRows := database.QueryBuilder(ctx, database.
+		Builder().
 		Select("p.personaname", "p.steam_id", "count(person_message_id) as total").
 		From("person_messages m").
 		LeftJoin("public.person p USING(steam_id)").
@@ -179,7 +182,7 @@ func (db *Store) TopChatters(ctx context.Context, count uint64) ([]model.TopChat
 		OrderBy("total DESC").
 		Limit(count))
 	if errRows != nil {
-		return nil, Err(errRows)
+		return nil, DBErr(errRows)
 	}
 
 	defer rows.Close()
@@ -193,7 +196,7 @@ func (db *Store) TopChatters(ctx context.Context, count uint64) ([]model.TopChat
 		)
 
 		if errScan := rows.Scan(&tcr.Name, &steamID, &tcr.Count); errScan != nil {
-			return nil, Err(errScan)
+			return nil, DBErr(errScan)
 		}
 
 		tcr.SteamID = steamid.New(steamID)
@@ -203,7 +206,7 @@ func (db *Store) TopChatters(ctx context.Context, count uint64) ([]model.TopChat
 	return results, nil
 }
 
-func (db *Store) WeaponsOverall(ctx context.Context) ([]model.WeaponsOverallResult, error) {
+func WeaponsOverall(ctx context.Context, database Store) ([]model.WeaponsOverallResult, error) {
 	const query = `
 		SELECT 
 		    s.weapon_id, s.name, s.key, 
@@ -239,9 +242,9 @@ func (db *Store) WeaponsOverall(ctx context.Context) ([]model.WeaponsOverallResu
             FROM match_weapon mw
         ) t ;`
 
-	rows, errQuery := db.Query(ctx, query)
+	rows, errQuery := database.Query(ctx, query)
 	if errQuery != nil {
-		return nil, Err(errQuery)
+		return nil, DBErr(errQuery)
 	}
 	defer rows.Close()
 
@@ -258,7 +261,7 @@ func (db *Store) WeaponsOverall(ctx context.Context) ([]model.WeaponsOverallResu
 				&wor.Shots, &wor.ShotsPct,
 				&wor.Hits, &wor.HitsPct,
 				&wor.Damage, &wor.DamagePct); errScan != nil {
-			return nil, Err(errScan)
+			return nil, DBErr(errScan)
 		}
 
 		results = append(results, wor)
@@ -267,8 +270,9 @@ func (db *Store) WeaponsOverall(ctx context.Context) ([]model.WeaponsOverallResu
 	return results, nil
 }
 
-func (db *Store) WeaponsOverallTopPlayers(ctx context.Context, weaponID int) ([]model.PlayerWeaponResult, error) {
-	rows, errQuery := db.QueryBuilder(ctx, db.sb.
+func WeaponsOverallTopPlayers(ctx context.Context, database Store, weaponID int) ([]model.PlayerWeaponResult, error) {
+	rows, errQuery := database.QueryBuilder(ctx, database.
+		Builder().
 		Select("row_number() over (order by SUM(mw.kills) desc nulls last) as rank",
 			"p.steam_id", "p.personaname", "p.avatarhash",
 			"SUM(mw.kills) as kills", "sum(mw.damage) as damage",
@@ -285,7 +289,7 @@ func (db *Store) WeaponsOverallTopPlayers(ctx context.Context, weaponID int) ([]
 		OrderBy("kills DESC").
 		Limit(250))
 	if errQuery != nil {
-		return nil, Err(errQuery)
+		return nil, DBErr(errQuery)
 	}
 	defer rows.Close()
 
@@ -303,7 +307,7 @@ func (db *Store) WeaponsOverallTopPlayers(ctx context.Context, weaponID int) ([]
 				&pwr.Shots, &pwr.Hits,
 				&pwr.Backstabs, &pwr.Headshots,
 				&pwr.Airshots); errScan != nil {
-			return nil, Err(errScan)
+			return nil, DBErr(errScan)
 		}
 
 		pwr.SteamID = steamid.New(sid64)
@@ -313,7 +317,7 @@ func (db *Store) WeaponsOverallTopPlayers(ctx context.Context, weaponID int) ([]
 	return results, nil
 }
 
-func (db *Store) WeaponsOverallByPlayer(ctx context.Context, steamID steamid.SID64) ([]model.WeaponsOverallResult, error) {
+func WeaponsOverallByPlayer(ctx context.Context, database Store, steamID steamid.SID64) ([]model.WeaponsOverallResult, error) {
 	const query = `
 		SELECT
 			row_number() over (order by s.kills desc nulls last) as rank,
@@ -356,9 +360,9 @@ func (db *Store) WeaponsOverallByPlayer(ctx context.Context, steamID steamid.SID
 			WHERE mp.steam_id = $1
 		) t`
 
-	rows, errQuery := db.Query(ctx, query, steamID.Int64())
+	rows, errQuery := database.Query(ctx, query, steamID.Int64())
 	if errQuery != nil {
-		return nil, Err(errQuery)
+		return nil, DBErr(errQuery)
 	}
 	defer rows.Close()
 
@@ -376,7 +380,7 @@ func (db *Store) WeaponsOverallByPlayer(ctx context.Context, steamID steamid.SID
 				&wor.Shots, &wor.ShotsPct,
 				&wor.Hits, &wor.HitsPct,
 				&wor.Damage, &wor.DamagePct); errScan != nil {
-			return nil, Err(errScan)
+			return nil, DBErr(errScan)
 		}
 
 		results = append(results, wor)
@@ -385,7 +389,7 @@ func (db *Store) WeaponsOverallByPlayer(ctx context.Context, steamID steamid.SID
 	return results, nil
 }
 
-func (db *Store) PlayersOverallByKills(ctx context.Context, count int) ([]model.PlayerWeaponResult, error) {
+func PlayersOverallByKills(ctx context.Context, database Store, count int) ([]model.PlayerWeaponResult, error) {
 	const query = `SELECT row_number() over (order by c.assists + w.kills desc nulls last) as rank,
 			   p.personaname,
 			   p.steam_id,
@@ -446,9 +450,9 @@ func (db *Store) PlayersOverallByKills(ctx context.Context, count int) ([]model.
 		ORDER BY rank
 		LIMIT $1`
 
-	rows, errQuery := db.Query(ctx, query, count)
+	rows, errQuery := database.Query(ctx, query, count)
 	if errQuery != nil {
-		return nil, Err(errQuery)
+		return nil, DBErr(errQuery)
 	}
 	defer rows.Close()
 
@@ -469,7 +473,7 @@ func (db *Store) PlayersOverallByKills(ctx context.Context, count int) ([]model.
 				&wor.Dominated, &wor.Revenges, &wor.Damage, &wor.DamageTaken, &wor.Captures,
 				&wor.CapturesBlocked, &wor.BuildingsDestroyed,
 			); errScan != nil {
-			return nil, Err(errScan)
+			return nil, DBErr(errScan)
 		}
 
 		wor.SteamID = steamid.New(sid64)
@@ -479,7 +483,7 @@ func (db *Store) PlayersOverallByKills(ctx context.Context, count int) ([]model.
 	return results, nil
 }
 
-func (db *Store) HealersOverallByHealing(ctx context.Context, count int) ([]model.HealingOverallResult, error) {
+func HealersOverallByHealing(ctx context.Context, database Store, count int) ([]model.HealingOverallResult, error) {
 	const query = `
 		SELECT
             row_number() over (order by h.healing desc nulls last) as rank,
@@ -558,9 +562,9 @@ func (db *Store) HealersOverallByHealing(ctx context.Context, count int) ([]mode
 		ORDER BY rank
 		LIMIT $1`
 
-	rows, errQuery := db.Query(ctx, query, count)
+	rows, errQuery := database.Query(ctx, query, count)
 	if errQuery != nil {
-		return nil, Err(errQuery)
+		return nil, DBErr(errQuery)
 	}
 	defer rows.Close()
 
@@ -581,7 +585,7 @@ func (db *Store) HealersOverallByHealing(ctx context.Context, count int) ([]mode
 				&wor.Playtime, &wor.Dominations, &wor.Dominated, &wor.Revenges,
 				&wor.DamageTaken, &wor.DTM, &wor.Wins, &wor.Matches, &wor.WinRate,
 			); errScan != nil {
-			return nil, Err(errScan)
+			return nil, DBErr(errScan)
 		}
 
 		wor.SteamID = steamid.New(sid64)
@@ -591,7 +595,7 @@ func (db *Store) HealersOverallByHealing(ctx context.Context, count int) ([]mode
 	return results, nil
 }
 
-func (db *Store) PlayerOverallClassStats(ctx context.Context, steamID steamid.SID64) ([]model.PlayerClassOverallResult, error) {
+func PlayerOverallClassStats(ctx context.Context, database Store, steamID steamid.SID64) ([]model.PlayerClassOverallResult, error) {
 	const query = `
 		SELECT
 			c.player_class_id,
@@ -620,9 +624,9 @@ func (db *Store) PlayerOverallClassStats(ctx context.Context, steamID steamid.SI
 		WHERE mp.steam_id = $1
 		GROUP BY c.player_class_id`
 
-	rows, errQuery := db.Query(ctx, query, steamID.Int64())
+	rows, errQuery := database.Query(ctx, query, steamID.Int64())
 	if errQuery != nil {
-		return nil, Err(errQuery)
+		return nil, DBErr(errQuery)
 	}
 	defer rows.Close()
 
@@ -638,7 +642,7 @@ func (db *Store) PlayerOverallClassStats(ctx context.Context, steamID steamid.SI
 				&wor.HealingTaken, &wor.Captures, &wor.CapturesBlocked, &wor.BuildingsDestroyed,
 				&wor.KD, &wor.KAD, &wor.DPM,
 			); errScan != nil {
-			return nil, Err(errScan)
+			return nil, DBErr(errScan)
 		}
 
 		results = append(results, wor)
@@ -647,7 +651,7 @@ func (db *Store) PlayerOverallClassStats(ctx context.Context, steamID steamid.SI
 	return results, nil
 }
 
-func (db *Store) PlayerOverallStats(ctx context.Context, steamID steamid.SID64, por *model.PlayerOverallResult) error {
+func PlayerOverallStats(ctx context.Context, database Store, steamID steamid.SID64, por *model.PlayerOverallResult) error {
 	const query = `
 		SELECT coalesce(h.healing, 0),
 			   coalesce(h.drops, 0),
@@ -740,7 +744,7 @@ func (db *Store) PlayerOverallStats(ctx context.Context, steamID steamid.SID64, 
 							GROUP BY mp.steam_id) c ON c.steam_id = p.steam_id
 		WHERE p.steam_id = $1`
 
-	if errQuery := db.
+	if errQuery := database.
 		QueryRow(ctx, query, steamID.Int64()).Scan(
 		&por.Healing, &por.Drops, &por.NearFullChargeDeath, &por.AvgUberLen, &por.MajorAdvLost, &por.BiggestAdvLost,
 		&por.ChargesUber, &por.ChargesKritz, &por.ChargesVacc, &por.ChargesQuickfix, &por.Buildings, &por.Extinguishes,
@@ -748,7 +752,7 @@ func (db *Store) PlayerOverallStats(ctx context.Context, steamID steamid.SID64, 
 		&por.Headshots, &por.Playtime, &por.Dominations, &por.Dominated, &por.Revenges, &por.Damage, &por.DamageTaken,
 		&por.Captures, &por.CapturesBlocked, &por.BuildingsDestroyed, &por.HealingTaken, &por.Wins, &por.Matches, &por.WinRate,
 	); errQuery != nil {
-		return Err(errQuery)
+		return DBErr(errQuery)
 	}
 
 	return nil

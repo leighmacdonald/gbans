@@ -38,7 +38,7 @@ func onAPISaveWikiSlug(app *App) gin.HandlerFunc {
 		}
 
 		var page wiki.Page
-		if errGetWikiSlug := app.db.GetWikiPageBySlug(ctx, req.Slug, &page); errGetWikiSlug != nil {
+		if errGetWikiSlug := store.GetWikiPageBySlug(ctx, app.db, req.Slug, &page); errGetWikiSlug != nil {
 			if errors.Is(errGetWikiSlug, store.ErrNoResult) {
 				page.CreatedOn = time.Now()
 				page.Revision += 1
@@ -55,7 +55,7 @@ func onAPISaveWikiSlug(app *App) gin.HandlerFunc {
 		page.PermissionLevel = req.PermissionLevel
 		page.BodyMD = req.BodyMD
 
-		if errSave := app.db.SaveWikiPage(ctx, &page); errSave != nil {
+		if errSave := store.SaveWikiPage(ctx, app.db, &page); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
@@ -74,7 +74,7 @@ func onAPIPostNewsCreate(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if errSave := app.db.SaveNewsArticle(ctx, &req); errSave != nil {
+		if errSave := store.SaveNewsArticle(ctx, app.db, &req); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
@@ -106,8 +106,8 @@ func onAPIPostNewsUpdate(app *App) gin.HandlerFunc {
 		}
 
 		var entry model.NewsEntry
-		if errGet := app.db.GetNewsByID(ctx, newsID, &entry); errGet != nil {
-			if errors.Is(store.Err(errGet), store.ErrNoResult) {
+		if errGet := store.GetNewsByID(ctx, app.db, newsID, &entry); errGet != nil {
+			if errors.Is(store.DBErr(errGet), store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 
 				return
@@ -122,7 +122,7 @@ func onAPIPostNewsUpdate(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if errSave := app.db.SaveNewsArticle(ctx, &entry); errSave != nil {
+		if errSave := store.SaveNewsArticle(ctx, app.db, &entry); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
@@ -144,7 +144,7 @@ func onAPIPostNewsUpdate(app *App) gin.HandlerFunc {
 
 func onAPIGetNewsAll(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		newsLatest, errGetNewsLatest := app.db.GetNewsLatest(ctx, 100, true)
+		newsLatest, errGetNewsLatest := store.GetNewsLatest(ctx, app.db, 100, true)
 		if errGetNewsLatest != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -164,7 +164,7 @@ func onAPIQueryWordFilters(app *App) gin.HandlerFunc {
 			return
 		}
 
-		words, count, errGetFilters := app.db.GetFilters(ctx, opts)
+		words, count, errGetFilters := store.GetFilters(ctx, app.db, opts)
 		if errGetFilters != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -216,7 +216,7 @@ func onAPIPostWordFilter(app *App) gin.HandlerFunc {
 
 		if req.FilterID > 0 {
 			var existingFilter model.Filter
-			if errGet := app.db.GetFilterByID(ctx, req.FilterID, &existingFilter); errGet != nil {
+			if errGet := store.GetFilterByID(ctx, app.db, req.FilterID, &existingFilter); errGet != nil {
 				if errors.Is(errGet, store.ErrNoResult) {
 					responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 
@@ -280,7 +280,7 @@ func onAPIDeleteWordFilter(app *App) gin.HandlerFunc {
 		}
 
 		var filter model.Filter
-		if errGet := app.db.GetFilterByID(ctx, wordID, &filter); errGet != nil {
+		if errGet := store.GetFilterByID(ctx, app.db, wordID, &filter); errGet != nil {
 			if errors.Is(errGet, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 
@@ -292,7 +292,7 @@ func onAPIDeleteWordFilter(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if errDrop := app.db.DropFilter(ctx, &filter); errDrop != nil {
+		if errDrop := store.DropFilter(ctx, app.db, &filter); errDrop != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
@@ -315,7 +315,7 @@ func onAPIPostWordMatch(app *App) gin.HandlerFunc {
 			return
 		}
 
-		words, _, errGetFilters := app.db.GetFilters(ctx, store.FiltersQueryFilter{})
+		words, _, errGetFilters := store.GetFilters(ctx, app.db, store.FiltersQueryFilter{})
 		if errGetFilters != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -336,7 +336,7 @@ func onAPIPostWordMatch(app *App) gin.HandlerFunc {
 
 func onAPIExportBansValveIP(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		bans, _, errBans := app.db.GetBansNet(ctx, store.CIDRBansQueryFilter{})
+		bans, _, errBans := store.GetBansNet(ctx, app.db, store.CIDRBansQueryFilter{})
 		if errBans != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -367,7 +367,7 @@ func onAPISearchPlayers(app *App) gin.HandlerFunc {
 			return
 		}
 
-		people, count, errGetPeople := app.db.GetPeople(ctx, query)
+		people, count, errGetPeople := store.GetPeople(ctx, app.db, query)
 		if errGetPeople != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -388,7 +388,7 @@ func onAPIPostBanState(app *App) gin.HandlerFunc {
 		}
 
 		var report model.Report
-		if errReport := app.db.GetReport(ctx, reportID, &report); errReport != nil {
+		if errReport := store.GetReport(ctx, app.db, reportID, &report); errReport != nil {
 			if errors.Is(errReport, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 
@@ -417,7 +417,7 @@ func onAPIQueryPersonConnections(app *App) gin.HandlerFunc {
 			return
 		}
 
-		ipHist, totalCount, errIPHist := app.db.QueryConnectionHistory(ctx, req)
+		ipHist, totalCount, errIPHist := store.QueryConnectionHistory(ctx, app.db, req)
 		if errIPHist != nil && !errors.Is(errIPHist, store.ErrNoResult) {
 			log.Error("Failed to query connection history", zap.Error(errIPHist))
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
@@ -450,13 +450,13 @@ func onAPIQueryMessageContext(app *App) gin.HandlerFunc {
 		}
 
 		var msg model.QueryChatHistoryResult
-		if errMsg := app.db.GetPersonMessage(ctx, messageID, &msg); errMsg != nil {
+		if errMsg := store.GetPersonMessage(ctx, app.db, messageID, &msg); errMsg != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
 		}
 
-		messages, errQuery := app.db.GetPersonMessageContext(ctx, msg.ServerID, messageID, padding)
+		messages, errQuery := store.GetPersonMessageContext(ctx, app.db, msg.ServerID, messageID, padding)
 		if errQuery != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -476,7 +476,7 @@ func onAPIGetAppeals(app *App) gin.HandlerFunc {
 			return
 		}
 
-		bans, total, errBans := app.db.GetAppealsByActivity(ctx, req)
+		bans, total, errBans := store.GetAppealsByActivity(ctx, app.db, req)
 		if errBans != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to fetch appeals", zap.Error(errBans))
@@ -497,7 +497,7 @@ func onAPIGetBansSteam(app *App) gin.HandlerFunc {
 			return
 		}
 
-		bans, count, errBans := app.db.GetBansSteam(ctx, req)
+		bans, count, errBans := store.GetBansSteam(ctx, app.db, req)
 		if errBans != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to fetch steam bans", zap.Error(errBans))
@@ -526,7 +526,7 @@ func onAPIPostBanDelete(app *App) gin.HandlerFunc {
 		}
 
 		bannedPerson := model.NewBannedPerson()
-		if banErr := app.db.GetBanByBanID(ctx, banID, &bannedPerson, false); banErr != nil {
+		if banErr := store.GetBanByBanID(ctx, app.db, banID, &bannedPerson, false); banErr != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
@@ -582,7 +582,7 @@ func onAPIPostBanUpdate(app *App) gin.HandlerFunc {
 		}
 
 		bannedPerson := model.NewBannedPerson()
-		if banErr := app.db.GetBanByBanID(ctx, banID, &bannedPerson, false); banErr != nil {
+		if banErr := store.GetBanByBanID(ctx, app.db, banID, &bannedPerson, false); banErr != nil {
 			responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 
 			return
@@ -606,7 +606,7 @@ func onAPIPostBanUpdate(app *App) gin.HandlerFunc {
 		bannedPerson.IncludeFriends = req.IncludeFriends
 		bannedPerson.ValidUntil = req.ValidUntil
 
-		if errSave := app.db.SaveBan(ctx, &bannedPerson.BanSteam); errSave != nil {
+		if errSave := store.SaveBan(ctx, app.db, &bannedPerson.BanSteam); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to save updated ban", zap.Error(errSave))
 
@@ -638,7 +638,7 @@ func onAPIPostSetBanAppealStatus(app *App) gin.HandlerFunc {
 		}
 
 		bannedPerson := model.NewBannedPerson()
-		if banErr := app.db.GetBanByBanID(ctx, banID, &bannedPerson, false); banErr != nil {
+		if banErr := store.GetBanByBanID(ctx, app.db, banID, &bannedPerson, false); banErr != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
@@ -653,7 +653,7 @@ func onAPIPostSetBanAppealStatus(app *App) gin.HandlerFunc {
 		original := bannedPerson.AppealState
 		bannedPerson.AppealState = req.AppealState
 
-		if errSave := app.db.SaveBan(ctx, &bannedPerson.BanSteam); errSave != nil {
+		if errSave := store.SaveBan(ctx, app.db, &bannedPerson.BanSteam); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
@@ -742,7 +742,7 @@ func onAPIGetBansCIDR(app *App) gin.HandlerFunc {
 			return
 		}
 
-		bans, count, errBans := app.db.GetBansNet(ctx, req)
+		bans, count, errBans := store.GetBansNet(ctx, app.db, req)
 		if errBans != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to fetch cidr bans", zap.Error(errBans))
@@ -771,7 +771,7 @@ func onAPIDeleteBansCIDR(app *App) gin.HandlerFunc {
 		}
 
 		var banCidr model.BanCIDR
-		if errFetch := app.db.GetBanNetByID(ctx, netID, &banCidr); errFetch != nil {
+		if errFetch := store.GetBanNetByID(ctx, app.db, netID, &banCidr); errFetch != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
@@ -780,7 +780,7 @@ func onAPIDeleteBansCIDR(app *App) gin.HandlerFunc {
 		banCidr.UnbanReasonText = req.UnbanReasonText
 		banCidr.Deleted = true
 
-		if errSave := app.db.SaveBanNet(ctx, &banCidr); errSave != nil {
+		if errSave := store.SaveBanNet(ctx, app.db, &banCidr); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to delete cidr ban", zap.Error(errSave))
 
@@ -815,7 +815,7 @@ func onAPIPostBansCIDRUpdate(app *App) gin.HandlerFunc {
 
 		var ban model.BanCIDR
 
-		if errBan := app.db.GetBanNetByID(ctx, netID, &ban); errBan != nil {
+		if errBan := store.GetBanNetByID(ctx, app.db, netID, &ban); errBan != nil {
 			if errors.Is(errBan, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 			}
@@ -857,7 +857,7 @@ func onAPIPostBansCIDRUpdate(app *App) gin.HandlerFunc {
 		ban.ValidUntil = req.ValidUntil
 		ban.TargetID = sid
 
-		if errSave := app.db.SaveBanNet(ctx, &ban); errSave != nil {
+		if errSave := store.SaveBanNet(ctx, app.db, &ban); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
@@ -942,7 +942,7 @@ func onAPIGetBansASN(app *App) gin.HandlerFunc {
 			return
 		}
 
-		bansASN, count, errBans := app.db.GetBansASN(ctx, req)
+		bansASN, count, errBans := store.GetBansASN(ctx, app.db, req)
 		if errBans != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to fetch banASN", zap.Error(errBans))
@@ -971,7 +971,7 @@ func onAPIDeleteBansASN(app *App) gin.HandlerFunc {
 		}
 
 		var banAsn model.BanASN
-		if errFetch := app.db.GetBanASN(ctx, asnID, &banAsn); errFetch != nil {
+		if errFetch := store.GetBanASN(ctx, app.db, asnID, &banAsn); errFetch != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
@@ -980,7 +980,7 @@ func onAPIDeleteBansASN(app *App) gin.HandlerFunc {
 		banAsn.UnbanReasonText = req.UnbanReasonText
 		banAsn.Deleted = true
 
-		if errSave := app.db.SaveBanASN(ctx, &banAsn); errSave != nil {
+		if errSave := store.SaveBanASN(ctx, app.db, &banAsn); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to delete asn ban", zap.Error(errSave))
 
@@ -1013,7 +1013,7 @@ func onAPIPostBansASNUpdate(app *App) gin.HandlerFunc {
 		}
 
 		var ban model.BanASN
-		if errBan := app.db.GetBanASN(ctx, asnID, &ban); errBan != nil {
+		if errBan := store.GetBanASN(ctx, app.db, asnID, &ban); errBan != nil {
 			if errors.Is(errBan, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 
@@ -1049,7 +1049,7 @@ func onAPIPostBansASNUpdate(app *App) gin.HandlerFunc {
 		ban.Reason = req.Reason
 		ban.ReasonText = req.ReasonText
 
-		if errSave := app.db.SaveBanASN(ctx, &ban); errSave != nil {
+		if errSave := store.SaveBanASN(ctx, app.db, &ban); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
@@ -1077,7 +1077,7 @@ func onAPIPostBansGroupCreate(app *App) gin.HandlerFunc {
 		}
 
 		var existing model.BanGroup
-		if errExist := app.db.GetBanGroup(ctx, req.GroupID, &existing); errExist != nil {
+		if errExist := store.GetBanGroup(ctx, app.db, req.GroupID, &existing); errExist != nil {
 			if !errors.Is(errExist, store.ErrNoResult) {
 				responseErr(ctx, http.StatusConflict, consts.ErrDuplicate)
 
@@ -1142,7 +1142,7 @@ func onAPIGetBansGroup(app *App) gin.HandlerFunc {
 			return
 		}
 
-		banGroups, count, errBans := app.db.GetBanGroups(ctx, req)
+		banGroups, count, errBans := store.GetBanGroups(ctx, app.db, req)
 		if errBans != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to fetch banGroups", zap.Error(errBans))
@@ -1171,7 +1171,7 @@ func onAPIDeleteBansGroup(app *App) gin.HandlerFunc {
 		}
 
 		var banGroup model.BanGroup
-		if errFetch := app.db.GetBanGroupByID(ctx, groupID, &banGroup); errFetch != nil {
+		if errFetch := store.GetBanGroupByID(ctx, app.db, groupID, &banGroup); errFetch != nil {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrInternal)
 
 			return
@@ -1180,7 +1180,7 @@ func onAPIDeleteBansGroup(app *App) gin.HandlerFunc {
 		banGroup.UnbanReasonText = req.UnbanReasonText
 		banGroup.Deleted = true
 
-		if errSave := app.db.SaveBanGroup(ctx, &banGroup); errSave != nil {
+		if errSave := store.SaveBanGroup(ctx, app.db, &banGroup); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to delete asn ban", zap.Error(errSave))
 
@@ -1225,7 +1225,7 @@ func onAPIPostBansGroupUpdate(app *App) gin.HandlerFunc {
 
 		var ban model.BanGroup
 
-		if errExist := app.db.GetBanGroupByID(ctx, banGroupID, &ban); errExist != nil {
+		if errExist := store.GetBanGroupByID(ctx, app.db, banGroupID, &ban); errExist != nil {
 			if !errors.Is(errExist, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 
@@ -1241,7 +1241,7 @@ func onAPIPostBansGroupUpdate(app *App) gin.HandlerFunc {
 		ban.ValidUntil = req.ValidUntil
 		ban.TargetID = sid
 
-		if errSave := app.db.SaveBanGroup(ctx, &ban); errSave != nil {
+		if errSave := store.SaveBanGroup(ctx, app.db, &ban); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
@@ -1302,7 +1302,7 @@ func onAPIPostContest(app *App) gin.HandlerFunc {
 			newContest.ContestID = newID
 		}
 
-		if errSave := app.db.ContestSave(ctx, &newContest); errSave != nil {
+		if errSave := store.ContestSave(ctx, app.db, &newContest); errSave != nil {
 			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
 
 			return
@@ -1325,7 +1325,7 @@ func onAPIDeleteContest(app *App) gin.HandlerFunc {
 
 		var contest model.Contest
 
-		if errContest := app.db.ContestByID(ctx, contestID, &contest); errContest != nil {
+		if errContest := store.ContestByID(ctx, app.db, contestID, &contest); errContest != nil {
 			if errors.Is(errContest, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrUnknownID)
 
@@ -1339,7 +1339,7 @@ func onAPIDeleteContest(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if errDelete := app.db.ContestDelete(ctx, contest.ContestID); errDelete != nil {
+		if errDelete := store.ContestDelete(ctx, app.db, contest.ContestID); errDelete != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			log.Error("Error deleting contest", zap.Error(errDelete))
@@ -1368,7 +1368,7 @@ func onAPIUpdateContest(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if errSave := app.db.ContestSave(ctx, &contest); errSave != nil {
+		if errSave := store.ContestSave(ctx, app.db, &contest); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			log.Error("Error updating contest", zap.Error(errSave))
@@ -1406,7 +1406,7 @@ func onAPICreateForumCategory(app *App) gin.HandlerFunc {
 			TimeStamped: model.NewTimeStamped(),
 		}
 
-		if errSave := app.db.ForumCategorySave(ctx, &category); errSave != nil {
+		if errSave := store.ForumCategorySave(ctx, app.db, &category); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			log.Error("Error creating new forum category", zap.Error(errSave))
@@ -1433,7 +1433,7 @@ func onAPIForumCategory(app *App) gin.HandlerFunc {
 
 		var category model.ForumCategory
 
-		if errGet := app.db.ForumCategory(ctx, forumCategoryID, &category); errGet != nil {
+		if errGet := store.ForumCategory(ctx, app.db, forumCategoryID, &category); errGet != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			log.Error("Error fetching forum category", zap.Error(errGet))
@@ -1457,7 +1457,7 @@ func onAPIUpdateForumCategory(app *App) gin.HandlerFunc {
 		}
 
 		var category model.ForumCategory
-		if errGet := app.db.ForumCategory(ctx, categoryID, &category); errGet != nil {
+		if errGet := store.ForumCategory(ctx, app.db, categoryID, &category); errGet != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
@@ -1472,7 +1472,7 @@ func onAPIUpdateForumCategory(app *App) gin.HandlerFunc {
 		category.Description = util.SanitizeUGC(req.Description)
 		category.Ordering = req.Ordering
 
-		if errSave := app.db.ForumCategorySave(ctx, &category); errSave != nil {
+		if errSave := store.ForumCategorySave(ctx, app.db, &category); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			log.Error("Error creating new forum category", zap.Error(errSave))
@@ -1510,7 +1510,7 @@ func onAPICreateForumForum(app *App) gin.HandlerFunc {
 			TimeStamped:     model.NewTimeStamped(),
 		}
 
-		if errSave := app.db.ForumSave(ctx, &forum); errSave != nil {
+		if errSave := store.ForumSave(ctx, app.db, &forum); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			log.Error("Error creating new forum", zap.Error(errSave))
@@ -1536,7 +1536,7 @@ func onAPIUpdateForumForum(app *App) gin.HandlerFunc {
 		}
 
 		var forum model.Forum
-		if errGet := app.db.Forum(ctx, forumID, &forum); errGet != nil {
+		if errGet := store.Forum(ctx, app.db, forumID, &forum); errGet != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
@@ -1553,7 +1553,7 @@ func onAPIUpdateForumForum(app *App) gin.HandlerFunc {
 		forum.Ordering = req.Ordering
 		forum.PermissionLevel = req.PermissionLevel
 
-		if errSave := app.db.ForumSave(ctx, &forum); errSave != nil {
+		if errSave := store.ForumSave(ctx, app.db, &forum); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			log.Error("Error updating forum", zap.Error(errSave))

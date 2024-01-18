@@ -2,10 +2,11 @@ package app
 
 import (
 	"context"
-	"github.com/leighmacdonald/gbans/internal/model"
-	"go.uber.org/zap"
 	"sync"
 	"time"
+
+	"github.com/leighmacdonald/gbans/internal/model"
+	"go.uber.org/zap"
 )
 
 type forumActivity struct {

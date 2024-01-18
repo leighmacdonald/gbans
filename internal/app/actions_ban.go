@@ -27,7 +27,7 @@ func (app *App) BanSteam(ctx context.Context, banSteam *model.BanSteam) error {
 
 	existing := model.NewBannedPerson()
 
-	errGetExistingBan := app.db.GetBanBySteamID(ctx, banSteam.TargetID, &existing, false)
+	errGetExistingBan := store.GetBanBySteamID(ctx, app.db, banSteam.TargetID, &existing, false)
 
 	if existing.BanID > 0 {
 		return store.ErrDuplicate
@@ -37,18 +37,18 @@ func (app *App) BanSteam(ctx context.Context, banSteam *model.BanSteam) error {
 		return errors.Wrapf(errGetExistingBan, "Failed to get ban")
 	}
 
-	if errSave := app.db.SaveBan(ctx, banSteam); errSave != nil {
+	if errSave := store.SaveBan(ctx, app.db, banSteam); errSave != nil {
 		return errors.Wrap(errSave, "Failed to save ban")
 	}
 
 	updateAppealState := func(reportId int64) error {
 		var report model.Report
-		if errReport := app.db.GetReport(ctx, reportId, &report); errReport != nil {
+		if errReport := store.GetReport(ctx, app.db, reportId, &report); errReport != nil {
 			return errors.Wrap(errReport, "Failed to get associated report for ban")
 		}
 
 		report.ReportStatus = model.ClosedWithAction
-		if errSaveReport := app.db.SaveReport(ctx, &report); errSaveReport != nil {
+		if errSaveReport := store.SaveReport(ctx, app.db, &report); errSaveReport != nil {
 			return errors.Wrap(errSaveReport, "Failed to update report state")
 		}
 
@@ -129,13 +129,13 @@ func (app *App) BanSteam(ctx context.Context, banSteam *model.BanSteam) error {
 // BanASN will ban all network ranges associated with the requested ASN.
 func (app *App) BanASN(ctx context.Context, banASN *model.BanASN) error {
 	var existing model.BanASN
-	if errGetExistingBan := app.db.GetBanASN(ctx, banASN.ASNum, &existing); errGetExistingBan != nil {
+	if errGetExistingBan := store.GetBanASN(ctx, app.db, banASN.ASNum, &existing); errGetExistingBan != nil {
 		if !errors.Is(errGetExistingBan, store.ErrNoResult) {
 			return errors.Wrapf(errGetExistingBan, "Failed trying to fetch existing asn ban")
 		}
 	}
 
-	if errSave := app.db.SaveBanASN(ctx, banASN); errSave != nil {
+	if errSave := store.SaveBanASN(ctx, app.db, banASN); errSave != nil {
 		return errors.Wrap(errSave, "Failed to save ban")
 	}
 	// TODO Kick all current players matching
@@ -148,8 +148,8 @@ func (app *App) BanASN(ctx context.Context, banASN *model.BanASN) error {
 // If duration is 0, the value of config.DefaultExpiration() will be used.
 func (app *App) BanCIDR(ctx context.Context, banNet *model.BanCIDR) error {
 	// TODO
-	// _, err2 := store.GetBanNetByAddress(ctx, net.ParseIP(cidrStr))
-	// if err2 != nil && err2 != store.ErrNoResult {
+	// _, err2 := db.GetBanNetByAddress(ctx, net.ParseIP(cidrStr))
+	// if err2 != nil && err2 != db.ErrNoResult {
 	//	return "", errCommandFailed
 	// }
 	// if err2 == nil {
@@ -164,7 +164,7 @@ func (app *App) BanCIDR(ctx context.Context, banNet *model.BanCIDR) error {
 		return errors.Wrap(errCIDR, "Invalid IP")
 	}
 
-	if errSaveBanNet := app.db.SaveBanNet(ctx, banNet); errSaveBanNet != nil {
+	if errSaveBanNet := store.SaveBanNet(ctx, app.db, banNet); errSaveBanNet != nil {
 		return errors.Wrap(errSaveBanNet, "Failed to save ban")
 	}
 
@@ -193,12 +193,12 @@ func (app *App) BanCIDR(ctx context.Context, banNet *model.BanCIDR) error {
 		AddField("Reason", banNet.Reason.String())
 
 	var author model.Person
-	if err := app.db.GetOrCreatePersonBySteamID(ctx, banNet.SourceID, &author); err != nil {
+	if err := store.GetOrCreatePersonBySteamID(ctx, app.db, banNet.SourceID, &author); err != nil {
 		return errors.Wrap(err, "Failed to get author")
 	}
 
 	var target model.Person
-	if err := app.db.GetOrCreatePersonBySteamID(ctx, banNet.TargetID, &target); err != nil {
+	if err := store.GetOrCreatePersonBySteamID(ctx, app.db, banNet.TargetID, &target); err != nil {
 		return errors.Wrap(err, "Failed to get target")
 	}
 
@@ -219,7 +219,7 @@ func (app *App) BanSteamGroup(ctx context.Context, banGroup *model.BanGroup) err
 		return errors.Wrapf(membersErr, "Failed to validate group")
 	}
 
-	if errSaveBanGroup := app.db.SaveBanGroup(ctx, banGroup); errSaveBanGroup != nil {
+	if errSaveBanGroup := store.SaveBanGroup(ctx, app.db, banGroup); errSaveBanGroup != nil {
 		return errors.Wrapf(errSaveBanGroup, "Failed to save banned group")
 	}
 
@@ -234,7 +234,7 @@ func (app *App) BanSteamGroup(ctx context.Context, banGroup *model.BanGroup) err
 // Returns false, nil if the ban does not exist.
 func (app *App) Unban(ctx context.Context, targetSID steamid.SID64, reason string) (bool, error) {
 	bannedPerson := model.NewBannedPerson()
-	errGetBan := app.db.GetBanBySteamID(ctx, targetSID, &bannedPerson, false)
+	errGetBan := store.GetBanBySteamID(ctx, app.db, targetSID, &bannedPerson, false)
 
 	if errGetBan != nil {
 		if errors.Is(errGetBan, store.ErrNoResult) {
@@ -247,7 +247,7 @@ func (app *App) Unban(ctx context.Context, targetSID steamid.SID64, reason strin
 	bannedPerson.Deleted = true
 	bannedPerson.UnbanReasonText = reason
 
-	if errSaveBan := app.db.SaveBan(ctx, &bannedPerson.BanSteam); errSaveBan != nil {
+	if errSaveBan := store.SaveBan(ctx, app.db, &bannedPerson.BanSteam); errSaveBan != nil {
 		return false, errors.Wrapf(errSaveBan, "Failed to save unban")
 	}
 
@@ -263,7 +263,7 @@ func (app *App) Unban(ctx context.Context, targetSID steamid.SID64, reason strin
 		AddField("ban_id", fmt.Sprintf("%d", bannedPerson.BanID)).AddField("Reason", reason)
 
 	var target model.Person
-	if err := app.db.GetPersonBySteamID(ctx, targetSID, &target); err != nil {
+	if err := store.GetPersonBySteamID(ctx, app.db, targetSID, &target); err != nil {
 		return false, errors.Wrap(err, "Failed to get target")
 	}
 
@@ -287,11 +287,11 @@ func (app *App) UnbanASN(ctx context.Context, asnNum string) (bool, error) {
 	}
 
 	var banASN model.BanASN
-	if errGetBanASN := app.db.GetBanASN(ctx, asNum, &banASN); errGetBanASN != nil {
+	if errGetBanASN := store.GetBanASN(ctx, app.db, asNum, &banASN); errGetBanASN != nil {
 		return false, errors.Wrapf(errGetBanASN, "Failed to get asn ban")
 	}
 
-	if errDrop := app.db.DropBanASN(ctx, &banASN); errDrop != nil {
+	if errDrop := store.DropBanASN(ctx, app.db, &banASN); errDrop != nil {
 		app.log.Error("Failed to drop ASN ban", zap.Error(errDrop))
 
 		return false, errors.Wrap(errDrop, "Failed to drop asn ban")
@@ -310,7 +310,7 @@ func (app *App) UnbanASN(ctx context.Context, asnNum string) (bool, error) {
 
 	if banASN.TargetID.Valid() {
 		var target model.Person
-		if err := app.db.GetOrCreatePersonBySteamID(ctx, banASN.TargetID, &target); err != nil {
+		if err := store.GetOrCreatePersonBySteamID(ctx, app.db, banASN.TargetID, &target); err != nil {
 			return false, errors.Wrap(err, "Failed to get target")
 		}
 

@@ -1,4 +1,4 @@
-package app
+package s3
 
 import (
 	"context"
@@ -19,7 +19,7 @@ type AssetStore interface {
 	Remove(ctx context.Context, bucket string, name string) error
 }
 
-type S3Client struct {
+type Client struct {
 	*sync.RWMutex
 	*minio.Client
 	log    *zap.Logger
@@ -27,7 +27,7 @@ type S3Client struct {
 	ssl    bool
 }
 
-func NewS3Client(log *zap.Logger, endpoint string, accessKey string, secretKey string, useSSL bool, region string) (*S3Client, error) {
+func NewS3Client(log *zap.Logger, endpoint string, accessKey string, secretKey string, useSSL bool, region string) (*Client, error) {
 	// Initialize minio client object.
 	minioClient, err := minio.New(endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
@@ -37,10 +37,10 @@ func NewS3Client(log *zap.Logger, endpoint string, accessKey string, secretKey s
 		return nil, errors.Wrap(err, "Failed to initialize minio client")
 	}
 
-	return &S3Client{Client: minioClient, log: log, region: region, ssl: useSSL, RWMutex: &sync.RWMutex{}}, nil
+	return &Client{Client: minioClient, log: log, region: region, ssl: useSSL, RWMutex: &sync.RWMutex{}}, nil
 }
 
-func (s3 *S3Client) CreateBucketIfNotExists(ctx context.Context, name string) error {
+func (s3 *Client) CreateBucketIfNotExists(ctx context.Context, name string) error {
 	s3.Lock()
 	defer s3.Unlock()
 
@@ -80,7 +80,7 @@ func (s3 *S3Client) CreateBucketIfNotExists(ctx context.Context, name string) er
 	return nil
 }
 
-func (s3 *S3Client) Put(ctx context.Context, bucket string, name string, body io.Reader, size int64, contentType string) error {
+func (s3 *Client) Put(ctx context.Context, bucket string, name string, body io.Reader, size int64, contentType string) error {
 	s3.Lock()
 	defer s3.Unlock()
 
@@ -88,7 +88,7 @@ func (s3 *S3Client) Put(ctx context.Context, bucket string, name string, body io
 		ContentType: contentType,
 	})
 	if err != nil {
-		return errors.Wrap(err, "Failed to write object to s3 store")
+		return errors.Wrap(err, "Failed to write object to s3 db")
 	}
 
 	s3.log.Debug("File uploaded successfully",
@@ -98,7 +98,7 @@ func (s3 *S3Client) Put(ctx context.Context, bucket string, name string, body io
 	return nil
 }
 
-func (s3 *S3Client) Remove(ctx context.Context, bucket string, name string) error {
+func (s3 *Client) Remove(ctx context.Context, bucket string, name string) error {
 	s3.Lock()
 	defer s3.Unlock()
 
@@ -113,7 +113,7 @@ func (s3 *S3Client) Remove(ctx context.Context, bucket string, name string) erro
 	return nil
 }
 
-func (s3 *S3Client) LinkObject(bucket string, name string) string {
+func (s3 *Client) LinkObject(bucket string, name string) string {
 	endpoint := s3.EndpointURL()
 	endpoint.Path = bucket + "/" + name
 

@@ -6,13 +6,13 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/model"
-	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
-	"go.uber.org/zap"
 )
 
-func (db *Store) GetNewsLatest(ctx context.Context, limit int, includeUnpublished bool) ([]model.NewsEntry, error) {
-	builder := db.sb.Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
+func GetNewsLatest(ctx context.Context, database Store, limit int, includeUnpublished bool) ([]model.NewsEntry, error) {
+	builder := database.
+		Builder().
+		Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
 		From("news").
 		OrderBy("created_on DESC").
 		Limit(uint64(limit))
@@ -21,9 +21,9 @@ func (db *Store) GetNewsLatest(ctx context.Context, limit int, includeUnpublishe
 		builder = builder.Where(sq.Eq{"is_published": true})
 	}
 
-	rows, errQuery := db.QueryBuilder(ctx, builder)
+	rows, errQuery := database.QueryBuilder(ctx, builder)
 	if errQuery != nil {
-		return nil, Err(errQuery)
+		return nil, DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -34,7 +34,7 @@ func (db *Store) GetNewsLatest(ctx context.Context, limit int, includeUnpublishe
 		var entry model.NewsEntry
 		if errScan := rows.Scan(&entry.NewsID, &entry.Title, &entry.BodyMD, &entry.IsPublished,
 			&entry.CreatedOn, &entry.UpdatedOn); errScan != nil {
-			return nil, Err(errScan)
+			return nil, DBErr(errScan)
 		}
 
 		articles = append(articles, entry)
@@ -43,8 +43,10 @@ func (db *Store) GetNewsLatest(ctx context.Context, limit int, includeUnpublishe
 	return articles, nil
 }
 
-func (db *Store) GetNewsLatestArticle(ctx context.Context, includeUnpublished bool, entry *model.NewsEntry) error {
-	builder := db.sb.Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
+func GetNewsLatestArticle(ctx context.Context, database Store, includeUnpublished bool, entry *model.NewsEntry) error {
+	builder := database.
+		Builder().
+		Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
 		From("news")
 	if !includeUnpublished {
 		builder = builder.Where(sq.Eq{"is_published": true})
@@ -52,42 +54,46 @@ func (db *Store) GetNewsLatestArticle(ctx context.Context, includeUnpublished bo
 
 	query, args, errQueryArgs := builder.OrderBy("created_on DESC").ToSql()
 	if errQueryArgs != nil {
-		return Err(errQueryArgs)
+		return DBErr(errQueryArgs)
 	}
 
-	if errQuery := db.QueryRow(ctx, query, args...).Scan(&entry.NewsID, &entry.Title, &entry.BodyMD, &entry.IsPublished,
+	if errQuery := database.QueryRow(ctx, query, args...).Scan(&entry.NewsID, &entry.Title, &entry.BodyMD, &entry.IsPublished,
 		&entry.CreatedOn, &entry.UpdatedOn); errQuery != nil {
-		return Err(errQuery)
+		return DBErr(errQuery)
 	}
 
 	return nil
 }
 
-func (db *Store) GetNewsByID(ctx context.Context, newsID int, entry *model.NewsEntry) error {
-	query, args, errQueryArgs := db.sb.Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
+func GetNewsByID(ctx context.Context, database Store, newsID int, entry *model.NewsEntry) error {
+	query, args, errQueryArgs := database.
+		Builder().
+		Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
 		From("news").Where(sq.Eq{"news_id": newsID}).ToSql()
 	if errQueryArgs != nil {
-		return Err(errQueryArgs)
+		return DBErr(errQueryArgs)
 	}
 
-	if errQuery := db.QueryRow(ctx, query, args...).Scan(&entry.NewsID, &entry.Title, &entry.BodyMD, &entry.IsPublished,
+	if errQuery := database.QueryRow(ctx, query, args...).Scan(&entry.NewsID, &entry.Title, &entry.BodyMD, &entry.IsPublished,
 		&entry.CreatedOn, &entry.UpdatedOn); errQuery != nil {
-		return Err(errQuery)
+		return DBErr(errQuery)
 	}
 
 	return nil
 }
 
-func (db *Store) SaveNewsArticle(ctx context.Context, entry *model.NewsEntry) error {
+func SaveNewsArticle(ctx context.Context, database Store, entry *model.NewsEntry) error {
 	if entry.NewsID > 0 {
-		return db.updateNewsArticle(ctx, entry)
+		return updateNewsArticle(ctx, database, entry)
 	} else {
-		return db.insertNewsArticle(ctx, entry)
+		return insertNewsArticle(ctx, database, entry)
 	}
 }
 
-func (db *Store) insertNewsArticle(ctx context.Context, entry *model.NewsEntry) error {
-	query, args, errQueryArgs := db.sb.Insert("news").
+func insertNewsArticle(ctx context.Context, database Store, entry *model.NewsEntry) error {
+	query, args, errQueryArgs := database.
+		Builder().
+		Insert("news").
 		Columns("title", "body_md", "is_published", "created_on", "updated_on").
 		Values(entry.Title, entry.BodyMD, entry.IsPublished, entry.CreatedOn, entry.UpdatedOn).
 		Suffix("RETURNING news_id").
@@ -96,40 +102,28 @@ func (db *Store) insertNewsArticle(ctx context.Context, entry *model.NewsEntry) 
 		return errors.Wrapf(errQueryArgs, "Failed to create query")
 	}
 
-	errQueryRow := db.QueryRow(ctx, query, args...).Scan(&entry.NewsID)
+	errQueryRow := database.QueryRow(ctx, query, args...).Scan(&entry.NewsID)
 	if errQueryRow != nil {
-		return Err(errQueryRow)
+		return DBErr(errQueryRow)
 	}
-
-	db.log.Info("New article saved", zap.String("title", util.SanitizeLog(entry.Title)))
 
 	return nil
 }
 
-func (db *Store) updateNewsArticle(ctx context.Context, entry *model.NewsEntry) error {
-	if errExec := db.ExecUpdateBuilder(ctx, db.sb.
+func updateNewsArticle(ctx context.Context, database Store, entry *model.NewsEntry) error {
+	return DBErr(database.ExecUpdateBuilder(ctx, database.
+		Builder().
 		Update("news").
 		Set("title", entry.Title).
 		Set("body_md", entry.BodyMD).
 		Set("is_published", entry.IsPublished).
 		Set("updated_on", time.Now()).
-		Where(sq.Eq{"news_id": entry.NewsID})); errExec != nil {
-		return errors.Wrapf(errExec, "Failed to update article")
-	}
-
-	db.log.Info("News article updated", zap.String("title", util.SanitizeLog(entry.Title)))
-
-	return nil
+		Where(sq.Eq{"news_id": entry.NewsID})))
 }
 
-func (db *Store) DropNewsArticle(ctx context.Context, newsID int) error {
-	if errExec := db.ExecDeleteBuilder(ctx, db.sb.
+func DropNewsArticle(ctx context.Context, database Store, newsID int) error {
+	return DBErr(database.ExecDeleteBuilder(ctx, database.
+		Builder().
 		Delete("news").
-		Where(sq.Eq{"news_id": newsID})); errExec != nil {
-		return Err(errExec)
-	}
-
-	db.log.Info("News deleted", zap.Int("news_id", newsID))
-
-	return nil
+		Where(sq.Eq{"news_id": newsID})))
 }
