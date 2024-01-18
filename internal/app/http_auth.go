@@ -384,7 +384,7 @@ func authMiddleware(app *App, level consts.Privilege) gin.HandlerFunc {
 
 		hdrToken, errToken := tokenFromHeader(ctx, level == consts.PGuest)
 		if errToken != nil || hdrToken == "" {
-			ctx.Set(ctxKeyUserProfile, userProfile{PermissionLevel: consts.PGuest, Name: "Guest"})
+			ctx.Set(ctxKeyUserProfile, model.UserProfile{PermissionLevel: consts.PGuest, Name: "Guest"})
 		} else {
 			token = hdrToken
 
@@ -424,7 +424,7 @@ func authMiddleware(app *App, level consts.Privilege) gin.HandlerFunc {
 					}
 				}
 
-				profile := userProfile{
+				profile := model.UserProfile{
 					SteamID:         loggedInPerson.SteamID,
 					CreatedOn:       loggedInPerson.CreatedOn,
 					UpdatedOn:       loggedInPerson.UpdatedOn,
@@ -448,7 +448,7 @@ func authMiddleware(app *App, level consts.Privilege) gin.HandlerFunc {
 					})
 				}
 			} else {
-				ctx.Set(ctxKeyUserProfile, userProfile{PermissionLevel: consts.PGuest, Name: "Guest"})
+				ctx.Set(ctxKeyUserProfile, model.UserProfile{PermissionLevel: consts.PGuest, Name: "Guest"})
 			}
 		}
 

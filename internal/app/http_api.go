@@ -700,7 +700,7 @@ func onAPIForumOverview(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		currentUser := currentUserProfile(ctx)
 
-		app.touchPerson(currentUser)
+		app.activityTracker.touch(currentUser)
 
 		categories, errCats := app.db.ForumCategories(ctx)
 		if errCats != nil {
@@ -746,7 +746,7 @@ func onAPIForumThreads(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		currentUser := currentUserProfile(ctx)
 
-		app.touchPerson(currentUser)
+		app.activityTracker.touch(currentUser)
 
 		var tqf store.ThreadQueryFilter
 		if !bind(ctx, log, &tqf) {
@@ -789,7 +789,7 @@ func onAPIForumThread(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		currentUser := currentUserProfile(ctx)
 
-		app.touchPerson(currentUser)
+		app.activityTracker.touch(currentUser)
 
 		forumThreadID, errID := getInt64Param(ctx, "forum_thread_id")
 		if errID != nil {
@@ -869,7 +869,7 @@ func onAPIForumMessages(app *App) gin.HandlerFunc {
 			return
 		}
 
-		activeUsers := app.currentActiveUsers()
+		activeUsers := app.activityTracker.current()
 
 		for idx := range messages {
 			for _, activity := range activeUsers {
@@ -896,9 +896,7 @@ func onAPIActiveUsers(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var results []userActivity
 
-		app.activityMu.RLock()
-
-		for _, act := range app.activity {
+		for _, act := range app.activityTracker.current() {
 			results = append(results, userActivity{
 				SteamID:         act.person.SteamID,
 				Personaname:     act.person.Name,
@@ -906,8 +904,6 @@ func onAPIActiveUsers(app *App) gin.HandlerFunc {
 				CreatedOn:       act.lastActivity,
 			})
 		}
-
-		app.activityMu.RUnlock()
 
 		ctx.JSON(http.StatusOK, results)
 	}

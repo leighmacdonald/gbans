@@ -3,7 +3,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -55,8 +54,7 @@ type App struct {
 	assetStore       AssetStore
 	logListener      *logparse.UDPLogListener
 	matchUUIDMap     fp.MutexMap[int, uuid.UUID]
-	activityMu       *sync.RWMutex
-	activity         []forumActivity
+	activityTracker  *activityTracker
 	netBlock         *NetworkBlocker
 }
 
@@ -83,7 +81,7 @@ func New(conf config.Config, database *store.Store, bot ChatBot, logger *zap.Log
 		wordFilters:      newWordFilters(),
 		mc:               newMetricCollector(),
 		state:            newServerStateCollector(logger),
-		activityMu:       &sync.RWMutex{},
+		activityTracker:  newForumActivity(logger),
 		netBlock:         NewNetworkBlocker(),
 	}
 
@@ -118,30 +116,6 @@ func (app *App) setConfig(conf config.Config) {
 	defer app.confMu.Unlock()
 
 	app.conf = conf
-}
-
-func (app *App) initLogAddress() {
-	conf := app.config()
-
-	if conf.Debug.AddRCONLogAddress == "" {
-		return
-	}
-
-	time.Sleep(time.Second * 60)
-
-	app.state.connectionsMu.RLock()
-	defer app.state.connectionsMu.RUnlock()
-
-	for _, server := range app.state.connections {
-		if server.RemoteConsole == nil {
-			continue
-		}
-
-		_, errExec := server.Exec(fmt.Sprintf("logaddress_add %s", conf.Debug.AddRCONLogAddress))
-		if errExec != nil {
-			app.log.Error("Failed to set logaddress")
-		}
-	}
 }
 
 func firstTimeSetup(ctx context.Context, conf config.Config, database *store.Store) error {
@@ -323,11 +297,6 @@ func (app *App) StartHTTP(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-type newUserWarning struct {
-	userMessage model.PersonMessage
-	userWarning
 }
 
 func (app *App) chatRecorder(ctx context.Context) {
@@ -607,7 +576,7 @@ func (app *App) startWorkers(ctx context.Context) {
 	go app.notificationSender(ctx)
 	go app.demoCleaner(ctx)
 	go app.stateUpdater(ctx)
-	go app.forumActivityUpdater(ctx)
+	go app.activityTracker.start(ctx)
 }
 
 // UDP log sink.
@@ -775,13 +744,6 @@ func (app *App) SendNotification(ctx context.Context, notification NotificationP
 	}
 
 	return nil
-}
-
-func (app *App) currentActiveUsers() []forumActivity {
-	app.activityMu.RLock()
-	defer app.activityMu.RUnlock()
-
-	return app.activity
 }
 
 // isOnIPWithBan checks if the address matches an existing user who is currently banned already. This

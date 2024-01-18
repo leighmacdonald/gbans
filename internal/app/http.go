@@ -3,12 +3,11 @@ package app
 import (
 	"context"
 	"crypto/tls"
-	"fmt"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/common"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"go.uber.org/zap"
@@ -82,61 +81,15 @@ func newHTTPServer(ctx context.Context, app *App) *http.Server {
 	return httpServer
 }
 
-// userProfile is the model used in the webui representing the logged-in user.
-type userProfile struct {
-	SteamID         steamid.SID64    `json:"steam_id"`
-	CreatedOn       time.Time        `json:"created_on"`
-	UpdatedOn       time.Time        `json:"updated_on"`
-	PermissionLevel consts.Privilege `json:"permission_level"`
-	DiscordID       string           `json:"discord_id"`
-	Name            string           `json:"name"`
-	Avatarhash      string           `json:"avatarhash"`
-	BanID           int64            `json:"ban_id"`
-	Muted           bool             `json:"muted"`
-}
-
-func (p userProfile) GetDiscordID() string {
-	return p.DiscordID
-}
-
-func (p userProfile) GetName() string {
-	return p.Name
-}
-
-func (p userProfile) GetAvatar() common.AvatarLinks {
-	return common.NewAvatarLinks(p.Avatarhash)
-}
-
-func (p userProfile) GetSteamID() steamid.SID64 {
-	return p.SteamID
-}
-
-func (p userProfile) Path() string {
-	return fmt.Sprintf("/profile/%d", p.SteamID.Int64())
-}
-
-// newUserProfile allocates a new default person instance.
-func newUserProfile(sid64 steamid.SID64) userProfile {
-	t0 := time.Now()
-
-	return userProfile{
-		SteamID:         sid64,
-		CreatedOn:       t0,
-		UpdatedOn:       t0,
-		PermissionLevel: consts.PUser,
-		Name:            "Guest",
-	}
-}
-
-func currentUserProfile(ctx *gin.Context) userProfile {
+func currentUserProfile(ctx *gin.Context) model.UserProfile {
 	maybePerson, found := ctx.Get(ctxKeyUserProfile)
 	if !found {
-		return newUserProfile("")
+		return model.NewUserProfile("")
 	}
 
-	person, ok := maybePerson.(userProfile)
+	person, ok := maybePerson.(model.UserProfile)
 	if !ok {
-		return newUserProfile("")
+		return model.NewUserProfile("")
 	}
 
 	return person
@@ -145,7 +98,7 @@ func currentUserProfile(ctx *gin.Context) userProfile {
 // checkPrivilege first checks if the steamId matches one of the provided allowedSteamIds, otherwise it will check
 // if the user has appropriate privilege levels.
 // Error responses are handled by this function, no further action needs to take place in the handlers.
-func checkPrivilege(ctx *gin.Context, person userProfile, allowedSteamIds steamid.Collection, minPrivilege consts.Privilege) bool {
+func checkPrivilege(ctx *gin.Context, person model.UserProfile, allowedSteamIds steamid.Collection, minPrivilege consts.Privilege) bool {
 	for _, steamID := range allowedSteamIds {
 		if steamID == person.SteamID {
 			return true

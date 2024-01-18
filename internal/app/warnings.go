@@ -38,6 +38,11 @@ func (w *WarningTracker) SetConfig(config config.Filter) {
 	w.config = config
 }
 
+type newUserWarning struct {
+	userMessage model.PersonMessage
+	userWarning
+}
+
 type userWarning struct {
 	WarnReason    model.Reason  `json:"warn_reason"`
 	Message       string        `json:"message"`

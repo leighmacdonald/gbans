@@ -43,6 +43,52 @@ type SimplePerson struct {
 	PermissionLevel consts.Privilege `json:"permission_level"`
 }
 
+// UserProfile is the model used in the webui representing the logged-in user.
+type UserProfile struct {
+	SteamID         steamid.SID64    `json:"steam_id"`
+	CreatedOn       time.Time        `json:"created_on"`
+	UpdatedOn       time.Time        `json:"updated_on"`
+	PermissionLevel consts.Privilege `json:"permission_level"`
+	DiscordID       string           `json:"discord_id"`
+	Name            string           `json:"name"`
+	Avatarhash      string           `json:"avatarhash"`
+	BanID           int64            `json:"ban_id"`
+	Muted           bool             `json:"muted"`
+}
+
+func (p UserProfile) GetDiscordID() string {
+	return p.DiscordID
+}
+
+func (p UserProfile) GetName() string {
+	return p.Name
+}
+
+func (p UserProfile) GetAvatar() common.AvatarLinks {
+	return common.NewAvatarLinks(p.Avatarhash)
+}
+
+func (p UserProfile) GetSteamID() steamid.SID64 {
+	return p.SteamID
+}
+
+func (p UserProfile) Path() string {
+	return fmt.Sprintf("/profile/%d", p.SteamID.Int64())
+}
+
+// NewUserProfile allocates a new default person instance.
+func NewUserProfile(sid64 steamid.SID64) UserProfile {
+	t0 := time.Now()
+
+	return UserProfile{
+		SteamID:         sid64,
+		CreatedOn:       t0,
+		UpdatedOn:       t0,
+		PermissionLevel: consts.PUser,
+		Name:            "Guest",
+	}
+}
+
 type Person struct {
 	// TODO merge use of steamid & steam_id
 	SteamID          steamid.SID64         `db:"steam_id" json:"steam_id"`
@@ -83,12 +129,12 @@ func (p Person) Path() string {
 }
 
 // LoggedIn checks for a valid steamID.
-func (p *Person) LoggedIn() bool {
+func (p Person) LoggedIn() bool {
 	return p.SteamID.Valid() && p.SteamID.Int64() > 0
 }
 
 // AsTarget checks for a valid steamID.
-func (p *Person) AsTarget() StringSID {
+func (p Person) AsTarget() StringSID {
 	return StringSID(p.SteamID.String())
 }
 
