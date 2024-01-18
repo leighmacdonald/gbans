@@ -13,23 +13,17 @@ import (
 	"go.uber.org/zap"
 )
 
-type groupMemberStore interface {
-	GetBanGroups(ctx context.Context, filter store.GroupBansQueryFilter) ([]model.BannedGroupPerson, int64, error)
-	GetMembersList(ctx context.Context, parentID int64, list *model.MembersList) error
-	SaveMembersList(ctx context.Context, list *model.MembersList) error
-}
-
 type steamGroupMemberships struct {
 	members    map[int64]steamid.Collection
 	membersMu  *sync.RWMutex
 	log        *zap.Logger
-	store      groupMemberStore
+	store      store.Store
 	updateFreq time.Duration
 }
 
-func newSteamGroupMemberships(log *zap.Logger, store groupMemberStore) *steamGroupMemberships {
+func newSteamGroupMemberships(log *zap.Logger, db store.Store) *steamGroupMemberships {
 	return &steamGroupMemberships{
-		store:      store,
+		store:      db,
 		log:        log.Named("steamGroupMemberships"),
 		members:    map[int64]steamid.Collection{},
 		membersMu:  &sync.RWMutex{},
@@ -83,7 +77,7 @@ func (g *steamGroupMemberships) updateGroupBanMembers(ctx context.Context) (map[
 	localCtx, cancel := context.WithTimeout(ctx, time.Second*120)
 	defer cancel()
 
-	groups, _, errGroups := g.store.GetBanGroups(ctx, store.GroupBansQueryFilter{})
+	groups, _, errGroups := store.GetBanGroups(ctx, g.store, store.GroupBansQueryFilter{})
 	if errGroups != nil {
 		if errors.Is(errGroups, store.ErrNoResult) {
 			return newMap, nil
@@ -103,13 +97,13 @@ func (g *steamGroupMemberships) updateGroupBanMembers(ctx context.Context) (map[
 		}
 
 		memberList := model.NewMembersList(group.GroupID.Int64(), members)
-		if errQuery := g.store.GetMembersList(ctx, group.GroupID.Int64(), &memberList); errQuery != nil {
+		if errQuery := store.GetMembersList(ctx, g.store, group.GroupID.Int64(), &memberList); errQuery != nil {
 			if !errors.Is(errQuery, store.ErrNoResult) {
 				return nil, errors.Wrap(errQuery, "Failed to fetch members list")
 			}
 		}
 
-		if errSave := g.store.SaveMembersList(ctx, &memberList); errSave != nil {
+		if errSave := store.SaveMembersList(ctx, g.store, &memberList); errSave != nil {
 			return nil, errors.Wrap(errSave, "Failed to save banned groups member list")
 		}
 

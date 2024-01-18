@@ -37,7 +37,7 @@ func onAPIPostDemosQuery(app *App) gin.HandlerFunc {
 			return
 		}
 
-		demos, count, errDemos := app.db.GetDemos(ctx, req)
+		demos, count, errDemos := store.GetDemos(ctx, app.db, req)
 		if errDemos != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to query demos", zap.Error(errDemos))
@@ -66,7 +66,7 @@ func onAPIGetPrometheusHosts(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var staticConfigs []promStaticConfig
 
-		servers, _, errGetServers := app.db.GetServers(ctx, store.ServerQueryFilter{})
+		servers, _, errGetServers := store.GetServers(ctx, app.db, store.ServerQueryFilter{})
 		if errGetServers != nil {
 			log.Error("Failed to fetch servers", zap.Error(errGetServers))
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
@@ -168,7 +168,7 @@ func onAPIGetServerStates(app *App) gin.HandlerFunc {
 
 func onAPIExportBansValveSteamID(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		bans, _, errBans := app.db.GetBansSteam(ctx, store.SteamBansQueryFilter{
+		bans, _, errBans := store.GetBansSteam(ctx, app.db, store.SteamBansQueryFilter{
 			BansQueryFilter: store.BansQueryFilter{PermanentOnly: true},
 		})
 
@@ -197,14 +197,14 @@ func onAPIExportSourcemodSimpleAdmins(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		privilegedIds, errPrivilegedIds := app.db.GetSteamIdsAbove(ctx, consts.PReserved)
+		privilegedIds, errPrivilegedIds := store.GetSteamIdsAbove(ctx, app.db, consts.PReserved)
 		if errPrivilegedIds != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
 		}
 
-		players, errPlayers := app.db.GetPeopleBySteamID(ctx, privilegedIds)
+		players, errPlayers := store.GetPeopleBySteamID(ctx, app.db, privilegedIds)
 		if errPlayers != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -245,7 +245,7 @@ func onAPIExportSourcemodSimpleAdmins(app *App) gin.HandlerFunc {
 func onAPIExportBansTF2BD(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// TODO limit / make specialized query since this returns all results
-		bans, _, errBans := app.db.GetBansSteam(ctx, store.SteamBansQueryFilter{
+		bans, _, errBans := store.GetBansSteam(ctx, app.db, store.SteamBansQueryFilter{
 			BansQueryFilter: store.BansQueryFilter{
 				QueryFilter: store.QueryFilter{
 					Deleted: false,
@@ -331,7 +331,7 @@ func onAPIProfile(app *App) gin.HandlerFunc {
 		}
 
 		person := model.NewPerson(sid)
-		if errGetProfile := app.PersonBySID(requestCtx, sid, &person); errGetProfile != nil {
+		if errGetProfile := PersonBySID(requestCtx, app.db, sid, &person); errGetProfile != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to create person", zap.Error(errGetProfile))
 
@@ -348,7 +348,7 @@ func onAPIProfile(app *App) gin.HandlerFunc {
 		response.Player = &person
 
 		var settings model.PersonSettings
-		if err := app.db.GetPersonSettings(ctx, sid, &settings); err != nil {
+		if err := store.GetPersonSettings(ctx, app.db, sid, &settings); err != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to load person settings", zap.Error(err))
 
@@ -364,7 +364,7 @@ func onAPIProfile(app *App) gin.HandlerFunc {
 func onAPIGetStats(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var stats model.Stats
-		if errGetStats := app.db.GetStats(ctx, &stats); errGetStats != nil {
+		if errGetStats := store.GetStats(ctx, app.db, &stats); errGetStats != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
@@ -388,7 +388,7 @@ type serverInfoSafe struct {
 
 func onAPIGetServers(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		fullServers, _, errServers := app.db.GetServers(ctx, store.ServerQueryFilter{})
+		fullServers, _, errServers := store.GetServers(ctx, app.db, store.ServerQueryFilter{})
 		if errServers != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -411,7 +411,7 @@ func onAPIGetServers(app *App) gin.HandlerFunc {
 
 func onAPIGetMapUsage(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		mapUsages, errServers := app.db.GetMapUsageStats(ctx)
+		mapUsages, errServers := store.GetMapUsageStats(ctx, app.db)
 		if errServers != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -479,7 +479,7 @@ func getUUIDParam(ctx *gin.Context, key string) (uuid.UUID, error) {
 
 func onAPIGetNewsLatest(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		newsLatest, errGetNewsLatest := app.db.GetNewsLatest(ctx, 50, false)
+		newsLatest, errGetNewsLatest := store.GetNewsLatest(ctx, app.db, 50, false)
 		if errGetNewsLatest != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -499,7 +499,7 @@ func contestFromCtx(ctx *gin.Context, app *App) (model.Contest, bool) {
 	}
 
 	var contest model.Contest
-	if errContests := app.db.ContestByID(ctx, contestID, &contest); errContests != nil {
+	if errContests := store.ContestByID(ctx, app.db, contestID, &contest); errContests != nil {
 		responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 		return model.Contest{}, false
@@ -524,7 +524,7 @@ func onAPIGetWikiSlug(app *App) gin.HandlerFunc {
 		}
 
 		var page wiki.Page
-		if errGetWikiSlug := app.db.GetWikiPageBySlug(ctx, slug, &page); errGetWikiSlug != nil {
+		if errGetWikiSlug := store.GetWikiPageBySlug(ctx, app.db, slug, &page); errGetWikiSlug != nil {
 			if errors.Is(errGetWikiSlug, store.ErrNoResult) {
 				ctx.JSON(http.StatusOK, page)
 
@@ -556,8 +556,8 @@ func onGetMediaByID(app *App) gin.HandlerFunc {
 		}
 
 		var media model.Media
-		if errMedia := app.db.GetMediaByID(ctx, mediaID, &media); errMedia != nil {
-			if errors.Is(store.Err(errMedia), store.ErrNoResult) {
+		if errMedia := store.GetMediaByID(ctx, app.db, mediaID, &media); errMedia != nil {
+			if errors.Is(store.DBErr(errMedia), store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 			} else {
 				responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
@@ -649,7 +649,7 @@ func onAPIGetContests(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		user := currentUserProfile(ctx)
 		publicOnly := user.PermissionLevel < consts.PModerator
-		contests, errContests := app.db.Contests(ctx, publicOnly)
+		contests, errContests := store.Contests(ctx, app.db, publicOnly)
 
 		if errContests != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
@@ -679,7 +679,7 @@ func onAPIGetContestEntries(app *App) gin.HandlerFunc {
 			return
 		}
 
-		entries, errEntries := app.db.ContestEntries(ctx, contest.ContestID)
+		entries, errEntries := store.ContestEntries(ctx, app.db, contest.ContestID)
 		if errEntries != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -702,7 +702,7 @@ func onAPIForumOverview(app *App) gin.HandlerFunc {
 
 		app.activityTracker.touch(currentUser)
 
-		categories, errCats := app.db.ForumCategories(ctx)
+		categories, errCats := store.ForumCategories(ctx, app.db)
 		if errCats != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -711,7 +711,7 @@ func onAPIForumOverview(app *App) gin.HandlerFunc {
 			return
 		}
 
-		forums, errForums := app.db.Forums(ctx)
+		forums, errForums := store.Forums(ctx, app.db)
 		if errForums != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -753,7 +753,7 @@ func onAPIForumThreads(app *App) gin.HandlerFunc {
 			return
 		}
 
-		threads, count, errThreads := app.db.ForumThreads(ctx, tqf)
+		threads, count, errThreads := store.ForumThreads(ctx, app.db, tqf)
 		if errThreads != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -763,7 +763,7 @@ func onAPIForumThreads(app *App) gin.HandlerFunc {
 		}
 
 		var forum model.Forum
-		if err := app.db.Forum(ctx, tqf.ForumID, &forum); err != nil {
+		if err := store.Forum(ctx, app.db, tqf.ForumID, &forum); err != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			log.Error("Could not load forum", zap.Error(errThreads))
@@ -799,7 +799,7 @@ func onAPIForumThread(app *App) gin.HandlerFunc {
 		}
 
 		var thread model.ForumThread
-		if errThreads := app.db.ForumThread(ctx, forumThreadID, &thread); errThreads != nil {
+		if errThreads := store.ForumThread(ctx, app.db, forumThreadID, &thread); errThreads != nil {
 			if errors.Is(errThreads, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 			} else {
@@ -812,7 +812,7 @@ func onAPIForumThread(app *App) gin.HandlerFunc {
 
 		ctx.JSON(http.StatusOK, thread)
 
-		if err := app.db.ForumThreadIncrView(ctx, forumThreadID); err != nil {
+		if err := store.ForumThreadIncrView(ctx, app.db, forumThreadID); err != nil {
 			log.Error("Failed to increment thread view count", zap.Error(err))
 		}
 	}
@@ -833,7 +833,7 @@ func onAPIForum(app *App) gin.HandlerFunc {
 
 		var forum model.Forum
 
-		if errForum := app.db.Forum(ctx, forumID, &forum); errForum != nil {
+		if errForum := store.Forum(ctx, app.db, forumID, &forum); errForum != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			log.Error("Could not load forum")
@@ -855,12 +855,12 @@ func onAPIForumMessages(app *App) gin.HandlerFunc {
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var tmqf store.ThreadMessagesQueryFilter
-		if !bind(ctx, log, &tmqf) {
+		var queryFilter store.ThreadMessagesQueryFilter
+		if !bind(ctx, log, &queryFilter) {
 			return
 		}
 
-		messages, count, errMessages := app.db.ForumMessages(ctx, tmqf)
+		messages, count, errMessages := store.ForumMessages(ctx, app.db, queryFilter)
 		if errMessages != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -915,7 +915,7 @@ func onAPIForumMessagesRecent(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		user := currentUserProfile(ctx)
 
-		messages, errThreads := app.db.ForumRecentActivity(ctx, 5, user.PermissionLevel)
+		messages, errThreads := store.ForumRecentActivity(ctx, app.db, 5, user.PermissionLevel)
 		if errThreads != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 

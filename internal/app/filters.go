@@ -18,16 +18,16 @@ func newWordFilters() *wordFilters {
 	}
 }
 
-// importFilteredWords loads the supplied word list into memory.
-func (f *wordFilters) importFilteredWords(filters []model.Filter) {
+// importFilters loads the supplied word list into memory.
+func (f *wordFilters) importFilters(filters []model.Filter) {
 	f.Lock()
 	defer f.Unlock()
 	f.wordFilters = filters
 }
 
-// findFilteredWordMatch checks to see if the body of text contains a known filtered word
+// findMatch checks to see if the body of text contains a known filtered word
 // It will only return the first matched filter found.
-func (f *wordFilters) findFilteredWordMatch(body string) (string, *model.Filter) {
+func (f *wordFilters) findMatch(body string) (string, *model.Filter) {
 	if body == "" {
 		return "", nil
 	}

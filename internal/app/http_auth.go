@@ -92,7 +92,7 @@ func authServerMiddleWare(app *App) gin.HandlerFunc {
 		}
 
 		var server model.Server
-		if errGetServer := app.db.GetServer(ctx, claims.ServerID, &server); errGetServer != nil {
+		if errGetServer := store.GetServer(ctx, app.db, claims.ServerID, &server); errGetServer != nil {
 			log.Error("Failed to load server during auth", zap.Error(errGetServer))
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 
@@ -175,7 +175,7 @@ func onOpenIDCallback(app *App) gin.HandlerFunc {
 		}
 
 		person := model.NewPerson(sid)
-		if errGetProfile := app.PersonBySID(ctx, sid, &person); errGetProfile != nil {
+		if errGetProfile := PersonBySID(ctx, app.db, sid, &person); errGetProfile != nil {
 			log.Error("Failed to fetch user profile", zap.Error(errGetProfile))
 			ctx.Redirect(302, referralURL)
 
@@ -243,7 +243,7 @@ func fingerprintHash(fingerprint string) string {
 
 // makeTokens generates new jwt auth tokens
 // fingerprint is a random string used to prevent side-jacking.
-func makeTokens(ctx *gin.Context, database *store.Store, cookieKey string, sid steamid.SID64, createRefresh bool) (userTokens, error) {
+func makeTokens(ctx *gin.Context, database store.Store, cookieKey string, sid steamid.SID64, createRefresh bool) (userTokens, error) {
 	if cookieKey == "" {
 		return userTokens{}, errors.New("cookieKey or fingerprint empty")
 	}
@@ -269,7 +269,7 @@ func makeTokens(ctx *gin.Context, database *store.Store, cookieKey string, sid s
 		}
 
 		personAuth := model.NewPersonAuth(sid, ipAddr, fingerprint)
-		if saveErr := database.SavePersonAuth(ctx, &personAuth); saveErr != nil {
+		if saveErr := store.SavePersonAuth(ctx, database, &personAuth); saveErr != nil {
 			return userTokens{}, errors.Wrap(saveErr, "Failed to save new createRefresh token")
 		}
 
@@ -290,7 +290,7 @@ type userToken struct {
 
 type serverAuthClaims struct {
 	ServerID int `json:"server_id"`
-	// A random string which is used to fingerprint and prevent sidejacking
+	// A random string which is used to fingerprint and prevent side-jacking
 	jwt.RegisteredClaims
 }
 
@@ -404,7 +404,7 @@ func authMiddleware(app *App, level consts.Privilege) gin.HandlerFunc {
 				}
 
 				loggedInPerson := model.NewPerson(sid)
-				if errGetPerson := app.PersonBySID(ctx, sid, &loggedInPerson); errGetPerson != nil {
+				if errGetPerson := store.GetOrCreatePersonBySteamID(ctx, app.db, sid, &loggedInPerson); errGetPerson != nil {
 					log.Error("Failed to load person during auth", zap.Error(errGetPerson))
 					ctx.AbortWithStatus(http.StatusForbidden)
 
@@ -418,7 +418,7 @@ func authMiddleware(app *App, level consts.Privilege) gin.HandlerFunc {
 				}
 
 				bannedPerson := model.NewBannedPerson()
-				if errBan := app.db.GetBanBySteamID(ctx, sid, &bannedPerson, false); errBan != nil {
+				if errBan := store.GetBanBySteamID(ctx, app.db, sid, &bannedPerson, false); errBan != nil {
 					if !errors.Is(errBan, store.ErrNoResult) {
 						log.Error("Failed to fetch authed user ban", zap.Error(errBan))
 					}

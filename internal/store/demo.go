@@ -9,18 +9,18 @@ import (
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/pkg/errors"
-	"go.uber.org/zap"
 )
 
-func (db *Store) ExpiredDemos(ctx context.Context, limit uint64) ([]model.DemoInfo, error) {
-	rows, errRow := db.QueryBuilder(ctx, db.sb.
+func ExpiredDemos(ctx context.Context, database Store, limit uint64) ([]model.DemoInfo, error) {
+	rows, errRow := database.QueryBuilder(ctx, database.
+		Builder().
 		Select("d.demo_id", "d.title", "d.asset_id").
 		From("demo d").
 		Where(sq.NotEq{"d.archive": true}).
 		OrderBy("d.created_on desc").
 		Offset(limit))
 	if errRow != nil {
-		return nil, errRow
+		return nil, DBErr(errRow)
 	}
 
 	defer rows.Close()
@@ -30,7 +30,7 @@ func (db *Store) ExpiredDemos(ctx context.Context, limit uint64) ([]model.DemoIn
 	for rows.Next() {
 		var demo model.DemoInfo
 		if err := rows.Scan(&demo.DemoID, &demo.Title, &demo.AssetID); err != nil {
-			return nil, Err(err)
+			return nil, DBErr(err)
 		}
 
 		demos = append(demos, demo)
@@ -39,8 +39,9 @@ func (db *Store) ExpiredDemos(ctx context.Context, limit uint64) ([]model.DemoIn
 	return demos, nil
 }
 
-func (db *Store) GetDemoByID(ctx context.Context, demoID int64, demoFile *model.DemoFile) error {
-	row, errRow := db.QueryRowBuilder(ctx, db.sb.
+func GetDemoByID(ctx context.Context, database Store, demoID int64, demoFile *model.DemoFile) error {
+	row, errRow := database.QueryRowBuilder(ctx, database.
+		Builder().
 		Select("d.demo_id", "d.server_id", "d.title", "d.created_on", "d.downloads",
 			"d.map_name", "d.archive", "d.stats", "d.asset_id", "a.size", "s.short_name", "s.name").
 		From("demo d").
@@ -48,7 +49,7 @@ func (db *Store) GetDemoByID(ctx context.Context, demoID int64, demoFile *model.
 		LeftJoin("asset a ON a.asset_id = d.asset_id").
 		Where(sq.Eq{"demo_id": demoID}))
 	if errRow != nil {
-		return errRow
+		return DBErr(errRow)
 	}
 
 	var uuidScan *uuid.UUID
@@ -57,7 +58,7 @@ func (db *Store) GetDemoByID(ctx context.Context, demoID int64, demoFile *model.
 		&demoFile.CreatedOn, &demoFile.Downloads, &demoFile.MapName,
 		&demoFile.Archive, &demoFile.Stats, uuidScan, &demoFile.Size, &demoFile.ServerNameShort,
 		&demoFile.ServerNameLong); errQuery != nil {
-		return Err(errQuery)
+		return DBErr(errQuery)
 	}
 
 	if uuidScan != nil {
@@ -67,8 +68,9 @@ func (db *Store) GetDemoByID(ctx context.Context, demoID int64, demoFile *model.
 	return nil
 }
 
-func (db *Store) GetDemoByName(ctx context.Context, demoName string, demoFile *model.DemoFile) error {
-	row, errRow := db.QueryRowBuilder(ctx, db.sb.
+func GetDemoByName(ctx context.Context, database Store, demoName string, demoFile *model.DemoFile) error {
+	row, errRow := database.QueryRowBuilder(ctx, database.
+		Builder().
 		Select("d.demo_id", "d.server_id", "d.title", "d.created_on", "d.downloads",
 			"d.map_name", "d.archive", "d.stats", "d.asset_id", "a.size", "s.short_name", "s.name").
 		From("demo d").
@@ -76,7 +78,7 @@ func (db *Store) GetDemoByName(ctx context.Context, demoName string, demoFile *m
 		LeftJoin("asset a ON a.asset_id = d.asset_id").
 		Where(sq.Eq{"title": demoName}))
 	if errRow != nil {
-		return errRow
+		return DBErr(errRow)
 	}
 
 	var uuidScan *uuid.UUID
@@ -85,7 +87,7 @@ func (db *Store) GetDemoByName(ctx context.Context, demoName string, demoFile *m
 		&demoFile.CreatedOn, &demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats,
 		&demoFile.Stats, &uuidScan, &demoFile.Size, &demoFile.ServerNameShort,
 		&demoFile.ServerNameLong); errQuery != nil {
-		return Err(errQuery)
+		return DBErr(errQuery)
 	}
 
 	if uuidScan != nil {
@@ -102,13 +104,14 @@ type DemoFilter struct {
 	MapName   string          `json:"map_name"`
 }
 
-func (db *Store) GetDemos(ctx context.Context, opts DemoFilter) ([]model.DemoFile, int64, error) {
+func GetDemos(ctx context.Context, database Store, opts DemoFilter) ([]model.DemoFile, int64, error) {
 	var (
 		demos       []model.DemoFile
 		constraints sq.And
 	)
 
-	builder := db.sb.
+	builder := database.
+		Builder().
 		Select("d.demo_id", "d.server_id", "d.title", "d.created_on", "d.downloads",
 			"d.map_name", "d.archive", "d.stats", "s.short_name", "s.name", "d.asset_id", "a.size").
 		From("demo d").
@@ -152,13 +155,13 @@ func (db *Store) GetDemos(ctx context.Context, opts DemoFilter) ([]model.DemoFil
 
 	builder = opts.applyLimitOffsetDefault(builder).Where(constraints)
 
-	rows, errQuery := db.QueryBuilder(ctx, builder)
+	rows, errQuery := database.QueryBuilder(ctx, builder)
 	if errQuery != nil {
 		if errors.Is(errQuery, ErrNoResult) {
 			return demos, 0, nil
 		}
 
-		return nil, 0, Err(errQuery)
+		return nil, 0, DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -172,7 +175,7 @@ func (db *Store) GetDemos(ctx context.Context, opts DemoFilter) ([]model.DemoFil
 		if errScan := rows.Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title, &demoFile.CreatedOn,
 			&demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats,
 			&demoFile.ServerNameShort, &demoFile.ServerNameLong, &uuidScan, &demoFile.Size); errScan != nil {
-			return nil, 0, Err(errScan)
+			return nil, 0, DBErr(errScan)
 		}
 
 		if uuidScan != nil {
@@ -186,22 +189,25 @@ func (db *Store) GetDemos(ctx context.Context, opts DemoFilter) ([]model.DemoFil
 		return []model.DemoFile{}, 0, nil
 	}
 
-	count, errCount := db.GetCount(ctx, db.sb.Select("count(d.demo_id)").
+	count, errCount := getCount(ctx, database, database.
+		Builder().
+		Select("count(d.demo_id)").
 		From("demo d").
 		Where(constraints))
 	if errCount != nil {
-		return []model.DemoFile{}, 0, Err(errCount)
+		return []model.DemoFile{}, 0, DBErr(errCount)
 	}
 
 	return demos, count, nil
 }
 
-func (db *Store) SaveDemo(ctx context.Context, demoFile *model.DemoFile) error {
+func SaveDemo(ctx context.Context, database Store, demoFile *model.DemoFile) error {
 	// Find open reports and if any are returned, mark the demo as archived so that it does not get auto
 	// deleted during cleanup.
 	// Reports can happen mid-game which is why this is checked when the demo is saved and not during the report where
 	// we have no completed demo instance/id yet.
-	reportRow, reportRowErr := db.QueryRowBuilder(ctx, db.sb.
+	reportRow, reportRowErr := database.QueryRowBuilder(ctx, database.
+		Builder().
 		Select("count(report_id)").
 		From("report").
 		Where(sq.Eq{"demo_name": demoFile.Title}))
@@ -211,7 +217,7 @@ func (db *Store) SaveDemo(ctx context.Context, demoFile *model.DemoFile) error {
 
 	var count int
 	if errScan := reportRow.Scan(&count); errScan != nil && !errors.Is(errScan, ErrNoResult) {
-		return Err(errScan)
+		return DBErr(errScan)
 	}
 
 	if count > 0 {
@@ -220,16 +226,17 @@ func (db *Store) SaveDemo(ctx context.Context, demoFile *model.DemoFile) error {
 
 	var err error
 	if demoFile.DemoID > 0 {
-		err = db.updateDemo(ctx, demoFile)
+		err = updateDemo(ctx, database, demoFile)
 	} else {
-		err = db.insertDemo(ctx, demoFile)
+		err = insertDemo(ctx, database, demoFile)
 	}
 
-	return Err(err)
+	return DBErr(err)
 }
 
-func (db *Store) insertDemo(ctx context.Context, demoFile *model.DemoFile) error {
-	query, args, errQueryArgs := db.sb.
+func insertDemo(ctx context.Context, database Store, demoFile *model.DemoFile) error {
+	query, args, errQueryArgs := database.
+		Builder().
 		Insert("demo").
 		Columns("server_id", "title", "created_on", "downloads", "map_name", "archive", "stats", "asset_id").
 		Values(demoFile.ServerID, demoFile.Title, demoFile.CreatedOn,
@@ -237,21 +244,20 @@ func (db *Store) insertDemo(ctx context.Context, demoFile *model.DemoFile) error
 		Suffix("RETURNING demo_id").
 		ToSql()
 	if errQueryArgs != nil {
-		return Err(errQueryArgs)
+		return DBErr(errQueryArgs)
 	}
 
-	errQuery := db.QueryRow(ctx, query, args...).Scan(&demoFile.ServerID)
+	errQuery := database.QueryRow(ctx, query, args...).Scan(&demoFile.ServerID)
 	if errQuery != nil {
-		return Err(errQuery)
+		return DBErr(errQuery)
 	}
-
-	db.log.Info("New demo saved", zap.String("name", demoFile.Title))
 
 	return nil
 }
 
-func (db *Store) updateDemo(ctx context.Context, demoFile *model.DemoFile) error {
-	query := db.sb.
+func updateDemo(ctx context.Context, database Store, demoFile *model.DemoFile) error {
+	query := database.
+		Builder().
 		Update("demo").
 		Set("title", demoFile.Title).
 		Set("downloads", demoFile.Downloads).
@@ -261,32 +267,30 @@ func (db *Store) updateDemo(ctx context.Context, demoFile *model.DemoFile) error
 		Set("asset_id", demoFile.AssetID).
 		Where(sq.Eq{"demo_id": demoFile.DemoID})
 
-	if errExec := db.ExecUpdateBuilder(ctx, query); errExec != nil {
-		return errExec
+	if errExec := database.ExecUpdateBuilder(ctx, query); errExec != nil {
+		return DBErr(errExec)
 	}
-
-	db.log.Info("Demo updated", zap.String("name", demoFile.Title))
 
 	return nil
 }
 
-func (db *Store) DropDemo(ctx context.Context, demoFile *model.DemoFile) error {
-	if errExec := db.ExecDeleteBuilder(ctx, db.sb.
+func DropDemo(ctx context.Context, database Store, demoFile *model.DemoFile) error {
+	if errExec := database.ExecDeleteBuilder(ctx, database.
+		Builder().
 		Delete("demo").
 		Where(sq.Eq{"demo_id": demoFile.DemoID})); errExec != nil {
-		return Err(errExec)
+		return DBErr(errExec)
 	}
 
 	demoFile.DemoID = 0
 
-	db.log.Info("Demo deleted:", zap.String("name", demoFile.Title))
-
 	return nil
 }
 
-func (db *Store) SaveAsset(ctx context.Context, asset *model.Asset) error {
-	return db.ExecInsertBuilder(ctx, db.sb.
+func SaveAsset(ctx context.Context, database Store, asset *model.Asset) error {
+	return DBErr(database.ExecInsertBuilder(ctx, database.
+		Builder().
 		Insert("asset").
 		Columns("asset_id", "bucket", "path", "name", "mime_type", "size", "old_id").
-		Values(asset.AssetID, asset.Bucket, asset.Path, asset.Name, asset.MimeType, asset.Size, asset.OldID))
+		Values(asset.AssetID, asset.Bucket, asset.Path, asset.Name, asset.MimeType, asset.Size, asset.OldID)))
 }

@@ -3,12 +3,12 @@ package app
 import (
 	"context"
 	"crypto/tls"
-	"github.com/leighmacdonald/gbans/internal/model"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/consts"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"go.uber.org/zap"
 )

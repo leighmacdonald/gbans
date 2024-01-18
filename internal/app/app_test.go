@@ -104,7 +104,7 @@ func TestApp(t *testing.T) {
 
 	database := store.New(zap.NewNop(), dsn, true, false)
 	if dbErr := database.Connect(ctx); dbErr != nil {
-		t.Fatalf("Failed to setup store: %v", dbErr)
+		t.Fatalf("Failed to setup db: %v", dbErr)
 	}
 
 	t.Cleanup(func() {

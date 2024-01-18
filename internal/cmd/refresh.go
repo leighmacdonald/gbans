@@ -78,7 +78,7 @@ func refreshFiltersCmd() *cobra.Command {
 			matches := 0
 
 			for {
-				messages, _, errMessages := database.QueryChatHistory(ctx, query)
+				messages, _, errMessages := store.QueryChatHistory(ctx, database, query)
 				if errMessages != nil {
 					rootLogger.Error("Failed to load more messages", zap.Error(errMessages))
 
@@ -88,7 +88,7 @@ func refreshFiltersCmd() *cobra.Command {
 				for _, message := range messages {
 					matched := application.FilterCheck(message.Body)
 					if len(matched) > 0 {
-						if errAdd := database.AddMessageFilterMatch(ctx, message.PersonMessageID, matched[0].FilterID); errAdd != nil {
+						if errAdd := store.AddMessageFilterMatch(ctx, database, message.PersonMessageID, matched[0].FilterID); errAdd != nil {
 							rootLogger.Error("Failed to add filter match", zap.Error(errAdd))
 						}
 

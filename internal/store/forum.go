@@ -11,13 +11,14 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (db *Store) ForumCategories(ctx context.Context) ([]model.ForumCategory, error) {
-	rows, errRows := db.QueryBuilder(ctx,
-		db.sb.Select("forum_category_id", "title", "description", "ordering", "updated_on", "created_on").
-			From("forum_category").
-			OrderBy("ordering"))
+func ForumCategories(ctx context.Context, db Store) ([]model.ForumCategory, error) {
+	rows, errRows := db.QueryBuilder(ctx, db.
+		Builder().
+		Select("forum_category_id", "title", "description", "ordering", "updated_on", "created_on").
+		From("forum_category").
+		OrderBy("ordering"))
 	if errRows != nil {
-		return nil, errRows
+		return nil, DBErr(errRows)
 	}
 
 	defer rows.Close()
@@ -27,7 +28,7 @@ func (db *Store) ForumCategories(ctx context.Context) ([]model.ForumCategory, er
 	for rows.Next() {
 		var fc model.ForumCategory
 		if errScan := rows.Scan(&fc.ForumCategoryID, &fc.Title, &fc.Description, &fc.Ordering, &fc.UpdatedOn, &fc.CreatedOn); errScan != nil {
-			return nil, Err(errScan)
+			return nil, DBErr(errScan)
 		}
 
 		categories = append(categories, fc)
@@ -36,10 +37,11 @@ func (db *Store) ForumCategories(ctx context.Context) ([]model.ForumCategory, er
 	return categories, nil
 }
 
-func (db *Store) ForumCategorySave(ctx context.Context, category *model.ForumCategory) error {
+func ForumCategorySave(ctx context.Context, database Store, category *model.ForumCategory) error {
 	category.UpdatedOn = time.Now()
 	if category.ForumCategoryID > 0 {
-		return db.ExecUpdateBuilder(ctx, db.sb.
+		return DBErr(database.ExecUpdateBuilder(ctx, database.
+			Builder().
 			Update("forum_category").
 			SetMap(map[string]interface{}{
 				"title":       category.Title,
@@ -47,12 +49,13 @@ func (db *Store) ForumCategorySave(ctx context.Context, category *model.ForumCat
 				"ordering":    category.Ordering,
 				"updated_on":  category.UpdatedOn,
 			}).
-			Where(sq.Eq{"forum_category_id": category.ForumCategoryID}))
+			Where(sq.Eq{"forum_category_id": category.ForumCategoryID})))
 	}
 
 	category.CreatedOn = category.UpdatedOn
 
-	return db.ExecInsertBuilderWithReturnValue(ctx, db.sb.
+	return DBErr(database.ExecInsertBuilderWithReturnValue(ctx, database.
+		Builder().
 		Insert("forum_category").
 		SetMap(map[string]interface{}{
 			"title":       category.Title,
@@ -61,43 +64,48 @@ func (db *Store) ForumCategorySave(ctx context.Context, category *model.ForumCat
 			"created_on":  category.CreatedOn,
 			"updated_on":  category.UpdatedOn,
 		}).
-		Suffix("RETURNING forum_category_id"), &category.ForumCategoryID)
+		Suffix("RETURNING forum_category_id"), &category.ForumCategoryID))
 }
 
-func (db *Store) ForumCategory(ctx context.Context, categoryID int, category *model.ForumCategory) error {
-	row, errRow := db.QueryRowBuilder(ctx, db.sb.
+func ForumCategory(ctx context.Context, db Store, categoryID int, category *model.ForumCategory) error {
+	row, errRow := db.QueryRowBuilder(ctx, db.
+		Builder().
 		Select("forum_category_id", "title", "description", "ordering", "created_on", "created_on").
 		From("forum_category").
 		Where(sq.Eq{"forum_category_id": categoryID}))
 	if errRow != nil {
-		return errRow
+		return DBErr(errRow)
 	}
 
-	return Err(row.Scan(&category.ForumCategoryID, &category.Title, &category.Description, &category.Ordering,
+	return DBErr(row.Scan(&category.ForumCategoryID, &category.Title, &category.Description, &category.Ordering,
 		&category.CreatedOn, &category.UpdatedOn))
 }
 
-func (db *Store) ForumCategoryDelete(ctx context.Context, categoryID int) error {
-	return db.ExecDeleteBuilder(ctx, db.sb.
+func ForumCategoryDelete(ctx context.Context, db Store, categoryID int) error {
+	return DBErr(db.ExecDeleteBuilder(ctx, db.
+		Builder().
 		Delete("forum_category").
-		Where(sq.Eq{"forum_category_id": categoryID}))
+		Where(sq.Eq{"forum_category_id": categoryID})))
 }
 
-func (db *Store) Forums(ctx context.Context) ([]model.Forum, error) {
-	fromSelect := db.sb.Select("DISTINCT ON (f.forum_id) f.forum_id", "f.forum_category_id", "f.title", "f.description", "f.last_thread_id",
-		"f.count_threads", "f.count_messages", "f.ordering", "f.created_on", "f.updated_on", "f.permission_level",
-		"t.forum_thread_id", "t.source_id", "p.personaname", "p.avatarhash", "t.created_on", "t.title").
+func Forums(ctx context.Context, database Store) ([]model.Forum, error) {
+	fromSelect := database.
+		Builder().
+		Select("DISTINCT ON (f.forum_id) f.forum_id", "f.forum_category_id", "f.title", "f.description", "f.last_thread_id",
+			"f.count_threads", "f.count_messages", "f.ordering", "f.created_on", "f.updated_on", "f.permission_level",
+			"t.forum_thread_id", "t.source_id", "p.personaname", "p.avatarhash", "t.created_on", "t.title").
 		From("forum f").
 		LeftJoin("forum_thread t ON f.last_thread_id = t.forum_thread_id").
 		LeftJoin("forum_message m ON t.forum_thread_id = m.forum_thread_id").
 		LeftJoin("person p ON p.steam_id = m.source_id")
 
-	rows, errRows := db.QueryBuilder(ctx, db.sb.
+	rows, errRows := database.QueryBuilder(ctx, database.
+		Builder().
 		Select("x.*").
 		FromSelect(fromSelect, "x").
 		OrderBy("x.ordering"))
 	if errRows != nil {
-		return nil, errRows
+		return nil, DBErr(errRows)
 	}
 
 	defer rows.Close()
@@ -121,7 +129,7 @@ func (db *Store) Forums(ctx context.Context) ([]model.Forum, error) {
 			&forum.Ordering, &forum.CreatedOn, &forum.UpdatedOn, &forum.PermissionLevel,
 			&lastForumTheadID, &lastSourceID, &lastPersonaname, &lastAvatarhash,
 			&lastCreatedOn, &lastTitle); errScan != nil {
-			return nil, Err(errScan)
+			return nil, DBErr(errScan)
 		}
 
 		if lastID != nil {
@@ -143,7 +151,7 @@ func (db *Store) Forums(ctx context.Context) ([]model.Forum, error) {
 	return forums, nil
 }
 
-func (db *Store) ForumSave(ctx context.Context, forum *model.Forum) error {
+func ForumSave(ctx context.Context, database Store, forum *model.Forum) error {
 	forum.UpdatedOn = time.Now()
 
 	var lastThreadID *int64
@@ -153,7 +161,8 @@ func (db *Store) ForumSave(ctx context.Context, forum *model.Forum) error {
 	}
 
 	if forum.ForumID > 0 {
-		return db.ExecUpdateBuilder(ctx, db.sb.
+		return DBErr(database.ExecUpdateBuilder(ctx, database.
+			Builder().
 			Update("forum").
 			SetMap(map[string]interface{}{
 				"forum_category_id": forum.ForumCategoryID,
@@ -166,12 +175,13 @@ func (db *Store) ForumSave(ctx context.Context, forum *model.Forum) error {
 				"permission_level":  forum.PermissionLevel,
 				"updated_on":        forum.UpdatedOn,
 			}).
-			Where(sq.Eq{"forum_id": forum.ForumID}))
+			Where(sq.Eq{"forum_id": forum.ForumID})))
 	}
 
 	forum.CreatedOn = time.Now()
 
-	return db.ExecInsertBuilderWithReturnValue(ctx, db.sb.
+	return DBErr(database.ExecInsertBuilderWithReturnValue(ctx, database.
+		Builder().
 		Insert("forum").
 		SetMap(map[string]interface{}{
 			"forum_category_id": forum.ForumCategoryID,
@@ -185,24 +195,25 @@ func (db *Store) ForumSave(ctx context.Context, forum *model.Forum) error {
 			"created_on":        forum.CreatedOn,
 			"updated_on":        forum.UpdatedOn,
 		}).
-		Suffix("RETURNING forum_id"), &forum.ForumID)
+		Suffix("RETURNING forum_id"), &forum.ForumID))
 }
 
-func (db *Store) Forum(ctx context.Context, forumID int, forum *model.Forum) error {
-	row, errRow := db.QueryRowBuilder(ctx, db.sb.
+func Forum(ctx context.Context, db Store, forumID int, forum *model.Forum) error {
+	row, errRow := db.QueryRowBuilder(ctx, db.
+		Builder().
 		Select("forum_id", "forum_category_id", "title", "description", "last_thread_id",
 			"count_threads", "count_messages", "ordering", "created_on", "updated_on", "permission_level").
 		From("forum").
 		Where(sq.Eq{"forum_id": forumID}))
 	if errRow != nil {
-		return errRow
+		return DBErr(errRow)
 	}
 
 	var lastThreadID *int64
 	if err := row.Scan(&forum.ForumID, &forum.ForumCategoryID, &forum.Title, &forum.Description,
 		&lastThreadID, &forum.CountThreads, &forum.CountMessages, &forum.Ordering,
 		&forum.CreatedOn, &forum.UpdatedOn, &forum.PermissionLevel); err != nil {
-		return Err(err)
+		return DBErr(err)
 	}
 
 	if lastThreadID != nil {
@@ -212,16 +223,18 @@ func (db *Store) Forum(ctx context.Context, forumID int, forum *model.Forum) err
 	return nil
 }
 
-func (db *Store) ForumDelete(ctx context.Context, forumID int) error {
-	return db.ExecDeleteBuilder(ctx, db.sb.
+func ForumDelete(ctx context.Context, db Store, forumID int) error {
+	return DBErr(db.ExecDeleteBuilder(ctx, db.
+		Builder().
 		Delete("forum").
-		Where(sq.Eq{"forum_id": forumID}))
+		Where(sq.Eq{"forum_id": forumID})))
 }
 
-func (db *Store) ForumThreadSave(ctx context.Context, thread *model.ForumThread) error {
+func ForumThreadSave(ctx context.Context, database Store, thread *model.ForumThread) error {
 	thread.UpdatedOn = time.Now()
 	if thread.ForumThreadID > 0 {
-		return db.ExecUpdateBuilder(ctx, db.sb.
+		return DBErr(database.ExecUpdateBuilder(ctx, database.
+			Builder().
 			Update("forum_thread").
 			SetMap(map[string]interface{}{
 				"forum_id":   thread.ForumID,
@@ -232,12 +245,13 @@ func (db *Store) ForumThreadSave(ctx context.Context, thread *model.ForumThread)
 				"views":      thread.Views,
 				"updated_on": thread.UpdatedOn,
 			}).
-			Where(sq.Eq{"forum_thread_id": thread.ForumThreadID}))
+			Where(sq.Eq{"forum_thread_id": thread.ForumThreadID})))
 	}
 
 	thread.CreatedOn = time.Now()
 
-	if errInsert := db.ExecInsertBuilderWithReturnValue(ctx, db.sb.
+	if errInsert := database.ExecInsertBuilderWithReturnValue(ctx, database.
+		Builder().
 		Insert("forum_thread").
 		SetMap(map[string]interface{}{
 			"forum_id":   thread.ForumID,
@@ -250,17 +264,20 @@ func (db *Store) ForumThreadSave(ctx context.Context, thread *model.ForumThread)
 			"updated_on": thread.UpdatedOn,
 		}).
 		Suffix("RETURNING forum_thread_id"), &thread.ForumThreadID); errInsert != nil {
-		return errInsert
+		return DBErr(errInsert)
 	}
 
-	return db.ExecUpdateBuilder(ctx, db.sb.Update("forum").
+	return DBErr(database.ExecUpdateBuilder(ctx, database.
+		Builder().
+		Update("forum").
 		Set("count_threads", sq.Expr("count_threads+1")).
 		Set("last_thread_id", thread.ForumThreadID).
-		Where(sq.Eq{"forum_id": thread.ForumID}))
+		Where(sq.Eq{"forum_id": thread.ForumID})))
 }
 
-func (db *Store) ForumThread(ctx context.Context, forumThreadID int64, thread *model.ForumThread) error {
-	row, errRow := db.QueryRowBuilder(ctx, db.sb.
+func ForumThread(ctx context.Context, database Store, forumThreadID int64, thread *model.ForumThread) error {
+	row, errRow := database.QueryRowBuilder(ctx, database.
+		Builder().
 		Select("t.forum_thread_id", "t.forum_id", "t.source_id", "t.title", "t.sticky",
 			"t.locked", "t.views", "t.created_on", "t.updated_on", "p.personaname", "p.avatarhash",
 			"p.permission_level").
@@ -268,25 +285,27 @@ func (db *Store) ForumThread(ctx context.Context, forumThreadID int64, thread *m
 		LeftJoin("person p ON p.steam_id = t.source_id").
 		Where(sq.Eq{"t.forum_thread_id": forumThreadID}))
 	if errRow != nil {
-		return errRow
+		return DBErr(errRow)
 	}
 
-	return Err(row.Scan(&thread.ForumThreadID, &thread.ForumID, &thread.SourceID, &thread.Title,
+	return DBErr(row.Scan(&thread.ForumThreadID, &thread.ForumID, &thread.SourceID, &thread.Title,
 		&thread.Sticky, &thread.Locked, &thread.Views, &thread.CreatedOn,
 		&thread.UpdatedOn, &thread.Personaname, &thread.Avatarhash, &thread.PermissionLevel))
 }
 
-func (db *Store) ForumThreadIncrView(ctx context.Context, forumThreadID int64) error {
-	return db.ExecUpdateBuilder(ctx, db.sb.
+func ForumThreadIncrView(ctx context.Context, database Store, forumThreadID int64) error {
+	return DBErr(database.ExecUpdateBuilder(ctx, database.
+		Builder().
 		Update("forum_thread").
 		Set("views", sq.Expr("views+1")).
-		Where(sq.Eq{"forum_thread_id": forumThreadID}))
+		Where(sq.Eq{"forum_thread_id": forumThreadID})))
 }
 
-func (db *Store) ForumThreadDelete(ctx context.Context, forumThreadID int64) error {
-	return db.ExecDeleteBuilder(ctx, db.sb.
+func ForumThreadDelete(ctx context.Context, database Store, forumThreadID int64) error {
+	return DBErr(database.ExecDeleteBuilder(ctx, database.
+		Builder().
 		Delete("forum_thread").
-		Where(sq.Eq{"forum_thread_id": forumThreadID}))
+		Where(sq.Eq{"forum_thread_id": forumThreadID})))
 }
 
 type ThreadQueryFilter struct {
@@ -294,14 +313,15 @@ type ThreadQueryFilter struct {
 	ForumID int `json:"forum_id"`
 }
 
-func (db *Store) ForumThreads(ctx context.Context, filter ThreadQueryFilter) ([]model.ThreadWithSource, int64, error) {
+func ForumThreads(ctx context.Context, database Store, filter ThreadQueryFilter) ([]model.ThreadWithSource, int64, error) {
 	if filter.ForumID <= 0 {
 		return nil, 0, errors.New("Invalid Thread")
 	}
 
 	constraints := sq.And{sq.Eq{"forum_id": filter.ForumID}}
 
-	builder := db.sb.
+	builder := database.
+		Builder().
 		Select("t.forum_thread_id", "t.forum_id", "t.source_id", "t.title", "t.sticky",
 			"t.locked", "t.views", "t.created_on", "t.updated_on", "p.personaname", "p.avatarhash", "p.permission_level",
 			"a.steam_id", "a.personaname", "a.avatarhash", "a.forum_message_id", "a.created_on", "c.message_count").
@@ -333,22 +353,23 @@ func (db *Store) ForumThreads(ctx context.Context, filter ThreadQueryFilter) ([]
 
 	builder = filter.applyLimitOffset(builder, 100).Where(constraints)
 
-	count, errCount := db.GetCount(ctx, db.sb.
+	count, errCount := getCount(ctx, database, database.
+		Builder().
 		Select("COUNT(forum_thread_id)").
 		From("forum_thread").
 		Where(constraints))
 
 	if errCount != nil {
-		return nil, 0, errCount
+		return nil, 0, DBErr(errCount)
 	}
 
 	if count == 0 {
 		return []model.ThreadWithSource{}, 0, nil
 	}
 
-	rows, errRows := db.QueryBuilder(ctx, builder)
+	rows, errRows := database.QueryBuilder(ctx, builder)
 	if errRows != nil {
-		return nil, 0, errRows
+		return nil, 0, DBErr(errRows)
 	}
 
 	defer rows.Close()
@@ -370,7 +391,7 @@ func (db *Store) ForumThreads(ctx context.Context, filter ThreadQueryFilter) ([]
 				&tws.Locked, &tws.Views, &tws.CreatedOn, &tws.UpdatedOn, &tws.Personaname, &tws.Avatarhash,
 				&tws.PermissionLevel, &RecentSteamID, &RecentPersonaname, &RecentAvatarHash, &RecentForumMessageID,
 				&RecentCreatedOn, &tws.Replies); errScan != nil {
-			return nil, 0, Err(errScan)
+			return nil, 0, DBErr(errScan)
 		}
 
 		if RecentForumMessageID != nil {
@@ -387,8 +408,10 @@ func (db *Store) ForumThreads(ctx context.Context, filter ThreadQueryFilter) ([]
 	return threads, count, nil
 }
 
-func (db *Store) ForumIncrMessageCount(ctx context.Context, forumID int, incr bool) error {
-	builder := db.sb.Update("forum").
+func ForumIncrMessageCount(ctx context.Context, database Store, forumID int, incr bool) error {
+	builder := database.
+		Builder().
+		Update("forum").
 		Where(sq.Eq{"forum_id": forumID})
 
 	if incr {
@@ -397,13 +420,14 @@ func (db *Store) ForumIncrMessageCount(ctx context.Context, forumID int, incr bo
 		builder = builder.Set("count_messages", sq.Expr("count_messages-1"))
 	}
 
-	return db.ExecUpdateBuilder(ctx, builder)
+	return DBErr(database.ExecUpdateBuilder(ctx, builder))
 }
 
-func (db *Store) ForumMessageSave(ctx context.Context, message *model.ForumMessage) error {
+func ForumMessageSave(ctx context.Context, database Store, message *model.ForumMessage) error {
 	message.UpdatedOn = time.Now()
 	if message.ForumMessageID > 0 {
-		return db.ExecUpdateBuilder(ctx, db.sb.
+		return DBErr(database.ExecUpdateBuilder(ctx, database.
+			Builder().
 			Update("forum_message").
 			SetMap(map[string]interface{}{
 				"forum_thread_id": message.ForumThreadID,
@@ -411,12 +435,13 @@ func (db *Store) ForumMessageSave(ctx context.Context, message *model.ForumMessa
 				"body_md":         message.BodyMD,
 				"updated_on":      message.UpdatedOn,
 			}).
-			Where(sq.Eq{"forum_message_id": message.ForumMessageID}))
+			Where(sq.Eq{"forum_message_id": message.ForumMessageID})))
 	}
 
 	message.CreatedOn = time.Now()
 
-	if errInsert := db.ExecInsertBuilderWithReturnValue(ctx, db.sb.
+	if errInsert := database.ExecInsertBuilderWithReturnValue(ctx, database.
+		Builder().
 		Insert("forum_message").
 		SetMap(map[string]interface{}{
 			"forum_thread_id": message.ForumThreadID,
@@ -426,16 +451,17 @@ func (db *Store) ForumMessageSave(ctx context.Context, message *model.ForumMessa
 			"updated_on":      message.UpdatedOn,
 		}).
 		Suffix("RETURNING forum_message_id"), &message.ForumMessageID); errInsert != nil {
-		return errInsert
+		return DBErr(errInsert)
 	}
 
-	return db.ExecUpdateBuilder(ctx, db.sb.
+	return DBErr(database.ExecUpdateBuilder(ctx, database.
+		Builder().
 		Update("forum_thread").
 		Set("updated_on", message.CreatedOn).
-		Where(sq.Eq{"forum_thread_id": message.ForumThreadID}))
+		Where(sq.Eq{"forum_thread_id": message.ForumThreadID})))
 }
 
-func (db *Store) ForumRecentActivity(ctx context.Context, limit uint64, permissionLevel consts.Privilege) ([]model.ForumMessage, error) {
+func ForumRecentActivity(ctx context.Context, database Store, limit uint64, permissionLevel consts.Privilege) ([]model.ForumMessage, error) {
 	expr, _, errExpr := sq.Expr(`
 			LATERAL (
 				SELECT m.forum_message_id,
@@ -453,10 +479,11 @@ func (db *Store) ForumRecentActivity(ctx context.Context, limit uint64, permissi
 				LIMIT 1
 				) m on TRUE`, permissionLevel).ToSql()
 	if errExpr != nil {
-		return nil, Err(errExpr)
+		return nil, DBErr(errExpr)
 	}
 
-	builder := db.sb.
+	builder := database.
+		Builder().
 		Select("t.forum_thread_id", "m.forum_message_id",
 			"m.steam_id", "m.created_on", "m.updated_on", "m.personaname",
 			"m.avatarhash", "f.permission_level", "t.title").
@@ -467,9 +494,9 @@ func (db *Store) ForumRecentActivity(ctx context.Context, limit uint64, permissi
 		OrderBy("t.updated_on DESC").
 		Limit(limit)
 
-	rows, errRows := db.QueryBuilder(ctx, builder)
+	rows, errRows := database.QueryBuilder(ctx, builder)
 	if errRows != nil {
-		return nil, errRows
+		return nil, DBErr(errRows)
 	}
 
 	defer rows.Close()
@@ -481,7 +508,7 @@ func (db *Store) ForumRecentActivity(ctx context.Context, limit uint64, permissi
 		if errScan := rows.Scan(&msg.ForumThreadID, &msg.ForumMessageID, &msg.SourceID,
 			&msg.CreatedOn, &msg.UpdatedOn, &msg.Personaname,
 			&msg.Avatarhash, &msg.PermissionLevel, &msg.Title); errScan != nil {
-			return nil, Err(errScan)
+			return nil, DBErr(errScan)
 		}
 
 		messages = append(messages, msg)
@@ -490,8 +517,9 @@ func (db *Store) ForumRecentActivity(ctx context.Context, limit uint64, permissi
 	return messages, nil
 }
 
-func (db *Store) ForumMessage(ctx context.Context, messageID int64, forumMessage *model.ForumMessage) error {
-	row, errRow := db.QueryRowBuilder(ctx, db.sb.
+func ForumMessage(ctx context.Context, db Store, messageID int64, forumMessage *model.ForumMessage) error {
+	row, errRow := db.QueryRowBuilder(ctx, db.
+		Builder().
 		Select("m.forum_message_id", "m.forum_thread_id", "m.source_id", "m.body_md", "m.created_on", "m.updated_on",
 			"p.personaname", "p.avatarhash", "p.permission_level", "coalesce(s.forum_signature, '')").
 		From("forum_message m").
@@ -499,10 +527,10 @@ func (db *Store) ForumMessage(ctx context.Context, messageID int64, forumMessage
 		LeftJoin("person_settings s ON s.steam_id = m.source_id").
 		Where(sq.Eq{"forum_message_id": messageID}))
 	if errRow != nil {
-		return errRow
+		return DBErr(errRow)
 	}
 
-	return Err(row.Scan(&forumMessage.ForumMessageID, &forumMessage.ForumThreadID, &forumMessage.SourceID,
+	return DBErr(row.Scan(&forumMessage.ForumMessageID, &forumMessage.ForumThreadID, &forumMessage.SourceID,
 		&forumMessage.BodyMD, &forumMessage.CreatedOn, &forumMessage.UpdatedOn, &forumMessage.Personaname,
 		&forumMessage.Avatarhash, &forumMessage.PermissionLevel, &forumMessage.Signature))
 }
@@ -512,10 +540,11 @@ type ThreadMessagesQueryFilter struct {
 	ForumThreadID int64 `json:"forum_thread_id"`
 }
 
-func (db *Store) ForumMessages(ctx context.Context, filters ThreadMessagesQueryFilter) ([]model.ForumMessage, int64, error) {
+func ForumMessages(ctx context.Context, database Store, filters ThreadMessagesQueryFilter) ([]model.ForumMessage, int64, error) {
 	constraints := sq.And{sq.Eq{"forum_thread_id": filters.ForumThreadID}}
 
-	builder := db.sb.
+	builder := database.
+		Builder().
 		Select("m.forum_message_id", "m.forum_thread_id", "m.source_id", "m.body_md", "m.created_on",
 			"m.updated_on", "p.personaname", "p.avatarhash", "p.permission_level", "coalesce(s.forum_signature, '')").
 		From("forum_message m").
@@ -524,9 +553,9 @@ func (db *Store) ForumMessages(ctx context.Context, filters ThreadMessagesQueryF
 		Where(constraints).
 		OrderBy("m.forum_message_id")
 
-	rows, errRows := db.QueryBuilder(ctx, filters.applyLimitOffset(builder, 100).Where(constraints))
+	rows, errRows := database.QueryBuilder(ctx, filters.applyLimitOffset(builder, 100).Where(constraints))
 	if errRows != nil {
-		return nil, 0, errRows
+		return nil, 0, DBErr(errRows)
 	}
 	defer rows.Close()
 
@@ -536,66 +565,72 @@ func (db *Store) ForumMessages(ctx context.Context, filters ThreadMessagesQueryF
 		var msg model.ForumMessage
 		if errScan := rows.Scan(&msg.ForumMessageID, &msg.ForumThreadID, &msg.SourceID, &msg.BodyMD, &msg.CreatedOn, &msg.UpdatedOn,
 			&msg.Personaname, &msg.Avatarhash, &msg.PermissionLevel, &msg.Signature); errScan != nil {
-			return nil, 0, Err(errScan)
+			return nil, 0, DBErr(errScan)
 		}
 
 		messages = append(messages, msg)
 	}
 
-	count, errCount := db.GetCount(ctx, db.sb.
+	count, errCount := getCount(ctx, database, database.
+		Builder().
 		Select("COUNT(m.forum_message_id)").
 		From("forum_message m").
 		Where(constraints))
 
 	if errCount != nil {
-		return nil, 0, errCount
+		return nil, 0, DBErr(errCount)
 	}
 
 	return messages, count, nil
 }
 
-func (db *Store) ForumMessageDelete(ctx context.Context, messageID int64) error {
-	return db.ExecDeleteBuilder(ctx, db.sb.
+func ForumMessageDelete(ctx context.Context, database Store, messageID int64) error {
+	return DBErr(database.ExecDeleteBuilder(ctx, database.
+		Builder().
 		Delete("forum_message").
-		Where(sq.Eq{"forum_message_id": messageID}))
+		Where(sq.Eq{"forum_message_id": messageID})))
 }
 
-func (db *Store) ForumMessageVoteApply(ctx context.Context, messageVote *model.ForumMessageVote) error {
+func ForumMessageVoteApply(ctx context.Context, database Store, messageVote *model.ForumMessageVote) error {
 	var existingVote model.ForumMessageVote
 
-	row, errRow := db.QueryRowBuilder(ctx, db.sb.
+	row, errRow := database.QueryRowBuilder(ctx, database.
+		Builder().
 		Select("forum_message_vote_id", "forum_message_id", "source_id", "vote", "created_on", "updated_on").
 		From("forum_message_vote").
 		Where(sq.And{sq.Eq{"forum_message_id": messageVote.ForumMessageID}, sq.Eq{"source_id": messageVote.SourceID.Int64()}}))
 	if errRow != nil {
 		if !errors.Is(errRow, ErrNoResult) {
-			return errRow
+			return DBErr(errRow)
 		}
 	}
 
-	errScan := Err(row.Scan(&existingVote.ForumMessageVoteID, &existingVote.ForumMessageID, &existingVote.SourceID,
+	errScan := DBErr(row.Scan(&existingVote.ForumMessageVoteID, &existingVote.ForumMessageID, &existingVote.SourceID,
 		&existingVote.Vote, &existingVote.CreatedOn, &existingVote.UpdatedOn))
 	if errScan != nil {
 		if !errors.Is(errScan, ErrNoResult) {
-			return Err(errScan)
+			return DBErr(errScan)
 		}
 	}
 
 	// If the vote exists and is the same vote, delete it. Otherwise, update the existing vote
 	if existingVote.ForumMessageVoteID > 0 {
 		if existingVote.Vote == messageVote.Vote {
-			return db.ExecDeleteBuilder(ctx, db.sb.
+			return DBErr(database.ExecDeleteBuilder(ctx, database.
+				Builder().
 				Delete("forum_message_vote").
-				Where(sq.Eq{"forum_message_vote_id": existingVote.ForumMessageVoteID}))
+				Where(sq.Eq{"forum_message_vote_id": existingVote.ForumMessageVoteID})))
 		} else {
-			return db.ExecUpdateBuilder(ctx, db.sb.
+			return DBErr(database.ExecUpdateBuilder(ctx, database.
+				Builder().
 				Update("forum_message_vote").
 				Set("vote", messageVote.Vote).
-				Where(sq.Eq{"forum_message_vote_id": existingVote.ForumMessageVoteID}))
+				Where(sq.Eq{"forum_message_vote_id": existingVote.ForumMessageVoteID})))
 		}
 	}
 
-	return db.ExecInsertBuilderWithReturnValue(ctx, db.sb.
+	return DBErr(database.ExecInsertBuilderWithReturnValue(ctx, database.
+		Builder().
 		Insert("forum_message_vote").
 		SetMap(map[string]interface{}{
 			"forum_message_id": messageVote.ForumMessageID,
@@ -604,17 +639,18 @@ func (db *Store) ForumMessageVoteApply(ctx context.Context, messageVote *model.F
 			"created_on":       messageVote.CreatedOn,
 			"updated_on":       messageVote.UpdatedOn,
 		}).
-		Suffix("RETURNING forum_message_vote_id"), &messageVote.ForumMessageVoteID)
+		Suffix("RETURNING forum_message_vote_id"), &messageVote.ForumMessageVoteID))
 }
 
-func (db *Store) ForumMessageVoteByID(ctx context.Context, messageVoteID int64, messageVote *model.ForumMessageVote) error {
-	row, errRow := db.QueryRowBuilder(ctx, db.sb.
+func ForumMessageVoteByID(ctx context.Context, database Store, messageVoteID int64, messageVote *model.ForumMessageVote) error {
+	row, errRow := database.QueryRowBuilder(ctx, database.
+		Builder().
 		Select("forum_message_vote_id", "forum_message_id", "source_id", "vote", "created_on", "updated_on").
 		From("forum_message_vote").Where(sq.Eq{"forum_message_vote_id": messageVoteID}))
 	if errRow != nil {
-		return errRow
+		return DBErr(errRow)
 	}
 
-	return Err(row.Scan(&messageVote.ForumMessageVoteID, &messageVote.ForumMessageID,
+	return DBErr(row.Scan(&messageVote.ForumMessageVoteID, &messageVote.ForumMessageID,
 		&messageVote.SourceID, &messageVote.Vote, &messageVote.CreatedOn, &messageVote.UpdatedOn))
 }

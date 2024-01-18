@@ -16,6 +16,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/gofrs/uuid/v5"
 	embed "github.com/leighmacdonald/discordgo-embed"
+	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/model"
@@ -117,12 +118,12 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 		}
 
 		player := model.NewPerson(sid)
-		if errGetPlayer := app.PersonBySID(ctx, sid, &player); errGetPlayer != nil {
+		if errGetPlayer := PersonBySID(ctx, app.db, sid, &player); errGetPlayer != nil {
 			return nil, discord.ErrCommandFailed
 		}
 
 		ban := model.NewBannedPerson()
-		if errGetBanBySID := app.db.GetBanBySteamID(ctx, sid, &ban, false); errGetBanBySID != nil {
+		if errGetBanBySID := store.GetBanBySteamID(ctx, app.db, sid, &ban, false); errGetBanBySID != nil {
 			if !errors.Is(errGetBanBySID, store.ErrNoResult) {
 				app.log.Error("Failed to get ban by steamid", zap.Error(errGetBanBySID))
 
@@ -130,7 +131,7 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 			}
 		}
 
-		oldBans, _, errOld := app.db.GetBansSteam(ctx, store.SteamBansQueryFilter{
+		oldBans, _, errOld := store.GetBansSteam(ctx, app.db, store.SteamBansQueryFilter{
 			BansQueryFilter: store.BansQueryFilter{
 				QueryFilter: store.QueryFilter{Deleted: true},
 				TargetID:    model.StringSID(sid),
@@ -142,7 +143,7 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 			}
 		}
 
-		bannedNets, errGetBanNet := app.db.GetBanNetByAddress(ctx, player.IPAddr)
+		bannedNets, errGetBanNet := store.GetBanNetByAddress(ctx, app.db, player.IPAddr)
 		if errGetBanNet != nil {
 			if !errors.Is(errGetBanNet, store.ErrNoResult) {
 				app.log.Error("Failed to get ban nets by addr", zap.Error(errGetBanNet))
@@ -179,7 +180,7 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 			createdAt = ban.CreatedOn.Format(time.RFC3339)
 
 			if ban.SourceID.Valid() {
-				if errGetProfile := app.PersonBySID(ctx, ban.SourceID, &authorProfile); errGetProfile != nil {
+				if errGetProfile := PersonBySID(ctx, app.db, ban.SourceID, &authorProfile); errGetProfile != nil {
 					app.log.Error("Failed to load author for ban", zap.Error(errGetProfile))
 				} else {
 					msgEmbed.AddAuthorPersonInfo(authorProfile)
@@ -231,7 +232,7 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 			defer waitGroup.Done()
 
 			if player.IPAddr != nil {
-				if errASN := app.db.GetASNRecordByIP(ctx, player.IPAddr, &asn); errASN != nil {
+				if errASN := store.GetASNRecordByIP(ctx, app.db, player.IPAddr, &asn); errASN != nil {
 					app.log.Error("Failed to fetch ASN record", zap.Error(errASN))
 				}
 			}
@@ -241,7 +242,7 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 			defer waitGroup.Done()
 
 			if player.IPAddr != nil {
-				if errLoc := app.db.GetLocationRecord(ctx, player.IPAddr, &location); errLoc != nil {
+				if errLoc := store.GetLocationRecord(ctx, app.db, player.IPAddr, &location); errLoc != nil {
 					app.log.Error("Failed to fetch Location record", zap.Error(errLoc))
 				}
 			}
@@ -251,7 +252,7 @@ func makeOnCheck(app *App) discord.CommandHandler { //nolint:maintidx
 			defer waitGroup.Done()
 
 			if player.IPAddr != nil {
-				if errProxy := app.db.GetProxyRecord(ctx, player.IPAddr, &proxy); errProxy != nil && !errors.Is(errProxy, store.ErrNoResult) {
+				if errProxy := store.GetProxyRecord(ctx, app.db, player.IPAddr, &proxy); errProxy != nil && !errors.Is(errProxy, store.ErrNoResult) {
 					app.log.Error("Failed to fetch proxy record", zap.Error(errProxy))
 				}
 			}
@@ -393,11 +394,11 @@ func onHistoryIP(ctx context.Context, app *App, _ *discordgo.Session, interactio
 	}
 
 	person := model.NewPerson(steamID)
-	if errPersonBySID := app.PersonBySID(ctx, steamID, &person); errPersonBySID != nil {
+	if errPersonBySID := PersonBySID(ctx, app.db, steamID, &person); errPersonBySID != nil {
 		return nil, discord.ErrCommandFailed
 	}
 
-	ipRecords, errGetPersonIPHist := app.db.GetPersonIPHistory(ctx, steamID, 20)
+	ipRecords, errGetPersonIPHist := store.GetPersonIPHistory(ctx, app.db, steamID, 20)
 	if errGetPersonIPHist != nil && !errors.Is(errGetPersonIPHist, store.ErrNoResult) {
 		return nil, discord.ErrCommandFailed
 	}
@@ -434,10 +435,10 @@ func onHistoryIP(ctx context.Context, app *App, _ *discordgo.Session, interactio
 //		return errCommandFailed
 //	}
 //	chatHistory, errChatHistory := discord.database.GetChatHistory(ctx, steamId, 25)
-//	if errChatHistory != nil && !errors.Is(errChatHistory, store.ErrNoResult) {
+//	if errChatHistory != nil && !errors.Is(errChatHistory, db.ErrNoResult) {
 //		return errCommandFailed
 //	}
-//	if errors.Is(errChatHistory, store.ErrNoResult) {
+//	if errors.Is(errChatHistory, db.ErrNoResult) {
 //		return errors.New("No chat history found")
 //	}
 //	var lines []string
@@ -449,8 +450,7 @@ func onHistoryIP(ctx context.Context, app *App, _ *discordgo.Session, interactio
 //	return nil
 // }
 
-func (app *App) createDiscordBanEmbed(ctx context.Context, ban model.BanSteam) (*embed.Embed, error) {
-	conf := app.config()
+func createDiscordBanEmbed(ctx context.Context, database store.Store, conf config.Config, ban model.BanSteam) (*embed.Embed, error) {
 	msgEmbed := discord.NewEmbed(conf)
 	msgEmbed.Embed().
 		SetTitle(fmt.Sprintf("Ban created successfully (#%d)", ban.BanID)).
@@ -463,7 +463,7 @@ func (app *App) createDiscordBanEmbed(ctx context.Context, ban model.BanSteam) (
 	}
 
 	var target model.Person
-	if errTarget := app.PersonBySID(ctx, ban.TargetID, &target); errTarget != nil {
+	if errTarget := PersonBySID(ctx, database, ban.TargetID, &target); errTarget != nil {
 		return nil, errTarget
 	}
 
@@ -471,7 +471,7 @@ func (app *App) createDiscordBanEmbed(ctx context.Context, ban model.BanSteam) (
 
 	var author model.Person
 
-	if errTarget := app.PersonBySID(ctx, ban.SourceID, &target); errTarget != nil {
+	if errTarget := PersonBySID(ctx, database, ban.SourceID, &target); errTarget != nil {
 		return nil, errTarget
 	}
 
@@ -542,7 +542,7 @@ func onUnbanSteam(ctx context.Context, app *App, _ *discordgo.Session, interacti
 	msgEmbed.Embed().SetColor(conf.Discord.ColourSuccess)
 
 	var user model.Person
-	if errUser := app.PersonBySID(ctx, steamID, &user); errUser != nil {
+	if errUser := store.GetPersonBySteamID(ctx, app.db, steamID, &user); errUser != nil {
 		app.log.Warn("Could not fetch unbanned person", zap.String("steam_id", steamID.String()), zap.Error(errUser))
 	} else {
 		msgEmbed.Embed().SetImage(user.AvatarFull).
@@ -576,7 +576,7 @@ func onUnbanASN(ctx context.Context, app *App, _ *discordgo.Session, interaction
 		return nil, errors.New("Invalid ASN")
 	}
 
-	asnNetworks, errGetASNRecords := app.db.GetASNRecordsByNum(ctx, asNum)
+	asnNetworks, errGetASNRecords := store.GetASNRecordsByNum(ctx, app.db, asNum)
 	if errGetASNRecords != nil {
 		if errors.Is(errGetASNRecords, store.ErrNoResult) {
 			return nil, errors.New("No asnNetworks found matching ASN")
@@ -598,9 +598,9 @@ func onUnbanASN(ctx context.Context, app *App, _ *discordgo.Session, interaction
 	return msgEmbed.MessageEmbed, nil
 }
 
-func getDiscordAuthor(ctx context.Context, db *store.Store, interaction *discordgo.InteractionCreate) (model.Person, error) {
+func getDiscordAuthor(ctx context.Context, db store.Store, interaction *discordgo.InteractionCreate) (model.Person, error) {
 	author := model.NewPerson("")
-	if errPersonByDiscordID := db.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID, &author); errPersonByDiscordID != nil {
+	if errPersonByDiscordID := store.GetPersonByDiscordID(ctx, db, interaction.Interaction.Member.User.ID, &author); errPersonByDiscordID != nil {
 		if errors.Is(errPersonByDiscordID, store.ErrNoResult) {
 			return author, errors.New("Must set steam id. See /set_steam")
 		}
@@ -846,20 +846,20 @@ func makeOnPlayers(app *App) discord.CommandHandler {
 
 			for _, player := range serverState.Players {
 				var asn ip2location.ASNRecord
-				if errASN := app.db.GetASNRecordByIP(ctx, player.IP, &asn); errASN != nil {
+				if errASN := store.GetASNRecordByIP(ctx, app.db, player.IP, &asn); errASN != nil {
 					// Will fail for LAN ips
 					app.log.Warn("Failed to get asn record", zap.Error(errASN))
 				}
 
 				var loc ip2location.LocationRecord
-				if errLoc := app.db.GetLocationRecord(ctx, player.IP, &loc); errLoc != nil {
+				if errLoc := store.GetLocationRecord(ctx, app.db, player.IP, &loc); errLoc != nil {
 					app.log.Warn("Failed to get location record: %v", zap.Error(errLoc))
 				}
 
 				proxyStr := ""
 
 				var proxy ip2location.ProxyRecord
-				if errGetProxyRecord := app.db.GetProxyRecord(ctx, player.IP, &proxy); errGetProxyRecord == nil {
+				if errGetProxyRecord := store.GetProxyRecord(ctx, app.db, player.IP, &proxy); errGetProxyRecord == nil {
 					proxyStr = fmt.Sprintf("Threat: %s | %s | %s", proxy.ProxyType, proxy.Threat, proxy.UsageType)
 				}
 
@@ -938,11 +938,11 @@ func onFilterDel(ctx context.Context, app *App, _ *discordgo.Session, interactio
 	}
 
 	var filter model.Filter
-	if errGetFilter := app.db.GetFilterByID(ctx, wordID, &filter); errGetFilter != nil {
+	if errGetFilter := store.GetFilterByID(ctx, app.db, wordID, &filter); errGetFilter != nil {
 		return nil, discord.ErrCommandFailed
 	}
 
-	if errDropFilter := app.db.DropFilter(ctx, &filter); errDropFilter != nil {
+	if errDropFilter := store.DropFilter(ctx, app.db, &filter); errDropFilter != nil {
 		return nil, discord.ErrCommandFailed
 	}
 
@@ -1145,7 +1145,7 @@ func onStatsPlayer(ctx context.Context, app *App, _ *discordgo.Session, interact
 	}
 
 	person := model.NewPerson(steamID)
-	errAuthor := app.PersonBySID(ctx, steamID, &person)
+	errAuthor := PersonBySID(ctx, app.db, steamID, &person)
 
 	if errAuthor != nil {
 		return nil, errAuthor
@@ -1157,22 +1157,22 @@ func onStatsPlayer(ctx context.Context, app *App, _ *discordgo.Session, interact
 	//	return nil, errAuthor
 	// }
 
-	classStats, errClassStats := app.db.StatsPlayerClass(ctx, person.SteamID)
+	classStats, errClassStats := store.StatsPlayerClass(ctx, app.db, person.SteamID)
 	if errClassStats != nil {
 		return nil, errors.Wrap(errClassStats, "Failed to fetch class stats")
 	}
 
-	weaponStats, errWeaponStats := app.db.StatsPlayerWeapons(ctx, person.SteamID)
+	weaponStats, errWeaponStats := store.StatsPlayerWeapons(ctx, app.db, person.SteamID)
 	if errWeaponStats != nil {
 		return nil, errors.Wrap(errWeaponStats, "Failed to fetch weapon stats")
 	}
 
-	killstreakStats, errKillstreakStats := app.db.StatsPlayerKillstreaks(ctx, person.SteamID)
+	killstreakStats, errKillstreakStats := store.StatsPlayerKillstreaks(ctx, app.db, person.SteamID)
 	if errKillstreakStats != nil {
 		return nil, errors.Wrap(errKillstreakStats, "Failed to fetch killstreak stats")
 	}
 
-	medicStats, errMedicStats := app.db.StatsPlayerMedic(ctx, person.SteamID)
+	medicStats, errMedicStats := store.StatsPlayerMedic(ctx, app.db, person.SteamID)
 	if errMedicStats != nil {
 		return nil, errors.Wrap(errMedicStats, "Failed to fetch medic stats")
 	}
@@ -1304,7 +1304,7 @@ func makeOnLogs(app *App) discord.CommandHandler {
 			return nil, errAuthor
 		}
 
-		matches, count, errMatch := app.db.Matches(ctx, store.MatchesQueryOpts{
+		matches, count, errMatch := store.Matches(ctx, app.db, store.MatchesQueryOpts{
 			SteamID:     author.SteamID,
 			QueryFilter: store.QueryFilter{Limit: 5},
 		})
@@ -1349,7 +1349,7 @@ func makeOnLog(app *App) discord.CommandHandler {
 
 		var match model.MatchResult
 
-		if errMatch := app.db.MatchGetByID(ctx, matchID, &match); errMatch != nil {
+		if errMatch := store.MatchGetByID(ctx, app.db, matchID, &match); errMatch != nil {
 			return nil, discord.ErrCommandFailed
 		}
 
@@ -1385,13 +1385,13 @@ func makeOnFind(app *App) discord.CommandHandler {
 
 		for _, player := range players {
 			var server model.Server
-			if errServer := app.db.GetServer(ctx, player.ServerID, &server); errServer != nil {
+			if errServer := store.GetServer(ctx, app.db, player.ServerID, &server); errServer != nil {
 				return nil, errors.Wrapf(errServer, "Failed to get server")
 			}
 
 			person := model.NewPerson(player.Player.SID)
-			if errPerson := app.PersonBySID(ctx, player.Player.SID, &person); errPerson != nil {
-				return nil, errPerson
+			if errPerson := store.GetOrCreatePersonBySteamID(ctx, app.db, player.Player.SID, &person); errPerson != nil {
+				return nil, errors.Wrap(errPerson, "Failed to get player instance")
 			}
 
 			msgEmbed.Embed().
@@ -1617,7 +1617,7 @@ func onBanASN(ctx context.Context, app *App, _ *discordgo.Session,
 		return nil, consts.ErrInvalidDuration
 	}
 
-	if errGetPersonByDiscordID := app.db.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID, &author); errGetPersonByDiscordID != nil {
+	if errGetPersonByDiscordID := store.GetPersonByDiscordID(ctx, app.db, interaction.Interaction.Member.User.ID, &author); errGetPersonByDiscordID != nil {
 		if errors.Is(errGetPersonByDiscordID, store.ErrNoResult) {
 			return nil, errors.New("Must set steam id. See /set_steam")
 		}
@@ -1630,7 +1630,7 @@ func onBanASN(ctx context.Context, app *App, _ *discordgo.Session,
 		return nil, errors.New("Invalid ASN")
 	}
 
-	asnRecords, errGetASNRecords := app.db.GetASNRecordsByNum(ctx, asNum)
+	asnRecords, errGetASNRecords := store.GetASNRecordsByNum(ctx, app.db, asNum)
 	if errGetASNRecords != nil {
 		if errors.Is(errGetASNRecords, store.ErrNoResult) {
 			return nil, errors.New("No asnRecords found matching ASN")
@@ -1696,7 +1696,7 @@ func onBanIP(ctx context.Context, app *App, _ *discordgo.Session,
 	modNote := opts[discord.OptNote].StringValue()
 
 	author := model.NewPerson("")
-	if errGetPerson := app.db.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID, &author); errGetPerson != nil {
+	if errGetPerson := store.GetPersonByDiscordID(ctx, app.db, interaction.Interaction.Member.User.ID, &author); errGetPerson != nil {
 		if errors.Is(errGetPerson, store.ErrNoResult) {
 			return nil, errors.New("Must set steam id. See /set_steam")
 		}
@@ -1793,7 +1793,7 @@ func onBanSteam(ctx context.Context, app *App, _ *discordgo.Session,
 		return nil, discord.ErrCommandFailed
 	}
 
-	msgEmbed, errCreate := app.createDiscordBanEmbed(ctx, banSteam)
+	msgEmbed, errCreate := createDiscordBanEmbed(ctx, app.db, app.config(), banSteam)
 	if errCreate != nil {
 		return nil, errCreate
 	}

@@ -107,6 +107,8 @@ linters:
     #- zerologlint
 
 linters-settings:
+  interfacebloat:
+    max: 15
   tagliatelle:
     case:
       use-field-name: true

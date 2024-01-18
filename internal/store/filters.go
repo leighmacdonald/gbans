@@ -6,36 +6,34 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"go.uber.org/zap"
 )
 
-func (db *Store) SaveFilter(ctx context.Context, filter *model.Filter) error {
+func SaveFilter(ctx context.Context, database Store, filter *model.Filter) error {
 	if filter.FilterID > 0 {
-		return db.updateFilter(ctx, filter)
+		return updateFilter(ctx, database, filter)
 	} else {
-		return db.insertFilter(ctx, filter)
+		return insertFilter(ctx, database, filter)
 	}
 }
 
-func (db *Store) insertFilter(ctx context.Context, filter *model.Filter) error {
+func insertFilter(ctx context.Context, database Store, filter *model.Filter) error {
 	const query = `
 		INSERT INTO filtered_word (author_id, pattern, is_regex, is_enabled, trigger_count, created_on, updated_on, action, duration, weight) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
 		RETURNING filter_id`
 
-	if errQuery := db.QueryRow(ctx, query, filter.AuthorID.Int64(), filter.Pattern,
+	if errQuery := database.QueryRow(ctx, query, filter.AuthorID.Int64(), filter.Pattern,
 		filter.IsRegex, filter.IsEnabled, filter.TriggerCount, filter.CreatedOn, filter.UpdatedOn, filter.Action, filter.Duration).
 		Scan(&filter.FilterID); errQuery != nil {
-		return Err(errQuery)
+		return DBErr(errQuery)
 	}
-
-	db.log.Info("Created filter", zap.Int64("filter_id", filter.FilterID))
 
 	return nil
 }
 
-func (db *Store) updateFilter(ctx context.Context, filter *model.Filter) error {
-	query := db.sb.
+func updateFilter(ctx context.Context, database Store, filter *model.Filter) error {
+	query := database.
+		Builder().
 		Update("filtered_word").
 		Set("author_id", filter.AuthorID.Int64()).
 		Set("pattern", filter.Pattern).
@@ -49,40 +47,36 @@ func (db *Store) updateFilter(ctx context.Context, filter *model.Filter) error {
 		Set("updated_on", filter.UpdatedOn).
 		Where(sq.Eq{"filter_id": filter.FilterID})
 
-	if err := db.ExecUpdateBuilder(ctx, query); err != nil {
-		return Err(err)
+	if err := database.ExecUpdateBuilder(ctx, query); err != nil {
+		return DBErr(err)
 	}
-
-	db.log.Debug("Updated filter", zap.Int64("filter_id", filter.FilterID))
 
 	return nil
 }
 
-func (db *Store) DropFilter(ctx context.Context, filter *model.Filter) error {
-	query := db.sb.
+func DropFilter(ctx context.Context, database Store, filter *model.Filter) error {
+	query := database.
+		Builder().
 		Delete("filtered_word").
 		Where(sq.Eq{"filter_id": filter.FilterID})
-	if errExec := db.ExecDeleteBuilder(ctx, query); errExec != nil {
-		db.log.Error("Failed to delete filter", zap.Error(errExec))
-
-		return Err(errExec)
+	if errExec := database.ExecDeleteBuilder(ctx, query); errExec != nil {
+		return DBErr(errExec)
 	}
-
-	db.log.Info("Deleted filter", zap.Int64("filter_id", filter.FilterID))
 
 	return nil
 }
 
-func (db *Store) GetFilterByID(ctx context.Context, filterID int64, filter *model.Filter) error {
-	query := db.sb.
+func GetFilterByID(ctx context.Context, database Store, filterID int64, filter *model.Filter) error {
+	query := database.
+		Builder().
 		Select("filter_id", "author_id", "pattern", "is_regex",
 			"is_enabled", "trigger_count", "created_on", "updated_on", "action", "duration", "weight").
 		From("filtered_word").
 		Where(sq.Eq{"filter_id": filterID})
 
-	row, errQuery := db.QueryRowBuilder(ctx, query)
+	row, errQuery := database.QueryRowBuilder(ctx, query)
 	if errQuery != nil {
-		return errQuery
+		return DBErr(errQuery)
 	}
 
 	var authorID int64
@@ -90,9 +84,7 @@ func (db *Store) GetFilterByID(ctx context.Context, filterID int64, filter *mode
 	if errScan := row.Scan(&filter.FilterID, &authorID, &filter.Pattern,
 		&filter.IsRegex, &filter.IsEnabled, &filter.TriggerCount, &filter.CreatedOn, &filter.UpdatedOn,
 		&filter.Action, &filter.Duration, &filter.Weight); errScan != nil {
-		db.log.Error("Failed to fetch filter", zap.Error(errScan))
-
-		return Err(errScan)
+		return DBErr(errScan)
 	}
 
 	filter.AuthorID = steamid.New(authorID)
@@ -106,8 +98,9 @@ type FiltersQueryFilter struct {
 	QueryFilter
 }
 
-func (db *Store) GetFilters(ctx context.Context, opts FiltersQueryFilter) ([]model.Filter, int64, error) {
-	builder := db.sb.
+func GetFilters(ctx context.Context, database Store, opts FiltersQueryFilter) ([]model.Filter, int64, error) {
+	builder := database.
+		Builder().
 		Select("f.filter_id", "f.author_id", "f.pattern", "f.is_regex",
 			"f.is_enabled", "f.trigger_count", "f.created_on", "f.updated_on", "f.action", "f.duration", "f.weight").
 		From("filtered_word f")
@@ -121,9 +114,9 @@ func (db *Store) GetFilters(ctx context.Context, opts FiltersQueryFilter) ([]mod
 
 	builder = opts.QueryFilter.applyLimitOffset(builder, maxResultsDefault)
 
-	rows, errExec := db.QueryBuilder(ctx, builder)
+	rows, errExec := database.QueryBuilder(ctx, builder)
 	if errExec != nil {
-		return nil, 0, Err(errExec)
+		return nil, 0, DBErr(errExec)
 	}
 
 	defer rows.Close()
@@ -139,7 +132,7 @@ func (db *Store) GetFilters(ctx context.Context, opts FiltersQueryFilter) ([]mod
 		if errScan := rows.Scan(&filter.FilterID, &authorID, &filter.Pattern, &filter.IsRegex,
 			&filter.IsEnabled, &filter.TriggerCount, &filter.CreatedOn, &filter.UpdatedOn, &filter.Action,
 			&filter.Duration, &filter.Weight); errScan != nil {
-			return nil, 0, Err(errScan)
+			return nil, 0, DBErr(errScan)
 		}
 
 		filter.AuthorID = steamid.New(authorID)
@@ -149,19 +142,21 @@ func (db *Store) GetFilters(ctx context.Context, opts FiltersQueryFilter) ([]mod
 		filters = append(filters, filter)
 	}
 
-	count, errCount := db.GetCount(ctx, db.sb.
+	count, errCount := getCount(ctx, database, database.
+		Builder().
 		Select("count(filter_id)").
 		From("filtered_word f"))
 	if errCount != nil {
-		return nil, 0, errCount
+		return nil, 0, DBErr(errCount)
 	}
 
 	return filters, count, nil
 }
 
-func (db *Store) AddMessageFilterMatch(ctx context.Context, messageID int64, filterID int64) error {
-	return db.ExecInsertBuilder(ctx, db.sb.
+func AddMessageFilterMatch(ctx context.Context, database Store, messageID int64, filterID int64) error {
+	return DBErr(database.ExecInsertBuilder(ctx, database.
+		Builder().
 		Insert("person_messages_filter").
 		Columns("person_message_id", "filter_id").
-		Values(messageID, filterID))
+		Values(messageID, filterID)))
 }

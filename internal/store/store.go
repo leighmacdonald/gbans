@@ -2,26 +2,15 @@ package store
 
 import (
 	"context"
-	"database/sql"
 	"embed"
-	"fmt"
-	"net/http"
-	"strings"
-	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/golang-migrate/migrate/v4"
-	pgxMigrate "github.com/golang-migrate/migrate/v4/database/pgx"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/golang-migrate/migrate/v4/source/httpfs"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
 	pgxuuid "github.com/jackc/pgx-gofrs-uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/leighmacdonald/gbans/pkg/fp"
-	"github.com/leighmacdonald/gbans/pkg/logparse"
-	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
@@ -41,7 +30,24 @@ const maxResultsDefault = 100
 // EmptyUUID is used as a placeholder value for signaling the entity is new.
 const EmptyUUID = "feb4bf16-7f55-4cb4-923c-4de69a093b79"
 
-type Store struct {
+// Store is the common database interface. All errors from callers should be wrapped in DBErr as they
+// are not automatically wrapped.
+type Store interface {
+	Begin(ctx context.Context) (pgx.Tx, error)
+	Query(ctx context.Context, query string, args ...any) (pgx.Rows, error)
+	QueryBuilder(ctx context.Context, builder sq.SelectBuilder) (pgx.Rows, error)
+	QueryRow(ctx context.Context, query string, args ...any) pgx.Row
+	QueryRowBuilder(ctx context.Context, builder sq.SelectBuilder) (pgx.Row, error)
+	Exec(ctx context.Context, query string, args ...any) error
+	ExecInsertBuilder(ctx context.Context, builder sq.InsertBuilder) error
+	ExecDeleteBuilder(ctx context.Context, builder sq.DeleteBuilder) error
+	ExecUpdateBuilder(ctx context.Context, builder sq.UpdateBuilder) error
+	ExecInsertBuilderWithReturnValue(ctx context.Context, builder sq.InsertBuilder, outID any) error
+	Builder() sq.StatementBuilderType
+	SendBatch(ctx context.Context, b *pgx.Batch) pgx.BatchResults
+}
+
+type Database struct {
 	conn *pgxpool.Pool
 	log  *zap.Logger
 	// Use $ for pg based queries.
@@ -50,84 +56,16 @@ type Store struct {
 	autoMigrate bool
 	migrated    bool
 	logQueries  bool
-	weaponMap   fp.MutexMap[logparse.Weapon, int]
 }
 
-func New(rootLogger *zap.Logger, dsn string, autoMigrate bool, logQueries bool) *Store {
-	return &Store{
+func New(rootLogger *zap.Logger, dsn string, autoMigrate bool, logQueries bool) *Database {
+	return &Database{
 		sb:          sq.StatementBuilder.PlaceholderFormat(sq.Dollar),
 		log:         rootLogger.Named("db"),
 		dsn:         dsn,
 		autoMigrate: autoMigrate,
 		logQueries:  logQueries,
-		weaponMap:   fp.NewMutexMap[logparse.Weapon, int](),
 	}
-}
-
-// QueryFilter provides a structure for common query parameters.
-type QueryFilter struct {
-	Offset  uint64 `json:"offset,omitempty" uri:"offset" binding:"gte=0"`
-	Limit   uint64 `json:"limit,omitempty" uri:"limit" binding:"gte=0,lte=1000"`
-	Desc    bool   `json:"desc,omitempty" uri:"desc"`
-	Query   string `json:"query,omitempty" uri:"query"`
-	OrderBy string `json:"order_by,omitempty" uri:"order_by"`
-	Deleted bool   `json:"deleted,omitempty" uri:"deleted"`
-}
-
-// applySafeOrder is used to ensure that a user requested column is valid. This
-// is used to prevent potential injection attacks as there is no parameterized
-// order by value.
-func (qf QueryFilter) applySafeOrder(builder sq.SelectBuilder, validColumns map[string][]string, fallback string) sq.SelectBuilder {
-	if qf.OrderBy == "" {
-		qf.OrderBy = fallback
-	}
-
-	qf.OrderBy = strings.ToLower(qf.OrderBy)
-
-	isValid := false
-
-	for prefix, columns := range validColumns {
-		for _, name := range columns {
-			if name == qf.OrderBy {
-				qf.OrderBy = prefix + qf.OrderBy
-				isValid = true
-
-				break
-			}
-		}
-
-		if isValid {
-			break
-		}
-	}
-
-	if qf.Desc {
-		builder = builder.OrderBy(fmt.Sprintf("%s DESC", qf.OrderBy))
-	} else {
-		builder = builder.OrderBy(fmt.Sprintf("%s ASC", qf.OrderBy))
-	}
-
-	return builder
-}
-
-func (qf QueryFilter) applyLimitOffsetDefault(builder sq.SelectBuilder) sq.SelectBuilder {
-	return qf.applyLimitOffset(builder, maxResultsDefault)
-}
-
-func (qf QueryFilter) applyLimitOffset(builder sq.SelectBuilder, maxLimit uint64) sq.SelectBuilder {
-	if qf.Limit > maxLimit {
-		qf.Limit = maxLimit
-	}
-
-	if qf.Limit > 0 {
-		builder = builder.Limit(qf.Limit)
-	}
-
-	if qf.Offset > 0 {
-		builder = builder.Offset(qf.Offset)
-	}
-
-	return builder
 }
 
 type dbQueryTracer struct {
@@ -148,7 +86,7 @@ func (tracer *dbQueryTracer) TraceQueryEnd(_ context.Context, _ *pgx.Conn, _ pgx
 }
 
 // Connect sets up underlying required services.
-func (db *Store) Connect(ctx context.Context) error {
+func (db *Database) Connect(ctx context.Context) error {
 	cfg, errConfig := pgxpool.ParseConfig(db.dsn)
 	if errConfig != nil {
 		return errors.Errorf("Unable to parse config: %v", errConfig)
@@ -182,96 +120,105 @@ func (db *Store) Connect(ctx context.Context) error {
 	return nil
 }
 
-//nolint:ireturn
-func (db *Store) Query(ctx context.Context, query string, args ...any) (pgx.Rows, error) {
-	rows, err := db.conn.Query(ctx, query, args...)
+func (db *Database) SendBatch(ctx context.Context, batch *pgx.Batch) pgx.BatchResults { //nolint:ireturn
+	return db.conn.SendBatch(ctx, batch)
+}
 
-	return rows, Err(err)
+func (db *Database) Builder() sq.StatementBuilderType {
+	return db.sb
 }
 
 //nolint:ireturn
-func (db *Store) QueryBuilder(ctx context.Context, builder sq.SelectBuilder) (pgx.Rows, error) {
+func (db *Database) Query(ctx context.Context, query string, args ...any) (pgx.Rows, error) {
+	rows, err := db.conn.Query(ctx, query, args...)
+
+	return rows, err //nolint:wrapcheck
+}
+
+func (db *Database) QueryBuilder(ctx context.Context, builder sq.SelectBuilder) (pgx.Rows, error) { //nolint:ireturn
 	query, args, errQuery := builder.ToSql()
 	if errQuery != nil {
-		return nil, Err(errQuery)
+		return nil, DBErr(errQuery)
 	}
 
 	rows, err := db.conn.Query(ctx, query, args...)
 
-	return rows, Err(err)
+	return rows, err //nolint:wrapcheck
 }
 
-//nolint:ireturn
-func (db *Store) QueryRow(ctx context.Context, query string, args ...any) pgx.Row {
+func (db *Database) QueryRow(ctx context.Context, query string, args ...any) pgx.Row { //nolint:ireturn
 	return db.conn.QueryRow(ctx, query, args...)
 }
 
-//nolint:ireturn
-func (db *Store) QueryRowBuilder(ctx context.Context, builder sq.SelectBuilder) (pgx.Row, error) {
+func (db *Database) QueryRowBuilder(ctx context.Context, builder sq.SelectBuilder) (pgx.Row, error) { //nolint:ireturn
 	query, args, errQuery := builder.ToSql()
 	if errQuery != nil {
-		return nil, Err(errQuery)
+		return nil, errQuery //nolint:wrapcheck
 	}
 
 	return db.conn.QueryRow(ctx, query, args...), nil
 }
 
-func (db *Store) Exec(ctx context.Context, query string, args ...any) error {
+func (db *Database) Exec(ctx context.Context, query string, args ...any) error {
 	_, err := db.conn.Exec(ctx, query, args...)
 
-	return Err(err)
+	return err //nolint:wrapcheck
 }
 
-func (db *Store) ExecInsertBuilder(ctx context.Context, builder sq.InsertBuilder) error {
+func (db *Database) ExecInsertBuilder(ctx context.Context, builder sq.InsertBuilder) error {
 	query, args, errQuery := builder.ToSql()
 	if errQuery != nil {
-		return Err(errQuery)
+		return DBErr(errQuery)
 	}
 
 	_, err := db.conn.Exec(ctx, query, args...)
 
-	return Err(err)
+	return err //nolint:wrapcheck
 }
 
-func (db *Store) ExecDeleteBuilder(ctx context.Context, builder sq.DeleteBuilder) error {
+func (db *Database) ExecDeleteBuilder(ctx context.Context, builder sq.DeleteBuilder) error {
 	query, args, errQuery := builder.ToSql()
 	if errQuery != nil {
-		return Err(errQuery)
+		return errQuery //nolint:wrapcheck
 	}
 
 	_, err := db.conn.Exec(ctx, query, args...)
 
-	return Err(err)
+	return err //nolint:wrapcheck
 }
 
-func (db *Store) ExecUpdateBuilder(ctx context.Context, builder sq.UpdateBuilder) error {
+func (db *Database) ExecUpdateBuilder(ctx context.Context, builder sq.UpdateBuilder) error {
 	query, args, errQuery := builder.ToSql()
 	if errQuery != nil {
-		return Err(errQuery)
+		return errQuery //nolint:wrapcheck
 	}
 
 	_, err := db.conn.Exec(ctx, query, args...)
 
-	return Err(err)
+	return err //nolint:wrapcheck
 }
 
-func (db *Store) ExecInsertBuilderWithReturnValue(ctx context.Context, builder sq.InsertBuilder, outID any) error {
+func (db *Database) ExecInsertBuilderWithReturnValue(ctx context.Context, builder sq.InsertBuilder, outID any) error {
 	query, args, errQuery := builder.ToSql()
 	if errQuery != nil {
-		return Err(errQuery)
+		return errQuery //nolint:wrapcheck
 	}
 
 	if errScan := db.
 		QueryRow(ctx, query, args...).
 		Scan(outID); errScan != nil {
-		return Err(errScan)
+		return errScan //nolint:wrapcheck
 	}
 
 	return nil
 }
 
+func (db *Database) Begin(ctx context.Context) (pgx.Tx, error) { //nolint:ireturn
+	return db.conn.Begin(ctx) //nolint:wrapcheck
+}
+
 // Close will close the underlying database connection if it exists.
-func (db *Store) Close() error {
+func (db *Database) Close() error {
 	if db.conn != nil {
 		db.conn.Close()
 	}
@@ -279,31 +226,31 @@ func (db *Store) Close() error {
 	return nil
 }
 
-func (db *Store) GetCount(ctx context.Context, builder sq.SelectBuilder) (int64, error) {
+func getCount(ctx context.Context, database Store, builder sq.SelectBuilder) (int64, error) {
 	countQuery, argsCount, errCountQuery := builder.ToSql()
 	if errCountQuery != nil {
 		return 0, errors.Wrap(errCountQuery, "Failed to create count query")
 	}
 
 	var count int64
-	if errCount := db.
+	if errCount := database.
 		QueryRow(ctx, countQuery, argsCount...).
 		Scan(&count); errCount != nil {
-		return 0, Err(errCount)
+		return 0, errCount //nolint:wrapcheck
 	}
 
 	return count, nil
 }
 
-func (db *Store) truncateTable(ctx context.Context, table string) error {
+func truncateTable(ctx context.Context, database Store, table string) error {
 	query, args, errQueryArgs := sq.Delete(table).ToSql()
 	if errQueryArgs != nil {
-		return Err(errQueryArgs)
+		return DBErr(errQueryArgs)
 	}
 
-	rows, errExec := db.Query(ctx, query, args...)
+	rows, errExec := database.Query(ctx, query, args...)
 	if errExec != nil {
-		return Err(errExec)
+		return DBErr(errExec)
 	}
 
 	rows.Close()
@@ -311,8 +258,8 @@ func (db *Store) truncateTable(ctx context.Context, table string) error {
 	return nil
 }
 
-// Err is used to wrap common database errors in owr own error types.
-func Err(rootError error) error {
+// DBErr is used to wrap common database errors in owr own error types.
+func DBErr(rootError error) error {
 	if rootError == nil {
 		return nil
 	}
@@ -333,77 +280,4 @@ func Err(rootError error) error {
 	}
 
 	return rootError
-}
-
-// MigrationAction is the type of migration to perform.
-type MigrationAction int
-
-const (
-	// MigrateUp Fully upgrades the schema.
-	MigrateUp = iota
-	// MigrateDn Fully downgrades the schema.
-	MigrateDn
-	// MigrateUpOne Upgrade the schema by one revision.
-	MigrateUpOne
-	// MigrateDownOne Downgrade the schema by one revision.
-	MigrateDownOne
-)
-
-// migrate database schema.
-func (db *Store) migrate(action MigrationAction, dsn string) error {
-	defer func() {
-		db.migrated = true
-	}()
-
-	instance, errOpen := sql.Open("pgx", dsn)
-	if errOpen != nil {
-		return errors.Wrapf(errOpen, "Failed to open database for migration")
-	}
-
-	if errPing := instance.Ping(); errPing != nil {
-		return errors.Wrapf(errPing, "Cannot migrate, failed to connect to target server")
-	}
-
-	driver, errMigrate := pgxMigrate.WithInstance(instance, &pgxMigrate.Config{
-		MigrationsTable:       "_migration",
-		SchemaName:            "public",
-		StatementTimeout:      60 * time.Second,
-		MultiStatementEnabled: true,
-	})
-	if errMigrate != nil {
-		return errors.Wrapf(errMigrate, "failed to create migration driver")
-	}
-
-	defer util.LogCloser(driver, db.log)
-
-	source, errHTTPFS := httpfs.New(http.FS(migrations), "migrations")
-	if errHTTPFS != nil {
-		return errors.Wrapf(errHTTPFS, "Failed to create migration httpfs")
-	}
-
-	migrator, errMigrateInstance := migrate.NewWithInstance("iofs", source, "pgx", driver)
-	if errMigrateInstance != nil {
-		return errors.Wrapf(errMigrateInstance, "Failed to migrator up")
-	}
-
-	var errMigration error
-
-	switch action {
-	case MigrateUpOne:
-		errMigration = migrator.Steps(1)
-	case MigrateDn:
-		errMigration = migrator.Down()
-	case MigrateDownOne:
-		errMigration = migrator.Steps(-1)
-	case MigrateUp:
-		fallthrough
-	default:
-		errMigration = migrator.Up()
-	}
-
-	if errMigration != nil && !errors.Is(errMigration, migrate.ErrNoChange) {
-		return errors.Wrapf(errMigration, "Failed to perform migration")
-	}
-
-	return nil
 }

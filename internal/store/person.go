@@ -18,14 +18,15 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (db *Store) DropPerson(ctx context.Context, steamID steamid.SID64) error {
-	return db.ExecDeleteBuilder(ctx, db.sb.
+func DropPerson(ctx context.Context, database Store, steamID steamid.SID64) error {
+	return DBErr(database.ExecDeleteBuilder(ctx, database.
+		Builder().
 		Delete("person").
-		Where(sq.Eq{"steam_id": steamID.Int64()}))
+		Where(sq.Eq{"steam_id": steamID.Int64()})))
 }
 
 // SavePerson will insert or update the person record.
-func (db *Store) SavePerson(ctx context.Context, person *model.Person) error {
+func SavePerson(ctx context.Context, database Store, person *model.Person) error {
 	person.UpdatedOn = time.Now()
 	// FIXME
 	if person.PermissionLevel == 0 {
@@ -33,19 +34,20 @@ func (db *Store) SavePerson(ctx context.Context, person *model.Person) error {
 	}
 
 	if !person.IsNew {
-		return db.updatePerson(ctx, person)
+		return updatePerson(ctx, database, person)
 	}
 
 	person.CreatedOn = person.UpdatedOn
 
-	return db.insertPerson(ctx, person)
+	return insertPerson(ctx, database, person)
 }
 
-func (db *Store) updatePerson(ctx context.Context, person *model.Person) error {
+func updatePerson(ctx context.Context, database Store, person *model.Person) error {
 	person.UpdatedOn = time.Now()
 
-	return db.
-		ExecUpdateBuilder(ctx, db.sb.
+	return DBErr(database.
+		ExecUpdateBuilder(ctx, database.
+			Builder().
 			Update("person").
 			SetMap(map[string]interface{}{
 				"updated_on":               person.UpdatedOn,
@@ -73,11 +75,12 @@ func (db *Store) updatePerson(ctx context.Context, person *model.Person) error {
 				"updated_on_steam":         person.UpdatedOnSteam,
 				"muted":                    person.Muted,
 			}).
-			Where(sq.Eq{"steam_id": person.SteamID.Int64()}))
+			Where(sq.Eq{"steam_id": person.SteamID.Int64()})))
 }
 
-func (db *Store) insertPerson(ctx context.Context, person *model.Person) error {
-	errExec := db.ExecInsertBuilder(ctx, db.sb.
+func insertPerson(ctx context.Context, database Store, person *model.Person) error {
+	errExec := database.ExecInsertBuilder(ctx, database.
+		Builder().
 		Insert("person").
 		Columns("created_on", "updated_on", "steam_id", "communityvisibilitystate", "profilestate",
 			"personaname", "profileurl", "avatar", "avatarmedium", "avatarfull", "avatarhash", "personastate",
@@ -93,7 +96,7 @@ func (db *Store) insertPerson(ctx context.Context, person *model.Person) error {
 			person.VACBans, person.GameBans, person.EconomyBan, person.DaysSinceLastBan, person.UpdatedOnSteam,
 			person.Muted))
 	if errExec != nil {
-		return Err(errExec)
+		return DBErr(errExec)
 	}
 
 	person.IsNew = false
@@ -113,12 +116,13 @@ var profileColumns = []string{ //nolint:gochecknoglobals
 
 // GetPersonBySteamID returns a person by their steam_id. ErrNoResult is returned if the steam_id
 // is not known.
-func (db *Store) GetPersonBySteamID(ctx context.Context, sid64 steamid.SID64, person *model.Person) error {
+func GetPersonBySteamID(ctx context.Context, database Store, sid64 steamid.SID64, person *model.Person) error {
 	if !sid64.Valid() {
 		return consts.ErrInvalidSID
 	}
 
-	row, errRow := db.QueryRowBuilder(ctx, db.sb.
+	row, errRow := database.QueryRowBuilder(ctx, database.
+		Builder().
 		Select("p.created_on",
 			"p.updated_on",
 			"p.communityvisibilitystate",
@@ -148,14 +152,14 @@ func (db *Store) GetPersonBySteamID(ctx context.Context, sid64 steamid.SID64, pe
 		Where(sq.Eq{"p.steam_id": sid64.Int64()}))
 
 	if errRow != nil {
-		return errRow
+		return DBErr(errRow)
 	}
 
 	person.IsNew = false
 	person.PlayerSummary = &steamweb.PlayerSummary{}
 	person.SteamID = sid64
 
-	return Err(row.Scan(&person.CreatedOn,
+	return DBErr(row.Scan(&person.CreatedOn,
 		&person.UpdatedOn, &person.CommunityVisibilityState, &person.ProfileState, &person.PersonaName,
 		&person.ProfileURL, &person.Avatar, &person.AvatarMedium, &person.AvatarFull, &person.AvatarHash,
 		&person.PersonaState, &person.RealName, &person.TimeCreated, &person.LocCountryCode, &person.LocStateCode,
@@ -164,7 +168,7 @@ func (db *Store) GetPersonBySteamID(ctx context.Context, sid64 steamid.SID64, pe
 		&person.Muted))
 }
 
-func (db *Store) GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collection) (model.People, error) {
+func GetPeopleBySteamID(ctx context.Context, database Store, steamIds steamid.Collection) (model.People, error) {
 	var ids []int64 //nolint:prealloc
 	for _, sid := range fp.Uniq[steamid.SID64](steamIds) {
 		ids = append(ids, sid.Int64())
@@ -172,12 +176,13 @@ func (db *Store) GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collec
 
 	var people model.People
 
-	rows, errQuery := db.QueryBuilder(ctx, db.sb.
+	rows, errQuery := database.QueryBuilder(ctx, database.
+		Builder().
 		Select(profileColumns...).
 		From("person").
 		Where(sq.Eq{"steam_id": ids}))
 	if errQuery != nil {
-		return nil, Err(errQuery)
+		return nil, DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -211,16 +216,17 @@ func normalizeStringLikeQuery(input string) string {
 	return fmt.Sprintf("%%%s%%", strings.ToLower(strings.Trim(space.ReplaceAllString(input, "%"), "%")))
 }
 
-func (db *Store) GetSteamsAtAddress(ctx context.Context, addr net.IP) (steamid.Collection, error) {
+func GetSteamsAtAddress(ctx context.Context, database Store, addr net.IP) (steamid.Collection, error) {
 	var ids steamid.Collection
 
 	// TODO
-	rows, errRows := db.QueryBuilder(ctx, db.sb.
+	rows, errRows := database.QueryBuilder(ctx, database.
+		Builder().
 		Select("DISTINCT steam_id").
 		From("person_connections").
 		Where(sq.Expr(fmt.Sprintf("ip_addr::inet >>= '::ffff:%s'::CIDR OR ip_addr::inet <<= '::ffff:%s'::CIDR", addr.String(), addr.String()))))
 	if errRows != nil {
-		return nil, errRows
+		return nil, DBErr(errRows)
 	}
 
 	defer rows.Close()
@@ -228,7 +234,7 @@ func (db *Store) GetSteamsAtAddress(ctx context.Context, addr net.IP) (steamid.C
 	for rows.Next() {
 		var sid int64
 		if errScan := rows.Scan(&sid); errScan != nil {
-			return nil, Err(errScan)
+			return nil, DBErr(errScan)
 		}
 
 		ids = append(ids, steamid.New(sid))
@@ -244,8 +250,9 @@ type PlayerQuery struct {
 	IP          string          `json:"ip"`
 }
 
-func (db *Store) GetPeople(ctx context.Context, filter PlayerQuery) (model.People, int64, error) {
-	builder := db.sb.
+func GetPeople(ctx context.Context, database Store, filter PlayerQuery) (model.People, int64, error) {
+	builder := database.
+		Builder().
 		Select("p.steam_id", "p.created_on", "p.updated_on",
 			"p.communityvisibilitystate", "p.profilestate", "p.personaname", "p.profileurl", "p.avatar",
 			"p.avatarmedium", "p.avatarfull", "p.avatarhash", "p.personastate", "p.realname", "p.timecreated",
@@ -262,13 +269,13 @@ func (db *Store) GetPeople(ctx context.Context, filter PlayerQuery) (model.Peopl
 			return nil, 0, errors.New("Invalid IP")
 		}
 
-		foundIds, errFoundIds := db.GetSteamsAtAddress(ctx, addr)
+		foundIds, errFoundIds := GetSteamsAtAddress(ctx, database, addr)
 		if errFoundIds != nil {
 			if errors.Is(errFoundIds, ErrNoResult) {
 				return model.People{}, 0, nil
 			}
 
-			return nil, 0, Err(errFoundIds)
+			return nil, 0, DBErr(errFoundIds)
 		}
 
 		conditions = append(conditions, sq.Eq{"p.steam_id": foundIds})
@@ -302,9 +309,9 @@ func (db *Store) GetPeople(ctx context.Context, filter PlayerQuery) (model.Peopl
 
 	var people model.People
 
-	rows, errQuery := db.QueryBuilder(ctx, builder.Where(conditions))
+	rows, errQuery := database.QueryBuilder(ctx, builder.Where(conditions))
 	if errQuery != nil {
-		return nil, 0, errQuery
+		return nil, 0, DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -331,7 +338,8 @@ func (db *Store) GetPeople(ctx context.Context, filter PlayerQuery) (model.Peopl
 		people = append(people, person)
 	}
 
-	count, errCount := db.GetCount(ctx, db.sb.
+	count, errCount := getCount(ctx, database, database.
+		Builder().
 		Select("COUNT(p.steam_id)").
 		From("person p").
 		Where(conditions))
@@ -344,32 +352,33 @@ func (db *Store) GetPeople(ctx context.Context, filter PlayerQuery) (model.Peopl
 
 // GetOrCreatePersonBySteamID returns a person by their steam_id, creating a new person if the steam_id
 // does not exist.
-func (db *Store) GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.SID64, person *model.Person) error {
-	errGetPerson := db.GetPersonBySteamID(ctx, sid64, person)
-	if errGetPerson != nil && errors.Is(Err(errGetPerson), ErrNoResult) {
+func GetOrCreatePersonBySteamID(ctx context.Context, database Store, sid64 steamid.SID64, person *model.Person) error {
+	errGetPerson := GetPersonBySteamID(ctx, database, sid64, person)
+	if errGetPerson != nil && errors.Is(DBErr(errGetPerson), ErrNoResult) {
 		// FIXME
 		newPerson := model.NewPerson(sid64)
 		*person = newPerson
 
-		return db.SavePerson(ctx, person)
+		return SavePerson(ctx, database, person)
 	}
 
 	return errGetPerson
 }
 
 // GetPersonByDiscordID returns a person by their discord_id.
-func (db *Store) GetPersonByDiscordID(ctx context.Context, discordID string, person *model.Person) error {
+func GetPersonByDiscordID(ctx context.Context, database Store, discordID string, person *model.Person) error {
 	var steamID int64
 
 	person.IsNew = false
 	person.PlayerSummary = &steamweb.PlayerSummary{}
 
-	row, errRow := db.QueryRowBuilder(ctx, db.sb.
+	row, errRow := database.QueryRowBuilder(ctx, database.
+		Builder().
 		Select(profileColumns...).
 		From("person").
 		Where(sq.Eq{"discord_id": discordID}))
 	if errRow != nil {
-		return errRow
+		return DBErr(errRow)
 	}
 
 	errQuery := row.Scan(&steamID, &person.CreatedOn,
@@ -379,7 +388,7 @@ func (db *Store) GetPersonByDiscordID(ctx context.Context, discordID string, per
 		&person.LocCityID, &person.PermissionLevel, &person.DiscordID, &person.CommunityBanned, &person.VACBans,
 		&person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan, &person.UpdatedOnSteam, &person.Muted)
 	if errQuery != nil {
-		return Err(errQuery)
+		return DBErr(errQuery)
 	}
 
 	person.SteamID = steamid.New(steamID)
@@ -387,10 +396,11 @@ func (db *Store) GetPersonByDiscordID(ctx context.Context, discordID string, per
 	return nil
 }
 
-func (db *Store) GetExpiredProfiles(ctx context.Context, limit uint64) ([]model.Person, error) {
+func GetExpiredProfiles(ctx context.Context, database Store, limit uint64) ([]model.Person, error) {
 	var people []model.Person
 
-	rows, errQuery := db.QueryBuilder(ctx, db.sb.
+	rows, errQuery := database.QueryBuilder(ctx, database.
+		Builder().
 		Select("steam_id", "created_on", "updated_on",
 			"communityvisibilitystate", "profilestate", "personaname", "profileurl", "avatar",
 			"avatarmedium", "avatarfull", "avatarhash", "personastate", "realname", "timecreated",
@@ -402,7 +412,7 @@ func (db *Store) GetExpiredProfiles(ctx context.Context, limit uint64) ([]model.
 		Where(sq.Lt{"updated_on_steam": time.Now().AddDate(0, 0, -30)}).
 		Limit(limit))
 	if errQuery != nil {
-		return nil, errQuery
+		return nil, DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -419,7 +429,7 @@ func (db *Store) GetExpiredProfiles(ctx context.Context, limit uint64) ([]model.
 			&person.LocCountryCode, &person.LocStateCode, &person.LocCityID, &person.PermissionLevel,
 			&person.DiscordID, &person.CommunityBanned, &person.VACBans, &person.GameBans,
 			&person.EconomyBan, &person.DaysSinceLastBan, &person.UpdatedOnSteam, &person.Muted); errScan != nil {
-			return nil, Err(errScan)
+			return nil, DBErr(errScan)
 		}
 
 		person.SteamID = steamid.New(steamID)
@@ -430,39 +440,41 @@ func (db *Store) GetExpiredProfiles(ctx context.Context, limit uint64) ([]model.
 	return people, nil
 }
 
-func (db *Store) AddChatHistory(ctx context.Context, message *model.PersonMessage) error {
+func AddChatHistory(ctx context.Context, database Store, message *model.PersonMessage) error {
 	const query = `INSERT INTO person_messages 
     		(steam_id, server_id, body, team, created_on, persona_name, match_id) 
 			VALUES ($1, $2, $3, $4, $5, $6, $7)
 			RETURNING person_message_id`
 
-	if errScan := db.
+	if errScan := database.
 		QueryRow(ctx, query, message.SteamID.Int64(), message.ServerID, message.Body, message.Team,
 			message.CreatedOn, message.PersonaName, message.MatchID).
 		Scan(&message.PersonMessageID); errScan != nil {
-		return Err(errScan)
+		return DBErr(errScan)
 	}
 
 	return nil
 }
 
-func (db *Store) GetPersonMessageByID(ctx context.Context, personMessageID int64, msg *model.PersonMessage) error {
-	row, errRow := db.QueryRowBuilder(ctx, db.sb.Select(
-		"m.person_message_id",
-		"m.steam_id",
-		"m.server_id",
-		"m.body",
-		"m.team",
-		"m.created_on",
-		"m.persona_name",
-		"m.match_id",
-		"s.short_name").
+func GetPersonMessageByID(ctx context.Context, database Store, personMessageID int64, msg *model.PersonMessage) error {
+	row, errRow := database.QueryRowBuilder(ctx, database.
+		Builder().
+		Select(
+			"m.person_message_id",
+			"m.steam_id",
+			"m.server_id",
+			"m.body",
+			"m.team",
+			"m.created_on",
+			"m.persona_name",
+			"m.match_id",
+			"s.short_name").
 		From("person_messages m").
 		LeftJoin("server s on m.server_id = s.server_id").
 		Where(sq.Eq{"m.person_message_id": personMessageID}))
 
 	if errRow != nil {
-		return errRow
+		return DBErr(errRow)
 	}
 
 	var steamID int64
@@ -476,7 +488,7 @@ func (db *Store) GetPersonMessageByID(ctx context.Context, personMessageID int64
 		&msg.PersonaName,
 		&msg.MatchID,
 		&msg.ServerName); errScan != nil {
-		return Err(errScan)
+		return DBErr(errScan)
 	}
 
 	msg.SteamID = steamid.New(steamID)
@@ -490,8 +502,9 @@ type ConnectionHistoryQueryFilter struct {
 	SourceID model.StringSID `json:"source_id"`
 }
 
-func (db *Store) QueryConnectionHistory(ctx context.Context, opts ConnectionHistoryQueryFilter) ([]model.PersonConnection, int64, error) {
-	builder := db.sb.
+func QueryConnectionHistory(ctx context.Context, database Store, opts ConnectionHistoryQueryFilter) ([]model.PersonConnection, int64, error) {
+	builder := database.
+		Builder().
 		Select("c.person_connection_id", "c.steam_id",
 			"c.ip_addr", "c.persona_name", "c.created_on", "c.server_id", "s.short_name", "s.name").
 		From("person_connections c").
@@ -516,9 +529,9 @@ func (db *Store) QueryConnectionHistory(ctx context.Context, opts ConnectionHist
 
 	var messages []model.PersonConnection
 
-	rows, errQuery := db.QueryBuilder(ctx, builder.Where(constraints))
+	rows, errQuery := database.QueryBuilder(ctx, builder.Where(constraints))
 	if errQuery != nil {
-		return nil, 0, Err(errQuery)
+		return nil, 0, DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -538,7 +551,7 @@ func (db *Store) QueryConnectionHistory(ctx context.Context, opts ConnectionHist
 			&connHistory.PersonaName,
 			&connHistory.CreatedOn,
 			&serverID, &shortName, &name); errScan != nil {
-			return nil, 0, Err(errScan)
+			return nil, 0, DBErr(errScan)
 		}
 
 		// Added later in dev, so can be legacy data w/o a server_id
@@ -557,13 +570,14 @@ func (db *Store) QueryConnectionHistory(ctx context.Context, opts ConnectionHist
 		return []model.PersonConnection{}, 0, nil
 	}
 
-	count, errCount := db.GetCount(ctx, db.sb.
+	count, errCount := getCount(ctx, database, database.
+		Builder().
 		Select("count(c.person_connection_id)").
 		From("person_connections c").
 		Where(constraints))
 
 	if errCount != nil {
-		return nil, 0, errCount
+		return nil, 0, DBErr(errCount)
 	}
 
 	return messages, count, nil
@@ -583,7 +597,7 @@ type ChatHistoryQueryFilter struct {
 
 const minQueryLen = 2
 
-func (db *Store) QueryChatHistory(ctx context.Context, filters ChatHistoryQueryFilter) ([]model.QueryChatHistoryResult, int64, error) { //nolint:maintidx
+func QueryChatHistory(ctx context.Context, database Store, filters ChatHistoryQueryFilter) ([]model.QueryChatHistoryResult, int64, error) { //nolint:maintidx
 	if filters.Query != "" && len(filters.Query) < minQueryLen {
 		return nil, 0, errors.New("Query value too short")
 	}
@@ -592,7 +606,8 @@ func (db *Store) QueryChatHistory(ctx context.Context, filters ChatHistoryQueryF
 		return nil, 0, errors.New("Name value too short")
 	}
 
-	builder := db.sb.
+	builder := database.
+		Builder().
 		Select("m.person_message_id",
 			"m.steam_id ",
 			"m.server_id",
@@ -663,9 +678,9 @@ func (db *Store) QueryChatHistory(ctx context.Context, filters ChatHistoryQueryF
 
 	var messages []model.QueryChatHistoryResult
 
-	rows, errQuery := db.QueryBuilder(ctx, builder.Where(constraints))
+	rows, errQuery := database.QueryBuilder(ctx, builder.Where(constraints))
 	if errQuery != nil {
-		return nil, 0, Err(errQuery)
+		return nil, 0, DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -689,7 +704,7 @@ func (db *Store) QueryChatHistory(ctx context.Context, filters ChatHistoryQueryF
 			&message.AutoFilterFlagged,
 			&message.AvatarHash,
 			&message.Pattern); errScan != nil {
-			return nil, 0, Err(errScan)
+			return nil, 0, DBErr(errScan)
 		}
 
 		if matchID != nil {
@@ -707,7 +722,8 @@ func (db *Store) QueryChatHistory(ctx context.Context, filters ChatHistoryQueryF
 		messages = []model.QueryChatHistoryResult{}
 	}
 
-	count, errCount := db.GetCount(ctx, db.sb.
+	count, errCount := getCount(ctx, database, database.
+		Builder().
 		Select("count(m.created_on) as count").
 		From("person_messages m").
 		LeftJoin("server s on m.server_id = s.server_id").
@@ -716,14 +732,15 @@ func (db *Store) QueryChatHistory(ctx context.Context, filters ChatHistoryQueryF
 		Where(constraints))
 
 	if errCount != nil {
-		return nil, 0, errCount
+		return nil, 0, DBErr(errCount)
 	}
 
 	return messages, count, nil
 }
 
-func (db *Store) GetPersonMessage(ctx context.Context, messageID int64, msg *model.QueryChatHistoryResult) error {
-	row, errRow := db.QueryRowBuilder(ctx, db.sb.
+func GetPersonMessage(ctx context.Context, database Store, messageID int64, msg *model.QueryChatHistoryResult) error {
+	row, errRow := database.QueryRowBuilder(ctx, database.
+		Builder().
 		Select("m.person_message_id", "m.steam_id", "m.server_id", "m.body", "m.team", "m.created_on",
 			"m.persona_name", "m.match_id", "s.short_name", "COUNT(f.person_message_id)::int::boolean as flagged").
 		From("person_messages m").
@@ -732,14 +749,14 @@ func (db *Store) GetPersonMessage(ctx context.Context, messageID int64, msg *mod
 		Where(sq.Eq{"m.person_message_id": messageID}).
 		GroupBy("m.person_message_id", "s.short_name"))
 	if errRow != nil {
-		return errRow
+		return DBErr(errRow)
 	}
 
-	return Err(row.Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.Team, &msg.CreatedOn,
+	return DBErr(row.Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.Team, &msg.CreatedOn,
 		&msg.PersonaName, &msg.MatchID, &msg.ServerName, &msg.AutoFilterFlagged))
 }
 
-func (db *Store) GetPersonMessageContext(ctx context.Context, serverID int, messageID int64, paddedMessageCount int) ([]model.QueryChatHistoryResult, error) {
+func GetPersonMessageContext(ctx context.Context, database Store, serverID int, messageID int64, paddedMessageCount int) ([]model.QueryChatHistoryResult, error) {
 	const query = `
 		(
 			SELECT m.person_message_id, m.steam_id,	m.server_id, m.body, m.team, m.created_on, 
@@ -775,7 +792,7 @@ func (db *Store) GetPersonMessageContext(ctx context.Context, serverID int, mess
 		paddedMessageCount = 5
 	}
 
-	rows, errRows := db.conn.Query(ctx, query, messageID, paddedMessageCount, serverID)
+	rows, errRows := database.Query(ctx, query, messageID, paddedMessageCount, serverID)
 	if errRows != nil {
 		return nil, errors.Wrap(errRows, "Failed to fetch message context")
 	}
@@ -797,8 +814,9 @@ func (db *Store) GetPersonMessageContext(ctx context.Context, serverID int, mess
 	return messages, nil
 }
 
-func (db *Store) GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, limit uint64) (model.PersonConnections, error) {
-	builder := db.sb.
+func GetPersonIPHistory(ctx context.Context, database Store, sid64 steamid.SID64, limit uint64) (model.PersonConnections, error) {
+	builder := database.
+		Builder().
 		Select(
 			"DISTINCT on (pn, pc.ip_addr) coalesce(pc.persona_name, pc.steam_id::text) as pn",
 			"pc.person_connection_id",
@@ -813,9 +831,9 @@ func (db *Store) GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, li
 		Limit(limit)
 	builder = builder.Where(sq.Eq{"pc.steam_id": sid64.Int64()})
 
-	rows, errQuery := db.QueryBuilder(ctx, builder)
+	rows, errQuery := database.QueryBuilder(ctx, builder)
 	if errQuery != nil {
-		return nil, Err(errQuery)
+		return nil, DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -830,7 +848,7 @@ func (db *Store) GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, li
 
 		if errScan := rows.Scan(&conn.PersonaName, &conn.PersonConnectionID, &steamID,
 			&conn.IPAddr, &conn.CreatedOn, &conn.ServerID); errScan != nil {
-			return nil, Err(errScan)
+			return nil, DBErr(errScan)
 		}
 
 		conn.SteamID = steamid.New(steamID)
@@ -841,34 +859,35 @@ func (db *Store) GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, li
 	return connections, nil
 }
 
-func (db *Store) AddConnectionHistory(ctx context.Context, conn *model.PersonConnection) error {
+func AddConnectionHistory(ctx context.Context, database Store, conn *model.PersonConnection) error {
 	const query = `
 		INSERT INTO person_connections (steam_id, ip_addr, persona_name, created_on, server_id) 
 		VALUES ($1, $2, $3, $4, $5) 
 		RETURNING person_connection_id`
 
-	if errQuery := db.
+	if errQuery := database.
 		QueryRow(ctx, query, conn.SteamID.Int64(), conn.IPAddr, conn.PersonaName, conn.CreatedOn, conn.ServerID).
 		Scan(&conn.PersonConnectionID); errQuery != nil {
-		return Err(errQuery)
+		return DBErr(errQuery)
 	}
 
 	return nil
 }
 
-func (db *Store) GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *model.PersonAuth) error {
-	row, errRow := db.QueryRowBuilder(ctx, db.sb.
+func GetPersonAuthByRefreshToken(ctx context.Context, database Store, token string, auth *model.PersonAuth) error {
+	row, errRow := database.QueryRowBuilder(ctx, database.
+		Builder().
 		Select("person_auth_id", "steam_id", "ip_addr", "refresh_token", "created_on").
 		From("person_auth").
 		Where(sq.And{sq.Eq{"refresh_token": token}}))
 	if errRow != nil {
-		return errRow
+		return DBErr(errRow)
 	}
 
 	var steamID int64
 
 	if errScan := row.Scan(&auth.PersonAuthID, &steamID, &auth.IPAddr, &auth.RefreshToken, &auth.CreatedOn); errScan != nil {
-		return Err(errScan)
+		return DBErr(errScan)
 	}
 
 	auth.SteamID = steamid.New(steamID)
@@ -876,8 +895,9 @@ func (db *Store) GetPersonAuthByRefreshToken(ctx context.Context, token string, 
 	return nil
 }
 
-func (db *Store) SavePersonAuth(ctx context.Context, auth *model.PersonAuth) error {
-	query, args, errQuery := db.sb.
+func SavePersonAuth(ctx context.Context, database Store, auth *model.PersonAuth) error {
+	query, args, errQuery := database.
+		Builder().
 		Insert("person_auth").
 		Columns("steam_id", "ip_addr", "refresh_token", "created_on").
 		Values(auth.SteamID.Int64(), auth.IPAddr.String(), auth.RefreshToken, auth.CreatedOn).
@@ -885,29 +905,32 @@ func (db *Store) SavePersonAuth(ctx context.Context, auth *model.PersonAuth) err
 		ToSql()
 
 	if errQuery != nil {
-		return Err(errQuery)
+		return DBErr(errQuery)
 	}
 
-	return Err(db.QueryRow(ctx, query, args...).Scan(&auth.PersonAuthID))
+	return DBErr(database.QueryRow(ctx, query, args...).Scan(&auth.PersonAuthID))
 }
 
-func (db *Store) DeletePersonAuth(ctx context.Context, authID int64) error {
-	return db.ExecDeleteBuilder(ctx, db.sb.
+func DeletePersonAuth(ctx context.Context, database Store, authID int64) error {
+	return DBErr(database.ExecDeleteBuilder(ctx, database.
+		Builder().
 		Delete("person_auth").
-		Where(sq.Eq{"person_auth_id": authID}))
+		Where(sq.Eq{"person_auth_id": authID})))
 }
 
-func (db *Store) PrunePersonAuth(ctx context.Context) error {
-	return db.ExecDeleteBuilder(ctx, db.sb.
+func PrunePersonAuth(ctx context.Context, database Store) error {
+	return DBErr(database.ExecDeleteBuilder(ctx, database.
+		Builder().
 		Delete("person_auth").
-		Where(sq.Gt{"created_on + interval '1 month'": time.Now()}))
+		Where(sq.Gt{"created_on + interval '1 month'": time.Now()})))
 }
 
-func (db *Store) SendNotification(ctx context.Context, targetID steamid.SID64, severity consts.NotificationSeverity, message string, link string) error {
-	return db.ExecInsertBuilder(ctx, db.sb.
+func SendNotification(ctx context.Context, database Store, targetID steamid.SID64, severity consts.NotificationSeverity, message string, link string) error {
+	return DBErr(database.ExecInsertBuilder(ctx, database.
+		Builder().
 		Insert("person_notification").
 		Columns("steam_id", "severity", "message", "link", "created_on").
-		Values(targetID.Int64(), severity, message, link, time.Now()))
+		Values(targetID.Int64(), severity, message, link, time.Now())))
 }
 
 type NotificationQuery struct {
@@ -915,8 +938,9 @@ type NotificationQuery struct {
 	SteamID steamid.SID64 `json:"steam_id"`
 }
 
-func (db *Store) GetPersonNotifications(ctx context.Context, filters NotificationQuery) ([]model.UserNotification, int64, error) {
-	builder := db.sb.
+func GetPersonNotifications(ctx context.Context, database Store, filters NotificationQuery) ([]model.UserNotification, int64, error) {
+	builder := database.
+		Builder().
 		Select("p.person_notification_id", "p.steam_id", "p.read", "p.deleted", "p.severity",
 			"p.message", "p.link", "p.count", "p.created_on").
 		From("person_notification p").
@@ -930,17 +954,18 @@ func (db *Store) GetPersonNotifications(ctx context.Context, filters Notificatio
 
 	builder = filters.applyLimitOffsetDefault(builder).Where(constraints)
 
-	count, errCount := db.GetCount(ctx, db.sb.
+	count, errCount := getCount(ctx, database, database.
+		Builder().
 		Select("count(p.person_notification_id)").
 		From("person_notification p").
 		Where(constraints))
 	if errCount != nil {
-		return nil, 0, errCount
+		return nil, 0, DBErr(errCount)
 	}
 
-	rows, errRows := db.QueryBuilder(ctx, builder.Where(constraints))
+	rows, errRows := database.QueryBuilder(ctx, builder.Where(constraints))
 	if errRows != nil {
-		return nil, 0, errRows
+		return nil, 0, DBErr(errRows)
 	}
 
 	defer rows.Close()
@@ -966,20 +991,22 @@ func (db *Store) GetPersonNotifications(ctx context.Context, filters Notificatio
 	return notifications, count, nil
 }
 
-func (db *Store) SetNotificationsRead(ctx context.Context, notificationIds []int64) error {
-	return db.ExecUpdateBuilder(ctx, db.sb.
-		Update("person_notification").
-		Set("deleted", true).
-		Where(sq.Eq{"person_notification_id": notificationIds}))
-}
+// func SetNotificationsRead(ctx context.Context, database Store, notificationIds []int64) error {
+//	return DBErr(database.ExecUpdateBuilder(ctx, database.
+//		Builder().
+//		Update("person_notification").
+//		Set("deleted", true).
+//		Where(sq.Eq{"person_notification_id": notificationIds})))
+//}
 
-func (db *Store) GetSteamIdsAbove(ctx context.Context, privilege consts.Privilege) (steamid.Collection, error) {
-	rows, errRows := db.QueryBuilder(ctx, db.sb.
+func GetSteamIdsAbove(ctx context.Context, database Store, privilege consts.Privilege) (steamid.Collection, error) {
+	rows, errRows := database.QueryBuilder(ctx, database.
+		Builder().
 		Select("steam_id").
 		From("person").
 		Where(sq.GtOrEq{"permission_level": privilege}))
 	if errRows != nil {
-		return nil, errRows
+		return nil, DBErr(errRows)
 	}
 
 	defer rows.Close()
@@ -998,33 +1025,34 @@ func (db *Store) GetSteamIdsAbove(ctx context.Context, privilege consts.Privileg
 	return ids, nil
 }
 
-func (db *Store) GetPersonSettings(ctx context.Context, steamID steamid.SID64, settings *model.PersonSettings) error {
-	row, errRow := db.QueryRowBuilder(ctx, db.sb.
+func GetPersonSettings(ctx context.Context, database Store, steamID steamid.SID64, settings *model.PersonSettings) error {
+	row, errRow := database.QueryRowBuilder(ctx, database.
+		Builder().
 		Select("person_settings_id", "forum_signature", "forum_profile_messages",
 			"stats_hidden", "created_on", "updated_on").
 		From("person_settings").
 		Where(sq.Eq{"steam_id": steamID.Int64()}))
 	if errRow != nil {
-		return errRow
+		return DBErr(errRow)
 	}
 
 	settings.SteamID = steamID
 
 	if errScan := row.Scan(&settings.PersonSettingsID, &settings.ForumSignature,
 		&settings.ForumProfileMessages, &settings.StatsHidden, &settings.CreatedOn, &settings.UpdatedOn); errScan != nil {
-		if errors.Is(Err(errScan), ErrNoResult) {
+		if errors.Is(DBErr(errScan), ErrNoResult) {
 			settings.ForumProfileMessages = true
 
 			return nil
 		}
 
-		return Err(errScan)
+		return DBErr(errScan)
 	}
 
 	return nil
 }
 
-func (db *Store) SavePersonSettings(ctx context.Context, settings *model.PersonSettings) error {
+func SavePersonSettings(ctx context.Context, database Store, settings *model.PersonSettings) error {
 	if !settings.SteamID.Valid() {
 		return consts.ErrInvalidSID
 	}
@@ -1034,28 +1062,29 @@ func (db *Store) SavePersonSettings(ctx context.Context, settings *model.PersonS
 	if settings.PersonSettingsID == 0 {
 		settings.CreatedOn = settings.UpdatedOn
 
-		return db.ExecInsertBuilderWithReturnValue(ctx,
-			db.sb.
-				Insert("person_settings").
-				SetMap(map[string]interface{}{
-					"steam_id":               settings.SteamID.Int64(),
-					"forum_signature":        settings.ForumSignature,
-					"forum_profile_messages": settings.ForumProfileMessages,
-					"stats_hidden":           settings.StatsHidden,
-					"created_on":             settings.CreatedOn,
-					"updated_on":             settings.UpdatedOn,
-				}).
-				Suffix("RETURNING person_settings_id"),
-			&settings.PersonSettingsID)
-	} else {
-		return db.ExecUpdateBuilder(ctx, db.sb.
-			Update("person_settings").
+		return DBErr(database.ExecInsertBuilderWithReturnValue(ctx, database.
+			Builder().
+			Insert("person_settings").
 			SetMap(map[string]interface{}{
+				"steam_id":               settings.SteamID.Int64(),
 				"forum_signature":        settings.ForumSignature,
 				"forum_profile_messages": settings.ForumProfileMessages,
 				"stats_hidden":           settings.StatsHidden,
+				"created_on":             settings.CreatedOn,
 				"updated_on":             settings.UpdatedOn,
 			}).
-			Where(sq.Eq{"steam_id": settings.SteamID.Int64()}))
+			Suffix("RETURNING person_settings_id"),
+			&settings.PersonSettingsID))
 	}
+
+	return DBErr(database.ExecUpdateBuilder(ctx, database.
+		Builder().
+		Update("person_settings").
+		SetMap(map[string]interface{}{
+			"forum_signature":        settings.ForumSignature,
+			"forum_profile_messages": settings.ForumProfileMessages,
+			"stats_hidden":           settings.StatsHidden,
+			"updated_on":             settings.UpdatedOn,
+		}).
+		Where(sq.Eq{"steam_id": settings.SteamID.Int64()})))
 }

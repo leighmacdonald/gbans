@@ -89,7 +89,7 @@ func onTokenRefresh(app *App) gin.HandlerFunc {
 		}
 
 		var auth model.PersonAuth
-		if authError := app.db.GetPersonAuthByRefreshToken(ctx, fingerprint, &auth); authError != nil {
+		if authError := store.GetPersonAuthByRefreshToken(ctx, app.db, fingerprint, &auth); authError != nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 
 			return
@@ -245,7 +245,7 @@ func onOAuthDiscordCallback(app *App) gin.HandlerFunc {
 		}
 
 		var discordPerson model.Person
-		if errDp := app.db.GetPersonByDiscordID(ctx, discordID, &discordPerson); errDp != nil {
+		if errDp := store.GetPersonByDiscordID(ctx, app.db, discordID, &discordPerson); errDp != nil {
 			if !errors.Is(errDp, store.ErrNoResult) {
 				responseErr(ctx, http.StatusInternalServerError, nil)
 
@@ -263,7 +263,7 @@ func onOAuthDiscordCallback(app *App) gin.HandlerFunc {
 		sid := currentUserProfile(ctx).SteamID
 
 		var person model.Person
-		if errPerson := app.PersonBySID(ctx, sid, &person); errPerson != nil {
+		if errPerson := PersonBySID(ctx, app.db, sid, &person); errPerson != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 
 			return
@@ -271,7 +271,7 @@ func onOAuthDiscordCallback(app *App) gin.HandlerFunc {
 
 		person.DiscordID = discordID
 
-		if errSave := app.db.SavePerson(ctx, &person); errSave != nil {
+		if errSave := store.SavePerson(ctx, app.db, &person); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 
 			return
@@ -309,14 +309,14 @@ func onAPILogout(app *App) gin.HandlerFunc {
 			parsedExternal.Hostname(), conf.General.Mode == config.ReleaseMode, true)
 
 		auth := model.PersonAuth{}
-		if errGet := app.db.GetPersonAuthByRefreshToken(ctx, fingerprint, &auth); errGet != nil {
+		if errGet := store.GetPersonAuthByRefreshToken(ctx, app.db, fingerprint, &auth); errGet != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			log.Warn("Failed to load person via fingerprint")
 
 			return
 		}
 
-		if errDelete := app.db.DeletePersonAuth(ctx, auth.PersonAuthID); errDelete != nil {
+		if errDelete := store.DeletePersonAuth(ctx, app.db, auth.PersonAuthID); errDelete != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			log.Error("Failed to delete person auth on logout", zap.Error(errDelete))
 
@@ -359,7 +359,7 @@ func onAPICurrentProfileNotifications(app *App) gin.HandlerFunc {
 
 		req.SteamID = currentProfile.SteamID
 
-		notifications, count, errNot := app.db.GetPersonNotifications(ctx, req)
+		notifications, count, errNot := store.GetPersonNotifications(ctx, app.db, req)
 		if errNot != nil {
 			if errors.Is(errNot, store.ErrNoResult) {
 				ctx.JSON(http.StatusOK, []model.UserNotification{})
@@ -391,8 +391,8 @@ func onAPIGetReport(app *App) gin.HandlerFunc {
 		}
 
 		var report reportWithAuthor
-		if errReport := app.db.GetReport(ctx, reportID, &report.Report); errReport != nil {
-			if errors.Is(store.Err(errReport), store.ErrNoResult) {
+		if errReport := store.GetReport(ctx, app.db, reportID, &report.Report); errReport != nil {
+			if errors.Is(store.DBErr(errReport), store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 
 				return
@@ -410,8 +410,8 @@ func onAPIGetReport(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if errAuthor := app.PersonBySID(ctx, report.Report.SourceID, &report.Author); errAuthor != nil {
-			if errors.Is(store.Err(errAuthor), store.ErrNoResult) {
+		if errAuthor := store.GetPersonBySteamID(ctx, app.db, report.Report.SourceID, &report.Author); errAuthor != nil {
+			if errors.Is(store.DBErr(errAuthor), store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 
 				return
@@ -423,8 +423,8 @@ func onAPIGetReport(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if errSubject := app.PersonBySID(ctx, report.Report.TargetID, &report.Subject); errSubject != nil {
-			if errors.Is(store.Err(errSubject), store.ErrNoResult) {
+		if errSubject := store.GetPersonBySteamID(ctx, app.db, report.Report.TargetID, &report.Subject); errSubject != nil {
+			if errors.Is(store.DBErr(errSubject), store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 
 				return
@@ -484,9 +484,9 @@ func onAPIGetReports(app *App) gin.HandlerFunc {
 
 		var userReports []reportWithAuthor
 
-		reports, count, errReports := app.db.GetReports(ctx, req)
+		reports, count, errReports := store.GetReports(ctx, app.db, req)
 		if errReports != nil {
-			if errors.Is(store.Err(errReports), store.ErrNoResult) {
+			if errors.Is(store.DBErr(errReports), store.ErrNoResult) {
 				ctx.JSON(http.StatusNoContent, nil)
 
 				return
@@ -502,7 +502,7 @@ func onAPIGetReports(app *App) gin.HandlerFunc {
 			authorIds = append(authorIds, report.SourceID)
 		}
 
-		authors, errAuthors := app.db.GetPeopleBySteamID(ctx, fp.Uniq(authorIds))
+		authors, errAuthors := store.GetPeopleBySteamID(ctx, app.db, fp.Uniq(authorIds))
 		if errAuthors != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -516,7 +516,7 @@ func onAPIGetReports(app *App) gin.HandlerFunc {
 			subjectIds = append(subjectIds, report.TargetID)
 		}
 
-		subjects, errSubjects := app.db.GetPeopleBySteamID(ctx, fp.Uniq(subjectIds))
+		subjects, errSubjects := store.GetPeopleBySteamID(ctx, app.db, fp.Uniq(subjectIds))
 		if errSubjects != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -562,7 +562,7 @@ func onAPISetReportStatus(app *App) gin.HandlerFunc {
 		}
 
 		var report model.Report
-		if errGet := app.db.GetReport(ctx, reportID, &report); errGet != nil {
+		if errGet := store.GetReport(ctx, app.db, reportID, &report); errGet != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to get report to set state", zap.Error(errGet))
 
@@ -578,7 +578,7 @@ func onAPISetReportStatus(app *App) gin.HandlerFunc {
 		original := report.ReportStatus
 
 		report.ReportStatus = req.Status
-		if errSave := app.db.SaveReport(ctx, &report); errSave != nil {
+		if errSave := store.SaveReport(ctx, app.db, &report); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to save report state", zap.Error(errSave))
 
@@ -592,7 +592,7 @@ func onAPISetReportStatus(app *App) gin.HandlerFunc {
 			zap.String("to_status", report.ReportStatus.String()))
 		// discord.SendDiscord(model.NotificationPayload{
 		//	Sids:     steamid.Collection{report.SourceID},
-		//	Severity: store.SeverityInfo,
+		//	Severity: db.SeverityInfo,
 		//	Message:  "Report status updated",
 		//	Link:     report.ToURL(),
 		// })
@@ -652,7 +652,7 @@ func onAPISaveMedia(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if errSaveAsset := app.db.SaveAsset(ctx, &asset); errSaveAsset != nil {
+		if errSaveAsset := store.SaveAsset(ctx, app.db, &asset); errSaveAsset != nil {
 			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save asset"))
 
 			log.Error("Failed to save user asset to s3 backend", zap.Error(errSaveAsset))
@@ -670,10 +670,10 @@ func onAPISaveMedia(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if errSave := app.db.SaveMedia(ctx, &media); errSave != nil {
+		if errSave := store.SaveMedia(ctx, app.db, &media); errSave != nil {
 			log.Error("Failed to save wiki media", zap.Error(errSave))
 
-			if errors.Is(store.Err(errSave), store.ErrDuplicate) {
+			if errors.Is(store.DBErr(errSave), store.ErrDuplicate) {
 				responseErr(ctx, http.StatusConflict, errors.New("Duplicate media name"))
 
 				return
@@ -698,7 +698,7 @@ func onAPIGetReportMessages(app *App) gin.HandlerFunc {
 		}
 
 		var report model.Report
-		if errGetReport := app.db.GetReport(ctx, reportID, &report); errGetReport != nil {
+		if errGetReport := store.GetReport(ctx, app.db, reportID, &report); errGetReport != nil {
 			responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 
 			return
@@ -708,7 +708,7 @@ func onAPIGetReportMessages(app *App) gin.HandlerFunc {
 			return
 		}
 
-		reportMessages, errGetReportMessages := app.db.GetReportMessages(ctx, reportID)
+		reportMessages, errGetReportMessages := store.GetReportMessages(ctx, app.db, reportID)
 		if errGetReportMessages != nil {
 			responseErr(ctx, http.StatusNotFound, consts.ErrPlayerNotFound)
 
@@ -750,8 +750,8 @@ func onAPIPostReportMessage(app *App) gin.HandlerFunc {
 		}
 
 		var report model.Report
-		if errReport := app.db.GetReport(ctx, reportID, &report); errReport != nil {
-			if errors.Is(store.Err(errReport), store.ErrNoResult) {
+		if errReport := store.GetReport(ctx, app.db, reportID, &report); errReport != nil {
+			if errors.Is(store.DBErr(errReport), store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 
 				return
@@ -766,7 +766,7 @@ func onAPIPostReportMessage(app *App) gin.HandlerFunc {
 		person := currentUserProfile(ctx)
 		msg := model.NewReportMessage(reportID, person.SteamID, req.Message)
 
-		if errSave := app.db.SaveReportMessage(ctx, &msg); errSave != nil {
+		if errSave := store.SaveReportMessage(ctx, app.db, &msg); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to save report message", zap.Error(errSave))
 
@@ -775,7 +775,7 @@ func onAPIPostReportMessage(app *App) gin.HandlerFunc {
 
 		report.UpdatedOn = time.Now()
 
-		if errSave := app.db.SaveReport(ctx, &report); errSave != nil {
+		if errSave := store.SaveReport(ctx, app.db, &report); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to update report activity", zap.Error(errSave))
 
@@ -819,7 +819,7 @@ func onAPIEditReportMessage(app *App) gin.HandlerFunc {
 		}
 
 		var existing model.ReportMessage
-		if errExist := app.db.GetReportMessageByID(ctx, reportMessageID, &existing); errExist != nil {
+		if errExist := store.GetReportMessageByID(ctx, app.db, reportMessageID, &existing); errExist != nil {
 			if errors.Is(errExist, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrPlayerNotFound)
 
@@ -854,7 +854,7 @@ func onAPIEditReportMessage(app *App) gin.HandlerFunc {
 		}
 
 		existing.MessageMD = req.BodyMD
-		if errSave := app.db.SaveReportMessage(ctx, &existing); errSave != nil {
+		if errSave := store.SaveReportMessage(ctx, app.db, &existing); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to save report message", zap.Error(errSave))
 
@@ -894,7 +894,7 @@ func onAPIDeleteReportMessage(app *App) gin.HandlerFunc {
 		}
 
 		var existing model.ReportMessage
-		if errExist := app.db.GetReportMessageByID(ctx, reportMessageID, &existing); errExist != nil {
+		if errExist := store.GetReportMessageByID(ctx, app.db, reportMessageID, &existing); errExist != nil {
 			if errors.Is(errExist, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 
@@ -912,7 +912,7 @@ func onAPIDeleteReportMessage(app *App) gin.HandlerFunc {
 		}
 
 		existing.Deleted = true
-		if errSave := app.db.SaveReportMessage(ctx, &existing); errSave != nil {
+		if errSave := store.SaveReportMessage(ctx, app.db, &existing); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to save report message", zap.Error(errSave))
 
@@ -964,7 +964,7 @@ func onAPIGetBanByID(app *App) gin.HandlerFunc {
 		}
 
 		bannedPerson := model.NewBannedPerson()
-		if errGetBan := app.db.GetBanByBanID(ctx, banID, &bannedPerson, deletedOk); errGetBan != nil {
+		if errGetBan := store.GetBanByBanID(ctx, app.db, banID, &bannedPerson, deletedOk); errGetBan != nil {
 			responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 			log.Error("Failed to fetch steam ban", zap.Error(errGetBan))
 
@@ -990,7 +990,7 @@ func onAPIGetBanMessages(app *App) gin.HandlerFunc {
 		}
 
 		banPerson := model.NewBannedPerson()
-		if errGetBan := app.db.GetBanByBanID(ctx, banID, &banPerson, true); errGetBan != nil {
+		if errGetBan := store.GetBanByBanID(ctx, app.db, banID, &banPerson, true); errGetBan != nil {
 			responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 
 			return
@@ -1000,7 +1000,7 @@ func onAPIGetBanMessages(app *App) gin.HandlerFunc {
 			return
 		}
 
-		banMessages, errGetBanMessages := app.db.GetBanMessages(ctx, banID)
+		banMessages, errGetBanMessages := store.GetBanMessages(ctx, app.db, banID)
 		if errGetBanMessages != nil {
 			responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 
@@ -1038,8 +1038,8 @@ func onAPIPostBanMessage(app *App) gin.HandlerFunc {
 		}
 
 		bannedPerson := model.NewBannedPerson()
-		if errReport := app.db.GetBanByBanID(ctx, banID, &bannedPerson, true); errReport != nil {
-			if errors.Is(store.Err(errReport), store.ErrNoResult) {
+		if errReport := store.GetBanByBanID(ctx, app.db, banID, &bannedPerson, true); errReport != nil {
+			if errors.Is(store.DBErr(errReport), store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 
 				return
@@ -1061,7 +1061,7 @@ func onAPIPostBanMessage(app *App) gin.HandlerFunc {
 		}
 
 		msg := model.NewBanAppealMessage(banID, curUserProfile.SteamID, req.Message)
-		if errSave := app.db.SaveBanMessage(ctx, &msg); errSave != nil {
+		if errSave := store.SaveBanMessage(ctx, app.db, &msg); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to save ban appeal message", zap.Error(errSave))
 
@@ -1109,7 +1109,7 @@ func onAPIEditBanMessage(app *App) gin.HandlerFunc {
 		}
 
 		var existing model.BanAppealMessage
-		if errExist := app.db.GetBanMessageByID(ctx, reportMessageID, &existing); errExist != nil {
+		if errExist := store.GetBanMessageByID(ctx, app.db, reportMessageID, &existing); errExist != nil {
 			if errors.Is(errExist, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 
@@ -1145,7 +1145,7 @@ func onAPIEditBanMessage(app *App) gin.HandlerFunc {
 		}
 
 		existing.MessageMD = req.BodyMD
-		if errSave := app.db.SaveBanMessage(ctx, &existing); errSave != nil {
+		if errSave := store.SaveBanMessage(ctx, app.db, &existing); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to save ban appeal message", zap.Error(errSave))
 
@@ -1184,7 +1184,7 @@ func onAPIDeleteBanMessage(app *App) gin.HandlerFunc {
 		}
 
 		var existing model.BanAppealMessage
-		if errExist := app.db.GetBanMessageByID(ctx, banMessageID, &existing); errExist != nil {
+		if errExist := store.GetBanMessageByID(ctx, app.db, banMessageID, &existing); errExist != nil {
 			if errors.Is(errExist, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 
@@ -1202,7 +1202,7 @@ func onAPIDeleteBanMessage(app *App) gin.HandlerFunc {
 		}
 
 		existing.Deleted = true
-		if errSave := app.db.SaveBanMessage(ctx, &existing); errSave != nil {
+		if errSave := store.SaveBanMessage(ctx, app.db, &existing); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to save appeal message", zap.Error(errSave))
 
@@ -1261,7 +1261,7 @@ func onAPIGetMatch(app *App) gin.HandlerFunc {
 
 		var match model.MatchResult
 
-		errMatch := app.db.MatchGetByID(ctx, matchID, &match)
+		errMatch := store.MatchGetByID(ctx, app.db, matchID, &match)
 
 		if errMatch != nil {
 			if errors.Is(errMatch, store.ErrNoResult) {
@@ -1304,7 +1304,7 @@ func onAPIGetMatches(app *App) gin.HandlerFunc {
 			}
 		}
 
-		matches, totalCount, matchesErr := app.db.Matches(ctx, req)
+		matches, totalCount, matchesErr := store.Matches(ctx, app.db, req)
 		if matchesErr != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to perform query", zap.Error(matchesErr))
@@ -1346,7 +1346,7 @@ func onAPIQueryMessages(app *App) gin.HandlerFunc {
 			req.Unrestricted = true
 		}
 
-		messages, count, errChat := app.db.QueryChatHistory(ctx, req)
+		messages, count, errChat := store.QueryChatHistory(ctx, app.db, req)
 		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
 			log.Error("Failed to query messages history",
 				zap.Error(errChat), zap.String("sid", string(req.SourceID)))
@@ -1363,7 +1363,7 @@ func onAPIGetStatsWeaponsOverall(ctx context.Context, app *App) gin.HandlerFunc 
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	updater := NewDataUpdater(log, time.Minute*10, func() ([]model.WeaponsOverallResult, error) {
-		weaponStats, errUpdate := app.db.WeaponsOverall(ctx)
+		weaponStats, errUpdate := store.WeaponsOverall(ctx, app.db)
 		if errUpdate != nil && !errors.Is(errUpdate, store.ErrNoResult) {
 			return nil, errors.Wrap(errUpdate, "Failed to update weapon stats")
 		}
@@ -1402,7 +1402,7 @@ func onAPIGetsStatsWeapon(app *App) gin.HandlerFunc {
 
 		var weapon model.Weapon
 
-		errWeapon := app.db.GetWeaponByID(ctx, weaponID, &weapon)
+		errWeapon := store.GetWeaponByID(ctx, app.db, weaponID, &weapon)
 
 		if errWeapon != nil {
 			responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
@@ -1410,7 +1410,7 @@ func onAPIGetsStatsWeapon(app *App) gin.HandlerFunc {
 			return
 		}
 
-		weaponStats, errChat := app.db.WeaponsOverallTopPlayers(ctx, weaponID)
+		weaponStats, errChat := store.WeaponsOverallTopPlayers(ctx, app.db, weaponID)
 		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
 			log.Error("Failed to get weapons overall top stats",
 				zap.Error(errChat))
@@ -1431,7 +1431,7 @@ func onAPIGetStatsPlayersOverall(ctx context.Context, app *App) gin.HandlerFunc 
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	updater := NewDataUpdater(log, time.Minute*10, func() ([]model.PlayerWeaponResult, error) {
-		updatedStats, errChat := app.db.PlayersOverallByKills(ctx, 1000)
+		updatedStats, errChat := store.PlayersOverallByKills(ctx, app.db, 1000)
 		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
 			return nil, errors.Wrap(errChat, "Failed to query overall players overall")
 		}
@@ -1451,7 +1451,7 @@ func onAPIGetStatsHealersOverall(ctx context.Context, app *App) gin.HandlerFunc 
 	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	updater := NewDataUpdater(log, time.Minute*10, func() ([]model.HealingOverallResult, error) {
-		updatedStats, errChat := app.db.HealersOverallByHealing(ctx, 250)
+		updatedStats, errChat := store.HealersOverallByHealing(ctx, app.db, 250)
 		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
 			return nil, errors.Wrap(errChat, "Failed to query overall healers overall")
 		}
@@ -1478,7 +1478,7 @@ func onAPIGetPlayerWeaponStatsOverall(app *App) gin.HandlerFunc {
 			return
 		}
 
-		weaponStats, errChat := app.db.WeaponsOverallByPlayer(ctx, steamID)
+		weaponStats, errChat := store.WeaponsOverallByPlayer(ctx, app.db, steamID)
 		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
 			log.Error("Failed to query player weapons stats",
 				zap.Error(errChat))
@@ -1506,7 +1506,7 @@ func onAPIGetPlayerClassStatsOverall(app *App) gin.HandlerFunc {
 			return
 		}
 
-		classStats, errChat := app.db.PlayerOverallClassStats(ctx, steamID)
+		classStats, errChat := store.PlayerOverallClassStats(ctx, app.db, steamID)
 		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
 			log.Error("Failed to query player class stats",
 				zap.Error(errChat))
@@ -1535,7 +1535,7 @@ func onAPIGetPlayerStatsOverall(app *App) gin.HandlerFunc {
 		}
 
 		var por model.PlayerOverallResult
-		if errChat := app.db.PlayerOverallStats(ctx, steamID, &por); errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
+		if errChat := store.PlayerOverallStats(ctx, app.db, steamID, &por); errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
 			log.Error("Failed to query player stats overall",
 				zap.Error(errChat))
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
@@ -1591,7 +1591,7 @@ func onAPISaveContestEntryMedia(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if errSaveAsset := app.db.SaveAsset(ctx, &asset); errSaveAsset != nil {
+		if errSaveAsset := store.SaveAsset(ctx, app.db, &asset); errSaveAsset != nil {
 			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save asset"))
 
 			log.Error("Failed to save user asset to s3 backend", zap.Error(errSaveAsset))
@@ -1609,10 +1609,10 @@ func onAPISaveContestEntryMedia(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if errSave := app.db.SaveMedia(ctx, &media); errSave != nil {
+		if errSave := store.SaveMedia(ctx, app.db, &media); errSave != nil {
 			log.Error("Failed to save user contest media", zap.Error(errSave))
 
-			if errors.Is(store.Err(errSave), store.ErrDuplicate) {
+			if errors.Is(store.DBErr(errSave), store.ErrDuplicate) {
 				responseErr(ctx, http.StatusConflict, errors.New("Duplicate media name"))
 
 				return
@@ -1665,7 +1665,7 @@ func onAPISaveContestEntryVote(app *App) gin.HandlerFunc {
 
 		currentUser := currentUserProfile(ctx)
 
-		if errVote := app.db.ContestEntryVote(ctx, contestEntryID, currentUser.SteamID, direction == "up"); errVote != nil {
+		if errVote := store.ContestEntryVote(ctx, app.db, contestEntryID, currentUser.SteamID, direction == "up"); errVote != nil {
 			if errors.Is(errVote, store.ErrVoteDeleted) {
 				ctx.JSON(http.StatusOK, voteResult{""})
 
@@ -1704,7 +1704,7 @@ func onAPISaveContestEntrySubmit(app *App) gin.HandlerFunc {
 
 		if contest.MediaTypes != "" {
 			var media model.Media
-			if errMedia := app.db.GetMediaByAssetID(ctx, req.AssetID, &media); errMedia != nil {
+			if errMedia := store.GetMediaByAssetID(ctx, app.db, req.AssetID, &media); errMedia != nil {
 				responseErr(ctx, http.StatusFailedDependency, errors.New("Could not load media asset"))
 
 				return
@@ -1717,7 +1717,7 @@ func onAPISaveContestEntrySubmit(app *App) gin.HandlerFunc {
 			}
 		}
 
-		existingEntries, errEntries := app.db.ContestEntries(ctx, contest.ContestID)
+		existingEntries, errEntries := store.ContestEntries(ctx, app.db, contest.ContestID)
 		if errEntries != nil && !errors.Is(errEntries, store.ErrNoResult) {
 			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not load existing contest entries"))
 
@@ -1747,7 +1747,7 @@ func onAPISaveContestEntrySubmit(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if errSave := app.db.ContestEntrySave(ctx, entry); errSave != nil {
+		if errSave := store.ContestEntrySave(ctx, app.db, entry); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save entry"))
 
 			return
@@ -1774,7 +1774,7 @@ func onAPIDeleteContestEntry(app *App) gin.HandlerFunc {
 
 		var entry model.ContestEntry
 
-		if errContest := app.db.ContestEntry(ctx, contestEntryID, &entry); errContest != nil {
+		if errContest := store.ContestEntry(ctx, app.db, contestEntryID, &entry); errContest != nil {
 			if errors.Is(errContest, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrUnknownID)
 
@@ -1797,7 +1797,7 @@ func onAPIDeleteContestEntry(app *App) gin.HandlerFunc {
 
 		var contest model.Contest
 
-		if errContest := app.db.ContestByID(ctx, entry.ContestID, &contest); errContest != nil {
+		if errContest := store.ContestByID(ctx, app.db, entry.ContestID, &contest); errContest != nil {
 			if errors.Is(errContest, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrUnknownID)
 
@@ -1820,7 +1820,7 @@ func onAPIDeleteContestEntry(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if errDelete := app.db.ContestEntryDelete(ctx, entry.ContestEntryID); errDelete != nil {
+		if errDelete := store.ContestEntryDelete(ctx, app.db, entry.ContestEntryID); errDelete != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			log.Error("Error deleting contest entry", zap.Error(errDelete))
@@ -1882,7 +1882,7 @@ func onAPIThreadCreate(app *App) gin.HandlerFunc {
 		}
 
 		var forum model.Forum
-		if errForum := app.db.Forum(ctx, forumID, &forum); errForum != nil {
+		if errForum := store.Forum(ctx, app.db, forumID, &forum); errForum != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
@@ -1892,7 +1892,7 @@ func onAPIThreadCreate(app *App) gin.HandlerFunc {
 		thread.Sticky = req.Sticky
 		thread.Locked = req.Locked
 
-		if errSaveThread := app.db.ForumThreadSave(ctx, &thread); errSaveThread != nil {
+		if errSaveThread := store.ForumThreadSave(ctx, app.db, &thread); errSaveThread != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			log.Error("Failed to save new thread", zap.Error(errSaveThread))
@@ -1902,10 +1902,10 @@ func onAPIThreadCreate(app *App) gin.HandlerFunc {
 
 		message := thread.NewMessage(user.SteamID, req.BodyMD)
 
-		if errSaveMessage := app.db.ForumMessageSave(ctx, &message); errSaveMessage != nil {
+		if errSaveMessage := store.ForumMessageSave(ctx, app.db, &message); errSaveMessage != nil {
 			// Drop created thread.
 			// TODO transaction
-			if errRollback := app.db.ForumThreadDelete(ctx, thread.ForumThreadID); errRollback != nil {
+			if errRollback := store.ForumThreadDelete(ctx, app.db, thread.ForumThreadID); errRollback != nil {
 				log.Error("Failed to rollback new thread", zap.Error(errRollback))
 			}
 
@@ -1916,7 +1916,7 @@ func onAPIThreadCreate(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if errIncr := app.db.ForumIncrMessageCount(ctx, forum.ForumID, true); errIncr != nil {
+		if errIncr := store.ForumIncrMessageCount(ctx, app.db, forum.ForumID, true); errIncr != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			log.Error("Failed to increment message count", zap.Error(errIncr))
@@ -1966,7 +1966,7 @@ func onAPIThreadUpdate(app *App) gin.HandlerFunc {
 		}
 
 		var thread model.ForumThread
-		if errGet := app.db.ForumThread(ctx, forumThreadID, &thread); errGet != nil {
+		if errGet := store.ForumThread(ctx, app.db, forumThreadID, &thread); errGet != nil {
 			if errors.Is(errGet, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 			} else {
@@ -1986,7 +1986,7 @@ func onAPIThreadUpdate(app *App) gin.HandlerFunc {
 		thread.Sticky = req.Sticky
 		thread.Locked = req.Locked
 
-		if errDelete := app.db.ForumThreadSave(ctx, &thread); errDelete != nil {
+		if errDelete := store.ForumThreadSave(ctx, app.db, &thread); errDelete != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to update thread", zap.Error(errDelete))
 
@@ -2010,7 +2010,7 @@ func onAPIThreadDelete(app *App) gin.HandlerFunc {
 		}
 
 		var thread model.ForumThread
-		if errGet := app.db.ForumThread(ctx, forumThreadID, &thread); errGet != nil {
+		if errGet := store.ForumThread(ctx, app.db, forumThreadID, &thread); errGet != nil {
 			if errors.Is(errGet, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 			} else {
@@ -2020,7 +2020,7 @@ func onAPIThreadDelete(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if errDelete := app.db.ForumThreadDelete(ctx, thread.ForumThreadID); errDelete != nil {
+		if errDelete := store.ForumThreadDelete(ctx, app.db, thread.ForumThreadID); errDelete != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to delete thread", zap.Error(errDelete))
 
@@ -2028,7 +2028,7 @@ func onAPIThreadDelete(app *App) gin.HandlerFunc {
 		}
 
 		var forum model.Forum
-		if errForum := app.db.Forum(ctx, thread.ForumID, &forum); errForum != nil {
+		if errForum := store.Forum(ctx, app.db, thread.ForumID, &forum); errForum != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to load forum", zap.Error(errForum))
 
@@ -2037,7 +2037,7 @@ func onAPIThreadDelete(app *App) gin.HandlerFunc {
 
 		forum.CountThreads -= 1
 
-		if errSave := app.db.ForumSave(ctx, &forum); errSave != nil {
+		if errSave := store.ForumSave(ctx, app.db, &forum); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to save thread count", zap.Error(errSave))
 
@@ -2073,7 +2073,7 @@ func onAPIThreadMessageUpdate(app *App) gin.HandlerFunc {
 		}
 
 		var message model.ForumMessage
-		if errMessage := app.db.ForumMessage(ctx, forumMessageID, &message); errMessage != nil {
+		if errMessage := store.ForumMessage(ctx, app.db, forumMessageID, &message); errMessage != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
@@ -2095,7 +2095,7 @@ func onAPIThreadMessageUpdate(app *App) gin.HandlerFunc {
 
 		message.BodyMD = req.BodyMD
 
-		if errSave := app.db.ForumMessageSave(ctx, &message); errSave != nil {
+		if errSave := store.ForumMessageSave(ctx, app.db, &message); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
@@ -2117,7 +2117,7 @@ func onAPIMessageDelete(app *App) gin.HandlerFunc {
 		}
 
 		var message model.ForumMessage
-		if err := app.db.ForumMessage(ctx, forumMessageID, &message); err != nil {
+		if err := store.ForumMessage(ctx, app.db, forumMessageID, &message); err != nil {
 			if errors.Is(err, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 			} else {
@@ -2128,7 +2128,7 @@ func onAPIMessageDelete(app *App) gin.HandlerFunc {
 		}
 
 		var thread model.ForumThread
-		if err := app.db.ForumThread(ctx, message.ForumThreadID, &thread); err != nil {
+		if err := store.ForumThread(ctx, app.db, message.ForumThreadID, &thread); err != nil {
 			if errors.Is(err, store.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
 			} else {
@@ -2144,7 +2144,7 @@ func onAPIMessageDelete(app *App) gin.HandlerFunc {
 			return
 		}
 
-		messages, count, errMessage := app.db.ForumMessages(ctx, store.ThreadMessagesQueryFilter{ForumThreadID: message.ForumThreadID})
+		messages, count, errMessage := store.ForumMessages(ctx, app.db, store.ThreadMessagesQueryFilter{ForumThreadID: message.ForumThreadID})
 		if errMessage != nil || count <= 0 {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
@@ -2154,7 +2154,7 @@ func onAPIMessageDelete(app *App) gin.HandlerFunc {
 		isThreadParent := messages[0].ForumMessageID == message.ForumMessageID
 
 		if isThreadParent {
-			if err := app.db.ForumThreadDelete(ctx, message.ForumThreadID); err != nil {
+			if err := store.ForumThreadDelete(ctx, app.db, message.ForumThreadID); err != nil {
 				responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 				log.Error("Failed to delete forum thread", zap.Error(err))
 
@@ -2163,7 +2163,7 @@ func onAPIMessageDelete(app *App) gin.HandlerFunc {
 
 			// Delete the thread if it's the first message
 			var forum model.Forum
-			if errForum := app.db.Forum(ctx, thread.ForumID, &forum); errForum != nil {
+			if errForum := store.Forum(ctx, app.db, thread.ForumID, &forum); errForum != nil {
 				responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 				log.Error("Failed to load forum", zap.Error(errForum))
 
@@ -2172,7 +2172,7 @@ func onAPIMessageDelete(app *App) gin.HandlerFunc {
 
 			forum.CountThreads -= 1
 
-			if errSave := app.db.ForumSave(ctx, &forum); errSave != nil {
+			if errSave := store.ForumSave(ctx, app.db, &forum); errSave != nil {
 				responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 				log.Error("Failed to save thread count", zap.Error(errSave))
 
@@ -2181,7 +2181,7 @@ func onAPIMessageDelete(app *App) gin.HandlerFunc {
 
 			log.Error("Thread deleted due to parent deletion", zap.Int64("forum_thread_id", thread.ForumThreadID))
 		} else {
-			if errDelete := app.db.ForumMessageDelete(ctx, message.ForumMessageID); errDelete != nil {
+			if errDelete := store.ForumMessageDelete(ctx, app.db, message.ForumMessageID); errDelete != nil {
 				responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 				log.Error("Failed to delete message", zap.Error(errDelete))
 
@@ -2215,7 +2215,7 @@ func onAPIThreadCreateReply(app *App) gin.HandlerFunc {
 		}
 
 		var thread model.ForumThread
-		if errThread := app.db.ForumThread(ctx, forumThreadID, &thread); errThread != nil {
+		if errThread := store.ForumThread(ctx, app.db, forumThreadID, &thread); errThread != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
@@ -2241,20 +2241,20 @@ func onAPIThreadCreateReply(app *App) gin.HandlerFunc {
 		}
 
 		newMessage := thread.NewMessage(currentUser.SteamID, req.BodyMD)
-		if errSave := app.db.ForumMessageSave(ctx, &newMessage); errSave != nil {
+		if errSave := store.ForumMessageSave(ctx, app.db, &newMessage); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
 		}
 
 		var message model.ForumMessage
-		if errFetch := app.db.ForumMessage(ctx, newMessage.ForumMessageID, &message); errFetch != nil {
+		if errFetch := store.ForumMessage(ctx, app.db, newMessage.ForumMessageID, &message); errFetch != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			return
 		}
 
-		if errIncr := app.db.ForumIncrMessageCount(ctx, thread.ForumID, true); errIncr != nil {
+		if errIncr := store.ForumIncrMessageCount(ctx, app.db, thread.ForumID, true); errIncr != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 
 			log.Error("Failed to increment message count", zap.Error(errIncr))
@@ -2277,7 +2277,7 @@ func onAPIGetPersonSettings(app *App) gin.HandlerFunc {
 
 		var settings model.PersonSettings
 
-		if err := app.db.GetPersonSettings(ctx, user.SteamID, &settings); err != nil {
+		if err := store.GetPersonSettings(ctx, app.db, user.SteamID, &settings); err != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to fetch person settings", zap.Error(err), zap.Int64("steam_id", user.SteamID.Int64()))
 
@@ -2308,7 +2308,7 @@ func onAPIPostPersonSettings(app *App) gin.HandlerFunc {
 
 		var settings model.PersonSettings
 
-		if err := app.db.GetPersonSettings(ctx, user.SteamID, &settings); err != nil {
+		if err := store.GetPersonSettings(ctx, app.db, user.SteamID, &settings); err != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to fetch person settings", zap.Error(err), zap.Int64("steam_id", user.SteamID.Int64()))
 
@@ -2319,7 +2319,7 @@ func onAPIPostPersonSettings(app *App) gin.HandlerFunc {
 		settings.StatsHidden = req.StatsHidden
 		settings.ForumSignature = util.SanitizeUGC(req.ForumSignature)
 
-		if err := app.db.SavePersonSettings(ctx, &settings); err != nil {
+		if err := store.SavePersonSettings(ctx, app.db, &settings); err != nil {
 			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
 			log.Error("Failed to save person settings", zap.Error(err), zap.Int64("steam_id", user.SteamID.Int64()))
 
