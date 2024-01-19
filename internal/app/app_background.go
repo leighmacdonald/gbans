@@ -6,12 +6,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/discord"
+	"github.com/leighmacdonald/gbans/internal/match"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
-	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/pkg/errors"
@@ -19,111 +18,54 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// matchSummarizer is the central collection point for summarizing matches live from UDP log events.
-func (app *App) matchSummarizer(ctx context.Context) {
-	log := app.log.Named("matchSum")
+func (app *App) onMatchComplete(ctx context.Context, matchContext *match.Context) error {
+	const minPlayers = 6
 
-	eventChan := make(chan logparse.ServerEvent)
-	if errReg := app.eb.Consume(eventChan); errReg != nil {
-		log.Error("logWriter Tried to register duplicate reader channel", zap.Error(errReg))
+	state := app.state.current()
+	server, found := state.byServerID(matchContext.Match.ServerID)
+
+	if found && server.Name != "" {
+		matchContext.Match.Title = server.Name
 	}
 
-	matches := map[int]*activeMatchContext{}
+	var fullServer model.Server
+	if err := store.GetServer(ctx, app.db, server.ServerID, &fullServer); err != nil {
+		return errors.Wrap(err, "Failed to load findMatch server")
+	}
 
-	for {
-		select {
-		case evt := <-eventChan:
-			matchContext, exists := matches[evt.ServerID]
+	if !fullServer.EnableStats {
+		return nil
+	}
 
-			if !exists {
-				cancelCtx, cancel := context.WithCancel(ctx)
-				matchContext = &activeMatchContext{
-					match:          logparse.NewMatch(evt.ServerID, evt.ServerName),
-					cancel:         cancel,
-					log:            log.Named(evt.ServerName),
-					incomingEvents: make(chan logparse.ServerEvent),
-				}
+	if len(matchContext.Match.PlayerSums) < minPlayers {
+		return match.ErrInsufficientPlayers
+	}
 
-				go matchContext.start(cancelCtx)
+	if matchContext.Match.TimeStart == nil || matchContext.Match.MapName == "" {
+		return match.ErrIncompleteMatch
+	}
 
-				app.matchUUIDMap.Set(evt.ServerID, matchContext.match.MatchID)
-
-				matches[evt.ServerID] = matchContext
-			}
-
-			matchContext.incomingEvents <- evt
-
-			switch evt.EventType {
-			case logparse.WTeamFinalScore:
-				matchContext.finalScores++
-				if matchContext.finalScores < 2 {
-					continue
-				}
-
-				fallthrough
-			case logparse.LogStop:
-				matchContext.cancel()
-
-				state := app.state.current()
-				server, found := state.byServerID(evt.ServerID)
-
-				if found && server.Name != "" {
-					matchContext.match.Title = server.Name
-				}
-
-				var fullServer model.Server
-				if err := store.GetServer(ctx, app.db, evt.ServerID, &fullServer); err != nil {
-					app.log.Error("Failed to load findMatch server",
-						zap.Int("server", matchContext.match.ServerID), zap.Error(err))
-					delete(matches, evt.ServerID)
-
-					continue
-				}
-
-				if !fullServer.EnableStats {
-					delete(matches, evt.ServerID)
-
-					continue
-				}
-
-				if errSave := store.MatchSave(ctx, app.db, &matchContext.match, app.weaponMap); errSave != nil {
-					if errors.Is(errSave, store.ErrInsufficientPlayers) {
-						app.log.Warn("Failed to save findMatch",
-							zap.Int("server", matchContext.match.ServerID), zap.Error(errSave))
-					} else {
-						app.log.Error("Failed to save findMatch",
-							zap.Int("server", matchContext.match.ServerID), zap.Error(errSave))
-					}
-
-					delete(matches, evt.ServerID)
-
-					continue
-				}
-
-				app.onMatchComplete(ctx, matchContext.match.MatchID)
-
-				delete(matches, evt.ServerID)
-			}
-		case <-ctx.Done():
-			return
+	if errSave := store.MatchSave(ctx, app.db, &matchContext.Match, app.weaponMap); errSave != nil {
+		if errors.Is(errSave, match.ErrInsufficientPlayers) {
+			return match.ErrInsufficientPlayers
+		} else {
+			return errors.Wrap(errSave, "Failed to save findMatch")
 		}
 	}
-}
 
-func (app *App) onMatchComplete(ctx context.Context, matchID uuid.UUID) {
 	var result model.MatchResult
-	if errResult := store.MatchGetByID(ctx, app.db, matchID, &result); errResult != nil {
-		app.log.Error("Failed to load findMatch", zap.Error(errResult))
-
-		return
+	if errResult := store.MatchGetByID(ctx, app.db, matchContext.Match.MatchID, &result); errResult != nil {
+		return errors.Wrap(errResult, "Failed to load findMatch")
 	}
 
 	conf := app.config()
 
-	app.discord.SendPayload(discord.Payload{
+	go app.discord.SendPayload(discord.Payload{
 		ChannelID: conf.Discord.PublicMatchLogChannelID,
 		Embed:     app.genDiscordMatchEmbed(result).MessageEmbed,
 	})
+
+	return nil
 }
 
 func (app *App) updateSteamBanMembers(ctx context.Context) (map[int64]steamid.Collection, error) {

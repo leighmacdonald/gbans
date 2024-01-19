@@ -453,29 +453,15 @@ func MatchGetByID(ctx context.Context, database Store, matchID uuid.UUID, match 
 	return nil
 }
 
-var (
-	ErrIncompleteMatch     = errors.New("Insufficient match data")
-	ErrInsufficientPlayers = errors.New("Insufficient match players")
-)
-
 const MinMedicHealing = 500
 
 func MatchSave(ctx context.Context, database Store, match *logparse.Match, weaponMap fp.MutexMap[logparse.Weapon, int]) error {
 	const (
-		minPlayers = 6
-		query      = `
+		query = `
 		INSERT INTO match (match_id, server_id, map, title, score_red, score_blu, time_red, time_blu, time_start, time_end, winner) 
 		VALUES ($1, $2, $3, $4, $5, $6,$7, $8, $9, $10, $11) 
 		RETURNING match_id`
 	)
-
-	if match.TimeStart == nil || match.MapName == "" {
-		return ErrIncompleteMatch
-	}
-
-	if len(match.PlayerSums) < minPlayers {
-		return ErrInsufficientPlayers
-	}
 
 	transaction, errTx := database.Begin(ctx)
 	if errTx != nil {

@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v3/steamid"
+	"golang.org/x/exp/slices"
 )
 
 type MatchPlayerKillstreak struct {
@@ -83,7 +83,7 @@ func (player MatchPlayer) KDARatio() float64 {
 }
 
 func (player MatchPlayer) DamagePerMin() int {
-	return fp.Max[int](int(float64(player.Damage)/player.TimeEnd.Sub(player.TimeStart).Minutes()), 0)
+	return slices.Max([]int{int(float64(player.Damage) / player.TimeEnd.Sub(player.TimeStart).Minutes()), 0})
 }
 
 type MatchHealer struct {

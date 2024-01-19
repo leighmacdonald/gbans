@@ -17,6 +17,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
+	"github.com/leighmacdonald/gbans/internal/match"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/s3"
 	"github.com/leighmacdonald/gbans/internal/store"
@@ -54,10 +55,11 @@ type App struct {
 	mc               *metricCollector
 	assetStore       s3.AssetStore
 	logListener      *logparse.UDPLogListener
-	matchUUIDMap     fp.MutexMap[int, uuid.UUID]
 	activityTracker  *activityTracker
 	netBlock         *NetworkBlocker
 	weaponMap        fp.MutexMap[logparse.Weapon, int]
+	chatLogger       *chatLogger
+	matchSummarizer  *match.Summarizer
 }
 
 type ChatBot interface {
@@ -68,9 +70,12 @@ type ChatBot interface {
 type CommandHandler func(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error)
 
 func New(conf config.Config, database store.Store, bot ChatBot, logger *zap.Logger, assetStore s3.AssetStore) *App {
+	eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
+	filters := newWordFilters()
+	matchUUIDMap := fp.NewMutexMap[int, uuid.UUID]()
 	application := &App{
 		discord:          bot,
-		eb:               fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent](),
+		eb:               eventBroadcaster,
 		db:               database,
 		conf:             conf,
 		assetStore:       assetStore,
@@ -78,9 +83,8 @@ func New(conf config.Config, database store.Store, bot ChatBot, logger *zap.Logg
 		logFileChan:      make(chan *logFilePayload, 10),
 		notificationChan: make(chan NotificationPayload, 5),
 		steamGroups:      newSteamGroupMemberships(logger, database),
-		matchUUIDMap:     fp.NewMutexMap[int, uuid.UUID](),
 		patreon:          newPatreonManager(logger, conf, database),
-		wordFilters:      newWordFilters(),
+		wordFilters:      filters,
 		mc:               newMetricCollector(),
 		state:            newServerStateCollector(logger),
 		activityTracker:  newForumActivity(logger),
@@ -93,6 +97,10 @@ func New(conf config.Config, database store.Store, bot ChatBot, logger *zap.Logg
 	application.warningTracker = newWarningTracker(logger, database, conf.Filter,
 		onWarningHandler(application),
 		onWarningExceeded(application))
+
+	application.chatLogger = newChatLogger(logger, database, eventBroadcaster, filters, application.warningTracker, matchUUIDMap)
+
+	application.matchSummarizer = match.NewSummarizer(logger, eventBroadcaster, matchUUIDMap, application.onMatchComplete)
 
 	if conf.Discord.Enabled {
 		if errReg := application.registerDiscordHandlers(); errReg != nil {
@@ -112,6 +120,26 @@ func (app *App) config() config.Config {
 	defer app.confMu.RUnlock()
 
 	return app.conf
+}
+
+func (app *App) startWorkers(ctx context.Context) {
+	go app.patreon.updater(ctx)
+	go app.banSweeper(ctx)
+	go app.profileUpdater(ctx)
+	go app.warningTracker.start(ctx)
+	go app.logReader(ctx, app.config().Debug.WriteUnhandledLogEvents)
+	go app.initLogSrc(ctx)
+	go logMetricsConsumer(ctx, app.mc, app.eb, app.log)
+	go app.matchSummarizer.Start(ctx)
+	go app.chatLogger.start(ctx)
+	go app.playerConnectionWriter(ctx)
+	go app.steamGroups.start(ctx)
+	go cleanupTasks(ctx, app.db, app.log)
+	go app.showReportMeta(ctx)
+	go app.notificationSender(ctx)
+	go app.demoCleaner(ctx)
+	go app.stateUpdater(ctx)
+	go app.activityTracker.start(ctx)
 }
 
 func (app *App) setConfig(conf config.Config) {
@@ -302,105 +330,6 @@ func (app *App) StartHTTP(ctx context.Context) error {
 	return nil
 }
 
-func (app *App) chatRecorder(ctx context.Context) {
-	var (
-		log             = app.log.Named("chatRecorder")
-		serverEventChan = make(chan logparse.ServerEvent)
-	)
-
-	if errRegister := app.eb.Consume(serverEventChan, logparse.Say, logparse.SayTeam); errRegister != nil {
-		log.Warn("logWriter Tried to register duplicate reader channel", zap.Error(errRegister))
-
-		return
-	}
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case evt := <-serverEventChan:
-			switch evt.EventType {
-			case logparse.Say:
-				fallthrough
-			case logparse.SayTeam:
-				newServerEvent, ok := evt.Event.(logparse.SayEvt)
-				if !ok {
-					continue
-				}
-
-				if newServerEvent.Msg == "" {
-					log.Warn("Empty person message body, skipping")
-
-					continue
-				}
-
-				var author model.Person
-				if errPerson := store.GetPersonBySteamID(ctx, app.db, newServerEvent.SID, &author); errPerson != nil {
-					log.Error("Failed to add chat history, could not get author", zap.Error(errPerson))
-
-					continue
-				}
-
-				matchID, _ := app.matchUUIDMap.Get(evt.ServerID)
-
-				msg := model.PersonMessage{
-					SteamID:     newServerEvent.SID,
-					PersonaName: strings.ToValidUTF8(newServerEvent.Name, "_"),
-					ServerName:  evt.ServerName,
-					ServerID:    evt.ServerID,
-					Body:        strings.ToValidUTF8(newServerEvent.Msg, "_"),
-					Team:        newServerEvent.Team,
-					CreatedOn:   newServerEvent.CreatedOn,
-					MatchID:     matchID,
-				}
-
-				if errChat := store.AddChatHistory(ctx, app.db, &msg); errChat != nil {
-					log.Error("Failed to add chat history", zap.Error(errChat))
-
-					continue
-				}
-
-				// app.incomingGameChat <- msg
-
-				go func(userMsg model.PersonMessage) {
-					if msg.ServerName == "localhost-1" {
-						log.Debug("Chat message",
-							zap.Int64("id", msg.PersonMessageID),
-							zap.String("server", evt.ServerName),
-							zap.String("name", newServerEvent.Name),
-							zap.String("steam_id", newServerEvent.SID.String()),
-							zap.Bool("team", msg.Team),
-							zap.String("message", msg.Body))
-					}
-
-					matchedWord, matchedFilter := app.wordFilters.findMatch(userMsg.Body)
-					if matchedFilter != nil {
-						if errSaveMatch := store.AddMessageFilterMatch(ctx, app.db, userMsg.PersonMessageID, matchedFilter.FilterID); errSaveMatch != nil {
-							log.Error("Failed to save message findMatch status", zap.Error(errSaveMatch))
-						}
-
-						app.warningTracker.warningChan <- newUserWarning{
-							userMessage: userMsg,
-							userWarning: userWarning{
-								WarnReason:    model.Language,
-								Message:       userMsg.Body,
-								Matched:       matchedWord,
-								MatchedFilter: matchedFilter,
-								CreatedOn:     time.Now(),
-								Personaname:   userMsg.PersonaName,
-								Avatar:        userMsg.AvatarHash,
-								ServerName:    userMsg.ServerName,
-								ServerID:      userMsg.ServerID,
-								SteamID:       userMsg.SteamID.String(),
-							},
-						}
-					}
-				}(msg)
-			}
-		}
-	}
-}
-
 func (app *App) playerConnectionWriter(ctx context.Context) {
 	log := app.log.Named("playerConnectionWriter")
 
@@ -560,26 +489,6 @@ func (app *App) LoadFilters(ctx context.Context) error {
 	app.log.Debug("Loaded word filters", zap.Int64("count", count))
 
 	return nil
-}
-
-func (app *App) startWorkers(ctx context.Context) {
-	go app.patreon.updater(ctx)
-	go app.banSweeper(ctx)
-	go app.profileUpdater(ctx)
-	go app.warningTracker.start(ctx)
-	go app.logReader(ctx, app.config().Debug.WriteUnhandledLogEvents)
-	go app.initLogSrc(ctx)
-	go logMetricsConsumer(ctx, app.mc, app.eb, app.log)
-	go app.matchSummarizer(ctx)
-	go app.chatRecorder(ctx)
-	go app.playerConnectionWriter(ctx)
-	go app.steamGroups.start(ctx)
-	go cleanupTasks(ctx, app.db, app.log)
-	go app.showReportMeta(ctx)
-	go app.notificationSender(ctx)
-	go app.demoCleaner(ctx)
-	go app.stateUpdater(ctx)
-	go app.activityTracker.start(ctx)
 }
 
 // UDP log sink.
