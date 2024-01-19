@@ -27,6 +27,7 @@ import (
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+	"golang.org/x/exp/slices"
 )
 
 func makeGetTokenKey(cookieKey string) func(_ *jwt.Token) (any, error) {
@@ -662,7 +663,7 @@ func onAPISaveMedia(app *App) gin.HandlerFunc {
 
 		media.Contents = nil
 
-		if !fp.Contains(MediaSafeMimeTypesImages, media.MimeType) {
+		if !slices.Contains(MediaSafeMimeTypesImages, media.MimeType) {
 			responseErr(ctx, http.StatusBadRequest, errors.New("Invalid image format"))
 			log.Error("User tried uploading image with forbidden mimetype",
 				zap.String("mime", media.MimeType), zap.String("name", media.Name))
