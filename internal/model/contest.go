@@ -1,13 +1,13 @@
 package model
 
 import (
+	"errors"
 	"strings"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/leighmacdonald/gbans/internal/consts"
+	"github.com/leighmacdonald/gbans/internal/errs"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"github.com/pkg/errors"
 )
 
 type Contest struct {
@@ -27,7 +27,7 @@ type Contest struct {
 	// Allow voting
 	Voting bool `json:"voting"`
 	// Minimum permission level allowed to vote
-	MinPermissionLevel consts.Privilege `json:"min_permission_level"`
+	MinPermissionLevel Privilege `json:"min_permission_level"`
 	// Allow down voting
 	DownVotes bool `json:"down_votes"`
 	IsNew     bool
@@ -76,7 +76,7 @@ func (c Contest) NewEntry(steamID steamid.SID64, assetID uuid.UUID, description 
 	}
 
 	if !steamID.Valid() {
-		return ContestEntry{}, consts.ErrInvalidSID
+		return ContestEntry{}, errs.ErrInvalidSID
 	}
 
 	if description == "" {
@@ -85,7 +85,7 @@ func (c Contest) NewEntry(steamID steamid.SID64, assetID uuid.UUID, description 
 
 	newID, errID := uuid.NewV4()
 	if errID != nil {
-		return ContestEntry{}, errors.Wrap(errID, "Failed to generate new uuidv4")
+		return ContestEntry{}, errors.Join(errID, errors.New("Failed to generate new uuidv4"))
 	}
 
 	return ContestEntry{
@@ -105,7 +105,7 @@ func (c Contest) NewEntry(steamID steamid.SID64, assetID uuid.UUID, description 
 func NewContest(title string, description string, dateStart time.Time, dateEnd time.Time, public bool) (Contest, error) {
 	newID, errID := uuid.NewV4()
 	if errID != nil {
-		return Contest{}, errors.Wrap(errID, "Failed to generate uuid")
+		return Contest{}, errors.Join(errID, errors.New("Failed to generate uuid"))
 	}
 
 	if title == "" {
@@ -133,7 +133,7 @@ func NewContest(title string, description string, dateStart time.Time, dateEnd t
 		MediaTypes:         "",
 		Deleted:            false,
 		Voting:             false,
-		MinPermissionLevel: consts.PUser,
+		MinPermissionLevel: PUser,
 		DownVotes:          false,
 		IsNew:              true,
 	}

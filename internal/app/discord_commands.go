@@ -1,13 +1,13 @@
-package discord
+package app
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/model"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
@@ -492,7 +492,7 @@ func (bot *Bot) botRegisterSlashCommands(appID string) error {
 
 	_, errBulk := bot.session.ApplicationCommandBulkOverwrite(appID, "", slashCommands)
 	if errBulk != nil {
-		return errors.Wrap(errBulk, "Failed to bulk overwrite application commands")
+		return errors.Join(errBulk, errors.New("Failed to bulk overwrite application commands"))
 	}
 
 	bot.log.Info("Registered discord commands", zap.Int("count", len(slashCommands)))
@@ -501,8 +501,6 @@ func (bot *Bot) botRegisterSlashCommands(appID string) error {
 }
 
 type CommandOptions map[optionKey]*discordgo.ApplicationCommandInteractionDataOption
-
-type CommandHandler func(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error)
 
 // OptionMap will take the recursive discord slash commands and flatten them into a simple
 // map.
@@ -565,12 +563,8 @@ func (bot *Bot) onInteractionCreate(session *discordgo.Session, interaction *dis
 
 		response, errHandleCommand := handler(commandCtx, session, interaction)
 		if errHandleCommand != nil || response == nil {
-			errEmbed := NewEmbed(config.Config{}, "Error Returned").Embed().
-				SetColor(bot.Colour.Error).
-				AddField("command", string(command)).
-				SetDescription(errHandleCommand.Error())
 			if _, errFollow := session.FollowupMessageCreate(interaction.Interaction, true, &discordgo.WebhookParams{
-				Embeds: []*discordgo.MessageEmbed{errEmbed.MessageEmbed},
+				Embeds: []*discordgo.MessageEmbed{discord.ErrorMessage(string(command), errHandleCommand)},
 			}); errFollow != nil {
 				bot.log.Error("Failed sending error response for interaction", zap.Error(errFollow))
 			}

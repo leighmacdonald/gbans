@@ -1,44 +1,41 @@
-package discord
+package app
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"sync/atomic"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/pkg/util"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
 var ErrCommandFailed = errors.New("Command failed")
 
+type SlashCommandHandler func(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error)
+
 type Bot struct {
 	log               *zap.Logger
 	session           *discordgo.Session
 	isReady           atomic.Bool
-	commandHandlers   map[Cmd]CommandHandler
+	commandHandlers   map[Cmd]SlashCommandHandler
 	unregisterOnStart bool
 	appID             string
 	extURL            string
-	Colour            LevelColors
 }
-
-const (
-	iconURL      = "https://cdn.discordapp.com/avatars/758536119397646370/6a371d1a481a72c512244ba9853f7eff.webp?size=128"
-	providerName = "gbans"
-)
 
 type Payload struct {
 	ChannelID string
 	Embed     *discordgo.MessageEmbed
 }
 
-func New(logger *zap.Logger, conf config.Config) (*Bot, error) {
+func NewDiscord(logger *zap.Logger, conf config.Config) (*Bot, error) {
 	// Immediately connects
 	session, errNewSession := discordgo.New("Bot " + conf.Discord.Token)
 	if errNewSession != nil {
-		return nil, errors.Wrapf(errNewSession, "Failed to connect to discord. discord unavailable")
+		return nil, errors.Join(errNewSession, errors.New("Failed to connect to discord. discord unavailable"))
 	}
 
 	session.UserAgent = "gbans (https://github.com/leighmacdonald/gbans)"
@@ -52,14 +49,7 @@ func New(logger *zap.Logger, conf config.Config) (*Bot, error) {
 		unregisterOnStart: conf.Discord.UnregisterOnStart,
 		appID:             conf.Discord.AppID,
 		extURL:            conf.General.ExternalURL,
-		commandHandlers:   map[Cmd]CommandHandler{},
-		Colour: LevelColors{
-			Debug:   conf.Discord.ColourDebug,
-			Success: conf.Discord.ColourSuccess,
-			Info:    conf.Discord.ColourInfo,
-			Warn:    conf.Discord.ColourWarn,
-			Error:   conf.Discord.ColourError,
-		},
+		commandHandlers:   map[Cmd]SlashCommandHandler{},
 	}
 	bot.session.AddHandler(bot.onReady)
 	bot.session.AddHandler(bot.onConnect)
@@ -69,7 +59,7 @@ func New(logger *zap.Logger, conf config.Config) (*Bot, error) {
 	return bot, nil
 }
 
-func (bot *Bot) RegisterHandler(cmd Cmd, handler CommandHandler) error {
+func (bot *Bot) RegisterHandler(cmd Cmd, handler SlashCommandHandler) error {
 	_, found := bot.commandHandlers[cmd]
 	if found {
 		return errors.New("Duplicate command")
@@ -109,7 +99,7 @@ func (bot *Bot) botUnregisterSlashCommands(guildID string) {
 func (bot *Bot) Start() error {
 	// Open a websocket connection to discord and begin listening.
 	if errSessionOpen := bot.session.Open(); errSessionOpen != nil {
-		return errors.Wrap(errSessionOpen, "Error opening discord connection")
+		return errors.Join(errSessionOpen, errors.New("Error opening discord connection"))
 	}
 
 	if bot.unregisterOnStart {
@@ -173,7 +163,7 @@ func (bot *Bot) sendInteractionResponse(session *discordgo.Session, interaction 
 		if _, errResp := session.FollowupMessageCreate(interaction, true, &discordgo.WebhookParams{
 			Content: "Something went wrong",
 		}); errResp != nil {
-			return errors.Wrap(errResp, "Failed to send error response")
+			return errors.Join(errResp, errors.New("Failed to send error response"))
 		}
 
 		return nil
@@ -182,21 +172,12 @@ func (bot *Bot) sendInteractionResponse(session *discordgo.Session, interaction 
 	return nil
 }
 
-func (bot *Bot) SendPayload(payload Payload) {
+func (bot *Bot) SendPayload(channelID string, payload *discordgo.MessageEmbed) {
 	if !bot.isReady.Load() {
 		return
 	}
 
-	if _, errSend := bot.session.ChannelMessageSendEmbed(payload.ChannelID, payload.Embed); errSend != nil {
+	if _, errSend := bot.session.ChannelMessageSendEmbed(channelID, payload); errSend != nil {
 		bot.log.Error("Failed to send discord payload", zap.Error(errSend))
 	}
-}
-
-// LevelColors is a struct of the possible colors used in Discord color format (0x[RGB] converted to int).
-type LevelColors struct {
-	Debug   int
-	Success int
-	Info    int
-	Warn    int
-	Error   int
 }

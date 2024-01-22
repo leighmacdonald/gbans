@@ -2,6 +2,8 @@ package app
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -10,30 +12,29 @@ import (
 	"sync"
 
 	"github.com/leighmacdonald/gbans/pkg/util"
-	"github.com/pkg/errors"
 )
 
-// NetworkBlocker provides a simple interface for blocking users connecting from banned IPs. Its designed to
+// Blocker provides a simple interface for blocking users connecting from banned IPs. Its designed to
 // download list of, for example, VPN CIDR blocks, parse them and block any ip that is contained within any of those
 // network blocks.
 //
 // IPs can be individually whitelisted if a remote/3rd party source cannot be changed.
-type NetworkBlocker struct {
+type Blocker struct {
 	cidrRx      *regexp.Regexp
 	blocks      map[string][]*net.IPNet
 	whitelisted map[int]*net.IPNet
 	sync.RWMutex
 }
 
-func NewNetworkBlocker() *NetworkBlocker {
-	return &NetworkBlocker{
+func NewBlocker() *Blocker {
+	return &Blocker{
 		blocks:      make(map[string][]*net.IPNet),
 		whitelisted: make(map[int]*net.IPNet),
 		cidrRx:      regexp.MustCompile(`^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(/(3[0-2]|2[0-9]|1[0-9]|[0-9]))?$`),
 	}
 }
 
-func (b *NetworkBlocker) IsMatch(addr net.IP) (bool, string) {
+func (b *Blocker) IsMatch(addr net.IP) (bool, string) {
 	b.RLock()
 	defer b.RUnlock()
 
@@ -54,38 +55,38 @@ func (b *NetworkBlocker) IsMatch(addr net.IP) (bool, string) {
 	return false, ""
 }
 
-func (b *NetworkBlocker) RemoveSource(name string) {
+func (b *Blocker) RemoveSource(name string) {
 	b.Lock()
 	defer b.Unlock()
 
 	delete(b.blocks, name)
 }
 
-func (b *NetworkBlocker) RemoveWhitelist(id int) {
+func (b *Blocker) RemoveWhitelist(id int) {
 	b.Lock()
 	defer b.Unlock()
 
 	delete(b.whitelisted, id)
 }
 
-func (b *NetworkBlocker) AddWhitelist(id int, network *net.IPNet) {
+func (b *Blocker) AddWhitelist(id int, network *net.IPNet) {
 	b.Lock()
 	defer b.Unlock()
 
 	b.whitelisted[id] = network
 }
 
-func (b *NetworkBlocker) AddRemoteSource(ctx context.Context, name string, url string) (int64, error) {
+func (b *Blocker) AddRemoteSource(ctx context.Context, name string, url string) (int64, error) {
 	req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if errReq != nil {
-		return 0, errors.Wrap(errReq, "Invalid request")
+		return 0, errors.Join(errReq, errors.New("Invalid request"))
 	}
 
 	client := util.NewHTTPClient()
 
 	resp, errResp := client.Do(req)
 	if errResp != nil {
-		return 0, errors.Wrap(errResp, "Failed to fetch remote block source")
+		return 0, errors.Join(errResp, errors.New("Failed to fetch remote block source"))
 	}
 
 	defer func() {
@@ -93,12 +94,12 @@ func (b *NetworkBlocker) AddRemoteSource(ctx context.Context, name string, url s
 	}()
 
 	if resp.StatusCode != http.StatusOK {
-		return 0, errors.Errorf("Invalid response code; %d", resp.StatusCode)
+		return 0, fmt.Errorf("Invalid response code; %d", resp.StatusCode)
 	}
 
 	bodyBytes, errRead := io.ReadAll(resp.Body)
 	if errRead != nil {
-		return 0, errors.Wrap(errRead, "Failed to read response body")
+		return 0, errors.Join(errRead, errors.New("Failed to read response body"))
 	}
 
 	var blocks []*net.IPNet //nolint:prealloc

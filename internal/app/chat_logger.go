@@ -13,8 +13,8 @@ import (
 	"go.uber.org/zap"
 )
 
-func newChatLogger(log *zap.Logger, database store.Store, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
-	filters *wordFilters, warningTracker *WarningTracker, matchUUIDMap fp.MutexMap[int, uuid.UUID],
+func newChatLogger(log *zap.Logger, database store.Stores, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
+	filters *WordFilters, warningTracker *Tracker, matchUUIDMap fp.MutexMap[int, uuid.UUID],
 ) *chatLogger {
 	return &chatLogger{
 		log:            log.Named("chatRecorder"),
@@ -29,11 +29,11 @@ func newChatLogger(log *zap.Logger, database store.Store, broadcaster *fp.Broadc
 
 type chatLogger struct {
 	log            *zap.Logger
-	database       store.Store
+	database       store.Stores
 	events         chan logparse.ServerEvent
 	broadcaster    *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
-	wordFilters    *wordFilters
-	warningTracker *WarningTracker
+	wordFilters    *WordFilters
+	warningTracker *Tracker
 	matchUUIDMap   fp.MutexMap[int, uuid.UUID]
 }
 
@@ -59,13 +59,13 @@ func (c *chatLogger) start(ctx context.Context) {
 				}
 
 				if newServerEvent.Msg == "" {
-					c.log.Warn("Empty person message body, skipping")
+					c.log.Warn("Empty Person message body, skipping")
 
 					continue
 				}
 
 				var author model.Person
-				if errPerson := store.GetPersonBySteamID(ctx, c.database, newServerEvent.SID, &author); errPerson != nil {
+				if errPerson := c.database.GetPersonBySteamID(ctx, newServerEvent.SID, &author); errPerson != nil {
 					c.log.Error("Failed to add chat history, could not get author", zap.Error(errPerson))
 
 					continue
@@ -84,7 +84,7 @@ func (c *chatLogger) start(ctx context.Context) {
 					MatchID:     matchID,
 				}
 
-				if errChat := store.AddChatHistory(ctx, c.database, &msg); errChat != nil {
+				if errChat := c.database.AddChatHistory(ctx, &msg); errChat != nil {
 					c.log.Error("Failed to add chat history", zap.Error(errChat))
 
 					continue
@@ -101,15 +101,15 @@ func (c *chatLogger) start(ctx context.Context) {
 							zap.String("message", msg.Body))
 					}
 
-					matchedWord, matchedFilter := c.wordFilters.findMatch(userMsg.Body)
+					matchedWord, matchedFilter := c.wordFilters.Match(userMsg.Body)
 					if matchedFilter != nil {
-						if errSaveMatch := store.AddMessageFilterMatch(ctx, c.database, userMsg.PersonMessageID, matchedFilter.FilterID); errSaveMatch != nil {
+						if errSaveMatch := c.database.AddMessageFilterMatch(ctx, userMsg.PersonMessageID, matchedFilter.FilterID); errSaveMatch != nil {
 							c.log.Error("Failed to save message findMatch status", zap.Error(errSaveMatch))
 						}
 
-						c.warningTracker.warningChan <- newUserWarning{
-							userMessage: userMsg,
-							userWarning: userWarning{
+						c.warningTracker.WarningChan <- model.NewUserWarning{
+							UserMessage: userMsg,
+							UserWarning: model.UserWarning{
 								WarnReason:    model.Language,
 								Message:       userMsg.Body,
 								Matched:       matchedWord,

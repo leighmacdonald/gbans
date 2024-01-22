@@ -2,71 +2,20 @@ package app
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"sync"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/discord"
-	"github.com/leighmacdonald/gbans/internal/match"
+	"github.com/leighmacdonald/gbans/internal/errs"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
-
-func (app *App) onMatchComplete(ctx context.Context, matchContext *match.Context) error {
-	const minPlayers = 6
-
-	state := app.state.current()
-	server, found := state.byServerID(matchContext.Match.ServerID)
-
-	if found && server.Name != "" {
-		matchContext.Match.Title = server.Name
-	}
-
-	var fullServer model.Server
-	if err := store.GetServer(ctx, app.db, server.ServerID, &fullServer); err != nil {
-		return errors.Wrap(err, "Failed to load findMatch server")
-	}
-
-	if !fullServer.EnableStats {
-		return nil
-	}
-
-	if len(matchContext.Match.PlayerSums) < minPlayers {
-		return match.ErrInsufficientPlayers
-	}
-
-	if matchContext.Match.TimeStart == nil || matchContext.Match.MapName == "" {
-		return match.ErrIncompleteMatch
-	}
-
-	if errSave := store.MatchSave(ctx, app.db, &matchContext.Match, app.weaponMap); errSave != nil {
-		if errors.Is(errSave, match.ErrInsufficientPlayers) {
-			return match.ErrInsufficientPlayers
-		} else {
-			return errors.Wrap(errSave, "Failed to save findMatch")
-		}
-	}
-
-	var result model.MatchResult
-	if errResult := store.MatchGetByID(ctx, app.db, matchContext.Match.MatchID, &result); errResult != nil {
-		return errors.Wrap(errResult, "Failed to load findMatch")
-	}
-
-	conf := app.config()
-
-	go app.discord.SendPayload(discord.Payload{
-		ChannelID: conf.Discord.PublicMatchLogChannelID,
-		Embed:     app.genDiscordMatchEmbed(result).MessageEmbed,
-	})
-
-	return nil
-}
 
 func (app *App) updateSteamBanMembers(ctx context.Context) (map[int64]steamid.Collection, error) {
 	newMap := map[int64]steamid.Collection{}
@@ -74,24 +23,24 @@ func (app *App) updateSteamBanMembers(ctx context.Context) (map[int64]steamid.Co
 	localCtx, cancel := context.WithTimeout(ctx, time.Second*120)
 	defer cancel()
 
-	opts := store.SteamBansQueryFilter{
-		BansQueryFilter:    store.BansQueryFilter{QueryFilter: store.QueryFilter{Deleted: false}},
+	opts := model.SteamBansQueryFilter{
+		BansQueryFilter:    model.BansQueryFilter{QueryFilter: model.QueryFilter{Deleted: false}},
 		IncludeFriendsOnly: true,
 	}
 
-	steamBans, _, errSteam := store.GetBansSteam(ctx, app.db, opts)
+	steamBans, _, errSteam := app.db.GetBansSteam(ctx, opts)
 	if errSteam != nil {
-		if errors.Is(errSteam, store.ErrNoResult) {
+		if errors.Is(errSteam, errs.ErrNoResult) {
 			return newMap, nil
 		}
 
-		return nil, errors.Wrap(errSteam, "Failed to fetch bans with friends included")
+		return nil, errors.Join(errSteam, errors.New("Failed to fetch bans with friends included"))
 	}
 
 	for _, steamBan := range steamBans {
 		friends, errFriends := steamweb.GetFriendList(localCtx, steamBan.TargetID)
 		if errFriends != nil {
-			return nil, errors.Wrap(errFriends, "Failed to fetch friends")
+			return nil, errors.Join(errFriends, errors.New("Failed to fetch friends"))
 		}
 
 		if len(friends) == 0 {
@@ -105,14 +54,14 @@ func (app *App) updateSteamBanMembers(ctx context.Context) (map[int64]steamid.Co
 		}
 
 		memberList := model.NewMembersList(steamBan.TargetID.Int64(), sids)
-		if errQuery := store.GetMembersList(ctx, app.db, steamBan.TargetID.Int64(), &memberList); errQuery != nil {
-			if !errors.Is(errQuery, store.ErrNoResult) {
-				return nil, errors.Wrap(errQuery, "Failed to fetch members list")
+		if errQuery := app.db.GetMembersList(ctx, steamBan.TargetID.Int64(), &memberList); errQuery != nil {
+			if !errors.Is(errQuery, errs.ErrNoResult) {
+				return nil, errors.Join(errQuery, errors.New("Failed to fetch members list"))
 			}
 		}
 
-		if errSave := store.SaveMembersList(ctx, app.db, &memberList); errSave != nil {
-			return nil, errors.Wrap(errSave, "Failed to save banned steam friend member list")
+		if errSave := app.db.SaveMembersList(ctx, &memberList); errSave != nil {
+			return nil, errors.Join(errSave, errors.New("Failed to save banned steam friend member list"))
 		}
 
 		newMap[steamBan.TargetID.Int64()] = memberList.Members
@@ -141,17 +90,6 @@ func (app *App) updateBanChildren(ctx context.Context) {
 }
 
 func (app *App) showReportMeta(ctx context.Context) {
-	type reportMeta struct {
-		TotalOpen   int
-		TotalClosed int
-		Open        int
-		NeedInfo    int
-		Open1Day    int
-		Open3Days   int
-		OpenWeek    int
-		OpenNew     int
-	}
-
 	ticker := time.NewTicker(time.Hour * 24)
 	updateChan := make(chan any)
 
@@ -165,8 +103,8 @@ func (app *App) showReportMeta(ctx context.Context) {
 		case <-ticker.C:
 			updateChan <- true
 		case <-updateChan:
-			reports, _, errReports := store.GetReports(ctx, app.db, store.ReportQueryFilter{
-				QueryFilter: store.QueryFilter{
+			reports, _, errReports := app.db.GetReports(ctx, model.ReportQueryFilter{
+				QueryFilter: model.QueryFilter{
 					Limit: 0,
 				},
 			})
@@ -178,7 +116,7 @@ func (app *App) showReportMeta(ctx context.Context) {
 
 			var (
 				now  = time.Now()
-				meta reportMeta
+				meta model.ReportMeta
 			)
 
 			for _, report := range reports {
@@ -208,33 +146,9 @@ func (app *App) showReportMeta(ctx context.Context) {
 				}
 			}
 
-			conf := app.config()
+			conf := app.Config()
 
-			msgEmbed := discord.NewEmbed(conf, "User Report Stats")
-			msgEmbed.
-				Embed().
-				SetColor(conf.Discord.ColourSuccess).
-				SetURL(conf.ExtURLRaw("/admin/reports"))
-
-			if meta.OpenWeek > 0 {
-				msgEmbed.Embed().SetColor(conf.Discord.ColourError)
-			} else if meta.Open3Days > 0 {
-				msgEmbed.Embed().SetColor(conf.Discord.ColourWarn)
-			}
-
-			msgEmbed.Embed().
-				SetDescription("Current Open Report Counts").
-				AddField("New", fmt.Sprintf(" %d", meta.Open1Day)).MakeFieldInline().
-				AddField("Total Open", fmt.Sprintf(" %d", meta.TotalOpen)).MakeFieldInline().
-				AddField("Total Closed", fmt.Sprintf(" %d", meta.TotalClosed)).MakeFieldInline().
-				AddField(">1 Day", fmt.Sprintf(" %d", meta.Open1Day)).MakeFieldInline().
-				AddField(">3 Days", fmt.Sprintf(" %d", meta.Open3Days)).MakeFieldInline().
-				AddField(">1 Week", fmt.Sprintf(" %d", meta.OpenWeek)).MakeFieldInline()
-
-			app.discord.SendPayload(discord.Payload{
-				ChannelID: conf.Discord.LogChannelID,
-				Embed:     msgEmbed.Embed().Truncate().MessageEmbed,
-			})
+			app.SendPayload(conf.Discord.LogChannelID, discord.ReportStatsMessage(meta, conf.ExtURLRaw("/admin/reports")))
 		case <-ctx.Done():
 			app.log.Debug("showReportMeta shutting down")
 
@@ -257,7 +171,7 @@ func (app *App) demoCleaner(ctx context.Context) {
 		case <-ticker.C:
 			triggerChan <- true
 		case <-triggerChan:
-			conf := app.config()
+			conf := app.Config()
 
 			if !conf.General.DemoCleanupEnabled {
 				continue
@@ -265,9 +179,9 @@ func (app *App) demoCleaner(ctx context.Context) {
 
 			log.Debug("Starting demo cleanup")
 
-			expired, errExpired := store.ExpiredDemos(ctx, app.db, conf.General.DemoCountLimit)
+			expired, errExpired := app.db.ExpiredDemos(ctx, conf.General.DemoCountLimit)
 			if errExpired != nil {
-				if errors.Is(errExpired, store.ErrNoResult) {
+				if errors.Is(errExpired, errs.ErrNoResult) {
 					continue
 				}
 
@@ -288,7 +202,7 @@ func (app *App) demoCleaner(ctx context.Context) {
 					continue
 				}
 
-				if errDrop := store.DropDemo(ctx, app.db, &model.DemoFile{DemoID: demo.DemoID, Title: demo.Title}); errDrop != nil {
+				if errDrop := app.db.DropDemo(ctx, &model.DemoFile{DemoID: demo.DemoID, Title: demo.Title}); errDrop != nil {
 					log.Error("Failed to remove demo", zap.Error(errDrop),
 						zap.String("bucket", conf.S3.BucketDemo), zap.String("name", demo.Title))
 
@@ -309,7 +223,7 @@ func (app *App) demoCleaner(ctx context.Context) {
 	}
 }
 
-func cleanupTasks(ctx context.Context, database store.Store, logger *zap.Logger) {
+func cleanupTasks(ctx context.Context, database store.Stores, logger *zap.Logger) {
 	var (
 		log    = logger.Named("cleanupTasks")
 		ticker = time.NewTicker(time.Hour * 24)
@@ -318,7 +232,7 @@ func cleanupTasks(ctx context.Context, database store.Store, logger *zap.Logger)
 	for {
 		select {
 		case <-ticker.C:
-			if err := store.PrunePersonAuth(ctx, database); err != nil && !errors.Is(err, store.ErrNoResult) {
+			if err := database.PrunePersonAuth(ctx); err != nil && !errors.Is(err, errs.ErrNoResult) {
 				log.Error("Error pruning expired refresh tokens", zap.Error(err))
 			}
 		case <-ctx.Done():
@@ -361,7 +275,7 @@ func (app *App) updateProfiles(ctx context.Context, people model.People) error {
 	errGroup.Go(func() error {
 		newBanStates, errBans := thirdparty.FetchPlayerBans(cancelCtx, steamIDs)
 		if errBans != nil {
-			return errors.Wrap(errBans, "Failed to fetch ban status from steamapi")
+			return errors.Join(errBans, errors.New("Failed to fetch ban status from steamapi"))
 		}
 
 		banStates = newBanStates
@@ -372,7 +286,7 @@ func (app *App) updateProfiles(ctx context.Context, people model.People) error {
 	errGroup.Go(func() error {
 		newSummaries, errSummaries := steamweb.PlayerSummaries(cancelCtx, steamIDs)
 		if errSummaries != nil {
-			return errors.Wrap(errSummaries, "Failed to fetch player summaries from steamapi")
+			return errors.Join(errSummaries, errors.New("Failed to fetch player summaries from steamapi"))
 		}
 
 		summaries = newSummaries
@@ -381,7 +295,7 @@ func (app *App) updateProfiles(ctx context.Context, people model.People) error {
 	})
 
 	if errFetch := errGroup.Wait(); errFetch != nil {
-		return errors.Wrap(errFetch, "Failed to fetch data from steamapi")
+		return errors.Join(errFetch, errors.New("Failed to fetch data from steamapi"))
 	}
 
 	for _, curPerson := range people {
@@ -413,8 +327,8 @@ func (app *App) updateProfiles(ctx context.Context, people model.People) error {
 			person.DaysSinceLastBan = banState.DaysSinceLastBan
 		}
 
-		if errSavePerson := store.SavePerson(ctx, app.db, &person); errSavePerson != nil {
-			return errors.Wrap(errSavePerson, "Failed to save person")
+		if errSavePerson := app.db.SavePerson(ctx, &person); errSavePerson != nil {
+			return errors.Join(errSavePerson, errors.New("Failed to save Person"))
 		}
 	}
 
@@ -442,7 +356,7 @@ func (app *App) profileUpdater(ctx context.Context) {
 			run <- true
 		case <-run:
 			localCtx, cancel := context.WithTimeout(ctx, time.Second*10)
-			people, errGetExpired := store.GetExpiredProfiles(localCtx, app.db, 100)
+			people, errGetExpired := app.db.GetExpiredProfiles(localCtx, 100)
 
 			if errGetExpired != nil || len(people) == 0 {
 				cancel()
@@ -458,64 +372,6 @@ func (app *App) profileUpdater(ctx context.Context) {
 		case <-ctx.Done():
 			log.Debug("profileUpdater shutting down")
 
-			return
-		}
-	}
-}
-
-func (app *App) stateUpdater(ctx context.Context) {
-	var (
-		log          = app.log.Named("state")
-		trigger      = make(chan any)
-		updateTicker = time.NewTicker(time.Minute * 30)
-	)
-
-	go app.state.start(ctx)
-
-	go func() {
-		trigger <- true
-	}()
-
-	for {
-		select {
-		case <-updateTicker.C:
-			trigger <- true
-		case <-trigger:
-			servers, _, errServers := store.GetServers(ctx, app.db, store.ServerQueryFilter{
-				QueryFilter:     store.QueryFilter{Deleted: false},
-				IncludeDisabled: false,
-			})
-			if errServers != nil && !errors.Is(errServers, store.ErrNoResult) {
-				log.Error("Failed to fetch servers, cannot update state", zap.Error(errServers))
-
-				continue
-			}
-
-			var configs []serverConfig
-			for _, server := range servers {
-				configs = append(configs, newServerConfig(
-					server.ServerID,
-					server.ShortName,
-					server.Name,
-					server.Address,
-					server.Port,
-					server.RCON,
-					server.ReservedSlots,
-					server.CC,
-					server.Region,
-					server.Latitude,
-					server.Longitude,
-				))
-			}
-
-			app.state.setServerConfigs(configs)
-
-			conf := app.config()
-			if conf.Debug.AddRCONLogAddress != "" {
-				app.state.logAddressAdd(conf.Debug.AddRCONLogAddress)
-			}
-
-		case <-ctx.Done():
 			return
 		}
 	}
@@ -537,23 +393,19 @@ func (app *App) banSweeper(ctx context.Context) {
 			go func() {
 				defer waitGroup.Done()
 
-				expiredBans, errExpiredBans := store.GetExpiredBans(ctx, app.db)
-				if errExpiredBans != nil && !errors.Is(errExpiredBans, store.ErrNoResult) {
+				expiredBans, errExpiredBans := app.db.GetExpiredBans(ctx)
+				if errExpiredBans != nil && !errors.Is(errExpiredBans, errs.ErrNoResult) {
 					log.Error("Failed to get expired expiredBans", zap.Error(errExpiredBans))
 				} else {
 					for _, expiredBan := range expiredBans {
 						ban := expiredBan
-						if errDrop := store.DropBan(ctx, app.db, &ban, false); errDrop != nil {
+						if errDrop := app.db.DropBan(ctx, &ban, false); errDrop != nil {
 							log.Error("Failed to drop expired expiredBan", zap.Error(errDrop))
 						} else {
-							banType := "Ban"
-							if ban.BanType == model.NoComm {
-								banType = "Mute"
-							}
 
 							var person model.Person
-							if errPerson := store.GetPersonBySteamID(ctx, app.db, ban.TargetID, &person); errPerson != nil {
-								log.Error("Failed to get expired person", zap.Error(errPerson))
+							if errPerson := app.db.GetPersonBySteamID(ctx, ban.TargetID, &person); errPerson != nil {
+								log.Error("Failed to get expired Person", zap.Error(errPerson))
 
 								continue
 							}
@@ -563,29 +415,11 @@ func (app *App) banSweeper(ctx context.Context) {
 								name = person.SteamID.String()
 							}
 
-							conf := app.config()
+							conf := app.Config()
 
-							msgEmbed := discord.NewEmbed(conf, "Steam Ban Expired")
-							msgEmbed.
-								Embed().
-								SetColor(conf.Discord.ColourInfo).
-								AddField("Type", banType).
-								SetImage(person.AvatarFull).
-								AddField("Name", person.PersonaName).
-								SetURL(conf.ExtURL(ban))
+							app.discord.SendPayload(conf.Discord.LogChannelID, discord.BanExpiresMessage(ban, person, conf.ExtURL(ban)))
 
-							msgEmbed.AddFieldsSteamID(person.SteamID)
-
-							if expiredBan.BanType == model.NoComm {
-								msgEmbed.Embed().SetColor(conf.Discord.ColourWarn)
-							}
-
-							app.bot().SendPayload(discord.Payload{
-								ChannelID: conf.Discord.LogChannelID,
-								Embed:     msgEmbed.Embed().Truncate().MessageEmbed,
-							})
-
-							log.Info("Ban expired", zap.String("type", banType),
+							log.Info("Ban expired",
 								zap.String("reason", ban.Reason.String()),
 								zap.Int64("sid64", ban.TargetID.Int64()), zap.String("name", name))
 						}
@@ -596,13 +430,13 @@ func (app *App) banSweeper(ctx context.Context) {
 			go func() {
 				defer waitGroup.Done()
 
-				expiredNetBans, errExpiredNetBans := store.GetExpiredNetBans(ctx, app.db)
-				if errExpiredNetBans != nil && !errors.Is(errExpiredNetBans, store.ErrNoResult) {
+				expiredNetBans, errExpiredNetBans := app.db.GetExpiredNetBans(ctx)
+				if errExpiredNetBans != nil && !errors.Is(errExpiredNetBans, errs.ErrNoResult) {
 					log.Warn("Failed to get expired network bans", zap.Error(errExpiredNetBans))
 				} else {
 					for _, expiredNetBan := range expiredNetBans {
 						expiredBan := expiredNetBan
-						if errDropBanNet := store.DropBanNet(ctx, app.db, &expiredBan); errDropBanNet != nil {
+						if errDropBanNet := app.db.DropBanNet(ctx, &expiredBan); errDropBanNet != nil {
 							log.Error("Failed to drop expired network expiredNetBan", zap.Error(errDropBanNet))
 						} else {
 							log.Info("IP ban expired", zap.String("cidr", expiredBan.String()))
@@ -614,13 +448,13 @@ func (app *App) banSweeper(ctx context.Context) {
 			go func() {
 				defer waitGroup.Done()
 
-				expiredASNBans, errExpiredASNBans := store.GetExpiredASNBans(ctx, app.db)
-				if errExpiredASNBans != nil && !errors.Is(errExpiredASNBans, store.ErrNoResult) {
+				expiredASNBans, errExpiredASNBans := app.db.GetExpiredASNBans(ctx)
+				if errExpiredASNBans != nil && !errors.Is(errExpiredASNBans, errs.ErrNoResult) {
 					log.Error("Failed to get expired asn bans", zap.Error(errExpiredASNBans))
 				} else {
 					for _, expiredASNBan := range expiredASNBans {
 						expired := expiredASNBan
-						if errDropASN := store.DropBanASN(ctx, app.db, &expired); errDropASN != nil {
+						if errDropASN := app.db.DropBanASN(ctx, &expired); errDropASN != nil {
 							log.Error("Failed to drop expired asn ban", zap.Error(errDropASN))
 						} else {
 							log.Info("ASN ban expired", zap.Int64("ban_id", expired.BanASNId))

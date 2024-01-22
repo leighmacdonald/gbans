@@ -2,12 +2,13 @@ package model
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/avatar"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"github.com/pkg/errors"
 )
 
 type SourceTarget struct {
@@ -25,6 +26,21 @@ type BannedCIDRPerson struct {
 type BannedSteamPerson struct {
 	BanSteam
 	SourceTarget
+}
+
+func (b BannedSteamPerson) GetName() string {
+	// TODO implement me
+	panic("implement me")
+}
+
+func (b BannedSteamPerson) GetAvatar() avatar.AvatarLinks {
+	// TODO implement me
+	panic("implement me")
+}
+
+func (b BannedSteamPerson) GetSteamID() steamid.SID64 {
+	// TODO implement me
+	panic("implement me")
 }
 
 type BannedGroupPerson struct {
@@ -224,7 +240,7 @@ func newBaseBanOpts(ctx context.Context, source SteamIDProvider, target StringSI
 ) error {
 	sourceSid, errSource := source.SID64(ctx)
 	if errSource != nil {
-		return errors.Wrapf(errSource, "Failed to parse source id")
+		return errors.Join(errSource, errors.New("Failed to parse source id"))
 	}
 
 	targetSid := steamid.New(0)
@@ -340,7 +356,7 @@ func NewBanCIDR(ctx context.Context, source SteamIDProvider, target StringSID, d
 
 	_, parsedNetwork, errParse := net.ParseCIDR(cidr)
 	if errParse != nil {
-		return errors.Wrap(errParse, "Failed to parse cidr address")
+		return errors.Join(errParse, errors.New("Failed to parse cidr address"))
 	}
 
 	opts.CIDR = parsedNetwork

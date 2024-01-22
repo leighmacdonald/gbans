@@ -1,10 +1,11 @@
-package app
+package api
 
 import (
 	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,14 +19,13 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/internal/discord"
+	"github.com/leighmacdonald/gbans/internal/errs"
 	"github.com/leighmacdonald/gbans/internal/model"
-	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
 )
@@ -40,8 +40,8 @@ const fingerprintCookieName = "fingerprint"
 
 // onTokenRefresh handles generating new token pairs to access the api
 // NOTE: All error code paths must return 401 (Unauthorized).
-func onTokenRefresh(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onTokenRefresh(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		fingerprint, errCookie := ctx.Cookie(fingerprintCookieName)
@@ -61,7 +61,7 @@ func onTokenRefresh(app *App) gin.HandlerFunc {
 
 		userClaims := userAuthClaims{}
 
-		refreshToken, errParseClaims := jwt.ParseWithClaims(refreshTokenString, &userClaims, makeGetTokenKey(app.config().HTTP.CookieKey))
+		refreshToken, errParseClaims := jwt.ParseWithClaims(refreshTokenString, &userClaims, makeGetTokenKey(env.Config().HTTP.CookieKey))
 		if errParseClaims != nil {
 			if errors.Is(errParseClaims, jwt.ErrSignatureInvalid) {
 				log.Error("jwt signature invalid!", zap.Error(errParseClaims))
@@ -90,13 +90,13 @@ func onTokenRefresh(app *App) gin.HandlerFunc {
 		}
 
 		var auth model.PersonAuth
-		if authError := store.GetPersonAuthByRefreshToken(ctx, app.db, fingerprint, &auth); authError != nil {
+		if authError := env.Store().GetPersonAuthByRefreshToken(ctx, fingerprint, &auth); authError != nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 
 			return
 		}
 
-		tokens, errMakeToken := makeTokens(ctx, app.db, app.config().HTTP.CookieKey, auth.SteamID, false)
+		tokens, errMakeToken := makeTokens(ctx, env, env.Config().HTTP.CookieKey, auth.SteamID, false)
 		if errMakeToken != nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			log.Error("Failed to create access token pair", zap.Error(errMakeToken))
@@ -110,7 +110,7 @@ func onTokenRefresh(app *App) gin.HandlerFunc {
 	}
 }
 
-func onOAuthDiscordCallback(app *App) gin.HandlerFunc {
+func onOAuthDiscordCallback(env Env) gin.HandlerFunc {
 	type accessTokenResp struct {
 		AccessToken  string `json:"access_token"`
 		ExpiresIn    int    `json:"expires_in"`
@@ -135,20 +135,20 @@ func onOAuthDiscordCallback(app *App) gin.HandlerFunc {
 		PremiumType      int         `json:"premium_type"`
 	}
 
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 	client := util.NewHTTPClient()
 
 	fetchDiscordID := func(ctx context.Context, accessToken string) (string, error) {
 		req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, "https://discord.com/api/users/@me", nil)
 		if errReq != nil {
-			return "", errors.Wrap(errReq, "Failed to create new request")
+			return "", errors.Join(errReq, errors.New("Failed to create new request"))
 		}
 
 		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", accessToken))
 		resp, errResp := client.Do(req)
 
 		if errResp != nil {
-			return "", errors.Wrap(errResp, "Failed to perform http request")
+			return "", errors.Join(errResp, errors.New("Failed to perform http request"))
 		}
 
 		defer func() {
@@ -157,12 +157,12 @@ func onOAuthDiscordCallback(app *App) gin.HandlerFunc {
 
 		body, errBody := io.ReadAll(resp.Body)
 		if errBody != nil {
-			return "", errors.Wrap(errBody, "Failed to read response body")
+			return "", errors.Join(errBody, errors.New("Failed to read response body"))
 		}
 
 		var details discordUserDetail
 		if errJSON := json.Unmarshal(body, &details); errJSON != nil {
-			return "", errors.Wrap(errJSON, "Failed to unmarshal response")
+			return "", errors.Join(errJSON, errors.New("Failed to unmarshal response"))
 		}
 
 		return details.ID, nil
@@ -170,7 +170,7 @@ func onOAuthDiscordCallback(app *App) gin.HandlerFunc {
 
 	fetchToken := func(ctx context.Context, code string) (string, error) {
 		// v, _ := go_oauth_pkce_code_verifier.CreateCodeVerifierFromBytes([]byte(code))
-		conf := app.config()
+		conf := env.Config()
 		form := url.Values{}
 		form.Set("client_id", conf.Discord.AppID)
 		form.Set("client_secret", conf.Discord.AppSecret)
@@ -182,14 +182,14 @@ func onOAuthDiscordCallback(app *App) gin.HandlerFunc {
 		req, errReq := http.NewRequestWithContext(ctx, http.MethodPost, "https://discord.com/api/oauth2/token", strings.NewReader(form.Encode()))
 
 		if errReq != nil {
-			return "", errors.Wrap(errReq, "Failed to create new request")
+			return "", errors.Join(errReq, errors.New("Failed to create new request"))
 		}
 
 		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 		resp, errResp := client.Do(req)
 		if errResp != nil {
-			return "", errors.Wrap(errResp, "Failed to perform http request")
+			return "", errors.Join(errResp, errors.New("Failed to perform http request"))
 		}
 
 		defer func() {
@@ -198,12 +198,12 @@ func onOAuthDiscordCallback(app *App) gin.HandlerFunc {
 
 		body, errBody := io.ReadAll(resp.Body)
 		if errBody != nil {
-			return "", errors.Wrap(errBody, "Failed to read response body")
+			return "", errors.Join(errBody, errors.New("Failed to read response body"))
 		}
 
 		var atr accessTokenResp
 		if errJSON := json.Unmarshal(body, &atr); errJSON != nil {
-			return "", errors.Wrap(errJSON, "Failed to decode response body")
+			return "", errors.Join(errJSON, errors.New("Failed to decode response body"))
 		}
 
 		if atr.AccessToken == "" {
@@ -246,8 +246,8 @@ func onOAuthDiscordCallback(app *App) gin.HandlerFunc {
 		}
 
 		var discordPerson model.Person
-		if errDp := store.GetPersonByDiscordID(ctx, app.db, discordID, &discordPerson); errDp != nil {
-			if !errors.Is(errDp, store.ErrNoResult) {
+		if errDp := env.Store().GetPersonByDiscordID(ctx, discordID, &discordPerson); errDp != nil {
+			if !errors.Is(errDp, errs.ErrNoResult) {
 				responseErr(ctx, http.StatusInternalServerError, nil)
 
 				return
@@ -264,15 +264,28 @@ func onOAuthDiscordCallback(app *App) gin.HandlerFunc {
 		sid := currentUserProfile(ctx).SteamID
 
 		var person model.Person
-		if errPerson := PersonBySID(ctx, app.db, sid, &person); errPerson != nil {
+		if errPerson := env.Store().GetPersonBySteamID(ctx, sid, &person); errPerson != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 
 			return
 		}
 
+		if person.Expired() {
+			if errGetProfile := thirdparty.UpdatePlayerSummary(ctx, &person); errGetProfile != nil {
+				log.Error("Failed to fetch user profile", zap.Error(errGetProfile))
+				responseErr(ctx, http.StatusInternalServerError, nil)
+
+				return
+			}
+
+			if errSave := env.Store().SavePerson(ctx, &person); errSave != nil {
+				log.Error("Failed to save player summary update", zap.Error(errSave))
+			}
+		}
+
 		person.DiscordID = discordID
 
-		if errSave := store.SavePerson(ctx, app.db, &person); errSave != nil {
+		if errSave := env.Store().SavePerson(ctx, &person); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 
 			return
@@ -285,8 +298,8 @@ func onOAuthDiscordCallback(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPILogout(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPILogout(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		fingerprint, errCookie := ctx.Cookie(fingerprintCookieName)
@@ -296,7 +309,7 @@ func onAPILogout(app *App) gin.HandlerFunc {
 			return
 		}
 
-		conf := app.config()
+		conf := env.Config()
 
 		parsedExternal, errExternal := url.Parse(conf.General.ExternalURL)
 		if errExternal != nil {
@@ -310,14 +323,14 @@ func onAPILogout(app *App) gin.HandlerFunc {
 			parsedExternal.Hostname(), conf.General.Mode == config.ReleaseMode, true)
 
 		auth := model.PersonAuth{}
-		if errGet := store.GetPersonAuthByRefreshToken(ctx, app.db, fingerprint, &auth); errGet != nil {
+		if errGet := env.Store().GetPersonAuthByRefreshToken(ctx, fingerprint, &auth); errGet != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			log.Warn("Failed to load person via fingerprint")
 
 			return
 		}
 
-		if errDelete := store.DeletePersonAuth(ctx, app.db, auth.PersonAuthID); errDelete != nil {
+		if errDelete := env.Store().DeletePersonAuth(ctx, auth.PersonAuthID); errDelete != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			log.Error("Failed to delete person auth on logout", zap.Error(errDelete))
 
@@ -328,8 +341,8 @@ func onAPILogout(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPICurrentProfile(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPICurrentProfile(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		profile := currentUserProfile(ctx)
@@ -338,7 +351,7 @@ func onAPICurrentProfile(app *App) gin.HandlerFunc {
 				zap.Int64("sid64", profile.SteamID.Int64()),
 				zap.String("name", profile.Name),
 				zap.String("permission_level", profile.PermissionLevel.String()))
-			responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+			responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 
 			return
 		}
@@ -347,28 +360,28 @@ func onAPICurrentProfile(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPICurrentProfileNotifications(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPICurrentProfileNotifications(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		currentProfile := currentUserProfile(ctx)
 
-		var req store.NotificationQuery
+		var req model.NotificationQuery
 		if !bind(ctx, log, &req) {
 			return
 		}
 
 		req.SteamID = currentProfile.SteamID
 
-		notifications, count, errNot := store.GetPersonNotifications(ctx, app.db, req)
+		notifications, count, errNot := env.Store().GetPersonNotifications(ctx, req)
 		if errNot != nil {
-			if errors.Is(errNot, store.ErrNoResult) {
+			if errors.Is(errNot, errs.ErrNoResult) {
 				ctx.JSON(http.StatusOK, []model.UserNotification{})
 
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			return
 		}
@@ -380,58 +393,58 @@ func onAPICurrentProfileNotifications(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIGetReport(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIGetReport(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		reportID, errParam := getInt64Param(ctx, "report_id")
 		if errParam != nil {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
 
 			return
 		}
 
 		var report reportWithAuthor
-		if errReport := store.GetReport(ctx, app.db, reportID, &report.Report); errReport != nil {
-			if errors.Is(store.DBErr(errReport), store.ErrNoResult) {
-				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+		if errReport := env.Store().GetReport(ctx, reportID, &report.Report); errReport != nil {
+			if errors.Is(errs.DBErr(errReport), errs.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 			log.Error("Failed to load report", zap.Error(errReport))
 
 			return
 		}
 
-		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{report.Report.SourceID}, consts.PModerator) {
-			responseErr(ctx, http.StatusUnauthorized, consts.ErrPermissionDenied)
+		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{report.Report.SourceID}, model.PModerator) {
+			responseErr(ctx, http.StatusUnauthorized, errs.ErrPermissionDenied)
 
 			return
 		}
 
-		if errAuthor := store.GetPersonBySteamID(ctx, app.db, report.Report.SourceID, &report.Author); errAuthor != nil {
-			if errors.Is(store.DBErr(errAuthor), store.ErrNoResult) {
-				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+		if errAuthor := env.Store().GetPersonBySteamID(ctx, report.Report.SourceID, &report.Author); errAuthor != nil {
+			if errors.Is(errs.DBErr(errAuthor), errs.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 
 				return
 			}
 
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
 			log.Error("Failed to load report author", zap.Error(errAuthor))
 
 			return
 		}
 
-		if errSubject := store.GetPersonBySteamID(ctx, app.db, report.Report.TargetID, &report.Subject); errSubject != nil {
-			if errors.Is(store.DBErr(errSubject), store.ErrNoResult) {
-				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+		if errSubject := env.Store().GetPersonBySteamID(ctx, report.Report.TargetID, &report.Subject); errSubject != nil {
+			if errors.Is(errs.DBErr(errSubject), errs.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 
 				return
 			}
 
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
 			log.Error("Failed to load report subject", zap.Error(errSubject))
 
 			return
@@ -447,13 +460,13 @@ type reportWithAuthor struct {
 	model.Report
 }
 
-func onAPIGetReports(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIGetReports(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		user := currentUserProfile(ctx)
 
-		var req store.ReportQueryFilter
+		var req model.ReportQueryFilter
 		if !bind(ctx, log, &req) {
 			return
 		}
@@ -466,12 +479,12 @@ func onAPIGetReports(app *App) gin.HandlerFunc {
 		// only able to request their own reports
 		var sourceID steamid.SID64
 
-		if user.PermissionLevel < consts.PModerator {
+		if user.PermissionLevel < model.PModerator {
 			sourceID = user.SteamID
 		} else if req.SourceID != "" {
 			sid, errSourceID := req.SourceID.SID64(ctx)
 			if errSourceID != nil {
-				responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+				responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
 
 				return
 			}
@@ -485,15 +498,15 @@ func onAPIGetReports(app *App) gin.HandlerFunc {
 
 		var userReports []reportWithAuthor
 
-		reports, count, errReports := store.GetReports(ctx, app.db, req)
+		reports, count, errReports := env.Store().GetReports(ctx, req)
 		if errReports != nil {
-			if errors.Is(store.DBErr(errReports), store.ErrNoResult) {
+			if errors.Is(errs.DBErr(errReports), errs.ErrNoResult) {
 				ctx.JSON(http.StatusNoContent, nil)
 
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			return
 		}
@@ -503,9 +516,9 @@ func onAPIGetReports(app *App) gin.HandlerFunc {
 			authorIds = append(authorIds, report.SourceID)
 		}
 
-		authors, errAuthors := store.GetPeopleBySteamID(ctx, app.db, fp.Uniq(authorIds))
+		authors, errAuthors := env.Store().GetPeopleBySteamID(ctx, fp.Uniq(authorIds))
 		if errAuthors != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			return
 		}
@@ -517,9 +530,9 @@ func onAPIGetReports(app *App) gin.HandlerFunc {
 			subjectIds = append(subjectIds, report.TargetID)
 		}
 
-		subjects, errSubjects := store.GetPeopleBySteamID(ctx, app.db, fp.Uniq(subjectIds))
+		subjects, errSubjects := env.Store().GetPeopleBySteamID(ctx, fp.Uniq(subjectIds))
 		if errSubjects != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			return
 		}
@@ -542,17 +555,17 @@ func onAPIGetReports(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPISetReportStatus(app *App) gin.HandlerFunc {
+func onAPISetReportStatus(env Env) gin.HandlerFunc {
 	type stateUpdateReq struct {
 		Status model.ReportStatus `json:"status"`
 	}
 
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		reportID, errParam := getInt64Param(ctx, "report_id")
 		if errParam != nil {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
 
 			return
 		}
@@ -563,15 +576,15 @@ func onAPISetReportStatus(app *App) gin.HandlerFunc {
 		}
 
 		var report model.Report
-		if errGet := store.GetReport(ctx, app.db, reportID, &report); errGet != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errGet := env.Store().GetReport(ctx, reportID, &report); errGet != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 			log.Error("Failed to get report to set state", zap.Error(errGet))
 
 			return
 		}
 
 		if report.ReportStatus == req.Status {
-			ctx.JSON(http.StatusConflict, consts.ErrDuplicate)
+			ctx.JSON(http.StatusConflict, errs.ErrDuplicate)
 
 			return
 		}
@@ -579,8 +592,8 @@ func onAPISetReportStatus(app *App) gin.HandlerFunc {
 		original := report.ReportStatus
 
 		report.ReportStatus = req.Status
-		if errSave := store.SaveReport(ctx, app.db, &report); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errSave := env.Store().SaveReport(ctx, &report); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 			log.Error("Failed to save report state", zap.Error(errSave))
 
 			return
@@ -607,7 +620,7 @@ type UserUploadedFile struct {
 	Size    int64  `json:"size"`
 }
 
-func onAPISaveMedia(app *App) gin.HandlerFunc {
+func onAPISaveMedia(env Env) gin.HandlerFunc {
 	MediaSafeMimeTypesImages := []string{
 		"image/gif",
 		"image/jpeg",
@@ -615,7 +628,7 @@ func onAPISaveMedia(app *App) gin.HandlerFunc {
 		"image/webp",
 	}
 
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		var req UserUploadedFile
@@ -625,18 +638,18 @@ func onAPISaveMedia(app *App) gin.HandlerFunc {
 
 		content, decodeErr := base64.StdEncoding.DecodeString(req.Content)
 		if decodeErr != nil {
-			ctx.JSON(http.StatusBadRequest, consts.ErrBadRequest)
+			ctx.JSON(http.StatusBadRequest, errs.ErrBadRequest)
 
 			return
 		}
 
 		media, errMedia := model.NewMedia(currentUserProfile(ctx).SteamID, req.Name, req.Mime, content)
 		if errMedia != nil {
-			ctx.JSON(http.StatusBadRequest, consts.ErrBadRequest)
+			ctx.JSON(http.StatusBadRequest, errs.ErrBadRequest)
 			log.Error("Invalid media uploaded", zap.Error(errMedia))
 		}
 
-		conf := app.config()
+		conf := env.Config()
 
 		asset, errAsset := model.NewAsset(content, conf.S3.BucketMedia, "")
 		if errAsset != nil {
@@ -645,7 +658,7 @@ func onAPISaveMedia(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if errPut := app.assetStore.Put(ctx, conf.S3.BucketMedia, asset.Name, bytes.NewReader(content), asset.Size, asset.MimeType); errPut != nil {
+		if errPut := env.Assets().Put(ctx, conf.S3.BucketMedia, asset.Name, bytes.NewReader(content), asset.Size, asset.MimeType); errPut != nil {
 			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save media"))
 
 			log.Error("Failed to save user media to s3 backend", zap.Error(errPut))
@@ -653,7 +666,7 @@ func onAPISaveMedia(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if errSaveAsset := store.SaveAsset(ctx, app.db, &asset); errSaveAsset != nil {
+		if errSaveAsset := env.Store().SaveAsset(ctx, &asset); errSaveAsset != nil {
 			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save asset"))
 
 			log.Error("Failed to save user asset to s3 backend", zap.Error(errSaveAsset))
@@ -671,10 +684,10 @@ func onAPISaveMedia(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if errSave := store.SaveMedia(ctx, app.db, &media); errSave != nil {
+		if errSave := env.Store().SaveMedia(ctx, &media); errSave != nil {
 			log.Error("Failed to save wiki media", zap.Error(errSave))
 
-			if errors.Is(store.DBErr(errSave), store.ErrDuplicate) {
+			if errors.Is(errs.DBErr(errSave), errs.ErrDuplicate) {
 				responseErr(ctx, http.StatusConflict, errors.New("Duplicate media name"))
 
 				return
@@ -689,29 +702,29 @@ func onAPISaveMedia(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIGetReportMessages(app *App) gin.HandlerFunc {
+func onAPIGetReportMessages(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		reportID, errParam := getInt64Param(ctx, "report_id")
 		if errParam != nil {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
 
 			return
 		}
 
 		var report model.Report
-		if errGetReport := store.GetReport(ctx, app.db, reportID, &report); errGetReport != nil {
-			responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+		if errGetReport := env.Store().GetReport(ctx, reportID, &report); errGetReport != nil {
+			responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 
 			return
 		}
 
-		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{report.SourceID, report.TargetID}, consts.PModerator) {
+		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{report.SourceID, report.TargetID}, model.PModerator) {
 			return
 		}
 
-		reportMessages, errGetReportMessages := store.GetReportMessages(ctx, app.db, reportID)
+		reportMessages, errGetReportMessages := env.Store().GetReportMessages(ctx, reportID)
 		if errGetReportMessages != nil {
-			responseErr(ctx, http.StatusNotFound, consts.ErrPlayerNotFound)
+			responseErr(ctx, http.StatusNotFound, errs.ErrPlayerNotFound)
 
 			return
 		}
@@ -724,17 +737,17 @@ func onAPIGetReportMessages(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIPostReportMessage(app *App) gin.HandlerFunc {
+func onAPIPostReportMessage(env Env) gin.HandlerFunc {
 	type newMessage struct {
 		Message string `json:"message"`
 	}
 
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		reportID, errID := getInt64Param(ctx, "report_id")
 		if errID != nil || reportID == 0 {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
 
 			return
 		}
@@ -745,20 +758,20 @@ func onAPIPostReportMessage(app *App) gin.HandlerFunc {
 		}
 
 		if req.Message == "" {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
 
 			return
 		}
 
 		var report model.Report
-		if errReport := store.GetReport(ctx, app.db, reportID, &report); errReport != nil {
-			if errors.Is(store.DBErr(errReport), store.ErrNoResult) {
-				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+		if errReport := env.Store().GetReport(ctx, reportID, &report); errReport != nil {
+			if errors.Is(errs.DBErr(errReport), errs.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 			log.Error("Failed to load report", zap.Error(errReport))
 
 			return
@@ -767,8 +780,8 @@ func onAPIPostReportMessage(app *App) gin.HandlerFunc {
 		person := currentUserProfile(ctx)
 		msg := model.NewReportMessage(reportID, person.SteamID, req.Message)
 
-		if errSave := store.SaveReportMessage(ctx, app.db, &msg); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errSave := env.Store().SaveReportMessage(ctx, &msg); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 			log.Error("Failed to save report message", zap.Error(errSave))
 
 			return
@@ -776,8 +789,8 @@ func onAPIPostReportMessage(app *App) gin.HandlerFunc {
 
 		report.UpdatedOn = time.Now()
 
-		if errSave := store.SaveReport(ctx, app.db, &report); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errSave := env.Store().SaveReport(ctx, &report); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 			log.Error("Failed to update report activity", zap.Error(errSave))
 
 			return
@@ -785,55 +798,43 @@ func onAPIPostReportMessage(app *App) gin.HandlerFunc {
 
 		ctx.JSON(http.StatusCreated, msg)
 
-		conf := app.config()
+		conf := env.Config()
 
-		msgEmbed := discord.
-			NewEmbed(conf, "New report message posted")
-		msgEmbed.
-			Embed().
-			SetDescription(msg.MessageMD).
-			SetColor(conf.Discord.ColourSuccess).
-			SetURL(conf.ExtURL(report))
-
-		msgEmbed.AddAuthorPersonInfo(person).Embed().Truncate()
-
-		app.discord.SendPayload(discord.Payload{
-			ChannelID: conf.Discord.LogChannelID,
-			Embed:     msgEmbed.Message(),
-		})
+		env.SendPayload(conf.Discord.LogChannelID,
+			discord.NewReportMessageResponse(msg.MessageMD, conf.ExtURL(report), person, conf.ExtURL(person)))
 	}
 }
 
-func onAPIEditReportMessage(app *App) gin.HandlerFunc {
+func onAPIEditReportMessage(env Env) gin.HandlerFunc {
 	type editMessage struct {
 		BodyMD string `json:"body_md"`
 	}
 
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		reportMessageID, errID := getInt64Param(ctx, "report_message_id")
 		if errID != nil || reportMessageID == 0 {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
 
 			return
 		}
 
 		var existing model.ReportMessage
-		if errExist := store.GetReportMessageByID(ctx, app.db, reportMessageID, &existing); errExist != nil {
-			if errors.Is(errExist, store.ErrNoResult) {
-				responseErr(ctx, http.StatusNotFound, consts.ErrPlayerNotFound)
+		if errExist := env.Store().GetReportMessageByID(ctx, reportMessageID, &existing); errExist != nil {
+			if errors.Is(errExist, errs.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, errs.ErrPlayerNotFound)
 
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			return
 		}
 
 		curUser := currentUserProfile(ctx)
-		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorID}, consts.PModerator) {
+		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorID}, model.PModerator) {
 			return
 		}
 
@@ -843,20 +844,20 @@ func onAPIEditReportMessage(app *App) gin.HandlerFunc {
 		}
 
 		if req.BodyMD == "" {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
 
 			return
 		}
 
 		if req.BodyMD == existing.MessageMD {
-			responseErr(ctx, http.StatusConflict, consts.ErrDuplicate)
+			responseErr(ctx, http.StatusConflict, errs.ErrDuplicate)
 
 			return
 		}
 
 		existing.MessageMD = req.BodyMD
-		if errSave := store.SaveReportMessage(ctx, app.db, &existing); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errSave := env.Store().SaveReportMessage(ctx, &existing); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 			log.Error("Failed to save report message", zap.Error(errSave))
 
 			return
@@ -864,57 +865,45 @@ func onAPIEditReportMessage(app *App) gin.HandlerFunc {
 
 		ctx.JSON(http.StatusCreated, req)
 
-		conf := app.config()
-
-		msgEmbed := discord.NewEmbed(conf, "New report message edited")
-		msgEmbed.
-			Embed().
-			SetDescription(req.BodyMD).
-			SetColor(conf.Discord.ColourWarn).
-			AddField("Old Message", existing.MessageMD).
-			SetURL(conf.ExtURLRaw("/report/%d", existing.ReportID))
-
-		msgEmbed.AddAuthorPersonInfo(curUser).Embed().Truncate()
-
-		app.discord.SendPayload(discord.Payload{
-			ChannelID: conf.Discord.LogChannelID,
-			Embed:     msgEmbed.Message(),
-		})
+		conf := env.Config()
+		msg := discord.EditReportMessageResponse(req.BodyMD, existing.MessageMD,
+			conf.ExtURLRaw("/report/%d", existing.ReportID), curUser, conf.ExtURL(curUser))
+		env.SendPayload(env.Config().Discord.LogChannelID, msg)
 	}
 }
 
-func onAPIDeleteReportMessage(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIDeleteReportMessage(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		reportMessageID, errID := getInt64Param(ctx, "report_message_id")
 		if errID != nil || reportMessageID == 0 {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
 
 			return
 		}
 
 		var existing model.ReportMessage
-		if errExist := store.GetReportMessageByID(ctx, app.db, reportMessageID, &existing); errExist != nil {
-			if errors.Is(errExist, store.ErrNoResult) {
-				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+		if errExist := env.Store().GetReportMessageByID(ctx, reportMessageID, &existing); errExist != nil {
+			if errors.Is(errExist, errs.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			return
 		}
 
 		curUser := currentUserProfile(ctx)
-		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorID}, consts.PModerator) {
+		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorID}, model.PModerator) {
 			return
 		}
 
 		existing.Deleted = true
-		if errSave := store.SaveReportMessage(ctx, app.db, &existing); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errSave := env.Store().SaveReportMessage(ctx, &existing); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 			log.Error("Failed to save report message", zap.Error(errSave))
 
 			return
@@ -922,32 +911,21 @@ func onAPIDeleteReportMessage(app *App) gin.HandlerFunc {
 
 		ctx.JSON(http.StatusNoContent, nil)
 
-		conf := app.config()
+		conf := env.Config()
 
-		msgEmbed := discord.NewEmbed(conf, "User report message deleted")
-		msgEmbed.
-			Embed().
-			SetDescription(existing.MessageMD).
-			SetColor(conf.Discord.ColourWarn)
-
-		msgEmbed.AddAuthorPersonInfo(curUser).Embed().Truncate()
-
-		app.discord.SendPayload(discord.Payload{
-			ChannelID: conf.Discord.LogChannelID,
-			Embed:     msgEmbed.Message(),
-		})
+		env.SendPayload(conf.Discord.LogChannelID, discord.DeleteReportMessage(existing, curUser, conf.ExtURL(curUser)))
 	}
 }
 
-func onAPIGetBanByID(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIGetBanByID(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		curUser := currentUserProfile(ctx)
 
 		banID, errID := getInt64Param(ctx, "ban_id")
 		if errID != nil || banID == 0 {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
 
 			return
 		}
@@ -965,14 +943,14 @@ func onAPIGetBanByID(app *App) gin.HandlerFunc {
 		}
 
 		bannedPerson := model.NewBannedPerson()
-		if errGetBan := store.GetBanByBanID(ctx, app.db, banID, &bannedPerson, deletedOk); errGetBan != nil {
-			responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+		if errGetBan := env.Store().GetBanByBanID(ctx, banID, &bannedPerson, deletedOk); errGetBan != nil {
+			responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 			log.Error("Failed to fetch steam ban", zap.Error(errGetBan))
 
 			return
 		}
 
-		if !checkPrivilege(ctx, curUser, steamid.Collection{bannedPerson.TargetID}, consts.PModerator) {
+		if !checkPrivilege(ctx, curUser, steamid.Collection{bannedPerson.TargetID}, model.PModerator) {
 			return
 		}
 
@@ -981,29 +959,29 @@ func onAPIGetBanByID(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIGetBanMessages(app *App) gin.HandlerFunc {
+func onAPIGetBanMessages(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		banID, errParam := getInt64Param(ctx, "ban_id")
 		if errParam != nil {
-			responseErr(ctx, http.StatusNotFound, consts.ErrInvalidParameter)
+			responseErr(ctx, http.StatusNotFound, errs.ErrInvalidParameter)
 
 			return
 		}
 
 		banPerson := model.NewBannedPerson()
-		if errGetBan := store.GetBanByBanID(ctx, app.db, banID, &banPerson, true); errGetBan != nil {
-			responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+		if errGetBan := env.Store().GetBanByBanID(ctx, banID, &banPerson, true); errGetBan != nil {
+			responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 
 			return
 		}
 
-		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{banPerson.TargetID, banPerson.SourceID}, consts.PModerator) {
+		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{banPerson.TargetID, banPerson.SourceID}, model.PModerator) {
 			return
 		}
 
-		banMessages, errGetBanMessages := store.GetBanMessages(ctx, app.db, banID)
+		banMessages, errGetBanMessages := env.Store().GetBanMessages(ctx, banID)
 		if errGetBanMessages != nil {
-			responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+			responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 
 			return
 		}
@@ -1012,17 +990,17 @@ func onAPIGetBanMessages(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIPostBanMessage(app *App) gin.HandlerFunc {
+func onAPIPostBanMessage(env Env) gin.HandlerFunc {
 	type newMessage struct {
 		Message string `json:"message"`
 	}
 
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		banID, errID := getInt64Param(ctx, "ban_id")
 		if errID != nil || banID == 0 {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
 
 			return
 		}
@@ -1033,28 +1011,28 @@ func onAPIPostBanMessage(app *App) gin.HandlerFunc {
 		}
 
 		if req.Message == "" {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
 
 			return
 		}
 
 		bannedPerson := model.NewBannedPerson()
-		if errReport := store.GetBanByBanID(ctx, app.db, banID, &bannedPerson, true); errReport != nil {
-			if errors.Is(store.DBErr(errReport), store.ErrNoResult) {
-				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+		if errReport := env.Store().GetBanByBanID(ctx, banID, &bannedPerson, true); errReport != nil {
+			if errors.Is(errs.DBErr(errReport), errs.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 			log.Error("Failed to load ban", zap.Error(errReport))
 
 			return
 		}
 
 		curUserProfile := currentUserProfile(ctx)
-		if bannedPerson.AppealState != model.Open && curUserProfile.PermissionLevel < consts.PModerator {
-			responseErr(ctx, http.StatusForbidden, consts.ErrPermissionDenied)
+		if bannedPerson.AppealState != model.Open && curUserProfile.PermissionLevel < model.PModerator {
+			responseErr(ctx, http.StatusForbidden, errs.ErrPermissionDenied)
 			log.Warn("User tried to bypass posting restriction",
 				zap.Int64("ban_id", bannedPerson.BanID), zap.Int64("target_id", bannedPerson.TargetID.Int64()))
 
@@ -1062,8 +1040,8 @@ func onAPIPostBanMessage(app *App) gin.HandlerFunc {
 		}
 
 		msg := model.NewBanAppealMessage(banID, curUserProfile.SteamID, req.Message)
-		if errSave := store.SaveBanMessage(ctx, app.db, &msg); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errSave := env.Store().SaveBanMessage(ctx, &msg); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 			log.Error("Failed to save ban appeal message", zap.Error(errSave))
 
 			return
@@ -1075,56 +1053,58 @@ func onAPIPostBanMessage(app *App) gin.HandlerFunc {
 
 		ctx.JSON(http.StatusCreated, msg)
 
-		conf := app.config()
+		conf := env.Config()
 
-		msgEmbed := discord.NewEmbed(conf, "New ban appeal message posted")
-		msgEmbed.
-			Embed().
-			SetColor(conf.Discord.ColourInfo).
-			// SetThumbnail(bannedPerson.TargetAvatarhash).
-			SetDescription(msg.MessageMD).
-			SetURL(conf.ExtURL(bannedPerson.BanSteam))
+		var target model.Person
+		if errTarget := env.Store().GetPersonBySteamID(ctx, bannedPerson.TargetID, &target); errTarget != nil {
+			env.Log().Error("Failed to load target", zap.Error(errTarget))
 
-		msgEmbed.AddAuthorPersonInfo(curUserProfile).Embed().Truncate()
+			return
+		}
 
-		app.discord.SendPayload(discord.Payload{
-			ChannelID: conf.Discord.LogChannelID,
-			Embed:     msgEmbed.Message(),
-		})
+		var source model.Person
+		if errSource := env.Store().GetPersonBySteamID(ctx, bannedPerson.SourceID, &source); errSource != nil {
+			env.Log().Error("Failed to load source", zap.Error(errSource))
+
+			return
+		}
+
+		env.SendPayload(conf.Discord.LogChannelID,
+			discord.NewAppealMessage(msg.MessageMD, conf.ExtURL(bannedPerson.BanSteam), curUserProfile, conf.ExtURL(curUserProfile)))
 	}
 }
 
-func onAPIEditBanMessage(app *App) gin.HandlerFunc {
+func onAPIEditBanMessage(env Env) gin.HandlerFunc {
 	type editMessage struct {
 		BodyMD string `json:"body_md"`
 	}
 
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		reportMessageID, errID := getIntParam(ctx, "ban_message_id")
 		if errID != nil || reportMessageID == 0 {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
 
 			return
 		}
 
 		var existing model.BanAppealMessage
-		if errExist := store.GetBanMessageByID(ctx, app.db, reportMessageID, &existing); errExist != nil {
-			if errors.Is(errExist, store.ErrNoResult) {
-				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+		if errExist := env.Store().GetBanMessageByID(ctx, reportMessageID, &existing); errExist != nil {
+			if errors.Is(errExist, errs.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			return
 		}
 
 		curUser := currentUserProfile(ctx)
 
-		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorID}, consts.PModerator) {
+		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorID}, model.PModerator) {
 			return
 		}
 
@@ -1134,20 +1114,20 @@ func onAPIEditBanMessage(app *App) gin.HandlerFunc {
 		}
 
 		if req.BodyMD == "" {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
 
 			return
 		}
 
 		if req.BodyMD == existing.MessageMD {
-			responseErr(ctx, http.StatusConflict, consts.ErrDuplicate)
+			responseErr(ctx, http.StatusConflict, errs.ErrDuplicate)
 
 			return
 		}
 
 		existing.MessageMD = req.BodyMD
-		if errSave := store.SaveBanMessage(ctx, app.db, &existing); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errSave := env.Store().SaveBanMessage(ctx, &existing); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 			log.Error("Failed to save ban appeal message", zap.Error(errSave))
 
 			return
@@ -1155,56 +1135,44 @@ func onAPIEditBanMessage(app *App) gin.HandlerFunc {
 
 		ctx.JSON(http.StatusCreated, req)
 
-		conf := app.config()
+		conf := env.Config()
 
-		msgEmbed := discord.
-			NewEmbed(conf, "Ban appeal message edited")
-		msgEmbed.
-			Embed().
-			SetDescription(util.DiffString(existing.MessageMD, req.BodyMD)).
-			SetColor(conf.Discord.ColourWarn)
-
-		msgEmbed.AddAuthorPersonInfo(curUser).Embed().Truncate()
-
-		app.discord.SendPayload(discord.Payload{
-			ChannelID: conf.Discord.LogChannelID,
-			Embed:     msgEmbed.Message(),
-		})
+		env.SendPayload(conf.Discord.LogChannelID, discord.EditAppealMessage(existing, req.BodyMD, curUser, conf.ExtURL(curUser)))
 	}
 }
 
-func onAPIDeleteBanMessage(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIDeleteBanMessage(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		banMessageID, errID := getIntParam(ctx, "ban_message_id")
 		if errID != nil || banMessageID == 0 {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
 
 			return
 		}
 
 		var existing model.BanAppealMessage
-		if errExist := store.GetBanMessageByID(ctx, app.db, banMessageID, &existing); errExist != nil {
-			if errors.Is(errExist, store.ErrNoResult) {
-				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+		if errExist := env.Store().GetBanMessageByID(ctx, banMessageID, &existing); errExist != nil {
+			if errors.Is(errExist, errs.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			return
 		}
 
 		curUser := currentUserProfile(ctx)
-		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorID}, consts.PModerator) {
+		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorID}, model.PModerator) {
 			return
 		}
 
 		existing.Deleted = true
-		if errSave := store.SaveBanMessage(ctx, app.db, &existing); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errSave := env.Store().SaveBanMessage(ctx, &existing); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 			log.Error("Failed to save appeal message", zap.Error(errSave))
 
 			return
@@ -1212,34 +1180,24 @@ func onAPIDeleteBanMessage(app *App) gin.HandlerFunc {
 
 		ctx.JSON(http.StatusNoContent, nil)
 
-		conf := app.config()
+		conf := env.Config()
 
-		msgEmbed := discord.
-			NewEmbed(conf, "User appeal message deleted")
-		msgEmbed.
-			Embed().
-			SetDescription(existing.MessageMD)
-		msgEmbed.AddAuthorPersonInfo(curUser).Embed().Truncate()
-
-		app.discord.SendPayload(discord.Payload{
-			ChannelID: conf.Discord.LogChannelID,
-			Embed:     msgEmbed.Message(),
-		})
+		env.SendPayload(conf.Discord.LogChannelID, discord.DeleteAppealMessage(existing, curUser, conf.ExtURL(curUser)))
 	}
 }
 
-func onAPIGetSourceBans(_ *App) gin.HandlerFunc {
+func onAPIGetSourceBans(_ Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		steamID, errID := getSID64Param(ctx, "steam_id")
 		if errID != nil {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
 
 			return
 		}
 
 		records, errRecords := getSourceBans(ctx, steamID)
 		if errRecords != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			return
 		}
@@ -1248,30 +1206,30 @@ func onAPIGetSourceBans(_ *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIGetMatch(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIGetMatch(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		matchID, errID := getUUIDParam(ctx, "match_id")
 		if errID != nil {
 			log.Error("Invalid match_id value", zap.Error(errID))
-			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
 
 			return
 		}
 
 		var match model.MatchResult
 
-		errMatch := store.MatchGetByID(ctx, app.db, matchID, &match)
+		errMatch := env.Store().MatchGetByID(ctx, matchID, &match)
 
 		if errMatch != nil {
-			if errors.Is(errMatch, store.ErrNoResult) {
-				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+			if errors.Is(errMatch, errs.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			return
 		}
@@ -1280,34 +1238,34 @@ func onAPIGetMatch(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIGetMatches(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIGetMatches(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var req store.MatchesQueryOpts
+		var req model.MatchesQueryOpts
 		if !bind(ctx, log, &req) {
 			return
 		}
 
 		// Don't let normal users query anybody but themselves
 		user := currentUserProfile(ctx)
-		if user.PermissionLevel <= consts.PUser {
+		if user.PermissionLevel <= model.PUser {
 			if !req.SteamID.Valid() {
-				responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+				responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
 
 				return
 			}
 
 			if user.SteamID != req.SteamID {
-				responseErr(ctx, http.StatusForbidden, consts.ErrPermissionDenied)
+				responseErr(ctx, http.StatusForbidden, errs.ErrPermissionDenied)
 
 				return
 			}
 		}
 
-		matches, totalCount, matchesErr := store.Matches(ctx, app.db, req)
+		matches, totalCount, matchesErr := env.Store().Matches(ctx, req)
 		if matchesErr != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 			log.Error("Failed to perform query", zap.Error(matchesErr))
 
 			return
@@ -1317,11 +1275,11 @@ func onAPIGetMatches(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIQueryMessages(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIQueryMessages(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var req store.ChatHistoryQueryFilter
+		var req model.ChatHistoryQueryFilter
 		if !bind(ctx, log, &req) {
 			return
 		}
@@ -1332,7 +1290,7 @@ func onAPIQueryMessages(app *App) gin.HandlerFunc {
 
 		user := currentUserProfile(ctx)
 
-		if user.PermissionLevel <= consts.PUser {
+		if user.PermissionLevel <= model.PUser {
 			req.Unrestricted = false
 			beforeLimit := time.Now().Add(-time.Minute * 20)
 
@@ -1347,11 +1305,11 @@ func onAPIQueryMessages(app *App) gin.HandlerFunc {
 			req.Unrestricted = true
 		}
 
-		messages, count, errChat := store.QueryChatHistory(ctx, app.db, req)
-		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
+		messages, count, errChat := env.Store().QueryChatHistory(ctx, req)
+		if errChat != nil && !errors.Is(errChat, errs.ErrNoResult) {
 			log.Error("Failed to query messages history",
 				zap.Error(errChat), zap.String("sid", string(req.SourceID)))
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			return
 		}
@@ -1360,13 +1318,13 @@ func onAPIQueryMessages(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIGetStatsWeaponsOverall(ctx context.Context, app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIGetStatsWeaponsOverall(ctx context.Context, env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	updater := NewDataUpdater(log, time.Minute*10, func() ([]model.WeaponsOverallResult, error) {
-		weaponStats, errUpdate := store.WeaponsOverall(ctx, app.db)
-		if errUpdate != nil && !errors.Is(errUpdate, store.ErrNoResult) {
-			return nil, errors.Wrap(errUpdate, "Failed to update weapon stats")
+		weaponStats, errUpdate := env.Store().WeaponsOverall(ctx)
+		if errUpdate != nil && !errors.Is(errUpdate, errs.ErrNoResult) {
+			return nil, errors.Join(errUpdate, errors.New("Failed to update weapon stats"))
 		}
 
 		if weaponStats == nil {
@@ -1385,8 +1343,8 @@ func onAPIGetStatsWeaponsOverall(ctx context.Context, app *App) gin.HandlerFunc 
 	}
 }
 
-func onAPIGetsStatsWeapon(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIGetsStatsWeapon(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	type resp struct {
 		LazyResult
@@ -1396,26 +1354,26 @@ func onAPIGetsStatsWeapon(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		weaponID, errWeaponID := getIntParam(ctx, "weapon_id")
 		if errWeaponID != nil {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
 
 			return
 		}
 
 		var weapon model.Weapon
 
-		errWeapon := store.GetWeaponByID(ctx, app.db, weaponID, &weapon)
+		errWeapon := env.Store().GetWeaponByID(ctx, weaponID, &weapon)
 
 		if errWeapon != nil {
-			responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+			responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 
 			return
 		}
 
-		weaponStats, errChat := store.WeaponsOverallTopPlayers(ctx, app.db, weaponID)
-		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
+		weaponStats, errChat := env.Store().WeaponsOverallTopPlayers(ctx, weaponID)
+		if errChat != nil && !errors.Is(errChat, errs.ErrNoResult) {
 			log.Error("Failed to get weapons overall top stats",
 				zap.Error(errChat))
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			return
 		}
@@ -1428,13 +1386,13 @@ func onAPIGetsStatsWeapon(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIGetStatsPlayersOverall(ctx context.Context, app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIGetStatsPlayersOverall(ctx context.Context, env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	updater := NewDataUpdater(log, time.Minute*10, func() ([]model.PlayerWeaponResult, error) {
-		updatedStats, errChat := store.PlayersOverallByKills(ctx, app.db, 1000)
-		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
-			return nil, errors.Wrap(errChat, "Failed to query overall players overall")
+		updatedStats, errChat := env.Store().PlayersOverallByKills(ctx, 1000)
+		if errChat != nil && !errors.Is(errChat, errs.ErrNoResult) {
+			return nil, errors.Join(errChat, errors.New("Failed to query overall players overall"))
 		}
 
 		return updatedStats, nil
@@ -1448,13 +1406,13 @@ func onAPIGetStatsPlayersOverall(ctx context.Context, app *App) gin.HandlerFunc 
 	}
 }
 
-func onAPIGetStatsHealersOverall(ctx context.Context, app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIGetStatsHealersOverall(ctx context.Context, env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	updater := NewDataUpdater(log, time.Minute*10, func() ([]model.HealingOverallResult, error) {
-		updatedStats, errChat := store.HealersOverallByHealing(ctx, app.db, 250)
-		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
-			return nil, errors.Wrap(errChat, "Failed to query overall healers overall")
+		updatedStats, errChat := env.Store().HealersOverallByHealing(ctx, 250)
+		if errChat != nil && !errors.Is(errChat, errs.ErrNoResult) {
+			return nil, errors.Join(errChat, errors.New("Failed to query overall healers overall"))
 		}
 
 		return updatedStats, nil
@@ -1468,22 +1426,22 @@ func onAPIGetStatsHealersOverall(ctx context.Context, app *App) gin.HandlerFunc 
 	}
 }
 
-func onAPIGetPlayerWeaponStatsOverall(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIGetPlayerWeaponStatsOverall(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		steamID, errSteamID := getSID64Param(ctx, "steam_id")
 		if errSteamID != nil {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
 
 			return
 		}
 
-		weaponStats, errChat := store.WeaponsOverallByPlayer(ctx, app.db, steamID)
-		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
+		weaponStats, errChat := env.Store().WeaponsOverallByPlayer(ctx, steamID)
+		if errChat != nil && !errors.Is(errChat, errs.ErrNoResult) {
 			log.Error("Failed to query player weapons stats",
 				zap.Error(errChat))
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			return
 		}
@@ -1496,22 +1454,22 @@ func onAPIGetPlayerWeaponStatsOverall(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIGetPlayerClassStatsOverall(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIGetPlayerClassStatsOverall(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		steamID, errSteamID := getSID64Param(ctx, "steam_id")
 		if errSteamID != nil {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
 
 			return
 		}
 
-		classStats, errChat := store.PlayerOverallClassStats(ctx, app.db, steamID)
-		if errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
+		classStats, errChat := env.Store().PlayerOverallClassStats(ctx, steamID)
+		if errChat != nil && !errors.Is(errChat, errs.ErrNoResult) {
 			log.Error("Failed to query player class stats",
 				zap.Error(errChat))
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			return
 		}
@@ -1524,22 +1482,22 @@ func onAPIGetPlayerClassStatsOverall(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIGetPlayerStatsOverall(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIGetPlayerStatsOverall(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		steamID, errSteamID := getSID64Param(ctx, "steam_id")
 		if errSteamID != nil {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
 
 			return
 		}
 
 		var por model.PlayerOverallResult
-		if errChat := store.PlayerOverallStats(ctx, app.db, steamID, &por); errChat != nil && !errors.Is(errChat, store.ErrNoResult) {
+		if errChat := env.Store().PlayerOverallStats(ctx, steamID, &por); errChat != nil && !errors.Is(errChat, errs.ErrNoResult) {
 			log.Error("Failed to query player stats overall",
 				zap.Error(errChat))
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			return
 		}
@@ -1548,11 +1506,11 @@ func onAPIGetPlayerStatsOverall(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPISaveContestEntryMedia(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPISaveContestEntryMedia(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		contest, success := contestFromCtx(ctx, app)
+		contest, success := contestFromCtx(ctx, env)
 		if !success {
 			return
 		}
@@ -1564,18 +1522,18 @@ func onAPISaveContestEntryMedia(app *App) gin.HandlerFunc {
 
 		content, decodeErr := base64.StdEncoding.DecodeString(req.Content)
 		if decodeErr != nil {
-			ctx.JSON(http.StatusBadRequest, consts.ErrBadRequest)
+			ctx.JSON(http.StatusBadRequest, errs.ErrBadRequest)
 
 			return
 		}
 
 		media, errMedia := model.NewMedia(currentUserProfile(ctx).SteamID, req.Name, req.Mime, content)
 		if errMedia != nil {
-			ctx.JSON(http.StatusBadRequest, consts.ErrBadRequest)
+			ctx.JSON(http.StatusBadRequest, errs.ErrBadRequest)
 			log.Error("Invalid media uploaded", zap.Error(errMedia))
 		}
 
-		conf := app.config()
+		conf := env.Config()
 
 		asset, errAsset := model.NewAsset(content, conf.S3.BucketMedia, "")
 		if errAsset != nil {
@@ -1584,7 +1542,7 @@ func onAPISaveContestEntryMedia(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if errPut := app.assetStore.Put(ctx, conf.S3.BucketMedia, asset.Name, bytes.NewReader(content), asset.Size, asset.MimeType); errPut != nil {
+		if errPut := env.Assets().Put(ctx, conf.S3.BucketMedia, asset.Name, bytes.NewReader(content), asset.Size, asset.MimeType); errPut != nil {
 			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save user contest media"))
 
 			log.Error("Failed to save user contest entry media to s3 backend", zap.Error(errPut))
@@ -1592,7 +1550,7 @@ func onAPISaveContestEntryMedia(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if errSaveAsset := store.SaveAsset(ctx, app.db, &asset); errSaveAsset != nil {
+		if errSaveAsset := env.Store().SaveAsset(ctx, &asset); errSaveAsset != nil {
 			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save asset"))
 
 			log.Error("Failed to save user asset to s3 backend", zap.Error(errSaveAsset))
@@ -1610,10 +1568,10 @@ func onAPISaveContestEntryMedia(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if errSave := store.SaveMedia(ctx, app.db, &media); errSave != nil {
+		if errSave := env.Store().SaveMedia(ctx, &media); errSave != nil {
 			log.Error("Failed to save user contest media", zap.Error(errSave))
 
-			if errors.Is(store.DBErr(errSave), store.ErrDuplicate) {
+			if errors.Is(errs.DBErr(errSave), errs.ErrDuplicate) {
 				responseErr(ctx, http.StatusConflict, errors.New("Duplicate media name"))
 
 				return
@@ -1628,22 +1586,22 @@ func onAPISaveContestEntryMedia(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPISaveContestEntryVote(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPISaveContestEntryVote(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	type voteResult struct {
 		CurrentVote string `json:"current_vote"`
 	}
 
 	return func(ctx *gin.Context) {
-		contest, success := contestFromCtx(ctx, app)
+		contest, success := contestFromCtx(ctx, env)
 		if !success {
 			return
 		}
 
 		contestEntryID, errContestEntryID := getUUIDParam(ctx, "contest_entry_id")
 		if errContestEntryID != nil {
-			ctx.JSON(http.StatusNotFound, consts.ErrNotFound)
+			ctx.JSON(http.StatusNotFound, errs.ErrNotFound)
 			log.Error("Invalid contest entry id option")
 
 			return
@@ -1651,14 +1609,14 @@ func onAPISaveContestEntryVote(app *App) gin.HandlerFunc {
 
 		direction := strings.ToLower(ctx.Param("direction"))
 		if direction != "up" && direction != "down" {
-			ctx.JSON(http.StatusBadRequest, consts.ErrBadRequest)
+			ctx.JSON(http.StatusBadRequest, errs.ErrBadRequest)
 			log.Error("Invalid vote direction option")
 
 			return
 		}
 
 		if !contest.Voting || !contest.DownVotes && direction != "down" {
-			ctx.JSON(http.StatusBadRequest, consts.ErrBadRequest)
+			ctx.JSON(http.StatusBadRequest, errs.ErrBadRequest)
 			log.Error("Voting not enabled")
 
 			return
@@ -1666,14 +1624,14 @@ func onAPISaveContestEntryVote(app *App) gin.HandlerFunc {
 
 		currentUser := currentUserProfile(ctx)
 
-		if errVote := store.ContestEntryVote(ctx, app.db, contestEntryID, currentUser.SteamID, direction == "up"); errVote != nil {
-			if errors.Is(errVote, store.ErrVoteDeleted) {
+		if errVote := env.Store().ContestEntryVote(ctx, contestEntryID, currentUser.SteamID, direction == "up"); errVote != nil {
+			if errors.Is(errVote, errs.ErrVoteDeleted) {
 				ctx.JSON(http.StatusOK, voteResult{""})
 
 				return
 			}
 
-			ctx.JSON(http.StatusInternalServerError, consts.ErrInternal)
+			ctx.JSON(http.StatusInternalServerError, errs.ErrInternal)
 
 			return
 		}
@@ -1682,17 +1640,17 @@ func onAPISaveContestEntryVote(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPISaveContestEntrySubmit(app *App) gin.HandlerFunc {
+func onAPISaveContestEntrySubmit(env Env) gin.HandlerFunc {
 	type entryReq struct {
 		Description string    `json:"description"`
 		AssetID     uuid.UUID `json:"asset_id"`
 	}
 
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		user := currentUserProfile(ctx)
-		contest, success := contestFromCtx(ctx, app)
+		contest, success := contestFromCtx(ctx, env)
 
 		if !success {
 			return
@@ -1705,7 +1663,7 @@ func onAPISaveContestEntrySubmit(app *App) gin.HandlerFunc {
 
 		if contest.MediaTypes != "" {
 			var media model.Media
-			if errMedia := store.GetMediaByAssetID(ctx, app.db, req.AssetID, &media); errMedia != nil {
+			if errMedia := env.Store().GetMediaByAssetID(ctx, req.AssetID, &media); errMedia != nil {
 				responseErr(ctx, http.StatusFailedDependency, errors.New("Could not load media asset"))
 
 				return
@@ -1718,8 +1676,8 @@ func onAPISaveContestEntrySubmit(app *App) gin.HandlerFunc {
 			}
 		}
 
-		existingEntries, errEntries := store.ContestEntries(ctx, app.db, contest.ContestID)
-		if errEntries != nil && !errors.Is(errEntries, store.ErrNoResult) {
+		existingEntries, errEntries := env.Store().ContestEntries(ctx, contest.ContestID)
+		if errEntries != nil && !errors.Is(errEntries, errs.ErrNoResult) {
 			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not load existing contest entries"))
 
 			return
@@ -1748,7 +1706,7 @@ func onAPISaveContestEntrySubmit(app *App) gin.HandlerFunc {
 			return
 		}
 
-		if errSave := store.ContestEntrySave(ctx, app.db, entry); errSave != nil {
+		if errSave := env.Store().ContestEntrySave(ctx, entry); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save entry"))
 
 			return
@@ -1760,29 +1718,29 @@ func onAPISaveContestEntrySubmit(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIDeleteContestEntry(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIDeleteContestEntry(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		user := currentUserProfile(ctx)
 
 		contestEntryID, idErr := getUUIDParam(ctx, "contest_entry_id")
 		if idErr != nil {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
 
 			return
 		}
 
 		var entry model.ContestEntry
 
-		if errContest := store.ContestEntry(ctx, app.db, contestEntryID, &entry); errContest != nil {
-			if errors.Is(errContest, store.ErrNoResult) {
-				responseErr(ctx, http.StatusNotFound, consts.ErrUnknownID)
+		if errContest := env.Store().ContestEntry(ctx, contestEntryID, &entry); errContest != nil {
+			if errors.Is(errContest, errs.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, errs.ErrUnknownID)
 
 				return
 			}
 
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
 
 			log.Error("Error getting contest entry for deletion", zap.Error(errContest))
 
@@ -1790,22 +1748,22 @@ func onAPIDeleteContestEntry(app *App) gin.HandlerFunc {
 		}
 
 		// Only >=moderators or the entry author are allowed to delete entries.
-		if !(user.PermissionLevel >= consts.PModerator || user.SteamID == entry.SteamID) {
-			responseErr(ctx, http.StatusForbidden, consts.ErrPermissionDenied)
+		if !(user.PermissionLevel >= model.PModerator || user.SteamID == entry.SteamID) {
+			responseErr(ctx, http.StatusForbidden, errs.ErrPermissionDenied)
 
 			return
 		}
 
 		var contest model.Contest
 
-		if errContest := store.ContestByID(ctx, app.db, entry.ContestID, &contest); errContest != nil {
-			if errors.Is(errContest, store.ErrNoResult) {
-				responseErr(ctx, http.StatusNotFound, consts.ErrUnknownID)
+		if errContest := env.Store().ContestByID(ctx, entry.ContestID, &contest); errContest != nil {
+			if errors.Is(errContest, errs.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, errs.ErrUnknownID)
 
 				return
 			}
 
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
 
 			log.Error("Error getting contest", zap.Error(errContest))
 
@@ -1814,15 +1772,15 @@ func onAPIDeleteContestEntry(app *App) gin.HandlerFunc {
 
 		// Only allow mods to delete entries from expired contests.
 		if user.SteamID == entry.SteamID && time.Since(contest.DateEnd) > 0 {
-			responseErr(ctx, http.StatusForbidden, consts.ErrPermissionDenied)
+			responseErr(ctx, http.StatusForbidden, errs.ErrPermissionDenied)
 
 			log.Error("User tried to delete entry from expired contest")
 
 			return
 		}
 
-		if errDelete := store.ContestEntryDelete(ctx, app.db, entry.ContestEntryID); errDelete != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errDelete := env.Store().ContestEntryDelete(ctx, entry.ContestEntryID); errDelete != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			log.Error("Error deleting contest entry", zap.Error(errDelete))
 
@@ -1838,8 +1796,8 @@ func onAPIDeleteContestEntry(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIThreadCreate(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIThreadCreate(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	type CreateThreadRequest struct {
 		Title  string `json:"title"`
@@ -1856,11 +1814,11 @@ func onAPIThreadCreate(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		user := currentUserProfile(ctx)
 
-		app.activityTracker.touch(user)
+		env.Activity().Touch(user)
 
 		forumID, errForumID := getIntParam(ctx, "forum_id")
 		if errForumID != nil {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
 
 			return
 		}
@@ -1883,8 +1841,8 @@ func onAPIThreadCreate(app *App) gin.HandlerFunc {
 		}
 
 		var forum model.Forum
-		if errForum := store.Forum(ctx, app.db, forumID, &forum); errForum != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errForum := env.Store().Forum(ctx, forumID, &forum); errForum != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			return
 		}
@@ -1893,8 +1851,8 @@ func onAPIThreadCreate(app *App) gin.HandlerFunc {
 		thread.Sticky = req.Sticky
 		thread.Locked = req.Locked
 
-		if errSaveThread := store.ForumThreadSave(ctx, app.db, &thread); errSaveThread != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errSaveThread := env.Store().ForumThreadSave(ctx, &thread); errSaveThread != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			log.Error("Failed to save new thread", zap.Error(errSaveThread))
 
@@ -1903,22 +1861,22 @@ func onAPIThreadCreate(app *App) gin.HandlerFunc {
 
 		message := thread.NewMessage(user.SteamID, req.BodyMD)
 
-		if errSaveMessage := store.ForumMessageSave(ctx, app.db, &message); errSaveMessage != nil {
+		if errSaveMessage := env.Store().ForumMessageSave(ctx, &message); errSaveMessage != nil {
 			// Drop created thread.
 			// TODO transaction
-			if errRollback := store.ForumThreadDelete(ctx, app.db, thread.ForumThreadID); errRollback != nil {
+			if errRollback := env.Store().ForumThreadDelete(ctx, thread.ForumThreadID); errRollback != nil {
 				log.Error("Failed to rollback new thread", zap.Error(errRollback))
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			log.Error("Failed to save new forum message", zap.Error(errSaveMessage))
 
 			return
 		}
 
-		if errIncr := store.ForumIncrMessageCount(ctx, app.db, forum.ForumID, true); errIncr != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errIncr := env.Store().ForumIncrMessageCount(ctx, forum.ForumID, true); errIncr != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			log.Error("Failed to increment message count", zap.Error(errIncr))
 
@@ -1934,8 +1892,8 @@ func onAPIThreadCreate(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIThreadUpdate(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIThreadUpdate(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	type threadUpdate struct {
 		Title  string `json:"title"`
@@ -1948,7 +1906,7 @@ func onAPIThreadUpdate(app *App) gin.HandlerFunc {
 
 		forumThreadID, errForumTheadID := getInt64Param(ctx, "forum_thread_id")
 		if errForumTheadID != nil {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
 
 			return
 		}
@@ -1961,24 +1919,24 @@ func onAPIThreadUpdate(app *App) gin.HandlerFunc {
 		req.Title = util.SanitizeUGC(req.Title)
 
 		if len(req.Title) < 2 {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
 
 			return
 		}
 
 		var thread model.ForumThread
-		if errGet := store.ForumThread(ctx, app.db, forumThreadID, &thread); errGet != nil {
-			if errors.Is(errGet, store.ErrNoResult) {
-				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+		if errGet := env.Store().ForumThread(ctx, forumThreadID, &thread); errGet != nil {
+			if errors.Is(errGet, errs.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 			} else {
-				responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+				responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 			}
 
 			return
 		}
 
-		if thread.SourceID != currentUser.SteamID && !(currentUser.PermissionLevel >= consts.PModerator) {
-			responseErr(ctx, http.StatusForbidden, consts.ErrInternal)
+		if thread.SourceID != currentUser.SteamID && !(currentUser.PermissionLevel >= model.PModerator) {
+			responseErr(ctx, http.StatusForbidden, errs.ErrInternal)
 
 			return
 		}
@@ -1987,8 +1945,8 @@ func onAPIThreadUpdate(app *App) gin.HandlerFunc {
 		thread.Sticky = req.Sticky
 		thread.Locked = req.Locked
 
-		if errDelete := store.ForumThreadSave(ctx, app.db, &thread); errDelete != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errDelete := env.Store().ForumThreadSave(ctx, &thread); errDelete != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 			log.Error("Failed to update thread", zap.Error(errDelete))
 
 			return
@@ -1999,38 +1957,38 @@ func onAPIThreadUpdate(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIThreadDelete(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIThreadDelete(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		forumThreadID, errForumTheadID := getInt64Param(ctx, "forum_thread_id")
 		if errForumTheadID != nil {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
 
 			return
 		}
 
 		var thread model.ForumThread
-		if errGet := store.ForumThread(ctx, app.db, forumThreadID, &thread); errGet != nil {
-			if errors.Is(errGet, store.ErrNoResult) {
-				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+		if errGet := env.Store().ForumThread(ctx, forumThreadID, &thread); errGet != nil {
+			if errors.Is(errGet, errs.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 			} else {
-				responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+				responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 			}
 
 			return
 		}
 
-		if errDelete := store.ForumThreadDelete(ctx, app.db, thread.ForumThreadID); errDelete != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errDelete := env.Store().ForumThreadDelete(ctx, thread.ForumThreadID); errDelete != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 			log.Error("Failed to delete thread", zap.Error(errDelete))
 
 			return
 		}
 
 		var forum model.Forum
-		if errForum := store.Forum(ctx, app.db, thread.ForumID, &forum); errForum != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errForum := env.Store().Forum(ctx, thread.ForumID, &forum); errForum != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 			log.Error("Failed to load forum", zap.Error(errForum))
 
 			return
@@ -2038,8 +1996,8 @@ func onAPIThreadDelete(app *App) gin.HandlerFunc {
 
 		forum.CountThreads -= 1
 
-		if errSave := store.ForumSave(ctx, app.db, &forum); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errSave := env.Store().ForumSave(ctx, &forum); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 			log.Error("Failed to save thread count", zap.Error(errSave))
 
 			return
@@ -2049,8 +2007,8 @@ func onAPIThreadDelete(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIThreadMessageUpdate(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIThreadMessageUpdate(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	type MessageUpdate struct {
 		BodyMD string `json:"body_md"`
@@ -2059,11 +2017,11 @@ func onAPIThreadMessageUpdate(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		currentUser := currentUserProfile(ctx)
 
-		app.activityTracker.touch(currentUser)
+		env.Activity().Touch(currentUser)
 
 		forumMessageID, errForumMessageID := getInt64Param(ctx, "forum_message_id")
 		if errForumMessageID != nil {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
 
 			return
 		}
@@ -2074,14 +2032,14 @@ func onAPIThreadMessageUpdate(app *App) gin.HandlerFunc {
 		}
 
 		var message model.ForumMessage
-		if errMessage := store.ForumMessage(ctx, app.db, forumMessageID, &message); errMessage != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errMessage := env.Store().ForumMessage(ctx, forumMessageID, &message); errMessage != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			return
 		}
 
-		if message.SourceID != currentUser.SteamID && !(currentUser.PermissionLevel >= consts.PModerator) {
-			responseErr(ctx, http.StatusForbidden, consts.ErrInternal)
+		if message.SourceID != currentUser.SteamID && !(currentUser.PermissionLevel >= model.PModerator) {
+			responseErr(ctx, http.StatusForbidden, errs.ErrInternal)
 
 			return
 		}
@@ -2089,15 +2047,15 @@ func onAPIThreadMessageUpdate(app *App) gin.HandlerFunc {
 		req.BodyMD = util.SanitizeUGC(req.BodyMD)
 
 		if len(req.BodyMD) < 10 {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
 
 			return
 		}
 
 		message.BodyMD = req.BodyMD
 
-		if errSave := store.ForumMessageSave(ctx, app.db, &message); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errSave := env.Store().ForumMessageSave(ctx, &message); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			return
 		}
@@ -2106,34 +2064,34 @@ func onAPIThreadMessageUpdate(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIMessageDelete(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIMessageDelete(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		forumMessageID, errForumMessageID := getInt64Param(ctx, "forum_message_id")
 		if errForumMessageID != nil {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
 
 			return
 		}
 
 		var message model.ForumMessage
-		if err := store.ForumMessage(ctx, app.db, forumMessageID, &message); err != nil {
-			if errors.Is(err, store.ErrNoResult) {
-				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+		if err := env.Store().ForumMessage(ctx, forumMessageID, &message); err != nil {
+			if errors.Is(err, errs.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 			} else {
-				responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+				responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 			}
 
 			return
 		}
 
 		var thread model.ForumThread
-		if err := store.ForumThread(ctx, app.db, message.ForumThreadID, &thread); err != nil {
-			if errors.Is(err, store.ErrNoResult) {
-				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+		if err := env.Store().ForumThread(ctx, message.ForumThreadID, &thread); err != nil {
+			if errors.Is(err, errs.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 			} else {
-				responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+				responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 			}
 
 			return
@@ -2145,9 +2103,9 @@ func onAPIMessageDelete(app *App) gin.HandlerFunc {
 			return
 		}
 
-		messages, count, errMessage := store.ForumMessages(ctx, app.db, store.ThreadMessagesQueryFilter{ForumThreadID: message.ForumThreadID})
+		messages, count, errMessage := env.Store().ForumMessages(ctx, model.ThreadMessagesQueryFilter{ForumThreadID: message.ForumThreadID})
 		if errMessage != nil || count <= 0 {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			return
 		}
@@ -2155,8 +2113,8 @@ func onAPIMessageDelete(app *App) gin.HandlerFunc {
 		isThreadParent := messages[0].ForumMessageID == message.ForumMessageID
 
 		if isThreadParent {
-			if err := store.ForumThreadDelete(ctx, app.db, message.ForumThreadID); err != nil {
-				responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			if err := env.Store().ForumThreadDelete(ctx, message.ForumThreadID); err != nil {
+				responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 				log.Error("Failed to delete forum thread", zap.Error(err))
 
 				return
@@ -2164,8 +2122,8 @@ func onAPIMessageDelete(app *App) gin.HandlerFunc {
 
 			// Delete the thread if it's the first message
 			var forum model.Forum
-			if errForum := store.Forum(ctx, app.db, thread.ForumID, &forum); errForum != nil {
-				responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			if errForum := env.Store().Forum(ctx, thread.ForumID, &forum); errForum != nil {
+				responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 				log.Error("Failed to load forum", zap.Error(errForum))
 
 				return
@@ -2173,8 +2131,8 @@ func onAPIMessageDelete(app *App) gin.HandlerFunc {
 
 			forum.CountThreads -= 1
 
-			if errSave := store.ForumSave(ctx, app.db, &forum); errSave != nil {
-				responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			if errSave := env.Store().ForumSave(ctx, &forum); errSave != nil {
+				responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 				log.Error("Failed to save thread count", zap.Error(errSave))
 
 				return
@@ -2182,8 +2140,8 @@ func onAPIMessageDelete(app *App) gin.HandlerFunc {
 
 			log.Error("Thread deleted due to parent deletion", zap.Int64("forum_thread_id", thread.ForumThreadID))
 		} else {
-			if errDelete := store.ForumMessageDelete(ctx, app.db, message.ForumMessageID); errDelete != nil {
-				responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			if errDelete := env.Store().ForumMessageDelete(ctx, message.ForumMessageID); errDelete != nil {
+				responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 				log.Error("Failed to delete message", zap.Error(errDelete))
 
 				return
@@ -2196,8 +2154,8 @@ func onAPIMessageDelete(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIThreadCreateReply(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIThreadCreateReply(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	type ThreadReply struct {
 		BodyMD string `json:"body_md"`
@@ -2206,23 +2164,23 @@ func onAPIThreadCreateReply(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		currentUser := currentUserProfile(ctx)
 
-		app.activityTracker.touch(currentUser)
+		env.Activity().Touch(currentUser)
 
 		forumThreadID, errForumID := getInt64Param(ctx, "forum_thread_id")
 		if errForumID != nil {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
 
 			return
 		}
 
 		var thread model.ForumThread
-		if errThread := store.ForumThread(ctx, app.db, forumThreadID, &thread); errThread != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errThread := env.Store().ForumThread(ctx, forumThreadID, &thread); errThread != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			return
 		}
 
-		if thread.Locked && currentUser.PermissionLevel < consts.PEditor {
+		if thread.Locked && currentUser.PermissionLevel < model.PEditor {
 			responseErr(ctx, http.StatusForbidden, errors.New("Cannot reply to locked threads"))
 
 			return
@@ -2242,21 +2200,21 @@ func onAPIThreadCreateReply(app *App) gin.HandlerFunc {
 		}
 
 		newMessage := thread.NewMessage(currentUser.SteamID, req.BodyMD)
-		if errSave := store.ForumMessageSave(ctx, app.db, &newMessage); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errSave := env.Store().ForumMessageSave(ctx, &newMessage); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			return
 		}
 
 		var message model.ForumMessage
-		if errFetch := store.ForumMessage(ctx, app.db, newMessage.ForumMessageID, &message); errFetch != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errFetch := env.Store().ForumMessage(ctx, newMessage.ForumMessageID, &message); errFetch != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			return
 		}
 
-		if errIncr := store.ForumIncrMessageCount(ctx, app.db, thread.ForumID, true); errIncr != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errIncr := env.Store().ForumIncrMessageCount(ctx, thread.ForumID, true); errIncr != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			log.Error("Failed to increment message count", zap.Error(errIncr))
 		}
@@ -2270,16 +2228,16 @@ func onAPIThreadCreateReply(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIGetPersonSettings(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIGetPersonSettings(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		user := currentUserProfile(ctx)
 
 		var settings model.PersonSettings
 
-		if err := store.GetPersonSettings(ctx, app.db, user.SteamID, &settings); err != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if err := env.Store().GetPersonSettings(ctx, user.SteamID, &settings); err != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 			log.Error("Failed to fetch person settings", zap.Error(err), zap.Int64("steam_id", user.SteamID.Int64()))
 
 			return
@@ -2289,8 +2247,8 @@ func onAPIGetPersonSettings(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIPostPersonSettings(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIPostPersonSettings(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	type settingsUpdateReq struct {
 		ForumSignature       string `json:"forum_signature"`
@@ -2309,8 +2267,8 @@ func onAPIPostPersonSettings(app *App) gin.HandlerFunc {
 
 		var settings model.PersonSettings
 
-		if err := store.GetPersonSettings(ctx, app.db, user.SteamID, &settings); err != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if err := env.Store().GetPersonSettings(ctx, user.SteamID, &settings); err != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 			log.Error("Failed to fetch person settings", zap.Error(err), zap.Int64("steam_id", user.SteamID.Int64()))
 
 			return
@@ -2320,8 +2278,8 @@ func onAPIPostPersonSettings(app *App) gin.HandlerFunc {
 		settings.StatsHidden = req.StatsHidden
 		settings.ForumSignature = util.SanitizeUGC(req.ForumSignature)
 
-		if err := store.SavePersonSettings(ctx, app.db, &settings); err != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if err := env.Store().SavePersonSettings(ctx, &settings); err != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 			log.Error("Failed to save person settings", zap.Error(err), zap.Int64("steam_id", user.SteamID.Int64()))
 
 			return

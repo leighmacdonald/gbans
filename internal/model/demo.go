@@ -1,13 +1,13 @@
 package model
 
 import (
+	"errors"
 	"time"
 
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"github.com/pkg/errors"
 )
 
 type DemoPlayerStats struct {
@@ -57,7 +57,7 @@ func NewAsset(content []byte, bucket string, name string) (Asset, error) {
 
 	newID, errID := uuid.NewV4()
 	if errID != nil {
-		return Asset{}, errors.Wrap(errID, "Failed to generate a new asset ID")
+		return Asset{}, errors.Join(errID, errors.New("Failed to generate a new asset ID"))
 	}
 
 	if name == "" {

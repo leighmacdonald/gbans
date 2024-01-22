@@ -2,18 +2,17 @@ package vpksign
 
 import (
 	"context"
+	"errors"
 	"os"
 	"os/exec"
 	"path"
-
-	"github.com/pkg/errors"
 )
 
 func call(ctx context.Context, vpkBinRoot string, args ...string) (*exec.Cmd, error) {
 	bin := path.Join(vpkBinRoot, "vpk_linux32")
 
 	if errEnv := os.Setenv("LD_LIBRARY_PATH", vpkBinRoot); errEnv != nil {
-		return nil, errors.Wrap(errEnv, "Failed to set LD_LIBRARY_PATH")
+		return nil, errors.Join(errEnv, errors.New("Failed to set LD_LIBRARY_PATH"))
 	}
 
 	return exec.CommandContext(ctx, bin, args...), nil

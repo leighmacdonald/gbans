@@ -2,6 +2,7 @@ package logparse
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -9,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 )
@@ -36,10 +36,12 @@ type UDPLogListener struct {
 	onEvent       func(EventType, ServerEvent)
 }
 
+var ErrResolve = errors.New("failed to resolve UDP address")
+
 func NewUDPLogListener(logger *zap.Logger, logAddr string, onEvent LogEventHandler) (*UDPLogListener, error) {
 	udpAddr, errResolveUDP := net.ResolveUDPAddr("udp4", logAddr)
 	if errResolveUDP != nil {
-		return nil, errors.Wrapf(errResolveUDP, "Failed to resolve UDP address")
+		return nil, errors.Join(errResolveUDP, ErrResolve)
 	}
 
 	return &UDPLogListener{
@@ -200,6 +202,8 @@ type ServerEvent struct {
 	*Results
 }
 
+var ErrLogParse = errors.New("failed to parse log message")
+
 func logToServerEvent(parser *LogParser, serverID int, serverName string, msg string) (ServerEvent, error) {
 	event := ServerEvent{
 		ServerID:   serverID,
@@ -208,7 +212,7 @@ func logToServerEvent(parser *LogParser, serverID int, serverName string, msg st
 	parseResult, errParse := parser.Parse(msg)
 
 	if errParse != nil {
-		return event, errors.Wrapf(errParse, "Failed to parse log message")
+		return event, errors.Join(errParse, ErrLogParse)
 	}
 
 	event.Results = parseResult

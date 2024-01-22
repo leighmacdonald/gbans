@@ -3,10 +3,18 @@ package model
 import (
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
+
+type ForumActivity struct {
+	Person       UserProfile
+	LastActivity time.Time
+}
+
+func (activity ForumActivity) Expired() bool {
+	return time.Since(activity.LastActivity) > time.Minute*5
+}
 
 type ForumCategory struct {
 	ForumCategoryID int     `json:"forum_category_id"`
@@ -30,21 +38,21 @@ func (category ForumCategory) NewForum(title string, description string) Forum {
 }
 
 type Forum struct {
-	ForumID             int              `json:"forum_id"`
-	ForumCategoryID     int              `json:"forum_category_id"`
-	LastThreadID        int64            `json:"last_thread_id"`
-	Title               string           `json:"title"`
-	Description         string           `json:"description"`
-	Ordering            int              `json:"ordering"`
-	CountThreads        int64            `json:"count_threads"`
-	CountMessages       int64            `json:"count_messages"`
-	PermissionLevel     consts.Privilege `json:"permission_level"`
-	RecentForumThreadID int64            `json:"recent_forum_thread_id"`
-	RecentForumTitle    string           `json:"recent_forum_title"`
-	RecentSourceID      steamid.SID64    `json:"recent_source_id"`
-	RecentPersonaname   string           `json:"recent_personaname"`
-	RecentAvatarhash    string           `json:"recent_avatarhash"`
-	RecentCreatedOn     time.Time        `json:"recent_created_on"`
+	ForumID             int           `json:"forum_id"`
+	ForumCategoryID     int           `json:"forum_category_id"`
+	LastThreadID        int64         `json:"last_thread_id"`
+	Title               string        `json:"title"`
+	Description         string        `json:"description"`
+	Ordering            int           `json:"ordering"`
+	CountThreads        int64         `json:"count_threads"`
+	CountMessages       int64         `json:"count_messages"`
+	PermissionLevel     Privilege     `json:"permission_level"`
+	RecentForumThreadID int64         `json:"recent_forum_thread_id"`
+	RecentForumTitle    string        `json:"recent_forum_title"`
+	RecentSourceID      steamid.SID64 `json:"recent_source_id"`
+	RecentPersonaname   string        `json:"recent_personaname"`
+	RecentAvatarhash    string        `json:"recent_avatarhash"`
+	RecentCreatedOn     time.Time     `json:"recent_created_on"`
 	TimeStamped
 }
 

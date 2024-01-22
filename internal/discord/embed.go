@@ -5,13 +5,17 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	embed "github.com/leighmacdonald/discordgo-embed"
-	"github.com/leighmacdonald/gbans/internal/common"
-	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
+const (
+	iconURL      = "https://cdn.discordapp.com/avatars/758536119397646370/6a371d1a481a72c512244ba9853f7eff.webp?size=128"
+	providerName = "gbans"
+)
+
 // NewEmbed construct a new discord embed message. This must not be chained if using gbans helper functions.
-func NewEmbed(config config.Config, args ...string) *Embed {
+func NewEmbed(args ...string) *Embed {
 	newEmbed := embed.
 		NewEmbed().
 		SetFooter(providerName, iconURL)
@@ -24,8 +28,7 @@ func NewEmbed(config config.Config, args ...string) *Embed {
 	}
 
 	return &Embed{
-		emb:    newEmbed,
-		config: config,
+		emb: newEmbed,
 	}
 }
 
@@ -38,8 +41,7 @@ func (e *Embed) AddFieldsSteamID(steamID steamid.SID64) *Embed {
 }
 
 type Embed struct {
-	emb    *embed.Embed
-	config config.Config
+	emb *embed.Embed
 }
 
 func (e *Embed) Embed() *embed.Embed {
@@ -50,7 +52,7 @@ func (e *Embed) Message() *discordgo.MessageEmbed {
 	return e.emb.MessageEmbed
 }
 
-func (e *Embed) AddTargetPerson(person common.PersonInfo) *Embed {
+func (e *Embed) AddTargetPerson(person model.PersonInfo) *Embed {
 	name := person.GetName()
 	if person.GetDiscordID() != "" {
 		name = fmt.Sprintf("<@%s> | ", person.GetDiscordID()) + name
@@ -62,13 +64,13 @@ func (e *Embed) AddTargetPerson(person common.PersonInfo) *Embed {
 	return e
 }
 
-func (e *Embed) AddAuthorPersonInfo(person common.PersonInfo) *Embed {
+func (e *Embed) AddAuthorPersonInfo(person model.PersonInfo, url string) *Embed {
 	name := person.GetName()
 	if person.GetDiscordID() != "" {
 		name = fmt.Sprintf("<@%s> | ", person.GetDiscordID()) + name
 	}
 
-	e.Embed().SetAuthor(name, person.GetAvatar().Full(), e.config.ExtURL(person))
+	e.Embed().SetAuthor(name, person.GetAvatar().Full(), url)
 
 	return e
 }

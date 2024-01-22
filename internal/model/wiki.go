@@ -1,12 +1,12 @@
 package model
 
 import (
+	"errors"
 	"strings"
 	"time"
 
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"github.com/pkg/errors"
 )
 
 const unknownMediaTag = "__unknown__"

@@ -105,7 +105,7 @@ func importConnectionsCmd() *cobra.Command {
 				if _, playerFound := playerExistsCache[sid]; !playerFound {
 					// Satisfy fk
 					var person model.Person
-					if errPerson := store.GetOrCreatePersonBySteamID(ctx, database, sid, &person); errPerson != nil {
+					if errPerson := database.GetOrCreatePersonBySteamID(ctx, sid, &person); errPerson != nil {
 						rootLogger.Error("Failed to get person", zap.Error(errPerson))
 
 						continue
@@ -149,7 +149,7 @@ func importConnectionsCmd() *cobra.Command {
 					continue
 				}
 
-				if errAdd := store.AddConnectionHistory(ctx, database, &model.PersonConnection{
+				if errAdd := database.AddConnectionHistory(ctx, &model.PersonConnection{
 					IPAddr:      ipAddr,
 					SteamID:     sid,
 					PersonaName: name,
@@ -238,7 +238,7 @@ func importMessagesCmd() *cobra.Command {
 				if _, playerFound := playerExistsCache[sid]; !playerFound {
 					// Satisfy fk
 					var person model.Person
-					if errPerson := store.GetOrCreatePersonBySteamID(ctx, database, sid, &person); errPerson != nil {
+					if errPerson := database.GetOrCreatePersonBySteamID(ctx, sid, &person); errPerson != nil {
 						rootLogger.Error("Failed to get person", zap.Error(errPerson))
 
 						continue
@@ -255,7 +255,7 @@ func importMessagesCmd() *cobra.Command {
 				serverID, serverFound := serverCache[serverName]
 				if !serverFound {
 					var server model.Server
-					if errServer := store.GetServerByName(ctx, database, serverName, &server, true, true); errServer != nil {
+					if errServer := database.GetServerByName(ctx, serverName, &server, true, true); errServer != nil {
 						rootLogger.Error("Failed to get server", zap.Error(errServer))
 
 						continue
@@ -299,7 +299,7 @@ func importMessagesCmd() *cobra.Command {
 					continue
 				}
 
-				if errAdd := store.AddChatHistory(ctx, database, &model.PersonMessage{
+				if errAdd := database.AddChatHistory(ctx, &model.PersonMessage{
 					SteamID:     sid,
 					PersonaName: name,
 					ServerID:    serverID,

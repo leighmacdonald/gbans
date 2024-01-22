@@ -1,6 +1,7 @@
-package app
+package api
 
 import (
+	"errors"
 	"net"
 	"net/http"
 	"net/url"
@@ -8,15 +9,13 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/consts"
+	"github.com/leighmacdonald/gbans/internal/errs"
 	"github.com/leighmacdonald/gbans/internal/model"
-	"github.com/leighmacdonald/gbans/internal/store"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
-func onAPIPostServer(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIPostServer(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		var req serverUpdateRequest
@@ -34,8 +33,8 @@ func onAPIPostServer(app *App) gin.HandlerFunc {
 		server.Region = req.Region
 		server.IsEnabled = req.IsEnabled
 
-		if errSave := store.SaveServer(ctx, app.db, &server); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errSave := env.Store().SaveServer(ctx, &server); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 			log.Error("Failed to save new server", zap.Error(errSave))
 
 			return
@@ -43,7 +42,7 @@ func onAPIPostServer(app *App) gin.HandlerFunc {
 
 		ctx.JSON(http.StatusOK, server)
 
-		log.Info("Server config created",
+		log.Info("ServerStore config created",
 			zap.Int("server_id", server.ServerID),
 			zap.String("name", server.ShortName))
 	}
@@ -66,20 +65,20 @@ type serverUpdateRequest struct {
 	LogSecret       int     `json:"log_secret"`
 }
 
-func onAPIPostServerUpdate(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIPostServerUpdate(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		serverID, idErr := getIntParam(ctx, "server_id")
 		if idErr != nil {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
 
 			return
 		}
 
 		var server model.Server
-		if errServer := store.GetServer(ctx, app.db, serverID, &server); errServer != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errServer := env.Store().GetServer(ctx, serverID, &server); errServer != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			return
 		}
@@ -103,8 +102,8 @@ func onAPIPostServerUpdate(app *App) gin.HandlerFunc {
 		server.LogSecret = req.LogSecret
 		server.EnableStats = req.EnableStats
 
-		if errSave := store.SaveServer(ctx, app.db, &server); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errSave := env.Store().SaveServer(ctx, &server); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 			log.Error("Failed to update server", zap.Error(errSave))
 
 			return
@@ -112,58 +111,58 @@ func onAPIPostServerUpdate(app *App) gin.HandlerFunc {
 
 		ctx.JSON(http.StatusOK, server)
 
-		log.Info("Server config updated",
+		log.Info("ServerStore config updated",
 			zap.Int("server_id", server.ServerID),
 			zap.String("name", server.ShortName))
 	}
 }
 
-func onAPIPostServerDelete(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIPostServerDelete(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		serverID, idErr := getIntParam(ctx, "server_id")
 		if idErr != nil {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
 
 			return
 		}
 
 		var server model.Server
-		if errServer := store.GetServer(ctx, app.db, serverID, &server); errServer != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errServer := env.Store().GetServer(ctx, serverID, &server); errServer != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			return
 		}
 
 		server.Deleted = true
 
-		if errSave := store.SaveServer(ctx, app.db, &server); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errSave := env.Store().SaveServer(ctx, &server); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 			log.Error("Failed to delete server", zap.Error(errSave))
 
 			return
 		}
 
 		ctx.JSON(http.StatusOK, server)
-		log.Info("Server config deleted",
+		log.Info("ServerStore config deleted",
 			zap.Int("server_id", server.ServerID),
 			zap.String("name", server.ShortName))
 	}
 }
 
-func onAPIGetServersAdmin(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIGetServersAdmin(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var filter store.ServerQueryFilter
+		var filter model.ServerQueryFilter
 		if !bind(ctx, log, &filter) {
 			return
 		}
 
-		servers, count, errServers := store.GetServers(ctx, app.db, filter)
+		servers, count, errServers := env.Store().GetServers(ctx, filter)
 		if errServers != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			return
 		}
@@ -172,17 +171,18 @@ func onAPIGetServersAdmin(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIPutPlayerPermission(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIPutPlayerPermission(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+	errOwnerMod := errors.New("cannot alter site owner permissions")
 
 	type updatePermissionLevel struct {
-		PermissionLevel consts.Privilege `json:"permission_level"`
+		PermissionLevel model.Privilege `json:"permission_level"`
 	}
 
 	return func(ctx *gin.Context) {
 		steamID, errParam := getSID64Param(ctx, "steam_id")
 		if errParam != nil {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
 
 			return
 		}
@@ -193,24 +193,24 @@ func onAPIPutPlayerPermission(app *App) gin.HandlerFunc {
 		}
 
 		var person model.Person
-		if errGet := store.GetPersonBySteamID(ctx, app.db, steamID, &person); errGet != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errGet := env.Store().GetPersonBySteamID(ctx, steamID, &person); errGet != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			log.Error("Failed to load person", zap.Error(errGet))
 
 			return
 		}
 
-		if steamID == app.config().General.Owner {
-			responseErr(ctx, http.StatusConflict, errors.New("Cannot alter site owner permissions"))
+		if steamID == env.Config().General.Owner {
+			responseErr(ctx, http.StatusConflict, errOwnerMod)
 
 			return
 		}
 
 		person.PermissionLevel = req.PermissionLevel
 
-		if errSave := store.SavePerson(ctx, app.db, &person); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errSave := env.Store().SavePerson(ctx, &person); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			log.Error("Failed to save person", zap.Error(errSave))
 
@@ -225,19 +225,19 @@ func onAPIPutPlayerPermission(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIDeleteBlockList(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIDeleteBlockList(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		sourceID, errSourceID := getIntParam(ctx, "cidr_block_source_id")
 		if errSourceID != nil {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
 
 			return
 		}
 
-		if err := store.DeleteCIDRBlockSources(ctx, app.db, sourceID); err != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if err := env.Store().DeleteCIDRBlockSources(ctx, sourceID); err != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			log.Error("Failed to delete blocklist", zap.Error(err))
 
@@ -256,8 +256,8 @@ type CIDRBlockWhitelistExport struct {
 	model.TimeStamped
 }
 
-func onAPIGetBlockLists(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIGetBlockLists(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	type BlockSources struct {
 		Sources   []model.CIDRBlockSource    `json:"sources"`
@@ -265,18 +265,18 @@ func onAPIGetBlockLists(app *App) gin.HandlerFunc {
 	}
 
 	return func(ctx *gin.Context) {
-		blockLists, err := store.GetCIDRBlockSources(ctx, app.db)
+		blockLists, err := env.Store().GetCIDRBlockSources(ctx)
 		if err != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			log.Error("Failed to load blocklist", zap.Error(err))
 
 			return
 		}
 
-		whiteLists, errWl := store.GetCIDRBlockWhitelists(ctx, app.db)
+		whiteLists, errWl := env.Store().GetCIDRBlockWhitelists(ctx)
 		if errWl != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			log.Error("Failed to load blocklist", zap.Error(err))
 
@@ -296,8 +296,8 @@ func onAPIGetBlockLists(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIPostBlockListCreate(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIPostBlockListCreate(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	type createRequest struct {
 		Name    string `json:"name"`
@@ -312,14 +312,14 @@ func onAPIPostBlockListCreate(app *App) gin.HandlerFunc {
 		}
 
 		if req.Name == "" {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
 
 			return
 		}
 
 		parsedURL, errURL := url.Parse(req.URL)
 		if errURL != nil {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
 
 			return
 		}
@@ -331,8 +331,8 @@ func onAPIPostBlockListCreate(app *App) gin.HandlerFunc {
 			TimeStamped: model.NewTimeStamped(),
 		}
 
-		if errSave := store.SaveCIDRBlockSources(ctx, app.db, &blockList); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errSave := env.Store().SaveCIDRBlockSources(ctx, &blockList); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			log.Error("Failed to save blocklist", zap.Error(errSave))
 
@@ -343,8 +343,8 @@ func onAPIPostBlockListCreate(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIPostBlockListUpdate(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIPostBlockListUpdate(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	type updateRequest struct {
 		Name    string `json:"name"`
@@ -355,18 +355,18 @@ func onAPIPostBlockListUpdate(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		sourceID, err := getIntParam(ctx, "cidr_block_source_id")
 		if err != nil {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
 
 			return
 		}
 
 		var blockSource model.CIDRBlockSource
 
-		if errSource := store.GetCIDRBlockSource(ctx, app.db, sourceID, &blockSource); errSource != nil {
-			if errors.Is(errSource, store.ErrNoResult) {
-				responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+		if errSource := env.Store().GetCIDRBlockSource(ctx, sourceID, &blockSource); errSource != nil {
+			if errors.Is(errSource, errs.ErrNoResult) {
+				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 			} else {
-				responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+				responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
 			}
 
 			return
@@ -377,25 +377,25 @@ func onAPIPostBlockListUpdate(app *App) gin.HandlerFunc {
 			return
 		}
 
-		testBlocker := NewNetworkBlocker()
-		if count, errTest := testBlocker.AddRemoteSource(ctx, req.Name, req.URL); errTest != nil || count == 0 {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
-
-			if errTest != nil {
-				log.Error("Failed to validate blocklist url", zap.Error(errTest))
-			} else {
-				log.Error("Blocklist returned no valid results")
-			}
-
-			return
-		}
+		// testBlocker := network.NewBlocker()
+		// if count, errTest := testBlocker.AddRemoteSource(ctx, req.Name, req.URL); errTest != nil || count == 0 {
+		//	responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+		//
+		//	if errTest != nil {
+		//		log.Error("Failed to validate blocklist url", zap.Error(errTest))
+		//	} else {
+		//		log.Error("Blocklist returned no valid results")
+		//	}
+		//
+		//	return
+		// }
 
 		blockSource.Enabled = req.Enabled
 		blockSource.Name = req.Name
 		blockSource.URL = req.URL
 
-		if errUpdate := store.SaveCIDRBlockSources(ctx, app.db, &blockSource); errUpdate != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errUpdate := env.Store().SaveCIDRBlockSources(ctx, &blockSource); errUpdate != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			return
 		}
@@ -404,8 +404,8 @@ func onAPIPostBlockListUpdate(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIPostBlockListWhitelistCreate(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIPostBlockListWhitelistCreate(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	type createRequest struct {
 		Address string `json:"address"`
@@ -423,7 +423,7 @@ func onAPIPostBlockListWhitelistCreate(app *App) gin.HandlerFunc {
 
 		_, cidr, errParse := net.ParseCIDR(req.Address)
 		if errParse != nil {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
 
 			return
 		}
@@ -433,8 +433,8 @@ func onAPIPostBlockListWhitelistCreate(app *App) gin.HandlerFunc {
 			TimeStamped: model.NewTimeStamped(),
 		}
 
-		if errSave := store.SaveCIDRBlockWhitelist(ctx, app.db, &whitelist); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errSave := env.Store().SaveCIDRBlockWhitelist(ctx, &whitelist); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			return
 		}
@@ -445,12 +445,12 @@ func onAPIPostBlockListWhitelistCreate(app *App) gin.HandlerFunc {
 			TimeStamped:          whitelist.TimeStamped,
 		})
 
-		app.netBlock.AddWhitelist(whitelist.CIDRBlockWhitelistID, cidr)
+		env.NetBlocks().AddWhitelist(whitelist.CIDRBlockWhitelistID, cidr)
 	}
 }
 
-func onAPIPostBlockListWhitelistUpdate(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIPostBlockListWhitelistUpdate(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	type updateRequest struct {
 		Address string `json:"address"`
@@ -459,7 +459,7 @@ func onAPIPostBlockListWhitelistUpdate(app *App) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		whitelistID, errID := getIntParam(ctx, "cidr_block_whitelist_id")
 		if errID != nil {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
 
 			return
 		}
@@ -471,22 +471,22 @@ func onAPIPostBlockListWhitelistUpdate(app *App) gin.HandlerFunc {
 
 		_, cidr, errParse := net.ParseCIDR(req.Address)
 		if errParse != nil {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
 
 			return
 		}
 
 		var whitelist model.CIDRBlockWhitelist
-		if errGet := store.GetCIDRBlockWhitelist(ctx, app.db, whitelistID, &whitelist); errGet != nil {
-			responseErr(ctx, http.StatusNotFound, consts.ErrNotFound)
+		if errGet := env.Store().GetCIDRBlockWhitelist(ctx, whitelistID, &whitelist); errGet != nil {
+			responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 
 			return
 		}
 
 		whitelist.Address = cidr
 
-		if errSave := store.SaveCIDRBlockWhitelist(ctx, app.db, &whitelist); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if errSave := env.Store().SaveCIDRBlockWhitelist(ctx, &whitelist); errSave != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			log.Error("Failed to save whitelist", zap.Error(errSave))
 
@@ -495,19 +495,19 @@ func onAPIPostBlockListWhitelistUpdate(app *App) gin.HandlerFunc {
 	}
 }
 
-func onAPIDeleteBlockListWhitelist(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIDeleteBlockListWhitelist(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		whitelistID, errWhitelistID := getIntParam(ctx, "cidr_block_whitelist_id")
 		if errWhitelistID != nil {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
 
 			return
 		}
 
-		if err := store.DeleteCIDRBlockWhitelist(ctx, app.db, whitelistID); err != nil {
-			responseErr(ctx, http.StatusInternalServerError, consts.ErrInternal)
+		if err := env.Store().DeleteCIDRBlockWhitelist(ctx, whitelistID); err != nil {
+			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
 
 			log.Error("Failed to delete whitelist", zap.Error(err))
 
@@ -518,12 +518,12 @@ func onAPIDeleteBlockListWhitelist(app *App) gin.HandlerFunc {
 
 		ctx.JSON(http.StatusOK, nil)
 
-		app.netBlock.RemoveWhitelist(whitelistID)
+		env.NetBlocks().RemoveWhitelist(whitelistID)
 	}
 }
 
-func onAPIPostBlocklistCheck(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func onAPIPostBlocklistCheck(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	type checkReq struct {
 		Address string `json:"address"`
@@ -542,12 +542,12 @@ func onAPIPostBlocklistCheck(app *App) gin.HandlerFunc {
 
 		ipAddr := net.ParseIP(req.Address)
 		if ipAddr == nil {
-			responseErr(ctx, http.StatusBadRequest, consts.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
 
 			return
 		}
 
-		isBlocked, source := app.netBlock.IsMatch(ipAddr)
+		isBlocked, source := env.NetBlocks().IsMatch(ipAddr)
 
 		ctx.JSON(http.StatusOK, checkResp{
 			Blocked: isBlocked,

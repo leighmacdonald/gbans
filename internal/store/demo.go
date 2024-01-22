@@ -2,25 +2,25 @@ package store
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid/v5"
-	"github.com/leighmacdonald/gbans/internal/consts"
+	"github.com/leighmacdonald/gbans/internal/errs"
 	"github.com/leighmacdonald/gbans/internal/model"
-	"github.com/pkg/errors"
 )
 
-func ExpiredDemos(ctx context.Context, database Store, limit uint64) ([]model.DemoInfo, error) {
-	rows, errRow := database.QueryBuilder(ctx, database.
+func (s Stores) ExpiredDemos(ctx context.Context, limit uint64) ([]model.DemoInfo, error) {
+	rows, errRow := s.QueryBuilder(ctx, s.
 		Builder().
-		Select("d.demo_id", "d.title", "d.asset_id").
-		From("demo d").
-		Where(sq.NotEq{"d.archive": true}).
-		OrderBy("d.created_on desc").
+		Select("s.demo_id", "s.title", "s.asset_id").
+		From("demo s").
+		Where(sq.NotEq{"s.archive": true}).
+		OrderBy("s.created_on desc").
 		Offset(limit))
 	if errRow != nil {
-		return nil, DBErr(errRow)
+		return nil, errs.DBErr(errRow)
 	}
 
 	defer rows.Close()
@@ -30,7 +30,7 @@ func ExpiredDemos(ctx context.Context, database Store, limit uint64) ([]model.De
 	for rows.Next() {
 		var demo model.DemoInfo
 		if err := rows.Scan(&demo.DemoID, &demo.Title, &demo.AssetID); err != nil {
-			return nil, DBErr(err)
+			return nil, errs.DBErr(err)
 		}
 
 		demos = append(demos, demo)
@@ -39,17 +39,17 @@ func ExpiredDemos(ctx context.Context, database Store, limit uint64) ([]model.De
 	return demos, nil
 }
 
-func GetDemoByID(ctx context.Context, database Store, demoID int64, demoFile *model.DemoFile) error {
-	row, errRow := database.QueryRowBuilder(ctx, database.
+func (s Stores) GetDemoByID(ctx context.Context, demoID int64, demoFile *model.DemoFile) error {
+	row, errRow := s.QueryRowBuilder(ctx, s.
 		Builder().
-		Select("d.demo_id", "d.server_id", "d.title", "d.created_on", "d.downloads",
-			"d.map_name", "d.archive", "d.stats", "d.asset_id", "a.size", "s.short_name", "s.name").
-		From("demo d").
-		LeftJoin("server s ON s.server_id = d.server_id").
-		LeftJoin("asset a ON a.asset_id = d.asset_id").
+		Select("s.demo_id", "s.server_id", "s.title", "s.created_on", "s.downloads",
+			"s.map_name", "s.archive", "s.stats", "s.asset_id", "a.size", "s.short_name", "s.name").
+		From("demo s").
+		LeftJoin("server s ON s.server_id = s.server_id").
+		LeftJoin("asset a ON a.asset_id = s.asset_id").
 		Where(sq.Eq{"demo_id": demoID}))
 	if errRow != nil {
-		return DBErr(errRow)
+		return errs.DBErr(errRow)
 	}
 
 	var uuidScan *uuid.UUID
@@ -58,7 +58,7 @@ func GetDemoByID(ctx context.Context, database Store, demoID int64, demoFile *mo
 		&demoFile.CreatedOn, &demoFile.Downloads, &demoFile.MapName,
 		&demoFile.Archive, &demoFile.Stats, uuidScan, &demoFile.Size, &demoFile.ServerNameShort,
 		&demoFile.ServerNameLong); errQuery != nil {
-		return DBErr(errQuery)
+		return errs.DBErr(errQuery)
 	}
 
 	if uuidScan != nil {
@@ -68,17 +68,17 @@ func GetDemoByID(ctx context.Context, database Store, demoID int64, demoFile *mo
 	return nil
 }
 
-func GetDemoByName(ctx context.Context, database Store, demoName string, demoFile *model.DemoFile) error {
-	row, errRow := database.QueryRowBuilder(ctx, database.
+func (s Stores) GetDemoByName(ctx context.Context, demoName string, demoFile *model.DemoFile) error {
+	row, errRow := s.QueryRowBuilder(ctx, s.
 		Builder().
-		Select("d.demo_id", "d.server_id", "d.title", "d.created_on", "d.downloads",
-			"d.map_name", "d.archive", "d.stats", "d.asset_id", "a.size", "s.short_name", "s.name").
-		From("demo d").
-		LeftJoin("server s ON s.server_id = d.server_id").
-		LeftJoin("asset a ON a.asset_id = d.asset_id").
+		Select("s.demo_id", "s.server_id", "s.title", "s.created_on", "s.downloads",
+			"s.map_name", "s.archive", "s.stats", "s.asset_id", "a.size", "s.short_name", "s.name").
+		From("demo s").
+		LeftJoin("server s ON s.server_id = s.server_id").
+		LeftJoin("asset a ON a.asset_id = s.asset_id").
 		Where(sq.Eq{"title": demoName}))
 	if errRow != nil {
-		return DBErr(errRow)
+		return errs.DBErr(errRow)
 	}
 
 	var uuidScan *uuid.UUID
@@ -87,7 +87,7 @@ func GetDemoByName(ctx context.Context, database Store, demoName string, demoFil
 		&demoFile.CreatedOn, &demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats,
 		&demoFile.Stats, &uuidScan, &demoFile.Size, &demoFile.ServerNameShort,
 		&demoFile.ServerNameLong); errQuery != nil {
-		return DBErr(errQuery)
+		return errs.DBErr(errQuery)
 	}
 
 	if uuidScan != nil {
@@ -97,38 +97,31 @@ func GetDemoByName(ctx context.Context, database Store, demoName string, demoFil
 	return nil
 }
 
-type DemoFilter struct {
-	QueryFilter
-	SteamID   model.StringSID `json:"steam_id"`
-	ServerIds []int           `json:"server_ids"`
-	MapName   string          `json:"map_name"`
-}
-
-func GetDemos(ctx context.Context, database Store, opts DemoFilter) ([]model.DemoFile, int64, error) {
+func (s Stores) GetDemos(ctx context.Context, opts model.DemoFilter) ([]model.DemoFile, int64, error) {
 	var (
 		demos       []model.DemoFile
 		constraints sq.And
 	)
 
-	builder := database.
+	builder := s.
 		Builder().
-		Select("d.demo_id", "d.server_id", "d.title", "d.created_on", "d.downloads",
-			"d.map_name", "d.archive", "d.stats", "s.short_name", "s.name", "d.asset_id", "a.size").
-		From("demo d").
-		LeftJoin("server s ON s.server_id = d.server_id").
-		LeftJoin("asset a ON a.asset_id = d.asset_id")
+		Select("s.demo_id", "s.server_id", "s.title", "s.created_on", "s.downloads",
+			"s.map_name", "s.archive", "s.stats", "s.short_name", "s.name", "s.asset_id", "a.size").
+		From("demo s").
+		LeftJoin("server s ON s.server_id = s.server_id").
+		LeftJoin("asset a ON a.asset_id = s.asset_id")
 
 	if opts.MapName != "" {
-		constraints = append(constraints, sq.ILike{"d.map_name": "%" + strings.ToLower(opts.MapName) + "%"})
+		constraints = append(constraints, sq.ILike{"s.map_name": "%" + strings.ToLower(opts.MapName) + "%"})
 	}
 
 	if opts.SteamID != "" {
 		sid64, errSid := opts.SteamID.SID64(ctx)
 		if errSid != nil {
-			return nil, 0, consts.ErrInvalidSID
+			return nil, 0, errs.ErrInvalidSID
 		}
 
-		constraints = append(constraints, sq.Expr("d.stats ?? ?", sid64.String()))
+		constraints = append(constraints, sq.Expr("s.stats ?? ?", sid64.String()))
 	}
 
 	if len(opts.ServerIds) > 0 && opts.ServerIds[0] != 0 {
@@ -143,25 +136,25 @@ func GetDemos(ctx context.Context, database Store, opts DemoFilter) ([]model.Dem
 		}
 
 		if !anyServer {
-			constraints = append(constraints, sq.Eq{"d.server_id": opts.ServerIds})
+			constraints = append(constraints, sq.Eq{"s.server_id": opts.ServerIds})
 		}
 	}
 
-	builder = opts.applySafeOrder(builder, map[string][]string{
+	builder = opts.ApplySafeOrder(builder, map[string][]string{
 		"d.": {"demo_id", "server_id", "title", "created_on", "downloads", "map_name"},
 		"s.": {"short_name", "name"},
 		"a.": {"size"},
 	}, "demo_id")
 
-	builder = opts.applyLimitOffsetDefault(builder).Where(constraints)
+	builder = opts.ApplyLimitOffsetDefault(builder).Where(constraints)
 
-	rows, errQuery := database.QueryBuilder(ctx, builder)
+	rows, errQuery := s.QueryBuilder(ctx, builder)
 	if errQuery != nil {
-		if errors.Is(errQuery, ErrNoResult) {
+		if errors.Is(errQuery, errs.ErrNoResult) {
 			return demos, 0, nil
 		}
 
-		return nil, 0, DBErr(errQuery)
+		return nil, 0, errs.DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -175,7 +168,7 @@ func GetDemos(ctx context.Context, database Store, opts DemoFilter) ([]model.Dem
 		if errScan := rows.Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title, &demoFile.CreatedOn,
 			&demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats,
 			&demoFile.ServerNameShort, &demoFile.ServerNameLong, &uuidScan, &demoFile.Size); errScan != nil {
-			return nil, 0, DBErr(errScan)
+			return nil, 0, errs.DBErr(errScan)
 		}
 
 		if uuidScan != nil {
@@ -189,35 +182,35 @@ func GetDemos(ctx context.Context, database Store, opts DemoFilter) ([]model.Dem
 		return []model.DemoFile{}, 0, nil
 	}
 
-	count, errCount := getCount(ctx, database, database.
+	count, errCount := getCount(ctx, s, s.
 		Builder().
-		Select("count(d.demo_id)").
-		From("demo d").
+		Select("count(s.demo_id)").
+		From("demo s").
 		Where(constraints))
 	if errCount != nil {
-		return []model.DemoFile{}, 0, DBErr(errCount)
+		return []model.DemoFile{}, 0, errs.DBErr(errCount)
 	}
 
 	return demos, count, nil
 }
 
-func SaveDemo(ctx context.Context, database Store, demoFile *model.DemoFile) error {
+func (s Stores) SaveDemo(ctx context.Context, demoFile *model.DemoFile) error {
 	// Find open reports and if any are returned, mark the demo as archived so that it does not get auto
 	// deleted during cleanup.
 	// Reports can happen mid-game which is why this is checked when the demo is saved and not during the report where
 	// we have no completed demo instance/id yet.
-	reportRow, reportRowErr := database.QueryRowBuilder(ctx, database.
+	reportRow, reportRowErr := s.QueryRowBuilder(ctx, s.
 		Builder().
 		Select("count(report_id)").
 		From("report").
 		Where(sq.Eq{"demo_name": demoFile.Title}))
 	if reportRowErr != nil {
-		return errors.Wrap(reportRowErr, "Failed to select reports")
+		return errors.Join(reportRowErr, errors.New("Failed to select reports"))
 	}
 
 	var count int
-	if errScan := reportRow.Scan(&count); errScan != nil && !errors.Is(errScan, ErrNoResult) {
-		return DBErr(errScan)
+	if errScan := reportRow.Scan(&count); errScan != nil && !errors.Is(errScan, errs.ErrNoResult) {
+		return errs.DBErr(errScan)
 	}
 
 	if count > 0 {
@@ -226,16 +219,16 @@ func SaveDemo(ctx context.Context, database Store, demoFile *model.DemoFile) err
 
 	var err error
 	if demoFile.DemoID > 0 {
-		err = updateDemo(ctx, database, demoFile)
+		err = s.updateDemo(ctx, demoFile)
 	} else {
-		err = insertDemo(ctx, database, demoFile)
+		err = s.insertDemo(ctx, demoFile)
 	}
 
-	return DBErr(err)
+	return errs.DBErr(err)
 }
 
-func insertDemo(ctx context.Context, database Store, demoFile *model.DemoFile) error {
-	query, args, errQueryArgs := database.
+func (s Stores) insertDemo(ctx context.Context, demoFile *model.DemoFile) error {
+	query, args, errQueryArgs := s.
 		Builder().
 		Insert("demo").
 		Columns("server_id", "title", "created_on", "downloads", "map_name", "archive", "stats", "asset_id").
@@ -244,19 +237,19 @@ func insertDemo(ctx context.Context, database Store, demoFile *model.DemoFile) e
 		Suffix("RETURNING demo_id").
 		ToSql()
 	if errQueryArgs != nil {
-		return DBErr(errQueryArgs)
+		return errs.DBErr(errQueryArgs)
 	}
 
-	errQuery := database.QueryRow(ctx, query, args...).Scan(&demoFile.ServerID)
+	errQuery := s.QueryRow(ctx, query, args...).Scan(&demoFile.ServerID)
 	if errQuery != nil {
-		return DBErr(errQuery)
+		return errs.DBErr(errQuery)
 	}
 
 	return nil
 }
 
-func updateDemo(ctx context.Context, database Store, demoFile *model.DemoFile) error {
-	query := database.
+func (s Stores) updateDemo(ctx context.Context, demoFile *model.DemoFile) error {
+	query := s.
 		Builder().
 		Update("demo").
 		Set("title", demoFile.Title).
@@ -267,19 +260,19 @@ func updateDemo(ctx context.Context, database Store, demoFile *model.DemoFile) e
 		Set("asset_id", demoFile.AssetID).
 		Where(sq.Eq{"demo_id": demoFile.DemoID})
 
-	if errExec := database.ExecUpdateBuilder(ctx, query); errExec != nil {
-		return DBErr(errExec)
+	if errExec := s.ExecUpdateBuilder(ctx, query); errExec != nil {
+		return errs.DBErr(errExec)
 	}
 
 	return nil
 }
 
-func DropDemo(ctx context.Context, database Store, demoFile *model.DemoFile) error {
-	if errExec := database.ExecDeleteBuilder(ctx, database.
+func (s Stores) DropDemo(ctx context.Context, demoFile *model.DemoFile) error {
+	if errExec := s.ExecDeleteBuilder(ctx, s.
 		Builder().
 		Delete("demo").
 		Where(sq.Eq{"demo_id": demoFile.DemoID})); errExec != nil {
-		return DBErr(errExec)
+		return errs.DBErr(errExec)
 	}
 
 	demoFile.DemoID = 0
@@ -287,8 +280,8 @@ func DropDemo(ctx context.Context, database Store, demoFile *model.DemoFile) err
 	return nil
 }
 
-func SaveAsset(ctx context.Context, database Store, asset *model.Asset) error {
-	return DBErr(database.ExecInsertBuilder(ctx, database.
+func (s Stores) SaveAsset(ctx context.Context, asset *model.Asset) error {
+	return errs.DBErr(s.ExecInsertBuilder(ctx, s.
 		Builder().
 		Insert("asset").
 		Columns("asset_id", "bucket", "path", "name", "mime_type", "size", "old_id").
