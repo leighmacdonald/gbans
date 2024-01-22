@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -12,7 +13,6 @@ import (
 	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/mitchellh/go-homedir"
 	"github.com/mitchellh/mapstructure"
-	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 )
 
@@ -150,11 +150,6 @@ type Discord struct {
 	PublicMatchLogChannelID string `mapstructure:"public_match_log_channel_id"`
 	ModPingRoleID           string `mapstructure:"mod_ping_role_id"`
 	UnregisterOnStart       bool   `mapstructure:"unregister_on_start"`
-	ColourDebug             int    `mapstructure:"colour_debug"`
-	ColourSuccess           int    `mapstructure:"colour_success"`
-	ColourInfo              int    `mapstructure:"colour_info"`
-	ColourWarn              int    `mapstructure:"colour_warn"`
-	ColourError             int    `mapstructure:"colour_error"`
 }
 
 type Log struct {
@@ -199,7 +194,7 @@ func decodeDuration() mapstructure.DecodeHookFuncType {
 
 		duration, errDuration := util.ParseUserStringDuration(data.(string))
 		if errDuration != nil {
-			return nil, errors.Wrap(errDuration, "Cannot parse invalid duration")
+			return nil, errors.Join(errDuration, errors.New("Cannot parse invalid duration"))
 		}
 
 		return duration, nil
@@ -211,11 +206,11 @@ func Read(conf *Config, noFileOk bool) error {
 	setDefaultConfigValues()
 
 	if errReadConfig := viper.ReadInConfig(); errReadConfig != nil && !noFileOk {
-		return errors.Wrapf(errReadConfig, "Failed to read config file")
+		return errors.Join(errReadConfig, errors.New("Failed to read config file"))
 	}
 
 	if errUnmarshal := viper.Unmarshal(conf, viper.DecodeHook(mapstructure.DecodeHookFunc(decodeDuration()))); errUnmarshal != nil {
-		return errors.Wrap(errUnmarshal, "Invalid config file format")
+		return errors.Join(errUnmarshal, errors.New("Invalid config file format"))
 	}
 
 	if strings.HasPrefix(conf.DB.DSN, "pgx://") {
@@ -225,11 +220,11 @@ func Read(conf *Config, noFileOk bool) error {
 	gin.SetMode(conf.General.Mode.String())
 
 	if errSteam := steamid.SetKey(conf.General.SteamKey); errSteam != nil {
-		return errors.Wrap(errSteam, "Failed to set steamid api key")
+		return errors.Join(errSteam, errors.New("Failed to set steamid api key"))
 	}
 
 	if errSteamWeb := steamweb.SetKey(conf.General.SteamKey); errSteamWeb != nil {
-		return errors.Wrap(errSteamWeb, "Failed to set steamweb api key")
+		return errors.Join(errSteamWeb, errors.New("Failed to set steamweb api key"))
 	}
 
 	return nil
@@ -298,11 +293,6 @@ func setDefaultConfigValues() {
 		"discord.log_channel_id":                   "",
 		"discord.mod_ping_role_id":                 "",
 		"discord.unregister_on_start":              false,
-		"discord.colour_debug":                     10170623,
-		"discord.colour_success":                   302673,
-		"discord.colour_info":                      3581519,
-		"discord.colour_warn":                      14327864,
-		"discord.colour_error":                     13631488,
 		"ip2location.enabled":                      false,
 		"ip2location.token":                        "",
 		"ip2location.asn_enabled":                  false,

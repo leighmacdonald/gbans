@@ -1,29 +1,28 @@
 package log
 
 import (
+	"errors"
+
 	"github.com/TheZeroSlave/zapsentry"
 	"github.com/getsentry/sentry-go"
-	"github.com/leighmacdonald/gbans/internal/app"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
-func NewSentryClient(dsn string, tracing bool, sampleRate float64) (*sentry.Client, error) {
+func NewSentryClient(dsn string, tracing bool, sampleRate float64, buildVersion string) (*sentry.Client, error) {
 	hub := sentry.CurrentHub()
 	client, errClient := sentry.NewClient(sentry.ClientOptions{
 		// "https://examplePublicKey@o0.ingest.sentry.io/0"
 		Dsn:           dsn,
 		EnableTracing: tracing,
-		// Set TracesSampleRate to 1.0 to capture 100%
-		// of transactions for performance monitoring.
+		// Set TracesSampleRate to 1.0 to capture 100%		// of transactions for performance monitoring.
 		// We recommend adjusting this value in production,
 		TracesSampleRate: sampleRate,
-		Release:          app.BuildVersion,
+		Release:          buildVersion,
 	})
 
 	if errClient != nil {
-		return nil, errors.Wrap(errClient, "Failed to initialize sentry client")
+		return nil, errors.Join(errClient, errors.New("Failed to initialize sentry client"))
 	}
 
 	hub.BindClient(client)

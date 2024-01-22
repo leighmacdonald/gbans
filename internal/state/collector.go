@@ -1,8 +1,8 @@
-package app
+package state
 
 import (
 	"context"
-	gerrors "errors"
+	"errors"
 	"fmt"
 	"net"
 	"regexp"
@@ -13,21 +13,22 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/errs"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/rcon/rcon"
 	"github.com/leighmacdonald/steamid/v3/extra"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
-	"github.com/pkg/errors"
 	"github.com/ryanuber/go-glob"
 	"go.uber.org/zap"
 )
 
-// serverDetails contains the entire state for the servers. This
+// ServerState contains the entire State for the servers. This
 // contains sensitive information and should only be used where needed
 // by admins.
-type serverDetails struct {
-	// Database
+type ServerState struct {
 	ServerID  int    `json:"server_id"`
 	NameShort string `json:"name_short"`
 	Name      string `json:"name"`
@@ -65,7 +66,7 @@ type serverDetails struct {
 	VAC bool `json:"vac"`
 	// Version of the game installed on the server.
 	Version string `json:"version"`
-	// Server's SteamID.
+	// ServerStore's SteamID.
 	SteamID steamid.SID64 `json:"steam_id"`
 	// Tags that describe the game according to the server (for future use.)
 	Keywords []string `json:"keywords"`
@@ -82,53 +83,48 @@ type serverDetails struct {
 	Players []extra.Player `json:"players"`
 }
 
-type baseServer struct {
-	ServerID   int      `json:"server_id"`
-	Host       string   `json:"host"`
-	Port       int      `json:"port"`
-	IP         string   `json:"ip"`
-	Name       string   `json:"name"`
-	NameShort  string   `json:"name_short"`
-	Region     string   `json:"region"`
-	CC         string   `json:"cc"`
-	Players    int      `json:"players"`
-	MaxPlayers int      `json:"max_players"`
-	Bots       int      `json:"bots"`
-	Map        string   `json:"map"`
-	GameTypes  []string `json:"game_types"`
-	Latitude   float64  `json:"latitude"`
-	Longitude  float64  `json:"longitude"`
-	Distance   float64  `json:"distance"`
+type Collector struct {
+	log              *zap.Logger
+	statusUpdateFreq time.Duration
+	msListUpdateFreq time.Duration
+	updateTimeout    time.Duration
+	masterServerList []serverLocation
+	serverState      map[int]ServerState
+	stateMu          *sync.RWMutex
+	configs          []serverConfig
+	maxPlayersRx     *regexp.Regexp
 }
 
-var errUnknownServer = errors.New("Unknown server")
+func NewCollector(logger *zap.Logger) *Collector {
+	const (
+		statusUpdateFreq = time.Second * 20
+		msListUpdateFreq = time.Minute * 5
+		updateTimeout    = time.Second * 5
+	)
 
-type serverDetailsCollection []serverDetails
-
-type playerServerInfo struct {
-	Player   extra.Player
-	ServerID int
+	return &Collector{
+		log:              logger,
+		statusUpdateFreq: statusUpdateFreq,
+		msListUpdateFreq: msListUpdateFreq,
+		updateTimeout:    updateTimeout,
+		serverState:      map[int]ServerState{},
+		stateMu:          &sync.RWMutex{},
+		maxPlayersRx:     regexp.MustCompile(`^"sv_visiblemaxplayers" = "(\d{1,2})"\s`),
+	}
 }
 
-type findOpts struct {
-	Name    string
-	IP      *net.IP
-	SteamID steamid.SID64
-	CIDR    *net.IPNet `json:"cidr"`
-}
+func (c *Collector) Find(name string, steamID steamid.SID64, addr net.IP, cidr *net.IPNet) []model.PlayerServerInfo {
+	var found []model.PlayerServerInfo
 
-func (c *serverDetailsCollection) find(opts findOpts) []playerServerInfo {
-	var found []playerServerInfo
-
-	for _, server := range *c {
-		for _, player := range server.Players {
+	for server := range c.serverState {
+		for _, player := range c.serverState[server].Players {
 			matched := false
-			if opts.SteamID.Valid() && player.SID == opts.SteamID {
+			if steamID.Valid() && player.SID == steamID {
 				matched = true
 			}
 
-			if opts.Name != "" {
-				queryName := opts.Name
+			if name != "" {
+				queryName := name
 				if !strings.HasPrefix(queryName, "*") {
 					queryName = "*" + queryName
 				}
@@ -143,16 +139,16 @@ func (c *serverDetailsCollection) find(opts findOpts) []playerServerInfo {
 				}
 			}
 
-			if opts.IP != nil && opts.IP.Equal(player.IP) {
+			if addr != nil && addr.Equal(player.IP) {
 				matched = true
 			}
 
-			if opts.CIDR != nil && opts.CIDR.Contains(player.IP) {
+			if cidr != nil && cidr.Contains(player.IP) {
 				matched = true
 			}
 
 			if matched {
-				found = append(found, playerServerInfo{Player: player, ServerID: server.ServerID})
+				found = append(found, model.PlayerServerInfo{Player: player, ServerID: c.serverState[server].ServerID})
 			}
 		}
 	}
@@ -160,12 +156,12 @@ func (c *serverDetailsCollection) find(opts findOpts) []playerServerInfo {
 	return found
 }
 
-func (c *serverDetailsCollection) sortRegion() map[string]serverDetailsCollection {
-	serverMap := map[string]serverDetailsCollection{}
-	for _, server := range *c {
+func (c *Collector) SortRegion() map[string][]ServerState {
+	serverMap := map[string][]ServerState{}
+	for _, server := range c.serverState {
 		_, exists := serverMap[server.Region]
 		if !exists {
-			serverMap[server.Region] = serverDetailsCollection{}
+			serverMap[server.Region] = []ServerState{}
 		}
 
 		serverMap[server.Region] = append(serverMap[server.Region], server)
@@ -174,21 +170,23 @@ func (c *serverDetailsCollection) sortRegion() map[string]serverDetailsCollectio
 	return serverMap
 }
 
-func (c *serverDetailsCollection) byServerID(serverID int) (serverDetails, bool) {
-	for _, server := range *c {
+func (c *Collector) ByServerID(serverID int) (ServerState, bool) {
+	for _, server := range c.serverState {
 		if server.ServerID == serverID {
 			return server, true
 		}
 	}
 
-	return serverDetails{}, false
+	return ServerState{}, false
 }
 
-func (c *serverDetailsCollection) byName(name string, wildcardOk bool) serverDetailsCollection {
-	var servers serverDetailsCollection
+func (c *Collector) ByName(name string, wildcardOk bool) []ServerState {
+	var servers []ServerState
 
 	if name == "*" && wildcardOk {
-		servers = append(servers, *c...)
+		for _, server := range c.serverState {
+			servers = append(servers, server)
+		}
 	} else {
 		if !strings.HasPrefix(name, "*") {
 			name = "*" + name
@@ -198,7 +196,7 @@ func (c *serverDetailsCollection) byName(name string, wildcardOk bool) serverDet
 			name += "*"
 		}
 
-		for _, server := range *c {
+		for _, server := range c.serverState {
 			if glob.Glob(strings.ToLower(name), strings.ToLower(server.NameShort)) ||
 				strings.EqualFold(server.NameShort, name) {
 				servers = append(servers, server)
@@ -211,129 +209,93 @@ func (c *serverDetailsCollection) byName(name string, wildcardOk bool) serverDet
 	return servers
 }
 
-func (c *serverDetailsCollection) serverIDsByName(name string, wildcardOk bool) []int {
+func (c *Collector) ServerIDsByName(name string, wildcardOk bool) []int {
 	var servers []int //nolint:prealloc
-	for _, server := range c.byName(name, wildcardOk) {
+	for _, server := range c.ByName(name, wildcardOk) {
 		servers = append(servers, server.ServerID)
 	}
 
 	return servers
 }
 
-type rconController struct {
-	*rcon.RemoteConsole
-	*sync.RWMutex
-	attempts           int
-	lastConnectSuccess time.Time
-	lastConnectAttempt time.Time
+func (c *Collector) logAddressAdd(ctx context.Context, logAddress string) {
+	c.Broadcast(ctx, nil, fmt.Sprintf("logaddress_add %s", logAddress))
 }
 
-func (rc *rconController) connected() bool {
-	rc.RLock()
-	defer rc.RUnlock()
+// OnFindExec is a helper function used to execute rcon commands against any players found in the query.
+func (c *Collector) OnFindExec(ctx context.Context, name string, steamID steamid.SID64,
+	ip net.IP, cidr *net.IPNet, onFoundCmd func(info model.PlayerServerInfo) string,
+) error {
+	currentState := c.Current()
+	players := c.Find(name, steamID, ip, cidr)
 
-	return rc.RemoteConsole != nil
-}
-
-func (rc *rconController) allowedToConnect() bool {
-	const (
-		waitInterval    = time.Minute
-		limitMultiCount = 10
-	)
-
-	rc.RLock()
-	defer rc.RUnlock()
-
-	if rc.attempts == 0 || rc.RemoteConsole != nil {
-		return true
+	if len(players) == 0 {
+		return errs.ErrPlayerNotFound
 	}
 
-	multi := rc.attempts
-	if multi > limitMultiCount {
-		multi = limitMultiCount
-	}
+	var err error
 
-	return rc.lastConnectAttempt.Add(waitInterval * time.Duration(multi)).Before(time.Now())
-}
-
-type serverStateCollector struct {
-	log              *zap.Logger
-	statusUpdateFreq time.Duration
-	msListUpdateFreq time.Duration
-	updateTimeout    time.Duration
-	masterServerList []serverLocation
-	connections      map[int]*rconController
-	connectionsMu    *sync.RWMutex
-	serverState      map[int]serverDetails
-	stateMu          *sync.RWMutex
-	configs          []serverConfig
-	maxPlayersRx     *regexp.Regexp
-}
-
-func newServerStateCollector(logger *zap.Logger) *serverStateCollector {
-	const (
-		statusUpdateFreq = time.Second * 20
-		msListUpdateFreq = time.Minute * 5
-		updateTimeout    = time.Second * 5
-	)
-
-	return &serverStateCollector{
-		log:              logger,
-		statusUpdateFreq: statusUpdateFreq,
-		msListUpdateFreq: msListUpdateFreq,
-		updateTimeout:    updateTimeout,
-		connections:      map[int]*rconController{},
-		connectionsMu:    &sync.RWMutex{},
-		serverState:      map[int]serverDetails{},
-		stateMu:          &sync.RWMutex{},
-		maxPlayersRx:     regexp.MustCompile(`^"sv_visiblemaxplayers" = "(\d{1,2})"\s`),
-	}
-}
-
-func (c *serverStateCollector) logAddressAdd(logAddress string) {
-	time.Sleep(time.Second * 60)
-
-	c.connectionsMu.RLock()
-	defer c.connectionsMu.RUnlock()
-
-	for _, server := range c.connections {
-		if server.RemoteConsole == nil {
-			continue
-		}
-
-		_, errExec := server.Exec(fmt.Sprintf("logaddress_add %s", logAddress))
-		if errExec != nil {
-			c.log.Error("Failed to set logaddress")
+	for _, player := range players {
+		for _, server := range currentState {
+			if player.ServerID == server.ServerID {
+				_, errRcon := c.ExecServer(ctx, server.ServerID, onFoundCmd(player))
+				if errRcon != nil {
+					err = errors.Join(errRcon)
+				}
+			}
 		}
 	}
+
+	return err
 }
 
-func (c *serverStateCollector) rcon(serverID int, cmd string) (string, error) {
-	c.connectionsMu.RLock()
+var ErrUnknownServerID = errors.New("unknown server id")
 
-	conn, found := c.connections[serverID]
-	if !found || conn.RemoteConsole == nil {
-		c.connectionsMu.RUnlock()
+func (c *Collector) ExecServer(ctx context.Context, serverID int, cmd string) (string, error) {
+	var conf serverConfig
 
-		return "", errUnknownServer
+	for _, server := range c.configs {
+		if server.ServerID == serverID {
+			conf = server
+
+			break
+		}
 	}
 
-	c.connectionsMu.RUnlock()
+	if conf.ServerID == 0 {
+		return "", ErrUnknownServerID
+	}
 
-	conn.Lock()
-	defer conn.Unlock()
+	return c.ExecRaw(ctx, conf.addr(), conf.RconPassword, cmd)
+}
+
+func (c *Collector) ExecRaw(ctx context.Context, addr string, password string, cmd string) (string, error) {
+	conn, errConn := rcon.Dial(ctx, addr, password, time.Second*5)
+	if errConn != nil {
+		return "", fmt.Errorf("dailed to connect to conf")
+	}
 
 	resp, errExec := conn.Exec(cmd)
 	if errExec != nil {
-		return "", errors.Wrap(errExec, "Failed to perform command")
+		return "", errors.Join(errExec, ErrRCONExecCommand)
+	}
+
+	if errClose := conn.Close(); errClose != nil {
+		c.log.Error("Could not close rcon connection", zap.Error(errClose))
 	}
 
 	return resp, nil
 }
 
-func (c *serverStateCollector) broadcast(serverIDs []int, cmd string) map[int]string {
+func (c *Collector) Broadcast(ctx context.Context, serverIDs []int, cmd string) map[int]string {
 	results := map[int]string{}
 	waitGroup := sync.WaitGroup{}
+
+	if len(serverIDs) == 0 {
+		for _, conf := range c.configs {
+			serverIDs = append(serverIDs, conf.ServerID)
+		}
+	}
 
 	for _, serverID := range serverIDs {
 		waitGroup.Add(1)
@@ -341,8 +303,10 @@ func (c *serverStateCollector) broadcast(serverIDs []int, cmd string) map[int]st
 		go func(sid int) {
 			defer waitGroup.Done()
 
-			resp, errExec := c.rcon(sid, cmd)
+			resp, errExec := c.ExecServer(ctx, sid, cmd)
 			if errExec != nil {
+				c.log.Error("Failed to exec server command", zap.Int("server_id", sid), zap.Error(errExec))
+
 				return
 			}
 
@@ -355,11 +319,11 @@ func (c *serverStateCollector) broadcast(serverIDs []int, cmd string) map[int]st
 	return results
 }
 
-func (c *serverStateCollector) current() serverDetailsCollection {
+func (c *Collector) Current() []ServerState {
 	c.stateMu.RLock()
 	defer c.stateMu.RUnlock()
 
-	var curState []serverDetails //nolint:prealloc
+	var curState []ServerState //nolint:prealloc
 	for _, s := range c.serverState {
 		curState = append(curState, s)
 	}
@@ -371,7 +335,7 @@ func (c *serverStateCollector) current() serverDetailsCollection {
 	return curState
 }
 
-func (c *serverStateCollector) startMSL(ctx context.Context) {
+func (c *Collector) startMSL(ctx context.Context) {
 	var (
 		log            = c.log.Named("msl_update")
 		mlUpdateTicker = time.NewTicker(c.msListUpdateFreq)
@@ -396,7 +360,7 @@ func (c *serverStateCollector) startMSL(ctx context.Context) {
 	}
 }
 
-func (c *serverStateCollector) onStatusUpdate(conf serverConfig, newState extra.Status, maxVisible int) {
+func (c *Collector) onStatusUpdate(conf serverConfig, newState extra.Status, maxVisible int) {
 	c.stateMu.Lock()
 	defer c.stateMu.Unlock()
 
@@ -426,7 +390,7 @@ func (c *serverStateCollector) onStatusUpdate(conf serverConfig, newState extra.
 	c.serverState[conf.ServerID] = server
 }
 
-func (c *serverStateCollector) setServerConfigs(configs []serverConfig) {
+func (c *Collector) setServerConfigs(configs []serverConfig) {
 	c.stateMu.Lock()
 	defer c.stateMu.Unlock()
 
@@ -452,26 +416,26 @@ func (c *serverStateCollector) setServerConfigs(configs []serverConfig) {
 		delete(c.serverState, conf.ServerID)
 	}
 
-	for _, config := range configs {
-		if _, found := c.serverState[config.ServerID]; !found {
-			addr, errResolve := resolveIP(config.Host)
+	for _, cfg := range configs {
+		if _, found := c.serverState[cfg.ServerID]; !found {
+			addr, errResolve := ResolveIP(cfg.Host)
 			if errResolve != nil {
 				c.log.Warn("Failed to resolve server ip", zap.String("addr", addr), zap.Error(errResolve))
-				addr = config.Host
+				addr = cfg.Host
 			}
 
-			c.serverState[config.ServerID] = serverDetails{
-				ServerID:      config.ServerID,
-				Name:          config.DefaultHostname,
-				NameShort:     config.Tag,
-				Host:          config.Host,
-				Port:          config.Port,
-				RconPassword:  config.RconPassword,
-				ReservedSlots: config.ReservedSlots,
-				CC:            config.CC,
-				Region:        config.Region,
-				Latitude:      config.Latitude,
-				Longitude:     config.Longitude,
+			c.serverState[cfg.ServerID] = ServerState{
+				ServerID:      cfg.ServerID,
+				Name:          cfg.DefaultHostname,
+				NameShort:     cfg.Tag,
+				Host:          cfg.Host,
+				Port:          cfg.Port,
+				RconPassword:  cfg.RconPassword,
+				ReservedSlots: cfg.ReservedSlots,
+				CC:            cfg.CC,
+				Region:        cfg.Region,
+				Latitude:      cfg.Latitude,
+				Longitude:     cfg.Longitude,
 				IP:            addr,
 			}
 		}
@@ -480,36 +444,13 @@ func (c *serverStateCollector) setServerConfigs(configs []serverConfig) {
 	c.configs = configs
 }
 
-func resolveIP(addr string) (string, error) {
-	ipAddr := net.ParseIP(addr)
-	if ipAddr != nil {
-		return ipAddr.String(), nil
-	}
-
-	ips, err := net.LookupIP(addr)
-	if err != nil || len(ips) == 0 {
-		return "", errors.Wrap(err, "Failed to resolve server dns")
-	}
-
-	return ips[0].String(), nil
-}
-
-type partialStateUpdate struct {
-	Hostname       string `json:"hostname"`
-	ShortName      string `json:"short_name"`
-	CurrentMap     string `json:"current_map"`
-	PlayersReal    int    `json:"players_real"`
-	PlayersTotal   int    `json:"players_total"`
-	PlayersVisible int    `json:"players_visible"`
-}
-
-func (c *serverStateCollector) updateState(serverID int, update partialStateUpdate) error {
+func (c *Collector) Update(serverID int, update model.PartialStateUpdate) error {
 	c.stateMu.Lock()
 	defer c.stateMu.Unlock()
 
 	curState, ok := c.serverState[serverID]
 	if !ok {
-		return errUnknownServer
+		return errs.ErrUnknownServer
 	}
 
 	if update.Hostname != "" {
@@ -525,35 +466,24 @@ func (c *serverStateCollector) updateState(serverID int, update partialStateUpda
 	return nil
 }
 
-func (c *serverStateCollector) controllerRcon(controller *rconController, cmd string) (string, error) {
-	controller.Lock()
-	defer controller.Unlock()
+var (
+	ErrStatusParse       = errors.New("failed to parse status response")
+	ErrMaxPlayerIntParse = errors.New("failed to cast max players value")
+	ErrMaxPlayerParse    = errors.New("failed to parse sv_visiblemaxplayers response")
+	ErrServerListRequest = errors.New("failed to fetch updated list")
+	ErrDNSResolve        = errors.New("failed to resolve server dns")
+	ErrRCONExecCommand   = errors.New("failed to perform command")
+)
 
-	resp, errRcon := controller.Exec(cmd)
-
-	if errRcon != nil {
-		err := errors.Wrapf(errRcon, "Failed to exec rcon command: %s", cmd)
-		if errClose := controller.RemoteConsole.Close(); errClose != nil {
-			err = gerrors.Join(err, errors.Wrap(errClose, "Failed to close rcon connection"))
-		}
-
-		controller.RemoteConsole = nil
-
-		return "", err
-	}
-
-	return resp, nil
-}
-
-func (c *serverStateCollector) status(controller *rconController) (extra.Status, error) {
-	statusResp, errStatus := c.controllerRcon(controller, "status")
+func (c *Collector) status(ctx context.Context, serverID int) (extra.Status, error) {
+	statusResp, errStatus := c.ExecServer(ctx, serverID, "status")
 	if errStatus != nil {
 		return extra.Status{}, errStatus
 	}
 
 	status, errParse := extra.ParseStatus(statusResp, true)
 	if errParse != nil {
-		return extra.Status{}, errors.Wrap(errParse, "Failed to parse status response")
+		return extra.Status{}, errors.Join(errParse, ErrStatusParse)
 	}
 
 	return status, nil
@@ -561,20 +491,20 @@ func (c *serverStateCollector) status(controller *rconController) (extra.Status,
 
 const maxPlayersSupported = 101
 
-func (c *serverStateCollector) maxVisiblePlayers(controller *rconController) (int, error) {
-	maxPlayersResp, errMaxPlayers := c.controllerRcon(controller, "sv_visiblemaxplayers")
+func (c *Collector) maxVisiblePlayers(ctx context.Context, serverID int) (int, error) {
+	maxPlayersResp, errMaxPlayers := c.ExecServer(ctx, serverID, "sv_visiblemaxplayers")
 	if errMaxPlayers != nil {
 		return 0, errMaxPlayers
 	}
 
 	matches := c.maxPlayersRx.FindStringSubmatch(maxPlayersResp)
 	if matches == nil || len(matches) != 2 {
-		return 0, errors.New("Failed to parse sv_visiblemaxplayers response")
+		return 0, ErrMaxPlayerParse
 	}
 
 	maxPlayers, errCast := strconv.ParseInt(matches[1], 10, 32)
 	if errCast != nil {
-		return 0, errors.Wrap(errCast, "Failed to cast max players value")
+		return 0, errors.Join(errCast, ErrMaxPlayerIntParse)
 	}
 
 	if maxPlayers > maxPlayersSupported {
@@ -584,7 +514,7 @@ func (c *serverStateCollector) maxVisiblePlayers(controller *rconController) (in
 	return int(maxPlayers), nil
 }
 
-func (c *serverStateCollector) startStatus(ctx context.Context) {
+func (c *Collector) startStatus(ctx context.Context) {
 	var (
 		logger             = c.log.Named("statusUpdate")
 		statusUpdateTicker = time.NewTicker(c.statusUpdateFreq)
@@ -611,67 +541,17 @@ func (c *serverStateCollector) startStatus(ctx context.Context) {
 
 					log := logger.Named(conf.Tag)
 
-					c.connectionsMu.Lock()
-
-					controller, found := c.connections[conf.ServerID]
-					if !found {
-						controller = &rconController{RWMutex: &sync.RWMutex{}, RemoteConsole: nil, attempts: 0, lastConnectAttempt: time.Now()}
-						c.connections[conf.ServerID] = controller
-					}
-
-					c.connectionsMu.Unlock()
-
-					connected := controller.connected()
-
-					if !connected && !controller.allowedToConnect() {
-						return
-					}
-
-					if !connected {
-						dialCtx, cancel := context.WithTimeout(ctx, time.Second*5)
-						newConsole, errDial := rcon.Dial(dialCtx, conf.addr(), conf.RconPassword, c.updateTimeout)
-
-						if errDial != nil {
-							log.Debug("Failed to dial rcon", zap.String("err", errDial.Error()))
-						}
-
-						cancel()
-
-						controller.Lock()
-						controller.lastConnectAttempt = time.Now()
-
-						if newConsole != nil {
-							controller.lastConnectSuccess = controller.lastConnectAttempt
-							controller.attempts = 0
-							controller.RemoteConsole = newConsole
-							connected = true
-						} else {
-							controller.attempts++
-						}
-						controller.Unlock()
-					} else {
-						existing.Add(1)
-					}
-
-					if !connected {
-						return
-					}
-
-					status, errStatus := c.status(controller)
+					status, errStatus := c.status(ctx, conf.ServerID)
 					if errStatus != nil {
 						return
 					}
 
-					maxVisible, errMaxVisible := c.maxVisiblePlayers(controller)
+					maxVisible, errMaxVisible := c.maxVisiblePlayers(ctx, conf.ServerID)
 					if errMaxVisible != nil {
 						log.Warn("Got invalid max players value", zap.Error(errMaxVisible))
 					}
 
 					c.onStatusUpdate(conf, status, maxVisible)
-
-					c.connectionsMu.Lock()
-					c.connections[conf.ServerID] = controller
-					c.connectionsMu.Unlock()
 
 					successful.Add(1)
 				}(serverConfigInstance)
@@ -690,14 +570,14 @@ func (c *serverStateCollector) startStatus(ctx context.Context) {
 	}
 }
 
-func (c *serverStateCollector) updateMSL(ctx context.Context) ([]serverLocation, error) {
+func (c *Collector) updateMSL(ctx context.Context) ([]serverLocation, error) {
 	allServers, errServers := steamweb.GetServerList(ctx, map[string]string{
 		"appid":     "440",
 		"dedicated": "1",
 	})
 
 	if errServers != nil {
-		return nil, errors.Wrap(errServers, "Failed to fetch updated list")
+		return nil, errors.Join(errServers, ErrServerListRequest)
 	}
 
 	var ( //nolint:prealloc
@@ -759,9 +639,67 @@ func (c *serverStateCollector) updateMSL(ctx context.Context) ([]serverLocation,
 	return communityServers, nil
 }
 
-func (c *serverStateCollector) start(ctx context.Context) {
+type ServerStore interface {
+	GetServers(ctx context.Context, filter model.ServerQueryFilter) ([]model.Server, int64, error)
+}
+
+func (c *Collector) Start(ctx context.Context, configFunc func() config.Config, database func() ServerStore) {
+	var (
+		log          = c.log.Named("State")
+		trigger      = make(chan any)
+		updateTicker = time.NewTicker(time.Minute * 30)
+	)
+
 	go c.startMSL(ctx)
 	go c.startStatus(ctx)
+
+	go func() {
+		trigger <- true
+	}()
+
+	for {
+		select {
+		case <-updateTicker.C:
+			trigger <- true
+		case <-trigger:
+			servers, _, errServers := database().GetServers(ctx, model.ServerQueryFilter{
+				QueryFilter:     model.QueryFilter{Deleted: false},
+				IncludeDisabled: false,
+			})
+			if errServers != nil && !errors.Is(errServers, errs.ErrNoResult) {
+				log.Error("Failed to fetch servers, cannot update State", zap.Error(errServers))
+
+				continue
+			}
+
+			var configs []serverConfig
+			for _, server := range servers {
+				configs = append(configs, newServerConfig(
+					server.ServerID,
+					server.ShortName,
+					server.Name,
+					server.Address,
+					server.Port,
+					server.RCON,
+					server.ReservedSlots,
+					server.CC,
+					server.Region,
+					server.Latitude,
+					server.Longitude,
+				))
+			}
+
+			c.setServerConfigs(configs)
+
+			conf := configFunc()
+			if conf.Debug.AddRCONLogAddress != "" {
+				c.logAddressAdd(ctx, conf.Debug.AddRCONLogAddress)
+			}
+
+		case <-ctx.Done():
+			return
+		}
+	}
 }
 
 func newServerConfig(serverID int, name string, defaultHostname string, address string,
@@ -893,4 +831,18 @@ func newGlobalTF2Stats() globalTF2StatsSnapshot {
 type serverLocation struct {
 	ip2location.LatLong
 	steamweb.Server
+}
+
+func ResolveIP(addr string) (string, error) {
+	ipAddr := net.ParseIP(addr)
+	if ipAddr != nil {
+		return ipAddr.String(), nil
+	}
+
+	ips, err := net.LookupIP(addr)
+	if err != nil || len(ips) == 0 {
+		return "", errors.Join(err, ErrDNSResolve)
+	}
+
+	return ips[0].String(), nil
 }

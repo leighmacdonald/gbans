@@ -1,7 +1,8 @@
-package app
+package api
 
 import (
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -16,12 +17,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/consts"
+	"github.com/leighmacdonald/gbans/internal/errs"
 	"github.com/leighmacdonald/gbans/internal/model"
-	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"github.com/pkg/errors"
 	"github.com/yohcop/openid-go"
 	"go.uber.org/zap"
 )
@@ -39,8 +39,8 @@ func (n *noOpDiscoveryCache) Get(_ string) openid.DiscoveredInfo {
 	return nil
 }
 
-func authServerMiddleWare(app *App) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func authServerMiddleWare(env Env) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		reqAuthHeader := ctx.GetHeader("Authorization")
@@ -63,7 +63,7 @@ func authServerMiddleWare(app *App) gin.HandlerFunc {
 
 		claims := &serverAuthClaims{}
 
-		parsedToken, errParseClaims := jwt.ParseWithClaims(reqAuthHeader, claims, makeGetTokenKey(app.config().HTTP.CookieKey))
+		parsedToken, errParseClaims := jwt.ParseWithClaims(reqAuthHeader, claims, makeGetTokenKey(env.Config().HTTP.CookieKey))
 		if errParseClaims != nil {
 			if errors.Is(errParseClaims, jwt.ErrSignatureInvalid) {
 				log.Error("jwt signature invalid!", zap.Error(errParseClaims))
@@ -92,7 +92,7 @@ func authServerMiddleWare(app *App) gin.HandlerFunc {
 		}
 
 		var server model.Server
-		if errGetServer := store.GetServer(ctx, app.db, claims.ServerID, &server); errGetServer != nil {
+		if errGetServer := env.Store().GetServer(ctx, claims.ServerID, &server); errGetServer != nil {
 			log.Error("Failed to load server during auth", zap.Error(errGetServer))
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 
@@ -124,17 +124,17 @@ func referral(ctx *gin.Context) string {
 	return referralURL
 }
 
-func onOpenIDCallback(app *App) gin.HandlerFunc {
+func onOpenIDCallback(env Env) gin.HandlerFunc {
 	nonceStore := openid.NewSimpleNonceStore()
 	discoveryCache := &noOpDiscoveryCache{}
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 	oidRx := regexp.MustCompile(`^https://steamcommunity\.com/openid/id/(\d+)$`)
 
 	return func(ctx *gin.Context) {
 		var idStr string
 
 		referralURL := referral(ctx)
-		conf := app.config()
+		conf := env.Config()
 		fullURL := conf.General.ExternalURL + ctx.Request.URL.String()
 
 		if conf.Debug.SkipOpenIDValidation {
@@ -175,14 +175,20 @@ func onOpenIDCallback(app *App) gin.HandlerFunc {
 		}
 
 		person := model.NewPerson(sid)
-		if errGetProfile := PersonBySID(ctx, app.db, sid, &person); errGetProfile != nil {
-			log.Error("Failed to fetch user profile", zap.Error(errGetProfile))
-			ctx.Redirect(302, referralURL)
+		if person.Expired() {
+			if errGetProfile := thirdparty.UpdatePlayerSummary(ctx, &person); errGetProfile != nil {
+				log.Error("Failed to fetch user profile", zap.Error(errGetProfile))
+				ctx.Redirect(302, referralURL)
 
-			return
+				return
+			}
+
+			if errSave := env.Store().SavePerson(ctx, &person); errSave != nil {
+				log.Error("Failed to save summary update", zap.Error(errSave))
+			}
 		}
 
-		tokens, errToken := makeTokens(ctx, app.db, conf.HTTP.CookieKey, sid, true)
+		tokens, errToken := makeTokens(ctx, env, conf.HTTP.CookieKey, sid, true)
 		if errToken != nil {
 			ctx.Redirect(302, referralURL)
 			log.Error("Failed to create access token pair", zap.Error(errToken))
@@ -241,9 +247,20 @@ func fingerprintHash(fingerprint string) string {
 	return fmt.Sprintf("%x", hasher.Sum([]byte(fingerprint)))
 }
 
+var (
+	ErrCreateToken         = errors.New("failed to create new access token")
+	ErrRefreshToken        = errors.New("failed to create new refresh token")
+	ErrClientIP            = errors.New("failed to parse IP")
+	ErrSaveToken           = errors.New("failed to save new createRefresh token")
+	ErrSignToken           = errors.New("failed create signed string")
+	ErrSignJWT             = errors.New("failed create signed JWT string")
+	ErrAuthHeader          = errors.New("failed to bind auth header")
+	ErrMalformedAuthHeader = errors.New("invalid auth header format")
+)
+
 // makeTokens generates new jwt auth tokens
 // fingerprint is a random string used to prevent side-jacking.
-func makeTokens(ctx *gin.Context, database store.Store, cookieKey string, sid steamid.SID64, createRefresh bool) (userTokens, error) {
+func makeTokens(ctx *gin.Context, env Env, cookieKey string, sid steamid.SID64, createRefresh bool) (userTokens, error) {
 	if cookieKey == "" {
 		return userTokens{}, errors.New("cookieKey or fingerprint empty")
 	}
@@ -252,7 +269,7 @@ func makeTokens(ctx *gin.Context, database store.Store, cookieKey string, sid st
 
 	accessToken, errJWT := newUserToken(sid, cookieKey, fingerprint, authTokenDuration)
 	if errJWT != nil {
-		return userTokens{}, errors.Wrap(errJWT, "Failed to create new access token")
+		return userTokens{}, errors.Join(errJWT, ErrCreateToken)
 	}
 
 	refreshToken := ""
@@ -260,17 +277,17 @@ func makeTokens(ctx *gin.Context, database store.Store, cookieKey string, sid st
 	if createRefresh {
 		newRefreshToken, errRefresh := newUserToken(sid, cookieKey, fingerprint, refreshTokenDuration)
 		if errRefresh != nil {
-			return userTokens{}, errors.Wrap(errRefresh, "Failed to create new refresh token")
+			return userTokens{}, errors.Join(errRefresh, ErrRefreshToken)
 		}
 
 		ipAddr := net.ParseIP(ctx.ClientIP())
 		if ipAddr == nil {
-			return userTokens{}, errors.New("Failed to parse IP")
+			return userTokens{}, ErrClientIP
 		}
 
 		personAuth := model.NewPersonAuth(sid, ipAddr, fingerprint)
-		if saveErr := store.SavePersonAuth(ctx, database, &personAuth); saveErr != nil {
-			return userTokens{}, errors.Wrap(saveErr, "Failed to save new createRefresh token")
+		if saveErr := env.Store().SavePersonAuth(ctx, &personAuth); saveErr != nil {
+			return userTokens{}, errors.Join(saveErr, ErrSaveToken)
 		}
 
 		refreshToken = newRefreshToken
@@ -323,7 +340,7 @@ func newUserToken(steamID steamid.SID64, cookieKey string, userContext string, v
 	signedToken, errSigned := tokenWithClaims.SignedString([]byte(cookieKey))
 
 	if errSigned != nil {
-		return "", errors.Wrap(errSigned, "Failed create signed string")
+		return "", errors.Join(errSigned, ErrSignToken)
 	}
 
 	return signedToken, nil
@@ -345,7 +362,7 @@ func newServerToken(serverID int, cookieKey string) (string, error) {
 
 	signedToken, errSigned := tokenWithClaims.SignedString([]byte(cookieKey))
 	if errSigned != nil {
-		return "", errors.Wrap(errSigned, "Failed create signed string")
+		return "", errors.Join(errSigned, ErrSignJWT)
 	}
 
 	return signedToken, nil
@@ -358,7 +375,7 @@ type authHeader struct {
 func tokenFromHeader(ctx *gin.Context, emptyOK bool) (string, error) {
 	hdr := authHeader{}
 	if errBind := ctx.ShouldBindHeader(&hdr); errBind != nil {
-		return "", errors.Wrap(errBind, "Failed to bind auth header")
+		return "", errors.Join(errBind, ErrAuthHeader)
 	}
 
 	pcs := strings.Split(hdr.Authorization, " ")
@@ -369,29 +386,29 @@ func tokenFromHeader(ctx *gin.Context, emptyOK bool) (string, error) {
 
 		ctx.AbortWithStatus(http.StatusForbidden)
 
-		return "", errors.New("Invalid auth header")
+		return "", ErrMalformedAuthHeader
 	}
 
 	return pcs[1], nil
 }
 
 // authMiddleware handles client authentication to the HTTP API.
-func authMiddleware(app *App, level consts.Privilege) gin.HandlerFunc {
-	log := app.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func authMiddleware(env Env, level model.Privilege) gin.HandlerFunc {
+	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		var token string
 
-		hdrToken, errToken := tokenFromHeader(ctx, level == consts.PGuest)
+		hdrToken, errToken := tokenFromHeader(ctx, level == model.PGuest)
 		if errToken != nil || hdrToken == "" {
-			ctx.Set(ctxKeyUserProfile, model.UserProfile{PermissionLevel: consts.PGuest, Name: "Guest"})
+			ctx.Set(ctxKeyUserProfile, model.UserProfile{PermissionLevel: model.PGuest, Name: "Guest"})
 		} else {
 			token = hdrToken
 
-			if level >= consts.PGuest {
-				sid, errFromToken := sid64FromJWTToken(token, app.config().HTTP.CookieKey)
+			if level >= model.PGuest {
+				sid, errFromToken := sid64FromJWTToken(token, env.Config().HTTP.CookieKey)
 				if errFromToken != nil {
-					if errors.Is(errFromToken, consts.ErrExpired) {
+					if errors.Is(errFromToken, errs.ErrExpired) {
 						ctx.AbortWithStatus(http.StatusUnauthorized)
 
 						return
@@ -404,7 +421,7 @@ func authMiddleware(app *App, level consts.Privilege) gin.HandlerFunc {
 				}
 
 				loggedInPerson := model.NewPerson(sid)
-				if errGetPerson := store.GetOrCreatePersonBySteamID(ctx, app.db, sid, &loggedInPerson); errGetPerson != nil {
+				if errGetPerson := env.Store().GetOrCreatePersonBySteamID(ctx, sid, &loggedInPerson); errGetPerson != nil {
 					log.Error("Failed to load person during auth", zap.Error(errGetPerson))
 					ctx.AbortWithStatus(http.StatusForbidden)
 
@@ -418,8 +435,8 @@ func authMiddleware(app *App, level consts.Privilege) gin.HandlerFunc {
 				}
 
 				bannedPerson := model.NewBannedPerson()
-				if errBan := store.GetBanBySteamID(ctx, app.db, sid, &bannedPerson, false); errBan != nil {
-					if !errors.Is(errBan, store.ErrNoResult) {
+				if errBan := env.Store().GetBanBySteamID(ctx, sid, &bannedPerson, false); errBan != nil {
+					if !errors.Is(errBan, errs.ErrNoResult) {
 						log.Error("Failed to fetch authed user ban", zap.Error(errBan))
 					}
 				}
@@ -448,7 +465,7 @@ func authMiddleware(app *App, level consts.Privilege) gin.HandlerFunc {
 					})
 				}
 			} else {
-				ctx.Set(ctxKeyUserProfile, model.UserProfile{PermissionLevel: consts.PGuest, Name: "Guest"})
+				ctx.Set(ctxKeyUserProfile, model.UserProfile{PermissionLevel: model.PGuest, Name: "Guest"})
 			}
 		}
 
@@ -462,23 +479,23 @@ func sid64FromJWTToken(token string, cookieKey string) (steamid.SID64, error) {
 	tkn, errParseClaims := jwt.ParseWithClaims(token, claims, makeGetTokenKey(cookieKey))
 	if errParseClaims != nil {
 		if errors.Is(errParseClaims, jwt.ErrSignatureInvalid) {
-			return "", consts.ErrAuthentication
+			return "", errs.ErrAuthentication
 		}
 
 		if errors.Is(errParseClaims, jwt.ErrTokenExpired) {
-			return "", consts.ErrExpired
+			return "", errs.ErrExpired
 		}
 
-		return "", consts.ErrAuthentication
+		return "", errs.ErrAuthentication
 	}
 
 	if !tkn.Valid {
-		return "", consts.ErrAuthentication
+		return "", errs.ErrAuthentication
 	}
 
 	sid := steamid.New(claims.Subject)
 	if !sid.Valid() {
-		return "", consts.ErrAuthentication
+		return "", errs.ErrAuthentication
 	}
 
 	return sid, nil

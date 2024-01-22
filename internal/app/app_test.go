@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -19,9 +20,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/api"
+	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
@@ -144,22 +146,22 @@ func decodeTestResponse(r *http.Response, target any) error {
 func testServerAPI(app *App) func(t *testing.T) {
 	return func(t *testing.T) {
 		ctx := context.Background()
-		httpServer := newHTTPServer(ctx, app)
+		httpServer := api.newHTTPServer(ctx, app)
 		testServer := store.NewServer("test-1", "127.0.0.1", 27015)
 		testServer.Name = "Test Instance"
 		require.NoError(t, app.db.SaveServer(ctx, &testServer))
-		token, errToken := newServerToken(testServer.ServerID, app.config().HTTP.CookieKey)
+		token, errToken := api.newServerToken(testServer.ServerID, app.Config().HTTP.CookieKey)
 		require.NoError(t, errToken)
 		testBaddie := "76561197961279983"
 
 		t.Run("auth_valid", func(t *testing.T) {
 			t.Parallel()
-			req := newTestReq("POST", "/api/server/auth", ServerAuthReq{
+			req := newTestReq("POST", "/api/server/auth", api.ServerAuthReq{
 				Key: testServer.Password,
 			}, "")
 			w := httptest.NewRecorder()
 			httpServer.Handler.ServeHTTP(w, req)
-			var resp ServerAuthResp
+			var resp api.ServerAuthResp
 			require.NoError(t, decodeTestResponse(w.Result(), &resp))
 			require.True(t, resp.Status)
 			require.True(t, len(resp.Token) > 8)
@@ -168,12 +170,12 @@ func testServerAPI(app *App) func(t *testing.T) {
 
 		t.Run("auth_invalid", func(t *testing.T) {
 			t.Parallel()
-			req := newTestReq(http.MethodPost, "/api/server/auth", ServerAuthReq{
+			req := newTestReq(http.MethodPost, "/api/server/auth", api.ServerAuthReq{
 				Key: "xxxxx",
 			}, "xxxxxxxxxxxxxxx")
 			w := httptest.NewRecorder()
 			httpServer.Handler.ServeHTTP(w, req)
-			var resp ServerAuthResp
+			var resp api.ServerAuthResp
 			require.NoError(t, decodeTestResponse(w.Result(), &resp))
 			require.False(t, resp.Status)
 			require.Equal(t, "", resp.Token)
@@ -182,7 +184,7 @@ func testServerAPI(app *App) func(t *testing.T) {
 
 		t.Run("check_no_token", func(t *testing.T) {
 			t.Parallel()
-			req := newTestReq(http.MethodPost, "/api/check", CheckRequest{
+			req := newTestReq(http.MethodPost, "/api/check", api.CheckRequest{
 				ClientID: 10,
 				SteamID:  "76561197961279983",
 				IP:       net.ParseIP("10.10.10.10"),
@@ -203,18 +205,18 @@ func testServerAPI(app *App) func(t *testing.T) {
 			require.True(t, len(perms) >= 1)
 			ownerFound := false
 			for _, perm := range perms {
-				if steamid.SIDToSID64(perm.SteamID) == app.config().General.Owner {
+				if steamid.SIDToSID64(perm.SteamID) == app.Config().General.Owner {
 					ownerFound = true
 					break
 				}
 			}
-			require.True(t, ownerFound, "Failed to find owner sid")
+			require.True(t, ownerFound, "Failed to Find owner sid")
 		})
 
 		t.Run("sm_ban", func(t *testing.T) {
 			t.Parallel()
-			req := newTestReq(http.MethodPost, "/api/sm/bans/steam/create", apiBanRequest{
-				SourceID:       store.StringSID(app.config().General.Owner.String()),
+			req := newTestReq(http.MethodPost, "/api/sm/bans/steam/create", api.apiBanRequest{
+				SourceID:       store.StringSID(app.Config().General.Owner.String()),
 				TargetID:       store.StringSID(testBaddie),
 				Duration:       "custom",
 				ValidUntil:     time.Now().Add(time.Hour * 11),
@@ -237,8 +239,8 @@ func testServerAPI(app *App) func(t *testing.T) {
 
 		t.Run("sm_report", func(t *testing.T) {
 			t.Parallel()
-			req := newTestReq(http.MethodPost, "/api/sm/report/create", apiCreateReportReq{
-				SourceID:        store.StringSID(app.config().General.Owner.String()),
+			req := newTestReq(http.MethodPost, "/api/sm/report/create", api.apiCreateReportReq{
+				SourceID:        store.StringSID(app.Config().General.Owner.String()),
 				TargetID:        store.StringSID(testBaddie),
 				Description:     "User report message",
 				Reason:          store.Custom,
@@ -257,7 +259,7 @@ func testServerAPI(app *App) func(t *testing.T) {
 
 		t.Run("sm_ping", func(t *testing.T) {
 			t.Parallel()
-			req := newTestReq(http.MethodPost, "/api/ping_mod", pingReq{
+			req := newTestReq(http.MethodPost, "/api/ping_mod", api.pingReq{
 				ServerName: testServer.ShortName,
 				Name:       "Uncle Lame",
 				SteamID:    steamid.SID64(testBaddie),
@@ -272,13 +274,13 @@ func testServerAPI(app *App) func(t *testing.T) {
 		t.Run("state_push", func(t *testing.T) {
 			t.Parallel()
 			app.state.stateMu.Lock()
-			app.state.serverState[testServer.ServerID] = serverDetails{
+			app.state.serverState[testServer.ServerID] = state.serverDetails{
 				ServerID:  testServer.ServerID,
 				NameShort: testServer.ShortName,
 				Name:      testServer.Name,
 			}
 			app.state.stateMu.Unlock()
-			req := newTestReq(http.MethodPost, "/api/state_update", partialStateUpdate{
+			req := newTestReq(http.MethodPost, "/api/state_update", state.partialStateUpdate{
 				Hostname:       testServer.Name,
 				ShortName:      testServer.ShortName,
 				CurrentMap:     "pl_goodburger",

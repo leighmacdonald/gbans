@@ -2,17 +2,17 @@ package store
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/leighmacdonald/gbans/internal/consts"
+	"github.com/leighmacdonald/gbans/internal/errs"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"github.com/pkg/errors"
 )
 
-func GetServer(ctx context.Context, database Store, serverID int, server *model.Server) error {
-	row, rowErr := database.QueryRowBuilder(ctx, database.
+func (s Stores) GetServer(ctx context.Context, serverID int, server *model.Server) error {
+	row, rowErr := s.QueryRowBuilder(ctx, s.
 		Builder().
 		Select("server_id", "short_name", "name", "address", "port", "rcon", "password",
 			"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
@@ -20,7 +20,7 @@ func GetServer(ctx context.Context, database Store, serverID int, server *model.
 		From("server").
 		Where(sq.And{sq.Eq{"server_id": serverID}, sq.Eq{"deleted": false}}))
 	if rowErr != nil {
-		return DBErr(rowErr)
+		return errs.DBErr(rowErr)
 	}
 
 	if errScan := row.Scan(&server.ServerID, &server.ShortName, &server.Name, &server.Address, &server.Port, &server.RCON,
@@ -28,20 +28,20 @@ func GetServer(ctx context.Context, database Store, serverID int, server *model.
 		&server.ReservedSlots, &server.IsEnabled, &server.Region, &server.CC,
 		&server.Latitude, &server.Longitude,
 		&server.Deleted, &server.LogSecret, &server.EnableStats); errScan != nil {
-		return DBErr(errScan)
+		return errs.DBErr(errScan)
 	}
 
 	return nil
 }
 
-func GetServerPermissions(ctx context.Context, database Store) ([]model.ServerPermission, error) {
-	rows, errRows := database.QueryBuilder(ctx, database.
+func (s Stores) GetServerPermissions(ctx context.Context) ([]model.ServerPermission, error) {
+	rows, errRows := s.QueryBuilder(ctx, s.
 		Builder().
 		Select("steam_id", "permission_level").From("person").
-		Where(sq.GtOrEq{"permission_level": consts.PReserved}).
+		Where(sq.GtOrEq{"permission_level": model.PReserved}).
 		OrderBy("permission_level desc"))
 	if errRows != nil {
-		return nil, DBErr(errRows)
+		return nil, errs.DBErr(errRows)
 	}
 
 	defer rows.Close()
@@ -51,22 +51,22 @@ func GetServerPermissions(ctx context.Context, database Store) ([]model.ServerPe
 	for rows.Next() {
 		var (
 			sid   int64
-			perm  consts.Privilege
+			perm  model.Privilege
 			flags string
 		)
 
 		if errScan := rows.Scan(&sid, &perm); errScan != nil {
-			return nil, DBErr(errScan)
+			return nil, errs.DBErr(errScan)
 		}
 
 		switch perm {
-		case consts.PReserved:
+		case model.PReserved:
 			flags = "a"
-		case consts.PEditor:
+		case model.PEditor:
 			flags = "aj"
-		case consts.PModerator:
+		case model.PModerator:
 			flags = "abcdegjk"
-		case consts.PAdmin:
+		case model.PAdmin:
 			flags = "z"
 		}
 
@@ -80,13 +80,8 @@ func GetServerPermissions(ctx context.Context, database Store) ([]model.ServerPe
 	return perms, nil
 }
 
-type ServerQueryFilter struct {
-	QueryFilter
-	IncludeDisabled bool `json:"include_disabled"`
-}
-
-func GetServers(ctx context.Context, database Store, filter ServerQueryFilter) ([]model.Server, int64, error) {
-	builder := database.
+func (s Stores) GetServers(ctx context.Context, filter model.ServerQueryFilter) ([]model.Server, int64, error) {
+	builder := s.
 		Builder().
 		Select("s.server_id", "s.short_name", "s.name", "s.address", "s.port", "s.rcon", "s.password",
 			"s.token_created_on", "s.created_on", "s.updated_on", "s.reserved_slots", "s.is_enabled", "s.region", "s.cc",
@@ -103,7 +98,7 @@ func GetServers(ctx context.Context, database Store, filter ServerQueryFilter) (
 		constraints = append(constraints, sq.Eq{"s.is_enabled": true})
 	}
 
-	builder = filter.applySafeOrder(builder, map[string][]string{
+	builder = filter.ApplySafeOrder(builder, map[string][]string{
 		"s.": {
 			"server_id", "short_name", "name", "address", "port",
 			"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
@@ -111,11 +106,11 @@ func GetServers(ctx context.Context, database Store, filter ServerQueryFilter) (
 		},
 	}, "short_name")
 
-	builder = filter.applyLimitOffset(builder, 250).Where(constraints)
+	builder = filter.ApplyLimitOffset(builder, 250).Where(constraints)
 
-	rows, errQueryExec := database.QueryBuilder(ctx, builder)
+	rows, errQueryExec := s.QueryBuilder(ctx, builder)
 	if errQueryExec != nil {
-		return []model.Server{}, 0, DBErr(errQueryExec)
+		return []model.Server{}, 0, errs.DBErr(errQueryExec)
 	}
 
 	defer rows.Close()
@@ -129,29 +124,29 @@ func GetServers(ctx context.Context, database Store, filter ServerQueryFilter) (
 				&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn, &server.ReservedSlots,
 				&server.IsEnabled, &server.Region, &server.CC, &server.Latitude, &server.Longitude,
 				&server.Deleted, &server.LogSecret, &server.EnableStats); errScan != nil {
-			return nil, 0, errors.Wrap(errScan, "Failed to scan server")
+			return nil, 0, errors.Join(errScan, errors.New("Failed to scan server"))
 		}
 
 		servers = append(servers, server)
 	}
 
 	if rows.Err() != nil {
-		return nil, 0, DBErr(rows.Err())
+		return nil, 0, errs.DBErr(rows.Err())
 	}
 
-	count, errCount := getCount(ctx, database, database.
+	count, errCount := getCount(ctx, s, s.
 		Builder().
 		Select("count(s.server_id)").
 		From("server s").
 		Where(constraints))
 	if errCount != nil {
-		return nil, 0, DBErr(errCount)
+		return nil, 0, errs.DBErr(errCount)
 	}
 
 	return servers, count, nil
 }
 
-func GetServerByName(ctx context.Context, database Store, serverName string, server *model.Server, disabledOk bool, deletedOk bool) error {
+func (s Stores) GetServerByName(ctx context.Context, serverName string, server *model.Server, disabledOk bool, deletedOk bool) error {
 	and := sq.And{sq.Eq{"short_name": serverName}}
 	if !disabledOk {
 		and = append(and, sq.Eq{"is_enabled": true})
@@ -161,7 +156,7 @@ func GetServerByName(ctx context.Context, database Store, serverName string, ser
 		and = append(and, sq.Eq{"deleted": false})
 	}
 
-	row, errRow := database.QueryRowBuilder(ctx, database.
+	row, errRow := s.QueryRowBuilder(ctx, s.
 		Builder().
 		Select("server_id", "short_name", "name", "address", "port", "rcon", "password",
 			"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
@@ -169,10 +164,10 @@ func GetServerByName(ctx context.Context, database Store, serverName string, ser
 		From("server").
 		Where(and))
 	if errRow != nil {
-		return DBErr(errRow)
+		return errs.DBErr(errRow)
 	}
 
-	return DBErr(row.Scan(
+	return errs.DBErr(row.Scan(
 		&server.ServerID,
 		&server.ShortName,
 		&server.Name,
@@ -184,7 +179,7 @@ func GetServerByName(ctx context.Context, database Store, serverName string, ser
 		&server.Deleted, &server.LogSecret, &server.EnableStats))
 }
 
-func GetServerByPassword(ctx context.Context, database Store, serverPassword string, server *model.Server, disabledOk bool, deletedOk bool) error {
+func (s Stores) GetServerByPassword(ctx context.Context, serverPassword string, server *model.Server, disabledOk bool, deletedOk bool) error {
 	and := sq.And{sq.Eq{"password": serverPassword}}
 	if !disabledOk {
 		and = append(and, sq.Eq{"is_enabled": true})
@@ -194,7 +189,7 @@ func GetServerByPassword(ctx context.Context, database Store, serverPassword str
 		and = append(and, sq.Eq{"deleted": false})
 	}
 
-	row, errRow := database.QueryRowBuilder(ctx, database.
+	row, errRow := s.QueryRowBuilder(ctx, s.
 		Builder().
 		Select("server_id", "short_name", "name", "address", "port", "rcon", "password",
 			"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
@@ -202,28 +197,28 @@ func GetServerByPassword(ctx context.Context, database Store, serverPassword str
 		From("server").
 		Where(and))
 	if errRow != nil {
-		return DBErr(errRow)
+		return errs.DBErr(errRow)
 	}
 
-	return DBErr(row.Scan(&server.ServerID, &server.ShortName, &server.Name, &server.Address, &server.Port,
+	return errs.DBErr(row.Scan(&server.ServerID, &server.ShortName, &server.Name, &server.Address, &server.Port,
 		&server.RCON, &server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn,
 		&server.ReservedSlots, &server.IsEnabled, &server.Region, &server.CC, &server.Latitude,
 		&server.Longitude, &server.Deleted, &server.LogSecret, &server.EnableStats))
 }
 
 // SaveServer updates or creates the server data in the database.
-func SaveServer(ctx context.Context, database Store, server *model.Server) error {
+func (s Stores) SaveServer(ctx context.Context, server *model.Server) error {
 	server.UpdatedOn = time.Now()
 	if server.ServerID > 0 {
-		return updateServer(ctx, database, server)
+		return s.updateServer(ctx, server)
 	}
 
 	server.CreatedOn = time.Now()
 
-	return insertServer(ctx, database, server)
+	return s.insertServer(ctx, server)
 }
 
-func insertServer(ctx context.Context, database Store, server *model.Server) error {
+func (s Stores) insertServer(ctx context.Context, server *model.Server) error {
 	const query = `
 		INSERT INTO server (
 		    short_name, name, address, port, rcon, token_created_on, 
@@ -232,22 +227,22 @@ func insertServer(ctx context.Context, database Store, server *model.Server) err
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
 		RETURNING server_id;`
 
-	err := database.QueryRow(ctx, query, server.ShortName, server.Name, server.Address, server.Port,
+	err := s.QueryRow(ctx, query, server.ShortName, server.Name, server.Address, server.Port,
 		server.RCON, server.TokenCreatedOn, server.ReservedSlots, server.CreatedOn, server.UpdatedOn,
 		server.Password, server.IsEnabled, server.Region, server.CC,
 		server.Latitude, server.Longitude, server.Deleted, &server.LogSecret, &server.EnableStats).
 		Scan(&server.ServerID)
 	if err != nil {
-		return DBErr(err)
+		return errs.DBErr(err)
 	}
 
 	return nil
 }
 
-func updateServer(ctx context.Context, database Store, server *model.Server) error {
+func (s Stores) updateServer(ctx context.Context, server *model.Server) error {
 	server.UpdatedOn = time.Now()
 
-	return DBErr(database.ExecUpdateBuilder(ctx, database.
+	return errs.DBErr(s.ExecUpdateBuilder(ctx, s.
 		Builder().
 		Update("server").
 		Set("short_name", server.ShortName).
@@ -270,8 +265,8 @@ func updateServer(ctx context.Context, database Store, server *model.Server) err
 		Where(sq.Eq{"server_id": server.ServerID})))
 }
 
-func DropServer(ctx context.Context, database Store, serverID int) error {
-	return DBErr(database.ExecUpdateBuilder(ctx, database.
+func (s Stores) DropServer(ctx context.Context, serverID int) error {
+	return errs.DBErr(s.ExecUpdateBuilder(ctx, s.
 		Builder().
 		Update("server").
 		Set("deleted", true).

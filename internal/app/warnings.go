@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -9,76 +10,57 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/model"
-	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
-func newWarningTracker(log *zap.Logger, store store.Store, config config.Filter,
-	issuedFunc warningsIssuedFunc, exceededFunc warningsExceededFunc,
-) *WarningTracker {
-	tracker := WarningTracker{
+type WarningStore interface {
+	SaveFilter(ctx context.Context, filter *model.Filter) error
+}
+
+func NewTracker(log *zap.Logger, db WarningStore, conf config.Filter, onIssue OnIssuedFunc, onExceed OnExceededFunc) *Tracker {
+	tracker := Tracker{
 		log:                log.Named("warnTracker"),
-		warnings:           make(map[steamid.SID64][]userWarning),
-		warningChan:        make(chan newUserWarning),
-		wordFilters:        wordFilters{},
-		db:                 store,
-		onWarningsExceeded: exceededFunc,
-		onWarning:          issuedFunc,
+		warnings:           make(map[steamid.SID64][]model.UserWarning),
+		WarningChan:        make(chan model.NewUserWarning),
+		wordFilters:        WordFilters{},
+		db:                 db,
+		config:             conf,
+		onWarningsExceeded: onExceed,
+		onWarning:          onIssue,
 		warningMu:          &sync.RWMutex{},
 	}
-
-	tracker.SetConfig(config)
 
 	return &tracker
 }
 
-func (w *WarningTracker) SetConfig(config config.Filter) {
+func (w *Tracker) SetConfig(config config.Filter) {
 	w.config = config
 }
 
-type newUserWarning struct {
-	userMessage model.PersonMessage
-	userWarning
-}
-
-type userWarning struct {
-	WarnReason    model.Reason  `json:"warn_reason"`
-	Message       string        `json:"message"`
-	Matched       string        `json:"matched"`
-	MatchedFilter *model.Filter `json:"matched_filter"`
-	CreatedOn     time.Time     `json:"created_on"`
-	Personaname   string        `json:"personaname"`
-	Avatar        string        `json:"avatar"`
-	ServerName    string        `json:"server_name"`
-	ServerID      int           `json:"server_id"`
-	SteamID       string        `json:"steam_id"`
-	CurrentTotal  int           `json:"current_total"`
-}
-
-type WarningTracker struct {
+type Tracker struct {
 	log                *zap.Logger
-	db                 store.Store
+	db                 WarningStore
 	warningMu          *sync.RWMutex
-	warnings           map[steamid.SID64][]userWarning
-	warningChan        chan newUserWarning
-	wordFilters        wordFilters
+	warnings           map[steamid.SID64][]model.UserWarning
+	WarningChan        chan model.NewUserWarning
+	wordFilters        WordFilters
 	config             config.Filter
-	onWarningsExceeded warningsExceededFunc
-	onWarning          warningsIssuedFunc
+	onWarningsExceeded OnExceededFunc
+	onWarning          OnIssuedFunc
 }
 
-// state returns a string key so its more easily portable to frontend js w/o using BigInt.
-func (w *WarningTracker) state() map[string][]userWarning {
+// State returns a string key so its more easily portable to frontend js w/o using BigInt.
+func (w *Tracker) State() map[string][]model.UserWarning {
 	w.warningMu.RLock()
 	defer w.warningMu.RUnlock()
 
-	out := make(map[string][]userWarning)
+	out := make(map[string][]model.UserWarning)
 
 	for steamID, v := range w.warnings {
-		var warnings []userWarning
+		var warnings []model.UserWarning
 
 		warnings = append(warnings, v...)
 
@@ -88,7 +70,7 @@ func (w *WarningTracker) state() map[string][]userWarning {
 	return out
 }
 
-func (w *WarningTracker) check(now time.Time) {
+func (w *Tracker) check(now time.Time) {
 	w.warningMu.Lock()
 	defer w.warningMu.Unlock()
 
@@ -111,13 +93,13 @@ func (w *WarningTracker) check(now time.Time) {
 	}
 }
 
-func (w *WarningTracker) trigger(ctx context.Context, newWarn newUserWarning) {
-	if !newWarn.userMessage.SteamID.Valid() {
+func (w *Tracker) trigger(ctx context.Context, newWarn model.NewUserWarning) {
+	if !newWarn.UserMessage.SteamID.Valid() {
 		return
 	}
 
 	newWarn.MatchedFilter.TriggerCount++
-	if errSave := store.SaveFilter(ctx, w.db, newWarn.MatchedFilter); errSave != nil {
+	if errSave := w.db.SaveFilter(ctx, newWarn.MatchedFilter); errSave != nil {
 		w.log.Error("Failed to update filter trigger count", zap.Error(errSave))
 	}
 
@@ -128,9 +110,9 @@ func (w *WarningTracker) trigger(ctx context.Context, newWarn newUserWarning) {
 	if !w.config.Dry {
 		w.warningMu.Lock()
 
-		_, found := w.warnings[newWarn.userMessage.SteamID]
+		_, found := w.warnings[newWarn.UserMessage.SteamID]
 		if !found {
-			w.warnings[newWarn.userMessage.SteamID] = []userWarning{}
+			w.warnings[newWarn.UserMessage.SteamID] = []model.UserWarning{}
 		}
 
 		var (
@@ -138,20 +120,20 @@ func (w *WarningTracker) trigger(ctx context.Context, newWarn newUserWarning) {
 			count         int
 		)
 
-		for _, existing := range w.warnings[newWarn.userMessage.SteamID] {
+		for _, existing := range w.warnings[newWarn.UserMessage.SteamID] {
 			currentWeight += existing.MatchedFilter.Weight
 			count++
 		}
 
 		newWarn.CurrentTotal = currentWeight + newWarn.MatchedFilter.Weight
 
-		w.warnings[newWarn.userMessage.SteamID] = append(w.warnings[newWarn.userMessage.SteamID], newWarn.userWarning)
+		w.warnings[newWarn.UserMessage.SteamID] = append(w.warnings[newWarn.UserMessage.SteamID], newWarn.UserWarning)
 
 		w.warningMu.Unlock()
 
 		if currentWeight > w.config.MaxWeight {
 			w.log.Info("Warn limit exceeded",
-				zap.Int64("sid64", newWarn.userMessage.SteamID.Int64()),
+				zap.Int64("sid64", newWarn.UserMessage.SteamID.Int64()),
 				zap.Int("count", count), zap.Int("weight", currentWeight))
 
 			if err := w.onWarningsExceeded(ctx, w, newWarn); err != nil {
@@ -165,7 +147,7 @@ func (w *WarningTracker) trigger(ctx context.Context, newWarn newUserWarning) {
 	}
 }
 
-func (w *WarningTracker) start(ctx context.Context) {
+func (w *Tracker) Start(ctx context.Context) {
 	ticker := time.NewTicker(w.config.CheckTimeout)
 
 	for {
@@ -173,7 +155,7 @@ func (w *WarningTracker) start(ctx context.Context) {
 		case now := <-ticker.C:
 			w.check(now)
 			ticker.Reset(w.config.CheckTimeout)
-		case newWarn := <-w.warningChan:
+		case newWarn := <-w.WarningChan:
 			w.trigger(ctx, newWarn)
 		case <-ctx.Done():
 			return
@@ -181,42 +163,49 @@ func (w *WarningTracker) start(ctx context.Context) {
 	}
 }
 
-type warningsExceededFunc func(ctx context.Context, w *WarningTracker, newWarning newUserWarning) error
+type OnExceededFunc func(ctx context.Context, w *Tracker, newWarning model.NewUserWarning) error
 
-type warningsIssuedFunc func(ctx context.Context, w *WarningTracker, newWarning newUserWarning) error
+type OnIssuedFunc func(ctx context.Context, w *Tracker, newWarning model.NewUserWarning) error
 
-func onWarningHandler(app WarnApplication) warningsIssuedFunc {
-	return func(ctx context.Context, w *WarningTracker, newWarning newUserWarning) error {
+//
+//type WarnApplication interface {
+//	Config() config.Config
+//	Bot() common.ChatBot
+//	BanSteam(ctx context.Context, steam *model.BanSteam) error
+//	Kick(ctx context.Context, origin model.Origin, sid64 steamid.SID64, author steamid.SID64, reason model.Reason) error
+//	PSay(ctx context.Context, target steamid.SID64, message string) error
+//}
+
+func onWarningHandler(app *App) OnIssuedFunc {
+	return func(ctx context.Context, w *Tracker, newWarning model.NewUserWarning) error {
 		msg := fmt.Sprintf("[WARN] Please refrain from using slurs/toxicity (see: rules & MOTD). " +
 			"Further offenses will result in mutes/bans")
 
-		if errPSay := app.PSay(ctx, newWarning.userMessage.SteamID, msg); errPSay != nil {
-			return errors.Wrap(errPSay, "Failed to send user warning psay message")
+		if errPSay := state.PSay(ctx, app.State(), newWarning.UserMessage.SteamID, msg); errPSay != nil {
+			return errors.Join(errPSay, errors.New("Failed to send user warning psay message"))
 		}
 
 		return nil
 	}
 }
 
-func onWarningExceeded(app WarnApplication) warningsExceededFunc {
-	return func(ctx context.Context, tracker *WarningTracker, newWarning newUserWarning) error {
+func onWarningExceeded(app *App) OnExceededFunc {
+	return func(ctx context.Context, tracker *Tracker, newWarning model.NewUserWarning) error {
 		var (
 			errBan   error
 			banSteam model.BanSteam
-			expIn    = "Permanent"
-			expAt    = expIn
 		)
 
-		conf := app.config()
+		conf := app.Config()
 
 		if newWarning.MatchedFilter.Action == model.Ban || newWarning.MatchedFilter.Action == model.Mute {
 			duration, errDuration := util.ParseDuration(newWarning.MatchedFilter.Duration)
 			if errDuration != nil {
-				return errors.Wrap(errDuration, "Failed to parse word filter duration value")
+				return errors.Join(errDuration, errors.New("Failed to parse word filter duration value"))
 			}
 
 			if errNewBan := model.NewBanSteam(ctx, model.StringSID(conf.General.Owner.String()),
-				model.StringSID(newWarning.userMessage.SteamID.String()),
+				model.StringSID(newWarning.UserMessage.SteamID.String()),
 				duration,
 				newWarning.WarnReason,
 				"",
@@ -226,7 +215,7 @@ func onWarningExceeded(app WarnApplication) warningsExceededFunc {
 				model.NoComm,
 				false,
 				&banSteam); errNewBan != nil {
-				return errors.Wrap(errNewBan, "Failed to create warning ban")
+				return errors.Join(errNewBan, errors.New("Failed to create warning ban"))
 			}
 		}
 
@@ -238,65 +227,23 @@ func onWarningExceeded(app WarnApplication) warningsExceededFunc {
 			banSteam.BanType = model.Banned
 			errBan = app.BanSteam(ctx, &banSteam)
 		case model.Kick:
-			errBan = app.Kick(ctx, model.System, newWarning.userMessage.SteamID, conf.General.Owner, newWarning.WarnReason)
+			errBan = state.Kick(ctx, app.state, newWarning.UserMessage.SteamID, newWarning.WarnReason)
 		}
 
 		if errBan != nil {
-			return errors.Wrap(errBan, "Failed to apply warning action")
-		}
-
-		title := "Language Warning"
-		if conf.Filter.Dry {
-			title = "[DRYRUN] " + title
+			return errors.Join(errBan, errors.New("Failed to apply warning action"))
 		}
 
 		var person model.Person
-		if personErr := store.GetPersonBySteamID(ctx, tracker.db, newWarning.userMessage.SteamID, &person); personErr != nil {
-			return errors.Wrap(personErr, "Failed to get person for warning")
+		if personErr := app.Store().GetPersonBySteamID(ctx, newWarning.UserMessage.SteamID, &person); personErr != nil {
+			return errors.Join(personErr, errors.New("Failed to get Person for warning"))
 		}
-
-		bot := app.bot()
-		if bot == nil {
+		if !conf.Filter.PingDiscord {
 			return nil
 		}
 
-		msgEmbed := discord.NewEmbed(conf, title)
-		msgEmbed.Embed().
-			SetDescription(newWarning.userWarning.Message).
-			SetColor(conf.Discord.ColourWarn).
-			AddField("Filter ID", fmt.Sprintf("%d", newWarning.MatchedFilter.FilterID)).
-			AddField("Matched", newWarning.Matched).
-			AddField("Server", newWarning.userMessage.ServerName).InlineAllFields().
-			AddField("Pattern", newWarning.MatchedFilter.Pattern)
-
-		msgEmbed.
-			AddFieldsSteamID(newWarning.userMessage.SteamID).
-			Embed().
-			AddField("Name", person.PersonaName)
-
-		if banSteam.ValidUntil.Year()-time.Now().Year() < 5 {
-			expIn = util.FmtDuration(banSteam.ValidUntil)
-			expAt = util.FmtTimeShort(banSteam.ValidUntil)
-		}
-
-		msgEmbed.Embed().AddField("Expires In", expIn).
-			AddField("Expires At", expAt)
-
-		if conf.Filter.PingDiscord {
-			bot.SendPayload(discord.Payload{
-				ChannelID: conf.Discord.LogChannelID,
-				Embed:     msgEmbed.Message(),
-			})
-		}
+		app.SendPayload(conf.Discord.LogChannelID, discord.WarningMessage(newWarning, banSteam, person))
 
 		return nil
 	}
-}
-
-type WarnApplication interface {
-	config() config.Config
-	bot() ChatBot
-	BanSteam(ctx context.Context, steam *model.BanSteam) error
-	Kick(ctx context.Context, origin model.Origin, sid64 steamid.SID64, author steamid.SID64, reason model.Reason) error
-	PSay(ctx context.Context, target steamid.SID64, message string) error
 }

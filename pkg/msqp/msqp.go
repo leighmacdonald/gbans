@@ -6,11 +6,10 @@ package msqp
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"net"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 const masterBrowserHost = "hl2master.steampowered.com:27011"
@@ -57,7 +56,7 @@ func List(c *net.UDPConn, regions []Region) ([]*ServerEndpoint, error) {
 		for firstRequest || lastIp != endIp {
 			r, errList := sendListRequest(c, lastIp, filter, region)
 			if errList != nil {
-				return nil, errors.Wrap(errList, "Failed to send list request")
+				return nil, errors.Join(errList, errors.New("Failed to send list request"))
 			}
 			if len(r) == 0 {
 				// Shouldn't happen?
@@ -90,7 +89,7 @@ func sendListRequest(conn *net.UDPConn, ipStart string, filter string, regionCod
 	buf.WriteString(filter)
 	_, errWrite := conn.Write(buf.Bytes())
 	if errWrite != nil {
-		return nil, errors.Wrap(errWrite, "Failed to write udp bytes")
+		return nil, errors.Join(errWrite, errors.New("failed to write udp bytes"))
 	}
 	buffer := make([]byte, 1600)
 	if errDeadLine := conn.SetReadDeadline(time.Now().Add(time.Second)); errDeadLine != nil {
@@ -98,16 +97,16 @@ func sendListRequest(conn *net.UDPConn, ipStart string, filter string, regionCod
 	}
 	readCount, _, errRead := conn.ReadFromUDP(buffer)
 	if errRead != nil {
-		return nil, errors.Wrap(errWrite, "Failed to read udp bytes")
+		return nil, errors.Join(errWrite, errors.New("failed to read udp bytes"))
 	}
 	const structSize int = 6
 	if readCount%structSize > 0 {
-		return nil, errors.New("Query list response has a length which is not multiple of 6")
+		return nil, errors.New("query list response has a length which is not multiple of 6")
 	}
 	var endpoints []*ServerEndpoint
 	replyHeader := []byte{0xFF, 0xFF, 0xFF, 0xFF, 0x66, 0x0A}
 	if !bytes.Equal(replyHeader, buffer[0:structSize]) {
-		return nil, errors.New("Query list response header is malformed")
+		return nil, errors.New("query list response header is malformed")
 	}
 	res := buffer[structSize:readCount]
 	count := len(res)

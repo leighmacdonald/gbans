@@ -1,10 +1,11 @@
 package fp
 
 import (
+	"errors"
 	"sync"
-
-	"github.com/pkg/errors"
 )
+
+var ErrDuplicateChannel = errors.New("duplicate channel registration")
 
 type Broadcaster[T comparable, V any] struct {
 	// Each log event can have any number of channels associated with them
@@ -43,7 +44,7 @@ func (eb *Broadcaster[k, v]) Consume(serverEventChan chan v, keys ...k) error {
 			if existing == serverEventChan {
 				eb.allReadersMu.Unlock()
 
-				return errors.New("Duplicate channel registration")
+				return ErrDuplicateChannel
 			}
 		}
 

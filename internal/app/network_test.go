@@ -12,7 +12,7 @@ import (
 func TestNetworkBlocker(t *testing.T) {
 	testName := "test"
 	testSource := "https://raw.githubusercontent.com/X4BNet/lists_vpn/main/output/datacenter/ipv4.txt"
-	blocker := app.NewNetworkBlocker()
+	blocker := app.NewBlocker()
 
 	count, errAdd := blocker.AddRemoteSource(context.Background(), testName, testSource)
 	require.NoError(t, errAdd)

@@ -2,42 +2,39 @@ package app
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/store"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"gopkg.in/mxpv/patreon-go.v1"
 )
 
-type patreonManager struct {
+type PatreonManager struct {
 	patreonClient    *patreon.Client
 	patreonMu        *sync.RWMutex
 	patreonCampaigns []patreon.Campaign
 	patreonPledges   []patreon.Pledge
 	log              *zap.Logger
 	conf             config.Config
-	db               store.Store
 }
 
-func newPatreonManager(logger *zap.Logger, conf config.Config, db store.Store) *patreonManager {
-	return &patreonManager{
+func NewPatreonManager(logger *zap.Logger, conf config.Config) *PatreonManager {
+	return &PatreonManager{
 		log:       logger.Named("patreon"),
 		conf:      conf,
-		db:        db,
 		patreonMu: &sync.RWMutex{},
 	}
 }
 
 // // start https://www.patreon.com/portal/registration/register-clients
-// func (p *patreonManager) start(ctx context.Context) (*patreon.Client, error) {
+// func (p *PatreonManager) start(ctx context.Context) (*patreon.Client, error) {
 //	log := p.log.Named("patreonClient")
 //	cat, crt, errAuth := p.db.GetPatreonAuth(ctx)
 //
 //	if errAuth != nil || cat == "" || crt == "" {
-//		// Attempt to use config file values as the initial source if we have nothing saved.
+//		// Attempt to use Config file values as the initial source if we have nothing saved.
 //		// These are only used once as they are dynamically updated and stored
 //		// in the database for subsequent retrievals
 //		cat = p.conf.Patreon.CreatorAccessToken
@@ -51,7 +48,7 @@ func newPatreonManager(logger *zap.Logger, conf config.Config, db store.Store) *
 //			AuthURL:  patreon.AuthorizationURL,
 //			TokenURL: patreon.AccessTokenURL,
 //		},
-//		Scopes: []string{"users", "pledges-to-me", "campaigns", "my-campaign"},
+//		Scopes: []string{"users", "Pledges-to-me", "campaigns", "my-campaign"},
 //	}
 //
 //	tok := &oauth2.Token{
@@ -108,19 +105,19 @@ func newPatreonManager(logger *zap.Logger, conf config.Config, db store.Store) *
 //	return nil
 // }
 
-func (p *patreonManager) tiers() ([]patreon.Campaign, error) {
+func (p *PatreonManager) Tiers() ([]patreon.Campaign, error) {
 	campaigns, errCampaigns := p.patreonClient.FetchCampaign()
 	if errCampaigns != nil {
-		return nil, errors.Wrap(errCampaigns, "Failed to fetch campaign")
+		return nil, errors.Join(errCampaigns, errors.New("Failed to fetch campaign"))
 	}
 
 	return campaigns.Data, nil
 }
 
-func (p *patreonManager) pledges() ([]patreon.Pledge, map[string]*patreon.User, error) {
+func (p *PatreonManager) Pledges() ([]patreon.Pledge, map[string]*patreon.User, error) {
 	campaignResponse, err := p.patreonClient.FetchCampaign()
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "Failed to fetch campaign")
+		return nil, nil, errors.Join(err, errors.New("Failed to fetch campaign"))
 	}
 
 	if len(campaignResponse.Data) == 0 {
@@ -140,7 +137,7 @@ func (p *patreonManager) pledges() ([]patreon.Pledge, map[string]*patreon.User, 
 			patreon.WithPageSize(25),
 			patreon.WithCursor(cursor))
 		if errFetch != nil {
-			return nil, nil, errors.Wrap(errFetch, "Failed to fetch current pledges")
+			return nil, nil, errors.Join(errFetch, errors.New("Failed to fetch Current Pledges"))
 		}
 
 		for _, item := range pledgesResponse.Included.Items {
@@ -167,7 +164,7 @@ func (p *patreonManager) pledges() ([]patreon.Pledge, map[string]*patreon.User, 
 	return out, users, nil
 }
 
-func (p *patreonManager) updater(ctx context.Context) {
+func (p *PatreonManager) Start(ctx context.Context) {
 	var (
 		log         = p.log.Named("patreon")
 		updateTimer = time.NewTicker(time.Hour * 1)
@@ -187,16 +184,16 @@ func (p *patreonManager) updater(ctx context.Context) {
 		case <-updateTimer.C:
 			updateChan <- true
 		case <-updateChan:
-			newCampaigns, errCampaigns := p.tiers()
+			newCampaigns, errCampaigns := p.Tiers()
 			if errCampaigns != nil {
 				log.Error("Failed to refresh campaigns", zap.Error(errCampaigns))
 
 				return
 			}
 
-			newPledges, _, errPledges := p.pledges()
+			newPledges, _, errPledges := p.Pledges()
 			if errPledges != nil {
-				log.Error("Failed to refresh pledges", zap.Error(errPledges))
+				log.Error("Failed to refresh Pledges", zap.Error(errPledges))
 
 				return
 			}

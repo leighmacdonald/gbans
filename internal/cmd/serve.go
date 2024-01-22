@@ -11,7 +11,6 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/log"
 	"github.com/leighmacdonald/gbans/internal/s3"
 	"github.com/leighmacdonald/gbans/internal/store"
@@ -38,7 +37,7 @@ func serveCmd() *cobra.Command {
 			var sentryClient *sentry.Client
 			var errSentry error
 
-			sentryClient, errSentry = log.NewSentryClient(conf.Log.SentryDSN, conf.Log.SentryTrace, conf.Log.SentrySampleRate)
+			sentryClient, errSentry = log.NewSentryClient(conf.Log.SentryDSN, conf.Log.SentryTrace, conf.Log.SentrySampleRate, app.BuildVersion)
 
 			rootLogger := log.MustCreate(&conf, sentryClient)
 			defer func() {
@@ -64,7 +63,7 @@ func serveCmd() *cobra.Command {
 				}
 			}()
 
-			bot, errBot := discord.New(rootLogger, conf)
+			bot, errBot := app.NewDiscord(rootLogger, conf)
 			if errBot != nil {
 				rootLogger.Fatal("Failed to connect to perform initial discord connection")
 			}

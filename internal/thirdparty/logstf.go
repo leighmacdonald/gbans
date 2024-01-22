@@ -3,6 +3,7 @@ package thirdparty
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,7 +11,6 @@ import (
 
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"github.com/pkg/errors"
 )
 
 type LogsTFResult struct {
@@ -46,12 +46,12 @@ func LogsTFOverview(ctx context.Context, sid steamid.SID64) (*LogsTFResult, erro
 	req, reqErr := http.NewRequestWithContext(localCtx, http.MethodGet,
 		fmt.Sprintf("https://logs.tf/api/v1/log?player=%s", sid), nil)
 	if reqErr != nil {
-		return nil, errors.Wrap(reqErr, "Failed to create request")
+		return nil, errors.Join(reqErr, errors.New("Failed to create request"))
 	}
 
 	response, errGet := httpClient.Do(req)
 	if errGet != nil {
-		return nil, errors.Wrapf(errGet, "Failed to query logstf")
+		return nil, errors.Join(errGet, errors.New("Failed to query logstf"))
 	}
 
 	defer func() {
@@ -60,12 +60,12 @@ func LogsTFOverview(ctx context.Context, sid steamid.SID64) (*LogsTFResult, erro
 
 	body, errReadBody := io.ReadAll(response.Body)
 	if errReadBody != nil {
-		return nil, errors.Wrapf(errGet, "Failed to read logstf body")
+		return nil, errors.Join(errGet, errors.New("Failed to read logstf body"))
 	}
 
 	var logsTFResult LogsTFResult
 	if errUnmarshal := json.Unmarshal(body, &logsTFResult); errUnmarshal != nil {
-		return nil, errors.Wrapf(errGet, "Failed to unmarshal logstf body")
+		return nil, errors.Join(errGet, errors.New("Failed to unmarshal logstf body"))
 	}
 
 	return &logsTFResult, nil

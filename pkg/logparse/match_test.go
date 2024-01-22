@@ -1,6 +1,7 @@
 package logparse_test
 
 import (
+	"errors"
 	"os"
 	"path"
 	"strings"
@@ -9,7 +10,6 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
 

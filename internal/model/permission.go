@@ -1,4 +1,4 @@
-package consts
+package model
 
 type NotificationSeverity int
 

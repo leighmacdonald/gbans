@@ -1,4 +1,4 @@
-package app
+package api
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/internal/errs"
 	"go.uber.org/zap"
 )
 
@@ -48,7 +48,7 @@ func (c *DataUpdater[T]) Start(ctx context.Context) {
 		select {
 		case <-c.updateChan:
 			newData, errUpdate := c.update()
-			if errUpdate != nil && !errors.Is(errUpdate, store.ErrNoResult) {
+			if errUpdate != nil && !errors.Is(errUpdate, errs.ErrNoResult) {
 				c.log.Error("Failed to update data source", zap.Error(errUpdate))
 
 				return

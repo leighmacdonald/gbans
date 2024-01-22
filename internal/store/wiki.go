@@ -6,13 +6,14 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/internal/errs"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/wiki"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
-func GetWikiPageBySlug(ctx context.Context, database Store, slug string, page *wiki.Page) error {
-	row, errQuery := database.QueryRowBuilder(ctx, database.
+func (s Stores) GetWikiPageBySlug(ctx context.Context, slug string, page *wiki.Page) error {
+	row, errQuery := s.QueryRowBuilder(ctx, s.
 		Builder().
 		Select("slug", "body_md", "revision", "created_on", "updated_on", "permission_level").
 		From("wiki").
@@ -20,39 +21,39 @@ func GetWikiPageBySlug(ctx context.Context, database Store, slug string, page *w
 		OrderBy("revision desc").
 		Limit(1))
 	if errQuery != nil {
-		return DBErr(errQuery)
+		return errs.DBErr(errQuery)
 	}
 
-	return DBErr(row.Scan(&page.Slug, &page.BodyMD, &page.Revision, &page.CreatedOn, &page.UpdatedOn, &page.PermissionLevel))
+	return errs.DBErr(row.Scan(&page.Slug, &page.BodyMD, &page.Revision, &page.CreatedOn, &page.UpdatedOn, &page.PermissionLevel))
 }
 
-func DeleteWikiPageBySlug(ctx context.Context, database Store, slug string) error {
-	if errExec := database.ExecDeleteBuilder(ctx, database.
+func (s Stores) DeleteWikiPageBySlug(ctx context.Context, slug string) error {
+	if errExec := s.ExecDeleteBuilder(ctx, s.
 		Builder().
 		Delete("wiki").
 		Where(sq.Eq{"slug": slug})); errExec != nil {
-		return DBErr(errExec)
+		return errs.DBErr(errExec)
 	}
 
 	return nil
 }
 
-func SaveWikiPage(ctx context.Context, database Store, page *wiki.Page) error {
-	errQueryRow := database.ExecInsertBuilder(ctx, database.
+func (s Stores) SaveWikiPage(ctx context.Context, page *wiki.Page) error {
+	errQueryRow := s.ExecInsertBuilder(ctx, s.
 		Builder().
 		Insert("wiki").
 		Columns("slug", "body_md", "revision", "created_on", "updated_on", "permission_level").
 		Values(page.Slug, page.BodyMD, page.Revision, page.CreatedOn, page.UpdatedOn, page.PermissionLevel))
 	if errQueryRow != nil {
-		return DBErr(errQueryRow)
+		return errs.DBErr(errQueryRow)
 	}
 
 	return nil
 }
 
-func SaveMedia(ctx context.Context, database Store, media *model.Media) error {
+func (s Stores) SaveMedia(ctx context.Context, media *model.Media) error {
 	if media.MediaID > 0 {
-		return DBErr(database.ExecUpdateBuilder(ctx, database.
+		return errs.DBErr(s.ExecUpdateBuilder(ctx, s.
 			Builder().
 			Update("media").
 			Set("author_id", media.AuthorID).
@@ -74,7 +75,7 @@ func SaveMedia(ctx context.Context, database Store, media *model.Media) error {
 		RETURNING media_id
 	`
 
-	return DBErr(database.QueryRow(ctx, query,
+	return errs.DBErr(s.QueryRow(ctx, query,
 		media.AuthorID,
 		media.MimeType,
 		media.Name,
@@ -84,11 +85,12 @@ func SaveMedia(ctx context.Context, database Store, media *model.Media) error {
 		media.CreatedOn,
 		media.UpdatedOn,
 		media.Asset.AssetID,
-	).Scan(&media.MediaID))
+	).
+		Scan(&media.MediaID))
 }
 
-func GetMediaByAssetID(ctx context.Context, database Store, uuid uuid.UUID, media *model.Media) error {
-	row, errRow := database.QueryRowBuilder(ctx, database.
+func (s Stores) GetMediaByAssetID(ctx context.Context, uuid uuid.UUID, media *model.Media) error {
+	row, errRow := s.QueryRowBuilder(ctx, s.
 		Builder().
 		Select("m.media_id", "m.author_id", "m.name", "m.size", "m.mime_type", "m.contents",
 			"m.deleted", "m.created_on", "m.updated_on", "a.name", "a.size", "a.mime_type", "a.path",
@@ -97,7 +99,7 @@ func GetMediaByAssetID(ctx context.Context, database Store, uuid uuid.UUID, medi
 		LeftJoin("asset a USING(asset_id)").
 		Where(sq.And{sq.Eq{"deleted": false}, sq.Eq{"m.asset_id": uuid}}))
 	if errRow != nil {
-		return DBErr(errRow)
+		return errs.DBErr(errRow)
 	}
 
 	media.Asset = model.Asset{AssetID: uuid}
@@ -121,7 +123,7 @@ func GetMediaByAssetID(ctx context.Context, database Store, uuid uuid.UUID, medi
 		&media.Asset.Bucket,
 		&media.Asset.OldID,
 	); errScan != nil {
-		return DBErr(errScan)
+		return errs.DBErr(errScan)
 	}
 
 	media.AuthorID = steamid.New(authorID)
@@ -129,15 +131,15 @@ func GetMediaByAssetID(ctx context.Context, database Store, uuid uuid.UUID, medi
 	return nil
 }
 
-func GetMediaByName(ctx context.Context, database Store, name string, media *model.Media) error {
-	row, errRow := database.QueryRowBuilder(ctx, database.
+func (s Stores) GetMediaByName(ctx context.Context, name string, media *model.Media) error {
+	row, errRow := s.QueryRowBuilder(ctx, s.
 		Builder().
 		Select("media_id", "author_id", "name", "size", "mime_type", "contents", "deleted",
 			"created_on", "updated_on").
 		From("media").
 		Where(sq.And{sq.Eq{"deleted": false}, sq.Eq{"name": name}}))
 	if errRow != nil {
-		return DBErr(errRow)
+		return errs.DBErr(errRow)
 	}
 
 	var authorID int64
@@ -153,7 +155,7 @@ func GetMediaByName(ctx context.Context, database Store, name string, media *mod
 		&media.CreatedOn,
 		&media.UpdatedOn,
 	); errScan != nil {
-		return DBErr(errScan)
+		return errs.DBErr(errScan)
 	}
 
 	media.AuthorID = steamid.New(authorID)
@@ -161,8 +163,8 @@ func GetMediaByName(ctx context.Context, database Store, name string, media *mod
 	return nil
 }
 
-func GetMediaByID(ctx context.Context, database Store, mediaID int, media *model.Media) error {
-	row, errRow := database.QueryRowBuilder(ctx, database.
+func (s Stores) GetMediaByID(ctx context.Context, mediaID int, media *model.Media) error {
+	row, errRow := s.QueryRowBuilder(ctx, s.
 		Builder().
 		Select("m.media_id", "m.author_id", "m.name", "m.size", "m.mime_type", "m.contents",
 			"m.deleted", "m.created_on", "m.updated_on", "a.name", "a.size", "a.mime_type",
@@ -171,7 +173,7 @@ func GetMediaByID(ctx context.Context, database Store, mediaID int, media *model
 		LeftJoin("asset a USING(asset_id)").
 		Where(sq.And{sq.Eq{"deleted": false}, sq.Eq{"m.media_id": mediaID}}))
 	if errRow != nil {
-		return DBErr(errRow)
+		return errs.DBErr(errRow)
 	}
 
 	var authorID int64
@@ -193,7 +195,7 @@ func GetMediaByID(ctx context.Context, database Store, mediaID int, media *model
 		&media.Asset.Bucket,
 		&media.Asset.OldID,
 	); errScan != nil {
-		return DBErr(errScan)
+		return errs.DBErr(errScan)
 	}
 
 	media.AuthorID = steamid.New(authorID)

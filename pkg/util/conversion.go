@@ -1,16 +1,16 @@
 package util
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/leighmacdonald/gbans/internal/consts"
-	"github.com/pkg/errors"
 )
+
+var ErrInvalidDuration = errors.New("invalid duration")
 
 // StringToFloat64 converts a string to a float64, returning a default values on
 // conversion error.
@@ -40,7 +40,7 @@ func StringToInt(desired string) int {
 
 var (
 	reDuration         = regexp.MustCompile(`^(\d+)([smhdwMy])$`)
-	errInvalidDuration = errors.New("Invalid duration")
+	errInvalidDuration = errors.New("invalid duration")
 )
 
 // FmtTimeShort returns a common format for time display.
@@ -186,11 +186,11 @@ func ParseUserStringDuration(durationString string) (time.Duration, error) {
 func ParseDuration(value string) (time.Duration, error) {
 	duration, errDuration := ParseUserStringDuration(value)
 	if errDuration != nil {
-		return 0, consts.ErrInvalidDuration
+		return 0, ErrInvalidDuration
 	}
 
 	if duration < 0 {
-		return 0, consts.ErrInvalidDuration
+		return 0, ErrInvalidDuration
 	}
 
 	if duration == 0 {

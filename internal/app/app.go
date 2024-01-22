@@ -1,8 +1,8 @@
-// Package app is the main application and entry point. It implements the action.Executor and io.Closer interfaces.
 package app
 
 import (
 	"context"
+	"errors"
 	"net"
 	"net/http"
 	"os"
@@ -14,21 +14,18 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/internal/activity"
+	"github.com/leighmacdonald/gbans/internal/api"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/consts"
-	"github.com/leighmacdonald/gbans/internal/discord"
-	"github.com/leighmacdonald/gbans/internal/match"
+	"github.com/leighmacdonald/gbans/internal/errs"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/s3"
+	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/store"
-	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
-	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/gbans/pkg/wiki"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"github.com/leighmacdonald/steamweb/v2"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
@@ -41,37 +38,32 @@ var (
 type App struct {
 	conf             config.Config
 	confMu           sync.RWMutex
-	discord          ChatBot
-	db               store.Store
+	discord          *Bot
+	db               store.Stores
 	log              *zap.Logger
 	logFileChan      chan *logFilePayload
 	notificationChan chan NotificationPayload
-	state            *serverStateCollector
-	steamGroups      *steamGroupMemberships
-	patreon          *patreonManager
+	state            *state.Collector
+	steamGroups      *SteamGroupMemberships
+	patreon          *PatreonManager
 	eb               *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
-	wordFilters      *wordFilters
-	warningTracker   *WarningTracker
+	wordFilters      *WordFilters
+	warningTracker   *Tracker
 	mc               *metricCollector
 	assetStore       s3.AssetStore
 	logListener      *logparse.UDPLogListener
-	activityTracker  *activityTracker
-	netBlock         *NetworkBlocker
+	activityTracker  *activity.Tracker
+	netBlock         *Blocker
 	weaponMap        fp.MutexMap[logparse.Weapon, int]
 	chatLogger       *chatLogger
-	matchSummarizer  *match.Summarizer
-}
-
-type ChatBot interface {
-	SendPayload(payload discord.Payload)
-	RegisterHandler(cmd discord.Cmd, handler discord.CommandHandler) error
+	matchSummarizer  *Summarizer
 }
 
 type CommandHandler func(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error)
 
-func New(conf config.Config, database store.Store, bot ChatBot, logger *zap.Logger, assetStore s3.AssetStore) *App {
+func New(conf config.Config, database store.Stores, bot *Bot, logger *zap.Logger, assetStore s3.AssetStore) *App {
 	eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
-	filters := newWordFilters()
+	filters := NewWordFilters()
 	matchUUIDMap := fp.NewMutexMap[int, uuid.UUID]()
 	application := &App{
 		discord:          bot,
@@ -82,28 +74,23 @@ func New(conf config.Config, database store.Store, bot ChatBot, logger *zap.Logg
 		log:              logger,
 		logFileChan:      make(chan *logFilePayload, 10),
 		notificationChan: make(chan NotificationPayload, 5),
-		steamGroups:      newSteamGroupMemberships(logger, database),
-		patreon:          newPatreonManager(logger, conf, database),
+		steamGroups:      NewSteamGroupMemberships(logger, database),
+		patreon:          NewPatreonManager(logger, conf),
 		wordFilters:      filters,
 		mc:               newMetricCollector(),
-		state:            newServerStateCollector(logger),
-		activityTracker:  newForumActivity(logger),
-		netBlock:         NewNetworkBlocker(),
+		state:            state.NewCollector(logger),
+		activityTracker:  activity.NewTracker(logger),
+		netBlock:         NewBlocker(),
 		weaponMap:        fp.NewMutexMap[logparse.Weapon, int](),
 	}
 
 	application.setConfig(conf)
-
-	application.warningTracker = newWarningTracker(logger, database, conf.Filter,
-		onWarningHandler(application),
-		onWarningExceeded(application))
-
+	application.warningTracker = NewTracker(logger, database, conf.Filter, onWarningHandler(application), onWarningExceeded(application))
 	application.chatLogger = newChatLogger(logger, database, eventBroadcaster, filters, application.warningTracker, matchUUIDMap)
-
-	application.matchSummarizer = match.NewSummarizer(logger, eventBroadcaster, matchUUIDMap, application.onMatchComplete)
+	application.matchSummarizer = NewSummarizer(logger, eventBroadcaster, matchUUIDMap, onMatchComplete(application))
 
 	if conf.Discord.Enabled {
-		if errReg := application.registerDiscordHandlers(); errReg != nil {
+		if errReg := RegisterDiscordHandlers(application); errReg != nil {
 			panic(errReg)
 		}
 	}
@@ -111,35 +98,95 @@ func New(conf config.Config, database store.Store, bot ChatBot, logger *zap.Logg
 	return application
 }
 
-func (app *App) bot() ChatBot { // nolint:ireturn
-	return app.discord
+func (app *App) Activity() *activity.Tracker {
+	return app.activityTracker
 }
 
-func (app *App) config() config.Config {
+func (app *App) SendPayload(channelID string, message *discordgo.MessageEmbed) {
+	app.discord.SendPayload(channelID, message)
+}
+
+func (app *App) Version() model.BuildInfo {
+	return model.BuildInfo{
+		BuildVersion: BuildVersion,
+		Commit:       BuildCommit,
+		Date:         BuildDate,
+	}
+}
+
+func (app *App) EventBroadcaster() *fp.Broadcaster[logparse.EventType, logparse.ServerEvent] {
+	return app.eb
+}
+
+func (app *App) Config() config.Config {
 	app.confMu.RLock()
 	defer app.confMu.RUnlock()
 
 	return app.conf
 }
 
+func (app *App) Warnings() model.Warnings {
+	return app.warningTracker
+}
+
+func (app *App) State() *state.Collector {
+	return app.state
+}
+
+func (app *App) Patreon() model.Patreon {
+	return app.patreon
+}
+
+func (app *App) NetBlocks() model.NetBLocker {
+	return app.netBlock
+}
+
+func (app *App) Store() store.Stores {
+	return app.db
+}
+
+func (app *App) Groups() model.Groups {
+	return app.steamGroups
+}
+
+func (app *App) WordFilters() *WordFilters {
+	return app.wordFilters
+}
+
+func (app *App) Log() *zap.Logger {
+	return app.log
+}
+
+func (app *App) Assets() s3.AssetStore {
+	return app.assetStore
+}
+
+func (app *App) WeaponMap() fp.MutexMap[logparse.Weapon, int] {
+	return app.weaponMap
+}
+
 func (app *App) startWorkers(ctx context.Context) {
-	go app.patreon.updater(ctx)
+	go app.patreon.Start(ctx)
 	go app.banSweeper(ctx)
 	go app.profileUpdater(ctx)
-	go app.warningTracker.start(ctx)
-	go app.logReader(ctx, app.config().Debug.WriteUnhandledLogEvents)
+	go app.warningTracker.Start(ctx)
+	go app.logReader(ctx, app.Config().Debug.WriteUnhandledLogEvents)
 	go app.initLogSrc(ctx)
 	go logMetricsConsumer(ctx, app.mc, app.eb, app.log)
 	go app.matchSummarizer.Start(ctx)
 	go app.chatLogger.start(ctx)
 	go app.playerConnectionWriter(ctx)
-	go app.steamGroups.start(ctx)
+	go app.steamGroups.Start(ctx)
 	go cleanupTasks(ctx, app.db, app.log)
 	go app.showReportMeta(ctx)
 	go app.notificationSender(ctx)
 	go app.demoCleaner(ctx)
-	go app.stateUpdater(ctx)
-	go app.activityTracker.start(ctx)
+	go app.state.Start(ctx, func() config.Config {
+		return app.Config()
+	}, func() state.ServerStore {
+		return app.Store()
+	})
+	go app.activityTracker.Start(ctx)
 }
 
 func (app *App) setConfig(conf config.Config) {
@@ -149,7 +196,7 @@ func (app *App) setConfig(conf config.Config) {
 	app.conf = conf
 }
 
-func firstTimeSetup(ctx context.Context, conf config.Config, database store.Store, weaponMap fp.MutexMap[logparse.Weapon, int]) error {
+func firstTimeSetup(ctx context.Context, conf config.Config, database store.Stores, weaponMap fp.MutexMap[logparse.Weapon, int]) error {
 	if !conf.General.Owner.Valid() {
 		return errors.New("Configured owner is not a valid steam64")
 	}
@@ -159,16 +206,16 @@ func firstTimeSetup(ctx context.Context, conf config.Config, database store.Stor
 
 	var owner model.Person
 
-	if errRootUser := store.GetPersonBySteamID(localCtx, database, conf.General.Owner, &owner); errRootUser != nil {
-		if !errors.Is(errRootUser, store.ErrNoResult) {
-			return errors.Wrapf(errRootUser, "Failed first time setup")
+	if errRootUser := database.GetPersonBySteamID(localCtx, conf.General.Owner, &owner); errRootUser != nil {
+		if !errors.Is(errRootUser, errs.ErrNoResult) {
+			return errors.Join(errRootUser, errors.New("Failed first time setup"))
 		}
 
 		newOwner := model.NewPerson(conf.General.Owner)
-		newOwner.PermissionLevel = consts.PAdmin
+		newOwner.PermissionLevel = model.PAdmin
 
-		if errSave := store.SavePerson(localCtx, database, &newOwner); errSave != nil {
-			return errors.Wrap(errSave, "Failed to create admin user")
+		if errSave := database.SavePerson(localCtx, &newOwner); errSave != nil {
+			return errors.Join(errSave, errors.New("Failed to create admin user"))
 		}
 
 		newsEntry := model.NewsEntry{
@@ -179,8 +226,8 @@ func firstTimeSetup(ctx context.Context, conf config.Config, database store.Stor
 			UpdatedOn:   time.Now(),
 		}
 
-		if errSave := store.SaveNewsArticle(localCtx, database, &newsEntry); errSave != nil {
-			return errors.Wrap(errSave, "Failed to create sample news entry")
+		if errSave := database.SaveNewsArticle(localCtx, &newsEntry); errSave != nil {
+			return errors.Join(errSave, errors.New("Failed to create sample news entry"))
 		}
 
 		server := model.NewServer("server-1", "127.0.0.1", 27015)
@@ -188,12 +235,12 @@ func firstTimeSetup(ctx context.Context, conf config.Config, database store.Stor
 		server.RCON = "example_rcon"
 		server.Latitude = 35.652832
 		server.Longitude = 139.839478
-		server.Name = "Example Server"
+		server.Name = "Example ServerStore"
 		server.LogSecret = 12345678
 		server.Region = "asia"
 
-		if errSave := store.SaveServer(localCtx, database, &server); errSave != nil {
-			return errors.Wrap(errSave, "Failed to create sample server entry")
+		if errSave := database.SaveServer(localCtx, &server); errSave != nil {
+			return errors.Join(errSave, errors.New("Failed to create sample server entry"))
 		}
 
 		page := wiki.Page{
@@ -204,13 +251,13 @@ func firstTimeSetup(ctx context.Context, conf config.Config, database store.Stor
 			UpdatedOn: time.Now(),
 		}
 
-		if errSave := store.SaveWikiPage(localCtx, database, &page); errSave != nil {
-			return errors.Wrap(errSave, "Failed to create sample wiki entry")
+		if errSave := database.SaveWikiPage(localCtx, &page); errSave != nil {
+			return errors.Join(errSave, errors.New("Failed to create sample wiki entry"))
 		}
 	}
 
-	if errWeapons := store.LoadWeapons(ctx, database, weaponMap); errWeapons != nil {
-		return errors.Wrap(errWeapons, "Failed to load weapons")
+	if errWeapons := database.LoadWeapons(ctx, weaponMap); errWeapons != nil {
+		return errors.Join(errWeapons, errors.New("Failed to load weapons"))
 	}
 
 	return nil
@@ -230,12 +277,13 @@ func (app *App) Init(ctx context.Context) error {
 	app.startWorkers(ctx)
 
 	// Load the filtered word set into memory
-	if app.config().Filter.Enabled {
-		if errFilter := app.LoadFilters(ctx); errFilter != nil {
-			return errors.Wrap(errFilter, "Failed to load filters")
+	if app.Config().Filter.Enabled {
+		count, errFilter := app.LoadFilters(ctx)
+		if errFilter != nil {
+			return errors.Join(errFilter, errors.New("Failed to load filters"))
 		}
 
-		app.log.Info("Loaded filter list", zap.Int("count", len(app.wordFilters.wordFilters)))
+		app.log.Info("Loaded filter list", zap.Int64("count", count))
 	}
 
 	if errBlocklist := app.loadNetBlocks(ctx); errBlocklist != nil {
@@ -246,9 +294,9 @@ func (app *App) Init(ctx context.Context) error {
 }
 
 func (app *App) loadNetBlocks(ctx context.Context) error {
-	sources, errSource := store.GetCIDRBlockSources(ctx, app.db)
+	sources, errSource := app.db.GetCIDRBlockSources(ctx)
 	if errSource != nil {
-		return errors.Wrap(errSource, "Failed to load block sources")
+		return errors.Join(errSource, errors.New("Failed to load block sources"))
 	}
 
 	var total atomic.Int64
@@ -276,15 +324,10 @@ func (app *App) loadNetBlocks(ctx context.Context) error {
 
 	waitGroup.Wait()
 
-	app.netBlock.Lock()
-	_, netBlock, _ := net.ParseCIDR("192.168.0.0/24")
-	app.netBlock.blocks["local"] = []*net.IPNet{netBlock}
-	app.netBlock.Unlock()
-
-	whitelists, errWhitelists := store.GetCIDRBlockWhitelists(ctx, app.db)
+	whitelists, errWhitelists := app.db.GetCIDRBlockWhitelists(ctx)
 	if errWhitelists != nil {
-		if !errors.Is(errWhitelists, store.ErrNoResult) {
-			return errors.Wrap(errWhitelists, "Failed to load cidr block whitelists")
+		if !errors.Is(errWhitelists, errs.ErrNoResult) {
+			return errors.Join(errWhitelists, errors.New("Failed to load cidr block whitelists"))
 		}
 	}
 
@@ -299,16 +342,16 @@ func (app *App) loadNetBlocks(ctx context.Context) error {
 }
 
 func (app *App) StartHTTP(ctx context.Context) error {
-	app.log.Info("Service status changed", zap.String("state", "ready"))
-	defer app.log.Info("Service status changed", zap.String("state", "stopped"))
+	app.log.Info("Service status changed", zap.String("State", "ready"))
+	defer app.log.Info("Service status changed", zap.String("State", "stopped"))
 
-	if app.config().General.Mode == config.ReleaseMode {
+	if app.Config().General.Mode == config.ReleaseMode {
 		gin.SetMode(gin.ReleaseMode)
 	} else {
 		gin.SetMode(gin.DebugMode)
 	}
 
-	httpServer := newHTTPServer(ctx, app)
+	httpServer := api.New(ctx, app)
 
 	go func() {
 		<-ctx.Done()
@@ -324,7 +367,7 @@ func (app *App) StartHTTP(ctx context.Context) error {
 
 	errServe := httpServer.ListenAndServe()
 	if errServe != nil && !errors.Is(errServe, http.ErrServerClosed) {
-		return errors.Wrap(errServe, "HTTP listener returned error")
+		return errors.Join(errServe, errors.New("HTTP listener returned error"))
 	}
 
 	return nil
@@ -351,7 +394,7 @@ func (app *App) playerConnectionWriter(ctx context.Context) {
 			}
 
 			if newServerEvent.Address == "" {
-				log.Warn("Empty person message body, skipping")
+				log.Warn("Empty Person message body, skipping")
 
 				continue
 			}
@@ -365,8 +408,8 @@ func (app *App) playerConnectionWriter(ctx context.Context) {
 
 			// Maybe ignore these and wait for connect call to create?
 			var person model.Person
-			if errPerson := PersonBySID(ctx, app.db, newServerEvent.SID, &person); errPerson != nil {
-				log.Error("Failed to load person", zap.Error(errPerson))
+			if errPerson := app.Store().GetOrCreatePersonBySteamID(ctx, newServerEvent.SID, &person); errPerson != nil {
+				log.Error("Failed to load Person", zap.Error(errPerson))
 
 				continue
 			}
@@ -380,7 +423,7 @@ func (app *App) playerConnectionWriter(ctx context.Context) {
 			}
 
 			lCtx, cancel := context.WithTimeout(ctx, time.Second*5)
-			if errChat := store.AddConnectionHistory(lCtx, app.db, &conn); errChat != nil {
+			if errChat := app.db.AddConnectionHistory(lCtx, &conn); errChat != nil {
 				log.Error("Failed to add connection history", zap.Error(errChat))
 			}
 
@@ -470,30 +513,30 @@ func (app *App) logReader(ctx context.Context, writeUnhandled bool) {
 	}
 }
 
-func (app *App) LoadFilters(ctx context.Context) error {
+func (app *App) LoadFilters(ctx context.Context) (int64, error) {
 	// TODO load external lists via http
 	localCtx, cancel := context.WithTimeout(ctx, time.Second*15)
 	defer cancel()
 
-	words, count, errGetFilters := store.GetFilters(localCtx, app.db, store.FiltersQueryFilter{})
+	words, count, errGetFilters := app.db.GetFilters(localCtx, model.FiltersQueryFilter{})
 	if errGetFilters != nil {
-		if errors.Is(errGetFilters, store.ErrNoResult) {
-			return nil
+		if errors.Is(errGetFilters, errs.ErrNoResult) {
+			return 0, nil
 		}
 
-		return errors.Wrap(errGetFilters, "Failed to fetch filters")
+		return 0, errors.Join(errGetFilters, errors.New("Failed to fetch filters"))
 	}
 
-	app.wordFilters.importFilters(words)
+	app.wordFilters.Import(words)
 
 	app.log.Debug("Loaded word filters", zap.Int64("count", count))
 
-	return nil
+	return count, nil
 }
 
 // UDP log sink.
 func (app *App) initLogSrc(ctx context.Context) {
-	logSrc, errLogSrc := logparse.NewUDPLogListener(app.log, app.config().Log.SrcdsLogAddr,
+	logSrc, errLogSrc := logparse.NewUDPLogListener(app.log, app.Config().Log.SrcdsLogAddr,
 		func(eventType logparse.EventType, event logparse.ServerEvent) {
 			app.eb.Emit(event.EventType, event)
 		})
@@ -504,7 +547,7 @@ func (app *App) initLogSrc(ctx context.Context) {
 
 	app.logListener = logSrc
 
-	// TODO run on server config changes
+	// TODO run on server Config changes
 	go app.updateSrcdsLogSecrets(ctx)
 
 	app.logListener.Start(ctx)
@@ -516,9 +559,9 @@ func (app *App) updateSrcdsLogSecrets(ctx context.Context) {
 
 	defer cancelServers()
 
-	servers, _, errServers := store.GetServers(serversCtx, app.db, store.ServerQueryFilter{
+	servers, _, errServers := app.db.GetServers(serversCtx, model.ServerQueryFilter{
 		IncludeDisabled: false,
-		QueryFilter:     store.QueryFilter{Deleted: false},
+		QueryFilter:     model.QueryFilter{Deleted: false},
 	})
 	if errServers != nil {
 		app.log.Error("Failed to update srcds log secrets", zap.Error(errServers))
@@ -536,83 +579,22 @@ func (app *App) updateSrcdsLogSecrets(ctx context.Context) {
 	app.logListener.SetSecrets(newSecrets)
 }
 
-// PersonBySID fetches the person from the database, updating the PlayerSummary if it out of date or if
-// the player does not already exist.
-func PersonBySID(ctx context.Context, database store.Store, sid steamid.SID64, person *model.Person) error {
-	if errGetPerson := store.GetOrCreatePersonBySteamID(ctx, database, sid, person); errGetPerson != nil {
-		return errors.Wrapf(errGetPerson, "Failed to get person instance: %s", sid)
-	}
-
-	if person.IsNew || time.Since(person.UpdatedOnSteam) > time.Hour*24*30 {
-		summaries, errSummaries := steamweb.PlayerSummaries(ctx, steamid.Collection{sid})
-		if errSummaries != nil {
-			return errors.Wrapf(errSummaries, "Failed to get Player summary: %v", errSummaries)
-		}
-
-		if len(summaries) > 0 {
-			s := summaries[0]
-			person.PlayerSummary = &s
-		} else {
-			return errors.New("Failed to update profile summary")
-		}
-
-		vac, errBans := thirdparty.FetchPlayerBans(ctx, steamid.Collection{sid})
-		if errBans != nil || len(vac) != 1 {
-			return errors.Wrap(errBans, "Failed to update ban status")
-		} else {
-			person.CommunityBanned = vac[0].CommunityBanned
-			person.VACBans = vac[0].NumberOfVACBans
-			person.GameBans = vac[0].NumberOfGameBans
-			person.EconomyBan = steamweb.EconBanNone
-			person.CommunityBanned = vac[0].CommunityBanned
-			person.DaysSinceLastBan = vac[0].DaysSinceLastBan
-		}
-
-		person.UpdatedOnSteam = time.Now()
-	}
-
-	person.SteamID = sid
-	if errSavePerson := store.SavePerson(ctx, database, person); errSavePerson != nil {
-		return errors.Wrapf(errSavePerson, "Failed to save person")
-	}
-
-	return nil
-}
-
-// resolveSID is just a simple helper for calling steamid.ResolveSID64 with a timeout.
-func resolveSID(ctx context.Context, sidStr string) (steamid.SID64, error) {
-	localCtx, cancel := context.WithTimeout(ctx, time.Second*3)
-	defer cancel()
-
-	sid64, errString := steamid.StringToSID64(sidStr)
-	if errString == nil && sid64.Valid() {
-		return sid64, nil
-	}
-
-	sid, errResolve := steamid.ResolveSID64(localCtx, sidStr)
-	if errResolve != nil {
-		return "", errors.Wrap(errResolve, "Failed to resolve vanity")
-	}
-
-	return sid, nil
-}
-
 type NotificationHandler struct{}
 
 type NotificationPayload struct {
-	MinPerms consts.Privilege
+	MinPerms model.Privilege
 	Sids     steamid.Collection
-	Severity consts.NotificationSeverity
+	Severity model.NotificationSeverity
 	Message  string
 	Link     string
 }
 
 func (app *App) SendNotification(ctx context.Context, notification NotificationPayload) error {
 	// Collect all required ids
-	if notification.MinPerms >= consts.PUser {
-		sids, errIds := store.GetSteamIdsAbove(ctx, app.db, notification.MinPerms)
+	if notification.MinPerms >= model.PUser {
+		sids, errIds := app.db.GetSteamIdsAbove(ctx, notification.MinPerms)
 		if errIds != nil {
-			return errors.Wrap(errIds, "Failed to fetch steamids for notification")
+			return errors.Join(errIds, errors.New("Failed to fetch steamids for notification"))
 		}
 
 		notification.Sids = append(notification.Sids, sids...)
@@ -620,9 +602,9 @@ func (app *App) SendNotification(ctx context.Context, notification NotificationP
 
 	uniqueIds := fp.Uniq(notification.Sids)
 
-	people, errPeople := store.GetPeopleBySteamID(ctx, app.db, uniqueIds)
-	if errPeople != nil && !errors.Is(errPeople, store.ErrNoResult) {
-		return errors.Wrap(errPeople, "Failed to fetch people for notification")
+	people, errPeople := app.db.GetPeopleBySteamID(ctx, uniqueIds)
+	if errPeople != nil && !errors.Is(errPeople, errs.ErrNoResult) {
+		return errors.Join(errPeople, errors.New("Failed to fetch people for notification"))
 	}
 
 	var discordIds []string
@@ -633,21 +615,21 @@ func (app *App) SendNotification(ctx context.Context, notification NotificationP
 		}
 	}
 
-	go func(ids []string, payload NotificationPayload) {
-		for _, discordID := range ids {
-			msgEmbed := discord.NewEmbed(app.config(), "Notification", payload.Message)
-			if payload.Link != "" {
-				msgEmbed.Embed().SetURL(payload.Link)
-			}
-
-			app.discord.SendPayload(discord.Payload{ChannelID: discordID, Embed: msgEmbed.Embed().Truncate().MessageEmbed})
-		}
-	}(discordIds, notification)
+	//go func(ids []string, payload NotificationPayload) {
+	//	for _, discordID := range ids {
+	//		msgEmbed := discord.NewEmbed(app.Config(), "Notification", payload.Message)
+	//		if payload.Link != "" {
+	//			msgEmbed.Embed().SetURL(payload.Link)
+	//		}
+	//
+	//		app.SendPayload(discordID, msgEmbed.Embed().Truncate().MessageEmbed)
+	//	}
+	//}(discordIds, notification)
 
 	// Broadcast to
 	for _, sid := range uniqueIds {
 		// Todo, prep stmt at least.
-		if errSend := store.SendNotification(ctx, app.db, sid, notification.Severity,
+		if errSend := app.db.SendNotification(ctx, sid, notification.Severity,
 			notification.Message, notification.Link); errSend != nil {
 			app.log.Error("Failed to send notification", zap.Error(errSend))
 
@@ -658,63 +640,12 @@ func (app *App) SendNotification(ctx context.Context, notification NotificationP
 	return nil
 }
 
-// isOnIPWithBan checks if the address matches an existing user who is currently banned already. This
-// function will always fail-open and allow players in if an error occurs.
-func (app *App) isOnIPWithBan(ctx context.Context, steamID steamid.SID64, address net.IP) bool {
-	existing := model.NewBannedPerson()
-	if errMatch := store.GetBanByLastIP(ctx, app.db, address, &existing, false); errMatch != nil {
-		if errors.Is(errMatch, store.ErrNoResult) {
-			return false
-		}
-
-		app.log.Error("Could not load player by ip", zap.Error(errMatch))
-
-		return false
-	}
-
-	duration, errDuration := util.ParseUserStringDuration("10y")
-	if errDuration != nil {
-		app.log.Error("Could not parse ban duration", zap.Error(errDuration))
-
-		return false
-	}
-
-	existing.BanSteam.ValidUntil = time.Now().Add(duration)
-
-	if errSave := store.SaveBan(ctx, app.db, &existing.BanSteam); errSave != nil {
-		app.log.Error("Could not update previous ban.", zap.Error(errSave))
-
-		return false
-	}
-
-	conf := app.config()
-
-	var newBan model.BanSteam
-	if errNewBan := model.NewBanSteam(ctx,
-		model.StringSID(conf.General.Owner.String()),
-		model.StringSID(steamID.String()), duration, model.Evading, model.Evading.String(),
-		"Connecting from same IP as banned player", model.System,
-		0, model.Banned, false, &newBan); errNewBan != nil {
-		app.log.Error("Could not create evade ban", zap.Error(errDuration))
-
-		return false
-	}
-
-	if errSave := app.BanSteam(ctx, &newBan); errSave != nil {
-		app.log.Error("Could not save evade ban", zap.Error(errSave))
-
-		return false
-	}
-
-	return true
-}
-
 // validateLink is used in the case of discord origin actions that require mapping the
 // discord member ID to a SteamID so that we can track its use and apply permissions, etc.
 //
 // This function will replace the discord member id value in the target field with
 // the found SteamID, if any.
-// func validateLink(ctx context.Context, database db.Database, sourceID action.Author, target *action.Author) error {
+// func validateLink(ctx context.Context, database db.postgreStore, sourceID action.Author, target *action.Author) error {
 //	var p model.Person
 //	if errGetPerson := database.GetPersonByDiscordID(ctx, string(sourceID), &p); errGetPerson != nil {
 //		if errGetPerson == db.ErrNoResult {

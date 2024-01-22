@@ -1,12 +1,14 @@
-package match
+package app
 
 import (
 	"context"
+	"errors"
 
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/internal/discord"
+	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
-	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
@@ -50,15 +52,13 @@ func (am *Context) start(ctx context.Context) {
 
 type OnCompleteFunc func(ctx context.Context, matchContext *Context) error
 
-func NewSummarizer(log *zap.Logger, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
-	matchUUIDMap fp.MutexMap[int, uuid.UUID], completeFunc OnCompleteFunc,
-) *Summarizer {
+func NewSummarizer(logger *zap.Logger, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent], matchUUIDMap fp.MutexMap[int, uuid.UUID], onComplete OnCompleteFunc) *Summarizer {
 	return &Summarizer{
-		log:             log,
+		log:             logger,
 		events:          make(chan logparse.ServerEvent),
 		broadcaster:     broadcaster,
 		matchUUIDMap:    matchUUIDMap,
-		onMatchComplete: completeFunc,
+		onMatchComplete: onComplete,
 	}
 }
 
@@ -132,5 +132,54 @@ func (ms *Summarizer) Start(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		}
+	}
+}
+
+func onMatchComplete(env *App) OnCompleteFunc {
+	return func(ctx context.Context, matchContext *Context) error {
+		const minPlayers = 6
+
+		currentState := env.State()
+		server, found := currentState.ByServerID(matchContext.Match.ServerID)
+
+		if found && server.Name != "" {
+			matchContext.Match.Title = server.Name
+		}
+
+		var fullServer model.Server
+		if err := env.Store().GetServer(ctx, server.ServerID, &fullServer); err != nil {
+			return errors.Join(err, errors.New("Failed to load findMatch server"))
+		}
+
+		if !fullServer.EnableStats {
+			return nil
+		}
+
+		if len(matchContext.Match.PlayerSums) < minPlayers {
+			return ErrInsufficientPlayers
+		}
+
+		if matchContext.Match.TimeStart == nil || matchContext.Match.MapName == "" {
+			return ErrIncompleteMatch
+		}
+
+		if errSave := env.Store().MatchSave(ctx, &matchContext.Match, env.WeaponMap()); errSave != nil {
+			if errors.Is(errSave, ErrInsufficientPlayers) {
+				return ErrInsufficientPlayers
+			} else {
+				return errors.Join(errSave, errors.New("Failed to save findMatch"))
+			}
+		}
+
+		var result model.MatchResult
+		if errResult := env.Store().MatchGetByID(ctx, matchContext.Match.MatchID, &result); errResult != nil {
+			return errors.Join(errResult, errors.New("Failed to load findMatch"))
+		}
+
+		conf := env.Config()
+
+		go env.SendPayload(conf.Discord.PublicMatchLogChannelID, discord.MatchMessage(result, ""))
+
+		return nil
 	}
 }

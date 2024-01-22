@@ -2,6 +2,12 @@ package model
 
 import "net"
 
+type NetBLocker interface {
+	AddWhitelist(id int, network *net.IPNet)
+	RemoveWhitelist(id int)
+	IsMatch(addr net.IP) (bool, string)
+}
+
 type CIDRBlockSource struct {
 	CIDRBlockSourceID int    `json:"cidr_block_source_id"`
 	Name              string `json:"name"`

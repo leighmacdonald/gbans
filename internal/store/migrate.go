@@ -2,6 +2,7 @@ package store
 
 import (
 	"database/sql"
+	"errors"
 	"net/http"
 	"time"
 
@@ -9,7 +10,6 @@ import (
 	pgxMigrate "github.com/golang-migrate/migrate/v4/database/pgx"
 	"github.com/golang-migrate/migrate/v4/source/httpfs"
 	"github.com/leighmacdonald/gbans/pkg/util"
-	"github.com/pkg/errors"
 )
 
 // MigrationAction is the type of migration to perform.
@@ -27,18 +27,18 @@ const (
 )
 
 // migrate database schema.
-func (db *Database) migrate(action MigrationAction, dsn string) error {
+func (db *postgresStore) migrate(action MigrationAction, dsn string) error {
 	defer func() {
 		db.migrated = true
 	}()
 
 	instance, errOpen := sql.Open("pgx", dsn)
 	if errOpen != nil {
-		return errors.Wrapf(errOpen, "Failed to open database for migration")
+		return errors.Join(errOpen, errors.New("Failed to open database for migration"))
 	}
 
 	if errPing := instance.Ping(); errPing != nil {
-		return errors.Wrapf(errPing, "Cannot migrate, failed to connect to target server")
+		return errors.Join(errPing, errors.New("Cannot migrate, failed to connect to target server"))
 	}
 
 	driver, errMigrate := pgxMigrate.WithInstance(instance, &pgxMigrate.Config{
@@ -48,19 +48,19 @@ func (db *Database) migrate(action MigrationAction, dsn string) error {
 		MultiStatementEnabled: true,
 	})
 	if errMigrate != nil {
-		return errors.Wrapf(errMigrate, "failed to create migration driver")
+		return errors.Join(errMigrate, errors.New("failed to create migration driver"))
 	}
 
 	defer util.LogCloser(driver, db.log)
 
 	source, errHTTPFS := httpfs.New(http.FS(migrations), "migrations")
 	if errHTTPFS != nil {
-		return errors.Wrapf(errHTTPFS, "Failed to create migration httpfs")
+		return errors.Join(errHTTPFS, errors.New("Failed to create migration httpfs"))
 	}
 
 	migrator, errMigrateInstance := migrate.NewWithInstance("iofs", source, "pgx", driver)
 	if errMigrateInstance != nil {
-		return errors.Wrapf(errMigrateInstance, "Failed to migrator up")
+		return errors.Join(errMigrateInstance, errors.New("Failed to migrator up"))
 	}
 
 	var errMigration error
@@ -79,7 +79,7 @@ func (db *Database) migrate(action MigrationAction, dsn string) error {
 	}
 
 	if errMigration != nil && !errors.Is(errMigration, migrate.ErrNoChange) {
-		return errors.Wrapf(errMigration, "Failed to perform migration")
+		return errors.Join(errMigration, errors.New("Failed to perform migration"))
 	}
 
 	return nil

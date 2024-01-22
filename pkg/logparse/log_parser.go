@@ -5,6 +5,7 @@
 package logparse
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -14,7 +15,6 @@ import (
 
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/mitchellh/mapstructure"
-	"github.com/pkg/errors"
 )
 
 type regexEventMap struct {
@@ -1347,6 +1347,11 @@ func (p *LogParser) decodeTime() func(reflect.Type, reflect.Type, any) (any, err
 	}
 }
 
+var (
+	ErrDecoderFailed = errors.New("failed to create decoder")
+	ErrUnmarshal     = errors.New("failed to decode unmarshal input")
+)
+
 // unmarshal will transform a map of values into the struct passed in
 // eg: {"sm_nextmap": "pl_frontier_final"} -> CVAREvt
 func (p *LogParser) unmarshal(input any, output any) error {
@@ -1366,11 +1371,11 @@ func (p *LogParser) unmarshal(input any, output any) error {
 		Squash:           true,
 	})
 	if errNewDecoder != nil {
-		return errors.Wrap(errNewDecoder, "Failed to create decoder")
+		return errors.Join(errNewDecoder, ErrDecoderFailed)
 	}
 
 	if errDecode := decoder.Decode(input); errDecode != nil {
-		return errors.Wrap(errDecode, "Failed to decode unmarshal input")
+		return errors.Join(errDecode, ErrUnmarshal)
 	}
 
 	return nil

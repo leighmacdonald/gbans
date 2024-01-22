@@ -1,6 +1,7 @@
 package logparse
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"sort"
@@ -8,16 +9,15 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/leighmacdonald/gbans/internal/consts"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"github.com/pkg/errors"
 )
 
 var (
-	ErrIgnored     = errors.New("Ignored msg")
-	ErrUnhandled   = errors.New("Unhandled msg")
-	ErrInvalidType = errors.New("Invalid Type")
+	ErrIgnored     = errors.New("ignored msg")
+	ErrUnhandled   = errors.New("unhandled msg")
+	ErrInvalidType = errors.New("invalid Type")
+	ErrInvalidSID  = errors.New("invalid steam id")
 )
 
 type MatchPlayerSums map[steamid.SID64]*PlayerStats
@@ -29,7 +29,7 @@ func (mps MatchPlayerSums) GetBySteamID(steamID steamid.SID64) (*PlayerStats, er
 		}
 	}
 
-	return nil, consts.ErrUnknownID
+	return nil, ErrInvalidSID
 }
 
 type MatchChat struct {
@@ -871,6 +871,8 @@ func (match *Match) pickup(evt PickupEvt) {
 	player.HealingPacks += evt.Healing
 }
 
+var ErrUnknownCustomKill = errors.New("custom kill type unknown")
+
 func (match *Match) killedCustom(evt CustomKilledEvt) error {
 	player := match.getPlayer(evt.CreatedOn, evt.SID)
 	weaponSum := player.getWeaponSum(evt.Weapon)
@@ -885,7 +887,7 @@ func (match *Match) killedCustom(evt CustomKilledEvt) error {
 		// This is taken from damage event instead to match logs.tf
 		// weaponSum.Headshots++
 	default:
-		return errors.Errorf("Custom kill type unknown: %s", evt.Customkill)
+		return fmt.Errorf("%w: %s", ErrUnknownCustomKill, evt.Customkill)
 	}
 
 	player.addKill(evt.CreatedOn, evt.SID2, evt.Weapon, evt.AttackerPosition, evt.VictimPosition)
@@ -1485,5 +1487,5 @@ func (mps HealingStatsMap) GetBySteamID(steamID steamid.SID64) (*HealingStats, e
 		return m, nil
 	}
 
-	return nil, consts.ErrInvalidSID
+	return nil, ErrInvalidSID
 }

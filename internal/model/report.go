@@ -89,3 +89,14 @@ func NewReportMessage(reportID int64, authorID steamid.SID64, messageMD string) 
 		SimplePerson: SimplePerson{},
 	}
 }
+
+type ReportMeta struct {
+	TotalOpen   int
+	TotalClosed int
+	Open        int
+	NeedInfo    int
+	Open1Day    int
+	Open3Days   int
+	OpenWeek    int
+	OpenNew     int
+}
