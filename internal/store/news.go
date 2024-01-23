@@ -100,7 +100,7 @@ func (s Stores) insertNewsArticle(ctx context.Context, entry *model.NewsEntry) e
 		Suffix("RETURNING news_id").
 		ToSql()
 	if errQueryArgs != nil {
-		return errors.Join(errQueryArgs, errors.New("Failed to create query"))
+		return errors.Join(errQueryArgs, ErrCreateQuery)
 	}
 
 	errQueryRow := s.QueryRow(ctx, query, args...).Scan(&entry.NewsID)

@@ -26,6 +26,18 @@ var migrations embed.FS
 // EmptyUUID is used as a placeholder value for signaling the entity is new.
 const EmptyUUID = "feb4bf16-7f55-4cb4-923c-4de69a093b79"
 
+var (
+	ErrRowResults  = errors.New("resulting rows contain error")
+	ErrTxStart     = errors.New("could not start transaction")
+	ErrTxCommit    = errors.New("failed to commit tx changes")
+	ErrTxRollback  = errors.New("could not rollback transaction")
+	ErrPoolFailed  = errors.New("could not create store pool")
+	ErrUUIDGen     = errors.New("could not generate uuid")
+	ErrCreateQuery = errors.New("failed to generate query")
+	ErrCountQuery  = errors.New("failed to get count result")
+	ErrTooShort    = errors.New("value too short")
+)
+
 // Database is the common database interface. All errors from callers should be wrapped in errs.DBErr as they
 // are not automatically wrapped.
 type Database interface {
@@ -91,7 +103,7 @@ func (tracer *dbQueryTracer) TraceQueryEnd(_ context.Context, _ *pgx.Conn, _ pgx
 func (db *postgresStore) Connect(ctx context.Context) error {
 	cfg, errConfig := pgxpool.ParseConfig(db.dsn)
 	if errConfig != nil {
-		return fmt.Errorf("Unable to parse config: %v", errConfig)
+		return fmt.Errorf("unable to parse db config/dsn: %w", errConfig)
 	}
 
 	cfg.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
@@ -106,7 +118,7 @@ func (db *postgresStore) Connect(ctx context.Context) error {
 
 	if db.autoMigrate && !db.migrated {
 		if errMigrate := db.migrate(MigrateUp, db.dsn); errMigrate != nil {
-			return fmt.Errorf("Could not migrate schema: %v", errMigrate)
+			return fmt.Errorf("could not migrate schema: %w", errMigrate)
 		}
 
 		db.log.Info("Migration completed successfully")
@@ -114,7 +126,7 @@ func (db *postgresStore) Connect(ctx context.Context) error {
 
 	dbConn, errConnectConfig := pgxpool.NewWithConfig(ctx, cfg)
 	if errConnectConfig != nil {
-		return errors.Join(errConnectConfig, errors.New("Failed to connect to database"))
+		return errors.Join(errConnectConfig, ErrPoolFailed)
 	}
 
 	db.conn = dbConn

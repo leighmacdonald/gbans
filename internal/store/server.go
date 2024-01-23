@@ -124,7 +124,7 @@ func (s Stores) GetServers(ctx context.Context, filter model.ServerQueryFilter) 
 				&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn, &server.ReservedSlots,
 				&server.IsEnabled, &server.Region, &server.CC, &server.Latitude, &server.Longitude,
 				&server.Deleted, &server.LogSecret, &server.EnableStats); errScan != nil {
-			return nil, 0, errors.Join(errScan, errors.New("Failed to scan server"))
+			return nil, 0, errors.Join(errScan, ErrScanResult)
 		}
 
 		servers = append(servers, server)

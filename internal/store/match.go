@@ -14,6 +14,23 @@ import (
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
+var (
+	ErrMatchQuery           = errors.New("failed to load match")
+	ErrQueryPlayers         = errors.New("failed to query match players")
+	ErrQueryMatch           = errors.New("failed to query match")
+	ErrChatQuery            = errors.New("failed to query chat history")
+	ErrGetPlayerClasses     = errors.New("failed to fetch player class stats")
+	ErrGetMedicStats        = errors.New("failed to fetch medic class stats")
+	ErrSaveMedicStats       = errors.New("failed to save medic stats")
+	ErrSavePlayerStats      = errors.New("failed to save player stats")
+	ErrSaveWeaponStats      = errors.New("failed to save weapon stats")
+	ErrSaveClassStats       = errors.New("failed to save class stats")
+	ErrSaveKillstreakStats  = errors.New("failed to save killstreak stats")
+	ErrGetWeaponStats       = errors.New("failed to fetch match weapon stats")
+	ErrGetPlayerKillstreaks = errors.New("failed to fetch player killstreak stats")
+	ErrGetPerson            = errors.New("failed to fetch person result")
+)
+
 func (s Stores) matchGetPlayerClasses(ctx context.Context, matchID uuid.UUID) (map[steamid.SID64][]model.MatchPlayerClass, error) {
 	const query = `
 		SELECT mp.steam_id, c.match_player_class_id, c.match_player_id, c.player_class_id, c.kills, 
@@ -207,7 +224,7 @@ func (s Stores) matchGetPlayers(ctx context.Context, matchID uuid.UUID) ([]*mode
 			return []*model.MatchPlayer{}, nil
 		}
 
-		return nil, errors.Join(errPlayer, errors.New("Failed to query match players"))
+		return nil, errors.Join(errPlayer, ErrQueryPlayers)
 	}
 
 	defer playerRows.Close()
@@ -225,7 +242,7 @@ func (s Stores) matchGetPlayers(ctx context.Context, matchID uuid.UUID) ([]*mode
 				&mpSum.DamageTaken, &mpSum.HealingTaken, &mpSum.HealingPacks, &mpSum.Captures, &mpSum.CapturesBlocked,
 				&mpSum.Extinguishes, &mpSum.BuildingBuilt, &mpSum.BuildingDestroyed, &mpSum.Name,
 				&mpSum.AvatarHash); errRow != nil {
-			return nil, errors.Join(errPlayer, errors.New("Failed to scan match players"))
+			return nil, errors.Join(errPlayer, ErrScanResult)
 		}
 
 		mpSum.SteamID = steamid.New(steamID)
@@ -261,7 +278,7 @@ func (s Stores) matchGetMedics(ctx context.Context, matchID uuid.UUID) (map[stea
 			return medics, nil
 		}
 
-		return nil, errors.Join(errMedics, errors.New("Failed to query match healers"))
+		return nil, errors.Join(errMedics, ErrQueryPlayers)
 	}
 
 	defer medicRows.Close()
@@ -277,7 +294,7 @@ func (s Stores) matchGetMedics(ctx context.Context, matchID uuid.UUID) (map[stea
 				&mpSum.NearFullChargeDeath, &mpSum.AvgUberLength, &mpSum.MajorAdvLost,
 				&mpSum.BiggestAdvLost, &mpSum.ChargesUber, &mpSum.ChargesKritz,
 				&mpSum.ChargesVacc, &mpSum.ChargesQuickfix); errRow != nil {
-			return nil, errors.Join(errMedics, errors.New("Failed to scan match healer"))
+			return nil, errors.Join(errMedics, ErrScanResult)
 		}
 
 		sid := steamid.New(steamID)
@@ -286,7 +303,7 @@ func (s Stores) matchGetMedics(ctx context.Context, matchID uuid.UUID) (map[stea
 	}
 
 	if medicRows.Err() != nil {
-		return medics, errors.Join(medicRows.Err(), errors.New("medicRows error returned"))
+		return medics, errors.Join(medicRows.Err(), ErrRowResults)
 	}
 
 	return medics, nil
@@ -304,36 +321,36 @@ func (s Stores) matchGetChat(ctx context.Context, matchID uuid.UUID) (model.Pers
 
 	messages := model.PersonMessages{}
 
-	medicRows, errMedics := s.Query(ctx, query, matchID)
-	if errMedics != nil {
-		if errors.Is(errMedics, errs.ErrNoResult) {
+	chatRows, errQuery := s.Query(ctx, query, matchID)
+	if errQuery != nil {
+		if errors.Is(errQuery, errs.ErrNoResult) {
 			return messages, nil
 		}
 
-		return nil, errors.Join(errMedics, errors.New("Failed to query match healers"))
+		return nil, errors.Join(errQuery, ErrChatQuery)
 	}
 
-	defer medicRows.Close()
+	defer chatRows.Close()
 
-	for medicRows.Next() {
+	for chatRows.Next() {
 		var (
 			msg     model.PersonMessage
 			steamID int64
 		)
 
-		if errRow := medicRows.
+		if errRow := chatRows.
 			Scan(&msg.PersonMessageID, &steamID, &msg.ServerID, &msg.Body,
 				&msg.PersonaName, &msg.Team, &msg.CreatedOn,
 				&msg.MatchID, &msg.Flagged); errRow != nil {
-			return nil, errors.Join(errMedics, errors.New("Failed to scan match healer"))
+			return nil, errors.Join(errQuery, ErrScanResult)
 		}
 
 		msg.SteamID = steamid.New(steamID)
 		messages = append(messages, msg)
 	}
 
-	if medicRows.Err() != nil {
-		return messages, errors.Join(medicRows.Err(), errors.New("medicRows error returned"))
+	if chatRows.Err() != nil {
+		return messages, errors.Join(chatRows.Err(), ErrRowResults)
 	}
 
 	return messages, nil
@@ -349,19 +366,19 @@ func (s Stores) MatchGetByID(ctx context.Context, matchID uuid.UUID, match *mode
 		Scan(&match.MatchID, &match.ServerID, &match.MapName, &match.Title,
 			&match.TeamScores.Red, &match.TeamScores.Blu, &match.TeamScores.BluTime, &match.TeamScores.BluTime,
 			&match.TimeStart, &match.TimeEnd, &match.Winner); errMatch != nil {
-		return errors.Join(errMatch, errors.New("Failed to load root match"))
+		return errors.Join(errMatch, ErrMatchQuery)
 	}
 
 	playerStats, errPlayerStats := s.matchGetPlayers(ctx, matchID)
 	if errPlayerStats != nil {
-		return errors.Join(errPlayerStats, errors.New("Failed to fetch match players"))
+		return errors.Join(errPlayerStats, ErrQueryPlayers)
 	}
 
 	match.Players = playerStats
 
 	playerClasses, errPlayerClasses := s.matchGetPlayerClasses(ctx, matchID)
 	if errPlayerClasses != nil {
-		return errors.Join(errPlayerClasses, errors.New("Failed to fetch player class stats"))
+		return errors.Join(errPlayerClasses, ErrGetPlayerClasses)
 	}
 
 	for _, player := range playerStats {
@@ -372,7 +389,7 @@ func (s Stores) MatchGetByID(ctx context.Context, matchID uuid.UUID, match *mode
 
 	playerKillstreaks, errPlayerKillstreaks := s.matchGetPlayerKillstreak(ctx, matchID)
 	if errPlayerKillstreaks != nil {
-		return errors.Join(errPlayerKillstreaks, errors.New("Failed to fetch player killstreak stats"))
+		return errors.Join(errPlayerKillstreaks, ErrGetPlayerKillstreaks)
 	}
 
 	for _, player := range match.Players {
@@ -383,7 +400,7 @@ func (s Stores) MatchGetByID(ctx context.Context, matchID uuid.UUID, match *mode
 
 	medicStats, errMedics := s.matchGetMedics(ctx, matchID)
 	if errMedics != nil {
-		return errors.Join(errMedics, errors.New("Failed to fetch match medics"))
+		return errors.Join(errMedics, ErrGetMedicStats)
 	}
 
 	for steamID, stats := range medicStats {
@@ -400,7 +417,7 @@ func (s Stores) MatchGetByID(ctx context.Context, matchID uuid.UUID, match *mode
 
 	weaponStats, errWeapons := s.matchGetPlayerWeapons(ctx, matchID)
 	if errWeapons != nil {
-		return errors.Join(errMedics, errors.New("Failed to fetch match weapon stats"))
+		return errors.Join(errMedics, ErrGetWeaponStats)
 	}
 
 	for steamID, stats := range weaponStats {
@@ -418,7 +435,7 @@ func (s Stores) MatchGetByID(ctx context.Context, matchID uuid.UUID, match *mode
 	chat, errChat := s.matchGetChat(ctx, matchID)
 
 	if errChat != nil && !errors.Is(errChat, errs.ErrNoResult) {
-		return errors.Join(errMedics, errors.New("Failed to fetch match chat history"))
+		return errChat
 	}
 
 	match.Chat = chat
@@ -456,7 +473,7 @@ func (s Stores) MatchSave(ctx context.Context, match *logparse.Match, weaponMap 
 
 	transaction, errTx := s.Begin(ctx)
 	if errTx != nil {
-		return errors.Join(errTx, errors.New("Failed to create match tx"))
+		return errors.Join(errTx, ErrTxStart)
 	}
 
 	if errQuery := transaction.
@@ -465,10 +482,10 @@ func (s Stores) MatchSave(ctx context.Context, match *logparse.Match, weaponMap 
 			match.TimeStart, match.TimeEnd, match.Winner()).
 		Scan(&match.MatchID); errQuery != nil {
 		if errRollback := transaction.Rollback(ctx); errRollback != nil {
-			return errors.Join(errRollback, errors.New("Failed to rollback tx"))
+			return errors.Join(errRollback, ErrTxRollback)
 		}
 
-		return errors.Join(errQuery, errors.New("Failed to create match"))
+		return errors.Join(errQuery, ErrMatchQuery)
 	}
 
 	for _, player := range match.PlayerSums {
@@ -480,15 +497,15 @@ func (s Stores) MatchSave(ctx context.Context, match *logparse.Match, weaponMap 
 		var loadPlayerTest model.Person
 		if errPlayer := s.GetOrCreatePersonBySteamID(ctx, player.SteamID, &loadPlayerTest); errPlayer != nil {
 			if errRollback := transaction.Rollback(ctx); errRollback != nil {
-				return errors.Join(errRollback, errors.New("Failed to rollback tx"))
+				return errors.Join(errRollback, ErrTxRollback)
 			}
 
-			return errors.Join(errPlayer, errors.New("Failed to load person"))
+			return errors.Join(errPlayer, ErrGetPerson)
 		}
 
 		if errSave := s.saveMatchPlayerStats(ctx, transaction, match, player); errSave != nil {
 			if errRollback := transaction.Rollback(ctx); errRollback != nil {
-				return errors.Join(errRollback, errors.New("Failed to rollback tx"))
+				return errors.Join(errRollback, ErrTxRollback)
 			}
 
 			return errSave
@@ -496,7 +513,7 @@ func (s Stores) MatchSave(ctx context.Context, match *logparse.Match, weaponMap 
 
 		if errSave := s.saveMatchWeaponStats(ctx, transaction, player, weaponMap); errSave != nil {
 			if errRollback := transaction.Rollback(ctx); errRollback != nil {
-				return errors.Join(errRollback, errors.New("Failed to rollback tx"))
+				return errors.Join(errRollback, ErrTxRollback)
 			}
 
 			return errSave
@@ -504,7 +521,7 @@ func (s Stores) MatchSave(ctx context.Context, match *logparse.Match, weaponMap 
 
 		if errSave := s.saveMatchPlayerClassStats(ctx, transaction, player); errSave != nil {
 			if errRollback := transaction.Rollback(ctx); errRollback != nil {
-				return errors.Join(errRollback, errors.New("Failed to rollback tx"))
+				return errors.Join(errRollback, ErrTxRollback)
 			}
 
 			return errSave
@@ -512,7 +529,7 @@ func (s Stores) MatchSave(ctx context.Context, match *logparse.Match, weaponMap 
 
 		if errSave := s.saveMatchKillstreakStats(ctx, transaction, player); errSave != nil {
 			if errRollback := transaction.Rollback(ctx); errRollback != nil {
-				return errors.Join(errRollback, errors.New("Failed to rollback tx"))
+				return errors.Join(errRollback, ErrTxRollback)
 			}
 
 			return errSave
@@ -521,7 +538,7 @@ func (s Stores) MatchSave(ctx context.Context, match *logparse.Match, weaponMap 
 		if player.HealingStats != nil && player.HealingStats.Healing >= MinMedicHealing {
 			if errSave := s.saveMatchMedicStats(ctx, transaction, player.MatchPlayerID, player.HealingStats); errSave != nil {
 				if errRollback := transaction.Rollback(ctx); errRollback != nil {
-					return errors.Join(errRollback, errors.New("Failed to rollback tx"))
+					return errors.Join(errRollback, ErrTxRollback)
 				}
 
 				return errSave
@@ -530,7 +547,7 @@ func (s Stores) MatchSave(ctx context.Context, match *logparse.Match, weaponMap 
 	}
 
 	if errCommit := transaction.Commit(ctx); errCommit != nil {
-		return errors.Join(errCommit, errors.New("Failed to commit match"))
+		return errors.Join(errCommit, ErrTxCommit)
 	}
 
 	return nil
@@ -555,7 +572,7 @@ func (s Stores) saveMatchPlayerStats(ctx context.Context, database pgx.Tx, match
 		QueryRow(ctx, playerQuery, match.MatchID, stats.SteamID.Int64(), stats.Team, stats.TimeStart,
 			endTime, stats.HealthPacks(), stats.Extinguishes(), stats.BuildingBuilt).
 		Scan(&stats.MatchPlayerID); errPlayerExec != nil {
-		return errors.Join(errPlayerExec, errors.New("Failed to write player sum"))
+		return errors.Join(errPlayerExec, ErrSavePlayerStats)
 	}
 
 	return nil
@@ -575,7 +592,7 @@ func (s Stores) saveMatchMedicStats(ctx context.Context, transaction pgx.Tx, mat
 			stats.Charges[logparse.Kritzkrieg], stats.Charges[logparse.QuickFix],
 			stats.Charges[logparse.Uber], stats.Charges[logparse.Vaccinator]).
 		Scan(&stats.MatchMedicID); errMedExec != nil {
-		return errors.Join(errMedExec, errors.New("Failed to write medic sum"))
+		return errors.Join(errMedExec, ErrSaveMedicStats)
 	}
 
 	return nil
@@ -597,7 +614,7 @@ func (s Stores) saveMatchWeaponStats(ctx context.Context, transaction pgx.Tx, pl
 		if _, errWeapon := transaction.
 			Exec(ctx, query, player.MatchPlayerID, weaponID, info.Kills, info.Damage, info.Shots, info.Hits,
 				info.BackStabs, info.Headshots, info.Airshots); errWeapon != nil {
-			return errors.Join(errWeapon, errors.New("Failed to write weapon stats"))
+			return errors.Join(errWeapon, ErrSaveWeaponStats)
 		}
 	}
 
@@ -616,7 +633,7 @@ func (s Stores) saveMatchPlayerClassStats(ctx context.Context, transaction pgx.T
 			Exec(ctx, query, player.MatchPlayerID, class, stats.Kills, stats.Assists, stats.Deaths, stats.Playtime,
 				stats.Dominations, stats.Dominated, stats.Revenges, stats.Damage, stats.DamageTaken, stats.HealingTaken,
 				stats.Captures, stats.CapturesBlocked, stats.BuildingsDestroyed); errWeapon != nil {
-			return errors.Join(errWeapon, errors.New("Failed to write player class stats"))
+			return errors.Join(errWeapon, ErrSaveClassStats)
 		}
 	}
 
@@ -631,7 +648,7 @@ func (s Stores) saveMatchKillstreakStats(ctx context.Context, transaction pgx.Tx
 	for class, stats := range player.KillStreaks {
 		if _, errWeapon := transaction.
 			Exec(ctx, query, player.MatchPlayerID, class, stats.Killstreak, stats.Duration); errWeapon != nil {
-			return errors.Join(errWeapon, errors.New("Failed to write player class stats"))
+			return errors.Join(errWeapon, ErrSaveKillstreakStats)
 		}
 	}
 
@@ -899,22 +916,14 @@ func (s Stores) Matches(ctx context.Context, opts model.MatchesQueryOpts) ([]mod
 
 	builder = opts.ApplyLimitOffsetDefault(builder)
 
-	countQuery, countArgs, errCountArgs := countBuilder.ToSql()
-	if errCountArgs != nil {
-		return nil, 0, errors.Join(errCountArgs, errors.New("Failed to build count query"))
-	}
-
-	var count int64
-
-	if errCount := s.
-		QueryRow(ctx, countQuery, countArgs...).
-		Scan(&count); errCount != nil {
-		return nil, 0, errs.DBErr(errCount)
+	count, errCount := getCount(ctx, s, countBuilder)
+	if errCount != nil {
+		return nil, 0, errCount
 	}
 
 	rows, errQuery := s.QueryBuilder(ctx, builder)
 	if errQuery != nil {
-		return nil, 0, errors.Join(errQuery, errors.New("Failed to query matches"))
+		return nil, 0, errors.Join(errQuery, ErrQueryMatch)
 	}
 
 	defer rows.Close()
@@ -926,7 +935,7 @@ func (s Stores) Matches(ctx context.Context, opts model.MatchesQueryOpts) ([]mod
 		if errScan := rows.Scan(&summary.MatchID, &summary.ServerID, &summary.IsWinner, &summary.ShortName,
 			&summary.Title, &summary.MapName, &summary.ScoreBlu, &summary.ScoreRed, &summary.TimeStart,
 			&summary.TimeEnd); errScan != nil {
-			return nil, 0, errors.Join(errScan, errors.New("Failed to scan match row"))
+			return nil, 0, errors.Join(errScan, ErrScanResult)
 		}
 
 		matches = append(matches, summary)

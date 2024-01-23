@@ -12,9 +12,11 @@ import (
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
+var ErrInvalidContestID = errors.New("invalid contest id provided")
+
 func (s Stores) ContestByID(ctx context.Context, contestID uuid.UUID, contest *model.Contest) error {
 	if contestID.IsNil() {
-		return errors.New("Invalid contest id")
+		return ErrInvalidContestID
 	}
 
 	query := s.
@@ -110,7 +112,7 @@ func (s Stores) ContestSave(ctx context.Context, contest *model.Contest) error {
 	if contest.ContestID == uuid.FromStringOrNil(EmptyUUID) {
 		newID, errID := uuid.NewV4()
 		if errID != nil {
-			return errors.Join(errID, errors.New("Failed to generate new uuidv4"))
+			return errors.Join(errID, ErrUUIDGen)
 		}
 
 		contest.ContestID = newID

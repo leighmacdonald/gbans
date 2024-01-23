@@ -25,6 +25,8 @@ import (
 	"go.uber.org/zap"
 )
 
+var ErrRCONCommand = errors.New("failed to execute rcon command")
+
 // ServerState contains the entire State for the servers. This
 // contains sensitive information and should only be used where needed
 // by admins.

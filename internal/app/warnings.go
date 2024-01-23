@@ -20,13 +20,13 @@ type WarningStore interface {
 	SaveFilter(ctx context.Context, filter *model.Filter) error
 }
 
-func NewTracker(log *zap.Logger, db WarningStore, conf config.Filter, onIssue OnIssuedFunc, onExceed OnExceededFunc) *Tracker {
+func NewTracker(log *zap.Logger, database WarningStore, conf config.Filter, onIssue OnIssuedFunc, onExceed OnExceededFunc) *Tracker {
 	tracker := Tracker{
 		log:                log.Named("warnTracker"),
 		warnings:           make(map[steamid.SID64][]model.UserWarning),
 		WarningChan:        make(chan model.NewUserWarning),
 		wordFilters:        WordFilters{},
-		db:                 db,
+		db:                 database,
 		config:             conf,
 		onWarningsExceeded: onExceed,
 		onWarning:          onIssue,
@@ -167,27 +167,23 @@ type OnExceededFunc func(ctx context.Context, w *Tracker, newWarning model.NewUs
 
 type OnIssuedFunc func(ctx context.Context, w *Tracker, newWarning model.NewUserWarning) error
 
-//
-//type WarnApplication interface {
-//	Config() config.Config
-//	Bot() common.ChatBot
-//	BanSteam(ctx context.Context, steam *model.BanSteam) error
-//	Kick(ctx context.Context, origin model.Origin, sid64 steamid.SID64, author steamid.SID64, reason model.Reason) error
-//	PSay(ctx context.Context, target steamid.SID64, message string) error
-//}
-
 func onWarningHandler(app *App) OnIssuedFunc {
 	return func(ctx context.Context, w *Tracker, newWarning model.NewUserWarning) error {
 		msg := fmt.Sprintf("[WARN] Please refrain from using slurs/toxicity (see: rules & MOTD). " +
 			"Further offenses will result in mutes/bans")
 
 		if errPSay := state.PSay(ctx, app.State(), newWarning.UserMessage.SteamID, msg); errPSay != nil {
-			return errors.Join(errPSay, errors.New("Failed to send user warning psay message"))
+			return errors.Join(errPSay, state.ErrRCONCommand)
 		}
 
 		return nil
 	}
 }
+
+var (
+	ErrFailedToBan     = errors.New("failed to create warning ban")
+	ErrWarnActionApply = errors.New("failed to apply warning action")
+)
 
 func onWarningExceeded(app *App) OnExceededFunc {
 	return func(ctx context.Context, tracker *Tracker, newWarning model.NewUserWarning) error {
@@ -201,7 +197,7 @@ func onWarningExceeded(app *App) OnExceededFunc {
 		if newWarning.MatchedFilter.Action == model.Ban || newWarning.MatchedFilter.Action == model.Mute {
 			duration, errDuration := util.ParseDuration(newWarning.MatchedFilter.Duration)
 			if errDuration != nil {
-				return errors.Join(errDuration, errors.New("Failed to parse word filter duration value"))
+				return fmt.Errorf("invalid duration: %w", errDuration)
 			}
 
 			if errNewBan := model.NewBanSteam(ctx, model.StringSID(conf.General.Owner.String()),
@@ -215,7 +211,7 @@ func onWarningExceeded(app *App) OnExceededFunc {
 				model.NoComm,
 				false,
 				&banSteam); errNewBan != nil {
-				return errors.Join(errNewBan, errors.New("Failed to create warning ban"))
+				return errors.Join(errNewBan, ErrFailedToBan)
 			}
 		}
 
@@ -231,13 +227,14 @@ func onWarningExceeded(app *App) OnExceededFunc {
 		}
 
 		if errBan != nil {
-			return errors.Join(errBan, errors.New("Failed to apply warning action"))
+			return errors.Join(errBan, ErrWarnActionApply)
 		}
 
 		var person model.Person
 		if personErr := app.Store().GetPersonBySteamID(ctx, newWarning.UserMessage.SteamID, &person); personErr != nil {
-			return errors.Join(personErr, errors.New("Failed to get Person for warning"))
+			return personErr
 		}
+
 		if !conf.Filter.PingDiscord {
 			return nil
 		}

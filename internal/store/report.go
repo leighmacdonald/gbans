@@ -160,7 +160,7 @@ func (s Stores) GetReports(ctx context.Context, opts model.ReportQueryFilter) ([
 	if opts.SourceID != "" {
 		authorID, errAuthorID := opts.SourceID.SID64(ctx)
 		if errAuthorID != nil {
-			return nil, 0, errors.Join(errAuthorID, errors.New("Invalid source id"))
+			return nil, 0, errors.Join(errAuthorID, errs.ErrSourceID)
 		}
 
 		constraints = append(constraints, sq.Eq{"s.author_id": authorID.Int64()})
@@ -169,7 +169,7 @@ func (s Stores) GetReports(ctx context.Context, opts model.ReportQueryFilter) ([
 	if opts.TargetID != "" {
 		targetID, errTargetID := opts.TargetID.SID64(ctx)
 		if errTargetID != nil {
-			return nil, 0, errors.Join(errTargetID, errors.New("Invalid target id"))
+			return nil, 0, errors.Join(errTargetID, errs.ErrTargetID)
 		}
 
 		constraints = append(constraints, sq.Eq{"s.reported_id": targetID.Int64()})

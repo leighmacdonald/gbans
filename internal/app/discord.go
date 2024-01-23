@@ -12,7 +12,13 @@ import (
 	"go.uber.org/zap"
 )
 
-var ErrCommandFailed = errors.New("Command failed")
+var (
+	ErrCommandFailed     = errors.New("command failed")
+	ErrDiscordCreate     = errors.New("failed to connect to discord")
+	ErrDiscordOpen       = errors.New("failed to open discord connection")
+	ErrDuplicateCommand  = errors.New("duplicate command registration")
+	ErrDiscordMessageSen = errors.New("failed to send discord message")
+)
 
 type SlashCommandHandler func(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error)
 
@@ -35,7 +41,7 @@ func NewDiscord(logger *zap.Logger, conf config.Config) (*Bot, error) {
 	// Immediately connects
 	session, errNewSession := discordgo.New("Bot " + conf.Discord.Token)
 	if errNewSession != nil {
-		return nil, errors.Join(errNewSession, errors.New("Failed to connect to discord. discord unavailable"))
+		return nil, errors.Join(errNewSession, ErrDiscordCreate)
 	}
 
 	session.UserAgent = "gbans (https://github.com/leighmacdonald/gbans)"
@@ -62,7 +68,7 @@ func NewDiscord(logger *zap.Logger, conf config.Config) (*Bot, error) {
 func (bot *Bot) RegisterHandler(cmd Cmd, handler SlashCommandHandler) error {
 	_, found := bot.commandHandlers[cmd]
 	if found {
-		return errors.New("Duplicate command")
+		return ErrDuplicateCommand
 	}
 
 	bot.commandHandlers[cmd] = handler
@@ -99,7 +105,7 @@ func (bot *Bot) botUnregisterSlashCommands(guildID string) {
 func (bot *Bot) Start() error {
 	// Open a websocket connection to discord and begin listening.
 	if errSessionOpen := bot.session.Open(); errSessionOpen != nil {
-		return errors.Join(errSessionOpen, errors.New("Error opening discord connection"))
+		return errors.Join(errSessionOpen, ErrDiscordOpen)
 	}
 
 	if bot.unregisterOnStart {
@@ -163,7 +169,7 @@ func (bot *Bot) sendInteractionResponse(session *discordgo.Session, interaction 
 		if _, errResp := session.FollowupMessageCreate(interaction, true, &discordgo.WebhookParams{
 			Content: "Something went wrong",
 		}); errResp != nil {
-			return errors.Join(errResp, errors.New("Failed to send error response"))
+			return errors.Join(errResp, ErrDiscordMessageSen)
 		}
 
 		return nil
