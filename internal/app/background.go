@@ -402,7 +402,6 @@ func (app *App) banSweeper(ctx context.Context) {
 						if errDrop := app.db.DropBan(ctx, &ban, false); errDrop != nil {
 							log.Error("Failed to drop expired expiredBan", zap.Error(errDrop))
 						} else {
-
 							var person model.Person
 							if errPerson := app.db.GetPersonBySteamID(ctx, ban.TargetID, &person); errPerson != nil {
 								log.Error("Failed to get expired Person", zap.Error(errPerson))

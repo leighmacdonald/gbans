@@ -13,6 +13,12 @@ import (
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
+var (
+	ErrPersonSource = errors.New("failed to load source person")
+	ErrPersonTarget = errors.New("failed to load target person")
+	ErrGetBan       = errors.New("failed to load existing ban")
+)
+
 func (s Stores) DropBan(ctx context.Context, ban *model.BanSteam, hardDelete bool) error {
 	if hardDelete {
 		if errExec := s.Exec(ctx, `DELETE FROM ban WHERE ban_id = $1`, ban.BanID); errExec != nil {
@@ -103,12 +109,12 @@ func (s Stores) SaveBan(ctx context.Context, ban *model.BanSteam) error {
 	// Ensure the foreign keys are satisfied
 	targetPerson := model.NewPerson(ban.TargetID)
 	if errGetPerson := s.GetOrCreatePersonBySteamID(ctx, ban.TargetID, &targetPerson); errGetPerson != nil {
-		return errors.Join(errGetPerson, errors.New("Failed to get targetPerson for ban"))
+		return errors.Join(errGetPerson, ErrPersonTarget)
 	}
 
 	authorPerson := model.NewPerson(ban.SourceID)
 	if errGetAuthor := s.GetOrCreatePersonBySteamID(ctx, ban.SourceID, &authorPerson); errGetAuthor != nil {
-		return errors.Join(errGetAuthor, errors.New("Failed to get author for ban"))
+		return errors.Join(errGetAuthor, ErrPersonSource)
 	}
 
 	ban.UpdatedOn = time.Now()
@@ -123,7 +129,7 @@ func (s Stores) SaveBan(ctx context.Context, ban *model.BanSteam) error {
 	errGetBan := s.GetBanBySteamID(ctx, ban.TargetID, &existing, false)
 	if errGetBan != nil {
 		if !errors.Is(errGetBan, errs.ErrNoResult) {
-			return errors.Join(errGetBan, errors.New("Failed to check existing ban state"))
+			return errors.Join(errGetBan, ErrGetBan)
 		}
 	} else {
 		if ban.BanType <= existing.BanType {
@@ -201,7 +207,7 @@ func (s Stores) GetExpiredBans(ctx context.Context) ([]model.BanSteam, error) {
 
 	defer rows.Close()
 
-	bans := []model.BanSteam{}
+	var bans []model.BanSteam
 
 	for rows.Next() {
 		var (
@@ -213,13 +219,17 @@ func (s Stores) GetExpiredBans(ctx context.Context) ([]model.BanSteam, error) {
 		if errScan := rows.Scan(&ban.BanID, &targetID, &sourceID, &ban.BanType, &ban.Reason, &ban.ReasonText, &ban.Note,
 			&ban.ValidUntil, &ban.Origin, &ban.CreatedOn, &ban.UpdatedOn, &ban.Deleted, &ban.ReportID, &ban.UnbanReasonText,
 			&ban.IsEnabled, &ban.AppealState, &ban.IncludeFriends); errScan != nil {
-			return nil, errors.Join(errScan, errors.New("Failed to load ban"))
+			return nil, errors.Join(errScan, ErrScanResult)
 		}
 
 		ban.SourceID = steamid.New(sourceID)
 		ban.TargetID = steamid.New(targetID)
 
 		bans = append(bans, ban)
+	}
+
+	if bans == nil {
+		return []model.BanSteam{}, nil
 	}
 
 	return bans, nil
@@ -239,7 +249,7 @@ func (s Stores) GetAppealsByActivity(ctx context.Context, opts model.AppealQuery
 	if opts.SourceID != "" {
 		authorID, errAuthorID := opts.SourceID.SID64(ctx)
 		if errAuthorID != nil {
-			return nil, 0, errors.Join(errAuthorID, errors.New("Invalid source id"))
+			return nil, 0, errors.Join(errAuthorID, errs.ErrSourceID)
 		}
 
 		constraints = append(constraints, sq.Eq{"s.source_id": authorID.Int64()})
@@ -248,7 +258,7 @@ func (s Stores) GetAppealsByActivity(ctx context.Context, opts model.AppealQuery
 	if opts.TargetID != "" {
 		targetID, errTargetID := opts.TargetID.SID64(ctx)
 		if errTargetID != nil {
-			return nil, 0, errors.Join(errTargetID, errors.New("Invalid target id"))
+			return nil, 0, errors.Join(errTargetID, errs.ErrTargetID)
 		}
 
 		constraints = append(constraints, sq.Eq{"s.target_id": targetID.Int64()})
@@ -308,7 +318,7 @@ func (s Stores) GetAppealsByActivity(ctx context.Context, opts model.AppealQuery
 
 	defer rows.Close()
 
-	overviews := []model.AppealOverview{}
+	var overviews []model.AppealOverview
 
 	for rows.Next() {
 		var (
@@ -327,13 +337,17 @@ func (s Stores) GetAppealsByActivity(ctx context.Context, opts model.AppealQuery
 			&SourceSteamID, &overview.SourcePersonaname, &overview.SourceAvatarhash,
 			&TargetSteamID, &overview.TargetPersonaname, &overview.TargetAvatarhash,
 		); errScan != nil {
-			return nil, 0, errors.Join(errScan, errors.New("Failed to scan appeal overview"))
+			return nil, 0, errors.Join(errScan, ErrScanResult)
 		}
 
 		overview.SourceID = steamid.New(SourceSteamID)
 		overview.TargetID = steamid.New(TargetSteamID)
 
 		overviews = append(overviews, overview)
+	}
+
+	if overviews == nil {
+		return []model.AppealOverview{}, 0, nil
 	}
 
 	return overviews, count, nil
@@ -370,7 +384,7 @@ func (s Stores) GetBansSteam(ctx context.Context, filter model.SteamBansQueryFil
 	if filter.TargetID != "" {
 		targetID, errTargetID := filter.TargetID.SID64(ctx)
 		if errTargetID != nil {
-			return nil, 0, errors.Join(errTargetID, errors.New("Invalid target id"))
+			return nil, 0, errors.Join(errTargetID, errs.ErrTargetID)
 		}
 
 		ands = append(ands, sq.Eq{"s.target_id": targetID.Int64()})
@@ -379,7 +393,7 @@ func (s Stores) GetBansSteam(ctx context.Context, filter model.SteamBansQueryFil
 	if filter.SourceID != "" {
 		sourceID, errSourceID := filter.SourceID.SID64(ctx)
 		if errSourceID != nil {
-			return nil, 0, errors.Join(errSourceID, errors.New("Invalid source id"))
+			return nil, 0, errors.Join(errSourceID, errs.ErrSourceID)
 		}
 
 		ands = append(ands, sq.Eq{"s.source_id": sourceID.Int64()})
@@ -479,7 +493,7 @@ func (s Stores) GetBansOlderThan(ctx context.Context, filter model.QueryFilter, 
 
 	defer rows.Close()
 
-	bans := []model.BanSteam{}
+	var bans []model.BanSteam
 
 	for rows.Next() {
 		var (
@@ -491,13 +505,17 @@ func (s Stores) GetBansOlderThan(ctx context.Context, filter model.QueryFilter, 
 		if errQuery = rows.Scan(&ban.BanID, &targetID, &sourceID, &ban.BanType, &ban.Reason, &ban.ReasonText, &ban.Note,
 			&ban.Origin, &ban.ValidUntil, &ban.CreatedOn, &ban.UpdatedOn, &ban.Deleted, &ban.ReportID, &ban.UnbanReasonText,
 			&ban.IsEnabled, &ban.AppealState, &ban.AppealState); errQuery != nil {
-			return nil, errors.Join(errQuery, errors.New("Failed to scan ban"))
+			return nil, errors.Join(errQuery, ErrScanResult)
 		}
 
 		ban.SourceID = steamid.New(sourceID)
 		ban.TargetID = steamid.New(targetID)
 
 		bans = append(bans, ban)
+	}
+
+	if bans == nil {
+		return []model.BanSteam{}, nil
 	}
 
 	return bans, nil
@@ -586,7 +604,7 @@ func (s Stores) GetBanMessages(ctx context.Context, banID int64) ([]model.BanApp
 
 	defer rows.Close()
 
-	messages := []model.BanAppealMessage{}
+	var messages []model.BanAppealMessage
 
 	for rows.Next() {
 		var (
@@ -612,6 +630,10 @@ func (s Stores) GetBanMessages(ctx context.Context, banID int64) ([]model.BanApp
 		msg.AuthorID = steamid.New(authorID)
 
 		messages = append(messages, msg)
+	}
+
+	if messages == nil {
+		return []model.BanAppealMessage{}, nil
 	}
 
 	return messages, nil
@@ -783,7 +805,7 @@ func (s Stores) GetBanGroups(ctx context.Context, filter model.GroupBansQueryFil
 	if filter.TargetID != "" {
 		targetID, errTargetID := filter.TargetID.SID64(ctx)
 		if errTargetID != nil {
-			return nil, 0, errors.Join(errTargetID, errors.New("Invalid target id"))
+			return nil, 0, errors.Join(errTargetID, errs.ErrTargetID)
 		}
 
 		constraints = append(constraints, sq.Eq{"s.target_id": targetID.Int64()})
@@ -792,7 +814,7 @@ func (s Stores) GetBanGroups(ctx context.Context, filter model.GroupBansQueryFil
 	if filter.SourceID != "" {
 		sourceID, errSourceID := filter.SourceID.SID64(ctx)
 		if errSourceID != nil {
-			return nil, 0, errors.Join(errSourceID, errors.New("Invalid source id"))
+			return nil, 0, errors.Join(errSourceID, errs.ErrSourceID)
 		}
 
 		constraints = append(constraints, sq.Eq{"s.source_id": sourceID.Int64()})

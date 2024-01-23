@@ -151,7 +151,7 @@ func makeOnCheck(env *App) func(_ context.Context, _ *discordgo.Session, _ *disc
 			}
 		}
 
-		var banUrl string
+		var banURL string
 
 		var (
 			conf = env.Config()
@@ -167,7 +167,8 @@ func makeOnCheck(env *App) func(_ context.Context, _ *discordgo.Session, _ *disc
 				} else {
 				}
 			}
-			banUrl = conf.ExtURL(ban.BanSteam)
+
+			banURL = conf.ExtURL(ban.BanSteam)
 		}
 
 		// TODO move elsewhere
@@ -217,7 +218,7 @@ func makeOnCheck(env *App) func(_ context.Context, _ *discordgo.Session, _ *disc
 
 		waitGroup.Wait()
 
-		return discord.CheckMessage(player, ban, banUrl, authorProfile, oldBans, bannedNets, asn, location, proxy, logData), nil
+		return discord.CheckMessage(player, ban, banURL, authorProfile, oldBans, bannedNets, asn, location, proxy, logData), nil
 	}
 }
 
@@ -783,6 +784,7 @@ func makeOnFind(env *App) func(context.Context, *discordgo.Session, *discordgo.I
 		}
 
 		var found []discord.FoundPlayer
+
 		for _, player := range players {
 			var server model.Server
 			if errServer := env.Store().GetServer(ctx, player.ServerID, &server); errServer != nil {

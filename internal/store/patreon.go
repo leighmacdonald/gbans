@@ -7,6 +7,8 @@ import (
 	"github.com/leighmacdonald/gbans/internal/errs"
 )
 
+var ErrQueryPatreon = errors.New("failed to query patreon auth token")
+
 func (s Stores) SetPatreonAuth(ctx context.Context, accessToken string, refreshToken string) error {
 	return errs.DBErr(s.ExecUpdateBuilder(ctx, s.
 		Builder().
@@ -20,7 +22,7 @@ func (s Stores) GetPatreonAuth(ctx context.Context) (string, string, error) {
 		Builder().
 		Select("creator_access_token", "creator_refresh_token").From("patreon_auth").ToSql()
 	if errQuery != nil {
-		return "", "", errors.Join(errQuery, errors.New("Failed to create patreon auth select query"))
+		return "", "", errors.Join(errQuery, ErrCreateQuery)
 	}
 
 	var (
@@ -31,7 +33,7 @@ func (s Stores) GetPatreonAuth(ctx context.Context) (string, string, error) {
 	if errScan := s.
 		QueryRow(ctx, query, args...).
 		Scan(&creatorAccessToken, &creatorRefreshToken); errScan != nil {
-		return "", "", errors.Join(errQuery, errors.New("Failed to query patreon auth"))
+		return "", "", errors.Join(errQuery, ErrQueryPatreon)
 	}
 
 	return creatorAccessToken, creatorRefreshToken, nil

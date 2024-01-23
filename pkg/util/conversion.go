@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-var ErrInvalidDuration = errors.New("invalid duration")
+var ErrInvalidDuration = errors.New("invalid duration string")
 
 // StringToFloat64 converts a string to a float64, returning a default values on
 // conversion error.

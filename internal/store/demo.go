@@ -11,6 +11,8 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 )
 
+var ErrReportCountQuery = errors.New("failed to get reports count for demo")
+
 func (s Stores) ExpiredDemos(ctx context.Context, limit uint64) ([]model.DemoInfo, error) {
 	rows, errRow := s.QueryBuilder(ctx, s.
 		Builder().
@@ -205,7 +207,7 @@ func (s Stores) SaveDemo(ctx context.Context, demoFile *model.DemoFile) error {
 		From("report").
 		Where(sq.Eq{"demo_name": demoFile.Title}))
 	if reportRowErr != nil {
-		return errors.Join(reportRowErr, errors.New("Failed to select reports"))
+		return errors.Join(reportRowErr, ErrReportCountQuery)
 	}
 
 	var count int

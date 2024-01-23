@@ -201,7 +201,7 @@ func SilenceEmbed(target model.PersonInfo) *discordgo.MessageEmbed {
 	return msgEmbed.AddTargetPerson(target).Embed().MessageEmbed
 }
 
-func BanExpiresMessage(ban model.BanSteam, person model.PersonInfo, banUrl string) *discordgo.MessageEmbed {
+func BanExpiresMessage(ban model.BanSteam, person model.PersonInfo, banURL string) *discordgo.MessageEmbed {
 	banType := "Ban"
 	if ban.BanType == model.NoComm {
 		banType = "Mute"
@@ -214,7 +214,7 @@ func BanExpiresMessage(ban model.BanSteam, person model.PersonInfo, banUrl strin
 		AddField("Type", banType).
 		SetImage(person.GetAvatar().Full()).
 		AddField("Name", person.GetName()).
-		SetURL(banUrl)
+		SetURL(banURL)
 
 	msgEmbed.AddFieldsSteamID(person.GetSteamID())
 
@@ -315,6 +315,7 @@ func NewInGameReportResponse(report model.Report, reportURL string, author model
 		if demoURL != "" {
 			msgEmbed.Embed().AddField("Demo", demoURL)
 		}
+
 		msgEmbed.Embed().AddField("Demo Tick", fmt.Sprintf("%d", report.DemoTick))
 	}
 
@@ -454,10 +455,12 @@ func WarningMessage(newWarning model.NewUserWarning, banSteam model.BanSteam, pe
 		AddFieldsSteamID(newWarning.UserMessage.SteamID).
 		Embed().
 		AddField("Name", person.GetName())
+
 	var (
 		expIn = "Permanent"
 		expAt = expIn
 	)
+
 	if banSteam.ValidUntil.Year()-time.Now().Year() < 5 {
 		expIn = util.FmtDuration(banSteam.ValidUntil)
 		expAt = util.FmtTimeShort(banSteam.ValidUntil)
@@ -470,7 +473,7 @@ func WarningMessage(newWarning model.NewUserWarning, banSteam model.BanSteam, pe
 		MessageEmbed
 }
 
-func CheckMessage(player model.Person, ban model.BannedSteamPerson, banUrl string, author model.Person,
+func CheckMessage(player model.Person, ban model.BannedSteamPerson, banURL string, author model.Person,
 	oldBans []model.BannedSteamPerson, bannedNets []model.BanCIDR, asn ip2location.ASNRecord,
 	location ip2location.LocationRecord,
 	proxy ip2location.ProxyRecord, logData *thirdparty.LogsTFResult,
@@ -554,7 +557,7 @@ func CheckMessage(player model.Person, ban model.BannedSteamPerson, banUrl strin
 		expiry = ban.ValidUntil
 		createdAt = ban.CreatedOn.Format(time.RFC3339)
 
-		msgEmbed.Embed().SetURL(banUrl)
+		msgEmbed.Embed().SetURL(banURL)
 		msgEmbed.Embed().AddField("Reason", reason)
 		msgEmbed.Embed().AddField("Created", util.FmtTimeShort(ban.CreatedOn)).MakeFieldInline()
 
@@ -573,6 +576,13 @@ func CheckMessage(player model.Person, ban model.BannedSteamPerson, banUrl strin
 		msgEmbed.AddAuthorPersonInfo(author, "")
 	}
 
+	if len(bannedNets) > 0 {
+		// ip = bannedNets[0].CIDR.String()
+		reason = fmt.Sprintf("Banned from %d networks", len(bannedNets))
+		expiry = bannedNets[0].ValidUntil
+		msgEmbed.Embed().AddField("Network Bans", fmt.Sprintf("%d", len(bannedNets)))
+	}
+
 	banStateStr := "no"
 
 	if banned {
@@ -588,13 +598,6 @@ func CheckMessage(player model.Person, ban model.BannedSteamPerson, banUrl strin
 	}
 
 	msgEmbed.Embed().AddField("Ban/Muted", banStateStr)
-
-	if len(bannedNets) > 0 {
-		// ip = bannedNets[0].CIDR.String()
-		reason = fmt.Sprintf("Banned from %d networks", len(bannedNets))
-		expiry = bannedNets[0].ValidUntil
-		msgEmbed.Embed().AddField("Network Bans", fmt.Sprintf("%d", len(bannedNets)))
-	}
 
 	if player.IPAddr != nil {
 		msgEmbed.Embed().AddField("Last IP", player.IPAddr.String()).MakeFieldInline()
@@ -717,7 +720,7 @@ func CSayMessage(server string, msg string) *discordgo.MessageEmbed {
 func PSayMessage(player string, msg string) *discordgo.MessageEmbed {
 	return NewEmbed("Sent private message successfully").Embed().
 		SetColor(ColourSuccess).
-		AddField("Player", string(player)).
+		AddField("Player", player).
 		AddField("Message", msg).
 		Truncate().MessageEmbed
 }
@@ -750,7 +753,7 @@ func ServersMessage(currentStateRegion map[string][]state.ServerState, serversUR
 	var (
 		stats       = map[string]float64{}
 		used, total = 0, 0
-		regionNames []string
+		regionNames []string //nolint:realloc
 	)
 
 	msgEmbed := NewEmbed("Current ServerStore Populations")
@@ -850,6 +853,7 @@ func FilterCheckMessage(matches []model.Filter) *discordgo.MessageEmbed {
 			msgEmbed.Embed().AddField(fmt.Sprintf("Matched ID: %d", match.FilterID), match.Pattern)
 		}
 	}
+
 	return msgEmbed.Embed().Truncate().MessageEmbed
 }
 
@@ -868,15 +872,13 @@ func StatsPlayerMessage(person model.PersonInfo, url string, classStats model.Pl
 		makeKillstreakStatsTable(killstreakStats),
 	))
 
-	emb.AddAuthorPersonInfo(person, url)
-	return emb.Embed().MessageEmbed
+	return emb.AddAuthorPersonInfo(person, url).Embed().MessageEmbed
 }
 
 func LogsMessage(count int64, matches string) *discordgo.MessageEmbed {
-	msgEmbed := NewEmbed(fmt.Sprintf("Your most recent matches [%d total]", count)).Embed().
+	return NewEmbed(fmt.Sprintf("Your most recent matches [%d total]", count)).Embed().
 		SetColor(ColourSuccess).
-		SetDescription(matches)
-	return msgEmbed.MessageEmbed
+		SetDescription(matches).MessageEmbed
 }
 
 type FoundPlayer struct {
@@ -1083,14 +1085,15 @@ func BanASNMessage(asNum int64, asnRecords ip2location.ASNRecords) *discordgo.Me
 		SetColor(ColourSuccess).
 		AddField("ASNum", fmt.Sprintf("%d", asNum)).
 		AddField("Total IPs Blocked", fmt.Sprintf("%d", asnRecords.Hosts())).
-		Truncate().MessageEmbed
+		Truncate().
+		MessageEmbed
 }
 
 func BanIPMessage() *discordgo.MessageEmbed {
-	msgEmbed := NewEmbed("IP ban created successfully").Embed().
+	return NewEmbed("IP ban created successfully").Embed().
 		SetColor(ColourSuccess).
-		Truncate()
-	return msgEmbed.MessageEmbed
+		Truncate().
+		MessageEmbed
 }
 
 func SetSteamMessage() *discordgo.MessageEmbed {
@@ -1098,5 +1101,6 @@ func SetSteamMessage() *discordgo.MessageEmbed {
 		SetTitle("Steam Account Linked").
 		SetDescription("Your steam and discord accounts are now linked").
 		SetColor(ColourSuccess).
-		Truncate().MessageEmbed
+		Truncate().
+		MessageEmbed
 }

@@ -615,7 +615,7 @@ func (app *App) SendNotification(ctx context.Context, notification NotificationP
 		}
 	}
 
-	//go func(ids []string, payload NotificationPayload) {
+	// go func(ids []string, payload NotificationPayload) {
 	//	for _, discordID := range ids {
 	//		msgEmbed := discord.NewEmbed(app.Config(), "Notification", payload.Message)
 	//		if payload.Link != "" {
@@ -624,7 +624,7 @@ func (app *App) SendNotification(ctx context.Context, notification NotificationP
 	//
 	//		app.SendPayload(discordID, msgEmbed.Embed().Truncate().MessageEmbed)
 	//	}
-	//}(discordIds, notification)
+	// }(discordIds, notification)
 
 	// Broadcast to
 	for _, sid := range uniqueIds {

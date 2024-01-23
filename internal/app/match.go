@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	ErrInsufficientPlayers = errors.New("Insufficient Match players")
-	ErrIncompleteMatch     = errors.New("Insufficient match data")
+	ErrInsufficientPlayers = errors.New("insufficient Match players")
+	ErrIncompleteMatch     = errors.New("insufficient match data")
 )
 
 // Context represents the current Match on any given server instance.

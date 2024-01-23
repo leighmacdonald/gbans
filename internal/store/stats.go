@@ -12,6 +12,8 @@ import (
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
+var ErrFailedWeapon = errors.New("failed to save weapon")
+
 func (s Stores) LoadWeapons(ctx context.Context, weaponMap fp.MutexMap[logparse.Weapon, int]) error {
 	for weapon, name := range logparse.NewWeaponParser().NameMap() {
 		var newWeapon model.Weapon
@@ -74,7 +76,7 @@ func (s Stores) SaveWeapon(ctx context.Context, weapon *model.Weapon) error {
 	if errSave := s.
 		QueryRow(ctx, wq, weapon.Key, weapon.Name).
 		Scan(&weapon.WeaponID); errSave != nil {
-		return errors.Join(errSave, errors.New("Failed to insert weapon"))
+		return errors.Join(errSave, ErrFailedWeapon)
 	}
 
 	return nil
@@ -96,14 +98,14 @@ func (s Stores) Weapons(ctx context.Context, database Database) ([]model.Weapon,
 	for rows.Next() {
 		var weapon model.Weapon
 		if errScan := rows.Scan(&weapon.WeaponID, &weapon.Name); errScan != nil {
-			return nil, errors.Join(errScan, errors.New("Failed to scan weapon"))
+			return nil, errors.Join(errScan, ErrScanResult)
 		}
 
 		weapons = append(weapons, weapon)
 	}
 
 	if errRow := rows.Err(); errRow != nil {
-		return nil, errors.Join(errRow, errors.New("weapons rows error"))
+		return nil, errors.Join(errRow, ErrRowResults)
 	}
 
 	return weapons, nil
@@ -167,7 +169,7 @@ func (s Stores) GetMapUsageStats(ctx context.Context) ([]model.MapUseDetail, err
 	}
 
 	if rows.Err() != nil {
-		return nil, errors.Join(rows.Err(), errors.New("rows returned error"))
+		return nil, errors.Join(rows.Err(), ErrRowResults)
 	}
 
 	return details, nil

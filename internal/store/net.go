@@ -17,6 +17,11 @@ import (
 	"go.uber.org/zap"
 )
 
+var (
+	ErrScanASN    = errors.New("failed to scan asn result")
+	ErrCloseBatch = errors.New("failed to close batch request")
+)
+
 // GetBanNetByAddress returns the BanCIDR matching intersecting the supplied ip.
 //
 // Note that this function does not currently limit results returned. This may change in the future, do not
@@ -161,7 +166,7 @@ func (s Stores) GetBansNet(ctx context.Context, filter model.CIDRBansQueryFilter
 	if filter.TargetID != "" {
 		targetID, errTargetID := filter.TargetID.SID64(ctx)
 		if errTargetID != nil {
-			return nil, 0, errors.Join(errTargetID, errors.New("Invalid target id"))
+			return nil, 0, errors.Join(errTargetID, errs.ErrTargetID)
 		}
 
 		constraints = append(constraints, sq.Eq{"b.target_id": targetID.Int64()})
@@ -170,7 +175,7 @@ func (s Stores) GetBansNet(ctx context.Context, filter model.CIDRBansQueryFilter
 	if filter.SourceID != "" {
 		sourceID, errSourceID := filter.SourceID.SID64(ctx)
 		if errSourceID != nil {
-			return nil, 0, errors.Join(errSourceID, errors.New("Invalid source id"))
+			return nil, 0, errors.Join(errSourceID, errs.ErrSourceID)
 		}
 
 		constraints = append(constraints, sq.Eq{"b.source_id": sourceID.Int64()})
@@ -184,7 +189,7 @@ func (s Stores) GetBansNet(ctx context.Context, filter model.CIDRBansQueryFilter
 		if errCidr != nil {
 			ip := net.ParseIP(filter.IP)
 			if ip == nil {
-				return nil, 0, errors.Join(errCidr, errors.New("Failed to parse IP"))
+				return nil, 0, errors.Join(errCidr, errs.ErrInvalidIP)
 			}
 
 			addr = ip.String()
@@ -394,7 +399,7 @@ func (s Stores) GetExpiredASNBans(ctx context.Context) ([]model.BanASN, error) {
 			Scan(&banASN.BanASNId, &banASN.ASNum, &banASN.Origin, &sourceID, &targetID,
 				&banASN.ReasonText, &banASN.ValidUntil, &banASN.CreatedOn, &banASN.UpdatedOn, &banASN.Deleted,
 				&banASN.Reason, &banASN.IsEnabled, &banASN.UnbanReasonText, &banASN.AppealState); errScan != nil {
-			return nil, errors.Join(errScan, errors.New("Failed to scan asn ban"))
+			return nil, errors.Join(errScan, ErrScanASN)
 		}
 
 		banASN.TargetID = steamid.New(targetID)
@@ -510,7 +515,7 @@ func (s Stores) loadASN(ctx context.Context, log *zap.Logger, records []ip2locat
 				if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
 					cancel()
 
-					return errors.Join(errCloseBatch, errors.New("Failed to close asn batch"))
+					return errors.Join(errCloseBatch, ErrCloseBatch)
 				}
 
 				cancel()
@@ -553,7 +558,7 @@ func (s Stores) loadLocation(ctx context.Context, log *zap.Logger, records []ip2
 				if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
 					cancel()
 
-					return errors.Join(errCloseBatch, errors.New("Failed to send location batch update query"))
+					return errors.Join(errCloseBatch, ErrCloseBatch)
 				}
 
 				cancel()
@@ -598,7 +603,7 @@ func (s Stores) loadProxies(ctx context.Context, log *zap.Logger, records []ip2l
 				if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
 					cancel()
 
-					return errors.Join(errCloseBatch, errors.New("Failed to close proxy batch"))
+					return errors.Join(errCloseBatch, ErrCloseBatch)
 				}
 
 				cancel()
@@ -700,7 +705,7 @@ func (s Stores) GetBansASN(ctx context.Context, filter model.ASNBansQueryFilter)
 	if filter.TargetID != "" {
 		targetID, errTargetID := filter.TargetID.SID64(ctx)
 		if errTargetID != nil {
-			return nil, 0, errors.Join(errTargetID, errors.New("Invalid target id"))
+			return nil, 0, errors.Join(errTargetID, errs.ErrTargetID)
 		}
 
 		constraints = append(constraints, sq.Eq{"b.target_id": targetID.Int64()})
@@ -709,7 +714,7 @@ func (s Stores) GetBansASN(ctx context.Context, filter model.ASNBansQueryFilter)
 	if filter.SourceID != "" {
 		sourceID, errSourceID := filter.SourceID.SID64(ctx)
 		if errSourceID != nil {
-			return nil, 0, errors.Join(errSourceID, errors.New("Invalid source id"))
+			return nil, 0, errors.Join(errSourceID, errs.ErrSourceID)
 		}
 
 		constraints = append(constraints, sq.Eq{"b.source_id": sourceID.Int64()})
@@ -830,7 +835,7 @@ func (s Stores) GetSteamIDsAtIP(ctx context.Context, ipNet *net.IPNet) (steamid.
 		WHERE ip_addr::inet <<= inet '%s';`
 
 	if ipNet == nil {
-		return nil, errors.New("Invalid address")
+		return nil, errs.ErrInvalidCIDR
 	}
 
 	rows, errQuery := s.Query(ctx, fmt.Sprintf(query, ipNet.String()))

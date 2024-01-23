@@ -3,7 +3,6 @@ package thirdparty
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -84,7 +83,7 @@ var (
 func UpdatePlayerSummary(ctx context.Context, person *model.Person) error {
 	summaries, errSummaries := steamweb.PlayerSummaries(ctx, steamid.Collection{person.SteamID})
 	if errSummaries != nil {
-		return errors.Join(errSummaries, fmt.Errorf("%w: %v", ErrPlayerAPIFailed, errSummaries))
+		return errors.Join(errSummaries, ErrPlayerAPIFailed)
 	}
 
 	if len(summaries) > 0 {

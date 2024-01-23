@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"runtime"
@@ -22,12 +21,29 @@ import (
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/errs"
 	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
+)
+
+var (
+	errAssetCreateFailed  = errors.New("failed to create asset")
+	errAssetPut           = errors.New("unable to create asset on remote store")
+	errAssetSave          = errors.New("failed to save asset metadata")
+	errInvalidFormat      = errors.New("invalid format")
+	errDuplicateMediaName = errors.New("duplicate media name")
+	errSaveMedia          = errors.New("could not save media")
+	errFetchMedia         = errors.New("failed to fetch media asset")
+	errEmptyToken         = errors.New("invalid access token decoded")
+	errContestLoadEntries = errors.New("failed to load existing contest entries")
+	errContestMaxEntries  = errors.New("entries count exceed max_submission limits")
+	errEntryCreate        = errors.New("failed to create new contest entry")
+	errEntrySave          = errors.New("failed to save contest entry")
+	errThreadLocked       = errors.New("thread is locked")
 )
 
 func makeGetTokenKey(cookieKey string) func(_ *jwt.Token) (any, error) {
@@ -141,28 +157,23 @@ func onOAuthDiscordCallback(env Env) gin.HandlerFunc {
 	fetchDiscordID := func(ctx context.Context, accessToken string) (string, error) {
 		req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, "https://discord.com/api/users/@me", nil)
 		if errReq != nil {
-			return "", errors.Join(errReq, errors.New("Failed to create new request"))
+			return "", errors.Join(errReq, errs.ErrCreateRequest)
 		}
 
 		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", accessToken))
 		resp, errResp := client.Do(req)
 
 		if errResp != nil {
-			return "", errors.Join(errResp, errors.New("Failed to perform http request"))
+			return "", errors.Join(errResp, errs.ErrRequestPerform)
 		}
 
 		defer func() {
 			_ = resp.Body.Close()
 		}()
 
-		body, errBody := io.ReadAll(resp.Body)
-		if errBody != nil {
-			return "", errors.Join(errBody, errors.New("Failed to read response body"))
-		}
-
 		var details discordUserDetail
-		if errJSON := json.Unmarshal(body, &details); errJSON != nil {
-			return "", errors.Join(errJSON, errors.New("Failed to unmarshal response"))
+		if errJSON := json.NewDecoder(resp.Body).Decode(&details); errJSON != nil {
+			return "", errors.Join(errJSON, errs.ErrRequestDecode)
 		}
 
 		return details.ID, nil
@@ -182,32 +193,27 @@ func onOAuthDiscordCallback(env Env) gin.HandlerFunc {
 		req, errReq := http.NewRequestWithContext(ctx, http.MethodPost, "https://discord.com/api/oauth2/token", strings.NewReader(form.Encode()))
 
 		if errReq != nil {
-			return "", errors.Join(errReq, errors.New("Failed to create new request"))
+			return "", errors.Join(errReq, errs.ErrCreateRequest)
 		}
 
 		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 		resp, errResp := client.Do(req)
 		if errResp != nil {
-			return "", errors.Join(errResp, errors.New("Failed to perform http request"))
+			return "", errors.Join(errResp, errs.ErrRequestPerform)
 		}
 
 		defer func() {
 			_ = resp.Body.Close()
 		}()
 
-		body, errBody := io.ReadAll(resp.Body)
-		if errBody != nil {
-			return "", errors.Join(errBody, errors.New("Failed to read response body"))
-		}
-
 		var atr accessTokenResp
-		if errJSON := json.Unmarshal(body, &atr); errJSON != nil {
-			return "", errors.Join(errJSON, errors.New("Failed to decode response body"))
+		if errJSON := json.NewDecoder(resp.Body).Decode(&atr); errJSON != nil {
+			return "", errors.Join(errJSON, errs.ErrRequestDecode)
 		}
 
 		if atr.AccessToken == "" {
-			return "", errors.New("Empty token returned")
+			return "", errEmptyToken
 		}
 
 		return atr.AccessToken, nil
@@ -653,13 +659,13 @@ func onAPISaveMedia(env Env) gin.HandlerFunc {
 
 		asset, errAsset := model.NewAsset(content, conf.S3.BucketMedia, "")
 		if errAsset != nil {
-			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save asset"))
+			responseErr(ctx, http.StatusInternalServerError, errAssetCreateFailed)
 
 			return
 		}
 
 		if errPut := env.Assets().Put(ctx, conf.S3.BucketMedia, asset.Name, bytes.NewReader(content), asset.Size, asset.MimeType); errPut != nil {
-			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save media"))
+			responseErr(ctx, http.StatusInternalServerError, errAssetPut)
 
 			log.Error("Failed to save user media to s3 backend", zap.Error(errPut))
 
@@ -667,7 +673,7 @@ func onAPISaveMedia(env Env) gin.HandlerFunc {
 		}
 
 		if errSaveAsset := env.Store().SaveAsset(ctx, &asset); errSaveAsset != nil {
-			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save asset"))
+			responseErr(ctx, http.StatusInternalServerError, errAssetSave)
 
 			log.Error("Failed to save user asset to s3 backend", zap.Error(errSaveAsset))
 		}
@@ -677,7 +683,7 @@ func onAPISaveMedia(env Env) gin.HandlerFunc {
 		media.Contents = nil
 
 		if !slices.Contains(MediaSafeMimeTypesImages, media.MimeType) {
-			responseErr(ctx, http.StatusBadRequest, errors.New("Invalid image format"))
+			responseErr(ctx, http.StatusBadRequest, errInvalidFormat)
 			log.Error("User tried uploading image with forbidden mimetype",
 				zap.String("mime", media.MimeType), zap.String("name", media.Name))
 
@@ -687,13 +693,13 @@ func onAPISaveMedia(env Env) gin.HandlerFunc {
 		if errSave := env.Store().SaveMedia(ctx, &media); errSave != nil {
 			log.Error("Failed to save wiki media", zap.Error(errSave))
 
-			if errors.Is(errs.DBErr(errSave), errs.ErrDuplicate) {
-				responseErr(ctx, http.StatusConflict, errors.New("Duplicate media name"))
+			if errors.Is(errSave, errs.ErrDuplicate) {
+				responseErr(ctx, http.StatusConflict, errDuplicateMediaName)
 
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save media"))
+			responseErr(ctx, http.StatusInternalServerError, errSaveMedia)
 
 			return
 		}
@@ -1324,7 +1330,7 @@ func onAPIGetStatsWeaponsOverall(ctx context.Context, env Env) gin.HandlerFunc {
 	updater := NewDataUpdater(log, time.Minute*10, func() ([]model.WeaponsOverallResult, error) {
 		weaponStats, errUpdate := env.Store().WeaponsOverall(ctx)
 		if errUpdate != nil && !errors.Is(errUpdate, errs.ErrNoResult) {
-			return nil, errors.Join(errUpdate, errors.New("Failed to update weapon stats"))
+			return nil, errors.Join(errUpdate, ErrDataUpdate)
 		}
 
 		if weaponStats == nil {
@@ -1392,7 +1398,7 @@ func onAPIGetStatsPlayersOverall(ctx context.Context, env Env) gin.HandlerFunc {
 	updater := NewDataUpdater(log, time.Minute*10, func() ([]model.PlayerWeaponResult, error) {
 		updatedStats, errChat := env.Store().PlayersOverallByKills(ctx, 1000)
 		if errChat != nil && !errors.Is(errChat, errs.ErrNoResult) {
-			return nil, errors.Join(errChat, errors.New("Failed to query overall players overall"))
+			return nil, errors.Join(errChat, ErrDataUpdate)
 		}
 
 		return updatedStats, nil
@@ -1412,7 +1418,7 @@ func onAPIGetStatsHealersOverall(ctx context.Context, env Env) gin.HandlerFunc {
 	updater := NewDataUpdater(log, time.Minute*10, func() ([]model.HealingOverallResult, error) {
 		updatedStats, errChat := env.Store().HealersOverallByHealing(ctx, 250)
 		if errChat != nil && !errors.Is(errChat, errs.ErrNoResult) {
-			return nil, errors.Join(errChat, errors.New("Failed to query overall healers overall"))
+			return nil, errors.Join(errChat, ErrDataUpdate)
 		}
 
 		return updatedStats, nil
@@ -1537,13 +1543,13 @@ func onAPISaveContestEntryMedia(env Env) gin.HandlerFunc {
 
 		asset, errAsset := model.NewAsset(content, conf.S3.BucketMedia, "")
 		if errAsset != nil {
-			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save asset"))
+			responseErr(ctx, http.StatusInternalServerError, errAssetCreateFailed)
 
 			return
 		}
 
 		if errPut := env.Assets().Put(ctx, conf.S3.BucketMedia, asset.Name, bytes.NewReader(content), asset.Size, asset.MimeType); errPut != nil {
-			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save user contest media"))
+			responseErr(ctx, http.StatusInternalServerError, errAssetPut)
 
 			log.Error("Failed to save user contest entry media to s3 backend", zap.Error(errPut))
 
@@ -1551,7 +1557,7 @@ func onAPISaveContestEntryMedia(env Env) gin.HandlerFunc {
 		}
 
 		if errSaveAsset := env.Store().SaveAsset(ctx, &asset); errSaveAsset != nil {
-			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save asset"))
+			responseErr(ctx, http.StatusInternalServerError, errAssetSave)
 
 			log.Error("Failed to save user asset to s3 backend", zap.Error(errSaveAsset))
 		}
@@ -1561,7 +1567,7 @@ func onAPISaveContestEntryMedia(env Env) gin.HandlerFunc {
 		media.Contents = nil
 
 		if !contest.MimeTypeAcceptable(media.MimeType) {
-			responseErr(ctx, http.StatusUnsupportedMediaType, errors.New("Invalid file format"))
+			responseErr(ctx, http.StatusUnsupportedMediaType, errInvalidFormat)
 			log.Error("User tried uploading file with forbidden mimetype",
 				zap.String("mime", media.MimeType), zap.String("name", media.Name))
 
@@ -1572,12 +1578,12 @@ func onAPISaveContestEntryMedia(env Env) gin.HandlerFunc {
 			log.Error("Failed to save user contest media", zap.Error(errSave))
 
 			if errors.Is(errs.DBErr(errSave), errs.ErrDuplicate) {
-				responseErr(ctx, http.StatusConflict, errors.New("Duplicate media name"))
+				responseErr(ctx, http.StatusConflict, errDuplicateMediaName)
 
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save user contest media"))
+			responseErr(ctx, http.StatusInternalServerError, errSaveMedia)
 
 			return
 		}
@@ -1664,13 +1670,13 @@ func onAPISaveContestEntrySubmit(env Env) gin.HandlerFunc {
 		if contest.MediaTypes != "" {
 			var media model.Media
 			if errMedia := env.Store().GetMediaByAssetID(ctx, req.AssetID, &media); errMedia != nil {
-				responseErr(ctx, http.StatusFailedDependency, errors.New("Could not load media asset"))
+				responseErr(ctx, http.StatusFailedDependency, errFetchMedia)
 
 				return
 			}
 
 			if !contest.MimeTypeAcceptable(media.MimeType) {
-				responseErr(ctx, http.StatusFailedDependency, errors.New("Invalid Mime Type"))
+				responseErr(ctx, http.StatusFailedDependency, errInvalidFormat)
 
 				return
 			}
@@ -1678,7 +1684,7 @@ func onAPISaveContestEntrySubmit(env Env) gin.HandlerFunc {
 
 		existingEntries, errEntries := env.Store().ContestEntries(ctx, contest.ContestID)
 		if errEntries != nil && !errors.Is(errEntries, errs.ErrNoResult) {
-			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not load existing contest entries"))
+			responseErr(ctx, http.StatusInternalServerError, errContestLoadEntries)
 
 			return
 		}
@@ -1691,7 +1697,7 @@ func onAPISaveContestEntrySubmit(env Env) gin.HandlerFunc {
 			}
 
 			if own >= contest.MaxSubmissions {
-				responseErr(ctx, http.StatusForbidden, errors.New("Current entries count exceed max_submissions"))
+				responseErr(ctx, http.StatusForbidden, errContestMaxEntries)
 
 				return
 			}
@@ -1701,13 +1707,13 @@ func onAPISaveContestEntrySubmit(env Env) gin.HandlerFunc {
 
 		entry, errEntry := contest.NewEntry(steamID, req.AssetID, req.Description)
 		if errEntry != nil {
-			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not create content entry"))
+			responseErr(ctx, http.StatusInternalServerError, errEntryCreate)
 
 			return
 		}
 
 		if errSave := env.Store().ContestEntrySave(ctx, entry); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save entry"))
+			responseErr(ctx, http.StatusInternalServerError, errEntrySave)
 
 			return
 		}
@@ -1829,13 +1835,13 @@ func onAPIThreadCreate(env Env) gin.HandlerFunc {
 		}
 
 		if len(req.BodyMD) <= 1 {
-			responseErr(ctx, http.StatusBadRequest, errors.New("Message too short"))
+			responseErr(ctx, http.StatusBadRequest, fmt.Errorf("body: %w", store.ErrTooShort))
 
 			return
 		}
 
 		if len(req.Title) <= 4 {
-			responseErr(ctx, http.StatusBadRequest, errors.New("Title too short"))
+			responseErr(ctx, http.StatusBadRequest, fmt.Errorf("title: %w", store.ErrTooShort))
 
 			return
 		}
@@ -2098,7 +2104,7 @@ func onAPIMessageDelete(env Env) gin.HandlerFunc {
 		}
 
 		if thread.Locked {
-			responseErr(ctx, http.StatusForbidden, errors.New("Locked thread"))
+			responseErr(ctx, http.StatusForbidden, errThreadLocked)
 
 			return
 		}
@@ -2181,7 +2187,7 @@ func onAPIThreadCreateReply(env Env) gin.HandlerFunc {
 		}
 
 		if thread.Locked && currentUser.PermissionLevel < model.PEditor {
-			responseErr(ctx, http.StatusForbidden, errors.New("Cannot reply to locked threads"))
+			responseErr(ctx, http.StatusForbidden, errThreadLocked)
 
 			return
 		}
@@ -2194,7 +2200,7 @@ func onAPIThreadCreateReply(env Env) gin.HandlerFunc {
 		req.BodyMD = util.SanitizeUGC(req.BodyMD)
 
 		if len(req.BodyMD) < 3 {
-			responseErr(ctx, http.StatusBadRequest, errors.New("Body too short"))
+			responseErr(ctx, http.StatusBadRequest, fmt.Errorf("body: %w", store.ErrTooShort))
 
 			return
 		}

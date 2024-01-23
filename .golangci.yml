@@ -107,6 +107,35 @@ linters:
     #- zerologlint
 
 linters-settings:
+  wrapcheck:
+    # An array of strings that specify substrings of signatures to ignore.
+    # If this set, it will override the default set of ignored signatures.
+    # See https://github.com/tomarrell/wrapcheck#configuration for more information.
+    # Default: [".Errorf(", "errors.New(", "errors.Unwrap(", "errors.Join(", ".Wrap(", ".Wrapf(", ".WithMessage(", ".WithMessagef(", ".WithStack("]
+    ignoreSigs:
+      - .Errorf(
+      - errors.New(
+      - errors.Unwrap(
+      - errors.Join(
+      - .Wrap(
+      - .Wrapf(
+      - .WithMessage(
+      - .WithMessagef(
+      - .WithStack(
+      - errs.DBErr(
+    # An array of strings that specify regular expressions of signatures to ignore.
+    # Default: []
+    #ignoreSigRegexps:
+    #  - \.New.*Error\(
+    # An array of strings that specify globs of packages to ignore.
+    # Default: []
+    ignorePackageGlobs:
+    #  - encoding/*
+      - github.com/leighmacdonald/gbans/internal/store
+    # An array of strings that specify regular expressions of interfaces to ignore.
+    # Default: []
+    #ignoreInterfaceRegexps:
+    #  - ^(?i)c(?-i)ach(ing|e)
   interfacebloat:
     max: 26
   tagliatelle:

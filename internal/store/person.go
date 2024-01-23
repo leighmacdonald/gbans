@@ -19,6 +19,12 @@ import (
 	"github.com/leighmacdonald/steamweb/v2"
 )
 
+var (
+	ErrScanPerson     = errors.New("failed to scan person result")
+	ErrMessageContext = errors.New("could not fetch message context")
+	ErrScanResult     = errors.New("failed to scan result")
+)
+
 func (s Stores) DropPerson(ctx context.Context, steamID steamid.SID64) error {
 	return errs.DBErr(s.ExecDeleteBuilder(ctx, s.
 		Builder().
@@ -200,7 +206,7 @@ func (s Stores) GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collect
 			&person.LocCountryCode, &person.LocStateCode, &person.LocCityID, &person.PermissionLevel, &person.DiscordID,
 			&person.CommunityBanned, &person.VACBans, &person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan,
 			&person.UpdatedOnSteam, &person.Muted); errScan != nil {
-			return nil, errors.Join(errScan, errors.New("Failedto scan person"))
+			return nil, errors.Join(errScan, ErrScanPerson)
 		}
 
 		person.SteamID = steamid.New(steamID)
@@ -260,7 +266,7 @@ func (s Stores) GetPeople(ctx context.Context, filter model.PlayerQuery) (model.
 	if filter.IP != "" {
 		addr := net.ParseIP(filter.IP)
 		if addr == nil {
-			return nil, 0, errors.New("Invalid IP")
+			return nil, 0, errs.ErrInvalidIP
 		}
 
 		foundIds, errFoundIds := s.GetSteamsAtAddress(ctx, addr)
@@ -278,7 +284,7 @@ func (s Stores) GetPeople(ctx context.Context, filter model.PlayerQuery) (model.
 	if filter.SteamID != "" {
 		steamID, errSteamID := filter.SteamID.SID64(ctx)
 		if errSteamID != nil {
-			return nil, 0, errors.Join(errSteamID, errors.New("Invalid Steam ID"))
+			return nil, 0, errors.Join(errSteamID, errs.ErrSourceID)
 		}
 
 		conditions = append(conditions, sq.Eq{"s.steam_id": steamID.Int64()})
@@ -324,7 +330,7 @@ func (s Stores) GetPeople(ctx context.Context, filter model.PlayerQuery) (model.
 				&person.LocCityID, &person.PermissionLevel, &person.DiscordID, &person.CommunityBanned,
 				&person.VACBans, &person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan,
 				&person.UpdatedOnSteam, &person.Muted); errScan != nil {
-			return nil, 0, errors.Join(errScan, errors.New("Failed to scan person"))
+			return nil, 0, errors.Join(errScan, ErrScanPerson)
 		}
 
 		person.SteamID = steamid.New(steamID)
@@ -338,7 +344,7 @@ func (s Stores) GetPeople(ctx context.Context, filter model.PlayerQuery) (model.
 		From("person s").
 		Where(conditions))
 	if errCount != nil {
-		return nil, 0, errors.Join(errCount, errors.New("Failed to exec count query"))
+		return nil, 0, errors.Join(errCount, ErrCountQuery)
 	}
 
 	return people, count, nil
@@ -504,7 +510,7 @@ func (s Stores) QueryConnectionHistory(ctx context.Context, opts model.Connectio
 	if opts.SourceID != "" {
 		sid, errSID := opts.SourceID.SID64(ctx)
 		if errSID != nil {
-			return nil, 0, errors.Join(steamid.ErrInvalidSID, errors.New("Invalid steam id in query"))
+			return nil, 0, errors.Join(steamid.ErrInvalidSID, errs.ErrSourceID)
 		}
 
 		constraints = append(constraints, sq.Eq{"c.steam_id": sid.Int64()})
@@ -575,11 +581,11 @@ const minQueryLen = 2
 
 func (s Stores) QueryChatHistory(ctx context.Context, filters model.ChatHistoryQueryFilter) ([]model.QueryChatHistoryResult, int64, error) { //nolint:maintidx
 	if filters.Query != "" && len(filters.Query) < minQueryLen {
-		return nil, 0, errors.New("Query value too short")
+		return nil, 0, fmt.Errorf("%w: query", ErrTooShort)
 	}
 
 	if filters.Personaname != "" && len(filters.Personaname) < minQueryLen {
-		return nil, 0, errors.New("Name value too short")
+		return nil, 0, fmt.Errorf("%w: name", ErrTooShort)
 	}
 
 	builder := s.
@@ -634,7 +640,7 @@ func (s Stores) QueryChatHistory(ctx context.Context, filters model.ChatHistoryQ
 	if filters.SourceID != "" {
 		sid, errSID := filters.SourceID.SID64(ctx)
 		if errSID != nil {
-			return nil, 0, errors.Join(errSID, errors.New("Invalid steam id in query"))
+			return nil, 0, errors.Join(errSID, errs.ErrSourceID)
 		}
 
 		constraints = append(constraints, sq.Eq{"m.steam_id": sid.Int64()})
@@ -770,7 +776,7 @@ func (s Stores) GetPersonMessageContext(ctx context.Context, serverID int, messa
 
 	rows, errRows := s.Query(ctx, query, messageID, paddedMessageCount, serverID)
 	if errRows != nil {
-		return nil, errors.Join(errRows, errors.New("Failed to fetch message context"))
+		return nil, errors.Join(errRows, ErrMessageContext)
 	}
 	defer rows.Close()
 
@@ -781,7 +787,7 @@ func (s Stores) GetPersonMessageContext(ctx context.Context, serverID int, messa
 
 		if errScan := rows.Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.Team, &msg.CreatedOn,
 			&msg.PersonaName, &msg.MatchID, &msg.ServerName, &msg.AutoFilterFlagged); errScan != nil {
-			return nil, errors.Join(errRows, errors.New("Failed to scan message result"))
+			return nil, errors.Join(errRows, ErrScanResult)
 		}
 
 		messages = append(messages, msg)
@@ -951,7 +957,7 @@ func (s Stores) GetPersonNotifications(ctx context.Context, filters model.Notifi
 
 		if errScan := rows.Scan(&notif.PersonNotificationID, &outSteamID, &notif.Read, &notif.Deleted,
 			&notif.Severity, &notif.Message, &notif.Link, &notif.Count, &notif.CreatedOn); errScan != nil {
-			return nil, 0, errors.Join(errScan, errors.New("Failed to scan notification"))
+			return nil, 0, errors.Join(errScan, ErrScanResult)
 		}
 
 		notif.SteamID = steamid.New(outSteamID)
@@ -987,7 +993,7 @@ func (s Stores) GetSteamIdsAbove(ctx context.Context, privilege model.Privilege)
 	for rows.Next() {
 		var sid int64
 		if errScan := rows.Scan(&sid); errScan != nil {
-			return nil, errors.Join(errScan, errors.New("Failed to scan steam id"))
+			return nil, errors.Join(errScan, ErrScanResult)
 		}
 
 		ids = append(ids, steamid.New(sid))

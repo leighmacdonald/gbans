@@ -11,6 +11,8 @@ import (
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
+var ErrInvalidThread = errors.New("invalid thread id")
+
 func (s Stores) ForumCategories(ctx context.Context) ([]model.ForumCategory, error) {
 	rows, errRows := s.QueryBuilder(ctx, s.
 		Builder().
@@ -310,7 +312,7 @@ func (s Stores) ForumThreadDelete(ctx context.Context, forumThreadID int64) erro
 
 func (s Stores) ForumThreads(ctx context.Context, filter model.ThreadQueryFilter) ([]model.ThreadWithSource, int64, error) {
 	if filter.ForumID <= 0 {
-		return nil, 0, errors.New("Invalid Thread")
+		return nil, 0, ErrInvalidThread
 	}
 
 	constraints := sq.And{sq.Eq{"forum_id": filter.ForumID}}
