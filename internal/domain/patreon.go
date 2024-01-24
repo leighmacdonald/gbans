@@ -1,4 +1,4 @@
-package model
+package domain
 
 import "gopkg.in/mxpv/patreon-go.v1"
 

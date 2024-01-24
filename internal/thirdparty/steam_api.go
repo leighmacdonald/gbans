@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
@@ -80,7 +80,7 @@ var (
 	ErrSteamBans       = errors.New("failed to fetch player bans")
 )
 
-func UpdatePlayerSummary(ctx context.Context, person *model.Person) error {
+func UpdatePlayerSummary(ctx context.Context, person *domain.Person) error {
 	summaries, errSummaries := steamweb.PlayerSummaries(ctx, steamid.Collection{person.SteamID})
 	if errSummaries != nil {
 		return errors.Join(errSummaries, ErrPlayerAPIFailed)

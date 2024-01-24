@@ -5,30 +5,30 @@ import (
 	"sync"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"go.uber.org/zap"
 )
 
 type Tracker struct {
 	activityMu *sync.RWMutex
-	activity   []model.ForumActivity
+	activity   []domain.ForumActivity
 	log        *zap.Logger
 }
 
 func NewTracker(log *zap.Logger) *Tracker {
 	return &Tracker{
 		activityMu: &sync.RWMutex{},
-		activity:   make([]model.ForumActivity, 0),
+		activity:   make([]domain.ForumActivity, 0),
 		log:        log.Named("Tracker"),
 	}
 }
 
-func (tracker *Tracker) Touch(person model.UserProfile) {
+func (tracker *Tracker) Touch(person domain.UserProfile) {
 	if !person.SteamID.Valid() {
 		return
 	}
 
-	valid := []model.ForumActivity{{LastActivity: time.Now(), Person: person}}
+	valid := []domain.ForumActivity{{LastActivity: time.Now(), Person: person}}
 
 	tracker.activityMu.Lock()
 	defer tracker.activityMu.Unlock()
@@ -50,7 +50,7 @@ func (tracker *Tracker) Start(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			var current []model.ForumActivity
+			var current []domain.ForumActivity
 
 			tracker.activityMu.Lock()
 
@@ -73,11 +73,11 @@ func (tracker *Tracker) Start(ctx context.Context) {
 	}
 }
 
-func (tracker *Tracker) Current() []model.ForumActivity {
+func (tracker *Tracker) Current() []domain.ForumActivity {
 	tracker.activityMu.RLock()
 	defer tracker.activityMu.RUnlock()
 
-	var activity []model.ForumActivity
+	var activity []domain.ForumActivity
 
 	activity = append(activity, tracker.activity...)
 

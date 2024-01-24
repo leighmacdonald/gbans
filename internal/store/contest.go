@@ -7,14 +7,14 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
 var ErrInvalidContestID = errors.New("invalid contest id provided")
 
-func (s Stores) ContestByID(ctx context.Context, contestID uuid.UUID, contest *model.Contest) error {
+func (s Stores) ContestByID(ctx context.Context, contestID uuid.UUID, contest *domain.Contest) error {
 	if contestID.IsNil() {
 		return ErrInvalidContestID
 	}
@@ -53,8 +53,8 @@ func (s Stores) ContestEntryDelete(ctx context.Context, contestEntryID uuid.UUID
 		Where(sq.Eq{"contest_entry_id": contestEntryID})))
 }
 
-func (s Stores) Contests(ctx context.Context, publicOnly bool) ([]model.Contest, error) {
-	var contests []model.Contest
+func (s Stores) Contests(ctx context.Context, publicOnly bool) ([]domain.Contest, error) {
+	var contests []domain.Contest
 
 	builder := s.
 		Builder().
@@ -75,7 +75,7 @@ func (s Stores) Contests(ctx context.Context, publicOnly bool) ([]model.Contest,
 	rows, errRows := s.QueryBuilder(ctx, builder.Where(ands))
 	if errRows != nil {
 		if errors.Is(errRows, errs.ErrNoResult) {
-			return []model.Contest{}, nil
+			return []domain.Contest{}, nil
 		}
 
 		return nil, errs.DBErr(errRows)
@@ -84,7 +84,7 @@ func (s Stores) Contests(ctx context.Context, publicOnly bool) ([]model.Contest,
 	defer rows.Close()
 
 	for rows.Next() {
-		var contest model.Contest
+		var contest domain.Contest
 		if errScan := rows.Scan(&contest.ContestID, &contest.Title, &contest.Public, &contest.Description,
 			&contest.DateStart, &contest.DateEnd, &contest.MaxSubmissions, &contest.MediaTypes,
 			&contest.Deleted, &contest.Voting, &contest.MinPermissionLevel, &contest.DownVotes,
@@ -98,7 +98,7 @@ func (s Stores) Contests(ctx context.Context, publicOnly bool) ([]model.Contest,
 	return contests, nil
 }
 
-func (s Stores) ContestEntrySave(ctx context.Context, entry model.ContestEntry) error {
+func (s Stores) ContestEntrySave(ctx context.Context, entry domain.ContestEntry) error {
 	return errs.DBErr(s.ExecInsertBuilder(ctx, s.
 		Builder().
 		Insert("contest_entry").
@@ -108,7 +108,7 @@ func (s Stores) ContestEntrySave(ctx context.Context, entry model.ContestEntry) 
 			entry.Placement, entry.Deleted, entry.CreatedOn, entry.UpdatedOn)))
 }
 
-func (s Stores) ContestSave(ctx context.Context, contest *model.Contest) error {
+func (s Stores) ContestSave(ctx context.Context, contest *domain.Contest) error {
 	if contest.ContestID == uuid.FromStringOrNil(EmptyUUID) {
 		newID, errID := uuid.NewV4()
 		if errID != nil {
@@ -123,7 +123,7 @@ func (s Stores) ContestSave(ctx context.Context, contest *model.Contest) error {
 	return s.contestUpdate(ctx, contest)
 }
 
-func (s Stores) contestInsert(ctx context.Context, contest *model.Contest) error {
+func (s Stores) contestInsert(ctx context.Context, contest *domain.Contest) error {
 	query := s.
 		Builder().
 		Insert("contest").
@@ -144,7 +144,7 @@ func (s Stores) contestInsert(ctx context.Context, contest *model.Contest) error
 	return nil
 }
 
-func (s Stores) contestUpdate(ctx context.Context, contest *model.Contest) error {
+func (s Stores) contestUpdate(ctx context.Context, contest *domain.Contest) error {
 	contest.UpdatedOn = time.Now()
 
 	return errs.DBErr(s.ExecUpdateBuilder(ctx, s.
@@ -166,7 +166,7 @@ func (s Stores) contestUpdate(ctx context.Context, contest *model.Contest) error
 		Where(sq.Eq{"contest_id": contest.ContestID})))
 }
 
-func (s Stores) ContestEntry(ctx context.Context, contestID uuid.UUID, entry *model.ContestEntry) error {
+func (s Stores) ContestEntry(ctx context.Context, contestID uuid.UUID, entry *domain.ContestEntry) error {
 	query := `
 		SELECT
 			s.contest_entry_id,
@@ -214,7 +214,7 @@ func (s Stores) ContestEntry(ctx context.Context, contestID uuid.UUID, entry *mo
 	return nil
 }
 
-func (s Stores) ContestEntries(ctx context.Context, contestID uuid.UUID) ([]*model.ContestEntry, error) {
+func (s Stores) ContestEntries(ctx context.Context, contestID uuid.UUID) ([]*domain.ContestEntry, error) {
 	query := `
 		SELECT
 			s.contest_entry_id,
@@ -250,12 +250,12 @@ func (s Stores) ContestEntries(ctx context.Context, contestID uuid.UUID) ([]*mod
 		WHERE s.contest_id = $1
 		ORDER BY s.created_on DESC`
 
-	var entries []*model.ContestEntry
+	var entries []*domain.ContestEntry
 
 	rows, errRows := s.Query(ctx, query, contestID)
 	if errRows != nil {
 		if errors.Is(errRows, errs.ErrNoResult) {
-			return []*model.ContestEntry{}, nil
+			return []*domain.ContestEntry{}, nil
 		}
 
 		return nil, errs.DBErr(errRows)
@@ -264,7 +264,7 @@ func (s Stores) ContestEntries(ctx context.Context, contestID uuid.UUID) ([]*mod
 	defer rows.Close()
 
 	for rows.Next() {
-		var entry model.ContestEntry
+		var entry domain.ContestEntry
 
 		if errScan := rows.Scan(&entry.ContestEntryID, &entry.ContestID, &entry.SteamID, &entry.AssetID, &entry.Description,
 			&entry.Placement, &entry.Deleted, &entry.CreatedOn, &entry.UpdatedOn,
@@ -280,7 +280,7 @@ func (s Stores) ContestEntries(ctx context.Context, contestID uuid.UUID) ([]*mod
 	return entries, nil
 }
 
-func (s Stores) ContestEntryVoteGet(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SID64, record *model.ContentVoteRecord) error {
+func (s Stores) ContestEntryVoteGet(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SID64, record *domain.ContentVoteRecord) error {
 	query := s.
 		Builder().
 		Select("contest_entry_vote_id", "contest_entry_id", "steam_id",
@@ -303,17 +303,17 @@ func (s Stores) ContestEntryVoteGet(ctx context.Context, contestEntryID uuid.UUI
 }
 
 func (s Stores) ContestEntryVote(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SID64, vote bool) error {
-	var record model.ContentVoteRecord
+	var record domain.ContentVoteRecord
 	if errRecord := s.ContestEntryVoteGet(ctx, contestEntryID, steamID, &record); errRecord != nil {
 		if !errors.Is(errRecord, errs.ErrNoResult) {
 			return errs.DBErr(errRecord)
 		}
 
-		record = model.ContentVoteRecord{
+		record = domain.ContentVoteRecord{
 			ContestEntryID: contestEntryID,
 			SteamID:        steamID,
 			Vote:           vote,
-			TimeStamped:    model.NewTimeStamped(),
+			TimeStamped:    domain.NewTimeStamped(),
 		}
 
 		now := time.Now()

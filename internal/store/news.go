@@ -6,11 +6,11 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/model"
 )
 
-func (s Stores) GetNewsLatest(ctx context.Context, limit int, includeUnpublished bool) ([]model.NewsEntry, error) {
+func (s Stores) GetNewsLatest(ctx context.Context, limit int, includeUnpublished bool) ([]domain.NewsEntry, error) {
 	builder := s.
 		Builder().
 		Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
@@ -29,10 +29,10 @@ func (s Stores) GetNewsLatest(ctx context.Context, limit int, includeUnpublished
 
 	defer rows.Close()
 
-	var articles []model.NewsEntry
+	var articles []domain.NewsEntry
 
 	for rows.Next() {
-		var entry model.NewsEntry
+		var entry domain.NewsEntry
 		if errScan := rows.Scan(&entry.NewsID, &entry.Title, &entry.BodyMD, &entry.IsPublished,
 			&entry.CreatedOn, &entry.UpdatedOn); errScan != nil {
 			return nil, errs.DBErr(errScan)
@@ -44,7 +44,7 @@ func (s Stores) GetNewsLatest(ctx context.Context, limit int, includeUnpublished
 	return articles, nil
 }
 
-func (s Stores) GetNewsLatestArticle(ctx context.Context, includeUnpublished bool, entry *model.NewsEntry) error {
+func (s Stores) GetNewsLatestArticle(ctx context.Context, includeUnpublished bool, entry *domain.NewsEntry) error {
 	builder := s.
 		Builder().
 		Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
@@ -66,7 +66,7 @@ func (s Stores) GetNewsLatestArticle(ctx context.Context, includeUnpublished boo
 	return nil
 }
 
-func (s Stores) GetNewsByID(ctx context.Context, newsID int, entry *model.NewsEntry) error {
+func (s Stores) GetNewsByID(ctx context.Context, newsID int, entry *domain.NewsEntry) error {
 	query, args, errQueryArgs := s.
 		Builder().
 		Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
@@ -83,7 +83,7 @@ func (s Stores) GetNewsByID(ctx context.Context, newsID int, entry *model.NewsEn
 	return nil
 }
 
-func (s Stores) SaveNewsArticle(ctx context.Context, entry *model.NewsEntry) error {
+func (s Stores) SaveNewsArticle(ctx context.Context, entry *domain.NewsEntry) error {
 	if entry.NewsID > 0 {
 		return s.updateNewsArticle(ctx, entry)
 	} else {
@@ -91,7 +91,7 @@ func (s Stores) SaveNewsArticle(ctx context.Context, entry *model.NewsEntry) err
 	}
 }
 
-func (s Stores) insertNewsArticle(ctx context.Context, entry *model.NewsEntry) error {
+func (s Stores) insertNewsArticle(ctx context.Context, entry *domain.NewsEntry) error {
 	query, args, errQueryArgs := s.
 		Builder().
 		Insert("news").
@@ -111,7 +111,7 @@ func (s Stores) insertNewsArticle(ctx context.Context, entry *model.NewsEntry) e
 	return nil
 }
 
-func (s Stores) updateNewsArticle(ctx context.Context, entry *model.NewsEntry) error {
+func (s Stores) updateNewsArticle(ctx context.Context, entry *domain.NewsEntry) error {
 	return errs.DBErr(s.ExecUpdateBuilder(ctx, s.
 		Builder().
 		Update("news").

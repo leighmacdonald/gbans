@@ -14,8 +14,8 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/rcon/rcon"
 	"github.com/leighmacdonald/steamid/v3/extra"
@@ -118,8 +118,8 @@ func NewCollector(logger *zap.Logger) *Collector {
 	}
 }
 
-func (c *Collector) Find(name string, steamID steamid.SID64, addr net.IP, cidr *net.IPNet) []model.PlayerServerInfo {
-	var found []model.PlayerServerInfo
+func (c *Collector) Find(name string, steamID steamid.SID64, addr net.IP, cidr *net.IPNet) []domain.PlayerServerInfo {
+	var found []domain.PlayerServerInfo
 
 	for server := range c.serverState {
 		for _, player := range c.serverState[server].Players {
@@ -153,7 +153,7 @@ func (c *Collector) Find(name string, steamID steamid.SID64, addr net.IP, cidr *
 			}
 
 			if matched {
-				found = append(found, model.PlayerServerInfo{Player: player, ServerID: c.serverState[server].ServerID})
+				found = append(found, domain.PlayerServerInfo{Player: player, ServerID: c.serverState[server].ServerID})
 			}
 		}
 	}
@@ -176,6 +176,9 @@ func (c *Collector) SortRegion() map[string][]ServerState {
 }
 
 func (c *Collector) ByServerID(serverID int) (ServerState, bool) {
+	c.stateMu.RLock()
+	defer c.stateMu.RUnlock()
+
 	for _, server := range c.serverState {
 		if server.ServerID == serverID {
 			return server, true
@@ -229,7 +232,7 @@ func (c *Collector) logAddressAdd(ctx context.Context, logAddress string) {
 
 // OnFindExec is a helper function used to execute rcon commands against any players found in the query.
 func (c *Collector) OnFindExec(ctx context.Context, name string, steamID steamid.SID64,
-	ip net.IP, cidr *net.IPNet, onFoundCmd func(info model.PlayerServerInfo) string,
+	ip net.IP, cidr *net.IPNet, onFoundCmd func(info domain.PlayerServerInfo) string,
 ) error {
 	currentState := c.Current()
 	players := c.Find(name, steamID, ip, cidr)
@@ -449,7 +452,7 @@ func (c *Collector) setServerConfigs(configs []serverConfig) {
 	c.configs = configs
 }
 
-func (c *Collector) Update(serverID int, update model.PartialStateUpdate) error {
+func (c *Collector) Update(serverID int, update domain.PartialStateUpdate) error {
 	c.stateMu.Lock()
 	defer c.stateMu.Unlock()
 
@@ -645,7 +648,7 @@ func (c *Collector) updateMSL(ctx context.Context) ([]serverLocation, error) {
 }
 
 type ServerStore interface {
-	GetServers(ctx context.Context, filter model.ServerQueryFilter) ([]model.Server, int64, error)
+	GetServers(ctx context.Context, filter domain.ServerQueryFilter) ([]domain.Server, int64, error)
 }
 
 func (c *Collector) Start(ctx context.Context, configFunc func() config.Config, database func() ServerStore) {
@@ -667,8 +670,8 @@ func (c *Collector) Start(ctx context.Context, configFunc func() config.Config, 
 		case <-updateTicker.C:
 			trigger <- true
 		case <-trigger:
-			servers, _, errServers := database().GetServers(ctx, model.ServerQueryFilter{
-				QueryFilter:     model.QueryFilter{Deleted: false},
+			servers, _, errServers := database().GetServers(ctx, domain.ServerQueryFilter{
+				QueryFilter:     domain.QueryFilter{Deleted: false},
 				IncludeDisabled: false,
 			})
 			if errServers != nil && !errors.Is(errServers, errs.ErrNoResult) {

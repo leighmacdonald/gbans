@@ -55,6 +55,7 @@ type Database interface {
 	ExecInsertBuilderWithReturnValue(ctx context.Context, builder sq.InsertBuilder, outID any) error
 	Builder() sq.StatementBuilderType
 	SendBatch(ctx context.Context, b *pgx.Batch) pgx.BatchResults
+	GetCount(ctx context.Context, store Database, builder sq.SelectBuilder) (int64, error)
 }
 
 type Stores struct {
@@ -238,6 +239,22 @@ func (db *postgresStore) Close() error {
 	}
 
 	return nil
+}
+
+func (db *postgresStore) GetCount(ctx context.Context, store Database, builder sq.SelectBuilder) (int64, error) {
+	countQuery, argsCount, errCountQuery := builder.ToSql()
+	if errCountQuery != nil {
+		return 0, errors.Join(errCountQuery, ErrCreateQuery)
+	}
+
+	var count int64
+	if errCount := store.
+		QueryRow(ctx, countQuery, argsCount...).
+		Scan(&count); errCount != nil {
+		return 0, errCount //nolint:wrapcheck
+	}
+
+	return count, nil
 }
 
 func getCount(ctx context.Context, store Database, builder sq.SelectBuilder) (int64, error) {

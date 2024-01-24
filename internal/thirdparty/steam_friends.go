@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
@@ -92,8 +92,8 @@ func (sf *SteamFriends) updateSteamBanMembers(ctx context.Context) (map[steamid.
 	localCtx, cancel := context.WithTimeout(ctx, time.Second*120)
 	defer cancel()
 
-	opts := model.SteamBansQueryFilter{
-		BansQueryFilter:    model.BansQueryFilter{QueryFilter: model.QueryFilter{Deleted: false}},
+	opts := domain.SteamBansQueryFilter{
+		BansQueryFilter:    domain.BansQueryFilter{QueryFilter: domain.QueryFilter{Deleted: false}},
 		IncludeFriendsOnly: true,
 	}
 
@@ -122,7 +122,7 @@ func (sf *SteamFriends) updateSteamBanMembers(ctx context.Context) (map[steamid.
 			sids = append(sids, friend.SteamID)
 		}
 
-		memberList := model.NewMembersList(steamBan.TargetID.Int64(), sids)
+		memberList := domain.NewMembersList(steamBan.TargetID.Int64(), sids)
 		if errQuery := sf.store.GetMembersList(ctx, steamBan.TargetID.Int64(), &memberList); errQuery != nil {
 			if !errors.Is(errQuery, errs.ErrNoResult) {
 				return nil, errors.Join(errQuery, ErrSteamFriendsFetch)

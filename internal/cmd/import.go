@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/log"
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -104,7 +104,7 @@ func importConnectionsCmd() *cobra.Command {
 
 				if _, playerFound := playerExistsCache[sid]; !playerFound {
 					// Satisfy fk
-					var person model.Person
+					var person domain.Person
 					if errPerson := database.GetOrCreatePersonBySteamID(ctx, sid, &person); errPerson != nil {
 						rootLogger.Error("Failed to get person", zap.Error(errPerson))
 
@@ -149,7 +149,7 @@ func importConnectionsCmd() *cobra.Command {
 					continue
 				}
 
-				if errAdd := database.AddConnectionHistory(ctx, &model.PersonConnection{
+				if errAdd := database.AddConnectionHistory(ctx, &domain.PersonConnection{
 					IPAddr:      ipAddr,
 					SteamID:     sid,
 					PersonaName: name,
@@ -237,7 +237,7 @@ func importMessagesCmd() *cobra.Command {
 
 				if _, playerFound := playerExistsCache[sid]; !playerFound {
 					// Satisfy fk
-					var person model.Person
+					var person domain.Person
 					if errPerson := database.GetOrCreatePersonBySteamID(ctx, sid, &person); errPerson != nil {
 						rootLogger.Error("Failed to get person", zap.Error(errPerson))
 
@@ -254,7 +254,7 @@ func importMessagesCmd() *cobra.Command {
 
 				serverID, serverFound := serverCache[serverName]
 				if !serverFound {
-					var server model.Server
+					var server domain.Server
 					if errServer := database.GetServerByName(ctx, serverName, &server, true, true); errServer != nil {
 						rootLogger.Error("Failed to get server", zap.Error(errServer))
 
@@ -299,7 +299,7 @@ func importMessagesCmd() *cobra.Command {
 					continue
 				}
 
-				if errAdd := database.AddChatHistory(ctx, &model.PersonMessage{
+				if errAdd := database.AddChatHistory(ctx, &domain.PersonMessage{
 					SteamID:     sid,
 					PersonaName: name,
 					ServerID:    serverID,

@@ -1,4 +1,4 @@
-package store
+package repository
 
 import (
 	"context"
@@ -13,11 +13,20 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
+	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 )
+
+type personRepository struct {
+	store.Database
+}
+
+func NewPersonRepository(database store.Database) domain.PersonRepository {
+	return &personRepository{Database: database}
+}
 
 var (
 	ErrScanPerson     = errors.New("failed to scan person result")
@@ -25,7 +34,7 @@ var (
 	ErrScanResult     = errors.New("failed to scan result")
 )
 
-func (s Stores) DropPerson(ctx context.Context, steamID steamid.SID64) error {
+func (s *personRepository) DropPerson(ctx context.Context, steamID steamid.SID64) error {
 	return errs.DBErr(s.ExecDeleteBuilder(ctx, s.
 		Builder().
 		Delete("person").
@@ -33,7 +42,7 @@ func (s Stores) DropPerson(ctx context.Context, steamID steamid.SID64) error {
 }
 
 // SavePerson will insert or update the person record.
-func (s Stores) SavePerson(ctx context.Context, person *domain.Person) error {
+func (s *personRepository) SavePerson(ctx context.Context, person *domain.Person) error {
 	person.UpdatedOn = time.Now()
 	// FIXME
 	if person.PermissionLevel == 0 {
@@ -49,7 +58,7 @@ func (s Stores) SavePerson(ctx context.Context, person *domain.Person) error {
 	return s.insertPerson(ctx, person)
 }
 
-func (s Stores) updatePerson(ctx context.Context, person *domain.Person) error {
+func (s *personRepository) updatePerson(ctx context.Context, person *domain.Person) error {
 	person.UpdatedOn = time.Now()
 
 	return errs.DBErr(s.
@@ -85,7 +94,7 @@ func (s Stores) updatePerson(ctx context.Context, person *domain.Person) error {
 			Where(sq.Eq{"steam_id": person.SteamID.Int64()})))
 }
 
-func (s Stores) insertPerson(ctx context.Context, person *domain.Person) error {
+func (s *personRepository) insertPerson(ctx context.Context, person *domain.Person) error {
 	errExec := s.ExecInsertBuilder(ctx, s.
 		Builder().
 		Insert("person").
@@ -123,7 +132,7 @@ var profileColumns = []string{ //nolint:gochecknoglobals
 
 // GetPersonBySteamID returns a person by their steam_id. ErrNoResult is returned if the steam_id
 // is not known.
-func (s Stores) GetPersonBySteamID(ctx context.Context, sid64 steamid.SID64, person *domain.Person) error {
+func (s *personRepository) GetPersonBySteamID(ctx context.Context, sid64 steamid.SID64, person *domain.Person) error {
 	if !sid64.Valid() {
 		return errs.ErrInvalidSID
 	}
@@ -175,7 +184,7 @@ func (s Stores) GetPersonBySteamID(ctx context.Context, sid64 steamid.SID64, per
 		&person.Muted))
 }
 
-func (s Stores) GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collection) (domain.People, error) {
+func (s *personRepository) GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collection) (domain.People, error) {
 	var ids []int64 //nolint:prealloc
 	for _, sid := range fp.Uniq[steamid.SID64](steamIds) {
 		ids = append(ids, sid.Int64())
@@ -223,7 +232,7 @@ func normalizeStringLikeQuery(input string) string {
 	return fmt.Sprintf("%%%s%%", strings.ToLower(strings.Trim(space.ReplaceAllString(input, "%"), "%")))
 }
 
-func (s Stores) GetSteamsAtAddress(ctx context.Context, addr net.IP) (steamid.Collection, error) {
+func (s *personRepository) GetSteamsAtAddress(ctx context.Context, addr net.IP) (steamid.Collection, error) {
 	var ids steamid.Collection
 
 	// TODO
@@ -250,7 +259,7 @@ func (s Stores) GetSteamsAtAddress(ctx context.Context, addr net.IP) (steamid.Co
 	return ids, nil
 }
 
-func (s Stores) GetPeople(ctx context.Context, filter domain.PlayerQuery) (domain.People, int64, error) {
+func (s *personRepository) GetPeople(ctx context.Context, filter domain.PlayerQuery) (domain.People, int64, error) {
 	builder := s.
 		Builder().
 		Select("s.steam_id", "s.created_on", "s.updated_on",
@@ -338,13 +347,13 @@ func (s Stores) GetPeople(ctx context.Context, filter domain.PlayerQuery) (domai
 		people = append(people, person)
 	}
 
-	count, errCount := getCount(ctx, s, s.
+	count, errCount := s.GetCount(ctx, s, s.
 		Builder().
 		Select("COUNT(s.steam_id)").
 		From("person s").
 		Where(conditions))
 	if errCount != nil {
-		return nil, 0, errors.Join(errCount, ErrCountQuery)
+		return nil, 0, errors.Join(errCount, domain.ErrCountQuery)
 	}
 
 	return people, count, nil
@@ -352,7 +361,7 @@ func (s Stores) GetPeople(ctx context.Context, filter domain.PlayerQuery) (domai
 
 // GetOrCreatePersonBySteamID returns a person by their steam_id, creating a new person if the steam_id
 // does not exist.
-func (s Stores) GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.SID64, person *domain.Person) error {
+func (s *personRepository) GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.SID64, person *domain.Person) error {
 	errGetPerson := s.GetPersonBySteamID(ctx, sid64, person)
 	if errGetPerson != nil && errors.Is(errs.DBErr(errGetPerson), errs.ErrNoResult) {
 		// FIXME
@@ -366,7 +375,7 @@ func (s Stores) GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.SI
 }
 
 // GetPersonByDiscordID returns a person by their discord_id.
-func (s Stores) GetPersonByDiscordID(ctx context.Context, discordID string, person *domain.Person) error {
+func (s *personRepository) GetPersonByDiscordID(ctx context.Context, discordID string, person *domain.Person) error {
 	var steamID int64
 
 	person.IsNew = false
@@ -396,7 +405,7 @@ func (s Stores) GetPersonByDiscordID(ctx context.Context, discordID string, pers
 	return nil
 }
 
-func (s Stores) GetExpiredProfiles(ctx context.Context, limit uint64) ([]domain.Person, error) {
+func (s *personRepository) GetExpiredProfiles(ctx context.Context, limit uint64) ([]domain.Person, error) {
 	var people []domain.Person
 
 	rows, errQuery := s.QueryBuilder(ctx, s.
@@ -440,7 +449,7 @@ func (s Stores) GetExpiredProfiles(ctx context.Context, limit uint64) ([]domain.
 	return people, nil
 }
 
-func (s Stores) AddChatHistory(ctx context.Context, message *domain.PersonMessage) error {
+func (s *personRepository) AddChatHistory(ctx context.Context, message *domain.PersonMessage) error {
 	const query = `INSERT INTO person_messages 
     		(steam_id, server_id, body, team, created_on, persona_name, match_id) 
 			VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -456,7 +465,7 @@ func (s Stores) AddChatHistory(ctx context.Context, message *domain.PersonMessag
 	return nil
 }
 
-func (s Stores) GetPersonMessageByID(ctx context.Context, personMessageID int64, msg *domain.PersonMessage) error {
+func (s *personRepository) GetPersonMessageByID(ctx context.Context, personMessageID int64, msg *domain.PersonMessage) error {
 	row, errRow := s.QueryRowBuilder(ctx, s.
 		Builder().
 		Select(
@@ -496,7 +505,7 @@ func (s Stores) GetPersonMessageByID(ctx context.Context, personMessageID int64,
 	return nil
 }
 
-func (s Stores) QueryConnectionHistory(ctx context.Context, opts domain.ConnectionHistoryQueryFilter) ([]domain.PersonConnection, int64, error) {
+func (s *personRepository) QueryConnectionHistory(ctx context.Context, opts domain.ConnectionHistoryQueryFilter) ([]domain.PersonConnection, int64, error) {
 	builder := s.
 		Builder().
 		Select("c.person_connection_id", "c.steam_id",
@@ -564,7 +573,7 @@ func (s Stores) QueryConnectionHistory(ctx context.Context, opts domain.Connecti
 		return []domain.PersonConnection{}, 0, nil
 	}
 
-	count, errCount := getCount(ctx, s, s.
+	count, errCount := s.GetCount(ctx, s, s.
 		Builder().
 		Select("count(c.person_connection_id)").
 		From("person_connections c").
@@ -579,13 +588,13 @@ func (s Stores) QueryConnectionHistory(ctx context.Context, opts domain.Connecti
 
 const minQueryLen = 2
 
-func (s Stores) QueryChatHistory(ctx context.Context, filters domain.ChatHistoryQueryFilter) ([]domain.QueryChatHistoryResult, int64, error) { //nolint:maintidx
+func (s *personRepository) QueryChatHistory(ctx context.Context, filters domain.ChatHistoryQueryFilter) ([]domain.QueryChatHistoryResult, int64, error) { //nolint:maintidx
 	if filters.Query != "" && len(filters.Query) < minQueryLen {
-		return nil, 0, fmt.Errorf("%w: query", ErrTooShort)
+		return nil, 0, fmt.Errorf("%w: query", domain.ErrTooShort)
 	}
 
 	if filters.Personaname != "" && len(filters.Personaname) < minQueryLen {
-		return nil, 0, fmt.Errorf("%w: name", ErrTooShort)
+		return nil, 0, fmt.Errorf("%w: name", domain.ErrTooShort)
 	}
 
 	builder := s.
@@ -704,7 +713,7 @@ func (s Stores) QueryChatHistory(ctx context.Context, filters domain.ChatHistory
 		messages = []domain.QueryChatHistoryResult{}
 	}
 
-	count, errCount := getCount(ctx, s, s.
+	count, errCount := s.GetCount(ctx, s, s.
 		Builder().
 		Select("count(m.created_on) as count").
 		From("person_messages m").
@@ -720,7 +729,7 @@ func (s Stores) QueryChatHistory(ctx context.Context, filters domain.ChatHistory
 	return messages, count, nil
 }
 
-func (s Stores) GetPersonMessage(ctx context.Context, messageID int64, msg *domain.QueryChatHistoryResult) error {
+func (s *personRepository) GetPersonMessage(ctx context.Context, messageID int64, msg *domain.QueryChatHistoryResult) error {
 	row, errRow := s.QueryRowBuilder(ctx, s.
 		Builder().
 		Select("m.person_message_id", "m.steam_id", "m.server_id", "m.body", "m.team", "m.created_on",
@@ -738,7 +747,7 @@ func (s Stores) GetPersonMessage(ctx context.Context, messageID int64, msg *doma
 		&msg.PersonaName, &msg.MatchID, &msg.ServerName, &msg.AutoFilterFlagged))
 }
 
-func (s Stores) GetPersonMessageContext(ctx context.Context, serverID int, messageID int64, paddedMessageCount int) ([]domain.QueryChatHistoryResult, error) {
+func (s *personRepository) GetPersonMessageContext(ctx context.Context, serverID int, messageID int64, paddedMessageCount int) ([]domain.QueryChatHistoryResult, error) {
 	const query = `
 		(
 			SELECT m.person_message_id, m.steam_id,	m.server_id, m.body, m.team, m.created_on, 
@@ -796,7 +805,7 @@ func (s Stores) GetPersonMessageContext(ctx context.Context, serverID int, messa
 	return messages, nil
 }
 
-func (s Stores) GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, limit uint64) (domain.PersonConnections, error) {
+func (s *personRepository) GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, limit uint64) (domain.PersonConnections, error) {
 	builder := s.
 		Builder().
 		Select(
@@ -841,7 +850,7 @@ func (s Stores) GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, lim
 	return connections, nil
 }
 
-func (s Stores) AddConnectionHistory(ctx context.Context, conn *domain.PersonConnection) error {
+func (s *personRepository) AddConnectionHistory(ctx context.Context, conn *domain.PersonConnection) error {
 	const query = `
 		INSERT INTO person_connections (steam_id, ip_addr, persona_name, created_on, server_id) 
 		VALUES ($1, $2, $3, $4, $5) 
@@ -856,7 +865,7 @@ func (s Stores) AddConnectionHistory(ctx context.Context, conn *domain.PersonCon
 	return nil
 }
 
-func (s Stores) GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *domain.PersonAuth) error {
+func (s *personRepository) GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *domain.PersonAuth) error {
 	row, errRow := s.QueryRowBuilder(ctx, s.
 		Builder().
 		Select("person_auth_id", "steam_id", "ip_addr", "refresh_token", "created_on").
@@ -877,7 +886,7 @@ func (s Stores) GetPersonAuthByRefreshToken(ctx context.Context, token string, a
 	return nil
 }
 
-func (s Stores) SavePersonAuth(ctx context.Context, auth *domain.PersonAuth) error {
+func (s *personRepository) SavePersonAuth(ctx context.Context, auth *domain.PersonAuth) error {
 	query, args, errQuery := s.
 		Builder().
 		Insert("person_auth").
@@ -893,21 +902,21 @@ func (s Stores) SavePersonAuth(ctx context.Context, auth *domain.PersonAuth) err
 	return errs.DBErr(s.QueryRow(ctx, query, args...).Scan(&auth.PersonAuthID))
 }
 
-func (s Stores) DeletePersonAuth(ctx context.Context, authID int64) error {
+func (s *personRepository) DeletePersonAuth(ctx context.Context, authID int64) error {
 	return errs.DBErr(s.ExecDeleteBuilder(ctx, s.
 		Builder().
 		Delete("person_auth").
 		Where(sq.Eq{"person_auth_id": authID})))
 }
 
-func (s Stores) PrunePersonAuth(ctx context.Context) error {
+func (s *personRepository) PrunePersonAuth(ctx context.Context) error {
 	return errs.DBErr(s.ExecDeleteBuilder(ctx, s.
 		Builder().
 		Delete("person_auth").
 		Where(sq.Gt{"created_on + interval '1 month'": time.Now()})))
 }
 
-func (s Stores) SendNotification(ctx context.Context, targetID steamid.SID64, severity domain.NotificationSeverity, message string, link string) error {
+func (s *personRepository) SendNotification(ctx context.Context, targetID steamid.SID64, severity domain.NotificationSeverity, message string, link string) error {
 	return errs.DBErr(s.ExecInsertBuilder(ctx, s.
 		Builder().
 		Insert("person_notification").
@@ -915,7 +924,7 @@ func (s Stores) SendNotification(ctx context.Context, targetID steamid.SID64, se
 		Values(targetID.Int64(), severity, message, link, time.Now())))
 }
 
-func (s Stores) GetPersonNotifications(ctx context.Context, filters domain.NotificationQuery) ([]domain.UserNotification, int64, error) {
+func (s *personRepository) GetPersonNotifications(ctx context.Context, filters domain.NotificationQuery) ([]domain.UserNotification, int64, error) {
 	builder := s.
 		Builder().
 		Select("s.person_notification_id", "s.steam_id", "s.read", "s.deleted", "s.severity",
@@ -931,7 +940,7 @@ func (s Stores) GetPersonNotifications(ctx context.Context, filters domain.Notif
 
 	builder = filters.ApplyLimitOffsetDefault(builder).Where(constraints)
 
-	count, errCount := getCount(ctx, s, s.
+	count, errCount := s.GetCount(ctx, s, s.
 		Builder().
 		Select("count(s.person_notification_id)").
 		From("person_notification s").
@@ -976,7 +985,7 @@ func (s Stores) GetPersonNotifications(ctx context.Context, filters domain.Notif
 //		Where(sq.Eq{"person_notification_id": notificationIds})))
 //}
 
-func (s Stores) GetSteamIdsAbove(ctx context.Context, privilege domain.Privilege) (steamid.Collection, error) {
+func (s *personRepository) GetSteamIdsAbove(ctx context.Context, privilege domain.Privilege) (steamid.Collection, error) {
 	rows, errRows := s.QueryBuilder(ctx, s.
 		Builder().
 		Select("steam_id").
@@ -1002,7 +1011,7 @@ func (s Stores) GetSteamIdsAbove(ctx context.Context, privilege domain.Privilege
 	return ids, nil
 }
 
-func (s Stores) GetPersonSettings(ctx context.Context, steamID steamid.SID64, settings *domain.PersonSettings) error {
+func (s *personRepository) GetPersonSettings(ctx context.Context, steamID steamid.SID64, settings *domain.PersonSettings) error {
 	row, errRow := s.QueryRowBuilder(ctx, s.
 		Builder().
 		Select("person_settings_id", "forum_signature", "forum_profile_messages",
@@ -1029,7 +1038,7 @@ func (s Stores) GetPersonSettings(ctx context.Context, steamID steamid.SID64, se
 	return nil
 }
 
-func (s Stores) SavePersonSettings(ctx context.Context, settings *domain.PersonSettings) error {
+func (s *personRepository) SavePersonSettings(ctx context.Context, settings *domain.PersonSettings) error {
 	if !settings.SteamID.Valid() {
 		return errs.ErrInvalidSID
 	}

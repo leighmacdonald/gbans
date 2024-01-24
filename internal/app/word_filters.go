@@ -4,13 +4,13 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"golang.org/x/exp/slices"
 )
 
 type WordFilters struct {
 	*sync.RWMutex
-	wordFilters []model.Filter
+	wordFilters []domain.Filter
 }
 
 func NewWordFilters() *WordFilters {
@@ -20,13 +20,13 @@ func NewWordFilters() *WordFilters {
 }
 
 // Import loads the supplied word list into memory.
-func (f *WordFilters) Import(filters []model.Filter) {
+func (f *WordFilters) Import(filters []domain.Filter) {
 	f.Lock()
 	defer f.Unlock()
 	f.wordFilters = filters
 }
 
-func (f *WordFilters) Add(filter *model.Filter) {
+func (f *WordFilters) Add(filter *domain.Filter) {
 	f.Lock()
 	f.wordFilters = append(f.wordFilters, *filter)
 	f.Unlock()
@@ -34,7 +34,7 @@ func (f *WordFilters) Add(filter *model.Filter) {
 
 // Match checks to see if the body of text contains a known filtered word
 // It will only return the first matched filter found.
-func (f *WordFilters) Match(body string) (string, *model.Filter) {
+func (f *WordFilters) Match(body string) (string, *domain.Filter) {
 	if body == "" {
 		return "", nil
 	}
@@ -59,13 +59,13 @@ func (f *WordFilters) Remove(filterID int64) {
 	f.Lock()
 	defer f.Unlock()
 
-	f.wordFilters = slices.DeleteFunc(f.wordFilters, func(filter model.Filter) bool {
+	f.wordFilters = slices.DeleteFunc(f.wordFilters, func(filter domain.Filter) bool {
 		return filter.FilterID == filterID
 	})
 }
 
 // Check can be used to check if a phrase will match any filters.
-func (f *WordFilters) Check(message string) []model.Filter {
+func (f *WordFilters) Check(message string) []domain.Filter {
 	if message == "" {
 		return nil
 	}
@@ -75,7 +75,7 @@ func (f *WordFilters) Check(message string) []model.Filter {
 	f.RLock()
 	defer f.RUnlock()
 
-	var found []model.Filter
+	var found []domain.Filter
 
 	for _, filter := range f.wordFilters {
 		for _, word := range words {

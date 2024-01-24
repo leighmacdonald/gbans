@@ -10,8 +10,8 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v5"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"go.uber.org/zap"
@@ -26,14 +26,14 @@ var (
 //
 // Note that this function does not currently limit results returned. This may change in the future, do not
 // rely on this functionality.
-func (s Stores) GetBanNetByAddress(ctx context.Context, ipAddr net.IP) ([]model.BanCIDR, error) {
+func (s Stores) GetBanNetByAddress(ctx context.Context, ipAddr net.IP) ([]domain.BanCIDR, error) {
 	const query = `
 		SELECT net_id, cidr, origin, created_on, updated_on, reason, reason_text, valid_until, deleted, 
 		       note, unban_reason_text, is_enabled, target_id, source_id, appeal_state
 		FROM ban_net
 		WHERE $1 <<= cidr AND deleted = false AND is_enabled = true`
 
-	var nets []model.BanCIDR
+	var nets []domain.BanCIDR
 
 	rows, errQuery := s.Query(ctx, query, ipAddr.String())
 	if errQuery != nil {
@@ -44,7 +44,7 @@ func (s Stores) GetBanNetByAddress(ctx context.Context, ipAddr net.IP) ([]model.
 
 	for rows.Next() {
 		var (
-			banNet   model.BanCIDR
+			banNet   domain.BanCIDR
 			sourceID int64
 			targetID int64
 			cidr     *net.IPNet
@@ -66,13 +66,13 @@ func (s Stores) GetBanNetByAddress(ctx context.Context, ipAddr net.IP) ([]model.
 	}
 
 	if nets == nil {
-		return []model.BanCIDR{}, nil
+		return []domain.BanCIDR{}, nil
 	}
 
 	return nets, nil
 }
 
-func (s Stores) GetBanNetByID(ctx context.Context, netID int64, banNet *model.BanCIDR) error {
+func (s Stores) GetBanNetByID(ctx context.Context, netID int64, banNet *domain.BanCIDR) error {
 	const query = `
 		SELECT net_id, cidr, origin, created_on, updated_on, reason, reason_text, valid_until, deleted, 
 		       note, unban_reason_text, is_enabled, target_id, source_id, appeal_state
@@ -127,7 +127,7 @@ func (s Stores) GetPlayerMostRecentIP(ctx context.Context, steamID steamid.SID64
 }
 
 // GetBansNet returns the BanCIDR matching intersecting the supplied ip.
-func (s Stores) GetBansNet(ctx context.Context, filter model.CIDRBansQueryFilter) ([]model.BannedCIDRPerson, int64, error) {
+func (s Stores) GetBansNet(ctx context.Context, filter domain.CIDRBansQueryFilter) ([]domain.BannedCIDRPerson, int64, error) {
 	validColumns := map[string][]string{
 		"b.": {
 			"net_id", "cidr", "origin", "created_on", "updated_on",
@@ -203,7 +203,7 @@ func (s Stores) GetBansNet(ctx context.Context, filter model.CIDRBansQueryFilter
 	builder = filter.QueryFilter.ApplySafeOrder(builder, validColumns, "net_id")
 	builder = filter.QueryFilter.ApplyLimitOffsetDefault(builder)
 
-	var nets []model.BannedCIDRPerson
+	var nets []domain.BannedCIDRPerson
 
 	rows, errRows := s.QueryBuilder(ctx, builder.Where(constraints))
 	if errRows != nil {
@@ -214,7 +214,7 @@ func (s Stores) GetBansNet(ctx context.Context, filter model.CIDRBansQueryFilter
 
 	for rows.Next() {
 		var (
-			banNet   model.BannedCIDRPerson
+			banNet   domain.BannedCIDRPerson
 			sourceID int64
 			targetID int64
 			cidr     *net.IPNet
@@ -246,20 +246,20 @@ func (s Stores) GetBansNet(ctx context.Context, filter model.CIDRBansQueryFilter
 
 	if errCount != nil {
 		if errors.Is(errCount, errs.ErrNoResult) {
-			return []model.BannedCIDRPerson{}, 0, nil
+			return []domain.BannedCIDRPerson{}, 0, nil
 		}
 
 		return nil, count, errs.DBErr(errCount)
 	}
 
 	if nets == nil {
-		return []model.BannedCIDRPerson{}, 0, nil
+		return []domain.BannedCIDRPerson{}, 0, nil
 	}
 
 	return nets, count, nil
 }
 
-func (s Stores) updateBanNet(ctx context.Context, banNet *model.BanCIDR) error {
+func (s Stores) updateBanNet(ctx context.Context, banNet *domain.BanCIDR) error {
 	banNet.UpdatedOn = time.Now()
 
 	query := s.
@@ -283,7 +283,7 @@ func (s Stores) updateBanNet(ctx context.Context, banNet *model.BanCIDR) error {
 	return errs.DBErr(s.ExecUpdateBuilder(ctx, query))
 }
 
-func (s Stores) insertBanNet(ctx context.Context, banNet *model.BanCIDR) error {
+func (s Stores) insertBanNet(ctx context.Context, banNet *domain.BanCIDR) error {
 	query, args, errQueryArgs := s.
 		Builder().
 		Insert("ban_net").
@@ -301,7 +301,7 @@ func (s Stores) insertBanNet(ctx context.Context, banNet *model.BanCIDR) error {
 	return errs.DBErr(s.QueryRow(ctx, query, args...).Scan(&banNet.NetID))
 }
 
-func (s Stores) SaveBanNet(ctx context.Context, banNet *model.BanCIDR) error {
+func (s Stores) SaveBanNet(ctx context.Context, banNet *domain.BanCIDR) error {
 	if banNet.NetID > 0 {
 		return s.updateBanNet(ctx, banNet)
 	}
@@ -309,7 +309,7 @@ func (s Stores) SaveBanNet(ctx context.Context, banNet *model.BanCIDR) error {
 	return s.insertBanNet(ctx, banNet)
 }
 
-func (s Stores) DropBanNet(ctx context.Context, banNet *model.BanCIDR) error {
+func (s Stores) DropBanNet(ctx context.Context, banNet *domain.BanCIDR) error {
 	query := s.
 		Builder().
 		Delete("ban_net").
@@ -324,7 +324,7 @@ func (s Stores) DropBanNet(ctx context.Context, banNet *model.BanCIDR) error {
 	return nil
 }
 
-func (s Stores) GetExpiredNetBans(ctx context.Context) ([]model.BanCIDR, error) {
+func (s Stores) GetExpiredNetBans(ctx context.Context) ([]domain.BanCIDR, error) {
 	query := s.
 		Builder().
 		Select("net_id", "cidr", "origin", "created_on", "updated_on", "reason_text", "valid_until",
@@ -332,7 +332,7 @@ func (s Stores) GetExpiredNetBans(ctx context.Context) ([]model.BanCIDR, error) 
 		From("ban_net").
 		Where(sq.Lt{"valid_until": time.Now()})
 
-	var bans []model.BanCIDR
+	var bans []domain.BanCIDR
 
 	rows, errQuery := s.QueryBuilder(ctx, query)
 	if errQuery != nil {
@@ -343,7 +343,7 @@ func (s Stores) GetExpiredNetBans(ctx context.Context) ([]model.BanCIDR, error) 
 
 	for rows.Next() {
 		var (
-			banNet   model.BanCIDR
+			banNet   domain.BanCIDR
 			targetID int64
 			sourceID int64
 			cidr     pgtype.CIDR
@@ -365,13 +365,13 @@ func (s Stores) GetExpiredNetBans(ctx context.Context) ([]model.BanCIDR, error) 
 	}
 
 	if bans == nil {
-		return []model.BanCIDR{}, nil
+		return []domain.BanCIDR{}, nil
 	}
 
 	return bans, nil
 }
 
-func (s Stores) GetExpiredASNBans(ctx context.Context) ([]model.BanASN, error) {
+func (s Stores) GetExpiredASNBans(ctx context.Context) ([]domain.BanASN, error) {
 	query := s.
 		Builder().
 		Select("ban_asn_id", "as_num", "origin", "source_id", "target_id", "reason_text", "valid_until",
@@ -379,7 +379,7 @@ func (s Stores) GetExpiredASNBans(ctx context.Context) ([]model.BanASN, error) {
 		From("ban_asn").
 		Where(sq.And{sq.Lt{"valid_until": time.Now()}, sq.Eq{"deleted": false}})
 
-	var bans []model.BanASN
+	var bans []domain.BanASN
 
 	rows, errQuery := s.QueryBuilder(ctx, query)
 	if errQuery != nil {
@@ -390,7 +390,7 @@ func (s Stores) GetExpiredASNBans(ctx context.Context) ([]model.BanASN, error) {
 
 	for rows.Next() {
 		var (
-			banASN   model.BanASN
+			banASN   domain.BanASN
 			targetID int64
 			sourceID int64
 		)
@@ -409,7 +409,7 @@ func (s Stores) GetExpiredASNBans(ctx context.Context) ([]model.BanASN, error) {
 	}
 
 	if bans == nil {
-		bans = []model.BanASN{}
+		bans = []domain.BanASN{}
 	}
 
 	return bans, nil
@@ -648,7 +648,7 @@ func (s Stores) InsertBlockListData(ctx context.Context, log *zap.Logger, blockL
 	return nil
 }
 
-func (s Stores) GetBanASN(ctx context.Context, asNum int64, banASN *model.BanASN) error {
+func (s Stores) GetBanASN(ctx context.Context, asNum int64, banASN *domain.BanASN) error {
 	const query = `
 		SELECT ban_asn_id, as_num, origin, source_id, target_id, reason_text, valid_until, created_on, updated_on, 
 		       deleted, reason, is_enabled, unban_reason_text, appeal_state
@@ -675,7 +675,7 @@ func (s Stores) GetBanASN(ctx context.Context, asNum int64, banASN *model.BanASN
 	return nil
 }
 
-func (s Stores) GetBansASN(ctx context.Context, filter model.ASNBansQueryFilter) ([]model.BannedASNPerson, int64, error) {
+func (s Stores) GetBansASN(ctx context.Context, filter domain.ASNBansQueryFilter) ([]domain.BannedASNPerson, int64, error) {
 	builder := s.
 		Builder().
 		Select("b.ban_asn_id", "b.as_num", "b.origin", "b.source_id",
@@ -738,7 +738,7 @@ func (s Stores) GetBansASN(ctx context.Context, filter model.ASNBansQueryFilter)
 	rows, errRows := s.QueryBuilder(ctx, builder.Where(constraints))
 	if errRows != nil {
 		if errors.Is(errRows, errs.ErrNoResult) {
-			return []model.BannedASNPerson{}, 0, nil
+			return []domain.BannedASNPerson{}, 0, nil
 		}
 
 		return nil, 0, errs.DBErr(errRows)
@@ -746,11 +746,11 @@ func (s Stores) GetBansASN(ctx context.Context, filter model.ASNBansQueryFilter)
 
 	defer rows.Close()
 
-	var records []model.BannedASNPerson
+	var records []domain.BannedASNPerson
 
 	for rows.Next() {
 		var (
-			ban      model.BannedASNPerson
+			ban      domain.BannedASNPerson
 			targetID int64
 			sourceID int64
 		)
@@ -779,20 +779,20 @@ func (s Stores) GetBansASN(ctx context.Context, filter model.ASNBansQueryFilter)
 
 	if errCount != nil {
 		if errors.Is(errCount, errs.ErrNoResult) {
-			return []model.BannedASNPerson{}, 0, nil
+			return []domain.BannedASNPerson{}, 0, nil
 		}
 
 		return nil, 0, errs.DBErr(errCount)
 	}
 
 	if records == nil {
-		records = []model.BannedASNPerson{}
+		records = []domain.BannedASNPerson{}
 	}
 
 	return records, count, nil
 }
 
-func (s Stores) SaveBanASN(ctx context.Context, banASN *model.BanASN) error {
+func (s Stores) SaveBanASN(ctx context.Context, banASN *domain.BanASN) error {
 	banASN.UpdatedOn = time.Now()
 
 	if banASN.BanASNId > 0 {
@@ -822,7 +822,7 @@ func (s Stores) SaveBanASN(ctx context.Context, banASN *model.BanASN) error {
 		Scan(&banASN.BanASNId))
 }
 
-func (s Stores) DropBanASN(ctx context.Context, banASN *model.BanASN) error {
+func (s Stores) DropBanASN(ctx context.Context, banASN *domain.BanASN) error {
 	banASN.Deleted = true
 
 	return s.SaveBanASN(ctx, banASN)
@@ -859,8 +859,8 @@ func (s Stores) GetSteamIDsAtIP(ctx context.Context, ipNet *net.IPNet) (steamid.
 	return ids, nil
 }
 
-func (s Stores) GetCIDRBlockSources(ctx context.Context) ([]model.CIDRBlockSource, error) {
-	blocks := make([]model.CIDRBlockSource, 0)
+func (s Stores) GetCIDRBlockSources(ctx context.Context) ([]domain.CIDRBlockSource, error) {
+	blocks := make([]domain.CIDRBlockSource, 0)
 
 	rows, errRows := s.QueryBuilder(ctx, s.
 		Builder().
@@ -877,7 +877,7 @@ func (s Stores) GetCIDRBlockSources(ctx context.Context) ([]model.CIDRBlockSourc
 	defer rows.Close()
 
 	for rows.Next() {
-		var block model.CIDRBlockSource
+		var block domain.CIDRBlockSource
 		if errScan := rows.Scan(&block.CIDRBlockSourceID, &block.Name, &block.URL, &block.Enabled, &block.CreatedOn, &block.UpdatedOn); errScan != nil {
 			return nil, errs.DBErr(errScan)
 		}
@@ -888,7 +888,7 @@ func (s Stores) GetCIDRBlockSources(ctx context.Context) ([]model.CIDRBlockSourc
 	return blocks, nil
 }
 
-func (s Stores) GetCIDRBlockSource(ctx context.Context, sourceID int, block *model.CIDRBlockSource) error {
+func (s Stores) GetCIDRBlockSource(ctx context.Context, sourceID int, block *domain.CIDRBlockSource) error {
 	row, errRow := s.QueryRowBuilder(ctx, s.
 		Builder().
 		Select("cidr_block_source_id", "name", "url", "enabled", "created_on", "updated_on").
@@ -905,7 +905,7 @@ func (s Stores) GetCIDRBlockSource(ctx context.Context, sourceID int, block *mod
 	return nil
 }
 
-func (s Stores) SaveCIDRBlockSources(ctx context.Context, block *model.CIDRBlockSource) error {
+func (s Stores) SaveCIDRBlockSources(ctx context.Context, block *domain.CIDRBlockSource) error {
 	now := time.Now()
 
 	block.UpdatedOn = now
@@ -945,8 +945,8 @@ func (s Stores) DeleteCIDRBlockSources(ctx context.Context, blockSourceID int) e
 		Where(sq.Eq{"cidr_block_source_id": blockSourceID})))
 }
 
-func (s Stores) GetCIDRBlockWhitelists(ctx context.Context) ([]model.CIDRBlockWhitelist, error) {
-	whitelists := make([]model.CIDRBlockWhitelist, 0)
+func (s Stores) GetCIDRBlockWhitelists(ctx context.Context) ([]domain.CIDRBlockWhitelist, error) {
+	whitelists := make([]domain.CIDRBlockWhitelist, 0)
 
 	rows, errRows := s.QueryBuilder(ctx, s.
 		Builder().
@@ -963,7 +963,7 @@ func (s Stores) GetCIDRBlockWhitelists(ctx context.Context) ([]model.CIDRBlockWh
 	defer rows.Close()
 
 	for rows.Next() {
-		var whitelist model.CIDRBlockWhitelist
+		var whitelist domain.CIDRBlockWhitelist
 		if errScan := rows.Scan(&whitelist.CIDRBlockWhitelistID, &whitelist.Address, &whitelist.CreatedOn, &whitelist.UpdatedOn); errScan != nil {
 			return nil, errs.DBErr(errScan)
 		}
@@ -974,7 +974,7 @@ func (s Stores) GetCIDRBlockWhitelists(ctx context.Context) ([]model.CIDRBlockWh
 	return whitelists, nil
 }
 
-func (s Stores) GetCIDRBlockWhitelist(ctx context.Context, whitelistID int, whitelist *model.CIDRBlockWhitelist) error {
+func (s Stores) GetCIDRBlockWhitelist(ctx context.Context, whitelistID int, whitelist *domain.CIDRBlockWhitelist) error {
 	rows, errRow := s.QueryRowBuilder(ctx, s.
 		Builder().
 		Select("cidr_block_whitelist_id", "address", "created_on", "updated_on").
@@ -991,7 +991,7 @@ func (s Stores) GetCIDRBlockWhitelist(ctx context.Context, whitelistID int, whit
 	return nil
 }
 
-func (s Stores) SaveCIDRBlockWhitelist(ctx context.Context, whitelist *model.CIDRBlockWhitelist) error {
+func (s Stores) SaveCIDRBlockWhitelist(ctx context.Context, whitelist *domain.CIDRBlockWhitelist) error {
 	now := time.Now()
 
 	whitelist.UpdatedOn = now

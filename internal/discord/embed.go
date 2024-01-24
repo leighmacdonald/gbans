@@ -5,7 +5,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	embed "github.com/leighmacdonald/discordgo-embed"
-	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
@@ -52,7 +52,7 @@ func (e *Embed) Message() *discordgo.MessageEmbed {
 	return e.emb.MessageEmbed
 }
 
-func (e *Embed) AddTargetPerson(person model.PersonInfo) *Embed {
+func (e *Embed) AddTargetPerson(person domain.PersonInfo) *Embed {
 	name := person.GetName()
 	if person.GetDiscordID() != "" {
 		name = fmt.Sprintf("<@%s> | ", person.GetDiscordID()) + name
@@ -64,7 +64,7 @@ func (e *Embed) AddTargetPerson(person model.PersonInfo) *Embed {
 	return e
 }
 
-func (e *Embed) AddAuthorPersonInfo(person model.PersonInfo, url string) *Embed {
+func (e *Embed) AddAuthorPersonInfo(person domain.PersonInfo, url string) *Embed {
 	name := person.GetName()
 	if person.GetDiscordID() != "" {
 		name = fmt.Sprintf("<@%s> | ", person.GetDiscordID()) + name

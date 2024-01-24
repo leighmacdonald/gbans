@@ -11,8 +11,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"go.uber.org/zap"
@@ -123,25 +123,25 @@ func serverFromCtx(ctx *gin.Context) int {
 	return serverID
 }
 
-func contestFromCtx(ctx *gin.Context, env Env) (model.Contest, bool) {
+func contestFromCtx(ctx *gin.Context, env Env) (domain.Contest, bool) {
 	contestID, idErr := getUUIDParam(ctx, "contest_id")
 	if idErr != nil {
 		responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
-		return model.Contest{}, false
+		return domain.Contest{}, false
 	}
 
-	var contest model.Contest
+	var contest domain.Contest
 	if errContests := env.Store().ContestByID(ctx, contestID, &contest); errContests != nil {
 		responseErr(ctx, http.StatusInternalServerError, errInternal)
 
-		return model.Contest{}, false
+		return domain.Contest{}, false
 	}
 
-	if !contest.Public && currentUserProfile(ctx).PermissionLevel < model.PModerator {
+	if !contest.Public && currentUserProfile(ctx).PermissionLevel < domain.PModerator {
 		responseErr(ctx, http.StatusForbidden, errs.ErrNotFound)
 
-		return model.Contest{}, false
+		return domain.Contest{}, false
 	}
 
 	return contest, true
@@ -189,15 +189,15 @@ func New(ctx context.Context, env Env) *http.Server {
 	return httpServer
 }
 
-func currentUserProfile(ctx *gin.Context) model.UserProfile {
+func currentUserProfile(ctx *gin.Context) domain.UserProfile {
 	maybePerson, found := ctx.Get(ctxKeyUserProfile)
 	if !found {
-		return model.NewUserProfile("")
+		return domain.NewUserProfile("")
 	}
 
-	person, ok := maybePerson.(model.UserProfile)
+	person, ok := maybePerson.(domain.UserProfile)
 	if !ok {
-		return model.NewUserProfile("")
+		return domain.NewUserProfile("")
 	}
 
 	return person
@@ -206,7 +206,7 @@ func currentUserProfile(ctx *gin.Context) model.UserProfile {
 // checkPrivilege first checks if the steamId matches one of the provided allowedSteamIds, otherwise it will check
 // if the user has appropriate privilege levels.
 // Error responses are handled by this function, no further action needs to take place in the handlers.
-func checkPrivilege(ctx *gin.Context, person model.UserProfile, allowedSteamIds steamid.Collection, minPrivilege model.Privilege) bool {
+func checkPrivilege(ctx *gin.Context, person domain.UserProfile, allowedSteamIds steamid.Collection, minPrivilege domain.Privilege) bool {
 	for _, steamID := range allowedSteamIds {
 		if steamID == person.SteamID {
 			return true

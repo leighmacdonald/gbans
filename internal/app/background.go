@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/discord"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/steamweb/v2"
@@ -30,8 +30,8 @@ func (app *App) showReportMeta(ctx context.Context) {
 		case <-ticker.C:
 			updateChan <- true
 		case <-updateChan:
-			reports, _, errReports := app.db.GetReports(ctx, model.ReportQueryFilter{
-				QueryFilter: model.QueryFilter{
+			reports, _, errReports := app.db.GetReports(ctx, domain.ReportQueryFilter{
+				QueryFilter: domain.QueryFilter{
 					Limit: 0,
 				},
 			})
@@ -43,11 +43,11 @@ func (app *App) showReportMeta(ctx context.Context) {
 
 			var (
 				now  = time.Now()
-				meta model.ReportMeta
+				meta domain.ReportMeta
 			)
 
 			for _, report := range reports {
-				if report.ReportStatus == model.ClosedWithAction || report.ReportStatus == model.ClosedWithoutAction {
+				if report.ReportStatus == domain.ClosedWithAction || report.ReportStatus == domain.ClosedWithoutAction {
 					meta.TotalClosed++
 
 					continue
@@ -55,7 +55,7 @@ func (app *App) showReportMeta(ctx context.Context) {
 
 				meta.TotalOpen++
 
-				if report.ReportStatus == model.NeedMoreInfo {
+				if report.ReportStatus == domain.NeedMoreInfo {
 					meta.NeedInfo++
 				} else {
 					meta.Open++
@@ -129,7 +129,7 @@ func (app *App) demoCleaner(ctx context.Context) {
 					continue
 				}
 
-				if errDrop := app.db.DropDemo(ctx, &model.DemoFile{DemoID: demo.DemoID, Title: demo.Title}); errDrop != nil {
+				if errDrop := app.db.DropDemo(ctx, &domain.DemoFile{DemoID: demo.DemoID, Title: demo.Title}); errDrop != nil {
 					log.Error("Failed to remove demo", zap.Error(errDrop),
 						zap.String("bucket", conf.S3.BucketDemo), zap.String("name", demo.Title))
 
@@ -187,7 +187,7 @@ func (app *App) notificationSender(ctx context.Context) {
 	}
 }
 
-func (app *App) updateProfiles(ctx context.Context, people model.People) error {
+func (app *App) updateProfiles(ctx context.Context, people domain.People) error {
 	if len(people) > 100 {
 		return errSteamAPIArgLimit
 	}
@@ -329,7 +329,7 @@ func (app *App) banSweeper(ctx context.Context) {
 						if errDrop := app.db.DropBan(ctx, &ban, false); errDrop != nil {
 							log.Error("Failed to drop expired expiredBan", zap.Error(errDrop))
 						} else {
-							var person model.Person
+							var person domain.Person
 							if errPerson := app.db.GetPersonBySteamID(ctx, ban.TargetID, &person); errPerson != nil {
 								log.Error("Failed to get expired Person", zap.Error(errPerson))
 

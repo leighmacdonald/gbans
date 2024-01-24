@@ -6,8 +6,8 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/wiki"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
@@ -51,7 +51,7 @@ func (s Stores) SaveWikiPage(ctx context.Context, page *wiki.Page) error {
 	return nil
 }
 
-func (s Stores) SaveMedia(ctx context.Context, media *model.Media) error {
+func (s Stores) SaveMedia(ctx context.Context, media *domain.Media) error {
 	if media.MediaID > 0 {
 		return errs.DBErr(s.ExecUpdateBuilder(ctx, s.
 			Builder().
@@ -89,7 +89,7 @@ func (s Stores) SaveMedia(ctx context.Context, media *model.Media) error {
 		Scan(&media.MediaID))
 }
 
-func (s Stores) GetMediaByAssetID(ctx context.Context, uuid uuid.UUID, media *model.Media) error {
+func (s Stores) GetMediaByAssetID(ctx context.Context, uuid uuid.UUID, media *domain.Media) error {
 	row, errRow := s.QueryRowBuilder(ctx, s.
 		Builder().
 		Select("m.media_id", "m.author_id", "m.name", "m.size", "m.mime_type", "m.contents",
@@ -102,7 +102,7 @@ func (s Stores) GetMediaByAssetID(ctx context.Context, uuid uuid.UUID, media *mo
 		return errs.DBErr(errRow)
 	}
 
-	media.Asset = model.Asset{AssetID: uuid}
+	media.Asset = domain.Asset{AssetID: uuid}
 
 	var authorID int64
 
@@ -131,7 +131,7 @@ func (s Stores) GetMediaByAssetID(ctx context.Context, uuid uuid.UUID, media *mo
 	return nil
 }
 
-func (s Stores) GetMediaByName(ctx context.Context, name string, media *model.Media) error {
+func (s Stores) GetMediaByName(ctx context.Context, name string, media *domain.Media) error {
 	row, errRow := s.QueryRowBuilder(ctx, s.
 		Builder().
 		Select("media_id", "author_id", "name", "size", "mime_type", "contents", "deleted",
@@ -163,7 +163,7 @@ func (s Stores) GetMediaByName(ctx context.Context, name string, media *model.Me
 	return nil
 }
 
-func (s Stores) GetMediaByID(ctx context.Context, mediaID int, media *model.Media) error {
+func (s Stores) GetMediaByID(ctx context.Context, mediaID int, media *domain.Media) error {
 	row, errRow := s.QueryRowBuilder(ctx, s.
 		Builder().
 		Select("m.media_id", "m.author_id", "m.name", "m.size", "m.mime_type", "m.contents",

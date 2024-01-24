@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/wiki"
@@ -27,7 +27,7 @@ func onAPIPostDemosQuery(env Env) gin.HandlerFunc {
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var req model.DemoFilter
+		var req domain.DemoFilter
 		if !bind(ctx, log, &req) {
 			return
 		}
@@ -61,7 +61,7 @@ func onAPIGetPrometheusHosts(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var staticConfigs []promStaticConfig
 
-		servers, _, errGetServers := env.Store().GetServers(ctx, model.ServerQueryFilter{})
+		servers, _, errGetServers := env.Store().GetServers(ctx, domain.ServerQueryFilter{})
 		if errGetServers != nil {
 			log.Error("Failed to fetch servers", zap.Error(errGetServers))
 			responseErr(ctx, http.StatusInternalServerError, errInternal)
@@ -113,7 +113,7 @@ func getDefaultFloat64(s string, def float64) float64 {
 
 func onAPIGetServerStates(env Env) gin.HandlerFunc {
 	type UserServers struct {
-		Servers []model.BaseServer  `json:"servers"`
+		Servers []domain.BaseServer `json:"servers"`
 		LatLong ip2location.LatLong `json:"lat_long"`
 	}
 
@@ -123,11 +123,11 @@ func onAPIGetServerStates(env Env) gin.HandlerFunc {
 			lon = getDefaultFloat64(ctx.GetHeader("cf-iplongitude"), -87.6160)
 			// region := ctx.GetHeader("cf-region-code")
 			curState = env.State().Current()
-			servers  []model.BaseServer
+			servers  []domain.BaseServer
 		)
 
 		for _, srv := range curState {
-			servers = append(servers, model.BaseServer{
+			servers = append(servers, domain.BaseServer{
 				Host:       srv.Host,
 				Port:       srv.Port,
 				IP:         srv.IP,
@@ -163,8 +163,8 @@ func onAPIGetServerStates(env Env) gin.HandlerFunc {
 
 func onAPIExportBansValveSteamID(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		bans, _, errBans := env.Store().GetBansSteam(ctx, model.SteamBansQueryFilter{
-			BansQueryFilter: model.BansQueryFilter{PermanentOnly: true},
+		bans, _, errBans := env.Store().GetBansSteam(ctx, domain.SteamBansQueryFilter{
+			BansQueryFilter: domain.BansQueryFilter{PermanentOnly: true},
 		})
 
 		if errBans != nil {
@@ -192,7 +192,7 @@ func onAPIExportSourcemodSimpleAdmins(env Env) gin.HandlerFunc {
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		privilegedIds, errPrivilegedIds := env.Store().GetSteamIdsAbove(ctx, model.PReserved)
+		privilegedIds, errPrivilegedIds := env.Store().GetSteamIdsAbove(ctx, domain.PReserved)
 		if errPrivilegedIds != nil {
 			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
@@ -216,13 +216,13 @@ func onAPIExportSourcemodSimpleAdmins(env Env) gin.HandlerFunc {
 			var perms string
 
 			switch player.PermissionLevel {
-			case model.PAdmin:
+			case domain.PAdmin:
 				perms = "z"
-			case model.PModerator:
+			case domain.PModerator:
 				perms = "abcdefgjk"
-			case model.PEditor:
+			case domain.PEditor:
 				perms = "ak"
-			case model.PReserved:
+			case domain.PReserved:
 				perms = "a"
 			}
 
@@ -240,9 +240,9 @@ func onAPIExportSourcemodSimpleAdmins(env Env) gin.HandlerFunc {
 func onAPIExportBansTF2BD(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// TODO limit / make specialized query since this returns all results
-		bans, _, errBans := env.Store().GetBansSteam(ctx, model.SteamBansQueryFilter{
-			BansQueryFilter: model.BansQueryFilter{
-				QueryFilter: model.QueryFilter{
+		bans, _, errBans := env.Store().GetBansSteam(ctx, domain.SteamBansQueryFilter{
+			BansQueryFilter: domain.BansQueryFilter{
+				QueryFilter: domain.QueryFilter{
 					Deleted: false,
 				},
 			},
@@ -254,10 +254,10 @@ func onAPIExportBansTF2BD(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var filtered []model.BannedSteamPerson
+		var filtered []domain.BannedSteamPerson
 
 		for _, ban := range bans {
-			if ban.Reason != model.Cheating ||
+			if ban.Reason != domain.Cheating ||
 				ban.Deleted ||
 				!ban.IsEnabled {
 				continue
@@ -300,9 +300,9 @@ func onAPIProfile(env Env) gin.HandlerFunc {
 	}
 
 	type resp struct {
-		Player   *model.Person        `json:"player"`
-		Friends  []steamweb.Friend    `json:"friends"`
-		Settings model.PersonSettings `json:"settings"`
+		Player   *domain.Person        `json:"player"`
+		Friends  []steamweb.Friend     `json:"friends"`
+		Settings domain.PersonSettings `json:"settings"`
 	}
 
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
@@ -325,7 +325,7 @@ func onAPIProfile(env Env) gin.HandlerFunc {
 			return
 		}
 
-		person := model.NewPerson(sid)
+		person := domain.NewPerson(sid)
 		if errGetProfile := env.Store().GetOrCreatePersonBySteamID(requestCtx, sid, &person); errGetProfile != nil {
 			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to create person", zap.Error(errGetProfile))
@@ -352,7 +352,7 @@ func onAPIProfile(env Env) gin.HandlerFunc {
 
 		response.Player = &person
 
-		var settings model.PersonSettings
+		var settings domain.PersonSettings
 		if err := env.Store().GetPersonSettings(ctx, sid, &settings); err != nil {
 			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to load person settings", zap.Error(err))
@@ -368,7 +368,7 @@ func onAPIProfile(env Env) gin.HandlerFunc {
 
 func onAPIGetStats(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var stats model.Stats
+		var stats domain.Stats
 		if errGetStats := env.Store().GetStats(ctx, &stats); errGetStats != nil {
 			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
@@ -381,7 +381,7 @@ func onAPIGetStats(env Env) gin.HandlerFunc {
 	}
 }
 
-func loadBanMeta(_ *model.BannedSteamPerson) {
+func loadBanMeta(_ *domain.BannedSteamPerson) {
 }
 
 type serverInfoSafe struct {
@@ -393,7 +393,7 @@ type serverInfoSafe struct {
 
 func onAPIGetServers(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		fullServers, _, errServers := env.Store().GetServers(ctx, model.ServerQueryFilter{})
+		fullServers, _, errServers := env.Store().GetServers(ctx, domain.ServerQueryFilter{})
 		if errServers != nil {
 			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
@@ -481,7 +481,7 @@ func onGetMediaByID(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var media model.Media
+		var media domain.Media
 		if errMedia := env.Store().GetMediaByID(ctx, mediaID, &media); errMedia != nil {
 			if errors.Is(errs.DBErr(errMedia), errs.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
@@ -531,7 +531,7 @@ func onAPIGetPatreonCampaigns(env Env) gin.HandlerFunc {
 func onAPIGetContests(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		user := currentUserProfile(ctx)
-		publicOnly := user.PermissionLevel < model.PModerator
+		publicOnly := user.PermissionLevel < domain.PModerator
 		contests, errContests := env.Store().Contests(ctx, publicOnly)
 
 		if errContests != nil {
@@ -577,7 +577,7 @@ func onAPIForumOverview(env Env) gin.HandlerFunc {
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	type Overview struct {
-		Categories []model.ForumCategory `json:"categories"`
+		Categories []domain.ForumCategory `json:"categories"`
 	}
 
 	return func(ctx *gin.Context) {
@@ -615,7 +615,7 @@ func onAPIForumOverview(env Env) gin.HandlerFunc {
 			}
 
 			if categories[index].Forums == nil {
-				categories[index].Forums = []model.Forum{}
+				categories[index].Forums = []domain.Forum{}
 			}
 		}
 
@@ -631,7 +631,7 @@ func onAPIForumThreads(env Env) gin.HandlerFunc {
 
 		env.Activity().Touch(currentUser)
 
-		var tqf model.ThreadQueryFilter
+		var tqf domain.ThreadQueryFilter
 		if !bind(ctx, log, &tqf) {
 			return
 		}
@@ -645,7 +645,7 @@ func onAPIForumThreads(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var forum model.Forum
+		var forum domain.Forum
 		if err := env.Store().Forum(ctx, tqf.ForumID, &forum); err != nil {
 			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
@@ -681,7 +681,7 @@ func onAPIForumThread(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var thread model.ForumThread
+		var thread domain.ForumThread
 		if errThreads := env.Store().ForumThread(ctx, forumThreadID, &thread); errThreads != nil {
 			if errors.Is(errThreads, errs.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
@@ -714,7 +714,7 @@ func onAPIForum(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var forum model.Forum
+		var forum domain.Forum
 
 		if errForum := env.Store().Forum(ctx, forumID, &forum); errForum != nil {
 			responseErr(ctx, http.StatusInternalServerError, errInternal)
@@ -738,7 +738,7 @@ func onAPIForumMessages(env Env) gin.HandlerFunc {
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var queryFilter model.ThreadMessagesQueryFilter
+		var queryFilter domain.ThreadMessagesQueryFilter
 		if !bind(ctx, log, &queryFilter) {
 			return
 		}
@@ -770,10 +770,10 @@ func onAPIForumMessages(env Env) gin.HandlerFunc {
 
 func onAPIActiveUsers(env Env) gin.HandlerFunc {
 	type userActivity struct {
-		SteamID         steamid.SID64   `json:"steam_id"`
-		Personaname     string          `json:"personaname"`
-		PermissionLevel model.Privilege `json:"permission_level"`
-		CreatedOn       time.Time       `json:"created_on"`
+		SteamID         steamid.SID64    `json:"steam_id"`
+		Personaname     string           `json:"personaname"`
+		PermissionLevel domain.Privilege `json:"permission_level"`
+		CreatedOn       time.Time        `json:"created_on"`
 	}
 
 	return func(ctx *gin.Context) {
@@ -808,7 +808,7 @@ func onAPIForumMessagesRecent(env Env) gin.HandlerFunc {
 		}
 
 		if messages == nil {
-			messages = []model.ForumMessage{}
+			messages = []domain.ForumMessage{}
 		}
 
 		ctx.JSON(http.StatusOK, messages)

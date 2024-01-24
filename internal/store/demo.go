@@ -7,13 +7,13 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/model"
 )
 
 var ErrReportCountQuery = errors.New("failed to get reports count for demo")
 
-func (s Stores) ExpiredDemos(ctx context.Context, limit uint64) ([]model.DemoInfo, error) {
+func (s Stores) ExpiredDemos(ctx context.Context, limit uint64) ([]domain.DemoInfo, error) {
 	rows, errRow := s.QueryBuilder(ctx, s.
 		Builder().
 		Select("s.demo_id", "s.title", "s.asset_id").
@@ -27,10 +27,10 @@ func (s Stores) ExpiredDemos(ctx context.Context, limit uint64) ([]model.DemoInf
 
 	defer rows.Close()
 
-	var demos []model.DemoInfo
+	var demos []domain.DemoInfo
 
 	for rows.Next() {
-		var demo model.DemoInfo
+		var demo domain.DemoInfo
 		if err := rows.Scan(&demo.DemoID, &demo.Title, &demo.AssetID); err != nil {
 			return nil, errs.DBErr(err)
 		}
@@ -41,7 +41,7 @@ func (s Stores) ExpiredDemos(ctx context.Context, limit uint64) ([]model.DemoInf
 	return demos, nil
 }
 
-func (s Stores) GetDemoByID(ctx context.Context, demoID int64, demoFile *model.DemoFile) error {
+func (s Stores) GetDemoByID(ctx context.Context, demoID int64, demoFile *domain.DemoFile) error {
 	row, errRow := s.QueryRowBuilder(ctx, s.
 		Builder().
 		Select("s.demo_id", "s.server_id", "s.title", "s.created_on", "s.downloads",
@@ -70,7 +70,7 @@ func (s Stores) GetDemoByID(ctx context.Context, demoID int64, demoFile *model.D
 	return nil
 }
 
-func (s Stores) GetDemoByName(ctx context.Context, demoName string, demoFile *model.DemoFile) error {
+func (s Stores) GetDemoByName(ctx context.Context, demoName string, demoFile *domain.DemoFile) error {
 	row, errRow := s.QueryRowBuilder(ctx, s.
 		Builder().
 		Select("s.demo_id", "s.server_id", "s.title", "s.created_on", "s.downloads",
@@ -99,9 +99,9 @@ func (s Stores) GetDemoByName(ctx context.Context, demoName string, demoFile *mo
 	return nil
 }
 
-func (s Stores) GetDemos(ctx context.Context, opts model.DemoFilter) ([]model.DemoFile, int64, error) {
+func (s Stores) GetDemos(ctx context.Context, opts domain.DemoFilter) ([]domain.DemoFile, int64, error) {
 	var (
-		demos       []model.DemoFile
+		demos       []domain.DemoFile
 		constraints sq.And
 	)
 
@@ -163,7 +163,7 @@ func (s Stores) GetDemos(ctx context.Context, opts model.DemoFilter) ([]model.De
 
 	for rows.Next() {
 		var (
-			demoFile model.DemoFile
+			demoFile domain.DemoFile
 			uuidScan *uuid.UUID // TODO remove this and make column not-null once migrations are complete
 		)
 
@@ -181,7 +181,7 @@ func (s Stores) GetDemos(ctx context.Context, opts model.DemoFilter) ([]model.De
 	}
 
 	if demos == nil {
-		return []model.DemoFile{}, 0, nil
+		return []domain.DemoFile{}, 0, nil
 	}
 
 	count, errCount := getCount(ctx, s, s.
@@ -190,13 +190,13 @@ func (s Stores) GetDemos(ctx context.Context, opts model.DemoFilter) ([]model.De
 		From("demo s").
 		Where(constraints))
 	if errCount != nil {
-		return []model.DemoFile{}, 0, errs.DBErr(errCount)
+		return []domain.DemoFile{}, 0, errs.DBErr(errCount)
 	}
 
 	return demos, count, nil
 }
 
-func (s Stores) SaveDemo(ctx context.Context, demoFile *model.DemoFile) error {
+func (s Stores) SaveDemo(ctx context.Context, demoFile *domain.DemoFile) error {
 	// Find open reports and if any are returned, mark the demo as archived so that it does not get auto
 	// deleted during cleanup.
 	// Reports can happen mid-game which is why this is checked when the demo is saved and not during the report where
@@ -229,7 +229,7 @@ func (s Stores) SaveDemo(ctx context.Context, demoFile *model.DemoFile) error {
 	return errs.DBErr(err)
 }
 
-func (s Stores) insertDemo(ctx context.Context, demoFile *model.DemoFile) error {
+func (s Stores) insertDemo(ctx context.Context, demoFile *domain.DemoFile) error {
 	query, args, errQueryArgs := s.
 		Builder().
 		Insert("demo").
@@ -250,7 +250,7 @@ func (s Stores) insertDemo(ctx context.Context, demoFile *model.DemoFile) error 
 	return nil
 }
 
-func (s Stores) updateDemo(ctx context.Context, demoFile *model.DemoFile) error {
+func (s Stores) updateDemo(ctx context.Context, demoFile *domain.DemoFile) error {
 	query := s.
 		Builder().
 		Update("demo").
@@ -269,7 +269,7 @@ func (s Stores) updateDemo(ctx context.Context, demoFile *model.DemoFile) error 
 	return nil
 }
 
-func (s Stores) DropDemo(ctx context.Context, demoFile *model.DemoFile) error {
+func (s Stores) DropDemo(ctx context.Context, demoFile *domain.DemoFile) error {
 	if errExec := s.ExecDeleteBuilder(ctx, s.
 		Builder().
 		Delete("demo").
@@ -282,7 +282,7 @@ func (s Stores) DropDemo(ctx context.Context, demoFile *model.DemoFile) error {
 	return nil
 }
 
-func (s Stores) SaveAsset(ctx context.Context, asset *model.Asset) error {
+func (s Stores) SaveAsset(ctx context.Context, asset *domain.Asset) error {
 	return errs.DBErr(s.ExecInsertBuilder(ctx, s.
 		Builder().
 		Insert("asset").

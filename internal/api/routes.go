@@ -12,7 +12,7 @@ import (
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/unrolled/secure"
 	"github.com/unrolled/secure/cspbuilder"
@@ -216,7 +216,7 @@ func createRouter(ctx context.Context, env Env) *gin.Engine {
 	// This allows use of the user profile on endpoints that have optional authentication
 	optionalAuth := engine.Group("/")
 	{
-		optional := optionalAuth.Use(authMiddleware(env, model.PGuest))
+		optional := optionalAuth.Use(authMiddleware(env, domain.PGuest))
 		optional.GET("/api/contests", onAPIGetContests(env))
 		optional.GET("/api/contests/:contest_id", onAPIGetContest(env))
 		optional.GET("/api/contests/:contest_id/entries", onAPIGetContestEntries(env))
@@ -246,7 +246,7 @@ func createRouter(ctx context.Context, env Env) *gin.Engine {
 	authedGrp := engine.Group("/")
 	{
 		// Basic logged-in user
-		authed := authedGrp.Use(authMiddleware(env, model.PUser))
+		authed := authedGrp.Use(authMiddleware(env, domain.PUser))
 
 		authed.GET("/api/auth/discord", onOAuthDiscordCallback(env))
 		authed.GET("/api/auth/logout", onAPILogout(env))
@@ -301,7 +301,7 @@ func createRouter(ctx context.Context, env Env) *gin.Engine {
 	editorGrp := engine.Group("/")
 	{
 		// Editor access
-		editorRoute := editorGrp.Use(authMiddleware(env, model.PEditor))
+		editorRoute := editorGrp.Use(authMiddleware(env, domain.PEditor))
 		editorRoute.POST("/api/wiki/slug", onAPISaveWikiSlug(env))
 		editorRoute.POST("/api/news", onAPIPostNewsCreate(env))
 		editorRoute.POST("/api/news/:news_id", onAPIPostNewsUpdate(env))
@@ -318,7 +318,7 @@ func createRouter(ctx context.Context, env Env) *gin.Engine {
 	modGrp := engine.Group("/")
 	{
 		// Moderator access
-		modRoute := modGrp.Use(authMiddleware(env, model.PModerator))
+		modRoute := modGrp.Use(authMiddleware(env, domain.PModerator))
 		modRoute.POST("/api/report/:report_id/state", onAPIPostBanState(env))
 		modRoute.POST("/api/connections", onAPIQueryPersonConnections(env))
 		modRoute.GET("/api/message/:person_message_id/context/:padding", onAPIQueryMessageContext(env))
@@ -367,7 +367,7 @@ func createRouter(ctx context.Context, env Env) *gin.Engine {
 	adminGrp := engine.Group("/")
 	{
 		// Admin access
-		adminRoute := adminGrp.Use(authMiddleware(env, model.PAdmin))
+		adminRoute := adminGrp.Use(authMiddleware(env, domain.PAdmin))
 		adminRoute.POST("/api/servers", onAPIPostServer(env))
 		adminRoute.POST("/api/servers/:server_id", onAPIPostServerUpdate(env))
 		adminRoute.DELETE("/api/servers/:server_id", onAPIPostServerDelete(env))

@@ -7,8 +7,8 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgx/v5"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -31,7 +31,7 @@ var (
 	ErrGetPerson            = errors.New("failed to fetch person result")
 )
 
-func (s Stores) matchGetPlayerClasses(ctx context.Context, matchID uuid.UUID) (map[steamid.SID64][]model.MatchPlayerClass, error) {
+func (s Stores) matchGetPlayerClasses(ctx context.Context, matchID uuid.UUID) (map[steamid.SID64][]domain.MatchPlayerClass, error) {
 	const query = `
 		SELECT mp.steam_id, c.match_player_class_id, c.match_player_id, c.player_class_id, c.kills, 
 		   c.assists, c.deaths, c.playtime, c.dominations, c.dominated, c.revenges, c.damage, c.damage_taken, c.healing_taken,
@@ -47,12 +47,12 @@ func (s Stores) matchGetPlayerClasses(ctx context.Context, matchID uuid.UUID) (m
 
 	defer rows.Close()
 
-	results := map[steamid.SID64][]model.MatchPlayerClass{}
+	results := map[steamid.SID64][]domain.MatchPlayerClass{}
 
 	for rows.Next() {
 		var (
 			steamID int64
-			stats   model.MatchPlayerClass
+			stats   domain.MatchPlayerClass
 		)
 
 		if errScan := rows.
@@ -67,7 +67,7 @@ func (s Stores) matchGetPlayerClasses(ctx context.Context, matchID uuid.UUID) (m
 
 		res, found := results[sid]
 		if !found {
-			res = []model.MatchPlayerClass{}
+			res = []domain.MatchPlayerClass{}
 		}
 
 		results[sid] = append(res, stats)
@@ -80,7 +80,7 @@ func (s Stores) matchGetPlayerClasses(ctx context.Context, matchID uuid.UUID) (m
 	return results, nil
 }
 
-func (s Stores) matchGetPlayerWeapons(ctx context.Context, matchID uuid.UUID) (map[steamid.SID64][]model.MatchPlayerWeapon, error) {
+func (s Stores) matchGetPlayerWeapons(ctx context.Context, matchID uuid.UUID) (map[steamid.SID64][]domain.MatchPlayerWeapon, error) {
 	const query = `
 		SELECT mp.steam_id, mw.weapon_id, w.name, w.key,  mw.kills, mw.damage, mw.shots, mw.hits, mw.backstabs, mw.headshots, mw.airshots
 		FROM match s
@@ -90,7 +90,7 @@ func (s Stores) matchGetPlayerWeapons(ctx context.Context, matchID uuid.UUID) (m
 		WHERE s.match_id = $1 and mw.weapon_id is not null
 		ORDER BY mw.kills DESC`
 
-	results := map[steamid.SID64][]model.MatchPlayerWeapon{}
+	results := map[steamid.SID64][]domain.MatchPlayerWeapon{}
 
 	rows, errRows := s.Query(ctx, query, matchID)
 	if errRows != nil {
@@ -102,7 +102,7 @@ func (s Stores) matchGetPlayerWeapons(ctx context.Context, matchID uuid.UUID) (m
 	for rows.Next() {
 		var (
 			steamID int64
-			mpw     model.MatchPlayerWeapon
+			mpw     domain.MatchPlayerWeapon
 		)
 
 		if errScan := rows.
@@ -115,7 +115,7 @@ func (s Stores) matchGetPlayerWeapons(ctx context.Context, matchID uuid.UUID) (m
 
 		res, found := results[sid]
 		if !found {
-			res = []model.MatchPlayerWeapon{}
+			res = []domain.MatchPlayerWeapon{}
 		}
 
 		results[sid] = append(res, mpw)
@@ -124,7 +124,7 @@ func (s Stores) matchGetPlayerWeapons(ctx context.Context, matchID uuid.UUID) (m
 	return results, nil
 }
 
-func (s Stores) matchGetPlayerKillstreak(ctx context.Context, matchID uuid.UUID) (map[steamid.SID64][]model.MatchPlayerKillstreak, error) {
+func (s Stores) matchGetPlayerKillstreak(ctx context.Context, matchID uuid.UUID) (map[steamid.SID64][]domain.MatchPlayerKillstreak, error) {
 	const query = `
 		SELECT mp.steam_id, k.match_player_id, k.player_class_id, k.killstreak, k.duration
 		FROM match_player_killstreak k
@@ -138,12 +138,12 @@ func (s Stores) matchGetPlayerKillstreak(ctx context.Context, matchID uuid.UUID)
 
 	defer rows.Close()
 
-	results := map[steamid.SID64][]model.MatchPlayerKillstreak{}
+	results := map[steamid.SID64][]domain.MatchPlayerKillstreak{}
 
 	for rows.Next() {
 		var (
 			steamID int64
-			stats   model.MatchPlayerKillstreak
+			stats   domain.MatchPlayerKillstreak
 		)
 
 		if errScan := rows.
@@ -155,7 +155,7 @@ func (s Stores) matchGetPlayerKillstreak(ctx context.Context, matchID uuid.UUID)
 
 		res, found := results[sid]
 		if !found {
-			res = []model.MatchPlayerKillstreak{}
+			res = []domain.MatchPlayerKillstreak{}
 		}
 
 		results[sid] = append(res, stats)
@@ -164,7 +164,7 @@ func (s Stores) matchGetPlayerKillstreak(ctx context.Context, matchID uuid.UUID)
 	return results, nil
 }
 
-func (s Stores) matchGetPlayers(ctx context.Context, matchID uuid.UUID) ([]*model.MatchPlayer, error) {
+func (s Stores) matchGetPlayers(ctx context.Context, matchID uuid.UUID) ([]*domain.MatchPlayer, error) {
 	const queryPlayer = `
 		SELECT
 			p.match_player_id,
@@ -216,12 +216,12 @@ func (s Stores) matchGetPlayers(ctx context.Context, matchID uuid.UUID) ([]*mode
 			p.match_player_id, w.kills, w.damage, w.shots, w.hits, w.backstabs, w.headshots, w.airshots, pe.steam_id
 		ORDER BY w.kills DESC`
 
-	var players []*model.MatchPlayer
+	var players []*domain.MatchPlayer
 
 	playerRows, errPlayer := s.Query(ctx, queryPlayer, matchID)
 	if errPlayer != nil {
 		if errors.Is(errPlayer, errs.ErrNoResult) {
-			return []*model.MatchPlayer{}, nil
+			return []*domain.MatchPlayer{}, nil
 		}
 
 		return nil, errors.Join(errPlayer, ErrQueryPlayers)
@@ -231,7 +231,7 @@ func (s Stores) matchGetPlayers(ctx context.Context, matchID uuid.UUID) ([]*mode
 
 	for playerRows.Next() {
 		var (
-			mpSum   = &model.MatchPlayer{}
+			mpSum   = &domain.MatchPlayer{}
 			steamID int64
 		)
 
@@ -252,7 +252,7 @@ func (s Stores) matchGetPlayers(ctx context.Context, matchID uuid.UUID) ([]*mode
 	return players, nil
 }
 
-func (s Stores) matchGetMedics(ctx context.Context, matchID uuid.UUID) (map[steamid.SID64]model.MatchHealer, error) {
+func (s Stores) matchGetMedics(ctx context.Context, matchID uuid.UUID) (map[steamid.SID64]domain.MatchHealer, error) {
 	const query = `
 		SELECT s.match_medic_id,
 			   mp.steam_id,
@@ -270,7 +270,7 @@ func (s Stores) matchGetMedics(ctx context.Context, matchID uuid.UUID) (map[stea
 		LEFT JOIN match_player mp on mp.match_player_id = s.match_player_id
 		WHERE mp.match_id = $1`
 
-	medics := map[steamid.SID64]model.MatchHealer{}
+	medics := map[steamid.SID64]domain.MatchHealer{}
 
 	medicRows, errMedics := s.Query(ctx, query, matchID)
 	if errMedics != nil {
@@ -285,7 +285,7 @@ func (s Stores) matchGetMedics(ctx context.Context, matchID uuid.UUID) (map[stea
 
 	for medicRows.Next() {
 		var (
-			mpSum   = model.MatchHealer{}
+			mpSum   = domain.MatchHealer{}
 			steamID int64
 		)
 
@@ -309,7 +309,7 @@ func (s Stores) matchGetMedics(ctx context.Context, matchID uuid.UUID) (map[stea
 	return medics, nil
 }
 
-func (s Stores) matchGetChat(ctx context.Context, matchID uuid.UUID) (model.PersonMessages, error) {
+func (s Stores) matchGetChat(ctx context.Context, matchID uuid.UUID) (domain.PersonMessages, error) {
 	const query = `
 		SELECT c.person_message_id, c.steam_id, c.server_id, c.body, c.persona_name, c.team, 
 		       c.created_on, c.match_id, COUNT(f.person_message_id)::int::boolean as flagged
@@ -319,7 +319,7 @@ func (s Stores) matchGetChat(ctx context.Context, matchID uuid.UUID) (model.Pers
 		GROUP BY c.person_message_id
 		`
 
-	messages := model.PersonMessages{}
+	messages := domain.PersonMessages{}
 
 	chatRows, errQuery := s.Query(ctx, query, matchID)
 	if errQuery != nil {
@@ -334,7 +334,7 @@ func (s Stores) matchGetChat(ctx context.Context, matchID uuid.UUID) (model.Pers
 
 	for chatRows.Next() {
 		var (
-			msg     model.PersonMessage
+			msg     domain.PersonMessage
 			steamID int64
 		)
 
@@ -356,7 +356,7 @@ func (s Stores) matchGetChat(ctx context.Context, matchID uuid.UUID) (model.Pers
 	return messages, nil
 }
 
-func (s Stores) MatchGetByID(ctx context.Context, matchID uuid.UUID, match *model.MatchResult) error {
+func (s Stores) MatchGetByID(ctx context.Context, matchID uuid.UUID, match *domain.MatchResult) error {
 	const query = `
 		SELECT match_id, server_id, map, title, score_red, score_blu, time_red, time_blu, time_start, time_end, winner
 		FROM match WHERE match_id = $1`
@@ -441,20 +441,20 @@ func (s Stores) MatchGetByID(ctx context.Context, matchID uuid.UUID, match *mode
 	match.Chat = chat
 
 	if match.Chat == nil {
-		match.Chat = model.PersonMessages{}
+		match.Chat = domain.PersonMessages{}
 	}
 
 	for _, player := range match.Players {
 		if player.Weapons == nil {
-			player.Weapons = []model.MatchPlayerWeapon{}
+			player.Weapons = []domain.MatchPlayerWeapon{}
 		}
 
 		if player.Classes == nil {
-			player.Classes = []model.MatchPlayerClass{}
+			player.Classes = []domain.MatchPlayerClass{}
 		}
 
 		if player.Killstreaks == nil {
-			player.Killstreaks = []model.MatchPlayerKillstreak{}
+			player.Killstreaks = []domain.MatchPlayerKillstreak{}
 		}
 	}
 
@@ -494,7 +494,7 @@ func (s Stores) MatchSave(ctx context.Context, match *logparse.Match, weaponMap 
 			continue
 		}
 
-		var loadPlayerTest model.Person
+		var loadPlayerTest domain.Person
 		if errPlayer := s.GetOrCreatePersonBySteamID(ctx, player.SteamID, &loadPlayerTest); errPlayer != nil {
 			if errRollback := transaction.Rollback(ctx); errRollback != nil {
 				return errors.Join(errRollback, ErrTxRollback)
@@ -655,7 +655,7 @@ func (s Stores) saveMatchKillstreakStats(ctx context.Context, transaction pgx.Tx
 	return nil
 }
 
-func (s Stores) StatsPlayerClass(ctx context.Context, sid64 steamid.SID64) (model.PlayerClassStatsCollection, error) {
+func (s Stores) StatsPlayerClass(ctx context.Context, sid64 steamid.SID64) (domain.PlayerClassStatsCollection, error) {
 	const query = `
 		SELECT c.player_class_id,
 			   coalesce(SUM(c.kills), 0)               as kill,
@@ -687,10 +687,10 @@ func (s Stores) StatsPlayerClass(ctx context.Context, sid64 steamid.SID64) (mode
 
 	defer rows.Close()
 
-	var stats model.PlayerClassStatsCollection
+	var stats domain.PlayerClassStatsCollection
 
 	for rows.Next() {
-		var class model.PlayerClassStats
+		var class domain.PlayerClassStats
 		if errScan := rows.
 			Scan(&class.Class, &class.Kills, &class.Damage, &class.Assists, &class.Deaths, &class.Dominations,
 				&class.Dominated, &class.Revenges, &class.DamageTaken, &class.HealingTaken, &class.HealthPacks,
@@ -706,7 +706,7 @@ func (s Stores) StatsPlayerClass(ctx context.Context, sid64 steamid.SID64) (mode
 	return stats, nil
 }
 
-func (s Stores) StatsPlayerWeapons(ctx context.Context, sid64 steamid.SID64) ([]model.PlayerWeaponStats, error) {
+func (s Stores) StatsPlayerWeapons(ctx context.Context, sid64 steamid.SID64) ([]domain.PlayerWeaponStats, error) {
 	const query = `
 		SELECT n.key,
 			   n.name,
@@ -731,10 +731,10 @@ func (s Stores) StatsPlayerWeapons(ctx context.Context, sid64 steamid.SID64) ([]
 
 	defer rows.Close()
 
-	var stats []model.PlayerWeaponStats
+	var stats []domain.PlayerWeaponStats
 
 	for rows.Next() {
-		var class model.PlayerWeaponStats
+		var class domain.PlayerWeaponStats
 		if errScan := rows.
 			Scan(&class.Weapon, &class.WeaponName, &class.Kills, &class.Damage, &class.Shots, &class.Hits,
 				&class.Backstabs, &class.Headshots, &class.Airshots); errScan != nil {
@@ -747,7 +747,7 @@ func (s Stores) StatsPlayerWeapons(ctx context.Context, sid64 steamid.SID64) ([]
 	return stats, nil
 }
 
-func (s Stores) StatsPlayerKillstreaks(ctx context.Context, sid64 steamid.SID64) ([]model.PlayerKillstreakStats, error) {
+func (s Stores) StatsPlayerKillstreaks(ctx context.Context, sid64 steamid.SID64) ([]domain.PlayerKillstreakStats, error) {
 	const query = `
 		SELECT k.player_class_id,
 			   SUM(k.killstreak) as killstreak,
@@ -770,10 +770,10 @@ func (s Stores) StatsPlayerKillstreaks(ctx context.Context, sid64 steamid.SID64)
 
 	defer rows.Close()
 
-	var stats []model.PlayerKillstreakStats
+	var stats []domain.PlayerKillstreakStats
 
 	for rows.Next() {
-		var class model.PlayerKillstreakStats
+		var class domain.PlayerKillstreakStats
 		if errScan := rows.
 			Scan(&class.Class, &class.Kills, &class.Duration, &class.CreatedOn); errScan != nil {
 			return nil, errs.DBErr(errScan)
@@ -786,7 +786,7 @@ func (s Stores) StatsPlayerKillstreaks(ctx context.Context, sid64 steamid.SID64)
 	return stats, nil
 }
 
-func (s Stores) StatsPlayerMedic(ctx context.Context, sid64 steamid.SID64) ([]model.PlayerMedicStats, error) {
+func (s Stores) StatsPlayerMedic(ctx context.Context, sid64 steamid.SID64) ([]domain.PlayerMedicStats, error) {
 	const query = `
 		SELECT coalesce(SUM(s.healing), 0)                as healing,
 			   coalesce(SUM(s.drops), 0)                  as drops,
@@ -808,10 +808,10 @@ func (s Stores) StatsPlayerMedic(ctx context.Context, sid64 steamid.SID64) ([]mo
 
 	defer rows.Close()
 
-	var stats []model.PlayerMedicStats
+	var stats []domain.PlayerMedicStats
 
 	for rows.Next() {
-		var class model.PlayerMedicStats
+		var class domain.PlayerMedicStats
 		if errScan := rows.
 			Scan(&class.Healing, &class.Drops, &class.NearFullChargeDeath, &class.AvgUberLength,
 				&class.ChargesUber, &class.ChargesKritz, &class.ChargesVacc, &class.ChargesQuickfix); errScan != nil {
@@ -824,7 +824,7 @@ func (s Stores) StatsPlayerMedic(ctx context.Context, sid64 steamid.SID64) ([]mo
 	return stats, nil
 }
 
-func (s Stores) PlayerStats(ctx context.Context, steamID steamid.SID64, stats *model.PlayerStats) error {
+func (s Stores) PlayerStats(ctx context.Context, steamID steamid.SID64, stats *domain.PlayerStats) error {
 	const query = `
 		SELECT count(s.match_id)            as                     matches,
 			   sum(case when mp.team = s.winner then 1 else 0 end) wins,
@@ -874,7 +874,7 @@ func (s Stores) PlayerStats(ctx context.Context, steamID steamid.SID64, stats *m
 	return nil
 }
 
-func (s Stores) Matches(ctx context.Context, opts model.MatchesQueryOpts) ([]model.MatchSummary, int64, error) {
+func (s Stores) Matches(ctx context.Context, opts domain.MatchesQueryOpts) ([]domain.MatchSummary, int64, error) {
 	countBuilder := s.
 		Builder().
 		Select("count(s.match_id) as count").
@@ -928,10 +928,10 @@ func (s Stores) Matches(ctx context.Context, opts model.MatchesQueryOpts) ([]mod
 
 	defer rows.Close()
 
-	var matches []model.MatchSummary
+	var matches []domain.MatchSummary
 
 	for rows.Next() {
-		var summary model.MatchSummary
+		var summary domain.MatchSummary
 		if errScan := rows.Scan(&summary.MatchID, &summary.ServerID, &summary.IsWinner, &summary.ShortName,
 			&summary.Title, &summary.MapName, &summary.ScoreBlu, &summary.ScoreRed, &summary.TimeStart,
 			&summary.TimeEnd); errScan != nil {
