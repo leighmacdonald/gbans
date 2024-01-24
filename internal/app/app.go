@@ -18,8 +18,8 @@ import (
 	"github.com/leighmacdonald/gbans/internal/api"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/s3"
 	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/store"
@@ -110,8 +110,8 @@ func (app *App) SendPayload(channelID string, message *discordgo.MessageEmbed) {
 	app.discord.SendPayload(channelID, message)
 }
 
-func (app *App) Version() model.BuildInfo {
-	return model.BuildInfo{
+func (app *App) Version() domain.BuildInfo {
+	return domain.BuildInfo{
 		BuildVersion: BuildVersion,
 		Commit:       BuildCommit,
 		Date:         BuildDate,
@@ -129,7 +129,7 @@ func (app *App) Config() config.Config {
 	return app.conf
 }
 
-func (app *App) Warnings() model.Warnings { //nolint:ireturn
+func (app *App) Warnings() domain.Warnings { //nolint:ireturn
 	return app.warningTracker
 }
 
@@ -137,11 +137,11 @@ func (app *App) State() *state.Collector {
 	return app.state
 }
 
-func (app *App) Patreon() model.Patreon { //nolint:ireturn
+func (app *App) Patreon() domain.Patreon { //nolint:ireturn
 	return app.patreon
 }
 
-func (app *App) NetBlocks() model.NetBLocker { //nolint:ireturn
+func (app *App) NetBlocks() domain.NetBLocker { //nolint:ireturn
 	return app.netBlock
 }
 
@@ -213,21 +213,21 @@ func firstTimeSetup(ctx context.Context, conf config.Config, database store.Stor
 	localCtx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 
-	var owner model.Person
+	var owner domain.Person
 
 	if errRootUser := database.GetPersonBySteamID(localCtx, conf.General.Owner, &owner); errRootUser != nil {
 		if !errors.Is(errRootUser, errs.ErrNoResult) {
 			return errors.Join(errRootUser, errCreateAdmin)
 		}
 
-		newOwner := model.NewPerson(conf.General.Owner)
-		newOwner.PermissionLevel = model.PAdmin
+		newOwner := domain.NewPerson(conf.General.Owner)
+		newOwner.PermissionLevel = domain.PAdmin
 
 		if errSave := database.SavePerson(localCtx, &newOwner); errSave != nil {
 			return errors.Join(errSave, errSetupAdmin)
 		}
 
-		newsEntry := model.NewsEntry{
+		newsEntry := domain.NewsEntry{
 			Title:       "Welcome to gbans",
 			BodyMD:      "This is an *example* **news** entry.",
 			IsPublished: true,
@@ -239,7 +239,7 @@ func firstTimeSetup(ctx context.Context, conf config.Config, database store.Stor
 			return errors.Join(errSave, errSetupNews)
 		}
 
-		server := model.NewServer("server-1", "127.0.0.1", 27015)
+		server := domain.NewServer("server-1", "127.0.0.1", 27015)
 		server.CC = "jp"
 		server.RCON = "example_rcon"
 		server.Latitude = 35.652832
@@ -319,7 +319,7 @@ func (app *App) loadNetBlocks(ctx context.Context) error {
 
 		waitGroup.Add(1)
 
-		go func(src model.CIDRBlockSource) {
+		go func(src domain.CIDRBlockSource) {
 			defer waitGroup.Done()
 
 			count, errAdd := app.netBlock.AddRemoteSource(ctx, src.Name, src.URL)
@@ -416,14 +416,14 @@ func (app *App) playerConnectionWriter(ctx context.Context) {
 			}
 
 			// Maybe ignore these and wait for connect call to create?
-			var person model.Person
+			var person domain.Person
 			if errPerson := app.Store().GetOrCreatePersonBySteamID(ctx, newServerEvent.SID, &person); errPerson != nil {
 				log.Error("Failed to load Person", zap.Error(errPerson))
 
 				continue
 			}
 
-			conn := model.PersonConnection{
+			conn := domain.PersonConnection{
 				IPAddr:      parsedAddr,
 				SteamID:     newServerEvent.SID,
 				PersonaName: strings.ToValidUTF8(newServerEvent.Name, "_"),
@@ -527,7 +527,7 @@ func (app *App) LoadFilters(ctx context.Context) (int64, error) {
 	localCtx, cancel := context.WithTimeout(ctx, time.Second*15)
 	defer cancel()
 
-	words, count, errGetFilters := app.db.GetFilters(localCtx, model.FiltersQueryFilter{})
+	words, count, errGetFilters := app.db.GetFilters(localCtx, domain.FiltersQueryFilter{})
 	if errGetFilters != nil {
 		if errors.Is(errGetFilters, errs.ErrNoResult) {
 			return 0, nil
@@ -568,9 +568,9 @@ func (app *App) updateSrcdsLogSecrets(ctx context.Context) {
 
 	defer cancelServers()
 
-	servers, _, errServers := app.db.GetServers(serversCtx, model.ServerQueryFilter{
+	servers, _, errServers := app.db.GetServers(serversCtx, domain.ServerQueryFilter{
 		IncludeDisabled: false,
-		QueryFilter:     model.QueryFilter{Deleted: false},
+		QueryFilter:     domain.QueryFilter{Deleted: false},
 	})
 	if errServers != nil {
 		app.log.Error("Failed to update srcds log secrets", zap.Error(errServers))
@@ -591,16 +591,16 @@ func (app *App) updateSrcdsLogSecrets(ctx context.Context) {
 type NotificationHandler struct{}
 
 type NotificationPayload struct {
-	MinPerms model.Privilege
+	MinPerms domain.Privilege
 	Sids     steamid.Collection
-	Severity model.NotificationSeverity
+	Severity domain.NotificationSeverity
 	Message  string
 	Link     string
 }
 
 func (app *App) SendNotification(ctx context.Context, notification NotificationPayload) error {
 	// Collect all required ids
-	if notification.MinPerms >= model.PUser {
+	if notification.MinPerms >= domain.PUser {
 		sids, errIds := app.db.GetSteamIdsAbove(ctx, notification.MinPerms)
 		if errIds != nil {
 			return errors.Join(errIds, errNotificationSteamIDs)

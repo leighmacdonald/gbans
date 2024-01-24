@@ -4,12 +4,12 @@ import (
 	"context"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
-func (s Stores) SaveFilter(ctx context.Context, filter *model.Filter) error {
+func (s Stores) SaveFilter(ctx context.Context, filter *domain.Filter) error {
 	if filter.FilterID > 0 {
 		return s.updateFilter(ctx, filter)
 	} else {
@@ -17,7 +17,7 @@ func (s Stores) SaveFilter(ctx context.Context, filter *model.Filter) error {
 	}
 }
 
-func (s Stores) insertFilter(ctx context.Context, filter *model.Filter) error {
+func (s Stores) insertFilter(ctx context.Context, filter *domain.Filter) error {
 	const query = `
 		INSERT INTO filtered_word (author_id, pattern, is_regex, is_enabled, trigger_count, created_on, updated_on, action, duration, weight) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
@@ -32,7 +32,7 @@ func (s Stores) insertFilter(ctx context.Context, filter *model.Filter) error {
 	return nil
 }
 
-func (s Stores) updateFilter(ctx context.Context, filter *model.Filter) error {
+func (s Stores) updateFilter(ctx context.Context, filter *domain.Filter) error {
 	query := s.
 		Builder().
 		Update("filtered_word").
@@ -55,7 +55,7 @@ func (s Stores) updateFilter(ctx context.Context, filter *model.Filter) error {
 	return nil
 }
 
-func (s Stores) DropFilter(ctx context.Context, filter *model.Filter) error {
+func (s Stores) DropFilter(ctx context.Context, filter *domain.Filter) error {
 	query := s.
 		Builder().
 		Delete("filtered_word").
@@ -67,7 +67,7 @@ func (s Stores) DropFilter(ctx context.Context, filter *model.Filter) error {
 	return nil
 }
 
-func (s Stores) GetFilterByID(ctx context.Context, filterID int64, filter *model.Filter) error {
+func (s Stores) GetFilterByID(ctx context.Context, filterID int64, filter *domain.Filter) error {
 	query := s.
 		Builder().
 		Select("filter_id", "author_id", "pattern", "is_regex",
@@ -95,7 +95,7 @@ func (s Stores) GetFilterByID(ctx context.Context, filterID int64, filter *model
 	return nil
 }
 
-func (s Stores) GetFilters(ctx context.Context, opts model.FiltersQueryFilter) ([]model.Filter, int64, error) {
+func (s Stores) GetFilters(ctx context.Context, opts domain.FiltersQueryFilter) ([]domain.Filter, int64, error) {
 	builder := s.
 		Builder().
 		Select("s.filter_id", "s.author_id", "s.pattern", "s.is_regex",
@@ -109,7 +109,7 @@ func (s Stores) GetFilters(ctx context.Context, opts model.FiltersQueryFilter) (
 		},
 	}, "filter_id")
 
-	builder = opts.QueryFilter.ApplyLimitOffset(builder, model.MaxResultsDefault)
+	builder = opts.QueryFilter.ApplyLimitOffset(builder, domain.MaxResultsDefault)
 
 	rows, errExec := s.QueryBuilder(ctx, builder)
 	if errExec != nil {
@@ -118,11 +118,11 @@ func (s Stores) GetFilters(ctx context.Context, opts model.FiltersQueryFilter) (
 
 	defer rows.Close()
 
-	var filters []model.Filter
+	var filters []domain.Filter
 
 	for rows.Next() {
 		var (
-			filter   model.Filter
+			filter   domain.Filter
 			authorID int64
 		)
 

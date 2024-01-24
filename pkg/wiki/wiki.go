@@ -7,7 +7,7 @@ import (
 
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/parser"
-	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/microcosm-cc/bluemonday"
 )
 
@@ -15,12 +15,12 @@ import (
 const RootSlug = "home"
 
 type Page struct {
-	Slug            string          `json:"slug"`
-	BodyMD          string          `json:"body_md"`
-	Revision        int             `json:"revision"`
-	PermissionLevel model.Privilege `json:"permission_level"`
-	CreatedOn       time.Time       `json:"created_on"`
-	UpdatedOn       time.Time       `json:"updated_on"`
+	Slug            string           `json:"slug"`
+	BodyMD          string           `json:"body_md"`
+	Revision        int              `json:"revision"`
+	PermissionLevel domain.Privilege `json:"permission_level"`
+	CreatedOn       time.Time        `json:"created_on"`
+	UpdatedOn       time.Time        `json:"updated_on"`
 }
 
 func (page *Page) NewRevision() Page {

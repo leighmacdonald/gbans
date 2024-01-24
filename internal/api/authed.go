@@ -19,8 +19,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/fp"
@@ -105,7 +105,7 @@ func onTokenRefresh(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var auth model.PersonAuth
+		var auth domain.PersonAuth
 		if authError := env.Store().GetPersonAuthByRefreshToken(ctx, fingerprint, &auth); authError != nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 
@@ -251,7 +251,7 @@ func onOAuthDiscordCallback(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var discordPerson model.Person
+		var discordPerson domain.Person
 		if errDp := env.Store().GetPersonByDiscordID(ctx, discordID, &discordPerson); errDp != nil {
 			if !errors.Is(errDp, errs.ErrNoResult) {
 				responseErr(ctx, http.StatusInternalServerError, nil)
@@ -269,7 +269,7 @@ func onOAuthDiscordCallback(env Env) gin.HandlerFunc {
 
 		sid := currentUserProfile(ctx).SteamID
 
-		var person model.Person
+		var person domain.Person
 		if errPerson := env.Store().GetPersonBySteamID(ctx, sid, &person); errPerson != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 
@@ -328,7 +328,7 @@ func onAPILogout(env Env) gin.HandlerFunc {
 		ctx.SetCookie(fingerprintCookieName, "", -1, "/api",
 			parsedExternal.Hostname(), conf.General.Mode == config.ReleaseMode, true)
 
-		auth := model.PersonAuth{}
+		auth := domain.PersonAuth{}
 		if errGet := env.Store().GetPersonAuthByRefreshToken(ctx, fingerprint, &auth); errGet != nil {
 			responseErr(ctx, http.StatusInternalServerError, nil)
 			log.Warn("Failed to load person via fingerprint")
@@ -372,7 +372,7 @@ func onAPICurrentProfileNotifications(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		currentProfile := currentUserProfile(ctx)
 
-		var req model.NotificationQuery
+		var req domain.NotificationQuery
 		if !bind(ctx, log, &req) {
 			return
 		}
@@ -382,7 +382,7 @@ func onAPICurrentProfileNotifications(env Env) gin.HandlerFunc {
 		notifications, count, errNot := env.Store().GetPersonNotifications(ctx, req)
 		if errNot != nil {
 			if errors.Is(errNot, errs.ErrNoResult) {
-				ctx.JSON(http.StatusOK, []model.UserNotification{})
+				ctx.JSON(http.StatusOK, []domain.UserNotification{})
 
 				return
 			}
@@ -424,7 +424,7 @@ func onAPIGetReport(env Env) gin.HandlerFunc {
 			return
 		}
 
-		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{report.Report.SourceID}, model.PModerator) {
+		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{report.Report.SourceID}, domain.PModerator) {
 			responseErr(ctx, http.StatusUnauthorized, errPermissionDenied)
 
 			return
@@ -461,9 +461,9 @@ func onAPIGetReport(env Env) gin.HandlerFunc {
 }
 
 type reportWithAuthor struct {
-	Author  model.Person `json:"author"`
-	Subject model.Person `json:"subject"`
-	model.Report
+	Author  domain.Person `json:"author"`
+	Subject domain.Person `json:"subject"`
+	domain.Report
 }
 
 func onAPIGetReports(env Env) gin.HandlerFunc {
@@ -472,7 +472,7 @@ func onAPIGetReports(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		user := currentUserProfile(ctx)
 
-		var req model.ReportQueryFilter
+		var req domain.ReportQueryFilter
 		if !bind(ctx, log, &req) {
 			return
 		}
@@ -485,7 +485,7 @@ func onAPIGetReports(env Env) gin.HandlerFunc {
 		// only able to request their own reports
 		var sourceID steamid.SID64
 
-		if user.PermissionLevel < model.PModerator {
+		if user.PermissionLevel < domain.PModerator {
 			sourceID = user.SteamID
 		} else if req.SourceID != "" {
 			sid, errSourceID := req.SourceID.SID64(ctx)
@@ -499,7 +499,7 @@ func onAPIGetReports(env Env) gin.HandlerFunc {
 		}
 
 		if sourceID.Valid() {
-			req.SourceID = model.StringSID(sourceID.String())
+			req.SourceID = domain.StringSID(sourceID.String())
 		}
 
 		var userReports []reportWithAuthor
@@ -563,7 +563,7 @@ func onAPIGetReports(env Env) gin.HandlerFunc {
 
 func onAPISetReportStatus(env Env) gin.HandlerFunc {
 	type stateUpdateReq struct {
-		Status model.ReportStatus `json:"status"`
+		Status domain.ReportStatus `json:"status"`
 	}
 
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
@@ -581,7 +581,7 @@ func onAPISetReportStatus(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var report model.Report
+		var report domain.Report
 		if errGet := env.Store().GetReport(ctx, reportID, &report); errGet != nil {
 			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to get report to set state", zap.Error(errGet))
@@ -649,7 +649,7 @@ func onAPISaveMedia(env Env) gin.HandlerFunc {
 			return
 		}
 
-		media, errMedia := model.NewMedia(currentUserProfile(ctx).SteamID, req.Name, req.Mime, content)
+		media, errMedia := domain.NewMedia(currentUserProfile(ctx).SteamID, req.Name, req.Mime, content)
 		if errMedia != nil {
 			ctx.JSON(http.StatusBadRequest, errBadRequest)
 			log.Error("Invalid media uploaded", zap.Error(errMedia))
@@ -657,7 +657,7 @@ func onAPISaveMedia(env Env) gin.HandlerFunc {
 
 		conf := env.Config()
 
-		asset, errAsset := model.NewAsset(content, conf.S3.BucketMedia, "")
+		asset, errAsset := domain.NewAsset(content, conf.S3.BucketMedia, "")
 		if errAsset != nil {
 			responseErr(ctx, http.StatusInternalServerError, errAssetCreateFailed)
 
@@ -717,14 +717,14 @@ func onAPIGetReportMessages(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var report model.Report
+		var report domain.Report
 		if errGetReport := env.Store().GetReport(ctx, reportID, &report); errGetReport != nil {
 			responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 
 			return
 		}
 
-		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{report.SourceID, report.TargetID}, model.PModerator) {
+		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{report.SourceID, report.TargetID}, domain.PModerator) {
 			return
 		}
 
@@ -736,7 +736,7 @@ func onAPIGetReportMessages(env Env) gin.HandlerFunc {
 		}
 
 		if reportMessages == nil {
-			reportMessages = []model.ReportMessage{}
+			reportMessages = []domain.ReportMessage{}
 		}
 
 		ctx.JSON(http.StatusOK, reportMessages)
@@ -769,7 +769,7 @@ func onAPIPostReportMessage(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var report model.Report
+		var report domain.Report
 		if errReport := env.Store().GetReport(ctx, reportID, &report); errReport != nil {
 			if errors.Is(errs.DBErr(errReport), errs.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
@@ -784,7 +784,7 @@ func onAPIPostReportMessage(env Env) gin.HandlerFunc {
 		}
 
 		person := currentUserProfile(ctx)
-		msg := model.NewReportMessage(reportID, person.SteamID, req.Message)
+		msg := domain.NewReportMessage(reportID, person.SteamID, req.Message)
 
 		if errSave := env.Store().SaveReportMessage(ctx, &msg); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, errInternal)
@@ -826,7 +826,7 @@ func onAPIEditReportMessage(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var existing model.ReportMessage
+		var existing domain.ReportMessage
 		if errExist := env.Store().GetReportMessageByID(ctx, reportMessageID, &existing); errExist != nil {
 			if errors.Is(errExist, errs.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, errs.ErrPlayerNotFound)
@@ -840,7 +840,7 @@ func onAPIEditReportMessage(env Env) gin.HandlerFunc {
 		}
 
 		curUser := currentUserProfile(ctx)
-		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorID}, model.PModerator) {
+		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorID}, domain.PModerator) {
 			return
 		}
 
@@ -889,7 +889,7 @@ func onAPIDeleteReportMessage(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var existing model.ReportMessage
+		var existing domain.ReportMessage
 		if errExist := env.Store().GetReportMessageByID(ctx, reportMessageID, &existing); errExist != nil {
 			if errors.Is(errExist, errs.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
@@ -903,7 +903,7 @@ func onAPIDeleteReportMessage(env Env) gin.HandlerFunc {
 		}
 
 		curUser := currentUserProfile(ctx)
-		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorID}, model.PModerator) {
+		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorID}, domain.PModerator) {
 			return
 		}
 
@@ -948,7 +948,7 @@ func onAPIGetBanByID(env Env) gin.HandlerFunc {
 			}
 		}
 
-		bannedPerson := model.NewBannedPerson()
+		bannedPerson := domain.NewBannedPerson()
 		if errGetBan := env.Store().GetBanByBanID(ctx, banID, &bannedPerson, deletedOk); errGetBan != nil {
 			responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 			log.Error("Failed to fetch steam ban", zap.Error(errGetBan))
@@ -956,7 +956,7 @@ func onAPIGetBanByID(env Env) gin.HandlerFunc {
 			return
 		}
 
-		if !checkPrivilege(ctx, curUser, steamid.Collection{bannedPerson.TargetID}, model.PModerator) {
+		if !checkPrivilege(ctx, curUser, steamid.Collection{bannedPerson.TargetID}, domain.PModerator) {
 			return
 		}
 
@@ -974,14 +974,14 @@ func onAPIGetBanMessages(env Env) gin.HandlerFunc {
 			return
 		}
 
-		banPerson := model.NewBannedPerson()
+		banPerson := domain.NewBannedPerson()
 		if errGetBan := env.Store().GetBanByBanID(ctx, banID, &banPerson, true); errGetBan != nil {
 			responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 
 			return
 		}
 
-		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{banPerson.TargetID, banPerson.SourceID}, model.PModerator) {
+		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{banPerson.TargetID, banPerson.SourceID}, domain.PModerator) {
 			return
 		}
 
@@ -1022,7 +1022,7 @@ func onAPIPostBanMessage(env Env) gin.HandlerFunc {
 			return
 		}
 
-		bannedPerson := model.NewBannedPerson()
+		bannedPerson := domain.NewBannedPerson()
 		if errReport := env.Store().GetBanByBanID(ctx, banID, &bannedPerson, true); errReport != nil {
 			if errors.Is(errs.DBErr(errReport), errs.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
@@ -1037,7 +1037,7 @@ func onAPIPostBanMessage(env Env) gin.HandlerFunc {
 		}
 
 		curUserProfile := currentUserProfile(ctx)
-		if bannedPerson.AppealState != model.Open && curUserProfile.PermissionLevel < model.PModerator {
+		if bannedPerson.AppealState != domain.Open && curUserProfile.PermissionLevel < domain.PModerator {
 			responseErr(ctx, http.StatusForbidden, errPermissionDenied)
 			log.Warn("User tried to bypass posting restriction",
 				zap.Int64("ban_id", bannedPerson.BanID), zap.Int64("target_id", bannedPerson.TargetID.Int64()))
@@ -1045,7 +1045,7 @@ func onAPIPostBanMessage(env Env) gin.HandlerFunc {
 			return
 		}
 
-		msg := model.NewBanAppealMessage(banID, curUserProfile.SteamID, req.Message)
+		msg := domain.NewBanAppealMessage(banID, curUserProfile.SteamID, req.Message)
 		if errSave := env.Store().SaveBanMessage(ctx, &msg); errSave != nil {
 			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to save ban appeal message", zap.Error(errSave))
@@ -1061,14 +1061,14 @@ func onAPIPostBanMessage(env Env) gin.HandlerFunc {
 
 		conf := env.Config()
 
-		var target model.Person
+		var target domain.Person
 		if errTarget := env.Store().GetPersonBySteamID(ctx, bannedPerson.TargetID, &target); errTarget != nil {
 			env.Log().Error("Failed to load target", zap.Error(errTarget))
 
 			return
 		}
 
-		var source model.Person
+		var source domain.Person
 		if errSource := env.Store().GetPersonBySteamID(ctx, bannedPerson.SourceID, &source); errSource != nil {
 			env.Log().Error("Failed to load source", zap.Error(errSource))
 
@@ -1095,7 +1095,7 @@ func onAPIEditBanMessage(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var existing model.BanAppealMessage
+		var existing domain.BanAppealMessage
 		if errExist := env.Store().GetBanMessageByID(ctx, reportMessageID, &existing); errExist != nil {
 			if errors.Is(errExist, errs.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
@@ -1110,7 +1110,7 @@ func onAPIEditBanMessage(env Env) gin.HandlerFunc {
 
 		curUser := currentUserProfile(ctx)
 
-		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorID}, model.PModerator) {
+		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorID}, domain.PModerator) {
 			return
 		}
 
@@ -1158,7 +1158,7 @@ func onAPIDeleteBanMessage(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var existing model.BanAppealMessage
+		var existing domain.BanAppealMessage
 		if errExist := env.Store().GetBanMessageByID(ctx, banMessageID, &existing); errExist != nil {
 			if errors.Is(errExist, errs.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
@@ -1172,7 +1172,7 @@ func onAPIDeleteBanMessage(env Env) gin.HandlerFunc {
 		}
 
 		curUser := currentUserProfile(ctx)
-		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorID}, model.PModerator) {
+		if !checkPrivilege(ctx, curUser, steamid.Collection{existing.AuthorID}, domain.PModerator) {
 			return
 		}
 
@@ -1224,7 +1224,7 @@ func onAPIGetMatch(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var match model.MatchResult
+		var match domain.MatchResult
 
 		errMatch := env.Store().MatchGetByID(ctx, matchID, &match)
 
@@ -1248,14 +1248,14 @@ func onAPIGetMatches(env Env) gin.HandlerFunc {
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var req model.MatchesQueryOpts
+		var req domain.MatchesQueryOpts
 		if !bind(ctx, log, &req) {
 			return
 		}
 
 		// Don't let normal users query anybody but themselves
 		user := currentUserProfile(ctx)
-		if user.PermissionLevel <= model.PUser {
+		if user.PermissionLevel <= domain.PUser {
 			if !req.SteamID.Valid() {
 				responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
@@ -1285,7 +1285,7 @@ func onAPIQueryMessages(env Env) gin.HandlerFunc {
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var req model.ChatHistoryQueryFilter
+		var req domain.ChatHistoryQueryFilter
 		if !bind(ctx, log, &req) {
 			return
 		}
@@ -1296,7 +1296,7 @@ func onAPIQueryMessages(env Env) gin.HandlerFunc {
 
 		user := currentUserProfile(ctx)
 
-		if user.PermissionLevel <= model.PUser {
+		if user.PermissionLevel <= domain.PUser {
 			req.Unrestricted = false
 			beforeLimit := time.Now().Add(-time.Minute * 20)
 
@@ -1327,14 +1327,14 @@ func onAPIQueryMessages(env Env) gin.HandlerFunc {
 func onAPIGetStatsWeaponsOverall(ctx context.Context, env Env) gin.HandlerFunc {
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
-	updater := NewDataUpdater(log, time.Minute*10, func() ([]model.WeaponsOverallResult, error) {
+	updater := NewDataUpdater(log, time.Minute*10, func() ([]domain.WeaponsOverallResult, error) {
 		weaponStats, errUpdate := env.Store().WeaponsOverall(ctx)
 		if errUpdate != nil && !errors.Is(errUpdate, errs.ErrNoResult) {
 			return nil, errors.Join(errUpdate, ErrDataUpdate)
 		}
 
 		if weaponStats == nil {
-			weaponStats = []model.WeaponsOverallResult{}
+			weaponStats = []domain.WeaponsOverallResult{}
 		}
 
 		return weaponStats, nil
@@ -1354,7 +1354,7 @@ func onAPIGetsStatsWeapon(env Env) gin.HandlerFunc {
 
 	type resp struct {
 		LazyResult
-		Weapon model.Weapon `json:"weapon"`
+		Weapon domain.Weapon `json:"weapon"`
 	}
 
 	return func(ctx *gin.Context) {
@@ -1365,7 +1365,7 @@ func onAPIGetsStatsWeapon(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var weapon model.Weapon
+		var weapon domain.Weapon
 
 		errWeapon := env.Store().GetWeaponByID(ctx, weaponID, &weapon)
 
@@ -1385,7 +1385,7 @@ func onAPIGetsStatsWeapon(env Env) gin.HandlerFunc {
 		}
 
 		if weaponStats == nil {
-			weaponStats = []model.PlayerWeaponResult{}
+			weaponStats = []domain.PlayerWeaponResult{}
 		}
 
 		ctx.JSON(http.StatusOK, resp{LazyResult: newLazyResult(int64(len(weaponStats)), weaponStats), Weapon: weapon})
@@ -1395,7 +1395,7 @@ func onAPIGetsStatsWeapon(env Env) gin.HandlerFunc {
 func onAPIGetStatsPlayersOverall(ctx context.Context, env Env) gin.HandlerFunc {
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
-	updater := NewDataUpdater(log, time.Minute*10, func() ([]model.PlayerWeaponResult, error) {
+	updater := NewDataUpdater(log, time.Minute*10, func() ([]domain.PlayerWeaponResult, error) {
 		updatedStats, errChat := env.Store().PlayersOverallByKills(ctx, 1000)
 		if errChat != nil && !errors.Is(errChat, errs.ErrNoResult) {
 			return nil, errors.Join(errChat, ErrDataUpdate)
@@ -1415,7 +1415,7 @@ func onAPIGetStatsPlayersOverall(ctx context.Context, env Env) gin.HandlerFunc {
 func onAPIGetStatsHealersOverall(ctx context.Context, env Env) gin.HandlerFunc {
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
-	updater := NewDataUpdater(log, time.Minute*10, func() ([]model.HealingOverallResult, error) {
+	updater := NewDataUpdater(log, time.Minute*10, func() ([]domain.HealingOverallResult, error) {
 		updatedStats, errChat := env.Store().HealersOverallByHealing(ctx, 250)
 		if errChat != nil && !errors.Is(errChat, errs.ErrNoResult) {
 			return nil, errors.Join(errChat, ErrDataUpdate)
@@ -1453,7 +1453,7 @@ func onAPIGetPlayerWeaponStatsOverall(env Env) gin.HandlerFunc {
 		}
 
 		if weaponStats == nil {
-			weaponStats = []model.WeaponsOverallResult{}
+			weaponStats = []domain.WeaponsOverallResult{}
 		}
 
 		ctx.JSON(http.StatusOK, newLazyResult(int64(len(weaponStats)), weaponStats))
@@ -1481,7 +1481,7 @@ func onAPIGetPlayerClassStatsOverall(env Env) gin.HandlerFunc {
 		}
 
 		if classStats == nil {
-			classStats = []model.PlayerClassOverallResult{}
+			classStats = []domain.PlayerClassOverallResult{}
 		}
 
 		ctx.JSON(http.StatusOK, newLazyResult(int64(len(classStats)), classStats))
@@ -1499,7 +1499,7 @@ func onAPIGetPlayerStatsOverall(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var por model.PlayerOverallResult
+		var por domain.PlayerOverallResult
 		if errChat := env.Store().PlayerOverallStats(ctx, steamID, &por); errChat != nil && !errors.Is(errChat, errs.ErrNoResult) {
 			log.Error("Failed to query player stats overall",
 				zap.Error(errChat))
@@ -1533,7 +1533,7 @@ func onAPISaveContestEntryMedia(env Env) gin.HandlerFunc {
 			return
 		}
 
-		media, errMedia := model.NewMedia(currentUserProfile(ctx).SteamID, req.Name, req.Mime, content)
+		media, errMedia := domain.NewMedia(currentUserProfile(ctx).SteamID, req.Name, req.Mime, content)
 		if errMedia != nil {
 			ctx.JSON(http.StatusBadRequest, errBadRequest)
 			log.Error("Invalid media uploaded", zap.Error(errMedia))
@@ -1541,7 +1541,7 @@ func onAPISaveContestEntryMedia(env Env) gin.HandlerFunc {
 
 		conf := env.Config()
 
-		asset, errAsset := model.NewAsset(content, conf.S3.BucketMedia, "")
+		asset, errAsset := domain.NewAsset(content, conf.S3.BucketMedia, "")
 		if errAsset != nil {
 			responseErr(ctx, http.StatusInternalServerError, errAssetCreateFailed)
 
@@ -1668,7 +1668,7 @@ func onAPISaveContestEntrySubmit(env Env) gin.HandlerFunc {
 		}
 
 		if contest.MediaTypes != "" {
-			var media model.Media
+			var media domain.Media
 			if errMedia := env.Store().GetMediaByAssetID(ctx, req.AssetID, &media); errMedia != nil {
 				responseErr(ctx, http.StatusFailedDependency, errFetchMedia)
 
@@ -1737,7 +1737,7 @@ func onAPIDeleteContestEntry(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var entry model.ContestEntry
+		var entry domain.ContestEntry
 
 		if errContest := env.Store().ContestEntry(ctx, contestEntryID, &entry); errContest != nil {
 			if errors.Is(errContest, errs.ErrNoResult) {
@@ -1754,13 +1754,13 @@ func onAPIDeleteContestEntry(env Env) gin.HandlerFunc {
 		}
 
 		// Only >=moderators or the entry author are allowed to delete entries.
-		if !(user.PermissionLevel >= model.PModerator || user.SteamID == entry.SteamID) {
+		if !(user.PermissionLevel >= domain.PModerator || user.SteamID == entry.SteamID) {
 			responseErr(ctx, http.StatusForbidden, errPermissionDenied)
 
 			return
 		}
 
-		var contest model.Contest
+		var contest domain.Contest
 
 		if errContest := env.Store().ContestByID(ctx, entry.ContestID, &contest); errContest != nil {
 			if errors.Is(errContest, errs.ErrNoResult) {
@@ -1813,8 +1813,8 @@ func onAPIThreadCreate(env Env) gin.HandlerFunc {
 	}
 
 	type ThreadWithMessage struct {
-		model.ForumThread
-		Message model.ForumMessage `json:"message"`
+		domain.ForumThread
+		Message domain.ForumMessage `json:"message"`
 	}
 
 	return func(ctx *gin.Context) {
@@ -1846,7 +1846,7 @@ func onAPIThreadCreate(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var forum model.Forum
+		var forum domain.Forum
 		if errForum := env.Store().Forum(ctx, forumID, &forum); errForum != nil {
 			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
@@ -1930,7 +1930,7 @@ func onAPIThreadUpdate(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var thread model.ForumThread
+		var thread domain.ForumThread
 		if errGet := env.Store().ForumThread(ctx, forumThreadID, &thread); errGet != nil {
 			if errors.Is(errGet, errs.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
@@ -1941,7 +1941,7 @@ func onAPIThreadUpdate(env Env) gin.HandlerFunc {
 			return
 		}
 
-		if thread.SourceID != currentUser.SteamID && !(currentUser.PermissionLevel >= model.PModerator) {
+		if thread.SourceID != currentUser.SteamID && !(currentUser.PermissionLevel >= domain.PModerator) {
 			responseErr(ctx, http.StatusForbidden, errInternal)
 
 			return
@@ -1974,7 +1974,7 @@ func onAPIThreadDelete(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var thread model.ForumThread
+		var thread domain.ForumThread
 		if errGet := env.Store().ForumThread(ctx, forumThreadID, &thread); errGet != nil {
 			if errors.Is(errGet, errs.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
@@ -1992,7 +1992,7 @@ func onAPIThreadDelete(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var forum model.Forum
+		var forum domain.Forum
 		if errForum := env.Store().Forum(ctx, thread.ForumID, &forum); errForum != nil {
 			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to load forum", zap.Error(errForum))
@@ -2037,14 +2037,14 @@ func onAPIThreadMessageUpdate(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var message model.ForumMessage
+		var message domain.ForumMessage
 		if errMessage := env.Store().ForumMessage(ctx, forumMessageID, &message); errMessage != nil {
 			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
 
-		if message.SourceID != currentUser.SteamID && !(currentUser.PermissionLevel >= model.PModerator) {
+		if message.SourceID != currentUser.SteamID && !(currentUser.PermissionLevel >= domain.PModerator) {
 			responseErr(ctx, http.StatusForbidden, errInternal)
 
 			return
@@ -2081,7 +2081,7 @@ func onAPIMessageDelete(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var message model.ForumMessage
+		var message domain.ForumMessage
 		if err := env.Store().ForumMessage(ctx, forumMessageID, &message); err != nil {
 			if errors.Is(err, errs.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
@@ -2092,7 +2092,7 @@ func onAPIMessageDelete(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var thread model.ForumThread
+		var thread domain.ForumThread
 		if err := env.Store().ForumThread(ctx, message.ForumThreadID, &thread); err != nil {
 			if errors.Is(err, errs.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
@@ -2109,7 +2109,7 @@ func onAPIMessageDelete(env Env) gin.HandlerFunc {
 			return
 		}
 
-		messages, count, errMessage := env.Store().ForumMessages(ctx, model.ThreadMessagesQueryFilter{ForumThreadID: message.ForumThreadID})
+		messages, count, errMessage := env.Store().ForumMessages(ctx, domain.ThreadMessagesQueryFilter{ForumThreadID: message.ForumThreadID})
 		if errMessage != nil || count <= 0 {
 			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
@@ -2127,7 +2127,7 @@ func onAPIMessageDelete(env Env) gin.HandlerFunc {
 			}
 
 			// Delete the thread if it's the first message
-			var forum model.Forum
+			var forum domain.Forum
 			if errForum := env.Store().Forum(ctx, thread.ForumID, &forum); errForum != nil {
 				responseErr(ctx, http.StatusInternalServerError, errInternal)
 				log.Error("Failed to load forum", zap.Error(errForum))
@@ -2179,14 +2179,14 @@ func onAPIThreadCreateReply(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var thread model.ForumThread
+		var thread domain.ForumThread
 		if errThread := env.Store().ForumThread(ctx, forumThreadID, &thread); errThread != nil {
 			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
 
-		if thread.Locked && currentUser.PermissionLevel < model.PEditor {
+		if thread.Locked && currentUser.PermissionLevel < domain.PEditor {
 			responseErr(ctx, http.StatusForbidden, errThreadLocked)
 
 			return
@@ -2212,7 +2212,7 @@ func onAPIThreadCreateReply(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var message model.ForumMessage
+		var message domain.ForumMessage
 		if errFetch := env.Store().ForumMessage(ctx, newMessage.ForumMessageID, &message); errFetch != nil {
 			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
@@ -2240,7 +2240,7 @@ func onAPIGetPersonSettings(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		user := currentUserProfile(ctx)
 
-		var settings model.PersonSettings
+		var settings domain.PersonSettings
 
 		if err := env.Store().GetPersonSettings(ctx, user.SteamID, &settings); err != nil {
 			responseErr(ctx, http.StatusInternalServerError, errInternal)
@@ -2271,7 +2271,7 @@ func onAPIPostPersonSettings(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var settings model.PersonSettings
+		var settings domain.PersonSettings
 
 		if err := env.Store().GetPersonSettings(ctx, user.SteamID, &settings); err != nil {
 			responseErr(ctx, http.StatusInternalServerError, errInternal)

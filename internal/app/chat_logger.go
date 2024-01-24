@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -64,8 +64,8 @@ func (c *chatLogger) start(ctx context.Context) {
 					continue
 				}
 
-				var author model.Person
-				if errPerson := c.database.GetPersonBySteamID(ctx, newServerEvent.SID, &author); errPerson != nil {
+				var author domain.Person
+				if errPerson := c.database.GetOrCreatePersonBySteamID(ctx, newServerEvent.SID, &author); errPerson != nil {
 					c.log.Error("Failed to add chat history, could not get author", zap.Error(errPerson))
 
 					continue
@@ -73,7 +73,7 @@ func (c *chatLogger) start(ctx context.Context) {
 
 				matchID, _ := c.matchUUIDMap.Get(evt.ServerID)
 
-				msg := model.PersonMessage{
+				msg := domain.PersonMessage{
 					SteamID:     newServerEvent.SID,
 					PersonaName: strings.ToValidUTF8(newServerEvent.Name, "_"),
 					ServerName:  evt.ServerName,
@@ -90,7 +90,7 @@ func (c *chatLogger) start(ctx context.Context) {
 					continue
 				}
 
-				go func(userMsg model.PersonMessage) {
+				go func(userMsg domain.PersonMessage) {
 					if msg.ServerName == "localhost-1" {
 						c.log.Debug("Chat message",
 							zap.Int64("id", msg.PersonMessageID),
@@ -107,10 +107,10 @@ func (c *chatLogger) start(ctx context.Context) {
 							c.log.Error("Failed to save message findMatch status", zap.Error(errSaveMatch))
 						}
 
-						c.warningTracker.WarningChan <- model.NewUserWarning{
+						c.warningTracker.WarningChan <- domain.NewUserWarning{
 							UserMessage: userMsg,
-							UserWarning: model.UserWarning{
-								WarnReason:    model.Language,
+							UserWarning: domain.UserWarning{
+								WarnReason:    domain.Language,
 								Message:       userMsg.Body,
 								Matched:       matchedWord,
 								MatchedFilter: matchedFilter,

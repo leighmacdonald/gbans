@@ -13,8 +13,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/discord"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/gbans/pkg/wiki"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -75,7 +75,7 @@ func onAPIPostNewsCreate(env Env) gin.HandlerFunc {
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var req model.NewsEntry
+		var req domain.NewsEntry
 		if !bind(ctx, log, &req) {
 			return
 		}
@@ -105,7 +105,7 @@ func onAPIPostNewsUpdate(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var entry model.NewsEntry
+		var entry domain.NewsEntry
 		if errGet := env.Store().GetNewsByID(ctx, newsID, &entry); errGet != nil {
 			if errors.Is(errs.DBErr(errGet), errs.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
@@ -152,7 +152,7 @@ func onAPIQueryWordFilters(env Env) gin.HandlerFunc {
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var opts model.FiltersQueryFilter
+		var opts domain.FiltersQueryFilter
 		if !bind(ctx, log, &opts) {
 			return
 		}
@@ -172,7 +172,7 @@ func onAPIPostWordFilter(env Env) gin.HandlerFunc {
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var req model.Filter
+		var req domain.Filter
 		if !bind(ctx, log, &req) {
 			return
 		}
@@ -208,7 +208,7 @@ func onAPIPostWordFilter(env Env) gin.HandlerFunc {
 		now := time.Now()
 
 		if req.FilterID > 0 {
-			var existingFilter model.Filter
+			var existingFilter domain.Filter
 			if errGet := env.Store().GetFilterByID(ctx, req.FilterID, &existingFilter); errGet != nil {
 				if errors.Is(errGet, errs.ErrNoResult) {
 					responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
@@ -238,7 +238,7 @@ func onAPIPostWordFilter(env Env) gin.HandlerFunc {
 			req = existingFilter
 		} else {
 			profile := currentUserProfile(ctx)
-			newFilter := model.Filter{
+			newFilter := domain.Filter{
 				AuthorID:  profile.SteamID,
 				Pattern:   req.Pattern,
 				Action:    req.Action,
@@ -272,7 +272,7 @@ func onAPIDeleteWordFilter(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var filter model.Filter
+		var filter domain.Filter
 		if errGet := env.Store().GetFilterByID(ctx, wordID, &filter); errGet != nil {
 			if errors.Is(errGet, errs.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
@@ -308,14 +308,14 @@ func onAPIPostWordMatch(env Env) gin.HandlerFunc {
 			return
 		}
 
-		words, _, errGetFilters := env.Store().GetFilters(ctx, model.FiltersQueryFilter{})
+		words, _, errGetFilters := env.Store().GetFilters(ctx, domain.FiltersQueryFilter{})
 		if errGetFilters != nil {
 			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
 
-		var matches []model.Filter
+		var matches []domain.Filter
 
 		for _, filter := range words {
 			if filter.Match(req.Query) {
@@ -329,7 +329,7 @@ func onAPIPostWordMatch(env Env) gin.HandlerFunc {
 
 func onAPIExportBansValveIP(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		bans, _, errBans := env.Store().GetBansNet(ctx, model.CIDRBansQueryFilter{})
+		bans, _, errBans := env.Store().GetBansNet(ctx, domain.CIDRBansQueryFilter{})
 		if errBans != nil {
 			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
@@ -355,7 +355,7 @@ func onAPISearchPlayers(env Env) gin.HandlerFunc {
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var query model.PlayerQuery
+		var query domain.PlayerQuery
 		if !bind(ctx, log, &query) {
 			return
 		}
@@ -380,7 +380,7 @@ func onAPIPostBanState(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var report model.Report
+		var report domain.Report
 		if errReport := env.Store().GetReport(ctx, reportID, &report); errReport != nil {
 			if errors.Is(errReport, errs.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
@@ -405,7 +405,7 @@ func onAPIQueryPersonConnections(env Env) gin.HandlerFunc {
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var req model.ConnectionHistoryQueryFilter
+		var req domain.ConnectionHistoryQueryFilter
 		if !bind(ctx, log, &req) {
 			return
 		}
@@ -442,7 +442,7 @@ func onAPIQueryMessageContext(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var msg model.QueryChatHistoryResult
+		var msg domain.QueryChatHistoryResult
 		if errMsg := env.Store().GetPersonMessage(ctx, messageID, &msg); errMsg != nil {
 			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
@@ -464,7 +464,7 @@ func onAPIGetAppeals(env Env) gin.HandlerFunc {
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var req model.AppealQueryFilter
+		var req domain.AppealQueryFilter
 		if !bind(ctx, log, &req) {
 			return
 		}
@@ -485,7 +485,7 @@ func onAPIGetBansSteam(env Env) gin.HandlerFunc {
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var req model.SteamBansQueryFilter
+		var req domain.SteamBansQueryFilter
 		if !bind(ctx, log, &req) {
 			return
 		}
@@ -518,7 +518,7 @@ func onAPIPostBanDelete(env Env) gin.HandlerFunc {
 			return
 		}
 
-		bannedPerson := model.NewBannedPerson()
+		bannedPerson := domain.NewBannedPerson()
 		if banErr := env.Store().GetBanByBanID(ctx, banID, &bannedPerson, false); banErr != nil {
 			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
@@ -546,13 +546,13 @@ func onAPIPostBanUpdate(env Env) gin.HandlerFunc {
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	type updateBanRequest struct {
-		TargetID       model.StringSID `json:"target_id"`
-		BanType        model.BanType   `json:"ban_type"`
-		Reason         model.Reason    `json:"reason"`
-		ReasonText     string          `json:"reason_text"`
-		Note           string          `json:"note"`
-		IncludeFriends bool            `json:"include_friends"`
-		ValidUntil     time.Time       `json:"valid_until"`
+		TargetID       domain.StringSID `json:"target_id"`
+		BanType        domain.BanType   `json:"ban_type"`
+		Reason         domain.Reason    `json:"reason"`
+		ReasonText     string           `json:"reason_text"`
+		Note           string           `json:"note"`
+		IncludeFriends bool             `json:"include_friends"`
+		ValidUntil     time.Time        `json:"valid_until"`
 	}
 
 	return func(ctx *gin.Context) {
@@ -574,14 +574,14 @@ func onAPIPostBanUpdate(env Env) gin.HandlerFunc {
 			return
 		}
 
-		bannedPerson := model.NewBannedPerson()
+		bannedPerson := domain.NewBannedPerson()
 		if banErr := env.Store().GetBanByBanID(ctx, banID, &bannedPerson, false); banErr != nil {
 			responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 
 			return
 		}
 
-		if req.Reason == model.Custom {
+		if req.Reason == domain.Custom {
 			if req.ReasonText == "" {
 				responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
@@ -612,7 +612,7 @@ func onAPIPostBanUpdate(env Env) gin.HandlerFunc {
 
 func onAPIPostSetBanAppealStatus(env Env) gin.HandlerFunc {
 	type setStatusReq struct {
-		AppealState model.AppealState `json:"appeal_state"`
+		AppealState domain.AppealState `json:"appeal_state"`
 	}
 
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
@@ -630,7 +630,7 @@ func onAPIPostSetBanAppealStatus(env Env) gin.HandlerFunc {
 			return
 		}
 
-		bannedPerson := model.NewBannedPerson()
+		bannedPerson := domain.NewBannedPerson()
 		if banErr := env.Store().GetBanByBanID(ctx, banID, &bannedPerson, false); banErr != nil {
 			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
@@ -663,13 +663,13 @@ func onAPIPostSetBanAppealStatus(env Env) gin.HandlerFunc {
 
 func onAPIPostBansCIDRCreate(env Env) gin.HandlerFunc {
 	type apiBanRequest struct {
-		TargetID   model.StringSID `json:"target_id"`
-		Duration   string          `json:"duration"`
-		Note       string          `json:"note"`
-		Reason     model.Reason    `json:"reason"`
-		ReasonText string          `json:"reason_text"`
-		CIDR       string          `json:"cidr"`
-		ValidUntil time.Time       `json:"valid_until"`
+		TargetID   domain.StringSID `json:"target_id"`
+		Duration   string           `json:"duration"`
+		Note       string           `json:"note"`
+		Reason     domain.Reason    `json:"reason"`
+		ReasonText string           `json:"reason_text"`
+		CIDR       string           `json:"cidr"`
+		ValidUntil time.Time        `json:"valid_until"`
 	}
 
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
@@ -681,7 +681,7 @@ func onAPIPostBansCIDRCreate(env Env) gin.HandlerFunc {
 		}
 
 		var (
-			banCIDR model.BanCIDR
+			banCIDR domain.BanCIDR
 			sid     = currentUserProfile(ctx).SteamID
 		)
 
@@ -692,16 +692,16 @@ func onAPIPostBansCIDRCreate(env Env) gin.HandlerFunc {
 			return
 		}
 
-		if errBanCIDR := model.NewBanCIDR(ctx,
-			model.StringSID(sid.String()),
+		if errBanCIDR := domain.NewBanCIDR(ctx,
+			domain.StringSID(sid.String()),
 			req.TargetID,
 			duration,
 			req.Reason,
 			req.ReasonText,
 			req.Note,
-			model.Web,
+			domain.Web,
 			req.CIDR,
-			model.Banned,
+			domain.Banned,
 			&banCIDR,
 		); errBanCIDR != nil {
 			responseErr(ctx, http.StatusBadRequest, errBadRequest)
@@ -730,7 +730,7 @@ func onAPIGetBansCIDR(env Env) gin.HandlerFunc {
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var req model.CIDRBansQueryFilter
+		var req domain.CIDRBansQueryFilter
 		if !bind(ctx, log, &req) {
 			return
 		}
@@ -763,7 +763,7 @@ func onAPIDeleteBansCIDR(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var banCidr model.BanCIDR
+		var banCidr domain.BanCIDR
 		if errFetch := env.Store().GetBanNetByID(ctx, netID, &banCidr); errFetch != nil {
 			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
@@ -788,12 +788,12 @@ func onAPIDeleteBansCIDR(env Env) gin.HandlerFunc {
 
 func onAPIPostBansCIDRUpdate(env Env) gin.HandlerFunc {
 	type apiUpdateBanRequest struct {
-		TargetID   model.StringSID `json:"target_id"`
-		Note       string          `json:"note"`
-		Reason     model.Reason    `json:"reason"`
-		ReasonText string          `json:"reason_text"`
-		CIDR       string          `json:"cidr"`
-		ValidUntil time.Time       `json:"valid_until"`
+		TargetID   domain.StringSID `json:"target_id"`
+		Note       string           `json:"note"`
+		Reason     domain.Reason    `json:"reason"`
+		ReasonText string           `json:"reason_text"`
+		CIDR       string           `json:"cidr"`
+		ValidUntil time.Time        `json:"valid_until"`
 	}
 
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
@@ -806,7 +806,7 @@ func onAPIPostBansCIDRUpdate(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var ban model.BanCIDR
+		var ban domain.BanCIDR
 
 		if errBan := env.Store().GetBanNetByID(ctx, netID, &ban); errBan != nil {
 			if errors.Is(errBan, errs.ErrNoResult) {
@@ -830,7 +830,7 @@ func onAPIPostBansCIDRUpdate(env Env) gin.HandlerFunc {
 			return
 		}
 
-		if req.Reason == model.Custom && req.ReasonText == "" {
+		if req.Reason == domain.Custom && req.ReasonText == "" {
 			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
@@ -862,13 +862,13 @@ func onAPIPostBansCIDRUpdate(env Env) gin.HandlerFunc {
 
 func onAPIPostBansASNCreate(env Env) gin.HandlerFunc {
 	type apiBanRequest struct {
-		TargetID   model.StringSID `json:"target_id"`
-		Note       string          `json:"note"`
-		Reason     model.Reason    `json:"reason"`
-		ReasonText string          `json:"reason_text"`
-		ASNum      int64           `json:"as_num"`
-		Duration   string          `json:"duration"`
-		ValidUntil time.Time       `json:"valid_until"`
+		TargetID   domain.StringSID `json:"target_id"`
+		Note       string           `json:"note"`
+		Reason     domain.Reason    `json:"reason"`
+		ReasonText string           `json:"reason_text"`
+		ASNum      int64            `json:"as_num"`
+		Duration   string           `json:"duration"`
+		ValidUntil time.Time        `json:"valid_until"`
 	}
 
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
@@ -880,7 +880,7 @@ func onAPIPostBansASNCreate(env Env) gin.HandlerFunc {
 		}
 
 		var (
-			banASN model.BanASN
+			banASN domain.BanASN
 			sid    = currentUserProfile(ctx).SteamID
 		)
 
@@ -891,16 +891,16 @@ func onAPIPostBansASNCreate(env Env) gin.HandlerFunc {
 			return
 		}
 
-		if errBanSteamGroup := model.NewBanASN(ctx,
-			model.StringSID(sid.String()),
+		if errBanSteamGroup := domain.NewBanASN(ctx,
+			domain.StringSID(sid.String()),
 			req.TargetID,
 			duration,
 			req.Reason,
 			req.ReasonText,
 			req.Note,
-			model.Web,
+			domain.Web,
 			req.ASNum,
-			model.Banned,
+			domain.Banned,
 			&banASN,
 		); errBanSteamGroup != nil {
 			responseErr(ctx, http.StatusBadRequest, errBadRequest)
@@ -930,7 +930,7 @@ func onAPIGetBansASN(env Env) gin.HandlerFunc {
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var req model.ASNBansQueryFilter
+		var req domain.ASNBansQueryFilter
 		if !bind(ctx, log, &req) {
 			return
 		}
@@ -963,7 +963,7 @@ func onAPIDeleteBansASN(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var banAsn model.BanASN
+		var banAsn domain.BanASN
 		if errFetch := env.Store().GetBanASN(ctx, asnID, &banAsn); errFetch != nil {
 			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
@@ -988,11 +988,11 @@ func onAPIDeleteBansASN(env Env) gin.HandlerFunc {
 
 func onAPIPostBansASNUpdate(env Env) gin.HandlerFunc {
 	type apiBanRequest struct {
-		TargetID   model.StringSID `json:"target_id"`
-		Note       string          `json:"note"`
-		Reason     model.Reason    `json:"reason"`
-		ReasonText string          `json:"reason_text"`
-		ValidUntil time.Time       `json:"valid_until"`
+		TargetID   domain.StringSID `json:"target_id"`
+		Note       string           `json:"note"`
+		Reason     domain.Reason    `json:"reason"`
+		ReasonText string           `json:"reason_text"`
+		ValidUntil time.Time        `json:"valid_until"`
 	}
 
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
@@ -1005,7 +1005,7 @@ func onAPIPostBansASNUpdate(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var ban model.BanASN
+		var ban domain.BanASN
 		if errBan := env.Store().GetBanASN(ctx, asnID, &ban); errBan != nil {
 			if errors.Is(errBan, errs.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
@@ -1023,7 +1023,7 @@ func onAPIPostBansASNUpdate(env Env) gin.HandlerFunc {
 			return
 		}
 
-		if ban.Reason == model.Custom && req.ReasonText == "" {
+		if ban.Reason == domain.Custom && req.ReasonText == "" {
 			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
@@ -1054,11 +1054,11 @@ func onAPIPostBansASNUpdate(env Env) gin.HandlerFunc {
 
 func onAPIPostBansGroupCreate(env Env) gin.HandlerFunc {
 	type apiBanRequest struct {
-		TargetID   model.StringSID `json:"target_id"`
-		GroupID    steamid.GID     `json:"group_id"`
-		Duration   string          `json:"duration"`
-		Note       string          `json:"note"`
-		ValidUntil time.Time       `json:"valid_until"`
+		TargetID   domain.StringSID `json:"target_id"`
+		GroupID    steamid.GID      `json:"group_id"`
+		Duration   string           `json:"duration"`
+		Note       string           `json:"note"`
+		ValidUntil time.Time        `json:"valid_until"`
 	}
 
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
@@ -1069,7 +1069,7 @@ func onAPIPostBansGroupCreate(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var existing model.BanGroup
+		var existing domain.BanGroup
 		if errExist := env.Store().GetBanGroup(ctx, req.GroupID, &existing); errExist != nil {
 			if !errors.Is(errExist, errs.ErrNoResult) {
 				responseErr(ctx, http.StatusConflict, errs.ErrDuplicate)
@@ -1079,7 +1079,7 @@ func onAPIPostBansGroupCreate(env Env) gin.HandlerFunc {
 		}
 
 		var (
-			banSteamGroup model.BanGroup
+			banSteamGroup domain.BanGroup
 			sid           = currentUserProfile(ctx).SteamID
 		)
 
@@ -1090,15 +1090,15 @@ func onAPIPostBansGroupCreate(env Env) gin.HandlerFunc {
 			return
 		}
 
-		if errBanSteamGroup := model.NewBanSteamGroup(ctx,
-			model.StringSID(sid.String()),
+		if errBanSteamGroup := domain.NewBanSteamGroup(ctx,
+			domain.StringSID(sid.String()),
 			req.TargetID,
 			duration,
 			req.Note,
-			model.Web,
+			domain.Web,
 			req.GroupID,
 			"",
-			model.Banned,
+			domain.Banned,
 			&banSteamGroup,
 		); errBanSteamGroup != nil {
 			responseErr(ctx, http.StatusBadRequest, errBadRequest)
@@ -1127,7 +1127,7 @@ func onAPIGetBansGroup(env Env) gin.HandlerFunc {
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var req model.GroupBansQueryFilter
+		var req domain.GroupBansQueryFilter
 		if !bind(ctx, log, &req) {
 			return
 		}
@@ -1160,7 +1160,7 @@ func onAPIDeleteBansGroup(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var banGroup model.BanGroup
+		var banGroup domain.BanGroup
 		if errFetch := env.Store().GetBanGroupByID(ctx, groupID, &banGroup); errFetch != nil {
 			responseErr(ctx, http.StatusBadRequest, errInternal)
 
@@ -1185,9 +1185,9 @@ func onAPIDeleteBansGroup(env Env) gin.HandlerFunc {
 
 func onAPIPostBansGroupUpdate(env Env) gin.HandlerFunc {
 	type apiBanUpdateRequest struct {
-		TargetID   model.StringSID `json:"target_id"`
-		Note       string          `json:"note"`
-		ValidUntil time.Time       `json:"valid_until"`
+		TargetID   domain.StringSID `json:"target_id"`
+		Note       string           `json:"note"`
+		ValidUntil time.Time        `json:"valid_until"`
 	}
 
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
@@ -1212,7 +1212,7 @@ func onAPIPostBansGroupUpdate(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var ban model.BanGroup
+		var ban domain.BanGroup
 
 		if errExist := env.Store().GetBanGroupByID(ctx, banGroupID, &ban); errExist != nil {
 			if !errors.Is(errExist, errs.ErrNoResult) {
@@ -1275,7 +1275,7 @@ func onAPIPostContest(env Env) gin.HandlerFunc {
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		newContest, _ := model.NewContest("", "", time.Now(), time.Now(), false)
+		newContest, _ := domain.NewContest("", "", time.Now(), time.Now(), false)
 		if !bind(ctx, log, &newContest) {
 			return
 		}
@@ -1312,7 +1312,7 @@ func onAPIDeleteContest(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var contest model.Contest
+		var contest domain.Contest
 
 		if errContest := env.Store().ContestByID(ctx, contestID, &contest); errContest != nil {
 			if errors.Is(errContest, errs.ErrNoResult) {
@@ -1352,7 +1352,7 @@ func onAPIUpdateContest(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var contest model.Contest
+		var contest domain.Contest
 		if !bind(ctx, log, &contest) {
 			return
 		}
@@ -1388,11 +1388,11 @@ func onAPICreateForumCategory(env Env) gin.HandlerFunc {
 			return
 		}
 
-		category := model.ForumCategory{
+		category := domain.ForumCategory{
 			Title:       util.SanitizeUGC(req.Title),
 			Description: util.SanitizeUGC(req.Description),
 			Ordering:    req.Ordering,
-			TimeStamped: model.NewTimeStamped(),
+			TimeStamped: domain.NewTimeStamped(),
 		}
 
 		if errSave := env.Store().ForumCategorySave(ctx, &category); errSave != nil {
@@ -1420,7 +1420,7 @@ func onAPIForumCategory(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var category model.ForumCategory
+		var category domain.ForumCategory
 
 		if errGet := env.Store().ForumCategory(ctx, forumCategoryID, &category); errGet != nil {
 			responseErr(ctx, http.StatusInternalServerError, errInternal)
@@ -1445,7 +1445,7 @@ func onAPIUpdateForumCategory(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var category model.ForumCategory
+		var category domain.ForumCategory
 		if errGet := env.Store().ForumCategory(ctx, categoryID, &category); errGet != nil {
 			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
@@ -1476,8 +1476,8 @@ func onAPIUpdateForumCategory(env Env) gin.HandlerFunc {
 }
 
 type ForumForumRequest struct {
-	ForumCategoryID int             `json:"forum_category_id"`
-	PermissionLevel model.Privilege `json:"permission_level"`
+	ForumCategoryID int              `json:"forum_category_id"`
+	PermissionLevel domain.Privilege `json:"permission_level"`
 	ForumCategoryRequest
 }
 
@@ -1490,13 +1490,13 @@ func onAPICreateForumForum(env Env) gin.HandlerFunc {
 			return
 		}
 
-		forum := model.Forum{
+		forum := domain.Forum{
 			ForumCategoryID: req.ForumCategoryID,
 			Title:           util.SanitizeUGC(req.Title),
 			Description:     util.SanitizeUGC(req.Description),
 			Ordering:        req.Ordering,
 			PermissionLevel: req.PermissionLevel,
-			TimeStamped:     model.NewTimeStamped(),
+			TimeStamped:     domain.NewTimeStamped(),
 		}
 
 		if errSave := env.Store().ForumSave(ctx, &forum); errSave != nil {
@@ -1524,7 +1524,7 @@ func onAPIUpdateForumForum(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var forum model.Forum
+		var forum domain.Forum
 		if errGet := env.Store().Forum(ctx, forumID, &forum); errGet != nil {
 			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
@@ -1559,8 +1559,8 @@ func onAPIUpdateForumForum(env Env) gin.HandlerFunc {
 func onAPIGetWarningState(env Env) gin.HandlerFunc {
 	// log := app.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 	type warningState struct {
-		MaxWeight int                 `json:"max_weight"`
-		Current   []model.UserWarning `json:"current"`
+		MaxWeight int                  `json:"max_weight"`
+		Current   []domain.UserWarning `json:"current"`
 	}
 
 	return func(ctx *gin.Context) {

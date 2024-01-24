@@ -17,8 +17,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -91,7 +91,7 @@ func authServerMiddleWare(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var server model.Server
+		var server domain.Server
 		if errGetServer := env.Store().GetServer(ctx, claims.ServerID, &server); errGetServer != nil {
 			log.Error("Failed to load server during auth", zap.Error(errGetServer))
 			ctx.AbortWithStatus(http.StatusUnauthorized)
@@ -174,7 +174,7 @@ func onOpenIDCallback(env Env) gin.HandlerFunc {
 			return
 		}
 
-		person := model.NewPerson(sid)
+		person := domain.NewPerson(sid)
 		if person.Expired() {
 			if errGetProfile := thirdparty.UpdatePlayerSummary(ctx, &person); errGetProfile != nil {
 				log.Error("Failed to fetch user profile", zap.Error(errGetProfile))
@@ -286,7 +286,7 @@ func makeTokens(ctx *gin.Context, env Env, cookieKey string, sid steamid.SID64, 
 			return userTokens{}, errClientIP
 		}
 
-		personAuth := model.NewPersonAuth(sid, ipAddr, fingerprint)
+		personAuth := domain.NewPersonAuth(sid, ipAddr, fingerprint)
 		if saveErr := env.Store().SavePersonAuth(ctx, &personAuth); saveErr != nil {
 			return userTokens{}, errors.Join(saveErr, errSaveToken)
 		}
@@ -394,19 +394,19 @@ func tokenFromHeader(ctx *gin.Context, emptyOK bool) (string, error) {
 }
 
 // authMiddleware handles client authentication to the HTTP API.
-func authMiddleware(env Env, level model.Privilege) gin.HandlerFunc {
+func authMiddleware(env Env, level domain.Privilege) gin.HandlerFunc {
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		var token string
 
-		hdrToken, errToken := tokenFromHeader(ctx, level == model.PGuest)
+		hdrToken, errToken := tokenFromHeader(ctx, level == domain.PGuest)
 		if errToken != nil || hdrToken == "" {
-			ctx.Set(ctxKeyUserProfile, model.UserProfile{PermissionLevel: model.PGuest, Name: "Guest"})
+			ctx.Set(ctxKeyUserProfile, domain.UserProfile{PermissionLevel: domain.PGuest, Name: "Guest"})
 		} else {
 			token = hdrToken
 
-			if level >= model.PGuest {
+			if level >= domain.PGuest {
 				sid, errFromToken := sid64FromJWTToken(token, env.Config().HTTP.CookieKey)
 				if errFromToken != nil {
 					if errors.Is(errFromToken, errs.ErrExpired) {
@@ -421,7 +421,7 @@ func authMiddleware(env Env, level model.Privilege) gin.HandlerFunc {
 					return
 				}
 
-				loggedInPerson := model.NewPerson(sid)
+				loggedInPerson := domain.NewPerson(sid)
 				if errGetPerson := env.Store().GetOrCreatePersonBySteamID(ctx, sid, &loggedInPerson); errGetPerson != nil {
 					log.Error("Failed to load person during auth", zap.Error(errGetPerson))
 					ctx.AbortWithStatus(http.StatusForbidden)
@@ -435,14 +435,14 @@ func authMiddleware(env Env, level model.Privilege) gin.HandlerFunc {
 					return
 				}
 
-				bannedPerson := model.NewBannedPerson()
+				bannedPerson := domain.NewBannedPerson()
 				if errBan := env.Store().GetBanBySteamID(ctx, sid, &bannedPerson, false); errBan != nil {
 					if !errors.Is(errBan, errs.ErrNoResult) {
 						log.Error("Failed to fetch authed user ban", zap.Error(errBan))
 					}
 				}
 
-				profile := model.UserProfile{
+				profile := domain.UserProfile{
 					SteamID:         loggedInPerson.SteamID,
 					CreatedOn:       loggedInPerson.CreatedOn,
 					UpdatedOn:       loggedInPerson.UpdatedOn,
@@ -466,7 +466,7 @@ func authMiddleware(env Env, level model.Privilege) gin.HandlerFunc {
 					})
 				}
 			} else {
-				ctx.Set(ctxKeyUserProfile, model.UserProfile{PermissionLevel: model.PGuest, Name: "Guest"})
+				ctx.Set(ctxKeyUserProfile, domain.UserProfile{PermissionLevel: domain.PGuest, Name: "Guest"})
 			}
 		}
 

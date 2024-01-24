@@ -7,8 +7,8 @@ import (
 	"strconv"
 
 	"github.com/leighmacdonald/gbans/internal/discord"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
@@ -19,7 +19,7 @@ import (
 // instead of requiring users to link their steam account to discord itself. It also
 // means the discord does not require more privileged intents.
 func (app *App) SetSteam(ctx context.Context, sid64 steamid.SID64, discordID string) error {
-	newPerson := model.NewPerson(sid64)
+	newPerson := domain.NewPerson(sid64)
 	if errGetPerson := app.db.GetOrCreatePersonBySteamID(ctx, sid64, &newPerson); errGetPerson != nil || !sid64.Valid() {
 		return errs.ErrInvalidSID
 	}
@@ -39,7 +39,7 @@ func (app *App) SetSteam(ctx context.Context, sid64 steamid.SID64, discordID str
 }
 
 // FilterAdd creates a new chat filter using a regex pattern.
-func (app *App) FilterAdd(ctx context.Context, filter *model.Filter) error {
+func (app *App) FilterAdd(ctx context.Context, filter *domain.Filter) error {
 	if errSave := app.db.SaveFilter(ctx, filter); errSave != nil {
 		if errors.Is(errSave, errs.ErrDuplicate) {
 			return errs.ErrDuplicate
@@ -61,12 +61,12 @@ func (app *App) FilterAdd(ctx context.Context, filter *model.Filter) error {
 
 // BanSteam will ban the steam id from all servers. Players are immediately kicked from servers
 // once executed. If duration is 0, the value of Config.DefaultExpiration() will be used.
-func (app *App) BanSteam(ctx context.Context, banSteam *model.BanSteam) error {
+func (app *App) BanSteam(ctx context.Context, banSteam *domain.BanSteam) error {
 	if !banSteam.TargetID.Valid() {
 		return errors.Join(errs.ErrInvalidSID, errs.ErrTargetID)
 	}
 
-	existing := model.NewBannedPerson()
+	existing := domain.NewBannedPerson()
 
 	errGetExistingBan := app.db.GetBanBySteamID(ctx, banSteam.TargetID, &existing, false)
 
@@ -83,12 +83,12 @@ func (app *App) BanSteam(ctx context.Context, banSteam *model.BanSteam) error {
 	}
 
 	updateAppealState := func(reportId int64) error {
-		var report model.Report
+		var report domain.Report
 		if errReport := app.db.GetReport(ctx, reportId, &report); errReport != nil {
 			return errors.Join(errReport, errGetBanReport)
 		}
 
-		report.ReportStatus = model.ClosedWithAction
+		report.ReportStatus = domain.ClosedWithAction
 		if errSaveReport := app.db.SaveReport(ctx, &report); errSaveReport != nil {
 			return errors.Join(errSaveReport, errReportStateUpdate)
 		}
@@ -103,20 +103,20 @@ func (app *App) BanSteam(ctx context.Context, banSteam *model.BanSteam) error {
 		}
 	}
 
-	var target model.Person
+	var target domain.Person
 	if err := app.db.GetOrCreatePersonBySteamID(ctx, banSteam.TargetID, &target); err != nil {
 		return errors.Join(err, errFetchPerson)
 	}
 
 	// TODO mute player currently in-game w/o kicking
-	if banSteam.BanType == model.Banned {
+	if banSteam.BanType == domain.Banned {
 		if errKick := state.Kick(ctx, app.State(), banSteam.TargetID, banSteam.Reason); errKick != nil && !errors.Is(errKick, errs.ErrPlayerNotFound) {
 			app.log.Error("Failed to kick player", zap.Error(errKick),
 				zap.Int64("sid64", banSteam.TargetID.Int64()))
 		}
 
 		app.SendPayload(app.Config().Discord.LogChannelID, discord.KickPlayerEmbed(target))
-	} else if banSteam.BanType == model.NoComm {
+	} else if banSteam.BanType == domain.NoComm {
 		if errSilence := state.Silence(ctx, app.State(), banSteam.TargetID, banSteam.Reason); errSilence != nil && !errors.Is(errSilence, errs.ErrPlayerNotFound) {
 			app.log.Error("Failed to silence player", zap.Error(errSilence),
 				zap.Int64("sid64", banSteam.TargetID.Int64()))
@@ -128,8 +128,8 @@ func (app *App) BanSteam(ctx context.Context, banSteam *model.BanSteam) error {
 }
 
 // BanASN will ban all network ranges associated with the requested ASN.
-func (app *App) BanASN(ctx context.Context, banASN *model.BanASN) error {
-	var existing model.BanASN
+func (app *App) BanASN(ctx context.Context, banASN *domain.BanASN) error {
+	var existing domain.BanASN
 	if errGetExistingBan := app.db.GetBanASN(ctx, banASN.ASNum, &existing); errGetExistingBan != nil {
 		if !errors.Is(errGetExistingBan, errs.ErrNoResult) {
 			return errors.Join(errGetExistingBan, errFailedFetchBan)
@@ -147,7 +147,7 @@ func (app *App) BanASN(ctx context.Context, banASN *model.BanASN) error {
 // It accepts an optional steamid to associate a particular user with the network ban. Any active players
 // that fall within the range will be kicked immediately.
 // If duration is 0, the value of Config.DefaultExpiration() will be used.
-func (app *App) BanCIDR(ctx context.Context, banNet *model.BanCIDR) error {
+func (app *App) BanCIDR(ctx context.Context, banNet *domain.BanCIDR) error {
 	// TODO
 	// _, err2 := db.GetBanNetByAddress(ctx, net.ParseIP(cidrStr))
 	// if err2 != nil && err2 != db.ErrNoResult {
@@ -169,12 +169,12 @@ func (app *App) BanCIDR(ctx context.Context, banNet *model.BanCIDR) error {
 		return errors.Join(errSaveBanNet, errSaveBan)
 	}
 
-	var author model.Person
+	var author domain.Person
 	if err := app.Store().GetOrCreatePersonBySteamID(ctx, banNet.SourceID, &author); err != nil {
 		return errors.Join(err, errFetchSource)
 	}
 
-	var target model.Person
+	var target domain.Person
 	if err := app.Store().GetOrCreatePersonBySteamID(ctx, banNet.TargetID, &target); err != nil {
 		return errors.Join(err, errFetchTarget)
 	}
@@ -183,7 +183,7 @@ func (app *App) BanCIDR(ctx context.Context, banNet *model.BanCIDR) error {
 
 	app.SendPayload(conf.Discord.LogChannelID, discord.BanCIDRResponse(realCIDR, author, conf.ExtURL(author), target, banNet))
 
-	go func(_ *net.IPNet, reason model.Reason) {
+	go func(_ *net.IPNet, reason domain.Reason) {
 		foundPlayers := app.state.Find("", "", nil, realCIDR)
 
 		if len(foundPlayers) == 0 {
@@ -200,7 +200,7 @@ func (app *App) BanCIDR(ctx context.Context, banNet *model.BanCIDR) error {
 	return nil
 }
 
-func (app *App) BanSteamGroup(ctx context.Context, banGroup *model.BanGroup) error {
+func (app *App) BanSteamGroup(ctx context.Context, banGroup *domain.BanGroup) error {
 	members, membersErr := steamweb.GetGroupMembers(ctx, banGroup.GroupID)
 	if membersErr != nil || len(members) == 0 {
 		return errors.Join(membersErr, errGroupValidate)
@@ -219,7 +219,7 @@ func (app *App) BanSteamGroup(ctx context.Context, banGroup *model.BanGroup) err
 // Returns true, nil if the ban exists, and was successfully banned.
 // Returns false, nil if the ban does not exist.
 func (app *App) Unban(ctx context.Context, targetSID steamid.SID64, reason string) (bool, error) {
-	bannedPerson := model.NewBannedPerson()
+	bannedPerson := domain.NewBannedPerson()
 	errGetBan := app.db.GetBanBySteamID(ctx, targetSID, &bannedPerson, false)
 
 	if errGetBan != nil {
@@ -239,7 +239,7 @@ func (app *App) Unban(ctx context.Context, targetSID steamid.SID64, reason strin
 
 	conf := app.Config()
 
-	var person model.Person
+	var person domain.Person
 	if err := app.db.GetPersonBySteamID(ctx, targetSID, &person); err != nil {
 		return false, errors.Join(err, errFetchPerson)
 	}
@@ -258,7 +258,7 @@ func (app *App) UnbanASN(ctx context.Context, asnNum string) (bool, error) {
 		return false, errors.Join(errConv, errParseASN)
 	}
 
-	var banASN model.BanASN
+	var banASN domain.BanASN
 	if errGetBanASN := app.Store().GetBanASN(ctx, asNum, &banASN); errGetBanASN != nil {
 		return false, errors.Join(errGetBanASN, errFetchASNBan)
 	}

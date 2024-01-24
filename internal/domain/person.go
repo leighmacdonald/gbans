@@ -1,4 +1,4 @@
-package model
+package domain
 
 import (
 	"context"
@@ -15,6 +15,60 @@ import (
 
 type SteamMember interface {
 	IsMember(steamID steamid.SID64) (int64, bool)
+}
+
+type PersonUsecase interface {
+	DropPerson(ctx context.Context, steamID steamid.SID64) error
+	SavePerson(ctx context.Context, person *Person) error
+	GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collection) (People, error)
+	GetSteamsAtAddress(ctx context.Context, addr net.IP) (steamid.Collection, error)
+	GetPeople(ctx context.Context, filter PlayerQuery) (People, int64, error)
+	GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.SID64, person *Person) error
+	GetPersonByDiscordID(ctx context.Context, discordID string, person *Person) error
+	GetExpiredProfiles(ctx context.Context, limit uint64) ([]Person, error)
+	GetPersonMessageByID(ctx context.Context, personMessageID int64, msg *PersonMessage) error
+	QueryConnectionHistory(ctx context.Context, opts ConnectionHistoryQueryFilter) ([]PersonConnection, int64, error)
+	QueryChatHistory(ctx context.Context, filters ChatHistoryQueryFilter) ([]QueryChatHistoryResult, int64, error)
+	GetPersonMessage(ctx context.Context, messageID int64, msg *QueryChatHistoryResult) error
+	GetPersonMessageContext(ctx context.Context, serverID int, messageID int64, paddedMessageCount int) ([]QueryChatHistoryResult, error)
+	GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, limit uint64) (PersonConnections, error)
+	AddConnectionHistory(ctx context.Context, conn *PersonConnection) error
+	GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *PersonAuth) error
+	SavePersonAuth(ctx context.Context, auth *PersonAuth) error
+	DeletePersonAuth(ctx context.Context, authID int64) error
+	PrunePersonAuth(ctx context.Context) error
+	SendNotification(ctx context.Context, targetID steamid.SID64, severity NotificationSeverity, message string, link string) error
+	GetPersonNotifications(ctx context.Context, filters NotificationQuery) ([]UserNotification, int64, error)
+	GetSteamIdsAbove(ctx context.Context, privilege Privilege) (steamid.Collection, error)
+	GetPersonSettings(ctx context.Context, steamID steamid.SID64, settings *PersonSettings) error
+	SavePersonSettings(ctx context.Context, settings *PersonSettings) error
+}
+
+type PersonRepository interface {
+	DropPerson(ctx context.Context, steamID steamid.SID64) error
+	SavePerson(ctx context.Context, person *Person) error
+	GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collection) (People, error)
+	GetSteamsAtAddress(ctx context.Context, addr net.IP) (steamid.Collection, error)
+	GetPeople(ctx context.Context, filter PlayerQuery) (People, int64, error)
+	GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.SID64, person *Person) error
+	GetPersonByDiscordID(ctx context.Context, discordID string, person *Person) error
+	GetExpiredProfiles(ctx context.Context, limit uint64) ([]Person, error)
+	GetPersonMessageByID(ctx context.Context, personMessageID int64, msg *PersonMessage) error
+	QueryConnectionHistory(ctx context.Context, opts ConnectionHistoryQueryFilter) ([]PersonConnection, int64, error)
+	QueryChatHistory(ctx context.Context, filters ChatHistoryQueryFilter) ([]QueryChatHistoryResult, int64, error)
+	GetPersonMessage(ctx context.Context, messageID int64, msg *QueryChatHistoryResult) error
+	GetPersonMessageContext(ctx context.Context, serverID int, messageID int64, paddedMessageCount int) ([]QueryChatHistoryResult, error)
+	GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, limit uint64) (PersonConnections, error)
+	AddConnectionHistory(ctx context.Context, conn *PersonConnection) error
+	GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *PersonAuth) error
+	SavePersonAuth(ctx context.Context, auth *PersonAuth) error
+	DeletePersonAuth(ctx context.Context, authID int64) error
+	PrunePersonAuth(ctx context.Context) error
+	SendNotification(ctx context.Context, targetID steamid.SID64, severity NotificationSeverity, message string, link string) error
+	GetPersonNotifications(ctx context.Context, filters NotificationQuery) ([]UserNotification, int64, error)
+	GetSteamIdsAbove(ctx context.Context, privilege Privilege) (steamid.Collection, error)
+	GetPersonSettings(ctx context.Context, steamID steamid.SID64, settings *PersonSettings) error
+	SavePersonSettings(ctx context.Context, settings *PersonSettings) error
 }
 
 type PersonInfo interface {

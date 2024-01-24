@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 	"go.uber.org/zap"
@@ -21,9 +21,9 @@ var (
 )
 
 type GroupsStore interface {
-	GetBanGroups(ctx context.Context, filter model.GroupBansQueryFilter) ([]model.BannedGroupPerson, int64, error)
-	GetMembersList(ctx context.Context, parentID int64, list *model.MembersList) error
-	SaveMembersList(ctx context.Context, list *model.MembersList) error
+	GetBanGroups(ctx context.Context, filter domain.GroupBansQueryFilter) ([]domain.BannedGroupPerson, int64, error)
+	GetMembersList(ctx context.Context, parentID int64, list *domain.MembersList) error
+	SaveMembersList(ctx context.Context, list *domain.MembersList) error
 }
 
 type SteamGroupMemberships struct {
@@ -90,7 +90,7 @@ func (g *SteamGroupMemberships) updateGroupBanMembers(ctx context.Context) (map[
 	localCtx, cancel := context.WithTimeout(ctx, time.Second*120)
 	defer cancel()
 
-	groups, _, errGroups := g.store.GetBanGroups(ctx, model.GroupBansQueryFilter{})
+	groups, _, errGroups := g.store.GetBanGroups(ctx, domain.GroupBansQueryFilter{})
 	if errGroups != nil {
 		if errors.Is(errGroups, errs.ErrNoResult) {
 			return newMap, nil
@@ -109,7 +109,7 @@ func (g *SteamGroupMemberships) updateGroupBanMembers(ctx context.Context) (map[
 			continue
 		}
 
-		memberList := model.NewMembersList(group.GroupID.Int64(), members)
+		memberList := domain.NewMembersList(group.GroupID.Int64(), members)
 		if errQuery := g.store.GetMembersList(ctx, group.GroupID.Int64(), &memberList); errQuery != nil {
 			if !errors.Is(errQuery, errs.ErrNoResult) {
 				return nil, errors.Join(errQuery, errLoadGroupBanMembersList)

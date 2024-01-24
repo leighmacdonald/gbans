@@ -7,8 +7,8 @@ import (
 	"net"
 	"sync"
 
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
@@ -17,16 +17,16 @@ var ErrCommandFailed = errors.New("rcon command failed")
 type Executor interface {
 	ExecServer(ctx context.Context, serverID int, cmd string) (string, error)
 	ExecRaw(ctx context.Context, addr string, password string, cmd string) (string, error)
-	OnFindExec(ctx context.Context, name string, steamID steamid.SID64, ip net.IP, cidr *net.IPNet, onFoundCmd func(info model.PlayerServerInfo) string) error
+	OnFindExec(ctx context.Context, name string, steamID steamid.SID64, ip net.IP, cidr *net.IPNet, onFoundCmd func(info domain.PlayerServerInfo) string) error
 }
 
 // Kick will kick the steam id from whatever server it is connected to.
-func Kick(ctx context.Context, executor Executor, target steamid.SID64, reason model.Reason) error {
+func Kick(ctx context.Context, executor Executor, target steamid.SID64, reason domain.Reason) error {
 	if !target.Valid() {
 		return errs.ErrInvalidTargetSID
 	}
 
-	if errExec := executor.OnFindExec(ctx, "", target, nil, nil, func(info model.PlayerServerInfo) string {
+	if errExec := executor.OnFindExec(ctx, "", target, nil, nil, func(info domain.PlayerServerInfo) string {
 		return fmt.Sprintf("sm_kick #%d %s", info.Player.UserID, reason.String())
 	}); errExec != nil {
 		return errors.Join(errExec, ErrCommandFailed)
@@ -36,7 +36,7 @@ func Kick(ctx context.Context, executor Executor, target steamid.SID64, reason m
 }
 
 // Silence will gag & mute a player.
-func Silence(ctx context.Context, executor Executor, target steamid.SID64, reason model.Reason,
+func Silence(ctx context.Context, executor Executor, target steamid.SID64, reason domain.Reason,
 ) error {
 	if !target.Valid() {
 		return errs.ErrInvalidTargetSID
@@ -47,7 +47,7 @@ func Silence(ctx context.Context, executor Executor, target steamid.SID64, reaso
 		usersMu = &sync.RWMutex{}
 	)
 
-	if errExec := executor.OnFindExec(ctx, "", target, nil, nil, func(info model.PlayerServerInfo) string {
+	if errExec := executor.OnFindExec(ctx, "", target, nil, nil, func(info domain.PlayerServerInfo) string {
 		usersMu.Lock()
 		users = append(users, info.Player.Name)
 		usersMu.Unlock()
@@ -80,7 +80,7 @@ func PSay(ctx context.Context, executor Executor, target steamid.SID64, message 
 		return errs.ErrInvalidTargetSID
 	}
 
-	if errExec := executor.OnFindExec(ctx, "", target, nil, nil, func(info model.PlayerServerInfo) string {
+	if errExec := executor.OnFindExec(ctx, "", target, nil, nil, func(info domain.PlayerServerInfo) string {
 		return fmt.Sprintf(`sm_psay "#%s" "%s"`, steamid.SID64ToSID(target), message)
 	}); errExec != nil {
 		return errors.Join(errExec, fmt.Errorf("%w: sm_psay", ErrCommandFailed))

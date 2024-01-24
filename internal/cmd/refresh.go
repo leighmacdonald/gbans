@@ -7,8 +7,8 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/log"
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -68,7 +68,7 @@ func refreshFiltersCmd() *cobra.Command {
 				rootLogger.Fatal("Failed to load filters", zap.Error(errFilters))
 			}
 
-			var query model.ChatHistoryQueryFilter
+			var query domain.ChatHistoryQueryFilter
 			query.DontCalcTotal = true
 			query.OrderBy = "created_on"
 			query.Desc = false

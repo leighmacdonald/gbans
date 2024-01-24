@@ -6,12 +6,12 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
-func (s Stores) GetServer(ctx context.Context, serverID int, server *model.Server) error {
+func (s Stores) GetServer(ctx context.Context, serverID int, server *domain.Server) error {
 	row, rowErr := s.QueryRowBuilder(ctx, s.
 		Builder().
 		Select("server_id", "short_name", "name", "address", "port", "rcon", "password",
@@ -34,11 +34,11 @@ func (s Stores) GetServer(ctx context.Context, serverID int, server *model.Serve
 	return nil
 }
 
-func (s Stores) GetServerPermissions(ctx context.Context) ([]model.ServerPermission, error) {
+func (s Stores) GetServerPermissions(ctx context.Context) ([]domain.ServerPermission, error) {
 	rows, errRows := s.QueryBuilder(ctx, s.
 		Builder().
 		Select("steam_id", "permission_level").From("person").
-		Where(sq.GtOrEq{"permission_level": model.PReserved}).
+		Where(sq.GtOrEq{"permission_level": domain.PReserved}).
 		OrderBy("permission_level desc"))
 	if errRows != nil {
 		return nil, errs.DBErr(errRows)
@@ -46,12 +46,12 @@ func (s Stores) GetServerPermissions(ctx context.Context) ([]model.ServerPermiss
 
 	defer rows.Close()
 
-	var perms []model.ServerPermission
+	var perms []domain.ServerPermission
 
 	for rows.Next() {
 		var (
 			sid   int64
-			perm  model.Privilege
+			perm  domain.Privilege
 			flags string
 		)
 
@@ -60,17 +60,17 @@ func (s Stores) GetServerPermissions(ctx context.Context) ([]model.ServerPermiss
 		}
 
 		switch perm {
-		case model.PReserved:
+		case domain.PReserved:
 			flags = "a"
-		case model.PEditor:
+		case domain.PEditor:
 			flags = "aj"
-		case model.PModerator:
+		case domain.PModerator:
 			flags = "abcdegjk"
-		case model.PAdmin:
+		case domain.PAdmin:
 			flags = "z"
 		}
 
-		perms = append(perms, model.ServerPermission{
+		perms = append(perms, domain.ServerPermission{
 			SteamID:         steamid.SID64ToSID(steamid.New(sid)),
 			PermissionLevel: perm,
 			Flags:           flags,
@@ -80,7 +80,7 @@ func (s Stores) GetServerPermissions(ctx context.Context) ([]model.ServerPermiss
 	return perms, nil
 }
 
-func (s Stores) GetServers(ctx context.Context, filter model.ServerQueryFilter) ([]model.Server, int64, error) {
+func (s Stores) GetServers(ctx context.Context, filter domain.ServerQueryFilter) ([]domain.Server, int64, error) {
 	builder := s.
 		Builder().
 		Select("s.server_id", "s.short_name", "s.name", "s.address", "s.port", "s.rcon", "s.password",
@@ -110,15 +110,15 @@ func (s Stores) GetServers(ctx context.Context, filter model.ServerQueryFilter) 
 
 	rows, errQueryExec := s.QueryBuilder(ctx, builder)
 	if errQueryExec != nil {
-		return []model.Server{}, 0, errs.DBErr(errQueryExec)
+		return []domain.Server{}, 0, errs.DBErr(errQueryExec)
 	}
 
 	defer rows.Close()
 
-	var servers []model.Server
+	var servers []domain.Server
 
 	for rows.Next() {
-		var server model.Server
+		var server domain.Server
 		if errScan := rows.
 			Scan(&server.ServerID, &server.ShortName, &server.Name, &server.Address, &server.Port, &server.RCON,
 				&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn, &server.ReservedSlots,
@@ -146,7 +146,7 @@ func (s Stores) GetServers(ctx context.Context, filter model.ServerQueryFilter) 
 	return servers, count, nil
 }
 
-func (s Stores) GetServerByName(ctx context.Context, serverName string, server *model.Server, disabledOk bool, deletedOk bool) error {
+func (s Stores) GetServerByName(ctx context.Context, serverName string, server *domain.Server, disabledOk bool, deletedOk bool) error {
 	and := sq.And{sq.Eq{"short_name": serverName}}
 	if !disabledOk {
 		and = append(and, sq.Eq{"is_enabled": true})
@@ -179,7 +179,7 @@ func (s Stores) GetServerByName(ctx context.Context, serverName string, server *
 		&server.Deleted, &server.LogSecret, &server.EnableStats))
 }
 
-func (s Stores) GetServerByPassword(ctx context.Context, serverPassword string, server *model.Server, disabledOk bool, deletedOk bool) error {
+func (s Stores) GetServerByPassword(ctx context.Context, serverPassword string, server *domain.Server, disabledOk bool, deletedOk bool) error {
 	and := sq.And{sq.Eq{"password": serverPassword}}
 	if !disabledOk {
 		and = append(and, sq.Eq{"is_enabled": true})
@@ -207,7 +207,7 @@ func (s Stores) GetServerByPassword(ctx context.Context, serverPassword string, 
 }
 
 // SaveServer updates or creates the server data in the database.
-func (s Stores) SaveServer(ctx context.Context, server *model.Server) error {
+func (s Stores) SaveServer(ctx context.Context, server *domain.Server) error {
 	server.UpdatedOn = time.Now()
 	if server.ServerID > 0 {
 		return s.updateServer(ctx, server)
@@ -218,7 +218,7 @@ func (s Stores) SaveServer(ctx context.Context, server *model.Server) error {
 	return s.insertServer(ctx, server)
 }
 
-func (s Stores) insertServer(ctx context.Context, server *model.Server) error {
+func (s Stores) insertServer(ctx context.Context, server *domain.Server) error {
 	const query = `
 		INSERT INTO server (
 		    short_name, name, address, port, rcon, token_created_on, 
@@ -239,7 +239,7 @@ func (s Stores) insertServer(ctx context.Context, server *model.Server) error {
 	return nil
 }
 
-func (s Stores) updateServer(ctx context.Context, server *model.Server) error {
+func (s Stores) updateServer(ctx context.Context, server *domain.Server) error {
 	server.UpdatedOn = time.Now()
 
 	return errs.DBErr(s.ExecUpdateBuilder(ctx, s.

@@ -6,7 +6,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/discord"
-	"github.com/leighmacdonald/gbans/internal/model"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"go.uber.org/zap"
@@ -141,7 +141,7 @@ func onMatchComplete(env *App) OnCompleteFunc {
 			matchContext.Match.Title = server.Name
 		}
 
-		var fullServer model.Server
+		var fullServer domain.Server
 		if err := env.Store().GetServer(ctx, server.ServerID, &fullServer); err != nil {
 			return errors.Join(err, errLoadServer)
 		}
@@ -166,7 +166,7 @@ func onMatchComplete(env *App) OnCompleteFunc {
 			}
 		}
 
-		var result model.MatchResult
+		var result domain.MatchResult
 		if errResult := env.Store().MatchGetByID(ctx, matchContext.Match.MatchID, &result); errResult != nil {
 			return errors.Join(errResult, errLoadMatch)
 		}

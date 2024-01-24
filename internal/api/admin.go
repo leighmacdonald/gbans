@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/model"
 	"go.uber.org/zap"
 )
 
@@ -23,7 +23,7 @@ func onAPIPostServer(env Env) gin.HandlerFunc {
 			return
 		}
 
-		server := model.NewServer(req.ServerNameShort, req.Host, req.Port)
+		server := domain.NewServer(req.ServerNameShort, req.Host, req.Port)
 		server.Name = req.ServerName
 		server.ReservedSlots = req.ReservedSlots
 		server.RCON = req.RCON
@@ -76,7 +76,7 @@ func onAPIPostServerUpdate(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var server model.Server
+		var server domain.Server
 		if errServer := env.Store().GetServer(ctx, serverID, &server); errServer != nil {
 			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
@@ -128,7 +128,7 @@ func onAPIPostServerDelete(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var server model.Server
+		var server domain.Server
 		if errServer := env.Store().GetServer(ctx, serverID, &server); errServer != nil {
 			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
@@ -155,7 +155,7 @@ func onAPIGetServersAdmin(env Env) gin.HandlerFunc {
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		var filter model.ServerQueryFilter
+		var filter domain.ServerQueryFilter
 		if !bind(ctx, log, &filter) {
 			return
 		}
@@ -175,7 +175,7 @@ func onAPIPutPlayerPermission(env Env) gin.HandlerFunc {
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	type updatePermissionLevel struct {
-		PermissionLevel model.Privilege `json:"permission_level"`
+		PermissionLevel domain.Privilege `json:"permission_level"`
 	}
 
 	return func(ctx *gin.Context) {
@@ -191,7 +191,7 @@ func onAPIPutPlayerPermission(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var person model.Person
+		var person domain.Person
 		if errGet := env.Store().GetPersonBySteamID(ctx, steamID, &person); errGet != nil {
 			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
@@ -252,14 +252,14 @@ func onAPIDeleteBlockList(env Env) gin.HandlerFunc {
 type CIDRBlockWhitelistExport struct {
 	CIDRBlockWhitelistID int    `json:"cidr_block_whitelist_id"`
 	Address              string `json:"address"`
-	model.TimeStamped
+	domain.TimeStamped
 }
 
 func onAPIGetBlockLists(env Env) gin.HandlerFunc {
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	type BlockSources struct {
-		Sources   []model.CIDRBlockSource    `json:"sources"`
+		Sources   []domain.CIDRBlockSource   `json:"sources"`
 		Whitelist []CIDRBlockWhitelistExport `json:"whitelist"`
 	}
 
@@ -323,11 +323,11 @@ func onAPIPostBlockListCreate(env Env) gin.HandlerFunc {
 			return
 		}
 
-		blockList := model.CIDRBlockSource{
+		blockList := domain.CIDRBlockSource{
 			Name:        req.Name,
 			URL:         parsedURL.String(),
 			Enabled:     req.Enabled,
-			TimeStamped: model.NewTimeStamped(),
+			TimeStamped: domain.NewTimeStamped(),
 		}
 
 		if errSave := env.Store().SaveCIDRBlockSources(ctx, &blockList); errSave != nil {
@@ -359,7 +359,7 @@ func onAPIPostBlockListUpdate(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var blockSource model.CIDRBlockSource
+		var blockSource domain.CIDRBlockSource
 
 		if errSource := env.Store().GetCIDRBlockSource(ctx, sourceID, &blockSource); errSource != nil {
 			if errors.Is(errSource, errs.ErrNoResult) {
@@ -427,9 +427,9 @@ func onAPIPostBlockListWhitelistCreate(env Env) gin.HandlerFunc {
 			return
 		}
 
-		whitelist := model.CIDRBlockWhitelist{
+		whitelist := domain.CIDRBlockWhitelist{
 			Address:     cidr,
-			TimeStamped: model.NewTimeStamped(),
+			TimeStamped: domain.NewTimeStamped(),
 		}
 
 		if errSave := env.Store().SaveCIDRBlockWhitelist(ctx, &whitelist); errSave != nil {
@@ -475,7 +475,7 @@ func onAPIPostBlockListWhitelistUpdate(env Env) gin.HandlerFunc {
 			return
 		}
 
-		var whitelist model.CIDRBlockWhitelist
+		var whitelist domain.CIDRBlockWhitelist
 		if errGet := env.Store().GetCIDRBlockWhitelist(ctx, whitelistID, &whitelist); errGet != nil {
 			responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 
