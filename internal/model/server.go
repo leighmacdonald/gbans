@@ -12,6 +12,8 @@ import (
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
+var ErrResolveIP = errors.New("failed to resolve address")
+
 type ServerPermission struct {
 	SteamID         steamid.SID `json:"steam_id"`
 	PermissionLevel Privilege   `json:"permission_level"`
@@ -72,7 +74,7 @@ func (s Server) IP(ctx context.Context) (net.IP, error) {
 	// TODO proper timeout for ctx
 	ips, errResolve := net.DefaultResolver.LookupIP(ctx, "ip4", s.Address)
 	if errResolve != nil || len(ips) == 0 {
-		return nil, errors.Join(errResolve, errors.New("Could not resolve address"))
+		return nil, errors.Join(errResolve, ErrResolveIP)
 	}
 
 	return ips[0], nil

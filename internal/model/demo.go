@@ -10,6 +10,8 @@ import (
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
+var ErrAssetID = errors.New("failed to generate new asset ID")
+
 type DemoPlayerStats struct {
 	Score      int `json:"score"`
 	ScoreTotal int `json:"score_total"`
@@ -57,7 +59,7 @@ func NewAsset(content []byte, bucket string, name string) (Asset, error) {
 
 	newID, errID := uuid.NewV4()
 	if errID != nil {
-		return Asset{}, errors.Join(errID, errors.New("Failed to generate a new asset ID"))
+		return Asset{}, errors.Join(errID, ErrAssetID)
 	}
 
 	if name == "" {

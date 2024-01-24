@@ -12,14 +12,6 @@ import (
 	"go.uber.org/zap"
 )
 
-var (
-	ErrCommandFailed     = errors.New("command failed")
-	ErrDiscordCreate     = errors.New("failed to connect to discord")
-	ErrDiscordOpen       = errors.New("failed to open discord connection")
-	ErrDuplicateCommand  = errors.New("duplicate command registration")
-	ErrDiscordMessageSen = errors.New("failed to send discord message")
-)
-
 type SlashCommandHandler func(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error)
 
 type Bot struct {

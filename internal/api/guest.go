@@ -34,7 +34,7 @@ func onAPIPostDemosQuery(env Env) gin.HandlerFunc {
 
 		demos, count, errDemos := env.Store().GetDemos(ctx, req)
 		if errDemos != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to query demos", zap.Error(errDemos))
 
 			return
@@ -64,7 +64,7 @@ func onAPIGetPrometheusHosts(env Env) gin.HandlerFunc {
 		servers, _, errGetServers := env.Store().GetServers(ctx, model.ServerQueryFilter{})
 		if errGetServers != nil {
 			log.Error("Failed to fetch servers", zap.Error(errGetServers))
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -168,7 +168,7 @@ func onAPIExportBansValveSteamID(env Env) gin.HandlerFunc {
 		})
 
 		if errBans != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -194,14 +194,14 @@ func onAPIExportSourcemodSimpleAdmins(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		privilegedIds, errPrivilegedIds := env.Store().GetSteamIdsAbove(ctx, model.PReserved)
 		if errPrivilegedIds != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
 
 		players, errPlayers := env.Store().GetPeopleBySteamID(ctx, privilegedIds)
 		if errPlayers != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -249,7 +249,7 @@ func onAPIExportBansTF2BD(env Env) gin.HandlerFunc {
 		})
 
 		if errBans != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -327,7 +327,7 @@ func onAPIProfile(env Env) gin.HandlerFunc {
 
 		person := model.NewPerson(sid)
 		if errGetProfile := env.Store().GetOrCreatePersonBySteamID(requestCtx, sid, &person); errGetProfile != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to create person", zap.Error(errGetProfile))
 
 			return
@@ -354,7 +354,7 @@ func onAPIProfile(env Env) gin.HandlerFunc {
 
 		var settings model.PersonSettings
 		if err := env.Store().GetPersonSettings(ctx, sid, &settings); err != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to load person settings", zap.Error(err))
 
 			return
@@ -370,7 +370,7 @@ func onAPIGetStats(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var stats model.Stats
 		if errGetStats := env.Store().GetStats(ctx, &stats); errGetStats != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -395,7 +395,7 @@ func onAPIGetServers(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		fullServers, _, errServers := env.Store().GetServers(ctx, model.ServerQueryFilter{})
 		if errServers != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -418,7 +418,7 @@ func onAPIGetMapUsage(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		mapUsages, errServers := env.Store().GetMapUsageStats(ctx)
 		if errServers != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -431,7 +431,7 @@ func onAPIGetNewsLatest(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		newsLatest, errGetNewsLatest := env.Store().GetNewsLatest(ctx, 50, false)
 		if errGetNewsLatest != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -457,13 +457,13 @@ func onAPIGetWikiSlug(env Env) gin.HandlerFunc {
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
 
 		if page.PermissionLevel > currentUser.PermissionLevel {
-			responseErr(ctx, http.StatusForbidden, errs.ErrPermissionDenied)
+			responseErr(ctx, http.StatusForbidden, errPermissionDenied)
 
 			return
 		}
@@ -476,7 +476,7 @@ func onGetMediaByID(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		mediaID, idErr := getIntParam(ctx, "media_id")
 		if idErr != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
@@ -486,7 +486,7 @@ func onGetMediaByID(env Env) gin.HandlerFunc {
 			if errors.Is(errs.DBErr(errMedia), errs.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 			} else {
-				responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+				responseErr(ctx, http.StatusInternalServerError, errInternal)
 			}
 
 			return
@@ -535,7 +535,7 @@ func onAPIGetContests(env Env) gin.HandlerFunc {
 		contests, errContests := env.Store().Contests(ctx, publicOnly)
 
 		if errContests != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -564,7 +564,7 @@ func onAPIGetContestEntries(env Env) gin.HandlerFunc {
 
 		entries, errEntries := env.Store().ContestEntries(ctx, contest.ContestID)
 		if errEntries != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -587,7 +587,7 @@ func onAPIForumOverview(env Env) gin.HandlerFunc {
 
 		categories, errCats := env.Store().ForumCategories(ctx)
 		if errCats != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			log.Error("Could not load categories")
 
@@ -596,7 +596,7 @@ func onAPIForumOverview(env Env) gin.HandlerFunc {
 
 		forums, errForums := env.Store().Forums(ctx)
 		if errForums != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			log.Error("Could not load forums", zap.Error(errForums))
 
@@ -638,7 +638,7 @@ func onAPIForumThreads(env Env) gin.HandlerFunc {
 
 		threads, count, errThreads := env.Store().ForumThreads(ctx, tqf)
 		if errThreads != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			log.Error("Could not load threads", zap.Error(errThreads))
 
@@ -647,7 +647,7 @@ func onAPIForumThreads(env Env) gin.HandlerFunc {
 
 		var forum model.Forum
 		if err := env.Store().Forum(ctx, tqf.ForumID, &forum); err != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			log.Error("Could not load forum", zap.Error(errThreads))
 
@@ -655,7 +655,7 @@ func onAPIForumThreads(env Env) gin.HandlerFunc {
 		}
 
 		if forum.PermissionLevel > currentUser.PermissionLevel {
-			responseErr(ctx, http.StatusUnauthorized, errs.ErrPermissionDenied)
+			responseErr(ctx, http.StatusUnauthorized, errPermissionDenied)
 
 			log.Error("User does not have access to forum")
 
@@ -676,7 +676,7 @@ func onAPIForumThread(env Env) gin.HandlerFunc {
 
 		forumThreadID, errID := getInt64Param(ctx, "forum_thread_id")
 		if errID != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
@@ -686,7 +686,7 @@ func onAPIForumThread(env Env) gin.HandlerFunc {
 			if errors.Is(errThreads, errs.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 			} else {
-				responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+				responseErr(ctx, http.StatusInternalServerError, errInternal)
 				log.Error("Could not load threads")
 			}
 
@@ -709,7 +709,7 @@ func onAPIForum(env Env) gin.HandlerFunc {
 
 		forumID, errForumID := getIntParam(ctx, "forum_id")
 		if errForumID != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
@@ -717,7 +717,7 @@ func onAPIForum(env Env) gin.HandlerFunc {
 		var forum model.Forum
 
 		if errForum := env.Store().Forum(ctx, forumID, &forum); errForum != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			log.Error("Could not load forum")
 
@@ -725,7 +725,7 @@ func onAPIForum(env Env) gin.HandlerFunc {
 		}
 
 		if forum.PermissionLevel > currentUser.PermissionLevel {
-			responseErr(ctx, http.StatusForbidden, errs.ErrPermissionDenied)
+			responseErr(ctx, http.StatusForbidden, errPermissionDenied)
 
 			return
 		}
@@ -745,7 +745,7 @@ func onAPIForumMessages(env Env) gin.HandlerFunc {
 
 		messages, count, errMessages := env.Store().ForumMessages(ctx, queryFilter)
 		if errMessages != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			log.Error("Could not load thread messages", zap.Error(errMessages))
 
@@ -800,7 +800,7 @@ func onAPIForumMessagesRecent(env Env) gin.HandlerFunc {
 
 		messages, errThreads := env.Store().ForumRecentActivity(ctx, 5, user.PermissionLevel)
 		if errThreads != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			log.Error("Could not load thread messages")
 

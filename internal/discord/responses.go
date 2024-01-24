@@ -20,7 +20,6 @@ import (
 )
 
 const (
-	ColourDebug   = 10170623
 	ColourSuccess = 302673
 	ColourInfo    = 3581519
 	ColourWarn    = 14327864
@@ -537,7 +536,6 @@ func CheckMessage(player model.Person, ban model.BannedSteamPerson, banURL strin
 	var (
 		banned    = false
 		muted     = false
-		reason    = ""
 		color     = 0
 		createdAt = ""
 		expiry    time.Time
@@ -546,7 +544,7 @@ func CheckMessage(player model.Person, ban model.BannedSteamPerson, banURL strin
 	if ban.BanID > 0 {
 		banned = ban.BanType == model.Banned
 		muted = ban.BanType == model.NoComm
-		reason = ban.ReasonText
+		reason := ban.ReasonText
 
 		if len(reason) == 0 {
 			// in case authorProfile ban without authorProfile reason ever makes its way here, we make sure
@@ -578,9 +576,11 @@ func CheckMessage(player model.Person, ban model.BannedSteamPerson, banURL strin
 
 	if len(bannedNets) > 0 {
 		// ip = bannedNets[0].CIDR.String()
-		reason = fmt.Sprintf("Banned from %d networks", len(bannedNets))
-		expiry = bannedNets[0].ValidUntil
+		netReason := fmt.Sprintf("Banned from %d networks", len(bannedNets))
+		netExpiry := bannedNets[0].ValidUntil
 		msgEmbed.Embed().AddField("Network Bans", fmt.Sprintf("%d", len(bannedNets)))
+		msgEmbed.Embed().AddField("Network Reason", netReason)
+		msgEmbed.Embed().AddField("Network Expires", util.FmtDuration(netExpiry)).MakeFieldInline()
 	}
 
 	banStateStr := "no"
@@ -642,34 +642,34 @@ func HistoryMessage(person model.PersonInfo) *discordgo.MessageEmbed {
 		Truncate().MessageEmbed
 }
 
-func BanMessage(ban model.BannedSteamPerson, link string, target model.PersonInfo, source model.PersonInfo) *discordgo.MessageEmbed {
-	msgEmbed := NewEmbed()
-	msgEmbed.Embed().
-		SetTitle(fmt.Sprintf("Ban created successfully (#%d)", ban.BanID)).
-		SetDescription(ban.Note).
-		SetURL(link).
-		SetColor(ColourSuccess)
-
-	if ban.ReasonText != "" {
-		msgEmbed.Embed().AddField("Reason", ban.ReasonText)
-	}
-
-	msgEmbed.Embed().SetImage(target.GetAvatar().Full())
-
-	msgEmbed.AddAuthorPersonInfo(source, "")
-
-	if ban.ValidUntil.Year()-time.Now().Year() > 5 {
-		msgEmbed.Embed().AddField("Expires In", "Permanent")
-		msgEmbed.Embed().AddField("Expires At", "Permanent")
-	} else {
-		msgEmbed.Embed().AddField("Expires In", util.FmtDuration(ban.ValidUntil))
-		msgEmbed.Embed().AddField("Expires At", util.FmtTimeShort(ban.ValidUntil))
-	}
-
-	msgEmbed.AddFieldsSteamID(ban.TargetID)
-
-	return msgEmbed.Embed().Truncate().MessageEmbed
-}
+// func BanMessage(ban model.BannedSteamPerson, link string, target model.PersonInfo, source model.PersonInfo) *discordgo.MessageEmbed {
+//	msgEmbed := NewEmbed()
+//	msgEmbed.Embed().
+//		SetTitle(fmt.Sprintf("Ban created successfully (#%d)", ban.BanID)).
+//		SetDescription(ban.Note).
+//		SetURL(link).
+//		SetColor(ColourSuccess)
+//
+//	if ban.ReasonText != "" {
+//		msgEmbed.Embed().AddField("Reason", ban.ReasonText)
+//	}
+//
+//	msgEmbed.Embed().SetImage(target.GetAvatar().Full())
+//
+//	msgEmbed.AddAuthorPersonInfo(source, "")
+//
+//	if ban.ValidUntil.Year()-time.Now().Year() > 5 {
+//		msgEmbed.Embed().AddField("Expires In", "Permanent")
+//		msgEmbed.Embed().AddField("Expires At", "Permanent")
+//	} else {
+//		msgEmbed.Embed().AddField("Expires In", util.FmtDuration(ban.ValidUntil))
+//		msgEmbed.Embed().AddField("Expires At", util.FmtTimeShort(ban.ValidUntil))
+//	}
+//
+//	msgEmbed.AddFieldsSteamID(ban.TargetID)
+//
+//	return msgEmbed.Embed().Truncate().MessageEmbed
+// }
 
 func UnbanMessage(person model.PersonInfo) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed("User Unbanned Successfully")
@@ -753,7 +753,7 @@ func ServersMessage(currentStateRegion map[string][]state.ServerState, serversUR
 	var (
 		stats       = map[string]float64{}
 		used, total = 0, 0
-		regionNames []string //nolint:realloc
+		regionNames = make([]string, 9)
 	)
 
 	msgEmbed := NewEmbed("Current ServerStore Populations")
@@ -1103,4 +1103,13 @@ func SetSteamMessage() *discordgo.MessageEmbed {
 		SetColor(ColourSuccess).
 		Truncate().
 		MessageEmbed
+}
+
+func NotificationMessage(message string, link string) *discordgo.MessageEmbed {
+	msgEmbed := NewEmbed("Notification", message)
+	if link != "" {
+		msgEmbed.Embed().SetURL(link)
+	}
+
+	return msgEmbed.Embed().Truncate().MessageEmbed
 }

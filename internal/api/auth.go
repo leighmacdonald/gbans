@@ -248,28 +248,29 @@ func fingerprintHash(fingerprint string) string {
 }
 
 var (
-	ErrCreateToken         = errors.New("failed to create new access token")
-	ErrRefreshToken        = errors.New("failed to create new refresh token")
-	ErrClientIP            = errors.New("failed to parse IP")
-	ErrSaveToken           = errors.New("failed to save new createRefresh token")
-	ErrSignToken           = errors.New("failed create signed string")
-	ErrSignJWT             = errors.New("failed create signed JWT string")
-	ErrAuthHeader          = errors.New("failed to bind auth header")
-	ErrMalformedAuthHeader = errors.New("invalid auth header format")
+	errCreateToken         = errors.New("failed to create new access token")
+	errRefreshToken        = errors.New("failed to create new refresh token")
+	errClientIP            = errors.New("failed to parse IP")
+	errSaveToken           = errors.New("failed to save new createRefresh token")
+	errSignToken           = errors.New("failed create signed string")
+	errSignJWT             = errors.New("failed create signed JWT string")
+	errAuthHeader          = errors.New("failed to bind auth header")
+	errMalformedAuthHeader = errors.New("invalid auth header format")
+	errCookieKeyMissing    = errors.New("cookie key missing, cannot generate token")
 )
 
 // makeTokens generates new jwt auth tokens
 // fingerprint is a random string used to prevent side-jacking.
 func makeTokens(ctx *gin.Context, env Env, cookieKey string, sid steamid.SID64, createRefresh bool) (userTokens, error) {
 	if cookieKey == "" {
-		return userTokens{}, errors.New("cookieKey or fingerprint empty")
+		return userTokens{}, errCookieKeyMissing
 	}
 
 	fingerprint := util.SecureRandomString(40)
 
 	accessToken, errJWT := newUserToken(sid, cookieKey, fingerprint, authTokenDuration)
 	if errJWT != nil {
-		return userTokens{}, errors.Join(errJWT, ErrCreateToken)
+		return userTokens{}, errors.Join(errJWT, errCreateToken)
 	}
 
 	refreshToken := ""
@@ -277,17 +278,17 @@ func makeTokens(ctx *gin.Context, env Env, cookieKey string, sid steamid.SID64, 
 	if createRefresh {
 		newRefreshToken, errRefresh := newUserToken(sid, cookieKey, fingerprint, refreshTokenDuration)
 		if errRefresh != nil {
-			return userTokens{}, errors.Join(errRefresh, ErrRefreshToken)
+			return userTokens{}, errors.Join(errRefresh, errRefreshToken)
 		}
 
 		ipAddr := net.ParseIP(ctx.ClientIP())
 		if ipAddr == nil {
-			return userTokens{}, ErrClientIP
+			return userTokens{}, errClientIP
 		}
 
 		personAuth := model.NewPersonAuth(sid, ipAddr, fingerprint)
 		if saveErr := env.Store().SavePersonAuth(ctx, &personAuth); saveErr != nil {
-			return userTokens{}, errors.Join(saveErr, ErrSaveToken)
+			return userTokens{}, errors.Join(saveErr, errSaveToken)
 		}
 
 		refreshToken = newRefreshToken
@@ -340,7 +341,7 @@ func newUserToken(steamID steamid.SID64, cookieKey string, userContext string, v
 	signedToken, errSigned := tokenWithClaims.SignedString([]byte(cookieKey))
 
 	if errSigned != nil {
-		return "", errors.Join(errSigned, ErrSignToken)
+		return "", errors.Join(errSigned, errSignToken)
 	}
 
 	return signedToken, nil
@@ -362,7 +363,7 @@ func newServerToken(serverID int, cookieKey string) (string, error) {
 
 	signedToken, errSigned := tokenWithClaims.SignedString([]byte(cookieKey))
 	if errSigned != nil {
-		return "", errors.Join(errSigned, ErrSignJWT)
+		return "", errors.Join(errSigned, errSignJWT)
 	}
 
 	return signedToken, nil
@@ -375,7 +376,7 @@ type authHeader struct {
 func tokenFromHeader(ctx *gin.Context, emptyOK bool) (string, error) {
 	hdr := authHeader{}
 	if errBind := ctx.ShouldBindHeader(&hdr); errBind != nil {
-		return "", errors.Join(errBind, ErrAuthHeader)
+		return "", errors.Join(errBind, errAuthHeader)
 	}
 
 	pcs := strings.Split(hdr.Authorization, " ")
@@ -386,7 +387,7 @@ func tokenFromHeader(ctx *gin.Context, emptyOK bool) (string, error) {
 
 		ctx.AbortWithStatus(http.StatusForbidden)
 
-		return "", ErrMalformedAuthHeader
+		return "", errMalformedAuthHeader
 	}
 
 	return pcs[1], nil

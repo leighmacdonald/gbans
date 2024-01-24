@@ -14,10 +14,11 @@ import (
 )
 
 var (
-	ErrIgnored     = errors.New("ignored msg")
-	ErrUnhandled   = errors.New("unhandled msg")
-	ErrInvalidType = errors.New("invalid Type")
-	ErrInvalidSID  = errors.New("invalid steam id")
+	ErrIgnored        = errors.New("ignored msg")
+	ErrUnhandled      = errors.New("unhandled msg")
+	ErrInvalidType    = errors.New("invalid Type")
+	ErrInvalidSID     = errors.New("invalid steam id")
+	ErrUnhandledEvent = errors.New("unhandled event")
 )
 
 type MatchPlayerSums map[steamid.SID64]*PlayerStats
@@ -568,7 +569,7 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 	case SteamAuth:
 		return nil
 	default:
-		return errors.New(fmt.Sprintf("Unhandled apply event: %d %v", result.EventType, result.Event))
+		return fmt.Errorf("%w: %v", ErrUnhandledEvent, result.EventType)
 	}
 
 	return nil

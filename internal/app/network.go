@@ -11,10 +11,11 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/leighmacdonald/gbans/internal/errs"
 	"github.com/leighmacdonald/gbans/pkg/util"
 )
 
-// Blocker provides a simple interface for blocking users connecting from banned IPs. Its designed to
+// Blocker provides a simple interface for blocking users connecting from banned IPs. It's designed to
 // download list of, for example, VPN CIDR blocks, parse them and block any ip that is contained within any of those
 // network blocks.
 //
@@ -79,14 +80,14 @@ func (b *Blocker) AddWhitelist(id int, network *net.IPNet) {
 func (b *Blocker) AddRemoteSource(ctx context.Context, name string, url string) (int64, error) {
 	req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if errReq != nil {
-		return 0, errors.Join(errReq, errors.New("Invalid request"))
+		return 0, errors.Join(errReq, errs.ErrCreateRequest)
 	}
 
 	client := util.NewHTTPClient()
 
 	resp, errResp := client.Do(req)
 	if errResp != nil {
-		return 0, errors.Join(errResp, errors.New("Failed to fetch remote block source"))
+		return 0, errors.Join(errResp, errs.ErrRequestPerform)
 	}
 
 	defer func() {
@@ -94,12 +95,12 @@ func (b *Blocker) AddRemoteSource(ctx context.Context, name string, url string) 
 	}()
 
 	if resp.StatusCode != http.StatusOK {
-		return 0, fmt.Errorf("Invalid response code; %d", resp.StatusCode)
+		return 0, fmt.Errorf("%w: %d", errs.ErrRequestInvalidCode, resp.StatusCode)
 	}
 
 	bodyBytes, errRead := io.ReadAll(resp.Body)
 	if errRead != nil {
-		return 0, errors.Join(errRead, errors.New("Failed to read response body"))
+		return 0, errors.Join(errRead, errs.ErrResponseBody)
 	}
 
 	var blocks []*net.IPNet //nolint:prealloc

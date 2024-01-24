@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/avatar"
+	"github.com/leighmacdonald/gbans/internal/errs"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
@@ -240,7 +241,7 @@ func newBaseBanOpts(ctx context.Context, source SteamIDProvider, target StringSI
 ) error {
 	sourceSid, errSource := source.SID64(ctx)
 	if errSource != nil {
-		return errors.Join(errSource, errors.New("Failed to parse source id"))
+		return errors.Join(errSource, errs.ErrSourceID)
 	}
 
 	targetSid := steamid.New(0)
@@ -248,22 +249,22 @@ func newBaseBanOpts(ctx context.Context, source SteamIDProvider, target StringSI
 	if string(target) != "0" {
 		newTargetSid, errTargetSid := target.SID64(ctx)
 		if errTargetSid != nil {
-			return errors.New("Invalid target id")
+			return errs.ErrTargetID
 		}
 
 		targetSid = newTargetSid
 	}
 
 	if !(banType == Banned || banType == NoComm) {
-		return errors.New("New ban must be ban or nocomm")
+		return ErrInvalidBanType
 	}
 
 	if duration <= 0 {
-		return errors.New("Insufficient duration")
+		return ErrInvalidBanDuration
 	}
 
 	if reason == Custom && reasonText == "" {
-		return errors.New("Custom reason cannot be empty")
+		return ErrInvalidBanReason
 	}
 
 	opts.TargetID = targetSid
@@ -292,7 +293,7 @@ func NewBanSteam(ctx context.Context, source SteamIDProvider, target StringSID, 
 	}
 
 	if reportID < 0 {
-		return errors.New("Invalid report ID")
+		return ErrInvalidReportID
 	}
 
 	opts.ReportID = reportID
@@ -336,7 +337,7 @@ func NewBanASN(ctx context.Context, source SteamIDProvider, target StringSID, du
 	}
 
 	if !inRange {
-		return errors.New("Invalid asn")
+		return ErrInvalidASN
 	}
 
 	opts.ASNum = asNum
@@ -356,7 +357,7 @@ func NewBanCIDR(ctx context.Context, source SteamIDProvider, target StringSID, d
 
 	_, parsedNetwork, errParse := net.ParseCIDR(cidr)
 	if errParse != nil {
-		return errors.Join(errParse, errors.New("Failed to parse cidr address"))
+		return errors.Join(errParse, ErrInvalidCIDR)
 	}
 
 	opts.CIDR = parsedNetwork

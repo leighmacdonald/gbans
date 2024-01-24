@@ -243,7 +243,7 @@ func (db *postgresStore) Close() error {
 func getCount(ctx context.Context, store Database, builder sq.SelectBuilder) (int64, error) {
 	countQuery, argsCount, errCountQuery := builder.ToSql()
 	if errCountQuery != nil {
-		return 0, errors.Join(errCountQuery, errors.New("Failed to create count query"))
+		return 0, errors.Join(errCountQuery, ErrCreateQuery)
 	}
 
 	var count int64

@@ -5,13 +5,20 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"time"
 
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
+
+var (
+	ErrCreateRequest = errors.New("failed to create logstf request")
+	ErrRequestFailed = errors.New("failed to query logstf")
+	ErrDecode        = errors.New("failed to decode logstf response")
+)
+
+const logsTFURL = "https://logs.tf/api/v1/log?player=%s"
 
 type LogsTFResult struct {
 	Success    bool `json:"success"`
@@ -43,29 +50,23 @@ func LogsTFOverview(ctx context.Context, sid steamid.SID64) (*LogsTFResult, erro
 	localCtx, cancel := context.WithTimeout(ctx, time.Second*15)
 	defer cancel()
 
-	req, reqErr := http.NewRequestWithContext(localCtx, http.MethodGet,
-		fmt.Sprintf("https://logs.tf/api/v1/log?player=%s", sid), nil)
+	req, reqErr := http.NewRequestWithContext(localCtx, http.MethodGet, fmt.Sprintf(logsTFURL, sid), nil)
 	if reqErr != nil {
-		return nil, errors.Join(reqErr, errors.New("Failed to create request"))
+		return nil, errors.Join(reqErr, ErrCreateRequest)
 	}
 
 	response, errGet := httpClient.Do(req)
 	if errGet != nil {
-		return nil, errors.Join(errGet, errors.New("Failed to query logstf"))
+		return nil, errors.Join(errGet, ErrRequestFailed)
 	}
 
 	defer func() {
 		_ = response.Body.Close()
 	}()
 
-	body, errReadBody := io.ReadAll(response.Body)
-	if errReadBody != nil {
-		return nil, errors.Join(errGet, errors.New("Failed to read logstf body"))
-	}
-
 	var logsTFResult LogsTFResult
-	if errUnmarshal := json.Unmarshal(body, &logsTFResult); errUnmarshal != nil {
-		return nil, errors.Join(errGet, errors.New("Failed to unmarshal logstf body"))
+	if errUnmarshal := json.NewDecoder(response.Body).Decode(&logsTFResult); errUnmarshal != nil {
+		return nil, errors.Join(errGet, ErrDecode)
 	}
 
 	return &logsTFResult, nil

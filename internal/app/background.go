@@ -11,90 +11,17 @@ import (
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
-	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
-
-func (app *App) updateSteamBanMembers(ctx context.Context) (map[int64]steamid.Collection, error) {
-	newMap := map[int64]steamid.Collection{}
-
-	localCtx, cancel := context.WithTimeout(ctx, time.Second*120)
-	defer cancel()
-
-	opts := model.SteamBansQueryFilter{
-		BansQueryFilter:    model.BansQueryFilter{QueryFilter: model.QueryFilter{Deleted: false}},
-		IncludeFriendsOnly: true,
-	}
-
-	steamBans, _, errSteam := app.db.GetBansSteam(ctx, opts)
-	if errSteam != nil {
-		if errors.Is(errSteam, errs.ErrNoResult) {
-			return newMap, nil
-		}
-
-		return nil, errors.Join(errSteam, errors.New("Failed to fetch bans with friends included"))
-	}
-
-	for _, steamBan := range steamBans {
-		friends, errFriends := steamweb.GetFriendList(localCtx, steamBan.TargetID)
-		if errFriends != nil {
-			return nil, errors.Join(errFriends, errors.New("Failed to fetch friends"))
-		}
-
-		if len(friends) == 0 {
-			continue
-		}
-
-		var sids steamid.Collection
-
-		for _, friend := range friends {
-			sids = append(sids, friend.SteamID)
-		}
-
-		memberList := model.NewMembersList(steamBan.TargetID.Int64(), sids)
-		if errQuery := app.db.GetMembersList(ctx, steamBan.TargetID.Int64(), &memberList); errQuery != nil {
-			if !errors.Is(errQuery, errs.ErrNoResult) {
-				return nil, errors.Join(errQuery, errors.New("Failed to fetch members list"))
-			}
-		}
-
-		if errSave := app.db.SaveMembersList(ctx, &memberList); errSave != nil {
-			return nil, errors.Join(errSave, errors.New("Failed to save banned steam friend member list"))
-		}
-
-		newMap[steamBan.TargetID.Int64()] = memberList.Members
-	}
-
-	return newMap, nil
-}
-
-// todo move to separate struct.
-func (app *App) updateBanChildren(ctx context.Context) {
-	var (
-		newMap = map[int64]steamid.Collection{}
-		total  = 0
-	)
-
-	friendEntries, errFriendEntries := app.updateSteamBanMembers(ctx)
-	if errFriendEntries == nil {
-		for k, v := range friendEntries {
-			total += len(v)
-			newMap[k] = v
-		}
-	}
-
-	app.log.Debug("Updated friend list member bans",
-		zap.Int("friends", len(friendEntries)))
-}
 
 func (app *App) showReportMeta(ctx context.Context) {
 	ticker := time.NewTicker(time.Hour * 24)
 	updateChan := make(chan any)
 
 	go func() {
-		time.Sleep(time.Second * 20)
+		time.Sleep(time.Second * 5)
 		updateChan <- true
 	}()
 
@@ -262,7 +189,7 @@ func (app *App) notificationSender(ctx context.Context) {
 
 func (app *App) updateProfiles(ctx context.Context, people model.People) error {
 	if len(people) > 100 {
-		return errors.New("100 people max per call")
+		return errSteamAPIArgLimit
 	}
 
 	var (
@@ -275,7 +202,7 @@ func (app *App) updateProfiles(ctx context.Context, people model.People) error {
 	errGroup.Go(func() error {
 		newBanStates, errBans := thirdparty.FetchPlayerBans(cancelCtx, steamIDs)
 		if errBans != nil {
-			return errors.Join(errBans, errors.New("Failed to fetch ban status from steamapi"))
+			return errors.Join(errBans, errFetchSteamBans)
 		}
 
 		banStates = newBanStates
@@ -286,7 +213,7 @@ func (app *App) updateProfiles(ctx context.Context, people model.People) error {
 	errGroup.Go(func() error {
 		newSummaries, errSummaries := steamweb.PlayerSummaries(cancelCtx, steamIDs)
 		if errSummaries != nil {
-			return errors.Join(errSummaries, errors.New("Failed to fetch player summaries from steamapi"))
+			return errors.Join(errSummaries, errSteamAPISummaries)
 		}
 
 		summaries = newSummaries
@@ -295,7 +222,7 @@ func (app *App) updateProfiles(ctx context.Context, people model.People) error {
 	})
 
 	if errFetch := errGroup.Wait(); errFetch != nil {
-		return errors.Join(errFetch, errors.New("Failed to fetch data from steamapi"))
+		return errors.Join(errFetch, errSteamAPI)
 	}
 
 	for _, curPerson := range people {
@@ -328,7 +255,7 @@ func (app *App) updateProfiles(ctx context.Context, people model.People) error {
 		}
 
 		if errSavePerson := app.db.SavePerson(ctx, &person); errSavePerson != nil {
-			return errors.Join(errSavePerson, errors.New("Failed to save Person"))
+			return errors.Join(errSavePerson, errUpdatePerson)
 		}
 	}
 

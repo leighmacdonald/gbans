@@ -29,7 +29,7 @@ func Kick(ctx context.Context, executor Executor, target steamid.SID64, reason m
 	if errExec := executor.OnFindExec(ctx, "", target, nil, nil, func(info model.PlayerServerInfo) string {
 		return fmt.Sprintf("sm_kick #%d %s", info.Player.UserID, reason.String())
 	}); errExec != nil {
-		return errExec
+		return errors.Join(errExec, ErrCommandFailed)
 	}
 
 	return nil
@@ -54,7 +54,7 @@ func Silence(ctx context.Context, executor Executor, target steamid.SID64, reaso
 
 		return fmt.Sprintf(`sm_silence "#%s" %s`, steamid.SID64ToSID(info.Player.SID), reason.String())
 	}); errExec != nil {
-		return errExec
+		return errors.Join(errExec, fmt.Errorf("%w: sm_silence", ErrCommandFailed))
 	}
 
 	return nil
@@ -64,14 +64,14 @@ func Silence(ctx context.Context, executor Executor, target steamid.SID64, reaso
 func Say(ctx context.Context, executor Executor, serverID int, message string) error {
 	_, errExec := executor.ExecServer(ctx, serverID, fmt.Sprintf(`sm_say %s`, message))
 
-	return errExec
+	return errors.Join(errExec, fmt.Errorf("%w: sm_say", ErrCommandFailed))
 }
 
 // CSay is used to send a centered message to the server via sm_csay.
 func CSay(ctx context.Context, executor Executor, serverID int, message string) error {
 	_, errExec := executor.ExecServer(ctx, serverID, fmt.Sprintf(`sm_csay %s`, message))
 
-	return errExec
+	return errors.Join(errExec, fmt.Errorf("%w: sm_csay", ErrCommandFailed))
 }
 
 // PSay is used to send a private message to a player.
@@ -83,7 +83,7 @@ func PSay(ctx context.Context, executor Executor, target steamid.SID64, message 
 	if errExec := executor.OnFindExec(ctx, "", target, nil, nil, func(info model.PlayerServerInfo) string {
 		return fmt.Sprintf(`sm_psay "#%s" "%s"`, steamid.SID64ToSID(target), message)
 	}); errExec != nil {
-		return errExec
+		return errors.Join(errExec, fmt.Errorf("%w: sm_psay", ErrCommandFailed))
 	}
 
 	return nil

@@ -49,7 +49,7 @@ func RegisterDiscordHandlers(env *App) error {
 	}
 	for k, v := range cmdMap {
 		if errRegister := env.discord.RegisterHandler(k, v); errRegister != nil {
-			return errors.Join(errRegister, errors.New("Failed to register discord command"))
+			return errors.Join(errRegister, ErrRegisterCommand)
 		}
 	}
 
@@ -164,7 +164,6 @@ func makeOnCheck(env *App) func(_ context.Context, _ *discordgo.Session, _ *disc
 			if ban.SourceID.Valid() {
 				if errGetProfile := env.Store().GetPersonBySteamID(ctx, ban.SourceID, &authorProfile); errGetProfile != nil {
 					env.Log().Error("Failed to load author for ban", zap.Error(errGetProfile))
-				} else {
 				}
 			}
 
@@ -328,14 +327,14 @@ func onUnbanSteam(ctx context.Context, env *App, _ *discordgo.Session, interacti
 	}
 
 	if !found {
-		return nil, errors.New("No ban found")
+		return nil, ErrBanDoesNotExist
 	}
 
 	var user model.Person
 	if errUser := env.Store().GetPersonBySteamID(ctx, steamID, &user); errUser != nil {
 		env.Log().Warn("Could not fetch unbanned Person", zap.String("steam_id", steamID.String()), zap.Error(errUser))
-	} else {
 	}
+
 	return discord.UnbanMessage(user), nil
 }
 
@@ -346,28 +345,28 @@ func onUnbanASN(ctx context.Context, env *App, _ *discordgo.Session, interaction
 	banExisted, errUnbanASN := env.UnbanASN(ctx, asNumStr)
 	if errUnbanASN != nil {
 		if errors.Is(errUnbanASN, errs.ErrNoResult) {
-			return nil, errors.New("Ban for ASN does not exist")
+			return nil, ErrBanDoesNotExist
 		}
 
 		return nil, ErrCommandFailed
 	}
 
 	if !banExisted {
-		return nil, errors.New("Ban for ASN does not exist")
+		return nil, ErrBanDoesNotExist
 	}
 
 	asNum, errConv := strconv.ParseInt(asNumStr, 10, 64)
 	if errConv != nil {
-		return nil, errors.New("Invalid ASN")
+		return nil, errParseASN
 	}
 
 	asnNetworks, errGetASNRecords := env.Store().GetASNRecordsByNum(ctx, asNum)
 	if errGetASNRecords != nil {
 		if errors.Is(errGetASNRecords, errs.ErrNoResult) {
-			return nil, errors.New("No asnNetworks found matching ASN")
+			return nil, errFetchASN
 		}
 
-		return nil, errors.New("Error fetching asn asnNetworks")
+		return nil, errFetchASN
 	}
 
 	return discord.UnbanASNMessage(asNum, asnNetworks), nil
@@ -377,10 +376,10 @@ func getDiscordAuthor(ctx context.Context, db store.Stores, interaction *discord
 	author := model.NewPerson("")
 	if errPersonByDiscordID := db.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID, &author); errPersonByDiscordID != nil {
 		if errors.Is(errPersonByDiscordID, errs.ErrNoResult) {
-			return author, errors.New("Must set steam id. See /set_steam")
+			return author, ErrSteamUnset
 		}
 
-		return author, errors.New("Error fetching author info")
+		return author, errFetchSource
 	}
 
 	return author, nil
@@ -467,7 +466,7 @@ func makeOnPSay(env *App) func(context.Context, *discordgo.Session, *discordgo.I
 
 		playerSid, errPlayerSid := player.SID64(ctx)
 		if errPlayerSid != nil {
-			return nil, errors.Join(errPlayerSid, errors.New("Failed to get player sid"))
+			return nil, errors.Join(errPlayerSid, errs.ErrInvalidSID)
 		}
 
 		if errPSay := state.PSay(ctx, env.State(), playerSid, msg); errPSay != nil {
@@ -537,6 +536,7 @@ func makeOnPlayers(env *App) func(context.Context, *discordgo.Session, *discordg
 					flag, player.SID, asStr, player.Ping, player.Name, player.SID, proxyStr))
 			}
 		}
+
 		return discord.PlayersMessage(rows, serverState.MaxPlayers, serverState.Name), nil
 	}
 }
@@ -550,7 +550,7 @@ func onFilterAdd(ctx context.Context, env *App, _ *discordgo.Session, interactio
 	if isRegex {
 		_, rxErr := regexp.Compile(pattern)
 		if rxErr != nil {
-			return nil, errors.Join(fmt.Errorf("Invalid regular expression: %v", rxErr))
+			return nil, errors.Join(rxErr, ErrInvalidFilterRegex)
 		}
 	}
 
@@ -579,7 +579,7 @@ func onFilterDel(ctx context.Context, env *App, _ *discordgo.Session, interactio
 	wordID := opts["filter"].IntValue()
 
 	if wordID <= 0 {
-		return nil, errors.New("Invalid filter id")
+		return nil, ErrInvalidFilterID
 	}
 
 	var filter model.Filter
@@ -639,22 +639,22 @@ func onStatsPlayer(ctx context.Context, env *App, _ *discordgo.Session, interact
 
 	classStats, errClassStats := env.Store().StatsPlayerClass(ctx, person.SteamID)
 	if errClassStats != nil {
-		return nil, errors.Join(errClassStats, errors.New("Failed to fetch class stats"))
+		return nil, errors.Join(errClassStats, ErrFetchClassStats)
 	}
 
 	weaponStats, errWeaponStats := env.Store().StatsPlayerWeapons(ctx, person.SteamID)
 	if errWeaponStats != nil {
-		return nil, errors.Join(errWeaponStats, errors.New("Failed to fetch weapon stats"))
+		return nil, errors.Join(errWeaponStats, ErrFetchWeaponStats)
 	}
 
 	killstreakStats, errKillstreakStats := env.Store().StatsPlayerKillstreaks(ctx, person.SteamID)
 	if errKillstreakStats != nil {
-		return nil, errors.Join(errKillstreakStats, errors.New("Failed to fetch killstreak stats"))
+		return nil, errors.Join(errKillstreakStats, ErrFetchKillstreakStats)
 	}
 
 	medicStats, errMedicStats := env.Store().StatsPlayerMedic(ctx, person.SteamID)
 	if errMedicStats != nil {
-		return nil, errors.Join(errMedicStats, errors.New("Failed to fetch medic stats"))
+		return nil, errors.Join(errMedicStats, ErrFetchMedicStats)
 	}
 
 	return discord.StatsPlayerMessage(person, env.Config().ExtURL(person), classStats, medicStats, weaponStats, killstreakStats), nil
@@ -788,12 +788,12 @@ func makeOnFind(env *App) func(context.Context, *discordgo.Session, *discordgo.I
 		for _, player := range players {
 			var server model.Server
 			if errServer := env.Store().GetServer(ctx, player.ServerID, &server); errServer != nil {
-				return nil, errors.Join(errServer, errors.New("Failed to get server"))
+				return nil, errors.Join(errServer, ErrGetServer)
 			}
 
 			person := model.NewPerson(player.Player.SID)
 			if errPerson := env.Store().GetOrCreatePersonBySteamID(ctx, player.Player.SID, &person); errPerson != nil {
-				return nil, errors.Join(errPerson, errors.New("Failed to get player instance"))
+				return nil, errors.Join(errPerson, errFetchPerson)
 			}
 
 			found = append(found, discord.FoundPlayer{
@@ -817,7 +817,7 @@ func makeOnMute(env *App) func(context.Context, *discordgo.Session, *discordgo.I
 
 		reasonValueOpt, ok := opts[OptBanReason]
 		if !ok {
-			return nil, errors.New("Invalid mute reason")
+			return nil, ErrReasonInvalid
 		}
 
 		reason = model.Reason(reasonValueOpt.IntValue())
@@ -848,7 +848,7 @@ func makeOnMute(env *App) func(context.Context, *discordgo.Session, *discordgo.I
 			false,
 			&banSteam,
 		); errOpts != nil {
-			return nil, errors.Join(errOpts, errors.New("Failed to parse options"))
+			return nil, errOpts
 		}
 
 		if errBan := env.BanSteam(ctx, &banSteam); errBan != nil {
@@ -878,24 +878,24 @@ func onBanASN(ctx context.Context, env *App, _ *discordgo.Session,
 
 	if errGetPersonByDiscordID := env.Store().GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID, &author); errGetPersonByDiscordID != nil {
 		if errors.Is(errGetPersonByDiscordID, errs.ErrNoResult) {
-			return nil, errors.New("Must set steam id. See /set_steam")
+			return nil, ErrSteamUnset
 		}
 
-		return nil, errors.New("Error fetching author info")
+		return nil, errors.Join(errGetPersonByDiscordID, errFetchPerson)
 	}
 
 	asNum, errConv := strconv.ParseInt(asNumStr, 10, 64)
 	if errConv != nil {
-		return nil, errors.New("Invalid ASN")
+		return nil, errParseASN
 	}
 
 	asnRecords, errGetASNRecords := env.Store().GetASNRecordsByNum(ctx, asNum)
 	if errGetASNRecords != nil {
 		if errors.Is(errGetASNRecords, errs.ErrNoResult) {
-			return nil, errors.New("No asnRecords found matching ASN")
+			return nil, errASNNoRecords
 		}
 
-		return nil, errors.New("Error fetching asn asnRecords")
+		return nil, errFetchASN
 	}
 
 	var banASN model.BanASN
@@ -911,12 +911,12 @@ func onBanASN(ctx context.Context, env *App, _ *discordgo.Session,
 		model.Banned,
 		&banASN,
 	); errOpts != nil {
-		return nil, errors.Join(errOpts, errors.New("Failed to parse options"))
+		return nil, errOpts
 	}
 
 	if errBanASN := env.BanASN(ctx, &banASN); errBanASN != nil {
 		if errors.Is(errBanASN, errs.ErrDuplicate) {
-			return nil, errors.New("Duplicate ASN ban")
+			return nil, ErrDuplicateBan
 		}
 
 		return nil, ErrCommandFailed
@@ -935,12 +935,12 @@ func onBanIP(ctx context.Context, env *App, _ *discordgo.Session,
 
 	_, network, errParseCIDR := net.ParseCIDR(cidr)
 	if errParseCIDR != nil {
-		return nil, errors.Join(errParseCIDR, errors.New("Invalid IP"))
+		return nil, errors.Join(errParseCIDR, errs.ErrInvalidIP)
 	}
 
 	duration, errDuration := util.ParseDuration(opts[OptDuration].StringValue())
 	if errDuration != nil {
-		return nil, errors.New("Invalid duration")
+		return nil, errDuration
 	}
 
 	modNote := opts[OptNote].StringValue()
@@ -948,10 +948,10 @@ func onBanIP(ctx context.Context, env *App, _ *discordgo.Session,
 	author := model.NewPerson("")
 	if errGetPerson := env.Store().GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID, &author); errGetPerson != nil {
 		if errors.Is(errGetPerson, errs.ErrNoResult) {
-			return nil, errors.New("Must set steam id. See /set_steam")
+			return nil, ErrSteamUnset
 		}
 
-		return nil, errors.New("Error fetching author info")
+		return nil, errFetchPerson
 	}
 
 	var banCIDR model.BanCIDR
@@ -967,7 +967,7 @@ func onBanIP(ctx context.Context, env *App, _ *discordgo.Session,
 		model.Banned,
 		&banCIDR,
 	); errOpts != nil {
-		return nil, errors.Join(errOpts, errors.New("Failed to parse options"))
+		return nil, errOpts
 	}
 
 	if errBanNet := env.BanCIDR(ctx, &banCIDR); errBanNet != nil {
@@ -1025,12 +1025,12 @@ func onBanSteam(ctx context.Context, env *App, _ *discordgo.Session,
 		false,
 		&banSteam,
 	); errOpts != nil {
-		return nil, errors.Join(errOpts, errors.New("Failed to parse options"))
+		return nil, errOpts
 	}
 
 	if errBan := env.BanSteam(ctx, &banSteam); errBan != nil {
 		if errors.Is(errBan, errs.ErrDuplicate) {
-			return nil, errors.New("Duplicate ban")
+			return nil, ErrDuplicateBan
 		}
 
 		return nil, ErrCommandFailed

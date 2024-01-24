@@ -21,6 +21,13 @@ import (
 	"go.uber.org/zap"
 )
 
+var (
+	errUnbanFailed    = errors.New("failed to perform unban")
+	errStateUnchanged = errors.New("state must be different than previous")
+	errInvalidRegex   = errors.New("invalid regex format")
+	errInvalidWeight  = errors.New("invalid weight value")
+)
+
 func onAPISaveWikiSlug(env Env) gin.HandlerFunc {
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
@@ -31,7 +38,7 @@ func onAPISaveWikiSlug(env Env) gin.HandlerFunc {
 		}
 
 		if req.Slug == "" || req.BodyMD == "" {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
@@ -43,7 +50,7 @@ func onAPISaveWikiSlug(env Env) gin.HandlerFunc {
 				page.Revision += 1
 				page.Slug = req.Slug
 			} else {
-				responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+				responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 				return
 			}
@@ -55,7 +62,7 @@ func onAPISaveWikiSlug(env Env) gin.HandlerFunc {
 		page.BodyMD = req.BodyMD
 
 		if errSave := env.Store().SaveWikiPage(ctx, &page); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -74,7 +81,7 @@ func onAPIPostNewsCreate(env Env) gin.HandlerFunc {
 		}
 
 		if errSave := env.Store().SaveNewsArticle(ctx, &req); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -93,7 +100,7 @@ func onAPIPostNewsUpdate(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		newsID, errID := getIntParam(ctx, "news_id")
 		if errID != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
@@ -106,7 +113,7 @@ func onAPIPostNewsUpdate(env Env) gin.HandlerFunc {
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -116,7 +123,7 @@ func onAPIPostNewsUpdate(env Env) gin.HandlerFunc {
 		}
 
 		if errSave := env.Store().SaveNewsArticle(ctx, &entry); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -132,7 +139,7 @@ func onAPIGetNewsAll(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		newsLatest, errGetNewsLatest := env.Store().GetNewsLatest(ctx, 100, true)
 		if errGetNewsLatest != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -152,7 +159,7 @@ func onAPIQueryWordFilters(env Env) gin.HandlerFunc {
 
 		words, count, errGetFilters := env.Store().GetFilters(ctx, opts)
 		if errGetFilters != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -171,14 +178,14 @@ func onAPIPostWordFilter(env Env) gin.HandlerFunc {
 		}
 
 		if req.Pattern == "" {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
 
 		_, errDur := util.ParseDuration(req.Duration)
 		if errDur != nil {
-			responseErr(ctx, http.StatusBadRequest, errors.New("invalid duration format"))
+			responseErr(ctx, http.StatusBadRequest, util.ErrInvalidDuration)
 
 			return
 		}
@@ -186,14 +193,14 @@ func onAPIPostWordFilter(env Env) gin.HandlerFunc {
 		if req.IsRegex {
 			_, compErr := regexp.Compile(req.Pattern)
 			if compErr != nil {
-				responseErr(ctx, http.StatusBadRequest, errors.New("invalid regex"))
+				responseErr(ctx, http.StatusBadRequest, errInvalidRegex)
 
 				return
 			}
 		}
 
 		if req.Weight < 1 {
-			responseErr(ctx, http.StatusBadRequest, errors.New("invalid weight"))
+			responseErr(ctx, http.StatusBadRequest, errInvalidWeight)
 
 			return
 		}
@@ -209,7 +216,7 @@ func onAPIPostWordFilter(env Env) gin.HandlerFunc {
 					return
 				}
 
-				responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+				responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 				return
 			}
@@ -223,7 +230,7 @@ func onAPIPostWordFilter(env Env) gin.HandlerFunc {
 			existingFilter.Weight = req.Weight
 
 			if errSave := env.FilterAdd(ctx, &existingFilter); errSave != nil {
-				responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+				responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 				return
 			}
@@ -244,7 +251,7 @@ func onAPIPostWordFilter(env Env) gin.HandlerFunc {
 			}
 
 			if errSave := env.FilterAdd(ctx, &newFilter); errSave != nil {
-				responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+				responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 				return
 			}
@@ -260,7 +267,7 @@ func onAPIDeleteWordFilter(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		wordID, wordIDErr := getInt64Param(ctx, "word_id")
 		if wordIDErr != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
@@ -273,13 +280,13 @@ func onAPIDeleteWordFilter(env Env) gin.HandlerFunc {
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
 
 		if errDrop := env.Store().DropFilter(ctx, &filter); errDrop != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -303,7 +310,7 @@ func onAPIPostWordMatch(env Env) gin.HandlerFunc {
 
 		words, _, errGetFilters := env.Store().GetFilters(ctx, model.FiltersQueryFilter{})
 		if errGetFilters != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -324,7 +331,7 @@ func onAPIExportBansValveIP(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		bans, _, errBans := env.Store().GetBansNet(ctx, model.CIDRBansQueryFilter{})
 		if errBans != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -355,7 +362,7 @@ func onAPISearchPlayers(env Env) gin.HandlerFunc {
 
 		people, count, errGetPeople := env.Store().GetPeople(ctx, query)
 		if errGetPeople != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -368,7 +375,7 @@ func onAPIPostBanState(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		reportID, errID := getInt64Param(ctx, "report_id")
 		if errID != nil || reportID <= 0 {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
@@ -381,7 +388,7 @@ func onAPIPostBanState(env Env) gin.HandlerFunc {
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -406,7 +413,7 @@ func onAPIQueryPersonConnections(env Env) gin.HandlerFunc {
 		ipHist, totalCount, errIPHist := env.Store().QueryConnectionHistory(ctx, req)
 		if errIPHist != nil && !errors.Is(errIPHist, errs.ErrNoResult) {
 			log.Error("Failed to query connection history", zap.Error(errIPHist))
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -421,7 +428,7 @@ func onAPIQueryMessageContext(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		messageID, errMessageID := getInt64Param(ctx, "person_message_id")
 		if errMessageID != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 			log.Debug("Got invalid person_message_id", zap.Error(errMessageID))
 
 			return
@@ -429,7 +436,7 @@ func onAPIQueryMessageContext(env Env) gin.HandlerFunc {
 
 		padding, errPadding := getIntParam(ctx, "padding")
 		if errPadding != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 			log.Debug("Got invalid padding", zap.Error(errPadding))
 
 			return
@@ -437,14 +444,14 @@ func onAPIQueryMessageContext(env Env) gin.HandlerFunc {
 
 		var msg model.QueryChatHistoryResult
 		if errMsg := env.Store().GetPersonMessage(ctx, messageID, &msg); errMsg != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
 
 		messages, errQuery := env.Store().GetPersonMessageContext(ctx, msg.ServerID, messageID, padding)
 		if errQuery != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -464,7 +471,7 @@ func onAPIGetAppeals(env Env) gin.HandlerFunc {
 
 		bans, total, errBans := env.Store().GetAppealsByActivity(ctx, req)
 		if errBans != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to fetch appeals", zap.Error(errBans))
 
 			return
@@ -485,7 +492,7 @@ func onAPIGetBansSteam(env Env) gin.HandlerFunc {
 
 		bans, count, errBans := env.Store().GetBansSteam(ctx, req)
 		if errBans != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to fetch steam bans", zap.Error(errBans))
 
 			return
@@ -501,7 +508,7 @@ func onAPIPostBanDelete(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		banID, banIDErr := getInt64Param(ctx, "ban_id")
 		if banIDErr != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
@@ -513,20 +520,20 @@ func onAPIPostBanDelete(env Env) gin.HandlerFunc {
 
 		bannedPerson := model.NewBannedPerson()
 		if banErr := env.Store().GetBanByBanID(ctx, banID, &bannedPerson, false); banErr != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
 
 		changed, errSave := env.Unban(ctx, bannedPerson.TargetID, req.UnbanReasonText)
 		if errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
 
 		if !changed {
-			responseErr(ctx, http.StatusNotFound, errors.New("Failed to save unban"))
+			responseErr(ctx, http.StatusNotFound, errUnbanFailed)
 
 			return
 		}
@@ -551,7 +558,7 @@ func onAPIPostBanUpdate(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		banID, banIDErr := getInt64Param(ctx, "ban_id")
 		if banIDErr != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
@@ -562,7 +569,7 @@ func onAPIPostBanUpdate(env Env) gin.HandlerFunc {
 		}
 
 		if time.Since(req.ValidUntil) > 0 {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
@@ -576,7 +583,7 @@ func onAPIPostBanUpdate(env Env) gin.HandlerFunc {
 
 		if req.Reason == model.Custom {
 			if req.ReasonText == "" {
-				responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+				responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 				return
 			}
@@ -593,7 +600,7 @@ func onAPIPostBanUpdate(env Env) gin.HandlerFunc {
 		bannedPerson.ValidUntil = req.ValidUntil
 
 		if errSave := env.Store().SaveBan(ctx, &bannedPerson.BanSteam); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to save updated ban", zap.Error(errSave))
 
 			return
@@ -613,7 +620,7 @@ func onAPIPostSetBanAppealStatus(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		banID, banIDErr := getInt64Param(ctx, "ban_id")
 		if banIDErr != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
@@ -625,13 +632,13 @@ func onAPIPostSetBanAppealStatus(env Env) gin.HandlerFunc {
 
 		bannedPerson := model.NewBannedPerson()
 		if banErr := env.Store().GetBanByBanID(ctx, banID, &bannedPerson, false); banErr != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
 
 		if bannedPerson.AppealState == req.AppealState {
-			responseErr(ctx, http.StatusConflict, errors.New("State must be different than previous"))
+			responseErr(ctx, http.StatusConflict, errStateUnchanged)
 
 			return
 		}
@@ -640,7 +647,7 @@ func onAPIPostSetBanAppealStatus(env Env) gin.HandlerFunc {
 		bannedPerson.AppealState = req.AppealState
 
 		if errSave := env.Store().SaveBan(ctx, &bannedPerson.BanSteam); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -680,7 +687,7 @@ func onAPIPostBansCIDRCreate(env Env) gin.HandlerFunc {
 
 		duration, errDuration := util.CalcDuration(req.Duration, req.ValidUntil)
 		if errDuration != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
@@ -697,7 +704,7 @@ func onAPIPostBansCIDRCreate(env Env) gin.HandlerFunc {
 			model.Banned,
 			&banCIDR,
 		); errBanCIDR != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
@@ -709,7 +716,7 @@ func onAPIPostBansCIDRCreate(env Env) gin.HandlerFunc {
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to save cidr ban", zap.Error(errBan))
 
 			return
@@ -730,7 +737,7 @@ func onAPIGetBansCIDR(env Env) gin.HandlerFunc {
 
 		bans, count, errBans := env.Store().GetBansNet(ctx, req)
 		if errBans != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to fetch cidr bans", zap.Error(errBans))
 
 			return
@@ -746,7 +753,7 @@ func onAPIDeleteBansCIDR(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		netID, netIDErr := getInt64Param(ctx, "net_id")
 		if netIDErr != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
@@ -758,7 +765,7 @@ func onAPIDeleteBansCIDR(env Env) gin.HandlerFunc {
 
 		var banCidr model.BanCIDR
 		if errFetch := env.Store().GetBanNetByID(ctx, netID, &banCidr); errFetch != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -767,7 +774,7 @@ func onAPIDeleteBansCIDR(env Env) gin.HandlerFunc {
 		banCidr.Deleted = true
 
 		if errSave := env.Store().SaveBanNet(ctx, &banCidr); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to delete cidr ban", zap.Error(errSave))
 
 			return
@@ -794,7 +801,7 @@ func onAPIPostBansCIDRUpdate(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		netID, banIDErr := getInt64Param(ctx, "net_id")
 		if banIDErr != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
@@ -806,7 +813,7 @@ func onAPIPostBansCIDRUpdate(env Env) gin.HandlerFunc {
 				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -818,20 +825,20 @@ func onAPIPostBansCIDRUpdate(env Env) gin.HandlerFunc {
 
 		sid, errSID := req.TargetID.SID64(ctx)
 		if errSID != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
 
 		if req.Reason == model.Custom && req.ReasonText == "" {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
 
 		_, ipNet, errParseCIDR := net.ParseCIDR(req.CIDR)
 		if errParseCIDR != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
@@ -844,7 +851,7 @@ func onAPIPostBansCIDRUpdate(env Env) gin.HandlerFunc {
 		ban.TargetID = sid
 
 		if errSave := env.Store().SaveBanNet(ctx, &ban); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -879,7 +886,7 @@ func onAPIPostBansASNCreate(env Env) gin.HandlerFunc {
 
 		duration, errDuration := util.CalcDuration(req.Duration, req.ValidUntil)
 		if errDuration != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
@@ -896,7 +903,7 @@ func onAPIPostBansASNCreate(env Env) gin.HandlerFunc {
 			model.Banned,
 			&banASN,
 		); errBanSteamGroup != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
@@ -908,7 +915,7 @@ func onAPIPostBansASNCreate(env Env) gin.HandlerFunc {
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			log.Error("Failed to save asn ban", zap.Error(errBan))
 
@@ -930,7 +937,7 @@ func onAPIGetBansASN(env Env) gin.HandlerFunc {
 
 		bansASN, count, errBans := env.Store().GetBansASN(ctx, req)
 		if errBans != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to fetch banASN", zap.Error(errBans))
 
 			return
@@ -946,7 +953,7 @@ func onAPIDeleteBansASN(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		asnID, asnIDErr := getInt64Param(ctx, "asn_id")
 		if asnIDErr != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
@@ -958,7 +965,7 @@ func onAPIDeleteBansASN(env Env) gin.HandlerFunc {
 
 		var banAsn model.BanASN
 		if errFetch := env.Store().GetBanASN(ctx, asnID, &banAsn); errFetch != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -967,7 +974,7 @@ func onAPIDeleteBansASN(env Env) gin.HandlerFunc {
 		banAsn.Deleted = true
 
 		if errSave := env.Store().SaveBanASN(ctx, &banAsn); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to delete asn ban", zap.Error(errSave))
 
 			return
@@ -993,7 +1000,7 @@ func onAPIPostBansASNUpdate(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		asnID, asnIDErr := getInt64Param(ctx, "asn_id")
 		if asnIDErr != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
@@ -1006,7 +1013,7 @@ func onAPIPostBansASNUpdate(env Env) gin.HandlerFunc {
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -1017,14 +1024,14 @@ func onAPIPostBansASNUpdate(env Env) gin.HandlerFunc {
 		}
 
 		if ban.Reason == model.Custom && req.ReasonText == "" {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
 
 		sid, errSID := req.TargetID.SID64(ctx)
 		if errSID != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
@@ -1036,7 +1043,7 @@ func onAPIPostBansASNUpdate(env Env) gin.HandlerFunc {
 		ban.ReasonText = req.ReasonText
 
 		if errSave := env.Store().SaveBanASN(ctx, &ban); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -1078,7 +1085,7 @@ func onAPIPostBansGroupCreate(env Env) gin.HandlerFunc {
 
 		duration, errDuration := util.CalcDuration(req.Duration, req.ValidUntil)
 		if errDuration != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
@@ -1094,7 +1101,7 @@ func onAPIPostBansGroupCreate(env Env) gin.HandlerFunc {
 			model.Banned,
 			&banSteamGroup,
 		); errBanSteamGroup != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 			log.Error("Failed to save group ban", zap.Error(errBanSteamGroup))
 
 			return
@@ -1107,13 +1114,10 @@ func onAPIPostBansGroupCreate(env Env) gin.HandlerFunc {
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
-
-		// Immediately update group members
-		// go app.updateBanChildren(ctx)
 
 		ctx.JSON(http.StatusCreated, banSteamGroup)
 	}
@@ -1130,7 +1134,7 @@ func onAPIGetBansGroup(env Env) gin.HandlerFunc {
 
 		banGroups, count, errBans := env.Store().GetBanGroups(ctx, req)
 		if errBans != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to fetch banGroups", zap.Error(errBans))
 
 			return
@@ -1146,7 +1150,7 @@ func onAPIDeleteBansGroup(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		groupID, groupIDErr := getInt64Param(ctx, "ban_group_id")
 		if groupIDErr != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInternal)
+			responseErr(ctx, http.StatusBadRequest, errInternal)
 
 			return
 		}
@@ -1158,7 +1162,7 @@ func onAPIDeleteBansGroup(env Env) gin.HandlerFunc {
 
 		var banGroup model.BanGroup
 		if errFetch := env.Store().GetBanGroupByID(ctx, groupID, &banGroup); errFetch != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInternal)
+			responseErr(ctx, http.StatusBadRequest, errInternal)
 
 			return
 		}
@@ -1167,15 +1171,13 @@ func onAPIDeleteBansGroup(env Env) gin.HandlerFunc {
 		banGroup.Deleted = true
 
 		if errSave := env.Store().SaveBanGroup(ctx, &banGroup); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to delete asn ban", zap.Error(errSave))
 
 			return
 		}
 
 		banGroup.BanGroupID = 0
-
-		// go app.updateBanChildren(ctx)
 
 		ctx.JSON(http.StatusOK, banGroup)
 	}
@@ -1193,7 +1195,7 @@ func onAPIPostBansGroupUpdate(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		banGroupID, banIDErr := getInt64Param(ctx, "ban_group_id")
 		if banIDErr != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
@@ -1205,7 +1207,7 @@ func onAPIPostBansGroupUpdate(env Env) gin.HandlerFunc {
 
 		sid, errSID := req.TargetID.SID64(ctx)
 		if errSID != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
@@ -1229,7 +1231,7 @@ func onAPIPostBansGroupUpdate(env Env) gin.HandlerFunc {
 		ban.TargetID = sid
 
 		if errSave := env.Store().SaveBanGroup(ctx, &ban); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -1281,7 +1283,7 @@ func onAPIPostContest(env Env) gin.HandlerFunc {
 		if newContest.ContestID.IsNil() {
 			newID, errID := uuid.NewV4()
 			if errID != nil {
-				responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+				responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 				return
 			}
@@ -1290,7 +1292,7 @@ func onAPIPostContest(env Env) gin.HandlerFunc {
 		}
 
 		if errSave := env.Store().ContestSave(ctx, &newContest); errSave != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
@@ -1305,7 +1307,7 @@ func onAPIDeleteContest(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		contestID, idErr := getUUIDParam(ctx, "contest_id")
 		if idErr != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
@@ -1319,7 +1321,7 @@ func onAPIDeleteContest(env Env) gin.HandlerFunc {
 				return
 			}
 
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			log.Error("Error getting contest for deletion", zap.Error(errContest))
 
@@ -1327,7 +1329,7 @@ func onAPIDeleteContest(env Env) gin.HandlerFunc {
 		}
 
 		if errDelete := env.Store().ContestDelete(ctx, contest.ContestID); errDelete != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			log.Error("Error deleting contest", zap.Error(errDelete))
 
@@ -1356,7 +1358,7 @@ func onAPIUpdateContest(env Env) gin.HandlerFunc {
 		}
 
 		if errSave := env.Store().ContestSave(ctx, &contest); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			log.Error("Error updating contest", zap.Error(errSave))
 
@@ -1394,7 +1396,7 @@ func onAPICreateForumCategory(env Env) gin.HandlerFunc {
 		}
 
 		if errSave := env.Store().ForumCategorySave(ctx, &category); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			log.Error("Error creating new forum category", zap.Error(errSave))
 
@@ -1413,7 +1415,7 @@ func onAPIForumCategory(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		forumCategoryID, errCategoryID := getIntParam(ctx, "forum_category_id")
 		if errCategoryID != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
@@ -1421,7 +1423,7 @@ func onAPIForumCategory(env Env) gin.HandlerFunc {
 		var category model.ForumCategory
 
 		if errGet := env.Store().ForumCategory(ctx, forumCategoryID, &category); errGet != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			log.Error("Error fetching forum category", zap.Error(errGet))
 
@@ -1438,14 +1440,14 @@ func onAPIUpdateForumCategory(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		categoryID, errCategoryID := getIntParam(ctx, "forum_category_id")
 		if errCategoryID != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
 
 		var category model.ForumCategory
 		if errGet := env.Store().ForumCategory(ctx, categoryID, &category); errGet != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -1460,7 +1462,7 @@ func onAPIUpdateForumCategory(env Env) gin.HandlerFunc {
 		category.Ordering = req.Ordering
 
 		if errSave := env.Store().ForumCategorySave(ctx, &category); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			log.Error("Error creating new forum category", zap.Error(errSave))
 
@@ -1498,7 +1500,7 @@ func onAPICreateForumForum(env Env) gin.HandlerFunc {
 		}
 
 		if errSave := env.Store().ForumSave(ctx, &forum); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			log.Error("Error creating new forum", zap.Error(errSave))
 
@@ -1517,14 +1519,14 @@ func onAPIUpdateForumForum(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		forumID, errForumID := getIntParam(ctx, "forum_id")
 		if errForumID != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
 
 		var forum model.Forum
 		if errGet := env.Store().Forum(ctx, forumID, &forum); errGet != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -1541,7 +1543,7 @@ func onAPIUpdateForumForum(env Env) gin.HandlerFunc {
 		forum.PermissionLevel = req.PermissionLevel
 
 		if errSave := env.Store().ForumSave(ctx, &forum); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			log.Error("Error updating forum", zap.Error(errSave))
 

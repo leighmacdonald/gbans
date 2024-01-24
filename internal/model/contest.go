@@ -10,6 +10,15 @@ import (
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
+var (
+	ErrInvalidContestID   = errors.New("invalid contest id")
+	ErrInvalidDescription = errors.New("invalid description, cannot be empty")
+	ErrGenerateUUID       = errors.New("failed to generate uuid")
+	ErrTitleEmpty         = errors.New("title cannot be empty")
+	ErrDescriptionEmpty   = errors.New("description cannot be empty")
+	ErrEndDateBefore      = errors.New("end date comes before start date")
+)
+
 type Contest struct {
 	TimeStamped
 	ContestID       uuid.UUID `json:"contest_id"`
@@ -72,7 +81,7 @@ type ContestEntryVote struct {
 
 func (c Contest) NewEntry(steamID steamid.SID64, assetID uuid.UUID, description string) (ContestEntry, error) {
 	if c.ContestID.IsNil() {
-		return ContestEntry{}, errors.New("Invalid contest id")
+		return ContestEntry{}, ErrInvalidContestID
 	}
 
 	if !steamID.Valid() {
@@ -80,12 +89,12 @@ func (c Contest) NewEntry(steamID steamid.SID64, assetID uuid.UUID, description 
 	}
 
 	if description == "" {
-		return ContestEntry{}, errors.New("Description cannot be empty")
+		return ContestEntry{}, ErrInvalidDescription
 	}
 
 	newID, errID := uuid.NewV4()
 	if errID != nil {
-		return ContestEntry{}, errors.Join(errID, errors.New("Failed to generate new uuidv4"))
+		return ContestEntry{}, errors.Join(errID, ErrGenerateUUID)
 	}
 
 	return ContestEntry{
@@ -105,19 +114,19 @@ func (c Contest) NewEntry(steamID steamid.SID64, assetID uuid.UUID, description 
 func NewContest(title string, description string, dateStart time.Time, dateEnd time.Time, public bool) (Contest, error) {
 	newID, errID := uuid.NewV4()
 	if errID != nil {
-		return Contest{}, errors.Join(errID, errors.New("Failed to generate uuid"))
+		return Contest{}, errors.Join(errID, ErrGenerateUUID)
 	}
 
 	if title == "" {
-		return Contest{}, errors.New("Title cannot be empty")
+		return Contest{}, ErrTitleEmpty
 	}
 
 	if description == "" {
-		return Contest{}, errors.New("Title cannot be empty")
+		return Contest{}, ErrDescriptionEmpty
 	}
 
 	if dateEnd.Before(dateStart) {
-		return Contest{}, errors.New("End date cannot come before start date")
+		return Contest{}, ErrEndDateBefore
 	}
 
 	contest := Contest{

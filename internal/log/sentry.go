@@ -9,6 +9,8 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+var ErrClientInit = errors.New("failed to initialize sentry client")
+
 func NewSentryClient(dsn string, tracing bool, sampleRate float64, buildVersion string) (*sentry.Client, error) {
 	hub := sentry.CurrentHub()
 	client, errClient := sentry.NewClient(sentry.ClientOptions{
@@ -22,7 +24,7 @@ func NewSentryClient(dsn string, tracing bool, sampleRate float64, buildVersion 
 	})
 
 	if errClient != nil {
-		return nil, errors.Join(errClient, errors.New("Failed to initialize sentry client"))
+		return nil, errors.Join(errClient, ErrClientInit)
 	}
 
 	hub.BindClient(client)

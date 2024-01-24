@@ -108,7 +108,7 @@ func NewPatreonManager(logger *zap.Logger, conf config.Config) *PatreonManager {
 func (p *PatreonManager) Tiers() ([]patreon.Campaign, error) {
 	campaigns, errCampaigns := p.patreonClient.FetchCampaign()
 	if errCampaigns != nil {
-		return nil, errors.Join(errCampaigns, errors.New("Failed to fetch campaign"))
+		return nil, errors.Join(errCampaigns, ErrPatreonFetchCampaign)
 	}
 
 	return campaigns.Data, nil
@@ -117,11 +117,11 @@ func (p *PatreonManager) Tiers() ([]patreon.Campaign, error) {
 func (p *PatreonManager) Pledges() ([]patreon.Pledge, map[string]*patreon.User, error) {
 	campaignResponse, err := p.patreonClient.FetchCampaign()
 	if err != nil {
-		return nil, nil, errors.Join(err, errors.New("Failed to fetch campaign"))
+		return nil, nil, errors.Join(err, ErrPatreonFetchCampaign)
 	}
 
 	if len(campaignResponse.Data) == 0 {
-		return nil, nil, errors.New("No campaign returned")
+		return nil, nil, ErrPatreonInvalidCampaign
 	}
 
 	var (
@@ -137,7 +137,7 @@ func (p *PatreonManager) Pledges() ([]patreon.Pledge, map[string]*patreon.User, 
 			patreon.WithPageSize(25),
 			patreon.WithCursor(cursor))
 		if errFetch != nil {
-			return nil, nil, errors.Join(errFetch, errors.New("Failed to fetch Current Pledges"))
+			return nil, nil, errors.Join(errFetch, ErrPatreonFetchPledges)
 		}
 
 		for _, item := range pledgesResponse.Included.Items {
