@@ -13,7 +13,7 @@ import (
 	"github.com/leighmacdonald/steamweb/v2"
 )
 
-type Groups interface {
+type SteamMember interface {
 	IsMember(steamID steamid.SID64) (int64, bool)
 }
 

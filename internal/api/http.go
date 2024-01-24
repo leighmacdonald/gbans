@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"crypto/tls"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -21,6 +20,16 @@ import (
 
 const ctxKeyUserProfile = "user_profile"
 
+var (
+	errInvalidParameter = errors.New("invalid parameter format")
+	errPermissionDenied = errors.New("permission denied")
+	errBadRequest       = errors.New("invalid request")
+	errInternal         = errors.New("internal server error")
+	errParamKeyMissing  = errors.New("param key not found")
+	errParamParse       = errors.New("failed to parse param value")
+	errParamInvalid     = errors.New("param value invalid")
+)
+
 type apiError struct {
 	Message string `json:"message"`
 }
@@ -36,7 +45,7 @@ func responseErr(ctx *gin.Context, statusCode int, err error) {
 
 func bind(ctx *gin.Context, log *zap.Logger, target any) bool {
 	if errBind := ctx.BindJSON(&target); errBind != nil {
-		responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+		responseErr(ctx, http.StatusBadRequest, errBadRequest)
 		log.Error("Failed to bind request", zap.Error(errBind))
 
 		return false
@@ -62,16 +71,16 @@ func getSID64Param(c *gin.Context, key string) (steamid.SID64, error) {
 func getInt64Param(ctx *gin.Context, key string) (int64, error) {
 	valueStr := ctx.Param(key)
 	if valueStr == "" {
-		return 0, fmt.Errorf("Failed to get %s", key)
+		return 0, fmt.Errorf("%w: %s", errParamKeyMissing, key)
 	}
 
 	value, valueErr := strconv.ParseInt(valueStr, 10, 64)
 	if valueErr != nil {
-		return 0, fmt.Errorf("Failed to parse %s: %v", key, valueErr)
+		return 0, errParamParse
 	}
 
 	if value <= 0 {
-		return 0, fmt.Errorf("Invalid %s: %v", key, valueErr)
+		return 0, fmt.Errorf("%w: %s", errParamInvalid, key)
 	}
 
 	return value, nil
@@ -80,7 +89,7 @@ func getInt64Param(ctx *gin.Context, key string) (int64, error) {
 func getIntParam(ctx *gin.Context, key string) (int, error) {
 	valueStr := ctx.Param(key)
 	if valueStr == "" {
-		return 0, fmt.Errorf("Failed to get %s", key)
+		return 0, fmt.Errorf("%w: %s", errParamKeyMissing, key)
 	}
 
 	return util.StringToInt(valueStr), nil
@@ -89,12 +98,12 @@ func getIntParam(ctx *gin.Context, key string) (int, error) {
 func getUUIDParam(ctx *gin.Context, key string) (uuid.UUID, error) {
 	valueStr := ctx.Param(key)
 	if valueStr == "" {
-		return uuid.UUID{}, fmt.Errorf("Failed to get %s", key)
+		return uuid.UUID{}, fmt.Errorf("%w: %s", errParamKeyMissing, key)
 	}
 
 	parsedUUID, errString := uuid.FromString(valueStr)
 	if errString != nil {
-		return uuid.UUID{}, errors.Join(errString, errors.New("Failed to parse UUID"))
+		return uuid.UUID{}, errors.Join(errString, errParamParse)
 	}
 
 	return parsedUUID, nil
@@ -117,14 +126,14 @@ func serverFromCtx(ctx *gin.Context) int {
 func contestFromCtx(ctx *gin.Context, env Env) (model.Contest, bool) {
 	contestID, idErr := getUUIDParam(ctx, "contest_id")
 	if idErr != nil {
-		responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+		responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 		return model.Contest{}, false
 	}
 
 	var contest model.Contest
 	if errContests := env.Store().ContestByID(ctx, contestID, &contest); errContests != nil {
-		responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+		responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 		return model.Contest{}, false
 	}
@@ -208,7 +217,7 @@ func checkPrivilege(ctx *gin.Context, person model.UserProfile, allowedSteamIds 
 		return true
 	}
 
-	ctx.JSON(http.StatusForbidden, errs.ErrPermissionDenied.Error())
+	ctx.JSON(http.StatusForbidden, errPermissionDenied.Error())
 
 	return false
 }
@@ -220,42 +229,4 @@ type ResultsCount struct {
 type LazyResult struct {
 	Count int64 `json:"count"`
 	Data  any   `json:"data"`
-}
-
-type sbBanRecord struct {
-	BanID       int           `json:"ban_id"`
-	SiteName    string        `json:"site_name"`
-	SiteID      int           `json:"site_id"`
-	PersonaName string        `json:"persona_name"`
-	SteamID     steamid.SID64 `json:"steam_id"`
-	Reason      string        `json:"reason"`
-	Duration    time.Duration `json:"duration"`
-	Permanent   bool          `json:"permanent"`
-	CreatedOn   time.Time     `json:"created_on"`
-}
-
-func getSourceBans(ctx context.Context, steamID steamid.SID64) ([]sbBanRecord, error) {
-	client := &http.Client{Timeout: time.Second * 10}
-	url := fmt.Sprintf("https://bd-api.roto.lol/sourcebans/%s", steamID)
-
-	req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if errReq != nil {
-		return nil, errors.Join(errReq, errors.New("Failed to create request"))
-	}
-
-	resp, errResp := client.Do(req)
-	if errResp != nil {
-		return nil, errors.Join(errResp, errors.New("Failed to perform request"))
-	}
-
-	defer func() {
-		_ = resp.Body.Close()
-	}()
-
-	var records []sbBanRecord
-	if errJSON := json.NewDecoder(resp.Body).Decode(&records); errJSON != nil {
-		return nil, errors.Join(errJSON, errors.New("Failed to decode body"))
-	}
-
-	return records, nil
 }

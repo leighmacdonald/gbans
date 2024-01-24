@@ -1,4 +1,4 @@
-package app
+package thirdparty
 
 import (
 	"context"
@@ -13,6 +13,13 @@ import (
 	"go.uber.org/zap"
 )
 
+var (
+	errFetchGroupBans          = errors.New("failed to fetch group bans")
+	errFetchGroupBanMembersAPI = errors.New("failed to fetch group ban members from steam api")
+	errLoadGroupBanMembersList = errors.New("failed to load group ban members list")
+	errSaveGroupBanMembers     = errors.New("failed to save group ban members list")
+)
+
 type GroupsStore interface {
 	GetBanGroups(ctx context.Context, filter model.GroupBansQueryFilter) ([]model.BannedGroupPerson, int64, error)
 	GetMembersList(ctx context.Context, parentID int64, list *model.MembersList) error
@@ -20,8 +27,8 @@ type GroupsStore interface {
 }
 
 type SteamGroupMemberships struct {
-	members    map[int64]steamid.Collection
-	membersMu  *sync.RWMutex
+	members map[steamid.GID]steamid.Collection
+	*sync.RWMutex
 	log        *zap.Logger
 	store      GroupsStore
 	updateFreq time.Duration
@@ -29,18 +36,18 @@ type SteamGroupMemberships struct {
 
 func NewSteamGroupMemberships(log *zap.Logger, db GroupsStore) *SteamGroupMemberships {
 	return &SteamGroupMemberships{
+		RWMutex:    &sync.RWMutex{},
 		store:      db,
 		log:        log.Named("SteamGroupMemberships"),
-		members:    map[int64]steamid.Collection{},
-		membersMu:  &sync.RWMutex{},
+		members:    map[steamid.GID]steamid.Collection{},
 		updateFreq: time.Minute * 60,
 	}
 }
 
 // IsMember checks membership in the currently known banned group members.
-func (g *SteamGroupMemberships) IsMember(steamID steamid.SID64) (int64, bool) {
-	g.membersMu.RLock()
-	defer g.membersMu.RUnlock()
+func (g *SteamGroupMemberships) IsMember(steamID steamid.SID64) (steamid.GID, bool) {
+	g.RLock()
+	defer g.RUnlock()
 
 	for parentID, groupMembers := range g.members {
 		for _, member := range groupMembers {
@@ -50,11 +57,11 @@ func (g *SteamGroupMemberships) IsMember(steamID steamid.SID64) (int64, bool) {
 		}
 	}
 
-	return 0, false
+	return "", false
 }
 
 func (g *SteamGroupMemberships) update(ctx context.Context) {
-	newMap := map[int64]steamid.Collection{}
+	newMap := map[steamid.GID]steamid.Collection{}
 
 	var total int
 
@@ -66,9 +73,9 @@ func (g *SteamGroupMemberships) update(ctx context.Context) {
 		}
 	}
 
-	g.membersMu.Lock()
+	g.Lock()
 	g.members = newMap
-	g.membersMu.Unlock()
+	g.Unlock()
 
 	g.log.Info("Updated group memberships", zap.Int("count", total))
 }
@@ -77,8 +84,8 @@ func (g *SteamGroupMemberships) update(ctx context.Context) {
 // NOT use the steam API, so be careful to not call too often.
 //
 // Group IDs can be found using https://steamcommunity.com/groups/<GROUP_NAME>/memberslistxml/?xml=1
-func (g *SteamGroupMemberships) updateGroupBanMembers(ctx context.Context) (map[int64]steamid.Collection, error) {
-	newMap := map[int64]steamid.Collection{}
+func (g *SteamGroupMemberships) updateGroupBanMembers(ctx context.Context) (map[steamid.GID]steamid.Collection, error) {
+	newMap := map[steamid.GID]steamid.Collection{}
 
 	localCtx, cancel := context.WithTimeout(ctx, time.Second*120)
 	defer cancel()
@@ -89,13 +96,13 @@ func (g *SteamGroupMemberships) updateGroupBanMembers(ctx context.Context) (map[
 			return newMap, nil
 		}
 
-		return nil, errors.Join(errGroups, errors.New("Failed to fetch banned groups"))
+		return nil, errors.Join(errGroups, errFetchGroupBans)
 	}
 
 	for _, group := range groups {
 		members, errMembers := steamweb.GetGroupMembers(localCtx, group.GroupID)
 		if errMembers != nil {
-			return nil, errors.Join(errMembers, errors.New("Failed to fetch group members"))
+			return nil, errors.Join(errMembers, errFetchGroupBanMembersAPI)
 		}
 
 		if len(members) == 0 {
@@ -105,18 +112,18 @@ func (g *SteamGroupMemberships) updateGroupBanMembers(ctx context.Context) (map[
 		memberList := model.NewMembersList(group.GroupID.Int64(), members)
 		if errQuery := g.store.GetMembersList(ctx, group.GroupID.Int64(), &memberList); errQuery != nil {
 			if !errors.Is(errQuery, errs.ErrNoResult) {
-				return nil, errors.Join(errQuery, errors.New("Failed to fetch members list"))
+				return nil, errors.Join(errQuery, errLoadGroupBanMembersList)
 			}
 		}
 
 		if errSave := g.store.SaveMembersList(ctx, &memberList); errSave != nil {
-			return nil, errors.Join(errSave, errors.New("Failed to save banned groups member list"))
+			return nil, errors.Join(errSave, errSaveGroupBanMembers)
 		}
 
-		newMap[group.GroupID.Int64()] = members
+		newMap[group.GroupID] = members
 
 		// Group info doesn't use the steam api so its *heavily* rate limited. Let's try to minimize the ability to
-		// get banned incase there is a lot of banned groups. This probably need to be increased if you are blocked a
+		// get banned incase there is a lot of banned groups. This probably need to be increased if you are blocking a
 		// large amount of groups.
 		time.Sleep(time.Second * 5)
 	}

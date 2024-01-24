@@ -17,11 +17,13 @@ import (
 	"github.com/leighmacdonald/gbans/internal/activity"
 	"github.com/leighmacdonald/gbans/internal/api"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/errs"
 	"github.com/leighmacdonald/gbans/internal/model"
 	"github.com/leighmacdonald/gbans/internal/s3"
 	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/gbans/pkg/wiki"
@@ -44,13 +46,14 @@ type App struct {
 	logFileChan      chan *logFilePayload
 	notificationChan chan NotificationPayload
 	state            *state.Collector
-	steamGroups      *SteamGroupMemberships
+	steamGroups      *thirdparty.SteamGroupMemberships
+	steamFriends     *thirdparty.SteamFriends
 	patreon          *PatreonManager
 	eb               *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 	wordFilters      *WordFilters
 	warningTracker   *Tracker
 	mc               *metricCollector
-	assetStore       s3.AssetStore
+	assetStore       *s3.Client
 	logListener      *logparse.UDPLogListener
 	activityTracker  *activity.Tracker
 	netBlock         *Blocker
@@ -61,7 +64,7 @@ type App struct {
 
 type CommandHandler func(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error)
 
-func New(conf config.Config, database store.Stores, bot *Bot, logger *zap.Logger, assetStore s3.AssetStore) *App {
+func New(conf config.Config, database store.Stores, bot *Bot, logger *zap.Logger, assetStore *s3.Client) *App {
 	eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
 	filters := NewWordFilters()
 	matchUUIDMap := fp.NewMutexMap[int, uuid.UUID]()
@@ -74,7 +77,8 @@ func New(conf config.Config, database store.Stores, bot *Bot, logger *zap.Logger
 		log:              logger,
 		logFileChan:      make(chan *logFilePayload, 10),
 		notificationChan: make(chan NotificationPayload, 5),
-		steamGroups:      NewSteamGroupMemberships(logger, database),
+		steamGroups:      thirdparty.NewSteamGroupMemberships(logger, database),
+		steamFriends:     thirdparty.NewSteamFriends(logger, database),
 		patreon:          NewPatreonManager(logger, conf),
 		wordFilters:      filters,
 		mc:               newMetricCollector(),
@@ -125,7 +129,7 @@ func (app *App) Config() config.Config {
 	return app.conf
 }
 
-func (app *App) Warnings() model.Warnings {
+func (app *App) Warnings() model.Warnings { //nolint:ireturn
 	return app.warningTracker
 }
 
@@ -133,11 +137,11 @@ func (app *App) State() *state.Collector {
 	return app.state
 }
 
-func (app *App) Patreon() model.Patreon {
+func (app *App) Patreon() model.Patreon { //nolint:ireturn
 	return app.patreon
 }
 
-func (app *App) NetBlocks() model.NetBLocker {
+func (app *App) NetBlocks() model.NetBLocker { //nolint:ireturn
 	return app.netBlock
 }
 
@@ -145,8 +149,12 @@ func (app *App) Store() store.Stores {
 	return app.db
 }
 
-func (app *App) Groups() model.Groups {
+func (app *App) Groups() *thirdparty.SteamGroupMemberships { //nolint:ireturn
 	return app.steamGroups
+}
+
+func (app *App) Friends() *thirdparty.SteamFriends { //nolint:ireturn
+	return app.steamFriends
 }
 
 func (app *App) WordFilters() *WordFilters {
@@ -157,7 +165,7 @@ func (app *App) Log() *zap.Logger {
 	return app.log
 }
 
-func (app *App) Assets() s3.AssetStore {
+func (app *App) Assets() *s3.Client {
 	return app.assetStore
 }
 
@@ -187,6 +195,7 @@ func (app *App) startWorkers(ctx context.Context) {
 		return app.Store()
 	})
 	go app.activityTracker.Start(ctx)
+	go app.steamFriends.Start(ctx)
 }
 
 func (app *App) setConfig(conf config.Config) {
@@ -198,7 +207,7 @@ func (app *App) setConfig(conf config.Config) {
 
 func firstTimeSetup(ctx context.Context, conf config.Config, database store.Stores, weaponMap fp.MutexMap[logparse.Weapon, int]) error {
 	if !conf.General.Owner.Valid() {
-		return errors.New("Configured owner is not a valid steam64")
+		return errOwnerInvalid
 	}
 
 	localCtx, cancel := context.WithTimeout(ctx, time.Second*5)
@@ -208,14 +217,14 @@ func firstTimeSetup(ctx context.Context, conf config.Config, database store.Stor
 
 	if errRootUser := database.GetPersonBySteamID(localCtx, conf.General.Owner, &owner); errRootUser != nil {
 		if !errors.Is(errRootUser, errs.ErrNoResult) {
-			return errors.Join(errRootUser, errors.New("Failed first time setup"))
+			return errors.Join(errRootUser, errCreateAdmin)
 		}
 
 		newOwner := model.NewPerson(conf.General.Owner)
 		newOwner.PermissionLevel = model.PAdmin
 
 		if errSave := database.SavePerson(localCtx, &newOwner); errSave != nil {
-			return errors.Join(errSave, errors.New("Failed to create admin user"))
+			return errors.Join(errSave, errSetupAdmin)
 		}
 
 		newsEntry := model.NewsEntry{
@@ -227,7 +236,7 @@ func firstTimeSetup(ctx context.Context, conf config.Config, database store.Stor
 		}
 
 		if errSave := database.SaveNewsArticle(localCtx, &newsEntry); errSave != nil {
-			return errors.Join(errSave, errors.New("Failed to create sample news entry"))
+			return errors.Join(errSave, errSetupNews)
 		}
 
 		server := model.NewServer("server-1", "127.0.0.1", 27015)
@@ -240,7 +249,7 @@ func firstTimeSetup(ctx context.Context, conf config.Config, database store.Stor
 		server.Region = "asia"
 
 		if errSave := database.SaveServer(localCtx, &server); errSave != nil {
-			return errors.Join(errSave, errors.New("Failed to create sample server entry"))
+			return errors.Join(errSave, errSetupServer)
 		}
 
 		page := wiki.Page{
@@ -252,12 +261,12 @@ func firstTimeSetup(ctx context.Context, conf config.Config, database store.Stor
 		}
 
 		if errSave := database.SaveWikiPage(localCtx, &page); errSave != nil {
-			return errors.Join(errSave, errors.New("Failed to create sample wiki entry"))
+			return errors.Join(errSave, errSetupWiki)
 		}
 	}
 
 	if errWeapons := database.LoadWeapons(ctx, weaponMap); errWeapons != nil {
-		return errors.Join(errWeapons, errors.New("Failed to load weapons"))
+		return errors.Join(errWeapons, errSetupWeapons)
 	}
 
 	return nil
@@ -280,7 +289,7 @@ func (app *App) Init(ctx context.Context) error {
 	if app.Config().Filter.Enabled {
 		count, errFilter := app.LoadFilters(ctx)
 		if errFilter != nil {
-			return errors.Join(errFilter, errors.New("Failed to load filters"))
+			return errLoadFilters
 		}
 
 		app.log.Info("Loaded filter list", zap.Int64("count", count))
@@ -296,7 +305,7 @@ func (app *App) Init(ctx context.Context) error {
 func (app *App) loadNetBlocks(ctx context.Context) error {
 	sources, errSource := app.db.GetCIDRBlockSources(ctx)
 	if errSource != nil {
-		return errors.Join(errSource, errors.New("Failed to load block sources"))
+		return errors.Join(errSource, errInitNetBlocks)
 	}
 
 	var total atomic.Int64
@@ -327,7 +336,7 @@ func (app *App) loadNetBlocks(ctx context.Context) error {
 	whitelists, errWhitelists := app.db.GetCIDRBlockWhitelists(ctx)
 	if errWhitelists != nil {
 		if !errors.Is(errWhitelists, errs.ErrNoResult) {
-			return errors.Join(errWhitelists, errors.New("Failed to load cidr block whitelists"))
+			return errors.Join(errWhitelists, errInitNetWhitelist)
 		}
 	}
 
@@ -367,7 +376,7 @@ func (app *App) StartHTTP(ctx context.Context) error {
 
 	errServe := httpServer.ListenAndServe()
 	if errServe != nil && !errors.Is(errServe, http.ErrServerClosed) {
-		return errors.Join(errServe, errors.New("HTTP listener returned error"))
+		return errors.Join(errServe, errHTTPServer)
 	}
 
 	return nil
@@ -524,7 +533,7 @@ func (app *App) LoadFilters(ctx context.Context) (int64, error) {
 			return 0, nil
 		}
 
-		return 0, errors.Join(errGetFilters, errors.New("Failed to fetch filters"))
+		return 0, errors.Join(errGetFilters, errLoadFilters)
 	}
 
 	app.wordFilters.Import(words)
@@ -594,7 +603,7 @@ func (app *App) SendNotification(ctx context.Context, notification NotificationP
 	if notification.MinPerms >= model.PUser {
 		sids, errIds := app.db.GetSteamIdsAbove(ctx, notification.MinPerms)
 		if errIds != nil {
-			return errors.Join(errIds, errors.New("Failed to fetch steamids for notification"))
+			return errors.Join(errIds, errNotificationSteamIDs)
 		}
 
 		notification.Sids = append(notification.Sids, sids...)
@@ -604,7 +613,7 @@ func (app *App) SendNotification(ctx context.Context, notification NotificationP
 
 	people, errPeople := app.db.GetPeopleBySteamID(ctx, uniqueIds)
 	if errPeople != nil && !errors.Is(errPeople, errs.ErrNoResult) {
-		return errors.Join(errPeople, errors.New("Failed to fetch people for notification"))
+		return errors.Join(errPeople, errNotificationPeople)
 	}
 
 	var discordIds []string
@@ -615,16 +624,11 @@ func (app *App) SendNotification(ctx context.Context, notification NotificationP
 		}
 	}
 
-	// go func(ids []string, payload NotificationPayload) {
-	//	for _, discordID := range ids {
-	//		msgEmbed := discord.NewEmbed(app.Config(), "Notification", payload.Message)
-	//		if payload.Link != "" {
-	//			msgEmbed.Embed().SetURL(payload.Link)
-	//		}
-	//
-	//		app.SendPayload(discordID, msgEmbed.Embed().Truncate().MessageEmbed)
-	//	}
-	// }(discordIds, notification)
+	go func(ids []string, payload NotificationPayload) {
+		for _, discordID := range ids {
+			app.SendPayload(discordID, discord.NotificationMessage(payload.Message, payload.Link))
+		}
+	}(discordIds, notification)
 
 	// Broadcast to
 	for _, sid := range uniqueIds {

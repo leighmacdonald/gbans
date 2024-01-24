@@ -25,7 +25,10 @@ import (
 	"go.uber.org/zap"
 )
 
-var ErrRCONCommand = errors.New("failed to execute rcon command")
+var (
+	ErrRCONCommand      = errors.New("failed to execute rcon command")
+	ErrFailedToDialRCON = errors.New("failed to connect to conf")
+)
 
 // ServerState contains the entire State for the servers. This
 // contains sensitive information and should only be used where needed
@@ -274,7 +277,7 @@ func (c *Collector) ExecServer(ctx context.Context, serverID int, cmd string) (s
 func (c *Collector) ExecRaw(ctx context.Context, addr string, password string, cmd string) (string, error) {
 	conn, errConn := rcon.Dial(ctx, addr, password, time.Second*5)
 	if errConn != nil {
-		return "", fmt.Errorf("dailed to connect to conf")
+		return "", errors.Join(errConn, ErrFailedToDialRCON)
 	}
 
 	resp, errExec := conn.Exec(cmd)

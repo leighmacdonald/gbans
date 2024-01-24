@@ -16,6 +16,13 @@ import (
 	"github.com/spf13/viper"
 )
 
+var (
+	ErrDecodeDuration = errors.New("failed to decode duration")
+	ErrReadConfig     = errors.New("failed to read config file")
+	ErrFormatConfig   = errors.New("config file format invalid")
+	ErrSteamAPIKey    = errors.New("failed to set steam api key")
+)
+
 type LinkablePath interface {
 	Path() string
 }
@@ -194,7 +201,7 @@ func decodeDuration() mapstructure.DecodeHookFuncType {
 
 		duration, errDuration := util.ParseUserStringDuration(data.(string))
 		if errDuration != nil {
-			return nil, errors.Join(errDuration, errors.New("Cannot parse invalid duration"))
+			return nil, errors.Join(errDuration, fmt.Errorf("%w: %s", ErrDecodeDuration, target.String()))
 		}
 
 		return duration, nil
@@ -206,11 +213,11 @@ func Read(conf *Config, noFileOk bool) error {
 	setDefaultConfigValues()
 
 	if errReadConfig := viper.ReadInConfig(); errReadConfig != nil && !noFileOk {
-		return errors.Join(errReadConfig, errors.New("Failed to read config file"))
+		return errors.Join(errReadConfig, ErrReadConfig)
 	}
 
 	if errUnmarshal := viper.Unmarshal(conf, viper.DecodeHook(mapstructure.DecodeHookFunc(decodeDuration()))); errUnmarshal != nil {
-		return errors.Join(errUnmarshal, errors.New("Invalid config file format"))
+		return errors.Join(errUnmarshal, ErrFormatConfig)
 	}
 
 	if strings.HasPrefix(conf.DB.DSN, "pgx://") {
@@ -220,11 +227,11 @@ func Read(conf *Config, noFileOk bool) error {
 	gin.SetMode(conf.General.Mode.String())
 
 	if errSteam := steamid.SetKey(conf.General.SteamKey); errSteam != nil {
-		return errors.Join(errSteam, errors.New("Failed to set steamid api key"))
+		return errors.Join(errSteam, ErrSteamAPIKey)
 	}
 
 	if errSteamWeb := steamweb.SetKey(conf.General.SteamKey); errSteamWeb != nil {
-		return errors.Join(errSteamWeb, errors.New("Failed to set steamweb api key"))
+		return errors.Join(errSteamWeb, ErrSteamAPIKey)
 	}
 
 	return nil

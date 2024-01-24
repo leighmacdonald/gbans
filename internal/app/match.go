@@ -12,11 +12,6 @@ import (
 	"go.uber.org/zap"
 )
 
-var (
-	ErrInsufficientPlayers = errors.New("insufficient Match players")
-	ErrIncompleteMatch     = errors.New("insufficient match data")
-)
-
 // Context represents the current Match on any given server instance.
 type Context struct {
 	Match          logparse.Match
@@ -148,7 +143,7 @@ func onMatchComplete(env *App) OnCompleteFunc {
 
 		var fullServer model.Server
 		if err := env.Store().GetServer(ctx, server.ServerID, &fullServer); err != nil {
-			return errors.Join(err, errors.New("Failed to load findMatch server"))
+			return errors.Join(err, errLoadServer)
 		}
 
 		if !fullServer.EnableStats {
@@ -167,13 +162,13 @@ func onMatchComplete(env *App) OnCompleteFunc {
 			if errors.Is(errSave, ErrInsufficientPlayers) {
 				return ErrInsufficientPlayers
 			} else {
-				return errors.Join(errSave, errors.New("Failed to save findMatch"))
+				return errors.Join(errSave, errSaveMatch)
 			}
 		}
 
 		var result model.MatchResult
 		if errResult := env.Store().MatchGetByID(ctx, matchContext.Match.MatchID, &result); errResult != nil {
-			return errors.Join(errResult, errors.New("Failed to load findMatch"))
+			return errors.Join(errResult, errLoadMatch)
 		}
 
 		conf := env.Config()

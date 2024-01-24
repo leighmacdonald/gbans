@@ -6,8 +6,8 @@ import (
 )
 
 var (
-	ErrPlayerExists  = errors.New("Duplicate player")
-	ErrPlayerMissing = errors.New("Player does not exist")
+	ErrPlayerExists  = errors.New("duplicate player")
+	ErrPlayerMissing = errors.New("player does not exist")
 )
 
 type GameType int

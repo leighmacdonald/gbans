@@ -59,6 +59,7 @@ var (
 	ErrLoad          = errors.New("failed to load dataset")
 	ErrConvertString = errors.New("failed to convert value to string")
 	ErrParseLocation = errors.New("failed to parse location")
+	ErrAPIKey        = errors.New("invalid maxmind api key")
 )
 
 type ProxyType string
@@ -290,7 +291,7 @@ func Update(ctx context.Context, outputPath string, apiKey string) error {
 	}
 
 	if apiKey == "" {
-		return errors.New("invalid maxmind api key")
+		return ErrAPIKey
 	}
 
 	var (

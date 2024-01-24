@@ -21,6 +21,8 @@ import (
 	"go.uber.org/zap"
 )
 
+var ErrTestContainer = errors.New("failed to bring up test postgres container")
+
 func newTestDB(ctx context.Context) (string, *postgres.PostgresContainer, error) {
 	const testInfo = "gbans-test"
 	username, password, dbName := testInfo, testInfo, testInfo
@@ -36,7 +38,7 @@ func newTestDB(ctx context.Context) (string, *postgres.PostgresContainer, error)
 	)
 
 	if errContainer != nil {
-		return "", nil, errors.Join(errContainer, errors.New("Failed to bring up test container"))
+		return "", nil, errors.Join(errContainer, ErrTestContainer)
 	}
 
 	port, _ := cont.MappedPort(ctx, "5432")

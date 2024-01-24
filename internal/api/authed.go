@@ -387,7 +387,7 @@ func onAPICurrentProfileNotifications(env Env) gin.HandlerFunc {
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -405,7 +405,7 @@ func onAPIGetReport(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		reportID, errParam := getInt64Param(ctx, "report_id")
 		if errParam != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
@@ -418,14 +418,14 @@ func onAPIGetReport(env Env) gin.HandlerFunc {
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to load report", zap.Error(errReport))
 
 			return
 		}
 
 		if !checkPrivilege(ctx, currentUserProfile(ctx), steamid.Collection{report.Report.SourceID}, model.PModerator) {
-			responseErr(ctx, http.StatusUnauthorized, errs.ErrPermissionDenied)
+			responseErr(ctx, http.StatusUnauthorized, errPermissionDenied)
 
 			return
 		}
@@ -437,7 +437,7 @@ func onAPIGetReport(env Env) gin.HandlerFunc {
 				return
 			}
 
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 			log.Error("Failed to load report author", zap.Error(errAuthor))
 
 			return
@@ -450,7 +450,7 @@ func onAPIGetReport(env Env) gin.HandlerFunc {
 				return
 			}
 
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 			log.Error("Failed to load report subject", zap.Error(errSubject))
 
 			return
@@ -490,7 +490,7 @@ func onAPIGetReports(env Env) gin.HandlerFunc {
 		} else if req.SourceID != "" {
 			sid, errSourceID := req.SourceID.SID64(ctx)
 			if errSourceID != nil {
-				responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+				responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 				return
 			}
@@ -512,7 +512,7 @@ func onAPIGetReports(env Env) gin.HandlerFunc {
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -524,7 +524,7 @@ func onAPIGetReports(env Env) gin.HandlerFunc {
 
 		authors, errAuthors := env.Store().GetPeopleBySteamID(ctx, fp.Uniq(authorIds))
 		if errAuthors != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -538,7 +538,7 @@ func onAPIGetReports(env Env) gin.HandlerFunc {
 
 		subjects, errSubjects := env.Store().GetPeopleBySteamID(ctx, fp.Uniq(subjectIds))
 		if errSubjects != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -571,7 +571,7 @@ func onAPISetReportStatus(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		reportID, errParam := getInt64Param(ctx, "report_id")
 		if errParam != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
@@ -583,7 +583,7 @@ func onAPISetReportStatus(env Env) gin.HandlerFunc {
 
 		var report model.Report
 		if errGet := env.Store().GetReport(ctx, reportID, &report); errGet != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to get report to set state", zap.Error(errGet))
 
 			return
@@ -599,7 +599,7 @@ func onAPISetReportStatus(env Env) gin.HandlerFunc {
 
 		report.ReportStatus = req.Status
 		if errSave := env.Store().SaveReport(ctx, &report); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to save report state", zap.Error(errSave))
 
 			return
@@ -644,14 +644,14 @@ func onAPISaveMedia(env Env) gin.HandlerFunc {
 
 		content, decodeErr := base64.StdEncoding.DecodeString(req.Content)
 		if decodeErr != nil {
-			ctx.JSON(http.StatusBadRequest, errs.ErrBadRequest)
+			ctx.JSON(http.StatusBadRequest, errBadRequest)
 
 			return
 		}
 
 		media, errMedia := model.NewMedia(currentUserProfile(ctx).SteamID, req.Name, req.Mime, content)
 		if errMedia != nil {
-			ctx.JSON(http.StatusBadRequest, errs.ErrBadRequest)
+			ctx.JSON(http.StatusBadRequest, errBadRequest)
 			log.Error("Invalid media uploaded", zap.Error(errMedia))
 		}
 
@@ -712,7 +712,7 @@ func onAPIGetReportMessages(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		reportID, errParam := getInt64Param(ctx, "report_id")
 		if errParam != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
@@ -753,7 +753,7 @@ func onAPIPostReportMessage(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		reportID, errID := getInt64Param(ctx, "report_id")
 		if errID != nil || reportID == 0 {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
@@ -764,7 +764,7 @@ func onAPIPostReportMessage(env Env) gin.HandlerFunc {
 		}
 
 		if req.Message == "" {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
@@ -777,7 +777,7 @@ func onAPIPostReportMessage(env Env) gin.HandlerFunc {
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to load report", zap.Error(errReport))
 
 			return
@@ -787,7 +787,7 @@ func onAPIPostReportMessage(env Env) gin.HandlerFunc {
 		msg := model.NewReportMessage(reportID, person.SteamID, req.Message)
 
 		if errSave := env.Store().SaveReportMessage(ctx, &msg); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to save report message", zap.Error(errSave))
 
 			return
@@ -796,7 +796,7 @@ func onAPIPostReportMessage(env Env) gin.HandlerFunc {
 		report.UpdatedOn = time.Now()
 
 		if errSave := env.Store().SaveReport(ctx, &report); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to update report activity", zap.Error(errSave))
 
 			return
@@ -821,7 +821,7 @@ func onAPIEditReportMessage(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		reportMessageID, errID := getInt64Param(ctx, "report_message_id")
 		if errID != nil || reportMessageID == 0 {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
@@ -834,7 +834,7 @@ func onAPIEditReportMessage(env Env) gin.HandlerFunc {
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -850,7 +850,7 @@ func onAPIEditReportMessage(env Env) gin.HandlerFunc {
 		}
 
 		if req.BodyMD == "" {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
@@ -863,7 +863,7 @@ func onAPIEditReportMessage(env Env) gin.HandlerFunc {
 
 		existing.MessageMD = req.BodyMD
 		if errSave := env.Store().SaveReportMessage(ctx, &existing); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to save report message", zap.Error(errSave))
 
 			return
@@ -884,7 +884,7 @@ func onAPIDeleteReportMessage(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		reportMessageID, errID := getInt64Param(ctx, "report_message_id")
 		if errID != nil || reportMessageID == 0 {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
@@ -897,7 +897,7 @@ func onAPIDeleteReportMessage(env Env) gin.HandlerFunc {
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -909,7 +909,7 @@ func onAPIDeleteReportMessage(env Env) gin.HandlerFunc {
 
 		existing.Deleted = true
 		if errSave := env.Store().SaveReportMessage(ctx, &existing); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to save report message", zap.Error(errSave))
 
 			return
@@ -931,7 +931,7 @@ func onAPIGetBanByID(env Env) gin.HandlerFunc {
 
 		banID, errID := getInt64Param(ctx, "ban_id")
 		if errID != nil || banID == 0 {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
@@ -969,7 +969,7 @@ func onAPIGetBanMessages(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		banID, errParam := getInt64Param(ctx, "ban_id")
 		if errParam != nil {
-			responseErr(ctx, http.StatusNotFound, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusNotFound, errInvalidParameter)
 
 			return
 		}
@@ -1006,7 +1006,7 @@ func onAPIPostBanMessage(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		banID, errID := getInt64Param(ctx, "ban_id")
 		if errID != nil || banID == 0 {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
@@ -1017,7 +1017,7 @@ func onAPIPostBanMessage(env Env) gin.HandlerFunc {
 		}
 
 		if req.Message == "" {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
@@ -1030,7 +1030,7 @@ func onAPIPostBanMessage(env Env) gin.HandlerFunc {
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to load ban", zap.Error(errReport))
 
 			return
@@ -1038,7 +1038,7 @@ func onAPIPostBanMessage(env Env) gin.HandlerFunc {
 
 		curUserProfile := currentUserProfile(ctx)
 		if bannedPerson.AppealState != model.Open && curUserProfile.PermissionLevel < model.PModerator {
-			responseErr(ctx, http.StatusForbidden, errs.ErrPermissionDenied)
+			responseErr(ctx, http.StatusForbidden, errPermissionDenied)
 			log.Warn("User tried to bypass posting restriction",
 				zap.Int64("ban_id", bannedPerson.BanID), zap.Int64("target_id", bannedPerson.TargetID.Int64()))
 
@@ -1047,7 +1047,7 @@ func onAPIPostBanMessage(env Env) gin.HandlerFunc {
 
 		msg := model.NewBanAppealMessage(banID, curUserProfile.SteamID, req.Message)
 		if errSave := env.Store().SaveBanMessage(ctx, &msg); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to save ban appeal message", zap.Error(errSave))
 
 			return
@@ -1090,7 +1090,7 @@ func onAPIEditBanMessage(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		reportMessageID, errID := getIntParam(ctx, "ban_message_id")
 		if errID != nil || reportMessageID == 0 {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
@@ -1103,7 +1103,7 @@ func onAPIEditBanMessage(env Env) gin.HandlerFunc {
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -1120,7 +1120,7 @@ func onAPIEditBanMessage(env Env) gin.HandlerFunc {
 		}
 
 		if req.BodyMD == "" {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
@@ -1133,7 +1133,7 @@ func onAPIEditBanMessage(env Env) gin.HandlerFunc {
 
 		existing.MessageMD = req.BodyMD
 		if errSave := env.Store().SaveBanMessage(ctx, &existing); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to save ban appeal message", zap.Error(errSave))
 
 			return
@@ -1153,7 +1153,7 @@ func onAPIDeleteBanMessage(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		banMessageID, errID := getIntParam(ctx, "ban_message_id")
 		if errID != nil || banMessageID == 0 {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
@@ -1166,7 +1166,7 @@ func onAPIDeleteBanMessage(env Env) gin.HandlerFunc {
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -1178,7 +1178,7 @@ func onAPIDeleteBanMessage(env Env) gin.HandlerFunc {
 
 		existing.Deleted = true
 		if errSave := env.Store().SaveBanMessage(ctx, &existing); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to save appeal message", zap.Error(errSave))
 
 			return
@@ -1196,14 +1196,14 @@ func onAPIGetSourceBans(_ Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		steamID, errID := getSID64Param(ctx, "steam_id")
 		if errID != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
 
-		records, errRecords := getSourceBans(ctx, steamID)
+		records, errRecords := thirdparty.BDSourceBans(ctx, steamID)
 		if errRecords != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -1219,7 +1219,7 @@ func onAPIGetMatch(env Env) gin.HandlerFunc {
 		matchID, errID := getUUIDParam(ctx, "match_id")
 		if errID != nil {
 			log.Error("Invalid match_id value", zap.Error(errID))
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
@@ -1235,7 +1235,7 @@ func onAPIGetMatch(env Env) gin.HandlerFunc {
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -1257,13 +1257,13 @@ func onAPIGetMatches(env Env) gin.HandlerFunc {
 		user := currentUserProfile(ctx)
 		if user.PermissionLevel <= model.PUser {
 			if !req.SteamID.Valid() {
-				responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+				responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 				return
 			}
 
 			if user.SteamID != req.SteamID {
-				responseErr(ctx, http.StatusForbidden, errs.ErrPermissionDenied)
+				responseErr(ctx, http.StatusForbidden, errPermissionDenied)
 
 				return
 			}
@@ -1271,7 +1271,7 @@ func onAPIGetMatches(env Env) gin.HandlerFunc {
 
 		matches, totalCount, matchesErr := env.Store().Matches(ctx, req)
 		if matchesErr != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to perform query", zap.Error(matchesErr))
 
 			return
@@ -1315,7 +1315,7 @@ func onAPIQueryMessages(env Env) gin.HandlerFunc {
 		if errChat != nil && !errors.Is(errChat, errs.ErrNoResult) {
 			log.Error("Failed to query messages history",
 				zap.Error(errChat), zap.String("sid", string(req.SourceID)))
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -1360,7 +1360,7 @@ func onAPIGetsStatsWeapon(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		weaponID, errWeaponID := getIntParam(ctx, "weapon_id")
 		if errWeaponID != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
@@ -1379,7 +1379,7 @@ func onAPIGetsStatsWeapon(env Env) gin.HandlerFunc {
 		if errChat != nil && !errors.Is(errChat, errs.ErrNoResult) {
 			log.Error("Failed to get weapons overall top stats",
 				zap.Error(errChat))
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -1438,7 +1438,7 @@ func onAPIGetPlayerWeaponStatsOverall(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		steamID, errSteamID := getSID64Param(ctx, "steam_id")
 		if errSteamID != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
@@ -1447,7 +1447,7 @@ func onAPIGetPlayerWeaponStatsOverall(env Env) gin.HandlerFunc {
 		if errChat != nil && !errors.Is(errChat, errs.ErrNoResult) {
 			log.Error("Failed to query player weapons stats",
 				zap.Error(errChat))
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -1466,7 +1466,7 @@ func onAPIGetPlayerClassStatsOverall(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		steamID, errSteamID := getSID64Param(ctx, "steam_id")
 		if errSteamID != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
@@ -1475,7 +1475,7 @@ func onAPIGetPlayerClassStatsOverall(env Env) gin.HandlerFunc {
 		if errChat != nil && !errors.Is(errChat, errs.ErrNoResult) {
 			log.Error("Failed to query player class stats",
 				zap.Error(errChat))
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -1494,7 +1494,7 @@ func onAPIGetPlayerStatsOverall(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		steamID, errSteamID := getSID64Param(ctx, "steam_id")
 		if errSteamID != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
@@ -1503,7 +1503,7 @@ func onAPIGetPlayerStatsOverall(env Env) gin.HandlerFunc {
 		if errChat := env.Store().PlayerOverallStats(ctx, steamID, &por); errChat != nil && !errors.Is(errChat, errs.ErrNoResult) {
 			log.Error("Failed to query player stats overall",
 				zap.Error(errChat))
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -1528,14 +1528,14 @@ func onAPISaveContestEntryMedia(env Env) gin.HandlerFunc {
 
 		content, decodeErr := base64.StdEncoding.DecodeString(req.Content)
 		if decodeErr != nil {
-			ctx.JSON(http.StatusBadRequest, errs.ErrBadRequest)
+			ctx.JSON(http.StatusBadRequest, errBadRequest)
 
 			return
 		}
 
 		media, errMedia := model.NewMedia(currentUserProfile(ctx).SteamID, req.Name, req.Mime, content)
 		if errMedia != nil {
-			ctx.JSON(http.StatusBadRequest, errs.ErrBadRequest)
+			ctx.JSON(http.StatusBadRequest, errBadRequest)
 			log.Error("Invalid media uploaded", zap.Error(errMedia))
 		}
 
@@ -1615,14 +1615,14 @@ func onAPISaveContestEntryVote(env Env) gin.HandlerFunc {
 
 		direction := strings.ToLower(ctx.Param("direction"))
 		if direction != "up" && direction != "down" {
-			ctx.JSON(http.StatusBadRequest, errs.ErrBadRequest)
+			ctx.JSON(http.StatusBadRequest, errBadRequest)
 			log.Error("Invalid vote direction option")
 
 			return
 		}
 
 		if !contest.Voting || !contest.DownVotes && direction != "down" {
-			ctx.JSON(http.StatusBadRequest, errs.ErrBadRequest)
+			ctx.JSON(http.StatusBadRequest, errBadRequest)
 			log.Error("Voting not enabled")
 
 			return
@@ -1637,7 +1637,7 @@ func onAPISaveContestEntryVote(env Env) gin.HandlerFunc {
 				return
 			}
 
-			ctx.JSON(http.StatusInternalServerError, errs.ErrInternal)
+			ctx.JSON(http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -1732,7 +1732,7 @@ func onAPIDeleteContestEntry(env Env) gin.HandlerFunc {
 
 		contestEntryID, idErr := getUUIDParam(ctx, "contest_entry_id")
 		if idErr != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
@@ -1746,7 +1746,7 @@ func onAPIDeleteContestEntry(env Env) gin.HandlerFunc {
 				return
 			}
 
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			log.Error("Error getting contest entry for deletion", zap.Error(errContest))
 
@@ -1755,7 +1755,7 @@ func onAPIDeleteContestEntry(env Env) gin.HandlerFunc {
 
 		// Only >=moderators or the entry author are allowed to delete entries.
 		if !(user.PermissionLevel >= model.PModerator || user.SteamID == entry.SteamID) {
-			responseErr(ctx, http.StatusForbidden, errs.ErrPermissionDenied)
+			responseErr(ctx, http.StatusForbidden, errPermissionDenied)
 
 			return
 		}
@@ -1769,7 +1769,7 @@ func onAPIDeleteContestEntry(env Env) gin.HandlerFunc {
 				return
 			}
 
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			log.Error("Error getting contest", zap.Error(errContest))
 
@@ -1778,7 +1778,7 @@ func onAPIDeleteContestEntry(env Env) gin.HandlerFunc {
 
 		// Only allow mods to delete entries from expired contests.
 		if user.SteamID == entry.SteamID && time.Since(contest.DateEnd) > 0 {
-			responseErr(ctx, http.StatusForbidden, errs.ErrPermissionDenied)
+			responseErr(ctx, http.StatusForbidden, errPermissionDenied)
 
 			log.Error("User tried to delete entry from expired contest")
 
@@ -1786,7 +1786,7 @@ func onAPIDeleteContestEntry(env Env) gin.HandlerFunc {
 		}
 
 		if errDelete := env.Store().ContestEntryDelete(ctx, entry.ContestEntryID); errDelete != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			log.Error("Error deleting contest entry", zap.Error(errDelete))
 
@@ -1824,7 +1824,7 @@ func onAPIThreadCreate(env Env) gin.HandlerFunc {
 
 		forumID, errForumID := getIntParam(ctx, "forum_id")
 		if errForumID != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
@@ -1848,7 +1848,7 @@ func onAPIThreadCreate(env Env) gin.HandlerFunc {
 
 		var forum model.Forum
 		if errForum := env.Store().Forum(ctx, forumID, &forum); errForum != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -1858,7 +1858,7 @@ func onAPIThreadCreate(env Env) gin.HandlerFunc {
 		thread.Locked = req.Locked
 
 		if errSaveThread := env.Store().ForumThreadSave(ctx, &thread); errSaveThread != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			log.Error("Failed to save new thread", zap.Error(errSaveThread))
 
@@ -1874,7 +1874,7 @@ func onAPIThreadCreate(env Env) gin.HandlerFunc {
 				log.Error("Failed to rollback new thread", zap.Error(errRollback))
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			log.Error("Failed to save new forum message", zap.Error(errSaveMessage))
 
@@ -1882,7 +1882,7 @@ func onAPIThreadCreate(env Env) gin.HandlerFunc {
 		}
 
 		if errIncr := env.Store().ForumIncrMessageCount(ctx, forum.ForumID, true); errIncr != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			log.Error("Failed to increment message count", zap.Error(errIncr))
 
@@ -1912,7 +1912,7 @@ func onAPIThreadUpdate(env Env) gin.HandlerFunc {
 
 		forumThreadID, errForumTheadID := getInt64Param(ctx, "forum_thread_id")
 		if errForumTheadID != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
@@ -1925,7 +1925,7 @@ func onAPIThreadUpdate(env Env) gin.HandlerFunc {
 		req.Title = util.SanitizeUGC(req.Title)
 
 		if len(req.Title) < 2 {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
@@ -1935,14 +1935,14 @@ func onAPIThreadUpdate(env Env) gin.HandlerFunc {
 			if errors.Is(errGet, errs.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 			} else {
-				responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+				responseErr(ctx, http.StatusInternalServerError, errInternal)
 			}
 
 			return
 		}
 
 		if thread.SourceID != currentUser.SteamID && !(currentUser.PermissionLevel >= model.PModerator) {
-			responseErr(ctx, http.StatusForbidden, errs.ErrInternal)
+			responseErr(ctx, http.StatusForbidden, errInternal)
 
 			return
 		}
@@ -1952,7 +1952,7 @@ func onAPIThreadUpdate(env Env) gin.HandlerFunc {
 		thread.Locked = req.Locked
 
 		if errDelete := env.Store().ForumThreadSave(ctx, &thread); errDelete != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to update thread", zap.Error(errDelete))
 
 			return
@@ -1969,7 +1969,7 @@ func onAPIThreadDelete(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		forumThreadID, errForumTheadID := getInt64Param(ctx, "forum_thread_id")
 		if errForumTheadID != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
@@ -1979,14 +1979,14 @@ func onAPIThreadDelete(env Env) gin.HandlerFunc {
 			if errors.Is(errGet, errs.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 			} else {
-				responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+				responseErr(ctx, http.StatusInternalServerError, errInternal)
 			}
 
 			return
 		}
 
 		if errDelete := env.Store().ForumThreadDelete(ctx, thread.ForumThreadID); errDelete != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to delete thread", zap.Error(errDelete))
 
 			return
@@ -1994,7 +1994,7 @@ func onAPIThreadDelete(env Env) gin.HandlerFunc {
 
 		var forum model.Forum
 		if errForum := env.Store().Forum(ctx, thread.ForumID, &forum); errForum != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to load forum", zap.Error(errForum))
 
 			return
@@ -2003,7 +2003,7 @@ func onAPIThreadDelete(env Env) gin.HandlerFunc {
 		forum.CountThreads -= 1
 
 		if errSave := env.Store().ForumSave(ctx, &forum); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to save thread count", zap.Error(errSave))
 
 			return
@@ -2027,7 +2027,7 @@ func onAPIThreadMessageUpdate(env Env) gin.HandlerFunc {
 
 		forumMessageID, errForumMessageID := getInt64Param(ctx, "forum_message_id")
 		if errForumMessageID != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
@@ -2039,13 +2039,13 @@ func onAPIThreadMessageUpdate(env Env) gin.HandlerFunc {
 
 		var message model.ForumMessage
 		if errMessage := env.Store().ForumMessage(ctx, forumMessageID, &message); errMessage != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
 
 		if message.SourceID != currentUser.SteamID && !(currentUser.PermissionLevel >= model.PModerator) {
-			responseErr(ctx, http.StatusForbidden, errs.ErrInternal)
+			responseErr(ctx, http.StatusForbidden, errInternal)
 
 			return
 		}
@@ -2053,7 +2053,7 @@ func onAPIThreadMessageUpdate(env Env) gin.HandlerFunc {
 		req.BodyMD = util.SanitizeUGC(req.BodyMD)
 
 		if len(req.BodyMD) < 10 {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
@@ -2061,7 +2061,7 @@ func onAPIThreadMessageUpdate(env Env) gin.HandlerFunc {
 		message.BodyMD = req.BodyMD
 
 		if errSave := env.Store().ForumMessageSave(ctx, &message); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -2076,7 +2076,7 @@ func onAPIMessageDelete(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		forumMessageID, errForumMessageID := getInt64Param(ctx, "forum_message_id")
 		if errForumMessageID != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
@@ -2086,7 +2086,7 @@ func onAPIMessageDelete(env Env) gin.HandlerFunc {
 			if errors.Is(err, errs.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 			} else {
-				responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+				responseErr(ctx, http.StatusInternalServerError, errInternal)
 			}
 
 			return
@@ -2097,7 +2097,7 @@ func onAPIMessageDelete(env Env) gin.HandlerFunc {
 			if errors.Is(err, errs.ErrNoResult) {
 				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
 			} else {
-				responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+				responseErr(ctx, http.StatusInternalServerError, errInternal)
 			}
 
 			return
@@ -2111,7 +2111,7 @@ func onAPIMessageDelete(env Env) gin.HandlerFunc {
 
 		messages, count, errMessage := env.Store().ForumMessages(ctx, model.ThreadMessagesQueryFilter{ForumThreadID: message.ForumThreadID})
 		if errMessage != nil || count <= 0 {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -2120,7 +2120,7 @@ func onAPIMessageDelete(env Env) gin.HandlerFunc {
 
 		if isThreadParent {
 			if err := env.Store().ForumThreadDelete(ctx, message.ForumThreadID); err != nil {
-				responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+				responseErr(ctx, http.StatusInternalServerError, errInternal)
 				log.Error("Failed to delete forum thread", zap.Error(err))
 
 				return
@@ -2129,7 +2129,7 @@ func onAPIMessageDelete(env Env) gin.HandlerFunc {
 			// Delete the thread if it's the first message
 			var forum model.Forum
 			if errForum := env.Store().Forum(ctx, thread.ForumID, &forum); errForum != nil {
-				responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+				responseErr(ctx, http.StatusInternalServerError, errInternal)
 				log.Error("Failed to load forum", zap.Error(errForum))
 
 				return
@@ -2138,7 +2138,7 @@ func onAPIMessageDelete(env Env) gin.HandlerFunc {
 			forum.CountThreads -= 1
 
 			if errSave := env.Store().ForumSave(ctx, &forum); errSave != nil {
-				responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+				responseErr(ctx, http.StatusInternalServerError, errInternal)
 				log.Error("Failed to save thread count", zap.Error(errSave))
 
 				return
@@ -2147,7 +2147,7 @@ func onAPIMessageDelete(env Env) gin.HandlerFunc {
 			log.Error("Thread deleted due to parent deletion", zap.Int64("forum_thread_id", thread.ForumThreadID))
 		} else {
 			if errDelete := env.Store().ForumMessageDelete(ctx, message.ForumMessageID); errDelete != nil {
-				responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+				responseErr(ctx, http.StatusInternalServerError, errInternal)
 				log.Error("Failed to delete message", zap.Error(errDelete))
 
 				return
@@ -2174,14 +2174,14 @@ func onAPIThreadCreateReply(env Env) gin.HandlerFunc {
 
 		forumThreadID, errForumID := getInt64Param(ctx, "forum_thread_id")
 		if errForumID != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
 
 		var thread model.ForumThread
 		if errThread := env.Store().ForumThread(ctx, forumThreadID, &thread); errThread != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -2207,20 +2207,20 @@ func onAPIThreadCreateReply(env Env) gin.HandlerFunc {
 
 		newMessage := thread.NewMessage(currentUser.SteamID, req.BodyMD)
 		if errSave := env.Store().ForumMessageSave(ctx, &newMessage); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
 
 		var message model.ForumMessage
 		if errFetch := env.Store().ForumMessage(ctx, newMessage.ForumMessageID, &message); errFetch != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
 
 		if errIncr := env.Store().ForumIncrMessageCount(ctx, thread.ForumID, true); errIncr != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			log.Error("Failed to increment message count", zap.Error(errIncr))
 		}
@@ -2243,7 +2243,7 @@ func onAPIGetPersonSettings(env Env) gin.HandlerFunc {
 		var settings model.PersonSettings
 
 		if err := env.Store().GetPersonSettings(ctx, user.SteamID, &settings); err != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to fetch person settings", zap.Error(err), zap.Int64("steam_id", user.SteamID.Int64()))
 
 			return
@@ -2274,7 +2274,7 @@ func onAPIPostPersonSettings(env Env) gin.HandlerFunc {
 		var settings model.PersonSettings
 
 		if err := env.Store().GetPersonSettings(ctx, user.SteamID, &settings); err != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to fetch person settings", zap.Error(err), zap.Int64("steam_id", user.SteamID.Int64()))
 
 			return
@@ -2285,7 +2285,7 @@ func onAPIPostPersonSettings(env Env) gin.HandlerFunc {
 		settings.ForumSignature = util.SanitizeUGC(req.ForumSignature)
 
 		if err := env.Store().SavePersonSettings(ctx, &settings); err != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to save person settings", zap.Error(err), zap.Int64("steam_id", user.SteamID.Int64()))
 
 			return

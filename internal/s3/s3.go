@@ -14,10 +14,14 @@ import (
 	"go.uber.org/zap"
 )
 
-type AssetStore interface {
-	Put(ctx context.Context, bucket string, name string, body io.Reader, size int64, contentType string) error
-	Remove(ctx context.Context, bucket string, name string) error
-}
+var (
+	ErrInitClient   = errors.New("failed to initialize client")
+	ErrBucketCheck  = errors.New("could not determine if bucket exists")
+	ErrPolicy       = errors.New("failed to set bucket policy")
+	ErrWriteObject  = errors.New("failed to write object")
+	ErrDeleteObject = errors.New("failed to delete object")
+	ErrReadContent  = errors.New("failed to read content metadata")
+)
 
 type Client struct {
 	*sync.RWMutex
@@ -34,7 +38,7 @@ func NewS3Client(log *zap.Logger, endpoint string, accessKey string, secretKey s
 		Secure: useSSL,
 	})
 	if err != nil {
-		return nil, errors.Join(err, errors.New("Failed to initialize minio client"))
+		return nil, errors.Join(err, ErrInitClient)
 	}
 
 	return &Client{Client: minioClient, log: log, region: region, ssl: useSSL, RWMutex: &sync.RWMutex{}}, nil
@@ -49,7 +53,7 @@ func (s3 *Client) CreateBucketIfNotExists(ctx context.Context, name string) erro
 		// Check to see if we already own this bucket (which happens if you run this twice)
 		exists, errBucketExists := s3.BucketExists(ctx, name)
 		if errBucketExists != nil && !exists {
-			return errors.Join(errBucketExists, errors.New("Failed to check if bucket exists"))
+			return errors.Join(errBucketExists, ErrBucketCheck)
 		}
 	}
 
@@ -72,7 +76,7 @@ func (s3 *Client) CreateBucketIfNotExists(ctx context.Context, name string) erro
 		}`, name)
 
 	if err := s3.SetBucketPolicy(ctx, name, policy); err != nil {
-		return errors.Join(err, errors.New("Failed to set bucket policy"))
+		return errors.Join(err, ErrPolicy)
 	}
 
 	s3.log.Info("Successfully created new bucket", zap.String("name", name))
@@ -88,7 +92,7 @@ func (s3 *Client) Put(ctx context.Context, bucket string, name string, body io.R
 		ContentType: contentType,
 	})
 	if err != nil {
-		return errors.Join(err, errors.New("Failed to write object to s3 db"))
+		return errors.Join(err, ErrWriteObject)
 	}
 
 	s3.log.Debug("File uploaded successfully",
@@ -103,7 +107,7 @@ func (s3 *Client) Remove(ctx context.Context, bucket string, name string) error 
 	defer s3.Unlock()
 
 	if err := s3.RemoveObject(ctx, bucket, name, minio.RemoveObjectOptions{ForceDelete: true}); err != nil {
-		return errors.Join(err, errors.New("Failed to delete object"))
+		return errors.Join(err, ErrDeleteObject)
 	}
 
 	s3.log.Debug("File deleted successfully",
@@ -123,7 +127,7 @@ func (s3 *Client) LinkObject(bucket string, name string) string {
 func GenerateFileMeta(body io.Reader, name string) (string, string, int64, error) {
 	content, errRead := io.ReadAll(body)
 	if errRead != nil {
-		return "", "", 0, errors.Join(errRead, errors.New("Failed to read file content"))
+		return "", "", 0, errors.Join(errRead, ErrReadContent)
 	}
 
 	mime := mimetype.Detect(content)

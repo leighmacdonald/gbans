@@ -14,6 +14,8 @@ import (
 
 const masterBrowserHost = "hl2master.steampowered.com:27011"
 
+var ErrSendListFailed = errors.New("failed to send list request")
+
 // Region defines a part of the world where servers are located.
 type Region uint8
 
@@ -56,7 +58,7 @@ func List(c *net.UDPConn, regions []Region) ([]*ServerEndpoint, error) {
 		for firstRequest || lastIp != endIp {
 			r, errList := sendListRequest(c, lastIp, filter, region)
 			if errList != nil {
-				return nil, errors.Join(errList, errors.New("Failed to send list request"))
+				return nil, errors.Join(errList, ErrSendListFailed)
 			}
 			if len(r) == 0 {
 				// Shouldn't happen?

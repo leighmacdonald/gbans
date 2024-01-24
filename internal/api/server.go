@@ -29,6 +29,11 @@ import (
 	"go.uber.org/zap"
 )
 
+var (
+	errSelfReport   = errors.New("cannot self report")
+	errReportExists = errors.New("cannot create report while existing report open")
+)
+
 type ServerAuthReq struct {
 	Key string `json:"key"`
 }
@@ -51,14 +56,14 @@ func onSAPIPostServerAuth(env Env) gin.HandlerFunc {
 
 		errGetServer := env.Store().GetServerByPassword(ctx, req.Key, &server, true, false)
 		if errGetServer != nil {
-			responseErr(ctx, http.StatusUnauthorized, errs.ErrPermissionDenied)
+			responseErr(ctx, http.StatusUnauthorized, errPermissionDenied)
 			log.Warn("Failed to find server auth by password", zap.Error(errGetServer))
 
 			return
 		}
 
 		if server.Password != req.Key {
-			responseErr(ctx, http.StatusUnauthorized, errs.ErrPermissionDenied)
+			responseErr(ctx, http.StatusUnauthorized, errPermissionDenied)
 			log.Error("Invalid server key used")
 
 			return
@@ -66,7 +71,7 @@ func onSAPIPostServerAuth(env Env) gin.HandlerFunc {
 
 		accessToken, errToken := newServerToken(server.ServerID, env.Config().HTTP.CookieKey)
 		if errToken != nil {
-			responseErr(ctx, http.StatusUnauthorized, errs.ErrPermissionDenied)
+			responseErr(ctx, http.StatusUnauthorized, errPermissionDenied)
 			log.Error("Failed to create new server access token", zap.Error(errToken))
 
 			return
@@ -74,7 +79,7 @@ func onSAPIPostServerAuth(env Env) gin.HandlerFunc {
 
 		server.TokenCreatedOn = time.Now()
 		if errSaveServer := env.Store().SaveServer(ctx, &server); errSaveServer != nil {
-			responseErr(ctx, http.StatusUnauthorized, errs.ErrPermissionDenied)
+			responseErr(ctx, http.StatusUnauthorized, errPermissionDenied)
 			log.Error("Failed to updated server token", zap.Error(errSaveServer))
 
 			return
@@ -89,7 +94,7 @@ func onAPIGetServerAdmins(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		perms, err := env.Store().GetServerPermissions(ctx)
 		if err != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}
@@ -121,7 +126,7 @@ func onAPIPostPingMod(env Env) gin.HandlerFunc {
 
 		if len(players) == 0 && conf.General.Mode != config.TestMode {
 			log.Error("Failed to find player on /mod call")
-			responseErr(ctx, http.StatusFailedDependency, errs.ErrInternal)
+			responseErr(ctx, http.StatusFailedDependency, errInternal)
 
 			return
 		}
@@ -191,12 +196,7 @@ func onAPIPostServerCheck(env Env) gin.HandlerFunc {
 			zap.Int64("sid64", steamid.SIDToSID64(request.SteamID).Int64()),
 			zap.String("name", request.Name))
 
-		resp := CheckResponse{
-			ClientID: request.ClientID,
-			SteamID:  request.SteamID,
-			BanType:  model.Unknown,
-			Msg:      "",
-		}
+		resp := CheckResponse{ClientID: request.ClientID, SteamID: request.SteamID, BanType: model.Unknown, Msg: ""}
 
 		responseCtx, cancelResponse := context.WithTimeout(ctx, time.Second*15)
 		defer cancelResponse()
@@ -233,77 +233,22 @@ func onAPIPostServerCheck(env Env) gin.HandlerFunc {
 			log.Error("Failed to add conn history", zap.Error(errAddHist))
 		}
 
-		if parentID, banned := env.Groups().IsMember(steamID); banned {
-			resp.BanType = model.Banned
-
-			if parentID >= steamid.BaseGID {
-				resp.Msg = fmt.Sprintf("Group Banned (gid: %d)", parentID)
-			} else {
-				resp.Msg = fmt.Sprintf("Banned (sid: %d)", parentID)
-			}
-
-			ctx.JSON(http.StatusOK, resp)
-			log.Info("Player dropped", zap.String("drop_type", "group"),
-				zap.Int64("sid64", steamID.Int64()))
-
-			return
-		}
-
 		resp.PermissionLevel = person.PermissionLevel
 
-		if cidrBanned, source := env.NetBlocks().IsMatch(request.IP); cidrBanned {
-			resp.BanType = model.Network
-			resp.Msg = "Network Range Banned.\nIf you using a VPN try disabling it"
-
-			ctx.JSON(http.StatusOK, resp)
-			log.Info("Player network blocked", zap.Int64("sid64", steamID.Int64()),
-				zap.String("source", source), zap.String("ip", request.IP.String()))
-
+		if checkGroupBan(ctx, log, env, steamID, &resp) || checkFriendBan(ctx, log, env, steamID, &resp) {
 			return
 		}
 
-		// Check IP first
-		banNet, errGetBanNet := env.Store().GetBanNetByAddress(responseCtx, request.IP)
-		if errGetBanNet != nil {
-			ctx.JSON(http.StatusInternalServerError, CheckResponse{
-				BanType: model.Unknown,
-				Msg:     "Error determining state",
-			})
-			log.Error("Could not get bannedPerson net results", zap.Error(errGetBanNet))
-
+		if checkNetBlockBan(ctx, log, env, steamID, request.IP, &resp) {
 			return
 		}
 
-		if len(banNet) > 0 {
-			resp.BanType = model.Banned
-			resp.Msg = "Banned"
-
-			ctx.JSON(http.StatusOK, resp)
-
-			log.Info("Player dropped", zap.String("drop_type", "cidr"),
-				zap.Int64("sid64", steamID.Int64()))
-
+		if checkIPBan(ctx, log, env, steamID, request.IP, responseCtx, &resp) {
 			return
 		}
 
-		var asnRecord ip2location.ASNRecord
-
-		errASN := env.Store().GetASNRecordByIP(responseCtx, request.IP, &asnRecord)
-		if errASN == nil {
-			var asnBan model.BanASN
-			if errASNBan := env.Store().GetBanASN(responseCtx, int64(asnRecord.ASNum), &asnBan); errASNBan != nil {
-				if !errors.Is(errASNBan, errs.ErrNoResult) {
-					log.Error("Failed to fetch asn bannedPerson", zap.Error(errASNBan))
-				}
-			} else {
-				resp.BanType = model.Banned
-				resp.Msg = asnBan.Reason.String()
-				ctx.JSON(http.StatusOK, resp)
-				log.Info("Player dropped", zap.String("drop_type", "asn"),
-					zap.Int64("sid64", steamID.Int64()))
-
-				return
-			}
+		if checkASN(ctx, log, env, steamID, request.IP, responseCtx, &resp) {
+			return
 		}
 
 		bannedPerson := model.NewBannedPerson()
@@ -367,6 +312,104 @@ func onAPIPostServerCheck(env Env) gin.HandlerFunc {
 	}
 }
 
+func checkASN(ctx *gin.Context, log *zap.Logger, env Env, steamID steamid.SID64, addr net.IP, responseCtx context.Context, resp *CheckResponse) bool {
+	var asnRecord ip2location.ASNRecord
+
+	errASN := env.Store().GetASNRecordByIP(responseCtx, addr, &asnRecord)
+	if errASN == nil {
+		var asnBan model.BanASN
+		if errASNBan := env.Store().GetBanASN(responseCtx, int64(asnRecord.ASNum), &asnBan); errASNBan != nil {
+			if !errors.Is(errASNBan, errs.ErrNoResult) {
+				log.Error("Failed to fetch asn bannedPerson", zap.Error(errASNBan))
+			}
+		} else {
+			resp.BanType = model.Banned
+			resp.Msg = asnBan.Reason.String()
+			ctx.JSON(http.StatusOK, resp)
+			log.Info("Player dropped", zap.String("drop_type", "asn"),
+				zap.Int64("sid64", steamID.Int64()))
+
+			return true
+		}
+	}
+
+	return false
+}
+
+func checkIPBan(ctx *gin.Context, log *zap.Logger, env Env, steamID steamid.SID64, addr net.IP, responseCtx context.Context, resp *CheckResponse) bool {
+	// Check IP first
+	banNet, errGetBanNet := env.Store().GetBanNetByAddress(responseCtx, addr)
+	if errGetBanNet != nil {
+		ctx.JSON(http.StatusInternalServerError, CheckResponse{
+			BanType: model.Unknown,
+			Msg:     "Error determining state",
+		})
+		log.Error("Could not get bannedPerson net results", zap.Error(errGetBanNet))
+
+		return true
+	}
+
+	if len(banNet) > 0 {
+		resp.BanType = model.Banned
+		resp.Msg = "Banned"
+
+		ctx.JSON(http.StatusOK, resp)
+
+		log.Info("Player dropped", zap.String("drop_type", "cidr"),
+			zap.Int64("sid64", steamID.Int64()))
+
+		return true
+	}
+
+	return false
+}
+
+func checkNetBlockBan(ctx *gin.Context, log *zap.Logger, env Env, steamID steamid.SID64, addr net.IP, resp *CheckResponse) bool {
+	if cidrBanned, source := env.NetBlocks().IsMatch(addr); cidrBanned {
+		resp.BanType = model.Network
+		resp.Msg = "Network Range Banned.\nIf you using a VPN try disabling it"
+
+		ctx.JSON(http.StatusOK, resp)
+		log.Info("Player network blocked", zap.Int64("sid64", steamID.Int64()),
+			zap.String("source", source), zap.String("ip", addr.String()))
+
+		return true
+	}
+
+	return false
+}
+
+func checkGroupBan(ctx *gin.Context, log *zap.Logger, env Env, steamID steamid.SID64, resp *CheckResponse) bool {
+	if groupID, banned := env.Groups().IsMember(steamID); banned {
+		resp.BanType = model.Banned
+		resp.Msg = fmt.Sprintf("Group Banned (gid: %d)", groupID.Int64())
+
+		ctx.JSON(http.StatusOK, resp)
+		log.Info("Player dropped", zap.String("drop_type", "group"),
+			zap.Int64("sid64", steamID.Int64()))
+
+		return true
+	}
+
+	return false
+}
+
+func checkFriendBan(ctx *gin.Context, log *zap.Logger, env Env, steamID steamid.SID64, resp *CheckResponse) bool {
+	if parentFriendID, banned := env.Groups().IsMember(steamID); banned {
+		resp.BanType = model.Banned
+
+		resp.Msg = fmt.Sprintf("Banned (sid: %d)", parentFriendID.Int64())
+
+		ctx.JSON(http.StatusOK, resp)
+		log.Info("Player dropped", zap.String("drop_type", "friend"),
+			zap.Int64("sid64", steamID.Int64()))
+
+		return true
+	}
+
+	return false
+}
+
 // IsOnIPWithBan checks if the address matches an existing user who is currently banned already. This
 // function will always fail-open and allow players in if an error occurs.
 func IsOnIPWithBan(ctx context.Context, env Env, steamID steamid.SID64, address net.IP) bool {
@@ -422,7 +465,7 @@ func onAPIPostDemo(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		serverID := serverFromCtx(ctx)
 		if serverID <= 0 {
-			responseErr(ctx, http.StatusNotFound, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusNotFound, errBadRequest)
 
 			return
 		}
@@ -437,28 +480,28 @@ func onAPIPostDemo(env Env) gin.HandlerFunc {
 
 		demoFormFile, errDemoFile := ctx.FormFile("demo")
 		if errDemoFile != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
 
 		demoHandle, errDemoHandle := demoFormFile.Open()
 		if errDemoHandle != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
 
 		demoContent, errRead := io.ReadAll(demoHandle)
 		if errRead != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
 
 		dir, errDir := os.MkdirTemp("", "gbans-demo")
 		if errDir != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
@@ -486,13 +529,13 @@ func onAPIPostDemo(env Env) gin.HandlerFunc {
 
 		localFile, errLocalFile := os.Create(tempPath)
 		if errLocalFile != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
 
 		if _, err := localFile.Write(demoContent); err != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
@@ -501,7 +544,7 @@ func onAPIPostDemo(env Env) gin.HandlerFunc {
 
 		var demoInfo demoparser.DemoInfo
 		if errParse := demoparser.Parse(ctx, tempPath, &demoInfo); errParse != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
@@ -516,14 +559,14 @@ func onAPIPostDemo(env Env) gin.HandlerFunc {
 
 		asset, errAsset := model.NewAsset(demoContent, conf.S3.BucketDemo, demoFormFile.Filename)
 		if errAsset != nil {
-			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save asset"))
+			responseErr(ctx, http.StatusInternalServerError, errAssetCreateFailed)
 
 			return
 		}
 
 		if errPut := env.Assets().Put(ctx, conf.S3.BucketDemo, asset.Name,
 			bytes.NewReader(demoContent), asset.Size, asset.MimeType); errPut != nil {
-			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save media"))
+			responseErr(ctx, http.StatusInternalServerError, errAssetPut)
 
 			log.Error("Failed to save user media to s3 backend", zap.Error(errPut))
 
@@ -531,7 +574,7 @@ func onAPIPostDemo(env Env) gin.HandlerFunc {
 		}
 
 		if errSaveAsset := env.Store().SaveAsset(ctx, &asset); errSaveAsset != nil {
-			responseErr(ctx, http.StatusInternalServerError, errors.New("Could not save asset"))
+			responseErr(ctx, http.StatusInternalServerError, errAssetSave)
 
 			log.Error("Failed to save user asset to s3 backend", zap.Error(errSaveAsset))
 		}
@@ -546,7 +589,7 @@ func onAPIPostDemo(env Env) gin.HandlerFunc {
 		}
 
 		if errSave := env.Store().SaveDemo(ctx, &newDemo); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to save demo", zap.Error(errSave))
 
 			return
@@ -605,7 +648,7 @@ func onAPIPostBanSteamCreate(env Env) gin.HandlerFunc {
 
 		duration, errDuration := util.CalcDuration(req.Duration, req.ValidUntil)
 		if errDuration != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
@@ -624,7 +667,7 @@ func onAPIPostBanSteamCreate(env Env) gin.HandlerFunc {
 			req.IncludeFriends,
 			&banSteam,
 		); errBanSteam != nil {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrBadRequest)
+			responseErr(ctx, http.StatusBadRequest, errBadRequest)
 
 			return
 		}
@@ -639,7 +682,7 @@ func onAPIPostBanSteamCreate(env Env) gin.HandlerFunc {
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to save new steam ban", zap.Error(errBan))
 
 			return
@@ -661,7 +704,7 @@ func onAPIPostReportCreate(env Env) gin.HandlerFunc {
 		}
 
 		if req.Description == "" || len(req.Description) < 10 {
-			responseErr(ctx, http.StatusBadRequest, errors.New("Description too short"))
+			responseErr(ctx, http.StatusBadRequest, fmt.Errorf("%w: description", errParamInvalid))
 
 			return
 		}
@@ -675,7 +718,7 @@ func onAPIPostReportCreate(env Env) gin.HandlerFunc {
 
 		sourceID, errSourceID := req.SourceID.SID64(ctx)
 		if errSourceID != nil {
-			responseErr(ctx, http.StatusBadRequest, errors.New("Failed to resolve author steam id"))
+			responseErr(ctx, http.StatusBadRequest, errs.ErrSourceID)
 			log.Error("Invalid steam_id", zap.Error(errSourceID))
 
 			return
@@ -683,21 +726,21 @@ func onAPIPostReportCreate(env Env) gin.HandlerFunc {
 
 		targetID, errTargetID := req.TargetID.SID64(ctx)
 		if errTargetID != nil {
-			responseErr(ctx, http.StatusBadRequest, errors.New("Failed to resolve target steam id"))
+			responseErr(ctx, http.StatusBadRequest, errs.ErrTargetID)
 			log.Error("Invalid target_id", zap.Error(errTargetID))
 
 			return
 		}
 
 		if sourceID == targetID {
-			responseErr(ctx, http.StatusConflict, errors.New("Cannot report yourself"))
+			responseErr(ctx, http.StatusConflict, errSelfReport)
 
 			return
 		}
 
 		var personSource model.Person
 		if errCreatePerson := env.Store().GetPersonBySteamID(ctx, sourceID, &personSource); errCreatePerson != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Could not load player profile", zap.Error(errCreatePerson))
 
 			return
@@ -705,7 +748,7 @@ func onAPIPostReportCreate(env Env) gin.HandlerFunc {
 
 		var personTarget model.Person
 		if errCreatePerson := env.Store().GetOrCreatePersonBySteamID(ctx, targetID, &personTarget); errCreatePerson != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Could not load player profile", zap.Error(errCreatePerson))
 
 			return
@@ -726,14 +769,14 @@ func onAPIPostReportCreate(env Env) gin.HandlerFunc {
 		if errReports := env.Store().GetReportBySteamID(ctx, personSource.SteamID, targetID, &existing); errReports != nil {
 			if !errors.Is(errReports, errs.ErrNoResult) {
 				log.Error("Failed to query reports by steam id", zap.Error(errReports))
-				responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+				responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 				return
 			}
 		}
 
 		if existing.ReportID > 0 {
-			responseErr(ctx, http.StatusConflict, errors.New("Must resolve existing report for user before creating another"))
+			responseErr(ctx, http.StatusConflict, errReportExists)
 
 			return
 		}
@@ -752,7 +795,7 @@ func onAPIPostReportCreate(env Env) gin.HandlerFunc {
 		report.PersonMessageID = req.PersonMessageID
 
 		if errReportSave := env.Store().SaveReport(ctx, &report); errReportSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 			log.Error("Failed to save report", zap.Error(errReportSave))
 
 			return
@@ -791,13 +834,13 @@ func onAPIPostServerState(env Env) gin.HandlerFunc {
 
 		serverID := serverFromCtx(ctx) // TODO use generic func for int
 		if serverID == 0 {
-			responseErr(ctx, http.StatusBadRequest, errs.ErrInvalidParameter)
+			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
 
 			return
 		}
 
 		if errUpdate := env.State().Update(serverID, req); errUpdate != nil {
-			responseErr(ctx, http.StatusInternalServerError, errs.ErrInternal)
+			responseErr(ctx, http.StatusInternalServerError, errInternal)
 
 			return
 		}

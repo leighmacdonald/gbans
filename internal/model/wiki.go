@@ -2,6 +2,7 @@ package model
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -11,11 +12,13 @@ import (
 
 const unknownMediaTag = "__unknown__"
 
+var ErrInvalidMediaMimeType = errors.New("detected mimetype different than type provided")
+
 func NewMedia(author steamid.SID64, name string, mime string, content []byte) (Media, error) {
 	mType := mimetype.Detect(content)
 	if !mType.Is(mime) && mime != unknownMediaTag {
 		// Should never actually happen unless user is trying nefarious stuff.
-		return Media{}, errors.New("Detected mimetype different than provided")
+		return Media{}, fmt.Errorf("%w: %s = %s", ErrInvalidMediaMimeType, mime, mType.String())
 	}
 
 	curTime := time.Now()
