@@ -19,4 +19,5 @@ var (
 	ErrParamKeyMissing  = errors.New("param key not found")
 	ErrParamParse       = errors.New("failed to parse param value")
 	ErrParamInvalid     = errors.New("param value invalid")
+	ErrScanResult       = errors.New("failed to scan result")
 )

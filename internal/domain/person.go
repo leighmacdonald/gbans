@@ -20,6 +20,7 @@ type SteamMember interface {
 type PersonUsecase interface {
 	DropPerson(ctx context.Context, steamID steamid.SID64) error
 	SavePerson(ctx context.Context, person *Person) error
+	GetPersonBySteamID(ctx context.Context, sid64 steamid.SID64, person *Person) error
 	GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collection) (People, error)
 	GetSteamsAtAddress(ctx context.Context, addr net.IP) (steamid.Collection, error)
 	GetPeople(ctx context.Context, filter PlayerQuery) (People, int64, error)
@@ -47,6 +48,7 @@ type PersonUsecase interface {
 type PersonRepository interface {
 	DropPerson(ctx context.Context, steamID steamid.SID64) error
 	SavePerson(ctx context.Context, person *Person) error
+	GetPersonBySteamID(ctx context.Context, sid64 steamid.SID64, person *Person) error
 	GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collection) (People, error)
 	GetSteamsAtAddress(ctx context.Context, addr net.IP) (steamid.Collection, error)
 	GetPeople(ctx context.Context, filter PlayerQuery) (People, int64, error)

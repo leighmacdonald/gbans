@@ -147,14 +147,6 @@ func contestFromCtx(ctx *gin.Context, env Env) (domain.Contest, bool) {
 	return contest, true
 }
 
-func newLazyResult(count int64, data any) LazyResult {
-	if count == 0 {
-		return LazyResult{0, []interface{}{}}
-	}
-
-	return LazyResult{Count: count, Data: data}
-}
-
 func New(ctx context.Context, env Env) *http.Server {
 	conf := env.Config()
 
@@ -224,9 +216,4 @@ func checkPrivilege(ctx *gin.Context, person domain.UserProfile, allowedSteamIds
 
 type ResultsCount struct {
 	Count int64 `json:"count"`
-}
-
-type LazyResult struct {
-	Count int64 `json:"count"`
-	Data  any   `json:"data"`
 }

@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"runtime"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -16,7 +15,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
-	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/wiki"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
@@ -95,69 +93,6 @@ func onAPIGetPrometheusHosts(env Env) gin.HandlerFunc {
 
 		// Don't wrap in our custom response format
 		ctx.JSON(200, staticConfigs)
-	}
-}
-
-func getDefaultFloat64(s string, def float64) float64 {
-	if s != "" {
-		l, errLat := strconv.ParseFloat(s, 64)
-		if errLat != nil {
-			return def
-		}
-
-		return l
-	}
-
-	return def
-}
-
-func onAPIGetServerStates(env Env) gin.HandlerFunc {
-	type UserServers struct {
-		Servers []domain.BaseServer `json:"servers"`
-		LatLong ip2location.LatLong `json:"lat_long"`
-	}
-
-	return func(ctx *gin.Context) {
-		var (
-			lat = getDefaultFloat64(ctx.GetHeader("cf-iplatitude"), 41.7774)
-			lon = getDefaultFloat64(ctx.GetHeader("cf-iplongitude"), -87.6160)
-			// region := ctx.GetHeader("cf-region-code")
-			curState = env.State().Current()
-			servers  []domain.BaseServer
-		)
-
-		for _, srv := range curState {
-			servers = append(servers, domain.BaseServer{
-				Host:       srv.Host,
-				Port:       srv.Port,
-				IP:         srv.IP,
-				Name:       srv.Name,
-				NameShort:  srv.NameShort,
-				Region:     srv.Region,
-				CC:         srv.CC,
-				ServerID:   srv.ServerID,
-				Players:    srv.PlayerCount,
-				MaxPlayers: srv.MaxPlayers,
-				Bots:       srv.Bots,
-				Map:        srv.Map,
-				GameTypes:  []string{},
-				Latitude:   srv.Latitude,
-				Longitude:  srv.Longitude,
-				Distance:   distance(srv.Latitude, srv.Longitude, lat, lon),
-			})
-		}
-
-		sort.SliceStable(servers, func(i, j int) bool {
-			return servers[i].Name < servers[j].Name
-		})
-
-		ctx.JSON(http.StatusOK, UserServers{
-			Servers: servers,
-			LatLong: ip2location.LatLong{
-				Latitude:  lat,
-				Longitude: lon,
-			},
-		})
 	}
 }
 
@@ -382,36 +317,6 @@ func onAPIGetStats(env Env) gin.HandlerFunc {
 }
 
 func loadBanMeta(_ *domain.BannedSteamPerson) {
-}
-
-type serverInfoSafe struct {
-	ServerNameLong string `json:"server_name_long"`
-	ServerName     string `json:"server_name"`
-	ServerID       int    `json:"server_id"`
-	Colour         string `json:"colour"`
-}
-
-func onAPIGetServers(env Env) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		fullServers, _, errServers := env.Store().GetServers(ctx, domain.ServerQueryFilter{})
-		if errServers != nil {
-			responseErr(ctx, http.StatusInternalServerError, errInternal)
-
-			return
-		}
-
-		var servers []serverInfoSafe
-		for _, server := range fullServers {
-			servers = append(servers, serverInfoSafe{
-				ServerNameLong: server.Name,
-				ServerName:     server.ShortName,
-				ServerID:       server.ServerID,
-				Colour:         "",
-			})
-		}
-
-		ctx.JSON(http.StatusOK, servers)
-	}
 }
 
 func onAPIGetMapUsage(env Env) gin.HandlerFunc {

@@ -12,6 +12,26 @@ import (
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
+type ServersUsecase interface {
+	GetServer(ctx context.Context, serverID int, server *Server) error
+	GetServerPermissions(ctx context.Context) ([]ServerPermission, error)
+	GetServers(ctx context.Context, filter ServerQueryFilter) ([]Server, int64, error)
+	GetServerByName(ctx context.Context, serverName string, server *Server, disabledOk bool, deletedOk bool) error
+	GetServerByPassword(ctx context.Context, serverPassword string, server *Server, disabledOk bool, deletedOk bool) error
+	SaveServer(ctx context.Context, server *Server) error
+	DropServer(ctx context.Context, serverID int) error
+}
+
+type ServersRepository interface {
+	GetServer(ctx context.Context, serverID int, server *Server) error
+	GetServerPermissions(ctx context.Context) ([]ServerPermission, error)
+	GetServers(ctx context.Context, filter ServerQueryFilter) ([]Server, int64, error)
+	GetServerByName(ctx context.Context, serverName string, server *Server, disabledOk bool, deletedOk bool) error
+	GetServerByPassword(ctx context.Context, serverPassword string, server *Server, disabledOk bool, deletedOk bool) error
+	SaveServer(ctx context.Context, server *Server) error
+	DropServer(ctx context.Context, serverID int) error
+}
+
 var ErrResolveIP = errors.New("failed to resolve address")
 
 type ServerPermission struct {

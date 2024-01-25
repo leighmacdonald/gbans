@@ -347,25 +347,6 @@ func onAPILogout(env Env) gin.HandlerFunc {
 	}
 }
 
-func onAPICurrentProfile(env Env) gin.HandlerFunc {
-	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
-	return func(ctx *gin.Context) {
-		profile := currentUserProfile(ctx)
-		if !profile.SteamID.Valid() {
-			log.Error("Failed to load user profile",
-				zap.Int64("sid64", profile.SteamID.Int64()),
-				zap.String("name", profile.Name),
-				zap.String("permission_level", profile.PermissionLevel.String()))
-			responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, profile)
-	}
-}
-
 func onAPICurrentProfileNotifications(env Env) gin.HandlerFunc {
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
@@ -2231,66 +2212,5 @@ func onAPIThreadCreateReply(env Env) gin.HandlerFunc {
 		newMessage.Online = true
 
 		ctx.JSON(http.StatusCreated, newMessage)
-	}
-}
-
-func onAPIGetPersonSettings(env Env) gin.HandlerFunc {
-	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
-	return func(ctx *gin.Context) {
-		user := currentUserProfile(ctx)
-
-		var settings domain.PersonSettings
-
-		if err := env.Store().GetPersonSettings(ctx, user.SteamID, &settings); err != nil {
-			responseErr(ctx, http.StatusInternalServerError, errInternal)
-			log.Error("Failed to fetch person settings", zap.Error(err), zap.Int64("steam_id", user.SteamID.Int64()))
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, settings)
-	}
-}
-
-func onAPIPostPersonSettings(env Env) gin.HandlerFunc {
-	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
-	type settingsUpdateReq struct {
-		ForumSignature       string `json:"forum_signature"`
-		ForumProfileMessages bool   `json:"forum_profile_messages"`
-		StatsHidden          bool   `json:"stats_hidden"`
-	}
-
-	return func(ctx *gin.Context) {
-		user := currentUserProfile(ctx)
-
-		var req settingsUpdateReq
-
-		if !bind(ctx, log, &req) {
-			return
-		}
-
-		var settings domain.PersonSettings
-
-		if err := env.Store().GetPersonSettings(ctx, user.SteamID, &settings); err != nil {
-			responseErr(ctx, http.StatusInternalServerError, errInternal)
-			log.Error("Failed to fetch person settings", zap.Error(err), zap.Int64("steam_id", user.SteamID.Int64()))
-
-			return
-		}
-
-		settings.ForumProfileMessages = req.ForumProfileMessages
-		settings.StatsHidden = req.StatsHidden
-		settings.ForumSignature = util.SanitizeUGC(req.ForumSignature)
-
-		if err := env.Store().SavePersonSettings(ctx, &settings); err != nil {
-			responseErr(ctx, http.StatusInternalServerError, errInternal)
-			log.Error("Failed to save person settings", zap.Error(err), zap.Int64("steam_id", user.SteamID.Int64()))
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, settings)
 	}
 }

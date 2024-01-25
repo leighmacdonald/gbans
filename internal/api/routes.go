@@ -187,7 +187,7 @@ func createRouter(ctx context.Context, env Env) *gin.Engine {
 	engine.GET("/metrics", prometheusHandler())
 
 	engine.GET("/api/profile", onAPIProfile(env))
-	engine.GET("/api/servers/state", onAPIGetServerStates(env))
+	//engine.GET("/api/servers/state", onAPIGetServerStates(env))
 	engine.GET("/api/stats", onAPIGetStats(env))
 
 	engine.POST("/api/news_latest", onAPIGetNewsLatest(env))
@@ -195,7 +195,7 @@ func createRouter(ctx context.Context, env Env) *gin.Engine {
 	engine.GET("/api/patreon/campaigns", onAPIGetPatreonCampaigns(env))
 
 	engine.GET("/media/:media_id", onGetMediaByID(env))
-	engine.GET("/api/servers", onAPIGetServers(env))
+	//engine.GET("/api/servers", onAPIGetServers(env))
 
 	engine.GET("/api/stats/map", onAPIGetMapUsage(env))
 	engine.POST("/api/demos", onAPIPostDemosQuery(env))
@@ -250,11 +250,7 @@ func createRouter(ctx context.Context, env Env) *gin.Engine {
 
 		authed.GET("/api/auth/discord", onOAuthDiscordCallback(env))
 		authed.GET("/api/auth/logout", onAPILogout(env))
-		authed.GET("/api/current_profile", onAPICurrentProfile(env))
 		authed.POST("/api/current_profile/notifications", onAPICurrentProfileNotifications(env))
-
-		authed.GET("/api/current_profile/settings", onAPIGetPersonSettings(env))
-		authed.POST("/api/current_profile/settings", onAPIPostPersonSettings(env))
 
 		authed.POST("/api/report", onAPIPostReportCreate(env))
 		authed.GET("/api/report/:report_id", onAPIGetReport(env))
@@ -356,28 +352,17 @@ func createRouter(ctx context.Context, env Env) *gin.Engine {
 		modRoute.POST("/api/forum/category/:forum_category_id", onAPIUpdateForumCategory(env))
 		modRoute.POST("/api/forum/forum", onAPICreateForumForum(env))
 		modRoute.POST("/api/forum/forum/:forum_id", onAPIUpdateForumForum(env))
-
-		modRoute.POST("/api/block_list/whitelist", onAPIPostBlockListWhitelistCreate(env))
-		modRoute.POST("/api/block_list/whitelist/:cidr_block_whitelist_id", onAPIPostBlockListWhitelistUpdate(env))
-		modRoute.DELETE("/api/block_list/whitelist/:cidr_block_whitelist_id", onAPIDeleteBlockListWhitelist(env))
-		modRoute.GET("/api/block_list", onAPIGetBlockLists(env))
-		modRoute.POST("/api/block_list/checker", onAPIPostBlocklistCheck(env))
 	}
 
-	adminGrp := engine.Group("/")
-	{
-		// Admin access
-		adminRoute := adminGrp.Use(authMiddleware(env, domain.PAdmin))
-		adminRoute.POST("/api/servers", onAPIPostServer(env))
-		adminRoute.POST("/api/servers/:server_id", onAPIPostServerUpdate(env))
-		adminRoute.DELETE("/api/servers/:server_id", onAPIPostServerDelete(env))
-		adminRoute.POST("/api/servers_admin", onAPIGetServersAdmin(env))
-		adminRoute.PUT("/api/player/:steam_id/permissions", onAPIPutPlayerPermission(env))
-
-		adminRoute.POST("/api/block_list", onAPIPostBlockListCreate(env))
-		adminRoute.POST("/api/block_list/:cidr_block_source_id", onAPIPostBlockListUpdate(env))
-		adminRoute.DELETE("/api/block_list/:cidr_block_source_id", onAPIDeleteBlockList(env))
-	}
+	//adminGrp := engine.Group("/")
+	//{
+	//	// Admin access
+	//	adminRoute := adminGrp.Use(authMiddleware(env, domain.PAdmin))
+	//	adminRoute.POST("/api/servers", onAPIPostServer(env))
+	//	adminRoute.POST("/api/servers/:server_id", onAPIPostServerUpdate(env))
+	//	adminRoute.DELETE("/api/servers/:server_id", onAPIPostServerDelete(env))
+	//	adminRoute.POST("/api/servers_admin", onAPIGetServersAdmin(env))
+	//}
 
 	return engine
 }
