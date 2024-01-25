@@ -1,11 +1,60 @@
 package domain
 
 import (
+	"context"
 	"time"
 
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
+
+type ForumRepository interface {
+	ForumCategories(ctx context.Context) ([]ForumCategory, error)
+	ForumCategorySave(ctx context.Context, category *ForumCategory) error
+	ForumCategory(ctx context.Context, categoryID int, category *ForumCategory) error
+	ForumCategoryDelete(ctx context.Context, categoryID int) error
+	Forums(ctx context.Context) ([]Forum, error)
+	ForumSave(ctx context.Context, forum *Forum) error
+	Forum(ctx context.Context, forumID int, forum *Forum) error
+	ForumDelete(ctx context.Context, forumID int) error
+	ForumThreadSave(ctx context.Context, thread *ForumThread) error
+	ForumThread(ctx context.Context, forumThreadID int64, thread *ForumThread) error
+	ForumThreadIncrView(ctx context.Context, forumThreadID int64) error
+	ForumThreadDelete(ctx context.Context, forumThreadID int64) error
+	ForumThreads(ctx context.Context, filter ThreadQueryFilter) ([]ThreadWithSource, int64, error)
+	ForumIncrMessageCount(ctx context.Context, forumID int, incr bool) error
+	ForumMessageSave(ctx context.Context, message *ForumMessage) error
+	ForumRecentActivity(ctx context.Context, limit uint64, permissionLevel Privilege) ([]ForumMessage, error)
+	ForumMessage(ctx context.Context, messageID int64, forumMessage *ForumMessage) error
+	ForumMessages(ctx context.Context, filters ThreadMessagesQueryFilter) ([]ForumMessage, int64, error)
+	ForumMessageDelete(ctx context.Context, messageID int64) error
+	ForumMessageVoteApply(ctx context.Context, messageVote *ForumMessageVote) error
+	ForumMessageVoteByID(ctx context.Context, messageVoteID int64, messageVote *ForumMessageVote) error
+}
+
+type ForumUsecase interface {
+	ForumCategories(ctx context.Context) ([]ForumCategory, error)
+	ForumCategorySave(ctx context.Context, category *ForumCategory) error
+	ForumCategory(ctx context.Context, categoryID int, category *ForumCategory) error
+	ForumCategoryDelete(ctx context.Context, categoryID int) error
+	Forums(ctx context.Context) ([]Forum, error)
+	ForumSave(ctx context.Context, forum *Forum) error
+	Forum(ctx context.Context, forumID int, forum *Forum) error
+	ForumDelete(ctx context.Context, forumID int) error
+	ForumThreadSave(ctx context.Context, thread *ForumThread) error
+	ForumThread(ctx context.Context, forumThreadID int64, thread *ForumThread) error
+	ForumThreadIncrView(ctx context.Context, forumThreadID int64) error
+	ForumThreadDelete(ctx context.Context, forumThreadID int64) error
+	ForumThreads(ctx context.Context, filter ThreadQueryFilter) ([]ThreadWithSource, int64, error)
+	ForumIncrMessageCount(ctx context.Context, forumID int, incr bool) error
+	ForumMessageSave(ctx context.Context, message *ForumMessage) error
+	ForumRecentActivity(ctx context.Context, limit uint64, permissionLevel Privilege) ([]ForumMessage, error)
+	ForumMessage(ctx context.Context, messageID int64, forumMessage *ForumMessage) error
+	ForumMessages(ctx context.Context, filters ThreadMessagesQueryFilter) ([]ForumMessage, int64, error)
+	ForumMessageDelete(ctx context.Context, messageID int64) error
+	ForumMessageVoteApply(ctx context.Context, messageVote *ForumMessageVote) error
+	ForumMessageVoteByID(ctx context.Context, messageVoteID int64, messageVote *ForumMessageVote) error
+}
 
 type ForumActivity struct {
 	Person       UserProfile

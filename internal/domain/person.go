@@ -43,6 +43,7 @@ type PersonUsecase interface {
 	GetSteamIdsAbove(ctx context.Context, privilege Privilege) (steamid.Collection, error)
 	GetPersonSettings(ctx context.Context, steamID steamid.SID64, settings *PersonSettings) error
 	SavePersonSettings(ctx context.Context, settings *PersonSettings) error
+	GetPlayerMostRecentIP(ctx context.Context, steamID steamid.SID64) net.IP
 }
 
 type PersonRepository interface {

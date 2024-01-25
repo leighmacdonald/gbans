@@ -15,35 +15,17 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gofrs/uuid/v5"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
-)
-
-var (
-	errAssetCreateFailed  = errors.New("failed to create asset")
-	errAssetPut           = errors.New("unable to create asset on remote store")
-	errAssetSave          = errors.New("failed to save asset metadata")
-	errInvalidFormat      = errors.New("invalid format")
-	errDuplicateMediaName = errors.New("duplicate media name")
-	errSaveMedia          = errors.New("could not save media")
-	errFetchMedia         = errors.New("failed to fetch media asset")
-	errEmptyToken         = errors.New("invalid access token decoded")
-	errContestLoadEntries = errors.New("failed to load existing contest entries")
-	errContestMaxEntries  = errors.New("entries count exceed max_submission limits")
-	errEntryCreate        = errors.New("failed to create new contest entry")
-	errEntrySave          = errors.New("failed to save contest entry")
-	errThreadLocked       = errors.New("thread is locked")
 )
 
 func makeGetTokenKey(cookieKey string) func(_ *jwt.Token) (any, error) {
@@ -213,7 +195,7 @@ func onOAuthDiscordCallback(env Env) gin.HandlerFunc {
 		}
 
 		if atr.AccessToken == "" {
-			return "", errEmptyToken
+			return "", domain.ErrEmptyToken
 		}
 
 		return atr.AccessToken, nil
@@ -373,7 +355,7 @@ func onAPICurrentProfileNotifications(env Env) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, LazyResult{
+		ctx.JSON(http.StatusOK, domain.LazyResult{
 			Count: count,
 			Data:  notifications,
 		})
@@ -538,7 +520,7 @@ func onAPIGetReports(env Env) gin.HandlerFunc {
 			userReports = []reportWithAuthor{}
 		}
 
-		ctx.JSON(http.StatusOK, newLazyResult(count, userReports))
+		ctx.JSON(http.StatusOK, domain.NewLazyResult(count, userReports))
 	}
 }
 
@@ -600,13 +582,6 @@ func onAPISetReportStatus(env Env) gin.HandlerFunc {
 	} //nolint:wsl
 }
 
-type UserUploadedFile struct {
-	Content string `json:"content"`
-	Name    string `json:"name"`
-	Mime    string `json:"mime"`
-	Size    int64  `json:"size"`
-}
-
 func onAPISaveMedia(env Env) gin.HandlerFunc {
 	MediaSafeMimeTypesImages := []string{
 		"image/gif",
@@ -640,13 +615,13 @@ func onAPISaveMedia(env Env) gin.HandlerFunc {
 
 		asset, errAsset := domain.NewAsset(content, conf.S3.BucketMedia, "")
 		if errAsset != nil {
-			responseErr(ctx, http.StatusInternalServerError, errAssetCreateFailed)
+			responseErr(ctx, http.StatusInternalServerError, domain.ErrAssetCreateFailed)
 
 			return
 		}
 
 		if errPut := env.Assets().Put(ctx, conf.S3.BucketMedia, asset.Name, bytes.NewReader(content), asset.Size, asset.MimeType); errPut != nil {
-			responseErr(ctx, http.StatusInternalServerError, errAssetPut)
+			responseErr(ctx, http.StatusInternalServerError, domain.ErrAssetPut)
 
 			log.Error("Failed to save user media to s3 backend", zap.Error(errPut))
 
@@ -654,7 +629,7 @@ func onAPISaveMedia(env Env) gin.HandlerFunc {
 		}
 
 		if errSaveAsset := env.Store().SaveAsset(ctx, &asset); errSaveAsset != nil {
-			responseErr(ctx, http.StatusInternalServerError, errAssetSave)
+			responseErr(ctx, http.StatusInternalServerError, domain.ErrAssetSave)
 
 			log.Error("Failed to save user asset to s3 backend", zap.Error(errSaveAsset))
 		}
@@ -664,7 +639,7 @@ func onAPISaveMedia(env Env) gin.HandlerFunc {
 		media.Contents = nil
 
 		if !slices.Contains(MediaSafeMimeTypesImages, media.MimeType) {
-			responseErr(ctx, http.StatusBadRequest, errInvalidFormat)
+			responseErr(ctx, http.StatusBadRequest, domain.ErrInvalidFormat)
 			log.Error("User tried uploading image with forbidden mimetype",
 				zap.String("mime", media.MimeType), zap.String("name", media.Name))
 
@@ -675,12 +650,12 @@ func onAPISaveMedia(env Env) gin.HandlerFunc {
 			log.Error("Failed to save wiki media", zap.Error(errSave))
 
 			if errors.Is(errSave, errs.ErrDuplicate) {
-				responseErr(ctx, http.StatusConflict, errDuplicateMediaName)
+				responseErr(ctx, http.StatusConflict, domain.ErrDuplicateMediaName)
 
 				return
 			}
 
-			responseErr(ctx, http.StatusInternalServerError, errSaveMedia)
+			responseErr(ctx, http.StatusInternalServerError, domain.ErrSaveMedia)
 
 			return
 		}
@@ -1258,7 +1233,7 @@ func onAPIGetMatches(env Env) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, newLazyResult(totalCount, matches))
+		ctx.JSON(http.StatusOK, domain.NewLazyResult(totalCount, matches))
 	}
 }
 
@@ -1301,7 +1276,7 @@ func onAPIQueryMessages(env Env) gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, newLazyResult(count, messages))
+		ctx.JSON(http.StatusOK, domain.NewLazyResult(count, messages))
 	}
 }
 
@@ -1326,7 +1301,7 @@ func onAPIGetStatsWeaponsOverall(ctx context.Context, env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		stats := updater.Data()
 
-		ctx.JSON(http.StatusOK, newLazyResult(int64(len(stats)), stats))
+		ctx.JSON(http.StatusOK, domain.NewLazyResult(int64(len(stats)), stats))
 	}
 }
 
@@ -1334,7 +1309,7 @@ func onAPIGetsStatsWeapon(env Env) gin.HandlerFunc {
 	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	type resp struct {
-		LazyResult
+		domain.LazyResult
 		Weapon domain.Weapon `json:"weapon"`
 	}
 
@@ -1369,7 +1344,7 @@ func onAPIGetsStatsWeapon(env Env) gin.HandlerFunc {
 			weaponStats = []domain.PlayerWeaponResult{}
 		}
 
-		ctx.JSON(http.StatusOK, resp{LazyResult: newLazyResult(int64(len(weaponStats)), weaponStats), Weapon: weapon})
+		ctx.JSON(http.StatusOK, resp{LazyResult: domain.NewLazyResult(int64(len(weaponStats)), weaponStats), Weapon: weapon})
 	}
 }
 
@@ -1389,7 +1364,7 @@ func onAPIGetStatsPlayersOverall(ctx context.Context, env Env) gin.HandlerFunc {
 
 	return func(ctx *gin.Context) {
 		stats := updater.Data()
-		ctx.JSON(http.StatusOK, newLazyResult(int64(len(stats)), stats))
+		ctx.JSON(http.StatusOK, domain.NewLazyResult(int64(len(stats)), stats))
 	}
 }
 
@@ -1409,7 +1384,7 @@ func onAPIGetStatsHealersOverall(ctx context.Context, env Env) gin.HandlerFunc {
 
 	return func(ctx *gin.Context) {
 		stats := updater.Data()
-		ctx.JSON(http.StatusOK, newLazyResult(int64(len(stats)), stats))
+		ctx.JSON(http.StatusOK, domain.NewLazyResult(int64(len(stats)), stats))
 	}
 }
 
@@ -1437,7 +1412,7 @@ func onAPIGetPlayerWeaponStatsOverall(env Env) gin.HandlerFunc {
 			weaponStats = []domain.WeaponsOverallResult{}
 		}
 
-		ctx.JSON(http.StatusOK, newLazyResult(int64(len(weaponStats)), weaponStats))
+		ctx.JSON(http.StatusOK, domain.NewLazyResult(int64(len(weaponStats)), weaponStats))
 	}
 }
 
@@ -1465,7 +1440,7 @@ func onAPIGetPlayerClassStatsOverall(env Env) gin.HandlerFunc {
 			classStats = []domain.PlayerClassOverallResult{}
 		}
 
-		ctx.JSON(http.StatusOK, newLazyResult(int64(len(classStats)), classStats))
+		ctx.JSON(http.StatusOK, domain.NewLazyResult(int64(len(classStats)), classStats))
 	}
 }
 
@@ -1490,727 +1465,5 @@ func onAPIGetPlayerStatsOverall(env Env) gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusOK, por)
-	}
-}
-
-func onAPISaveContestEntryMedia(env Env) gin.HandlerFunc {
-	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
-	return func(ctx *gin.Context) {
-		contest, success := contestFromCtx(ctx, env)
-		if !success {
-			return
-		}
-
-		var req UserUploadedFile
-		if !bind(ctx, log, &req) {
-			return
-		}
-
-		content, decodeErr := base64.StdEncoding.DecodeString(req.Content)
-		if decodeErr != nil {
-			ctx.JSON(http.StatusBadRequest, errBadRequest)
-
-			return
-		}
-
-		media, errMedia := domain.NewMedia(currentUserProfile(ctx).SteamID, req.Name, req.Mime, content)
-		if errMedia != nil {
-			ctx.JSON(http.StatusBadRequest, errBadRequest)
-			log.Error("Invalid media uploaded", zap.Error(errMedia))
-		}
-
-		conf := env.Config()
-
-		asset, errAsset := domain.NewAsset(content, conf.S3.BucketMedia, "")
-		if errAsset != nil {
-			responseErr(ctx, http.StatusInternalServerError, errAssetCreateFailed)
-
-			return
-		}
-
-		if errPut := env.Assets().Put(ctx, conf.S3.BucketMedia, asset.Name, bytes.NewReader(content), asset.Size, asset.MimeType); errPut != nil {
-			responseErr(ctx, http.StatusInternalServerError, errAssetPut)
-
-			log.Error("Failed to save user contest entry media to s3 backend", zap.Error(errPut))
-
-			return
-		}
-
-		if errSaveAsset := env.Store().SaveAsset(ctx, &asset); errSaveAsset != nil {
-			responseErr(ctx, http.StatusInternalServerError, errAssetSave)
-
-			log.Error("Failed to save user asset to s3 backend", zap.Error(errSaveAsset))
-		}
-
-		media.Asset = asset
-
-		media.Contents = nil
-
-		if !contest.MimeTypeAcceptable(media.MimeType) {
-			responseErr(ctx, http.StatusUnsupportedMediaType, errInvalidFormat)
-			log.Error("User tried uploading file with forbidden mimetype",
-				zap.String("mime", media.MimeType), zap.String("name", media.Name))
-
-			return
-		}
-
-		if errSave := env.Store().SaveMedia(ctx, &media); errSave != nil {
-			log.Error("Failed to save user contest media", zap.Error(errSave))
-
-			if errors.Is(errs.DBErr(errSave), errs.ErrDuplicate) {
-				responseErr(ctx, http.StatusConflict, errDuplicateMediaName)
-
-				return
-			}
-
-			responseErr(ctx, http.StatusInternalServerError, errSaveMedia)
-
-			return
-		}
-
-		ctx.JSON(http.StatusCreated, media)
-	}
-}
-
-func onAPISaveContestEntryVote(env Env) gin.HandlerFunc {
-	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
-	type voteResult struct {
-		CurrentVote string `json:"current_vote"`
-	}
-
-	return func(ctx *gin.Context) {
-		contest, success := contestFromCtx(ctx, env)
-		if !success {
-			return
-		}
-
-		contestEntryID, errContestEntryID := getUUIDParam(ctx, "contest_entry_id")
-		if errContestEntryID != nil {
-			ctx.JSON(http.StatusNotFound, errs.ErrNotFound)
-			log.Error("Invalid contest entry id option")
-
-			return
-		}
-
-		direction := strings.ToLower(ctx.Param("direction"))
-		if direction != "up" && direction != "down" {
-			ctx.JSON(http.StatusBadRequest, errBadRequest)
-			log.Error("Invalid vote direction option")
-
-			return
-		}
-
-		if !contest.Voting || !contest.DownVotes && direction != "down" {
-			ctx.JSON(http.StatusBadRequest, errBadRequest)
-			log.Error("Voting not enabled")
-
-			return
-		}
-
-		currentUser := currentUserProfile(ctx)
-
-		if errVote := env.Store().ContestEntryVote(ctx, contestEntryID, currentUser.SteamID, direction == "up"); errVote != nil {
-			if errors.Is(errVote, errs.ErrVoteDeleted) {
-				ctx.JSON(http.StatusOK, voteResult{""})
-
-				return
-			}
-
-			ctx.JSON(http.StatusInternalServerError, errInternal)
-
-			return
-		}
-
-		ctx.JSON(http.StatusCreated, voteResult{direction})
-	}
-}
-
-func onAPISaveContestEntrySubmit(env Env) gin.HandlerFunc {
-	type entryReq struct {
-		Description string    `json:"description"`
-		AssetID     uuid.UUID `json:"asset_id"`
-	}
-
-	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
-	return func(ctx *gin.Context) {
-		user := currentUserProfile(ctx)
-		contest, success := contestFromCtx(ctx, env)
-
-		if !success {
-			return
-		}
-
-		var req entryReq
-		if !bind(ctx, log, &req) {
-			return
-		}
-
-		if contest.MediaTypes != "" {
-			var media domain.Media
-			if errMedia := env.Store().GetMediaByAssetID(ctx, req.AssetID, &media); errMedia != nil {
-				responseErr(ctx, http.StatusFailedDependency, errFetchMedia)
-
-				return
-			}
-
-			if !contest.MimeTypeAcceptable(media.MimeType) {
-				responseErr(ctx, http.StatusFailedDependency, errInvalidFormat)
-
-				return
-			}
-		}
-
-		existingEntries, errEntries := env.Store().ContestEntries(ctx, contest.ContestID)
-		if errEntries != nil && !errors.Is(errEntries, errs.ErrNoResult) {
-			responseErr(ctx, http.StatusInternalServerError, errContestLoadEntries)
-
-			return
-		}
-
-		own := 0
-
-		for _, entry := range existingEntries {
-			if entry.SteamID == user.SteamID {
-				own++
-			}
-
-			if own >= contest.MaxSubmissions {
-				responseErr(ctx, http.StatusForbidden, errContestMaxEntries)
-
-				return
-			}
-		}
-
-		steamID := currentUserProfile(ctx).SteamID
-
-		entry, errEntry := contest.NewEntry(steamID, req.AssetID, req.Description)
-		if errEntry != nil {
-			responseErr(ctx, http.StatusInternalServerError, errEntryCreate)
-
-			return
-		}
-
-		if errSave := env.Store().ContestEntrySave(ctx, entry); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errEntrySave)
-
-			return
-		}
-
-		ctx.JSON(http.StatusCreated, entry)
-
-		log.Info("New contest entry submitted", zap.String("contest_id", contest.ContestID.String()))
-	}
-}
-
-func onAPIDeleteContestEntry(env Env) gin.HandlerFunc {
-	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
-	return func(ctx *gin.Context) {
-		user := currentUserProfile(ctx)
-
-		contestEntryID, idErr := getUUIDParam(ctx, "contest_entry_id")
-		if idErr != nil {
-			responseErr(ctx, http.StatusBadRequest, errBadRequest)
-
-			return
-		}
-
-		var entry domain.ContestEntry
-
-		if errContest := env.Store().ContestEntry(ctx, contestEntryID, &entry); errContest != nil {
-			if errors.Is(errContest, errs.ErrNoResult) {
-				responseErr(ctx, http.StatusNotFound, errs.ErrUnknownID)
-
-				return
-			}
-
-			responseErr(ctx, http.StatusBadRequest, errBadRequest)
-
-			log.Error("Error getting contest entry for deletion", zap.Error(errContest))
-
-			return
-		}
-
-		// Only >=moderators or the entry author are allowed to delete entries.
-		if !(user.PermissionLevel >= domain.PModerator || user.SteamID == entry.SteamID) {
-			responseErr(ctx, http.StatusForbidden, errPermissionDenied)
-
-			return
-		}
-
-		var contest domain.Contest
-
-		if errContest := env.Store().ContestByID(ctx, entry.ContestID, &contest); errContest != nil {
-			if errors.Is(errContest, errs.ErrNoResult) {
-				responseErr(ctx, http.StatusNotFound, errs.ErrUnknownID)
-
-				return
-			}
-
-			responseErr(ctx, http.StatusBadRequest, errBadRequest)
-
-			log.Error("Error getting contest", zap.Error(errContest))
-
-			return
-		}
-
-		// Only allow mods to delete entries from expired contests.
-		if user.SteamID == entry.SteamID && time.Since(contest.DateEnd) > 0 {
-			responseErr(ctx, http.StatusForbidden, errPermissionDenied)
-
-			log.Error("User tried to delete entry from expired contest")
-
-			return
-		}
-
-		if errDelete := env.Store().ContestEntryDelete(ctx, entry.ContestEntryID); errDelete != nil {
-			responseErr(ctx, http.StatusInternalServerError, errInternal)
-
-			log.Error("Error deleting contest entry", zap.Error(errDelete))
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, gin.H{})
-
-		log.Info("Contest deleted",
-			zap.String("contest_id", entry.ContestID.String()),
-			zap.String("contest_entry_id", entry.ContestEntryID.String()),
-			zap.String("title", contest.Title))
-	}
-}
-
-func onAPIThreadCreate(env Env) gin.HandlerFunc {
-	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
-	type CreateThreadRequest struct {
-		Title  string `json:"title"`
-		BodyMD string `json:"body_md"`
-		Sticky bool   `json:"sticky"`
-		Locked bool   `json:"locked"`
-	}
-
-	type ThreadWithMessage struct {
-		domain.ForumThread
-		Message domain.ForumMessage `json:"message"`
-	}
-
-	return func(ctx *gin.Context) {
-		user := currentUserProfile(ctx)
-
-		env.Activity().Touch(user)
-
-		forumID, errForumID := getIntParam(ctx, "forum_id")
-		if errForumID != nil {
-			responseErr(ctx, http.StatusBadRequest, errBadRequest)
-
-			return
-		}
-
-		var req CreateThreadRequest
-		if !bind(ctx, log, &req) {
-			return
-		}
-
-		if len(req.BodyMD) <= 1 {
-			responseErr(ctx, http.StatusBadRequest, fmt.Errorf("body: %w", store.ErrTooShort))
-
-			return
-		}
-
-		if len(req.Title) <= 4 {
-			responseErr(ctx, http.StatusBadRequest, fmt.Errorf("title: %w", store.ErrTooShort))
-
-			return
-		}
-
-		var forum domain.Forum
-		if errForum := env.Store().Forum(ctx, forumID, &forum); errForum != nil {
-			responseErr(ctx, http.StatusInternalServerError, errInternal)
-
-			return
-		}
-
-		thread := forum.NewThread(req.Title, user.SteamID)
-		thread.Sticky = req.Sticky
-		thread.Locked = req.Locked
-
-		if errSaveThread := env.Store().ForumThreadSave(ctx, &thread); errSaveThread != nil {
-			responseErr(ctx, http.StatusInternalServerError, errInternal)
-
-			log.Error("Failed to save new thread", zap.Error(errSaveThread))
-
-			return
-		}
-
-		message := thread.NewMessage(user.SteamID, req.BodyMD)
-
-		if errSaveMessage := env.Store().ForumMessageSave(ctx, &message); errSaveMessage != nil {
-			// Drop created thread.
-			// TODO transaction
-			if errRollback := env.Store().ForumThreadDelete(ctx, thread.ForumThreadID); errRollback != nil {
-				log.Error("Failed to rollback new thread", zap.Error(errRollback))
-			}
-
-			responseErr(ctx, http.StatusInternalServerError, errInternal)
-
-			log.Error("Failed to save new forum message", zap.Error(errSaveMessage))
-
-			return
-		}
-
-		if errIncr := env.Store().ForumIncrMessageCount(ctx, forum.ForumID, true); errIncr != nil {
-			responseErr(ctx, http.StatusInternalServerError, errInternal)
-
-			log.Error("Failed to increment message count", zap.Error(errIncr))
-
-			return
-		}
-
-		ctx.JSON(http.StatusCreated, ThreadWithMessage{
-			ForumThread: thread,
-			Message:     message,
-		})
-
-		log.Info("Thread created")
-	}
-}
-
-func onAPIThreadUpdate(env Env) gin.HandlerFunc {
-	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
-	type threadUpdate struct {
-		Title  string `json:"title"`
-		Sticky bool   `json:"sticky"`
-		Locked bool   `json:"locked"`
-	}
-
-	return func(ctx *gin.Context) {
-		currentUser := currentUserProfile(ctx)
-
-		forumThreadID, errForumTheadID := getInt64Param(ctx, "forum_thread_id")
-		if errForumTheadID != nil {
-			responseErr(ctx, http.StatusBadRequest, errBadRequest)
-
-			return
-		}
-
-		var req threadUpdate
-		if !bind(ctx, log, &req) {
-			return
-		}
-
-		req.Title = util.SanitizeUGC(req.Title)
-
-		if len(req.Title) < 2 {
-			responseErr(ctx, http.StatusBadRequest, errBadRequest)
-
-			return
-		}
-
-		var thread domain.ForumThread
-		if errGet := env.Store().ForumThread(ctx, forumThreadID, &thread); errGet != nil {
-			if errors.Is(errGet, errs.ErrNoResult) {
-				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
-			} else {
-				responseErr(ctx, http.StatusInternalServerError, errInternal)
-			}
-
-			return
-		}
-
-		if thread.SourceID != currentUser.SteamID && !(currentUser.PermissionLevel >= domain.PModerator) {
-			responseErr(ctx, http.StatusForbidden, errInternal)
-
-			return
-		}
-
-		thread.Title = req.Title
-		thread.Sticky = req.Sticky
-		thread.Locked = req.Locked
-
-		if errDelete := env.Store().ForumThreadSave(ctx, &thread); errDelete != nil {
-			responseErr(ctx, http.StatusInternalServerError, errInternal)
-			log.Error("Failed to update thread", zap.Error(errDelete))
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, thread)
-		log.Info("Thread updated", zap.Int64("forum_thread_id", thread.ForumThreadID))
-	}
-}
-
-func onAPIThreadDelete(env Env) gin.HandlerFunc {
-	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
-	return func(ctx *gin.Context) {
-		forumThreadID, errForumTheadID := getInt64Param(ctx, "forum_thread_id")
-		if errForumTheadID != nil {
-			responseErr(ctx, http.StatusBadRequest, errBadRequest)
-
-			return
-		}
-
-		var thread domain.ForumThread
-		if errGet := env.Store().ForumThread(ctx, forumThreadID, &thread); errGet != nil {
-			if errors.Is(errGet, errs.ErrNoResult) {
-				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
-			} else {
-				responseErr(ctx, http.StatusInternalServerError, errInternal)
-			}
-
-			return
-		}
-
-		if errDelete := env.Store().ForumThreadDelete(ctx, thread.ForumThreadID); errDelete != nil {
-			responseErr(ctx, http.StatusInternalServerError, errInternal)
-			log.Error("Failed to delete thread", zap.Error(errDelete))
-
-			return
-		}
-
-		var forum domain.Forum
-		if errForum := env.Store().Forum(ctx, thread.ForumID, &forum); errForum != nil {
-			responseErr(ctx, http.StatusInternalServerError, errInternal)
-			log.Error("Failed to load forum", zap.Error(errForum))
-
-			return
-		}
-
-		forum.CountThreads -= 1
-
-		if errSave := env.Store().ForumSave(ctx, &forum); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errInternal)
-			log.Error("Failed to save thread count", zap.Error(errSave))
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, gin.H{})
-	}
-}
-
-func onAPIThreadMessageUpdate(env Env) gin.HandlerFunc {
-	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
-	type MessageUpdate struct {
-		BodyMD string `json:"body_md"`
-	}
-
-	return func(ctx *gin.Context) {
-		currentUser := currentUserProfile(ctx)
-
-		env.Activity().Touch(currentUser)
-
-		forumMessageID, errForumMessageID := getInt64Param(ctx, "forum_message_id")
-		if errForumMessageID != nil {
-			responseErr(ctx, http.StatusBadRequest, errBadRequest)
-
-			return
-		}
-
-		var req MessageUpdate
-		if !bind(ctx, log, &req) {
-			return
-		}
-
-		var message domain.ForumMessage
-		if errMessage := env.Store().ForumMessage(ctx, forumMessageID, &message); errMessage != nil {
-			responseErr(ctx, http.StatusInternalServerError, errInternal)
-
-			return
-		}
-
-		if message.SourceID != currentUser.SteamID && !(currentUser.PermissionLevel >= domain.PModerator) {
-			responseErr(ctx, http.StatusForbidden, errInternal)
-
-			return
-		}
-
-		req.BodyMD = util.SanitizeUGC(req.BodyMD)
-
-		if len(req.BodyMD) < 10 {
-			responseErr(ctx, http.StatusBadRequest, errBadRequest)
-
-			return
-		}
-
-		message.BodyMD = req.BodyMD
-
-		if errSave := env.Store().ForumMessageSave(ctx, &message); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errInternal)
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, message)
-	}
-}
-
-func onAPIMessageDelete(env Env) gin.HandlerFunc {
-	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
-	return func(ctx *gin.Context) {
-		forumMessageID, errForumMessageID := getInt64Param(ctx, "forum_message_id")
-		if errForumMessageID != nil {
-			responseErr(ctx, http.StatusBadRequest, errBadRequest)
-
-			return
-		}
-
-		var message domain.ForumMessage
-		if err := env.Store().ForumMessage(ctx, forumMessageID, &message); err != nil {
-			if errors.Is(err, errs.ErrNoResult) {
-				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
-			} else {
-				responseErr(ctx, http.StatusInternalServerError, errInternal)
-			}
-
-			return
-		}
-
-		var thread domain.ForumThread
-		if err := env.Store().ForumThread(ctx, message.ForumThreadID, &thread); err != nil {
-			if errors.Is(err, errs.ErrNoResult) {
-				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
-			} else {
-				responseErr(ctx, http.StatusInternalServerError, errInternal)
-			}
-
-			return
-		}
-
-		if thread.Locked {
-			responseErr(ctx, http.StatusForbidden, errThreadLocked)
-
-			return
-		}
-
-		messages, count, errMessage := env.Store().ForumMessages(ctx, domain.ThreadMessagesQueryFilter{ForumThreadID: message.ForumThreadID})
-		if errMessage != nil || count <= 0 {
-			responseErr(ctx, http.StatusInternalServerError, errInternal)
-
-			return
-		}
-
-		isThreadParent := messages[0].ForumMessageID == message.ForumMessageID
-
-		if isThreadParent {
-			if err := env.Store().ForumThreadDelete(ctx, message.ForumThreadID); err != nil {
-				responseErr(ctx, http.StatusInternalServerError, errInternal)
-				log.Error("Failed to delete forum thread", zap.Error(err))
-
-				return
-			}
-
-			// Delete the thread if it's the first message
-			var forum domain.Forum
-			if errForum := env.Store().Forum(ctx, thread.ForumID, &forum); errForum != nil {
-				responseErr(ctx, http.StatusInternalServerError, errInternal)
-				log.Error("Failed to load forum", zap.Error(errForum))
-
-				return
-			}
-
-			forum.CountThreads -= 1
-
-			if errSave := env.Store().ForumSave(ctx, &forum); errSave != nil {
-				responseErr(ctx, http.StatusInternalServerError, errInternal)
-				log.Error("Failed to save thread count", zap.Error(errSave))
-
-				return
-			}
-
-			log.Error("Thread deleted due to parent deletion", zap.Int64("forum_thread_id", thread.ForumThreadID))
-		} else {
-			if errDelete := env.Store().ForumMessageDelete(ctx, message.ForumMessageID); errDelete != nil {
-				responseErr(ctx, http.StatusInternalServerError, errInternal)
-				log.Error("Failed to delete message", zap.Error(errDelete))
-
-				return
-			}
-
-			log.Info("Thread message deleted", zap.Int64("forum_message_id", message.ForumMessageID))
-		}
-
-		ctx.JSON(http.StatusOK, gin.H{})
-	}
-}
-
-func onAPIThreadCreateReply(env Env) gin.HandlerFunc {
-	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
-	type ThreadReply struct {
-		BodyMD string `json:"body_md"`
-	}
-
-	return func(ctx *gin.Context) {
-		currentUser := currentUserProfile(ctx)
-
-		env.Activity().Touch(currentUser)
-
-		forumThreadID, errForumID := getInt64Param(ctx, "forum_thread_id")
-		if errForumID != nil {
-			responseErr(ctx, http.StatusBadRequest, errBadRequest)
-
-			return
-		}
-
-		var thread domain.ForumThread
-		if errThread := env.Store().ForumThread(ctx, forumThreadID, &thread); errThread != nil {
-			responseErr(ctx, http.StatusInternalServerError, errInternal)
-
-			return
-		}
-
-		if thread.Locked && currentUser.PermissionLevel < domain.PEditor {
-			responseErr(ctx, http.StatusForbidden, errThreadLocked)
-
-			return
-		}
-
-		var req ThreadReply
-		if !bind(ctx, log, &req) {
-			return
-		}
-
-		req.BodyMD = util.SanitizeUGC(req.BodyMD)
-
-		if len(req.BodyMD) < 3 {
-			responseErr(ctx, http.StatusBadRequest, fmt.Errorf("body: %w", store.ErrTooShort))
-
-			return
-		}
-
-		newMessage := thread.NewMessage(currentUser.SteamID, req.BodyMD)
-		if errSave := env.Store().ForumMessageSave(ctx, &newMessage); errSave != nil {
-			responseErr(ctx, http.StatusInternalServerError, errInternal)
-
-			return
-		}
-
-		var message domain.ForumMessage
-		if errFetch := env.Store().ForumMessage(ctx, newMessage.ForumMessageID, &message); errFetch != nil {
-			responseErr(ctx, http.StatusInternalServerError, errInternal)
-
-			return
-		}
-
-		if errIncr := env.Store().ForumIncrMessageCount(ctx, thread.ForumID, true); errIncr != nil {
-			responseErr(ctx, http.StatusInternalServerError, errInternal)
-
-			log.Error("Failed to increment message count", zap.Error(errIncr))
-		}
-
-		newMessage.Personaname = currentUser.Name
-		newMessage.Avatarhash = currentUser.Avatarhash
-		newMessage.PermissionLevel = currentUser.PermissionLevel
-		newMessage.Online = true
-
-		ctx.JSON(http.StatusCreated, newMessage)
 	}
 }

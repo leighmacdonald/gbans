@@ -109,44 +109,6 @@ func getUUIDParam(ctx *gin.Context, key string) (uuid.UUID, error) {
 	return parsedUUID, nil
 }
 
-func serverFromCtx(ctx *gin.Context) int {
-	serverIDUntyped, ok := ctx.Get("server_id")
-	if !ok {
-		return 0
-	}
-
-	serverID, castOk := serverIDUntyped.(int)
-	if !castOk {
-		return 0
-	}
-
-	return serverID
-}
-
-func contestFromCtx(ctx *gin.Context, env Env) (domain.Contest, bool) {
-	contestID, idErr := getUUIDParam(ctx, "contest_id")
-	if idErr != nil {
-		responseErr(ctx, http.StatusBadRequest, errBadRequest)
-
-		return domain.Contest{}, false
-	}
-
-	var contest domain.Contest
-	if errContests := env.Store().ContestByID(ctx, contestID, &contest); errContests != nil {
-		responseErr(ctx, http.StatusInternalServerError, errInternal)
-
-		return domain.Contest{}, false
-	}
-
-	if !contest.Public && currentUserProfile(ctx).PermissionLevel < domain.PModerator {
-		responseErr(ctx, http.StatusForbidden, errs.ErrNotFound)
-
-		return domain.Contest{}, false
-	}
-
-	return contest, true
-}
-
 func New(ctx context.Context, env Env) *http.Server {
 	conf := env.Config()
 

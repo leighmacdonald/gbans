@@ -61,7 +61,7 @@ func authServerMiddleWare(env Env) gin.HandlerFunc {
 			reqAuthHeader = parts[1]
 		}
 
-		claims := &serverAuthClaims{}
+		claims := &domain.ServerAuthClaims{}
 
 		parsedToken, errParseClaims := jwt.ParseWithClaims(reqAuthHeader, claims, makeGetTokenKey(env.Config().HTTP.CookieKey))
 		if errParseClaims != nil {
@@ -247,30 +247,18 @@ func fingerprintHash(fingerprint string) string {
 	return fmt.Sprintf("%x", hasher.Sum([]byte(fingerprint)))
 }
 
-var (
-	errCreateToken         = errors.New("failed to create new access token")
-	errRefreshToken        = errors.New("failed to create new refresh token")
-	errClientIP            = errors.New("failed to parse IP")
-	errSaveToken           = errors.New("failed to save new createRefresh token")
-	errSignToken           = errors.New("failed create signed string")
-	errSignJWT             = errors.New("failed create signed JWT string")
-	errAuthHeader          = errors.New("failed to bind auth header")
-	errMalformedAuthHeader = errors.New("invalid auth header format")
-	errCookieKeyMissing    = errors.New("cookie key missing, cannot generate token")
-)
-
 // makeTokens generates new jwt auth tokens
 // fingerprint is a random string used to prevent side-jacking.
 func makeTokens(ctx *gin.Context, env Env, cookieKey string, sid steamid.SID64, createRefresh bool) (userTokens, error) {
 	if cookieKey == "" {
-		return userTokens{}, errCookieKeyMissing
+		return userTokens{}, domain.ErrCookieKeyMissing
 	}
 
 	fingerprint := util.SecureRandomString(40)
 
 	accessToken, errJWT := newUserToken(sid, cookieKey, fingerprint, authTokenDuration)
 	if errJWT != nil {
-		return userTokens{}, errors.Join(errJWT, errCreateToken)
+		return userTokens{}, errors.Join(errJWT, domain.ErrCreateToken)
 	}
 
 	refreshToken := ""
@@ -278,17 +266,17 @@ func makeTokens(ctx *gin.Context, env Env, cookieKey string, sid steamid.SID64, 
 	if createRefresh {
 		newRefreshToken, errRefresh := newUserToken(sid, cookieKey, fingerprint, refreshTokenDuration)
 		if errRefresh != nil {
-			return userTokens{}, errors.Join(errRefresh, errRefreshToken)
+			return userTokens{}, errors.Join(errRefresh, domain.ErrRefreshToken)
 		}
 
 		ipAddr := net.ParseIP(ctx.ClientIP())
 		if ipAddr == nil {
-			return userTokens{}, errClientIP
+			return userTokens{}, domain.ErrClientIP
 		}
 
 		personAuth := domain.NewPersonAuth(sid, ipAddr, fingerprint)
 		if saveErr := env.Store().SavePersonAuth(ctx, &personAuth); saveErr != nil {
-			return userTokens{}, errors.Join(saveErr, errSaveToken)
+			return userTokens{}, errors.Join(saveErr, domain.ErrSaveToken)
 		}
 
 		refreshToken = newRefreshToken
@@ -304,12 +292,6 @@ func makeTokens(ctx *gin.Context, env Env, cookieKey string, sid steamid.SID64, 
 type userToken struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token,omitempty"`
-}
-
-type serverAuthClaims struct {
-	ServerID int `json:"server_id"`
-	// A random string which is used to fingerprint and prevent side-jacking
-	jwt.RegisteredClaims
 }
 
 type userAuthClaims struct {
@@ -341,29 +323,7 @@ func newUserToken(steamID steamid.SID64, cookieKey string, userContext string, v
 	signedToken, errSigned := tokenWithClaims.SignedString([]byte(cookieKey))
 
 	if errSigned != nil {
-		return "", errors.Join(errSigned, errSignToken)
-	}
-
-	return signedToken, nil
-}
-
-func newServerToken(serverID int, cookieKey string) (string, error) {
-	curTime := time.Now()
-
-	claims := &serverAuthClaims{
-		ServerID: serverID,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(curTime.Add(authTokenDuration)),
-			IssuedAt:  jwt.NewNumericDate(curTime),
-			NotBefore: jwt.NewNumericDate(curTime),
-		},
-	}
-
-	tokenWithClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	signedToken, errSigned := tokenWithClaims.SignedString([]byte(cookieKey))
-	if errSigned != nil {
-		return "", errors.Join(errSigned, errSignJWT)
+		return "", errors.Join(errSigned, domain.ErrSignToken)
 	}
 
 	return signedToken, nil
@@ -376,7 +336,7 @@ type authHeader struct {
 func tokenFromHeader(ctx *gin.Context, emptyOK bool) (string, error) {
 	hdr := authHeader{}
 	if errBind := ctx.ShouldBindHeader(&hdr); errBind != nil {
-		return "", errors.Join(errBind, errAuthHeader)
+		return "", errors.Join(errBind, domain.ErrAuthHeader)
 	}
 
 	pcs := strings.Split(hdr.Authorization, " ")
@@ -387,7 +347,7 @@ func tokenFromHeader(ctx *gin.Context, emptyOK bool) (string, error) {
 
 		ctx.AbortWithStatus(http.StatusForbidden)
 
-		return "", errMalformedAuthHeader
+		return "", domain.ErrMalformedAuthHeader
 	}
 
 	return pcs[1], nil

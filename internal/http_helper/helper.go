@@ -3,6 +3,9 @@ package http_helper
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -10,8 +13,6 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"go.uber.org/zap"
-	"net/http"
-	"strconv"
 )
 
 const ctxKeyUserProfile = "user_profile"
@@ -126,4 +127,18 @@ func GetDefaultFloat64(s string, def float64) float64 {
 	}
 
 	return def
+}
+
+func ServerFromCtx(ctx *gin.Context) int {
+	serverIDUntyped, ok := ctx.Get("server_id")
+	if !ok {
+		return 0
+	}
+
+	serverID, castOk := serverIDUntyped.(int)
+	if !castOk {
+		return 0
+	}
+
+	return serverID
 }
