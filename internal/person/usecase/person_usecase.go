@@ -2,10 +2,11 @@ package usecase
 
 import (
 	"context"
-	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/steamid/v3/steamid"
 	"net"
 	"time"
+
+	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
 type personUsecase struct {

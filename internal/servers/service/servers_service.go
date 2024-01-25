@@ -1,24 +1,28 @@
 package service
 
 import (
+	"math"
+	"net/http"
+	"runtime"
+	"sort"
+
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/http_helper"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"go.uber.org/zap"
-	"net/http"
-	"runtime"
-	"sort"
 )
 
 type ServersHandler struct {
-	ServersUsecase domain.ServersUsecase
+	serversUsecase domain.ServersUsecase
+	stateUsecase   domain.StateUsecase
 	log            *zap.Logger
 }
 
-func NewServerHandler(logger *zap.Logger, engine *gin.Engine, serversUsecase domain.ServersUsecase) {
+func NewServerHandler(logger *zap.Logger, engine *gin.Engine, serversUsecase domain.ServersUsecase, stateUsecase domain.StateUsecase) {
 	handler := &ServersHandler{
-		ServersUsecase: serversUsecase,
+		serversUsecase: serversUsecase,
+		stateUsecase:   stateUsecase,
 		log:            logger,
 	}
 
@@ -26,12 +30,11 @@ func NewServerHandler(logger *zap.Logger, engine *gin.Engine, serversUsecase dom
 	engine.GET("/api/servers", handler.onAPIGetServers())
 
 	// admin
-	//adminRoute := adminGrp.Use(authMiddleware(env, domain.PAdmin))
+	// adminRoute := adminGrp.Use(authMiddleware(env, domain.PAdmin))
 	engine.POST("/api/servers", handler.onAPIPostServer())
 	engine.POST("/api/servers/:server_id", handler.onAPIPostServerUpdate())
 	engine.DELETE("/api/servers/:server_id", handler.onAPIPostServerDelete())
 	engine.POST("/api/servers_admin", handler.onAPIGetServersAdmin())
-
 }
 
 type serverInfoSafe struct {
@@ -43,7 +46,7 @@ type serverInfoSafe struct {
 
 func (s *ServersHandler) onAPIGetServers() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		fullServers, _, errServers := s.ServersUsecase.GetServers(ctx, domain.ServerQueryFilter{})
+		fullServers, _, errServers := s.serversUsecase.GetServers(ctx, domain.ServerQueryFilter{})
 		if errServers != nil {
 			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
@@ -70,12 +73,31 @@ func (s *ServersHandler) onAPIGetServerStates() gin.HandlerFunc {
 		LatLong ip2location.LatLong `json:"lat_long"`
 	}
 
+	distance := func(lat1 float64, lng1 float64, lat2 float64, lng2 float64) float64 {
+		radianLat1 := math.Pi * lat1 / 180
+		radianLat2 := math.Pi * lat2 / 180
+		theta := lng1 - lng2
+		radianTheta := math.Pi * theta / 180
+
+		dist := math.Sin(radianLat1)*math.Sin(radianLat2) + math.Cos(radianLat1)*math.Cos(radianLat2)*math.Cos(radianTheta)
+		if dist > 1 {
+			dist = 1
+		}
+
+		dist = math.Acos(dist)
+		dist = dist * 180 / math.Pi
+		dist = dist * 60 * 1.1515
+		dist *= 1.609344 // convert to km
+
+		return dist
+	}
+
 	return func(ctx *gin.Context) {
 		var (
 			lat = http_helper.GetDefaultFloat64(ctx.GetHeader("cf-iplatitude"), 41.7774)
 			lon = http_helper.GetDefaultFloat64(ctx.GetHeader("cf-iplongitude"), -87.6160)
 			// region := ctx.GetHeader("cf-region-code")
-			curState = env.State().Current()
+			curState = s.stateUsecase.Current()
 			servers  []domain.BaseServer
 		)
 
@@ -133,7 +155,7 @@ func (s *ServersHandler) onAPIPostServer() gin.HandlerFunc {
 		server.Region = req.Region
 		server.IsEnabled = req.IsEnabled
 
-		if errSave := s.ServersUsecase.SaveServer(ctx, &server); errSave != nil {
+		if errSave := s.serversUsecase.SaveServer(ctx, &server); errSave != nil {
 			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			log.Error("Failed to save new server", zap.Error(errSave))
 
@@ -177,7 +199,7 @@ func (s *ServersHandler) onAPIPostServerUpdate() gin.HandlerFunc {
 		}
 
 		var server domain.Server
-		if errServer := s.ServersUsecase.GetServer(ctx, serverID, &server); errServer != nil {
+		if errServer := s.serversUsecase.GetServer(ctx, serverID, &server); errServer != nil {
 			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
@@ -202,7 +224,7 @@ func (s *ServersHandler) onAPIPostServerUpdate() gin.HandlerFunc {
 		server.LogSecret = req.LogSecret
 		server.EnableStats = req.EnableStats
 
-		if errSave := s.ServersUsecase.SaveServer(ctx, &server); errSave != nil {
+		if errSave := s.serversUsecase.SaveServer(ctx, &server); errSave != nil {
 			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			log.Error("Failed to update server", zap.Error(errSave))
 
@@ -226,7 +248,7 @@ func (s *ServersHandler) onAPIGetServersAdmin() gin.HandlerFunc {
 			return
 		}
 
-		servers, count, errServers := s.ServersUsecase.GetServers(ctx, filter)
+		servers, count, errServers := s.serversUsecase.GetServers(ctx, filter)
 		if errServers != nil {
 			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
@@ -249,7 +271,7 @@ func (s *ServersHandler) onAPIPostServerDelete() gin.HandlerFunc {
 		}
 
 		var server domain.Server
-		if errServer := s.ServersUsecase.GetServer(ctx, serverID, &server); errServer != nil {
+		if errServer := s.serversUsecase.GetServer(ctx, serverID, &server); errServer != nil {
 			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
@@ -257,7 +279,7 @@ func (s *ServersHandler) onAPIPostServerDelete() gin.HandlerFunc {
 
 		server.Deleted = true
 
-		if errSave := s.ServersUsecase.SaveServer(ctx, &server); errSave != nil {
+		if errSave := s.serversUsecase.SaveServer(ctx, &server); errSave != nil {
 			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			log.Error("Failed to delete server", zap.Error(errSave))
 

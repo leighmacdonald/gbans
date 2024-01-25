@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
 	"net/http"
 	"runtime"
 	"sort"
@@ -15,7 +14,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
-	"github.com/leighmacdonald/gbans/pkg/wiki"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 	"go.uber.org/zap"
@@ -345,38 +343,6 @@ func onAPIGetNewsLatest(env Env) gin.HandlerFunc {
 	}
 }
 
-func onAPIGetWikiSlug(env Env) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		currentUser := currentUserProfile(ctx)
-
-		slug := strings.ToLower(ctx.Param("slug"))
-		if slug[0] == '/' {
-			slug = slug[1:]
-		}
-
-		var page wiki.Page
-		if errGetWikiSlug := env.Store().GetWikiPageBySlug(ctx, slug, &page); errGetWikiSlug != nil {
-			if errors.Is(errGetWikiSlug, errs.ErrNoResult) {
-				ctx.JSON(http.StatusOK, page)
-
-				return
-			}
-
-			responseErr(ctx, http.StatusInternalServerError, errInternal)
-
-			return
-		}
-
-		if page.PermissionLevel > currentUser.PermissionLevel {
-			responseErr(ctx, http.StatusForbidden, errPermissionDenied)
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, page)
-	}
-}
-
 func onGetMediaByID(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		mediaID, idErr := getIntParam(ctx, "media_id")
@@ -401,25 +367,6 @@ func onGetMediaByID(env Env) gin.HandlerFunc {
 	}
 }
 
-func distance(lat1 float64, lng1 float64, lat2 float64, lng2 float64) float64 {
-	radianLat1 := math.Pi * lat1 / 180
-	radianLat2 := math.Pi * lat2 / 180
-	theta := lng1 - lng2
-	radianTheta := math.Pi * theta / 180
-
-	dist := math.Sin(radianLat1)*math.Sin(radianLat2) + math.Cos(radianLat1)*math.Cos(radianLat2)*math.Cos(radianTheta)
-	if dist > 1 {
-		dist = 1
-	}
-
-	dist = math.Acos(dist)
-	dist = dist * 180 / math.Pi
-	dist = dist * 60 * 1.1515
-	dist *= 1.609344 // convert to km
-
-	return dist
-}
-
 func onAPIGetPatreonCampaigns(env Env) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		tiers, errTiers := env.Patreon().Tiers()
@@ -430,246 +377,6 @@ func onAPIGetPatreonCampaigns(env Env) gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusOK, tiers)
-	}
-}
-
-func onAPIGetContests(env Env) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		user := currentUserProfile(ctx)
-		publicOnly := user.PermissionLevel < domain.PModerator
-		contests, errContests := env.Store().Contests(ctx, publicOnly)
-
-		if errContests != nil {
-			responseErr(ctx, http.StatusInternalServerError, errInternal)
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, newLazyResult(int64(len(contests)), contests))
-	}
-}
-
-func onAPIGetContest(env Env) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		contest, success := contestFromCtx(ctx, env)
-		if !success {
-			return
-		}
-
-		ctx.JSON(http.StatusOK, contest)
-	}
-}
-
-func onAPIGetContestEntries(env Env) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		contest, success := contestFromCtx(ctx, env)
-		if !success {
-			return
-		}
-
-		entries, errEntries := env.Store().ContestEntries(ctx, contest.ContestID)
-		if errEntries != nil {
-			responseErr(ctx, http.StatusInternalServerError, errInternal)
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, entries)
-	}
-}
-
-func onAPIForumOverview(env Env) gin.HandlerFunc {
-	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
-	type Overview struct {
-		Categories []domain.ForumCategory `json:"categories"`
-	}
-
-	return func(ctx *gin.Context) {
-		currentUser := currentUserProfile(ctx)
-
-		env.Activity().Touch(currentUser)
-
-		categories, errCats := env.Store().ForumCategories(ctx)
-		if errCats != nil {
-			responseErr(ctx, http.StatusInternalServerError, errInternal)
-
-			log.Error("Could not load categories")
-
-			return
-		}
-
-		forums, errForums := env.Store().Forums(ctx)
-		if errForums != nil {
-			responseErr(ctx, http.StatusInternalServerError, errInternal)
-
-			log.Error("Could not load forums", zap.Error(errForums))
-
-			return
-		}
-
-		for index := range categories {
-			for _, forum := range forums {
-				if currentUser.PermissionLevel < forum.PermissionLevel {
-					continue
-				}
-
-				if categories[index].ForumCategoryID == forum.ForumCategoryID {
-					categories[index].Forums = append(categories[index].Forums, forum)
-				}
-			}
-
-			if categories[index].Forums == nil {
-				categories[index].Forums = []domain.Forum{}
-			}
-		}
-
-		ctx.JSON(http.StatusOK, Overview{Categories: categories})
-	}
-}
-
-func onAPIForumThreads(env Env) gin.HandlerFunc {
-	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
-	return func(ctx *gin.Context) {
-		currentUser := currentUserProfile(ctx)
-
-		env.Activity().Touch(currentUser)
-
-		var tqf domain.ThreadQueryFilter
-		if !bind(ctx, log, &tqf) {
-			return
-		}
-
-		threads, count, errThreads := env.Store().ForumThreads(ctx, tqf)
-		if errThreads != nil {
-			responseErr(ctx, http.StatusInternalServerError, errInternal)
-
-			log.Error("Could not load threads", zap.Error(errThreads))
-
-			return
-		}
-
-		var forum domain.Forum
-		if err := env.Store().Forum(ctx, tqf.ForumID, &forum); err != nil {
-			responseErr(ctx, http.StatusInternalServerError, errInternal)
-
-			log.Error("Could not load forum", zap.Error(errThreads))
-
-			return
-		}
-
-		if forum.PermissionLevel > currentUser.PermissionLevel {
-			responseErr(ctx, http.StatusUnauthorized, errPermissionDenied)
-
-			log.Error("User does not have access to forum")
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, newLazyResult(count, threads))
-	}
-}
-
-func onAPIForumThread(env Env) gin.HandlerFunc {
-	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
-	return func(ctx *gin.Context) {
-		currentUser := currentUserProfile(ctx)
-
-		env.Activity().Touch(currentUser)
-
-		forumThreadID, errID := getInt64Param(ctx, "forum_thread_id")
-		if errID != nil {
-			responseErr(ctx, http.StatusBadRequest, errInvalidParameter)
-
-			return
-		}
-
-		var thread domain.ForumThread
-		if errThreads := env.Store().ForumThread(ctx, forumThreadID, &thread); errThreads != nil {
-			if errors.Is(errThreads, errs.ErrNoResult) {
-				responseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
-			} else {
-				responseErr(ctx, http.StatusInternalServerError, errInternal)
-				log.Error("Could not load threads")
-			}
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, thread)
-
-		if err := env.Store().ForumThreadIncrView(ctx, forumThreadID); err != nil {
-			log.Error("Failed to increment thread view count", zap.Error(err))
-		}
-	}
-}
-
-func onAPIForum(env Env) gin.HandlerFunc {
-	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
-	return func(ctx *gin.Context) {
-		currentUser := currentUserProfile(ctx)
-
-		forumID, errForumID := getIntParam(ctx, "forum_id")
-		if errForumID != nil {
-			responseErr(ctx, http.StatusBadRequest, errBadRequest)
-
-			return
-		}
-
-		var forum domain.Forum
-
-		if errForum := env.Store().Forum(ctx, forumID, &forum); errForum != nil {
-			responseErr(ctx, http.StatusInternalServerError, errInternal)
-
-			log.Error("Could not load forum")
-
-			return
-		}
-
-		if forum.PermissionLevel > currentUser.PermissionLevel {
-			responseErr(ctx, http.StatusForbidden, errPermissionDenied)
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, forum)
-	}
-}
-
-func onAPIForumMessages(env Env) gin.HandlerFunc {
-	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
-	return func(ctx *gin.Context) {
-		var queryFilter domain.ThreadMessagesQueryFilter
-		if !bind(ctx, log, &queryFilter) {
-			return
-		}
-
-		messages, count, errMessages := env.Store().ForumMessages(ctx, queryFilter)
-		if errMessages != nil {
-			responseErr(ctx, http.StatusInternalServerError, errInternal)
-
-			log.Error("Could not load thread messages", zap.Error(errMessages))
-
-			return
-		}
-
-		activeUsers := env.Activity().Current()
-
-		for idx := range messages {
-			for _, activity := range activeUsers {
-				if messages[idx].SourceID == activity.Person.SteamID {
-					messages[idx].Online = true
-
-					break
-				}
-			}
-		}
-
-		ctx.JSON(http.StatusOK, newLazyResult(count, messages))
 	}
 }
 
@@ -694,28 +401,5 @@ func onAPIActiveUsers(env Env) gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusOK, results)
-	}
-}
-
-func onAPIForumMessagesRecent(env Env) gin.HandlerFunc {
-	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
-	return func(ctx *gin.Context) {
-		user := currentUserProfile(ctx)
-
-		messages, errThreads := env.Store().ForumRecentActivity(ctx, 5, user.PermissionLevel)
-		if errThreads != nil {
-			responseErr(ctx, http.StatusInternalServerError, errInternal)
-
-			log.Error("Could not load thread messages")
-
-			return
-		}
-
-		if messages == nil {
-			messages = []domain.ForumMessage{}
-		}
-
-		ctx.JSON(http.StatusOK, messages)
 	}
 }

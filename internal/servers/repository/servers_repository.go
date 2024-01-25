@@ -3,12 +3,13 @@ package repository
 import (
 	"context"
 	"errors"
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
 	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"time"
 )
 
 type serversRepository struct {

@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"time"
@@ -10,14 +11,38 @@ import (
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
-var (
-	ErrInvalidContestID   = errors.New("invalid contest id")
-	ErrInvalidDescription = errors.New("invalid description, cannot be empty")
-	ErrGenerateUUID       = errors.New("failed to generate uuid")
-	ErrTitleEmpty         = errors.New("title cannot be empty")
-	ErrDescriptionEmpty   = errors.New("description cannot be empty")
-	ErrEndDateBefore      = errors.New("end date comes before start date")
-)
+// EmptyUUID is used as a placeholder value for signaling the entity is new.
+const EmptyUUID = "feb4bf16-7f55-4cb4-923c-4de69a093b79"
+
+type ContestRepository interface {
+	ContestSave(ctx context.Context, contest *Contest) error
+	ContestByID(ctx context.Context, contestID uuid.UUID, contest *Contest) error
+	ContestDelete(ctx context.Context, contestID uuid.UUID) error
+	ContestEntryDelete(ctx context.Context, contestEntryID uuid.UUID) error
+	Contests(ctx context.Context, publicOnly bool) ([]Contest, error)
+	ContestEntry(ctx context.Context, contestID uuid.UUID, entry *ContestEntry) error
+	ContestEntrySave(ctx context.Context, entry ContestEntry) error
+	ContestEntries(ctx context.Context, contestID uuid.UUID) ([]*ContestEntry, error)
+	ContestEntryVoteGet(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SID64, record *ContentVoteRecord) error
+	ContestEntryVote(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SID64, vote bool) error
+	ContestEntryVoteDelete(ctx context.Context, contestEntryVoteID int64) error
+	ContestEntryVoteUpdate(ctx context.Context, contestEntryVoteID int64, newVote bool) error
+}
+
+type ContestUsecase interface {
+	ContestSave(ctx context.Context, contest *Contest) error
+	ContestByID(ctx context.Context, contestID uuid.UUID, contest *Contest) error
+	ContestDelete(ctx context.Context, contestID uuid.UUID) error
+	ContestEntryDelete(ctx context.Context, contestEntryID uuid.UUID) error
+	Contests(ctx context.Context, publicOnly bool) ([]Contest, error)
+	ContestEntry(ctx context.Context, contestID uuid.UUID, entry *ContestEntry) error
+	ContestEntrySave(ctx context.Context, entry ContestEntry) error
+	ContestEntries(ctx context.Context, contestID uuid.UUID) ([]*ContestEntry, error)
+	ContestEntryVoteGet(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SID64, record *ContentVoteRecord) error
+	ContestEntryVote(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SID64, vote bool) error
+	ContestEntryVoteDelete(ctx context.Context, contestEntryVoteID int64) error
+	ContestEntryVoteUpdate(ctx context.Context, contestEntryVoteID int64, newVote bool) error
+}
 
 type Contest struct {
 	TimeStamped

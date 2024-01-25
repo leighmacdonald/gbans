@@ -23,9 +23,6 @@ import (
 //go:embed migrations
 var migrations embed.FS
 
-// EmptyUUID is used as a placeholder value for signaling the entity is new.
-const EmptyUUID = "feb4bf16-7f55-4cb4-923c-4de69a093b79"
-
 var (
 	ErrRowResults  = errors.New("resulting rows contain error")
 	ErrTxStart     = errors.New("could not start transaction")

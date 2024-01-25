@@ -3,11 +3,12 @@ package repository
 import (
 	"context"
 	"errors"
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
 	"github.com/leighmacdonald/gbans/internal/store"
-	"time"
 )
 
 type blocklistRepository struct {

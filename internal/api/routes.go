@@ -187,7 +187,7 @@ func createRouter(ctx context.Context, env Env) *gin.Engine {
 	engine.GET("/metrics", prometheusHandler())
 
 	engine.GET("/api/profile", onAPIProfile(env))
-	//engine.GET("/api/servers/state", onAPIGetServerStates(env))
+	// engine.GET("/api/servers/state", onAPIGetServerStates(env))
 	engine.GET("/api/stats", onAPIGetStats(env))
 
 	engine.POST("/api/news_latest", onAPIGetNewsLatest(env))
@@ -195,7 +195,7 @@ func createRouter(ctx context.Context, env Env) *gin.Engine {
 	engine.GET("/api/patreon/campaigns", onAPIGetPatreonCampaigns(env))
 
 	engine.GET("/media/:media_id", onGetMediaByID(env))
-	//engine.GET("/api/servers", onAPIGetServers(env))
+	// engine.GET("/api/servers", onAPIGetServers(env))
 
 	engine.GET("/api/stats/map", onAPIGetMapUsage(env))
 	engine.POST("/api/demos", onAPIPostDemosQuery(env))
@@ -205,7 +205,7 @@ func createRouter(ctx context.Context, env Env) *gin.Engine {
 	engine.GET("/api/sd/ansible/hosts", onAPIGetPrometheusHosts(env))
 
 	// Game server plugin routes
-	engine.POST("/api/server/auth", onSAPIPostServerAuth(env))
+	// engine.POST("/api/server/auth", onSAPIPostServerAuth(env))
 
 	engine.GET("/export/sourcemod/admins_simple.ini", onAPIExportSourcemodSimpleAdmins(env))
 
@@ -217,30 +217,16 @@ func createRouter(ctx context.Context, env Env) *gin.Engine {
 	optionalAuth := engine.Group("/")
 	{
 		optional := optionalAuth.Use(authMiddleware(env, domain.PGuest))
-		optional.GET("/api/contests", onAPIGetContests(env))
-		optional.GET("/api/contests/:contest_id", onAPIGetContest(env))
-		optional.GET("/api/contests/:contest_id/entries", onAPIGetContestEntries(env))
-		optional.GET("/api/forum/overview", onAPIForumOverview(env))
-		optional.GET("/api/forum/messages/recent", onAPIForumMessagesRecent(env))
-		optional.POST("/api/forum/threads", onAPIForumThreads(env))
-		optional.GET("/api/forum/thread/:forum_thread_id", onAPIForumThread(env))
-		optional.GET("/api/wiki/slug/*slug", onAPIGetWikiSlug(env))
-		optional.GET("/api/forum/forum/:forum_id", onAPIForum(env))
-		optional.POST("/api/forum/messages", onAPIForumMessages(env))
-	}
-
-	srvGrp := engine.Group("/")
-	{
-		// Server Auth Request
-		serverAuth := srvGrp.Use(authServerMiddleWare(env))
-		serverAuth.GET("/api/server/admins", onAPIGetServerAdmins(env))
-		serverAuth.POST("/api/ping_mod", onAPIPostPingMod(env))
-		serverAuth.POST("/api/check", onAPIPostServerCheck(env))
-		serverAuth.POST("/api/demo", onAPIPostDemo(env))
-		// Duplicated since we need to authenticate via server middleware
-		serverAuth.POST("/api/sm/bans/steam/create", onAPIPostBanSteamCreate(env))
-		serverAuth.POST("/api/sm/report/create", onAPIPostReportCreate(env))
-		serverAuth.POST("/api/state_update", onAPIPostServerState(env))
+		// optional.GET("/api/contests", onAPIGetContests(env))
+		// optional.GET("/api/contests/:contest_id", onAPIGetContest(env))
+		// optional.GET("/api/contests/:contest_id/entries", onAPIGetContestEntries(env))
+		// optional.GET("/api/forum/overview", onAPIForumOverview(env))
+		// optional.GET("/api/forum/messages/recent", onAPIForumMessagesRecent(env))
+		// optional.POST("/api/forum/threads", onAPIForumThreads(env))
+		// optional.GET("/api/forum/thread/:forum_thread_id", onAPIForumThread(env))
+		// optional.GET("/api/wiki/slug/*slug", onAPIGetWikiSlug(env))
+		// optional.GET("/api/forum/forum/:forum_id", onAPIForum(env))
+		// optional.POST("/api/forum/messages", onAPIForumMessages(env))
 	}
 
 	authedGrp := engine.Group("/")
@@ -281,24 +267,24 @@ func createRouter(ctx context.Context, env Env) *gin.Engine {
 		authed.GET("/api/stats/player/:steam_id/classes", onAPIGetPlayerClassStatsOverall(env))
 		authed.GET("/api/stats/player/:steam_id/overall", onAPIGetPlayerStatsOverall(env))
 
-		authed.POST("/api/contests/:contest_id/upload", onAPISaveContestEntryMedia(env))
-		authed.GET("/api/contests/:contest_id/vote/:contest_entry_id/:direction", onAPISaveContestEntryVote(env))
-		authed.POST("/api/contests/:contest_id/submit", onAPISaveContestEntrySubmit(env))
-		authed.DELETE("/api/contest_entry/:contest_entry_id", onAPIDeleteContestEntry(env))
+		// authed.POST("/api/contests/:contest_id/upload", onAPISaveContestEntryMedia(env))
+		// authed.GET("/api/contests/:contest_id/vote/:contest_entry_id/:direction", onAPISaveContestEntryVote(env))
+		// authed.POST("/api/contests/:contest_id/submit", onAPISaveContestEntrySubmit(env))
+		// authed.DELETE("/api/contest_entry/:contest_entry_id", onAPIDeleteContestEntry(env))
 
-		authed.POST("/api/forum/forum/:forum_id/thread", onAPIThreadCreate(env))
-		authed.POST("/api/forum/thread/:forum_thread_id/message", onAPIThreadCreateReply(env))
-		authed.POST("/api/forum/message/:forum_message_id", onAPIThreadMessageUpdate(env))
-		authed.DELETE("/api/forum/thread/:forum_thread_id", onAPIThreadDelete(env))
-		authed.DELETE("/api/forum/message/:forum_message_id", onAPIMessageDelete(env))
-		authed.POST("/api/forum/thread/:forum_thread_id", onAPIThreadUpdate(env))
+		// authed.POST("/api/forum/forum/:forum_id/thread", onAPIThreadCreate(env))
+		// authed.POST("/api/forum/thread/:forum_thread_id/message", onAPIThreadCreateReply(env))
+		// authed.POST("/api/forum/message/:forum_message_id", onAPIThreadMessageUpdate(env))
+		// authed.DELETE("/api/forum/thread/:forum_thread_id", onAPIThreadDelete(env))
+		// authed.DELETE("/api/forum/message/:forum_message_id", onAPIMessageDelete(env))
+		// authed.POST("/api/forum/thread/:forum_thread_id", onAPIThreadUpdate(env))
 	}
 
 	editorGrp := engine.Group("/")
 	{
 		// Editor access
 		editorRoute := editorGrp.Use(authMiddleware(env, domain.PEditor))
-		editorRoute.POST("/api/wiki/slug", onAPISaveWikiSlug(env))
+		// editorRoute.POST("/api/wiki/slug", onAPISaveWikiSlug(env))
 		editorRoute.POST("/api/news", onAPIPostNewsCreate(env))
 		editorRoute.POST("/api/news/:news_id", onAPIPostNewsUpdate(env))
 		editorRoute.POST("/api/news_all", onAPIGetNewsAll(env))
@@ -343,15 +329,15 @@ func createRouter(ctx context.Context, env Env) *gin.Engine {
 
 		modRoute.GET("/api/patreon/pledges", onAPIGetPatreonPledges(env))
 
-		modRoute.POST("/api/contests", onAPIPostContest(env))
-		modRoute.DELETE("/api/contests/:contest_id", onAPIDeleteContest(env))
-		modRoute.PUT("/api/contests/:contest_id", onAPIUpdateContest(env))
+		// modRoute.POST("/api/contests", onAPIPostContest(env))
+		// modRoute.DELETE("/api/contests/:contest_id", onAPIDeleteContest(env))
+		// modRoute.PUT("/api/contests/:contest_id", onAPIUpdateContest(env))
 
-		modRoute.POST("/api/forum/category", onAPICreateForumCategory(env))
-		modRoute.GET("/api/forum/category/:forum_category_id", onAPIForumCategory(env))
-		modRoute.POST("/api/forum/category/:forum_category_id", onAPIUpdateForumCategory(env))
-		modRoute.POST("/api/forum/forum", onAPICreateForumForum(env))
-		modRoute.POST("/api/forum/forum/:forum_id", onAPIUpdateForumForum(env))
+		// modRoute.POST("/api/forum/category", onAPICreateForumCategory(env))
+		// modRoute.GET("/api/forum/category/:forum_category_id", onAPIForumCategory(env))
+		// modRoute.POST("/api/forum/category/:forum_category_id", onAPIUpdateForumCategory(env))
+		// modRoute.POST("/api/forum/forum", onAPICreateForumForum(env))
+		// modRoute.POST("/api/forum/forum/:forum_id", onAPIUpdateForumForum(env))
 	}
 
 	//adminGrp := engine.Group("/")

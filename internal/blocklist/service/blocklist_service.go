@@ -2,16 +2,17 @@ package service
 
 import (
 	"errors"
-	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/http_helper"
-	"go.uber.org/zap"
 	"net"
 	"net/http"
 	"net/url"
 	"runtime"
 	"strings"
+
+	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/errs"
+	"github.com/leighmacdonald/gbans/internal/http_helper"
+	"go.uber.org/zap"
 )
 
 type BlocklistHandler struct {

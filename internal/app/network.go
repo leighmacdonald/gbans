@@ -35,25 +35,25 @@ func NewBlocker() *Blocker {
 	}
 }
 
-func (b *Blocker) IsMatch(addr net.IP) (bool, string) {
+func (b *Blocker) IsMatch(addr net.IP) (string, bool) {
 	b.RLock()
 	defer b.RUnlock()
 
 	for _, whitelisted := range b.whitelisted {
 		if whitelisted.Contains(addr) {
-			return false, ""
+			return "", false
 		}
 	}
 
 	for name, networks := range b.blocks {
 		for _, block := range networks {
 			if block.Contains(addr) {
-				return true, name
+				return name, true
 			}
 		}
 	}
 
-	return false, ""
+	return "", false
 }
 
 func (b *Blocker) RemoveSource(name string) {
