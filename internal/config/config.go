@@ -23,6 +23,9 @@ var (
 	ErrSteamAPIKey    = errors.New("failed to set steam api key")
 )
 
+type ConfigRepository struct {
+	Config
+}
 type LinkablePath interface {
 	Path() string
 }

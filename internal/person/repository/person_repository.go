@@ -31,7 +31,6 @@ func NewPersonRepository(database store.Database) domain.PersonRepository {
 var (
 	ErrScanPerson     = errors.New("failed to scan person result")
 	ErrMessageContext = errors.New("could not fetch message context")
-	ErrScanResult     = errors.New("failed to scan result")
 )
 
 func (s *personRepository) DropPerson(ctx context.Context, steamID steamid.SID64) error {
