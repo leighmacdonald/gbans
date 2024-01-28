@@ -9,17 +9,40 @@ import (
 	"sync"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/errs"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/ryanuber/go-glob"
+	"go.uber.org/zap"
 )
 
 type stateUsecase struct {
 	stateRepository domain.StateRepository
+	log             *zap.Logger
 }
 
-func NewStateUsecase(repository domain.StateRepository) domain.StateUsecase {
-	return &stateUsecase{stateRepository: repository}
+// NewStateUsecase created a interface to interact with server state and exec rcon commands
+// TODO ensure started
+func NewStateUsecase(log *zap.Logger, repository domain.StateRepository) domain.StateUsecase {
+	return &stateUsecase{stateRepository: repository, log: log.Named("state")}
+}
+
+func (s *stateUsecase) Current() []domain.ServerState {
+	return s.stateRepository.Current()
+}
+
+func (s *stateUsecase) FindByCIDR(cidr *net.IPNet) []domain.PlayerServerInfo {
+	return s.Find("", "", nil, cidr)
+}
+
+func (s *stateUsecase) FindByIP(addr net.IP) []domain.PlayerServerInfo {
+	return s.Find("", "", addr, nil)
+}
+
+func (s *stateUsecase) FindByName(name string) []domain.PlayerServerInfo {
+	return s.Find(name, "", nil, nil)
+}
+
+func (s *stateUsecase) FindBySteamID(steamID steamid.SID64) []domain.PlayerServerInfo {
+	return s.Find("", steamID, nil, nil)
 }
 
 func (s *stateUsecase) Update(serverID int, update domain.PartialStateUpdate) error {
@@ -140,7 +163,7 @@ func (s *stateUsecase) OnFindExec(ctx context.Context, name string, steamID stea
 	players := s.Find(name, steamID, ip, cidr)
 
 	if len(players) == 0 {
-		return errs.ErrPlayerNotFound
+		return domain.ErrPlayerNotFound
 	}
 
 	var err error
@@ -181,14 +204,53 @@ func (s *stateUsecase) ExecRaw(ctx context.Context, addr string, password string
 	return s.stateRepository.ExecRaw(ctx, addr, password, cmd)
 }
 
+func (s *stateUsecase) LogAddressAdd(ctx context.Context, logAddress string) {
+	s.Broadcast(ctx, nil, fmt.Sprintf("logaddress_add %s", logAddress))
+}
+
 func (s *stateUsecase) Broadcast(ctx context.Context, serverIDs []int, cmd string) map[int]string {
-	return s.stateRepository.Broadcast(ctx, serverIDs, cmd)
+	results := map[int]string{}
+	waitGroup := sync.WaitGroup{}
+
+	configs := s.stateRepository.Configs()
+
+	if len(serverIDs) == 0 {
+		for _, conf := range configs {
+			serverIDs = append(serverIDs, conf.ServerID)
+		}
+	}
+
+	for _, serverID := range serverIDs {
+		waitGroup.Add(1)
+
+		go func(sid int) {
+			defer waitGroup.Done()
+
+			serverConf, errServerConf := s.stateRepository.GetServer(sid)
+			if errServerConf != nil {
+				return
+			}
+
+			resp, errExec := s.stateRepository.ExecRaw(ctx, serverConf.Addr(), serverConf.RconPassword, cmd)
+			if errExec != nil {
+				s.log.Error("Failed to exec server command", zap.Int("server_id", sid), zap.Error(errExec))
+
+				return
+			}
+
+			results[sid] = resp
+		}(serverID)
+	}
+
+	waitGroup.Wait()
+
+	return results
 }
 
 // Kick will kick the steam id from whatever server it is connected to.
 func (s *stateUsecase) Kick(ctx context.Context, target steamid.SID64, reason domain.Reason) error {
 	if !target.Valid() {
-		return errs.ErrInvalidTargetSID
+		return domain.ErrInvalidTargetSID
 	}
 
 	if errExec := s.OnFindExec(ctx, "", target, nil, nil, func(info domain.PlayerServerInfo) string {
@@ -204,7 +266,7 @@ func (s *stateUsecase) Kick(ctx context.Context, target steamid.SID64, reason do
 func (s *stateUsecase) Silence(ctx context.Context, target steamid.SID64, reason domain.Reason,
 ) error {
 	if !target.Valid() {
-		return errs.ErrInvalidTargetSID
+		return domain.ErrInvalidTargetSID
 	}
 
 	var (
@@ -242,7 +304,7 @@ func (s *stateUsecase) CSay(ctx context.Context, serverID int, message string) e
 // PSay is used to send a private message to a player.
 func (s *stateUsecase) PSay(ctx context.Context, target steamid.SID64, message string) error {
 	if !target.Valid() {
-		return errs.ErrInvalidTargetSID
+		return domain.ErrInvalidTargetSID
 	}
 
 	if errExec := s.OnFindExec(ctx, "", target, nil, nil, func(info domain.PlayerServerInfo) string {

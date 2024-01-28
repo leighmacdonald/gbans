@@ -1,24 +1,26 @@
 package service
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/url"
+	"regexp"
+	"runtime"
+	"strings"
+
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/api"
-	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/errs"
 	"github.com/leighmacdonald/gbans/internal/http_helper"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/yohcop/openid-go"
 	"go.uber.org/zap"
-	"net/http"
-	"net/url"
-	"regexp"
-	"runtime"
-	"strings"
 )
 
 type AuthHandler struct {
@@ -37,9 +39,15 @@ func NewAuthHandler(log *zap.Logger, engine *gin.Engine, au domain.AuthUsecase, 
 	}
 
 	engine.GET("/auth/callback", handler.onOpenIDCallback())
+
+	// authed
+	engine.POST("/api/auth/refresh", handler.onTokenRefresh())
+	engine.GET("/api/auth/discord", handler.onOAuthDiscordCallback())
+	engine.GET("/api/auth/logout", handler.onAPILogout())
+
 }
 
-func (h *AuthHandler) onOpenIDCallback() gin.HandlerFunc {
+func (h AuthHandler) onOpenIDCallback() gin.HandlerFunc {
 	nonceStore := openid.NewSimpleNonceStore()
 	discoveryCache := &noOpDiscoveryCache{}
 	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
@@ -119,8 +127,8 @@ func (h *AuthHandler) onOpenIDCallback() gin.HandlerFunc {
 		}
 
 		query := parsedURL.Query()
-		query.Set("refresh", tokens.refresh)
-		query.Set("token", tokens.access)
+		query.Set("refresh", tokens.Refresh)
+		query.Set("token", tokens.Access)
 		query.Set("next_url", referralURL)
 		parsedURL.RawQuery = query.Encode()
 
@@ -134,12 +142,12 @@ func (h *AuthHandler) onOpenIDCallback() gin.HandlerFunc {
 		// TODO max age checks
 		ctx.SetSameSite(http.SameSiteStrictMode)
 		ctx.SetCookie(
-			api.fingerprintCookieName,
-			tokens.fingerprint,
-			int(refreshTokenDuration.Seconds()),
+			fingerprintCookieName,
+			tokens.Fingerprint,
+			int(domain.RefreshTokenDuration.Seconds()),
 			"/api",
 			parsedExternal.Hostname(),
-			conf.General.Mode == config.ReleaseMode,
+			conf.General.Mode == domain.ReleaseMode,
 			true)
 
 		ctx.Redirect(302, parsedURL.String())
@@ -154,8 +162,9 @@ const fingerprintCookieName = "fingerprint"
 
 // onTokenRefresh handles generating new token pairs to access the api
 // NOTE: All error code paths must return 401 (Unauthorized).
-func onTokenRefresh() gin.HandlerFunc {
-	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func (h AuthHandler) onTokenRefresh() gin.HandlerFunc {
+	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+	conf := h.configUsecase.Config()
 
 	return func(ctx *gin.Context) {
 		fingerprint, errCookie := ctx.Cookie(fingerprintCookieName)
@@ -166,16 +175,16 @@ func onTokenRefresh() gin.HandlerFunc {
 			return
 		}
 
-		refreshTokenString, errToken := middleware.tokenFromHeader(ctx, false)
+		refreshTokenString, errToken := h.authUsecase.TokenFromHeader(ctx, false)
 		if errToken != nil {
 			ctx.AbortWithStatus(http.StatusForbidden)
 
 			return
 		}
 
-		userClaims := middleware.userAuthClaims{}
+		userClaims := domain.UserAuthClaims{}
 
-		refreshToken, errParseClaims := jwt.ParseWithClaims(refreshTokenString, &userClaims, makeGetTokenKey(env.Config().HTTP.CookieKey))
+		refreshToken, errParseClaims := jwt.ParseWithClaims(refreshTokenString, &userClaims, h.authUsecase.MakeGetTokenKey(conf.HTTP.CookieKey))
 		if errParseClaims != nil {
 			if errors.Is(errParseClaims, jwt.ErrSignatureInvalid) {
 				log.Error("jwt signature invalid!", zap.Error(errParseClaims))
@@ -189,28 +198,28 @@ func onTokenRefresh() gin.HandlerFunc {
 			return
 		}
 
-		claims, ok := refreshToken.Claims.(*middleware.userAuthClaims)
+		claims, ok := refreshToken.Claims.(*domain.UserAuthClaims)
 		if !ok || !refreshToken.Valid {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 
 			return
 		}
 
-		hash := middleware.fingerprintHash(fingerprint)
+		hash := auth.FingerprintHash(fingerprint)
 		if claims.Fingerprint != hash {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 
 			return
 		}
 
-		var auth domain.PersonAuth
-		if authError := env.Store().GetPersonAuthByRefreshToken(ctx, fingerprint, &auth); authError != nil {
+		var personAuth domain.PersonAuth
+		if authError := h.authUsecase.GetPersonAuthByRefreshToken(ctx, fingerprint, &personAuth); authError != nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 
 			return
 		}
 
-		tokens, errMakeToken := middleware.makeTokens(ctx, env, env.Config().HTTP.CookieKey, auth.SteamID, false)
+		tokens, errMakeToken := h.authUsecase.MakeTokens(ctx, conf.HTTP.CookieKey, personAuth.SteamID, false)
 		if errMakeToken != nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			log.Error("Failed to create access token pair", zap.Error(errMakeToken))
@@ -218,13 +227,13 @@ func onTokenRefresh() gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, middleware.userToken{
-			AccessToken: tokens.access,
+		ctx.JSON(http.StatusOK, userToken{
+			AccessToken: tokens.Access,
 		})
 	}
 }
 
-func onOAuthDiscordCallback() gin.HandlerFunc {
+func (h AuthHandler) onOAuthDiscordCallback() gin.HandlerFunc {
 	type accessTokenResp struct {
 		AccessToken  string `json:"access_token"`
 		ExpiresIn    int    `json:"expires_in"`
@@ -249,20 +258,21 @@ func onOAuthDiscordCallback() gin.HandlerFunc {
 		PremiumType      int         `json:"premium_type"`
 	}
 
-	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 	client := util.NewHTTPClient()
+	conf := h.configUsecase.Config()
 
 	fetchDiscordID := func(ctx context.Context, accessToken string) (string, error) {
 		req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, "https://discord.com/api/users/@me", nil)
 		if errReq != nil {
-			return "", errors.Join(errReq, errs.ErrCreateRequest)
+			return "", errors.Join(errReq, domain.ErrCreateRequest)
 		}
 
 		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", accessToken))
 		resp, errResp := client.Do(req)
 
 		if errResp != nil {
-			return "", errors.Join(errResp, errs.ErrRequestPerform)
+			return "", errors.Join(errResp, domain.ErrRequestPerform)
 		}
 
 		defer func() {
@@ -271,7 +281,7 @@ func onOAuthDiscordCallback() gin.HandlerFunc {
 
 		var details discordUserDetail
 		if errJSON := json.NewDecoder(resp.Body).Decode(&details); errJSON != nil {
-			return "", errors.Join(errJSON, errs.ErrRequestDecode)
+			return "", errors.Join(errJSON, domain.ErrRequestDecode)
 		}
 
 		return details.ID, nil
@@ -279,7 +289,6 @@ func onOAuthDiscordCallback() gin.HandlerFunc {
 
 	fetchToken := func(ctx context.Context, code string) (string, error) {
 		// v, _ := go_oauth_pkce_code_verifier.CreateCodeVerifierFromBytes([]byte(code))
-		conf := env.Config()
 		form := url.Values{}
 		form.Set("client_id", conf.Discord.AppID)
 		form.Set("client_secret", conf.Discord.AppSecret)
@@ -291,14 +300,14 @@ func onOAuthDiscordCallback() gin.HandlerFunc {
 		req, errReq := http.NewRequestWithContext(ctx, http.MethodPost, "https://discord.com/api/oauth2/token", strings.NewReader(form.Encode()))
 
 		if errReq != nil {
-			return "", errors.Join(errReq, errs.ErrCreateRequest)
+			return "", errors.Join(errReq, domain.ErrCreateRequest)
 		}
 
 		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 		resp, errResp := client.Do(req)
 		if errResp != nil {
-			return "", errors.Join(errResp, errs.ErrRequestPerform)
+			return "", errors.Join(errResp, domain.ErrRequestPerform)
 		}
 
 		defer func() {
@@ -307,7 +316,7 @@ func onOAuthDiscordCallback() gin.HandlerFunc {
 
 		var atr accessTokenResp
 		if errJSON := json.NewDecoder(resp.Body).Decode(&atr); errJSON != nil {
-			return "", errors.Join(errJSON, errs.ErrRequestDecode)
+			return "", errors.Join(errJSON, domain.ErrRequestDecode)
 		}
 
 		if atr.AccessToken == "" {
@@ -350,8 +359,8 @@ func onOAuthDiscordCallback() gin.HandlerFunc {
 		}
 
 		var discordPerson domain.Person
-		if errDp := env.Store().GetPersonByDiscordID(ctx, discordID, &discordPerson); errDp != nil {
-			if !errors.Is(errDp, errs.ErrNoResult) {
+		if errDp := h.personUsecase.GetPersonByDiscordID(ctx, discordID, &discordPerson); errDp != nil {
+			if !errors.Is(errDp, domain.ErrNoResult) {
 				http_helper.ResponseErr(ctx, http.StatusInternalServerError, nil)
 
 				return
@@ -368,7 +377,7 @@ func onOAuthDiscordCallback() gin.HandlerFunc {
 		sid := http_helper.CurrentUserProfile(ctx).SteamID
 
 		var person domain.Person
-		if errPerson := env.Store().GetPersonBySteamID(ctx, sid, &person); errPerson != nil {
+		if errPerson := h.personUsecase.GetPersonBySteamID(ctx, sid, &person); errPerson != nil {
 			http_helper.ResponseErr(ctx, http.StatusInternalServerError, nil)
 
 			return
@@ -382,14 +391,14 @@ func onOAuthDiscordCallback() gin.HandlerFunc {
 				return
 			}
 
-			if errSave := env.Store().SavePerson(ctx, &person); errSave != nil {
+			if errSave := h.personUsecase.SavePerson(ctx, &person); errSave != nil {
 				log.Error("Failed to save player summary update", zap.Error(errSave))
 			}
 		}
 
 		person.DiscordID = discordID
 
-		if errSave := env.Store().SavePerson(ctx, &person); errSave != nil {
+		if errSave := h.personUsecase.SavePerson(ctx, &person); errSave != nil {
 			http_helper.ResponseErr(ctx, http.StatusInternalServerError, nil)
 
 			return
@@ -402,8 +411,9 @@ func onOAuthDiscordCallback() gin.HandlerFunc {
 	}
 }
 
-func onAPILogout() gin.HandlerFunc {
-	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func (h AuthHandler) onAPILogout() gin.HandlerFunc {
+	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+	conf := h.configUsecase.Config()
 
 	return func(ctx *gin.Context) {
 		fingerprint, errCookie := ctx.Cookie(fingerprintCookieName)
@@ -412,8 +422,6 @@ func onAPILogout() gin.HandlerFunc {
 
 			return
 		}
-
-		conf := env.Config()
 
 		parsedExternal, errExternal := url.Parse(conf.General.ExternalURL)
 		if errExternal != nil {
@@ -424,17 +432,17 @@ func onAPILogout() gin.HandlerFunc {
 		}
 
 		ctx.SetCookie(fingerprintCookieName, "", -1, "/api",
-			parsedExternal.Hostname(), conf.General.Mode == config.ReleaseMode, true)
+			parsedExternal.Hostname(), conf.General.Mode == domain.ReleaseMode, true)
 
-		auth := domain.PersonAuth{}
-		if errGet := env.Store().GetPersonAuthByRefreshToken(ctx, fingerprint, &auth); errGet != nil {
+		personAuth := domain.PersonAuth{}
+		if errGet := h.authUsecase.GetPersonAuthByRefreshToken(ctx, fingerprint, &personAuth); errGet != nil {
 			http_helper.ResponseErr(ctx, http.StatusInternalServerError, nil)
 			log.Warn("Failed to load person via fingerprint")
 
 			return
 		}
 
-		if errDelete := env.Store().DeletePersonAuth(ctx, auth.PersonAuthID); errDelete != nil {
+		if errDelete := h.authUsecase.DeletePersonAuth(ctx, personAuth.PersonAuthID); errDelete != nil {
 			http_helper.ResponseErr(ctx, http.StatusInternalServerError, nil)
 			log.Error("Failed to delete person auth on logout", zap.Error(errDelete))
 

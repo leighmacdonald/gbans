@@ -1,7 +1,6 @@
 package service
 
 import (
-	"bytes"
 	"encoding/base64"
 	"errors"
 	"net/http"
@@ -14,25 +13,24 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/http_helper"
 	"go.uber.org/zap"
+	"golang.org/x/exp/slices"
 )
 
 type ContestHandler struct {
 	contestUsecase domain.ContestUsecase
 	configUsecase  domain.ConfigUsecase
-	s3usecase      domain.S3Usecase
-	assetUsecase   domain.AssetUsecase
+	mediaUsecase   domain.MediaUsecase
 	wikiUsecase    domain.WikiUsecase
 	log            *zap.Logger
 }
 
 func NewContestHandler(logger *zap.Logger, engine *gin.Engine, cu domain.ContestUsecase,
-	configUsecase domain.ConfigUsecase, s3usecase domain.S3Usecase, assetUsecase domain.AssetUsecase, wikiUsecase domain.WikiUsecase,
+	configUsecase domain.ConfigUsecase, mediaUsecase domain.MediaUsecase, wikiUsecase domain.WikiUsecase,
 ) {
 	handler := &ContestHandler{
 		contestUsecase: cu,
 		configUsecase:  configUsecase,
-		s3usecase:      s3usecase,
-		assetUsecase:   assetUsecase,
+		mediaUsecase:   mediaUsecase,
 		wikiUsecase:    wikiUsecase,
 		log:            logger.Named("contest"),
 	}
@@ -245,60 +243,16 @@ func (c *ContestHandler) onAPISaveContestEntryMedia() gin.HandlerFunc {
 			return
 		}
 
-		media, errMedia := domain.NewMedia(http_helper.CurrentUserProfile(ctx).SteamID, req.Name, req.Mime, content)
-		if errMedia != nil {
-			ctx.JSON(http.StatusBadRequest, domain.ErrBadRequest)
-			log.Error("Invalid media uploaded", zap.Error(errMedia))
-		}
-
-		conf := c.configUsecase.Config()
-
-		asset, errAsset := domain.NewAsset(content, conf.S3.BucketMedia, "")
-		if errAsset != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrAssetCreateFailed)
+		media, errCreate := c.mediaUsecase.Create(ctx, http_helper.CurrentUserProfile(ctx).SteamID,
+			req.Name, req.Mime, content, strings.Split(contest.MediaTypes, ","))
+		if errHandle := http_helper.ErrorHandled(ctx, errCreate); errHandle != nil {
+			log.Error("Failed to save user contest media", zap.Error(errHandle))
 
 			return
 		}
 
-		if errPut := c.s3usecase.Put(ctx, conf.S3.BucketMedia, asset.Name, bytes.NewReader(content), asset.Size, asset.MimeType); errPut != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrAssetPut)
-
-			log.Error("Failed to save user contest entry media to s3 backend", zap.Error(errPut))
-
-			return
-		}
-
-		if errSaveAsset := c.assetUsecase.SaveAsset(ctx, &asset); errSaveAsset != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrAssetSave)
-
-			log.Error("Failed to save user asset to s3 backend", zap.Error(errSaveAsset))
-		}
-
-		media.Asset = asset
-
+		// Don't bother to resend entire body
 		media.Contents = nil
-
-		if !contest.MimeTypeAcceptable(media.MimeType) {
-			http_helper.ResponseErr(ctx, http.StatusUnsupportedMediaType, domain.ErrInvalidFormat)
-			log.Error("User tried uploading file with forbidden mimetype",
-				zap.String("mime", media.MimeType), zap.String("name", media.Name))
-
-			return
-		}
-
-		if errSave := c.wikiUsecase.SaveMedia(ctx, &media); errSave != nil {
-			log.Error("Failed to save user contest media", zap.Error(errSave))
-
-			if errors.Is(errs.DBErr(errSave), domain.ErrDuplicate) {
-				http_helper.ResponseErr(ctx, http.StatusConflict, domain.ErrDuplicateMediaName)
-
-				return
-			}
-
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrSaveMedia)
-
-			return
-		}
 
 		ctx.JSON(http.StatusCreated, media)
 	}
@@ -380,14 +334,15 @@ func (c *ContestHandler) onAPISaveContestEntrySubmit() gin.HandlerFunc {
 		}
 
 		if contest.MediaTypes != "" {
+			// TODO delete assets? reformat this?
 			var media domain.Media
-			if errMedia := c.wikiUsecase.GetMediaByAssetID(ctx, req.AssetID, &media); errMedia != nil {
+			if errMedia := c.mediaUsecase.GetMediaByAssetID(ctx, req.AssetID, &media); errMedia != nil {
 				http_helper.ResponseErr(ctx, http.StatusFailedDependency, domain.ErrFetchMedia)
 
 				return
 			}
 
-			if !contest.MimeTypeAcceptable(media.MimeType) {
+			if !slices.Contains(strings.Split(contest.MediaTypes, ","), strings.ToLower(media.MimeType)) {
 				http_helper.ResponseErr(ctx, http.StatusFailedDependency, domain.ErrInvalidFormat)
 
 				return

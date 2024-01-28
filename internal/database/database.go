@@ -1,20 +1,19 @@
-package store
+package database
 
 import (
 	"context"
 	"embed"
 	"errors"
 	"fmt"
-	"github.com/jackc/pgerrcode"
-	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/leighmacdonald/gbans/internal/domain"
 
 	sq "github.com/Masterminds/squirrel"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/jackc/pgerrcode"
 	pgxuuid "github.com/jackc/pgx-gofrs-uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/leighmacdonald/gbans/internal/errs"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"go.uber.org/zap"
 )
 
@@ -25,18 +24,6 @@ import (
 
 //go:embed migrations
 var migrations embed.FS
-
-var (
-	ErrRowResults  = errors.New("resulting rows contain error")
-	ErrTxStart     = errors.New("could not start transaction")
-	ErrTxCommit    = errors.New("failed to commit tx changes")
-	ErrTxRollback  = errors.New("could not rollback transaction")
-	ErrPoolFailed  = errors.New("could not create store pool")
-	ErrUUIDGen     = errors.New("could not generate uuid")
-	ErrCreateQuery = errors.New("failed to generate query")
-	ErrCountQuery  = errors.New("failed to get count result")
-	ErrTooShort    = errors.New("value too short")
-)
 
 // Database is the common database interface. All errors from callers should be wrapped in errs.DBErr as they
 // are not automatically wrapped.
@@ -59,10 +46,6 @@ type Database interface {
 	DBErr(rootError error) error
 }
 
-type Stores struct {
-	Database
-}
-
 type postgresStore struct {
 	conn *pgxpool.Pool
 	log  *zap.Logger
@@ -74,14 +57,14 @@ type postgresStore struct {
 	logQueries  bool
 }
 
-func New(rootLogger *zap.Logger, dsn string, autoMigrate bool, logQueries bool) Stores {
-	return Stores{Database: &postgresStore{
+func New(rootLogger *zap.Logger, dsn string, autoMigrate bool, logQueries bool) Database {
+	return &postgresStore{
 		sb:          sq.StatementBuilder.PlaceholderFormat(sq.Dollar),
 		log:         rootLogger.Named("db"),
 		dsn:         dsn,
 		autoMigrate: autoMigrate,
 		logQueries:  logQueries,
-	}}
+	}
 }
 
 type dbQueryTracer struct {
@@ -152,7 +135,7 @@ func (db *postgresStore) Connect(ctx context.Context) error {
 
 	dbConn, errConnectConfig := pgxpool.NewWithConfig(ctx, cfg)
 	if errConnectConfig != nil {
-		return errors.Join(errConnectConfig, ErrPoolFailed)
+		return errors.Join(errConnectConfig, domain.ErrPoolFailed)
 	}
 
 	db.conn = dbConn
@@ -208,7 +191,7 @@ func (db *postgresStore) Exec(ctx context.Context, query string, args ...any) er
 func (db *postgresStore) ExecInsertBuilder(ctx context.Context, builder sq.InsertBuilder) error {
 	query, args, errQuery := builder.ToSql()
 	if errQuery != nil {
-		return errs.DBErr(errQuery)
+		return db.DBErr(errQuery)
 	}
 
 	_, err := db.conn.Exec(ctx, query, args...)
@@ -269,7 +252,7 @@ func (db *postgresStore) Close() error {
 func (db *postgresStore) GetCount(ctx context.Context, builder sq.SelectBuilder) (int64, error) {
 	countQuery, argsCount, errCountQuery := builder.ToSql()
 	if errCountQuery != nil {
-		return 0, errors.Join(errCountQuery, ErrCreateQuery)
+		return 0, errors.Join(errCountQuery, domain.ErrCreateQuery)
 	}
 
 	var count int64
@@ -282,31 +265,15 @@ func (db *postgresStore) GetCount(ctx context.Context, builder sq.SelectBuilder)
 	return count, nil
 }
 
-func getCount(ctx context.Context, store Database, builder sq.SelectBuilder) (int64, error) {
-	countQuery, argsCount, errCountQuery := builder.ToSql()
-	if errCountQuery != nil {
-		return 0, errors.Join(errCountQuery, ErrCreateQuery)
-	}
-
-	var count int64
-	if errCount := store.
-		QueryRow(ctx, countQuery, argsCount...).
-		Scan(&count); errCount != nil {
-		return 0, errCount //nolint:wrapcheck
-	}
-
-	return count, nil
-}
-
-func truncateTable(ctx context.Context, database Database, table string) error {
+func (db *postgresStore) truncateTable(ctx context.Context, database Database, table string) error {
 	query, args, errQueryArgs := sq.Delete(table).ToSql()
 	if errQueryArgs != nil {
-		return errs.DBErr(errQueryArgs)
+		return db.DBErr(errQueryArgs)
 	}
 
 	rows, errExec := database.Query(ctx, query, args...)
 	if errExec != nil {
-		return errs.DBErr(errExec)
+		return db.DBErr(errExec)
 	}
 
 	rows.Close()

@@ -11,35 +11,35 @@ import (
 )
 
 type StateUsecase interface {
-	Current() []ServerState
-	Update(serverID int, update PartialStateUpdate) error
-	Find(name string, steamID steamid.SID64, addr net.IP, cidr *net.IPNet) []PlayerServerInfo
-	FindByIP(addr net.IP)
-	FindByCIDR(cidr *net.IPNet)
-	FindBySteamID(steamID steamid.SID64) []PlayerServerInfo
-	FindByName(name string) []PlayerServerInfo
-	SortRegion() map[string][]ServerState
-	ByServerID(serverID int) (ServerState, bool)
-	ByName(name string, wildcardOk bool) []ServerState
-	ServerIDsByName(name string, wildcardOk bool) []int
-	OnFindExec(ctx context.Context, name string, steamID steamid.SID64,
-		ip net.IP, cidr *net.IPNet, onFoundCmd func(info PlayerServerInfo) string) error
-	ExecServer(ctx context.Context, serverID int, cmd string) (string, error)
-	ExecRaw(ctx context.Context, addr string, password string, cmd string) (string, error)
 	Broadcast(ctx context.Context, serverIDs []int, cmd string) map[int]string
-	Kick(ctx context.Context, target steamid.SID64, reason Reason) error
-	Silence(ctx context.Context, target steamid.SID64, reason Reason) error
-	Say(ctx context.Context, serverID int, message string) error
+	ByName(name string, wildcardOk bool) []ServerState
+	ByServerID(serverID int) (ServerState, bool)
 	CSay(ctx context.Context, serverID int, message string) error
+	Current() []ServerState
+	ExecRaw(ctx context.Context, addr string, password string, cmd string) (string, error)
+	ExecServer(ctx context.Context, serverID int, cmd string) (string, error)
+	Find(name string, steamID steamid.SID64, addr net.IP, cidr *net.IPNet) []PlayerServerInfo
+	FindByCIDR(cidr *net.IPNet) []PlayerServerInfo
+	FindByIP(addr net.IP) []PlayerServerInfo
+	FindByName(name string) []PlayerServerInfo
+	FindBySteamID(steamID steamid.SID64) []PlayerServerInfo
+	Kick(ctx context.Context, target steamid.SID64, reason Reason) error
+	LogAddressAdd(ctx context.Context, logAddress string)
+	OnFindExec(ctx context.Context, name string, steamID steamid.SID64, ip net.IP, cidr *net.IPNet, onFoundCmd func(info PlayerServerInfo) string) error
 	PSay(ctx context.Context, target steamid.SID64, message string) error
+	Say(ctx context.Context, serverID int, message string) error
+	ServerIDsByName(name string, wildcardOk bool) []int
+	Silence(ctx context.Context, target steamid.SID64, reason Reason) error
+	SortRegion() map[string][]ServerState
+	Update(serverID int, update PartialStateUpdate) error
 }
 
 type StateRepository interface {
+	GetServer(serverID int) (ServerConfig, error)
 	Update(serverID int, update PartialStateUpdate) error
 	Current() []ServerState
 	Configs() []ServerConfig
 	ExecRaw(ctx context.Context, addr string, password string, cmd string) (string, error)
-	Broadcast(ctx context.Context, serverIDs []int, cmd string) map[int]string
 }
 
 type ServerConfig struct {

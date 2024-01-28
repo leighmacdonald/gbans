@@ -3,7 +3,6 @@ package state
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net"
 	"regexp"
 	"sort"
@@ -14,7 +13,6 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/errs"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/rcon/rcon"
 	"github.com/leighmacdonald/steamid/v3/extra"
@@ -63,10 +61,6 @@ func NewCollector(logger *zap.Logger, serverUsecase domain.ServersUsecase) *Coll
 	}
 }
 
-func (c *Collector) logAddressAdd(ctx context.Context, logAddress string) {
-	c.Broadcast(ctx, nil, fmt.Sprintf("logaddress_add %s", logAddress))
-}
-
 func (c *Collector) Configs() []domain.ServerConfig {
 	c.configMu.RLock()
 	defer c.configMu.RUnlock()
@@ -96,7 +90,7 @@ func (c *Collector) ExecRaw(ctx context.Context, addr string, password string, c
 	return resp, nil
 }
 
-func (c *Collector) getServer(serverID int) (domain.ServerConfig, error) {
+func (c *Collector) GetServer(serverID int) (domain.ServerConfig, error) {
 	c.configMu.RLock()
 	c.configMu.RUnlock()
 
@@ -111,43 +105,6 @@ func (c *Collector) getServer(serverID int) (domain.ServerConfig, error) {
 	}
 
 	return configs[serverIdx], nil
-}
-
-func (c *Collector) Broadcast(ctx context.Context, serverIDs []int, cmd string) map[int]string {
-	results := map[int]string{}
-	waitGroup := sync.WaitGroup{}
-
-	if len(serverIDs) == 0 {
-		for _, conf := range c.configs {
-			serverIDs = append(serverIDs, conf.ServerID)
-		}
-	}
-
-	for _, serverID := range serverIDs {
-		waitGroup.Add(1)
-
-		go func(sid int) {
-			defer waitGroup.Done()
-
-			serverConf, errServerConf := c.getServer(sid)
-			if errServerConf != nil {
-				return
-			}
-
-			resp, errExec := c.ExecRaw(ctx, serverConf.Addr(), serverConf.RconPassword, cmd)
-			if errExec != nil {
-				c.log.Error("Failed to exec server command", zap.Int("server_id", sid), zap.Error(errExec))
-
-				return
-			}
-
-			results[sid] = resp
-		}(serverID)
-	}
-
-	waitGroup.Wait()
-
-	return results
 }
 
 func (c *Collector) Current() []domain.ServerState {
@@ -288,7 +245,7 @@ func (c *Collector) Update(serverID int, update domain.PartialStateUpdate) error
 
 	curState, ok := c.serverState[serverID]
 	if !ok {
-		return errs.ErrUnknownServer
+		return domain.ErrUnknownServer
 	}
 
 	if update.Hostname != "" {
@@ -314,7 +271,7 @@ var (
 )
 
 func (c *Collector) status(ctx context.Context, serverID int) (extra.Status, error) {
-	server, errServerID := c.getServer(serverID)
+	server, errServerID := c.GetServer(serverID)
 	if errServerID != nil {
 		return extra.Status{}, errServerID
 	}
@@ -335,7 +292,7 @@ func (c *Collector) status(ctx context.Context, serverID int) (extra.Status, err
 const maxPlayersSupported = 101
 
 func (c *Collector) maxVisiblePlayers(ctx context.Context, serverID int) (int, error) {
-	server, errServerID := c.getServer(serverID)
+	server, errServerID := c.GetServer(serverID)
 	if errServerID != nil {
 		return 0, errServerID
 	}
@@ -487,6 +444,12 @@ func (c *Collector) updateMSL(ctx context.Context) ([]serverLocation, error) {
 	return communityServers, nil
 }
 
+// todo add external
+// conf := c.configUsecase.Config()
+// if conf.Debug.AddRCONLogAddress != "" {
+// c.LogAddressAdd(ctx, conf.Debug.AddRCONLogAddress)
+// }
+
 func (c *Collector) Start(ctx context.Context) {
 	var (
 		log          = c.log.Named("State")
@@ -510,7 +473,7 @@ func (c *Collector) Start(ctx context.Context) {
 				QueryFilter:     domain.QueryFilter{Deleted: false},
 				IncludeDisabled: false,
 			})
-			if errServers != nil && !errors.Is(errServers, errs.ErrNoResult) {
+			if errServers != nil && !errors.Is(errServers, domain.ErrNoResult) {
 				log.Error("Failed to fetch servers, cannot update State", zap.Error(errServers))
 
 				continue
@@ -534,12 +497,6 @@ func (c *Collector) Start(ctx context.Context) {
 			}
 
 			c.setServerConfigs(configs)
-
-			conf := c.configUsecase.Config()
-			if conf.Debug.AddRCONLogAddress != "" {
-				c.logAddressAdd(ctx, conf.Debug.AddRCONLogAddress)
-			}
-
 		case <-ctx.Done():
 			return
 		}

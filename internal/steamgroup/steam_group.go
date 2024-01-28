@@ -1,4 +1,4 @@
-package thirdparty
+package steamgroup
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/errs"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 	"go.uber.org/zap"
@@ -20,21 +19,15 @@ var (
 	errSaveGroupBanMembers     = errors.New("failed to save group ban members list")
 )
 
-type GroupsStore interface {
-	GetBanGroups(ctx context.Context, filter domain.GroupBansQueryFilter) ([]domain.BannedGroupPerson, int64, error)
-	GetMembersList(ctx context.Context, parentID int64, list *domain.MembersList) error
-	SaveMembersList(ctx context.Context, list *domain.MembersList) error
-}
-
 type SteamGroupMemberships struct {
 	members map[steamid.GID]steamid.Collection
 	*sync.RWMutex
 	log        *zap.Logger
-	store      GroupsStore
+	store      domain.BanGroupRepository
 	updateFreq time.Duration
 }
 
-func NewSteamGroupMemberships(log *zap.Logger, db GroupsStore) *SteamGroupMemberships {
+func NewSteamGroupMemberships(log *zap.Logger, db domain.BanGroupRepository) *SteamGroupMemberships {
 	return &SteamGroupMemberships{
 		RWMutex:    &sync.RWMutex{},
 		store:      db,
@@ -92,7 +85,7 @@ func (g *SteamGroupMemberships) updateGroupBanMembers(ctx context.Context) (map[
 
 	groups, _, errGroups := g.store.GetBanGroups(ctx, domain.GroupBansQueryFilter{})
 	if errGroups != nil {
-		if errors.Is(errGroups, errs.ErrNoResult) {
+		if errors.Is(errGroups, domain.ErrNoResult) {
 			return newMap, nil
 		}
 
@@ -111,7 +104,7 @@ func (g *SteamGroupMemberships) updateGroupBanMembers(ctx context.Context) (map[
 
 		memberList := domain.NewMembersList(group.GroupID.Int64(), members)
 		if errQuery := g.store.GetMembersList(ctx, group.GroupID.Int64(), &memberList); errQuery != nil {
-			if !errors.Is(errQuery, errs.ErrNoResult) {
+			if !errors.Is(errQuery, domain.ErrNoResult) {
 				return nil, errors.Join(errQuery, errLoadGroupBanMembersList)
 			}
 		}

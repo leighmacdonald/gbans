@@ -118,22 +118,6 @@ func (p *personUsecase) AddConnectionHistory(ctx context.Context, conn *domain.P
 	return p.personRepo.AddConnectionHistory(ctx, conn)
 }
 
-func (p *personUsecase) GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *domain.PersonAuth) error {
-	return p.personRepo.GetPersonAuthByRefreshToken(ctx, token, auth)
-}
-
-func (p *personUsecase) SavePersonAuth(ctx context.Context, auth *domain.PersonAuth) error {
-	return p.personRepo.SavePersonAuth(ctx, auth)
-}
-
-func (p *personUsecase) DeletePersonAuth(ctx context.Context, authID int64) error {
-	return p.personRepo.DeletePersonAuth(ctx, authID)
-}
-
-func (p *personUsecase) PrunePersonAuth(ctx context.Context) error {
-	return p.personRepo.PrunePersonAuth(ctx)
-}
-
 func (p *personUsecase) SendNotification(ctx context.Context, targetID steamid.SID64, severity domain.NotificationSeverity, message string, link string) error {
 	return p.personRepo.SendNotification(ctx, targetID, severity, message, link)
 }

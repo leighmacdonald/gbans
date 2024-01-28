@@ -6,16 +6,16 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/store"
 )
 
 type blocklistRepository struct {
-	store.Database
+	database.Database
 }
 
-func NewBlocklistRepository(database store.Database) domain.BlocklistRepository {
+func NewBlocklistRepository(database database.Database) domain.BlocklistRepository {
 	return &blocklistRepository{Database: database}
 }
 

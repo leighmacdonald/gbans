@@ -2,18 +2,18 @@ package repository
 
 import (
 	"context"
+
 	sq "github.com/Masterminds/squirrel"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
 type wordFilterRepository struct {
-	db store.Database
+	db database.Database
 }
 
-func NewWordFilterRepository(database store.Database) domain.WordFilterRepository {
+func NewWordFilterRepository(database database.Database) domain.WordFilterRepository {
 	return &wordFilterRepository{db: database}
 }
 
@@ -34,7 +34,7 @@ func (r *wordFilterRepository) insertFilter(ctx context.Context, filter *domain.
 	if errQuery := r.db.QueryRow(ctx, query, filter.AuthorID.Int64(), filter.Pattern,
 		filter.IsRegex, filter.IsEnabled, filter.TriggerCount, filter.CreatedOn, filter.UpdatedOn, filter.Action, filter.Duration).
 		Scan(&filter.FilterID); errQuery != nil {
-		return errs.DBErr(errQuery)
+		return r.db.DBErr(errQuery)
 	}
 
 	return nil
@@ -57,7 +57,7 @@ func (r *wordFilterRepository) updateFilter(ctx context.Context, filter *domain.
 		Where(sq.Eq{"filter_id": filter.FilterID})
 
 	if err := r.db.ExecUpdateBuilder(ctx, query); err != nil {
-		return errs.DBErr(err)
+		return r.db.DBErr(err)
 	}
 
 	return nil
@@ -69,7 +69,7 @@ func (r *wordFilterRepository) DropFilter(ctx context.Context, filter *domain.Fi
 		Delete("filtered_word").
 		Where(sq.Eq{"filter_id": filter.FilterID})
 	if errExec := r.db.ExecDeleteBuilder(ctx, query); errExec != nil {
-		return errs.DBErr(errExec)
+		return r.db.DBErr(errExec)
 	}
 
 	return nil
@@ -85,7 +85,7 @@ func (r *wordFilterRepository) GetFilterByID(ctx context.Context, filterID int64
 
 	row, errQuery := r.db.QueryRowBuilder(ctx, query)
 	if errQuery != nil {
-		return errs.DBErr(errQuery)
+		return r.db.DBErr(errQuery)
 	}
 
 	var authorID int64
@@ -93,7 +93,7 @@ func (r *wordFilterRepository) GetFilterByID(ctx context.Context, filterID int64
 	if errScan := row.Scan(&filter.FilterID, &authorID, &filter.Pattern,
 		&filter.IsRegex, &filter.IsEnabled, &filter.TriggerCount, &filter.CreatedOn, &filter.UpdatedOn,
 		&filter.Action, &filter.Duration, &filter.Weight); errScan != nil {
-		return errs.DBErr(errScan)
+		return r.db.DBErr(errScan)
 	}
 
 	filter.AuthorID = steamid.New(authorID)
@@ -121,7 +121,7 @@ func (r *wordFilterRepository) GetFilters(ctx context.Context, opts domain.Filte
 
 	rows, errExec := r.db.QueryBuilder(ctx, builder)
 	if errExec != nil {
-		return nil, 0, errs.DBErr(errExec)
+		return nil, 0, r.db.DBErr(errExec)
 	}
 
 	defer rows.Close()
@@ -137,7 +137,7 @@ func (r *wordFilterRepository) GetFilters(ctx context.Context, opts domain.Filte
 		if errScan := rows.Scan(&filter.FilterID, &authorID, &filter.Pattern, &filter.IsRegex,
 			&filter.IsEnabled, &filter.TriggerCount, &filter.CreatedOn, &filter.UpdatedOn, &filter.Action,
 			&filter.Duration, &filter.Weight); errScan != nil {
-			return nil, 0, errs.DBErr(errScan)
+			return nil, 0, r.db.DBErr(errScan)
 		}
 
 		filter.AuthorID = steamid.New(authorID)
@@ -152,14 +152,14 @@ func (r *wordFilterRepository) GetFilters(ctx context.Context, opts domain.Filte
 		Select("count(filter_id)").
 		From("filtered_word r"))
 	if errCount != nil {
-		return nil, 0, errs.DBErr(errCount)
+		return nil, 0, r.db.DBErr(errCount)
 	}
 
 	return filters, count, nil
 }
 
 func (r *wordFilterRepository) AddMessageFilterMatch(ctx context.Context, messageID int64, filterID int64) error {
-	return errs.DBErr(r.db.ExecInsertBuilder(ctx, r.db.
+	return r.db.DBErr(r.db.ExecInsertBuilder(ctx, r.db.
 		Builder().
 		Insert("person_messages_filter").
 		Columns("person_message_id", "filter_id").

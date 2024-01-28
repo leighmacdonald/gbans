@@ -10,8 +10,6 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/state"
-	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/util"
@@ -370,7 +368,7 @@ func EditAppealMessage(existing domain.BanAppealMessage, body string, author dom
 		MessageEmbed
 }
 
-func DeleteAppealMessage(existing domain.BanAppealMessage, user domain.PersonInfo, userURL string) *discordgo.MessageEmbed {
+func DeleteAppealMessage(existing *domain.BanAppealMessage, user domain.PersonInfo, userURL string) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed("User appeal message deleted")
 	msgEmbed.
 		Embed().
@@ -749,7 +747,7 @@ func mapRegion(region string) string {
 	}
 }
 
-func ServersMessage(currentStateRegion map[string][]state.ServerState, serversURL string) *discordgo.MessageEmbed {
+func ServersMessage(currentStateRegion map[string][]domain.ServerState, serversURL string) *discordgo.MessageEmbed {
 	var (
 		stats       = map[string]float64{}
 		used, total = 0, 0
@@ -1001,7 +999,7 @@ func matchASCIITable(match domain.MatchResult) string {
 	tableHealers.SetHeader([]string{" ", "Name", "A", "D", "Heal", "H/M", "Dr", "U/K/Q/V", "AUL"})
 
 	for _, player := range match.Healers() {
-		if player.MedicStats.Healing < store.MinMedicHealing {
+		if player.MedicStats.Healing < domain.MinMedicHealing {
 			continue
 		}
 

@@ -3,6 +3,8 @@ package app
 import (
 	"context"
 	"errors"
+	"github.com/leighmacdonald/gbans/internal/chat"
+	"github.com/leighmacdonald/gbans/internal/wordfilter"
 	"net"
 	"net/http"
 	"os"
@@ -14,19 +16,20 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
-	"github.com/leighmacdonald/gbans/internal/activity"
 	"github.com/leighmacdonald/gbans/internal/api"
+	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/s3"
+	"github.com/leighmacdonald/gbans/internal/forum"
 	"github.com/leighmacdonald/gbans/internal/state"
-	"github.com/leighmacdonald/gbans/internal/store"
+	"github.com/leighmacdonald/gbans/internal/steamgroup"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
+	"github.com/leighmacdonald/gbans/internal/wiki"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
-	"github.com/leighmacdonald/gbans/pkg/wiki"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"go.uber.org/zap"
 )
@@ -41,21 +44,21 @@ type App struct {
 	conf             config.Config
 	confMu           sync.RWMutex
 	discord          *Bot
-	db               store.Stores
+	db               database.Stores
 	log              *zap.Logger
 	logFileChan      chan *logFilePayload
 	notificationChan chan NotificationPayload
 	state            *state.Collector
-	steamGroups      *thirdparty.SteamGroupMemberships
+	steamGroups      *steamgroup.SteamGroupMemberships
 	steamFriends     *thirdparty.SteamFriends
 	patreon          *PatreonManager
 	eb               *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 	wordFilters      *WordFilters
-	warningTracker   *Tracker
+	warningTracker   *chat.Tracker
 	mc               *metricCollector
-	assetStore       *s3.Client
+	assetStore       *asset.Client
 	logListener      *logparse.UDPLogListener
-	activityTracker  *activity.Tracker
+	activityTracker  *forum.Tracker
 	netBlock         *Blocker
 	weaponMap        fp.MutexMap[logparse.Weapon, int]
 	chatLogger       *chatLogger
@@ -64,7 +67,7 @@ type App struct {
 
 type CommandHandler func(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error)
 
-func New(conf config.Config, database store.Stores, bot *Bot, logger *zap.Logger, assetStore *s3.Client) *App {
+func New(conf config.Config, database database.Stores, bot *Bot, logger *zap.Logger, assetStore *asset.Client) *App {
 	eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
 	filters := NewWordFilters()
 	matchUUIDMap := fp.NewMutexMap[int, uuid.UUID]()
@@ -77,19 +80,19 @@ func New(conf config.Config, database store.Stores, bot *Bot, logger *zap.Logger
 		log:              logger,
 		logFileChan:      make(chan *logFilePayload, 10),
 		notificationChan: make(chan NotificationPayload, 5),
-		steamGroups:      thirdparty.NewSteamGroupMemberships(logger, database),
+		steamGroups:      steamgroup.NewSteamGroupMemberships(logger, database),
 		steamFriends:     thirdparty.NewSteamFriends(logger, database),
 		patreon:          NewPatreonManager(logger, conf),
 		wordFilters:      filters,
 		mc:               newMetricCollector(),
 		state:            state.NewCollector(logger),
-		activityTracker:  activity.NewTracker(logger),
+		activityTracker:  forum.NewTracker(logger),
 		netBlock:         NewBlocker(),
 		weaponMap:        fp.NewMutexMap[logparse.Weapon, int](),
 	}
 
 	application.setConfig(conf)
-	application.warningTracker = NewTracker(logger, database, conf.Filter, onWarningHandler(application), onWarningExceeded(application))
+	application.warningTracker = chat.NewTracker(logger, database, conf.Filter, wordfilter.onWarningHandler(application), wordfilter.onWarningExceeded(application))
 	application.chatLogger = newChatLogger(logger, database, eventBroadcaster, filters, application.warningTracker, matchUUIDMap)
 	application.matchSummarizer = NewSummarizer(logger, eventBroadcaster, matchUUIDMap, onMatchComplete(application))
 
@@ -102,7 +105,7 @@ func New(conf config.Config, database store.Stores, bot *Bot, logger *zap.Logger
 	return application
 }
 
-func (app *App) Activity() *activity.Tracker {
+func (app *App) Activity() *forum.Tracker {
 	return app.activityTracker
 }
 
@@ -145,11 +148,11 @@ func (app *App) NetBlocks() domain.NetBLocker { //nolint:ireturn
 	return app.netBlock
 }
 
-func (app *App) Store() store.Stores {
+func (app *App) Store() database.Stores {
 	return app.db
 }
 
-func (app *App) Groups() *thirdparty.SteamGroupMemberships { //nolint:ireturn
+func (app *App) Groups() *steamgroup.SteamGroupMemberships { //nolint:ireturn
 	return app.steamGroups
 }
 
@@ -165,7 +168,7 @@ func (app *App) Log() *zap.Logger {
 	return app.log
 }
 
-func (app *App) Assets() *s3.Client {
+func (app *App) Assets() *asset.Client {
 	return app.assetStore
 }
 
@@ -205,7 +208,7 @@ func (app *App) setConfig(conf config.Config) {
 	app.conf = conf
 }
 
-func firstTimeSetup(ctx context.Context, conf config.Config, database store.Stores, weaponMap fp.MutexMap[logparse.Weapon, int]) error {
+func firstTimeSetup(ctx context.Context, conf config.Config, database database.Stores, weaponMap fp.MutexMap[logparse.Weapon, int]) error {
 	if !conf.General.Owner.Valid() {
 		return errOwnerInvalid
 	}

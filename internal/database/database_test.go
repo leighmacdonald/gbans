@@ -1,4 +1,4 @@
-package store_test
+package database_test
 
 import (
 	"context"
@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/golib"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/stretchr/testify/require"
@@ -56,7 +56,7 @@ func TestStore(t *testing.T) {
 		t.Skipf("Failed to bring up testcontainer db: %v", errDB)
 	}
 
-	database := store.New(logger, dsn, true, false)
+	database := database.New(logger, dsn, true, false)
 	if err := database.Connect(testCtx); err != nil {
 		logger.Fatal("Failed to setup store", zap.Error(err))
 	}
@@ -79,7 +79,7 @@ func TestStore(t *testing.T) {
 	t.Run("forum", testForum(database))
 }
 
-func testServerTest(database store.Stores) func(t *testing.T) {
+func testServerTest(database database.Stores) func(t *testing.T) {
 	return func(t *testing.T) {
 		serverA := domain.Server{
 			ShortName:      fmt.Sprintf("test-%s", golib.RandomString(10)),
@@ -134,7 +134,7 @@ func randIP() string {
 	return fmt.Sprintf("%d.%d.%d.%d", rand.Intn(255), rand.Intn(255), rand.Intn(255), rand.Intn(255)) //nolint:gosec
 }
 
-func testReport(database store.Stores) func(t *testing.T) {
+func testReport(database database.Stores) func(t *testing.T) {
 	return func(t *testing.T) {
 		var author domain.Person
 
@@ -165,7 +165,7 @@ func testReport(database store.Stores) func(t *testing.T) {
 	}
 }
 
-func testBanNet(database store.Stores) func(t *testing.T) {
+func testBanNet(database database.Stores) func(t *testing.T) {
 	return func(t *testing.T) {
 		bgCtx := context.Background()
 		banNetEqual := func(b1, b2 domain.BanCIDR) {
@@ -193,7 +193,7 @@ func testBanNet(database store.Stores) func(t *testing.T) {
 	}
 }
 
-func testBanSteam(database store.Stores) func(t *testing.T) {
+func testBanSteam(database database.Stores) func(t *testing.T) {
 	return func(t *testing.T) {
 		bgCtx := context.Background()
 		banEqual := func(ban1, ban2 *domain.BanSteam) {
@@ -260,7 +260,7 @@ func randSID() steamid.SID64 {
 	return steamid.New(76561197960265728 + rand.Int63n(100000000)) //nolint:gosec
 }
 
-func testPerson(database store.Stores) func(t *testing.T) {
+func testPerson(database database.Stores) func(t *testing.T) {
 	return func(t *testing.T) {
 		var (
 			person1 = domain.NewPerson(randSID())
@@ -285,7 +285,7 @@ func testPerson(database store.Stores) func(t *testing.T) {
 	}
 }
 
-func testChatHistory(database store.Stores) func(t *testing.T) {
+func testChatHistory(database database.Stores) func(t *testing.T) {
 	return func(t *testing.T) {
 		ctx := context.Background()
 
@@ -321,7 +321,7 @@ func testChatHistory(database store.Stores) func(t *testing.T) {
 	}
 }
 
-func testFilters(database store.Stores) func(t *testing.T) {
+func testFilters(database database.Stores) func(t *testing.T) {
 	return func(t *testing.T) {
 		player1 := domain.NewPerson(randSID())
 
@@ -370,7 +370,7 @@ func testFilters(database store.Stores) func(t *testing.T) {
 	}
 }
 
-func testBanASN(database store.Stores) func(t *testing.T) {
+func testBanASN(database database.Stores) func(t *testing.T) {
 	return func(t *testing.T) {
 		ctx := context.Background()
 
@@ -398,7 +398,7 @@ func testBanASN(database store.Stores) func(t *testing.T) {
 	}
 }
 
-func testBanGroup(database store.Stores) func(t *testing.T) {
+func testBanGroup(database database.Stores) func(t *testing.T) {
 	return func(t *testing.T) {
 		ctx := context.Background()
 
@@ -432,7 +432,7 @@ func testBanGroup(database store.Stores) func(t *testing.T) {
 	}
 }
 
-func testForum(database store.Stores) func(t *testing.T) {
+func testForum(database database.Stores) func(t *testing.T) {
 	ctx := context.Background()
 
 	return func(t *testing.T) {

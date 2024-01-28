@@ -9,9 +9,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/errs"
 	"github.com/leighmacdonald/gbans/internal/http_helper"
-	"github.com/leighmacdonald/gbans/pkg/wiki"
+	"github.com/leighmacdonald/gbans/internal/wiki"
 	"go.uber.org/zap"
 )
 
@@ -35,7 +34,7 @@ func NewWIkiHandler(logger *zap.Logger, engine *gin.Engine, wikiUsecase domain.W
 
 func (w *WikiHandler) onAPIGetWikiSlug() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		currentUser := http_helper.http_helper.CurrentUserProfile(ctx)
+		currentUser := http_helper.CurrentUserProfile(ctx)
 
 		slug := strings.ToLower(ctx.Param("slug"))
 		if slug[0] == '/' {
@@ -44,19 +43,19 @@ func (w *WikiHandler) onAPIGetWikiSlug() gin.HandlerFunc {
 
 		var page wiki.Page
 		if errGetWikiSlug := w.wikiUsecase.GetWikiPageBySlug(ctx, slug, &page); errGetWikiSlug != nil {
-			if errors.Is(errGetWikiSlug, errs.ErrNoResult) {
+			if errors.Is(errGetWikiSlug, domain.ErrNoResult) {
 				ctx.JSON(http.StatusOK, page)
 
 				return
 			}
 
-			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
+			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
 
 		if page.PermissionLevel > currentUser.PermissionLevel {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusForbidden, domain.ErrPermissionDenied)
+			http_helper.ResponseErr(ctx, http.StatusForbidden, domain.ErrPermissionDenied)
 
 			return
 		}
@@ -75,19 +74,19 @@ func (w *WikiHandler) onAPISaveWikiSlug() gin.HandlerFunc {
 		}
 
 		if req.Slug == "" || req.BodyMD == "" {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.domain.ErrInvalidParameter
+			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
 
 			return
 		}
 
 		var page wiki.Page
 		if errGetWikiSlug := w.wikiUsecase.GetWikiPageBySlug(ctx, req.Slug, &page); errGetWikiSlug != nil {
-			if errors.Is(errGetWikiSlug, errs.ErrNoResult) {
+			if errors.Is(errGetWikiSlug, domain.ErrNoResult) {
 				page.CreatedOn = time.Now()
 				page.Revision += 1
 				page.Slug = req.Slug
 			} else {
-				http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
+				http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 				return
 			}
@@ -99,7 +98,7 @@ func (w *WikiHandler) onAPISaveWikiSlug() gin.HandlerFunc {
 		page.BodyMD = req.BodyMD
 
 		if errSave := w.wikiUsecase.SaveWikiPage(ctx, &page); errSave != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
+			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}

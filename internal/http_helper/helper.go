@@ -17,12 +17,6 @@ import (
 	"go.uber.org/zap"
 )
 
-var (
-	ErrParamKeyMissing = errors.New("param key not found")
-	ErrParamParse      = errors.New("failed to parse param value")
-	ErrParamInvalid    = errors.New("param value invalid")
-)
-
 type ApiError struct {
 	Message string `json:"message"`
 }
@@ -78,16 +72,16 @@ func GetSID64Param(c *gin.Context, key string) (steamid.SID64, error) {
 func GetInt64Param(ctx *gin.Context, key string) (int64, error) {
 	valueStr := ctx.Param(key)
 	if valueStr == "" {
-		return 0, fmt.Errorf("%w: %s", ErrParamKeyMissing, key)
+		return 0, fmt.Errorf("%w: %s", domain.ErrParamKeyMissing, key)
 	}
 
 	value, valueErr := strconv.ParseInt(valueStr, 10, 64)
 	if valueErr != nil {
-		return 0, ErrParamParse
+		return 0, domain.ErrParamParse
 	}
 
 	if value <= 0 {
-		return 0, fmt.Errorf("%w: %s", ErrParamInvalid, key)
+		return 0, fmt.Errorf("%w: %s", domain.ErrParamInvalid, key)
 	}
 
 	return value, nil
@@ -96,7 +90,7 @@ func GetInt64Param(ctx *gin.Context, key string) (int64, error) {
 func GetIntParam(ctx *gin.Context, key string) (int, error) {
 	valueStr := ctx.Param(key)
 	if valueStr == "" {
-		return 0, fmt.Errorf("%w: %s", ErrParamKeyMissing, key)
+		return 0, fmt.Errorf("%w: %s", domain.ErrParamKeyMissing, key)
 	}
 
 	return util.StringToInt(valueStr), nil
@@ -105,12 +99,12 @@ func GetIntParam(ctx *gin.Context, key string) (int, error) {
 func GetUUIDParam(ctx *gin.Context, key string) (uuid.UUID, error) {
 	valueStr := ctx.Param(key)
 	if valueStr == "" {
-		return uuid.UUID{}, fmt.Errorf("%w: %s", ErrParamKeyMissing, key)
+		return uuid.UUID{}, fmt.Errorf("%w: %s", domain.ErrParamKeyMissing, key)
 	}
 
 	parsedUUID, errString := uuid.FromString(valueStr)
 	if errString != nil {
-		return uuid.UUID{}, errors.Join(errString, ErrParamParse)
+		return uuid.UUID{}, errors.Join(errString, domain.ErrParamParse)
 	}
 
 	return parsedUUID, nil

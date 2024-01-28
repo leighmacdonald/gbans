@@ -2,15 +2,15 @@ package service
 
 import (
 	"errors"
+	"net/http"
+	"runtime"
+
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/errs"
 	"github.com/leighmacdonald/gbans/internal/http_helper"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"go.uber.org/zap"
-	"net/http"
-	"runtime"
 )
 
 type AppealHandler struct {
@@ -38,31 +38,34 @@ func NewAppealHandler(logger *zap.Logger, engine *gin.Engine, au domain.AppealUs
 	engine.POST("/api/bans/:ban_id/messages", handler.onAPIPostBanMessage())
 	engine.POST("/api/bans/message/:ban_message_id", handler.onAPIEditBanMessage())
 	engine.DELETE("/api/bans/message/:ban_message_id", handler.onAPIDeleteBanMessage())
+
+	// mod
+	engine.POST("/api/appeals", handler.onAPIGetAppeals())
 }
 
-func (a *AppealHandler) onAPIGetBanMessages() gin.HandlerFunc {
+func (h *AppealHandler) onAPIGetBanMessages() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		banID, errParam := http_helper.GetInt64Param(ctx, "ban_id")
 		if errParam != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusNotFound, domain.domain.ErrInvalidParameter
+			http_helper.ResponseErr(ctx, http.StatusNotFound, domain.ErrInvalidParameter)
 
 			return
 		}
 
 		banPerson := domain.NewBannedPerson()
-		if errGetBan := a.banUsecase.GetBanByBanID(ctx, banID, &banPerson, true); errGetBan != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
+		if errGetBan := h.banUsecase.GetBanByBanID(ctx, banID, &banPerson, true); errGetBan != nil {
+			http_helper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
 
 			return
 		}
 
-		if !http_helper.CheckPrivilege(ctx, http_helper.http_helper.CurrentUserProfile(ctx), steamid.Collection{banPerson.TargetID, banPerson.SourceID}, domain.PModerator) {
+		if !http_helper.CheckPrivilege(ctx, http_helper.CurrentUserProfile(ctx), steamid.Collection{banPerson.TargetID, banPerson.SourceID}, domain.PModerator) {
 			return
 		}
 
-		banMessages, errGetBanMessages := a.appealUsecase.GetBanMessages(ctx, banID)
+		banMessages, errGetBanMessages := h.appealUsecase.GetBanMessages(ctx, banID)
 		if errGetBanMessages != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
+			http_helper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
 
 			return
 		}
@@ -71,117 +74,55 @@ func (a *AppealHandler) onAPIGetBanMessages() gin.HandlerFunc {
 	}
 }
 
-func (a *AppealHandler) onAPIPostBanMessage() gin.HandlerFunc {
-	type newMessage struct {
-		Message string `json:"message"`
-	}
+func (h *AppealHandler) onAPIPostBanMessage() gin.HandlerFunc {
 
-	log := a.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		banID, errID := http_helper.GetInt64Param(ctx, "ban_id")
 		if errID != nil || banID == 0 {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.domain.ErrInvalidParameter
+			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
 
 			return
 		}
 
-		var req newMessage
+		var req domain.NewBanMessage
 		if !http_helper.Bind(ctx, log, &req) {
 			return
 		}
 
-		if req.Message == "" {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.domain.ErrBadRequest)
+		curUserProfile := http_helper.CurrentUserProfile(ctx)
 
+		msg, errSave := h.appealUsecase.SaveBanMessage(ctx, curUserProfile, domain.BanAppealMessage{BanID: banID, MessageMD: req.Message})
+		if err := http_helper.ErrorHandled(ctx, errSave); err != nil {
 			return
 		}
-
-		bannedPerson := domain.NewBannedPerson()
-		if errReport := a.banUsecase.GetBanByBanID(ctx, banID, &bannedPerson, true); errReport != nil {
-			if errors.Is(errs.DBErr(errReport), errs.ErrNoResult) {
-				http_helper.http_helper.ResponseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
-
-				return
-			}
-
-			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
-			log.Error("Failed to load ban", zap.Error(errReport))
-
-			return
-		}
-
-		curUserProfile := http_helper.http_helper.CurrentUserProfile(ctx)
-		if bannedPerson.AppealState != domain.Open && curUserProfile.PermissionLevel < domain.PModerator {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusForbidden, domain.ErrPermissionDenied)
-			log.Warn("User tried to bypass posting restriction",
-				zap.Int64("ban_id", bannedPerson.BanID), zap.Int64("target_id", bannedPerson.TargetID.Int64()))
-
-			return
-		}
-
-		msg := domain.NewBanAppealMessage(banID, curUserProfile.SteamID, req.Message)
-		if errSave := a.appealUsecase.SaveBanMessage(ctx, &msg); errSave != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
-			log.Error("Failed to save ban appeal message", zap.Error(errSave))
-
-			return
-		}
-
-		msg.PermissionLevel = curUserProfile.PermissionLevel
-		msg.Personaname = curUserProfile.Name
-		msg.Avatarhash = curUserProfile.Avatarhash
 
 		ctx.JSON(http.StatusCreated, msg)
-
-		var target domain.Person
-		if errTarget := a.personUsecase.GetPersonBySteamID(ctx, bannedPerson.TargetID, &target); errTarget != nil {
-			log.Error("Failed to load target", zap.Error(errTarget))
-
-			return
-		}
-
-		var source domain.Person
-		if errSource := a.personUsecase.GetPersonBySteamID(ctx, bannedPerson.SourceID, &source); errSource != nil {
-			log.Error("Failed to load source", zap.Error(errSource))
-
-			return
-		}
-
-		a.discordUsecase.SendPayload(domain.ChannelModLog, discord.NewAppealMessage(msg.MessageMD,
-			a.configUsecase.ExtURL(bannedPerson.BanSteam), curUserProfile, a.configUsecase.ExtURL(curUserProfile)))
 	}
 }
 
-func (a *AppealHandler) onAPIEditBanMessage() gin.HandlerFunc {
+func (h *AppealHandler) onAPIEditBanMessage() gin.HandlerFunc {
 	type editMessage struct {
 		BodyMD string `json:"body_md"`
 	}
 
-	log := a.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		reportMessageID, errID := http_helper.GetIntParam(ctx, "ban_message_id")
 		if errID != nil || reportMessageID == 0 {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.domain.ErrInvalidParameter
+			http_helper.HandleErrBadRequest(ctx)
 
 			return
 		}
 
 		var existing domain.BanAppealMessage
-		if errExist := a.appealUsecase.GetBanMessageByID(ctx, reportMessageID, &existing); errExist != nil {
-			if errors.Is(errExist, errs.ErrNoResult) {
-				http_helper.http_helper.ResponseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
-
-				return
-			}
-
-			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
-
+		if err := http_helper.ErrorHandled(ctx, h.appealUsecase.GetBanMessageByID(ctx, reportMessageID, &existing)); err != nil {
 			return
 		}
 
-		curUser := http_helper.http_helper.CurrentUserProfile(ctx)
+		curUser := http_helper.CurrentUserProfile(ctx)
 
 		if !http_helper.CheckPrivilege(ctx, curUser, steamid.Collection{existing.AuthorID}, domain.PModerator) {
 			return
@@ -193,76 +134,73 @@ func (a *AppealHandler) onAPIEditBanMessage() gin.HandlerFunc {
 		}
 
 		if req.BodyMD == "" {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.domain.ErrBadRequest)
+			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 
 			return
 		}
 
 		if req.BodyMD == existing.MessageMD {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusConflict, errs.ErrDuplicate)
+			http_helper.ResponseErr(ctx, http.StatusConflict, domain.ErrDuplicate)
 
 			return
 		}
 
 		existing.MessageMD = req.BodyMD
-		if errSave := a.appealUsecase.SaveBanMessage(ctx, &existing); errSave != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
+		msg, errSave := h.appealUsecase.SaveBanMessage(ctx, curUser, existing)
+		if errSave != nil {
+			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			log.Error("Failed to save ban appeal message", zap.Error(errSave))
 
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, req)
+		ctx.JSON(http.StatusCreated, msg)
 
-		a.discordUsecase.SendPayload(domain.ChannelModLog, discord.EditAppealMessage(existing, req.BodyMD, curUser, a.configUsecase.ExtURL(curUser)))
+		h.discordUsecase.SendPayload(domain.ChannelModLog, discord.EditAppealMessage(existing, req.BodyMD, curUser, h.configUsecase.ExtURL(curUser)))
 	}
 }
 
-func (a *AppealHandler) onAPIDeleteBanMessage() gin.HandlerFunc {
-	log := a.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func (h *AppealHandler) onAPIDeleteBanMessage() gin.HandlerFunc {
+	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		banMessageID, errID := http_helper.GetIntParam(ctx, "ban_message_id")
 		if errID != nil || banMessageID == 0 {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.domain.ErrInvalidParameter
+			http_helper.HandleErrBadRequest(ctx)
 
 			return
 		}
 
 		var existing domain.BanAppealMessage
-		if errExist := a.appealUsecase.GetBanMessageByID(ctx, banMessageID, &existing); errExist != nil {
-			if errors.Is(errExist, errs.ErrNoResult) {
-				http_helper.http_helper.ResponseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
+		if errExist := h.appealUsecase.GetBanMessageByID(ctx, banMessageID, &existing); errExist != nil {
+			if errors.Is(errExist, domain.ErrNoResult) {
+				http_helper.HandleErrNotFound(ctx)
 
 				return
 			}
 
-			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
+			http_helper.HandleErrInternal(ctx)
 
 			return
 		}
 
-		curUser := http_helper.http_helper.CurrentUserProfile(ctx)
+		curUser := http_helper.CurrentUserProfile(ctx)
 		if !http_helper.CheckPrivilege(ctx, curUser, steamid.Collection{existing.AuthorID}, domain.PModerator) {
 			return
 		}
 
-		existing.Deleted = true
-		if errSave := a.appealUsecase.SaveBanMessage(ctx, &existing); errSave != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
-			log.Error("Failed to save appeal message", zap.Error(errSave))
-
+		if err := http_helper.ErrorHandled(ctx, h.appealUsecase.DropBanMessage(ctx, curUser, &existing)); err != nil {
 			return
 		}
 
 		ctx.JSON(http.StatusNoContent, nil)
+		log.Info("appeal message deleted")
 
-		a.discordUsecase.SendPayload(domain.ChannelModLog, discord.DeleteAppealMessage(existing, curUser, a.configUsecase.ExtURL(curUser)))
 	}
 }
 
-func onAPIGetAppeals() gin.HandlerFunc {
-	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func (h *AppealHandler) onAPIGetAppeals() gin.HandlerFunc {
+	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		var req domain.AppealQueryFilter
@@ -270,7 +208,7 @@ func onAPIGetAppeals() gin.HandlerFunc {
 			return
 		}
 
-		bans, total, errBans := env.Store().GetAppealsByActivity(ctx, req)
+		bans, total, errBans := h.appealUsecase.GetAppealsByActivity(ctx, req)
 		if errBans != nil {
 			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			log.Error("Failed to fetch appeals", zap.Error(errBans))

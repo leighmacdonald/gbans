@@ -3,11 +3,9 @@ package domain
 import (
 	"context"
 	"errors"
-	"strings"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/leighmacdonald/gbans/internal/errs"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
@@ -67,20 +65,6 @@ type Contest struct {
 	IsNew     bool
 }
 
-func (c Contest) MimeTypeAcceptable(mediaType string) bool {
-	if c.MediaTypes == "" {
-		return true
-	}
-
-	for _, validType := range strings.Split(c.MediaTypes, ",") {
-		if strings.EqualFold(validType, mediaType) {
-			return true
-		}
-	}
-
-	return false
-}
-
 type ContestEntry struct {
 	TimeStamped
 	ContestEntryID uuid.UUID     `json:"contest_entry_id"`
@@ -110,7 +94,7 @@ func (c Contest) NewEntry(steamID steamid.SID64, assetID uuid.UUID, description 
 	}
 
 	if !steamID.Valid() {
-		return ContestEntry{}, errs.ErrInvalidSID
+		return ContestEntry{}, ErrInvalidSID
 	}
 
 	if description == "" {

@@ -1,17 +1,36 @@
 package service
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/errs"
+	"github.com/leighmacdonald/gbans/internal/http_helper"
+	"go.uber.org/zap"
 	"net/http"
 	"runtime"
 )
 
-func onAPIGetNewsLatest() gin.HandlerFunc {
+type NewsHandler struct {
+	newsUsecase domain.NewsUsecase
+	du          domain.DiscordUsecase
+	log         *zap.Logger
+}
+
+func NewNewsHandler(logger *zap.Logger, engine *gin.Engine, nu domain.NewsUsecase, du domain.DiscordUsecase) {
+	handler := NewsHandler{log: logger.Named("news"), newsUsecase: nu, du: du}
+
+	engine.POST("/api/news_latest", handler.onAPIGetNewsLatest())
+
+	// editor
+	engine.POST("/api/news", handler.onAPIPostNewsCreate())
+	engine.POST("/api/news/:news_id", handler.onAPIPostNewsUpdate())
+	engine.POST("/api/news_all", handler.onAPIGetNewsAll())
+}
+
+func (h NewsHandler) onAPIGetNewsLatest() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		newsLatest, errGetNewsLatest := env.Store().GetNewsLatest(ctx, 50, false)
+		newsLatest, errGetNewsLatest := h.newsUsecase.GetNewsLatest(ctx, 50, false)
 		if errGetNewsLatest != nil {
 			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
@@ -22,8 +41,8 @@ func onAPIGetNewsLatest() gin.HandlerFunc {
 	}
 }
 
-func onAPIPostNewsCreate() gin.HandlerFunc {
-	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func (h NewsHandler) onAPIPostNewsCreate() gin.HandlerFunc {
+	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		var req domain.NewsEntry
@@ -31,7 +50,7 @@ func onAPIPostNewsCreate() gin.HandlerFunc {
 			return
 		}
 
-		if errSave := env.Store().SaveNewsArticle(ctx, &req); errSave != nil {
+		if errSave := h.newsUsecase.SaveNewsArticle(ctx, &req); errSave != nil {
 			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
@@ -39,27 +58,25 @@ func onAPIPostNewsCreate() gin.HandlerFunc {
 
 		ctx.JSON(http.StatusCreated, req)
 
-		conf := env.Config()
-
-		go env.SendPayload(conf.Discord.LogChannelID, discord.NewNewsMessage(req.BodyMD, req.Title))
+		go h.du.SendPayload(domain.ChannelModLog, discord.NewNewsMessage(req.BodyMD, req.Title))
 	}
 }
 
-func onAPIPostNewsUpdate() gin.HandlerFunc {
-	log := env.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func (h NewsHandler) onAPIPostNewsUpdate() gin.HandlerFunc {
+	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		newsID, errID := getIntParam(ctx, "news_id")
+		newsID, errID := http_helper.GetIntParam(ctx, "news_id")
 		if errID != nil {
-			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter
+			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
 
 			return
 		}
 
 		var entry domain.NewsEntry
-		if errGet := env.Store().GetNewsByID(ctx, newsID, &entry); errGet != nil {
-			if errors.Is(errs.DBErr(errGet), errs.ErrNoResult) {
-				http_helper.ResponseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
+		if errGet := h.newsUsecase.GetNewsByID(ctx, newsID, &entry); errGet != nil {
+			if errors.Is(errGet, domain.ErrNoResult) {
+				http_helper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
 
 				return
 			}
@@ -73,7 +90,7 @@ func onAPIPostNewsUpdate() gin.HandlerFunc {
 			return
 		}
 
-		if errSave := env.Store().SaveNewsArticle(ctx, &entry); errSave != nil {
+		if errSave := h.newsUsecase.SaveNewsArticle(ctx, &entry); errSave != nil {
 			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
@@ -81,14 +98,13 @@ func onAPIPostNewsUpdate() gin.HandlerFunc {
 
 		ctx.JSON(http.StatusAccepted, entry)
 
-		conf := env.Config()
-		env.SendPayload(conf.Discord.LogChannelID, discord.EditNewsMessages(entry.Title, entry.BodyMD))
+		h.du.SendPayload(domain.ChannelModLog, discord.EditNewsMessages(entry.Title, entry.BodyMD))
 	}
 }
 
-func onAPIGetNewsAll() gin.HandlerFunc {
+func (h NewsHandler) onAPIGetNewsAll() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		newsLatest, errGetNewsLatest := env.Store().GetNewsLatest(ctx, 100, true)
+		newsLatest, errGetNewsLatest := h.newsUsecase.GetNewsLatest(ctx, 100, true)
 		if errGetNewsLatest != nil {
 			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 

@@ -3,13 +3,159 @@ package repository
 import (
 	"errors"
 	"fmt"
+	"net"
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"go.uber.org/zap"
-	"net"
-	"time"
 )
+
+// todo move to network
+func (r *personRepository) QueryConnectionHistory(ctx context.Context, opts domain.ConnectionHistoryQueryFilter) ([]domain.PersonConnection, int64, error) {
+	builder := r.db.
+		Builder().
+		Select("c.person_connection_id", "c.steam_id",
+			"c.ip_addr", "c.persona_name", "c.created_on", "c.server_id", "r.short_name", "r.name").
+		From("person_connections c").
+		LeftJoin("server r USING(server_id)").
+		GroupBy("c.person_connection_id, c.ip_addr, r.short_name", "r.name")
+
+	var constraints sq.And
+
+	if opts.SourceID != "" {
+		sid, errSID := opts.SourceID.SID64(ctx)
+		if errSID != nil {
+			return nil, 0, errors.Join(steamid.ErrInvalidSID, domain.ErrSourceID)
+		}
+
+		constraints = append(constraints, sq.Eq{"c.steam_id": sid.Int64()})
+	}
+
+	builder = opts.ApplySafeOrder(opts.ApplyLimitOffsetDefault(builder), map[string][]string{
+		"c.": {"person_connection_id", "steam_id", "ip_addr", "persona_name", "created_on"},
+		"r.": {"short_name", "name"},
+	}, "person_connection_id")
+
+	var messages []domain.PersonConnection
+
+	rows, errQuery := r.db.QueryBuilder(ctx, builder.Where(constraints))
+	if errQuery != nil {
+		return nil, 0, r.db.DBErr(errQuery)
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var (
+			connHistory domain.PersonConnection
+			steamID     int64
+			serverID    *int
+			shortName   *string
+			name        *string
+		)
+
+		if errScan := rows.Scan(&connHistory.PersonConnectionID,
+			&steamID,
+			&connHistory.IPAddr,
+			&connHistory.PersonaName,
+			&connHistory.CreatedOn,
+			&serverID, &shortName, &name); errScan != nil {
+			return nil, 0, r.db.DBErr(errScan)
+		}
+
+		// Added later in dev, so can be legacy data w/o a server_id
+		if serverID != nil && shortName != nil && name != nil {
+			connHistory.ServerID = *serverID
+			connHistory.ServerNameShort = *shortName
+			connHistory.ServerName = *name
+		}
+
+		connHistory.SteamID = steamid.New(steamID)
+
+		messages = append(messages, connHistory)
+	}
+
+	if messages == nil {
+		return []domain.PersonConnection{}, 0, nil
+	}
+
+	count, errCount := r.db.GetCount(ctx, r.db.
+		Builder().
+		Select("count(c.person_connection_id)").
+		From("person_connections c").
+		Where(constraints))
+
+	if errCount != nil {
+		return nil, 0, r.db.DBErr(errCount)
+	}
+
+	return messages, count, nil
+}
+
+// todo move to network
+func (r *personRepository) GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, limit uint64) (domain.PersonConnections, error) {
+	builder := r.db.
+		Builder().
+		Select(
+			"DISTINCT on (pn, pc.ip_addr) coalesce(pc.persona_name, pc.steam_id::text) as pn",
+			"pc.person_connection_id",
+			"pc.steam_id",
+			"pc.ip_addr",
+			"pc.created_on",
+			"pc.server_id").
+		From("person_connections pc").
+		LeftJoin("net_location loc ON pc.ip_addr <@ loc.ip_range").
+		// Join("LEFT JOIN net_proxy proxy ON pc.ip_addr <@ proxy.ip_range").
+		OrderBy("1").
+		Limit(limit)
+	builder = builder.Where(sq.Eq{"pc.steam_id": sid64.Int64()})
+
+	rows, errQuery := r.db.QueryBuilder(ctx, builder)
+	if errQuery != nil {
+		return nil, r.db.DBErr(errQuery)
+	}
+
+	defer rows.Close()
+
+	var connections domain.PersonConnections
+
+	for rows.Next() {
+		var (
+			conn    domain.PersonConnection
+			steamID int64
+		)
+
+		if errScan := rows.Scan(&conn.PersonaName, &conn.PersonConnectionID, &steamID,
+			&conn.IPAddr, &conn.CreatedOn, &conn.ServerID); errScan != nil {
+			return nil, r.db.DBErr(errScan)
+		}
+
+		conn.SteamID = steamid.New(steamID)
+
+		connections = append(connections, conn)
+	}
+
+	return connections, nil
+}
+
+// todo move to network
+func (r *personRepository) AddConnectionHistory(ctx context.Context, conn *domain.PersonConnection) error {
+	const query = `
+		INSERT INTO person_connections (steam_id, ip_addr, persona_name, created_on, server_id) 
+		VALUES ($1, $2, $3, $4, $5) 
+		RETURNING person_connection_id`
+
+	if errQuery := r.db.
+		QueryRow(ctx, query, conn.SteamID.Int64(), conn.IPAddr, conn.PersonaName, conn.CreatedOn, conn.ServerID).
+		Scan(&conn.PersonConnectionID); errQuery != nil {
+		return r.db.DBErr(errQuery)
+	}
+
+	return nil
+}
 
 func (s Stores) GetPlayerMostRecentIP(ctx context.Context, steamID steamid.SID64) net.IP {
 	row, errRow := s.QueryRowBuilder(ctx, s.

@@ -3,6 +3,13 @@ package service
 import (
 	"errors"
 	"fmt"
+	"net"
+	"net/http"
+	"runtime"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -11,13 +18,6 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"go.uber.org/zap"
-	"net"
-	"net/http"
-	"runtime"
-	"sort"
-	"strconv"
-	"strings"
-	"time"
 )
 
 type BanHandler struct {
@@ -293,55 +293,6 @@ func (h BanHandler) onAPIExportBansValveSteamID() gin.HandlerFunc {
 		}
 
 		ctx.Data(http.StatusOK, "text/plain", []byte(strings.Join(entries, "\n")))
-	}
-}
-
-func (h BanHandler) onAPIExportSourcemodSimpleAdmins() gin.HandlerFunc {
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
-	return func(ctx *gin.Context) {
-		privilegedIds, errPrivilegedIds := h.pu.GetSteamIdsAbove(ctx, domain.PReserved)
-		if errPrivilegedIds != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-
-			return
-		}
-
-		players, errPlayers := h.pu.GetPeopleBySteamID(ctx, privilegedIds)
-		if errPlayers != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-
-			return
-		}
-
-		sort.Slice(players, func(i, j int) bool {
-			return players[i].PermissionLevel > players[j].PermissionLevel
-		})
-
-		bld := strings.Builder{}
-
-		for _, player := range players {
-			var perms string
-
-			switch player.PermissionLevel {
-			case domain.PAdmin:
-				perms = "z"
-			case domain.PModerator:
-				perms = "abcdefgjk"
-			case domain.PEditor:
-				perms = "ak"
-			case domain.PReserved:
-				perms = "a"
-			}
-
-			if perms == "" {
-				log.Warn("User has no perm string", zap.Int64("sid", player.SteamID.Int64()))
-			} else {
-				bld.WriteString(fmt.Sprintf("\"%s\" \"%s\"\n", steamid.SID64ToSID3(player.SteamID), perms))
-			}
-		}
-
-		ctx.String(http.StatusOK, bld.String())
 	}
 }
 
@@ -970,8 +921,4 @@ func (h BanHandler) onAPIPostBanState() gin.HandlerFunc {
 
 		h.du.SendPayload(domain.ChannelModLog, discord.EditBanAppealStatusMessage())
 	}
-}
-
-type apiUnbanRequest struct {
-	UnbanReasonText string `json:"unban_reason_text"`
 }

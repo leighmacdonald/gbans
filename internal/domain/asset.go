@@ -1,15 +1,26 @@
 package domain
 
-import "context"
+import (
+	"context"
+	"io"
 
-type AssetUsecase interface {
+	"github.com/gofrs/uuid/v5"
+)
+
+type AssetRepository interface {
+	CreateBucketIfNotExists(ctx context.Context, name string) error
 	SaveAsset(ctx context.Context, asset *Asset) error
-	ExpiredDemos(ctx context.Context, limit uint64) ([]DemoInfo, error)
-	GetDemoByID(ctx context.Context, demoID int64, demoFile *DemoFile) error
-	GetDemoByName(ctx context.Context, demoName string, demoFile *DemoFile) error
-	GetDemos(ctx context.Context, opts DemoFilter) ([]DemoFile, int64, error)
-	SaveDemo(ctx context.Context, demoFile *DemoFile) error
-	DropDemo(ctx context.Context, demoFile *DemoFile) error
+	DeleteAsset(ctx context.Context, asset *Asset) error
+	Put(ctx context.Context, bucket string, name string, body io.Reader, size int64, contentType string) error
+	Remove(ctx context.Context, bucket string, name string) error
+	LinkObject(bucket string, name string) string
+}
+
+// TODO SaveAsset/DropAsset higher level funcs
+type AssetUsecase interface {
+	GetAsset(ctx context.Context, uuid uuid.UUID) (*Asset, error)
+	SaveAsset(ctx context.Context, bucket string, asset *Asset, content []byte) error
+	DropAsset(ctx context.Context, asset *Asset) error
 }
 
 type UserUploadedFile struct {

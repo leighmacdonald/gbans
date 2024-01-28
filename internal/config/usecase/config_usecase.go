@@ -2,6 +2,8 @@ package usecase
 
 import (
 	"errors"
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -9,7 +11,6 @@ import (
 	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
-	"strings"
 )
 
 type configUsecase struct {

@@ -2,39 +2,48 @@ package domain
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/gabriel-vasile/mimetype"
-	"github.com/gofrs/uuid/v5"
-	"github.com/leighmacdonald/gbans/pkg/wiki"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
 const unknownMediaTag = "__unknown__"
 
-var ErrInvalidMediaMimeType = errors.New("detected mimetype different than type provided")
-
 type WikiRepository interface {
-	GetWikiPageBySlug(ctx context.Context, slug string, page *wiki.Page) error
+	GetWikiPageBySlug(ctx context.Context, slug string, page *Page) error
 	DeleteWikiPageBySlug(ctx context.Context, slug string) error
-	SaveWikiPage(ctx context.Context, page *wiki.Page) error
-	SaveMedia(ctx context.Context, media *Media) error
-	GetMediaByAssetID(ctx context.Context, uuid uuid.UUID, media *Media) error
-	GetMediaByName(ctx context.Context, name string, media *Media) error
-	GetMediaByID(ctx context.Context, mediaID int, media *Media) error
+	SaveWikiPage(ctx context.Context, page *Page) error
 }
 
 type WikiUsecase interface {
-	GetWikiPageBySlug(ctx context.Context, slug string, page *wiki.Page) error
+	GetWikiPageBySlug(ctx context.Context, slug string, page *Page) error
 	DeleteWikiPageBySlug(ctx context.Context, slug string) error
-	SaveWikiPage(ctx context.Context, page *wiki.Page) error
-	SaveMedia(ctx context.Context, media *Media) error
-	GetMediaByAssetID(ctx context.Context, uuid uuid.UUID, media *Media) error
-	GetMediaByName(ctx context.Context, name string, media *Media) error
-	GetMediaByID(ctx context.Context, mediaID int, media *Media) error
+	SaveWikiPage(ctx context.Context, page *Page) error
+}
+
+// RootSlug is the top-most (index) page of the wiki.
+const RootSlug = "home"
+
+type Page struct {
+	Slug            string    `json:"slug"`
+	BodyMD          string    `json:"body_md"`
+	Revision        int       `json:"revision"`
+	PermissionLevel Privilege `json:"permission_level"`
+	CreatedOn       time.Time `json:"created_on"`
+	UpdatedOn       time.Time `json:"updated_on"`
+}
+
+func (page *Page) NewRevision() Page {
+	return Page{
+		Slug:      page.Slug,
+		BodyMD:    page.BodyMD,
+		Revision:  page.Revision + 1,
+		CreatedOn: page.CreatedOn,
+		UpdatedOn: time.Now(),
+	}
 }
 
 // TODO move media to separate pkg

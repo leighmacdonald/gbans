@@ -2,10 +2,11 @@ package repository
 
 import (
 	"errors"
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"time"
 )
 
 func (s Stores) insertReport(ctx context.Context, report *domain.Report) error {

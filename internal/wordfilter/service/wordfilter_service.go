@@ -2,27 +2,31 @@ package service
 
 import (
 	"errors"
-	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/http_helper"
-	"github.com/leighmacdonald/gbans/pkg/util"
-	"go.uber.org/zap"
 	"net/http"
 	"regexp"
 	"runtime"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/http_helper"
+	"github.com/leighmacdonald/gbans/pkg/util"
+	"go.uber.org/zap"
 )
 
 type WordFilterHandler struct {
-	wfu domain.WordFilterUsecase
-	log *zap.Logger
+	wfu         domain.WordFilterUsecase
+	cu          domain.ChatUsecase
+	confUsecase domain.ConfigUsecase
+	log         *zap.Logger
 }
 
-func NewWordFilterHandler(log *zap.Logger, engine *gin.Engine, wfu domain.WordFilterUsecase) {
+func NewWordFilterHandler(log *zap.Logger, engine *gin.Engine, confUsecase domain.ConfigUsecase, wfu domain.WordFilterUsecase, cu domain.ChatUsecase) {
 	handler := WordFilterHandler{
-		wfu: wfu,
-		log: log.Named("wordfilter"),
+		log:         log.Named("wordfilter"),
+		confUsecase: confUsecase,
+		wfu:         wfu,
+		cu:          cu,
 	}
 
 	// editor
@@ -95,8 +99,8 @@ func (h *WordFilterHandler) onAPIPostWordFilter() gin.HandlerFunc {
 		if req.FilterID > 0 {
 			var existingFilter domain.Filter
 			if errGet := h.wfu.GetFilterByID(ctx, req.FilterID, &existingFilter); errGet != nil {
-				if errors.Is(errGet, errs.ErrNoResult) {
-					http_helper.ResponseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
+				if errors.Is(errGet, domain.ErrNoResult) {
+					http_helper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
 
 					return
 				}
@@ -114,7 +118,7 @@ func (h *WordFilterHandler) onAPIPostWordFilter() gin.HandlerFunc {
 			existingFilter.Duration = req.Duration
 			existingFilter.Weight = req.Weight
 
-			if errSave := env.FilterAdd(ctx, &existingFilter); errSave != nil {
+			if errSave := h.wfu.FilterAdd(ctx, &existingFilter); errSave != nil {
 				http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 				return
@@ -135,7 +139,7 @@ func (h *WordFilterHandler) onAPIPostWordFilter() gin.HandlerFunc {
 				Weight:    req.Weight,
 			}
 
-			if errSave := env.FilterAdd(ctx, &newFilter); errSave != nil {
+			if errSave := h.wfu.FilterAdd(ctx, &newFilter); errSave != nil {
 				http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 				return
@@ -158,9 +162,9 @@ func (h *WordFilterHandler) onAPIDeleteWordFilter() gin.HandlerFunc {
 		}
 
 		var filter domain.Filter
-		if errGet := env.Store().GetFilterByID(ctx, wordID, &filter); errGet != nil {
-			if errors.Is(errGet, errs.ErrNoResult) {
-				http_helper.ResponseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
+		if errGet := h.wfu.GetFilterByID(ctx, wordID, &filter); errGet != nil {
+			if errors.Is(errGet, domain.ErrNoResult) {
+				http_helper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
 
 				return
 			}
@@ -170,7 +174,7 @@ func (h *WordFilterHandler) onAPIDeleteWordFilter() gin.HandlerFunc {
 			return
 		}
 
-		if errDrop := env.Store().DropFilter(ctx, &filter); errDrop != nil {
+		if errDrop := h.wfu.DropFilter(ctx, &filter); errDrop != nil {
 			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
@@ -193,7 +197,7 @@ func (h *WordFilterHandler) onAPIPostWordMatch() gin.HandlerFunc {
 			return
 		}
 
-		words, _, errGetFilters := env.Store().GetFilters(ctx, domain.FiltersQueryFilter{})
+		words, _, errGetFilters := h.wfu.GetFilters(ctx, domain.FiltersQueryFilter{})
 		if errGetFilters != nil {
 			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
@@ -212,16 +216,17 @@ func (h *WordFilterHandler) onAPIPostWordMatch() gin.HandlerFunc {
 	}
 }
 func (h *WordFilterHandler) onAPIGetWarningState() gin.HandlerFunc {
-	// log := app.Log().Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 	type warningState struct {
 		MaxWeight int                  `json:"max_weight"`
 		Current   []domain.UserWarning `json:"current"`
 	}
 
-	return func(ctx *gin.Context) {
-		state := env.Warnings().State()
+	maxWeight := h.confUsecase.Config().Filter.MaxWeight
 
-		outputState := warningState{MaxWeight: env.Config().Filter.MaxWeight}
+	return func(ctx *gin.Context) {
+		state := h.cu.WarningState()
+
+		outputState := warningState{MaxWeight: maxWeight}
 
 		for _, warn := range state {
 			outputState.Current = append(outputState.Current, warn...)

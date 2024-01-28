@@ -69,7 +69,7 @@ type Server struct {
 	// RCON is the RCON password for the server
 	RCON          string `db:"rcon" json:"rcon"`
 	ReservedSlots int    `db:"reserved_slots" json:"reserved_slots"`
-	// Password is what the server uses to generate a token to make authenticated calls (permanent refresh token)
+	// Password is what the server uses to generate a token to make authenticated calls (permanent Refresh token)
 	Password    string  `db:"password" json:"password"`
 	IsEnabled   bool    `json:"is_enabled"`
 	Deleted     bool    `json:"deleted"`

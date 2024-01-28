@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/log"
-	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -40,7 +40,7 @@ func netUpdateCmd() *cobra.Command {
 
 			connCtx, cancelConn := context.WithTimeout(ctx, time.Second*5)
 			defer cancelConn()
-			database := store.New(rootLogger, conf.DB.DSN, false, conf.DB.LogQueries)
+			database := database.New(rootLogger, conf.DB.DSN, false, conf.DB.LogQueries)
 
 			rootLogger.Info("Connecting to database")
 			if errConnect := database.Connect(connCtx); errConnect != nil {

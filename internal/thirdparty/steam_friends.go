@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 	"go.uber.org/zap"
@@ -24,12 +24,12 @@ var (
 type SteamFriends struct {
 	log        *zap.Logger
 	updateFreq time.Duration
-	store      store.Stores
+	store      database.Stores
 	members    map[steamid.SID64]steamid.Collection
 	*sync.RWMutex
 }
 
-func NewSteamFriends(logger *zap.Logger, database store.Stores) *SteamFriends {
+func NewSteamFriends(logger *zap.Logger, database database.Stores) *SteamFriends {
 	return &SteamFriends{
 		RWMutex:    &sync.RWMutex{},
 		log:        logger.Named("SteamFriends"),

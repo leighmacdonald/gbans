@@ -3,17 +3,37 @@ package usecase
 import (
 	"context"
 	"errors"
+
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/steamgroup"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
+	"go.uber.org/zap"
 )
 
 type banGroupUsecase struct {
 	bgr domain.BanGroupRepository
+	sg  *steamgroup.SteamGroupMemberships
+	log *zap.Logger
 }
 
-func NewBanGroupUsecase() domain.BanGroupUsecase {
-	return &banGroupUsecase{}
+func NewBanGroupUsecase(logger *zap.Logger, bgr domain.BanGroupRepository) domain.BanGroupUsecase {
+	sg := steamgroup.NewSteamGroupMemberships(logger, bgr)
+	return &banGroupUsecase{
+		bgr: bgr,
+		sg:  sg,
+		log: logger.Named("bangroup"),
+	}
+}
+func (s *banGroupUsecase) SaveBanGroup(ctx context.Context, banGroup *domain.BanGroup) error {
+	return s.bgr.SaveBanGroup(ctx, banGroup)
+}
+
+func (s *banGroupUsecase) Start(ctx context.Context) {
+	s.sg.Start(ctx)
+}
+func (s *banGroupUsecase) IsMember(steamID steamid.SID64) (steamid.GID, bool) {
+	return s.sg.IsMember(steamID)
 }
 
 func (s *banGroupUsecase) GetBanGroup(ctx context.Context, groupID steamid.GID, banGroup *domain.BanGroup) error {

@@ -1,31 +1,37 @@
 package service
 
 import (
+	"fmt"
 	"math"
 	"net/http"
 	"runtime"
 	"sort"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/http_helper"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
+	"github.com/leighmacdonald/steamid/v3/steamid"
 	"go.uber.org/zap"
 )
 
 type ServersHandler struct {
 	serversUsecase domain.ServersUsecase
 	stateUsecase   domain.StateUsecase
+	pu             domain.PersonUsecase
 	log            *zap.Logger
 }
 
-func NewServerHandler(logger *zap.Logger, engine *gin.Engine, serversUsecase domain.ServersUsecase, stateUsecase domain.StateUsecase) {
+func NewServerHandler(logger *zap.Logger, engine *gin.Engine, serversUsecase domain.ServersUsecase,
+	stateUsecase domain.StateUsecase, pu domain.PersonUsecase) {
 	handler := &ServersHandler{
 		serversUsecase: serversUsecase,
 		stateUsecase:   stateUsecase,
 		log:            logger,
 	}
 
+	engine.GET("/export/sourcemod/admins_simple.ini", handler.onAPIExportSourcemodSimpleAdmins())
 	engine.GET("/api/servers/state", handler.onAPIGetServerStates())
 	engine.GET("/api/servers", handler.onAPIGetServers())
 
@@ -44,11 +50,60 @@ type serverInfoSafe struct {
 	Colour         string `json:"colour"`
 }
 
-func (s *ServersHandler) onAPIGetServers() gin.HandlerFunc {
+func (h *ServersHandler) onAPIExportSourcemodSimpleAdmins() gin.HandlerFunc {
+	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
 	return func(ctx *gin.Context) {
-		fullServers, _, errServers := s.serversUsecase.GetServers(ctx, domain.ServerQueryFilter{})
+		privilegedIds, errPrivilegedIds := h.pu.GetSteamIdsAbove(ctx, domain.PReserved)
+		if errPrivilegedIds != nil {
+			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+
+			return
+		}
+
+		players, errPlayers := h.pu.GetPeopleBySteamID(ctx, privilegedIds)
+		if errPlayers != nil {
+			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+
+			return
+		}
+
+		sort.Slice(players, func(i, j int) bool {
+			return players[i].PermissionLevel > players[j].PermissionLevel
+		})
+
+		bld := strings.Builder{}
+
+		for _, player := range players {
+			var perms string
+
+			switch player.PermissionLevel {
+			case domain.PAdmin:
+				perms = "z"
+			case domain.PModerator:
+				perms = "abcdefgjk"
+			case domain.PEditor:
+				perms = "ak"
+			case domain.PReserved:
+				perms = "a"
+			}
+
+			if perms == "" {
+				log.Warn("User has no perm string", zap.Int64("sid", player.SteamID.Int64()))
+			} else {
+				bld.WriteString(fmt.Sprintf("\"%h\" \"%h\"\n", steamid.SID64ToSID3(player.SteamID), perms))
+			}
+		}
+
+		ctx.String(http.StatusOK, bld.String())
+	}
+}
+
+func (h *ServersHandler) onAPIGetServers() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		fullServers, _, errServers := h.serversUsecase.GetServers(ctx, domain.ServerQueryFilter{})
 		if errServers != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
+			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
@@ -67,7 +122,7 @@ func (s *ServersHandler) onAPIGetServers() gin.HandlerFunc {
 	}
 }
 
-func (s *ServersHandler) onAPIGetServerStates() gin.HandlerFunc {
+func (h *ServersHandler) onAPIGetServerStates() gin.HandlerFunc {
 	type UserServers struct {
 		Servers []domain.BaseServer `json:"servers"`
 		LatLong ip2location.LatLong `json:"lat_long"`
@@ -97,7 +152,7 @@ func (s *ServersHandler) onAPIGetServerStates() gin.HandlerFunc {
 			lat = http_helper.GetDefaultFloat64(ctx.GetHeader("cf-iplatitude"), 41.7774)
 			lon = http_helper.GetDefaultFloat64(ctx.GetHeader("cf-iplongitude"), -87.6160)
 			// region := ctx.GetHeader("cf-region-code")
-			curState = s.stateUsecase.Current()
+			curState = h.stateUsecase.Current()
 			servers  []domain.BaseServer
 		)
 
@@ -136,8 +191,8 @@ func (s *ServersHandler) onAPIGetServerStates() gin.HandlerFunc {
 	}
 }
 
-func (s *ServersHandler) onAPIPostServer() gin.HandlerFunc {
-	log := s.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func (h *ServersHandler) onAPIPostServer() gin.HandlerFunc {
+	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		var req serverUpdateRequest
@@ -155,8 +210,8 @@ func (s *ServersHandler) onAPIPostServer() gin.HandlerFunc {
 		server.Region = req.Region
 		server.IsEnabled = req.IsEnabled
 
-		if errSave := s.serversUsecase.SaveServer(ctx, &server); errSave != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
+		if errSave := h.serversUsecase.SaveServer(ctx, &server); errSave != nil {
+			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			log.Error("Failed to save new server", zap.Error(errSave))
 
 			return
@@ -187,20 +242,20 @@ type serverUpdateRequest struct {
 	LogSecret       int     `json:"log_secret"`
 }
 
-func (s *ServersHandler) onAPIPostServerUpdate() gin.HandlerFunc {
-	log := s.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func (h *ServersHandler) onAPIPostServerUpdate() gin.HandlerFunc {
+	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		serverID, idErr := http_helper.GetIntParam(ctx, "server_id")
 		if idErr != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.domain.ErrInvalidParameter
+			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
 
 			return
 		}
 
 		var server domain.Server
-		if errServer := s.serversUsecase.GetServer(ctx, serverID, &server); errServer != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
+		if errServer := h.serversUsecase.GetServer(ctx, serverID, &server); errServer != nil {
+			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
@@ -224,8 +279,8 @@ func (s *ServersHandler) onAPIPostServerUpdate() gin.HandlerFunc {
 		server.LogSecret = req.LogSecret
 		server.EnableStats = req.EnableStats
 
-		if errSave := s.serversUsecase.SaveServer(ctx, &server); errSave != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
+		if errSave := h.serversUsecase.SaveServer(ctx, &server); errSave != nil {
+			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			log.Error("Failed to update server", zap.Error(errSave))
 
 			return
@@ -239,8 +294,8 @@ func (s *ServersHandler) onAPIPostServerUpdate() gin.HandlerFunc {
 	}
 }
 
-func (s *ServersHandler) onAPIGetServersAdmin() gin.HandlerFunc {
-	log := s.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func (h *ServersHandler) onAPIGetServersAdmin() gin.HandlerFunc {
+	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		var filter domain.ServerQueryFilter
@@ -248,9 +303,9 @@ func (s *ServersHandler) onAPIGetServersAdmin() gin.HandlerFunc {
 			return
 		}
 
-		servers, count, errServers := s.serversUsecase.GetServers(ctx, filter)
+		servers, count, errServers := h.serversUsecase.GetServers(ctx, filter)
 		if errServers != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
+			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
@@ -259,28 +314,28 @@ func (s *ServersHandler) onAPIGetServersAdmin() gin.HandlerFunc {
 	}
 }
 
-func (s *ServersHandler) onAPIPostServerDelete() gin.HandlerFunc {
-	log := s.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func (h *ServersHandler) onAPIPostServerDelete() gin.HandlerFunc {
+	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		serverID, idErr := http_helper.GetIntParam(ctx, "server_id")
 		if idErr != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.domain.ErrInvalidParameter
+			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
 
 			return
 		}
 
 		var server domain.Server
-		if errServer := s.serversUsecase.GetServer(ctx, serverID, &server); errServer != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
+		if errServer := h.serversUsecase.GetServer(ctx, serverID, &server); errServer != nil {
+			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
 
 		server.Deleted = true
 
-		if errSave := s.serversUsecase.SaveServer(ctx, &server); errSave != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
+		if errSave := h.serversUsecase.SaveServer(ctx, &server); errSave != nil {
+			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			log.Error("Failed to delete server", zap.Error(errSave))
 
 			return

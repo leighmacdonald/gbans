@@ -4,21 +4,22 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	sq "github.com/Masterminds/squirrel"
-	"github.com/jackc/pgtype"
-	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/store"
-	"github.com/leighmacdonald/steamid/v3/steamid"
 	"net"
 	"time"
+
+	sq "github.com/Masterminds/squirrel"
+	"github.com/jackc/pgtype"
+	"github.com/leighmacdonald/gbans/internal/database"
+	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/errs"
+	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
 type banRepository struct {
-	store.Database
+	database.Database
 }
 
-func NewBanRepository(database store.Database) domain.BanRepository {
+func NewBanRepository(database database.Database) domain.BanRepository {
 	return &banRepository{Database: database}
 }
 
@@ -626,124 +627,6 @@ func (s *banRepository) GetExpiredBans(ctx context.Context) ([]domain.BanSteam, 
 	}
 
 	return bans, nil
-}
-
-func (s *banRepository) GetAppealsByActivity(ctx context.Context, opts domain.AppealQueryFilter) ([]domain.AppealOverview, int64, error) {
-	constraints := sq.And{sq.Gt{"m.count": 0}}
-
-	if !opts.Deleted {
-		constraints = append(constraints, sq.Eq{"s.deleted": opts.Deleted})
-	}
-
-	if opts.AppealState > domain.AnyState {
-		constraints = append(constraints, sq.Eq{"s.appeal_state": opts.AppealState})
-	}
-
-	if opts.SourceID != "" {
-		authorID, errAuthorID := opts.SourceID.SID64(ctx)
-		if errAuthorID != nil {
-			return nil, 0, errors.Join(errAuthorID, errs.ErrSourceID)
-		}
-
-		constraints = append(constraints, sq.Eq{"s.source_id": authorID.Int64()})
-	}
-
-	if opts.TargetID != "" {
-		targetID, errTargetID := opts.TargetID.SID64(ctx)
-		if errTargetID != nil {
-			return nil, 0, errors.Join(errTargetID, errs.ErrTargetID)
-		}
-
-		constraints = append(constraints, sq.Eq{"s.target_id": targetID.Int64()})
-	}
-
-	counterQuery := s.
-		Builder().
-		Select("COUNT(s.ban_id)").
-		From("ban s").
-		Where(constraints).
-		InnerJoin(`
-			LATERAL (
-				SELECT count(a.ban_message_id) as count 
-				FROM ban_appeal a
-				WHERE s.ban_id = a.ban_id
-			) m ON TRUE`)
-
-	count, errCount := getCount(ctx, s, counterQuery)
-	if errCount != nil {
-		return nil, 0, errs.DBErr(errCount)
-	}
-
-	builder := s.
-		Builder().
-		Select("s.ban_id", "s.target_id", "s.source_id", "s.ban_type", "s.reason", "s.reason_text",
-			"s.note", "s.valid_until", "s.origin", "s.created_on", "s.updated_on", "s.deleted",
-			"CASE WHEN s.report_id IS NULL THEN 0 ELSE report_id END",
-			"s.unban_reason_text", "s.is_enabled", "s.appeal_state",
-			"source.steam_id as source_steam_id", "source.personaname as source_personaname",
-			"source.avatarhash as source_avatar",
-			"target.steam_id as target_steam_id", "target.personaname as target_personaname",
-			"target.avatarhash as target_avatar").
-		From("ban s").
-		Where(constraints).
-		InnerJoin(`
-			LATERAL (
-				SELECT count(a.ban_message_id) as count 
-				FROM ban_appeal a
-				WHERE s.ban_id = a.ban_id
-			) m ON TRUE`).
-		LeftJoin("person source on source.steam_id = s.source_id").
-		LeftJoin("person target on target.steam_id = s.target_id")
-
-	builder = opts.QueryFilter.ApplySafeOrder(builder, map[string][]string{
-		"s.": {
-			"ban_id", "target_id", "source_id", "ban_type", "reason", "valid_until", "origin", "created_on",
-			"updated_on", "deleted", "is_enabled", "appeal_state",
-		},
-	}, "updated_on")
-
-	builder = opts.QueryFilter.ApplyLimitOffsetDefault(builder)
-
-	rows, errQuery := s.QueryBuilder(ctx, builder)
-	if errQuery != nil {
-		return nil, 0, errs.DBErr(errQuery)
-	}
-
-	defer rows.Close()
-
-	var overviews []domain.AppealOverview
-
-	for rows.Next() {
-		var (
-			overview      domain.AppealOverview
-			sourceID      int64
-			SourceSteamID int64
-			targetID      int64
-			TargetSteamID int64
-		)
-
-		if errScan := rows.Scan(
-			&overview.BanID, &targetID, &sourceID, &overview.BanType,
-			&overview.Reason, &overview.ReasonText, &overview.Note, &overview.ValidUntil,
-			&overview.Origin, &overview.CreatedOn, &overview.UpdatedOn, &overview.Deleted,
-			&overview.ReportID, &overview.UnbanReasonText, &overview.IsEnabled, &overview.AppealState,
-			&SourceSteamID, &overview.SourcePersonaname, &overview.SourceAvatarhash,
-			&TargetSteamID, &overview.TargetPersonaname, &overview.TargetAvatarhash,
-		); errScan != nil {
-			return nil, 0, errors.Join(errScan, ErrScanResult)
-		}
-
-		overview.SourceID = steamid.New(SourceSteamID)
-		overview.TargetID = steamid.New(TargetSteamID)
-
-		overviews = append(overviews, overview)
-	}
-
-	if overviews == nil {
-		return []domain.AppealOverview{}, 0, nil
-	}
-
-	return overviews, count, nil
 }
 
 // GetBansSteam returns all bans that fit the filter criteria passed in.

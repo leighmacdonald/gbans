@@ -3,56 +3,55 @@ package repository
 import (
 	"context"
 	"errors"
+	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"time"
 )
 
 type steamGroupRepository struct {
-	db store.Database
+	db database.Database
 }
 
-func (s *steamGroupRepository) DropBanGroup(ctx context.Context, banGroup *domain.BanGroup) error {
+func (r *steamGroupRepository) DropBanGroup(ctx context.Context, banGroup *domain.BanGroup) error {
 	banGroup.IsEnabled = false
 	banGroup.Deleted = true
 
-	return s.BanSteamGroup(ctx, banGroup)
+	return r.BanSteamGroup(ctx, banGroup)
 }
 
-func NewSteamGroupRepository(database store.Database) domain.BanGroupRepository {
+func NewSteamGroupRepository(database database.Database) domain.BanGroupRepository {
 	return &steamGroupRepository{db: database}
 }
 
-func (s *steamGroupRepository) BanSteamGroup(ctx context.Context, banGroup *domain.BanGroup) error {
+func (r *steamGroupRepository) BanSteamGroup(ctx context.Context, banGroup *domain.BanGroup) error {
 	if banGroup.BanGroupID > 0 {
-		return s.updateBanGroup(ctx, banGroup)
+		return r.updateBanGroup(ctx, banGroup)
 	}
 
-	return s.insertBanGroup(ctx, banGroup)
+	return r.insertBanGroup(ctx, banGroup)
 }
 
-func (s *steamGroupRepository) insertBanGroup(ctx context.Context, banGroup *domain.BanGroup) error {
+func (r *steamGroupRepository) insertBanGroup(ctx context.Context, banGroup *domain.BanGroup) error {
 	const query = `
 	INSERT INTO ban_group (source_id, target_id, group_id, group_name, is_enabled, deleted, note,
 	unban_reason_text, origin, created_on, updated_on, valid_until, appeal_state)
 	VALUES ($1, $2, $3, $4, $5, $6,$7, $8, $9, $10, $11, $12, $13)
 	RETURNING ban_group_id`
 
-	return errs.DBErr(s.db.
+	return r.db.DBErr(r.db.
 		QueryRow(ctx, query, banGroup.SourceID.Int64(), banGroup.TargetID.Int64(), banGroup.GroupID.Int64(),
 			banGroup.GroupName, banGroup.IsEnabled, banGroup.Deleted, banGroup.Note, banGroup.UnbanReasonText, banGroup.Origin,
 			banGroup.CreatedOn, banGroup.UpdatedOn, banGroup.ValidUntil, banGroup.AppealState).
 		Scan(&banGroup.BanGroupID))
 }
 
-func (s *steamGroupRepository) updateBanGroup(ctx context.Context, banGroup *domain.BanGroup) error {
+func (r *steamGroupRepository) updateBanGroup(ctx context.Context, banGroup *domain.BanGroup) error {
 	banGroup.UpdatedOn = time.Now()
 
-	return errs.DBErr(s.db.ExecUpdateBuilder(ctx, s.db.
+	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, r.db.
 		Builder().
 		Update("ban_group").
 		Set("source_id", banGroup.SourceID.Int64()).
@@ -70,8 +69,8 @@ func (s *steamGroupRepository) updateBanGroup(ctx context.Context, banGroup *dom
 		Where(sq.Eq{"ban_group_id": banGroup.BanGroupID})))
 }
 
-func (s *steamGroupRepository) GetBanGroup(ctx context.Context, groupID steamid.GID, banGroup *domain.BanGroup) error {
-	query := s.db.
+func (r *steamGroupRepository) GetBanGroup(ctx context.Context, groupID steamid.GID, banGroup *domain.BanGroup) error {
+	query := r.db.
 		Builder().
 		Select("ban_group_id", "source_id", "target_id", "group_name", "is_enabled", "deleted",
 			"note", "unban_reason_text", "origin", "created_on", "updated_on", "valid_until", "appeal_state", "group_id").
@@ -84,15 +83,15 @@ func (s *steamGroupRepository) GetBanGroup(ctx context.Context, groupID steamid.
 		newGroupID int64
 	)
 
-	row, errQuery := s.db.QueryRowBuilder(ctx, query)
+	row, errQuery := r.db.QueryRowBuilder(ctx, query)
 	if errQuery != nil {
-		return errs.DBErr(errQuery)
+		return r.db.DBErr(errQuery)
 	}
 
 	if errScan := row.Scan(&banGroup.BanGroupID, &sourceID, &targetID, &banGroup.GroupName, &banGroup.IsEnabled,
 		&banGroup.Deleted, &banGroup.Note, &banGroup.UnbanReasonText, &banGroup.Origin, &banGroup.CreatedOn,
 		&banGroup.UpdatedOn, &banGroup.ValidUntil, &banGroup.AppealState, &newGroupID); errScan != nil {
-		return errs.DBErr(errScan)
+		return r.db.DBErr(errScan)
 	}
 
 	banGroup.SourceID = steamid.New(sourceID)
@@ -102,8 +101,8 @@ func (s *steamGroupRepository) GetBanGroup(ctx context.Context, groupID steamid.
 	return nil
 }
 
-func (s *steamGroupRepository) GetBanGroupByID(ctx context.Context, banGroupID int64, banGroup *domain.BanGroup) error {
-	query := s.db.
+func (r *steamGroupRepository) GetBanGroupByID(ctx context.Context, banGroupID int64, banGroup *domain.BanGroup) error {
+	query := r.db.
 		Builder().
 		Select("ban_group_id", "source_id", "target_id", "group_name", "is_enabled", "deleted",
 			"note", "unban_reason_text", "origin", "created_on", "updated_on", "valid_until", "appeal_state", "group_id").
@@ -116,9 +115,9 @@ func (s *steamGroupRepository) GetBanGroupByID(ctx context.Context, banGroupID i
 		targetID int64
 	)
 
-	row, errQuery := s.db.QueryRowBuilder(ctx, query)
+	row, errQuery := r.db.QueryRowBuilder(ctx, query)
 	if errQuery != nil {
-		return errs.DBErr(errQuery)
+		return r.db.DBErr(errQuery)
 	}
 
 	if errScan := row.Scan(
@@ -136,7 +135,7 @@ func (s *steamGroupRepository) GetBanGroupByID(ctx context.Context, banGroupID i
 		&banGroup.ValidUntil,
 		&banGroup.AppealState,
 		&groupID); errScan != nil {
-		return errs.DBErr(errScan)
+		return r.db.DBErr(errScan)
 	}
 
 	banGroup.SourceID = steamid.New(sourceID)
@@ -146,8 +145,8 @@ func (s *steamGroupRepository) GetBanGroupByID(ctx context.Context, banGroupID i
 	return nil
 }
 
-func (s *steamGroupRepository) GetBanGroups(ctx context.Context, filter domain.GroupBansQueryFilter) ([]domain.BannedGroupPerson, int64, error) {
-	builder := s.db.
+func (r *steamGroupRepository) GetBanGroups(ctx context.Context, filter domain.GroupBansQueryFilter) ([]domain.BannedGroupPerson, int64, error) {
+	builder := r.db.
 		Builder().
 		Select("s.ban_group_id", "s.source_id", "s.target_id", "s.group_name", "s.is_enabled", "s.deleted",
 			"s.note", "s.unban_reason_text", "s.origin", "s.created_on", "s.updated_on", "s.valid_until",
@@ -184,7 +183,7 @@ func (s *steamGroupRepository) GetBanGroups(ctx context.Context, filter domain.G
 	if filter.TargetID != "" {
 		targetID, errTargetID := filter.TargetID.SID64(ctx)
 		if errTargetID != nil {
-			return nil, 0, errors.Join(errTargetID, errs.ErrTargetID)
+			return nil, 0, errors.Join(errTargetID, domain.ErrTargetID)
 		}
 
 		constraints = append(constraints, sq.Eq{"s.target_id": targetID.Int64()})
@@ -193,7 +192,7 @@ func (s *steamGroupRepository) GetBanGroups(ctx context.Context, filter domain.G
 	if filter.SourceID != "" {
 		sourceID, errSourceID := filter.SourceID.SID64(ctx)
 		if errSourceID != nil {
-			return nil, 0, errors.Join(errSourceID, errs.ErrSourceID)
+			return nil, 0, errors.Join(errSourceID, domain.ErrSourceID)
 		}
 
 		constraints = append(constraints, sq.Eq{"s.source_id": sourceID.Int64()})
@@ -210,13 +209,13 @@ func (s *steamGroupRepository) GetBanGroups(ctx context.Context, filter domain.G
 
 	builder = filter.ApplyLimitOffsetDefault(builder).Where(constraints)
 
-	rows, errRows := s.db.QueryBuilder(ctx, builder)
+	rows, errRows := r.db.QueryBuilder(ctx, builder)
 	if errRows != nil {
-		if errors.Is(errRows, errs.ErrNoResult) {
+		if errors.Is(errRows, domain.ErrNoResult) {
 			return []domain.BannedGroupPerson{}, 0, nil
 		}
 
-		return nil, 0, errs.DBErr(errRows)
+		return nil, 0, r.db.DBErr(errRows)
 	}
 
 	defer rows.Close()
@@ -250,7 +249,7 @@ func (s *steamGroupRepository) GetBanGroups(ctx context.Context, filter domain.G
 			&group.SourceTarget.TargetPersonaname, &group.SourceTarget.TargetAvatarhash,
 			&group.CommunityBanned, &group.VacBans, &group.GameBans,
 		); errScan != nil {
-			return nil, 0, errs.DBErr(errScan)
+			return nil, 0, r.db.DBErr(errScan)
 		}
 
 		group.SourceID = steamid.New(sourceID)
@@ -260,17 +259,17 @@ func (s *steamGroupRepository) GetBanGroups(ctx context.Context, filter domain.G
 		groups = append(groups, group)
 	}
 
-	count, errCount := s.db.GetCount(ctx, s.db.
+	count, errCount := r.db.GetCount(ctx, r.db.
 		Builder().
 		Select("s.ban_group_id").
 		From("ban_group s").
 		Where(constraints))
 	if errCount != nil {
-		if errors.Is(errCount, errs.ErrNoResult) {
+		if errors.Is(errCount, domain.ErrNoResult) {
 			return []domain.BannedGroupPerson{}, 0, nil
 		}
 
-		return nil, 0, errs.DBErr(errCount)
+		return nil, 0, r.db.DBErr(errCount)
 	}
 
 	if groups == nil {
@@ -280,30 +279,30 @@ func (s *steamGroupRepository) GetBanGroups(ctx context.Context, filter domain.G
 	return groups, count, nil
 }
 
-func (s *steamGroupRepository) GetMembersList(ctx context.Context, parentID int64, list *domain.MembersList) error {
-	row, err := s.db.QueryRowBuilder(ctx, s.db.
+func (r *steamGroupRepository) GetMembersList(ctx context.Context, parentID int64, list *domain.MembersList) error {
+	row, err := r.db.QueryRowBuilder(ctx, r.db.
 		Builder().
 		Select("members_id", "parent_id", "members", "created_on", "updated_on").
 		From("members").
 		Where(sq.Eq{"parent_id": parentID}))
 	if err != nil {
-		return errs.DBErr(err)
+		return r.db.DBErr(err)
 	}
 
-	return errs.DBErr(row.Scan(&list.MembersID, &list.ParentID, &list.Members, &list.CreatedOn, &list.UpdatedOn))
+	return r.db.DBErr(row.Scan(&list.MembersID, &list.ParentID, &list.Members, &list.CreatedOn, &list.UpdatedOn))
 }
 
-func (s *steamGroupRepository) SaveMembersList(ctx context.Context, list *domain.MembersList) error {
+func (r *steamGroupRepository) SaveMembersList(ctx context.Context, list *domain.MembersList) error {
 	if list.MembersID > 0 {
 		list.UpdatedOn = time.Now()
 
 		const update = `UPDATE members SET members = $2::jsonb, updated_on = $3 WHERE members_id = $1`
 
-		return errs.DBErr(s.db.Exec(ctx, update, list.MembersID, list.Members, list.UpdatedOn))
+		return r.db.DBErr(r.db.Exec(ctx, update, list.MembersID, list.Members, list.UpdatedOn))
 	} else {
 		const insert = `INSERT INTO members (parent_id, members, created_on, updated_on) 
 		VALUES ($1, $2::jsonb, $3, $4) RETURNING members_id`
 
-		return errs.DBErr(s.db.QueryRow(ctx, insert, list.ParentID, list.Members, list.CreatedOn, list.UpdatedOn).Scan(&list.MembersID))
+		return r.db.DBErr(r.db.QueryRow(ctx, insert, list.ParentID, list.Members, list.CreatedOn, list.UpdatedOn).Scan(&list.MembersID))
 	}
 }

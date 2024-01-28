@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/avatar"
-	"github.com/leighmacdonald/gbans/internal/errs"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
@@ -56,13 +55,7 @@ type BanUsecase interface {
 	GetBansSteam(ctx context.Context, filter SteamBansQueryFilter) ([]BannedSteamPerson, int64, error)
 	GetExpiredBans(ctx context.Context) ([]BanSteam, error)
 	GetBansOlderThan(ctx context.Context, filter QueryFilter, since time.Time) ([]BanSteam, error)
-	SaveBanMessage(ctx context.Context, message *BanAppealMessage) error
-	GetBanMessages(ctx context.Context, banID int64) ([]BanAppealMessage, error)
-	GetBanMessageByID(ctx context.Context, banMessageID int, message *BanAppealMessage) error
-	DropBanMessage(ctx context.Context, message *BanAppealMessage) error
 
-	SaveBanGroup(ctx context.Context, banGroup *BanGroup) error
-	DropBanGroup(ctx context.Context, banGroup *BanGroup) error
 	GetBanASN(ctx context.Context, asNum int64, banASN *BanASN) error
 	GetBansASN(ctx context.Context, filter ASNBansQueryFilter) ([]BannedASNPerson, int64, error)
 	SaveBanASN(ctx context.Context, banASN *BanASN) error
@@ -79,6 +72,7 @@ type BanUsecase interface {
 }
 
 type BanGroupRepository interface {
+	SaveBanGroup(ctx context.Context, banGroup *BanGroup) error
 	BanSteamGroup(ctx context.Context, banGroup *BanGroup) error
 	GetBanGroup(ctx context.Context, groupID steamid.GID, banGroup *BanGroup) error
 	GetBanGroupByID(ctx context.Context, banGroupID int64, banGroup *BanGroup) error
@@ -89,6 +83,7 @@ type BanGroupRepository interface {
 }
 
 type BanGroupUsecase interface {
+	SaveBanGroup(ctx context.Context, banGroup *BanGroup) error
 	BanSteamGroup(ctx context.Context, banGroup *BanGroup) error
 	GetBanGroup(ctx context.Context, groupID steamid.GID, banGroup *BanGroup) error
 	GetBanGroupByID(ctx context.Context, banGroupID int64, banGroup *BanGroup) error
@@ -96,6 +91,11 @@ type BanGroupUsecase interface {
 	GetMembersList(ctx context.Context, parentID int64, list *MembersList) error
 	SaveMembersList(ctx context.Context, list *MembersList) error
 	DropBanGroup(ctx context.Context, banGroup *BanGroup) error
+	IsMember(steamID steamid.SID64) (steamid.GID, bool)
+}
+
+type UnbanRequest struct {
+	UnbanReasonText string `json:"unban_reason_text"`
 }
 
 type SourceTarget struct {
@@ -327,7 +327,7 @@ func newBaseBanOpts(ctx context.Context, source SteamIDProvider, target StringSI
 ) error {
 	sourceSid, errSource := source.SID64(ctx)
 	if errSource != nil {
-		return errors.Join(errSource, errs.ErrSourceID)
+		return errors.Join(errSource, ErrSourceID)
 	}
 
 	targetSid := steamid.New(0)
@@ -335,7 +335,7 @@ func newBaseBanOpts(ctx context.Context, source SteamIDProvider, target StringSI
 	if string(target) != "0" {
 		newTargetSid, errTargetSid := target.SID64(ctx)
 		if errTargetSid != nil {
-			return errs.ErrTargetID
+			return ErrTargetID
 		}
 
 		targetSid = newTargetSid

@@ -7,17 +7,17 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
 type contestRepository struct {
-	store.Database
+	database.Database
 }
 
-func NewContestRepository(database store.Database) domain.ContestRepository {
+func NewContestRepository(database database.Database) domain.ContestRepository {
 	return &contestRepository{Database: database}
 }
 
