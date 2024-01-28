@@ -12,7 +12,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/errs"
 	"github.com/leighmacdonald/gbans/internal/http_helper"
 	"go.uber.org/zap"
 )
@@ -70,7 +69,7 @@ func (c *ContestHandler) contestFromCtx(ctx *gin.Context) (domain.Contest, bool)
 	}
 
 	if !contest.Public && http_helper.CurrentUserProfile(ctx).PermissionLevel < domain.PModerator {
-		http_helper.ResponseErr(ctx, http.StatusForbidden, errs.ErrNotFound)
+		http_helper.ResponseErr(ctx, http.StatusForbidden, domain.ErrNotFound)
 
 		return domain.Contest{}, false
 	}
@@ -167,8 +166,8 @@ func (c *ContestHandler) onAPIDeleteContest() gin.HandlerFunc {
 		var contest domain.Contest
 
 		if errContest := c.contestUsecase.ContestByID(ctx, contestID, &contest); errContest != nil {
-			if errors.Is(errContest, errs.ErrNoResult) {
-				http_helper.ResponseErr(ctx, http.StatusNotFound, errs.ErrUnknownID)
+			if errors.Is(errContest, domain.ErrNoResult) {
+				http_helper.ResponseErr(ctx, http.StatusNotFound, domain.ErrUnknownID)
 
 				return
 			}
@@ -290,7 +289,7 @@ func (c *ContestHandler) onAPISaveContestEntryMedia() gin.HandlerFunc {
 		if errSave := c.wikiUsecase.SaveMedia(ctx, &media); errSave != nil {
 			log.Error("Failed to save user contest media", zap.Error(errSave))
 
-			if errors.Is(errs.DBErr(errSave), errs.ErrDuplicate) {
+			if errors.Is(errs.DBErr(errSave), domain.ErrDuplicate) {
 				http_helper.ResponseErr(ctx, http.StatusConflict, domain.ErrDuplicateMediaName)
 
 				return
@@ -320,7 +319,7 @@ func (c *ContestHandler) onAPISaveContestEntryVote() gin.HandlerFunc {
 
 		contestEntryID, errContestEntryID := http_helper.GetUUIDParam(ctx, "contest_entry_id")
 		if errContestEntryID != nil {
-			ctx.JSON(http.StatusNotFound, errs.ErrNotFound)
+			ctx.JSON(http.StatusNotFound, domain.ErrNotFound)
 			log.Error("Invalid contest entry id option")
 
 			return
@@ -344,7 +343,7 @@ func (c *ContestHandler) onAPISaveContestEntryVote() gin.HandlerFunc {
 		currentUser := http_helper.CurrentUserProfile(ctx)
 
 		if errVote := c.contestUsecase.ContestEntryVote(ctx, contestEntryID, currentUser.SteamID, direction == "up"); errVote != nil {
-			if errors.Is(errVote, errs.ErrVoteDeleted) {
+			if errors.Is(errVote, domain.ErrVoteDeleted) {
 				ctx.JSON(http.StatusOK, voteResult{""})
 
 				return
@@ -396,7 +395,7 @@ func (c *ContestHandler) onAPISaveContestEntrySubmit() gin.HandlerFunc {
 		}
 
 		existingEntries, errEntries := c.contestUsecase.ContestEntries(ctx, contest.ContestID)
-		if errEntries != nil && !errors.Is(errEntries, errs.ErrNoResult) {
+		if errEntries != nil && !errors.Is(errEntries, domain.ErrNoResult) {
 			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrContestLoadEntries)
 
 			return
@@ -453,8 +452,8 @@ func (c *ContestHandler) onAPIDeleteContestEntry() gin.HandlerFunc {
 		var entry domain.ContestEntry
 
 		if errContest := c.contestUsecase.ContestEntry(ctx, contestEntryID, &entry); errContest != nil {
-			if errors.Is(errContest, errs.ErrNoResult) {
-				http_helper.ResponseErr(ctx, http.StatusNotFound, errs.ErrUnknownID)
+			if errors.Is(errContest, domain.ErrNoResult) {
+				http_helper.ResponseErr(ctx, http.StatusNotFound, domain.ErrUnknownID)
 
 				return
 			}
@@ -476,8 +475,8 @@ func (c *ContestHandler) onAPIDeleteContestEntry() gin.HandlerFunc {
 		var contest domain.Contest
 
 		if errContest := c.contestUsecase.ContestByID(ctx, entry.ContestID, &contest); errContest != nil {
-			if errors.Is(errContest, errs.ErrNoResult) {
-				http_helper.ResponseErr(ctx, http.StatusNotFound, errs.ErrUnknownID)
+			if errors.Is(errContest, domain.ErrNoResult) {
+				http_helper.ResponseErr(ctx, http.StatusNotFound, domain.ErrUnknownID)
 
 				return
 			}

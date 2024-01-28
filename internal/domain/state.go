@@ -27,6 +27,11 @@ type StateUsecase interface {
 	ExecServer(ctx context.Context, serverID int, cmd string) (string, error)
 	ExecRaw(ctx context.Context, addr string, password string, cmd string) (string, error)
 	Broadcast(ctx context.Context, serverIDs []int, cmd string) map[int]string
+	Kick(ctx context.Context, target steamid.SID64, reason Reason) error
+	Silence(ctx context.Context, target steamid.SID64, reason Reason) error
+	Say(ctx context.Context, serverID int, message string) error
+	CSay(ctx context.Context, serverID int, message string) error
+	PSay(ctx context.Context, target steamid.SID64, message string) error
 }
 
 type StateRepository interface {

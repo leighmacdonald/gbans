@@ -1,7 +1,9 @@
 package domain
 
 import (
+	"context"
 	"fmt"
+	"github.com/leighmacdonald/gbans/pkg/fp"
 	"math"
 	"sort"
 	"time"
@@ -11,6 +13,54 @@ import (
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"golang.org/x/exp/slices"
 )
+
+type MatchRepository interface {
+	Matches(ctx context.Context, opts MatchesQueryOpts) ([]MatchSummary, int64, error)
+	MatchGetByID(ctx context.Context, matchID uuid.UUID, match *MatchResult) error
+	MatchSave(ctx context.Context, match *logparse.Match, weaponMap fp.MutexMap[logparse.Weapon, int]) error
+	StatsPlayerClass(ctx context.Context, sid64 steamid.SID64) (PlayerClassStatsCollection, error)
+	StatsPlayerWeapons(ctx context.Context, sid64 steamid.SID64) ([]PlayerWeaponStats, error)
+	StatsPlayerKillstreaks(ctx context.Context, sid64 steamid.SID64) ([]PlayerKillstreakStats, error)
+	StatsPlayerMedic(ctx context.Context, sid64 steamid.SID64) ([]PlayerMedicStats, error)
+	PlayerStats(ctx context.Context, steamID steamid.SID64, stats *PlayerStats) error
+	WeaponsOverall(ctx context.Context) ([]WeaponsOverallResult, error)
+	GetMapUsageStats(ctx context.Context) ([]MapUseDetail, error)
+	Weapons(ctx context.Context) ([]Weapon, error)
+	SaveWeapon(ctx context.Context, weapon *Weapon) error
+	GetWeaponByKey(ctx context.Context, key logparse.Weapon, weapon *Weapon) error
+	GetWeaponByID(ctx context.Context, weaponID int, weapon *Weapon) error
+	LoadWeapons(ctx context.Context, weaponMap fp.MutexMap[logparse.Weapon, int]) error
+
+	WeaponsOverallTopPlayers(ctx context.Context, weaponID int) ([]PlayerWeaponResult, error)
+	WeaponsOverallByPlayer(ctx context.Context, steamID steamid.SID64) ([]WeaponsOverallResult, error)
+	PlayersOverallByKills(ctx context.Context, count int) ([]PlayerWeaponResult, error)
+	HealersOverallByHealing(ctx context.Context, count int) ([]HealingOverallResult, error)
+	PlayerOverallClassStats(ctx context.Context, steamID steamid.SID64) ([]PlayerClassOverallResult, error)
+	PlayerOverallStats(ctx context.Context, steamID steamid.SID64, por *PlayerOverallResult) error
+}
+type MatchUsecase interface {
+	Matches(ctx context.Context, opts MatchesQueryOpts) ([]MatchSummary, int64, error)
+	MatchGetByID(ctx context.Context, matchID uuid.UUID, match *MatchResult) error
+	MatchSave(ctx context.Context, match *logparse.Match, weaponMap fp.MutexMap[logparse.Weapon, int]) error
+	StatsPlayerClass(ctx context.Context, sid64 steamid.SID64) (PlayerClassStatsCollection, error)
+	StatsPlayerWeapons(ctx context.Context, sid64 steamid.SID64) ([]PlayerWeaponStats, error)
+	StatsPlayerKillstreaks(ctx context.Context, sid64 steamid.SID64) ([]PlayerKillstreakStats, error)
+	StatsPlayerMedic(ctx context.Context, sid64 steamid.SID64) ([]PlayerMedicStats, error)
+	PlayerStats(ctx context.Context, steamID steamid.SID64, stats *PlayerStats) error
+	WeaponsOverall(ctx context.Context) ([]WeaponsOverallResult, error)
+	GetMapUsageStats(ctx context.Context) ([]MapUseDetail, error)
+	Weapons(ctx context.Context) ([]Weapon, error)
+	SaveWeapon(ctx context.Context, weapon *Weapon) error
+	GetWeaponByKey(ctx context.Context, key logparse.Weapon, weapon *Weapon) error
+	GetWeaponByID(ctx context.Context, weaponID int, weapon *Weapon) error
+	LoadWeapons(ctx context.Context, weaponMap fp.MutexMap[logparse.Weapon, int]) error
+	WeaponsOverallTopPlayers(ctx context.Context, weaponID int) ([]PlayerWeaponResult, error)
+	WeaponsOverallByPlayer(ctx context.Context, steamID steamid.SID64) ([]WeaponsOverallResult, error)
+	PlayersOverallByKills(ctx context.Context, count int) ([]PlayerWeaponResult, error)
+	HealersOverallByHealing(ctx context.Context, count int) ([]HealingOverallResult, error)
+	PlayerOverallClassStats(ctx context.Context, steamID steamid.SID64) ([]PlayerClassOverallResult, error)
+	PlayerOverallStats(ctx context.Context, steamID steamid.SID64, por *PlayerOverallResult) error
+}
 
 type MatchPlayerKillstreak struct {
 	MatchKillstreakID int64                `json:"match_killstreak_id"`

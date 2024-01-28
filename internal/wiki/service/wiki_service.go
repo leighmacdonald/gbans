@@ -35,7 +35,7 @@ func NewWIkiHandler(logger *zap.Logger, engine *gin.Engine, wikiUsecase domain.W
 
 func (w *WikiHandler) onAPIGetWikiSlug() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		currentUser := http_helper.CurrentUserProfile(ctx)
+		currentUser := http_helper.http_helper.CurrentUserProfile(ctx)
 
 		slug := strings.ToLower(ctx.Param("slug"))
 		if slug[0] == '/' {
@@ -50,13 +50,13 @@ func (w *WikiHandler) onAPIGetWikiSlug() gin.HandlerFunc {
 				return
 			}
 
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
 
 			return
 		}
 
 		if page.PermissionLevel > currentUser.PermissionLevel {
-			http_helper.ResponseErr(ctx, http.StatusForbidden, domain.ErrPermissionDenied)
+			http_helper.http_helper.ResponseErr(ctx, http.StatusForbidden, domain.ErrPermissionDenied)
 
 			return
 		}
@@ -75,7 +75,7 @@ func (w *WikiHandler) onAPISaveWikiSlug() gin.HandlerFunc {
 		}
 
 		if req.Slug == "" || req.BodyMD == "" {
-			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			http_helper.http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.domain.ErrInvalidParameter
 
 			return
 		}
@@ -87,7 +87,7 @@ func (w *WikiHandler) onAPISaveWikiSlug() gin.HandlerFunc {
 				page.Revision += 1
 				page.Slug = req.Slug
 			} else {
-				http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+				http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
 
 				return
 			}
@@ -99,7 +99,7 @@ func (w *WikiHandler) onAPISaveWikiSlug() gin.HandlerFunc {
 		page.BodyMD = req.BodyMD
 
 		if errSave := w.wikiUsecase.SaveWikiPage(ctx, &page); errSave != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
 
 			return
 		}

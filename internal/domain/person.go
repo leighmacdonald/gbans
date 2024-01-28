@@ -44,6 +44,7 @@ type PersonUsecase interface {
 	GetPersonSettings(ctx context.Context, steamID steamid.SID64, settings *PersonSettings) error
 	SavePersonSettings(ctx context.Context, settings *PersonSettings) error
 	GetPlayerMostRecentIP(ctx context.Context, steamID steamid.SID64) net.IP
+	SetSteam(ctx context.Context, sid64 steamid.SID64, discordID string) error
 }
 
 type PersonRepository interface {
@@ -53,7 +54,6 @@ type PersonRepository interface {
 	GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collection) (People, error)
 	GetSteamsAtAddress(ctx context.Context, addr net.IP) (steamid.Collection, error)
 	GetPeople(ctx context.Context, filter PlayerQuery) (People, int64, error)
-	GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.SID64, person *Person) error
 	GetPersonByDiscordID(ctx context.Context, discordID string, person *Person) error
 	GetExpiredProfiles(ctx context.Context, limit uint64) ([]Person, error)
 	GetPersonMessageByID(ctx context.Context, personMessageID int64, msg *PersonMessage) error

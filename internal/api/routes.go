@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"github.com/leighmacdonald/gbans/internal/middleware"
 	"net/http"
 	"path/filepath"
 	"runtime"
@@ -181,14 +182,14 @@ func createRouter(ctx context.Context, env Env) *gin.Engine {
 		})
 	}
 
-	engine.GET("/auth/callback", onOpenIDCallback(env))
-	engine.GET("/export/bans/tf2bd", onAPIExportBansTF2BD(env))
-	engine.GET("/export/bans/valve/steamid", onAPIExportBansValveSteamID(env))
+	//engine.GET("/auth/callback", middleware.onOpenIDCallback(env))
+	//engine.GET("/export/bans/tf2bd", onAPIExportBansTF2BD(env))
+	//engine.GET("/export/bans/valve/steamid", onAPIExportBansValveSteamID(env))
 	engine.GET("/metrics", prometheusHandler())
 
 	engine.GET("/api/profile", onAPIProfile(env))
 	// engine.GET("/api/servers/state", onAPIGetServerStates(env))
-	engine.GET("/api/stats", onAPIGetStats(env))
+	//engine.GET("/api/stats", onAPIGetStats(env))
 
 	engine.POST("/api/news_latest", onAPIGetNewsLatest(env))
 
@@ -216,7 +217,7 @@ func createRouter(ctx context.Context, env Env) *gin.Engine {
 	// This allows use of the user profile on endpoints that have optional authentication
 	optionalAuth := engine.Group("/")
 	{
-		optional := optionalAuth.Use(authMiddleware(env, domain.PGuest))
+		optional := optionalAuth.Use(middleware.authMiddleware(env, domain.PGuest))
 		// optional.GET("/api/contests", onAPIGetContests(env))
 		// optional.GET("/api/contests/:contest_id", onAPIGetContest(env))
 		// optional.GET("/api/contests/:contest_id/entries", onAPIGetContestEntries(env))
@@ -232,7 +233,7 @@ func createRouter(ctx context.Context, env Env) *gin.Engine {
 	authedGrp := engine.Group("/")
 	{
 		// Basic logged-in user
-		authed := authedGrp.Use(authMiddleware(env, domain.PUser))
+		authed := authedGrp.Use(middleware.authMiddleware(env, domain.PUser))
 
 		authed.GET("/api/auth/discord", onOAuthDiscordCallback(env))
 		authed.GET("/api/auth/logout", onAPILogout(env))
@@ -248,24 +249,24 @@ func createRouter(ctx context.Context, env Env) *gin.Engine {
 		authed.POST("/api/report/:report_id/messages", onAPIPostReportMessage(env))
 		authed.POST("/api/report/message/:report_message_id", onAPIEditReportMessage(env))
 		authed.DELETE("/api/report/message/:report_message_id", onAPIDeleteReportMessage(env))
-		authed.GET("/api/bans/steam/:ban_id", onAPIGetBanByID(env))
-		authed.GET("/api/bans/:ban_id/messages", onAPIGetBanMessages(env))
-		authed.POST("/api/bans/:ban_id/messages", onAPIPostBanMessage(env))
-		authed.POST("/api/bans/message/:ban_message_id", onAPIEditBanMessage(env))
-		authed.DELETE("/api/bans/message/:ban_message_id", onAPIDeleteBanMessage(env))
-		authed.GET("/api/sourcebans/:steam_id", onAPIGetSourceBans(env))
+		//authed.GET("/api/bans/steam/:ban_id", onAPIGetBanByID(env))
+		//authed.GET("/api/bans/:ban_id/messages", onAPIGetBanMessages(env))
+		//authed.POST("/api/bans/:ban_id/messages", onAPIPostBanMessage(env))
+		//authed.POST("/api/bans/message/:ban_message_id", onAPIEditBanMessage(env))
+		//authed.DELETE("/api/bans/message/:ban_message_id", onAPIDeleteBanMessage(env))
+		//authed.GET("/api/sourcebans/:steam_id", onAPIGetSourceBans(env))
 
-		authed.GET("/api/log/:match_id", onAPIGetMatch(env))
-		authed.POST("/api/logs", onAPIGetMatches(env))
+		//authed.GET("/api/log/:match_id", onAPIGetMatch(env))
+		//authed.POST("/api/logs", onAPIGetMatches(env))
 		authed.POST("/api/messages", onAPIQueryMessages(env))
 
-		authed.GET("/api/stats/weapons", onAPIGetStatsWeaponsOverall(ctx, env))
-		authed.GET("/api/stats/weapon/:weapon_id", onAPIGetsStatsWeapon(env))
-		authed.GET("/api/stats/players", onAPIGetStatsPlayersOverall(ctx, env))
-		authed.GET("/api/stats/healers", onAPIGetStatsHealersOverall(ctx, env))
-		authed.GET("/api/stats/player/:steam_id/weapons", onAPIGetPlayerWeaponStatsOverall(env))
-		authed.GET("/api/stats/player/:steam_id/classes", onAPIGetPlayerClassStatsOverall(env))
-		authed.GET("/api/stats/player/:steam_id/overall", onAPIGetPlayerStatsOverall(env))
+		//authed.GET("/api/stats/weapons", onAPIGetStatsWeaponsOverall(ctx, env))
+		//authed.GET("/api/stats/weapon/:weapon_id", onAPIGetsStatsWeapon(env))
+		//authed.GET("/api/stats/players", onAPIGetStatsPlayersOverall(ctx, env))
+		//authed.GET("/api/stats/healers", onAPIGetStatsHealersOverall(ctx, env))
+		//authed.GET("/api/stats/player/:steam_id/weapons", onAPIGetPlayerWeaponStatsOverall(env))
+		//authed.GET("/api/stats/player/:steam_id/classes", onAPIGetPlayerClassStatsOverall(env))
+		//authed.GET("/api/stats/player/:steam_id/overall", onAPIGetPlayerStatsOverall(env))
 
 		// authed.POST("/api/contests/:contest_id/upload", onAPISaveContestEntryMedia(env))
 		// authed.GET("/api/contests/:contest_id/vote/:contest_entry_id/:direction", onAPISaveContestEntryVote(env))
@@ -283,16 +284,16 @@ func createRouter(ctx context.Context, env Env) *gin.Engine {
 	editorGrp := engine.Group("/")
 	{
 		// Editor access
-		editorRoute := editorGrp.Use(authMiddleware(env, domain.PEditor))
+		editorRoute := editorGrp.Use(middleware.authMiddleware(env, domain.PEditor))
 		// editorRoute.POST("/api/wiki/slug", onAPISaveWikiSlug(env))
 		editorRoute.POST("/api/news", onAPIPostNewsCreate(env))
 		editorRoute.POST("/api/news/:news_id", onAPIPostNewsUpdate(env))
 		editorRoute.POST("/api/news_all", onAPIGetNewsAll(env))
-		editorRoute.POST("/api/filters/query", onAPIQueryWordFilters(env))
-		editorRoute.GET("/api/filters/state", onAPIGetWarningState(env))
-		editorRoute.POST("/api/filters", onAPIPostWordFilter(env))
-		editorRoute.DELETE("/api/filters/:word_id", onAPIDeleteWordFilter(env))
-		editorRoute.POST("/api/filter_match", onAPIPostWordMatch(env))
+		//editorRoute.POST("/api/filters/query", onAPIQueryWordFilters(env))
+		//editorRoute.GET("/api/filters/state", onAPIGetWarningState(env))
+		//editorRoute.POST("/api/filters", onAPIPostWordFilter(env))
+		//editorRoute.DELETE("/api/filters/:word_id", onAPIDeleteWordFilter(env))
+		//editorRoute.POST("/api/filter_match", onAPIPostWordMatch(env))
 		editorRoute.GET("/export/bans/valve/network", onAPIExportBansValveIP(env))
 		editorRoute.POST("/api/players", onAPISearchPlayers(env))
 	}
@@ -300,27 +301,27 @@ func createRouter(ctx context.Context, env Env) *gin.Engine {
 	modGrp := engine.Group("/")
 	{
 		// Moderator access
-		modRoute := modGrp.Use(authMiddleware(env, domain.PModerator))
+		modRoute := modGrp.Use(middleware.authMiddleware(env, domain.PModerator))
 		modRoute.POST("/api/report/:report_id/state", onAPIPostBanState(env))
 		modRoute.POST("/api/connections", onAPIQueryPersonConnections(env))
 		modRoute.GET("/api/message/:person_message_id/context/:padding", onAPIQueryMessageContext(env))
 		modRoute.POST("/api/appeals", onAPIGetAppeals(env))
 
-		modRoute.POST("/api/bans/steam", onAPIGetBansSteam(env))
-		modRoute.POST("/api/bans/steam/create", onAPIPostBanSteamCreate(env))
-		modRoute.DELETE("/api/bans/steam/:ban_id", onAPIPostBanDelete(env))
-		modRoute.POST("/api/bans/steam/:ban_id", onAPIPostBanUpdate(env))
-		modRoute.POST("/api/bans/steam/:ban_id/status", onAPIPostSetBanAppealStatus(env))
-
-		modRoute.POST("/api/bans/cidr/create", onAPIPostBansCIDRCreate(env))
-		modRoute.POST("/api/bans/cidr", onAPIGetBansCIDR(env))
-		modRoute.DELETE("/api/bans/cidr/:net_id", onAPIDeleteBansCIDR(env))
-		modRoute.POST("/api/bans/cidr/:net_id", onAPIPostBansCIDRUpdate(env))
-
-		modRoute.POST("/api/bans/asn/create", onAPIPostBansASNCreate(env))
-		modRoute.POST("/api/bans/asn", onAPIGetBansASN(env))
-		modRoute.DELETE("/api/bans/asn/:asn_id", onAPIDeleteBansASN(env))
-		modRoute.POST("/api/bans/asn/:asn_id", onAPIPostBansASNUpdate(env))
+		//modRoute.POST("/api/bans/steam", onAPIGetBansSteam(env))
+		//modRoute.POST("/api/bans/steam/create", onAPIPostBanSteamCreate(env))
+		//modRoute.DELETE("/api/bans/steam/:ban_id", onAPIPostBanDelete(env))
+		//modRoute.POST("/api/bans/steam/:ban_id", onAPIPostBanUpdate(env))
+		//modRoute.POST("/api/bans/steam/:ban_id/status", onAPIPostSetBanAppealStatus(env))
+		//
+		//modRoute.POST("/api/bans/cidr/create", onAPIPostBansCIDRCreate(env))
+		//modRoute.POST("/api/bans/cidr", onAPIGetBansCIDR(env))
+		//modRoute.DELETE("/api/bans/cidr/:net_id", onAPIDeleteBansCIDR(env))
+		//modRoute.POST("/api/bans/cidr/:net_id", onAPIPostBansCIDRUpdate(env))
+		//
+		//modRoute.POST("/api/bans/asn/create", onAPIPostBansASNCreate(env))
+		//modRoute.POST("/api/bans/asn", onAPIGetBansASN(env))
+		//modRoute.DELETE("/api/bans/asn/:asn_id", onAPIDeleteBansASN(env))
+		//modRoute.POST("/api/bans/asn/:asn_id", onAPIPostBansASNUpdate(env))
 
 		modRoute.POST("/api/bans/group/create", onAPIPostBansGroupCreate(env))
 		modRoute.POST("/api/bans/group", onAPIGetBansGroup(env))
