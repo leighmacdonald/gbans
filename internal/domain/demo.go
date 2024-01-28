@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -11,6 +12,26 @@ import (
 )
 
 var ErrAssetID = errors.New("failed to generate new asset ID")
+
+type DemoUsecase interface {
+	ExpiredDemos(ctx context.Context, limit uint64) ([]DemoInfo, error)
+	GetDemoByID(ctx context.Context, demoID int64, demoFile *DemoFile) error
+	GetDemoByName(ctx context.Context, demoName string, demoFile *DemoFile) error
+	GetDemos(ctx context.Context, opts DemoFilter) ([]DemoFile, int64, error)
+	SaveDemo(ctx context.Context, demoFile *DemoFile) error
+	DropDemo(ctx context.Context, demoFile *DemoFile) error
+	SaveAsset(ctx context.Context, asset *Asset) error
+}
+
+type DemoRepository interface {
+	ExpiredDemos(ctx context.Context, limit uint64) ([]DemoInfo, error)
+	GetDemoByID(ctx context.Context, demoID int64, demoFile *DemoFile) error
+	GetDemoByName(ctx context.Context, demoName string, demoFile *DemoFile) error
+	GetDemos(ctx context.Context, opts DemoFilter) ([]DemoFile, int64, error)
+	SaveDemo(ctx context.Context, demoFile *DemoFile) error
+	DropDemo(ctx context.Context, demoFile *DemoFile) error
+	SaveAsset(ctx context.Context, asset *Asset) error
+}
 
 type DemoPlayerStats struct {
 	Score      int `json:"score"`

@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"net"
 	"time"
 
@@ -19,6 +20,29 @@ func NewPersonUsecase(pr domain.PersonRepository, timeout time.Duration) domain.
 		personRepo:     pr,
 		contextTimeout: timeout,
 	}
+}
+
+// SetSteam is used to associate a discord user with either steam id. This is used
+// instead of requiring users to link their steam account to discord itself. It also
+// means the discord does not require more privileged intents.
+func (p *personUsecase) SetSteam(ctx context.Context, sid64 steamid.SID64, discordID string) error {
+	newPerson := domain.NewPerson(sid64)
+	if errGetPerson := p.GetOrCreatePersonBySteamID(ctx, sid64, &newPerson); errGetPerson != nil || !sid64.Valid() {
+		return domain.ErrInvalidSID
+	}
+
+	if (newPerson.DiscordID) != "" {
+		return domain.ErrDiscordAlreadyLinked
+	}
+
+	newPerson.DiscordID = discordID
+	if errSavePerson := p.SavePerson(ctx, &newPerson); errSavePerson != nil {
+		return errors.Join(errSavePerson, domain.ErrSaveChanges)
+	}
+
+	// env.Log().Info("Discord steamid set", zap.Int64("sid64", sid64.Int64()), zap.String("discordId", discordID))
+
+	return nil
 }
 
 func (p *personUsecase) GetPersonBySteamID(ctx context.Context, sid64 steamid.SID64, person *domain.Person) error {
@@ -46,7 +70,16 @@ func (p *personUsecase) GetPeople(ctx context.Context, filter domain.PlayerQuery
 }
 
 func (p *personUsecase) GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.SID64, person *domain.Person) error {
-	return p.personRepo.GetOrCreatePersonBySteamID(ctx, sid64, person)
+	errGetPerson := p.personRepo.GetPersonBySteamID(ctx, sid64, person)
+	if errGetPerson != nil && errors.Is(r.db.DBErr(errGetPerson), domain.ErrNoResult) {
+		// FIXME
+		newPerson := domain.NewPerson(sid64)
+		*person = newPerson
+
+		return p.personRepo.SavePerson(ctx, person)
+	}
+
+	return errGetPerson
 }
 
 func (p *personUsecase) GetPersonByDiscordID(ctx context.Context, discordID string, person *domain.Person) error {

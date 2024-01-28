@@ -655,7 +655,7 @@ func (app *App) SendNotification(ctx context.Context, notification NotificationP
 //		if errGetPerson == db.ErrNoResult {
 //			return consts.ErrUnlinkedAccount
 //		}
-//		return consts.ErrInternal
+//		return consts.domain.ErrInternal
 //	}
 //	*target = action.Author(p.SteamID.String())
 //	return nil

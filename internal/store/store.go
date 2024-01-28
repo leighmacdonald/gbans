@@ -5,6 +5,9 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/leighmacdonald/gbans/internal/domain"
 
 	sq "github.com/Masterminds/squirrel"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -52,7 +55,8 @@ type Database interface {
 	ExecInsertBuilderWithReturnValue(ctx context.Context, builder sq.InsertBuilder, outID any) error
 	Builder() sq.StatementBuilderType
 	SendBatch(ctx context.Context, b *pgx.Batch) pgx.BatchResults
-	GetCount(ctx context.Context, store Database, builder sq.SelectBuilder) (int64, error)
+	GetCount(ctx context.Context, builder sq.SelectBuilder) (int64, error)
+	DBErr(rootError error) error
 }
 
 type Stores struct {
@@ -95,6 +99,30 @@ func (tracer *dbQueryTracer) TraceQueryStart(
 }
 
 func (tracer *dbQueryTracer) TraceQueryEnd(_ context.Context, _ *pgx.Conn, _ pgx.TraceQueryEndData) {
+}
+
+// DBErr is used to wrap common database errors in owr own error types.
+func (db *postgresStore) DBErr(rootError error) error {
+	if rootError == nil {
+		return nil
+	}
+
+	if errors.Is(rootError, pgx.ErrNoRows) {
+		return domain.ErrNoResult
+	}
+
+	var pgErr *pgconn.PgError
+
+	if errors.As(rootError, &pgErr) {
+		switch pgErr.Code {
+		case pgerrcode.UniqueViolation:
+			return domain.ErrDuplicate
+		default:
+			return rootError
+		}
+	}
+
+	return rootError
 }
 
 // Connect sets up underlying required services.
@@ -150,7 +178,7 @@ func (db *postgresStore) Query(ctx context.Context, query string, args ...any) (
 func (db *postgresStore) QueryBuilder(ctx context.Context, builder sq.SelectBuilder) (pgx.Rows, error) { //nolint:ireturn
 	query, args, errQuery := builder.ToSql()
 	if errQuery != nil {
-		return nil, errs.DBErr(errQuery)
+		return nil, db.DBErr(errQuery)
 	}
 
 	rows, err := db.conn.Query(ctx, query, args...)
@@ -238,14 +266,14 @@ func (db *postgresStore) Close() error {
 	return nil
 }
 
-func (db *postgresStore) GetCount(ctx context.Context, store Database, builder sq.SelectBuilder) (int64, error) {
+func (db *postgresStore) GetCount(ctx context.Context, builder sq.SelectBuilder) (int64, error) {
 	countQuery, argsCount, errCountQuery := builder.ToSql()
 	if errCountQuery != nil {
 		return 0, errors.Join(errCountQuery, ErrCreateQuery)
 	}
 
 	var count int64
-	if errCount := store.
+	if errCount := db.
 		QueryRow(ctx, countQuery, argsCount...).
 		Scan(&count); errCount != nil {
 		return 0, errCount //nolint:wrapcheck

@@ -48,7 +48,7 @@ func (s *ServersHandler) onAPIGetServers() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		fullServers, _, errServers := s.serversUsecase.GetServers(ctx, domain.ServerQueryFilter{})
 		if errServers != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
 
 			return
 		}
@@ -156,7 +156,7 @@ func (s *ServersHandler) onAPIPostServer() gin.HandlerFunc {
 		server.IsEnabled = req.IsEnabled
 
 		if errSave := s.serversUsecase.SaveServer(ctx, &server); errSave != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
 			log.Error("Failed to save new server", zap.Error(errSave))
 
 			return
@@ -193,14 +193,14 @@ func (s *ServersHandler) onAPIPostServerUpdate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		serverID, idErr := http_helper.GetIntParam(ctx, "server_id")
 		if idErr != nil {
-			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			http_helper.http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.domain.ErrInvalidParameter
 
 			return
 		}
 
 		var server domain.Server
 		if errServer := s.serversUsecase.GetServer(ctx, serverID, &server); errServer != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
 
 			return
 		}
@@ -225,7 +225,7 @@ func (s *ServersHandler) onAPIPostServerUpdate() gin.HandlerFunc {
 		server.EnableStats = req.EnableStats
 
 		if errSave := s.serversUsecase.SaveServer(ctx, &server); errSave != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
 			log.Error("Failed to update server", zap.Error(errSave))
 
 			return
@@ -250,7 +250,7 @@ func (s *ServersHandler) onAPIGetServersAdmin() gin.HandlerFunc {
 
 		servers, count, errServers := s.serversUsecase.GetServers(ctx, filter)
 		if errServers != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
 
 			return
 		}
@@ -265,14 +265,14 @@ func (s *ServersHandler) onAPIPostServerDelete() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		serverID, idErr := http_helper.GetIntParam(ctx, "server_id")
 		if idErr != nil {
-			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			http_helper.http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.domain.ErrInvalidParameter
 
 			return
 		}
 
 		var server domain.Server
 		if errServer := s.serversUsecase.GetServer(ctx, serverID, &server); errServer != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
 
 			return
 		}
@@ -280,7 +280,7 @@ func (s *ServersHandler) onAPIPostServerDelete() gin.HandlerFunc {
 		server.Deleted = true
 
 		if errSave := s.serversUsecase.SaveServer(ctx, &server); errSave != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
 			log.Error("Failed to delete server", zap.Error(errSave))
 
 			return

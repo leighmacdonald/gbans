@@ -3,8 +3,10 @@ package usecase
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"strings"
+	"sync"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
@@ -181,4 +183,73 @@ func (s *stateUsecase) ExecRaw(ctx context.Context, addr string, password string
 
 func (s *stateUsecase) Broadcast(ctx context.Context, serverIDs []int, cmd string) map[int]string {
 	return s.stateRepository.Broadcast(ctx, serverIDs, cmd)
+}
+
+// Kick will kick the steam id from whatever server it is connected to.
+func (s *stateUsecase) Kick(ctx context.Context, target steamid.SID64, reason domain.Reason) error {
+	if !target.Valid() {
+		return errs.ErrInvalidTargetSID
+	}
+
+	if errExec := s.OnFindExec(ctx, "", target, nil, nil, func(info domain.PlayerServerInfo) string {
+		return fmt.Sprintf("sm_kick #%d %s", info.Player.UserID, reason.String())
+	}); errExec != nil {
+		return errors.Join(errExec, domain.ErrCommandFailed)
+	}
+
+	return nil
+}
+
+// Silence will gag & mute a player.
+func (s *stateUsecase) Silence(ctx context.Context, target steamid.SID64, reason domain.Reason,
+) error {
+	if !target.Valid() {
+		return errs.ErrInvalidTargetSID
+	}
+
+	var (
+		users   []string
+		usersMu = &sync.RWMutex{}
+	)
+
+	if errExec := s.OnFindExec(ctx, "", target, nil, nil, func(info domain.PlayerServerInfo) string {
+		usersMu.Lock()
+		users = append(users, info.Player.Name)
+		usersMu.Unlock()
+
+		return fmt.Sprintf(`sm_silence "#%s" %s`, steamid.SID64ToSID(info.Player.SID), reason.String())
+	}); errExec != nil {
+		return errors.Join(errExec, fmt.Errorf("%w: sm_silence", domain.ErrCommandFailed))
+	}
+
+	return nil
+}
+
+// Say is used to send a message to the server via sm_say.
+func (s *stateUsecase) Say(ctx context.Context, serverID int, message string) error {
+	_, errExec := s.ExecServer(ctx, serverID, fmt.Sprintf(`sm_say %s`, message))
+
+	return errors.Join(errExec, fmt.Errorf("%w: sm_say", domain.ErrCommandFailed))
+}
+
+// CSay is used to send a centered message to the server via sm_csay.
+func (s *stateUsecase) CSay(ctx context.Context, serverID int, message string) error {
+	_, errExec := s.ExecServer(ctx, serverID, fmt.Sprintf(`sm_csay %s`, message))
+
+	return errors.Join(errExec, fmt.Errorf("%w: sm_csay", domain.ErrCommandFailed))
+}
+
+// PSay is used to send a private message to a player.
+func (s *stateUsecase) PSay(ctx context.Context, target steamid.SID64, message string) error {
+	if !target.Valid() {
+		return errs.ErrInvalidTargetSID
+	}
+
+	if errExec := s.OnFindExec(ctx, "", target, nil, nil, func(info domain.PlayerServerInfo) string {
+		return fmt.Sprintf(`sm_psay "#%s" "%s"`, steamid.SID64ToSID(target), message)
+	}); errExec != nil {
+		return errors.Join(errExec, fmt.Errorf("%w: sm_psay", domain.ErrCommandFailed))
+	}
+
+	return nil
 }

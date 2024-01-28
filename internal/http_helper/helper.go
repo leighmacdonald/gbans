@@ -1,21 +1,21 @@
 package http_helper
 
 import (
+	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/errs"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"go.uber.org/zap"
 )
-
-const ctxKeyUserProfile = "user_profile"
 
 var (
 	ErrParamKeyMissing = errors.New("param key not found")
@@ -69,7 +69,7 @@ func GetSID64Param(c *gin.Context, key string) (steamid.SID64, error) {
 
 	sid := steamid.New(i)
 	if !sid.Valid() {
-		return "", errs.ErrInvalidSID
+		return "", domain.ErrInvalidSID
 	}
 
 	return sid, nil
@@ -141,4 +141,72 @@ func ServerFromCtx(ctx *gin.Context) int {
 	}
 
 	return serverID
+}
+
+// CheckPrivilege first checks if the steamId matches one of the provided allowedSteamIds, otherwise it will check
+// if the user has appropriate privilege levels.
+// Error responses are handled by this function, no further action needs to take place in the handlers.
+func CheckPrivilege(ctx *gin.Context, person domain.UserProfile, allowedSteamIds steamid.Collection, minPrivilege domain.Privilege) bool {
+	for _, steamID := range allowedSteamIds {
+		if steamID == person.SteamID {
+			return true
+		}
+	}
+
+	if person.PermissionLevel >= minPrivilege {
+		return true
+	}
+
+	ctx.JSON(http.StatusForbidden, domain.ErrPermissionDenied.Error())
+
+	return false
+}
+
+type ResultsCount struct {
+	Count int64 `json:"count"`
+}
+
+const ctxKeyUserProfile = "user_profile"
+
+func New(ctx context.Context, listenAddr string) *http.Server {
+	conf := env.Config()
+
+	httpServer := &http.Server{
+		Addr:           listenAddr,
+		Handler:        createRouter(ctx, env),
+		ReadTimeout:    10 * time.Second,
+		WriteTimeout:   120 * time.Second,
+		MaxHeaderBytes: 1 << 20,
+	}
+
+	if conf.HTTP.TLS {
+		tlsVar := &tls.Config{
+			// Only use curves which have assembly implementations
+			CurvePreferences: []tls.CurveID{
+				tls.CurveP256,
+				tls.X25519, // Go 1.8 only
+			},
+			MinVersion: tls.VersionTLS12,
+			CipherSuites: []uint16{
+				tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+				tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305, // Go 1.8 only
+				tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,   // Go 1.8 only
+				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			},
+		}
+		httpServer.TLSConfig = tlsVar
+	}
+
+	return httpServer
+}
+
+func Referral(ctx *gin.Context) string {
+	referralURL, found := ctx.GetQuery("return_url")
+	if !found {
+		referralURL = "/"
+	}
+
+	return referralURL
 }
