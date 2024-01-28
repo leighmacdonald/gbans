@@ -1,4 +1,4 @@
-package activity
+package forum
 
 import (
 	"context"
@@ -6,20 +6,16 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"go.uber.org/zap"
 )
 
 type Tracker struct {
-	activityMu *sync.RWMutex
+	activityMu sync.RWMutex
 	activity   []domain.ForumActivity
-	log        *zap.Logger
 }
 
-func NewTracker(log *zap.Logger) *Tracker {
+func NewTracker() *Tracker {
 	return &Tracker{
-		activityMu: &sync.RWMutex{},
-		activity:   make([]domain.ForumActivity, 0),
-		log:        log.Named("Tracker"),
+		activity: make([]domain.ForumActivity, 0),
 	}
 }
 
@@ -56,8 +52,6 @@ func (tracker *Tracker) Start(ctx context.Context) {
 
 			for _, entry := range tracker.activity {
 				if entry.Expired() {
-					tracker.log.Debug("Player forum activity expired", zap.Int64("steam_id", entry.Person.SteamID.Int64()))
-
 					continue
 				}
 

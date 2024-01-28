@@ -1,48 +1,55 @@
 package usecase
 
 import (
-	"crypto/sha256"
+	"context"
 	"errors"
 	"fmt"
-	"github.com/getsentry/sentry-go"
-	sentrygin "github.com/getsentry/sentry-go/gin"
-	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/pkg/util"
-	"github.com/leighmacdonald/steamid/v3/steamid"
-	"go.uber.org/zap"
 	"net"
 	"net/http"
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/getsentry/sentry-go"
+	sentrygin "github.com/getsentry/sentry-go/gin"
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/leighmacdonald/gbans/internal/auth"
+	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/pkg/util"
+	"github.com/leighmacdonald/steamid/v3/steamid"
+	"go.uber.org/zap"
 )
 
 const ctxKeyUserProfile = "user_profile"
 
-const (
-	authTokenDuration    = time.Minute * 15
-	refreshTokenDuration = time.Hour * 24 * 31
-)
-
 type authUsecase struct {
-	configUsecase domain.ConfigUsecase
-	personUsecase domain.PersonUsecase
-	banUsecase    domain.BanUsecase
-	serverUsecase domain.ServersUsecase
-	log           *zap.Logger
+	authRepository domain.AuthRepository
+	configUsecase  domain.ConfigUsecase
+	personUsecase  domain.PersonUsecase
+	banUsecase     domain.BanUsecase
+	serverUsecase  domain.ServersUsecase
+	log            *zap.Logger
 }
 
-func NewAuthUsecase(log *zap.Logger, cu domain.ConfigUsecase, pu domain.PersonUsecase, bu domain.BanUsecase, su domain.ServersUsecase) domain.AuthUsecase {
+func NewAuthUsecase(log *zap.Logger, au domain.AuthRepository, cu domain.ConfigUsecase, pu domain.PersonUsecase,
+	bu domain.BanUsecase, su domain.ServersUsecase) domain.AuthUsecase {
 	return &authUsecase{
-		configUsecase: cu,
-		personUsecase: pu,
-		banUsecase:    bu,
-		serverUsecase: su,
-		log:           log.Named("auth"),
+		authRepository: au,
+		configUsecase:  cu,
+		personUsecase:  pu,
+		banUsecase:     bu,
+		serverUsecase:  su,
+		log:            log.Named("auth"),
 	}
+}
+
+func (u *authUsecase) DeletePersonAuth(ctx context.Context, authID int64) error {
+	return u.authRepository.DeletePersonAuth(ctx, authID)
+}
+
+func (u *authUsecase) GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *domain.PersonAuth) error {
+	return u.authRepository.GetPersonAuthByRefreshToken(ctx, token, auth)
 }
 
 // MakeTokens generates new jwt auth tokens
@@ -54,7 +61,7 @@ func (u *authUsecase) MakeTokens(ctx *gin.Context, cookieKey string, sid steamid
 
 	fingerprint := util.SecureRandomString(40)
 
-	accessToken, errJWT := u.NewUserToken(sid, cookieKey, fingerprint, authTokenDuration)
+	accessToken, errJWT := u.NewUserToken(sid, cookieKey, fingerprint, domain.AuthTokenDuration)
 	if errJWT != nil {
 		return domain.UserTokens{}, errors.Join(errJWT, domain.ErrCreateToken)
 	}
@@ -62,7 +69,7 @@ func (u *authUsecase) MakeTokens(ctx *gin.Context, cookieKey string, sid steamid
 	refreshToken := ""
 
 	if createRefresh {
-		newRefreshToken, errRefresh := u.NewUserToken(sid, cookieKey, fingerprint, refreshTokenDuration)
+		newRefreshToken, errRefresh := u.NewUserToken(sid, cookieKey, fingerprint, domain.RefreshTokenDuration)
 		if errRefresh != nil {
 			return domain.UserTokens{}, errors.Join(errRefresh, domain.ErrRefreshToken)
 		}
@@ -74,7 +81,7 @@ func (u *authUsecase) MakeTokens(ctx *gin.Context, cookieKey string, sid steamid
 
 		personAuth := domain.NewPersonAuth(sid, ipAddr, fingerprint)
 		// TODO move to authUsecase
-		if saveErr := u.personUsecase.SavePersonAuth(ctx, &personAuth); saveErr != nil {
+		if saveErr := u.authRepository.SavePersonAuth(ctx, &personAuth); saveErr != nil {
 			return domain.UserTokens{}, errors.Join(saveErr, domain.ErrSaveToken)
 		}
 
@@ -82,11 +89,12 @@ func (u *authUsecase) MakeTokens(ctx *gin.Context, cookieKey string, sid steamid
 	}
 
 	return domain.UserTokens{
-		access:      accessToken,
-		refresh:     refreshToken,
-		fingerprint: fingerprint,
+		Access:      accessToken,
+		Refresh:     refreshToken,
+		Fingerprint: fingerprint,
 	}, nil
 }
+
 func (u *authUsecase) AuthMiddleware(level domain.Privilege) gin.HandlerFunc {
 	log := u.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
@@ -95,7 +103,7 @@ func (u *authUsecase) AuthMiddleware(level domain.Privilege) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var token string
 
-		hdrToken, errToken := u.tokenFromHeader(ctx, level == domain.PGuest)
+		hdrToken, errToken := u.TokenFromHeader(ctx, level == domain.PGuest)
 		if errToken != nil || hdrToken == "" {
 			ctx.Set(ctxKeyUserProfile, domain.UserProfile{PermissionLevel: domain.PGuest, Name: "Guest"})
 		} else {
@@ -104,7 +112,7 @@ func (u *authUsecase) AuthMiddleware(level domain.Privilege) gin.HandlerFunc {
 			if level >= domain.PGuest {
 				sid, errFromToken := u.Sid64FromJWTToken(token, cookieKey)
 				if errFromToken != nil {
-					if errors.Is(errFromToken, errs.ErrExpired) {
+					if errors.Is(errFromToken, domain.ErrExpired) {
 						ctx.AbortWithStatus(http.StatusUnauthorized)
 
 						return
@@ -132,7 +140,7 @@ func (u *authUsecase) AuthMiddleware(level domain.Privilege) gin.HandlerFunc {
 
 				bannedPerson := domain.NewBannedPerson()
 				if errBan := u.banUsecase.GetBanBySteamID(ctx, sid, &bannedPerson, false); errBan != nil {
-					if !errors.Is(errBan, errs.ErrNoResult) {
+					if !errors.Is(errBan, domain.ErrNoResult) {
 						log.Error("Failed to fetch authed user ban", zap.Error(errBan))
 					}
 				}
@@ -168,7 +176,7 @@ func (u *authUsecase) AuthMiddleware(level domain.Privilege) gin.HandlerFunc {
 		ctx.Next()
 	}
 }
-func (u *authUsecase) makeGetTokenKey(cookieKey string) func(_ *jwt.Token) (any, error) {
+func (u *authUsecase) MakeGetTokenKey(cookieKey string) func(_ *jwt.Token) (any, error) {
 	return func(_ *jwt.Token) (any, error) {
 		return []byte(cookieKey), nil
 	}
@@ -200,7 +208,7 @@ func (u *authUsecase) AuthServerMiddleWare() gin.HandlerFunc {
 
 		claims := &domain.ServerAuthClaims{}
 
-		parsedToken, errParseClaims := jwt.ParseWithClaims(reqAuthHeader, claims, u.makeGetTokenKey(cookieKey))
+		parsedToken, errParseClaims := jwt.ParseWithClaims(reqAuthHeader, claims, u.MakeGetTokenKey(cookieKey))
 		if errParseClaims != nil {
 			if errors.Is(errParseClaims, jwt.ErrSignatureInvalid) {
 				log.Error("jwt signature invalid!", zap.Error(errParseClaims))
@@ -255,7 +263,7 @@ func (u *authUsecase) NewUserToken(steamID steamid.SID64, cookieKey string, user
 	nowTime := time.Now()
 
 	claims := domain.UserAuthClaims{
-		Fingerprint: fingerprintHash(userContext),
+		Fingerprint: auth.FingerprintHash(userContext),
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    "gbans",
 			Subject:   steamID.String(),
@@ -278,7 +286,7 @@ type authHeader struct {
 	Authorization string `header:"Authorization"`
 }
 
-func (u *authUsecase) tokenFromHeader(ctx *gin.Context, emptyOK bool) (string, error) {
+func (u *authUsecase) TokenFromHeader(ctx *gin.Context, emptyOK bool) (string, error) {
 	hdr := authHeader{}
 	if errBind := ctx.ShouldBindHeader(&hdr); errBind != nil {
 		return "", errors.Join(errBind, domain.ErrAuthHeader)
@@ -301,33 +309,27 @@ func (u *authUsecase) tokenFromHeader(ctx *gin.Context, emptyOK bool) (string, e
 func (u *authUsecase) Sid64FromJWTToken(token string, cookieKey string) (steamid.SID64, error) {
 	claims := &jwt.RegisteredClaims{}
 
-	tkn, errParseClaims := jwt.ParseWithClaims(token, claims, u.makeGetTokenKey(cookieKey))
+	tkn, errParseClaims := jwt.ParseWithClaims(token, claims, u.MakeGetTokenKey(cookieKey))
 	if errParseClaims != nil {
 		if errors.Is(errParseClaims, jwt.ErrSignatureInvalid) {
-			return "", errs.ErrAuthentication
+			return "", domain.ErrAuthentication
 		}
 
 		if errors.Is(errParseClaims, jwt.ErrTokenExpired) {
-			return "", errs.ErrExpired
+			return "", domain.ErrExpired
 		}
 
-		return "", errs.ErrAuthentication
+		return "", domain.ErrAuthentication
 	}
 
 	if !tkn.Valid {
-		return "", errs.ErrAuthentication
+		return "", domain.ErrAuthentication
 	}
 
 	sid := steamid.New(claims.Subject)
 	if !sid.Valid() {
-		return "", errs.ErrAuthentication
+		return "", domain.ErrAuthentication
 	}
 
 	return sid, nil
-}
-
-func fingerprintHash(fingerprint string) string {
-	hasher := sha256.New()
-
-	return fmt.Sprintf("%x", hasher.Sum([]byte(fingerprint)))
 }

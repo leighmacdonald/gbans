@@ -8,7 +8,6 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/avatar"
-	"github.com/leighmacdonald/gbans/internal/errs"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 )
@@ -34,16 +33,11 @@ type PersonUsecase interface {
 	GetPersonMessageContext(ctx context.Context, serverID int, messageID int64, paddedMessageCount int) ([]QueryChatHistoryResult, error)
 	GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, limit uint64) (PersonConnections, error)
 	AddConnectionHistory(ctx context.Context, conn *PersonConnection) error
-	GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *PersonAuth) error
-	SavePersonAuth(ctx context.Context, auth *PersonAuth) error
-	DeletePersonAuth(ctx context.Context, authID int64) error
-	PrunePersonAuth(ctx context.Context) error
 	SendNotification(ctx context.Context, targetID steamid.SID64, severity NotificationSeverity, message string, link string) error
 	GetPersonNotifications(ctx context.Context, filters NotificationQuery) ([]UserNotification, int64, error)
 	GetSteamIdsAbove(ctx context.Context, privilege Privilege) (steamid.Collection, error)
 	GetPersonSettings(ctx context.Context, steamID steamid.SID64, settings *PersonSettings) error
 	SavePersonSettings(ctx context.Context, settings *PersonSettings) error
-	GetPlayerMostRecentIP(ctx context.Context, steamID steamid.SID64) net.IP
 	SetSteam(ctx context.Context, sid64 steamid.SID64, discordID string) error
 }
 
@@ -63,10 +57,6 @@ type PersonRepository interface {
 	GetPersonMessageContext(ctx context.Context, serverID int, messageID int64, paddedMessageCount int) ([]QueryChatHistoryResult, error)
 	GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, limit uint64) (PersonConnections, error)
 	AddConnectionHistory(ctx context.Context, conn *PersonConnection) error
-	GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *PersonAuth) error
-	SavePersonAuth(ctx context.Context, auth *PersonAuth) error
-	DeletePersonAuth(ctx context.Context, authID int64) error
-	PrunePersonAuth(ctx context.Context) error
 	SendNotification(ctx context.Context, targetID steamid.SID64, severity NotificationSeverity, message string, link string) error
 	GetPersonNotifications(ctx context.Context, filters NotificationQuery) ([]UserNotification, int64, error)
 	GetSteamIdsAbove(ctx context.Context, privilege Privilege) (steamid.Collection, error)
@@ -96,11 +86,11 @@ func (t StringSID) SID64(ctx context.Context) (steamid.SID64, error) {
 	// TODO cache this as it can be a huge hot path
 	sid64, errResolveSID := steamid.ResolveSID64(resolveCtx, string(t))
 	if errResolveSID != nil {
-		return "", errs.ErrInvalidSID
+		return "", ErrInvalidSID
 	}
 
 	if !sid64.Valid() {
-		return "", errs.ErrInvalidSID
+		return "", ErrInvalidSID
 	}
 
 	return sid64, nil

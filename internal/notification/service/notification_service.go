@@ -1,11 +1,12 @@
 package service
 
 import (
+	"net/http"
+	"runtime"
+
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
-	"net/http"
-	"runtime"
 )
 
 func onAPICurrentProfileNotifications() gin.HandlerFunc {

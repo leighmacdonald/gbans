@@ -13,9 +13,9 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/log"
-	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/spf13/cobra"
@@ -52,7 +52,7 @@ func importConnectionsCmd() *cobra.Command {
 				}
 			}()
 
-			database := store.New(rootLogger, conf.DB.DSN, conf.DB.AutoMigrate, conf.DB.LogQueries)
+			database := database.New(rootLogger, conf.DB.DSN, conf.DB.AutoMigrate, conf.DB.LogQueries)
 			if errConnect := database.Connect(rootCtx); errConnect != nil {
 				rootLogger.Fatal("Cannot initialize database", zap.Error(errConnect))
 			}
@@ -186,7 +186,7 @@ func importMessagesCmd() *cobra.Command {
 				}
 			}()
 
-			database := store.New(rootLogger, conf.DB.DSN, conf.DB.AutoMigrate, conf.DB.LogQueries)
+			database := database.New(rootLogger, conf.DB.DSN, conf.DB.AutoMigrate, conf.DB.LogQueries)
 			if errConnect := database.Connect(rootCtx); errConnect != nil {
 				rootLogger.Fatal("Cannot initialize database", zap.Error(errConnect))
 			}

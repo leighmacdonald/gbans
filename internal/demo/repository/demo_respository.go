@@ -3,19 +3,19 @@ package repository
 import (
 	"context"
 	"errors"
+	"strings"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/store"
-	"strings"
 )
 
 type demoRepository struct {
-	db store.Database
+	db database.Database
 }
 
-func NewDemoRepository(database store.Database) domain.DemoRepository {
+func NewDemoRepository(database database.Database) domain.DemoRepository {
 	return &demoRepository{db: database}
 }
 
@@ -286,12 +286,4 @@ func (r *demoRepository) DropDemo(ctx context.Context, demoFile *domain.DemoFile
 	demoFile.DemoID = 0
 
 	return nil
-}
-
-func (r *demoRepository) SaveAsset(ctx context.Context, asset *domain.Asset) error {
-	return r.db.DBErr(r.db.ExecInsertBuilder(ctx, r.db.
-		Builder().
-		Insert("asset").
-		Columns("asset_id", "bucket", "path", "name", "mime_type", "size", "old_id").
-		Values(asset.AssetID, asset.Bucket, asset.Path, asset.Name, asset.MimeType, asset.Size, asset.OldID)))
 }

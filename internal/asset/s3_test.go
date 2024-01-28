@@ -1,4 +1,4 @@
-package s3_test
+package asset_test
 
 import (
 	"context"
@@ -10,13 +10,13 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/leighmacdonald/gbans/internal/s3"
+	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
 
 func TestS3Client(t *testing.T) {
-	client, errClient := s3.NewS3Client(
+	client, errClient := asset.NewS3Client(
 		zap.NewNop(),
 		"localhost:9000",
 		"gbans-test-key",
@@ -39,7 +39,7 @@ func TestS3Client(t *testing.T) {
 	testFile, errOpen := os.Open("../../testdata/gopher.webp")
 	require.NoError(t, errOpen, "Failed to open test image")
 
-	name, mimeType, size, errGen := s3.GenerateFileMeta(testFile, randID.String())
+	name, mimeType, size, errGen := asset.GenerateFileMeta(testFile, randID.String())
 	require.NoError(t, errGen)
 
 	_, errSeek := testFile.Seek(0, 0)

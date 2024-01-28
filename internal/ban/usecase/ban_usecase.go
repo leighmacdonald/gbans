@@ -3,15 +3,16 @@ package usecase
 import (
 	"context"
 	"errors"
+	"net"
+	"strconv"
+	"time"
+
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"go.uber.org/zap"
-	"net"
-	"strconv"
-	"time"
 )
 
 type banUsecase struct {

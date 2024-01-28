@@ -3,12 +3,12 @@ package domain
 import (
 	"context"
 	"fmt"
-	"github.com/leighmacdonald/gbans/pkg/fp"
 	"math"
 	"sort"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"golang.org/x/exp/slices"
@@ -30,7 +30,6 @@ type MatchRepository interface {
 	GetWeaponByKey(ctx context.Context, key logparse.Weapon, weapon *Weapon) error
 	GetWeaponByID(ctx context.Context, weaponID int, weapon *Weapon) error
 	LoadWeapons(ctx context.Context, weaponMap fp.MutexMap[logparse.Weapon, int]) error
-
 	WeaponsOverallTopPlayers(ctx context.Context, weaponID int) ([]PlayerWeaponResult, error)
 	WeaponsOverallByPlayer(ctx context.Context, steamID steamid.SID64) ([]WeaponsOverallResult, error)
 	PlayersOverallByKills(ctx context.Context, count int) ([]PlayerWeaponResult, error)
@@ -61,6 +60,8 @@ type MatchUsecase interface {
 	PlayerOverallClassStats(ctx context.Context, steamID steamid.SID64) ([]PlayerClassOverallResult, error)
 	PlayerOverallStats(ctx context.Context, steamID steamid.SID64, por *PlayerOverallResult) error
 }
+
+const MinMedicHealing = 500
 
 type MatchPlayerKillstreak struct {
 	MatchKillstreakID int64                `json:"match_killstreak_id"`

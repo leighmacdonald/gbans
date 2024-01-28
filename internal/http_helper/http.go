@@ -1,8 +1,8 @@
-package api
+package http_helper
 
 import (
 	"context"
-	"github.com/leighmacdonald/gbans/internal/middleware"
+	"errors"
 	"net/http"
 	"path/filepath"
 	"runtime"
@@ -12,21 +12,11 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/unrolled/secure"
 	"github.com/unrolled/secure/cspbuilder"
 	"go.uber.org/zap"
 )
-
-func prometheusHandler() gin.HandlerFunc {
-	h := promhttp.Handler()
-
-	return func(ctx *gin.Context) {
-		h.ServeHTTP(ctx.Writer, ctx.Request)
-	}
-}
 
 func httpErrorHandler(logger *zap.Logger) gin.HandlerFunc {
 	log := logger.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
@@ -40,7 +30,7 @@ func httpErrorHandler(logger *zap.Logger) gin.HandlerFunc {
 	}
 }
 
-func useSecure(mode config.RunMode, cspOrigin string) gin.HandlerFunc {
+func useSecure(mode domain.RunMode, cspOrigin string) gin.HandlerFunc {
 	cspBuilder := cspbuilder.Builder{
 		Directives: map[string][]string{
 			cspbuilder.DefaultSrc: {"'self'", cspOrigin},
@@ -56,7 +46,7 @@ func useSecure(mode config.RunMode, cspOrigin string) gin.HandlerFunc {
 		FrameDeny:             true,
 		ContentTypeNosniff:    true,
 		ContentSecurityPolicy: cspBuilder.MustBuild(),
-		IsDevelopment:         mode != config.ReleaseMode,
+		IsDevelopment:         mode != domain.ReleaseMode,
 	})
 
 	secureFunc := func(ctx *gin.Context) {
@@ -91,8 +81,51 @@ type jsConfig struct {
 	SentryDSN    string `json:"sentry_dsn"`
 }
 
+func ErrorHandled(ctx *gin.Context, err error) error {
+	if err != nil {
+		return nil
+	}
+
+	if errors.Is(err, domain.ErrPermissionDenied) {
+		HandleErrPermissionDenied(ctx)
+	} else if errors.Is(err, domain.ErrNoResult) {
+		HandleErrNotFound(ctx)
+	} else if errors.Is(err, domain.ErrBadRequest) {
+		HandleErrBadRequest(ctx)
+	} else if errors.Is(err, domain.ErrDuplicate) {
+		HandleErrDuplicate(ctx)
+	} else if errors.Is(err, domain.ErrInvalidFormat) {
+		HandleErrInvalidFormat(ctx)
+	} else {
+		HandleErrInternal(ctx)
+	}
+
+	return err
+}
+
+func HandleErrPermissionDenied(ctx *gin.Context) {
+	ResponseErr(ctx, http.StatusForbidden, domain.ErrPermissionDenied)
+}
+func HandleErrNotFound(ctx *gin.Context) {
+	ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
+}
+func HandleErrBadRequest(ctx *gin.Context) {
+	ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+}
+func HandleErrInternal(ctx *gin.Context) {
+	ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+}
+
+func HandleErrDuplicate(ctx *gin.Context) {
+	ResponseErr(ctx, http.StatusConflict, domain.ErrDuplicate)
+}
+
+func HandleErrInvalidFormat(ctx *gin.Context) {
+	ResponseErr(ctx, http.StatusUnsupportedMediaType, domain.ErrInvalidFormat)
+}
+
 //nolint:contextcheck,maintidx
-func createRouter(ctx context.Context, env Env) *gin.Engine {
+func createRouter(ctx context.Context) *gin.Engine {
 	engine := gin.New()
 	engine.MaxMultipartMemory = 8 << 24
 	engine.Use(gin.Recovery())
@@ -185,13 +218,13 @@ func createRouter(ctx context.Context, env Env) *gin.Engine {
 	//engine.GET("/auth/callback", middleware.onOpenIDCallback(env))
 	//engine.GET("/export/bans/tf2bd", onAPIExportBansTF2BD(env))
 	//engine.GET("/export/bans/valve/steamid", onAPIExportBansValveSteamID(env))
-	engine.GET("/metrics", prometheusHandler())
+	//engine.GET("/metrics", prometheusHandler())
 
-	engine.GET("/api/profile", onAPIProfile(env))
+	//engine.GET("/api/profile", onAPIProfile(env))
 	// engine.GET("/api/servers/state", onAPIGetServerStates(env))
 	//engine.GET("/api/stats", onAPIGetStats(env))
 
-	engine.POST("/api/news_latest", onAPIGetNewsLatest(env))
+	//engine.POST("/api/news_latest", onAPIGetNewsLatest(env))
 
 	engine.GET("/api/patreon/campaigns", onAPIGetPatreonCampaigns(env))
 
@@ -199,11 +232,7 @@ func createRouter(ctx context.Context, env Env) *gin.Engine {
 	// engine.GET("/api/servers", onAPIGetServers(env))
 
 	engine.GET("/api/stats/map", onAPIGetMapUsage(env))
-	engine.POST("/api/demos", onAPIPostDemosQuery(env))
-
-	// Service discovery endpoints
-	engine.GET("/api/sd/prometheus/hosts", onAPIGetPrometheusHosts(env))
-	engine.GET("/api/sd/ansible/hosts", onAPIGetPrometheusHosts(env))
+	//engine.POST("/api/demos", onAPIPostDemosQuery(env))
 
 	// Game server plugin routes
 	// engine.POST("/api/server/auth", onSAPIPostServerAuth(env))
@@ -212,7 +241,7 @@ func createRouter(ctx context.Context, env Env) *gin.Engine {
 
 	engine.GET("/api/forum/active_users", onAPIActiveUsers(env))
 
-	engine.POST("/api/auth/refresh", onTokenRefresh(env))
+	//engine.POST("/api/auth/refresh", onTokenRefresh(env))
 
 	// This allows use of the user profile on endpoints that have optional authentication
 	optionalAuth := engine.Group("/")
@@ -235,15 +264,15 @@ func createRouter(ctx context.Context, env Env) *gin.Engine {
 		// Basic logged-in user
 		authed := authedGrp.Use(middleware.authMiddleware(env, domain.PUser))
 
-		authed.GET("/api/auth/discord", onOAuthDiscordCallback(env))
-		authed.GET("/api/auth/logout", onAPILogout(env))
+		//authed.GET("/api/auth/discord", onOAuthDiscordCallback(env))
+		//authed.GET("/api/auth/logout", onAPILogout(env))
 		authed.POST("/api/current_profile/notifications", onAPICurrentProfileNotifications(env))
 
 		authed.POST("/api/report", onAPIPostReportCreate(env))
 		authed.GET("/api/report/:report_id", onAPIGetReport(env))
 		authed.POST("/api/reports", onAPIGetReports(env))
 		authed.POST("/api/report_status/:report_id", onAPISetReportStatus(env))
-		authed.POST("/api/media", onAPISaveMedia(env))
+		//authed.POST("/api/media", onAPISaveMedia(env))
 
 		authed.GET("/api/report/:report_id/messages", onAPIGetReportMessages(env))
 		authed.POST("/api/report/:report_id/messages", onAPIPostReportMessage(env))
@@ -258,7 +287,7 @@ func createRouter(ctx context.Context, env Env) *gin.Engine {
 
 		//authed.GET("/api/log/:match_id", onAPIGetMatch(env))
 		//authed.POST("/api/logs", onAPIGetMatches(env))
-		authed.POST("/api/messages", onAPIQueryMessages(env))
+		//authed.POST("/api/messages", onAPIQueryMessages(env))
 
 		//authed.GET("/api/stats/weapons", onAPIGetStatsWeaponsOverall(ctx, env))
 		//authed.GET("/api/stats/weapon/:weapon_id", onAPIGetsStatsWeapon(env))
@@ -286,9 +315,9 @@ func createRouter(ctx context.Context, env Env) *gin.Engine {
 		// Editor access
 		editorRoute := editorGrp.Use(middleware.authMiddleware(env, domain.PEditor))
 		// editorRoute.POST("/api/wiki/slug", onAPISaveWikiSlug(env))
-		editorRoute.POST("/api/news", onAPIPostNewsCreate(env))
-		editorRoute.POST("/api/news/:news_id", onAPIPostNewsUpdate(env))
-		editorRoute.POST("/api/news_all", onAPIGetNewsAll(env))
+		//editorRoute.POST("/api/news", onAPIPostNewsCreate(env))
+		//editorRoute.POST("/api/news/:news_id", onAPIPostNewsUpdate(env))
+		//editorRoute.POST("/api/news_all", onAPIGetNewsAll(env))
 		//editorRoute.POST("/api/filters/query", onAPIQueryWordFilters(env))
 		//editorRoute.GET("/api/filters/state", onAPIGetWarningState(env))
 		//editorRoute.POST("/api/filters", onAPIPostWordFilter(env))
@@ -304,7 +333,7 @@ func createRouter(ctx context.Context, env Env) *gin.Engine {
 		modRoute := modGrp.Use(middleware.authMiddleware(env, domain.PModerator))
 		modRoute.POST("/api/report/:report_id/state", onAPIPostBanState(env))
 		modRoute.POST("/api/connections", onAPIQueryPersonConnections(env))
-		modRoute.GET("/api/message/:person_message_id/context/:padding", onAPIQueryMessageContext(env))
+		//modRoute.GET("/api/message/:person_message_id/context/:padding", onAPIQueryMessageContext(env))
 		modRoute.POST("/api/appeals", onAPIGetAppeals(env))
 
 		//modRoute.POST("/api/bans/steam", onAPIGetBansSteam(env))
@@ -323,10 +352,10 @@ func createRouter(ctx context.Context, env Env) *gin.Engine {
 		//modRoute.DELETE("/api/bans/asn/:asn_id", onAPIDeleteBansASN(env))
 		//modRoute.POST("/api/bans/asn/:asn_id", onAPIPostBansASNUpdate(env))
 
-		modRoute.POST("/api/bans/group/create", onAPIPostBansGroupCreate(env))
-		modRoute.POST("/api/bans/group", onAPIGetBansGroup(env))
-		modRoute.DELETE("/api/bans/group/:ban_group_id", onAPIDeleteBansGroup(env))
-		modRoute.POST("/api/bans/group/:ban_group_id", onAPIPostBansGroupUpdate(env))
+		//modRoute.POST("/api/bans/group/create", onAPIPostBansGroupCreate(env))
+		//modRoute.POST("/api/bans/group", onAPIGetBansGroup(env))
+		//modRoute.DELETE("/api/bans/group/:ban_group_id", onAPIDeleteBansGroup(env))
+		//modRoute.POST("/api/bans/group/:ban_group_id", onAPIPostBansGroupUpdate(env))
 
 		modRoute.GET("/api/patreon/pledges", onAPIGetPatreonPledges(env))
 

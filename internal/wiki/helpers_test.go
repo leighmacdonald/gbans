@@ -3,7 +3,7 @@ package wiki_test
 import (
 	"testing"
 
-	"github.com/leighmacdonald/gbans/pkg/wiki"
+	"github.com/leighmacdonald/gbans/internal/wiki"
 	"github.com/stretchr/testify/require"
 )
 

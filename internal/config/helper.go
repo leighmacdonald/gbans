@@ -3,14 +3,15 @@ package config
 import (
 	"errors"
 	"fmt"
+	"reflect"
+	"strings"
+
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/mitchellh/go-homedir"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
-	"reflect"
-	"strings"
 )
 
 // decodeDuration automatically parses the string duration type (1s,1m,1h,etc.) into a real time.Duration type.

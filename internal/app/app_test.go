@@ -21,8 +21,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/api"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/state"
-	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
@@ -104,7 +104,7 @@ func TestApp(t *testing.T) {
 		t.Skipf("Failed to bring up testcontainer db: %v", errDB)
 	}
 
-	database := store.New(zap.NewNop(), dsn, true, false)
+	database := database.New(zap.NewNop(), dsn, true, false)
 	if dbErr := database.Connect(ctx); dbErr != nil {
 		t.Fatalf("Failed to setup db: %v", dbErr)
 	}
@@ -147,7 +147,7 @@ func testServerAPI(app *App) func(t *testing.T) {
 	return func(t *testing.T) {
 		ctx := context.Background()
 		httpServer := api.newHTTPServer(ctx, app)
-		testServer := store.NewServer("test-1", "127.0.0.1", 27015)
+		testServer := database.NewServer("test-1", "127.0.0.1", 27015)
 		testServer.Name = "Test Instance"
 		require.NoError(t, app.db.SaveServer(ctx, &testServer))
 		token, errToken := api.newServerToken(testServer.ServerID, app.Config().HTTP.CookieKey)
@@ -200,7 +200,7 @@ func testServerAPI(app *App) func(t *testing.T) {
 			w := httptest.NewRecorder()
 			httpServer.Handler.ServeHTTP(w, req)
 			require.Equal(t, http.StatusOK, w.Code)
-			var perms []store.ServerPermission
+			var perms []database.ServerPermission
 			require.NoError(t, decodeTestResponse(w.Result(), &perms))
 			require.True(t, len(perms) >= 1)
 			ownerFound := false
@@ -216,12 +216,12 @@ func testServerAPI(app *App) func(t *testing.T) {
 		t.Run("sm_ban", func(t *testing.T) {
 			t.Parallel()
 			req := newTestReq(http.MethodPost, "/api/sm/bans/steam/create", api.apiBanRequest{
-				SourceID:       store.StringSID(app.Config().General.Owner.String()),
-				TargetID:       store.StringSID(testBaddie),
+				SourceID:       database.StringSID(app.Config().General.Owner.String()),
+				TargetID:       database.StringSID(testBaddie),
 				Duration:       "custom",
 				ValidUntil:     time.Now().Add(time.Hour * 11),
-				BanType:        store.Banned,
-				Reason:         store.Custom,
+				BanType:        database.Banned,
+				Reason:         database.Custom,
 				ReasonText:     "Custom reason value",
 				Note:           "A moderator note",
 				ReportID:       0,
@@ -232,7 +232,7 @@ func testServerAPI(app *App) func(t *testing.T) {
 			w := httptest.NewRecorder()
 			httpServer.Handler.ServeHTTP(w, req)
 			require.Equal(t, http.StatusCreated, w.Code)
-			var banSteam store.BanSteam
+			var banSteam database.BanSteam
 			require.NoError(t, decodeTestResponse(w.Result(), &banSteam))
 			require.True(t, banSteam.BanID > 0)
 		})
@@ -240,10 +240,10 @@ func testServerAPI(app *App) func(t *testing.T) {
 		t.Run("sm_report", func(t *testing.T) {
 			t.Parallel()
 			req := newTestReq(http.MethodPost, "/api/sm/report/create", api.apiCreateReportReq{
-				SourceID:        store.StringSID(app.Config().General.Owner.String()),
-				TargetID:        store.StringSID(testBaddie),
+				SourceID:        database.StringSID(app.Config().General.Owner.String()),
+				TargetID:        database.StringSID(testBaddie),
 				Description:     "User report message",
-				Reason:          store.Custom,
+				Reason:          database.Custom,
 				ReasonText:      "Custom reason value",
 				DemoName:        "",
 				DemoTick:        0,
@@ -252,7 +252,7 @@ func testServerAPI(app *App) func(t *testing.T) {
 			w := httptest.NewRecorder()
 			httpServer.Handler.ServeHTTP(w, req)
 			require.Equal(t, http.StatusCreated, w.Code)
-			var report store.Report
+			var report database.Report
 			require.NoError(t, decodeTestResponse(w.Result(), &report))
 			require.True(t, report.ReportID > 0)
 		})
@@ -332,7 +332,7 @@ func testServerAPI(app *App) func(t *testing.T) {
 			demoFileName := "test-file.dem"
 			stats, errStats := json.Marshal(gin.H{"76561198084134025": gin.H{"score": 0, "deaths": 0, "score_total": 0}})
 			require.NoError(t, errStats)
-			testDemoData := []byte(store.SecureRandomString(10000))
+			testDemoData := []byte(database.SecureRandomString(10000))
 			compressedBody, errCompress := compressReaderBytes(zap.NewNop(), demoFileName, testDemoData, stats)
 			require.NoError(t, errCompress)
 			var (

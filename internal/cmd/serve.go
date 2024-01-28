@@ -10,10 +10,10 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/leighmacdonald/gbans/internal/app"
+	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/log"
-	"github.com/leighmacdonald/gbans/internal/s3"
-	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -52,7 +52,7 @@ func serveCmd() *cobra.Command {
 				defer sentryClient.Flush(2 * time.Second)
 			}
 
-			database := store.New(rootLogger, conf.DB.DSN, conf.DB.AutoMigrate, conf.DB.LogQueries)
+			database := database.New(rootLogger, conf.DB.DSN, conf.DB.AutoMigrate, conf.DB.LogQueries)
 			if errConnect := database.Connect(rootCtx); errConnect != nil {
 				rootLogger.Fatal("Cannot initialize database", zap.Error(errConnect))
 			}
@@ -68,7 +68,7 @@ func serveCmd() *cobra.Command {
 				rootLogger.Fatal("Failed to connect to perform initial discord connection")
 			}
 
-			s3Client, errClient := s3.NewS3Client(rootLogger, conf.S3.Endpoint, conf.S3.AccessKey, conf.S3.SecretKey, conf.S3.SSL, conf.S3.Region)
+			s3Client, errClient := asset.NewS3Client(rootLogger, conf.S3.Endpoint, conf.S3.AccessKey, conf.S3.SecretKey, conf.S3.SSL, conf.S3.Region)
 			if errClient != nil {
 				rootLogger.Fatal("Failed to setup S3 client", zap.Error(errClient))
 			}

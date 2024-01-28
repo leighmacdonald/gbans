@@ -3,9 +3,8 @@ package usecase
 import (
 	"context"
 	"errors"
-	"github.com/leighmacdonald/gbans/internal/discord"
-	"github.com/leighmacdonald/gbans/internal/errs"
 
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 )
 
@@ -21,8 +20,8 @@ func NewWordFilterUsecase(wfr domain.WordFilterRepository, duc domain.DiscordUse
 // FilterAdd creates a new chat filter using a regex pattern.
 func (w *wordfilterUsecase) FilterAdd(ctx context.Context, filter *domain.Filter) error {
 	if errSave := w.wfr.SaveFilter(ctx, filter); errSave != nil {
-		if errors.Is(errSave, errs.ErrDuplicate) {
-			return errs.ErrDuplicate
+		if errors.Is(errSave, domain.ErrDuplicate) {
+			return domain.ErrDuplicate
 		}
 
 		// env.Log().Error("Error saving filter word", zap.Error(errSave))

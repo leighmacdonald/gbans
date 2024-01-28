@@ -9,6 +9,8 @@ import (
 )
 
 type ForumRepository interface {
+	Current() []ForumActivity
+	Touch(up UserProfile)
 	ForumCategories(ctx context.Context) ([]ForumCategory, error)
 	ForumCategorySave(ctx context.Context, category *ForumCategory) error
 	ForumCategory(ctx context.Context, categoryID int, category *ForumCategory) error
@@ -33,6 +35,8 @@ type ForumRepository interface {
 }
 
 type ForumUsecase interface {
+	Current() []ForumActivity
+	Touch(up UserProfile)
 	ForumCategories(ctx context.Context) ([]ForumCategory, error)
 	ForumCategorySave(ctx context.Context, category *ForumCategory) error
 	ForumCategory(ctx context.Context, categoryID int, category *ForumCategory) error

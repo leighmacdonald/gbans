@@ -14,11 +14,11 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
 	"github.com/leighmacdonald/gbans/internal/state"
-	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/util"
@@ -372,7 +372,7 @@ func onUnbanASN(ctx context.Context, env *App, _ *discordgo.Session, interaction
 	return discord.UnbanASNMessage(asNum, asnNetworks), nil
 }
 
-func getDiscordAuthor(ctx context.Context, db store.Stores, interaction *discordgo.InteractionCreate) (domain.Person, error) {
+func getDiscordAuthor(ctx context.Context, db database.Stores, interaction *discordgo.InteractionCreate) (domain.Person, error) {
 	author := domain.NewPerson("")
 	if errPersonByDiscordID := db.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID, &author); errPersonByDiscordID != nil {
 		if errors.Is(errPersonByDiscordID, errs.ErrNoResult) {

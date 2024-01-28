@@ -3,23 +3,24 @@ package repository
 import (
 	"context"
 	"errors"
+
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgx/v5"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
 type matchRepository struct {
-	db store.Database
-	pd domain.PersonRepository
+	db database.Database
+	pu domain.PersonUsecase
 }
 
-func NewMatchRepository(database store.Database, pd domain.PersonRepository) domain.MatchRepository {
-	return &matchRepository{db: database, pd: pd}
+func NewMatchRepository(database database.Database, pu domain.PersonUsecase) domain.MatchRepository {
+	return &matchRepository{db: database, pu: pu}
 }
 
 func (r *matchRepository) Matches(ctx context.Context, opts domain.MatchesQueryOpts) ([]domain.MatchSummary, int64, error) {
@@ -526,8 +527,6 @@ func (r *matchRepository) MatchGetByID(ctx context.Context, matchID uuid.UUID, m
 	return nil
 }
 
-const MinMedicHealing = 500
-
 func (r *matchRepository) MatchSave(ctx context.Context, match *logparse.Match, weaponMap fp.MutexMap[logparse.Weapon, int]) error {
 	const (
 		query = `
@@ -560,7 +559,7 @@ func (r *matchRepository) MatchSave(ctx context.Context, match *logparse.Match, 
 		}
 
 		var loadPlayerTest domain.Person
-		if errPlayer := r.pd.GetOrCreatePersonBySteamID(ctx, player.SteamID, &loadPlayerTest); errPlayer != nil {
+		if errPlayer := r.pu.GetOrCreatePersonBySteamID(ctx, player.SteamID, &loadPlayerTest); errPlayer != nil {
 			if errRollback := transaction.Rollback(ctx); errRollback != nil {
 				return errors.Join(errRollback, domain.ErrTxRollback)
 			}
@@ -600,7 +599,7 @@ func (r *matchRepository) MatchSave(ctx context.Context, match *logparse.Match, 
 			return errSave
 		}
 
-		if player.HealingStats != nil && player.HealingStats.Healing >= MinMedicHealing {
+		if player.HealingStats != nil && player.HealingStats.Healing >= domain.MinMedicHealing {
 			if errSave := r.saveMatchMedicStats(ctx, transaction, player.MatchPlayerID, player.HealingStats); errSave != nil {
 				if errRollback := transaction.Rollback(ctx); errRollback != nil {
 					return errors.Join(errRollback, domain.ErrTxRollback)
@@ -938,7 +937,7 @@ func (r *matchRepository) PlayerStats(ctx context.Context, steamID steamid.SID64
 
 	return nil
 }
-func (s Stores) WeaponsOverall(ctx context.Context) ([]domain.WeaponsOverallResult, error) {
+func (r *matchRepository) WeaponsOverall(ctx context.Context) ([]domain.WeaponsOverallResult, error) {
 	const query = `
 		SELECT 
 		    s.weapon_id, s.name, s.key, 
@@ -974,9 +973,9 @@ func (s Stores) WeaponsOverall(ctx context.Context) ([]domain.WeaponsOverallResu
             FROM match_weapon mw
         ) t ;`
 
-	rows, errQuery := s.Query(ctx, query)
+	rows, errQuery := r.db.Query(ctx, query)
 	if errQuery != nil {
-		return nil, errs.DBErr(errQuery)
+		return nil, r.db.DBErr(errQuery)
 	}
 	defer rows.Close()
 
@@ -993,7 +992,7 @@ func (s Stores) WeaponsOverall(ctx context.Context) ([]domain.WeaponsOverallResu
 				&wor.Shots, &wor.ShotsPct,
 				&wor.Hits, &wor.HitsPct,
 				&wor.Damage, &wor.DamagePct); errScan != nil {
-			return nil, errs.DBErr(errScan)
+			return nil, r.db.DBErr(errScan)
 		}
 
 		results = append(results, wor)
@@ -1002,8 +1001,8 @@ func (s Stores) WeaponsOverall(ctx context.Context) ([]domain.WeaponsOverallResu
 	return results, nil
 }
 
-func (s Stores) WeaponsOverallTopPlayers(ctx context.Context, weaponID int) ([]domain.PlayerWeaponResult, error) {
-	rows, errQuery := s.QueryBuilder(ctx, s.
+func (r *matchRepository) WeaponsOverallTopPlayers(ctx context.Context, weaponID int) ([]domain.PlayerWeaponResult, error) {
+	rows, errQuery := r.db.QueryBuilder(ctx, r.db.
 		Builder().
 		Select("row_number() over (order by SUM(mw.kills) desc nulls last) as rank",
 			"p.steam_id", "p.personaname", "p.avatarhash",
@@ -1021,7 +1020,7 @@ func (s Stores) WeaponsOverallTopPlayers(ctx context.Context, weaponID int) ([]d
 		OrderBy("kills DESC").
 		Limit(250))
 	if errQuery != nil {
-		return nil, errs.DBErr(errQuery)
+		return nil, r.db.DBErr(errQuery)
 	}
 	defer rows.Close()
 
@@ -1039,7 +1038,7 @@ func (s Stores) WeaponsOverallTopPlayers(ctx context.Context, weaponID int) ([]d
 				&pwr.Shots, &pwr.Hits,
 				&pwr.Backstabs, &pwr.Headshots,
 				&pwr.Airshots); errScan != nil {
-			return nil, errs.DBErr(errScan)
+			return nil, r.db.DBErr(errScan)
 		}
 
 		pwr.SteamID = steamid.New(sid64)
@@ -1049,7 +1048,7 @@ func (s Stores) WeaponsOverallTopPlayers(ctx context.Context, weaponID int) ([]d
 	return results, nil
 }
 
-func (s Stores) WeaponsOverallByPlayer(ctx context.Context, steamID steamid.SID64) ([]domain.WeaponsOverallResult, error) {
+func (r *matchRepository) WeaponsOverallByPlayer(ctx context.Context, steamID steamid.SID64) ([]domain.WeaponsOverallResult, error) {
 	const query = `
 		SELECT
 			row_number() over (order by s.kills desc nulls last) as rank,
@@ -1092,9 +1091,9 @@ func (s Stores) WeaponsOverallByPlayer(ctx context.Context, steamID steamid.SID6
 			WHERE mp.steam_id = $1
 		) t`
 
-	rows, errQuery := s.Query(ctx, query, steamID.Int64())
+	rows, errQuery := r.db.Query(ctx, query, steamID.Int64())
 	if errQuery != nil {
-		return nil, errs.DBErr(errQuery)
+		return nil, r.db.DBErr(errQuery)
 	}
 	defer rows.Close()
 
@@ -1112,7 +1111,7 @@ func (s Stores) WeaponsOverallByPlayer(ctx context.Context, steamID steamid.SID6
 				&wor.Shots, &wor.ShotsPct,
 				&wor.Hits, &wor.HitsPct,
 				&wor.Damage, &wor.DamagePct); errScan != nil {
-			return nil, errs.DBErr(errScan)
+			return nil, r.db.DBErr(errScan)
 		}
 
 		results = append(results, wor)
@@ -1121,7 +1120,7 @@ func (s Stores) WeaponsOverallByPlayer(ctx context.Context, steamID steamid.SID6
 	return results, nil
 }
 
-func (s Stores) PlayersOverallByKills(ctx context.Context, count int) ([]domain.PlayerWeaponResult, error) {
+func (r *matchRepository) PlayersOverallByKills(ctx context.Context, count int) ([]domain.PlayerWeaponResult, error) {
 	const query = `SELECT row_number() over (order by c.assists + w.kills desc nulls last) as rank,
 			   p.personaname,
 			   p.steam_id,
@@ -1182,9 +1181,9 @@ func (s Stores) PlayersOverallByKills(ctx context.Context, count int) ([]domain.
 		ORDER BY rank
 		LIMIT $1`
 
-	rows, errQuery := s.Query(ctx, query, count)
+	rows, errQuery := r.db.Query(ctx, query, count)
 	if errQuery != nil {
-		return nil, errs.DBErr(errQuery)
+		return nil, r.db.DBErr(errQuery)
 	}
 	defer rows.Close()
 
@@ -1205,7 +1204,7 @@ func (s Stores) PlayersOverallByKills(ctx context.Context, count int) ([]domain.
 				&wor.Dominated, &wor.Revenges, &wor.Damage, &wor.DamageTaken, &wor.Captures,
 				&wor.CapturesBlocked, &wor.BuildingsDestroyed,
 			); errScan != nil {
-			return nil, errs.DBErr(errScan)
+			return nil, r.db.DBErr(errScan)
 		}
 
 		wor.SteamID = steamid.New(sid64)
@@ -1215,7 +1214,7 @@ func (s Stores) PlayersOverallByKills(ctx context.Context, count int) ([]domain.
 	return results, nil
 }
 
-func (s Stores) HealersOverallByHealing(ctx context.Context, count int) ([]domain.HealingOverallResult, error) {
+func (r *matchRepository) HealersOverallByHealing(ctx context.Context, count int) ([]domain.HealingOverallResult, error) {
 	const query = `
 		SELECT
             row_number() over (order by h.healing desc nulls last) as rank,
@@ -1294,9 +1293,9 @@ func (s Stores) HealersOverallByHealing(ctx context.Context, count int) ([]domai
 		ORDER BY rank
 		LIMIT $1`
 
-	rows, errQuery := s.Query(ctx, query, count)
+	rows, errQuery := r.db.Query(ctx, query, count)
 	if errQuery != nil {
-		return nil, errs.DBErr(errQuery)
+		return nil, r.db.DBErr(errQuery)
 	}
 	defer rows.Close()
 
@@ -1317,7 +1316,7 @@ func (s Stores) HealersOverallByHealing(ctx context.Context, count int) ([]domai
 				&wor.Playtime, &wor.Dominations, &wor.Dominated, &wor.Revenges,
 				&wor.DamageTaken, &wor.DTM, &wor.Wins, &wor.Matches, &wor.WinRate,
 			); errScan != nil {
-			return nil, errs.DBErr(errScan)
+			return nil, r.db.DBErr(errScan)
 		}
 
 		wor.SteamID = steamid.New(sid64)
@@ -1327,7 +1326,7 @@ func (s Stores) HealersOverallByHealing(ctx context.Context, count int) ([]domai
 	return results, nil
 }
 
-func (s Stores) PlayerOverallClassStats(ctx context.Context, steamID steamid.SID64) ([]domain.PlayerClassOverallResult, error) {
+func (r *matchRepository) PlayerOverallClassStats(ctx context.Context, steamID steamid.SID64) ([]domain.PlayerClassOverallResult, error) {
 	const query = `
 		SELECT
 			c.player_class_id,
@@ -1356,9 +1355,9 @@ func (s Stores) PlayerOverallClassStats(ctx context.Context, steamID steamid.SID
 		WHERE mp.steam_id = $1
 		GROUP BY c.player_class_id`
 
-	rows, errQuery := s.Query(ctx, query, steamID.Int64())
+	rows, errQuery := r.db.Query(ctx, query, steamID.Int64())
 	if errQuery != nil {
-		return nil, errs.DBErr(errQuery)
+		return nil, r.db.DBErr(errQuery)
 	}
 	defer rows.Close()
 
@@ -1374,7 +1373,7 @@ func (s Stores) PlayerOverallClassStats(ctx context.Context, steamID steamid.SID
 				&wor.HealingTaken, &wor.Captures, &wor.CapturesBlocked, &wor.BuildingsDestroyed,
 				&wor.KD, &wor.KAD, &wor.DPM,
 			); errScan != nil {
-			return nil, errs.DBErr(errScan)
+			return nil, r.db.DBErr(errScan)
 		}
 
 		results = append(results, wor)
@@ -1383,7 +1382,7 @@ func (s Stores) PlayerOverallClassStats(ctx context.Context, steamID steamid.SID
 	return results, nil
 }
 
-func (s Stores) PlayerOverallStats(ctx context.Context, steamID steamid.SID64, por *domain.PlayerOverallResult) error {
+func (r *matchRepository) PlayerOverallStats(ctx context.Context, steamID steamid.SID64, por *domain.PlayerOverallResult) error {
 	const query = `
 		SELECT coalesce(h.healing, 0),
 			   coalesce(h.drops, 0),
@@ -1476,7 +1475,7 @@ func (s Stores) PlayerOverallStats(ctx context.Context, steamID steamid.SID64, p
 							GROUP BY mp.steam_id) c ON c.steam_id = p.steam_id
 		WHERE p.steam_id = $1`
 
-	if errQuery := s.
+	if errQuery := r.db.
 		QueryRow(ctx, query, steamID.Int64()).Scan(
 		&por.Healing, &por.Drops, &por.NearFullChargeDeath, &por.AvgUberLen, &por.MajorAdvLost, &por.BiggestAdvLost,
 		&por.ChargesUber, &por.ChargesKritz, &por.ChargesVacc, &por.ChargesQuickfix, &por.Buildings, &por.Extinguishes,
@@ -1484,13 +1483,13 @@ func (s Stores) PlayerOverallStats(ctx context.Context, steamID steamid.SID64, p
 		&por.Headshots, &por.Playtime, &por.Dominations, &por.Dominated, &por.Revenges, &por.Damage, &por.DamageTaken,
 		&por.Captures, &por.CapturesBlocked, &por.BuildingsDestroyed, &por.HealingTaken, &por.Wins, &por.Matches, &por.WinRate,
 	); errQuery != nil {
-		return errs.DBErr(errQuery)
+		return r.db.DBErr(errQuery)
 	}
 
 	return nil
 }
 
-func (s Stores) GetMapUsageStats(ctx context.Context) ([]domain.MapUseDetail, error) {
+func (r *matchRepository) GetMapUsageStats(ctx context.Context) ([]domain.MapUseDetail, error) {
 	const query = `SELECT m.map, m.playtime, (m.playtime::float / s.total::float) * 100 percent
 		FROM (
 			SELECT SUM(extract('epoch' from m.time_end - m.time_start)) as playtime, m.map FROM match m
@@ -1503,9 +1502,9 @@ func (s Stores) GetMapUsageStats(ctx context.Context) ([]domain.MapUseDetail, er
 
 	var details []domain.MapUseDetail
 
-	rows, errQuery := s.Query(ctx, query)
+	rows, errQuery := r.db.Query(ctx, query)
 	if errQuery != nil {
-		return nil, errs.DBErr(errQuery)
+		return nil, r.db.DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -1517,7 +1516,7 @@ func (s Stores) GetMapUsageStats(ctx context.Context) ([]domain.MapUseDetail, er
 		)
 
 		if errScan := rows.Scan(&mud.Map, &seconds, &mud.Percent); errScan != nil {
-			return nil, errs.DBErr(errScan)
+			return nil, r.db.DBErr(errScan)
 		}
 
 		mud.Playtime = seconds
@@ -1526,25 +1525,25 @@ func (s Stores) GetMapUsageStats(ctx context.Context) ([]domain.MapUseDetail, er
 	}
 
 	if rows.Err() != nil {
-		return nil, errors.Join(rows.Err(), ErrRowResults)
+		return nil, errors.Join(rows.Err(), domain.ErrRowResults)
 	}
 
 	return details, nil
 }
 
-func (s Stores) LoadWeapons(ctx context.Context, weaponMap fp.MutexMap[logparse.Weapon, int]) error {
+func (r *matchRepository) LoadWeapons(ctx context.Context, weaponMap fp.MutexMap[logparse.Weapon, int]) error {
 	for weapon, name := range logparse.NewWeaponParser().NameMap() {
 		var newWeapon domain.Weapon
-		if errWeapon := s.GetWeaponByKey(ctx, weapon, &newWeapon); errWeapon != nil {
-			if !errors.Is(errWeapon, errs.ErrNoResult) {
+		if errWeapon := r.GetWeaponByKey(ctx, weapon, &newWeapon); errWeapon != nil {
+			if !errors.Is(errWeapon, domain.ErrNoResult) {
 				return errWeapon
 			}
 
 			newWeapon.Key = weapon
 			newWeapon.Name = name
 
-			if errSave := s.SaveWeapon(ctx, &newWeapon); errSave != nil {
-				return errs.DBErr(errSave)
+			if errSave := r.SaveWeapon(ctx, &newWeapon); errSave != nil {
+				return r.db.DBErr(errSave)
 			}
 		}
 
@@ -1554,34 +1553,34 @@ func (s Stores) LoadWeapons(ctx context.Context, weaponMap fp.MutexMap[logparse.
 	return nil
 }
 
-func (s Stores) GetWeaponByKey(ctx context.Context, key logparse.Weapon, weapon *domain.Weapon) error {
-	row, errRow := s.QueryRowBuilder(ctx, s.
+func (r *matchRepository) GetWeaponByKey(ctx context.Context, key logparse.Weapon, weapon *domain.Weapon) error {
+	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
 		Builder().
 		Select("weapon_id", "key", "name").
 		From("weapon").
 		Where(sq.Eq{"key": key}))
 	if errRow != nil {
-		return errs.DBErr(errRow)
+		return r.db.DBErr(errRow)
 	}
 
-	return errs.DBErr(row.Scan(&weapon.WeaponID, &weapon.Key, &weapon.Name))
+	return r.db.DBErr(row.Scan(&weapon.WeaponID, &weapon.Key, &weapon.Name))
 }
 
-func (s Stores) GetWeaponByID(ctx context.Context, weaponID int, weapon *domain.Weapon) error {
-	row, errRow := s.QueryRowBuilder(ctx, s.
+func (r *matchRepository) GetWeaponByID(ctx context.Context, weaponID int, weapon *domain.Weapon) error {
+	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
 		Builder().
 		Select("weapon_id", "key", "name").
 		From("weapon").Where(sq.Eq{"weapon_id": weaponID}))
 	if errRow != nil {
-		return errs.DBErr(errRow)
+		return r.db.DBErr(errRow)
 	}
 
-	return errs.DBErr(row.Scan(&weapon.WeaponID, &weapon.Key, &weapon.Name))
+	return r.db.DBErr(row.Scan(&weapon.WeaponID, &weapon.Key, &weapon.Name))
 }
 
-func (s Stores) SaveWeapon(ctx context.Context, weapon *domain.Weapon) error {
+func (r *matchRepository) SaveWeapon(ctx context.Context, weapon *domain.Weapon) error {
 	if weapon.WeaponID > 0 {
-		return errs.DBErr(s.ExecUpdateBuilder(ctx, s.
+		return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, r.db.
 			Builder().
 			Update("weapon").
 			Set("key", weapon.Key).
@@ -1591,22 +1590,22 @@ func (s Stores) SaveWeapon(ctx context.Context, weapon *domain.Weapon) error {
 
 	const wq = `INSERT INTO weapon (key, name) VALUES ($1, $2) RETURNING weapon_id`
 
-	if errSave := s.
+	if errSave := r.db.
 		QueryRow(ctx, wq, weapon.Key, weapon.Name).
 		Scan(&weapon.WeaponID); errSave != nil {
-		return errors.Join(errSave, ErrFailedWeapon)
+		return errors.Join(errSave, domain.ErrFailedWeapon)
 	}
 
 	return nil
 }
 
-func (s Stores) Weapons(ctx context.Context, database Database) ([]domain.Weapon, error) {
-	rows, errRows := database.QueryBuilder(ctx, database.
+func (r *matchRepository) Weapons(ctx context.Context) ([]domain.Weapon, error) {
+	rows, errRows := r.db.QueryBuilder(ctx, r.db.
 		Builder().
 		Select("weapon_id", "key", "name").
 		From("weapon"))
 	if errRows != nil {
-		return nil, errs.DBErr(errRows)
+		return nil, r.db.DBErr(errRows)
 	}
 
 	defer rows.Close()
@@ -1616,14 +1615,14 @@ func (s Stores) Weapons(ctx context.Context, database Database) ([]domain.Weapon
 	for rows.Next() {
 		var weapon domain.Weapon
 		if errScan := rows.Scan(&weapon.WeaponID, &weapon.Name); errScan != nil {
-			return nil, errors.Join(errScan, ErrScanResult)
+			return nil, errors.Join(errScan, domain.ErrScanResult)
 		}
 
 		weapons = append(weapons, weapon)
 	}
 
 	if errRow := rows.Err(); errRow != nil {
-		return nil, errors.Join(errRow, ErrRowResults)
+		return nil, errors.Join(errRow, domain.ErrRowResults)
 	}
 
 	return weapons, nil

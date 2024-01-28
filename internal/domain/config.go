@@ -2,9 +2,10 @@ package domain
 
 import (
 	"fmt"
-	"github.com/leighmacdonald/steamid/v3/steamid"
 	"strings"
 	"time"
+
+	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
 type LinkablePath interface {

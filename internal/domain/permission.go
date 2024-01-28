@@ -15,7 +15,7 @@ const (
 	PGuest     Privilege = 1   // Normal logged-in user
 	PUser      Privilege = 10  // Normal logged-in user
 	PReserved  Privilege = 15  // Normal logged-in user with reserved slot
-	PEditor    Privilege = 25  // Edit access to site / resources
+	PEditor    Privilege = 25  // Edit Access to site / resources
 	PModerator Privilege = 50  // Access detailed player into & ban permissions.
 	PAdmin     Privilege = 100 // Unrestricted admin
 )

@@ -2,43 +2,89 @@ package usecase
 
 import (
 	"context"
-	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/errs"
 	"time"
+
+	"github.com/leighmacdonald/gbans/internal/discord"
+	"github.com/leighmacdonald/gbans/internal/domain"
 )
 
 type appealUsecase struct {
 	appealRepository domain.AppealRepository
 	banUsecase       domain.BanUsecase
+	personUsecase    domain.PersonUsecase
+	discordUsecase   domain.DiscordUsecase
+	configUsecase    domain.ConfigUsecase
 }
 
-func (s *appealUsecase) SaveBanMessage(ctx context.Context, message *domain.BanAppealMessage) error {
-	if err := s.appealRepository.SaveBanMessage(ctx, message); err != nil {
-		return err
+func NewAppealUsecase(ar domain.AppealRepository, bu domain.BanUsecase, pu domain.PersonUsecase, du domain.DiscordUsecase, cu domain.ConfigUsecase) domain.AppealUsecase {
+	return &appealUsecase{appealRepository: ar, banUsecase: bu, personUsecase: pu, discordUsecase: du, configUsecase: cu}
+}
+
+func (u *appealUsecase) GetAppealsByActivity(ctx context.Context, opts domain.AppealQueryFilter) ([]domain.AppealOverview, int64, error) {
+	return u.appealRepository.GetAppealsByActivity(ctx, opts)
+}
+
+func (u *appealUsecase) SaveBanMessage(ctx context.Context, curUserProfile domain.UserProfile, req domain.BanAppealMessage) (*domain.BanAppealMessage, error) {
+	if req.MessageMD == "" {
+		return nil, domain.ErrBadRequest
 	}
 
 	bannedPerson := domain.NewBannedPerson()
-	if errBan := s.banUsecase.GetBanByBanID(ctx, message.BanID, &bannedPerson, true); errBan != nil {
-		return errs.ErrNoResult
+	if errReport := u.banUsecase.GetBanByBanID(ctx, req.BanID, &bannedPerson, true); errReport != nil {
+		return nil, errReport
 	}
+
+	if bannedPerson.AppealState != domain.Open && curUserProfile.PermissionLevel < domain.PModerator {
+		return nil, domain.ErrPermissionDenied
+	}
+
+	var target domain.Person
+	if errTarget := u.personUsecase.GetOrCreatePersonBySteamID(ctx, bannedPerson.TargetID, &target); errTarget != nil {
+		return nil, errTarget
+	}
+
+	var source domain.Person
+	if errSource := u.personUsecase.GetOrCreatePersonBySteamID(ctx, bannedPerson.SourceID, &source); errSource != nil {
+		return nil, errSource
+	}
+
+	msg := domain.NewBanAppealMessage(req.BanID, curUserProfile.SteamID, req.MessageMD)
+	msg.PermissionLevel = curUserProfile.PermissionLevel
+	msg.Personaname = curUserProfile.Name
+	msg.Avatarhash = curUserProfile.Avatarhash
+
+	if errSave := u.appealRepository.SaveBanMessage(ctx, &msg); errSave != nil {
+		return nil, errSave
+	}
+
+	conf := u.configUsecase.Config()
+
+	u.discordUsecase.SendPayload(domain.ChannelModLog, discord.NewAppealMessage(msg.MessageMD,
+		conf.ExtURL(bannedPerson.BanSteam), curUserProfile, conf.ExtURL(curUserProfile)))
 
 	bannedPerson.UpdatedOn = time.Now()
 
-	if errUpdate := s.banUsecase.SaveBan(ctx, &bannedPerson.BanSteam); errUpdate != nil {
-		return errUpdate
+	if errUpdate := u.banUsecase.SaveBan(ctx, &bannedPerson.BanSteam); errUpdate != nil {
+		return nil, errUpdate
 	}
 
+	return &msg, nil
+}
+
+func (u *appealUsecase) GetBanMessages(ctx context.Context, banID int64) ([]domain.BanAppealMessage, error) {
+	return u.appealRepository.GetBanMessages(ctx, banID)
+}
+
+func (u *appealUsecase) GetBanMessageByID(ctx context.Context, banMessageID int, message *domain.BanAppealMessage) error {
+	return u.appealRepository.GetBanMessageByID(ctx, banMessageID, message)
+}
+
+func (u *appealUsecase) DropBanMessage(ctx context.Context, curUser domain.UserProfile, message *domain.BanAppealMessage) error {
+	if errDrop := u.appealRepository.DropBanMessage(ctx, message); errDrop != nil {
+		return errDrop
+	}
+
+	u.discordUsecase.SendPayload(domain.ChannelModLog, discord.DeleteAppealMessage(message, curUser, u.configUsecase.ExtURL(curUser)))
+
 	return nil
-}
-
-func (s *appealUsecase) GetBanMessages(ctx context.Context, banID int64) ([]domain.BanAppealMessage, error) {
-	return s.appealRepository.GetBanMessages(ctx, banID)
-}
-
-func (s *appealUsecase) GetBanMessageByID(ctx context.Context, banMessageID int, message *domain.BanAppealMessage) error {
-	return s.appealRepository.GetBanMessageByID(ctx, banMessageID, message)
-}
-
-func (s *appealUsecase) DropBanMessage(ctx context.Context, message *domain.BanAppealMessage) error {
-	return s.appealRepository.DropBanMessage(ctx, message)
 }

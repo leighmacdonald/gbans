@@ -6,10 +6,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/steamweb/v2"
 	"go.uber.org/zap"
@@ -150,7 +150,7 @@ func (app *App) demoCleaner(ctx context.Context) {
 	}
 }
 
-func cleanupTasks(ctx context.Context, database store.Stores, logger *zap.Logger) {
+func cleanupTasks(ctx context.Context, database database.Stores, logger *zap.Logger) {
 	var (
 		log    = logger.Named("cleanupTasks")
 		ticker = time.NewTicker(time.Hour * 24)

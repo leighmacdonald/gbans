@@ -2,19 +2,20 @@ package app
 
 import (
 	"context"
+	"github.com/leighmacdonald/gbans/internal/chat"
 	"strings"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/store"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"go.uber.org/zap"
 )
 
-func newChatLogger(log *zap.Logger, database store.Stores, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
-	filters *WordFilters, warningTracker *Tracker, matchUUIDMap fp.MutexMap[int, uuid.UUID],
+func newChatLogger(log *zap.Logger, database database.Stores, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
+	filters *WordFilters, warningTracker *chat.Tracker, matchUUIDMap fp.MutexMap[int, uuid.UUID],
 ) *chatLogger {
 	return &chatLogger{
 		log:            log.Named("chatRecorder"),
@@ -29,11 +30,11 @@ func newChatLogger(log *zap.Logger, database store.Stores, broadcaster *fp.Broad
 
 type chatLogger struct {
 	log            *zap.Logger
-	database       store.Stores
+	database       database.Stores
 	events         chan logparse.ServerEvent
 	broadcaster    *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 	wordFilters    *WordFilters
-	warningTracker *Tracker
+	warningTracker *chat.Tracker
 	matchUUIDMap   fp.MutexMap[int, uuid.UUID]
 }
 

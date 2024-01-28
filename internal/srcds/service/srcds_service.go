@@ -1,7 +1,6 @@
 package service
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -16,10 +15,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/errs"
 	"github.com/leighmacdonald/gbans/internal/http_helper"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/demoparser"
@@ -35,13 +32,14 @@ type SRCDSHandler struct {
 	StateUsecase       domain.StateUsecase
 	DiscordUsecase     domain.DiscordUsecase
 	ConfigUsecase      domain.ConfigUsecase
-	S3Usecase          domain.S3Usecase
+	S3Usecase          domain.AssetUsecase
 	reportUsecase      domain.ReportUsecase
 	assetUsecase       domain.AssetUsecase
 	banUsecase         domain.BanUsecase
 	netUsecase         domain.NetworkUsecase
 	friendBlockUsecase domain.FriendBlockerUsecase
 	netBlockerUsecase  domain.NetBlockerUsecase
+	du                 domain.DemoUsecase
 	groupBlocker       domain.GroupBlockerUsecase
 	log                *zap.Logger
 }
@@ -49,8 +47,8 @@ type SRCDSHandler struct {
 const authTokenDuration = time.Minute * 15
 
 func NewSRCDSHandler(engine *gin.Engine, log *zap.Logger, su domain.ServersUsecase, pu domain.PersonUsecase,
-	s3usecase domain.S3Usecase, ru domain.ReportUsecase, au domain.AssetUsecase, bu domain.BanUsecase, nu domain.NetworkUsecase,
-	fbu domain.FriendBlockerUsecase, nbu domain.NetBlockerUsecase, gbu domain.GroupBlockerUsecase,
+	s3usecase domain.AssetUsecase, ru domain.ReportUsecase, au domain.AssetUsecase, bu domain.BanUsecase, nu domain.NetworkUsecase,
+	fbu domain.FriendBlockerUsecase, nbu domain.NetBlockerUsecase, gbu domain.GroupBlockerUsecase, demoUsecase domain.DemoUsecase,
 ) {
 	handler := SRCDSHandler{
 		ServerUsecase:      su,
@@ -62,6 +60,7 @@ func NewSRCDSHandler(engine *gin.Engine, log *zap.Logger, su domain.ServersUseca
 		friendBlockUsecase: fbu,
 		netBlockerUsecase:  nbu,
 		groupBlocker:       gbu,
+		du:                 demoUsecase,
 		S3Usecase:          s3usecase,
 		log:                log,
 	}
@@ -74,6 +73,7 @@ func NewSRCDSHandler(engine *gin.Engine, log *zap.Logger, su domain.ServersUseca
 	engine.POST("/api/ping_mod", handler.onAPIPostPingMod())
 	engine.POST("/api/check", handler.onAPIPostServerCheck())
 	engine.POST("/api/demo", handler.onAPIPostDemo())
+
 	// Duplicated since we need to authenticate via server middleware
 	engine.POST("/api/sm/bans/steam/create", handler.onAPIPostBanSteamCreate())
 	engine.POST("/api/sm/report/create", handler.onAPIPostReportCreate())
@@ -124,14 +124,14 @@ func (s *SRCDSHandler) onSAPIPostServerAuth() gin.HandlerFunc {
 
 		errGetServer := s.ServerUsecase.GetServerByPassword(ctx, req.Key, &server, true, false)
 		if errGetServer != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusUnauthorized, domain.ErrPermissionDenied)
+			http_helper.ResponseErr(ctx, http.StatusUnauthorized, domain.ErrPermissionDenied)
 			log.Warn("Failed to find server auth by password", zap.Error(errGetServer))
 
 			return
 		}
 
 		if server.Password != req.Key {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusUnauthorized, domain.ErrPermissionDenied)
+			http_helper.ResponseErr(ctx, http.StatusUnauthorized, domain.ErrPermissionDenied)
 			log.Error("Invalid server key used")
 
 			return
@@ -139,7 +139,7 @@ func (s *SRCDSHandler) onSAPIPostServerAuth() gin.HandlerFunc {
 
 		accessToken, errToken := newServerToken(server.ServerID, s.ConfigUsecase.Config().HTTP.CookieKey)
 		if errToken != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusUnauthorized, domain.ErrPermissionDenied)
+			http_helper.ResponseErr(ctx, http.StatusUnauthorized, domain.ErrPermissionDenied)
 			log.Error("Failed to create new server access token", zap.Error(errToken))
 
 			return
@@ -147,7 +147,7 @@ func (s *SRCDSHandler) onSAPIPostServerAuth() gin.HandlerFunc {
 
 		server.TokenCreatedOn = time.Now()
 		if errSaveServer := s.ServerUsecase.SaveServer(ctx, &server); errSaveServer != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusUnauthorized, domain.ErrPermissionDenied)
+			http_helper.ResponseErr(ctx, http.StatusUnauthorized, domain.ErrPermissionDenied)
 			log.Error("Failed to updated server token", zap.Error(errSaveServer))
 
 			return
@@ -169,13 +169,13 @@ func (s *SRCDSHandler) onAPIPostServerState() gin.HandlerFunc {
 
 		serverID := http_helper.ServerFromCtx(ctx) // TODO use generic func for int
 		if serverID == 0 {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusBadRequest, http_helper.ErrParamInvalid)
+			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrParamInvalid)
 
 			return
 		}
 
 		if errUpdate := s.StateUsecase.Update(serverID, req); errUpdate != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
+			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
@@ -199,7 +199,7 @@ func (s *SRCDSHandler) onAPIPostReportCreate() gin.HandlerFunc {
 	log := s.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		currentUser := http_helper.http_helper.CurrentUserProfile(ctx)
+		currentUser := http_helper.CurrentUserProfile(ctx)
 
 		var req apiCreateReportReq
 		if !http_helper.Bind(ctx, log, &req) {
@@ -207,7 +207,7 @@ func (s *SRCDSHandler) onAPIPostReportCreate() gin.HandlerFunc {
 		}
 
 		if req.Description == "" || len(req.Description) < 10 {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusBadRequest, fmt.Errorf("%w: description", http_helper.ErrParamInvalid))
+			http_helper.ResponseErr(ctx, http.StatusBadRequest, fmt.Errorf("%w: description", domain.ErrParamInvalid))
 
 			return
 		}
@@ -221,7 +221,7 @@ func (s *SRCDSHandler) onAPIPostReportCreate() gin.HandlerFunc {
 
 		sourceID, errSourceID := req.SourceID.SID64(ctx)
 		if errSourceID != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusBadRequest, errs.ErrSourceID)
+			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrSourceID)
 			log.Error("Invalid steam_id", zap.Error(errSourceID))
 
 			return
@@ -229,21 +229,21 @@ func (s *SRCDSHandler) onAPIPostReportCreate() gin.HandlerFunc {
 
 		targetID, errTargetID := req.TargetID.SID64(ctx)
 		if errTargetID != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusBadRequest, errs.ErrTargetID)
+			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrTargetID)
 			log.Error("Invalid target_id", zap.Error(errTargetID))
 
 			return
 		}
 
 		if sourceID == targetID {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusConflict, domain.ErrSelfReport)
+			http_helper.ResponseErr(ctx, http.StatusConflict, domain.ErrSelfReport)
 
 			return
 		}
 
 		var personSource domain.Person
 		if errCreatePerson := s.PersonUsecase.GetPersonBySteamID(ctx, sourceID, &personSource); errCreatePerson != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
+			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			log.Error("Could not load player profile", zap.Error(errCreatePerson))
 
 			return
@@ -251,7 +251,7 @@ func (s *SRCDSHandler) onAPIPostReportCreate() gin.HandlerFunc {
 
 		var personTarget domain.Person
 		if errCreatePerson := s.PersonUsecase.GetOrCreatePersonBySteamID(ctx, targetID, &personTarget); errCreatePerson != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
+			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			log.Error("Could not load player profile", zap.Error(errCreatePerson))
 
 			return
@@ -270,16 +270,16 @@ func (s *SRCDSHandler) onAPIPostReportCreate() gin.HandlerFunc {
 		// Ensure the user doesn't already have an open report against the user
 		var existing domain.Report
 		if errReports := s.reportUsecase.GetReportBySteamID(ctx, personSource.SteamID, targetID, &existing); errReports != nil {
-			if !errors.Is(errReports, errs.ErrNoResult) {
+			if !errors.Is(errReports, domain.ErrNoResult) {
 				log.Error("Failed to query reports by steam id", zap.Error(errReports))
-				http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
+				http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 				return
 			}
 		}
 
 		if existing.ReportID > 0 {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusConflict, domain.ErrReportExists)
+			http_helper.ResponseErr(ctx, http.StatusConflict, domain.ErrReportExists)
 
 			return
 		}
@@ -298,7 +298,7 @@ func (s *SRCDSHandler) onAPIPostReportCreate() gin.HandlerFunc {
 		report.PersonMessageID = req.PersonMessageID
 
 		if errReportSave := s.reportUsecase.SaveReport(ctx, &report); errReportSave != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
+			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			log.Error("Failed to save report", zap.Error(errReportSave))
 
 			return
@@ -322,7 +322,7 @@ func (s *SRCDSHandler) onAPIPostReportCreate() gin.HandlerFunc {
 
 		msg := discord.NewInGameReportResponse(report, conf.ExtURL(report), currentUser, conf.ExtURL(currentUser), demoURL)
 
-		s.DiscordUsecase.SendPayload(conf.Discord.LogChannelID, msg)
+		s.DiscordUsecase.SendPayload(domain.ChannelModLog, msg)
 	}
 }
 
@@ -332,7 +332,7 @@ func (s *SRCDSHandler) onAPIPostDemo() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		serverID := http_helper.ServerFromCtx(ctx)
 		if serverID <= 0 {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusNotFound, domain.domain.ErrBadRequest)
+			http_helper.ResponseErr(ctx, http.StatusNotFound, domain.ErrBadRequest)
 
 			return
 		}
@@ -340,35 +340,35 @@ func (s *SRCDSHandler) onAPIPostDemo() gin.HandlerFunc {
 		var server domain.Server
 		if errGetServer := s.ServerUsecase.GetServer(ctx, serverID, &server); errGetServer != nil {
 			log.Error("ServerStore not found", zap.Int("server_id", serverID))
-			http_helper.http_helper.ResponseErr(ctx, http.StatusNotFound, errs.ErrNotFound)
+			http_helper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
 
 			return
 		}
 
 		demoFormFile, errDemoFile := ctx.FormFile("demo")
 		if errDemoFile != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.domain.ErrBadRequest)
+			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 
 			return
 		}
 
 		demoHandle, errDemoHandle := demoFormFile.Open()
 		if errDemoHandle != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.domain.ErrBadRequest)
+			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 
 			return
 		}
 
 		demoContent, errRead := io.ReadAll(demoHandle)
 		if errRead != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.domain.ErrBadRequest)
+			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 
 			return
 		}
 
 		dir, errDir := os.MkdirTemp("", "gbans-demo")
 		if errDir != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.domain.ErrBadRequest)
+			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 
 			return
 		}
@@ -396,13 +396,13 @@ func (s *SRCDSHandler) onAPIPostDemo() gin.HandlerFunc {
 
 		localFile, errLocalFile := os.Create(tempPath)
 		if errLocalFile != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.domain.ErrBadRequest)
+			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 
 			return
 		}
 
 		if _, err := localFile.Write(demoContent); err != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.domain.ErrBadRequest)
+			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 
 			return
 		}
@@ -411,7 +411,7 @@ func (s *SRCDSHandler) onAPIPostDemo() gin.HandlerFunc {
 
 		var demoInfo demoparser.DemoInfo
 		if errParse := demoparser.Parse(ctx, tempPath, &demoInfo); errParse != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.domain.ErrBadRequest)
+			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 
 			return
 		}
@@ -422,42 +422,9 @@ func (s *SRCDSHandler) onAPIPostDemo() gin.HandlerFunc {
 			intStats[steamID] = gin.H{}
 		}
 
-		conf := s.ConfigUsecase.Config()
-
-		asset, errAsset := domain.NewAsset(demoContent, conf.S3.BucketDemo, demoFormFile.Filename)
-		if errAsset != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrAssetCreateFailed)
-
-			return
-		}
-
-		if errPut := s.S3Usecase.Put(ctx, conf.S3.BucketDemo, asset.Name,
-			bytes.NewReader(demoContent), asset.Size, asset.MimeType); errPut != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrAssetPut)
-
-			log.Error("Failed to save user media to s3 backend", zap.Error(errPut))
-
-			return
-		}
-
-		if errSaveAsset := s.assetUsecase.SaveAsset(ctx, &asset); errSaveAsset != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrAssetSave)
-
-			log.Error("Failed to save user asset to s3 backend", zap.Error(errSaveAsset))
-		}
-
-		newDemo := domain.DemoFile{
-			ServerID:  serverID,
-			Title:     asset.Name,
-			CreatedOn: time.Now(),
-			MapName:   mapName,
-			Stats:     intStats,
-			AssetID:   asset.AssetID,
-		}
-
-		if errSave := s.assetUsecase.SaveDemo(ctx, &newDemo); errSave != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
-			log.Error("Failed to save demo", zap.Error(errSave))
+		newDemo, errCreateDemo := s.du.Create(ctx, demoFormFile.Filename, demoContent, mapName, intStats, serverID)
+		if errCreateDemo != nil {
+			http_helper.HandleErrInternal(ctx)
 
 			return
 		}
@@ -492,7 +459,7 @@ func (s *SRCDSHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 
 		var (
 			origin   = domain.Web
-			sid      = http_helper.http_helper.CurrentUserProfile(ctx).SteamID
+			sid      = http_helper.CurrentUserProfile(ctx).SteamID
 			sourceID = domain.StringSID(sid.String())
 		)
 
@@ -504,7 +471,7 @@ func (s *SRCDSHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 
 		duration, errDuration := util.CalcDuration(req.Duration, req.ValidUntil)
 		if errDuration != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.domain.ErrBadRequest)
+			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 
 			return
 		}
@@ -523,7 +490,7 @@ func (s *SRCDSHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 			req.IncludeFriends,
 			&banSteam,
 		); errBanSteam != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.domain.ErrBadRequest)
+			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 
 			return
 		}
@@ -532,13 +499,13 @@ func (s *SRCDSHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 			log.Error("Failed to ban steam profile",
 				zap.Error(errBan), zap.Int64("target_id", banSteam.TargetID.Int64()))
 
-			if errors.Is(errBan, errs.ErrDuplicate) {
-				http_helper.http_helper.ResponseErr(ctx, http.StatusConflict, errs.ErrDuplicate)
+			if errors.Is(errBan, domain.ErrDuplicate) {
+				http_helper.ResponseErr(ctx, http.StatusConflict, domain.ErrDuplicate)
 
 				return
 			}
 
-			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
+			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			log.Error("Failed to save new steam ban", zap.Error(errBan))
 
 			return
@@ -552,7 +519,7 @@ func (s *SRCDSHandler) onAPIGetServerAdmins() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		perms, err := s.ServerUsecase.GetServerPermissions(ctx)
 		if err != nil {
-			http_helper.http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.domain.ErrInternal)
+			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
@@ -581,9 +548,9 @@ func (s *SRCDSHandler) onAPIPostPingMod() gin.HandlerFunc {
 		conf := s.ConfigUsecase.Config()
 		players := s.StateUsecase.Find("", req.SteamID, nil, nil)
 
-		if len(players) == 0 && conf.General.Mode != config.TestMode {
+		if len(players) == 0 && conf.General.Mode != domain.TestMode {
 			log.Error("Failed to find player on /mod call")
-			http_helper.http_helper.ResponseErr(ctx, http.StatusFailedDependency, domain.domain.ErrInternal)
+			http_helper.ResponseErr(ctx, http.StatusFailedDependency, domain.ErrInternal)
 
 			return
 		}
@@ -601,7 +568,7 @@ func (s *SRCDSHandler) onAPIPostPingMod() gin.HandlerFunc {
 			return
 		}
 
-		s.DiscordUsecase.SendPayload(conf.Discord.LogChannelID,
+		s.DiscordUsecase.SendPayload(domain.ChannelMod,
 			discord.PingModMessage(author, conf.ExtURL(author), req.Reason, req.ServerName, conf.Discord.ModPingRoleID))
 	}
 }
@@ -710,8 +677,16 @@ func (s *SRCDSHandler) onAPIPostServerCheck() gin.HandlerFunc {
 
 		bannedPerson := domain.NewBannedPerson()
 		if errGetBan := s.banUsecase.GetBanBySteamID(responseCtx, steamID, &bannedPerson, false); errGetBan != nil {
-			if errors.Is(errGetBan, errs.ErrNoResult) {
-				if s.banUsecase.IsOnIPWithBan(ctx, steamid.SIDToSID64(request.SteamID), request.IP) {
+			if errors.Is(errGetBan, domain.ErrNoResult) {
+				isShared, errShared := s.banUsecase.IsOnIPWithBan(ctx, steamid.SIDToSID64(request.SteamID), request.IP)
+				if errShared != nil {
+					log.Error("Failed to check shared ip state", zap.Error(errShared))
+
+					ctx.JSON(http.StatusOK, resp)
+
+					return
+				}
+				if isShared {
 					log.Info("Player connected from IP of a banned player",
 						zap.String("steam_id", steamid.SIDToSID64(request.SteamID).String()),
 						zap.String("ip", request.IP.String()))
@@ -776,7 +751,7 @@ func (s *SRCDSHandler) checkASN(ctx *gin.Context, log *zap.Logger, steamID steam
 	if errASN == nil {
 		var asnBan domain.BanASN
 		if errASNBan := s.banUsecase.GetBanASN(responseCtx, int64(asnRecord.ASNum), &asnBan); errASNBan != nil {
-			if !errors.Is(errASNBan, errs.ErrNoResult) {
+			if !errors.Is(errASNBan, domain.ErrNoResult) {
 				log.Error("Failed to fetch asn bannedPerson", zap.Error(errASNBan))
 			}
 		} else {
