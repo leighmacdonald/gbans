@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var ErrDataUpdate = errors.New("failed to update data")
+var ErrDataUpdate = errors.New("data update failed")
 
 // DataUpdater handles periodically updating a data source and caching the results via user supplied func.
 type DataUpdater[T any] struct {

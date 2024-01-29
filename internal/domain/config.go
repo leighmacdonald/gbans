@@ -13,12 +13,13 @@ type LinkablePath interface {
 }
 
 type ConfigRepository interface {
-	Config() *Config
+	Config() Config
+	Read(noFileOk bool) error
 }
 
 type ConfigUsecase interface {
-	Read(conf *Config, noFileOk bool) error
-	Config() *Config
+	Read(noFileOk bool) error
+	Config() Config
 	ExtURL(obj LinkablePath) string
 	ExtURLRaw(path string, args ...any) string
 }

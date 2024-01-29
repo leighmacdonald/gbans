@@ -8,6 +8,18 @@ import (
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
+type ReportRepository interface {
+	GetReportBySteamID(ctx context.Context, authorID steamid.SID64, steamID steamid.SID64, report *Report) error
+	GetReports(ctx context.Context, opts ReportQueryFilter) ([]Report, int64, error)
+	GetReport(ctx context.Context, reportID int64, report *Report) error
+	GetReportMessages(ctx context.Context, reportID int64) ([]ReportMessage, error)
+	GetReportMessageByID(ctx context.Context, reportMessageID int64, message *ReportMessage) error
+	DropReportMessage(ctx context.Context, message *ReportMessage) error
+	DropReport(ctx context.Context, report *Report) error
+	SaveReport(ctx context.Context, report *Report) error
+	SaveReportMessage(ctx context.Context, message *ReportMessage) error
+}
+
 type ReportUsecase interface {
 	GetReportBySteamID(ctx context.Context, authorID steamid.SID64, steamID steamid.SID64, report *Report) error
 	GetReports(ctx context.Context, opts ReportQueryFilter) ([]Report, int64, error)
@@ -18,6 +30,17 @@ type ReportUsecase interface {
 	DropReport(ctx context.Context, report *Report) error
 	SaveReport(ctx context.Context, report *Report) error
 	SaveReportMessage(ctx context.Context, message *ReportMessage) error
+}
+
+type CreateReportReq struct {
+	SourceID        StringSID `json:"source_id"`
+	TargetID        StringSID `json:"target_id"`
+	Description     string    `json:"description"`
+	Reason          Reason    `json:"reason"`
+	ReasonText      string    `json:"reason_text"`
+	DemoName        string    `json:"demo_name"`
+	DemoTick        int       `json:"demo_tick"`
+	PersonMessageID int64     `json:"person_message_id"`
 }
 
 type ReportStatus int

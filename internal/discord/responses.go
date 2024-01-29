@@ -879,12 +879,7 @@ func LogsMessage(count int64, matches string) *discordgo.MessageEmbed {
 		SetDescription(matches).MessageEmbed
 }
 
-type FoundPlayer struct {
-	Player domain.PlayerServerInfo
-	Server domain.Server
-}
-
-func FindMessage(found []FoundPlayer) *discordgo.MessageEmbed {
+func FindMessage(found []domain.FoundPlayer) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed("Player(s) Found")
 	for _, info := range found {
 		msgEmbed.Embed().

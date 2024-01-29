@@ -119,7 +119,7 @@ func TestApp(t *testing.T) {
 		map[string][]mockAsset{},
 	})
 
-	require.NoError(t, firstTimeSetup(ctx, &config, database))
+	require.NoError(t, FirstTimeSetup(ctx, &config, database))
 
 	t.Run("api_server", testServerAPI(&app))
 	t.Run("api_frontend", testFrontendAPI(&app))

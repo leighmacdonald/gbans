@@ -11,6 +11,7 @@ type ChatRepository interface {
 }
 
 type ChatUsecase interface {
+	Start(ctx context.Context)
 	WarningState() map[string][]UserWarning
 	GetPersonMessage(ctx context.Context, messageID int64, msg *QueryChatHistoryResult) error
 	AddChatHistory(ctx context.Context, message *PersonMessage) error

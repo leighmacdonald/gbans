@@ -2,14 +2,28 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/app"
+	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/internal/ban"
+	"github.com/leighmacdonald/gbans/internal/blocklist"
+	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/log"
+	"github.com/leighmacdonald/gbans/internal/network"
+	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/internal/report"
+	"github.com/leighmacdonald/gbans/internal/servers"
+	"github.com/leighmacdonald/gbans/internal/state"
+	"github.com/leighmacdonald/gbans/internal/steamgroup"
+	"github.com/leighmacdonald/gbans/internal/wordfilter"
+	"github.com/leighmacdonald/gbans/pkg/fp"
+	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -28,10 +42,12 @@ func refreshFiltersCmd() *cobra.Command {
 		Short: "refresh filters",
 		Long:  `refresh filters`,
 		Run: func(cmd *cobra.Command, args []string) {
-			var conf config.Config
-			if errConfig := config.Read(&conf, false); errConfig != nil {
-				panic("Failed to read config")
+			cu := config.NewConfigUsecase(config.NewConfigRepository())
+			if errConfig := cu.Read(false); errConfig != nil {
+				panic(fmt.Sprintf("Failed to read config: %v", errConfig))
 			}
+
+			conf := cu.Config()
 			conf.Log.Level = "DEBUG"
 			rootLogger := log.MustCreate(&conf, nil)
 			defer func() {
@@ -42,31 +58,43 @@ func refreshFiltersCmd() *cobra.Command {
 
 			connCtx, cancelConn := context.WithTimeout(ctx, time.Second*5)
 			defer cancelConn()
-			database := database.New(rootLogger, conf.DB.DSN, false, conf.DB.LogQueries)
+			db := database.New(rootLogger, conf.DB.DSN, false, conf.DB.LogQueries)
 
 			rootLogger.Info("Connecting to database")
-			if errConnect := database.Connect(connCtx); errConnect != nil {
+			if errConnect := db.Connect(connCtx); errConnect != nil {
 				rootLogger.Fatal("Failed to connect to database", zap.Error(errConnect))
 			}
 			defer func() {
-				if errClose := database.Close(); errClose != nil {
+				if errClose := db.Close(); errClose != nil {
 					rootLogger.Error("Failed to close database cleanly", zap.Error(errClose))
 				}
 			}()
 
-			if errDelete := database.Exec(ctx, "DELETE FROM person_messages_filter"); errDelete != nil {
+			if errDelete := db.Exec(ctx, "DELETE FROM person_messages_filter"); errDelete != nil {
 				rootLogger.Fatal("Failed to delete existing", zap.Error(errDelete))
 			}
 
-			bot, errBot := app.NewDiscord(rootLogger, conf)
-			if errBot != nil {
-				rootLogger.Fatal("Failed to connect to perform initial discord connection")
-			}
+			eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
+			matchUUIDMap := fp.NewMutexMap[int, uuid.UUID]()
 
-			application := app.New(conf, database, bot, rootLogger, nil)
-			if _, errFilters := application.LoadFilters(ctx); errFilters != nil {
-				rootLogger.Fatal("Failed to load filters", zap.Error(errFilters))
-			}
+			sv := servers.NewServersUsecase(servers.NewServersRepository(db))
+			st := state.NewStateUsecase(rootLogger, state.NewStateRepository(state.NewCollector(rootLogger, sv)))
+			ru := report.NewReportUsecase(report.NewReportRepository(db))
+
+			dr, _ := discord.NewDiscordRepository(rootLogger, conf)
+
+			du := discord.NewDiscordUsecase(dr)
+
+			pu := person.NewPersonUsecase(person.NewPersonRepository(db))
+			wfu := wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(db), du)
+			wfu.Import(ctx)
+			blu := blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(db))
+			nu := network.NewNetworkUsecase(rootLogger, network.NewNetworkRepository(db), blu)
+			br := ban.NewBanRepository(db, pu, nu)
+			sgu := steamgroup.NewBanGroupUsecase(rootLogger, steamgroup.NewSteamGroupRepository(db))
+			bu := ban.NewBanUsecase(rootLogger, br, pu, cu, du, sgu, ru, st)
+			cr := chat.NewChatRepository(db, rootLogger, pu, wfu, eventBroadcaster, matchUUIDMap)
+			chu := chat.NewChatUsecase(rootLogger, cu, cr, wfu, st, bu, pu, du, st)
 
 			var query domain.ChatHistoryQueryFilter
 			query.DontCalcTotal = true
@@ -78,7 +106,7 @@ func refreshFiltersCmd() *cobra.Command {
 			matches := 0
 
 			for {
-				messages, _, errMessages := database.QueryChatHistory(ctx, query)
+				messages, _, errMessages := chu.QueryChatHistory(ctx, query)
 				if errMessages != nil {
 					rootLogger.Error("Failed to load more messages", zap.Error(errMessages))
 
@@ -86,9 +114,9 @@ func refreshFiltersCmd() *cobra.Command {
 				}
 
 				for _, message := range messages {
-					matched := application.WordFilters().Check(message.Body)
+					matched := wfu.Check(message.Body)
 					if len(matched) > 0 {
-						if errAdd := database.AddMessageFilterMatch(ctx, message.PersonMessageID, matched[0].FilterID); errAdd != nil {
+						if errAdd := wfu.AddMessageFilterMatch(ctx, message.PersonMessageID, matched[0].FilterID); errAdd != nil {
 							rootLogger.Error("Failed to add filter match", zap.Error(errAdd))
 						}
 

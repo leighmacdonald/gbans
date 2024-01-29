@@ -1,7 +1,6 @@
 package http_helper
 
 import (
-	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -162,18 +161,16 @@ type ResultsCount struct {
 
 const ctxKeyUserProfile = "user_profile"
 
-func New(ctx context.Context, listenAddr string) *http.Server {
-	conf := env.Config()
-
+func NewHTTPServer(tlsEnabled bool, listenAddr string, handler http.Handler) *http.Server {
 	httpServer := &http.Server{
 		Addr:           listenAddr,
-		Handler:        createRouter(ctx, env),
+		Handler:        handler,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   120 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
 
-	if conf.HTTP.TLS {
+	if tlsEnabled {
 		tlsVar := &tls.Config{
 			// Only use curves which have assembly implementations
 			CurvePreferences: []tls.CurveID{

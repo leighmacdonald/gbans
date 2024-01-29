@@ -179,4 +179,5 @@ var (
 	ErrReadContent              = errors.New("failed to read content metadata")
 	ErrFailedToBan              = errors.New("failed to create warning ban")
 	ErrWarnActionApply          = errors.New("failed to apply warning action")
+	ErrStaticPathError          = errors.New("Could not load static path")
 )
