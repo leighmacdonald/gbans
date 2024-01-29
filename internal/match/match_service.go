@@ -1,0 +1,308 @@
+package match
+
+import (
+	"context"
+	"errors"
+	"net/http"
+	"runtime"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/http_helper"
+	"github.com/leighmacdonald/gbans/pkg/util"
+	"go.uber.org/zap"
+)
+
+type MatchHandler struct {
+	log *zap.Logger
+	mu  domain.MatchUsecase
+}
+
+// todo move data updaters to repository
+func NewMatchHandler(ctx context.Context, logger *zap.Logger, engine *gin.Engine, mu domain.MatchUsecase) {
+	handler := MatchHandler{log: logger, mu: mu}
+
+	engine.GET("/api/stats/map", handler.onAPIGetMapUsage())
+
+	// authed
+	engine.POST("/api/logs", handler.onAPIGetMatches())
+	engine.GET("/api/log/:match_id", handler.onAPIGetMatch())
+	engine.GET("/api/stats/weapons", handler.onAPIGetStatsWeaponsOverall(ctx))
+	engine.GET("/api/stats/weapon/:weapon_id", handler.onAPIGetsStatsWeapon())
+	engine.GET("/api/stats/players", handler.onAPIGetStatsPlayersOverall(ctx))
+	engine.GET("/api/stats/healers", handler.onAPIGetStatsHealersOverall(ctx))
+	engine.GET("/api/stats/player/:steam_id/weapons", handler.onAPIGetPlayerWeaponStatsOverall())
+	engine.GET("/api/stats/player/:steam_id/classes", handler.onAPIGetPlayerClassStatsOverall())
+	engine.GET("/api/stats/player/:steam_id/overall", handler.onAPIGetPlayerStatsOverall())
+}
+
+func (h MatchHandler) onAPIGetStatsWeaponsOverall(ctx context.Context) gin.HandlerFunc {
+	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	updater := util.NewDataUpdater(log, time.Minute*10, func() ([]domain.WeaponsOverallResult, error) {
+		weaponStats, errUpdate := h.mu.WeaponsOverall(ctx)
+		if errUpdate != nil && !errors.Is(errUpdate, domain.ErrNoResult) {
+			return nil, errors.Join(errUpdate, util.ErrDataUpdate)
+		}
+
+		if weaponStats == nil {
+			weaponStats = []domain.WeaponsOverallResult{}
+		}
+
+		return weaponStats, nil
+	})
+
+	go updater.Start(ctx)
+
+	return func(ctx *gin.Context) {
+		stats := updater.Data()
+
+		ctx.JSON(http.StatusOK, domain.NewLazyResult(int64(len(stats)), stats))
+	}
+}
+
+func (h MatchHandler) onAPIGetsStatsWeapon() gin.HandlerFunc {
+	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	type resp struct {
+		domain.LazyResult
+		Weapon domain.Weapon `json:"weapon"`
+	}
+
+	return func(ctx *gin.Context) {
+		weaponID, errWeaponID := http_helper.GetIntParam(ctx, "weapon_id")
+		if errWeaponID != nil {
+			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+
+			return
+		}
+
+		var weapon domain.Weapon
+
+		errWeapon := h.mu.GetWeaponByID(ctx, weaponID, &weapon)
+
+		if errWeapon != nil {
+			http_helper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
+
+			return
+		}
+
+		weaponStats, errChat := h.mu.WeaponsOverallTopPlayers(ctx, weaponID)
+		if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
+			log.Error("Failed to get weapons overall top stats",
+				zap.Error(errChat))
+			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+
+			return
+		}
+
+		if weaponStats == nil {
+			weaponStats = []domain.PlayerWeaponResult{}
+		}
+
+		ctx.JSON(http.StatusOK, resp{LazyResult: domain.NewLazyResult(int64(len(weaponStats)), weaponStats), Weapon: weapon})
+	}
+}
+
+func (h MatchHandler) onAPIGetStatsPlayersOverall(ctx context.Context) gin.HandlerFunc {
+	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	updater := util.NewDataUpdater(log, time.Minute*10, func() ([]domain.PlayerWeaponResult, error) {
+		updatedStats, errChat := h.mu.PlayersOverallByKills(ctx, 1000)
+		if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
+			return nil, errors.Join(errChat, util.ErrDataUpdate)
+		}
+
+		return updatedStats, nil
+	})
+
+	go updater.Start(ctx)
+
+	return func(ctx *gin.Context) {
+		stats := updater.Data()
+		ctx.JSON(http.StatusOK, domain.NewLazyResult(int64(len(stats)), stats))
+	}
+}
+
+func (h MatchHandler) onAPIGetStatsHealersOverall(ctx context.Context) gin.HandlerFunc {
+	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	updater := util.NewDataUpdater(log, time.Minute*10, func() ([]domain.HealingOverallResult, error) {
+		updatedStats, errChat := h.mu.HealersOverallByHealing(ctx, 250)
+		if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
+			return nil, errors.Join(errChat, util.ErrDataUpdate)
+		}
+
+		return updatedStats, nil
+	})
+
+	go updater.Start(ctx)
+
+	return func(ctx *gin.Context) {
+		stats := updater.Data()
+		ctx.JSON(http.StatusOK, domain.NewLazyResult(int64(len(stats)), stats))
+	}
+}
+
+func (h MatchHandler) onAPIGetPlayerWeaponStatsOverall() gin.HandlerFunc {
+	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		steamID, errSteamID := http_helper.GetSID64Param(ctx, "steam_id")
+		if errSteamID != nil {
+			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+
+			return
+		}
+
+		weaponStats, errChat := h.mu.WeaponsOverallByPlayer(ctx, steamID)
+		if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
+			log.Error("Failed to query player weapons stats",
+				zap.Error(errChat))
+			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+
+			return
+		}
+
+		if weaponStats == nil {
+			weaponStats = []domain.WeaponsOverallResult{}
+		}
+
+		ctx.JSON(http.StatusOK, domain.NewLazyResult(int64(len(weaponStats)), weaponStats))
+	}
+}
+
+func (h MatchHandler) onAPIGetPlayerClassStatsOverall() gin.HandlerFunc {
+	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		steamID, errSteamID := http_helper.GetSID64Param(ctx, "steam_id")
+		if errSteamID != nil {
+			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+
+			return
+		}
+
+		classStats, errChat := h.mu.PlayerOverallClassStats(ctx, steamID)
+		if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
+			log.Error("Failed to query player class stats",
+				zap.Error(errChat))
+			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+
+			return
+		}
+
+		if classStats == nil {
+			classStats = []domain.PlayerClassOverallResult{}
+		}
+
+		ctx.JSON(http.StatusOK, domain.NewLazyResult(int64(len(classStats)), classStats))
+	}
+}
+
+func (h MatchHandler) onAPIGetPlayerStatsOverall() gin.HandlerFunc {
+	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		steamID, errSteamID := http_helper.GetSID64Param(ctx, "steam_id")
+		if errSteamID != nil {
+			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+
+			return
+		}
+
+		var por domain.PlayerOverallResult
+		if errChat := h.mu.PlayerOverallStats(ctx, steamID, &por); errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
+			log.Error("Failed to query player stats overall",
+				zap.Error(errChat))
+			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, por)
+	}
+}
+
+func (h MatchHandler) onAPIGetMapUsage() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		mapUsages, errServers := h.mu.GetMapUsageStats(ctx)
+		if errServers != nil {
+			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, mapUsages)
+	}
+}
+
+func (h MatchHandler) onAPIGetMatch() gin.HandlerFunc {
+	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		matchID, errID := http_helper.GetUUIDParam(ctx, "match_id")
+		if errID != nil {
+			log.Error("Invalid match_id value", zap.Error(errID))
+			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+
+			return
+		}
+
+		var match domain.MatchResult
+
+		errMatch := h.mu.MatchGetByID(ctx, matchID, &match)
+
+		if errMatch != nil {
+			if errors.Is(errMatch, domain.ErrNoResult) {
+				http_helper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
+
+				return
+			}
+
+			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, match)
+	}
+}
+
+func (h MatchHandler) onAPIGetMatches() gin.HandlerFunc {
+	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+
+	return func(ctx *gin.Context) {
+		var req domain.MatchesQueryOpts
+		if !http_helper.Bind(ctx, log, &req) {
+			return
+		}
+
+		// Don't let normal users query anybody but themselves
+		user := http_helper.CurrentUserProfile(ctx)
+		if user.PermissionLevel <= domain.PUser {
+			if !req.SteamID.Valid() {
+				http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+
+				return
+			}
+
+			if user.SteamID != req.SteamID {
+				http_helper.ResponseErr(ctx, http.StatusForbidden, domain.ErrPermissionDenied)
+
+				return
+			}
+		}
+
+		matches, totalCount, matchesErr := h.mu.Matches(ctx, req)
+		if matchesErr != nil {
+			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			log.Error("Failed to perform query", zap.Error(matchesErr))
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, domain.NewLazyResult(totalCount, matches))
+	}
+}

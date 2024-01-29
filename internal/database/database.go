@@ -44,6 +44,7 @@ type Database interface {
 	SendBatch(ctx context.Context, b *pgx.Batch) pgx.BatchResults
 	GetCount(ctx context.Context, builder sq.SelectBuilder) (int64, error)
 	DBErr(rootError error) error
+	TruncateTable(ctx context.Context, table string) error
 }
 
 type postgresStore struct {
@@ -265,13 +266,13 @@ func (db *postgresStore) GetCount(ctx context.Context, builder sq.SelectBuilder)
 	return count, nil
 }
 
-func (db *postgresStore) truncateTable(ctx context.Context, database Database, table string) error {
+func (db *postgresStore) TruncateTable(ctx context.Context, table string) error {
 	query, args, errQueryArgs := sq.Delete(table).ToSql()
 	if errQueryArgs != nil {
 		return db.DBErr(errQueryArgs)
 	}
 
-	rows, errExec := database.Query(ctx, query, args...)
+	rows, errExec := db.Query(ctx, query, args...)
 	if errExec != nil {
 		return db.DBErr(errExec)
 	}

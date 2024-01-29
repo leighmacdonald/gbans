@@ -5,15 +5,15 @@ import (
 	"os"
 
 	"github.com/getsentry/sentry-go"
-	"github.com/leighmacdonald/gbans/internal/config"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
-func MustCreate(conf *config.Config, sentryClient *sentry.Client) *zap.Logger {
+func MustCreate(conf domain.Config, sentryClient *sentry.Client) *zap.Logger {
 	var loggingConfig zap.Config
-	if conf.General.Mode == config.ReleaseMode {
+	if conf.General.Mode == domain.ReleaseMode {
 		loggingConfig = zap.NewProductionConfig()
 		loggingConfig.DisableCaller = true
 	} else {

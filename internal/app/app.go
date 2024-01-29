@@ -3,34 +3,17 @@ package app
 import (
 	"context"
 	"errors"
-	"github.com/leighmacdonald/gbans/internal/chat"
-	"github.com/leighmacdonald/gbans/internal/wordfilter"
 	"net"
-	"net/http"
 	"os"
 	"strings"
-	"sync"
-	"sync/atomic"
 	"time"
 
-	"github.com/bwmarrin/discordgo"
-	"github.com/gin-gonic/gin"
-	"github.com/gofrs/uuid/v5"
-	"github.com/leighmacdonald/gbans/internal/api"
-	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/config"
-	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/errs"
-	"github.com/leighmacdonald/gbans/internal/forum"
+	"github.com/leighmacdonald/gbans/internal/metrics"
 	"github.com/leighmacdonald/gbans/internal/state"
-	"github.com/leighmacdonald/gbans/internal/steamgroup"
-	"github.com/leighmacdonald/gbans/internal/thirdparty"
-	"github.com/leighmacdonald/gbans/internal/wiki"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
-	"github.com/leighmacdonald/steamid/v3/steamid"
 	"go.uber.org/zap"
 )
 
@@ -40,140 +23,12 @@ var (
 	BuildDate    = ""       //nolint:gochecknoglobals
 )
 
-type App struct {
-	conf             config.Config
-	confMu           sync.RWMutex
-	discord          *Bot
-	db               database.Stores
-	log              *zap.Logger
-	logFileChan      chan *logFilePayload
-	notificationChan chan NotificationPayload
-	state            *state.Collector
-	steamGroups      *steamgroup.SteamGroupMemberships
-	steamFriends     *thirdparty.SteamFriends
-	patreon          *PatreonManager
-	eb               *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
-	wordFilters      *WordFilters
-	warningTracker   *chat.Tracker
-	mc               *metricCollector
-	assetStore       *asset.Client
-	logListener      *logparse.UDPLogListener
-	activityTracker  *forum.Tracker
-	netBlock         *Blocker
-	weaponMap        fp.MutexMap[logparse.Weapon, int]
-	chatLogger       *chatLogger
-	matchSummarizer  *Summarizer
-}
-
-type CommandHandler func(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error)
-
-func New(conf config.Config, database database.Stores, bot *Bot, logger *zap.Logger, assetStore *asset.Client) *App {
-	eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
-	filters := NewWordFilters()
-	matchUUIDMap := fp.NewMutexMap[int, uuid.UUID]()
-	application := &App{
-		discord:          bot,
-		eb:               eventBroadcaster,
-		db:               database,
-		conf:             conf,
-		assetStore:       assetStore,
-		log:              logger,
-		logFileChan:      make(chan *logFilePayload, 10),
-		notificationChan: make(chan NotificationPayload, 5),
-		steamGroups:      steamgroup.NewSteamGroupMemberships(logger, database),
-		steamFriends:     thirdparty.NewSteamFriends(logger, database),
-		patreon:          NewPatreonManager(logger, conf),
-		wordFilters:      filters,
-		mc:               newMetricCollector(),
-		state:            state.NewCollector(logger),
-		activityTracker:  forum.NewTracker(logger),
-		netBlock:         NewBlocker(),
-		weaponMap:        fp.NewMutexMap[logparse.Weapon, int](),
-	}
-
-	application.setConfig(conf)
-	application.warningTracker = chat.NewTracker(logger, database, conf.Filter, wordfilter.onWarningHandler(application), wordfilter.onWarningExceeded(application))
-	application.chatLogger = newChatLogger(logger, database, eventBroadcaster, filters, application.warningTracker, matchUUIDMap)
-	application.matchSummarizer = NewSummarizer(logger, eventBroadcaster, matchUUIDMap, onMatchComplete(application))
-
-	if conf.Discord.Enabled {
-		if errReg := RegisterDiscordHandlers(application); errReg != nil {
-			panic(errReg)
-		}
-	}
-
-	return application
-}
-
-func (app *App) Activity() *forum.Tracker {
-	return app.activityTracker
-}
-
-func (app *App) SendPayload(channelID string, message *discordgo.MessageEmbed) {
-	app.discord.SendPayload(channelID, message)
-}
-
-func (app *App) Version() domain.BuildInfo {
+func Version() domain.BuildInfo {
 	return domain.BuildInfo{
 		BuildVersion: BuildVersion,
 		Commit:       BuildCommit,
 		Date:         BuildDate,
 	}
-}
-
-func (app *App) EventBroadcaster() *fp.Broadcaster[logparse.EventType, logparse.ServerEvent] {
-	return app.eb
-}
-
-func (app *App) Config() config.Config {
-	app.confMu.RLock()
-	defer app.confMu.RUnlock()
-
-	return app.conf
-}
-
-func (app *App) Warnings() domain.Warnings { //nolint:ireturn
-	return app.warningTracker
-}
-
-func (app *App) State() *state.Collector {
-	return app.state
-}
-
-func (app *App) Patreon() domain.Patreon { //nolint:ireturn
-	return app.patreon
-}
-
-func (app *App) NetBlocks() domain.NetBLocker { //nolint:ireturn
-	return app.netBlock
-}
-
-func (app *App) Store() database.Stores {
-	return app.db
-}
-
-func (app *App) Groups() *steamgroup.SteamGroupMemberships { //nolint:ireturn
-	return app.steamGroups
-}
-
-func (app *App) Friends() *thirdparty.SteamFriends { //nolint:ireturn
-	return app.steamFriends
-}
-
-func (app *App) WordFilters() *WordFilters {
-	return app.wordFilters
-}
-
-func (app *App) Log() *zap.Logger {
-	return app.log
-}
-
-func (app *App) Assets() *asset.Client {
-	return app.assetStore
-}
-
-func (app *App) WeaponMap() fp.MutexMap[logparse.Weapon, int] {
-	return app.weaponMap
 }
 
 func (app *App) startWorkers(ctx context.Context) {
@@ -183,7 +38,7 @@ func (app *App) startWorkers(ctx context.Context) {
 	go app.warningTracker.Start(ctx)
 	go app.logReader(ctx, app.Config().Debug.WriteUnhandledLogEvents)
 	go app.initLogSrc(ctx)
-	go logMetricsConsumer(ctx, app.mc, app.eb, app.log)
+	go metrics.logMetricsConsumer(ctx, app.mc, app.eb, app.log)
 	go app.matchSummarizer.Start(ctx)
 	go app.chatLogger.start(ctx)
 	go app.playerConnectionWriter(ctx)
@@ -201,16 +56,12 @@ func (app *App) startWorkers(ctx context.Context) {
 	go app.steamFriends.Start(ctx)
 }
 
-func (app *App) setConfig(conf config.Config) {
-	app.confMu.Lock()
-	defer app.confMu.Unlock()
-
-	app.conf = conf
-}
-
-func firstTimeSetup(ctx context.Context, conf config.Config, database database.Stores, weaponMap fp.MutexMap[logparse.Weapon, int]) error {
+func FirstTimeSetup(ctx context.Context, conf domain.Config, pu domain.PersonUsecase,
+	nu domain.NewsUsecase, sv domain.ServersUsecase, wu domain.WikiUsecase, mu domain.MatchUsecase,
+	weaponMap fp.MutexMap[logparse.Weapon, int],
+) error {
 	if !conf.General.Owner.Valid() {
-		return errOwnerInvalid
+		return domain.ErrOwnerInvalid
 	}
 
 	localCtx, cancel := context.WithTimeout(ctx, time.Second*5)
@@ -218,16 +69,16 @@ func firstTimeSetup(ctx context.Context, conf config.Config, database database.S
 
 	var owner domain.Person
 
-	if errRootUser := database.GetPersonBySteamID(localCtx, conf.General.Owner, &owner); errRootUser != nil {
-		if !errors.Is(errRootUser, errs.ErrNoResult) {
-			return errors.Join(errRootUser, errCreateAdmin)
+	if errRootUser := pu.GetPersonBySteamID(localCtx, conf.General.Owner, &owner); errRootUser != nil {
+		if !errors.Is(errRootUser, domain.ErrNoResult) {
+			return errors.Join(errRootUser, domain.ErrCreateAdmin)
 		}
 
 		newOwner := domain.NewPerson(conf.General.Owner)
 		newOwner.PermissionLevel = domain.PAdmin
 
-		if errSave := database.SavePerson(localCtx, &newOwner); errSave != nil {
-			return errors.Join(errSave, errSetupAdmin)
+		if errSave := pu.SavePerson(localCtx, &newOwner); errSave != nil {
+			return errors.Join(errSave, domain.ErrSetupAdmin)
 		}
 
 		newsEntry := domain.NewsEntry{
@@ -238,8 +89,8 @@ func firstTimeSetup(ctx context.Context, conf config.Config, database database.S
 			UpdatedOn:   time.Now(),
 		}
 
-		if errSave := database.SaveNewsArticle(localCtx, &newsEntry); errSave != nil {
-			return errors.Join(errSave, errSetupNews)
+		if errSave := nu.SaveNewsArticle(localCtx, &newsEntry); errSave != nil {
+			return errors.Join(errSave, domain.ErrSetupNews)
 		}
 
 		server := domain.NewServer("server-1", "127.0.0.1", 27015)
@@ -251,135 +102,25 @@ func firstTimeSetup(ctx context.Context, conf config.Config, database database.S
 		server.LogSecret = 12345678
 		server.Region = "asia"
 
-		if errSave := database.SaveServer(localCtx, &server); errSave != nil {
-			return errors.Join(errSave, errSetupServer)
+		if errSave := sv.SaveServer(localCtx, &server); errSave != nil {
+			return errors.Join(errSave, domain.ErrSetupServer)
 		}
 
-		page := wiki.Page{
-			Slug:      wiki.RootSlug,
+		page := domain.Page{
+			Slug:      domain.RootSlug,
 			BodyMD:    "# Welcome to the wiki",
 			Revision:  1,
 			CreatedOn: time.Now(),
 			UpdatedOn: time.Now(),
 		}
 
-		if errSave := database.SaveWikiPage(localCtx, &page); errSave != nil {
-			return errors.Join(errSave, errSetupWiki)
+		if errSave := wu.SaveWikiPage(localCtx, &page); errSave != nil {
+			return errors.Join(errSave, domain.ErrSetupWiki)
 		}
 	}
 
-	if errWeapons := database.LoadWeapons(ctx, weaponMap); errWeapons != nil {
-		return errors.Join(errWeapons, errSetupWeapons)
-	}
-
-	return nil
-}
-
-func (app *App) Init(ctx context.Context) error {
-	app.log.Info("Starting gbans...",
-		zap.String("version", BuildVersion),
-		zap.String("commit", BuildCommit),
-		zap.String("date", BuildDate))
-
-	if setupErr := firstTimeSetup(ctx, app.conf, app.db, app.weaponMap); setupErr != nil {
-		app.log.Fatal("Failed to do first time setup", zap.Error(setupErr))
-	}
-
-	// start the background goroutine workers
-	app.startWorkers(ctx)
-
-	// Load the filtered word set into memory
-	if app.Config().Filter.Enabled {
-		count, errFilter := app.LoadFilters(ctx)
-		if errFilter != nil {
-			return errLoadFilters
-		}
-
-		app.log.Info("Loaded filter list", zap.Int64("count", count))
-	}
-
-	if errBlocklist := app.loadNetBlocks(ctx); errBlocklist != nil {
-		app.log.Error("Could not load CIDR block list", zap.Error(errBlocklist))
-	}
-
-	return nil
-}
-
-func (app *App) loadNetBlocks(ctx context.Context) error {
-	sources, errSource := app.db.GetCIDRBlockSources(ctx)
-	if errSource != nil {
-		return errors.Join(errSource, errInitNetBlocks)
-	}
-
-	var total atomic.Int64
-
-	waitGroup := sync.WaitGroup{}
-
-	for _, source := range sources {
-		if !source.Enabled {
-			continue
-		}
-
-		waitGroup.Add(1)
-
-		go func(src domain.CIDRBlockSource) {
-			defer waitGroup.Done()
-
-			count, errAdd := app.netBlock.AddRemoteSource(ctx, src.Name, src.URL)
-			if errAdd != nil {
-				app.log.Error("Could not load remote source URL")
-			}
-
-			total.Add(count)
-		}(source)
-	}
-
-	waitGroup.Wait()
-
-	whitelists, errWhitelists := app.db.GetCIDRBlockWhitelists(ctx)
-	if errWhitelists != nil {
-		if !errors.Is(errWhitelists, errs.ErrNoResult) {
-			return errors.Join(errWhitelists, errInitNetWhitelist)
-		}
-	}
-
-	for _, whitelist := range whitelists {
-		app.netBlock.AddWhitelist(whitelist.CIDRBlockWhitelistID, whitelist.Address)
-	}
-
-	app.log.Info("Loaded cidr block lists",
-		zap.Int64("cidr_blocks", total.Load()), zap.Int("whitelisted", len(whitelists)))
-
-	return nil
-}
-
-func (app *App) StartHTTP(ctx context.Context) error {
-	app.log.Info("Service status changed", zap.String("State", "ready"))
-	defer app.log.Info("Service status changed", zap.String("State", "stopped"))
-
-	if app.Config().General.Mode == config.ReleaseMode {
-		gin.SetMode(gin.ReleaseMode)
-	} else {
-		gin.SetMode(gin.DebugMode)
-	}
-
-	httpServer := api.New(ctx, app)
-
-	go func() {
-		<-ctx.Done()
-
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-
-		defer cancel()
-
-		if errShutdown := httpServer.Shutdown(shutdownCtx); errShutdown != nil { //nolint:contextcheck
-			app.log.Error("Error shutting down http service", zap.Error(errShutdown))
-		}
-	}()
-
-	errServe := httpServer.ListenAndServe()
-	if errServe != nil && !errors.Is(errServe, http.ErrServerClosed) {
-		return errors.Join(errServe, errHTTPServer)
+	if errWeapons := mu.LoadWeapons(ctx, weaponMap); errWeapons != nil {
+		return errors.Join(errWeapons, domain.ErrSetupWeapons)
 	}
 
 	return nil
@@ -525,27 +266,6 @@ func (app *App) logReader(ctx context.Context, writeUnhandled bool) {
 	}
 }
 
-func (app *App) LoadFilters(ctx context.Context) (int64, error) {
-	// TODO load external lists via http
-	localCtx, cancel := context.WithTimeout(ctx, time.Second*15)
-	defer cancel()
-
-	words, count, errGetFilters := app.db.GetFilters(localCtx, domain.FiltersQueryFilter{})
-	if errGetFilters != nil {
-		if errors.Is(errGetFilters, errs.ErrNoResult) {
-			return 0, nil
-		}
-
-		return 0, errors.Join(errGetFilters, errLoadFilters)
-	}
-
-	app.wordFilters.Import(words)
-
-	app.log.Debug("Loaded word filters", zap.Int64("count", count))
-
-	return count, nil
-}
-
 // UDP log sink.
 func (app *App) initLogSrc(ctx context.Context) {
 	logSrc, errLogSrc := logparse.NewUDPLogListener(app.log, app.Config().Log.SrcdsLogAddr,
@@ -593,57 +313,7 @@ func (app *App) updateSrcdsLogSecrets(ctx context.Context) {
 
 type NotificationHandler struct{}
 
-type NotificationPayload struct {
-	MinPerms domain.Privilege
-	Sids     steamid.Collection
-	Severity domain.NotificationSeverity
-	Message  string
-	Link     string
-}
-
 func (app *App) SendNotification(ctx context.Context, notification NotificationPayload) error {
-	// Collect all required ids
-	if notification.MinPerms >= domain.PUser {
-		sids, errIds := app.db.GetSteamIdsAbove(ctx, notification.MinPerms)
-		if errIds != nil {
-			return errors.Join(errIds, errNotificationSteamIDs)
-		}
-
-		notification.Sids = append(notification.Sids, sids...)
-	}
-
-	uniqueIds := fp.Uniq(notification.Sids)
-
-	people, errPeople := app.db.GetPeopleBySteamID(ctx, uniqueIds)
-	if errPeople != nil && !errors.Is(errPeople, errs.ErrNoResult) {
-		return errors.Join(errPeople, errNotificationPeople)
-	}
-
-	var discordIds []string
-
-	for _, p := range people {
-		if p.DiscordID != "" {
-			discordIds = append(discordIds, p.DiscordID)
-		}
-	}
-
-	go func(ids []string, payload NotificationPayload) {
-		for _, discordID := range ids {
-			app.SendPayload(discordID, discord.NotificationMessage(payload.Message, payload.Link))
-		}
-	}(discordIds, notification)
-
-	// Broadcast to
-	for _, sid := range uniqueIds {
-		// Todo, prep stmt at least.
-		if errSend := app.db.SendNotification(ctx, sid, notification.Severity,
-			notification.Message, notification.Link); errSend != nil {
-			app.log.Error("Failed to send notification", zap.Error(errSend))
-
-			break
-		}
-	}
-
 	return nil
 }
 

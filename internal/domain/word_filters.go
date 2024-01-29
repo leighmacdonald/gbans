@@ -23,6 +23,8 @@ type WordFilterUsecase interface {
 	DropFilter(ctx context.Context, filter *Filter) error
 	GetFilterByID(ctx context.Context, filterID int64, filter *Filter) error
 	GetFilters(ctx context.Context, opts FiltersQueryFilter) ([]Filter, int64, error)
+	Check(query string) []Filter
+	Import(ctx context.Context) error
 	AddMessageFilterMatch(ctx context.Context, messageID int64, filterID int64) error
 }
 

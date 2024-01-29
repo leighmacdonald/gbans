@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/errs"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
@@ -32,12 +32,12 @@ func BDSourceBans(ctx context.Context, steamID steamid.SID64) ([]BDSourceBansRec
 
 	req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if errReq != nil {
-		return nil, errors.Join(errReq, errs.ErrCreateRequest)
+		return nil, errors.Join(errReq, domain.ErrCreateRequest)
 	}
 
 	resp, errResp := client.Do(req)
 	if errResp != nil {
-		return nil, errors.Join(errResp, errs.ErrRequestPerform)
+		return nil, errors.Join(errResp, domain.ErrRequestPerform)
 	}
 
 	defer func() {
@@ -46,7 +46,7 @@ func BDSourceBans(ctx context.Context, steamID steamid.SID64) ([]BDSourceBansRec
 
 	var records []BDSourceBansRecord
 	if errJSON := json.NewDecoder(resp.Body).Decode(&records); errJSON != nil {
-		return nil, errors.Join(errJSON, errs.ErrRequestDecode)
+		return nil, errors.Join(errJSON, domain.ErrRequestDecode)
 	}
 
 	return records, nil

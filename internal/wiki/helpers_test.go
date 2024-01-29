@@ -3,19 +3,20 @@ package wiki_test
 import (
 	"testing"
 
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/wiki"
 	"github.com/stretchr/testify/require"
 )
 
 func TestWiki(t *testing.T) {
-	root := wiki.Page{Slug: wiki.RootSlug}
+	root := domain.Page{Slug: domain.RootSlug}
 	root.BodyMD = `
 # Title
 
 - list 1
 - list 2
 `
-	rendered := root.Render()
+	rendered := wiki.Render(root)
 	require.Equal(t,
 		[]byte(`<h1 id="title">Title</h1>
 

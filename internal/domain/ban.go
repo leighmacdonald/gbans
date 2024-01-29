@@ -7,7 +7,6 @@ import (
 	"net"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/avatar"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
@@ -17,18 +16,13 @@ type BanRepository interface {
 	GetBanBySteamID(ctx context.Context, sid64 steamid.SID64, bannedPerson *BannedSteamPerson, deletedOk bool) error
 	GetBanByBanID(ctx context.Context, banID int64, bannedPerson *BannedSteamPerson, deletedOk bool) error
 	GetBanByLastIP(ctx context.Context, lastIP net.IP, bannedPerson *BannedSteamPerson, deletedOk bool) error
-
 	DropBan(ctx context.Context, ban *BanSteam, hardDelete bool) error
 	GetBansSteam(ctx context.Context, filter SteamBansQueryFilter) ([]BannedSteamPerson, int64, error)
 	GetExpiredBans(ctx context.Context) ([]BanSteam, error)
 	GetBansOlderThan(ctx context.Context, filter QueryFilter, since time.Time) ([]BanSteam, error)
-
-	IsOnIPWithBan(ctx context.Context, steamID steamid.SID64, address net.IP) (bool, error)
 	GetBanASN(ctx context.Context, asNum int64, banASN *BanASN) error
 	GetBansASN(ctx context.Context, filter ASNBansQueryFilter) ([]BannedASNPerson, int64, error)
-
 	DropBanASN(ctx context.Context, banASN *BanASN) error
-
 	GetBanNetByAddress(ctx context.Context, ipAddr net.IP) ([]BanCIDR, error)
 	GetBanNetByID(ctx context.Context, netID int64, banNet *BanCIDR) error
 	GetBansNet(ctx context.Context, filter CIDRBansQueryFilter) ([]BannedCIDRPerson, int64, error)
@@ -40,6 +34,8 @@ type BanRepository interface {
 }
 
 type BanUsecase interface {
+	IsMember(steamID steamid.SID64) (steamid.SID64, bool)
+
 	IsOnIPWithBan(ctx context.Context, steamID steamid.SID64, address net.IP) (bool, error)
 	GetBanBySteamID(ctx context.Context, sid64 steamid.SID64, bannedPerson *BannedSteamPerson, deletedOk bool) error
 	GetBanByBanID(ctx context.Context, banID int64, bannedPerson *BannedSteamPerson, deletedOk bool) error
@@ -60,7 +56,6 @@ type BanUsecase interface {
 	GetBansASN(ctx context.Context, filter ASNBansQueryFilter) ([]BannedASNPerson, int64, error)
 	SaveBanASN(ctx context.Context, banASN *BanASN) error
 	DropBanASN(ctx context.Context, banASN *BanASN) error
-	GetSteamIDsAtIP(ctx context.Context, ipNet *net.IPNet) (steamid.Collection, error)
 	GetBanNetByAddress(ctx context.Context, ipAddr net.IP) ([]BanCIDR, error)
 	GetBanNetByID(ctx context.Context, netID int64, banNet *BanCIDR) error
 	GetBansNet(ctx context.Context, filter CIDRBansQueryFilter) ([]BannedCIDRPerson, int64, error)
@@ -120,7 +115,7 @@ func (b BannedSteamPerson) GetName() string {
 	panic("implement me")
 }
 
-func (b BannedSteamPerson) GetAvatar() avatar.AvatarLinks {
+func (b BannedSteamPerson) GetAvatar() AvatarLinks {
 	// TODO implement me
 	panic("implement me")
 }

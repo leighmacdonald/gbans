@@ -1,7 +1,6 @@
 package http_helper
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"path/filepath"
@@ -106,12 +105,15 @@ func ErrorHandled(ctx *gin.Context, err error) error {
 func HandleErrPermissionDenied(ctx *gin.Context) {
 	ResponseErr(ctx, http.StatusForbidden, domain.ErrPermissionDenied)
 }
+
 func HandleErrNotFound(ctx *gin.Context) {
 	ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
 }
+
 func HandleErrBadRequest(ctx *gin.Context) {
 	ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 }
+
 func HandleErrInternal(ctx *gin.Context) {
 	ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 }
@@ -124,46 +126,37 @@ func HandleErrInvalidFormat(ctx *gin.Context) {
 	ResponseErr(ctx, http.StatusUnsupportedMediaType, domain.ErrInvalidFormat)
 }
 
-//nolint:contextcheck,maintidx
-func createRouter(ctx context.Context) *gin.Engine {
-	engine := gin.New()
-	engine.MaxMultipartMemory = 8 << 24
-	engine.Use(gin.Recovery())
+func useSentry(engine *gin.Engine, version string) {
+	engine.Use(sentrygin.New(sentrygin.Options{Repanic: true}))
+	engine.Use(func(ctx *gin.Context) {
+		if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
+			hub.Scope().SetTag("version", version)
+		}
+		ctx.Next()
+	})
+}
 
-	conf := env.Config()
+func useCors(engine *gin.Engine, log *zap.Logger, conf domain.Config) {
+	engine.Use(httpErrorHandler(log), gin.Recovery())
+	engine.Use(useSecure(conf.General.Mode, conf.S3.ExternalURL))
 
-	if conf.Log.SentryDSN != "" {
-		engine.Use(sentrygin.New(sentrygin.Options{Repanic: true}))
-		engine.Use(func(ctx *gin.Context) {
-			if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
-				hub.Scope().SetTag("version", env.Version().BuildVersion)
-			}
-			ctx.Next()
-		})
-	}
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowOrigins = conf.HTTP.CorsOrigins
+	corsConfig.AllowHeaders = append(corsConfig.AllowHeaders, "Authorization")
+	corsConfig.AllowWildcard = false
+	corsConfig.AllowCredentials = false
+	engine.Use(cors.New(corsConfig))
+}
 
-	if conf.General.Mode != config.ReleaseMode {
-		pprof.Register(engine)
-	}
-
-	if conf.General.Mode != config.TestMode {
-		engine.Use(httpErrorHandler(env.Log()), gin.Recovery())
-		engine.Use(useSecure(conf.General.Mode, conf.S3.ExternalURL))
-
-		corsConfig := cors.DefaultConfig()
-		corsConfig.AllowOrigins = conf.HTTP.CorsOrigins
-		corsConfig.AllowHeaders = append(corsConfig.AllowHeaders, "Authorization")
-		corsConfig.AllowWildcard = false
-		corsConfig.AllowCredentials = false
-		engine.Use(cors.New(corsConfig))
-	}
-
+func usePrometheus(engine *gin.Engine) {
 	prom := ginprom.New(func(prom *ginprom.Prometheus) {
 		prom.Namespace = "gbans"
 		prom.Subsystem = "http"
 	})
 	engine.Use(prom.Instrument())
+}
 
+func useFrontend(engine *gin.Engine, conf domain.Config, version domain.BuildInfo) error {
 	staticPath := conf.HTTP.StaticPath
 	if staticPath == "" {
 		staticPath = "./dist"
@@ -171,12 +164,12 @@ func createRouter(ctx context.Context) *gin.Engine {
 
 	absStaticPath, errStaticPath := filepath.Abs(staticPath)
 	if errStaticPath != nil {
-		env.Log().Fatal("Invalid static path", zap.Error(errStaticPath))
+		return errors.Join(errStaticPath, domain.ErrStaticPathError)
 	}
 
 	engine.StaticFS("/dist", http.Dir(absStaticPath))
 
-	if conf.General.Mode != config.TestMode {
+	if conf.General.Mode != domain.TestMode {
 		engine.LoadHTMLFiles(filepath.Join(absStaticPath, "index.html"))
 	}
 
@@ -198,8 +191,6 @@ func createRouter(ctx context.Context) *gin.Engine {
 				ctx.Header("Document-Policy", "js-profiling")
 			}
 
-			version := env.Version()
-
 			ctx.HTML(http.StatusOK, "index.html", jsConfig{
 				SiteName:        conf.General.SiteName,
 				DiscordClientID: conf.Discord.AppID,
@@ -215,170 +206,32 @@ func createRouter(ctx context.Context) *gin.Engine {
 		})
 	}
 
-	//engine.GET("/auth/callback", middleware.onOpenIDCallback(env))
-	//engine.GET("/export/bans/tf2bd", onAPIExportBansTF2BD(env))
-	//engine.GET("/export/bans/valve/steamid", onAPIExportBansValveSteamID(env))
-	//engine.GET("/metrics", prometheusHandler())
+	return nil
+}
 
-	//engine.GET("/api/profile", onAPIProfile(env))
-	// engine.GET("/api/servers/state", onAPIGetServerStates(env))
-	//engine.GET("/api/stats", onAPIGetStats(env))
+func CreateRouter(log *zap.Logger, conf domain.Config, version domain.BuildInfo) (*gin.Engine, error) {
+	engine := gin.New()
+	engine.MaxMultipartMemory = 8 << 24
+	engine.Use(gin.Recovery())
 
-	//engine.POST("/api/news_latest", onAPIGetNewsLatest(env))
-
-	engine.GET("/api/patreon/campaigns", onAPIGetPatreonCampaigns(env))
-
-	engine.GET("/media/:media_id", onGetMediaByID(env))
-	// engine.GET("/api/servers", onAPIGetServers(env))
-
-	engine.GET("/api/stats/map", onAPIGetMapUsage(env))
-	//engine.POST("/api/demos", onAPIPostDemosQuery(env))
-
-	// Game server plugin routes
-	// engine.POST("/api/server/auth", onSAPIPostServerAuth(env))
-
-	engine.GET("/export/sourcemod/admins_simple.ini", onAPIExportSourcemodSimpleAdmins(env))
-
-	engine.GET("/api/forum/active_users", onAPIActiveUsers(env))
-
-	//engine.POST("/api/auth/refresh", onTokenRefresh(env))
-
-	// This allows use of the user profile on endpoints that have optional authentication
-	optionalAuth := engine.Group("/")
-	{
-		optional := optionalAuth.Use(middleware.authMiddleware(env, domain.PGuest))
-		// optional.GET("/api/contests", onAPIGetContests(env))
-		// optional.GET("/api/contests/:contest_id", onAPIGetContest(env))
-		// optional.GET("/api/contests/:contest_id/entries", onAPIGetContestEntries(env))
-		// optional.GET("/api/forum/overview", onAPIForumOverview(env))
-		// optional.GET("/api/forum/messages/recent", onAPIForumMessagesRecent(env))
-		// optional.POST("/api/forum/threads", onAPIForumThreads(env))
-		// optional.GET("/api/forum/thread/:forum_thread_id", onAPIForumThread(env))
-		// optional.GET("/api/wiki/slug/*slug", onAPIGetWikiSlug(env))
-		// optional.GET("/api/forum/forum/:forum_id", onAPIForum(env))
-		// optional.POST("/api/forum/messages", onAPIForumMessages(env))
+	if conf.Log.SentryDSN != "" {
+		useSentry(engine, version.BuildVersion)
 	}
 
-	authedGrp := engine.Group("/")
-	{
-		// Basic logged-in user
-		authed := authedGrp.Use(middleware.authMiddleware(env, domain.PUser))
-
-		//authed.GET("/api/auth/discord", onOAuthDiscordCallback(env))
-		//authed.GET("/api/auth/logout", onAPILogout(env))
-		authed.POST("/api/current_profile/notifications", onAPICurrentProfileNotifications(env))
-
-		authed.POST("/api/report", onAPIPostReportCreate(env))
-		authed.GET("/api/report/:report_id", onAPIGetReport(env))
-		authed.POST("/api/reports", onAPIGetReports(env))
-		authed.POST("/api/report_status/:report_id", onAPISetReportStatus(env))
-		//authed.POST("/api/media", onAPISaveMedia(env))
-
-		authed.GET("/api/report/:report_id/messages", onAPIGetReportMessages(env))
-		authed.POST("/api/report/:report_id/messages", onAPIPostReportMessage(env))
-		authed.POST("/api/report/message/:report_message_id", onAPIEditReportMessage(env))
-		authed.DELETE("/api/report/message/:report_message_id", onAPIDeleteReportMessage(env))
-		//authed.GET("/api/bans/steam/:ban_id", onAPIGetBanByID(env))
-		//authed.GET("/api/bans/:ban_id/messages", onAPIGetBanMessages(env))
-		//authed.POST("/api/bans/:ban_id/messages", onAPIPostBanMessage(env))
-		//authed.POST("/api/bans/message/:ban_message_id", onAPIEditBanMessage(env))
-		//authed.DELETE("/api/bans/message/:ban_message_id", onAPIDeleteBanMessage(env))
-		//authed.GET("/api/sourcebans/:steam_id", onAPIGetSourceBans(env))
-
-		//authed.GET("/api/log/:match_id", onAPIGetMatch(env))
-		//authed.POST("/api/logs", onAPIGetMatches(env))
-		//authed.POST("/api/messages", onAPIQueryMessages(env))
-
-		//authed.GET("/api/stats/weapons", onAPIGetStatsWeaponsOverall(ctx, env))
-		//authed.GET("/api/stats/weapon/:weapon_id", onAPIGetsStatsWeapon(env))
-		//authed.GET("/api/stats/players", onAPIGetStatsPlayersOverall(ctx, env))
-		//authed.GET("/api/stats/healers", onAPIGetStatsHealersOverall(ctx, env))
-		//authed.GET("/api/stats/player/:steam_id/weapons", onAPIGetPlayerWeaponStatsOverall(env))
-		//authed.GET("/api/stats/player/:steam_id/classes", onAPIGetPlayerClassStatsOverall(env))
-		//authed.GET("/api/stats/player/:steam_id/overall", onAPIGetPlayerStatsOverall(env))
-
-		// authed.POST("/api/contests/:contest_id/upload", onAPISaveContestEntryMedia(env))
-		// authed.GET("/api/contests/:contest_id/vote/:contest_entry_id/:direction", onAPISaveContestEntryVote(env))
-		// authed.POST("/api/contests/:contest_id/submit", onAPISaveContestEntrySubmit(env))
-		// authed.DELETE("/api/contest_entry/:contest_entry_id", onAPIDeleteContestEntry(env))
-
-		// authed.POST("/api/forum/forum/:forum_id/thread", onAPIThreadCreate(env))
-		// authed.POST("/api/forum/thread/:forum_thread_id/message", onAPIThreadCreateReply(env))
-		// authed.POST("/api/forum/message/:forum_message_id", onAPIThreadMessageUpdate(env))
-		// authed.DELETE("/api/forum/thread/:forum_thread_id", onAPIThreadDelete(env))
-		// authed.DELETE("/api/forum/message/:forum_message_id", onAPIMessageDelete(env))
-		// authed.POST("/api/forum/thread/:forum_thread_id", onAPIThreadUpdate(env))
+	if conf.General.Mode != domain.ReleaseMode {
+		pprof.Register(engine)
 	}
 
-	editorGrp := engine.Group("/")
-	{
-		// Editor access
-		editorRoute := editorGrp.Use(middleware.authMiddleware(env, domain.PEditor))
-		// editorRoute.POST("/api/wiki/slug", onAPISaveWikiSlug(env))
-		//editorRoute.POST("/api/news", onAPIPostNewsCreate(env))
-		//editorRoute.POST("/api/news/:news_id", onAPIPostNewsUpdate(env))
-		//editorRoute.POST("/api/news_all", onAPIGetNewsAll(env))
-		//editorRoute.POST("/api/filters/query", onAPIQueryWordFilters(env))
-		//editorRoute.GET("/api/filters/state", onAPIGetWarningState(env))
-		//editorRoute.POST("/api/filters", onAPIPostWordFilter(env))
-		//editorRoute.DELETE("/api/filters/:word_id", onAPIDeleteWordFilter(env))
-		//editorRoute.POST("/api/filter_match", onAPIPostWordMatch(env))
-		editorRoute.GET("/export/bans/valve/network", onAPIExportBansValveIP(env))
-		editorRoute.POST("/api/players", onAPISearchPlayers(env))
+	if conf.General.Mode != domain.TestMode {
+		useCors(engine, log, conf)
 	}
 
-	modGrp := engine.Group("/")
-	{
-		// Moderator access
-		modRoute := modGrp.Use(middleware.authMiddleware(env, domain.PModerator))
-		modRoute.POST("/api/report/:report_id/state", onAPIPostBanState(env))
-		modRoute.POST("/api/connections", onAPIQueryPersonConnections(env))
-		//modRoute.GET("/api/message/:person_message_id/context/:padding", onAPIQueryMessageContext(env))
-		modRoute.POST("/api/appeals", onAPIGetAppeals(env))
+	// TODO add config toggle
+	usePrometheus(engine)
 
-		//modRoute.POST("/api/bans/steam", onAPIGetBansSteam(env))
-		//modRoute.POST("/api/bans/steam/create", onAPIPostBanSteamCreate(env))
-		//modRoute.DELETE("/api/bans/steam/:ban_id", onAPIPostBanDelete(env))
-		//modRoute.POST("/api/bans/steam/:ban_id", onAPIPostBanUpdate(env))
-		//modRoute.POST("/api/bans/steam/:ban_id/status", onAPIPostSetBanAppealStatus(env))
-		//
-		//modRoute.POST("/api/bans/cidr/create", onAPIPostBansCIDRCreate(env))
-		//modRoute.POST("/api/bans/cidr", onAPIGetBansCIDR(env))
-		//modRoute.DELETE("/api/bans/cidr/:net_id", onAPIDeleteBansCIDR(env))
-		//modRoute.POST("/api/bans/cidr/:net_id", onAPIPostBansCIDRUpdate(env))
-		//
-		//modRoute.POST("/api/bans/asn/create", onAPIPostBansASNCreate(env))
-		//modRoute.POST("/api/bans/asn", onAPIGetBansASN(env))
-		//modRoute.DELETE("/api/bans/asn/:asn_id", onAPIDeleteBansASN(env))
-		//modRoute.POST("/api/bans/asn/:asn_id", onAPIPostBansASNUpdate(env))
-
-		//modRoute.POST("/api/bans/group/create", onAPIPostBansGroupCreate(env))
-		//modRoute.POST("/api/bans/group", onAPIGetBansGroup(env))
-		//modRoute.DELETE("/api/bans/group/:ban_group_id", onAPIDeleteBansGroup(env))
-		//modRoute.POST("/api/bans/group/:ban_group_id", onAPIPostBansGroupUpdate(env))
-
-		modRoute.GET("/api/patreon/pledges", onAPIGetPatreonPledges(env))
-
-		// modRoute.POST("/api/contests", onAPIPostContest(env))
-		// modRoute.DELETE("/api/contests/:contest_id", onAPIDeleteContest(env))
-		// modRoute.PUT("/api/contests/:contest_id", onAPIUpdateContest(env))
-
-		// modRoute.POST("/api/forum/category", onAPICreateForumCategory(env))
-		// modRoute.GET("/api/forum/category/:forum_category_id", onAPIForumCategory(env))
-		// modRoute.POST("/api/forum/category/:forum_category_id", onAPIUpdateForumCategory(env))
-		// modRoute.POST("/api/forum/forum", onAPICreateForumForum(env))
-		// modRoute.POST("/api/forum/forum/:forum_id", onAPIUpdateForumForum(env))
+	if err := useFrontend(engine, conf, version); err != nil {
+		return nil, err
 	}
 
-	//adminGrp := engine.Group("/")
-	//{
-	//	// Admin access
-	//	adminRoute := adminGrp.Use(authMiddleware(env, domain.PAdmin))
-	//	adminRoute.POST("/api/servers", onAPIPostServer(env))
-	//	adminRoute.POST("/api/servers/:server_id", onAPIPostServerUpdate(env))
-	//	adminRoute.DELETE("/api/servers/:server_id", onAPIPostServerDelete(env))
-	//	adminRoute.POST("/api/servers_admin", onAPIGetServersAdmin(env))
-	//}
-
-	return engine
+	return engine, nil
 }
