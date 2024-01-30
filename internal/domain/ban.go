@@ -34,6 +34,7 @@ type BanRepository interface {
 }
 
 type BanUsecase interface {
+	Start(ctx context.Context)
 	IsMember(steamID steamid.SID64) (steamid.SID64, bool)
 
 	IsOnIPWithBan(ctx context.Context, steamID steamid.SID64, address net.IP) (bool, error)

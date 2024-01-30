@@ -11,7 +11,7 @@ import (
 	"gopkg.in/mxpv/patreon-go.v1"
 )
 
-type Mananger struct {
+type Manager struct {
 	patreonClient    *patreon.Client
 	patreonMu        *sync.RWMutex
 	patreonCampaigns []patreon.Campaign
@@ -19,8 +19,8 @@ type Mananger struct {
 	log              *zap.Logger
 }
 
-func NewPatreonManager(logger *zap.Logger) *Mananger {
-	return &Mananger{
+func NewPatreonManager(logger *zap.Logger) *Manager {
+	return &Manager{
 		log: logger.Named("patreon"),
 
 		patreonMu: &sync.RWMutex{},
@@ -104,7 +104,7 @@ func NewPatreonManager(logger *zap.Logger) *Mananger {
 //	return nil
 // }
 
-func (p *Mananger) Tiers() ([]patreon.Campaign, error) {
+func (p *Manager) Tiers() ([]patreon.Campaign, error) {
 	campaigns, errCampaigns := p.patreonClient.FetchCampaign()
 	if errCampaigns != nil {
 		return nil, errors.Join(errCampaigns, domain.ErrPatreonFetchCampaign)
@@ -113,7 +113,7 @@ func (p *Mananger) Tiers() ([]patreon.Campaign, error) {
 	return campaigns.Data, nil
 }
 
-func (p *Mananger) Pledges() ([]patreon.Pledge, map[string]*patreon.User, error) {
+func (p *Manager) Pledges() ([]patreon.Pledge, map[string]*patreon.User, error) {
 	campaignResponse, err := p.patreonClient.FetchCampaign()
 	if err != nil {
 		return nil, nil, errors.Join(err, domain.ErrPatreonFetchCampaign)
@@ -163,7 +163,7 @@ func (p *Mananger) Pledges() ([]patreon.Pledge, map[string]*patreon.User, error)
 	return out, users, nil
 }
 
-func (p *Mananger) Start(ctx context.Context) {
+func (p *Manager) Start(ctx context.Context) {
 	var (
 		log         = p.log.Named("patreon")
 		updateTimer = time.NewTicker(time.Hour * 1)

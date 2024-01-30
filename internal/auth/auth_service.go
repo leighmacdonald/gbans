@@ -39,10 +39,13 @@ func NewAuthHandler(log *zap.Logger, engine *gin.Engine, au domain.AuthUsecase, 
 
 	engine.GET("/auth/callback", handler.onOpenIDCallback())
 
-	// authed
-	engine.POST("/api/auth/refresh", handler.onTokenRefresh())
-	engine.GET("/api/auth/discord", handler.onOAuthDiscordCallback())
-	engine.GET("/api/auth/logout", handler.onAPILogout())
+	env := engine.Use(au.AuthMiddleware(domain.PUser))
+	{
+		// authed
+		env.POST("/api/auth/refresh", handler.onTokenRefresh())
+		env.GET("/api/auth/discord", handler.onOAuthDiscordCallback())
+		env.GET("/api/auth/logout", handler.onAPILogout())
+	}
 }
 
 func (h AuthHandler) onOpenIDCallback() gin.HandlerFunc {
@@ -96,6 +99,11 @@ func (h AuthHandler) onOpenIDCallback() gin.HandlerFunc {
 		}
 
 		person := domain.NewPerson(sid)
+		if errPerson := h.personUsecase.GetOrCreatePersonBySteamID(ctx, sid, &person); errPerson != nil {
+			log.Error("Failed to create or load user profile", zap.Error(errPerson))
+			ctx.Redirect(302, referralURL)
+		}
+
 		if person.Expired() {
 			if errGetProfile := thirdparty.UpdatePlayerSummary(ctx, &person); errGetProfile != nil {
 				log.Error("Failed to fetch user profile", zap.Error(errGetProfile))

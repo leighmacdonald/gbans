@@ -414,7 +414,7 @@ func (s *banUsecase) GetExpiredNetBans(ctx context.Context) ([]domain.BanCIDR, e
 }
 
 func (s *banUsecase) GetExpiredASNBans(ctx context.Context) ([]domain.BanASN, error) {
-	return s.GetExpiredASNBans(ctx)
+	return s.banRepo.GetExpiredASNBans(ctx)
 }
 
 // IsOnIPWithBan checks if the address matches an existing user who is currently banned already. This

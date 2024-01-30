@@ -3,10 +3,10 @@ package match
 import (
 	"context"
 	"errors"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"sync"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"go.uber.org/zap"
 )
 

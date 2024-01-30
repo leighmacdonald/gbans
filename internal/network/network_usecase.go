@@ -3,8 +3,6 @@ package network
 import (
 	"context"
 	"errors"
-	"github.com/leighmacdonald/gbans/pkg/fp"
-	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"net"
 	"strings"
 	"sync"
@@ -12,7 +10,9 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
+	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"go.uber.org/zap"
 )
@@ -27,14 +27,16 @@ type networkUsecase struct {
 }
 
 func NewNetworkUsecase(log *zap.Logger, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
-	nr domain.NetworkRepository, bl domain.BlocklistUsecase, pu domain.PersonUsecase) domain.NetworkUsecase {
+	nr domain.NetworkRepository, bl domain.BlocklistUsecase, pu domain.PersonUsecase,
+) domain.NetworkUsecase {
 	return networkUsecase{
 		log:     log.Named("network"),
 		nr:      nr,
 		bl:      bl,
 		blocker: NewBlocker(),
 		eb:      broadcaster,
-		pu:      pu}
+		pu:      pu,
+	}
 }
 
 func (u networkUsecase) Start(ctx context.Context) {

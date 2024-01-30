@@ -21,6 +21,7 @@ type AuthRepository interface {
 	GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *PersonAuth) error
 }
 type AuthUsecase interface {
+	Start(ctx context.Context)
 	DeletePersonAuth(ctx context.Context, authID int64) error
 	NewUserToken(steamID steamid.SID64, cookieKey string, userContext string, validDuration time.Duration) (string, error)
 	Sid64FromJWTToken(token string, cookieKey string) (steamid.SID64, error)

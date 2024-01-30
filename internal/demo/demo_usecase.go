@@ -23,7 +23,7 @@ func NewDemoUsecase(log *zap.Logger, bucket string, dr domain.DemoRepository, au
 	return &demoUsecase{log: log.Named("demo"), bucket: bucket, dr: dr, au: au, cu: cu}
 }
 
-func (d demoUsecase) Cleaner(ctx context.Context) {
+func (d demoUsecase) Start(ctx context.Context) {
 	log := d.log.Named("demoCleaner")
 	ticker := time.NewTicker(time.Hour)
 	triggerChan := make(chan any)

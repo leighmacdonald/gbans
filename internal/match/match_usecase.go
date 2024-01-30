@@ -3,6 +3,7 @@ package match
 import (
 	"context"
 	"errors"
+
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -26,7 +27,8 @@ type matchUsecase struct {
 
 func NewMatchUsecase(log *zap.Logger, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
 	mr domain.MatchRepository, su domain.StateUsecase, sv domain.ServersUsecase, du domain.DiscordUsecase,
-	wm fp.MutexMap[logparse.Weapon, int]) domain.MatchUsecase {
+	wm fp.MutexMap[logparse.Weapon, int],
+) domain.MatchUsecase {
 	mu := &matchUsecase{
 		mr:           mr,
 		su:           su,

@@ -3,15 +3,15 @@ package person
 import (
 	"context"
 	"errors"
-	"github.com/leighmacdonald/gbans/internal/thirdparty"
-	"github.com/leighmacdonald/steamweb/v2"
-	"go.uber.org/zap"
-	"golang.org/x/sync/errgroup"
 	"net"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamweb/v2"
+	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 )
 
 type personUsecase struct {

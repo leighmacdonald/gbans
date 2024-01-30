@@ -29,7 +29,7 @@ type discordRepository struct {
 
 func NewDiscordRepository(logger *zap.Logger, conf domain.Config) (domain.DiscordRepository, error) {
 	// Immediately connects
-	session, errNewSession := discordgo.New("bot " + conf.Discord.Token)
+	session, errNewSession := discordgo.New("Bot " + conf.Discord.Token)
 	if errNewSession != nil {
 		return nil, errors.Join(errNewSession, domain.ErrDiscordCreate)
 	}

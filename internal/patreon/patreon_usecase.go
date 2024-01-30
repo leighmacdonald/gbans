@@ -1,17 +1,24 @@
 package patreon
 
 import (
+	"context"
+	"go.uber.org/zap"
+
 	"github.com/leighmacdonald/gbans/internal/domain"
 	libpatreon "gopkg.in/mxpv/patreon-go.v1"
 )
 
 type patreonUsecase struct {
 	pr      domain.PatreonRepository
-	manager *Mananger
+	manager *Manager
 }
 
-func NewPatreonUsecase(pr domain.PatreonRepository) domain.PatreonUsecase {
-	return &patreonUsecase{pr: pr}
+func (p patreonUsecase) Start(ctx context.Context) {
+	p.manager.Start(ctx)
+}
+
+func NewPatreonUsecase(logger *zap.Logger, pr domain.PatreonRepository) domain.PatreonUsecase {
+	return &patreonUsecase{pr: pr, manager: NewPatreonManager(logger)}
 }
 
 func (p patreonUsecase) Tiers() ([]libpatreon.Campaign, error) {

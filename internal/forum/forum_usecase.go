@@ -8,18 +8,23 @@ import (
 
 type forumUsecase struct {
 	forumRepo domain.ForumRepository
+	tracker   *Tracker
 }
 
 func NewForumUsecase(fr domain.ForumRepository) domain.ForumUsecase {
-	return &forumUsecase{forumRepo: fr}
+	return &forumUsecase{forumRepo: fr, tracker: NewTracker()}
 }
 
-func (f forumUsecase) Current() []domain.ForumActivity {
-	return f.forumRepo.Current()
+func (f forumUsecase) Start(ctx context.Context) {
+	f.tracker.Start(ctx)
 }
 
 func (f forumUsecase) Touch(up domain.UserProfile) {
-	f.forumRepo.Touch(up)
+	f.tracker.Touch(up)
+}
+
+func (f forumUsecase) Current() []domain.ForumActivity {
+	return f.tracker.Current()
 }
 
 func (f forumUsecase) ForumCategories(ctx context.Context) ([]domain.ForumCategory, error) {

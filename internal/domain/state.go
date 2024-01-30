@@ -11,6 +11,7 @@ import (
 )
 
 type StateUsecase interface {
+	Start(ctx context.Context)
 	Broadcast(ctx context.Context, serverIDs []int, cmd string) map[int]string
 	ByName(name string, wildcardOk bool) []ServerState
 	ByServerID(serverID int) (ServerState, bool)
@@ -35,6 +36,7 @@ type StateUsecase interface {
 }
 
 type StateRepository interface {
+	Start(ctx context.Context)
 	GetServer(serverID int) (ServerConfig, error)
 	Update(serverID int, update PartialStateUpdate) error
 	Current() []ServerState
