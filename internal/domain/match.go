@@ -38,6 +38,7 @@ type MatchRepository interface {
 	PlayerOverallStats(ctx context.Context, steamID steamid.SID64, por *PlayerOverallResult) error
 }
 type MatchUsecase interface {
+	GetMatchIDFromServerID(serverID int) (uuid.UUID, bool)
 	Matches(ctx context.Context, opts MatchesQueryOpts) ([]MatchSummary, int64, error)
 	MatchGetByID(ctx context.Context, matchID uuid.UUID, match *MatchResult) error
 	MatchSave(ctx context.Context, match *logparse.Match, weaponMap fp.MutexMap[logparse.Weapon, int]) error

@@ -10,7 +10,7 @@ type wikiUsecase struct {
 	wikiRepo domain.WikiRepository
 }
 
-func NewServersUsecase(wr domain.WikiRepository) domain.WikiUsecase {
+func NewWikiUsecase(wr domain.WikiRepository) domain.WikiUsecase {
 	return &wikiUsecase{wikiRepo: wr}
 }
 

@@ -19,26 +19,24 @@ import (
 )
 
 type chatRepository struct {
-	db           database.Database
-	log          *zap.Logger
-	pu           domain.PersonUsecase
-	wfu          domain.WordFilterUsecase
-	broadcaster  *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
-	matchUUIDMap fp.MutexMap[int, uuid.UUID]
-	WarningChan  chan domain.NewUserWarning
+	db          database.Database
+	log         *zap.Logger
+	pu          domain.PersonUsecase
+	wfu         domain.WordFilterUsecase
+	mu          domain.MatchUsecase
+	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
+	WarningChan chan domain.NewUserWarning
 }
 
-func NewChatRepository(database database.Database, log *zap.Logger, pu domain.PersonUsecase, wfu domain.WordFilterUsecase, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
-	matchUUIDMap fp.MutexMap[int, uuid.UUID],
-) domain.ChatRepository {
+func NewChatRepository(database database.Database, log *zap.Logger, pu domain.PersonUsecase, wfu domain.WordFilterUsecase,
+	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]) domain.ChatRepository {
 	return &chatRepository{
-		db:           database,
-		log:          log,
-		pu:           pu,
-		wfu:          wfu,
-		broadcaster:  broadcaster,
-		matchUUIDMap: matchUUIDMap,
-		WarningChan:  make(chan domain.NewUserWarning),
+		db:          database,
+		log:         log,
+		pu:          pu,
+		wfu:         wfu,
+		broadcaster: broadcaster,
+		WarningChan: make(chan domain.NewUserWarning),
 	}
 }
 
@@ -77,7 +75,7 @@ func (r chatRepository) Start(ctx context.Context) {
 					continue
 				}
 
-				matchID, _ := r.matchUUIDMap.Get(evt.ServerID)
+				matchID, _ := r.mu.GetMatchIDFromServerID(evt.ServerID)
 
 				msg := domain.PersonMessage{
 					SteamID:     newServerEvent.SID,

@@ -14,6 +14,14 @@ func NewForumUsecase(fr domain.ForumRepository) domain.ForumUsecase {
 	return &forumUsecase{forumRepo: fr}
 }
 
+func (f forumUsecase) Current() []domain.ForumActivity {
+	return f.forumRepo.Current()
+}
+
+func (f forumUsecase) Touch(up domain.UserProfile) {
+	f.forumRepo.Touch(up)
+}
+
 func (f forumUsecase) ForumCategories(ctx context.Context) ([]domain.ForumCategory, error) {
 	return f.forumRepo.ForumCategories(ctx)
 }

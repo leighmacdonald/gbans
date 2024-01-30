@@ -37,6 +37,29 @@ func NewSteamGroupMemberships(log *zap.Logger, db domain.BanGroupRepository) *St
 	}
 }
 
+func (g *SteamGroupMemberships) Start(ctx context.Context) {
+	ticker := time.NewTicker(g.updateFreq)
+	updateChan := make(chan any)
+
+	go func() {
+		updateChan <- true
+	}()
+
+	for {
+		select {
+		case <-ticker.C:
+			updateChan <- true
+		case <-updateChan:
+			g.update(ctx)
+			ticker.Reset(g.updateFreq)
+		case <-ctx.Done():
+			g.log.Debug("SteamGroupMemberships shutting down")
+
+			return
+		}
+	}
+}
+
 // IsMember checks membership in the currently known banned group members.
 func (g *SteamGroupMemberships) IsMember(steamID steamid.SID64) (steamid.GID, bool) {
 	g.RLock()
@@ -122,27 +145,4 @@ func (g *SteamGroupMemberships) updateGroupBanMembers(ctx context.Context) (map[
 	}
 
 	return newMap, nil
-}
-
-func (g *SteamGroupMemberships) Start(ctx context.Context) {
-	ticker := time.NewTicker(g.updateFreq)
-	updateChan := make(chan any)
-
-	go func() {
-		updateChan <- true
-	}()
-
-	for {
-		select {
-		case <-ticker.C:
-			updateChan <- true
-		case <-updateChan:
-			g.update(ctx)
-			ticker.Reset(g.updateFreq)
-		case <-ctx.Done():
-			g.log.Debug("SteamGroupMemberships shutting down")
-
-			return
-		}
-	}
 }

@@ -42,6 +42,13 @@ type StateRepository interface {
 	ExecRaw(ctx context.Context, addr string, password string, cmd string) (string, error)
 }
 
+type LogFilePayload struct {
+	ServerID   int
+	ServerName string
+	Lines      []string
+	Map        string
+}
+
 type ServerConfig struct {
 	ServerID        int
 	Tag             string

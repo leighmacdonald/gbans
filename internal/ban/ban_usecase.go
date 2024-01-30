@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/discord"
@@ -35,6 +36,98 @@ func NewBanUsecase(log *zap.Logger, br domain.BanRepository, pr domain.PersonUse
 	bu.friends = friendTracker
 
 	return bu
+}
+
+// periodically will query the database for expired bans and remove them.
+func (s *banUsecase) Start(ctx context.Context) {
+	var (
+		log    = s.log.Named("banSweeper")
+		ticker = time.NewTicker(time.Minute)
+	)
+
+	for {
+		select {
+		case <-ticker.C:
+			waitGroup := &sync.WaitGroup{}
+			waitGroup.Add(3)
+
+			go func() {
+				defer waitGroup.Done()
+
+				expiredBans, errExpiredBans := s.banRepo.GetExpiredBans(ctx)
+				if errExpiredBans != nil && !errors.Is(errExpiredBans, domain.ErrNoResult) {
+					log.Error("Failed to get expired expiredBans", zap.Error(errExpiredBans))
+				} else {
+					for _, expiredBan := range expiredBans {
+						ban := expiredBan
+						if errDrop := s.banRepo.DropBan(ctx, &ban, false); errDrop != nil {
+							log.Error("Failed to drop expired expiredBan", zap.Error(errDrop))
+						} else {
+							var person domain.Person
+							if errPerson := s.personUsecase.GetPersonBySteamID(ctx, ban.TargetID, &person); errPerson != nil {
+								log.Error("Failed to get expired Person", zap.Error(errPerson))
+
+								continue
+							}
+
+							name := person.PersonaName
+							if name == "" {
+								name = person.SteamID.String()
+							}
+
+							s.discordUsecase.SendPayload(domain.ChannelModLog, discord.BanExpiresMessage(ban, person, s.configUsecase.ExtURL(ban)))
+
+							log.Info("Ban expired",
+								zap.String("reason", ban.Reason.String()),
+								zap.Int64("sid64", ban.TargetID.Int64()), zap.String("name", name))
+						}
+					}
+				}
+			}()
+
+			go func() {
+				defer waitGroup.Done()
+
+				expiredNetBans, errExpiredNetBans := s.GetExpiredNetBans(ctx)
+				if errExpiredNetBans != nil && !errors.Is(errExpiredNetBans, domain.ErrNoResult) {
+					log.Warn("Failed to get expired network bans", zap.Error(errExpiredNetBans))
+				} else {
+					for _, expiredNetBan := range expiredNetBans {
+						expiredBan := expiredNetBan
+						if errDropBanNet := s.DropBanNet(ctx, &expiredBan); errDropBanNet != nil {
+							log.Error("Failed to drop expired network expiredNetBan", zap.Error(errDropBanNet))
+						} else {
+							log.Info("IP ban expired", zap.String("cidr", expiredBan.String()))
+						}
+					}
+				}
+			}()
+
+			go func() {
+				defer waitGroup.Done()
+
+				expiredASNBans, errExpiredASNBans := s.GetExpiredASNBans(ctx)
+				if errExpiredASNBans != nil && !errors.Is(errExpiredASNBans, domain.ErrNoResult) {
+					log.Error("Failed to get expired asn bans", zap.Error(errExpiredASNBans))
+				} else {
+					for _, expiredASNBan := range expiredASNBans {
+						expired := expiredASNBan
+						if errDropASN := s.DropBanASN(ctx, &expired); errDropASN != nil {
+							log.Error("Failed to drop expired asn ban", zap.Error(errDropASN))
+						} else {
+							log.Info("ASN ban expired", zap.Int64("ban_id", expired.BanASNId))
+						}
+					}
+				}
+			}()
+
+			waitGroup.Wait()
+		case <-ctx.Done():
+			log.Debug("banSweeper shutting down")
+
+			return
+		}
+	}
 }
 
 func (s *banUsecase) GetStats(ctx context.Context, stats *domain.Stats) error {

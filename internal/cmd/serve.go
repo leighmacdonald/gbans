@@ -12,7 +12,6 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/gin-gonic/gin"
-	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/appeal"
 	"github.com/leighmacdonald/gbans/internal/asset"
@@ -105,7 +104,7 @@ func serveCmd() *cobra.Command {
 			}()
 
 			eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
-			matchUUIDMap := fp.NewMutexMap[int, uuid.UUID]()
+			wm := fp.NewMutexMap[logparse.Weapon, int]()
 
 			dr, errDR := discord.NewDiscordRepository(rootLogger, conf)
 			if errDR != nil {
@@ -124,19 +123,20 @@ func serveCmd() *cobra.Command {
 				rootLogger.Fatal("Cannot initialize minio", zap.Error(errDR))
 			}
 
+			pu := person.NewPersonUsecase(rootLogger, person.NewPersonRepository(db))
+
 			blu := blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(db))
-			nu := network.NewNetworkUsecase(rootLogger, network.NewNetworkRepository(db), blu)
+			nu := network.NewNetworkUsecase(rootLogger, eventBroadcaster, network.NewNetworkRepository(db), blu, pu)
 			nu.LoadNetBlocks(ctx)
 			au := asset.NewAssetUsecase(asset.NewS3Repository(rootLogger, db, minioClient, conf.S3.Region))
 			meu := media.NewMediaUsecase(conf.S3.BucketMedia, media.NewMediaRepository(db), au)
 			deu := demo.NewDemoUsecase(rootLogger, conf.S3.BucketDemo, demo.NewDemoRepository(db), au, cu)
 			go deu.Cleaner(ctx)
 
-			pu := person.NewPersonUsecase(person.NewPersonRepository(db))
 			sgu := steamgroup.NewBanGroupUsecase(rootLogger, steamgroup.NewSteamGroupRepository(db))
-			ru := report.NewReportUsecase(report.NewReportRepository(db))
+			ru := report.NewReportUsecase(rootLogger, report.NewReportRepository(db), du, cu)
 			sv := servers.NewServersUsecase(servers.NewServersRepository(db))
-			st := state.NewStateUsecase(rootLogger, state.NewStateRepository(state.NewCollector(rootLogger, sv)))
+			st := state.NewStateUsecase(rootLogger, eventBroadcaster, state.NewStateRepository(state.NewCollector(rootLogger, sv)), cu, sv)
 			br := ban.NewBanRepository(db, pu, nu)
 			bu := ban.NewBanUsecase(rootLogger, br, pu, cu, du, sgu, ru, st)
 
@@ -145,26 +145,21 @@ func serveCmd() *cobra.Command {
 			wfu := wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(db), du)
 			wfu.Import(ctx)
 
-			cr := chat.NewChatRepository(db, rootLogger, pu, wfu, eventBroadcaster, matchUUIDMap)
+			cr := chat.NewChatRepository(db, rootLogger, pu, wfu, eventBroadcaster)
 			chu := chat.NewChatUsecase(rootLogger, cu, cr, wfu, st, bu, pu, du, st)
 			fu := forum.NewForumUsecase(forum.NewForumRepository(db))
-			mu := match.NewMatchUsecase(match.NewMatchRepository(db, pu))
+			mu := match.NewMatchUsecase(rootLogger, eventBroadcaster, match.NewMatchRepository(db, pu), st, sv, du, wm)
 			neu := news.NewNewsUsecase(news.NewNewsRepository(db))
 			nou := notification.NewNotificationUsecase(rootLogger, notification.NewNotificationRepository(db), pu)
 			pat := patreon.NewPatreonUsecase(patreon.NewPatreonRepository(db))
 
 			srcdsu := srcds.NewSrcdsUsecase(rootLogger, cu, sv, pu, ru, du)
 
-			wu := wiki.NewServersUsecase(wiki.NewWikiRepository(db, meu))
+			wu := wiki.NewWikiUsecase(wiki.NewWikiRepository(db, meu))
 
 			athu := auth.NewAuthUsecase(rootLogger, auth.NewAuthRepository(db), cu, pu, bu, sv)
 
 			cnu := contest.NewContestUsecase(contest.NewContestRepository(db))
-			wm := fp.NewMutexMap[logparse.Weapon, int]()
-
-			if setupErr := app.FirstTimeSetup(ctx, conf, pu, neu, sv, wu, mu, wm); setupErr != nil {
-				rootLogger.Fatal("Failed to do first time setup", zap.Error(setupErr))
-			}
 
 			// start workers
 

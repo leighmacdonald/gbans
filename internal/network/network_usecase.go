@@ -3,9 +3,13 @@ package network
 import (
 	"context"
 	"errors"
+	"github.com/leighmacdonald/gbans/pkg/fp"
+	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"net"
+	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
@@ -16,12 +20,80 @@ import (
 type networkUsecase struct {
 	nr      domain.NetworkRepository
 	bl      domain.BlocklistUsecase
+	pu      domain.PersonUsecase
 	blocker *Blocker
 	log     *zap.Logger
+	eb      *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 }
 
-func NewNetworkUsecase(log *zap.Logger, nr domain.NetworkRepository, bl domain.BlocklistUsecase) domain.NetworkUsecase {
-	return networkUsecase{log: log.Named("network"), nr: nr, bl: bl, blocker: NewBlocker()}
+func NewNetworkUsecase(log *zap.Logger, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
+	nr domain.NetworkRepository, bl domain.BlocklistUsecase, pu domain.PersonUsecase) domain.NetworkUsecase {
+	return networkUsecase{
+		log:     log.Named("network"),
+		nr:      nr,
+		bl:      bl,
+		blocker: NewBlocker(),
+		eb:      broadcaster,
+		pu:      pu}
+}
+
+func (u networkUsecase) Start(ctx context.Context) {
+	log := u.log.Named("playerConnectionWriter")
+
+	serverEventChan := make(chan logparse.ServerEvent)
+	if errRegister := u.eb.Consume(serverEventChan, logparse.Connected); errRegister != nil {
+		log.Warn("logWriter Tried to register duplicate reader channel", zap.Error(errRegister))
+
+		return
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case evt := <-serverEventChan:
+			newServerEvent, ok := evt.Event.(logparse.ConnectedEvt)
+			if !ok {
+				continue
+			}
+
+			if newServerEvent.Address == "" {
+				log.Warn("Empty Person message body, skipping")
+
+				continue
+			}
+
+			parsedAddr := net.ParseIP(newServerEvent.Address)
+			if parsedAddr == nil {
+				log.Warn("Received invalid address", zap.String("addr", newServerEvent.Address))
+
+				continue
+			}
+
+			// Maybe ignore these and wait for connect call to create?
+			var person domain.Person
+			if errPerson := u.pu.GetOrCreatePersonBySteamID(ctx, newServerEvent.SID, &person); errPerson != nil {
+				log.Error("Failed to load Person", zap.Error(errPerson))
+
+				continue
+			}
+
+			conn := domain.PersonConnection{
+				IPAddr:      parsedAddr,
+				SteamID:     newServerEvent.SID,
+				PersonaName: strings.ToValidUTF8(newServerEvent.Name, "_"),
+				CreatedOn:   newServerEvent.CreatedOn,
+				ServerID:    evt.ServerID,
+			}
+
+			lCtx, cancel := context.WithTimeout(ctx, time.Second*5)
+			if errChat := u.nr.AddConnectionHistory(lCtx, &conn); errChat != nil {
+				log.Error("Failed to add connection history", zap.Error(errChat))
+			}
+
+			cancel()
+		}
+	}
 }
 
 func (u networkUsecase) LoadNetBlocks(ctx context.Context) error {

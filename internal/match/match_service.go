@@ -10,18 +10,17 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/http_helper"
-	"github.com/leighmacdonald/gbans/pkg/util"
 	"go.uber.org/zap"
 )
 
-type MatchHandler struct {
+type matchHandler struct {
 	log *zap.Logger
 	mu  domain.MatchUsecase
 }
 
 // todo move data updaters to repository
 func NewMatchHandler(ctx context.Context, logger *zap.Logger, engine *gin.Engine, mu domain.MatchUsecase) {
-	handler := MatchHandler{log: logger, mu: mu}
+	handler := matchHandler{log: logger, mu: mu}
 
 	engine.GET("/api/stats/map", handler.onAPIGetMapUsage())
 
@@ -37,13 +36,13 @@ func NewMatchHandler(ctx context.Context, logger *zap.Logger, engine *gin.Engine
 	engine.GET("/api/stats/player/:steam_id/overall", handler.onAPIGetPlayerStatsOverall())
 }
 
-func (h MatchHandler) onAPIGetStatsWeaponsOverall(ctx context.Context) gin.HandlerFunc {
+func (h matchHandler) onAPIGetStatsWeaponsOverall(ctx context.Context) gin.HandlerFunc {
 	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
-	updater := util.NewDataUpdater(log, time.Minute*10, func() ([]domain.WeaponsOverallResult, error) {
+	updater := NewDataUpdater(log, time.Minute*10, func() ([]domain.WeaponsOverallResult, error) {
 		weaponStats, errUpdate := h.mu.WeaponsOverall(ctx)
 		if errUpdate != nil && !errors.Is(errUpdate, domain.ErrNoResult) {
-			return nil, errors.Join(errUpdate, util.ErrDataUpdate)
+			return nil, errors.Join(errUpdate, domain.ErrDataUpdate)
 		}
 
 		if weaponStats == nil {
@@ -62,7 +61,7 @@ func (h MatchHandler) onAPIGetStatsWeaponsOverall(ctx context.Context) gin.Handl
 	}
 }
 
-func (h MatchHandler) onAPIGetsStatsWeapon() gin.HandlerFunc {
+func (h matchHandler) onAPIGetsStatsWeapon() gin.HandlerFunc {
 	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	type resp struct {
@@ -105,13 +104,13 @@ func (h MatchHandler) onAPIGetsStatsWeapon() gin.HandlerFunc {
 	}
 }
 
-func (h MatchHandler) onAPIGetStatsPlayersOverall(ctx context.Context) gin.HandlerFunc {
+func (h matchHandler) onAPIGetStatsPlayersOverall(ctx context.Context) gin.HandlerFunc {
 	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
-	updater := util.NewDataUpdater(log, time.Minute*10, func() ([]domain.PlayerWeaponResult, error) {
+	updater := NewDataUpdater(log, time.Minute*10, func() ([]domain.PlayerWeaponResult, error) {
 		updatedStats, errChat := h.mu.PlayersOverallByKills(ctx, 1000)
 		if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
-			return nil, errors.Join(errChat, util.ErrDataUpdate)
+			return nil, errors.Join(errChat, domain.ErrDataUpdate)
 		}
 
 		return updatedStats, nil
@@ -125,13 +124,13 @@ func (h MatchHandler) onAPIGetStatsPlayersOverall(ctx context.Context) gin.Handl
 	}
 }
 
-func (h MatchHandler) onAPIGetStatsHealersOverall(ctx context.Context) gin.HandlerFunc {
+func (h matchHandler) onAPIGetStatsHealersOverall(ctx context.Context) gin.HandlerFunc {
 	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
-	updater := util.NewDataUpdater(log, time.Minute*10, func() ([]domain.HealingOverallResult, error) {
+	updater := NewDataUpdater(log, time.Minute*10, func() ([]domain.HealingOverallResult, error) {
 		updatedStats, errChat := h.mu.HealersOverallByHealing(ctx, 250)
 		if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
-			return nil, errors.Join(errChat, util.ErrDataUpdate)
+			return nil, errors.Join(errChat, domain.ErrDataUpdate)
 		}
 
 		return updatedStats, nil
@@ -145,7 +144,7 @@ func (h MatchHandler) onAPIGetStatsHealersOverall(ctx context.Context) gin.Handl
 	}
 }
 
-func (h MatchHandler) onAPIGetPlayerWeaponStatsOverall() gin.HandlerFunc {
+func (h matchHandler) onAPIGetPlayerWeaponStatsOverall() gin.HandlerFunc {
 	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
@@ -173,7 +172,7 @@ func (h MatchHandler) onAPIGetPlayerWeaponStatsOverall() gin.HandlerFunc {
 	}
 }
 
-func (h MatchHandler) onAPIGetPlayerClassStatsOverall() gin.HandlerFunc {
+func (h matchHandler) onAPIGetPlayerClassStatsOverall() gin.HandlerFunc {
 	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
@@ -201,7 +200,7 @@ func (h MatchHandler) onAPIGetPlayerClassStatsOverall() gin.HandlerFunc {
 	}
 }
 
-func (h MatchHandler) onAPIGetPlayerStatsOverall() gin.HandlerFunc {
+func (h matchHandler) onAPIGetPlayerStatsOverall() gin.HandlerFunc {
 	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
@@ -225,7 +224,7 @@ func (h MatchHandler) onAPIGetPlayerStatsOverall() gin.HandlerFunc {
 	}
 }
 
-func (h MatchHandler) onAPIGetMapUsage() gin.HandlerFunc {
+func (h matchHandler) onAPIGetMapUsage() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		mapUsages, errServers := h.mu.GetMapUsageStats(ctx)
 		if errServers != nil {
@@ -238,7 +237,7 @@ func (h MatchHandler) onAPIGetMapUsage() gin.HandlerFunc {
 	}
 }
 
-func (h MatchHandler) onAPIGetMatch() gin.HandlerFunc {
+func (h matchHandler) onAPIGetMatch() gin.HandlerFunc {
 	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
@@ -270,7 +269,7 @@ func (h MatchHandler) onAPIGetMatch() gin.HandlerFunc {
 	}
 }
 
-func (h MatchHandler) onAPIGetMatches() gin.HandlerFunc {
+func (h matchHandler) onAPIGetMatches() gin.HandlerFunc {
 	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
