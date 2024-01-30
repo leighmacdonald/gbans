@@ -1,20 +1,8 @@
 // Package cmd implements the CLI (Command Line Interface) of the application.
 //
-// ban asn - Ban based on ASN
-// ban cidr - Ban an IP or network with CIDR notation
-// ban steam - Ban a player via steamid or vanity name
-// import - Imports bans from a folder in json format
-// migrate - Initiate a database migration manually
 // net update - Download and import the latest ip2location databases
-// seed - Pre seed the database with data, used for development mostly
 // serve - The main application service entry point
-// server create
-// server delete
-// server list
-// server update
-// unban asn - Unban an ASN
-// unban cidr - Unban a CIDR network or IP
-// unban steam - Unban a steam profile
+// setup - Perform an initial setup task, needs to be ran once.
 package cmd
 
 import (
@@ -54,15 +42,11 @@ func setupRootCmd() *cobra.Command {
 	refreshCommands := refreshCmd()
 	refreshCommands.AddCommand(refreshFiltersCmd())
 
-	importCommands := importCmd()
-	importCommands.AddCommand(importConnectionsCmd())
-	importCommands.AddCommand(importMessagesCmd())
-
 	netCommands := netCmd()
 	netCommands.AddCommand(netUpdateCmd())
 
+	root.AddCommand(setupCmd())
 	root.AddCommand(netCommands)
-	root.AddCommand(importCommands)
 	root.AddCommand(serveCmd())
 	root.AddCommand(refreshCommands)
 	// root.PersistentFlags().StringVar(&cfgFile, "config", "gbans.yml", "config file (default is $HOME/.gbans.yaml)").

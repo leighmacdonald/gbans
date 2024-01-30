@@ -6,7 +6,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/blocklist"
 	"github.com/leighmacdonald/gbans/internal/chat"
@@ -48,8 +47,11 @@ func refreshFiltersCmd() *cobra.Command {
 			}
 
 			conf := cu.Config()
-			conf.Log.Level = "DEBUG"
-			rootLogger := log.MustCreate(&conf, nil)
+			rootLogger := log.MustCreate(conf, nil)
+			defer func() {
+				_ = rootLogger.Sync()
+			}()
+
 			defer func() {
 				_ = rootLogger.Sync()
 			}()
@@ -75,25 +77,27 @@ func refreshFiltersCmd() *cobra.Command {
 			}
 
 			eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
-			matchUUIDMap := fp.NewMutexMap[int, uuid.UUID]()
 
 			sv := servers.NewServersUsecase(servers.NewServersRepository(db))
-			st := state.NewStateUsecase(rootLogger, state.NewStateRepository(state.NewCollector(rootLogger, sv)))
-			ru := report.NewReportUsecase(report.NewReportRepository(db))
+
+			sr := state.NewStateRepository(state.NewCollector(rootLogger, sv))
+			st := state.NewStateUsecase(rootLogger, eventBroadcaster, sr, cu, sv)
 
 			dr, _ := discord.NewDiscordRepository(rootLogger, conf)
 
 			du := discord.NewDiscordUsecase(dr)
 
-			pu := person.NewPersonUsecase(person.NewPersonRepository(db))
+			ru := report.NewReportUsecase(rootLogger, report.NewReportRepository(db), du, cu)
+
+			pu := person.NewPersonUsecase(rootLogger, person.NewPersonRepository(db))
 			wfu := wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(db), du)
 			wfu.Import(ctx)
 			blu := blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(db))
-			nu := network.NewNetworkUsecase(rootLogger, network.NewNetworkRepository(db), blu)
+			nu := network.NewNetworkUsecase(rootLogger, eventBroadcaster, network.NewNetworkRepository(db), blu, pu)
 			br := ban.NewBanRepository(db, pu, nu)
 			sgu := steamgroup.NewBanGroupUsecase(rootLogger, steamgroup.NewSteamGroupRepository(db))
 			bu := ban.NewBanUsecase(rootLogger, br, pu, cu, du, sgu, ru, st)
-			cr := chat.NewChatRepository(db, rootLogger, pu, wfu, eventBroadcaster, matchUUIDMap)
+			cr := chat.NewChatRepository(db, rootLogger, pu, wfu, eventBroadcaster)
 			chu := chat.NewChatUsecase(rootLogger, cu, cr, wfu, st, bu, pu, du, st)
 
 			var query domain.ChatHistoryQueryFilter

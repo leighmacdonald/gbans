@@ -3,6 +3,9 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/pkg/fp"
+	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"os"
 	"time"
 
@@ -58,10 +61,9 @@ func netUpdateCmd() *cobra.Command {
 				}
 			}()
 
-			nu := network.NewNetworkUsecase(
-				rootLogger,
-				network.NewNetworkRepository(db),
-				blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(db)))
+			eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
+
+			pu := person.NewPersonUsecase(rootLogger, person.NewPersonRepository(db))
 
 			if errUpdate := ip2location.Update(ctx, conf.IP2Location.CachePath, conf.IP2Location.Token); errUpdate != nil {
 				rootLogger.Fatal("Failed to update", zap.Error(errUpdate))
@@ -78,6 +80,12 @@ func netUpdateCmd() *cobra.Command {
 			defer cancelUpdate()
 
 			rootLogger.Info("Starting import")
+
+			nu := network.NewNetworkUsecase(
+				rootLogger,
+				eventBroadcaster,
+				network.NewNetworkRepository(db),
+				blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(db)), pu)
 
 			if errInsert := nu.InsertBlockListData(updateCtx, rootLogger, blockListData); errInsert != nil {
 				rootLogger.Fatal("Failed to import", zap.Error(errInsert))

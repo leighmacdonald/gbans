@@ -1,16 +1,14 @@
-package util
+package match
 
 import (
 	"context"
 	"errors"
+	"github.com/leighmacdonald/gbans/internal/domain"
 	"sync"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/errs"
 	"go.uber.org/zap"
 )
-
-var ErrDataUpdate = errors.New("data update failed")
 
 // DataUpdater handles periodically updating a data source and caching the results via user supplied func.
 type DataUpdater[T any] struct {
@@ -50,7 +48,7 @@ func (c *DataUpdater[T]) Start(ctx context.Context) {
 		select {
 		case <-c.updateChan:
 			newData, errUpdate := c.update()
-			if errUpdate != nil && !errors.Is(errUpdate, errs.ErrNoResult) {
+			if errUpdate != nil && !errors.Is(errUpdate, domain.ErrNoResult) {
 				c.log.Error("Failed to update data source", zap.Error(errUpdate))
 
 				return

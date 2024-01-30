@@ -2,17 +2,94 @@ package report
 
 import (
 	"context"
+	"github.com/leighmacdonald/gbans/internal/discord"
+	"go.uber.org/zap"
+	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
 type reportUsecase struct {
-	rr domain.ReportRepository
+	rr  domain.ReportRepository
+	du  domain.DiscordUsecase
+	cu  domain.ConfigUsecase
+	log *zap.Logger
 }
 
-func NewReportUsecase(rr domain.ReportRepository) domain.ReportUsecase {
-	return &reportUsecase{rr: rr}
+func NewReportUsecase(log *zap.Logger, rr domain.ReportRepository, du domain.DiscordUsecase, cu domain.ConfigUsecase) domain.ReportUsecase {
+	return &reportUsecase{
+		log: log.Named("report"),
+		du:  du,
+		rr:  rr,
+		cu:  cu}
+
+}
+
+func (r reportUsecase) Start(ctx context.Context) {
+	ticker := time.NewTicker(time.Hour * 24)
+	updateChan := make(chan any)
+
+	go func() {
+		time.Sleep(time.Second * 5)
+		updateChan <- true
+	}()
+
+	for {
+		select {
+		case <-ticker.C:
+			updateChan <- true
+		case <-updateChan:
+			reports, _, errReports := r.GetReports(ctx, domain.ReportQueryFilter{
+				QueryFilter: domain.QueryFilter{
+					Limit: 0,
+				},
+			})
+			if errReports != nil {
+				r.log.Error("failed to fetch reports for report metadata", zap.Error(errReports))
+
+				continue
+			}
+
+			var (
+				now  = time.Now()
+				meta domain.ReportMeta
+			)
+
+			for _, report := range reports {
+				if report.ReportStatus == domain.ClosedWithAction || report.ReportStatus == domain.ClosedWithoutAction {
+					meta.TotalClosed++
+
+					continue
+				}
+
+				meta.TotalOpen++
+
+				if report.ReportStatus == domain.NeedMoreInfo {
+					meta.NeedInfo++
+				} else {
+					meta.Open++
+				}
+
+				switch {
+				case now.Sub(report.CreatedOn) > time.Hour*24*7:
+					meta.OpenWeek++
+				case now.Sub(report.CreatedOn) > time.Hour*24*3:
+					meta.Open3Days++
+				case now.Sub(report.CreatedOn) > time.Hour*24:
+					meta.Open1Day++
+				default:
+					meta.OpenNew++
+				}
+			}
+
+			r.du.SendPayload(domain.ChannelMod, discord.ReportStatsMessage(meta, r.cu.ExtURLRaw("/admin/reports")))
+		case <-ctx.Done():
+			r.log.Debug("showReportMeta shutting down")
+
+			return
+		}
+	}
 }
 
 func (r reportUsecase) GetReportBySteamID(ctx context.Context, authorID steamid.SID64, steamID steamid.SID64, report *domain.Report) error {

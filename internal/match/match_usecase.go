@@ -2,20 +2,155 @@ package match
 
 import (
 	"context"
-
+	"errors"
 	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v3/steamid"
+	"go.uber.org/zap"
 )
 
 type matchUsecase struct {
-	mr domain.MatchRepository
+	mr           domain.MatchRepository
+	su           domain.StateUsecase
+	sv           domain.ServersUsecase
+	log          *zap.Logger
+	events       chan logparse.ServerEvent
+	du           domain.DiscordUsecase
+	wm           fp.MutexMap[logparse.Weapon, int]
+	broadcaster  *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
+	matchUUIDMap fp.MutexMap[int, uuid.UUID]
 }
 
-func NewMatchUsecase(mr domain.MatchRepository) domain.MatchUsecase {
-	return &matchUsecase{mr: mr}
+func NewMatchUsecase(log *zap.Logger, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
+	mr domain.MatchRepository, su domain.StateUsecase, sv domain.ServersUsecase, du domain.DiscordUsecase,
+	wm fp.MutexMap[logparse.Weapon, int]) domain.MatchUsecase {
+	mu := &matchUsecase{
+		mr:           mr,
+		su:           su,
+		sv:           sv,
+		du:           du,
+		wm:           wm,
+		log:          log,
+		events:       make(chan logparse.ServerEvent),
+		broadcaster:  broadcaster,
+		matchUUIDMap: fp.NewMutexMap[int, uuid.UUID](),
+	}
+	return mu
+}
+
+func (m matchUsecase) GetMatchIDFromServerID(serverID int) (uuid.UUID, bool) {
+	return m.matchUUIDMap.Get(serverID)
+}
+
+func (m matchUsecase) Start(ctx context.Context) {
+	log := m.log.Named("matchSum")
+
+	eventChan := make(chan logparse.ServerEvent)
+	if errReg := m.broadcaster.Consume(eventChan); errReg != nil {
+		log.Error("logWriter Tried to register duplicate reader channel", zap.Error(errReg))
+	}
+
+	matches := map[int]*Context{}
+
+	for {
+		select {
+		case evt := <-eventChan:
+			matchContext, exists := matches[evt.ServerID]
+
+			if !exists {
+				cancelCtx, cancel := context.WithCancel(ctx)
+				matchContext = &Context{
+					Match:          logparse.NewMatch(evt.ServerID, evt.ServerName),
+					cancel:         cancel,
+					log:            log.Named(evt.ServerName),
+					incomingEvents: make(chan logparse.ServerEvent),
+					stopChan:       make(chan bool),
+				}
+
+				go matchContext.start(cancelCtx)
+
+				m.matchUUIDMap.Set(evt.ServerID, matchContext.Match.MatchID)
+
+				matches[evt.ServerID] = matchContext
+			}
+
+			matchContext.incomingEvents <- evt
+
+			switch evt.EventType {
+			case logparse.WTeamFinalScore:
+				matchContext.finalScores++
+				if matchContext.finalScores < 2 {
+					continue
+				}
+
+				fallthrough
+			case logparse.LogStop:
+				matchContext.stopChan <- true
+
+				if err := m.onMatchComplete(ctx, matchContext); err != nil {
+					switch {
+					case errors.Is(err, domain.ErrInsufficientPlayers):
+						m.log.Warn("Insufficient data to save")
+					case errors.Is(err, domain.ErrIncompleteMatch):
+						m.log.Warn("Incomplete match, ignoring")
+					default:
+						m.log.Error("Failed to save Match results", zap.Error(err))
+					}
+				}
+
+				delete(matches, evt.ServerID)
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func (m matchUsecase) onMatchComplete(ctx context.Context, matchContext *Context) error {
+	const minPlayers = 6
+
+	server, found := m.su.ByServerID(matchContext.Match.ServerID)
+
+	if found && server.Name != "" {
+		matchContext.Match.Title = server.Name
+	}
+
+	var fullServer domain.Server
+	if err := m.sv.GetServer(ctx, server.ServerID, &fullServer); err != nil {
+		return errors.Join(err, domain.ErrLoadServer)
+	}
+
+	if !fullServer.EnableStats {
+		return nil
+	}
+
+	if len(matchContext.Match.PlayerSums) < minPlayers {
+		return domain.ErrInsufficientPlayers
+	}
+
+	if matchContext.Match.TimeStart == nil || matchContext.Match.MapName == "" {
+		return domain.ErrIncompleteMatch
+	}
+
+	if errSave := m.MatchSave(ctx, &matchContext.Match, m.wm); errSave != nil {
+		if errors.Is(errSave, domain.ErrInsufficientPlayers) {
+			return domain.ErrInsufficientPlayers
+		} else {
+			return errors.Join(errSave, domain.ErrSaveMatch)
+		}
+	}
+
+	var result domain.MatchResult
+	if errResult := m.MatchGetByID(ctx, matchContext.Match.MatchID, &result); errResult != nil {
+		return errors.Join(errResult, domain.ErrLoadMatch)
+	}
+
+	go m.du.SendPayload(domain.ChannelPublicMatchLog, discord.MatchMessage(result, ""))
+
+	return nil
 }
 
 func (m matchUsecase) Matches(ctx context.Context, opts domain.MatchesQueryOpts) ([]domain.MatchSummary, int64, error) {
@@ -26,6 +161,7 @@ func (m matchUsecase) MatchGetByID(ctx context.Context, matchID uuid.UUID, match
 	return m.mr.MatchGetByID(ctx, matchID, match)
 }
 
+// todo hide
 func (m matchUsecase) MatchSave(ctx context.Context, match *logparse.Match, weaponMap fp.MutexMap[logparse.Weapon, int]) error {
 	return m.mr.MatchSave(ctx, match, weaponMap)
 }

@@ -4,9 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/leighmacdonald/gbans/pkg/fp"
+	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"net"
+	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -16,13 +20,149 @@ import (
 
 type stateUsecase struct {
 	stateRepository domain.StateRepository
+	cu              domain.ConfigUsecase
+	sv              domain.ServersUsecase
+	logListener     *logparse.UDPLogListener
+	logFileChan     chan domain.LogFilePayload
 	log             *zap.Logger
+	eb              *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 }
 
 // NewStateUsecase created a interface to interact with server state and exec rcon commands
 // TODO ensure started
-func NewStateUsecase(log *zap.Logger, repository domain.StateRepository) domain.StateUsecase {
-	return &stateUsecase{stateRepository: repository, log: log.Named("state")}
+func NewStateUsecase(log *zap.Logger, eb *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
+	repository domain.StateRepository, cu domain.ConfigUsecase, sv domain.ServersUsecase) domain.StateUsecase {
+	conf := cu.Config()
+
+	logSrc, errLogSrc := logparse.NewUDPLogListener(log, conf.Log.SrcdsLogAddr,
+		func(eventType logparse.EventType, event logparse.ServerEvent) {
+			eb.Emit(event.EventType, event)
+		})
+
+	if errLogSrc != nil {
+		log.Fatal("Failed to setup udp log src", zap.Error(errLogSrc))
+	}
+
+	return &stateUsecase{
+		stateRepository: repository,
+		log:             log.Named("state"),
+		cu:              cu,
+		eb:              eb,
+		sv:              sv,
+		logListener:     logSrc,
+		logFileChan:     make(chan domain.LogFilePayload)}
+}
+
+// UDP log sink.
+func (s *stateUsecase) Start(ctx context.Context) {
+	s.updateSrcdsLogSecrets(ctx)
+
+	go s.logReader(ctx, false)
+
+	// TODO run on server Config changes
+	s.updateSrcdsLogSecrets(ctx)
+
+	s.logListener.Start(ctx)
+}
+
+// logReader is the fan-out orchestrator for game log events
+// Registering receivers can be accomplished with app.eb.Broadcaster.
+func (s *stateUsecase) logReader(ctx context.Context, writeUnhandled bool) {
+	var (
+		log  = s.log.Named("logReader")
+		file *os.File
+	)
+
+	if writeUnhandled {
+		var errCreateFile error
+		file, errCreateFile = os.Create("./unhandled_messages.log")
+
+		if errCreateFile != nil {
+			log.Fatal("Failed to open debug message log", zap.Error(errCreateFile))
+		}
+
+		defer func() {
+			if errClose := file.Close(); errClose != nil {
+				log.Error("Failed to close unhandled_messages.log", zap.Error(errClose))
+			}
+		}()
+	}
+
+	parser := logparse.NewLogParser()
+
+	// playerStateCache := newPlayerCache(app.logger)
+	for {
+		select {
+		case logFile := <-s.logFileChan:
+			emitted := 0
+			failed := 0
+			unknown := 0
+			ignored := 0
+
+			for _, logLine := range logFile.Lines {
+				parseResult, errParse := parser.Parse(logLine)
+				if errParse != nil {
+					continue
+				}
+
+				newServerEvent := logparse.ServerEvent{
+					ServerName: logFile.ServerName,
+					ServerID:   logFile.ServerID,
+					Results:    parseResult,
+				}
+
+				if newServerEvent.EventType == logparse.IgnoredMsg {
+					ignored++
+
+					continue
+				} else if newServerEvent.EventType == logparse.UnknownMsg {
+					unknown++
+					if writeUnhandled {
+						if _, errWrite := file.WriteString(logLine + "\n"); errWrite != nil {
+							log.Error("Failed to write debug log", zap.Error(errWrite))
+						}
+					}
+				}
+
+				s.eb.Emit(newServerEvent.EventType, newServerEvent)
+				emitted++
+			}
+
+			log.Debug("Completed emitting logfile events",
+				zap.Int("ok", emitted), zap.Int("failed", failed),
+				zap.Int("unknown", unknown), zap.Int("ignored", ignored))
+		case <-ctx.Done():
+			log.Debug("logReader shutting down")
+
+			return
+		}
+	}
+}
+
+func (s *stateUsecase) updateSrcdsLogSecrets(ctx context.Context) {
+	newSecrets := map[int]logparse.ServerIDMap{}
+	serversCtx, cancelServers := context.WithTimeout(ctx, time.Second*5)
+
+	defer cancelServers()
+
+	servers, _, errServers := s.sv.GetServers(serversCtx, domain.ServerQueryFilter{
+		IncludeDisabled: false,
+		QueryFilter:     domain.QueryFilter{Deleted: false},
+	})
+	if errServers != nil {
+		s.log.Error("Failed to update srcds log secrets", zap.Error(errServers))
+
+		return
+	}
+
+	for _, server := range servers {
+		newSecrets[server.LogSecret] = logparse.ServerIDMap{
+			ServerID:   server.ServerID,
+			ServerName: server.ShortName,
+		}
+	}
+
+	s.logListener.SetSecrets(newSecrets)
 }
 
 func (s *stateUsecase) Current() []domain.ServerState {

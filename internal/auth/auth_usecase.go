@@ -44,6 +44,26 @@ func NewAuthUsecase(log *zap.Logger, au domain.AuthRepository, cu domain.ConfigU
 	}
 }
 
+func (u *authUsecase) Start(ctx context.Context) {
+	var (
+		log    = u.log.Named("cleanupTasks")
+		ticker = time.NewTicker(time.Hour * 24)
+	)
+
+	for {
+		select {
+		case <-ticker.C:
+			if err := u.authRepository.PrunePersonAuth(ctx); err != nil && !errors.Is(err, domain.ErrNoResult) {
+				log.Error("Error pruning expired refresh tokens", zap.Error(err))
+			}
+		case <-ctx.Done():
+			log.Debug("cleanupTasks shutting down")
+
+			return
+		}
+	}
+}
+
 func (u *authUsecase) DeletePersonAuth(ctx context.Context, authID int64) error {
 	return u.authRepository.DeletePersonAuth(ctx, authID)
 }

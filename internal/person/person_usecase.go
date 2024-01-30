@@ -3,7 +3,12 @@ package person
 import (
 	"context"
 	"errors"
+	"github.com/leighmacdonald/gbans/internal/thirdparty"
+	"github.com/leighmacdonald/steamweb/v2"
+	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 	"net"
+	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -11,11 +16,131 @@ import (
 
 type personUsecase struct {
 	personRepo domain.PersonRepository
+	log        *zap.Logger
 }
 
-func NewPersonUsecase(pr domain.PersonRepository) domain.PersonUsecase {
+func NewPersonUsecase(log *zap.Logger, pr domain.PersonRepository) domain.PersonUsecase {
 	return &personUsecase{
+		log:        log,
 		personRepo: pr,
+	}
+}
+
+func (p *personUsecase) updateProfiles(ctx context.Context, people domain.People) (int, error) {
+	if len(people) > 100 {
+		return 0, domain.ErrSteamAPIArgLimit
+	}
+
+	var (
+		banStates           []steamweb.PlayerBanState
+		summaries           []steamweb.PlayerSummary
+		steamIDs            = people.ToSteamIDCollection()
+		errGroup, cancelCtx = errgroup.WithContext(ctx)
+	)
+
+	errGroup.Go(func() error {
+		newBanStates, errBans := thirdparty.FetchPlayerBans(cancelCtx, steamIDs)
+		if errBans != nil {
+			return errors.Join(errBans, domain.ErrFetchSteamBans)
+		}
+
+		banStates = newBanStates
+
+		return nil
+	})
+
+	errGroup.Go(func() error {
+		newSummaries, errSummaries := steamweb.PlayerSummaries(cancelCtx, steamIDs)
+		if errSummaries != nil {
+			return errors.Join(errSummaries, domain.ErrSteamAPISummaries)
+		}
+
+		summaries = newSummaries
+
+		return nil
+	})
+
+	if errFetch := errGroup.Wait(); errFetch != nil {
+		return 0, errors.Join(errFetch, domain.ErrSteamAPI)
+	}
+
+	for _, curPerson := range people {
+		person := curPerson
+		person.IsNew = false
+		person.UpdatedOnSteam = time.Now()
+
+		for _, newSummary := range summaries {
+			summary := newSummary
+			if person.SteamID != summary.SteamID {
+				continue
+			}
+
+			person.PlayerSummary = &summary
+
+			break
+		}
+
+		for _, banState := range banStates {
+			if person.SteamID != banState.SteamID {
+				continue
+			}
+
+			person.CommunityBanned = banState.CommunityBanned
+			person.VACBans = banState.NumberOfVACBans
+			person.GameBans = banState.NumberOfGameBans
+			person.EconomyBan = banState.EconomyBan
+			person.CommunityBanned = banState.CommunityBanned
+			person.DaysSinceLastBan = banState.DaysSinceLastBan
+		}
+
+		if errSavePerson := p.personRepo.SavePerson(ctx, &person); errSavePerson != nil {
+			return 0, errors.Join(errSavePerson, domain.ErrUpdatePerson)
+		}
+	}
+
+	return len(people), nil
+}
+
+// Start takes care of periodically querying the steam api for updates player summaries.
+// The 100 oldest profiles are updated on each execution.
+func (p *personUsecase) Start(ctx context.Context) {
+	var (
+		log    = p.log.Named("profileUpdate")
+		run    = make(chan any)
+		ticker = time.NewTicker(time.Second * 300)
+	)
+
+	go func() {
+		run <- true
+	}()
+
+	for {
+		select {
+		case <-ticker.C:
+			run <- true
+		case <-run:
+			localCtx, cancel := context.WithTimeout(ctx, time.Second*10)
+			people, errGetExpired := p.personRepo.GetExpiredProfiles(localCtx, 100)
+
+			if errGetExpired != nil || len(people) == 0 {
+				cancel()
+
+				continue
+			}
+
+			count, errUpdate := p.updateProfiles(localCtx, people)
+			if errUpdate != nil {
+				log.Error("Failed to update profiles", zap.Error(errUpdate))
+			}
+
+			p.log.Debug("Updated steam profiles and vac data", zap.Int("count", count))
+
+			cancel()
+		case <-ctx.Done():
+			log.Debug("profileUpdater shutting down")
+
+			return
+		}
 	}
 }
 
@@ -37,7 +162,7 @@ func (p *personUsecase) SetSteam(ctx context.Context, sid64 steamid.SID64, disco
 		return errors.Join(errSavePerson, domain.ErrSaveChanges)
 	}
 
-	// env.Log().Info("Discord steamid set", zap.Int64("sid64", sid64.Int64()), zap.String("discordId", discordID))
+	p.log.Info("Discord steamid set", zap.Int64("sid64", sid64.Int64()), zap.String("discordId", discordID))
 
 	return nil
 }
