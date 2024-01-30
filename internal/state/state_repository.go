@@ -13,9 +13,11 @@ type stateRepository struct {
 func NewStateRepository(collector *Collector) domain.StateRepository {
 	return &stateRepository{collector: collector}
 }
+
 func (s *stateRepository) Start(ctx context.Context) {
 	s.collector.Start(ctx)
 }
+
 func (s *stateRepository) GetServer(serverID int) (domain.ServerConfig, error) {
 	return s.collector.GetServer(serverID)
 }

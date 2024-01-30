@@ -433,30 +433,30 @@ func (r *banRepository) DropBan(ctx context.Context, ban *domain.BanSteam, hardD
 
 func (r *banRepository) getBanByColumn(ctx context.Context, column string, identifier any, person *domain.BannedSteamPerson, deletedOk bool) error {
 	whereClauses := sq.And{
-		sq.Eq{fmt.Sprintf("s.%s", column): identifier}, // valid columns are immutable
+		sq.Eq{fmt.Sprintf("b.%s", column): identifier}, // valid columns are immutable
 	}
 
 	if !deletedOk {
-		whereClauses = append(whereClauses, sq.Eq{"s.deleted": false})
+		whereClauses = append(whereClauses, sq.Eq{"b.deleted": false})
 	} else {
-		whereClauses = append(whereClauses, sq.Gt{"s.valid_until": time.Now()})
+		whereClauses = append(whereClauses, sq.Gt{"b.valid_until": time.Now()})
 	}
 
 	query := r.db.
 		Builder().
 		Select(
-			"s.ban_id", "s.target_id", "s.source_id", "s.ban_type", "s.reason",
-			"s.reason_text", "s.note", "s.origin", "s.valid_until", "s.created_on", "s.updated_on", "s.include_friends",
-			"s.deleted", "case WHEN s.report_id is null THEN 0 ELSE s.report_id END",
-			"s.unban_reason_text", "s.is_enabled", "s.appeal_state", "s.last_ip",
+			"b.ban_id", "b.target_id", "b.source_id", "b.ban_type", "b.reason",
+			"b.reason_text", "b.note", "b.origin", "b.valid_until", "b.created_on", "b.updated_on", "b.include_friends",
+			"b.deleted", "case WHEN b.report_id is null THEN 0 ELSE b.report_id END",
+			"b.unban_reason_text", "b.is_enabled", "b.appeal_state", "b.last_ip",
 			"s.personaname as source_personaname", "s.avatarhash",
 			"t.personaname as target_personaname", "t.avatarhash", "t.community_banned", "t.vac_bans", "t.game_bans",
 		).
-		From("ban s").
-		LeftJoin("person s on s.steam_id = s.source_id").
-		LeftJoin("person t on t.steam_id = s.target_id").
+		From("ban b").
+		LeftJoin("person s on s.steam_id = b.source_id").
+		LeftJoin("person t on t.steam_id = b.target_id").
 		Where(whereClauses).
-		OrderBy("s.created_on DESC").
+		OrderBy("b.created_on DESC").
 		Limit(1)
 
 	row, errQuery := r.db.QueryRowBuilder(ctx, query)
@@ -635,28 +635,28 @@ func (r *banRepository) GetExpiredBans(ctx context.Context) ([]domain.BanSteam, 
 func (r *banRepository) GetBansSteam(ctx context.Context, filter domain.SteamBansQueryFilter) ([]domain.BannedSteamPerson, int64, error) {
 	builder := r.db.
 		Builder().
-		Select("s.ban_id", "s.target_id", "s.source_id", "s.ban_type", "s.reason",
-			"s.reason_text", "s.note", "s.origin", "s.valid_until", "s.created_on", "s.updated_on", "s.include_friends",
-			"s.deleted", "case WHEN s.report_id is null THEN 0 ELSE s.report_id END",
-			"s.unban_reason_text", "s.is_enabled", "s.appeal_state",
+		Select("b.ban_id", "b.target_id", "b.source_id", "b.ban_type", "b.reason",
+			"b.reason_text", "b.note", "b.origin", "b.valid_until", "b.created_on", "b.updated_on", "b.include_friends",
+			"b.deleted", "case WHEN b.report_id is null THEN 0 ELSE b.report_id END",
+			"b.unban_reason_text", "b.is_enabled", "b.appeal_state",
 			"s.personaname as source_personaname", "s.avatarhash",
 			"t.personaname as target_personaname", "t.avatarhash", "t.community_banned", "t.vac_bans", "t.game_bans").
-		From("ban s").
-		JoinClause("LEFT JOIN person s on s.steam_id = s.source_id").
-		JoinClause("LEFT JOIN person t on t.steam_id = s.target_id")
+		From("ban b").
+		JoinClause("LEFT JOIN person s on s.steam_id = b.source_id").
+		JoinClause("LEFT JOIN person t on t.steam_id = b.target_id")
 
 	var ands sq.And
 
 	if !filter.Deleted {
-		ands = append(ands, sq.Eq{"s.deleted": false})
+		ands = append(ands, sq.Eq{"b.deleted": false})
 	}
 
 	if filter.Reason > 0 {
-		ands = append(ands, sq.Eq{"s.reason": filter.Reason})
+		ands = append(ands, sq.Eq{"b.reason": filter.Reason})
 	}
 
 	if filter.PermanentOnly {
-		ands = append(ands, sq.Gt{"s.valid_until": time.Now()})
+		ands = append(ands, sq.Gt{"b.valid_until": time.Now()})
 	}
 
 	if filter.TargetID != "" {
@@ -665,7 +665,7 @@ func (r *banRepository) GetBansSteam(ctx context.Context, filter domain.SteamBan
 			return nil, 0, errors.Join(errTargetID, domain.ErrTargetID)
 		}
 
-		ands = append(ands, sq.Eq{"s.target_id": targetID.Int64()})
+		ands = append(ands, sq.Eq{"b.target_id": targetID.Int64()})
 	}
 
 	if filter.SourceID != "" {
@@ -674,15 +674,15 @@ func (r *banRepository) GetBansSteam(ctx context.Context, filter domain.SteamBan
 			return nil, 0, errors.Join(errSourceID, domain.ErrSourceID)
 		}
 
-		ands = append(ands, sq.Eq{"s.source_id": sourceID.Int64()})
+		ands = append(ands, sq.Eq{"b.source_id": sourceID.Int64()})
 	}
 
 	if filter.IncludeFriendsOnly {
-		ands = append(ands, sq.Eq{"s.include_friends": true})
+		ands = append(ands, sq.Eq{"b.include_friends": true})
 	}
 
 	if filter.AppealState > domain.AnyState {
-		ands = append(ands, sq.Eq{"s.appeal_state": filter.AppealState})
+		ands = append(ands, sq.Eq{"b.appeal_state": filter.AppealState})
 	}
 
 	if len(ands) > 0 {
@@ -757,12 +757,12 @@ func (r *banRepository) GetBansSteam(ctx context.Context, filter domain.SteamBan
 func (r *banRepository) GetBansOlderThan(ctx context.Context, filter domain.QueryFilter, since time.Time) ([]domain.BanSteam, error) {
 	query := r.db.
 		Builder().
-		Select("s.ban_id", "s.target_id", "s.source_id", "s.ban_type", "s.reason",
-			"s.reason_text", "s.note", "s.origin", "s.valid_until", "s.created_on", "s.updated_on", "s.deleted",
-			"case WHEN s.report_id is null THEN 0 ELSE s.report_id END", "s.unban_reason_text", "s.is_enabled",
-			"s.appeal_state", "s.include_friends").
-		From("ban s").
-		Where(sq.And{sq.Lt{"updated_on": since}, sq.Eq{"deleted": false}})
+		Select("b.ban_id", "b.target_id", "b.source_id", "b.ban_type", "b.reason",
+			"b.reason_text", "b.note", "b.origin", "b.valid_until", "b.created_on", "b.updated_on", "b.deleted",
+			"case WHEN b.report_id is null THEN 0 ELSE s.report_id END", "b.unban_reason_text", "b.is_enabled",
+			"b.appeal_state", "b.include_friends").
+		From("ban b").
+		Where(sq.And{sq.Lt{"b.updated_on": since}, sq.Eq{"b.deleted": false}})
 
 	rows, errQuery := r.db.QueryBuilder(ctx, filter.ApplyLimitOffsetDefault(query))
 	if errQuery != nil {
