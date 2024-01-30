@@ -22,21 +22,33 @@ type PersonHandler struct {
 	log           *zap.Logger
 }
 
-func NewPersonHandler(logger *zap.Logger, engine *gin.Engine, configUsecase domain.ConfigUsecase, personUsecase domain.PersonUsecase) {
+func NewPersonHandler(logger *zap.Logger, engine *gin.Engine, configUsecase domain.ConfigUsecase, personUsecase domain.PersonUsecase, ath domain.AuthUsecase) {
 	handler := &PersonHandler{pu: personUsecase, configUsecase: configUsecase, log: logger.Named("PersonHandler")}
 
 	engine.GET("/api/profile", handler.onAPIProfile())
 
 	// authed
-	engine.GET("/api/current_profile", handler.onAPICurrentProfile())
-	engine.GET("/api/current_profile/settings", handler.onAPIGetPersonSettings())
-	engine.POST("/api/current_profile/settings", handler.onAPIPostPersonSettings())
+	authedGrp := engine.Group("/")
+	{
+		authed := authedGrp.Use(ath.AuthMiddleware(domain.PUser))
+		authed.GET("/api/current_profile", handler.onAPICurrentProfile())
+		authed.GET("/api/current_profile/settings", handler.onAPIGetPersonSettings())
+		authed.POST("/api/current_profile/settings", handler.onAPIPostPersonSettings())
+	}
 
 	// mod
-	engine.POST("/api/players", handler.onAPISearchPlayers())
+	modGrp := engine.Group("/")
+	{
+		mod := modGrp.Use(ath.AuthMiddleware(domain.PUser))
+		mod.POST("/api/players", handler.onAPISearchPlayers())
+	}
 
 	// admin
-	engine.PUT("/api/player/:steam_id/permissions", handler.onAPIPutPlayerPermission())
+	adminGrp := engine.Group("/")
+	{
+		admin := adminGrp.Use(ath.AuthMiddleware(domain.PUser))
+		admin.PUT("/api/player/:steam_id/permissions", handler.onAPIPutPlayerPermission())
+	}
 }
 
 func (h PersonHandler) onAPIPutPlayerPermission() gin.HandlerFunc {

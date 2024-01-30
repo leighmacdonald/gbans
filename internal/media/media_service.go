@@ -18,7 +18,7 @@ type mediaHandler struct {
 	log *zap.Logger
 }
 
-func NewMediaHandler(logger *zap.Logger, engine *gin.Engine, mu domain.MediaUsecase, cu domain.ConfigUsecase, au domain.AssetUsecase) {
+func NewMediaHandler(logger *zap.Logger, engine *gin.Engine, mu domain.MediaUsecase, cu domain.ConfigUsecase, au domain.AssetUsecase, ath domain.AuthUsecase) {
 	handler := mediaHandler{
 		mu:  mu,
 		cu:  cu,
@@ -29,7 +29,11 @@ func NewMediaHandler(logger *zap.Logger, engine *gin.Engine, mu domain.MediaUsec
 	engine.GET("/media/:media_id", handler.onGetMediaByID())
 
 	// authed
-	engine.POST("/api/media", handler.onAPISaveMedia())
+	authedGrp := engine.Group("/")
+	{
+		authed := authedGrp.Use(ath.AuthMiddleware(domain.PUser))
+		authed.POST("/api/media", handler.onAPISaveMedia())
+	}
 }
 
 func (h mediaHandler) onAPISaveMedia() gin.HandlerFunc {

@@ -39,9 +39,10 @@ func NewAuthHandler(log *zap.Logger, engine *gin.Engine, au domain.AuthUsecase, 
 
 	engine.GET("/auth/callback", handler.onOpenIDCallback())
 
-	env := engine.Use(au.AuthMiddleware(domain.PUser))
+	authGrp := engine.Group("/")
 	{
 		// authed
+		env := authGrp.Use(au.AuthMiddleware(domain.PUser))
 		env.POST("/api/auth/refresh", handler.onTokenRefresh())
 		env.GET("/api/auth/discord", handler.onOAuthDiscordCallback())
 		env.GET("/api/auth/logout", handler.onAPILogout())

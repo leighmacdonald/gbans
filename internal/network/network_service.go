@@ -16,10 +16,14 @@ type NetworkHandler struct {
 	log *zap.Logger
 }
 
-func NewNetworkHandler(log *zap.Logger, engine *gin.Engine, nu domain.NetworkUsecase) {
+func NewNetworkHandler(log *zap.Logger, engine *gin.Engine, nu domain.NetworkUsecase, ath domain.AuthUsecase) {
 	handler := NetworkHandler{log: log.Named("network"), nu: nu}
 
-	engine.POST("/api/connections", handler.onAPIQueryPersonConnections())
+	modGrp := engine.Group("/")
+	{
+		mod := modGrp.Use(ath.AuthMiddleware(domain.PModerator))
+		mod.POST("/api/connections", handler.onAPIQueryPersonConnections())
+	}
 }
 
 func (h NetworkHandler) onAPIQueryPersonConnections() gin.HandlerFunc {

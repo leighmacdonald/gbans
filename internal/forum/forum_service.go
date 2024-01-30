@@ -20,7 +20,7 @@ type ForumHandler struct {
 	log *zap.Logger
 }
 
-func NewForumHandler(logger *zap.Logger, engine *gin.Engine, fuc domain.ForumUsecase) {
+func NewForumHandler(logger *zap.Logger, engine *gin.Engine, fuc domain.ForumUsecase, ath domain.AuthUsecase) {
 	handler := &ForumHandler{
 		fuc: fuc,
 		log: logger.Named("forum"),
@@ -29,27 +29,38 @@ func NewForumHandler(logger *zap.Logger, engine *gin.Engine, fuc domain.ForumUse
 	engine.GET("/api/forum/active_users", handler.onAPIActiveUsers())
 
 	// opt
-	engine.GET("/api/forum/overview", handler.onAPIForumOverview())
-	engine.GET("/api/forum/messages/recent", handler.onAPIForumMessagesRecent())
-	engine.POST("/api/forum/threads", handler.onAPIForumThreads())
-	engine.GET("/api/forum/thread/:forum_thread_id", handler.onAPIForumThread())
-	engine.GET("/api/forum/forum/:forum_id", handler.onAPIForum())
-	engine.POST("/api/forum/messages", handler.onAPIForumMessages())
+	optGrp := engine.Group("/")
+	{
+		opt := optGrp.Use(ath.AuthMiddleware(domain.PGuest))
+		opt.GET("/api/forum/overview", handler.onAPIForumOverview())
+		opt.GET("/api/forum/messages/recent", handler.onAPIForumMessagesRecent())
+		opt.POST("/api/forum/threads", handler.onAPIForumThreads())
+		opt.GET("/api/forum/thread/:forum_thread_id", handler.onAPIForumThread())
+		opt.GET("/api/forum/forum/:forum_id", handler.onAPIForum())
+		opt.POST("/api/forum/messages", handler.onAPIForumMessages())
+	}
 
 	// auth
-	engine.POST("/api/forum/forum/:forum_id/thread", handler.onAPIThreadCreate())
-	engine.POST("/api/forum/thread/:forum_thread_id/message", handler.onAPIThreadCreateReply())
-	engine.POST("/api/forum/message/:forum_message_id", handler.onAPIThreadMessageUpdate())
-	engine.DELETE("/api/forum/thread/:forum_thread_id", handler.onAPIThreadDelete())
-	engine.DELETE("/api/forum/message/:forum_message_id", handler.onAPIMessageDelete())
-	engine.POST("/api/forum/thread/:forum_thread_id", handler.onAPIThreadUpdate())
-
+	authedGrp := engine.Group("/")
+	{
+		authed := authedGrp.Use(ath.AuthMiddleware(domain.PUser))
+		authed.POST("/api/forum/forum/:forum_id/thread", handler.onAPIThreadCreate())
+		authed.POST("/api/forum/thread/:forum_thread_id/message", handler.onAPIThreadCreateReply())
+		authed.POST("/api/forum/message/:forum_message_id", handler.onAPIThreadMessageUpdate())
+		authed.DELETE("/api/forum/thread/:forum_thread_id", handler.onAPIThreadDelete())
+		authed.DELETE("/api/forum/message/:forum_message_id", handler.onAPIMessageDelete())
+		authed.POST("/api/forum/thread/:forum_thread_id", handler.onAPIThreadUpdate())
+	}
 	// mod
-	engine.POST("/api/forum/category", handler.onAPICreateForumCategory())
-	engine.GET("/api/forum/category/:forum_category_id", handler.onAPIForumCategory())
-	engine.POST("/api/forum/category/:forum_category_id", handler.onAPIUpdateForumCategory())
-	engine.POST("/api/forum/forum", handler.onAPICreateForumForum())
-	engine.POST("/api/forum/forum/:forum_id", handler.onAPIUpdateForumForum())
+	modGrp := engine.Group("/")
+	{
+		mod := modGrp.Use(ath.AuthMiddleware(domain.PModerator))
+		mod.POST("/api/forum/category", handler.onAPICreateForumCategory())
+		mod.GET("/api/forum/category/:forum_category_id", handler.onAPIForumCategory())
+		mod.POST("/api/forum/category/:forum_category_id", handler.onAPIUpdateForumCategory())
+		mod.POST("/api/forum/forum", handler.onAPICreateForumForum())
+		mod.POST("/api/forum/forum/:forum_id", handler.onAPIUpdateForumForum())
+	}
 }
 
 type ForumCategoryRequest struct {

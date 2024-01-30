@@ -19,21 +19,25 @@ type matchHandler struct {
 }
 
 // todo move data updaters to repository
-func NewMatchHandler(ctx context.Context, logger *zap.Logger, engine *gin.Engine, mu domain.MatchUsecase) {
+func NewMatchHandler(ctx context.Context, logger *zap.Logger, engine *gin.Engine, mu domain.MatchUsecase, ath domain.AuthUsecase) {
 	handler := matchHandler{log: logger, mu: mu}
 
 	engine.GET("/api/stats/map", handler.onAPIGetMapUsage())
 
 	// authed
-	engine.POST("/api/logs", handler.onAPIGetMatches())
-	engine.GET("/api/log/:match_id", handler.onAPIGetMatch())
-	engine.GET("/api/stats/weapons", handler.onAPIGetStatsWeaponsOverall(ctx))
-	engine.GET("/api/stats/weapon/:weapon_id", handler.onAPIGetsStatsWeapon())
-	engine.GET("/api/stats/players", handler.onAPIGetStatsPlayersOverall(ctx))
-	engine.GET("/api/stats/healers", handler.onAPIGetStatsHealersOverall(ctx))
-	engine.GET("/api/stats/player/:steam_id/weapons", handler.onAPIGetPlayerWeaponStatsOverall())
-	engine.GET("/api/stats/player/:steam_id/classes", handler.onAPIGetPlayerClassStatsOverall())
-	engine.GET("/api/stats/player/:steam_id/overall", handler.onAPIGetPlayerStatsOverall())
+	authedGrp := engine.Group("/")
+	{
+		authed := authedGrp.Use(ath.AuthMiddleware(domain.PUser))
+		authed.POST("/api/logs", handler.onAPIGetMatches())
+		authed.GET("/api/log/:match_id", handler.onAPIGetMatch())
+		authed.GET("/api/stats/weapons", handler.onAPIGetStatsWeaponsOverall(ctx))
+		authed.GET("/api/stats/weapon/:weapon_id", handler.onAPIGetsStatsWeapon())
+		authed.GET("/api/stats/players", handler.onAPIGetStatsPlayersOverall(ctx))
+		authed.GET("/api/stats/healers", handler.onAPIGetStatsHealersOverall(ctx))
+		authed.GET("/api/stats/player/:steam_id/weapons", handler.onAPIGetPlayerWeaponStatsOverall())
+		authed.GET("/api/stats/player/:steam_id/classes", handler.onAPIGetPlayerClassStatsOverall())
+		authed.GET("/api/stats/player/:steam_id/overall", handler.onAPIGetPlayerStatsOverall())
+	}
 }
 
 func (h matchHandler) onAPIGetStatsWeaponsOverall(ctx context.Context) gin.HandlerFunc {

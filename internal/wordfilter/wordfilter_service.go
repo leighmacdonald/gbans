@@ -21,7 +21,7 @@ type WordFilterHandler struct {
 	log         *zap.Logger
 }
 
-func NewWordFilterHandler(log *zap.Logger, engine *gin.Engine, confUsecase domain.ConfigUsecase, wfu domain.WordFilterUsecase, cu domain.ChatUsecase) {
+func NewWordFilterHandler(log *zap.Logger, engine *gin.Engine, confUsecase domain.ConfigUsecase, wfu domain.WordFilterUsecase, cu domain.ChatUsecase, ath domain.AuthUsecase) {
 	handler := WordFilterHandler{
 		log:         log.Named("wordfilter"),
 		confUsecase: confUsecase,
@@ -30,11 +30,15 @@ func NewWordFilterHandler(log *zap.Logger, engine *gin.Engine, confUsecase domai
 	}
 
 	// editor
-	engine.POST("/api/filters/query", handler.onAPIQueryWordFilters())
-	engine.GET("/api/filters/state", handler.onAPIGetWarningState())
-	engine.POST("/api/filters", handler.onAPIPostWordFilter())
-	engine.DELETE("/api/filters/:word_id", handler.onAPIDeleteWordFilter())
-	engine.POST("/api/filter_match", handler.onAPIPostWordMatch())
+	editorGrp := engine.Group("/")
+	{
+		editor := editorGrp.Use(ath.AuthMiddleware(domain.PUser))
+		editor.POST("/api/filters/query", handler.onAPIQueryWordFilters())
+		editor.GET("/api/filters/state", handler.onAPIGetWarningState())
+		editor.POST("/api/filters", handler.onAPIPostWordFilter())
+		editor.DELETE("/api/filters/:word_id", handler.onAPIDeleteWordFilter())
+		editor.POST("/api/filter_match", handler.onAPIPostWordMatch())
+	}
 }
 
 func (h *WordFilterHandler) onAPIQueryWordFilters() gin.HandlerFunc {
