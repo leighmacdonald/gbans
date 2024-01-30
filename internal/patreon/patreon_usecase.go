@@ -2,9 +2,9 @@ package patreon
 
 import (
 	"context"
-	"go.uber.org/zap"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"go.uber.org/zap"
 	libpatreon "gopkg.in/mxpv/patreon-go.v1"
 )
 
