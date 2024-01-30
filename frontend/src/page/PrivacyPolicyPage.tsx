@@ -210,3 +210,5 @@ export const PrivacyPolicyPage = (): JSX.Element => {
         </ContainerWithHeader>
     );
 };
+
+export default PrivacyPolicyPage;

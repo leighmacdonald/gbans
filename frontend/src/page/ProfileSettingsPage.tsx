@@ -169,3 +169,5 @@ export const ProfileSettingsPage = (): JSX.Element => {
         </ContainerWithHeader>
     );
 };
+
+export default ProfileSettingsPage;

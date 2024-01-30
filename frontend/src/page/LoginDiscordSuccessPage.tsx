@@ -34,3 +34,5 @@ export const LoginDiscordSuccessPage = () => {
         </>
     );
 };
+
+export default LoginDiscordSuccessPage;

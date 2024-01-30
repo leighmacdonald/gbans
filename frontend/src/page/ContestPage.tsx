@@ -467,3 +467,5 @@ export const ContestPage = () => {
         )
     );
 };
+
+export default ContestPage;

@@ -56,3 +56,5 @@ export const AdminBanGroupPage = () => {
         </Grid>
     );
 };
+
+export default AdminBanGroupPage;

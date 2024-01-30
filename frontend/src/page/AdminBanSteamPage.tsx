@@ -56,3 +56,5 @@ export const AdminBanSteamPage = () => {
         </Grid>
     );
 };
+
+export default AdminBanSteamPage;

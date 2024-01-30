@@ -126,3 +126,5 @@ export const NotificationsPage = () => {
         </Grid2>
     );
 };
+
+export default NotificationsPage;

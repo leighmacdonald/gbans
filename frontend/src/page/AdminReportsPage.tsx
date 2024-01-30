@@ -279,3 +279,5 @@ export const AdminReportsPage = () => {
         </Formik>
     );
 };
+
+export default AdminReportsPage;

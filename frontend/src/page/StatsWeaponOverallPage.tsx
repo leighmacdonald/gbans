@@ -168,3 +168,5 @@ export const StatsWeaponOverallPage = (): JSX.Element => {
         </Grid>
     );
 };
+
+export default StatsWeaponOverallPage;

@@ -342,3 +342,5 @@ export const ReportViewPage = (): JSX.Element => {
         </Grid>
     );
 };
+
+export default ReportViewPage;

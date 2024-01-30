@@ -139,3 +139,5 @@ export const ContestListPage = () => {
         </ContainerWithHeader>
     );
 };
+
+export default ContestListPage;

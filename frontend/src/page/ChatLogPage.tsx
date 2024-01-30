@@ -431,3 +431,5 @@ const ChatContextMenu = ({
         </>
     );
 };
+
+export default ChatLogPage;

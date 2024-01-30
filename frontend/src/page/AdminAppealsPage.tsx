@@ -293,3 +293,5 @@ export const AdminAppealsPage = () => {
         </Formik>
     );
 };
+
+export default AdminAppealsPage;

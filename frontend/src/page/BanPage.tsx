@@ -387,3 +387,5 @@ export const BanPage = (): JSX.Element => {
         </Grid>
     );
 };
+
+export default BanPage;

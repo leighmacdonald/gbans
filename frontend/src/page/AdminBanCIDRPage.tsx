@@ -60,3 +60,5 @@ export const AdminBanCIDRPage = () => {
         </Grid>
     );
 };
+
+export default AdminBanCIDRPage;

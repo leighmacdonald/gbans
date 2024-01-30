@@ -210,3 +210,5 @@ export const MatchListPage = (): JSX.Element => {
         </Grid>
     );
 };
+
+export default MatchListPage;

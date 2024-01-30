@@ -1,5 +1,17 @@
-import React, { useCallback, useMemo, useState, JSX } from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import React, {
+    useCallback,
+    useMemo,
+    useState,
+    JSX,
+    lazy,
+    Suspense
+} from 'react';
+import {
+    BrowserRouter as Router,
+    Outlet,
+    Route,
+    Routes
+} from 'react-router-dom';
 import NiceModal from '@ebay/nice-modal-react';
 import { PaletteMode } from '@mui/material';
 import { AlertColor } from '@mui/material/Alert';
@@ -22,45 +34,6 @@ import { ColourModeContext } from './contexts/ColourModeContext';
 import { CurrentUserCtx, GuestProfile } from './contexts/CurrentUserCtx';
 import { NotificationsProvider } from './contexts/NotificationsCtx';
 import { UserFlashCtx } from './contexts/UserFlashCtx';
-import { AdminAppealsPage } from './page/AdminAppealsPage';
-import { AdminBanASNPage } from './page/AdminBanASNPage';
-import { AdminBanCIDRPage } from './page/AdminBanCIDRPage';
-import { AdminBanGroupPage } from './page/AdminBanGroupPage';
-import { AdminBanSteamPage } from './page/AdminBanSteamPage';
-import { AdminContestsPage } from './page/AdminContestsPage';
-import { AdminFiltersPage } from './page/AdminFiltersPage';
-import { AdminNetworkPage } from './page/AdminNetworkPage';
-import { AdminNewsPage } from './page/AdminNewsPage';
-import { AdminPeoplePage } from './page/AdminPeoplePage';
-import { AdminReportsPage } from './page/AdminReportsPage';
-import { AdminServersPage } from './page/AdminServersPage';
-import { BanPage } from './page/BanPage';
-import { ChatLogPage } from './page/ChatLogPage';
-import { ContestListPage } from './page/ContestListPage';
-import { ContestPage } from './page/ContestPage';
-import { ForumOverviewPage } from './page/ForumOverviewPage';
-import { ForumPage } from './page/ForumPage';
-import { ForumThreadPage } from './page/ForumThreadPage';
-import { HomePage } from './page/HomePage';
-import { LoginDiscordSuccessPage } from './page/LoginDiscordSuccessPage';
-import { LoginPage } from './page/LoginPage';
-import { LoginSteamSuccessPage } from './page/LoginSteamSuccessPage';
-import { LogoutPage } from './page/LogoutPage';
-import { MatchListPage } from './page/MatchListPage';
-import { MatchPage } from './page/MatchPage';
-import { NotificationsPage } from './page/NotificationsPage';
-import { PageNotFoundPage } from './page/PageNotFoundPage';
-import { PlayerStatsPage } from './page/PlayerStatsPage';
-import { PrivacyPolicyPage } from './page/PrivacyPolicyPage';
-import { ProfilePage } from './page/ProfilePage';
-import { ProfileSettingsPage } from './page/ProfileSettingsPage';
-import { ReportCreatePage } from './page/ReportCreatePage';
-import { ReportViewPage } from './page/ReportViewPage';
-import { STVPage } from './page/STVPage';
-import { ServersPage } from './page/ServersPage';
-import { StatsPage } from './page/StatsPage';
-import { StatsWeaponOverallPage } from './page/StatsWeaponOverallPage';
-import { WikiPage } from './page/WikiPage';
 import { createThemeByMode } from './theme';
 
 export interface AppProps {
@@ -68,6 +41,51 @@ export interface AppProps {
 }
 
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
+const HomePage = lazy(() => import('./page/HomePage'));
+const AdminAppealsPage = lazy(() => import('./page/AdminAppealsPage'));
+const AdminBanASNPage = lazy(() => import('./page/AdminBanASNPage'));
+const AdminBanCIDRPage = lazy(() => import('./page/AdminBanCIDRPage'));
+const AdminBanGroupPage = lazy(() => import('./page/AdminBanGroupPage'));
+const AdminBanSteamPage = lazy(() => import('./page/AdminBanSteamPage'));
+const AdminContestsPage = lazy(() => import('./page/AdminContestsPage'));
+const AdminFiltersPage = lazy(() => import('./page/AdminFiltersPage'));
+const AdminNetworkPage = lazy(() => import('./page/AdminNetworkPage'));
+const AdminNewsPage = lazy(() => import('./page/AdminNewsPage'));
+const AdminPeoplePage = lazy(() => import('./page/AdminPeoplePage'));
+const AdminReportsPage = lazy(() => import('./page/AdminReportsPage'));
+const AdminServersPage = lazy(() => import('./page/AdminServersPage'));
+const BanPage = lazy(() => import('./page/BanPage'));
+const ChatLogPage = lazy(() => import('./page/ChatLogPage'));
+const ContestListPage = lazy(() => import('./page/ContestListPage'));
+const ContestPage = lazy(() => import('./page/ContestPage'));
+const ForumOverviewPage = lazy(() => import('./page/ForumOverviewPage'));
+const ForumPage = lazy(() => import('./page/ForumPage'));
+const ForumThreadPage = lazy(() => import('./page/ForumThreadPage'));
+const LoginDiscordSuccessPage = lazy(
+    () => import('./page/LoginDiscordSuccessPage')
+);
+const LoginPage = lazy(() => import('./page/LoginPage'));
+const LoginSteamSuccessPage = lazy(
+    () => import('./page/LoginSteamSuccessPage')
+);
+const LogoutPage = lazy(() => import('./page/LogoutPage'));
+const MatchListPage = lazy(() => import('./page/MatchListPage'));
+const MatchPage = lazy(() => import('./page/MatchPage'));
+const NotificationsPage = lazy(() => import('./page/NotificationsPage'));
+const PageNotFoundPage = lazy(() => import('./page/PageNotFoundPage'));
+const PlayerStatsPage = lazy(() => import('./page/PlayerStatsPage'));
+const PrivacyPolicyPage = lazy(() => import('./page/PrivacyPolicyPage'));
+const ProfilePage = lazy(() => import('./page/ProfilePage'));
+const ProfileSettingsPage = lazy(() => import('./page/ProfileSettingsPage'));
+const ReportCreatePage = lazy(() => import('./page/ReportCreatePage'));
+const ReportViewPage = lazy(() => import('./page/ReportViewPage'));
+const STVPage = lazy(() => import('./page/STVPage'));
+const ServersPage = lazy(() => import('./page/ServersPage'));
+const StatsPage = lazy(() => import('./page/StatsPage'));
+const StatsWeaponOverallPage = lazy(
+    () => import('./page/StatsWeaponOverallPage')
+);
+const WikiPage = lazy(() => import('./page/WikiPage'));
 
 export const App = ({ initialTheme }: AppProps): JSX.Element => {
     const [currentUser, setCurrentUser] =
@@ -765,6 +783,13 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                 />
                                                             </SentryRoutes>
                                                         </Sentry.ErrorBoundary>
+                                                        <Suspense
+                                                            fallback={
+                                                                <h2>Loading</h2>
+                                                            }
+                                                        >
+                                                            <Outlet />
+                                                        </Suspense>
                                                     </div>
                                                     <Footer />
                                                 </Container>

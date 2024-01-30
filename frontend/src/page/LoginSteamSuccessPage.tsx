@@ -49,3 +49,5 @@ export const LoginSteamSuccessPage = () => {
 
     return <>{<Typography variant={'h3'}>Logging In...</Typography>}</>;
 };
+
+export default LoginSteamSuccessPage;

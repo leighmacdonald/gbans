@@ -524,3 +524,5 @@ export const ForumThreadPage = (): JSX.Element => {
         </Stack>
     );
 };
+
+export default ForumThreadPage;

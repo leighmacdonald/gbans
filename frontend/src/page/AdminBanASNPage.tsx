@@ -56,3 +56,5 @@ export const AdminBanASNPage = () => {
         </Grid>
     );
 };
+
+export default AdminBanASNPage;

@@ -166,3 +166,5 @@ export const AdminNetworkPage = () => {
         </Grid>
     );
 };
+
+export default AdminNetworkPage;
