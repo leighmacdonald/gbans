@@ -43,20 +43,3 @@ func Version() domain.BuildInfo {
 //	go app.activityTracker.Start(ctx)
 //	go app.steamFriends.Start(ctx)
 //}
-
-// validateLink is used in the case of discord origin actions that require mapping the
-// discord member ID to a SteamID so that we can track its use and apply permissions, etc.
-//
-// This function will replace the discord member id value in the target field with
-// the found SteamID, if any.
-// func validateLink(ctx context.Context, database db.postgreStore, sourceID action.Author, target *action.Author) error {
-//	var p model.Person
-//	if errGetPerson := database.GetPersonByDiscordID(ctx, string(sourceID), &p); errGetPerson != nil {
-//		if errGetPerson == db.ErrNoResult {
-//			return consts.ErrUnlinkedAccount
-//		}
-//		return consts.domain.ErrInternal
-//	}
-//	*target = action.Author(p.SteamID.String())
-//	return nil
-// }

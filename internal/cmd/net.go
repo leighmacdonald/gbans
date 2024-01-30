@@ -3,9 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"github.com/leighmacdonald/gbans/internal/person"
-	"github.com/leighmacdonald/gbans/pkg/fp"
-	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"os"
 	"time"
 
@@ -14,7 +11,10 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/log"
 	"github.com/leighmacdonald/gbans/internal/network"
+	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
+	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )

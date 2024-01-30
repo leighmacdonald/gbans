@@ -14,7 +14,7 @@ import (
 var ErrAssetID = errors.New("failed to generate new asset ID")
 
 type DemoUsecase interface {
-	Cleaner(ctx context.Context)
+	Start(ctx context.Context)
 	ExpiredDemos(ctx context.Context, limit uint64) ([]DemoInfo, error)
 	GetDemoByID(ctx context.Context, demoID int64, demoFile *DemoFile) error
 	GetDemoByName(ctx context.Context, demoName string, demoFile *DemoFile) error

@@ -3,14 +3,11 @@ package domain
 import (
 	"context"
 
-	"github.com/leighmacdonald/gbans/pkg/fp"
-	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
 )
 
 type MetricsUsecase interface {
-	LogMetricsConsumer(ctx context.Context, collector *MetricCollector, eb *fp.Broadcaster[logparse.EventType, logparse.ServerEvent], logger *zap.Logger)
+	Start(ctx context.Context)
 }
 
 type MetricCollector struct {

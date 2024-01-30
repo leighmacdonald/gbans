@@ -7,6 +7,7 @@ import (
 )
 
 type PatreonUsecase interface {
+	Start(ctx context.Context)
 	Tiers() ([]patreon.Campaign, error)
 	Pledges() ([]patreon.Pledge, map[string]*patreon.User, error)
 }

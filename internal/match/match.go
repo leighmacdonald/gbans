@@ -3,6 +3,7 @@ package match
 import (
 	"context"
 	"errors"
+
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"go.uber.org/zap"
 )

@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/leighmacdonald/gbans/pkg/fp"
-	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"net"
 	"os"
 	"strings"
@@ -13,6 +11,8 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/pkg/fp"
+	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/ryanuber/go-glob"
 	"go.uber.org/zap"
@@ -31,7 +31,8 @@ type stateUsecase struct {
 // NewStateUsecase created a interface to interact with server state and exec rcon commands
 // TODO ensure started
 func NewStateUsecase(log *zap.Logger, eb *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
-	repository domain.StateRepository, cu domain.ConfigUsecase, sv domain.ServersUsecase) domain.StateUsecase {
+	repository domain.StateRepository, cu domain.ConfigUsecase, sv domain.ServersUsecase,
+) domain.StateUsecase {
 	conf := cu.Config()
 
 	logSrc, errLogSrc := logparse.NewUDPLogListener(log, conf.Log.SrcdsLogAddr,
@@ -50,11 +51,14 @@ func NewStateUsecase(log *zap.Logger, eb *fp.Broadcaster[logparse.EventType, log
 		eb:              eb,
 		sv:              sv,
 		logListener:     logSrc,
-		logFileChan:     make(chan domain.LogFilePayload)}
+		logFileChan:     make(chan domain.LogFilePayload),
+	}
 }
 
 // UDP log sink.
 func (s *stateUsecase) Start(ctx context.Context) {
+	s.stateRepository.Start(ctx)
+
 	s.updateSrcdsLogSecrets(ctx)
 
 	go s.logReader(ctx, false)
@@ -264,9 +268,7 @@ func (s *stateUsecase) ByName(name string, wildcardOk bool) []domain.ServerState
 	current := s.stateRepository.Current()
 
 	if name == "*" && wildcardOk {
-		for _, server := range current {
-			servers = append(servers, server)
-		}
+		servers = append(servers, current...)
 	} else {
 		if !strings.HasPrefix(name, "*") {
 			name = "*" + name

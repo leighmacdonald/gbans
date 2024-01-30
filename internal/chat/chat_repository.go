@@ -29,7 +29,8 @@ type chatRepository struct {
 }
 
 func NewChatRepository(database database.Database, log *zap.Logger, pu domain.PersonUsecase, wfu domain.WordFilterUsecase,
-	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]) domain.ChatRepository {
+	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
+) domain.ChatRepository {
 	return &chatRepository{
 		db:          database,
 		log:         log,

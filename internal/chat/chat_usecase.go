@@ -54,6 +54,7 @@ func NewChatUsecase(log *zap.Logger, cu domain.ConfigUsecase, cr domain.ChatRepo
 		st:           st,
 		pingDiscord:  conf.Filter.PingDiscord,
 		warnings:     make(map[steamid.SID64][]domain.UserWarning),
+		warningMu:    &sync.RWMutex{},
 		WarningChan:  make(chan domain.NewUserWarning),
 		matchTimeout: conf.Filter.MatchTimeout,
 		dry:          conf.Filter.Dry,

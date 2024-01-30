@@ -12,20 +12,11 @@ import (
 )
 
 type forumRepository struct {
-	db      database.Database
-	tracker *Tracker
+	db database.Database
 }
 
 func NewForumRepository(database database.Database) domain.ForumRepository {
-	return &forumRepository{db: database, tracker: NewTracker()}
-}
-
-func (f *forumRepository) Touch(up domain.UserProfile) {
-	f.tracker.Touch(up)
-}
-
-func (f *forumRepository) Current() []domain.ForumActivity {
-	return f.tracker.Current()
+	return &forumRepository{db: database}
 }
 
 func (f *forumRepository) ForumCategories(ctx context.Context) ([]domain.ForumCategory, error) {

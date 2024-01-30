@@ -2,12 +2,12 @@ package report
 
 import (
 	"context"
-	"github.com/leighmacdonald/gbans/internal/discord"
-	"go.uber.org/zap"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v3/steamid"
+	"go.uber.org/zap"
 )
 
 type reportUsecase struct {
@@ -22,8 +22,8 @@ func NewReportUsecase(log *zap.Logger, rr domain.ReportRepository, du domain.Dis
 		log: log.Named("report"),
 		du:  du,
 		rr:  rr,
-		cu:  cu}
-
+		cu:  cu,
+	}
 }
 
 func (r reportUsecase) Start(ctx context.Context) {

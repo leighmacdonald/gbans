@@ -110,8 +110,13 @@ func serveCmd() *cobra.Command {
 			if errDR != nil {
 				rootLogger.Fatal("Cannot initialize discord", zap.Error(errDR))
 			}
+
 			du := discord.NewDiscordUsecase(dr)
-			// du.Start()
+
+			if err := du.Start(); err != nil {
+				rootLogger.Fatal("Failed to start discord", zap.Error(err))
+			}
+
 			defer du.Shutdown(conf.Discord.GuildID)
 
 			// Initialize minio client object.
@@ -131,33 +136,45 @@ func serveCmd() *cobra.Command {
 			au := asset.NewAssetUsecase(asset.NewS3Repository(rootLogger, db, minioClient, conf.S3.Region))
 			meu := media.NewMediaUsecase(conf.S3.BucketMedia, media.NewMediaRepository(db), au)
 			deu := demo.NewDemoUsecase(rootLogger, conf.S3.BucketDemo, demo.NewDemoRepository(db), au, cu)
-			go deu.Cleaner(ctx)
+			go deu.Start(ctx)
 
 			sgu := steamgroup.NewBanGroupUsecase(rootLogger, steamgroup.NewSteamGroupRepository(db))
 			ru := report.NewReportUsecase(rootLogger, report.NewReportRepository(db), du, cu)
 			sv := servers.NewServersUsecase(servers.NewServersRepository(db))
 			st := state.NewStateUsecase(rootLogger, eventBroadcaster, state.NewStateRepository(state.NewCollector(rootLogger, sv)), cu, sv)
+			go st.Start(ctx)
 			br := ban.NewBanRepository(db, pu, nu)
 			bu := ban.NewBanUsecase(rootLogger, br, pu, cu, du, sgu, ru, st)
-
+			go bu.Start(ctx)
 			apu := appeal.NewAppealUsecase(appeal.NewAppealRepository(db), bu, pu, du, cu)
 
 			wfu := wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(db), du)
 			wfu.Import(ctx)
 
 			cr := chat.NewChatRepository(db, rootLogger, pu, wfu, eventBroadcaster)
+
 			chu := chat.NewChatUsecase(rootLogger, cu, cr, wfu, st, bu, pu, du, st)
+			go chu.Start(ctx)
+
 			fu := forum.NewForumUsecase(forum.NewForumRepository(db))
+
+			mt := metrics.NewMetricsUsecase(rootLogger, eventBroadcaster)
+			go mt.Start(ctx)
+
+			go fu.Start(ctx)
 			mu := match.NewMatchUsecase(rootLogger, eventBroadcaster, match.NewMatchRepository(db, pu), st, sv, du, wm)
+			go mu.Start(ctx)
 			neu := news.NewNewsUsecase(news.NewNewsRepository(db))
 			nou := notification.NewNotificationUsecase(rootLogger, notification.NewNotificationRepository(db), pu)
-			pat := patreon.NewPatreonUsecase(patreon.NewPatreonRepository(db))
+			pat := patreon.NewPatreonUsecase(rootLogger, patreon.NewPatreonRepository(db))
+			go pat.Start(ctx)
 
 			srcdsu := srcds.NewSrcdsUsecase(rootLogger, cu, sv, pu, ru, du)
 
 			wu := wiki.NewWikiUsecase(wiki.NewWikiRepository(db, meu))
 
 			athu := auth.NewAuthUsecase(rootLogger, auth.NewAuthRepository(db), cu, pu, bu, sv)
+			go athu.Start(ctx)
 
 			cnu := contest.NewContestUsecase(contest.NewContestRepository(db))
 

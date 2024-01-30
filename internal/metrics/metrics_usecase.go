@@ -12,19 +12,25 @@ import (
 
 type metricsUsecase struct {
 	collector *domain.MetricCollector
+	log       *zap.Logger
+	eb        *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 }
 
-func NewMetricsUsecase() domain.MetricsUsecase {
+func NewMetricsUsecase(logger *zap.Logger, eb *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]) domain.MetricsUsecase {
 	collector := newMetricCollector()
-	return &metricsUsecase{collector: collector}
+	return &metricsUsecase{
+		collector: collector,
+		log:       logger.Named("metrics"),
+		eb:        eb,
+	}
 }
 
-// LogMetricsConsumer processes incoming log events and updated any associated metrics.
-func (u metricsUsecase) LogMetricsConsumer(ctx context.Context, collector *domain.MetricCollector, eb *fp.Broadcaster[logparse.EventType, logparse.ServerEvent], logger *zap.Logger) {
-	log := logger.Named("metricsConsumer")
+// Start begins processing incoming log events and updating any associated metrics.
+func (u metricsUsecase) Start(ctx context.Context) {
+	log := u.log.Named("consumer")
 
 	eventChan := make(chan logparse.ServerEvent)
-	if errRegister := eb.Consume(eventChan); errRegister != nil {
+	if errRegister := u.eb.Consume(eventChan); errRegister != nil {
 		log.Error("Failed to register event consumer", zap.Error(errRegister))
 
 		return
@@ -44,36 +50,36 @@ func (u metricsUsecase) LogMetricsConsumer(ctx context.Context, collector *domai
 			switch newEvent.EventType { //nolint:wsl,exhaustive
 			case logparse.Damage:
 				if evt, ok := newEvent.Event.(logparse.DamageEvt); ok {
-					collector.DamageCounter.With(prometheus.Labels{"weapon": parser.Name(evt.Weapon)}).Add(float64(evt.Damage))
+					u.collector.DamageCounter.With(prometheus.Labels{"weapon": parser.Name(evt.Weapon)}).Add(float64(evt.Damage))
 				}
 			case logparse.Healed:
 				// evt := serverEvent.Event.(logparse.HealedEvt)
 				// healingCounter.With(prometheus.Labels{"weapon": evt.Wa}).Add(float64(serverEvent.Damage))
 			case logparse.ShotFired:
 				if evt, ok := newEvent.Event.(logparse.ShotFiredEvt); ok {
-					collector.ShotFiredCounter.With(prometheus.Labels{"weapon": parser.Name(evt.Weapon)}).Inc()
+					u.collector.ShotFiredCounter.With(prometheus.Labels{"weapon": parser.Name(evt.Weapon)}).Inc()
 				}
 			case logparse.ShotHit:
 				if evt, ok := newEvent.Event.(logparse.ShotHitEvt); ok {
-					collector.ShotHitCounter.With(prometheus.Labels{"weapon": parser.Name(evt.Weapon)}).Inc()
+					u.collector.ShotHitCounter.With(prometheus.Labels{"weapon": parser.Name(evt.Weapon)}).Inc()
 				}
 			case logparse.Killed:
 				if evt, ok := newEvent.Event.(logparse.KilledEvt); ok {
-					collector.KillCounter.With(prometheus.Labels{"weapon": parser.Name(evt.Weapon)}).Inc()
+					u.collector.KillCounter.With(prometheus.Labels{"weapon": parser.Name(evt.Weapon)}).Inc()
 				}
 			case logparse.Say:
-				collector.SayCounter.With(prometheus.Labels{"team_say": "0"}).Inc()
+				u.collector.SayCounter.With(prometheus.Labels{"team_say": "0"}).Inc()
 			case logparse.SayTeam:
-				collector.SayCounter.With(prometheus.Labels{"team_say": "1"}).Inc()
+				u.collector.SayCounter.With(prometheus.Labels{"team_say": "1"}).Inc()
 			case logparse.RCON:
-				collector.RconCounter.With(prometheus.Labels{"server_name": newEvent.ServerName}).Inc()
+				u.collector.RconCounter.With(prometheus.Labels{"server_name": newEvent.ServerName}).Inc()
 			case logparse.Connected:
-				collector.ConnectedCounter.With(prometheus.Labels{"server_name": newEvent.ServerName}).Inc()
+				u.collector.ConnectedCounter.With(prometheus.Labels{"server_name": newEvent.ServerName}).Inc()
 			case logparse.Disconnected:
-				collector.DisconnectedCounter.With(prometheus.Labels{"server_name": newEvent.ServerName}).Inc()
+				u.collector.DisconnectedCounter.With(prometheus.Labels{"server_name": newEvent.ServerName}).Inc()
 			case logparse.SpawnedAs:
 				if evt, ok := newEvent.Event.(logparse.SpawnedAsEvt); ok {
-					collector.ClassCounter.With(prometheus.Labels{"class": evt.Class.String()}).Inc()
+					u.collector.ClassCounter.With(prometheus.Labels{"class": evt.Class.String()}).Inc()
 				}
 			}
 		}
