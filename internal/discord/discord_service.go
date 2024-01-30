@@ -22,7 +22,7 @@ import (
 	"go.uber.org/zap"
 )
 
-type discordService struct {
+type DiscordService struct {
 	du  domain.DiscordUsecase
 	pu  domain.PersonUsecase
 	bu  domain.BanUsecase
@@ -36,10 +36,11 @@ type discordService struct {
 	log *zap.Logger
 }
 
-func DiscordHandler(ctx context.Context, log *zap.Logger, du domain.DiscordUsecase, pu domain.PersonUsecase, bu domain.BanUsecase, su domain.StateUsecase, sv domain.ServersUsecase,
-	cu domain.ConfigUsecase, nu domain.NetworkUsecase, wfu domain.WordFilterUsecase, mu domain.MatchUsecase, ch domain.ChatUsecase,
-) error {
-	handler := discordService{
+func NewDiscordHandler(log *zap.Logger, du domain.DiscordUsecase, pu domain.PersonUsecase, bu domain.BanUsecase,
+	su domain.StateUsecase, sv domain.ServersUsecase, cu domain.ConfigUsecase, nu domain.NetworkUsecase,
+	wfu domain.WordFilterUsecase, mu domain.MatchUsecase,
+) *DiscordService {
+	handler := &DiscordService{
 		du:  du,
 		pu:  pu,
 		su:  su,
@@ -51,40 +52,44 @@ func DiscordHandler(ctx context.Context, log *zap.Logger, du domain.DiscordUseca
 		wfu: wfu,
 		log: log.Named("discord"),
 	}
-	cmdMap := map[domain.Cmd]func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error){
-		domain.CmdBan:     handler.makeOnBan(),
-		domain.CmdCheck:   handler.makeOnCheck(),
-		domain.CmdCSay:    handler.makeOnCSay(),
-		domain.CmdFilter:  handler.makeOnFilter(),
-		domain.CmdFind:    handler.makeOnFind(),
-		domain.CmdHistory: handler.makeOnHistory(),
-		domain.CmdKick:    handler.makeOnKick(),
-		domain.CmdLog:     handler.makeOnLog(),
-		domain.CmdLogs:    handler.makeOnLogs(),
-		domain.CmdMute:    handler.makeOnMute(),
-		// domain.CmdCheckIP:  handler.onCheckIp,
-		domain.CmdPlayers:  handler.makeOnPlayers(),
-		domain.CmdPSay:     handler.makeOnPSay(),
-		domain.CmdSay:      handler.makeOnSay(),
-		domain.CmdServers:  handler.makeOnServers(),
-		domain.CmdSetSteam: handler.makeOnSetSteam(),
-		domain.CmdUnban:    handler.makeOnUnban(),
-		domain.CmdStats:    handler.makeOnStats(),
+
+	return handler
+}
+
+func (h DiscordService) Start() {
+	if errStart := h.du.Start(); errStart != nil {
+		h.log.Error("Failed to start discord service", zap.Error(errStart))
 	}
+
+	cmdMap := map[domain.Cmd]func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error){
+		domain.CmdBan:     h.makeOnBan(),
+		domain.CmdCheck:   h.makeOnCheck(),
+		domain.CmdCSay:    h.makeOnCSay(),
+		domain.CmdFilter:  h.makeOnFilter(),
+		domain.CmdFind:    h.makeOnFind(),
+		domain.CmdHistory: h.makeOnHistory(),
+		domain.CmdKick:    h.makeOnKick(),
+		domain.CmdLog:     h.makeOnLog(),
+		domain.CmdLogs:    h.makeOnLogs(),
+		domain.CmdMute:    h.makeOnMute(),
+		// domain.CmdCheckIP:  h.onCheckIp,
+		domain.CmdPlayers:  h.makeOnPlayers(),
+		domain.CmdPSay:     h.makeOnPSay(),
+		domain.CmdSay:      h.makeOnSay(),
+		domain.CmdServers:  h.makeOnServers(),
+		domain.CmdSetSteam: h.makeOnSetSteam(),
+		domain.CmdUnban:    h.makeOnUnban(),
+		domain.CmdStats:    h.makeOnStats(),
+	}
+
 	for k, v := range cmdMap {
-		if errRegister := du.RegisterHandler(k, v); errRegister != nil {
-			return errors.Join(errRegister, domain.ErrRegisterCommand)
+		if errRegister := h.du.RegisterHandler(k, v); errRegister != nil {
+			h.log.Error("Failed to register handler", zap.Error(errRegister))
 		}
 	}
-
-	return nil
 }
 
-func (h discordService) Start() {
-	h.du.Start()
-}
-
-func (h discordService) makeOnBan() func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (h DiscordService) makeOnBan() func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	return func(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 		name := interaction.ApplicationCommandData().Options[0].Name
 		switch name {
@@ -100,7 +105,7 @@ func (h discordService) makeOnBan() func(_ context.Context, _ *discordgo.Session
 	}
 }
 
-func (h discordService) makeOnUnban() func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) { //nolint:maintidx
+func (h DiscordService) makeOnUnban() func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) { //nolint:maintidx
 	return func(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 		switch interaction.ApplicationCommandData().Options[0].Name {
 		case "steam":
@@ -116,7 +121,7 @@ func (h discordService) makeOnUnban() func(_ context.Context, _ *discordgo.Sessi
 	}
 }
 
-func (h discordService) makeOnFilter() func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) { //nolint:maintidx
+func (h DiscordService) makeOnFilter() func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) { //nolint:maintidx
 	return func(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 		switch interaction.ApplicationCommandData().Options[0].Name {
 		case "add":
@@ -133,7 +138,7 @@ func (h discordService) makeOnFilter() func(_ context.Context, _ *discordgo.Sess
 
 type BanStore interface{}
 
-func (h discordService) makeOnCheck() func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) { //nolint:maintidx
+func (h DiscordService) makeOnCheck() func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) { //nolint:maintidx
 	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, //nolint:maintidx
 	) (*discordgo.MessageEmbed, error) {
 		opts := domain.OptionMap(interaction.ApplicationCommandData().Options)
@@ -249,7 +254,7 @@ func (h discordService) makeOnCheck() func(_ context.Context, _ *discordgo.Sessi
 	}
 }
 
-func (h discordService) makeOnHistory() func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (h DiscordService) makeOnHistory() func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	return func(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 		switch interaction.ApplicationCommandData().Name {
 		case string(domain.CmdHistoryIP):
@@ -261,7 +266,7 @@ func (h discordService) makeOnHistory() func(_ context.Context, _ *discordgo.Ses
 	}
 }
 
-func (h discordService) onHistoryIP(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (h DiscordService) onHistoryIP(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	opts := domain.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 
 	steamID, errResolve := thirdparty.ResolveSID(ctx, opts[domain.OptUserIdentifier].StringValue())
@@ -320,7 +325,7 @@ func (h discordService) onHistoryIP(ctx context.Context, _ *discordgo.Session, i
 //	return nil
 // }
 
-func (h discordService) makeOnSetSteam() func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (h DiscordService) makeOnSetSteam() func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	return func(ctx context.Context, _ *discordgo.Session,
 		interaction *discordgo.InteractionCreate,
 	) (*discordgo.MessageEmbed, error) {
@@ -340,7 +345,7 @@ func (h discordService) makeOnSetSteam() func(_ context.Context, _ *discordgo.Se
 	}
 }
 
-func (h discordService) onUnbanSteam(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (h DiscordService) onUnbanSteam(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	opts := domain.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 	reason := opts[domain.OptUnbanReason].StringValue()
 
@@ -366,7 +371,7 @@ func (h discordService) onUnbanSteam(ctx context.Context, _ *discordgo.Session, 
 	return UnbanMessage(user), nil
 }
 
-func (h discordService) onUnbanASN(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (h DiscordService) onUnbanASN(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	opts := domain.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 	asNumStr := opts[domain.OptASN].StringValue()
 
@@ -400,7 +405,7 @@ func (h discordService) onUnbanASN(ctx context.Context, _ *discordgo.Session, in
 	return UnbanASNMessage(asNum, asnNetworks), nil
 }
 
-func (h discordService) getDiscordAuthor(ctx context.Context, interaction *discordgo.InteractionCreate) (domain.Person, error) {
+func (h DiscordService) getDiscordAuthor(ctx context.Context, interaction *discordgo.InteractionCreate) (domain.Person, error) {
 	author := domain.NewPerson("")
 	if errPersonByDiscordID := h.pu.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID, &author); errPersonByDiscordID != nil {
 		if errors.Is(errPersonByDiscordID, domain.ErrNoResult) {
@@ -413,7 +418,7 @@ func (h discordService) getDiscordAuthor(ctx context.Context, interaction *disco
 	return author, nil
 }
 
-func (h discordService) makeOnKick() func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (h DiscordService) makeOnKick() func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 		var (
 			opts   = domain.OptionMap(interaction.ApplicationCommandData().Options)
@@ -446,7 +451,7 @@ func (h discordService) makeOnKick() func(_ context.Context, _ *discordgo.Sessio
 	}
 }
 
-func (h discordService) makeOnSay() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (h DiscordService) makeOnSay() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 		opts := domain.OptionMap(interaction.ApplicationCommandData().Options)
 		serverName := opts[domain.OptServerIdentifier].StringValue()
@@ -465,7 +470,7 @@ func (h discordService) makeOnSay() func(context.Context, *discordgo.Session, *d
 	}
 }
 
-func (h discordService) makeOnCSay() func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (h DiscordService) makeOnCSay() func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	) (*discordgo.MessageEmbed, error) {
 		opts := domain.OptionMap(interaction.ApplicationCommandData().Options)
@@ -485,7 +490,7 @@ func (h discordService) makeOnCSay() func(_ context.Context, _ *discordgo.Sessio
 	}
 }
 
-func (h discordService) makeOnPSay() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (h DiscordService) makeOnPSay() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 		opts := domain.OptionMap(interaction.ApplicationCommandData().Options)
 		player := domain.StringSID(opts[domain.OptUserIdentifier].StringValue())
@@ -504,13 +509,13 @@ func (h discordService) makeOnPSay() func(context.Context, *discordgo.Session, *
 	}
 }
 
-func (h discordService) makeOnServers() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (h DiscordService) makeOnServers() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	return func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 		return ServersMessage(h.su.SortRegion(), h.cu.ExtURLRaw("/servers")), nil
 	}
 }
 
-func (h discordService) makeOnPlayers() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (h DiscordService) makeOnPlayers() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 		opts := domain.OptionMap(interaction.ApplicationCommandData().Options)
 		serverName := opts[domain.OptServerIdentifier].StringValue()
@@ -568,7 +573,7 @@ func (h discordService) makeOnPlayers() func(context.Context, *discordgo.Session
 	}
 }
 
-func (h discordService) onFilterAdd(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
+func (h DiscordService) onFilterAdd(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 ) (*discordgo.MessageEmbed, error) {
 	opts := domain.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 	pattern := opts[domain.OptPattern].StringValue()
@@ -601,7 +606,7 @@ func (h discordService) onFilterAdd(ctx context.Context, _ *discordgo.Session, i
 	return FilterAddMessage(filter), nil
 }
 
-func (h discordService) onFilterDel(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (h DiscordService) onFilterDel(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	opts := domain.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 	wordID := opts["filter"].IntValue()
 
@@ -621,14 +626,14 @@ func (h discordService) onFilterDel(ctx context.Context, _ *discordgo.Session, i
 	return FilterDelMessage(filter), nil
 }
 
-func (h discordService) onFilterCheck(_ context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (h DiscordService) onFilterCheck(_ context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	opts := domain.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 	message := opts[domain.OptMessage].StringValue()
 
 	return FilterCheckMessage(h.wfu.Check(message)), nil
 }
 
-func (h discordService) makeOnStats() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (h DiscordService) makeOnStats() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	return func(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 		name := interaction.ApplicationCommandData().Options[0].Name
 		switch name {
@@ -644,7 +649,7 @@ func (h discordService) makeOnStats() func(context.Context, *discordgo.Session, 
 	}
 }
 
-func (h discordService) onStatsPlayer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (h DiscordService) onStatsPlayer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	opts := domain.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 	steamID, errResolveSID := thirdparty.ResolveSID(ctx, opts[domain.OptUserIdentifier].StringValue())
 
@@ -735,7 +740,7 @@ func (h discordService) onStatsPlayer(ctx context.Context, _ *discordgo.Session,
 //		return nil
 //	}
 
-func (h discordService) makeOnLogs() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (h DiscordService) makeOnLogs() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 		author, errAuthor := h.getDiscordAuthor(ctx, interaction)
 		if errAuthor != nil {
@@ -767,7 +772,7 @@ func (h discordService) makeOnLogs() func(context.Context, *discordgo.Session, *
 	}
 }
 
-func (h discordService) makeOnLog() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (h DiscordService) makeOnLog() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 		opts := domain.OptionMap(interaction.ApplicationCommandData().Options)
 
@@ -788,7 +793,7 @@ func (h discordService) makeOnLog() func(context.Context, *discordgo.Session, *d
 	}
 }
 
-func (h discordService) makeOnFind() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (h DiscordService) makeOnFind() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	return func(ctx context.Context, _ *discordgo.Session, i *discordgo.InteractionCreate,
 	) (*discordgo.MessageEmbed, error) {
 		opts := domain.OptionMap(i.ApplicationCommandData().Options)
@@ -830,7 +835,7 @@ func (h discordService) makeOnFind() func(context.Context, *discordgo.Session, *
 	}
 }
 
-func (h discordService) makeOnMute() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
+func (h DiscordService) makeOnMute() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	return func(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
 	) (*discordgo.MessageEmbed, error) {
 		var (
@@ -883,7 +888,7 @@ func (h discordService) makeOnMute() func(context.Context, *discordgo.Session, *
 	}
 }
 
-func (h discordService) onBanASN(ctx context.Context, _ *discordgo.Session,
+func (h DiscordService) onBanASN(ctx context.Context, _ *discordgo.Session,
 	interaction *discordgo.InteractionCreate,
 ) (*discordgo.MessageEmbed, error) {
 	var (
@@ -949,7 +954,7 @@ func (h discordService) onBanASN(ctx context.Context, _ *discordgo.Session,
 	return BanASNMessage(asNum, asnRecords), nil
 }
 
-func (h discordService) onBanIP(ctx context.Context, _ *discordgo.Session,
+func (h DiscordService) onBanIP(ctx context.Context, _ *discordgo.Session,
 	interaction *discordgo.InteractionCreate,
 ) (*discordgo.MessageEmbed, error) {
 	opts := domain.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
@@ -1014,7 +1019,7 @@ func (h discordService) onBanIP(ctx context.Context, _ *discordgo.Session,
 }
 
 // onBanSteam !ban <id> <duration> [reason].
-func (h discordService) onBanSteam(ctx context.Context, _ *discordgo.Session,
+func (h DiscordService) onBanSteam(ctx context.Context, _ *discordgo.Session,
 	interaction *discordgo.InteractionCreate,
 ) (*discordgo.MessageEmbed, error) {
 	var (

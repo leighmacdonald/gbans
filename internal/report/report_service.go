@@ -26,7 +26,7 @@ type ReportHandler struct {
 	pu  domain.PersonUsecase
 }
 
-func NewReportHandler(log *zap.Logger, engine *gin.Engine, ru domain.ReportUsecase, cu domain.ConfigUsecase, du domain.DiscordUsecase, pu domain.PersonUsecase) {
+func NewReportHandler(log *zap.Logger, engine *gin.Engine, ru domain.ReportUsecase, cu domain.ConfigUsecase, du domain.DiscordUsecase, pu domain.PersonUsecase, ath domain.AuthUsecase) {
 	handler := ReportHandler{
 		log: log.Named("report"),
 		ru:  ru,
@@ -36,17 +36,24 @@ func NewReportHandler(log *zap.Logger, engine *gin.Engine, ru domain.ReportUseca
 	}
 
 	// auth
-	engine.POST("/api/report", handler.onAPIPostReportCreate())
-	engine.GET("/api/report/:report_id", handler.onAPIGetReport())
-	engine.POST("/api/reports", handler.onAPIGetReports())
-	engine.POST("/api/report_status/:report_id", handler.onAPISetReportStatus())
-	engine.GET("/api/report/:report_id/messages", handler.onAPIGetReportMessages())
-	engine.POST("/api/report/:report_id/messages", handler.onAPIPostReportMessage())
-	engine.POST("/api/report/message/:report_message_id", handler.onAPIEditReportMessage())
-	engine.DELETE("/api/report/message/:report_message_id", handler.onAPIDeleteReportMessage())
-
+	authedGrp := engine.Group("/")
+	{
+		authed := authedGrp.Use(ath.AuthMiddleware(domain.PUser))
+		authed.POST("/api/report", handler.onAPIPostReportCreate())
+		authed.GET("/api/report/:report_id", handler.onAPIGetReport())
+		authed.POST("/api/reports", handler.onAPIGetReports())
+		authed.POST("/api/report_status/:report_id", handler.onAPISetReportStatus())
+		authed.GET("/api/report/:report_id/messages", handler.onAPIGetReportMessages())
+		authed.POST("/api/report/:report_id/messages", handler.onAPIPostReportMessage())
+		authed.POST("/api/report/message/:report_message_id", handler.onAPIEditReportMessage())
+		authed.DELETE("/api/report/message/:report_message_id", handler.onAPIDeleteReportMessage())
+	}
 	// mod
-	engine.POST("/api/report/:report_id/state", handler.onAPIPostBanState())
+	modGrp := engine.Group("/")
+	{
+		mod := modGrp.Use(ath.AuthMiddleware(domain.PModerator))
+		mod.POST("/api/report/:report_id/state", handler.onAPIPostBanState())
+	}
 }
 
 func (h ReportHandler) onAPIPostBanState() gin.HandlerFunc {

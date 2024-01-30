@@ -13,25 +13,33 @@ import (
 	"go.uber.org/zap"
 )
 
-type WikiHandler struct {
+type wikiHandler struct {
 	wikiUsecase domain.WikiUsecase
 	log         *zap.Logger
 }
 
-func NewWIkiHandler(logger *zap.Logger, engine *gin.Engine, wikiUsecase domain.WikiUsecase) {
-	handler := &WikiHandler{
+func NewWIkiHandler(logger *zap.Logger, engine *gin.Engine, wikiUsecase domain.WikiUsecase, ath domain.AuthUsecase) {
+	handler := &wikiHandler{
 		wikiUsecase: wikiUsecase,
 		log:         logger.Named("wiki"),
 	}
 
 	// optional
-	engine.GET("/api/wiki/slug/*slug", handler.onAPIGetWikiSlug())
+	optGrp := engine.Group("/")
+	{
+		opt := optGrp.Use(ath.AuthMiddleware(domain.PGuest))
+		opt.GET("/api/wiki/slug/*slug", handler.onAPIGetWikiSlug())
+	}
 
 	// editor
-	engine.POST("/api/wiki/slug", handler.onAPISaveWikiSlug())
+	editorGrp := engine.Group("/")
+	{
+		editor := editorGrp.Use(ath.AuthMiddleware(domain.PEditor))
+		editor.POST("/api/wiki/slug", handler.onAPISaveWikiSlug())
+	}
 }
 
-func (w *WikiHandler) onAPIGetWikiSlug() gin.HandlerFunc {
+func (w *wikiHandler) onAPIGetWikiSlug() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		currentUser := http_helper.CurrentUserProfile(ctx)
 
@@ -63,7 +71,7 @@ func (w *WikiHandler) onAPIGetWikiSlug() gin.HandlerFunc {
 	}
 }
 
-func (w *WikiHandler) onAPISaveWikiSlug() gin.HandlerFunc {
+func (w *wikiHandler) onAPISaveWikiSlug() gin.HandlerFunc {
 	log := w.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {

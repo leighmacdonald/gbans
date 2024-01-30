@@ -14,7 +14,7 @@ type PatreonHandler struct {
 	log *zap.Logger
 }
 
-func NewPatreonHandler(log *zap.Logger, engine *gin.Engine, pu domain.PatreonUsecase) {
+func NewPatreonHandler(log *zap.Logger, engine *gin.Engine, pu domain.PatreonUsecase, ath domain.AuthUsecase) {
 	handler := PatreonHandler{
 		pu:  pu,
 		log: log.Named("patreon"),
@@ -23,7 +23,11 @@ func NewPatreonHandler(log *zap.Logger, engine *gin.Engine, pu domain.PatreonUse
 	engine.GET("/api/patreon/campaigns", handler.onAPIGetPatreonCampaigns())
 
 	// mod
-	engine.GET("/api/patreon/pledges", handler.onAPIGetPatreonPledges())
+	modGrp := engine.Group("/")
+	{
+		mod := modGrp.Use(ath.AuthMiddleware(domain.PUser))
+		mod.GET("/api/patreon/pledges", handler.onAPIGetPatreonPledges())
+	}
 }
 
 func (h PatreonHandler) onAPIGetPatreonCampaigns() gin.HandlerFunc {

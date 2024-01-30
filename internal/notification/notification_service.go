@@ -16,14 +16,18 @@ type notificationHandler struct {
 	log *zap.Logger
 }
 
-func NewNotificationHandler(log *zap.Logger, engine *gin.Engine, nu domain.NotificationUsecase) {
+func NewNotificationHandler(log *zap.Logger, engine *gin.Engine, nu domain.NotificationUsecase, ath domain.AuthUsecase) {
 	handler := notificationHandler{
 		nu:  nu,
 		log: log.Named("notif"),
 	}
 
 	// authed
-	engine.POST("/api/current_profile/notifications", handler.onAPICurrentProfileNotifications())
+	authedGrp := engine.Group("/")
+	{
+		authed := authedGrp.Use(ath.AuthMiddleware(domain.PUser))
+		authed.POST("/api/current_profile/notifications", handler.onAPICurrentProfileNotifications())
+	}
 }
 
 func (h notificationHandler) onAPICurrentProfileNotifications() gin.HandlerFunc {

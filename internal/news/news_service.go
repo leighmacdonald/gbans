@@ -18,15 +18,19 @@ type NewsHandler struct {
 	log         *zap.Logger
 }
 
-func NewNewsHandler(logger *zap.Logger, engine *gin.Engine, nu domain.NewsUsecase, du domain.DiscordUsecase) {
+func NewNewsHandler(logger *zap.Logger, engine *gin.Engine, nu domain.NewsUsecase, du domain.DiscordUsecase, ath domain.AuthUsecase) {
 	handler := NewsHandler{log: logger.Named("news"), newsUsecase: nu, du: du}
 
 	engine.POST("/api/news_latest", handler.onAPIGetNewsLatest())
 
 	// editor
-	engine.POST("/api/news", handler.onAPIPostNewsCreate())
-	engine.POST("/api/news/:news_id", handler.onAPIPostNewsUpdate())
-	engine.POST("/api/news_all", handler.onAPIGetNewsAll())
+	editorGrp := engine.Group("/")
+	{
+		editor := editorGrp.Use(ath.AuthMiddleware(domain.PUser))
+		editor.POST("/api/news", handler.onAPIPostNewsCreate())
+		editor.POST("/api/news/:news_id", handler.onAPIPostNewsUpdate())
+		editor.POST("/api/news_all", handler.onAPIGetNewsAll())
+	}
 }
 
 func (h NewsHandler) onAPIGetNewsLatest() gin.HandlerFunc {

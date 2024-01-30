@@ -24,7 +24,7 @@ type ContestHandler struct {
 }
 
 func NewContestHandler(logger *zap.Logger, engine *gin.Engine, cu domain.ContestUsecase,
-	configUsecase domain.ConfigUsecase, mediaUsecase domain.MediaUsecase,
+	configUsecase domain.ConfigUsecase, mediaUsecase domain.MediaUsecase, ath domain.AuthUsecase,
 ) {
 	handler := &ContestHandler{
 		contestUsecase: cu,
@@ -32,21 +32,34 @@ func NewContestHandler(logger *zap.Logger, engine *gin.Engine, cu domain.Contest
 		mediaUsecase:   mediaUsecase,
 		log:            logger.Named("contest"),
 	}
+
 	// opt
-	engine.GET("/api/contests", handler.onAPIGetContests())
-	engine.GET("/api/contests/:contest_id", handler.onAPIGetContest())
-	engine.GET("/api/contests/:contest_id/entries", handler.onAPIGetContestEntries())
+	optGrp := engine.Group("/")
+	{
+		opt := optGrp.Use(ath.AuthMiddleware(domain.PGuest))
+		opt.GET("/api/contests", handler.onAPIGetContests())
+		opt.GET("/api/contests/:contest_id", handler.onAPIGetContest())
+		opt.GET("/api/contests/:contest_id/entries", handler.onAPIGetContestEntries())
+	}
 
 	// auth
-	engine.POST("/api/contests/:contest_id/upload", handler.onAPISaveContestEntryMedia())
-	engine.GET("/api/contests/:contest_id/vote/:contest_entry_id/:direction", handler.onAPISaveContestEntryVote())
-	engine.POST("/api/contests/:contest_id/submit", handler.onAPISaveContestEntrySubmit())
-	engine.DELETE("/api/contest_entry/:contest_entry_id", handler.onAPIDeleteContestEntry())
+	authGrp := engine.Group("/")
+	{
+		authed := authGrp.Use(ath.AuthMiddleware(domain.PUser))
+		authed.POST("/api/contests/:contest_id/upload", handler.onAPISaveContestEntryMedia())
+		authed.GET("/api/contests/:contest_id/vote/:contest_entry_id/:direction", handler.onAPISaveContestEntryVote())
+		authed.POST("/api/contests/:contest_id/submit", handler.onAPISaveContestEntrySubmit())
+		authed.DELETE("/api/contest_entry/:contest_entry_id", handler.onAPIDeleteContestEntry())
+	}
 
-	// mod
-	engine.POST("/api/contests", handler.onAPIPostContest())
-	engine.DELETE("/api/contests/:contest_id", handler.onAPIDeleteContest())
-	engine.PUT("/api/contests/:contest_id", handler.onAPIUpdateContest())
+	// mods
+	modGrp := engine.Group("/")
+	{
+		mod := modGrp.Use(ath.AuthMiddleware(domain.PModerator))
+		mod.POST("/api/contests", handler.onAPIPostContest())
+		mod.DELETE("/api/contests/:contest_id", handler.onAPIDeleteContest())
+		mod.PUT("/api/contests/:contest_id", handler.onAPIUpdateContest())
+	}
 }
 
 func (c *ContestHandler) contestFromCtx(ctx *gin.Context) (domain.Contest, bool) {

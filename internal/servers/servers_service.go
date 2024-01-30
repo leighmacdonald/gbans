@@ -16,7 +16,7 @@ import (
 	"go.uber.org/zap"
 )
 
-type ServersHandler struct {
+type serversHandler struct {
 	serversUsecase domain.ServersUsecase
 	stateUsecase   domain.StateUsecase
 	pu             domain.PersonUsecase
@@ -24,9 +24,9 @@ type ServersHandler struct {
 }
 
 func NewServerHandler(logger *zap.Logger, engine *gin.Engine, serversUsecase domain.ServersUsecase,
-	stateUsecase domain.StateUsecase, pu domain.PersonUsecase,
+	stateUsecase domain.StateUsecase, ath domain.AuthUsecase,
 ) {
-	handler := &ServersHandler{
+	handler := &serversHandler{
 		serversUsecase: serversUsecase,
 		stateUsecase:   stateUsecase,
 		log:            logger,
@@ -37,11 +37,14 @@ func NewServerHandler(logger *zap.Logger, engine *gin.Engine, serversUsecase dom
 	engine.GET("/api/servers", handler.onAPIGetServers())
 
 	// admin
-	// adminRoute := adminGrp.Use(authMiddleware(env, domain.PAdmin))
-	engine.POST("/api/servers", handler.onAPIPostServer())
-	engine.POST("/api/servers/:server_id", handler.onAPIPostServerUpdate())
-	engine.DELETE("/api/servers/:server_id", handler.onAPIPostServerDelete())
-	engine.POST("/api/servers_admin", handler.onAPIGetServersAdmin())
+	srvGrp := engine.Group("/")
+	{
+		admin := srvGrp.Use(ath.AuthMiddleware(domain.PAdmin))
+		admin.POST("/api/servers", handler.onAPIPostServer())
+		admin.POST("/api/servers/:server_id", handler.onAPIPostServerUpdate())
+		admin.DELETE("/api/servers/:server_id", handler.onAPIPostServerDelete())
+		admin.POST("/api/servers_admin", handler.onAPIGetServersAdmin())
+	}
 }
 
 type serverInfoSafe struct {
@@ -51,7 +54,7 @@ type serverInfoSafe struct {
 	Colour         string `json:"colour"`
 }
 
-func (h *ServersHandler) onAPIExportSourcemodSimpleAdmins() gin.HandlerFunc {
+func (h *serversHandler) onAPIExportSourcemodSimpleAdmins() gin.HandlerFunc {
 	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
@@ -92,7 +95,7 @@ func (h *ServersHandler) onAPIExportSourcemodSimpleAdmins() gin.HandlerFunc {
 			if perms == "" {
 				log.Warn("User has no perm string", zap.Int64("sid", player.SteamID.Int64()))
 			} else {
-				bld.WriteString(fmt.Sprintf("\"%h\" \"%h\"\n", steamid.SID64ToSID3(player.SteamID), perms))
+				bld.WriteString(fmt.Sprintf("\"%s\" \"%s\"\n", steamid.SID64ToSID3(player.SteamID), perms))
 			}
 		}
 
@@ -100,7 +103,7 @@ func (h *ServersHandler) onAPIExportSourcemodSimpleAdmins() gin.HandlerFunc {
 	}
 }
 
-func (h *ServersHandler) onAPIGetServers() gin.HandlerFunc {
+func (h *serversHandler) onAPIGetServers() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		fullServers, _, errServers := h.serversUsecase.GetServers(ctx, domain.ServerQueryFilter{})
 		if errServers != nil {
@@ -123,7 +126,7 @@ func (h *ServersHandler) onAPIGetServers() gin.HandlerFunc {
 	}
 }
 
-func (h *ServersHandler) onAPIGetServerStates() gin.HandlerFunc {
+func (h *serversHandler) onAPIGetServerStates() gin.HandlerFunc {
 	type UserServers struct {
 		Servers []domain.BaseServer `json:"servers"`
 		LatLong ip2location.LatLong `json:"lat_long"`
@@ -192,7 +195,7 @@ func (h *ServersHandler) onAPIGetServerStates() gin.HandlerFunc {
 	}
 }
 
-func (h *ServersHandler) onAPIPostServer() gin.HandlerFunc {
+func (h *serversHandler) onAPIPostServer() gin.HandlerFunc {
 	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
@@ -243,7 +246,7 @@ type serverUpdateRequest struct {
 	LogSecret       int     `json:"log_secret"`
 }
 
-func (h *ServersHandler) onAPIPostServerUpdate() gin.HandlerFunc {
+func (h *serversHandler) onAPIPostServerUpdate() gin.HandlerFunc {
 	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
@@ -295,7 +298,7 @@ func (h *ServersHandler) onAPIPostServerUpdate() gin.HandlerFunc {
 	}
 }
 
-func (h *ServersHandler) onAPIGetServersAdmin() gin.HandlerFunc {
+func (h *serversHandler) onAPIGetServersAdmin() gin.HandlerFunc {
 	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
@@ -315,7 +318,7 @@ func (h *ServersHandler) onAPIGetServersAdmin() gin.HandlerFunc {
 	}
 }
 
-func (h *ServersHandler) onAPIPostServerDelete() gin.HandlerFunc {
+func (h *serversHandler) onAPIPostServerDelete() gin.HandlerFunc {
 	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {

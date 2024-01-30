@@ -23,7 +23,7 @@ type AppealHandler struct {
 }
 
 func NewAppealHandler(logger *zap.Logger, engine *gin.Engine, au domain.AppealUsecase, bu domain.BanUsecase,
-	cu domain.ConfigUsecase, pu domain.PersonUsecase, du domain.DiscordUsecase,
+	cu domain.ConfigUsecase, pu domain.PersonUsecase, du domain.DiscordUsecase, ath domain.AuthUsecase,
 ) {
 	handler := &AppealHandler{
 		appealUsecase:  au,
@@ -35,13 +35,21 @@ func NewAppealHandler(logger *zap.Logger, engine *gin.Engine, au domain.AppealUs
 	}
 
 	// authed
-	engine.GET("/api/bans/:ban_id/messages", handler.onAPIGetBanMessages())
-	engine.POST("/api/bans/:ban_id/messages", handler.onAPIPostBanMessage())
-	engine.POST("/api/bans/message/:ban_message_id", handler.onAPIEditBanMessage())
-	engine.DELETE("/api/bans/message/:ban_message_id", handler.onAPIDeleteBanMessage())
+	authedGrp := engine.Group("/")
+	{
+		authed := authedGrp.Use(ath.AuthMiddleware(domain.PUser))
+		authed.GET("/api/bans/:ban_id/messages", handler.onAPIGetBanMessages())
+		authed.POST("/api/bans/:ban_id/messages", handler.onAPIPostBanMessage())
+		authed.POST("/api/bans/message/:ban_message_id", handler.onAPIEditBanMessage())
+		authed.DELETE("/api/bans/message/:ban_message_id", handler.onAPIDeleteBanMessage())
+	}
 
 	// mod
-	engine.POST("/api/appeals", handler.onAPIGetAppeals())
+	modGrp := engine.Group("/")
+	{
+		mod := modGrp.Use(ath.AuthMiddleware(domain.PModerator))
+		mod.POST("/api/appeals", handler.onAPIGetAppeals())
+	}
 }
 
 func (h *AppealHandler) onAPIGetBanMessages() gin.HandlerFunc {

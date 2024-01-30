@@ -17,16 +17,25 @@ type ChatHandler struct {
 	log *zap.Logger
 }
 
-func NewChatHandler(log *zap.Logger, engine *gin.Engine, cu domain.ChatUsecase) {
+func NewChatHandler(log *zap.Logger, engine *gin.Engine, cu domain.ChatUsecase, ath domain.AuthUsecase) {
 	handler := ChatHandler{
 		cu:  cu,
 		log: log.Named("chat"),
 	}
+
 	// authed
-	engine.POST("/api/messages", handler.onAPIQueryMessages())
+	authedGrp := engine.Group("/")
+	{
+		authed := authedGrp.Use(ath.AuthMiddleware(domain.PUser))
+		authed.POST("/api/messages", handler.onAPIQueryMessages())
+	}
 
 	// mod
-	engine.GET("/api/message/:person_message_id/context/:padding", handler.onAPIQueryMessageContext())
+	modGrp := engine.Group("/")
+	{
+		mod := modGrp.Use(ath.AuthMiddleware(domain.PModerator))
+		mod.GET("/api/message/:person_message_id/context/:padding", handler.onAPIQueryMessageContext())
+	}
 }
 
 func (h ChatHandler) onAPIQueryMessages() gin.HandlerFunc {

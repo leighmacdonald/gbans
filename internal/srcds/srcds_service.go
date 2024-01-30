@@ -47,7 +47,7 @@ const authTokenDuration = time.Minute * 15
 
 func NewSRCDSHandler(log *zap.Logger, engine *gin.Engine, sru domain.SRCDSUsecase, sv domain.ServersUsecase, pu domain.PersonUsecase,
 	s3usecase domain.AssetUsecase, ru domain.ReportUsecase, au domain.AssetUsecase, bu domain.BanUsecase, nu domain.NetworkUsecase,
-	bgu domain.BanGroupUsecase, demoUsecase domain.DemoUsecase,
+	bgu domain.BanGroupUsecase, demoUsecase domain.DemoUsecase, ath domain.AuthUsecase,
 ) {
 	handler := srcdsHandler{
 		sru:           sru,
@@ -67,15 +67,19 @@ func NewSRCDSHandler(log *zap.Logger, engine *gin.Engine, sru domain.SRCDSUsecas
 	engine.POST("/api/server/auth", handler.onSAPIPostServerAuth())
 
 	// serverAuth := srvGrp.Use(authServerMiddleWare(env))
-	engine.GET("/api/server/admins", handler.onAPIGetServerAdmins())
-	engine.POST("/api/ping_mod", handler.onAPIPostPingMod())
-	engine.POST("/api/check", handler.onAPIPostServerCheck())
-	engine.POST("/api/demo", handler.onAPIPostDemo())
+	srvGrp := engine.Group("/")
+	{
+		server := srvGrp.Use(ath.AuthServerMiddleWare())
+		server.GET("/api/server/admins", handler.onAPIGetServerAdmins())
+		server.POST("/api/ping_mod", handler.onAPIPostPingMod())
+		server.POST("/api/check", handler.onAPIPostServerCheck())
+		server.POST("/api/demo", handler.onAPIPostDemo())
 
-	// Duplicated since we need to authenticate via server middleware
-	engine.POST("/api/sm/bans/steam/create", handler.onAPIPostBanSteamCreate())
-	engine.POST("/api/sm/report/create", handler.onAPIPostReportCreate())
-	engine.POST("/api/state_update", handler.onAPIPostServerState())
+		// Duplicated since we need to authenticate via server middleware
+		server.POST("/api/sm/bans/steam/create", handler.onAPIPostBanSteamCreate())
+		server.POST("/api/sm/report/create", handler.onAPIPostReportCreate())
+		server.POST("/api/state_update", handler.onAPIPostServerState())
+	}
 }
 
 type ServerAuthResp struct {

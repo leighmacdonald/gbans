@@ -28,7 +28,7 @@ type BanHandler struct {
 }
 
 func NewBanHandler(logger *zap.Logger, engine *gin.Engine, bu domain.BanUsecase, du domain.DiscordUsecase,
-	pu domain.PersonUsecase, cu domain.ConfigUsecase,
+	pu domain.PersonUsecase, cu domain.ConfigUsecase, ath domain.AuthUsecase,
 ) {
 	handler := BanHandler{log: logger, bu: bu, du: du, pu: pu, cu: cu}
 
@@ -37,26 +37,34 @@ func NewBanHandler(logger *zap.Logger, engine *gin.Engine, bu domain.BanUsecase,
 	engine.GET("/export/bans/valve/steamid", handler.onAPIExportBansValveSteamID())
 
 	// auth
-	engine.GET("/api/bans/steam/:ban_id", handler.onAPIGetBanByID())
-	engine.GET("/api/sourcebans/:steam_id", handler.onAPIGetSourceBans())
+	authedGrp := engine.Group("/")
+	{
+		authed := authedGrp.Use(ath.AuthMiddleware(domain.PUser))
+		authed.GET("/api/bans/steam/:ban_id", handler.onAPIGetBanByID())
+		authed.GET("/api/sourcebans/:steam_id", handler.onAPIGetSourceBans())
+	}
 
 	// mod
-	engine.GET("/export/bans/valve/network", handler.onAPIExportBansValveIP())
-	engine.POST("/api/bans/steam", handler.onAPIGetBansSteam())
-	engine.POST("/api/bans/steam/create", handler.onAPIPostBanSteamCreate())
-	engine.DELETE("/api/bans/steam/:ban_id", handler.onAPIPostBanDelete())
-	engine.POST("/api/bans/steam/:ban_id", handler.onAPIPostBanUpdate())
-	engine.POST("/api/bans/steam/:ban_id/status", handler.onAPIPostSetBanAppealStatus())
+	modGrp := engine.Group("/")
+	{
+		mod := modGrp.Use(ath.AuthMiddleware(domain.PModerator))
+		mod.GET("/export/bans/valve/network", handler.onAPIExportBansValveIP())
+		mod.POST("/api/bans/steam", handler.onAPIGetBansSteam())
+		mod.POST("/api/bans/steam/create", handler.onAPIPostBanSteamCreate())
+		mod.DELETE("/api/bans/steam/:ban_id", handler.onAPIPostBanDelete())
+		mod.POST("/api/bans/steam/:ban_id", handler.onAPIPostBanUpdate())
+		mod.POST("/api/bans/steam/:ban_id/status", handler.onAPIPostSetBanAppealStatus())
 
-	engine.POST("/api/bans/cidr/create", handler.onAPIPostBansCIDRCreate())
-	engine.POST("/api/bans/cidr", handler.onAPIGetBansCIDR())
-	engine.DELETE("/api/bans/cidr/:net_id", handler.onAPIDeleteBansCIDR())
-	engine.POST("/api/bans/cidr/:net_id", handler.onAPIPostBansCIDRUpdate())
+		mod.POST("/api/bans/cidr/create", handler.onAPIPostBansCIDRCreate())
+		mod.POST("/api/bans/cidr", handler.onAPIGetBansCIDR())
+		mod.DELETE("/api/bans/cidr/:net_id", handler.onAPIDeleteBansCIDR())
+		mod.POST("/api/bans/cidr/:net_id", handler.onAPIPostBansCIDRUpdate())
 
-	engine.POST("/api/bans/asn/create", handler.onAPIPostBansASNCreate())
-	engine.POST("/api/bans/asn", handler.onAPIGetBansASN())
-	engine.DELETE("/api/bans/asn/:asn_id", handler.onAPIDeleteBansASN())
-	engine.POST("/api/bans/asn/:asn_id", handler.onAPIPostBansASNUpdate())
+		mod.POST("/api/bans/asn/create", handler.onAPIPostBansASNCreate())
+		mod.POST("/api/bans/asn", handler.onAPIGetBansASN())
+		mod.DELETE("/api/bans/asn/:asn_id", handler.onAPIDeleteBansASN())
+		mod.POST("/api/bans/asn/:asn_id", handler.onAPIPostBansASNUpdate())
+	}
 }
 
 func (h BanHandler) onAPIPostSetBanAppealStatus() gin.HandlerFunc {

@@ -20,7 +20,7 @@ type BlocklistHandler struct {
 	log              *zap.Logger
 }
 
-func NewBlocklistHandler(log *zap.Logger, engine *gin.Engine, bu domain.BlocklistUsecase, nu domain.NetworkUsecase) {
+func NewBlocklistHandler(log *zap.Logger, engine *gin.Engine, bu domain.BlocklistUsecase, nu domain.NetworkUsecase, ath domain.AuthUsecase) {
 	handler := BlocklistHandler{
 		BlocklistUsecase: bu,
 		nu:               nu,
@@ -28,16 +28,24 @@ func NewBlocklistHandler(log *zap.Logger, engine *gin.Engine, bu domain.Blocklis
 	}
 
 	// mod
-	engine.POST("/api/block_list/whitelist", handler.onAPIPostBlockListWhitelistCreate())
-	engine.POST("/api/block_list/whitelist/:cidr_block_whitelist_id", handler.onAPIPostBlockListWhitelistUpdate())
-	engine.DELETE("/api/block_list/whitelist/:cidr_block_whitelist_id", handler.onAPIDeleteBlockListWhitelist())
-	engine.GET("/api/block_list", handler.onAPIGetBlockLists())
-	engine.POST("/api/block_list/checker", handler.onAPIPostBlocklistCheck())
+	modGrp := engine.Group("/")
+	{
+		mod := modGrp.Use(ath.AuthMiddleware(domain.PModerator))
+		mod.POST("/api/block_list/whitelist", handler.onAPIPostBlockListWhitelistCreate())
+		mod.POST("/api/block_list/whitelist/:cidr_block_whitelist_id", handler.onAPIPostBlockListWhitelistUpdate())
+		mod.DELETE("/api/block_list/whitelist/:cidr_block_whitelist_id", handler.onAPIDeleteBlockListWhitelist())
+		mod.GET("/api/block_list", handler.onAPIGetBlockLists())
+		mod.POST("/api/block_list/checker", handler.onAPIPostBlocklistCheck())
+	}
 
 	// admin
-	engine.POST("/api/block_list", handler.onAPIPostBlockListCreate())
-	engine.POST("/api/block_list/:cidr_block_source_id", handler.onAPIPostBlockListUpdate())
-	engine.DELETE("/api/block_list/:cidr_block_source_id", handler.onAPIDeleteBlockList())
+	adminGrp := engine.Group("/")
+	{
+		admin := adminGrp.Use(ath.AuthMiddleware(domain.PAdmin))
+		admin.POST("/api/block_list", handler.onAPIPostBlockListCreate())
+		admin.POST("/api/block_list/:cidr_block_source_id", handler.onAPIPostBlockListUpdate())
+		admin.DELETE("/api/block_list/:cidr_block_source_id", handler.onAPIDeleteBlockList())
+	}
 }
 
 type (
