@@ -107,3 +107,5 @@ export const ReportCreatePage = (): JSX.Element => {
         </Grid>
     );
 };
+
+export default ReportCreatePage;

@@ -420,3 +420,5 @@ export const RecentMessageActivity = () => {
         </ContainerWithHeader>
     );
 };
+
+export default ForumOverviewPage;

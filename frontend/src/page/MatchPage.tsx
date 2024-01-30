@@ -934,3 +934,5 @@ const MatchHealersTable = ({ players }: MatchHealersTableProps) => {
         />
     );
 };
+
+export default MatchPage;

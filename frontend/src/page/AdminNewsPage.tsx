@@ -168,3 +168,5 @@ export const AdminNewsPage = () => {
         </Grid>
     );
 };
+
+export default AdminNewsPage;

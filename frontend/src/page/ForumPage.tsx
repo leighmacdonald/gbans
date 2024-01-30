@@ -280,3 +280,5 @@ export const ForumPage = () => {
         </ContainerWithHeaderAndButtons>
     );
 };
+
+export default ForumPage;

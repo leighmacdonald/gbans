@@ -75,3 +75,5 @@ export const LoginPage = ({
         </Grid>
     );
 };
+
+export default LoginPage;

@@ -7,8 +7,6 @@ import { PageNotFoundPage } from './PageNotFoundPage';
 export const PlayerStatsPage = (): JSX.Element => {
     const { steam_id } = useParams();
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-
     if (!steam_id) {
         return <PageNotFoundPage error={'Invalid steam id'} />;
     }
@@ -22,3 +20,5 @@ export const PlayerStatsPage = (): JSX.Element => {
         </Grid>
     );
 };
+
+export default PlayerStatsPage;

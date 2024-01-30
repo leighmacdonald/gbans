@@ -154,3 +154,5 @@ export const HomePage = (): JSX.Element => {
         </Grid>
     );
 };
+
+export default HomePage;

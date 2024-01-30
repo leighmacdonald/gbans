@@ -189,3 +189,5 @@ export const ServersPage = () => {
         </MapStateCtx.Provider>
     );
 };
+
+export default ServersPage;

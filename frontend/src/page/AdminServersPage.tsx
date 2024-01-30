@@ -251,3 +251,5 @@ export const AdminServersPage = () => {
         </Grid>
     );
 };
+
+export default AdminServersPage;

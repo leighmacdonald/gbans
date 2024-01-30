@@ -318,3 +318,5 @@ export const AdminPeoplePage = (): JSX.Element => {
         </Grid>
     );
 };
+
+export default AdminPeoplePage;

@@ -13,3 +13,5 @@ export const STVPage = (): JSX.Element => {
         </ContainerWithHeader>
     );
 };
+
+export default STVPage;

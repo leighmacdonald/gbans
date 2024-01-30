@@ -45,7 +45,7 @@ const validationSchema = yup.object({
         .required('Minimum permission value required')
 });
 
-export const WikiPage = (): JSX.Element => {
+const WikiPage = (): JSX.Element => {
     const [editMode, setEditMode] = React.useState<boolean>(false);
     const { slug } = useParams();
     const { currentUser } = useCurrentUserCtx();
@@ -209,3 +209,5 @@ export const WikiPage = (): JSX.Element => {
         </Grid>
     );
 };
+
+export default WikiPage;

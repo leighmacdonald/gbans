@@ -15,3 +15,5 @@ export const StatsPage = (): JSX.Element => {
         </Stack>
     );
 };
+
+export default StatsPage;

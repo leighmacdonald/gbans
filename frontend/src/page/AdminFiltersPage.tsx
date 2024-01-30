@@ -232,3 +232,5 @@ export const AdminFiltersPage = () => {
         </Stack>
     );
 };
+
+export default AdminFiltersPage;

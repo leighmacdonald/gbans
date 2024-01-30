@@ -26,3 +26,5 @@ export const LogoutPage = (): JSX.Element => {
 
     return <Navigate to={'/'} />;
 };
+
+export default LogoutPage;

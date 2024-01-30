@@ -218,3 +218,5 @@ export const AdminContestsPage = () => {
         </>
     );
 };
+
+export default AdminContestsPage;
