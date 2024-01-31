@@ -122,3 +122,5 @@ export const ForumThreadEditorModal = NiceModal.create(
         );
     }
 );
+
+export default ForumThreadEditorModal;

@@ -1,30 +1,44 @@
 import NiceModal from '@ebay/nice-modal-react';
-import { AssetViewer } from './AssetViewer';
-import { BanASNModal } from './BanASNModal';
-import { BanCIDRModal } from './BanCIDRModal';
-import { BanGroupModal } from './BanGroupModal';
-import { BanSteamModal } from './BanSteamModal';
-import { CIDRBlockEditorModal } from './CIDRBlockEditorModal';
-import { CIDRWhitelistEditorModal } from './CIDRWhitelistEditorModal';
-import { ConfirmDeleteFilterModal } from './ConfirmDeleteFilterModal';
-import { ConfirmationModal } from './ConfirmationModal';
-import { ContestEditor } from './ContestEditor';
-import { ContestEntryDeleteModal } from './ContestEntryDeleteModal';
-import { ContestEntryModal } from './ContestEntryModal';
-import { FileUploadModal } from './FileUploadModal';
-import { FilterEditModal } from './FilterEditModal';
-import { ForumCategoryEditorModal } from './ForumCategoryEditorModal';
-import { ForumForumEditorModal } from './ForumForumEditorModal';
-import { ForumThreadCreatorModal } from './ForumThreadCreatorModal';
-import { ForumThreadEditorModal } from './ForumThreadEditorModal';
-import { MessageContextModal } from './MessageContextModal';
-import { PersonEditModal } from './PersonEditModal';
-import { ServerDeleteModal } from './ServerDeleteModal';
-import { ServerEditorModal } from './ServerEditorModal';
-import { UnbanASNModal } from './UnbanASNModal';
-import { UnbanCIDRModal } from './UnbanCIDRModal';
-import { UnbanGroupModal } from './UnbanGroupModal';
-import { UnbanSteamModal } from './UnbanSteamModal';
+import loadable from '@loadable/component';
+
+const AssetViewer = loadable(() => import('./AssetViewer'));
+const BanASNModal = loadable(() => import('./BanASNModal'));
+const BanCIDRModal = loadable(() => import('./BanCIDRModal'));
+const BanGroupModal = loadable(() => import('./BanGroupModal'));
+const BanSteamModal = loadable(() => import('./BanSteamModal'));
+const CIDRBlockEditorModal = loadable(() => import('./CIDRBlockEditorModal'));
+const CIDRWhitelistEditorModal = loadable(
+    () => import('./CIDRWhitelistEditorModal')
+);
+const ConfirmDeleteFilterModal = loadable(
+    () => import('./ConfirmDeleteFilterModal')
+);
+const ConfirmationModal = loadable(() => import('./ConfirmationModal'));
+const ContestEditor = loadable(() => import('./ContestEditor'));
+const ContestEntryDeleteModal = loadable(
+    () => import('./ContestEntryDeleteModal')
+);
+const ContestEntryModal = loadable(() => import('./ContestEntryModal'));
+const FileUploadModal = loadable(() => import('./FileUploadModal'));
+const FilterEditModal = loadable(() => import('./FilterEditModal'));
+const ForumCategoryEditorModal = loadable(
+    () => import('./ForumCategoryEditorModal')
+);
+const ForumForumEditorModal = loadable(() => import('./ForumForumEditorModal'));
+const ForumThreadCreatorModal = loadable(
+    () => import('./ForumThreadCreatorModal')
+);
+const ForumThreadEditorModal = loadable(
+    () => import('./ForumThreadEditorModal')
+);
+const MessageContextModal = loadable(() => import('./MessageContextModal'));
+const PersonEditModal = loadable(() => import('./PersonEditModal'));
+const ServerDeleteModal = loadable(() => import('./ServerDeleteModal'));
+const ServerEditorModal = loadable(() => import('./ServerEditorModal'));
+const UnbanASNModal = loadable(() => import('./UnbanASNModal'));
+const UnbanCIDRModal = loadable(() => import('./UnbanCIDRModal'));
+const UnbanGroupModal = loadable(() => import('./UnbanGroupModal'));
+const UnbanSteamModal = loadable(() => import('./UnbanSteamModal'));
 
 export const ModalCIDRWhitelistEditor = 'modal-cidr-whitelist-editor';
 export const ModalCIDRBlockEditor = 'modal-cidr-block-editor';
@@ -53,29 +67,33 @@ export const ModalForumForumEditor = 'modal-forum-forum-editor';
 export const ModalForumThreadCreator = 'modal-forum-thread-creator';
 export const ModalForumThreadEditor = 'modal-forum-thread-editor';
 
-NiceModal.register(ModalCIDRWhitelistEditor, CIDRWhitelistEditorModal);
-NiceModal.register(ModalCIDRBlockEditor, CIDRBlockEditorModal);
-NiceModal.register(ModalForumThreadEditor, ForumThreadEditorModal);
-NiceModal.register(ModalForumThreadCreator, ForumThreadCreatorModal);
-NiceModal.register(ModalForumForumEditor, ForumForumEditorModal);
-NiceModal.register(ModalForumCategoryEditor, ForumCategoryEditorModal);
-NiceModal.register(ModalContestEntryDelete, ContestEntryDeleteModal);
-NiceModal.register(ModalContestEditor, ContestEditor);
-NiceModal.register(ModalContestEntry, ContestEntryModal);
-NiceModal.register(ModalAssetViewer, AssetViewer);
-NiceModal.register(ModalConfirm, ConfirmationModal);
-NiceModal.register(ModalServerEditor, ServerEditorModal);
-NiceModal.register(ModalServerDelete, ServerDeleteModal);
-NiceModal.register(ModalMessageContext, MessageContextModal);
-NiceModal.register(ModalPersonEditor, PersonEditModal);
-NiceModal.register(ModalFileUpload, FileUploadModal);
-NiceModal.register(ModalFilterDelete, ConfirmDeleteFilterModal);
-NiceModal.register(ModalFilterEditor, FilterEditModal);
-NiceModal.register(ModalBanSteam, BanSteamModal);
-NiceModal.register(ModalBanASN, BanASNModal);
-NiceModal.register(ModalBanCIDR, BanCIDRModal);
-NiceModal.register(ModalBanGroup, BanGroupModal);
-NiceModal.register(ModalUnbanSteam, UnbanSteamModal);
-NiceModal.register(ModalUnbanASN, UnbanASNModal);
-NiceModal.register(ModalUnbanCIDR, UnbanCIDRModal);
-NiceModal.register(ModalUnbanGroup, UnbanGroupModal);
+[
+    [ModalCIDRWhitelistEditor, CIDRWhitelistEditorModal],
+    [ModalCIDRBlockEditor, CIDRBlockEditorModal],
+    [ModalForumThreadEditor, ForumThreadEditorModal],
+    [ModalForumThreadCreator, ForumThreadCreatorModal],
+    [ModalForumForumEditor, ForumForumEditorModal],
+    [ModalForumCategoryEditor, ForumCategoryEditorModal],
+    [ModalContestEntryDelete, ContestEntryDeleteModal],
+    [ModalContestEditor, ContestEditor],
+    [ModalContestEntry, ContestEntryModal],
+    [ModalAssetViewer, AssetViewer],
+    [ModalConfirm, ConfirmationModal],
+    [ModalServerEditor, ServerEditorModal],
+    [ModalServerDelete, ServerDeleteModal],
+    [ModalMessageContext, MessageContextModal],
+    [ModalPersonEditor, PersonEditModal],
+    [ModalFileUpload, FileUploadModal],
+    [ModalFilterDelete, ConfirmDeleteFilterModal],
+    [ModalFilterEditor, FilterEditModal],
+    [ModalBanSteam, BanSteamModal],
+    [ModalBanASN, BanASNModal],
+    [ModalBanCIDR, BanCIDRModal],
+    [ModalBanGroup, BanGroupModal],
+    [ModalUnbanSteam, UnbanSteamModal],
+    [ModalUnbanASN, UnbanASNModal],
+    [ModalUnbanCIDR, UnbanCIDRModal],
+    [ModalUnbanGroup, UnbanGroupModal]
+].map((value) => {
+    NiceModal.register(value[0] as never, value[1] as never);
+});

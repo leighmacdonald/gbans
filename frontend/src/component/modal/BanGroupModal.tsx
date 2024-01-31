@@ -133,3 +133,5 @@ export const BanGroupModal = NiceModal.create(
         );
     }
 );
+
+export default BanGroupModal;

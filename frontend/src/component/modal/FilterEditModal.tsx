@@ -98,3 +98,5 @@ export const FilterEditModal = NiceModal.create(
         );
     }
 );
+
+export default FilterEditModal;

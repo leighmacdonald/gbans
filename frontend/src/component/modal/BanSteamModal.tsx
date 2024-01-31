@@ -193,3 +193,5 @@ export const BanSteamModal = NiceModal.create(
         );
     }
 );
+
+export default BanSteamModal;

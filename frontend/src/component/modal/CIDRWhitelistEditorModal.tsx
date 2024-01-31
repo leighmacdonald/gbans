@@ -92,3 +92,5 @@ export const CIDRWhitelistEditorModal = NiceModal.create(
         );
     }
 );
+
+export default CIDRWhitelistEditorModal;

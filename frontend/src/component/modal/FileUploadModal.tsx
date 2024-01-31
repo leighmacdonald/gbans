@@ -243,3 +243,5 @@ export const FileUploadModal = NiceModal.create((): JSX.Element => {
         </Formik>
     );
 });
+
+export default FileUploadModal;

@@ -345,3 +345,5 @@ const MimeTypeField = ({ isReadOnly }: BaseFormikInputProps) => {
         />
     );
 };
+
+export default ContestEditor;

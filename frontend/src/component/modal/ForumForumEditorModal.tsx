@@ -142,3 +142,5 @@ export const ForumForumEditorModal = NiceModal.create(
         );
     }
 );
+
+export default ForumForumEditorModal;

@@ -64,3 +64,5 @@ export const ConfirmationModal = NiceModal.create(
         );
     }
 );
+
+export default ConfirmationModal;
