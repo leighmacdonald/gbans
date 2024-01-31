@@ -53,3 +53,5 @@ export const ContestEntryDeleteModal = NiceModal.create(
         );
     }
 );
+
+export default ContestEntryDeleteModal;

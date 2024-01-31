@@ -127,3 +127,5 @@ export const ForumThreadCreatorModal = NiceModal.create(
         );
     }
 );
+
+export default ForumThreadCreatorModal;

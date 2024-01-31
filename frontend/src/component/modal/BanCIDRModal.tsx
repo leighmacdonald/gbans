@@ -168,3 +168,5 @@ export const BanCIDRModal = NiceModal.create(
         );
     }
 );
+
+export default BanCIDRModal;

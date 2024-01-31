@@ -100,3 +100,5 @@ export const CIDRBlockEditorModal = NiceModal.create(
         );
     }
 );
+
+export default CIDRBlockEditorModal;

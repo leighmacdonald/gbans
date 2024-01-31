@@ -47,3 +47,5 @@ export const ConfirmDeleteFilterModal = NiceModal.create(
         );
     }
 );
+
+export default ConfirmDeleteFilterModal;

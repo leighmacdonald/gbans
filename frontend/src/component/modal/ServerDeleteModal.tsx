@@ -45,3 +45,5 @@ export const ServerDeleteModal = ({
         </ConfirmationModal>
     );
 };
+
+export default ServerDeleteModal;

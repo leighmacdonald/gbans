@@ -31,3 +31,5 @@ export const MessageContextModal = ({ messageId }: UnbanASNModalProps) => {
         </ConfirmationModal>
     );
 };
+
+export default MessageContextModal;

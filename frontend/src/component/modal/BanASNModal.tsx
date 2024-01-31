@@ -157,3 +157,5 @@ export const BanASNModal = NiceModal.create(
         );
     }
 );
+
+export default BanASNModal;

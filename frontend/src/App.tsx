@@ -1,11 +1,4 @@
-import React, {
-    useCallback,
-    useMemo,
-    useState,
-    JSX,
-    lazy,
-    Suspense
-} from 'react';
+import React, { useCallback, useMemo, useState, JSX, Suspense } from 'react';
 import {
     BrowserRouter as Router,
     Outlet,
@@ -13,6 +6,7 @@ import {
     Routes
 } from 'react-router-dom';
 import NiceModal from '@ebay/nice-modal-react';
+import loadable from '@loadable/component';
 import { PaletteMode } from '@mui/material';
 import { AlertColor } from '@mui/material/Alert';
 import Container from '@mui/material/Container';
@@ -41,51 +35,53 @@ export interface AppProps {
 }
 
 const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes);
-const HomePage = lazy(() => import('./page/HomePage'));
-const AdminAppealsPage = lazy(() => import('./page/AdminAppealsPage'));
-const AdminBanASNPage = lazy(() => import('./page/AdminBanASNPage'));
-const AdminBanCIDRPage = lazy(() => import('./page/AdminBanCIDRPage'));
-const AdminBanGroupPage = lazy(() => import('./page/AdminBanGroupPage'));
-const AdminBanSteamPage = lazy(() => import('./page/AdminBanSteamPage'));
-const AdminContestsPage = lazy(() => import('./page/AdminContestsPage'));
-const AdminFiltersPage = lazy(() => import('./page/AdminFiltersPage'));
-const AdminNetworkPage = lazy(() => import('./page/AdminNetworkPage'));
-const AdminNewsPage = lazy(() => import('./page/AdminNewsPage'));
-const AdminPeoplePage = lazy(() => import('./page/AdminPeoplePage'));
-const AdminReportsPage = lazy(() => import('./page/AdminReportsPage'));
-const AdminServersPage = lazy(() => import('./page/AdminServersPage'));
-const BanPage = lazy(() => import('./page/BanPage'));
-const ChatLogPage = lazy(() => import('./page/ChatLogPage'));
-const ContestListPage = lazy(() => import('./page/ContestListPage'));
-const ContestPage = lazy(() => import('./page/ContestPage'));
-const ForumOverviewPage = lazy(() => import('./page/ForumOverviewPage'));
-const ForumPage = lazy(() => import('./page/ForumPage'));
-const ForumThreadPage = lazy(() => import('./page/ForumThreadPage'));
-const LoginDiscordSuccessPage = lazy(
+const HomePage = loadable(() => import('./page/HomePage'));
+const AdminAppealsPage = loadable(() => import('./page/AdminAppealsPage'));
+const AdminBanASNPage = loadable(() => import('./page/AdminBanASNPage'));
+const AdminBanCIDRPage = loadable(() => import('./page/AdminBanCIDRPage'));
+const AdminBanGroupPage = loadable(() => import('./page/AdminBanGroupPage'));
+const AdminBanSteamPage = loadable(() => import('./page/AdminBanSteamPage'));
+const AdminContestsPage = loadable(() => import('./page/AdminContestsPage'));
+const AdminFiltersPage = loadable(() => import('./page/AdminFiltersPage'));
+const AdminNetworkPage = loadable(() => import('./page/AdminNetworkPage'));
+const AdminNewsPage = loadable(() => import('./page/AdminNewsPage'));
+const AdminPeoplePage = loadable(() => import('./page/AdminPeoplePage'));
+const AdminReportsPage = loadable(() => import('./page/AdminReportsPage'));
+const AdminServersPage = loadable(() => import('./page/AdminServersPage'));
+const BanPage = loadable(() => import('./page/BanPage'));
+const ChatLogPage = loadable(() => import('./page/ChatLogPage'));
+const ContestListPage = loadable(() => import('./page/ContestListPage'));
+const ContestPage = loadable(() => import('./page/ContestPage'));
+const ForumOverviewPage = loadable(() => import('./page/ForumOverviewPage'));
+const ForumPage = loadable(() => import('./page/ForumPage'));
+const ForumThreadPage = loadable(() => import('./page/ForumThreadPage'));
+const LoginDiscordSuccessPage = loadable(
     () => import('./page/LoginDiscordSuccessPage')
 );
-const LoginPage = lazy(() => import('./page/LoginPage'));
-const LoginSteamSuccessPage = lazy(
+const LoginPage = loadable(() => import('./page/LoginPage'));
+const LoginSteamSuccessPage = loadable(
     () => import('./page/LoginSteamSuccessPage')
 );
-const LogoutPage = lazy(() => import('./page/LogoutPage'));
-const MatchListPage = lazy(() => import('./page/MatchListPage'));
-const MatchPage = lazy(() => import('./page/MatchPage'));
-const NotificationsPage = lazy(() => import('./page/NotificationsPage'));
-const PageNotFoundPage = lazy(() => import('./page/PageNotFoundPage'));
-const PlayerStatsPage = lazy(() => import('./page/PlayerStatsPage'));
-const PrivacyPolicyPage = lazy(() => import('./page/PrivacyPolicyPage'));
-const ProfilePage = lazy(() => import('./page/ProfilePage'));
-const ProfileSettingsPage = lazy(() => import('./page/ProfileSettingsPage'));
-const ReportCreatePage = lazy(() => import('./page/ReportCreatePage'));
-const ReportViewPage = lazy(() => import('./page/ReportViewPage'));
-const STVPage = lazy(() => import('./page/STVPage'));
-const ServersPage = lazy(() => import('./page/ServersPage'));
-const StatsPage = lazy(() => import('./page/StatsPage'));
-const StatsWeaponOverallPage = lazy(
+const LogoutPage = loadable(() => import('./page/LogoutPage'));
+const MatchListPage = loadable(() => import('./page/MatchListPage'));
+const MatchPage = loadable(() => import('./page/MatchPage'));
+const NotificationsPage = loadable(() => import('./page/NotificationsPage'));
+const PageNotFoundPage = loadable(() => import('./page/PageNotFoundPage'));
+const PlayerStatsPage = loadable(() => import('./page/PlayerStatsPage'));
+const PrivacyPolicyPage = loadable(() => import('./page/PrivacyPolicyPage'));
+const ProfilePage = loadable(() => import('./page/ProfilePage'));
+const ProfileSettingsPage = loadable(
+    () => import('./page/ProfileSettingsPage')
+);
+const ReportCreatePage = loadable(() => import('./page/ReportCreatePage'));
+const ReportViewPage = loadable(() => import('./page/ReportViewPage'));
+const STVPage = loadable(() => import('./page/STVPage'));
+const ServersPage = loadable(() => import('./page/ServersPage'));
+const StatsPage = loadable(() => import('./page/StatsPage'));
+const StatsWeaponOverallPage = loadable(
     () => import('./page/StatsWeaponOverallPage')
 );
-const WikiPage = lazy(() => import('./page/WikiPage'));
+const WikiPage = loadable(() => import('./page/WikiPage'));
 
 export const App = ({ initialTheme }: AppProps): JSX.Element => {
     const [currentUser, setCurrentUser] =

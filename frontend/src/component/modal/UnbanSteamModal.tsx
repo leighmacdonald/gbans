@@ -73,3 +73,5 @@ export const UnbanSteamModal = NiceModal.create(
         );
     }
 );
+
+export default UnbanSteamModal;

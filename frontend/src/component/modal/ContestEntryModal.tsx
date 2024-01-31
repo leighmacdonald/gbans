@@ -279,3 +279,5 @@ export const ContestEntryModal = NiceModal.create(
         );
     }
 );
+
+export default ContestEntryModal;

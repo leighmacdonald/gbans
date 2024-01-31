@@ -79,3 +79,5 @@ export const PersonEditModal = NiceModal.create(
         );
     }
 );
+
+export default PersonEditModal;

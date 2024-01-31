@@ -61,3 +61,5 @@ export const UnbanASNModal = NiceModal.create(({ banId }: UnbanModalProps) => {
         </Formik>
     );
 });
+
+export default UnbanASNModal;

@@ -125,3 +125,5 @@ export const CatLoader = ({
 
     return <></>;
 };
+
+export default ForumCategoryEditorModal;

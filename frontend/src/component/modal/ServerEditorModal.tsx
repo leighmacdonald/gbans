@@ -345,3 +345,5 @@ export const ServerEditorModal = NiceModal.create(
         );
     }
 );
+
+export default ServerEditorModal;
