@@ -27,15 +27,15 @@ type networkUsecase struct {
 }
 
 func NewNetworkUsecase(log *zap.Logger, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
-	nr domain.NetworkRepository, bl domain.BlocklistUsecase, pu domain.PersonUsecase,
+	repository domain.NetworkRepository, blocklistUsecase domain.BlocklistUsecase, personUsecase domain.PersonUsecase,
 ) domain.NetworkUsecase {
 	return networkUsecase{
 		log:     log.Named("network"),
-		nr:      nr,
-		bl:      bl,
+		nr:      repository,
+		bl:      blocklistUsecase,
 		blocker: NewBlocker(),
 		eb:      broadcaster,
-		pu:      pu,
+		pu:      personUsecase,
 	}
 }
 

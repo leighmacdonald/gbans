@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/http_helper"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"go.uber.org/zap"
 )
 
@@ -34,10 +34,10 @@ func (h notificationHandler) onAPICurrentProfileNotifications() gin.HandlerFunc 
 	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		currentProfile := http_helper.CurrentUserProfile(ctx)
+		currentProfile := httphelper.CurrentUserProfile(ctx)
 
 		var req domain.NotificationQuery
-		if !http_helper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, log, &req) {
 			return
 		}
 
@@ -51,7 +51,7 @@ func (h notificationHandler) onAPICurrentProfileNotifications() gin.HandlerFunc 
 				return
 			}
 
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}

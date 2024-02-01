@@ -34,15 +34,15 @@ type AuthUsecase interface {
 }
 
 type UserTokens struct {
-	Access      string `json:"Access"`
-	Refresh     string `json:"Refresh"`
-	Fingerprint string `json:"Fingerprint"`
+	Access      string `json:"access"`
+	Refresh     string `json:"refresh"`
+	Fingerprint string `json:"fingerprint"`
 }
 
 type UserAuthClaims struct {
 	// user context to prevent side-jacking
 	// https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html#token-sidejacking
-	Fingerprint string `json:"Fingerprint"`
+	Fingerprint string `json:"fingerprint"`
 	jwt.RegisteredClaims
 }
 

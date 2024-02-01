@@ -18,7 +18,9 @@ func NewWikiRepository(database database.Database, mu domain.MediaUsecase) domai
 	return &wikiRepository{db: database, mu: mu}
 }
 
-func (r *wikiRepository) GetWikiPageBySlug(ctx context.Context, slug string, page *domain.Page) error {
+func (r *wikiRepository) GetWikiPageBySlug(ctx context.Context, slug string) (domain.WikiPage, error) {
+	var page domain.WikiPage
+
 	row, errQuery := r.db.QueryRowBuilder(ctx, r.db.
 		Builder().
 		Select("slug", "body_md", "revision", "created_on", "updated_on", "permission_level").
@@ -27,10 +29,14 @@ func (r *wikiRepository) GetWikiPageBySlug(ctx context.Context, slug string, pag
 		OrderBy("revision desc").
 		Limit(1))
 	if errQuery != nil {
-		return r.db.DBErr(errQuery)
+		return page, r.db.DBErr(errQuery)
 	}
 
-	return r.db.DBErr(row.Scan(&page.Slug, &page.BodyMD, &page.Revision, &page.CreatedOn, &page.UpdatedOn, &page.PermissionLevel))
+	if err := row.Scan(&page.Slug, &page.BodyMD, &page.Revision, &page.CreatedOn, &page.UpdatedOn, &page.PermissionLevel); err != nil {
+		return page, r.db.DBErr(err)
+	}
+
+	return page, nil
 }
 
 func (r *wikiRepository) DeleteWikiPageBySlug(ctx context.Context, slug string) error {
@@ -44,7 +50,7 @@ func (r *wikiRepository) DeleteWikiPageBySlug(ctx context.Context, slug string) 
 	return nil
 }
 
-func (r *wikiRepository) SaveWikiPage(ctx context.Context, page *domain.Page) error {
+func (r *wikiRepository) SaveWikiPage(ctx context.Context, page *domain.WikiPage) error {
 	errQueryRow := r.db.ExecInsertBuilder(ctx, r.db.
 		Builder().
 		Insert("wiki").

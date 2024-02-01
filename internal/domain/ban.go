@@ -10,84 +10,92 @@ import (
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
-type BanRepository interface {
-	SaveBanASN(ctx context.Context, banASN *BanASN) error
-	SaveBan(ctx context.Context, ban *BanSteam) error
-	GetBanBySteamID(ctx context.Context, sid64 steamid.SID64, bannedPerson *BannedSteamPerson, deletedOk bool) error
-	GetBanByBanID(ctx context.Context, banID int64, bannedPerson *BannedSteamPerson, deletedOk bool) error
-	GetBanByLastIP(ctx context.Context, lastIP net.IP, bannedPerson *BannedSteamPerson, deletedOk bool) error
-	DropBan(ctx context.Context, ban *BanSteam, hardDelete bool) error
-	GetBansSteam(ctx context.Context, filter SteamBansQueryFilter) ([]BannedSteamPerson, int64, error)
-	GetExpiredBans(ctx context.Context) ([]BanSteam, error)
-	GetBansOlderThan(ctx context.Context, filter QueryFilter, since time.Time) ([]BanSteam, error)
-	GetBanASN(ctx context.Context, asNum int64, banASN *BanASN) error
-	GetBansASN(ctx context.Context, filter ASNBansQueryFilter) ([]BannedASNPerson, int64, error)
-	DropBanASN(ctx context.Context, banASN *BanASN) error
-	GetBanNetByAddress(ctx context.Context, ipAddr net.IP) ([]BanCIDR, error)
-	GetBanNetByID(ctx context.Context, netID int64, banNet *BanCIDR) error
-	GetBansNet(ctx context.Context, filter CIDRBansQueryFilter) ([]BannedCIDRPerson, int64, error)
-	SaveBanNet(ctx context.Context, banNet *BanCIDR) error
-	DropBanNet(ctx context.Context, banNet *BanCIDR) error
-	GetExpiredNetBans(ctx context.Context) ([]BanCIDR, error)
-	GetExpiredASNBans(ctx context.Context) ([]BanASN, error)
-	GetStats(ctx context.Context, stats *Stats) error
+type BanSteamRepository interface {
+	Save(ctx context.Context, ban *BanSteam) error
+	GetBySteamID(ctx context.Context, sid64 steamid.SID64, bannedPerson *BannedSteamPerson, deletedOk bool) error
+	GetByBanID(ctx context.Context, banID int64, bannedPerson *BannedSteamPerson, deletedOk bool) error
+	GetByLastIP(ctx context.Context, lastIP net.IP, bannedPerson *BannedSteamPerson, deletedOk bool) error
+	Delete(ctx context.Context, ban *BanSteam, hardDelete bool) error
+	Get(ctx context.Context, filter SteamBansQueryFilter) ([]BannedSteamPerson, int64, error)
+	ExpiredBans(ctx context.Context) ([]BanSteam, error)
+	GetOlderThan(ctx context.Context, filter QueryFilter, since time.Time) ([]BanSteam, error)
+	Stats(ctx context.Context, stats *Stats) error
 }
 
-type BanUsecase interface {
-	Start(ctx context.Context)
-	IsMember(steamID steamid.SID64) (steamid.SID64, bool)
-
+type BanSteamUsecase interface {
+	IsFriendBanned(steamID steamid.SID64) (steamid.SID64, bool)
 	IsOnIPWithBan(ctx context.Context, steamID steamid.SID64, address net.IP) (bool, error)
-	GetBanBySteamID(ctx context.Context, sid64 steamid.SID64, bannedPerson *BannedSteamPerson, deletedOk bool) error
-	GetBanByBanID(ctx context.Context, banID int64, bannedPerson *BannedSteamPerson, deletedOk bool) error
-	GetBanByLastIP(ctx context.Context, lastIP net.IP, bannedPerson *BannedSteamPerson, deletedOk bool) error
-	SaveBan(ctx context.Context, ban *BanSteam) error
-	BanASN(ctx context.Context, banASN *BanASN) error
-	BanCIDR(ctx context.Context, banNet *BanCIDR) error
-	BanSteam(ctx context.Context, banSteam *BanSteam) error
-
+	GetBySteamID(ctx context.Context, sid64 steamid.SID64, bannedPerson *BannedSteamPerson, deletedOk bool) error
+	GetByBanID(ctx context.Context, banID int64, bannedPerson *BannedSteamPerson, deletedOk bool) error
+	GetByLastIP(ctx context.Context, lastIP net.IP, bannedPerson *BannedSteamPerson, deletedOk bool) error
+	Save(ctx context.Context, ban *BanSteam) error
+	Ban(ctx context.Context, banSteam *BanSteam) error
 	Unban(ctx context.Context, targetSID steamid.SID64, reason string) (bool, error)
-	UnbanASN(ctx context.Context, asnNum string) (bool, error)
-	DropBan(ctx context.Context, ban *BanSteam, hardDelete bool) error
-	GetBansSteam(ctx context.Context, filter SteamBansQueryFilter) ([]BannedSteamPerson, int64, error)
-	GetExpiredBans(ctx context.Context) ([]BanSteam, error)
-	GetBansOlderThan(ctx context.Context, filter QueryFilter, since time.Time) ([]BanSteam, error)
-
-	GetBanASN(ctx context.Context, asNum int64, banASN *BanASN) error
-	GetBansASN(ctx context.Context, filter ASNBansQueryFilter) ([]BannedASNPerson, int64, error)
-	SaveBanASN(ctx context.Context, banASN *BanASN) error
-	DropBanASN(ctx context.Context, banASN *BanASN) error
-	GetBanNetByAddress(ctx context.Context, ipAddr net.IP) ([]BanCIDR, error)
-	GetBanNetByID(ctx context.Context, netID int64, banNet *BanCIDR) error
-	GetBansNet(ctx context.Context, filter CIDRBansQueryFilter) ([]BannedCIDRPerson, int64, error)
-	SaveBanNet(ctx context.Context, banNet *BanCIDR) error
-	DropBanNet(ctx context.Context, banNet *BanCIDR) error
-	GetExpiredNetBans(ctx context.Context) ([]BanCIDR, error)
-	GetExpiredASNBans(ctx context.Context) ([]BanASN, error)
-	GetStats(ctx context.Context, stats *Stats) error
+	Delete(ctx context.Context, ban *BanSteam, hardDelete bool) error
+	Get(ctx context.Context, filter SteamBansQueryFilter) ([]BannedSteamPerson, int64, error)
+	Expired(ctx context.Context) ([]BanSteam, error)
+	GetOlderThan(ctx context.Context, filter QueryFilter, since time.Time) ([]BanSteam, error)
+	Stats(ctx context.Context, stats *Stats) error
 }
 
 type BanGroupRepository interface {
-	SaveBanGroup(ctx context.Context, banGroup *BanGroup) error
-	BanSteamGroup(ctx context.Context, banGroup *BanGroup) error
-	GetBanGroup(ctx context.Context, groupID steamid.GID, banGroup *BanGroup) error
-	GetBanGroupByID(ctx context.Context, banGroupID int64, banGroup *BanGroup) error
-	GetBanGroups(ctx context.Context, filter GroupBansQueryFilter) ([]BannedGroupPerson, int64, error)
+	Save(ctx context.Context, banGroup *BanGroup) error
+	Ban(ctx context.Context, banGroup *BanGroup) error
+	GetByGID(ctx context.Context, groupID steamid.GID, banGroup *BanGroup) error
+	GetByID(ctx context.Context, banGroupID int64, banGroup *BanGroup) error
+	Get(ctx context.Context, filter GroupBansQueryFilter) ([]BannedGroupPerson, int64, error)
 	GetMembersList(ctx context.Context, parentID int64, list *MembersList) error
 	SaveMembersList(ctx context.Context, list *MembersList) error
-	DropBanGroup(ctx context.Context, banGroup *BanGroup) error
+	Delete(ctx context.Context, banGroup *BanGroup) error
 }
 
 type BanGroupUsecase interface {
-	SaveBanGroup(ctx context.Context, banGroup *BanGroup) error
-	BanSteamGroup(ctx context.Context, banGroup *BanGroup) error
-	GetBanGroup(ctx context.Context, groupID steamid.GID, banGroup *BanGroup) error
-	GetBanGroupByID(ctx context.Context, banGroupID int64, banGroup *BanGroup) error
-	GetBanGroups(ctx context.Context, filter GroupBansQueryFilter) ([]BannedGroupPerson, int64, error)
+	Save(ctx context.Context, banGroup *BanGroup) error
+	Ban(ctx context.Context, banGroup *BanGroup) error
+	GetByGID(ctx context.Context, groupID steamid.GID, banGroup *BanGroup) error
+	GetByID(ctx context.Context, banGroupID int64, banGroup *BanGroup) error
+	Get(ctx context.Context, filter GroupBansQueryFilter) ([]BannedGroupPerson, int64, error)
 	GetMembersList(ctx context.Context, parentID int64, list *MembersList) error
 	SaveMembersList(ctx context.Context, list *MembersList) error
-	DropBanGroup(ctx context.Context, banGroup *BanGroup) error
+	Delete(ctx context.Context, banGroup *BanGroup) error
 	IsMember(steamID steamid.SID64) (steamid.GID, bool)
+}
+
+type BanNetRepository interface {
+	GetByAddress(ctx context.Context, ipAddr net.IP) ([]BanCIDR, error)
+	GetByID(ctx context.Context, netID int64, banNet *BanCIDR) error
+	Get(ctx context.Context, filter CIDRBansQueryFilter) ([]BannedCIDRPerson, int64, error)
+	Save(ctx context.Context, banNet *BanCIDR) error
+	Delete(ctx context.Context, banNet *BanCIDR) error
+	Expired(ctx context.Context) ([]BanCIDR, error)
+}
+
+type BanNetUsecase interface {
+	Ban(ctx context.Context, banNet *BanCIDR) error
+	GetByAddress(ctx context.Context, ipAddr net.IP) ([]BanCIDR, error)
+	GetByID(ctx context.Context, netID int64, banNet *BanCIDR) error
+	Get(ctx context.Context, filter CIDRBansQueryFilter) ([]BannedCIDRPerson, int64, error)
+	Save(ctx context.Context, banNet *BanCIDR) error
+	Delete(ctx context.Context, banNet *BanCIDR) error
+	Expired(ctx context.Context) ([]BanCIDR, error)
+}
+
+type BanASNRepository interface {
+	Save(ctx context.Context, banASN *BanASN) error
+	GetByASN(ctx context.Context, asNum int64, banASN *BanASN) error
+	Get(ctx context.Context, filter ASNBansQueryFilter) ([]BannedASNPerson, int64, error)
+	Delete(ctx context.Context, banASN *BanASN) error
+	Expired(ctx context.Context) ([]BanASN, error)
+}
+
+type BanASNUsecase interface {
+	Ban(ctx context.Context, banASN *BanASN) error
+	GetByASN(ctx context.Context, asNum int64, banASN *BanASN) error
+	Get(ctx context.Context, filter ASNBansQueryFilter) ([]BannedASNPerson, int64, error)
+	Save(ctx context.Context, banASN *BanASN) error
+	Delete(ctx context.Context, banASN *BanASN) error
+	Expired(ctx context.Context) ([]BanASN, error)
+	Unban(ctx context.Context, asnNum string) (bool, error)
 }
 
 type UnbanRequest struct {

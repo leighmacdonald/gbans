@@ -9,7 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/http_helper"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"go.uber.org/zap"
 )
@@ -46,13 +46,13 @@ func (h *WordFilterHandler) onAPIQueryWordFilters() gin.HandlerFunc {
 
 	return func(ctx *gin.Context) {
 		var opts domain.FiltersQueryFilter
-		if !http_helper.Bind(ctx, log, &opts) {
+		if !httphelper.Bind(ctx, log, &opts) {
 			return
 		}
 
 		words, count, errGetFilters := h.wfu.GetFilters(ctx, opts)
 		if errGetFilters != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
@@ -66,19 +66,19 @@ func (h *WordFilterHandler) onAPIPostWordFilter() gin.HandlerFunc {
 
 	return func(ctx *gin.Context) {
 		var req domain.Filter
-		if !http_helper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, log, &req) {
 			return
 		}
 
 		if req.Pattern == "" {
-			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 
 			return
 		}
 
 		_, errDur := util.ParseDuration(req.Duration)
 		if errDur != nil {
-			http_helper.ResponseErr(ctx, http.StatusBadRequest, util.ErrInvalidDuration)
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, util.ErrInvalidDuration)
 
 			return
 		}
@@ -86,14 +86,14 @@ func (h *WordFilterHandler) onAPIPostWordFilter() gin.HandlerFunc {
 		if req.IsRegex {
 			_, compErr := regexp.Compile(req.Pattern)
 			if compErr != nil {
-				http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidRegex)
+				httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidRegex)
 
 				return
 			}
 		}
 
 		if req.Weight < 1 {
-			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidWeight)
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidWeight)
 
 			return
 		}
@@ -104,12 +104,12 @@ func (h *WordFilterHandler) onAPIPostWordFilter() gin.HandlerFunc {
 			var existingFilter domain.Filter
 			if errGet := h.wfu.GetFilterByID(ctx, req.FilterID, &existingFilter); errGet != nil {
 				if errors.Is(errGet, domain.ErrNoResult) {
-					http_helper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
+					httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
 
 					return
 				}
 
-				http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+				httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 				return
 			}
@@ -123,14 +123,14 @@ func (h *WordFilterHandler) onAPIPostWordFilter() gin.HandlerFunc {
 			existingFilter.Weight = req.Weight
 
 			if errSave := h.wfu.FilterAdd(ctx, &existingFilter); errSave != nil {
-				http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+				httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 				return
 			}
 
 			req = existingFilter
 		} else {
-			profile := http_helper.CurrentUserProfile(ctx)
+			profile := httphelper.CurrentUserProfile(ctx)
 			newFilter := domain.Filter{
 				AuthorID:  profile.SteamID,
 				Pattern:   req.Pattern,
@@ -144,7 +144,7 @@ func (h *WordFilterHandler) onAPIPostWordFilter() gin.HandlerFunc {
 			}
 
 			if errSave := h.wfu.FilterAdd(ctx, &newFilter); errSave != nil {
-				http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+				httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 				return
 			}
@@ -158,9 +158,9 @@ func (h *WordFilterHandler) onAPIPostWordFilter() gin.HandlerFunc {
 
 func (h *WordFilterHandler) onAPIDeleteWordFilter() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		wordID, wordIDErr := http_helper.GetInt64Param(ctx, "word_id")
+		wordID, wordIDErr := httphelper.GetInt64Param(ctx, "word_id")
 		if wordIDErr != nil {
-			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
 
 			return
 		}
@@ -168,18 +168,18 @@ func (h *WordFilterHandler) onAPIDeleteWordFilter() gin.HandlerFunc {
 		var filter domain.Filter
 		if errGet := h.wfu.GetFilterByID(ctx, wordID, &filter); errGet != nil {
 			if errors.Is(errGet, domain.ErrNoResult) {
-				http_helper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
+				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
 
 				return
 			}
 
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
 
 		if errDrop := h.wfu.DropFilter(ctx, &filter); errDrop != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
@@ -197,13 +197,13 @@ func (h *WordFilterHandler) onAPIPostWordMatch() gin.HandlerFunc {
 
 	return func(ctx *gin.Context) {
 		var req matchRequest
-		if !http_helper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, log, &req) {
 			return
 		}
 
 		words, _, errGetFilters := h.wfu.GetFilters(ctx, domain.FiltersQueryFilter{})
 		if errGetFilters != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}

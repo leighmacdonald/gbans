@@ -1,4 +1,4 @@
-package http_helper
+package httphelper
 
 import (
 	"crypto/tls"
@@ -16,7 +16,7 @@ import (
 	"go.uber.org/zap"
 )
 
-type ApiError struct {
+type APIError struct {
 	Message string `json:"message"`
 }
 
@@ -26,7 +26,7 @@ func ResponseErr(ctx *gin.Context, statusCode int, err error) {
 		userErr = err.Error()
 	}
 
-	ctx.JSON(statusCode, ApiError{Message: userErr})
+	ctx.JSON(statusCode, APIError{Message: userErr})
 }
 
 func Bind(ctx *gin.Context, log *zap.Logger, target any) bool {

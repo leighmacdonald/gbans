@@ -17,22 +17,22 @@ type mediaUsecase struct {
 	bucket string
 }
 
-func NewMediaUsecase(bucket string, mr domain.MediaRepository, au domain.AssetUsecase) domain.MediaUsecase {
+func NewMediaUsecase(bucket string, repository domain.MediaRepository, assetUsecase domain.AssetUsecase) domain.MediaUsecase {
 	return &mediaUsecase{
-		mr:     mr,
-		au:     au,
+		mr:     repository,
+		au:     assetUsecase,
 		bucket: bucket,
 	}
 }
 
-func (u mediaUsecase) Create(ctx context.Context, steamId steamid.SID64, name string, mimeType string, content []byte,
+func (u mediaUsecase) Create(ctx context.Context, steamID steamid.SID64, name string, mimeType string, content []byte,
 	mimeTypesAllowed []string,
 ) (*domain.Media, error) {
 	if len(mimeTypesAllowed) > 0 && !slices.Contains(mimeTypesAllowed, strings.ToLower(mimeType)) {
 		return nil, domain.ErrMimeTypeNotAllowed
 	}
 
-	media, errMedia := domain.NewMedia(steamId, name, mimeType, content)
+	media, errMedia := domain.NewMedia(steamID, name, mimeType, content)
 	if errMedia != nil {
 		return nil, errMedia
 	}

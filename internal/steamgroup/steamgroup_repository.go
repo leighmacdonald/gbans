@@ -15,18 +15,18 @@ type steamGroupRepository struct {
 	db database.Database
 }
 
-func (r *steamGroupRepository) DropBanGroup(ctx context.Context, banGroup *domain.BanGroup) error {
+func (r *steamGroupRepository) Delete(ctx context.Context, banGroup *domain.BanGroup) error {
 	banGroup.IsEnabled = false
 	banGroup.Deleted = true
 
-	return r.BanSteamGroup(ctx, banGroup)
+	return r.Ban(ctx, banGroup)
 }
 
 func NewSteamGroupRepository(database database.Database) domain.BanGroupRepository {
 	return &steamGroupRepository{db: database}
 }
 
-func (r *steamGroupRepository) SaveBanGroup(ctx context.Context, banGroup *domain.BanGroup) error {
+func (r *steamGroupRepository) Save(ctx context.Context, banGroup *domain.BanGroup) error {
 	if banGroup.BanGroupID > 0 {
 		return r.updateBanGroup(ctx, banGroup)
 	}
@@ -34,7 +34,7 @@ func (r *steamGroupRepository) SaveBanGroup(ctx context.Context, banGroup *domai
 	return r.insertBanGroup(ctx, banGroup)
 }
 
-func (r *steamGroupRepository) BanSteamGroup(ctx context.Context, banGroup *domain.BanGroup) error {
+func (r *steamGroupRepository) Ban(ctx context.Context, banGroup *domain.BanGroup) error {
 	if banGroup.BanGroupID > 0 {
 		return r.updateBanGroup(ctx, banGroup)
 	}
@@ -77,7 +77,7 @@ func (r *steamGroupRepository) updateBanGroup(ctx context.Context, banGroup *dom
 		Where(sq.Eq{"ban_group_id": banGroup.BanGroupID})))
 }
 
-func (r *steamGroupRepository) GetBanGroup(ctx context.Context, groupID steamid.GID, banGroup *domain.BanGroup) error {
+func (r *steamGroupRepository) GetByGID(ctx context.Context, groupID steamid.GID, banGroup *domain.BanGroup) error {
 	query := r.db.
 		Builder().
 		Select("ban_group_id", "source_id", "target_id", "group_name", "is_enabled", "deleted",
@@ -109,7 +109,7 @@ func (r *steamGroupRepository) GetBanGroup(ctx context.Context, groupID steamid.
 	return nil
 }
 
-func (r *steamGroupRepository) GetBanGroupByID(ctx context.Context, banGroupID int64, banGroup *domain.BanGroup) error {
+func (r *steamGroupRepository) GetByID(ctx context.Context, banGroupID int64, banGroup *domain.BanGroup) error {
 	query := r.db.
 		Builder().
 		Select("ban_group_id", "source_id", "target_id", "group_name", "is_enabled", "deleted",
@@ -153,7 +153,7 @@ func (r *steamGroupRepository) GetBanGroupByID(ctx context.Context, banGroupID i
 	return nil
 }
 
-func (r *steamGroupRepository) GetBanGroups(ctx context.Context, filter domain.GroupBansQueryFilter) ([]domain.BannedGroupPerson, int64, error) {
+func (r *steamGroupRepository) Get(ctx context.Context, filter domain.GroupBansQueryFilter) ([]domain.BannedGroupPerson, int64, error) {
 	builder := r.db.
 		Builder().
 		Select("s.ban_group_id", "s.source_id", "s.target_id", "s.group_name", "s.is_enabled", "s.deleted",

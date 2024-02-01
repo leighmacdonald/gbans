@@ -9,16 +9,16 @@ import (
 )
 
 type patreonUsecase struct {
-	pr      domain.PatreonRepository
-	manager *Manager
+	repository domain.PatreonRepository
+	manager    *Manager
 }
 
 func (p patreonUsecase) Start(ctx context.Context) {
 	p.manager.Start(ctx)
 }
 
-func NewPatreonUsecase(logger *zap.Logger, pr domain.PatreonRepository) domain.PatreonUsecase {
-	return &patreonUsecase{pr: pr, manager: NewPatreonManager(logger)}
+func NewPatreonUsecase(logger *zap.Logger, repository domain.PatreonRepository) domain.PatreonUsecase {
+	return &patreonUsecase{repository: repository, manager: NewPatreonManager(logger)}
 }
 
 func (p patreonUsecase) Tiers() ([]libpatreon.Campaign, error) {

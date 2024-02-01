@@ -22,13 +22,13 @@ var (
 type SteamFriends struct {
 	log        *zap.Logger
 	updateFreq time.Duration
-	bu         domain.BanUsecase
+	bu         domain.BanSteamUsecase
 	bgu        domain.BanGroupUsecase
 	members    map[steamid.SID64]steamid.Collection
 	*sync.RWMutex
 }
 
-func NewSteamFriends(logger *zap.Logger, bu domain.BanUsecase, bgu domain.BanGroupUsecase) *SteamFriends {
+func NewSteamFriends(logger *zap.Logger, bu domain.BanSteamUsecase, bgu domain.BanGroupUsecase) *SteamFriends {
 	return &SteamFriends{
 		RWMutex:    &sync.RWMutex{},
 		log:        logger.Named("SteamFriends"),
@@ -97,7 +97,7 @@ func (sf *SteamFriends) updateSteamBanMembers(ctx context.Context) (map[steamid.
 		IncludeFriendsOnly: true,
 	}
 
-	steamBans, _, errSteam := sf.bu.GetBansSteam(ctx, opts)
+	steamBans, _, errSteam := sf.bu.Get(ctx, opts)
 	if errSteam != nil {
 		if errors.Is(errSteam, domain.ErrNoResult) {
 			return newMap, nil

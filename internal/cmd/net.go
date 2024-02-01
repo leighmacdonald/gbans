@@ -33,12 +33,12 @@ func netUpdateCmd() *cobra.Command {
 		Short: "Updates ip2location dataset",
 		Long:  `Updates ip2location dataset`,
 		Run: func(cmd *cobra.Command, args []string) {
-			cu := config.NewConfigUsecase(config.NewConfigRepository())
-			if errConfig := cu.Read(false); errConfig != nil {
+			configUsecase := config.NewConfigUsecase(config.NewConfigRepository())
+			if errConfig := configUsecase.Read(false); errConfig != nil {
 				panic(fmt.Sprintf("Failed to read config: %v", errConfig))
 			}
 
-			conf := cu.Config()
+			conf := configUsecase.Config()
 			rootLogger := log.MustCreate(conf, nil)
 			defer func() {
 				_ = rootLogger.Sync()
@@ -48,22 +48,22 @@ func netUpdateCmd() *cobra.Command {
 
 			connCtx, cancelConn := context.WithTimeout(ctx, time.Second*5)
 			defer cancelConn()
-			db := database.New(rootLogger, conf.DB.DSN, false, conf.DB.LogQueries)
+			dbUsecase := database.New(rootLogger, conf.DB.DSN, false, conf.DB.LogQueries)
 
 			rootLogger.Info("Connecting to database")
-			if errConnect := db.Connect(connCtx); errConnect != nil {
+			if errConnect := dbUsecase.Connect(connCtx); errConnect != nil {
 				rootLogger.Fatal("Failed to connect to database", zap.Error(errConnect))
 			}
 
 			defer func() {
-				if errClose := db.Close(); errClose != nil {
+				if errClose := dbUsecase.Close(); errClose != nil {
 					rootLogger.Error("Failed to close database cleanly", zap.Error(errClose))
 				}
 			}()
 
 			eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
 
-			pu := person.NewPersonUsecase(rootLogger, person.NewPersonRepository(db))
+			personUsecase := person.NewPersonUsecase(rootLogger, person.NewPersonRepository(dbUsecase))
 
 			if errUpdate := ip2location.Update(ctx, conf.IP2Location.CachePath, conf.IP2Location.Token); errUpdate != nil {
 				rootLogger.Fatal("Failed to update", zap.Error(errUpdate))
@@ -81,13 +81,13 @@ func netUpdateCmd() *cobra.Command {
 
 			rootLogger.Info("Starting import")
 
-			nu := network.NewNetworkUsecase(
+			networkUsecase := network.NewNetworkUsecase(
 				rootLogger,
 				eventBroadcaster,
-				network.NewNetworkRepository(db),
-				blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(db)), pu)
+				network.NewNetworkRepository(dbUsecase),
+				blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(dbUsecase)), personUsecase)
 
-			if errInsert := nu.InsertBlockListData(updateCtx, rootLogger, blockListData); errInsert != nil {
+			if errInsert := networkUsecase.InsertBlockListData(updateCtx, rootLogger, blockListData); errInsert != nil {
 				rootLogger.Fatal("Failed to import", zap.Error(errInsert))
 			}
 			rootLogger.Info("Import Complete")

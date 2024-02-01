@@ -10,14 +10,16 @@ import (
 
 type appealUsecase struct {
 	appealRepository domain.AppealRepository
-	banUsecase       domain.BanUsecase
+	banUsecase       domain.BanSteamUsecase
 	personUsecase    domain.PersonUsecase
 	discordUsecase   domain.DiscordUsecase
 	configUsecase    domain.ConfigUsecase
 }
 
-func NewAppealUsecase(ar domain.AppealRepository, bu domain.BanUsecase, pu domain.PersonUsecase, du domain.DiscordUsecase, cu domain.ConfigUsecase) domain.AppealUsecase {
-	return &appealUsecase{appealRepository: ar, banUsecase: bu, personUsecase: pu, discordUsecase: du, configUsecase: cu}
+func NewAppealUsecase(ar domain.AppealRepository, banUsecase domain.BanSteamUsecase, personUsecase domain.PersonUsecase,
+	discordUsecase domain.DiscordUsecase, configUsecase domain.ConfigUsecase,
+) domain.AppealUsecase {
+	return &appealUsecase{appealRepository: ar, banUsecase: banUsecase, personUsecase: personUsecase, discordUsecase: discordUsecase, configUsecase: configUsecase}
 }
 
 func (u *appealUsecase) GetAppealsByActivity(ctx context.Context, opts domain.AppealQueryFilter) ([]domain.AppealOverview, int64, error) {
@@ -30,7 +32,7 @@ func (u *appealUsecase) SaveBanMessage(ctx context.Context, curUserProfile domai
 	}
 
 	bannedPerson := domain.NewBannedPerson()
-	if errReport := u.banUsecase.GetBanByBanID(ctx, req.BanID, &bannedPerson, true); errReport != nil {
+	if errReport := u.banUsecase.GetByBanID(ctx, req.BanID, &bannedPerson, true); errReport != nil {
 		return nil, errReport
 	}
 
@@ -64,7 +66,7 @@ func (u *appealUsecase) SaveBanMessage(ctx context.Context, curUserProfile domai
 
 	bannedPerson.UpdatedOn = time.Now()
 
-	if errUpdate := u.banUsecase.SaveBan(ctx, &bannedPerson.BanSteam); errUpdate != nil {
+	if errUpdate := u.banUsecase.Save(ctx, &bannedPerson.BanSteam); errUpdate != nil {
 		return nil, errUpdate
 	}
 

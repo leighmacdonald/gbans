@@ -1,4 +1,4 @@
-package http_helper
+package httphelper
 
 import (
 	"errors"
@@ -81,21 +81,22 @@ type jsConfig struct {
 }
 
 func ErrorHandled(ctx *gin.Context, err error) error {
-	if err != nil {
+	if err == nil {
 		return nil
 	}
 
-	if errors.Is(err, domain.ErrPermissionDenied) {
+	switch {
+	case errors.Is(err, domain.ErrPermissionDenied):
 		HandleErrPermissionDenied(ctx)
-	} else if errors.Is(err, domain.ErrNoResult) {
+	case errors.Is(err, domain.ErrNoResult):
 		HandleErrNotFound(ctx)
-	} else if errors.Is(err, domain.ErrBadRequest) {
+	case errors.Is(err, domain.ErrBadRequest):
 		HandleErrBadRequest(ctx)
-	} else if errors.Is(err, domain.ErrDuplicate) {
+	case errors.Is(err, domain.ErrDuplicate):
 		HandleErrDuplicate(ctx)
-	} else if errors.Is(err, domain.ErrInvalidFormat) {
+	case errors.Is(err, domain.ErrInvalidFormat):
 		HandleErrInvalidFormat(ctx)
-	} else {
+	default:
 		HandleErrInternal(ctx)
 	}
 

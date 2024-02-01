@@ -19,8 +19,10 @@ type demoUsecase struct {
 	log    *zap.Logger
 }
 
-func NewDemoUsecase(log *zap.Logger, bucket string, dr domain.DemoRepository, au domain.AssetUsecase, cu domain.ConfigUsecase) domain.DemoUsecase {
-	return &demoUsecase{log: log.Named("demo"), bucket: bucket, dr: dr, au: au, cu: cu}
+func NewDemoUsecase(log *zap.Logger, bucket string, demoRepository domain.DemoRepository, assetUsecase domain.AssetUsecase,
+	configUsecase domain.ConfigUsecase,
+) domain.DemoUsecase {
+	return &demoUsecase{log: log.Named("demo"), bucket: bucket, dr: demoRepository, au: assetUsecase, cu: configUsecase}
 }
 
 func (d demoUsecase) Start(ctx context.Context) {
@@ -85,7 +87,7 @@ func (d demoUsecase) ExpiredDemos(ctx context.Context, limit uint64) ([]domain.D
 }
 
 func (d demoUsecase) GetDemoByID(ctx context.Context, demoID int64, demoFile *domain.DemoFile) error {
-	return d.GetDemoByID(ctx, demoID, demoFile)
+	return d.dr.GetDemoByID(ctx, demoID, demoFile)
 }
 
 func (d demoUsecase) GetDemoByName(ctx context.Context, demoName string, demoFile *domain.DemoFile) error {

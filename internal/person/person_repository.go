@@ -25,11 +25,6 @@ func NewPersonRepository(database database.Database) domain.PersonRepository {
 	return &personRepository{db: database}
 }
 
-var (
-	ErrScanPerson     = errors.New("failed to scan person result")
-	ErrMessageContext = errors.New("could not fetch message context")
-)
-
 func (r *personRepository) DropPerson(ctx context.Context, steamID steamid.SID64) error {
 	return r.db.DBErr(r.db.ExecDeleteBuilder(ctx, r.db.
 		Builder().
@@ -135,33 +130,33 @@ func (r *personRepository) GetPersonBySteamID(ctx context.Context, sid64 steamid
 
 	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
 		Builder().
-		Select("r.created_on",
-			"r.updated_on",
-			"r.communityvisibilitystate",
-			"r.profilestate",
-			"r.personaname",
-			"r.profileurl",
-			"r.avatar",
-			"r.avatarmedium",
-			"r.avatarfull",
-			"r.avatarhash",
-			"r.personastate",
-			"r.realname",
-			"r.timecreated",
-			"r.loccountrycode",
-			"r.locstatecode",
-			"r.loccityid",
-			"r.permission_level",
-			"r.discord_id",
-			"r.community_banned",
-			"r.vac_bans",
-			"r.game_bans",
-			"r.economy_ban",
-			"r.days_since_last_ban",
-			"r.updated_on_steam",
-			"r.muted").
+		Select("p.created_on",
+			"p.updated_on",
+			"p.communityvisibilitystate",
+			"p.profilestate",
+			"p.personaname",
+			"p.profileurl",
+			"p.avatar",
+			"p.avatarmedium",
+			"p.avatarfull",
+			"p.avatarhash",
+			"p.personastate",
+			"p.realname",
+			"p.timecreated",
+			"p.loccountrycode",
+			"p.locstatecode",
+			"p.loccityid",
+			"p.permission_level",
+			"p.discord_id",
+			"p.community_banned",
+			"p.vac_bans",
+			"p.game_bans",
+			"p.economy_ban",
+			"p.days_since_last_ban",
+			"p.updated_on_steam",
+			"p.muted").
 		From("person r").
-		Where(sq.Eq{"r.steam_id": sid64.Int64()}))
+		Where(sq.Eq{"p.steam_id": sid64.Int64()}))
 
 	if errRow != nil {
 		return r.db.DBErr(errRow)
@@ -211,7 +206,7 @@ func (r *personRepository) GetPeopleBySteamID(ctx context.Context, steamIds stea
 			&person.LocCountryCode, &person.LocStateCode, &person.LocCityID, &person.PermissionLevel, &person.DiscordID,
 			&person.CommunityBanned, &person.VACBans, &person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan,
 			&person.UpdatedOnSteam, &person.Muted); errScan != nil {
-			return nil, errors.Join(errScan, ErrScanPerson)
+			return nil, errors.Join(errScan, domain.ErrScanResult)
 		}
 
 		person.SteamID = steamid.New(steamID)
@@ -236,7 +231,7 @@ func (r *personRepository) GetSteamsAtAddress(ctx context.Context, addr net.IP) 
 		Builder().
 		Select("DISTINCT steam_id").
 		From("person_connections").
-		Where(sq.Expr(fmt.Sprintf("ip_addr::inet >>= '::ffff:%r'::CIDR OR ip_addr::inet <<= '::ffff:%r'::CIDR", addr.String(), addr.String()))))
+		Where(sq.Expr(fmt.Sprintf("ip_addr::inet >>= '::ffff:%s'::CIDR OR ip_addr::inet <<= '::ffff:%s'::CIDR", addr.String(), addr.String()))))
 	if errRows != nil {
 		return nil, r.db.DBErr(errRows)
 	}
@@ -258,12 +253,12 @@ func (r *personRepository) GetSteamsAtAddress(ctx context.Context, addr net.IP) 
 func (r *personRepository) GetPeople(ctx context.Context, filter domain.PlayerQuery) (domain.People, int64, error) {
 	builder := r.db.
 		Builder().
-		Select("r.steam_id", "r.created_on", "r.updated_on",
-			"r.communityvisibilitystate", "r.profilestate", "r.personaname", "r.profileurl", "r.avatar",
-			"r.avatarmedium", "r.avatarfull", "r.avatarhash", "r.personastate", "r.realname", "r.timecreated",
-			"r.loccountrycode", "r.locstatecode", "r.loccityid", "r.permission_level", "r.discord_id",
-			"r.community_banned", "r.vac_bans", "r.game_bans", "r.economy_ban", "r.days_since_last_ban",
-			"r.updated_on_steam", "r.muted").
+		Select("p.steam_id", "p.created_on", "p.updated_on",
+			"p.communityvisibilitystate", "p.profilestate", "p.personaname", "p.profileurl", "p.avatar",
+			"p.avatarmedium", "p.avatarfull", "p.avatarhash", "p.personastate", "p.realname", "p.timecreated",
+			"p.loccountrycode", "p.locstatecode", "p.loccityid", "p.permission_level", "p.discord_id",
+			"p.community_banned", "p.vac_bans", "p.game_bans", "p.economy_ban", "p.days_since_last_ban",
+			"p.updated_on_steam", "p.muted").
 		From("person r")
 
 	conditions := sq.And{}
@@ -283,7 +278,7 @@ func (r *personRepository) GetPeople(ctx context.Context, filter domain.PlayerQu
 			return nil, 0, r.db.DBErr(errFoundIds)
 		}
 
-		conditions = append(conditions, sq.Eq{"r.steam_id": foundIds})
+		conditions = append(conditions, sq.Eq{"p.steam_id": foundIds})
 	}
 
 	if filter.SteamID != "" {
@@ -292,21 +287,21 @@ func (r *personRepository) GetPeople(ctx context.Context, filter domain.PlayerQu
 			return nil, 0, errors.Join(errSteamID, domain.ErrSourceID)
 		}
 
-		conditions = append(conditions, sq.Eq{"r.steam_id": steamID.Int64()})
+		conditions = append(conditions, sq.Eq{"p.steam_id": steamID.Int64()})
 	}
 
 	if filter.Personaname != "" {
 		// TODO add lower-cased functional index to avoid table scan
-		conditions = append(conditions, sq.ILike{"r.personaname": normalizeStringLikeQuery(filter.Personaname)})
+		conditions = append(conditions, sq.ILike{"p.personaname": normalizeStringLikeQuery(filter.Personaname)})
 	}
 
 	builder = filter.ApplyLimitOffsetDefault(builder)
 	builder = filter.ApplySafeOrder(builder, map[string][]string{
-		"r.": {
+		"p.": {
 			"steam_id", "created_on", "updated_on",
 			"communityvisibilitystate", "profilestate", "personaname", "profileurl", "avatar",
 			"avatarmedium", "avatarfull", "avatarhash", "personastate", "realname", "timecreated",
-			"loccountrycode", "locstatecode", "loccityid", "r.permission_level", "discord_id",
+			"loccountrycode", "locstatecode", "loccityid", "p.permission_level", "discord_id",
 			"community_banned", "vac_bans", "game_bans", "economy_ban", "days_since_last_ban",
 			"updated_on_steam", "muted",
 		},
@@ -335,7 +330,7 @@ func (r *personRepository) GetPeople(ctx context.Context, filter domain.PlayerQu
 				&person.LocCityID, &person.PermissionLevel, &person.DiscordID, &person.CommunityBanned,
 				&person.VACBans, &person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan,
 				&person.UpdatedOnSteam, &person.Muted); errScan != nil {
-			return nil, 0, errors.Join(errScan, ErrScanPerson)
+			return nil, 0, errors.Join(errScan, domain.ErrScanResult)
 		}
 
 		person.SteamID = steamid.New(steamID)
@@ -442,7 +437,7 @@ func (r *personRepository) GetPersonMessageByID(ctx context.Context, personMessa
 			"m.created_on",
 			"m.persona_name",
 			"m.match_id",
-			"r.short_name").
+			"p.short_name").
 		From("person_messages m").
 		LeftJoin("server r on m.server_id = r.server_id").
 		Where(sq.Eq{"m.person_message_id": personMessageID}))

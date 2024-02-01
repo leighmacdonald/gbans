@@ -26,20 +26,20 @@ type authUsecase struct {
 	authRepository domain.AuthRepository
 	configUsecase  domain.ConfigUsecase
 	personUsecase  domain.PersonUsecase
-	banUsecase     domain.BanUsecase
+	banUsecase     domain.BanSteamUsecase
 	serverUsecase  domain.ServersUsecase
 	log            *zap.Logger
 }
 
-func NewAuthUsecase(log *zap.Logger, au domain.AuthRepository, cu domain.ConfigUsecase, pu domain.PersonUsecase,
-	bu domain.BanUsecase, su domain.ServersUsecase,
+func NewAuthUsecase(log *zap.Logger, authRepository domain.AuthRepository, configUsecase domain.ConfigUsecase, personUsecase domain.PersonUsecase,
+	banUsecase domain.BanSteamUsecase, serversUsecase domain.ServersUsecase,
 ) domain.AuthUsecase {
 	return &authUsecase{
-		authRepository: au,
-		configUsecase:  cu,
-		personUsecase:  pu,
-		banUsecase:     bu,
-		serverUsecase:  su,
+		authRepository: authRepository,
+		configUsecase:  configUsecase,
+		personUsecase:  personUsecase,
+		banUsecase:     banUsecase,
+		serverUsecase:  serversUsecase,
 		log:            log.Named("auth"),
 	}
 }
@@ -159,7 +159,7 @@ func (u *authUsecase) AuthMiddleware(level domain.Privilege) gin.HandlerFunc {
 				}
 
 				bannedPerson := domain.NewBannedPerson()
-				if errBan := u.banUsecase.GetBanBySteamID(ctx, sid, &bannedPerson, false); errBan != nil {
+				if errBan := u.banUsecase.GetBySteamID(ctx, sid, &bannedPerson, false); errBan != nil {
 					if !errors.Is(errBan, domain.ErrNoResult) {
 						log.Error("Failed to fetch authed user ban", zap.Error(errBan))
 					}

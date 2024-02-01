@@ -27,7 +27,7 @@ func (s *stateRepository) Configs() []domain.ServerConfig {
 }
 
 func (s *stateRepository) ExecRaw(ctx context.Context, addr string, password string, cmd string) (string, error) {
-	return s.ExecRaw(ctx, addr, password, cmd)
+	return s.collector.ExecRaw(ctx, addr, password, cmd)
 }
 
 func (s *stateRepository) Update(serverID int, update domain.PartialStateUpdate) error {

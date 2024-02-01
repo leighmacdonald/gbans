@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/http_helper"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"go.uber.org/zap"
 )
 
@@ -34,7 +34,7 @@ func (h PatreonHandler) onAPIGetPatreonCampaigns() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		tiers, errTiers := h.pu.Tiers()
 		if errTiers != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, nil)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, nil)
 
 			return
 		}
@@ -65,7 +65,7 @@ func (h PatreonHandler) onAPIGetPatreonPledges() gin.HandlerFunc {
 		// }
 		pledges, _, errPledges := h.pu.Pledges()
 		if errPledges != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, nil)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, nil)
 
 			return
 		}

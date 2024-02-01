@@ -9,7 +9,7 @@ import (
 )
 
 func TestWiki(t *testing.T) {
-	root := domain.Page{Slug: domain.RootSlug}
+	root := domain.WikiPage{Slug: domain.RootSlug}
 	root.BodyMD = `
 # Title
 

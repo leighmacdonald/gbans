@@ -20,24 +20,24 @@ import (
 
 type stateUsecase struct {
 	stateRepository domain.StateRepository
-	cu              domain.ConfigUsecase
-	sv              domain.ServersUsecase
+	configUsecase   domain.ConfigUsecase
+	serversUsecase  domain.ServersUsecase
 	logListener     *logparse.UDPLogListener
 	logFileChan     chan domain.LogFilePayload
 	log             *zap.Logger
-	eb              *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
+	broadcaster     *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 }
 
 // NewStateUsecase created a interface to interact with server state and exec rcon commands
-// TODO ensure started
-func NewStateUsecase(log *zap.Logger, eb *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
-	repository domain.StateRepository, cu domain.ConfigUsecase, sv domain.ServersUsecase,
+// TODO ensure started.
+func NewStateUsecase(log *zap.Logger, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
+	repository domain.StateRepository, configUsecase domain.ConfigUsecase, serversUsecase domain.ServersUsecase,
 ) domain.StateUsecase {
-	conf := cu.Config()
+	conf := configUsecase.Config()
 
 	logSrc, errLogSrc := logparse.NewUDPLogListener(log, conf.Log.SrcdsLogAddr,
 		func(eventType logparse.EventType, event logparse.ServerEvent) {
-			eb.Emit(event.EventType, event)
+			broadcaster.Emit(event.EventType, event)
 		})
 
 	if errLogSrc != nil {
@@ -47,9 +47,9 @@ func NewStateUsecase(log *zap.Logger, eb *fp.Broadcaster[logparse.EventType, log
 	return &stateUsecase{
 		stateRepository: repository,
 		log:             log.Named("state"),
-		cu:              cu,
-		eb:              eb,
-		sv:              sv,
+		configUsecase:   configUsecase,
+		broadcaster:     broadcaster,
+		serversUsecase:  serversUsecase,
 		logListener:     logSrc,
 		logFileChan:     make(chan domain.LogFilePayload),
 	}
@@ -128,7 +128,7 @@ func (s *stateUsecase) logReader(ctx context.Context, writeUnhandled bool) {
 					}
 				}
 
-				s.eb.Emit(newServerEvent.EventType, newServerEvent)
+				s.broadcaster.Emit(newServerEvent.EventType, newServerEvent)
 				emitted++
 			}
 
@@ -149,7 +149,7 @@ func (s *stateUsecase) updateSrcdsLogSecrets(ctx context.Context) {
 
 	defer cancelServers()
 
-	servers, _, errServers := s.sv.GetServers(serversCtx, domain.ServerQueryFilter{
+	servers, _, errServers := s.serversUsecase.GetServers(serversCtx, domain.ServerQueryFilter{
 		IncludeDisabled: false,
 		QueryFilter:     domain.QueryFilter{Deleted: false},
 	})

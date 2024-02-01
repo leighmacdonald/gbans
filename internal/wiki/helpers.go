@@ -9,7 +9,7 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 )
 
-func Render(page domain.Page) []byte {
+func Render(page domain.WikiPage) []byte {
 	unsafeHTML := markdown.ToHTML([]byte(page.BodyMD), NewParser(), nil)
 
 	return bluemonday.UGCPolicy().SanitizeBytes(unsafeHTML)

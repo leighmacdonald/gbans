@@ -8,10 +8,10 @@ type configUsecase struct {
 	configRepo domain.ConfigRepository
 }
 
-func NewConfigUsecase(conf domain.ConfigRepository) domain.ConfigUsecase {
+func NewConfigUsecase(repository domain.ConfigRepository) domain.ConfigUsecase {
 	SetDefaultConfigValues()
 
-	return &configUsecase{configRepo: conf}
+	return &configUsecase{configRepo: repository}
 }
 
 func (c *configUsecase) ExtURL(obj domain.LinkablePath) string {

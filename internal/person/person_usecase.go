@@ -19,10 +19,10 @@ type personUsecase struct {
 	log        *zap.Logger
 }
 
-func NewPersonUsecase(log *zap.Logger, pr domain.PersonRepository) domain.PersonUsecase {
+func NewPersonUsecase(log *zap.Logger, repository domain.PersonRepository) domain.PersonUsecase {
 	return &personUsecase{
 		log:        log,
-		personRepo: pr,
+		personRepo: repository,
 	}
 }
 
@@ -205,7 +205,7 @@ func (p *personUsecase) GetOrCreatePersonBySteamID(ctx context.Context, sid64 st
 }
 
 func (p *personUsecase) GetPersonByDiscordID(ctx context.Context, discordID string, person *domain.Person) error {
-	return p.GetPersonByDiscordID(ctx, discordID, person)
+	return p.personRepo.GetPersonByDiscordID(ctx, discordID, person)
 }
 
 func (p *personUsecase) GetExpiredProfiles(ctx context.Context, limit uint64) ([]domain.Person, error) {

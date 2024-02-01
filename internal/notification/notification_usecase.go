@@ -16,8 +16,10 @@ type notificationUsecase struct {
 	log *zap.Logger
 }
 
-func NewNotificationUsecase(log *zap.Logger, nr domain.NotificationRepository, pu domain.PersonUsecase) domain.NotificationUsecase {
-	return &notificationUsecase{nr: nr, pu: pu, log: log.Named("notification")}
+func NewNotificationUsecase(log *zap.Logger, repository domain.NotificationRepository,
+	personUsecase domain.PersonUsecase,
+) domain.NotificationUsecase {
+	return &notificationUsecase{nr: repository, pu: personUsecase, log: log.Named("notification")}
 }
 
 func (n notificationUsecase) SendNotification(ctx context.Context, targetID steamid.SID64, severity domain.NotificationSeverity, message string, link string) error {

@@ -38,7 +38,6 @@ type Collector struct {
 	configMu         *sync.RWMutex
 	maxPlayersRx     *regexp.Regexp
 	serverUsecase    domain.ServersUsecase
-	configUsecase    domain.ConfigUsecase
 }
 
 func NewCollector(logger *zap.Logger, serverUsecase domain.ServersUsecase) *Collector {
@@ -92,7 +91,7 @@ func (c *Collector) ExecRaw(ctx context.Context, addr string, password string, c
 
 func (c *Collector) GetServer(serverID int) (domain.ServerConfig, error) {
 	c.configMu.RLock()
-	c.configMu.RUnlock()
+	defer c.configMu.RUnlock()
 
 	configs := c.Configs()
 
@@ -228,7 +227,6 @@ func (c *Collector) setServerConfigs(configs []domain.ServerConfig) {
 				Longitude:     cfg.Longitude,
 				IP:            addr,
 			}
-
 		}
 	}
 

@@ -4,6 +4,7 @@ GO_CMD=go
 GO_BUILD=$(GO_CMD) build
 GO_FLAGS = -trimpath -ldflags="-s -w -X github.com/leighmacdonald/gbans/internal/app.BuildVersion=$(VERSION)"
 DEBUG_FLAGS = -gcflags "all=-N -l"
+ROOT_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 all: frontend sourcemod build
 
@@ -69,11 +70,12 @@ test-go:
 testcover:
 	@go test -race -coverprofile c.out $(GO_FLAGS) ./...
 
-check_deps:
-	go install github.com/daixiang0/gci@latest
-	go install mvdan.cc/gofumpt@latest
+install_deps:
+	go install github.com/vektra/mockery/v2@v2.40.1
+	go install github.com/daixiang0/gci@v0.12.1
+	go install mvdan.cc/gofumpt@v0.6.0
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.2
-	go install honnef.co/go/tools/cmd/staticcheck@latest
+	go install honnef.co/go/tools/cmd/staticcheck@v0.4.6
 
 check: lint_golangci static lint_ts
 
@@ -136,4 +138,8 @@ docker_update_plugin:
 
 copy_ut:
 	cp -rv sourcemod/scripting/* ../uncletopia/roles/sourcemod/files/addons/sourcemod/scripting/
+
+gen_mocks:
+	rm -f internal/domain/mocks/*
+	mockery
 

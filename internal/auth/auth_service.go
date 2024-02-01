@@ -14,7 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/http_helper"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -29,11 +29,13 @@ type AuthHandler struct {
 	log           *zap.Logger
 }
 
-func NewAuthHandler(log *zap.Logger, engine *gin.Engine, au domain.AuthUsecase, cu domain.ConfigUsecase, pu domain.PersonUsecase) {
+func NewAuthHandler(log *zap.Logger, engine *gin.Engine, authUsecase domain.AuthUsecase, configUsecase domain.ConfigUsecase,
+	personUsecase domain.PersonUsecase,
+) {
 	handler := &AuthHandler{
-		authUsecase:   au,
-		configUsecase: cu,
-		personUsecase: pu,
+		authUsecase:   authUsecase,
+		configUsecase: configUsecase,
+		personUsecase: personUsecase,
 		log:           log.Named("auth"),
 	}
 
@@ -42,7 +44,7 @@ func NewAuthHandler(log *zap.Logger, engine *gin.Engine, au domain.AuthUsecase, 
 	authGrp := engine.Group("/")
 	{
 		// authed
-		env := authGrp.Use(au.AuthMiddleware(domain.PUser))
+		env := authGrp.Use(authUsecase.AuthMiddleware(domain.PUser))
 		env.POST("/api/auth/refresh", handler.onTokenRefresh())
 		env.GET("/api/auth/discord", handler.onOAuthDiscordCallback())
 		env.GET("/api/auth/logout", handler.onAPILogout())
@@ -58,7 +60,7 @@ func (h AuthHandler) onOpenIDCallback() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var idStr string
 
-		referralURL := http_helper.Referral(ctx)
+		referralURL := httphelper.Referral(ctx)
 		conf := h.configUsecase.Config()
 		fullURL := conf.General.ExternalURL + ctx.Request.URL.String()
 
@@ -336,7 +338,7 @@ func (h AuthHandler) onOAuthDiscordCallback() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		code := ctx.Query("code")
 		if code == "" {
-			http_helper.ResponseErr(ctx, http.StatusBadRequest, nil)
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, nil)
 			log.Error("Failed to get code from query")
 
 			return
@@ -344,7 +346,7 @@ func (h AuthHandler) onOAuthDiscordCallback() gin.HandlerFunc {
 
 		token, errToken := fetchToken(ctx, code)
 		if errToken != nil {
-			http_helper.ResponseErr(ctx, http.StatusBadRequest, nil)
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, nil)
 			log.Error("Failed to fetch token", zap.Error(errToken))
 
 			return
@@ -352,14 +354,14 @@ func (h AuthHandler) onOAuthDiscordCallback() gin.HandlerFunc {
 
 		discordID, errID := fetchDiscordID(ctx, token)
 		if errID != nil {
-			http_helper.ResponseErr(ctx, http.StatusBadRequest, nil)
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, nil)
 			log.Error("Failed to fetch discord ID", zap.Error(errID))
 
 			return
 		}
 
 		if discordID == "" {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, nil)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, nil)
 			log.Error("Empty discord id received")
 
 			return
@@ -368,24 +370,24 @@ func (h AuthHandler) onOAuthDiscordCallback() gin.HandlerFunc {
 		var discordPerson domain.Person
 		if errDp := h.personUsecase.GetPersonByDiscordID(ctx, discordID, &discordPerson); errDp != nil {
 			if !errors.Is(errDp, domain.ErrNoResult) {
-				http_helper.ResponseErr(ctx, http.StatusInternalServerError, nil)
+				httphelper.ResponseErr(ctx, http.StatusInternalServerError, nil)
 
 				return
 			}
 		}
 
 		if discordPerson.DiscordID != "" {
-			http_helper.ResponseErr(ctx, http.StatusConflict, nil)
+			httphelper.ResponseErr(ctx, http.StatusConflict, nil)
 			log.Error("Failed to update persons discord id")
 
 			return
 		}
 
-		sid := http_helper.CurrentUserProfile(ctx).SteamID
+		sid := httphelper.CurrentUserProfile(ctx).SteamID
 
 		var person domain.Person
 		if errPerson := h.personUsecase.GetPersonBySteamID(ctx, sid, &person); errPerson != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, nil)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, nil)
 
 			return
 		}
@@ -393,7 +395,7 @@ func (h AuthHandler) onOAuthDiscordCallback() gin.HandlerFunc {
 		if person.Expired() {
 			if errGetProfile := thirdparty.UpdatePlayerSummary(ctx, &person); errGetProfile != nil {
 				log.Error("Failed to fetch user profile", zap.Error(errGetProfile))
-				http_helper.ResponseErr(ctx, http.StatusInternalServerError, nil)
+				httphelper.ResponseErr(ctx, http.StatusInternalServerError, nil)
 
 				return
 			}
@@ -406,7 +408,7 @@ func (h AuthHandler) onOAuthDiscordCallback() gin.HandlerFunc {
 		person.DiscordID = discordID
 
 		if errSave := h.personUsecase.SavePerson(ctx, &person); errSave != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, nil)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, nil)
 
 			return
 		}
@@ -425,7 +427,7 @@ func (h AuthHandler) onAPILogout() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		fingerprint, errCookie := ctx.Cookie(fingerprintCookieName)
 		if errCookie != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, nil)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, nil)
 
 			return
 		}
@@ -443,14 +445,14 @@ func (h AuthHandler) onAPILogout() gin.HandlerFunc {
 
 		personAuth := domain.PersonAuth{}
 		if errGet := h.authUsecase.GetPersonAuthByRefreshToken(ctx, fingerprint, &personAuth); errGet != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, nil)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, nil)
 			log.Warn("Failed to load person via fingerprint")
 
 			return
 		}
 
 		if errDelete := h.authUsecase.DeletePersonAuth(ctx, personAuth.PersonAuthID); errDelete != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, nil)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, nil)
 			log.Error("Failed to delete person auth on logout", zap.Error(errDelete))
 
 			return

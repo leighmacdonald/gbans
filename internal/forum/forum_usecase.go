@@ -11,8 +11,8 @@ type forumUsecase struct {
 	tracker   *Tracker
 }
 
-func NewForumUsecase(fr domain.ForumRepository) domain.ForumUsecase {
-	return &forumUsecase{forumRepo: fr, tracker: NewTracker()}
+func NewForumUsecase(repository domain.ForumRepository) domain.ForumUsecase {
+	return &forumUsecase{forumRepo: repository, tracker: NewTracker()}
 }
 
 func (f forumUsecase) Start(ctx context.Context) {
@@ -84,7 +84,7 @@ func (f forumUsecase) ForumIncrMessageCount(ctx context.Context, forumID int, in
 }
 
 func (f forumUsecase) ForumMessageSave(ctx context.Context, message *domain.ForumMessage) error {
-	return f.ForumMessageSave(ctx, message)
+	return f.forumRepo.ForumMessageSave(ctx, message)
 }
 
 func (f forumUsecase) ForumRecentActivity(ctx context.Context, limit uint64, permissionLevel domain.Privilege) ([]domain.ForumMessage, error) {
