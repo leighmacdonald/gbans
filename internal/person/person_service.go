@@ -8,7 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/http_helper"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -57,21 +57,21 @@ func (h PersonHandler) onAPIPutPlayerPermission() gin.HandlerFunc {
 	}
 
 	return func(ctx *gin.Context) {
-		steamID, errParam := http_helper.GetSID64Param(ctx, "steam_id")
+		steamID, errParam := httphelper.GetSID64Param(ctx, "steam_id")
 		if errParam != nil {
-			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 
 			return
 		}
 
 		var req updatePermissionLevel
-		if !http_helper.Bind(ctx, h.log, &req) {
+		if !httphelper.Bind(ctx, h.log, &req) {
 			return
 		}
 
 		var person domain.Person
 		if errGet := h.pu.GetPersonBySteamID(ctx, steamID, &person); errGet != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			h.log.Error("Failed to load person", zap.Error(errGet))
 
@@ -79,7 +79,7 @@ func (h PersonHandler) onAPIPutPlayerPermission() gin.HandlerFunc {
 		}
 
 		if steamID == h.configUsecase.Config().General.Owner {
-			http_helper.ResponseErr(ctx, http.StatusConflict, domain.ErrPermissionDenied)
+			httphelper.ResponseErr(ctx, http.StatusConflict, domain.ErrPermissionDenied)
 
 			return
 		}
@@ -87,7 +87,7 @@ func (h PersonHandler) onAPIPutPlayerPermission() gin.HandlerFunc {
 		person.PermissionLevel = req.PermissionLevel
 
 		if errSave := h.pu.SavePerson(ctx, &person); errSave != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			h.log.Error("Failed to save person", zap.Error(errSave))
 
@@ -104,12 +104,12 @@ func (h PersonHandler) onAPIPutPlayerPermission() gin.HandlerFunc {
 
 func (h PersonHandler) onAPIGetPersonSettings() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		user := http_helper.CurrentUserProfile(ctx)
+		user := httphelper.CurrentUserProfile(ctx)
 
 		var settings domain.PersonSettings
 
 		if err := h.pu.GetPersonSettings(ctx, user.SteamID, &settings); err != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			h.log.Error("Failed to fetch person settings", zap.Error(err), zap.Int64("steam_id", user.SteamID.Int64()))
 
 			return
@@ -127,18 +127,18 @@ func (h PersonHandler) onAPIPostPersonSettings() gin.HandlerFunc {
 	}
 
 	return func(ctx *gin.Context) {
-		user := http_helper.CurrentUserProfile(ctx)
+		user := httphelper.CurrentUserProfile(ctx)
 
 		var req settingsUpdateReq
 
-		if !http_helper.Bind(ctx, h.log, &req) {
+		if !httphelper.Bind(ctx, h.log, &req) {
 			return
 		}
 
 		var settings domain.PersonSettings
 
 		if err := h.pu.GetPersonSettings(ctx, user.SteamID, &settings); err != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			h.log.Error("Failed to fetch person settings", zap.Error(err), zap.Int64("steam_id", user.SteamID.Int64()))
 
 			return
@@ -149,7 +149,7 @@ func (h PersonHandler) onAPIPostPersonSettings() gin.HandlerFunc {
 		settings.ForumSignature = util.SanitizeUGC(req.ForumSignature)
 
 		if err := h.pu.SavePersonSettings(ctx, &settings); err != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			h.log.Error("Failed to save person settings", zap.Error(err), zap.Int64("steam_id", user.SteamID.Int64()))
 
 			return
@@ -161,13 +161,13 @@ func (h PersonHandler) onAPIPostPersonSettings() gin.HandlerFunc {
 
 func (h PersonHandler) onAPICurrentProfile() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		profile := http_helper.CurrentUserProfile(ctx)
+		profile := httphelper.CurrentUserProfile(ctx)
 		if !profile.SteamID.Valid() {
 			h.log.Error("Failed to load user profile",
 				zap.Int64("sid64", profile.SteamID.Int64()),
 				zap.String("name", profile.Name),
 				zap.String("permission_level", profile.PermissionLevel.String()))
-			http_helper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
+			httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
 
 			return
 		}
@@ -193,21 +193,21 @@ func (h PersonHandler) onAPIProfile() gin.HandlerFunc {
 
 		var req profileQuery
 		if errBind := ctx.Bind(&req); errBind != nil {
-			http_helper.ResponseErr(ctx, http.StatusBadRequest, nil)
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, nil)
 
 			return
 		}
 
 		sid, errResolveSID64 := steamid.ResolveSID64(requestCtx, req.Query)
 		if errResolveSID64 != nil {
-			http_helper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
+			httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
 
 			return
 		}
 
 		person := domain.NewPerson(sid)
 		if errGetProfile := h.pu.GetOrCreatePersonBySteamID(requestCtx, sid, &person); errGetProfile != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			h.log.Error("Failed to create person", zap.Error(errGetProfile))
 
 			return
@@ -234,7 +234,7 @@ func (h PersonHandler) onAPIProfile() gin.HandlerFunc {
 
 		var settings domain.PersonSettings
 		if err := h.pu.GetPersonSettings(ctx, sid, &settings); err != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			h.log.Error("Failed to load person settings", zap.Error(err))
 
 			return
@@ -251,13 +251,13 @@ func (h PersonHandler) onAPISearchPlayers() gin.HandlerFunc {
 
 	return func(ctx *gin.Context) {
 		var query domain.PlayerQuery
-		if !http_helper.Bind(ctx, log, &query) {
+		if !httphelper.Bind(ctx, log, &query) {
 			return
 		}
 
 		people, count, errGetPeople := h.pu.GetPeople(ctx, query)
 		if errGetPeople != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}

@@ -9,8 +9,8 @@ type discordUsecase struct {
 	dr domain.DiscordRepository
 }
 
-func NewDiscordUsecase(dr domain.DiscordRepository) domain.DiscordUsecase {
-	return &discordUsecase{dr: dr}
+func NewDiscordUsecase(repository domain.DiscordRepository) domain.DiscordUsecase {
+	return &discordUsecase{dr: repository}
 }
 
 func (d discordUsecase) Shutdown(guildID string) {

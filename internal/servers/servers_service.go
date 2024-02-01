@@ -10,7 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/http_helper"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"go.uber.org/zap"
@@ -60,14 +60,14 @@ func (h *serversHandler) onAPIExportSourcemodSimpleAdmins() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		privilegedIds, errPrivilegedIds := h.pu.GetSteamIdsAbove(ctx, domain.PReserved)
 		if errPrivilegedIds != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
 
 		players, errPlayers := h.pu.GetPeopleBySteamID(ctx, privilegedIds)
 		if errPlayers != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
@@ -107,7 +107,7 @@ func (h *serversHandler) onAPIGetServers() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		fullServers, _, errServers := h.serversUsecase.GetServers(ctx, domain.ServerQueryFilter{})
 		if errServers != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
@@ -153,8 +153,8 @@ func (h *serversHandler) onAPIGetServerStates() gin.HandlerFunc {
 
 	return func(ctx *gin.Context) {
 		var (
-			lat = http_helper.GetDefaultFloat64(ctx.GetHeader("cf-iplatitude"), 41.7774)
-			lon = http_helper.GetDefaultFloat64(ctx.GetHeader("cf-iplongitude"), -87.6160)
+			lat = httphelper.GetDefaultFloat64(ctx.GetHeader("cf-iplatitude"), 41.7774)
+			lon = httphelper.GetDefaultFloat64(ctx.GetHeader("cf-iplongitude"), -87.6160)
 			// region := ctx.GetHeader("cf-region-code")
 			curState = h.stateUsecase.Current()
 			servers  []domain.BaseServer
@@ -200,7 +200,7 @@ func (h *serversHandler) onAPIPostServer() gin.HandlerFunc {
 
 	return func(ctx *gin.Context) {
 		var req serverUpdateRequest
-		if !http_helper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, log, &req) {
 			return
 		}
 
@@ -215,7 +215,7 @@ func (h *serversHandler) onAPIPostServer() gin.HandlerFunc {
 		server.IsEnabled = req.IsEnabled
 
 		if errSave := h.serversUsecase.SaveServer(ctx, &server); errSave != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			log.Error("Failed to save new server", zap.Error(errSave))
 
 			return
@@ -250,22 +250,22 @@ func (h *serversHandler) onAPIPostServerUpdate() gin.HandlerFunc {
 	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		serverID, idErr := http_helper.GetIntParam(ctx, "server_id")
+		serverID, idErr := httphelper.GetIntParam(ctx, "server_id")
 		if idErr != nil {
-			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
 
 			return
 		}
 
 		var server domain.Server
 		if errServer := h.serversUsecase.GetServer(ctx, serverID, &server); errServer != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
 
 		var req serverUpdateRequest
-		if !http_helper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, log, &req) {
 			return
 		}
 
@@ -284,7 +284,7 @@ func (h *serversHandler) onAPIPostServerUpdate() gin.HandlerFunc {
 		server.EnableStats = req.EnableStats
 
 		if errSave := h.serversUsecase.SaveServer(ctx, &server); errSave != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			log.Error("Failed to update server", zap.Error(errSave))
 
 			return
@@ -303,13 +303,13 @@ func (h *serversHandler) onAPIGetServersAdmin() gin.HandlerFunc {
 
 	return func(ctx *gin.Context) {
 		var filter domain.ServerQueryFilter
-		if !http_helper.Bind(ctx, log, &filter) {
+		if !httphelper.Bind(ctx, log, &filter) {
 			return
 		}
 
 		servers, count, errServers := h.serversUsecase.GetServers(ctx, filter)
 		if errServers != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
@@ -322,16 +322,16 @@ func (h *serversHandler) onAPIPostServerDelete() gin.HandlerFunc {
 	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		serverID, idErr := http_helper.GetIntParam(ctx, "server_id")
+		serverID, idErr := httphelper.GetIntParam(ctx, "server_id")
 		if idErr != nil {
-			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
 
 			return
 		}
 
 		var server domain.Server
 		if errServer := h.serversUsecase.GetServer(ctx, serverID, &server); errServer != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
@@ -339,7 +339,7 @@ func (h *serversHandler) onAPIPostServerDelete() gin.HandlerFunc {
 		server.Deleted = true
 
 		if errSave := h.serversUsecase.SaveServer(ctx, &server); errSave != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			log.Error("Failed to delete server", zap.Error(errSave))
 
 			return

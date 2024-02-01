@@ -3,7 +3,11 @@ package asset
 import (
 	"bytes"
 	"context"
+	"errors"
+	"io"
+	"strings"
 
+	"github.com/gabriel-vasile/mimetype"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
 )
@@ -12,12 +16,12 @@ type AssetUsecase struct {
 	ar domain.AssetRepository
 }
 
-func (s AssetUsecase) GetAsset(ctx context.Context, uuid uuid.UUID) (*domain.Asset, error) {
-	panic("DropAsset")
+func NewAssetUsecase(assetRepository domain.AssetRepository) domain.AssetUsecase {
+	return &AssetUsecase{ar: assetRepository}
 }
 
-func NewAssetUsecase(ar domain.AssetRepository) domain.AssetUsecase {
-	return &AssetUsecase{ar: ar}
+func (s AssetUsecase) GetAsset(ctx context.Context, uuid uuid.UUID) (*domain.Asset, error) {
+	panic("DropAsset")
 }
 
 func (s AssetUsecase) SaveAsset(ctx context.Context, bucket string, asset *domain.Asset, content []byte) error {
@@ -42,4 +46,19 @@ func (s AssetUsecase) DropAsset(ctx context.Context, asset *domain.Asset) error 
 	}
 
 	return nil
+}
+
+func GenerateFileMeta(body io.Reader, name string) (string, string, int64, error) {
+	content, errRead := io.ReadAll(body)
+	if errRead != nil {
+		return "", "", 0, errors.Join(errRead, domain.ErrReadContent)
+	}
+
+	mime := mimetype.Detect(content)
+
+	if !strings.HasSuffix(strings.ToLower(name), mime.Extension()) {
+		name += mime.Extension()
+	}
+
+	return name, mime.String(), int64(len(content)), nil
 }

@@ -9,7 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/http_helper"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"go.uber.org/zap"
 )
 
@@ -18,7 +18,7 @@ type matchHandler struct {
 	mu  domain.MatchUsecase
 }
 
-// todo move data updaters to repository
+// todo move data updaters to repository.
 func NewMatchHandler(ctx context.Context, logger *zap.Logger, engine *gin.Engine, mu domain.MatchUsecase, ath domain.AuthUsecase) {
 	handler := matchHandler{log: logger, mu: mu}
 
@@ -74,9 +74,9 @@ func (h matchHandler) onAPIGetsStatsWeapon() gin.HandlerFunc {
 	}
 
 	return func(ctx *gin.Context) {
-		weaponID, errWeaponID := http_helper.GetIntParam(ctx, "weapon_id")
+		weaponID, errWeaponID := httphelper.GetIntParam(ctx, "weapon_id")
 		if errWeaponID != nil {
-			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
 
 			return
 		}
@@ -86,7 +86,7 @@ func (h matchHandler) onAPIGetsStatsWeapon() gin.HandlerFunc {
 		errWeapon := h.mu.GetWeaponByID(ctx, weaponID, &weapon)
 
 		if errWeapon != nil {
-			http_helper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
+			httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
 
 			return
 		}
@@ -95,7 +95,7 @@ func (h matchHandler) onAPIGetsStatsWeapon() gin.HandlerFunc {
 		if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
 			log.Error("Failed to get weapons overall top stats",
 				zap.Error(errChat))
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
@@ -152,9 +152,9 @@ func (h matchHandler) onAPIGetPlayerWeaponStatsOverall() gin.HandlerFunc {
 	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		steamID, errSteamID := http_helper.GetSID64Param(ctx, "steam_id")
+		steamID, errSteamID := httphelper.GetSID64Param(ctx, "steam_id")
 		if errSteamID != nil {
-			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
 
 			return
 		}
@@ -163,7 +163,7 @@ func (h matchHandler) onAPIGetPlayerWeaponStatsOverall() gin.HandlerFunc {
 		if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
 			log.Error("Failed to query player weapons stats",
 				zap.Error(errChat))
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
@@ -180,9 +180,9 @@ func (h matchHandler) onAPIGetPlayerClassStatsOverall() gin.HandlerFunc {
 	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		steamID, errSteamID := http_helper.GetSID64Param(ctx, "steam_id")
+		steamID, errSteamID := httphelper.GetSID64Param(ctx, "steam_id")
 		if errSteamID != nil {
-			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
 
 			return
 		}
@@ -191,7 +191,7 @@ func (h matchHandler) onAPIGetPlayerClassStatsOverall() gin.HandlerFunc {
 		if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
 			log.Error("Failed to query player class stats",
 				zap.Error(errChat))
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
@@ -208,9 +208,9 @@ func (h matchHandler) onAPIGetPlayerStatsOverall() gin.HandlerFunc {
 	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		steamID, errSteamID := http_helper.GetSID64Param(ctx, "steam_id")
+		steamID, errSteamID := httphelper.GetSID64Param(ctx, "steam_id")
 		if errSteamID != nil {
-			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
 
 			return
 		}
@@ -219,7 +219,7 @@ func (h matchHandler) onAPIGetPlayerStatsOverall() gin.HandlerFunc {
 		if errChat := h.mu.PlayerOverallStats(ctx, steamID, &por); errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
 			log.Error("Failed to query player stats overall",
 				zap.Error(errChat))
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
@@ -232,7 +232,7 @@ func (h matchHandler) onAPIGetMapUsage() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		mapUsages, errServers := h.mu.GetMapUsageStats(ctx)
 		if errServers != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
@@ -245,10 +245,10 @@ func (h matchHandler) onAPIGetMatch() gin.HandlerFunc {
 	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		matchID, errID := http_helper.GetUUIDParam(ctx, "match_id")
+		matchID, errID := httphelper.GetUUIDParam(ctx, "match_id")
 		if errID != nil {
 			log.Error("Invalid match_id value", zap.Error(errID))
-			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
 
 			return
 		}
@@ -259,12 +259,12 @@ func (h matchHandler) onAPIGetMatch() gin.HandlerFunc {
 
 		if errMatch != nil {
 			if errors.Is(errMatch, domain.ErrNoResult) {
-				http_helper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
+				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
 
 				return
 			}
 
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
@@ -278,21 +278,21 @@ func (h matchHandler) onAPIGetMatches() gin.HandlerFunc {
 
 	return func(ctx *gin.Context) {
 		var req domain.MatchesQueryOpts
-		if !http_helper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, log, &req) {
 			return
 		}
 
 		// Don't let normal users query anybody but themselves
-		user := http_helper.CurrentUserProfile(ctx)
+		user := httphelper.CurrentUserProfile(ctx)
 		if user.PermissionLevel <= domain.PUser {
 			if !req.SteamID.Valid() {
-				http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+				httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 
 				return
 			}
 
 			if user.SteamID != req.SteamID {
-				http_helper.ResponseErr(ctx, http.StatusForbidden, domain.ErrPermissionDenied)
+				httphelper.ResponseErr(ctx, http.StatusForbidden, domain.ErrPermissionDenied)
 
 				return
 			}
@@ -300,7 +300,7 @@ func (h matchHandler) onAPIGetMatches() gin.HandlerFunc {
 
 		matches, totalCount, matchesErr := h.mu.Matches(ctx, req)
 		if matchesErr != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			log.Error("Failed to perform query", zap.Error(matchesErr))
 
 			return

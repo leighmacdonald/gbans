@@ -31,12 +31,12 @@ func setupCmd() *cobra.Command {
 		Short: "Run Initial Setup",
 		Long:  `Run Initial Setup`,
 		Run: func(cmd *cobra.Command, args []string) {
-			cu := config.NewConfigUsecase(config.NewConfigRepository())
-			if errConfig := cu.Read(false); errConfig != nil {
+			configUsecase := config.NewConfigUsecase(config.NewConfigRepository())
+			if errConfig := configUsecase.Read(false); errConfig != nil {
 				panic(fmt.Sprintf("Failed to read config: %v", errConfig))
 			}
 
-			conf := cu.Config()
+			conf := configUsecase.Config()
 			rootLogger := log.MustCreate(conf, nil)
 			defer func() {
 				_ = rootLogger.Sync()
@@ -50,36 +50,37 @@ func setupCmd() *cobra.Command {
 
 			connCtx, cancelConn := context.WithTimeout(ctx, time.Second*5)
 			defer cancelConn()
-			db := database.New(rootLogger, conf.DB.DSN, false, conf.DB.LogQueries)
+			databaseRepository := database.New(rootLogger, conf.DB.DSN, false, conf.DB.LogQueries)
 
 			rootLogger.Info("Connecting to database")
-			if errConnect := db.Connect(connCtx); errConnect != nil {
+			if errConnect := databaseRepository.Connect(connCtx); errConnect != nil {
 				rootLogger.Fatal("Failed to connect to database", zap.Error(errConnect))
 			}
 			defer func() {
-				if errClose := db.Close(); errClose != nil {
+				if errClose := databaseRepository.Close(); errClose != nil {
 					rootLogger.Error("Failed to close database cleanly", zap.Error(errClose))
 				}
 			}()
 
-			if errDelete := db.Exec(ctx, "DELETE FROM person_messages_filter"); errDelete != nil {
+			if //goland:noinspection ALL
+			errDelete := databaseRepository.Exec(ctx, "DELETE FROM person_messages_filter"); errDelete != nil {
 				rootLogger.Fatal("Failed to delete existing", zap.Error(errDelete))
 			}
-			eb := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
-			wm := fp.NewMutexMap[logparse.Weapon, int]()
+			broadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
+			weaponMap := fp.NewMutexMap[logparse.Weapon, int]()
 
-			sv := servers.NewServersUsecase(servers.NewServersRepository(db))
-			st := state.NewStateUsecase(rootLogger, eb, state.NewStateRepository(state.NewCollector(rootLogger, sv)), cu, sv)
-			pu := person.NewPersonUsecase(rootLogger, person.NewPersonRepository(db))
-			au := asset.NewAssetUsecase(asset.NewS3Repository(rootLogger, db, nil, conf.S3.Region))
-			meu := media.NewMediaUsecase(conf.S3.BucketMedia, media.NewMediaRepository(db), au)
-			neu := news.NewNewsUsecase(news.NewNewsRepository(db))
-			wu := wiki.NewWikiUsecase(wiki.NewWikiRepository(db, meu))
-			mu := match.NewMatchUsecase(rootLogger, eb, match.NewMatchRepository(db, pu), st, sv, nil, wm)
+			serversUsecase := servers.NewServersUsecase(servers.NewServersRepository(databaseRepository))
+			stateUsecase := state.NewStateUsecase(rootLogger, broadcaster, state.NewStateRepository(state.NewCollector(rootLogger, serversUsecase)), configUsecase, serversUsecase)
+			personUsecase := person.NewPersonUsecase(rootLogger, person.NewPersonRepository(databaseRepository))
+			assetUsecase := asset.NewAssetUsecase(asset.NewS3Repository(rootLogger, databaseRepository, nil, conf.S3.Region))
+			mediaUsecase := media.NewMediaUsecase(conf.S3.BucketMedia, media.NewMediaRepository(databaseRepository), assetUsecase)
+			newsUsecase := news.NewNewsUsecase(news.NewNewsRepository(databaseRepository))
+			wikiUsecase := wiki.NewWikiUsecase(wiki.NewWikiRepository(databaseRepository, mediaUsecase))
+			matchUsecase := match.NewMatchUsecase(rootLogger, broadcaster, match.NewMatchRepository(databaseRepository, personUsecase), stateUsecase, serversUsecase, nil, weaponMap)
 
 			var owner domain.Person
 
-			if errRootUser := pu.GetPersonBySteamID(ctx, conf.General.Owner, &owner); errRootUser != nil {
+			if errRootUser := personUsecase.GetPersonBySteamID(ctx, conf.General.Owner, &owner); errRootUser != nil {
 				if !errors.Is(errRootUser, domain.ErrNoResult) {
 					rootLogger.Fatal("Failed checking owner state", zap.Error(errRootUser))
 				}
@@ -87,7 +88,7 @@ func setupCmd() *cobra.Command {
 				newOwner := domain.NewPerson(conf.General.Owner)
 				newOwner.PermissionLevel = domain.PAdmin
 
-				if errSave := pu.SavePerson(ctx, &newOwner); errSave != nil {
+				if errSave := personUsecase.SavePerson(ctx, &newOwner); errSave != nil {
 					rootLogger.Fatal("Failed create new owner", zap.Error(errSave))
 				}
 
@@ -99,7 +100,7 @@ func setupCmd() *cobra.Command {
 					UpdatedOn:   time.Now(),
 				}
 
-				if errSave := neu.SaveNewsArticle(ctx, &newsEntry); errSave != nil {
+				if errSave := newsUsecase.SaveNewsArticle(ctx, &newsEntry); errSave != nil {
 					rootLogger.Fatal("Failed create example news entry", zap.Error(errSave))
 				}
 
@@ -112,11 +113,11 @@ func setupCmd() *cobra.Command {
 				server.LogSecret = 12345678
 				server.Region = "asia"
 
-				if errSave := sv.SaveServer(ctx, &server); errSave != nil {
+				if errSave := serversUsecase.SaveServer(ctx, &server); errSave != nil {
 					rootLogger.Fatal("Failed create example server entry", zap.Error(errSave))
 				}
 
-				page := domain.Page{
+				page := domain.WikiPage{
 					Slug:      domain.RootSlug,
 					BodyMD:    "# Welcome to the wiki",
 					Revision:  1,
@@ -124,12 +125,12 @@ func setupCmd() *cobra.Command {
 					UpdatedOn: time.Now(),
 				}
 
-				if errSave := wu.SaveWikiPage(ctx, &page); errSave != nil {
+				if errSave := wikiUsecase.SaveWikiPage(ctx, &page); errSave != nil {
 					rootLogger.Fatal("Failed save example wiki entry", zap.Error(errSave))
 				}
 			}
 
-			if errWeapons := mu.LoadWeapons(ctx, wm); errWeapons != nil {
+			if errWeapons := matchUsecase.LoadWeapons(ctx, weaponMap); errWeapons != nil {
 				rootLogger.Fatal("Failed to import weapons", zap.Error(errWeapons))
 			}
 

@@ -23,17 +23,17 @@ type srcdsUsecase struct {
 	cookie string
 }
 
-func NewSrcdsUsecase(log *zap.Logger, cu domain.ConfigUsecase, sv domain.ServersUsecase,
-	pu domain.PersonUsecase, ru domain.ReportUsecase, du domain.DiscordUsecase,
+func NewSrcdsUsecase(log *zap.Logger, configUsecase domain.ConfigUsecase, serversUsecase domain.ServersUsecase,
+	personUsecase domain.PersonUsecase, reportUsecase domain.ReportUsecase, discordUsecase domain.DiscordUsecase,
 ) domain.SRCDSUsecase {
 	return &srcdsUsecase{
 		log:    log,
-		cu:     cu,
-		sv:     sv,
-		pu:     pu,
-		ru:     ru,
-		du:     du,
-		cookie: cu.Config().HTTP.CookieKey,
+		cu:     configUsecase,
+		sv:     serversUsecase,
+		pu:     personUsecase,
+		ru:     reportUsecase,
+		du:     discordUsecase,
+		cookie: configUsecase.Config().HTTP.CookieKey,
 	}
 }
 

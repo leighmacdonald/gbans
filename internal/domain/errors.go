@@ -5,7 +5,6 @@ import (
 )
 
 var (
-	ErrScanPerson               = errors.New("failed to scan person result")
 	ErrMessageContext           = errors.New("could not fetch message context")
 	ErrFailedWeapon             = errors.New("failed to save weapon")
 	ErrSaveChanges              = errors.New("cannot save changes")

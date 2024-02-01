@@ -6,7 +6,7 @@ import (
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
-// todo add discord
+// todo add discord.
 type NotificationRepository interface {
 	SendNotification(ctx context.Context, targetID steamid.SID64, severity NotificationSeverity, message string, link string) error
 	GetPersonNotifications(ctx context.Context, filters NotificationQuery) ([]UserNotification, int64, error)

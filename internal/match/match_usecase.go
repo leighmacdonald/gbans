@@ -26,21 +26,20 @@ type matchUsecase struct {
 }
 
 func NewMatchUsecase(log *zap.Logger, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
-	mr domain.MatchRepository, su domain.StateUsecase, sv domain.ServersUsecase, du domain.DiscordUsecase,
-	wm fp.MutexMap[logparse.Weapon, int],
+	matchRepository domain.MatchRepository, stateUsecase domain.StateUsecase, serversUsecase domain.ServersUsecase,
+	discordUsecase domain.DiscordUsecase, weaponMap fp.MutexMap[logparse.Weapon, int],
 ) domain.MatchUsecase {
-	mu := &matchUsecase{
-		mr:           mr,
-		su:           su,
-		sv:           sv,
-		du:           du,
-		wm:           wm,
+	return &matchUsecase{
+		mr:           matchRepository,
+		su:           stateUsecase,
+		sv:           serversUsecase,
+		du:           discordUsecase,
+		wm:           weaponMap,
 		log:          log,
 		events:       make(chan logparse.ServerEvent),
 		broadcaster:  broadcaster,
 		matchUUIDMap: fp.NewMutexMap[int, uuid.UUID](),
 	}
-	return mu
 }
 
 func (m matchUsecase) GetMatchIDFromServerID(serverID int) (uuid.UUID, bool) {
@@ -163,7 +162,7 @@ func (m matchUsecase) MatchGetByID(ctx context.Context, matchID uuid.UUID, match
 	return m.mr.MatchGetByID(ctx, matchID, match)
 }
 
-// todo hide
+// todo hide.
 func (m matchUsecase) MatchSave(ctx context.Context, match *logparse.Match, weaponMap fp.MutexMap[logparse.Weapon, int]) error {
 	return m.mr.MatchSave(ctx, match, weaponMap)
 }

@@ -25,31 +25,35 @@ import (
 type DiscordService struct {
 	du  domain.DiscordUsecase
 	pu  domain.PersonUsecase
-	bu  domain.BanUsecase
+	bu  domain.BanSteamUsecase
+	bnu domain.BanNetUsecase
+	bau domain.BanASNUsecase
 	su  domain.StateUsecase
 	sv  domain.ServersUsecase
 	cu  domain.ConfigUsecase
 	nu  domain.NetworkUsecase
 	wfu domain.WordFilterUsecase
-	ch  domain.ChatUsecase
 	mu  domain.MatchUsecase
 	log *zap.Logger
 }
 
-func NewDiscordHandler(log *zap.Logger, du domain.DiscordUsecase, pu domain.PersonUsecase, bu domain.BanUsecase,
-	su domain.StateUsecase, sv domain.ServersUsecase, cu domain.ConfigUsecase, nu domain.NetworkUsecase,
-	wfu domain.WordFilterUsecase, mu domain.MatchUsecase,
+func NewDiscordHandler(log *zap.Logger, discordUsecase domain.DiscordUsecase, personUsecase domain.PersonUsecase,
+	banUsecase domain.BanSteamUsecase, stateUsecase domain.StateUsecase, serversUsecase domain.ServersUsecase,
+	configUsecase domain.ConfigUsecase, networkUsecase domain.NetworkUsecase, filterUsecase domain.WordFilterUsecase,
+	matchUsecase domain.MatchUsecase, banNetUsecase domain.BanNetUsecase, banASNUsecase domain.BanASNUsecase,
 ) *DiscordService {
 	handler := &DiscordService{
-		du:  du,
-		pu:  pu,
-		su:  su,
-		bu:  bu,
-		sv:  sv,
-		cu:  cu,
-		nu:  nu,
-		mu:  mu,
-		wfu: wfu,
+		du:  discordUsecase,
+		pu:  personUsecase,
+		su:  stateUsecase,
+		bu:  banUsecase,
+		sv:  serversUsecase,
+		cu:  configUsecase,
+		nu:  networkUsecase,
+		mu:  matchUsecase,
+		wfu: filterUsecase,
+		bnu: banNetUsecase,
+		bau: banASNUsecase,
 		log: log.Named("discord"),
 	}
 
@@ -155,7 +159,7 @@ func (h DiscordService) makeOnCheck() func(_ context.Context, _ *discordgo.Sessi
 		}
 
 		ban := domain.NewBannedPerson()
-		if errGetBanBySID := h.bu.GetBanBySteamID(ctx, sid, &ban, false); errGetBanBySID != nil {
+		if errGetBanBySID := h.bu.GetBySteamID(ctx, sid, &ban, false); errGetBanBySID != nil {
 			if !errors.Is(errGetBanBySID, domain.ErrNoResult) {
 				h.log.Error("Failed to get ban by steamid", zap.Error(errGetBanBySID))
 
@@ -163,7 +167,7 @@ func (h DiscordService) makeOnCheck() func(_ context.Context, _ *discordgo.Sessi
 			}
 		}
 
-		oldBans, _, errOld := h.bu.GetBansSteam(ctx, domain.SteamBansQueryFilter{
+		oldBans, _, errOld := h.bu.Get(ctx, domain.SteamBansQueryFilter{
 			BansQueryFilter: domain.BansQueryFilter{
 				QueryFilter: domain.QueryFilter{Deleted: true},
 				TargetID:    domain.StringSID(sid),
@@ -175,7 +179,7 @@ func (h DiscordService) makeOnCheck() func(_ context.Context, _ *discordgo.Sessi
 			}
 		}
 
-		bannedNets, errGetBanNet := h.bu.GetBanNetByAddress(ctx, player.IPAddr)
+		bannedNets, errGetBanNet := h.bnu.GetByAddress(ctx, player.IPAddr)
 		if errGetBanNet != nil {
 			if !errors.Is(errGetBanNet, domain.ErrNoResult) {
 				h.log.Error("Failed to get ban nets by addr", zap.Error(errGetBanNet))
@@ -375,7 +379,7 @@ func (h DiscordService) onUnbanASN(ctx context.Context, _ *discordgo.Session, in
 	opts := domain.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 	asNumStr := opts[domain.OptASN].StringValue()
 
-	banExisted, errUnbanASN := h.bu.UnbanASN(ctx, asNumStr)
+	banExisted, errUnbanASN := h.bau.Unban(ctx, asNumStr)
 	if errUnbanASN != nil {
 		if errors.Is(errUnbanASN, domain.ErrNoResult) {
 			return nil, domain.ErrBanDoesNotExist
@@ -880,7 +884,7 @@ func (h DiscordService) makeOnMute() func(context.Context, *discordgo.Session, *
 			return nil, errOpts
 		}
 
-		if errBan := h.bu.BanSteam(ctx, &banSteam); errBan != nil {
+		if errBan := h.bu.Ban(ctx, &banSteam); errBan != nil {
 			return nil, errBan
 		}
 
@@ -943,7 +947,7 @@ func (h DiscordService) onBanASN(ctx context.Context, _ *discordgo.Session,
 		return nil, errOpts
 	}
 
-	if errBanASN := h.bu.BanASN(ctx, &banASN); errBanASN != nil {
+	if errBanASN := h.bau.Ban(ctx, &banASN); errBanASN != nil {
 		if errors.Is(errBanASN, domain.ErrDuplicate) {
 			return nil, domain.ErrDuplicateBan
 		}
@@ -999,7 +1003,7 @@ func (h DiscordService) onBanIP(ctx context.Context, _ *discordgo.Session,
 		return nil, errOpts
 	}
 
-	if errBanNet := h.bu.BanCIDR(ctx, &banCIDR); errBanNet != nil {
+	if errBanNet := h.bnu.Ban(ctx, &banCIDR); errBanNet != nil {
 		return nil, errBanNet
 	}
 
@@ -1056,7 +1060,7 @@ func (h DiscordService) onBanSteam(ctx context.Context, _ *discordgo.Session,
 		return nil, errOpts
 	}
 
-	if errBan := h.bu.BanSteam(ctx, &banSteam); errBan != nil {
+	if errBan := h.bu.Ban(ctx, &banSteam); errBan != nil {
 		if errors.Is(errBan, domain.ErrDuplicate) {
 			return nil, domain.ErrDuplicateBan
 		}

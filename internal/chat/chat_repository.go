@@ -19,25 +19,25 @@ import (
 )
 
 type chatRepository struct {
-	db          database.Database
-	log         *zap.Logger
-	pu          domain.PersonUsecase
-	wfu         domain.WordFilterUsecase
-	mu          domain.MatchUsecase
-	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
-	WarningChan chan domain.NewUserWarning
+	db                database.Database
+	log               *zap.Logger
+	personUsecase     domain.PersonUsecase
+	wordFilterUsecase domain.WordFilterUsecase
+	matchUsecase      domain.MatchUsecase
+	broadcaster       *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
+	WarningChan       chan domain.NewUserWarning
 }
 
-func NewChatRepository(database database.Database, log *zap.Logger, pu domain.PersonUsecase, wfu domain.WordFilterUsecase,
+func NewChatRepository(database database.Database, log *zap.Logger, personUsecase domain.PersonUsecase, wordFilterUsecase domain.WordFilterUsecase,
 	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
 ) domain.ChatRepository {
 	return &chatRepository{
-		db:          database,
-		log:         log,
-		pu:          pu,
-		wfu:         wfu,
-		broadcaster: broadcaster,
-		WarningChan: make(chan domain.NewUserWarning),
+		db:                database,
+		log:               log,
+		personUsecase:     personUsecase,
+		wordFilterUsecase: wordFilterUsecase,
+		broadcaster:       broadcaster,
+		WarningChan:       make(chan domain.NewUserWarning),
 	}
 }
 
@@ -70,13 +70,13 @@ func (r chatRepository) Start(ctx context.Context) {
 				}
 
 				var author domain.Person
-				if errPerson := r.pu.GetOrCreatePersonBySteamID(ctx, newServerEvent.SID, &author); errPerson != nil {
+				if errPerson := r.personUsecase.GetOrCreatePersonBySteamID(ctx, newServerEvent.SID, &author); errPerson != nil {
 					r.log.Error("Failed to add chat history, could not get author", zap.Error(errPerson))
 
 					continue
 				}
 
-				matchID, _ := r.mu.GetMatchIDFromServerID(evt.ServerID)
+				matchID, _ := r.matchUsecase.GetMatchIDFromServerID(evt.ServerID)
 
 				msg := domain.PersonMessage{
 					SteamID:     newServerEvent.SID,
@@ -106,9 +106,9 @@ func (r chatRepository) Start(ctx context.Context) {
 							zap.String("message", msg.Body))
 					}
 
-					matchedFilter := r.wfu.Check(userMsg.Body)
+					matchedFilter := r.wordFilterUsecase.Check(userMsg.Body)
 					if len(matchedFilter) > 0 {
-						if errSaveMatch := r.wfu.AddMessageFilterMatch(ctx, userMsg.PersonMessageID, matchedFilter[0].FilterID); errSaveMatch != nil {
+						if errSaveMatch := r.wordFilterUsecase.AddMessageFilterMatch(ctx, userMsg.PersonMessageID, matchedFilter[0].FilterID); errSaveMatch != nil {
 							r.log.Error("Failed to save message findMatch status", zap.Error(errSaveMatch))
 						}
 

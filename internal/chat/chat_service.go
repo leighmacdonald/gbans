@@ -8,7 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/http_helper"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"go.uber.org/zap"
 )
 
@@ -43,7 +43,7 @@ func (h ChatHandler) onAPIQueryMessages() gin.HandlerFunc {
 
 	return func(ctx *gin.Context) {
 		var req domain.ChatHistoryQueryFilter
-		if !http_helper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, log, &req) {
 			return
 		}
 
@@ -51,7 +51,7 @@ func (h ChatHandler) onAPIQueryMessages() gin.HandlerFunc {
 			req.Limit = 50
 		}
 
-		user := http_helper.CurrentUserProfile(ctx)
+		user := httphelper.CurrentUserProfile(ctx)
 
 		if user.PermissionLevel <= domain.PUser {
 			req.Unrestricted = false
@@ -72,7 +72,7 @@ func (h ChatHandler) onAPIQueryMessages() gin.HandlerFunc {
 		if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
 			log.Error("Failed to query messages history",
 				zap.Error(errChat), zap.String("sid", string(req.SourceID)))
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
@@ -85,17 +85,17 @@ func (h ChatHandler) onAPIQueryMessageContext() gin.HandlerFunc {
 	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		messageID, errMessageID := http_helper.GetInt64Param(ctx, "person_message_id")
+		messageID, errMessageID := httphelper.GetInt64Param(ctx, "person_message_id")
 		if errMessageID != nil {
-			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
 			log.Debug("Got invalid person_message_id", zap.Error(errMessageID))
 
 			return
 		}
 
-		padding, errPadding := http_helper.GetIntParam(ctx, "padding")
+		padding, errPadding := httphelper.GetIntParam(ctx, "padding")
 		if errPadding != nil {
-			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 			log.Debug("Got invalid padding", zap.Error(errPadding))
 
 			return
@@ -103,14 +103,14 @@ func (h ChatHandler) onAPIQueryMessageContext() gin.HandlerFunc {
 
 		var msg domain.QueryChatHistoryResult
 		if errMsg := h.cu.GetPersonMessage(ctx, messageID, &msg); errMsg != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
 
 		messages, errQuery := h.cu.GetPersonMessageContext(ctx, msg.ServerID, messageID, padding)
 		if errQuery != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}

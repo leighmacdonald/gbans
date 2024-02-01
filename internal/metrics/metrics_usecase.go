@@ -16,12 +16,13 @@ type metricsUsecase struct {
 	eb        *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 }
 
-func NewMetricsUsecase(logger *zap.Logger, eb *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]) domain.MetricsUsecase {
+func NewMetricsUsecase(logger *zap.Logger, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]) domain.MetricsUsecase {
 	collector := newMetricCollector()
+
 	return &metricsUsecase{
 		collector: collector,
 		log:       logger.Named("metrics"),
-		eb:        eb,
+		eb:        broadcaster,
 	}
 }
 

@@ -18,11 +18,9 @@ import (
 type chatUsecase struct {
 	cr           domain.ChatRepository
 	wfu          domain.WordFilterUsecase
-	su           domain.StateUsecase
-	bu           domain.BanUsecase
+	bu           domain.BanSteamUsecase
 	pu           domain.PersonUsecase
 	du           domain.DiscordUsecase
-	cu           domain.ConfigUsecase
 	log          *zap.Logger
 	st           domain.StateUsecase
 	warningMu    *sync.RWMutex
@@ -37,21 +35,20 @@ type chatUsecase struct {
 	pingDiscord bool
 }
 
-func NewChatUsecase(log *zap.Logger, cu domain.ConfigUsecase, cr domain.ChatRepository,
-	wfu domain.WordFilterUsecase, su domain.StateUsecase, bu domain.BanUsecase, pu domain.PersonUsecase,
-	du domain.DiscordUsecase, st domain.StateUsecase,
+func NewChatUsecase(log *zap.Logger, configUsecase domain.ConfigUsecase, chatRepository domain.ChatRepository,
+	filterUsecase domain.WordFilterUsecase, stateUsecase domain.StateUsecase, banUsecase domain.BanSteamUsecase,
+	personUsecase domain.PersonUsecase, discordUsecase domain.DiscordUsecase,
 ) domain.ChatUsecase {
-	conf := cu.Config()
+	conf := configUsecase.Config()
 
-	uc := &chatUsecase{
-		cr:           cr,
-		wfu:          wfu,
+	return &chatUsecase{
+		cr:           chatRepository,
+		wfu:          filterUsecase,
 		log:          log,
-		su:           su,
-		bu:           bu,
-		pu:           pu,
-		du:           du,
-		st:           st,
+		bu:           banUsecase,
+		pu:           personUsecase,
+		du:           discordUsecase,
+		st:           stateUsecase,
 		pingDiscord:  conf.Filter.PingDiscord,
 		warnings:     make(map[steamid.SID64][]domain.UserWarning),
 		warningMu:    &sync.RWMutex{},
@@ -61,8 +58,6 @@ func NewChatUsecase(log *zap.Logger, cu domain.ConfigUsecase, cr domain.ChatRepo
 		maxWeight:    conf.Filter.MaxWeight,
 		checkTimeout: conf.Filter.CheckTimeout,
 	}
-
-	return uc
 }
 
 func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.NewUserWarning) error {
@@ -95,10 +90,10 @@ func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.Ne
 	switch newWarning.MatchedFilter.Action {
 	case domain.Mute:
 		banSteam.BanType = domain.NoComm
-		errBan = u.bu.BanSteam(ctx, &banSteam)
+		errBan = u.bu.Ban(ctx, &banSteam)
 	case domain.Ban:
 		banSteam.BanType = domain.Banned
-		errBan = u.bu.BanSteam(ctx, &banSteam)
+		errBan = u.bu.Ban(ctx, &banSteam)
 	case domain.Kick:
 		errBan = u.st.Kick(ctx, newWarning.UserMessage.SteamID, newWarning.WarnReason)
 	}
@@ -257,7 +252,7 @@ func (u chatUsecase) GetPersonMessage(ctx context.Context, messageID int64, msg 
 }
 
 func (u chatUsecase) AddChatHistory(ctx context.Context, message *domain.PersonMessage) error {
-	return u.AddChatHistory(ctx, message)
+	return u.cr.AddChatHistory(ctx, message)
 }
 
 func (u chatUsecase) QueryChatHistory(ctx context.Context, filters domain.ChatHistoryQueryFilter) ([]domain.QueryChatHistoryResult, int64, error) {
@@ -265,7 +260,7 @@ func (u chatUsecase) QueryChatHistory(ctx context.Context, filters domain.ChatHi
 }
 
 func (u chatUsecase) GetPersonMessageContext(ctx context.Context, serverID int, messageID int64, paddedMessageCount int) ([]domain.QueryChatHistoryResult, error) {
-	return u.GetPersonMessageContext(ctx, serverID, messageID, paddedMessageCount)
+	return u.cr.GetPersonMessageContext(ctx, serverID, messageID, paddedMessageCount)
 }
 
 func (u chatUsecase) TopChatters(ctx context.Context, count uint64) ([]domain.TopChatterResult, error) {

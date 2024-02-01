@@ -16,7 +16,7 @@ type AssetRepository interface {
 	LinkObject(bucket string, name string) string
 }
 
-// TODO SaveAsset/DropAsset higher level funcs
+// TODO SaveAsset/DropAsset higher level funcs.
 type AssetUsecase interface {
 	GetAsset(ctx context.Context, uuid uuid.UUID) (*Asset, error)
 	SaveAsset(ctx context.Context, bucket string, asset *Asset, content []byte) error

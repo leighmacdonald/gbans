@@ -17,12 +17,14 @@ type reportUsecase struct {
 	log *zap.Logger
 }
 
-func NewReportUsecase(log *zap.Logger, rr domain.ReportRepository, du domain.DiscordUsecase, cu domain.ConfigUsecase) domain.ReportUsecase {
+func NewReportUsecase(log *zap.Logger, repository domain.ReportRepository, discordUsecase domain.DiscordUsecase,
+	configUsecase domain.ConfigUsecase,
+) domain.ReportUsecase {
 	return &reportUsecase{
 		log: log.Named("report"),
-		du:  du,
-		rr:  rr,
-		cu:  cu,
+		du:  discordUsecase,
+		rr:  repository,
+		cu:  configUsecase,
 	}
 }
 

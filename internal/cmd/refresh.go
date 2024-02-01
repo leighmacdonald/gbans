@@ -41,12 +41,12 @@ func refreshFiltersCmd() *cobra.Command {
 		Short: "refresh filters",
 		Long:  `refresh filters`,
 		Run: func(cmd *cobra.Command, args []string) {
-			cu := config.NewConfigUsecase(config.NewConfigRepository())
-			if errConfig := cu.Read(false); errConfig != nil {
+			configUsecase := config.NewConfigUsecase(config.NewConfigRepository())
+			if errConfig := configUsecase.Read(false); errConfig != nil {
 				panic(fmt.Sprintf("Failed to read config: %v", errConfig))
 			}
 
-			conf := cu.Config()
+			conf := configUsecase.Config()
 			rootLogger := log.MustCreate(conf, nil)
 			defer func() {
 				_ = rootLogger.Sync()
@@ -60,45 +60,51 @@ func refreshFiltersCmd() *cobra.Command {
 
 			connCtx, cancelConn := context.WithTimeout(ctx, time.Second*5)
 			defer cancelConn()
-			db := database.New(rootLogger, conf.DB.DSN, false, conf.DB.LogQueries)
+			dbUsecase := database.New(rootLogger, conf.DB.DSN, false, conf.DB.LogQueries)
 
 			rootLogger.Info("Connecting to database")
-			if errConnect := db.Connect(connCtx); errConnect != nil {
+			if errConnect := dbUsecase.Connect(connCtx); errConnect != nil {
 				rootLogger.Fatal("Failed to connect to database", zap.Error(errConnect))
 			}
 			defer func() {
-				if errClose := db.Close(); errClose != nil {
+				if errClose := dbUsecase.Close(); errClose != nil {
 					rootLogger.Error("Failed to close database cleanly", zap.Error(errClose))
 				}
 			}()
 
-			if errDelete := db.Exec(ctx, "DELETE FROM person_messages_filter"); errDelete != nil {
+			if //goland:noinspection ALL
+			errDelete := dbUsecase.Exec(ctx, "DELETE FROM person_messages_filter"); errDelete != nil {
 				rootLogger.Fatal("Failed to delete existing", zap.Error(errDelete))
 			}
 
 			eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
 
-			sv := servers.NewServersUsecase(servers.NewServersRepository(db))
+			serversUsecase := servers.NewServersUsecase(servers.NewServersRepository(dbUsecase))
 
-			sr := state.NewStateRepository(state.NewCollector(rootLogger, sv))
-			st := state.NewStateUsecase(rootLogger, eventBroadcaster, sr, cu, sv)
+			stateRepository := state.NewStateRepository(state.NewCollector(rootLogger, serversUsecase))
+			stateUsecase := state.NewStateUsecase(rootLogger, eventBroadcaster, stateRepository, configUsecase, serversUsecase)
 
-			dr, _ := discord.NewDiscordRepository(rootLogger, conf)
+			discordRepository, _ := discord.NewDiscordRepository(rootLogger, conf)
 
-			du := discord.NewDiscordUsecase(dr)
+			discordUsecase := discord.NewDiscordUsecase(discordRepository)
 
-			ru := report.NewReportUsecase(rootLogger, report.NewReportRepository(db), du, cu)
+			reportUsecase := report.NewReportUsecase(rootLogger, report.NewReportRepository(dbUsecase), discordUsecase, configUsecase)
 
-			pu := person.NewPersonUsecase(rootLogger, person.NewPersonRepository(db))
-			wfu := wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(db), du)
-			wfu.Import(ctx)
-			blu := blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(db))
-			nu := network.NewNetworkUsecase(rootLogger, eventBroadcaster, network.NewNetworkRepository(db), blu, pu)
-			br := ban.NewBanRepository(db, pu, nu)
-			sgu := steamgroup.NewBanGroupUsecase(rootLogger, steamgroup.NewSteamGroupRepository(db))
-			bu := ban.NewBanUsecase(rootLogger, br, pu, cu, du, sgu, ru, st)
-			cr := chat.NewChatRepository(db, rootLogger, pu, wfu, eventBroadcaster)
-			chu := chat.NewChatUsecase(rootLogger, cu, cr, wfu, st, bu, pu, du, st)
+			personUsecase := person.NewPersonUsecase(rootLogger, person.NewPersonRepository(dbUsecase))
+
+			wordFilterUsecase := wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(dbUsecase), discordUsecase)
+			if errImport := wordFilterUsecase.Import(ctx); errImport != nil {
+				rootLogger.Fatal("Failed to load filters")
+			}
+
+			blocklistUsecase := blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(dbUsecase))
+			networkUsecase := network.NewNetworkUsecase(rootLogger, eventBroadcaster, network.NewNetworkRepository(dbUsecase), blocklistUsecase, personUsecase)
+			banRepository := ban.NewBanSteamRepository(dbUsecase, personUsecase, networkUsecase)
+			banGroupUsecase := steamgroup.NewBanGroupUsecase(rootLogger, steamgroup.NewSteamGroupRepository(dbUsecase))
+			banUsecase := ban.NewBanSteamUsecase(rootLogger, banRepository, personUsecase, configUsecase, discordUsecase, banGroupUsecase, reportUsecase, stateUsecase)
+			chatRepository := chat.NewChatRepository(dbUsecase, rootLogger, personUsecase, wordFilterUsecase, eventBroadcaster)
+			chatUsecase := chat.NewChatUsecase(rootLogger, configUsecase, chatRepository, wordFilterUsecase, stateUsecase, banUsecase,
+				personUsecase, discordUsecase)
 
 			var query domain.ChatHistoryQueryFilter
 			query.DontCalcTotal = true
@@ -110,7 +116,7 @@ func refreshFiltersCmd() *cobra.Command {
 			matches := 0
 
 			for {
-				messages, _, errMessages := chu.QueryChatHistory(ctx, query)
+				messages, _, errMessages := chatUsecase.QueryChatHistory(ctx, query)
 				if errMessages != nil {
 					rootLogger.Error("Failed to load more messages", zap.Error(errMessages))
 
@@ -118,9 +124,9 @@ func refreshFiltersCmd() *cobra.Command {
 				}
 
 				for _, message := range messages {
-					matched := wfu.Check(message.Body)
+					matched := wordFilterUsecase.Check(message.Body)
 					if len(matched) > 0 {
-						if errAdd := wfu.AddMessageFilterMatch(ctx, message.PersonMessageID, matched[0].FilterID); errAdd != nil {
+						if errAdd := wordFilterUsecase.AddMessageFilterMatch(ctx, message.PersonMessageID, matched[0].FilterID); errAdd != nil {
 							rootLogger.Error("Failed to add filter match", zap.Error(errAdd))
 						}
 

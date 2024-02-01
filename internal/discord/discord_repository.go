@@ -22,11 +22,6 @@ type discordRepository struct {
 	conf              domain.Config
 }
 
-//type Payload struct {
-//	ChannelID string
-//	Embed     *discordgo.MessageEmbed
-//}
-
 func NewDiscordRepository(logger *zap.Logger, conf domain.Config) (domain.DiscordRepository, error) {
 	// Immediately connects
 	session, errNewSession := discordgo.New("Bot " + conf.Discord.Token)
@@ -223,6 +218,7 @@ func (bot *discordRepository) SendPayload(channel domain.DiscordChannel, payload
 	}
 
 	var channelID string
+
 	switch channel {
 	case domain.ChannelMod:
 		channelID = bot.conf.Discord.LogChannelID

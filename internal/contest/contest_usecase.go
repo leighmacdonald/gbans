@@ -12,8 +12,8 @@ type contestUsecase struct {
 	contestRepo domain.ContestRepository
 }
 
-func NewContestUsecase(cr domain.ContestRepository) domain.ContestUsecase {
-	return &contestUsecase{contestRepo: cr}
+func NewContestUsecase(contestRepository domain.ContestRepository) domain.ContestUsecase {
+	return &contestUsecase{contestRepo: contestRepository}
 }
 
 func (c *contestUsecase) ContestSave(ctx context.Context, contest *domain.Contest) error {

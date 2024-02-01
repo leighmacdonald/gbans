@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/http_helper"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"go.uber.org/zap"
 )
 
@@ -41,7 +41,7 @@ func (h mediaHandler) onAPISaveMedia() gin.HandlerFunc {
 
 	return func(ctx *gin.Context) {
 		var req domain.UserUploadedFile
-		if !http_helper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, log, &req) {
 			return
 		}
 
@@ -52,10 +52,11 @@ func (h mediaHandler) onAPISaveMedia() gin.HandlerFunc {
 			return
 		}
 
-		media, errMedia := h.mu.Create(ctx, http_helper.CurrentUserProfile(ctx).SteamID, req.Name, req.Mime, content, nil)
+		media, errMedia := h.mu.Create(ctx, httphelper.CurrentUserProfile(ctx).SteamID, req.Name, req.Mime, content, nil)
 
 		if errMedia != nil {
-			http_helper.ResponseErr(ctx, http.StatusInternalServerError, errMedia)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, errMedia)
+
 			return
 		}
 
@@ -65,15 +66,15 @@ func (h mediaHandler) onAPISaveMedia() gin.HandlerFunc {
 
 func (h mediaHandler) onGetMediaByID() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		mediaID, idErr := http_helper.GetIntParam(ctx, "media_id")
+		mediaID, idErr := httphelper.GetIntParam(ctx, "media_id")
 		if idErr != nil {
-			http_helper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
 
 			return
 		}
 
 		var media domain.Media
-		if err := http_helper.ErrorHandled(ctx, h.mu.GetMediaByID(ctx, mediaID, &media)); err != nil {
+		if err := httphelper.ErrorHandled(ctx, h.mu.GetMediaByID(ctx, mediaID, &media)); err != nil {
 			return
 		}
 

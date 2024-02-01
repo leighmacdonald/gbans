@@ -10,8 +10,8 @@ type serversUsecase struct {
 	serversRepo domain.ServersRepository
 }
 
-func NewServersUsecase(sr domain.ServersRepository) domain.ServersUsecase {
-	return &serversUsecase{serversRepo: sr}
+func NewServersUsecase(repository domain.ServersRepository) domain.ServersUsecase {
+	return &serversUsecase{serversRepo: repository}
 }
 
 func (s *serversUsecase) GetServer(ctx context.Context, serverID int, server *domain.Server) error {
