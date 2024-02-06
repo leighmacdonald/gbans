@@ -19,7 +19,9 @@ func NewServersRepository(database database.Database) domain.ServersRepository {
 	return &serversRepository{db: database}
 }
 
-func (r *serversRepository) GetServer(ctx context.Context, serverID int, server *domain.Server) error {
+func (r *serversRepository) GetServer(ctx context.Context, serverID int) (domain.Server, error) {
+	var server domain.Server
+
 	row, rowErr := r.db.QueryRowBuilder(ctx, r.db.
 		Builder().
 		Select("server_id", "short_name", "name", "address", "port", "rcon", "password",
@@ -28,7 +30,7 @@ func (r *serversRepository) GetServer(ctx context.Context, serverID int, server 
 		From("server").
 		Where(sq.And{sq.Eq{"server_id": serverID}, sq.Eq{"deleted": false}}))
 	if rowErr != nil {
-		return r.db.DBErr(rowErr)
+		return server, r.db.DBErr(rowErr)
 	}
 
 	if errScan := row.Scan(&server.ServerID, &server.ShortName, &server.Name, &server.Address, &server.Port, &server.RCON,
@@ -36,10 +38,10 @@ func (r *serversRepository) GetServer(ctx context.Context, serverID int, server 
 		&server.ReservedSlots, &server.IsEnabled, &server.Region, &server.CC,
 		&server.Latitude, &server.Longitude,
 		&server.Deleted, &server.LogSecret, &server.EnableStats); errScan != nil {
-		return r.db.DBErr(errScan)
+		return server, r.db.DBErr(errScan)
 	}
 
-	return nil
+	return server, nil
 }
 
 func (r *serversRepository) GetServerPermissions(ctx context.Context) ([]domain.ServerPermission, error) {

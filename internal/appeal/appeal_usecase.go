@@ -2,6 +2,8 @@ package appeal
 
 import (
 	"context"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/steamid/v3/steamid"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/discord"
@@ -26,34 +28,49 @@ func (u *appealUsecase) GetAppealsByActivity(ctx context.Context, opts domain.Ap
 	return u.appealRepository.GetAppealsByActivity(ctx, opts)
 }
 
-func (u *appealUsecase) SaveBanMessage(ctx context.Context, curUserProfile domain.UserProfile, req domain.BanAppealMessage) (*domain.BanAppealMessage, error) {
-	if req.MessageMD == "" {
-		return nil, domain.ErrBadRequest
+func (u *appealUsecase) SaveBanMessage(ctx context.Context, curUser domain.UserProfile, reportMessageID int64, newMsg string) (*domain.BanAppealMessage, error) {
+	var existing domain.BanAppealMessage
+	if err := u.GetBanMessageByID(ctx, reportMessageID, &existing); err != nil {
+		return nil, err
 	}
 
-	bannedPerson := domain.NewBannedPerson()
-	if errReport := u.banUsecase.GetByBanID(ctx, req.BanID, &bannedPerson, true); errReport != nil {
-		return nil, errReport
-	}
-
-	if bannedPerson.AppealState != domain.Open && curUserProfile.PermissionLevel < domain.PModerator {
+	if !httphelper.HasPrivilege(curUser, steamid.Collection{existing.AuthorID}, domain.PModerator) {
 		return nil, domain.ErrPermissionDenied
 	}
 
-	var target domain.Person
-	if errTarget := u.personUsecase.GetOrCreatePersonBySteamID(ctx, bannedPerson.TargetID, &target); errTarget != nil {
+	if newMsg == "" {
+		return nil, domain.ErrBadRequest
+	}
+
+	if newMsg == existing.MessageMD {
+		return nil, domain.ErrDuplicate
+	}
+
+	existing.MessageMD = newMsg
+
+	bannedPerson, errReport := u.banUsecase.GetByBanID(ctx, existing.BanID, true)
+	if errReport != nil {
+		return nil, errReport
+	}
+
+	if bannedPerson.AppealState != domain.Open && curUser.PermissionLevel < domain.PModerator {
+		return nil, domain.ErrPermissionDenied
+	}
+
+	_, errTarget := u.personUsecase.GetOrCreatePersonBySteamID(ctx, bannedPerson.TargetID)
+	if errTarget != nil {
 		return nil, errTarget
 	}
 
-	var source domain.Person
-	if errSource := u.personUsecase.GetOrCreatePersonBySteamID(ctx, bannedPerson.SourceID, &source); errSource != nil {
+	_, errSource := u.personUsecase.GetOrCreatePersonBySteamID(ctx, bannedPerson.SourceID)
+	if errSource != nil {
 		return nil, errSource
 	}
 
-	msg := domain.NewBanAppealMessage(req.BanID, curUserProfile.SteamID, req.MessageMD)
-	msg.PermissionLevel = curUserProfile.PermissionLevel
-	msg.Personaname = curUserProfile.Name
-	msg.Avatarhash = curUserProfile.Avatarhash
+	msg := domain.NewBanAppealMessage(existing.BanID, curUser.SteamID, existing.MessageMD)
+	msg.PermissionLevel = curUser.PermissionLevel
+	msg.Personaname = curUser.Name
+	msg.Avatarhash = curUser.Avatarhash
 
 	if errSave := u.appealRepository.SaveBanMessage(ctx, &msg); errSave != nil {
 		return nil, errSave
@@ -62,7 +79,7 @@ func (u *appealUsecase) SaveBanMessage(ctx context.Context, curUserProfile domai
 	conf := u.configUsecase.Config()
 
 	u.discordUsecase.SendPayload(domain.ChannelModLog, discord.NewAppealMessage(msg.MessageMD,
-		conf.ExtURL(bannedPerson.BanSteam), curUserProfile, conf.ExtURL(curUserProfile)))
+		conf.ExtURL(bannedPerson.BanSteam), curUser, conf.ExtURL(curUser)))
 
 	bannedPerson.UpdatedOn = time.Now()
 
@@ -70,23 +87,43 @@ func (u *appealUsecase) SaveBanMessage(ctx context.Context, curUserProfile domai
 		return nil, errUpdate
 	}
 
+	u.discordUsecase.SendPayload(domain.ChannelModLog, discord.EditAppealMessage(existing, msg.MessageMD, curUser, u.configUsecase.ExtURL(curUser)))
+
 	return &msg, nil
 }
 
-func (u *appealUsecase) GetBanMessages(ctx context.Context, banID int64) ([]domain.BanAppealMessage, error) {
+func (u *appealUsecase) GetBanMessages(ctx context.Context, userProfile domain.UserProfile, banID int64) ([]domain.BanAppealMessage, error) {
+	banPerson, errGetBan := u.banUsecase.GetByBanID(ctx, banID, true)
+	if errGetBan != nil {
+		return nil, errGetBan
+	}
+
+	if !httphelper.HasPrivilege(userProfile, steamid.Collection{banPerson.TargetID, banPerson.SourceID}, domain.PModerator) {
+		return nil, domain.ErrPermissionDenied
+	}
+
 	return u.appealRepository.GetBanMessages(ctx, banID)
 }
 
-func (u *appealUsecase) GetBanMessageByID(ctx context.Context, banMessageID int, message *domain.BanAppealMessage) error {
+func (u *appealUsecase) GetBanMessageByID(ctx context.Context, banMessageID int64, message *domain.BanAppealMessage) error {
 	return u.appealRepository.GetBanMessageByID(ctx, banMessageID, message)
 }
 
-func (u *appealUsecase) DropBanMessage(ctx context.Context, curUser domain.UserProfile, message *domain.BanAppealMessage) error {
-	if errDrop := u.appealRepository.DropBanMessage(ctx, message); errDrop != nil {
+func (u *appealUsecase) DropBanMessage(ctx context.Context, curUser domain.UserProfile, banMessageID int64) error {
+	var existing domain.BanAppealMessage
+	if errExist := u.GetBanMessageByID(ctx, banMessageID, &existing); errExist != nil {
+		return errExist
+	}
+
+	if !httphelper.HasPrivilege(curUser, steamid.Collection{existing.AuthorID}, domain.PModerator) {
+		return domain.ErrPermissionDenied
+	}
+
+	if errDrop := u.appealRepository.DropBanMessage(ctx, &existing); errDrop != nil {
 		return errDrop
 	}
 
-	u.discordUsecase.SendPayload(domain.ChannelModLog, discord.DeleteAppealMessage(message, curUser, u.configUsecase.ExtURL(curUser)))
+	u.discordUsecase.SendPayload(domain.ChannelModLog, discord.DeleteAppealMessage(&existing, curUser, u.configUsecase.ExtURL(curUser)))
 
 	return nil
 }

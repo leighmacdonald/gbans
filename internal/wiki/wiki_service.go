@@ -1,16 +1,12 @@
 package wiki
 
 import (
-	"errors"
-	"net/http"
-	"runtime"
-	"strings"
-	"time"
-
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"go.uber.org/zap"
+	"net/http"
+	"runtime"
 )
 
 type wikiHandler struct {
@@ -41,28 +37,9 @@ func NewWIkiHandler(logger *zap.Logger, engine *gin.Engine, wikiUsecase domain.W
 
 func (w *wikiHandler) onAPIGetWikiSlug() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		currentUser := httphelper.CurrentUserProfile(ctx)
-
-		slug := strings.ToLower(ctx.Param("slug"))
-		if slug[0] == '/' {
-			slug = slug[1:]
-		}
-
-		page, errGetWikiSlug := w.wikiUsecase.GetWikiPageBySlug(ctx, slug)
-		if errGetWikiSlug != nil {
-			if errors.Is(errGetWikiSlug, domain.ErrNoResult) {
-				ctx.JSON(http.StatusOK, page)
-
-				return
-			}
-
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-
-			return
-		}
-
-		if page.PermissionLevel > currentUser.PermissionLevel {
-			httphelper.ResponseErr(ctx, http.StatusForbidden, domain.ErrPermissionDenied)
+		page, err := w.wikiUsecase.GetWikiPageBySlug(ctx, httphelper.CurrentUserProfile(ctx), ctx.Param("slug"))
+		if err != nil {
+			httphelper.ErrorHandled(ctx, err)
 
 			return
 		}
@@ -80,32 +57,9 @@ func (w *wikiHandler) onAPISaveWikiSlug() gin.HandlerFunc {
 			return
 		}
 
-		if req.Slug == "" || req.BodyMD == "" {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
-
-			return
-		}
-
-		page, errGetWikiSlug := w.wikiUsecase.GetWikiPageBySlug(ctx, req.Slug)
-		if errGetWikiSlug != nil {
-			if errors.Is(errGetWikiSlug, domain.ErrNoResult) {
-				page.CreatedOn = time.Now()
-				page.Revision += 1
-				page.Slug = req.Slug
-			} else {
-				httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-
-				return
-			}
-		} else {
-			page = page.NewRevision()
-		}
-
-		page.PermissionLevel = req.PermissionLevel
-		page.BodyMD = req.BodyMD
-
-		if errSave := w.wikiUsecase.SaveWikiPage(ctx, &page); errSave != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+		page, err := w.wikiUsecase.SaveWikiPage(ctx, httphelper.CurrentUserProfile(ctx), req.Slug, req.BodyMD, req.PermissionLevel)
+		if err != nil {
+			httphelper.ErrorHandled(ctx, err)
 
 			return
 		}

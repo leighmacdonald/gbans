@@ -31,7 +31,6 @@ type Collector struct {
 	statusUpdateFreq time.Duration
 	msListUpdateFreq time.Duration
 	updateTimeout    time.Duration
-	masterServerList []serverLocation
 	serverState      map[int]domain.ServerState
 	stateMu          *sync.RWMutex
 	configs          []domain.ServerConfig
@@ -122,31 +121,6 @@ func (c *Collector) Current() []domain.ServerState {
 	return curState
 }
 
-func (c *Collector) startMSL(ctx context.Context) {
-	var (
-		log            = c.log.Named("msl_update")
-		mlUpdateTicker = time.NewTicker(c.msListUpdateFreq)
-	)
-
-	for {
-		select {
-		case <-mlUpdateTicker.C:
-			newMsl, errUpdateMsl := c.updateMSL(ctx)
-			if errUpdateMsl != nil {
-				log.Error("Failed to update master server list", zap.Error(errUpdateMsl))
-
-				continue
-			}
-
-			c.stateMu.Lock()
-			c.masterServerList = newMsl
-			c.stateMu.Unlock()
-		case <-ctx.Done():
-			return
-		}
-	}
-}
-
 func (c *Collector) onStatusUpdate(conf domain.ServerConfig, newState extra.Status, maxVisible int) {
 	c.stateMu.Lock()
 	defer c.stateMu.Unlock()
@@ -204,6 +178,7 @@ func (c *Collector) setServerConfigs(configs []domain.ServerConfig) {
 	}
 
 	c.stateMu.Lock()
+	defer c.stateMu.Unlock()
 
 	for _, cfg := range configs {
 		if _, found := c.serverState[cfg.ServerID]; !found {
@@ -230,11 +205,7 @@ func (c *Collector) setServerConfigs(configs []domain.ServerConfig) {
 		}
 	}
 
-	c.stateMu.Unlock()
-
-	c.configMu.Lock()
 	c.configs = configs
-	c.configMu.Unlock()
 }
 
 func (c *Collector) Update(serverID int, update domain.PartialStateUpdate) error {
@@ -442,12 +413,6 @@ func (c *Collector) updateMSL(ctx context.Context) ([]serverLocation, error) {
 	return communityServers, nil
 }
 
-// todo add external
-// conf := c.configUsecase.Config()
-// if conf.Debug.AddRCONLogAddress != "" {
-// c.LogAddressAdd(ctx, conf.Debug.AddRCONLogAddress)
-// }
-
 func (c *Collector) Start(ctx context.Context) {
 	var (
 		log          = c.log.Named("State")
@@ -455,7 +420,6 @@ func (c *Collector) Start(ctx context.Context) {
 		updateTicker = time.NewTicker(time.Minute * 30)
 	)
 
-	go c.startMSL(ctx)
 	go c.startStatus(ctx)
 
 	go func() {

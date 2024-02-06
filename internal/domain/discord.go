@@ -29,6 +29,8 @@ type DiscordUsecase interface {
 	Shutdown(guildID string)
 	SendPayload(channelID DiscordChannel, embed *discordgo.MessageEmbed)
 	RegisterHandler(cmd Cmd, handler SlashCommandHandler) error
+
+	FilterAdd(ctx context.Context, user PersonInfo, pattern string, isRegex bool) (*discordgo.MessageEmbed, error)
 }
 
 type FoundPlayer struct {

@@ -558,8 +558,8 @@ func (r *matchRepository) MatchSave(ctx context.Context, match *logparse.Match, 
 			continue
 		}
 
-		var loadPlayerTest domain.Person
-		if errPlayer := r.pu.GetOrCreatePersonBySteamID(ctx, player.SteamID, &loadPlayerTest); errPlayer != nil {
+		_, errPlayer := r.pu.GetOrCreatePersonBySteamID(ctx, player.SteamID)
+		if errPlayer != nil {
 			if errRollback := transaction.Rollback(ctx); errRollback != nil {
 				return errors.Join(errRollback, domain.ErrTxRollback)
 			}

@@ -4,13 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
-	"os"
-	"path/filepath"
 	"runtime"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -19,7 +15,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
-	"github.com/leighmacdonald/gbans/pkg/demoparser"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
@@ -190,21 +185,6 @@ func (s *srcdsHandler) onAPIPostDemo() gin.HandlerFunc {
 	log := s.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
-		serverID := httphelper.ServerFromCtx(ctx)
-		if serverID <= 0 {
-			httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrBadRequest)
-
-			return
-		}
-
-		var server domain.Server
-		if errGetServer := s.ServerUsecase.GetServer(ctx, serverID, &server); errGetServer != nil {
-			log.Error("ServerStore not found", zap.Int("server_id", serverID))
-			httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
-
-			return
-		}
-
 		demoFormFile, errDemoFile := ctx.FormFile("demo")
 		if errDemoFile != nil {
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
@@ -212,77 +192,16 @@ func (s *srcdsHandler) onAPIPostDemo() gin.HandlerFunc {
 			return
 		}
 
-		demoHandle, errDemoHandle := demoFormFile.Open()
+		demoFile, errDemoHandle := demoFormFile.Open()
 		if errDemoHandle != nil {
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 
 			return
 		}
 
-		demoContent, errRead := io.ReadAll(demoHandle)
-		if errRead != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+		defer util.LogCloser(demoFile, log)
 
-			return
-		}
-
-		dir, errDir := os.MkdirTemp("", "gbans-demo")
-		if errDir != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
-
-			return
-		}
-
-		defer func() {
-			if err := os.RemoveAll(dir); err != nil {
-				log.Error("Failed to cleanup temp demo path", zap.Error(err))
-			}
-		}()
-
-		namePartsAll := strings.Split(demoFormFile.Filename, "-")
-
-		var mapName string
-
-		if strings.Contains(demoFormFile.Filename, "workshop-") {
-			// 20231221-042605-workshop-cp_overgrown_rc8-ugc503939302.dem
-			mapName = namePartsAll[3]
-		} else {
-			// 20231112-063943-koth_harvest_final.dem
-			nameParts := strings.Split(namePartsAll[2], ".")
-			mapName = nameParts[0]
-		}
-
-		tempPath := filepath.Join(dir, demoFormFile.Filename)
-
-		localFile, errLocalFile := os.Create(tempPath)
-		if errLocalFile != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
-
-			return
-		}
-
-		if _, err := localFile.Write(demoContent); err != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
-
-			return
-		}
-
-		_ = localFile.Close()
-
-		var demoInfo demoparser.DemoInfo
-		if errParse := demoparser.Parse(ctx, tempPath, &demoInfo); errParse != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
-
-			return
-		}
-
-		intStats := map[steamid.SID64]gin.H{}
-
-		for _, steamID := range demoInfo.SteamIDs() {
-			intStats[steamID] = gin.H{}
-		}
-
-		newDemo, errCreateDemo := s.demoUsecase.Create(ctx, demoFormFile.Filename, demoContent, mapName, intStats, serverID)
+		newDemo, errCreateDemo := s.demoUsecase.Create(ctx, demoFormFile.Filename, demoFile, demoFormFile.Filename, httphelper.ServerFromCtx(ctx))
 		if errCreateDemo != nil {
 			httphelper.HandleErrInternal(ctx)
 
@@ -319,8 +238,8 @@ func (s *srcdsHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 
 		var (
 			origin   = domain.Web
-			sid      = httphelper.CurrentUserProfile(ctx).SteamID
-			sourceID = domain.StringSID(sid.String())
+			curUser  = httphelper.CurrentUserProfile(ctx)
+			sourceID = domain.StringSID(curUser.SteamID.String())
 		)
 
 		// srcds sourced bans provide a source_id to id the admin
@@ -355,7 +274,7 @@ func (s *srcdsHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 			return
 		}
 
-		if errBan := s.banUsecase.Ban(ctx, &banSteam); errBan != nil {
+		if errBan := s.banUsecase.Ban(ctx, curUser, &banSteam); errBan != nil {
 			log.Error("Failed to ban steam profile",
 				zap.Error(errBan), zap.Int64("target_id", banSteam.TargetID.Int64()))
 
@@ -421,8 +340,8 @@ func (s *srcdsHandler) onAPIPostPingMod() gin.HandlerFunc {
 			return
 		}
 
-		var author domain.Person
-		if err := s.PersonUsecase.GetOrCreatePersonBySteamID(ctx, req.SteamID, &author); err != nil {
+		author, err := s.PersonUsecase.GetOrCreatePersonBySteamID(ctx, req.SteamID)
+		if err != nil {
 			log.Error("Failed to load user", zap.Error(err))
 
 			return
@@ -493,9 +412,8 @@ func (s *srcdsHandler) onAPIPostServerCheck() gin.HandlerFunc {
 			return
 		}
 
-		var person domain.Person
-
-		if errPerson := s.PersonUsecase.GetOrCreatePersonBySteamID(responseCtx, steamID, &person); errPerson != nil {
+		person, errPerson := s.PersonUsecase.GetOrCreatePersonBySteamID(responseCtx, steamID)
+		if errPerson != nil {
 			log.Error("Failed to create connecting player", zap.Error(errPerson))
 		} else if person.Expired() {
 			if err := thirdparty.UpdatePlayerSummary(ctx, &person); err != nil {
@@ -535,10 +453,11 @@ func (s *srcdsHandler) onAPIPostServerCheck() gin.HandlerFunc {
 			return
 		}
 
-		bannedPerson := domain.NewBannedPerson()
-		if errGetBan := s.banUsecase.GetBySteamID(responseCtx, steamID, &bannedPerson, false); errGetBan != nil {
+		bannedPerson, errGetBan := s.banUsecase.GetBySteamID(responseCtx, steamID, false)
+		if errGetBan != nil {
 			if errors.Is(errGetBan, domain.ErrNoResult) {
-				isShared, errShared := s.banUsecase.IsOnIPWithBan(ctx, steamid.SIDToSID64(request.SteamID), request.IP)
+				isShared, errShared := s.banUsecase.IsOnIPWithBan(ctx, httphelper.CurrentUserProfile(ctx),
+					steamid.SIDToSID64(request.SteamID), request.IP)
 				if errShared != nil {
 					log.Error("Failed to check shared ip state", zap.Error(errShared))
 

@@ -9,21 +9,17 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/thirdparty"
-	"github.com/leighmacdonald/gbans/pkg/util"
-	"github.com/leighmacdonald/steamid/v3/steamid"
-	"github.com/leighmacdonald/steamweb/v2"
 	"go.uber.org/zap"
 )
 
-type PersonHandler struct {
+type personHandler struct {
 	pu            domain.PersonUsecase
 	configUsecase domain.ConfigUsecase
 	log           *zap.Logger
 }
 
 func NewPersonHandler(logger *zap.Logger, engine *gin.Engine, configUsecase domain.ConfigUsecase, personUsecase domain.PersonUsecase, ath domain.AuthUsecase) {
-	handler := &PersonHandler{pu: personUsecase, configUsecase: configUsecase, log: logger.Named("PersonHandler")}
+	handler := &personHandler{pu: personUsecase, configUsecase: configUsecase, log: logger.Named("personHandler")}
 
 	engine.GET("/api/profile", handler.onAPIProfile())
 
@@ -51,7 +47,7 @@ func NewPersonHandler(logger *zap.Logger, engine *gin.Engine, configUsecase doma
 	}
 }
 
-func (h PersonHandler) onAPIPutPlayerPermission() gin.HandlerFunc {
+func (h personHandler) onAPIPutPlayerPermission() gin.HandlerFunc {
 	type updatePermissionLevel struct {
 		PermissionLevel domain.Privilege `json:"permission_level"`
 	}
@@ -69,46 +65,20 @@ func (h PersonHandler) onAPIPutPlayerPermission() gin.HandlerFunc {
 			return
 		}
 
-		var person domain.Person
-		if errGet := h.pu.GetPersonBySteamID(ctx, steamID, &person); errGet != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-
-			h.log.Error("Failed to load person", zap.Error(errGet))
-
-			return
-		}
-
-		if steamID == h.configUsecase.Config().General.Owner {
-			httphelper.ResponseErr(ctx, http.StatusConflict, domain.ErrPermissionDenied)
-
-			return
-		}
-
-		person.PermissionLevel = req.PermissionLevel
-
-		if errSave := h.pu.SavePerson(ctx, &person); errSave != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-
-			h.log.Error("Failed to save person", zap.Error(errSave))
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, person)
+		ctx.JSON(http.StatusOK, gin.H{})
 
 		h.log.Info("Player permission updated",
 			zap.Int64("steam_id", steamID.Int64()),
-			zap.String("permissions", person.PermissionLevel.String()))
+			zap.String("permissions", req.PermissionLevel.String()))
 	}
 }
 
-func (h PersonHandler) onAPIGetPersonSettings() gin.HandlerFunc {
+func (h personHandler) onAPIGetPersonSettings() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		user := httphelper.CurrentUserProfile(ctx)
 
-		var settings domain.PersonSettings
-
-		if err := h.pu.GetPersonSettings(ctx, user.SteamID, &settings); err != nil {
+		settings, err := h.pu.GetPersonSettings(ctx, user.SteamID)
+		if err != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			h.log.Error("Failed to fetch person settings", zap.Error(err), zap.Int64("steam_id", user.SteamID.Int64()))
 
@@ -119,38 +89,17 @@ func (h PersonHandler) onAPIGetPersonSettings() gin.HandlerFunc {
 	}
 }
 
-func (h PersonHandler) onAPIPostPersonSettings() gin.HandlerFunc {
-	type settingsUpdateReq struct {
-		ForumSignature       string `json:"forum_signature"`
-		ForumProfileMessages bool   `json:"forum_profile_messages"`
-		StatsHidden          bool   `json:"stats_hidden"`
-	}
-
+func (h personHandler) onAPIPostPersonSettings() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		user := httphelper.CurrentUserProfile(ctx)
-
-		var req settingsUpdateReq
+		var req domain.PersonSettingsUpdate
 
 		if !httphelper.Bind(ctx, h.log, &req) {
 			return
 		}
 
-		var settings domain.PersonSettings
-
-		if err := h.pu.GetPersonSettings(ctx, user.SteamID, &settings); err != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			h.log.Error("Failed to fetch person settings", zap.Error(err), zap.Int64("steam_id", user.SteamID.Int64()))
-
-			return
-		}
-
-		settings.ForumProfileMessages = req.ForumProfileMessages
-		settings.StatsHidden = req.StatsHidden
-		settings.ForumSignature = util.SanitizeUGC(req.ForumSignature)
-
-		if err := h.pu.SavePersonSettings(ctx, &settings); err != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			h.log.Error("Failed to save person settings", zap.Error(err), zap.Int64("steam_id", user.SteamID.Int64()))
+		settings, err := h.pu.SavePersonSettings(ctx, httphelper.CurrentUserProfile(ctx), req)
+		if err != nil {
+			httphelper.ErrorHandled(ctx, err)
 
 			return
 		}
@@ -159,7 +108,7 @@ func (h PersonHandler) onAPIPostPersonSettings() gin.HandlerFunc {
 	}
 }
 
-func (h PersonHandler) onAPICurrentProfile() gin.HandlerFunc {
+func (h personHandler) onAPICurrentProfile() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		profile := httphelper.CurrentUserProfile(ctx)
 		if !profile.SteamID.Valid() {
@@ -176,15 +125,9 @@ func (h PersonHandler) onAPICurrentProfile() gin.HandlerFunc {
 	}
 }
 
-func (h PersonHandler) onAPIProfile() gin.HandlerFunc {
+func (h personHandler) onAPIProfile() gin.HandlerFunc {
 	type profileQuery struct {
 		Query string `form:"query"`
-	}
-
-	type resp struct {
-		Player   *domain.Person        `json:"player"`
-		Friends  []steamweb.Friend     `json:"friends"`
-		Settings domain.PersonSettings `json:"settings"`
 	}
 
 	return func(ctx *gin.Context) {
@@ -198,55 +141,18 @@ func (h PersonHandler) onAPIProfile() gin.HandlerFunc {
 			return
 		}
 
-		sid, errResolveSID64 := steamid.ResolveSID64(requestCtx, req.Query)
-		if errResolveSID64 != nil {
-			httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
+		response, err := h.pu.QueryProfile(requestCtx, req.Query)
+		if err != nil {
+			httphelper.ErrorHandled(ctx, err)
 
 			return
 		}
-
-		person := domain.NewPerson(sid)
-		if errGetProfile := h.pu.GetOrCreatePersonBySteamID(requestCtx, sid, &person); errGetProfile != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			h.log.Error("Failed to create person", zap.Error(errGetProfile))
-
-			return
-		}
-
-		if person.Expired() {
-			if err := thirdparty.UpdatePlayerSummary(ctx, &person); err != nil {
-				h.log.Error("Failed to update player summary", zap.Error(err))
-			} else {
-				if errSave := h.pu.SavePerson(ctx, &person); errSave != nil {
-					h.log.Error("Failed to save person summary", zap.Error(errSave))
-				}
-			}
-		}
-
-		var response resp
-
-		friendList, errFetchFriends := steamweb.GetFriendList(requestCtx, person.SteamID)
-		if errFetchFriends == nil {
-			response.Friends = friendList
-		}
-
-		response.Player = &person
-
-		var settings domain.PersonSettings
-		if err := h.pu.GetPersonSettings(ctx, sid, &settings); err != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			h.log.Error("Failed to load person settings", zap.Error(err))
-
-			return
-		}
-
-		response.Settings = settings
 
 		ctx.JSON(http.StatusOK, response)
 	}
 }
 
-func (h PersonHandler) onAPISearchPlayers() gin.HandlerFunc {
+func (h personHandler) onAPISearchPlayers() gin.HandlerFunc {
 	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {

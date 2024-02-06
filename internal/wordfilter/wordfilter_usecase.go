@@ -3,6 +3,9 @@ package wordfilter
 import (
 	"context"
 	"errors"
+	"github.com/leighmacdonald/gbans/pkg/util"
+	"regexp"
+	"time"
 
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -29,14 +32,75 @@ func (w *wordfilterUsecase) Import(ctx context.Context) error {
 	return nil
 }
 
-// FilterAdd creates a new chat filter using a regex pattern.
-func (w *wordfilterUsecase) FilterAdd(ctx context.Context, filter *domain.Filter) error {
+func (w *wordfilterUsecase) Check(query string) []domain.Filter {
+	return w.wordFilters.Check(query)
+}
+
+func (w *wordfilterUsecase) SaveFilter(ctx context.Context, user domain.PersonInfo, filter *domain.Filter) error {
+	if filter.Pattern == "" {
+		return domain.ErrInvalidPattern
+	}
+
+	_, errDur := util.ParseDuration(filter.Duration)
+	if errDur != nil {
+		return util.ErrInvalidDuration
+	}
+
+	if filter.IsRegex {
+		_, compErr := regexp.Compile(filter.Pattern)
+		if compErr != nil {
+			return domain.ErrInvalidRegex
+		}
+	}
+
+	if filter.Weight < 1 {
+		return domain.ErrInvalidWeight
+	}
+	now := time.Now()
+
+	if filter.FilterID > 0 {
+		existingFilter, errGet := w.filterRepository.GetFilterByID(ctx, filter.FilterID)
+		if errGet != nil {
+			return errGet
+		}
+
+		existingFilter.UpdatedOn = now
+		existingFilter.Pattern = filter.Pattern
+		existingFilter.IsRegex = filter.IsRegex
+		existingFilter.IsEnabled = filter.IsEnabled
+		existingFilter.Action = filter.Action
+		existingFilter.Duration = filter.Duration
+		existingFilter.Weight = filter.Weight
+
+		if errSave := w.filterRepository.SaveFilter(ctx, &existingFilter); errSave != nil {
+			return errSave
+		}
+
+		filter = &existingFilter
+	} else {
+		newFilter := domain.Filter{
+			AuthorID:  user.GetSteamID(),
+			Pattern:   filter.Pattern,
+			Action:    filter.Action,
+			Duration:  filter.Duration,
+			CreatedOn: now,
+			UpdatedOn: now,
+			IsRegex:   filter.IsRegex,
+			IsEnabled: filter.IsEnabled,
+			Weight:    filter.Weight,
+		}
+
+		if errSave := w.filterRepository.SaveFilter(ctx, &newFilter); errSave != nil {
+			return errSave
+		}
+
+		filter = &newFilter
+	}
+
 	if errSave := w.filterRepository.SaveFilter(ctx, filter); errSave != nil {
 		if errors.Is(errSave, domain.ErrDuplicate) {
 			return domain.ErrDuplicate
 		}
-
-		// env.Log().Error("Error saving filter word", zap.Error(errSave))
 
 		return errors.Join(errSave, domain.ErrSaveChanges)
 	}
@@ -51,20 +115,12 @@ func (w *wordfilterUsecase) FilterAdd(ctx context.Context, filter *domain.Filter
 	return nil
 }
 
-func (w *wordfilterUsecase) Check(query string) []domain.Filter {
-	return w.wordFilters.Check(query)
-}
-
-func (w *wordfilterUsecase) SaveFilter(ctx context.Context, filter *domain.Filter) error {
-	return w.filterRepository.SaveFilter(ctx, filter)
-}
-
 func (w *wordfilterUsecase) DropFilter(ctx context.Context, filter *domain.Filter) error {
 	return w.filterRepository.DropFilter(ctx, filter)
 }
 
-func (w *wordfilterUsecase) GetFilterByID(ctx context.Context, filterID int64, filter *domain.Filter) error {
-	return w.filterRepository.GetFilterByID(ctx, filterID, filter)
+func (w *wordfilterUsecase) GetFilterByID(ctx context.Context, filterID int64) (domain.Filter, error) {
+	return w.filterRepository.GetFilterByID(ctx, filterID)
 }
 
 func (w *wordfilterUsecase) GetFilters(ctx context.Context, opts domain.FiltersQueryFilter) ([]domain.Filter, int64, error) {

@@ -88,9 +88,7 @@ func (c *ContestHandler) contestFromCtx(ctx *gin.Context) (domain.Contest, bool)
 
 func (c *ContestHandler) onAPIGetContests() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		user := httphelper.CurrentUserProfile(ctx)
-		publicOnly := user.PermissionLevel < domain.PModerator
-		contests, errContests := c.contestUsecase.Contests(ctx, publicOnly)
+		contests, errContests := c.contestUsecase.Contests(ctx, httphelper.CurrentUserProfile(ctx))
 
 		if errContests != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
@@ -140,22 +138,7 @@ func (c *ContestHandler) onAPIPostContest() gin.HandlerFunc {
 			return
 		}
 
-		if newContest.ContestID.IsNil() {
-			newID, errID := uuid.NewV4()
-			if errID != nil {
-				httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-
-				return
-			}
-
-			newContest.ContestID = newID
-		}
-
-		if errSave := c.contestUsecase.ContestSave(ctx, &newContest); errSave != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
-
-			return
-		}
+		c.contestUsecase.ContestSave(ctx, newContest)
 
 		ctx.JSON(http.StatusOK, newContest)
 	}
@@ -212,13 +195,14 @@ func (c *ContestHandler) onAPIUpdateContest() gin.HandlerFunc {
 			return
 		}
 
-		var contest domain.Contest
-		if !httphelper.Bind(ctx, log, &contest) {
+		var req domain.Contest
+		if !httphelper.Bind(ctx, log, &req) {
 			return
 		}
 
-		if errSave := c.contestUsecase.ContestSave(ctx, &contest); errSave != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+		contest, errSave := c.contestUsecase.ContestSave(ctx, req)
+		if errSave != nil {
+			httphelper.ErrorHandled(ctx, errSave)
 
 			log.Error("Error updating contest", zap.Error(errSave))
 
@@ -228,8 +212,8 @@ func (c *ContestHandler) onAPIUpdateContest() gin.HandlerFunc {
 		ctx.JSON(http.StatusAccepted, contest)
 
 		log.Info("Contest updated",
-			zap.String("contest_id", contest.ContestID.String()),
-			zap.String("title", contest.Title))
+			zap.String("contest_id", req.ContestID.String()),
+			zap.String("title", req.Title))
 	}
 }
 
@@ -256,7 +240,7 @@ func (c *ContestHandler) onAPISaveContestEntryMedia() gin.HandlerFunc {
 
 		media, errCreate := c.mediaUsecase.Create(ctx, httphelper.CurrentUserProfile(ctx).SteamID,
 			req.Name, req.Mime, content, strings.Split(contest.MediaTypes, ","))
-		if errHandle := httphelper.ErrorHandled(ctx, errCreate); errHandle != nil {
+		if errHandle := httphelper.ErrorHandledWithReturn(ctx, errCreate); errHandle != nil {
 			log.Error("Failed to save user contest media", zap.Error(errHandle))
 
 			return
@@ -269,6 +253,10 @@ func (c *ContestHandler) onAPISaveContestEntryMedia() gin.HandlerFunc {
 	}
 }
 
+func (c *ContestHandler) getContestID(ctx *gin.Context) (uuid.UUID, error) {
+	return httphelper.GetUUIDParam(ctx, "contest_id")
+}
+
 func (c *ContestHandler) onAPISaveContestEntryVote() gin.HandlerFunc {
 	log := c.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
@@ -277,8 +265,10 @@ func (c *ContestHandler) onAPISaveContestEntryVote() gin.HandlerFunc {
 	}
 
 	return func(ctx *gin.Context) {
-		contest, success := c.contestFromCtx(ctx)
-		if !success {
+		contestID, contestIDErr := c.getContestID(ctx)
+		if contestIDErr != nil {
+			httphelper.ErrorHandled(ctx, contestIDErr)
+
 			return
 		}
 
@@ -298,16 +288,7 @@ func (c *ContestHandler) onAPISaveContestEntryVote() gin.HandlerFunc {
 			return
 		}
 
-		if !contest.Voting || !contest.DownVotes && direction != "down" {
-			ctx.JSON(http.StatusBadRequest, domain.ErrBadRequest)
-			log.Error("Voting not enabled")
-
-			return
-		}
-
-		currentUser := httphelper.CurrentUserProfile(ctx)
-
-		if errVote := c.contestUsecase.ContestEntryVote(ctx, contestEntryID, currentUser.SteamID, direction == "up"); errVote != nil {
+		if errVote := c.contestUsecase.ContestEntryVote(ctx, contestID, contestEntryID, httphelper.CurrentUserProfile(ctx), direction == "up"); errVote != nil {
 			if errors.Is(errVote, domain.ErrVoteDeleted) {
 				ctx.JSON(http.StatusOK, voteResult{""})
 

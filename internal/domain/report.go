@@ -9,11 +9,11 @@ import (
 )
 
 type ReportRepository interface {
-	GetReportBySteamID(ctx context.Context, authorID steamid.SID64, steamID steamid.SID64, report *Report) error
+	GetReportBySteamID(ctx context.Context, authorID steamid.SID64, steamID steamid.SID64) (Report, error)
 	GetReports(ctx context.Context, opts ReportQueryFilter) ([]Report, int64, error)
-	GetReport(ctx context.Context, reportID int64, report *Report) error
+	GetReport(ctx context.Context, reportID int64) (Report, error)
 	GetReportMessages(ctx context.Context, reportID int64) ([]ReportMessage, error)
-	GetReportMessageByID(ctx context.Context, reportMessageID int64, message *ReportMessage) error
+	GetReportMessageByID(ctx context.Context, reportMessageID int64) (ReportMessage, error)
 	DropReportMessage(ctx context.Context, message *ReportMessage) error
 	DropReport(ctx context.Context, report *Report) error
 	SaveReport(ctx context.Context, report *Report) error
@@ -21,11 +21,11 @@ type ReportRepository interface {
 }
 
 type ReportUsecase interface {
-	GetReportBySteamID(ctx context.Context, authorID steamid.SID64, steamID steamid.SID64, report *Report) error
+	GetReportBySteamID(ctx context.Context, authorID steamid.SID64, steamID steamid.SID64) (Report, error)
 	GetReports(ctx context.Context, opts ReportQueryFilter) ([]Report, int64, error)
-	GetReport(ctx context.Context, reportID int64, report *Report) error
+	GetReport(ctx context.Context, curUser PersonInfo, reportID int64) (Report, error)
 	GetReportMessages(ctx context.Context, reportID int64) ([]ReportMessage, error)
-	GetReportMessageByID(ctx context.Context, reportMessageID int64, message *ReportMessage) error
+	GetReportMessageByID(ctx context.Context, reportMessageID int64) (ReportMessage, error)
 	DropReportMessage(ctx context.Context, message *ReportMessage) error
 	DropReport(ctx context.Context, report *Report) error
 	SaveReport(ctx context.Context, report *Report) error

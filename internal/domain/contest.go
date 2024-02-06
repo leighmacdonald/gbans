@@ -28,16 +28,16 @@ type ContestRepository interface {
 }
 
 type ContestUsecase interface {
-	ContestSave(ctx context.Context, contest *Contest) error
+	ContestSave(ctx context.Context, contest Contest) (Contest, error)
 	ContestByID(ctx context.Context, contestID uuid.UUID, contest *Contest) error
 	ContestDelete(ctx context.Context, contestID uuid.UUID) error
 	ContestEntryDelete(ctx context.Context, contestEntryID uuid.UUID) error
-	Contests(ctx context.Context, publicOnly bool) ([]Contest, error)
+	Contests(ctx context.Context, user PersonInfo) ([]Contest, error)
 	ContestEntry(ctx context.Context, contestID uuid.UUID, entry *ContestEntry) error
 	ContestEntrySave(ctx context.Context, entry ContestEntry) error
 	ContestEntries(ctx context.Context, contestID uuid.UUID) ([]*ContestEntry, error)
 	ContestEntryVoteGet(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SID64, record *ContentVoteRecord) error
-	ContestEntryVote(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SID64, vote bool) error
+	ContestEntryVote(ctx context.Context, contestID uuid.UUID, contestEntryID uuid.UUID, user PersonInfo, vote bool) error
 	ContestEntryVoteDelete(ctx context.Context, contestEntryVoteID int64) error
 	ContestEntryVoteUpdate(ctx context.Context, contestEntryVoteID int64, newVote bool) error
 }

@@ -14,9 +14,9 @@ type WikiRepository interface {
 }
 
 type WikiUsecase interface {
-	GetWikiPageBySlug(ctx context.Context, slug string) (WikiPage, error)
+	GetWikiPageBySlug(ctx context.Context, user PersonInfo, slug string) (WikiPage, error)
 	DeleteWikiPageBySlug(ctx context.Context, slug string) error
-	SaveWikiPage(ctx context.Context, page *WikiPage) error
+	SaveWikiPage(ctx context.Context, user PersonInfo, slug string, body string, level Privilege) (WikiPage, error)
 }
 
 // RootSlug is the top-most (index) page of the wiki.

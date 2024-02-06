@@ -128,7 +128,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				rootLogger.Fatal("Cannot initialize minio", zap.Error(errDR))
 			}
 
-			personUsecase := person.NewPersonUsecase(rootLogger, person.NewPersonRepository(dbUsecase))
+			personUsecase := person.NewPersonUsecase(rootLogger, person.NewPersonRepository(dbUsecase), configUsecase)
 
 			blocklistUsecase := blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(dbUsecase))
 
@@ -139,14 +139,15 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			assetUsecase := asset.NewAssetUsecase(asset.NewS3Repository(rootLogger, dbUsecase, minioClient, conf.S3.Region))
 			mediaUsecase := media.NewMediaUsecase(conf.S3.BucketMedia, media.NewMediaRepository(dbUsecase), assetUsecase)
-			demoUsecase := demo.NewDemoUsecase(rootLogger, conf.S3.BucketDemo, demo.NewDemoRepository(dbUsecase), assetUsecase, configUsecase)
+			serversUsecase := servers.NewServersUsecase(servers.NewServersRepository(dbUsecase))
+			demoUsecase := demo.NewDemoUsecase(rootLogger, conf.S3.BucketDemo, demo.NewDemoRepository(dbUsecase), assetUsecase, configUsecase, serversUsecase)
 			go demoUsecase.Start(ctx)
 
 			banGroupUsecase := steamgroup.NewBanGroupUsecase(rootLogger, steamgroup.NewSteamGroupRepository(dbUsecase))
-			reportUsecase := report.NewReportUsecase(rootLogger, report.NewReportRepository(dbUsecase), discordUsecase, configUsecase)
-			serversUsecase := servers.NewServersUsecase(servers.NewServersRepository(dbUsecase))
+			reportUsecase := report.NewReportUsecase(rootLogger, report.NewReportRepository(dbUsecase), discordUsecase, configUsecase, personUsecase)
 
-			stateUsecase := state.NewStateUsecase(rootLogger, eventBroadcaster, state.NewStateRepository(state.NewCollector(rootLogger, serversUsecase)), configUsecase, serversUsecase)
+			stateUsecase := state.NewStateUsecase(rootLogger, eventBroadcaster,
+				state.NewStateRepository(state.NewCollector(rootLogger, serversUsecase)), configUsecase, serversUsecase)
 			go stateUsecase.Start(ctx)
 
 			banRepository := ban.NewBanSteamRepository(dbUsecase, personUsecase, networkUsecase)
@@ -208,7 +209,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			discordHandler := discord.NewDiscordHandler(rootLogger, discordUsecase, personUsecase, banUsecase,
 				stateUsecase, serversUsecase, configUsecase, networkUsecase, wordFilterUsecase, matchUsecase, banNetUsecase, banASNUsecase)
-			discordHandler.Start()
+			discordHandler.Start(ctx)
 
 			appeal.NewAppealHandler(rootLogger, router, apu, banUsecase, configUsecase, personUsecase, discordUsecase, authUsecase)
 			auth.NewAuthHandler(rootLogger, router, authUsecase, configUsecase, personUsecase)
@@ -237,6 +238,11 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			wordfilter.NewWordFilterHandler(rootLogger, router, configUsecase, wordFilterUsecase, chatUsecase, authUsecase)
 
 			defer discordUsecase.Shutdown(conf.Discord.GuildID)
+
+			if conf.Debug.AddRCONLogAddress != "" {
+				rootLogger.Info("Enabling log forwarding for local host")
+				stateUsecase.LogAddressAdd(ctx, conf.Debug.AddRCONLogAddress)
+			}
 
 			httpServer := httphelper.NewHTTPServer(conf.HTTP.TLS, conf.HTTP.Addr(), router)
 

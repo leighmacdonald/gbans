@@ -13,7 +13,7 @@ import (
 )
 
 type ServersUsecase interface {
-	GetServer(ctx context.Context, serverID int, server *Server) error
+	GetServer(ctx context.Context, serverID int) (Server, error)
 	GetServerPermissions(ctx context.Context) ([]ServerPermission, error)
 	GetServers(ctx context.Context, filter ServerQueryFilter) ([]Server, int64, error)
 	GetServerByName(ctx context.Context, serverName string, server *Server, disabledOk bool, deletedOk bool) error
@@ -23,7 +23,7 @@ type ServersUsecase interface {
 }
 
 type ServersRepository interface {
-	GetServer(ctx context.Context, serverID int, server *Server) error
+	GetServer(ctx context.Context, serverID int) (Server, error)
 	GetServerPermissions(ctx context.Context) ([]ServerPermission, error)
 	GetServers(ctx context.Context, filter ServerQueryFilter) ([]Server, int64, error)
 	GetServerByName(ctx context.Context, serverName string, server *Server, disabledOk bool, deletedOk bool) error

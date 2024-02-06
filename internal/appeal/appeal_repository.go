@@ -244,7 +244,7 @@ func (r *appealRepository) GetBanMessages(ctx context.Context, banID int64) ([]d
 	return messages, nil
 }
 
-func (r *appealRepository) GetBanMessageByID(ctx context.Context, banMessageID int, message *domain.BanAppealMessage) error {
+func (r *appealRepository) GetBanMessageByID(ctx context.Context, banMessageID int64, message *domain.BanAppealMessage) error {
 	query := r.db.
 		Builder().
 		Select("a.ban_message_id", "a.ban_id", "a.author_id", "a.message_md", "a.deleted", "a.created_on",

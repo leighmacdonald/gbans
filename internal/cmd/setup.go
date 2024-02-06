@@ -71,16 +71,15 @@ func setupCmd() *cobra.Command {
 
 			serversUsecase := servers.NewServersUsecase(servers.NewServersRepository(databaseRepository))
 			stateUsecase := state.NewStateUsecase(rootLogger, broadcaster, state.NewStateRepository(state.NewCollector(rootLogger, serversUsecase)), configUsecase, serversUsecase)
-			personUsecase := person.NewPersonUsecase(rootLogger, person.NewPersonRepository(databaseRepository))
+			personUsecase := person.NewPersonUsecase(rootLogger, person.NewPersonRepository(databaseRepository), configUsecase)
 			assetUsecase := asset.NewAssetUsecase(asset.NewS3Repository(rootLogger, databaseRepository, nil, conf.S3.Region))
 			mediaUsecase := media.NewMediaUsecase(conf.S3.BucketMedia, media.NewMediaRepository(databaseRepository), assetUsecase)
 			newsUsecase := news.NewNewsUsecase(news.NewNewsRepository(databaseRepository))
 			wikiUsecase := wiki.NewWikiUsecase(wiki.NewWikiRepository(databaseRepository, mediaUsecase))
 			matchUsecase := match.NewMatchUsecase(rootLogger, broadcaster, match.NewMatchRepository(databaseRepository, personUsecase), stateUsecase, serversUsecase, nil, weaponMap)
 
-			var owner domain.Person
-
-			if errRootUser := personUsecase.GetPersonBySteamID(ctx, conf.General.Owner, &owner); errRootUser != nil {
+			owner, errRootUser := personUsecase.GetPersonBySteamID(ctx, conf.General.Owner)
+			if errRootUser != nil {
 				if !errors.Is(errRootUser, domain.ErrNoResult) {
 					rootLogger.Fatal("Failed checking owner state", zap.Error(errRootUser))
 				}
@@ -125,7 +124,8 @@ func setupCmd() *cobra.Command {
 					UpdatedOn: time.Now(),
 				}
 
-				if errSave := wikiUsecase.SaveWikiPage(ctx, &page); errSave != nil {
+				_, errSave := wikiUsecase.SaveWikiPage(ctx, owner, page.Slug, page.BodyMD, page.PermissionLevel)
+				if errSave != nil {
 					rootLogger.Fatal("Failed save example wiki entry", zap.Error(errSave))
 				}
 			}

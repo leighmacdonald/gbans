@@ -29,7 +29,7 @@ func NewBanNetUsecase(logger *zap.Logger, repository domain.BanNetRepository, pe
 	}
 }
 
-// BanCIDR adds a new network to the banned network list. It will accept any Valid CIDR format.
+// Ban adds a new network to the banned network list. It will accept any Valid CIDR format.
 // It accepts an optional steamid to associate a particular user with the network ban. Any active players
 // that fall within the range will be kicked immediately.
 // If duration is 0, the value of Config.DefaultExpiration() will be used.
@@ -55,14 +55,14 @@ func (s *banNetUsecase) Ban(ctx context.Context, banNet *domain.BanCIDR) error {
 		return errors.Join(errSaveBanNet, domain.ErrSaveBan)
 	}
 
-	var author domain.Person
-	if err := s.personUsecase.GetOrCreatePersonBySteamID(ctx, banNet.SourceID, &author); err != nil {
-		return errors.Join(err, domain.ErrFetchSource)
+	author, errAuthor := s.personUsecase.GetOrCreatePersonBySteamID(ctx, banNet.SourceID)
+	if errAuthor != nil {
+		return errors.Join(errAuthor, domain.ErrFetchSource)
 	}
 
-	var target domain.Person
-	if err := s.personUsecase.GetOrCreatePersonBySteamID(ctx, banNet.TargetID, &target); err != nil {
-		return errors.Join(err, domain.ErrFetchTarget)
+	target, errTarget := s.personUsecase.GetOrCreatePersonBySteamID(ctx, banNet.TargetID)
+	if errTarget != nil {
+		return errors.Join(errTarget, domain.ErrFetchTarget)
 	}
 
 	conf := s.configUsecase.Config()

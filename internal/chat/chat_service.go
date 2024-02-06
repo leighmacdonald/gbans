@@ -2,14 +2,12 @@ package chat
 
 import (
 	"errors"
-	"net/http"
-	"runtime"
-	"time"
-
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"go.uber.org/zap"
+	"net/http"
+	"runtime"
 )
 
 type ChatHandler struct {
@@ -47,28 +45,7 @@ func (h ChatHandler) onAPIQueryMessages() gin.HandlerFunc {
 			return
 		}
 
-		if req.Limit <= 0 || req.Limit > 1000 {
-			req.Limit = 50
-		}
-
-		user := httphelper.CurrentUserProfile(ctx)
-
-		if user.PermissionLevel <= domain.PUser {
-			req.Unrestricted = false
-			beforeLimit := time.Now().Add(-time.Minute * 20)
-
-			if req.DateEnd != nil && req.DateEnd.After(beforeLimit) {
-				req.DateEnd = &beforeLimit
-			}
-
-			if req.DateEnd == nil {
-				req.DateEnd = &beforeLimit
-			}
-		} else {
-			req.Unrestricted = true
-		}
-
-		messages, count, errChat := h.cu.QueryChatHistory(ctx, req)
+		messages, count, errChat := h.cu.QueryChatHistory(ctx, httphelper.CurrentUserProfile(ctx), req)
 		if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
 			log.Error("Failed to query messages history",
 				zap.Error(errChat), zap.String("sid", string(req.SourceID)))
@@ -101,14 +78,7 @@ func (h ChatHandler) onAPIQueryMessageContext() gin.HandlerFunc {
 			return
 		}
 
-		var msg domain.QueryChatHistoryResult
-		if errMsg := h.cu.GetPersonMessage(ctx, messageID, &msg); errMsg != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-
-			return
-		}
-
-		messages, errQuery := h.cu.GetPersonMessageContext(ctx, msg.ServerID, messageID, padding)
+		messages, errQuery := h.cu.GetPersonMessageContext(ctx, messageID, padding)
 		if errQuery != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 

@@ -123,9 +123,11 @@ var profileColumns = []string{ //nolint:gochecknoglobals
 
 // GetPersonBySteamID returns a person by their steam_id. ErrNoResult is returned if the steam_id
 // is not known.
-func (r *personRepository) GetPersonBySteamID(ctx context.Context, sid64 steamid.SID64, person *domain.Person) error {
+func (r *personRepository) GetPersonBySteamID(ctx context.Context, sid64 steamid.SID64) (domain.Person, error) {
+	var person domain.Person
+
 	if !sid64.Valid() {
-		return domain.ErrInvalidSID
+		return person, domain.ErrInvalidSID
 	}
 
 	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
@@ -155,24 +157,28 @@ func (r *personRepository) GetPersonBySteamID(ctx context.Context, sid64 steamid
 			"p.days_since_last_ban",
 			"p.updated_on_steam",
 			"p.muted").
-		From("person r").
+		From("person p").
 		Where(sq.Eq{"p.steam_id": sid64.Int64()}))
 
 	if errRow != nil {
-		return r.db.DBErr(errRow)
+		return person, r.db.DBErr(errRow)
 	}
 
 	person.IsNew = false
 	person.PlayerSummary = &steamweb.PlayerSummary{}
 	person.SteamID = sid64
 
-	return r.db.DBErr(row.Scan(&person.CreatedOn,
+	if err := r.db.DBErr(row.Scan(&person.CreatedOn,
 		&person.UpdatedOn, &person.CommunityVisibilityState, &person.ProfileState, &person.PersonaName,
 		&person.ProfileURL, &person.Avatar, &person.AvatarMedium, &person.AvatarFull, &person.AvatarHash,
 		&person.PersonaState, &person.RealName, &person.TimeCreated, &person.LocCountryCode, &person.LocStateCode,
 		&person.LocCityID, &person.PermissionLevel, &person.DiscordID, &person.CommunityBanned,
 		&person.VACBans, &person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan, &person.UpdatedOnSteam,
-		&person.Muted))
+		&person.Muted)); err != nil {
+		return person, err
+	}
+
+	return person, nil
 }
 
 func (r *personRepository) GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collection) (domain.People, error) {
@@ -259,7 +265,7 @@ func (r *personRepository) GetPeople(ctx context.Context, filter domain.PlayerQu
 			"p.loccountrycode", "p.locstatecode", "p.loccityid", "p.permission_level", "p.discord_id",
 			"p.community_banned", "p.vac_bans", "p.game_bans", "p.economy_ban", "p.days_since_last_ban",
 			"p.updated_on_steam", "p.muted").
-		From("person r")
+		From("person p")
 
 	conditions := sq.And{}
 
@@ -341,7 +347,7 @@ func (r *personRepository) GetPeople(ctx context.Context, filter domain.PlayerQu
 	count, errCount := r.db.GetCount(ctx, r.db.
 		Builder().
 		Select("COUNT(r.steam_id)").
-		From("person r").
+		From("person p").
 		Where(conditions))
 	if errCount != nil {
 		return nil, 0, errors.Join(errCount, domain.ErrCountQuery)
@@ -351,8 +357,11 @@ func (r *personRepository) GetPeople(ctx context.Context, filter domain.PlayerQu
 }
 
 // GetPersonByDiscordID returns a person by their discord_id.
-func (r *personRepository) GetPersonByDiscordID(ctx context.Context, discordID string, person *domain.Person) error {
-	var steamID int64
+func (r *personRepository) GetPersonByDiscordID(ctx context.Context, discordID string) (domain.Person, error) {
+	var (
+		steamID int64
+		person  domain.Person
+	)
 
 	person.IsNew = false
 	person.PlayerSummary = &steamweb.PlayerSummary{}
@@ -363,7 +372,7 @@ func (r *personRepository) GetPersonByDiscordID(ctx context.Context, discordID s
 		From("person").
 		Where(sq.Eq{"discord_id": discordID}))
 	if errRow != nil {
-		return r.db.DBErr(errRow)
+		return person, r.db.DBErr(errRow)
 	}
 
 	errQuery := row.Scan(&steamID, &person.CreatedOn,
@@ -373,12 +382,12 @@ func (r *personRepository) GetPersonByDiscordID(ctx context.Context, discordID s
 		&person.LocCityID, &person.PermissionLevel, &person.DiscordID, &person.CommunityBanned, &person.VACBans,
 		&person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan, &person.UpdatedOnSteam, &person.Muted)
 	if errQuery != nil {
-		return r.db.DBErr(errQuery)
+		return person, r.db.DBErr(errQuery)
 	}
 
 	person.SteamID = steamid.New(steamID)
 
-	return nil
+	return person, nil
 }
 
 func (r *personRepository) GetExpiredProfiles(ctx context.Context, limit uint64) ([]domain.Person, error) {
@@ -425,7 +434,9 @@ func (r *personRepository) GetExpiredProfiles(ctx context.Context, limit uint64)
 	return people, nil
 }
 
-func (r *personRepository) GetPersonMessageByID(ctx context.Context, personMessageID int64, msg *domain.PersonMessage) error {
+func (r *personRepository) GetPersonMessageByID(ctx context.Context, personMessageID int64) (domain.PersonMessage, error) {
+	var msg domain.PersonMessage
+
 	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
 		Builder().
 		Select(
@@ -443,7 +454,7 @@ func (r *personRepository) GetPersonMessageByID(ctx context.Context, personMessa
 		Where(sq.Eq{"m.person_message_id": personMessageID}))
 
 	if errRow != nil {
-		return r.db.DBErr(errRow)
+		return msg, r.db.DBErr(errRow)
 	}
 
 	var steamID int64
@@ -457,12 +468,12 @@ func (r *personRepository) GetPersonMessageByID(ctx context.Context, personMessa
 		&msg.PersonaName,
 		&msg.MatchID,
 		&msg.ServerName); errScan != nil {
-		return r.db.DBErr(errScan)
+		return msg, r.db.DBErr(errScan)
 	}
 
 	msg.SteamID = steamid.New(steamID)
 
-	return nil
+	return msg, nil
 }
 
 // func SetNotificationsRead(ctx context.Context,  notificationIds []int64) error {
@@ -499,15 +510,18 @@ func (r *personRepository) GetSteamIdsAbove(ctx context.Context, privilege domai
 	return ids, nil
 }
 
-func (r *personRepository) GetPersonSettings(ctx context.Context, steamID steamid.SID64, settings *domain.PersonSettings) error {
+func (r *personRepository) GetPersonSettings(ctx context.Context, steamID steamid.SID64) (domain.PersonSettings, error) {
+	var settings domain.PersonSettings
+
 	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
 		Builder().
 		Select("person_settings_id", "forum_signature", "forum_profile_messages",
 			"stats_hidden", "created_on", "updated_on").
 		From("person_settings").
 		Where(sq.Eq{"steam_id": steamID.Int64()}))
+
 	if errRow != nil {
-		return r.db.DBErr(errRow)
+		return settings, r.db.DBErr(errRow)
 	}
 
 	settings.SteamID = steamID
@@ -517,13 +531,13 @@ func (r *personRepository) GetPersonSettings(ctx context.Context, steamID steami
 		if errors.Is(r.db.DBErr(errScan), domain.ErrNoResult) {
 			settings.ForumProfileMessages = true
 
-			return nil
+			return settings, nil
 		}
 
-		return r.db.DBErr(errScan)
+		return settings, r.db.DBErr(errScan)
 	}
 
-	return nil
+	return settings, nil
 }
 
 func (r *personRepository) SavePersonSettings(ctx context.Context, settings *domain.PersonSettings) error {

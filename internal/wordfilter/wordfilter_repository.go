@@ -75,7 +75,9 @@ func (r *wordFilterRepository) DropFilter(ctx context.Context, filter *domain.Fi
 	return nil
 }
 
-func (r *wordFilterRepository) GetFilterByID(ctx context.Context, filterID int64, filter *domain.Filter) error {
+func (r *wordFilterRepository) GetFilterByID(ctx context.Context, filterID int64) (domain.Filter, error) {
+	var filter domain.Filter
+
 	query := r.db.
 		Builder().
 		Select("filter_id", "author_id", "pattern", "is_regex",
@@ -85,7 +87,7 @@ func (r *wordFilterRepository) GetFilterByID(ctx context.Context, filterID int64
 
 	row, errQuery := r.db.QueryRowBuilder(ctx, query)
 	if errQuery != nil {
-		return r.db.DBErr(errQuery)
+		return filter, r.db.DBErr(errQuery)
 	}
 
 	var authorID int64
@@ -93,14 +95,14 @@ func (r *wordFilterRepository) GetFilterByID(ctx context.Context, filterID int64
 	if errScan := row.Scan(&filter.FilterID, &authorID, &filter.Pattern,
 		&filter.IsRegex, &filter.IsEnabled, &filter.TriggerCount, &filter.CreatedOn, &filter.UpdatedOn,
 		&filter.Action, &filter.Duration, &filter.Weight); errScan != nil {
-		return r.db.DBErr(errScan)
+		return filter, r.db.DBErr(errScan)
 	}
 
 	filter.AuthorID = steamid.New(authorID)
 
 	filter.Init()
 
-	return nil
+	return filter, nil
 }
 
 func (r *wordFilterRepository) GetFilters(ctx context.Context, opts domain.FiltersQueryFilter) ([]domain.Filter, int64, error) {

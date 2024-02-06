@@ -2,7 +2,6 @@ package servers
 
 import (
 	"context"
-
 	"github.com/leighmacdonald/gbans/internal/domain"
 )
 
@@ -14,8 +13,12 @@ func NewServersUsecase(repository domain.ServersRepository) domain.ServersUsecas
 	return &serversUsecase{serversRepo: repository}
 }
 
-func (s *serversUsecase) GetServer(ctx context.Context, serverID int, server *domain.Server) error {
-	return s.serversRepo.GetServer(ctx, serverID, server)
+func (s *serversUsecase) GetServer(ctx context.Context, serverID int) (domain.Server, error) {
+	if serverID <= 0 {
+		return domain.Server{}, domain.ErrGetServer
+	}
+
+	return s.serversRepo.GetServer(ctx, serverID)
 }
 
 func (s *serversUsecase) GetServerPermissions(ctx context.Context) ([]domain.ServerPermission, error) {

@@ -59,6 +59,7 @@ func NewReportHandler(log *zap.Logger, engine *gin.Engine, reportUsecase domain.
 }
 
 func (h ReportHandler) onAPIPostBanState() gin.HandlerFunc {
+	// TODO doesnt do anything
 	return func(ctx *gin.Context) {
 		reportID, errID := httphelper.GetInt64Param(ctx, "report_id")
 		if errID != nil || reportID <= 0 {
@@ -67,18 +68,14 @@ func (h ReportHandler) onAPIPostBanState() gin.HandlerFunc {
 			return
 		}
 
-		var report domain.Report
-		if errReport := h.reportUsecase.GetReport(ctx, reportID, &report); errReport != nil {
-			if errors.Is(errReport, domain.ErrNoResult) {
-				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
-
-				return
-			}
-
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+		report, errReport := h.reportUsecase.GetReport(ctx, httphelper.CurrentUserProfile(ctx), reportID)
+		if errReport != nil {
+			httphelper.ErrorHandled(ctx, errReport)
 
 			return
 		}
+
+		ctx.JSON(http.StatusOK, report)
 
 		h.discordUsecase.SendPayload(domain.ChannelModLog, discord.EditBanAppealStatusMessage())
 	}
@@ -130,18 +127,18 @@ func (h ReportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 			return
 		}
 
-		var personSource domain.Person
-		if errCreatePerson := h.personUsecase.GetPersonBySteamID(ctx, sourceID, &personSource); errCreatePerson != nil {
+		personSource, errSource := h.personUsecase.GetPersonBySteamID(ctx, sourceID)
+		if errSource != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			log.Error("Could not load player profile", zap.Error(errCreatePerson))
+			log.Error("Could not load player profile", zap.Error(errSource))
 
 			return
 		}
 
-		var personTarget domain.Person
-		if errCreatePerson := h.personUsecase.GetOrCreatePersonBySteamID(ctx, targetID, &personTarget); errCreatePerson != nil {
+		personTarget, errTarget := h.personUsecase.GetOrCreatePersonBySteamID(ctx, targetID)
+		if errTarget != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			log.Error("Could not load player profile", zap.Error(errCreatePerson))
+			log.Error("Could not load player profile", zap.Error(errTarget))
 
 			return
 		}
@@ -157,8 +154,8 @@ func (h ReportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 		}
 
 		// Ensure the user doesn't already have an open report against the user
-		var existing domain.Report
-		if errReports := h.reportUsecase.GetReportBySteamID(ctx, personSource.SteamID, targetID, &existing); errReports != nil {
+		existing, errReports := h.reportUsecase.GetReportBySteamID(ctx, personSource.SteamID, targetID)
+		if errReports != nil {
 			if !errors.Is(errReports, domain.ErrNoResult) {
 				log.Error("Failed to query reports by steam id", zap.Error(errReports))
 				httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
@@ -216,8 +213,6 @@ func (h ReportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 }
 
 func (h ReportHandler) onAPIGetReport() gin.HandlerFunc {
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
 	return func(ctx *gin.Context) {
 		reportID, errParam := httphelper.GetInt64Param(ctx, "report_id")
 		if errParam != nil {
@@ -226,48 +221,9 @@ func (h ReportHandler) onAPIGetReport() gin.HandlerFunc {
 			return
 		}
 
-		var report reportWithAuthor
-		if errReport := h.reportUsecase.GetReport(ctx, reportID, &report.Report); errReport != nil {
-			if errors.Is(errReport, domain.ErrNoResult) {
-				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
-
-				return
-			}
-
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			log.Error("Failed to load report", zap.Error(errReport))
-
-			return
-		}
-
-		if !httphelper.CheckPrivilege(ctx, httphelper.CurrentUserProfile(ctx), steamid.Collection{report.Report.SourceID}, domain.PModerator) {
-			httphelper.ResponseErr(ctx, http.StatusUnauthorized, domain.ErrPermissionDenied)
-
-			return
-		}
-
-		if errAuthor := h.personUsecase.GetPersonBySteamID(ctx, report.Report.SourceID, &report.Author); errAuthor != nil {
-			if errors.Is(errAuthor, domain.ErrNoResult) {
-				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
-
-				return
-			}
-
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
-			log.Error("Failed to load report author", zap.Error(errAuthor))
-
-			return
-		}
-
-		if errSubject := h.personUsecase.GetPersonBySteamID(ctx, report.Report.TargetID, &report.Subject); errSubject != nil {
-			if errors.Is(errSubject, domain.ErrNoResult) {
-				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
-
-				return
-			}
-
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
-			log.Error("Failed to load report subject", zap.Error(errSubject))
+		report, errReport := h.reportUsecase.GetReport(ctx, httphelper.CurrentUserProfile(ctx), reportID)
+		if errReport != nil {
+			httphelper.ErrorHandled(ctx, errReport)
 
 			return
 		}
@@ -397,8 +353,8 @@ func (h ReportHandler) onAPISetReportStatus() gin.HandlerFunc {
 			return
 		}
 
-		var report domain.Report
-		if errGet := h.reportUsecase.GetReport(ctx, reportID, &report); errGet != nil {
+		report, errGet := h.reportUsecase.GetReport(ctx, httphelper.CurrentUserProfile(ctx), reportID)
+		if errGet != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			log.Error("Failed to get report to set state", zap.Error(errGet))
 
@@ -444,14 +400,14 @@ func (h ReportHandler) onAPIGetReportMessages() gin.HandlerFunc {
 			return
 		}
 
-		var report domain.Report
-		if errGetReport := h.reportUsecase.GetReport(ctx, reportID, &report); errGetReport != nil {
+		report, errGetReport := h.reportUsecase.GetReport(ctx, httphelper.CurrentUserProfile(ctx), reportID)
+		if errGetReport != nil {
 			httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
 
 			return
 		}
 
-		if !httphelper.CheckPrivilege(ctx, httphelper.CurrentUserProfile(ctx), steamid.Collection{report.SourceID, report.TargetID}, domain.PModerator) {
+		if !httphelper.HasPrivilege(httphelper.CurrentUserProfile(ctx), steamid.Collection{report.SourceID, report.TargetID}, domain.PModerator) {
 			return
 		}
 
@@ -496,8 +452,8 @@ func (h ReportHandler) onAPIPostReportMessage() gin.HandlerFunc {
 			return
 		}
 
-		var report domain.Report
-		if errReport := h.reportUsecase.GetReport(ctx, reportID, &report); errReport != nil {
+		report, errReport := h.reportUsecase.GetReport(ctx, httphelper.CurrentUserProfile(ctx), reportID)
+		if errReport != nil {
 			if errors.Is(errReport, domain.ErrNoResult) {
 				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
 
@@ -553,8 +509,8 @@ func (h ReportHandler) onAPIEditReportMessage() gin.HandlerFunc {
 			return
 		}
 
-		var existing domain.ReportMessage
-		if errExist := h.reportUsecase.GetReportMessageByID(ctx, reportMessageID, &existing); errExist != nil {
+		existing, errExist := h.reportUsecase.GetReportMessageByID(ctx, reportMessageID)
+		if errExist != nil {
 			if errors.Is(errExist, domain.ErrNoResult) {
 				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrPlayerNotFound)
 
@@ -567,7 +523,7 @@ func (h ReportHandler) onAPIEditReportMessage() gin.HandlerFunc {
 		}
 
 		curUser := httphelper.CurrentUserProfile(ctx)
-		if !httphelper.CheckPrivilege(ctx, curUser, steamid.Collection{existing.AuthorID}, domain.PModerator) {
+		if !httphelper.HasPrivilege(curUser, steamid.Collection{existing.AuthorID}, domain.PModerator) {
 			return
 		}
 
@@ -618,8 +574,8 @@ func (h ReportHandler) onAPIDeleteReportMessage() gin.HandlerFunc {
 			return
 		}
 
-		var existing domain.ReportMessage
-		if errExist := h.reportUsecase.GetReportMessageByID(ctx, reportMessageID, &existing); errExist != nil {
+		existing, errExist := h.reportUsecase.GetReportMessageByID(ctx, reportMessageID)
+		if errExist != nil {
 			if errors.Is(errExist, domain.ErrNoResult) {
 				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
 
@@ -632,7 +588,7 @@ func (h ReportHandler) onAPIDeleteReportMessage() gin.HandlerFunc {
 		}
 
 		curUser := httphelper.CurrentUserProfile(ctx)
-		if !httphelper.CheckPrivilege(ctx, curUser, steamid.Collection{existing.AuthorID}, domain.PModerator) {
+		if !httphelper.HasPrivilege(curUser, steamid.Collection{existing.AuthorID}, domain.PModerator) {
 			return
 		}
 

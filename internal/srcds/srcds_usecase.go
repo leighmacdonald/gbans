@@ -88,13 +88,13 @@ func (h srcdsUsecase) Report(ctx context.Context, currentUser domain.UserProfile
 		return nil, domain.ErrSelfReport
 	}
 
-	var personSource domain.Person
-	if errCreatePerson := h.pu.GetPersonBySteamID(ctx, sourceID, &personSource); errCreatePerson != nil {
+	personSource, errCreatePerson := h.pu.GetPersonBySteamID(ctx, sourceID)
+	if errCreatePerson != nil {
 		return nil, domain.ErrInternal
 	}
 
-	var personTarget domain.Person
-	if errCreatePerson := h.pu.GetOrCreatePersonBySteamID(ctx, targetID, &personTarget); errCreatePerson != nil {
+	personTarget, errCreatePerson := h.pu.GetOrCreatePersonBySteamID(ctx, targetID)
+	if errCreatePerson != nil {
 		return nil, domain.ErrInternal
 	}
 
@@ -109,8 +109,8 @@ func (h srcdsUsecase) Report(ctx context.Context, currentUser domain.UserProfile
 	}
 
 	// Ensure the user doesn't already have an open report against the user
-	var existing domain.Report
-	if errReports := h.ru.GetReportBySteamID(ctx, personSource.SteamID, targetID, &existing); errReports != nil {
+	existing, errReports := h.ru.GetReportBySteamID(ctx, personSource.SteamID, targetID)
+	if errReports != nil {
 		if !errors.Is(errReports, domain.ErrNoResult) {
 			return nil, errReports
 		}

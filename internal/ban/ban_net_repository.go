@@ -21,7 +21,7 @@ func NewBanNetRepository(database database.Database) domain.BanNetRepository {
 	return &banNetRepository{db: database}
 }
 
-// GetBanNetByAddress returns the BanCIDR matching intersecting the supplied ip.
+// GetByAddress returns the BanCIDR matching intersecting the supplied ip.
 //
 // Note that this function does not currently limit results returned. This may change in the future, do not
 // rely on this functionality.
@@ -71,7 +71,7 @@ func (r banNetRepository) GetByAddress(ctx context.Context, ipAddr net.IP) ([]do
 	return nets, nil
 }
 
-// GetBansNet returns the BanCIDR matching intersecting the supplied ip.
+// Get returns the BanCIDR matching intersecting the supplied ip.
 func (r banNetRepository) Get(ctx context.Context, filter domain.CIDRBansQueryFilter) ([]domain.BannedCIDRPerson, int64, error) {
 	validColumns := map[string][]string{
 		"b.": {

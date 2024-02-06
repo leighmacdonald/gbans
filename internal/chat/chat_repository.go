@@ -69,8 +69,8 @@ func (r chatRepository) Start(ctx context.Context) {
 					continue
 				}
 
-				var author domain.Person
-				if errPerson := r.personUsecase.GetOrCreatePersonBySteamID(ctx, newServerEvent.SID, &author); errPerson != nil {
+				_, errPerson := r.personUsecase.GetOrCreatePersonBySteamID(ctx, newServerEvent.SID)
+				if errPerson != nil {
 					r.log.Error("Failed to add chat history, could not get author", zap.Error(errPerson))
 
 					continue
@@ -216,7 +216,7 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.Cha
 		LeftJoin("server r USING(server_id)").
 		LeftJoin("person_messages_filter mf USING(person_message_id)").
 		LeftJoin("filtered_word f USING(filter_id)").
-		LeftJoin("person r USING(steam_id)")
+		LeftJoin("person p USING(steam_id)")
 
 	builder = filters.ApplySafeOrder(builder, map[string][]string{
 		"m.": {"persona_name", "person_message_id"},
@@ -320,7 +320,7 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.Cha
 		From("person_messages m").
 		LeftJoin("server r on m.server_id = r.server_id").
 		LeftJoin("person_messages_filter f on m.person_message_id = f.person_message_id").
-		LeftJoin("person r on r.steam_id = m.steam_id").
+		LeftJoin("person p on p.steam_id = m.steam_id").
 		Where(constraints))
 
 	if errCount != nil {
@@ -330,7 +330,9 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.Cha
 	return messages, count, nil
 }
 
-func (r chatRepository) GetPersonMessage(ctx context.Context, messageID int64, msg *domain.QueryChatHistoryResult) error {
+func (r chatRepository) GetPersonMessage(ctx context.Context, messageID int64) (domain.QueryChatHistoryResult, error) {
+	var msg domain.QueryChatHistoryResult
+
 	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
 		Builder().
 		Select("m.person_message_id", "m.steam_id", "m.server_id", "m.body", "m.team", "m.created_on",
@@ -341,11 +343,15 @@ func (r chatRepository) GetPersonMessage(ctx context.Context, messageID int64, m
 		Where(sq.Eq{"m.person_message_id": messageID}).
 		GroupBy("m.person_message_id", "r.short_name"))
 	if errRow != nil {
-		return r.db.DBErr(errRow)
+		return msg, r.db.DBErr(errRow)
 	}
 
-	return r.db.DBErr(row.Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.Team, &msg.CreatedOn,
-		&msg.PersonaName, &msg.MatchID, &msg.ServerName, &msg.AutoFilterFlagged))
+	if err := r.db.DBErr(row.Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.Team, &msg.CreatedOn,
+		&msg.PersonaName, &msg.MatchID, &msg.ServerName, &msg.AutoFilterFlagged)); err != nil {
+		return msg, err
+	}
+
+	return msg, nil
 }
 
 func (r chatRepository) GetPersonMessageContext(ctx context.Context, serverID int, messageID int64, paddedMessageCount int) ([]domain.QueryChatHistoryResult, error) {
