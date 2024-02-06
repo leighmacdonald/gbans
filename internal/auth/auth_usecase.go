@@ -144,8 +144,8 @@ func (u *authUsecase) AuthMiddleware(level domain.Privilege) gin.HandlerFunc {
 					return
 				}
 
-				loggedInPerson := domain.NewPerson(sid)
-				if errGetPerson := u.personUsecase.GetOrCreatePersonBySteamID(ctx, sid, &loggedInPerson); errGetPerson != nil {
+				loggedInPerson, errGetPerson := u.personUsecase.GetOrCreatePersonBySteamID(ctx, sid)
+				if errGetPerson != nil {
 					log.Error("Failed to load person during auth", zap.Error(errGetPerson))
 					ctx.AbortWithStatus(http.StatusForbidden)
 
@@ -158,8 +158,8 @@ func (u *authUsecase) AuthMiddleware(level domain.Privilege) gin.HandlerFunc {
 					return
 				}
 
-				bannedPerson := domain.NewBannedPerson()
-				if errBan := u.banUsecase.GetBySteamID(ctx, sid, &bannedPerson, false); errBan != nil {
+				bannedPerson, errBan := u.banUsecase.GetBySteamID(ctx, sid, false)
+				if errBan != nil {
 					if !errors.Is(errBan, domain.ErrNoResult) {
 						log.Error("Failed to fetch authed user ban", zap.Error(errBan))
 					}
@@ -256,9 +256,8 @@ func (u *authUsecase) AuthServerMiddleWare() gin.HandlerFunc {
 
 			return
 		}
-
-		var server domain.Server
-		if errGetServer := u.serverUsecase.GetServer(ctx, claims.ServerID, &server); errGetServer != nil {
+		server, errGetServer := u.serverUsecase.GetServer(ctx, claims.ServerID)
+		if errGetServer != nil {
 			log.Error("Failed to load server during auth", zap.Error(errGetServer))
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 

@@ -87,13 +87,18 @@ func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.Ne
 		}
 	}
 
+	admin, errAdmin := u.pu.GetPersonBySteamID(ctx, u.owner)
+	if errAdmin != nil {
+		return errAdmin
+	}
+
 	switch newWarning.MatchedFilter.Action {
 	case domain.Mute:
 		banSteam.BanType = domain.NoComm
-		errBan = u.bu.Ban(ctx, &banSteam)
+		errBan = u.bu.Ban(ctx, admin, &banSteam)
 	case domain.Ban:
 		banSteam.BanType = domain.Banned
-		errBan = u.bu.Ban(ctx, &banSteam)
+		errBan = u.bu.Ban(ctx, admin, &banSteam)
 	case domain.Kick:
 		errBan = u.st.Kick(ctx, newWarning.UserMessage.SteamID, newWarning.WarnReason)
 	}
@@ -102,13 +107,13 @@ func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.Ne
 		return errors.Join(errBan, domain.ErrWarnActionApply)
 	}
 
-	var person domain.Person
-	if personErr := u.pu.GetPersonBySteamID(ctx, newWarning.UserMessage.SteamID, &person); personErr != nil {
+	person, personErr := u.pu.GetPersonBySteamID(ctx, newWarning.UserMessage.SteamID)
+	if personErr != nil {
 		return personErr
 	}
 
 	newWarning.MatchedFilter.TriggerCount++
-	if errSave := u.wfu.SaveFilter(ctx, newWarning.MatchedFilter); errSave != nil {
+	if errSave := u.wfu.SaveFilter(ctx, admin, newWarning.MatchedFilter); errSave != nil {
 		u.log.Error("Failed to update filter trigger count", zap.Error(errSave))
 	}
 
@@ -126,7 +131,13 @@ func (u chatUsecase) onWarningHandler(ctx context.Context, newWarning domain.New
 		"Further offenses will result in mutes/bans")
 
 	newWarning.MatchedFilter.TriggerCount++
-	if errSave := u.wfu.SaveFilter(ctx, newWarning.MatchedFilter); errSave != nil {
+
+	admin, errAdmin := u.pu.GetPersonBySteamID(ctx, u.owner)
+	if errAdmin != nil {
+		return errAdmin
+	}
+
+	if errSave := u.wfu.SaveFilter(ctx, admin, newWarning.MatchedFilter); errSave != nil {
 		u.log.Error("Failed to update filter trigger count", zap.Error(errSave))
 	}
 
@@ -247,20 +258,48 @@ func (u chatUsecase) WarningState() map[string][]domain.UserWarning {
 	return u.State()
 }
 
-func (u chatUsecase) GetPersonMessage(ctx context.Context, messageID int64, msg *domain.QueryChatHistoryResult) error {
-	return u.cr.GetPersonMessage(ctx, messageID, msg)
+func (u chatUsecase) GetPersonMessage(ctx context.Context, messageID int64) (domain.QueryChatHistoryResult, error) {
+	return u.cr.GetPersonMessage(ctx, messageID)
 }
 
 func (u chatUsecase) AddChatHistory(ctx context.Context, message *domain.PersonMessage) error {
 	return u.cr.AddChatHistory(ctx, message)
 }
 
-func (u chatUsecase) QueryChatHistory(ctx context.Context, filters domain.ChatHistoryQueryFilter) ([]domain.QueryChatHistoryResult, int64, error) {
-	return u.cr.QueryChatHistory(ctx, filters)
+func (u chatUsecase) QueryChatHistory(ctx context.Context, user domain.PersonInfo, req domain.ChatHistoryQueryFilter) ([]domain.QueryChatHistoryResult, int64, error) {
+	if req.Limit <= 0 || req.Limit > 1000 {
+		req.Limit = 50
+	}
+
+	if !user.HasPermission(domain.PModerator) {
+		req.Unrestricted = false
+		beforeLimit := time.Now().Add(-time.Minute * 20)
+
+		if req.DateEnd != nil && req.DateEnd.After(beforeLimit) {
+			req.DateEnd = &beforeLimit
+		}
+
+		if req.DateEnd == nil {
+			req.DateEnd = &beforeLimit
+		}
+	} else {
+		req.Unrestricted = true
+	}
+
+	return u.cr.QueryChatHistory(ctx, req)
 }
 
-func (u chatUsecase) GetPersonMessageContext(ctx context.Context, serverID int, messageID int64, paddedMessageCount int) ([]domain.QueryChatHistoryResult, error) {
-	return u.cr.GetPersonMessageContext(ctx, serverID, messageID, paddedMessageCount)
+func (u chatUsecase) GetPersonMessageContext(ctx context.Context, messageID int64, paddedMessageCount int) ([]domain.QueryChatHistoryResult, error) {
+	if paddedMessageCount > 100 || paddedMessageCount <= 0 {
+		paddedMessageCount = 100
+	}
+
+	msg, errMsg := u.GetPersonMessage(ctx, messageID)
+	if errMsg != nil {
+		return nil, errMsg
+	}
+
+	return u.cr.GetPersonMessageContext(ctx, msg.ServerID, messageID, paddedMessageCount)
 }
 
 func (u chatUsecase) TopChatters(ctx context.Context, count uint64) ([]domain.TopChatterResult, error) {

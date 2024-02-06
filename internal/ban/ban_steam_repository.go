@@ -61,7 +61,9 @@ func (r *banSteamRepository) Delete(ctx context.Context, ban *domain.BanSteam, h
 	}
 }
 
-func (r *banSteamRepository) getBanByColumn(ctx context.Context, column string, identifier any, person *domain.BannedSteamPerson, deletedOk bool) error {
+func (r *banSteamRepository) getBanByColumn(ctx context.Context, column string, identifier any, deletedOk bool) (domain.BannedSteamPerson, error) {
+	person := domain.NewBannedPerson()
+
 	whereClauses := sq.And{
 		sq.Eq{fmt.Sprintf("b.%s", column): identifier}, // valid columns are immutable
 	}
@@ -91,7 +93,7 @@ func (r *banSteamRepository) getBanByColumn(ctx context.Context, column string, 
 
 	row, errQuery := r.db.QueryRowBuilder(ctx, query)
 	if errQuery != nil {
-		return r.db.DBErr(errQuery)
+		return person, r.db.DBErr(errQuery)
 	}
 
 	var (
@@ -108,38 +110,38 @@ func (r *banSteamRepository) getBanByColumn(ctx context.Context, column string, 
 			&person.SourceTarget.TargetPersonaname, &person.SourceTarget.TargetAvatarhash,
 			&person.CommunityBanned, &person.VacBans, &person.GameBans,
 		); errScan != nil {
-		return r.db.DBErr(errScan)
+		return person, r.db.DBErr(errScan)
 	}
 
 	person.SourceID = steamid.New(sourceID)
 	person.TargetID = steamid.New(targetID)
 
-	return nil
+	return person, nil
 }
 
-func (r *banSteamRepository) GetBySteamID(ctx context.Context, sid64 steamid.SID64, bannedPerson *domain.BannedSteamPerson, deletedOk bool) error {
-	return r.getBanByColumn(ctx, "target_id", sid64, bannedPerson, deletedOk)
+func (r *banSteamRepository) GetBySteamID(ctx context.Context, sid64 steamid.SID64, deletedOk bool) (domain.BannedSteamPerson, error) {
+	return r.getBanByColumn(ctx, "target_id", sid64, deletedOk)
 }
 
-func (r *banSteamRepository) GetByBanID(ctx context.Context, banID int64, bannedPerson *domain.BannedSteamPerson, deletedOk bool) error {
-	return r.getBanByColumn(ctx, "ban_id", banID, bannedPerson, deletedOk)
+func (r *banSteamRepository) GetByBanID(ctx context.Context, banID int64, deletedOk bool) (domain.BannedSteamPerson, error) {
+	return r.getBanByColumn(ctx, "ban_id", banID, deletedOk)
 }
 
-func (r *banSteamRepository) GetByLastIP(ctx context.Context, lastIP net.IP, bannedPerson *domain.BannedSteamPerson, deletedOk bool) error {
-	return r.getBanByColumn(ctx, "last_ip", fmt.Sprintf("::ffff:%s", lastIP.String()), bannedPerson, deletedOk)
+func (r *banSteamRepository) GetByLastIP(ctx context.Context, lastIP net.IP, deletedOk bool) (domain.BannedSteamPerson, error) {
+	return r.getBanByColumn(ctx, "last_ip", fmt.Sprintf("::ffff:%s", lastIP.String()), deletedOk)
 }
 
-// SaveBan will insert or update the ban record
+// Save will insert or update the ban record
 // New records will have the Ban.BanID set automatically.
 func (r *banSteamRepository) Save(ctx context.Context, ban *domain.BanSteam) error {
 	// Ensure the foreign keys are satisfied
-	targetPerson := domain.NewPerson(ban.TargetID)
-	if errGetPerson := r.pu.GetOrCreatePersonBySteamID(ctx, ban.TargetID, &targetPerson); errGetPerson != nil {
+	_, errGetPerson := r.pu.GetOrCreatePersonBySteamID(ctx, ban.TargetID)
+	if errGetPerson != nil {
 		return errors.Join(errGetPerson, domain.ErrPersonTarget)
 	}
 
-	authorPerson := domain.NewPerson(ban.SourceID)
-	if errGetAuthor := r.pu.GetOrCreatePersonBySteamID(ctx, ban.SourceID, &authorPerson); errGetAuthor != nil {
+	_, errGetAuthor := r.pu.GetPersonBySteamID(ctx, ban.SourceID)
+	if errGetAuthor != nil {
 		return errors.Join(errGetAuthor, domain.ErrPersonSource)
 	}
 
@@ -150,9 +152,7 @@ func (r *banSteamRepository) Save(ctx context.Context, ban *domain.BanSteam) err
 
 	ban.CreatedOn = ban.UpdatedOn
 
-	existing := domain.NewBannedPerson()
-
-	errGetBan := r.GetBySteamID(ctx, ban.TargetID, &existing, false)
+	existing, errGetBan := r.GetBySteamID(ctx, ban.TargetID, false)
 	if errGetBan != nil {
 		if !errors.Is(errGetBan, domain.ErrNoResult) {
 			return errors.Join(errGetBan, domain.ErrGetBan)
@@ -261,7 +261,7 @@ func (r *banSteamRepository) ExpiredBans(ctx context.Context) ([]domain.BanSteam
 	return bans, nil
 }
 
-// GetBansSteam returns all bans that fit the filter criteria passed in.
+// Get returns all bans that fit the filter criteria passed in.
 func (r *banSteamRepository) Get(ctx context.Context, filter domain.SteamBansQueryFilter) ([]domain.BannedSteamPerson, int64, error) {
 	builder := r.db.
 		Builder().

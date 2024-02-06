@@ -2,16 +2,12 @@ package wordfilter
 
 import (
 	"errors"
-	"net/http"
-	"regexp"
-	"runtime"
-	"time"
-
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/pkg/util"
 	"go.uber.org/zap"
+	"net/http"
+	"runtime"
 )
 
 type WordFilterHandler struct {
@@ -70,86 +66,8 @@ func (h *WordFilterHandler) onAPIPostWordFilter() gin.HandlerFunc {
 			return
 		}
 
-		if req.Pattern == "" {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
-
+		if err := httphelper.ErrorHandledWithReturn(ctx, h.wfu.SaveFilter(ctx, httphelper.CurrentUserProfile(ctx), &req)); err != nil {
 			return
-		}
-
-		_, errDur := util.ParseDuration(req.Duration)
-		if errDur != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, util.ErrInvalidDuration)
-
-			return
-		}
-
-		if req.IsRegex {
-			_, compErr := regexp.Compile(req.Pattern)
-			if compErr != nil {
-				httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidRegex)
-
-				return
-			}
-		}
-
-		if req.Weight < 1 {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidWeight)
-
-			return
-		}
-
-		now := time.Now()
-
-		if req.FilterID > 0 {
-			var existingFilter domain.Filter
-			if errGet := h.wfu.GetFilterByID(ctx, req.FilterID, &existingFilter); errGet != nil {
-				if errors.Is(errGet, domain.ErrNoResult) {
-					httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
-
-					return
-				}
-
-				httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-
-				return
-			}
-
-			existingFilter.UpdatedOn = now
-			existingFilter.Pattern = req.Pattern
-			existingFilter.IsRegex = req.IsRegex
-			existingFilter.IsEnabled = req.IsEnabled
-			existingFilter.Action = req.Action
-			existingFilter.Duration = req.Duration
-			existingFilter.Weight = req.Weight
-
-			if errSave := h.wfu.FilterAdd(ctx, &existingFilter); errSave != nil {
-				httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-
-				return
-			}
-
-			req = existingFilter
-		} else {
-			profile := httphelper.CurrentUserProfile(ctx)
-			newFilter := domain.Filter{
-				AuthorID:  profile.SteamID,
-				Pattern:   req.Pattern,
-				Action:    req.Action,
-				Duration:  req.Duration,
-				CreatedOn: now,
-				UpdatedOn: now,
-				IsRegex:   req.IsRegex,
-				IsEnabled: req.IsEnabled,
-				Weight:    req.Weight,
-			}
-
-			if errSave := h.wfu.FilterAdd(ctx, &newFilter); errSave != nil {
-				httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-
-				return
-			}
-
-			req = newFilter
 		}
 
 		ctx.JSON(http.StatusOK, req)
@@ -165,8 +83,8 @@ func (h *WordFilterHandler) onAPIDeleteWordFilter() gin.HandlerFunc {
 			return
 		}
 
-		var filter domain.Filter
-		if errGet := h.wfu.GetFilterByID(ctx, wordID, &filter); errGet != nil {
+		filter, errGet := h.wfu.GetFilterByID(ctx, wordID)
+		if errGet != nil {
 			if errors.Is(errGet, domain.ErrNoResult) {
 				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
 

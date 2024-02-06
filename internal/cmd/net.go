@@ -63,7 +63,7 @@ func netUpdateCmd() *cobra.Command {
 
 			eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
 
-			personUsecase := person.NewPersonUsecase(rootLogger, person.NewPersonRepository(dbUsecase))
+			personUsecase := person.NewPersonUsecase(rootLogger, person.NewPersonRepository(dbUsecase), configUsecase)
 
 			if errUpdate := ip2location.Update(ctx, conf.IP2Location.CachePath, conf.IP2Location.Token); errUpdate != nil {
 				rootLogger.Fatal("Failed to update", zap.Error(errUpdate))

@@ -257,8 +257,8 @@ func (h *serversHandler) onAPIPostServerUpdate() gin.HandlerFunc {
 			return
 		}
 
-		var server domain.Server
-		if errServer := h.serversUsecase.GetServer(ctx, serverID, &server); errServer != nil {
+		server, errServer := h.serversUsecase.GetServer(ctx, serverID)
+		if errServer != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
@@ -329,8 +329,8 @@ func (h *serversHandler) onAPIPostServerDelete() gin.HandlerFunc {
 			return
 		}
 
-		var server domain.Server
-		if errServer := h.serversUsecase.GetServer(ctx, serverID, &server); errServer != nil {
+		server, errServer := h.serversUsecase.GetServer(ctx, serverID)
+		if errServer != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return

@@ -71,15 +71,21 @@ func GetSID64Param(c *gin.Context, key string) (steamid.SID64, error) {
 func GetInt64Param(ctx *gin.Context, key string) (int64, error) {
 	valueStr := ctx.Param(key)
 	if valueStr == "" {
+		HandleErrBadRequest(ctx)
+
 		return 0, fmt.Errorf("%w: %s", domain.ErrParamKeyMissing, key)
 	}
 
 	value, valueErr := strconv.ParseInt(valueStr, 10, 64)
 	if valueErr != nil {
+		HandleErrBadRequest(ctx)
+
 		return 0, domain.ErrParamParse
 	}
 
 	if value <= 0 {
+		HandleErrBadRequest(ctx)
+
 		return 0, fmt.Errorf("%w: %s", domain.ErrParamInvalid, key)
 	}
 
@@ -136,23 +142,22 @@ func ServerFromCtx(ctx *gin.Context) int {
 	return serverID
 }
 
-// CheckPrivilege first checks if the steamId matches one of the provided allowedSteamIds, otherwise it will check
+// HasPrivilege first checks if the steamId matches one of the provided allowedSteamIds, otherwise it will check
 // if the user has appropriate privilege levels.
 // Error responses are handled by this function, no further action needs to take place in the handlers.
-func CheckPrivilege(ctx *gin.Context, person domain.UserProfile, allowedSteamIds steamid.Collection, minPrivilege domain.Privilege) bool {
+func HasPrivilege(person domain.PersonInfo, allowedSteamIds steamid.Collection, minPrivilege domain.Privilege) bool {
 	for _, steamID := range allowedSteamIds {
-		if steamID == person.SteamID {
+		if steamID == person.GetSteamID() {
 			return true
 		}
 	}
 
-	if person.PermissionLevel >= minPrivilege {
-		return true
+	if !person.HasPermission(minPrivilege) {
+
+		return false
 	}
 
-	ctx.JSON(http.StatusForbidden, domain.ErrPermissionDenied.Error())
-
-	return false
+	return true
 }
 
 type ResultsCount struct {

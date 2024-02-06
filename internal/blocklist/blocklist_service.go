@@ -1,17 +1,13 @@
 package blocklist
 
 import (
-	"errors"
-	"net"
-	"net/http"
-	"net/url"
-	"runtime"
-	"strings"
-
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"go.uber.org/zap"
+	"net"
+	"net/http"
+	"runtime"
 )
 
 type BlocklistHandler struct {
@@ -75,8 +71,6 @@ func (b *BlocklistHandler) onAPIDeleteBlockList() gin.HandlerFunc {
 			return
 		}
 
-		log.Info("Blocklist deleted", zap.Int("cidr_block_source_id", sourceID))
-
 		ctx.JSON(http.StatusOK, nil)
 	}
 }
@@ -136,27 +130,8 @@ func (b *BlocklistHandler) onAPIPostBlockListCreate() gin.HandlerFunc {
 			return
 		}
 
-		if req.Name == "" {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
-
-			return
-		}
-
-		parsedURL, errURL := url.Parse(req.URL)
-		if errURL != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
-
-			return
-		}
-
-		blockList := domain.CIDRBlockSource{
-			Name:        req.Name,
-			URL:         parsedURL.String(),
-			Enabled:     req.Enabled,
-			TimeStamped: domain.NewTimeStamped(),
-		}
-
-		if errSave := b.BlocklistUsecase.SaveCIDRBlockSources(ctx, &blockList); errSave != nil {
+		blockList, errSave := b.BlocklistUsecase.CreateCIDRBlockSources(ctx, req.Name, req.URL, req.Enabled)
+		if errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			log.Error("Failed to save blocklist", zap.Error(errSave))
@@ -185,41 +160,13 @@ func (b *BlocklistHandler) onAPIPostBlockListUpdate() gin.HandlerFunc {
 			return
 		}
 
-		var blockSource domain.CIDRBlockSource
-
-		if errSource := b.BlocklistUsecase.GetCIDRBlockSource(ctx, sourceID, &blockSource); errSource != nil {
-			if errors.Is(errSource, domain.ErrNoResult) {
-				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
-			} else {
-				httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
-			}
-
-			return
-		}
-
 		var req updateRequest
 		if !httphelper.Bind(ctx, log, &req) {
 			return
 		}
 
-		// testBlocker := network.NewBlocker()
-		// if count, errTest := testBlocker.AddRemoteSource(ctx, req.Name, req.URL); errTest != nil || count == 0 {
-		//	httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
-		//
-		//	if errTest != nil {
-		//		log.Error("Failed to validate blocklist url", zap.Error(errTest))
-		//	} else {
-		//		log.Error("Blocklist returned no valid results")
-		//	}
-		//
-		//	return
-		// }
-
-		blockSource.Enabled = req.Enabled
-		blockSource.Name = req.Name
-		blockSource.URL = req.URL
-
-		if errUpdate := b.BlocklistUsecase.SaveCIDRBlockSources(ctx, &blockSource); errUpdate != nil {
+		blockSource, errUpdate := b.BlocklistUsecase.UpdateCIDRBlockSource(ctx, sourceID, req.Name, req.URL, req.Enabled)
+		if errUpdate != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
@@ -242,24 +189,9 @@ func (b *BlocklistHandler) onAPIPostBlockListWhitelistCreate() gin.HandlerFunc {
 			return
 		}
 
-		if !strings.Contains(req.Address, "/") {
-			req.Address += "/32"
-		}
-
-		_, cidr, errParse := net.ParseCIDR(req.Address)
-		if errParse != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
-
-			return
-		}
-
-		whitelist := domain.CIDRBlockWhitelist{
-			Address:     cidr,
-			TimeStamped: domain.NewTimeStamped(),
-		}
-
-		if errSave := b.BlocklistUsecase.SaveCIDRBlockWhitelist(ctx, &whitelist); errSave != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+		whitelist, errSave := b.BlocklistUsecase.CreateCIDRBlockWhitelist(ctx, req.Address)
+		if errSave != nil {
+			_ = httphelper.ErrorHandledWithReturn(ctx, errSave)
 
 			return
 		}
@@ -270,7 +202,7 @@ func (b *BlocklistHandler) onAPIPostBlockListWhitelistCreate() gin.HandlerFunc {
 			TimeStamped:          whitelist.TimeStamped,
 		})
 
-		b.nu.AddWhitelist(whitelist.CIDRBlockWhitelistID, cidr)
+		b.nu.AddWhitelist(whitelist.CIDRBlockWhitelistID, whitelist.Address)
 	}
 }
 
@@ -294,29 +226,16 @@ func (b *BlocklistHandler) onAPIPostBlockListWhitelistUpdate() gin.HandlerFunc {
 			return
 		}
 
-		_, cidr, errParse := net.ParseCIDR(req.Address)
-		if errParse != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
-
-			return
-		}
-
-		var whitelist domain.CIDRBlockWhitelist
-		if errGet := b.BlocklistUsecase.GetCIDRBlockWhitelist(ctx, whitelistID, &whitelist); errGet != nil {
-			httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
-
-			return
-		}
-
-		whitelist.Address = cidr
-
-		if errSave := b.BlocklistUsecase.SaveCIDRBlockWhitelist(ctx, &whitelist); errSave != nil {
+		whiteList, errSave := b.BlocklistUsecase.UpdateCIDRBlockWhitelist(ctx, whitelistID, req.Address)
+		if errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			log.Error("Failed to save whitelist", zap.Error(errSave))
 
 			return
 		}
+
+		ctx.JSON(http.StatusOK, whiteList)
 	}
 }
 

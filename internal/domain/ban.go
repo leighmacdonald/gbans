@@ -12,9 +12,9 @@ import (
 
 type BanSteamRepository interface {
 	Save(ctx context.Context, ban *BanSteam) error
-	GetBySteamID(ctx context.Context, sid64 steamid.SID64, bannedPerson *BannedSteamPerson, deletedOk bool) error
-	GetByBanID(ctx context.Context, banID int64, bannedPerson *BannedSteamPerson, deletedOk bool) error
-	GetByLastIP(ctx context.Context, lastIP net.IP, bannedPerson *BannedSteamPerson, deletedOk bool) error
+	GetBySteamID(ctx context.Context, sid64 steamid.SID64, deletedOk bool) (BannedSteamPerson, error)
+	GetByBanID(ctx context.Context, banID int64, deletedOk bool) (BannedSteamPerson, error)
+	GetByLastIP(ctx context.Context, lastIP net.IP, deletedOk bool) (BannedSteamPerson, error)
 	Delete(ctx context.Context, ban *BanSteam, hardDelete bool) error
 	Get(ctx context.Context, filter SteamBansQueryFilter) ([]BannedSteamPerson, int64, error)
 	ExpiredBans(ctx context.Context) ([]BanSteam, error)
@@ -24,12 +24,12 @@ type BanSteamRepository interface {
 
 type BanSteamUsecase interface {
 	IsFriendBanned(steamID steamid.SID64) (steamid.SID64, bool)
-	IsOnIPWithBan(ctx context.Context, steamID steamid.SID64, address net.IP) (bool, error)
-	GetBySteamID(ctx context.Context, sid64 steamid.SID64, bannedPerson *BannedSteamPerson, deletedOk bool) error
-	GetByBanID(ctx context.Context, banID int64, bannedPerson *BannedSteamPerson, deletedOk bool) error
-	GetByLastIP(ctx context.Context, lastIP net.IP, bannedPerson *BannedSteamPerson, deletedOk bool) error
+	IsOnIPWithBan(ctx context.Context, curUser PersonInfo, steamID steamid.SID64, address net.IP) (bool, error)
+	GetBySteamID(ctx context.Context, sid64 steamid.SID64, deletedOk bool) (BannedSteamPerson, error)
+	GetByBanID(ctx context.Context, banID int64, deletedOk bool) (BannedSteamPerson, error)
+	GetByLastIP(ctx context.Context, lastIP net.IP, deletedOk bool) (BannedSteamPerson, error)
 	Save(ctx context.Context, ban *BanSteam) error
-	Ban(ctx context.Context, banSteam *BanSteam) error
+	Ban(ctx context.Context, curUser PersonInfo, banSteam *BanSteam) error
 	Unban(ctx context.Context, targetSID steamid.SID64, reason string) (bool, error)
 	Delete(ctx context.Context, ban *BanSteam, hardDelete bool) error
 	Get(ctx context.Context, filter SteamBansQueryFilter) ([]BannedSteamPerson, int64, error)

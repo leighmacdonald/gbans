@@ -73,8 +73,8 @@ func (u networkUsecase) Start(ctx context.Context) {
 			}
 
 			// Maybe ignore these and wait for connect call to create?
-			var person domain.Person
-			if errPerson := u.pu.GetOrCreatePersonBySteamID(ctx, newServerEvent.SID, &person); errPerson != nil {
+			_, errPerson := u.pu.GetOrCreatePersonBySteamID(ctx, newServerEvent.SID)
+			if errPerson != nil {
 				log.Error("Failed to load Person", zap.Error(errPerson))
 
 				continue

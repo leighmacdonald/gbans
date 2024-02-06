@@ -3,6 +3,11 @@ package demo
 import (
 	"context"
 	"errors"
+	"github.com/leighmacdonald/gbans/pkg/demoparser"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -12,17 +17,25 @@ import (
 )
 
 type demoUsecase struct {
-	dr     domain.DemoRepository
-	au     domain.AssetUsecase
-	cu     domain.ConfigUsecase
-	bucket string
-	log    *zap.Logger
+	repository     domain.DemoRepository
+	assetUsecase   domain.AssetUsecase
+	configUsecase  domain.ConfigUsecase
+	serversUsecase domain.ServersUsecase
+	bucket         string
+	log            *zap.Logger
 }
 
 func NewDemoUsecase(log *zap.Logger, bucket string, demoRepository domain.DemoRepository, assetUsecase domain.AssetUsecase,
-	configUsecase domain.ConfigUsecase,
+	configUsecase domain.ConfigUsecase, serversUsecase domain.ServersUsecase,
 ) domain.DemoUsecase {
-	return &demoUsecase{log: log.Named("demo"), bucket: bucket, dr: demoRepository, au: assetUsecase, cu: configUsecase}
+	return &demoUsecase{
+		log:            log.Named("demo"),
+		bucket:         bucket,
+		repository:     demoRepository,
+		assetUsecase:   assetUsecase,
+		configUsecase:  configUsecase,
+		serversUsecase: serversUsecase,
+	}
 }
 
 func (d demoUsecase) Start(ctx context.Context) {
@@ -39,7 +52,7 @@ func (d demoUsecase) Start(ctx context.Context) {
 		case <-ticker.C:
 			triggerChan <- true
 		case <-triggerChan:
-			conf := d.cu.Config()
+			conf := d.configUsecase.Config()
 
 			if !conf.General.DemoCleanupEnabled {
 				continue
@@ -47,7 +60,7 @@ func (d demoUsecase) Start(ctx context.Context) {
 
 			log.Debug("Starting demo cleanup")
 
-			expired, errExpired := d.dr.ExpiredDemos(ctx, conf.General.DemoCountLimit)
+			expired, errExpired := d.repository.ExpiredDemos(ctx, conf.General.DemoCountLimit)
 			if errExpired != nil {
 				if errors.Is(errExpired, domain.ErrNoResult) {
 					continue
@@ -83,28 +96,91 @@ func (d demoUsecase) Start(ctx context.Context) {
 }
 
 func (d demoUsecase) ExpiredDemos(ctx context.Context, limit uint64) ([]domain.DemoInfo, error) {
-	return d.dr.ExpiredDemos(ctx, limit)
+	return d.repository.ExpiredDemos(ctx, limit)
 }
 
 func (d demoUsecase) GetDemoByID(ctx context.Context, demoID int64, demoFile *domain.DemoFile) error {
-	return d.dr.GetDemoByID(ctx, demoID, demoFile)
+	return d.repository.GetDemoByID(ctx, demoID, demoFile)
 }
 
 func (d demoUsecase) GetDemoByName(ctx context.Context, demoName string, demoFile *domain.DemoFile) error {
-	return d.dr.GetDemoByName(ctx, demoName, demoFile)
+	return d.repository.GetDemoByName(ctx, demoName, demoFile)
 }
 
 func (d demoUsecase) GetDemos(ctx context.Context, opts domain.DemoFilter) ([]domain.DemoFile, int64, error) {
-	return d.dr.GetDemos(ctx, opts)
+	return d.repository.GetDemos(ctx, opts)
 }
 
-func (d demoUsecase) Create(ctx context.Context, name string, content []byte, mapName string, intStats map[steamid.SID64]gin.H, serverID int) (*domain.DemoFile, error) {
-	asset, errAsset := domain.NewAsset(content, d.bucket, name)
+func (d demoUsecase) Create(ctx context.Context, name string, content io.Reader, demoName string, serverID int) (*domain.DemoFile, error) {
+	_, errGetServer := d.serversUsecase.GetServer(ctx, serverID)
+	if errGetServer != nil {
+		return nil, domain.ErrGetServer
+	}
+
+	demoContent, errRead := io.ReadAll(content)
+	if errRead != nil {
+		return nil, errRead
+	}
+
+	dir, errDir := os.MkdirTemp("", "gbans-demo")
+	if errDir != nil {
+		return nil, errDir
+	}
+
+	defer func() {
+		if err := os.RemoveAll(dir); err != nil {
+			d.log.Error("Failed to cleanup temp demo path", zap.Error(err))
+		}
+	}()
+
+	namePartsAll := strings.Split(demoName, "-")
+
+	var mapName string
+
+	if strings.Contains(demoName, "workshop-") {
+		// 20231221-042605-workshop-cp_overgrown_rc8-ugc503939302.dem
+		mapName = namePartsAll[3]
+	} else {
+		// 20231112-063943-koth_harvest_final.dem
+		nameParts := strings.Split(namePartsAll[2], ".")
+		mapName = nameParts[0]
+	}
+
+	tempPath := filepath.Join(dir, demoName)
+
+	localFile, errLocalFile := os.Create(tempPath)
+	if errLocalFile != nil {
+		return nil, errLocalFile
+	}
+
+	if _, err := localFile.Write(demoContent); err != nil {
+		return nil, err
+	}
+
+	_ = localFile.Close()
+
+	var demoInfo demoparser.DemoInfo
+	if errParse := demoparser.Parse(ctx, tempPath, &demoInfo); errParse != nil {
+		return nil, errParse
+	}
+
+	intStats := map[steamid.SID64]gin.H{}
+
+	for _, steamID := range demoInfo.SteamIDs() {
+		intStats[steamID] = gin.H{}
+	}
+
+	fileContents, errReadContent := io.ReadAll(content)
+	if errReadContent != nil {
+		return nil, errors.Join(errReadContent, domain.ErrReadContent)
+	}
+
+	asset, errAsset := domain.NewAsset(fileContents, d.bucket, name)
 	if errAsset != nil {
 		return nil, errAsset
 	}
 
-	if errPut := d.au.SaveAsset(ctx, d.bucket, &asset, content); errPut != nil {
+	if errPut := d.assetUsecase.SaveAsset(ctx, d.bucket, &asset, fileContents); errPut != nil {
 		return nil, errPut
 	}
 
@@ -117,7 +193,7 @@ func (d demoUsecase) Create(ctx context.Context, name string, content []byte, ma
 		AssetID:   asset.AssetID,
 	}
 
-	if errSave := d.dr.SaveDemo(ctx, &newDemo); errSave != nil {
+	if errSave := d.repository.SaveDemo(ctx, &newDemo); errSave != nil {
 		return nil, errSave
 	}
 
@@ -125,21 +201,21 @@ func (d demoUsecase) Create(ctx context.Context, name string, content []byte, ma
 }
 
 func (d demoUsecase) DropDemo(ctx context.Context, demoFile *domain.DemoFile) error {
-	conf := d.cu.Config()
+	conf := d.configUsecase.Config()
 
-	asset, errAsset := d.au.GetAsset(ctx, demoFile.AssetID)
+	asset, errAsset := d.assetUsecase.GetAsset(ctx, demoFile.AssetID)
 	if errAsset != nil {
 		return errAsset
 	}
 
-	if errRemove := d.au.DropAsset(ctx, asset); errRemove != nil {
+	if errRemove := d.assetUsecase.DropAsset(ctx, asset); errRemove != nil {
 		d.log.Error("Failed to remove demo asset from S3",
 			zap.Error(errRemove), zap.String("bucket", conf.S3.BucketDemo), zap.String("name", demoFile.Title))
 
 		return errRemove
 	}
 
-	if err := d.dr.DropDemo(ctx, demoFile); err != nil {
+	if err := d.repository.DropDemo(ctx, demoFile); err != nil {
 		return err
 	}
 

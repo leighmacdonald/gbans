@@ -80,9 +80,15 @@ type jsConfig struct {
 	SentryDSN    string `json:"sentry_dsn"`
 }
 
-func ErrorHandled(ctx *gin.Context, err error) error {
+func ErrorHandledWithReturn(ctx *gin.Context, err error) error {
+	ErrorHandled(ctx, err)
+
+	return err
+}
+
+func ErrorHandled(ctx *gin.Context, err error) {
 	if err == nil {
-		return nil
+		return
 	}
 
 	switch {
@@ -99,8 +105,6 @@ func ErrorHandled(ctx *gin.Context, err error) error {
 	default:
 		HandleErrInternal(ctx)
 	}
-
-	return err
 }
 
 func HandleErrPermissionDenied(ctx *gin.Context) {

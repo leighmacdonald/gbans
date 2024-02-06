@@ -263,7 +263,8 @@ func (r reportRepository) GetReports(ctx context.Context, opts domain.ReportQuer
 }
 
 // GetReportBySteamID returns any open report for the user by the author.
-func (r reportRepository) GetReportBySteamID(ctx context.Context, authorID steamid.SID64, steamID steamid.SID64, report *domain.Report) error {
+func (r reportRepository) GetReportBySteamID(ctx context.Context, authorID steamid.SID64, steamID steamid.SID64) (domain.Report, error) {
+	var report domain.Report
 	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
 		Builder().
 		Select("s.report_id", "s.author_id", "s.reported_id", "s.report_status", "s.description",
@@ -279,7 +280,7 @@ func (r reportRepository) GetReportBySteamID(ctx context.Context, authorID steam
 		}))
 
 	if errRow != nil {
-		return r.db.DBErr(errRow)
+		return report, r.db.DBErr(errRow)
 	}
 
 	var (
@@ -303,16 +304,17 @@ func (r reportRepository) GetReportBySteamID(ctx context.Context, authorID steam
 		&report.DemoID,
 		&report.PersonMessageID,
 	); errScan != nil {
-		return r.db.DBErr(errScan)
+		return report, r.db.DBErr(errScan)
 	}
 
 	report.SourceID = steamid.New(sourceID)
 	report.TargetID = steamid.New(targetID)
 
-	return nil
+	return report, nil
 }
 
-func (r reportRepository) GetReport(ctx context.Context, reportID int64, report *domain.Report) error {
+func (r reportRepository) GetReport(ctx context.Context, reportID int64) (domain.Report, error) {
+	var report domain.Report
 	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
 		Builder().
 		Select("s.report_id", "s.author_id", "s.reported_id", "s.report_status", "s.description",
@@ -323,7 +325,7 @@ func (r reportRepository) GetReport(ctx context.Context, reportID int64, report 
 		Where(sq.And{sq.Eq{"deleted": false}, sq.Eq{"report_id": reportID}}))
 
 	if errRow != nil {
-		return r.db.DBErr(errRow)
+		return report, r.db.DBErr(errRow)
 	}
 
 	var (
@@ -347,13 +349,13 @@ func (r reportRepository) GetReport(ctx context.Context, reportID int64, report 
 		&report.DemoID,
 		&report.PersonMessageID,
 	); errScan != nil {
-		return r.db.DBErr(errScan)
+		return report, r.db.DBErr(errScan)
 	}
 
 	report.SourceID = steamid.New(sourceID)
 	report.TargetID = steamid.New(targetID)
 
-	return nil
+	return report, nil
 }
 
 func (r reportRepository) GetReportMessages(ctx context.Context, reportID int64) ([]domain.ReportMessage, error) {
@@ -404,7 +406,8 @@ func (r reportRepository) GetReportMessages(ctx context.Context, reportID int64)
 	return messages, nil
 }
 
-func (r reportRepository) GetReportMessageByID(ctx context.Context, reportMessageID int64, message *domain.ReportMessage) error {
+func (r reportRepository) GetReportMessageByID(ctx context.Context, reportMessageID int64) (domain.ReportMessage, error) {
+	var message domain.ReportMessage
 	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
 		Builder().
 		Select("s.report_message_id", "s.report_id", "s.author_id", "s.message_md", "s.deleted",
@@ -413,7 +416,7 @@ func (r reportRepository) GetReportMessageByID(ctx context.Context, reportMessag
 		LeftJoin("person p ON s.author_id = p.steam_id").
 		Where(sq.Eq{"s.report_message_id": reportMessageID}))
 	if errRow != nil {
-		return errRow
+		return message, errRow
 	}
 
 	var authorID int64
@@ -430,10 +433,10 @@ func (r reportRepository) GetReportMessageByID(ctx context.Context, reportMessag
 		&message.Personaname,
 		&message.PermissionLevel,
 	); errScan != nil {
-		return r.db.DBErr(errScan)
+		return message, r.db.DBErr(errScan)
 	}
 
 	message.AuthorID = steamid.New(authorID)
 
-	return nil
+	return message, nil
 }

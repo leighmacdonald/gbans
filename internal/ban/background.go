@@ -39,8 +39,9 @@ func Start(ctx context.Context, logger *zap.Logger, banUsecase domain.BanSteamUs
 						if errDrop := banUsecase.Delete(ctx, &ban, false); errDrop != nil {
 							log.Error("Failed to drop expired expiredBan", zap.Error(errDrop))
 						} else {
-							var person domain.Person
-							if errPerson := personUsecase.GetPersonBySteamID(ctx, ban.TargetID, &person); errPerson != nil {
+
+							person, errPerson := personUsecase.GetPersonBySteamID(ctx, ban.TargetID)
+							if errPerson != nil {
 								log.Error("Failed to get expired Person", zap.Error(errPerson))
 
 								continue

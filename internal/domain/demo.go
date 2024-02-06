@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"errors"
+	"io"
 	"time"
 
 	"github.com/gabriel-vasile/mimetype"
@@ -19,7 +20,7 @@ type DemoUsecase interface {
 	GetDemoByID(ctx context.Context, demoID int64, demoFile *DemoFile) error
 	GetDemoByName(ctx context.Context, demoName string, demoFile *DemoFile) error
 	GetDemos(ctx context.Context, opts DemoFilter) ([]DemoFile, int64, error)
-	Create(ctx context.Context, name string, content []byte, mapName string, intStats map[steamid.SID64]gin.H, serverID int) (*DemoFile, error)
+	Create(ctx context.Context, name string, content io.Reader, demoName string, serverID int) (*DemoFile, error)
 	DropDemo(ctx context.Context, demoFile *DemoFile) error
 }
 

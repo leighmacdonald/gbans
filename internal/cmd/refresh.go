@@ -81,16 +81,15 @@ func refreshFiltersCmd() *cobra.Command {
 
 			serversUsecase := servers.NewServersUsecase(servers.NewServersRepository(dbUsecase))
 
-			stateRepository := state.NewStateRepository(state.NewCollector(rootLogger, serversUsecase))
-			stateUsecase := state.NewStateUsecase(rootLogger, eventBroadcaster, stateRepository, configUsecase, serversUsecase)
+			stateUsecase := state.NewStateUsecase(rootLogger, eventBroadcaster,
+				state.NewStateRepository(state.NewCollector(rootLogger, serversUsecase)), configUsecase, serversUsecase)
 
 			discordRepository, _ := discord.NewDiscordRepository(rootLogger, conf)
 
 			discordUsecase := discord.NewDiscordUsecase(discordRepository)
 
-			reportUsecase := report.NewReportUsecase(rootLogger, report.NewReportRepository(dbUsecase), discordUsecase, configUsecase)
-
-			personUsecase := person.NewPersonUsecase(rootLogger, person.NewPersonRepository(dbUsecase))
+			personUsecase := person.NewPersonUsecase(rootLogger, person.NewPersonRepository(dbUsecase), configUsecase)
+			reportUsecase := report.NewReportUsecase(rootLogger, report.NewReportRepository(dbUsecase), discordUsecase, configUsecase, personUsecase)
 
 			wordFilterUsecase := wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(dbUsecase), discordUsecase)
 			if errImport := wordFilterUsecase.Import(ctx); errImport != nil {
@@ -115,8 +114,13 @@ func refreshFiltersCmd() *cobra.Command {
 
 			matches := 0
 
+			admin, errAdmin := personUsecase.GetPersonBySteamID(ctx, conf.General.Owner)
+			if errAdmin != nil {
+				rootLogger.Fatal("Failed to load admin user", zap.Error(errAdmin))
+			}
+
 			for {
-				messages, _, errMessages := chatUsecase.QueryChatHistory(ctx, query)
+				messages, _, errMessages := chatUsecase.QueryChatHistory(ctx, admin, query)
 				if errMessages != nil {
 					rootLogger.Error("Failed to load more messages", zap.Error(errMessages))
 

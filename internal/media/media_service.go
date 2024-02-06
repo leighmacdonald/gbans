@@ -74,7 +74,7 @@ func (h mediaHandler) onGetMediaByID() gin.HandlerFunc {
 		}
 
 		var media domain.Media
-		if err := httphelper.ErrorHandled(ctx, h.mu.GetMediaByID(ctx, mediaID, &media)); err != nil {
+		if err := httphelper.ErrorHandledWithReturn(ctx, h.mu.GetMediaByID(ctx, mediaID, &media)); err != nil {
 			return
 		}
 

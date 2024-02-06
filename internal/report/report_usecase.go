@@ -2,6 +2,7 @@ package report
 
 import (
 	"context"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/discord"
@@ -14,17 +15,19 @@ type reportUsecase struct {
 	rr  domain.ReportRepository
 	du  domain.DiscordUsecase
 	cu  domain.ConfigUsecase
+	pu  domain.PersonUsecase
 	log *zap.Logger
 }
 
 func NewReportUsecase(log *zap.Logger, repository domain.ReportRepository, discordUsecase domain.DiscordUsecase,
-	configUsecase domain.ConfigUsecase,
+	configUsecase domain.ConfigUsecase, personUsecase domain.PersonUsecase,
 ) domain.ReportUsecase {
 	return &reportUsecase{
 		log: log.Named("report"),
 		du:  discordUsecase,
 		rr:  repository,
 		cu:  configUsecase,
+		pu:  personUsecase,
 	}
 }
 
@@ -94,24 +97,38 @@ func (r reportUsecase) Start(ctx context.Context) {
 	}
 }
 
-func (r reportUsecase) GetReportBySteamID(ctx context.Context, authorID steamid.SID64, steamID steamid.SID64, report *domain.Report) error {
-	return r.rr.GetReportBySteamID(ctx, authorID, steamID, report)
+func (r reportUsecase) GetReportBySteamID(ctx context.Context, authorID steamid.SID64, steamID steamid.SID64) (domain.Report, error) {
+	return r.rr.GetReportBySteamID(ctx, authorID, steamID)
 }
 
 func (r reportUsecase) GetReports(ctx context.Context, opts domain.ReportQueryFilter) ([]domain.Report, int64, error) {
 	return r.rr.GetReports(ctx, opts)
 }
 
-func (r reportUsecase) GetReport(ctx context.Context, reportID int64, report *domain.Report) error {
-	return r.rr.GetReport(ctx, reportID, report)
+func (r reportUsecase) GetReport(ctx context.Context, curUser domain.PersonInfo, reportID int64) (domain.Report, error) {
+	report, err := r.rr.GetReport(ctx, reportID)
+	if err != nil {
+		return domain.Report{}, err
+	}
+
+	author, errAuthor := r.pu.GetPersonBySteamID(ctx, report.SourceID)
+	if errAuthor != nil {
+		return report, errAuthor
+	}
+
+	if !httphelper.HasPrivilege(curUser, steamid.Collection{author.SteamID}, domain.PModerator) {
+		return report, domain.ErrPermissionDenied
+	}
+
+	return report, nil
 }
 
 func (r reportUsecase) GetReportMessages(ctx context.Context, reportID int64) ([]domain.ReportMessage, error) {
 	return r.rr.GetReportMessages(ctx, reportID)
 }
 
-func (r reportUsecase) GetReportMessageByID(ctx context.Context, reportMessageID int64, message *domain.ReportMessage) error {
-	return r.rr.GetReportMessageByID(ctx, reportMessageID, message)
+func (r reportUsecase) GetReportMessageByID(ctx context.Context, reportMessageID int64) (domain.ReportMessage, error) {
+	return r.rr.GetReportMessageByID(ctx, reportMessageID)
 }
 
 func (r reportUsecase) DropReportMessage(ctx context.Context, message *domain.ReportMessage) error {

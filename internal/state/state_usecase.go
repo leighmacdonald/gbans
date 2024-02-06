@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"golang.org/x/sync/errgroup"
 	"net"
 	"os"
 	"strings"
@@ -350,9 +351,16 @@ func (s *stateUsecase) LogAddressAdd(ctx context.Context, logAddress string) {
 	s.Broadcast(ctx, nil, fmt.Sprintf("logaddress_add %s", logAddress))
 }
 
+type broadcastResult struct {
+	serverID int
+	resp     string
+}
+
+// Broadcast sends out rcon commands to all provided servers. If no servers are provided it will default to broadcasting
+// to every server.
 func (s *stateUsecase) Broadcast(ctx context.Context, serverIDs []int, cmd string) map[int]string {
 	results := map[int]string{}
-	waitGroup := sync.WaitGroup{}
+	eg, egCtx := errgroup.WithContext(ctx)
 
 	configs := s.stateRepository.Configs()
 
@@ -362,29 +370,47 @@ func (s *stateUsecase) Broadcast(ctx context.Context, serverIDs []int, cmd strin
 		}
 	}
 
+	resultChan := make(chan broadcastResult)
+
 	for _, serverID := range serverIDs {
-		waitGroup.Add(1)
+		sid := serverID
 
-		go func(sid int) {
-			defer waitGroup.Done()
-
+		eg.Go(func() error {
 			serverConf, errServerConf := s.stateRepository.GetServer(sid)
 			if errServerConf != nil {
-				return
+				return errServerConf
 			}
 
-			resp, errExec := s.stateRepository.ExecRaw(ctx, serverConf.Addr(), serverConf.RconPassword, cmd)
+			resp, errExec := s.stateRepository.ExecRaw(egCtx, serverConf.Addr(), serverConf.RconPassword, cmd)
 			if errExec != nil {
 				s.log.Error("Failed to exec server command", zap.Int("server_id", sid), zap.Error(errExec))
 
-				return
+				// Don't error out since we don't want a single servers potentially temporary issue to prevent the rest
+				// from executing.
+				return nil
 			}
 
-			results[sid] = resp
-		}(serverID)
+			resultChan <- broadcastResult{
+				serverID: sid,
+				resp:     resp,
+			}
+
+			return nil
+		})
 	}
 
-	waitGroup.Wait()
+	go func() {
+		err := eg.Wait()
+		if err != nil {
+			s.log.Error("Failed to broadcast command", zap.Error(err))
+		}
+
+		close(resultChan)
+	}()
+
+	for result := range resultChan {
+		results[result.serverID] = result.resp
+	}
 
 	return results
 }

@@ -101,22 +101,19 @@ func (h AuthHandler) onOpenIDCallback() gin.HandlerFunc {
 			return
 		}
 
-		person := domain.NewPerson(sid)
-		if errPerson := h.personUsecase.GetOrCreatePersonBySteamID(ctx, sid, &person); errPerson != nil {
+		person, errPerson := h.personUsecase.GetOrCreatePersonBySteamID(ctx, sid)
+		if errPerson != nil {
 			log.Error("Failed to create or load user profile", zap.Error(errPerson))
 			ctx.Redirect(302, referralURL)
 		}
 
 		if person.Expired() {
 			if errGetProfile := thirdparty.UpdatePlayerSummary(ctx, &person); errGetProfile != nil {
-				log.Error("Failed to fetch user profile", zap.Error(errGetProfile))
-				ctx.Redirect(302, referralURL)
-
-				return
-			}
-
-			if errSave := h.personUsecase.SavePerson(ctx, &person); errSave != nil {
-				log.Error("Failed to save summary update", zap.Error(errSave))
+				log.Error("Failed to fetch user profile on login", zap.Error(errGetProfile))
+			} else {
+				if errSave := h.personUsecase.SavePerson(ctx, &person); errSave != nil {
+					log.Error("Failed to save summary update", zap.Error(errSave))
+				}
 			}
 		}
 
@@ -367,8 +364,8 @@ func (h AuthHandler) onOAuthDiscordCallback() gin.HandlerFunc {
 			return
 		}
 
-		var discordPerson domain.Person
-		if errDp := h.personUsecase.GetPersonByDiscordID(ctx, discordID, &discordPerson); errDp != nil {
+		discordPerson, errDp := h.personUsecase.GetPersonByDiscordID(ctx, discordID)
+		if errDp != nil {
 			if !errors.Is(errDp, domain.ErrNoResult) {
 				httphelper.ResponseErr(ctx, http.StatusInternalServerError, nil)
 
@@ -385,8 +382,8 @@ func (h AuthHandler) onOAuthDiscordCallback() gin.HandlerFunc {
 
 		sid := httphelper.CurrentUserProfile(ctx).SteamID
 
-		var person domain.Person
-		if errPerson := h.personUsecase.GetPersonBySteamID(ctx, sid, &person); errPerson != nil {
+		person, errPerson := h.personUsecase.GetPersonBySteamID(ctx, sid)
+		if errPerson != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, nil)
 
 			return
@@ -395,13 +392,10 @@ func (h AuthHandler) onOAuthDiscordCallback() gin.HandlerFunc {
 		if person.Expired() {
 			if errGetProfile := thirdparty.UpdatePlayerSummary(ctx, &person); errGetProfile != nil {
 				log.Error("Failed to fetch user profile", zap.Error(errGetProfile))
-				httphelper.ResponseErr(ctx, http.StatusInternalServerError, nil)
-
-				return
-			}
-
-			if errSave := h.personUsecase.SavePerson(ctx, &person); errSave != nil {
-				log.Error("Failed to save player summary update", zap.Error(errSave))
+			} else {
+				if errSave := h.personUsecase.SavePerson(ctx, &person); errSave != nil {
+					log.Error("Failed to save player summary update", zap.Error(errSave))
+				}
 			}
 		}
 

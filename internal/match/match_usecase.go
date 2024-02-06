@@ -119,8 +119,8 @@ func (m matchUsecase) onMatchComplete(ctx context.Context, matchContext *Context
 		matchContext.Match.Title = server.Name
 	}
 
-	var fullServer domain.Server
-	if err := m.sv.GetServer(ctx, server.ServerID, &fullServer); err != nil {
+	fullServer, err := m.sv.GetServer(ctx, server.ServerID)
+	if err != nil {
 		return errors.Join(err, domain.ErrLoadServer)
 	}
 
