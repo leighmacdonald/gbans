@@ -71,10 +71,10 @@ testcover:
 	@go test -race -coverprofile c.out $(GO_FLAGS) ./...
 
 install_deps:
-	go install github.com/vektra/mockery/v2@v2.40.1
+	go install github.com/vektra/mockery/v2@v2.41.0
 	go install github.com/daixiang0/gci@v0.12.1
 	go install mvdan.cc/gofumpt@v0.6.0
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.2
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.56.1
 	go install honnef.co/go/tools/cmd/staticcheck@v0.4.6
 
 check: lint_golangci static lint_ts
@@ -89,7 +89,7 @@ lint_ts:
 	cd frontend && yarn run eslint:check && yarn prettier src/ --check
 
 static:
-	staticcheck -go 1.21 ./...
+	staticcheck -go 1.22 ./...
 
 bench:
 	@go test -run=NONE -bench=. $(GO_FLAGS) ./...
