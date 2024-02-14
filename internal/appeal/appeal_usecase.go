@@ -2,12 +2,12 @@ package appeal
 
 import (
 	"context"
-	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/steamid/v3/steamid"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
 type appealUsecase struct {

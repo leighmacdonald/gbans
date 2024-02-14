@@ -12,8 +12,6 @@ import (
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
-var ErrAssetID = errors.New("failed to generate new asset ID")
-
 type DemoUsecase interface {
 	Start(ctx context.Context)
 	ExpiredDemos(ctx context.Context, limit uint64) ([]DemoInfo, error)
@@ -80,7 +78,7 @@ func NewAsset(content []byte, bucket string, name string) (Asset, error) {
 
 	newID, errID := uuid.NewV4()
 	if errID != nil {
-		return Asset{}, errors.Join(errID, ErrAssetID)
+		return Asset{}, errors.Join(errID, ErrUUIDCreate)
 	}
 
 	if name == "" {

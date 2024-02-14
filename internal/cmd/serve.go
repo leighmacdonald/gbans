@@ -111,7 +111,12 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				rootLogger.Fatal("Cannot initialize discord", zap.Error(errDR))
 			}
 
-			discordUsecase := discord.NewDiscordUsecase(dr)
+			wordFilterUsecase := wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(dbUsecase))
+			if err := wordFilterUsecase.Import(ctx); err != nil {
+				rootLogger.Fatal("Failed to load word filters", zap.Error(err))
+			}
+
+			discordUsecase := discord.NewDiscordUsecase(dr, wordFilterUsecase)
 
 			if err := discordUsecase.Start(); err != nil {
 				rootLogger.Fatal("Failed to start discord", zap.Error(err))
@@ -160,11 +165,6 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			ban.NewBanNetRepository(dbUsecase)
 
 			apu := appeal.NewAppealUsecase(appeal.NewAppealRepository(dbUsecase), banUsecase, personUsecase, discordUsecase, configUsecase)
-
-			wordFilterUsecase := wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(dbUsecase), discordUsecase)
-			if err := wordFilterUsecase.Import(ctx); err != nil {
-				rootLogger.Fatal("Failed to load word filters", zap.Error(err))
-			}
 
 			chatRepository := chat.NewChatRepository(dbUsecase, rootLogger, personUsecase, wordFilterUsecase, eventBroadcaster)
 

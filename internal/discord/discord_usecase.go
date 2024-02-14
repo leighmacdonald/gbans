@@ -3,10 +3,11 @@ package discord
 import (
 	"context"
 	"errors"
-	"github.com/bwmarrin/discordgo"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"regexp"
 	"time"
+
+	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/gbans/internal/domain"
 )
 
 type discordUsecase struct {
@@ -54,5 +55,5 @@ func (d discordUsecase) FilterAdd(ctx context.Context, user domain.PersonInfo, p
 		return nil, domain.ErrCommandFailed
 	}
 
-	FilterAddMessage(filter)
+	return FilterAddMessage(filter), nil
 }

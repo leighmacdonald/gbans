@@ -2,6 +2,7 @@ package contest
 
 import (
 	"context"
+
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v3/steamid"

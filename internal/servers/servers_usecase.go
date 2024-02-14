@@ -2,6 +2,7 @@ package servers
 
 import (
 	"context"
+
 	"github.com/leighmacdonald/gbans/internal/domain"
 )
 

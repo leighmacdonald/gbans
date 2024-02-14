@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"golang.org/x/sync/errgroup"
 	"net"
 	"os"
 	"strings"
@@ -17,6 +16,7 @@ import (
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/ryanuber/go-glob"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 )
 
 type stateUsecase struct {

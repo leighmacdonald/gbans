@@ -1,12 +1,13 @@
 package wiki
 
 import (
+	"net/http"
+	"runtime"
+
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"go.uber.org/zap"
-	"net/http"
-	"runtime"
 )
 
 type wikiHandler struct {

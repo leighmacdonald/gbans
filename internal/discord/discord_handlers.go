@@ -585,7 +585,7 @@ func (h discordService) onFilterAdd(ctx context.Context, _ *discordgo.Session, i
 		return nil, errAuthor
 	}
 
-	return h.du.FilterAdd(author, pattern, isRegex)
+	return h.du.FilterAdd(ctx, author, pattern, isRegex)
 }
 
 func (h discordService) onFilterDel(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {

@@ -84,17 +84,17 @@ func refreshFiltersCmd() *cobra.Command {
 			stateUsecase := state.NewStateUsecase(rootLogger, eventBroadcaster,
 				state.NewStateRepository(state.NewCollector(rootLogger, serversUsecase)), configUsecase, serversUsecase)
 
-			discordRepository, _ := discord.NewDiscordRepository(rootLogger, conf)
-
-			discordUsecase := discord.NewDiscordUsecase(discordRepository)
-
-			personUsecase := person.NewPersonUsecase(rootLogger, person.NewPersonRepository(dbUsecase), configUsecase)
-			reportUsecase := report.NewReportUsecase(rootLogger, report.NewReportRepository(dbUsecase), discordUsecase, configUsecase, personUsecase)
-
-			wordFilterUsecase := wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(dbUsecase), discordUsecase)
+			wordFilterUsecase := wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(dbUsecase))
 			if errImport := wordFilterUsecase.Import(ctx); errImport != nil {
 				rootLogger.Fatal("Failed to load filters")
 			}
+
+			discordRepository, _ := discord.NewDiscordRepository(rootLogger, conf)
+
+			discordUsecase := discord.NewDiscordUsecase(discordRepository, wordFilterUsecase)
+
+			personUsecase := person.NewPersonUsecase(rootLogger, person.NewPersonRepository(dbUsecase), configUsecase)
+			reportUsecase := report.NewReportUsecase(rootLogger, report.NewReportRepository(dbUsecase), discordUsecase, configUsecase, personUsecase)
 
 			blocklistUsecase := blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(dbUsecase))
 			networkUsecase := network.NewNetworkUsecase(rootLogger, eventBroadcaster, network.NewNetworkRepository(dbUsecase), blocklistUsecase, personUsecase)
