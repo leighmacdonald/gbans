@@ -36,10 +36,12 @@ func NewDiscordRepository(logger *zap.Logger, conf domain.Config) (domain.Discor
 	bot := &discordRepository{
 		log:               logger.Named("discord"),
 		session:           session,
+		conf:              conf,
 		isReady:           atomic.Bool{},
 		unregisterOnStart: conf.Discord.UnregisterOnStart,
 		commandHandlers:   map[domain.Cmd]domain.SlashCommandHandler{},
 	}
+
 	bot.session.AddHandler(bot.onReady)
 	bot.session.AddHandler(bot.onConnect)
 	bot.session.AddHandler(bot.onDisconnect)
@@ -258,7 +260,7 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 		Description: "Short server name",
 		Required:    true,
 	}
-	// optReason := &discordgo.ApplicationCommandOption{
+	//optReason := &discordgo.ApplicationCommandOption{
 	//	Type:        discordgo.ApplicationCommandOptionString,
 	//	Name:        "reason",
 	//	Description: "Reason for the ban (shown to users on kick)",

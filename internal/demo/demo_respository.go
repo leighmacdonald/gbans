@@ -22,10 +22,10 @@ func NewDemoRepository(database database.Database) domain.DemoRepository {
 func (r *demoRepository) ExpiredDemos(ctx context.Context, limit uint64) ([]domain.DemoInfo, error) {
 	rows, errRow := r.db.QueryBuilder(ctx, r.db.
 		Builder().
-		Select("r.demo_id", "r.title", "r.asset_id").
-		From("demo r").
-		Where(sq.NotEq{"r.archive": true}).
-		OrderBy("r.created_on desc").
+		Select("d.demo_id", "d.title", "d.asset_id").
+		From("demo d").
+		Where(sq.NotEq{"d.archive": true}).
+		OrderBy("d.created_on desc").
 		Offset(limit))
 	if errRow != nil {
 		return nil, r.db.DBErr(errRow)
@@ -50,11 +50,11 @@ func (r *demoRepository) ExpiredDemos(ctx context.Context, limit uint64) ([]doma
 func (r *demoRepository) GetDemoByID(ctx context.Context, demoID int64, demoFile *domain.DemoFile) error {
 	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
 		Builder().
-		Select("r.demo_id", "r.server_id", "r.title", "r.created_on", "r.downloads",
-			"r.map_name", "r.archive", "r.stats", "r.asset_id", "a.size", "r.short_name", "r.name").
+		Select("d.demo_id", "d.server_id", "d.title", "d.created_on", "d.downloads",
+			"d.map_name", "d.archive", "d.stats", "d.asset_id", "a.size", "s.short_name", "s.name").
 		From("demo r").
-		LeftJoin("server r ON r.server_id = r.server_id").
-		LeftJoin("asset a ON a.asset_id = r.asset_id").
+		LeftJoin("server s ON s.server_id = d.server_id").
+		LeftJoin("asset a ON a.asset_id = d.asset_id").
 		Where(sq.Eq{"demo_id": demoID}))
 	if errRow != nil {
 		return r.db.DBErr(errRow)
@@ -80,9 +80,9 @@ func (r *demoRepository) GetDemoByName(ctx context.Context, demoName string, dem
 	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
 		Builder().
 		Select("r.demo_id", "r.server_id", "r.title", "r.created_on", "r.downloads",
-			"r.map_name", "r.archive", "r.stats", "r.asset_id", "a.size", "r.short_name", "r.name").
+			"r.map_name", "r.archive", "r.stats", "r.asset_id", "a.size", "s.short_name", "s.name").
 		From("demo r").
-		LeftJoin("server r ON r.server_id = r.server_id").
+		LeftJoin("server s ON s.server_id = r.server_id").
 		LeftJoin("asset a ON a.asset_id = r.asset_id").
 		Where(sq.Eq{"title": demoName}))
 	if errRow != nil {
@@ -113,14 +113,14 @@ func (r *demoRepository) GetDemos(ctx context.Context, opts domain.DemoFilter) (
 
 	builder := r.db.
 		Builder().
-		Select("r.demo_id", "r.server_id", "r.title", "r.created_on", "r.downloads",
-			"r.map_name", "r.archive", "r.stats", "r.short_name", "r.name", "r.asset_id", "a.size").
-		From("demo r").
-		LeftJoin("server r ON r.server_id = r.server_id").
-		LeftJoin("asset a ON a.asset_id = r.asset_id")
+		Select("d.demo_id", "d.server_id", "d.title", "d.created_on", "d.downloads",
+			"d.map_name", "d.archive", "d.stats", "s.short_name", "s.name", "d.asset_id", "a.size").
+		From("demo d").
+		LeftJoin("server s ON s.server_id = d.server_id").
+		LeftJoin("asset a ON a.asset_id = d.asset_id")
 
 	if opts.MapName != "" {
-		constraints = append(constraints, sq.ILike{"r.map_name": "%" + strings.ToLower(opts.MapName) + "%"})
+		constraints = append(constraints, sq.ILike{"d.map_name": "%" + strings.ToLower(opts.MapName) + "%"})
 	}
 
 	if opts.SteamID != "" {
@@ -129,7 +129,7 @@ func (r *demoRepository) GetDemos(ctx context.Context, opts domain.DemoFilter) (
 			return nil, 0, domain.ErrInvalidSID
 		}
 
-		constraints = append(constraints, sq.Expr("r.stats ?? ?", sid64.String()))
+		constraints = append(constraints, sq.Expr("d.stats ?? ?", sid64.String()))
 	}
 
 	if len(opts.ServerIds) > 0 && opts.ServerIds[0] != 0 {
@@ -144,13 +144,13 @@ func (r *demoRepository) GetDemos(ctx context.Context, opts domain.DemoFilter) (
 		}
 
 		if !anyServer {
-			constraints = append(constraints, sq.Eq{"r.server_id": opts.ServerIds})
+			constraints = append(constraints, sq.Eq{"d.server_id": opts.ServerIds})
 		}
 	}
 
 	builder = opts.ApplySafeOrder(builder, map[string][]string{
 		"d.": {"demo_id", "server_id", "title", "created_on", "downloads", "map_name"},
-		"r.": {"short_name", "name"},
+		"s.": {"short_name", "name"},
 		"a.": {"size"},
 	}, "demo_id")
 
@@ -192,8 +192,8 @@ func (r *demoRepository) GetDemos(ctx context.Context, opts domain.DemoFilter) (
 
 	count, errCount := r.db.GetCount(ctx, r.db.
 		Builder().
-		Select("count(r.demo_id)").
-		From("demo r").
+		Select("count(d.demo_id)").
+		From("demo d").
 		Where(constraints))
 	if errCount != nil {
 		return []domain.DemoFile{}, 0, r.db.DBErr(errCount)
