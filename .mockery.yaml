@@ -1,0 +1,8 @@
+with-expecter: true
+packages:
+  github.com/leighmacdonald/gbans/internal/domain:
+    config:
+      dir: internal/domain/mocks
+      outpkg: mocks
+      include-regex: .*(Usecase|Repository)$
+      filename: "Mock{{.InterfaceName}}.go"
