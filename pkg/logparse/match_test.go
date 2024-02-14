@@ -8,13 +8,13 @@ import (
 	"testing"
 
 	"github.com/leighmacdonald/gbans/pkg/logparse"
-	"github.com/leighmacdonald/golib"
+	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/stretchr/testify/require"
 )
 
 func TestMatch(t *testing.T) {
-	testFilePath := golib.FindFile(path.Join("testdata", "log_3124689.log"), "gbans")
+	testFilePath := util.FindFile(path.Join("testdata", "log_3124689.log"), "gbans")
 	if testFilePath == "" {
 		t.Skipf("Cant find test file: log_3124689.log")
 

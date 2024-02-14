@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/golib"
+	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 )
@@ -33,7 +33,7 @@ func FetchPlayerBans(ctx context.Context, steamIDs []steamid.SID64) ([]steamweb.
 
 			var (
 				total      = uint64(len(steamIDs) - index)
-				maxResults = golib.UMin64(steamQueryMaxResults, total)
+				maxResults = util.UMin64(steamQueryMaxResults, total)
 				ids        = steamIDs[index : index+int(maxResults)]
 			)
 
