@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/minio/minio-go/v7"
@@ -30,6 +31,33 @@ func NewS3Repository(logger *zap.Logger, db database.Database, client *minio.Cli
 		log:    logger.Named("s3"),
 		region: region,
 	}
+}
+
+func (r *s3repository) Get(ctx context.Context, bucket string, name string) (io.Reader, error) {
+	reader, err := r.client.GetObject(ctx, bucket, name, minio.GetObjectOptions{})
+	if err != nil {
+		return nil, errors.Join(err, domain.ErrAssetGet)
+	}
+
+	return reader, nil
+}
+
+func (r *s3repository) GetAsset(ctx context.Context, uuid uuid.UUID) (domain.Asset, error) {
+	var asset domain.Asset
+
+	row, errRow := r.db.QueryRowBuilder(ctx, r.db.Builder().
+		Select("asset_id", "bucket", "path", "name", "mime_type", "size", "old_id").
+		From("asset").Where(sq.Eq{"asset_id": uuid.String()}))
+
+	if errRow != nil {
+		return asset, errRow
+	}
+
+	if errScan := row.Scan(&asset.AssetID, &asset.Bucket, &asset.Path, &asset.Name, &asset.MimeType, &asset.Size, &asset.OldID); errScan != nil {
+		return asset, r.db.DBErr(errScan)
+	}
+
+	return asset, nil
 }
 
 func (r *s3repository) CreateBucketIfNotExists(ctx context.Context, name string) error {

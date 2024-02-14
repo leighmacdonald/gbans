@@ -12,19 +12,29 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 )
 
-type AssetUsecase struct {
+type assetUsecase struct {
 	ar domain.AssetRepository
 }
 
 func NewAssetUsecase(assetRepository domain.AssetRepository) domain.AssetUsecase {
-	return &AssetUsecase{ar: assetRepository}
+	return &assetUsecase{ar: assetRepository}
 }
 
-func (s AssetUsecase) GetAsset(ctx context.Context, uuid uuid.UUID) (*domain.Asset, error) {
-	panic("DropAsset")
+func (s assetUsecase) GetAsset(ctx context.Context, uuid uuid.UUID) (domain.Asset, io.Reader, error) {
+	asset, errAsset := s.ar.GetAsset(ctx, uuid)
+	if errAsset != nil {
+		return asset, nil, errAsset
+	}
+
+	content, err := s.ar.Get(ctx, asset.Bucket, asset.Name)
+	if err != nil {
+		return asset, nil, err
+	}
+
+	return asset, content, nil
 }
 
-func (s AssetUsecase) SaveAsset(ctx context.Context, bucket string, asset *domain.Asset, content []byte) error {
+func (s assetUsecase) SaveAsset(ctx context.Context, bucket string, asset *domain.Asset, content []byte) error {
 	if errPut := s.ar.Put(ctx, bucket, asset.Name, bytes.NewReader(content), asset.Size, asset.MimeType); errPut != nil {
 		return errPut
 	}
@@ -36,7 +46,7 @@ func (s AssetUsecase) SaveAsset(ctx context.Context, bucket string, asset *domai
 	return nil
 }
 
-func (s AssetUsecase) DropAsset(ctx context.Context, asset *domain.Asset) error {
+func (s assetUsecase) DropAsset(ctx context.Context, asset *domain.Asset) error {
 	if err := s.ar.Remove(ctx, asset.Bucket, asset.Name); err != nil {
 		return err
 	}

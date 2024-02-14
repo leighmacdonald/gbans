@@ -3,7 +3,6 @@ package demo
 import (
 	"context"
 	"errors"
-	"github.com/leighmacdonald/gbans/pkg/demoparser"
 	"io"
 	"os"
 	"path/filepath"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/pkg/demoparser"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"go.uber.org/zap"
 )
@@ -203,12 +203,12 @@ func (d demoUsecase) Create(ctx context.Context, name string, content io.Reader,
 func (d demoUsecase) DropDemo(ctx context.Context, demoFile *domain.DemoFile) error {
 	conf := d.configUsecase.Config()
 
-	asset, errAsset := d.assetUsecase.GetAsset(ctx, demoFile.AssetID)
+	asset, _, errAsset := d.assetUsecase.GetAsset(ctx, demoFile.AssetID)
 	if errAsset != nil {
 		return errAsset
 	}
 
-	if errRemove := d.assetUsecase.DropAsset(ctx, asset); errRemove != nil {
+	if errRemove := d.assetUsecase.DropAsset(ctx, &asset); errRemove != nil {
 		d.log.Error("Failed to remove demo asset from S3",
 			zap.Error(errRemove), zap.String("bucket", conf.S3.BucketDemo), zap.String("name", demoFile.Title))
 

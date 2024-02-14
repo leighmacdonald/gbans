@@ -3,22 +3,20 @@ package wordfilter
 import (
 	"context"
 	"errors"
-	"github.com/leighmacdonald/gbans/pkg/util"
 	"regexp"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/pkg/util"
 )
 
 type wordfilterUsecase struct {
 	filterRepository domain.WordFilterRepository
-	discordUsecase   domain.DiscordUsecase
 	wordFilters      *WordFilters
 }
 
-func NewWordFilterUsecase(filterRepository domain.WordFilterRepository, discordUsecase domain.DiscordUsecase) domain.WordFilterUsecase {
-	return &wordfilterUsecase{filterRepository: filterRepository, discordUsecase: discordUsecase, wordFilters: NewWordFilters()}
+func NewWordFilterUsecase(filterRepository domain.WordFilterRepository) domain.WordFilterUsecase {
+	return &wordfilterUsecase{filterRepository: filterRepository, wordFilters: NewWordFilters()}
 }
 
 func (w *wordfilterUsecase) Import(ctx context.Context) error {
@@ -109,8 +107,6 @@ func (w *wordfilterUsecase) SaveFilter(ctx context.Context, user domain.PersonIn
 
 	// TODO
 	// app.wordFilters.Add(filter)
-
-	w.discordUsecase.SendPayload(domain.ChannelModLog, discord.FilterAddMessage(*filter))
 
 	return nil
 }

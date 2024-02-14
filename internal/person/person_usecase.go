@@ -3,12 +3,12 @@ package person
 import (
 	"context"
 	"errors"
-	"github.com/leighmacdonald/gbans/pkg/util"
 	"net"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
+	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 	"go.uber.org/zap"
@@ -246,6 +246,7 @@ func (u personUsecase) GetOrCreatePersonBySteamID(ctx context.Context, sid64 ste
 
 	return person, errGetPerson
 }
+
 func (u personUsecase) GetPersonByDiscordID(ctx context.Context, discordID string) (domain.Person, error) {
 	return u.personRepo.GetPersonByDiscordID(ctx, discordID)
 }

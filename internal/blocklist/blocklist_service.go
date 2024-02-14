@@ -1,13 +1,14 @@
 package blocklist
 
 import (
+	"net"
+	"net/http"
+	"runtime"
+
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"go.uber.org/zap"
-	"net"
-	"net/http"
-	"runtime"
 )
 
 type BlocklistHandler struct {

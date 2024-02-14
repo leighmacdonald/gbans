@@ -3,11 +3,12 @@ package blocklist
 import (
 	"context"
 	"errors"
-	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/network"
 	"net"
 	"net/url"
 	"strings"
+
+	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/network"
 )
 
 type blocklistUsecase struct {
@@ -64,7 +65,6 @@ func (b blocklistUsecase) UpdateCIDRBlockSource(ctx context.Context, sourceID in
 	testBlocker := network.NewBlocker()
 	if count, errTest := testBlocker.AddRemoteSource(ctx, name, url); errTest != nil || count == 0 {
 		return blockSource, domain.ErrValidateURL
-
 	}
 
 	blockSource.Enabled = enabled
@@ -111,6 +111,7 @@ func (b blocklistUsecase) CreateCIDRBlockWhitelist(ctx context.Context, address 
 
 	return whitelist, nil
 }
+
 func (b blocklistUsecase) UpdateCIDRBlockWhitelist(ctx context.Context, whitelistID int, address string) (domain.CIDRBlockWhitelist, error) {
 	_, cidr, errParse := net.ParseCIDR(address)
 	if errParse != nil {

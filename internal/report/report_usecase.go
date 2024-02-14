@@ -2,11 +2,11 @@ package report
 
 import (
 	"context"
-	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"go.uber.org/zap"
 )

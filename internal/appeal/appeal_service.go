@@ -127,7 +127,6 @@ func (h *AppealHandler) onAPIEditBanMessage() gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusCreated, msg)
-
 	}
 }
 
