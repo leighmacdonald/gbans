@@ -103,7 +103,7 @@ func (c Contest) NewEntry(steamID steamid.SID64, assetID uuid.UUID, description 
 
 	newID, errID := uuid.NewV4()
 	if errID != nil {
-		return ContestEntry{}, errors.Join(errID, ErrGenerateUUID)
+		return ContestEntry{}, errors.Join(errID, ErrUUIDCreate)
 	}
 
 	return ContestEntry{
@@ -123,7 +123,7 @@ func (c Contest) NewEntry(steamID steamid.SID64, assetID uuid.UUID, description 
 func NewContest(title string, description string, dateStart time.Time, dateEnd time.Time, public bool) (Contest, error) {
 	newID, errID := uuid.NewV4()
 	if errID != nil {
-		return Contest{}, errors.Join(errID, ErrGenerateUUID)
+		return Contest{}, errors.Join(errID, ErrUUIDCreate)
 	}
 
 	if title == "" {

@@ -260,12 +260,12 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 		Description: "Short server name",
 		Required:    true,
 	}
-	//optReason := &discordgo.ApplicationCommandOption{
+	// optReason := &discordgo.ApplicationCommandOption{
 	//	Type:        discordgo.ApplicationCommandOptionString,
 	//	Name:        "reason",
 	//	Description: "Reason for the ban (shown to users on kick)",
 	//	Required:    true,
-	//}
+	// }
 	optMessage := &discordgo.ApplicationCommandOption{
 		Type:        discordgo.ApplicationCommandOptionString,
 		Name:        domain.OptMessage,

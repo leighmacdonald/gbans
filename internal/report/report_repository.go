@@ -265,6 +265,7 @@ func (r reportRepository) GetReports(ctx context.Context, opts domain.ReportQuer
 // GetReportBySteamID returns any open report for the user by the author.
 func (r reportRepository) GetReportBySteamID(ctx context.Context, authorID steamid.SID64, steamID steamid.SID64) (domain.Report, error) {
 	var report domain.Report
+
 	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
 		Builder().
 		Select("s.report_id", "s.author_id", "s.reported_id", "s.report_status", "s.description",
@@ -315,6 +316,7 @@ func (r reportRepository) GetReportBySteamID(ctx context.Context, authorID steam
 
 func (r reportRepository) GetReport(ctx context.Context, reportID int64) (domain.Report, error) {
 	var report domain.Report
+
 	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
 		Builder().
 		Select("s.report_id", "s.author_id", "s.reported_id", "s.report_status", "s.description",
@@ -408,6 +410,7 @@ func (r reportRepository) GetReportMessages(ctx context.Context, reportID int64)
 
 func (r reportRepository) GetReportMessageByID(ctx context.Context, reportMessageID int64) (domain.ReportMessage, error) {
 	var message domain.ReportMessage
+
 	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
 		Builder().
 		Select("s.report_message_id", "s.report_id", "s.author_id", "s.message_md", "s.deleted",
@@ -415,6 +418,7 @@ func (r reportRepository) GetReportMessageByID(ctx context.Context, reportMessag
 		From("report_message s").
 		LeftJoin("person p ON s.author_id = p.steam_id").
 		Where(sq.Eq{"s.report_message_id": reportMessageID}))
+
 	if errRow != nil {
 		return message, errRow
 	}

@@ -120,6 +120,7 @@ func (s *banSteamUsecase) Ban(ctx context.Context, curUser domain.PersonInfo, ba
 			s.log.Error("Failed to silence player", zap.Error(errSilence),
 				zap.Int64("sid64", banSteam.TargetID.Int64()))
 		}
+
 		s.discordUsecase.SendPayload(domain.ChannelModLog, discord.SilenceEmbed(target))
 	}
 

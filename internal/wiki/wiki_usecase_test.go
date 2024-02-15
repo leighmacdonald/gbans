@@ -16,6 +16,10 @@ func TestGetWikiPageBySlug(t *testing.T) {
 	mockRepo := new(mocks.MockWikiRepository)
 	mockPage := domain.NewWikiPage("test", util.SecureRandomString(100))
 
+	user := domain.UserProfile{
+		PermissionLevel: domain.PGuest,
+	}
+
 	t.Run("success", func(t *testing.T) {
 		mockRepo.
 			On("GetWikiPageBySlug", mock.Anything, mock.AnythingOfType("string")).
@@ -23,7 +27,7 @@ func TestGetWikiPageBySlug(t *testing.T) {
 			Once()
 
 		u := wiki.NewWikiUsecase(mockRepo)
-		page, errPage := u.GetWikiPageBySlug(context.TODO(), mockPage.Slug)
+		page, errPage := u.GetWikiPageBySlug(context.TODO(), user, mockPage.Slug)
 		require.NoError(t, errPage)
 		require.EqualValues(t, page, mockPage)
 	})
@@ -34,7 +38,7 @@ func TestGetWikiPageBySlug(t *testing.T) {
 			Return(domain.WikiPage{}, domain.ErrNoResult).
 			Once()
 
-		_, errPage := wiki.NewWikiUsecase(mockRepo).GetWikiPageBySlug(context.TODO(), "invalid_slug")
+		_, errPage := wiki.NewWikiUsecase(mockRepo).GetWikiPageBySlug(context.TODO(), user, "invalid_slug")
 		require.Error(t, errPage)
 	})
 }

@@ -847,6 +847,7 @@ func FilterCheckMessage(matches []domain.Filter) *discordgo.MessageEmbed {
 	} else {
 		msgEmbed.Embed().SetTitle("Matched Found")
 		msgEmbed.Embed().SetColor(ColourWarn)
+
 		for _, match := range matches {
 			msgEmbed.Embed().AddField(fmt.Sprintf("Matched ID: %d", match.FilterID), match.Pattern)
 		}
@@ -912,6 +913,7 @@ func MatchMessage(match domain.MatchResult, link string) *discordgo.MessageEmbed
 		if !found {
 			msgCounts[msg.SteamID] = 0
 		}
+
 		msgCounts[msg.SteamID]++
 	}
 

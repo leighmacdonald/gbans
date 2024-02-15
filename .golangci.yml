@@ -130,7 +130,7 @@ linters-settings:
     # Default: []
     ignorePackageGlobs:
     #  - encoding/*
-      - github.com/leighmacdonald/gbans/pkg/util
+      - github.com/leighmacdonald/gbans/pkg/*
       - github.com/leighmacdonald/gbans/internal/*
     # An array of strings that specify regular expressions of interfaces to ignore.
     # Default: []

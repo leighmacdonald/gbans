@@ -256,6 +256,7 @@ func (u *authUsecase) AuthServerMiddleWare() gin.HandlerFunc {
 
 			return
 		}
+
 		server, errGetServer := u.serverUsecase.GetServer(ctx, claims.ServerID)
 		if errGetServer != nil {
 			log.Error("Failed to load server during auth", zap.Error(errGetServer))

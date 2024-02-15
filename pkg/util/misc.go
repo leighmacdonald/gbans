@@ -4,6 +4,7 @@ import (
 	"io"
 
 	"go.uber.org/zap"
+	"golang.org/x/exp/constraints"
 )
 
 func LogCloser(closer io.Closer, logger *zap.Logger) {
@@ -12,8 +13,7 @@ func LogCloser(closer io.Closer, logger *zap.Logger) {
 	}
 }
 
-// UMin64 is math.Min for uint64
-func UMin64(a, b uint64) uint64 {
+func Min[T constraints.Ordered](a, b T) T {
 	if a < b {
 		return a
 	}

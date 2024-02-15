@@ -33,7 +33,7 @@ func FetchPlayerBans(ctx context.Context, steamIDs []steamid.SID64) ([]steamweb.
 
 			var (
 				total      = uint64(len(steamIDs) - index)
-				maxResults = util.UMin64(steamQueryMaxResults, total)
+				maxResults = util.Min(steamQueryMaxResults, total)
 				ids        = steamIDs[index : index+int(maxResults)]
 			)
 

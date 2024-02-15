@@ -138,9 +138,14 @@ func (c *ContestHandler) onAPIPostContest() gin.HandlerFunc {
 			return
 		}
 
-		c.contestUsecase.ContestSave(ctx, newContest)
+		contest, errSave := c.contestUsecase.ContestSave(ctx, newContest)
+		if errSave != nil {
+			httphelper.ErrorHandled(ctx, errSave)
 
-		ctx.JSON(http.StatusOK, newContest)
+			return
+		}
+
+		ctx.JSON(http.StatusOK, contest)
 	}
 }
 

@@ -118,6 +118,7 @@ func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 					remoteSrc.logger.Error("Using unsupported log packet type 0x52",
 						zap.Int64("count", int64(insecureCount+1)))
 				}
+
 				insecureCount++
 				errCount++
 			case s2aLogString2:
@@ -126,6 +127,7 @@ func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 				idx := strings.Index(line, "L ")
 				if idx == -1 {
 					remoteSrc.logger.Warn("Received malformed log message: Failed to find marker")
+
 					errCount++
 
 					continue
@@ -135,12 +137,14 @@ func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 				if errConv != nil {
 					remoteSrc.logger.Error("Received malformed log message: Failed to parse secret",
 						zap.Error(errConv))
+
 					errCount++
 
 					continue
 				}
 
 				msgIngressChan <- newMsg{source: secret, body: line[idx : readLen-2]}
+
 				count++
 
 				if count%10000 == 0 {

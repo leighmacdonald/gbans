@@ -7,16 +7,13 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/rcon/rcon"
 	"github.com/leighmacdonald/steamid/v3/extra"
-	"github.com/leighmacdonald/steamweb/v2"
 	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
 )
@@ -29,7 +26,6 @@ var (
 type Collector struct {
 	log              *zap.Logger
 	statusUpdateFreq time.Duration
-	msListUpdateFreq time.Duration
 	updateTimeout    time.Duration
 	serverState      map[int]domain.ServerState
 	stateMu          *sync.RWMutex
@@ -42,14 +38,12 @@ type Collector struct {
 func NewCollector(logger *zap.Logger, serverUsecase domain.ServersUsecase) *Collector {
 	const (
 		statusUpdateFreq = time.Second * 20
-		msListUpdateFreq = time.Minute * 5
 		updateTimeout    = time.Second * 5
 	)
 
 	return &Collector{
 		log:              logger,
 		statusUpdateFreq: statusUpdateFreq,
-		msListUpdateFreq: msListUpdateFreq,
 		updateTimeout:    updateTimeout,
 		serverState:      map[int]domain.ServerState{},
 		stateMu:          &sync.RWMutex{},
@@ -234,7 +228,6 @@ var (
 	ErrStatusParse       = errors.New("failed to parse status response")
 	ErrMaxPlayerIntParse = errors.New("failed to cast max players value")
 	ErrMaxPlayerParse    = errors.New("failed to parse sv_visiblemaxplayers response")
-	ErrServerListRequest = errors.New("failed to fetch updated list")
 	ErrDNSResolve        = errors.New("failed to resolve server dns")
 	ErrRCONExecCommand   = errors.New("failed to perform command")
 )
@@ -344,75 +337,6 @@ func (c *Collector) startStatus(ctx context.Context) {
 	}
 }
 
-func (c *Collector) updateMSL(ctx context.Context) ([]serverLocation, error) {
-	allServers, errServers := steamweb.GetServerList(ctx, map[string]string{
-		"appid":     "440",
-		"dedicated": "1",
-	})
-
-	if errServers != nil {
-		return nil, errors.Join(errServers, ErrServerListRequest)
-	}
-
-	var ( //nolint:prealloc
-		communityServers []serverLocation
-		stats            = newGlobalTF2Stats()
-	)
-
-	for _, base := range allServers {
-		server := serverLocation{
-			LatLong: ip2location.LatLong{},
-			Server:  base,
-		}
-
-		stats.ServersTotal++
-		stats.Players += server.Players
-		stats.Bots += server.Bots
-
-		switch {
-		case server.MaxPlayers > 0 && server.Players >= server.MaxPlayers:
-			stats.CapacityFull++
-		case server.Players == 0:
-			stats.CapacityEmpty++
-		default:
-			stats.CapacityPartial++
-		}
-
-		if server.Secure {
-			stats.Secure++
-		}
-
-		region := SteamRegionIDString(SvRegion(server.Region))
-
-		_, regionFound := stats.Regions[region]
-		if !regionFound {
-			stats.Regions[region] = 0
-		}
-
-		stats.Regions[region] += server.Players
-
-		mapType := guessMapType(server.Map)
-
-		_, mapTypeFound := stats.MapTypes[mapType]
-		if !mapTypeFound {
-			stats.MapTypes[mapType] = 0
-		}
-
-		stats.MapTypes[mapType]++
-		if strings.Contains(server.GameType, "valve") ||
-			!server.Dedicated ||
-			!server.Secure {
-			stats.ServersCommunity++
-
-			continue
-		}
-
-		communityServers = append(communityServers, server)
-	}
-
-	return communityServers, nil
-}
-
 func (c *Collector) Start(ctx context.Context) {
 	var (
 		log          = c.log.Named("State")
@@ -481,101 +405,6 @@ func newServerConfig(serverID int, name string, defaultHostname string, address 
 		Latitude:        lat,
 		Longitude:       long,
 	}
-}
-
-type SvRegion int
-
-const (
-	RegionNaEast SvRegion = iota
-	RegionNAWest
-	RegionSouthAmerica
-	RegionEurope
-	RegionAsia
-	RegionAustralia
-	RegionMiddleEast
-	RegionAfrica
-	RegionWorld SvRegion = 255
-)
-
-func SteamRegionIDString(region SvRegion) string {
-	switch region {
-	case RegionNaEast:
-		return "ne"
-	case RegionNAWest:
-		return "nw"
-	case RegionSouthAmerica:
-		return "sa"
-	case RegionEurope:
-		return "eu"
-	case RegionAsia:
-		return "as"
-	case RegionAustralia:
-		return "au"
-	case RegionMiddleEast:
-		return "me"
-	case RegionAfrica:
-		return "af"
-	case RegionWorld:
-		fallthrough
-	default:
-		return "wd"
-	}
-}
-
-func guessMapType(mapName string) string {
-	mapName = strings.TrimPrefix(mapName, "workshop/")
-	pieces := strings.SplitN(mapName, "_", 2)
-
-	if len(pieces) == 1 {
-		return "unknown"
-	}
-
-	return strings.ToLower(pieces[0])
-}
-
-type globalTF2StatsSnapshot struct {
-	StatID           int64          `json:"stat_id"`
-	Players          int            `json:"players"`
-	Bots             int            `json:"bots"`
-	Secure           int            `json:"secure"`
-	ServersCommunity int            `json:"servers_community"`
-	ServersTotal     int            `json:"servers_total"`
-	CapacityFull     int            `json:"capacity_full"`
-	CapacityEmpty    int            `json:"capacity_empty"`
-	CapacityPartial  int            `json:"capacity_partial"`
-	MapTypes         map[string]int `json:"map_types"`
-	Regions          map[string]int `json:"regions"`
-	CreatedOn        time.Time      `json:"created_on"`
-}
-
-// func (stats globalTF2StatsSnapshot) trimMapTypes() map[string]int {
-//	const minSize = 5
-//
-//	out := map[string]int{}
-//
-//	for keyKey, value := range stats.MapTypes {
-//		mapKey := keyKey
-//		if value < minSize {
-//			mapKey = "unknown"
-//		}
-//
-//		out[mapKey] = value
-//	}
-//
-//	return out
-// }
-
-func newGlobalTF2Stats() globalTF2StatsSnapshot {
-	return globalTF2StatsSnapshot{
-		MapTypes:  map[string]int{},
-		Regions:   map[string]int{},
-		CreatedOn: time.Now(),
-	}
-}
-
-type serverLocation struct {
-	ip2location.LatLong
-	steamweb.Server
 }
 
 func ResolveIP(addr string) (string, error) {

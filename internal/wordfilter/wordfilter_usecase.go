@@ -54,6 +54,7 @@ func (w *wordfilterUsecase) SaveFilter(ctx context.Context, user domain.PersonIn
 	if filter.Weight < 1 {
 		return domain.ErrInvalidWeight
 	}
+
 	now := time.Now()
 
 	if filter.FilterID > 0 {
