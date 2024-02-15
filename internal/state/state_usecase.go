@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net"
 	"os"
 	"strings"
@@ -12,10 +13,10 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/fp"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/ryanuber/go-glob"
-	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -25,39 +26,37 @@ type stateUsecase struct {
 	serversUsecase  domain.ServersUsecase
 	logListener     *logparse.UDPLogListener
 	logFileChan     chan domain.LogFilePayload
-	log             *zap.Logger
 	broadcaster     *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 }
 
 // NewStateUsecase created a interface to interact with server state and exec rcon commands
 // TODO ensure started.
-func NewStateUsecase(log *zap.Logger, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
+func NewStateUsecase(broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
 	repository domain.StateRepository, configUsecase domain.ConfigUsecase, serversUsecase domain.ServersUsecase,
 ) domain.StateUsecase {
-	conf := configUsecase.Config()
-
-	logSrc, errLogSrc := logparse.NewUDPLogListener(log, conf.Log.SrcdsLogAddr,
-		func(eventType logparse.EventType, event logparse.ServerEvent) {
-			broadcaster.Emit(event.EventType, event)
-		})
-
-	if errLogSrc != nil {
-		log.Fatal("Failed to setup udp log src", zap.Error(errLogSrc))
-	}
-
 	return &stateUsecase{
 		stateRepository: repository,
-		log:             log.Named("state"),
 		configUsecase:   configUsecase,
 		broadcaster:     broadcaster,
 		serversUsecase:  serversUsecase,
-		logListener:     logSrc,
 		logFileChan:     make(chan domain.LogFilePayload),
 	}
 }
 
-// UDP log sink.
-func (s *stateUsecase) Start(ctx context.Context) {
+func (s *stateUsecase) Start(ctx context.Context) error {
+	conf := s.configUsecase.Config()
+
+	logSrc, errLogSrc := logparse.NewUDPLogListener(conf.Log.SrcdsLogAddr,
+		func(eventType logparse.EventType, event logparse.ServerEvent) {
+			s.broadcaster.Emit(event.EventType, event)
+		})
+
+	if errLogSrc != nil {
+		return errLogSrc
+	}
+
+	s.logListener = logSrc
+
 	s.stateRepository.Start(ctx)
 
 	s.updateSrcdsLogSecrets(ctx)
@@ -68,14 +67,16 @@ func (s *stateUsecase) Start(ctx context.Context) {
 	s.updateSrcdsLogSecrets(ctx)
 
 	s.logListener.Start(ctx)
+
+	return nil
 }
 
 // logReader is the fan-out orchestrator for game log events
 // Registering receivers can be accomplished with app.eb.Broadcaster.
 func (s *stateUsecase) logReader(ctx context.Context, writeUnhandled bool) {
 	var (
-		log  = s.log.Named("logReader")
-		file *os.File
+		logger = slog.Default().WithGroup("logReader")
+		file   *os.File
 	)
 
 	if writeUnhandled {
@@ -83,14 +84,14 @@ func (s *stateUsecase) logReader(ctx context.Context, writeUnhandled bool) {
 		file, errCreateFile = os.Create("./unhandled_messages.log")
 
 		if errCreateFile != nil {
-			log.Fatal("Failed to open debug message log", zap.Error(errCreateFile))
+			logger.Error("Failed to open debug message log", log.ErrAttr(errCreateFile))
+		} else {
+			defer func() {
+				if errClose := file.Close(); errClose != nil {
+					logger.Error("Failed to close unhandled_messages.log", log.ErrAttr(errClose))
+				}
+			}()
 		}
-
-		defer func() {
-			if errClose := file.Close(); errClose != nil {
-				log.Error("Failed to close unhandled_messages.log", zap.Error(errClose))
-			}
-		}()
 	}
 
 	parser := logparse.NewLogParser()
@@ -125,7 +126,7 @@ func (s *stateUsecase) logReader(ctx context.Context, writeUnhandled bool) {
 
 					if writeUnhandled {
 						if _, errWrite := file.WriteString(logLine + "\n"); errWrite != nil {
-							log.Error("Failed to write debug log", zap.Error(errWrite))
+							logger.Error("Failed to write debug log", log.ErrAttr(errWrite))
 						}
 					}
 				}
@@ -135,11 +136,11 @@ func (s *stateUsecase) logReader(ctx context.Context, writeUnhandled bool) {
 				emitted++
 			}
 
-			log.Debug("Completed emitting logfile events",
-				zap.Int("ok", emitted), zap.Int("failed", failed),
-				zap.Int("unknown", unknown), zap.Int("ignored", ignored))
+			logger.Debug("Completed emitting logfile events",
+				slog.Int("ok", emitted), slog.Int("failed", failed),
+				slog.Int("unknown", unknown), slog.Int("ignored", ignored))
 		case <-ctx.Done():
-			log.Debug("logReader shutting down")
+			logger.Debug("logReader shutting down")
 
 			return
 		}
@@ -157,7 +158,7 @@ func (s *stateUsecase) updateSrcdsLogSecrets(ctx context.Context) {
 		QueryFilter:     domain.QueryFilter{Deleted: false},
 	})
 	if errServers != nil {
-		s.log.Error("Failed to update srcds log secrets", zap.Error(errServers))
+		slog.Error("Failed to update srcds log secrets", log.ErrAttr(errServers))
 
 		return
 	}
@@ -385,7 +386,7 @@ func (s *stateUsecase) Broadcast(ctx context.Context, serverIDs []int, cmd strin
 
 			resp, errExec := s.stateRepository.ExecRaw(egCtx, serverConf.Addr(), serverConf.RconPassword, cmd)
 			if errExec != nil {
-				s.log.Error("Failed to exec server command", zap.Int("server_id", sid), zap.Error(errExec))
+				slog.Error("Failed to exec server command", slog.Int("server_id", sid), log.ErrAttr(errExec))
 
 				// Don't error out since we don't want a single servers potentially temporary issue to prevent the rest
 				// from executing.
@@ -404,7 +405,7 @@ func (s *stateUsecase) Broadcast(ctx context.Context, serverIDs []int, cmd strin
 	go func() {
 		err := errGroup.Wait()
 		if err != nil {
-			s.log.Error("Failed to broadcast command", zap.Error(err))
+			slog.Error("Failed to broadcast command", log.ErrAttr(err))
 		}
 
 		close(resultChan)

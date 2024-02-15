@@ -3,24 +3,20 @@ package wordfilter
 import (
 	"errors"
 	"net/http"
-	"runtime"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"go.uber.org/zap"
 )
 
-type WordFilterHandler struct {
+type wordFilterHandler struct {
 	wfu         domain.WordFilterUsecase
 	cu          domain.ChatUsecase
 	confUsecase domain.ConfigUsecase
-	log         *zap.Logger
 }
 
-func NewWordFilterHandler(log *zap.Logger, engine *gin.Engine, confUsecase domain.ConfigUsecase, wfu domain.WordFilterUsecase, cu domain.ChatUsecase, ath domain.AuthUsecase) {
-	handler := WordFilterHandler{
-		log:         log.Named("wordfilter"),
+func NewWordFilterHandler(engine *gin.Engine, confUsecase domain.ConfigUsecase, wfu domain.WordFilterUsecase, cu domain.ChatUsecase, ath domain.AuthUsecase) {
+	handler := wordFilterHandler{
 		confUsecase: confUsecase,
 		wfu:         wfu,
 		cu:          cu,
@@ -38,12 +34,10 @@ func NewWordFilterHandler(log *zap.Logger, engine *gin.Engine, confUsecase domai
 	}
 }
 
-func (h *WordFilterHandler) onAPIQueryWordFilters() gin.HandlerFunc {
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (h *wordFilterHandler) onAPIQueryWordFilters() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var opts domain.FiltersQueryFilter
-		if !httphelper.Bind(ctx, log, &opts) {
+		if !httphelper.Bind(ctx, &opts) {
 			return
 		}
 
@@ -58,12 +52,10 @@ func (h *WordFilterHandler) onAPIQueryWordFilters() gin.HandlerFunc {
 	}
 }
 
-func (h *WordFilterHandler) onAPIPostWordFilter() gin.HandlerFunc {
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (h *wordFilterHandler) onAPIPostWordFilter() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req domain.Filter
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -75,7 +67,7 @@ func (h *WordFilterHandler) onAPIPostWordFilter() gin.HandlerFunc {
 	}
 }
 
-func (h *WordFilterHandler) onAPIDeleteWordFilter() gin.HandlerFunc {
+func (h *wordFilterHandler) onAPIDeleteWordFilter() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		wordID, wordIDErr := httphelper.GetInt64Param(ctx, "word_id")
 		if wordIDErr != nil {
@@ -107,16 +99,14 @@ func (h *WordFilterHandler) onAPIDeleteWordFilter() gin.HandlerFunc {
 	}
 }
 
-func (h *WordFilterHandler) onAPIPostWordMatch() gin.HandlerFunc {
+func (h *wordFilterHandler) onAPIPostWordMatch() gin.HandlerFunc {
 	type matchRequest struct {
 		Query string
 	}
 
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
 	return func(ctx *gin.Context) {
 		var req matchRequest
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -139,7 +129,7 @@ func (h *WordFilterHandler) onAPIPostWordMatch() gin.HandlerFunc {
 	}
 }
 
-func (h *WordFilterHandler) onAPIGetWarningState() gin.HandlerFunc {
+func (h *wordFilterHandler) onAPIGetWarningState() gin.HandlerFunc {
 	type warningState struct {
 		MaxWeight int                  `json:"max_weight"`
 		Current   []domain.UserWarning `json:"current"`

@@ -3,23 +3,23 @@ package notification
 import (
 	"context"
 	"errors"
+	"log/slog"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/fp"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"go.uber.org/zap"
 )
 
 type notificationUsecase struct {
-	nr  domain.NotificationRepository
-	pu  domain.PersonUsecase
-	log *zap.Logger
+	nr domain.NotificationRepository
+	pu domain.PersonUsecase
 }
 
-func NewNotificationUsecase(log *zap.Logger, repository domain.NotificationRepository,
+func NewNotificationUsecase(repository domain.NotificationRepository,
 	personUsecase domain.PersonUsecase,
 ) domain.NotificationUsecase {
-	return &notificationUsecase{nr: repository, pu: personUsecase, log: log.Named("notification")}
+	return &notificationUsecase{nr: repository, pu: personUsecase}
 }
 
 func (n notificationUsecase) SendNotification(ctx context.Context, targetID steamid.SID64, severity domain.NotificationSeverity, message string, link string) error {
@@ -52,7 +52,7 @@ func (n notificationUsecase) SendNotification(ctx context.Context, targetID stea
 	go func(ids []domain.Person, payload domain.NotificationPayload) {
 		for _, discordPerson := range discordPeople {
 			if err := n.nr.SendNotification(ctx, discordPerson.SteamID, notification.Severity, notification.Message, notification.Link); err != nil {
-				n.log.Error("Failed to send discord notification", zap.Error(err))
+				slog.Error("Failed to send discord notification", log.ErrAttr(err))
 			}
 		}
 	}(discordPeople, notification)
@@ -61,7 +61,7 @@ func (n notificationUsecase) SendNotification(ctx context.Context, targetID stea
 		// Todo, prep stmt at least.
 		if errSend := n.nr.SendNotification(ctx, sid, notification.Severity,
 			notification.Message, notification.Link); errSend != nil {
-			n.log.Error("Failed to send notification", zap.Error(errSend))
+			slog.Error("Failed to send notification", log.ErrAttr(errSend))
 
 			break
 		}

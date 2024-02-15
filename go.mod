@@ -5,8 +5,8 @@ go 1.22
 require (
 	github.com/Depado/ginprom v1.8.0
 	github.com/Masterminds/squirrel v1.5.4
-	github.com/TheZeroSlave/zapsentry v1.20.2
 	github.com/bwmarrin/discordgo v0.27.2-0.20240202235938-7f80bc797881
+	github.com/dotse/slug v0.1.0
 	github.com/gabriel-vasile/mimetype v1.4.3
 	github.com/getsentry/sentry-go v0.27.0
 	github.com/gin-contrib/cors v1.5.0
@@ -38,7 +38,6 @@ require (
 	github.com/unrolled/secure v1.14.0
 	github.com/yohcop/openid-go v1.0.1
 	go.uber.org/atomic v1.11.0
-	go.uber.org/zap v1.26.0
 	golang.org/x/exp v0.0.0-20240213143201-ec583247a57a
 	golang.org/x/sync v0.6.0
 	gopkg.in/mxpv/patreon-go.v1 v1.0.0-20171031001022-1d2f253ac700
@@ -84,6 +83,8 @@ require (
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
+	github.com/logrusorgru/aurora v2.0.3+incompatible // indirect
+	github.com/logrusorgru/aurora/v4 v4.0.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect

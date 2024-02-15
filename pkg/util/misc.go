@@ -2,14 +2,15 @@ package util
 
 import (
 	"io"
+	"log/slog"
 
-	"go.uber.org/zap"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"golang.org/x/exp/constraints"
 )
 
-func LogCloser(closer io.Closer, logger *zap.Logger) {
+func LogCloser(closer io.Closer) {
 	if errClose := closer.Close(); errClose != nil {
-		logger.Error("Failed to close", zap.Error(errClose))
+		slog.Error("Failed to close", log.ErrAttr(errClose))
 	}
 }
 

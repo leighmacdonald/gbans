@@ -3,23 +3,20 @@ package news
 import (
 	"errors"
 	"net/http"
-	"runtime"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"go.uber.org/zap"
 )
 
-type NewsHandler struct {
+type newsHandler struct {
 	newsUsecase domain.NewsUsecase
 	du          domain.DiscordUsecase
-	log         *zap.Logger
 }
 
-func NewNewsHandler(logger *zap.Logger, engine *gin.Engine, nu domain.NewsUsecase, du domain.DiscordUsecase, ath domain.AuthUsecase) {
-	handler := NewsHandler{log: logger.Named("news"), newsUsecase: nu, du: du}
+func NewNewsHandler(engine *gin.Engine, nu domain.NewsUsecase, du domain.DiscordUsecase, ath domain.AuthUsecase) {
+	handler := newsHandler{newsUsecase: nu, du: du}
 
 	engine.POST("/api/news_latest", handler.onAPIGetNewsLatest())
 
@@ -33,7 +30,7 @@ func NewNewsHandler(logger *zap.Logger, engine *gin.Engine, nu domain.NewsUsecas
 	}
 }
 
-func (h NewsHandler) onAPIGetNewsLatest() gin.HandlerFunc {
+func (h newsHandler) onAPIGetNewsLatest() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		newsLatest, errGetNewsLatest := h.newsUsecase.GetNewsLatest(ctx, 50, false)
 		if errGetNewsLatest != nil {
@@ -46,12 +43,10 @@ func (h NewsHandler) onAPIGetNewsLatest() gin.HandlerFunc {
 	}
 }
 
-func (h NewsHandler) onAPIPostNewsCreate() gin.HandlerFunc {
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (h newsHandler) onAPIPostNewsCreate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req domain.NewsEntry
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -67,9 +62,7 @@ func (h NewsHandler) onAPIPostNewsCreate() gin.HandlerFunc {
 	}
 }
 
-func (h NewsHandler) onAPIPostNewsUpdate() gin.HandlerFunc {
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (h newsHandler) onAPIPostNewsUpdate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		newsID, errID := httphelper.GetIntParam(ctx, "news_id")
 		if errID != nil {
@@ -91,7 +84,7 @@ func (h NewsHandler) onAPIPostNewsUpdate() gin.HandlerFunc {
 			return
 		}
 
-		if !httphelper.Bind(ctx, log, &entry) {
+		if !httphelper.Bind(ctx, &entry) {
 			return
 		}
 
@@ -107,7 +100,7 @@ func (h NewsHandler) onAPIPostNewsUpdate() gin.HandlerFunc {
 	}
 }
 
-func (h NewsHandler) onAPIGetNewsAll() gin.HandlerFunc {
+func (h newsHandler) onAPIGetNewsAll() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		newsLatest, errGetNewsLatest := h.newsUsecase.GetNewsLatest(ctx, 100, true)
 		if errGetNewsLatest != nil {

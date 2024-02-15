@@ -3,8 +3,8 @@ package contest
 import (
 	"encoding/base64"
 	"errors"
+	"log/slog"
 	"net/http"
-	"runtime"
 	"strings"
 	"time"
 
@@ -12,25 +12,23 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"go.uber.org/zap"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"golang.org/x/exp/slices"
 )
 
-type ContestHandler struct {
+type contestHandler struct {
 	contestUsecase domain.ContestUsecase
 	configUsecase  domain.ConfigUsecase
 	mediaUsecase   domain.MediaUsecase
-	log            *zap.Logger
 }
 
-func NewContestHandler(logger *zap.Logger, engine *gin.Engine, cu domain.ContestUsecase,
+func NewContestHandler(engine *gin.Engine, cu domain.ContestUsecase,
 	configUsecase domain.ConfigUsecase, mediaUsecase domain.MediaUsecase, ath domain.AuthUsecase,
 ) {
-	handler := &ContestHandler{
+	handler := &contestHandler{
 		contestUsecase: cu,
 		configUsecase:  configUsecase,
 		mediaUsecase:   mediaUsecase,
-		log:            logger.Named("contest"),
 	}
 
 	// opt
@@ -62,7 +60,7 @@ func NewContestHandler(logger *zap.Logger, engine *gin.Engine, cu domain.Contest
 	}
 }
 
-func (c *ContestHandler) contestFromCtx(ctx *gin.Context) (domain.Contest, bool) {
+func (c *contestHandler) contestFromCtx(ctx *gin.Context) (domain.Contest, bool) {
 	contestID, idErr := httphelper.GetUUIDParam(ctx, "contest_id")
 	if idErr != nil {
 		httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
@@ -86,7 +84,7 @@ func (c *ContestHandler) contestFromCtx(ctx *gin.Context) (domain.Contest, bool)
 	return contest, true
 }
 
-func (c *ContestHandler) onAPIGetContests() gin.HandlerFunc {
+func (c *contestHandler) onAPIGetContests() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		contests, errContests := c.contestUsecase.Contests(ctx, httphelper.CurrentUserProfile(ctx))
 
@@ -100,7 +98,7 @@ func (c *ContestHandler) onAPIGetContests() gin.HandlerFunc {
 	}
 }
 
-func (c *ContestHandler) onAPIGetContest() gin.HandlerFunc {
+func (c *contestHandler) onAPIGetContest() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		contest, success := c.contestFromCtx(ctx)
 		if !success {
@@ -111,7 +109,7 @@ func (c *ContestHandler) onAPIGetContest() gin.HandlerFunc {
 	}
 }
 
-func (c *ContestHandler) onAPIGetContestEntries() gin.HandlerFunc {
+func (c *contestHandler) onAPIGetContestEntries() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		contest, success := c.contestFromCtx(ctx)
 		if !success {
@@ -129,12 +127,10 @@ func (c *ContestHandler) onAPIGetContestEntries() gin.HandlerFunc {
 	}
 }
 
-func (c *ContestHandler) onAPIPostContest() gin.HandlerFunc {
-	log := c.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (c *contestHandler) onAPIPostContest() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		newContest, _ := domain.NewContest("", "", time.Now(), time.Now(), false)
-		if !httphelper.Bind(ctx, log, &newContest) {
+		if !httphelper.Bind(ctx, &newContest) {
 			return
 		}
 
@@ -149,9 +145,7 @@ func (c *ContestHandler) onAPIPostContest() gin.HandlerFunc {
 	}
 }
 
-func (c *ContestHandler) onAPIDeleteContest() gin.HandlerFunc {
-	log := c.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (c *contestHandler) onAPIDeleteContest() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		contestID, idErr := httphelper.GetUUIDParam(ctx, "contest_id")
 		if idErr != nil {
@@ -171,7 +165,7 @@ func (c *ContestHandler) onAPIDeleteContest() gin.HandlerFunc {
 
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 
-			log.Error("Error getting contest for deletion", zap.Error(errContest))
+			slog.Error("Error getting contest for deletion", log.ErrAttr(errContest))
 
 			return
 		}
@@ -179,29 +173,27 @@ func (c *ContestHandler) onAPIDeleteContest() gin.HandlerFunc {
 		if errDelete := c.contestUsecase.ContestDelete(ctx, contest.ContestID); errDelete != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
-			log.Error("Error deleting contest", zap.Error(errDelete))
+			slog.Error("Error deleting contest", log.ErrAttr(errDelete))
 
 			return
 		}
 
 		ctx.Status(http.StatusAccepted)
 
-		log.Info("Contest deleted",
-			zap.String("contest_id", contestID.String()),
-			zap.String("title", contest.Title))
+		slog.Info("Contest deleted",
+			slog.String("contest_id", contestID.String()),
+			slog.String("title", contest.Title))
 	}
 }
 
-func (c *ContestHandler) onAPIUpdateContest() gin.HandlerFunc {
-	log := c.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (c *contestHandler) onAPIUpdateContest() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		if _, success := c.contestFromCtx(ctx); !success {
 			return
 		}
 
 		var req domain.Contest
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -209,22 +201,20 @@ func (c *ContestHandler) onAPIUpdateContest() gin.HandlerFunc {
 		if errSave != nil {
 			httphelper.ErrorHandled(ctx, errSave)
 
-			log.Error("Error updating contest", zap.Error(errSave))
+			slog.Error("Error updating contest", log.ErrAttr(errSave))
 
 			return
 		}
 
 		ctx.JSON(http.StatusAccepted, contest)
 
-		log.Info("Contest updated",
-			zap.String("contest_id", req.ContestID.String()),
-			zap.String("title", req.Title))
+		slog.Info("Contest updated",
+			slog.String("contest_id", req.ContestID.String()),
+			slog.String("title", req.Title))
 	}
 }
 
-func (c *ContestHandler) onAPISaveContestEntryMedia() gin.HandlerFunc {
-	log := c.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (c *contestHandler) onAPISaveContestEntryMedia() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		contest, success := c.contestFromCtx(ctx)
 		if !success {
@@ -232,7 +222,7 @@ func (c *ContestHandler) onAPISaveContestEntryMedia() gin.HandlerFunc {
 		}
 
 		var req domain.UserUploadedFile
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -246,7 +236,7 @@ func (c *ContestHandler) onAPISaveContestEntryMedia() gin.HandlerFunc {
 		media, errCreate := c.mediaUsecase.Create(ctx, httphelper.CurrentUserProfile(ctx).SteamID,
 			req.Name, req.Mime, content, strings.Split(contest.MediaTypes, ","))
 		if errHandle := httphelper.ErrorHandledWithReturn(ctx, errCreate); errHandle != nil {
-			log.Error("Failed to save user contest media", zap.Error(errHandle))
+			slog.Error("Failed to save user contest media", log.ErrAttr(errHandle))
 
 			return
 		}
@@ -258,13 +248,11 @@ func (c *ContestHandler) onAPISaveContestEntryMedia() gin.HandlerFunc {
 	}
 }
 
-func (c *ContestHandler) getContestID(ctx *gin.Context) (uuid.UUID, error) {
+func (c *contestHandler) getContestID(ctx *gin.Context) (uuid.UUID, error) {
 	return httphelper.GetUUIDParam(ctx, "contest_id")
 }
 
-func (c *ContestHandler) onAPISaveContestEntryVote() gin.HandlerFunc {
-	log := c.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (c *contestHandler) onAPISaveContestEntryVote() gin.HandlerFunc {
 	type voteResult struct {
 		CurrentVote string `json:"current_vote"`
 	}
@@ -280,7 +268,7 @@ func (c *ContestHandler) onAPISaveContestEntryVote() gin.HandlerFunc {
 		contestEntryID, errContestEntryID := httphelper.GetUUIDParam(ctx, "contest_entry_id")
 		if errContestEntryID != nil {
 			ctx.JSON(http.StatusNotFound, domain.ErrNotFound)
-			log.Error("Invalid contest entry id option")
+			slog.Error("Invalid contest entry id option")
 
 			return
 		}
@@ -288,7 +276,7 @@ func (c *ContestHandler) onAPISaveContestEntryVote() gin.HandlerFunc {
 		direction := strings.ToLower(ctx.Param("direction"))
 		if direction != "up" && direction != "down" {
 			ctx.JSON(http.StatusBadRequest, domain.ErrBadRequest)
-			log.Error("Invalid vote direction option")
+			slog.Error("Invalid vote direction option")
 
 			return
 		}
@@ -309,13 +297,11 @@ func (c *ContestHandler) onAPISaveContestEntryVote() gin.HandlerFunc {
 	}
 }
 
-func (c *ContestHandler) onAPISaveContestEntrySubmit() gin.HandlerFunc {
+func (c *contestHandler) onAPISaveContestEntrySubmit() gin.HandlerFunc {
 	type entryReq struct {
 		Description string    `json:"description"`
 		AssetID     uuid.UUID `json:"asset_id"`
 	}
-
-	log := c.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		user := httphelper.CurrentUserProfile(ctx)
@@ -326,7 +312,7 @@ func (c *ContestHandler) onAPISaveContestEntrySubmit() gin.HandlerFunc {
 		}
 
 		var req entryReq
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -384,13 +370,11 @@ func (c *ContestHandler) onAPISaveContestEntrySubmit() gin.HandlerFunc {
 
 		ctx.JSON(http.StatusCreated, entry)
 
-		log.Info("New contest entry submitted", zap.String("contest_id", contest.ContestID.String()))
+		slog.Info("New contest entry submitted", slog.String("contest_id", contest.ContestID.String()))
 	}
 }
 
-func (c *ContestHandler) onAPIDeleteContestEntry() gin.HandlerFunc {
-	log := c.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (c *contestHandler) onAPIDeleteContestEntry() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		user := httphelper.CurrentUserProfile(ctx)
 
@@ -412,7 +396,7 @@ func (c *ContestHandler) onAPIDeleteContestEntry() gin.HandlerFunc {
 
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 
-			log.Error("Error getting contest entry for deletion", zap.Error(errContest))
+			slog.Error("Error getting contest entry for deletion", log.ErrAttr(errContest))
 
 			return
 		}
@@ -435,7 +419,7 @@ func (c *ContestHandler) onAPIDeleteContestEntry() gin.HandlerFunc {
 
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 
-			log.Error("Error getting contest", zap.Error(errContest))
+			slog.Error("Error getting contest", log.ErrAttr(errContest))
 
 			return
 		}
@@ -444,7 +428,7 @@ func (c *ContestHandler) onAPIDeleteContestEntry() gin.HandlerFunc {
 		if user.SteamID == entry.SteamID && time.Since(contest.DateEnd) > 0 {
 			httphelper.ResponseErr(ctx, http.StatusForbidden, domain.ErrPermissionDenied)
 
-			log.Error("User tried to delete entry from expired contest")
+			slog.Error("User tried to delete entry from expired contest")
 
 			return
 		}
@@ -452,16 +436,16 @@ func (c *ContestHandler) onAPIDeleteContestEntry() gin.HandlerFunc {
 		if errDelete := c.contestUsecase.ContestEntryDelete(ctx, entry.ContestEntryID); errDelete != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
-			log.Error("Error deleting contest entry", zap.Error(errDelete))
+			slog.Error("Error deleting contest entry", log.ErrAttr(errDelete))
 
 			return
 		}
 
 		ctx.JSON(http.StatusOK, gin.H{})
 
-		log.Info("Contest deleted",
-			zap.String("contest_id", entry.ContestID.String()),
-			zap.String("contest_entry_id", entry.ContestEntryID.String()),
-			zap.String("title", contest.Title))
+		slog.Info("Contest deleted",
+			slog.String("contest_id", entry.ContestID.String()),
+			slog.String("contest_entry_id", entry.ContestEntryID.String()),
+			slog.String("title", contest.Title))
 	}
 }

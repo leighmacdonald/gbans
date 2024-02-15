@@ -2,32 +2,31 @@ package report
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"go.uber.org/zap"
 )
 
 type reportUsecase struct {
-	rr  domain.ReportRepository
-	du  domain.DiscordUsecase
-	cu  domain.ConfigUsecase
-	pu  domain.PersonUsecase
-	log *zap.Logger
+	rr domain.ReportRepository
+	du domain.DiscordUsecase
+	cu domain.ConfigUsecase
+	pu domain.PersonUsecase
 }
 
-func NewReportUsecase(log *zap.Logger, repository domain.ReportRepository, discordUsecase domain.DiscordUsecase,
+func NewReportUsecase(repository domain.ReportRepository, discordUsecase domain.DiscordUsecase,
 	configUsecase domain.ConfigUsecase, personUsecase domain.PersonUsecase,
 ) domain.ReportUsecase {
 	return &reportUsecase{
-		log: log.Named("report"),
-		du:  discordUsecase,
-		rr:  repository,
-		cu:  configUsecase,
-		pu:  personUsecase,
+		du: discordUsecase,
+		rr: repository,
+		cu: configUsecase,
+		pu: personUsecase,
 	}
 }
 
@@ -51,7 +50,7 @@ func (r reportUsecase) Start(ctx context.Context) {
 				},
 			})
 			if errReports != nil {
-				r.log.Error("failed to fetch reports for report metadata", zap.Error(errReports))
+				slog.Error("failed to fetch reports for report metadata", log.ErrAttr(errReports))
 
 				continue
 			}
@@ -90,7 +89,7 @@ func (r reportUsecase) Start(ctx context.Context) {
 
 			r.du.SendPayload(domain.ChannelMod, discord.ReportStatsMessage(meta, r.cu.ExtURLRaw("/admin/reports")))
 		case <-ctx.Done():
-			r.log.Debug("showReportMeta shutting down")
+			slog.Debug("showReportMeta shutting down")
 
 			return
 		}

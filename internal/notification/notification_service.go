@@ -3,23 +3,19 @@ package notification
 import (
 	"errors"
 	"net/http"
-	"runtime"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"go.uber.org/zap"
 )
 
 type notificationHandler struct {
-	nu  domain.NotificationUsecase
-	log *zap.Logger
+	nu domain.NotificationUsecase
 }
 
-func NewNotificationHandler(log *zap.Logger, engine *gin.Engine, nu domain.NotificationUsecase, ath domain.AuthUsecase) {
+func NewNotificationHandler(engine *gin.Engine, nu domain.NotificationUsecase, ath domain.AuthUsecase) {
 	handler := notificationHandler{
-		nu:  nu,
-		log: log.Named("notif"),
+		nu: nu,
 	}
 
 	// authed
@@ -31,13 +27,11 @@ func NewNotificationHandler(log *zap.Logger, engine *gin.Engine, nu domain.Notif
 }
 
 func (h notificationHandler) onAPICurrentProfileNotifications() gin.HandlerFunc {
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
 	return func(ctx *gin.Context) {
 		currentProfile := httphelper.CurrentUserProfile(ctx)
 
 		var req domain.NotificationQuery
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 

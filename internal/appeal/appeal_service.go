@@ -1,13 +1,13 @@
 package appeal
 
 import (
+	"log/slog"
 	"net/http"
-	"runtime"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"go.uber.org/zap"
+	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 type AppealHandler struct {
@@ -16,10 +16,9 @@ type AppealHandler struct {
 	configUsecase  domain.ConfigUsecase
 	personUsecase  domain.PersonUsecase
 	discordUsecase domain.DiscordUsecase
-	log            *zap.Logger
 }
 
-func NewAppealHandler(logger *zap.Logger, engine *gin.Engine, appealUsecase domain.AppealUsecase, banUsecase domain.BanSteamUsecase,
+func NewAppealHandler(engine *gin.Engine, appealUsecase domain.AppealUsecase, banUsecase domain.BanSteamUsecase,
 	configUsecase domain.ConfigUsecase, personUsecase domain.PersonUsecase, discordUsecase domain.DiscordUsecase,
 	authUsecase domain.AuthUsecase,
 ) {
@@ -29,7 +28,6 @@ func NewAppealHandler(logger *zap.Logger, engine *gin.Engine, appealUsecase doma
 		configUsecase:  configUsecase,
 		personUsecase:  personUsecase,
 		discordUsecase: discordUsecase,
-		log:            logger.Named("appeal"),
 	}
 
 	// authed
@@ -71,8 +69,6 @@ func (h *AppealHandler) onAPIGetBanMessages() gin.HandlerFunc {
 }
 
 func (h *AppealHandler) onAPIPostBanMessage() gin.HandlerFunc {
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
 	return func(ctx *gin.Context) {
 		banID, errID := httphelper.GetInt64Param(ctx, "ban_id")
 		if errID != nil || banID == 0 {
@@ -82,7 +78,7 @@ func (h *AppealHandler) onAPIPostBanMessage() gin.HandlerFunc {
 		}
 
 		var req domain.NewBanMessage
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -100,8 +96,6 @@ func (h *AppealHandler) onAPIEditBanMessage() gin.HandlerFunc {
 		BodyMD string `json:"body_md"`
 	}
 
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
 	return func(ctx *gin.Context) {
 		reportMessageID, errID := httphelper.GetInt64Param(ctx, "ban_message_id")
 		if errID != nil || reportMessageID == 0 {
@@ -111,7 +105,7 @@ func (h *AppealHandler) onAPIEditBanMessage() gin.HandlerFunc {
 		}
 
 		var req editMessage
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -121,7 +115,7 @@ func (h *AppealHandler) onAPIEditBanMessage() gin.HandlerFunc {
 
 		if errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			log.Error("Failed to save ban appeal message", zap.Error(errSave))
+			slog.Error("Failed to save ban appeal message", log.ErrAttr(errSave))
 
 			return
 		}
@@ -131,8 +125,6 @@ func (h *AppealHandler) onAPIEditBanMessage() gin.HandlerFunc {
 }
 
 func (h *AppealHandler) onAPIDeleteBanMessage() gin.HandlerFunc {
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
 	return func(ctx *gin.Context) {
 		curUser := httphelper.CurrentUserProfile(ctx)
 
@@ -146,23 +138,21 @@ func (h *AppealHandler) onAPIDeleteBanMessage() gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusNoContent, nil)
-		log.Info("appeal message deleted")
+		slog.Info("appeal message deleted")
 	}
 }
 
 func (h *AppealHandler) onAPIGetAppeals() gin.HandlerFunc {
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
 	return func(ctx *gin.Context) {
 		var req domain.AppealQueryFilter
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
 		bans, total, errBans := h.appealUsecase.GetAppealsByActivity(ctx, req)
 		if errBans != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			log.Error("Failed to fetch appeals", zap.Error(errBans))
+			slog.Error("Failed to fetch appeals", log.ErrAttr(errBans))
 
 			return
 		}

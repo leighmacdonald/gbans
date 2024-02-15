@@ -60,7 +60,7 @@ func (db *postgresStore) migrate(action MigrationAction, dsn string) error {
 		return errors.Join(errMigrate, ErrMigrationDriver)
 	}
 
-	defer util.LogCloser(driver, db.log)
+	defer util.LogCloser(driver)
 
 	source, errHTTPFS := httpfs.New(http.FS(migrations), "migrations")
 	if errHTTPFS != nil {

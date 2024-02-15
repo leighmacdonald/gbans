@@ -3,21 +3,21 @@ package match
 import (
 	"context"
 	"errors"
+	"log/slog"
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/fp"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"go.uber.org/zap"
 )
 
 type matchUsecase struct {
 	mr           domain.MatchRepository
 	su           domain.StateUsecase
 	sv           domain.ServersUsecase
-	log          *zap.Logger
 	events       chan logparse.ServerEvent
 	du           domain.DiscordUsecase
 	wm           fp.MutexMap[logparse.Weapon, int]
@@ -25,7 +25,7 @@ type matchUsecase struct {
 	matchUUIDMap fp.MutexMap[int, uuid.UUID]
 }
 
-func NewMatchUsecase(log *zap.Logger, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
+func NewMatchUsecase(broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
 	matchRepository domain.MatchRepository, stateUsecase domain.StateUsecase, serversUsecase domain.ServersUsecase,
 	discordUsecase domain.DiscordUsecase, weaponMap fp.MutexMap[logparse.Weapon, int],
 ) domain.MatchUsecase {
@@ -35,7 +35,6 @@ func NewMatchUsecase(log *zap.Logger, broadcaster *fp.Broadcaster[logparse.Event
 		sv:           serversUsecase,
 		du:           discordUsecase,
 		wm:           weaponMap,
-		log:          log,
 		events:       make(chan logparse.ServerEvent),
 		broadcaster:  broadcaster,
 		matchUUIDMap: fp.NewMutexMap[int, uuid.UUID](),
@@ -47,11 +46,11 @@ func (m matchUsecase) GetMatchIDFromServerID(serverID int) (uuid.UUID, bool) {
 }
 
 func (m matchUsecase) Start(ctx context.Context) {
-	log := m.log.Named("matchSum")
+	logger := slog.Default().WithGroup("matchSum")
 
 	eventChan := make(chan logparse.ServerEvent)
 	if errReg := m.broadcaster.Consume(eventChan); errReg != nil {
-		log.Error("logWriter Tried to register duplicate reader channel", zap.Error(errReg))
+		logger.Error("logWriter Tried to register duplicate reader channel", log.ErrAttr(errReg))
 	}
 
 	matches := map[int]*Context{}
@@ -66,7 +65,7 @@ func (m matchUsecase) Start(ctx context.Context) {
 				matchContext = &Context{
 					Match:          logparse.NewMatch(evt.ServerID, evt.ServerName),
 					cancel:         cancel,
-					log:            log.Named(evt.ServerName),
+					log:            logger.WithGroup(evt.ServerName),
 					incomingEvents: make(chan logparse.ServerEvent),
 					stopChan:       make(chan bool),
 				}
@@ -94,11 +93,11 @@ func (m matchUsecase) Start(ctx context.Context) {
 				if err := m.onMatchComplete(ctx, matchContext); err != nil {
 					switch {
 					case errors.Is(err, domain.ErrInsufficientPlayers):
-						m.log.Warn("Insufficient data to save")
+						logger.Warn("Insufficient data to save")
 					case errors.Is(err, domain.ErrIncompleteMatch):
-						m.log.Warn("Incomplete match, ignoring")
+						logger.Warn("Incomplete match, ignoring")
 					default:
-						m.log.Error("Failed to save Match results", zap.Error(err))
+						logger.Error("Failed to save Match results", log.ErrAttr(err))
 					}
 				}
 

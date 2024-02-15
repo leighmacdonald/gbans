@@ -91,7 +91,7 @@ func (r *matchRepository) Matches(ctx context.Context, opts domain.MatchesQueryO
 	}
 
 	// if rows.DBErr() != nil {
-	//	 database.log.Error("Matches rows error", zap.Error(rows.DBErr()))
+	//	 database.log.Error("Matches rows error", log.ErrAttr(rows.DBErr()))
 	// }
 
 	return matches, count, nil
@@ -671,7 +671,7 @@ func (r *matchRepository) saveMatchWeaponStats(ctx context.Context, transaction 
 	for weapon, info := range player.WeaponInfo {
 		weaponID, found := weaponMap.Get(weapon)
 		if !found {
-			// db.log.Error("Unknown weapon", zap.String("weapon", string(weapon)))
+			// db.log.Error("Unknown weapon", slog.String("weapon", string(weapon)))
 			continue
 		}
 

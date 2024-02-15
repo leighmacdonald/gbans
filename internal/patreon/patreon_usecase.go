@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"go.uber.org/zap"
 	libpatreon "gopkg.in/mxpv/patreon-go.v1"
 )
 
@@ -17,8 +16,8 @@ func (p patreonUsecase) Start(ctx context.Context) {
 	p.manager.Start(ctx)
 }
 
-func NewPatreonUsecase(logger *zap.Logger, repository domain.PatreonRepository) domain.PatreonUsecase {
-	return &patreonUsecase{repository: repository, manager: NewPatreonManager(logger)}
+func NewPatreonUsecase(repository domain.PatreonRepository) domain.PatreonUsecase {
+	return &patreonUsecase{repository: repository, manager: NewPatreonManager()}
 }
 
 func (p patreonUsecase) Tiers() ([]libpatreon.Campaign, error) {

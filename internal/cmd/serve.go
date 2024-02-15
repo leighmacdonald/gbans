@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -27,7 +28,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/forum"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/log"
 	"github.com/leighmacdonald/gbans/internal/match"
 	"github.com/leighmacdonald/gbans/internal/media"
 	"github.com/leighmacdonald/gbans/internal/metrics"
@@ -44,11 +44,11 @@ import (
 	"github.com/leighmacdonald/gbans/internal/wiki"
 	"github.com/leighmacdonald/gbans/internal/wordfilter"
 	"github.com/leighmacdonald/gbans/pkg/fp"
+	log2 "github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/spf13/cobra"
-	"go.uber.org/zap"
 )
 
 // serveCmd represents the serve command.
@@ -72,54 +72,58 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			var sentryClient *sentry.Client
 			var errSentry error
 
-			sentryClient, errSentry = log.NewSentryClient(conf.Log.SentryDSN, conf.Log.SentryTrace, conf.Log.SentrySampleRate, app.BuildVersion)
+			sentryClient, errSentry = log2.NewSentryClient(conf.Log.SentryDSN, conf.Log.SentryTrace, conf.Log.SentrySampleRate, app.BuildVersion)
 
-			rootLogger := log.MustCreate(conf, sentryClient)
-			defer func() {
-				if conf.Log.File != "" {
-					_ = rootLogger.Sync()
-				}
-			}()
+			logCloser := log2.MustCreateLogger(conf.Log.File, conf.Log.Level)
+			defer logCloser()
 
 			if errSentry != nil {
-				rootLogger.Error("Failed to setup sentry client")
+				slog.Error("Failed to setup sentry client")
 			} else {
 				defer sentryClient.Flush(2 * time.Second)
 			}
 
-			rootLogger.Info("Starting gbans...",
-				zap.String("version", app.BuildVersion),
-				zap.String("commit", app.BuildCommit),
-				zap.String("date", app.BuildDate))
+			slog.Info("Starting gbans...",
+				slog.String("version", app.BuildVersion),
+				slog.String("commit", app.BuildCommit),
+				slog.String("date", app.BuildDate))
 
-			dbUsecase := database.New(rootLogger, conf.DB.DSN, conf.DB.AutoMigrate, conf.DB.LogQueries)
+			dbUsecase := database.New(conf.DB.DSN, conf.DB.AutoMigrate, conf.DB.LogQueries)
 			if errConnect := dbUsecase.Connect(rootCtx); errConnect != nil {
-				rootLogger.Fatal("Cannot initialize database", zap.Error(errConnect))
+				slog.Error("Cannot initialize database", log2.ErrAttr(errConnect))
+
+				return
 			}
 
 			defer func() {
 				if errClose := dbUsecase.Close(); errClose != nil {
-					rootLogger.Error("Failed to close database cleanly")
+					slog.Error("Failed to close database cleanly")
 				}
 			}()
 
 			eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
 			weaponsMap := fp.NewMutexMap[logparse.Weapon, int]()
 
-			discordRepository, errDR := discord.NewDiscordRepository(rootLogger, conf)
+			discordRepository, errDR := discord.NewDiscordRepository(conf)
 			if errDR != nil {
-				rootLogger.Fatal("Cannot initialize discord", zap.Error(errDR))
+				slog.Error("Cannot initialize discord", log2.ErrAttr(errDR))
+
+				return
 			}
 
 			wordFilterUsecase := wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(dbUsecase))
 			if err := wordFilterUsecase.Import(ctx); err != nil {
-				rootLogger.Fatal("Failed to load word filters", zap.Error(err))
+				slog.Error("Failed to load word filters", log2.ErrAttr(err))
+
+				return
 			}
 
 			discordUsecase := discord.NewDiscordUsecase(discordRepository, wordFilterUsecase)
 
 			if err := discordUsecase.Start(); err != nil {
-				rootLogger.Fatal("Failed to start discord", zap.Error(err))
+				slog.Error("Failed to start discord", log2.ErrAttr(err))
+
+				return
 			}
 
 			defer discordUsecase.Shutdown(conf.Discord.GuildID)
@@ -130,65 +134,69 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				Secure: conf.S3.SSL,
 			})
 			if errMinio != nil {
-				rootLogger.Fatal("Cannot initialize minio", zap.Error(errDR))
+				slog.Error("Cannot initialize minio", log2.ErrAttr(errDR))
+
+				return
 			}
 
-			personUsecase := person.NewPersonUsecase(rootLogger, person.NewPersonRepository(dbUsecase), configUsecase)
+			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(dbUsecase), configUsecase)
 
 			blocklistUsecase := blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(dbUsecase))
 
-			networkUsecase := network.NewNetworkUsecase(rootLogger, eventBroadcaster, network.NewNetworkRepository(dbUsecase), blocklistUsecase, personUsecase)
+			networkUsecase := network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(dbUsecase), blocklistUsecase, personUsecase)
 			if err := networkUsecase.LoadNetBlocks(ctx); err != nil {
-				rootLogger.Fatal("Failed to load network blocks", zap.Error(err))
+				slog.Error("Failed to load network blocks", log2.ErrAttr(err))
+
+				return
 			}
 
-			assetUsecase := asset.NewAssetUsecase(asset.NewS3Repository(rootLogger, dbUsecase, minioClient, conf.S3.Region))
+			assetUsecase := asset.NewAssetUsecase(asset.NewS3Repository(dbUsecase, minioClient, conf.S3.Region))
 			mediaUsecase := media.NewMediaUsecase(conf.S3.BucketMedia, media.NewMediaRepository(dbUsecase), assetUsecase)
 			serversUsecase := servers.NewServersUsecase(servers.NewServersRepository(dbUsecase))
-			demoUsecase := demo.NewDemoUsecase(rootLogger, conf.S3.BucketDemo, demo.NewDemoRepository(dbUsecase), assetUsecase, configUsecase, serversUsecase)
+			demoUsecase := demo.NewDemoUsecase(conf.S3.BucketDemo, demo.NewDemoRepository(dbUsecase), assetUsecase, configUsecase, serversUsecase)
 			go demoUsecase.Start(ctx)
 
-			banGroupUsecase := steamgroup.NewBanGroupUsecase(rootLogger, steamgroup.NewSteamGroupRepository(dbUsecase))
-			reportUsecase := report.NewReportUsecase(rootLogger, report.NewReportRepository(dbUsecase), discordUsecase, configUsecase, personUsecase)
+			banGroupUsecase := steamgroup.NewBanGroupUsecase(steamgroup.NewSteamGroupRepository(dbUsecase))
+			reportUsecase := report.NewReportUsecase(report.NewReportRepository(dbUsecase), discordUsecase, configUsecase, personUsecase)
 
-			stateUsecase := state.NewStateUsecase(rootLogger, eventBroadcaster,
-				state.NewStateRepository(state.NewCollector(rootLogger, serversUsecase)), configUsecase, serversUsecase)
+			stateUsecase := state.NewStateUsecase(eventBroadcaster,
+				state.NewStateRepository(state.NewCollector(serversUsecase)), configUsecase, serversUsecase)
 			go stateUsecase.Start(ctx)
 
 			banRepository := ban.NewBanSteamRepository(dbUsecase, personUsecase, networkUsecase)
-			banUsecase := ban.NewBanSteamUsecase(rootLogger, banRepository, personUsecase, configUsecase, discordUsecase, banGroupUsecase, reportUsecase, stateUsecase)
+			banUsecase := ban.NewBanSteamUsecase(banRepository, personUsecase, configUsecase, discordUsecase, banGroupUsecase, reportUsecase, stateUsecase)
 
 			banASNUsecase := ban.NewBanASNUsecase(ban.NewBanASNRepository(dbUsecase), discordUsecase, networkUsecase)
 
-			banNetUsecase := ban.NewBanNetUsecase(rootLogger, ban.NewBanNetRepository(dbUsecase), personUsecase, configUsecase, discordUsecase, stateUsecase)
+			banNetUsecase := ban.NewBanNetUsecase(ban.NewBanNetRepository(dbUsecase), personUsecase, configUsecase, discordUsecase, stateUsecase)
 
 			ban.NewBanNetRepository(dbUsecase)
 
 			apu := appeal.NewAppealUsecase(appeal.NewAppealRepository(dbUsecase), banUsecase, personUsecase, discordUsecase, configUsecase)
 
-			chatRepository := chat.NewChatRepository(dbUsecase, rootLogger, personUsecase, wordFilterUsecase, eventBroadcaster)
+			chatRepository := chat.NewChatRepository(dbUsecase, personUsecase, wordFilterUsecase, eventBroadcaster)
 
-			chatUsecase := chat.NewChatUsecase(rootLogger, configUsecase, chatRepository, wordFilterUsecase, stateUsecase, banUsecase, personUsecase, discordUsecase)
+			chatUsecase := chat.NewChatUsecase(configUsecase, chatRepository, wordFilterUsecase, stateUsecase, banUsecase, personUsecase, discordUsecase)
 			go chatUsecase.Start(ctx)
 
 			forumUsecase := forum.NewForumUsecase(forum.NewForumRepository(dbUsecase))
 
-			metricsUsecase := metrics.NewMetricsUsecase(rootLogger, eventBroadcaster)
+			metricsUsecase := metrics.NewMetricsUsecase(eventBroadcaster)
 			go metricsUsecase.Start(ctx)
 
 			go forumUsecase.Start(ctx)
-			matchUsecase := match.NewMatchUsecase(rootLogger, eventBroadcaster, match.NewMatchRepository(dbUsecase, personUsecase), stateUsecase, serversUsecase, discordUsecase, weaponsMap)
+			matchUsecase := match.NewMatchUsecase(eventBroadcaster, match.NewMatchRepository(dbUsecase, personUsecase), stateUsecase, serversUsecase, discordUsecase, weaponsMap)
 			go matchUsecase.Start(ctx)
 			newsUsecase := news.NewNewsUsecase(news.NewNewsRepository(dbUsecase))
-			notificationUsecase := notification.NewNotificationUsecase(rootLogger, notification.NewNotificationRepository(dbUsecase), personUsecase)
-			patreonUsecase := patreon.NewPatreonUsecase(rootLogger, patreon.NewPatreonRepository(dbUsecase))
+			notificationUsecase := notification.NewNotificationUsecase(notification.NewNotificationRepository(dbUsecase), personUsecase)
+			patreonUsecase := patreon.NewPatreonUsecase(patreon.NewPatreonRepository(dbUsecase))
 			go patreonUsecase.Start(ctx)
 
-			srcdsUsecase := srcds.NewSrcdsUsecase(rootLogger, configUsecase, serversUsecase, personUsecase, reportUsecase, discordUsecase)
+			srcdsUsecase := srcds.NewSrcdsUsecase(configUsecase, serversUsecase, personUsecase, reportUsecase, discordUsecase)
 
 			wikiUsecase := wiki.NewWikiUsecase(wiki.NewWikiRepository(dbUsecase, mediaUsecase))
 
-			authUsecase := auth.NewAuthUsecase(rootLogger, auth.NewAuthRepository(dbUsecase), configUsecase, personUsecase, banUsecase, serversUsecase)
+			authUsecase := auth.NewAuthUsecase(auth.NewAuthRepository(dbUsecase), configUsecase, personUsecase, banUsecase, serversUsecase)
 			go authUsecase.Start(ctx)
 
 			contestUsecase := contest.NewContestUsecase(contest.NewContestRepository(dbUsecase))
@@ -200,47 +208,49 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				gin.SetMode(gin.DebugMode)
 			}
 
-			go ban.Start(ctx, rootLogger, banUsecase, banNetUsecase, banASNUsecase, personUsecase, discordUsecase, configUsecase)
+			go ban.Start(ctx, banUsecase, banNetUsecase, banASNUsecase, personUsecase, discordUsecase, configUsecase)
 
-			router, errRouter := httphelper.CreateRouter(rootLogger, conf, app.Version())
+			router, errRouter := httphelper.CreateRouter(conf, app.Version())
 			if errRouter != nil {
-				rootLogger.Fatal("Could not setup router", zap.Error(errRouter))
+				slog.Error("Could not setup router", log2.ErrAttr(errRouter))
+
+				return
 			}
 
-			discordHandler := discord.NewDiscordHandler(rootLogger, discordUsecase, personUsecase, banUsecase,
+			discordHandler := discord.NewDiscordHandler(discordUsecase, personUsecase, banUsecase,
 				stateUsecase, serversUsecase, configUsecase, networkUsecase, wordFilterUsecase, matchUsecase, banNetUsecase, banASNUsecase)
 			discordHandler.Start(ctx)
 
-			appeal.NewAppealHandler(rootLogger, router, apu, banUsecase, configUsecase, personUsecase, discordUsecase, authUsecase)
-			auth.NewAuthHandler(rootLogger, router, authUsecase, configUsecase, personUsecase)
-			ban.NewBanHandler(rootLogger, router, banUsecase, discordUsecase, personUsecase, configUsecase, authUsecase)
-			ban.NewBanNetHandler(rootLogger, router, banNetUsecase, authUsecase)
-			ban.NewBanASNHandler(rootLogger, router, banASNUsecase, authUsecase)
-			blocklist.NewBlocklistHandler(rootLogger, router, blocklistUsecase, networkUsecase, authUsecase)
-			chat.NewChatHandler(rootLogger, router, chatUsecase, authUsecase)
-			contest.NewContestHandler(rootLogger, router, contestUsecase, configUsecase, mediaUsecase, authUsecase)
-			demo.NewDemoHandler(rootLogger, router, demoUsecase)
-			forum.NewForumHandler(rootLogger, router, forumUsecase, authUsecase)
-			match.NewMatchHandler(ctx, rootLogger, router, matchUsecase, authUsecase)
-			media.NewMediaHandler(rootLogger, router, mediaUsecase, configUsecase, assetUsecase, authUsecase)
-			metrics.NewMetricsHandler(rootLogger, router)
-			network.NewNetworkHandler(rootLogger, router, networkUsecase, authUsecase)
-			news.NewNewsHandler(rootLogger, router, newsUsecase, discordUsecase, authUsecase)
-			notification.NewNotificationHandler(rootLogger, router, notificationUsecase, authUsecase)
-			patreon.NewPatreonHandler(rootLogger, router, patreonUsecase, authUsecase)
-			person.NewPersonHandler(rootLogger, router, configUsecase, personUsecase, authUsecase)
-			report.NewReportHandler(rootLogger, router, reportUsecase, configUsecase, discordUsecase, personUsecase, authUsecase)
-			servers.NewServerHandler(rootLogger, router, serversUsecase, stateUsecase, authUsecase)
-			srcds.NewSRCDSHandler(rootLogger, router, srcdsUsecase, serversUsecase, personUsecase, assetUsecase,
+			appeal.NewAppealHandler(router, apu, banUsecase, configUsecase, personUsecase, discordUsecase, authUsecase)
+			auth.NewAuthHandler(router, authUsecase, configUsecase, personUsecase)
+			ban.NewBanHandler(router, banUsecase, discordUsecase, personUsecase, configUsecase, authUsecase)
+			ban.NewBanNetHandler(router, banNetUsecase, authUsecase)
+			ban.NewBanASNHandler(router, banASNUsecase, authUsecase)
+			blocklist.NewBlocklistHandler(router, blocklistUsecase, networkUsecase, authUsecase)
+			chat.NewChatHandler(router, chatUsecase, authUsecase)
+			contest.NewContestHandler(router, contestUsecase, configUsecase, mediaUsecase, authUsecase)
+			demo.NewDemoHandler(router, demoUsecase)
+			forum.NewForumHandler(router, forumUsecase, authUsecase)
+			match.NewMatchHandler(ctx, router, matchUsecase, authUsecase)
+			media.NewMediaHandler(router, mediaUsecase, configUsecase, assetUsecase, authUsecase)
+			metrics.NewMetricsHandler(router)
+			network.NewNetworkHandler(router, networkUsecase, authUsecase)
+			news.NewNewsHandler(router, newsUsecase, discordUsecase, authUsecase)
+			notification.NewNotificationHandler(router, notificationUsecase, authUsecase)
+			patreon.NewPatreonHandler(router, patreonUsecase, authUsecase)
+			person.NewPersonHandler(router, configUsecase, personUsecase, authUsecase)
+			report.NewReportHandler(router, reportUsecase, configUsecase, discordUsecase, personUsecase, authUsecase)
+			servers.NewServerHandler(router, serversUsecase, stateUsecase, authUsecase)
+			srcds.NewSRCDSHandler(router, srcdsUsecase, serversUsecase, personUsecase, assetUsecase,
 				reportUsecase, banUsecase, networkUsecase, banGroupUsecase, demoUsecase, authUsecase, banASNUsecase, banNetUsecase,
 				configUsecase, discordUsecase, stateUsecase)
-			wiki.NewWIkiHandler(rootLogger, router, wikiUsecase, authUsecase)
-			wordfilter.NewWordFilterHandler(rootLogger, router, configUsecase, wordFilterUsecase, chatUsecase, authUsecase)
+			wiki.NewWIkiHandler(router, wikiUsecase, authUsecase)
+			wordfilter.NewWordFilterHandler(router, configUsecase, wordFilterUsecase, chatUsecase, authUsecase)
 
 			defer discordUsecase.Shutdown(conf.Discord.GuildID)
 
 			if conf.Debug.AddRCONLogAddress != "" {
-				rootLogger.Info("Enabling log forwarding for local host")
+				slog.Info("Enabling log forwarding for local host")
 				stateUsecase.LogAddressAdd(ctx, conf.Debug.AddRCONLogAddress)
 			}
 
@@ -254,13 +264,13 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				defer cancel()
 
 				if errShutdown := httpServer.Shutdown(shutdownCtx); errShutdown != nil { //nolint:contextcheck
-					rootLogger.Error("Error shutting down http service", zap.Error(errShutdown))
+					slog.Error("Error shutting down http service", log2.ErrAttr(errShutdown))
 				}
 			}()
 
 			errServe := httpServer.ListenAndServe()
 			if errServe != nil && !errors.Is(errServe, http.ErrServerClosed) {
-				rootLogger.Error("HTTP server returned error", zap.Error(errServe))
+				slog.Error("HTTP server returned error", log2.ErrAttr(errServe))
 			}
 
 			<-rootCtx.Done()

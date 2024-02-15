@@ -3,27 +3,23 @@ package media
 import (
 	"encoding/base64"
 	"net/http"
-	"runtime"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"go.uber.org/zap"
 )
 
 type mediaHandler struct {
-	au  domain.AssetUsecase
-	mu  domain.MediaUsecase
-	cu  domain.ConfigUsecase
-	log *zap.Logger
+	au domain.AssetUsecase
+	mu domain.MediaUsecase
+	cu domain.ConfigUsecase
 }
 
-func NewMediaHandler(logger *zap.Logger, engine *gin.Engine, mu domain.MediaUsecase, cu domain.ConfigUsecase, au domain.AssetUsecase, ath domain.AuthUsecase) {
+func NewMediaHandler(engine *gin.Engine, mu domain.MediaUsecase, cu domain.ConfigUsecase, au domain.AssetUsecase, ath domain.AuthUsecase) {
 	handler := mediaHandler{
-		mu:  mu,
-		cu:  cu,
-		au:  au,
-		log: logger.Named("media"),
+		mu: mu,
+		cu: cu,
+		au: au,
 	}
 
 	engine.GET("/media/:media_id", handler.onGetMediaByID())
@@ -37,11 +33,9 @@ func NewMediaHandler(logger *zap.Logger, engine *gin.Engine, mu domain.MediaUsec
 }
 
 func (h mediaHandler) onAPISaveMedia() gin.HandlerFunc {
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
 	return func(ctx *gin.Context) {
 		var req domain.UserUploadedFile
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 

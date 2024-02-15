@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net"
 	"sort"
 	"strconv"
@@ -16,9 +17,9 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"go.uber.org/zap"
 )
 
 type discordService struct {
@@ -33,10 +34,9 @@ type discordService struct {
 	nu  domain.NetworkUsecase
 	wfu domain.WordFilterUsecase
 	mu  domain.MatchUsecase
-	log *zap.Logger
 }
 
-func NewDiscordHandler(log *zap.Logger, discordUsecase domain.DiscordUsecase, personUsecase domain.PersonUsecase,
+func NewDiscordHandler(discordUsecase domain.DiscordUsecase, personUsecase domain.PersonUsecase,
 	banUsecase domain.BanSteamUsecase, stateUsecase domain.StateUsecase, serversUsecase domain.ServersUsecase,
 	configUsecase domain.ConfigUsecase, networkUsecase domain.NetworkUsecase, filterUsecase domain.WordFilterUsecase,
 	matchUsecase domain.MatchUsecase, banNetUsecase domain.BanNetUsecase, banASNUsecase domain.BanASNUsecase,
@@ -53,7 +53,6 @@ func NewDiscordHandler(log *zap.Logger, discordUsecase domain.DiscordUsecase, pe
 		wfu: filterUsecase,
 		bnu: banNetUsecase,
 		bau: banASNUsecase,
-		log: log.Named("discord"),
 	}
 
 	return handler
@@ -83,7 +82,7 @@ func (h discordService) Start(_ context.Context) {
 
 	for k, v := range cmdMap {
 		if errRegister := h.du.RegisterHandler(k, v); errRegister != nil {
-			h.log.Error("Failed to register handler", zap.Error(errRegister))
+			slog.Error("Failed to register handler", log.ErrAttr(errRegister))
 		}
 	}
 }
@@ -155,7 +154,7 @@ func (h discordService) makeOnCheck() func(_ context.Context, _ *discordgo.Sessi
 		ban, errGetBanBySID := h.bu.GetBySteamID(ctx, sid, false)
 		if errGetBanBySID != nil {
 			if !errors.Is(errGetBanBySID, domain.ErrNoResult) {
-				h.log.Error("Failed to get ban by steamid", zap.Error(errGetBanBySID))
+				slog.Error("Failed to get ban by steamid", log.ErrAttr(errGetBanBySID))
 
 				return nil, domain.ErrCommandFailed
 			}
@@ -169,14 +168,14 @@ func (h discordService) makeOnCheck() func(_ context.Context, _ *discordgo.Sessi
 		})
 		if errOld != nil {
 			if !errors.Is(errOld, domain.ErrNoResult) {
-				h.log.Error("Failed to fetch old bans", zap.Error(errOld))
+				slog.Error("Failed to fetch old bans", log.ErrAttr(errOld))
 			}
 		}
 
 		bannedNets, errGetBanNet := h.bnu.GetByAddress(ctx, player.IPAddr)
 		if errGetBanNet != nil {
 			if !errors.Is(errGetBanNet, domain.ErrNoResult) {
-				h.log.Error("Failed to get ban nets by addr", zap.Error(errGetBanNet))
+				slog.Error("Failed to get ban nets by addr", log.ErrAttr(errGetBanNet))
 
 				return nil, domain.ErrCommandFailed
 			}
@@ -195,7 +194,7 @@ func (h discordService) makeOnCheck() func(_ context.Context, _ *discordgo.Sessi
 			if ban.SourceID.Valid() {
 				ap, errGetProfile := h.pu.GetPersonBySteamID(ctx, ban.SourceID)
 				if errGetProfile != nil {
-					h.log.Error("Failed to load author for ban", zap.Error(errGetProfile))
+					slog.Error("Failed to load author for ban", log.ErrAttr(errGetProfile))
 				} else {
 					authorProfile = ap
 				}
@@ -207,7 +206,7 @@ func (h discordService) makeOnCheck() func(_ context.Context, _ *discordgo.Sessi
 		// TODO move elsewhere
 		logData, errLogs := thirdparty.LogsTFOverview(ctx, sid)
 		if errLogs != nil {
-			h.log.Warn("Failed to fetch logTF data", zap.Error(errLogs))
+			slog.Warn("Failed to fetch logTF data", log.ErrAttr(errLogs))
 		}
 
 		var (
@@ -224,7 +223,7 @@ func (h discordService) makeOnCheck() func(_ context.Context, _ *discordgo.Sessi
 
 			if player.IPAddr != nil {
 				if errASN := h.nu.GetASNRecordByIP(ctx, player.IPAddr, &asn); errASN != nil {
-					h.log.Error("Failed to fetch ASN record", zap.Error(errASN))
+					slog.Error("Failed to fetch ASN record", log.ErrAttr(errASN))
 				}
 			}
 		}()
@@ -234,7 +233,7 @@ func (h discordService) makeOnCheck() func(_ context.Context, _ *discordgo.Sessi
 
 			if player.IPAddr != nil {
 				if errLoc := h.nu.GetLocationRecord(ctx, player.IPAddr, &location); errLoc != nil {
-					h.log.Error("Failed to fetch Location record", zap.Error(errLoc))
+					slog.Error("Failed to fetch Location record", log.ErrAttr(errLoc))
 				}
 			}
 		}()
@@ -244,7 +243,7 @@ func (h discordService) makeOnCheck() func(_ context.Context, _ *discordgo.Sessi
 
 			if player.IPAddr != nil {
 				if errProxy := h.nu.GetProxyRecord(ctx, player.IPAddr, &proxy); errProxy != nil && !errors.Is(errProxy, domain.ErrNoResult) {
-					h.log.Error("Failed to fetch proxy record", zap.Error(errProxy))
+					slog.Error("Failed to fetch proxy record", log.ErrAttr(errProxy))
 				}
 			}
 		}()
@@ -366,7 +365,7 @@ func (h discordService) onUnbanSteam(ctx context.Context, _ *discordgo.Session, 
 
 	user, errUser := h.pu.GetPersonBySteamID(ctx, steamID)
 	if errUser != nil {
-		h.log.Warn("Could not fetch unbanned Person", zap.String("steam_id", steamID.String()), zap.Error(errUser))
+		slog.Warn("Could not fetch unbanned Person", slog.String("steam_id", steamID.String()), log.ErrAttr(errUser))
 	}
 
 	return UnbanMessage(user), nil
@@ -540,12 +539,12 @@ func (h discordService) makeOnPlayers() func(context.Context, *discordgo.Session
 				var asn ip2location.ASNRecord
 				if errASN := h.nu.GetASNRecordByIP(ctx, player.IP, &asn); errASN != nil {
 					// Will fail for LAN ips
-					h.log.Warn("Failed to get asn record", zap.Error(errASN))
+					slog.Warn("Failed to get asn record", log.ErrAttr(errASN))
 				}
 
 				var loc ip2location.LocationRecord
 				if errLoc := h.nu.GetLocationRecord(ctx, player.IP, &loc); errLoc != nil {
-					h.log.Warn("Failed to get location record: %v", zap.Error(errLoc))
+					slog.Warn("Failed to get location record: %v", log.ErrAttr(errLoc))
 				}
 
 				proxyStr := ""
@@ -992,7 +991,7 @@ func (h discordService) onBanIP(ctx context.Context, _ *discordgo.Session,
 
 	for _, player := range players {
 		if errKick := h.su.Kick(ctx, player.Player.SID, reason); errKick != nil {
-			h.log.Error("Failed to perform kick", zap.Error(errKick))
+			slog.Error("Failed to perform kick", log.ErrAttr(errKick))
 		}
 	}
 

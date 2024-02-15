@@ -3,13 +3,13 @@ package steamgroup
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"sync"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
-	"go.uber.org/zap"
 )
 
 var (
@@ -22,16 +22,14 @@ var (
 type SteamGroupMemberships struct {
 	members map[steamid.GID]steamid.Collection
 	*sync.RWMutex
-	log        *zap.Logger
 	store      domain.BanGroupRepository
 	updateFreq time.Duration
 }
 
-func NewSteamGroupMemberships(log *zap.Logger, db domain.BanGroupRepository) *SteamGroupMemberships {
+func NewSteamGroupMemberships(db domain.BanGroupRepository) *SteamGroupMemberships {
 	return &SteamGroupMemberships{
 		RWMutex:    &sync.RWMutex{},
 		store:      db,
-		log:        log.Named("SteamGroupMemberships"),
 		members:    map[steamid.GID]steamid.Collection{},
 		updateFreq: time.Minute * 60,
 	}
@@ -53,7 +51,7 @@ func (g *SteamGroupMemberships) Start(ctx context.Context) {
 			g.update(ctx)
 			ticker.Reset(g.updateFreq)
 		case <-ctx.Done():
-			g.log.Debug("SteamGroupMemberships shutting down")
+			slog.Debug("SteamGroupMemberships shutting down")
 
 			return
 		}
@@ -93,7 +91,7 @@ func (g *SteamGroupMemberships) update(ctx context.Context) {
 	g.members = newMap
 	g.Unlock()
 
-	g.log.Info("Updated group memberships", zap.Int("count", total))
+	slog.Info("Updated group memberships", slog.Int("count", total))
 }
 
 // updateGroupBanMembers handles fetching and updating the member lists of steam groups. This does

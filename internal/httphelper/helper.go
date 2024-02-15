@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
@@ -11,9 +12,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"go.uber.org/zap"
 )
 
 type APIError struct {
@@ -29,10 +30,10 @@ func ResponseErr(ctx *gin.Context, statusCode int, err error) {
 	ctx.JSON(statusCode, APIError{Message: userErr})
 }
 
-func Bind(ctx *gin.Context, log *zap.Logger, target any) bool {
+func Bind(ctx *gin.Context, target any) bool {
 	if errBind := ctx.BindJSON(&target); errBind != nil {
 		ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
-		log.Error("Failed to bind request", zap.Error(errBind))
+		slog.Error("Failed to bind request", log.ErrAttr(errBind))
 
 		return false
 	}

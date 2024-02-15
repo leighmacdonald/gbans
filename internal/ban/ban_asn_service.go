@@ -2,25 +2,23 @@ package ban
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
-	"runtime"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
-	"go.uber.org/zap"
 )
 
 type banASNHandler struct {
-	log           *zap.Logger
 	banASNUsecase domain.BanASNUsecase
 }
 
-func NewBanASNHandler(logger *zap.Logger, engine *gin.Engine, banASNUsecase domain.BanASNUsecase, ath domain.AuthUsecase) {
+func NewBanASNHandler(engine *gin.Engine, banASNUsecase domain.BanASNUsecase, ath domain.AuthUsecase) {
 	handler := banASNHandler{
-		log:           logger.Named("ban_asn"),
 		banASNUsecase: banASNUsecase,
 	}
 	// mod
@@ -45,11 +43,9 @@ func (h banASNHandler) onAPIPostBansASNCreate() gin.HandlerFunc {
 		ValidUntil time.Time        `json:"valid_until"`
 	}
 
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
 	return func(ctx *gin.Context) {
 		var req apiBanRequest
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -91,7 +87,7 @@ func (h banASNHandler) onAPIPostBansASNCreate() gin.HandlerFunc {
 
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
-			log.Error("Failed to save asn ban", zap.Error(errBan))
+			slog.Error("Failed to save asn ban", log.ErrAttr(errBan))
 
 			return
 		}
@@ -101,18 +97,16 @@ func (h banASNHandler) onAPIPostBansASNCreate() gin.HandlerFunc {
 }
 
 func (h banASNHandler) onAPIGetBansASN() gin.HandlerFunc {
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
 	return func(ctx *gin.Context) {
 		var req domain.ASNBansQueryFilter
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
 		bansASN, count, errBans := h.banASNUsecase.Get(ctx, req)
 		if errBans != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			log.Error("Failed to fetch banASN", zap.Error(errBans))
+			slog.Error("Failed to fetch banASN", log.ErrAttr(errBans))
 
 			return
 		}
@@ -122,8 +116,6 @@ func (h banASNHandler) onAPIGetBansASN() gin.HandlerFunc {
 }
 
 func (h banASNHandler) onAPIDeleteBansASN() gin.HandlerFunc {
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
 	return func(ctx *gin.Context) {
 		asnID, asnIDErr := httphelper.GetInt64Param(ctx, "asn_id")
 		if asnIDErr != nil {
@@ -133,7 +125,7 @@ func (h banASNHandler) onAPIDeleteBansASN() gin.HandlerFunc {
 		}
 
 		var req domain.UnbanRequest
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -149,7 +141,7 @@ func (h banASNHandler) onAPIDeleteBansASN() gin.HandlerFunc {
 
 		if errSave := h.banASNUsecase.Save(ctx, &banAsn); errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			log.Error("Failed to delete asn ban", zap.Error(errSave))
+			slog.Error("Failed to delete asn ban", log.ErrAttr(errSave))
 
 			return
 		}
@@ -168,8 +160,6 @@ func (h banASNHandler) onAPIPostBansASNUpdate() gin.HandlerFunc {
 		ReasonText string           `json:"reason_text"`
 		ValidUntil time.Time        `json:"valid_until"`
 	}
-
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		asnID, asnIDErr := httphelper.GetInt64Param(ctx, "asn_id")
@@ -193,7 +183,7 @@ func (h banASNHandler) onAPIPostBansASNUpdate() gin.HandlerFunc {
 		}
 
 		var req apiBanRequest
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 

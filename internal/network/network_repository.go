@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net"
 	"time"
 
@@ -13,7 +14,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"go.uber.org/zap"
 )
 
 type networkRepository struct {
@@ -265,7 +265,7 @@ func (r networkRepository) GetProxyRecord(ctx context.Context, ipAddr net.IP, pr
 	return nil
 }
 
-func (r networkRepository) loadASN(ctx context.Context, log *zap.Logger, records []ip2location.ASNRecord) error {
+func (r networkRepository) loadASN(ctx context.Context, records []ip2location.ASNRecord) error {
 	curTime := time.Now()
 
 	if errTruncate := r.db.TruncateTable(ctx, "net_asn"); errTruncate != nil {
@@ -296,19 +296,19 @@ func (r networkRepository) loadASN(ctx context.Context, log *zap.Logger, records
 
 				batch = pgx.Batch{}
 
-				log.Info(fmt.Sprintf("ASN Progress: %d/%d (%.0f%%)",
+				slog.Info(fmt.Sprintf("ASN Progress: %d/%d (%.0f%%)",
 					recordIdx, len(records)-1, float64(recordIdx)/float64(len(records)-1)*100))
 			}
 		}
 	}
 
-	log.Info("Loaded ASN4 records",
-		zap.Int("count", len(records)), zap.Duration("duration", time.Since(curTime)))
+	slog.Info("Loaded ASN4 records",
+		slog.Int("count", len(records)), slog.Duration("duration", time.Since(curTime)))
 
 	return nil
 }
 
-func (r networkRepository) loadLocation(ctx context.Context, log *zap.Logger, records []ip2location.LocationRecord, _ bool) error {
+func (r networkRepository) loadLocation(ctx context.Context, records []ip2location.LocationRecord, _ bool) error {
 	curTime := time.Now()
 
 	if errTruncate := r.db.TruncateTable(ctx, "net_location"); errTruncate != nil {
@@ -339,19 +339,19 @@ func (r networkRepository) loadLocation(ctx context.Context, log *zap.Logger, re
 
 				batch = pgx.Batch{}
 
-				log.Info(fmt.Sprintf("Location4 Progress: %d/%d (%.0f%%)",
+				slog.Info(fmt.Sprintf("Location4 Progress: %d/%d (%.0f%%)",
 					recordIdx, len(records)-1, float64(recordIdx)/float64(len(records)-1)*100))
 			}
 		}
 	}
 
-	log.Info("Loaded Location4 records",
-		zap.Int("count", len(records)), zap.Duration("duration", time.Since(curTime)))
+	slog.Info("Loaded Location4 records",
+		slog.Int("count", len(records)), slog.Duration("duration", time.Since(curTime)))
 
 	return nil
 }
 
-func (r networkRepository) loadProxies(ctx context.Context, log *zap.Logger, records []ip2location.ProxyRecord, _ bool) error {
+func (r networkRepository) loadProxies(ctx context.Context, records []ip2location.ProxyRecord, _ bool) error {
 	curTime := time.Now()
 
 	if errTruncate := r.db.TruncateTable(ctx, "net_proxy"); errTruncate != nil {
@@ -384,14 +384,14 @@ func (r networkRepository) loadProxies(ctx context.Context, log *zap.Logger, rec
 
 				batch = pgx.Batch{}
 
-				log.Info(fmt.Sprintf("Proxy Progress: %d/%d (%.0f%%)",
+				slog.Info(fmt.Sprintf("Proxy Progress: %d/%d (%.0f%%)",
 					recordIdx, len(records)-1, float64(recordIdx)/float64(len(records)-1)*100))
 			}
 		}
 	}
 
-	log.Info("Loaded Proxy records",
-		zap.Int("count", len(records)), zap.Duration("duration", time.Since(curTime)))
+	slog.Info("Loaded Proxy records",
+		slog.Int("count", len(records)), slog.Duration("duration", time.Since(curTime)))
 
 	return nil
 }
@@ -400,21 +400,21 @@ func (r networkRepository) loadProxies(ctx context.Context, log *zap.Logger, rec
 //
 // Note that this can take a while on slower machines. For reference, it takes
 // about ~90s with a local database on a Ryzen 3900X/PCIe4 NVMe SSD.
-func (r networkRepository) InsertBlockListData(ctx context.Context, log *zap.Logger, blockListData *ip2location.BlockListData) error {
+func (r networkRepository) InsertBlockListData(ctx context.Context, blockListData *ip2location.BlockListData) error {
 	if len(blockListData.Proxies) > 0 {
-		if errProxies := r.loadProxies(ctx, log, blockListData.Proxies, false); errProxies != nil {
+		if errProxies := r.loadProxies(ctx, blockListData.Proxies, false); errProxies != nil {
 			return errProxies
 		}
 	}
 
 	if len(blockListData.Locations4) > 0 {
-		if errLocation := r.loadLocation(ctx, log, blockListData.Locations4, false); errLocation != nil {
+		if errLocation := r.loadLocation(ctx, blockListData.Locations4, false); errLocation != nil {
 			return errLocation
 		}
 	}
 
 	if len(blockListData.ASN4) > 0 {
-		if errASN := r.loadASN(ctx, log, blockListData.ASN4); errASN != nil {
+		if errASN := r.loadASN(ctx, blockListData.ASN4); errASN != nil {
 			return errASN
 		}
 	}

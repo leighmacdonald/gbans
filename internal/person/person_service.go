@@ -2,24 +2,23 @@ package person
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
-	"runtime"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"go.uber.org/zap"
+	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 type personHandler struct {
 	pu            domain.PersonUsecase
 	configUsecase domain.ConfigUsecase
-	log           *zap.Logger
 }
 
-func NewPersonHandler(logger *zap.Logger, engine *gin.Engine, configUsecase domain.ConfigUsecase, personUsecase domain.PersonUsecase, ath domain.AuthUsecase) {
-	handler := &personHandler{pu: personUsecase, configUsecase: configUsecase, log: logger.Named("personHandler")}
+func NewPersonHandler(engine *gin.Engine, configUsecase domain.ConfigUsecase, personUsecase domain.PersonUsecase, ath domain.AuthUsecase) {
+	handler := &personHandler{pu: personUsecase, configUsecase: configUsecase}
 
 	engine.GET("/api/profile", handler.onAPIProfile())
 
@@ -61,15 +60,15 @@ func (h personHandler) onAPIPutPlayerPermission() gin.HandlerFunc {
 		}
 
 		var req updatePermissionLevel
-		if !httphelper.Bind(ctx, h.log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
 		ctx.JSON(http.StatusOK, gin.H{})
 
-		h.log.Info("Player permission updated",
-			zap.Int64("steam_id", steamID.Int64()),
-			zap.String("permissions", req.PermissionLevel.String()))
+		slog.Info("Player permission updated",
+			slog.Int64("steam_id", steamID.Int64()),
+			slog.String("permissions", req.PermissionLevel.String()))
 	}
 }
 
@@ -80,7 +79,7 @@ func (h personHandler) onAPIGetPersonSettings() gin.HandlerFunc {
 		settings, err := h.pu.GetPersonSettings(ctx, user.SteamID)
 		if err != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			h.log.Error("Failed to fetch person settings", zap.Error(err), zap.Int64("steam_id", user.SteamID.Int64()))
+			slog.Error("Failed to fetch person settings", log.ErrAttr(err), slog.Int64("steam_id", user.SteamID.Int64()))
 
 			return
 		}
@@ -93,7 +92,7 @@ func (h personHandler) onAPIPostPersonSettings() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req domain.PersonSettingsUpdate
 
-		if !httphelper.Bind(ctx, h.log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -112,10 +111,10 @@ func (h personHandler) onAPICurrentProfile() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		profile := httphelper.CurrentUserProfile(ctx)
 		if !profile.SteamID.Valid() {
-			h.log.Error("Failed to load user profile",
-				zap.Int64("sid64", profile.SteamID.Int64()),
-				zap.String("name", profile.Name),
-				zap.String("permission_level", profile.PermissionLevel.String()))
+			slog.Error("Failed to load user profile",
+				slog.Int64("sid64", profile.SteamID.Int64()),
+				slog.String("name", profile.Name),
+				slog.String("permission_level", profile.PermissionLevel.String()))
 			httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
 
 			return
@@ -153,11 +152,9 @@ func (h personHandler) onAPIProfile() gin.HandlerFunc {
 }
 
 func (h personHandler) onAPISearchPlayers() gin.HandlerFunc {
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
 	return func(ctx *gin.Context) {
 		var query domain.PlayerQuery
-		if !httphelper.Bind(ctx, log, &query) {
+		if !httphelper.Bind(ctx, &query) {
 			return
 		}
 

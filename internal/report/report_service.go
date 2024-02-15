@@ -3,8 +3,8 @@ package report
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
-	"runtime"
 	"strings"
 	"time"
 
@@ -14,23 +14,21 @@ import (
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/fp"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"go.uber.org/zap"
 )
 
-type ReportHandler struct {
-	log            *zap.Logger
+type reportHandler struct {
 	reportUsecase  domain.ReportUsecase
 	configUsecase  domain.ConfigUsecase
 	discordUsecase domain.DiscordUsecase
 	personUsecase  domain.PersonUsecase
 }
 
-func NewReportHandler(log *zap.Logger, engine *gin.Engine, reportUsecase domain.ReportUsecase, configUsecase domain.ConfigUsecase,
+func NewReportHandler(engine *gin.Engine, reportUsecase domain.ReportUsecase, configUsecase domain.ConfigUsecase,
 	discordUsecase domain.DiscordUsecase, personUsecase domain.PersonUsecase, authUsecase domain.AuthUsecase,
 ) {
-	handler := ReportHandler{
-		log:            log.Named("report"),
+	handler := reportHandler{
 		reportUsecase:  reportUsecase,
 		configUsecase:  configUsecase,
 		discordUsecase: discordUsecase,
@@ -58,7 +56,7 @@ func NewReportHandler(log *zap.Logger, engine *gin.Engine, reportUsecase domain.
 	}
 }
 
-func (h ReportHandler) onAPIPostBanState() gin.HandlerFunc {
+func (h reportHandler) onAPIPostBanState() gin.HandlerFunc {
 	// TODO doesnt do anything
 	return func(ctx *gin.Context) {
 		reportID, errID := httphelper.GetInt64Param(ctx, "report_id")
@@ -81,14 +79,12 @@ func (h ReportHandler) onAPIPostBanState() gin.HandlerFunc {
 	}
 }
 
-func (h ReportHandler) onAPIPostReportCreate() gin.HandlerFunc {
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (h reportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		currentUser := httphelper.CurrentUserProfile(ctx)
 
 		var req domain.CreateReportReq
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -108,7 +104,7 @@ func (h ReportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 		sourceID, errSourceID := req.SourceID.SID64(ctx)
 		if errSourceID != nil {
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrSourceID)
-			log.Error("Invalid steam_id", zap.Error(errSourceID))
+			slog.Error("Invalid steam_id", log.ErrAttr(errSourceID))
 
 			return
 		}
@@ -116,7 +112,7 @@ func (h ReportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 		targetID, errTargetID := req.TargetID.SID64(ctx)
 		if errTargetID != nil {
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrTargetID)
-			log.Error("Invalid target_id", zap.Error(errTargetID))
+			slog.Error("Invalid target_id", log.ErrAttr(errTargetID))
 
 			return
 		}
@@ -130,7 +126,7 @@ func (h ReportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 		personSource, errSource := h.personUsecase.GetPersonBySteamID(ctx, sourceID)
 		if errSource != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			log.Error("Could not load player profile", zap.Error(errSource))
+			slog.Error("Could not load player profile", log.ErrAttr(errSource))
 
 			return
 		}
@@ -138,17 +134,17 @@ func (h ReportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 		personTarget, errTarget := h.personUsecase.GetOrCreatePersonBySteamID(ctx, targetID)
 		if errTarget != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			log.Error("Could not load player profile", zap.Error(errTarget))
+			slog.Error("Could not load player profile", log.ErrAttr(errTarget))
 
 			return
 		}
 
 		if personTarget.Expired() {
 			if err := thirdparty.UpdatePlayerSummary(ctx, &personTarget); err != nil {
-				log.Error("Failed to update target player", zap.Error(err))
+				slog.Error("Failed to update target player", log.ErrAttr(err))
 			} else {
 				if errSave := h.personUsecase.SavePerson(ctx, &personTarget); errSave != nil {
-					log.Error("Failed to save target player update", zap.Error(err))
+					slog.Error("Failed to save target player update", log.ErrAttr(err))
 				}
 			}
 		}
@@ -157,7 +153,7 @@ func (h ReportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 		existing, errReports := h.reportUsecase.GetReportBySteamID(ctx, personSource.SteamID, targetID)
 		if errReports != nil {
 			if !errors.Is(errReports, domain.ErrNoResult) {
-				log.Error("Failed to query reports by steam id", zap.Error(errReports))
+				slog.Error("Failed to query reports by steam id", log.ErrAttr(errReports))
 				httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 				return
@@ -185,14 +181,14 @@ func (h ReportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 
 		if errReportSave := h.reportUsecase.SaveReport(ctx, &report); errReportSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			log.Error("Failed to save report", zap.Error(errReportSave))
+			slog.Error("Failed to save report", log.ErrAttr(errReportSave))
 
 			return
 		}
 
 		ctx.JSON(http.StatusCreated, report)
 
-		log.Info("New report created successfully", zap.Int64("report_id", report.ReportID))
+		slog.Info("New report created successfully", slog.Int64("report_id", report.ReportID))
 
 		conf := h.configUsecase.Config()
 
@@ -212,7 +208,7 @@ func (h ReportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 	}
 }
 
-func (h ReportHandler) onAPIGetReport() gin.HandlerFunc {
+func (h reportHandler) onAPIGetReport() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		reportID, errParam := httphelper.GetInt64Param(ctx, "report_id")
 		if errParam != nil {
@@ -238,14 +234,12 @@ type reportWithAuthor struct {
 	domain.Report
 }
 
-func (h ReportHandler) onAPIGetReports() gin.HandlerFunc {
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (h reportHandler) onAPIGetReports() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		user := httphelper.CurrentUserProfile(ctx)
 
 		var req domain.ReportQueryFilter
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -333,12 +327,10 @@ func (h ReportHandler) onAPIGetReports() gin.HandlerFunc {
 	}
 }
 
-func (h ReportHandler) onAPISetReportStatus() gin.HandlerFunc {
+func (h reportHandler) onAPISetReportStatus() gin.HandlerFunc {
 	type stateUpdateReq struct {
 		Status domain.ReportStatus `json:"status"`
 	}
-
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		reportID, errParam := httphelper.GetInt64Param(ctx, "report_id")
@@ -349,14 +341,14 @@ func (h ReportHandler) onAPISetReportStatus() gin.HandlerFunc {
 		}
 
 		var req stateUpdateReq
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
 		report, errGet := h.reportUsecase.GetReport(ctx, httphelper.CurrentUserProfile(ctx), reportID)
 		if errGet != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			log.Error("Failed to get report to set state", zap.Error(errGet))
+			slog.Error("Failed to get report to set state", log.ErrAttr(errGet))
 
 			return
 		}
@@ -372,16 +364,16 @@ func (h ReportHandler) onAPISetReportStatus() gin.HandlerFunc {
 		report.ReportStatus = req.Status
 		if errSave := h.reportUsecase.SaveReport(ctx, &report); errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			log.Error("Failed to save report state", zap.Error(errSave))
+			slog.Error("Failed to save report state", log.ErrAttr(errSave))
 
 			return
 		}
 
 		ctx.JSON(http.StatusAccepted, nil)
-		log.Info("Report status changed",
-			zap.Int64("report_id", report.ReportID),
-			zap.String("from_status", original.String()),
-			zap.String("to_status", report.ReportStatus.String()))
+		slog.Info("Report status changed",
+			slog.Int64("report_id", report.ReportID),
+			slog.String("from_status", original.String()),
+			slog.String("to_status", report.ReportStatus.String()))
 		// discord.SendDiscord(model.NotificationPayload{
 		//	Sids:     steamid.Collection{report.SourceID},
 		//	Severity: db.SeverityInfo,
@@ -391,7 +383,7 @@ func (h ReportHandler) onAPISetReportStatus() gin.HandlerFunc {
 	} //nolint:wsl
 }
 
-func (h ReportHandler) onAPIGetReportMessages() gin.HandlerFunc {
+func (h reportHandler) onAPIGetReportMessages() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		reportID, errParam := httphelper.GetInt64Param(ctx, "report_id")
 		if errParam != nil {
@@ -426,12 +418,10 @@ func (h ReportHandler) onAPIGetReportMessages() gin.HandlerFunc {
 	}
 }
 
-func (h ReportHandler) onAPIPostReportMessage() gin.HandlerFunc {
+func (h reportHandler) onAPIPostReportMessage() gin.HandlerFunc {
 	type newMessage struct {
 		Message string `json:"message"`
 	}
-
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		reportID, errID := httphelper.GetInt64Param(ctx, "report_id")
@@ -442,7 +432,7 @@ func (h ReportHandler) onAPIPostReportMessage() gin.HandlerFunc {
 		}
 
 		var req newMessage
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -461,7 +451,7 @@ func (h ReportHandler) onAPIPostReportMessage() gin.HandlerFunc {
 			}
 
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			log.Error("Failed to load report", zap.Error(errReport))
+			slog.Error("Failed to load report", log.ErrAttr(errReport))
 
 			return
 		}
@@ -471,7 +461,7 @@ func (h ReportHandler) onAPIPostReportMessage() gin.HandlerFunc {
 
 		if errSave := h.reportUsecase.SaveReportMessage(ctx, &msg); errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			log.Error("Failed to save report message", zap.Error(errSave))
+			slog.Error("Failed to save report message", log.ErrAttr(errSave))
 
 			return
 		}
@@ -480,7 +470,7 @@ func (h ReportHandler) onAPIPostReportMessage() gin.HandlerFunc {
 
 		if errSave := h.reportUsecase.SaveReport(ctx, &report); errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			log.Error("Failed to update report activity", zap.Error(errSave))
+			slog.Error("Failed to update report activity", log.ErrAttr(errSave))
 
 			return
 		}
@@ -494,12 +484,10 @@ func (h ReportHandler) onAPIPostReportMessage() gin.HandlerFunc {
 	}
 }
 
-func (h ReportHandler) onAPIEditReportMessage() gin.HandlerFunc {
+func (h reportHandler) onAPIEditReportMessage() gin.HandlerFunc {
 	type editMessage struct {
 		BodyMD string `json:"body_md"`
 	}
-
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		reportMessageID, errID := httphelper.GetInt64Param(ctx, "report_message_id")
@@ -528,7 +516,7 @@ func (h ReportHandler) onAPIEditReportMessage() gin.HandlerFunc {
 		}
 
 		var req editMessage
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -547,7 +535,7 @@ func (h ReportHandler) onAPIEditReportMessage() gin.HandlerFunc {
 		existing.MessageMD = req.BodyMD
 		if errSave := h.reportUsecase.SaveReportMessage(ctx, &existing); errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			log.Error("Failed to save report message", zap.Error(errSave))
+			slog.Error("Failed to save report message", log.ErrAttr(errSave))
 
 			return
 		}
@@ -563,9 +551,7 @@ func (h ReportHandler) onAPIEditReportMessage() gin.HandlerFunc {
 	}
 }
 
-func (h ReportHandler) onAPIDeleteReportMessage() gin.HandlerFunc {
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (h reportHandler) onAPIDeleteReportMessage() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		reportMessageID, errID := httphelper.GetInt64Param(ctx, "report_message_id")
 		if errID != nil || reportMessageID == 0 {
@@ -595,7 +581,7 @@ func (h ReportHandler) onAPIDeleteReportMessage() gin.HandlerFunc {
 		existing.Deleted = true
 		if errSave := h.reportUsecase.SaveReportMessage(ctx, &existing); errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			log.Error("Failed to save report message", zap.Error(errSave))
+			slog.Error("Failed to save report message", log.ErrAttr(errSave))
 
 			return
 		}

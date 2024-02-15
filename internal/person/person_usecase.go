@@ -3,27 +3,26 @@ package person
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
-	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
 
 type personUsecase struct {
 	configUsecase domain.ConfigUsecase
 	personRepo    domain.PersonRepository
-	log           *zap.Logger
 }
 
-func NewPersonUsecase(log *zap.Logger, repository domain.PersonRepository, configUsecase domain.ConfigUsecase) domain.PersonUsecase {
+func NewPersonUsecase(repository domain.PersonRepository, configUsecase domain.ConfigUsecase) domain.PersonUsecase {
 	return &personUsecase{
-		log:        log,
 		personRepo: repository,
 	}
 }
@@ -43,10 +42,10 @@ func (u personUsecase) QueryProfile(ctx context.Context, query string) (domain.P
 
 	if person.Expired() {
 		if err := thirdparty.UpdatePlayerSummary(ctx, &person); err != nil {
-			u.log.Error("Failed to update player summary", zap.Error(err))
+			slog.Error("Failed to update player summary", log.ErrAttr(err))
 		} else {
 			if errSave := u.SavePerson(ctx, &person); errSave != nil {
-				u.log.Error("Failed to save person summary", zap.Error(errSave))
+				slog.Error("Failed to save person summary", log.ErrAttr(errSave))
 			}
 		}
 	}
@@ -147,7 +146,7 @@ func (u personUsecase) updateProfiles(ctx context.Context, people domain.People)
 // The 100 oldest profiles are updated on each execution.
 func (u personUsecase) Start(ctx context.Context) {
 	var (
-		log    = u.log.Named("profileUpdate")
+		logger = slog.Default().WithGroup("profileUpdate")
 		run    = make(chan any)
 		ticker = time.NewTicker(time.Second * 300)
 	)
@@ -172,14 +171,14 @@ func (u personUsecase) Start(ctx context.Context) {
 
 			count, errUpdate := u.updateProfiles(localCtx, people)
 			if errUpdate != nil {
-				log.Error("Failed to update profiles", zap.Error(errUpdate))
+				logger.Error("Failed to update profiles", log.ErrAttr(errUpdate))
 			}
 
-			u.log.Debug("Updated steam profiles and vac data", zap.Int("count", count))
+			logger.Debug("Updated steam profiles and vac data", slog.Int("count", count))
 
 			cancel()
 		case <-ctx.Done():
-			log.Debug("profileUpdater shutting down")
+			logger.Debug("profileUpdater shutting down")
 
 			return
 		}
@@ -204,7 +203,7 @@ func (u personUsecase) SetSteam(ctx context.Context, sid64 steamid.SID64, discor
 		return errors.Join(errSavePerson, domain.ErrSaveChanges)
 	}
 
-	u.log.Info("Discord steamid set", zap.Int64("sid64", sid64.Int64()), zap.String("discordId", discordID))
+	slog.Info("Discord steamid set", slog.Int64("sid64", sid64.Int64()), slog.String("discordId", discordID))
 
 	return nil
 }

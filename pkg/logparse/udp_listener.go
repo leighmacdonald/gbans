@@ -4,14 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"go.uber.org/atomic"
-	"go.uber.org/zap"
 )
 
 type srcdsPacket byte
@@ -29,7 +30,7 @@ type LogEventHandler func(EventType, ServerEvent)
 type UDPLogListener struct {
 	*sync.RWMutex
 
-	logger        *zap.Logger
+	logger        *slog.Logger
 	udpAddr       *net.UDPAddr
 	secretMap     map[int]ServerIDMap // index = logsecret key
 	logAddrString string
@@ -38,7 +39,7 @@ type UDPLogListener struct {
 
 var ErrResolve = errors.New("failed to resolve UDP address")
 
-func NewUDPLogListener(logger *zap.Logger, logAddr string, onEvent LogEventHandler) (*UDPLogListener, error) {
+func NewUDPLogListener(logAddr string, onEvent LogEventHandler) (*UDPLogListener, error) {
 	udpAddr, errResolveUDP := net.ResolveUDPAddr("udp4", logAddr)
 	if errResolveUDP != nil {
 		return nil, errors.Join(errResolveUDP, ErrResolve)
@@ -47,7 +48,7 @@ func NewUDPLogListener(logger *zap.Logger, logAddr string, onEvent LogEventHandl
 	return &UDPLogListener{
 		RWMutex:       &sync.RWMutex{},
 		onEvent:       onEvent,
-		logger:        logger.Named("srcdsLog"),
+		logger:        slog.Default().WithGroup("srcdsLog"),
 		udpAddr:       udpAddr,
 		secretMap:     map[int]ServerIDMap{},
 		logAddrString: logAddr,
@@ -78,18 +79,19 @@ func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 
 	connection, errListenUDP := net.ListenUDP("udp4", remoteSrc.udpAddr)
 	if errListenUDP != nil {
-		remoteSrc.logger.Error("Failed to start log listener", zap.Error(errListenUDP))
+		remoteSrc.logger.Error("Failed to start log listener", log.ErrAttr(errListenUDP))
 
 		return
 	}
 
 	defer func() {
 		if errConnClose := connection.Close(); errConnClose != nil {
-			remoteSrc.logger.Error("Failed to close connection cleanly", zap.Error(errConnClose))
+			remoteSrc.logger.Error("Failed to close connection cleanly", log.ErrAttr(errConnClose))
 		}
 	}()
 
-	remoteSrc.logger.Info("Starting log reader", zap.String("listen_addr", fmt.Sprintf("%s/udp", remoteSrc.udpAddr.String())))
+	remoteSrc.logger.Info("Starting log reader",
+		slog.String("listen_addr", fmt.Sprintf("%s/udp", remoteSrc.udpAddr.String())))
 
 	var (
 		running        = atomic.NewBool(true)
@@ -107,7 +109,7 @@ func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 
 			readLen, _, errReadUDP := connection.ReadFromUDP(buffer)
 			if errReadUDP != nil {
-				remoteSrc.logger.Warn("UDP log read error", zap.Error(errReadUDP))
+				remoteSrc.logger.Warn("UDP log read error", log.ErrAttr(errReadUDP))
 
 				continue
 			}
@@ -116,7 +118,7 @@ func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 			case s2aLogString:
 				if insecureCount%10000 == 0 {
 					remoteSrc.logger.Error("Using unsupported log packet type 0x52",
-						zap.Int64("count", int64(insecureCount+1)))
+						slog.Int64("count", int64(insecureCount+1)))
 				}
 
 				insecureCount++
@@ -136,7 +138,7 @@ func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 				secret, errConv := strconv.ParseInt(line[5:idx], 10, 32)
 				if errConv != nil {
 					remoteSrc.logger.Error("Received malformed log message: Failed to parse secret",
-						zap.Error(errConv))
+						log.ErrAttr(errConv))
 
 					errCount++
 
@@ -151,9 +153,9 @@ func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 					rate := float64(count) / time.Since(startTime).Seconds()
 
 					remoteSrc.logger.Debug("UDP SRCDS Logger Packets",
-						zap.Uint64("count", count),
-						zap.Float64("messages/sec", rate),
-						zap.Uint64("errors", errCount))
+						slog.Uint64("count", count),
+						slog.Float64("messages/sec", rate),
+						slog.Uint64("errors", errCount))
 
 					startTime = time.Now()
 				}
@@ -188,8 +190,8 @@ func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 			event, errLogServerEvent := logToServerEvent(parser, server.ServerID, server.ServerName, logPayload.body)
 			if errLogServerEvent != nil {
 				remoteSrc.logger.Error("Failed to create serverEvent",
-					zap.String("body", logPayload.body),
-					zap.Error(errLogServerEvent))
+					slog.String("body", logPayload.body),
+					log.ErrAttr(errLogServerEvent))
 
 				continue
 			}
