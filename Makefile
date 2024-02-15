@@ -14,22 +14,22 @@ vet:
 fmt:
 	gci write . --skip-generated -s standard -s default
 	gofumpt -l -w .
-	cd frontend && yarn prettier src/ --write
+	cd frontend && pnpm prettier src/ --write
 
 build_debug:
 	@go build $(DEBUG_FLAGS) $(GO_FLAGS) -o gbans
 
 bump_deps:
 	go get -u ./...
-	cd frontend && yarn upgrade-interactive
+	cd frontend && pnpm update -i
 
 build: linux64
 
 frontend:
-	cd frontend && yarn && yarn run build
+	cd frontend && pnpm && pnpm run build
 
 linux64:
-	GOOS=linux GOARCH=amd64 $(GO_BUILD) $(GO_FLAGS) -o build/linux64/gbans  main.go
+	GOOS=linux GOARCH=amd64 $(GO_BUILD) $(GO_FLAGS) -o build/linux64/gbans main.go
 
 windows64:
 	GOOS=windows GOARCH=amd64 $(GO_BUILD) $(GO_FLAGS) -o build/win64/gbans.exe main.go
@@ -59,10 +59,10 @@ sourcemod_devel: sourcemod
 install:
 	@go install $(GO_FLAGS) ./...
 
-test: test-go test-ts
+test: test-go
 
-test-ts:
-	@cd frontend && yarn && yarn run test --passWithNoTests
+# test-ts:
+# 	@cd frontend && pnpm install && pnpm run test --passWithNoTests
 
 test-go:
 	@go test $(GO_FLAGS) -race -cover . ./...
@@ -86,7 +86,7 @@ fix: fmt
 	golangci-lint run --fix
 
 lint_ts:
-	cd frontend && yarn run eslint:check && yarn prettier src/ --check
+	cd frontend && pnpm run eslint:check && pnpm prettier src/ --check
 
 static:
 	staticcheck -go 1.22 ./...

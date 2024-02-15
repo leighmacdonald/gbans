@@ -108,6 +108,13 @@ interface errorMessage {
     code?: number;
 }
 
+const apiRootURL = (): string => {
+    if (import.meta.env.DEV) {
+        return 'http://gbans.localhost:6006';
+    } else {
+        return `${location.protocol}//${location.host}`;
+    }
+};
 /**
  * All api requests are handled through this interface.
  *
@@ -132,7 +139,7 @@ export const apiCall = async <
         'Content-Type': 'application/json; charset=UTF-8'
     };
     const requestOptions: RequestInit = {
-        mode: 'same-origin',
+        mode: import.meta.env.DEV ? 'no-cors' : 'same-origin',
         credentials: 'include',
         method: method.toUpperCase()
     };
@@ -156,10 +163,7 @@ export const apiCall = async <
         requestOptions.signal = abortController.signal;
     }
 
-    const response = await fetch(
-        new URL(url, `${location.protocol}//${location.host}`),
-        requestOptions
-    );
+    const response = await fetch(new URL(url, apiRootURL()), requestOptions);
 
     switch (response.status) {
         case 415:

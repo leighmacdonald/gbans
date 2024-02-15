@@ -10,12 +10,13 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { LatLngLiteral } from 'leaflet';
-import { sum } from 'lodash-es';
+//import { sum } from 'lodash-es';
 import { apiGetServerStates, BaseServer } from '../api';
 import { ServerFilters } from '../component/ServerFilters';
 import { ServerList } from '../component/ServerList';
 import { ServerMap } from '../component/ServerMap';
 import { MapStateCtx, useMapStateCtx } from '../contexts/MapStateCtx';
+import { sum } from '../util/lists.ts';
 
 function LinearProgressWithLabel(
     props: LinearProgressProps & { value: number }

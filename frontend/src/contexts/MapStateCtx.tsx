@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react';
 import { LatLngLiteral } from 'leaflet';
-import noop from 'lodash-es/noop';
 import { BaseServer } from '../api';
+import { noop } from '../util/lists';
 
 export type MapState = {
     pos: LatLngLiteral;

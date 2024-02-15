@@ -11,6 +11,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/frontend"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/unrolled/secure"
@@ -63,20 +64,21 @@ func useSecure(mode domain.RunMode, cspOrigin string) gin.HandlerFunc {
 	return secureFunc
 }
 
+//
 // jsConfig contains all the variables that we inject into the frontend at runtime.
-type jsConfig struct {
-	SiteName        string `json:"site_name"`
-	DiscordClientID string `json:"discord_client_id"`
-	DiscordLinkID   string `json:"discord_link_id"`
-	// External URL used to access S3 assets. media:// links are replaces with this url
-	AssetURL     string `json:"asset_url"`
-	BucketDemo   string `json:"bucket_demo"`
-	BucketMedia  string `json:"bucket_media"`
-	BuildVersion string `json:"build_version"`
-	BuildCommit  string `json:"build_commit"`
-	BuildDate    string `json:"build_date"`
-	SentryDSN    string `json:"sentry_dsn"`
-}
+// type jsConfig struct {
+//	SiteName        string `json:"site_name"`
+//	DiscordClientID string `json:"discord_client_id"`
+//	DiscordLinkID   string `json:"discord_link_id"`
+//	// External URL used to access S3 assets. media:// links are replaces with this url
+//	AssetURL     string `json:"asset_url"`
+//	BucketDemo   string `json:"bucket_demo"`
+//	BucketMedia  string `json:"bucket_media"`
+//	BuildVersion string `json:"build_version"`
+//	BuildCommit  string `json:"build_commit"`
+//	BuildDate    string `json:"build_date"`
+//	SentryDSN    string `json:"sentry_dsn"`
+// }
 
 func ErrorHandledWithReturn(ctx *gin.Context, err error) error {
 	ErrorHandled(ctx, err)
@@ -144,12 +146,15 @@ func useCors(engine *gin.Engine, conf domain.Config) {
 	engine.Use(httpErrorHandler(), gin.Recovery())
 	engine.Use(useSecure(conf.General.Mode, conf.S3.ExternalURL))
 
-	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowOrigins = conf.HTTP.CorsOrigins
-	corsConfig.AllowHeaders = append(corsConfig.AllowHeaders, "Authorization")
-	corsConfig.AllowWildcard = false
-	corsConfig.AllowCredentials = false
-	engine.Use(cors.New(corsConfig))
+	if conf.General.Mode == domain.ReleaseMode {
+		corsConfig := cors.DefaultConfig()
+		corsConfig.AllowOrigins = conf.HTTP.CorsOrigins
+		corsConfig.AllowHeaders = append(corsConfig.AllowHeaders, "Authorization")
+		corsConfig.AllowWildcard = true
+		corsConfig.AllowCredentials = true
+
+		engine.Use(cors.New(corsConfig))
+	}
 }
 
 func usePrometheus(engine *gin.Engine) {
@@ -163,7 +168,7 @@ func usePrometheus(engine *gin.Engine) {
 func useFrontend(engine *gin.Engine, conf domain.Config, version domain.BuildInfo) error {
 	staticPath := conf.HTTP.StaticPath
 	if staticPath == "" {
-		staticPath = "./dist"
+		staticPath = "./frontend/dist"
 	}
 
 	absStaticPath, errStaticPath := filepath.Abs(staticPath)
@@ -171,44 +176,7 @@ func useFrontend(engine *gin.Engine, conf domain.Config, version domain.BuildInf
 		return errors.Join(errStaticPath, domain.ErrStaticPathError)
 	}
 
-	engine.StaticFS("/dist", http.Dir(absStaticPath))
-
-	if conf.General.Mode != domain.TestMode {
-		engine.LoadHTMLFiles(filepath.Join(absStaticPath, "index.html"))
-	}
-
-	// These should findMatch  defined in the frontend. This allows us to use the browser
-	// based routing when serving the SPA.
-	jsRoutes := []string{
-		"/", "/servers", "/profile/:steam_id", "/bans", "/appeal", "/settings", "/report",
-		"/admin/server_logs", "/admin/servers", "/admin/people", "/admin/ban/steam", "/admin/ban/cidr",
-		"/admin/ban/asn", "/admin/ban/group", "/admin/reports", "/admin/news", "/admin/import", "/admin/filters",
-		"/404", "/logout", "/login/success", "/report/:report_id", "/wiki", "/wiki/*slug", "/log/:match_id",
-		"/logs/:steam_id", "/logs", "/ban/:ban_id", "/chatlogs", "/admin/appeals", "/login", "/pug", "/quickplay",
-		"/global_stats", "/stv", "/login/discord", "/notifications", "/admin/network", "/stats",
-		"/stats/weapon/:weapon_id", "/stats/player/:steam_id", "/privacy-policy", "/admin/contests",
-		"/contests", "/contests/:contest_id", "/forums", "/forums/:forum_id", "/forums/thread/:forum_thread_id",
-	}
-	for _, rt := range jsRoutes {
-		engine.GET(rt, func(ctx *gin.Context) {
-			if conf.Log.SentryDSNWeb != "" {
-				ctx.Header("Document-Policy", "js-profiling")
-			}
-
-			ctx.HTML(http.StatusOK, "index.html", jsConfig{
-				SiteName:        conf.General.SiteName,
-				DiscordClientID: conf.Discord.AppID,
-				DiscordLinkID:   conf.Discord.LinkID,
-				AssetURL:        conf.S3.ExternalURL,
-				BucketDemo:      conf.S3.BucketDemo,
-				BucketMedia:     conf.S3.BucketMedia,
-				BuildVersion:    version.BuildVersion,
-				BuildCommit:     version.Commit,
-				BuildDate:       version.Date,
-				SentryDSN:       conf.Log.SentryDSNWeb,
-			})
-		})
-	}
+	frontend.AddRoutes(engine, absStaticPath, conf)
 
 	return nil
 }

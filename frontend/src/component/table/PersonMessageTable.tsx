@@ -119,9 +119,7 @@ export const PersonMessageTable = ({ steam_id }: PersonMessageTableProps) => {
                         <PersonCell
                             steam_id={row.steam_id}
                             personaname={row.persona_name}
-                            avatar_hash={
-                                'fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb'
-                            }
+                            avatar_hash={row.avatar_hash}
                         ></PersonCell>
                     )
                 },

@@ -6,8 +6,8 @@ import {
     useState,
     JSX
 } from 'react';
-import { noop } from 'lodash-es';
 import { UserNotification } from '../api';
+import { noop } from '../util/lists.ts';
 
 export type NotificationState = {
     notifications: UserNotification[];
