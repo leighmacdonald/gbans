@@ -18,12 +18,13 @@
     ]
   ],
   "scripts": {
+    "preinstall": "npx only-allow pnpm",
     "watch": "cross-env NODE_ENV=development webpack --watch --progress",
     "serve": "cross-env NODE_ENV=development webpack serve --progress --static ../dist",
     "build": "cross-env NODE_ENV=production webpack",
     "prettier:base": "prettier --parser typescript --single-quote",
-    "prettier:check": "npm run prettier:base -- --list-different \"src/**/*.{ts,tsx}\"",
-    "prettier:fix": "npm run prettier:base -- --write \"src/**/*.{ts,tsx}\"",
+    "prettier:check": "pnpm run prettier:base -- --list-different \"src/**/*.{ts,tsx}\"",
+    "prettier:fix": "pnpm run prettier:base -- --write \"src/**/*.{ts,tsx}\"",
     "eslint:check": "eslint . --ext .ts,.tsx",
     "eslint:fix": "eslint . --ext .ts,.tsx --fix",
     "test": "jest",
@@ -136,5 +137,5 @@
       "ie 11"
     ]
   },
-  "packageManager": "yarn@4.0.2"
+  "packageManager": "pnpm@8.15.2+sha256.90bb5d6382cb2cb8b8d4959a076b3953d84d1d94121717097bcd41c71344fa14"
 }
