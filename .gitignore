@@ -60,3 +60,4 @@ frontend/.yarn/*
 !frontend/.yarn/versions
 parse_demo
 /frontend/.env.sentry-build-plugin
+/frontend/stats.html

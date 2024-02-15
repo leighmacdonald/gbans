@@ -49,6 +49,7 @@ http:
   # general.external_url.
   cors_origins:
     - "https://gbans.localhost"
+    - "http://gbans.localhost:5173"
     - "https://gbans.localhost:6006"
 
 database:

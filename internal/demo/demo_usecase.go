@@ -206,7 +206,6 @@ func (d demoUsecase) DropDemo(ctx context.Context, demoFile *domain.DemoFile) er
 	if asset, _, errAsset := d.assetUsecase.GetAsset(ctx, demoFile.AssetID); errAsset == nil {
 		// TODO assets should exist, but can be missing
 		if errRemove := d.assetUsecase.DropAsset(ctx, &asset); errRemove != nil {
-
 			d.log.Warn("Failed to remove demo asset from S3",
 				zap.Error(errRemove), zap.String("bucket", conf.S3.BucketDemo), zap.String("name", demoFile.Title))
 		}
