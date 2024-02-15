@@ -1,4 +1,4 @@
-import React from 'react';
+import { useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
     createRoutesFromChildren,
@@ -37,7 +37,7 @@ if (window.gbans.sentry_dsn_web != '') {
             new Sentry.BrowserProfilingIntegration(),
             new Sentry.BrowserTracing({
                 routingInstrumentation: Sentry.reactRouterV6Instrumentation(
-                    React.useEffect,
+                    useEffect,
                     useLocation,
                     useNavigationType,
                     createRoutesFromChildren,

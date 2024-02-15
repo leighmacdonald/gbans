@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import { ChangeEvent, useCallback, useMemo } from 'react';
 import useUrlState from '@ahooksjs/use-url-state';
 import DoNotDisturbIcon from '@mui/icons-material/DoNotDisturb';
 import FiberNewIcon from '@mui/icons-material/FiberNew';
@@ -163,7 +163,7 @@ export const AdminAppealsPage = () => {
                                 setState({ sortOrder: direction });
                             }}
                             onRowsPerPageChange={(
-                                event: React.ChangeEvent<
+                                event: ChangeEvent<
                                     HTMLInputElement | HTMLTextAreaElement
                                 >
                             ) => {

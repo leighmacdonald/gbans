@@ -1,4 +1,4 @@
-import React, { useMemo, JSX } from 'react';
+import { useMemo, JSX } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import HistoryIcon from '@mui/icons-material/History';
 import InfoIcon from '@mui/icons-material/Info';

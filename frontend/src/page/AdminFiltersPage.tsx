@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import { ChangeEvent, useCallback, useMemo, useState } from 'react';
 import useUrlState from '@ahooksjs/use-url-state';
 import NiceModal from '@ebay/nice-modal-react';
 import AddBoxIcon from '@mui/icons-material/AddBox';
@@ -113,7 +113,7 @@ export const AdminFiltersPage = () => {
                         setState({ page: newPage });
                     }}
                     onRowsPerPageChange={(
-                        event: React.ChangeEvent<
+                        event: ChangeEvent<
                             HTMLInputElement | HTMLTextAreaElement
                         >
                     ) => {

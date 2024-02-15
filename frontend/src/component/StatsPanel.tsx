@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -10,7 +10,7 @@ import { apiGetStats, DatabaseStats } from '../api';
 import { logErr } from '../util/errors';
 
 export const StatsPanel = () => {
-    const [stats, setStats] = React.useState<DatabaseStats>({
+    const [stats, setStats] = useState<DatabaseStats>({
         bans: 0,
         appeals_closed: 0,
         appeals_open: 0,

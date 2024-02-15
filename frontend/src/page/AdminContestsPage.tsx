@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import DeleteIcon from '@mui/icons-material/Delete';

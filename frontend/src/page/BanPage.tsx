@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState, JSX } from 'react';
+import { useCallback, useMemo, useState, JSX } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import NiceModal from '@ebay/nice-modal-react';
 import AddModeratorIcon from '@mui/icons-material/AddModerator';

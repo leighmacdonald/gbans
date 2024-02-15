@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import { SyntheticEvent, useCallback, useState } from 'react';
 import PublishedWithChangesIcon from '@mui/icons-material/PublishedWithChanges';
 import SaveIcon from '@mui/icons-material/Save';
 import UnpublishedIcon from '@mui/icons-material/Unpublished';
@@ -20,9 +20,9 @@ import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { logErr } from '../util/errors';
 
 export const AdminNewsPage = () => {
-    const [setTabValue, setTabSetTabValue] = React.useState(0);
+    const [setTabValue, setTabSetTabValue] = useState(0);
     const { sendFlash } = useUserFlashCtx();
-    const handleChange = (_: React.SyntheticEvent, newValue: number) => {
+    const handleChange = (_: SyntheticEvent, newValue: number) => {
         setTabSetTabValue(newValue);
     };
     const [selectedNewsEntry, setSelectedNewsEntry] = useState<NewsEntry>({

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"io"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,8 +12,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/demoparser"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v3/steamid"
+	"go.uber.org/zap"
 )
 
 type demoUsecase struct {
@@ -23,12 +22,14 @@ type demoUsecase struct {
 	configUsecase  domain.ConfigUsecase
 	serversUsecase domain.ServersUsecase
 	bucket         string
+	log            *zap.Logger
 }
 
-func NewDemoUsecase(bucket string, demoRepository domain.DemoRepository, assetUsecase domain.AssetUsecase,
+func NewDemoUsecase(log *zap.Logger, bucket string, demoRepository domain.DemoRepository, assetUsecase domain.AssetUsecase,
 	configUsecase domain.ConfigUsecase, serversUsecase domain.ServersUsecase,
 ) domain.DemoUsecase {
 	return &demoUsecase{
+		log:            log.Named("demo"),
 		bucket:         bucket,
 		repository:     demoRepository,
 		assetUsecase:   assetUsecase,
@@ -38,7 +39,7 @@ func NewDemoUsecase(bucket string, demoRepository domain.DemoRepository, assetUs
 }
 
 func (d demoUsecase) Start(ctx context.Context) {
-	logger := slog.Default().WithGroup("demoCleaner")
+	log := d.log.Named("demoCleaner")
 	ticker := time.NewTicker(time.Hour)
 	triggerChan := make(chan any)
 
@@ -57,7 +58,7 @@ func (d demoUsecase) Start(ctx context.Context) {
 				continue
 			}
 
-			logger.Debug("Starting demo cleanup")
+			log.Debug("Starting demo cleanup")
 
 			expired, errExpired := d.repository.ExpiredDemos(ctx, conf.General.DemoCountLimit)
 			if errExpired != nil {
@@ -65,7 +66,7 @@ func (d demoUsecase) Start(ctx context.Context) {
 					continue
 				}
 
-				logger.Error("Failed to fetch expired demos", log.ErrAttr(errExpired))
+				log.Error("Failed to fetch expired demos", zap.Error(errExpired))
 			}
 
 			if len(expired) == 0 {
@@ -76,8 +77,8 @@ func (d demoUsecase) Start(ctx context.Context) {
 
 			for _, demo := range expired {
 				if errDrop := d.DropDemo(ctx, &domain.DemoFile{DemoID: demo.DemoID, Title: demo.Title}); errDrop != nil {
-					logger.Error("Failed to remove demo", log.ErrAttr(errDrop),
-						slog.String("bucket", conf.S3.BucketDemo), slog.String("name", demo.Title))
+					log.Error("Failed to remove demo", zap.Error(errDrop),
+						zap.String("bucket", conf.S3.BucketDemo), zap.String("name", demo.Title))
 
 					continue
 				}
@@ -85,9 +86,9 @@ func (d demoUsecase) Start(ctx context.Context) {
 				count++
 			}
 
-			logger.Info("Old demos flushed", slog.Int("count", count))
+			log.Info("Old demos flushed", zap.Int("count", count))
 		case <-ctx.Done():
-			logger.Debug("demoCleaner shutting down")
+			log.Debug("demoCleaner shutting down")
 
 			return
 		}
@@ -128,7 +129,7 @@ func (d demoUsecase) Create(ctx context.Context, name string, content io.Reader,
 
 	defer func() {
 		if err := os.RemoveAll(dir); err != nil {
-			slog.Error("Failed to cleanup temp demo path", log.ErrAttr(err))
+			d.log.Error("Failed to cleanup temp demo path", zap.Error(err))
 		}
 	}()
 
@@ -202,24 +203,21 @@ func (d demoUsecase) Create(ctx context.Context, name string, content io.Reader,
 func (d demoUsecase) DropDemo(ctx context.Context, demoFile *domain.DemoFile) error {
 	conf := d.configUsecase.Config()
 
-	asset, _, errAsset := d.assetUsecase.GetAsset(ctx, demoFile.AssetID)
-	if errAsset != nil {
-		return errAsset
+	if asset, _, errAsset := d.assetUsecase.GetAsset(ctx, demoFile.AssetID); errAsset == nil {
+		// TODO assets should exist, but can be missing
+		if errRemove := d.assetUsecase.DropAsset(ctx, &asset); errRemove != nil {
+
+			d.log.Warn("Failed to remove demo asset from S3",
+				zap.Error(errRemove), zap.String("bucket", conf.S3.BucketDemo), zap.String("name", demoFile.Title))
+		}
+
+		if err := d.repository.DropDemo(ctx, demoFile); err != nil {
+			return err
+		}
 	}
 
-	if errRemove := d.assetUsecase.DropAsset(ctx, &asset); errRemove != nil {
-		slog.Error("Failed to remove demo asset from S3",
-			log.ErrAttr(errRemove), slog.String("bucket", conf.S3.BucketDemo), slog.String("name", demoFile.Title))
-
-		return errRemove
-	}
-
-	if err := d.repository.DropDemo(ctx, demoFile); err != nil {
-		return err
-	}
-
-	slog.Info("Demo expired and removed",
-		slog.String("bucket", conf.S3.BucketDemo), slog.String("name", demoFile.Title))
+	d.log.Debug("Demo expired and removed",
+		zap.String("bucket", conf.S3.BucketDemo), zap.String("name", demoFile.Title))
 
 	return nil
 }

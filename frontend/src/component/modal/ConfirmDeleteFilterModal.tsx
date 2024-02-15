@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import Stack from '@mui/material/Stack';
 import { apiDeleteFilter, Filter } from '../../api/filters';

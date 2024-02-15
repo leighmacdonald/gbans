@@ -1,4 +1,4 @@
-import React from 'react';
+import { MouseEvent, ChangeEvent } from 'react';
 import { TablePagination } from '@mui/material';
 import { RowsPerPage } from './LazyTable';
 
@@ -8,10 +8,10 @@ interface LazyTablePaginatorProps {
     total: number;
     rowsPerPage: RowsPerPage;
     onRowsPerPageChange: (
-        event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+        event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
     ) => void;
     onPageChange: (
-        event: React.MouseEvent<HTMLButtonElement> | null,
+        event: MouseEvent<HTMLButtonElement> | null,
         page: number
     ) => void;
 }

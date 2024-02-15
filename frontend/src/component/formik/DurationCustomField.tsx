@@ -1,4 +1,3 @@
-import React from 'react';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import { useFormikContext } from 'formik';
 import * as yup from 'yup';

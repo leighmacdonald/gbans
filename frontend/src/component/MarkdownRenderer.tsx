@@ -1,4 +1,4 @@
-import React, { JSX } from 'react';
+import { JSX } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { PaletteMode } from '@mui/material';
 import Box from '@mui/material/Box';

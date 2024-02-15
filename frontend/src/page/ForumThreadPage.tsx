@@ -1,4 +1,4 @@
-import React, { JSX, useCallback, useMemo, useState } from 'react';
+import { JSX, useCallback, useMemo, useState } from 'react';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import useUrlState from '@ahooksjs/use-url-state';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';

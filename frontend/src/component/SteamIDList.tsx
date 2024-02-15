@@ -1,4 +1,3 @@
-import React from 'react';
 import FingerprintIcon from '@mui/icons-material/Fingerprint';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';

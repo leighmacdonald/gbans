@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import { ChangeEvent, MouseEvent, useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useUrlState from '@ahooksjs/use-url-state';
 import ChatIcon from '@mui/icons-material/Chat';
@@ -231,7 +231,7 @@ export const ChatLogPage = () => {
                                 setState({ sortOrder: direction });
                             }}
                             onRowsPerPageChange={(
-                                event: React.ChangeEvent<
+                                event: ChangeEvent<
                                     HTMLInputElement | HTMLTextAreaElement
                                 >
                             ) => {
@@ -367,9 +367,9 @@ const ChatContextMenu = ({
 }: ChatContextMenuProps) => {
     const navigate = useNavigate();
 
-    const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
-    const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    const handleClick = (event: MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
     };
     const handleClose = () => {

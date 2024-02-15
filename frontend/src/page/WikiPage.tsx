@@ -1,4 +1,4 @@
-import React, { JSX, useCallback, useMemo, useState } from 'react';
+import { JSX, useCallback, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 import ArticleIcon from '@mui/icons-material/Article';
 import BuildIcon from '@mui/icons-material/Build';
@@ -46,7 +46,7 @@ const validationSchema = yup.object({
 });
 
 const WikiPage = (): JSX.Element => {
-    const [editMode, setEditMode] = React.useState<boolean>(false);
+    const [editMode, setEditMode] = useState<boolean>(false);
     const { slug } = useParams();
     const { currentUser } = useCurrentUserCtx();
     const [updatedPage, setUpdatedPage] = useState<Page>();

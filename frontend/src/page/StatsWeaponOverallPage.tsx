@@ -1,4 +1,4 @@
-import React, { JSX, useState } from 'react';
+import { ChangeEvent, JSX, useState } from 'react';
 import { useParams } from 'react-router';
 import InsightsIcon from '@mui/icons-material/Insights';
 import Grid from '@mui/material/Unstable_Grid2';
@@ -55,7 +55,7 @@ const WeaponStatsContainer = ({ weapon_id }: WeaponStatsContainerProps) => {
                         setPage(newPage);
                     }}
                     onRowsPerPageChange={(
-                        event: React.ChangeEvent<
+                        event: ChangeEvent<
                             HTMLInputElement | HTMLTextAreaElement
                         >
                     ) => {

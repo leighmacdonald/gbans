@@ -1,4 +1,4 @@
-import React from 'react';
+import { ReactNode } from 'react';
 import { useModal } from '@ebay/nice-modal-react';
 import CheckIcon from '@mui/icons-material/Check';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -36,7 +36,7 @@ export const SubmitButton = ({
 }: onClickProps & {
     disabled?: boolean;
     label?: string;
-    startIcon?: React.ReactNode;
+    startIcon?: ReactNode;
 }) => {
     const { submitForm } = useFormikContext();
     return (

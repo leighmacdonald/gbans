@@ -1,4 +1,3 @@
-import React from 'react';
 import { LoadingButton } from '@mui/lab';
 import { useTheme } from '@mui/material/styles';
 import { LoadingIcon } from './LoadingIcon';

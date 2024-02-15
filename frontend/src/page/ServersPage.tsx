@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useTimer } from 'react-timer-hook';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';

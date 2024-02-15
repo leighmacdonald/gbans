@@ -1,4 +1,4 @@
-import React, { JSX, useCallback, useMemo } from 'react';
+import { ChangeEvent, JSX, useCallback, useMemo } from 'react';
 import useUrlState from '@ahooksjs/use-url-state';
 import NiceModal from '@ebay/nice-modal-react';
 import FilterListIcon from '@mui/icons-material/FilterList';
@@ -158,7 +158,7 @@ export const AdminPeoplePage = (): JSX.Element => {
                             setState({ sortOrder: direction });
                         }}
                         onRowsPerPageChange={(
-                            event: React.ChangeEvent<
+                            event: ChangeEvent<
                                 HTMLInputElement | HTMLTextAreaElement
                             >
                         ) => {

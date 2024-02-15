@@ -1,4 +1,3 @@
-import React from 'react';
 import { DatePicker } from '@mui/x-date-pickers';
 import { useFormikContext } from 'formik';
 import { BaseFormikInputProps } from './SteamIdField';

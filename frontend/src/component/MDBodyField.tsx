@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback, SyntheticEvent } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import EditIcon from '@mui/icons-material/Edit';
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
@@ -44,7 +44,7 @@ export const MDBodyField = <T,>({
     const { sendFlash } = useUserFlashCtx();
     const extraButtons = false;
 
-    const handleTabChange = (_: React.SyntheticEvent, newValue: number) =>
+    const handleTabChange = (_: SyntheticEvent, newValue: number) =>
         setTabSetTabValue(newValue);
 
     const onFileSave = useCallback(

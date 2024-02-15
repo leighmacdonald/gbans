@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { ChangeEvent, useCallback } from 'react';
 import useUrlState from '@ahooksjs/use-url-state';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import ReportIcon from '@mui/icons-material/Report';
@@ -142,7 +142,7 @@ export const AdminReportsPage = () => {
                                 setState({ page: newPage });
                             }}
                             onRowsPerPageChange={(
-                                event: React.ChangeEvent<
+                                event: ChangeEvent<
                                     HTMLInputElement | HTMLTextAreaElement
                                 >
                             ) => {

@@ -1,4 +1,4 @@
-import React, { JSX } from 'react';
+import { JSX } from 'react';
 import Stack from '@mui/material/Stack';
 import { HealersOverallContainer } from '../component/HealersOverallContainer';
 import { MapUsageContainer } from '../component/MapUsageContainer';

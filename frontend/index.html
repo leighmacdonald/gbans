@@ -46,9 +46,11 @@
             rel="stylesheet"
             href="https://fonts.googleapis.com/icon?family=Material+Icons"
         />
-        <title>{{ .SiteName }}</title>
+        <title><%= title %></title>
         <script>
-            window.gbans = {{ . }}
+            window.gbans = {
+                build_version: "<%= build_version %>"
+            }
         </script>
         <style>
             body {

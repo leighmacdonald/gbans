@@ -1,4 +1,4 @@
-import React, { JSX } from 'react';
+import { ChangeEvent, JSX } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import useUrlState from '@ahooksjs/use-url-state';
 import CheckIcon from '@mui/icons-material/Check';
@@ -63,7 +63,7 @@ const MatchSummaryTable = ({ steam_id }: MatchSummaryTableProps) => {
                     showLastButton
                     rowsPerPage={Number(state.rows ?? RowsPerPage.Ten)}
                     onRowsPerPageChange={(
-                        event: React.ChangeEvent<
+                        event: ChangeEvent<
                             HTMLInputElement | HTMLTextAreaElement
                         >
                     ) => {

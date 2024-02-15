@@ -1,4 +1,3 @@
-import React from 'react';
 import CheckIcon from '@mui/icons-material/Check';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import { VCenterBox } from '../VCenterBox';

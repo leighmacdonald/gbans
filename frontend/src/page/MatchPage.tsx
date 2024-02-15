@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, MouseEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -70,9 +70,9 @@ const ClassStatRow = ({ name, value }: ClassStatRowProp) => {
 };
 
 const PlayerClassHoverStats = ({ stats }: PlayerClassHoverStatsProps) => {
-    const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
+    const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 
-    const handlePopoverOpen = (event: React.MouseEvent<HTMLElement>) => {
+    const handlePopoverOpen = (event: MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
     };
 
@@ -231,9 +231,9 @@ interface PlayerWeaponHoverStatsProps {
 }
 
 const PlayerWeaponHoverStats = ({ stats }: PlayerWeaponHoverStatsProps) => {
-    const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
+    const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 
-    const handlePopoverOpen = (event: React.MouseEvent<HTMLElement>) => {
+    const handlePopoverOpen = (event: MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
     };
 
@@ -347,7 +347,7 @@ const red = '#a7584b';
 export const MatchPage = () => {
     const navigate = useNavigate();
     const [match, setMatch] = useState<MatchResult>();
-    const [loading, setLoading] = React.useState<boolean>(true);
+    const [loading, setLoading] = useState<boolean>(true);
     const { match_id } = useParams<string>();
     const theme = useTheme();
     const { sendFlash } = useUserFlashCtx();
