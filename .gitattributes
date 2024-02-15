@@ -3,3 +3,4 @@
 /frontend/.yarn/plugins/** binary
 *.dem binary
 *.png binary
+*.gif binary
