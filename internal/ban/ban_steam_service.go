@@ -3,8 +3,8 @@ package ban
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -13,23 +13,22 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"go.uber.org/zap"
 )
 
 type nanHandler struct {
-	du  domain.DiscordUsecase
-	bu  domain.BanSteamUsecase
-	pu  domain.PersonUsecase
-	cu  domain.ConfigUsecase
-	log *zap.Logger
+	du domain.DiscordUsecase
+	bu domain.BanSteamUsecase
+	pu domain.PersonUsecase
+	cu domain.ConfigUsecase
 }
 
-func NewBanHandler(logger *zap.Logger, engine *gin.Engine, bu domain.BanSteamUsecase, du domain.DiscordUsecase,
+func NewBanHandler(engine *gin.Engine, bu domain.BanSteamUsecase, du domain.DiscordUsecase,
 	pu domain.PersonUsecase, cu domain.ConfigUsecase, ath domain.AuthUsecase,
 ) {
-	handler := nanHandler{log: logger, bu: bu, du: du, pu: pu, cu: cu}
+	handler := nanHandler{bu: bu, du: du, pu: pu, cu: cu}
 
 	engine.GET("/api/stats", handler.onAPIGetStats())
 	engine.GET("/export/bans/tf2bd", handler.onAPIExportBansTF2BD())
@@ -61,8 +60,6 @@ func (h nanHandler) onAPIPostSetBanAppealStatus() gin.HandlerFunc {
 		AppealState domain.AppealState `json:"appeal_state"`
 	}
 
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
 	return func(ctx *gin.Context) {
 		banID, banIDErr := httphelper.GetInt64Param(ctx, "ban_id")
 		if banIDErr != nil {
@@ -72,7 +69,7 @@ func (h nanHandler) onAPIPostSetBanAppealStatus() gin.HandlerFunc {
 		}
 
 		var req setStatusReq
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -100,10 +97,10 @@ func (h nanHandler) onAPIPostSetBanAppealStatus() gin.HandlerFunc {
 
 		ctx.JSON(http.StatusAccepted, gin.H{})
 
-		log.Info("Updated ban appeal state",
-			zap.Int64("ban_id", banID),
-			zap.Int("from_state", int(original)),
-			zap.Int("to_state", int(req.AppealState)))
+		slog.Info("Updated ban appeal state",
+			slog.Int64("ban_id", banID),
+			slog.Int("from_state", int(original)),
+			slog.Int("to_state", int(req.AppealState)))
 	}
 }
 
@@ -123,11 +120,9 @@ type apiBanRequest struct {
 }
 
 func (h nanHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
 	return func(ctx *gin.Context) {
 		var req apiBanRequest
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -183,8 +178,8 @@ func (h nanHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 		}
 
 		if errBan := h.bu.Ban(ctx, author, &banSteam); errBan != nil {
-			log.Error("Failed to ban steam profile",
-				zap.Error(errBan), zap.Int64("target_id", banSteam.TargetID.Int64()))
+			slog.Error("Failed to ban steam profile",
+				log.ErrAttr(errBan), slog.Int64("target_id", banSteam.TargetID.Int64()))
 
 			if errors.Is(errBan, domain.ErrDuplicate) {
 				httphelper.ResponseErr(ctx, http.StatusConflict, domain.ErrDuplicate)
@@ -193,7 +188,7 @@ func (h nanHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 			}
 
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			log.Error("Failed to save new steam ban", zap.Error(errBan))
+			slog.Error("Failed to save new steam ban", log.ErrAttr(errBan))
 
 			return
 		}
@@ -203,8 +198,6 @@ func (h nanHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 }
 
 func (h nanHandler) onAPIGetBanByID() gin.HandlerFunc {
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
 	return func(ctx *gin.Context) {
 		curUser := httphelper.CurrentUserProfile(ctx)
 
@@ -221,7 +214,7 @@ func (h nanHandler) onAPIGetBanByID() gin.HandlerFunc {
 		if fullOk {
 			deleted, deletedOkErr := strconv.ParseBool(fullValue)
 			if deletedOkErr != nil {
-				log.Error("Failed to parse ban full query value", zap.Error(deletedOkErr))
+				slog.Error("Failed to parse ban full query value", log.ErrAttr(deletedOkErr))
 			} else {
 				deletedOk = deleted
 			}
@@ -362,18 +355,16 @@ func (h nanHandler) onAPIExportBansTF2BD() gin.HandlerFunc {
 }
 
 func (h nanHandler) onAPIGetBansSteam() gin.HandlerFunc {
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
 	return func(ctx *gin.Context) {
 		var req domain.SteamBansQueryFilter
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
 		bans, count, errBans := h.bu.Get(ctx, req)
 		if errBans != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			log.Error("Failed to fetch steam bans", zap.Error(errBans))
+			slog.Error("Failed to fetch steam bans", log.ErrAttr(errBans))
 
 			return
 		}
@@ -383,8 +374,6 @@ func (h nanHandler) onAPIGetBansSteam() gin.HandlerFunc {
 }
 
 func (h nanHandler) onAPIPostBanDelete() gin.HandlerFunc {
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
 	return func(ctx *gin.Context) {
 		banID, banIDErr := httphelper.GetInt64Param(ctx, "ban_id")
 		if banIDErr != nil {
@@ -394,7 +383,7 @@ func (h nanHandler) onAPIPostBanDelete() gin.HandlerFunc {
 		}
 
 		var req domain.UnbanRequest
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -423,8 +412,6 @@ func (h nanHandler) onAPIPostBanDelete() gin.HandlerFunc {
 }
 
 func (h nanHandler) onAPIPostBanUpdate() gin.HandlerFunc {
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
 	type updateBanRequest struct {
 		TargetID       domain.StringSID `json:"target_id"`
 		BanType        domain.BanType   `json:"ban_type"`
@@ -444,7 +431,7 @@ func (h nanHandler) onAPIPostBanUpdate() gin.HandlerFunc {
 		}
 
 		var req updateBanRequest
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -481,7 +468,7 @@ func (h nanHandler) onAPIPostBanUpdate() gin.HandlerFunc {
 
 		if errSave := h.bu.Save(ctx, &bannedPerson.BanSteam); errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			log.Error("Failed to save updated ban", zap.Error(errSave))
+			slog.Error("Failed to save updated ban", log.ErrAttr(errSave))
 
 			return
 		}

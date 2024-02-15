@@ -6,7 +6,6 @@ import (
 
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"go.uber.org/zap"
 )
 
 type NetworkUsecase interface {
@@ -15,7 +14,7 @@ type NetworkUsecase interface {
 	GetASNRecordsByNum(ctx context.Context, asNum int64) (ip2location.ASNRecords, error)
 	GetLocationRecord(ctx context.Context, ipAddr net.IP, record *ip2location.LocationRecord) error
 	GetProxyRecord(ctx context.Context, ipAddr net.IP, proxyRecord *ip2location.ProxyRecord) error
-	InsertBlockListData(ctx context.Context, log *zap.Logger, blockListData *ip2location.BlockListData) error
+	InsertBlockListData(ctx context.Context, blockListData *ip2location.BlockListData) error
 	GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, limit uint64) (PersonConnections, error)
 	GetPlayerMostRecentIP(ctx context.Context, steamID steamid.SID64) net.IP
 	QueryConnectionHistory(ctx context.Context, opts ConnectionHistoryQueryFilter) ([]PersonConnection, int64, error)
@@ -34,7 +33,7 @@ type NetworkRepository interface {
 	GetASNRecordByIP(ctx context.Context, ipAddr net.IP, asnRecord *ip2location.ASNRecord) error
 	GetLocationRecord(ctx context.Context, ipAddr net.IP, record *ip2location.LocationRecord) error
 	GetProxyRecord(ctx context.Context, ipAddr net.IP, proxyRecord *ip2location.ProxyRecord) error
-	InsertBlockListData(ctx context.Context, log *zap.Logger, blockListData *ip2location.BlockListData) error
+	InsertBlockListData(ctx context.Context, blockListData *ip2location.BlockListData) error
 	GetSteamIDsAtIP(ctx context.Context, ipNet *net.IPNet) (steamid.Collection, error)
 }
 type CIDRBlockSource struct {

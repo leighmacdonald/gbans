@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"runtime"
@@ -15,9 +16,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"go.uber.org/zap"
 )
 
 const ctxKeyUserProfile = "user_profile"
@@ -28,10 +29,9 @@ type authUsecase struct {
 	personUsecase  domain.PersonUsecase
 	banUsecase     domain.BanSteamUsecase
 	serverUsecase  domain.ServersUsecase
-	log            *zap.Logger
 }
 
-func NewAuthUsecase(log *zap.Logger, authRepository domain.AuthRepository, configUsecase domain.ConfigUsecase, personUsecase domain.PersonUsecase,
+func NewAuthUsecase(authRepository domain.AuthRepository, configUsecase domain.ConfigUsecase, personUsecase domain.PersonUsecase,
 	banUsecase domain.BanSteamUsecase, serversUsecase domain.ServersUsecase,
 ) domain.AuthUsecase {
 	return &authUsecase{
@@ -40,13 +40,12 @@ func NewAuthUsecase(log *zap.Logger, authRepository domain.AuthRepository, confi
 		personUsecase:  personUsecase,
 		banUsecase:     banUsecase,
 		serverUsecase:  serversUsecase,
-		log:            log.Named("auth"),
 	}
 }
 
 func (u *authUsecase) Start(ctx context.Context) {
 	var (
-		log    = u.log.Named("cleanupTasks")
+		logger = slog.Default().WithGroup("cleanupTasks")
 		ticker = time.NewTicker(time.Hour * 24)
 	)
 
@@ -54,10 +53,10 @@ func (u *authUsecase) Start(ctx context.Context) {
 		select {
 		case <-ticker.C:
 			if err := u.authRepository.PrunePersonAuth(ctx); err != nil && !errors.Is(err, domain.ErrNoResult) {
-				log.Error("Error pruning expired refresh tokens", zap.Error(err))
+				logger.Error("Error pruning expired refresh tokens", log.ErrAttr(err))
 			}
 		case <-ctx.Done():
-			log.Debug("cleanupTasks shutting down")
+			logger.Debug("cleanupTasks shutting down")
 
 			return
 		}
@@ -116,7 +115,7 @@ func (u *authUsecase) MakeTokens(ctx *gin.Context, cookieKey string, sid steamid
 }
 
 func (u *authUsecase) AuthMiddleware(level domain.Privilege) gin.HandlerFunc {
-	log := u.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+	logger := slog.Default().WithGroup(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	cookieKey := u.configUsecase.Config().HTTP.CookieKey
 
@@ -138,7 +137,7 @@ func (u *authUsecase) AuthMiddleware(level domain.Privilege) gin.HandlerFunc {
 						return
 					}
 
-					log.Error("Failed to load sid from access token", zap.Error(errFromToken))
+					logger.Error("Failed to load sid from access token", log.ErrAttr(errFromToken))
 					ctx.AbortWithStatus(http.StatusForbidden)
 
 					return
@@ -146,7 +145,7 @@ func (u *authUsecase) AuthMiddleware(level domain.Privilege) gin.HandlerFunc {
 
 				loggedInPerson, errGetPerson := u.personUsecase.GetOrCreatePersonBySteamID(ctx, sid)
 				if errGetPerson != nil {
-					log.Error("Failed to load person during auth", zap.Error(errGetPerson))
+					logger.Error("Failed to load person during auth", log.ErrAttr(errGetPerson))
 					ctx.AbortWithStatus(http.StatusForbidden)
 
 					return
@@ -161,7 +160,7 @@ func (u *authUsecase) AuthMiddleware(level domain.Privilege) gin.HandlerFunc {
 				bannedPerson, errBan := u.banUsecase.GetBySteamID(ctx, sid, false)
 				if errBan != nil {
 					if !errors.Is(errBan, domain.ErrNoResult) {
-						log.Error("Failed to fetch authed user ban", zap.Error(errBan))
+						logger.Error("Failed to fetch authed user ban", log.ErrAttr(errBan))
 					}
 				}
 
@@ -204,7 +203,7 @@ func (u *authUsecase) MakeGetTokenKey(cookieKey string) func(_ *jwt.Token) (any,
 }
 
 func (u *authUsecase) AuthServerMiddleWare() gin.HandlerFunc {
-	log := u.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+	logger := slog.Default().WithGroup(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	cookieKey := u.configUsecase.Config().HTTP.CookieKey
 
@@ -232,7 +231,7 @@ func (u *authUsecase) AuthServerMiddleWare() gin.HandlerFunc {
 		parsedToken, errParseClaims := jwt.ParseWithClaims(reqAuthHeader, claims, u.MakeGetTokenKey(cookieKey))
 		if errParseClaims != nil {
 			if errors.Is(errParseClaims, jwt.ErrSignatureInvalid) {
-				log.Error("jwt signature invalid!", zap.Error(errParseClaims))
+				logger.Error("jwt signature invalid!", log.ErrAttr(errParseClaims))
 				ctx.AbortWithStatus(http.StatusUnauthorized)
 
 				return
@@ -245,21 +244,21 @@ func (u *authUsecase) AuthServerMiddleWare() gin.HandlerFunc {
 
 		if !parsedToken.Valid {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
-			log.Error("Invalid jwt token parsed")
+			logger.Error("Invalid jwt token parsed")
 
 			return
 		}
 
 		if claims.ServerID <= 0 {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
-			log.Error("Invalid jwt claim server")
+			logger.Error("Invalid jwt claim server")
 
 			return
 		}
 
 		server, errGetServer := u.serverUsecase.GetServer(ctx, claims.ServerID)
 		if errGetServer != nil {
-			log.Error("Failed to load server during auth", zap.Error(errGetServer))
+			logger.Error("Failed to load server during auth", log.ErrAttr(errGetServer))
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 
 			return

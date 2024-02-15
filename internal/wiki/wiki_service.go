@@ -2,24 +2,18 @@ package wiki
 
 import (
 	"net/http"
-	"runtime"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"go.uber.org/zap"
 )
 
 type wikiHandler struct {
 	wikiUsecase domain.WikiUsecase
-	log         *zap.Logger
 }
 
-func NewWIkiHandler(logger *zap.Logger, engine *gin.Engine, wikiUsecase domain.WikiUsecase, ath domain.AuthUsecase) {
-	handler := &wikiHandler{
-		wikiUsecase: wikiUsecase,
-		log:         logger.Named("wiki"),
-	}
+func NewWIkiHandler(engine *gin.Engine, wikiUsecase domain.WikiUsecase, ath domain.AuthUsecase) {
+	handler := &wikiHandler{wikiUsecase: wikiUsecase}
 
 	// optional
 	optGrp := engine.Group("/")
@@ -50,11 +44,9 @@ func (w *wikiHandler) onAPIGetWikiSlug() gin.HandlerFunc {
 }
 
 func (w *wikiHandler) onAPISaveWikiSlug() gin.HandlerFunc {
-	log := w.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
 	return func(ctx *gin.Context) {
 		var req domain.WikiPage
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 

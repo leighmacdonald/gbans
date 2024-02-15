@@ -3,14 +3,15 @@ package ban
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"go.uber.org/zap"
 )
 
 type banSteamUsecase struct {
@@ -20,16 +21,15 @@ type banSteamUsecase struct {
 	discordUsecase domain.DiscordUsecase
 	stateUsecase   domain.StateUsecase
 	reportUsecase  domain.ReportUsecase
-	log            *zap.Logger
 	friends        *SteamFriends
 }
 
-func NewBanSteamUsecase(log *zap.Logger, repository domain.BanSteamRepository, personUsecase domain.PersonUsecase,
+func NewBanSteamUsecase(repository domain.BanSteamRepository, personUsecase domain.PersonUsecase,
 	configUsecase domain.ConfigUsecase, discordUsecase domain.DiscordUsecase, groupUsecase domain.BanGroupUsecase,
 	reportUsecase domain.ReportUsecase, stateUsecase domain.StateUsecase,
 ) domain.BanSteamUsecase {
-	bu := &banSteamUsecase{log: log, banRepo: repository, personUsecase: personUsecase, configUsecase: configUsecase, discordUsecase: discordUsecase, reportUsecase: reportUsecase, stateUsecase: stateUsecase}
-	friendTracker := NewSteamFriends(log, bu, groupUsecase)
+	bu := &banSteamUsecase{banRepo: repository, personUsecase: personUsecase, configUsecase: configUsecase, discordUsecase: discordUsecase, reportUsecase: reportUsecase, stateUsecase: stateUsecase}
+	friendTracker := NewSteamFriends(bu, groupUsecase)
 
 	bu.friends = friendTracker
 
@@ -110,15 +110,15 @@ func (s *banSteamUsecase) Ban(ctx context.Context, curUser domain.PersonInfo, ba
 	// TODO mute player currently in-game w/o kicking
 	if banSteam.BanType == domain.Banned {
 		if errKick := s.stateUsecase.Kick(ctx, banSteam.TargetID, banSteam.Reason); errKick != nil && !errors.Is(errKick, domain.ErrPlayerNotFound) {
-			s.log.Error("Failed to kick player", zap.Error(errKick),
-				zap.Int64("sid64", banSteam.TargetID.Int64()))
+			slog.Error("Failed to kick player", log.ErrAttr(errKick),
+				slog.Int64("sid64", banSteam.TargetID.Int64()))
 		}
 
 		s.discordUsecase.SendPayload(domain.ChannelModLog, discord.KickPlayerEmbed(target))
 	} else if banSteam.BanType == domain.NoComm {
 		if errSilence := s.stateUsecase.Silence(ctx, banSteam.TargetID, banSteam.Reason); errSilence != nil && !errors.Is(errSilence, domain.ErrPlayerNotFound) {
-			s.log.Error("Failed to silence player", zap.Error(errSilence),
-				zap.Int64("sid64", banSteam.TargetID.Int64()))
+			slog.Error("Failed to silence player", log.ErrAttr(errSilence),
+				slog.Int64("sid64", banSteam.TargetID.Int64()))
 		}
 
 		s.discordUsecase.SendPayload(domain.ChannelModLog, discord.SilenceEmbed(target))
@@ -155,7 +155,7 @@ func (s *banSteamUsecase) Unban(ctx context.Context, targetSID steamid.SID64, re
 
 	s.discordUsecase.SendPayload(domain.ChannelModLog, discord.UnbanMessage(person))
 
-	// env.Log().Info("Player unbanned", zap.Int64("sid64", targetSID.Int64()), zap.String("reason", reason))
+	// env.Log().Info("Player unbanned", slog.Int64("sid64", targetSID.Int64()), slog.String("reason", reason))
 
 	return true, nil
 }
@@ -196,7 +196,7 @@ func (s *banSteamUsecase) IsOnIPWithBan(ctx context.Context, curUser domain.Pers
 	existing.BanSteam.ValidUntil = time.Now().Add(duration)
 
 	if errSave := s.Save(ctx, &existing.BanSteam); errSave != nil {
-		s.log.Error("Could not update previous ban.", zap.Error(errSave))
+		slog.Error("Could not update previous ban.", log.ErrAttr(errSave))
 
 		return false, errSave
 	}
@@ -207,13 +207,13 @@ func (s *banSteamUsecase) IsOnIPWithBan(ctx context.Context, curUser domain.Pers
 		domain.StringSID(steamID.String()), duration, domain.Evading, domain.Evading.String(),
 		"Connecting from same IP as banned player", domain.System,
 		0, domain.Banned, false, &newBan); errNewBan != nil {
-		s.log.Error("Could not create evade ban", zap.Error(errDuration))
+		slog.Error("Could not create evade ban", log.ErrAttr(errDuration))
 
 		return false, errNewBan
 	}
 
 	if errSave := s.Ban(ctx, curUser, &newBan); errSave != nil {
-		s.log.Error("Could not save evade ban", zap.Error(errSave))
+		slog.Error("Could not save evade ban", log.ErrAttr(errSave))
 
 		return false, errSave
 	}

@@ -4,15 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"sync"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/state"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"go.uber.org/zap"
 )
 
 type chatUsecase struct {
@@ -21,7 +22,6 @@ type chatUsecase struct {
 	bu           domain.BanSteamUsecase
 	pu           domain.PersonUsecase
 	du           domain.DiscordUsecase
-	log          *zap.Logger
 	st           domain.StateUsecase
 	warningMu    *sync.RWMutex
 	dry          bool
@@ -35,7 +35,7 @@ type chatUsecase struct {
 	pingDiscord bool
 }
 
-func NewChatUsecase(log *zap.Logger, configUsecase domain.ConfigUsecase, chatRepository domain.ChatRepository,
+func NewChatUsecase(configUsecase domain.ConfigUsecase, chatRepository domain.ChatRepository,
 	filterUsecase domain.WordFilterUsecase, stateUsecase domain.StateUsecase, banUsecase domain.BanSteamUsecase,
 	personUsecase domain.PersonUsecase, discordUsecase domain.DiscordUsecase,
 ) domain.ChatUsecase {
@@ -44,7 +44,6 @@ func NewChatUsecase(log *zap.Logger, configUsecase domain.ConfigUsecase, chatRep
 	return &chatUsecase{
 		cr:           chatRepository,
 		wfu:          filterUsecase,
-		log:          log,
 		bu:           banUsecase,
 		pu:           personUsecase,
 		du:           discordUsecase,
@@ -114,7 +113,7 @@ func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.Ne
 
 	newWarning.MatchedFilter.TriggerCount++
 	if errSave := u.wfu.SaveFilter(ctx, admin, newWarning.MatchedFilter); errSave != nil {
-		u.log.Error("Failed to update filter trigger count", zap.Error(errSave))
+		slog.Error("Failed to update filter trigger count", log.ErrAttr(errSave))
 	}
 
 	if !u.pingDiscord {
@@ -138,7 +137,7 @@ func (u chatUsecase) onWarningHandler(ctx context.Context, newWarning domain.New
 	}
 
 	if errSave := u.wfu.SaveFilter(ctx, admin, newWarning.MatchedFilter); errSave != nil {
-		u.log.Error("Failed to update filter trigger count", zap.Error(errSave))
+		slog.Error("Failed to update filter trigger count", log.ErrAttr(errSave))
 	}
 
 	if !newWarning.MatchedFilter.IsEnabled {
@@ -223,16 +222,17 @@ func (u chatUsecase) trigger(ctx context.Context, newWarn domain.NewUserWarning)
 		u.warningMu.Unlock()
 
 		if currentWeight > u.maxWeight {
-			u.log.Info("Warn limit exceeded",
-				zap.Int64("sid64", newWarn.UserMessage.SteamID.Int64()),
-				zap.Int("count", count), zap.Int("weight", currentWeight))
+			slog.Info("Warn limit exceeded",
+				slog.Int64("sid64", newWarn.UserMessage.SteamID.Int64()),
+				slog.Int("count", count),
+				slog.Int("weight", currentWeight))
 
 			if err := u.onWarningExceeded(ctx, newWarn); err != nil {
-				u.log.Error("Failed to execute warning exceeded handler", zap.Error(err))
+				slog.Error("Failed to execute warning exceeded handler", log.ErrAttr(err))
 			}
 		} else {
 			if err := u.onWarningHandler(ctx, newWarn); err != nil {
-				u.log.Error("Failed to execute warning handler", zap.Error(err))
+				slog.Error("Failed to execute warning handler", log.ErrAttr(err))
 			}
 		}
 	}

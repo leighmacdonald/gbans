@@ -3,11 +3,12 @@ package match
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"sync"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"go.uber.org/zap"
+	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 // DataUpdater handles periodically updating a data source and caching the results via user supplied func.
@@ -17,12 +18,10 @@ type DataUpdater[T any] struct {
 	updateChan chan any
 	updateRate time.Duration
 	dataMu     *sync.RWMutex
-	log        *zap.Logger
 }
 
-func NewDataUpdater[T any](log *zap.Logger, updateRate time.Duration, updateFn func() (T, error)) *DataUpdater[T] {
+func NewDataUpdater[T any](updateRate time.Duration, updateFn func() (T, error)) *DataUpdater[T] {
 	return &DataUpdater[T]{
-		log:        log.Named("cache"),
 		update:     updateFn,
 		updateChan: make(chan any),
 		dataMu:     &sync.RWMutex{},
@@ -49,7 +48,7 @@ func (c *DataUpdater[T]) Start(ctx context.Context) {
 		case <-c.updateChan:
 			newData, errUpdate := c.update()
 			if errUpdate != nil && !errors.Is(errUpdate, domain.ErrNoResult) {
-				c.log.Error("Failed to update data source", zap.Error(errUpdate))
+				slog.Error("Failed to update data source", log.ErrAttr(errUpdate))
 
 				return
 			}

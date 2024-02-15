@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"sync"
 
 	sq "github.com/Masterminds/squirrel"
@@ -12,23 +13,20 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/minio/minio-go/v7"
-	"go.uber.org/zap"
 )
 
 type s3repository struct {
 	mu     sync.RWMutex
 	client *minio.Client
-	log    *zap.Logger
 	region string
 	db     database.Database
 }
 
-func NewS3Repository(logger *zap.Logger, db database.Database, client *minio.Client, region string) domain.AssetRepository {
+func NewS3Repository(db database.Database, client *minio.Client, region string) domain.AssetRepository {
 	return &s3repository{
 		mu:     sync.RWMutex{},
 		client: client,
 		db:     db,
-		log:    logger.Named("s3"),
 		region: region,
 	}
 }
@@ -95,7 +93,7 @@ func (r *s3repository) CreateBucketIfNotExists(ctx context.Context, name string)
 		return errors.Join(err, domain.ErrPolicy)
 	}
 
-	r.log.Info("Successfully created new bucket", zap.String("name", name))
+	slog.Info("Successfully created new bucket", slog.String("name", name))
 
 	return nil
 }
@@ -111,9 +109,9 @@ func (r *s3repository) Put(ctx context.Context, bucket string, name string, body
 		return errors.Join(err, domain.ErrWriteObject)
 	}
 
-	r.log.Debug("File uploaded successfully",
-		zap.String("name", name),
-		zap.String("bucket", bucket))
+	slog.Debug("File uploaded successfully",
+		slog.String("name", name),
+		slog.String("bucket", bucket))
 
 	return nil
 }

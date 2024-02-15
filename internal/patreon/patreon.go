@@ -3,11 +3,12 @@ package patreon
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"sync"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"go.uber.org/zap"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"gopkg.in/mxpv/patreon-go.v1"
 )
 
@@ -16,13 +17,10 @@ type Manager struct {
 	patreonMu        *sync.RWMutex
 	patreonCampaigns []patreon.Campaign
 	patreonPledges   []patreon.Pledge
-	log              *zap.Logger
 }
 
-func NewPatreonManager(logger *zap.Logger) *Manager {
+func NewPatreonManager() *Manager {
 	return &Manager{
-		log: logger.Named("patreon"),
-
 		patreonMu: &sync.RWMutex{},
 	}
 }
@@ -76,7 +74,7 @@ func NewPatreonManager(logger *zap.Logger) *Manager {
 //			select {
 //			case <-t0.C:
 //				if errUpdate := updateToken(ctx, p.db, oAuthConfig, tok); errUpdate != nil {
-//					log.Error("Failed to update patreon token", zap.Error(errUpdate))
+//					log.Error("Failed to update patreon token", log.ErrAttr(errUpdate))
 //				}
 //			case <-ctx.Done():
 //				return
@@ -165,7 +163,7 @@ func (p *Manager) Pledges() ([]patreon.Pledge, map[string]*patreon.User, error) 
 
 func (p *Manager) Start(ctx context.Context) {
 	var (
-		log         = p.log.Named("patreon")
+		logger      = slog.Default().WithGroup("patreon")
 		updateTimer = time.NewTicker(time.Hour * 1)
 		updateChan  = make(chan any)
 	)
@@ -185,14 +183,14 @@ func (p *Manager) Start(ctx context.Context) {
 		case <-updateChan:
 			newCampaigns, errCampaigns := p.Tiers()
 			if errCampaigns != nil {
-				log.Error("Failed to refresh campaigns", zap.Error(errCampaigns))
+				logger.Error("Failed to refresh campaigns", log.ErrAttr(errCampaigns))
 
 				return
 			}
 
 			newPledges, _, errPledges := p.Pledges()
 			if errPledges != nil {
-				log.Error("Failed to refresh Pledges", zap.Error(errPledges))
+				logger.Error("Failed to refresh Pledges", log.ErrAttr(errPledges))
 
 				return
 			}
@@ -214,8 +212,8 @@ func (p *Manager) Start(ctx context.Context) {
 				}
 			}
 
-			log.Info("Patreon Updated", zap.Int("campaign_count", len(newCampaigns)),
-				zap.Int("current_cents", cents), zap.Int("total_cents", totalCents))
+			logger.Info("Patreon Updated", slog.Int("campaign_count", len(newCampaigns)),
+				slog.Int("current_cents", cents), slog.Int("total_cents", totalCents))
 		case <-ctx.Done():
 			return
 		}

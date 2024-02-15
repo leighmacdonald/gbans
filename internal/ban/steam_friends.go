@@ -3,13 +3,13 @@ package ban
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"sync"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
-	"go.uber.org/zap"
 )
 
 var (
@@ -20,7 +20,6 @@ var (
 )
 
 type SteamFriends struct {
-	log        *zap.Logger
 	updateFreq time.Duration
 	bu         domain.BanSteamUsecase
 	bgu        domain.BanGroupUsecase
@@ -28,10 +27,9 @@ type SteamFriends struct {
 	*sync.RWMutex
 }
 
-func NewSteamFriends(logger *zap.Logger, bu domain.BanSteamUsecase, bgu domain.BanGroupUsecase) *SteamFriends {
+func NewSteamFriends(bu domain.BanSteamUsecase, bgu domain.BanGroupUsecase) *SteamFriends {
 	return &SteamFriends{
 		RWMutex:    &sync.RWMutex{},
-		log:        logger.Named("SteamFriends"),
 		updateFreq: time.Hour * 6,
 		bu:         bu,
 		bgu:        bgu,
@@ -67,7 +65,7 @@ func (sf *SteamFriends) Start(ctx context.Context) {
 		case <-update:
 			updated, errUpdate := sf.updateSteamBanMembers(ctx)
 			if errUpdate != nil {
-				sf.log.Error("failed to update steam ban friends")
+				slog.Error("failed to update steam ban friends")
 
 				continue
 			}
@@ -76,8 +74,8 @@ func (sf *SteamFriends) Start(ctx context.Context) {
 			sf.members = updated
 			sf.Unlock()
 
-			sf.log.Debug("Updated friend list member bans",
-				zap.Int("friends", len(updated)))
+			slog.Debug("Updated friend list member bans",
+				slog.Int("friends", len(updated)))
 		case <-timer.C:
 			update <- true
 		case <-ctx.Done():

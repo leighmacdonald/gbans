@@ -5,6 +5,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	sq "github.com/Masterminds/squirrel"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -14,7 +15,6 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"go.uber.org/zap"
 )
 
 // // ErrNoResult is returned on successful queries which return no rows.
@@ -49,7 +49,7 @@ type Database interface {
 
 type postgresStore struct {
 	conn *pgxpool.Pool
-	log  *zap.Logger
+	log  *slog.Logger
 	// Use $ for pg based queries.
 	sb          sq.StatementBuilderType
 	dsn         string
@@ -58,10 +58,10 @@ type postgresStore struct {
 	logQueries  bool
 }
 
-func New(rootLogger *zap.Logger, dsn string, autoMigrate bool, logQueries bool) Database {
+func New(dsn string, autoMigrate bool, logQueries bool) Database {
 	return &postgresStore{
 		sb:          sq.StatementBuilder.PlaceholderFormat(sq.Dollar),
-		log:         rootLogger.Named("db"),
+		log:         slog.Default().WithGroup("db"),
 		dsn:         dsn,
 		autoMigrate: autoMigrate,
 		logQueries:  logQueries,
@@ -69,7 +69,7 @@ func New(rootLogger *zap.Logger, dsn string, autoMigrate bool, logQueries bool) 
 }
 
 type dbQueryTracer struct {
-	log *zap.SugaredLogger
+	log *slog.Logger
 }
 
 func (tracer *dbQueryTracer) TraceQueryStart(
@@ -77,7 +77,7 @@ func (tracer *dbQueryTracer) TraceQueryStart(
 	_ *pgx.Conn,
 	data pgx.TraceQueryStartData,
 ) context.Context {
-	tracer.log.Infow("Executing command", "sql", data.SQL, "args", data.Args)
+	tracer.log.Info("Executing command", slog.String("sql", data.SQL), slog.Any("args", data.Args))
 
 	return ctx
 }
@@ -123,7 +123,7 @@ func (db *postgresStore) Connect(ctx context.Context) error {
 	}
 
 	if db.logQueries {
-		cfg.ConnConfig.Tracer = &dbQueryTracer{log: db.log.Sugar()}
+		cfg.ConnConfig.Tracer = &dbQueryTracer{log: db.log}
 	}
 
 	if db.autoMigrate && !db.migrated {

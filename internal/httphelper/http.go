@@ -2,9 +2,9 @@ package httphelper
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 	"path/filepath"
-	"runtime"
 
 	"github.com/Depado/ginprom"
 	sentrygin "github.com/getsentry/sentry-go/gin"
@@ -12,19 +12,17 @@ import (
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/unrolled/secure"
 	"github.com/unrolled/secure/cspbuilder"
-	"go.uber.org/zap"
 )
 
-func httpErrorHandler(logger *zap.Logger) gin.HandlerFunc {
-	log := logger.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func httpErrorHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Next()
 
 		for _, ginErr := range c.Errors {
-			log.Error("Unhandled HTTP Error", zap.Error(ginErr))
+			slog.Error("Unhandled HTTP Error", log.ErrAttr(ginErr))
 		}
 	}
 }
@@ -142,8 +140,8 @@ func useSentry(engine *gin.Engine, version string) {
 	})
 }
 
-func useCors(engine *gin.Engine, log *zap.Logger, conf domain.Config) {
-	engine.Use(httpErrorHandler(log), gin.Recovery())
+func useCors(engine *gin.Engine, conf domain.Config) {
+	engine.Use(httpErrorHandler(), gin.Recovery())
 	engine.Use(useSecure(conf.General.Mode, conf.S3.ExternalURL))
 
 	corsConfig := cors.DefaultConfig()
@@ -215,7 +213,7 @@ func useFrontend(engine *gin.Engine, conf domain.Config, version domain.BuildInf
 	return nil
 }
 
-func CreateRouter(log *zap.Logger, conf domain.Config, version domain.BuildInfo) (*gin.Engine, error) {
+func CreateRouter(conf domain.Config, version domain.BuildInfo) (*gin.Engine, error) {
 	engine := gin.New()
 	engine.MaxMultipartMemory = 8 << 24
 	engine.Use(gin.Recovery())
@@ -229,7 +227,7 @@ func CreateRouter(log *zap.Logger, conf domain.Config, version domain.BuildInfo)
 	}
 
 	if conf.General.Mode != domain.TestMode {
-		useCors(engine, log, conf)
+		useCors(engine, conf)
 	}
 
 	// TODO add config toggle

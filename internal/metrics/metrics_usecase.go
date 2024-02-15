@@ -2,37 +2,36 @@ package metrics
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/fp"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
 )
 
 type metricsUsecase struct {
 	collector *domain.MetricCollector
-	log       *zap.Logger
 	eb        *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 }
 
-func NewMetricsUsecase(logger *zap.Logger, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]) domain.MetricsUsecase {
+func NewMetricsUsecase(broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]) domain.MetricsUsecase {
 	collector := newMetricCollector()
 
 	return &metricsUsecase{
 		collector: collector,
-		log:       logger.Named("metrics"),
 		eb:        broadcaster,
 	}
 }
 
 // Start begins processing incoming log events and updating any associated metrics.
 func (u metricsUsecase) Start(ctx context.Context) {
-	log := u.log.Named("consumer")
+	logger := slog.Default().WithGroup("consumer")
 
 	eventChan := make(chan logparse.ServerEvent)
 	if errRegister := u.eb.Consume(eventChan); errRegister != nil {
-		log.Error("Failed to register event consumer", zap.Error(errRegister))
+		logger.Error("Failed to register event consumer", log.ErrAttr(errRegister))
 
 		return
 	}

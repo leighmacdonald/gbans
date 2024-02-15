@@ -3,27 +3,25 @@ package forum
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
-	"runtime"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"go.uber.org/zap"
 )
 
-type ForumHandler struct {
+type forumHandler struct {
 	fuc domain.ForumUsecase
-	log *zap.Logger
 }
 
-func NewForumHandler(logger *zap.Logger, engine *gin.Engine, fuc domain.ForumUsecase, ath domain.AuthUsecase) {
-	handler := &ForumHandler{
+func NewForumHandler(engine *gin.Engine, fuc domain.ForumUsecase, ath domain.AuthUsecase) {
+	handler := &forumHandler{
 		fuc: fuc,
-		log: logger.Named("forum"),
 	}
 
 	engine.GET("/api/forum/active_users", handler.onAPIActiveUsers())
@@ -69,9 +67,7 @@ type ForumCategoryRequest struct {
 	Ordering    int    `json:"ordering"`
 }
 
-func (f *ForumHandler) onAPIForumMessagesRecent() gin.HandlerFunc {
-	log := f.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (f *forumHandler) onAPIForumMessagesRecent() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		user := httphelper.CurrentUserProfile(ctx)
 
@@ -79,7 +75,7 @@ func (f *ForumHandler) onAPIForumMessagesRecent() gin.HandlerFunc {
 		if errThreads != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
-			log.Error("Could not load thread messages")
+			slog.Error("Could not load thread messages")
 
 			return
 		}
@@ -92,12 +88,10 @@ func (f *ForumHandler) onAPIForumMessagesRecent() gin.HandlerFunc {
 	}
 }
 
-func (f *ForumHandler) onAPICreateForumCategory() gin.HandlerFunc {
-	log := f.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (f *forumHandler) onAPICreateForumCategory() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req ForumCategoryRequest
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -111,20 +105,18 @@ func (f *ForumHandler) onAPICreateForumCategory() gin.HandlerFunc {
 		if errSave := f.fuc.ForumCategorySave(ctx, &category); errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
-			log.Error("Error creating new forum category", zap.Error(errSave))
+			slog.Error("Error creating new forum category", log.ErrAttr(errSave))
 
 			return
 		}
 
 		ctx.JSON(http.StatusCreated, category)
 
-		log.Info("New forum category created", zap.String("title", category.Title))
+		slog.Info("New forum category created", slog.String("title", category.Title))
 	}
 }
 
-func (f *ForumHandler) onAPIForumCategory() gin.HandlerFunc {
-	log := f.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (f *forumHandler) onAPIForumCategory() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		forumCategoryID, errCategoryID := httphelper.GetIntParam(ctx, "forum_category_id")
 		if errCategoryID != nil {
@@ -138,7 +130,7 @@ func (f *ForumHandler) onAPIForumCategory() gin.HandlerFunc {
 		if errGet := f.fuc.ForumCategory(ctx, forumCategoryID, &category); errGet != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
-			log.Error("Error fetching forum category", zap.Error(errGet))
+			slog.Error("Error fetching forum category", log.ErrAttr(errGet))
 
 			return
 		}
@@ -147,9 +139,7 @@ func (f *ForumHandler) onAPIForumCategory() gin.HandlerFunc {
 	}
 }
 
-func (f *ForumHandler) onAPIUpdateForumCategory() gin.HandlerFunc {
-	log := f.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (f *forumHandler) onAPIUpdateForumCategory() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		categoryID, errCategoryID := httphelper.GetIntParam(ctx, "forum_category_id")
 		if errCategoryID != nil {
@@ -166,7 +156,7 @@ func (f *ForumHandler) onAPIUpdateForumCategory() gin.HandlerFunc {
 		}
 
 		var req ForumCategoryRequest
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -177,14 +167,14 @@ func (f *ForumHandler) onAPIUpdateForumCategory() gin.HandlerFunc {
 		if errSave := f.fuc.ForumCategorySave(ctx, &category); errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
-			log.Error("Error creating new forum category", zap.Error(errSave))
+			slog.Error("Error creating new forum category", log.ErrAttr(errSave))
 
 			return
 		}
 
 		ctx.JSON(http.StatusOK, category)
 
-		log.Info("New forum category updated", zap.String("title", category.Title))
+		slog.Info("New forum category updated", slog.String("title", category.Title))
 	}
 }
 
@@ -194,12 +184,10 @@ type ForumForumRequest struct {
 	ForumCategoryRequest
 }
 
-func (f *ForumHandler) onAPICreateForumForum() gin.HandlerFunc {
-	log := f.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (f *forumHandler) onAPICreateForumForum() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req ForumForumRequest
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -215,20 +203,18 @@ func (f *ForumHandler) onAPICreateForumForum() gin.HandlerFunc {
 		if errSave := f.fuc.ForumSave(ctx, &forum); errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
-			log.Error("Error creating new forum", zap.Error(errSave))
+			slog.Error("Error creating new forum", log.ErrAttr(errSave))
 
 			return
 		}
 
 		ctx.JSON(http.StatusCreated, forum)
 
-		log.Info("New forum created", zap.String("title", forum.Title))
+		slog.Info("New forum created", slog.String("title", forum.Title))
 	}
 }
 
-func (f *ForumHandler) onAPIUpdateForumForum() gin.HandlerFunc {
-	log := f.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (f *forumHandler) onAPIUpdateForumForum() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		forumID, errForumID := httphelper.GetIntParam(ctx, "forum_id")
 		if errForumID != nil {
@@ -245,7 +231,7 @@ func (f *ForumHandler) onAPIUpdateForumForum() gin.HandlerFunc {
 		}
 
 		var req ForumForumRequest
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -258,20 +244,18 @@ func (f *ForumHandler) onAPIUpdateForumForum() gin.HandlerFunc {
 		if errSave := f.fuc.ForumSave(ctx, &forum); errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
-			log.Error("Error updating forum", zap.Error(errSave))
+			slog.Error("Error updating forum", log.ErrAttr(errSave))
 
 			return
 		}
 
 		ctx.JSON(http.StatusOK, forum)
 
-		log.Info("Forum updated", zap.String("title", forum.Title))
+		slog.Info("Forum updated", slog.String("title", forum.Title))
 	}
 }
 
-func (f *ForumHandler) onAPIThreadCreate() gin.HandlerFunc {
-	log := f.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (f *forumHandler) onAPIThreadCreate() gin.HandlerFunc {
 	type CreateThreadRequest struct {
 		Title  string `json:"title"`
 		BodyMD string `json:"body_md"`
@@ -297,7 +281,7 @@ func (f *ForumHandler) onAPIThreadCreate() gin.HandlerFunc {
 		}
 
 		var req CreateThreadRequest
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -327,7 +311,7 @@ func (f *ForumHandler) onAPIThreadCreate() gin.HandlerFunc {
 		if errSaveThread := f.fuc.ForumThreadSave(ctx, &thread); errSaveThread != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
-			log.Error("Failed to save new thread", zap.Error(errSaveThread))
+			slog.Error("Failed to save new thread", log.ErrAttr(errSaveThread))
 
 			return
 		}
@@ -338,12 +322,12 @@ func (f *ForumHandler) onAPIThreadCreate() gin.HandlerFunc {
 			// Drop created thread.
 			// TODO transaction
 			if errRollback := f.fuc.ForumThreadDelete(ctx, thread.ForumThreadID); errRollback != nil {
-				log.Error("Failed to rollback new thread", zap.Error(errRollback))
+				slog.Error("Failed to rollback new thread", log.ErrAttr(errRollback))
 			}
 
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
-			log.Error("Failed to save new forum message", zap.Error(errSaveMessage))
+			slog.Error("Failed to save new forum message", log.ErrAttr(errSaveMessage))
 
 			return
 		}
@@ -351,7 +335,7 @@ func (f *ForumHandler) onAPIThreadCreate() gin.HandlerFunc {
 		if errIncr := f.fuc.ForumIncrMessageCount(ctx, forum.ForumID, true); errIncr != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
-			log.Error("Failed to increment message count", zap.Error(errIncr))
+			slog.Error("Failed to increment message count", log.ErrAttr(errIncr))
 
 			return
 		}
@@ -361,13 +345,11 @@ func (f *ForumHandler) onAPIThreadCreate() gin.HandlerFunc {
 			Message:     message,
 		})
 
-		log.Info("Thread created")
+		slog.Info("Thread created")
 	}
 }
 
-func (f *ForumHandler) onAPIThreadUpdate() gin.HandlerFunc {
-	log := f.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (f *forumHandler) onAPIThreadUpdate() gin.HandlerFunc {
 	type threadUpdate struct {
 		Title  string `json:"title"`
 		Sticky bool   `json:"sticky"`
@@ -385,7 +367,7 @@ func (f *ForumHandler) onAPIThreadUpdate() gin.HandlerFunc {
 		}
 
 		var req threadUpdate
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -420,19 +402,17 @@ func (f *ForumHandler) onAPIThreadUpdate() gin.HandlerFunc {
 
 		if errDelete := f.fuc.ForumThreadSave(ctx, &thread); errDelete != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			log.Error("Failed to update thread", zap.Error(errDelete))
+			slog.Error("Failed to update thread", log.ErrAttr(errDelete))
 
 			return
 		}
 
 		ctx.JSON(http.StatusOK, thread)
-		log.Info("Thread updated", zap.Int64("forum_thread_id", thread.ForumThreadID))
+		slog.Info("Thread updated", slog.Int64("forum_thread_id", thread.ForumThreadID))
 	}
 }
 
-func (f *ForumHandler) onAPIThreadDelete() gin.HandlerFunc {
-	log := f.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (f *forumHandler) onAPIThreadDelete() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		forumThreadID, errForumTheadID := httphelper.GetInt64Param(ctx, "forum_thread_id")
 		if errForumTheadID != nil {
@@ -454,7 +434,7 @@ func (f *ForumHandler) onAPIThreadDelete() gin.HandlerFunc {
 
 		if errDelete := f.fuc.ForumThreadDelete(ctx, thread.ForumThreadID); errDelete != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			log.Error("Failed to delete thread", zap.Error(errDelete))
+			slog.Error("Failed to delete thread", log.ErrAttr(errDelete))
 
 			return
 		}
@@ -462,7 +442,7 @@ func (f *ForumHandler) onAPIThreadDelete() gin.HandlerFunc {
 		var forum domain.Forum
 		if errForum := f.fuc.Forum(ctx, thread.ForumID, &forum); errForum != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			log.Error("Failed to load forum", zap.Error(errForum))
+			slog.Error("Failed to load forum", log.ErrAttr(errForum))
 
 			return
 		}
@@ -471,7 +451,7 @@ func (f *ForumHandler) onAPIThreadDelete() gin.HandlerFunc {
 
 		if errSave := f.fuc.ForumSave(ctx, &forum); errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			log.Error("Failed to save thread count", zap.Error(errSave))
+			slog.Error("Failed to save thread count", log.ErrAttr(errSave))
 
 			return
 		}
@@ -480,9 +460,7 @@ func (f *ForumHandler) onAPIThreadDelete() gin.HandlerFunc {
 	}
 }
 
-func (f *ForumHandler) onAPIThreadMessageUpdate() gin.HandlerFunc {
-	log := f.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (f *forumHandler) onAPIThreadMessageUpdate() gin.HandlerFunc {
 	type MessageUpdate struct {
 		BodyMD string `json:"body_md"`
 	}
@@ -500,7 +478,7 @@ func (f *ForumHandler) onAPIThreadMessageUpdate() gin.HandlerFunc {
 		}
 
 		var req MessageUpdate
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -537,9 +515,7 @@ func (f *ForumHandler) onAPIThreadMessageUpdate() gin.HandlerFunc {
 	}
 }
 
-func (f *ForumHandler) onAPIMessageDelete() gin.HandlerFunc {
-	log := f.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (f *forumHandler) onAPIMessageDelete() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		forumMessageID, errForumMessageID := httphelper.GetInt64Param(ctx, "forum_message_id")
 		if errForumMessageID != nil {
@@ -588,7 +564,7 @@ func (f *ForumHandler) onAPIMessageDelete() gin.HandlerFunc {
 		if isThreadParent {
 			if err := f.fuc.ForumThreadDelete(ctx, message.ForumThreadID); err != nil {
 				httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-				log.Error("Failed to delete forum thread", zap.Error(err))
+				slog.Error("Failed to delete forum thread", log.ErrAttr(err))
 
 				return
 			}
@@ -597,7 +573,7 @@ func (f *ForumHandler) onAPIMessageDelete() gin.HandlerFunc {
 			var forum domain.Forum
 			if errForum := f.fuc.Forum(ctx, thread.ForumID, &forum); errForum != nil {
 				httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-				log.Error("Failed to load forum", zap.Error(errForum))
+				slog.Error("Failed to load forum", log.ErrAttr(errForum))
 
 				return
 			}
@@ -606,30 +582,28 @@ func (f *ForumHandler) onAPIMessageDelete() gin.HandlerFunc {
 
 			if errSave := f.fuc.ForumSave(ctx, &forum); errSave != nil {
 				httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-				log.Error("Failed to save thread count", zap.Error(errSave))
+				slog.Error("Failed to save thread count", log.ErrAttr(errSave))
 
 				return
 			}
 
-			log.Error("Thread deleted due to parent deletion", zap.Int64("forum_thread_id", thread.ForumThreadID))
+			slog.Error("Thread deleted due to parent deletion", slog.Int64("forum_thread_id", thread.ForumThreadID))
 		} else {
 			if errDelete := f.fuc.ForumMessageDelete(ctx, message.ForumMessageID); errDelete != nil {
 				httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-				log.Error("Failed to delete message", zap.Error(errDelete))
+				slog.Error("Failed to delete message", log.ErrAttr(errDelete))
 
 				return
 			}
 
-			log.Info("Thread message deleted", zap.Int64("forum_message_id", message.ForumMessageID))
+			slog.Info("Thread message deleted", slog.Int64("forum_message_id", message.ForumMessageID))
 		}
 
 		ctx.JSON(http.StatusOK, gin.H{})
 	}
 }
 
-func (f *ForumHandler) onAPIThreadCreateReply() gin.HandlerFunc {
-	log := f.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (f *forumHandler) onAPIThreadCreateReply() gin.HandlerFunc {
 	type ThreadReply struct {
 		BodyMD string `json:"body_md"`
 	}
@@ -660,7 +634,7 @@ func (f *ForumHandler) onAPIThreadCreateReply() gin.HandlerFunc {
 		}
 
 		var req ThreadReply
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -689,7 +663,7 @@ func (f *ForumHandler) onAPIThreadCreateReply() gin.HandlerFunc {
 		if errIncr := f.fuc.ForumIncrMessageCount(ctx, thread.ForumID, true); errIncr != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
-			log.Error("Failed to increment message count", zap.Error(errIncr))
+			slog.Error("Failed to increment message count", log.ErrAttr(errIncr))
 		}
 
 		newMessage.Personaname = currentUser.Name
@@ -701,9 +675,7 @@ func (f *ForumHandler) onAPIThreadCreateReply() gin.HandlerFunc {
 	}
 }
 
-func (f *ForumHandler) onAPIForumOverview() gin.HandlerFunc {
-	log := f.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (f *forumHandler) onAPIForumOverview() gin.HandlerFunc {
 	type Overview struct {
 		Categories []domain.ForumCategory `json:"categories"`
 	}
@@ -717,7 +689,7 @@ func (f *ForumHandler) onAPIForumOverview() gin.HandlerFunc {
 		if errCats != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
-			log.Error("Could not load categories")
+			slog.Error("Could not load categories")
 
 			return
 		}
@@ -726,7 +698,7 @@ func (f *ForumHandler) onAPIForumOverview() gin.HandlerFunc {
 		if errForums != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
-			log.Error("Could not load forums", zap.Error(errForums))
+			slog.Error("Could not load forums", log.ErrAttr(errForums))
 
 			return
 		}
@@ -751,16 +723,14 @@ func (f *ForumHandler) onAPIForumOverview() gin.HandlerFunc {
 	}
 }
 
-func (f *ForumHandler) onAPIForumThreads() gin.HandlerFunc {
-	log := f.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (f *forumHandler) onAPIForumThreads() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		currentUser := httphelper.CurrentUserProfile(ctx)
 
 		f.fuc.Touch(currentUser)
 
 		var tqf domain.ThreadQueryFilter
-		if !httphelper.Bind(ctx, log, &tqf) {
+		if !httphelper.Bind(ctx, &tqf) {
 			return
 		}
 
@@ -768,7 +738,7 @@ func (f *ForumHandler) onAPIForumThreads() gin.HandlerFunc {
 		if errThreads != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
-			log.Error("Could not load threads", zap.Error(errThreads))
+			slog.Error("Could not load threads", log.ErrAttr(errThreads))
 
 			return
 		}
@@ -777,7 +747,7 @@ func (f *ForumHandler) onAPIForumThreads() gin.HandlerFunc {
 		if err := f.fuc.Forum(ctx, tqf.ForumID, &forum); err != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
-			log.Error("Could not load forum", zap.Error(errThreads))
+			slog.Error("Could not load forum", log.ErrAttr(errThreads))
 
 			return
 		}
@@ -785,7 +755,7 @@ func (f *ForumHandler) onAPIForumThreads() gin.HandlerFunc {
 		if forum.PermissionLevel > currentUser.PermissionLevel {
 			httphelper.ResponseErr(ctx, http.StatusUnauthorized, domain.ErrPermissionDenied)
 
-			log.Error("User does not have access to forum")
+			slog.Error("User does not have access to forum")
 
 			return
 		}
@@ -794,9 +764,7 @@ func (f *ForumHandler) onAPIForumThreads() gin.HandlerFunc {
 	}
 }
 
-func (f *ForumHandler) onAPIForumThread() gin.HandlerFunc {
-	log := f.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (f *forumHandler) onAPIForumThread() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		currentUser := httphelper.CurrentUserProfile(ctx)
 
@@ -815,7 +783,7 @@ func (f *ForumHandler) onAPIForumThread() gin.HandlerFunc {
 				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
 			} else {
 				httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-				log.Error("Could not load threads")
+				slog.Error("Could not load threads")
 			}
 
 			return
@@ -824,14 +792,12 @@ func (f *ForumHandler) onAPIForumThread() gin.HandlerFunc {
 		ctx.JSON(http.StatusOK, thread)
 
 		if err := f.fuc.ForumThreadIncrView(ctx, forumThreadID); err != nil {
-			log.Error("Failed to increment thread view count", zap.Error(err))
+			slog.Error("Failed to increment thread view count", log.ErrAttr(err))
 		}
 	}
 }
 
-func (f *ForumHandler) onAPIForum() gin.HandlerFunc {
-	log := f.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (f *forumHandler) onAPIForum() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		currentUser := httphelper.CurrentUserProfile(ctx)
 
@@ -847,7 +813,7 @@ func (f *ForumHandler) onAPIForum() gin.HandlerFunc {
 		if errForum := f.fuc.Forum(ctx, forumID, &forum); errForum != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
-			log.Error("Could not load forum")
+			slog.Error("Could not load forum")
 
 			return
 		}
@@ -862,12 +828,10 @@ func (f *ForumHandler) onAPIForum() gin.HandlerFunc {
 	}
 }
 
-func (f *ForumHandler) onAPIForumMessages() gin.HandlerFunc {
-	log := f.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (f *forumHandler) onAPIForumMessages() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var queryFilter domain.ThreadMessagesQueryFilter
-		if !httphelper.Bind(ctx, log, &queryFilter) {
+		if !httphelper.Bind(ctx, &queryFilter) {
 			return
 		}
 
@@ -875,7 +839,7 @@ func (f *ForumHandler) onAPIForumMessages() gin.HandlerFunc {
 		if errMessages != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
-			log.Error("Could not load thread messages", zap.Error(errMessages))
+			slog.Error("Could not load thread messages", log.ErrAttr(errMessages))
 
 			return
 		}
@@ -896,7 +860,7 @@ func (f *ForumHandler) onAPIForumMessages() gin.HandlerFunc {
 	}
 }
 
-func (f *ForumHandler) onAPIActiveUsers() gin.HandlerFunc {
+func (f *forumHandler) onAPIActiveUsers() gin.HandlerFunc {
 	type userActivity struct {
 		SteamID         steamid.SID64    `json:"steam_id"`
 		Personaname     string           `json:"personaname"`

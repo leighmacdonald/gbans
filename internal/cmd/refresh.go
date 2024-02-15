@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"time"
 
@@ -13,7 +14,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/log"
 	"github.com/leighmacdonald/gbans/internal/network"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/report"
@@ -22,9 +22,9 @@ import (
 	"github.com/leighmacdonald/gbans/internal/steamgroup"
 	"github.com/leighmacdonald/gbans/internal/wordfilter"
 	"github.com/leighmacdonald/gbans/pkg/fp"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/spf13/cobra"
-	"go.uber.org/zap"
 )
 
 func refreshCmd() *cobra.Command {
@@ -47,62 +47,62 @@ func refreshFiltersCmd() *cobra.Command {
 			}
 
 			conf := configUsecase.Config()
-			rootLogger := log.MustCreate(conf, nil)
-			defer func() {
-				_ = rootLogger.Sync()
-			}()
 
-			defer func() {
-				_ = rootLogger.Sync()
-			}()
+			logCloser := log.MustCreateLogger(conf.Log.File, conf.Log.Level)
+			defer logCloser()
 
 			ctx := context.Background()
 
 			connCtx, cancelConn := context.WithTimeout(ctx, time.Second*5)
 			defer cancelConn()
-			dbUsecase := database.New(rootLogger, conf.DB.DSN, false, conf.DB.LogQueries)
+			dbUsecase := database.New(conf.DB.DSN, false, conf.DB.LogQueries)
 
-			rootLogger.Info("Connecting to database")
+			slog.Info("Connecting to database")
 			if errConnect := dbUsecase.Connect(connCtx); errConnect != nil {
-				rootLogger.Fatal("Failed to connect to database", zap.Error(errConnect))
+				slog.Error("Failed to connect to database", log.ErrAttr(errConnect))
+
+				return
 			}
+
 			defer func() {
 				if errClose := dbUsecase.Close(); errClose != nil {
-					rootLogger.Error("Failed to close database cleanly", zap.Error(errClose))
+					slog.Error("Failed to close database cleanly", log.ErrAttr(errClose))
 				}
 			}()
 
 			if //goland:noinspection ALL
 			errDelete := dbUsecase.Exec(ctx, "DELETE FROM person_messages_filter"); errDelete != nil {
-				rootLogger.Fatal("Failed to delete existing", zap.Error(errDelete))
+				slog.Error("Failed to delete existing", log.ErrAttr(errDelete))
+
+				return
 			}
 
 			eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
 
 			serversUsecase := servers.NewServersUsecase(servers.NewServersRepository(dbUsecase))
 
-			stateUsecase := state.NewStateUsecase(rootLogger, eventBroadcaster,
-				state.NewStateRepository(state.NewCollector(rootLogger, serversUsecase)), configUsecase, serversUsecase)
+			stateUsecase := state.NewStateUsecase(eventBroadcaster,
+				state.NewStateRepository(state.NewCollector(serversUsecase)), configUsecase, serversUsecase)
 
 			wordFilterUsecase := wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(dbUsecase))
 			if errImport := wordFilterUsecase.Import(ctx); errImport != nil {
-				rootLogger.Fatal("Failed to load filters")
+				slog.Error("Failed to load filters")
 			}
 
-			discordRepository, _ := discord.NewDiscordRepository(rootLogger, conf)
+			discordRepository, _ := discord.NewDiscordRepository(conf)
 
 			discordUsecase := discord.NewDiscordUsecase(discordRepository, wordFilterUsecase)
 
-			personUsecase := person.NewPersonUsecase(rootLogger, person.NewPersonRepository(dbUsecase), configUsecase)
-			reportUsecase := report.NewReportUsecase(rootLogger, report.NewReportRepository(dbUsecase), discordUsecase, configUsecase, personUsecase)
+			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(dbUsecase), configUsecase)
+			reportUsecase := report.NewReportUsecase(report.NewReportRepository(dbUsecase), discordUsecase, configUsecase, personUsecase)
 
 			blocklistUsecase := blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(dbUsecase))
-			networkUsecase := network.NewNetworkUsecase(rootLogger, eventBroadcaster, network.NewNetworkRepository(dbUsecase), blocklistUsecase, personUsecase)
+			networkUsecase := network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(dbUsecase), blocklistUsecase, personUsecase)
 			banRepository := ban.NewBanSteamRepository(dbUsecase, personUsecase, networkUsecase)
-			banGroupUsecase := steamgroup.NewBanGroupUsecase(rootLogger, steamgroup.NewSteamGroupRepository(dbUsecase))
-			banUsecase := ban.NewBanSteamUsecase(rootLogger, banRepository, personUsecase, configUsecase, discordUsecase, banGroupUsecase, reportUsecase, stateUsecase)
-			chatRepository := chat.NewChatRepository(dbUsecase, rootLogger, personUsecase, wordFilterUsecase, eventBroadcaster)
-			chatUsecase := chat.NewChatUsecase(rootLogger, configUsecase, chatRepository, wordFilterUsecase, stateUsecase, banUsecase,
+			banGroupUsecase := steamgroup.NewBanGroupUsecase(steamgroup.NewSteamGroupRepository(dbUsecase))
+			banUsecase := ban.NewBanSteamUsecase(banRepository, personUsecase, configUsecase, discordUsecase, banGroupUsecase, reportUsecase, stateUsecase)
+			chatRepository := chat.NewChatRepository(dbUsecase, personUsecase, wordFilterUsecase, eventBroadcaster)
+			chatUsecase := chat.NewChatUsecase(configUsecase, chatRepository, wordFilterUsecase, stateUsecase, banUsecase,
 				personUsecase, discordUsecase)
 
 			var query domain.ChatHistoryQueryFilter
@@ -116,13 +116,15 @@ func refreshFiltersCmd() *cobra.Command {
 
 			admin, errAdmin := personUsecase.GetPersonBySteamID(ctx, conf.General.Owner)
 			if errAdmin != nil {
-				rootLogger.Fatal("Failed to load admin user", zap.Error(errAdmin))
+				slog.Error("Failed to load admin user", log.ErrAttr(errAdmin))
+
+				return
 			}
 
 			for {
 				messages, _, errMessages := chatUsecase.QueryChatHistory(ctx, admin, query)
 				if errMessages != nil {
-					rootLogger.Error("Failed to load more messages", zap.Error(errMessages))
+					slog.Error("Failed to load more messages", log.ErrAttr(errMessages))
 
 					break
 				}
@@ -131,7 +133,7 @@ func refreshFiltersCmd() *cobra.Command {
 					matched := wordFilterUsecase.Check(message.Body)
 					if len(matched) > 0 {
 						if errAdd := wordFilterUsecase.AddMessageFilterMatch(ctx, message.PersonMessageID, matched[0].FilterID); errAdd != nil {
-							rootLogger.Error("Failed to add filter match", zap.Error(errAdd))
+							slog.Error("Failed to add filter match", log.ErrAttr(errAdd))
 						}
 
 						matches++
@@ -143,11 +145,11 @@ func refreshFiltersCmd() *cobra.Command {
 				query.Offset += query.Limit
 
 				if query.Offset%(query.Offset*5) == 0 {
-					rootLogger.Info("Progress update", zap.Uint64("offset", query.Offset), zap.Int("matches", matches))
+					slog.Info("Progress update", slog.Uint64("offset", query.Offset), slog.Int("matches", matches))
 				}
 			}
 
-			rootLogger.Info("Refresh Complete")
+			slog.Info("Refresh Complete")
 
 			os.Exit(0)
 		},

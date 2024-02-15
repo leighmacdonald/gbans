@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
-	"go.uber.org/zap"
+	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 type srcdsUsecase struct {
@@ -19,15 +20,13 @@ type srcdsUsecase struct {
 	pu     domain.PersonUsecase
 	ru     domain.ReportUsecase
 	du     domain.DiscordUsecase
-	log    *zap.Logger
 	cookie string
 }
 
-func NewSrcdsUsecase(log *zap.Logger, configUsecase domain.ConfigUsecase, serversUsecase domain.ServersUsecase,
+func NewSrcdsUsecase(configUsecase domain.ConfigUsecase, serversUsecase domain.ServersUsecase,
 	personUsecase domain.PersonUsecase, reportUsecase domain.ReportUsecase, discordUsecase domain.DiscordUsecase,
 ) domain.SRCDSUsecase {
 	return &srcdsUsecase{
-		log:    log,
 		cu:     configUsecase,
 		sv:     serversUsecase,
 		pu:     personUsecase,
@@ -100,10 +99,10 @@ func (h srcdsUsecase) Report(ctx context.Context, currentUser domain.UserProfile
 
 	if personTarget.Expired() {
 		if err := thirdparty.UpdatePlayerSummary(ctx, &personTarget); err != nil {
-			h.log.Error("Failed to update target player", zap.Error(err))
+			slog.Error("Failed to update target player", log.ErrAttr(err))
 		} else {
 			if errSave := h.pu.SavePerson(ctx, &personTarget); errSave != nil {
-				h.log.Error("Failed to save target player update", zap.Error(err))
+				slog.Error("Failed to save target player update", log.ErrAttr(err))
 			}
 		}
 	}
@@ -137,7 +136,7 @@ func (h srcdsUsecase) Report(ctx context.Context, currentUser domain.UserProfile
 		return nil, errReportSave
 	}
 
-	h.log.Info("New report created successfully", zap.Int64("report_id", report.ReportID))
+	slog.Info("New report created successfully", slog.Int64("report_id", report.ReportID))
 
 	conf := h.cu.Config()
 

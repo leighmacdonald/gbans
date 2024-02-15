@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"time"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/log"
 	"github.com/leighmacdonald/gbans/internal/match"
 	"github.com/leighmacdonald/gbans/internal/media"
 	"github.com/leighmacdonald/gbans/internal/news"
@@ -20,9 +20,9 @@ import (
 	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/wiki"
 	"github.com/leighmacdonald/gbans/pkg/fp"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/spf13/cobra"
-	"go.uber.org/zap"
 )
 
 func setupCmd() *cobra.Command {
@@ -37,58 +37,58 @@ func setupCmd() *cobra.Command {
 			}
 
 			conf := configUsecase.Config()
-			rootLogger := log.MustCreate(conf, nil)
-			defer func() {
-				_ = rootLogger.Sync()
-			}()
 
-			defer func() {
-				_ = rootLogger.Sync()
-			}()
+			logCloser := log.MustCreateLogger(conf.Log.File, conf.Log.Level)
+			defer logCloser()
 
 			ctx := context.Background()
 
 			connCtx, cancelConn := context.WithTimeout(ctx, time.Second*5)
 			defer cancelConn()
-			databaseRepository := database.New(rootLogger, conf.DB.DSN, false, conf.DB.LogQueries)
+			databaseRepository := database.New(conf.DB.DSN, false, conf.DB.LogQueries)
 
-			rootLogger.Info("Connecting to database")
+			slog.Info("Connecting to database")
 			if errConnect := databaseRepository.Connect(connCtx); errConnect != nil {
-				rootLogger.Fatal("Failed to connect to database", zap.Error(errConnect))
+				slog.Error("Failed to connect to database", log.ErrAttr(errConnect))
+
+				return
 			}
+
 			defer func() {
 				if errClose := databaseRepository.Close(); errClose != nil {
-					rootLogger.Error("Failed to close database cleanly", zap.Error(errClose))
+					slog.Error("Failed to close database cleanly", log.ErrAttr(errClose))
 				}
 			}()
 
 			if //goland:noinspection ALL
 			errDelete := databaseRepository.Exec(ctx, "DELETE FROM person_messages_filter"); errDelete != nil {
-				rootLogger.Fatal("Failed to delete existing", zap.Error(errDelete))
+				slog.Error("Failed to delete existing", log.ErrAttr(errDelete))
+
+				return
 			}
 			broadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
 			weaponMap := fp.NewMutexMap[logparse.Weapon, int]()
 
 			serversUsecase := servers.NewServersUsecase(servers.NewServersRepository(databaseRepository))
-			stateUsecase := state.NewStateUsecase(rootLogger, broadcaster, state.NewStateRepository(state.NewCollector(rootLogger, serversUsecase)), configUsecase, serversUsecase)
-			personUsecase := person.NewPersonUsecase(rootLogger, person.NewPersonRepository(databaseRepository), configUsecase)
-			assetUsecase := asset.NewAssetUsecase(asset.NewS3Repository(rootLogger, databaseRepository, nil, conf.S3.Region))
+			stateUsecase := state.NewStateUsecase(broadcaster, state.NewStateRepository(state.NewCollector(serversUsecase)), configUsecase, serversUsecase)
+			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(databaseRepository), configUsecase)
+			assetUsecase := asset.NewAssetUsecase(asset.NewS3Repository(databaseRepository, nil, conf.S3.Region))
 			mediaUsecase := media.NewMediaUsecase(conf.S3.BucketMedia, media.NewMediaRepository(databaseRepository), assetUsecase)
 			newsUsecase := news.NewNewsUsecase(news.NewNewsRepository(databaseRepository))
 			wikiUsecase := wiki.NewWikiUsecase(wiki.NewWikiRepository(databaseRepository, mediaUsecase))
-			matchUsecase := match.NewMatchUsecase(rootLogger, broadcaster, match.NewMatchRepository(databaseRepository, personUsecase), stateUsecase, serversUsecase, nil, weaponMap)
+			matchUsecase := match.NewMatchUsecase(broadcaster, match.NewMatchRepository(databaseRepository, personUsecase), stateUsecase, serversUsecase, nil, weaponMap)
 
 			owner, errRootUser := personUsecase.GetPersonBySteamID(ctx, conf.General.Owner)
 			if errRootUser != nil {
 				if !errors.Is(errRootUser, domain.ErrNoResult) {
-					rootLogger.Fatal("Failed checking owner state", zap.Error(errRootUser))
+					slog.Error("Failed checking owner state", log.ErrAttr(errRootUser))
 				}
 
 				newOwner := domain.NewPerson(conf.General.Owner)
 				newOwner.PermissionLevel = domain.PAdmin
 
 				if errSave := personUsecase.SavePerson(ctx, &newOwner); errSave != nil {
-					rootLogger.Fatal("Failed create new owner", zap.Error(errSave))
+					slog.Error("Failed create new owner", log.ErrAttr(errSave))
 				}
 
 				newsEntry := domain.NewsEntry{
@@ -100,7 +100,9 @@ func setupCmd() *cobra.Command {
 				}
 
 				if errSave := newsUsecase.SaveNewsArticle(ctx, &newsEntry); errSave != nil {
-					rootLogger.Fatal("Failed create example news entry", zap.Error(errSave))
+					slog.Error("Failed create example news entry", log.ErrAttr(errSave))
+
+					return
 				}
 
 				server := domain.NewServer("server-1", "127.0.0.1", 27015)
@@ -113,7 +115,9 @@ func setupCmd() *cobra.Command {
 				server.Region = "asia"
 
 				if errSave := serversUsecase.SaveServer(ctx, &server); errSave != nil {
-					rootLogger.Fatal("Failed create example server entry", zap.Error(errSave))
+					slog.Error("Failed create example server entry", log.ErrAttr(errSave))
+
+					return
 				}
 
 				page := domain.WikiPage{
@@ -126,12 +130,12 @@ func setupCmd() *cobra.Command {
 
 				_, errSave := wikiUsecase.SaveWikiPage(ctx, owner, page.Slug, page.BodyMD, page.PermissionLevel)
 				if errSave != nil {
-					rootLogger.Fatal("Failed save example wiki entry", zap.Error(errSave))
+					slog.Error("Failed save example wiki entry", log.ErrAttr(errSave))
 				}
 			}
 
 			if errWeapons := matchUsecase.LoadWeapons(ctx, weaponMap); errWeapons != nil {
-				rootLogger.Fatal("Failed to import weapons", zap.Error(errWeapons))
+				slog.Error("Failed to import weapons", log.ErrAttr(errWeapons))
 			}
 
 			os.Exit(0)

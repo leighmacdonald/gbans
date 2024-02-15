@@ -6,19 +6,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"go.uber.org/zap"
 )
 
-type PatreonHandler struct {
-	pu  domain.PatreonUsecase
-	log *zap.Logger
+type patreonHandler struct {
+	pu domain.PatreonUsecase
 }
 
-func NewPatreonHandler(log *zap.Logger, engine *gin.Engine, pu domain.PatreonUsecase, ath domain.AuthUsecase) {
-	handler := PatreonHandler{
-		pu:  pu,
-		log: log.Named("patreon"),
-	}
+func NewPatreonHandler(engine *gin.Engine, pu domain.PatreonUsecase, ath domain.AuthUsecase) {
+	handler := patreonHandler{pu: pu}
 
 	engine.GET("/api/patreon/campaigns", handler.onAPIGetPatreonCampaigns())
 
@@ -30,7 +25,7 @@ func NewPatreonHandler(log *zap.Logger, engine *gin.Engine, pu domain.PatreonUse
 	}
 }
 
-func (h PatreonHandler) onAPIGetPatreonCampaigns() gin.HandlerFunc {
+func (h patreonHandler) onAPIGetPatreonCampaigns() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		tiers, errTiers := h.pu.Tiers()
 		if errTiers != nil {
@@ -43,7 +38,7 @@ func (h PatreonHandler) onAPIGetPatreonCampaigns() gin.HandlerFunc {
 	}
 }
 
-func (h PatreonHandler) onAPIGetPatreonPledges() gin.HandlerFunc {
+func (h patreonHandler) onAPIGetPatreonPledges() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// Only leak specific details
 		// type basicPledge struct {

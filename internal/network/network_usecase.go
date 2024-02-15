@@ -3,6 +3,7 @@ package network
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net"
 	"strings"
 	"sync"
@@ -12,9 +13,9 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"go.uber.org/zap"
 )
 
 type networkUsecase struct {
@@ -22,15 +23,13 @@ type networkUsecase struct {
 	bl      domain.BlocklistUsecase
 	pu      domain.PersonUsecase
 	blocker *Blocker
-	log     *zap.Logger
 	eb      *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 }
 
-func NewNetworkUsecase(log *zap.Logger, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
+func NewNetworkUsecase(broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
 	repository domain.NetworkRepository, blocklistUsecase domain.BlocklistUsecase, personUsecase domain.PersonUsecase,
 ) domain.NetworkUsecase {
 	return networkUsecase{
-		log:     log.Named("network"),
 		nr:      repository,
 		bl:      blocklistUsecase,
 		blocker: NewBlocker(),
@@ -40,11 +39,9 @@ func NewNetworkUsecase(log *zap.Logger, broadcaster *fp.Broadcaster[logparse.Eve
 }
 
 func (u networkUsecase) Start(ctx context.Context) {
-	log := u.log.Named("playerConnectionWriter")
-
 	serverEventChan := make(chan logparse.ServerEvent)
 	if errRegister := u.eb.Consume(serverEventChan, logparse.Connected); errRegister != nil {
-		log.Warn("logWriter Tried to register duplicate reader channel", zap.Error(errRegister))
+		slog.Warn("logWriter Tried to register duplicate reader channel", log.ErrAttr(errRegister))
 
 		return
 	}
@@ -60,14 +57,14 @@ func (u networkUsecase) Start(ctx context.Context) {
 			}
 
 			if newServerEvent.Address == "" {
-				log.Warn("Empty Person message body, skipping")
+				slog.Warn("Empty Person message body, skipping")
 
 				continue
 			}
 
 			parsedAddr := net.ParseIP(newServerEvent.Address)
 			if parsedAddr == nil {
-				log.Warn("Received invalid address", zap.String("addr", newServerEvent.Address))
+				slog.Warn("Received invalid address", slog.String("addr", newServerEvent.Address))
 
 				continue
 			}
@@ -75,7 +72,7 @@ func (u networkUsecase) Start(ctx context.Context) {
 			// Maybe ignore these and wait for connect call to create?
 			_, errPerson := u.pu.GetOrCreatePersonBySteamID(ctx, newServerEvent.SID)
 			if errPerson != nil {
-				log.Error("Failed to load Person", zap.Error(errPerson))
+				slog.Error("Failed to load Person", log.ErrAttr(errPerson))
 
 				continue
 			}
@@ -90,7 +87,7 @@ func (u networkUsecase) Start(ctx context.Context) {
 
 			lCtx, cancel := context.WithTimeout(ctx, time.Second*5)
 			if errChat := u.nr.AddConnectionHistory(lCtx, &conn); errChat != nil {
-				log.Error("Failed to add connection history", zap.Error(errChat))
+				slog.Error("Failed to add connection history", log.ErrAttr(errChat))
 			}
 
 			cancel()
@@ -120,7 +117,7 @@ func (u networkUsecase) LoadNetBlocks(ctx context.Context) error {
 
 			count, errAdd := u.blocker.AddRemoteSource(ctx, src.Name, src.URL)
 			if errAdd != nil {
-				u.log.Error("Could not load remote source URL")
+				slog.Error("Could not load remote source URL")
 			}
 
 			total.Add(count)
@@ -140,8 +137,8 @@ func (u networkUsecase) LoadNetBlocks(ctx context.Context) error {
 		u.blocker.AddWhitelist(whitelist.CIDRBlockWhitelistID, whitelist.Address)
 	}
 
-	u.log.Info("Loaded cidr block lists",
-		zap.Int64("cidr_blocks", total.Load()), zap.Int("whitelisted", len(whitelists)))
+	slog.Info("Loaded cidr block lists",
+		slog.Int64("cidr_blocks", total.Load()), slog.Int("whitelisted", len(whitelists)))
 
 	return nil
 }
@@ -182,8 +179,8 @@ func (u networkUsecase) GetProxyRecord(ctx context.Context, ipAddr net.IP, proxy
 	return u.nr.GetProxyRecord(ctx, ipAddr, proxyRecord)
 }
 
-func (u networkUsecase) InsertBlockListData(ctx context.Context, log *zap.Logger, blockListData *ip2location.BlockListData) error {
-	return u.nr.InsertBlockListData(ctx, log, blockListData)
+func (u networkUsecase) InsertBlockListData(ctx context.Context, blockListData *ip2location.BlockListData) error {
+	return u.nr.InsertBlockListData(ctx, blockListData)
 }
 
 func (u networkUsecase) GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, limit uint64) (domain.PersonConnections, error) {

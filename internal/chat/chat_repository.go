@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -12,15 +13,14 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/fp"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"go.uber.org/zap"
 )
 
 type chatRepository struct {
 	db                database.Database
-	log               *zap.Logger
 	personUsecase     domain.PersonUsecase
 	wordFilterUsecase domain.WordFilterUsecase
 	matchUsecase      domain.MatchUsecase
@@ -28,12 +28,11 @@ type chatRepository struct {
 	WarningChan       chan domain.NewUserWarning
 }
 
-func NewChatRepository(database database.Database, log *zap.Logger, personUsecase domain.PersonUsecase, wordFilterUsecase domain.WordFilterUsecase,
+func NewChatRepository(database database.Database, personUsecase domain.PersonUsecase, wordFilterUsecase domain.WordFilterUsecase,
 	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
 ) domain.ChatRepository {
 	return &chatRepository{
 		db:                database,
-		log:               log,
 		personUsecase:     personUsecase,
 		wordFilterUsecase: wordFilterUsecase,
 		broadcaster:       broadcaster,
@@ -44,7 +43,7 @@ func NewChatRepository(database database.Database, log *zap.Logger, personUsecas
 func (r chatRepository) Start(ctx context.Context) {
 	eventChan := make(chan logparse.ServerEvent)
 	if errRegister := r.broadcaster.Consume(eventChan, logparse.Say, logparse.SayTeam); errRegister != nil {
-		r.log.Warn("logWriter Tried to register duplicate reader channel", zap.Error(errRegister))
+		slog.Warn("logWriter Tried to register duplicate reader channel", log.ErrAttr(errRegister))
 
 		return
 	}
@@ -64,14 +63,14 @@ func (r chatRepository) Start(ctx context.Context) {
 				}
 
 				if newServerEvent.Msg == "" {
-					r.log.Warn("Empty Person message body, skipping")
+					slog.Warn("Empty Person message body, skipping")
 
 					continue
 				}
 
 				_, errPerson := r.personUsecase.GetOrCreatePersonBySteamID(ctx, newServerEvent.SID)
 				if errPerson != nil {
-					r.log.Error("Failed to add chat history, could not get author", zap.Error(errPerson))
+					slog.Error("Failed to add chat history, could not get author", log.ErrAttr(errPerson))
 
 					continue
 				}
@@ -90,26 +89,26 @@ func (r chatRepository) Start(ctx context.Context) {
 				}
 
 				if errChat := r.AddChatHistory(ctx, &msg); errChat != nil {
-					r.log.Error("Failed to add chat history", zap.Error(errChat))
+					slog.Error("Failed to add chat history", log.ErrAttr(errChat))
 
 					continue
 				}
 
 				go func(userMsg domain.PersonMessage) {
 					if msg.ServerName == "localhost-1" {
-						r.log.Debug("Chat message",
-							zap.Int64("id", msg.PersonMessageID),
-							zap.String("server", evt.ServerName),
-							zap.String("name", newServerEvent.Name),
-							zap.String("steam_id", newServerEvent.SID.String()),
-							zap.Bool("team", msg.Team),
-							zap.String("message", msg.Body))
+						slog.Debug("Chat message",
+							slog.Int64("id", msg.PersonMessageID),
+							slog.String("server", evt.ServerName),
+							slog.String("name", newServerEvent.Name),
+							slog.String("steam_id", newServerEvent.SID.String()),
+							slog.Bool("team", msg.Team),
+							slog.String("message", msg.Body))
 					}
 
 					matchedFilter := r.wordFilterUsecase.Check(userMsg.Body)
 					if len(matchedFilter) > 0 {
 						if errSaveMatch := r.wordFilterUsecase.AddMessageFilterMatch(ctx, userMsg.PersonMessageID, matchedFilter[0].FilterID); errSaveMatch != nil {
-							r.log.Error("Failed to save message findMatch status", zap.Error(errSaveMatch))
+							slog.Error("Failed to save message findMatch status", log.ErrAttr(errSaveMatch))
 						}
 
 						matchResult := matchedFilter[0]

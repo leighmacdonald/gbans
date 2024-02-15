@@ -2,26 +2,24 @@ package steamgroup
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
-	"runtime"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
-	"go.uber.org/zap"
 )
 
-type SteamgroupHandler struct {
-	log *zap.Logger
+type steamgroupHandler struct {
 	bgu domain.BanGroupUsecase
 }
 
-func NewSteamgroupHandler(log *zap.Logger, engine *gin.Engine, bgu domain.BanGroupUsecase, ath domain.AuthUsecase) {
-	handler := SteamgroupHandler{
-		log: log.Named("steamgroup"),
+func NewSteamgroupHandler(engine *gin.Engine, bgu domain.BanGroupUsecase, ath domain.AuthUsecase) {
+	handler := steamgroupHandler{
 		bgu: bgu,
 	}
 
@@ -36,7 +34,7 @@ func NewSteamgroupHandler(log *zap.Logger, engine *gin.Engine, bgu domain.BanGro
 	}
 }
 
-func (h SteamgroupHandler) onAPIPostBansGroupCreate() gin.HandlerFunc {
+func (h steamgroupHandler) onAPIPostBansGroupCreate() gin.HandlerFunc {
 	type apiBanRequest struct {
 		TargetID   domain.StringSID `json:"target_id"`
 		GroupID    steamid.GID      `json:"group_id"`
@@ -45,11 +43,9 @@ func (h SteamgroupHandler) onAPIPostBansGroupCreate() gin.HandlerFunc {
 		ValidUntil time.Time        `json:"valid_until"`
 	}
 
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
 	return func(ctx *gin.Context) {
 		var req apiBanRequest
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -86,7 +82,7 @@ func (h SteamgroupHandler) onAPIPostBansGroupCreate() gin.HandlerFunc {
 			&banSteamGroup,
 		); errBanSteamGroup != nil {
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
-			log.Error("Failed to save group ban", zap.Error(errBanSteamGroup))
+			slog.Error("Failed to save group ban", log.ErrAttr(errBanSteamGroup))
 
 			return
 		}
@@ -107,19 +103,17 @@ func (h SteamgroupHandler) onAPIPostBansGroupCreate() gin.HandlerFunc {
 	}
 }
 
-func (h SteamgroupHandler) onAPIGetBansGroup() gin.HandlerFunc {
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (h steamgroupHandler) onAPIGetBansGroup() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req domain.GroupBansQueryFilter
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
 		banGroups, count, errBans := h.bgu.Get(ctx, req)
 		if errBans != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			log.Error("Failed to fetch banGroups", zap.Error(errBans))
+			slog.Error("Failed to fetch banGroups", log.ErrAttr(errBans))
 
 			return
 		}
@@ -128,9 +122,7 @@ func (h SteamgroupHandler) onAPIGetBansGroup() gin.HandlerFunc {
 	}
 }
 
-func (h SteamgroupHandler) onAPIDeleteBansGroup() gin.HandlerFunc {
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (h steamgroupHandler) onAPIDeleteBansGroup() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		groupID, groupIDErr := httphelper.GetInt64Param(ctx, "ban_group_id")
 		if groupIDErr != nil {
@@ -140,7 +132,7 @@ func (h SteamgroupHandler) onAPIDeleteBansGroup() gin.HandlerFunc {
 		}
 
 		var req domain.UnbanRequest
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -156,7 +148,7 @@ func (h SteamgroupHandler) onAPIDeleteBansGroup() gin.HandlerFunc {
 
 		if errSave := h.bgu.Save(ctx, &banGroup); errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			log.Error("Failed to delete asn ban", zap.Error(errSave))
+			slog.Error("Failed to delete asn ban", log.ErrAttr(errSave))
 
 			return
 		}
@@ -167,14 +159,12 @@ func (h SteamgroupHandler) onAPIDeleteBansGroup() gin.HandlerFunc {
 	}
 }
 
-func (h SteamgroupHandler) onAPIPostBansGroupUpdate() gin.HandlerFunc {
+func (h steamgroupHandler) onAPIPostBansGroupUpdate() gin.HandlerFunc {
 	type apiBanUpdateRequest struct {
 		TargetID   domain.StringSID `json:"target_id"`
 		Note       string           `json:"note"`
 		ValidUntil time.Time        `json:"valid_until"`
 	}
-
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		banGroupID, banIDErr := httphelper.GetInt64Param(ctx, "ban_group_id")
@@ -185,7 +175,7 @@ func (h SteamgroupHandler) onAPIPostBansGroupUpdate() gin.HandlerFunc {
 		}
 
 		var req apiBanUpdateRequest
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 

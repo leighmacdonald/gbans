@@ -11,7 +11,7 @@ import (
 )
 
 type StateUsecase interface {
-	Start(ctx context.Context)
+	Start(ctx context.Context) error
 	Broadcast(ctx context.Context, serverIDs []int, cmd string) map[int]string
 	ByName(name string, wildcardOk bool) []ServerState
 	ByServerID(serverID int) (ServerState, bool)

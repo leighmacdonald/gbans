@@ -3,27 +3,25 @@ package ban
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
-	"runtime"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
-	"go.uber.org/zap"
 )
 
 type banNetHandler struct {
-	log           *zap.Logger
 	banNetUsecase domain.BanNetUsecase
 }
 
-func NewBanNetHandler(logger *zap.Logger, engine *gin.Engine, banNetUsecase domain.BanNetUsecase, ath domain.AuthUsecase) {
+func NewBanNetHandler(engine *gin.Engine, banNetUsecase domain.BanNetUsecase, ath domain.AuthUsecase) {
 	handler := banNetHandler{
-		log:           logger.Named("ban_net"),
 		banNetUsecase: banNetUsecase,
 	}
 	// mod
@@ -73,11 +71,9 @@ func (h banNetHandler) onAPIPostBansCIDRCreate() gin.HandlerFunc {
 		ValidUntil time.Time        `json:"valid_until"`
 	}
 
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
 	return func(ctx *gin.Context) {
 		var req apiBanRequest
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -118,7 +114,7 @@ func (h banNetHandler) onAPIPostBansCIDRCreate() gin.HandlerFunc {
 			}
 
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			log.Error("Failed to save cidr ban", zap.Error(errBan))
+			slog.Error("Failed to save cidr ban", log.ErrAttr(errBan))
 
 			return
 		}
@@ -128,18 +124,16 @@ func (h banNetHandler) onAPIPostBansCIDRCreate() gin.HandlerFunc {
 }
 
 func (h banNetHandler) onAPIGetBansCIDR() gin.HandlerFunc {
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
 	return func(ctx *gin.Context) {
 		var req domain.CIDRBansQueryFilter
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
 		bans, count, errBans := h.banNetUsecase.Get(ctx, req)
 		if errBans != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			log.Error("Failed to fetch cidr bans", zap.Error(errBans))
+			slog.Error("Failed to fetch cidr bans", log.ErrAttr(errBans))
 
 			return
 		}
@@ -149,8 +143,6 @@ func (h banNetHandler) onAPIGetBansCIDR() gin.HandlerFunc {
 }
 
 func (h banNetHandler) onAPIDeleteBansCIDR() gin.HandlerFunc {
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
 	return func(ctx *gin.Context) {
 		netID, netIDErr := httphelper.GetInt64Param(ctx, "net_id")
 		if netIDErr != nil {
@@ -160,7 +152,7 @@ func (h banNetHandler) onAPIDeleteBansCIDR() gin.HandlerFunc {
 		}
 
 		var req domain.UnbanRequest
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -176,7 +168,7 @@ func (h banNetHandler) onAPIDeleteBansCIDR() gin.HandlerFunc {
 
 		if errSave := h.banNetUsecase.Save(ctx, &banCidr); errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			log.Error("Failed to delete cidr ban", zap.Error(errSave))
+			slog.Error("Failed to delete cidr ban", log.ErrAttr(errSave))
 
 			return
 		}
@@ -196,8 +188,6 @@ func (h banNetHandler) onAPIPostBansCIDRUpdate() gin.HandlerFunc {
 		CIDR       string           `json:"cidr"`
 		ValidUntil time.Time        `json:"valid_until"`
 	}
-
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 
 	return func(ctx *gin.Context) {
 		netID, banIDErr := httphelper.GetInt64Param(ctx, "net_id")
@@ -220,7 +210,7 @@ func (h banNetHandler) onAPIPostBansCIDRUpdate() gin.HandlerFunc {
 		}
 
 		var req apiUpdateBanRequest
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 

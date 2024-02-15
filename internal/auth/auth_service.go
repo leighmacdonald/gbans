@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"regexp"
-	"runtime"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -16,27 +16,25 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/yohcop/openid-go"
-	"go.uber.org/zap"
 )
 
-type AuthHandler struct {
+type authHandler struct {
 	authUsecase   domain.AuthUsecase
 	configUsecase domain.ConfigUsecase
 	personUsecase domain.PersonUsecase
-	log           *zap.Logger
 }
 
-func NewAuthHandler(log *zap.Logger, engine *gin.Engine, authUsecase domain.AuthUsecase, configUsecase domain.ConfigUsecase,
+func NewAuthHandler(engine *gin.Engine, authUsecase domain.AuthUsecase, configUsecase domain.ConfigUsecase,
 	personUsecase domain.PersonUsecase,
 ) {
-	handler := &AuthHandler{
+	handler := &authHandler{
 		authUsecase:   authUsecase,
 		configUsecase: configUsecase,
 		personUsecase: personUsecase,
-		log:           log.Named("auth"),
 	}
 
 	engine.GET("/auth/callback", handler.onOpenIDCallback())
@@ -51,10 +49,9 @@ func NewAuthHandler(log *zap.Logger, engine *gin.Engine, authUsecase domain.Auth
 	}
 }
 
-func (h AuthHandler) onOpenIDCallback() gin.HandlerFunc {
+func (h authHandler) onOpenIDCallback() gin.HandlerFunc {
 	nonceStore := openid.NewSimpleNonceStore()
 	discoveryCache := &noOpDiscoveryCache{}
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 	oidRx := regexp.MustCompile(`^https://steamcommunity\.com/openid/id/(\d+)$`)
 
 	return func(ctx *gin.Context) {
@@ -68,7 +65,7 @@ func (h AuthHandler) onOpenIDCallback() gin.HandlerFunc {
 			// Pull the sid out of the query without doing a signature check
 			values, errParse := url.Parse(fullURL)
 			if errParse != nil {
-				log.Error("Failed to parse url", zap.Error(errParse))
+				slog.Error("Failed to parse url", log.ErrAttr(errParse))
 				ctx.Redirect(302, referralURL)
 
 				return
@@ -78,7 +75,7 @@ func (h AuthHandler) onOpenIDCallback() gin.HandlerFunc {
 		} else {
 			openID, errVerify := openid.Verify(fullURL, discoveryCache, nonceStore)
 			if errVerify != nil {
-				log.Error("Error verifying openid auth response", zap.Error(errVerify))
+				slog.Error("Error verifying openid auth response", log.ErrAttr(errVerify))
 				ctx.Redirect(302, referralURL)
 
 				return
@@ -96,7 +93,7 @@ func (h AuthHandler) onOpenIDCallback() gin.HandlerFunc {
 
 		sid, errDecodeSid := steamid.SID64FromString(match[1])
 		if errDecodeSid != nil {
-			log.Error("Received invalid steamid", zap.Error(errDecodeSid))
+			slog.Error("Received invalid steamid", log.ErrAttr(errDecodeSid))
 			ctx.Redirect(302, referralURL)
 
 			return
@@ -104,16 +101,16 @@ func (h AuthHandler) onOpenIDCallback() gin.HandlerFunc {
 
 		person, errPerson := h.personUsecase.GetOrCreatePersonBySteamID(ctx, sid)
 		if errPerson != nil {
-			log.Error("Failed to create or load user profile", zap.Error(errPerson))
+			slog.Error("Failed to create or load user profile", log.ErrAttr(errPerson))
 			ctx.Redirect(302, referralURL)
 		}
 
 		if person.Expired() {
 			if errGetProfile := thirdparty.UpdatePlayerSummary(ctx, &person); errGetProfile != nil {
-				log.Error("Failed to fetch user profile on login", zap.Error(errGetProfile))
+				slog.Error("Failed to fetch user profile on login", log.ErrAttr(errGetProfile))
 			} else {
 				if errSave := h.personUsecase.SavePerson(ctx, &person); errSave != nil {
-					log.Error("Failed to save summary update", zap.Error(errSave))
+					slog.Error("Failed to save summary update", log.ErrAttr(errSave))
 				}
 			}
 		}
@@ -121,7 +118,7 @@ func (h AuthHandler) onOpenIDCallback() gin.HandlerFunc {
 		tokens, errToken := h.authUsecase.MakeTokens(ctx, conf.HTTP.CookieKey, sid, true)
 		if errToken != nil {
 			ctx.Redirect(302, referralURL)
-			log.Error("Failed to create access token pair", zap.Error(errToken))
+			slog.Error("Failed to create access token pair", log.ErrAttr(errToken))
 
 			return
 		}
@@ -142,7 +139,7 @@ func (h AuthHandler) onOpenIDCallback() gin.HandlerFunc {
 		parsedExternal, errExternal := url.Parse(conf.General.ExternalURL)
 		if errExternal != nil {
 			ctx.Redirect(302, referralURL)
-			log.Error("Failed to parse ext url", zap.Error(errExternal))
+			slog.Error("Failed to parse ext url", log.ErrAttr(errExternal))
 
 			return
 		}
@@ -158,10 +155,10 @@ func (h AuthHandler) onOpenIDCallback() gin.HandlerFunc {
 			true)
 
 		ctx.Redirect(302, parsedURL.String())
-		log.Info("User logged in",
-			zap.Int64("sid64", sid.Int64()),
-			zap.String("name", person.PersonaName),
-			zap.Int("permission_level", int(person.PermissionLevel)))
+		slog.Info("User logged in",
+			slog.Int64("sid64", sid.Int64()),
+			slog.String("name", person.PersonaName),
+			slog.Int("permission_level", int(person.PermissionLevel)))
 	}
 }
 
@@ -169,15 +166,14 @@ const fingerprintCookieName = "fingerprint"
 
 // onTokenRefresh handles generating new token pairs to access the api
 // NOTE: All error code paths must return 401 (Unauthorized).
-func (h AuthHandler) onTokenRefresh() gin.HandlerFunc {
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func (h authHandler) onTokenRefresh() gin.HandlerFunc {
 	conf := h.configUsecase.Config()
 
 	return func(ctx *gin.Context) {
 		fingerprint, errCookie := ctx.Cookie(fingerprintCookieName)
 		if errCookie != nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
-			log.Warn("Failed to get fingerprint cookie", zap.Error(errCookie))
+			slog.Warn("Failed to get fingerprint cookie", log.ErrAttr(errCookie))
 
 			return
 		}
@@ -194,7 +190,7 @@ func (h AuthHandler) onTokenRefresh() gin.HandlerFunc {
 		refreshToken, errParseClaims := jwt.ParseWithClaims(refreshTokenString, &userClaims, h.authUsecase.MakeGetTokenKey(conf.HTTP.CookieKey))
 		if errParseClaims != nil {
 			if errors.Is(errParseClaims, jwt.ErrSignatureInvalid) {
-				log.Error("jwt signature invalid!", zap.Error(errParseClaims))
+				slog.Error("jwt signature invalid!", log.ErrAttr(errParseClaims))
 				ctx.AbortWithStatus(http.StatusUnauthorized)
 
 				return
@@ -229,7 +225,7 @@ func (h AuthHandler) onTokenRefresh() gin.HandlerFunc {
 		tokens, errMakeToken := h.authUsecase.MakeTokens(ctx, conf.HTTP.CookieKey, personAuth.SteamID, false)
 		if errMakeToken != nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
-			log.Error("Failed to create access token pair", zap.Error(errMakeToken))
+			slog.Error("Failed to create access token pair", log.ErrAttr(errMakeToken))
 
 			return
 		}
@@ -240,7 +236,7 @@ func (h AuthHandler) onTokenRefresh() gin.HandlerFunc {
 	}
 }
 
-func (h AuthHandler) onOAuthDiscordCallback() gin.HandlerFunc {
+func (h authHandler) onOAuthDiscordCallback() gin.HandlerFunc {
 	type accessTokenResp struct {
 		AccessToken  string `json:"access_token"`
 		ExpiresIn    int    `json:"expires_in"`
@@ -265,7 +261,6 @@ func (h AuthHandler) onOAuthDiscordCallback() gin.HandlerFunc {
 		PremiumType      int         `json:"premium_type"`
 	}
 
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
 	client := util.NewHTTPClient()
 	conf := h.configUsecase.Config()
 
@@ -337,7 +332,7 @@ func (h AuthHandler) onOAuthDiscordCallback() gin.HandlerFunc {
 		code := ctx.Query("code")
 		if code == "" {
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, nil)
-			log.Error("Failed to get code from query")
+			slog.Error("Failed to get code from query")
 
 			return
 		}
@@ -345,7 +340,7 @@ func (h AuthHandler) onOAuthDiscordCallback() gin.HandlerFunc {
 		token, errToken := fetchToken(ctx, code)
 		if errToken != nil {
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, nil)
-			log.Error("Failed to fetch token", zap.Error(errToken))
+			slog.Error("Failed to fetch token", log.ErrAttr(errToken))
 
 			return
 		}
@@ -353,14 +348,14 @@ func (h AuthHandler) onOAuthDiscordCallback() gin.HandlerFunc {
 		discordID, errID := fetchDiscordID(ctx, token)
 		if errID != nil {
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, nil)
-			log.Error("Failed to fetch discord ID", zap.Error(errID))
+			slog.Error("Failed to fetch discord ID", log.ErrAttr(errID))
 
 			return
 		}
 
 		if discordID == "" {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, nil)
-			log.Error("Empty discord id received")
+			slog.Error("Empty discord id received")
 
 			return
 		}
@@ -376,7 +371,7 @@ func (h AuthHandler) onOAuthDiscordCallback() gin.HandlerFunc {
 
 		if discordPerson.DiscordID != "" {
 			httphelper.ResponseErr(ctx, http.StatusConflict, nil)
-			log.Error("Failed to update persons discord id")
+			slog.Error("Failed to update persons discord id")
 
 			return
 		}
@@ -392,10 +387,10 @@ func (h AuthHandler) onOAuthDiscordCallback() gin.HandlerFunc {
 
 		if person.Expired() {
 			if errGetProfile := thirdparty.UpdatePlayerSummary(ctx, &person); errGetProfile != nil {
-				log.Error("Failed to fetch user profile", zap.Error(errGetProfile))
+				slog.Error("Failed to fetch user profile", log.ErrAttr(errGetProfile))
 			} else {
 				if errSave := h.personUsecase.SavePerson(ctx, &person); errSave != nil {
-					log.Error("Failed to save player summary update", zap.Error(errSave))
+					slog.Error("Failed to save player summary update", log.ErrAttr(errSave))
 				}
 			}
 		}
@@ -410,13 +405,12 @@ func (h AuthHandler) onOAuthDiscordCallback() gin.HandlerFunc {
 
 		ctx.JSON(http.StatusOK, nil)
 
-		log.Info("Discord account linked successfully",
-			zap.String("discord_id", discordID), zap.Int64("sid64", sid.Int64()))
+		slog.Info("Discord account linked successfully",
+			slog.String("discord_id", discordID), slog.Int64("sid64", sid.Int64()))
 	}
 }
 
-func (h AuthHandler) onAPILogout() gin.HandlerFunc {
-	log := h.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
+func (h authHandler) onAPILogout() gin.HandlerFunc {
 	conf := h.configUsecase.Config()
 
 	return func(ctx *gin.Context) {
@@ -430,7 +424,7 @@ func (h AuthHandler) onAPILogout() gin.HandlerFunc {
 		parsedExternal, errExternal := url.Parse(conf.General.ExternalURL)
 		if errExternal != nil {
 			ctx.Status(http.StatusInternalServerError)
-			log.Error("Failed to parse ext url", zap.Error(errExternal))
+			slog.Error("Failed to parse ext url", log.ErrAttr(errExternal))
 
 			return
 		}
@@ -441,14 +435,14 @@ func (h AuthHandler) onAPILogout() gin.HandlerFunc {
 		personAuth := domain.PersonAuth{}
 		if errGet := h.authUsecase.GetPersonAuthByRefreshToken(ctx, fingerprint, &personAuth); errGet != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, nil)
-			log.Warn("Failed to load person via fingerprint")
+			slog.Warn("Failed to load person via fingerprint")
 
 			return
 		}
 
 		if errDelete := h.authUsecase.DeletePersonAuth(ctx, personAuth.PersonAuthID); errDelete != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, nil)
-			log.Error("Failed to delete person auth on logout", zap.Error(errDelete))
+			slog.Error("Failed to delete person auth on logout", log.ErrAttr(errDelete))
 
 			return
 		}

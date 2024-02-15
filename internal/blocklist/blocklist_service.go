@@ -1,27 +1,25 @@
 package blocklist
 
 import (
+	"log/slog"
 	"net"
 	"net/http"
-	"runtime"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"go.uber.org/zap"
+	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
-type BlocklistHandler struct {
+type blocklistHandler struct {
 	BlocklistUsecase domain.BlocklistUsecase
 	nu               domain.NetworkUsecase
-	log              *zap.Logger
 }
 
-func NewBlocklistHandler(log *zap.Logger, engine *gin.Engine, bu domain.BlocklistUsecase, nu domain.NetworkUsecase, ath domain.AuthUsecase) {
-	handler := BlocklistHandler{
+func NewBlocklistHandler(engine *gin.Engine, bu domain.BlocklistUsecase, nu domain.NetworkUsecase, ath domain.AuthUsecase) {
+	handler := blocklistHandler{
 		BlocklistUsecase: bu,
 		nu:               nu,
-		log:              log,
 	}
 
 	// mod
@@ -53,9 +51,7 @@ type (
 	}
 )
 
-func (b *BlocklistHandler) onAPIDeleteBlockList() gin.HandlerFunc {
-	log := b.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (b *blocklistHandler) onAPIDeleteBlockList() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		sourceID, errSourceID := httphelper.GetIntParam(ctx, "cidr_block_source_id")
 		if errSourceID != nil {
@@ -67,7 +63,7 @@ func (b *BlocklistHandler) onAPIDeleteBlockList() gin.HandlerFunc {
 		if err := b.BlocklistUsecase.DeleteCIDRBlockSources(ctx, sourceID); err != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
-			log.Error("Failed to delete blocklist", zap.Error(err))
+			slog.Error("Failed to delete blocklist", log.ErrAttr(err))
 
 			return
 		}
@@ -76,9 +72,7 @@ func (b *BlocklistHandler) onAPIDeleteBlockList() gin.HandlerFunc {
 	}
 }
 
-func (b *BlocklistHandler) onAPIGetBlockLists() gin.HandlerFunc {
-	log := b.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (b *blocklistHandler) onAPIGetBlockLists() gin.HandlerFunc {
 	type BlockSources struct {
 		Sources   []domain.CIDRBlockSource   `json:"sources"`
 		Whitelist []CIDRBlockWhitelistExport `json:"whitelist"`
@@ -89,7 +83,7 @@ func (b *BlocklistHandler) onAPIGetBlockLists() gin.HandlerFunc {
 		if err != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
-			log.Error("Failed to load blocklist", zap.Error(err))
+			slog.Error("Failed to load blocklist", log.ErrAttr(err))
 
 			return
 		}
@@ -98,7 +92,7 @@ func (b *BlocklistHandler) onAPIGetBlockLists() gin.HandlerFunc {
 		if errWl != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
-			log.Error("Failed to load blocklist", zap.Error(err))
+			slog.Error("Failed to load blocklist", log.ErrAttr(err))
 
 			return
 		}
@@ -116,9 +110,7 @@ func (b *BlocklistHandler) onAPIGetBlockLists() gin.HandlerFunc {
 	}
 }
 
-func (b *BlocklistHandler) onAPIPostBlockListCreate() gin.HandlerFunc {
-	log := b.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (b *blocklistHandler) onAPIPostBlockListCreate() gin.HandlerFunc {
 	type createRequest struct {
 		Name    string `json:"name"`
 		URL     string `json:"url"`
@@ -127,7 +119,7 @@ func (b *BlocklistHandler) onAPIPostBlockListCreate() gin.HandlerFunc {
 
 	return func(ctx *gin.Context) {
 		var req createRequest
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -135,7 +127,7 @@ func (b *BlocklistHandler) onAPIPostBlockListCreate() gin.HandlerFunc {
 		if errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
-			log.Error("Failed to save blocklist", zap.Error(errSave))
+			slog.Error("Failed to save blocklist", log.ErrAttr(errSave))
 
 			return
 		}
@@ -144,9 +136,7 @@ func (b *BlocklistHandler) onAPIPostBlockListCreate() gin.HandlerFunc {
 	}
 }
 
-func (b *BlocklistHandler) onAPIPostBlockListUpdate() gin.HandlerFunc {
-	log := b.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (b *blocklistHandler) onAPIPostBlockListUpdate() gin.HandlerFunc {
 	type updateRequest struct {
 		Name    string `json:"name"`
 		URL     string `json:"url"`
@@ -162,7 +152,7 @@ func (b *BlocklistHandler) onAPIPostBlockListUpdate() gin.HandlerFunc {
 		}
 
 		var req updateRequest
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -177,16 +167,14 @@ func (b *BlocklistHandler) onAPIPostBlockListUpdate() gin.HandlerFunc {
 	}
 }
 
-func (b *BlocklistHandler) onAPIPostBlockListWhitelistCreate() gin.HandlerFunc {
-	log := b.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (b *blocklistHandler) onAPIPostBlockListWhitelistCreate() gin.HandlerFunc {
 	type createRequest struct {
 		Address string `json:"address"`
 	}
 
 	return func(ctx *gin.Context) {
 		var req createRequest
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -207,9 +195,7 @@ func (b *BlocklistHandler) onAPIPostBlockListWhitelistCreate() gin.HandlerFunc {
 	}
 }
 
-func (b *BlocklistHandler) onAPIPostBlockListWhitelistUpdate() gin.HandlerFunc {
-	log := b.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (b *blocklistHandler) onAPIPostBlockListWhitelistUpdate() gin.HandlerFunc {
 	type updateRequest struct {
 		Address string `json:"address"`
 	}
@@ -223,7 +209,7 @@ func (b *BlocklistHandler) onAPIPostBlockListWhitelistUpdate() gin.HandlerFunc {
 		}
 
 		var req updateRequest
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
@@ -231,7 +217,7 @@ func (b *BlocklistHandler) onAPIPostBlockListWhitelistUpdate() gin.HandlerFunc {
 		if errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
-			log.Error("Failed to save whitelist", zap.Error(errSave))
+			slog.Error("Failed to save whitelist", log.ErrAttr(errSave))
 
 			return
 		}
@@ -240,9 +226,7 @@ func (b *BlocklistHandler) onAPIPostBlockListWhitelistUpdate() gin.HandlerFunc {
 	}
 }
 
-func (b *BlocklistHandler) onAPIDeleteBlockListWhitelist() gin.HandlerFunc {
-	log := b.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (b *blocklistHandler) onAPIDeleteBlockListWhitelist() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		whitelistID, errWhitelistID := httphelper.GetIntParam(ctx, "cidr_block_whitelist_id")
 		if errWhitelistID != nil {
@@ -254,12 +238,12 @@ func (b *BlocklistHandler) onAPIDeleteBlockListWhitelist() gin.HandlerFunc {
 		if err := b.BlocklistUsecase.DeleteCIDRBlockWhitelist(ctx, whitelistID); err != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
-			log.Error("Failed to delete whitelist", zap.Error(err))
+			slog.Error("Failed to delete whitelist", log.ErrAttr(err))
 
 			return
 		}
 
-		log.Info("Blocklist deleted", zap.Int("cidr_block_source_id", whitelistID))
+		slog.Info("Blocklist deleted", slog.Int("cidr_block_source_id", whitelistID))
 
 		ctx.JSON(http.StatusOK, nil)
 
@@ -267,9 +251,7 @@ func (b *BlocklistHandler) onAPIDeleteBlockListWhitelist() gin.HandlerFunc {
 	}
 }
 
-func (b *BlocklistHandler) onAPIPostBlocklistCheck() gin.HandlerFunc {
-	log := b.log.Named(runtime.FuncForPC(make([]uintptr, 10)[0]).Name())
-
+func (b *blocklistHandler) onAPIPostBlocklistCheck() gin.HandlerFunc {
 	type checkReq struct {
 		Address string `json:"address"`
 	}
@@ -281,7 +263,7 @@ func (b *BlocklistHandler) onAPIPostBlocklistCheck() gin.HandlerFunc {
 
 	return func(ctx *gin.Context) {
 		var req checkReq
-		if !httphelper.Bind(ctx, log, &req) {
+		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 

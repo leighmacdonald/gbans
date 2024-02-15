@@ -7,22 +7,19 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
-	"go.uber.org/zap"
 )
 
 type banGroupUsecase struct {
 	banGroupRepository domain.BanGroupRepository
 	groupMemberships   *SteamGroupMemberships
-	log                *zap.Logger
 }
 
-func NewBanGroupUsecase(logger *zap.Logger, banGroupRepository domain.BanGroupRepository) domain.BanGroupUsecase {
-	sg := NewSteamGroupMemberships(logger, banGroupRepository)
+func NewBanGroupUsecase(banGroupRepository domain.BanGroupRepository) domain.BanGroupUsecase {
+	sg := NewSteamGroupMemberships(banGroupRepository)
 
 	return &banGroupUsecase{
 		banGroupRepository: banGroupRepository,
 		groupMemberships:   sg,
-		log:                logger.Named("bangroup"),
 	}
 }
 
