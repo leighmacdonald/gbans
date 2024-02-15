@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import NiceModal from '@ebay/nice-modal-react';
 import InsightsIcon from '@mui/icons-material/Insights';

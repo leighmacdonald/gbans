@@ -1,4 +1,3 @@
-import React from 'react';
 import InfoIcon from '@mui/icons-material/Info';
 import WarningIcon from '@mui/icons-material/Warning';
 import Stack from '@mui/material/Stack';

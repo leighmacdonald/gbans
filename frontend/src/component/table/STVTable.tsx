@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import { ChangeEvent, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useUrlState from '@ahooksjs/use-url-state';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
@@ -159,7 +159,7 @@ export const STVTable = () => {
                             setState({ page: newPage });
                         }}
                         onRowsPerPageChange={(
-                            event: React.ChangeEvent<
+                            event: ChangeEvent<
                                 HTMLInputElement | HTMLTextAreaElement
                             >
                         ) => {

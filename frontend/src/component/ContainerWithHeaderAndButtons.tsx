@@ -1,4 +1,4 @@
-import React, { FC, JSX } from 'react';
+import { FC, JSX, ReactNode } from 'react';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Grid from '@mui/material/Unstable_Grid2';
@@ -9,12 +9,12 @@ import { VCenteredElement } from './Heading';
 interface ContainerWithHeaderProps {
     title: string;
     children?: JSX.Element[] | JSX.Element | string;
-    iconLeft?: React.ReactNode;
+    iconLeft?: ReactNode;
     spacing?: number;
     elevation?: number;
     marginTop?: number;
     padding?: number;
-    buttons?: React.ReactNode[];
+    buttons?: ReactNode[];
 }
 
 export const ContainerWithHeaderAndButtons = ({
@@ -42,8 +42,8 @@ export const ContainerWithHeaderAndButtons = ({
 interface HeadingWithButtonsProps {
     children: JSX.Element[] | JSX.Element | string;
     bgColor?: string;
-    iconLeft?: React.ReactNode;
-    buttons?: React.ReactNode[];
+    iconLeft?: ReactNode;
+    buttons?: ReactNode[];
 }
 
 export const HeadingWithButtons: FC<HeadingWithButtonsProps> = ({

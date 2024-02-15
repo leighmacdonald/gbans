@@ -1,4 +1,3 @@
-import React from 'react';
 import { DatePicker } from '@mui/x-date-pickers';
 import { parseISO } from 'date-fns';
 import { useFormikContext } from 'formik';

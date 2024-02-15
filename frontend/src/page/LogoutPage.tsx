@@ -1,4 +1,4 @@
-import React, { useEffect, JSX } from 'react';
+import { useEffect, JSX } from 'react';
 import { Navigate } from 'react-router-dom';
 import { logout } from '../api';
 import { GuestProfile, useCurrentUserCtx } from '../contexts/CurrentUserCtx';

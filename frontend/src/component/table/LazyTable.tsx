@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import { MouseEvent, ChangeEventHandler, ReactNode } from 'react';
 import {
     TableFooter,
     TablePagination,
@@ -75,11 +75,11 @@ export interface LazyTableProps<T> {
     loading?: boolean;
     showPager?: boolean;
     hideHeader?: boolean;
-    onRowsPerPageChange?: React.ChangeEventHandler<
+    onRowsPerPageChange?: ChangeEventHandler<
         HTMLTextAreaElement | HTMLInputElement
     >;
     onPageChange?: (
-        event: React.MouseEvent<HTMLButtonElement> | null,
+        event: MouseEvent<HTMLButtonElement> | null,
         page: number
     ) => void;
     // Current page, used to calculate db offset

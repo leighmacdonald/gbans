@@ -1,4 +1,11 @@
-import React, { JSX, ReactNode, useCallback, useMemo, useState } from 'react';
+import {
+    JSX,
+    ReactNode,
+    SyntheticEvent,
+    useCallback,
+    useMemo,
+    useState
+} from 'react';
 import ConstructionIcon from '@mui/icons-material/Construction';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Box from '@mui/material/Box';
@@ -48,7 +55,7 @@ const SettingRow = ({
 };
 
 export const ProfileSettingsPage = (): JSX.Element => {
-    const [expanded, setExpanded] = React.useState<string | false>('general');
+    const [expanded, setExpanded] = useState<string | false>('general');
     const { data, loading } = usePersonSettings();
     const [newSettings, setNewSettings] = useState<PersonSettings>();
     const { sendFlash } = useUserFlashCtx();
@@ -58,7 +65,7 @@ export const ProfileSettingsPage = (): JSX.Element => {
     }, [data, newSettings]);
 
     const handleChange =
-        (panel: string) => (_: React.SyntheticEvent, isExpanded: boolean) => {
+        (panel: string) => (_: SyntheticEvent, isExpanded: boolean) => {
             setExpanded(isExpanded ? panel : false);
         };
 

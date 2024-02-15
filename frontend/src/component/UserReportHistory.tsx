@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { ChangeEvent, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import ButtonGroup from '@mui/material/ButtonGroup';
@@ -49,7 +49,7 @@ export const UserReportHistory = ({ steam_id }: { steam_id: string }) => {
                 setPage(newPage);
             }}
             onRowsPerPageChange={(
-                event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+                event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
             ) => {
                 setRowPerPageCount(parseInt(event.target.value, 10));
                 setPage(0);

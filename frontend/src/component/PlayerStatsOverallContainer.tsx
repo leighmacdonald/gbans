@@ -1,4 +1,4 @@
-import React, { useEffect, useState, JSX } from 'react';
+import { useEffect, useState, JSX } from 'react';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';

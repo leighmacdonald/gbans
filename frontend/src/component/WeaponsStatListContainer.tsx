@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { ChangeEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import InsightsIcon from '@mui/icons-material/Insights';
 import Button from '@mui/material/Button';
@@ -54,7 +54,7 @@ export const WeaponsStatListContainer = () => {
                         setPage(newPage);
                     }}
                     onRowsPerPageChange={(
-                        event: React.ChangeEvent<
+                        event: ChangeEvent<
                             HTMLInputElement | HTMLTextAreaElement
                         >
                     ) => {

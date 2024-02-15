@@ -1,4 +1,3 @@
-import React from 'react';
 import FolderIcon from '@mui/icons-material/Folder';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';

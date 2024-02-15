@@ -1,4 +1,4 @@
-import React, { JSX } from 'react';
+import { JSX, ReactNode } from 'react';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import { Heading } from './Heading';
@@ -12,7 +12,7 @@ export type JustifyTypes =
 interface ContainerWithHeaderProps {
     title: string;
     children?: JSX.Element[] | JSX.Element | string | boolean;
-    iconLeft?: React.ReactNode;
+    iconLeft?: ReactNode;
     spacing?: number;
     elevation?: number;
     marginTop?: number;

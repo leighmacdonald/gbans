@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { useFormikContext } from 'formik';
 import { PersonCell, PersonCellProps } from '../PersonCell';
 

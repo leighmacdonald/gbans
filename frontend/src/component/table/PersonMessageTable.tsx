@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import Button from '@mui/material/Button';
 import { format } from 'date-fns';
 import stc from 'string-to-color';
@@ -70,7 +70,7 @@ export const PersonMessageTable = ({ steam_id }: PersonMessageTableProps) => {
                 setPage(newPage);
             }}
             onRowsPerPageChange={(
-                event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+                event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
             ) => {
                 setRowPerPageCount(parseInt(event.target.value, 10));
                 setPage(0);
@@ -145,7 +145,7 @@ export const PersonMessageTable = ({ steam_id }: PersonMessageTableProps) => {
                 //                 <IconButton
                 //                     color={'secondary'}
                 //                     onClick={(
-                //                         event: React.MouseEvent<HTMLElement>
+                //                         event: MouseEvent<HTMLElement>
                 //                     ) => {
                 //                         setAnchorEl(event.currentTarget);
                 //                         setMenuOpen(true);

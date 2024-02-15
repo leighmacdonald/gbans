@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { ChangeEvent, useMemo, useState } from 'react';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { Filter, filterActionString, UserWarning } from '../../api/filters';
@@ -64,7 +64,7 @@ export const WarningStateTable = ({
                 setPage(newPage);
             }}
             onRowsPerPageChange={(
-                event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+                event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
             ) => {
                 setRowPerPageCount(parseInt(event.target.value, 10));
                 setPage(0);

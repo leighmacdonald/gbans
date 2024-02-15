@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import Stack from '@mui/material/Stack';
 import { ASNBanRecord } from '../../api';
 import { Heading } from '../Heading';

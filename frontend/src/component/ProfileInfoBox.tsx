@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import PregnantWomanIcon from '@mui/icons-material/PregnantWoman';
 import Avatar from '@mui/material/Avatar';
 import Stack from '@mui/material/Stack';

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import { ChangeEvent, useCallback, useMemo } from 'react';
 import useUrlState from '@ahooksjs/use-url-state';
 import NiceModal from '@ebay/nice-modal-react';
 import EditIcon from '@mui/icons-material/Edit';
@@ -188,7 +188,7 @@ export const BanGroupTable = ({ newBans }: { newBans: GroupBanRecord[] }) => {
                             setState({ page: newPage });
                         }}
                         onRowsPerPageChange={(
-                            event: React.ChangeEvent<
+                            event: ChangeEvent<
                                 HTMLInputElement | HTMLTextAreaElement
                             >
                         ) => {

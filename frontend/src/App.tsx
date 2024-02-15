@@ -1,4 +1,12 @@
-import React, { useCallback, useMemo, useState, JSX, Suspense } from 'react';
+import {
+    useCallback,
+    useMemo,
+    useState,
+    JSX,
+    Suspense,
+    Fragment,
+    StrictMode
+} from 'react';
 import {
     BrowserRouter as Router,
     Outlet,
@@ -151,11 +159,11 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
             <UserFlashCtx.Provider value={{ flashes, setFlashes, sendFlash }}>
                 <LocalizationProvider dateAdapter={AdapterDateFns}>
                     <Router>
-                        <React.Fragment>
+                        <Fragment>
                             <ColourModeContext.Provider value={colorMode}>
                                 <ThemeProvider theme={theme}>
                                     <NotificationsProvider>
-                                        <React.StrictMode>
+                                        <StrictMode>
                                             <NiceModal.Provider>
                                                 <UserInit />
                                                 <LogoutHandler />
@@ -791,11 +799,11 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                 </Container>
                                                 <Flashes />
                                             </NiceModal.Provider>
-                                        </React.StrictMode>
+                                        </StrictMode>
                                     </NotificationsProvider>
                                 </ThemeProvider>
                             </ColourModeContext.Provider>
-                        </React.Fragment>
+                        </Fragment>
                     </Router>
                 </LocalizationProvider>
             </UserFlashCtx.Provider>

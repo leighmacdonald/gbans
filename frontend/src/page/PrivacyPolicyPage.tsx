@@ -1,4 +1,4 @@
-import React, { JSX, ReactNode } from 'react';
+import { JSX, ReactNode } from 'react';
 import PolicyIcon from '@mui/icons-material/Policy';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';

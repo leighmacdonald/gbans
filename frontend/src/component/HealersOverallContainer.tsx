@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { ChangeEvent, useState } from 'react';
 import HealthAndSafetyIcon from '@mui/icons-material/HealthAndSafety';
 import { HealingOverallResult } from '../api';
 import { useHealerOverallStats } from '../hooks/useHealerOverallStats';
@@ -49,7 +49,7 @@ export const HealersOverallContainer = () => {
                         setPage(newPage);
                     }}
                     onRowsPerPageChange={(
-                        event: React.ChangeEvent<
+                        event: ChangeEvent<
                             HTMLInputElement | HTMLTextAreaElement
                         >
                     ) => {

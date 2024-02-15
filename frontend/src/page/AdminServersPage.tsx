@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import { ChangeEvent, useCallback, useMemo, useState } from 'react';
 import useUrlState from '@ahooksjs/use-url-state';
 import NiceModal from '@ebay/nice-modal-react';
 import AddIcon from '@mui/icons-material/Add';
@@ -120,7 +120,7 @@ export const AdminServersPage = () => {
                                 setState({ page: newPage });
                             }}
                             onRowsPerPageChange={(
-                                event: React.ChangeEvent<
+                                event: ChangeEvent<
                                     HTMLInputElement | HTMLTextAreaElement
                                 >
                             ) => {

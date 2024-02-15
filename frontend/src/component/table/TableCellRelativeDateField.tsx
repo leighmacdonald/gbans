@@ -1,4 +1,3 @@
-import React from 'react';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { formatDistanceStrict, intervalToDuration } from 'date-fns';

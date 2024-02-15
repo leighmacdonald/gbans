@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import {
@@ -73,7 +73,7 @@ export const ConnectionHistoryTable = ({ steam_id }: { steam_id?: string }) => {
                 setPage(newPage);
             }}
             onRowsPerPageChange={(
-                event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+                event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
             ) => {
                 setRowPerPageCount(parseInt(event.target.value, 10));
                 setPage(0);

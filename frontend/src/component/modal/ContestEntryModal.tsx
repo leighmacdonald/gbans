@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';

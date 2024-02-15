@@ -1,4 +1,3 @@
-import React from 'react';
 import { logoutKey, writeAccessToken, writeRefreshToken } from '../api';
 
 export const LogoutHandler = () => {

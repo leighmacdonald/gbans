@@ -1,11 +1,11 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import DoDisturbIcon from '@mui/icons-material/DoDisturb';
 import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import SteamID from 'steamid';
+import * as SteamID from 'steamid';
 import { handleOnLogin } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';

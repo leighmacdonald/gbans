@@ -1,4 +1,4 @@
-import React, { JSX, useCallback, useMemo } from 'react';
+import { JSX, useCallback, useMemo } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import NiceModal from '@ebay/nice-modal-react';
 import { Person2 } from '@mui/icons-material';

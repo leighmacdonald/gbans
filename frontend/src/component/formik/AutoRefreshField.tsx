@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useTimer } from 'react-timer-hook';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';

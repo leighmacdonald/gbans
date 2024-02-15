@@ -1,4 +1,3 @@
-import React from 'react';
 import { useParams } from 'react-router';
 import LinkIcon from '@mui/icons-material/Link';
 import LocalLibraryIcon from '@mui/icons-material/LocalLibrary';

@@ -1,4 +1,3 @@
-import React from 'react';
 import CancelPresentationIcon from '@mui/icons-material/CancelPresentation';
 import GavelIcon from '@mui/icons-material/Gavel';
 import NewReleasesIcon from '@mui/icons-material/NewReleases';

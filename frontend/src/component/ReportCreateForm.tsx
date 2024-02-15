@@ -1,4 +1,4 @@
-import React, { JSX, useCallback, useEffect, useState } from 'react';
+import { JSX, useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import EditNotificationsIcon from '@mui/icons-material/EditNotifications';
 import SendIcon from '@mui/icons-material/Send';

@@ -1,4 +1,4 @@
-import React, { JSX, useMemo } from 'react';
+import { JSX, useMemo, useState, MouseEvent } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import ArticleIcon from '@mui/icons-material/Article';
@@ -65,26 +65,23 @@ export const TopBar = () => {
     const theme = useTheme();
     const colourMode = useColourModeCtx();
 
-    const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
+    const [anchorElNav, setAnchorElNav] = useState<null | HTMLElement>(null);
+
+    const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
+
+    const [anchorElAdmin, setAnchorElAdmin] = useState<null | HTMLElement>(
         null
     );
 
-    const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(
-        null
-    );
-
-    const [anchorElAdmin, setAnchorElAdmin] =
-        React.useState<null | HTMLElement>(null);
-
-    const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
+    const handleOpenNavMenu = (event: MouseEvent<HTMLElement>) => {
         setAnchorElNav(event.currentTarget);
     };
 
-    const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
+    const handleOpenUserMenu = (event: MouseEvent<HTMLElement>) => {
         setAnchorElUser(event.currentTarget);
     };
 
-    const handleOpenAdminMenu = (event: React.MouseEvent<HTMLElement>) => {
+    const handleOpenAdminMenu = (event: MouseEvent<HTMLElement>) => {
         setAnchorElAdmin(event.currentTarget);
     };
 

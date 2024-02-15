@@ -1,4 +1,3 @@
-import React from 'react';
 import { APIError, ErrorCode } from '../api';
 import { LoginPage } from '../page/LoginPage';
 import { PageNotFoundPage } from '../page/PageNotFoundPage';

@@ -1,4 +1,3 @@
-import React from 'react';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import Grid from '@mui/material/Unstable_Grid2';
 import { formatDistance } from 'date-fns';

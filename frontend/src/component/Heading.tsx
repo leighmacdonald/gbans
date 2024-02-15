@@ -1,4 +1,4 @@
-import React, { FC, JSX } from 'react';
+import { FC, JSX, ReactNode } from 'react';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
@@ -7,13 +7,13 @@ import { tf2Fonts } from '../theme';
 interface HeadingProps {
     children: JSX.Element[] | JSX.Element | string;
     bgColor?: string;
-    iconLeft?: React.ReactNode;
-    iconRight?: React.ReactNode;
+    iconLeft?: ReactNode;
+    iconRight?: ReactNode;
     align?: 'flex-start' | 'center' | 'flex-end' | 'space-between';
 }
 
 interface VCenteredImageProps {
-    icon: React.ReactNode;
+    icon: ReactNode;
 }
 
 export const VCenteredElement = ({ icon }: VCenteredImageProps) => {

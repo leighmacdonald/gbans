@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useCallback, useState, JSX } from 'react';
+import { ChangeEvent, ClipboardEvent, useCallback, useState, JSX } from 'react';
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import {
     Dialog,
@@ -84,7 +84,7 @@ export const FileUploadModal = NiceModal.create((): JSX.Element => {
         [name]
     );
 
-    const handlePaste = useCallback((event: React.ClipboardEvent) => {
+    const handlePaste = useCallback((event: ClipboardEvent) => {
         setUploadInProgress(true);
         const items = event.clipboardData.items;
         // eslint-disable-next-line no-loops/no-loops

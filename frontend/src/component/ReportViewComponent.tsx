@@ -1,4 +1,4 @@
-import React, { useCallback, useState, JSX, useMemo } from 'react';
+import { useCallback, useState, JSX, useMemo, SyntheticEvent } from 'react';
 import DescriptionIcon from '@mui/icons-material/Description';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import LanIcon from '@mui/icons-material/Lan';
@@ -56,7 +56,7 @@ export const ReportViewComponent = ({
     const { data: messagesServer } = useReportMessages(report.report_id);
     const [newMessages, setNewMessages] = useState<ReportMessage[]>([]);
     const [deletedMessages, setDeletedMessages] = useState<number[]>([]);
-    const [value, setValue] = React.useState<number>(0);
+    const [value, setValue] = useState<number>(0);
 
     const { currentUser } = useCurrentUserCtx();
     const { sendFlash } = useUserFlashCtx();
@@ -67,7 +67,7 @@ export const ReportViewComponent = ({
         );
     }, [deletedMessages, messagesServer, newMessages]);
 
-    const handleChange = (_: React.SyntheticEvent, newValue: number) => {
+    const handleChange = (_: SyntheticEvent, newValue: number) => {
         setValue(newValue);
     };
 

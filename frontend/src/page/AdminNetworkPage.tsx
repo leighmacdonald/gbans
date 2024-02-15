@@ -1,4 +1,4 @@
-import React from 'react';
+import { ChangeEvent, SyntheticEvent, useCallback, useState } from 'react';
 import HelpIcon from '@mui/icons-material/Help';
 import LeakAddIcon from '@mui/icons-material/LeakAdd';
 import VpnLockIcon from '@mui/icons-material/VpnLock';
@@ -23,12 +23,12 @@ interface NetworkInputProps {
 
 export const NetworkInput = ({ onValidChange }: NetworkInputProps) => {
     const defaultHelperText = 'Enter a IP address or CIDR range';
-    const [error, setError] = React.useState('');
-    const [value, setValue] = React.useState('');
-    const [helper, setHelper] = React.useState(defaultHelperText);
+    const [error, setError] = useState('');
+    const [value, setValue] = useState('');
+    const [helper, setHelper] = useState(defaultHelperText);
 
-    const onChange = React.useCallback(
-        (evt: React.ChangeEvent<HTMLInputElement>) => {
+    const onChange = useCallback(
+        (evt: ChangeEvent<HTMLInputElement>) => {
             const address = evt.target.value;
             if (address == '') {
                 setError('');
@@ -92,9 +92,9 @@ const FindPlayerIP = () => {
 };
 
 export const AdminNetworkPage = () => {
-    const [value, setValue] = React.useState(0);
+    const [value, setValue] = useState(0);
 
-    const handleChange = (_: React.SyntheticEvent, newValue: number) => {
+    const handleChange = (_: SyntheticEvent, newValue: number) => {
         setValue(newValue);
     };
 

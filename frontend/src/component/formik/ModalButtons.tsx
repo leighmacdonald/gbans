@@ -1,4 +1,3 @@
-import React from 'react';
 import { useModal } from '@ebay/nice-modal-react';
 import CheckIcon from '@mui/icons-material/Check';
 import ClearIcon from '@mui/icons-material/Clear';

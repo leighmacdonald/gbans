@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import Typography from '@mui/material/Typography';
 import { apiGetBansSteam, BanReasons, SteamBanRecord } from '../../api';
 import { logErr } from '../../util/errors';
@@ -62,7 +62,7 @@ export const BanHistoryTable = ({ steam_id }: { steam_id?: string }) => {
                 setPage(newPage);
             }}
             onRowsPerPageChange={(
-                event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+                event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
             ) => {
                 setRowPerPageCount(parseInt(event.target.value, 10));
                 setPage(0);

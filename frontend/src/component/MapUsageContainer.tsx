@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { SyntheticEvent, useEffect, useMemo, useState } from 'react';
 import MapIcon from '@mui/icons-material/Map';
 import TabContext from '@mui/lab/TabContext';
 import TabList from '@mui/lab/TabList';
@@ -135,9 +135,9 @@ export const MapUsageContainer = () => {
     const [seriesMode, setSeriesMode] = useState<SeriesData[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const [value, setValue] = React.useState('1');
+    const [value, setValue] = useState('1');
 
-    const handleChange = (_: React.SyntheticEvent, newValue: string) => {
+    const handleChange = (_: SyntheticEvent, newValue: string) => {
         setValue(newValue);
     };
 

@@ -1,4 +1,4 @@
-import React, { JSX } from 'react';
+import { forwardRef, JSX, SyntheticEvent, useState } from 'react';
 import { AlertColor } from '@mui/material/Alert';
 import MuiAlert, { AlertProps } from '@mui/material/Alert';
 import Snackbar, { SnackbarOrigin } from '@mui/material/Snackbar';
@@ -12,7 +12,7 @@ export interface Flash {
     link_to?: string;
 }
 
-const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
+const Alert = forwardRef<HTMLDivElement, AlertProps>(
     function Alert(props, ref) {
         return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
     }
@@ -27,13 +27,13 @@ export const PositionedSnackbar = ({
 }: {
     notification: Flash;
 }) => {
-    const [state, setState] = React.useState<State>({
+    const [state, setState] = useState<State>({
         open: true,
         vertical: 'bottom',
         horizontal: 'left'
     });
 
-    const handleClose = (_: React.SyntheticEvent | Event, reason?: string) => {
+    const handleClose = (_: SyntheticEvent | Event, reason?: string) => {
         if (reason === 'clickaway') {
             return;
         }

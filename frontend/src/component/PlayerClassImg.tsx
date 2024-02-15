@@ -1,4 +1,4 @@
-import React, { MouseEventHandler } from 'react';
+import { MouseEventHandler } from 'react';
 import { PlayerClass, PlayerClassNames } from '../api';
 import demoClassImg from '../icons/class_demoman.png';
 import engineerClassImg from '../icons/class_engineer.png';
