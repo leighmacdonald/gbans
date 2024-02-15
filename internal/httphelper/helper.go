@@ -152,11 +152,7 @@ func HasPrivilege(person domain.PersonInfo, allowedSteamIds steamid.Collection, 
 		}
 	}
 
-	if !person.HasPermission(minPrivilege) {
-		return false
-	}
-
-	return true
+	return person.HasPermission(minPrivilege)
 }
 
 type ResultsCount struct {

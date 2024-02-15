@@ -83,6 +83,7 @@ func (h AuthHandler) onOpenIDCallback() gin.HandlerFunc {
 
 				return
 			}
+
 			idStr = openID
 		}
 

@@ -119,12 +119,12 @@ func (d demoUsecase) Create(ctx context.Context, name string, content io.Reader,
 
 	demoContent, errRead := io.ReadAll(content)
 	if errRead != nil {
-		return nil, errRead
+		return nil, errors.Join(errRead, domain.ErrReadContent)
 	}
 
 	dir, errDir := os.MkdirTemp("", "gbans-demo")
 	if errDir != nil {
-		return nil, errDir
+		return nil, errors.Join(errDir, domain.ErrTempDir)
 	}
 
 	defer func() {
@@ -150,11 +150,11 @@ func (d demoUsecase) Create(ctx context.Context, name string, content io.Reader,
 
 	localFile, errLocalFile := os.Create(tempPath)
 	if errLocalFile != nil {
-		return nil, errLocalFile
+		return nil, errors.Join(errLocalFile, domain.ErrOpenFile)
 	}
 
 	if _, err := localFile.Write(demoContent); err != nil {
-		return nil, err
+		return nil, errors.Join(err, domain.ErrWriteDemo)
 	}
 
 	_ = localFile.Close()

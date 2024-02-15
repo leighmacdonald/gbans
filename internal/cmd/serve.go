@@ -106,7 +106,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
 			weaponsMap := fp.NewMutexMap[logparse.Weapon, int]()
 
-			dr, errDR := discord.NewDiscordRepository(rootLogger, conf)
+			discordRepository, errDR := discord.NewDiscordRepository(rootLogger, conf)
 			if errDR != nil {
 				rootLogger.Fatal("Cannot initialize discord", zap.Error(errDR))
 			}
@@ -116,7 +116,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				rootLogger.Fatal("Failed to load word filters", zap.Error(err))
 			}
 
-			discordUsecase := discord.NewDiscordUsecase(dr, wordFilterUsecase)
+			discordUsecase := discord.NewDiscordUsecase(discordRepository, wordFilterUsecase)
 
 			if err := discordUsecase.Start(); err != nil {
 				rootLogger.Fatal("Failed to start discord", zap.Error(err))

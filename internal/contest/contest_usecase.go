@@ -2,6 +2,7 @@ package contest
 
 import (
 	"context"
+	"errors"
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -20,7 +21,7 @@ func (c *contestUsecase) ContestSave(ctx context.Context, contest domain.Contest
 	if contest.ContestID.IsNil() {
 		newID, errID := uuid.NewV4()
 		if errID != nil {
-			return contest, errID
+			return contest, errors.Join(errID, domain.ErrUUIDCreate)
 		}
 
 		contest.ContestID = newID

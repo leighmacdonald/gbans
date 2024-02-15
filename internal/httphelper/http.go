@@ -137,6 +137,7 @@ func useSentry(engine *gin.Engine, version string) {
 		if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
 			hub.Scope().SetTag("version", version)
 		}
+
 		ctx.Next()
 	})
 }

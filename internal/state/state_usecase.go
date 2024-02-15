@@ -122,6 +122,7 @@ func (s *stateUsecase) logReader(ctx context.Context, writeUnhandled bool) {
 					continue
 				} else if newServerEvent.EventType == logparse.UnknownMsg {
 					unknown++
+
 					if writeUnhandled {
 						if _, errWrite := file.WriteString(logLine + "\n"); errWrite != nil {
 							log.Error("Failed to write debug log", zap.Error(errWrite))
@@ -130,6 +131,7 @@ func (s *stateUsecase) logReader(ctx context.Context, writeUnhandled bool) {
 				}
 
 				s.broadcaster.Emit(newServerEvent.EventType, newServerEvent)
+
 				emitted++
 			}
 
@@ -360,7 +362,7 @@ type broadcastResult struct {
 // to every server.
 func (s *stateUsecase) Broadcast(ctx context.Context, serverIDs []int, cmd string) map[int]string {
 	results := map[int]string{}
-	eg, egCtx := errgroup.WithContext(ctx)
+	errGroup, egCtx := errgroup.WithContext(ctx)
 
 	configs := s.stateRepository.Configs()
 
@@ -375,7 +377,7 @@ func (s *stateUsecase) Broadcast(ctx context.Context, serverIDs []int, cmd strin
 	for _, serverID := range serverIDs {
 		sid := serverID
 
-		eg.Go(func() error {
+		errGroup.Go(func() error {
 			serverConf, errServerConf := s.stateRepository.GetServer(sid)
 			if errServerConf != nil {
 				return errServerConf
@@ -400,7 +402,7 @@ func (s *stateUsecase) Broadcast(ctx context.Context, serverIDs []int, cmd strin
 	}
 
 	go func() {
-		err := eg.Wait()
+		err := errGroup.Wait()
 		if err != nil {
 			s.log.Error("Failed to broadcast command", zap.Error(err))
 		}
