@@ -23,7 +23,7 @@ jobs:
         with:
           node-version: '20.x'
           cache: 'yarn'
-          cache-dependency-path: 'frontend/yarn.lock'
+          cache-dependency-path: 'frontend/pnpm-lock.yaml'
 
       - name: corepack
         run: corepack enable

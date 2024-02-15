@@ -3,8 +3,7 @@ FROM node:18-alpine as frontend
 WORKDIR /build
 RUN apk add --no-cache python3 make g++
 COPY frontend/package.json frontend/package.json
-COPY frontend/.yarnrc.yml frontend/.yarnrc.yml
-COPY frontend/yarn.lock frontend/yarn.lock
+COPY frontend/pnpm-lock.yaml frontend/pnpm-lock.yaml
 COPY frontend frontend
 WORKDIR /build/frontend
 RUN yarn install --immutable
