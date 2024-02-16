@@ -112,8 +112,9 @@ func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.Ne
 	}
 
 	newWarning.MatchedFilter.TriggerCount++
-	if errSave := u.wfu.SaveFilter(ctx, admin, newWarning.MatchedFilter); errSave != nil {
-		slog.Error("Failed to update filter trigger count", log.ErrAttr(errSave))
+	_, errSave := u.wfu.Edit(ctx, admin, newWarning.MatchedFilter.FilterID, newWarning.MatchedFilter)
+	if errSave != nil {
+		return errSave
 	}
 
 	if !u.pingDiscord {
@@ -136,8 +137,9 @@ func (u chatUsecase) onWarningHandler(ctx context.Context, newWarning domain.New
 		return errAdmin
 	}
 
-	if errSave := u.wfu.SaveFilter(ctx, admin, newWarning.MatchedFilter); errSave != nil {
-		slog.Error("Failed to update filter trigger count", log.ErrAttr(errSave))
+	_, errSave := u.wfu.Edit(ctx, admin, newWarning.MatchedFilter.FilterID, newWarning.MatchedFilter)
+	if errSave != nil {
+		return errSave
 	}
 
 	if !newWarning.MatchedFilter.IsEnabled {

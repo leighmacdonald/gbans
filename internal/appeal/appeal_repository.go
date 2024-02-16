@@ -244,7 +244,7 @@ func (r *appealRepository) GetBanMessages(ctx context.Context, banID int64) ([]d
 	return messages, nil
 }
 
-func (r *appealRepository) GetBanMessageByID(ctx context.Context, banMessageID int64, message *domain.BanAppealMessage) error {
+func (r *appealRepository) GetBanMessageByID(ctx context.Context, banMessageID int64) (domain.BanAppealMessage, error) {
 	query := r.db.
 		Builder().
 		Select("a.ban_message_id", "a.ban_id", "a.author_id", "a.message_md", "a.deleted", "a.created_on",
@@ -253,11 +253,14 @@ func (r *appealRepository) GetBanMessageByID(ctx context.Context, banMessageID i
 		LeftJoin("person p ON a.author_id = p.steam_id").
 		Where(sq.Eq{"a.ban_message_id": banMessageID})
 
-	var authorID int64
+	var (
+		authorID int64
+		message  domain.BanAppealMessage
+	)
 
 	row, errQuery := r.db.QueryRowBuilder(ctx, query)
 	if errQuery != nil {
-		return r.db.DBErr(errQuery)
+		return message, r.db.DBErr(errQuery)
 	}
 
 	if errScan := row.Scan(
@@ -272,12 +275,12 @@ func (r *appealRepository) GetBanMessageByID(ctx context.Context, banMessageID i
 		&message.Personaname,
 		&message.PermissionLevel,
 	); errScan != nil {
-		return r.db.DBErr(errScan)
+		return message, r.db.DBErr(errScan)
 	}
 
 	message.AuthorID = steamid.New(authorID)
 
-	return nil
+	return message, nil
 }
 
 func (r *appealRepository) DropBanMessage(ctx context.Context, message *domain.BanAppealMessage) error {

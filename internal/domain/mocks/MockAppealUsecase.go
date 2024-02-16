@@ -245,7 +245,7 @@ func (_c *MockAppealUsecase_GetBanMessages_Call) RunAndReturn(run func(context.C
 }
 
 // SaveBanMessage provides a mock function with given fields: ctx, curUser, reportMessageID, newMsg
-func (_m *MockAppealUsecase) SaveBanMessage(ctx context.Context, curUser domain.UserProfile, reportMessageID int64, newMsg string) (*domain.BanAppealMessage, error) {
+func (_m *MockAppealUsecase) CreateBanMessage(ctx context.Context, curUser domain.UserProfile, reportMessageID int64, newMsg string) (*domain.BanAppealMessage, error) {
 	ret := _m.Called(ctx, curUser, reportMessageID, newMsg)
 
 	if len(ret) == 0 {

@@ -46,10 +46,11 @@ type CreateReportReq struct {
 type ReportStatus int
 
 const (
-	Opened ReportStatus = iota
-	NeedMoreInfo
-	ClosedWithoutAction
-	ClosedWithAction
+	AnyStatus                        = -1
+	Opened              ReportStatus = 0
+	NeedMoreInfo                     = 1
+	ClosedWithoutAction              = 2
+	ClosedWithAction                 = 3
 )
 
 func (status ReportStatus) String() string {

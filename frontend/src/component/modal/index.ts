@@ -10,9 +10,7 @@ const CIDRBlockEditorModal = loadable(() => import('./CIDRBlockEditorModal'));
 const CIDRWhitelistEditorModal = loadable(
     () => import('./CIDRWhitelistEditorModal')
 );
-const ConfirmDeleteFilterModal = loadable(
-    () => import('./ConfirmDeleteFilterModal')
-);
+
 const ConfirmationModal = loadable(() => import('./ConfirmationModal'));
 const ContestEditor = loadable(() => import('./ContestEditor'));
 const ContestEntryDeleteModal = loadable(
@@ -59,7 +57,6 @@ export const ModalServerEditor = 'modal-server-editor';
 export const ModalServerDelete = 'modal-server-delete';
 export const ModalMessageContext = 'modal-message-context';
 export const ModalFileUpload = 'modal-file-upload';
-export const ModalFilterDelete = 'modal-filter-delete';
 export const ModalFilterEditor = 'modal-filter-editor';
 export const ModalPersonEditor = 'modal-person-editor';
 export const ModalForumCategoryEditor = 'modal-forum-category-editor';
@@ -84,7 +81,6 @@ export const ModalForumThreadEditor = 'modal-forum-thread-editor';
     [ModalMessageContext, MessageContextModal],
     [ModalPersonEditor, PersonEditModal],
     [ModalFileUpload, FileUploadModal],
-    [ModalFilterDelete, ConfirmDeleteFilterModal],
     [ModalFilterEditor, FilterEditModal],
     [ModalBanSteam, BanSteamModal],
     [ModalBanASN, BanASNModal],
