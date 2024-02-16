@@ -9,7 +9,12 @@ import {
 } from '@mui/material';
 import Stack from '@mui/material/Stack';
 import { Formik } from 'formik';
-import { apiSaveFilter, Filter, FilterAction } from '../../api/filters';
+import {
+    apiCreateFilter,
+    apiEditFilter,
+    Filter,
+    FilterAction
+} from '../../api/filters';
 import { Heading } from '../Heading';
 import { DurationStringField } from '../formik/DurationStringField';
 import { FilterActionField } from '../formik/FilterActionField';
@@ -40,15 +45,27 @@ export const FilterEditModal = NiceModal.create(
         const onSave = useCallback(
             async (values: FilterEditFormValues) => {
                 try {
-                    const resp = await apiSaveFilter({
-                        is_enabled: values.is_enabled,
-                        filter_id: values.filter_id,
-                        is_regex: values.is_regex,
-                        pattern: values.pattern,
-                        action: values.action,
-                        duration: values.duration,
-                        weight: values.weight
-                    });
+                    let resp: Filter;
+                    if (values.filter_id) {
+                        resp = await apiEditFilter(values.filter_id, {
+                            is_enabled: values.is_enabled,
+                            is_regex: values.is_regex,
+                            pattern: values.pattern,
+                            action: values.action,
+                            duration: values.duration,
+                            weight: values.weight
+                        });
+                    } else {
+                        resp = await apiCreateFilter({
+                            is_enabled: values.is_enabled,
+                            is_regex: values.is_regex,
+                            pattern: values.pattern,
+                            action: values.action,
+                            duration: values.duration,
+                            weight: values.weight
+                        });
+                    }
+
                     modal.resolve(resp);
                     await modal.hide();
                 } catch (e) {

@@ -46,8 +46,11 @@ export const apiGetFilters = async (
         abortController
     );
 
-export const apiSaveFilter = async (filter: Filter) =>
+export const apiCreateFilter = async (filter: Filter) =>
     await apiCall<Filter>(`/api/filters`, 'POST', filter);
+
+export const apiEditFilter = async (filter_id: number, filter: Filter) =>
+    await apiCall<Filter>(`/api/filters/${filter_id}`, 'POST', filter);
 
 export interface FilterQuery {
     query: string;

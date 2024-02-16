@@ -32,7 +32,7 @@ func (r *wordFilterRepository) insertFilter(ctx context.Context, filter *domain.
 		RETURNING filter_id`
 
 	if errQuery := r.db.QueryRow(ctx, query, filter.AuthorID.Int64(), filter.Pattern,
-		filter.IsRegex, filter.IsEnabled, filter.TriggerCount, filter.CreatedOn, filter.UpdatedOn, filter.Action, filter.Duration).
+		filter.IsRegex, filter.IsEnabled, filter.TriggerCount, filter.CreatedOn, filter.UpdatedOn, filter.Action, filter.Duration, filter.Weight).
 		Scan(&filter.FilterID); errQuery != nil {
 		return r.db.DBErr(errQuery)
 	}
@@ -63,7 +63,7 @@ func (r *wordFilterRepository) updateFilter(ctx context.Context, filter *domain.
 	return nil
 }
 
-func (r *wordFilterRepository) DropFilter(ctx context.Context, filter *domain.Filter) error {
+func (r *wordFilterRepository) DropFilter(ctx context.Context, filter domain.Filter) error {
 	query := r.db.
 		Builder().
 		Delete("filtered_word").

@@ -11,15 +11,16 @@ import (
 
 type WordFilterRepository interface {
 	SaveFilter(ctx context.Context, filter *Filter) error
-	DropFilter(ctx context.Context, filter *Filter) error
+	DropFilter(ctx context.Context, filter Filter) error
 	GetFilterByID(ctx context.Context, filterID int64) (Filter, error)
 	GetFilters(ctx context.Context, opts FiltersQueryFilter) ([]Filter, int64, error)
 	AddMessageFilterMatch(ctx context.Context, messageID int64, filterID int64) error
 }
 
 type WordFilterUsecase interface {
-	SaveFilter(ctx context.Context, user PersonInfo, filter *Filter) error
-	DropFilter(ctx context.Context, filter *Filter) error
+	Edit(ctx context.Context, user PersonInfo, filterID int64, filter Filter) (Filter, error)
+	Create(ctx context.Context, user PersonInfo, filter Filter) (Filter, error)
+	DropFilter(ctx context.Context, filter Filter) error
 	GetFilterByID(ctx context.Context, filterID int64) (Filter, error)
 	GetFilters(ctx context.Context, opts FiltersQueryFilter) ([]Filter, int64, error)
 	Check(query string) []Filter
