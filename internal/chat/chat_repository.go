@@ -207,12 +207,12 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.Cha
 			"m.created_on",
 			"m.persona_name",
 			"m.match_id",
-			"r.short_name",
+			"s.short_name",
 			"CASE WHEN mf.person_message_id::int::boolean THEN mf.person_message_filter_id ELSE 0 END as flagged",
-			"r.avatarhash",
+			"p.avatarhash",
 			"CASE WHEN f.pattern IS NULL THEN '' ELSE f.pattern END").
 		From("person_messages m").
-		LeftJoin("server r USING(server_id)").
+		LeftJoin("server s USING(server_id)").
 		LeftJoin("person_messages_filter mf USING(person_message_id)").
 		LeftJoin("filtered_word f USING(filter_id)").
 		LeftJoin("person p USING(steam_id)")
@@ -317,7 +317,7 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.Cha
 		Builder().
 		Select("count(m.created_on) as count").
 		From("person_messages m").
-		LeftJoin("server r on m.server_id = r.server_id").
+		LeftJoin("server s on m.server_id = m.server_id").
 		LeftJoin("person_messages_filter f on m.person_message_id = f.person_message_id").
 		LeftJoin("person p on p.steam_id = m.steam_id").
 		Where(constraints))
@@ -335,12 +335,12 @@ func (r chatRepository) GetPersonMessage(ctx context.Context, messageID int64) (
 	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
 		Builder().
 		Select("m.person_message_id", "m.steam_id", "m.server_id", "m.body", "m.team", "m.created_on",
-			"m.persona_name", "m.match_id", "r.short_name", "COUNT(f.person_message_id)::int::boolean as flagged").
+			"m.persona_name", "m.match_id", "s.short_name", "COUNT(f.person_message_id)::int::boolean as flagged").
 		From("person_messages m").
-		LeftJoin("server r USING(server_id)").
+		LeftJoin("server s USING(server_id)").
 		LeftJoin("person_messages_filter f USING(person_message_id)").
 		Where(sq.Eq{"m.person_message_id": messageID}).
-		GroupBy("m.person_message_id", "r.short_name"))
+		GroupBy("m.person_message_id", "s.short_name"))
 	if errRow != nil {
 		return msg, r.db.DBErr(errRow)
 	}
@@ -357,12 +357,12 @@ func (r chatRepository) GetPersonMessageContext(ctx context.Context, serverID in
 	const query = `
 		(
 			SELECT m.person_message_id, m.steam_id,	m.server_id, m.body, m.team, m.created_on, 
-			       m.persona_name,  m.match_id, r.short_name, COUNT(f.person_message_id)::int::boolean as flagged
+			       m.persona_name,  m.match_id, s.short_name, COUNT(f.person_message_id)::int::boolean as flagged
 			FROM person_messages m 
-			LEFT JOIN server r on m.server_id = r.server_id
+			LEFT JOIN server s on m.server_id = s.server_id
 			LEFT JOIN person_messages_filter f on m.person_message_id = f.person_message_id
 		 	WHERE m.server_id = $3 AND m.person_message_id >= $1 
-		 	GROUP BY m.person_message_id, r.short_name 
+		 	GROUP BY m.person_message_id, s.short_name 
 		 	ORDER BY m.person_message_id ASC
 		 	
 		 	LIMIT $2+1
@@ -370,9 +370,9 @@ func (r chatRepository) GetPersonMessageContext(ctx context.Context, serverID in
 		UNION
 		(
 			SELECT m.person_message_id, m.steam_id, m.server_id, m.body, m.team, m.created_on, 
-			       m.persona_name,  m.match_id, r.short_name, COUNT(f.person_message_id)::int::boolean as flagged
+			       m.persona_name,  m.match_id, s.short_name, COUNT(f.person_message_id)::int::boolean as flagged
 		 	FROM person_messages m 
-		 	    LEFT JOIN server r on m.server_id = r.server_id 
+		 	    LEFT JOIN server s on m.server_id = s.server_id 
 		 	LEFT JOIN person_messages_filter f on m.person_message_id = f.person_message_id
 		 	WHERE m.server_id = $3 AND  m.person_message_id < $1
 		 	GROUP BY m.person_message_id, r.short_name

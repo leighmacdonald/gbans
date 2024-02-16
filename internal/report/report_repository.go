@@ -163,7 +163,7 @@ func (r reportRepository) DropReportMessage(ctx context.Context, message *domain
 }
 
 func (r reportRepository) GetReports(ctx context.Context, opts domain.ReportQueryFilter) ([]domain.Report, int64, error) {
-	constraints := sq.And{sq.Eq{"deleted": opts.Deleted}}
+	constraints := sq.And{sq.Eq{"r.deleted": opts.Deleted}}
 
 	if opts.SourceID != "" {
 		authorID, errAuthorID := opts.SourceID.SID64(ctx)
@@ -171,7 +171,7 @@ func (r reportRepository) GetReports(ctx context.Context, opts domain.ReportQuer
 			return nil, 0, errors.Join(errAuthorID, domain.ErrSourceID)
 		}
 
-		constraints = append(constraints, sq.Eq{"s.author_id": authorID.Int64()})
+		constraints = append(constraints, sq.Eq{"r.author_id": authorID.Int64()})
 	}
 
 	if opts.TargetID != "" {
@@ -180,30 +180,30 @@ func (r reportRepository) GetReports(ctx context.Context, opts domain.ReportQuer
 			return nil, 0, errors.Join(errTargetID, domain.ErrTargetID)
 		}
 
-		constraints = append(constraints, sq.Eq{"s.reported_id": targetID.Int64()})
+		constraints = append(constraints, sq.Eq{"r.reported_id": targetID.Int64()})
 	}
 
 	if opts.ReportStatus >= 0 {
-		constraints = append(constraints, sq.Eq{"s.report_status": opts.ReportStatus})
+		constraints = append(constraints, sq.Eq{"r.report_status": opts.ReportStatus})
 	}
 
 	counterQuery := r.db.
 		Builder().
-		Select("count(s.report_id) as total").
-		From("report s").
+		Select("count(r.report_id) as total").
+		From("report r").
 		Where(constraints)
 
 	builder := r.db.
 		Builder().
-		Select("s.report_id", "s.author_id", "s.reported_id", "s.report_status",
-			"s.description", "s.deleted", "s.created_on", "s.updated_on", "s.reason", "s.reason_text",
-			"s.demo_name", "s.demo_tick", "coalesce(d.demo_id, 0)", "s.person_message_id").
-		From("report s").
+		Select("r.report_id", "r.author_id", "r.reported_id", "r.report_status",
+			"r.description", "r.deleted", "r.created_on", "r.updated_on", "r.reason", "r.reason_text",
+			"r.demo_name", "r.demo_tick", "coalesce(d.demo_id, 0)", "r.person_message_id").
+		From("report r").
 		Where(constraints).
-		LeftJoin("demo d on d.title = s.demo_name")
+		LeftJoin("demo d on d.title = r.demo_name")
 
 	builder = opts.ApplySafeOrder(builder, map[string][]string{
-		"s.": {"report_id", "author_id", "reported_id", "report_status", "deleted", "created_on", "updated_on", "reason"},
+		"r.": {"report_id", "author_id", "reported_id", "report_status", "deleted", "created_on", "updated_on", "reason"},
 	}, "report_id")
 
 	builder = opts.ApplyLimitOffsetDefault(builder)

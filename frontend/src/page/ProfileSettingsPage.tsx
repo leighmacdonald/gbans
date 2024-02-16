@@ -26,7 +26,7 @@ import { ForumProfileMessagesField } from '../component/formik/ForumProfileMessa
 import { StatsHiddenField } from '../component/formik/StatsHiddenField';
 import { ResetButton, SubmitButton } from '../component/modal/Buttons';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
-import { usePersonSettings } from '../hooks/usePersonSettings';
+import { usePersonSettings } from '../hooks/usePersonSettings.ts';
 import { logErr } from '../util/errors';
 
 interface SettingsValues {

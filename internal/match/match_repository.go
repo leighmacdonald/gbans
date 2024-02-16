@@ -26,31 +26,31 @@ func NewMatchRepository(database database.Database, pu domain.PersonUsecase) dom
 func (r *matchRepository) Matches(ctx context.Context, opts domain.MatchesQueryOpts) ([]domain.MatchSummary, int64, error) {
 	countBuilder := r.db.
 		Builder().
-		Select("count(r.match_id) as count").
-		From("match r").
-		LeftJoin("public.match_player mp on r.match_id = mp.match_id").
-		LeftJoin("public.server r on r.server_id = r.server_id")
+		Select("count(m.match_id) as count").
+		From("match m").
+		LeftJoin("public.match_player mp on m.match_id = mp.match_id").
+		LeftJoin("public.server s on s.server_id = m.server_id")
 
 	builder := r.db.
 		Builder().
 		Select(
-			"r.match_id",
-			"r.server_id",
-			"case when mp.team = r.winner then true else false end as winner",
-			"r.short_name",
-			"r.title",
-			"r.map",
-			"r.score_blu",
-			"r.score_red",
-			"r.time_start",
-			"r.time_end").
-		From("match r").
-		LeftJoin("public.match_player mp on r.match_id = mp.match_id AND mp.time_end - mp.time_start > INTERVAL '60' second"). // TODO index?
-		LeftJoin("public.server r on r.server_id = r.server_id")
+			"m.match_id",
+			"m.server_id",
+			"case when mp.team = m.winner then true else false end as winner",
+			"s.short_name",
+			"m.title",
+			"m.map",
+			"m.score_blu",
+			"m.score_red",
+			"m.time_start",
+			"m.time_end").
+		From("match m").
+		LeftJoin("public.match_player mp on m.match_id = mp.match_id AND mp.time_end - mp.time_start > INTERVAL '60' second"). // TODO index?
+		LeftJoin("public.server s on s.server_id = m.server_id")
 
 	if opts.Map != "" {
-		builder = builder.Where(sq.Eq{"r.map": opts.Map})
-		countBuilder = countBuilder.Where(sq.Eq{"r.map": opts.Map})
+		builder = builder.Where(sq.Eq{"m.map": opts.Map})
+		countBuilder = countBuilder.Where(sq.Eq{"m.map": opts.Map})
 	}
 
 	if opts.SteamID.Valid() {
@@ -60,7 +60,7 @@ func (r *matchRepository) Matches(ctx context.Context, opts domain.MatchesQueryO
 
 	builder = opts.QueryFilter.ApplySafeOrder(builder, map[string][]string{
 		"":   {"winner"},
-		"r.": {"match_id", "server_id", "map", "score_blu", "score_red", "time_start", "time_end"},
+		"m.": {"match_id", "server_id", "map", "score_blu", "score_red", "time_start", "time_end"},
 	}, "match_id")
 
 	builder = opts.ApplyLimitOffsetDefault(builder)
@@ -149,11 +149,11 @@ func (r *matchRepository) matchGetPlayerClasses(ctx context.Context, matchID uui
 func (r *matchRepository) matchGetPlayerWeapons(ctx context.Context, matchID uuid.UUID) (map[steamid.SID64][]domain.MatchPlayerWeapon, error) {
 	const query = `
 		SELECT mp.steam_id, mw.weapon_id, w.name, w.key,  mw.kills, mw.damage, mw.shots, mw.hits, mw.backstabs, mw.headshots, mw.airshots
-		FROM match r
-		LEFT JOIN match_player mp on r.match_id = mp.match_id
+		FROM match m
+		LEFT JOIN match_player mp on m.match_id = mp.match_id
 		LEFT JOIN match_weapon mw on mp.match_player_id = mw.match_player_id
 		LEFT JOIN weapon w on w.weapon_id = mw.weapon_id
-		WHERE r.match_id = $1 and mw.weapon_id is not null
+		WHERE m.match_id = $1 and mw.weapon_id is not null
 		ORDER BY mw.kills DESC`
 
 	results := map[steamid.SID64][]domain.MatchPlayerWeapon{}
@@ -320,20 +320,20 @@ func (r *matchRepository) matchGetPlayers(ctx context.Context, matchID uuid.UUID
 
 func (r *matchRepository) matchGetMedics(ctx context.Context, matchID uuid.UUID) (map[steamid.SID64]domain.MatchHealer, error) {
 	const query = `
-		SELECT r.match_medic_id,
+		SELECT m.match_medic_id,
 			   mp.steam_id,
-			   r.healing,
-			   r.drops,
-			   r.near_full_charge_death,
-			   r.avg_uber_length,
-			   r.major_adv_lost,
-			   r.biggest_adv_lost,
-			   r.charge_uber,
-			   r.charge_kritz,
-			   r.charge_vacc,
-			   r.charge_quickfix
-		FROM match_medic r
-		LEFT JOIN match_player mp on mp.match_player_id = r.match_player_id
+			   m.healing,
+			   m.drops,
+			   m.near_full_charge_death,
+			   m.avg_uber_length,
+			   m.major_adv_lost,
+			   m.biggest_adv_lost,
+			   m.charge_uber,
+			   m.charge_kritz,
+			   m.charge_vacc,
+			   m.charge_quickfix
+		FROM match_medic m
+		LEFT JOIN match_player mp on mp.match_player_id = m.match_player_id
 		WHERE mp.match_id = $1`
 
 	medics := map[steamid.SID64]domain.MatchHealer{}
@@ -816,14 +816,14 @@ func (r *matchRepository) StatsPlayerKillstreaks(ctx context.Context, sid64 stea
 		SELECT k.player_class_id,
 			   SUM(k.killstreak) as killstreak,
 			   SUM(k.duration)   as duration,
-			   r.time_start
+			   m.time_start
 		FROM match_player p
 				 LEFT JOIN match_player_killstreak k on p.match_player_id = k.match_player_id
 				 LEFT JOIN match_player mp on mp.match_player_id = k.match_player_id
-				 LEFT JOIN match r on p.match_id = r.match_id
+				 LEFT JOIN match m on p.match_id = m.match_id
 		WHERE p.steam_id = $1
 		  AND k.player_class_id IS NOT NULL
-		GROUP BY k.match_killstreak_id, r.time_start, k.player_class_id
+		GROUP BY k.match_killstreak_id, m.time_start, k.player_class_id
 		ORDER BY killstreak DESC
 		LIMIT 10;`
 
@@ -852,16 +852,16 @@ func (r *matchRepository) StatsPlayerKillstreaks(ctx context.Context, sid64 stea
 
 func (r *matchRepository) StatsPlayerMedic(ctx context.Context, sid64 steamid.SID64) ([]domain.PlayerMedicStats, error) {
 	const query = `
-		SELECT coalesce(SUM(r.healing), 0)                as healing,
-			   coalesce(SUM(r.drops), 0)                  as drops,
-			   coalesce(SUM(r.near_full_charge_death), 0) as near_full_charge_death,
-			   coalesce(AVG(r.avg_uber_length), 0)        as avg_uber_length,
-			   coalesce(SUM(r.charge_uber), 0)            as charge_uber,
-			   coalesce(SUM(r.charge_kritz), 0)           as charge_kritz,
-			   coalesce(SUM(r.charge_vacc), 0)            as charge_vacc,
-			   coalesce(SUM(r.charge_quickfix), 0)        as charge_quickfix
+		SELECT coalesce(SUM(m.healing), 0)                as healing,
+			   coalesce(SUM(m.drops), 0)                  as drops,
+			   coalesce(SUM(m.near_full_charge_death), 0) as near_full_charge_death,
+			   coalesce(AVG(m.avg_uber_length), 0)        as avg_uber_length,
+			   coalesce(SUM(m.charge_uber), 0)            as charge_uber,
+			   coalesce(SUM(m.charge_kritz), 0)           as charge_kritz,
+			   coalesce(SUM(m.charge_vacc), 0)            as charge_vacc,
+			   coalesce(SUM(m.charge_quickfix), 0)        as charge_quickfix
 		FROM match_player p
-		LEFT JOIN match_medic r on p.match_player_id = r.match_player_id
+		LEFT JOIN match_medic m on p.match_player_id = m.match_player_id
 		WHERE p.steam_id = $1
 		GROUP BY p.steam_id`
 
@@ -890,8 +890,8 @@ func (r *matchRepository) StatsPlayerMedic(ctx context.Context, sid64 steamid.SI
 
 func (r *matchRepository) PlayerStats(ctx context.Context, steamID steamid.SID64, stats *domain.PlayerStats) error {
 	const query = `
-		SELECT count(r.match_id)            as                     matches,
-			   sum(case when mp.team = r.winner then 1 else 0 end) wins,
+		SELECT count(m.match_id)            as                     matches,
+			   sum(case when mp.team = m.winner then 1 else 0 end) wins,
 			   sum(mp.health_packs)         as                     health_packs,
 			   sum(mp.extinguishes)         as                     extinguishes,
 			   sum(mp.buildings)            as                     buildings,
@@ -916,12 +916,12 @@ func (r *matchRepository) PlayerStats(ctx context.Context, steamID steamid.SID64
 			   sum(mm.charge_vacc)          as                     charge_vacc
 		
 		FROM match_player mp
-				 LEFT JOIN match r on r.match_id = mp.match_id
+				 LEFT JOIN match m on m.match_id = mp.match_id
 				 LEFT JOIN match_player_class mpc on mp.match_player_id = mpc.match_player_id
 				 LEFT JOIN match_medic mm on mp.match_player_id = mm.match_player_id
 		
 		WHERE mp.steam_id = $1 AND
-			  r.time_start BETWEEN LOCALTIMESTAMP - INTERVAL '1 DAY' and LOCALTIMESTAMP`
+			  m.time_start BETWEEN LOCALTIMESTAMP - INTERVAL '1 DAY' and LOCALTIMESTAMP`
 
 	if errQuery := r.db.
 		QueryRow(ctx, query, steamID).

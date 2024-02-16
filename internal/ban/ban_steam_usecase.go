@@ -88,7 +88,7 @@ func (s *banSteamUsecase) Ban(ctx context.Context, curUser domain.PersonInfo, ba
 		}
 
 		report.ReportStatus = domain.ClosedWithAction
-		if errSaveReport := s.reportUsecase.SaveReport(ctx, &report); errSaveReport != nil {
+		if errSaveReport := s.reportUsecase.SaveReport(ctx, &report.Report); errSaveReport != nil {
 			return errors.Join(errSaveReport, domain.ErrReportStateUpdate)
 		}
 

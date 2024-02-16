@@ -105,6 +105,12 @@ func ErrorHandled(ctx *gin.Context, err error) {
 	default:
 		HandleErrInternal(ctx)
 	}
+
+	slog.Error("Error performing request",
+		log.ErrAttr(err),
+		slog.String("path", ctx.Request.RequestURI),
+		slog.String("method", ctx.Request.Method),
+		slog.String("agent", ctx.Request.UserAgent()))
 }
 
 func HandleErrPermissionDenied(ctx *gin.Context) {

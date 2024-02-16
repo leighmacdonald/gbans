@@ -13,7 +13,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
-	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
@@ -228,12 +227,6 @@ func (h reportHandler) onAPIGetReport() gin.HandlerFunc {
 	}
 }
 
-type reportWithAuthor struct {
-	Author  domain.Person `json:"author"`
-	Subject domain.Person `json:"subject"`
-	domain.Report
-}
-
 func (h reportHandler) onAPIGetReports() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		user := httphelper.CurrentUserProfile(ctx)
@@ -243,87 +236,14 @@ func (h reportHandler) onAPIGetReports() gin.HandlerFunc {
 			return
 		}
 
-		if req.Limit <= 0 && req.Limit > 100 {
-			req.Limit = 25
-		}
-
-		// Make sure the person requesting is either a moderator, or a user
-		// only able to request their own reports
-		var sourceID steamid.SID64
-
-		if user.PermissionLevel < domain.PModerator {
-			sourceID = user.SteamID
-		} else if req.SourceID != "" {
-			sid, errSourceID := req.SourceID.SID64(ctx)
-			if errSourceID != nil {
-				httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
-
-				return
-			}
-
-			sourceID = sid
-		}
-
-		if sourceID.Valid() {
-			req.SourceID = domain.StringSID(sourceID.String())
-		}
-
-		var userReports []reportWithAuthor
-
-		reports, count, errReports := h.reportUsecase.GetReports(ctx, req)
+		reports, count, errReports := h.reportUsecase.GetReports(ctx, user, req)
 		if errReports != nil {
-			if errors.Is(errReports, domain.ErrNoResult) {
-				ctx.JSON(http.StatusNoContent, nil)
-
-				return
-			}
-
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ErrorHandled(ctx, errReports)
 
 			return
 		}
 
-		var authorIds steamid.Collection
-		for _, report := range reports {
-			authorIds = append(authorIds, report.SourceID)
-		}
-
-		authors, errAuthors := h.personUsecase.GetPeopleBySteamID(ctx, fp.Uniq(authorIds))
-		if errAuthors != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-
-			return
-		}
-
-		authorMap := authors.AsMap()
-
-		var subjectIds steamid.Collection
-		for _, report := range reports {
-			subjectIds = append(subjectIds, report.TargetID)
-		}
-
-		subjects, errSubjects := h.personUsecase.GetPeopleBySteamID(ctx, fp.Uniq(subjectIds))
-		if errSubjects != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-
-			return
-		}
-
-		subjectMap := subjects.AsMap()
-
-		for _, report := range reports {
-			userReports = append(userReports, reportWithAuthor{
-				Author:  authorMap[report.SourceID],
-				Report:  report,
-				Subject: subjectMap[report.TargetID],
-			})
-		}
-
-		if userReports == nil {
-			userReports = []reportWithAuthor{}
-		}
-
-		ctx.JSON(http.StatusOK, domain.NewLazyResult(count, userReports))
+		ctx.JSON(http.StatusOK, domain.NewLazyResult(count, reports))
 	}
 }
 
@@ -362,7 +282,7 @@ func (h reportHandler) onAPISetReportStatus() gin.HandlerFunc {
 		original := report.ReportStatus
 
 		report.ReportStatus = req.Status
-		if errSave := h.reportUsecase.SaveReport(ctx, &report); errSave != nil {
+		if errSave := h.reportUsecase.SaveReport(ctx, &report.Report); errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			slog.Error("Failed to save report state", log.ErrAttr(errSave))
 
@@ -468,7 +388,7 @@ func (h reportHandler) onAPIPostReportMessage() gin.HandlerFunc {
 
 		report.UpdatedOn = time.Now()
 
-		if errSave := h.reportUsecase.SaveReport(ctx, &report); errSave != nil {
+		if errSave := h.reportUsecase.SaveReport(ctx, &report.Report); errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			slog.Error("Failed to update report activity", log.ErrAttr(errSave))
 

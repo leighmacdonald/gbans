@@ -333,8 +333,8 @@ func (r *banSteamRepository) Get(ctx context.Context, filter domain.SteamBansQue
 
 	count, errCount := r.db.GetCount(ctx, r.db.
 		Builder().
-		Select("COUNT(s.ban_id)").
-		From("ban s").
+		Select("COUNT(b.ban_id)").
+		From("ban b").
 		Where(ands))
 	if errCount != nil {
 		return nil, 0, r.db.DBErr(errCount)
