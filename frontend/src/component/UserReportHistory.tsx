@@ -6,7 +6,7 @@ import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { reportStatusString, ReportWithAuthor } from '../api';
+import { ReportStatus, reportStatusString, ReportWithAuthor } from '../api';
 import { useReports } from '../hooks/useReports';
 import { PersonCell } from './PersonCell';
 import { ReportStatusIcon } from './ReportStatusIcon';
@@ -27,7 +27,8 @@ export const UserReportHistory = ({ steam_id }: { steam_id: string }) => {
         deleted: false,
         offset: page * rowPerPageCount,
         limit: rowPerPageCount,
-        desc: sortOrder == 'desc'
+        desc: sortOrder == 'desc',
+        report_status: ReportStatus.Any
     });
 
     return (

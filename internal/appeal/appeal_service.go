@@ -10,7 +10,7 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
-type AppealHandler struct {
+type appealHandler struct {
 	appealUsecase  domain.AppealUsecase
 	banUsecase     domain.BanSteamUsecase
 	configUsecase  domain.ConfigUsecase
@@ -22,7 +22,7 @@ func NewAppealHandler(engine *gin.Engine, appealUsecase domain.AppealUsecase, ba
 	configUsecase domain.ConfigUsecase, personUsecase domain.PersonUsecase, discordUsecase domain.DiscordUsecase,
 	authUsecase domain.AuthUsecase,
 ) {
-	handler := &AppealHandler{
+	handler := &appealHandler{
 		appealUsecase:  appealUsecase,
 		banUsecase:     banUsecase,
 		configUsecase:  configUsecase,
@@ -35,8 +35,8 @@ func NewAppealHandler(engine *gin.Engine, appealUsecase domain.AppealUsecase, ba
 	{
 		authed := authedGrp.Use(authUsecase.AuthMiddleware(domain.PUser))
 		authed.GET("/api/bans/:ban_id/messages", handler.onAPIGetBanMessages())
-		authed.POST("/api/bans/:ban_id/messages", handler.onAPIPostBanMessage())
-		authed.POST("/api/bans/message/:ban_message_id", handler.onAPIEditBanMessage())
+		authed.POST("/api/bans/:ban_id/messages", handler.createBanMessage())
+		authed.POST("/api/bans/message/:ban_message_id", handler.editBanMessage())
 		authed.DELETE("/api/bans/message/:ban_message_id", handler.onAPIDeleteBanMessage())
 	}
 
@@ -48,7 +48,7 @@ func NewAppealHandler(engine *gin.Engine, appealUsecase domain.AppealUsecase, ba
 	}
 }
 
-func (h *AppealHandler) onAPIGetBanMessages() gin.HandlerFunc {
+func (h *appealHandler) onAPIGetBanMessages() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		banID, errParam := httphelper.GetInt64Param(ctx, "ban_id")
 		if errParam != nil {
@@ -68,7 +68,7 @@ func (h *AppealHandler) onAPIGetBanMessages() gin.HandlerFunc {
 	}
 }
 
-func (h *AppealHandler) onAPIPostBanMessage() gin.HandlerFunc {
+func (h *appealHandler) createBanMessage() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		banID, errID := httphelper.GetInt64Param(ctx, "ban_id")
 		if errID != nil || banID == 0 {
@@ -82,7 +82,7 @@ func (h *AppealHandler) onAPIPostBanMessage() gin.HandlerFunc {
 			return
 		}
 
-		msg, errSave := h.appealUsecase.SaveBanMessage(ctx, httphelper.CurrentUserProfile(ctx), banID, req.Message)
+		msg, errSave := h.appealUsecase.CreateBanMessage(ctx, httphelper.CurrentUserProfile(ctx), banID, req.Message)
 		if err := httphelper.ErrorHandledWithReturn(ctx, errSave); err != nil {
 			return
 		}
@@ -91,7 +91,7 @@ func (h *AppealHandler) onAPIPostBanMessage() gin.HandlerFunc {
 	}
 }
 
-func (h *AppealHandler) onAPIEditBanMessage() gin.HandlerFunc {
+func (h *appealHandler) editBanMessage() gin.HandlerFunc {
 	type editMessage struct {
 		BodyMD string `json:"body_md"`
 	}
@@ -111,7 +111,7 @@ func (h *AppealHandler) onAPIEditBanMessage() gin.HandlerFunc {
 
 		curUser := httphelper.CurrentUserProfile(ctx)
 
-		msg, errSave := h.appealUsecase.SaveBanMessage(ctx, curUser, reportMessageID, req.BodyMD)
+		msg, errSave := h.appealUsecase.EditBanMessage(ctx, curUser, reportMessageID, req.BodyMD)
 
 		if errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
@@ -124,7 +124,7 @@ func (h *AppealHandler) onAPIEditBanMessage() gin.HandlerFunc {
 	}
 }
 
-func (h *AppealHandler) onAPIDeleteBanMessage() gin.HandlerFunc {
+func (h *appealHandler) onAPIDeleteBanMessage() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		curUser := httphelper.CurrentUserProfile(ctx)
 
@@ -142,7 +142,7 @@ func (h *AppealHandler) onAPIDeleteBanMessage() gin.HandlerFunc {
 	}
 }
 
-func (h *AppealHandler) onAPIGetAppeals() gin.HandlerFunc {
+func (h *appealHandler) onAPIGetAppeals() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req domain.AppealQueryFilter
 		if !httphelper.Bind(ctx, &req) {

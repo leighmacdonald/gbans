@@ -120,7 +120,7 @@ func (r chatRepository) Start(ctx context.Context) {
 								Message:    userMsg.Body,
 								// todo
 								// Matched:       matchResult,
-								MatchedFilter: &matchResult,
+								MatchedFilter: matchResult,
 								CreatedOn:     time.Now(),
 								Personaname:   userMsg.PersonaName,
 								Avatar:        userMsg.AvatarHash,

@@ -43,7 +43,7 @@ func (d discordUsecase) FilterAdd(ctx context.Context, user domain.PersonInfo, p
 		}
 	}
 
-	filter := domain.Filter{
+	newFilter := domain.Filter{
 		AuthorID:  user.GetSteamID(),
 		Pattern:   pattern,
 		IsRegex:   isRegex,
@@ -51,7 +51,10 @@ func (d discordUsecase) FilterAdd(ctx context.Context, user domain.PersonInfo, p
 		CreatedOn: time.Now(),
 		UpdatedOn: time.Now(),
 	}
-	if errFilterAdd := d.wfu.SaveFilter(ctx, user, &filter); errFilterAdd != nil {
+
+	filter, errFilterAdd := d.wfu.Create(ctx, user, newFilter)
+
+	if errFilterAdd != nil {
 		return nil, domain.ErrCommandFailed
 	}
 

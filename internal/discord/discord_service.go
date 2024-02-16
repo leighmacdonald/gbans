@@ -600,7 +600,7 @@ func (h discordService) onFilterDel(ctx context.Context, _ *discordgo.Session, i
 		return nil, domain.ErrCommandFailed
 	}
 
-	if errDropFilter := h.wfu.DropFilter(ctx, &filter); errDropFilter != nil {
+	if errDropFilter := h.wfu.DropFilter(ctx, filter); errDropFilter != nil {
 		return nil, domain.ErrCommandFailed
 	}
 

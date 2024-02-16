@@ -146,6 +146,79 @@ export const BanPage = (): JSX.Element => {
         });
     }, [ban]);
 
+    const modTools = useMemo(() => {
+        return (
+            <ContainerWithHeader
+                title={'Moderation Tools'}
+                iconLeft={<AddModeratorIcon />}
+            >
+                <Stack spacing={2} padding={2}>
+                    <Stack direction={'row'} spacing={2}>
+                        <FormControl fullWidth>
+                            <InputLabel id="appeal-status-label">
+                                Appeal Status
+                            </InputLabel>
+                            <Select<AppealState>
+                                value={ban?.appeal_state}
+                                labelId={'appeal-status-label'}
+                                id={'appeal-status'}
+                                label={'Appeal Status'}
+                                onChange={(evt) => {
+                                    setAppealState(
+                                        evt.target.value as AppealState
+                                    );
+                                }}
+                            >
+                                {AppealStateCollection.map((as) => {
+                                    return (
+                                        <MenuItem value={as} key={as}>
+                                            {appealStateString(as)}
+                                        </MenuItem>
+                                    );
+                                })}
+                            </Select>
+                        </FormControl>
+                        <Button
+                            variant={'contained'}
+                            onClick={onSaveAppealState}
+                        >
+                            Apply Status
+                        </Button>
+                    </Stack>
+
+                    {ban && ban?.report_id > 0 && (
+                        <Button
+                            fullWidth
+                            color={'secondary'}
+                            variant={'contained'}
+                            onClick={() => {
+                                navigate(`/report/${ban?.report_id}`);
+                            }}
+                        >
+                            View Report #{ban?.report_id}
+                        </Button>
+                    )}
+                    <Button
+                        variant={'contained'}
+                        color={'secondary'}
+                        component={Link}
+                        href={`https://logs.viora.sh/messages?q[for_player]=${ban?.target_id.toString()}`}
+                    >
+                        Ext. Chat Logs
+                    </Button>
+                    <ButtonGroup fullWidth variant={'contained'}>
+                        <Button color={'warning'} onClick={onEditBan}>
+                            Edit Ban
+                        </Button>
+                        <Button color={'success'} onClick={onUnban}>
+                            Unban
+                        </Button>
+                    </ButtonGroup>
+                </Stack>
+            </ContainerWithHeader>
+        );
+    }, [ban, navigate, onEditBan, onSaveAppealState, onUnban]);
+
     return (
         <Grid container spacing={2}>
             <Grid xs={8}>
@@ -303,85 +376,7 @@ export const BanPage = (): JSX.Element => {
                         )}
 
                     {currentUser.permission_level >=
-                        PermissionLevel.Moderator && (
-                        <ContainerWithHeader
-                            title={'Moderation Tools'}
-                            iconLeft={<AddModeratorIcon />}
-                        >
-                            <Stack spacing={2} padding={2}>
-                                <Stack direction={'row'} spacing={2}>
-                                    <FormControl fullWidth>
-                                        <InputLabel id="appeal-status-label">
-                                            Appeal Status
-                                        </InputLabel>
-                                        <Select<AppealState>
-                                            value={appealState}
-                                            labelId={'appeal-status-label'}
-                                            id={'appeal-status'}
-                                            label={'Appeal Status'}
-                                            onChange={(evt) => {
-                                                setAppealState(
-                                                    evt.target
-                                                        .value as AppealState
-                                                );
-                                            }}
-                                        >
-                                            {AppealStateCollection.map((as) => {
-                                                return (
-                                                    <MenuItem
-                                                        value={as}
-                                                        key={as}
-                                                    >
-                                                        {appealStateString(as)}
-                                                    </MenuItem>
-                                                );
-                                            })}
-                                        </Select>
-                                    </FormControl>
-                                    <Button
-                                        variant={'contained'}
-                                        onClick={onSaveAppealState}
-                                    >
-                                        Apply Status
-                                    </Button>
-                                </Stack>
-
-                                {ban && ban?.report_id > 0 && (
-                                    <Button
-                                        fullWidth
-                                        color={'secondary'}
-                                        variant={'contained'}
-                                        onClick={() => {
-                                            navigate(
-                                                `/report/${ban?.report_id}`
-                                            );
-                                        }}
-                                    >
-                                        View Report #{ban?.report_id}
-                                    </Button>
-                                )}
-                                <Button
-                                    variant={'contained'}
-                                    color={'secondary'}
-                                    component={Link}
-                                    href={`https://logs.viora.sh/messages?q[for_player]=${ban?.target_id.toString()}`}
-                                >
-                                    Ext. Chat Logs
-                                </Button>
-                                <ButtonGroup fullWidth variant={'contained'}>
-                                    <Button
-                                        color={'warning'}
-                                        onClick={onEditBan}
-                                    >
-                                        Edit Ban
-                                    </Button>
-                                    <Button color={'success'} onClick={onUnban}>
-                                        Unban
-                                    </Button>
-                                </ButtonGroup>
-                            </Stack>
-                        </ContainerWithHeader>
-                    )}
+                        PermissionLevel.Moderator && modTools}
                 </Stack>
             </Grid>
         </Grid>

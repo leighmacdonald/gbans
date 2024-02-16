@@ -9,7 +9,7 @@ type configUsecase struct {
 }
 
 func NewConfigUsecase(repository domain.ConfigRepository) domain.ConfigUsecase {
-	SetDefaultConfigValues()
+	setDefaultConfigValues()
 
 	return &configUsecase{configRepo: repository}
 }

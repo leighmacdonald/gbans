@@ -15,7 +15,7 @@ import (
 )
 
 // decodeDuration automatically parses the string duration type (1s,1m,1h,etc.) into a real time.Duration type.
-func DecodeDuration() mapstructure.DecodeHookFuncType {
+func decodeDuration() mapstructure.DecodeHookFuncType {
 	return func(f reflect.Type, target reflect.Type, data interface{}) (interface{}, error) {
 		if f.Kind() != reflect.String {
 			return data, nil
@@ -35,7 +35,7 @@ func DecodeDuration() mapstructure.DecodeHookFuncType {
 	}
 }
 
-func SetDefaultConfigValues() {
+func setDefaultConfigValues() {
 	if home, errHomeDir := homedir.Dir(); errHomeDir != nil {
 		viper.AddConfigPath(home)
 	}

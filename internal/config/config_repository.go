@@ -36,7 +36,7 @@ func (c *configRepository) Read(noFileOk bool) error {
 
 	var newConfig domain.Config
 
-	if errUnmarshal := viper.Unmarshal(&newConfig, viper.DecodeHook(mapstructure.DecodeHookFunc(DecodeDuration()))); errUnmarshal != nil {
+	if errUnmarshal := viper.Unmarshal(&newConfig, viper.DecodeHook(mapstructure.DecodeHookFunc(decodeDuration()))); errUnmarshal != nil {
 		return errors.Join(errUnmarshal, domain.ErrFormatConfig)
 	}
 

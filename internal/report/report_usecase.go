@@ -105,7 +105,6 @@ func (r reportUsecase) GetReportBySteamID(ctx context.Context, authorID steamid.
 }
 
 func (r reportUsecase) GetReports(ctx context.Context, user domain.PersonInfo, opts domain.ReportQueryFilter) ([]domain.ReportWithAuthor, int64, error) {
-
 	if opts.Limit <= 0 && opts.Limit > 100 {
 		opts.Limit = 25
 	}
@@ -129,8 +128,6 @@ func (r reportUsecase) GetReports(ctx context.Context, user domain.PersonInfo, o
 		opts.SourceID = domain.StringSID(sourceID.String())
 	}
 
-	var userReports []domain.ReportWithAuthor
-
 	reports, count, errReports := r.rr.GetReports(ctx, opts)
 	if errReports != nil {
 		if errors.Is(errReports, domain.ErrNoResult) {
@@ -152,12 +149,14 @@ func (r reportUsecase) GetReports(ctx context.Context, user domain.PersonInfo, o
 
 	peopleMap := people.AsMap()
 
-	for _, report := range reports {
-		userReports = append(userReports, domain.ReportWithAuthor{
+	userReports := make([]domain.ReportWithAuthor, len(reports))
+
+	for i, report := range reports {
+		userReports[i] = domain.ReportWithAuthor{
 			Author:  peopleMap[report.SourceID],
 			Report:  report,
 			Subject: peopleMap[report.TargetID],
-		})
+		}
 	}
 
 	if userReports == nil {

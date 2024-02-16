@@ -347,7 +347,7 @@ type UserWarning struct {
 	WarnReason    Reason    `json:"warn_reason"`
 	Message       string    `json:"message"`
 	Matched       string    `json:"matched"`
-	MatchedFilter *Filter   `json:"matched_filter"`
+	MatchedFilter Filter    `json:"matched_filter"`
 	CreatedOn     time.Time `json:"created_on"`
 	Personaname   string    `json:"personaname"`
 	Avatar        string    `json:"avatar"`
