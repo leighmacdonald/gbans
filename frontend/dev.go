@@ -19,13 +19,13 @@ func AddRoutes(engine *gin.Engine, root string, conf domain.Config) {
 
 	engine.Use(static.Serve("/", static.LocalFile(root, false)))
 
-	indexData, errIndex := os.ReadFile(path.Join(root, "index.html"))
-	if errIndex != nil {
-		panic("failed to load index.html")
-	}
-
 	for _, rt := range jsRoutes {
 		engine.GET(rt, func(ctx *gin.Context) {
+			indexData, errIndex := os.ReadFile(path.Join(root, "index.html"))
+			if errIndex != nil {
+				panic("failed to load index.html")
+			}
+
 			if conf.Log.SentryDSNWeb != "" {
 				ctx.Header("Document-Policy", "js-profiling")
 			}

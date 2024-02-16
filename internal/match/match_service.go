@@ -281,8 +281,7 @@ func (h matchHandler) onAPIGetMatches() gin.HandlerFunc {
 
 		matches, totalCount, matchesErr := h.mu.Matches(ctx, req)
 		if matchesErr != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			slog.Error("Failed to perform query", log.ErrAttr(matchesErr))
+			httphelper.ErrorHandled(ctx, matchesErr)
 
 			return
 		}

@@ -25,7 +25,6 @@ import { useTheme } from '@mui/material/styles';
 import { isBefore } from 'date-fns';
 import {
     apiGetBansSteam,
-    apiGetReport,
     apiReportSetState,
     BanReasons,
     BanType,
@@ -33,7 +32,6 @@ import {
     ReportStatus,
     reportStatusColour,
     reportStatusString,
-    ReportWithAuthor,
     SteamBanRecord
 } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
@@ -44,6 +42,7 @@ import { SteamIDList } from '../component/SteamIDList';
 import { ModalBanSteam } from '../component/modal';
 import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { useReport } from '../hooks/useReport.ts';
 import { logErr } from '../util/errors';
 import { avatarHashToURL } from '../util/text';
 
@@ -51,36 +50,23 @@ export const ReportViewPage = (): JSX.Element => {
     const { report_id } = useParams();
     const theme = useTheme();
     const id = parseInt(report_id || '');
-    const [report, setReport] = useState<ReportWithAuthor>();
     const [stateAction, setStateAction] = useState(ReportStatus.Opened);
+    const [newStateAction, setNewStateAction] = useState(stateAction);
     const { currentUser } = useCurrentUserCtx();
     const [ban, setBan] = useState<SteamBanRecord>();
     const { sendFlash } = useUserFlashCtx();
     const navigate = useNavigate();
-
-    const handleReportStateChange = (event: SelectChangeEvent<number>) => {
-        setStateAction(event.target.value as ReportStatus);
-    };
+    const { data: report } = useReport(id);
 
     useEffect(() => {
-        const abortController = new AbortController();
-        apiGetReport(id, abortController)
-            .then((response) => {
-                setReport(response);
-                setStateAction(response.report_status);
-            })
-            .catch((e) => {
-                sendFlash(
-                    'error',
-                    'Permission denied. Only report authors, subjects and mods can view reports'
-                );
-                logErr(e);
-                navigate(`/report`);
-                return;
-            });
+        if (report) {
+            setStateAction(report?.report_status);
+        }
+    }, [report]);
 
-        return () => abortController.abort();
-    }, [report_id, setReport, id, sendFlash, navigate]);
+    const handleReportStateChange = (event: SelectChangeEvent<number>) => {
+        setNewStateAction(event.target.value as ReportStatus);
+    };
 
     useEffect(() => {
         const abortController = new AbortController();
@@ -99,17 +85,18 @@ export const ReportViewPage = (): JSX.Element => {
     }, [report?.target_id]);
 
     const onSetReportState = useCallback(() => {
-        apiReportSetState(id, stateAction)
+        apiReportSetState(id, newStateAction)
             .then(() => {
                 sendFlash(
                     'success',
                     `State changed from ${reportStatusString(
                         report?.report_status ?? ReportStatus.Opened
-                    )} => ${reportStatusString(stateAction)}`
+                    )} => ${reportStatusString(newStateAction)}`
                 );
+                setStateAction(newStateAction);
             })
             .catch(logErr);
-    }, [id, report?.report_status, sendFlash, stateAction]);
+    }, [id, newStateAction, report?.report_status, sendFlash]);
 
     const renderBan = useMemo(() => {
         if (!ban) {
@@ -129,6 +116,27 @@ export const ReportViewPage = (): JSX.Element => {
                 );
         }
     }, [ban, theme.palette.error.main, theme.palette.warning.main]);
+
+    const reportStatusView = useMemo(() => {
+        return (
+            <ContainerWithHeader
+                title={'Report Status'}
+                iconLeft={<AccountBalanceIcon />}
+            >
+                <Typography
+                    padding={2}
+                    variant={'h4'}
+                    align={'center'}
+                    sx={{
+                        color: '#111111',
+                        backgroundColor: reportStatusColour(stateAction, theme)
+                    }}
+                >
+                    {reportStatusString(stateAction)}
+                </Typography>
+            </ContainerWithHeader>
+        );
+    }, [stateAction, theme]);
 
     return (
         <Grid container spacing={2}>
@@ -165,28 +173,8 @@ export const ReportViewPage = (): JSX.Element => {
 
                     <SteamIDList steam_id={report?.subject.steam_id ?? ''} />
 
-                    <ContainerWithHeader
-                        title={'Report Status'}
-                        iconLeft={<AccountBalanceIcon />}
-                    >
-                        <Typography
-                            padding={2}
-                            variant={'h4'}
-                            align={'center'}
-                            sx={{
-                                color: '#111111',
-                                backgroundColor: reportStatusColour(
-                                    report?.report_status ??
-                                        ReportStatus.Opened,
-                                    theme
-                                )
-                            }}
-                        >
-                            {reportStatusString(
-                                report?.report_status ?? ReportStatus.Opened
-                            )}
-                        </Typography>
-                    </ContainerWithHeader>
+                    {reportStatusView}
+
                     <ContainerWithHeader
                         title={'Details'}
                         iconLeft={<InfoIcon />}
@@ -274,7 +262,7 @@ export const ReportViewPage = (): JSX.Element => {
                                                 <Select<ReportStatus>
                                                     labelId="select-label"
                                                     id="simple-select"
-                                                    value={stateAction}
+                                                    value={newStateAction}
                                                     label="Report State"
                                                     onChange={
                                                         handleReportStateChange

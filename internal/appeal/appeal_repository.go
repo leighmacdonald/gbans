@@ -23,11 +23,11 @@ func (r *appealRepository) GetAppealsByActivity(ctx context.Context, opts domain
 	constraints := sq.And{sq.Gt{"m.count": 0}}
 
 	if !opts.Deleted {
-		constraints = append(constraints, sq.Eq{"s.deleted": opts.Deleted})
+		constraints = append(constraints, sq.Eq{"b.deleted": opts.Deleted})
 	}
 
 	if opts.AppealState > domain.AnyState {
-		constraints = append(constraints, sq.Eq{"s.appeal_state": opts.AppealState})
+		constraints = append(constraints, sq.Eq{"b.appeal_state": opts.AppealState})
 	}
 
 	if opts.SourceID != "" {
@@ -36,7 +36,7 @@ func (r *appealRepository) GetAppealsByActivity(ctx context.Context, opts domain
 			return nil, 0, errors.Join(errAuthorID, domain.ErrSourceID)
 		}
 
-		constraints = append(constraints, sq.Eq{"s.source_id": authorID.Int64()})
+		constraints = append(constraints, sq.Eq{"b.source_id": authorID.Int64()})
 	}
 
 	if opts.TargetID != "" {
@@ -45,19 +45,19 @@ func (r *appealRepository) GetAppealsByActivity(ctx context.Context, opts domain
 			return nil, 0, errors.Join(errTargetID, domain.ErrTargetID)
 		}
 
-		constraints = append(constraints, sq.Eq{"s.target_id": targetID.Int64()})
+		constraints = append(constraints, sq.Eq{"b.target_id": targetID.Int64()})
 	}
 
 	counterQuery := r.db.
 		Builder().
-		Select("COUNT(s.ban_id)").
-		From("ban s").
+		Select("COUNT(b.ban_id)").
+		From("ban b").
 		Where(constraints).
 		InnerJoin(`
 			LATERAL (
 				SELECT count(a.ban_message_id) as count 
 				FROM ban_appeal a
-				WHERE s.ban_id = a.ban_id
+				WHERE b.ban_id = a.ban_id
 			) m ON TRUE`)
 
 	count, errCount := r.db.GetCount(ctx, counterQuery)
@@ -67,27 +67,27 @@ func (r *appealRepository) GetAppealsByActivity(ctx context.Context, opts domain
 
 	builder := r.db.
 		Builder().
-		Select("s.ban_id", "s.target_id", "s.source_id", "s.ban_type", "s.reason", "s.reason_text",
-			"s.note", "s.valid_until", "s.origin", "s.created_on", "s.updated_on", "s.deleted",
-			"CASE WHEN s.report_id IS NULL THEN 0 ELSE report_id END",
-			"s.unban_reason_text", "s.is_enabled", "s.appeal_state",
+		Select("b.ban_id", "b.target_id", "b.source_id", "b.ban_type", "b.reason", "b.reason_text",
+			"b.note", "b.valid_until", "b.origin", "b.created_on", "b.updated_on", "b.deleted",
+			"CASE WHEN b.report_id IS NULL THEN 0 ELSE b.report_id END",
+			"b.unban_reason_text", "b.is_enabled", "b.appeal_state",
 			"source.steam_id as source_steam_id", "source.personaname as source_personaname",
 			"source.avatarhash as source_avatar",
 			"target.steam_id as target_steam_id", "target.personaname as target_personaname",
 			"target.avatarhash as target_avatar").
-		From("ban s").
+		From("ban b").
 		Where(constraints).
 		InnerJoin(`
 			LATERAL (
 				SELECT count(a.ban_message_id) as count 
 				FROM ban_appeal a
-				WHERE s.ban_id = a.ban_id
+				WHERE b.ban_id = a.ban_id
 			) m ON TRUE`).
-		LeftJoin("person source on source.steam_id = s.source_id").
-		LeftJoin("person target on target.steam_id = s.target_id")
+		LeftJoin("person source on source.steam_id = b.source_id").
+		LeftJoin("person target on target.steam_id = b.target_id")
 
 	builder = opts.QueryFilter.ApplySafeOrder(builder, map[string][]string{
-		"s.": {
+		"b.": {
 			"ban_id", "target_id", "source_id", "ban_type", "reason", "valid_until", "origin", "created_on",
 			"updated_on", "deleted", "is_enabled", "appeal_state",
 		},

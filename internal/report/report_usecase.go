@@ -2,6 +2,8 @@ package report
 
 import (
 	"context"
+	"errors"
+	"github.com/leighmacdonald/gbans/pkg/fp"
 	"log/slog"
 	"time"
 
@@ -39,12 +41,14 @@ func (r reportUsecase) Start(ctx context.Context) {
 		updateChan <- true
 	}()
 
+	admin := domain.UserProfile{SteamID: r.cu.Config().General.Owner}
+
 	for {
 		select {
 		case <-ticker.C:
 			updateChan <- true
 		case <-updateChan:
-			reports, _, errReports := r.GetReports(ctx, domain.ReportQueryFilter{
+			reports, _, errReports := r.GetReports(ctx, admin, domain.ReportQueryFilter{
 				QueryFilter: domain.QueryFilter{
 					Limit: 0,
 				},
@@ -100,26 +104,94 @@ func (r reportUsecase) GetReportBySteamID(ctx context.Context, authorID steamid.
 	return r.rr.GetReportBySteamID(ctx, authorID, steamID)
 }
 
-func (r reportUsecase) GetReports(ctx context.Context, opts domain.ReportQueryFilter) ([]domain.Report, int64, error) {
-	return r.rr.GetReports(ctx, opts)
+func (r reportUsecase) GetReports(ctx context.Context, user domain.PersonInfo, opts domain.ReportQueryFilter) ([]domain.ReportWithAuthor, int64, error) {
+
+	if opts.Limit <= 0 && opts.Limit > 100 {
+		opts.Limit = 25
+	}
+
+	// Make sure the person requesting is either a moderator, or a user
+	// only able to request their own reports
+	var sourceID steamid.SID64
+
+	if !user.HasPermission(domain.PModerator) {
+		sourceID = user.GetSteamID()
+	} else if opts.SourceID != "" {
+		sid, errSourceID := opts.SourceID.SID64(ctx)
+		if errSourceID != nil {
+			return nil, 0, errSourceID
+		}
+
+		sourceID = sid
+	}
+
+	if sourceID.Valid() {
+		opts.SourceID = domain.StringSID(sourceID.String())
+	}
+
+	var userReports []domain.ReportWithAuthor
+
+	reports, count, errReports := r.rr.GetReports(ctx, opts)
+	if errReports != nil {
+		if errors.Is(errReports, domain.ErrNoResult) {
+			return nil, 0, nil
+		}
+
+		return nil, 0, errReports
+	}
+
+	var peopleIDs steamid.Collection
+	for _, report := range reports {
+		peopleIDs = append(peopleIDs, report.SourceID, report.TargetID)
+	}
+
+	people, errAuthors := r.pu.GetPeopleBySteamID(ctx, fp.Uniq(peopleIDs))
+	if errAuthors != nil {
+		return nil, 0, errAuthors
+	}
+
+	peopleMap := people.AsMap()
+
+	for _, report := range reports {
+		userReports = append(userReports, domain.ReportWithAuthor{
+			Author:  peopleMap[report.SourceID],
+			Report:  report,
+			Subject: peopleMap[report.TargetID],
+		})
+	}
+
+	if userReports == nil {
+		userReports = []domain.ReportWithAuthor{}
+	}
+
+	return userReports, count, nil
 }
 
-func (r reportUsecase) GetReport(ctx context.Context, curUser domain.PersonInfo, reportID int64) (domain.Report, error) {
+func (r reportUsecase) GetReport(ctx context.Context, curUser domain.PersonInfo, reportID int64) (domain.ReportWithAuthor, error) {
 	report, err := r.rr.GetReport(ctx, reportID)
 	if err != nil {
-		return domain.Report{}, err
+		return domain.ReportWithAuthor{}, err
 	}
 
 	author, errAuthor := r.pu.GetPersonBySteamID(ctx, report.SourceID)
 	if errAuthor != nil {
-		return report, errAuthor
+		return domain.ReportWithAuthor{}, errAuthor
 	}
 
 	if !httphelper.HasPrivilege(curUser, steamid.Collection{author.SteamID}, domain.PModerator) {
-		return report, domain.ErrPermissionDenied
+		return domain.ReportWithAuthor{}, domain.ErrPermissionDenied
 	}
 
-	return report, nil
+	target, errTarget := r.pu.GetPersonBySteamID(ctx, report.TargetID)
+	if errTarget != nil {
+		return domain.ReportWithAuthor{}, errTarget
+	}
+
+	return domain.ReportWithAuthor{
+		Author:  author,
+		Subject: target,
+		Report:  report,
+	}, nil
 }
 
 func (r reportUsecase) GetReportMessages(ctx context.Context, reportID int64) ([]domain.ReportMessage, error) {
