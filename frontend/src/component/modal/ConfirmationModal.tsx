@@ -8,6 +8,7 @@ import {
 } from '@mui/material';
 import { Breakpoint } from '@mui/material';
 import { CancelButton, ConfirmButton } from './Buttons';
+import { ModalConfirm } from './index.ts';
 
 export interface ConfirmationModalProps<T> {
     initialValue?: T;
@@ -29,7 +30,7 @@ export const ConfirmationModal = NiceModal.create(
         size,
         fullWidth
     }: ConfirmationModalProps<boolean>) => {
-        const modal = useModal();
+        const modal = useModal(ModalConfirm);
         return (
             <Dialog
                 fullWidth={fullWidth}

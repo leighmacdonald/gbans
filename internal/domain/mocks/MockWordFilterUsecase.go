@@ -335,7 +335,7 @@ func (_c *MockWordFilterUsecase_Import_Call) RunAndReturn(run func(context.Conte
 }
 
 // SaveFilter provides a mock function with given fields: ctx, user, filter
-func (_m *MockWordFilterUsecase) SaveFilter(ctx context.Context, user domain.PersonInfo, filter *domain.Filter) error {
+func (_m *MockWordFilterUsecase) Create(ctx context.Context, user domain.PersonInfo, filter *domain.Filter) error {
 	ret := _m.Called(ctx, user, filter)
 
 	if len(ret) == 0 {

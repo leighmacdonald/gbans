@@ -11,13 +11,19 @@ import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { Filter, FilterAction, filterActionString } from '../api/filters';
+import {
+    apiDeleteFilter,
+    Filter,
+    FilterAction,
+    filterActionString
+} from '../api/filters';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons';
 import { WarningStateContainer } from '../component/WarningStateContainer';
-import { ModalFilterDelete, ModalFilterEditor } from '../component/modal';
+import { ModalConfirm, ModalFilterEditor } from '../component/modal';
 import { LazyTable, RowsPerPage } from '../component/table/LazyTable';
 import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { useWordFilters } from '../hooks/useWordFilters';
+import { logErr } from '../util/errors.ts';
 
 export const AdminFiltersPage = () => {
     const [newFilters, setNewFilters] = useState<Filter[]>([]);
@@ -27,6 +33,8 @@ export const AdminFiltersPage = () => {
         sortOrder: undefined,
         sortColumn: undefined
     });
+    const [deletedFiltersIDs, setDeletedFiltersIDs] = useState<number[]>([]);
+    const [editedFilters, setEditedFilters] = useState<Filter[]>([]);
 
     const { sendFlash } = useUserFlashCtx();
 
@@ -38,8 +46,18 @@ export const AdminFiltersPage = () => {
     });
 
     const allRows = useMemo(() => {
-        return [...newFilters, ...data];
-    }, [data, newFilters]);
+        const edited = data.map((value) => {
+            return (
+                editedFilters.find((f) => f.filter_id == value.filter_id) ||
+                value
+            );
+        });
+
+        const undeleted = edited.filter(
+            (f) => f.filter_id && !deletedFiltersIDs.includes(f.filter_id)
+        );
+        return [...newFilters, ...undeleted];
+    }, [data, deletedFiltersIDs, editedFilters, newFilters]);
 
     const onCreate = useCallback(async () => {
         try {
@@ -63,16 +81,57 @@ export const AdminFiltersPage = () => {
     }, [sendFlash]);
 
     const onEdit = useCallback(async (filter: Filter) => {
-        await NiceModal.show(ModalFilterEditor, {
-            filter
-        });
+        try {
+            const resp = await NiceModal.show<Filter>(ModalFilterEditor, {
+                filter
+            });
+            setEditedFilters((prevState) => {
+                return [...prevState, resp];
+            });
+        } catch (e) {
+            logErr(e);
+        }
     }, []);
 
-    const onDelete = useCallback(async (filter: Filter) => {
-        await NiceModal.show(ModalFilterDelete, {
-            record: filter
-        });
-    }, []);
+    const handleDelete = useCallback(
+        async (filter: Filter) => {
+            if (!filter.filter_id) {
+                logErr(new Error('filter_id not present, cannot delete'));
+                return;
+            }
+            apiDeleteFilter(filter.filter_id)
+                .then(() => {
+                    setDeletedFiltersIDs((prevState) => {
+                        return [...prevState, filter.filter_id ?? 0];
+                    });
+                    sendFlash('success', `Deleted filter successfully`);
+                })
+                .catch((err) => {
+                    sendFlash('error', `Failed to delete filter: ${err}`);
+                });
+        },
+        [sendFlash]
+    );
+
+    const onConfirmDelete = useCallback(
+        async (filter: Filter) => {
+            try {
+                const confirmed = await NiceModal.show(ModalConfirm, {
+                    title: 'Are you sure you want to delete this filter?'
+                });
+
+                if (!confirmed) {
+                    return;
+                }
+
+                await handleDelete(filter);
+            } catch (e) {
+                logErr(e);
+                return;
+            }
+        },
+        [handleDelete]
+    );
 
     return (
         <Stack spacing={2}>
@@ -215,7 +274,7 @@ export const AdminFiltersPage = () => {
                                             <IconButton
                                                 color={'error'}
                                                 onClick={async () => {
-                                                    await onDelete(row);
+                                                    await onConfirmDelete(row);
                                                 }}
                                             >
                                                 <DeleteForeverIcon />
