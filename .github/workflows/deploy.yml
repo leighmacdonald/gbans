@@ -22,7 +22,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
-          cache: 'yarn'
+          cache: 'pnpm'
           cache-dependency-path: 'frontend/pnpm-lock.yaml'
 
       - name: corepack
@@ -30,7 +30,7 @@ jobs:
 
       - name: Install modules
         working-directory: ./frontend
-        run: yarn install
+        run: pnpm install --frozen-lockfile
 
       - name: Prettier
         run: make lint_ts

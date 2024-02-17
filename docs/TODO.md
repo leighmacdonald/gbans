@@ -24,7 +24,6 @@ If you are looking for things to try implementing, this is a good place to look.
 ## Demos
 
 - Attach the demo to the match_id, probably using a match uuid returned from match start call.
-- Add S3 compatible (minio) storage backend
 - Permanently save demos which trigger AC or are attached to reports
 
 ## Stats
