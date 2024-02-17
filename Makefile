@@ -25,8 +25,14 @@ bump_deps:
 
 build: linux64
 
+watch:
+	cd frontend && pnpm run watch
+
+serve:
+	cd frontend && pnpm run serve
+
 frontend:
-	cd frontend && pnpm && pnpm run build
+	cd frontend && pnpm install --frozen-lockfile && pnpm run build
 
 linux64:
 	GOOS=linux GOARCH=amd64 $(GO_BUILD) $(GO_FLAGS) -o build/linux64/gbans main.go
@@ -96,6 +102,10 @@ bench:
 
 clean:
 	@go clean $(GO_FLAGS) -i
+	rm -rf ./build/
+	rm -rf ./frontend/dist
+	rm -rf ./frontend/node_modules
+	rm -rf ./sourcemod/plugins/gbans.smx
 
 docker_test_postgres:
 	@docker-compose --project-name testing -f docker/docker-compose-test.yml down -v

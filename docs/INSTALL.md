@@ -8,10 +8,6 @@ Gbans is lightweight and can handle a small to moderately sized community with a
 
 Special considerations need to be made when using extended functionality:
 
-- STV demo recording can fill space up quickly. STVs are stored in the database directly, and typically removed after
-  two weeks. Allow 15GB or so per TF2 server instance for demo recordings. Space can be reduced by enabling TOAST
-  compression in
-  Postgres.
 - IP2Location is memory intensive when updating the dataset, requiring 10 to 12GB of memory. The process can be
   sped up by using NVMe storage for the database.
 
@@ -30,25 +26,31 @@ instructions:
 
 ### Compile from source
 
-Precompiled binaries will be provided once the project is in a more stable state.
+Precompiled binaries will be provided once the project is in a more stable state. Its recommended to use the docker
+images as they are currently the only tested usecase.  
 
 - [make](https://www.gnu.org/software/make/) Not strictly required but provides predefined build commands
-- [golang 1.21+](https://golang.org/) gbans is written in go. Version >=1.21 is *REQUIRED* due to using profile guided
-  optimization features.
-- [PostgreSQL](https://www.postgresql.org/) is used as the data store. Version 12 is the only version currently tested
-  against. However i believe anything 10 and up should work. Please let me know if this is not the case.
+- [minio](https://min.io/) You will need to have set up minio access/secret keys. Other s3 compatible options should work but are untested
+- [golang 1.22+](https://golang.org/) Version >=1.22 is required.
+- [PostgreSQL](https://www.postgresql.org/) Version 15 is the only version currently tested against. However, anything 10 and up should work, ymmv.
     - [PostGIS](https://postgis.net/) extension is also used for some GIS functionality.
 - [NodeJS >=18.17.1](https://nodejs.org/en/) To build frontend
-    - [yarn4](https://yarnpkg.com/) JS package manager (If you have problems
-      try: `cd frontend && corepack enable && yarn set version stable && yarn install`)
-- [Sourcemod 1.11+](https://www.sourcemod.net/) - Sourcemod SDK path. [sourcemod/Makefile](../sourcemod/Makefile)
-  expects your
-  installation path to be `~/sdk/sourcemod/addons/sourcemod` with `spcomp64` in your $PATH
+    - [pnpm](https://pnpm.io/) JS package manager
+- [Sourcemod 1.12](https://www.sourcemod.net/) - Sourcemod installation
 
 Basic steps to build the binary packages:
 
-    1. git clone git@github.com:leighmacdonald/gbans.git && cd gbans
-    2. make
+If you do not already have sourcemod, you can download and extract sourcemod to a directory of your choosing with the following:
+
+    mkdir -p ~/sourcemod &&  wget https://sm.alliedmods.net/smdrop/1.12/sourcemod-1.12.0-git7110-linux.tar.gz -O ~/sourcemod/sm.tar.gz && tar xvfz ~/sourcemod/sm.tar.gz -C ~/sourcemod
+
+Clone the gbans repository
+
+    git clone git@github.com:leighmacdonald/gbans.git && cd gbans
+
+Build the projects, replace SM_ROOT with the path to your sourcemod installation directory (the folder with addons and cfg folders inside).
+    
+    SM_ROOT=~/sourcemod make 
 
 You should now have a binary located at `./build/$platform/gbans`
 
@@ -60,10 +62,10 @@ sudo docker run -d --restart unless-stopped \
     --dns=1.1.1.1 \
     -v /home/ubuntu/gbans/gbans.yml:/app/gbans.yml:ro \
     --name gbans \
-    ghcr.io/leighmacdonald/gbans:v0.5.4
+    ghcr.io/leighmacdonald/gbans:v0.5.14
 ```
 
-Substitute `master` for a specific tag if desired, and `/home/ubuntu/gbans/gbans.yml` with the location of your config.
+Substitute `/home/ubuntu/gbans/gbans.yml` with the location of your config.
 
 This configuration will restart gbans unless explicitly stopped, and names the container for easy log access/stopping.
 
