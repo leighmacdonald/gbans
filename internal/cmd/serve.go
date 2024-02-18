@@ -58,8 +58,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 		Short: "Starts the gbans service",
 		Long:  `Starts the main gbans application`,
 		Run: func(cmd *cobra.Command, args []string) {
-			ctx := context.Background()
-			rootCtx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
+			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer stop()
 
 			configUsecase := config.NewConfigUsecase(config.NewConfigRepository())
@@ -89,7 +88,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				slog.String("date", app.BuildDate))
 
 			dbUsecase := database.New(conf.DB.DSN, conf.DB.AutoMigrate, conf.DB.LogQueries)
-			if errConnect := dbUsecase.Connect(rootCtx); errConnect != nil {
+			if errConnect := dbUsecase.Connect(ctx); errConnect != nil {
 				slog.Error("Cannot initialize database", log.ErrAttr(errConnect))
 
 				return
@@ -260,8 +259,6 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			wiki.NewWIkiHandler(router, wikiUsecase, authUsecase)
 			wordfilter.NewWordFilterHandler(router, configUsecase, wordFilterUsecase, chatUsecase, authUsecase)
 
-			defer discordUsecase.Shutdown(conf.Discord.GuildID)
-
 			if conf.Debug.AddRCONLogAddress != "" {
 				slog.Info("Enabling log forwarding for local host")
 				stateUsecase.LogAddressAdd(ctx, conf.Debug.AddRCONLogAddress)
@@ -286,7 +283,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				slog.Error("HTTP server returned error", log.ErrAttr(errServe))
 			}
 
-			<-rootCtx.Done()
+			<-ctx.Done()
 		},
 	}
 }
