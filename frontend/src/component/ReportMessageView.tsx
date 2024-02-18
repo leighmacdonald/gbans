@@ -15,7 +15,7 @@ import { formatDistance } from 'date-fns';
 import { Formik } from 'formik';
 import { apiUpdateReportMessage, ReportMessage } from '../api';
 import { logErr } from '../util/errors';
-import { avatarHashToURL } from '../util/text';
+import { avatarHashToURL } from '../util/text.tsx';
 import { MDBodyField } from './MDBodyField';
 import { MarkDownRenderer } from './MarkdownRenderer';
 import { ResetButton, SubmitButton } from './modal/Buttons';

@@ -1,23 +1,12 @@
 import { useMemo } from 'react';
 import TextField from '@mui/material/TextField';
 import { useFormikContext } from 'formik';
-import * as yup from 'yup';
 import { BanReason } from '../../api';
 import { BanReasonFieldProps } from './BanReasonField';
 
-export const banReasonTextFieldValidator = yup
-    .string()
-    .test('reason_text', '${path} invalid', (value, context) => {
-        if (context.parent.reason != BanReason.Custom) {
-            return true;
-        } else {
-            return value != undefined && value.length > 3;
-        }
-    });
-
-export const banValidationSchema = yup.object({
-    reason_text: banReasonTextFieldValidator
-});
+// const banValidationSchema = yup.object({
+//     reason_text: banReasonTextFieldValidator
+// });
 
 interface BanReasonTextFieldProps {
     reason_text: BanReason;

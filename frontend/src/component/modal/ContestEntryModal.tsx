@@ -23,7 +23,7 @@ import {
     useContest
 } from '../../api';
 import { apiSaveContestEntryMedia, UserUploadedFile } from '../../api/media';
-import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { logErr } from '../../util/errors';
 import { Nullable } from '../../util/types';
 import { Heading } from '../Heading';

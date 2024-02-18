@@ -5,7 +5,6 @@ import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import AutoFixNormalIcon from '@mui/icons-material/AutoFixNormal';
 import GavelIcon from '@mui/icons-material/Gavel';
 import InfoIcon from '@mui/icons-material/Info';
-import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import SendIcon from '@mui/icons-material/Send';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
@@ -36,15 +35,15 @@ import {
 } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { Heading } from '../component/Heading';
-import { LoadingSpinner } from '../component/LoadingSpinner';
+import { ProfileInfoBox } from '../component/ProfileInfoBox.tsx';
 import { ReportViewComponent } from '../component/ReportViewComponent';
 import { SteamIDList } from '../component/SteamIDList';
 import { ModalBanSteam } from '../component/modal';
-import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
 import { useReport } from '../hooks/useReport.ts';
+import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors';
-import { avatarHashToURL } from '../util/text';
+import { avatarHashToURL } from '../util/text.tsx';
 
 export const ReportViewPage = (): JSX.Element => {
     const { report_id } = useParams();
@@ -59,10 +58,10 @@ export const ReportViewPage = (): JSX.Element => {
     const { data: report } = useReport(id);
 
     useEffect(() => {
-        if (report) {
+        if (report?.report_status) {
             setStateAction(report?.report_status);
         }
-    }, [report]);
+    }, [report?.report_status]);
 
     const handleReportStateChange = (event: SelectChangeEvent<number>) => {
         setNewStateAction(event.target.value as ReportStatus);
@@ -74,7 +73,7 @@ export const ReportViewPage = (): JSX.Element => {
             { target_id: report?.target_id, desc: true },
             abortController
         ).then((bans) => {
-            const active = bans.data.filter((b) =>
+            const active = bans.data.filter((b: SteamBanRecord) =>
                 isBefore(new Date(), b.valid_until)
             );
             if (active.length > 0) {
@@ -138,6 +137,74 @@ export const ReportViewPage = (): JSX.Element => {
         );
     }, [stateAction, theme]);
 
+    const resolveView = useMemo(() => {
+        return (
+            <ContainerWithHeader
+                title={'Resolve Report'}
+                iconLeft={<AutoFixNormalIcon />}
+            >
+                <List>
+                    <ListItem>
+                        <Stack sx={{ width: '100%' }} spacing={2}>
+                            <FormControl fullWidth>
+                                <InputLabel id="select-label">
+                                    Action
+                                </InputLabel>
+                                <Select<ReportStatus>
+                                    labelId="select-label"
+                                    id="simple-select"
+                                    value={stateAction}
+                                    label="Report State"
+                                    onChange={handleReportStateChange}
+                                >
+                                    {[
+                                        ReportStatus.Opened,
+                                        ReportStatus.NeedMoreInfo,
+                                        ReportStatus.ClosedWithoutAction,
+                                        ReportStatus.ClosedWithAction
+                                    ].map((status) => (
+                                        <MenuItem key={status} value={status}>
+                                            {reportStatusString(status)}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                            <ButtonGroup fullWidth>
+                                {report && (
+                                    <Button
+                                        variant={'contained'}
+                                        color={'error'}
+                                        startIcon={<GavelIcon />}
+                                        onClick={async () => {
+                                            await NiceModal.show(
+                                                ModalBanSteam,
+                                                {
+                                                    reportId: report.report_id,
+                                                    steamId:
+                                                        report?.subject.steam_id
+                                                }
+                                            );
+                                        }}
+                                    >
+                                        Ban Player
+                                    </Button>
+                                )}
+                                <Button
+                                    variant={'contained'}
+                                    color={'warning'}
+                                    startIcon={<SendIcon />}
+                                    onClick={onSetReportState}
+                                >
+                                    Set State
+                                </Button>
+                            </ButtonGroup>
+                        </Stack>
+                    </ListItem>
+                </List>
+            </ContainerWithHeader>
+        );
+    }, [onSetReportState, report, stateAction]);
+
     return (
         <Grid container spacing={2}>
             <Grid xs={12} md={8}>
@@ -145,32 +212,10 @@ export const ReportViewPage = (): JSX.Element => {
             </Grid>
             <Grid xs={12} md={4}>
                 <Stack spacing={2}>
-                    <ContainerWithHeader
-                        title={report?.subject.personaname ?? 'Loading'}
-                        iconLeft={<PersonSearchIcon />}
-                    >
-                        <Stack>
-                            {!report?.subject.steam_id ? (
-                                <LoadingSpinner />
-                            ) : (
-                                <>
-                                    <Avatar
-                                        variant={'square'}
-                                        alt={report?.subject.personaname}
-                                        src={avatarHashToURL(
-                                            report?.subject.avatarhash
-                                        )}
-                                        sx={{
-                                            width: '100%',
-                                            height: '100%'
-                                        }}
-                                    />
-                                    {renderBan}
-                                </>
-                            )}
-                        </Stack>
-                    </ContainerWithHeader>
-
+                    {report?.target_id && (
+                        <ProfileInfoBox steam_id={report?.target_id} />
+                    )}
+                    {renderBan}
                     <SteamIDList steam_id={report?.subject.steam_id ?? ''} />
 
                     {reportStatusView}
@@ -243,88 +288,7 @@ export const ReportViewPage = (): JSX.Element => {
                         </List>
                     </ContainerWithHeader>
                     {currentUser.permission_level >=
-                        PermissionLevel.Moderator && (
-                        <>
-                            <ContainerWithHeader
-                                title={'Resolve Report'}
-                                iconLeft={<AutoFixNormalIcon />}
-                            >
-                                <List>
-                                    <ListItem>
-                                        <Stack
-                                            sx={{ width: '100%' }}
-                                            spacing={2}
-                                        >
-                                            <FormControl fullWidth>
-                                                <InputLabel id="select-label">
-                                                    Action
-                                                </InputLabel>
-                                                <Select<ReportStatus>
-                                                    labelId="select-label"
-                                                    id="simple-select"
-                                                    value={newStateAction}
-                                                    label="Report State"
-                                                    onChange={
-                                                        handleReportStateChange
-                                                    }
-                                                >
-                                                    {[
-                                                        ReportStatus.Opened,
-                                                        ReportStatus.NeedMoreInfo,
-                                                        ReportStatus.ClosedWithoutAction,
-                                                        ReportStatus.ClosedWithAction
-                                                    ].map((status) => (
-                                                        <MenuItem
-                                                            key={status}
-                                                            value={status}
-                                                        >
-                                                            {reportStatusString(
-                                                                status
-                                                            )}
-                                                        </MenuItem>
-                                                    ))}
-                                                </Select>
-                                            </FormControl>
-                                            <ButtonGroup fullWidth>
-                                                {report && (
-                                                    <Button
-                                                        variant={'contained'}
-                                                        color={'error'}
-                                                        startIcon={
-                                                            <GavelIcon />
-                                                        }
-                                                        onClick={async () => {
-                                                            await NiceModal.show(
-                                                                ModalBanSteam,
-                                                                {
-                                                                    reportId:
-                                                                        report.report_id,
-                                                                    steamId:
-                                                                        report
-                                                                            ?.subject
-                                                                            .steam_id
-                                                                }
-                                                            );
-                                                        }}
-                                                    >
-                                                        Ban Player
-                                                    </Button>
-                                                )}
-                                                <Button
-                                                    variant={'contained'}
-                                                    color={'warning'}
-                                                    startIcon={<SendIcon />}
-                                                    onClick={onSetReportState}
-                                                >
-                                                    Set State
-                                                </Button>
-                                            </ButtonGroup>
-                                        </Stack>
-                                    </ListItem>
-                                </List>
-                            </ContainerWithHeader>
-                        </>
-                    )}
+                        PermissionLevel.Moderator && resolveView}
                 </Stack>
             </Grid>
         </Grid>

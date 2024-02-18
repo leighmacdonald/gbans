@@ -10,10 +10,11 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { LazyTable, RowsPerPage } from '../component/table/LazyTable';
-import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { LazyTable } from '../component/table/LazyTable';
+import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
 import { useMatchHistory } from '../hooks/useMatchHistory';
+import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import { RowsPerPage } from '../util/table.ts';
 import { PageNotFoundPage } from './PageNotFoundPage';
 
 interface MatchSummaryTableProps {

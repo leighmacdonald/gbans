@@ -38,10 +38,11 @@ import { PersonanameField } from '../component/formik/PersonanameField';
 import { ServerIDCell, ServerIDField } from '../component/formik/ServerIDField';
 import { SteamIdField } from '../component/formik/SteamIdField';
 import { ResetButton, SubmitButton } from '../component/modal/Buttons';
-import { LazyTable, RowsPerPage } from '../component/table/LazyTable';
-import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import { LazyTable } from '../component/table/LazyTable';
+import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
 import { useServers } from '../hooks/useServers';
 import { logErr } from '../util/errors';
+import { RowsPerPage } from '../util/table.ts';
 
 const anyServerSimple: ServerSimple = {
     server_name: 'Any',

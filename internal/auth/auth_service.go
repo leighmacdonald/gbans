@@ -143,6 +143,7 @@ func (h authHandler) onOpenIDCallback() gin.HandlerFunc {
 
 			return
 		}
+
 		// TODO max age checks
 		ctx.SetSameSite(http.SameSiteStrictMode)
 		ctx.SetCookie(

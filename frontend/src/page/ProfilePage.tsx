@@ -15,7 +15,7 @@ import { PlayerStatsOverallContainer } from '../component/PlayerStatsOverallCont
 import { PlayerWeaponsStatListContainer } from '../component/PlayerWeaponsStatListContainer';
 import { ProfileInfoBox } from '../component/ProfileInfoBox';
 import { SteamIDList } from '../component/SteamIDList';
-import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
 import { useProfile } from '../hooks/useProfile';
 import { createExternalLinks } from '../util/history';
 import { LoginPage } from './LoginPage';

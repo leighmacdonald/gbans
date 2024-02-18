@@ -5,13 +5,7 @@ import FormHelperText from '@mui/material/FormHelperText';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import { useFormikContext } from 'formik';
-import * as yup from 'yup';
 import { ReportStatus, reportStatusString } from '../../api';
-
-export const reportStatusFielValidator = yup
-    .string()
-    .label('Select a report status')
-    .required('report status is required');
 
 export interface ReportStatusFieldProps {
     report_status: ReportStatus;

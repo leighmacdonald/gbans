@@ -1,5 +1,5 @@
 import { logErr } from '../util/errors';
-import { parseDateTime } from '../util/text';
+import { parseDateTime } from '../util/text.tsx';
 import { emptyOrNullString } from '../util/types';
 import {
     isTokenExpired,
@@ -79,7 +79,7 @@ export enum ErrorCode {
 export class APIError extends Error {
     public code: ErrorCode;
 
-    constructor(code: ErrorCode, message?: string, options?: ErrorOptions) {
+    constructor(code: ErrorCode, message?: string, options?: never) {
         if (emptyOrNullString(message)) {
             switch (code) {
                 case ErrorCode.InvalidMimetype:
@@ -98,6 +98,7 @@ export class APIError extends Error {
                     message = 'Unhandled Error';
             }
         }
+        // @ts-expect-error not supported
         super(message, options);
         this.code = code;
     }
@@ -108,13 +109,8 @@ interface errorMessage {
     code?: number;
 }
 
-const apiRootURL = (): string => {
-    if (import.meta.env.DEV) {
-        return 'http://gbans.localhost:6006';
-    } else {
-        return `${location.protocol}//${location.host}`;
-    }
-};
+const apiRootURL = (): string => `${location.protocol}//${location.host}`;
+
 /**
  * All api requests are handled through this interface.
  *
@@ -139,7 +135,7 @@ export const apiCall = async <
         'Content-Type': 'application/json; charset=UTF-8'
     };
     const requestOptions: RequestInit = {
-        mode: import.meta.env.DEV ? 'no-cors' : 'same-origin',
+        mode: 'cors',
         credentials: 'include',
         method: method.toUpperCase()
     };

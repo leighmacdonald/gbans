@@ -13,54 +13,33 @@ import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import { Player } from 'video-react';
 import 'video-react/dist/video-react.css';
-import { Asset } from '../../api/media';
+import { Asset, assetURLMedia, mediaType, MediaTypes } from '../../api/media';
 import { Heading } from '../Heading';
 import { CloseButton } from './Buttons';
 
-export enum MediaTypes {
-    video,
-    image,
-    other
-}
-
-const assetUrl = (bucket: string, asset: Asset): string =>
-    `${window.gbans.asset_url}/${bucket}/${asset.name}`;
-
-export const mediaType = (mime_type: string): MediaTypes => {
-    if (mime_type.startsWith('image/')) {
-        return MediaTypes.image;
-    } else if (mime_type.startsWith('video/')) {
-        return MediaTypes.video;
-    } else {
-        return MediaTypes.other;
-    }
-};
-
-export const VideoAsset = ({ asset }: AssetViewerProps) => (
+const VideoAsset = ({ asset }: AssetViewerProps) => (
     <Box>
         <Player>
-            <source
-                src={assetUrl(window.gbans.bucket_media, asset)}
-                type={asset.mime_type}
-            />
+            <source src={assetURLMedia(asset)} type={asset.mime_type} />
         </Player>
     </Box>
 );
 
-export const ImageAsset = ({ asset }: AssetViewerProps) => {
+const ImageAsset = ({ asset }: AssetViewerProps) => {
     return (
         <Card>
             <CardActionArea>
                 <CardMedia
                     component="img"
                     //height="140"
-                    image={assetUrl(window.gbans.bucket_media, asset)}
+                    image={assetURLMedia(asset)}
                     alt={asset.name}
                 />
             </CardActionArea>
         </Card>
     );
 };
+
 interface AssetViewerProps {
     asset: Asset;
 }

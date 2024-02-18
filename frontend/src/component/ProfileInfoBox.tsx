@@ -6,7 +6,7 @@ import Typography from '@mui/material/Typography';
 import { format, fromUnixTime } from 'date-fns';
 import { apiGetProfile, PlayerProfile } from '../api';
 import { logErr } from '../util/errors';
-import { avatarHashToURL, isValidSteamDate } from '../util/text';
+import { avatarHashToURL, isValidSteamDate } from '../util/text.tsx';
 import { ContainerWithHeader } from './ContainerWithHeader';
 import { LoadingPlaceholder } from './LoadingPlaceholder';
 

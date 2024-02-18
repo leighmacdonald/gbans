@@ -24,7 +24,7 @@ import {
     PermissionLevel,
     useContest
 } from '../api';
-import { Asset } from '../api/media';
+import { Asset, mediaType, MediaTypes } from '../api/media';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { InfoBar } from '../component/InfoBar';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder';
@@ -37,11 +37,10 @@ import {
     ModalContestEntry,
     ModalContestEntryDelete
 } from '../component/modal';
-import { mediaType, MediaTypes } from '../component/modal/AssetViewer';
-import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
+import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors';
-import { humanFileSize } from '../util/text';
+import { humanFileSize } from '../util/text.tsx';
 import { PageNotFoundPage } from './PageNotFoundPage';
 
 export const ContestPage = () => {

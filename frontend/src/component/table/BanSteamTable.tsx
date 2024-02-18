@@ -9,30 +9,41 @@ import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
+import { intervalToDuration } from 'date-fns';
 import { Formik } from 'formik';
 import { FormikHelpers } from 'formik/dist/types';
 import * as yup from 'yup';
 import { AppealState, BanReason, SteamBanRecord } from '../../api';
-import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
 import { useBansSteam } from '../../hooks/useBansSteam';
-import { renderDate } from '../../util/text';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+import { RowsPerPage } from '../../util/table.ts';
+import { renderDate } from '../../util/text.tsx';
 import {
-    AppealStateField,
-    appealStateFielValidator
-} from '../formik/AppealStateField';
-import { DeletedField, deletedValidator } from '../formik/DeletedField';
+    appealStateFielValidator,
+    deletedValidator,
+    sourceIdValidator,
+    targetIdValidator
+} from '../../util/validators.ts';
+import { AppealStateField } from '../formik/AppealStateField';
+import { DeletedField } from '../formik/DeletedField';
 import { FilterButtons } from '../formik/FilterButtons';
-import { SourceIdField, sourceIdValidator } from '../formik/SourceIdField';
+import { SourceIdField } from '../formik/SourceIdField';
 import { SteamIDSelectField } from '../formik/SteamIDSelectField';
-import { TargetIDField, targetIdValidator } from '../formik/TargetIdField';
+import { TargetIDField } from '../formik/TargetIdField';
 import { ModalBanSteam, ModalUnbanSteam } from '../modal';
-import { LazyTable, RowsPerPage } from './LazyTable';
+import { LazyTable } from './LazyTable';
 import { TableCellBool } from './TableCellBool';
 import { TableCellLink } from './TableCellLink';
-import {
-    isPermanentBan,
-    TableCellRelativeDateField
-} from './TableCellRelativeDateField';
+import { TableCellRelativeDateField } from './TableCellRelativeDateField';
+
+const isPermanentBan = (start: Date, end: Date): boolean => {
+    const dur = intervalToDuration({
+        start,
+        end
+    });
+    const { years } = dur;
+    return years != null && years > 5;
+};
 
 interface SteamBanFilterValues {
     appeal_state: AppealState;

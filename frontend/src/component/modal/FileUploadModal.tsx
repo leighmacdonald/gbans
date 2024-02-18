@@ -17,7 +17,7 @@ import { styled } from '@mui/material/styles';
 import { fromByteArray } from 'base64-js';
 import { Formik } from 'formik';
 import { UserUploadedFile } from '../../api/media';
-import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Nullable } from '../../util/types';
 import { Heading } from '../Heading';
 import { NameField } from '../formik/NameField';

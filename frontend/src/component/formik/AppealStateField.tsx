@@ -4,13 +4,7 @@ import FormHelperText from '@mui/material/FormHelperText';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import { useFormikContext } from 'formik';
-import * as yup from 'yup';
 import { AppealState, appealStateString } from '../../api';
-
-export const appealStateFielValidator = yup
-    .string()
-    .label('Select a appeal state')
-    .required('Appeal state is required');
 
 export interface AppealStateFieldProps {
     appeal_state: AppealState;

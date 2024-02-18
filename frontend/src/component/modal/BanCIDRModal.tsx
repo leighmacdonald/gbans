@@ -19,31 +19,24 @@ import {
     CIDRBanRecord,
     APIError
 } from '../../api';
+import {
+    banReasonFieldValidator,
+    banReasonTextFieldValidator,
+    makeNetworkRangeFieldValidator,
+    steamIdValidator
+} from '../../util/validators.ts';
 import { Heading } from '../Heading';
-import {
-    BanReasonField,
-    banReasonFieldValidator
-} from '../formik/BanReasonField';
-import {
-    BanReasonTextField,
-    banReasonTextFieldValidator
-} from '../formik/BanReasonTextField';
+import { BanReasonField } from '../formik/BanReasonField';
+import { BanReasonTextField } from '../formik/BanReasonTextField';
 import {
     DurationCustomField,
     DurationCustomFieldValidator
 } from '../formik/DurationCustomField';
 import { DurationField, DurationFieldValidator } from '../formik/DurationField';
 import { ErrorField } from '../formik/ErrorField';
-import {
-    makeNetworkRangeFieldValidator,
-    NetworkRangeField
-} from '../formik/NetworkRangeField';
+import { NetworkRangeField } from '../formik/NetworkRangeField';
 import { NoteField, NoteFieldValidator } from '../formik/NoteField';
-import {
-    SteamIdField,
-    SteamIDInputValue,
-    steamIdValidator
-} from '../formik/SteamIdField';
+import { SteamIdField, SteamIDInputValue } from '../formik/SteamIdField';
 import { CancelButton, ResetButton, SubmitButton } from './Buttons';
 
 interface BanCIDRFormValues extends SteamIDInputValue {

@@ -19,16 +19,15 @@ import {
     Duration,
     SteamBanRecord
 } from '../../api';
-import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+import {
+    banReasonFieldValidator,
+    banReasonTextFieldValidator,
+    steamIdValidator
+} from '../../util/validators.ts';
 import { Heading } from '../Heading';
-import {
-    BanReasonField,
-    banReasonFieldValidator
-} from '../formik/BanReasonField';
-import {
-    BanReasonTextField,
-    banReasonTextFieldValidator
-} from '../formik/BanReasonTextField';
+import { BanReasonField } from '../formik/BanReasonField';
+import { BanReasonTextField } from '../formik/BanReasonTextField';
 import { BanTypeField, BanTypeFieldValidator } from '../formik/BanTypeField';
 import {
     DurationCustomField,
@@ -39,11 +38,7 @@ import { ErrorField } from '../formik/ErrorField';
 import { IncludeFriendsField } from '../formik/IncludeFriendsField';
 import { NoteField, NoteFieldValidator } from '../formik/NoteField';
 import { ReportIdField, ReportIdFieldValidator } from '../formik/ReportIdField';
-import {
-    SteamIdField,
-    SteamIDInputValue,
-    steamIdValidator
-} from '../formik/SteamIdField';
+import { SteamIdField, SteamIDInputValue } from '../formik/SteamIdField';
 import { CancelButton, ResetButton, SubmitButton } from './Buttons';
 
 export interface BanModalProps {
@@ -89,7 +84,7 @@ export const BanSteamModal = NiceModal.create(
             return existing && existing?.ban_id > 0;
         }, [existing]);
 
-        const onSumit = useCallback(
+        const onSubmit = useCallback(
             async (values: BanSteamFormValues) => {
                 try {
                     if (isUpdate && existing) {
@@ -137,7 +132,7 @@ export const BanSteamModal = NiceModal.create(
 
         return (
             <Formik
-                onSubmit={onSumit}
+                onSubmit={onSubmit}
                 id={'banSteamForm'}
                 initialValues={{
                     ban_type: existing?.ban_type ?? BanType.Banned,

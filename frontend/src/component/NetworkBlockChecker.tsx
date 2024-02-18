@@ -7,8 +7,7 @@ import { Formik } from 'formik';
 import * as yup from 'yup';
 import { apiCIDRBlockCheck, CIDRBlockCheckResponse } from '../api';
 import { logErr } from '../util/errors';
-import { emptyOrNullString } from '../util/types';
-import { isValidIP } from '../util/validators';
+import { ipFieldValidator } from '../util/validators';
 import { VCenterBox } from './VCenterBox';
 import { IPField } from './formik/IPField';
 import { SubmitButton } from './modal/Buttons';
@@ -16,16 +15,6 @@ import { SubmitButton } from './modal/Buttons';
 interface NetworkBlockCheckerValues {
     ip: string;
 }
-
-export const ipFieldValidator = yup
-    .string()
-    .required()
-    .test('valid_ip', 'Invalid IP', (value) => {
-        if (emptyOrNullString(value)) {
-            return true;
-        }
-        return isValidIP(value as string);
-    });
 
 const validationSchema = yup.object({ ip: ipFieldValidator });
 

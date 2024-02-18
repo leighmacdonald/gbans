@@ -5,10 +5,10 @@ import {
     apiGetPlayerClassOverallStats,
     PlayerClassOverallResult
 } from '../api';
-import { defaultFloatFmt, humanCount } from '../util/text';
+import { defaultFloatFmt, humanCount } from '../util/text.tsx';
 import { ContainerWithHeader } from './ContainerWithHeader';
+import FmtWhenGt from './FmtWhenGT.tsx';
 import { PlayerClassImg } from './PlayerClassImg';
-import { fmtWhenGt } from './PlayersOverallContainer';
 import { LazyTableSimple } from './table/LazyTableSimple';
 
 interface PlayerClassStatsContainerProps {
@@ -61,7 +61,7 @@ export const PlayerClassStatsContainer = ({
                                 sortable: true,
                                 sortKey: 'ka',
                                 tooltip: 'Total Kills + Assists',
-                                renderer: (obj) => fmtWhenGt(obj.ka, humanCount)
+                                renderer: (obj) => FmtWhenGt(obj.ka, humanCount)
                             },
                             {
                                 label: 'Kills',
@@ -69,7 +69,7 @@ export const PlayerClassStatsContainer = ({
                                 sortKey: 'kills',
                                 tooltip: 'Total Kills',
                                 renderer: (obj) =>
-                                    fmtWhenGt(obj.kills, humanCount)
+                                    FmtWhenGt(obj.kills, humanCount)
                             },
                             {
                                 label: 'A',
@@ -77,7 +77,7 @@ export const PlayerClassStatsContainer = ({
                                 sortKey: 'assists',
                                 tooltip: 'Total Assists',
                                 renderer: (obj) =>
-                                    fmtWhenGt(obj.assists, humanCount)
+                                    FmtWhenGt(obj.assists, humanCount)
                             },
                             {
                                 label: 'D',
@@ -85,7 +85,7 @@ export const PlayerClassStatsContainer = ({
                                 sortKey: 'deaths',
                                 tooltip: 'Total Deaths',
                                 renderer: (obj) =>
-                                    fmtWhenGt(obj.deaths, humanCount)
+                                    FmtWhenGt(obj.deaths, humanCount)
                             },
                             {
                                 label: 'KAD',
@@ -93,7 +93,7 @@ export const PlayerClassStatsContainer = ({
                                 sortKey: 'kad',
                                 tooltip: 'Kills+Assists:Deaths Ratio',
                                 renderer: (obj) =>
-                                    fmtWhenGt(obj.kad, defaultFloatFmt)
+                                    FmtWhenGt(obj.kad, defaultFloatFmt)
                             },
                             {
                                 label: 'Dmg',
@@ -101,7 +101,7 @@ export const PlayerClassStatsContainer = ({
                                 sortKey: 'damage',
                                 tooltip: 'Total Damage',
                                 renderer: (obj) =>
-                                    fmtWhenGt(obj.damage, humanCount)
+                                    FmtWhenGt(obj.damage, humanCount)
                             },
                             {
                                 label: 'DPM',
@@ -109,7 +109,7 @@ export const PlayerClassStatsContainer = ({
                                 sortKey: 'dpm',
                                 tooltip: 'Overall Damage Per Minute',
                                 renderer: (obj) =>
-                                    fmtWhenGt(obj.dpm, () =>
+                                    FmtWhenGt(obj.dpm, () =>
                                         defaultFloatFmt(obj.dpm)
                                     )
                             },
@@ -119,7 +119,7 @@ export const PlayerClassStatsContainer = ({
                                 sortKey: 'damage_taken',
                                 tooltip: 'Total Damage Taken',
                                 renderer: (obj) =>
-                                    fmtWhenGt(obj.damage_taken, humanCount)
+                                    FmtWhenGt(obj.damage_taken, humanCount)
                             },
                             {
                                 label: 'DM',
@@ -127,7 +127,7 @@ export const PlayerClassStatsContainer = ({
                                 sortKey: 'dominations',
                                 tooltip: 'Total Dominations',
                                 renderer: (obj) =>
-                                    fmtWhenGt(obj.dominations, humanCount)
+                                    FmtWhenGt(obj.dominations, humanCount)
                             },
                             {
                                 label: 'DD',
@@ -135,7 +135,7 @@ export const PlayerClassStatsContainer = ({
                                 sortKey: 'dominated',
                                 tooltip: 'Total Times Dominated',
                                 renderer: (obj) =>
-                                    fmtWhenGt(obj.dominated, humanCount)
+                                    FmtWhenGt(obj.dominated, humanCount)
                             },
                             {
                                 label: 'RV',
@@ -143,7 +143,7 @@ export const PlayerClassStatsContainer = ({
                                 sortKey: 'revenges',
                                 tooltip: 'Total Revenges',
                                 renderer: (obj) =>
-                                    fmtWhenGt(obj.revenges, humanCount)
+                                    FmtWhenGt(obj.revenges, humanCount)
                             },
                             {
                                 label: 'CP',
@@ -151,7 +151,7 @@ export const PlayerClassStatsContainer = ({
                                 sortKey: 'captures',
                                 tooltip: 'Total Captures',
                                 renderer: (obj) =>
-                                    fmtWhenGt(obj.captures, humanCount)
+                                    FmtWhenGt(obj.captures, humanCount)
                             }
                         ]}
                         defaultSortColumn={'ka'}

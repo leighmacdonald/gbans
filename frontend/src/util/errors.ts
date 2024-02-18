@@ -13,7 +13,7 @@ export enum Level {
 export const log = (msg: unknown, level: Level = Level.err): void => {
     if (runMode === 'development') {
         if (
-            (msg as object).hasOwnProperty('message') &&
+            Object.prototype.hasOwnProperty.call(msg as object, 'message') &&
             (msg as Error).name != 'AbortError'
         ) {
             // eslint-disable-next-line no-console
@@ -26,7 +26,7 @@ export const log = (msg: unknown, level: Level = Level.err): void => {
 };
 
 export const logErr = (exception: unknown): void => {
-    if ((exception as object).hasOwnProperty('name')) {
+    if (Object.prototype.hasOwnProperty.call(exception as object, 'name')) {
         if ((exception as Error).name !== 'AbortError') {
             return log(exception, Level.err);
         }

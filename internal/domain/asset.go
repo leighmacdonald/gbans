@@ -8,6 +8,7 @@ import (
 )
 
 type AssetRepository interface {
+	Init(ctx context.Context) error
 	GetAsset(ctx context.Context, uuid uuid.UUID) (Asset, error)
 	CreateBucketIfNotExists(ctx context.Context, name string) error
 	SaveAsset(ctx context.Context, asset *Asset) error

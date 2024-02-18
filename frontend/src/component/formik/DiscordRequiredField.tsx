@@ -4,12 +4,6 @@ import FormGroup from '@mui/material/FormGroup';
 import FormHelperText from '@mui/material/FormHelperText';
 import Switch from '@mui/material/Switch';
 import { FormikHandlers, FormikState } from 'formik/dist/types';
-import * as yup from 'yup';
-
-export const discordRequiredValidator = yup
-    .boolean()
-    .label('Is discord required')
-    .required();
 
 export const DiscordRequiredField = ({
     formik

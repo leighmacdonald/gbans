@@ -5,9 +5,8 @@ import {
     QueryFilter,
     Weapon
 } from '../api';
-import { RowsPerPage } from '../component/table/LazyTable';
-import { compare, stableSort } from '../component/table/LazyTableSimple';
 import { logErr } from '../util/errors';
+import { compare, RowsPerPage, stableSort } from '../util/table.ts';
 
 export const useWeaponsStats = (
     weapon_id: number,

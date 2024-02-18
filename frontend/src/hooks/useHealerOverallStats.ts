@@ -4,9 +4,8 @@ import {
     HealingOverallResult,
     QueryFilter
 } from '../api';
-import { RowsPerPage } from '../component/table/LazyTable';
-import { compare, stableSort } from '../component/table/LazyTableSimple';
 import { logErr } from '../util/errors';
+import { compare, RowsPerPage, stableSort } from '../util/table.ts';
 
 export const useHealerOverallStats = (
     opts: QueryFilter<HealingOverallResult>

@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react';
+import { createContext } from 'react';
 import { noop } from '../util/lists.ts';
 
 export const ColourModeContext = createContext({
@@ -6,5 +6,3 @@ export const ColourModeContext = createContext({
         noop();
     }
 });
-
-export const useColourModeCtx = () => useContext(ColourModeContext);

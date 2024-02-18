@@ -16,7 +16,7 @@ import { apiNewsSave, NewsEntry } from '../api/news';
 import { MarkDownRenderer } from '../component/MarkdownRenderer';
 import { NewsList } from '../component/NewsList';
 import { TabPanel } from '../component/TabPanel';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors';
 
 export const AdminNewsPage = () => {

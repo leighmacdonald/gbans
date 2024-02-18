@@ -8,7 +8,7 @@ import { ASNBanRecord } from '../api';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons';
 import { ModalBanASN } from '../component/modal';
 import { BanASNTable } from '../component/table/BanASNTable';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors';
 
 export const AdminBanASNPage = () => {

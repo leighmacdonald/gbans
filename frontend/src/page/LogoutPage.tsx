@@ -1,8 +1,9 @@
 import { useEffect, JSX } from 'react';
 import { Navigate } from 'react-router-dom';
 import { logout } from '../api';
-import { GuestProfile, useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
 import { logErr } from '../util/errors';
+import { GuestProfile } from '../util/profile.ts';
 
 export const LogoutPage = (): JSX.Element => {
     const { setCurrentUser } = useCurrentUserCtx();

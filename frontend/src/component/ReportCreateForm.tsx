@@ -16,21 +16,19 @@ import {
     sessionKeyReportSteamID
 } from '../api';
 import { logErr } from '../util/errors';
+import {
+    banReasonFieldValidator,
+    banReasonTextFieldValidator,
+    steamIdValidator
+} from '../util/validators.ts';
 import { ContainerWithHeader } from './ContainerWithHeader';
 import { MDBodyField } from './MDBodyField';
 import { PlayerMessageContext } from './PlayerMessageContext';
 import { ProfileSelectionField } from './ProfileSelectionField';
-import {
-    BanReasonField,
-    banReasonFieldValidator
-} from './formik/BanReasonField';
-import {
-    BanReasonTextField,
-    banReasonTextFieldValidator
-} from './formik/BanReasonTextField';
+import { BanReasonField } from './formik/BanReasonField';
+import { BanReasonTextField } from './formik/BanReasonTextField';
 import { DemoNameField } from './formik/DemoNameField';
 import { DemTickField } from './formik/DemoTickField';
-import { steamIdValidator } from './formik/SteamIdField';
 import { ResetButton, SubmitButton } from './modal/Buttons';
 
 interface ReportValues {

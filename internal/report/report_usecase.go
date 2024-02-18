@@ -3,13 +3,13 @@ package report
 import (
 	"context"
 	"errors"
-	"github.com/leighmacdonald/gbans/pkg/fp"
 	"log/slog"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
@@ -157,10 +157,6 @@ func (r reportUsecase) GetReports(ctx context.Context, user domain.PersonInfo, o
 			Report:  report,
 			Subject: peopleMap[report.TargetID],
 		}
-	}
-
-	if userReports == nil {
-		userReports = []domain.ReportWithAuthor{}
 	}
 
 	return userReports, count, nil

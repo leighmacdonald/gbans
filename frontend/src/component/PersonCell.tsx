@@ -6,7 +6,7 @@ import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
-import { avatarHashToURL } from '../util/text';
+import { avatarHashToURL } from '../util/text.tsx';
 
 export interface PersonCellProps {
     steam_id: string;

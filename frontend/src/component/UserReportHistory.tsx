@@ -8,9 +8,10 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { ReportStatus, reportStatusString, ReportWithAuthor } from '../api';
 import { useReports } from '../hooks/useReports';
+import { Order, RowsPerPage } from '../util/table.ts';
 import { PersonCell } from './PersonCell';
 import { ReportStatusIcon } from './ReportStatusIcon';
-import { LazyTable, Order, RowsPerPage } from './table/LazyTable';
+import { LazyTable } from './table/LazyTable';
 
 export const UserReportHistory = ({ steam_id }: { steam_id: string }) => {
     const [sortOrder, setSortOrder] = useState<Order>('desc');

@@ -1,33 +1,5 @@
 import TextField from '@mui/material/TextField';
 import { useFormikContext } from 'formik';
-import * as yup from 'yup';
-import { isValidIP } from '../../util/validators';
-
-export const makeNetworkRangeFieldValidator = (required: boolean) => {
-    return (
-        required
-            ? yup.string().required('CIDR address is required')
-            : yup.string().optional()
-    )
-        .label('Input a CIDR network range')
-        .test('rangeValid', 'IP / CIDR invalid', (addr) => {
-            if (addr == undefined && !required) {
-                return true;
-            }
-            if (!addr) {
-                return false;
-            }
-            if (!addr.includes('/')) {
-                addr = addr + '/32';
-            }
-
-            const v = addr.split('/');
-            if (!isValidIP(v[0])) {
-                return false;
-            }
-            return !(v.length > 1 && parseInt(v[1]) < 24);
-        });
-};
 
 export interface CIDRInputFieldProps {
     cidr: string;

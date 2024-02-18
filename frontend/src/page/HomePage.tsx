@@ -15,7 +15,7 @@ import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Grid from '@mui/material/Unstable_Grid2';
 import { NewsView } from '../component/NewsView';
-import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
 
 export const HomePage = (): JSX.Element => {
     const navigate = useNavigate();

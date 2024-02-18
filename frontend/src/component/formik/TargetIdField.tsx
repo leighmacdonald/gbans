@@ -1,16 +1,5 @@
 import TextField from '@mui/material/TextField';
 import { useFormikContext } from 'formik';
-import * as yup from 'yup';
-import { nonResolvingSteamIDInputTest } from './SourceIdField';
-
-export const targetIdValidator = yup
-    .string()
-    .label('Target Steam ID')
-    .test(
-        'checkTargetId',
-        'Invalid target steamid',
-        nonResolvingSteamIDInputTest
-    );
 
 interface TargetIDInputValue {
     target_id: string;

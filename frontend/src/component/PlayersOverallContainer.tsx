@@ -1,41 +1,18 @@
 import { ChangeEvent, useState } from 'react';
 import InsightsIcon from '@mui/icons-material/Insights';
-import Tooltip from '@mui/material/Tooltip';
-import Typography from '@mui/material/Typography';
 import { PlayerWeaponStats } from '../api';
 import { usePlayersOverallStats } from '../hooks/usePlayersOverallStats';
-import { defaultFloatFmt, defaultFloatFmtPct, humanCount } from '../util/text';
+import { Order, RowsPerPage } from '../util/table.ts';
+import {
+    defaultFloatFmt,
+    defaultFloatFmtPct,
+    humanCount
+} from '../util/text.tsx';
 import { ContainerWithHeader } from './ContainerWithHeader';
+import FmtWhenGt from './FmtWhenGT.tsx';
 import { LoadingPlaceholder } from './LoadingPlaceholder';
 import { PersonCell } from './PersonCell';
-import { LazyTable, Order, RowsPerPage } from './table/LazyTable';
-
-export const fmtWhenGt = (
-    value: number,
-    fmt?: (value: number) => string,
-    gt: number = 0,
-    fallback: string = ''
-) => {
-    return value > 1000 ? (
-        <Tooltip title={`${value}`}>
-            <Typography
-                variant={'body1'}
-                padding={0}
-                sx={{ fontFamily: 'Monospace' }}
-            >
-                {value > gt ? (fmt ? fmt(value) : `${value}`) : fallback}
-            </Typography>
-        </Tooltip>
-    ) : (
-        <Typography
-            variant={'body1'}
-            padding={0}
-            sx={{ fontFamily: 'Monospace' }}
-        >
-            {value > gt ? (fmt ? fmt(value) : `${value}`) : fallback}
-        </Typography>
-    );
-};
+import { LazyTable } from './table/LazyTable';
 
 export const PlayersOverallContainer = () => {
     const [page, setPage] = useState(0);
@@ -114,14 +91,14 @@ export const PlayersOverallContainer = () => {
                             sortable: true,
                             sortKey: 'ka',
                             tooltip: 'Total Kills + Assists',
-                            renderer: (obj) => fmtWhenGt(obj.ka, humanCount)
+                            renderer: (obj) => FmtWhenGt(obj.ka, humanCount)
                         },
                         {
                             label: 'K',
                             sortable: true,
                             sortKey: 'kills',
                             tooltip: 'Total Kills',
-                            renderer: (obj) => fmtWhenGt(obj.kills, humanCount)
+                            renderer: (obj) => FmtWhenGt(obj.kills, humanCount)
                         },
                         {
                             label: 'A',
@@ -129,14 +106,14 @@ export const PlayersOverallContainer = () => {
                             sortKey: 'assists',
                             tooltip: 'Total Assists',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.assists, humanCount)
+                                FmtWhenGt(obj.assists, humanCount)
                         },
                         {
                             label: 'D',
                             sortable: true,
                             sortKey: 'deaths',
                             tooltip: 'Total Deaths',
-                            renderer: (obj) => fmtWhenGt(obj.deaths, humanCount)
+                            renderer: (obj) => FmtWhenGt(obj.deaths, humanCount)
                         },
                         {
                             label: 'KAD',
@@ -144,21 +121,21 @@ export const PlayersOverallContainer = () => {
                             sortKey: 'kad',
                             tooltip: 'Kills+Assists:Deaths Ratio',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.kad, defaultFloatFmt)
+                                FmtWhenGt(obj.kad, defaultFloatFmt)
                         },
                         {
                             label: 'Sht',
                             sortable: true,
                             sortKey: 'shots',
                             tooltip: 'Total Shots',
-                            renderer: (obj) => fmtWhenGt(obj.shots, humanCount)
+                            renderer: (obj) => FmtWhenGt(obj.shots, humanCount)
                         },
                         {
                             label: 'Hit',
                             sortable: true,
                             sortKey: 'hits',
                             tooltip: 'Total Hits',
-                            renderer: (obj) => fmtWhenGt(obj.hits, humanCount)
+                            renderer: (obj) => FmtWhenGt(obj.hits, humanCount)
                         },
                         {
                             label: 'Acc%',
@@ -166,7 +143,7 @@ export const PlayersOverallContainer = () => {
                             sortKey: 'accuracy',
                             tooltip: 'Overall Accuracy',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.accuracy, () =>
+                                FmtWhenGt(obj.accuracy, () =>
                                     defaultFloatFmtPct(obj.accuracy)
                                 )
                         },
@@ -176,7 +153,7 @@ export const PlayersOverallContainer = () => {
                             sortKey: 'airshots',
                             tooltip: 'Total Airshots',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.airshots, humanCount)
+                                FmtWhenGt(obj.airshots, humanCount)
                         },
                         {
                             label: 'B',
@@ -184,7 +161,7 @@ export const PlayersOverallContainer = () => {
                             sortKey: 'backstabs',
                             tooltip: 'Total Backstabs',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.backstabs, humanCount)
+                                FmtWhenGt(obj.backstabs, humanCount)
                         },
                         {
                             label: 'H',
@@ -192,14 +169,14 @@ export const PlayersOverallContainer = () => {
                             sortKey: 'headshots',
                             tooltip: 'Total Headshots',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.headshots, humanCount)
+                                FmtWhenGt(obj.headshots, humanCount)
                         },
                         {
                             label: 'Dmg',
                             sortable: true,
                             sortKey: 'damage',
                             tooltip: 'Total Damage',
-                            renderer: (obj) => fmtWhenGt(obj.damage, humanCount)
+                            renderer: (obj) => FmtWhenGt(obj.damage, humanCount)
                         },
                         {
                             label: 'DPM',
@@ -207,7 +184,7 @@ export const PlayersOverallContainer = () => {
                             sortKey: 'dpm',
                             tooltip: 'Overall Damage Per Minute',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.shots, () =>
+                                FmtWhenGt(obj.shots, () =>
                                     defaultFloatFmt(obj.dpm)
                                 )
                         },
@@ -217,7 +194,7 @@ export const PlayersOverallContainer = () => {
                             sortKey: 'damage_taken',
                             tooltip: 'Total Damage Taken',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.damage_taken, humanCount)
+                                FmtWhenGt(obj.damage_taken, humanCount)
                         },
                         {
                             label: 'DM',
@@ -225,7 +202,7 @@ export const PlayersOverallContainer = () => {
                             sortKey: 'dominations',
                             tooltip: 'Total Dominations',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.dominations, humanCount)
+                                FmtWhenGt(obj.dominations, humanCount)
                         },
                         {
                             label: 'CP',
@@ -233,7 +210,7 @@ export const PlayersOverallContainer = () => {
                             sortKey: 'captures',
                             tooltip: 'Total Captures',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.captures, humanCount)
+                                FmtWhenGt(obj.captures, humanCount)
                         }
                     ]}
                 />

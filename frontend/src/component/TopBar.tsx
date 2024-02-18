@@ -42,13 +42,11 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import SteamID from 'steamid';
-import { handleOnLogin, PermissionLevel, UserNotification } from '../api';
-import { useColourModeCtx } from '../contexts/ColourModeContext';
-import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
-import {
-    NotificationsProvider,
-    useNotificationsCtx
-} from '../contexts/NotificationsCtx';
+import { generateOIDCLink, PermissionLevel, UserNotification } from '../api';
+import { NotificationsProvider } from '../contexts/NotificationsCtx';
+import { useColourModeCtx } from '../hooks/useColourModeCtx.ts';
+import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
+import { useNotificationsCtx } from '../hooks/useNotificationsCtx.ts';
 import steamLogo from '../icons/steam_login_sm.png';
 import { tf2Fonts } from '../theme';
 import { logErr } from '../util/errors';
@@ -418,7 +416,7 @@ export const TopBar = () => {
                                     <Tooltip title="Steam Login">
                                         <Button
                                             component={Link}
-                                            href={handleOnLogin(
+                                            href={generateOIDCLink(
                                                 window.location.pathname
                                             )}
                                         >

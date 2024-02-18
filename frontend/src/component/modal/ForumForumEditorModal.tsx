@@ -17,11 +17,12 @@ import {
     ForumCategory
 } from '../../api/forum';
 import { logErr } from '../../util/errors';
+import { titleFieldValidator } from '../../util/validators.ts';
 import { DescriptionField } from '../formik/DescriptionField';
 import { ForumCategorySelectField } from '../formik/ForumCategorySelectField';
 import { OrderingField } from '../formik/OrderingField';
 import { PermissionLevelField } from '../formik/PermissionLevelField';
-import { TitleField, titleFieldValidator } from '../formik/TitleField';
+import { TitleField } from '../formik/TitleField';
 import { CancelButton, SubmitButton } from './Buttons';
 
 interface ForumEditorValues {

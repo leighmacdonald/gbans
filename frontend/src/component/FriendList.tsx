@@ -15,7 +15,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import { Person } from '../api';
-import { avatarHashToURL, filterPerson } from '../util/text';
+import { avatarHashToURL, filterPerson } from '../util/text.tsx';
 import { Heading } from './Heading';
 import { LoadingSpinner } from './LoadingSpinner';
 

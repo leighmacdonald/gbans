@@ -20,10 +20,11 @@ import {
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons';
 import { WarningStateContainer } from '../component/WarningStateContainer';
 import { ModalConfirm, ModalFilterEditor } from '../component/modal';
-import { LazyTable, RowsPerPage } from '../component/table/LazyTable';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { LazyTable } from '../component/table/LazyTable';
+import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { useWordFilters } from '../hooks/useWordFilters';
 import { logErr } from '../util/errors.ts';
+import { RowsPerPage } from '../util/table.ts';
 
 export const AdminFiltersPage = () => {
     const [newFilters, setNewFilters] = useState<Filter[]>([]);

@@ -17,6 +17,24 @@ export default defineConfig({
             }
         }
     },
+    server: {
+        open: true,
+        port: 6007,
+        cors: true,
+        proxy: {
+            '/auth/callback': {
+                target: 'http://localhost:6006',
+                changeOrigin: true,
+                secure: false
+            },
+            '/api': {
+                target: 'http://localhost:6006',
+                changeOrigin: true,
+                secure: false
+            }
+        }
+    },
+
     plugins: [
         react(),
         createHtmlPlugin({

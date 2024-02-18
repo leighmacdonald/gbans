@@ -18,24 +18,21 @@ import {
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { LoadingIcon } from '../component/LoadingIcon';
 import { LoadingSpinner } from '../component/LoadingSpinner';
-import {
-    AppealStateField,
-    appealStateFielValidator
-} from '../component/formik/AppealStateField';
+import { AppealStateField } from '../component/formik/AppealStateField';
 import { FilterButtons } from '../component/formik/FilterButtons';
-import {
-    SourceIdField,
-    sourceIdValidator
-} from '../component/formik/SourceIdField';
+import { SourceIdField } from '../component/formik/SourceIdField';
 import { SteamIDSelectField } from '../component/formik/SteamIDSelectField';
-import {
-    TargetIDField,
-    targetIdValidator
-} from '../component/formik/TargetIdField';
-import { LazyTable, RowsPerPage } from '../component/table/LazyTable';
+import { TargetIDField } from '../component/formik/TargetIdField';
+import { LazyTable } from '../component/table/LazyTable';
 import { TableCellLink } from '../component/table/TableCellLink';
 import { useAppeals } from '../hooks/useAppeals';
-import { renderDate, renderDateTime } from '../util/text';
+import { RowsPerPage } from '../util/table.ts';
+import { renderDate, renderDateTime } from '../util/text.tsx';
+import {
+    appealStateFielValidator,
+    sourceIdValidator,
+    targetIdValidator
+} from '../util/validators.ts';
 
 interface AppealFilterValues {
     appeal_state?: AppealState;

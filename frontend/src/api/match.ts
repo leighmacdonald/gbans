@@ -1,5 +1,5 @@
 import { LazyResult } from '../component/table/LazyTableSimple';
-import { parseDateTime } from '../util/text';
+import { parseDateTime } from '../util/text.tsx';
 import {
     apiCall,
     MatchTimes,

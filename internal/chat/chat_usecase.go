@@ -112,6 +112,7 @@ func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.Ne
 	}
 
 	newWarning.MatchedFilter.TriggerCount++
+
 	_, errSave := u.wfu.Edit(ctx, admin, newWarning.MatchedFilter.FilterID, newWarning.MatchedFilter)
 	if errSave != nil {
 		return errSave

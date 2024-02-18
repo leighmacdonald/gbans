@@ -4,12 +4,13 @@ import InsightsIcon from '@mui/icons-material/Insights';
 import Grid from '@mui/material/Unstable_Grid2';
 import { PlayerWeaponStats } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
+import FmtWhenGt from '../component/FmtWhenGT.tsx';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder';
 import { PersonCell } from '../component/PersonCell';
-import { fmtWhenGt } from '../component/PlayersOverallContainer';
-import { LazyTable, Order, RowsPerPage } from '../component/table/LazyTable';
+import { LazyTable } from '../component/table/LazyTable';
 import { useWeaponsStats } from '../hooks/useWeaponsStats';
-import { defaultFloatFmtPct, humanCount } from '../util/text';
+import { Order, RowsPerPage } from '../util/table.ts';
+import { defaultFloatFmtPct, humanCount } from '../util/text.tsx';
 
 interface WeaponStatsContainerProps {
     weapon_id: number;
@@ -90,28 +91,28 @@ const WeaponStatsContainer = ({ weapon_id }: WeaponStatsContainerProps) => {
                             sortable: true,
                             sortKey: 'kills',
                             tooltip: 'Total Kills',
-                            renderer: (obj) => fmtWhenGt(obj.kills, humanCount)
+                            renderer: (obj) => FmtWhenGt(obj.kills, humanCount)
                         },
                         {
                             label: 'Dmg',
                             sortable: true,
                             sortKey: 'damage',
                             tooltip: 'Total Damage',
-                            renderer: (obj) => fmtWhenGt(obj.damage, humanCount)
+                            renderer: (obj) => FmtWhenGt(obj.damage, humanCount)
                         },
                         {
                             label: 'Shots',
                             sortable: true,
                             sortKey: 'shots',
                             tooltip: 'Total Shots',
-                            renderer: (obj) => fmtWhenGt(obj.shots, humanCount)
+                            renderer: (obj) => FmtWhenGt(obj.shots, humanCount)
                         },
                         {
                             label: 'Hits',
                             sortable: true,
                             sortKey: 'hits',
                             tooltip: 'Total Shots Landed',
-                            renderer: (obj) => fmtWhenGt(obj.hits, humanCount)
+                            renderer: (obj) => FmtWhenGt(obj.hits, humanCount)
                         },
                         {
                             label: 'Acc%',
@@ -120,7 +121,7 @@ const WeaponStatsContainer = ({ weapon_id }: WeaponStatsContainerProps) => {
                             virtualKey: 'accuracy',
                             tooltip: 'Overall Accuracy',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.shots, () =>
+                                FmtWhenGt(obj.shots, () =>
                                     defaultFloatFmtPct(obj.accuracy)
                                 )
                         },
@@ -130,7 +131,7 @@ const WeaponStatsContainer = ({ weapon_id }: WeaponStatsContainerProps) => {
                             sortKey: 'airshots',
                             tooltip: 'Total Airshots',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.airshots, humanCount)
+                                FmtWhenGt(obj.airshots, humanCount)
                         },
 
                         {
@@ -139,7 +140,7 @@ const WeaponStatsContainer = ({ weapon_id }: WeaponStatsContainerProps) => {
                             sortKey: 'backstabs',
                             tooltip: 'Total Backstabs',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.backstabs, humanCount)
+                                FmtWhenGt(obj.backstabs, humanCount)
                         },
 
                         {
@@ -148,7 +149,7 @@ const WeaponStatsContainer = ({ weapon_id }: WeaponStatsContainerProps) => {
                             sortKey: 'headshots',
                             tooltip: 'Total Headshots',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.headshots, humanCount)
+                                FmtWhenGt(obj.headshots, humanCount)
                         }
                     ]}
                 />

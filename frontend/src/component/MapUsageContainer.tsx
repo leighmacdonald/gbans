@@ -11,10 +11,10 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { PieChart } from '@mui/x-charts';
 import { apiGetMapUsage } from '../api';
 import { logErr } from '../util/errors';
+import { compare, Order, RowsPerPage, stableSort } from '../util/table.ts';
 import { ContainerWithHeader } from './ContainerWithHeader';
 import { LoadingSpinner } from './LoadingSpinner';
-import { LazyTable, Order, RowsPerPage } from './table/LazyTable';
-import { compare, stableSort } from './table/LazyTableSimple';
+import { LazyTable } from './table/LazyTable';
 
 interface MapUseChartProps {
     details: SeriesData[];

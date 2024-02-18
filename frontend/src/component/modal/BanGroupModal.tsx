@@ -17,6 +17,10 @@ import {
     Duration,
     GroupBanRecord
 } from '../../api';
+import {
+    groupIdFieldValidator,
+    steamIdValidator
+} from '../../util/validators.ts';
 import { Heading } from '../Heading';
 import {
     DurationCustomField,
@@ -24,9 +28,9 @@ import {
 } from '../formik/DurationCustomField';
 import { DurationField, DurationFieldValidator } from '../formik/DurationField';
 import { ErrorField } from '../formik/ErrorField';
-import { GroupIdField, groupIdFieldValidator } from '../formik/GroupIdField';
+import { GroupIdField } from '../formik/GroupIdField';
 import { NoteField, NoteFieldValidator } from '../formik/NoteField';
-import { SteamIdField, steamIdValidator } from '../formik/SteamIdField';
+import { SteamIdField } from '../formik/SteamIdField';
 import { CancelButton, ResetButton, SubmitButton } from './Buttons';
 
 export interface BanGroupFormValues {

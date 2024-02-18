@@ -4,13 +4,7 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import { useFormikContext } from 'formik';
-import * as yup from 'yup';
 import { BanReason, BanReasons, banReasonsList } from '../../api';
-
-export const banReasonFieldValidator = yup
-    .string()
-    .label('Select a reason')
-    .required('reason is required');
 
 export interface BanReasonFieldProps {
     reason: BanReason;

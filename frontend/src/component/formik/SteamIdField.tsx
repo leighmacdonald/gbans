@@ -1,35 +1,7 @@
 import TextField from '@mui/material/TextField';
 import { useFormikContext } from 'formik';
-import * as yup from 'yup';
 import { PlayerProfile } from '../../api';
-import { logErr } from '../../util/errors';
 import { Nullable } from '../../util/types';
-import { steamIDOrEmptyString } from '../../util/validators';
-
-export const steamIdValidator = yup
-    .string()
-    .test(
-        'checkSteamId',
-        'Invalid steamid or profile url',
-        async (steamId, ctx) => {
-            if (!steamId) {
-                return false;
-            }
-            try {
-                const sid = await steamIDOrEmptyString(steamId);
-                if (sid == '') {
-                    return false;
-                }
-                ctx.parent.value = sid;
-                return true;
-            } catch (e) {
-                logErr(e);
-                return false;
-            }
-        }
-    )
-    .label('Enter your Steam ID')
-    .required('Steam ID is required');
 
 export interface BaseFormikInputProps {
     id?: string;

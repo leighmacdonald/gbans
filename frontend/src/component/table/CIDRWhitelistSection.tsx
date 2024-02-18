@@ -10,11 +10,11 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { apiDeleteCIDRBlockWhitelist, CIDRBlockWhitelist } from '../../api';
 import { logErr } from '../../util/errors';
-import { renderDateTime } from '../../util/text';
+import { compare, Order, RowsPerPage, stableSort } from '../../util/table.ts';
+import { renderDateTime } from '../../util/text.tsx';
 import { VCenterBox } from '../VCenterBox';
 import { ModalCIDRWhitelistEditor, ModalConfirm } from '../modal';
-import { LazyTable, Order, RowsPerPage } from './LazyTable';
-import { compare, stableSort } from './LazyTableSimple';
+import { LazyTable } from './LazyTable';
 
 export const CIDRWhitelistSection = ({
     rows

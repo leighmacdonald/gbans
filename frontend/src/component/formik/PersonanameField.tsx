@@ -1,11 +1,5 @@
 import TextField from '@mui/material/TextField';
 import { useFormikContext } from 'formik';
-import * as yup from 'yup';
-
-export const personanameFieldValidator = yup
-    .string()
-    .min(3, 'Minimum length 3')
-    .label('Name Query');
 
 export interface PersonanameFieldProps {
     personaname: string;

@@ -8,7 +8,7 @@ import TextField from '@mui/material/TextField';
 import { useFormikContext } from 'formik';
 import { apiGetProfile, PlayerProfile } from '../api';
 import { logErr } from '../util/errors';
-import { avatarHashToURL } from '../util/text';
+import { avatarHashToURL } from '../util/text.tsx';
 import { Nullable } from '../util/types';
 
 export interface ProfileSelectionInputProps {

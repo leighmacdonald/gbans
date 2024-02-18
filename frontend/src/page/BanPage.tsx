@@ -39,12 +39,12 @@ import { SourceBansList } from '../component/SourceBansList';
 import { SteamIDList } from '../component/SteamIDList';
 import { ModalBanSteam, ModalUnbanSteam } from '../component/modal';
 import { ResetButton, SubmitButton } from '../component/modal/Buttons';
-import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { useBan } from '../hooks/useBan';
 import { useBanAppealMessages } from '../hooks/useBanAppealMessages';
+import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
+import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors';
-import { renderDateTime, renderTimeDistance } from '../util/text';
+import { renderDateTime, renderTimeDistance } from '../util/text.tsx';
 
 interface NewReplyValues {
     body_md: string;
@@ -146,6 +146,10 @@ export const BanPage = (): JSX.Element => {
         });
     }, [ban]);
 
+    const expired = useMemo(() => {
+        return ban?.valid_until ? ban?.valid_until < new Date() : true;
+    }, [ban?.valid_until]);
+
     const modTools = useMemo(() => {
         return (
             <ContainerWithHeader
@@ -154,41 +158,52 @@ export const BanPage = (): JSX.Element => {
             >
                 <Stack spacing={2} padding={2}>
                     <Stack direction={'row'} spacing={2}>
-                        <FormControl fullWidth>
-                            <InputLabel id="appeal-status-label">
-                                Appeal Status
-                            </InputLabel>
-                            <Select<AppealState>
-                                value={ban?.appeal_state}
-                                labelId={'appeal-status-label'}
-                                id={'appeal-status'}
-                                label={'Appeal Status'}
-                                onChange={(evt) => {
-                                    setAppealState(
-                                        evt.target.value as AppealState
-                                    );
-                                }}
-                            >
-                                {AppealStateCollection.map((as) => {
-                                    return (
-                                        <MenuItem value={as} key={as}>
-                                            {appealStateString(as)}
-                                        </MenuItem>
-                                    );
-                                })}
-                            </Select>
-                        </FormControl>
-                        <Button
-                            variant={'contained'}
-                            onClick={onSaveAppealState}
-                        >
-                            Apply Status
-                        </Button>
+                        {!expired && (
+                            <>
+                                <FormControl fullWidth>
+                                    <InputLabel id="appeal-status-label">
+                                        Appeal Status
+                                    </InputLabel>
+                                    <Select<AppealState>
+                                        value={ban?.appeal_state}
+                                        labelId={'appeal-status-label'}
+                                        id={'appeal-status'}
+                                        label={'Appeal Status'}
+                                        onChange={(evt) => {
+                                            setAppealState(
+                                                evt.target.value as AppealState
+                                            );
+                                        }}
+                                    >
+                                        {AppealStateCollection.map((as) => {
+                                            return (
+                                                <MenuItem value={as} key={as}>
+                                                    {appealStateString(as)}
+                                                </MenuItem>
+                                            );
+                                        })}
+                                    </Select>
+                                </FormControl>
+
+                                <Button
+                                    variant={'contained'}
+                                    onClick={onSaveAppealState}
+                                >
+                                    Apply Status
+                                </Button>
+                            </>
+                        )}
+                        {expired && (
+                            <Typography variant={'h6'} textAlign={'center'}>
+                                Ban Expired
+                            </Typography>
+                        )}
                     </Stack>
 
                     {ban && ban?.report_id > 0 && (
                         <Button
                             fullWidth
+                            disabled={expired}
                             color={'secondary'}
                             variant={'contained'}
                             onClick={() => {
@@ -210,14 +225,18 @@ export const BanPage = (): JSX.Element => {
                         <Button color={'warning'} onClick={onEditBan}>
                             Edit Ban
                         </Button>
-                        <Button color={'success'} onClick={onUnban}>
+                        <Button
+                            color={'success'}
+                            onClick={onUnban}
+                            disabled={expired}
+                        >
                             Unban
                         </Button>
                     </ButtonGroup>
                 </Stack>
             </ContainerWithHeader>
         );
-    }, [ban, navigate, onEditBan, onSaveAppealState, onUnban]);
+    }, [ban, expired, navigate, onEditBan, onSaveAppealState, onUnban]);
 
     return (
         <Grid container spacing={2}>

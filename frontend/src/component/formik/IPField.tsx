@@ -1,17 +1,5 @@
 import TextField from '@mui/material/TextField';
 import { useFormikContext } from 'formik';
-import * as yup from 'yup';
-import { emptyOrNullString } from '../../util/types';
-import { isValidIP } from '../../util/validators';
-
-export const ipFieldValidator = yup
-    .string()
-    .test('valid_ip', 'Invalid IP', (value) => {
-        if (emptyOrNullString(value)) {
-            return true;
-        }
-        return isValidIP(value as string);
-    });
 
 interface IPFieldProps {
     ip: string;

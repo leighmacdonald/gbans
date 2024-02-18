@@ -4,9 +4,9 @@ import { Pagination } from '@mui/material';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import { apiGetNewsLatest, NewsEntry } from '../api/news';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors';
-import { renderDate } from '../util/text';
+import { renderDate } from '../util/text.tsx';
 import { MarkDownRenderer } from './MarkdownRenderer';
 import { SplitHeading } from './SplitHeading';
 

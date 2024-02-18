@@ -14,10 +14,11 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { Server } from '../api';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons';
 import { ModalServerEditor } from '../component/modal';
-import { LazyTable, RowsPerPage } from '../component/table/LazyTable';
+import { LazyTable } from '../component/table/LazyTable';
 import { TableCellBool } from '../component/table/TableCellBool';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { useServersAdmin } from '../hooks/useServersAdmin';
+import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import { RowsPerPage } from '../util/table.ts';
 
 export const AdminServersPage = () => {
     const [newServers, setNewServers] = useState<Server[]>([]);

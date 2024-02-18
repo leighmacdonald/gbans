@@ -10,11 +10,12 @@ import Stack from '@mui/material/Stack';
 import { Formik } from 'formik';
 import * as yup from 'yup';
 import { apiDeleteThread, apiUpdateThread, ForumThread } from '../../api/forum';
-import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { logErr } from '../../util/errors';
+import { titleFieldValidator } from '../../util/validators.ts';
 import { LockedField } from '../formik/LockedField';
 import { StickyField } from '../formik/StickyField';
-import { TitleField, titleFieldValidator } from '../formik/TitleField';
+import { TitleField } from '../formik/TitleField';
 import { CancelButton, SubmitButton } from './Buttons';
 import { ModalConfirm } from './index';
 

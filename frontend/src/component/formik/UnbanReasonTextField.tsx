@@ -1,17 +1,6 @@
 import TextField from '@mui/material/TextField';
 import { useFormikContext } from 'formik';
-import * as yup from 'yup';
 import { BanReasonFieldProps } from './BanReasonField';
-
-export const unbanReasonTextFieldValidator = yup
-    .string()
-    .min(5, 'Message to short')
-    .label('Unban Reason')
-    .required('Reason is required');
-
-export const unbanValidationSchema = yup.object({
-    unban_reason: unbanReasonTextFieldValidator
-});
 
 interface BanReasonTextFieldProps {
     unban_reason: string;
