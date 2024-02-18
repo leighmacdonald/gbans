@@ -174,6 +174,7 @@ var (
 	ErrInvalidMediaMimeType     = errors.New("detected mimetype different than type provided")
 	ErrInitClient               = errors.New("failed to initialize client")
 	ErrBucketCheck              = errors.New("could not determine if bucket exists")
+	ErrBucketCreate             = errors.New("could not create new bucket")
 	ErrPolicy                   = errors.New("failed to set bucket policy")
 	ErrWriteObject              = errors.New("failed to write object")
 	ErrDeleteObject             = errors.New("failed to delete object")
