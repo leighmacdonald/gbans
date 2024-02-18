@@ -1,8 +1,5 @@
 import TextField from '@mui/material/TextField';
 import { useFormikContext } from 'formik';
-import * as yup from 'yup';
-
-export const orderingFieldValidator = yup.number().label('Ordering').integer();
 
 interface OrderingFieldProps {
     ordering: number;

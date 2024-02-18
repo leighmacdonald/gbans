@@ -9,10 +9,8 @@ import {
 import Stack from '@mui/material/Stack';
 import { Formik } from 'formik';
 import { apiDeleteGroupBan } from '../../api';
-import {
-    UnbanReasonTextField,
-    unbanValidationSchema
-} from '../formik/UnbanReasonTextField';
+import { unbanValidationSchema } from '../../util/validators.ts';
+import { UnbanReasonTextField } from '../formik/UnbanReasonTextField';
 import { CancelButton, SubmitButton } from './Buttons';
 import { UnbanFormValues, UnbanModalProps } from './UnbanSteamModal';
 

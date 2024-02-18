@@ -31,12 +31,12 @@ import { Heading } from '../component/Heading';
 import { LoadingSpinner } from '../component/LoadingSpinner';
 import { PersonCell } from '../component/PersonCell';
 import { PlayerClassImg } from '../component/PlayerClassImg';
-import { LazyTable, Order } from '../component/table/LazyTable';
-import { compare, stableSort } from '../component/table/LazyTableSimple';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { LazyTable } from '../component/table/LazyTable';
+import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import bluLogoImg from '../icons/blu_logo.png';
 import redLogoImg from '../icons/red_logo.png';
 import { logErr } from '../util/errors';
+import { compare, Order, stableSort } from '../util/table.ts';
 import { PageNotFoundPage } from './PageNotFoundPage';
 
 interface PlayerClassHoverStatsProps {

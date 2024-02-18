@@ -14,18 +14,25 @@ import { FormikHelpers } from 'formik/dist/types';
 import IPCIDR from 'ip-cidr';
 import * as yup from 'yup';
 import { BanReason, CIDRBanRecord } from '../../api';
-import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
 import { useBansCIDR } from '../../hooks/useBansCIDR';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { logErr } from '../../util/errors';
-import { DeletedField, deletedValidator } from '../formik/DeletedField';
+import { RowsPerPage } from '../../util/table.ts';
+import {
+    deletedValidator,
+    ipFieldValidator,
+    sourceIdValidator,
+    targetIdValidator
+} from '../../util/validators.ts';
+import { DeletedField } from '../formik/DeletedField';
 import { FilterButtons } from '../formik/FilterButtons';
-import { IPField, ipFieldValidator } from '../formik/IPField';
-import { SourceIdField, sourceIdValidator } from '../formik/SourceIdField';
+import { IPField } from '../formik/IPField';
+import { SourceIdField } from '../formik/SourceIdField';
 import { SteamIDSelectField } from '../formik/SteamIDSelectField';
-import { TargetIDField, targetIdValidator } from '../formik/TargetIdField';
+import { TargetIDField } from '../formik/TargetIdField';
 import { ModalBanCIDR, ModalUnbanCIDR } from '../modal';
 import { BanCIDRModalProps } from '../modal/BanCIDRModal';
-import { LazyTable, RowsPerPage } from './LazyTable';
+import { LazyTable } from './LazyTable';
 import { TableCellBool } from './TableCellBool';
 import { TableCellRelativeDateField } from './TableCellRelativeDateField';
 

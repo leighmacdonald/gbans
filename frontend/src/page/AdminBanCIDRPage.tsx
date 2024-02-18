@@ -9,7 +9,7 @@ import { CIDRBanRecord } from '../api';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons';
 import { ModalBanCIDR } from '../component/modal';
 import { BanCIDRTable } from '../component/table/BanCIDRTable';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors';
 
 export const AdminBanCIDRPage = () => {

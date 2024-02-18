@@ -35,7 +35,7 @@ func NewPersonHandler(engine *gin.Engine, configUsecase domain.ConfigUsecase, pe
 	modGrp := engine.Group("/")
 	{
 		mod := modGrp.Use(ath.AuthMiddleware(domain.PUser))
-		mod.POST("/api/players", handler.onAPISearchPlayers())
+		mod.POST("/api/players", handler.searchPlayers())
 	}
 
 	// admin
@@ -151,7 +151,7 @@ func (h personHandler) onAPIProfile() gin.HandlerFunc {
 	}
 }
 
-func (h personHandler) onAPISearchPlayers() gin.HandlerFunc {
+func (h personHandler) searchPlayers() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var query domain.PlayerQuery
 		if !httphelper.Bind(ctx, &query) {
@@ -160,7 +160,7 @@ func (h personHandler) onAPISearchPlayers() gin.HandlerFunc {
 
 		people, count, errGetPeople := h.pu.GetPeople(ctx, query)
 		if errGetPeople != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ErrorHandled(ctx, errGetPeople)
 
 			return
 		}

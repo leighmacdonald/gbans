@@ -23,7 +23,7 @@ import { useTheme } from '@mui/material/styles';
 import { isAfter } from 'date-fns/fp';
 import { Formik } from 'formik';
 import * as yup from 'yup';
-import { PermissionLevel, permissionLevelString } from '../api';
+import { PermissionLevel, permissionLevelString, UserProfile } from '../api';
 import {
     apiDeleteMessage,
     apiSaveThreadMessage,
@@ -32,19 +32,27 @@ import {
 } from '../api/forum';
 import { ForumRowLink } from '../component/ForumRowLink';
 import { ForumThreadReplyBox } from '../component/ForumThreadReplyBox';
-import { bodyMDValidator, MDBodyField } from '../component/MDBodyField';
+import { MDBodyField } from '../component/MDBodyField';
 import { MarkDownRenderer } from '../component/MarkdownRenderer';
 import { VCenterBox } from '../component/VCenterBox';
 import { ModalConfirm, ModalForumThreadEditor } from '../component/modal';
 import { SubmitButton } from '../component/modal/Buttons';
-import { RowsPerPage } from '../component/table/LazyTable';
-import { hasPermission, useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
 import { useThread } from '../hooks/useThread';
 import { useThreadMessages } from '../hooks/useThreadMessages';
 import { logErr } from '../util/errors';
 import { useScrollToLocation } from '../util/history';
-import { avatarHashToURL, renderDateTime } from '../util/text';
+import { RowsPerPage } from '../util/table.ts';
+import { avatarHashToURL, renderDateTime } from '../util/text.tsx';
+import { bodyMDValidator } from '../util/validators.ts';
 import { LoginPage } from './LoginPage';
+
+const hasPermission = (
+    profile: UserProfile,
+    permission: PermissionLevel
+): boolean => {
+    return profile.permission_level >= permission;
+};
 
 const ForumAvatar = ({
     src,

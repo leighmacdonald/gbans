@@ -14,13 +14,14 @@ import { ErrorCode, PermissionLevel } from '../api';
 import { apiSaveWikiPage, Page } from '../api/wiki';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons';
-import { bodyMDValidator, MDBodyField } from '../component/MDBodyField';
+import { MDBodyField } from '../component/MDBodyField';
 import { MarkDownRenderer } from '../component/MarkdownRenderer';
 import { PermissionLevelField } from '../component/formik/PermissionLevelField';
 import { SubmitButton } from '../component/modal/Buttons';
-import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
 import { useWiki } from '../hooks/useWiki';
 import { logErr } from '../util/errors';
+import { bodyMDValidator } from '../util/validators.ts';
 import { LoginPage } from './LoginPage';
 import { PageNotFoundPage } from './PageNotFoundPage';
 

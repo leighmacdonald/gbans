@@ -17,15 +17,12 @@ import Tabs from '@mui/material/Tabs';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 import { useFormikContext } from 'formik';
-import * as yup from 'yup';
 import { apiSaveMedia, UserUploadedFile } from '../api/media';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors';
 import { MarkDownRenderer } from './MarkdownRenderer';
 import { TabPanel } from './TabPanel';
 import { ModalFileUpload } from './modal';
-
-export const bodyMDValidator = yup.string().min(3, 'Message to short');
 
 interface BodyMDFieldProps {
     body_md: string;

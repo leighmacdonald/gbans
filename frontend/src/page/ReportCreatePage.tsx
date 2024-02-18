@@ -14,7 +14,7 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { ReportCreateForm } from '../component/ReportCreateForm';
 import { UserReportHistory } from '../component/UserReportHistory';
-import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
 
 export const ReportCreatePage = (): JSX.Element => {
     const { currentUser } = useCurrentUserCtx();

@@ -10,7 +10,7 @@ export const useBan = (ban_id: number) => {
     useEffect(() => {
         const abortController = new AbortController();
         setLoading(true);
-        apiGetBanSteam(ban_id, false)
+        apiGetBanSteam(ban_id, true)
             .then((ban) => {
                 setData(ban);
             })

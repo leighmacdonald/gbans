@@ -118,7 +118,7 @@ const baseUrl = () => {
     return `${window.location.protocol}//${returnUrl}`;
 };
 
-export const handleOnLogin = (returnPath: string): string => {
+export const generateOIDCLink = (returnPath: string): string => {
     let returnUrl = window.location.hostname;
     if (window.location.port !== '') {
         returnUrl = `${returnUrl}:${window.location.port}`;

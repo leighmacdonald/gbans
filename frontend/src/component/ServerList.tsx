@@ -7,14 +7,15 @@ import Link from '@mui/material/Link';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { BaseServer, cleanMapName } from '../api';
-import { useMapStateCtx } from '../contexts/MapStateCtx';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { useMapStateCtx } from '../hooks/useMapStateCtx.ts';
+import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { tf2Fonts } from '../theme';
 import { logErr } from '../util/errors';
+import { RowsPerPage } from '../util/table.ts';
 import { ContainerWithHeader } from './ContainerWithHeader';
 import { Flag } from './Flag';
 import { LoadingSpinner } from './LoadingSpinner';
-import { LazyTable, RowsPerPage } from './table/LazyTable';
+import { LazyTable } from './table/LazyTable';
 
 export const ServerList = () => {
     const { sendFlash } = useUserFlashCtx();

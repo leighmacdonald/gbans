@@ -6,9 +6,9 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import SteamID from 'steamid';
-import { handleOnLogin } from '../api';
+import { generateOIDCLink } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
 import steamLogo from '../icons/steam_login_lg.png';
 
 export interface LoginFormProps {
@@ -57,7 +57,7 @@ export const LoginPage = ({
                                     <Button
                                         sx={{ alignSelf: 'center' }}
                                         component={Link}
-                                        href={handleOnLogin(
+                                        href={generateOIDCLink(
                                             window.location.pathname
                                         )}
                                     >

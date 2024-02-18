@@ -27,18 +27,18 @@ import {
     ModalForumCategoryEditor,
     ModalForumForumEditor
 } from '../component/modal';
-import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
 import { useForumOverview } from '../hooks/useForumOverview';
 import { useForumRecentMessageActivity } from '../hooks/useForumRecentMessageActivity';
 import { useForumRecentUserActivity } from '../hooks/useForumRecentUserActivity';
+import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors';
 import {
     avatarHashToURL,
     humanCount,
     renderDateTime,
     renderTime
-} from '../util/text';
+} from '../util/text.tsx';
 
 const CategoryBlock = ({ category }: { category: ForumCategory }) => {
     const { currentUser } = useCurrentUserCtx();

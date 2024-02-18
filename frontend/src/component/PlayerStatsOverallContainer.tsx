@@ -10,10 +10,14 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { formatDistance } from 'date-fns';
 import { apiGetPlayerStats, PlayerOverallResult } from '../api';
-import { defaultFloatFmt, defaultFloatFmtPct, humanCount } from '../util/text';
+import {
+    defaultFloatFmt,
+    defaultFloatFmtPct,
+    humanCount
+} from '../util/text.tsx';
 import { ContainerWithHeader } from './ContainerWithHeader';
+import FmtWhenGt from './FmtWhenGT.tsx';
 import { LoadingPlaceholder } from './LoadingPlaceholder';
-import { fmtWhenGt } from './PlayersOverallContainer';
 
 interface PlayerStatsOverallContainerProps {
     steam_id: string;
@@ -95,15 +99,15 @@ export const PlayerStatsOverallContainer = ({
                             stats={[
                                 {
                                     label: 'Matches',
-                                    value: fmtWhenGt(stats.matches, humanCount)
+                                    value: FmtWhenGt(stats.matches, humanCount)
                                 },
                                 {
                                     label: 'Wins',
-                                    value: fmtWhenGt(stats.wins, humanCount)
+                                    value: FmtWhenGt(stats.wins, humanCount)
                                 },
                                 {
                                     label: 'Losses',
-                                    value: fmtWhenGt(
+                                    value: FmtWhenGt(
                                         stats.matches - stats.wins,
                                         humanCount
                                     )
@@ -124,53 +128,53 @@ export const PlayerStatsOverallContainer = ({
                                 },
                                 {
                                     label: 'Extinguishes',
-                                    value: fmtWhenGt(
+                                    value: FmtWhenGt(
                                         stats.extinguishes,
                                         humanCount
                                     )
                                 },
                                 {
                                     label: 'Buildings Created',
-                                    value: fmtWhenGt(
+                                    value: FmtWhenGt(
                                         stats.buildings,
                                         humanCount
                                     )
                                 },
                                 {
                                     label: 'Buildings Destroyed',
-                                    value: fmtWhenGt(
+                                    value: FmtWhenGt(
                                         stats.buildings_destroyed,
                                         humanCount
                                     )
                                 },
                                 {
                                     label: 'Captures',
-                                    value: fmtWhenGt(stats.captures, humanCount)
+                                    value: FmtWhenGt(stats.captures, humanCount)
                                 },
                                 {
                                     label: 'Captured Blocked',
-                                    value: fmtWhenGt(
+                                    value: FmtWhenGt(
                                         stats.captures_blocked,
                                         humanCount
                                     )
                                 },
                                 {
                                     label: 'Dominations',
-                                    value: fmtWhenGt(
+                                    value: FmtWhenGt(
                                         stats.dominations,
                                         humanCount
                                     )
                                 },
                                 {
                                     label: 'Dominated',
-                                    value: fmtWhenGt(
+                                    value: FmtWhenGt(
                                         stats.dominated,
                                         humanCount
                                     )
                                 },
                                 {
                                     label: 'Revenges',
-                                    value: fmtWhenGt(stats.revenges, humanCount)
+                                    value: FmtWhenGt(stats.revenges, humanCount)
                                 }
                             ]}
                         />
@@ -184,19 +188,19 @@ export const PlayerStatsOverallContainer = ({
                             stats={[
                                 {
                                     label: 'Kills',
-                                    value: fmtWhenGt(stats.kills, humanCount)
+                                    value: FmtWhenGt(stats.kills, humanCount)
                                 },
                                 {
                                     label: 'Assists',
-                                    value: fmtWhenGt(stats.assists, humanCount)
+                                    value: FmtWhenGt(stats.assists, humanCount)
                                 },
                                 {
                                     label: 'Deaths',
-                                    value: fmtWhenGt(stats.deaths, humanCount)
+                                    value: FmtWhenGt(stats.deaths, humanCount)
                                 },
                                 {
                                     label: 'KA',
-                                    value: fmtWhenGt(stats.ka, humanCount)
+                                    value: FmtWhenGt(stats.ka, humanCount)
                                 },
                                 {
                                     label: 'K:D',
@@ -208,7 +212,7 @@ export const PlayerStatsOverallContainer = ({
                                 },
                                 {
                                     label: 'Damage',
-                                    value: fmtWhenGt(stats.damage, humanCount)
+                                    value: FmtWhenGt(stats.damage, humanCount)
                                 },
                                 {
                                     label: 'Damage Per Min',
@@ -216,11 +220,11 @@ export const PlayerStatsOverallContainer = ({
                                 },
                                 {
                                     label: 'Shots',
-                                    value: fmtWhenGt(stats.shots, humanCount)
+                                    value: FmtWhenGt(stats.shots, humanCount)
                                 },
                                 {
                                     label: 'Hits',
-                                    value: fmtWhenGt(stats.hits, humanCount)
+                                    value: FmtWhenGt(stats.hits, humanCount)
                                 },
                                 {
                                     label: 'Accuracy',
@@ -228,18 +232,18 @@ export const PlayerStatsOverallContainer = ({
                                 },
                                 {
                                     label: 'Headshots',
-                                    value: fmtWhenGt(
+                                    value: FmtWhenGt(
                                         stats.headshots,
                                         humanCount
                                     )
                                 },
                                 {
                                     label: 'Airshots',
-                                    value: fmtWhenGt(stats.airshots, humanCount)
+                                    value: FmtWhenGt(stats.airshots, humanCount)
                                 },
                                 {
                                     label: 'Backstabs',
-                                    value: fmtWhenGt(
+                                    value: FmtWhenGt(
                                         stats.backstabs,
                                         humanCount
                                     )
@@ -256,36 +260,36 @@ export const PlayerStatsOverallContainer = ({
                             stats={[
                                 {
                                     label: 'Healing',
-                                    value: fmtWhenGt(stats.healing, humanCount)
+                                    value: FmtWhenGt(stats.healing, humanCount)
                                 },
                                 {
                                     label: 'Damage Taken',
-                                    value: fmtWhenGt(
+                                    value: FmtWhenGt(
                                         stats.damage_taken,
                                         humanCount
                                     )
                                 },
                                 {
                                     label: 'Healing Taken',
-                                    value: fmtWhenGt(
+                                    value: FmtWhenGt(
                                         stats.healing_taken,
                                         humanCount
                                     )
                                 },
                                 {
                                     label: 'Health Packs',
-                                    value: fmtWhenGt(
+                                    value: FmtWhenGt(
                                         stats.health_packs,
                                         humanCount
                                     )
                                 },
                                 {
                                     label: 'Drops',
-                                    value: fmtWhenGt(stats.drops, humanCount)
+                                    value: FmtWhenGt(stats.drops, humanCount)
                                 },
                                 {
                                     label: 'Near Full Charge Deaths',
-                                    value: fmtWhenGt(
+                                    value: FmtWhenGt(
                                         stats.near_full_charge_death,
                                         humanCount
                                     )
@@ -296,28 +300,28 @@ export const PlayerStatsOverallContainer = ({
                                 },
                                 {
                                     label: 'Charges Uber',
-                                    value: fmtWhenGt(
+                                    value: FmtWhenGt(
                                         stats.charges_uber,
                                         humanCount
                                     )
                                 },
                                 {
                                     label: 'Charges Kritz',
-                                    value: fmtWhenGt(
+                                    value: FmtWhenGt(
                                         stats.charges_kritz,
                                         humanCount
                                     )
                                 },
                                 {
                                     label: 'Charges Vaccinator',
-                                    value: fmtWhenGt(
+                                    value: FmtWhenGt(
                                         stats.charges_vacc,
                                         humanCount
                                     )
                                 },
                                 {
                                     label: 'Charges QuickFix',
-                                    value: fmtWhenGt(
+                                    value: FmtWhenGt(
                                         stats.charges_quickfix,
                                         humanCount
                                     )

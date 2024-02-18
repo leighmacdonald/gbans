@@ -25,8 +25,8 @@ import { MDBodyField } from '../component/MDBodyField';
 import { ForumProfileMessagesField } from '../component/formik/ForumProfileMessagesField';
 import { StatsHiddenField } from '../component/formik/StatsHiddenField';
 import { ResetButton, SubmitButton } from '../component/modal/Buttons';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
 import { usePersonSettings } from '../hooks/usePersonSettings.ts';
+import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors';
 
 interface SettingsValues {

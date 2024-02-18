@@ -4,13 +4,7 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import { useFormikContext } from 'formik';
-import * as yup from 'yup';
 import { FilterAction, filterActionString } from '../../api/filters';
-
-export const filterActionValidator = yup
-    .number()
-    .label('Select a action')
-    .required('Filter action is required');
 
 interface FilterActionFieldProps {
     action: FilterAction;

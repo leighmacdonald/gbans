@@ -1,5 +1,28 @@
 import { apiCall, TimeStamped } from './common';
 
+const assetUrl = (bucket: string, asset: Asset): string =>
+    `${window.gbans.asset_url}/${bucket}/${asset.name}`;
+
+export const assetURLMedia = (asset: Asset) => assetUrl('media', asset);
+
+export const assetURLDemo = (asset: Asset) => assetUrl('demo', asset);
+
+export enum MediaTypes {
+    video,
+    image,
+    other
+}
+
+export const mediaType = (mime_type: string): MediaTypes => {
+    if (mime_type.startsWith('image/')) {
+        return MediaTypes.image;
+    } else if (mime_type.startsWith('video/')) {
+        return MediaTypes.video;
+    } else {
+        return MediaTypes.other;
+    }
+};
+
 export interface BaseUploadedMedia extends TimeStamped {
     media_id: number;
     author_id: number;

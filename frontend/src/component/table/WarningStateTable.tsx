@@ -2,10 +2,10 @@ import { ChangeEvent, useMemo, useState } from 'react';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { Filter, filterActionString, UserWarning } from '../../api/filters';
-import { renderDateTime } from '../../util/text';
+import { compare, Order, RowsPerPage, stableSort } from '../../util/table.ts';
+import { renderDateTime } from '../../util/text.tsx';
 import { PersonCell } from '../PersonCell';
-import { LazyTable, Order, RowsPerPage } from './LazyTable';
-import { compare, stableSort } from './LazyTableSimple';
+import { LazyTable } from './LazyTable';
 
 export const WarningStateTable = ({
     warnings

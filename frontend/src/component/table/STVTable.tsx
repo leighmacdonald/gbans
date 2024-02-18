@@ -10,16 +10,23 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { Formik } from 'formik';
 import { FormikHelpers } from 'formik/dist/types';
 import * as yup from 'yup';
-import { useCurrentUserCtx } from '../../contexts/CurrentUserCtx';
+import { useCurrentUserCtx } from '../../hooks/useCurrentUserCtx.ts';
 import { useDemos } from '../../hooks/useDemos';
-import { humanFileSize, renderDateTime } from '../../util/text';
+import { RowsPerPage } from '../../util/table.ts';
+import { humanFileSize, renderDateTime } from '../../util/text.tsx';
 import { emptyOrNullString } from '../../util/types';
+import {
+    mapNameFieldValidator,
+    selectOwnValidator,
+    serverIDsValidator,
+    sourceIdValidator
+} from '../../util/validators.ts';
 import { FilterButtons } from '../formik/FilterButtons';
-import { MapNameField, mapNameFieldValidator } from '../formik/MapNameField';
-import { SelectOwnField, selectOwnValidator } from '../formik/SelectOwnField';
-import { ServerIDsField, serverIDsValidator } from '../formik/ServerIDsField';
-import { SourceIdField, sourceIdValidator } from '../formik/SourceIdField';
-import { LazyTable, RowsPerPage } from './LazyTable';
+import { MapNameField } from '../formik/MapNameField.tsx';
+import { SelectOwnField } from '../formik/SelectOwnField.tsx';
+import { ServerIDsField } from '../formik/ServerIDsField.tsx';
+import { SourceIdField } from '../formik/SourceIdField.tsx';
+import { LazyTable } from './LazyTable';
 
 interface STVFormValues {
     source_id: string;

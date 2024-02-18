@@ -15,18 +15,25 @@ import { Formik } from 'formik';
 import { FormikHelpers } from 'formik/dist/types';
 import * as yup from 'yup';
 import { GroupBanRecord } from '../../api';
-import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
 import { useBansGroup } from '../../hooks/useBansGroup';
-import { renderDate } from '../../util/text';
-import { DeletedField, deletedValidator } from '../formik/DeletedField';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+import { RowsPerPage } from '../../util/table.ts';
+import { renderDate } from '../../util/text.tsx';
+import {
+    deletedValidator,
+    groupIdFieldValidator,
+    sourceIdValidator,
+    targetIdValidator
+} from '../../util/validators.ts';
+import { DeletedField } from '../formik/DeletedField';
 import { FilterButtons } from '../formik/FilterButtons';
-import { GroupIdField, groupIdFieldValidator } from '../formik/GroupIdField';
-import { SourceIdField, sourceIdValidator } from '../formik/SourceIdField';
+import { GroupIdField } from '../formik/GroupIdField';
+import { SourceIdField } from '../formik/SourceIdField';
 import { SteamIDSelectField } from '../formik/SteamIDSelectField';
-import { TargetIDField, targetIdValidator } from '../formik/TargetIdField';
+import { TargetIDField } from '../formik/TargetIdField';
 import { ModalBanGroup, ModalUnbanGroup } from '../modal';
 import { BanGroupModalProps } from '../modal/BanGroupModal';
-import { LazyTable, RowsPerPage } from './LazyTable';
+import { LazyTable } from './LazyTable';
 import { TableCellBool } from './TableCellBool';
 
 interface GroupBanFilterValues {

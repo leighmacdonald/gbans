@@ -24,13 +24,13 @@ import {
     ModalForumForumEditor,
     ModalForumThreadCreator
 } from '../component/modal';
-import { RowsPerPage } from '../component/table/LazyTable';
-import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
 import { useForum } from '../hooks/useForum';
 import { useThreads } from '../hooks/useThreads';
+import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors';
-import { avatarHashToURL, renderDateTime } from '../util/text';
+import { RowsPerPage } from '../util/table.ts';
+import { avatarHashToURL, renderDateTime } from '../util/text.tsx';
 
 const ForumThreadRow = ({ thread }: { thread: ForumThread }) => {
     return (

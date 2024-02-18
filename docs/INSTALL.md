@@ -84,19 +84,7 @@ the same directory as the binary. Configure it as desired.
 
 #### Starting the server
 
-To start the server just run `./gbans serve`. It should show output similar to the following if
-successful.
-
-```
-{"level":"info","ts":1695203543.242712,"logger":"gb.db","msg":"Migration completed successfully"}
-{"level":"info","ts":1695203543.4707286,"logger":"gb.srcdsLog","msg":"Starting log reader","listen_addr":":27115/udp"}
-{"level":"info","ts":1695203543.4926925,"logger":"gb","msg":"Successfully created new bucket","name":"media"}
-{"level":"info","ts":1695203544.1639986,"logger":"gb","msg":"Service status changed","state":"ready"}
-{"level":"info","ts":1695203544.1639986,"logger":"gb.discord","msg":"Service state changed","state":"ready","username":"gbans-dev#0000"}
-{"level":"info","ts":1695203544.6317015,"logger":"gb.discord","msg":"Registered discord commands","count":18}
-{"level":"info","ts":1695203544.632212,"logger":"gb.discord","msg":"Service state changed","state":"connected"}
-     
-```
+To start the server just run `./build/linux64/gbans serve`.
 
 It's recommended to create a [systemd .service](https://freedesktop.org/software/systemd/man/systemd.service.html)
 file so that it can start automatically. More info on configuring this will be available at a later

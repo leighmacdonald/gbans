@@ -1,12 +1,25 @@
-import { ChangeEvent, useEffect, useState } from 'react';
+import {
+    ChangeEvent,
+    Dispatch,
+    SetStateAction,
+    useEffect,
+    useState
+} from 'react';
 import Typography from '@mui/material/Typography';
 import { apiGetBansSteam, BanReasons, SteamBanRecord } from '../../api';
 import { logErr } from '../../util/errors';
+import { Order, RowsPerPage } from '../../util/table.ts';
 import { PersonCell } from '../PersonCell';
-import { LazyTable, Order, RowsPerPage } from './LazyTable';
+import { LazyTable } from './LazyTable';
 import { TableCellBool } from './TableCellBool';
 
-export const BanHistoryTable = ({ steam_id }: { steam_id?: string }) => {
+export const BanHistoryTable = ({
+    steam_id,
+    setBanCount
+}: {
+    steam_id?: string;
+    setBanCount: Dispatch<SetStateAction<number>>;
+}) => {
     const [bans, setBans] = useState<SteamBanRecord[]>([]);
     const [sortOrder, setSortOrder] = useState<Order>('desc');
     const [sortColumn, setSortColumn] =
@@ -33,6 +46,7 @@ export const BanHistoryTable = ({ steam_id }: { steam_id?: string }) => {
             .then((resp) => {
                 setBans(resp.data);
                 setTotalRows(resp.count);
+                setBanCount(resp.count);
                 if (page * rowPerPageCount > resp.count) {
                     setPage(0);
                 }
@@ -41,7 +55,7 @@ export const BanHistoryTable = ({ steam_id }: { steam_id?: string }) => {
                 logErr(e);
             });
         return () => abortController.abort();
-    }, [page, rowPerPageCount, sortColumn, sortOrder, steam_id]);
+    }, [page, rowPerPageCount, setBanCount, sortColumn, sortOrder, steam_id]);
 
     return (
         <LazyTable<SteamBanRecord>

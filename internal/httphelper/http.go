@@ -40,8 +40,9 @@ func useSecure(mode domain.RunMode, cspOrigin string) gin.HandlerFunc {
 			cspbuilder.ObjectSrc:  {"'none'"},
 		},
 	}
+
 	secureMiddleware := secure.New(secure.Options{
-		FrameDeny:             true,
+		FrameDeny:             false,
 		ContentTypeNosniff:    true,
 		ContentSecurityPolicy: cspBuilder.MustBuild(),
 		IsDevelopment:         mode != domain.ReleaseMode,
@@ -152,15 +153,13 @@ func useCors(engine *gin.Engine, conf domain.Config) {
 	engine.Use(httpErrorHandler(), gin.Recovery())
 	engine.Use(useSecure(conf.General.Mode, conf.S3.ExternalURL))
 
-	if conf.General.Mode == domain.ReleaseMode {
-		corsConfig := cors.DefaultConfig()
-		corsConfig.AllowOrigins = conf.HTTP.CorsOrigins
-		corsConfig.AllowHeaders = append(corsConfig.AllowHeaders, "Authorization")
-		corsConfig.AllowWildcard = true
-		corsConfig.AllowCredentials = true
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowOrigins = conf.HTTP.CorsOrigins
+	corsConfig.AllowHeaders = append(corsConfig.AllowHeaders, "Authorization")
+	corsConfig.AllowWildcard = true
+	corsConfig.AllowCredentials = true
 
-		engine.Use(cors.New(corsConfig))
-	}
+	engine.Use(cors.New(corsConfig))
 }
 
 func usePrometheus(engine *gin.Engine) {

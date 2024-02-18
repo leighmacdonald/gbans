@@ -33,10 +33,11 @@ import { PrivateRoute } from './component/PrivateRoute';
 import { TopBar } from './component/TopBar';
 import { UserInit } from './component/UserInit';
 import { ColourModeContext } from './contexts/ColourModeContext';
-import { CurrentUserCtx, GuestProfile } from './contexts/CurrentUserCtx';
+import { CurrentUserCtx } from './contexts/CurrentUserCtx';
 import { NotificationsProvider } from './contexts/NotificationsCtx';
 import { UserFlashCtx } from './contexts/UserFlashCtx';
 import { createThemeByMode } from './theme';
+import { GuestProfile } from './util/profile';
 
 export interface AppProps {
     initialTheme: PaletteMode;

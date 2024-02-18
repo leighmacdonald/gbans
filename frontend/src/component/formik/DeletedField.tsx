@@ -4,13 +4,7 @@ import FormGroup from '@mui/material/FormGroup';
 import FormHelperText from '@mui/material/FormHelperText';
 import Switch from '@mui/material/Switch';
 import { useFormikContext } from 'formik';
-import * as yup from 'yup';
 import { VCenterBox } from '../VCenterBox';
-
-export const deletedValidator = yup
-    .boolean()
-    .label('Include deleted results')
-    .required();
 
 interface DeletedFieldProps {
     deleted: boolean;

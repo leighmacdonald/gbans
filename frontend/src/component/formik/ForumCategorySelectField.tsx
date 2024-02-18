@@ -4,11 +4,8 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import { useFormikContext } from 'formik';
-import * as yup from 'yup';
 import { apiGetForumOverview, ForumCategory } from '../../api/forum';
 import { logErr } from '../../util/errors';
-
-export const serverIDsValidator = yup.number().min(1).label('Forum Category');
 
 interface ServerSelectFieldProps {
     forum_category_id: number;

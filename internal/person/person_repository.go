@@ -346,7 +346,7 @@ func (r *personRepository) GetPeople(ctx context.Context, filter domain.PlayerQu
 
 	count, errCount := r.db.GetCount(ctx, r.db.
 		Builder().
-		Select("COUNT(r.steam_id)").
+		Select("COUNT(p.steam_id)").
 		From("person p").
 		Where(conditions))
 	if errCount != nil {
@@ -448,9 +448,9 @@ func (r *personRepository) GetPersonMessageByID(ctx context.Context, personMessa
 			"m.created_on",
 			"m.persona_name",
 			"m.match_id",
-			"p.short_name").
+			"s.short_name").
 		From("person_messages m").
-		LeftJoin("server r on m.server_id = r.server_id").
+		LeftJoin("server s on m.server_id = s.server_id").
 		Where(sq.Eq{"m.person_message_id": personMessageID}))
 
 	if errRow != nil {

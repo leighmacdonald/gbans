@@ -11,23 +11,20 @@ import { BanReasons, ReportStatus, reportStatusString } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { LoadingIcon } from '../component/LoadingIcon';
 import { FilterButtons } from '../component/formik/FilterButtons';
-import {
-    ReportStatusField,
-    reportStatusFielValidator
-} from '../component/formik/ReportStatusField';
-import {
-    SourceIdField,
-    sourceIdValidator
-} from '../component/formik/SourceIdField';
+import { ReportStatusField } from '../component/formik/ReportStatusField';
+import { SourceIdField } from '../component/formik/SourceIdField';
 import { SteamIDSelectField } from '../component/formik/SteamIDSelectField';
-import {
-    TargetIDField,
-    targetIdValidator
-} from '../component/formik/TargetIdField';
-import { LazyTable, RowsPerPage } from '../component/table/LazyTable';
+import { TargetIDField } from '../component/formik/TargetIdField';
+import { LazyTable } from '../component/table/LazyTable';
 import { TableCellLink } from '../component/table/TableCellLink';
 import { useReports } from '../hooks/useReports';
-import { renderDateTime } from '../util/text';
+import { RowsPerPage } from '../util/table.ts';
+import { renderDateTime } from '../util/text.tsx';
+import {
+    reportStatusFieldValidator,
+    sourceIdValidator,
+    targetIdValidator
+} from '../util/validators.ts';
 
 interface FilterValues {
     report_status: ReportStatus;
@@ -36,7 +33,7 @@ interface FilterValues {
 }
 
 const validationSchema = yup.object({
-    report_status: reportStatusFielValidator,
+    report_status: reportStatusFieldValidator,
     source_id: sourceIdValidator,
     target_id: targetIdValidator
 });

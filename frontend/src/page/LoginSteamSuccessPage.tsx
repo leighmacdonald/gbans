@@ -8,7 +8,8 @@ import {
     writeAccessToken,
     writeRefreshToken
 } from '../api';
-import { GuestProfile, useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
+import { GuestProfile } from '../util/profile.ts';
 
 const defaultLocation = '/';
 

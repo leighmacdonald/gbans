@@ -1,10 +1,5 @@
 import { MouseEvent, ChangeEventHandler, ReactNode } from 'react';
-import {
-    TableFooter,
-    TablePagination,
-    TableSortLabel,
-    Theme
-} from '@mui/material';
+import { TableFooter, TablePagination, TableSortLabel } from '@mui/material';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -13,33 +8,10 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { SxProps, useTheme } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
+import { HeadingCell, Order, RowsPerPage } from '../../util/table.ts';
 
-export enum RowsPerPage {
-    Ten = 10,
-    TwentyFive = 25,
-    Fifty = 50,
-    Hundred = 100
-}
-
-export interface HeadingCell<T> {
-    label: string;
-    align?: 'inherit' | 'left' | 'center' | 'right' | 'justify';
-    tooltip: string;
-    sortKey?: keyof T;
-    width?: number | string;
-    sortType?: 'number' | 'string' | 'date' | 'float' | 'boolean';
-    virtual?: boolean;
-    virtualKey?: string;
-    sortable?: boolean;
-    // Custom cell render function for complex types
-    renderer?: (obj: T, value: unknown, type: string) => ReactNode;
-    style?: (obj: T) => SxProps<Theme> | undefined;
-    onClick?: (row: T) => void;
-    hideSm?: boolean;
-}
-
-export const defaultRenderer = (
+const defaultRenderer = (
     _: unknown,
     value: unknown,
     type: string
@@ -59,11 +31,6 @@ export const defaultRenderer = (
             return <Typography variant={'body1'}>{value as string}</Typography>;
     }
 };
-
-export const descendingComparator = <T,>(a: T, b: T, orderBy: keyof T) =>
-    b[orderBy] < a[orderBy] ? -1 : b[orderBy] > a[orderBy] ? 1 : 0;
-
-export type Order = 'asc' | 'desc';
 
 export interface LazyTableProps<T> {
     columns: HeadingCell<T>[];

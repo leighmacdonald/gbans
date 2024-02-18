@@ -13,12 +13,13 @@ import {
     apiSaveServer,
     APIError
 } from '../../api';
-import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { logErr } from '../../util/errors';
 import { Heading } from '../Heading';
 import { VCenterBox } from '../VCenterBox';
 import { ErrorField } from '../formik/ErrorField';
 import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
+import { ModalServerEditor } from './index.ts';
 
 export interface ServerEditorModalProps extends ConfirmationModalProps<Server> {
     server?: Server;
@@ -48,7 +49,7 @@ export const ServerEditorModal = NiceModal.create(
         const [logSecret, setLogSecret] = useState<number>(0);
         const [error, setError] = useState<string>();
 
-        const modal = useModal();
+        const modal = useModal(ModalServerEditor);
 
         useEffect(() => {
             setServerId(server?.server_id ?? 0);

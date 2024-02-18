@@ -3,7 +3,6 @@ package demo
 import (
 	"context"
 	"errors"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"io"
 	"log/slog"
 	"os"
@@ -14,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/demoparser"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 

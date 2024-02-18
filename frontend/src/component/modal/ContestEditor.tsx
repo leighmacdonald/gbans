@@ -21,7 +21,7 @@ import { Formik, useFormikContext } from 'formik';
 import * as yup from 'yup';
 import { EmptyUUID, PermissionLevel, useContest } from '../../api';
 import { apiContestSave } from '../../api';
-import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { logErr } from '../../util/errors';
 import { Heading } from '../Heading';
 import { LoadingSpinner } from '../LoadingSpinner';

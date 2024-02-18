@@ -1,7 +1,7 @@
 import { useMemo, JSX } from 'react';
 import { RouteProps } from 'react-router';
 import loadable from '@loadable/component';
-import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
 
 const LoginPage = loadable(() => import('../page/LoginPage'));
 

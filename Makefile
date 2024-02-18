@@ -34,6 +34,9 @@ serve:
 frontend:
 	cd frontend && pnpm install --frozen-lockfile && pnpm run build
 
+dev:
+	GOOS=linux GOARCH=amd64 $(GO_CMD) run $(GO_FLAGS) main.go serve
+
 linux64:
 	GOOS=linux GOARCH=amd64 $(GO_BUILD) $(GO_FLAGS) -o build/linux64/gbans main.go
 

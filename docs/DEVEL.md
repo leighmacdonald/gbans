@@ -10,43 +10,11 @@
 
 `make bump_deps` Can be used to update both go and js/ts libraries.
 
-## Seeding data
+## Start Backend
 
-There is a simple `seed` command you can use to pre-load some data for working with while
-developing.
+`make dev` Run the backend server. By default, listens on http://localhost:6006/. 
 
-    {
-        "settings": {
-            "rcon": "common_rcon_password"
-        },
-        "admins": [ "76561198084134025" ],
-        "players": [
-            "76561198080000000",
-            "76561198080000001",
-        ],
-        "servers": [
-          {
-            "short_name": "test-1",
-            "host": "test-1.us.server.com",
-            "password": "xxxxxxxxxxxxxxxxxxxx",
-            "location": [ 58.377956, 24.897070 ],
-            "enabled": false,
-            "region": "na",
-            "cc": "us"
-          },
-          {
-            "short_name": "test-2",
-            "host": "test-2.us.server.com",
-            "password": "xxxxxxxxxxxxxxxxxxxx",
-            "location": [ 58.377956, 24.897070 ],
-            "enabled": false,
-            "region": "na",
-            "cc": "us"
-          },
-        ]
-    }
+## Start Frontend
 
-You can then import the data with:
-
-`./gbans seed -f seed.json -r common_rcon_password`
+`make serve` Start the vite frontend development web server. This should open http://localhost:6007/ automatically.
 

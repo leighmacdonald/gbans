@@ -13,8 +13,8 @@ import {
     CIDRBlockSource,
     PermissionLevel
 } from '../api';
-import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
 import { useCIDRBlocks } from '../hooks/useCIDRBlocks';
+import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
 import { logErr } from '../util/errors';
 import { LoadingPlaceholder } from './LoadingPlaceholder';
 import { VCenterBox } from './VCenterBox';

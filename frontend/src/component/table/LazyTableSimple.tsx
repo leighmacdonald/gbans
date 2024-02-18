@@ -1,48 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Stack from '@mui/material/Stack';
-import { DataCount } from '../../api';
 import { logErr } from '../../util/errors';
-import { LoadingPlaceholder } from '../LoadingPlaceholder';
 import {
-    descendingComparator,
+    compare,
     HeadingCell,
-    LazyTable,
+    LazyFetchOpts,
+    LazyResult,
     Order,
-    RowsPerPage
-} from './LazyTable';
-
-export const compare = <T,>(
-    order: Order,
-    orderBy: keyof T
-): ((a: T, b: T) => number) =>
-    order === 'desc'
-        ? (a, b) => descendingComparator(a, b, orderBy)
-        : (a, b) => -descendingComparator(a, b, orderBy);
-
-export const stableSort = <T,>(
-    array: T[],
-    comparator: (a: T, b: T) => number
-) => {
-    const stabilizedThis = array.map((el, index) => [el, index] as [T, number]);
-    stabilizedThis.sort((a, b) => {
-        const order = comparator(a[0], b[0]);
-        if (order !== 0) {
-            return order;
-        }
-        return a[1] - b[1];
-    });
-    return stabilizedThis.map((el) => el[0]);
-};
-
-export interface LazyFetchOpts<T> {
-    column: keyof T;
-    order: Order;
-    page: number;
-}
-
-export interface LazyResult<T> extends DataCount {
-    data: T[];
-}
+    RowsPerPage,
+    stableSort
+} from '../../util/table.ts';
+import { LoadingPlaceholder } from '../LoadingPlaceholder';
+import { LazyTable } from './LazyTable.tsx';
 
 interface LazyTableSimpleProps<T> {
     fetchData: (opts: LazyFetchOpts<T>) => Promise<LazyResult<T>>;

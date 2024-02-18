@@ -1,20 +1,5 @@
 import TextField from '@mui/material/TextField';
 import { useFormikContext } from 'formik';
-import * as yup from 'yup';
-
-export const asNumberFieldValidator = yup
-    .number()
-    .label('AS Number')
-    .test('valid_asn', (value, ctx) => {
-        if (value == undefined) {
-            return true;
-        }
-        if (value <= 0) {
-            return ctx.createError({ message: 'Invalid ASN' });
-        }
-        return true;
-    })
-    .integer();
 
 interface ASNumberFieldProps {
     as_num: number;

@@ -2,7 +2,7 @@ import { forwardRef, JSX, SyntheticEvent, useState } from 'react';
 import { AlertColor } from '@mui/material/Alert';
 import MuiAlert, { AlertProps } from '@mui/material/Alert';
 import Snackbar, { SnackbarOrigin } from '@mui/material/Snackbar';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 
 export interface Flash {
     level: AlertColor;

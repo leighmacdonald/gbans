@@ -1,11 +1,4 @@
-import {
-    createContext,
-    Dispatch,
-    SetStateAction,
-    useContext,
-    useState,
-    JSX
-} from 'react';
+import { createContext, Dispatch, SetStateAction, useState, JSX } from 'react';
 import { UserNotification } from '../api';
 import { noop } from '../util/lists.ts';
 
@@ -43,14 +36,4 @@ export const NotificationsProvider = ({
             {children}
         </NotificationsCtx.Provider>
     );
-};
-
-export const useNotificationsCtx = () => {
-    const context = useContext(NotificationsCtx);
-    if (context === undefined) {
-        throw new Error(
-            'useNotifications must be used within a NotificationsProvider'
-        );
-    }
-    return context;
 };

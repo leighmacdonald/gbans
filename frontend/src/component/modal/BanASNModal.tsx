@@ -18,16 +18,16 @@ import {
     ASNBanRecord,
     APIError
 } from '../../api';
+import {
+    asNumberFieldValidator,
+    banReasonFieldValidator,
+    banReasonTextFieldValidator,
+    steamIdValidator
+} from '../../util/validators.ts';
 import { Heading } from '../Heading';
-import { ASNumberField, asNumberFieldValidator } from '../formik/ASNumberField';
-import {
-    BanReasonField,
-    banReasonFieldValidator
-} from '../formik/BanReasonField';
-import {
-    BanReasonTextField,
-    banReasonTextFieldValidator
-} from '../formik/BanReasonTextField';
+import { ASNumberField } from '../formik/ASNumberField';
+import { BanReasonField } from '../formik/BanReasonField';
+import { BanReasonTextField } from '../formik/BanReasonTextField';
 import {
     DurationCustomField,
     DurationCustomFieldValidator
@@ -35,11 +35,7 @@ import {
 import { DurationField, DurationFieldValidator } from '../formik/DurationField';
 import { ErrorField } from '../formik/ErrorField';
 import { NoteField, NoteFieldValidator } from '../formik/NoteField';
-import {
-    SteamIdField,
-    SteamIDInputValue,
-    steamIdValidator
-} from '../formik/SteamIdField';
+import { SteamIdField, SteamIDInputValue } from '../formik/SteamIdField';
 import { CancelButton, ResetButton, SubmitButton } from './Buttons';
 
 interface BanASNFormValues extends SteamIDInputValue {
@@ -52,7 +48,7 @@ interface BanASNFormValues extends SteamIDInputValue {
     note: string;
 }
 
-export const validationSchema = yup.object({
+const validationSchema = yup.object({
     steam_id: steamIdValidator,
     as_num: asNumberFieldValidator,
     reason: banReasonFieldValidator,

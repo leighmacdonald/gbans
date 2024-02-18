@@ -15,8 +15,9 @@ import {
     apiUpdateCIDRBlockWhitelist,
     CIDRBlockWhitelist
 } from '../../api';
+import { ipFieldValidator } from '../../util/validators.ts';
 import { Heading } from '../Heading';
-import { IPField, ipFieldValidator } from '../formik/IPField';
+import { IPField } from '../formik/IPField';
 import { CancelButton, SubmitButton } from './Buttons';
 
 interface CIDRWhitelistEditorProps {

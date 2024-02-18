@@ -44,7 +44,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/wiki"
 	"github.com/leighmacdonald/gbans/internal/wordfilter"
 	"github.com/leighmacdonald/gbans/pkg/fp"
-	log2 "github.com/leighmacdonald/gbans/pkg/log"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -72,9 +72,9 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			var sentryClient *sentry.Client
 			var errSentry error
 
-			sentryClient, errSentry = log2.NewSentryClient(conf.Log.SentryDSN, conf.Log.SentryTrace, conf.Log.SentrySampleRate, app.BuildVersion)
+			sentryClient, errSentry = log.NewSentryClient(conf.Log.SentryDSN, conf.Log.SentryTrace, conf.Log.SentrySampleRate, app.BuildVersion)
 
-			logCloser := log2.MustCreateLogger(conf.Log.File, conf.Log.Level)
+			logCloser := log.MustCreateLogger(conf.Log.File, conf.Log.Level)
 			defer logCloser()
 
 			if errSentry != nil {
@@ -90,7 +90,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			dbUsecase := database.New(conf.DB.DSN, conf.DB.AutoMigrate, conf.DB.LogQueries)
 			if errConnect := dbUsecase.Connect(rootCtx); errConnect != nil {
-				slog.Error("Cannot initialize database", log2.ErrAttr(errConnect))
+				slog.Error("Cannot initialize database", log.ErrAttr(errConnect))
 
 				return
 			}
@@ -106,14 +106,14 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			discordRepository, errDR := discord.NewDiscordRepository(conf)
 			if errDR != nil {
-				slog.Error("Cannot initialize discord", log2.ErrAttr(errDR))
+				slog.Error("Cannot initialize discord", log.ErrAttr(errDR))
 
 				return
 			}
 
 			wordFilterUsecase := wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(dbUsecase))
 			if err := wordFilterUsecase.Import(ctx); err != nil {
-				slog.Error("Failed to load word filters", log2.ErrAttr(err))
+				slog.Error("Failed to load word filters", log.ErrAttr(err))
 
 				return
 			}
@@ -121,7 +121,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			discordUsecase := discord.NewDiscordUsecase(discordRepository, wordFilterUsecase)
 
 			if err := discordUsecase.Start(); err != nil {
-				slog.Error("Failed to start discord", log2.ErrAttr(err))
+				slog.Error("Failed to start discord", log.ErrAttr(err))
 
 				return
 			}
@@ -134,7 +134,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				Secure: conf.S3.SSL,
 			})
 			if errMinio != nil {
-				slog.Error("Cannot initialize minio", log2.ErrAttr(errDR))
+				slog.Error("Cannot initialize minio", log.ErrAttr(errDR))
 
 				return
 			}
@@ -145,12 +145,20 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			networkUsecase := network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(dbUsecase), blocklistUsecase, personUsecase)
 			if err := networkUsecase.LoadNetBlocks(ctx); err != nil {
-				slog.Error("Failed to load network blocks", log2.ErrAttr(err))
+				slog.Error("Failed to load network blocks", log.ErrAttr(err))
 
 				return
 			}
 
-			assetUsecase := asset.NewAssetUsecase(asset.NewS3Repository(dbUsecase, minioClient, conf.S3.Region))
+			assetRepository := asset.NewS3Repository(dbUsecase, minioClient, conf.S3.Region)
+			if errInit := assetRepository.Init(ctx); errInit != nil {
+				slog.Error("Failed to ensure s3 buckets exist", log.ErrAttr(errInit))
+
+				return
+			}
+
+			assetUsecase := asset.NewAssetUsecase(assetRepository)
+
 			mediaUsecase := media.NewMediaUsecase(conf.S3.BucketMedia, media.NewMediaRepository(dbUsecase), assetUsecase)
 			serversUsecase := servers.NewServersUsecase(servers.NewServersRepository(dbUsecase))
 			demoUsecase := demo.NewDemoUsecase(conf.S3.BucketDemo, demo.NewDemoRepository(dbUsecase), assetUsecase, configUsecase, serversUsecase)
@@ -161,7 +169,12 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			stateUsecase := state.NewStateUsecase(eventBroadcaster,
 				state.NewStateRepository(state.NewCollector(serversUsecase)), configUsecase, serversUsecase)
-			go stateUsecase.Start(ctx)
+
+			go func() {
+				if err := stateUsecase.Start(ctx); err != nil {
+					slog.Error("Failed to start state tracker", log.ErrAttr(err))
+				}
+			}()
 
 			banRepository := ban.NewBanSteamRepository(dbUsecase, personUsecase, networkUsecase)
 			banUsecase := ban.NewBanSteamUsecase(banRepository, personUsecase, configUsecase, discordUsecase, banGroupUsecase, reportUsecase, stateUsecase)
@@ -212,7 +225,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			router, errRouter := httphelper.CreateRouter(conf, app.Version())
 			if errRouter != nil {
-				slog.Error("Could not setup router", log2.ErrAttr(errRouter))
+				slog.Error("Could not setup router", log.ErrAttr(errRouter))
 
 				return
 			}
@@ -264,13 +277,13 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				defer cancel()
 
 				if errShutdown := httpServer.Shutdown(shutdownCtx); errShutdown != nil { //nolint:contextcheck
-					slog.Error("Error shutting down http service", log2.ErrAttr(errShutdown))
+					slog.Error("Error shutting down http service", log.ErrAttr(errShutdown))
 				}
 			}()
 
 			errServe := httpServer.ListenAndServe()
 			if errServe != nil && !errors.Is(errServe, http.ErrServerClosed) {
-				slog.Error("HTTP server returned error", log2.ErrAttr(errServe))
+				slog.Error("HTTP server returned error", log.ErrAttr(errServe))
 			}
 
 			<-rootCtx.Done()

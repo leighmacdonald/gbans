@@ -6,11 +6,12 @@ import Link from '@mui/material/Link';
 import Tooltip from '@mui/material/Tooltip';
 import { WeaponsOverallResult } from '../api';
 import { usePlayerWeaponsOverallStats } from '../hooks/usePlayerWeaponsOverallStats';
-import { defaultFloatFmtPct, humanCount } from '../util/text';
+import { Order, RowsPerPage } from '../util/table.ts';
+import { defaultFloatFmtPct, humanCount } from '../util/text.tsx';
 import { ContainerWithHeader } from './ContainerWithHeader';
+import FmtWhenGt from './FmtWhenGT.tsx';
 import { LoadingPlaceholder } from './LoadingPlaceholder';
-import { fmtWhenGt } from './PlayersOverallContainer';
-import { LazyTable, Order, RowsPerPage } from './table/LazyTable';
+import { LazyTable } from './table/LazyTable';
 
 export const PlayerWeaponsStatListContainer = ({
     steamId
@@ -102,7 +103,7 @@ export const PlayerWeaponsStatListContainer = ({
                             sortable: true,
                             sortKey: 'kills',
                             tooltip: 'Total Kills',
-                            renderer: (obj) => fmtWhenGt(obj.kills, humanCount)
+                            renderer: (obj) => FmtWhenGt(obj.kills, humanCount)
                         },
                         {
                             label: 'Kills%',
@@ -110,14 +111,14 @@ export const PlayerWeaponsStatListContainer = ({
                             sortKey: 'kills_pct',
                             tooltip: 'Percentage Of Overall Kills',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.kills_pct, defaultFloatFmtPct)
+                                FmtWhenGt(obj.kills_pct, defaultFloatFmtPct)
                         },
                         {
                             label: 'Shots',
                             sortable: true,
                             sortKey: 'shots',
                             tooltip: 'Total Shots',
-                            renderer: (obj) => fmtWhenGt(obj.shots, humanCount)
+                            renderer: (obj) => FmtWhenGt(obj.shots, humanCount)
                         },
                         {
                             label: 'Shots%',
@@ -125,14 +126,14 @@ export const PlayerWeaponsStatListContainer = ({
                             sortKey: 'shots_pct',
                             tooltip: 'Shot Hit Percentage',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.shots_pct, defaultFloatFmtPct)
+                                FmtWhenGt(obj.shots_pct, defaultFloatFmtPct)
                         },
                         {
                             label: 'Hits',
                             sortable: true,
                             sortKey: 'hits',
                             tooltip: 'Total Hits',
-                            renderer: (obj) => fmtWhenGt(obj.hits, humanCount)
+                            renderer: (obj) => FmtWhenGt(obj.hits, humanCount)
                         },
                         {
                             label: 'Hits%',
@@ -140,7 +141,7 @@ export const PlayerWeaponsStatListContainer = ({
                             sortKey: 'hits_pct',
                             tooltip: 'Total Hits',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.hits_pct, defaultFloatFmtPct)
+                                FmtWhenGt(obj.hits_pct, defaultFloatFmtPct)
                         },
                         {
                             label: 'Acc%',
@@ -149,7 +150,7 @@ export const PlayerWeaponsStatListContainer = ({
                             virtualKey: 'accuracy',
                             tooltip: 'Overall Accuracy',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.shots_pct, () =>
+                                FmtWhenGt(obj.shots_pct, () =>
                                     defaultFloatFmtPct(
                                         (obj.hits / obj.shots) * 100
                                     )
@@ -161,7 +162,7 @@ export const PlayerWeaponsStatListContainer = ({
                             sortKey: 'airshots',
                             tooltip: 'Total Airshots',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.airshots, humanCount)
+                                FmtWhenGt(obj.airshots, humanCount)
                         },
                         {
                             label: 'As%',
@@ -169,7 +170,7 @@ export const PlayerWeaponsStatListContainer = ({
                             sortKey: 'airshots_pct',
                             tooltip: 'Total Airshot Percentage',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.airshots_pct, defaultFloatFmtPct)
+                                FmtWhenGt(obj.airshots_pct, defaultFloatFmtPct)
                         },
                         {
                             label: 'Bs',
@@ -177,7 +178,7 @@ export const PlayerWeaponsStatListContainer = ({
                             sortKey: 'backstabs',
                             tooltip: 'Total Backstabs',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.backstabs, humanCount)
+                                FmtWhenGt(obj.backstabs, humanCount)
                         },
                         {
                             label: 'Bs%',
@@ -185,7 +186,7 @@ export const PlayerWeaponsStatListContainer = ({
                             sortKey: 'backstabs_pct',
                             tooltip: 'Total Backstabs Percentage',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.backstabs_pct, defaultFloatFmtPct)
+                                FmtWhenGt(obj.backstabs_pct, defaultFloatFmtPct)
                         },
                         {
                             label: 'Hs',
@@ -193,7 +194,7 @@ export const PlayerWeaponsStatListContainer = ({
                             sortKey: 'headshots',
                             tooltip: 'Total Headshots',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.headshots, humanCount)
+                                FmtWhenGt(obj.headshots, humanCount)
                         },
                         {
                             label: 'Hs%',
@@ -201,14 +202,14 @@ export const PlayerWeaponsStatListContainer = ({
                             sortKey: 'headshots_pct',
                             tooltip: 'Total Headshot Percentage',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.headshots_pct, defaultFloatFmtPct)
+                                FmtWhenGt(obj.headshots_pct, defaultFloatFmtPct)
                         },
                         {
                             label: 'Dmg',
                             sortable: true,
                             sortKey: 'damage',
                             tooltip: 'Total Damage',
-                            renderer: (obj) => fmtWhenGt(obj.damage, humanCount)
+                            renderer: (obj) => FmtWhenGt(obj.damage, humanCount)
                         },
                         {
                             label: 'Dmg%',
@@ -216,7 +217,7 @@ export const PlayerWeaponsStatListContainer = ({
                             sortKey: 'damage_pct',
                             tooltip: 'Total Damage Percentage',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.damage_pct, defaultFloatFmtPct)
+                                FmtWhenGt(obj.damage_pct, defaultFloatFmtPct)
                         }
                     ]}
                 />

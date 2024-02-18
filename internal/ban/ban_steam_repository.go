@@ -70,9 +70,10 @@ func (r *banSteamRepository) getBanByColumn(ctx context.Context, column string, 
 
 	if !deletedOk {
 		whereClauses = append(whereClauses, sq.Eq{"b.deleted": false})
-	} else {
-		whereClauses = append(whereClauses, sq.Gt{"b.valid_until": time.Now()})
 	}
+	// else {
+	//	whereClauses = append(whereClauses, sq.Gt{"b.valid_until": time.Now()})
+	// }
 
 	query := r.db.
 		Builder().

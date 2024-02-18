@@ -7,9 +7,10 @@ import {
     PersonConnectionQuery
 } from '../../api';
 import { logErr } from '../../util/errors';
-import { renderDateTime } from '../../util/text';
+import { Order, RowsPerPage } from '../../util/table.ts';
+import { renderDateTime } from '../../util/text.tsx';
 import { LoadingPlaceholder } from '../LoadingPlaceholder';
-import { LazyTable, Order, RowsPerPage } from './LazyTable';
+import { LazyTable } from './LazyTable';
 
 export const ConnectionHistoryTable = ({ steam_id }: { steam_id?: string }) => {
     const [bans, setBans] = useState<PersonConnection[]>([]);

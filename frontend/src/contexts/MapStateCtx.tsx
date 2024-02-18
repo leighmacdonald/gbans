@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react';
+import { createContext } from 'react';
 import { LatLngLiteral } from 'leaflet';
 import { BaseServer } from '../api';
 import { noop } from '../util/lists';
@@ -42,5 +42,3 @@ export const MapStateCtx = createContext<MapState>({
     selectedRegion: 'any',
     setSelectedRegion: noop
 });
-
-export const useMapStateCtx = () => useContext(MapStateCtx);

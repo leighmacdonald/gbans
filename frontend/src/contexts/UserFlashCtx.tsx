@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react';
+import { createContext } from 'react';
 import { AlertColor } from '@mui/material/Alert';
 import { Flash } from '../component/Flashes';
 import { noop } from '../util/lists.ts';
@@ -18,6 +18,3 @@ export const UserFlashCtx = createContext<CurrentFlashes>({
     setFlashes: () => noop,
     sendFlash: () => noop
 });
-
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export const useUserFlashCtx = () => useContext(UserFlashCtx);

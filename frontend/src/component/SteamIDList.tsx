@@ -4,7 +4,7 @@ import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import { useTheme } from '@mui/material/styles';
 import SteamID from 'steamid';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { ContainerWithHeader } from './ContainerWithHeader';
 
 export interface SteamIDListProps {

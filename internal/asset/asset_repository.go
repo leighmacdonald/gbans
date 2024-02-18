@@ -31,6 +31,18 @@ func NewS3Repository(db database.Database, client *minio.Client, region string) 
 	}
 }
 
+func (r *s3repository) Init(ctx context.Context) error {
+	if errDemo := r.CreateBucketIfNotExists(ctx, "demo"); errDemo != nil {
+		return errDemo
+	}
+
+	if errMedia := r.CreateBucketIfNotExists(ctx, "media"); errMedia != nil {
+		return errMedia
+	}
+
+	return nil
+}
+
 func (r *s3repository) Get(ctx context.Context, bucket string, name string) (io.Reader, error) {
 	reader, err := r.client.GetObject(ctx, bucket, name, minio.GetObjectOptions{})
 	if err != nil {

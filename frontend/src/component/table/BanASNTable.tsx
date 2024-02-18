@@ -13,18 +13,25 @@ import { Formik } from 'formik';
 import { FormikHelpers } from 'formik/dist/types';
 import * as yup from 'yup';
 import { ASNBanRecord, BanReason } from '../../api';
-import { useUserFlashCtx } from '../../contexts/UserFlashCtx';
 import { useBansASN } from '../../hooks/useBansASN';
-import { renderDate } from '../../util/text';
-import { ASNumberField, asNumberFieldValidator } from '../formik/ASNumberField';
-import { DeletedField, deletedValidator } from '../formik/DeletedField';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+import { RowsPerPage } from '../../util/table.ts';
+import { renderDate } from '../../util/text.tsx';
+import {
+    asNumberFieldValidator,
+    deletedValidator,
+    sourceIdValidator,
+    targetIdValidator
+} from '../../util/validators.ts';
+import { ASNumberField } from '../formik/ASNumberField';
+import { DeletedField } from '../formik/DeletedField';
 import { FilterButtons } from '../formik/FilterButtons';
-import { SourceIdField, sourceIdValidator } from '../formik/SourceIdField';
+import { SourceIdField } from '../formik/SourceIdField';
 import { SteamIDSelectField } from '../formik/SteamIDSelectField';
-import { TargetIDField, targetIdValidator } from '../formik/TargetIdField';
+import { TargetIDField } from '../formik/TargetIdField';
 import { ModalBanASN, ModalUnbanASN } from '../modal';
 import { BanASNModalProps } from '../modal/BanASNModal';
-import { LazyTable, RowsPerPage } from './LazyTable';
+import { LazyTable } from './LazyTable';
 import { TableCellBool } from './TableCellBool';
 
 interface ASNFilterValues {

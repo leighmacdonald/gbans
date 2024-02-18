@@ -23,7 +23,7 @@ export const useReport = (report_id: number) => {
             });
 
         return () => abortController.abort();
-    }, []);
+    }, [report_id]);
 
     return { data, loading, error };
 };

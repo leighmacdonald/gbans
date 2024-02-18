@@ -15,7 +15,8 @@ import { apiGetServerStates, BaseServer } from '../api';
 import { ServerFilters } from '../component/ServerFilters';
 import { ServerList } from '../component/ServerList';
 import { ServerMap } from '../component/ServerMap';
-import { MapStateCtx, useMapStateCtx } from '../contexts/MapStateCtx';
+import { MapStateCtx } from '../contexts/MapStateCtx';
+import { useMapStateCtx } from '../hooks/useMapStateCtx.ts';
 import { sum } from '../util/lists.ts';
 
 function LinearProgressWithLabel(

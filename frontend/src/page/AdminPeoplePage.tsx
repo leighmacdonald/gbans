@@ -22,24 +22,21 @@ import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { LoadingSpinner } from '../component/LoadingSpinner';
 import { PersonCell } from '../component/PersonCell';
 import { FilterButtons } from '../component/formik/FilterButtons';
-import { IPField, ipFieldValidator } from '../component/formik/IPField';
-import {
-    PersonanameField,
-    personanameFieldValidator
-} from '../component/formik/PersonanameField';
-import { nonResolvingSteamIDInputTest } from '../component/formik/SourceIdField';
+import { IPField } from '../component/formik/IPField';
+import { PersonanameField } from '../component/formik/PersonanameField';
 import { SteamIdField } from '../component/formik/SteamIdField';
 import { ModalPersonEditor } from '../component/modal';
-import { LazyTable, RowsPerPage } from '../component/table/LazyTable';
-import { useCurrentUserCtx } from '../contexts/CurrentUserCtx';
+import { LazyTable } from '../component/table/LazyTable';
+import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
 import { usePeople } from '../hooks/usePeople';
 import { logErr } from '../util/errors';
-import { isValidSteamDate, renderDate } from '../util/text';
-
-export const steamIDValidatorSimple = yup
-    .string()
-    .label('Player Steam ID')
-    .test('steam_id', 'Invalid steamid', nonResolvingSteamIDInputTest);
+import { RowsPerPage } from '../util/table.ts';
+import { isValidSteamDate, renderDate } from '../util/text.tsx';
+import {
+    ipFieldValidator,
+    personanameFieldValidator,
+    steamIDValidatorSimple
+} from '../util/validators.ts';
 
 const validationSchema = yup.object({
     steam_id: steamIDValidatorSimple,

@@ -13,10 +13,10 @@ import Typography from '@mui/material/Typography';
 import Grid2 from '@mui/material/Unstable_Grid2';
 import { parseISO } from 'date-fns';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { RowsPerPage } from '../component/table/LazyTable';
-import { useNotificationsCtx } from '../contexts/NotificationsCtx';
 import { useNotifications } from '../hooks/useNotifications';
-import { renderDateTime } from '../util/text';
+import { useNotificationsCtx } from '../hooks/useNotificationsCtx.ts';
+import { RowsPerPage } from '../util/table.ts';
+import { renderDateTime } from '../util/text.tsx';
 
 interface CBProps {
     id: number;

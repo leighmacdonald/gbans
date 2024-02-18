@@ -1,22 +1,6 @@
 import FormControl from '@mui/material/FormControl';
 import TextField from '@mui/material/TextField';
 import { useFormikContext } from 'formik';
-import * as yup from 'yup';
-import { emptyOrNullString } from '../../util/types';
-
-export const mapNameFieldValidator = yup
-    .string()
-    .label('Select a map')
-    .min(3, 'Minimum 3 characters required')
-    .optional();
-
-export const mapValidator = yup
-    .string()
-    .test('checkMap', 'Invalid map selection', async (map) => {
-        return !emptyOrNullString(map);
-    })
-    .label('Select a map to play')
-    .required('map is required');
 
 interface MapNameFieldProps {
     map_name: string;

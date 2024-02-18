@@ -8,7 +8,7 @@ import { SteamBanRecord } from '../api';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons';
 import { ModalBanSteam } from '../component/modal';
 import { BanSteamTable } from '../component/table/BanSteamTable';
-import { useUserFlashCtx } from '../contexts/UserFlashCtx';
+import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors';
 
 export const AdminBanSteamPage = () => {

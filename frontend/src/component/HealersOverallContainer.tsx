@@ -2,12 +2,17 @@ import { ChangeEvent, useState } from 'react';
 import HealthAndSafetyIcon from '@mui/icons-material/HealthAndSafety';
 import { HealingOverallResult } from '../api';
 import { useHealerOverallStats } from '../hooks/useHealerOverallStats';
-import { defaultFloatFmt, defaultFloatFmtPct, humanCount } from '../util/text';
+import { Order, RowsPerPage } from '../util/table.ts';
+import {
+    defaultFloatFmt,
+    defaultFloatFmtPct,
+    humanCount
+} from '../util/text.tsx';
 import { ContainerWithHeader } from './ContainerWithHeader';
+import FmtWhenGt from './FmtWhenGT.tsx';
 import { LoadingPlaceholder } from './LoadingPlaceholder';
 import { PersonCell } from './PersonCell';
-import { fmtWhenGt } from './PlayersOverallContainer';
-import { LazyTable, Order, RowsPerPage } from './table/LazyTable';
+import { LazyTable } from './table/LazyTable';
 
 export const HealersOverallContainer = () => {
     const [page, setPage] = useState(0);
@@ -87,7 +92,7 @@ export const HealersOverallContainer = () => {
                             sortKey: 'healing',
                             tooltip: 'Total Healing',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.healing, humanCount)
+                                FmtWhenGt(obj.healing, humanCount)
                         },
                         {
                             label: 'A',
@@ -95,14 +100,14 @@ export const HealersOverallContainer = () => {
                             sortKey: 'assists',
                             tooltip: 'Total Assists',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.assists, humanCount)
+                                FmtWhenGt(obj.assists, humanCount)
                         },
                         {
                             label: 'D',
                             sortable: true,
                             sortKey: 'deaths',
                             tooltip: 'Total Deaths',
-                            renderer: (obj) => fmtWhenGt(obj.deaths, humanCount)
+                            renderer: (obj) => FmtWhenGt(obj.deaths, humanCount)
                         },
                         {
                             label: 'KAD',
@@ -110,7 +115,7 @@ export const HealersOverallContainer = () => {
                             sortKey: 'kad',
                             tooltip: 'Kills+Assists:Deaths Ratio',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.kad, defaultFloatFmt)
+                                FmtWhenGt(obj.kad, defaultFloatFmt)
                         },
                         {
                             label: 'HPM',
@@ -118,7 +123,7 @@ export const HealersOverallContainer = () => {
                             sortKey: 'hpm',
                             tooltip: 'Overall Healing Per Minute',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.hpm, () =>
+                                FmtWhenGt(obj.hpm, () =>
                                     defaultFloatFmt(obj.hpm)
                                 )
                         },
@@ -128,7 +133,7 @@ export const HealersOverallContainer = () => {
                             sortKey: 'damage_taken',
                             tooltip: 'Total Damage Taken',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.damage_taken, humanCount)
+                                FmtWhenGt(obj.damage_taken, humanCount)
                         },
                         {
                             label: 'DTM',
@@ -136,7 +141,7 @@ export const HealersOverallContainer = () => {
                             sortKey: 'dtm',
                             tooltip: 'Overall Damage Taken Per Minute',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.dtm, () =>
+                                FmtWhenGt(obj.dtm, () =>
                                     defaultFloatFmt(obj.dtm)
                                 )
                         },
@@ -146,14 +151,14 @@ export const HealersOverallContainer = () => {
                             sortKey: 'dominations',
                             tooltip: 'Total Dominations',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.dominations, humanCount)
+                                FmtWhenGt(obj.dominations, humanCount)
                         },
                         {
                             label: 'Dr',
                             sortable: true,
                             sortKey: 'drops',
                             tooltip: 'Total Drops',
-                            renderer: (obj) => fmtWhenGt(obj.drops, humanCount)
+                            renderer: (obj) => FmtWhenGt(obj.drops, humanCount)
                         },
                         {
                             label: 'Ub',
@@ -161,7 +166,7 @@ export const HealersOverallContainer = () => {
                             sortKey: 'charges_uber',
                             tooltip: 'Total Uber Charges',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.charges_uber, humanCount)
+                                FmtWhenGt(obj.charges_uber, humanCount)
                         },
                         {
                             label: 'Kr',
@@ -169,7 +174,7 @@ export const HealersOverallContainer = () => {
                             sortKey: 'charges_kritz',
                             tooltip: 'Total Kritz Charges',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.charges_kritz, humanCount)
+                                FmtWhenGt(obj.charges_kritz, humanCount)
                         },
                         {
                             label: 'Qf',
@@ -177,7 +182,7 @@ export const HealersOverallContainer = () => {
                             sortKey: 'charges_quickfix',
                             tooltip: 'Total Quick-Fix Charges',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.charges_quickfix, humanCount)
+                                FmtWhenGt(obj.charges_quickfix, humanCount)
                         },
                         {
                             label: 'Va',
@@ -185,7 +190,7 @@ export const HealersOverallContainer = () => {
                             sortKey: 'charges_vacc',
                             tooltip: 'Total Vaccinator Charges',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.charges_vacc, humanCount)
+                                FmtWhenGt(obj.charges_vacc, humanCount)
                         },
                         {
                             label: 'WR',
@@ -193,7 +198,7 @@ export const HealersOverallContainer = () => {
                             sortKey: 'win_rate',
                             tooltip: 'Win Rate %',
                             renderer: (obj) =>
-                                fmtWhenGt(obj.win_rate, defaultFloatFmtPct)
+                                FmtWhenGt(obj.win_rate, defaultFloatFmtPct)
                         }
                     ]}
                 />

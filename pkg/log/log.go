@@ -9,8 +9,10 @@ import (
 )
 
 func MustCreateLogger(debugLogPath string, levelString string) func() {
-	var logHandler slog.Handler
-	var level slog.Level
+	var (
+		logHandler slog.Handler
+		level      slog.Level
+	)
 
 	switch levelString {
 	case "debug":
@@ -21,7 +23,6 @@ func MustCreateLogger(debugLogPath string, levelString string) func() {
 		level = slog.LevelWarn
 	default:
 		level = slog.LevelError
-
 	}
 
 	closer := func() {}
