@@ -74,13 +74,18 @@ func (r *s3repository) CreateBucketIfNotExists(ctx context.Context, name string)
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	errMake := r.client.MakeBucket(ctx, name, minio.MakeBucketOptions{Region: r.region})
-	if errMake != nil {
-		// Check to see if we already own this bucket (which happens if you run this twice)
-		exists, errBucketExists := r.client.BucketExists(ctx, name)
-		if errBucketExists != nil && !exists {
-			return errors.Join(errBucketExists, domain.ErrBucketCheck)
+	exists, errBucketExists := r.client.BucketExists(ctx, name)
+	if errBucketExists != nil && !exists {
+		return errors.Join(errBucketExists, domain.ErrBucketCheck)
+	}
+
+	if !exists {
+		errMake := r.client.MakeBucket(ctx, name, minio.MakeBucketOptions{Region: r.region})
+		if errMake != nil {
+			return errors.Join(errMake, domain.ErrBucketCreate)
 		}
+
+		slog.Info("Created new S3 bucket", slog.String("name", name))
 	}
 
 	// string ???
@@ -104,8 +109,6 @@ func (r *s3repository) CreateBucketIfNotExists(ctx context.Context, name string)
 	if err := r.client.SetBucketPolicy(ctx, name, policy); err != nil {
 		return errors.Join(err, domain.ErrPolicy)
 	}
-
-	slog.Info("Successfully created new bucket", slog.String("name", name))
 
 	return nil
 }
