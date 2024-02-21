@@ -25,7 +25,6 @@ var (
 )
 
 type Collector struct {
-	log              *slog.Logger
 	statusUpdateFreq time.Duration
 	updateTimeout    time.Duration
 	serverState      map[int]domain.ServerState
@@ -43,7 +42,6 @@ func NewCollector(serverUsecase domain.ServersUsecase) *Collector {
 	)
 
 	return &Collector{
-		log:              slog.Default().WithGroup("collector"),
 		statusUpdateFreq: statusUpdateFreq,
 		updateTimeout:    updateTimeout,
 		serverState:      map[int]domain.ServerState{},
@@ -77,7 +75,7 @@ func (c *Collector) ExecRaw(ctx context.Context, addr string, password string, c
 	}
 
 	if errClose := conn.Close(); errClose != nil {
-		c.log.Error("Could not close rcon connection", log.ErrAttr(errClose))
+		slog.Error("Could not close rcon connection", log.ErrAttr(errClose))
 	}
 
 	return resp, nil
@@ -179,7 +177,7 @@ func (c *Collector) setServerConfigs(configs []domain.ServerConfig) {
 		if _, found := c.serverState[cfg.ServerID]; !found {
 			addr, errResolve := ResolveIP(cfg.Host)
 			if errResolve != nil {
-				c.log.Warn("Failed to resolve server ip", slog.String("addr", addr), log.ErrAttr(errResolve))
+				slog.Warn("Failed to resolve server ip", slog.String("addr", addr), log.ErrAttr(errResolve))
 				addr = cfg.Host
 			}
 
@@ -284,7 +282,6 @@ func (c *Collector) maxVisiblePlayers(ctx context.Context, serverID int) (int, e
 
 func (c *Collector) startStatus(ctx context.Context) {
 	var (
-		logger             = slog.Default().WithGroup("statusUpdate")
 		statusUpdateTicker = time.NewTicker(c.statusUpdateFreq)
 	)
 
@@ -304,34 +301,33 @@ func (c *Collector) startStatus(ctx context.Context) {
 			for _, serverConfigInstance := range configs {
 				waitGroup.Add(1)
 
-				go func(conf domain.ServerConfig) {
+				go func(lCtx context.Context, conf domain.ServerConfig) {
 					defer waitGroup.Done()
 
-					loggerTag := logger.WithGroup(conf.Tag)
-
-					status, errStatus := c.status(ctx, conf.ServerID)
+					status, errStatus := c.status(lCtx, conf.ServerID)
 					if errStatus != nil {
 						return
 					}
 
-					maxVisible, errMaxVisible := c.maxVisiblePlayers(ctx, conf.ServerID)
+					maxVisible, errMaxVisible := c.maxVisiblePlayers(lCtx, conf.ServerID)
 					if errMaxVisible != nil {
-						loggerTag.Warn("Got invalid max players value", log.ErrAttr(errMaxVisible))
+						slog.Warn("Got invalid max players value", log.ErrAttr(errMaxVisible), slog.Int("server_id", conf.ServerID))
 					}
 
 					c.onStatusUpdate(conf, status, maxVisible)
 
 					successful.Add(1)
-				}(serverConfigInstance)
+				}(ctx, serverConfigInstance)
 			}
 
 			waitGroup.Wait()
 
-			logger.Debug("RCON update cycle complete",
+			slog.Debug("RCON update cycle complete",
 				slog.Int("success", int(successful.Load())),
 				slog.Int("existing", int(existing.Load())),
 				slog.Int("fail", len(configs)-int(successful.Load())),
 				slog.Duration("duration", time.Since(startTIme)))
+
 		case <-ctx.Done():
 			return
 		}
@@ -340,7 +336,6 @@ func (c *Collector) startStatus(ctx context.Context) {
 
 func (c *Collector) Start(ctx context.Context) {
 	var (
-		logger       = slog.Default().WithGroup("State")
 		trigger      = make(chan any)
 		updateTicker = time.NewTicker(time.Minute * 30)
 	)
@@ -361,7 +356,7 @@ func (c *Collector) Start(ctx context.Context) {
 				IncludeDisabled: false,
 			})
 			if errServers != nil && !errors.Is(errServers, domain.ErrNoResult) {
-				logger.Error("Failed to fetch servers, cannot update State", log.ErrAttr(errServers))
+				slog.Error("Failed to fetch servers, cannot update State", log.ErrAttr(errServers))
 
 				continue
 			}

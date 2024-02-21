@@ -46,11 +46,9 @@ func (m matchUsecase) GetMatchIDFromServerID(serverID int) (uuid.UUID, bool) {
 }
 
 func (m matchUsecase) Start(ctx context.Context) {
-	logger := slog.Default().WithGroup("matchSum")
-
 	eventChan := make(chan logparse.ServerEvent)
 	if errReg := m.broadcaster.Consume(eventChan); errReg != nil {
-		logger.Error("logWriter Tried to register duplicate reader channel", log.ErrAttr(errReg))
+		slog.Error("logWriter Tried to register duplicate reader channel", log.ErrAttr(errReg))
 	}
 
 	matches := map[int]*Context{}
@@ -65,7 +63,6 @@ func (m matchUsecase) Start(ctx context.Context) {
 				matchContext = &Context{
 					Match:          logparse.NewMatch(evt.ServerID, evt.ServerName),
 					cancel:         cancel,
-					log:            logger.WithGroup(evt.ServerName),
 					incomingEvents: make(chan logparse.ServerEvent),
 					stopChan:       make(chan bool),
 				}
@@ -93,11 +90,11 @@ func (m matchUsecase) Start(ctx context.Context) {
 				if err := m.onMatchComplete(ctx, matchContext); err != nil {
 					switch {
 					case errors.Is(err, domain.ErrInsufficientPlayers):
-						logger.Warn("Insufficient data to save")
+						slog.Warn("Insufficient data to save")
 					case errors.Is(err, domain.ErrIncompleteMatch):
-						logger.Warn("Incomplete match, ignoring")
+						slog.Warn("Incomplete match, ignoring")
 					default:
-						logger.Error("Failed to save Match results", log.ErrAttr(err))
+						slog.Error("Failed to save Match results", log.ErrAttr(err))
 					}
 				}
 

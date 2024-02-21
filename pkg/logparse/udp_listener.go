@@ -30,7 +30,6 @@ type LogEventHandler func(EventType, ServerEvent)
 type UDPLogListener struct {
 	*sync.RWMutex
 
-	logger        *slog.Logger
 	udpAddr       *net.UDPAddr
 	secretMap     map[int]ServerIDMap // index = logsecret key
 	logAddrString string
@@ -48,7 +47,6 @@ func NewUDPLogListener(logAddr string, onEvent LogEventHandler) (*UDPLogListener
 	return &UDPLogListener{
 		RWMutex:       &sync.RWMutex{},
 		onEvent:       onEvent,
-		logger:        slog.Default().WithGroup("srcdsLog"),
 		udpAddr:       udpAddr,
 		secretMap:     map[int]ServerIDMap{},
 		logAddrString: logAddr,
@@ -60,7 +58,7 @@ func (remoteSrc *UDPLogListener) SetSecrets(secrets map[int]ServerIDMap) {
 	defer remoteSrc.Unlock()
 
 	remoteSrc.secretMap = secrets
-	remoteSrc.logger.Debug("Updated server id map")
+	slog.Debug("Updated server id map")
 }
 
 type ServerIDMap struct {
@@ -79,18 +77,18 @@ func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 
 	connection, errListenUDP := net.ListenUDP("udp4", remoteSrc.udpAddr)
 	if errListenUDP != nil {
-		remoteSrc.logger.Error("Failed to start log listener", log.ErrAttr(errListenUDP))
+		slog.Error("Failed to start log listener", log.ErrAttr(errListenUDP))
 
 		return
 	}
 
 	defer func() {
 		if errConnClose := connection.Close(); errConnClose != nil {
-			remoteSrc.logger.Error("Failed to close connection cleanly", log.ErrAttr(errConnClose))
+			slog.Error("Failed to close connection cleanly", log.ErrAttr(errConnClose))
 		}
 	}()
 
-	remoteSrc.logger.Info("Starting log reader",
+	slog.Info("Starting log reader",
 		slog.String("listen_addr", fmt.Sprintf("%s/udp", remoteSrc.udpAddr.String())))
 
 	var (
@@ -109,7 +107,7 @@ func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 
 			readLen, _, errReadUDP := connection.ReadFromUDP(buffer)
 			if errReadUDP != nil {
-				remoteSrc.logger.Warn("UDP log read error", log.ErrAttr(errReadUDP))
+				slog.Warn("UDP log read error", log.ErrAttr(errReadUDP))
 
 				continue
 			}
@@ -117,7 +115,7 @@ func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 			switch srcdsPacket(buffer[4]) {
 			case s2aLogString:
 				if insecureCount%10000 == 0 {
-					remoteSrc.logger.Error("Using unsupported log packet type 0x52",
+					slog.Error("Using unsupported log packet type 0x52",
 						slog.Int64("count", int64(insecureCount+1)))
 				}
 
@@ -128,7 +126,7 @@ func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 
 				idx := strings.Index(line, "L ")
 				if idx == -1 {
-					remoteSrc.logger.Warn("Received malformed log message: Failed to find marker")
+					slog.Warn("Received malformed log message: Failed to find marker")
 
 					errCount++
 
@@ -137,7 +135,7 @@ func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 
 				secret, errConv := strconv.ParseInt(line[5:idx], 10, 32)
 				if errConv != nil {
-					remoteSrc.logger.Error("Received malformed log message: Failed to parse secret",
+					slog.Error("Received malformed log message: Failed to parse secret",
 						log.ErrAttr(errConv))
 
 					errCount++
@@ -152,7 +150,7 @@ func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 				if count%10000 == 0 {
 					rate := float64(count) / time.Since(startTime).Seconds()
 
-					remoteSrc.logger.Debug("UDP SRCDS Logger Packets",
+					slog.Debug("UDP SRCDS Logger Packets",
 						slog.Uint64("count", count),
 						slog.Float64("messages/sec", rate),
 						slog.Uint64("errors", errCount))
@@ -179,7 +177,7 @@ func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 			if !found {
 				lastTime, ok := rejects[int(logPayload.source)]
 				if !ok || time.Since(lastTime) > time.Minute*5 {
-					remoteSrc.logger.Warn("Rejecting unknown secret log author")
+					slog.Warn("Rejecting unknown secret log author")
 
 					rejects[int(logPayload.source)] = time.Now()
 				}
@@ -189,7 +187,7 @@ func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 
 			event, errLogServerEvent := logToServerEvent(parser, server.ServerID, server.ServerName, logPayload.body)
 			if errLogServerEvent != nil {
-				remoteSrc.logger.Error("Failed to create serverEvent",
+				slog.Error("Failed to create serverEvent",
 					slog.String("body", logPayload.body),
 					log.ErrAttr(errLogServerEvent))
 

@@ -49,7 +49,6 @@ type Database interface {
 
 type postgresStore struct {
 	conn *pgxpool.Pool
-	log  *slog.Logger
 	// Use $ for pg based queries.
 	sb          sq.StatementBuilderType
 	dsn         string
@@ -61,7 +60,6 @@ type postgresStore struct {
 func New(dsn string, autoMigrate bool, logQueries bool) Database {
 	return &postgresStore{
 		sb:          sq.StatementBuilder.PlaceholderFormat(sq.Dollar),
-		log:         slog.Default().WithGroup("db"),
 		dsn:         dsn,
 		autoMigrate: autoMigrate,
 		logQueries:  logQueries,
@@ -69,7 +67,6 @@ func New(dsn string, autoMigrate bool, logQueries bool) Database {
 }
 
 type dbQueryTracer struct {
-	log *slog.Logger
 }
 
 func (tracer *dbQueryTracer) TraceQueryStart(
@@ -77,7 +74,7 @@ func (tracer *dbQueryTracer) TraceQueryStart(
 	_ *pgx.Conn,
 	data pgx.TraceQueryStartData,
 ) context.Context {
-	tracer.log.Info("Executing command", slog.String("sql", data.SQL), slog.Any("args", data.Args))
+	slog.Info("Executing command", slog.String("sql", data.SQL), slog.Any("args", data.Args))
 
 	return ctx
 }
@@ -123,7 +120,7 @@ func (db *postgresStore) Connect(ctx context.Context) error {
 	}
 
 	if db.logQueries {
-		cfg.ConnConfig.Tracer = &dbQueryTracer{log: db.log}
+		cfg.ConnConfig.Tracer = &dbQueryTracer{}
 	}
 
 	if db.autoMigrate && !db.migrated {
@@ -131,7 +128,7 @@ func (db *postgresStore) Connect(ctx context.Context) error {
 			return fmt.Errorf("could not migrate schema: %w", errMigrate)
 		}
 
-		db.log.Info("Migration completed successfully")
+		slog.Info("Migration completed successfully")
 	}
 
 	dbConn, errConnectConfig := pgxpool.NewWithConfig(ctx, cfg)

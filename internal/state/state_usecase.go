@@ -75,8 +75,7 @@ func (s *stateUsecase) Start(ctx context.Context) error {
 // Registering receivers can be accomplished with app.eb.Broadcaster.
 func (s *stateUsecase) logReader(ctx context.Context, writeUnhandled bool) {
 	var (
-		logger = slog.Default().WithGroup("logReader")
-		file   *os.File
+		file *os.File
 	)
 
 	if writeUnhandled {
@@ -84,11 +83,11 @@ func (s *stateUsecase) logReader(ctx context.Context, writeUnhandled bool) {
 		file, errCreateFile = os.Create("./unhandled_messages.log")
 
 		if errCreateFile != nil {
-			logger.Error("Failed to open debug message log", log.ErrAttr(errCreateFile))
+			slog.Error("Failed to open debug message log", log.ErrAttr(errCreateFile))
 		} else {
 			defer func() {
 				if errClose := file.Close(); errClose != nil {
-					logger.Error("Failed to close unhandled_messages.log", log.ErrAttr(errClose))
+					slog.Error("Failed to close unhandled_messages.log", log.ErrAttr(errClose))
 				}
 			}()
 		}
@@ -126,7 +125,7 @@ func (s *stateUsecase) logReader(ctx context.Context, writeUnhandled bool) {
 
 					if writeUnhandled {
 						if _, errWrite := file.WriteString(logLine + "\n"); errWrite != nil {
-							logger.Error("Failed to write debug log", log.ErrAttr(errWrite))
+							slog.Error("Failed to write debug log", log.ErrAttr(errWrite))
 						}
 					}
 				}
@@ -136,11 +135,11 @@ func (s *stateUsecase) logReader(ctx context.Context, writeUnhandled bool) {
 				emitted++
 			}
 
-			logger.Debug("Completed emitting logfile events",
+			slog.Debug("Completed emitting logfile events",
 				slog.Int("ok", emitted), slog.Int("failed", failed),
 				slog.Int("unknown", unknown), slog.Int("ignored", ignored))
 		case <-ctx.Done():
-			logger.Debug("logReader shutting down")
+			slog.Debug("logReader shutting down")
 
 			return
 		}
