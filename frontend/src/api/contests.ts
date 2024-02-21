@@ -1,9 +1,7 @@
-import { useEffect, useState } from 'react';
-import { LazyResult } from '../component/table/LazyTableSimple';
 import { logErr } from '../util/errors';
+import { LazyResult } from '../util/table.ts';
 import {
     apiCall,
-    APIError,
     DateRange,
     PermissionLevel,
     TimeStamped,
@@ -113,49 +111,3 @@ export const apiContestEntryVote = async (
         }`,
         'GET'
     );
-
-export const useContests = () => {
-    const [loading, setLoading] = useState(false);
-    const [contests, setContests] = useState<Contest[]>([]);
-
-    useEffect(() => {
-        apiContests()
-            .then((contests) => {
-                setContests(contests.data);
-            })
-            .catch((e) => {
-                setContests([]);
-                logErr(e);
-            })
-            .finally(() => {
-                setLoading(false);
-            });
-    }, []);
-
-    return { loading, contests };
-};
-
-export const useContest = (contest_id?: string) => {
-    const [loading, setLoading] = useState(false);
-    const [contest, setContest] = useState<Contest>();
-    const [error, setError] = useState<APIError>();
-
-    useEffect(() => {
-        if (!contest_id) {
-            return;
-        }
-
-        apiContest(contest_id)
-            .then((contest) => {
-                setContest(contest);
-            })
-            .catch((reason) => {
-                setError(reason as APIError);
-            })
-            .finally(() => {
-                setLoading(false);
-            });
-    }, [contest_id]);
-
-    return { loading, contest, error };
-};
