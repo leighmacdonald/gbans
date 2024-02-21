@@ -1,5 +1,5 @@
 import { Theme } from '@mui/material';
-import { LazyResult } from '../component/table/LazyTableSimple';
+import { LazyResult } from '../util/table.ts';
 import { BanReason } from './bans';
 import {
     apiCall,

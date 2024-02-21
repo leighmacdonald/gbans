@@ -1,4 +1,4 @@
-import { LazyResult } from '../component/table/LazyTableSimple';
+import { LazyResult } from '../util/table.ts';
 import { apiCall, QueryFilter, transformCreatedOnDate } from './common';
 import { Asset } from './media';
 

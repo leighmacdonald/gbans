@@ -1,4 +1,4 @@
-import { LazyResult } from '../component/table/LazyTableSimple';
+import { LazyResult } from '../util/table.ts';
 import { parseDateTime } from '../util/text.tsx';
 import {
     apiCall,
