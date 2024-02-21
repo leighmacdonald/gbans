@@ -15,7 +15,6 @@ import (
 )
 
 type discordRepository struct {
-	log               *slog.Logger
 	session           *discordgo.Session
 	isReady           atomic.Bool
 	commandHandlers   map[domain.Cmd]domain.SlashCommandHandler
@@ -35,7 +34,6 @@ func NewDiscordRepository(conf domain.Config) (domain.DiscordRepository, error) 
 	session.Identify.Intents |= discordgo.IntentMessageContent
 	session.Identify.Intents |= discordgo.IntentGuildMembers
 	bot := &discordRepository{
-		log:               slog.Default().WithGroup("discord"),
 		session:           session,
 		conf:              conf,
 		isReady:           atomic.Bool{},
@@ -72,20 +70,20 @@ func (bot *discordRepository) Shutdown(guildID string) {
 func (bot *discordRepository) botUnregisterSlashCommands(guildID string) {
 	registeredCommands, err := bot.session.ApplicationCommands(bot.session.State.User.ID, guildID)
 	if err != nil {
-		bot.log.Error("Could not fetch registered commands", log.ErrAttr(err))
+		slog.Error("Could not fetch registered commands", log.ErrAttr(err))
 
 		return
 	}
 
 	for _, v := range registeredCommands {
 		if errDel := bot.session.ApplicationCommandDelete(bot.session.State.User.ID, guildID, v.ID); errDel != nil {
-			bot.log.Error("Cannot delete command", slog.String("name", v.Name), log.ErrAttr(err))
+			slog.Error("Cannot delete command", slog.String("name", v.Name), log.ErrAttr(err))
 
 			return
 		}
 	}
 
-	bot.log.Info("Unregistered discord commands", slog.Int("count", len(registeredCommands)))
+	slog.Info("Unregistered discord commands", slog.Int("count", len(registeredCommands)))
 }
 
 func (bot *discordRepository) Start() error {
@@ -102,13 +100,13 @@ func (bot *discordRepository) Start() error {
 }
 
 func (bot *discordRepository) onReady(session *discordgo.Session, _ *discordgo.Ready) {
-	bot.log.Info("Service state changed", slog.String("state", "ready"), slog.String("username",
+	slog.Info("Service state changed", slog.String("state", "ready"), slog.String("username",
 		fmt.Sprintf("%v#%v", session.State.User.Username, session.State.User.Discriminator)))
 }
 
 func (bot *discordRepository) onConnect(_ *discordgo.Session, _ *discordgo.Connect) {
 	if errRegister := bot.botRegisterSlashCommands(bot.conf.Discord.AppID); errRegister != nil {
-		bot.log.Error("Failed to register discord slash commands", log.ErrAttr(errRegister))
+		slog.Error("Failed to register discord slash commands", log.ErrAttr(errRegister))
 	}
 
 	status := discordgo.UpdateStatusData{
@@ -128,10 +126,10 @@ func (bot *discordRepository) onConnect(_ *discordgo.Session, _ *discordgo.Conne
 		Status: "https://github.com/leighmacdonald/gbans",
 	}
 	if errUpdateStatus := bot.session.UpdateStatusComplex(status); errUpdateStatus != nil {
-		bot.log.Error("Failed to update status complex", log.ErrAttr(errUpdateStatus))
+		slog.Error("Failed to update status complex", log.ErrAttr(errUpdateStatus))
 	}
 
-	bot.log.Info("Service state changed", slog.String("state", "connected"))
+	slog.Info("Service state changed", slog.String("state", "connected"))
 
 	bot.isReady.Store(true)
 }
@@ -139,7 +137,7 @@ func (bot *discordRepository) onConnect(_ *discordgo.Session, _ *discordgo.Conne
 func (bot *discordRepository) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 	bot.isReady.Store(false)
 
-	bot.log.Info("Service state changed", slog.String("state", "disconnected"))
+	slog.Info("Service state changed", slog.String("state", "disconnected"))
 }
 
 // onInteractionCreate is called when a user initiates an application command. All commands are sent
@@ -167,7 +165,7 @@ func (bot *discordRepository) onInteractionCreate(session *discordgo.Session, in
 			if _, errFollow := session.FollowupMessageCreate(interaction.Interaction, true, &discordgo.WebhookParams{
 				Content: errRespond.Error(),
 			}); errFollow != nil {
-				bot.log.Error("Failed sending error response for interaction", log.ErrAttr(errFollow))
+				slog.Error("Failed sending error response for interaction", log.ErrAttr(errFollow))
 			}
 
 			return
@@ -181,14 +179,14 @@ func (bot *discordRepository) onInteractionCreate(session *discordgo.Session, in
 			if _, errFollow := session.FollowupMessageCreate(interaction.Interaction, true, &discordgo.WebhookParams{
 				Embeds: []*discordgo.MessageEmbed{ErrorMessage(string(command), errHandleCommand)},
 			}); errFollow != nil {
-				bot.log.Error("Failed sending error response for interaction", log.ErrAttr(errFollow))
+				slog.Error("Failed sending error response for interaction", log.ErrAttr(errFollow))
 			}
 
 			return
 		}
 
 		if sendSendResponse := bot.sendInteractionResponse(session, interaction.Interaction, response); sendSendResponse != nil {
-			bot.log.Error("Failed sending success response for interaction", log.ErrAttr(sendSendResponse))
+			slog.Error("Failed sending success response for interaction", log.ErrAttr(sendSendResponse))
 		}
 	}
 }
@@ -234,7 +232,7 @@ func (bot *discordRepository) SendPayload(channel domain.DiscordChannel, payload
 	}
 
 	if _, errSend := bot.session.ChannelMessageSendEmbed(channelID, payload); errSend != nil {
-		bot.log.Error("Failed to send discord payload", log.ErrAttr(errSend))
+		slog.Error("Failed to send discord payload", log.ErrAttr(errSend))
 	}
 }
 
@@ -666,7 +664,7 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 		return errors.Join(errBulk, domain.ErrDiscordOverwriteCommands)
 	}
 
-	bot.log.Info("Registered discord commands", slog.Int("count", len(slashCommands)))
+	slog.Debug("Registered discord commands", slog.Int("count", len(slashCommands)))
 
 	return nil
 }

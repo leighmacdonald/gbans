@@ -27,11 +27,9 @@ func NewMetricsUsecase(broadcaster *fp.Broadcaster[logparse.EventType, logparse.
 
 // Start begins processing incoming log events and updating any associated metrics.
 func (u metricsUsecase) Start(ctx context.Context) {
-	logger := slog.Default().WithGroup("consumer")
-
 	eventChan := make(chan logparse.ServerEvent)
 	if errRegister := u.eb.Consume(eventChan); errRegister != nil {
-		logger.Error("Failed to register event consumer", log.ErrAttr(errRegister))
+		slog.Error("Failed to register event consumer", log.ErrAttr(errRegister))
 
 		return
 	}

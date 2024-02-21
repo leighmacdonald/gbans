@@ -146,7 +146,6 @@ func (u personUsecase) updateProfiles(ctx context.Context, people domain.People)
 // The 100 oldest profiles are updated on each execution.
 func (u personUsecase) Start(ctx context.Context) {
 	var (
-		logger = slog.Default().WithGroup("profileUpdate")
 		run    = make(chan any)
 		ticker = time.NewTicker(time.Second * 300)
 	)
@@ -171,14 +170,14 @@ func (u personUsecase) Start(ctx context.Context) {
 
 			count, errUpdate := u.updateProfiles(localCtx, people)
 			if errUpdate != nil {
-				logger.Error("Failed to update profiles", log.ErrAttr(errUpdate))
+				slog.Error("Failed to update profiles", log.ErrAttr(errUpdate))
 			}
 
-			logger.Debug("Updated steam profiles and vac data", slog.Int("count", count))
+			slog.Debug("Updated steam profiles and vac data", slog.Int("count", count))
 
 			cancel()
 		case <-ctx.Done():
-			logger.Debug("profileUpdater shutting down")
+			slog.Debug("profileUpdater shutting down")
 
 			return
 		}

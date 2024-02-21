@@ -163,7 +163,6 @@ func (p *Manager) Pledges() ([]patreon.Pledge, map[string]*patreon.User, error) 
 
 func (p *Manager) Start(ctx context.Context) {
 	var (
-		logger      = slog.Default().WithGroup("patreon")
 		updateTimer = time.NewTicker(time.Hour * 1)
 		updateChan  = make(chan any)
 	)
@@ -183,14 +182,14 @@ func (p *Manager) Start(ctx context.Context) {
 		case <-updateChan:
 			newCampaigns, errCampaigns := p.Tiers()
 			if errCampaigns != nil {
-				logger.Error("Failed to refresh campaigns", log.ErrAttr(errCampaigns))
+				slog.Error("Failed to refresh campaigns", log.ErrAttr(errCampaigns))
 
 				return
 			}
 
 			newPledges, _, errPledges := p.Pledges()
 			if errPledges != nil {
-				logger.Error("Failed to refresh Pledges", log.ErrAttr(errPledges))
+				slog.Error("Failed to refresh Pledges", log.ErrAttr(errPledges))
 
 				return
 			}
@@ -212,7 +211,7 @@ func (p *Manager) Start(ctx context.Context) {
 				}
 			}
 
-			logger.Info("Patreon Updated", slog.Int("campaign_count", len(newCampaigns)),
+			slog.Info("Patreon Updated", slog.Int("campaign_count", len(newCampaigns)),
 				slog.Int("current_cents", cents), slog.Int("total_cents", totalCents))
 		case <-ctx.Done():
 			return
