@@ -118,8 +118,66 @@ func (_c *MockWordFilterUsecase_Check_Call) RunAndReturn(run func(string) []doma
 	return _c
 }
 
+// Create provides a mock function with given fields: ctx, user, filter
+func (_m *MockWordFilterUsecase) Create(ctx context.Context, user domain.PersonInfo, filter domain.Filter) (domain.Filter, error) {
+	ret := _m.Called(ctx, user, filter)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Create")
+	}
+
+	var r0 domain.Filter
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, domain.PersonInfo, domain.Filter) (domain.Filter, error)); ok {
+		return rf(ctx, user, filter)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, domain.PersonInfo, domain.Filter) domain.Filter); ok {
+		r0 = rf(ctx, user, filter)
+	} else {
+		r0 = ret.Get(0).(domain.Filter)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, domain.PersonInfo, domain.Filter) error); ok {
+		r1 = rf(ctx, user, filter)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockWordFilterUsecase_Create_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Create'
+type MockWordFilterUsecase_Create_Call struct {
+	*mock.Call
+}
+
+// Create is a helper method to define mock.On call
+//   - ctx context.Context
+//   - user domain.PersonInfo
+//   - filter domain.Filter
+func (_e *MockWordFilterUsecase_Expecter) Create(ctx interface{}, user interface{}, filter interface{}) *MockWordFilterUsecase_Create_Call {
+	return &MockWordFilterUsecase_Create_Call{Call: _e.mock.On("Create", ctx, user, filter)}
+}
+
+func (_c *MockWordFilterUsecase_Create_Call) Run(run func(ctx context.Context, user domain.PersonInfo, filter domain.Filter)) *MockWordFilterUsecase_Create_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(domain.PersonInfo), args[2].(domain.Filter))
+	})
+	return _c
+}
+
+func (_c *MockWordFilterUsecase_Create_Call) Return(_a0 domain.Filter, _a1 error) *MockWordFilterUsecase_Create_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockWordFilterUsecase_Create_Call) RunAndReturn(run func(context.Context, domain.PersonInfo, domain.Filter) (domain.Filter, error)) *MockWordFilterUsecase_Create_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DropFilter provides a mock function with given fields: ctx, filter
-func (_m *MockWordFilterUsecase) DropFilter(ctx context.Context, filter *domain.Filter) error {
+func (_m *MockWordFilterUsecase) DropFilter(ctx context.Context, filter domain.Filter) error {
 	ret := _m.Called(ctx, filter)
 
 	if len(ret) == 0 {
@@ -127,7 +185,7 @@ func (_m *MockWordFilterUsecase) DropFilter(ctx context.Context, filter *domain.
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *domain.Filter) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, domain.Filter) error); ok {
 		r0 = rf(ctx, filter)
 	} else {
 		r0 = ret.Error(0)
@@ -143,14 +201,14 @@ type MockWordFilterUsecase_DropFilter_Call struct {
 
 // DropFilter is a helper method to define mock.On call
 //   - ctx context.Context
-//   - filter *domain.Filter
+//   - filter domain.Filter
 func (_e *MockWordFilterUsecase_Expecter) DropFilter(ctx interface{}, filter interface{}) *MockWordFilterUsecase_DropFilter_Call {
 	return &MockWordFilterUsecase_DropFilter_Call{Call: _e.mock.On("DropFilter", ctx, filter)}
 }
 
-func (_c *MockWordFilterUsecase_DropFilter_Call) Run(run func(ctx context.Context, filter *domain.Filter)) *MockWordFilterUsecase_DropFilter_Call {
+func (_c *MockWordFilterUsecase_DropFilter_Call) Run(run func(ctx context.Context, filter domain.Filter)) *MockWordFilterUsecase_DropFilter_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*domain.Filter))
+		run(args[0].(context.Context), args[1].(domain.Filter))
 	})
 	return _c
 }
@@ -160,7 +218,66 @@ func (_c *MockWordFilterUsecase_DropFilter_Call) Return(_a0 error) *MockWordFilt
 	return _c
 }
 
-func (_c *MockWordFilterUsecase_DropFilter_Call) RunAndReturn(run func(context.Context, *domain.Filter) error) *MockWordFilterUsecase_DropFilter_Call {
+func (_c *MockWordFilterUsecase_DropFilter_Call) RunAndReturn(run func(context.Context, domain.Filter) error) *MockWordFilterUsecase_DropFilter_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Edit provides a mock function with given fields: ctx, user, filterID, filter
+func (_m *MockWordFilterUsecase) Edit(ctx context.Context, user domain.PersonInfo, filterID int64, filter domain.Filter) (domain.Filter, error) {
+	ret := _m.Called(ctx, user, filterID, filter)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Edit")
+	}
+
+	var r0 domain.Filter
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, domain.PersonInfo, int64, domain.Filter) (domain.Filter, error)); ok {
+		return rf(ctx, user, filterID, filter)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, domain.PersonInfo, int64, domain.Filter) domain.Filter); ok {
+		r0 = rf(ctx, user, filterID, filter)
+	} else {
+		r0 = ret.Get(0).(domain.Filter)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, domain.PersonInfo, int64, domain.Filter) error); ok {
+		r1 = rf(ctx, user, filterID, filter)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockWordFilterUsecase_Edit_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Edit'
+type MockWordFilterUsecase_Edit_Call struct {
+	*mock.Call
+}
+
+// Edit is a helper method to define mock.On call
+//   - ctx context.Context
+//   - user domain.PersonInfo
+//   - filterID int64
+//   - filter domain.Filter
+func (_e *MockWordFilterUsecase_Expecter) Edit(ctx interface{}, user interface{}, filterID interface{}, filter interface{}) *MockWordFilterUsecase_Edit_Call {
+	return &MockWordFilterUsecase_Edit_Call{Call: _e.mock.On("Edit", ctx, user, filterID, filter)}
+}
+
+func (_c *MockWordFilterUsecase_Edit_Call) Run(run func(ctx context.Context, user domain.PersonInfo, filterID int64, filter domain.Filter)) *MockWordFilterUsecase_Edit_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(domain.PersonInfo), args[2].(int64), args[3].(domain.Filter))
+	})
+	return _c
+}
+
+func (_c *MockWordFilterUsecase_Edit_Call) Return(_a0 domain.Filter, _a1 error) *MockWordFilterUsecase_Edit_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockWordFilterUsecase_Edit_Call) RunAndReturn(run func(context.Context, domain.PersonInfo, int64, domain.Filter) (domain.Filter, error)) *MockWordFilterUsecase_Edit_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -330,54 +447,6 @@ func (_c *MockWordFilterUsecase_Import_Call) Return(_a0 error) *MockWordFilterUs
 }
 
 func (_c *MockWordFilterUsecase_Import_Call) RunAndReturn(run func(context.Context) error) *MockWordFilterUsecase_Import_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// SaveFilter provides a mock function with given fields: ctx, user, filter
-func (_m *MockWordFilterUsecase) Create(ctx context.Context, user domain.PersonInfo, filter *domain.Filter) error {
-	ret := _m.Called(ctx, user, filter)
-
-	if len(ret) == 0 {
-		panic("no return value specified for SaveFilter")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, domain.PersonInfo, *domain.Filter) error); ok {
-		r0 = rf(ctx, user, filter)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// MockWordFilterUsecase_SaveFilter_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SaveFilter'
-type MockWordFilterUsecase_SaveFilter_Call struct {
-	*mock.Call
-}
-
-// SaveFilter is a helper method to define mock.On call
-//   - ctx context.Context
-//   - user domain.PersonInfo
-//   - filter *domain.Filter
-func (_e *MockWordFilterUsecase_Expecter) SaveFilter(ctx interface{}, user interface{}, filter interface{}) *MockWordFilterUsecase_SaveFilter_Call {
-	return &MockWordFilterUsecase_SaveFilter_Call{Call: _e.mock.On("SaveFilter", ctx, user, filter)}
-}
-
-func (_c *MockWordFilterUsecase_SaveFilter_Call) Run(run func(ctx context.Context, user domain.PersonInfo, filter *domain.Filter)) *MockWordFilterUsecase_SaveFilter_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(domain.PersonInfo), args[2].(*domain.Filter))
-	})
-	return _c
-}
-
-func (_c *MockWordFilterUsecase_SaveFilter_Call) Return(_a0 error) *MockWordFilterUsecase_SaveFilter_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockWordFilterUsecase_SaveFilter_Call) RunAndReturn(run func(context.Context, domain.PersonInfo, *domain.Filter) error) *MockWordFilterUsecase_SaveFilter_Call {
 	_c.Call.Return(run)
 	return _c
 }

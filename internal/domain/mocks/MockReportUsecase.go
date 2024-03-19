@@ -119,22 +119,22 @@ func (_c *MockReportUsecase_DropReportMessage_Call) RunAndReturn(run func(contex
 }
 
 // GetReport provides a mock function with given fields: ctx, curUser, reportID
-func (_m *MockReportUsecase) GetReport(ctx context.Context, curUser domain.PersonInfo, reportID int64) (domain.Report, error) {
+func (_m *MockReportUsecase) GetReport(ctx context.Context, curUser domain.PersonInfo, reportID int64) (domain.ReportWithAuthor, error) {
 	ret := _m.Called(ctx, curUser, reportID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetReport")
 	}
 
-	var r0 domain.Report
+	var r0 domain.ReportWithAuthor
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, domain.PersonInfo, int64) (domain.Report, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, domain.PersonInfo, int64) (domain.ReportWithAuthor, error)); ok {
 		return rf(ctx, curUser, reportID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, domain.PersonInfo, int64) domain.Report); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, domain.PersonInfo, int64) domain.ReportWithAuthor); ok {
 		r0 = rf(ctx, curUser, reportID)
 	} else {
-		r0 = ret.Get(0).(domain.Report)
+		r0 = ret.Get(0).(domain.ReportWithAuthor)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, domain.PersonInfo, int64) error); ok {
@@ -166,12 +166,12 @@ func (_c *MockReportUsecase_GetReport_Call) Run(run func(ctx context.Context, cu
 	return _c
 }
 
-func (_c *MockReportUsecase_GetReport_Call) Return(_a0 domain.Report, _a1 error) *MockReportUsecase_GetReport_Call {
+func (_c *MockReportUsecase_GetReport_Call) Return(_a0 domain.ReportWithAuthor, _a1 error) *MockReportUsecase_GetReport_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockReportUsecase_GetReport_Call) RunAndReturn(run func(context.Context, domain.PersonInfo, int64) (domain.Report, error)) *MockReportUsecase_GetReport_Call {
+func (_c *MockReportUsecase_GetReport_Call) RunAndReturn(run func(context.Context, domain.PersonInfo, int64) (domain.ReportWithAuthor, error)) *MockReportUsecase_GetReport_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -350,36 +350,36 @@ func (_c *MockReportUsecase_GetReportMessages_Call) RunAndReturn(run func(contex
 	return _c
 }
 
-// GetReports provides a mock function with given fields: ctx, opts
-func (_m *MockReportUsecase) GetReports(ctx context.Context, opts domain.ReportQueryFilter) ([]domain.Report, int64, error) {
-	ret := _m.Called(ctx, opts)
+// GetReports provides a mock function with given fields: ctx, user, opts
+func (_m *MockReportUsecase) GetReports(ctx context.Context, user domain.PersonInfo, opts domain.ReportQueryFilter) ([]domain.ReportWithAuthor, int64, error) {
+	ret := _m.Called(ctx, user, opts)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetReports")
 	}
 
-	var r0 []domain.Report
+	var r0 []domain.ReportWithAuthor
 	var r1 int64
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, domain.ReportQueryFilter) ([]domain.Report, int64, error)); ok {
-		return rf(ctx, opts)
+	if rf, ok := ret.Get(0).(func(context.Context, domain.PersonInfo, domain.ReportQueryFilter) ([]domain.ReportWithAuthor, int64, error)); ok {
+		return rf(ctx, user, opts)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, domain.ReportQueryFilter) []domain.Report); ok {
-		r0 = rf(ctx, opts)
+	if rf, ok := ret.Get(0).(func(context.Context, domain.PersonInfo, domain.ReportQueryFilter) []domain.ReportWithAuthor); ok {
+		r0 = rf(ctx, user, opts)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]domain.Report)
+			r0 = ret.Get(0).([]domain.ReportWithAuthor)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, domain.ReportQueryFilter) int64); ok {
-		r1 = rf(ctx, opts)
+	if rf, ok := ret.Get(1).(func(context.Context, domain.PersonInfo, domain.ReportQueryFilter) int64); ok {
+		r1 = rf(ctx, user, opts)
 	} else {
 		r1 = ret.Get(1).(int64)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, domain.ReportQueryFilter) error); ok {
-		r2 = rf(ctx, opts)
+	if rf, ok := ret.Get(2).(func(context.Context, domain.PersonInfo, domain.ReportQueryFilter) error); ok {
+		r2 = rf(ctx, user, opts)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -394,24 +394,25 @@ type MockReportUsecase_GetReports_Call struct {
 
 // GetReports is a helper method to define mock.On call
 //   - ctx context.Context
+//   - user domain.PersonInfo
 //   - opts domain.ReportQueryFilter
-func (_e *MockReportUsecase_Expecter) GetReports(ctx interface{}, opts interface{}) *MockReportUsecase_GetReports_Call {
-	return &MockReportUsecase_GetReports_Call{Call: _e.mock.On("GetReports", ctx, opts)}
+func (_e *MockReportUsecase_Expecter) GetReports(ctx interface{}, user interface{}, opts interface{}) *MockReportUsecase_GetReports_Call {
+	return &MockReportUsecase_GetReports_Call{Call: _e.mock.On("GetReports", ctx, user, opts)}
 }
 
-func (_c *MockReportUsecase_GetReports_Call) Run(run func(ctx context.Context, opts domain.ReportQueryFilter)) *MockReportUsecase_GetReports_Call {
+func (_c *MockReportUsecase_GetReports_Call) Run(run func(ctx context.Context, user domain.PersonInfo, opts domain.ReportQueryFilter)) *MockReportUsecase_GetReports_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(domain.ReportQueryFilter))
+		run(args[0].(context.Context), args[1].(domain.PersonInfo), args[2].(domain.ReportQueryFilter))
 	})
 	return _c
 }
 
-func (_c *MockReportUsecase_GetReports_Call) Return(_a0 []domain.Report, _a1 int64, _a2 error) *MockReportUsecase_GetReports_Call {
+func (_c *MockReportUsecase_GetReports_Call) Return(_a0 []domain.ReportWithAuthor, _a1 int64, _a2 error) *MockReportUsecase_GetReports_Call {
 	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *MockReportUsecase_GetReports_Call) RunAndReturn(run func(context.Context, domain.ReportQueryFilter) ([]domain.Report, int64, error)) *MockReportUsecase_GetReports_Call {
+func (_c *MockReportUsecase_GetReports_Call) RunAndReturn(run func(context.Context, domain.PersonInfo, domain.ReportQueryFilter) ([]domain.ReportWithAuthor, int64, error)) *MockReportUsecase_GetReports_Call {
 	_c.Call.Return(run)
 	return _c
 }

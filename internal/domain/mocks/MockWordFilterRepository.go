@@ -71,7 +71,7 @@ func (_c *MockWordFilterRepository_AddMessageFilterMatch_Call) RunAndReturn(run 
 }
 
 // DropFilter provides a mock function with given fields: ctx, filter
-func (_m *MockWordFilterRepository) DropFilter(ctx context.Context, filter *domain.Filter) error {
+func (_m *MockWordFilterRepository) DropFilter(ctx context.Context, filter domain.Filter) error {
 	ret := _m.Called(ctx, filter)
 
 	if len(ret) == 0 {
@@ -79,7 +79,7 @@ func (_m *MockWordFilterRepository) DropFilter(ctx context.Context, filter *doma
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *domain.Filter) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, domain.Filter) error); ok {
 		r0 = rf(ctx, filter)
 	} else {
 		r0 = ret.Error(0)
@@ -95,14 +95,14 @@ type MockWordFilterRepository_DropFilter_Call struct {
 
 // DropFilter is a helper method to define mock.On call
 //   - ctx context.Context
-//   - filter *domain.Filter
+//   - filter domain.Filter
 func (_e *MockWordFilterRepository_Expecter) DropFilter(ctx interface{}, filter interface{}) *MockWordFilterRepository_DropFilter_Call {
 	return &MockWordFilterRepository_DropFilter_Call{Call: _e.mock.On("DropFilter", ctx, filter)}
 }
 
-func (_c *MockWordFilterRepository_DropFilter_Call) Run(run func(ctx context.Context, filter *domain.Filter)) *MockWordFilterRepository_DropFilter_Call {
+func (_c *MockWordFilterRepository_DropFilter_Call) Run(run func(ctx context.Context, filter domain.Filter)) *MockWordFilterRepository_DropFilter_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*domain.Filter))
+		run(args[0].(context.Context), args[1].(domain.Filter))
 	})
 	return _c
 }
@@ -112,7 +112,7 @@ func (_c *MockWordFilterRepository_DropFilter_Call) Return(_a0 error) *MockWordF
 	return _c
 }
 
-func (_c *MockWordFilterRepository_DropFilter_Call) RunAndReturn(run func(context.Context, *domain.Filter) error) *MockWordFilterRepository_DropFilter_Call {
+func (_c *MockWordFilterRepository_DropFilter_Call) RunAndReturn(run func(context.Context, domain.Filter) error) *MockWordFilterRepository_DropFilter_Call {
 	_c.Call.Return(run)
 	return _c
 }

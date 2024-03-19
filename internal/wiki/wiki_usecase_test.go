@@ -13,26 +13,26 @@ import (
 )
 
 func TestGetWikiPageBySlug(t *testing.T) {
-	mockRepo := new(mocks.MockWikiRepository)
-	mockPage := domain.NewWikiPage("test", util.SecureRandomString(100))
-
 	user := domain.UserProfile{
 		PermissionLevel: domain.PGuest,
 	}
 
 	t.Run("success", func(t *testing.T) {
+		mockPage := domain.NewWikiPage("test", util.SecureRandomString(100))
+		mockRepo := new(mocks.MockWikiRepository)
 		mockRepo.
 			On("GetWikiPageBySlug", mock.Anything, mock.AnythingOfType("string")).
 			Return(mockPage, nil).
 			Once()
 
 		u := wiki.NewWikiUsecase(mockRepo)
-		page, errPage := u.GetWikiPageBySlug(context.TODO(), user, mockPage.Slug)
+		page, errPage := u.GetWikiPageBySlug(context.TODO(), user, "test")
 		require.NoError(t, errPage)
 		require.EqualValues(t, page, mockPage)
 	})
 
 	t.Run("error", func(t *testing.T) {
+		mockRepo := new(mocks.MockWikiRepository)
 		mockRepo.
 			On("GetWikiPageBySlug", mock.Anything, mock.AnythingOfType("string")).
 			Return(domain.WikiPage{}, domain.ErrNoResult).
