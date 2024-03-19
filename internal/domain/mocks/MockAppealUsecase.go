@@ -22,6 +22,65 @@ func (_m *MockAppealUsecase) EXPECT() *MockAppealUsecase_Expecter {
 	return &MockAppealUsecase_Expecter{mock: &_m.Mock}
 }
 
+// CreateBanMessage provides a mock function with given fields: ctx, curUser, banID, newMsg
+func (_m *MockAppealUsecase) CreateBanMessage(ctx context.Context, curUser domain.UserProfile, banID int64, newMsg string) (domain.BanAppealMessage, error) {
+	ret := _m.Called(ctx, curUser, banID, newMsg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateBanMessage")
+	}
+
+	var r0 domain.BanAppealMessage
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, domain.UserProfile, int64, string) (domain.BanAppealMessage, error)); ok {
+		return rf(ctx, curUser, banID, newMsg)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, domain.UserProfile, int64, string) domain.BanAppealMessage); ok {
+		r0 = rf(ctx, curUser, banID, newMsg)
+	} else {
+		r0 = ret.Get(0).(domain.BanAppealMessage)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, domain.UserProfile, int64, string) error); ok {
+		r1 = rf(ctx, curUser, banID, newMsg)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockAppealUsecase_CreateBanMessage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateBanMessage'
+type MockAppealUsecase_CreateBanMessage_Call struct {
+	*mock.Call
+}
+
+// CreateBanMessage is a helper method to define mock.On call
+//   - ctx context.Context
+//   - curUser domain.UserProfile
+//   - banID int64
+//   - newMsg string
+func (_e *MockAppealUsecase_Expecter) CreateBanMessage(ctx interface{}, curUser interface{}, banID interface{}, newMsg interface{}) *MockAppealUsecase_CreateBanMessage_Call {
+	return &MockAppealUsecase_CreateBanMessage_Call{Call: _e.mock.On("CreateBanMessage", ctx, curUser, banID, newMsg)}
+}
+
+func (_c *MockAppealUsecase_CreateBanMessage_Call) Run(run func(ctx context.Context, curUser domain.UserProfile, banID int64, newMsg string)) *MockAppealUsecase_CreateBanMessage_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(domain.UserProfile), args[2].(int64), args[3].(string))
+	})
+	return _c
+}
+
+func (_c *MockAppealUsecase_CreateBanMessage_Call) Return(_a0 domain.BanAppealMessage, _a1 error) *MockAppealUsecase_CreateBanMessage_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockAppealUsecase_CreateBanMessage_Call) RunAndReturn(run func(context.Context, domain.UserProfile, int64, string) (domain.BanAppealMessage, error)) *MockAppealUsecase_CreateBanMessage_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DropBanMessage provides a mock function with given fields: ctx, curUser, banMessageID
 func (_m *MockAppealUsecase) DropBanMessage(ctx context.Context, curUser domain.UserProfile, banMessageID int64) error {
 	ret := _m.Called(ctx, curUser, banMessageID)
@@ -66,6 +125,65 @@ func (_c *MockAppealUsecase_DropBanMessage_Call) Return(_a0 error) *MockAppealUs
 }
 
 func (_c *MockAppealUsecase_DropBanMessage_Call) RunAndReturn(run func(context.Context, domain.UserProfile, int64) error) *MockAppealUsecase_DropBanMessage_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// EditBanMessage provides a mock function with given fields: ctx, curUser, reportMessageID, newMsg
+func (_m *MockAppealUsecase) EditBanMessage(ctx context.Context, curUser domain.UserProfile, reportMessageID int64, newMsg string) (domain.BanAppealMessage, error) {
+	ret := _m.Called(ctx, curUser, reportMessageID, newMsg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for EditBanMessage")
+	}
+
+	var r0 domain.BanAppealMessage
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, domain.UserProfile, int64, string) (domain.BanAppealMessage, error)); ok {
+		return rf(ctx, curUser, reportMessageID, newMsg)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, domain.UserProfile, int64, string) domain.BanAppealMessage); ok {
+		r0 = rf(ctx, curUser, reportMessageID, newMsg)
+	} else {
+		r0 = ret.Get(0).(domain.BanAppealMessage)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, domain.UserProfile, int64, string) error); ok {
+		r1 = rf(ctx, curUser, reportMessageID, newMsg)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockAppealUsecase_EditBanMessage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EditBanMessage'
+type MockAppealUsecase_EditBanMessage_Call struct {
+	*mock.Call
+}
+
+// EditBanMessage is a helper method to define mock.On call
+//   - ctx context.Context
+//   - curUser domain.UserProfile
+//   - reportMessageID int64
+//   - newMsg string
+func (_e *MockAppealUsecase_Expecter) EditBanMessage(ctx interface{}, curUser interface{}, reportMessageID interface{}, newMsg interface{}) *MockAppealUsecase_EditBanMessage_Call {
+	return &MockAppealUsecase_EditBanMessage_Call{Call: _e.mock.On("EditBanMessage", ctx, curUser, reportMessageID, newMsg)}
+}
+
+func (_c *MockAppealUsecase_EditBanMessage_Call) Run(run func(ctx context.Context, curUser domain.UserProfile, reportMessageID int64, newMsg string)) *MockAppealUsecase_EditBanMessage_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(domain.UserProfile), args[2].(int64), args[3].(string))
+	})
+	return _c
+}
+
+func (_c *MockAppealUsecase_EditBanMessage_Call) Return(_a0 domain.BanAppealMessage, _a1 error) *MockAppealUsecase_EditBanMessage_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockAppealUsecase_EditBanMessage_Call) RunAndReturn(run func(context.Context, domain.UserProfile, int64, string) (domain.BanAppealMessage, error)) *MockAppealUsecase_EditBanMessage_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -136,22 +254,32 @@ func (_c *MockAppealUsecase_GetAppealsByActivity_Call) RunAndReturn(run func(con
 	return _c
 }
 
-// GetBanMessageByID provides a mock function with given fields: ctx, banMessageID, message
-func (_m *MockAppealUsecase) GetBanMessageByID(ctx context.Context, banMessageID int64, message *domain.BanAppealMessage) error {
-	ret := _m.Called(ctx, banMessageID, message)
+// GetBanMessageByID provides a mock function with given fields: ctx, banMessageID
+func (_m *MockAppealUsecase) GetBanMessageByID(ctx context.Context, banMessageID int64) (domain.BanAppealMessage, error) {
+	ret := _m.Called(ctx, banMessageID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetBanMessageByID")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, *domain.BanAppealMessage) error); ok {
-		r0 = rf(ctx, banMessageID, message)
+	var r0 domain.BanAppealMessage
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64) (domain.BanAppealMessage, error)); ok {
+		return rf(ctx, banMessageID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int64) domain.BanAppealMessage); ok {
+		r0 = rf(ctx, banMessageID)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(domain.BanAppealMessage)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
+		r1 = rf(ctx, banMessageID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // MockAppealUsecase_GetBanMessageByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetBanMessageByID'
@@ -162,24 +290,23 @@ type MockAppealUsecase_GetBanMessageByID_Call struct {
 // GetBanMessageByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - banMessageID int64
-//   - message *domain.BanAppealMessage
-func (_e *MockAppealUsecase_Expecter) GetBanMessageByID(ctx interface{}, banMessageID interface{}, message interface{}) *MockAppealUsecase_GetBanMessageByID_Call {
-	return &MockAppealUsecase_GetBanMessageByID_Call{Call: _e.mock.On("GetBanMessageByID", ctx, banMessageID, message)}
+func (_e *MockAppealUsecase_Expecter) GetBanMessageByID(ctx interface{}, banMessageID interface{}) *MockAppealUsecase_GetBanMessageByID_Call {
+	return &MockAppealUsecase_GetBanMessageByID_Call{Call: _e.mock.On("GetBanMessageByID", ctx, banMessageID)}
 }
 
-func (_c *MockAppealUsecase_GetBanMessageByID_Call) Run(run func(ctx context.Context, banMessageID int64, message *domain.BanAppealMessage)) *MockAppealUsecase_GetBanMessageByID_Call {
+func (_c *MockAppealUsecase_GetBanMessageByID_Call) Run(run func(ctx context.Context, banMessageID int64)) *MockAppealUsecase_GetBanMessageByID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int64), args[2].(*domain.BanAppealMessage))
+		run(args[0].(context.Context), args[1].(int64))
 	})
 	return _c
 }
 
-func (_c *MockAppealUsecase_GetBanMessageByID_Call) Return(_a0 error) *MockAppealUsecase_GetBanMessageByID_Call {
-	_c.Call.Return(_a0)
+func (_c *MockAppealUsecase_GetBanMessageByID_Call) Return(_a0 domain.BanAppealMessage, _a1 error) *MockAppealUsecase_GetBanMessageByID_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockAppealUsecase_GetBanMessageByID_Call) RunAndReturn(run func(context.Context, int64, *domain.BanAppealMessage) error) *MockAppealUsecase_GetBanMessageByID_Call {
+func (_c *MockAppealUsecase_GetBanMessageByID_Call) RunAndReturn(run func(context.Context, int64) (domain.BanAppealMessage, error)) *MockAppealUsecase_GetBanMessageByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -240,67 +367,6 @@ func (_c *MockAppealUsecase_GetBanMessages_Call) Return(_a0 []domain.BanAppealMe
 }
 
 func (_c *MockAppealUsecase_GetBanMessages_Call) RunAndReturn(run func(context.Context, domain.UserProfile, int64) ([]domain.BanAppealMessage, error)) *MockAppealUsecase_GetBanMessages_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// SaveBanMessage provides a mock function with given fields: ctx, curUser, reportMessageID, newMsg
-func (_m *MockAppealUsecase) CreateBanMessage(ctx context.Context, curUser domain.UserProfile, reportMessageID int64, newMsg string) (*domain.BanAppealMessage, error) {
-	ret := _m.Called(ctx, curUser, reportMessageID, newMsg)
-
-	if len(ret) == 0 {
-		panic("no return value specified for SaveBanMessage")
-	}
-
-	var r0 *domain.BanAppealMessage
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, domain.UserProfile, int64, string) (*domain.BanAppealMessage, error)); ok {
-		return rf(ctx, curUser, reportMessageID, newMsg)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, domain.UserProfile, int64, string) *domain.BanAppealMessage); ok {
-		r0 = rf(ctx, curUser, reportMessageID, newMsg)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*domain.BanAppealMessage)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, domain.UserProfile, int64, string) error); ok {
-		r1 = rf(ctx, curUser, reportMessageID, newMsg)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockAppealUsecase_SaveBanMessage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SaveBanMessage'
-type MockAppealUsecase_SaveBanMessage_Call struct {
-	*mock.Call
-}
-
-// SaveBanMessage is a helper method to define mock.On call
-//   - ctx context.Context
-//   - curUser domain.UserProfile
-//   - reportMessageID int64
-//   - newMsg string
-func (_e *MockAppealUsecase_Expecter) SaveBanMessage(ctx interface{}, curUser interface{}, reportMessageID interface{}, newMsg interface{}) *MockAppealUsecase_SaveBanMessage_Call {
-	return &MockAppealUsecase_SaveBanMessage_Call{Call: _e.mock.On("SaveBanMessage", ctx, curUser, reportMessageID, newMsg)}
-}
-
-func (_c *MockAppealUsecase_SaveBanMessage_Call) Run(run func(ctx context.Context, curUser domain.UserProfile, reportMessageID int64, newMsg string)) *MockAppealUsecase_SaveBanMessage_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(domain.UserProfile), args[2].(int64), args[3].(string))
-	})
-	return _c
-}
-
-func (_c *MockAppealUsecase_SaveBanMessage_Call) Return(_a0 *domain.BanAppealMessage, _a1 error) *MockAppealUsecase_SaveBanMessage_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockAppealUsecase_SaveBanMessage_Call) RunAndReturn(run func(context.Context, domain.UserProfile, int64, string) (*domain.BanAppealMessage, error)) *MockAppealUsecase_SaveBanMessage_Call {
 	_c.Call.Return(run)
 	return _c
 }

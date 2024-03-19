@@ -135,22 +135,32 @@ func (_c *MockAppealRepository_GetAppealsByActivity_Call) RunAndReturn(run func(
 	return _c
 }
 
-// GetBanMessageByID provides a mock function with given fields: ctx, banMessageID, message
-func (_m *MockAppealRepository) GetBanMessageByID(ctx context.Context, banMessageID int64, message *domain.BanAppealMessage) error {
-	ret := _m.Called(ctx, banMessageID, message)
+// GetBanMessageByID provides a mock function with given fields: ctx, banMessageID
+func (_m *MockAppealRepository) GetBanMessageByID(ctx context.Context, banMessageID int64) (domain.BanAppealMessage, error) {
+	ret := _m.Called(ctx, banMessageID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetBanMessageByID")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, *domain.BanAppealMessage) error); ok {
-		r0 = rf(ctx, banMessageID, message)
+	var r0 domain.BanAppealMessage
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64) (domain.BanAppealMessage, error)); ok {
+		return rf(ctx, banMessageID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int64) domain.BanAppealMessage); ok {
+		r0 = rf(ctx, banMessageID)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(domain.BanAppealMessage)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
+		r1 = rf(ctx, banMessageID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // MockAppealRepository_GetBanMessageByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetBanMessageByID'
@@ -161,24 +171,23 @@ type MockAppealRepository_GetBanMessageByID_Call struct {
 // GetBanMessageByID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - banMessageID int64
-//   - message *domain.BanAppealMessage
-func (_e *MockAppealRepository_Expecter) GetBanMessageByID(ctx interface{}, banMessageID interface{}, message interface{}) *MockAppealRepository_GetBanMessageByID_Call {
-	return &MockAppealRepository_GetBanMessageByID_Call{Call: _e.mock.On("GetBanMessageByID", ctx, banMessageID, message)}
+func (_e *MockAppealRepository_Expecter) GetBanMessageByID(ctx interface{}, banMessageID interface{}) *MockAppealRepository_GetBanMessageByID_Call {
+	return &MockAppealRepository_GetBanMessageByID_Call{Call: _e.mock.On("GetBanMessageByID", ctx, banMessageID)}
 }
 
-func (_c *MockAppealRepository_GetBanMessageByID_Call) Run(run func(ctx context.Context, banMessageID int64, message *domain.BanAppealMessage)) *MockAppealRepository_GetBanMessageByID_Call {
+func (_c *MockAppealRepository_GetBanMessageByID_Call) Run(run func(ctx context.Context, banMessageID int64)) *MockAppealRepository_GetBanMessageByID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int64), args[2].(*domain.BanAppealMessage))
+		run(args[0].(context.Context), args[1].(int64))
 	})
 	return _c
 }
 
-func (_c *MockAppealRepository_GetBanMessageByID_Call) Return(_a0 error) *MockAppealRepository_GetBanMessageByID_Call {
-	_c.Call.Return(_a0)
+func (_c *MockAppealRepository_GetBanMessageByID_Call) Return(_a0 domain.BanAppealMessage, _a1 error) *MockAppealRepository_GetBanMessageByID_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockAppealRepository_GetBanMessageByID_Call) RunAndReturn(run func(context.Context, int64, *domain.BanAppealMessage) error) *MockAppealRepository_GetBanMessageByID_Call {
+func (_c *MockAppealRepository_GetBanMessageByID_Call) RunAndReturn(run func(context.Context, int64) (domain.BanAppealMessage, error)) *MockAppealRepository_GetBanMessageByID_Call {
 	_c.Call.Return(run)
 	return _c
 }

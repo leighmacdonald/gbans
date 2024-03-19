@@ -1,12 +1,12 @@
-* text eol=lf
+* text=auto eol=lf
 /frontend/.yarn/releases/** binary
 /frontend/.yarn/plugins/** binary
-*.dem binary
-*.png binary
-*.jpg binary
-*.jpeg binary
-*.dem binary
-*.zip binary
-*.eot binary
-*.woff binary
-*.woff2 binary
+*.dem text
+*.png -text
+*.jpg -text
+*.jpeg -text
+*.dem -text
+*.zip text
+*.eot text
+*.woff text
+*.woff2 text
