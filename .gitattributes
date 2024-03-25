@@ -1,12 +1,24 @@
-* text=auto eol=lf
-/frontend/.yarn/releases/** binary
-/frontend/.yarn/plugins/** binary
-*.dem text
-*.png -text
-*.jpg -text
-*.jpeg -text
-*.dem -text
-*.zip text
-*.eot text
-*.woff text
-*.woff2 text
+* text=auto
+docs/*              linguist-documentation
+go.sum              linguist-generated merge=ours
+go.mod              linguist-generated
+
+/.github            export-ignore
+.gitattributes      export-ignore
+.gitignore          export-ignore
+
+*.js text
+*.json text
+*.ts text
+*.md text
+*.yml text
+
+*.dem binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.dem binary
+*.zip binary
+*.eot binary
+*.woff binary
+*.woff2 binary
