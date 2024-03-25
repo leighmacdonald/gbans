@@ -14,7 +14,7 @@ services:
     networks:
       - prod_network
     ports:
-      - "6006:6006"
+      - "0.0.0.0:6006:6006"
     environment:
       GBANS_DATABASE_DSN: postgresql://gbans:gbans@postgres:5432/gbans
       GBANS_GENERAL_STEAM_KEY: ${GBANS_GENERAL_STEAM_KEY}
@@ -25,7 +25,7 @@ services:
     restart: always
     shm_size: 1gb
     ports:
-      - "5432:5432"
+      - "0.0.0.0:5432:5432"
     environment:
       POSTGRES_USER: gbans
       POSTGRES_DB: gbans
@@ -46,8 +46,8 @@ services:
       - MINIO_ROOT_USER=gbansgbans
       - MINIO_ROOT_PASSWORD=gbansgbans
     ports:
-      - '9000:9000'
-      - '9001:9001'
+      - '0.0.0.0:9000:9000'
+      - '0.0.0.0:9001:9001'
     volumes:
       - 'minio_data:/bitnami/minio/data'
     networks:
