@@ -66,8 +66,7 @@ func New(dsn string, autoMigrate bool, logQueries bool) Database {
 	}
 }
 
-type dbQueryTracer struct {
-}
+type dbQueryTracer struct{}
 
 func (tracer *dbQueryTracer) TraceQueryStart(
 	ctx context.Context,
