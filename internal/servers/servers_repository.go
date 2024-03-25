@@ -8,7 +8,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type serversRepository struct {
@@ -60,7 +60,7 @@ func (r *serversRepository) GetServerPermissions(ctx context.Context) ([]domain.
 
 	for rows.Next() {
 		var (
-			sid   int64
+			sid   steamid.SteamID
 			perm  domain.Privilege
 			flags string
 		)
@@ -81,7 +81,7 @@ func (r *serversRepository) GetServerPermissions(ctx context.Context) ([]domain.
 		}
 
 		perms = append(perms, domain.ServerPermission{
-			SteamID:         steamid.SID64ToSID(steamid.New(sid)),
+			SteamID:         sid.Steam(false),
 			PermissionLevel: perm,
 			Flags:           flags,
 		})

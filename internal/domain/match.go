@@ -10,7 +10,7 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 	"golang.org/x/exp/slices"
 )
 
@@ -18,11 +18,11 @@ type MatchRepository interface {
 	Matches(ctx context.Context, opts MatchesQueryOpts) ([]MatchSummary, int64, error)
 	MatchGetByID(ctx context.Context, matchID uuid.UUID, match *MatchResult) error
 	MatchSave(ctx context.Context, match *logparse.Match, weaponMap fp.MutexMap[logparse.Weapon, int]) error
-	StatsPlayerClass(ctx context.Context, sid64 steamid.SID64) (PlayerClassStatsCollection, error)
-	StatsPlayerWeapons(ctx context.Context, sid64 steamid.SID64) ([]PlayerWeaponStats, error)
-	StatsPlayerKillstreaks(ctx context.Context, sid64 steamid.SID64) ([]PlayerKillstreakStats, error)
-	StatsPlayerMedic(ctx context.Context, sid64 steamid.SID64) ([]PlayerMedicStats, error)
-	PlayerStats(ctx context.Context, steamID steamid.SID64, stats *PlayerStats) error
+	StatsPlayerClass(ctx context.Context, sid64 steamid.SteamID) (PlayerClassStatsCollection, error)
+	StatsPlayerWeapons(ctx context.Context, sid64 steamid.SteamID) ([]PlayerWeaponStats, error)
+	StatsPlayerKillstreaks(ctx context.Context, sid64 steamid.SteamID) ([]PlayerKillstreakStats, error)
+	StatsPlayerMedic(ctx context.Context, sid64 steamid.SteamID) ([]PlayerMedicStats, error)
+	PlayerStats(ctx context.Context, steamID steamid.SteamID, stats *PlayerStats) error
 	WeaponsOverall(ctx context.Context) ([]WeaponsOverallResult, error)
 	GetMapUsageStats(ctx context.Context) ([]MapUseDetail, error)
 	Weapons(ctx context.Context) ([]Weapon, error)
@@ -31,11 +31,11 @@ type MatchRepository interface {
 	GetWeaponByID(ctx context.Context, weaponID int, weapon *Weapon) error
 	LoadWeapons(ctx context.Context, weaponMap fp.MutexMap[logparse.Weapon, int]) error
 	WeaponsOverallTopPlayers(ctx context.Context, weaponID int) ([]PlayerWeaponResult, error)
-	WeaponsOverallByPlayer(ctx context.Context, steamID steamid.SID64) ([]WeaponsOverallResult, error)
+	WeaponsOverallByPlayer(ctx context.Context, steamID steamid.SteamID) ([]WeaponsOverallResult, error)
 	PlayersOverallByKills(ctx context.Context, count int) ([]PlayerWeaponResult, error)
 	HealersOverallByHealing(ctx context.Context, count int) ([]HealingOverallResult, error)
-	PlayerOverallClassStats(ctx context.Context, steamID steamid.SID64) ([]PlayerClassOverallResult, error)
-	PlayerOverallStats(ctx context.Context, steamID steamid.SID64, por *PlayerOverallResult) error
+	PlayerOverallClassStats(ctx context.Context, steamID steamid.SteamID) ([]PlayerClassOverallResult, error)
+	PlayerOverallStats(ctx context.Context, steamID steamid.SteamID, por *PlayerOverallResult) error
 }
 type MatchUsecase interface {
 	Start(ctx context.Context)
@@ -43,11 +43,11 @@ type MatchUsecase interface {
 	Matches(ctx context.Context, opts MatchesQueryOpts) ([]MatchSummary, int64, error)
 	MatchGetByID(ctx context.Context, matchID uuid.UUID, match *MatchResult) error
 	MatchSave(ctx context.Context, match *logparse.Match, weaponMap fp.MutexMap[logparse.Weapon, int]) error
-	StatsPlayerClass(ctx context.Context, sid64 steamid.SID64) (PlayerClassStatsCollection, error)
-	StatsPlayerWeapons(ctx context.Context, sid64 steamid.SID64) ([]PlayerWeaponStats, error)
-	StatsPlayerKillstreaks(ctx context.Context, sid64 steamid.SID64) ([]PlayerKillstreakStats, error)
-	StatsPlayerMedic(ctx context.Context, sid64 steamid.SID64) ([]PlayerMedicStats, error)
-	PlayerStats(ctx context.Context, steamID steamid.SID64, stats *PlayerStats) error
+	StatsPlayerClass(ctx context.Context, sid64 steamid.SteamID) (PlayerClassStatsCollection, error)
+	StatsPlayerWeapons(ctx context.Context, sid64 steamid.SteamID) ([]PlayerWeaponStats, error)
+	StatsPlayerKillstreaks(ctx context.Context, sid64 steamid.SteamID) ([]PlayerKillstreakStats, error)
+	StatsPlayerMedic(ctx context.Context, sid64 steamid.SteamID) ([]PlayerMedicStats, error)
+	PlayerStats(ctx context.Context, steamID steamid.SteamID, stats *PlayerStats) error
 	WeaponsOverall(ctx context.Context) ([]WeaponsOverallResult, error)
 	GetMapUsageStats(ctx context.Context) ([]MapUseDetail, error)
 	Weapons(ctx context.Context) ([]Weapon, error)
@@ -56,11 +56,11 @@ type MatchUsecase interface {
 	GetWeaponByID(ctx context.Context, weaponID int, weapon *Weapon) error
 	LoadWeapons(ctx context.Context, weaponMap fp.MutexMap[logparse.Weapon, int]) error
 	WeaponsOverallTopPlayers(ctx context.Context, weaponID int) ([]PlayerWeaponResult, error)
-	WeaponsOverallByPlayer(ctx context.Context, steamID steamid.SID64) ([]WeaponsOverallResult, error)
+	WeaponsOverallByPlayer(ctx context.Context, steamID steamid.SteamID) ([]WeaponsOverallResult, error)
 	PlayersOverallByKills(ctx context.Context, count int) ([]PlayerWeaponResult, error)
 	HealersOverallByHealing(ctx context.Context, count int) ([]HealingOverallResult, error)
-	PlayerOverallClassStats(ctx context.Context, steamID steamid.SID64) ([]PlayerClassOverallResult, error)
-	PlayerOverallStats(ctx context.Context, steamID steamid.SID64, por *PlayerOverallResult) error
+	PlayerOverallClassStats(ctx context.Context, steamID steamid.SteamID) ([]PlayerClassOverallResult, error)
+	PlayerOverallStats(ctx context.Context, steamID steamid.SteamID, por *PlayerOverallResult) error
 }
 
 const MinMedicHealing = 500
@@ -422,31 +422,31 @@ type PlayerMedicStats struct {
 }
 
 type CommonPlayerStats struct {
-	SteamID           steamid.SID64 `json:"steam_id"`
-	Name              string        `json:"name"`
-	AvatarHash        string        `json:"avatar_hash"`
-	Kills             int           `json:"kills"`
-	Assists           int           `json:"assists"`
-	Deaths            int           `json:"deaths"`
-	Suicides          int           `json:"suicides"`
-	Dominations       int           `json:"dominations"`
-	Dominated         int           `json:"dominated"`
-	Revenges          int           `json:"revenges"`
-	Damage            int           `json:"damage"`
-	DamageTaken       int           `json:"damage_taken"`
-	HealingTaken      int           `json:"healing_taken"`
-	HealthPacks       int           `json:"health_packs"`
-	HealingPacks      int           `json:"healing_packs"` // Healing from packs
-	Captures          int           `json:"captures"`
-	CapturesBlocked   int           `json:"captures_blocked"`
-	Extinguishes      int           `json:"extinguishes"`
-	BuildingBuilt     int           `json:"building_built"`
-	BuildingDestroyed int           `json:"building_destroyed"` // Opposing team buildings
-	Backstabs         int           `json:"backstabs"`
-	Airshots          int           `json:"airshots"`
-	Headshots         int           `json:"headshots"`
-	Shots             int           `json:"shots"`
-	Hits              int           `json:"hits"`
+	SteamID           steamid.SteamID `json:"steam_id"`
+	Name              string          `json:"name"`
+	AvatarHash        string          `json:"avatar_hash"`
+	Kills             int             `json:"kills"`
+	Assists           int             `json:"assists"`
+	Deaths            int             `json:"deaths"`
+	Suicides          int             `json:"suicides"`
+	Dominations       int             `json:"dominations"`
+	Dominated         int             `json:"dominated"`
+	Revenges          int             `json:"revenges"`
+	Damage            int             `json:"damage"`
+	DamageTaken       int             `json:"damage_taken"`
+	HealingTaken      int             `json:"healing_taken"`
+	HealthPacks       int             `json:"health_packs"`
+	HealingPacks      int             `json:"healing_packs"` // Healing from packs
+	Captures          int             `json:"captures"`
+	CapturesBlocked   int             `json:"captures_blocked"`
+	Extinguishes      int             `json:"extinguishes"`
+	BuildingBuilt     int             `json:"building_built"`
+	BuildingDestroyed int             `json:"building_destroyed"` // Opposing team buildings
+	Backstabs         int             `json:"backstabs"`
+	Airshots          int             `json:"airshots"`
+	Headshots         int             `json:"headshots"`
+	Shots             int             `json:"shots"`
+	Hits              int             `json:"hits"`
 }
 type PlayerStats struct {
 	CommonPlayerStats

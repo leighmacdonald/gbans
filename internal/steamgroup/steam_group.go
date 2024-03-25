@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 )
 
@@ -20,7 +20,7 @@ var (
 )
 
 type SteamGroupMemberships struct {
-	members map[steamid.GID]steamid.Collection
+	members map[steamid.SteamID]steamid.Collection
 	*sync.RWMutex
 	store      domain.BanGroupRepository
 	updateFreq time.Duration
@@ -30,7 +30,7 @@ func NewSteamGroupMemberships(db domain.BanGroupRepository) *SteamGroupMembershi
 	return &SteamGroupMemberships{
 		RWMutex:    &sync.RWMutex{},
 		store:      db,
-		members:    map[steamid.GID]steamid.Collection{},
+		members:    map[steamid.SteamID]steamid.Collection{},
 		updateFreq: time.Minute * 60,
 	}
 }
@@ -59,7 +59,7 @@ func (g *SteamGroupMemberships) Start(ctx context.Context) {
 }
 
 // IsMember checks membership in the currently known banned group members.
-func (g *SteamGroupMemberships) IsMember(steamID steamid.SID64) (steamid.GID, bool) {
+func (g *SteamGroupMemberships) IsMember(steamID steamid.SteamID) (steamid.SteamID, bool) {
 	g.RLock()
 	defer g.RUnlock()
 
@@ -71,11 +71,11 @@ func (g *SteamGroupMemberships) IsMember(steamID steamid.SID64) (steamid.GID, bo
 		}
 	}
 
-	return "", false
+	return steamid.SteamID{}, false
 }
 
 func (g *SteamGroupMemberships) update(ctx context.Context) {
-	newMap := map[steamid.GID]steamid.Collection{}
+	newMap := map[steamid.SteamID]steamid.Collection{}
 
 	var total int
 
@@ -98,8 +98,8 @@ func (g *SteamGroupMemberships) update(ctx context.Context) {
 // NOT use the steam API, so be careful to not call too often.
 //
 // Group IDs can be found using https://steamcommunity.com/groups/<GROUP_NAME>/memberslistxml/?xml=1
-func (g *SteamGroupMemberships) updateGroupBanMembers(ctx context.Context) (map[steamid.GID]steamid.Collection, error) {
-	newMap := map[steamid.GID]steamid.Collection{}
+func (g *SteamGroupMemberships) updateGroupBanMembers(ctx context.Context) (map[steamid.SteamID]steamid.Collection, error) {
+	newMap := map[steamid.SteamID]steamid.Collection{}
 
 	localCtx, cancel := context.WithTimeout(ctx, time.Second*120)
 	defer cancel()

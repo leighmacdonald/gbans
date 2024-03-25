@@ -15,7 +15,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type nanHandler struct {
@@ -105,18 +105,18 @@ func (h nanHandler) onAPIPostSetBanAppealStatus() gin.HandlerFunc {
 }
 
 type apiBanRequest struct {
-	SourceID       domain.StringSID `json:"source_id"`
-	TargetID       domain.StringSID `json:"target_id"`
-	Duration       string           `json:"duration"`
-	ValidUntil     time.Time        `json:"valid_until"`
-	BanType        domain.BanType   `json:"ban_type"`
-	Reason         domain.Reason    `json:"reason"`
-	ReasonText     string           `json:"reason_text"`
-	Note           string           `json:"note"`
-	ReportID       int64            `json:"report_id"`
-	DemoName       string           `json:"demo_name"`
-	DemoTick       int              `json:"demo_tick"`
-	IncludeFriends bool             `json:"include_friends"`
+	SourceID       steamid.SteamID `json:"source_id"`
+	TargetID       steamid.SteamID `json:"target_id"`
+	Duration       string          `json:"duration"`
+	ValidUntil     time.Time       `json:"valid_until"`
+	BanType        domain.BanType  `json:"ban_type"`
+	Reason         domain.Reason   `json:"reason"`
+	ReasonText     string          `json:"reason_text"`
+	Note           string          `json:"note"`
+	ReportID       int64           `json:"report_id"`
+	DemoName       string          `json:"demo_name"`
+	DemoTick       int             `json:"demo_tick"`
+	IncludeFriends bool            `json:"include_friends"`
 }
 
 func (h nanHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
@@ -132,15 +132,7 @@ func (h nanHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 		)
 
 		// srcds sourced bans provide a source_id to id the admin
-		if req.SourceID != "" {
-			authorSID, errAuthorSID := req.SourceID.SID64(ctx)
-			if errAuthorSID != nil {
-				httphelper.ErrorHandled(ctx, errAuthorSID)
-
-				return
-			}
-
-			sid = authorSID
+		if req.SourceID.Valid() {
 			origin = domain.InGame
 		}
 
@@ -159,18 +151,8 @@ func (h nanHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 		}
 
 		var banSteam domain.BanSteam
-		if errBanSteam := domain.NewBanSteam(ctx,
-			domain.StringSID(author.SteamID.String()),
-			req.TargetID,
-			duration,
-			req.Reason,
-			req.ReasonText,
-			req.Note,
-			origin,
-			req.ReportID,
-			req.BanType,
-			req.IncludeFriends,
-			&banSteam,
+		if errBanSteam := domain.NewBanSteam(author.SteamID, req.TargetID, duration, req.Reason, req.ReasonText, req.Note,
+			origin, req.ReportID, req.BanType, req.IncludeFriends, &banSteam,
 		); errBanSteam != nil {
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 
@@ -290,7 +272,7 @@ func (h nanHandler) onAPIExportBansValveSteamID() gin.HandlerFunc {
 				continue
 			}
 
-			entries = append(entries, fmt.Sprintf("banid 0 %s", steamid.SID64ToSID(ban.TargetID)))
+			entries = append(entries, fmt.Sprintf("banid 0 %s", ban.TargetID.Steam(false)))
 		}
 
 		ctx.Data(http.StatusOK, "text/plain", []byte(strings.Join(entries, "\n")))
@@ -413,13 +395,13 @@ func (h nanHandler) onAPIPostBanDelete() gin.HandlerFunc {
 
 func (h nanHandler) onAPIPostBanUpdate() gin.HandlerFunc {
 	type updateBanRequest struct {
-		TargetID       domain.StringSID `json:"target_id"`
-		BanType        domain.BanType   `json:"ban_type"`
-		Reason         domain.Reason    `json:"reason"`
-		ReasonText     string           `json:"reason_text"`
-		Note           string           `json:"note"`
-		IncludeFriends bool             `json:"include_friends"`
-		ValidUntil     time.Time        `json:"valid_until"`
+		TargetID       steamid.SteamID `json:"target_id"`
+		BanType        domain.BanType  `json:"ban_type"`
+		Reason         domain.Reason   `json:"reason"`
+		ReasonText     string          `json:"reason_text"`
+		Note           string          `json:"note"`
+		IncludeFriends bool            `json:"include_friends"`
+		ValidUntil     time.Time       `json:"valid_until"`
 	}
 
 	return func(ctx *gin.Context) {

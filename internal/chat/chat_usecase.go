@@ -13,7 +13,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type chatUsecase struct {
@@ -26,9 +26,9 @@ type chatUsecase struct {
 	warningMu    *sync.RWMutex
 	dry          bool
 	maxWeight    int
-	warnings     map[steamid.SID64][]domain.UserWarning
+	warnings     map[steamid.SteamID][]domain.UserWarning
 	WarningChan  chan domain.NewUserWarning
-	owner        steamid.SID64
+	owner        steamid.SteamID
 	matchTimeout time.Duration
 	checkTimeout time.Duration
 
@@ -49,7 +49,7 @@ func NewChatUsecase(configUsecase domain.ConfigUsecase, chatRepository domain.Ch
 		du:           discordUsecase,
 		st:           stateUsecase,
 		pingDiscord:  conf.Filter.PingDiscord,
-		warnings:     make(map[steamid.SID64][]domain.UserWarning),
+		warnings:     make(map[steamid.SteamID][]domain.UserWarning),
 		warningMu:    &sync.RWMutex{},
 		WarningChan:  make(chan domain.NewUserWarning),
 		matchTimeout: conf.Filter.MatchTimeout,
@@ -71,16 +71,8 @@ func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.Ne
 			return fmt.Errorf("invalid duration: %w", errDuration)
 		}
 
-		if errNewBan := domain.NewBanSteam(ctx, domain.StringSID(u.owner),
-			domain.StringSID(newWarning.UserMessage.SteamID.String()),
-			duration,
-			newWarning.WarnReason,
-			"",
-			"Automatic warning ban",
-			domain.System,
-			0,
-			domain.NoComm,
-			false,
+		if errNewBan := domain.NewBanSteam(u.owner, newWarning.UserMessage.SteamID, duration, newWarning.WarnReason, "",
+			"Automatic warning ban", domain.System, 0, domain.NoComm, false,
 			&banSteam); errNewBan != nil {
 			return errors.Join(errNewBan, domain.ErrFailedToBan)
 		}

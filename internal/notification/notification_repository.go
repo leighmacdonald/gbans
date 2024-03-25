@@ -8,7 +8,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type notificationRepository struct {
@@ -19,7 +19,7 @@ func NewNotificationRepository(db database.Database) domain.NotificationReposito
 	return &notificationRepository{db: db}
 }
 
-func (r *notificationRepository) SendNotification(ctx context.Context, targetID steamid.SID64, severity domain.NotificationSeverity, message string, link string) error {
+func (r *notificationRepository) SendNotification(ctx context.Context, targetID steamid.SteamID, severity domain.NotificationSeverity, message string, link string) error {
 	return r.db.DBErr(r.db.ExecInsertBuilder(ctx, r.db.
 		Builder().
 		Insert("person_notification").

@@ -6,7 +6,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type contestUsecase struct {
@@ -62,7 +62,7 @@ func (c *contestUsecase) ContestEntries(ctx context.Context, contestID uuid.UUID
 	return c.contestRepo.ContestEntries(ctx, contestID)
 }
 
-func (c *contestUsecase) ContestEntryVoteGet(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SID64, record *domain.ContentVoteRecord) error {
+func (c *contestUsecase) ContestEntryVoteGet(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SteamID, record *domain.ContentVoteRecord) error {
 	return c.contestRepo.ContestEntryVoteGet(ctx, contestEntryID, steamID, record)
 }
 

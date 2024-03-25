@@ -8,7 +8,7 @@ import (
 	domain "github.com/leighmacdonald/gbans/internal/domain"
 	mock "github.com/stretchr/testify/mock"
 
-	steamid "github.com/leighmacdonald/steamid/v3/steamid"
+	steamid "github.com/leighmacdonald/steamid/v4/steamid"
 
 	uuid "github.com/gofrs/uuid/v5"
 )
@@ -323,7 +323,7 @@ func (_c *MockContestRepository_ContestEntrySave_Call) RunAndReturn(run func(con
 }
 
 // ContestEntryVote provides a mock function with given fields: ctx, contestEntryID, steamID, vote
-func (_m *MockContestRepository) ContestEntryVote(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SID64, vote bool) error {
+func (_m *MockContestRepository) ContestEntryVote(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SteamID, vote bool) error {
 	ret := _m.Called(ctx, contestEntryID, steamID, vote)
 
 	if len(ret) == 0 {
@@ -331,7 +331,7 @@ func (_m *MockContestRepository) ContestEntryVote(ctx context.Context, contestEn
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, steamid.SID64, bool) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, steamid.SteamID, bool) error); ok {
 		r0 = rf(ctx, contestEntryID, steamID, vote)
 	} else {
 		r0 = ret.Error(0)
@@ -348,15 +348,15 @@ type MockContestRepository_ContestEntryVote_Call struct {
 // ContestEntryVote is a helper method to define mock.On call
 //   - ctx context.Context
 //   - contestEntryID uuid.UUID
-//   - steamID steamid.SID64
+//   - steamID steamid.SteamID
 //   - vote bool
 func (_e *MockContestRepository_Expecter) ContestEntryVote(ctx interface{}, contestEntryID interface{}, steamID interface{}, vote interface{}) *MockContestRepository_ContestEntryVote_Call {
 	return &MockContestRepository_ContestEntryVote_Call{Call: _e.mock.On("ContestEntryVote", ctx, contestEntryID, steamID, vote)}
 }
 
-func (_c *MockContestRepository_ContestEntryVote_Call) Run(run func(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SID64, vote bool)) *MockContestRepository_ContestEntryVote_Call {
+func (_c *MockContestRepository_ContestEntryVote_Call) Run(run func(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SteamID, vote bool)) *MockContestRepository_ContestEntryVote_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(steamid.SID64), args[3].(bool))
+		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(steamid.SteamID), args[3].(bool))
 	})
 	return _c
 }
@@ -366,7 +366,7 @@ func (_c *MockContestRepository_ContestEntryVote_Call) Return(_a0 error) *MockCo
 	return _c
 }
 
-func (_c *MockContestRepository_ContestEntryVote_Call) RunAndReturn(run func(context.Context, uuid.UUID, steamid.SID64, bool) error) *MockContestRepository_ContestEntryVote_Call {
+func (_c *MockContestRepository_ContestEntryVote_Call) RunAndReturn(run func(context.Context, uuid.UUID, steamid.SteamID, bool) error) *MockContestRepository_ContestEntryVote_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -419,7 +419,7 @@ func (_c *MockContestRepository_ContestEntryVoteDelete_Call) RunAndReturn(run fu
 }
 
 // ContestEntryVoteGet provides a mock function with given fields: ctx, contestEntryID, steamID, record
-func (_m *MockContestRepository) ContestEntryVoteGet(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SID64, record *domain.ContentVoteRecord) error {
+func (_m *MockContestRepository) ContestEntryVoteGet(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SteamID, record *domain.ContentVoteRecord) error {
 	ret := _m.Called(ctx, contestEntryID, steamID, record)
 
 	if len(ret) == 0 {
@@ -427,7 +427,7 @@ func (_m *MockContestRepository) ContestEntryVoteGet(ctx context.Context, contes
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, steamid.SID64, *domain.ContentVoteRecord) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, steamid.SteamID, *domain.ContentVoteRecord) error); ok {
 		r0 = rf(ctx, contestEntryID, steamID, record)
 	} else {
 		r0 = ret.Error(0)
@@ -444,15 +444,15 @@ type MockContestRepository_ContestEntryVoteGet_Call struct {
 // ContestEntryVoteGet is a helper method to define mock.On call
 //   - ctx context.Context
 //   - contestEntryID uuid.UUID
-//   - steamID steamid.SID64
+//   - steamID steamid.SteamID
 //   - record *domain.ContentVoteRecord
 func (_e *MockContestRepository_Expecter) ContestEntryVoteGet(ctx interface{}, contestEntryID interface{}, steamID interface{}, record interface{}) *MockContestRepository_ContestEntryVoteGet_Call {
 	return &MockContestRepository_ContestEntryVoteGet_Call{Call: _e.mock.On("ContestEntryVoteGet", ctx, contestEntryID, steamID, record)}
 }
 
-func (_c *MockContestRepository_ContestEntryVoteGet_Call) Run(run func(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SID64, record *domain.ContentVoteRecord)) *MockContestRepository_ContestEntryVoteGet_Call {
+func (_c *MockContestRepository_ContestEntryVoteGet_Call) Run(run func(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SteamID, record *domain.ContentVoteRecord)) *MockContestRepository_ContestEntryVoteGet_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(steamid.SID64), args[3].(*domain.ContentVoteRecord))
+		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(steamid.SteamID), args[3].(*domain.ContentVoteRecord))
 	})
 	return _c
 }
@@ -462,7 +462,7 @@ func (_c *MockContestRepository_ContestEntryVoteGet_Call) Return(_a0 error) *Moc
 	return _c
 }
 
-func (_c *MockContestRepository_ContestEntryVoteGet_Call) RunAndReturn(run func(context.Context, uuid.UUID, steamid.SID64, *domain.ContentVoteRecord) error) *MockContestRepository_ContestEntryVoteGet_Call {
+func (_c *MockContestRepository_ContestEntryVoteGet_Call) RunAndReturn(run func(context.Context, uuid.UUID, steamid.SteamID, *domain.ContentVoteRecord) error) *MockContestRepository_ContestEntryVoteGet_Call {
 	_c.Call.Return(run)
 	return _c
 }

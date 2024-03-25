@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type ReportRepository interface {
-	GetReportBySteamID(ctx context.Context, authorID steamid.SID64, steamID steamid.SID64) (Report, error)
+	GetReportBySteamID(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID) (Report, error)
 	GetReports(ctx context.Context, opts ReportQueryFilter) ([]Report, int64, error)
 	GetReport(ctx context.Context, reportID int64) (Report, error)
 	GetReportMessages(ctx context.Context, reportID int64) ([]ReportMessage, error)
@@ -21,7 +21,7 @@ type ReportRepository interface {
 }
 
 type ReportUsecase interface {
-	GetReportBySteamID(ctx context.Context, authorID steamid.SID64, steamID steamid.SID64) (Report, error)
+	GetReportBySteamID(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID) (Report, error)
 	GetReports(ctx context.Context, user PersonInfo, opts ReportQueryFilter) ([]ReportWithAuthor, int64, error)
 	GetReport(ctx context.Context, curUser PersonInfo, reportID int64) (ReportWithAuthor, error)
 	GetReportMessages(ctx context.Context, reportID int64) ([]ReportMessage, error)
@@ -33,14 +33,14 @@ type ReportUsecase interface {
 }
 
 type CreateReportReq struct {
-	SourceID        StringSID `json:"source_id"`
-	TargetID        StringSID `json:"target_id"`
-	Description     string    `json:"description"`
-	Reason          Reason    `json:"reason"`
-	ReasonText      string    `json:"reason_text"`
-	DemoName        string    `json:"demo_name"`
-	DemoTick        int       `json:"demo_tick"`
-	PersonMessageID int64     `json:"person_message_id"`
+	SourceID        steamid.SteamID `json:"source_id"`
+	TargetID        steamid.SteamID `json:"target_id"`
+	Description     string          `json:"description"`
+	Reason          Reason          `json:"reason"`
+	ReasonText      string          `json:"reason_text"`
+	DemoName        string          `json:"demo_name"`
+	DemoTick        int             `json:"demo_tick"`
+	PersonMessageID int64           `json:"person_message_id"`
 }
 
 type ReportStatus int
@@ -67,14 +67,14 @@ func (status ReportStatus) String() string {
 }
 
 type Report struct {
-	ReportID     int64         `json:"report_id"`
-	SourceID     steamid.SID64 `json:"source_id"`
-	TargetID     steamid.SID64 `json:"target_id"`
-	Description  string        `json:"description"`
-	ReportStatus ReportStatus  `json:"report_status"`
-	Reason       Reason        `json:"reason"`
-	ReasonText   string        `json:"reason_text"`
-	Deleted      bool          `json:"deleted"`
+	ReportID     int64           `json:"report_id"`
+	SourceID     steamid.SteamID `json:"source_id"`
+	TargetID     steamid.SteamID `json:"target_id"`
+	Description  string          `json:"description"`
+	ReportStatus ReportStatus    `json:"report_status"`
+	Reason       Reason          `json:"reason"`
+	ReasonText   string          `json:"reason_text"`
+	Deleted      bool            `json:"deleted"`
 	// Note that we do not use a foreign key here since the demos are not sent until completion
 	// and reports can happen mid-game
 	DemoName        string    `json:"demo_name"`
@@ -92,7 +92,7 @@ func (report Report) Path() string {
 func NewReport() Report {
 	return Report{
 		ReportID:     0,
-		SourceID:     "",
+		SourceID:     steamid.SteamID{},
 		Description:  "",
 		ReportStatus: 0,
 		CreatedOn:    time.Now(),
@@ -109,17 +109,17 @@ type ReportWithAuthor struct {
 }
 
 type ReportMessage struct {
-	ReportID        int64         `json:"report_id"`
-	ReportMessageID int64         `json:"report_message_id"`
-	AuthorID        steamid.SID64 `json:"author_id"`
-	MessageMD       string        `json:"message_md"`
-	Deleted         bool          `json:"deleted"`
-	CreatedOn       time.Time     `json:"created_on"`
-	UpdatedOn       time.Time     `json:"updated_on"`
+	ReportID        int64           `json:"report_id"`
+	ReportMessageID int64           `json:"report_message_id"`
+	AuthorID        steamid.SteamID `json:"author_id"`
+	MessageMD       string          `json:"message_md"`
+	Deleted         bool            `json:"deleted"`
+	CreatedOn       time.Time       `json:"created_on"`
+	UpdatedOn       time.Time       `json:"updated_on"`
 	SimplePerson
 }
 
-func NewReportMessage(reportID int64, authorID steamid.SID64, messageMD string) ReportMessage {
+func NewReportMessage(reportID int64, authorID steamid.SteamID, messageMD string) ReportMessage {
 	now := time.Now()
 
 	return ReportMessage{

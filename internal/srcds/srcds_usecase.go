@@ -69,30 +69,28 @@ func (h srcdsUsecase) Report(ctx context.Context, currentUser domain.UserProfile
 	// ServerStore initiated requests will have a sourceID set by the server
 	// Web based reports the source should not be set, the reporter will be taken from the
 	// current session information instead
-	if req.SourceID == "" {
-		req.SourceID = domain.StringSID(currentUser.SteamID.String())
+	if !req.SourceID.Valid() {
+		req.SourceID = currentUser.SteamID
 	}
 
-	sourceID, errSourceID := req.SourceID.SID64(ctx)
-	if errSourceID != nil {
+	if !req.SourceID.Valid() {
 		return nil, domain.ErrSourceID
 	}
 
-	targetID, errTargetID := req.TargetID.SID64(ctx)
-	if errTargetID != nil {
+	if !req.TargetID.Valid() {
 		return nil, domain.ErrTargetID
 	}
 
-	if sourceID == targetID {
+	if req.SourceID.Int64() == req.TargetID.Int64() {
 		return nil, domain.ErrSelfReport
 	}
 
-	personSource, errCreatePerson := h.pu.GetPersonBySteamID(ctx, sourceID)
+	personSource, errCreatePerson := h.pu.GetPersonBySteamID(ctx, req.SourceID)
 	if errCreatePerson != nil {
 		return nil, domain.ErrInternal
 	}
 
-	personTarget, errCreatePerson := h.pu.GetOrCreatePersonBySteamID(ctx, targetID)
+	personTarget, errCreatePerson := h.pu.GetOrCreatePersonBySteamID(ctx, req.TargetID)
 	if errCreatePerson != nil {
 		return nil, domain.ErrInternal
 	}
@@ -108,7 +106,7 @@ func (h srcdsUsecase) Report(ctx context.Context, currentUser domain.UserProfile
 	}
 
 	// Ensure the user doesn't already have an open report against the user
-	existing, errReports := h.ru.GetReportBySteamID(ctx, personSource.SteamID, targetID)
+	existing, errReports := h.ru.GetReportBySteamID(ctx, personSource.SteamID, req.TargetID)
 	if errReports != nil {
 		if !errors.Is(errReports, domain.ErrNoResult) {
 			return nil, errReports
@@ -121,10 +119,10 @@ func (h srcdsUsecase) Report(ctx context.Context, currentUser domain.UserProfile
 
 	// TODO encapsulate all operations in single tx
 	report := domain.NewReport()
-	report.SourceID = sourceID
+	report.SourceID = req.SourceID
 	report.ReportStatus = domain.Opened
 	report.Description = req.Description
-	report.TargetID = targetID
+	report.TargetID = req.TargetID
 	report.Reason = req.Reason
 	report.ReasonText = req.ReasonText
 	parts := strings.Split(req.DemoName, "/")

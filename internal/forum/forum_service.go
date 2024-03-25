@@ -12,7 +12,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type forumHandler struct {
@@ -862,7 +862,7 @@ func (f *forumHandler) onAPIForumMessages() gin.HandlerFunc {
 
 func (f *forumHandler) onAPIActiveUsers() gin.HandlerFunc {
 	type userActivity struct {
-		SteamID         steamid.SID64    `json:"steam_id"`
+		SteamID         steamid.SteamID  `json:"steam_id"`
 		Personaname     string           `json:"personaname"`
 		PermissionLevel domain.Privilege `json:"permission_level"`
 		CreatedOn       time.Time        `json:"created_on"`

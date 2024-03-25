@@ -7,37 +7,37 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 )
 
 type SteamMember interface {
-	IsMember(steamID steamid.SID64) (int64, bool)
+	IsMember(steamID steamid.SteamID) (int64, bool)
 }
 
 type PersonUsecase interface {
-	DropPerson(ctx context.Context, steamID steamid.SID64) error
+	DropPerson(ctx context.Context, steamID steamid.SteamID) error
 	SavePerson(ctx context.Context, person *Person) error
-	QueryProfile(ctx context.Context, query string) (ProfileReponse, error)
-	GetPersonBySteamID(ctx context.Context, sid64 steamid.SID64) (Person, error)
+	QueryProfile(ctx context.Context, query string) (ProfileResponse, error)
+	GetPersonBySteamID(ctx context.Context, sid64 steamid.SteamID) (Person, error)
 	GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collection) (People, error)
 	GetSteamsAtAddress(ctx context.Context, addr net.IP) (steamid.Collection, error)
 	GetPeople(ctx context.Context, filter PlayerQuery) (People, int64, error)
-	GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.SID64) (Person, error)
+	GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.SteamID) (Person, error)
 	GetPersonByDiscordID(ctx context.Context, discordID string) (Person, error)
 	GetExpiredProfiles(ctx context.Context, limit uint64) ([]Person, error)
 	GetPersonMessageByID(ctx context.Context, personMessageID int64) (PersonMessage, error)
 	GetSteamIdsAbove(ctx context.Context, privilege Privilege) (steamid.Collection, error)
-	GetPersonSettings(ctx context.Context, steamID steamid.SID64) (PersonSettings, error)
+	GetPersonSettings(ctx context.Context, steamID steamid.SteamID) (PersonSettings, error)
 	SavePersonSettings(ctx context.Context, user PersonInfo, req PersonSettingsUpdate) (PersonSettings, error)
-	SetSteam(ctx context.Context, sid64 steamid.SID64, discordID string) error
-	SetPermissionLevel(ctx context.Context, steamID steamid.SID64, level Privilege) error
+	SetSteam(ctx context.Context, sid64 steamid.SteamID, discordID string) error
+	SetPermissionLevel(ctx context.Context, steamID steamid.SteamID, level Privilege) error
 }
 
 type PersonRepository interface {
-	DropPerson(ctx context.Context, steamID steamid.SID64) error
+	DropPerson(ctx context.Context, steamID steamid.SteamID) error
 	SavePerson(ctx context.Context, person *Person) error
-	GetPersonBySteamID(ctx context.Context, sid64 steamid.SID64) (Person, error)
+	GetPersonBySteamID(ctx context.Context, sid64 steamid.SteamID) (Person, error)
 	GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collection) (People, error)
 	GetSteamsAtAddress(ctx context.Context, addr net.IP) (steamid.Collection, error)
 	GetPeople(ctx context.Context, filter PlayerQuery) (People, int64, error)
@@ -45,7 +45,7 @@ type PersonRepository interface {
 	GetExpiredProfiles(ctx context.Context, limit uint64) ([]Person, error)
 	GetPersonMessageByID(ctx context.Context, personMessageID int64) (PersonMessage, error)
 	GetSteamIdsAbove(ctx context.Context, privilege Privilege) (steamid.Collection, error)
-	GetPersonSettings(ctx context.Context, steamID steamid.SID64) (PersonSettings, error)
+	GetPersonSettings(ctx context.Context, steamID steamid.SteamID) (PersonSettings, error)
 	SavePersonSettings(ctx context.Context, settings *PersonSettings) error
 }
 
@@ -53,33 +53,9 @@ type PersonInfo interface {
 	GetDiscordID() string
 	GetName() string
 	GetAvatar() AvatarLinks
-	GetSteamID() steamid.SID64
+	GetSteamID() steamid.SteamID
 	Path() string // config.LinkablePath
 	HasPermission(Privilege) bool
-}
-
-type SteamIDProvider interface {
-	SID64(ctx context.Context) (steamid.SID64, error)
-}
-
-// StringSID defines a user provided steam id in an unknown format.
-type StringSID string
-
-func (t StringSID) SID64(ctx context.Context) (steamid.SID64, error) {
-	resolveCtx, cancelResolve := context.WithTimeout(ctx, time.Second*5)
-	defer cancelResolve()
-
-	// TODO cache this as it can be a huge hot path
-	sid64, errResolveSID := steamid.ResolveSID64(resolveCtx, string(t))
-	if errResolveSID != nil {
-		return "", ErrInvalidSID
-	}
-
-	if !sid64.Valid() {
-		return "", ErrInvalidSID
-	}
-
-	return sid64, nil
 }
 
 type SimplePerson struct {
@@ -90,15 +66,15 @@ type SimplePerson struct {
 
 // UserProfile is the model used in the webui representing the logged-in user.
 type UserProfile struct {
-	SteamID         steamid.SID64 `json:"steam_id"`
-	CreatedOn       time.Time     `json:"created_on"`
-	UpdatedOn       time.Time     `json:"updated_on"`
-	PermissionLevel Privilege     `json:"permission_level"`
-	DiscordID       string        `json:"discord_id"`
-	Name            string        `json:"name"`
-	Avatarhash      string        `json:"avatarhash"`
-	BanID           int64         `json:"ban_id"`
-	Muted           bool          `json:"muted"`
+	SteamID         steamid.SteamID `json:"steam_id"`
+	CreatedOn       time.Time       `json:"created_on"`
+	UpdatedOn       time.Time       `json:"updated_on"`
+	PermissionLevel Privilege       `json:"permission_level"`
+	DiscordID       string          `json:"discord_id"`
+	Name            string          `json:"name"`
+	Avatarhash      string          `json:"avatarhash"`
+	BanID           int64           `json:"ban_id"`
+	Muted           bool            `json:"muted"`
 }
 
 func (p UserProfile) HasPermission(privilege Privilege) bool {
@@ -117,7 +93,7 @@ func (p UserProfile) GetAvatar() AvatarLinks {
 	return NewAvatarLinks(p.Avatarhash)
 }
 
-func (p UserProfile) GetSteamID() steamid.SID64 {
+func (p UserProfile) GetSteamID() steamid.SteamID {
 	return p.SteamID
 }
 
@@ -126,7 +102,7 @@ func (p UserProfile) Path() string {
 }
 
 // NewUserProfile allocates a new default person instance.
-func NewUserProfile(sid64 steamid.SID64) UserProfile {
+func NewUserProfile(sid64 steamid.SteamID) UserProfile {
 	t0 := time.Now()
 
 	return UserProfile{
@@ -140,7 +116,7 @@ func NewUserProfile(sid64 steamid.SID64) UserProfile {
 
 type Person struct {
 	// TODO merge use of steamid & steam_id
-	SteamID          steamid.SID64         `db:"steam_id" json:"steam_id"`
+	SteamID          steamid.SteamID       `db:"steam_id" json:"steam_id"`
 	CreatedOn        time.Time             `json:"created_on"`
 	UpdatedOn        time.Time             `json:"updated_on"`
 	PermissionLevel  Privilege             `json:"permission_level"`
@@ -177,7 +153,7 @@ func (p Person) GetAvatar() AvatarLinks {
 	return NewAvatarLinks(p.AvatarHash)
 }
 
-func (p Person) GetSteamID() steamid.SID64 {
+func (p Person) GetSteamID() steamid.SteamID {
 	return p.SteamID
 }
 
@@ -190,19 +166,14 @@ func (p Person) LoggedIn() bool {
 	return p.SteamID.Valid() && p.SteamID.Int64() > 0
 }
 
-// AsTarget checks for a valid steamID.
-func (p Person) AsTarget() StringSID {
-	return StringSID(p.SteamID.String())
-}
-
-type ProfileReponse struct {
+type ProfileResponse struct {
 	Player   *Person           `json:"player"`
 	Friends  []steamweb.Friend `json:"friends"`
 	Settings PersonSettings    `json:"settings"`
 }
 
 // NewPerson allocates a new default person instance.
-func NewPerson(sid64 steamid.SID64) Person {
+func NewPerson(sid64 steamid.SteamID) Person {
 	curTime := time.Now()
 
 	return Person{
@@ -238,8 +209,8 @@ func (p People) ToSteamIDCollection() steamid.Collection {
 	return collection
 }
 
-func (p People) AsMap() map[steamid.SID64]Person {
-	m := map[steamid.SID64]Person{}
+func (p People) AsMap() map[steamid.SteamID]Person {
+	m := map[steamid.SteamID]Person{}
 	for _, person := range p {
 		m[person.SteamID] = person
 	}
@@ -249,7 +220,7 @@ func (p People) AsMap() map[steamid.SID64]Person {
 
 type UserNotification struct {
 	PersonNotificationID int64                `json:"person_notification_id"`
-	SteamID              steamid.SID64        `json:"steam_id"`
+	SteamID              steamid.SteamID      `json:"steam_id"`
 	Read                 bool                 `json:"read"`
 	Deleted              bool                 `json:"deleted"`
 	Severity             NotificationSeverity `json:"severity"`
@@ -275,14 +246,14 @@ type PersonIPRecord struct {
 }
 
 type PersonAuth struct {
-	PersonAuthID int64         `json:"person_auth_id"`
-	SteamID      steamid.SID64 `json:"steam_id"`
-	IPAddr       net.IP        `json:"ip_addr"`
-	RefreshToken string        `json:"refresh_token"`
-	CreatedOn    time.Time     `json:"created_on"`
+	PersonAuthID int64           `json:"person_auth_id"`
+	SteamID      steamid.SteamID `json:"steam_id"`
+	IPAddr       net.IP          `json:"ip_addr"`
+	RefreshToken string          `json:"refresh_token"`
+	CreatedOn    time.Time       `json:"created_on"`
 }
 
-func NewPersonAuth(sid64 steamid.SID64, addr net.IP, fingerPrint string) PersonAuth {
+func NewPersonAuth(sid64 steamid.SteamID, addr net.IP, fingerPrint string) PersonAuth {
 	return PersonAuth{
 		PersonAuthID: 0,
 		SteamID:      sid64,
@@ -293,30 +264,30 @@ func NewPersonAuth(sid64 steamid.SID64, addr net.IP, fingerPrint string) PersonA
 }
 
 type PersonConnection struct {
-	PersonConnectionID int64         `json:"person_connection_id"`
-	IPAddr             net.IP        `json:"ip_addr"`
-	SteamID            steamid.SID64 `json:"steam_id"`
-	PersonaName        string        `json:"persona_name"`
-	ServerID           int           `json:"server_id"`
-	CreatedOn          time.Time     `json:"created_on"`
-	ServerNameShort    string        `json:"server_name_short"`
-	ServerName         string        `json:"server_name"`
+	PersonConnectionID int64           `json:"person_connection_id"`
+	IPAddr             net.IP          `json:"ip_addr"`
+	SteamID            steamid.SteamID `json:"steam_id"`
+	PersonaName        string          `json:"persona_name"`
+	ServerID           int             `json:"server_id"`
+	CreatedOn          time.Time       `json:"created_on"`
+	ServerNameShort    string          `json:"server_name_short"`
+	ServerName         string          `json:"server_name"`
 }
 
 type PersonConnections []PersonConnection
 
 type PersonMessage struct {
-	PersonMessageID int64         `json:"person_message_id"`
-	MatchID         uuid.UUID     `json:"match_id"`
-	SteamID         steamid.SID64 `json:"steam_id"`
-	AvatarHash      string        `json:"avatar_hash"`
-	PersonaName     string        `json:"persona_name"`
-	ServerName      string        `json:"server_name"`
-	ServerID        int           `json:"server_id"`
-	Body            string        `json:"body"`
-	Team            bool          `json:"team"`
-	CreatedOn       time.Time     `json:"created_on"`
-	Flagged         bool          `json:"flagged"`
+	PersonMessageID int64           `json:"person_message_id"`
+	MatchID         uuid.UUID       `json:"match_id"`
+	SteamID         steamid.SteamID `json:"steam_id"`
+	AvatarHash      string          `json:"avatar_hash"`
+	PersonaName     string          `json:"persona_name"`
+	ServerName      string          `json:"server_name"`
+	ServerID        int             `json:"server_id"`
+	Body            string          `json:"body"`
+	Team            bool            `json:"team"`
+	CreatedOn       time.Time       `json:"created_on"`
+	Flagged         bool            `json:"flagged"`
 }
 
 type PersonMessages []PersonMessage
@@ -328,13 +299,13 @@ type QueryChatHistoryResult struct {
 }
 
 type PersonSettings struct {
-	PersonSettingsID     int64         `json:"person_settings_id"`
-	SteamID              steamid.SID64 `json:"steam_id"`
-	ForumSignature       string        `json:"forum_signature"`
-	ForumProfileMessages bool          `json:"forum_profile_messages"`
-	StatsHidden          bool          `json:"stats_hidden"`
-	CreatedOn            time.Time     `json:"created_on"`
-	UpdatedOn            time.Time     `json:"updated_on"`
+	PersonSettingsID     int64           `json:"person_settings_id"`
+	SteamID              steamid.SteamID `json:"steam_id"`
+	ForumSignature       string          `json:"forum_signature"`
+	ForumProfileMessages bool            `json:"forum_profile_messages"`
+	StatsHidden          bool            `json:"stats_hidden"`
+	CreatedOn            time.Time       `json:"created_on"`
+	UpdatedOn            time.Time       `json:"updated_on"`
 }
 
 type PersonSettingsUpdate struct {

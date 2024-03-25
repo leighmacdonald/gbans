@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type WordFilterRepository interface {
@@ -37,18 +37,18 @@ const (
 )
 
 type Filter struct {
-	FilterID     int64          `json:"filter_id"`
-	AuthorID     steamid.SID64  `json:"author_id"`
-	Pattern      string         `json:"pattern"`
-	IsRegex      bool           `json:"is_regex"`
-	IsEnabled    bool           `json:"is_enabled"`
-	Action       FilterAction   `json:"action"`
-	Duration     string         `json:"duration"`
-	Regex        *regexp.Regexp `json:"-"`
-	TriggerCount int64          `json:"trigger_count"`
-	Weight       int            `json:"weight"`
-	CreatedOn    time.Time      `json:"created_on"`
-	UpdatedOn    time.Time      `json:"updated_on"`
+	FilterID     int64           `json:"filter_id"`
+	AuthorID     steamid.SteamID `json:"author_id"`
+	Pattern      string          `json:"pattern"`
+	IsRegex      bool            `json:"is_regex"`
+	IsEnabled    bool            `json:"is_enabled"`
+	Action       FilterAction    `json:"action"`
+	Duration     string          `json:"duration"`
+	Regex        *regexp.Regexp  `json:"-"`
+	TriggerCount int64           `json:"trigger_count"`
+	Weight       int             `json:"weight"`
+	CreatedOn    time.Time       `json:"created_on"`
+	UpdatedOn    time.Time       `json:"updated_on"`
 }
 
 func (f *Filter) Init() {

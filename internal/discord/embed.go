@@ -6,7 +6,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	embed "github.com/leighmacdonald/discordgo-embed"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 const (
@@ -32,9 +32,9 @@ func NewEmbed(args ...string) *Embed {
 	}
 }
 
-func (e *Embed) AddFieldsSteamID(steamID steamid.SID64) *Embed {
-	e.Embed().AddField("STEAM", string(steamid.SID64ToSID(steamID))).MakeFieldInline()
-	e.Embed().AddField("STEAM3", string(steamid.SID64ToSID3(steamID))).MakeFieldInline()
+func (e *Embed) AddFieldsSteamID(steamID steamid.SteamID) *Embed {
+	e.Embed().AddField("STEAM", string(steamID.Steam(false))).MakeFieldInline()
+	e.Embed().AddField("STEAM3", string(steamID.Steam3())).MakeFieldInline()
 	e.Embed().AddField("SID64", steamID.String()).MakeFieldInline()
 
 	return e

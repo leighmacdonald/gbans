@@ -10,7 +10,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type banSteamRepository struct {
@@ -120,7 +120,7 @@ func (r *banSteamRepository) getBanByColumn(ctx context.Context, column string, 
 	return person, nil
 }
 
-func (r *banSteamRepository) GetBySteamID(ctx context.Context, sid64 steamid.SID64, deletedOk bool) (domain.BannedSteamPerson, error) {
+func (r *banSteamRepository) GetBySteamID(ctx context.Context, sid64 steamid.SteamID, deletedOk bool) (domain.BannedSteamPerson, error) {
 	return r.getBanByColumn(ctx, "target_id", sid64, deletedOk)
 }
 
@@ -290,22 +290,12 @@ func (r *banSteamRepository) Get(ctx context.Context, filter domain.SteamBansQue
 		ands = append(ands, sq.Gt{"b.valid_until": time.Now()})
 	}
 
-	if filter.TargetID != "" {
-		targetID, errTargetID := filter.TargetID.SID64(ctx)
-		if errTargetID != nil {
-			return nil, 0, errors.Join(errTargetID, domain.ErrTargetID)
-		}
-
-		ands = append(ands, sq.Eq{"b.target_id": targetID.Int64()})
+	if filter.TargetID.Valid() {
+		ands = append(ands, sq.Eq{"b.target_id": filter.TargetID.Int64()})
 	}
 
-	if filter.SourceID != "" {
-		sourceID, errSourceID := filter.SourceID.SID64(ctx)
-		if errSourceID != nil {
-			return nil, 0, errors.Join(errSourceID, domain.ErrSourceID)
-		}
-
-		ands = append(ands, sq.Eq{"b.source_id": sourceID.Int64()})
+	if filter.SourceID.Valid() {
+		ands = append(ands, sq.Eq{"b.source_id": filter.SourceID.Int64()})
 	}
 
 	if filter.IncludeFriendsOnly {

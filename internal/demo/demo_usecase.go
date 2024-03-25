@@ -14,7 +14,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/demoparser"
 	"github.com/leighmacdonald/gbans/pkg/log"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type demoUsecase struct {
@@ -162,7 +162,7 @@ func (d demoUsecase) Create(ctx context.Context, name string, content io.Reader,
 		return nil, errParse
 	}
 
-	intStats := map[steamid.SID64]gin.H{}
+	intStats := map[steamid.SteamID]gin.H{}
 
 	for _, steamID := range demoInfo.SteamIDs() {
 		intStats[steamID] = gin.H{}

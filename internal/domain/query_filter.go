@@ -6,7 +6,7 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 const MaxResultsDefault = 100
@@ -79,39 +79,39 @@ func (qf QueryFilter) ApplyLimitOffset(builder sq.SelectBuilder, maxLimit uint64
 
 type NotificationQuery struct {
 	QueryFilter
-	SteamID steamid.SID64 `json:"steam_id"`
+	SteamID steamid.SteamID `json:"steam_id"`
 }
 
 type ChatHistoryQueryFilter struct {
 	QueryFilter
-	Personaname   string     `json:"personaname,omitempty"`
-	SourceID      StringSID  `json:"source_id,omitempty"`
-	ServerID      int        `json:"server_id,omitempty"`
-	DateStart     *time.Time `json:"date_start,omitempty"`
-	DateEnd       *time.Time `json:"date_end,omitempty"`
-	Unrestricted  bool       `json:"-"`
-	DontCalcTotal bool       `json:"-"`
-	FlaggedOnly   bool       `json:"flagged_only"`
+	Personaname   string          `json:"personaname,omitempty"`
+	SourceID      steamid.SteamID `json:"source_id,omitempty"`
+	ServerID      int             `json:"server_id,omitempty"`
+	DateStart     *time.Time      `json:"date_start,omitempty"`
+	DateEnd       *time.Time      `json:"date_end,omitempty"`
+	Unrestricted  bool            `json:"-"`
+	DontCalcTotal bool            `json:"-"`
+	FlaggedOnly   bool            `json:"flagged_only"`
 }
 
 type ConnectionHistoryQueryFilter struct {
 	QueryFilter
-	IP       string    `json:"ip"`
-	SourceID StringSID `json:"source_id"`
+	IP       string          `json:"ip"`
+	SourceID steamid.SteamID `json:"source_id"`
 }
 
 type PlayerQuery struct {
 	QueryFilter
-	SteamID     StringSID `json:"steam_id"`
-	Personaname string    `json:"personaname"`
-	IP          string    `json:"ip"`
+	SteamID     steamid.SteamID `json:"steam_id"`
+	Personaname string          `json:"personaname"`
+	IP          string          `json:"ip"`
 }
 
 type DemoFilter struct {
 	QueryFilter
-	SteamID   StringSID `json:"steam_id"`
-	ServerIds []int     `json:"server_ids"`
-	MapName   string    `json:"map_name"`
+	SteamID   steamid.SteamID `json:"steam_id"`
+	ServerIds []int           `json:"server_ids"`
+	MapName   string          `json:"map_name"`
 }
 
 type FiltersQueryFilter struct {
@@ -130,19 +130,19 @@ type ThreadQueryFilter struct {
 
 type MatchesQueryOpts struct {
 	QueryFilter
-	SteamID   steamid.SID64 `json:"steam_id"`
-	ServerID  int           `json:"server_id"`
-	Map       string        `json:"map"`
-	TimeStart *time.Time    `json:"time_start,omitempty"`
-	TimeEnd   *time.Time    `json:"time_end,omitempty"`
+	SteamID   steamid.SteamID `json:"steam_id"`
+	ServerID  int             `json:"server_id"`
+	Map       string          `json:"map"`
+	TimeStart *time.Time      `json:"time_start,omitempty"`
+	TimeEnd   *time.Time      `json:"time_end,omitempty"`
 }
 
 type BansQueryFilter struct {
 	QueryFilter
-	SourceID      StringSID `json:"source_id,omitempty"`
-	TargetID      StringSID `json:"target_id,omitempty"`
-	Reason        Reason    `json:"reason,omitempty"`
-	PermanentOnly bool      `json:"permanent_only,omitempty"`
+	SourceID      steamid.SteamID `json:"source_id,omitempty"`
+	TargetID      steamid.SteamID `json:"target_id,omitempty"`
+	Reason        Reason          `json:"reason,omitempty"`
+	PermanentOnly bool            `json:"permanent_only,omitempty"`
 }
 
 type CIDRBansQueryFilter struct {
@@ -170,13 +170,13 @@ type SteamBansQueryFilter struct {
 
 type ReportQueryFilter struct {
 	QueryFilter
-	ReportStatus ReportStatus `json:"report_status"`
-	SourceID     StringSID    `json:"source_id"`
-	TargetID     StringSID    `json:"target_id"`
+	ReportStatus ReportStatus    `json:"report_status"`
+	SourceID     steamid.SteamID `json:"source_id"`
+	TargetID     steamid.SteamID `json:"target_id"`
 }
 type AppealQueryFilter struct {
 	QueryFilter
-	AppealState AppealState `json:"appeal_state"`
-	SourceID    StringSID   `json:"source_id"`
-	TargetID    StringSID   `json:"target_id"`
+	AppealState AppealState     `json:"appeal_state"`
+	SourceID    steamid.SteamID `json:"source_id"`
+	TargetID    steamid.SteamID `json:"target_id"`
 }

@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/pkg/util"
-	"github.com/leighmacdonald/steamid/v3/extra"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/extra"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type ServersUsecase interface {

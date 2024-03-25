@@ -8,7 +8,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type banASNRepository struct {
@@ -119,22 +119,12 @@ func (r banASNRepository) Get(ctx context.Context, filter domain.ASNBansQueryFil
 		constraints = append(constraints, sq.Gt{"b.valid_until": time.Now()})
 	}
 
-	if filter.TargetID != "" {
-		targetID, errTargetID := filter.TargetID.SID64(ctx)
-		if errTargetID != nil {
-			return nil, 0, errors.Join(errTargetID, domain.ErrTargetID)
-		}
-
-		constraints = append(constraints, sq.Eq{"b.target_id": targetID.Int64()})
+	if filter.TargetID.Valid() {
+		constraints = append(constraints, sq.Eq{"b.target_id": filter.TargetID.Int64()})
 	}
 
-	if filter.SourceID != "" {
-		sourceID, errSourceID := filter.SourceID.SID64(ctx)
-		if errSourceID != nil {
-			return nil, 0, errors.Join(errSourceID, domain.ErrSourceID)
-		}
-
-		constraints = append(constraints, sq.Eq{"b.source_id": sourceID.Int64()})
+	if filter.SourceID.Valid() {
+		constraints = append(constraints, sq.Eq{"b.source_id": filter.SourceID.Int64()})
 	}
 
 	if filter.ASNum > 0 {

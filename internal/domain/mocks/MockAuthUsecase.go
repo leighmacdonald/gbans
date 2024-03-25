@@ -12,7 +12,7 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 
-	steamid "github.com/leighmacdonald/steamid/v3/steamid"
+	steamid "github.com/leighmacdonald/steamid/v4/steamid"
 
 	time "time"
 )
@@ -269,7 +269,7 @@ func (_c *MockAuthUsecase_MakeGetTokenKey_Call) RunAndReturn(run func(string) fu
 }
 
 // MakeTokens provides a mock function with given fields: ctx, cookieKey, sid, createRefresh
-func (_m *MockAuthUsecase) MakeTokens(ctx *gin.Context, cookieKey string, sid steamid.SID64, createRefresh bool) (domain.UserTokens, error) {
+func (_m *MockAuthUsecase) MakeTokens(ctx *gin.Context, cookieKey string, sid steamid.SteamID, createRefresh bool) (domain.UserTokens, error) {
 	ret := _m.Called(ctx, cookieKey, sid, createRefresh)
 
 	if len(ret) == 0 {
@@ -278,16 +278,16 @@ func (_m *MockAuthUsecase) MakeTokens(ctx *gin.Context, cookieKey string, sid st
 
 	var r0 domain.UserTokens
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*gin.Context, string, steamid.SID64, bool) (domain.UserTokens, error)); ok {
+	if rf, ok := ret.Get(0).(func(*gin.Context, string, steamid.SteamID, bool) (domain.UserTokens, error)); ok {
 		return rf(ctx, cookieKey, sid, createRefresh)
 	}
-	if rf, ok := ret.Get(0).(func(*gin.Context, string, steamid.SID64, bool) domain.UserTokens); ok {
+	if rf, ok := ret.Get(0).(func(*gin.Context, string, steamid.SteamID, bool) domain.UserTokens); ok {
 		r0 = rf(ctx, cookieKey, sid, createRefresh)
 	} else {
 		r0 = ret.Get(0).(domain.UserTokens)
 	}
 
-	if rf, ok := ret.Get(1).(func(*gin.Context, string, steamid.SID64, bool) error); ok {
+	if rf, ok := ret.Get(1).(func(*gin.Context, string, steamid.SteamID, bool) error); ok {
 		r1 = rf(ctx, cookieKey, sid, createRefresh)
 	} else {
 		r1 = ret.Error(1)
@@ -304,15 +304,15 @@ type MockAuthUsecase_MakeTokens_Call struct {
 // MakeTokens is a helper method to define mock.On call
 //   - ctx *gin.Context
 //   - cookieKey string
-//   - sid steamid.SID64
+//   - sid steamid.SteamID
 //   - createRefresh bool
 func (_e *MockAuthUsecase_Expecter) MakeTokens(ctx interface{}, cookieKey interface{}, sid interface{}, createRefresh interface{}) *MockAuthUsecase_MakeTokens_Call {
 	return &MockAuthUsecase_MakeTokens_Call{Call: _e.mock.On("MakeTokens", ctx, cookieKey, sid, createRefresh)}
 }
 
-func (_c *MockAuthUsecase_MakeTokens_Call) Run(run func(ctx *gin.Context, cookieKey string, sid steamid.SID64, createRefresh bool)) *MockAuthUsecase_MakeTokens_Call {
+func (_c *MockAuthUsecase_MakeTokens_Call) Run(run func(ctx *gin.Context, cookieKey string, sid steamid.SteamID, createRefresh bool)) *MockAuthUsecase_MakeTokens_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*gin.Context), args[1].(string), args[2].(steamid.SID64), args[3].(bool))
+		run(args[0].(*gin.Context), args[1].(string), args[2].(steamid.SteamID), args[3].(bool))
 	})
 	return _c
 }
@@ -322,13 +322,13 @@ func (_c *MockAuthUsecase_MakeTokens_Call) Return(_a0 domain.UserTokens, _a1 err
 	return _c
 }
 
-func (_c *MockAuthUsecase_MakeTokens_Call) RunAndReturn(run func(*gin.Context, string, steamid.SID64, bool) (domain.UserTokens, error)) *MockAuthUsecase_MakeTokens_Call {
+func (_c *MockAuthUsecase_MakeTokens_Call) RunAndReturn(run func(*gin.Context, string, steamid.SteamID, bool) (domain.UserTokens, error)) *MockAuthUsecase_MakeTokens_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // NewUserToken provides a mock function with given fields: steamID, cookieKey, userContext, validDuration
-func (_m *MockAuthUsecase) NewUserToken(steamID steamid.SID64, cookieKey string, userContext string, validDuration time.Duration) (string, error) {
+func (_m *MockAuthUsecase) NewUserToken(steamID steamid.SteamID, cookieKey string, userContext string, validDuration time.Duration) (string, error) {
 	ret := _m.Called(steamID, cookieKey, userContext, validDuration)
 
 	if len(ret) == 0 {
@@ -337,16 +337,16 @@ func (_m *MockAuthUsecase) NewUserToken(steamID steamid.SID64, cookieKey string,
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(steamid.SID64, string, string, time.Duration) (string, error)); ok {
+	if rf, ok := ret.Get(0).(func(steamid.SteamID, string, string, time.Duration) (string, error)); ok {
 		return rf(steamID, cookieKey, userContext, validDuration)
 	}
-	if rf, ok := ret.Get(0).(func(steamid.SID64, string, string, time.Duration) string); ok {
+	if rf, ok := ret.Get(0).(func(steamid.SteamID, string, string, time.Duration) string); ok {
 		r0 = rf(steamID, cookieKey, userContext, validDuration)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(steamid.SID64, string, string, time.Duration) error); ok {
+	if rf, ok := ret.Get(1).(func(steamid.SteamID, string, string, time.Duration) error); ok {
 		r1 = rf(steamID, cookieKey, userContext, validDuration)
 	} else {
 		r1 = ret.Error(1)
@@ -361,7 +361,7 @@ type MockAuthUsecase_NewUserToken_Call struct {
 }
 
 // NewUserToken is a helper method to define mock.On call
-//   - steamID steamid.SID64
+//   - steamID steamid.SteamID
 //   - cookieKey string
 //   - userContext string
 //   - validDuration time.Duration
@@ -369,9 +369,9 @@ func (_e *MockAuthUsecase_Expecter) NewUserToken(steamID interface{}, cookieKey 
 	return &MockAuthUsecase_NewUserToken_Call{Call: _e.mock.On("NewUserToken", steamID, cookieKey, userContext, validDuration)}
 }
 
-func (_c *MockAuthUsecase_NewUserToken_Call) Run(run func(steamID steamid.SID64, cookieKey string, userContext string, validDuration time.Duration)) *MockAuthUsecase_NewUserToken_Call {
+func (_c *MockAuthUsecase_NewUserToken_Call) Run(run func(steamID steamid.SteamID, cookieKey string, userContext string, validDuration time.Duration)) *MockAuthUsecase_NewUserToken_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(steamid.SID64), args[1].(string), args[2].(string), args[3].(time.Duration))
+		run(args[0].(steamid.SteamID), args[1].(string), args[2].(string), args[3].(time.Duration))
 	})
 	return _c
 }
@@ -381,28 +381,28 @@ func (_c *MockAuthUsecase_NewUserToken_Call) Return(_a0 string, _a1 error) *Mock
 	return _c
 }
 
-func (_c *MockAuthUsecase_NewUserToken_Call) RunAndReturn(run func(steamid.SID64, string, string, time.Duration) (string, error)) *MockAuthUsecase_NewUserToken_Call {
+func (_c *MockAuthUsecase_NewUserToken_Call) RunAndReturn(run func(steamid.SteamID, string, string, time.Duration) (string, error)) *MockAuthUsecase_NewUserToken_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Sid64FromJWTToken provides a mock function with given fields: token, cookieKey
-func (_m *MockAuthUsecase) Sid64FromJWTToken(token string, cookieKey string) (steamid.SID64, error) {
+func (_m *MockAuthUsecase) Sid64FromJWTToken(token string, cookieKey string) (steamid.SteamID, error) {
 	ret := _m.Called(token, cookieKey)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Sid64FromJWTToken")
 	}
 
-	var r0 steamid.SID64
+	var r0 steamid.SteamID
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string) (steamid.SID64, error)); ok {
+	if rf, ok := ret.Get(0).(func(string, string) (steamid.SteamID, error)); ok {
 		return rf(token, cookieKey)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) steamid.SID64); ok {
+	if rf, ok := ret.Get(0).(func(string, string) steamid.SteamID); ok {
 		r0 = rf(token, cookieKey)
 	} else {
-		r0 = ret.Get(0).(steamid.SID64)
+		r0 = ret.Get(0).(steamid.SteamID)
 	}
 
 	if rf, ok := ret.Get(1).(func(string, string) error); ok {
@@ -433,12 +433,12 @@ func (_c *MockAuthUsecase_Sid64FromJWTToken_Call) Run(run func(token string, coo
 	return _c
 }
 
-func (_c *MockAuthUsecase_Sid64FromJWTToken_Call) Return(_a0 steamid.SID64, _a1 error) *MockAuthUsecase_Sid64FromJWTToken_Call {
+func (_c *MockAuthUsecase_Sid64FromJWTToken_Call) Return(_a0 steamid.SteamID, _a1 error) *MockAuthUsecase_Sid64FromJWTToken_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockAuthUsecase_Sid64FromJWTToken_Call) RunAndReturn(run func(string, string) (steamid.SID64, error)) *MockAuthUsecase_Sid64FromJWTToken_Call {
+func (_c *MockAuthUsecase_Sid64FromJWTToken_Call) RunAndReturn(run func(string, string) (steamid.SteamID, error)) *MockAuthUsecase_Sid64FromJWTToken_Call {
 	_c.Call.Return(run)
 	return _c
 }

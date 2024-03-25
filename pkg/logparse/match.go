@@ -10,7 +10,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/pkg/fp"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 var (
@@ -21,9 +21,9 @@ var (
 	ErrUnhandledEvent = errors.New("unhandled event")
 )
 
-type MatchPlayerSums map[steamid.SID64]*PlayerStats
+type MatchPlayerSums map[steamid.SteamID]*PlayerStats
 
-func (mps MatchPlayerSums) GetBySteamID(steamID steamid.SID64) (*PlayerStats, error) {
+func (mps MatchPlayerSums) GetBySteamID(steamID steamid.SteamID) (*PlayerStats, error) {
 	for _, m := range mps {
 		if m.SteamID == steamID {
 			return m, nil
@@ -34,7 +34,7 @@ func (mps MatchPlayerSums) GetBySteamID(steamID steamid.SID64) (*PlayerStats, er
 }
 
 type MatchChat struct {
-	SteamID   steamid.SID64
+	SteamID   steamid.SteamID
 	Name      string
 	Message   string
 	Team      bool
@@ -115,7 +115,7 @@ func NewMatch(serverID int, serverName string) Match {
 	}
 }
 
-func (match *Match) PlayerBySteamID(sid64 steamid.SID64) *PlayerStats {
+func (match *Match) PlayerBySteamID(sid64 steamid.SteamID) *PlayerStats {
 	if player, found := match.PlayerSums[sid64]; found {
 		return player
 	}
@@ -575,7 +575,7 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 	return nil
 }
 
-func (match *Match) getPlayer(evtTime time.Time, sid steamid.SID64) *PlayerStats {
+func (match *Match) getPlayer(evtTime time.Time, sid steamid.SteamID) *PlayerStats {
 	if playerSum, found := match.PlayerSums[sid]; found {
 		return playerSum
 	}
@@ -692,7 +692,7 @@ func (match *Match) joinTeam(evt JoinedTeamEvt) {
 	match.getPlayer(evt.CreatedOn, evt.SID).Team = evt.NewTeam
 }
 
-func (match *Match) addChat(sid steamid.SID64, name string, message string, team bool, created time.Time) {
+func (match *Match) addChat(sid steamid.SteamID, name string, message string, team bool, created time.Time) {
 	match.Chat = append(match.Chat, MatchChat{
 		SteamID:   sid,
 		Name:      name,
@@ -1001,10 +1001,10 @@ type PointCaptureBlocked struct {
 }
 
 type PointCapture struct {
-	SteamID  steamid.SID64 `json:"steam_id"`
-	CP       int           `json:"cp"`
-	CPName   string        `json:"cp_name"`
-	Position Pos           `json:"position"`
+	SteamID  steamid.SteamID `json:"steam_id"`
+	CP       int             `json:"cp"`
+	CPName   string          `json:"cp_name"`
+	Position Pos             `json:"position"`
 }
 
 type KillInfo struct {
@@ -1014,13 +1014,13 @@ type KillInfo struct {
 }
 
 type TargetStats struct {
-	SteamID      steamid.SID64 `json:"steam_id"`
-	KilledInfo   []KillInfo    `json:"killed_info"`
-	Dominations  int           `json:"dominations"`
-	DamageTaken  int           `json:"damage_taken"`
-	HealingTaken int           `json:"healing_taken"`
-	Revenges     int           `json:"revenges"`
-	Extinguishes int           `json:"extinguishes"`
+	SteamID      steamid.SteamID `json:"steam_id"`
+	KilledInfo   []KillInfo      `json:"killed_info"`
+	Dominations  int             `json:"dominations"`
+	DamageTaken  int             `json:"damage_taken"`
+	HealingTaken int             `json:"healing_taken"`
+	Revenges     int             `json:"revenges"`
+	Extinguishes int             `json:"extinguishes"`
 }
 
 type PlayerClassStats struct {
@@ -1049,12 +1049,12 @@ type PlayerKillstreak struct {
 type PlayerStats struct {
 	MatchPlayerID     int64 `json:"match_player_id"`
 	match             *Match
-	SteamID           steamid.SID64                     `json:"steam_id"`
+	SteamID           steamid.SteamID                   `json:"steam_id"`
 	Team              Team                              `json:"team"`
 	Name              string                            `json:"name"`
 	TimeStart         *time.Time                        `json:"time_start"`
 	TimeEnd           *time.Time                        `json:"time_end"`
-	TargetInfo        map[steamid.SID64]*TargetStats    `json:"target_info"`
+	TargetInfo        map[steamid.SteamID]*TargetStats  `json:"target_info"`
 	WeaponInfo        map[Weapon]*WeaponStats           `json:"weapon_info"`
 	Assists           int                               `json:"assists"`
 	Suicides          int                               `json:"suicides"`
@@ -1075,12 +1075,12 @@ type PlayerStats struct {
 	currentClass      PlayerClass
 }
 
-func newMatchPlayerStats(match *Match, sid steamid.SID64) *PlayerStats {
+func newMatchPlayerStats(match *Match, sid steamid.SteamID) *PlayerStats {
 	return &PlayerStats{
 		match:      match,
 		SteamID:    sid,
 		Team:       UNASSIGNED,
-		TargetInfo: map[steamid.SID64]*TargetStats{},
+		TargetInfo: map[steamid.SteamID]*TargetStats{},
 		WeaponInfo: map[Weapon]*WeaponStats{},
 		Pickups:    map[PickupItem]int{},
 		Classes:    map[PlayerClass]*PlayerClassStats{},
@@ -1121,7 +1121,7 @@ func (player *PlayerStats) Extinguishes() int {
 	return total
 }
 
-func (player *PlayerStats) getTarget(target steamid.SID64) *TargetStats {
+func (player *PlayerStats) getTarget(target steamid.SteamID) *TargetStats {
 	tSum, found := player.TargetInfo[target]
 	if !found {
 		tSum = &TargetStats{SteamID: target}
@@ -1300,7 +1300,7 @@ func (player *PlayerStats) setPlayerClass(evtTime time.Time, class PlayerClass) 
 	newStats.startTime = evtTime
 }
 
-func (player *PlayerStats) addKill(evtTime time.Time, target steamid.SID64, weapon Weapon, sourcePos Pos, targetPos Pos) {
+func (player *PlayerStats) addKill(evtTime time.Time, target steamid.SteamID, weapon Weapon, sourcePos Pos, targetPos Pos) {
 	targetInfo, found := player.TargetInfo[target]
 	if !found {
 		targetInfo = &TargetStats{
@@ -1419,7 +1419,7 @@ type HealingStats struct {
 	FirstHealAfterSpawn []float64           `json:"first_heal_after_spawn"`
 	Healing             int                 `json:"healing"`
 	Charges             map[MedigunType]int `json:"charges"`
-	Drops               []steamid.SID64     `json:"drops"`
+	Drops               []steamid.SteamID   `json:"drops"`
 	// AvgTimeToBuild      int
 	// AvgTimeBeforeUse    int
 	NearFullChargeDeath int       `json:"near_full_charge_death"`
@@ -1481,9 +1481,9 @@ func newHealingStats(player *PlayerStats) *HealingStats {
 	}
 }
 
-type HealingStatsMap map[steamid.SID64]*HealingStats
+type HealingStatsMap map[steamid.SteamID]*HealingStats
 
-func (mps HealingStatsMap) GetBySteamID(steamID steamid.SID64) (*HealingStats, error) {
+func (mps HealingStatsMap) GetBySteamID(steamID steamid.SteamID) (*HealingStats, error) {
 	if m, found := mps[steamID]; found {
 		return m, nil
 	}

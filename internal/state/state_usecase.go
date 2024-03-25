@@ -15,7 +15,7 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/ryanuber/go-glob"
 	"golang.org/x/sync/errgroup"
 )
@@ -175,18 +175,18 @@ func (s *stateUsecase) Current() []domain.ServerState {
 }
 
 func (s *stateUsecase) FindByCIDR(cidr *net.IPNet) []domain.PlayerServerInfo {
-	return s.Find("", "", nil, cidr)
+	return s.Find("", steamid.SteamID{}, nil, cidr)
 }
 
 func (s *stateUsecase) FindByIP(addr net.IP) []domain.PlayerServerInfo {
-	return s.Find("", "", addr, nil)
+	return s.Find("", steamid.SteamID{}, addr, nil)
 }
 
 func (s *stateUsecase) FindByName(name string) []domain.PlayerServerInfo {
-	return s.Find(name, "", nil, nil)
+	return s.Find(name, steamid.SteamID{}, nil, nil)
 }
 
-func (s *stateUsecase) FindBySteamID(steamID steamid.SID64) []domain.PlayerServerInfo {
+func (s *stateUsecase) FindBySteamID(steamID steamid.SteamID) []domain.PlayerServerInfo {
 	return s.Find("", steamID, nil, nil)
 }
 
@@ -194,7 +194,7 @@ func (s *stateUsecase) Update(serverID int, update domain.PartialStateUpdate) er
 	return s.stateRepository.Update(serverID, update)
 }
 
-func (s *stateUsecase) Find(name string, steamID steamid.SID64, addr net.IP, cidr *net.IPNet) []domain.PlayerServerInfo {
+func (s *stateUsecase) Find(name string, steamID steamid.SteamID, addr net.IP, cidr *net.IPNet) []domain.PlayerServerInfo {
 	var found []domain.PlayerServerInfo
 
 	current := s.stateRepository.Current()
@@ -301,7 +301,7 @@ func (s *stateUsecase) ServerIDsByName(name string, wildcardOk bool) []int {
 	return servers
 }
 
-func (s *stateUsecase) OnFindExec(ctx context.Context, name string, steamID steamid.SID64, ip net.IP, cidr *net.IPNet, onFoundCmd func(info domain.PlayerServerInfo) string) error {
+func (s *stateUsecase) OnFindExec(ctx context.Context, name string, steamID steamid.SteamID, ip net.IP, cidr *net.IPNet, onFoundCmd func(info domain.PlayerServerInfo) string) error {
 	currentState := s.stateRepository.Current()
 	players := s.Find(name, steamID, ip, cidr)
 
@@ -416,7 +416,7 @@ func (s *stateUsecase) Broadcast(ctx context.Context, serverIDs []int, cmd strin
 }
 
 // Kick will kick the steam id from whatever server it is connected to.
-func (s *stateUsecase) Kick(ctx context.Context, target steamid.SID64, reason domain.Reason) error {
+func (s *stateUsecase) Kick(ctx context.Context, target steamid.SteamID, reason domain.Reason) error {
 	if !target.Valid() {
 		return domain.ErrInvalidTargetSID
 	}
@@ -431,7 +431,7 @@ func (s *stateUsecase) Kick(ctx context.Context, target steamid.SID64, reason do
 }
 
 // Silence will gag & mute a player.
-func (s *stateUsecase) Silence(ctx context.Context, target steamid.SID64, reason domain.Reason,
+func (s *stateUsecase) Silence(ctx context.Context, target steamid.SteamID, reason domain.Reason,
 ) error {
 	if !target.Valid() {
 		return domain.ErrInvalidTargetSID
@@ -447,7 +447,7 @@ func (s *stateUsecase) Silence(ctx context.Context, target steamid.SID64, reason
 		users = append(users, info.Player.Name)
 		usersMu.Unlock()
 
-		return fmt.Sprintf(`sm_silence "#%s" %s`, steamid.SID64ToSID(info.Player.SID), reason.String())
+		return fmt.Sprintf(`sm_silence "#%s" %s`, info.Player.SID.Steam(false), reason.String())
 	}); errExec != nil {
 		return errors.Join(errExec, fmt.Errorf("%w: sm_silence", domain.ErrCommandFailed))
 	}
@@ -470,13 +470,13 @@ func (s *stateUsecase) CSay(ctx context.Context, serverID int, message string) e
 }
 
 // PSay is used to send a private message to a player.
-func (s *stateUsecase) PSay(ctx context.Context, target steamid.SID64, message string) error {
+func (s *stateUsecase) PSay(ctx context.Context, target steamid.SteamID, message string) error {
 	if !target.Valid() {
 		return domain.ErrInvalidTargetSID
 	}
 
 	if errExec := s.OnFindExec(ctx, "", target, nil, nil, func(info domain.PlayerServerInfo) string {
-		return fmt.Sprintf(`sm_psay "#%s" "%s"`, steamid.SID64ToSID(target), message)
+		return fmt.Sprintf(`sm_psay "#%s" "%s"`, target.Steam(false), message)
 	}); errExec != nil {
 		return errors.Join(errExec, fmt.Errorf("%w: sm_psay", domain.ErrCommandFailed))
 	}

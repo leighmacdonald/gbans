@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -622,7 +622,7 @@ func ParseSourcePlayer(srcStr string, player *SourcePlayer) bool {
 		return false
 	}
 
-	player.SID = steamid.SID3ToSID64(steamid.SID3(sidStr))
+	player.SID = steamid.New(sidStr)
 
 	return true
 }
@@ -1263,7 +1263,7 @@ func (p *LogParser) decodeSID3() func(reflect.Type, reflect.Type, any) (any, err
 			return value, nil
 		}
 
-		sid64 := steamid.SID3ToSID64(steamid.SID3(sidVal))
+		sid64 := steamid.New(sidVal)
 		if !sid64.Valid() {
 			return value, nil
 		}

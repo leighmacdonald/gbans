@@ -3,7 +3,7 @@ package logparse
 import (
 	"time"
 
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 // TimeStamp is the base event for all other events. It just contains a timestamp.
@@ -44,20 +44,20 @@ type WMiniRoundLenEvt struct {
 
 // SourcePlayer represents the player who initiated the event.
 type SourcePlayer struct {
-	Name string        `json:"name"`
-	PID  int           `json:"pid"`
-	SID  steamid.SID64 `json:"sid"`
-	Team Team          `json:"team"`
-	Bot  bool          `json:"bot"`
+	Name string          `json:"name"`
+	PID  int             `json:"pid"`
+	SID  steamid.SteamID `json:"sid"`
+	Team Team            `json:"team"`
+	Bot  bool            `json:"bot"`
 }
 
 // TargetPlayer maps the common secondary player values name_2.
 type TargetPlayer struct {
-	Name2 string        `json:"name2"`
-	PID2  int           `json:"pid2"`
-	SID2  steamid.SID64 `json:"sid2"`
-	Team2 Team          `json:"team2"`
-	Bot2  bool          `json:"bot2"`
+	Name2 string          `json:"name2"`
+	PID2  int             `json:"pid2"`
+	SID2  steamid.SteamID `json:"sid2"`
+	Team2 Team            `json:"team2"`
+	Bot2  bool            `json:"bot2"`
 }
 
 type EnteredEvt struct {

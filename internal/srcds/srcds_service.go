@@ -18,7 +18,7 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type srcdsHandler struct {
@@ -203,18 +203,18 @@ func (s *srcdsHandler) onAPIPostDemo() gin.HandlerFunc {
 }
 
 type apiBanRequest struct {
-	SourceID       domain.StringSID `json:"source_id"`
-	TargetID       domain.StringSID `json:"target_id"`
-	Duration       string           `json:"duration"`
-	ValidUntil     time.Time        `json:"valid_until"`
-	BanType        domain.BanType   `json:"ban_type"`
-	Reason         domain.Reason    `json:"reason"`
-	ReasonText     string           `json:"reason_text"`
-	Note           string           `json:"note"`
-	ReportID       int64            `json:"report_id"`
-	DemoName       string           `json:"demo_name"`
-	DemoTick       int              `json:"demo_tick"`
-	IncludeFriends bool             `json:"include_friends"`
+	SourceID       steamid.SteamID `json:"source_id"`
+	TargetID       steamid.SteamID `json:"target_id"`
+	Duration       string          `json:"duration"`
+	ValidUntil     time.Time       `json:"valid_until"`
+	BanType        domain.BanType  `json:"ban_type"`
+	Reason         domain.Reason   `json:"reason"`
+	ReasonText     string          `json:"reason_text"`
+	Note           string          `json:"note"`
+	ReportID       int64           `json:"report_id"`
+	DemoName       string          `json:"demo_name"`
+	DemoTick       int             `json:"demo_tick"`
+	IncludeFriends bool            `json:"include_friends"`
 }
 
 func (s *srcdsHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
@@ -227,11 +227,11 @@ func (s *srcdsHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 		var (
 			origin   = domain.Web
 			curUser  = httphelper.CurrentUserProfile(ctx)
-			sourceID = domain.StringSID(curUser.SteamID.String())
+			sourceID = curUser.SteamID
 		)
 
 		// srcds sourced bans provide a source_id to id the admin
-		if req.SourceID != "" {
+		if req.SourceID.Valid() {
 			sourceID = req.SourceID
 			origin = domain.InGame
 		}
@@ -244,19 +244,8 @@ func (s *srcdsHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 		}
 
 		var banSteam domain.BanSteam
-		if errBanSteam := domain.NewBanSteam(ctx,
-			sourceID,
-			req.TargetID,
-			duration,
-			req.Reason,
-			req.ReasonText,
-			req.Note,
-			origin,
-			req.ReportID,
-			req.BanType,
-			req.IncludeFriends,
-			&banSteam,
-		); errBanSteam != nil {
+		if errBanSteam := domain.NewBanSteam(sourceID, req.TargetID, duration, req.Reason, req.ReasonText, req.Note, origin,
+			req.ReportID, req.BanType, req.IncludeFriends, &banSteam); errBanSteam != nil {
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 
 			return
@@ -296,11 +285,11 @@ func (s *srcdsHandler) onAPIGetServerAdmins() gin.HandlerFunc {
 }
 
 type pingReq struct {
-	ServerName string        `json:"server_name"`
-	Name       string        `json:"name"`
-	SteamID    steamid.SID64 `json:"steam_id"`
-	Reason     string        `json:"reason"`
-	Client     int           `json:"client"`
+	ServerName string          `json:"server_name"`
+	Name       string          `json:"name"`
+	SteamID    steamid.SteamID `json:"steam_id"`
+	Reason     string          `json:"reason"`
+	Client     int             `json:"client"`
 }
 
 func (s *srcdsHandler) onAPIPostPingMod() gin.HandlerFunc {
@@ -339,10 +328,10 @@ func (s *srcdsHandler) onAPIPostPingMod() gin.HandlerFunc {
 }
 
 type CheckRequest struct {
-	ClientID int         `json:"client_id"`
-	SteamID  steamid.SID `json:"steam_id"`
-	IP       net.IP      `json:"ip"`
-	Name     string      `json:"name,omitempty"`
+	ClientID int    `json:"client_id"`
+	SteamID  string `json:"steam_id"`
+	IP       net.IP `json:"ip"`
+	Name     string `json:"name,omitempty"`
 }
 
 type CheckResponse struct {
@@ -378,25 +367,26 @@ func (s *srcdsHandler) onAPIPostServerCheck() gin.HandlerFunc {
 			return
 		}
 
+		sid := steamid.New(request.SteamID)
+
 		slog.Debug("Player connecting",
 			slog.String("ip", request.IP.String()),
-			slog.Int64("sid64", steamid.SIDToSID64(request.SteamID).Int64()),
+			slog.Int64("sid64", sid.Int64()),
 			slog.String("name", request.Name))
 
-		resp := CheckResponse{ClientID: request.ClientID, SteamID: request.SteamID, BanType: domain.Unknown, Msg: ""}
+		resp := CheckResponse{ClientID: request.ClientID, SteamID: sid.Steam(false), BanType: domain.Unknown, Msg: ""}
 
 		responseCtx, cancelResponse := context.WithTimeout(ctx, time.Second*15)
 		defer cancelResponse()
 
-		steamID := steamid.SIDToSID64(request.SteamID)
-		if !steamID.Valid() {
+		if !sid.Valid() {
 			resp.Msg = "Invalid steam id"
 			ctx.JSON(http.StatusBadRequest, resp)
 
 			return
 		}
 
-		person, errPerson := s.PersonUsecase.GetOrCreatePersonBySteamID(responseCtx, steamID)
+		person, errPerson := s.PersonUsecase.GetOrCreatePersonBySteamID(responseCtx, sid)
 		if errPerson != nil {
 			slog.Error("Failed to create connecting player", log.ErrAttr(errPerson))
 		} else if person.Expired() {
@@ -411,7 +401,7 @@ func (s *srcdsHandler) onAPIPostServerCheck() gin.HandlerFunc {
 
 		if errAddHist := s.networkUsecase.AddConnectionHistory(ctx, &domain.PersonConnection{
 			IPAddr:      request.IP,
-			SteamID:     steamID,
+			SteamID:     sid,
 			PersonaName: request.Name,
 			CreatedOn:   time.Now(),
 			ServerID:    ctx.GetInt("server_id"),
@@ -421,27 +411,27 @@ func (s *srcdsHandler) onAPIPostServerCheck() gin.HandlerFunc {
 
 		resp.PermissionLevel = person.PermissionLevel
 
-		if s.checkGroupBan(ctx, steamID, &resp) || s.checkFriendBan(ctx, steamID, &resp) {
+		if s.checkGroupBan(ctx, sid, &resp) || s.checkFriendBan(ctx, sid, &resp) {
 			return
 		}
 
-		if s.checkNetBlockBan(ctx, steamID, request.IP, &resp) {
+		if s.checkNetBlockBan(ctx, sid, request.IP, &resp) {
 			return
 		}
 
-		if s.checkIPBan(ctx, steamID, request.IP, responseCtx, &resp) {
+		if s.checkIPBan(ctx, sid, request.IP, responseCtx, &resp) {
 			return
 		}
 
-		if s.checkASN(ctx, steamID, request.IP, responseCtx, &resp) {
+		if s.checkASN(ctx, sid, request.IP, responseCtx, &resp) {
 			return
 		}
 
-		bannedPerson, errGetBan := s.banUsecase.GetBySteamID(responseCtx, steamID, false)
+		bannedPerson, errGetBan := s.banUsecase.GetBySteamID(responseCtx, sid, false)
 		if errGetBan != nil {
 			if errors.Is(errGetBan, domain.ErrNoResult) {
 				isShared, errShared := s.banUsecase.IsOnIPWithBan(ctx, httphelper.CurrentUserProfile(ctx),
-					steamid.SIDToSID64(request.SteamID), request.IP)
+					sid, request.IP)
 				if errShared != nil {
 					slog.Error("Failed to check shared ip state", log.ErrAttr(errShared))
 
@@ -452,7 +442,7 @@ func (s *srcdsHandler) onAPIPostServerCheck() gin.HandlerFunc {
 
 				if isShared {
 					slog.Info("Player connected from IP of a banned player",
-						slog.String("steam_id", steamid.SIDToSID64(request.SteamID).String()),
+						slog.String("steam_id", sid.String()),
 						slog.String("ip", request.IP.String()))
 
 					resp.BanType = domain.Banned
@@ -500,15 +490,16 @@ func (s *srcdsHandler) onAPIPostServerCheck() gin.HandlerFunc {
 		//goland:noinspection GoSwitchMissingCasesForIotaConsts
 		switch resp.BanType {
 		case domain.NoComm:
-			slog.Info("Player muted", slog.Int64("sid64", steamID.Int64()))
+			slog.Info("Player muted", slog.Int64("sid64", sid.Int64()))
 		case domain.Banned:
+			// TODO log to discord
 			slog.Info("Player dropped", slog.String("drop_type", "steam"),
-				slog.Int64("sid64", steamID.Int64()))
+				slog.Int64("sid64", sid.Int64()))
 		}
 	}
 }
 
-func (s *srcdsHandler) checkASN(ctx *gin.Context, steamID steamid.SID64, addr net.IP, responseCtx context.Context, resp *CheckResponse) bool {
+func (s *srcdsHandler) checkASN(ctx *gin.Context, steamID steamid.SteamID, addr net.IP, responseCtx context.Context, resp *CheckResponse) bool {
 	var asnRecord ip2location.ASNRecord
 
 	errASN := s.networkUsecase.GetASNRecordByIP(responseCtx, addr, &asnRecord)
@@ -532,7 +523,7 @@ func (s *srcdsHandler) checkASN(ctx *gin.Context, steamID steamid.SID64, addr ne
 	return false
 }
 
-func (s *srcdsHandler) checkIPBan(ctx *gin.Context, steamID steamid.SID64, addr net.IP, responseCtx context.Context, resp *CheckResponse) bool {
+func (s *srcdsHandler) checkIPBan(ctx *gin.Context, steamID steamid.SteamID, addr net.IP, responseCtx context.Context, resp *CheckResponse) bool {
 	// Check IP first
 	banNet, errGetBanNet := s.banNetUsecase.GetByAddress(responseCtx, addr)
 	if errGetBanNet != nil {
@@ -560,7 +551,7 @@ func (s *srcdsHandler) checkIPBan(ctx *gin.Context, steamID steamid.SID64, addr 
 	return false
 }
 
-func (s *srcdsHandler) checkNetBlockBan(ctx *gin.Context, steamID steamid.SID64, addr net.IP, resp *CheckResponse) bool {
+func (s *srcdsHandler) checkNetBlockBan(ctx *gin.Context, steamID steamid.SteamID, addr net.IP, resp *CheckResponse) bool {
 	if source, cidrBanned := s.networkUsecase.IsMatch(addr); cidrBanned {
 		resp.BanType = domain.Network
 		resp.Msg = "Network Range Banned.\nIf you using a VPN try disabling it"
@@ -575,7 +566,7 @@ func (s *srcdsHandler) checkNetBlockBan(ctx *gin.Context, steamID steamid.SID64,
 	return false
 }
 
-func (s *srcdsHandler) checkGroupBan(ctx *gin.Context, steamID steamid.SID64, resp *CheckResponse) bool {
+func (s *srcdsHandler) checkGroupBan(ctx *gin.Context, steamID steamid.SteamID, resp *CheckResponse) bool {
 	if groupID, banned := s.banGroupUsecase.IsMember(steamID); banned {
 		resp.BanType = domain.Banned
 		resp.Msg = fmt.Sprintf("Group Banned (gid: %d)", groupID.Int64())
@@ -590,7 +581,7 @@ func (s *srcdsHandler) checkGroupBan(ctx *gin.Context, steamID steamid.SID64, re
 	return false
 }
 
-func (s *srcdsHandler) checkFriendBan(ctx *gin.Context, steamID steamid.SID64, resp *CheckResponse) bool {
+func (s *srcdsHandler) checkFriendBan(ctx *gin.Context, steamID steamid.SteamID, resp *CheckResponse) bool {
 	if parentFriendID, banned := s.banUsecase.IsFriendBanned(steamID); banned {
 		resp.BanType = domain.Banned
 

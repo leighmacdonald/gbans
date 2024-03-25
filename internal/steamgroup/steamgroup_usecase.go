@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 )
 
@@ -31,11 +31,11 @@ func (s *banGroupUsecase) Start(ctx context.Context) {
 	s.groupMemberships.Start(ctx)
 }
 
-func (s *banGroupUsecase) IsMember(steamID steamid.SID64) (steamid.GID, bool) {
+func (s *banGroupUsecase) IsMember(steamID steamid.SteamID) (steamid.SteamID, bool) {
 	return s.groupMemberships.IsMember(steamID)
 }
 
-func (s *banGroupUsecase) GetByGID(ctx context.Context, groupID steamid.GID, banGroup *domain.BanGroup) error {
+func (s *banGroupUsecase) GetByGID(ctx context.Context, groupID steamid.SteamID, banGroup *domain.BanGroup) error {
 	return s.banGroupRepository.GetByGID(ctx, groupID, banGroup)
 }
 

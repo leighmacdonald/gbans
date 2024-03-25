@@ -17,7 +17,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 const ctxKeyUserProfile = "user_profile"
@@ -69,7 +69,7 @@ func (u *authUsecase) GetPersonAuthByRefreshToken(ctx context.Context, token str
 
 // MakeTokens generates new jwt auth tokens
 // fingerprint is a random string used to prevent side-jacking.
-func (u *authUsecase) MakeTokens(ctx *gin.Context, cookieKey string, sid steamid.SID64, createRefresh bool) (domain.UserTokens, error) {
+func (u *authUsecase) MakeTokens(ctx *gin.Context, cookieKey string, sid steamid.SteamID, createRefresh bool) (domain.UserTokens, error) {
 	if cookieKey == "" {
 		return domain.UserTokens{}, domain.ErrCookieKeyMissing
 	}
@@ -272,7 +272,7 @@ func (u *authUsecase) AuthServerMiddleWare() gin.HandlerFunc {
 	}
 }
 
-func (u *authUsecase) NewUserToken(steamID steamid.SID64, cookieKey string, userContext string, validDuration time.Duration) (string, error) {
+func (u *authUsecase) NewUserToken(steamID steamid.SteamID, cookieKey string, userContext string, validDuration time.Duration) (string, error) {
 	nowTime := time.Now()
 
 	claims := domain.UserAuthClaims{
@@ -319,29 +319,29 @@ func (u *authUsecase) TokenFromHeader(ctx *gin.Context, emptyOK bool) (string, e
 	return pcs[1], nil
 }
 
-func (u *authUsecase) Sid64FromJWTToken(token string, cookieKey string) (steamid.SID64, error) {
+func (u *authUsecase) Sid64FromJWTToken(token string, cookieKey string) (steamid.SteamID, error) {
 	claims := &jwt.RegisteredClaims{}
 
 	tkn, errParseClaims := jwt.ParseWithClaims(token, claims, u.MakeGetTokenKey(cookieKey))
 	if errParseClaims != nil {
 		if errors.Is(errParseClaims, jwt.ErrSignatureInvalid) {
-			return "", domain.ErrAuthentication
+			return steamid.SteamID{}, domain.ErrAuthentication
 		}
 
 		if errors.Is(errParseClaims, jwt.ErrTokenExpired) {
-			return "", domain.ErrExpired
+			return steamid.SteamID{}, domain.ErrExpired
 		}
 
-		return "", domain.ErrAuthentication
+		return steamid.SteamID{}, domain.ErrAuthentication
 	}
 
 	if !tkn.Valid {
-		return "", domain.ErrAuthentication
+		return steamid.SteamID{}, domain.ErrAuthentication
 	}
 
 	sid := steamid.New(claims.Subject)
 	if !sid.Valid() {
-		return "", domain.ErrAuthentication
+		return steamid.SteamID{}, domain.ErrAuthentication
 	}
 
 	return sid, nil

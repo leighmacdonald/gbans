@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 )
 
@@ -23,7 +23,7 @@ type SteamFriends struct {
 	updateFreq time.Duration
 	bu         domain.BanSteamUsecase
 	bgu        domain.BanGroupUsecase
-	members    map[steamid.SID64]steamid.Collection
+	members    map[steamid.SteamID]steamid.Collection
 	*sync.RWMutex
 }
 
@@ -33,11 +33,11 @@ func NewSteamFriends(bu domain.BanSteamUsecase, bgu domain.BanGroupUsecase) *Ste
 		updateFreq: time.Hour * 6,
 		bu:         bu,
 		bgu:        bgu,
-		members:    map[steamid.SID64]steamid.Collection{},
+		members:    map[steamid.SteamID]steamid.Collection{},
 	}
 }
 
-func (sf *SteamFriends) IsMember(steamID steamid.SID64) (steamid.SID64, bool) {
+func (sf *SteamFriends) IsMember(steamID steamid.SteamID) (steamid.SteamID, bool) {
 	sf.RLock()
 	defer sf.RUnlock()
 
@@ -49,7 +49,7 @@ func (sf *SteamFriends) IsMember(steamID steamid.SID64) (steamid.SID64, bool) {
 		}
 	}
 
-	return "", false
+	return steamid.SteamID{}, false
 }
 
 func (sf *SteamFriends) Start(ctx context.Context) {
@@ -84,8 +84,8 @@ func (sf *SteamFriends) Start(ctx context.Context) {
 	}
 }
 
-func (sf *SteamFriends) updateSteamBanMembers(ctx context.Context) (map[steamid.SID64]steamid.Collection, error) {
-	newMap := map[steamid.SID64]steamid.Collection{}
+func (sf *SteamFriends) updateSteamBanMembers(ctx context.Context) (map[steamid.SteamID]steamid.Collection, error) {
+	newMap := map[steamid.SteamID]steamid.Collection{}
 
 	localCtx, cancel := context.WithTimeout(ctx, time.Second*120)
 	defer cancel()

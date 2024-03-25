@@ -10,7 +10,7 @@ import (
 
 	net "net"
 
-	steamid "github.com/leighmacdonald/steamid/v3/steamid"
+	steamid "github.com/leighmacdonald/steamid/v4/steamid"
 
 	time "time"
 )
@@ -317,7 +317,7 @@ func (_c *MockBanSteamRepository_GetByLastIP_Call) RunAndReturn(run func(context
 }
 
 // GetBySteamID provides a mock function with given fields: ctx, sid64, deletedOk
-func (_m *MockBanSteamRepository) GetBySteamID(ctx context.Context, sid64 steamid.SID64, deletedOk bool) (domain.BannedSteamPerson, error) {
+func (_m *MockBanSteamRepository) GetBySteamID(ctx context.Context, sid64 steamid.SteamID, deletedOk bool) (domain.BannedSteamPerson, error) {
 	ret := _m.Called(ctx, sid64, deletedOk)
 
 	if len(ret) == 0 {
@@ -326,16 +326,16 @@ func (_m *MockBanSteamRepository) GetBySteamID(ctx context.Context, sid64 steami
 
 	var r0 domain.BannedSteamPerson
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, steamid.SID64, bool) (domain.BannedSteamPerson, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, steamid.SteamID, bool) (domain.BannedSteamPerson, error)); ok {
 		return rf(ctx, sid64, deletedOk)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, steamid.SID64, bool) domain.BannedSteamPerson); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, steamid.SteamID, bool) domain.BannedSteamPerson); ok {
 		r0 = rf(ctx, sid64, deletedOk)
 	} else {
 		r0 = ret.Get(0).(domain.BannedSteamPerson)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, steamid.SID64, bool) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, steamid.SteamID, bool) error); ok {
 		r1 = rf(ctx, sid64, deletedOk)
 	} else {
 		r1 = ret.Error(1)
@@ -351,15 +351,15 @@ type MockBanSteamRepository_GetBySteamID_Call struct {
 
 // GetBySteamID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - sid64 steamid.SID64
+//   - sid64 steamid.SteamID
 //   - deletedOk bool
 func (_e *MockBanSteamRepository_Expecter) GetBySteamID(ctx interface{}, sid64 interface{}, deletedOk interface{}) *MockBanSteamRepository_GetBySteamID_Call {
 	return &MockBanSteamRepository_GetBySteamID_Call{Call: _e.mock.On("GetBySteamID", ctx, sid64, deletedOk)}
 }
 
-func (_c *MockBanSteamRepository_GetBySteamID_Call) Run(run func(ctx context.Context, sid64 steamid.SID64, deletedOk bool)) *MockBanSteamRepository_GetBySteamID_Call {
+func (_c *MockBanSteamRepository_GetBySteamID_Call) Run(run func(ctx context.Context, sid64 steamid.SteamID, deletedOk bool)) *MockBanSteamRepository_GetBySteamID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(steamid.SID64), args[2].(bool))
+		run(args[0].(context.Context), args[1].(steamid.SteamID), args[2].(bool))
 	})
 	return _c
 }
@@ -369,7 +369,7 @@ func (_c *MockBanSteamRepository_GetBySteamID_Call) Return(_a0 domain.BannedStea
 	return _c
 }
 
-func (_c *MockBanSteamRepository_GetBySteamID_Call) RunAndReturn(run func(context.Context, steamid.SID64, bool) (domain.BannedSteamPerson, error)) *MockBanSteamRepository_GetBySteamID_Call {
+func (_c *MockBanSteamRepository_GetBySteamID_Call) RunAndReturn(run func(context.Context, steamid.SteamID, bool) (domain.BannedSteamPerson, error)) *MockBanSteamRepository_GetBySteamID_Call {
 	_c.Call.Return(run)
 	return _c
 }

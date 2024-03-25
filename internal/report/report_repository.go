@@ -8,7 +8,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type reportRepository struct {
@@ -165,22 +165,12 @@ func (r reportRepository) DropReportMessage(ctx context.Context, message *domain
 func (r reportRepository) GetReports(ctx context.Context, opts domain.ReportQueryFilter) ([]domain.Report, int64, error) {
 	constraints := sq.And{sq.Eq{"r.deleted": opts.Deleted}}
 
-	if opts.SourceID != "" {
-		authorID, errAuthorID := opts.SourceID.SID64(ctx)
-		if errAuthorID != nil {
-			return nil, 0, errors.Join(errAuthorID, domain.ErrSourceID)
-		}
-
-		constraints = append(constraints, sq.Eq{"r.author_id": authorID.Int64()})
+	if opts.SourceID.Valid() {
+		constraints = append(constraints, sq.Eq{"r.author_id": opts.SourceID.Int64()})
 	}
 
-	if opts.TargetID != "" {
-		targetID, errTargetID := opts.TargetID.SID64(ctx)
-		if errTargetID != nil {
-			return nil, 0, errors.Join(errTargetID, domain.ErrTargetID)
-		}
-
-		constraints = append(constraints, sq.Eq{"r.reported_id": targetID.Int64()})
+	if opts.TargetID.Valid() {
+		constraints = append(constraints, sq.Eq{"r.reported_id": opts.TargetID.Int64()})
 	}
 
 	if opts.ReportStatus >= 0 {
@@ -263,7 +253,7 @@ func (r reportRepository) GetReports(ctx context.Context, opts domain.ReportQuer
 }
 
 // GetReportBySteamID returns any open report for the user by the author.
-func (r reportRepository) GetReportBySteamID(ctx context.Context, authorID steamid.SID64, steamID steamid.SID64) (domain.Report, error) {
+func (r reportRepository) GetReportBySteamID(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID) (domain.Report, error) {
 	var report domain.Report
 
 	row, errRow := r.db.QueryRowBuilder(ctx, r.db.

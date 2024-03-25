@@ -10,7 +10,7 @@ import (
 
 	net "net"
 
-	steamid "github.com/leighmacdonald/steamid/v3/steamid"
+	steamid "github.com/leighmacdonald/steamid/v4/steamid"
 
 	time "time"
 )
@@ -365,7 +365,7 @@ func (_c *MockBanSteamUsecase_GetByLastIP_Call) RunAndReturn(run func(context.Co
 }
 
 // GetBySteamID provides a mock function with given fields: ctx, sid64, deletedOk
-func (_m *MockBanSteamUsecase) GetBySteamID(ctx context.Context, sid64 steamid.SID64, deletedOk bool) (domain.BannedSteamPerson, error) {
+func (_m *MockBanSteamUsecase) GetBySteamID(ctx context.Context, sid64 steamid.SteamID, deletedOk bool) (domain.BannedSteamPerson, error) {
 	ret := _m.Called(ctx, sid64, deletedOk)
 
 	if len(ret) == 0 {
@@ -374,16 +374,16 @@ func (_m *MockBanSteamUsecase) GetBySteamID(ctx context.Context, sid64 steamid.S
 
 	var r0 domain.BannedSteamPerson
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, steamid.SID64, bool) (domain.BannedSteamPerson, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, steamid.SteamID, bool) (domain.BannedSteamPerson, error)); ok {
 		return rf(ctx, sid64, deletedOk)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, steamid.SID64, bool) domain.BannedSteamPerson); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, steamid.SteamID, bool) domain.BannedSteamPerson); ok {
 		r0 = rf(ctx, sid64, deletedOk)
 	} else {
 		r0 = ret.Get(0).(domain.BannedSteamPerson)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, steamid.SID64, bool) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, steamid.SteamID, bool) error); ok {
 		r1 = rf(ctx, sid64, deletedOk)
 	} else {
 		r1 = ret.Error(1)
@@ -399,15 +399,15 @@ type MockBanSteamUsecase_GetBySteamID_Call struct {
 
 // GetBySteamID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - sid64 steamid.SID64
+//   - sid64 steamid.SteamID
 //   - deletedOk bool
 func (_e *MockBanSteamUsecase_Expecter) GetBySteamID(ctx interface{}, sid64 interface{}, deletedOk interface{}) *MockBanSteamUsecase_GetBySteamID_Call {
 	return &MockBanSteamUsecase_GetBySteamID_Call{Call: _e.mock.On("GetBySteamID", ctx, sid64, deletedOk)}
 }
 
-func (_c *MockBanSteamUsecase_GetBySteamID_Call) Run(run func(ctx context.Context, sid64 steamid.SID64, deletedOk bool)) *MockBanSteamUsecase_GetBySteamID_Call {
+func (_c *MockBanSteamUsecase_GetBySteamID_Call) Run(run func(ctx context.Context, sid64 steamid.SteamID, deletedOk bool)) *MockBanSteamUsecase_GetBySteamID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(steamid.SID64), args[2].(bool))
+		run(args[0].(context.Context), args[1].(steamid.SteamID), args[2].(bool))
 	})
 	return _c
 }
@@ -417,7 +417,7 @@ func (_c *MockBanSteamUsecase_GetBySteamID_Call) Return(_a0 domain.BannedSteamPe
 	return _c
 }
 
-func (_c *MockBanSteamUsecase_GetBySteamID_Call) RunAndReturn(run func(context.Context, steamid.SID64, bool) (domain.BannedSteamPerson, error)) *MockBanSteamUsecase_GetBySteamID_Call {
+func (_c *MockBanSteamUsecase_GetBySteamID_Call) RunAndReturn(run func(context.Context, steamid.SteamID, bool) (domain.BannedSteamPerson, error)) *MockBanSteamUsecase_GetBySteamID_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -483,25 +483,25 @@ func (_c *MockBanSteamUsecase_GetOlderThan_Call) RunAndReturn(run func(context.C
 }
 
 // IsFriendBanned provides a mock function with given fields: steamID
-func (_m *MockBanSteamUsecase) IsFriendBanned(steamID steamid.SID64) (steamid.SID64, bool) {
+func (_m *MockBanSteamUsecase) IsFriendBanned(steamID steamid.SteamID) (steamid.SteamID, bool) {
 	ret := _m.Called(steamID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for IsFriendBanned")
 	}
 
-	var r0 steamid.SID64
+	var r0 steamid.SteamID
 	var r1 bool
-	if rf, ok := ret.Get(0).(func(steamid.SID64) (steamid.SID64, bool)); ok {
+	if rf, ok := ret.Get(0).(func(steamid.SteamID) (steamid.SteamID, bool)); ok {
 		return rf(steamID)
 	}
-	if rf, ok := ret.Get(0).(func(steamid.SID64) steamid.SID64); ok {
+	if rf, ok := ret.Get(0).(func(steamid.SteamID) steamid.SteamID); ok {
 		r0 = rf(steamID)
 	} else {
-		r0 = ret.Get(0).(steamid.SID64)
+		r0 = ret.Get(0).(steamid.SteamID)
 	}
 
-	if rf, ok := ret.Get(1).(func(steamid.SID64) bool); ok {
+	if rf, ok := ret.Get(1).(func(steamid.SteamID) bool); ok {
 		r1 = rf(steamID)
 	} else {
 		r1 = ret.Get(1).(bool)
@@ -516,30 +516,30 @@ type MockBanSteamUsecase_IsFriendBanned_Call struct {
 }
 
 // IsFriendBanned is a helper method to define mock.On call
-//   - steamID steamid.SID64
+//   - steamID steamid.SteamID
 func (_e *MockBanSteamUsecase_Expecter) IsFriendBanned(steamID interface{}) *MockBanSteamUsecase_IsFriendBanned_Call {
 	return &MockBanSteamUsecase_IsFriendBanned_Call{Call: _e.mock.On("IsFriendBanned", steamID)}
 }
 
-func (_c *MockBanSteamUsecase_IsFriendBanned_Call) Run(run func(steamID steamid.SID64)) *MockBanSteamUsecase_IsFriendBanned_Call {
+func (_c *MockBanSteamUsecase_IsFriendBanned_Call) Run(run func(steamID steamid.SteamID)) *MockBanSteamUsecase_IsFriendBanned_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(steamid.SID64))
+		run(args[0].(steamid.SteamID))
 	})
 	return _c
 }
 
-func (_c *MockBanSteamUsecase_IsFriendBanned_Call) Return(_a0 steamid.SID64, _a1 bool) *MockBanSteamUsecase_IsFriendBanned_Call {
+func (_c *MockBanSteamUsecase_IsFriendBanned_Call) Return(_a0 steamid.SteamID, _a1 bool) *MockBanSteamUsecase_IsFriendBanned_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockBanSteamUsecase_IsFriendBanned_Call) RunAndReturn(run func(steamid.SID64) (steamid.SID64, bool)) *MockBanSteamUsecase_IsFriendBanned_Call {
+func (_c *MockBanSteamUsecase_IsFriendBanned_Call) RunAndReturn(run func(steamid.SteamID) (steamid.SteamID, bool)) *MockBanSteamUsecase_IsFriendBanned_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // IsOnIPWithBan provides a mock function with given fields: ctx, curUser, steamID, address
-func (_m *MockBanSteamUsecase) IsOnIPWithBan(ctx context.Context, curUser domain.PersonInfo, steamID steamid.SID64, address net.IP) (bool, error) {
+func (_m *MockBanSteamUsecase) IsOnIPWithBan(ctx context.Context, curUser domain.PersonInfo, steamID steamid.SteamID, address net.IP) (bool, error) {
 	ret := _m.Called(ctx, curUser, steamID, address)
 
 	if len(ret) == 0 {
@@ -548,16 +548,16 @@ func (_m *MockBanSteamUsecase) IsOnIPWithBan(ctx context.Context, curUser domain
 
 	var r0 bool
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, domain.PersonInfo, steamid.SID64, net.IP) (bool, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, domain.PersonInfo, steamid.SteamID, net.IP) (bool, error)); ok {
 		return rf(ctx, curUser, steamID, address)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, domain.PersonInfo, steamid.SID64, net.IP) bool); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, domain.PersonInfo, steamid.SteamID, net.IP) bool); ok {
 		r0 = rf(ctx, curUser, steamID, address)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, domain.PersonInfo, steamid.SID64, net.IP) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, domain.PersonInfo, steamid.SteamID, net.IP) error); ok {
 		r1 = rf(ctx, curUser, steamID, address)
 	} else {
 		r1 = ret.Error(1)
@@ -574,15 +574,15 @@ type MockBanSteamUsecase_IsOnIPWithBan_Call struct {
 // IsOnIPWithBan is a helper method to define mock.On call
 //   - ctx context.Context
 //   - curUser domain.PersonInfo
-//   - steamID steamid.SID64
+//   - steamID steamid.SteamID
 //   - address net.IP
 func (_e *MockBanSteamUsecase_Expecter) IsOnIPWithBan(ctx interface{}, curUser interface{}, steamID interface{}, address interface{}) *MockBanSteamUsecase_IsOnIPWithBan_Call {
 	return &MockBanSteamUsecase_IsOnIPWithBan_Call{Call: _e.mock.On("IsOnIPWithBan", ctx, curUser, steamID, address)}
 }
 
-func (_c *MockBanSteamUsecase_IsOnIPWithBan_Call) Run(run func(ctx context.Context, curUser domain.PersonInfo, steamID steamid.SID64, address net.IP)) *MockBanSteamUsecase_IsOnIPWithBan_Call {
+func (_c *MockBanSteamUsecase_IsOnIPWithBan_Call) Run(run func(ctx context.Context, curUser domain.PersonInfo, steamID steamid.SteamID, address net.IP)) *MockBanSteamUsecase_IsOnIPWithBan_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(domain.PersonInfo), args[2].(steamid.SID64), args[3].(net.IP))
+		run(args[0].(context.Context), args[1].(domain.PersonInfo), args[2].(steamid.SteamID), args[3].(net.IP))
 	})
 	return _c
 }
@@ -592,7 +592,7 @@ func (_c *MockBanSteamUsecase_IsOnIPWithBan_Call) Return(_a0 bool, _a1 error) *M
 	return _c
 }
 
-func (_c *MockBanSteamUsecase_IsOnIPWithBan_Call) RunAndReturn(run func(context.Context, domain.PersonInfo, steamid.SID64, net.IP) (bool, error)) *MockBanSteamUsecase_IsOnIPWithBan_Call {
+func (_c *MockBanSteamUsecase_IsOnIPWithBan_Call) RunAndReturn(run func(context.Context, domain.PersonInfo, steamid.SteamID, net.IP) (bool, error)) *MockBanSteamUsecase_IsOnIPWithBan_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -692,7 +692,7 @@ func (_c *MockBanSteamUsecase_Stats_Call) RunAndReturn(run func(context.Context,
 }
 
 // Unban provides a mock function with given fields: ctx, targetSID, reason
-func (_m *MockBanSteamUsecase) Unban(ctx context.Context, targetSID steamid.SID64, reason string) (bool, error) {
+func (_m *MockBanSteamUsecase) Unban(ctx context.Context, targetSID steamid.SteamID, reason string) (bool, error) {
 	ret := _m.Called(ctx, targetSID, reason)
 
 	if len(ret) == 0 {
@@ -701,16 +701,16 @@ func (_m *MockBanSteamUsecase) Unban(ctx context.Context, targetSID steamid.SID6
 
 	var r0 bool
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, steamid.SID64, string) (bool, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, steamid.SteamID, string) (bool, error)); ok {
 		return rf(ctx, targetSID, reason)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, steamid.SID64, string) bool); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, steamid.SteamID, string) bool); ok {
 		r0 = rf(ctx, targetSID, reason)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, steamid.SID64, string) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, steamid.SteamID, string) error); ok {
 		r1 = rf(ctx, targetSID, reason)
 	} else {
 		r1 = ret.Error(1)
@@ -726,15 +726,15 @@ type MockBanSteamUsecase_Unban_Call struct {
 
 // Unban is a helper method to define mock.On call
 //   - ctx context.Context
-//   - targetSID steamid.SID64
+//   - targetSID steamid.SteamID
 //   - reason string
 func (_e *MockBanSteamUsecase_Expecter) Unban(ctx interface{}, targetSID interface{}, reason interface{}) *MockBanSteamUsecase_Unban_Call {
 	return &MockBanSteamUsecase_Unban_Call{Call: _e.mock.On("Unban", ctx, targetSID, reason)}
 }
 
-func (_c *MockBanSteamUsecase_Unban_Call) Run(run func(ctx context.Context, targetSID steamid.SID64, reason string)) *MockBanSteamUsecase_Unban_Call {
+func (_c *MockBanSteamUsecase_Unban_Call) Run(run func(ctx context.Context, targetSID steamid.SteamID, reason string)) *MockBanSteamUsecase_Unban_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(steamid.SID64), args[2].(string))
+		run(args[0].(context.Context), args[1].(steamid.SteamID), args[2].(string))
 	})
 	return _c
 }
@@ -744,7 +744,7 @@ func (_c *MockBanSteamUsecase_Unban_Call) Return(_a0 bool, _a1 error) *MockBanSt
 	return _c
 }
 
-func (_c *MockBanSteamUsecase_Unban_Call) RunAndReturn(run func(context.Context, steamid.SID64, string) (bool, error)) *MockBanSteamUsecase_Unban_Call {
+func (_c *MockBanSteamUsecase_Unban_Call) RunAndReturn(run func(context.Context, steamid.SteamID, string) (bool, error)) *MockBanSteamUsecase_Unban_Call {
 	_c.Call.Return(run)
 	return _c
 }

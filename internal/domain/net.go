@@ -5,7 +5,7 @@ import (
 	"net"
 
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type NetworkUsecase interface {
@@ -15,8 +15,8 @@ type NetworkUsecase interface {
 	GetLocationRecord(ctx context.Context, ipAddr net.IP, record *ip2location.LocationRecord) error
 	GetProxyRecord(ctx context.Context, ipAddr net.IP, proxyRecord *ip2location.ProxyRecord) error
 	InsertBlockListData(ctx context.Context, blockListData *ip2location.BlockListData) error
-	GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, limit uint64) (PersonConnections, error)
-	GetPlayerMostRecentIP(ctx context.Context, steamID steamid.SID64) net.IP
+	GetPersonIPHistory(ctx context.Context, sid64 steamid.SteamID, limit uint64) (PersonConnections, error)
+	GetPlayerMostRecentIP(ctx context.Context, steamID steamid.SteamID) net.IP
 	QueryConnectionHistory(ctx context.Context, opts ConnectionHistoryQueryFilter) ([]PersonConnection, int64, error)
 	AddConnectionHistory(ctx context.Context, conn *PersonConnection) error
 	IsMatch(addr net.IP) (string, bool)
@@ -26,9 +26,9 @@ type NetworkUsecase interface {
 }
 type NetworkRepository interface {
 	QueryConnectionHistory(ctx context.Context, opts ConnectionHistoryQueryFilter) ([]PersonConnection, int64, error)
-	GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, limit uint64) (PersonConnections, error)
+	GetPersonIPHistory(ctx context.Context, sid64 steamid.SteamID, limit uint64) (PersonConnections, error)
 	AddConnectionHistory(ctx context.Context, conn *PersonConnection) error
-	GetPlayerMostRecentIP(ctx context.Context, steamID steamid.SID64) net.IP
+	GetPlayerMostRecentIP(ctx context.Context, steamID steamid.SteamID) net.IP
 	GetASNRecordsByNum(ctx context.Context, asNum int64) (ip2location.ASNRecords, error)
 	GetASNRecordByIP(ctx context.Context, ipAddr net.IP, asnRecord *ip2location.ASNRecord) error
 	GetLocationRecord(ctx context.Context, ipAddr net.IP, record *ip2location.LocationRecord) error
