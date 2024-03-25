@@ -8,7 +8,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type notificationUsecase struct {
@@ -22,7 +22,7 @@ func NewNotificationUsecase(repository domain.NotificationRepository,
 	return &notificationUsecase{nr: repository, pu: personUsecase}
 }
 
-func (n notificationUsecase) SendNotification(ctx context.Context, targetID steamid.SID64, severity domain.NotificationSeverity, message string, link string) error {
+func (n notificationUsecase) SendNotification(ctx context.Context, targetID steamid.SteamID, severity domain.NotificationSeverity, message string, link string) error {
 	notification := domain.NotificationPayload{}
 	// Collect all required ids
 	if notification.MinPerms >= domain.PUser {
@@ -34,7 +34,7 @@ func (n notificationUsecase) SendNotification(ctx context.Context, targetID stea
 		notification.Sids = append(notification.Sids, sids...)
 	}
 
-	uniqueIds := fp.Uniq[steamid.SID64](notification.Sids)
+	uniqueIds := fp.Uniq[steamid.SteamID](notification.Sids)
 
 	people, errPeople := n.pu.GetPeopleBySteamID(ctx, uniqueIds)
 	if errPeople != nil && !errors.Is(errPeople, domain.ErrNoResult) {

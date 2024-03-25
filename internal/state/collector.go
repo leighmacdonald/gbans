@@ -15,7 +15,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/rcon/rcon"
-	"github.com/leighmacdonald/steamid/v3/extra"
+	"github.com/leighmacdonald/steamid/v4/extra"
 	"golang.org/x/exp/slices"
 )
 

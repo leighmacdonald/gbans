@@ -123,13 +123,8 @@ func (r *demoRepository) GetDemos(ctx context.Context, opts domain.DemoFilter) (
 		constraints = append(constraints, sq.ILike{"d.map_name": "%" + strings.ToLower(opts.MapName) + "%"})
 	}
 
-	if opts.SteamID != "" {
-		sid64, errSid := opts.SteamID.SID64(ctx)
-		if errSid != nil {
-			return nil, 0, domain.ErrInvalidSID
-		}
-
-		constraints = append(constraints, sq.Expr("d.stats ?? ?", sid64.String()))
+	if opts.SteamID.Valid() {
+		constraints = append(constraints, sq.Expr("d.stats ?? ?", opts.SteamID.String()))
 	}
 
 	if len(opts.ServerIds) > 0 && opts.ServerIds[0] != 0 {

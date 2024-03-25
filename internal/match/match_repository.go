@@ -11,7 +11,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type matchRepository struct {
@@ -97,7 +97,7 @@ func (r *matchRepository) Matches(ctx context.Context, opts domain.MatchesQueryO
 	return matches, count, nil
 }
 
-func (r *matchRepository) matchGetPlayerClasses(ctx context.Context, matchID uuid.UUID) (map[steamid.SID64][]domain.MatchPlayerClass, error) {
+func (r *matchRepository) matchGetPlayerClasses(ctx context.Context, matchID uuid.UUID) (map[steamid.SteamID][]domain.MatchPlayerClass, error) {
 	const query = `
 		SELECT mp.steam_id, c.match_player_class_id, c.match_player_id, c.player_class_id, c.kills, 
 		   c.assists, c.deaths, c.playtime, c.dominations, c.dominated, c.revenges, c.damage, c.damage_taken, c.healing_taken,
@@ -113,7 +113,7 @@ func (r *matchRepository) matchGetPlayerClasses(ctx context.Context, matchID uui
 
 	defer rows.Close()
 
-	results := map[steamid.SID64][]domain.MatchPlayerClass{}
+	results := map[steamid.SteamID][]domain.MatchPlayerClass{}
 
 	for rows.Next() {
 		var (
@@ -146,7 +146,7 @@ func (r *matchRepository) matchGetPlayerClasses(ctx context.Context, matchID uui
 	return results, nil
 }
 
-func (r *matchRepository) matchGetPlayerWeapons(ctx context.Context, matchID uuid.UUID) (map[steamid.SID64][]domain.MatchPlayerWeapon, error) {
+func (r *matchRepository) matchGetPlayerWeapons(ctx context.Context, matchID uuid.UUID) (map[steamid.SteamID][]domain.MatchPlayerWeapon, error) {
 	const query = `
 		SELECT mp.steam_id, mw.weapon_id, w.name, w.key,  mw.kills, mw.damage, mw.shots, mw.hits, mw.backstabs, mw.headshots, mw.airshots
 		FROM match m
@@ -156,7 +156,7 @@ func (r *matchRepository) matchGetPlayerWeapons(ctx context.Context, matchID uui
 		WHERE m.match_id = $1 and mw.weapon_id is not null
 		ORDER BY mw.kills DESC`
 
-	results := map[steamid.SID64][]domain.MatchPlayerWeapon{}
+	results := map[steamid.SteamID][]domain.MatchPlayerWeapon{}
 
 	rows, errRows := r.db.Query(ctx, query, matchID)
 	if errRows != nil {
@@ -190,7 +190,7 @@ func (r *matchRepository) matchGetPlayerWeapons(ctx context.Context, matchID uui
 	return results, nil
 }
 
-func (r *matchRepository) matchGetPlayerKillstreak(ctx context.Context, matchID uuid.UUID) (map[steamid.SID64][]domain.MatchPlayerKillstreak, error) {
+func (r *matchRepository) matchGetPlayerKillstreak(ctx context.Context, matchID uuid.UUID) (map[steamid.SteamID][]domain.MatchPlayerKillstreak, error) {
 	const query = `
 		SELECT mp.steam_id, k.match_player_id, k.player_class_id, k.killstreak, k.duration
 		FROM match_player_killstreak k
@@ -204,7 +204,7 @@ func (r *matchRepository) matchGetPlayerKillstreak(ctx context.Context, matchID 
 
 	defer rows.Close()
 
-	results := map[steamid.SID64][]domain.MatchPlayerKillstreak{}
+	results := map[steamid.SteamID][]domain.MatchPlayerKillstreak{}
 
 	for rows.Next() {
 		var (
@@ -318,7 +318,7 @@ func (r *matchRepository) matchGetPlayers(ctx context.Context, matchID uuid.UUID
 	return players, nil
 }
 
-func (r *matchRepository) matchGetMedics(ctx context.Context, matchID uuid.UUID) (map[steamid.SID64]domain.MatchHealer, error) {
+func (r *matchRepository) matchGetMedics(ctx context.Context, matchID uuid.UUID) (map[steamid.SteamID]domain.MatchHealer, error) {
 	const query = `
 		SELECT m.match_medic_id,
 			   mp.steam_id,
@@ -336,7 +336,7 @@ func (r *matchRepository) matchGetMedics(ctx context.Context, matchID uuid.UUID)
 		LEFT JOIN match_player mp on mp.match_player_id = m.match_player_id
 		WHERE mp.match_id = $1`
 
-	medics := map[steamid.SID64]domain.MatchHealer{}
+	medics := map[steamid.SteamID]domain.MatchHealer{}
 
 	medicRows, errMedics := r.db.Query(ctx, query, matchID)
 	if errMedics != nil {
@@ -719,7 +719,7 @@ func (r *matchRepository) saveMatchKillstreakStats(ctx context.Context, transact
 	return nil
 }
 
-func (r *matchRepository) StatsPlayerClass(ctx context.Context, sid64 steamid.SID64) (domain.PlayerClassStatsCollection, error) {
+func (r *matchRepository) StatsPlayerClass(ctx context.Context, sid64 steamid.SteamID) (domain.PlayerClassStatsCollection, error) {
 	const query = `
 		SELECT c.player_class_id,
 			   coalesce(SUM(c.kills), 0)               as kill,
@@ -770,7 +770,7 @@ func (r *matchRepository) StatsPlayerClass(ctx context.Context, sid64 steamid.SI
 	return stats, nil
 }
 
-func (r *matchRepository) StatsPlayerWeapons(ctx context.Context, sid64 steamid.SID64) ([]domain.PlayerWeaponStats, error) {
+func (r *matchRepository) StatsPlayerWeapons(ctx context.Context, sid64 steamid.SteamID) ([]domain.PlayerWeaponStats, error) {
 	const query = `
 		SELECT n.key,
 			   n.name,
@@ -811,7 +811,7 @@ func (r *matchRepository) StatsPlayerWeapons(ctx context.Context, sid64 steamid.
 	return stats, nil
 }
 
-func (r *matchRepository) StatsPlayerKillstreaks(ctx context.Context, sid64 steamid.SID64) ([]domain.PlayerKillstreakStats, error) {
+func (r *matchRepository) StatsPlayerKillstreaks(ctx context.Context, sid64 steamid.SteamID) ([]domain.PlayerKillstreakStats, error) {
 	const query = `
 		SELECT k.player_class_id,
 			   SUM(k.killstreak) as killstreak,
@@ -850,7 +850,7 @@ func (r *matchRepository) StatsPlayerKillstreaks(ctx context.Context, sid64 stea
 	return stats, nil
 }
 
-func (r *matchRepository) StatsPlayerMedic(ctx context.Context, sid64 steamid.SID64) ([]domain.PlayerMedicStats, error) {
+func (r *matchRepository) StatsPlayerMedic(ctx context.Context, sid64 steamid.SteamID) ([]domain.PlayerMedicStats, error) {
 	const query = `
 		SELECT coalesce(SUM(m.healing), 0)                as healing,
 			   coalesce(SUM(m.drops), 0)                  as drops,
@@ -888,7 +888,7 @@ func (r *matchRepository) StatsPlayerMedic(ctx context.Context, sid64 steamid.SI
 	return stats, nil
 }
 
-func (r *matchRepository) PlayerStats(ctx context.Context, steamID steamid.SID64, stats *domain.PlayerStats) error {
+func (r *matchRepository) PlayerStats(ctx context.Context, steamID steamid.SteamID, stats *domain.PlayerStats) error {
 	const query = `
 		SELECT count(m.match_id)            as                     matches,
 			   sum(case when mp.team = m.winner then 1 else 0 end) wins,
@@ -1049,7 +1049,7 @@ func (r *matchRepository) WeaponsOverallTopPlayers(ctx context.Context, weaponID
 	return results, nil
 }
 
-func (r *matchRepository) WeaponsOverallByPlayer(ctx context.Context, steamID steamid.SID64) ([]domain.WeaponsOverallResult, error) {
+func (r *matchRepository) WeaponsOverallByPlayer(ctx context.Context, steamID steamid.SteamID) ([]domain.WeaponsOverallResult, error) {
 	const query = `
 		SELECT
 			row_number() over (order by s.kills desc nulls last) as rank,
@@ -1327,7 +1327,7 @@ func (r *matchRepository) HealersOverallByHealing(ctx context.Context, count int
 	return results, nil
 }
 
-func (r *matchRepository) PlayerOverallClassStats(ctx context.Context, steamID steamid.SID64) ([]domain.PlayerClassOverallResult, error) {
+func (r *matchRepository) PlayerOverallClassStats(ctx context.Context, steamID steamid.SteamID) ([]domain.PlayerClassOverallResult, error) {
 	const query = `
 		SELECT
 			c.player_class_id,
@@ -1383,7 +1383,7 @@ func (r *matchRepository) PlayerOverallClassStats(ctx context.Context, steamID s
 	return results, nil
 }
 
-func (r *matchRepository) PlayerOverallStats(ctx context.Context, steamID steamid.SID64, por *domain.PlayerOverallResult) error {
+func (r *matchRepository) PlayerOverallStats(ctx context.Context, steamID steamid.SteamID, por *domain.PlayerOverallResult) error {
 	const query = `
 		SELECT coalesce(h.healing, 0),
 			   coalesce(h.drops, 0),

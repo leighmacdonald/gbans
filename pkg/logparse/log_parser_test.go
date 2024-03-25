@@ -9,7 +9,7 @@ import (
 
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/gbans/pkg/util"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/stretchr/testify/require"
 )
 

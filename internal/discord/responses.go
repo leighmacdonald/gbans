@@ -13,7 +13,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/util"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -715,10 +715,10 @@ func CSayMessage(server string, msg string) *discordgo.MessageEmbed {
 		Truncate().MessageEmbed
 }
 
-func PSayMessage(player string, msg string) *discordgo.MessageEmbed {
+func PSayMessage(player steamid.SteamID, msg string) *discordgo.MessageEmbed {
 	return NewEmbed("Sent private message successfully").Embed().
 		SetColor(ColourSuccess).
-		AddField("Player", player).
+		AddField("Player", string(player.Steam(false))).
 		AddField("Message", msg).
 		Truncate().MessageEmbed
 }
@@ -906,7 +906,7 @@ func MatchMessage(match domain.MatchResult, link string) *discordgo.MessageEmbed
 	msgEmbed.Embed().AddField("Map", match.MapName).MakeFieldInline()
 	msgEmbed.Embed().AddField("Chat Messages", fmt.Sprintf("%d", len(match.Chat))).MakeFieldInline()
 
-	msgCounts := map[steamid.SID64]int{}
+	msgCounts := map[steamid.SteamID]int{}
 
 	for _, msg := range match.Chat {
 		_, found := msgCounts[msg.SteamID]
@@ -918,7 +918,7 @@ func MatchMessage(match domain.MatchResult, link string) *discordgo.MessageEmbed
 	}
 
 	var (
-		chatSid   steamid.SID64
+		chatSid   steamid.SteamID
 		count     int
 		kathyName string
 	)

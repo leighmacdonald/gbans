@@ -6,8 +6,8 @@ import (
 	"net"
 	"time"
 
-	"github.com/leighmacdonald/steamid/v3/extra"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/extra"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type StateUsecase interface {
@@ -19,18 +19,18 @@ type StateUsecase interface {
 	Current() []ServerState
 	ExecRaw(ctx context.Context, addr string, password string, cmd string) (string, error)
 	ExecServer(ctx context.Context, serverID int, cmd string) (string, error)
-	Find(name string, steamID steamid.SID64, addr net.IP, cidr *net.IPNet) []PlayerServerInfo
+	Find(name string, steamID steamid.SteamID, addr net.IP, cidr *net.IPNet) []PlayerServerInfo
 	FindByCIDR(cidr *net.IPNet) []PlayerServerInfo
 	FindByIP(addr net.IP) []PlayerServerInfo
 	FindByName(name string) []PlayerServerInfo
-	FindBySteamID(steamID steamid.SID64) []PlayerServerInfo
-	Kick(ctx context.Context, target steamid.SID64, reason Reason) error
+	FindBySteamID(steamID steamid.SteamID) []PlayerServerInfo
+	Kick(ctx context.Context, target steamid.SteamID, reason Reason) error
 	LogAddressAdd(ctx context.Context, logAddress string)
-	OnFindExec(ctx context.Context, name string, steamID steamid.SID64, ip net.IP, cidr *net.IPNet, onFoundCmd func(info PlayerServerInfo) string) error
-	PSay(ctx context.Context, target steamid.SID64, message string) error
+	OnFindExec(ctx context.Context, name string, steamID steamid.SteamID, ip net.IP, cidr *net.IPNet, onFoundCmd func(info PlayerServerInfo) string) error
+	PSay(ctx context.Context, target steamid.SteamID, message string) error
 	Say(ctx context.Context, serverID int, message string) error
 	ServerIDsByName(name string, wildcardOk bool) []int
-	Silence(ctx context.Context, target steamid.SID64, reason Reason) error
+	Silence(ctx context.Context, target steamid.SteamID, reason Reason) error
 	SortRegion() map[string][]ServerState
 	Update(serverID int, update PartialStateUpdate) error
 }
@@ -111,7 +111,7 @@ type ServerState struct {
 	// Version of the game installed on the server.
 	Version string `json:"version"`
 	// ServerStore's SteamID.
-	SteamID steamid.SID64 `json:"steam_id"`
+	SteamID steamid.SteamID `json:"steam_id"`
 	// Tags that describe the game according to the server (for future use.)
 	Keywords []string `json:"keywords"`
 	Edicts   []int    `json:"edicts"`

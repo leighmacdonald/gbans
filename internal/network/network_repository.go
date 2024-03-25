@@ -13,7 +13,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type networkRepository struct {
@@ -35,13 +35,8 @@ func (r networkRepository) QueryConnectionHistory(ctx context.Context, opts doma
 
 	var constraints sq.And
 
-	if opts.SourceID != "" {
-		sid, errSID := opts.SourceID.SID64(ctx)
-		if errSID != nil {
-			return nil, 0, errors.Join(steamid.ErrInvalidSID, domain.ErrSourceID)
-		}
-
-		constraints = append(constraints, sq.Eq{"c.steam_id": sid.Int64()})
+	if opts.SourceID.Valid() {
+		constraints = append(constraints, sq.Eq{"c.steam_id": opts.SourceID.Int64()})
 	}
 
 	builder = opts.ApplySafeOrder(opts.ApplyLimitOffsetDefault(builder), map[string][]string{
@@ -105,7 +100,7 @@ func (r networkRepository) QueryConnectionHistory(ctx context.Context, opts doma
 	return messages, count, nil
 }
 
-func (r networkRepository) GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, limit uint64) (domain.PersonConnections, error) {
+func (r networkRepository) GetPersonIPHistory(ctx context.Context, sid64 steamid.SteamID, limit uint64) (domain.PersonConnections, error) {
 	builder := r.db.
 		Builder().
 		Select(
@@ -165,7 +160,7 @@ func (r networkRepository) AddConnectionHistory(ctx context.Context, conn *domai
 	return nil
 }
 
-func (r networkRepository) GetPlayerMostRecentIP(ctx context.Context, steamID steamid.SID64) net.IP {
+func (r networkRepository) GetPlayerMostRecentIP(ctx context.Context, steamID steamid.SteamID) net.IP {
 	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
 		Builder().
 		Select("c.ip_addr").

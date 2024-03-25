@@ -15,7 +15,7 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type networkUsecase struct {
@@ -183,11 +183,11 @@ func (u networkUsecase) InsertBlockListData(ctx context.Context, blockListData *
 	return u.nr.InsertBlockListData(ctx, blockListData)
 }
 
-func (u networkUsecase) GetPersonIPHistory(ctx context.Context, sid64 steamid.SID64, limit uint64) (domain.PersonConnections, error) {
+func (u networkUsecase) GetPersonIPHistory(ctx context.Context, sid64 steamid.SteamID, limit uint64) (domain.PersonConnections, error) {
 	return u.nr.GetPersonIPHistory(ctx, sid64, limit)
 }
 
-func (u networkUsecase) GetPlayerMostRecentIP(ctx context.Context, steamID steamid.SID64) net.IP {
+func (u networkUsecase) GetPlayerMostRecentIP(ctx context.Context, steamID steamid.SteamID) net.IP {
 	return u.nr.GetPlayerMostRecentIP(ctx, steamID)
 }
 

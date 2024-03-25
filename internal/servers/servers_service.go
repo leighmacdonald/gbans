@@ -13,7 +13,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/log"
-	"github.com/leighmacdonald/steamid/v3/steamid"
 )
 
 type serversHandler struct {
@@ -91,7 +90,7 @@ func (h *serversHandler) onAPIExportSourcemodSimpleAdmins() gin.HandlerFunc {
 			if perms == "" {
 				slog.Warn("User has no perm string", slog.Int64("sid", player.SteamID.Int64()))
 			} else {
-				bld.WriteString(fmt.Sprintf("\"%s\" \"%s\"\n", steamid.SID64ToSID3(player.SteamID), perms))
+				bld.WriteString(fmt.Sprintf("\"%s\" \"%s\"\n", player.SteamID.Steam3(), perms))
 			}
 		}
 

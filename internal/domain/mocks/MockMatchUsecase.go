@@ -12,7 +12,7 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 
-	steamid "github.com/leighmacdonald/steamid/v3/steamid"
+	steamid "github.com/leighmacdonald/steamid/v4/steamid"
 
 	uuid "github.com/gofrs/uuid/v5"
 )
@@ -511,7 +511,7 @@ func (_c *MockMatchUsecase_Matches_Call) RunAndReturn(run func(context.Context, 
 }
 
 // PlayerOverallClassStats provides a mock function with given fields: ctx, steamID
-func (_m *MockMatchUsecase) PlayerOverallClassStats(ctx context.Context, steamID steamid.SID64) ([]domain.PlayerClassOverallResult, error) {
+func (_m *MockMatchUsecase) PlayerOverallClassStats(ctx context.Context, steamID steamid.SteamID) ([]domain.PlayerClassOverallResult, error) {
 	ret := _m.Called(ctx, steamID)
 
 	if len(ret) == 0 {
@@ -520,10 +520,10 @@ func (_m *MockMatchUsecase) PlayerOverallClassStats(ctx context.Context, steamID
 
 	var r0 []domain.PlayerClassOverallResult
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, steamid.SID64) ([]domain.PlayerClassOverallResult, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, steamid.SteamID) ([]domain.PlayerClassOverallResult, error)); ok {
 		return rf(ctx, steamID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, steamid.SID64) []domain.PlayerClassOverallResult); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, steamid.SteamID) []domain.PlayerClassOverallResult); ok {
 		r0 = rf(ctx, steamID)
 	} else {
 		if ret.Get(0) != nil {
@@ -531,7 +531,7 @@ func (_m *MockMatchUsecase) PlayerOverallClassStats(ctx context.Context, steamID
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, steamid.SID64) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, steamid.SteamID) error); ok {
 		r1 = rf(ctx, steamID)
 	} else {
 		r1 = ret.Error(1)
@@ -547,14 +547,14 @@ type MockMatchUsecase_PlayerOverallClassStats_Call struct {
 
 // PlayerOverallClassStats is a helper method to define mock.On call
 //   - ctx context.Context
-//   - steamID steamid.SID64
+//   - steamID steamid.SteamID
 func (_e *MockMatchUsecase_Expecter) PlayerOverallClassStats(ctx interface{}, steamID interface{}) *MockMatchUsecase_PlayerOverallClassStats_Call {
 	return &MockMatchUsecase_PlayerOverallClassStats_Call{Call: _e.mock.On("PlayerOverallClassStats", ctx, steamID)}
 }
 
-func (_c *MockMatchUsecase_PlayerOverallClassStats_Call) Run(run func(ctx context.Context, steamID steamid.SID64)) *MockMatchUsecase_PlayerOverallClassStats_Call {
+func (_c *MockMatchUsecase_PlayerOverallClassStats_Call) Run(run func(ctx context.Context, steamID steamid.SteamID)) *MockMatchUsecase_PlayerOverallClassStats_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(steamid.SID64))
+		run(args[0].(context.Context), args[1].(steamid.SteamID))
 	})
 	return _c
 }
@@ -564,13 +564,13 @@ func (_c *MockMatchUsecase_PlayerOverallClassStats_Call) Return(_a0 []domain.Pla
 	return _c
 }
 
-func (_c *MockMatchUsecase_PlayerOverallClassStats_Call) RunAndReturn(run func(context.Context, steamid.SID64) ([]domain.PlayerClassOverallResult, error)) *MockMatchUsecase_PlayerOverallClassStats_Call {
+func (_c *MockMatchUsecase_PlayerOverallClassStats_Call) RunAndReturn(run func(context.Context, steamid.SteamID) ([]domain.PlayerClassOverallResult, error)) *MockMatchUsecase_PlayerOverallClassStats_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // PlayerOverallStats provides a mock function with given fields: ctx, steamID, por
-func (_m *MockMatchUsecase) PlayerOverallStats(ctx context.Context, steamID steamid.SID64, por *domain.PlayerOverallResult) error {
+func (_m *MockMatchUsecase) PlayerOverallStats(ctx context.Context, steamID steamid.SteamID, por *domain.PlayerOverallResult) error {
 	ret := _m.Called(ctx, steamID, por)
 
 	if len(ret) == 0 {
@@ -578,7 +578,7 @@ func (_m *MockMatchUsecase) PlayerOverallStats(ctx context.Context, steamID stea
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, steamid.SID64, *domain.PlayerOverallResult) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, steamid.SteamID, *domain.PlayerOverallResult) error); ok {
 		r0 = rf(ctx, steamID, por)
 	} else {
 		r0 = ret.Error(0)
@@ -594,15 +594,15 @@ type MockMatchUsecase_PlayerOverallStats_Call struct {
 
 // PlayerOverallStats is a helper method to define mock.On call
 //   - ctx context.Context
-//   - steamID steamid.SID64
+//   - steamID steamid.SteamID
 //   - por *domain.PlayerOverallResult
 func (_e *MockMatchUsecase_Expecter) PlayerOverallStats(ctx interface{}, steamID interface{}, por interface{}) *MockMatchUsecase_PlayerOverallStats_Call {
 	return &MockMatchUsecase_PlayerOverallStats_Call{Call: _e.mock.On("PlayerOverallStats", ctx, steamID, por)}
 }
 
-func (_c *MockMatchUsecase_PlayerOverallStats_Call) Run(run func(ctx context.Context, steamID steamid.SID64, por *domain.PlayerOverallResult)) *MockMatchUsecase_PlayerOverallStats_Call {
+func (_c *MockMatchUsecase_PlayerOverallStats_Call) Run(run func(ctx context.Context, steamID steamid.SteamID, por *domain.PlayerOverallResult)) *MockMatchUsecase_PlayerOverallStats_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(steamid.SID64), args[2].(*domain.PlayerOverallResult))
+		run(args[0].(context.Context), args[1].(steamid.SteamID), args[2].(*domain.PlayerOverallResult))
 	})
 	return _c
 }
@@ -612,13 +612,13 @@ func (_c *MockMatchUsecase_PlayerOverallStats_Call) Return(_a0 error) *MockMatch
 	return _c
 }
 
-func (_c *MockMatchUsecase_PlayerOverallStats_Call) RunAndReturn(run func(context.Context, steamid.SID64, *domain.PlayerOverallResult) error) *MockMatchUsecase_PlayerOverallStats_Call {
+func (_c *MockMatchUsecase_PlayerOverallStats_Call) RunAndReturn(run func(context.Context, steamid.SteamID, *domain.PlayerOverallResult) error) *MockMatchUsecase_PlayerOverallStats_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // PlayerStats provides a mock function with given fields: ctx, steamID, stats
-func (_m *MockMatchUsecase) PlayerStats(ctx context.Context, steamID steamid.SID64, stats *domain.PlayerStats) error {
+func (_m *MockMatchUsecase) PlayerStats(ctx context.Context, steamID steamid.SteamID, stats *domain.PlayerStats) error {
 	ret := _m.Called(ctx, steamID, stats)
 
 	if len(ret) == 0 {
@@ -626,7 +626,7 @@ func (_m *MockMatchUsecase) PlayerStats(ctx context.Context, steamID steamid.SID
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, steamid.SID64, *domain.PlayerStats) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, steamid.SteamID, *domain.PlayerStats) error); ok {
 		r0 = rf(ctx, steamID, stats)
 	} else {
 		r0 = ret.Error(0)
@@ -642,15 +642,15 @@ type MockMatchUsecase_PlayerStats_Call struct {
 
 // PlayerStats is a helper method to define mock.On call
 //   - ctx context.Context
-//   - steamID steamid.SID64
+//   - steamID steamid.SteamID
 //   - stats *domain.PlayerStats
 func (_e *MockMatchUsecase_Expecter) PlayerStats(ctx interface{}, steamID interface{}, stats interface{}) *MockMatchUsecase_PlayerStats_Call {
 	return &MockMatchUsecase_PlayerStats_Call{Call: _e.mock.On("PlayerStats", ctx, steamID, stats)}
 }
 
-func (_c *MockMatchUsecase_PlayerStats_Call) Run(run func(ctx context.Context, steamID steamid.SID64, stats *domain.PlayerStats)) *MockMatchUsecase_PlayerStats_Call {
+func (_c *MockMatchUsecase_PlayerStats_Call) Run(run func(ctx context.Context, steamID steamid.SteamID, stats *domain.PlayerStats)) *MockMatchUsecase_PlayerStats_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(steamid.SID64), args[2].(*domain.PlayerStats))
+		run(args[0].(context.Context), args[1].(steamid.SteamID), args[2].(*domain.PlayerStats))
 	})
 	return _c
 }
@@ -660,7 +660,7 @@ func (_c *MockMatchUsecase_PlayerStats_Call) Return(_a0 error) *MockMatchUsecase
 	return _c
 }
 
-func (_c *MockMatchUsecase_PlayerStats_Call) RunAndReturn(run func(context.Context, steamid.SID64, *domain.PlayerStats) error) *MockMatchUsecase_PlayerStats_Call {
+func (_c *MockMatchUsecase_PlayerStats_Call) RunAndReturn(run func(context.Context, steamid.SteamID, *domain.PlayerStats) error) *MockMatchUsecase_PlayerStats_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -805,7 +805,7 @@ func (_c *MockMatchUsecase_Start_Call) RunAndReturn(run func(context.Context)) *
 }
 
 // StatsPlayerClass provides a mock function with given fields: ctx, sid64
-func (_m *MockMatchUsecase) StatsPlayerClass(ctx context.Context, sid64 steamid.SID64) (domain.PlayerClassStatsCollection, error) {
+func (_m *MockMatchUsecase) StatsPlayerClass(ctx context.Context, sid64 steamid.SteamID) (domain.PlayerClassStatsCollection, error) {
 	ret := _m.Called(ctx, sid64)
 
 	if len(ret) == 0 {
@@ -814,10 +814,10 @@ func (_m *MockMatchUsecase) StatsPlayerClass(ctx context.Context, sid64 steamid.
 
 	var r0 domain.PlayerClassStatsCollection
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, steamid.SID64) (domain.PlayerClassStatsCollection, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, steamid.SteamID) (domain.PlayerClassStatsCollection, error)); ok {
 		return rf(ctx, sid64)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, steamid.SID64) domain.PlayerClassStatsCollection); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, steamid.SteamID) domain.PlayerClassStatsCollection); ok {
 		r0 = rf(ctx, sid64)
 	} else {
 		if ret.Get(0) != nil {
@@ -825,7 +825,7 @@ func (_m *MockMatchUsecase) StatsPlayerClass(ctx context.Context, sid64 steamid.
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, steamid.SID64) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, steamid.SteamID) error); ok {
 		r1 = rf(ctx, sid64)
 	} else {
 		r1 = ret.Error(1)
@@ -841,14 +841,14 @@ type MockMatchUsecase_StatsPlayerClass_Call struct {
 
 // StatsPlayerClass is a helper method to define mock.On call
 //   - ctx context.Context
-//   - sid64 steamid.SID64
+//   - sid64 steamid.SteamID
 func (_e *MockMatchUsecase_Expecter) StatsPlayerClass(ctx interface{}, sid64 interface{}) *MockMatchUsecase_StatsPlayerClass_Call {
 	return &MockMatchUsecase_StatsPlayerClass_Call{Call: _e.mock.On("StatsPlayerClass", ctx, sid64)}
 }
 
-func (_c *MockMatchUsecase_StatsPlayerClass_Call) Run(run func(ctx context.Context, sid64 steamid.SID64)) *MockMatchUsecase_StatsPlayerClass_Call {
+func (_c *MockMatchUsecase_StatsPlayerClass_Call) Run(run func(ctx context.Context, sid64 steamid.SteamID)) *MockMatchUsecase_StatsPlayerClass_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(steamid.SID64))
+		run(args[0].(context.Context), args[1].(steamid.SteamID))
 	})
 	return _c
 }
@@ -858,13 +858,13 @@ func (_c *MockMatchUsecase_StatsPlayerClass_Call) Return(_a0 domain.PlayerClassS
 	return _c
 }
 
-func (_c *MockMatchUsecase_StatsPlayerClass_Call) RunAndReturn(run func(context.Context, steamid.SID64) (domain.PlayerClassStatsCollection, error)) *MockMatchUsecase_StatsPlayerClass_Call {
+func (_c *MockMatchUsecase_StatsPlayerClass_Call) RunAndReturn(run func(context.Context, steamid.SteamID) (domain.PlayerClassStatsCollection, error)) *MockMatchUsecase_StatsPlayerClass_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // StatsPlayerKillstreaks provides a mock function with given fields: ctx, sid64
-func (_m *MockMatchUsecase) StatsPlayerKillstreaks(ctx context.Context, sid64 steamid.SID64) ([]domain.PlayerKillstreakStats, error) {
+func (_m *MockMatchUsecase) StatsPlayerKillstreaks(ctx context.Context, sid64 steamid.SteamID) ([]domain.PlayerKillstreakStats, error) {
 	ret := _m.Called(ctx, sid64)
 
 	if len(ret) == 0 {
@@ -873,10 +873,10 @@ func (_m *MockMatchUsecase) StatsPlayerKillstreaks(ctx context.Context, sid64 st
 
 	var r0 []domain.PlayerKillstreakStats
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, steamid.SID64) ([]domain.PlayerKillstreakStats, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, steamid.SteamID) ([]domain.PlayerKillstreakStats, error)); ok {
 		return rf(ctx, sid64)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, steamid.SID64) []domain.PlayerKillstreakStats); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, steamid.SteamID) []domain.PlayerKillstreakStats); ok {
 		r0 = rf(ctx, sid64)
 	} else {
 		if ret.Get(0) != nil {
@@ -884,7 +884,7 @@ func (_m *MockMatchUsecase) StatsPlayerKillstreaks(ctx context.Context, sid64 st
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, steamid.SID64) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, steamid.SteamID) error); ok {
 		r1 = rf(ctx, sid64)
 	} else {
 		r1 = ret.Error(1)
@@ -900,14 +900,14 @@ type MockMatchUsecase_StatsPlayerKillstreaks_Call struct {
 
 // StatsPlayerKillstreaks is a helper method to define mock.On call
 //   - ctx context.Context
-//   - sid64 steamid.SID64
+//   - sid64 steamid.SteamID
 func (_e *MockMatchUsecase_Expecter) StatsPlayerKillstreaks(ctx interface{}, sid64 interface{}) *MockMatchUsecase_StatsPlayerKillstreaks_Call {
 	return &MockMatchUsecase_StatsPlayerKillstreaks_Call{Call: _e.mock.On("StatsPlayerKillstreaks", ctx, sid64)}
 }
 
-func (_c *MockMatchUsecase_StatsPlayerKillstreaks_Call) Run(run func(ctx context.Context, sid64 steamid.SID64)) *MockMatchUsecase_StatsPlayerKillstreaks_Call {
+func (_c *MockMatchUsecase_StatsPlayerKillstreaks_Call) Run(run func(ctx context.Context, sid64 steamid.SteamID)) *MockMatchUsecase_StatsPlayerKillstreaks_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(steamid.SID64))
+		run(args[0].(context.Context), args[1].(steamid.SteamID))
 	})
 	return _c
 }
@@ -917,13 +917,13 @@ func (_c *MockMatchUsecase_StatsPlayerKillstreaks_Call) Return(_a0 []domain.Play
 	return _c
 }
 
-func (_c *MockMatchUsecase_StatsPlayerKillstreaks_Call) RunAndReturn(run func(context.Context, steamid.SID64) ([]domain.PlayerKillstreakStats, error)) *MockMatchUsecase_StatsPlayerKillstreaks_Call {
+func (_c *MockMatchUsecase_StatsPlayerKillstreaks_Call) RunAndReturn(run func(context.Context, steamid.SteamID) ([]domain.PlayerKillstreakStats, error)) *MockMatchUsecase_StatsPlayerKillstreaks_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // StatsPlayerMedic provides a mock function with given fields: ctx, sid64
-func (_m *MockMatchUsecase) StatsPlayerMedic(ctx context.Context, sid64 steamid.SID64) ([]domain.PlayerMedicStats, error) {
+func (_m *MockMatchUsecase) StatsPlayerMedic(ctx context.Context, sid64 steamid.SteamID) ([]domain.PlayerMedicStats, error) {
 	ret := _m.Called(ctx, sid64)
 
 	if len(ret) == 0 {
@@ -932,10 +932,10 @@ func (_m *MockMatchUsecase) StatsPlayerMedic(ctx context.Context, sid64 steamid.
 
 	var r0 []domain.PlayerMedicStats
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, steamid.SID64) ([]domain.PlayerMedicStats, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, steamid.SteamID) ([]domain.PlayerMedicStats, error)); ok {
 		return rf(ctx, sid64)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, steamid.SID64) []domain.PlayerMedicStats); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, steamid.SteamID) []domain.PlayerMedicStats); ok {
 		r0 = rf(ctx, sid64)
 	} else {
 		if ret.Get(0) != nil {
@@ -943,7 +943,7 @@ func (_m *MockMatchUsecase) StatsPlayerMedic(ctx context.Context, sid64 steamid.
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, steamid.SID64) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, steamid.SteamID) error); ok {
 		r1 = rf(ctx, sid64)
 	} else {
 		r1 = ret.Error(1)
@@ -959,14 +959,14 @@ type MockMatchUsecase_StatsPlayerMedic_Call struct {
 
 // StatsPlayerMedic is a helper method to define mock.On call
 //   - ctx context.Context
-//   - sid64 steamid.SID64
+//   - sid64 steamid.SteamID
 func (_e *MockMatchUsecase_Expecter) StatsPlayerMedic(ctx interface{}, sid64 interface{}) *MockMatchUsecase_StatsPlayerMedic_Call {
 	return &MockMatchUsecase_StatsPlayerMedic_Call{Call: _e.mock.On("StatsPlayerMedic", ctx, sid64)}
 }
 
-func (_c *MockMatchUsecase_StatsPlayerMedic_Call) Run(run func(ctx context.Context, sid64 steamid.SID64)) *MockMatchUsecase_StatsPlayerMedic_Call {
+func (_c *MockMatchUsecase_StatsPlayerMedic_Call) Run(run func(ctx context.Context, sid64 steamid.SteamID)) *MockMatchUsecase_StatsPlayerMedic_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(steamid.SID64))
+		run(args[0].(context.Context), args[1].(steamid.SteamID))
 	})
 	return _c
 }
@@ -976,13 +976,13 @@ func (_c *MockMatchUsecase_StatsPlayerMedic_Call) Return(_a0 []domain.PlayerMedi
 	return _c
 }
 
-func (_c *MockMatchUsecase_StatsPlayerMedic_Call) RunAndReturn(run func(context.Context, steamid.SID64) ([]domain.PlayerMedicStats, error)) *MockMatchUsecase_StatsPlayerMedic_Call {
+func (_c *MockMatchUsecase_StatsPlayerMedic_Call) RunAndReturn(run func(context.Context, steamid.SteamID) ([]domain.PlayerMedicStats, error)) *MockMatchUsecase_StatsPlayerMedic_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // StatsPlayerWeapons provides a mock function with given fields: ctx, sid64
-func (_m *MockMatchUsecase) StatsPlayerWeapons(ctx context.Context, sid64 steamid.SID64) ([]domain.PlayerWeaponStats, error) {
+func (_m *MockMatchUsecase) StatsPlayerWeapons(ctx context.Context, sid64 steamid.SteamID) ([]domain.PlayerWeaponStats, error) {
 	ret := _m.Called(ctx, sid64)
 
 	if len(ret) == 0 {
@@ -991,10 +991,10 @@ func (_m *MockMatchUsecase) StatsPlayerWeapons(ctx context.Context, sid64 steami
 
 	var r0 []domain.PlayerWeaponStats
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, steamid.SID64) ([]domain.PlayerWeaponStats, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, steamid.SteamID) ([]domain.PlayerWeaponStats, error)); ok {
 		return rf(ctx, sid64)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, steamid.SID64) []domain.PlayerWeaponStats); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, steamid.SteamID) []domain.PlayerWeaponStats); ok {
 		r0 = rf(ctx, sid64)
 	} else {
 		if ret.Get(0) != nil {
@@ -1002,7 +1002,7 @@ func (_m *MockMatchUsecase) StatsPlayerWeapons(ctx context.Context, sid64 steami
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, steamid.SID64) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, steamid.SteamID) error); ok {
 		r1 = rf(ctx, sid64)
 	} else {
 		r1 = ret.Error(1)
@@ -1018,14 +1018,14 @@ type MockMatchUsecase_StatsPlayerWeapons_Call struct {
 
 // StatsPlayerWeapons is a helper method to define mock.On call
 //   - ctx context.Context
-//   - sid64 steamid.SID64
+//   - sid64 steamid.SteamID
 func (_e *MockMatchUsecase_Expecter) StatsPlayerWeapons(ctx interface{}, sid64 interface{}) *MockMatchUsecase_StatsPlayerWeapons_Call {
 	return &MockMatchUsecase_StatsPlayerWeapons_Call{Call: _e.mock.On("StatsPlayerWeapons", ctx, sid64)}
 }
 
-func (_c *MockMatchUsecase_StatsPlayerWeapons_Call) Run(run func(ctx context.Context, sid64 steamid.SID64)) *MockMatchUsecase_StatsPlayerWeapons_Call {
+func (_c *MockMatchUsecase_StatsPlayerWeapons_Call) Run(run func(ctx context.Context, sid64 steamid.SteamID)) *MockMatchUsecase_StatsPlayerWeapons_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(steamid.SID64))
+		run(args[0].(context.Context), args[1].(steamid.SteamID))
 	})
 	return _c
 }
@@ -1035,7 +1035,7 @@ func (_c *MockMatchUsecase_StatsPlayerWeapons_Call) Return(_a0 []domain.PlayerWe
 	return _c
 }
 
-func (_c *MockMatchUsecase_StatsPlayerWeapons_Call) RunAndReturn(run func(context.Context, steamid.SID64) ([]domain.PlayerWeaponStats, error)) *MockMatchUsecase_StatsPlayerWeapons_Call {
+func (_c *MockMatchUsecase_StatsPlayerWeapons_Call) RunAndReturn(run func(context.Context, steamid.SteamID) ([]domain.PlayerWeaponStats, error)) *MockMatchUsecase_StatsPlayerWeapons_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1157,7 +1157,7 @@ func (_c *MockMatchUsecase_WeaponsOverall_Call) RunAndReturn(run func(context.Co
 }
 
 // WeaponsOverallByPlayer provides a mock function with given fields: ctx, steamID
-func (_m *MockMatchUsecase) WeaponsOverallByPlayer(ctx context.Context, steamID steamid.SID64) ([]domain.WeaponsOverallResult, error) {
+func (_m *MockMatchUsecase) WeaponsOverallByPlayer(ctx context.Context, steamID steamid.SteamID) ([]domain.WeaponsOverallResult, error) {
 	ret := _m.Called(ctx, steamID)
 
 	if len(ret) == 0 {
@@ -1166,10 +1166,10 @@ func (_m *MockMatchUsecase) WeaponsOverallByPlayer(ctx context.Context, steamID 
 
 	var r0 []domain.WeaponsOverallResult
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, steamid.SID64) ([]domain.WeaponsOverallResult, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, steamid.SteamID) ([]domain.WeaponsOverallResult, error)); ok {
 		return rf(ctx, steamID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, steamid.SID64) []domain.WeaponsOverallResult); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, steamid.SteamID) []domain.WeaponsOverallResult); ok {
 		r0 = rf(ctx, steamID)
 	} else {
 		if ret.Get(0) != nil {
@@ -1177,7 +1177,7 @@ func (_m *MockMatchUsecase) WeaponsOverallByPlayer(ctx context.Context, steamID 
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, steamid.SID64) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, steamid.SteamID) error); ok {
 		r1 = rf(ctx, steamID)
 	} else {
 		r1 = ret.Error(1)
@@ -1193,14 +1193,14 @@ type MockMatchUsecase_WeaponsOverallByPlayer_Call struct {
 
 // WeaponsOverallByPlayer is a helper method to define mock.On call
 //   - ctx context.Context
-//   - steamID steamid.SID64
+//   - steamID steamid.SteamID
 func (_e *MockMatchUsecase_Expecter) WeaponsOverallByPlayer(ctx interface{}, steamID interface{}) *MockMatchUsecase_WeaponsOverallByPlayer_Call {
 	return &MockMatchUsecase_WeaponsOverallByPlayer_Call{Call: _e.mock.On("WeaponsOverallByPlayer", ctx, steamID)}
 }
 
-func (_c *MockMatchUsecase_WeaponsOverallByPlayer_Call) Run(run func(ctx context.Context, steamID steamid.SID64)) *MockMatchUsecase_WeaponsOverallByPlayer_Call {
+func (_c *MockMatchUsecase_WeaponsOverallByPlayer_Call) Run(run func(ctx context.Context, steamID steamid.SteamID)) *MockMatchUsecase_WeaponsOverallByPlayer_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(steamid.SID64))
+		run(args[0].(context.Context), args[1].(steamid.SteamID))
 	})
 	return _c
 }
@@ -1210,7 +1210,7 @@ func (_c *MockMatchUsecase_WeaponsOverallByPlayer_Call) Return(_a0 []domain.Weap
 	return _c
 }
 
-func (_c *MockMatchUsecase_WeaponsOverallByPlayer_Call) RunAndReturn(run func(context.Context, steamid.SID64) ([]domain.WeaponsOverallResult, error)) *MockMatchUsecase_WeaponsOverallByPlayer_Call {
+func (_c *MockMatchUsecase_WeaponsOverallByPlayer_Call) RunAndReturn(run func(context.Context, steamid.SteamID) ([]domain.WeaponsOverallResult, error)) *MockMatchUsecase_WeaponsOverallByPlayer_Call {
 	_c.Call.Return(run)
 	return _c
 }

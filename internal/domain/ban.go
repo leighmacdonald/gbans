@@ -7,12 +7,12 @@ import (
 	"net"
 	"time"
 
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type BanSteamRepository interface {
 	Save(ctx context.Context, ban *BanSteam) error
-	GetBySteamID(ctx context.Context, sid64 steamid.SID64, deletedOk bool) (BannedSteamPerson, error)
+	GetBySteamID(ctx context.Context, sid64 steamid.SteamID, deletedOk bool) (BannedSteamPerson, error)
 	GetByBanID(ctx context.Context, banID int64, deletedOk bool) (BannedSteamPerson, error)
 	GetByLastIP(ctx context.Context, lastIP net.IP, deletedOk bool) (BannedSteamPerson, error)
 	Delete(ctx context.Context, ban *BanSteam, hardDelete bool) error
@@ -23,14 +23,14 @@ type BanSteamRepository interface {
 }
 
 type BanSteamUsecase interface {
-	IsFriendBanned(steamID steamid.SID64) (steamid.SID64, bool)
-	IsOnIPWithBan(ctx context.Context, curUser PersonInfo, steamID steamid.SID64, address net.IP) (bool, error)
-	GetBySteamID(ctx context.Context, sid64 steamid.SID64, deletedOk bool) (BannedSteamPerson, error)
+	IsFriendBanned(steamID steamid.SteamID) (steamid.SteamID, bool)
+	IsOnIPWithBan(ctx context.Context, curUser PersonInfo, steamID steamid.SteamID, address net.IP) (bool, error)
+	GetBySteamID(ctx context.Context, sid64 steamid.SteamID, deletedOk bool) (BannedSteamPerson, error)
 	GetByBanID(ctx context.Context, banID int64, deletedOk bool) (BannedSteamPerson, error)
 	GetByLastIP(ctx context.Context, lastIP net.IP, deletedOk bool) (BannedSteamPerson, error)
 	Save(ctx context.Context, ban *BanSteam) error
 	Ban(ctx context.Context, curUser PersonInfo, banSteam *BanSteam) error
-	Unban(ctx context.Context, targetSID steamid.SID64, reason string) (bool, error)
+	Unban(ctx context.Context, targetSID steamid.SteamID, reason string) (bool, error)
 	Delete(ctx context.Context, ban *BanSteam, hardDelete bool) error
 	Get(ctx context.Context, filter SteamBansQueryFilter) ([]BannedSteamPerson, int64, error)
 	Expired(ctx context.Context) ([]BanSteam, error)
@@ -41,7 +41,7 @@ type BanSteamUsecase interface {
 type BanGroupRepository interface {
 	Save(ctx context.Context, banGroup *BanGroup) error
 	Ban(ctx context.Context, banGroup *BanGroup) error
-	GetByGID(ctx context.Context, groupID steamid.GID, banGroup *BanGroup) error
+	GetByGID(ctx context.Context, groupID steamid.SteamID, banGroup *BanGroup) error
 	GetByID(ctx context.Context, banGroupID int64, banGroup *BanGroup) error
 	Get(ctx context.Context, filter GroupBansQueryFilter) ([]BannedGroupPerson, int64, error)
 	GetMembersList(ctx context.Context, parentID int64, list *MembersList) error
@@ -52,13 +52,13 @@ type BanGroupRepository interface {
 type BanGroupUsecase interface {
 	Save(ctx context.Context, banGroup *BanGroup) error
 	Ban(ctx context.Context, banGroup *BanGroup) error
-	GetByGID(ctx context.Context, groupID steamid.GID, banGroup *BanGroup) error
+	GetByGID(ctx context.Context, groupID steamid.SteamID, banGroup *BanGroup) error
 	GetByID(ctx context.Context, banGroupID int64, banGroup *BanGroup) error
 	Get(ctx context.Context, filter GroupBansQueryFilter) ([]BannedGroupPerson, int64, error)
 	GetMembersList(ctx context.Context, parentID int64, list *MembersList) error
 	SaveMembersList(ctx context.Context, list *MembersList) error
 	Delete(ctx context.Context, banGroup *BanGroup) error
-	IsMember(steamID steamid.SID64) (steamid.GID, bool)
+	IsMember(steamID steamid.SteamID) (steamid.SteamID, bool)
 }
 
 type BanNetRepository interface {
@@ -129,7 +129,7 @@ func (b BannedSteamPerson) GetAvatar() AvatarLinks {
 	panic("implement me")
 }
 
-func (b BannedSteamPerson) GetSteamID() steamid.SID64 {
+func (b BannedSteamPerson) GetSteamID() steamid.SteamID {
 	// TODO implement me
 	panic("implement me")
 }
@@ -162,8 +162,8 @@ func NewBannedPerson() BannedSteamPerson {
 // directly.
 type BanBase struct {
 	// SteamID is the steamID of the banned person
-	TargetID steamid.SID64 `json:"target_id"`
-	SourceID steamid.SID64 `json:"source_id"`
+	TargetID steamid.SteamID `json:"target_id"`
+	SourceID steamid.SteamID `json:"source_id"`
 	// Reason defines the overall ban classification
 	BanType BanType `json:"ban_type"`
 	// Reason defines the overall ban classification
@@ -207,17 +207,17 @@ func (banBase *BanBase) ApplyBaseOpts(opts BaseBanOpts) {
 // It should not be instantiated directly, but instead use one of the composites that build
 // upon it.
 type BaseBanOpts struct {
-	TargetID    steamid.SID64 `json:"target_id"`
-	SourceID    steamid.SID64 `json:"source_id"`
-	Duration    time.Duration `json:"duration"`
-	BanType     BanType       `json:"ban_type"`
-	Reason      Reason        `json:"reason"`
-	ReasonText  string        `json:"reason_text"`
-	Origin      Origin        `json:"origin"`
-	ModNote     string        `json:"mod_note"`
-	IsEnabled   bool          `json:"is_enabled"`
-	Deleted     bool          `json:"deleted"`
-	AppealState AppealState   `json:"appeal_state"`
+	TargetID    steamid.SteamID `json:"target_id"`
+	SourceID    steamid.SteamID `json:"source_id"`
+	Duration    time.Duration   `json:"duration"`
+	BanType     BanType         `json:"ban_type"`
+	Reason      Reason          `json:"reason"`
+	ReasonText  string          `json:"reason_text"`
+	Origin      Origin          `json:"origin"`
+	ModNote     string          `json:"mod_note"`
+	IsEnabled   bool            `json:"is_enabled"`
+	Deleted     bool            `json:"deleted"`
+	AppealState AppealState     `json:"appeal_state"`
 }
 
 type BanSteamOpts struct {
@@ -228,7 +228,7 @@ type BanSteamOpts struct {
 
 type BanSteamGroupOpts struct {
 	BaseBanOpts
-	GroupID   steamid.GID
+	GroupID   steamid.SteamID
 	GroupName string
 }
 
@@ -246,12 +246,12 @@ type BanCIDROpts struct {
 type BanGroup struct {
 	BanBase
 	SourceTarget
-	BanGroupID      int64       `json:"ban_group_id"`
-	GroupID         steamid.GID `json:"group_id"`
-	GroupName       string      `json:"group_name"`
-	CommunityBanned bool        `json:"community_banned"`
-	VacBans         int         `json:"vac_bans"`
-	GameBans        int         `json:"game_bans"`
+	BanGroupID      int64           `json:"ban_group_id"`
+	GroupID         steamid.SteamID `json:"group_id"`
+	GroupName       string          `json:"group_name"`
+	CommunityBanned bool            `json:"community_banned"`
+	VacBans         int             `json:"vac_bans"`
+	GameBans        int             `json:"game_bans"`
 }
 
 func (banGroup *BanGroup) Apply(opts BanSteamGroupOpts) error {
@@ -325,24 +325,12 @@ func (banSteam BanSteam) String() string {
 	return fmt.Sprintf("SID: %d Origin: %s Reason: %s Type: %v", banSteam.TargetID.Int64(), banSteam.Origin, banSteam.ReasonText, banSteam.BanType)
 }
 
-func newBaseBanOpts(ctx context.Context, source SteamIDProvider, target StringSID, duration time.Duration,
+func newBaseBanOpts(source steamid.SteamID, target steamid.SteamID, duration time.Duration,
 	reason Reason, reasonText string, modNote string, origin Origin,
 	banType BanType, opts *BaseBanOpts,
 ) error {
-	sourceSid, errSource := source.SID64(ctx)
-	if errSource != nil {
-		return errors.Join(errSource, ErrSourceID)
-	}
-
-	targetSid := steamid.New(0)
-
-	if string(target) != "0" {
-		newTargetSid, errTargetSid := target.SID64(ctx)
-		if errTargetSid != nil {
-			return ErrTargetID
-		}
-
-		targetSid = newTargetSid
+	if !source.Valid() || !target.Valid() {
+		return ErrInvalidSID
 	}
 
 	if !(banType == Banned || banType == NoComm) {
@@ -357,8 +345,8 @@ func newBaseBanOpts(ctx context.Context, source SteamIDProvider, target StringSI
 		return ErrInvalidBanReason
 	}
 
-	opts.TargetID = targetSid
-	opts.SourceID = sourceSid
+	opts.TargetID = target
+	opts.SourceID = source
 	opts.Duration = duration
 	opts.ModNote = modNote
 	opts.Reason = reason
@@ -371,13 +359,13 @@ func newBaseBanOpts(ctx context.Context, source SteamIDProvider, target StringSI
 	return nil
 }
 
-func NewBanSteam(ctx context.Context, source SteamIDProvider, target StringSID, duration time.Duration,
+func NewBanSteam(source steamid.SteamID, target steamid.SteamID, duration time.Duration,
 	reason Reason, reasonText string, modNote string, origin Origin, reportID int64, banType BanType,
 	includeFriends bool, banSteam *BanSteam,
 ) error {
 	var opts BanSteamOpts
 
-	errBaseOpts := newBaseBanOpts(ctx, source, target, duration, reason, reasonText, modNote, origin, banType, &opts.BaseBanOpts)
+	errBaseOpts := newBaseBanOpts(source, target, duration, reason, reasonText, modNote, origin, banType, &opts.BaseBanOpts)
 	if errBaseOpts != nil {
 		return errBaseOpts
 	}
@@ -395,12 +383,12 @@ func NewBanSteam(ctx context.Context, source SteamIDProvider, target StringSID, 
 	return nil
 }
 
-func NewBanASN(ctx context.Context, source SteamIDProvider, target StringSID, duration time.Duration,
+func NewBanASN(source steamid.SteamID, target steamid.SteamID, duration time.Duration,
 	reason Reason, reasonText string, modNote string, origin Origin, asNum int64, banType BanType, banASN *BanASN,
 ) error {
 	var opts BanASNOpts
 
-	errBaseOpts := newBaseBanOpts(ctx, source, target, duration, reason, reasonText, modNote, origin, banType, &opts.BaseBanOpts)
+	errBaseOpts := newBaseBanOpts(source, target, duration, reason, reasonText, modNote, origin, banType, &opts.BaseBanOpts)
 	if errBaseOpts != nil {
 		return errBaseOpts
 	}
@@ -435,12 +423,12 @@ func NewBanASN(ctx context.Context, source SteamIDProvider, target StringSID, du
 	return banASN.Apply(opts)
 }
 
-func NewBanCIDR(ctx context.Context, source SteamIDProvider, target StringSID, duration time.Duration,
+func NewBanCIDR(source steamid.SteamID, target steamid.SteamID, duration time.Duration,
 	reason Reason, reasonText string, modNote string, origin Origin, cidr string,
 	banType BanType, banCIDR *BanCIDR,
 ) error {
 	var opts BanCIDROpts
-	if errBaseOpts := newBaseBanOpts(ctx, source, target, duration, reason, reasonText, modNote, origin,
+	if errBaseOpts := newBaseBanOpts(source, target, duration, reason, reasonText, modNote, origin,
 		banType, &opts.BaseBanOpts); errBaseOpts != nil {
 		return errBaseOpts
 	}
@@ -455,13 +443,12 @@ func NewBanCIDR(ctx context.Context, source SteamIDProvider, target StringSID, d
 	return banCIDR.Apply(opts)
 }
 
-func NewBanSteamGroup(ctx context.Context, source SteamIDProvider, target StringSID, duration time.Duration,
-	modNote string, origin Origin, groupID steamid.GID, groupName string,
+func NewBanSteamGroup(source steamid.SteamID, target steamid.SteamID, duration time.Duration,
+	modNote string, origin Origin, groupID steamid.SteamID, groupName string,
 	banType BanType, banGroup *BanGroup,
 ) error {
 	var opts BanSteamGroupOpts
-
-	errBaseOpts := newBaseBanOpts(ctx, source, target, duration, Custom, "Group Ban", modNote, origin, banType, &opts.BaseBanOpts)
+	errBaseOpts := newBaseBanOpts(source, target, duration, Custom, "Group Ban", modNote, origin, banType, &opts.BaseBanOpts)
 	if errBaseOpts != nil {
 		return errBaseOpts
 	}
@@ -502,17 +489,17 @@ type AppealOverview struct {
 }
 
 type BanAppealMessage struct {
-	BanID        int64         `json:"ban_id"`
-	BanMessageID int64         `json:"ban_message_id"`
-	AuthorID     steamid.SID64 `json:"author_id"`
-	MessageMD    string        `json:"message_md"`
-	Deleted      bool          `json:"deleted"`
-	CreatedOn    time.Time     `json:"created_on"`
-	UpdatedOn    time.Time     `json:"updated_on"`
+	BanID        int64           `json:"ban_id"`
+	BanMessageID int64           `json:"ban_message_id"`
+	AuthorID     steamid.SteamID `json:"author_id"`
+	MessageMD    string          `json:"message_md"`
+	Deleted      bool            `json:"deleted"`
+	CreatedOn    time.Time       `json:"created_on"`
+	UpdatedOn    time.Time       `json:"updated_on"`
 	SimplePerson
 }
 
-func NewBanAppealMessage(banID int64, authorID steamid.SID64, message string) BanAppealMessage {
+func NewBanAppealMessage(banID int64, authorID steamid.SteamID, message string) BanAppealMessage {
 	return BanAppealMessage{
 		BanID:     banID,
 		AuthorID:  authorID,

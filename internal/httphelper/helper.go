@@ -14,7 +14,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type APIError struct {
@@ -44,26 +44,26 @@ func Bind(ctx *gin.Context, target any) bool {
 func CurrentUserProfile(ctx *gin.Context) domain.UserProfile {
 	maybePerson, found := ctx.Get(ctxKeyUserProfile)
 	if !found {
-		return domain.NewUserProfile("")
+		return domain.NewUserProfile(steamid.SteamID{})
 	}
 
 	person, ok := maybePerson.(domain.UserProfile)
 	if !ok {
-		return domain.NewUserProfile("")
+		return domain.NewUserProfile(steamid.SteamID{})
 	}
 
 	return person
 }
 
-func GetSID64Param(c *gin.Context, key string) (steamid.SID64, error) {
+func GetSID64Param(c *gin.Context, key string) (steamid.SteamID, error) {
 	i, errGetParam := GetInt64Param(c, key)
 	if errGetParam != nil {
-		return "", errGetParam
+		return steamid.SteamID{}, errGetParam
 	}
 
 	sid := steamid.New(i)
 	if !sid.Valid() {
-		return "", domain.ErrInvalidSID
+		return steamid.SteamID{}, domain.ErrInvalidSID
 	}
 
 	return sid, nil

@@ -8,7 +8,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type appealRepository struct {
@@ -30,22 +30,12 @@ func (r *appealRepository) GetAppealsByActivity(ctx context.Context, opts domain
 		constraints = append(constraints, sq.Eq{"b.appeal_state": opts.AppealState})
 	}
 
-	if opts.SourceID != "" {
-		authorID, errAuthorID := opts.SourceID.SID64(ctx)
-		if errAuthorID != nil {
-			return nil, 0, errors.Join(errAuthorID, domain.ErrSourceID)
-		}
-
-		constraints = append(constraints, sq.Eq{"b.source_id": authorID.Int64()})
+	if opts.SourceID.Valid() {
+		constraints = append(constraints, sq.Eq{"b.source_id": opts.SourceID.Int64()})
 	}
 
-	if opts.TargetID != "" {
-		targetID, errTargetID := opts.TargetID.SID64(ctx)
-		if errTargetID != nil {
-			return nil, 0, errors.Join(errTargetID, domain.ErrTargetID)
-		}
-
-		constraints = append(constraints, sq.Eq{"b.target_id": targetID.Int64()})
+	if opts.TargetID.Valid() {
+		constraints = append(constraints, sq.Eq{"b.target_id": opts.TargetID.Int64()})
 	}
 
 	counterQuery := r.db.

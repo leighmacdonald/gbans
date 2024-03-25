@@ -11,7 +11,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 	"golang.org/x/sync/errgroup"
 )
@@ -27,10 +27,10 @@ func NewPersonUsecase(repository domain.PersonRepository, configUsecase domain.C
 	}
 }
 
-func (u personUsecase) QueryProfile(ctx context.Context, query string) (domain.ProfileReponse, error) {
-	var resp domain.ProfileReponse
+func (u personUsecase) QueryProfile(ctx context.Context, query string) (domain.ProfileResponse, error) {
+	var resp domain.ProfileResponse
 
-	sid, errResolveSID64 := steamid.ResolveSID64(ctx, query)
+	sid, errResolveSID64 := steamid.Resolve(ctx, query)
 	if errResolveSID64 != nil {
 		return resp, domain.ErrInvalidSID
 	}
@@ -187,7 +187,7 @@ func (u personUsecase) Start(ctx context.Context) {
 // SetSteam is used to associate a discord user with either steam id. This is used
 // instead of requiring users to link their steam account to discord itself. It also
 // means the discord does not require more privileged intents.
-func (u personUsecase) SetSteam(ctx context.Context, sid64 steamid.SID64, discordID string) error {
+func (u personUsecase) SetSteam(ctx context.Context, sid64 steamid.SteamID, discordID string) error {
 	newPerson, errGetPerson := u.GetOrCreatePersonBySteamID(ctx, sid64)
 	if errGetPerson != nil || !sid64.Valid() {
 		return domain.ErrInvalidSID
@@ -207,11 +207,11 @@ func (u personUsecase) SetSteam(ctx context.Context, sid64 steamid.SID64, discor
 	return nil
 }
 
-func (u personUsecase) GetPersonBySteamID(ctx context.Context, sid64 steamid.SID64) (domain.Person, error) {
+func (u personUsecase) GetPersonBySteamID(ctx context.Context, sid64 steamid.SteamID) (domain.Person, error) {
 	return u.personRepo.GetPersonBySteamID(ctx, sid64)
 }
 
-func (u personUsecase) DropPerson(ctx context.Context, steamID steamid.SID64) error {
+func (u personUsecase) DropPerson(ctx context.Context, steamID steamid.SteamID) error {
 	return u.personRepo.DropPerson(ctx, steamID)
 }
 
@@ -231,7 +231,7 @@ func (u personUsecase) GetPeople(ctx context.Context, filter domain.PlayerQuery)
 	return u.personRepo.GetPeople(ctx, filter)
 }
 
-func (u personUsecase) GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.SID64) (domain.Person, error) {
+func (u personUsecase) GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.SteamID) (domain.Person, error) {
 	person, errGetPerson := u.personRepo.GetPersonBySteamID(ctx, sid64)
 	if errGetPerson != nil && errors.Is(errGetPerson, domain.ErrNoResult) {
 		// FIXME
@@ -261,7 +261,7 @@ func (u personUsecase) GetSteamIdsAbove(ctx context.Context, privilege domain.Pr
 	return u.personRepo.GetSteamIdsAbove(ctx, privilege)
 }
 
-func (u personUsecase) GetPersonSettings(ctx context.Context, steamID steamid.SID64) (domain.PersonSettings, error) {
+func (u personUsecase) GetPersonSettings(ctx context.Context, steamID steamid.SteamID) (domain.PersonSettings, error) {
 	return u.personRepo.GetPersonSettings(ctx, steamID)
 }
 
@@ -282,7 +282,7 @@ func (u personUsecase) SavePersonSettings(ctx context.Context, user domain.Perso
 	return settings, nil
 }
 
-func (u personUsecase) SetPermissionLevel(ctx context.Context, steamID steamid.SID64, level domain.Privilege) error {
+func (u personUsecase) SetPermissionLevel(ctx context.Context, steamID steamid.SteamID, level domain.Privilege) error {
 	person, errGet := u.GetPersonBySteamID(ctx, steamID)
 	if errGet != nil {
 		return errGet

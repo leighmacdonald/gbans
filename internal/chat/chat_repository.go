@@ -16,7 +16,7 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/gbans/pkg/util"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type chatRepository struct {
@@ -246,13 +246,8 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.Cha
 		constraints = append(constraints, sq.Eq{"m.server_id": filters.ServerID})
 	}
 
-	if filters.SourceID != "" {
-		sid, errSID := filters.SourceID.SID64(ctx)
-		if errSID != nil {
-			return nil, 0, errors.Join(errSID, domain.ErrSourceID)
-		}
-
-		constraints = append(constraints, sq.Eq{"m.steam_id": sid.Int64()})
+	if filters.SourceID.Valid() {
+		constraints = append(constraints, sq.Eq{"m.steam_id": filters.SourceID.Int64()})
 	}
 
 	if filters.Personaname != "" {

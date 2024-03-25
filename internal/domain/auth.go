@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 const (
@@ -23,11 +23,11 @@ type AuthRepository interface {
 type AuthUsecase interface {
 	Start(ctx context.Context)
 	DeletePersonAuth(ctx context.Context, authID int64) error
-	NewUserToken(steamID steamid.SID64, cookieKey string, userContext string, validDuration time.Duration) (string, error)
-	Sid64FromJWTToken(token string, cookieKey string) (steamid.SID64, error)
+	NewUserToken(steamID steamid.SteamID, cookieKey string, userContext string, validDuration time.Duration) (string, error)
+	Sid64FromJWTToken(token string, cookieKey string) (steamid.SteamID, error)
 	AuthMiddleware(level Privilege) gin.HandlerFunc
 	AuthServerMiddleWare() gin.HandlerFunc
-	MakeTokens(ctx *gin.Context, cookieKey string, sid steamid.SID64, createRefresh bool) (UserTokens, error)
+	MakeTokens(ctx *gin.Context, cookieKey string, sid steamid.SteamID, createRefresh bool) (UserTokens, error)
 	TokenFromHeader(ctx *gin.Context, emptyOK bool) (string, error)
 	MakeGetTokenKey(cookieKey string) func(_ *jwt.Token) (any, error)
 	GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *PersonAuth) error

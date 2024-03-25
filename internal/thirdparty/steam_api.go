@@ -9,7 +9,7 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/util"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 )
 
@@ -17,7 +17,7 @@ const steamQueryMaxResults = 100
 
 const chunkSize = 100
 
-func FetchPlayerBans(ctx context.Context, steamIDs []steamid.SID64) ([]steamweb.PlayerBanState, error) {
+func FetchPlayerBans(ctx context.Context, steamIDs []steamid.SteamID) ([]steamweb.PlayerBanState, error) {
 	var (
 		waitGroup = &sync.WaitGroup{}
 		results   []steamweb.PlayerBanState
@@ -55,27 +55,8 @@ func FetchPlayerBans(ctx context.Context, steamIDs []steamid.SID64) ([]steamweb.
 	return results, nil
 }
 
-// ResolveSID is just a simple helper for calling steamid.ResolveSID64 with a timeout.
-func ResolveSID(ctx context.Context, sidStr string) (steamid.SID64, error) {
-	localCtx, cancel := context.WithTimeout(ctx, time.Second*3)
-	defer cancel()
-
-	sid64, errString := steamid.StringToSID64(sidStr)
-	if errString == nil && sid64.Valid() {
-		return sid64, nil
-	}
-
-	sid, errResolve := steamid.ResolveSID64(localCtx, sidStr)
-	if errResolve != nil {
-		return "", errors.Join(errResolve, ErrResolveVanity)
-	}
-
-	return sid, nil
-}
-
 var (
 	ErrPlayerAPIFailed = errors.New("could not update player from steam api")
-	ErrResolveVanity   = errors.New("failed to resolve vanity")
 	ErrInvalidResult   = errors.New("invalid response received")
 	ErrSteamBans       = errors.New("failed to fetch player bans")
 )

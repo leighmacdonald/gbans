@@ -8,7 +8,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type steamGroupRepository struct {
@@ -77,7 +77,7 @@ func (r *steamGroupRepository) updateBanGroup(ctx context.Context, banGroup *dom
 		Where(sq.Eq{"ban_group_id": banGroup.BanGroupID})))
 }
 
-func (r *steamGroupRepository) GetByGID(ctx context.Context, groupID steamid.GID, banGroup *domain.BanGroup) error {
+func (r *steamGroupRepository) GetByGID(ctx context.Context, groupID steamid.SteamID, banGroup *domain.BanGroup) error {
 	query := r.db.
 		Builder().
 		Select("ban_group_id", "source_id", "target_id", "group_name", "is_enabled", "deleted",
@@ -104,7 +104,7 @@ func (r *steamGroupRepository) GetByGID(ctx context.Context, groupID steamid.GID
 
 	banGroup.SourceID = steamid.New(sourceID)
 	banGroup.TargetID = steamid.New(targetID)
-	banGroup.GroupID = steamid.NewGID(newGroupID)
+	banGroup.GroupID = steamid.New(newGroupID)
 
 	return nil
 }
@@ -148,7 +148,7 @@ func (r *steamGroupRepository) GetByID(ctx context.Context, banGroupID int64, ba
 
 	banGroup.SourceID = steamid.New(sourceID)
 	banGroup.TargetID = steamid.New(targetID)
-	banGroup.GroupID = steamid.NewGID(groupID)
+	banGroup.GroupID = steamid.New(groupID)
 
 	return nil
 }
@@ -180,7 +180,7 @@ func (r *steamGroupRepository) Get(ctx context.Context, filter domain.GroupBansQ
 	}
 
 	if filter.GroupID != "" {
-		gid := steamid.NewGID(filter.GroupID)
+		gid := steamid.New(filter.GroupID)
 		if !gid.Valid() {
 			return nil, 0, steamid.ErrInvalidGID
 		}
@@ -188,22 +188,12 @@ func (r *steamGroupRepository) Get(ctx context.Context, filter domain.GroupBansQ
 		constraints = append(constraints, sq.Eq{"s.group_id": gid.Int64()})
 	}
 
-	if filter.TargetID != "" {
-		targetID, errTargetID := filter.TargetID.SID64(ctx)
-		if errTargetID != nil {
-			return nil, 0, errors.Join(errTargetID, domain.ErrTargetID)
-		}
-
-		constraints = append(constraints, sq.Eq{"s.target_id": targetID.Int64()})
+	if filter.TargetID.Valid() {
+		constraints = append(constraints, sq.Eq{"s.target_id": filter.TargetID.Int64()})
 	}
 
-	if filter.SourceID != "" {
-		sourceID, errSourceID := filter.SourceID.SID64(ctx)
-		if errSourceID != nil {
-			return nil, 0, errors.Join(errSourceID, domain.ErrSourceID)
-		}
-
-		constraints = append(constraints, sq.Eq{"s.source_id": sourceID.Int64()})
+	if filter.SourceID.Valid() {
+		constraints = append(constraints, sq.Eq{"s.source_id": filter.SourceID.Int64()})
 	}
 
 	builder = filter.QueryFilter.ApplySafeOrder(builder, map[string][]string{
@@ -262,7 +252,7 @@ func (r *steamGroupRepository) Get(ctx context.Context, filter domain.GroupBansQ
 
 		group.SourceID = steamid.New(sourceID)
 		group.TargetID = steamid.New(targetID)
-		group.GroupID = steamid.NewGID(groupID)
+		group.GroupID = steamid.New(groupID)
 
 		groups = append(groups, group)
 	}

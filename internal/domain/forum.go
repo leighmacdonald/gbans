@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/pkg/util"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type ForumRepository interface {
@@ -90,25 +90,25 @@ func (category ForumCategory) NewForum(title string, description string) Forum {
 }
 
 type Forum struct {
-	ForumID             int           `json:"forum_id"`
-	ForumCategoryID     int           `json:"forum_category_id"`
-	LastThreadID        int64         `json:"last_thread_id"`
-	Title               string        `json:"title"`
-	Description         string        `json:"description"`
-	Ordering            int           `json:"ordering"`
-	CountThreads        int64         `json:"count_threads"`
-	CountMessages       int64         `json:"count_messages"`
-	PermissionLevel     Privilege     `json:"permission_level"`
-	RecentForumThreadID int64         `json:"recent_forum_thread_id"`
-	RecentForumTitle    string        `json:"recent_forum_title"`
-	RecentSourceID      steamid.SID64 `json:"recent_source_id"`
-	RecentPersonaname   string        `json:"recent_personaname"`
-	RecentAvatarhash    string        `json:"recent_avatarhash"`
-	RecentCreatedOn     time.Time     `json:"recent_created_on"`
+	ForumID             int             `json:"forum_id"`
+	ForumCategoryID     int             `json:"forum_category_id"`
+	LastThreadID        int64           `json:"last_thread_id"`
+	Title               string          `json:"title"`
+	Description         string          `json:"description"`
+	Ordering            int             `json:"ordering"`
+	CountThreads        int64           `json:"count_threads"`
+	CountMessages       int64           `json:"count_messages"`
+	PermissionLevel     Privilege       `json:"permission_level"`
+	RecentForumThreadID int64           `json:"recent_forum_thread_id"`
+	RecentForumTitle    string          `json:"recent_forum_title"`
+	RecentSourceID      steamid.SteamID `json:"recent_source_id"`
+	RecentPersonaname   string          `json:"recent_personaname"`
+	RecentAvatarhash    string          `json:"recent_avatarhash"`
+	RecentCreatedOn     time.Time       `json:"recent_created_on"`
 	TimeStamped
 }
 
-func (forum Forum) NewThread(title string, sourceID steamid.SID64) ForumThread {
+func (forum Forum) NewThread(title string, sourceID steamid.SteamID) ForumThread {
 	return ForumThread{
 		ForumID:     forum.ForumID,
 		SourceID:    sourceID,
@@ -118,19 +118,19 @@ func (forum Forum) NewThread(title string, sourceID steamid.SID64) ForumThread {
 }
 
 type ForumThread struct {
-	ForumThreadID int64         `json:"forum_thread_id"`
-	ForumID       int           `json:"forum_id"`
-	SourceID      steamid.SID64 `json:"source_id"`
-	Title         string        `json:"title"`
-	Sticky        bool          `json:"sticky"`
-	Locked        bool          `json:"locked"`
-	Views         int64         `json:"views"`
-	Replies       int64         `json:"replies"`
+	ForumThreadID int64           `json:"forum_thread_id"`
+	ForumID       int             `json:"forum_id"`
+	SourceID      steamid.SteamID `json:"source_id"`
+	Title         string          `json:"title"`
+	Sticky        bool            `json:"sticky"`
+	Locked        bool            `json:"locked"`
+	Views         int64           `json:"views"`
+	Replies       int64           `json:"replies"`
 	SimplePerson
 	TimeStamped
 }
 
-func (thread ForumThread) NewMessage(sourceID steamid.SID64, body string) ForumMessage {
+func (thread ForumThread) NewMessage(sourceID steamid.SteamID, body string) ForumMessage {
 	return ForumMessage{
 		ForumMessageID: 0,
 		ForumThreadID:  thread.ForumThreadID,
@@ -141,18 +141,18 @@ func (thread ForumThread) NewMessage(sourceID steamid.SID64, body string) ForumM
 }
 
 type ForumMessage struct {
-	ForumMessageID int64         `json:"forum_message_id"`
-	ForumThreadID  int64         `json:"forum_thread_id"`
-	SourceID       steamid.SID64 `json:"source_id"`
-	BodyMD         string        `json:"body_md"`
-	Title          string        `json:"title"`
-	Online         bool          `json:"online"`
-	Signature      string        `json:"signature"`
+	ForumMessageID int64           `json:"forum_message_id"`
+	ForumThreadID  int64           `json:"forum_thread_id"`
+	SourceID       steamid.SteamID `json:"source_id"`
+	BodyMD         string          `json:"body_md"`
+	Title          string          `json:"title"`
+	Online         bool            `json:"online"`
+	Signature      string          `json:"signature"`
 	SimplePerson
 	TimeStamped
 }
 
-func (message ForumMessage) NewVote(sourceID steamid.SID64, vote Vote) ForumMessageVote {
+func (message ForumMessage) NewVote(sourceID steamid.SteamID, vote Vote) ForumMessageVote {
 	return ForumMessageVote{
 		ForumMessageID: message.ForumMessageID,
 		SourceID:       sourceID,
@@ -162,10 +162,10 @@ func (message ForumMessage) NewVote(sourceID steamid.SID64, vote Vote) ForumMess
 }
 
 type ForumMessageVote struct {
-	ForumMessageVoteID int64         `json:"forum_message_vote_id"`
-	ForumMessageID     int64         `json:"forum_message_id"`
-	SourceID           steamid.SID64 `json:"source_id"`
-	Vote               Vote          `json:"vote"` // -1/+1
+	ForumMessageVoteID int64           `json:"forum_message_vote_id"`
+	ForumMessageID     int64           `json:"forum_message_id"`
+	SourceID           steamid.SteamID `json:"source_id"`
+	Vote               Vote            `json:"vote"` // -1/+1
 	TimeStamped
 }
 

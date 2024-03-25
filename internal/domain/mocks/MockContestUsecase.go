@@ -8,7 +8,7 @@ import (
 	domain "github.com/leighmacdonald/gbans/internal/domain"
 	mock "github.com/stretchr/testify/mock"
 
-	steamid "github.com/leighmacdonald/steamid/v3/steamid"
+	steamid "github.com/leighmacdonald/steamid/v4/steamid"
 
 	uuid "github.com/gofrs/uuid/v5"
 )
@@ -420,7 +420,7 @@ func (_c *MockContestUsecase_ContestEntryVoteDelete_Call) RunAndReturn(run func(
 }
 
 // ContestEntryVoteGet provides a mock function with given fields: ctx, contestEntryID, steamID, record
-func (_m *MockContestUsecase) ContestEntryVoteGet(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SID64, record *domain.ContentVoteRecord) error {
+func (_m *MockContestUsecase) ContestEntryVoteGet(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SteamID, record *domain.ContentVoteRecord) error {
 	ret := _m.Called(ctx, contestEntryID, steamID, record)
 
 	if len(ret) == 0 {
@@ -428,7 +428,7 @@ func (_m *MockContestUsecase) ContestEntryVoteGet(ctx context.Context, contestEn
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, steamid.SID64, *domain.ContentVoteRecord) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, steamid.SteamID, *domain.ContentVoteRecord) error); ok {
 		r0 = rf(ctx, contestEntryID, steamID, record)
 	} else {
 		r0 = ret.Error(0)
@@ -445,15 +445,15 @@ type MockContestUsecase_ContestEntryVoteGet_Call struct {
 // ContestEntryVoteGet is a helper method to define mock.On call
 //   - ctx context.Context
 //   - contestEntryID uuid.UUID
-//   - steamID steamid.SID64
+//   - steamID steamid.SteamID
 //   - record *domain.ContentVoteRecord
 func (_e *MockContestUsecase_Expecter) ContestEntryVoteGet(ctx interface{}, contestEntryID interface{}, steamID interface{}, record interface{}) *MockContestUsecase_ContestEntryVoteGet_Call {
 	return &MockContestUsecase_ContestEntryVoteGet_Call{Call: _e.mock.On("ContestEntryVoteGet", ctx, contestEntryID, steamID, record)}
 }
 
-func (_c *MockContestUsecase_ContestEntryVoteGet_Call) Run(run func(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SID64, record *domain.ContentVoteRecord)) *MockContestUsecase_ContestEntryVoteGet_Call {
+func (_c *MockContestUsecase_ContestEntryVoteGet_Call) Run(run func(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SteamID, record *domain.ContentVoteRecord)) *MockContestUsecase_ContestEntryVoteGet_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(steamid.SID64), args[3].(*domain.ContentVoteRecord))
+		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(steamid.SteamID), args[3].(*domain.ContentVoteRecord))
 	})
 	return _c
 }
@@ -463,7 +463,7 @@ func (_c *MockContestUsecase_ContestEntryVoteGet_Call) Return(_a0 error) *MockCo
 	return _c
 }
 
-func (_c *MockContestUsecase_ContestEntryVoteGet_Call) RunAndReturn(run func(context.Context, uuid.UUID, steamid.SID64, *domain.ContentVoteRecord) error) *MockContestUsecase_ContestEntryVoteGet_Call {
+func (_c *MockContestUsecase_ContestEntryVoteGet_Call) RunAndReturn(run func(context.Context, uuid.UUID, steamid.SteamID, *domain.ContentVoteRecord) error) *MockContestUsecase_ContestEntryVoteGet_Call {
 	_c.Call.Return(run)
 	return _c
 }

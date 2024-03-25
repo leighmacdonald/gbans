@@ -8,7 +8,7 @@ import (
 	domain "github.com/leighmacdonald/gbans/internal/domain"
 	mock "github.com/stretchr/testify/mock"
 
-	steamid "github.com/leighmacdonald/steamid/v3/steamid"
+	steamid "github.com/leighmacdonald/steamid/v4/steamid"
 
 	uuid "github.com/gofrs/uuid/v5"
 )
@@ -27,7 +27,7 @@ func (_m *MockMediaUsecase) EXPECT() *MockMediaUsecase_Expecter {
 }
 
 // Create provides a mock function with given fields: ctx, steamID, name, mimeType, content, mimeTypesAllowed
-func (_m *MockMediaUsecase) Create(ctx context.Context, steamID steamid.SID64, name string, mimeType string, content []byte, mimeTypesAllowed []string) (*domain.Media, error) {
+func (_m *MockMediaUsecase) Create(ctx context.Context, steamID steamid.SteamID, name string, mimeType string, content []byte, mimeTypesAllowed []string) (*domain.Media, error) {
 	ret := _m.Called(ctx, steamID, name, mimeType, content, mimeTypesAllowed)
 
 	if len(ret) == 0 {
@@ -36,10 +36,10 @@ func (_m *MockMediaUsecase) Create(ctx context.Context, steamID steamid.SID64, n
 
 	var r0 *domain.Media
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, steamid.SID64, string, string, []byte, []string) (*domain.Media, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, steamid.SteamID, string, string, []byte, []string) (*domain.Media, error)); ok {
 		return rf(ctx, steamID, name, mimeType, content, mimeTypesAllowed)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, steamid.SID64, string, string, []byte, []string) *domain.Media); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, steamid.SteamID, string, string, []byte, []string) *domain.Media); ok {
 		r0 = rf(ctx, steamID, name, mimeType, content, mimeTypesAllowed)
 	} else {
 		if ret.Get(0) != nil {
@@ -47,7 +47,7 @@ func (_m *MockMediaUsecase) Create(ctx context.Context, steamID steamid.SID64, n
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, steamid.SID64, string, string, []byte, []string) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, steamid.SteamID, string, string, []byte, []string) error); ok {
 		r1 = rf(ctx, steamID, name, mimeType, content, mimeTypesAllowed)
 	} else {
 		r1 = ret.Error(1)
@@ -63,7 +63,7 @@ type MockMediaUsecase_Create_Call struct {
 
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
-//   - steamID steamid.SID64
+//   - steamID steamid.SteamID
 //   - name string
 //   - mimeType string
 //   - content []byte
@@ -72,9 +72,9 @@ func (_e *MockMediaUsecase_Expecter) Create(ctx interface{}, steamID interface{}
 	return &MockMediaUsecase_Create_Call{Call: _e.mock.On("Create", ctx, steamID, name, mimeType, content, mimeTypesAllowed)}
 }
 
-func (_c *MockMediaUsecase_Create_Call) Run(run func(ctx context.Context, steamID steamid.SID64, name string, mimeType string, content []byte, mimeTypesAllowed []string)) *MockMediaUsecase_Create_Call {
+func (_c *MockMediaUsecase_Create_Call) Run(run func(ctx context.Context, steamID steamid.SteamID, name string, mimeType string, content []byte, mimeTypesAllowed []string)) *MockMediaUsecase_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(steamid.SID64), args[2].(string), args[3].(string), args[4].([]byte), args[5].([]string))
+		run(args[0].(context.Context), args[1].(steamid.SteamID), args[2].(string), args[3].(string), args[4].([]byte), args[5].([]string))
 	})
 	return _c
 }
@@ -84,7 +84,7 @@ func (_c *MockMediaUsecase_Create_Call) Return(_a0 *domain.Media, _a1 error) *Mo
 	return _c
 }
 
-func (_c *MockMediaUsecase_Create_Call) RunAndReturn(run func(context.Context, steamid.SID64, string, string, []byte, []string) (*domain.Media, error)) *MockMediaUsecase_Create_Call {
+func (_c *MockMediaUsecase_Create_Call) RunAndReturn(run func(context.Context, steamid.SteamID, string, string, []byte, []string) (*domain.Media, error)) *MockMediaUsecase_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -3,6 +3,7 @@ package ban
 import (
 	"context"
 	"errors"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 	"log/slog"
 	"net"
 
@@ -69,7 +70,7 @@ func (s *banNetUsecase) Ban(ctx context.Context, banNet *domain.BanCIDR) error {
 	s.discordUsecase.SendPayload(domain.ChannelModLog, discord.BanCIDRResponse(realCIDR, author, conf.ExtURL(author), target, banNet))
 
 	go func(_ *net.IPNet, reason domain.Reason) {
-		foundPlayers := s.stateUsecase.Find("", "", nil, realCIDR)
+		foundPlayers := s.stateUsecase.Find("", steamid.SteamID{}, nil, realCIDR)
 
 		if len(foundPlayers) == 0 {
 			return

@@ -14,7 +14,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/log"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type reportHandler struct {
@@ -96,33 +96,31 @@ func (h reportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 		// ServerStore initiated requests will have a sourceID set by the server
 		// Web based reports the source should not be set, the reporter will be taken from the
 		// current session information instead
-		if req.SourceID == "" {
-			req.SourceID = domain.StringSID(currentUser.SteamID.String())
+		if !req.SourceID.Valid() {
+			req.SourceID = currentUser.SteamID
 		}
 
-		sourceID, errSourceID := req.SourceID.SID64(ctx)
-		if errSourceID != nil {
+		if !req.SourceID.Valid() {
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrSourceID)
-			slog.Error("Invalid steam_id", log.ErrAttr(errSourceID))
+			slog.Error("Invalid steam_id", slog.String("steamid", req.SourceID.String()))
 
 			return
 		}
 
-		targetID, errTargetID := req.TargetID.SID64(ctx)
-		if errTargetID != nil {
+		if !req.TargetID.Valid() {
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrTargetID)
-			slog.Error("Invalid target_id", log.ErrAttr(errTargetID))
+			slog.Error("Invalid target_id", slog.String("steamid", req.TargetID.String()))
 
 			return
 		}
 
-		if sourceID == targetID {
+		if req.SourceID.Int64() == req.TargetID.Int64() {
 			httphelper.ResponseErr(ctx, http.StatusConflict, domain.ErrSelfReport)
 
 			return
 		}
 
-		personSource, errSource := h.personUsecase.GetPersonBySteamID(ctx, sourceID)
+		personSource, errSource := h.personUsecase.GetPersonBySteamID(ctx, req.SourceID)
 		if errSource != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			slog.Error("Could not load player profile", log.ErrAttr(errSource))
@@ -130,7 +128,7 @@ func (h reportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 			return
 		}
 
-		personTarget, errTarget := h.personUsecase.GetOrCreatePersonBySteamID(ctx, targetID)
+		personTarget, errTarget := h.personUsecase.GetOrCreatePersonBySteamID(ctx, req.TargetID)
 		if errTarget != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			slog.Error("Could not load player profile", log.ErrAttr(errTarget))
@@ -149,7 +147,7 @@ func (h reportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 		}
 
 		// Ensure the user doesn't already have an open report against the user
-		existing, errReports := h.reportUsecase.GetReportBySteamID(ctx, personSource.SteamID, targetID)
+		existing, errReports := h.reportUsecase.GetReportBySteamID(ctx, personSource.SteamID, req.TargetID)
 		if errReports != nil {
 			if !errors.Is(errReports, domain.ErrNoResult) {
 				slog.Error("Failed to query reports by steam id", log.ErrAttr(errReports))
@@ -167,10 +165,10 @@ func (h reportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 
 		// TODO encapsulate all operations in single tx
 		report := domain.NewReport()
-		report.SourceID = sourceID
+		report.SourceID = req.SourceID
 		report.ReportStatus = domain.Opened
 		report.Description = req.Description
-		report.TargetID = targetID
+		report.TargetID = req.TargetID
 		report.Reason = req.Reason
 		report.ReasonText = req.ReasonText
 		parts := strings.Split(req.DemoName, "/")

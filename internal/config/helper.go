@@ -8,7 +8,7 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/util"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/mitchellh/go-homedir"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
@@ -60,7 +60,7 @@ func setDefaultConfigValues() {
 		"general.server_status_update_freq":        "60s",
 		"general.master_server_status_update_freq": "1m",
 		"general.external_url":                     "http://gbans.localhost:6006",
-		"general.banned_steam_group_ids":           []steamid.GID{},
+		"general.banned_steam_group_ids":           []steamid.SteamID{},
 		"general.banned_server_addresses":          []string{},
 		"general.demo_cleanup_enabled":             true,
 		"general.demo_count_limit":                 10000,

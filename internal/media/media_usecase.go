@@ -7,7 +7,7 @@ import (
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 	"golang.org/x/exp/slices"
 )
 
@@ -25,7 +25,7 @@ func NewMediaUsecase(bucket string, repository domain.MediaRepository, assetUsec
 	}
 }
 
-func (u mediaUsecase) Create(ctx context.Context, steamID steamid.SID64, name string, mimeType string, content []byte,
+func (u mediaUsecase) Create(ctx context.Context, steamID steamid.SteamID, name string, mimeType string, content []byte,
 	mimeTypesAllowed []string,
 ) (*domain.Media, error) {
 	if len(mimeTypesAllowed) > 0 && !slices.Contains(mimeTypesAllowed, strings.ToLower(mimeType)) {

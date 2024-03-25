@@ -13,7 +13,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/fp"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 )
 
@@ -25,7 +25,7 @@ func NewPersonRepository(database database.Database) domain.PersonRepository {
 	return &personRepository{db: database}
 }
 
-func (r *personRepository) DropPerson(ctx context.Context, steamID steamid.SID64) error {
+func (r *personRepository) DropPerson(ctx context.Context, steamID steamid.SteamID) error {
 	return r.db.DBErr(r.db.ExecDeleteBuilder(ctx, r.db.
 		Builder().
 		Delete("person").
@@ -123,7 +123,7 @@ var profileColumns = []string{ //nolint:gochecknoglobals
 
 // GetPersonBySteamID returns a person by their steam_id. ErrNoResult is returned if the steam_id
 // is not known.
-func (r *personRepository) GetPersonBySteamID(ctx context.Context, sid64 steamid.SID64) (domain.Person, error) {
+func (r *personRepository) GetPersonBySteamID(ctx context.Context, sid64 steamid.SteamID) (domain.Person, error) {
 	var person domain.Person
 
 	if !sid64.Valid() {
@@ -183,7 +183,7 @@ func (r *personRepository) GetPersonBySteamID(ctx context.Context, sid64 steamid
 
 func (r *personRepository) GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collection) (domain.People, error) {
 	var ids []int64 //nolint:prealloc
-	for _, sid := range fp.Uniq[steamid.SID64](steamIds) {
+	for _, sid := range fp.Uniq[steamid.SteamID](steamIds) {
 		ids = append(ids, sid.Int64())
 	}
 
@@ -203,7 +203,7 @@ func (r *personRepository) GetPeopleBySteamID(ctx context.Context, steamIds stea
 	for rows.Next() {
 		var (
 			steamID int64
-			person  = domain.NewPerson("")
+			person  = domain.NewPerson(steamid.SteamID{})
 		)
 
 		if errScan := rows.Scan(&steamID, &person.CreatedOn, &person.UpdatedOn, &person.CommunityVisibilityState,
@@ -287,13 +287,8 @@ func (r *personRepository) GetPeople(ctx context.Context, filter domain.PlayerQu
 		conditions = append(conditions, sq.Eq{"p.steam_id": foundIds})
 	}
 
-	if filter.SteamID != "" {
-		steamID, errSteamID := filter.SteamID.SID64(ctx)
-		if errSteamID != nil {
-			return nil, 0, errors.Join(errSteamID, domain.ErrSourceID)
-		}
-
-		conditions = append(conditions, sq.Eq{"p.steam_id": steamID.Int64()})
+	if filter.SteamID.Valid() {
+		conditions = append(conditions, sq.Eq{"p.steam_id": filter.SteamID.Int64()})
 	}
 
 	if filter.Personaname != "" {
@@ -324,7 +319,7 @@ func (r *personRepository) GetPeople(ctx context.Context, filter domain.PlayerQu
 
 	for rows.Next() {
 		var (
-			person  = domain.NewPerson("")
+			person  = domain.NewPerson(steamid.SteamID{})
 			steamID int64
 		)
 
@@ -413,7 +408,7 @@ func (r *personRepository) GetExpiredProfiles(ctx context.Context, limit uint64)
 
 	for rows.Next() {
 		var (
-			person  = domain.NewPerson("")
+			person  = domain.NewPerson(steamid.SteamID{})
 			steamID int64
 		)
 
@@ -510,7 +505,7 @@ func (r *personRepository) GetSteamIdsAbove(ctx context.Context, privilege domai
 	return ids, nil
 }
 
-func (r *personRepository) GetPersonSettings(ctx context.Context, steamID steamid.SID64) (domain.PersonSettings, error) {
+func (r *personRepository) GetPersonSettings(ctx context.Context, steamID steamid.SteamID) (domain.PersonSettings, error) {
 	var settings domain.PersonSettings
 
 	row, errRow := r.db.QueryRowBuilder(ctx, r.db.

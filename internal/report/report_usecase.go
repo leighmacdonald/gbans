@@ -11,7 +11,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type reportUsecase struct {
@@ -100,7 +100,7 @@ func (r reportUsecase) Start(ctx context.Context) {
 	}
 }
 
-func (r reportUsecase) GetReportBySteamID(ctx context.Context, authorID steamid.SID64, steamID steamid.SID64) (domain.Report, error) {
+func (r reportUsecase) GetReportBySteamID(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID) (domain.Report, error) {
 	return r.rr.GetReportBySteamID(ctx, authorID, steamID)
 }
 
@@ -111,21 +111,16 @@ func (r reportUsecase) GetReports(ctx context.Context, user domain.PersonInfo, o
 
 	// Make sure the person requesting is either a moderator, or a user
 	// only able to request their own reports
-	var sourceID steamid.SID64
+	var sourceID steamid.SteamID
 
 	if !user.HasPermission(domain.PModerator) {
 		sourceID = user.GetSteamID()
-	} else if opts.SourceID != "" {
-		sid, errSourceID := opts.SourceID.SID64(ctx)
-		if errSourceID != nil {
-			return nil, 0, errSourceID
-		}
-
-		sourceID = sid
+	} else if opts.SourceID.Valid() {
+		sourceID = opts.SourceID
 	}
 
 	if sourceID.Valid() {
-		opts.SourceID = domain.StringSID(sourceID.String())
+		opts.SourceID = sourceID
 	}
 
 	reports, count, errReports := r.rr.GetReports(ctx, opts)

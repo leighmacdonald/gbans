@@ -8,7 +8,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type forumRepository struct {
@@ -125,7 +125,7 @@ func (f *forumRepository) Forums(ctx context.Context) ([]domain.Forum, error) {
 			lastID           *int64
 			frm              domain.Forum
 			lastForumTheadID *int64
-			lastSourceID     *steamid.SID64
+			lastSourceID     *steamid.SteamID
 			lastPersonaname  *string
 			lastAvatarhash   *string
 			lastCreatedOn    *time.Time

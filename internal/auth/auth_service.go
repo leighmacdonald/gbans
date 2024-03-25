@@ -18,7 +18,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/yohcop/openid-go"
 )
 
@@ -91,9 +91,9 @@ func (h authHandler) onOpenIDCallback() gin.HandlerFunc {
 			return
 		}
 
-		sid, errDecodeSid := steamid.SID64FromString(match[1])
-		if errDecodeSid != nil {
-			slog.Error("Received invalid steamid", log.ErrAttr(errDecodeSid))
+		sid := steamid.New(match[1])
+		if !sid.Valid() {
+			slog.Error("Received invalid steamid")
 			ctx.Redirect(302, referralURL)
 
 			return

@@ -9,7 +9,7 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type contestRepository struct {
@@ -286,7 +286,7 @@ func (c *contestRepository) ContestEntries(ctx context.Context, contestID uuid.U
 	return entries, nil
 }
 
-func (c *contestRepository) ContestEntryVoteGet(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SID64, record *domain.ContentVoteRecord) error {
+func (c *contestRepository) ContestEntryVoteGet(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SteamID, record *domain.ContentVoteRecord) error {
 	query := c.db.
 		Builder().
 		Select("contest_entry_vote_id", "contest_entry_id", "steam_id",
@@ -308,7 +308,7 @@ func (c *contestRepository) ContestEntryVoteGet(ctx context.Context, contestEntr
 	return nil
 }
 
-func (c *contestRepository) ContestEntryVote(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SID64, vote bool) error {
+func (c *contestRepository) ContestEntryVote(ctx context.Context, contestEntryID uuid.UUID, steamID steamid.SteamID, vote bool) error {
 	var record domain.ContentVoteRecord
 	if errRecord := c.ContestEntryVoteGet(ctx, contestEntryID, steamID, &record); errRecord != nil {
 		if !errors.Is(errRecord, domain.ErrNoResult) {

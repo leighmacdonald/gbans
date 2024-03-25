@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/leighmacdonald/steamid/v3/steamid"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type LinkablePath interface {
@@ -126,19 +126,19 @@ const (
 )
 
 type ConfigGeneral struct {
-	SiteName                     string        `mapstructure:"site_name"`
-	SteamKey                     string        `mapstructure:"steam_key"`
-	Owner                        steamid.SID64 `mapstructure:"owner"`
-	Mode                         RunMode       `mapstructure:"mode"`
-	WarningTimeout               time.Duration `mapstructure:"warning_timeout"`
-	WarningLimit                 int           `mapstructure:"warning_limit"`
-	UseUTC                       bool          `mapstructure:"use_utc"`
-	ServerStatusUpdateFreq       time.Duration `mapstructure:"server_status_update_freq"`
-	MasterServerStatusUpdateFreq time.Duration `mapstructure:"master_server_status_update_freq"`
-	DefaultMaps                  []string      `mapstructure:"default_maps"`
-	ExternalURL                  string        `mapstructure:"external_url"`
-	DemoCleanupEnabled           bool          `mapstructure:"demo_cleanup_enabled"`
-	DemoCountLimit               uint64        `mapstructure:"demo_count_limit"`
+	SiteName                     string          `mapstructure:"site_name"`
+	SteamKey                     string          `mapstructure:"steam_key"`
+	Owner                        steamid.SteamID `mapstructure:"owner"`
+	Mode                         RunMode         `mapstructure:"mode"`
+	WarningTimeout               time.Duration   `mapstructure:"warning_timeout"`
+	WarningLimit                 int             `mapstructure:"warning_limit"`
+	UseUTC                       bool            `mapstructure:"use_utc"`
+	ServerStatusUpdateFreq       time.Duration   `mapstructure:"server_status_update_freq"`
+	MasterServerStatusUpdateFreq time.Duration   `mapstructure:"master_server_status_update_freq"`
+	DefaultMaps                  []string        `mapstructure:"default_maps"`
+	ExternalURL                  string          `mapstructure:"external_url"`
+	DemoCleanupEnabled           bool            `mapstructure:"demo_cleanup_enabled"`
+	DemoCountLimit               uint64          `mapstructure:"demo_count_limit"`
 }
 
 type ConfigDiscord struct {
