@@ -43,9 +43,7 @@ func NewAuthUsecase(authRepository domain.AuthRepository, configUsecase domain.C
 }
 
 func (u *authUsecase) Start(ctx context.Context) {
-	var (
-		ticker = time.NewTicker(time.Hour * 24)
-	)
+	ticker := time.NewTicker(time.Hour * 24)
 
 	for {
 		select {

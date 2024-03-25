@@ -281,9 +281,7 @@ func (c *Collector) maxVisiblePlayers(ctx context.Context, serverID int) (int, e
 }
 
 func (c *Collector) startStatus(ctx context.Context) {
-	var (
-		statusUpdateTicker = time.NewTicker(c.statusUpdateFreq)
-	)
+	statusUpdateTicker := time.NewTicker(c.statusUpdateFreq)
 
 	for {
 		select {

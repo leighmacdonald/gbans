@@ -17,9 +17,7 @@ func Start(ctx context.Context, banUsecase domain.BanSteamUsecase, banNetUsecase
 	banASNUsecase domain.BanASNUsecase, personUsecase domain.PersonUsecase, discordUsecase domain.DiscordUsecase,
 	configUsecase domain.ConfigUsecase,
 ) {
-	var (
-		ticker = time.NewTicker(time.Minute)
-	)
+	ticker := time.NewTicker(time.Minute)
 
 	for {
 		select {

@@ -74,9 +74,7 @@ func (s *stateUsecase) Start(ctx context.Context) error {
 // logReader is the fan-out orchestrator for game log events
 // Registering receivers can be accomplished with app.eb.Broadcaster.
 func (s *stateUsecase) logReader(ctx context.Context, writeUnhandled bool) {
-	var (
-		file *os.File
-	)
+	var file *os.File
 
 	if writeUnhandled {
 		var errCreateFile error
