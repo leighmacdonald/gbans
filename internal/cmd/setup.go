@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 	"log/slog"
 	"os"
 	"time"
@@ -78,13 +79,13 @@ func setupCmd() *cobra.Command {
 			wikiUsecase := wiki.NewWikiUsecase(wiki.NewWikiRepository(databaseRepository, mediaUsecase))
 			matchUsecase := match.NewMatchUsecase(broadcaster, match.NewMatchRepository(databaseRepository, personUsecase), stateUsecase, serversUsecase, nil, weaponMap)
 
-			owner, errRootUser := personUsecase.GetPersonBySteamID(ctx, conf.General.Owner)
+			owner, errRootUser := personUsecase.GetPersonBySteamID(ctx, steamid.New(conf.General.Owner))
 			if errRootUser != nil {
 				if !errors.Is(errRootUser, domain.ErrNoResult) {
 					slog.Error("Failed checking owner state", log.ErrAttr(errRootUser))
 				}
 
-				newOwner := domain.NewPerson(conf.General.Owner)
+				newOwner := domain.NewPerson(steamid.New(conf.General.Owner))
 				newOwner.PermissionLevel = domain.PAdmin
 
 				if errSave := personUsecase.SavePerson(ctx, &newOwner); errSave != nil {

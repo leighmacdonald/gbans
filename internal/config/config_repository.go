@@ -54,6 +54,11 @@ func (c *configRepository) Read(noFileOk bool) error {
 		return errors.Join(errSteamWeb, domain.ErrSteamAPIKey)
 	}
 
+	ownerSID := steamid.New(newConfig.General.Owner)
+	if !ownerSID.Valid() {
+		return domain.ErrInvalidSID
+	}
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
 

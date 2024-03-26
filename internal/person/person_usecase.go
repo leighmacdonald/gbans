@@ -289,7 +289,7 @@ func (u personUsecase) SetPermissionLevel(ctx context.Context, steamID steamid.S
 	}
 
 	// Don't let admins un-admin themselves.
-	if steamID == u.configUsecase.Config().General.Owner {
+	if steamID == steamid.New(u.configUsecase.Config().General.Owner) {
 		return domain.ErrPermissionDenied
 	}
 
