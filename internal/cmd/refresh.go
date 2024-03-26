@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 	"log/slog"
 	"os"
 	"time"
@@ -114,7 +115,7 @@ func refreshFiltersCmd() *cobra.Command {
 
 			matches := 0
 
-			admin, errAdmin := personUsecase.GetPersonBySteamID(ctx, conf.General.Owner)
+			admin, errAdmin := personUsecase.GetPersonBySteamID(ctx, steamid.New(conf.General.Owner))
 			if errAdmin != nil {
 				slog.Error("Failed to load admin user", log.ErrAttr(errAdmin))
 

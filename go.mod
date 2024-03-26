@@ -23,7 +23,7 @@ require (
 	github.com/jackc/pgx/v5 v5.5.5
 	github.com/leighmacdonald/discordgo-embed v0.0.0-20230818080156-2fb99fe03f89
 	github.com/leighmacdonald/rcon v1.0.10
-	github.com/leighmacdonald/steamid/v4 v4.0.2
+	github.com/leighmacdonald/steamid/v4 v4.0.3
 	github.com/leighmacdonald/steamweb/v2 v2.2.1
 	github.com/microcosm-cc/bluemonday v1.0.26
 	github.com/minio/minio-go/v7 v7.0.69
@@ -39,7 +39,7 @@ require (
 	github.com/unrolled/secure v1.14.0
 	github.com/yohcop/openid-go v1.0.1
 	go.uber.org/atomic v1.11.0
-	golang.org/x/exp v0.0.0-20240318143956-a85f2c67cd81
+	golang.org/x/exp v0.0.0-20240325151524-a685a6edb6d8
 	golang.org/x/sync v0.6.0
 	gopkg.in/mxpv/patreon-go.v1 v1.0.0-20171031001022-1d2f253ac700
 )
