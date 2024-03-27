@@ -23,7 +23,7 @@ require (
 	github.com/jackc/pgx/v5 v5.5.5
 	github.com/leighmacdonald/discordgo-embed v0.0.0-20230818080156-2fb99fe03f89
 	github.com/leighmacdonald/rcon v1.0.10
-	github.com/leighmacdonald/steamid/v4 v4.0.3
+	github.com/leighmacdonald/steamid/v4 v4.0.4
 	github.com/leighmacdonald/steamweb/v2 v2.2.1
 	github.com/microcosm-cc/bluemonday v1.0.26
 	github.com/minio/minio-go/v7 v7.0.69
