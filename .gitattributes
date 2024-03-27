@@ -7,6 +7,8 @@ go.mod              linguist-generated
 .gitattributes      export-ignore
 .gitignore          export-ignore
 
+/frontend/src/icons/* binary
+/frontend/src/fonts/* binary
 *.js text
 *.json text
 *.ts text
