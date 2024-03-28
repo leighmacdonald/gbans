@@ -321,6 +321,9 @@ func NewWeaponParser() *WeaponParser { //nolint:maintidx
 	}
 }
 
+// NewLogParser sets up a new log parser instance.
+//
+// BUG: People saying "BOT" will not get parsed properly as it gets interpreted as a steamid of a bot.
 func NewLogParser() *LogParser {
 	return &LogParser{
 		rxKVPairs: regexp.MustCompile(`\((?P<key>.+?)\s+"(?P<value>.+?)"\)`),
