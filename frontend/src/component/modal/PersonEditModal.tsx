@@ -13,17 +13,16 @@ import { apiUpdatePlayerPermission, PermissionLevel, Person } from '../../api';
 import { emptyOrNullString } from '../../util/types';
 import { Heading } from '../Heading';
 import { PermissionLevelField } from '../formik/PermissionLevelField';
-import { SteamIdField } from '../formik/SteamIdField';
+import { TargetIDField, TargetIDInputValue } from '../formik/TargetIdField.tsx';
 import { CancelButton, SubmitButton } from './Buttons';
 
 export interface PersonEditModalProps {
     person: Person;
 }
 
-interface PersonEditFormValues {
-    steam_id: string;
+type PersonEditFormValues = {
     permission_level: PermissionLevel;
-}
+} & TargetIDInputValue;
 
 export const PersonEditModal = NiceModal.create(
     ({ person }: PersonEditModalProps) => {
@@ -55,7 +54,7 @@ export const PersonEditModal = NiceModal.create(
                 initialValues={{
                     permission_level:
                         person.permission_level ?? PermissionLevel.User,
-                    steam_id: person.steam_id
+                    target_id: person.steam_id
                 }}
             >
                 <Dialog {...muiDialogV5(modal)} fullWidth maxWidth={'sm'}>
@@ -64,7 +63,7 @@ export const PersonEditModal = NiceModal.create(
                     </DialogTitle>
                     <DialogContent>
                         <Stack spacing={2}>
-                            <SteamIdField
+                            <TargetIDField
                                 isReadOnly={!emptyOrNullString(person.steam_id)}
                             />
                             <PermissionLevelField />

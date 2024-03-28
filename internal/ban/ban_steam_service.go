@@ -18,7 +18,7 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-type nanHandler struct {
+type banHandler struct {
 	du domain.DiscordUsecase
 	bu domain.BanSteamUsecase
 	pu domain.PersonUsecase
@@ -28,7 +28,7 @@ type nanHandler struct {
 func NewBanHandler(engine *gin.Engine, bu domain.BanSteamUsecase, du domain.DiscordUsecase,
 	pu domain.PersonUsecase, cu domain.ConfigUsecase, ath domain.AuthUsecase,
 ) {
-	handler := nanHandler{bu: bu, du: du, pu: pu, cu: cu}
+	handler := banHandler{bu: bu, du: du, pu: pu, cu: cu}
 
 	engine.GET("/api/stats", handler.onAPIGetStats())
 	engine.GET("/export/bans/tf2bd", handler.onAPIExportBansTF2BD())
@@ -55,7 +55,7 @@ func NewBanHandler(engine *gin.Engine, bu domain.BanSteamUsecase, du domain.Disc
 	}
 }
 
-func (h nanHandler) onAPIPostSetBanAppealStatus() gin.HandlerFunc {
+func (h banHandler) onAPIPostSetBanAppealStatus() gin.HandlerFunc {
 	type setStatusReq struct {
 		AppealState domain.AppealState `json:"appeal_state"`
 	}
@@ -105,21 +105,21 @@ func (h nanHandler) onAPIPostSetBanAppealStatus() gin.HandlerFunc {
 }
 
 type apiBanRequest struct {
-	SourceID       steamid.SteamID `json:"source_id"`
-	TargetID       steamid.SteamID `json:"target_id"`
-	Duration       string          `json:"duration"`
-	ValidUntil     time.Time       `json:"valid_until"`
-	BanType        domain.BanType  `json:"ban_type"`
-	Reason         domain.Reason   `json:"reason"`
-	ReasonText     string          `json:"reason_text"`
-	Note           string          `json:"note"`
-	ReportID       int64           `json:"report_id"`
-	DemoName       string          `json:"demo_name"`
-	DemoTick       int             `json:"demo_tick"`
-	IncludeFriends bool            `json:"include_friends"`
+	domain.SourceIDField
+	domain.TargetIDField
+	Duration       string         `json:"duration"`
+	ValidUntil     time.Time      `json:"valid_until"`
+	BanType        domain.BanType `json:"ban_type"`
+	Reason         domain.Reason  `json:"reason"`
+	ReasonText     string         `json:"reason_text"`
+	Note           string         `json:"note"`
+	ReportID       int64          `json:"report_id"`
+	DemoName       string         `json:"demo_name"`
+	DemoTick       int            `json:"demo_tick"`
+	IncludeFriends bool           `json:"include_friends"`
 }
 
-func (h nanHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
+func (h banHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req apiBanRequest
 		if !httphelper.Bind(ctx, &req) {
@@ -132,8 +132,9 @@ func (h nanHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 		)
 
 		// srcds sourced bans provide a source_id to id the admin
-		if req.SourceID.Valid() {
+		if sourceID, ok := req.SourceSteamID(ctx); ok {
 			origin = domain.InGame
+			sid = sourceID
 		}
 
 		duration, errDuration := util.CalcDuration(req.Duration, req.ValidUntil)
@@ -150,8 +151,15 @@ func (h nanHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 			return
 		}
 
+		targetID, targetIDOk := req.TargetSteamID(ctx)
+		if !targetIDOk {
+			httphelper.ErrorHandled(ctx, domain.ErrTargetID)
+
+			return
+		}
+
 		var banSteam domain.BanSteam
-		if errBanSteam := domain.NewBanSteam(author.SteamID, req.TargetID, duration, req.Reason, req.ReasonText, req.Note,
+		if errBanSteam := domain.NewBanSteam(author.SteamID, targetID, duration, req.Reason, req.ReasonText, req.Note,
 			origin, req.ReportID, req.BanType, req.IncludeFriends, &banSteam,
 		); errBanSteam != nil {
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
@@ -179,7 +187,7 @@ func (h nanHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 	}
 }
 
-func (h nanHandler) onAPIGetBanByID() gin.HandlerFunc {
+func (h banHandler) onAPIGetBanByID() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		curUser := httphelper.CurrentUserProfile(ctx)
 
@@ -217,7 +225,7 @@ func (h nanHandler) onAPIGetBanByID() gin.HandlerFunc {
 	}
 }
 
-func (h nanHandler) onAPIGetSourceBans() gin.HandlerFunc {
+func (h banHandler) onAPIGetSourceBans() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		steamID, errID := httphelper.GetSID64Param(ctx, "steam_id")
 		if errID != nil {
@@ -237,7 +245,7 @@ func (h nanHandler) onAPIGetSourceBans() gin.HandlerFunc {
 	}
 }
 
-func (h nanHandler) onAPIGetStats() gin.HandlerFunc {
+func (h banHandler) onAPIGetStats() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var stats domain.Stats
 		if errGetStats := h.bu.Stats(ctx, &stats); errGetStats != nil {
@@ -252,7 +260,7 @@ func (h nanHandler) onAPIGetStats() gin.HandlerFunc {
 	}
 }
 
-func (h nanHandler) onAPIExportBansValveSteamID() gin.HandlerFunc {
+func (h banHandler) onAPIExportBansValveSteamID() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		bans, _, errBans := h.bu.Get(ctx, domain.SteamBansQueryFilter{
 			BansQueryFilter: domain.BansQueryFilter{PermanentOnly: true},
@@ -279,7 +287,7 @@ func (h nanHandler) onAPIExportBansValveSteamID() gin.HandlerFunc {
 	}
 }
 
-func (h nanHandler) onAPIExportBansTF2BD() gin.HandlerFunc {
+func (h banHandler) onAPIExportBansTF2BD() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		// TODO limit / make specialized query since this returns all results
 		bans, _, errBans := h.bu.Get(ctx, domain.SteamBansQueryFilter{
@@ -336,7 +344,7 @@ func (h nanHandler) onAPIExportBansTF2BD() gin.HandlerFunc {
 	}
 }
 
-func (h nanHandler) onAPIGetBansSteam() gin.HandlerFunc {
+func (h banHandler) onAPIGetBansSteam() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req domain.SteamBansQueryFilter
 		if !httphelper.Bind(ctx, &req) {
@@ -355,7 +363,7 @@ func (h nanHandler) onAPIGetBansSteam() gin.HandlerFunc {
 	}
 }
 
-func (h nanHandler) onAPIPostBanDelete() gin.HandlerFunc {
+func (h banHandler) onAPIPostBanDelete() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		banID, banIDErr := httphelper.GetInt64Param(ctx, "ban_id")
 		if banIDErr != nil {
@@ -393,7 +401,7 @@ func (h nanHandler) onAPIPostBanDelete() gin.HandlerFunc {
 	}
 }
 
-func (h nanHandler) onAPIPostBanUpdate() gin.HandlerFunc {
+func (h banHandler) onAPIPostBanUpdate() gin.HandlerFunc {
 	type updateBanRequest struct {
 		TargetID       steamid.SteamID `json:"target_id"`
 		BanType        domain.BanType  `json:"ban_type"`

@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -79,25 +80,43 @@ func (qf QueryFilter) ApplyLimitOffset(builder sq.SelectBuilder, maxLimit uint64
 
 type NotificationQuery struct {
 	QueryFilter
-	SteamID steamid.SteamID `json:"steam_id"`
+	SteamID string `json:"steam_id"`
+}
+
+func (f NotificationQuery) SourceSteamID() (steamid.SteamID, bool) {
+	sid := steamid.New(f.SteamID)
+
+	return sid, sid.Valid()
 }
 
 type ChatHistoryQueryFilter struct {
 	QueryFilter
-	Personaname   string          `json:"personaname,omitempty"`
-	SourceID      steamid.SteamID `json:"source_id,omitempty"`
-	ServerID      int             `json:"server_id,omitempty"`
-	DateStart     *time.Time      `json:"date_start,omitempty"`
-	DateEnd       *time.Time      `json:"date_end,omitempty"`
-	Unrestricted  bool            `json:"-"`
-	DontCalcTotal bool            `json:"-"`
-	FlaggedOnly   bool            `json:"flagged_only"`
+	SourceIDField
+	Personaname   string     `json:"personaname,omitempty"`
+	ServerID      int        `json:"server_id,omitempty"`
+	DateStart     *time.Time `json:"date_start,omitempty"`
+	DateEnd       *time.Time `json:"date_end,omitempty"`
+	Unrestricted  bool       `json:"-"`
+	DontCalcTotal bool       `json:"-"`
+	FlaggedOnly   bool       `json:"flagged_only"`
+}
+
+func (f ChatHistoryQueryFilter) SourceSteamID() (steamid.SteamID, bool) {
+	sid := steamid.New(f.SourceID)
+
+	return sid, sid.Valid()
 }
 
 type ConnectionHistoryQueryFilter struct {
 	QueryFilter
-	IP       string          `json:"ip"`
-	SourceID steamid.SteamID `json:"source_id"`
+	IP       string `json:"ip"`
+	SourceID string `json:"source_id"`
+}
+
+func (f ConnectionHistoryQueryFilter) SourceSteamID() (steamid.SteamID, bool) {
+	sid := steamid.New(f.SourceID)
+
+	return sid, sid.Valid()
 }
 
 type PlayerQuery struct {
@@ -107,11 +126,23 @@ type PlayerQuery struct {
 	IP          string          `json:"ip"`
 }
 
+func (f PlayerQuery) TargetSteamID() (steamid.SteamID, bool) {
+	sid := steamid.New(f.SteamID)
+
+	return sid, sid.Valid()
+}
+
 type DemoFilter struct {
 	QueryFilter
-	SteamID   steamid.SteamID `json:"steam_id"`
-	ServerIds []int           `json:"server_ids"`
-	MapName   string          `json:"map_name"`
+	SteamID   string `json:"steam_id"`
+	ServerIds []int  `json:"server_ids"`
+	MapName   string `json:"map_name"`
+}
+
+func (f DemoFilter) SourceSteamID() (steamid.SteamID, bool) {
+	sid := steamid.New(f.SteamID)
+
+	return sid, sid.Valid()
 }
 
 type FiltersQueryFilter struct {
@@ -130,19 +161,33 @@ type ThreadQueryFilter struct {
 
 type MatchesQueryOpts struct {
 	QueryFilter
-	SteamID   steamid.SteamID `json:"steam_id"`
-	ServerID  int             `json:"server_id"`
-	Map       string          `json:"map"`
-	TimeStart *time.Time      `json:"time_start,omitempty"`
-	TimeEnd   *time.Time      `json:"time_end,omitempty"`
+	SteamID   string     `json:"steam_id"`
+	ServerID  int        `json:"server_id"`
+	Map       string     `json:"map"`
+	TimeStart *time.Time `json:"time_start,omitempty"`
+	TimeEnd   *time.Time `json:"time_end,omitempty"`
+}
+
+func (mqf MatchesQueryOpts) TargetSteamID() (steamid.SteamID, bool) {
+	sid := steamid.New(mqf.SteamID)
+
+	return sid, sid.Valid()
+}
+
+type SourceIDProvider interface {
+	SourceSteamID(context.Context) (steamid.SteamID, bool)
+}
+
+type TargetIDProvider interface {
+	TargetSteamID(context.Context) (steamid.SteamID, bool)
 }
 
 type BansQueryFilter struct {
 	QueryFilter
-	SourceID      steamid.SteamID `json:"source_id,omitempty"`
-	TargetID      steamid.SteamID `json:"target_id,omitempty"`
-	Reason        Reason          `json:"reason,omitempty"`
-	PermanentOnly bool            `json:"permanent_only,omitempty"`
+	SourceIDField
+	TargetIDField
+	Reason        Reason `json:"reason,omitempty"`
+	PermanentOnly bool   `json:"permanent_only,omitempty"`
 }
 
 type CIDRBansQueryFilter struct {
@@ -170,13 +215,52 @@ type SteamBansQueryFilter struct {
 
 type ReportQueryFilter struct {
 	QueryFilter
-	ReportStatus ReportStatus    `json:"report_status"`
-	SourceID     steamid.SteamID `json:"source_id"`
-	TargetID     steamid.SteamID `json:"target_id"`
+	SourceIDField
+	TargetIDField
+	ReportStatus ReportStatus `json:"report_status"`
 }
+
 type AppealQueryFilter struct {
 	QueryFilter
-	AppealState AppealState     `json:"appeal_state"`
-	SourceID    steamid.SteamID `json:"source_id"`
-	TargetID    steamid.SteamID `json:"target_id"`
+	SourceIDField
+	TargetIDField
+	AppealState AppealState `json:"appeal_state"`
+}
+
+func (f AppealQueryFilter) SourceSteamID() (steamid.SteamID, bool) {
+	sid := steamid.New(f.SourceID)
+
+	return sid, sid.Valid()
+}
+
+func (f AppealQueryFilter) TargetSteamID() (steamid.SteamID, bool) {
+	sid := steamid.New(f.SourceID)
+
+	return sid, sid.Valid()
+}
+
+type SourceIDField struct {
+	SourceID string `json:"source_id"`
+}
+
+func (f SourceIDField) SourceSteamID(ctx context.Context) (steamid.SteamID, bool) {
+	sid, err := steamid.Resolve(ctx, f.SourceID)
+	if err != nil {
+		return sid, false
+	}
+
+	return sid, sid.Valid()
+}
+
+type TargetIDField struct {
+	TargetID string `json:"target_id"`
+}
+
+func (f TargetIDField) TargetSteamID(ctx context.Context) (steamid.SteamID, bool) {
+	sid, err := steamid.Resolve(ctx, f.TargetID)
+	if err != nil {
+		return sid, false
+	}
+
+	return sid, sid.Valid()
 }

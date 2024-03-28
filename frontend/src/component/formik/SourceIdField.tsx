@@ -1,18 +1,23 @@
 import TextField from '@mui/material/TextField';
 import { useFormikContext } from 'formik';
+import { PlayerProfile } from '../../api';
+import { Nullable } from '../../util/types.ts';
+
+export interface BaseFormikInputProps {
+    id?: string;
+    label?: string;
+    initialValue?: string;
+    isReadOnly?: boolean;
+    onProfileSuccess?: (profile: Nullable<PlayerProfile>) => void;
+}
 
 interface AuthorIDFieldValue {
     source_id: string;
 }
 
-export const SourceIdField = <T,>({
-    disabled = false
-}: {
-    disabled?: boolean;
-}) => {
-    const { values, touched, errors, handleChange } = useFormikContext<
-        T & AuthorIDFieldValue
-    >();
+export const SourceIdField = ({ disabled = false }: { disabled?: boolean }) => {
+    const { values, touched, errors, handleChange } =
+        useFormikContext<AuthorIDFieldValue>();
     return (
         <TextField
             variant={'outlined'}

@@ -28,7 +28,7 @@ type BDSourceBansRecord struct {
 
 func BDSourceBans(ctx context.Context, steamID steamid.SteamID) ([]BDSourceBansRecord, error) {
 	client := &http.Client{Timeout: time.Second * 10}
-	url := fmt.Sprintf(bdAPIURL, steamID)
+	url := fmt.Sprintf(bdAPIURL, steamID.String())
 
 	req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if errReq != nil {

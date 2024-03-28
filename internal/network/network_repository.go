@@ -35,8 +35,8 @@ func (r networkRepository) QueryConnectionHistory(ctx context.Context, opts doma
 
 	var constraints sq.And
 
-	if opts.SourceID.Valid() {
-		constraints = append(constraints, sq.Eq{"c.steam_id": opts.SourceID.Int64()})
+	if sid, ok := opts.SourceSteamID(); ok {
+		constraints = append(constraints, sq.Eq{"c.steam_id": sid})
 	}
 
 	builder = opts.ApplySafeOrder(opts.ApplyLimitOffsetDefault(builder), map[string][]string{

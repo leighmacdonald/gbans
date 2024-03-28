@@ -30,12 +30,12 @@ func (r *appealRepository) GetAppealsByActivity(ctx context.Context, opts domain
 		constraints = append(constraints, sq.Eq{"b.appeal_state": opts.AppealState})
 	}
 
-	if opts.SourceID.Valid() {
-		constraints = append(constraints, sq.Eq{"b.source_id": opts.SourceID.Int64()})
+	if sid, ok := opts.SourceSteamID(); ok {
+		constraints = append(constraints, sq.Eq{"b.source_id": sid})
 	}
 
-	if opts.TargetID.Valid() {
-		constraints = append(constraints, sq.Eq{"b.target_id": opts.TargetID.Int64()})
+	if sid, ok := opts.TargetSteamID(); ok {
+		constraints = append(constraints, sq.Eq{"b.target_id": sid})
 	}
 
 	counterQuery := r.db.

@@ -238,6 +238,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			ban.NewBanHandler(router, banUsecase, discordUsecase, personUsecase, configUsecase, authUsecase)
 			ban.NewBanNetHandler(router, banNetUsecase, authUsecase)
 			ban.NewBanASNHandler(router, banASNUsecase, authUsecase)
+			steamgroup.NewSteamgroupHandler(router, banGroupUsecase, authUsecase)
 			blocklist.NewBlocklistHandler(router, blocklistUsecase, networkUsecase, authUsecase)
 			chat.NewChatHandler(router, chatUsecase, authUsecase)
 			contest.NewContestHandler(router, contestUsecase, configUsecase, mediaUsecase, authUsecase)

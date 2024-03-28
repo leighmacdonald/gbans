@@ -53,9 +53,9 @@ func (r *matchRepository) Matches(ctx context.Context, opts domain.MatchesQueryO
 		countBuilder = countBuilder.Where(sq.Eq{"m.map": opts.Map})
 	}
 
-	if opts.SteamID.Valid() {
-		builder = builder.Where(sq.Eq{"mp.steam_id": opts.SteamID.Int64()})
-		countBuilder = countBuilder.Where(sq.Eq{"mp.steam_id": opts.SteamID.Int64()})
+	if sid, ok := opts.TargetSteamID(); ok {
+		builder = builder.Where(sq.Eq{"mp.steam_id": sid})
+		countBuilder = countBuilder.Where(sq.Eq{"mp.steam_id": sid})
 	}
 
 	builder = opts.QueryFilter.ApplySafeOrder(builder, map[string][]string{

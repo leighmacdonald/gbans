@@ -42,7 +42,7 @@ interface ReportValues {
 }
 
 const validationSchema = yup.object({
-    steam_id: steamIdValidator,
+    steam_id: steamIdValidator(),
     body_md: yup
         .string()
         .min(10, 'Message too short (min 10)')

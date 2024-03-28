@@ -25,7 +25,6 @@ export const appealStateFielValidator = yup
 
 export const ipFieldValidator = yup
     .string()
-    .required()
     .test('valid_ip', 'Invalid IP', (value) => {
         if (emptyOrNullString(value)) {
             return true;
@@ -129,30 +128,32 @@ export const selectOwnValidator = yup
     .label('Include only results with yourself')
     .required();
 
-export const steamIdValidator = yup
-    .string()
-    .test(
-        'checkSteamId',
-        'Invalid steamid or profile url',
-        async (steamId, ctx) => {
-            if (!steamId) {
-                return false;
-            }
-            try {
-                const sid = await steamIDOrEmptyString(steamId);
-                if (sid == '') {
+export const steamIdValidator = (attr_name: string = 'steam_id') => {
+    return yup
+        .string()
+        .test(
+            'checkSteamId',
+            'Invalid steamid or profile url',
+            async (steamId, ctx) => {
+                if (!steamId) {
                     return false;
                 }
-                ctx.parent.value = sid;
-                return true;
-            } catch (e) {
-                logErr(e);
-                return false;
+                try {
+                    const sid = await steamIDOrEmptyString(steamId);
+                    if (sid == '') {
+                        return false;
+                    }
+                    ctx.parent[attr_name] = sid;
+                    return true;
+                } catch (e) {
+                    logErr(e);
+                    return false;
+                }
             }
-        }
-    )
-    .label('Enter your Steam ID')
-    .required('Steam ID is required');
+        )
+        .label('Enter your Steam ID')
+        .required('Steam ID is required');
+};
 
 export const filterActionValidator = yup
     .number()
@@ -321,7 +322,7 @@ export const steamIDOrEmptyString = async (
         }
     }
 
-    return '';
+    return steamId;
 };
 
 const ipRegex =

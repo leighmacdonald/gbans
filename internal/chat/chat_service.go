@@ -43,7 +43,7 @@ func (h chatHandler) onAPIQueryMessages() gin.HandlerFunc {
 		messages, count, errChat := h.cu.QueryChatHistory(ctx, httphelper.CurrentUserProfile(ctx), req)
 		if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
 			slog.Error("Failed to query messages history",
-				log.ErrAttr(errChat), slog.String("sid", req.SourceID.String()))
+				log.ErrAttr(errChat), slog.String("sid", req.SourceID))
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return

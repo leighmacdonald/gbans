@@ -1242,7 +1242,7 @@ func (p *LogParser) decodePos() func(reflect.Type, reflect.Type, any) (any, erro
 }
 
 // BotSid Special internal SID used to track bots internally.
-const BotSid = 807
+var BotSid = steamid.New(807) //nolint:gochecknoglobals
 
 func (p *LogParser) decodeSID3() func(reflect.Type, reflect.Type, any) (any, error) {
 	return func(fromType reflect.Type, toType reflect.Type, value any) (any, error) {

@@ -30,20 +30,19 @@ import { DurationField, DurationFieldValidator } from '../formik/DurationField';
 import { ErrorField } from '../formik/ErrorField';
 import { GroupIdField } from '../formik/GroupIdField';
 import { NoteField, NoteFieldValidator } from '../formik/NoteField';
-import { SteamIdField } from '../formik/SteamIdField';
+import { TargetIDField, TargetIDInputValue } from '../formik/TargetIdField.tsx';
 import { CancelButton, ResetButton, SubmitButton } from './Buttons';
 
-export interface BanGroupFormValues {
+type BanGroupFormValues = {
     ban_group_id?: number;
-    steam_id: string;
     group_id: string;
     duration: Duration;
     duration_custom: Date;
     note: string;
-}
+} & TargetIDInputValue;
 
 const validationSchema = yup.object({
-    steam_id: steamIdValidator,
+    target_id: steamIdValidator('target_id'),
     group_id: groupIdFieldValidator,
     duration: DurationFieldValidator,
     duration_custom: DurationCustomFieldValidator,
@@ -66,7 +65,7 @@ export const BanGroupModal = NiceModal.create(
                             await apiUpdateBanGroup(existing.ban_group_id, {
                                 note: values.note,
                                 valid_until: values.duration_custom,
-                                target_id: values.steam_id
+                                target_id: values.target_id
                             })
                         );
                     } else {
@@ -76,7 +75,7 @@ export const BanGroupModal = NiceModal.create(
                                 note: values.note,
                                 duration: values.duration,
                                 valid_until: values.duration_custom,
-                                target_id: values.steam_id
+                                target_id: values.target_id
                             })
                         );
                     }
@@ -100,7 +99,7 @@ export const BanGroupModal = NiceModal.create(
                 id={'banGroupForm'}
                 initialValues={{
                     ban_group_id: existing?.ban_group_id,
-                    steam_id: existing ? existing.target_id : '',
+                    target_id: existing ? existing.target_id : '',
                     duration: existing ? Duration.durCustom : Duration.dur2w,
                     duration_custom: existing
                         ? existing.valid_until
@@ -119,7 +118,7 @@ export const BanGroupModal = NiceModal.create(
 
                     <DialogContent>
                         <Stack spacing={2}>
-                            <SteamIdField />
+                            <TargetIDField />
                             <GroupIdField />
                             <DurationField />
                             <DurationCustomField />

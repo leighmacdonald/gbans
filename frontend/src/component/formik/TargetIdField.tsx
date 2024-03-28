@@ -1,24 +1,26 @@
 import TextField from '@mui/material/TextField';
 import { useFormikContext } from 'formik';
 
-interface TargetIDInputValue {
+export type TargetIDInputValue = {
     target_id: string;
-}
+};
 
-export const TargetIDField = <T,>({
-    label = 'Target Steam ID'
+export const TargetIDField = ({
+    label = 'Target Steam ID',
+    isReadOnly = false
 }: {
     label?: string;
+    isReadOnly?: boolean;
 }) => {
-    const { values, touched, errors, handleChange } = useFormikContext<
-        T & TargetIDInputValue
-    >();
+    const { values, touched, errors, handleChange } =
+        useFormikContext<TargetIDInputValue>();
     return (
         <TextField
             fullWidth
             name={'target_id'}
             id={'target_id'}
             label={label}
+            disabled={isReadOnly}
             value={values.target_id}
             onChange={handleChange}
             error={touched.target_id && Boolean(errors.target_id)}

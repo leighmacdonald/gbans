@@ -35,7 +35,7 @@ func (h notificationHandler) onAPICurrentProfileNotifications() gin.HandlerFunc 
 			return
 		}
 
-		req.SteamID = currentProfile.SteamID
+		req.SteamID = currentProfile.SteamID.String()
 
 		notifications, count, errNot := h.nu.GetPersonNotifications(ctx, req)
 		if errNot != nil {

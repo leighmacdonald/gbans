@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"github.com/leighmacdonald/steamid/v4/steamid"
 	"log/slog"
 	"os"
 	"time"
@@ -25,6 +24,7 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/spf13/cobra"
 )
 

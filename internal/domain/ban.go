@@ -448,6 +448,7 @@ func NewBanSteamGroup(source steamid.SteamID, target steamid.SteamID, duration t
 	banType BanType, banGroup *BanGroup,
 ) error {
 	var opts BanSteamGroupOpts
+
 	errBaseOpts := newBaseBanOpts(source, target, duration, Custom, "Group Ban", modNote, origin, banType, &opts.BaseBanOpts)
 	if errBaseOpts != nil {
 		return errBaseOpts

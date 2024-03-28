@@ -35,10 +35,10 @@ import {
 import { DurationField, DurationFieldValidator } from '../formik/DurationField';
 import { ErrorField } from '../formik/ErrorField';
 import { NoteField, NoteFieldValidator } from '../formik/NoteField';
-import { SteamIdField, SteamIDInputValue } from '../formik/SteamIdField';
+import { TargetIDField, TargetIDInputValue } from '../formik/TargetIdField.tsx';
 import { CancelButton, ResetButton, SubmitButton } from './Buttons';
 
-interface BanASNFormValues extends SteamIDInputValue {
+type BanASNFormValues = {
     ban_asn_id?: number;
     as_num: number;
     reason: BanReason;
@@ -46,10 +46,10 @@ interface BanASNFormValues extends SteamIDInputValue {
     duration: Duration;
     duration_custom: Date;
     note: string;
-}
+} & TargetIDInputValue;
 
 const validationSchema = yup.object({
-    steam_id: steamIdValidator,
+    target_id: steamIdValidator('target_id'),
     as_num: asNumberFieldValidator,
     reason: banReasonFieldValidator,
     reason_text: banReasonTextFieldValidator,
@@ -76,7 +76,7 @@ export const BanASNModal = NiceModal.create(
                                 valid_until: values.duration_custom,
                                 reason: values.reason,
                                 reason_text: values.reason_text,
-                                target_id: values.steam_id
+                                target_id: values.target_id
                             })
                         );
                     } else {
@@ -87,7 +87,7 @@ export const BanASNModal = NiceModal.create(
                                 valid_until: values.duration_custom,
                                 reason: values.reason,
                                 reason_text: values.reason_text,
-                                target_id: values.steam_id,
+                                target_id: values.target_id,
                                 as_num: values.as_num
                             })
                         );
@@ -118,7 +118,7 @@ export const BanASNModal = NiceModal.create(
                         : new Date(),
                     note: existing ? existing.note : '',
                     reason: existing ? existing.reason : BanReason.Cheating,
-                    steam_id: existing ? existing.target_id : '',
+                    target_id: existing ? existing.target_id : '',
                     reason_text: existing ? existing.reason_text : '',
                     as_num: existing ? existing.as_num : 0
                 }}
@@ -133,7 +133,7 @@ export const BanASNModal = NiceModal.create(
 
                     <DialogContent>
                         <Stack spacing={2}>
-                            <SteamIdField />
+                            <TargetIDField />
                             <ASNumberField />
                             <BanReasonField />
                             <BanReasonTextField />

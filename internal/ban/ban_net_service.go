@@ -3,7 +3,6 @@ package ban
 import (
 	"errors"
 	"fmt"
-	"github.com/leighmacdonald/steamid/v4/steamid"
 	"log/slog"
 	"net"
 	"net/http"
@@ -15,6 +14,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type banNetHandler struct {
@@ -63,13 +63,13 @@ func (h banNetHandler) onAPIExportBansValveIP() gin.HandlerFunc {
 
 func (h banNetHandler) onAPIPostBansCIDRCreate() gin.HandlerFunc {
 	type apiBanRequest struct {
-		TargetID   steamid.SteamID `json:"target_id"`
-		Duration   string          `json:"duration"`
-		Note       string          `json:"note"`
-		Reason     domain.Reason   `json:"reason"`
-		ReasonText string          `json:"reason_text"`
-		CIDR       string          `json:"cidr"`
-		ValidUntil time.Time       `json:"valid_until"`
+		domain.TargetIDField
+		Duration   string        `json:"duration"`
+		Note       string        `json:"note"`
+		Reason     domain.Reason `json:"reason"`
+		ReasonText string        `json:"reason_text"`
+		CIDR       string        `json:"cidr"`
+		ValidUntil time.Time     `json:"valid_until"`
 	}
 
 	return func(ctx *gin.Context) {
@@ -90,7 +90,14 @@ func (h banNetHandler) onAPIPostBansCIDRCreate() gin.HandlerFunc {
 			return
 		}
 
-		if errBanCIDR := domain.NewBanCIDR(sid, req.TargetID, duration, req.Reason, req.ReasonText, req.Note, domain.Web,
+		targetID, targetIDOk := req.TargetSteamID(ctx)
+		if !targetIDOk {
+			httphelper.ErrorHandled(ctx, domain.ErrTargetID)
+
+			return
+		}
+
+		if errBanCIDR := domain.NewBanCIDR(sid, targetID, duration, req.Reason, req.ReasonText, req.Note, domain.Web,
 			req.CIDR, domain.Banned, &banCIDR); errBanCIDR != nil {
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 

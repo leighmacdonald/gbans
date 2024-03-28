@@ -3,13 +3,13 @@ package ban
 import (
 	"context"
 	"errors"
-	"github.com/leighmacdonald/steamid/v4/steamid"
 	"log/slog"
 	"net"
 
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type banNetUsecase struct {

@@ -266,13 +266,14 @@ func (h matchHandler) onAPIGetMatches() gin.HandlerFunc {
 		// Don't let normal users query anybody but themselves
 		user := httphelper.CurrentUserProfile(ctx)
 		if user.PermissionLevel <= domain.PUser {
-			if !req.SteamID.Valid() {
+			targetID, ok := req.TargetSteamID()
+			if !ok {
 				httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 
 				return
 			}
 
-			if user.SteamID != req.SteamID {
+			if user.SteamID != targetID {
 				httphelper.ResponseErr(ctx, http.StatusForbidden, domain.ErrPermissionDenied)
 
 				return

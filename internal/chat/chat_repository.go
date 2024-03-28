@@ -246,8 +246,8 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.Cha
 		constraints = append(constraints, sq.Eq{"m.server_id": filters.ServerID})
 	}
 
-	if filters.SourceID.Valid() {
-		constraints = append(constraints, sq.Eq{"m.steam_id": filters.SourceID.Int64()})
+	if sid, ok := filters.SourceSteamID(); ok {
+		constraints = append(constraints, sq.Eq{"m.steam_id": sid})
 	}
 
 	if filters.Personaname != "" {

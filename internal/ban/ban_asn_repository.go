@@ -119,12 +119,12 @@ func (r banASNRepository) Get(ctx context.Context, filter domain.ASNBansQueryFil
 		constraints = append(constraints, sq.Gt{"b.valid_until": time.Now()})
 	}
 
-	if filter.TargetID.Valid() {
-		constraints = append(constraints, sq.Eq{"b.target_id": filter.TargetID.Int64()})
+	if sid, ok := filter.TargetSteamID(ctx); ok {
+		constraints = append(constraints, sq.Eq{"b.target_id": sid})
 	}
 
-	if filter.SourceID.Valid() {
-		constraints = append(constraints, sq.Eq{"b.source_id": filter.SourceID.Int64()})
+	if sid, ok := filter.SourceSteamID(ctx); ok {
+		constraints = append(constraints, sq.Eq{"b.source_id": sid})
 	}
 
 	if filter.ASNum > 0 {

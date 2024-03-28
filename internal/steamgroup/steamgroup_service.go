@@ -36,7 +36,7 @@ func NewSteamgroupHandler(engine *gin.Engine, bgu domain.BanGroupUsecase, ath do
 
 func (h steamgroupHandler) onAPIPostBansGroupCreate() gin.HandlerFunc {
 	type apiBanRequest struct {
-		TargetID   steamid.SteamID `json:"target_id"`
+		domain.TargetIDField
 		GroupID    steamid.SteamID `json:"group_id"`
 		Duration   string          `json:"duration"`
 		Note       string          `json:"note"`
@@ -70,7 +70,14 @@ func (h steamgroupHandler) onAPIPostBansGroupCreate() gin.HandlerFunc {
 			return
 		}
 
-		if errBanSteamGroup := domain.NewBanSteamGroup(sid, req.TargetID, duration, req.Note, domain.Web, req.GroupID,
+		targetID, targetIDOk := req.TargetSteamID(ctx)
+		if !targetIDOk {
+			httphelper.ErrorHandled(ctx, domain.ErrTargetID)
+
+			return
+		}
+
+		if errBanSteamGroup := domain.NewBanSteamGroup(sid, targetID, duration, req.Note, domain.Web, req.GroupID,
 			"", domain.Banned, &banSteamGroup); errBanSteamGroup != nil {
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 			slog.Error("Failed to save group ban", log.ErrAttr(errBanSteamGroup))

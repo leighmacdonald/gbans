@@ -156,27 +156,27 @@ func (r *steamGroupRepository) GetByID(ctx context.Context, banGroupID int64, ba
 func (r *steamGroupRepository) Get(ctx context.Context, filter domain.GroupBansQueryFilter) ([]domain.BannedGroupPerson, int64, error) {
 	builder := r.db.
 		Builder().
-		Select("s.ban_group_id", "s.source_id", "s.target_id", "s.group_name", "s.is_enabled", "s.deleted",
-			"s.note", "s.unban_reason_text", "s.origin", "s.created_on", "s.updated_on", "s.valid_until",
-			"s.appeal_state", "s.group_id",
+		Select("g.ban_group_id", "g.source_id", "g.target_id", "g.group_name", "g.is_enabled", "g.deleted",
+			"g.note", "g.unban_reason_text", "g.origin", "g.created_on", "g.updated_on", "g.valid_until",
+			"g.appeal_state", "g.group_id",
 			"s.personaname as source_personaname", "s.avatarhash",
 			"t.personaname as target_personaname", "t.avatarhash", "t.community_banned", "t.vac_bans", "t.game_bans").
-		From("ban_group s").
-		LeftJoin("person s ON s.steam_id = s.source_id").
-		LeftJoin("person t ON t.steam_id = s.target_id")
+		From("ban_group g").
+		LeftJoin("person s ON s.steam_id = g.source_id").
+		LeftJoin("person t ON t.steam_id = g.target_id")
 
 	var constraints sq.And
 
 	if !filter.Deleted {
-		constraints = append(constraints, sq.Eq{"s.deleted": false})
+		constraints = append(constraints, sq.Eq{"g.deleted": false})
 	}
 
 	if filter.Reason > 0 {
-		constraints = append(constraints, sq.Eq{"s.reason": filter.Reason})
+		constraints = append(constraints, sq.Eq{"g.reason": filter.Reason})
 	}
 
 	if filter.PermanentOnly {
-		constraints = append(constraints, sq.Gt{"s.valid_until": time.Now()})
+		constraints = append(constraints, sq.Gt{"g.valid_until": time.Now()})
 	}
 
 	if filter.GroupID != "" {
@@ -185,19 +185,19 @@ func (r *steamGroupRepository) Get(ctx context.Context, filter domain.GroupBansQ
 			return nil, 0, steamid.ErrInvalidGID
 		}
 
-		constraints = append(constraints, sq.Eq{"s.group_id": gid.Int64()})
+		constraints = append(constraints, sq.Eq{"g.group_id": gid.Int64()})
 	}
 
-	if filter.TargetID.Valid() {
-		constraints = append(constraints, sq.Eq{"s.target_id": filter.TargetID.Int64()})
+	if sid, ok := filter.TargetSteamID(ctx); ok {
+		constraints = append(constraints, sq.Eq{"g.target_id": sid})
 	}
 
-	if filter.SourceID.Valid() {
-		constraints = append(constraints, sq.Eq{"s.source_id": filter.SourceID.Int64()})
+	if sid, ok := filter.SourceSteamID(ctx); ok {
+		constraints = append(constraints, sq.Eq{"g.source_id": sid})
 	}
 
 	builder = filter.QueryFilter.ApplySafeOrder(builder, map[string][]string{
-		"b.": {
+		"g.": {
 			"ban_group_id", "source_id", "target_id", "group_name", "is_enabled", "deleted",
 			"origin", "created_on", "updated_on", "valid_until", "appeal_state", "group_id",
 		},
@@ -259,8 +259,8 @@ func (r *steamGroupRepository) Get(ctx context.Context, filter domain.GroupBansQ
 
 	count, errCount := r.db.GetCount(ctx, r.db.
 		Builder().
-		Select("s.ban_group_id").
-		From("ban_group s").
+		Select("g.ban_group_id").
+		From("ban_group g").
 		Where(constraints))
 	if errCount != nil {
 		if errors.Is(errCount, domain.ErrNoResult) {

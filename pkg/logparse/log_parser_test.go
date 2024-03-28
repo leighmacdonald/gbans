@@ -29,7 +29,7 @@ func TestParseSourcePlayer(t *testing.T) {
 	var src logparse.SourcePlayer
 
 	require.True(t, logparse.ParseSourcePlayer("var<3><[U:1:204626678]><Blue>", &src))
-	require.Equal(t, src.SID, steamid.SID3ToSID64("[U:1:204626678]"))
+	require.Equal(t, steamid.New("[U:1:204626678]"), src.SID)
 }
 
 func TestParseFile(t *testing.T) {
@@ -125,7 +125,7 @@ func TestParseEnteredEvt(t *testing.T) {
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "Hacksaw<12><[U:1:68745073]><>" Entered the game`,
 		logparse.EnteredEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
-			SourcePlayer: logparse.SourcePlayer{Name: "Hacksaw", PID: 12, SID: steamid.SID3ToSID64("[U:1:68745073]"), Team: logparse.UNASSIGNED},
+			SourcePlayer: logparse.SourcePlayer{Name: "Hacksaw", PID: 12, SID: steamid.New("[U:1:68745073]"), Team: logparse.UNASSIGNED},
 		})
 }
 
@@ -136,7 +136,7 @@ func TestParseJoinedTeamEvt(t *testing.T) {
 		logparse.JoinedTeamEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
 			NewTeam:      logparse.RED,
-			SourcePlayer: logparse.SourcePlayer{Name: "Hacksaw", PID: 12, SID: steamid.SID3ToSID64("[U:1:68745073]"), Team: logparse.SPEC},
+			SourcePlayer: logparse.SourcePlayer{Name: "Hacksaw", PID: 12, SID: steamid.New("[U:1:68745073]"), Team: logparse.SPEC},
 		})
 }
 
@@ -146,13 +146,13 @@ func TestParseChangeClassEvt(t *testing.T) {
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "Hacksaw<12><[U:1:68745073]><Red>" changed role to "scout"`,
 		logparse.ChangeClassEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
-			SourcePlayer: logparse.SourcePlayer{Name: "Hacksaw", PID: 12, SID: steamid.SID3ToSID64("[U:1:68745073]"), Team: logparse.RED},
+			SourcePlayer: logparse.SourcePlayer{Name: "Hacksaw", PID: 12, SID: steamid.New("[U:1:68745073]"), Team: logparse.RED},
 			Class:        logparse.Scout,
 		})
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "var<3><[U:1:204626678]><Blue>" changed role to "scout"`,
 		logparse.ChangeClassEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
-			SourcePlayer: logparse.SourcePlayer{Name: "var", PID: 3, SID: steamid.SID3ToSID64("[U:1:204626678]"), Team: logparse.BLU},
+			SourcePlayer: logparse.SourcePlayer{Name: "var", PID: 3, SID: steamid.New("[U:1:204626678]"), Team: logparse.BLU},
 			Class:        logparse.Scout,
 		})
 }
@@ -193,7 +193,7 @@ func TestParseMedicDeathEvt(t *testing.T) {
 		logparse.MedicDeathEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
 			SourcePlayer: logparse.SourcePlayer{Name: "Desmos Calculator", PID: 10, SID: steamid.New("[U:1:1132396177]"), Team: logparse.RED},
-			TargetPlayer: logparse.TargetPlayer{Name2: "Dzefersons14", PID2: 8, SID2: steamid.SID3ToSID64("[U:1:1080653073]"), Team2: logparse.BLU},
+			TargetPlayer: logparse.TargetPlayer{Name2: "Dzefersons14", PID2: 8, SID2: steamid.New("[U:1:1080653073]"), Team2: logparse.BLU},
 			Healing:      135,
 			Ubercharge:   false,
 		})
@@ -201,7 +201,7 @@ func TestParseMedicDeathEvt(t *testing.T) {
 		logparse.MedicDeathEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
 			SourcePlayer: logparse.SourcePlayer{Name: "Desmos Calculator", PID: 10, SID: steamid.New("[U:1:1132396177]"), Team: logparse.RED},
-			TargetPlayer: logparse.TargetPlayer{Name2: "Dzefersons14", PID2: 8, SID2: steamid.SID3ToSID64("[U:1:1080653073]"), Team2: logparse.BLU},
+			TargetPlayer: logparse.TargetPlayer{Name2: "Dzefersons14", PID2: 8, SID2: steamid.New("[U:1:1080653073]"), Team2: logparse.BLU},
 			Healing:      135,
 			Ubercharge:   true,
 		})
@@ -214,7 +214,7 @@ func TestParseKilledEvt(t *testing.T) {
 		logparse.KilledEvt{
 			TimeStamp:        logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
 			SourcePlayer:     logparse.SourcePlayer{Name: "Desmos Calculator", PID: 10, SID: steamid.New("[U:1:1132396177]"), Team: logparse.RED},
-			TargetPlayer:     logparse.TargetPlayer{Name2: "Dzefersons14", PID2: 8, SID2: steamid.SID3ToSID64("[U:1:1080653073]"), Team2: logparse.BLU},
+			TargetPlayer:     logparse.TargetPlayer{Name2: "Dzefersons14", PID2: 8, SID2: steamid.New("[U:1:1080653073]"), Team2: logparse.BLU},
 			AttackerPosition: logparse.Pos{X: 217, Y: -54, Z: -302},
 			VictimPosition:   logparse.Pos{X: 203, Y: -2, Z: -319},
 			Weapon:           logparse.BrassBeast,
@@ -222,8 +222,8 @@ func TestParseKilledEvt(t *testing.T) {
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "Five<636><[U:1:66374745]><Blue>" killed "2-D<658><[U:1:126712178]><Red>" with "scattergun" (attacker_position "803 -693 -235") (victim_position "663 -899 -165")`,
 		logparse.KilledEvt{
 			TimeStamp:        logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
-			SourcePlayer:     logparse.SourcePlayer{Name: "Five", PID: 636, SID: steamid.SID3ToSID64("[U:1:66374745]"), Team: logparse.BLU},
-			TargetPlayer:     logparse.TargetPlayer{Name2: "2-D", PID2: 658, SID2: steamid.SID3ToSID64("[U:1:126712178]"), Team2: logparse.RED},
+			SourcePlayer:     logparse.SourcePlayer{Name: "Five", PID: 636, SID: steamid.New("[U:1:66374745]"), Team: logparse.BLU},
+			TargetPlayer:     logparse.TargetPlayer{Name2: "2-D", PID2: 658, SID2: steamid.New("[U:1:126712178]"), Team2: logparse.RED},
 			AttackerPosition: logparse.Pos{X: 803, Y: -693, Z: -235},
 			VictimPosition:   logparse.Pos{X: 663, Y: -899, Z: -165},
 			Weapon:           logparse.Scattergun,
@@ -237,7 +237,7 @@ func TestParseCustomKilledEvt(t *testing.T) {
 		logparse.CustomKilledEvt{
 			TimeStamp:        logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
 			SourcePlayer:     logparse.SourcePlayer{Name: "Desmos Calculator", PID: 10, SID: steamid.New("[U:1:1132396177]"), Team: logparse.RED},
-			TargetPlayer:     logparse.TargetPlayer{Name2: "Dzefersons14", PID2: 8, SID2: steamid.SID3ToSID64("[U:1:1080653073]"), Team2: logparse.BLU},
+			TargetPlayer:     logparse.TargetPlayer{Name2: "Dzefersons14", PID2: 8, SID2: steamid.New("[U:1:1080653073]"), Team2: logparse.BLU},
 			AttackerPosition: logparse.Pos{X: 217, Y: -54, Z: -302},
 			VictimPosition:   logparse.Pos{X: 203, Y: -2, Z: -319},
 			Weapon:           logparse.Spycicle,
@@ -276,7 +276,7 @@ func TestParsePointCapturedEvt(t *testing.T) {
 
 	expectedPlayers := []logparse.SourcePlayerPosition{
 		{SourcePlayer: logparse.SourcePlayer{Name: "Hacksaw", PID: 12, SID: steamid.New("[U:1:68745073]"), Team: logparse.RED}, Pos: logparse.Pos{X: 101, Y: 98, Z: -313}},
-		{SourcePlayer: logparse.SourcePlayer{Name: "El Sur", PID: 35, SID: steamid.SID3ToSID64("[U:1:423376881]"), Team: logparse.RED}, Pos: logparse.Pos{X: -95, Y: 152, Z: -767}},
+		{SourcePlayer: logparse.SourcePlayer{Name: "El Sur", PID: 35, SID: steamid.New("[U:1:423376881]"), Team: logparse.RED}, Pos: logparse.Pos{X: -95, Y: 152, Z: -767}},
 	}
 
 	require.EqualValues(t, expectedPlayers, evt.Players())
@@ -316,8 +316,8 @@ func TestParseKilledObjectEvt(t *testing.T) {
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "Uncle Grain<387><BOT><Red>" triggered "killedobject" (object "OBJ_ATTACHMENT_SAPPER") (weapon "wrench") (objectowner "Doug<382><[U:1:1203081575]><Blue>") (attacker_position "-6889 -1367 -63")`,
 		logparse.KilledObjectEvt{
 			TimeStamp:        logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
-			SourcePlayer:     logparse.SourcePlayer{Name: "Uncle Grain", PID: 387, SID: steamid.New(logparse.BotSid), Team: logparse.RED},
-			TargetPlayer:     logparse.TargetPlayer{Name2: "Doug", PID2: 382, SID2: steamid.SID3ToSID64("[U:1:1203081575]"), Team2: logparse.BLU},
+			SourcePlayer:     logparse.SourcePlayer{Name: "Uncle Grain", PID: 387, SID: logparse.BotSid, Team: logparse.RED},
+			TargetPlayer:     logparse.TargetPlayer{Name2: "Doug", PID2: 382, SID2: steamid.New("[U:1:1203081575]"), Team2: logparse.BLU},
 			Object:           "OBJ_ATTACHMENT_SAPPER",
 			Weapon:           logparse.Wrench,
 			AttackerPosition: logparse.Pos{X: -6889, Y: -1367, Z: -63},
@@ -429,7 +429,7 @@ func TestParseDominationEvt(t *testing.T) {
 		logparse.DominationEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
 			SourcePlayer: logparse.SourcePlayer{Name: "Desmos Calculator", PID: 10, SID: steamid.New("[U:1:1132396177]"), Team: logparse.RED},
-			TargetPlayer: logparse.TargetPlayer{Name2: "Dzefersons14", PID2: 8, SID2: steamid.SID3ToSID64("[U:1:1080653073]"), Team2: logparse.BLU},
+			TargetPlayer: logparse.TargetPlayer{Name2: "Dzefersons14", PID2: 8, SID2: steamid.New("[U:1:1080653073]"), Team2: logparse.BLU},
 		})
 }
 
@@ -458,7 +458,7 @@ func TestParseRevengeEvt(t *testing.T) {
 		logparse.RevengeEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
 			SourcePlayer: logparse.SourcePlayer{Name: "Dzefersons14", PID: 8, SID: steamid.New("[U:1:1080653073]"), Team: logparse.BLU},
-			TargetPlayer: logparse.TargetPlayer{Name2: "Desmos Calculator", PID2: 10, SID2: steamid.SID3ToSID64("[U:1:1132396177]"), Team2: logparse.RED},
+			TargetPlayer: logparse.TargetPlayer{Name2: "Desmos Calculator", PID2: 10, SID2: steamid.New("[U:1:1132396177]"), Team2: logparse.RED},
 		})
 }
 
@@ -656,7 +656,7 @@ func TestParseDamageEvt(t *testing.T) {
 		logparse.DamageEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
 			SourcePlayer: logparse.SourcePlayer{Name: "rad", PID: 6, SID: steamid.New("[U:1:57823119]"), Team: logparse.RED},
-			TargetPlayer: logparse.TargetPlayer{Name2: "z/", PID2: 14, SID2: steamid.SID3ToSID64("[U:1:66656848]"), Team2: logparse.BLU},
+			TargetPlayer: logparse.TargetPlayer{Name2: "z/", PID2: 14, SID2: steamid.New("[U:1:66656848]"), Team2: logparse.BLU},
 			Weapon:       logparse.SyringeGun,
 			Damage:       11,
 		})
@@ -664,7 +664,7 @@ func TestParseDamageEvt(t *testing.T) {
 		logparse.DamageEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
 			SourcePlayer: logparse.SourcePlayer{Name: "rad", PID: 6, SID: steamid.New("[U:1:57823119]"), Team: logparse.RED},
-			TargetPlayer: logparse.TargetPlayer{Name2: "z/", PID2: 14, SID2: steamid.SID3ToSID64("[U:1:66656848]"), Team2: logparse.BLU},
+			TargetPlayer: logparse.TargetPlayer{Name2: "z/", PID2: 14, SID2: steamid.New("[U:1:66656848]"), Team2: logparse.BLU},
 			Damage:       88,
 			Realdamage:   32,
 			Weapon:       logparse.Ubersaw,
@@ -673,8 +673,8 @@ func TestParseDamageEvt(t *testing.T) {
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "Lochlore<22><[U:1:127176886]><Blue>" triggered "damage" against "Doctrine<20><[U:1:1090182064]><Red>" (damage "762") (realdamage "127") (weapon "knife") (crit "crit")`,
 		logparse.DamageEvt{
 			TimeStamp:    logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
-			SourcePlayer: logparse.SourcePlayer{Name: "Lochlore", PID: 22, SID: steamid.SID3ToSID64("[U:1:127176886]"), Team: logparse.BLU},
-			TargetPlayer: logparse.TargetPlayer{Name2: "Doctrine", PID2: 20, SID2: steamid.SID3ToSID64("[U:1:1090182064]"), Team2: logparse.RED},
+			SourcePlayer: logparse.SourcePlayer{Name: "Lochlore", PID: 22, SID: steamid.New("[U:1:127176886]"), Team: logparse.BLU},
+			TargetPlayer: logparse.TargetPlayer{Name2: "Doctrine", PID2: 20, SID2: steamid.New("[U:1:1090182064]"), Team2: logparse.RED},
 			Damage:       762,
 			Realdamage:   127,
 			Weapon:       logparse.Knife,
@@ -688,8 +688,8 @@ func TestParseJarateAttackEvt(t *testing.T) {
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "Banfield<2796><[U:1:958890744]><Blue>" triggered "jarate_attack" against "Legs™<2818><[U:1:42871337]><Red>" with "tf_weapon_jar" (attacker_position "1881 -1521 264") (victim_position "1729 -301 457")`,
 		logparse.JarateAttackEvt{
 			TimeStamp:        logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
-			SourcePlayer:     logparse.SourcePlayer{Name: "Banfield", PID: 2796, SID: steamid.SID3ToSID64("[U:1:958890744]"), Team: logparse.BLU},
-			TargetPlayer:     logparse.TargetPlayer{Name2: "Legs™", PID2: 2818, SID2: steamid.SID3ToSID64("[U:1:42871337]"), Team2: logparse.RED},
+			SourcePlayer:     logparse.SourcePlayer{Name: "Banfield", PID: 2796, SID: steamid.New("[U:1:958890744]"), Team: logparse.BLU},
+			TargetPlayer:     logparse.TargetPlayer{Name2: "Legs™", PID2: 2818, SID2: steamid.New("[U:1:42871337]"), Team2: logparse.RED},
 			Weapon:           logparse.JarBased,
 			AttackerPosition: logparse.Pos{X: 1881, Y: -1521, Z: 264},
 			VictimPosition:   logparse.Pos{X: 1729, Y: -301, Z: 457},
@@ -750,8 +750,8 @@ func TestParseMilkAttackEvt(t *testing.T) {
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "✪lil vandal<2953><[U:1:178417727]><Blue>" triggered "milk_attack" against "Darth Jar Jar<2965><[U:1:209106507]><Red>" with "tf_weapon_jar" (attacker_position "-1040 -854 128") (victim_position "-1516 -382 128")`,
 		logparse.MilkAttackEvt{
 			TimeStamp:        logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
-			SourcePlayer:     logparse.SourcePlayer{Name: "✪lil vandal", PID: 2953, SID: steamid.SID3ToSID64("[U:1:178417727]"), Team: logparse.BLU},
-			TargetPlayer:     logparse.TargetPlayer{Name2: "Darth Jar Jar", PID2: 2965, SID2: steamid.SID3ToSID64("[U:1:209106507]"), Team2: logparse.RED},
+			SourcePlayer:     logparse.SourcePlayer{Name: "✪lil vandal", PID: 2953, SID: steamid.New("[U:1:178417727]"), Team: logparse.BLU},
+			TargetPlayer:     logparse.TargetPlayer{Name2: "Darth Jar Jar", PID2: 2965, SID2: steamid.New("[U:1:209106507]"), Team2: logparse.RED},
 			Weapon:           logparse.JarBased,
 			AttackerPosition: logparse.Pos{X: -1040, Y: -854, Z: 128},
 			VictimPosition:   logparse.Pos{X: -1516, Y: -382, Z: 128},
@@ -764,8 +764,8 @@ func TestParseGasAttackEvt(t *testing.T) {
 	testLogLine(t, `L 02/21/2021 - 06:22:23: "UnEpic<6760><[U:1:132169058]><Blue>" triggered "gas_attack" against "Johnny Blaze<6800><[U:1:33228413]><Red>" with "tf_weapon_jar" (attacker_position "-4539 2731 156") (victim_position "-4384 1527 128")`,
 		logparse.GasAttackEvt{
 			TimeStamp:        logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
-			SourcePlayer:     logparse.SourcePlayer{Name: "UnEpic", PID: 6760, SID: steamid.SID3ToSID64("[U:1:132169058]"), Team: logparse.BLU},
-			TargetPlayer:     logparse.TargetPlayer{Name2: "Johnny Blaze", PID2: 6800, SID2: steamid.SID3ToSID64("[U:1:33228413]"), Team2: logparse.RED},
+			SourcePlayer:     logparse.SourcePlayer{Name: "UnEpic", PID: 6760, SID: steamid.New("[U:1:132169058]"), Team: logparse.BLU},
+			TargetPlayer:     logparse.TargetPlayer{Name2: "Johnny Blaze", PID2: 6800, SID2: steamid.New("[U:1:33228413]"), Team2: logparse.RED},
 			Weapon:           logparse.JarBased,
 			AttackerPosition: logparse.Pos{X: -4539, Y: 2731, Z: 156},
 			VictimPosition:   logparse.Pos{X: -4384, Y: 1527, Z: 128},
