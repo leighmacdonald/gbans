@@ -20,7 +20,7 @@ import { LoadingIcon } from '../component/LoadingIcon';
 import { LoadingSpinner } from '../component/LoadingSpinner';
 import { AppealStateField } from '../component/formik/AppealStateField';
 import { FilterButtons } from '../component/formik/FilterButtons';
-import { SourceIdField } from '../component/formik/SourceIdField';
+import { SourceIDField } from '../component/formik/SourceIDField.tsx';
 import { SteamIDSelectField } from '../component/formik/SteamIDSelectField';
 import { TargetIDField } from '../component/formik/TargetIdField';
 import { LazyTable } from '../component/table/LazyTable';
@@ -128,7 +128,7 @@ export const AdminAppealsPage = () => {
                                 <AppealStateField />
                             </Grid>
                             <Grid xs={6} sm={4} md={3}>
-                                <SourceIdField />
+                                <SourceIDField />
                             </Grid>
                             <Grid xs={6} sm={4} md={3}>
                                 <TargetIDField />

@@ -27,7 +27,7 @@ import {
 import { AppealStateField } from '../formik/AppealStateField';
 import { DeletedField } from '../formik/DeletedField';
 import { FilterButtons } from '../formik/FilterButtons';
-import { SourceIdField } from '../formik/SourceIdField';
+import { SourceIDField } from '../formik/SourceIDField.tsx';
 import { SteamIDSelectField } from '../formik/SteamIDSelectField';
 import { TargetIDField } from '../formik/TargetIdField';
 import { ModalBanSteam, ModalUnbanSteam } from '../modal';
@@ -172,7 +172,7 @@ export const BanSteamTable = ({ newBans }: { newBans: SteamBanRecord[] }) => {
                 <Grid xs={12}>
                     <Grid container spacing={2}>
                         <Grid xs={4} sm={3} md={2}>
-                            <SourceIdField />
+                            <SourceIDField />
                         </Grid>
                         <Grid xs={4} sm={3} md={2}>
                             <TargetIDField />

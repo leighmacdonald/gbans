@@ -12,7 +12,7 @@ import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { LoadingIcon } from '../component/LoadingIcon';
 import { FilterButtons } from '../component/formik/FilterButtons';
 import { ReportStatusField } from '../component/formik/ReportStatusField';
-import { SourceIdField } from '../component/formik/SourceIdField';
+import { SourceIDField } from '../component/formik/SourceIDField.tsx';
 import { SteamIDSelectField } from '../component/formik/SteamIDSelectField';
 import { TargetIDField } from '../component/formik/TargetIdField';
 import { LazyTable } from '../component/table/LazyTable';
@@ -102,7 +102,7 @@ export const AdminReportsPage = () => {
                     >
                         <Grid container spacing={2}>
                             <Grid xs={4} sm={4} md={3}>
-                                <SourceIdField />
+                                <SourceIDField />
                             </Grid>
                             <Grid xs={4} sm={4} md={3}>
                                 <TargetIDField />

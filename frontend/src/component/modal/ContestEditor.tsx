@@ -29,7 +29,7 @@ import { LoadingSpinner } from '../LoadingSpinner';
 import { DateEndField } from '../formik/DateEndField';
 import { DateStartField } from '../formik/DateStartField';
 import { DescriptionField } from '../formik/DescriptionField';
-import { BaseFormikInputProps } from '../formik/SourceIdField.tsx';
+import { BaseFormikInputProps } from '../formik/SourceIDField.tsx';
 import { TitleField } from '../formik/TitleField';
 import {
     boolDefinedValidator,
