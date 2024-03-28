@@ -7,8 +7,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"io"
 	"io/fs"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/exec"
@@ -132,21 +134,25 @@ func ensureBinary(ctx context.Context) error {
 		return errors.Join(errResp, ErrDownload)
 	}
 
-	data, _ := io.ReadAll(resp.Body)
+	defer func() {
+		if errClose := resp.Body.Close(); errClose != nil {
+			slog.Error("failed to close response body", log.ErrAttr(errClose))
+		}
+	}()
 
-	_ = resp.Body.Close()
-
-	openFile, err := os.OpenFile(fullPath, os.O_CREATE|os.O_RDWR|os.O_EXCL, 0x777)
+	openFile, err := os.OpenFile(fullPath, os.O_CREATE|os.O_RDWR|os.O_EXCL, 0x755)
 	if err != nil {
 		return errors.Join(err, ErrOpenFile)
 	}
 
-	if _, errWrite := openFile.Write(data); errWrite != nil {
-		return errors.Join(errWrite, ErrWrite)
-	}
+	defer func() {
+		if errClose := openFile.Close(); errClose != nil {
+			slog.Error("failed to close output file", log.ErrAttr(errClose))
+		}
+	}()
 
-	if errClose := openFile.Close(); errClose != nil {
-		return errors.Join(errClose, ErrCloseBin)
+	if _, errWrite := io.Copy(openFile, resp.Body); errWrite != nil {
+		return errors.Join(errWrite, ErrWrite)
 	}
 
 	return nil
