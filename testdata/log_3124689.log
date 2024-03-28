@@ -1827,7 +1827,7 @@ L 02/05/2022 - 06:25:14: "avg Q enjoyer<9><[U:1:152978378]><Blue>" triggered "sh
 L 02/05/2022 - 06:25:14: "Golden Terrestrial<18><[U:1:122447295]><Red>" triggered "empty_uber"
 L 02/05/2022 - 06:25:14: "avg Q enjoyer<9><[U:1:152978378]><Blue>" triggered "shot_hit" (weapon "crusaders_crossbow")
 L 02/05/2022 - 06:25:14: "avg Q enjoyer<9><[U:1:152978378]><Blue>" triggered "healed" against "var<3><[U:1:204626678]><Blue>" (healing "89")
-L 02/05/2022 - 06:25:15: "maz<29><[U:1:90251326]><Red>" say "BOT"
+L 02/05/2022 - 06:25:15: "maz<29><[U:1:90251326]><Red>" say "BOTMODE"
 L 02/05/2022 - 06:25:15: "jumbuck<24><[U:1:124421107]><Blue>" triggered "damage" against "Invidia<19><[U:1:135985851]><Red>" (damage "9") (weapon "brass_beast")
 L 02/05/2022 - 06:25:15: "Invidia<19><[U:1:135985851]><Red>" triggered "shot_fired" (weapon "tf_projectile_pipe")
 L 02/05/2022 - 06:25:15: "jumbuck<24><[U:1:124421107]><Blue>" triggered "damage" against "Invidia<19><[U:1:135985851]><Red>" (damage "9") (weapon "brass_beast")
@@ -3097,7 +3097,7 @@ L 02/05/2022 - 06:27:16: "Golden Terrestrial<18><[U:1:122447295]><Red>" triggere
 L 02/05/2022 - 06:27:16: "ExCalibre<27><[U:1:463127075]><Blue>" triggered "shot_fired" (weapon "sniperrifle")
 L 02/05/2022 - 06:27:17: "avg Q enjoyer<9><[U:1:152978378]><Blue>" triggered "healed" against "jumbuck<24><[U:1:124421107]><Blue>" (healing "28")
 L 02/05/2022 - 06:27:17: "Golden Terrestrial<18><[U:1:122447295]><Red>" triggered "healed" against "Tiger<21><[U:1:311133859]><Red>" (healing "23")
-L 02/05/2022 - 06:27:17: "maz<29><[U:1:90251326]><Red>" say "BOT"
+L 02/05/2022 - 06:27:17: "maz<29><[U:1:90251326]><Red>" say "BOTMODE"
 L 02/05/2022 - 06:27:18: "Tunaaaaaa<6><[U:1:848745342]><Red>" triggered "shot_fired" (weapon "tf_projectile_rocket")
 L 02/05/2022 - 06:27:18: "Golden Terrestrial<18><[U:1:122447295]><Red>" triggered "healed" against "Tiger<21><[U:1:311133859]><Red>" (healing "17")
 L 02/05/2022 - 06:27:18: "avg Q enjoyer<9><[U:1:152978378]><Blue>" triggered "healed" against "jumbuck<24><[U:1:124421107]><Blue>" (healing "34")
