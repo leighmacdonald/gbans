@@ -25,12 +25,14 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: 'frontend/pnpm-lock.yaml'
 
-      - name: corepack
-        run: corepack enable
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 8
+          run_install: false
 
       - name: Install modules
         working-directory: ./frontend
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --strict-peer-dependencies
 
       - name: Prettier
         run: make lint_ts
@@ -111,6 +113,7 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version: 'stable'
+
       - name: Setup nodejs
         uses: actions/setup-node@v4
         with:
@@ -118,12 +121,14 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: 'frontend/pnpm-lock.yaml'
 
-      - name: corepack
-        run: corepack enable
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 8
+          run_install: false
 
       - name: Install modules
         working-directory: ./frontend
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --strict-peer-dependencies
 
       - name: Prettier
         working-directory: ./frontend
