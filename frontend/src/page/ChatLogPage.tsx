@@ -36,7 +36,10 @@ import { MessageField } from '../component/formik/MessageField';
 import { PersonCellField } from '../component/formik/PersonCellField';
 import { PersonanameField } from '../component/formik/PersonanameField';
 import { ServerIDCell, ServerIDField } from '../component/formik/ServerIDField';
-import { SteamIdField } from '../component/formik/SteamIdField';
+import {
+    SourceIDField,
+    SourceIDFieldValue
+} from '../component/formik/SourceIDField.tsx';
 import { ResetButton, SubmitButton } from '../component/modal/Buttons';
 import { LazyTable } from '../component/table/LazyTable';
 import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
@@ -51,13 +54,13 @@ const anyServerSimple: ServerSimple = {
     colour: ''
 };
 
-interface ChatLogFormValues {
-    steam_id: string;
+type ChatLogFormValues = {
+    source_id: string;
     personaname: string;
     message: string;
     auto_refresh: number;
     server_id: number;
-}
+} & SourceIDFieldValue;
 
 export const ChatLogPage = () => {
     const [state, setState] = useUrlState({
@@ -92,7 +95,7 @@ export const ChatLogPage = () => {
                         : undefined,
                 personaname: values.personaname,
                 query: values.message,
-                source_id: values.steam_id,
+                source_id: values.source_id,
                 limit: Number(state.rowPerPageCount),
                 offset: Number(state.page ?? 0) * Number(state.rowPerPageCount),
                 order_by: state.sortColumn,
@@ -158,7 +161,7 @@ export const ChatLogPage = () => {
             initialValues={{
                 personaname: state.personaName,
                 message: state.message,
-                steam_id: state.steamId,
+                source_id: state.steamId,
                 auto_refresh: 0,
                 server_id: state.server
             }}
@@ -184,7 +187,7 @@ export const ChatLogPage = () => {
                                 <PersonanameField />
                             </Grid>
                             <Grid xs={6} md={3}>
-                                <SteamIdField />
+                                <SourceIDField />
                             </Grid>
                             <Grid xs={6} md={3}>
                                 <MessageField />

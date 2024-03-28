@@ -26,7 +26,7 @@ import {
 import { ASNumberField } from '../formik/ASNumberField';
 import { DeletedField } from '../formik/DeletedField';
 import { FilterButtons } from '../formik/FilterButtons';
-import { SourceIdField } from '../formik/SourceIdField';
+import { SourceIDField } from '../formik/SourceIDField.tsx';
 import { SteamIDSelectField } from '../formik/SteamIDSelectField';
 import { TargetIDField } from '../formik/TargetIdField';
 import { ModalBanASN, ModalUnbanASN } from '../modal';
@@ -161,7 +161,7 @@ export const BanASNTable = ({ newBans }: { newBans: ASNBanRecord[] }) => {
                             <ASNumberField />
                         </Grid>
                         <Grid xs={4} sm={3} md={2}>
-                            <SourceIdField />
+                            <SourceIDField />
                         </Grid>
                         <Grid xs={4} sm={3} md={2}>
                             <TargetIDField />

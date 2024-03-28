@@ -25,7 +25,7 @@ import { FilterButtons } from '../formik/FilterButtons';
 import { MapNameField } from '../formik/MapNameField.tsx';
 import { SelectOwnField } from '../formik/SelectOwnField.tsx';
 import { ServerIDsField } from '../formik/ServerIDsField.tsx';
-import { SourceIdField } from '../formik/SourceIdField.tsx';
+import { SourceIDField } from '../formik/SourceIDField.tsx';
 import { LazyTable } from './LazyTable';
 
 interface STVFormValues {
@@ -135,7 +135,7 @@ export const STVTable = () => {
                             <MapNameField />
                         </Grid>
                         <Grid md>
-                            <SourceIdField disabled={Boolean(state.own)} />
+                            <SourceIDField disabled={Boolean(state.own)} />
                         </Grid>
                         <Grid md>
                             <SelectOwnField disabled={selectOwnDisabled} />

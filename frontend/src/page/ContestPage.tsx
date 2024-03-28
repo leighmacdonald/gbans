@@ -21,8 +21,7 @@ import {
     apiContestEntryVote,
     ContestEntry,
     ErrorCode,
-    PermissionLevel,
-    useContest
+    PermissionLevel
 } from '../api';
 import { Asset, mediaType, MediaTypes } from '../api/media';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
@@ -37,6 +36,7 @@ import {
     ModalContestEntry,
     ModalContestEntryDelete
 } from '../component/modal';
+import { useContest } from '../hooks/useContest.ts';
 import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors';

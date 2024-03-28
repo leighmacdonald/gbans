@@ -11,13 +11,13 @@ export interface BaseFormikInputProps {
     onProfileSuccess?: (profile: Nullable<PlayerProfile>) => void;
 }
 
-interface AuthorIDFieldValue {
+export type SourceIDFieldValue = {
     source_id: string;
-}
+};
 
-export const SourceIdField = ({ disabled = false }: { disabled?: boolean }) => {
+export const SourceIDField = ({ disabled = false }: { disabled?: boolean }) => {
     const { values, touched, errors, handleChange } =
-        useFormikContext<AuthorIDFieldValue>();
+        useFormikContext<SourceIDFieldValue>();
     return (
         <TextField
             variant={'outlined'}

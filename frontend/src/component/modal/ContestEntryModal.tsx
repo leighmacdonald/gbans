@@ -16,13 +16,9 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { fromByteArray } from 'base64-js';
 import { Formik } from 'formik';
 import * as yup from 'yup';
-import {
-    apiContestEntrySave,
-    APIError,
-    EmptyUUID,
-    useContest
-} from '../../api';
+import { apiContestEntrySave, APIError, EmptyUUID } from '../../api';
 import { apiSaveContestEntryMedia, UserUploadedFile } from '../../api/media';
+import { useContest } from '../../hooks/useContest.ts';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { logErr } from '../../util/errors';
 import { Nullable } from '../../util/types';

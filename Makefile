@@ -144,14 +144,6 @@ docker_dump:
 docker_restore:
 	cat gbans.sql | docker exec -i docker-postgres-1 psql -U gbans
 
-docker_update_plugin:
-	docker cp sourcemod/plugins/gbans.smx srcds-localhost-1:/home/tf2server/tf-dedicated/tf/addons/sourcemod/plugins/gbans.smx
-	rcon -H 192.168.0.57 -p dev_pass sm plugins reload gbans
-	docker logs -f srcds-localhost-1
-
-copy_ut:
-	cp -rv sourcemod/scripting/* ../uncletopia/roles/sourcemod/files/addons/sourcemod/scripting/
-
 gen_mocks:
 	rm -f internal/domain/mocks/*
 	mockery
