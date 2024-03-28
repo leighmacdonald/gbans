@@ -115,12 +115,14 @@ func (r reportUsecase) GetReports(ctx context.Context, user domain.PersonInfo, o
 
 	if !user.HasPermission(domain.PModerator) {
 		sourceID = user.GetSteamID()
-	} else if opts.SourceID.Valid() {
-		sourceID = opts.SourceID
+	} else {
+		if sid, ok := opts.SourceSteamID(ctx); ok {
+			sourceID = sid
+		}
 	}
 
 	if sourceID.Valid() {
-		opts.SourceID = sourceID
+		opts.SourceID = sourceID.String()
 	}
 
 	reports, count, errReports := r.rr.GetReports(ctx, opts)

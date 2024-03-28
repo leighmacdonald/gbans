@@ -76,11 +76,11 @@ export const MarkDownRenderer = ({ body_md }: { body_md: string }) => {
                         img: {
                             component: MDImg
                         },
-                        p: {
-                            props: {
-                                gutterBottom: true
-                            }
-                        },
+                        // p: {
+                        //     props: {
+                        //         gutterBottom: true
+                        //     }
+                        // },
                         h1: {
                             props: {
                                 variant: 'h3'

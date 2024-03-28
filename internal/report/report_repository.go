@@ -165,12 +165,12 @@ func (r reportRepository) DropReportMessage(ctx context.Context, message *domain
 func (r reportRepository) GetReports(ctx context.Context, opts domain.ReportQueryFilter) ([]domain.Report, int64, error) {
 	constraints := sq.And{sq.Eq{"r.deleted": opts.Deleted}}
 
-	if opts.SourceID.Valid() {
-		constraints = append(constraints, sq.Eq{"r.author_id": opts.SourceID.Int64()})
+	if sid, ok := opts.SourceSteamID(ctx); ok {
+		constraints = append(constraints, sq.Eq{"r.author_id": sid})
 	}
 
-	if opts.TargetID.Valid() {
-		constraints = append(constraints, sq.Eq{"r.reported_id": opts.TargetID.Int64()})
+	if sid, ok := opts.TargetSteamID(ctx); ok {
+		constraints = append(constraints, sq.Eq{"r.reported_id": sid})
 	}
 
 	if opts.ReportStatus >= 0 {

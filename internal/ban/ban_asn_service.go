@@ -2,7 +2,6 @@ package ban
 
 import (
 	"errors"
-	"github.com/leighmacdonald/steamid/v4/steamid"
 	"log/slog"
 	"net/http"
 	"time"
@@ -12,6 +11,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type banASNHandler struct {
@@ -35,13 +35,13 @@ func NewBanASNHandler(engine *gin.Engine, banASNUsecase domain.BanASNUsecase, at
 
 func (h banASNHandler) onAPIPostBansASNCreate() gin.HandlerFunc {
 	type apiBanRequest struct {
-		TargetID   steamid.SteamID `json:"target_id"`
-		Note       string          `json:"note"`
-		Reason     domain.Reason   `json:"reason"`
-		ReasonText string          `json:"reason_text"`
-		ASNum      int64           `json:"as_num"`
-		Duration   string          `json:"duration"`
-		ValidUntil time.Time       `json:"valid_until"`
+		domain.TargetIDField
+		Note       string        `json:"note"`
+		Reason     domain.Reason `json:"reason"`
+		ReasonText string        `json:"reason_text"`
+		ASNum      int64         `json:"as_num"`
+		Duration   string        `json:"duration"`
+		ValidUntil time.Time     `json:"valid_until"`
 	}
 
 	return func(ctx *gin.Context) {
@@ -62,7 +62,14 @@ func (h banASNHandler) onAPIPostBansASNCreate() gin.HandlerFunc {
 			return
 		}
 
-		if errBanSteamGroup := domain.NewBanASN(sid, req.TargetID, duration, req.Reason, req.ReasonText, req.Note, domain.Web,
+		targetID, targetIDOk := req.TargetSteamID(ctx)
+		if !targetIDOk {
+			httphelper.ErrorHandled(ctx, domain.ErrTargetID)
+
+			return
+		}
+
+		if errBanSteamGroup := domain.NewBanASN(sid, targetID, duration, req.Reason, req.ReasonText, req.Note, domain.Web,
 			req.ASNum, domain.Banned, &banASN); errBanSteamGroup != nil {
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 

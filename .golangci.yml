@@ -1,8 +1,9 @@
-run:
-  skip-files:
+issues:
+  exclude-dirs:
+    - pkg/msqp
+    - pkg/mm
+  exclude-files:
     - internal/web/data.go
-    - pkg/msqp/*
-    - pkg/mm/*
 
 linters:
   # Disable all linters.

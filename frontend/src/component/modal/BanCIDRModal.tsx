@@ -36,10 +36,10 @@ import { DurationField, DurationFieldValidator } from '../formik/DurationField';
 import { ErrorField } from '../formik/ErrorField';
 import { NetworkRangeField } from '../formik/NetworkRangeField';
 import { NoteField, NoteFieldValidator } from '../formik/NoteField';
-import { SteamIdField, SteamIDInputValue } from '../formik/SteamIdField';
+import { TargetIDField, TargetIDInputValue } from '../formik/TargetIdField.tsx';
 import { CancelButton, ResetButton, SubmitButton } from './Buttons';
 
-interface BanCIDRFormValues extends SteamIDInputValue {
+type BanCIDRFormValues = {
     cidr: string;
     reason: BanReason;
     reason_text: string;
@@ -47,10 +47,10 @@ interface BanCIDRFormValues extends SteamIDInputValue {
     duration_custom: Date;
     note: string;
     existing?: CIDRBanRecord;
-}
+} & TargetIDInputValue;
 
 const validationSchema = yup.object({
-    steam_id: steamIdValidator,
+    target_id: steamIdValidator('target_id'),
     cidr: makeNetworkRangeFieldValidator(true),
     reason: banReasonFieldValidator,
     reason_text: banReasonTextFieldValidator,
@@ -81,7 +81,7 @@ export const BanCIDRModal = NiceModal.create(
                                 reason: values.reason,
                                 valid_until: values.duration_custom,
                                 reason_text: values.reason_text,
-                                target_id: values.steam_id,
+                                target_id: values.target_id,
                                 cidr: realCidr
                             })
                         );
@@ -93,7 +93,7 @@ export const BanCIDRModal = NiceModal.create(
                                 valid_until: values.duration_custom,
                                 reason: values.reason,
                                 reason_text: values.reason_text,
-                                target_id: values.steam_id,
+                                target_id: values.target_id,
                                 cidr: realCidr
                             })
                         );
@@ -126,7 +126,7 @@ export const BanCIDRModal = NiceModal.create(
                         : new Date(),
                     note: existing ? existing.note : '',
                     reason: existing ? existing.reason : BanReason.Cheating,
-                    steam_id: existing ? existing.target_id : '',
+                    target_id: existing ? existing.target_id : '',
                     reason_text: existing ? existing.reason_text : '',
                     cidr: existing ? existing.cidr : ''
                 }}
@@ -141,7 +141,7 @@ export const BanCIDRModal = NiceModal.create(
 
                     <DialogContent>
                         <Stack spacing={2}>
-                            <SteamIdField />
+                            <TargetIDField />
                             <NetworkRangeField />
                             <BanReasonField />
                             <BanReasonTextField />

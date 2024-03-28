@@ -242,7 +242,7 @@ func (u personUsecase) GetOrCreatePersonBySteamID(ctx context.Context, sid64 ste
 		}
 	}
 
-	return person, errGetPerson
+	return person, nil
 }
 
 func (u personUsecase) GetPersonByDiscordID(ctx context.Context, discordID string) (domain.Person, error) {

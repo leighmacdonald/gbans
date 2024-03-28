@@ -19,8 +19,9 @@ import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import { Formik, useFormikContext } from 'formik';
 import * as yup from 'yup';
-import { EmptyUUID, PermissionLevel, useContest } from '../../api';
+import { EmptyUUID, PermissionLevel } from '../../api';
 import { apiContestSave } from '../../api';
+import { useContest } from '../../hooks/useContest.ts';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { logErr } from '../../util/errors';
 import { Heading } from '../Heading';
@@ -28,7 +29,7 @@ import { LoadingSpinner } from '../LoadingSpinner';
 import { DateEndField } from '../formik/DateEndField';
 import { DateStartField } from '../formik/DateStartField';
 import { DescriptionField } from '../formik/DescriptionField';
-import { BaseFormikInputProps } from '../formik/SteamIdField';
+import { BaseFormikInputProps } from '../formik/SourceIdField.tsx';
 import { TitleField } from '../formik/TitleField';
 import {
     boolDefinedValidator,

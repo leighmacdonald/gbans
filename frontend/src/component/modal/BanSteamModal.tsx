@@ -38,7 +38,7 @@ import { ErrorField } from '../formik/ErrorField';
 import { IncludeFriendsField } from '../formik/IncludeFriendsField';
 import { NoteField, NoteFieldValidator } from '../formik/NoteField';
 import { ReportIdField, ReportIdFieldValidator } from '../formik/ReportIdField';
-import { SteamIdField, SteamIDInputValue } from '../formik/SteamIdField';
+import { TargetIDField, TargetIDInputValue } from '../formik/TargetIdField.tsx';
 import { CancelButton, ResetButton, SubmitButton } from './Buttons';
 
 export interface BanModalProps {
@@ -47,7 +47,7 @@ export interface BanModalProps {
     existing?: SteamBanRecord;
 }
 
-interface BanSteamFormValues extends SteamIDInputValue {
+type BanSteamFormValues = {
     report_id?: number;
     ban_type: BanType;
     reason: BanReason;
@@ -57,10 +57,10 @@ interface BanSteamFormValues extends SteamIDInputValue {
     note: string;
     include_friends: boolean;
     existing?: SteamBanRecord;
-}
+} & TargetIDInputValue;
 
 const validationSchema = yup.object({
-    steam_id: steamIdValidator,
+    target_id: steamIdValidator('target_id'),
     reportId: ReportIdFieldValidator,
     ban_type: BanTypeFieldValidator,
     reason: banReasonFieldValidator,
@@ -110,7 +110,7 @@ export const BanSteamModal = NiceModal.create(
                             reason: values.reason,
                             reason_text: values.reason_text,
                             report_id: values.report_id,
-                            target_id: values.steam_id,
+                            target_id: values.target_id,
                             include_friends: values.include_friends
                         });
                         sendFlash('success', 'Created ban successfully');
@@ -146,7 +146,7 @@ export const BanSteamModal = NiceModal.create(
                             : new Date(),
                     note: existing?.note ?? '',
                     reason: existing?.reason ?? BanReason.Cheating,
-                    steam_id: existing?.target_id ?? steamId ?? '',
+                    target_id: existing?.target_id ?? steamId ?? '',
                     reason_text: existing?.reason_text ?? '',
                     report_id: existing?.report_id ?? reportId,
                     include_friends: existing?.include_friends ?? false,
@@ -166,7 +166,7 @@ export const BanSteamModal = NiceModal.create(
 
                     <DialogContent>
                         <Stack spacing={2}>
-                            <SteamIdField isReadOnly={isReadOnlySid} />
+                            <TargetIDField isReadOnly={isReadOnlySid} />
                             <ReportIdField />
                             <BanTypeField />
                             <BanReasonField />

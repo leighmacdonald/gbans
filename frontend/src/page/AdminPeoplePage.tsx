@@ -24,7 +24,7 @@ import { PersonCell } from '../component/PersonCell';
 import { FilterButtons } from '../component/formik/FilterButtons';
 import { IPField } from '../component/formik/IPField';
 import { PersonanameField } from '../component/formik/PersonanameField';
-import { SteamIdField } from '../component/formik/SteamIdField';
+import { TargetIDField } from '../component/formik/TargetIdField.tsx';
 import { ModalPersonEditor } from '../component/modal';
 import { LazyTable } from '../component/table/LazyTable';
 import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
@@ -35,25 +35,25 @@ import { isValidSteamDate, renderDate } from '../util/text.tsx';
 import {
     ipFieldValidator,
     personanameFieldValidator,
-    steamIDValidatorSimple
+    steamIdValidator
 } from '../util/validators.ts';
 
 const validationSchema = yup.object({
-    steam_id: steamIDValidatorSimple,
+    target_id: steamIdValidator('target_id'),
     personaname: personanameFieldValidator,
     ip: ipFieldValidator
 });
 
-interface PeopleFilterValues {
-    steam_id: string;
+type PeopleFilterValues = {
+    target_id: string;
     personaname: string;
     ip: string;
-}
+};
 
 export const AdminPeoplePage = (): JSX.Element => {
     const [state, setState] = useUrlState({
         page: undefined,
-        steam_id: undefined,
+        target_id: undefined,
         personaname: undefined,
         ip: undefined,
         rows: undefined,
@@ -74,7 +74,7 @@ export const AdminPeoplePage = (): JSX.Element => {
         limit: Number(state.rows ?? RowsPerPage.Ten),
         offset: Number((state.page ?? 0) * (state.rows ?? RowsPerPage.Ten)),
         order_by: state.sortColumn ?? 'created_on',
-        steam_id: state.steam_id,
+        target_id: state.target_id,
         ip: state.ip
     });
 
@@ -89,7 +89,7 @@ export const AdminPeoplePage = (): JSX.Element => {
         setState({
             ip: '',
             personaname: '',
-            steam_id: ''
+            target_id: ''
         });
     }, [setState]);
 
@@ -115,14 +115,14 @@ export const AdminPeoplePage = (): JSX.Element => {
                         onReset={onFilterReset}
                         initialValues={{
                             personaname: '',
-                            steam_id: '',
+                            target_id: '',
                             ip: ''
                         }}
                         validationSchema={validationSchema}
                     >
                         <Grid container spacing={2}>
                             <Grid xs={6} sm={4} md={3}>
-                                <SteamIdField />
+                                <TargetIDField />
                             </Grid>
                             <Grid xs={6} sm={4} md={3}>
                                 <PersonanameField />

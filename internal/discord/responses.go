@@ -239,7 +239,7 @@ func BanSteamResponse(banSteam domain.BanSteam) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed(title)
 	msgEmbed.Embed().
 		SetColor(colour).
-		SetURL(fmt.Sprintf("https://steamcommunity.com/profiles/%s", banSteam.TargetID))
+		SetURL(fmt.Sprintf("https://steamcommunity.com/profiles/%s", banSteam.TargetID.String()))
 
 	msgEmbed.AddFieldsSteamID(banSteam.TargetID)
 

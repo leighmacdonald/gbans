@@ -50,7 +50,7 @@ func LogsTFOverview(ctx context.Context, sid steamid.SteamID) (*LogsTFResult, er
 	localCtx, cancel := context.WithTimeout(ctx, time.Second*15)
 	defer cancel()
 
-	req, reqErr := http.NewRequestWithContext(localCtx, http.MethodGet, fmt.Sprintf(logsTFURL, sid), nil)
+	req, reqErr := http.NewRequestWithContext(localCtx, http.MethodGet, fmt.Sprintf(logsTFURL, sid.String()), nil)
 	if reqErr != nil {
 		return nil, errors.Join(reqErr, ErrCreateRequest)
 	}

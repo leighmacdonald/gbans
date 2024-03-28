@@ -163,7 +163,9 @@ func (h discordService) makeOnCheck() func(_ context.Context, _ *discordgo.Sessi
 		oldBans, _, errOld := h.bu.Get(ctx, domain.SteamBansQueryFilter{
 			BansQueryFilter: domain.BansQueryFilter{
 				QueryFilter: domain.QueryFilter{Deleted: true},
-				TargetID:    sid,
+				TargetIDField: domain.TargetIDField{
+					TargetID: sid.String(),
+				},
 			},
 		})
 		if errOld != nil {
@@ -726,7 +728,7 @@ func (h discordService) makeOnLogs() func(context.Context, *discordgo.Session, *
 		}
 
 		matches, count, errMatch := h.mu.Matches(ctx, domain.MatchesQueryOpts{
-			SteamID:     author.SteamID,
+			SteamID:     author.SteamID.String(),
 			QueryFilter: domain.QueryFilter{Limit: 5},
 		})
 
@@ -927,8 +929,8 @@ func (h discordService) onBanIP(ctx context.Context, _ *discordgo.Session,
 	reason := domain.Reason(opts[domain.OptBanReason].IntValue())
 	cidr := opts[domain.OptCIDR].StringValue()
 
-	targetId, errTargetID := steamid.Resolve(ctx, opts[domain.OptUserIdentifier].StringValue())
-	if errTargetID != nil || !targetId.Valid() {
+	targetID, errTargetID := steamid.Resolve(ctx, opts[domain.OptUserIdentifier].StringValue())
+	if errTargetID != nil || !targetID.Valid() {
 		return nil, domain.ErrInvalidSID
 	}
 
@@ -954,7 +956,7 @@ func (h discordService) onBanIP(ctx context.Context, _ *discordgo.Session,
 	}
 
 	var banCIDR domain.BanCIDR
-	if errOpts := domain.NewBanCIDR(author.SteamID, targetId, duration, reason, reason.String(), modNote, domain.Bot,
+	if errOpts := domain.NewBanCIDR(author.SteamID, targetID, duration, reason, reason.String(), modNote, domain.Bot,
 		cidr, domain.Banned, &banCIDR); errOpts != nil {
 		return nil, errOpts
 	}

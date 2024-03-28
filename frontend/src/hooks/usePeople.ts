@@ -19,7 +19,7 @@ export const usePeople = (opts: PlayerQuery) => {
                 offset: opts.offset,
                 limit: opts.limit,
                 order_by: opts.order_by,
-                steam_id: opts.steam_id,
+                target_id: opts.target_id,
                 ip: opts.ip
             },
             abortController
@@ -45,7 +45,7 @@ export const usePeople = (opts: PlayerQuery) => {
         opts.offset,
         opts.order_by,
         opts.personaname,
-        opts.steam_id
+        opts.target_id
     ]);
 
     return { data, count, loading, error };
