@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"io"
 	"io/fs"
 	"log/slog"
@@ -17,6 +16,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
