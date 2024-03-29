@@ -3,12 +3,16 @@ import react from '@vitejs/plugin-react-swc';
 import { defineConfig } from 'vite';
 import { createHtmlPlugin } from 'vite-plugin-html';
 
+
 // https://vitejs.dev/config/
 export default defineConfig({
+    base: '/',
     build: {
         //sourcemap: true,
         rollupOptions: {
+            treeshake: 'recommended',
             output: {
+                esModule: false,
                 manualChunks: {
                     leaflet: ['leaflet'],
                     'react-leaflet': ['react-leaflet'],
@@ -40,6 +44,7 @@ export default defineConfig({
         createHtmlPlugin({
             entry: './src/index.tsx',
             template: 'index.html',
+
             inject: {
                 data: {
                     title: 'gbans',
