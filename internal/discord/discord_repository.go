@@ -143,7 +143,6 @@ func (bot *discordRepository) onDisconnect(_ *discordgo.Session, _ *discordgo.Di
 // onInteractionCreate is called when a user initiates an application command. All commands are sent
 // through this interface.
 // https://discord.com/developers/docs/interactions/receiving-and-responding#receiving-an-interaction
-
 func (bot *discordRepository) onInteractionCreate(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
 	var (
 		data    = interaction.ApplicationCommandData()

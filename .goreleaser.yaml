@@ -14,6 +14,8 @@ builds:
       - windows
     goarch:
       - amd64
+    tags:
+      - release
     ldflags:
       - -s -w -X github.com/leighmacdonald/gbans/internal/app.BuildVersion={{.Version}} -X github.com/leighmacdonald/gbans/internal/app.BuildCommit={{.Commit}} -X github.com/leighmacdonald/gbans/internal/app.BuildDate={{.Date}} -X main.builtBy=releaser
 
@@ -62,19 +64,19 @@ release:
 changelog:
   use: github-native
 
-signs:
-  - artifacts: checksum
-    args:
-      - "--batch"
-      - "-u"
-      - "{{ .Env.GPG_FINGERPRINT }}"
-      - "--output"
-      - "${signature}"
-      - "--detach-sign"
-      - "${artifact}"
+#signs:
+#  - artifacts: checksum
+#    args:
+#      - "--batch"
+#      - "-u"
+#      - "{{ .Env.GPG_FINGERPRINT }}"
+#      - "--output"
+#      - "${signature}"
+#      - "--detach-sign"
+#      - "${artifact}"
 
-sboms:
-  - artifacts: archive
+#sboms:
+#  - artifacts: archive
 
 #announce:
 #  discord:
