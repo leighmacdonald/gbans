@@ -1,29 +1,22 @@
 .PHONY: all test clean build install frontend sourcemod
-VERSION=v0.5.14
 GO_CMD=go
 GO_BUILD=$(GO_CMD) build
-GO_FLAGS = -trimpath -ldflags="-s -w -X github.com/leighmacdonald/gbans/internal/app.BuildVersion=$(VERSION)"
 DEBUG_FLAGS = -gcflags "all=-N -l"
 ROOT_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
-all: frontend sourcemod build
-
-vet:
-	@go vet . ./...
+all: frontend sourcemod buildp
 
 fmt:
 	gci write . --skip-generated -s standard -s default
 	gofumpt -l -w .
 	cd frontend && pnpm prettier src/ --write
 
-build_debug:
-	@go build $(DEBUG_FLAGS) $(GO_FLAGS) -o gbans
-
 bump_deps:
 	go get -u ./...
 	cd frontend && pnpm update -i
 
-build: frontend linux64
+buildp: frontend
+	goreleaser release --clean
 
 builds: frontend
 	goreleaser release --clean --snapshot
@@ -36,15 +29,6 @@ serve:
 
 frontend:
 	cd frontend && pnpm install --frozen-lockfile && pnpm run build
-
-dev:
-	GOOS=linux GOARCH=amd64 $(GO_CMD) run $(GO_FLAGS) main.go serve
-
-linux64:
-	GOOS=linux GOARCH=amd64 $(GO_BUILD) $(GO_FLAGS) -o build/linux64/gbans main.go
-
-windows64:
-	GOOS=windows GOARCH=amd64 $(GO_BUILD) $(GO_FLAGS) -o build/win64/gbans.exe main.go
 
 dist: frontend build
 	zip -j gbans-`git describe --abbrev=0`-win64.zip build/win64/gbans.exe LICENSE README.md gbans_example.yml
@@ -68,25 +52,19 @@ sourcemod_devel: sourcemod
 	docker cp sourcemod/plugins/gbans.smx srcds-localhost-1:/home/tf2server/tf-dedicated/tf/addons/sourcemod/plugins/
 	docker restart srcds-localhost-1
 
-install:
-	@go install $(GO_FLAGS) ./...
+test: test-go test-ts
 
-test: test-go
-
-# test-ts:
-# 	@cd frontend && pnpm install && pnpm run test --passWithNoTests
+test-ts:
+	@cd frontend && pnpm run test
 
 test-go:
 	@go test $(GO_FLAGS) -race -cover . ./...
-
-testcover:
-	@go test -race -coverprofile c.out $(GO_FLAGS) ./...
 
 install_deps:
 	go install github.com/vektra/mockery/v2@v2.41.0
 	go install github.com/daixiang0/gci@v0.12.1
 	go install mvdan.cc/gofumpt@v0.6.0
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.56.1
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.57.2
 	go install honnef.co/go/tools/cmd/staticcheck@v0.4.6
 
 check: lint_golangci static lint_ts
@@ -103,9 +81,6 @@ lint_ts:
 static:
 	staticcheck -go 1.22 ./...
 
-bench:
-	@go test -run=NONE -bench=. $(GO_FLAGS) ./...
-
 clean:
 	@go clean $(GO_FLAGS) -i
 	rm -rf ./build/
@@ -113,33 +88,13 @@ clean:
 	rm -rf ./frontend/node_modules
 	rm -rf ./sourcemod/plugins/gbans.smx
 
-docker_test_postgres:
-	@docker-compose --project-name testing -f docker/docker-compose-test.yml down -v
-	@docker-compose --project-name testing -f docker/docker-compose-test.yml up --pull --exit-code-from postgres-test --remove-orphans postgres-test
-
 docker_test:
-	@docker-compose --project-name testing -f docker/docker-compose-test.yml down -v
-	@docker-compose --project-name testing -f docker/docker-compose-test.yml up --build --force-recreate --renew-anon-volumes --abort-on-container-exit --exit-code-from gbans-test --remove-orphans gbans-test
-
-image_latest:
-	@docker build -t leighmacdonald/gbans:latest .
-
-publish_latest: image_latest
-	@docker push leighmacdonald/gbans:latest
-
-image_tag:
-	docker build -t leighmacdonald/gbans:$$(git describe --abbrev=0 --tags) .
-
-docker_run:
-	docker run -it --rm -v "$(pwd)"/gbans.yml:/app/gbans.yml:ro leighmacdonald/gbans:latest
+	@docker compose -f docker/docker-compose-test.yml up --force-recreate --abort-on-container-exit -V
+	@docker compose -f docker/docker-compose-test.yml rm -f
 
 up_postgres:
 	docker-compose --project-name dev -f docker/docker-compose-dev.yml down -v
 	docker-compose --project-name dev -f docker/docker-compose-dev.yml up postgres --remove-orphans --renew-anon-volumes
-
-up:
-	docker-compose --project-name dev -f docker/docker-compose-dev.yml down -v
-	docker-compose --project-name dev -f docker/docker-compose-dev.yml up --build --remove-orphans --abort-on-container-exit --exit-code-from gbans
 
 docker_dump:
 	docker exec gbans-postgres pg_dump -U gbans > gbans.sql
