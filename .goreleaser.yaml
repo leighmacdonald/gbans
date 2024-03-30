@@ -1,8 +1,5 @@
 project_name: gbans
 
-# frontend is already output to dist, --clean will wipe it, so we use another location
-dist: build
-
 env_files:
   github_token: .github_releaser_token
 
