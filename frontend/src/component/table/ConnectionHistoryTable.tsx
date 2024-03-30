@@ -1,6 +1,4 @@
 import { ChangeEvent, useEffect, useState } from 'react';
-import Tooltip from '@mui/material/Tooltip';
-import Typography from '@mui/material/Typography';
 import {
     apiGetConnections,
     PersonConnection,
@@ -8,9 +6,9 @@ import {
 } from '../../api';
 import { logErr } from '../../util/errors';
 import { Order, RowsPerPage } from '../../util/table.ts';
-import { renderDateTime } from '../../util/text.tsx';
 import { LoadingPlaceholder } from '../LoadingPlaceholder';
 import { LazyTable } from './LazyTable';
+import { connectionColumns } from './connectionColumns.tsx';
 
 export const ConnectionHistoryTable = ({ steam_id }: { steam_id?: string }) => {
     const [bans, setBans] = useState<PersonConnection[]>([]);
@@ -79,56 +77,7 @@ export const ConnectionHistoryTable = ({ steam_id }: { steam_id?: string }) => {
                 setRowPerPageCount(parseInt(event.target.value, 10));
                 setPage(0);
             }}
-            columns={[
-                {
-                    label: 'Created',
-                    tooltip: 'Created On',
-                    sortKey: 'created_on',
-                    sortType: 'date',
-                    align: 'left',
-                    width: '150px',
-                    sortable: true,
-                    renderer: (obj) => (
-                        <Typography variant={'body1'}>
-                            {renderDateTime(obj.created_on)}
-                        </Typography>
-                    )
-                },
-                {
-                    label: 'Name',
-                    tooltip: 'Name',
-                    sortKey: 'persona_name',
-                    sortType: 'string',
-                    align: 'left',
-                    width: '150px',
-                    sortable: true
-                },
-                {
-                    label: 'IP Address',
-                    tooltip: 'IP Address',
-                    sortKey: 'ip_addr',
-                    sortType: 'string',
-                    align: 'left',
-                    sortable: true
-                },
-                {
-                    label: 'Server',
-                    tooltip: 'IP Address',
-                    sortKey: 'ip_addr',
-                    sortType: 'string',
-                    align: 'left',
-                    sortable: true,
-                    renderer: (obj) => {
-                        return (
-                            <Tooltip title={obj.server_name ?? 'Unknown'}>
-                                <Typography variant={'body1'}>
-                                    {obj.server_name_short ?? 'Unknown'}
-                                </Typography>
-                            </Tooltip>
-                        );
-                    }
-                }
-            ]}
+            columns={connectionColumns}
         />
     );
 };
