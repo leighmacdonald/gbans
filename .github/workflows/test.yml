@@ -1,0 +1,107 @@
+name: test
+
+on:
+  push:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+permissions: write-all
+
+jobs:
+  lint-ts:
+    runs-on: ubuntu-22.04
+    env:
+      GBANS_GENERAL_STEAM_KEY: ${{ secrets.GBANS_GENERAL_STEAM_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 8
+          run_install: false
+
+      - name: Setup nodejs
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'pnpm'
+          cache-dependency-path: 'frontend/pnpm-lock.yaml'
+
+
+      - name: Install modules
+        working-directory: ./frontend
+        run: pnpm install --frozen-lockfile --strict-peer-dependencies
+
+      - name: Prettier
+        run: make lint_ts
+
+  lint-golangci:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v4
+        with:
+          go-version: 'stable'
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: 'latest'
+          args: --timeout=10m
+
+  staticcheck:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v4
+        with:
+          go-version: 'stable'
+      - run: go install honnef.co/go/tools/cmd/staticcheck@latest
+      - run: make static
+
+  lint-codeql:
+    name: Analyze
+    runs-on: ubuntu-22.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'go', 'javascript' ]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: ${{ matrix.language }}
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v2
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+
+  docker-test:
+    needs: [lint-ts, lint-golangci, lint-codeql, staticcheck]
+    runs-on: ubuntu-22.04
+    env:
+      GBANS_GENERAL_STEAM_KEY: ${{ secrets.GBANS_GENERAL_STEAM_KEY }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build the docker-compose stack
+        run: make docker_test
+
+  release:
+    needs: [docker-test]
+    uses: ./.github/workflows/release.yml
+
