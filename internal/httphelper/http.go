@@ -181,7 +181,9 @@ func useFrontend(engine *gin.Engine, conf domain.Config, version domain.BuildInf
 		return errors.Join(errStaticPath, domain.ErrStaticPathError)
 	}
 
-	frontend.AddRoutes(engine, absStaticPath, conf)
+	if errRoute := frontend.AddRoutes(engine, absStaticPath, conf); errRoute != nil {
+		return errors.Join(errRoute, domain.ErrFrontendRoutes)
+	}
 
 	return nil
 }

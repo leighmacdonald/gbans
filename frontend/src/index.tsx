@@ -12,7 +12,6 @@ import '@fontsource/roboto/latin-500.css';
 import '@fontsource/roboto/latin-700.css';
 import { PaletteMode } from '@mui/material';
 import * as Sentry from '@sentry/react';
-// import * as Sentry from '@sentry/react'; Bundle size is rediculous...
 import { App } from './App';
 import './fonts/tf2build.css';
 
