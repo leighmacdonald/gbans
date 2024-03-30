@@ -127,6 +127,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			defer discordUsecase.Shutdown(conf.Discord.GuildID)
 
+			slog.Info("Starting minio")
 			// Initialize minio client object.
 			minioClient, errMinio := minio.New(conf.S3.Endpoint, &minio.Options{
 				Creds:  credentials.NewStaticV4(conf.S3.AccessKey, conf.S3.SecretKey, ""),
@@ -142,6 +143,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			blocklistUsecase := blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(dbUsecase))
 
+			slog.Info("Starting network")
 			networkUsecase := network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(dbUsecase), blocklistUsecase, personUsecase)
 			if err := networkUsecase.LoadNetBlocks(ctx); err != nil {
 				slog.Error("Failed to load network blocks", log.ErrAttr(err))
@@ -149,11 +151,10 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				return
 			}
 
+			slog.Info("Starting s3")
 			assetRepository := asset.NewS3Repository(dbUsecase, minioClient, conf.S3.Region)
 			if errInit := assetRepository.Init(ctx); errInit != nil {
 				slog.Error("Failed to ensure s3 buckets exist", log.ErrAttr(errInit))
-
-				return
 			}
 
 			assetUsecase := asset.NewAssetUsecase(assetRepository)
@@ -270,6 +271,8 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			go func() {
 				<-ctx.Done()
 
+				slog.Info("Shutting down HTTP service")
+
 				shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 
 				defer cancel()
@@ -285,6 +288,8 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			}
 
 			<-ctx.Done()
+
+			slog.Info("Exiting")
 		},
 	}
 }

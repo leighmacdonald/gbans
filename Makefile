@@ -151,3 +151,6 @@ gen_mocks:
 	rm -f internal/domain/mocks/*
 	mockery
 
+run_docker_snapshot: builds
+	docker build . --no-cache -t gbans:snapshot
+	docker run -it -v ./gbans.yml:/app/gbans.yml -p 6006:6006  gbans:snapshot

@@ -3,7 +3,6 @@
 package frontend
 
 import (
-	"errors"
 	"log/slog"
 	"net/http"
 	"os"

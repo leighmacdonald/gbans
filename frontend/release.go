@@ -5,10 +5,11 @@ package frontend
 import (
 	"embed"
 	"errors"
+	"net/http"
+
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"net/http"
 )
 
 //go:embed dist/*
@@ -28,7 +29,6 @@ func AddRoutes(engine *gin.Engine, _ string, conf domain.Config) error {
 
 	for _, rt := range jsRoutes {
 		engine.GET(rt, func(ctx *gin.Context) {
-
 			if conf.Log.SentryDSNWeb != "" {
 				ctx.Header("Document-Policy", "js-profiling")
 			}
