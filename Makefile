@@ -23,7 +23,10 @@ bump_deps:
 	go get -u ./...
 	cd frontend && pnpm update -i
 
-build: linux64
+build: frontend linux64
+
+builds: frontend
+	goreleaser release --clean --snapshot
 
 watch:
 	cd frontend && pnpm run watch

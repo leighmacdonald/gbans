@@ -8,40 +8,34 @@ import (
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"io/fs"
-	"log/slog"
 	"net/http"
-	"strings"
 )
 
 //go:embed dist/*
 var embedFS embed.FS
 
-var ErrEmbedFS = errors.New("failed to load embed.fs path")
+func AddRoutes(engine *gin.Engine, _ string, conf domain.Config) error {
+	engine.Use(static.Serve("/", static.EmbedFolder(embedFS, "dist")))
 
-func AddRoutes(engine *gin.Engine, _ string, conf domain.Config) {
-	engine.Use(embedDist("/", "dist", embedFS))
-}
+	engine.NoRoute(func(c *gin.Context) {
+		c.Redirect(http.StatusMovedPermanently, "/")
+	})
 
-func embedDist(urlPrefix, buildDirectory string, em embed.FS) gin.HandlerFunc {
-	dir := static.LocalFile(buildDirectory, true)
-	embedDir, _ := fs.Sub(em, buildDirectory)
-	fileServer := http.FileServer(http.FS(embedDir))
-
-	if urlPrefix != "" {
-		fileServer = http.StripPrefix(urlPrefix, fileServer)
+	indexData, errIndex := embedFS.ReadFile("dist/index.html")
+	if errIndex != nil {
+		return errors.Join(errIndex, ErrContentRoot)
 	}
 
-	return func(c *gin.Context) {
-		if !dir.Exists(urlPrefix, c.Request.URL.Path) {
-			c.Request.URL.Path = "/"
-		}
+	for _, rt := range jsRoutes {
+		engine.GET(rt, func(ctx *gin.Context) {
 
-		slog.Info(c.Request.RequestURI)
-		if strings.HasSuffix(c.Request.RequestURI, ".js") {
-			c.Writer.Header().Set("Content-Type", "application/json")
-		}
-		fileServer.ServeHTTP(c.Writer, c.Request)
-		c.Abort()
+			if conf.Log.SentryDSNWeb != "" {
+				ctx.Header("Document-Policy", "js-profiling")
+			}
+
+			ctx.Data(http.StatusOK, "text/html", indexData)
+		})
 	}
+
+	return nil
 }

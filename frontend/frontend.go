@@ -1,5 +1,9 @@
 package frontend
 
+import "errors"
+
+var ErrContentRoot = errors.New("failed to open content root")
+
 // nolint:gochecknoglobals
 var jsRoutes = []string{
 	"/servers", "/profile/:steam_id", "/bans", "/appeal", "/settings", "/report",

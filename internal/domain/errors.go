@@ -187,4 +187,5 @@ var (
 	ErrTempDir                  = errors.New("failed to create temp dir")
 	ErrOpenFile                 = errors.New("could not open output file")
 	ErrWriteDemo                = errors.New("could not write demo to disk for reading")
+	ErrFrontendRoutes           = errors.New("failed to initialize frontend asset routes")
 )
