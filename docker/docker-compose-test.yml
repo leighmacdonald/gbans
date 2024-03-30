@@ -1,47 +1,14 @@
-version: "3.3"
-
 services:
-  gbans-test:
+  test-backend:
     tty: true
     build:
       context: "../"
-      dockerfile: ./docker/test.Dockerfile
-    depends_on:
-      - postgres-test
-    networks:
-      - test_network
-    environment:
-      GBANS_DATABASE_DSN: postgresql://gbans:gbans@postgres-test:5434/gbans
-      GBANS_GENERAL_STEAM_KEY: ${GBANS_GENERAL_STEAM_KEY}
-    command: ["make", "test"]
+      dockerfile: docker/test-backend.Dockerfile
+    command: ["make", "test-go"]
 
-  postgres-test:
-    image: postgis/postgis:15-3.3
-    restart: always
-    expose:
-      - "5434"
-    ports:
-      - "5434:5434"
-    environment:
-      POSTGRES_USER: gbans
-      POSTGRES_DB: gbans
-      POSTGRES_PASSWORD: gbans
-    networks:
-      - test_network
-    command: "-p 5434"
-  minio:
-    # Files are currently designed to be served from
-    image: docker.io/bitnami/minio:2023
-    restart: always
-    environment:
-      # *must* be >= 8 chars or minio will not start
-      - MINIO_ROOT_USER=gbansgbans
-      - MINIO_ROOT_PASSWORD=gbansgbans
-    ports:
-      - '127.0.0.1:9000:9000'
-      - '127.0.0.1:9001:9001'
-    networks:
-      - test_network
-
-networks:
-  test_network:
+  test-frontend:
+    tty: true
+    build:
+      context: "../"
+      dockerfile: docker/test-frontend.Dockerfile
+    command: ["make", "test-ts"]
