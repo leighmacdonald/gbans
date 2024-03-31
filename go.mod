@@ -2,6 +2,8 @@ module github.com/leighmacdonald/gbans
 
 go 1.22
 
+toolchain go1.22.1
+
 require (
 	github.com/Depado/ginprom v1.8.1
 	github.com/Masterminds/squirrel v1.5.4
