@@ -63,13 +63,23 @@ jobs:
       - run: make static
 
   lint-codeql:
-    name: Analyze
+    name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
+    permissions:
+      # required for all workflows
+      security-events: write
 
+      # only required for workflows in private repositories
+      actions: read
+      contents: read
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'go', 'javascript' ]
+        include:
+        - language: go
+          build-mode: autobuild
+        - language: javascript-typescript
+          build-mode: none
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -83,12 +93,12 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+          build-mode: ${{ matrix.build-mode }}
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{matrix.language}}"
 
   docker-test:
     needs: [lint-ts, lint-golangci, lint-codeql, staticcheck]
