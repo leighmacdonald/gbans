@@ -32,15 +32,18 @@ export const SubmitButton = ({
     formId,
     disabled = false,
     label = 'Save',
-    startIcon = <SaveIcon />
+    startIcon = <SaveIcon />,
+    fullWidth = false
 }: onClickProps & {
     disabled?: boolean;
     label?: string;
     startIcon?: ReactNode;
+    fullWidth?: boolean;
 }) => {
     const { submitForm } = useFormikContext();
     return (
         <Button
+            fullWidth={fullWidth}
             startIcon={startIcon}
             color={'success'}
             variant={'contained'}
@@ -48,6 +51,8 @@ export const SubmitButton = ({
             disabled={disabled}
             type={'submit'}
             form={formId}
+            size={'large'}
+            sx={{ height: '52px' }}
         >
             {label}
         </Button>

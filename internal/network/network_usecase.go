@@ -194,3 +194,7 @@ func (u networkUsecase) GetPlayerMostRecentIP(ctx context.Context, steamID steam
 func (u networkUsecase) QueryConnectionHistory(ctx context.Context, opts domain.ConnectionHistoryQueryFilter) ([]domain.PersonConnection, int64, error) {
 	return u.nr.QueryConnectionHistory(ctx, opts)
 }
+
+func (u networkUsecase) QueryConnectionBySteamID(ctx context.Context, opts domain.ConnectionHistoryBySteamIDQueryFilter) ([]domain.PersonConnection, int64, error) {
+	return u.nr.QueryConnectionBySteamID(ctx, opts)
+}

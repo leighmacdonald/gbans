@@ -18,6 +18,7 @@ type NetworkUsecase interface {
 	GetPersonIPHistory(ctx context.Context, sid64 steamid.SteamID, limit uint64) (PersonConnections, error)
 	GetPlayerMostRecentIP(ctx context.Context, steamID steamid.SteamID) net.IP
 	QueryConnectionHistory(ctx context.Context, opts ConnectionHistoryQueryFilter) ([]PersonConnection, int64, error)
+	QueryConnectionBySteamID(ctx context.Context, opts ConnectionHistoryBySteamIDQueryFilter) ([]PersonConnection, int64, error)
 	AddConnectionHistory(ctx context.Context, conn *PersonConnection) error
 	IsMatch(addr net.IP) (string, bool)
 	AddWhitelist(id int, network *net.IPNet)
@@ -26,6 +27,7 @@ type NetworkUsecase interface {
 }
 type NetworkRepository interface {
 	QueryConnectionHistory(ctx context.Context, opts ConnectionHistoryQueryFilter) ([]PersonConnection, int64, error)
+	QueryConnectionBySteamID(ctx context.Context, opts ConnectionHistoryBySteamIDQueryFilter) ([]PersonConnection, int64, error)
 	GetPersonIPHistory(ctx context.Context, sid64 steamid.SteamID, limit uint64) (PersonConnections, error)
 	AddConnectionHistory(ctx context.Context, conn *PersonConnection) error
 	GetPlayerMostRecentIP(ctx context.Context, steamID steamid.SteamID) net.IP

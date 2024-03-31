@@ -109,14 +109,13 @@ func (f ChatHistoryQueryFilter) SourceSteamID() (steamid.SteamID, bool) {
 
 type ConnectionHistoryQueryFilter struct {
 	QueryFilter
-	IP       string `json:"ip"`
-	SourceID string `json:"source_id"`
+	IP string `json:"ip"`
+	SourceIDField
 }
 
-func (f ConnectionHistoryQueryFilter) SourceSteamID() (steamid.SteamID, bool) {
-	sid := steamid.New(f.SourceID)
-
-	return sid, sid.Valid()
+type ConnectionHistoryBySteamIDQueryFilter struct {
+	QueryFilter
+	SourceIDField
 }
 
 type PlayerQuery struct {

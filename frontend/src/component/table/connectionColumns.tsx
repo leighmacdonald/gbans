@@ -25,7 +25,7 @@ export const connectionColumns: HeadingCell<PersonConnection>[] = [
         sortKey: 'persona_name',
         sortType: 'string',
         align: 'left',
-        width: '150px',
+        width: '200px',
         sortable: true
     },
     {
@@ -34,6 +34,7 @@ export const connectionColumns: HeadingCell<PersonConnection>[] = [
         sortKey: 'ip_addr',
         sortType: 'string',
         align: 'left',
+        width: '150px',
         sortable: true
     },
     {
