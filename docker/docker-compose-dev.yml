@@ -21,7 +21,9 @@ services:
     command: ./gbans serve
 
   postgres:
-    image: postgis/postgis:15-3.3
+    build:
+      context: "."
+      dockerfile: postgres-ip4r.Dockerfile
     restart: always
     shm_size: 1gb
     ports:

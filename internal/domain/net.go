@@ -17,8 +17,7 @@ type NetworkUsecase interface {
 	InsertBlockListData(ctx context.Context, blockListData *ip2location.BlockListData) error
 	GetPersonIPHistory(ctx context.Context, sid64 steamid.SteamID, limit uint64) (PersonConnections, error)
 	GetPlayerMostRecentIP(ctx context.Context, steamID steamid.SteamID) net.IP
-	QueryConnectionHistory(ctx context.Context, opts ConnectionHistoryQueryFilter) ([]PersonConnection, int64, error)
-	QueryConnectionBySteamID(ctx context.Context, opts ConnectionHistoryBySteamIDQueryFilter) ([]PersonConnection, int64, error)
+	QueryConnectionHistory(ctx context.Context, opts ConnectionHistoryQuery) ([]PersonConnection, int64, error)
 	AddConnectionHistory(ctx context.Context, conn *PersonConnection) error
 	IsMatch(addr net.IP) (string, bool)
 	AddWhitelist(id int, network *net.IPNet)
@@ -26,8 +25,7 @@ type NetworkUsecase interface {
 	AddRemoteSource(ctx context.Context, name string, url string) (int64, error)
 }
 type NetworkRepository interface {
-	QueryConnectionHistory(ctx context.Context, opts ConnectionHistoryQueryFilter) ([]PersonConnection, int64, error)
-	QueryConnectionBySteamID(ctx context.Context, opts ConnectionHistoryBySteamIDQueryFilter) ([]PersonConnection, int64, error)
+	QueryConnections(ctx context.Context, opts ConnectionHistoryQuery) ([]PersonConnection, int64, error)
 	GetPersonIPHistory(ctx context.Context, sid64 steamid.SteamID, limit uint64) (PersonConnections, error)
 	AddConnectionHistory(ctx context.Context, conn *PersonConnection) error
 	GetPlayerMostRecentIP(ctx context.Context, steamID steamid.SteamID) net.IP
@@ -36,7 +34,6 @@ type NetworkRepository interface {
 	GetLocationRecord(ctx context.Context, ipAddr net.IP, record *ip2location.LocationRecord) error
 	GetProxyRecord(ctx context.Context, ipAddr net.IP, proxyRecord *ip2location.ProxyRecord) error
 	InsertBlockListData(ctx context.Context, blockListData *ip2location.BlockListData) error
-	GetSteamIDsAtIP(ctx context.Context, ipNet *net.IPNet) (steamid.Collection, error)
 }
 type CIDRBlockSource struct {
 	CIDRBlockSourceID int    `json:"cidr_block_source_id"`

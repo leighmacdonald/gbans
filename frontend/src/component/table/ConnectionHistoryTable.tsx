@@ -2,7 +2,7 @@ import { ChangeEvent, useEffect, useState } from 'react';
 import {
     apiGetConnections,
     PersonConnection,
-    PersonConnectionQuery
+    ConnectionQuery
 } from '../../api';
 import { logErr } from '../../util/errors';
 import { Order, RowsPerPage } from '../../util/table.ts';
@@ -25,7 +25,7 @@ export const ConnectionHistoryTable = ({ steam_id }: { steam_id?: string }) => {
 
     useEffect(() => {
         const abortController = new AbortController();
-        const opts: PersonConnectionQuery = {
+        const opts: ConnectionQuery = {
             limit: rowPerPageCount,
             offset: page * rowPerPageCount,
             order_by: sortColumn,

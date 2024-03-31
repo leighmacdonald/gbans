@@ -21,38 +21,18 @@ func NewNetworkHandler(engine *gin.Engine, nu domain.NetworkUsecase, ath domain.
 	modGrp := engine.Group("/")
 	{
 		mod := modGrp.Use(ath.AuthMiddleware(domain.PModerator))
-		mod.POST("/api/connections", handler.onAPIQueryPersonConnections())
-		mod.POST("/api/connections/steam", handler.onAPIQuerySteamIDConnections())
+		mod.POST("/api/connections", handler.onAPIQueryConnections())
 	}
 }
 
-func (h networkHandler) onAPIQueryPersonConnections() gin.HandlerFunc {
+func (h networkHandler) onAPIQueryConnections() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req domain.ConnectionHistoryQueryFilter
+		var req domain.ConnectionHistoryQuery
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
 		ipHist, totalCount, errIPHist := h.nu.QueryConnectionHistory(ctx, req)
-		if errIPHist != nil && !errors.Is(errIPHist, domain.ErrNoResult) {
-			slog.Error("Failed to query connection history", log.ErrAttr(errIPHist))
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, domain.NewLazyResult(totalCount, ipHist))
-	}
-}
-
-func (h networkHandler) onAPIQuerySteamIDConnections() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		var req domain.ConnectionHistoryBySteamIDQueryFilter
-		if !httphelper.Bind(ctx, &req) {
-			return
-		}
-
-		ipHist, totalCount, errIPHist := h.nu.QueryConnectionBySteamID(ctx, req)
 		if errIPHist != nil && !errors.Is(errIPHist, domain.ErrNoResult) {
 			slog.Error("Failed to query connection history", log.ErrAttr(errIPHist))
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)

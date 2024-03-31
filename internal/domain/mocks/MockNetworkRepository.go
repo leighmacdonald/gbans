@@ -494,7 +494,7 @@ func (_c *MockNetworkRepository_InsertBlockListData_Call) RunAndReturn(run func(
 }
 
 // QueryConnectionHistory provides a mock function with given fields: ctx, opts
-func (_m *MockNetworkRepository) QueryConnectionHistory(ctx context.Context, opts domain.ConnectionHistoryQueryFilter) ([]domain.PersonConnection, int64, error) {
+func (_m *MockNetworkRepository) QueryConnectionHistory(ctx context.Context, opts domain.ConnectionHistoryQuery) ([]domain.PersonConnection, int64, error) {
 	ret := _m.Called(ctx, opts)
 
 	if len(ret) == 0 {
@@ -504,10 +504,10 @@ func (_m *MockNetworkRepository) QueryConnectionHistory(ctx context.Context, opt
 	var r0 []domain.PersonConnection
 	var r1 int64
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, domain.ConnectionHistoryQueryFilter) ([]domain.PersonConnection, int64, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, domain.ConnectionHistoryQuery) ([]domain.PersonConnection, int64, error)); ok {
 		return rf(ctx, opts)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, domain.ConnectionHistoryQueryFilter) []domain.PersonConnection); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, domain.ConnectionHistoryQuery) []domain.PersonConnection); ok {
 		r0 = rf(ctx, opts)
 	} else {
 		if ret.Get(0) != nil {
@@ -515,13 +515,13 @@ func (_m *MockNetworkRepository) QueryConnectionHistory(ctx context.Context, opt
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, domain.ConnectionHistoryQueryFilter) int64); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, domain.ConnectionHistoryQuery) int64); ok {
 		r1 = rf(ctx, opts)
 	} else {
 		r1 = ret.Get(1).(int64)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, domain.ConnectionHistoryQueryFilter) error); ok {
+	if rf, ok := ret.Get(2).(func(context.Context, domain.ConnectionHistoryQuery) error); ok {
 		r2 = rf(ctx, opts)
 	} else {
 		r2 = ret.Error(2)
@@ -537,14 +537,14 @@ type MockNetworkRepository_QueryConnectionHistory_Call struct {
 
 // QueryConnectionHistory is a helper method to define mock.On call
 //   - ctx context.Context
-//   - opts domain.ConnectionHistoryQueryFilter
+//   - opts domain.ConnectionHistoryQuery
 func (_e *MockNetworkRepository_Expecter) QueryConnectionHistory(ctx interface{}, opts interface{}) *MockNetworkRepository_QueryConnectionHistory_Call {
 	return &MockNetworkRepository_QueryConnectionHistory_Call{Call: _e.mock.On("QueryConnectionHistory", ctx, opts)}
 }
 
-func (_c *MockNetworkRepository_QueryConnectionHistory_Call) Run(run func(ctx context.Context, opts domain.ConnectionHistoryQueryFilter)) *MockNetworkRepository_QueryConnectionHistory_Call {
+func (_c *MockNetworkRepository_QueryConnectionHistory_Call) Run(run func(ctx context.Context, opts domain.ConnectionHistoryQuery)) *MockNetworkRepository_QueryConnectionHistory_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(domain.ConnectionHistoryQueryFilter))
+		run(args[0].(context.Context), args[1].(domain.ConnectionHistoryQuery))
 	})
 	return _c
 }
@@ -554,7 +554,7 @@ func (_c *MockNetworkRepository_QueryConnectionHistory_Call) Return(_a0 []domain
 	return _c
 }
 
-func (_c *MockNetworkRepository_QueryConnectionHistory_Call) RunAndReturn(run func(context.Context, domain.ConnectionHistoryQueryFilter) ([]domain.PersonConnection, int64, error)) *MockNetworkRepository_QueryConnectionHistory_Call {
+func (_c *MockNetworkRepository_QueryConnectionHistory_Call) RunAndReturn(run func(context.Context, domain.ConnectionHistoryQuery) ([]domain.PersonConnection, int64, error)) *MockNetworkRepository_QueryConnectionHistory_Call {
 	_c.Call.Return(run)
 	return _c
 }
