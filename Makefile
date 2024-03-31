@@ -89,7 +89,7 @@ clean:
 	rm -rf ./sourcemod/plugins/gbans.smx
 
 docker_test:
-	@docker compose -f docker/docker-compose-test.yml up --force-recreate --abort-on-container-exit -V
+	@docker compose -f docker/docker-compose-test.yml up --force-recreate -V
 	@docker compose -f docker/docker-compose-test.yml rm -f
 
 up_postgres:

@@ -231,12 +231,16 @@ export const apiGetNotifications = async (
     );
 };
 
-export interface PersonConnectionQuery extends QueryFilter<PersonConnection> {
+export type PersonConnectionQuery = {
     cidr?: string;
     source_id?: string;
     server_id?: number;
     asn?: number;
-}
+} & QueryFilter<PersonConnection>;
+
+export type PersonConnectionSteamIDQuery = {
+    source_id: string;
+} & QueryFilter<PersonConnection>;
 
 export const apiGetConnections = async (
     opts: PersonConnectionQuery,
@@ -246,6 +250,19 @@ export const apiGetConnections = async (
         LazyResult<PersonConnection>,
         PersonConnectionQuery
     >(`/api/connections`, 'POST', opts, abortController);
+
+    resp.data = resp.data.map(transformCreatedOnDate);
+    return resp;
+};
+
+export const apiGetConnectionsSteam = async (
+    opts: PersonConnectionSteamIDQuery,
+    abortController: AbortController
+) => {
+    const resp = await apiCall<
+        LazyResult<PersonConnection>,
+        PersonConnectionQuery
+    >(`/api/connections/steam`, 'POST', opts, abortController);
 
     resp.data = resp.data.map(transformCreatedOnDate);
     return resp;

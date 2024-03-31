@@ -1,6 +1,7 @@
 import { ChangeEvent, SyntheticEvent, useCallback, useState } from 'react';
 import HelpIcon from '@mui/icons-material/Help';
 import LeakAddIcon from '@mui/icons-material/LeakAdd';
+import SearchIcon from '@mui/icons-material/Search';
 import VpnLockIcon from '@mui/icons-material/VpnLock';
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
@@ -13,7 +14,7 @@ import TextField from '@mui/material/TextField';
 import Grid from '@mui/material/Unstable_Grid2';
 import { Formik } from 'formik';
 import IPCIDR from 'ip-cidr';
-import { apiGetConnections, PersonConnection } from '../api';
+import { PersonConnection } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
 import { NetworkBlockChecker } from '../component/NetworkBlockChecker';
@@ -23,9 +24,10 @@ import {
     TargetIDField,
     TargetIDInputValue
 } from '../component/formik/TargetIdField.tsx';
+import { SubmitButton } from '../component/modal/Buttons.tsx';
 import { LazyTable } from '../component/table/LazyTable.tsx';
 import { connectionColumns } from '../component/table/connectionColumns.tsx';
-import { logErr } from '../util/errors.ts';
+import { useConnectionsBySteamID } from '../hooks/useConnectionsBySteamID.ts';
 import { Order, RowsPerPage } from '../util/table.ts';
 
 interface NetworkInputProps {
@@ -103,40 +105,54 @@ const FindPlayerByIP = () => {
 };
 
 const FindPlayerIPs = () => {
-    const [rows, setRows] = useState<PersonConnection[]>([]);
-    const [count, setCount] = useState(0);
     const [sortOrder, setSortOrder] = useState<Order>('desc');
-    const [sortColumn, setSortColumn] = useState<keyof PersonConnection>(
-        'person_connection_id'
-    );
-    const [loading, setLoading] = useState(false);
+    const [sortColumn, setSortColumn] =
+        useState<keyof PersonConnection>('created_on');
     const [rowPerPageCount, setRowPerPageCount] = useState<number>(
         RowsPerPage.Ten
     );
+    const [steamID, setSteamID] = useState('');
     const [page, setPage] = useState(0);
 
-    const onSubmit = useCallback(async (values: TargetIDInputValue) => {
-        try {
-            setLoading(true);
-            const abortController = new AbortController();
-            const result = await apiGetConnections(
-                { source_id: values.target_id },
-                abortController
-            );
-            setRows(result.data);
-            setCount(result.count);
-        } catch (e) {
-            logErr(e);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+    const {
+        data: rows,
+        count,
+        loading
+    } = useConnectionsBySteamID({
+        limit: rowPerPageCount,
+        offset: page,
+        desc: sortOrder == 'desc',
+        order_by: sortColumn,
+        source_id: steamID
+    });
+
+    const onSubmit = (values: TargetIDInputValue) => {
+        setSteamID(values.target_id);
+    };
 
     return (
         <Grid container spacing={2}>
             <Grid xs={12}>
                 <Formik onSubmit={onSubmit} initialValues={{ target_id: '' }}>
-                    <TargetIDField />
+                    <Grid
+                        container
+                        direction="row"
+                        alignItems="top"
+                        justifyContent="center"
+                        spacing={2}
+                    >
+                        <Grid xs>
+                            <TargetIDField />
+                        </Grid>
+                        <Grid xs={2}>
+                            <SubmitButton
+                                label={'Submit'}
+                                fullWidth
+                                disabled={loading}
+                                startIcon={<SearchIcon />}
+                            />
+                        </Grid>
+                    </Grid>
                 </Formik>
             </Grid>
             <Grid xs={12}>

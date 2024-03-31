@@ -24,6 +24,87 @@ func NewNetworkRepository(db database.Database) domain.NetworkRepository {
 	return networkRepository{db: db}
 }
 
+func (r networkRepository) QueryConnectionBySteamID(ctx context.Context, opts domain.ConnectionHistoryBySteamIDQueryFilter) ([]domain.PersonConnection, int64, error) {
+	sid, ok := opts.SourceSteamID(ctx)
+	if !ok {
+		return nil, 0, domain.ErrInvalidSID
+	}
+
+	constraints := sq.And{sq.Eq{"c.steam_id": sid}}
+
+	selectBuilder := r.db.Builder().
+		Select("distinct on (c.ip_addr) c.ip_addr", "c.person_connection_id", "c.persona_name",
+			"c.steam_id", "c.created_on", "c.server_id", "s.short_name", "s.name").
+		From("person_connections c").
+		LeftJoin("server s USING(server_id)").
+		Where(constraints)
+
+	builder := r.db.
+		Builder().
+		Select("x.*").
+		FromSelect(selectBuilder, "x")
+
+	builder = opts.ApplySafeOrder(opts.ApplyLimitOffsetDefault(builder), map[string][]string{
+		"x.": {"steam_id", "ip_addr", "persona_name", "created_on", "short_name", "name"},
+	}, "created_on")
+
+	var messages []domain.PersonConnection
+
+	rows, errQuery := r.db.QueryBuilder(ctx, builder)
+	if errQuery != nil {
+		return nil, 0, r.db.DBErr(errQuery)
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var (
+			connHistory domain.PersonConnection
+			steamID     int64
+			serverID    *int
+			shortName   *string
+			name        *string
+		)
+
+		if errScan := rows.Scan(
+			&connHistory.IPAddr,
+			&connHistory.PersonConnectionID,
+			&connHistory.PersonaName,
+			&steamID,
+			&connHistory.CreatedOn,
+			&serverID, &shortName, &name); errScan != nil {
+			return nil, 0, r.db.DBErr(errScan)
+		}
+
+		// Added later in dev, so can be legacy data w/o a server_id
+		if serverID != nil && shortName != nil && name != nil {
+			connHistory.ServerID = *serverID
+			connHistory.ServerNameShort = *shortName
+			connHistory.ServerName = *name
+		}
+
+		connHistory.SteamID = steamid.New(steamID)
+
+		messages = append(messages, connHistory)
+	}
+
+	if messages == nil {
+		return []domain.PersonConnection{}, 0, nil
+	}
+
+	count, errCount := r.db.GetCount(ctx, r.db.
+		Builder().
+		Select("count(c.person_connection_id)").
+		From("person_connections c").
+		Where(constraints))
+
+	if errCount != nil {
+		return nil, 0, r.db.DBErr(errCount)
+	}
+
+	return messages, count, nil
+}
+
 func (r networkRepository) QueryConnectionHistory(ctx context.Context, opts domain.ConnectionHistoryQueryFilter) ([]domain.PersonConnection, int64, error) {
 	builder := r.db.
 		Builder().
@@ -35,7 +116,7 @@ func (r networkRepository) QueryConnectionHistory(ctx context.Context, opts doma
 
 	var constraints sq.And
 
-	if sid, ok := opts.SourceSteamID(); ok {
+	if sid, ok := opts.SourceSteamID(ctx); ok {
 		constraints = append(constraints, sq.Eq{"c.steam_id": sid})
 	}
 
