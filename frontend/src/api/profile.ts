@@ -231,38 +231,23 @@ export const apiGetNotifications = async (
     );
 };
 
-export type PersonConnectionQuery = {
-    cidr?: string;
-    source_id?: string;
-    server_id?: number;
-    asn?: number;
-} & QueryFilter<PersonConnection>;
-
-export type PersonConnectionSteamIDQuery = {
+export type ConnectionQuery = {
+    cidr: string;
     source_id: string;
+    server_id?: number;
+    asn: number;
 } & QueryFilter<PersonConnection>;
 
 export const apiGetConnections = async (
-    opts: PersonConnectionQuery,
+    opts: ConnectionQuery,
     abortController: AbortController
 ) => {
-    const resp = await apiCall<
-        LazyResult<PersonConnection>,
-        PersonConnectionQuery
-    >(`/api/connections`, 'POST', opts, abortController);
-
-    resp.data = resp.data.map(transformCreatedOnDate);
-    return resp;
-};
-
-export const apiGetConnectionsSteam = async (
-    opts: PersonConnectionSteamIDQuery,
-    abortController: AbortController
-) => {
-    const resp = await apiCall<
-        LazyResult<PersonConnection>,
-        PersonConnectionQuery
-    >(`/api/connections/steam`, 'POST', opts, abortController);
+    const resp = await apiCall<LazyResult<PersonConnection>, ConnectionQuery>(
+        `/api/connections`,
+        'POST',
+        opts,
+        abortController
+    );
 
     resp.data = resp.data.map(transformCreatedOnDate);
     return resp;

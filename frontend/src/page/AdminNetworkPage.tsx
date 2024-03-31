@@ -1,7 +1,6 @@
-import { ChangeEvent, SyntheticEvent, useCallback, useState } from 'react';
+import { SyntheticEvent, useState } from 'react';
 import HelpIcon from '@mui/icons-material/Help';
 import LeakAddIcon from '@mui/icons-material/LeakAdd';
-import SearchIcon from '@mui/icons-material/Search';
 import VpnLockIcon from '@mui/icons-material/VpnLock';
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
@@ -10,189 +9,13 @@ import ListItemText from '@mui/material/ListItemText';
 import Stack from '@mui/material/Stack';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
-import TextField from '@mui/material/TextField';
 import Grid from '@mui/material/Unstable_Grid2';
-import { Formik } from 'formik';
-import IPCIDR from 'ip-cidr';
-import { PersonConnection } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
+import { FindPlayerByIP } from '../component/FindPlayerByIP.tsx';
+import { FindPlayerIPs } from '../component/FindPlayerIPs.tsx';
 import { NetworkBlockChecker } from '../component/NetworkBlockChecker';
 import { NetworkBlockSources } from '../component/NetworkBlockSources';
 import { TabPanel } from '../component/TabPanel';
-import {
-    TargetIDField,
-    TargetIDInputValue
-} from '../component/formik/TargetIdField.tsx';
-import { SubmitButton } from '../component/modal/Buttons.tsx';
-import { LazyTable } from '../component/table/LazyTable.tsx';
-import { connectionColumns } from '../component/table/connectionColumns.tsx';
-import { useConnectionsBySteamID } from '../hooks/useConnectionsBySteamID.ts';
-import { Order, RowsPerPage } from '../util/table.ts';
-
-interface NetworkInputProps {
-    onValidChange: (cidr: string) => void;
-}
-
-export const NetworkInput = ({ onValidChange }: NetworkInputProps) => {
-    const defaultHelperText = 'Enter a IP address or CIDR range';
-    const [error, setError] = useState('');
-    const [value, setValue] = useState('');
-    const [helper, setHelper] = useState(defaultHelperText);
-
-    const onChange = useCallback(
-        (evt: ChangeEvent<HTMLInputElement>) => {
-            const address = evt.target.value;
-            if (address == '') {
-                setError('');
-                setValue(address);
-                setHelper(defaultHelperText);
-                return;
-            }
-            if (!address.match(`^([0-9./]+?)$`)) {
-                return;
-            }
-
-            setValue(address);
-
-            if (address.length > 0 && !IPCIDR.isValidAddress(address)) {
-                setError('Invalid address');
-                return;
-            }
-
-            setError('');
-
-            try {
-                const cidr = new IPCIDR(address);
-                setHelper(`Total hosts in range: ${cidr.size}`);
-                onValidChange(address);
-            } catch (e) {
-                if (IPCIDR.isValidAddress(address)) {
-                    setHelper(`Total hosts in range: 1`);
-                    onValidChange(address);
-                }
-                return;
-            }
-        },
-        [onValidChange]
-    );
-
-    return (
-        <TextField
-            fullWidth
-            error={Boolean(error.length)}
-            id="outlined-error-helper-text"
-            label="IP/CIDR"
-            value={value}
-            onChange={onChange}
-            helperText={helper}
-        />
-    );
-};
-
-const FindPlayerByIP = () => {
-    return (
-        <Grid container>
-            <Grid xs={12}>
-                <NetworkInput
-                    onValidChange={(cidr) => {
-                        console.log(cidr);
-                    }}
-                />
-            </Grid>
-        </Grid>
-    );
-};
-
-const FindPlayerIPs = () => {
-    const [sortOrder, setSortOrder] = useState<Order>('desc');
-    const [sortColumn, setSortColumn] =
-        useState<keyof PersonConnection>('created_on');
-    const [rowPerPageCount, setRowPerPageCount] = useState<number>(
-        RowsPerPage.Ten
-    );
-    const [steamID, setSteamID] = useState('');
-    const [page, setPage] = useState(0);
-
-    const {
-        data: rows,
-        count,
-        loading
-    } = useConnectionsBySteamID({
-        limit: rowPerPageCount,
-        offset: page,
-        desc: sortOrder == 'desc',
-        order_by: sortColumn,
-        source_id: steamID
-    });
-
-    const onSubmit = (values: TargetIDInputValue) => {
-        setSteamID(values.target_id);
-    };
-
-    return (
-        <Grid container spacing={2}>
-            <Grid xs={12}>
-                <Formik onSubmit={onSubmit} initialValues={{ target_id: '' }}>
-                    <Grid
-                        container
-                        direction="row"
-                        alignItems="top"
-                        justifyContent="center"
-                        spacing={2}
-                    >
-                        <Grid xs>
-                            <TargetIDField />
-                        </Grid>
-                        <Grid xs={2}>
-                            <SubmitButton
-                                label={'Submit'}
-                                fullWidth
-                                disabled={loading}
-                                startIcon={<SearchIcon />}
-                            />
-                        </Grid>
-                    </Grid>
-                </Formik>
-            </Grid>
-            <Grid xs={12}>
-                {loading ? (
-                    <LoadingPlaceholder />
-                ) : (
-                    <LazyTable<PersonConnection>
-                        showPager={true}
-                        count={count}
-                        rows={rows}
-                        page={page}
-                        rowsPerPage={rowPerPageCount}
-                        sortOrder={sortOrder}
-                        sortColumn={sortColumn}
-                        onSortColumnChanged={async (column) => {
-                            setSortColumn(column);
-                        }}
-                        onSortOrderChanged={async (direction) => {
-                            setSortOrder(direction);
-                        }}
-                        onPageChange={(_, newPage: number) => {
-                            setPage(newPage);
-                        }}
-                        onRowsPerPageChange={(
-                            event: ChangeEvent<
-                                HTMLInputElement | HTMLTextAreaElement
-                            >
-                        ) => {
-                            setRowPerPageCount(
-                                parseInt(event.target.value, 10)
-                            );
-                            setPage(0);
-                        }}
-                        columns={connectionColumns}
-                    />
-                )}
-            </Grid>
-        </Grid>
-    );
-};
 
 export const AdminNetworkPage = () => {
     const [value, setValue] = useState(0);

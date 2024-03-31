@@ -24,13 +24,16 @@ func NewNetworkRepository(db database.Database) domain.NetworkRepository {
 	return networkRepository{db: db}
 }
 
-func (r networkRepository) QueryConnectionBySteamID(ctx context.Context, opts domain.ConnectionHistoryBySteamIDQueryFilter) ([]domain.PersonConnection, int64, error) {
-	sid, ok := opts.SourceSteamID(ctx)
-	if !ok {
-		return nil, 0, domain.ErrInvalidSID
+func (r networkRepository) QueryConnections(ctx context.Context, opts domain.ConnectionHistoryQuery) ([]domain.PersonConnection, int64, error) {
+	var constraints sq.And
+
+	if opts.Sid64 > 0 {
+		constraints = append(constraints, sq.Eq{"steam_id": opts.Sid64})
 	}
 
-	constraints := sq.And{sq.Eq{"c.steam_id": sid}}
+	if opts.Network != "" {
+		constraints = append(constraints, sq.Expr("ip_addr <<= ?::ip4r", opts.Network))
+	}
 
 	selectBuilder := r.db.Builder().
 		Select("distinct on (c.ip_addr) c.ip_addr", "c.person_connection_id", "c.persona_name",
@@ -50,7 +53,7 @@ func (r networkRepository) QueryConnectionBySteamID(ctx context.Context, opts do
 
 	var messages []domain.PersonConnection
 
-	rows, errQuery := r.db.QueryBuilder(ctx, builder)
+	rows, errQuery := r.db.QueryBuilder(ctx, builder.Where(constraints))
 	if errQuery != nil {
 		return nil, 0, r.db.DBErr(errQuery)
 	}
@@ -71,82 +74,6 @@ func (r networkRepository) QueryConnectionBySteamID(ctx context.Context, opts do
 			&connHistory.PersonConnectionID,
 			&connHistory.PersonaName,
 			&steamID,
-			&connHistory.CreatedOn,
-			&serverID, &shortName, &name); errScan != nil {
-			return nil, 0, r.db.DBErr(errScan)
-		}
-
-		// Added later in dev, so can be legacy data w/o a server_id
-		if serverID != nil && shortName != nil && name != nil {
-			connHistory.ServerID = *serverID
-			connHistory.ServerNameShort = *shortName
-			connHistory.ServerName = *name
-		}
-
-		connHistory.SteamID = steamid.New(steamID)
-
-		messages = append(messages, connHistory)
-	}
-
-	if messages == nil {
-		return []domain.PersonConnection{}, 0, nil
-	}
-
-	count, errCount := r.db.GetCount(ctx, r.db.
-		Builder().
-		Select("count(c.person_connection_id)").
-		From("person_connections c").
-		Where(constraints))
-
-	if errCount != nil {
-		return nil, 0, r.db.DBErr(errCount)
-	}
-
-	return messages, count, nil
-}
-
-func (r networkRepository) QueryConnectionHistory(ctx context.Context, opts domain.ConnectionHistoryQueryFilter) ([]domain.PersonConnection, int64, error) {
-	builder := r.db.
-		Builder().
-		Select("c.person_connection_id", "c.steam_id",
-			"c.ip_addr", "c.persona_name", "c.created_on", "c.server_id", "r.short_name", "r.name").
-		From("person_connections c").
-		LeftJoin("server r USING(server_id)").
-		GroupBy("c.person_connection_id, c.ip_addr, r.short_name", "r.name")
-
-	var constraints sq.And
-
-	if sid, ok := opts.SourceSteamID(ctx); ok {
-		constraints = append(constraints, sq.Eq{"c.steam_id": sid})
-	}
-
-	builder = opts.ApplySafeOrder(opts.ApplyLimitOffsetDefault(builder), map[string][]string{
-		"c.": {"person_connection_id", "steam_id", "ip_addr", "persona_name", "created_on"},
-		"r.": {"short_name", "name"},
-	}, "person_connection_id")
-
-	var messages []domain.PersonConnection
-
-	rows, errQuery := r.db.QueryBuilder(ctx, builder.Where(constraints))
-	if errQuery != nil {
-		return nil, 0, r.db.DBErr(errQuery)
-	}
-
-	defer rows.Close()
-
-	for rows.Next() {
-		var (
-			connHistory domain.PersonConnection
-			steamID     int64
-			serverID    *int
-			shortName   *string
-			name        *string
-		)
-
-		if errScan := rows.Scan(&connHistory.PersonConnectionID,
-			&steamID,
-			&connHistory.IPAddr,
-			&connHistory.PersonaName,
 			&connHistory.CreatedOn,
 			&serverID, &shortName, &name); errScan != nil {
 			return nil, 0, r.db.DBErr(errScan)
@@ -496,35 +423,4 @@ func (r networkRepository) InsertBlockListData(ctx context.Context, blockListDat
 	}
 
 	return nil
-}
-
-func (r networkRepository) GetSteamIDsAtIP(ctx context.Context, ipNet *net.IPNet) (steamid.Collection, error) {
-	const query = `
-		SELECT DISTINCT c.steam_id
-		FROM person_connections c
-		WHERE ip_addr::inet <<= inet '%s';`
-
-	if ipNet == nil {
-		return nil, domain.ErrInvalidCIDR
-	}
-
-	rows, errQuery := r.db.Query(ctx, fmt.Sprintf(query, ipNet.String()))
-	if errQuery != nil {
-		return nil, r.db.DBErr(errQuery)
-	}
-
-	defer rows.Close()
-
-	var ids steamid.Collection
-
-	for rows.Next() {
-		var sid64 int64
-		if errScan := rows.Scan(&sid64); errScan != nil {
-			return nil, r.db.DBErr(errScan)
-		}
-
-		ids = append(ids, steamid.New(sid64))
-	}
-
-	return ids, nil
 }

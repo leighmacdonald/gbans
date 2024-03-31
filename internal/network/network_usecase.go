@@ -191,10 +191,29 @@ func (u networkUsecase) GetPlayerMostRecentIP(ctx context.Context, steamID steam
 	return u.nr.GetPlayerMostRecentIP(ctx, steamID)
 }
 
-func (u networkUsecase) QueryConnectionHistory(ctx context.Context, opts domain.ConnectionHistoryQueryFilter) ([]domain.PersonConnection, int64, error) {
-	return u.nr.QueryConnectionHistory(ctx, opts)
-}
+func (u networkUsecase) QueryConnectionHistory(ctx context.Context, opts domain.ConnectionHistoryQuery) ([]domain.PersonConnection, int64, error) {
+	if sid, ok := opts.SourceSteamID(ctx); ok {
+		opts.Sid64 = sid.Int64()
+	}
 
-func (u networkUsecase) QueryConnectionBySteamID(ctx context.Context, opts domain.ConnectionHistoryBySteamIDQueryFilter) ([]domain.PersonConnection, int64, error) {
-	return u.nr.QueryConnectionBySteamID(ctx, opts)
+	if opts.CIDR != "" {
+		if !strings.Contains(opts.CIDR, "/") {
+			opts.CIDR += "/32"
+		}
+
+		_, network, errNetwork := net.ParseCIDR(opts.CIDR)
+		if errNetwork != nil {
+			slog.Error("Received malformed CIDR", log.ErrAttr(errNetwork))
+
+			return nil, 0, domain.ErrInvalidCIDR
+		}
+
+		opts.Network = network.String()
+	}
+
+	if !(opts.Sid64 > 0 || opts.Network != "") {
+		return nil, 0, domain.ErrMissingParam
+	}
+
+	return u.nr.QueryConnections(ctx, opts)
 }
