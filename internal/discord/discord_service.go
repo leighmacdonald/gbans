@@ -6,17 +6,16 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"net/netip"
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
-	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -211,48 +210,12 @@ func (h discordService) makeOnCheck() func(_ context.Context, _ *discordgo.Sessi
 			slog.Warn("Failed to fetch logTF data", log.ErrAttr(errLogs))
 		}
 
-		var (
-			waitGroup = &sync.WaitGroup{}
-			asn       ip2location.ASNRecord
-			location  ip2location.LocationRecord
-			proxy     ip2location.ProxyRecord
-		)
+		network, errNetwork := h.nu.QueryNetwork(ctx, player.IPAddr)
+		if errNetwork != nil {
+			slog.Error("Failed to query network details")
+		}
 
-		waitGroup.Add(3)
-
-		go func() {
-			defer waitGroup.Done()
-
-			if player.IPAddr != nil {
-				if errASN := h.nu.GetASNRecordByIP(ctx, player.IPAddr, &asn); errASN != nil {
-					slog.Error("Failed to fetch ASN record", log.ErrAttr(errASN))
-				}
-			}
-		}()
-
-		go func() {
-			defer waitGroup.Done()
-
-			if player.IPAddr != nil {
-				if errLoc := h.nu.GetLocationRecord(ctx, player.IPAddr, &location); errLoc != nil {
-					slog.Error("Failed to fetch Location record", log.ErrAttr(errLoc))
-				}
-			}
-		}()
-
-		go func() {
-			defer waitGroup.Done()
-
-			if player.IPAddr != nil {
-				if errProxy := h.nu.GetProxyRecord(ctx, player.IPAddr, &proxy); errProxy != nil && !errors.Is(errProxy, domain.ErrNoResult) {
-					slog.Error("Failed to fetch proxy record", log.ErrAttr(errProxy))
-				}
-			}
-		}()
-
-		waitGroup.Wait()
-
-		return CheckMessage(player, ban, banURL, authorProfile, oldBans, bannedNets, asn, location, proxy, logData), nil
+		return CheckMessage(player, ban, banURL, authorProfile, oldBans, bannedNets, network.Asn, network.Location, network.Proxy, logData), nil
 	}
 }
 
@@ -281,22 +244,7 @@ func (h discordService) onHistoryIP(ctx context.Context, _ *discordgo.Session, i
 		return nil, domain.ErrCommandFailed
 	}
 
-	ipRecords, errGetPersonIPHist := h.nu.GetPersonIPHistory(ctx, steamID, 20)
-	if errGetPersonIPHist != nil && !errors.Is(errGetPersonIPHist, domain.ErrNoResult) {
-		return nil, domain.ErrCommandFailed
-	}
-
-	lastIP := net.IP{}
-
-	for _, ipRecord := range ipRecords {
-		// TODO Join query for connections and geoip lookup data
-		// addField(embed, ipRecord.IPAddr.String(), fmt.Sprintf("%s %s %s %s %s %s %s %s", Config.FmtTimeShort(ipRecord.CreatedOn), ipRecord.CC,
-		//	ipRecord.CityName, ipRecord.ASName, ipRecord.ISP, ipRecord.UsageType, ipRecord.Threat, ipRecord.DomainUsed))
-		// lastIP = ipRecord.IPAddr
-		if ipRecord.IPAddr.Equal(lastIP) {
-			continue
-		}
-	}
+	// TODO actually show record
 
 	return HistoryMessage(person), nil
 }
@@ -395,16 +343,7 @@ func (h discordService) onUnbanASN(ctx context.Context, _ *discordgo.Session, in
 		return nil, domain.ErrParseASN
 	}
 
-	asnNetworks, errGetASNRecords := h.nu.GetASNRecordsByNum(ctx, asNum)
-	if errGetASNRecords != nil {
-		if errors.Is(errGetASNRecords, domain.ErrNoResult) {
-			return nil, domain.ErrFetchASN
-		}
-
-		return nil, domain.ErrFetchASN
-	}
-
-	return UnbanASNMessage(asNum, asnNetworks), nil
+	return UnbanASNMessage(asNum), nil
 }
 
 func (h discordService) getDiscordAuthor(ctx context.Context, interaction *discordgo.InteractionCreate) (domain.Person, error) {
@@ -536,32 +475,32 @@ func (h discordService) makeOnPlayers() func(context.Context, *discordgo.Session
 			})
 
 			for _, player := range serverState.Players {
-				var asn ip2location.ASNRecord
-				if errASN := h.nu.GetASNRecordByIP(ctx, player.IP, &asn); errASN != nil {
-					// Will fail for LAN ips
-					slog.Warn("Failed to get asn record", log.ErrAttr(errASN))
+				ip, errIP := netip.ParseAddr(player.IP.String())
+				if errIP != nil {
+					slog.Error("Failed to parse player ip", log.ErrAttr(errIP))
+
+					continue
 				}
+				network, errNetwork := h.nu.QueryNetwork(ctx, ip)
+				if errNetwork != nil {
+					slog.Error("Failed to get network info", log.ErrAttr(errNetwork))
 
-				var loc ip2location.LocationRecord
-				if errLoc := h.nu.GetLocationRecord(ctx, player.IP, &loc); errLoc != nil {
-					slog.Warn("Failed to get location record: %v", log.ErrAttr(errLoc))
-				}
-
-				proxyStr := ""
-
-				var proxy ip2location.ProxyRecord
-				if errGetProxyRecord := h.nu.GetProxyRecord(ctx, player.IP, &proxy); errGetProxyRecord == nil {
-					proxyStr = fmt.Sprintf("Threat: %s | %s | %s", proxy.ProxyType, proxy.Threat, proxy.UsageType)
+					continue
 				}
 
 				flag := ""
-				if loc.CountryCode != "" {
-					flag = fmt.Sprintf(":flag_%s: ", strings.ToLower(loc.CountryCode))
+				if network.Location.CountryCode != "" {
+					flag = fmt.Sprintf(":flag_%s: ", strings.ToLower(network.Location.CountryCode))
 				}
 
 				asStr := ""
-				if asn.ASNum > 0 {
-					asStr = fmt.Sprintf("[ASN](https://spyse.com/target/as/%d) ", asn.ASNum)
+				if network.Asn.ASNum > 0 {
+					asStr = fmt.Sprintf("[ASN](https://spyse.com/target/as/%d) ", network.Asn.ASNum)
+				}
+
+				proxyStr := ""
+				if network.Proxy.ProxyType != "" {
+					proxyStr = fmt.Sprintf("Threat: %s | %s | %s", network.Proxy.ProxyType, network.Proxy.Threat, network.Proxy.UsageType)
 				}
 
 				rows = append(rows, fmt.Sprintf("%s`%s` %s`%3dms` [%s](https://steamcommunity.com/profiles/%s)%s",
@@ -896,15 +835,6 @@ func (h discordService) onBanASN(ctx context.Context, _ *discordgo.Session,
 		return nil, domain.ErrParseASN
 	}
 
-	asnRecords, errGetASNRecords := h.nu.GetASNRecordsByNum(ctx, asNum)
-	if errGetASNRecords != nil {
-		if errors.Is(errGetASNRecords, domain.ErrNoResult) {
-			return nil, domain.ErrASNNoRecords
-		}
-
-		return nil, domain.ErrFetchASN
-	}
-
 	var banASN domain.BanASN
 	if errOpts := domain.NewBanASN(author.SteamID, targetID, duration, reason, reason.String(), modNote, domain.Bot,
 		asNum, domain.Banned, &banASN); errOpts != nil {
@@ -919,7 +849,7 @@ func (h discordService) onBanASN(ctx context.Context, _ *discordgo.Session,
 		return nil, domain.ErrCommandFailed
 	}
 
-	return BanASNMessage(asNum, asnRecords), nil
+	return BanASNMessage(asNum), nil
 }
 
 func (h discordService) onBanIP(ctx context.Context, _ *discordgo.Session,
@@ -936,7 +866,7 @@ func (h discordService) onBanIP(ctx context.Context, _ *discordgo.Session,
 
 	_, network, errParseCIDR := net.ParseCIDR(cidr)
 	if errParseCIDR != nil {
-		return nil, errors.Join(errParseCIDR, domain.ErrInvalidIP)
+		return nil, errors.Join(errParseCIDR, domain.ErrNetworkInvalidIP)
 	}
 
 	duration, errDuration := util.ParseDuration(opts[domain.OptDuration].StringValue())

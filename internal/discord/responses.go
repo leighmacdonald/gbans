@@ -11,7 +11,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
-	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/olekukonko/tablewriter"
@@ -471,9 +470,9 @@ func WarningMessage(newWarning domain.NewUserWarning, banSteam domain.BanSteam, 
 }
 
 func CheckMessage(player domain.Person, ban domain.BannedSteamPerson, banURL string, author domain.Person,
-	oldBans []domain.BannedSteamPerson, bannedNets []domain.BanCIDR, asn ip2location.ASNRecord,
-	location ip2location.LocationRecord,
-	proxy ip2location.ProxyRecord, logData *thirdparty.LogsTFResult,
+	oldBans []domain.BannedSteamPerson, bannedNets []domain.BanCIDR, asn domain.NetworkASN,
+	location domain.NetworkLocation,
+	proxy domain.NetworkProxy, logData *thirdparty.LogsTFResult,
 ) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed()
 
@@ -597,7 +596,7 @@ func CheckMessage(player domain.Person, ban domain.BannedSteamPerson, banURL str
 
 	msgEmbed.Embed().AddField("Ban/Muted", banStateStr)
 
-	if player.IPAddr != nil {
+	if player.IPAddr.IsValid() {
 		msgEmbed.Embed().AddField("Last IP", player.IPAddr.String()).MakeFieldInline()
 	}
 
@@ -680,12 +679,11 @@ func UnbanMessage(person domain.PersonInfo) *discordgo.MessageEmbed {
 	return msgEmbed.Embed().Truncate().MessageEmbed
 }
 
-func UnbanASNMessage(asn int64, asnNetworks ip2location.ASNRecords) *discordgo.MessageEmbed {
+func UnbanASNMessage(asn int64) *discordgo.MessageEmbed {
 	return NewEmbed("ASN Networks Unbanned Successfully").
 		Embed().
 		SetColor(ColourSuccess).
 		AddField("ASN", fmt.Sprintf("%d", asn)).
-		AddField("Hosts", fmt.Sprintf("%d", asnNetworks.Hosts())).
 		Truncate().MessageEmbed
 }
 
@@ -1075,11 +1073,10 @@ func MuteMessage(banSteam domain.BanSteam) *discordgo.MessageEmbed {
 		Embed().Truncate().MessageEmbed
 }
 
-func BanASNMessage(asNum int64, asnRecords ip2location.ASNRecords) *discordgo.MessageEmbed {
+func BanASNMessage(asNum int64) *discordgo.MessageEmbed {
 	return NewEmbed("ASN BanSteam Created Successfully").Embed().
 		SetColor(ColourSuccess).
 		AddField("ASNum", fmt.Sprintf("%d", asNum)).
-		AddField("Total IPs Blocked", fmt.Sprintf("%d", asnRecords.Hosts())).
 		Truncate().
 		MessageEmbed
 }

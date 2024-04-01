@@ -57,16 +57,7 @@ func (s banASNUsecase) Unban(ctx context.Context, asnNum string) (bool, error) {
 		return false, errors.Join(errDrop, domain.ErrDropASNBan)
 	}
 
-	asnNetworks, errGetASNRecords := s.networkUsecase.GetASNRecordsByNum(ctx, asNum)
-	if errGetASNRecords != nil {
-		if errors.Is(errGetASNRecords, domain.ErrNoResult) {
-			return false, errors.Join(errGetASNRecords, domain.ErrUnknownASN)
-		}
-
-		return false, errors.Join(errGetASNRecords, domain.ErrFetchASN)
-	}
-
-	s.discordUsecase.SendPayload(domain.ChannelModLog, discord.UnbanASNMessage(asNum, asnNetworks))
+	s.discordUsecase.SendPayload(domain.ChannelModLog, discord.UnbanASNMessage(asNum))
 
 	return true, nil
 }

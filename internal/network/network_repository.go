@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"net/netip"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -192,10 +193,10 @@ func (r networkRepository) GetPlayerMostRecentIP(ctx context.Context, steamID st
 	return addr
 }
 
-func (r networkRepository) GetASNRecordsByNum(ctx context.Context, asNum int64) (ip2location.ASNRecords, error) {
+func (r networkRepository) GetASNRecordsByNum(ctx context.Context, asNum int64) ([]domain.NetworkASN, error) {
 	query := r.db.
 		Builder().
-		Select("ip_from", "ip_to", "cidr", "as_num", "as_name").
+		Select("cidr::text", "as_num", "as_name").
 		From("net_asn").
 		Where(sq.Eq{"as_num": asNum})
 
@@ -206,12 +207,12 @@ func (r networkRepository) GetASNRecordsByNum(ctx context.Context, asNum int64) 
 
 	defer rows.Close()
 
-	records := ip2location.ASNRecords{}
+	var records []domain.NetworkASN
 
 	for rows.Next() {
-		var asnRecord ip2location.ASNRecord
+		var asnRecord domain.NetworkASN
 		if errScan := rows.
-			Scan(&asnRecord.IPFrom, &asnRecord.IPTo, &asnRecord.CIDR, &asnRecord.ASNum, &asnRecord.ASName); errScan != nil {
+			Scan(&asnRecord.CIDR, &asnRecord.ASNum, &asnRecord.ASName); errScan != nil {
 			return nil, r.db.DBErr(errScan)
 		}
 
@@ -221,51 +222,57 @@ func (r networkRepository) GetASNRecordsByNum(ctx context.Context, asNum int64) 
 	return records, nil
 }
 
-func (r networkRepository) GetASNRecordByIP(ctx context.Context, ipAddr net.IP, asnRecord *ip2location.ASNRecord) error {
+func (r networkRepository) GetASNRecordByIP(ctx context.Context, ipAddr netip.Addr) (domain.NetworkASN, error) {
 	const query = `
-		SELECT ip_from, ip_to, cidr, as_num, as_name 
+		SELECT ip_range::text, as_num, as_name 
 		FROM net_asn
-		WHERE $1::inet <@ ip_range
+		WHERE ip_range >>= $1 
 		LIMIT 1`
+
+	var asnRecord domain.NetworkASN
 
 	if errQuery := r.db.
 		QueryRow(ctx, query, ipAddr.String()).
-		Scan(&asnRecord.IPFrom, &asnRecord.IPTo, &asnRecord.CIDR, &asnRecord.ASNum, &asnRecord.ASName); errQuery != nil {
-		return r.db.DBErr(errQuery)
+		Scan(&asnRecord.CIDR, &asnRecord.ASNum, &asnRecord.ASName); errQuery != nil {
+		return asnRecord, r.db.DBErr(errQuery)
 	}
 
-	return nil
+	return asnRecord, nil
 }
 
-func (r networkRepository) GetLocationRecord(ctx context.Context, ipAddr net.IP, record *ip2location.LocationRecord) error {
+func (r networkRepository) GetLocationRecord(ctx context.Context, ipAddr netip.Addr) (domain.NetworkLocation, error) {
 	const query = `
-		SELECT ip_from, ip_to, country_code, country_name, region_name, city_name, ST_Y(location), ST_X(location) 
+		SELECT ip_range::text, country_code, country_name, region_name, city_name, ST_Y(location), ST_X(location) 
 		FROM net_location 
-		WHERE ip_range @> $1::inet`
+		WHERE ip_range >>= $1`
+
+	var record domain.NetworkLocation
 
 	if errQuery := r.db.QueryRow(ctx, query, ipAddr.String()).
-		Scan(&record.IPFrom, &record.IPTo, &record.CountryCode, &record.CountryName, &record.RegionName,
+		Scan(&record.CIDR, &record.CountryCode, &record.CountryName, &record.RegionName,
 			&record.CityName, &record.LatLong.Latitude, &record.LatLong.Longitude); errQuery != nil {
-		return r.db.DBErr(errQuery)
+		return record, r.db.DBErr(errQuery)
 	}
 
-	return nil
+	return record, nil
 }
 
-func (r networkRepository) GetProxyRecord(ctx context.Context, ipAddr net.IP, proxyRecord *ip2location.ProxyRecord) error {
+func (r networkRepository) GetProxyRecord(ctx context.Context, ipAddr netip.Addr) (domain.NetworkProxy, error) {
 	const query = `
-		SELECT ip_from, ip_to, proxy_type, country_code, country_name, region_name, 
+		SELECT ip_range::text, proxy_type, country_code, country_name, region_name, 
        		city_name, isp, domain_used, usage_type, as_num, as_name, last_seen, threat 
 		FROM net_proxy 
-		WHERE $1::inet <@ ip_range`
+		WHERE ip_range >>= $1`
+
+	var proxyRecord domain.NetworkProxy
 
 	if errQuery := r.db.QueryRow(ctx, query, ipAddr.String()).
-		Scan(&proxyRecord.IPFrom, &proxyRecord.IPTo, &proxyRecord.ProxyType, &proxyRecord.CountryCode, &proxyRecord.CountryName, &proxyRecord.RegionName, &proxyRecord.CityName, &proxyRecord.ISP,
+		Scan(&proxyRecord.CIDR, &proxyRecord.ProxyType, &proxyRecord.CountryCode, &proxyRecord.CountryName, &proxyRecord.RegionName, &proxyRecord.CityName, &proxyRecord.ISP,
 			&proxyRecord.Domain, &proxyRecord.UsageType, &proxyRecord.ASN, &proxyRecord.AS, &proxyRecord.LastSeen, &proxyRecord.Threat); errQuery != nil {
-		return r.db.DBErr(errQuery)
+		return proxyRecord, r.db.DBErr(errQuery)
 	}
 
-	return nil
+	return proxyRecord, nil
 }
 
 func (r networkRepository) loadASN(ctx context.Context, records []ip2location.ASNRecord) error {
@@ -276,13 +283,13 @@ func (r networkRepository) loadASN(ctx context.Context, records []ip2location.AS
 	}
 
 	const query = `
-		INSERT INTO net_asn (ip_from, ip_to, cidr, as_num, as_name, ip_range) 
-		VALUES($1, $2, $3, $4, $5, iprange($1, $2))`
+		INSERT INTO net_asn (ip_range, cidr, as_num, as_name) 
+		VALUES($1, $2, $3, $4)`
 
 	batch := pgx.Batch{}
 
 	for recordIdx, asnRecord := range records {
-		batch.Queue(query, asnRecord.IPFrom, asnRecord.IPTo, asnRecord.CIDR, asnRecord.ASNum, asnRecord.ASName)
+		batch.Queue(query, fmt.Sprintf("%s-%s", asnRecord.IPFrom, asnRecord.IPTo), asnRecord.CIDR, asnRecord.ASNum, asnRecord.ASName)
 
 		if recordIdx > 0 && recordIdx%100000 == 0 || len(records) == recordIdx+1 {
 			if batch.Len() > 0 {
@@ -319,13 +326,13 @@ func (r networkRepository) loadLocation(ctx context.Context, records []ip2locati
 	}
 
 	const query = `
-		INSERT INTO net_location (ip_from, ip_to, country_code, country_name, region_name, city_name, location, ip_range)
-		VALUES($1, $2, $3, $4, $5, $6, ST_SetSRID(ST_MakePoint($8, $7), 4326), iprange($1, $2))`
+		INSERT INTO net_location (ip_range, country_code, country_name, region_name, city_name, location)
+		VALUES($1::ip4r, $2, $3, $4, $5, ST_SetSRID(ST_MakePoint($7, $6), 4326) )`
 
 	batch := pgx.Batch{}
 
 	for recordIdx, locationRecord := range records {
-		batch.Queue(query, locationRecord.IPFrom, locationRecord.IPTo, locationRecord.CountryCode, locationRecord.CountryName, locationRecord.RegionName, locationRecord.CityName, locationRecord.LatLong.Latitude, locationRecord.LatLong.Longitude)
+		batch.Queue(query, fmt.Sprintf("%s-%s", locationRecord.IPFrom, locationRecord.IPTo), locationRecord.CountryCode, locationRecord.CountryName, locationRecord.RegionName, locationRecord.CityName, locationRecord.LatLong.Latitude, locationRecord.LatLong.Longitude)
 
 		if recordIdx > 0 && recordIdx%100000 == 0 || len(records) == recordIdx+1 {
 			if batch.Len() > 0 {
@@ -362,14 +369,14 @@ func (r networkRepository) loadProxies(ctx context.Context, records []ip2locatio
 	}
 
 	const query = `
-		INSERT INTO net_proxy (ip_from, ip_to, proxy_type, country_code, country_name, region_name, city_name, isp,
-		                       domain_used, usage_type, as_num, as_name, last_seen, threat, ip_range)
-		VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, iprange($1, $2))`
+		INSERT INTO net_proxy (ip_range, proxy_type, country_code, country_name, region_name, city_name, isp,
+		                       domain_used, usage_type, as_num, as_name, last_seen, threat)
+		VALUES(ip4r($1::ip4, $2::ip4), $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`
 
 	batch := pgx.Batch{}
 
 	for recordIdx, proxyRecord := range records {
-		batch.Queue(query, proxyRecord.IPFrom, proxyRecord.IPTo, proxyRecord.ProxyType, proxyRecord.CountryCode, proxyRecord.CountryName, proxyRecord.RegionName, proxyRecord.CityName,
+		batch.Queue(query, proxyRecord.IPFrom.To4().String(), proxyRecord.IPTo.To4().String(), proxyRecord.ProxyType, proxyRecord.CountryCode, proxyRecord.CountryName, proxyRecord.RegionName, proxyRecord.CityName,
 			proxyRecord.ISP, proxyRecord.Domain, proxyRecord.UsageType, proxyRecord.ASN, proxyRecord.AS, proxyRecord.LastSeen, proxyRecord.Threat)
 
 		if recordIdx > 0 && recordIdx%100000 == 0 || len(records) == recordIdx+1 {

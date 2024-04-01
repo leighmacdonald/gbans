@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/netip"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
@@ -123,7 +124,7 @@ type Person struct {
 	Muted            bool                  `json:"muted"`
 	IsNew            bool                  `json:"-"`
 	DiscordID        string                `json:"discord_id"`
-	IPAddr           net.IP                `json:"-"` // TODO Allow json for admins endpoints
+	IPAddr           netip.Addr            `json:"-"` // TODO Allow json for admins endpoints
 	CommunityBanned  bool                  `json:"community_banned"`
 	VACBans          int                   `json:"vac_bans"`
 	GameBans         int                   `json:"game_bans"`
@@ -184,7 +185,6 @@ func NewPerson(sid64 steamid.SteamID) Person {
 		Muted:            false,
 		IsNew:            true,
 		DiscordID:        "",
-		IPAddr:           nil,
 		CommunityBanned:  false,
 		VACBans:          0,
 		GameBans:         0,
@@ -265,7 +265,7 @@ func NewPersonAuth(sid64 steamid.SteamID, addr net.IP, fingerPrint string) Perso
 
 type PersonConnection struct {
 	PersonConnectionID int64           `json:"person_connection_id"`
-	IPAddr             net.IP          `json:"ip_addr"`
+	IPAddr             netip.Addr      `json:"ip_addr"`
 	SteamID            steamid.SteamID `json:"steam_id"`
 	PersonaName        string          `json:"persona_name"`
 	ServerID           int             `json:"server_id"`

@@ -1,3 +1,4 @@
+import { LatLng, LatLngLiteral } from 'leaflet';
 import { LazyResult } from '../util/table.ts';
 import { parseDateTime } from '../util/text.tsx';
 import {
@@ -251,6 +252,62 @@ export const apiGetConnections = async (
 
     resp.data = resp.data.map(transformCreatedOnDate);
     return resp;
+};
+
+export type IPQuery = {
+    ip: string;
+};
+
+export type NetworkLocation = {
+    cidr: string;
+    country_code: string;
+    country_name: string;
+    region_name: string;
+    city_name: string;
+    lat_long: {
+        latitude: number;
+        longitude: number;
+    };
+};
+
+export type NetworkASN = {
+    cidr: string;
+    as_num: number;
+    as_name: string;
+};
+
+export type NetworkProxy = {
+    cidr: string;
+    proxy_type: string;
+    country_code: string;
+    country_name: string;
+    region_name: string;
+    city_name: string;
+    isp: string;
+    domain: string;
+    usage_type: string;
+    asn: number;
+    as: string;
+    last_seen: string;
+    threat: string;
+};
+
+export type NetworkDetails = {
+    location: NetworkLocation;
+    asn: NetworkASN;
+    proxy: NetworkProxy;
+};
+
+export const apiGetNetworkDetails = async (
+    opts: IPQuery,
+    abortController: AbortController
+) => {
+    return await apiCall<NetworkDetails, IPQuery>(
+        `/api/network`,
+        'POST',
+        opts,
+        abortController
+    );
 };
 
 interface PermissionUpdate {

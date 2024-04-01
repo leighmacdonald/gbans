@@ -15,6 +15,7 @@ import { FindPlayerByIP } from '../component/FindPlayerByIP.tsx';
 import { FindPlayerIPs } from '../component/FindPlayerIPs.tsx';
 import { NetworkBlockChecker } from '../component/NetworkBlockChecker';
 import { NetworkBlockSources } from '../component/NetworkBlockSources';
+import { NetworkInfo } from '../component/NetworkInfo.tsx';
 import { TabPanel } from '../component/TabPanel';
 
 export const AdminNetworkPage = () => {
@@ -50,7 +51,7 @@ export const AdminNetworkPage = () => {
                         <FindPlayerByIP />
                     </TabPanel>
                     <TabPanel value={value} index={2}>
-                        IPInfo
+                        <NetworkInfo />
                     </TabPanel>
                     <TabPanel value={value} index={3}>
                         <NetworkBlockSources />

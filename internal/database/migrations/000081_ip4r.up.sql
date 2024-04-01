@@ -16,9 +16,17 @@ TRUNCATE net_location;
 TRUNCATE net_proxy;
 
 -- Replace ip_range with the ip4r  type
-ALTER TABLE net_asn ADD COLUMN ip_range iprange not null;
-ALTER TABLE net_location ADD COLUMN ip_range iprange not null;
-ALTER TABLE net_proxy ADD COLUMN ip_range iprange not null;
+ALTER TABLE net_asn ADD COLUMN ip_range ip4r not null;
+ALTER TABLE net_location ADD COLUMN ip_range ip4r not null;
+ALTER TABLE net_proxy ADD COLUMN ip_range ip4r not null;
+
+ALTER TABLE net_proxy DROP COLUMN ip_from;
+ALTER TABLE net_proxy DROP COLUMN ip_to;
+ALTER TABLE net_location DROP COLUMN ip_from;
+ALTER TABLE net_location DROP COLUMN ip_to;
+ALTER TABLE net_asn DROP COLUMN ip_from;
+ALTER TABLE net_asn DROP COLUMN ip_to;
+
 
 -- Add a temp column to map to the new type
 ALTER TABLE person_connections ADD COLUMN new_ip4 ip4;

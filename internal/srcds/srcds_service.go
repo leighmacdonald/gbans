@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"net"
 	"net/http"
+	"net/netip"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -15,7 +15,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
-	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -328,10 +327,10 @@ func (s *srcdsHandler) onAPIPostPingMod() gin.HandlerFunc {
 }
 
 type CheckRequest struct {
-	ClientID int    `json:"client_id"`
-	SteamID  string `json:"steam_id"`
-	IP       net.IP `json:"ip"`
-	Name     string `json:"name,omitempty"`
+	ClientID int        `json:"client_id"`
+	SteamID  string     `json:"steam_id"`
+	IP       netip.Addr `json:"ip"`
+	Name     string     `json:"name,omitempty"`
 }
 
 type CheckResponse struct {
@@ -499,31 +498,32 @@ func (s *srcdsHandler) onAPIPostServerCheck() gin.HandlerFunc {
 	}
 }
 
-func (s *srcdsHandler) checkASN(ctx *gin.Context, steamID steamid.SteamID, addr net.IP, responseCtx context.Context, resp *CheckResponse) bool {
-	var asnRecord ip2location.ASNRecord
+func (s *srcdsHandler) checkASN(ctx *gin.Context, steamID steamid.SteamID, addr netip.Addr, responseCtx context.Context, resp *CheckResponse) bool {
+	details, errDetails := s.networkUsecase.QueryNetwork(ctx, addr)
+	if errDetails == nil && details.Asn.ASNum > 0 {
 
-	errASN := s.networkUsecase.GetASNRecordByIP(responseCtx, addr, &asnRecord)
-	if errASN == nil {
 		var asnBan domain.BanASN
-		if errASNBan := s.banASNUsecase.GetByASN(responseCtx, int64(asnRecord.ASNum), &asnBan); errASNBan != nil {
+		if errASNBan := s.banASNUsecase.GetByASN(responseCtx, int64(details.Asn.ASNum), &asnBan); errASNBan != nil {
 			if !errors.Is(errASNBan, domain.ErrNoResult) {
 				slog.Error("Failed to fetch asn bannedPerson", log.ErrAttr(errASNBan))
 			}
-		} else {
-			resp.BanType = domain.Banned
-			resp.Msg = asnBan.Reason.String()
-			ctx.JSON(http.StatusOK, resp)
-			slog.Info("Player dropped", slog.String("drop_type", "asn"),
-				slog.Int64("sid64", steamID.Int64()))
-
-			return true
+			// Fail open
+			return false
 		}
+
+		resp.BanType = domain.Banned
+		resp.Msg = asnBan.Reason.String()
+		ctx.JSON(http.StatusOK, resp)
+		slog.Info("Player dropped", slog.String("drop_type", "asn"),
+			slog.Int64("sid64", steamID.Int64()))
+
+		return true
 	}
 
 	return false
 }
 
-func (s *srcdsHandler) checkIPBan(ctx *gin.Context, steamID steamid.SteamID, addr net.IP, responseCtx context.Context, resp *CheckResponse) bool {
+func (s *srcdsHandler) checkIPBan(ctx *gin.Context, steamID steamid.SteamID, addr netip.Addr, responseCtx context.Context, resp *CheckResponse) bool {
 	// Check IP first
 	banNet, errGetBanNet := s.banNetUsecase.GetByAddress(responseCtx, addr)
 	if errGetBanNet != nil {
@@ -551,7 +551,7 @@ func (s *srcdsHandler) checkIPBan(ctx *gin.Context, steamID steamid.SteamID, add
 	return false
 }
 
-func (s *srcdsHandler) checkNetBlockBan(ctx *gin.Context, steamID steamid.SteamID, addr net.IP, resp *CheckResponse) bool {
+func (s *srcdsHandler) checkNetBlockBan(ctx *gin.Context, steamID steamid.SteamID, addr netip.Addr, resp *CheckResponse) bool {
 	if source, cidrBanned := s.networkUsecase.IsMatch(addr); cidrBanned {
 		resp.BanType = domain.Network
 		resp.Msg = "Network Range Banned.\nIf you using a VPN try disabling it"

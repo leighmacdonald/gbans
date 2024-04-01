@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net"
+	"net/netip"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -25,7 +26,7 @@ func NewBanNetRepository(database database.Database) domain.BanNetRepository {
 //
 // Note that this function does not currently limit results returned. This may change in the future, do not
 // rely on this functionality.
-func (r banNetRepository) GetByAddress(ctx context.Context, ipAddr net.IP) ([]domain.BanCIDR, error) {
+func (r banNetRepository) GetByAddress(ctx context.Context, ipAddr netip.Addr) ([]domain.BanCIDR, error) {
 	const query = `
 		SELECT net_id, cidr, origin, created_on, updated_on, reason, reason_text, valid_until, deleted, 
 		       note, unban_reason_text, is_enabled, target_id, source_id, appeal_state
@@ -124,7 +125,7 @@ func (r banNetRepository) Get(ctx context.Context, filter domain.CIDRBansQueryFi
 		if errCidr != nil {
 			ip := net.ParseIP(filter.IP)
 			if ip == nil {
-				return nil, 0, errors.Join(errCidr, domain.ErrInvalidIP)
+				return nil, 0, errors.Join(errCidr, domain.ErrNetworkInvalidIP)
 			}
 
 			addr = ip.String()
