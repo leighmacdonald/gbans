@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-	"net"
+	"net/netip"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/discord"
@@ -52,7 +52,7 @@ func (s *banSteamUsecase) GetByBanID(ctx context.Context, banID int64, deletedOk
 	return s.banRepo.GetByBanID(ctx, banID, deletedOk)
 }
 
-func (s *banSteamUsecase) GetByLastIP(ctx context.Context, lastIP net.IP, deletedOk bool) (domain.BannedSteamPerson, error) {
+func (s *banSteamUsecase) GetByLastIP(ctx context.Context, lastIP netip.Addr, deletedOk bool) (domain.BannedSteamPerson, error) {
 	return s.banRepo.GetByLastIP(ctx, lastIP, deletedOk)
 }
 
@@ -178,7 +178,7 @@ func (s *banSteamUsecase) GetOlderThan(ctx context.Context, filter domain.QueryF
 
 // IsOnIPWithBan checks if the address matches an existing user who is currently banned already. This
 // function will always fail-open and allow players in if an error occurs.
-func (s *banSteamUsecase) IsOnIPWithBan(ctx context.Context, curUser domain.PersonInfo, steamID steamid.SteamID, address net.IP) (bool, error) {
+func (s *banSteamUsecase) IsOnIPWithBan(ctx context.Context, curUser domain.PersonInfo, steamID steamid.SteamID, address netip.Addr) (bool, error) {
 	existing, errMatch := s.GetByLastIP(ctx, address, false)
 	if errMatch != nil {
 		if errors.Is(errMatch, domain.ErrNoResult) {

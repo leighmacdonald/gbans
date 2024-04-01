@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/netip"
 	"regexp"
 	"strings"
 	"sync"
@@ -35,19 +36,21 @@ func NewBlocker() *Blocker {
 	}
 }
 
-func (b *Blocker) IsMatch(addr net.IP) (string, bool) {
+func (b *Blocker) IsMatch(addr netip.Addr) (string, bool) {
 	b.RLock()
 	defer b.RUnlock()
 
+	ip := net.ParseIP(addr.String())
+
 	for _, whitelisted := range b.whitelisted {
-		if whitelisted.Contains(addr) {
+		if whitelisted.Contains(ip) {
 			return "", false
 		}
 	}
 
 	for name, networks := range b.blocks {
 		for _, block := range networks {
-			if block.Contains(addr) {
+			if block.Contains(ip) {
 				return name, true
 			}
 		}

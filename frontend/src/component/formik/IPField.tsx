@@ -1,14 +1,13 @@
 import TextField from '@mui/material/TextField';
 import { useFormikContext } from 'formik';
 
-interface IPFieldProps {
+export type IPFieldProps = {
     ip: string;
-}
+};
 
-export const IPField = <T,>() => {
-    const { values, touched, errors, handleChange } = useFormikContext<
-        T & IPFieldProps
-    >();
+export const IPField = () => {
+    const { values, touched, errors, handleChange } =
+        useFormikContext<IPFieldProps>();
     return (
         <TextField
             fullWidth

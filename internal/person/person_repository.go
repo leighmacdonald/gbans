@@ -272,7 +272,7 @@ func (r *personRepository) GetPeople(ctx context.Context, filter domain.PlayerQu
 	if filter.IP != "" {
 		addr := net.ParseIP(filter.IP)
 		if addr == nil {
-			return nil, 0, domain.ErrInvalidIP
+			return nil, 0, domain.ErrNetworkInvalidIP
 		}
 
 		foundIds, errFoundIds := r.GetSteamsAtAddress(ctx, addr)

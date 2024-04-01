@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
+	"net/netip"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -128,8 +128,9 @@ func (r *banSteamRepository) GetByBanID(ctx context.Context, banID int64, delete
 	return r.getBanByColumn(ctx, "ban_id", banID, deletedOk)
 }
 
-func (r *banSteamRepository) GetByLastIP(ctx context.Context, lastIP net.IP, deletedOk bool) (domain.BannedSteamPerson, error) {
-	return r.getBanByColumn(ctx, "last_ip", fmt.Sprintf("::ffff:%s", lastIP.String()), deletedOk)
+func (r *banSteamRepository) GetByLastIP(ctx context.Context, lastIP netip.Addr, deletedOk bool) (domain.BannedSteamPerson, error) {
+	// TODO check if works still
+	return r.getBanByColumn(ctx, "last_ip", lastIP.String(), deletedOk)
 }
 
 // Save will insert or update the ban record

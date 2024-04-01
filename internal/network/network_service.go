@@ -22,6 +22,26 @@ func NewNetworkHandler(engine *gin.Engine, nu domain.NetworkUsecase, ath domain.
 	{
 		mod := modGrp.Use(ath.AuthMiddleware(domain.PModerator))
 		mod.POST("/api/connections", handler.onAPIQueryConnections())
+		mod.POST("/api/network", handler.onAPIQueryNetwork())
+	}
+}
+
+func (h networkHandler) onAPIQueryNetwork() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var req domain.NetworkDetailsQuery
+		if !httphelper.Bind(ctx, &req) {
+			return
+		}
+
+		details, err := h.nu.QueryNetwork(ctx, req.IP)
+		if err != nil {
+			slog.Error("Failed to query connection history", log.ErrAttr(err))
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, details)
 	}
 }
 

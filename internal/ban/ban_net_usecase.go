@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"net"
+	"net/netip"
 
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -48,7 +49,7 @@ func (s *banNetUsecase) Ban(ctx context.Context, banNet *domain.BanCIDR) error {
 
 	_, realCIDR, errCIDR := net.ParseCIDR(banNet.CIDR)
 	if errCIDR != nil {
-		return errors.Join(errCIDR, domain.ErrInvalidIP)
+		return errors.Join(errCIDR, domain.ErrNetworkInvalidIP)
 	}
 
 	if errSaveBanNet := s.banRepo.Save(ctx, banNet); errSaveBanNet != nil {
@@ -86,7 +87,7 @@ func (s *banNetUsecase) Ban(ctx context.Context, banNet *domain.BanCIDR) error {
 	return nil
 }
 
-func (s *banNetUsecase) GetByAddress(ctx context.Context, ipAddr net.IP) ([]domain.BanCIDR, error) {
+func (s *banNetUsecase) GetByAddress(ctx context.Context, ipAddr netip.Addr) ([]domain.BanCIDR, error) {
 	return s.banRepo.GetByAddress(ctx, ipAddr)
 }
 

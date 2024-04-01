@@ -2,8 +2,8 @@ package blocklist
 
 import (
 	"log/slog"
-	"net"
 	"net/http"
+	"net/netip"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -253,7 +253,7 @@ func (b *blocklistHandler) onAPIDeleteBlockListWhitelist() gin.HandlerFunc {
 
 func (b *blocklistHandler) onAPIPostBlocklistCheck() gin.HandlerFunc {
 	type checkReq struct {
-		Address string `json:"address"`
+		Address netip.Addr `json:"address"`
 	}
 
 	type checkResp struct {
@@ -267,14 +267,15 @@ func (b *blocklistHandler) onAPIPostBlocklistCheck() gin.HandlerFunc {
 			return
 		}
 
-		ipAddr := net.ParseIP(req.Address)
-		if ipAddr == nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+		//
+		//ipAddr := net.ParseIP(req.Address)
+		//if ipAddr == nil {
+		//	httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+		//
+		//	return
+		//}
 
-			return
-		}
-
-		source, isBlocked := b.nu.IsMatch(ipAddr)
+		source, isBlocked := b.nu.IsMatch(req.Address)
 
 		ctx.JSON(http.StatusOK, checkResp{
 			Blocked: isBlocked,
