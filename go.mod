@@ -7,7 +7,7 @@ toolchain go1.22.1
 require (
 	github.com/Depado/ginprom v1.8.1
 	github.com/Masterminds/squirrel v1.5.4
-	github.com/bwmarrin/discordgo v0.27.1
+	github.com/bwmarrin/discordgo v0.28.1
 	github.com/dotse/slug v0.1.0
 	github.com/gabriel-vasile/mimetype v1.4.3
 	github.com/getsentry/sentry-go v0.27.0
