@@ -267,14 +267,6 @@ func (b *blocklistHandler) onAPIPostBlocklistCheck() gin.HandlerFunc {
 			return
 		}
 
-		//
-		//ipAddr := net.ParseIP(req.Address)
-		//if ipAddr == nil {
-		//	httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
-		//
-		//	return
-		//}
-
 		source, isBlocked := b.nu.IsMatch(req.Address)
 
 		ctx.JSON(http.StatusOK, checkResp{

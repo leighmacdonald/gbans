@@ -40,17 +40,17 @@ func (b *Blocker) IsMatch(addr netip.Addr) (string, bool) {
 	b.RLock()
 	defer b.RUnlock()
 
-	ip := net.ParseIP(addr.String())
+	address := net.ParseIP(addr.String())
 
 	for _, whitelisted := range b.whitelisted {
-		if whitelisted.Contains(ip) {
+		if whitelisted.Contains(address) {
 			return "", false
 		}
 	}
 
 	for name, networks := range b.blocks {
 		for _, block := range networks {
-			if block.Contains(ip) {
+			if block.Contains(address) {
 				return name, true
 			}
 		}
