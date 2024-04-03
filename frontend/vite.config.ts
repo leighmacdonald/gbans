@@ -25,14 +25,15 @@ export default defineConfig({
         open: true,
         port: 6007,
         cors: true,
+        host: 'gbans.localhost',
         proxy: {
             '/auth/callback': {
-                target: 'http://localhost:6006',
+                target: 'http://gbans.localhost:6006',
                 changeOrigin: true,
                 secure: false
             },
             '/api': {
-                target: 'http://localhost:6006',
+                target: 'http://gbans.localhost:6006',
                 changeOrigin: true,
                 secure: false
             }

@@ -475,13 +475,14 @@ func (h discordService) makeOnPlayers() func(context.Context, *discordgo.Session
 			})
 
 			for _, player := range serverState.Players {
-				ip, errIP := netip.ParseAddr(player.IP.String())
+				address, errIP := netip.ParseAddr(player.IP.String())
 				if errIP != nil {
 					slog.Error("Failed to parse player ip", log.ErrAttr(errIP))
 
 					continue
 				}
-				network, errNetwork := h.nu.QueryNetwork(ctx, ip)
+
+				network, errNetwork := h.nu.QueryNetwork(ctx, address)
 				if errNetwork != nil {
 					slog.Error("Failed to get network info", log.ErrAttr(errNetwork))
 

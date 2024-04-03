@@ -1,4 +1,3 @@
-import { LatLng, LatLngLiteral } from 'leaflet';
 import { LazyResult } from '../util/table.ts';
 import { parseDateTime } from '../util/text.tsx';
 import {

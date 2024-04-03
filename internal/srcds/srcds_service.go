@@ -501,7 +501,6 @@ func (s *srcdsHandler) onAPIPostServerCheck() gin.HandlerFunc {
 func (s *srcdsHandler) checkASN(ctx *gin.Context, steamID steamid.SteamID, addr netip.Addr, responseCtx context.Context, resp *CheckResponse) bool {
 	details, errDetails := s.networkUsecase.QueryNetwork(ctx, addr)
 	if errDetails == nil && details.Asn.ASNum > 0 {
-
 		var asnBan domain.BanASN
 		if errASNBan := s.banASNUsecase.GetByASN(responseCtx, int64(details.Asn.ASNum), &asnBan); errASNBan != nil {
 			if !errors.Is(errASNBan, domain.ErrNoResult) {

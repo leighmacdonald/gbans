@@ -87,8 +87,8 @@ type NetworkProxy struct {
 	ISP         string                 `json:"isp"`
 	Domain      string                 `json:"domain"`
 	UsageType   ip2location.UsageType  `json:"usage_type"`
-	ASN         int64                  `json:"as_num"`
-	AS          string                 `json:"as_name"`
+	ASN         int64                  `json:"as_num"`  //nolint:tagliatelle
+	AS          string                 `json:"as_name"` //nolint:tagliatelle
 	LastSeen    time.Time              `json:"last_seen"`
 	Threat      ip2location.ThreatType `json:"threat"`
 }

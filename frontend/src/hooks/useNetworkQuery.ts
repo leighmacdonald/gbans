@@ -13,7 +13,7 @@ export const useNetworkQuery = (opts: IPQuery) => {
         const abortController = new AbortController();
 
         setLoading(true);
-        apiGetNetworkDetails(opts, abortController)
+        apiGetNetworkDetails({ ip: opts.ip }, abortController)
             .then((resp) => {
                 setData(resp);
             })

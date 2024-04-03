@@ -2,7 +2,7 @@ package network_test
 
 import (
 	"context"
-	"net"
+	"net/netip"
 	"testing"
 
 	"github.com/leighmacdonald/gbans/internal/network"
@@ -18,16 +18,16 @@ func TestNetworkBlocker(t *testing.T) {
 	require.NoError(t, errAdd)
 	require.True(t, count > 100)
 
-	name, matched := blocker.IsMatch(net.ParseIP("3.2.2.2"))
+	name, matched := blocker.IsMatch(netip.MustParseAddr("3.2.2.2"))
 	require.True(t, matched)
 	require.Equal(t, testName, name)
 
-	noName, noMatch := blocker.IsMatch(net.ParseIP("1.1.1.1"))
+	noName, noMatch := blocker.IsMatch(netip.MustParseAddr("1.1.1.1"))
 	require.False(t, noMatch)
 	require.Equal(t, "", noName)
 
 	blocker.RemoveSource(testName)
 
-	_, noMatch2 := blocker.IsMatch(net.ParseIP("3.2.2.2"))
+	_, noMatch2 := blocker.IsMatch(netip.MustParseAddr("3.2.2.2"))
 	require.False(t, noMatch2)
 }
