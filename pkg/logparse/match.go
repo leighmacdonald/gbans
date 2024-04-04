@@ -1,7 +1,6 @@
 package logparse
 
 import (
-	"errors"
 	"fmt"
 	"math"
 	"sort"
@@ -11,14 +10,14 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+	"github.com/pkg/errors"
 )
 
 var (
-	ErrIgnored        = errors.New("ignored msg")
-	ErrUnhandled      = errors.New("unhandled msg")
-	ErrInvalidType    = errors.New("invalid Type")
-	ErrInvalidSID     = errors.New("invalid steam id")
-	ErrUnhandledEvent = errors.New("unhandled event")
+	ErrIgnored           = errors.New("Ignored msg")
+	ErrUnhandled         = errors.New("Unhandled msg")
+	ErrInvalidType       = errors.New("Invalid Type")
+	ErrPlayerSIDNotExist = errors.New("player sid does not exist")
 )
 
 type MatchPlayerSums map[steamid.SteamID]*PlayerStats
@@ -30,7 +29,7 @@ func (mps MatchPlayerSums) GetBySteamID(steamID steamid.SteamID) (*PlayerStats, 
 		}
 	}
 
-	return nil, ErrInvalidSID
+	return nil, ErrPlayerSIDNotExist
 }
 
 type MatchChat struct {
@@ -88,16 +87,14 @@ type Match struct {
 	ServerID   int              `json:"server_id"`
 	Title      string           `json:"title"`
 	MapName    string           `json:"map_name"`
+	DemoName   string           `json:"demo_name"`
 	TeamScores TeamScores       `json:"team_scores"`
 	PlayerSums MatchPlayerSums  `json:"player_sums"`
 	Rounds     []*MatchRoundSum `json:"rounds"`
 	Chat       []MatchChat      `json:"chat"`
 	TimeStart  *time.Time       `json:"time_start"`
 	TimeEnd    *time.Time       `json:"time_end"`
-	// inMatch is set to true when we start a round, many stat events are ignored until this is true
-	inMatch  bool // We ignore most events until Round_Start event
-	inRound  bool
-	curRound int
+	curRound   int
 }
 
 func NewMatch(serverID int, serverName string) Match {
@@ -111,7 +108,9 @@ func NewMatch(serverID int, serverName string) Match {
 		ServerID:   serverID,
 		Title:      serverName,
 		PlayerSums: MatchPlayerSums{},
-		curRound:   -1,
+		Rounds: []*MatchRoundSum{{
+			Score: TeamScores{},
+		}},
 	}
 }
 
@@ -569,13 +568,13 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 	case SteamAuth:
 		return nil
 	default:
-		return fmt.Errorf("%w: %v", ErrUnhandledEvent, result.EventType)
+		return errors.New(fmt.Sprintf("Unhandled apply event: %d %v", result.EventType, result.Event))
 	}
 
 	return nil
 }
 
-func (match *Match) getPlayer(evtTime time.Time, sid steamid.SteamID) *PlayerStats {
+func (match *Match) player(evtTime time.Time, sid steamid.SteamID) *PlayerStats {
 	if playerSum, found := match.PlayerSums[sid]; found {
 		return playerSum
 	}
@@ -597,8 +596,6 @@ func (match *Match) getRound() *MatchRoundSum {
 }
 
 func (match *Match) roundStart() {
-	match.inMatch = true
-	match.inRound = true
 	match.curRound++
 	match.Rounds = append(match.Rounds, &MatchRoundSum{
 		Score: TeamScores{},
@@ -610,14 +607,9 @@ func (match *Match) roundWin(evt WRoundWinEvt) {
 	if round != nil {
 		round.RoundWinner = evt.Winner
 	}
-
-	match.inMatch = true
-	match.inRound = false
 }
 
 func (match *Match) gameOver(evt WGameOverEvt) {
-	match.inMatch = false
-	match.inRound = false
 	match.TimeEnd = &evt.CreatedOn
 
 	for _, player := range match.PlayerSums {
@@ -635,26 +627,26 @@ func (match *Match) overtime() {
 }
 
 func (match *Match) disconnected(evt DisconnectedEvt) {
-	player := match.getPlayer(evt.CreatedOn, evt.SID)
+	player := match.player(evt.CreatedOn, evt.SID)
 	now := evt.CreatedOn
 	player.TimeEnd = &now
 	player.onClassChangeOrGameEnd(evt.CreatedOn)
 }
 
 func (match *Match) connected(evt ConnectedEvt) {
-	match.getPlayer(evt.CreatedOn, evt.SID)
+	match.player(evt.CreatedOn, evt.SID)
 }
 
 func (match *Match) entered(evt EnteredEvt) {
-	match.getPlayer(evt.CreatedOn, evt.SID)
+	match.player(evt.CreatedOn, evt.SID)
 }
 
 func (match *Match) spawnedAs(evt SpawnedAsEvt) {
+	playerSum := match.player(evt.CreatedOn, evt.SID)
+
 	if evt.Class == Spectator {
 		return
 	}
-
-	playerSum := match.getPlayer(evt.CreatedOn, evt.SID)
 
 	if playerSum.Name == "" && evt.Name != "" {
 		playerSum.Name = evt.Name
@@ -666,21 +658,21 @@ func (match *Match) spawnedAs(evt SpawnedAsEvt) {
 }
 
 func (match *Match) changeClass(evt ChangeClassEvt) {
-	player := match.getPlayer(evt.CreatedOn, evt.SID)
+	player := match.player(evt.CreatedOn, evt.SID)
 
 	player.setPlayerClass(evt.CreatedOn, evt.Class)
 }
 
 func (match *Match) shotFired(evt ShotFiredEvt) {
-	match.getPlayer(evt.CreatedOn, evt.SID).getWeaponSum(evt.Weapon).Shots++
+	match.player(evt.CreatedOn, evt.SID).getWeaponSum(evt.Weapon).Shots++
 }
 
 func (match *Match) shotHit(evt ShotHitEvt) {
-	match.getPlayer(evt.CreatedOn, evt.SID).getWeaponSum(evt.Weapon).Hits++
+	match.player(evt.CreatedOn, evt.SID).getWeaponSum(evt.Weapon).Hits++
 }
 
 func (match *Match) assist(evt KillAssistEvt) {
-	player := match.getPlayer(evt.CreatedOn, evt.SID)
+	player := match.player(evt.CreatedOn, evt.SID)
 	player.Assists++
 
 	if classStats := player.getClassStats(); classStats != nil {
@@ -689,7 +681,7 @@ func (match *Match) assist(evt KillAssistEvt) {
 }
 
 func (match *Match) joinTeam(evt JoinedTeamEvt) {
-	match.getPlayer(evt.CreatedOn, evt.SID).Team = evt.NewTeam
+	match.player(evt.CreatedOn, evt.SID).Team = evt.NewTeam
 }
 
 func (match *Match) addChat(sid steamid.SteamID, name string, message string, team bool, created time.Time) {
@@ -703,7 +695,7 @@ func (match *Match) addChat(sid steamid.SteamID, name string, message string, te
 }
 
 func (match *Match) domination(evt DominationEvt) {
-	player := match.getPlayer(evt.CreatedOn, evt.SID)
+	player := match.player(evt.CreatedOn, evt.SID)
 	if cs := player.getClassStats(); cs != nil {
 		cs.Dominations++
 	}
@@ -711,14 +703,14 @@ func (match *Match) domination(evt DominationEvt) {
 	target := player.getTarget(evt.SID2)
 	target.Dominations++
 
-	victim := match.getPlayer(evt.CreatedOn, evt.SID2)
+	victim := match.player(evt.CreatedOn, evt.SID2)
 	if cs := victim.getClassStats(); cs != nil {
 		cs.Dominated++
 	}
 }
 
 func (match *Match) revenge(evt RevengeEvt) {
-	player := match.getPlayer(evt.CreatedOn, evt.SID2)
+	player := match.player(evt.CreatedOn, evt.SID2)
 
 	target := player.getTarget(evt.SID2)
 	target.Revenges++
@@ -729,33 +721,33 @@ func (match *Match) revenge(evt RevengeEvt) {
 }
 
 func (match *Match) builtObject(evt BuiltObjectEvt) {
-	match.getPlayer(evt.CreatedOn, evt.SID).BuildingBuilt++
+	match.player(evt.CreatedOn, evt.SID).BuildingBuilt++
 }
 
 func (match *Match) killedObject(evt KilledObjectEvt) {
-	if cs := match.getPlayer(evt.CreatedOn, evt.SID).getClassStats(); cs != nil {
+	if cs := match.player(evt.CreatedOn, evt.SID).getClassStats(); cs != nil {
 		cs.BuildingsDestroyed++
 	}
 }
 
 func (match *Match) dropObject(evt DropObjectEvt) {
-	match.getPlayer(evt.CreatedOn, evt.SID).BuildingDropped++
+	match.player(evt.CreatedOn, evt.SID).BuildingDropped++
 }
 
 func (match *Match) carriedObject(evt CarryObjectEvt) {
-	match.getPlayer(evt.CreatedOn, evt.SID).BuildingCarried++
+	match.player(evt.CreatedOn, evt.SID).BuildingCarried++
 }
 
 func (match *Match) detonatedObject(evt DetonatedObjectEvt) {
-	match.getPlayer(evt.CreatedOn, evt.SID).BuildingDetonated++
+	match.player(evt.CreatedOn, evt.SID).BuildingDetonated++
 }
 
 func (match *Match) extinguishes(evt ExtinguishedEvt) {
-	match.getPlayer(evt.CreatedOn, evt.SID).getTarget(evt.SID2).Extinguishes++
+	match.player(evt.CreatedOn, evt.SID).getTarget(evt.SID2).Extinguishes++
 }
 
 func (match *Match) damage(evt DamageEvt) {
-	player := match.getPlayer(evt.CreatedOn, evt.SID)
+	player := match.player(evt.CreatedOn, evt.SID)
 	dmg := fp.FirstNonZero(evt.Realdamage, evt.Damage)
 
 	weaponSum := player.getWeaponSum(evt.Weapon)
@@ -776,7 +768,7 @@ func (match *Match) damage(evt DamageEvt) {
 	target := player.getTarget(evt.SID2)
 	target.DamageTaken += dmg
 
-	victim := match.getPlayer(evt.CreatedOn, evt.SID2)
+	victim := match.player(evt.CreatedOn, evt.SID2)
 	if cs := victim.getClassStats(); cs != nil {
 		cs.DamageTaken += dmg
 	}
@@ -791,20 +783,20 @@ func (match *Match) damage(evt DamageEvt) {
 }
 
 func (match *Match) healed(evt HealedEvt) {
-	player := match.getPlayer(evt.CreatedOn, evt.SID)
+	player := match.player(evt.CreatedOn, evt.SID)
 
 	medicStats := player.getMedicSum()
 	medicStats.Healing += evt.Healing
 
 	player.getTarget(evt.SID2).HealingTaken += evt.Healing
 
-	if cs := match.getPlayer(evt.CreatedOn, evt.SID2).getClassStats(); cs != nil {
+	if cs := match.player(evt.CreatedOn, evt.SID2).getClassStats(); cs != nil {
 		cs.HealingTaken += evt.Healing
 	}
 }
 
 func (match *Match) pointCaptureBlocked(evt CaptureBlockedEvt) {
-	player := match.getPlayer(evt.CreatedOn, evt.SID)
+	player := match.player(evt.CreatedOn, evt.SID)
 	player.CapturesBlocked = append(player.CapturesBlocked, &PointCaptureBlocked{
 		CP:       evt.CP,
 		CPName:   evt.Cpname,
@@ -818,7 +810,7 @@ func (match *Match) pointCaptureBlocked(evt CaptureBlockedEvt) {
 
 func (match *Match) pointCapture(evt PointCapturedEvt) {
 	for _, evtPlayer := range evt.Players() {
-		player := match.getPlayer(evt.CreatedOn, evtPlayer.SID)
+		player := match.player(evt.CreatedOn, evtPlayer.SID)
 		player.Captures = append(player.Captures, &PointCapture{
 			SteamID:  evtPlayer.SID,
 			CP:       evt.CP,
@@ -837,31 +829,29 @@ func (match *Match) pointCapture(evt PointCapturedEvt) {
 //}
 
 func (match *Match) killed(evt KilledEvt) {
-	if match.inRound {
-		player := match.getPlayer(evt.CreatedOn, evt.SID)
-		player.addKill(evt.CreatedOn, evt.SID2, evt.Weapon, evt.AttackerPosition, evt.VictimPosition)
+	player := match.player(evt.CreatedOn, evt.SID)
+	player.addKill(evt.CreatedOn, evt.SID2, evt.Weapon, evt.AttackerPosition, evt.VictimPosition)
 
-		if evt.Team == BLU {
-			match.getRound().KillsBlu++
-		} else if evt.Team == RED {
-			match.getRound().KillsRed++
-		}
+	if evt.Team == BLU {
+		match.getRound().KillsBlu++
+	} else if evt.Team == RED {
+		match.getRound().KillsRed++
 	}
 }
 
 func (match *Match) suicide(evt SuicideEvt) {
-	match.getPlayer(evt.CreatedOn, evt.SID).Suicides++
+	match.player(evt.CreatedOn, evt.SID).Suicides++
 }
 
 func (match *Match) firstHealAfterSpawn(evt FirstHealAfterSpawnEvt) {
-	player := match.getPlayer(evt.CreatedOn, evt.SID)
+	player := match.player(evt.CreatedOn, evt.SID)
 	if player.HealingStats != nil {
 		player.HealingStats.FirstHealAfterSpawn = append(player.HealingStats.FirstHealAfterSpawn, evt.Time)
 	}
 }
 
 func (match *Match) pickup(evt PickupEvt) {
-	player := match.getPlayer(evt.CreatedOn, evt.SID)
+	player := match.player(evt.CreatedOn, evt.SID)
 
 	_, found := player.Pickups[evt.Item]
 	if !found {
@@ -872,10 +862,8 @@ func (match *Match) pickup(evt PickupEvt) {
 	player.HealingPacks += evt.Healing
 }
 
-var ErrUnknownCustomKill = errors.New("custom kill type unknown")
-
 func (match *Match) killedCustom(evt CustomKilledEvt) error {
-	player := match.getPlayer(evt.CreatedOn, evt.SID)
+	player := match.player(evt.CreatedOn, evt.SID)
 	weaponSum := player.getWeaponSum(evt.Weapon)
 
 	switch evt.Customkill {
@@ -888,7 +876,7 @@ func (match *Match) killedCustom(evt CustomKilledEvt) error {
 		// This is taken from damage event instead to match logs.tf
 		// weaponSum.Headshots++
 	default:
-		return fmt.Errorf("%w: %s", ErrUnknownCustomKill, evt.Customkill)
+		return errors.Errorf("Custom kill type unknown: %s", evt.Customkill)
 	}
 
 	player.addKill(evt.CreatedOn, evt.SID2, evt.Weapon, evt.AttackerPosition, evt.VictimPosition)
@@ -897,19 +885,19 @@ func (match *Match) killedCustom(evt CustomKilledEvt) error {
 }
 
 func (match *Match) drop(evt MedicDeathEvt) {
-	healingSum := match.getPlayer(evt.CreatedOn, evt.SID2).getMedicSum()
+	healingSum := match.player(evt.CreatedOn, evt.SID2).getMedicSum()
 	healingSum.Drops = append(healingSum.Drops, evt.SID)
 }
 
 func (match *Match) medicDeath(evt MedicDeathExEvt) {
 	if evt.Uberpct > 95 && evt.Uberpct < 100 {
-		healingSum := match.getPlayer(evt.CreatedOn, evt.SID).getMedicSum()
+		healingSum := match.player(evt.CreatedOn, evt.SID).getMedicSum()
 		healingSum.NearFullChargeDeath++
 	}
 }
 
 func (match *Match) medicCharge(evt ChargeDeployedEvt) {
-	medicSum := match.getPlayer(evt.CreatedOn, evt.SID).getMedicSum()
+	medicSum := match.player(evt.CreatedOn, evt.SID).getMedicSum()
 
 	_, found := medicSum.Charges[evt.Medigun]
 	if !found {
@@ -936,13 +924,13 @@ func (match *Match) medicCharge(evt ChargeDeployedEvt) {
 }
 
 func (match *Match) medicChargeEnded(evt ChargeEndedEvt) {
-	medicSum := match.getPlayer(evt.CreatedOn, evt.SID).getMedicSum()
+	medicSum := match.player(evt.CreatedOn, evt.SID).getMedicSum()
 
 	medicSum.UberDurations = append(medicSum.UberDurations, evt.Duration)
 }
 
 func (match *Match) medicLostAdv(evt LostUberAdvantageEvt) {
-	medicSum := match.getPlayer(evt.CreatedOn, evt.SID).getMedicSum()
+	medicSum := match.player(evt.CreatedOn, evt.SID).getMedicSum()
 
 	if evt.Time > 30 {
 		// TODO check what is actually the time to trigger
@@ -1488,5 +1476,5 @@ func (mps HealingStatsMap) GetBySteamID(steamID steamid.SteamID) (*HealingStats,
 		return m, nil
 	}
 
-	return nil, ErrInvalidSID
+	return nil, ErrPlayerSIDNotExist
 }
