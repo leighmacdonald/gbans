@@ -18,15 +18,16 @@ import (
 type serversHandler struct {
 	serversUsecase domain.ServersUsecase
 	stateUsecase   domain.StateUsecase
-	pu             domain.PersonUsecase
+	personUsecase  domain.PersonUsecase
 }
 
 func NewServerHandler(engine *gin.Engine, serversUsecase domain.ServersUsecase,
-	stateUsecase domain.StateUsecase, ath domain.AuthUsecase,
+	stateUsecase domain.StateUsecase, ath domain.AuthUsecase, personUsecase domain.PersonUsecase,
 ) {
 	handler := &serversHandler{
 		serversUsecase: serversUsecase,
 		stateUsecase:   stateUsecase,
+		personUsecase:  personUsecase,
 	}
 
 	engine.GET("/export/sourcemod/admins_simple.ini", handler.onAPIExportSourcemodSimpleAdmins())
@@ -53,14 +54,14 @@ type serverInfoSafe struct {
 
 func (h *serversHandler) onAPIExportSourcemodSimpleAdmins() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		privilegedIds, errPrivilegedIds := h.pu.GetSteamIdsAbove(ctx, domain.PReserved)
+		privilegedIds, errPrivilegedIds := h.personUsecase.GetSteamIdsAbove(ctx, domain.PReserved)
 		if errPrivilegedIds != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
 
-		players, errPlayers := h.pu.GetPeopleBySteamID(ctx, privilegedIds)
+		players, errPlayers := h.personUsecase.GetPeopleBySteamID(ctx, privilegedIds)
 		if errPlayers != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 

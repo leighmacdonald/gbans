@@ -251,7 +251,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			patreon.NewPatreonHandler(router, patreonUsecase, authUsecase)
 			person.NewPersonHandler(router, configUsecase, personUsecase, authUsecase)
 			report.NewReportHandler(router, reportUsecase, configUsecase, discordUsecase, personUsecase, authUsecase)
-			servers.NewServerHandler(router, serversUsecase, stateUsecase, authUsecase)
+			servers.NewServerHandler(router, serversUsecase, stateUsecase, authUsecase, personUsecase)
 			srcds.NewSRCDSHandler(router, srcdsUsecase, serversUsecase, personUsecase, assetUsecase,
 				reportUsecase, banUsecase, networkUsecase, banGroupUsecase, demoUsecase, authUsecase, banASNUsecase, banNetUsecase,
 				configUsecase, discordUsecase, stateUsecase)

@@ -65,7 +65,7 @@ public void onAuthReqReceived(HTTPResponse response, any value)
 	gAccessToken = token;
 	gbLog("Successfully authenticated with gbans server");
 
-	reloadAdmins(false);
+	reloadAdmins(true);
 }
 
 public Action onAdminCmdReload(int clientId, int argc)
