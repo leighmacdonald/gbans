@@ -161,7 +161,7 @@ func (r networkRepository) AddConnectionHistory(ctx context.Context, conn *domai
 		RETURNING person_connection_id`
 
 	if errQuery := r.db.
-		QueryRow(ctx, query, conn.SteamID.Int64(), conn.IPAddr, conn.PersonaName, conn.CreatedOn, conn.ServerID).
+		QueryRow(ctx, query, conn.SteamID.Int64(), conn.IPAddr.String(), conn.PersonaName, conn.CreatedOn, conn.ServerID).
 		Scan(&conn.PersonConnectionID); errQuery != nil {
 		return r.db.DBErr(errQuery)
 	}
