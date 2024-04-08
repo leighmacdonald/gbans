@@ -33,12 +33,18 @@ func (r *serversRepository) GetServer(ctx context.Context, serverID int) (domain
 		return server, r.db.DBErr(rowErr)
 	}
 
+	var tokenTime *time.Time
+
 	if errScan := row.Scan(&server.ServerID, &server.ShortName, &server.Name, &server.Address, &server.Port, &server.RCON,
-		&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn,
+		&server.Password, &tokenTime, &server.CreatedOn, &server.UpdatedOn,
 		&server.ReservedSlots, &server.IsEnabled, &server.Region, &server.CC,
 		&server.Latitude, &server.Longitude,
 		&server.Deleted, &server.LogSecret, &server.EnableStats); errScan != nil {
 		return server, r.db.DBErr(errScan)
+	}
+
+	if tokenTime != nil {
+		server.TokenCreatedOn = *tokenTime
 	}
 
 	return server, nil
@@ -128,13 +134,21 @@ func (r *serversRepository) GetServers(ctx context.Context, filter domain.Server
 	var servers []domain.Server
 
 	for rows.Next() {
-		var server domain.Server
+		var (
+			server    domain.Server
+			tokenDate *time.Time
+		)
+
 		if errScan := rows.
 			Scan(&server.ServerID, &server.ShortName, &server.Name, &server.Address, &server.Port, &server.RCON,
-				&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn, &server.ReservedSlots,
+				&server.Password, &tokenDate, &server.CreatedOn, &server.UpdatedOn, &server.ReservedSlots,
 				&server.IsEnabled, &server.Region, &server.CC, &server.Latitude, &server.Longitude,
 				&server.Deleted, &server.LogSecret, &server.EnableStats); errScan != nil {
 			return nil, 0, errors.Join(errScan, domain.ErrScanResult)
+		}
+
+		if tokenDate != nil {
+			server.TokenCreatedOn = *tokenDate
 		}
 
 		servers = append(servers, server)
@@ -177,7 +191,9 @@ func (r *serversRepository) GetServerByName(ctx context.Context, serverName stri
 		return r.db.DBErr(errRow)
 	}
 
-	return r.db.DBErr(row.Scan(
+	var tokenTime *time.Time
+
+	if err := row.Scan(
 		&server.ServerID,
 		&server.ShortName,
 		&server.Name,
@@ -186,7 +202,15 @@ func (r *serversRepository) GetServerByName(ctx context.Context, serverName stri
 		&server.RCON,
 		&server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn, &server.ReservedSlots,
 		&server.IsEnabled, &server.Region, &server.CC, &server.Latitude, &server.Longitude,
-		&server.Deleted, &server.LogSecret, &server.EnableStats))
+		&server.Deleted, &server.LogSecret, &server.EnableStats); err != nil {
+		return r.db.DBErr(err)
+	}
+
+	if tokenTime != nil {
+		server.TokenCreatedOn = *tokenTime
+	}
+
+	return nil
 }
 
 func (r *serversRepository) GetServerByPassword(ctx context.Context, serverPassword string, server *domain.Server, disabledOk bool, deletedOk bool) error {
@@ -210,10 +234,20 @@ func (r *serversRepository) GetServerByPassword(ctx context.Context, serverPassw
 		return r.db.DBErr(errRow)
 	}
 
-	return r.db.DBErr(row.Scan(&server.ServerID, &server.ShortName, &server.Name, &server.Address, &server.Port,
-		&server.RCON, &server.Password, &server.TokenCreatedOn, &server.CreatedOn, &server.UpdatedOn,
+	var tokenTime *time.Time
+
+	if err := row.Scan(&server.ServerID, &server.ShortName, &server.Name, &server.Address, &server.Port,
+		&server.RCON, &server.Password, &tokenTime, &server.CreatedOn, &server.UpdatedOn,
 		&server.ReservedSlots, &server.IsEnabled, &server.Region, &server.CC, &server.Latitude,
-		&server.Longitude, &server.Deleted, &server.LogSecret, &server.EnableStats))
+		&server.Longitude, &server.Deleted, &server.LogSecret, &server.EnableStats); err != nil {
+		return r.db.DBErr(err)
+	}
+
+	if tokenTime != nil {
+		server.TokenCreatedOn = *tokenTime
+	}
+
+	return nil
 }
 
 // SaveServer updates or creates the server data in the database.
