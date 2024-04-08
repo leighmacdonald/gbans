@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/log"
@@ -15,11 +16,15 @@ import (
 
 type matchHandler struct {
 	mu domain.MatchUsecase
+	su domain.ServersUsecase
+	cu domain.ConfigUsecase
 }
 
 // todo move data updaters to repository.
-func NewMatchHandler(ctx context.Context, engine *gin.Engine, mu domain.MatchUsecase, ath domain.AuthUsecase) {
-	handler := matchHandler{mu: mu}
+func NewMatchHandler(ctx context.Context, engine *gin.Engine, mu domain.MatchUsecase, su domain.ServersUsecase,
+	ath domain.AuthUsecase, cu domain.ConfigUsecase,
+) {
+	handler := matchHandler{mu: mu, su: su, cu: cu}
 
 	engine.GET("/api/stats/map", handler.onAPIGetMapUsage())
 
@@ -36,6 +41,73 @@ func NewMatchHandler(ctx context.Context, engine *gin.Engine, mu domain.MatchUse
 		authed.GET("/api/stats/player/:steam_id/weapons", handler.onAPIGetPlayerWeaponStatsOverall())
 		authed.GET("/api/stats/player/:steam_id/classes", handler.onAPIGetPlayerClassStatsOverall())
 		authed.GET("/api/stats/player/:steam_id/overall", handler.onAPIGetPlayerStatsOverall())
+		authed.POST("/api/sm/match/start", handler.onAPIPostMatchStart())
+		authed.GET("/api/sm/match/end", handler.onAPIPostMatchEnd())
+	}
+}
+
+func (h matchHandler) onAPIPostMatchEnd() gin.HandlerFunc {
+	type endMatchResponse struct {
+		URL string `json:"url"`
+	}
+
+	return func(ctx *gin.Context) {
+		serverID := httphelper.ServerIDFromCtx(ctx)
+		if serverID == 0 {
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrUnknownServerID)
+
+			return
+		}
+
+		matchUUID, errEnd := h.mu.EndMatch(ctx, serverID)
+		if errEnd != nil {
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrUnknownServerID)
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, endMatchResponse{URL: h.cu.ExtURLRaw("/match/%s", matchUUID.String())})
+	}
+}
+
+func (h matchHandler) onAPIPostMatchStart() gin.HandlerFunc {
+	type matchStartRequest struct {
+		MapName  string `json:"map_name"`
+		DemoName string `json:"demo_name"`
+	}
+
+	type matchStartResponse struct {
+		MatchID uuid.UUID `json:"match_id"`
+	}
+
+	return func(ctx *gin.Context) {
+		var req matchStartRequest
+		if !httphelper.Bind(ctx, &req) {
+			return
+		}
+
+		serverID := httphelper.ServerIDFromCtx(ctx)
+		if serverID == 0 {
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrUnknownServerID)
+
+			return
+		}
+
+		server, errServer := h.su.GetServer(ctx, serverID)
+		if errServer != nil {
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrUnknownServerID)
+
+			return
+		}
+
+		matchUUID, errMatch := h.mu.StartMatch(server, req.MapName, req.DemoName)
+		if errMatch != nil {
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrUnknownServerID)
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, matchStartResponse{MatchID: matchUUID})
 	}
 }
 

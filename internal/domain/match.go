@@ -14,7 +14,25 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+type MatchTriggerType int
+
+const (
+	MatchTriggerStart MatchTriggerType = 1
+	MatchTriggerEnd   MatchTriggerType = 2
+)
+
+type MatchTrigger struct {
+	Type     MatchTriggerType
+	UUID     uuid.UUID
+	Server   Server
+	MapName  string
+	DemoName string
+}
+
 type MatchRepository interface {
+	Start(ctx context.Context)
+	StartMatch(startTrigger MatchTrigger)
+	EndMatch(endTrigger MatchTrigger)
 	Matches(ctx context.Context, opts MatchesQueryOpts) ([]MatchSummary, int64, error)
 	MatchGetByID(ctx context.Context, matchID uuid.UUID, match *MatchResult) error
 	MatchSave(ctx context.Context, match *logparse.Match, weaponMap fp.MutexMap[logparse.Weapon, int]) error
@@ -36,9 +54,11 @@ type MatchRepository interface {
 	HealersOverallByHealing(ctx context.Context, count int) ([]HealingOverallResult, error)
 	PlayerOverallClassStats(ctx context.Context, steamID steamid.SteamID) ([]PlayerClassOverallResult, error)
 	PlayerOverallStats(ctx context.Context, steamID steamid.SteamID, por *PlayerOverallResult) error
+	GetMatchIDFromServerID(serverID int) (uuid.UUID, bool)
 }
 type MatchUsecase interface {
-	Start(ctx context.Context)
+	StartMatch(server Server, mapName string, demoName string) (uuid.UUID, error)
+	EndMatch(ctx context.Context, serverID int) (uuid.UUID, error)
 	GetMatchIDFromServerID(serverID int) (uuid.UUID, bool)
 	Matches(ctx context.Context, opts MatchesQueryOpts) ([]MatchSummary, int64, error)
 	MatchGetByID(ctx context.Context, matchID uuid.UUID, match *MatchResult) error

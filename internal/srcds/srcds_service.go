@@ -134,7 +134,7 @@ func (s *srcdsHandler) onAPIPostServerState() gin.HandlerFunc {
 			return
 		}
 
-		serverID := httphelper.ServerFromCtx(ctx) // TODO use generic func for int
+		serverID := httphelper.ServerIDFromCtx(ctx) // TODO use generic func for int
 		if serverID == 0 {
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrParamInvalid)
 
@@ -190,7 +190,7 @@ func (s *srcdsHandler) onAPIPostDemo() gin.HandlerFunc {
 
 		defer util.LogCloser(demoFile)
 
-		newDemo, errCreateDemo := s.demoUsecase.Create(ctx, demoFormFile.Filename, demoFile, demoFormFile.Filename, httphelper.ServerFromCtx(ctx))
+		newDemo, errCreateDemo := s.demoUsecase.Create(ctx, demoFormFile.Filename, demoFile, demoFormFile.Filename, httphelper.ServerIDFromCtx(ctx))
 		if errCreateDemo != nil {
 			httphelper.HandleErrInternal(ctx)
 
