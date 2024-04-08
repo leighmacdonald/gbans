@@ -129,7 +129,7 @@ func GetDefaultFloat64(s string, def float64) float64 {
 	return def
 }
 
-func ServerFromCtx(ctx *gin.Context) int {
+func ServerIDFromCtx(ctx *gin.Context) int {
 	serverIDUntyped, ok := ctx.Get("server_id")
 	if !ok {
 		return 0

@@ -195,8 +195,11 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			go metricsUsecase.Start(ctx)
 
 			go forumUsecase.Start(ctx)
-			matchUsecase := match.NewMatchUsecase(eventBroadcaster, match.NewMatchRepository(dbUsecase, personUsecase), stateUsecase, serversUsecase, discordUsecase, weaponsMap)
-			go matchUsecase.Start(ctx)
+
+			matchRepo := match.NewMatchRepository(eventBroadcaster, dbUsecase, personUsecase, serversUsecase, discordUsecase, stateUsecase, weaponsMap)
+			go matchRepo.Start(ctx)
+
+			matchUsecase := match.NewMatchUsecase(matchRepo, stateUsecase, serversUsecase, discordUsecase)
 			newsUsecase := news.NewNewsUsecase(news.NewNewsRepository(dbUsecase))
 			notificationUsecase := notification.NewNotificationUsecase(notification.NewNotificationRepository(dbUsecase), personUsecase)
 			patreonUsecase := patreon.NewPatreonUsecase(patreon.NewPatreonRepository(dbUsecase))
@@ -242,7 +245,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			contest.NewContestHandler(router, contestUsecase, configUsecase, mediaUsecase, authUsecase)
 			demo.NewDemoHandler(router, demoUsecase)
 			forum.NewForumHandler(router, forumUsecase, authUsecase)
-			match.NewMatchHandler(ctx, router, matchUsecase, authUsecase)
+			match.NewMatchHandler(ctx, router, matchUsecase, serversUsecase, authUsecase, configUsecase)
 			media.NewMediaHandler(router, mediaUsecase, configUsecase, assetUsecase, authUsecase)
 			metrics.NewMetricsHandler(router)
 			network.NewNetworkHandler(router, networkUsecase, authUsecase)

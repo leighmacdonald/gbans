@@ -77,7 +77,8 @@ func setupCmd() *cobra.Command {
 			mediaUsecase := media.NewMediaUsecase(conf.S3.BucketMedia, media.NewMediaRepository(databaseRepository), assetUsecase)
 			newsUsecase := news.NewNewsUsecase(news.NewNewsRepository(databaseRepository))
 			wikiUsecase := wiki.NewWikiUsecase(wiki.NewWikiRepository(databaseRepository, mediaUsecase))
-			matchUsecase := match.NewMatchUsecase(broadcaster, match.NewMatchRepository(databaseRepository, personUsecase), stateUsecase, serversUsecase, nil, weaponMap)
+			matchRepo := match.NewMatchRepository(broadcaster, databaseRepository, personUsecase, serversUsecase, nil, stateUsecase, weaponMap)
+			matchUsecase := match.NewMatchUsecase(matchRepo, stateUsecase, serversUsecase, nil)
 
 			owner, errRootUser := personUsecase.GetPersonBySteamID(ctx, steamid.New(conf.General.Owner))
 			if errRootUser != nil {
