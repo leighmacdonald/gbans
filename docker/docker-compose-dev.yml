@@ -41,7 +41,7 @@ services:
       retries: 10
 
   minio:
-    image: docker.io/bitnami/minio:2023
+    image: docker.io/bitnami/minio:2024
     restart: always
     environment:
       # *must* be >= 8 chars or minio will not start
