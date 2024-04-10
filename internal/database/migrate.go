@@ -3,13 +3,11 @@ package database
 import (
 	"database/sql"
 	"errors"
-	"net/http"
-	"time"
-
 	"github.com/golang-migrate/migrate/v4"
 	pgxMigrate "github.com/golang-migrate/migrate/v4/database/pgx"
 	"github.com/golang-migrate/migrate/v4/source/httpfs"
 	"github.com/leighmacdonald/gbans/pkg/util"
+	"net/http"
 )
 
 // MigrationAction is the type of migration to perform.
@@ -53,7 +51,6 @@ func (db *postgresStore) migrate(action MigrationAction, dsn string) error {
 	driver, errMigrate := pgxMigrate.WithInstance(instance, &pgxMigrate.Config{
 		MigrationsTable:       "_migration",
 		SchemaName:            "public",
-		StatementTimeout:      60 * time.Second,
 		MultiStatementEnabled: true,
 	})
 	if errMigrate != nil {
