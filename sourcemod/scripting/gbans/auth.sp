@@ -12,7 +12,7 @@ Send authenticated commands with header "Authorization $token" set for subsequen
 */
 public void refreshToken()
 {
-	gbLog("Refreshing token %s", PLUGIN_VERSION);
+	gbLog("Refreshing token");
 
 	char serverName[PLATFORM_MAX_PATH];
 	GetConVarString(gb_core_server_name, serverName, sizeof serverName);
