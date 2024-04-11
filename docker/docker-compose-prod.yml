@@ -21,8 +21,11 @@ services:
     command: ./gbans serve
 
   postgres:
-    image: postgis/postgis:15-3.3
+    build:
+      context: "."
+      dockerfile: postgres-ip4r.Dockerfile
     restart: always
+    shm_size: 2gb
     volumes:
       - gbans_db:/var/lib/postgresql/data
     ports:
@@ -33,6 +36,11 @@ services:
       POSTGRES_PASSWORD: gbans
     networks:
       - prod_network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U gbans" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   minio:
     # Files are currently designed to be served from
