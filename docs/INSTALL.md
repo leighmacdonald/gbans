@@ -62,7 +62,7 @@ sudo docker run -d --restart unless-stopped \
     --dns=1.1.1.1 \
     -v /home/ubuntu/gbans/gbans.yml:/app/gbans.yml:ro \
     --name gbans \
-    ghcr.io/leighmacdonald/gbans:v0.6.0
+    ghcr.io/leighmacdonald/gbans:v0.6.1
 ```
 
 Substitute `/home/ubuntu/gbans/gbans.yml` with the location of your config.
