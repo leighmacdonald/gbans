@@ -1,6 +1,9 @@
 name: release
+
 on:
-  workflow_call:
+  push:
+    tags:
+      - '*'
 
 jobs:
   release:
