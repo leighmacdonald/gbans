@@ -3,7 +3,6 @@ import react from '@vitejs/plugin-react-swc';
 import { defineConfig } from 'vite';
 import { createHtmlPlugin } from 'vite-plugin-html';
 
-
 // https://vitejs.dev/config/
 export default defineConfig({
     base: '/',
@@ -48,8 +47,9 @@ export default defineConfig({
 
             inject: {
                 data: {
-                    title: 'gbans',
-                    build_version: 'v0.5.14'
+                    title: 'Uncletopia',
+                    build_version: 'v0.6.0',
+                    discord_link_id: 'caQKCWFMrN'
                 }
             }
         })
