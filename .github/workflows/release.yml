@@ -70,7 +70,7 @@ jobs:
 
       - name: Build & publish image
         run: |
-          docker build . --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${GITHUB_REF##*/}
-          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${GITHUB_REF##*/}
-          docker build . --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          docker build . --tag ghcr.io/leighmacdonald/gbans:${GITHUB_REF##*/}
+          docker push ghcr.io/leighmacdonald/gbans:${GITHUB_REF##*/}
+          docker build . --tag ghcr.io/leighmacdonald/gbans:latest
+          docker push ghcr.io/leighmacdonald/gbans:latest
