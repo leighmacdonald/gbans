@@ -1,9 +1,7 @@
 name: release
 
 on:
-  push:
-    tags:
-      - '*'
+  workflow_call:
 
 jobs:
   release:
@@ -76,4 +74,3 @@ jobs:
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${GITHUB_REF##*/}
           docker build . --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-
