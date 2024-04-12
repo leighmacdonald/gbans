@@ -1,4 +1,5 @@
 .PHONY: all test clean build install frontend sourcemod
+VERSION=vv0.6.0
 GO_CMD=go
 GO_BUILD=$(GO_CMD) build
 DEBUG_FLAGS = -gcflags "all=-N -l"
