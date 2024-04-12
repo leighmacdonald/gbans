@@ -64,7 +64,7 @@ jobs:
       - run: make static
 
   docker-test:
-    needs: [lint-ts, lint-golangci, lint-codeql, staticcheck]
+    needs: [lint-ts, lint-golangci, staticcheck]
     runs-on: ubuntu-latest
     env:
       GBANS_GENERAL_STEAM_KEY: ${{ secrets.GBANS_GENERAL_STEAM_KEY }}
