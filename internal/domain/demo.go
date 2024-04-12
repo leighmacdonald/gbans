@@ -9,7 +9,6 @@ import (
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
-	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type DemoUsecase interface {
@@ -43,18 +42,18 @@ type DemoMetaData struct {
 }
 
 type DemoFile struct {
-	DemoID          int64                     `json:"demo_id"`
-	ServerID        int                       `json:"server_id"`
-	ServerNameShort string                    `json:"server_name_short"`
-	ServerNameLong  string                    `json:"server_name_long"`
-	Title           string                    `json:"title"`
-	CreatedOn       time.Time                 `json:"created_on"`
-	Downloads       int64                     `json:"downloads"`
-	Size            int64                     `json:"size"`
-	MapName         string                    `json:"map_name"`
-	Archive         bool                      `json:"archive"` // When true, will not get auto deleted when flushing old demos
-	Stats           map[steamid.SteamID]gin.H `json:"stats"`
-	AssetID         uuid.UUID                 `json:"asset_id"`
+	DemoID          int64            `json:"demo_id"`
+	ServerID        int              `json:"server_id"`
+	ServerNameShort string           `json:"server_name_short"`
+	ServerNameLong  string           `json:"server_name_long"`
+	Title           string           `json:"title"`
+	CreatedOn       time.Time        `json:"created_on"`
+	Downloads       int64            `json:"downloads"`
+	Size            int64            `json:"size"`
+	MapName         string           `json:"map_name"`
+	Archive         bool             `json:"archive"` // When true, will not get auto deleted when flushing old demos
+	Stats           map[string]gin.H `json:"stats"`
+	AssetID         uuid.UUID        `json:"asset_id"`
 }
 
 type DemoInfo struct {

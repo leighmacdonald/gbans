@@ -124,7 +124,7 @@ func (r *demoRepository) GetDemos(ctx context.Context, opts domain.DemoFilter) (
 	}
 
 	if sid, ok := opts.SourceSteamID(); ok {
-		constraints = append(constraints, sq.Expr("d.stats ?? ?", sid))
+		constraints = append(constraints, sq.Expr("d.stats ?? ?", sid.String()))
 	}
 
 	if len(opts.ServerIds) > 0 && opts.ServerIds[0] != 0 {
