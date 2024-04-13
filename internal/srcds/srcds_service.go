@@ -201,24 +201,24 @@ func (s *srcdsHandler) onAPIPostDemo() gin.HandlerFunc {
 	}
 }
 
-type apiBanRequest struct {
-	SourceID       steamid.SteamID `json:"source_id"`
-	TargetID       steamid.SteamID `json:"target_id"`
-	Duration       string          `json:"duration"`
-	ValidUntil     time.Time       `json:"valid_until"`
-	BanType        domain.BanType  `json:"ban_type"`
-	Reason         domain.Reason   `json:"reason"`
-	ReasonText     string          `json:"reason_text"`
-	Note           string          `json:"note"`
-	ReportID       int64           `json:"report_id"`
-	DemoName       string          `json:"demo_name"`
-	DemoTick       int             `json:"demo_tick"`
-	IncludeFriends bool            `json:"include_friends"`
+type apiSMBanRequest struct {
+	domain.SourceIDField
+	domain.TargetIDField
+	Duration       int            `json:"duration"`
+	ValidUntil     time.Time      `json:"valid_until"`
+	BanType        domain.BanType `json:"ban_type"`
+	Reason         domain.Reason  `json:"reason"`
+	ReasonText     string         `json:"reason_text"`
+	Note           string         `json:"note"`
+	ReportID       int64          `json:"report_id"`
+	DemoName       string         `json:"demo_name"`
+	DemoTick       int            `json:"demo_tick"`
+	IncludeFriends bool           `json:"include_friends"`
 }
 
 func (s *srcdsHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req apiBanRequest
+		var req apiSMBanRequest
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
@@ -230,21 +230,24 @@ func (s *srcdsHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 		)
 
 		// srcds sourced bans provide a source_id to id the admin
-		if req.SourceID.Valid() {
-			sourceID = req.SourceID
+		if sid, valid := req.SourceSteamID(ctx); valid {
+			sourceID = sid
 		} else {
 			sourceID = steamid.New(s.configUsecase.Config().General.Owner)
 		}
 
-		duration, errDuration := util.CalcDuration(req.Duration, req.ValidUntil)
-		if errDuration != nil {
+		targetID, valid := req.TargetSteamID(ctx)
+		if !valid {
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			slog.Error("SM sent invalid target ID", slog.String("target_id", req.TargetID))
 
 			return
 		}
 
+		duration := time.Duration(req.Duration) * time.Second
+
 		var banSteam domain.BanSteam
-		if errBanSteam := domain.NewBanSteam(sourceID, req.TargetID, duration, req.Reason, req.ReasonText, req.Note, origin,
+		if errBanSteam := domain.NewBanSteam(sourceID, targetID, duration, req.Reason, req.ReasonText, req.Note, origin,
 			req.ReportID, req.BanType, req.IncludeFriends, &banSteam); errBanSteam != nil {
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 
