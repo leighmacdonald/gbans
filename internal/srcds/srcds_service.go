@@ -118,7 +118,7 @@ func (s *srcdsHandler) onSAPIPostServerAuth() gin.HandlerFunc {
 		token, err := s.sru.ServerAuth(ctx, req)
 		if err != nil {
 			httphelper.ResponseErr(ctx, http.StatusUnauthorized, domain.ErrPermissionDenied)
-			slog.Warn("Failed to check server auth", log.ErrAttr(err))
+			slog.Warn("Failed to check server auth", log.ErrAttr(err), slog.String("key", req.Key))
 
 			return
 		}
@@ -224,15 +224,16 @@ func (s *srcdsHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 		}
 
 		var (
-			origin   = domain.Web
+			origin   = domain.InGame
 			curUser  = httphelper.CurrentUserProfile(ctx)
-			sourceID = curUser.SteamID
+			sourceID steamid.SteamID
 		)
 
 		// srcds sourced bans provide a source_id to id the admin
 		if req.SourceID.Valid() {
 			sourceID = req.SourceID
-			origin = domain.InGame
+		} else {
+			sourceID = steamid.New(s.configUsecase.Config().General.Owner)
 		}
 
 		duration, errDuration := util.CalcDuration(req.Duration, req.ValidUntil)

@@ -49,7 +49,10 @@ export default defineConfig({
                 data: {
                     title: 'Uncletopia',
                     build_version: 'v0.6.1',
-                    discord_link_id: 'caQKCWFMrN'
+                    discord_link_id: 'caQKCWFMrN',
+                    asset_url: 'https://assets.uncletopia.com',
+                    bucket_demo: 'demos',
+                    bucket_media: 'media'
                 }
             }
         })
