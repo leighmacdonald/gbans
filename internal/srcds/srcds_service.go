@@ -243,8 +243,10 @@ func (s *srcdsHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 
 			return
 		}
-
-		duration := time.Duration(req.Duration) * time.Second
+		duration := time.Hour * 24 * 365 * 10
+		if req.Duration > 0 {
+			duration = time.Duration(req.Duration) * time.Second
+		}
 
 		var banSteam domain.BanSteam
 		if errBanSteam := domain.NewBanSteam(sourceID, targetID, duration, req.Reason, req.ReasonText, req.Note, origin,
