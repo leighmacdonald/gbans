@@ -243,6 +243,7 @@ func (s *srcdsHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 
 			return
 		}
+
 		duration := time.Hour * 24 * 365 * 10
 		if req.Duration > 0 {
 			duration = time.Duration(req.Duration) * time.Second
