@@ -320,12 +320,15 @@ func (c *Collector) startStatus(ctx context.Context) {
 
 			waitGroup.Wait()
 
-			slog.Debug("RCON update cycle complete",
-				slog.Int("success", int(successful.Load())),
-				slog.Int("existing", int(existing.Load())),
-				slog.Int("fail", len(configs)-int(successful.Load())),
-				slog.Duration("duration", time.Since(startTIme)))
+			fail := len(configs) - int(successful.Load())
 
+			if fail > 0 {
+				slog.Debug("RCON update cycle complete",
+					slog.Int("success", int(successful.Load())),
+					slog.Int("existing", int(existing.Load())),
+					slog.Int("fail", fail),
+					slog.Duration("duration", time.Since(startTIme)))
+			}
 		case <-ctx.Done():
 			return
 		}

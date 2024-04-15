@@ -212,8 +212,8 @@ func (d demoUsecase) DropDemo(ctx context.Context, demoFile *domain.DemoFile) er
 		}
 	}
 
-	slog.Debug("Demo expired and removed",
-		slog.String("bucket", conf.S3.BucketDemo), slog.String("name", demoFile.Title))
+	// slog.Debug("Demo expired and removed",
+	//	slog.String("bucket", conf.S3.BucketDemo), slog.String("name", demoFile.Title))
 
 	return nil
 }

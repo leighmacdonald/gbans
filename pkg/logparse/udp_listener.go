@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/pkg/log"
-	"go.uber.org/atomic"
 )
 
 type srcdsPacket byte
@@ -93,7 +92,6 @@ func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 		slog.String("listen_addr", fmt.Sprintf("%s/udp", remoteSrc.udpAddr.String())))
 
 	var (
-		running        = atomic.NewBool(true)
 		count          = uint64(0)
 		insecureCount  = uint64(0)
 		errCount       = uint64(0)
@@ -103,60 +101,65 @@ func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 	go func() {
 		startTime := time.Now()
 
-		for running.Load() {
-			buffer := make([]byte, 1024)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				buffer := make([]byte, 1024)
 
-			readLen, _, errReadUDP := connection.ReadFromUDP(buffer)
-			if errReadUDP != nil {
-				slog.Warn("UDP log read error", log.ErrAttr(errReadUDP))
-
-				continue
-			}
-
-			switch srcdsPacket(buffer[4]) {
-			case s2aLogString:
-				if insecureCount%10000 == 0 {
-					slog.Error("Using unsupported log packet type 0x52",
-						slog.Int64("count", int64(insecureCount+1)))
-				}
-
-				insecureCount++
-				errCount++
-			case s2aLogString2:
-				line := string(buffer)
-
-				idx := strings.Index(line, "L ")
-				if idx == -1 {
-					slog.Warn("Received malformed log message: Failed to find marker")
-
-					errCount++
+				readLen, _, errReadUDP := connection.ReadFromUDP(buffer)
+				if errReadUDP != nil {
+					slog.Warn("UDP log read error", log.ErrAttr(errReadUDP))
 
 					continue
 				}
 
-				secret, errConv := strconv.ParseInt(line[5:idx], 10, 32)
-				if errConv != nil {
-					slog.Error("Received malformed log message: Failed to parse secret",
-						log.ErrAttr(errConv))
+				switch srcdsPacket(buffer[4]) {
+				case s2aLogString:
+					if insecureCount%10000 == 0 {
+						slog.Error("Using unsupported log packet type 0x52",
+							slog.Int64("count", int64(insecureCount+1)))
+					}
 
+					insecureCount++
 					errCount++
+				case s2aLogString2:
+					line := string(buffer)
 
-					continue
-				}
+					idx := strings.Index(line, "L ")
+					if idx == -1 {
+						slog.Warn("Received malformed log message: Failed to find marker")
 
-				msgIngressChan <- newMsg{source: secret, body: line[idx : readLen-2]}
+						errCount++
 
-				count++
+						continue
+					}
 
-				if count%10000 == 0 {
-					rate := float64(count) / time.Since(startTime).Seconds()
+					secret, errConv := strconv.ParseInt(line[5:idx], 10, 32)
+					if errConv != nil {
+						slog.Error("Received malformed log message: Failed to parse secret",
+							log.ErrAttr(errConv))
 
-					slog.Debug("UDP SRCDS Logger Packets",
-						slog.Uint64("count", count),
-						slog.Float64("messages/sec", rate),
-						slog.Uint64("errors", errCount))
+						errCount++
 
-					startTime = time.Now()
+						continue
+					}
+
+					msgIngressChan <- newMsg{source: secret, body: line[idx : readLen-2]}
+
+					count++
+
+					if count%10000 == 0 {
+						rate := float64(count) / time.Since(startTime).Seconds()
+
+						slog.Debug("UDP SRCDS Logger Packets",
+							slog.Uint64("count", count),
+							slog.Float64("messages/sec", rate),
+							slog.Uint64("errors", errCount))
+
+						startTime = time.Now()
+					}
 				}
 			}
 		}
@@ -169,7 +172,7 @@ func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			running.Store(false)
+			return
 		case logPayload := <-msgIngressChan:
 			remoteSrc.RLock()
 			server, found := remoteSrc.secretMap[int(logPayload.source)]
@@ -214,6 +217,11 @@ func logToServerEvent(parser *LogParser, serverID int, serverName string, msg st
 		ServerID:   serverID,
 		ServerName: serverName,
 	}
+
+	if strings.Contains("vote", strings.ToLower(msg)) {
+		slog.Info(msg)
+	}
+
 	parseResult, errParse := parser.Parse(msg)
 
 	if errParse != nil {
