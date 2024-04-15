@@ -340,6 +340,7 @@ func NewLogParser() *LogParser {
 			// L 08/12/2023 - 08:47:05: Script not found (scripts/vscripts/mapspawn.nut)
 			// L 08/12/2023 - 08:47:05: "OMEGATRONIC<893><[U:1:918446193]><Red>" changed name to "butt cummer"
 			// L 08/12/2023 - 08:48:07: "sig_etc_ratelimit_exclude_commands" = ""
+			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+Kick Vote details:\s+VoteInitiatorSteamID:\s+(?P<source_id>.+?)\s+VoteTargetSteamID:\s+(?P<target_id>.+?)\s+Valid:\s+(?P<valid>\d+)\s+BIndividual:\s+(\d+)\s+Name:\s+(?P<name>.+?)\s+Proxy:\s+(?P<proxy>\d+)`), VoteDetails},
 			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+[Ll]og file started\s+(?P<keypairs>.+?)$`), LogStart},
 			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+[Ll]og file closed.$`), LogStop},
 			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+server_cvar:\s+"(?P<CVAR>.+?)"\s"(?P<value>.+?)"$`), CVAR},
@@ -664,6 +665,10 @@ func (p *LogParser) processKV(originalKVMap map[string]any) map[string]any {
 		}
 
 		switch key {
+		case "source_id":
+			newKVMap["source_id"] = steamid.New(value)
+		case "target_id":
+			newKVMap["target_id"] = steamid.New(value)
 		case "created_on":
 			var t time.Time
 			if ParseDateTime(value, &t) {
@@ -1146,6 +1151,13 @@ func (p *LogParser) Parse(logLine string) (*Results, error) {
 				event = parsedEvent
 			case SteamAuth:
 				break
+			case VoteDetails:
+				var parsedEvent VoteKickDetailsEvt
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+
+				event = parsedEvent
 			case MapStarted:
 				var parsedEvent MapStartedEvt
 				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
@@ -1365,7 +1377,7 @@ func (p *LogParser) unmarshal(input any, output any) error {
 			p.decodePlayerClass(),
 			p.decodePos(),
 			p.decodeSID3(),
-
+			//p.decodeSourceSID(),
 			p.decodePickupItem(),
 			p.decodeWeapon(),
 		),

@@ -744,6 +744,20 @@ func TestParseWMiniRoundStartEvt(t *testing.T) {
 		})
 }
 
+func TestParseVoteDetails(t *testing.T) {
+	t.Parallel()
+
+	testLogLine(t, `L 02/21/2021 - 06:22:23: Kick Vote details:  VoteInitiatorSteamID: [U:1:0000001]  VoteTargetSteamID: [U:1:0000002]  Valid: 1  BIndividual: 1  Name: Disconnected  Proxy: 0"`,
+		logparse.VoteKickDetailsEvt{
+			TimeStamp: logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
+			SID:       steamid.New("[U:1:0000001]"),
+			SID2:      steamid.New("[U:1:0000002]"),
+			Valid:     1,
+			Name:      "Disconnected",
+			Proxy:     0,
+		})
+}
+
 func TestParseMilkAttackEvt(t *testing.T) {
 	t.Parallel()
 

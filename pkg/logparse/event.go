@@ -6,6 +6,22 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
+type VoteOption string
+
+const (
+	VoteOption1 VoteOption = "option1" // Yes
+	VoteOption2 VoteOption = "option2" // No
+	VoteOption3 VoteOption = "option3"
+	VoteOption4 VoteOption = "option4"
+	VoteOption5 VoteOption = "option5"
+)
+
+type VoteReason int
+
+const (
+	VoteReasonUnspecified VoteReason = 0
+)
+
 // TimeStamp is the base event for all other events. It just contains a timestamp.
 type TimeStamp struct {
 	CreatedOn time.Time `json:"created_on" mapstructure:"created_on"`
@@ -86,6 +102,41 @@ type CVAREvt struct {
 type RCONEvt struct {
 	TimeStamp
 	Cmd string `json:"cmd" mapstructure:"cmd"`
+}
+
+type VoteStartEvt struct {
+	TimeStamp
+	SourcePlayer
+	TargetName string
+}
+
+type VoteCastEvt struct {
+	TimeStamp
+	SourcePlayer
+	TargetName string
+	Vote       string
+}
+
+type VoteFailEEvt struct {
+	TimeStamp
+	VoteType   string
+	TargetName string
+	Reason     string
+}
+
+type VoteSuccessEvt struct {
+	TimeStamp
+	VoteType   string
+	TargetName string
+}
+
+type VoteKickDetailsEvt struct {
+	TimeStamp
+	SID   steamid.SteamID `json:"sid" mapstructure:"source_id"`
+	SID2  steamid.SteamID `json:"sid2" mapstructure:"target_id"`
+	Valid int             `json:"valid,omitempty" mapstructure:"valid"`
+	Name  string          `json:"name,omitempty" mapstructure:"name"`
+	Proxy int             `json:"proxy,omitempty" mapstructure:"proxy"`
 }
 
 type MapStartedEvt struct {

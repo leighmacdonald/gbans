@@ -82,6 +82,8 @@ const (
 	ServerConfigExec EventType = 1009
 	SteamAuth        EventType = 1010
 	MapStarted       EventType = 1011
+
+	VoteDetails EventType = 1100
 )
 
 type CritType int
