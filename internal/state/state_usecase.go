@@ -57,11 +57,11 @@ func (s *stateUsecase) Start(ctx context.Context) error {
 
 	s.logListener = logSrc
 
-	s.stateRepository.Start(ctx)
+	go s.stateRepository.Start(ctx)
 
 	s.updateSrcdsLogSecrets(ctx)
 
-	go s.logReader(ctx, false)
+	go s.logReader(ctx, s.configUsecase.Config().Debug.WriteUnhandledLogEvents)
 
 	// TODO run on server Config changes
 	s.updateSrcdsLogSecrets(ctx)
