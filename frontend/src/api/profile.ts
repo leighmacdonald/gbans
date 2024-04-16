@@ -233,10 +233,10 @@ export const apiGetNotifications = async (
 };
 
 export type ConnectionQuery = {
-    cidr: string;
-    source_id: string;
+    cidr?: string;
+    source_id?: string;
     server_id?: number;
-    asn: number;
+    asn?: number;
 } & QueryFilter<PersonConnection>;
 
 export const apiGetConnections = async (
