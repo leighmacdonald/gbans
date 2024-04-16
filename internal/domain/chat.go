@@ -4,6 +4,7 @@ import "context"
 
 type ChatRepository interface {
 	GetPersonMessage(ctx context.Context, messageID int64) (QueryChatHistoryResult, error)
+	Start(ctx context.Context)
 	TopChatters(ctx context.Context, count uint64) ([]TopChatterResult, error)
 	AddChatHistory(ctx context.Context, message *PersonMessage) error
 	QueryChatHistory(ctx context.Context, filters ChatHistoryQueryFilter) ([]QueryChatHistoryResult, int64, error)

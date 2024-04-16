@@ -340,6 +340,11 @@ func NewLogParser() *LogParser {
 			// L 08/12/2023 - 08:47:05: Script not found (scripts/vscripts/mapspawn.nut)
 			// L 08/12/2023 - 08:47:05: "OMEGATRONIC<893><[U:1:918446193]><Red>" changed name to "butt cummer"
 			// L 08/12/2023 - 08:48:07: "sig_etc_ratelimit_exclude_commands" = ""
+			// L 04/15/2024 - 22:38:57: Vote succeeded "Kick Pain in a Box"
+			// L 04/15/2024 - 22:31:00: Vote failed "Kick blinkin" with code 3
+			// L 04/15/2024 - 22:31:00: Kick Vote details:  VoteInitiatorSteamID: [U:1:63178016]  VoteTargetSteamID: [U:1:1228238107]  Valid: 1  BIndividual: 1  Name: blinkin  Proxy: 0
+			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+Vote\ssucceeded\s"Kick (?P<name>.+?)"$`), VoteSuccess},
+			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+Vote\sfailed\s"Kick (?P<name>.+?)" with\s+code\s+(?P<code>\d+)$`), VoteFailed},
 			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+Kick Vote details:\s+VoteInitiatorSteamID:\s+(?P<source_id>.+?)\s+VoteTargetSteamID:\s+(?P<target_id>.+?)\s+Valid:\s+(?P<valid>\d+)\s+BIndividual:\s+(\d+)\s+Name:\s+(?P<name>.+?)\s+Proxy:\s+(?P<proxy>\d+)`), VoteDetails},
 			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+[Ll]og file started\s+(?P<keypairs>.+?)$`), LogStart},
 			{regexp.MustCompile(`^L\s(?P<created_on>.+?):\s+[Ll]og file closed.$`), LogStop},
@@ -1151,6 +1156,20 @@ func (p *LogParser) Parse(logLine string) (*Results, error) {
 				event = parsedEvent
 			case SteamAuth:
 				break
+			case VoteSuccess:
+				var parsedEvent VoteSuccessEvt
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+
+				event = parsedEvent
+			case VoteFailed:
+				var parsedEvent VoteFailEvt
+				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
+					return nil, errUnmarshal
+				}
+
+				event = parsedEvent
 			case VoteDetails:
 				var parsedEvent VoteKickDetailsEvt
 				if errUnmarshal = p.unmarshal(values, &parsedEvent); errUnmarshal != nil {
@@ -1377,7 +1396,7 @@ func (p *LogParser) unmarshal(input any, output any) error {
 			p.decodePlayerClass(),
 			p.decodePos(),
 			p.decodeSID3(),
-			//p.decodeSourceSID(),
+			// p.decodeSourceSID(),
 			p.decodePickupItem(),
 			p.decodeWeapon(),
 		),

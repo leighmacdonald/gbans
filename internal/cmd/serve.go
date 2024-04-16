@@ -41,6 +41,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/srcds"
 	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/steamgroup"
+	"github.com/leighmacdonald/gbans/internal/votes"
 	"github.com/leighmacdonald/gbans/internal/wiki"
 	"github.com/leighmacdonald/gbans/internal/wordfilter"
 	"github.com/leighmacdonald/gbans/pkg/fp"
@@ -149,6 +150,8 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				return
 			}
 
+			go networkUsecase.Start(ctx)
+
 			assetRepository := asset.NewS3Repository(dbUsecase, minioClient, conf.S3.Region)
 			if errInit := assetRepository.Init(ctx); errInit != nil {
 				slog.Error("Failed to ensure s3 buckets exist", log.ErrAttr(errInit))
@@ -183,8 +186,13 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			ban.NewBanNetRepository(dbUsecase)
 
 			apu := appeal.NewAppealUsecase(appeal.NewAppealRepository(dbUsecase), banUsecase, personUsecase, discordUsecase, configUsecase)
+			matchRepo := match.NewMatchRepository(eventBroadcaster, dbUsecase, personUsecase, serversUsecase, discordUsecase, stateUsecase, weaponsMap)
+			go matchRepo.Start(ctx)
 
-			chatRepository := chat.NewChatRepository(dbUsecase, personUsecase, wordFilterUsecase, eventBroadcaster)
+			matchUsecase := match.NewMatchUsecase(matchRepo, stateUsecase, serversUsecase, discordUsecase)
+
+			chatRepository := chat.NewChatRepository(dbUsecase, personUsecase, wordFilterUsecase, matchUsecase, eventBroadcaster)
+			go chatRepository.Start(ctx)
 
 			chatUsecase := chat.NewChatUsecase(configUsecase, chatRepository, wordFilterUsecase, stateUsecase, banUsecase, personUsecase, discordUsecase)
 			go chatUsecase.Start(ctx)
@@ -196,10 +204,6 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			go forumUsecase.Start(ctx)
 
-			matchRepo := match.NewMatchRepository(eventBroadcaster, dbUsecase, personUsecase, serversUsecase, discordUsecase, stateUsecase, weaponsMap)
-			go matchRepo.Start(ctx)
-
-			matchUsecase := match.NewMatchUsecase(matchRepo, stateUsecase, serversUsecase, discordUsecase)
 			newsUsecase := news.NewNewsUsecase(news.NewNewsRepository(dbUsecase))
 			notificationUsecase := notification.NewNotificationUsecase(notification.NewNotificationRepository(dbUsecase), personUsecase)
 			patreonUsecase := patreon.NewPatreonUsecase(patreon.NewPatreonRepository(dbUsecase))
@@ -211,6 +215,9 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			authUsecase := auth.NewAuthUsecase(auth.NewAuthRepository(dbUsecase), configUsecase, personUsecase, banUsecase, serversUsecase)
 			go authUsecase.Start(ctx)
+
+			voteUsecase := votes.NewVoteUsecase(votes.NewVoteRepository(dbUsecase), personUsecase, matchUsecase, discordUsecase, eventBroadcaster)
+			go voteUsecase.Start(ctx)
 
 			contestUsecase := contest.NewContestUsecase(contest.NewContestRepository(dbUsecase))
 

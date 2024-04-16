@@ -744,6 +744,27 @@ func TestParseWMiniRoundStartEvt(t *testing.T) {
 		})
 }
 
+func TestParseVoteSuccess(t *testing.T) {
+	t.Parallel()
+
+	testLogLine(t, `L 02/21/2021 - 06:22:23: Vote succeeded "Kick Pain in a Box"`,
+		logparse.VoteSuccessEvt{
+			TimeStamp: logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
+			Name:      "Pain in a Box",
+		})
+}
+
+func TestParseVoteFailed(t *testing.T) {
+	t.Parallel()
+
+	testLogLine(t, `L 02/21/2021 - 06:22:23: Vote failed "Kick Flower" with code 3`,
+		logparse.VoteFailEvt{
+			TimeStamp: logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
+			Name:      "Flower",
+			Code:      logparse.VoteCodeFailNoOutnumberYes,
+		})
+}
+
 func TestParseVoteDetails(t *testing.T) {
 	t.Parallel()
 

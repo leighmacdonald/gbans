@@ -29,12 +29,14 @@ type chatRepository struct {
 }
 
 func NewChatRepository(database database.Database, personUsecase domain.PersonUsecase, wordFilterUsecase domain.WordFilterUsecase,
+	matchUsecase domain.MatchUsecase,
 	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
 ) domain.ChatRepository {
 	return &chatRepository{
 		db:                database,
 		personUsecase:     personUsecase,
 		wordFilterUsecase: wordFilterUsecase,
+		matchUsecase:      matchUsecase,
 		broadcaster:       broadcaster,
 		WarningChan:       make(chan domain.NewUserWarning),
 	}

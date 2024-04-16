@@ -2,9 +2,11 @@ package domain
 
 import (
 	"context"
-	"github.com/gofrs/uuid/v5"
-	"github.com/leighmacdonald/steamid/v4/steamid"
 	"time"
+
+	"github.com/gofrs/uuid/v5"
+	"github.com/leighmacdonald/gbans/pkg/logparse"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type VoteQueryFilter struct {
@@ -22,7 +24,7 @@ type VoteRepository interface {
 }
 
 type VoteUsecase interface {
-	Query(ctx context.Context, filter VoteQueryFilter) ([]VoteResult, error)
+	Query(ctx context.Context, filter VoteQueryFilter) ([]VoteResult, int64, error)
 	Start(ctx context.Context)
 }
 
@@ -33,5 +35,7 @@ type VoteResult struct {
 	TargetID  steamid.SteamID
 	Valid     int
 	Name      string
+	Success   bool
+	Code      logparse.VoteCode
 	CreatedOn time.Time
 }

@@ -218,10 +218,6 @@ func logToServerEvent(parser *LogParser, serverID int, serverName string, msg st
 		ServerName: serverName,
 	}
 
-	if strings.Contains("vote", strings.ToLower(msg)) {
-		slog.Info(msg)
-	}
-
 	parseResult, errParse := parser.Parse(msg)
 
 	if errParse != nil {

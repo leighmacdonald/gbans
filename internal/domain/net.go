@@ -21,6 +21,7 @@ type NetworkUsecase interface {
 	IsMatch(addr netip.Addr) (string, bool)
 	AddWhitelist(id int, network *net.IPNet)
 	RemoveWhitelist(id int)
+	Start(ctx context.Context)
 	AddRemoteSource(ctx context.Context, name string, url string) (int64, error)
 	QueryNetwork(ctx context.Context, ip netip.Addr) (NetworkDetails, error)
 }
