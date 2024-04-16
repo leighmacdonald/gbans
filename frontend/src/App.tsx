@@ -57,6 +57,7 @@ const AdminNewsPage = loadable(() => import('./page/AdminNewsPage'));
 const AdminPeoplePage = loadable(() => import('./page/AdminPeoplePage'));
 const AdminReportsPage = loadable(() => import('./page/AdminReportsPage'));
 const AdminServersPage = loadable(() => import('./page/AdminServersPage'));
+const AdminVotesPage = loadable(() => import('./page/AdminVotesPage'));
 const BanPage = loadable(() => import('./page/BanPage'));
 const ChatLogPage = loadable(() => import('./page/ChatLogPage'));
 const ContestListPage = loadable(() => import('./page/ContestListPage'));
@@ -90,6 +91,7 @@ const StatsPage = loadable(() => import('./page/StatsPage'));
 const StatsWeaponOverallPage = loadable(
     () => import('./page/StatsWeaponOverallPage')
 );
+
 const WikiPage = loadable(() => import('./page/WikiPage'));
 
 export const App = ({ initialTheme }: AppProps): JSX.Element => {
@@ -640,6 +642,22 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                                 }
                                                                             >
                                                                                 <AdminReportsPage />
+                                                                            </PrivateRoute>
+                                                                        </ErrorBoundary>
+                                                                    }
+                                                                />
+                                                                <Route
+                                                                    path={
+                                                                        '/admin/votes'
+                                                                    }
+                                                                    element={
+                                                                        <ErrorBoundary>
+                                                                            <PrivateRoute
+                                                                                permission={
+                                                                                    PermissionLevel.Moderator
+                                                                                }
+                                                                            >
+                                                                                <AdminVotesPage />
                                                                             </PrivateRoute>
                                                                         </ErrorBoundary>
                                                                     }

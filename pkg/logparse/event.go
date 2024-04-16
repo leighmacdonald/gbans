@@ -104,32 +104,27 @@ type RCONEvt struct {
 	Cmd string `json:"cmd" mapstructure:"cmd"`
 }
 
-type VoteStartEvt struct {
-	TimeStamp
-	SourcePlayer
-	TargetName string
-}
+type VoteCode int
 
-type VoteCastEvt struct {
-	TimeStamp
-	SourcePlayer
-	TargetName string
-	Vote       string
-}
+const (
+	VoteCodeFailGeneric        VoteCode = 0 // VOTE_FAILED_GENERIC - Generic "Vote Failed" message
+	VoteCodeFailNoOutnumberYes VoteCode = 3 // VOTE_FAILED_YES_MUST_EXCEED_NO - Yes votes must outnumber No votes
+	VoteCodeFailQuorum         VoteCode = 4 // VOTE_FAILED_QUORUM_FAILURE - Not Enough Votes
+)
 
-type VoteFailEEvt struct {
+// L 04/15/2024 - 22:38:57: Vote succeeded "Kick Pain in a Box".
+type VoteFailEvt struct {
 	TimeStamp
-	VoteType   string
-	TargetName string
-	Reason     string
+	Name string   `json:"name" mapstructure:"name"`
+	Code VoteCode `json:"code" mapstructure:"code"`
 }
 
 type VoteSuccessEvt struct {
 	TimeStamp
-	VoteType   string
-	TargetName string
+	Name string `json:"name" mapstructure:"name"`
 }
 
+// L 04/15/2024 - 22:38:57: Kick Vote details:  VoteInitiatorSteamID: [U:1:8169544]  VoteTargetSteamID: [U:1:30511445]  Valid: 1  BIndividual: 1  Name: Pain in a Box  Proxy: 0.
 type VoteKickDetailsEvt struct {
 	TimeStamp
 	SID   steamid.SteamID `json:"sid" mapstructure:"source_id"`

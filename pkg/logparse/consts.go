@@ -84,6 +84,8 @@ const (
 	MapStarted       EventType = 1011
 
 	VoteDetails EventType = 1100
+	VoteSuccess EventType = 1101
+	VoteFailed  EventType = 1102
 )
 
 type CritType int

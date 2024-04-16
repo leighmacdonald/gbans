@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -1102,6 +1103,18 @@ func NotificationMessage(message string, link string) *discordgo.MessageEmbed {
 	if link != "" {
 		msgEmbed.Embed().SetURL(link)
 	}
+
+	return msgEmbed.Embed().Truncate().MessageEmbed
+}
+
+func VoteResultMessage(result domain.VoteResult) *discordgo.MessageEmbed {
+	msgEmbed := NewEmbed("Vote Result")
+	msgEmbed.Embed().
+		AddField("Initiator", result.SourceID.String()).
+		AddField("Target", result.TargetID.String()).
+		AddField("Code", fmt.Sprintf("%d", result.Code)).
+		AddField("Success", strconv.FormatBool(result.Success)).
+		AddField("Server", fmt.Sprintf("%d", result.ServerID))
 
 	return msgEmbed.Embed().Truncate().MessageEmbed
 }

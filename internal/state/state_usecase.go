@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -61,87 +60,12 @@ func (s *stateUsecase) Start(ctx context.Context) error {
 
 	s.updateSrcdsLogSecrets(ctx)
 
-	go s.logReader(ctx, s.configUsecase.Config().Debug.WriteUnhandledLogEvents)
-
 	// TODO run on server Config changes
 	s.updateSrcdsLogSecrets(ctx)
 
 	s.logListener.Start(ctx)
 
 	return nil
-}
-
-// logReader is the fan-out orchestrator for game log events
-// Registering receivers can be accomplished with app.eb.Broadcaster.
-func (s *stateUsecase) logReader(ctx context.Context, writeUnhandled bool) {
-	var file *os.File
-
-	if writeUnhandled {
-		var errCreateFile error
-		file, errCreateFile = os.Create("./unhandled_messages.log")
-
-		if errCreateFile != nil {
-			slog.Error("Failed to open debug message log", log.ErrAttr(errCreateFile))
-		} else {
-			defer func() {
-				if errClose := file.Close(); errClose != nil {
-					slog.Error("Failed to close unhandled_messages.log", log.ErrAttr(errClose))
-				}
-			}()
-		}
-	}
-
-	parser := logparse.NewLogParser()
-
-	// playerStateCache := newPlayerCache(app.logger)
-	for {
-		select {
-		case logFile := <-s.logFileChan:
-			emitted := 0
-			failed := 0
-			unknown := 0
-			ignored := 0
-
-			for _, logLine := range logFile.Lines {
-				parseResult, errParse := parser.Parse(logLine)
-				if errParse != nil {
-					continue
-				}
-
-				newServerEvent := logparse.ServerEvent{
-					ServerName: logFile.ServerName,
-					ServerID:   logFile.ServerID,
-					Results:    parseResult,
-				}
-
-				if newServerEvent.EventType == logparse.IgnoredMsg {
-					ignored++
-
-					continue
-				} else if newServerEvent.EventType == logparse.UnknownMsg {
-					unknown++
-
-					if writeUnhandled {
-						if _, errWrite := file.WriteString(logLine + "\n"); errWrite != nil {
-							slog.Error("Failed to write debug log", log.ErrAttr(errWrite))
-						}
-					}
-				}
-
-				s.broadcaster.Emit(newServerEvent.EventType, newServerEvent)
-
-				emitted++
-			}
-
-			slog.Debug("Completed emitting logfile events",
-				slog.Int("ok", emitted), slog.Int("failed", failed),
-				slog.Int("unknown", unknown), slog.Int("ignored", ignored))
-		case <-ctx.Done():
-			slog.Debug("logReader shutting down")
-
-			return
-		}
-	}
 }
 
 func (s *stateUsecase) updateSrcdsLogSecrets(ctx context.Context) {
