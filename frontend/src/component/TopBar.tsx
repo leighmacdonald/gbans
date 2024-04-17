@@ -2,9 +2,9 @@ import { JSX, useMemo, useState, MouseEvent } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import ArticleIcon from '@mui/icons-material/Article';
+import CellTowerIcon from '@mui/icons-material/CellTower';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import DashboardIcon from '@mui/icons-material/Dashboard';
-import DnsIcon from '@mui/icons-material/Dns';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import ForumIcon from '@mui/icons-material/Forum';
@@ -19,12 +19,14 @@ import NoAccountsIcon from '@mui/icons-material/NoAccounts';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import PublicOffIcon from '@mui/icons-material/PublicOff';
 import ReportIcon from '@mui/icons-material/Report';
+import SensorOccupiedIcon from '@mui/icons-material/SensorOccupied';
 import SettingsIcon from '@mui/icons-material/Settings';
 import StorageIcon from '@mui/icons-material/Storage';
 import SubjectIcon from '@mui/icons-material/Subject';
 import SupportIcon from '@mui/icons-material/Support';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import TravelExploreIcon from '@mui/icons-material/TravelExplore';
+import WifiFindIcon from '@mui/icons-material/WifiFind';
 import WifiOffIcon from '@mui/icons-material/WifiOff';
 import AppBar from '@mui/material/AppBar';
 import Avatar from '@mui/material/Avatar';
@@ -38,6 +40,7 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
+import Stack from '@mui/material/Stack';
 import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
@@ -51,6 +54,8 @@ import { useNotificationsCtx } from '../hooks/useNotificationsCtx.ts';
 import steamLogo from '../icons/steam_login_sm.png';
 import { tf2Fonts } from '../theme';
 import { logErr } from '../util/errors';
+import { VCenterBox } from './VCenterBox.tsx';
+import { MenuItemData, NestedDropdown } from './nested-menu';
 
 interface menuRoute {
     to: string;
@@ -68,10 +73,6 @@ export const TopBar = () => {
 
     const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
 
-    const [anchorElAdmin, setAnchorElAdmin] = useState<null | HTMLElement>(
-        null
-    );
-
     const handleOpenNavMenu = (event: MouseEvent<HTMLElement>) => {
         setAnchorElNav(event.currentTarget);
     };
@@ -80,20 +81,12 @@ export const TopBar = () => {
         setAnchorElUser(event.currentTarget);
     };
 
-    const handleOpenAdminMenu = (event: MouseEvent<HTMLElement>) => {
-        setAnchorElAdmin(event.currentTarget);
-    };
-
     const handleCloseNavMenu = () => {
         setAnchorElNav(null);
     };
 
     const handleCloseUserMenu = () => {
         setAnchorElUser(null);
-    };
-
-    const handleCloseAdminMenu = () => {
-        setAnchorElAdmin(null);
     };
 
     const colourOpts = useMemo(() => {
@@ -175,91 +168,100 @@ export const TopBar = () => {
         [colourOpts, currentUser?.steam_id]
     );
 
-    const adminItems: menuRoute[] = useMemo(() => {
-        const items: menuRoute[] = [];
-        if (currentUser.permission_level >= PermissionLevel.Editor) {
-            items.push({
-                to: '/admin/filters',
-                text: 'Filtered Words',
-                icon: <SubjectIcon sx={colourOpts} />
-            });
-        }
-        if (currentUser.permission_level >= PermissionLevel.Moderator) {
-            items.push({
-                to: '/admin/ban/steam',
-                text: 'Ban Steam',
-                icon: <NoAccountsIcon sx={colourOpts} />
-            });
-            items.push({
-                to: '/admin/ban/cidr',
-                text: 'Ban CIDR',
-                icon: <WifiOffIcon sx={colourOpts} />
-            });
-            items.push({
-                to: '/admin/ban/asn',
-                text: 'Ban ASN',
-                icon: <PublicOffIcon sx={colourOpts} />
-            });
-            items.push({
-                to: '/admin/ban/group',
-                text: 'Ban Steam Group',
-                icon: <GroupsIcon sx={colourOpts} />
-            });
-            items.push({
-                to: '/admin/reports',
-                text: 'Reports',
-                icon: <ReportIcon sx={colourOpts} />
-            });
-            items.push({
-                to: '/admin/appeals',
-                text: 'Ban Appeals',
-                icon: <LiveHelpIcon sx={colourOpts} />
-            });
-            items.push({
-                to: '/admin/news',
-                text: 'News',
-                icon: <NewspaperIcon sx={colourOpts} />
-            });
-            items.push({
-                to: '/admin/network',
-                text: 'IP/Network Tools',
-                icon: <TravelExploreIcon sx={colourOpts} />
-            });
-            items.push({
-                to: '/admin/contests',
-                text: 'Contests',
-                icon: <EmojiEventsIcon sx={colourOpts} />
-            });
-            items.push({
-                to: '/admin/people',
-                text: 'People',
-                icon: <PersonSearchIcon sx={colourOpts} />
-            });
-            items.push({
-                to: '/admin/votes',
-                text: 'Vote History',
-                icon: <HowToVoteIcon sx={colourOpts} />
-            });
-        }
-        if (currentUser.permission_level >= PermissionLevel.Admin) {
-            // items.push({
-            //     to: '/admin/people',
-            //     text: 'People',
-            //     icon: <PregnantWomanIcon sx={colourOpts} />
-            // });
-            // items.push({
-            //     to: '/admin/import',
-            //     text: 'Import',
-            //     icon: <ImportExportIcon sx={colourOpts} />
-            // });
-            items.push({
-                to: '/admin/servers',
-                text: 'Servers',
-                icon: <DnsIcon sx={colourOpts} />
-            });
-        }
-        return items;
-    }, [colourOpts, currentUser.permission_level]);
+    const adminItems: MenuItemData = useMemo(() => {
+        return {
+            label: <SettingsIcon />,
+            items: [
+                {
+                    href: '/admin/filters',
+                    label: 'Filtered Words',
+                    leftIcon: <SubjectIcon sx={colourOpts} />
+                },
+                {
+                    href: '/admin/ban/steam',
+                    label: 'Ban Steam',
+                    leftIcon: <NoAccountsIcon sx={colourOpts} />
+                },
+                {
+                    href: '/admin/ban/cidr',
+                    label: 'Ban CIDR',
+                    leftIcon: <WifiOffIcon sx={colourOpts} />
+                },
+                {
+                    href: '/admin/ban/group',
+                    label: 'Ban Steam Group',
+                    leftIcon: <GroupsIcon sx={colourOpts} />
+                },
+                {
+                    href: '/admin/ban/asn',
+                    label: 'Ban ASN',
+                    leftIcon: <PublicOffIcon sx={colourOpts} />
+                },
+                {
+                    href: '/admin/reports',
+                    label: 'Reports',
+                    leftIcon: <ReportIcon sx={colourOpts} />
+                },
+                {
+                    href: '/admin/appeals',
+                    label: 'Ban Appeals',
+                    leftIcon: <LiveHelpIcon sx={colourOpts} />
+                },
+                {
+                    href: '/admin/news',
+                    label: 'News',
+                    leftIcon: <NewspaperIcon sx={colourOpts} />
+                },
+                {
+                    href: '/admin/network',
+                    label: 'IP/Network Tools',
+                    leftIcon: <TravelExploreIcon sx={colourOpts} />,
+                    items: [
+                        {
+                            href: '/admin/network/ip_hist',
+                            label: 'Player IP History',
+                            leftIcon: <SensorOccupiedIcon sx={colourOpts} />
+                        },
+                        {
+                            href: '/admin/network/players_by_ip',
+                            label: 'Find Players By IP',
+                            leftIcon: <WifiFindIcon sx={colourOpts} />
+                        },
+                        {
+                            href: '/admin/network/ip_info',
+                            label: 'IP Info',
+                            leftIcon: <CellTowerIcon sx={colourOpts} />
+                        },
+                        {
+                            href: '/admin/network/cidr_blocks',
+                            label: 'External CIDR Bans',
+                            leftIcon: <WifiOffIcon sx={colourOpts} />
+                        }
+                    ]
+                },
+                {
+                    href: '/admin/contests',
+                    label: 'Contests',
+                    leftIcon: <EmojiEventsIcon sx={colourOpts} />
+                },
+                {
+                    href: '/admin/people',
+                    label: 'People',
+                    leftIcon: <PersonSearchIcon sx={colourOpts} />
+                },
+                {
+                    href: '/admin/votes',
+                    label: 'Vote History',
+                    leftIcon: <HowToVoteIcon sx={colourOpts} />
+                },
+                {
+                    href: '/admin/servers',
+                    label: 'Servers',
+                    leftIcon: <SettingsIcon sx={colourOpts} />
+                }
+            ]
+        };
+    }, [colourOpts]);
 
     const renderLinkedMenuItem = (
         text: string,
@@ -272,7 +274,6 @@ export const TopBar = () => {
             onClick={() => {
                 setAnchorElNav(null);
                 setAnchorElUser(null);
-                setAnchorElAdmin(null);
             }}
             key={route + text}
         >
@@ -388,7 +389,7 @@ export const TopBar = () => {
                     </Box>
 
                     <Box sx={{ flexGrow: 0 }}>
-                        <>
+                        <Stack direction={'row'} spacing={1}>
                             <Tooltip title="Toggle BLU/RED mode">
                                 <IconButton
                                     onClick={colourMode.toggleColorMode}
@@ -435,41 +436,20 @@ export const TopBar = () => {
                                 ))}
                             {currentUser &&
                                 validSteamId &&
-                                adminItems.length > 0 && (
-                                    <>
-                                        <Tooltip title="Mod/Admin">
-                                            <IconButton
-                                                color={'inherit'}
-                                                onClick={handleOpenAdminMenu}
-                                            >
-                                                <SettingsIcon />
-                                            </IconButton>
-                                        </Tooltip>
-                                        <Menu
-                                            sx={{ mt: '45px' }}
-                                            id="menu-appbar"
-                                            anchorEl={anchorElAdmin}
-                                            anchorOrigin={{
-                                                vertical: 'top',
-                                                horizontal: 'right'
+                                currentUser.permission_level >=
+                                    PermissionLevel.Moderator && (
+                                    <VCenterBox>
+                                        <NestedDropdown
+                                            menuItemsData={adminItems}
+                                            MenuProps={{
+                                                elevation: 0
                                             }}
-                                            keepMounted
-                                            transformOrigin={{
-                                                vertical: 'top',
-                                                horizontal: 'right'
+                                            ButtonProps={{
+                                                sx: { color: 'common.white' },
+                                                variant: 'text'
                                             }}
-                                            open={Boolean(anchorElAdmin)}
-                                            onClose={handleCloseAdminMenu}
-                                        >
-                                            {adminItems.map((value) => {
-                                                return renderLinkedMenuItem(
-                                                    value.text,
-                                                    value.to,
-                                                    value.icon
-                                                );
-                                            })}
-                                        </Menu>
-                                    </>
+                                        />
+                                    </VCenterBox>
                                 )}
 
                             {currentUser && validSteamId && (
@@ -511,7 +491,7 @@ export const TopBar = () => {
                                     </Menu>
                                 </>
                             )}
-                        </>
+                        </Stack>
                     </Box>
                 </Toolbar>
             </Container>
