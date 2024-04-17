@@ -175,97 +175,169 @@ export const TopBar = () => {
             items: [
                 {
                     href: '/admin/filters',
-                    label: 'Filtered Words',
-                    leftIcon: <SubjectIcon sx={colourOpts} />
+                    label: (
+                        <Stack direction={'row'} spacing={1}>
+                            <SubjectIcon sx={colourOpts} />
+                            <Typography>Filtered Words</Typography>
+                        </Stack>
+                    )
                 },
                 {
-                    label: 'Ban',
-                    leftIcon: <BlockIcon sx={colourOpts} />,
+                    label: (
+                        <Stack direction={'row'} spacing={1}>
+                            <BlockIcon sx={colourOpts} />
+                            <Typography>Ban</Typography>
+                        </Stack>
+                    ),
                     items: [
                         {
                             href: '/admin/ban/steam',
-                            label: 'Steam',
-                            leftIcon: <NoAccountsIcon sx={colourOpts} />
+                            label: (
+                                <Stack direction={'row'} spacing={1}>
+                                    <NoAccountsIcon sx={colourOpts} />
+                                    <Typography>Steam</Typography>
+                                </Stack>
+                            )
                         },
                         {
                             href: '/admin/ban/cidr',
-                            label: 'IP/CIDR',
-                            leftIcon: <WifiOffIcon sx={colourOpts} />
+                            label: (
+                                <Stack direction={'row'} spacing={1}>
+                                    <WifiOffIcon sx={colourOpts} />
+                                    <Typography>IP/CIDR</Typography>
+                                </Stack>
+                            )
                         },
                         {
                             href: '/admin/ban/group',
-                            label: 'Steam Group',
-                            leftIcon: <GroupsIcon sx={colourOpts} />
+                            label: (
+                                <Stack direction={'row'} spacing={1}>
+                                    <GroupsIcon sx={colourOpts} />
+                                    <Typography>Steam Group</Typography>
+                                </Stack>
+                            )
                         },
                         {
                             href: '/admin/ban/asn',
-                            label: 'ASN',
-                            leftIcon: <PublicOffIcon sx={colourOpts} />
+                            label: (
+                                <Stack direction={'row'} spacing={1}>
+                                    <PublicOffIcon sx={colourOpts} />
+                                    <Typography>ASN</Typography>
+                                </Stack>
+                            )
                         }
                     ]
                 },
 
                 {
                     href: '/admin/reports',
-                    label: 'Reports',
-                    leftIcon: <ReportIcon sx={colourOpts} />
+                    label: (
+                        <Stack direction={'row'} spacing={1}>
+                            <ReportIcon sx={colourOpts} />
+                            <Typography>Reports</Typography>
+                        </Stack>
+                    )
                 },
                 {
                     href: '/admin/appeals',
-                    label: 'Ban Appeals',
-                    leftIcon: <LiveHelpIcon sx={colourOpts} />
+                    label: (
+                        <Stack direction={'row'} spacing={1}>
+                            <LiveHelpIcon sx={colourOpts} />
+                            <Typography>Ban Appeals</Typography>
+                        </Stack>
+                    )
                 },
                 {
                     href: '/admin/news',
-                    label: 'News',
-                    leftIcon: <NewspaperIcon sx={colourOpts} />
+                    label: (
+                        <Stack direction={'row'} spacing={1}>
+                            <NewspaperIcon sx={colourOpts} />
+                            <Typography>News</Typography>
+                        </Stack>
+                    )
                 },
                 {
                     href: '/admin/network',
-                    label: 'IP/Network Tools',
-                    leftIcon: <TravelExploreIcon sx={colourOpts} />,
+                    label: (
+                        <Stack direction={'row'} spacing={1}>
+                            <TravelExploreIcon sx={colourOpts} />
+                            <Typography>IP/Network Tools</Typography>
+                        </Stack>
+                    ),
                     items: [
                         {
                             href: '/admin/network/ip_hist',
-                            label: 'Player IP History',
-                            leftIcon: <SensorOccupiedIcon sx={colourOpts} />
+                            label: (
+                                <Stack direction={'row'} spacing={1}>
+                                    <SensorOccupiedIcon sx={colourOpts} />
+                                    <Typography>Player IP History</Typography>
+                                </Stack>
+                            )
                         },
                         {
                             href: '/admin/network/players_by_ip',
-                            label: 'Find Players By IP',
-                            leftIcon: <WifiFindIcon sx={colourOpts} />
+                            label: (
+                                <Stack direction={'row'} spacing={1}>
+                                    <WifiFindIcon sx={colourOpts} />
+                                    <Typography>Find Players By IP</Typography>
+                                </Stack>
+                            )
                         },
                         {
                             href: '/admin/network/ip_info',
-                            label: 'IP Info',
-                            leftIcon: <CellTowerIcon sx={colourOpts} />
+                            label: (
+                                <Stack direction={'row'} spacing={1}>
+                                    <CellTowerIcon sx={colourOpts} />
+                                    <Typography>IP Info</Typography>
+                                </Stack>
+                            )
                         },
                         {
                             href: '/admin/network/cidr_blocks',
-                            label: 'External CIDR Bans',
-                            leftIcon: <WifiOffIcon sx={colourOpts} />
+                            label: (
+                                <Stack direction={'row'} spacing={1}>
+                                    <WifiOffIcon sx={colourOpts} />
+                                    <Typography>External CIDR Bans</Typography>
+                                </Stack>
+                            )
                         }
                     ]
                 },
                 {
                     href: '/admin/contests',
-                    label: 'Contests',
-                    leftIcon: <EmojiEventsIcon sx={colourOpts} />
+                    label: (
+                        <Stack direction={'row'} spacing={1}>
+                            <EmojiEventsIcon sx={colourOpts} />
+                            <Typography>Contests</Typography>
+                        </Stack>
+                    )
                 },
                 {
                     href: '/admin/people',
-                    label: 'People',
-                    leftIcon: <PersonSearchIcon sx={colourOpts} />
+                    label: (
+                        <Stack direction={'row'} spacing={1}>
+                            <PersonSearchIcon sx={colourOpts} />
+                            <Typography>People</Typography>
+                        </Stack>
+                    )
                 },
                 {
                     href: '/admin/votes',
-                    label: 'Vote History',
-                    leftIcon: <HowToVoteIcon sx={colourOpts} />
+                    label: (
+                        <Stack direction={'row'} spacing={1}>
+                            <HowToVoteIcon sx={colourOpts} />
+                            <Typography>Vote History</Typography>
+                        </Stack>
+                    )
                 },
                 {
                     href: '/admin/servers',
-                    label: 'Servers',
-                    leftIcon: <SettingsIcon sx={colourOpts} />
+                    label: (
+                        <Stack direction={'row'} spacing={1}>
+                            <SettingsIcon sx={colourOpts} />
+                            <Typography>Servers</Typography>
+                        </Stack>
+                    )
                 }
             ]
         };
