@@ -33,8 +33,25 @@ func NewVoteUsecase(voteRepository domain.VoteRepository, personUsecase domain.P
 }
 
 func (u voteUsecase) Query(ctx context.Context, filter domain.VoteQueryFilter) ([]domain.VoteResult, int64, error) {
-	// TODO implement me
-	panic("implement me")
+	if filter.SourceID != "" {
+		sourceID, valid := filter.SourceIDField.SourceSteamID(ctx)
+		if !valid {
+			return nil, 0, domain.ErrInvalidAuthorSID
+		}
+
+		filter.SourceSID = sourceID
+	}
+
+	if filter.TargetID != "" {
+		targetID, valid := filter.TargetIDField.TargetSteamID(ctx)
+		if !valid {
+			return nil, 0, domain.ErrInvalidTargetSID
+		}
+
+		filter.TargetSID = targetID
+	}
+
+	return u.voteRepository.Query(ctx, filter)
 }
 
 // Start will begin ingesting vote events and record them to the database.
@@ -123,7 +140,6 @@ func (u voteUsecase) Start(ctx context.Context) {
 					ServerID:  evt.ServerID,
 					SourceID:  serverEvent.SID,
 					TargetID:  serverEvent.SID2,
-					Valid:     serverEvent.Valid,
 					Success:   currentState.success,
 					Name:      currentState.name,
 					Code:      currentState.code,

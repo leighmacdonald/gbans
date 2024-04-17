@@ -3,6 +3,7 @@ import { apiCall, QueryFilter, transformCreatedOnDate } from './common.ts';
 
 export type VoteResult = {
     server_id: number;
+    server_name: string;
     match_id: string;
     source_id: string;
     source_name: string;
@@ -10,8 +11,8 @@ export type VoteResult = {
     target_id: string;
     target_name: string;
     target_avatar_hash: string;
-    valid: boolean;
     success: boolean;
+    valid: boolean;
     code: number;
     created_on: Date;
 };

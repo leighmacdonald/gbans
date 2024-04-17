@@ -17,19 +17,15 @@ func NewVoteRepository(database database.Database) domain.VoteRepository {
 	return &voteRepository{db: database}
 }
 
-func (r voteRepository) Query(ctx context.Context, filter domain.VoteQueryFilter) ([]domain.VoteResult, error) {
+func (r voteRepository) Query(ctx context.Context, filter domain.VoteQueryFilter) ([]domain.VoteResult, int64, error) {
 	var constraints sq.And
 
-	if filter.SourceID.Valid() {
-		constraints = append(constraints, sq.Eq{"source_id": filter.SourceID.Int64()})
+	if filter.SourceSID.Valid() {
+		constraints = append(constraints, sq.Eq{"source_id": filter.SourceSID.Int64()})
 	}
 
-	if filter.TargetID.Valid() {
-		constraints = append(constraints, sq.Eq{"target_id": filter.TargetID.Int64()})
-	}
-
-	if !filter.MatchID.IsNil() {
-		constraints = append(constraints, sq.Eq{"match_id": filter.MatchID.String()})
+	if filter.TargetSID.Valid() {
+		constraints = append(constraints, sq.Eq{"target_id": filter.TargetSID.Int64()})
 	}
 
 	if filter.ServerID > 0 {
@@ -40,19 +36,30 @@ func (r voteRepository) Query(ctx context.Context, filter domain.VoteQueryFilter
 		constraints = append(constraints, sq.Eq{"name": filter.Name})
 	}
 
+	if filter.Success >= 0 {
+		constraints = append(constraints, sq.Eq{"success": filter.Success == 1})
+	}
+
 	builder := r.db.Builder().
-		Select("v.vote_id", "v.server_id", "v.match_id", "v.source_id", "v.target_id", "v.valid", "v.name", "v.created_on").
-		From("vote_result v")
+		Select("v.vote_id", "v.server_id", "v.source_id",
+			"src.personaname", "src.avatarhash", "v.target_id", "tgt.personaname", "tgt.avatarhash",
+			"v.name", "v.success", "v.created_on", "s.short_name").
+		From("vote_result v").
+		LeftJoin("server s USING(server_id)").
+		LeftJoin("person src ON v.source_id = src.steam_id").
+		LeftJoin("person tgt ON v.target_id = tgt.steam_id")
 
 	builder = builder.Where(constraints)
 	builder = filter.ApplyLimitOffsetDefault(builder)
 	builder = filter.ApplySafeOrder(builder, map[string][]string{
-		"v.": {"vote_id", "server_id", "match_id", "source_id", "target_id", "valid", "name", "created_on"},
+		"v.":   {"vote_id", "server_id", "source_id", "target_id", "name", "created_on"},
+		"tgt.": {"personaname"},
+		"src.": {"personaname"},
 	}, "vote_id")
 
 	rows, errRows := r.db.QueryBuilder(ctx, builder)
 	if errRows != nil {
-		return nil, r.db.DBErr(errRows)
+		return nil, 0, r.db.DBErr(errRows)
 	}
 	defer rows.Close()
 
@@ -65,8 +72,11 @@ func (r voteRepository) Query(ctx context.Context, filter domain.VoteQueryFilter
 			result   domain.VoteResult
 		)
 
-		if errScan := rows.Scan(&result.ServerID, &result.MatchID, &sourceID, &targetID, &result.Valid, &result.Name, &result.CreatedOn); errScan != nil {
-			return nil, r.db.DBErr(errScan)
+		if errScan := rows.Scan(&result.VoteID, &result.ServerID,
+			&sourceID, &result.SourceName, &result.SourceAvatarHash,
+			&targetID, &result.TargetName, &result.TargetAvatarHash,
+			&result.Name, &result.Success, &result.CreatedOn, &result.ServerName); errScan != nil {
+			return nil, 0, r.db.DBErr(errScan)
 		}
 
 		result.SourceID = steamid.New(*sourceID)
@@ -77,7 +87,15 @@ func (r voteRepository) Query(ctx context.Context, filter domain.VoteQueryFilter
 		results = append(results, result)
 	}
 
-	return results, nil
+	count, errCount := r.db.GetCount(ctx, r.db.Builder().
+		Select("COUNT(v.vote_id)").
+		From("vote_result v").
+		Where(constraints))
+	if errCount != nil {
+		return nil, 0, r.db.DBErr(errCount)
+	}
+
+	return results, count, nil
 }
 
 func (r voteRepository) AddResult(ctx context.Context, voteResult domain.VoteResult) error {

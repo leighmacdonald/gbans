@@ -39,6 +39,10 @@ func (h voteHandler) onVotes() gin.HandlerFunc {
 			return
 		}
 
+		if votes == nil {
+			votes = []domain.VoteResult{}
+		}
+
 		ctx.JSON(http.StatusOK, domain.LazyResult{
 			Count: count,
 			Data:  votes,

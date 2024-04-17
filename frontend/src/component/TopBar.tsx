@@ -9,6 +9,7 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import ForumIcon from '@mui/icons-material/Forum';
 import GroupsIcon from '@mui/icons-material/Groups';
+import HowToVoteIcon from '@mui/icons-material/HowToVote';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import LiveHelpIcon from '@mui/icons-material/LiveHelp';
 import MailIcon from '@mui/icons-material/Mail';
@@ -233,6 +234,11 @@ export const TopBar = () => {
                 to: '/admin/people',
                 text: 'People',
                 icon: <PersonSearchIcon sx={colourOpts} />
+            });
+            items.push({
+                to: '/admin/votes',
+                text: 'Vote History',
+                icon: <HowToVoteIcon sx={colourOpts} />
             });
         }
         if (currentUser.permission_level >= PermissionLevel.Admin) {
