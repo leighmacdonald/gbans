@@ -1,48 +1,52 @@
-import { ChangeEvent, useState } from 'react';
+import { ChangeEvent } from 'react';
+import useUrlState from '@ahooksjs/use-url-state';
 import SearchIcon from '@mui/icons-material/Search';
 import Grid from '@mui/material/Unstable_Grid2';
 import { Formik } from 'formik';
 import { PersonConnection } from '../api';
 import { useConnections } from '../hooks/useConnections.ts';
-import { Order, RowsPerPage } from '../util/table.ts';
+import { RowsPerPage } from '../util/table.ts';
 import { LoadingPlaceholder } from './LoadingPlaceholder.tsx';
-import { TargetIDField, TargetIDInputValue } from './formik/TargetIdField.tsx';
+import { SourceIDField, SourceIDFieldValue } from './formik/SourceIDField.tsx';
 import { SubmitButton } from './modal/Buttons.tsx';
 import { LazyTable } from './table/LazyTable.tsx';
 import { connectionColumns } from './table/connectionColumns.tsx';
 
 export const FindPlayerIPs = () => {
-    const [sortOrder, setSortOrder] = useState<Order>('desc');
-    const [sortColumn, setSortColumn] =
-        useState<keyof PersonConnection>('created_on');
-    const [rowPerPageCount, setRowPerPageCount] = useState<number>(
-        RowsPerPage.Ten
-    );
-    const [steamID, setSteamID] = useState('');
-    const [page, setPage] = useState(0);
+    const [state, setState] = useUrlState({
+        page: undefined,
+        source_id: undefined,
+        asn: undefined,
+        cidr: undefined,
+        rows: undefined,
+        sortOrder: undefined,
+        sortColumn: undefined
+    });
 
     const {
         data: rows,
         count,
         loading
     } = useConnections({
-        limit: rowPerPageCount,
-        offset: page * rowPerPageCount,
-        desc: sortOrder == 'desc',
-        order_by: sortColumn,
-        source_id: steamID,
+        limit: state.rows ?? RowsPerPage.TwentyFive,
+        offset: Number((state.page ?? 0) * (state.rows ?? RowsPerPage.Ten)),
+        order_by: state.sortColumn ?? 'created_on',
+        desc: (state.sortOrder ?? 'desc') == 'desc',
+        source_id: state.source_id ?? '',
         asn: 0,
-        cidr: ''
+        cidr: state.cidr ?? ''
     });
 
-    const onSubmit = (values: TargetIDInputValue) => {
-        setSteamID(values.target_id);
+    const onSubmit = (values: SourceIDFieldValue) => {
+        setState((prevState) => {
+            return { ...prevState, source_id: values.source_id };
+        });
     };
 
     return (
         <Grid container spacing={2}>
             <Grid xs={12}>
-                <Formik onSubmit={onSubmit} initialValues={{ target_id: '' }}>
+                <Formik onSubmit={onSubmit} initialValues={{ source_id: '' }}>
                     <Grid
                         container
                         direction="row"
@@ -51,7 +55,7 @@ export const FindPlayerIPs = () => {
                         spacing={2}
                     >
                         <Grid xs>
-                            <TargetIDField />
+                            <SourceIDField />
                         </Grid>
                         <Grid xs={2}>
                             <SubmitButton
@@ -72,28 +76,37 @@ export const FindPlayerIPs = () => {
                         showPager={true}
                         count={count}
                         rows={rows}
-                        page={page}
-                        rowsPerPage={rowPerPageCount}
-                        sortOrder={sortOrder}
-                        sortColumn={sortColumn}
+                        page={state.page}
+                        rowsPerPage={state.rows}
+                        sortOrder={state.sortOrder}
+                        sortColumn={state.sortColumn}
                         onSortColumnChanged={async (column) => {
-                            setSortColumn(column);
+                            setState((prevState) => {
+                                return { ...prevState, sortColumn: column };
+                            });
                         }}
                         onSortOrderChanged={async (direction) => {
-                            setSortOrder(direction);
+                            setState((prevState) => {
+                                return { ...prevState, sortOrder: direction };
+                            });
                         }}
                         onPageChange={(_, newPage: number) => {
-                            setPage(newPage);
+                            setState((prevState) => {
+                                return { ...prevState, page: newPage };
+                            });
                         }}
                         onRowsPerPageChange={(
                             event: ChangeEvent<
                                 HTMLInputElement | HTMLTextAreaElement
                             >
                         ) => {
-                            setRowPerPageCount(
-                                parseInt(event.target.value, 10)
-                            );
-                            setPage(0);
+                            setState((prevState) => {
+                                return {
+                                    ...prevState,
+                                    rows: parseInt(event.target.value, 10),
+                                    page: 0
+                                };
+                            });
                         }}
                         columns={connectionColumns}
                     />

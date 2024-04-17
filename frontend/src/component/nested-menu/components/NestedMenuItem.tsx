@@ -83,6 +83,7 @@ const NestedMenuItem = forwardRef<HTMLLIElement | null, NestedMenuItemProps>(
             if (menuContainerRef.current == null) {
                 return false;
             }
+            // eslint-disable-next-line no-loops/no-loops
             for (const child of menuContainerRef.current.children) {
                 if (child === active) {
                     return true;

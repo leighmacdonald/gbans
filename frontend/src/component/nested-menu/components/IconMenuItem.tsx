@@ -1,9 +1,10 @@
 import React, { forwardRef, RefObject } from 'react';
 import MenuItem, { MenuItemProps } from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
-import { styled } from '@mui/material/styles';
+import { styled, SxProps } from '@mui/material/styles';
 import Box from '@mui/system/Box';
-import { SxProps } from '@mui/system/styleFunctionSx/styleFunctionSx';
+
+//import { SxProps } from '@mui/system/styleFunctionSx/styleFunctionSx';
 
 const StyledMenuItem = styled(MenuItem)({
     display: 'flex',

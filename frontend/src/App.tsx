@@ -53,6 +53,18 @@ const AdminBanSteamPage = loadable(() => import('./page/AdminBanSteamPage'));
 const AdminContestsPage = loadable(() => import('./page/AdminContestsPage'));
 const AdminFiltersPage = loadable(() => import('./page/AdminFiltersPage'));
 const AdminNetworkPage = loadable(() => import('./page/AdminNetworkPage'));
+const AdminNetworkPlayerIPHistoryPage = loadable(
+    () => import('./page/AdminNetworkPlayerIPHistoryPage.tsx')
+);
+const AdminNetworkPlayersByCIDRPage = loadable(
+    () => import('./page/AdminNetworkPlayersByCIDRPage.tsx')
+);
+const AdminNetworkInfoPage = loadable(
+    () => import('./page/AdminNetworkInfoPage')
+);
+const AdminNetworkCIDRBlocks = loadable(
+    () => import('./page/AdminNetworkCIDRBlocksPage')
+);
 const AdminNewsPage = loadable(() => import('./page/AdminNewsPage'));
 const AdminPeoplePage = loadable(() => import('./page/AdminPeoplePage'));
 const AdminReportsPage = loadable(() => import('./page/AdminReportsPage'));
@@ -606,7 +618,7 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                         <ErrorBoundary>
                                                                             <PrivateRoute
                                                                                 permission={
-                                                                                    PermissionLevel.Editor
+                                                                                    PermissionLevel.Moderator
                                                                                 }
                                                                             >
                                                                                 <AdminFiltersPage />
@@ -622,10 +634,74 @@ export const App = ({ initialTheme }: AppProps): JSX.Element => {
                                                                         <ErrorBoundary>
                                                                             <PrivateRoute
                                                                                 permission={
-                                                                                    PermissionLevel.Editor
+                                                                                    PermissionLevel.Moderator
                                                                                 }
                                                                             >
                                                                                 <AdminNetworkPage />
+                                                                            </PrivateRoute>
+                                                                        </ErrorBoundary>
+                                                                    }
+                                                                />
+                                                                <Route
+                                                                    path={
+                                                                        '/admin/network/ip_hist'
+                                                                    }
+                                                                    element={
+                                                                        <ErrorBoundary>
+                                                                            <PrivateRoute
+                                                                                permission={
+                                                                                    PermissionLevel.Moderator
+                                                                                }
+                                                                            >
+                                                                                <AdminNetworkPlayerIPHistoryPage />
+                                                                            </PrivateRoute>
+                                                                        </ErrorBoundary>
+                                                                    }
+                                                                />
+                                                                <Route
+                                                                    path={
+                                                                        '/admin/network/players_by_ip'
+                                                                    }
+                                                                    element={
+                                                                        <ErrorBoundary>
+                                                                            <PrivateRoute
+                                                                                permission={
+                                                                                    PermissionLevel.Moderator
+                                                                                }
+                                                                            >
+                                                                                <AdminNetworkPlayersByCIDRPage />
+                                                                            </PrivateRoute>
+                                                                        </ErrorBoundary>
+                                                                    }
+                                                                />
+                                                                <Route
+                                                                    path={
+                                                                        '/admin/network/ip_info'
+                                                                    }
+                                                                    element={
+                                                                        <ErrorBoundary>
+                                                                            <PrivateRoute
+                                                                                permission={
+                                                                                    PermissionLevel.Moderator
+                                                                                }
+                                                                            >
+                                                                                <AdminNetworkInfoPage />
+                                                                            </PrivateRoute>
+                                                                        </ErrorBoundary>
+                                                                    }
+                                                                />
+                                                                <Route
+                                                                    path={
+                                                                        '/admin/network/cidr_blocks'
+                                                                    }
+                                                                    element={
+                                                                        <ErrorBoundary>
+                                                                            <PrivateRoute
+                                                                                permission={
+                                                                                    PermissionLevel.Moderator
+                                                                                }
+                                                                            >
+                                                                                <AdminNetworkCIDRBlocks />
                                                                             </PrivateRoute>
                                                                         </ErrorBoundary>
                                                                     }
