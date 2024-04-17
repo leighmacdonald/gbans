@@ -15,9 +15,9 @@ export const useVotes = (opts: VoteQueryFilter): hookResult<VoteResult[]> => {
             offset: opts.offset,
             order_by: opts.order_by,
             desc: opts.desc,
-            success: opts.success,
             source_id: opts.source_id,
-            target_id: opts.target_id
+            target_id: opts.target_id,
+            success: opts.success
         })
             .then((resp) => {
                 setData(resp.data || []);
@@ -33,8 +33,8 @@ export const useVotes = (opts: VoteQueryFilter): hookResult<VoteResult[]> => {
         opts.desc,
         opts.limit,
         opts.offset,
-        opts.order_by,
         opts.success,
+        opts.order_by,
         opts.source_id,
         opts.target_id
     ]);

@@ -265,6 +265,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			srcds.NewSRCDSHandler(router, srcdsUsecase, serversUsecase, personUsecase, assetUsecase,
 				reportUsecase, banUsecase, networkUsecase, banGroupUsecase, demoUsecase, authUsecase, banASNUsecase, banNetUsecase,
 				configUsecase, discordUsecase, stateUsecase)
+			votes.NewVoteHandler(router, voteUsecase, authUsecase)
 			wiki.NewWIkiHandler(router, wikiUsecase, authUsecase)
 			wordfilter.NewWordFilterHandler(router, configUsecase, wordFilterUsecase, chatUsecase, authUsecase)
 

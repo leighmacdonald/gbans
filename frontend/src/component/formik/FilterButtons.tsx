@@ -8,7 +8,11 @@ export const FilterButtons = () => {
         <VCenterBox>
             <ButtonGroup fullWidth size={'medium'}>
                 <ResetButton />
-                <SubmitButton label={'Apply'} startIcon={<CheckIcon />} />
+                <SubmitButton
+                    label={'Apply'}
+                    startIcon={<CheckIcon />}
+                    fullWidth={true}
+                />
             </ButtonGroup>
         </VCenterBox>
     );

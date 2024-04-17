@@ -10,10 +10,9 @@ interface DeletedFieldProps {
     deleted: boolean;
 }
 
-export const DeletedField = <T,>() => {
-    const { values, touched, errors, handleChange } = useFormikContext<
-        T & DeletedFieldProps
-    >();
+export const DeletedField = () => {
+    const { values, touched, errors, handleChange } =
+        useFormikContext<DeletedFieldProps>();
     return (
         <VCenterBox>
             <FormControl fullWidth>
