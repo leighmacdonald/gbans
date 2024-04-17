@@ -4,13 +4,12 @@ import FormGroup from '@mui/material/FormGroup';
 import Tooltip from '@mui/material/Tooltip';
 import { useFormikContext } from 'formik';
 
-interface IncludeFriendsFieldValue {
-    include_friends: boolean;
+interface EvadeOKFieldValue {
+    evade_ok: boolean;
 }
 
-export const IncludeFriendsField = () => {
-    const { values, handleChange } =
-        useFormikContext<IncludeFriendsFieldValue>();
+export const EvadeOKField = () => {
+    const { values, handleChange } = useFormikContext<EvadeOKFieldValue>();
     return (
         <FormGroup>
             <Tooltip
@@ -19,9 +18,9 @@ export const IncludeFriendsField = () => {
                 }
             >
                 <FormControlLabel
-                    control={<Checkbox checked={values.include_friends} />}
-                    label="Include Friends"
-                    name={'include_friends'}
+                    control={<Checkbox checked={values.evade_ok} />}
+                    label="Evade OK"
+                    name={'evade_ok'}
                     onChange={handleChange}
                 />
             </Tooltip>

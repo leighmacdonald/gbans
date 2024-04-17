@@ -251,7 +251,7 @@ func (s *srcdsHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 
 		var banSteam domain.BanSteam
 		if errBanSteam := domain.NewBanSteam(sourceID, targetID, duration, req.Reason, req.ReasonText, req.Note, origin,
-			req.ReportID, req.BanType, req.IncludeFriends, &banSteam); errBanSteam != nil {
+			req.ReportID, req.BanType, req.IncludeFriends, false, &banSteam); errBanSteam != nil {
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 
 			return

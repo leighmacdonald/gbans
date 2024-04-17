@@ -35,6 +35,7 @@ import {
 } from '../formik/DurationCustomField';
 import { DurationField, DurationFieldValidator } from '../formik/DurationField';
 import { ErrorField } from '../formik/ErrorField';
+import { EvadeOKField } from '../formik/EvadeOKField.tsx';
 import { IncludeFriendsField } from '../formik/IncludeFriendsField';
 import { NoteField, NoteFieldValidator } from '../formik/NoteField';
 import { ReportIdField, ReportIdFieldValidator } from '../formik/ReportIdField';
@@ -56,6 +57,7 @@ type BanSteamFormValues = {
     duration_custom: Date;
     note: string;
     include_friends: boolean;
+    evade_ok: boolean;
     existing?: SteamBanRecord;
 } & TargetIDInputValue;
 
@@ -96,6 +98,7 @@ export const BanSteamModal = NiceModal.create(
                                 reason: values.reason,
                                 reason_text: values.reason_text,
                                 include_friends: values.include_friends,
+                                evade_ok: values.evade_ok,
                                 valid_until: values.duration_custom
                             }
                         );
@@ -111,7 +114,8 @@ export const BanSteamModal = NiceModal.create(
                             reason_text: values.reason_text,
                             report_id: values.report_id,
                             target_id: values.target_id,
-                            include_friends: values.include_friends
+                            include_friends: values.include_friends,
+                            evade_ok: values.evade_ok
                         });
                         sendFlash('success', 'Created ban successfully');
                         modal.resolve(ban_record);
@@ -150,6 +154,7 @@ export const BanSteamModal = NiceModal.create(
                     reason_text: existing?.reason_text ?? '',
                     report_id: existing?.report_id ?? reportId,
                     include_friends: existing?.include_friends ?? false,
+                    evade_ok: existing?.evade_ok ?? false,
                     existing: existing
                 }}
                 validateOnBlur={true}
@@ -172,6 +177,7 @@ export const BanSteamModal = NiceModal.create(
                             <BanReasonField />
                             <BanReasonTextField paired={true} />
                             <IncludeFriendsField />
+                            <EvadeOKField />
                             <DurationField />
                             <DurationCustomField />
                             <NoteField />

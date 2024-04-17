@@ -350,6 +350,17 @@ export const BanSteamTable = ({ newBans }: { newBans: SteamBanRecord[] }) => {
                                 )
                             },
                             {
+                                label: 'E',
+                                tooltip:
+                                    'Are othere players allowed to play from the same ip when a ban on that ip is active (eg. banned roomate/family)',
+                                align: 'center',
+                                width: '50px',
+                                sortKey: 'evade_ok',
+                                renderer: (row) => (
+                                    <TableCellBool enabled={row.evade_ok} />
+                                )
+                            },
+                            {
                                 label: 'A',
                                 tooltip:
                                     'Is this ban active (not deleted/inactive/unbanned)',

@@ -175,6 +175,7 @@ export interface SteamBanRecord extends BanBase {
     report_id: number;
     ban_type: BanType;
     include_friends: boolean;
+    evade_ok: boolean;
 }
 
 export interface GroupBanRecord extends BanBase {
@@ -212,6 +213,7 @@ interface BanReasonPayload {
 export interface BanPayloadSteam extends BanBasePayload, BanReasonPayload {
     report_id?: number;
     include_friends: boolean;
+    evade_ok: boolean;
     ban_type: BanType;
 }
 
@@ -309,6 +311,7 @@ export const apiUpdateBanSteam = async (
     ban_id: number,
     payload: UpdateBanPayload & {
         include_friends: boolean;
+        evade_ok: boolean;
         ban_type: BanType;
     }
 ) =>

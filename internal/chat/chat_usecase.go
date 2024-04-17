@@ -73,7 +73,7 @@ func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.Ne
 
 		if errNewBan := domain.NewBanSteam(u.owner, newWarning.UserMessage.SteamID, duration, newWarning.WarnReason, "",
 			"Automatic warning ban", domain.System, 0, domain.NoComm, false,
-			&banSteam); errNewBan != nil {
+			false, &banSteam); errNewBan != nil {
 			return errors.Join(errNewBan, domain.ErrFailedToBan)
 		}
 	}
