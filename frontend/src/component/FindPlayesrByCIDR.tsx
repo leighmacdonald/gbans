@@ -1,4 +1,5 @@
-import { ChangeEvent, useState } from 'react';
+import { ChangeEvent } from 'react';
+import useUrlState from '@ahooksjs/use-url-state';
 import SearchIcon from '@mui/icons-material/Search';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
@@ -6,7 +7,7 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { Formik } from 'formik';
 import { PersonConnection } from '../api';
 import { useConnections } from '../hooks/useConnections.ts';
-import { Order, RowsPerPage } from '../util/table.ts';
+import { RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 import { LoadingPlaceholder } from './LoadingPlaceholder.tsx';
 import {
@@ -16,32 +17,35 @@ import {
 import { SubmitButton } from './modal/Buttons.tsx';
 import { LazyTable } from './table/LazyTable.tsx';
 
-export const FindPlayerByIP = () => {
-    const [sortOrder, setSortOrder] = useState<Order>('desc');
-    const [sortColumn, setSortColumn] =
-        useState<keyof PersonConnection>('created_on');
-    const [rowPerPageCount, setRowPerPageCount] = useState<number>(
-        RowsPerPage.Ten
-    );
-    const [cidr, setCIDR] = useState('');
-    const [page, setPage] = useState(0);
+export const FindPlayesrByCIDR = () => {
+    const [state, setState] = useUrlState({
+        page: undefined,
+        source_id: undefined,
+        asn: undefined,
+        cidr: undefined,
+        rows: undefined,
+        sortOrder: undefined,
+        sortColumn: undefined
+    });
 
     const {
         data: rows,
         count,
         loading
     } = useConnections({
-        limit: rowPerPageCount,
-        offset: page * rowPerPageCount,
-        desc: sortOrder == 'desc',
-        order_by: sortColumn,
-        cidr: cidr,
+        limit: state.rows ?? RowsPerPage.TwentyFive,
+        offset: Number((state.page ?? 0) * (state.rows ?? RowsPerPage.Ten)),
+        order_by: state.sortColumn ?? 'created_on',
+        desc: (state.sortOrder ?? 'desc') == 'desc',
+        source_id: state.source_id ?? '',
         asn: 0,
-        source_id: ''
+        cidr: state.cidr ?? ''
     });
 
     const onSubmit = (values: CIDRInputFieldProps) => {
-        setCIDR(values.cidr);
+        setState((prevState) => {
+            return { ...prevState, cidr: values.cidr };
+        });
     };
 
     return (
@@ -77,28 +81,37 @@ export const FindPlayerByIP = () => {
                         showPager={true}
                         count={count}
                         rows={rows}
-                        page={page}
-                        rowsPerPage={rowPerPageCount}
-                        sortOrder={sortOrder}
-                        sortColumn={sortColumn}
+                        page={state.page}
+                        rowsPerPage={state.rows}
+                        sortOrder={state.sortOrder}
+                        sortColumn={state.sortColumn}
                         onSortColumnChanged={async (column) => {
-                            setSortColumn(column);
+                            setState((prevState) => {
+                                return { ...prevState, sortColumn: column };
+                            });
                         }}
                         onSortOrderChanged={async (direction) => {
-                            setSortOrder(direction);
+                            setState((prevState) => {
+                                return { ...prevState, sortOrder: direction };
+                            });
                         }}
                         onPageChange={(_, newPage: number) => {
-                            setPage(newPage);
+                            setState((prevState) => {
+                                return { ...prevState, page: newPage };
+                            });
                         }}
                         onRowsPerPageChange={(
                             event: ChangeEvent<
                                 HTMLInputElement | HTMLTextAreaElement
                             >
                         ) => {
-                            setRowPerPageCount(
-                                parseInt(event.target.value, 10)
-                            );
-                            setPage(0);
+                            setState((prevState) => {
+                                return {
+                                    ...prevState,
+                                    rows: parseInt(event.target.value, 10),
+                                    page: 0
+                                };
+                            });
                         }}
                         columns={[
                             {

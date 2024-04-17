@@ -1,5 +1,5 @@
-import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
 import React from 'react';
+import SvgIcon, { SvgIconProps } from '@mui/material/SvgIcon';
 
 export const ChevronRight = (props: SvgIconProps) => {
     return (

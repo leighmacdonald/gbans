@@ -1,5 +1,6 @@
-import { ReactNode, useMemo, useState } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { MapContainer, Marker, TileLayer } from 'react-leaflet';
+import useUrlState from '@ahooksjs/use-url-state';
 import SearchIcon from '@mui/icons-material/Search';
 import Link from '@mui/material/Link';
 import Table from '@mui/material/Table';
@@ -35,12 +36,16 @@ const InfoRow = ({
 };
 
 export const NetworkInfo = () => {
-    const [ip, setIP] = useState('');
+    const [state, setState] = useUrlState({
+        ip: undefined
+    });
 
-    const { data, loading } = useNetworkQuery({ ip: ip });
+    const { data, loading } = useNetworkQuery({ ip: state.ip });
 
     const onSubmit = (values: IPFieldProps) => {
-        setIP(values.ip);
+        setState((prevState) => {
+            return { ...prevState, ip: values.ip };
+        });
     };
 
     const pos = useMemo(() => {
