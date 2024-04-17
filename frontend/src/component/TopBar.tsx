@@ -178,7 +178,9 @@ export const TopBar = () => {
                     label: (
                         <Stack direction={'row'} spacing={1}>
                             <SubjectIcon sx={colourOpts} />
-                            <Typography>Filtered Words</Typography>
+                            <Typography color={colourOpts}>
+                                Filtered Words
+                            </Typography>
                         </Stack>
                     )
                 },
@@ -186,7 +188,7 @@ export const TopBar = () => {
                     label: (
                         <Stack direction={'row'} spacing={1}>
                             <BlockIcon sx={colourOpts} />
-                            <Typography>Ban</Typography>
+                            <Typography color={colourOpts}>Ban</Typography>
                         </Stack>
                     ),
                     items: [
@@ -195,7 +197,9 @@ export const TopBar = () => {
                             label: (
                                 <Stack direction={'row'} spacing={1}>
                                     <NoAccountsIcon sx={colourOpts} />
-                                    <Typography>Steam</Typography>
+                                    <Typography color={colourOpts}>
+                                        Steam
+                                    </Typography>
                                 </Stack>
                             )
                         },
@@ -204,7 +208,9 @@ export const TopBar = () => {
                             label: (
                                 <Stack direction={'row'} spacing={1}>
                                     <WifiOffIcon sx={colourOpts} />
-                                    <Typography>IP/CIDR</Typography>
+                                    <Typography color={colourOpts}>
+                                        IP/CIDR
+                                    </Typography>
                                 </Stack>
                             )
                         },
@@ -213,7 +219,9 @@ export const TopBar = () => {
                             label: (
                                 <Stack direction={'row'} spacing={1}>
                                     <GroupsIcon sx={colourOpts} />
-                                    <Typography>Steam Group</Typography>
+                                    <Typography color={colourOpts}>
+                                        Steam Group
+                                    </Typography>
                                 </Stack>
                             )
                         },
@@ -222,7 +230,9 @@ export const TopBar = () => {
                             label: (
                                 <Stack direction={'row'} spacing={1}>
                                     <PublicOffIcon sx={colourOpts} />
-                                    <Typography>ASN</Typography>
+                                    <Typography color={colourOpts}>
+                                        ASN
+                                    </Typography>
                                 </Stack>
                             )
                         }
@@ -234,7 +244,7 @@ export const TopBar = () => {
                     label: (
                         <Stack direction={'row'} spacing={1}>
                             <ReportIcon sx={colourOpts} />
-                            <Typography>Reports</Typography>
+                            <Typography color={colourOpts}>Reports</Typography>
                         </Stack>
                     )
                 },
@@ -243,7 +253,9 @@ export const TopBar = () => {
                     label: (
                         <Stack direction={'row'} spacing={1}>
                             <LiveHelpIcon sx={colourOpts} />
-                            <Typography>Ban Appeals</Typography>
+                            <Typography color={colourOpts}>
+                                Ban Appeals
+                            </Typography>
                         </Stack>
                     )
                 },
@@ -252,7 +264,7 @@ export const TopBar = () => {
                     label: (
                         <Stack direction={'row'} spacing={1}>
                             <NewspaperIcon sx={colourOpts} />
-                            <Typography>News</Typography>
+                            <Typography color={colourOpts}>News</Typography>
                         </Stack>
                     )
                 },
@@ -261,7 +273,9 @@ export const TopBar = () => {
                     label: (
                         <Stack direction={'row'} spacing={1}>
                             <TravelExploreIcon sx={colourOpts} />
-                            <Typography>IP/Network Tools</Typography>
+                            <Typography color={colourOpts}>
+                                IP/Network Tools
+                            </Typography>
                         </Stack>
                     ),
                     items: [
@@ -270,7 +284,9 @@ export const TopBar = () => {
                             label: (
                                 <Stack direction={'row'} spacing={1}>
                                     <SensorOccupiedIcon sx={colourOpts} />
-                                    <Typography>Player IP History</Typography>
+                                    <Typography color={colourOpts}>
+                                        Player IP History
+                                    </Typography>
                                 </Stack>
                             )
                         },
@@ -279,7 +295,9 @@ export const TopBar = () => {
                             label: (
                                 <Stack direction={'row'} spacing={1}>
                                     <WifiFindIcon sx={colourOpts} />
-                                    <Typography>Find Players By IP</Typography>
+                                    <Typography color={colourOpts}>
+                                        Find Players By IP
+                                    </Typography>
                                 </Stack>
                             )
                         },
@@ -288,7 +306,9 @@ export const TopBar = () => {
                             label: (
                                 <Stack direction={'row'} spacing={1}>
                                     <CellTowerIcon sx={colourOpts} />
-                                    <Typography>IP Info</Typography>
+                                    <Typography color={colourOpts}>
+                                        IP Info
+                                    </Typography>
                                 </Stack>
                             )
                         },
@@ -297,7 +317,9 @@ export const TopBar = () => {
                             label: (
                                 <Stack direction={'row'} spacing={1}>
                                     <WifiOffIcon sx={colourOpts} />
-                                    <Typography>External CIDR Bans</Typography>
+                                    <Typography color={colourOpts}>
+                                        External CIDR Bans
+                                    </Typography>
                                 </Stack>
                             )
                         }
@@ -308,7 +330,7 @@ export const TopBar = () => {
                     label: (
                         <Stack direction={'row'} spacing={1}>
                             <EmojiEventsIcon sx={colourOpts} />
-                            <Typography>Contests</Typography>
+                            <Typography color={colourOpts}>Contests</Typography>
                         </Stack>
                     )
                 },
@@ -317,7 +339,7 @@ export const TopBar = () => {
                     label: (
                         <Stack direction={'row'} spacing={1}>
                             <PersonSearchIcon sx={colourOpts} />
-                            <Typography>People</Typography>
+                            <Typography color={colourOpts}>People</Typography>
                         </Stack>
                     )
                 },
@@ -326,7 +348,9 @@ export const TopBar = () => {
                     label: (
                         <Stack direction={'row'} spacing={1}>
                             <HowToVoteIcon sx={colourOpts} />
-                            <Typography>Vote History</Typography>
+                            <Typography color={colourOpts}>
+                                Vote History
+                            </Typography>
                         </Stack>
                     )
                 },
@@ -335,7 +359,7 @@ export const TopBar = () => {
                     label: (
                         <Stack direction={'row'} spacing={1}>
                             <SettingsIcon sx={colourOpts} />
-                            <Typography>Servers</Typography>
+                            <Typography color={colourOpts}>Servers</Typography>
                         </Stack>
                     )
                 }
