@@ -15,4 +15,5 @@ var jsRoutes = []string{
 	"/stats/weapon/:weapon_id", "/stats/player/:steam_id", "/privacy-policy", "/admin/contests",
 	"/contests", "/contests/:contest_id", "/forums", "/forums/:forum_id", "/forums/thread/:forum_thread_id",
 	"/admin/network/ip_hist", "/admin/network/players_by_ip", "/admin/network/ip_info", "/admin/network/cidr_blocks",
+	"/admin/votes",
 }
