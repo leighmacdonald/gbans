@@ -2,6 +2,7 @@ import { JSX, useMemo, useState, MouseEvent } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import ArticleIcon from '@mui/icons-material/Article';
+import BlockIcon from '@mui/icons-material/Block';
 import CellTowerIcon from '@mui/icons-material/CellTower';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -178,25 +179,32 @@ export const TopBar = () => {
                     leftIcon: <SubjectIcon sx={colourOpts} />
                 },
                 {
-                    href: '/admin/ban/steam',
-                    label: 'Ban Steam',
-                    leftIcon: <NoAccountsIcon sx={colourOpts} />
+                    label: 'Ban',
+                    leftIcon: <BlockIcon sx={colourOpts} />,
+                    items: [
+                        {
+                            href: '/admin/ban/steam',
+                            label: 'Steam',
+                            leftIcon: <NoAccountsIcon sx={colourOpts} />
+                        },
+                        {
+                            href: '/admin/ban/cidr',
+                            label: 'IP/CIDR',
+                            leftIcon: <WifiOffIcon sx={colourOpts} />
+                        },
+                        {
+                            href: '/admin/ban/group',
+                            label: 'Steam Group',
+                            leftIcon: <GroupsIcon sx={colourOpts} />
+                        },
+                        {
+                            href: '/admin/ban/asn',
+                            label: 'ASN',
+                            leftIcon: <PublicOffIcon sx={colourOpts} />
+                        }
+                    ]
                 },
-                {
-                    href: '/admin/ban/cidr',
-                    label: 'Ban CIDR',
-                    leftIcon: <WifiOffIcon sx={colourOpts} />
-                },
-                {
-                    href: '/admin/ban/group',
-                    label: 'Ban Steam Group',
-                    leftIcon: <GroupsIcon sx={colourOpts} />
-                },
-                {
-                    href: '/admin/ban/asn',
-                    label: 'Ban ASN',
-                    leftIcon: <PublicOffIcon sx={colourOpts} />
-                },
+
                 {
                     href: '/admin/reports',
                     label: 'Reports',

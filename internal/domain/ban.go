@@ -308,6 +308,7 @@ type BanSteam struct {
 	VacBans         int    `json:"vac_bans"`
 	GameBans        int    `json:"game_bans"`
 	LastIP          net.IP `json:"last_ip"`
+	EvadeOk         bool   `json:"evade_ok"`
 }
 
 //goland:noinspection ALL
@@ -362,7 +363,7 @@ func newBaseBanOpts(source steamid.SteamID, target steamid.SteamID, duration tim
 
 func NewBanSteam(source steamid.SteamID, target steamid.SteamID, duration time.Duration,
 	reason Reason, reasonText string, modNote string, origin Origin, reportID int64, banType BanType,
-	includeFriends bool, banSteam *BanSteam,
+	includeFriends bool, evadeOk bool, banSteam *BanSteam,
 ) error {
 	var opts BanSteamOpts
 
@@ -380,6 +381,7 @@ func NewBanSteam(source steamid.SteamID, target steamid.SteamID, duration time.D
 	banSteam.ReportID = opts.ReportID
 	banSteam.BanID = opts.BanID
 	banSteam.IncludeFriends = includeFriends
+	banSteam.EvadeOk = evadeOk
 
 	return nil
 }

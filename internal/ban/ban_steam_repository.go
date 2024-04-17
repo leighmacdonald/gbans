@@ -79,7 +79,7 @@ func (r *banSteamRepository) getBanByColumn(ctx context.Context, column string, 
 		Builder().
 		Select(
 			"b.ban_id", "b.target_id", "b.source_id", "b.ban_type", "b.reason",
-			"b.reason_text", "b.note", "b.origin", "b.valid_until", "b.created_on", "b.updated_on", "b.include_friends",
+			"b.reason_text", "b.note", "b.origin", "b.valid_until", "b.created_on", "b.updated_on", "b.include_friends", "b.evade_ok",
 			"b.deleted", "case WHEN b.report_id is null THEN 0 ELSE b.report_id END",
 			"b.unban_reason_text", "b.is_enabled", "b.appeal_state", "b.last_ip",
 			"s.personaname as source_personaname", "s.avatarhash",
@@ -105,7 +105,7 @@ func (r *banSteamRepository) getBanByColumn(ctx context.Context, column string, 
 	if errScan := row.
 		Scan(&person.BanID, &targetID, &sourceID, &person.BanType, &person.Reason,
 			&person.ReasonText, &person.Note, &person.Origin, &person.ValidUntil, &person.CreatedOn,
-			&person.UpdatedOn, &person.IncludeFriends, &person.Deleted, &person.ReportID, &person.UnbanReasonText,
+			&person.UpdatedOn, &person.IncludeFriends, &person.EvadeOk, &person.Deleted, &person.ReportID, &person.UnbanReasonText,
 			&person.IsEnabled, &person.AppealState, &person.LastIP,
 			&person.SourceTarget.SourcePersonaname, &person.SourceTarget.SourceAvatarhash,
 			&person.SourceTarget.TargetPersonaname, &person.SourceTarget.TargetAvatarhash,
@@ -173,14 +173,14 @@ func (r *banSteamRepository) Save(ctx context.Context, ban *domain.BanSteam) err
 func (r *banSteamRepository) insertBan(ctx context.Context, ban *domain.BanSteam) error {
 	const query = `
 		INSERT INTO ban (target_id, source_id, ban_type, reason, reason_text, note, valid_until, 
-		                 created_on, updated_on, origin, report_id, appeal_state, include_friends, last_ip)
+		                 created_on, updated_on, origin, report_id, appeal_state, include_friends, evade_ok, last_ip)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, case WHEN $11 = 0 THEN null ELSE $11 END, $12, $13, $14)
 		RETURNING ban_id`
 
 	errQuery := r.db.
 		QueryRow(ctx, query, ban.TargetID.Int64(), ban.SourceID.Int64(), ban.BanType, ban.Reason, ban.ReasonText,
 			ban.Note, ban.ValidUntil, ban.CreatedOn, ban.UpdatedOn, ban.Origin, ban.ReportID, ban.AppealState,
-			ban.IncludeFriends, &ban.LastIP).
+			ban.IncludeFriends, ban.EvadeOk, &ban.LastIP).
 		Scan(&ban.BanID)
 
 	if errQuery != nil {
@@ -214,6 +214,7 @@ func (r *banSteamRepository) updateBan(ctx context.Context, ban *domain.BanSteam
 		Set("target_id", ban.TargetID.Int64()).
 		Set("appeal_state", ban.AppealState).
 		Set("include_friends", ban.IncludeFriends).
+		Set("evade_ok", ban.EvadeOk).
 		Where(sq.Eq{"ban_id": ban.BanID})
 
 	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, query))
@@ -224,7 +225,7 @@ func (r *banSteamRepository) ExpiredBans(ctx context.Context) ([]domain.BanSteam
 		Builder().
 		Select("ban_id", "target_id", "source_id", "ban_type", "reason", "reason_text", "note",
 			"valid_until", "origin", "created_on", "updated_on", "deleted", "case WHEN report_id is null THEN 0 ELSE report_id END",
-			"unban_reason_text", "is_enabled", "appeal_state", "include_friends").
+			"unban_reason_text", "is_enabled", "appeal_state", "include_friends", "evade_ok").
 		From("ban").
 		Where(sq.And{sq.Lt{"valid_until": time.Now()}, sq.Eq{"deleted": false}})
 
@@ -246,7 +247,7 @@ func (r *banSteamRepository) ExpiredBans(ctx context.Context) ([]domain.BanSteam
 
 		if errScan := rows.Scan(&ban.BanID, &targetID, &sourceID, &ban.BanType, &ban.Reason, &ban.ReasonText, &ban.Note,
 			&ban.ValidUntil, &ban.Origin, &ban.CreatedOn, &ban.UpdatedOn, &ban.Deleted, &ban.ReportID, &ban.UnbanReasonText,
-			&ban.IsEnabled, &ban.AppealState, &ban.IncludeFriends); errScan != nil {
+			&ban.IsEnabled, &ban.AppealState, &ban.IncludeFriends, &ban.EvadeOk); errScan != nil {
 			return nil, errors.Join(errScan, domain.ErrScanResult)
 		}
 
@@ -268,7 +269,7 @@ func (r *banSteamRepository) Get(ctx context.Context, filter domain.SteamBansQue
 	builder := r.db.
 		Builder().
 		Select("b.ban_id", "b.target_id", "b.source_id", "b.ban_type", "b.reason",
-			"b.reason_text", "b.note", "b.origin", "b.valid_until", "b.created_on", "b.updated_on", "b.include_friends",
+			"b.reason_text", "b.note", "b.origin", "b.valid_until", "b.created_on", "b.updated_on", "b.include_friends", "b.evade_ok",
 			"b.deleted", "case WHEN b.report_id is null THEN 0 ELSE b.report_id END",
 			"b.unban_reason_text", "b.is_enabled", "b.appeal_state",
 			"s.personaname as source_personaname", "s.avatarhash",
@@ -314,7 +315,7 @@ func (r *banSteamRepository) Get(ctx context.Context, filter domain.SteamBansQue
 	builder = filter.QueryFilter.ApplySafeOrder(builder, map[string][]string{
 		"b.": {
 			"ban_id", "target_id", "source_id", "ban_type", "reason",
-			"origin", "valid_until", "created_on", "updated_on", "include_friends",
+			"origin", "valid_until", "created_on", "updated_on", "include_friends", "evade_ok",
 			"deleted", "report_id", "is_enabled", "appeal_state",
 		},
 		"s.": {"source_personaname"},
@@ -355,7 +356,7 @@ func (r *banSteamRepository) Get(ctx context.Context, filter domain.SteamBansQue
 		if errScan := rows.
 			Scan(&person.BanID, &targetID, &sourceID, &person.BanType, &person.Reason,
 				&person.ReasonText, &person.Note, &person.Origin, &person.ValidUntil, &person.CreatedOn,
-				&person.UpdatedOn, &person.IncludeFriends, &person.Deleted, &person.ReportID, &person.UnbanReasonText,
+				&person.UpdatedOn, &person.IncludeFriends, &person.EvadeOk, &person.Deleted, &person.ReportID, &person.UnbanReasonText,
 				&person.IsEnabled, &person.AppealState,
 				&person.SourceTarget.SourcePersonaname, &person.SourceTarget.SourceAvatarhash,
 				&person.SourceTarget.TargetPersonaname, &person.SourceTarget.TargetAvatarhash,
@@ -382,7 +383,7 @@ func (r *banSteamRepository) GetOlderThan(ctx context.Context, filter domain.Que
 		Select("b.ban_id", "b.target_id", "b.source_id", "b.ban_type", "b.reason",
 			"b.reason_text", "b.note", "b.origin", "b.valid_until", "b.created_on", "b.updated_on", "b.deleted",
 			"case WHEN b.report_id is null THEN 0 ELSE s.report_id END", "b.unban_reason_text", "b.is_enabled",
-			"b.appeal_state", "b.include_friends").
+			"b.appeal_state", "b.include_friends", "b.evade_ok").
 		From("ban b").
 		Where(sq.And{sq.Lt{"b.updated_on": since}, sq.Eq{"b.deleted": false}})
 
@@ -404,7 +405,7 @@ func (r *banSteamRepository) GetOlderThan(ctx context.Context, filter domain.Que
 
 		if errQuery = rows.Scan(&ban.BanID, &targetID, &sourceID, &ban.BanType, &ban.Reason, &ban.ReasonText, &ban.Note,
 			&ban.Origin, &ban.ValidUntil, &ban.CreatedOn, &ban.UpdatedOn, &ban.Deleted, &ban.ReportID, &ban.UnbanReasonText,
-			&ban.IsEnabled, &ban.AppealState, &ban.AppealState); errQuery != nil {
+			&ban.IsEnabled, &ban.AppealState, &ban.IncludeFriends, &ban.EvadeOk); errQuery != nil {
 			return nil, errors.Join(errQuery, domain.ErrScanResult)
 		}
 

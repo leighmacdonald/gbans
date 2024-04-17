@@ -117,6 +117,7 @@ type apiBanRequest struct {
 	DemoName       string         `json:"demo_name"`
 	DemoTick       int            `json:"demo_tick"`
 	IncludeFriends bool           `json:"include_friends"`
+	EvadeOk        bool           `json:"evade_ok"`
 }
 
 func (h banHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
@@ -160,7 +161,7 @@ func (h banHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 
 		var banSteam domain.BanSteam
 		if errBanSteam := domain.NewBanSteam(author.SteamID, targetID, duration, req.Reason, req.ReasonText, req.Note,
-			origin, req.ReportID, req.BanType, req.IncludeFriends, &banSteam,
+			origin, req.ReportID, req.BanType, req.IncludeFriends, req.EvadeOk, &banSteam,
 		); errBanSteam != nil {
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 
@@ -409,6 +410,7 @@ func (h banHandler) onAPIPostBanUpdate() gin.HandlerFunc {
 		ReasonText     string          `json:"reason_text"`
 		Note           string          `json:"note"`
 		IncludeFriends bool            `json:"include_friends"`
+		EvadeOk        bool            `json:"evade_ok"`
 		ValidUntil     time.Time       `json:"valid_until"`
 	}
 
@@ -454,6 +456,7 @@ func (h banHandler) onAPIPostBanUpdate() gin.HandlerFunc {
 		bannedPerson.BanType = req.BanType
 		bannedPerson.Reason = req.Reason
 		bannedPerson.IncludeFriends = req.IncludeFriends
+		bannedPerson.EvadeOk = req.EvadeOk
 		bannedPerson.ValidUntil = req.ValidUntil
 
 		if errSave := h.bu.Save(ctx, &bannedPerson.BanSteam); errSave != nil {

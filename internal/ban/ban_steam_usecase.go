@@ -188,6 +188,14 @@ func (s *banSteamUsecase) IsOnIPWithBan(ctx context.Context, curUser domain.Pers
 		return false, errMatch
 	}
 
+	if existing.EvadeOk {
+		slog.Warn("Whitelisted player connecting from a banned ip",
+			slog.String("sid", existing.TargetID.String()),
+			slog.String("reason", existing.Reason.String()))
+
+		return false, nil
+	}
+
 	duration, errDuration := util.ParseUserStringDuration("10y")
 	if errDuration != nil {
 		return false, errDuration
@@ -205,7 +213,7 @@ func (s *banSteamUsecase) IsOnIPWithBan(ctx context.Context, curUser domain.Pers
 	if errNewBan := domain.NewBanSteam(steamid.New(s.configUsecase.Config().General.Owner),
 		steamID, duration, domain.Evading, domain.Evading.String(),
 		"Connecting from same IP as banned player", domain.System,
-		0, domain.Banned, false, &newBan); errNewBan != nil {
+		0, domain.Banned, false, false, &newBan); errNewBan != nil {
 		slog.Error("Could not create evade ban", log.ErrAttr(errDuration))
 
 		return false, errNewBan

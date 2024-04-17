@@ -1,11 +1,13 @@
 import { ChangeEvent, useCallback } from 'react';
 import useUrlState from '@ahooksjs/use-url-state';
+import FilterListIcon from '@mui/icons-material/FilterList';
 import HowToVoteIcon from '@mui/icons-material/HowToVote';
 import Stack from '@mui/material/Stack';
 import Grid from '@mui/material/Unstable_Grid2';
 import { Formik } from 'formik';
 import { FormikHelpers } from 'formik/dist/types';
 import { VoteResult } from '../api/votes.ts';
+import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons';
 import { FilterButtons } from '../component/formik/FilterButtons.tsx';
 import { SourceIDField } from '../component/formik/SourceIDField.tsx';
@@ -85,18 +87,22 @@ export const AdminVotesPage = () => {
             onSubmit={onSubmit}
         >
             <Stack spacing={2}>
-                <Grid container spacing={2}>
-                    <Grid xs={4} sm={4} md={4}>
-                        <SourceIDField />
+                <ContainerWithHeader
+                    title={'Filters'}
+                    iconLeft={<FilterListIcon />}
+                >
+                    <Grid container spacing={2}>
+                        <Grid xs={4} sm={4} md={4}>
+                            <SourceIDField />
+                        </Grid>
+                        <Grid xs={4} sm={4} md={4}>
+                            <TargetIDField />
+                        </Grid>
+                        <Grid xs={4} sm={4} md={4}>
+                            <FilterButtons />
+                        </Grid>
                     </Grid>
-                    <Grid xs={4} sm={4} md={4}>
-                        <TargetIDField />
-                    </Grid>
-                    <Grid xs={4} sm={4} md={4}>
-                        <FilterButtons />
-                    </Grid>
-                </Grid>
-
+                </ContainerWithHeader>
                 <ContainerWithHeaderAndButtons
                     title={'Vote History'}
                     iconLeft={<HowToVoteIcon />}

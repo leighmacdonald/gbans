@@ -790,7 +790,7 @@ func (h discordService) makeOnMute() func(context.Context, *discordgo.Session, *
 
 		var banSteam domain.BanSteam
 		if errOpts := domain.NewBanSteam(author.SteamID, playerID, duration, reason, reason.String(), modNote,
-			domain.Bot, 0, domain.NoComm, false, &banSteam); errOpts != nil {
+			domain.Bot, 0, domain.NoComm, false, false, &banSteam); errOpts != nil {
 			return nil, errOpts
 		}
 
@@ -938,7 +938,7 @@ func (h discordService) onBanSteam(ctx context.Context, _ *discordgo.Session,
 
 	var banSteam domain.BanSteam
 	if errOpts := domain.NewBanSteam(author.SteamID, targetID, duration, reason, reason.String(), modNote, domain.Bot,
-		0, domain.Banned, false, &banSteam); errOpts != nil {
+		0, domain.Banned, false, false, &banSteam); errOpts != nil {
 		return nil, errOpts
 	}
 
