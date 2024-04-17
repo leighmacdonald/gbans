@@ -49,7 +49,7 @@ export default defineConfig({
             inject: {
                 data: {
                     title: 'Uncletopia',
-                    build_version: 'v0.6.3',
+                    build_version: 'v0.6.4',
                     discord_link_id: 'caQKCWFMrN',
                     asset_url: 'https://assets.uncletopia.com',
                     bucket_demo: 'demos',
