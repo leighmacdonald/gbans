@@ -27,12 +27,14 @@ instructions:
 ### Compile from source
 
 Precompiled binaries will be provided once the project is in a more stable state. Its recommended to use the docker
-images as they are currently the only tested usecase.  
+images as they are currently the only tested usecase.
 
 - [make](https://www.gnu.org/software/make/) Not strictly required but provides predefined build commands
-- [minio](https://min.io/) You will need to have set up minio access/secret keys. Other s3 compatible options should work but are untested
+- [minio](https://min.io/) You will need to have set up minio access/secret keys. Other s3 compatible options should
+  work but are untested
 - [golang 1.22+](https://golang.org/) Version >=1.22 is required.
-- [PostgreSQL](https://www.postgresql.org/) Version 15 is the only version currently tested against. However, anything 10 and up should work, ymmv.
+- [PostgreSQL](https://www.postgresql.org/) Version 15 is the only version currently tested against. However, anything
+  10 and up should work, ymmv.
     - [PostGIS](https://postgis.net/) extension is also used for some GIS functionality.
 - [NodeJS >=18.17.1](https://nodejs.org/en/) To build frontend
     - [pnpm](https://pnpm.io/) JS package manager
@@ -40,7 +42,8 @@ images as they are currently the only tested usecase.
 
 Basic steps to build the binary packages:
 
-If you do not already have sourcemod, you can download and extract sourcemod to a directory of your choosing with the following:
+If you do not already have sourcemod, you can download and extract sourcemod to a directory of your choosing with the
+following:
 
     mkdir -p ~/sourcemod &&  wget https://sm.alliedmods.net/smdrop/1.12/sourcemod-1.12.0-git7110-linux.tar.gz -O ~/sourcemod/sm.tar.gz && tar xvfz ~/sourcemod/sm.tar.gz -C ~/sourcemod
 
@@ -48,8 +51,9 @@ Clone the gbans repository
 
     git clone git@github.com:leighmacdonald/gbans.git && cd gbans
 
-Build the projects, replace SM_ROOT with the path to your sourcemod installation directory (the folder with addons and cfg folders inside).
-    
+Build the projects, replace SM_ROOT with the path to your sourcemod installation directory (the folder with addons and
+cfg folders inside).
+
     SM_ROOT=~/sourcemod make 
 
 You should now have a binary located at `./build/$platform/gbans`
@@ -62,7 +66,7 @@ sudo docker run -d --restart unless-stopped \
     --dns=1.1.1.1 \
     -v /home/ubuntu/gbans/gbans.yml:/app/gbans.yml:ro \
     --name gbans \
-    ghcr.io/leighmacdonald/gbans:v0.6.2
+    ghcr.io/leighmacdonald/gbans:v0.6.3
 ```
 
 Substitute `/home/ubuntu/gbans/gbans.yml` with the location of your config.
