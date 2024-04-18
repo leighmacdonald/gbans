@@ -38,7 +38,7 @@ export const AdminVotesPage = () => {
     const { data, count } = useVotes({
         order_by: state.sortColumn ?? 'vote_id',
         desc: (state.sortOrder ?? 'desc') == 'desc',
-        limit: Number(state.rows ?? RowsPerPage.Ten),
+        limit: Number(state.rows ?? RowsPerPage.TwentyFive),
         offset: Number((state.page ?? 0) * (state.rows ?? RowsPerPage.Ten)),
         source_id: state.source_id,
         target_id: state.target_id,
@@ -195,7 +195,7 @@ export const AdminVotesPage = () => {
                                 label: 'Created On',
                                 tooltip: 'When the vote occurred',
                                 sortKey: 'created_on',
-                                sortable: false,
+                                sortable: true,
                                 align: 'right',
                                 renderer: (row) => {
                                     return renderDateTime(row.created_on);

@@ -161,6 +161,9 @@ devDependencies:
   mui-markdown:
     specifier: ^1.1.13
     version: 1.1.13(@emotion/react@11.11.4)(@emotion/styled@11.11.5)(@mui/material@5.15.15)(markdown-to-jsx@7.4.7)(react-dom@18.2.0)(react@18.2.0)
+  mui-nested-menu:
+    specifier: ^3.3.0
+    version: 3.3.0(@emotion/react@11.11.4)(@emotion/styled@11.11.5)(@mui/material@5.15.15)(@types/react@18.2.79)(react-dom@18.2.0)(react@18.2.0)
   prettier:
     specifier: ^3.2.5
     version: 3.2.5
@@ -4075,6 +4078,31 @@ packages:
       react-dom: 18.2.0(react@18.2.0)
     optionalDependencies:
       prism-react-renderer: 2.3.1(react@18.2.0)
+    dev: true
+
+  /mui-nested-menu@3.3.0(@emotion/react@11.11.4)(@emotion/styled@11.11.5)(@mui/material@5.15.15)(@types/react@18.2.79)(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-0tA+T8X6w5F2pgWLPC6vfXrVnc7zvLtgAR5Tmy7hIa73YjTuZfLaVfiDqtCNQNtLK/OcechtF04yx/G7HTjHVA==}
+    peerDependencies:
+      '@emotion/react': ^11.5.0
+      '@emotion/styled': ^11.3.0
+      '@mui/material': ^5.0.0
+      '@types/react': ^17.0.0 || ^18.0.0
+      react: ^17.0.0 || ^18.0.0
+      react-dom: ^17.0.0 || ^18.0.0
+    peerDependenciesMeta:
+      '@emotion/react':
+        optional: true
+      '@emotion/styled':
+        optional: true
+      '@types/react':
+        optional: true
+    dependencies:
+      '@emotion/react': 11.11.4(@types/react@18.2.79)(react@18.2.0)
+      '@emotion/styled': 11.11.5(@emotion/react@11.11.4)(@types/react@18.2.79)(react@18.2.0)
+      '@mui/material': 5.15.15(@emotion/react@11.11.4)(@emotion/styled@11.11.5)(@types/react@18.2.79)(react-dom@18.2.0)(react@18.2.0)
+      '@types/react': 18.2.79
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
     dev: true
 
   /nanoid@3.3.7:

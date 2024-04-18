@@ -1,5 +1,5 @@
 import { JSX, useMemo, useState, MouseEvent } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import ArticleIcon from '@mui/icons-material/Article';
 import BlockIcon from '@mui/icons-material/Block';
@@ -46,6 +46,7 @@ import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
+import { MenuItemData, NestedDropdown } from 'mui-nested-menu';
 import SteamID from 'steamid';
 import { generateOIDCLink, PermissionLevel, UserNotification } from '../api';
 import { NotificationsProvider } from '../contexts/NotificationsCtx';
@@ -56,7 +57,6 @@ import steamLogo from '../icons/steam_login_sm.png';
 import { tf2Fonts } from '../theme';
 import { logErr } from '../util/errors';
 import { VCenterBox } from './VCenterBox.tsx';
-import { MenuItemData, NestedDropdown } from './nested-menu';
 
 interface menuRoute {
     to: string;
@@ -69,6 +69,7 @@ export const TopBar = () => {
     const { notifications } = useNotificationsCtx();
     const theme = useTheme();
     const colourMode = useColourModeCtx();
+    const navigate = useNavigate();
 
     const [anchorElNav, setAnchorElNav] = useState<null | HTMLElement>(null);
 
@@ -169,203 +170,118 @@ export const TopBar = () => {
         [colourOpts, currentUser?.steam_id]
     );
 
+    // @ts-expect-error label defined as string
     const adminItems: MenuItemData = useMemo(() => {
+        const onClickHandler = (href: string) => {
+            return () => {
+                navigate(href);
+            };
+        };
+
         return {
             label: <SettingsIcon />,
             items: [
                 {
-                    href: '/admin/filters',
-                    label: (
-                        <Stack direction={'row'} spacing={1}>
-                            <SubjectIcon sx={colourOpts} />
-                            <Typography color={colourOpts}>
-                                Filtered Words
-                            </Typography>
-                        </Stack>
-                    )
+                    leftIcon: <SubjectIcon sx={colourOpts} />,
+                    label: 'Filtered Words',
+                    callback: onClickHandler('/admin/filters')
                 },
                 {
-                    label: (
-                        <Stack direction={'row'} spacing={1}>
-                            <BlockIcon sx={colourOpts} />
-                            <Typography color={colourOpts}>Ban</Typography>
-                        </Stack>
-                    ),
+                    leftIcon: <BlockIcon sx={colourOpts} />,
+                    label: 'Ban',
                     items: [
                         {
-                            href: '/admin/ban/steam',
-                            label: (
-                                <Stack direction={'row'} spacing={1}>
-                                    <NoAccountsIcon sx={colourOpts} />
-                                    <Typography color={colourOpts}>
-                                        Steam
-                                    </Typography>
-                                </Stack>
-                            )
+                            leftIcon: <NoAccountsIcon sx={colourOpts} />,
+                            label: 'Steam',
+                            callback: onClickHandler('/admin/ban/steam')
                         },
                         {
-                            href: '/admin/ban/cidr',
-                            label: (
-                                <Stack direction={'row'} spacing={1}>
-                                    <WifiOffIcon sx={colourOpts} />
-                                    <Typography color={colourOpts}>
-                                        IP/CIDR
-                                    </Typography>
-                                </Stack>
-                            )
+                            leftIcon: <WifiOffIcon sx={colourOpts} />,
+                            label: 'IP/CIDR',
+                            callback: onClickHandler('/admin/ban/cidr')
                         },
                         {
-                            href: '/admin/ban/group',
-                            label: (
-                                <Stack direction={'row'} spacing={1}>
-                                    <GroupsIcon sx={colourOpts} />
-                                    <Typography color={colourOpts}>
-                                        Steam Group
-                                    </Typography>
-                                </Stack>
-                            )
+                            leftIcon: <GroupsIcon sx={colourOpts} />,
+                            label: 'Steam Group',
+                            callback: onClickHandler('/admin/ban/group')
                         },
                         {
-                            href: '/admin/ban/asn',
-                            label: (
-                                <Stack direction={'row'} spacing={1}>
-                                    <PublicOffIcon sx={colourOpts} />
-                                    <Typography color={colourOpts}>
-                                        ASN
-                                    </Typography>
-                                </Stack>
-                            )
+                            leftIcon: <PublicOffIcon sx={colourOpts} />,
+                            label: 'ASN',
+                            callback: onClickHandler('/admin/ban/asn')
                         }
                     ]
                 },
 
                 {
-                    href: '/admin/reports',
-                    label: (
-                        <Stack direction={'row'} spacing={1}>
-                            <ReportIcon sx={colourOpts} />
-                            <Typography color={colourOpts}>Reports</Typography>
-                        </Stack>
-                    )
+                    leftIcon: <ReportIcon sx={colourOpts} />,
+                    label: 'Reports',
+                    callback: onClickHandler('/admin/reports')
                 },
                 {
-                    href: '/admin/appeals',
-                    label: (
-                        <Stack direction={'row'} spacing={1}>
-                            <LiveHelpIcon sx={colourOpts} />
-                            <Typography color={colourOpts}>
-                                Ban Appeals
-                            </Typography>
-                        </Stack>
-                    )
+                    leftIcon: <LiveHelpIcon sx={colourOpts} />,
+                    label: 'Ban Appeals',
+                    callback: onClickHandler('/admin/appeals')
                 },
                 {
-                    href: '/admin/news',
-                    label: (
-                        <Stack direction={'row'} spacing={1}>
-                            <NewspaperIcon sx={colourOpts} />
-                            <Typography color={colourOpts}>News</Typography>
-                        </Stack>
-                    )
+                    label: 'News',
+                    leftIcon: <NewspaperIcon sx={colourOpts} />,
+                    callback: onClickHandler('/admin/news')
                 },
                 {
-                    href: '/admin/network',
-                    label: (
-                        <Stack direction={'row'} spacing={1}>
-                            <TravelExploreIcon sx={colourOpts} />
-                            <Typography color={colourOpts}>
-                                IP/Network Tools
-                            </Typography>
-                        </Stack>
-                    ),
+                    leftIcon: <TravelExploreIcon sx={colourOpts} />,
+                    label: 'IP/Network Tools',
+                    callback: onClickHandler('/admin/network'),
                     items: [
                         {
-                            href: '/admin/network/ip_hist',
-                            label: (
-                                <Stack direction={'row'} spacing={1}>
-                                    <SensorOccupiedIcon sx={colourOpts} />
-                                    <Typography color={colourOpts}>
-                                        Player IP History
-                                    </Typography>
-                                </Stack>
+                            leftIcon: <SensorOccupiedIcon sx={colourOpts} />,
+                            label: 'Player IP History',
+                            callback: onClickHandler('/admin/network/ip_hist')
+                        },
+                        {
+                            leftIcon: <WifiFindIcon sx={colourOpts} />,
+                            label: 'Find Players By IP',
+                            callback: onClickHandler(
+                                '/admin/network/players_by_ip'
                             )
                         },
                         {
-                            href: '/admin/network/players_by_ip',
-                            label: (
-                                <Stack direction={'row'} spacing={1}>
-                                    <WifiFindIcon sx={colourOpts} />
-                                    <Typography color={colourOpts}>
-                                        Find Players By IP
-                                    </Typography>
-                                </Stack>
-                            )
+                            leftIcon: <CellTowerIcon sx={colourOpts} />,
+                            label: 'IP Info',
+                            callback: onClickHandler('/admin/network/ip_info')
                         },
                         {
-                            href: '/admin/network/ip_info',
-                            label: (
-                                <Stack direction={'row'} spacing={1}>
-                                    <CellTowerIcon sx={colourOpts} />
-                                    <Typography color={colourOpts}>
-                                        IP Info
-                                    </Typography>
-                                </Stack>
-                            )
-                        },
-                        {
-                            href: '/admin/network/cidr_blocks',
-                            label: (
-                                <Stack direction={'row'} spacing={1}>
-                                    <WifiOffIcon sx={colourOpts} />
-                                    <Typography color={colourOpts}>
-                                        External CIDR Bans
-                                    </Typography>
-                                </Stack>
+                            leftIcon: <WifiOffIcon sx={colourOpts} />,
+                            label: 'External CIDR Bans',
+                            callback: onClickHandler(
+                                '/admin/network/cidr_blocks'
                             )
                         }
                     ]
                 },
                 {
-                    href: '/admin/contests',
-                    label: (
-                        <Stack direction={'row'} spacing={1}>
-                            <EmojiEventsIcon sx={colourOpts} />
-                            <Typography color={colourOpts}>Contests</Typography>
-                        </Stack>
-                    )
+                    leftIcon: <EmojiEventsIcon sx={colourOpts} />,
+                    label: 'Contests',
+                    callback: onClickHandler('/admin/contests')
                 },
                 {
-                    href: '/admin/people',
-                    label: (
-                        <Stack direction={'row'} spacing={1}>
-                            <PersonSearchIcon sx={colourOpts} />
-                            <Typography color={colourOpts}>People</Typography>
-                        </Stack>
-                    )
+                    leftIcon: <PersonSearchIcon sx={colourOpts} />,
+                    label: 'People',
+                    callback: onClickHandler('/admin/people')
                 },
                 {
-                    href: '/admin/votes',
-                    label: (
-                        <Stack direction={'row'} spacing={1}>
-                            <HowToVoteIcon sx={colourOpts} />
-                            <Typography color={colourOpts}>
-                                Vote History
-                            </Typography>
-                        </Stack>
-                    )
+                    leftIcon: <HowToVoteIcon sx={colourOpts} />,
+                    label: 'Vote History',
+                    callback: onClickHandler('/admin/votes')
                 },
                 {
-                    href: '/admin/servers',
-                    label: (
-                        <Stack direction={'row'} spacing={1}>
-                            <SettingsIcon sx={colourOpts} />
-                            <Typography color={colourOpts}>Servers</Typography>
-                        </Stack>
-                    )
+                    leftIcon: <SettingsIcon sx={colourOpts} />,
+                    label: 'Servers',
+                    callback: onClickHandler('/admin/servers')
                 }
             ]
         };
-    }, [colourOpts]);
+    }, [colourOpts, navigate]);
 
     const renderLinkedMenuItem = (
         text: string,
