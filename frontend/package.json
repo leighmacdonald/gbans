@@ -80,6 +80,7 @@
     "markdown-to-jsx": "^7.4.7",
     "minimatch": "^9.0.4",
     "mui-markdown": "^1.1.13",
+    "mui-nested-menu": "^3.3.0",
     "prettier": "^3.2.5",
     "pretty-bytes": "^6.1.1",
     "prism-react-renderer": "^2.3.1",
