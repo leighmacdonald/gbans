@@ -9,8 +9,10 @@ import (
 	"path"
 	"strings"
 
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/network"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/viant/afs/storage"
 )
 
@@ -20,22 +22,24 @@ type demoUpdate struct {
 	demoBytes []byte
 }
 
-type DemoFetcher struct {
+type Fetcher struct {
+	database       database.Database
 	serversUsecase domain.ServersUsecase
 	configUsecase  domain.ConfigUsecase
 	demoChan       chan demoUpdate
 }
 
-func NewDemoFetcher(configUsecase domain.ConfigUsecase, serversUsecase domain.ServersUsecase) DemoFetcher {
-	return DemoFetcher{
+func NewFetcher(database database.Database, configUsecase domain.ConfigUsecase, serversUsecase domain.ServersUsecase) Fetcher {
+	return Fetcher{
+		database:       database,
 		configUsecase:  configUsecase,
 		serversUsecase: serversUsecase,
 		demoChan:       make(chan demoUpdate),
 	}
 }
 
-func (d DemoFetcher) Start(ctx context.Context) {
-	sshExec := network.NewSCPExecer(d.configUsecase, d.serversUsecase, d.OnClientConnect)
+func (d Fetcher) Start(ctx context.Context) {
+	sshExec := network.NewSCPExecer(d.database, d.configUsecase, d.serversUsecase, d.OnClientConnect)
 	go sshExec.Start(ctx)
 
 	for {
@@ -57,37 +61,41 @@ var (
 	errFailedReadFile = errors.New("failed to read file")
 )
 
-func (d DemoFetcher) OnClientConnect(ctx context.Context, client storage.Storager, server domain.Server) error {
-	demoDir := fmt.Sprintf("~/srcds-%s/tf/demos", server.ShortName)
+func (d Fetcher) OnClientConnect(ctx context.Context, client storage.Storager, servers []domain.Server) error {
+	for _, server := range servers {
+		demoDir := fmt.Sprintf("~/srcds-%s/tf/demos", server.ShortName)
 
-	filelist, errFilelist := client.List(ctx, demoDir)
-	if errFilelist != nil {
-		return errors.Join(errFilelist, errFailedToList)
-	}
+		filelist, errFilelist := client.List(ctx, demoDir)
+		if errFilelist != nil {
+			slog.Error("remote list dir failed", log.ErrAttr(errFailedToList))
 
-	for _, file := range filelist {
-		if !strings.HasSuffix(file.Name(), ".dem") {
 			continue
 		}
 
-		reader, err := client.Open(ctx, path.Join(demoDir, file.Name()))
-		if err != nil {
-			return errors.Join(err, errFailedOpenFile)
-		}
+		for _, file := range filelist {
+			if !strings.HasSuffix(file.Name(), ".dem") {
+				continue
+			}
 
-		data, errRead := io.ReadAll(reader)
-		if errRead != nil {
+			reader, err := client.Open(ctx, path.Join(demoDir, file.Name()))
+			if err != nil {
+				return errors.Join(err, errFailedOpenFile)
+			}
+
+			data, errRead := io.ReadAll(reader)
+			if errRead != nil {
+				_ = reader.Close()
+
+				return errors.Join(errRead, errFailedReadFile)
+			}
+
 			_ = reader.Close()
 
-			return errors.Join(errRead, errFailedReadFile)
-		}
-
-		_ = reader.Close()
-
-		d.demoChan <- demoUpdate{
-			name:      file.Name(),
-			server:    server,
-			demoBytes: data,
+			d.demoChan <- demoUpdate{
+				name:      file.Name(),
+				server:    server,
+				demoBytes: data,
+			}
 		}
 	}
 

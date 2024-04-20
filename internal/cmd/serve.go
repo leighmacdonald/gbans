@@ -282,8 +282,10 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				stateUsecase.LogAddressAdd(ctx, conf.Debug.AddRCONLogAddress)
 			}
 
-			demoFetcher := demo.NewDemoFetcher(configUsecase, serversUsecase)
-			go demoFetcher.Start(ctx)
+			if conf.SSH.Enabled {
+				demoFetcher := demo.NewFetcher(dbUsecase, configUsecase, serversUsecase)
+				go demoFetcher.Start(ctx)
+			}
 
 			httpServer := httphelper.NewHTTPServer(conf.HTTP.TLS, conf.HTTP.Addr(), router)
 

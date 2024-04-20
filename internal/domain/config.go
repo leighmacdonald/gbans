@@ -52,11 +52,14 @@ func (c Config) ExtURLRaw(path string, args ...any) string {
 }
 
 type ConfigSSH struct {
+	Enabled        bool          `mapstructure:"enabled"`
 	Username       string        `mapstructure:"username"`
+	Port           int           `mapstructure:"port"`
 	PrivateKeyPath string        `mapstructure:"private_key_path"`
 	Password       string        `mapstructure:"password"`
 	UpdateInterval time.Duration `mapstructure:"update_interval"`
 	Timeout        time.Duration `mapstructure:"timeout"`
+	DemoPathFmt    string        `mapstructure:"demo_path_fmt"`
 }
 
 type ConfigExports struct {

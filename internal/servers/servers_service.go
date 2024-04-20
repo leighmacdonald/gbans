@@ -124,7 +124,7 @@ func (h *serversHandler) onAPIGetServers() gin.HandlerFunc {
 
 func (h *serversHandler) onAPIGetServerStates() gin.HandlerFunc {
 	type UserServers struct {
-		Servers []domain.BaseServer `json:"servers"`
+		Servers []domain.SafeServer `json:"servers"`
 		LatLong ip2location.LatLong `json:"lat_long"`
 	}
 
@@ -153,11 +153,11 @@ func (h *serversHandler) onAPIGetServerStates() gin.HandlerFunc {
 			lon = httphelper.GetDefaultFloat64(ctx.GetHeader("cf-iplongitude"), -87.6160)
 			// region := ctx.GetHeader("cf-region-code")
 			curState = h.stateUsecase.Current()
-			servers  []domain.BaseServer
+			servers  []domain.SafeServer
 		)
 
 		for _, srv := range curState {
-			servers = append(servers, domain.BaseServer{
+			servers = append(servers, domain.SafeServer{
 				Host:       srv.Host,
 				Port:       srv.Port,
 				IP:         srv.IP,
