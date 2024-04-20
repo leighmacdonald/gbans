@@ -58,19 +58,19 @@ func NewServer(shortName string, address string, port int) Server {
 
 type Server struct {
 	// Auto generated id
-	ServerID int `db:"server_id" json:"server_id"`
+	ServerID int `json:"server_id"`
 	// ShortName is a short reference name for the server eg: us-1
 	ShortName string `json:"short_name"`
 	Name      string `json:"name"`
 	// Address is the ip of the server
-	Address string `db:"address" json:"address"`
+	Address string `json:"address"`
 	// Port is the port of the server
-	Port int `db:"port" json:"port"`
+	Port int `json:"port"`
 	// RCON is the RCON password for the server
-	RCON          string `db:"rcon" json:"rcon"`
-	ReservedSlots int    `db:"reserved_slots" json:"reserved_slots"`
+	RCON          string `json:"rcon"`
+	ReservedSlots int    `json:"reserved_slots"`
 	// Password is what the server uses to generate a token to make authenticated calls (permanent Refresh token)
-	Password    string  `db:"password" json:"password"`
+	Password    string  `json:"password"`
 	IsEnabled   bool    `json:"is_enabled"`
 	Deleted     bool    `json:"deleted"`
 	Region      string  `json:"region"`
@@ -80,9 +80,9 @@ type Server struct {
 	LogSecret   int     `json:"log_secret"`
 	EnableStats bool    `json:"enable_stats"`
 	// TokenCreatedOn is set when changing the token
-	TokenCreatedOn time.Time `db:"token_created_on" json:"token_created_on"`
-	CreatedOn      time.Time `db:"created_on" json:"created_on"`
-	UpdatedOn      time.Time `db:"updated_on" json:"updated_on"`
+	TokenCreatedOn time.Time `json:"token_created_on"`
+	CreatedOn      time.Time `json:"created_on"`
+	UpdatedOn      time.Time `json:"updated_on"`
 }
 
 func (s Server) IP(ctx context.Context) (net.IP, error) {
@@ -113,7 +113,9 @@ type ServerQueryFilter struct {
 	IncludeDisabled bool `json:"include_disabled"`
 }
 
-type BaseServer struct {
+// SafeServer provides a server struct stripped of any sensitive info suitable for public facing
+// services.
+type SafeServer struct {
 	ServerID   int      `json:"server_id"`
 	Host       string   `json:"host"`
 	Port       int      `json:"port"`

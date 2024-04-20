@@ -133,38 +133,21 @@ logging:
   # The external host:port that srcds will use to connect eg: `logaddress_add sink.localhost:27115`
   srcds_log_external_host: "sink.localhost:27115"
 
-network_bans:
-  enabled: true
-  max_age: 1d
+ip2location:
   # Where to store IP2Location databases while being processed.
+  enabled: true
   cache_path: .cache
-  ip2location:
-    enabled: true
-    # The API token. NOTE: This is for ip2location.com, NOT ip2location.io
-    token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-    asn_enabled: true
-    ip_enabled: true
-    proxy_enabled: true
-  sources:
-    - name: tf2bd
-      url: https://raw.githubusercontent.com/PazerOP/tf2_bot_detector/master/staging/cfg/playerlist.official.json
-      type: tf2bd
-      enabled: false
-#    - name: bdd
-#      url: https://tf2bdd.pazer.us/v1/steamids
-#      type: tf2bd
-#    - name: erjv
-#      url: https://raw.githubusercontent.com/ejrv/VPNs/master/vpn-ipv4.txt
-#      type: cidr
-#    - name: proxy-list-socks5
-#      url: https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/socks5.txt
-#      type: s5
-#    - name: proxy-list-socks4
-#      url: https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/socks4.txt
-#      type: s4
-#    - name: proxy-list-http
-#      url: https://raw.githubusercontent.com/TheSpeedX/PROXY-List/master/http.txt
-#      type: http
-#    - name: ET
-#      url: https://rules.emergingthreats.net/open-nogpl/snort-2.9.0/emerging.rules.tar.gz
-#      type: snort
+  # The API token. NOTE: This is for ip2location.com, NOT ip2location.io
+  token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  asn_enabled: true
+  ip_enabled: true
+  proxy_enabled: true
+
+ssh:
+  username: tf2server
+  port: 22
+  private_key_path: "~/.ssh/id_rsa" # if empty, password auth used
+  password: "" # used as passphrase if not empty and private key path set
+  update_interval: 5m
+  timeout: 10s
+  demo_path_fmt: "~/srcds-%s/tf/stv_demos/complete/" # %s is replaced with short server identifier name
