@@ -174,7 +174,7 @@ func (r *banSteamRepository) insertBan(ctx context.Context, ban *domain.BanSteam
 	const query = `
 		INSERT INTO ban (target_id, source_id, ban_type, reason, reason_text, note, valid_until, 
 		                 created_on, updated_on, origin, report_id, appeal_state, include_friends, evade_ok, last_ip)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, case WHEN $11 = 0 THEN null ELSE $11 END, $12, $13, $14)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, case WHEN $11 = 0 THEN null ELSE $11 END, $12, $13, $14, $15)
 		RETURNING ban_id`
 
 	errQuery := r.db.
