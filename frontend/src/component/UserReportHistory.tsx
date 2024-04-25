@@ -1,11 +1,11 @@
 import { ChangeEvent, useState } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
+import { Link as RouterLink } from '@tanstack/react-router';
 import { ReportStatus, reportStatusString, ReportWithAuthor } from '../api';
 import { useReports } from '../hooks/useReports';
 import { Order, RowsPerPage } from '../util/table.ts';

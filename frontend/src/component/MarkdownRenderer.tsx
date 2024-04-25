@@ -1,8 +1,8 @@
 import { JSX } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
 import { PaletteMode } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
+import { Link as RouterLink } from '@tanstack/react-router';
 import { getOverrides, MuiMarkdown } from 'mui-markdown';
 import { Highlight, themes } from 'prism-react-renderer';
 

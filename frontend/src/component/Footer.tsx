@@ -1,11 +1,11 @@
 import { JSX, useMemo } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
+import { Link as RouterLink } from '@tanstack/react-router';
 
 export const Footer = (): JSX.Element => {
     const theme = useTheme();

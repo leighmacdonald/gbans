@@ -1,5 +1,4 @@
 import { JSX, useMemo, useState, MouseEvent } from 'react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import ArticleIcon from '@mui/icons-material/Article';
 import BlockIcon from '@mui/icons-material/Block';
@@ -46,6 +45,7 @@ import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
+import { useNavigate, Link as RouterLink } from '@tanstack/react-router';
 import { MenuItemData, NestedDropdown } from 'mui-nested-menu';
 import SteamID from 'steamid';
 import { generateOIDCLink, PermissionLevel, UserNotification } from '../api';
@@ -173,8 +173,8 @@ export const TopBar = () => {
     // @ts-expect-error label defined as string
     const adminItems: MenuItemData = useMemo(() => {
         const onClickHandler = (href: string) => {
-            return () => {
-                navigate(href);
+            return async () => {
+                await navigate({ to: href });
             };
         };
 

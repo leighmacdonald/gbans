@@ -1,9 +1,8 @@
 import { ChangeEvent, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import InsightsIcon from '@mui/icons-material/Insights';
 import Button from '@mui/material/Button';
-import Link from '@mui/material/Link';
 import Tooltip from '@mui/material/Tooltip';
+import { Link } from '@tanstack/react-router';
 import { WeaponsOverallResult } from '../api';
 import { usePlayerWeaponsOverallStats } from '../hooks/usePlayerWeaponsOverallStats';
 import { Order, RowsPerPage } from '../util/table.ts';
@@ -30,8 +29,6 @@ export const PlayerWeaponsStatListContainer = ({
         order_by: sortColumn,
         desc: sortOrder == 'desc'
     });
-
-    const navigate = useNavigate();
 
     return (
         <ContainerWithHeader
@@ -84,13 +81,7 @@ export const PlayerWeaponsStatListContainer = ({
                                                 justifyContent: 'flex-start'
                                             }}
                                             component={Link}
-                                            href={`/stats/weapon/${obj.weapon_id}`}
-                                            onClick={(event) => {
-                                                event.preventDefault();
-                                                navigate(
-                                                    `/stats/weapon/${obj.weapon_id}`
-                                                );
-                                            }}
+                                            to={`/stats/weapon/${obj.weapon_id}`}
                                         >
                                             {obj.name}
                                         </Button>

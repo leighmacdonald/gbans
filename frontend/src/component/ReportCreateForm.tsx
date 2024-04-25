@@ -1,10 +1,10 @@
 import { JSX, useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import EditNotificationsIcon from '@mui/icons-material/EditNotifications';
 import SendIcon from '@mui/icons-material/Send';
 import Box from '@mui/material/Box';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import Stack from '@mui/material/Stack';
+import { useNavigate } from '@tanstack/react-router';
 import { Formik } from 'formik';
 import { FormikHelpers } from 'formik/dist/types';
 import * as yup from 'yup';
