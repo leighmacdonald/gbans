@@ -1,19 +1,29 @@
-import { useEffect } from 'react';
+import { StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
     createRoutesFromChildren,
+    matchRoutes,
     useLocation,
     useNavigationType
 } from 'react-router';
-import { matchRoutes } from 'react-router-dom';
 import '@fontsource/roboto/latin-300.css';
 import '@fontsource/roboto/latin-400.css';
 import '@fontsource/roboto/latin-500.css';
 import '@fontsource/roboto/latin-700.css';
-import { PaletteMode } from '@mui/material';
 import * as Sentry from '@sentry/react';
-import { App } from './App';
+import { createRouter, RouterProvider } from '@tanstack/react-router';
 import './fonts/tf2build.css';
+import { routeTree } from './routeTree.gen';
+
+// Create a new router instance
+const router = createRouter({ routeTree });
+
+// Register the router instance for type safety
+declare module '@tanstack/react-router' {
+    interface Register {
+        router: typeof router;
+    }
+}
 
 // extend window with our own items that we inject
 declare global {
@@ -62,10 +72,8 @@ if (window.gbans.sentry_dsn_web != '') {
 const container = document.getElementById('root');
 if (container) {
     createRoot(container).render(
-        <App
-            initialTheme={
-                (localStorage.getItem('theme') as PaletteMode) || 'light'
-            }
-        />
+        <StrictMode>
+            <RouterProvider router={router} />
+        </StrictMode>
     );
 }

@@ -3,7 +3,7 @@ import { RouteProps } from 'react-router';
 import loadable from '@loadable/component';
 import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
 
-const LoginPage = loadable(() => import('../page/LoginPage'));
+const LoginPage = loadable(() => import('../routes/login.lazy.tsx'));
 
 export interface PrivateRouteProps {
     children: JSX.Element;
