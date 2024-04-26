@@ -16,10 +16,10 @@ import { PlayerStatsOverallContainer } from '../component/PlayerStatsOverallCont
 import { PlayerWeaponsStatListContainer } from '../component/PlayerWeaponsStatListContainer';
 import { ProfileInfoBox } from '../component/ProfileInfoBox';
 import { SteamIDList } from '../component/SteamIDList';
-import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
+import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.tsx';
 import { useProfile } from '../hooks/useProfile';
 import { createExternalLinks } from '../util/history';
-import { LoginLazy } from './login.lazy.tsx';
+import { LoginPage } from './login.lazy.tsx';
 
 export const Route = createLazyFileRoute('/profile')({
     component: ProfilePage
@@ -110,9 +110,7 @@ function ProfilePage() {
                                 steam_id={data.player.steam_id}
                             />
                         ) : (
-                            <LoginLazy
-                                message={'Please login to see player stats'}
-                            />
+                            <LoginPage />
                         )}
                     </Grid>
                     <Grid xs={12}>
@@ -161,5 +159,3 @@ function ProfilePage() {
         <></>
     );
 }
-
-export default ProfileLazy;

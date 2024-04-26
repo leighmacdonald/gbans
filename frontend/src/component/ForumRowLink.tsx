@@ -1,5 +1,5 @@
-import { Link as RouterLink } from 'react-router-dom';
 import Typography from '@mui/material/Typography';
+import { Link as RouterLink } from '@tanstack/react-router';
 
 interface ForumRowLinkProps {
     label: string;

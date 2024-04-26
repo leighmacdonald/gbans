@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import BuildIcon from '@mui/icons-material/Build';
 import LockIcon from '@mui/icons-material/Lock';
@@ -13,7 +13,11 @@ import Pagination from '@mui/material/Pagination';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import { createLazyFileRoute } from '@tanstack/react-router';
+import {
+    createLazyFileRoute,
+    Link as RouterLink,
+    useNavigate
+} from '@tanstack/react-router';
 import { ErrorCode, PermissionLevel } from '../api';
 import { Forum, ForumThread } from '../api/forum';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons';

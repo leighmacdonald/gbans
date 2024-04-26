@@ -16,7 +16,7 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import { createLazyFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, createFileRoute, createLazyFileRoute, useNavigate } from '@tanstack/react-router';
 import { formatISO9075 } from 'date-fns/fp';
 import { Formik } from 'formik';
 import { FormikHelpers } from 'formik/dist/types';
@@ -42,13 +42,19 @@ import {
 } from '../component/formik/SourceIDField.tsx';
 import { ResetButton, SubmitButton } from '../component/modal/Buttons';
 import { LazyTable } from '../component/table/LazyTable';
-import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
+import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.tsx';
 import { useServers } from '../hooks/useServers';
 import { logErr } from '../util/errors';
 import { RowsPerPage } from '../util/table.ts';
+import { z } from 'zod';
 
-export const Route = createLazyFileRoute('/chatlogs')({
-    component: ChatLogs
+const chatlogsSearchParams = z.object({
+    sortOrder: z.enum()
+})
+
+export const Route = createFileRoute('/chatlogs')({
+    component: ChatLogs,
+    validateSearch:
 });
 
 const anyServerSimple: ServerSimple = {

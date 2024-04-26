@@ -9,7 +9,7 @@ import { createLazyFileRoute } from '@tanstack/react-router';
 import SteamID from 'steamid';
 import { generateOIDCLink } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
+import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.tsx';
 import steamLogo from '../icons/steam_login_lg.png';
 
 export const Route = createLazyFileRoute('/login')({

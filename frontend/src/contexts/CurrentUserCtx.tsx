@@ -1,10 +1,12 @@
 import { createContext } from 'react';
-import { userKey, UserProfile } from '../api';
+import { PermissionLevel, userKey, UserProfile } from '../api';
 import { GuestProfile } from '../util/profile.ts';
 
 export type CurrentUser = {
     currentUser: UserProfile;
     setCurrentUser: (profile: UserProfile) => void;
+    isAuthenticated: boolean;
+    permissionLevel: PermissionLevel;
 };
 
 export const CurrentUserCtx = createContext<CurrentUser>({
@@ -15,5 +17,7 @@ export const CurrentUserCtx = createContext<CurrentUser>({
         } catch (e) {
             return;
         }
-    }
+    },
+    isAuthenticated: false,
+    permissionLevel: PermissionLevel.Guest
 });

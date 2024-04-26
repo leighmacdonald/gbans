@@ -1,5 +1,4 @@
 import {
-    JSX,
     ReactNode,
     SyntheticEvent,
     useCallback,
@@ -181,5 +180,3 @@ function ProfileSettings() {
         </ContainerWithHeader>
     );
 }
-
-export default ProfileSettingsLazy;

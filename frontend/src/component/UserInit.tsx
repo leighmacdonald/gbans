@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { apiGetCurrentProfile, readRefreshToken } from '../api';
-import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
+import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.tsx';
 import { GuestProfile } from '../util/profile.ts';
 import { emptyOrNullString } from '../util/types';
 

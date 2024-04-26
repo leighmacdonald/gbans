@@ -18,7 +18,7 @@ import {
     Link as RouterLink
 } from '@tanstack/react-router';
 import { NewsView } from '../component/NewsView';
-import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
+import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.tsx';
 
 export const Route = createLazyFileRoute('/')({
     component: Index
