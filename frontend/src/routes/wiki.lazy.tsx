@@ -19,7 +19,7 @@ import { MDBodyField } from '../component/MDBodyField';
 import { MarkDownRenderer } from '../component/MarkdownRenderer';
 import { PermissionLevelField } from '../component/formik/PermissionLevelField';
 import { SubmitButton } from '../component/modal/Buttons';
-import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
+import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.tsx';
 import { useWiki } from '../hooks/useWiki';
 import { logErr } from '../util/errors';
 import { bodyMDValidator } from '../util/validators.ts';

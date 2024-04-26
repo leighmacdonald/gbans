@@ -30,8 +30,10 @@ export const Route = createRootRoute({
 function Root() {
     const initialTheme =
         (localStorage.getItem('theme') as PaletteMode) || 'light';
+
     const [currentUser, setCurrentUser] =
         useState<NonNullable<UserProfile>>(GuestProfile);
+
     const [flashes, setFlashes] = useState<Flash[]>([]);
 
     const saveUser = (profile: UserProfile) => {

@@ -1,9 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { useLocation } from 'react-router';
-import { createBrowserHistory } from 'history';
 import SteamID from 'steamid';
-
-export default createBrowserHistory();
 
 export const to = (url: string) => {
     window.open(url, '_self');
@@ -16,7 +12,9 @@ export interface LinkProps {
 
 export const useScrollToLocation = () => {
     const scrolledRef = useRef(false);
-    const { hash } = useLocation();
+    // const { hash } = useLocation();
+    // TODO fix
+    const hash = '#';
     const hashRef = useRef(hash);
 
     useEffect(() => {

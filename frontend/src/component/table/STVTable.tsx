@@ -1,5 +1,4 @@
 import { ChangeEvent, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import useUrlState from '@ahooksjs/use-url-state';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import FlagIcon from '@mui/icons-material/Flag';
@@ -7,10 +6,11 @@ import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
+import { useNavigate } from '@tanstack/react-router';
 import { Formik } from 'formik';
 import { FormikHelpers } from 'formik/dist/types';
 import * as yup from 'yup';
-import { useCurrentUserCtx } from '../../hooks/useCurrentUserCtx.ts';
+import { useCurrentUserCtx } from '../../hooks/useCurrentUserCtx.tsx';
 import { useDemos } from '../../hooks/useDemos';
 import { RowsPerPage } from '../../util/table.ts';
 import { humanFileSize, renderDateTime } from '../../util/text.tsx';
@@ -249,7 +249,7 @@ export const STVTable = () => {
                                                     'demoName',
                                                     row.title
                                                 );
-                                                navigate('/report');
+                                                navigate({ to: '/report' });
                                             }}
                                         >
                                             <FlagIcon />

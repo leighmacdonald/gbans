@@ -51,7 +51,7 @@ import SteamID from 'steamid';
 import { generateOIDCLink, PermissionLevel, UserNotification } from '../api';
 import { NotificationsProvider } from '../contexts/NotificationsCtx';
 import { useColourModeCtx } from '../hooks/useColourModeCtx.ts';
-import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
+import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.tsx';
 import { useNotificationsCtx } from '../hooks/useNotificationsCtx.ts';
 import steamLogo from '../icons/steam_login_sm.png';
 import { tf2Fonts } from '../theme';

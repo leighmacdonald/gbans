@@ -1,11 +1,5 @@
-import { StrictMode, useEffect } from 'react';
+import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import {
-    createRoutesFromChildren,
-    matchRoutes,
-    useLocation,
-    useNavigationType
-} from 'react-router';
 import '@fontsource/roboto/latin-300.css';
 import '@fontsource/roboto/latin-400.css';
 import '@fontsource/roboto/latin-500.css';
@@ -13,10 +7,17 @@ import '@fontsource/roboto/latin-700.css';
 import * as Sentry from '@sentry/react';
 import { createRouter, RouterProvider } from '@tanstack/react-router';
 import './fonts/tf2build.css';
+import { AuthProvider, useCurrentUserCtx } from './hooks/useCurrentUserCtx.tsx';
 import { routeTree } from './routeTree.gen';
 
 // Create a new router instance
-const router = createRouter({ routeTree });
+const router = createRouter({
+    routeTree,
+    defaultPreload: 'intent',
+    context: {
+        auth: undefined!
+    }
+});
 
 // Register the router instance for type safety
 declare module '@tanstack/react-router' {
@@ -46,20 +47,9 @@ declare global {
 window.gbans = window.gbans || [];
 
 if (window.gbans.sentry_dsn_web != '') {
+    // TODO instrumentation for tanstack router, not currently officially supported
     Sentry.init({
         dsn: window.gbans.sentry_dsn_web,
-        integrations: [
-            // new Sentry.BrowserProfilingIntegration(),
-            new Sentry.BrowserTracing({
-                routingInstrumentation: Sentry.reactRouterV6Instrumentation(
-                    useEffect,
-                    useLocation,
-                    useNavigationType,
-                    createRoutesFromChildren,
-                    matchRoutes
-                )
-            })
-        ],
         release: window.gbans.build_version,
         // Performance Monitoring
         tracesSampleRate: 1.0, //  Capture 100% of the transactions
@@ -69,11 +59,22 @@ if (window.gbans.sentry_dsn_web != '') {
     });
 }
 
+function InnerApp() {
+    const auth = useCurrentUserCtx();
+    return <RouterProvider router={router} context={{ auth }} />;
+}
+
+function App() {
+    return (
+        <AuthProvider>
+            <StrictMode>
+                <InnerApp />
+            </StrictMode>
+        </AuthProvider>
+    );
+}
+
 const container = document.getElementById('root');
 if (container) {
-    createRoot(container).render(
-        <StrictMode>
-            <RouterProvider router={router} />
-        </StrictMode>
-    );
+    createRoot(container).render(<App />);
 }

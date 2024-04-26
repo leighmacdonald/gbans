@@ -30,7 +30,7 @@ import {
     ModalForumCategoryEditor,
     ModalForumForumEditor
 } from '../component/modal';
-import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
+import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.tsx';
 import { useForumOverview } from '../hooks/useForumOverview';
 import { useForumRecentMessageActivity } from '../hooks/useForumRecentMessageActivity';
 import { useForumRecentUserActivity } from '../hooks/useForumRecentUserActivity';

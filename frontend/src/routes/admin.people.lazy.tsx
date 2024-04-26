@@ -28,7 +28,7 @@ import { PersonanameField } from '../component/formik/PersonanameField';
 import { TargetIDField } from '../component/formik/TargetIdField.tsx';
 import { ModalPersonEditor } from '../component/modal';
 import { LazyTable } from '../component/table/LazyTable';
-import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
+import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.tsx';
 import { usePeople } from '../hooks/usePeople';
 import { logErr } from '../util/errors';
 import { RowsPerPage } from '../util/table.ts';

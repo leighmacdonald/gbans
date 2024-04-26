@@ -12,13 +12,12 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import {
     Link as RouterLink,
-    useNavigate,
     createLazyFileRoute
 } from '@tanstack/react-router';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { ReportCreateForm } from '../component/ReportCreateForm';
 import { UserReportHistory } from '../component/UserReportHistory';
-import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
+import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.tsx';
 
 export const Route = createLazyFileRoute('/report/')({
     component: ReportCreate
@@ -26,7 +25,6 @@ export const Route = createLazyFileRoute('/report/')({
 
 function ReportCreate() {
     const { currentUser } = useCurrentUserCtx();
-    const navigate = useNavigate();
 
     const canReport = useMemo(() => {
         return currentUser.steam_id && currentUser.ban_id == 0;
@@ -45,11 +43,10 @@ function ReportCreate() {
                             </Typography>
                             <ButtonGroup sx={{ padding: 2 }}>
                                 <Button
+                                    component={RouterLink}
                                     variant={'contained'}
                                     color={'primary'}
-                                    onClick={() => {
-                                        navigate(`/ban/${currentUser.ban_id}`);
-                                    }}
+                                    to={`/ban/${currentUser.ban_id}`}
                                 >
                                     Appeal Ban
                                 </Button>
