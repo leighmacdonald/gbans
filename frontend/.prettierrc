@@ -4,6 +4,7 @@
   "singleQuote": true,
   "tabWidth": 4,
   "endOfLine": "lf",
+  "printWidth": 140,
   "plugins": [
     "@trivago/prettier-plugin-sort-imports"
   ],

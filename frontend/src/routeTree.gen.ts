@@ -13,6 +13,7 @@ import { createFileRoute } from '@tanstack/react-router'
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as ChatlogsImport } from './routes/chatlogs'
 
 // Create Virtual Routes
 
@@ -30,7 +31,6 @@ const MatchLazyImport = createFileRoute('/match')()
 const LogoutLazyImport = createFileRoute('/logout')()
 const LoginLazyImport = createFileRoute('/login')()
 const ContestsLazyImport = createFileRoute('/contests')()
-const ChatlogsLazyImport = createFileRoute('/chatlogs')()
 const BanLazyImport = createFileRoute('/ban')()
 const IndexLazyImport = createFileRoute('/')()
 const ReportIndexLazyImport = createFileRoute('/report/')()
@@ -149,15 +149,15 @@ const ContestsLazyRoute = ContestsLazyImport.update({
   getParentRoute: () => rootRoute,
 } as any).lazy(() => import('./routes/contests.lazy').then((d) => d.Route))
 
-const ChatlogsLazyRoute = ChatlogsLazyImport.update({
-  path: '/chatlogs',
-  getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/chatlogs.lazy').then((d) => d.Route))
-
 const BanLazyRoute = BanLazyImport.update({
   path: '/ban',
   getParentRoute: () => rootRoute,
 } as any).lazy(() => import('./routes/ban.lazy').then((d) => d.Route))
+
+const ChatlogsRoute = ChatlogsImport.update({
+  path: '/chatlogs',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const IndexLazyRoute = IndexLazyImport.update({
   path: '/',
@@ -351,12 +351,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexLazyImport
       parentRoute: typeof rootRoute
     }
-    '/ban': {
-      preLoaderRoute: typeof BanLazyImport
+    '/chatlogs': {
+      preLoaderRoute: typeof ChatlogsImport
       parentRoute: typeof rootRoute
     }
-    '/chatlogs': {
-      preLoaderRoute: typeof ChatlogsLazyImport
+    '/ban': {
+      preLoaderRoute: typeof BanLazyImport
       parentRoute: typeof rootRoute
     }
     '/contests': {
@@ -538,8 +538,8 @@ declare module '@tanstack/react-router' {
 
 export const routeTree = rootRoute.addChildren([
   IndexLazyRoute,
+  ChatlogsRoute,
   BanLazyRoute,
-  ChatlogsLazyRoute,
   ContestsLazyRoute.addChildren([ContestsContestidLazyRoute]),
   LoginLazyRoute.addChildren([LoginDiscordLazyRoute, LoginSuccessLazyRoute]),
   LogoutLazyRoute,

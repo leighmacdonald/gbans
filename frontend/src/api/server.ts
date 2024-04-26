@@ -131,13 +131,8 @@ export const apiGetServersAdmin = async (
         abortController
     );
 
-export const apiGetServers = async (abortController: AbortController) =>
-    await apiCall<ServerSimple[]>(
-        `/api/servers`,
-        'GET',
-        undefined,
-        abortController
-    );
+export const apiGetServers = async () =>
+    apiCall<ServerSimple[]>(`/api/servers`, 'GET', undefined);
 
 export const apiDeleteServer = async (server_id: number) =>
     await apiCall(`/api/servers/${server_id}`, 'DELETE');

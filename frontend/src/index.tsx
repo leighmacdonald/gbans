@@ -5,10 +5,13 @@ import '@fontsource/roboto/latin-400.css';
 import '@fontsource/roboto/latin-500.css';
 import '@fontsource/roboto/latin-700.css';
 import * as Sentry from '@sentry/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createRouter, RouterProvider } from '@tanstack/react-router';
 import './fonts/tf2build.css';
 import { AuthProvider, useCurrentUserCtx } from './hooks/useCurrentUserCtx.tsx';
 import { routeTree } from './routeTree.gen';
+
+const queryClient = new QueryClient();
 
 // Create a new router instance
 const router = createRouter({
@@ -66,11 +69,13 @@ function InnerApp() {
 
 function App() {
     return (
-        <AuthProvider>
-            <StrictMode>
-                <InnerApp />
-            </StrictMode>
-        </AuthProvider>
+        <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+                <StrictMode>
+                    <InnerApp />
+                </StrictMode>
+            </AuthProvider>
+        </QueryClientProvider>
     );
 }
 
