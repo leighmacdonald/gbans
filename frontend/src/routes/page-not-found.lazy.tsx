@@ -11,7 +11,7 @@ export const Route = createLazyFileRoute('/page-not-found')({
 //     error?: string;
 // }
 
-function PageNotFound() {
+export function PageNotFound() {
     const heading = 'Not Found';
     // const error = null;
 

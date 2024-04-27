@@ -59,6 +59,9 @@ devDependencies:
   '@tanstack/react-query':
     specifier: ^5.32.0
     version: 5.32.0(react@18.2.0)
+  '@tanstack/react-query-devtools':
+    specifier: ^5.32.0
+    version: 5.32.0(@tanstack/react-query@5.32.0)(react@18.2.0)
   '@tanstack/react-router':
     specifier: ^1.29.2
     version: 1.29.2(react-dom@18.2.0)(react@18.2.0)
@@ -1983,6 +1986,10 @@ packages:
     resolution: {integrity: sha512-Z3flEgCat55DRXU5UMwYU1U+DgFZKA3iufyOKs+II7iRAo0uXkeU7PH5e6sOH1CGEag0IpKmZxlUFpCg6roSKw==}
     dev: true
 
+  /@tanstack/query-devtools@5.28.10:
+    resolution: {integrity: sha512-5UN629fKa5/1K/2Pd26gaU7epxRrYiT1gy+V+pW5K6hnf1DeUKK3pANSb2eHKlecjIKIhTwyF7k9XdyE2gREvQ==}
+    dev: true
+
   /@tanstack/react-form@0.19.4(@types/react@18.2.79)(react-dom@18.2.0)(react@18.2.0):
     resolution: {integrity: sha512-WlGnRCvJmhwM0/qXaUIkD9nI9ilg1MIN3JX5HuNW1nl2AsqHzVRCFU9r/icrsrfFpc5NJ0OSF8lFi2GqAHVS1Q==}
     peerDependencies:
@@ -1996,6 +2003,17 @@ packages:
     transitivePeerDependencies:
       - '@types/react'
       - react-dom
+    dev: true
+
+  /@tanstack/react-query-devtools@5.32.0(@tanstack/react-query@5.32.0)(react@18.2.0):
+    resolution: {integrity: sha512-KWrzLoUjs9JtDSH3H2qbm5MjjykyAT8DkvP8tukw3gBG4ziu5WaWHciBjMsYSe1JB79AOxxGovzjW/Cd9+ofVw==}
+    peerDependencies:
+      '@tanstack/react-query': ^5.32.0
+      react: ^18.0.0
+    dependencies:
+      '@tanstack/query-devtools': 5.28.10
+      '@tanstack/react-query': 5.32.0(react@18.2.0)
+      react: 18.2.0
     dev: true
 
   /@tanstack/react-query@5.32.0(react@18.2.0):

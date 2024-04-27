@@ -6,21 +6,15 @@ import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, useRouteContext } from '@tanstack/react-router';
 import { Formik } from 'formik';
 import { FormikHelpers } from 'formik/dist/types';
 import * as yup from 'yup';
-import { useCurrentUserCtx } from '../../hooks/useCurrentUserCtx.tsx';
 import { useDemos } from '../../hooks/useDemos';
 import { RowsPerPage } from '../../util/table.ts';
 import { humanFileSize, renderDateTime } from '../../util/text.tsx';
 import { emptyOrNullString } from '../../util/types';
-import {
-    mapNameFieldValidator,
-    selectOwnValidator,
-    serverIDsValidator,
-    sourceIdValidator
-} from '../../util/validators.ts';
+import { mapNameFieldValidator, selectOwnValidator, serverIDsValidator, sourceIdValidator } from '../../util/validators.ts';
 import { FilterButtons } from '../formik/FilterButtons';
 import { MapNameField } from '../formik/MapNameField.tsx';
 import { SelectOwnField } from '../formik/SelectOwnField.tsx';
@@ -55,31 +49,24 @@ export const STVTable = () => {
         serverIds: undefined
     });
     const navigate = useNavigate();
-    const { currentUser } = useCurrentUserCtx();
+    const { userSteamID } = useRouteContext({ from: '/_authoptional/stv' });
 
     const selectOwnDisabled = useMemo(() => {
-        return currentUser.steam_id == '';
-    }, [currentUser.steam_id]);
+        return userSteamID == '';
+    }, [userSteamID]);
 
     const { data, count } = useDemos({
         limit: Number(state.rows ?? RowsPerPage.Ten),
         offset: Number((state.page ?? 0) * (state.rows ?? RowsPerPage.Ten)),
         order_by: state.sortColumn ?? 'created_on',
         desc: (state.sortOrder ?? 'desc') == 'desc',
-        steam_id: state.own
-            ? currentUser.steam_id
-            : !emptyOrNullString(state.source)
-              ? state.source
-              : '',
+        steam_id: state.own ? userSteamID : !emptyOrNullString(state.source) ? state.source : '',
         map_name: state.mapName ?? '',
         server_ids: state.serverIds ?? undefined
     });
 
     const onReset = useCallback(
-        async (
-            _: STVFormValues,
-            formikHelpers: FormikHelpers<STVFormValues>
-        ) => {
+        async (_: STVFormValues, formikHelpers: FormikHelpers<STVFormValues>) => {
             setState({
                 own: undefined,
                 source: undefined,
@@ -103,10 +90,7 @@ export const STVTable = () => {
                 own: values.select_own ? values.select_own : undefined,
                 source: values.source_id != '' ? values.source_id : undefined,
                 mapName: values.map_name != '' ? values.map_name : undefined,
-                serverIds:
-                    (values.server_ids ?? []).length > 0
-                        ? values.server_ids.map((i) => Number(i))
-                        : []
+                serverIds: (values.server_ids ?? []).length > 0 ? values.server_ids.map((i) => Number(i)) : []
             });
         },
         [setState]
@@ -151,9 +135,7 @@ export const STVTable = () => {
                         count={count}
                         rows={data}
                         page={Number(state.page ?? 0)}
-                        rowsPerPage={Number(
-                            state.rows ?? RowsPerPage.TwentyFive
-                        )}
+                        rowsPerPage={Number(state.rows ?? RowsPerPage.TwentyFive)}
                         sortOrder={state.sortOrder}
                         sortColumn={state.sortColumn}
                         onSortColumnChanged={async (column) => {
@@ -165,11 +147,7 @@ export const STVTable = () => {
                         onPageChange={(_, newPage: number) => {
                             setState({ page: newPage });
                         }}
-                        onRowsPerPageChange={(
-                            event: ChangeEvent<
-                                HTMLInputElement | HTMLTextAreaElement
-                            >
-                        ) => {
+                        onRowsPerPageChange={(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                             setState({
                                 rows: Number(event.target.value),
                                 page: 0
@@ -226,11 +204,7 @@ export const STVTable = () => {
                                 sortKey: 'downloads',
                                 width: '50px',
                                 renderer: (row) => {
-                                    return (
-                                        <Typography variant={'body1'}>
-                                            {row.downloads}
-                                        </Typography>
-                                    );
+                                    return <Typography variant={'body1'}>{row.downloads}</Typography>;
                                 }
                             },
                             {
@@ -245,10 +219,7 @@ export const STVTable = () => {
                                         <IconButton
                                             color={'error'}
                                             onClick={() => {
-                                                sessionStorage.setItem(
-                                                    'demoName',
-                                                    row.title
-                                                );
+                                                sessionStorage.setItem('demoName', row.title);
                                                 navigate({ to: '/report' });
                                             }}
                                         >

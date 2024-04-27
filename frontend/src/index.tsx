@@ -7,8 +7,10 @@ import '@fontsource/roboto/latin-700.css';
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createRouter, RouterProvider } from '@tanstack/react-router';
+import { useAuth } from './auth.tsx';
+import { ErrorComponent } from './component/ErrorComponent.tsx';
+import { LoadingPlaceholder } from './component/LoadingPlaceholder.tsx';
 import './fonts/tf2build.css';
-import { AuthProvider, useCurrentUserCtx } from './hooks/useCurrentUserCtx.tsx';
 import { routeTree } from './routeTree.gen';
 
 const queryClient = new QueryClient();
@@ -18,8 +20,14 @@ const router = createRouter({
     routeTree,
     defaultPreload: 'intent',
     context: {
-        auth: undefined!
-    }
+        auth: undefined!,
+        queryClient
+    },
+    defaultPendingComponent: LoadingPlaceholder,
+    defaultErrorComponent: ErrorComponent,
+    // Since we're using React Query, we don't want loader calls to ever be stale
+    // This will ensure that the loader is always called when the route is preloaded or visited
+    defaultPreloadStaleTime: 0
 });
 
 // Register the router instance for type safety
@@ -63,18 +71,16 @@ if (window.gbans.sentry_dsn_web != '') {
 }
 
 function InnerApp() {
-    const auth = useCurrentUserCtx();
-    return <RouterProvider router={router} context={{ auth }} />;
+    const auth = useAuth();
+    return <RouterProvider defaultPreload={'intent'} router={router} context={{ auth }} />;
 }
 
 function App() {
     return (
         <QueryClientProvider client={queryClient}>
-            <AuthProvider>
-                <StrictMode>
-                    <InnerApp />
-                </StrictMode>
-            </AuthProvider>
+            <StrictMode>
+                <InnerApp />
+            </StrictMode>
         </QueryClientProvider>
     );
 }

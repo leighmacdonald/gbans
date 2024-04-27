@@ -14,96 +14,91 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as ChatlogsImport } from './routes/chatlogs'
+import { Route as AuthoptionalImport } from './routes/_authoptional'
+import { Route as AuthImport } from './routes/_auth'
+import { Route as LoginIndexImport } from './routes/login.index'
+import { Route as LoginSuccessImport } from './routes/login.success'
 
 // Create Virtual Routes
 
-const WikiLazyImport = createFileRoute('/wiki')()
-const StvLazyImport = createFileRoute('/stv')()
-const StatsLazyImport = createFileRoute('/stats')()
-const SettingsLazyImport = createFileRoute('/settings')()
 const ServersLazyImport = createFileRoute('/servers')()
-const ProfileLazyImport = createFileRoute('/profile')()
 const PrivacyPolicyLazyImport = createFileRoute('/privacy-policy')()
 const PatreonLazyImport = createFileRoute('/patreon')()
 const PageNotFoundLazyImport = createFileRoute('/page-not-found')()
-const NotificationsLazyImport = createFileRoute('/notifications')()
-const MatchLazyImport = createFileRoute('/match')()
-const LogoutLazyImport = createFileRoute('/logout')()
-const LoginLazyImport = createFileRoute('/login')()
-const ContestsLazyImport = createFileRoute('/contests')()
-const BanLazyImport = createFileRoute('/ban')()
-const IndexLazyImport = createFileRoute('/')()
-const ReportIndexLazyImport = createFileRoute('/report/')()
-const ForumsIndexLazyImport = createFileRoute('/forums/')()
-const WikiSlugLazyImport = createFileRoute('/wiki/$slug')()
-const ReportReportidLazyImport = createFileRoute('/report/$report_id')()
-const LogsMatchidLazyImport = createFileRoute('/logs/$match_id')()
-const LoginSuccessLazyImport = createFileRoute('/login/success')()
+const AuthoptionalIndexLazyImport = createFileRoute('/_authoptional/')()
 const LoginDiscordLazyImport = createFileRoute('/login/discord')()
-const ForumsForumidLazyImport = createFileRoute('/forums/$forum_id')()
-const ContestsContestidLazyImport = createFileRoute('/contests/$contest_id')()
-const AdminVotesLazyImport = createFileRoute('/admin/votes')()
-const AdminServersLazyImport = createFileRoute('/admin/servers')()
-const AdminReportsLazyImport = createFileRoute('/admin/reports')()
-const AdminPeopleLazyImport = createFileRoute('/admin/people')()
-const AdminNewsLazyImport = createFileRoute('/admin/news')()
-const AdminNetworkLazyImport = createFileRoute('/admin/network')()
-const AdminFiltersLazyImport = createFileRoute('/admin/filters')()
-const AdminContestsLazyImport = createFileRoute('/admin/contests')()
-const AdminAppealsLazyImport = createFileRoute('/admin/appeals')()
-const StatsWeaponWeaponidLazyImport = createFileRoute(
-  '/stats/weapon/$weapon_id',
+const AuthoptionalWikiLazyImport = createFileRoute('/_authoptional/wiki')()
+const AuthoptionalStvLazyImport = createFileRoute('/_authoptional/stv')()
+const AuthoptionalProfileLazyImport = createFileRoute(
+  '/_authoptional/profile',
 )()
-const StatsPlayerSteamidLazyImport = createFileRoute(
-  '/stats/player/$steam_id',
+const AuthoptionalContestsLazyImport = createFileRoute(
+  '/_authoptional/contests',
 )()
-const ForumsThreadForumthreadidLazyImport = createFileRoute(
-  '/forums/thread/$forum_thread_id',
+const AuthStatsLazyImport = createFileRoute('/_auth/stats')()
+const AuthSettingsLazyImport = createFileRoute('/_auth/settings')()
+const AuthNotificationsLazyImport = createFileRoute('/_auth/notifications')()
+const AuthLogoutLazyImport = createFileRoute('/_auth/logout')()
+const AuthoptionalForumsIndexLazyImport = createFileRoute(
+  '/_authoptional/forums/',
 )()
-const AdminNetworkPlayersbyipLazyImport = createFileRoute(
-  '/admin/network/players_by_ip',
+const AuthReportIndexLazyImport = createFileRoute('/_auth/report/')()
+const AuthoptionalWikiSlugLazyImport = createFileRoute(
+  '/_authoptional/wiki/$slug',
 )()
-const AdminNetworkIphistLazyImport = createFileRoute('/admin/network/ip_hist')()
-const AdminNetworkIpInfoLazyImport = createFileRoute('/admin/network/ip_Info')()
-const AdminNetworkCidrblocksLazyImport = createFileRoute(
-  '/admin/network/cidr_blocks',
+const AuthoptionalForumsForumidLazyImport = createFileRoute(
+  '/_authoptional/forums/$forum_id',
 )()
-const AdminBanSteamLazyImport = createFileRoute('/admin/ban/steam')()
-const AdminBanGroupLazyImport = createFileRoute('/admin/ban/group')()
-const AdminBanCidrLazyImport = createFileRoute('/admin/ban/cidr')()
-const AdminBanAsnLazyImport = createFileRoute('/admin/ban/asn')()
+const AuthoptionalContestsContestidLazyImport = createFileRoute(
+  '/_authoptional/contests/$contest_id',
+)()
+const AuthReportReportidLazyImport = createFileRoute(
+  '/_auth/report/$report_id',
+)()
+const AuthMatchMatchidLazyImport = createFileRoute('/_auth/match/$match_id')()
+const AuthLogsMatchidLazyImport = createFileRoute('/_auth/logs/$match_id')()
+const AuthBanBanidLazyImport = createFileRoute('/_auth/ban/$ban_id')()
+const AuthAdminVotesLazyImport = createFileRoute('/_auth/admin/votes')()
+const AuthAdminServersLazyImport = createFileRoute('/_auth/admin/servers')()
+const AuthAdminReportsLazyImport = createFileRoute('/_auth/admin/reports')()
+const AuthAdminPeopleLazyImport = createFileRoute('/_auth/admin/people')()
+const AuthAdminNewsLazyImport = createFileRoute('/_auth/admin/news')()
+const AuthAdminNetworkLazyImport = createFileRoute('/_auth/admin/network')()
+const AuthAdminFiltersLazyImport = createFileRoute('/_auth/admin/filters')()
+const AuthAdminContestsLazyImport = createFileRoute('/_auth/admin/contests')()
+const AuthAdminAppealsLazyImport = createFileRoute('/_auth/admin/appeals')()
+const AuthoptionalForumsThreadForumthreadidLazyImport = createFileRoute(
+  '/_authoptional/forums/thread/$forum_thread_id',
+)()
+const AuthStatsWeaponWeaponidLazyImport = createFileRoute(
+  '/_auth/stats/weapon/$weapon_id',
+)()
+const AuthStatsPlayerSteamidLazyImport = createFileRoute(
+  '/_auth/stats/player/$steam_id',
+)()
+const AuthAdminNetworkPlayersbyipLazyImport = createFileRoute(
+  '/_auth/admin/network/players_by_ip',
+)()
+const AuthAdminNetworkIphistLazyImport = createFileRoute(
+  '/_auth/admin/network/ip_hist',
+)()
+const AuthAdminNetworkIpInfoLazyImport = createFileRoute(
+  '/_auth/admin/network/ip_Info',
+)()
+const AuthAdminNetworkCidrblocksLazyImport = createFileRoute(
+  '/_auth/admin/network/cidr_blocks',
+)()
+const AuthAdminBanSteamLazyImport = createFileRoute('/_auth/admin/ban/steam')()
+const AuthAdminBanGroupLazyImport = createFileRoute('/_auth/admin/ban/group')()
+const AuthAdminBanCidrLazyImport = createFileRoute('/_auth/admin/ban/cidr')()
+const AuthAdminBanAsnLazyImport = createFileRoute('/_auth/admin/ban/asn')()
 
 // Create/Update Routes
-
-const WikiLazyRoute = WikiLazyImport.update({
-  path: '/wiki',
-  getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/wiki.lazy').then((d) => d.Route))
-
-const StvLazyRoute = StvLazyImport.update({
-  path: '/stv',
-  getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/stv.lazy').then((d) => d.Route))
-
-const StatsLazyRoute = StatsLazyImport.update({
-  path: '/stats',
-  getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/stats.lazy').then((d) => d.Route))
-
-const SettingsLazyRoute = SettingsLazyImport.update({
-  path: '/settings',
-  getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/settings.lazy').then((d) => d.Route))
 
 const ServersLazyRoute = ServersLazyImport.update({
   path: '/servers',
   getParentRoute: () => rootRoute,
 } as any).lazy(() => import('./routes/servers.lazy').then((d) => d.Route))
-
-const ProfileLazyRoute = ProfileLazyImport.update({
-  path: '/profile',
-  getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/profile.lazy').then((d) => d.Route))
 
 const PrivacyPolicyLazyRoute = PrivacyPolicyLazyImport.update({
   path: '/privacy-policy',
@@ -124,259 +119,333 @@ const PageNotFoundLazyRoute = PageNotFoundLazyImport.update({
   import('./routes/page-not-found.lazy').then((d) => d.Route),
 )
 
-const NotificationsLazyRoute = NotificationsLazyImport.update({
-  path: '/notifications',
-  getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/notifications.lazy').then((d) => d.Route))
-
-const MatchLazyRoute = MatchLazyImport.update({
-  path: '/match',
-  getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/match.lazy').then((d) => d.Route))
-
-const LogoutLazyRoute = LogoutLazyImport.update({
-  path: '/logout',
-  getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/logout.lazy').then((d) => d.Route))
-
-const LoginLazyRoute = LoginLazyImport.update({
-  path: '/login',
-  getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/login.lazy').then((d) => d.Route))
-
-const ContestsLazyRoute = ContestsLazyImport.update({
-  path: '/contests',
-  getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/contests.lazy').then((d) => d.Route))
-
-const BanLazyRoute = BanLazyImport.update({
-  path: '/ban',
-  getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/ban.lazy').then((d) => d.Route))
-
 const ChatlogsRoute = ChatlogsImport.update({
   path: '/chatlogs',
   getParentRoute: () => rootRoute,
 } as any)
 
-const IndexLazyRoute = IndexLazyImport.update({
+const AuthoptionalRoute = AuthoptionalImport.update({
+  id: '/_authoptional',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const AuthRoute = AuthImport.update({
+  id: '/_auth',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const AuthoptionalIndexLazyRoute = AuthoptionalIndexLazyImport.update({
   path: '/',
-  getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/index.lazy').then((d) => d.Route))
-
-const ReportIndexLazyRoute = ReportIndexLazyImport.update({
-  path: '/report/',
-  getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/report.index.lazy').then((d) => d.Route))
-
-const ForumsIndexLazyRoute = ForumsIndexLazyImport.update({
-  path: '/forums/',
-  getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/forums.index.lazy').then((d) => d.Route))
-
-const WikiSlugLazyRoute = WikiSlugLazyImport.update({
-  path: '/$slug',
-  getParentRoute: () => WikiLazyRoute,
-} as any).lazy(() => import('./routes/wiki.$slug.lazy').then((d) => d.Route))
-
-const ReportReportidLazyRoute = ReportReportidLazyImport.update({
-  path: '/report/$report_id',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => AuthoptionalRoute,
 } as any).lazy(() =>
-  import('./routes/report.$report_id.lazy').then((d) => d.Route),
+  import('./routes/_authoptional/index.lazy').then((d) => d.Route),
 )
 
-const LogsMatchidLazyRoute = LogsMatchidLazyImport.update({
-  path: '/logs/$match_id',
+const LoginIndexRoute = LoginIndexImport.update({
+  path: '/login/',
   getParentRoute: () => rootRoute,
-} as any).lazy(() =>
-  import('./routes/logs.$match_id.lazy').then((d) => d.Route),
-)
-
-const LoginSuccessLazyRoute = LoginSuccessLazyImport.update({
-  path: '/success',
-  getParentRoute: () => LoginLazyRoute,
-} as any).lazy(() => import('./routes/login.success.lazy').then((d) => d.Route))
+} as any)
 
 const LoginDiscordLazyRoute = LoginDiscordLazyImport.update({
-  path: '/discord',
-  getParentRoute: () => LoginLazyRoute,
+  path: '/login/discord',
+  getParentRoute: () => rootRoute,
 } as any).lazy(() => import('./routes/login.discord.lazy').then((d) => d.Route))
 
-const ForumsForumidLazyRoute = ForumsForumidLazyImport.update({
-  path: '/forums/$forum_id',
+const AuthoptionalWikiLazyRoute = AuthoptionalWikiLazyImport.update({
+  path: '/wiki',
+  getParentRoute: () => AuthoptionalRoute,
+} as any).lazy(() =>
+  import('./routes/_authoptional/wiki.lazy').then((d) => d.Route),
+)
+
+const AuthoptionalStvLazyRoute = AuthoptionalStvLazyImport.update({
+  path: '/stv',
+  getParentRoute: () => AuthoptionalRoute,
+} as any).lazy(() =>
+  import('./routes/_authoptional/stv.lazy').then((d) => d.Route),
+)
+
+const AuthoptionalProfileLazyRoute = AuthoptionalProfileLazyImport.update({
+  path: '/profile',
+  getParentRoute: () => AuthoptionalRoute,
+} as any).lazy(() =>
+  import('./routes/_authoptional/profile.lazy').then((d) => d.Route),
+)
+
+const AuthoptionalContestsLazyRoute = AuthoptionalContestsLazyImport.update({
+  path: '/contests',
+  getParentRoute: () => AuthoptionalRoute,
+} as any).lazy(() =>
+  import('./routes/_authoptional/contests.lazy').then((d) => d.Route),
+)
+
+const AuthStatsLazyRoute = AuthStatsLazyImport.update({
+  path: '/stats',
+  getParentRoute: () => AuthRoute,
+} as any).lazy(() => import('./routes/_auth/stats.lazy').then((d) => d.Route))
+
+const AuthSettingsLazyRoute = AuthSettingsLazyImport.update({
+  path: '/settings',
+  getParentRoute: () => AuthRoute,
+} as any).lazy(() =>
+  import('./routes/_auth/settings.lazy').then((d) => d.Route),
+)
+
+const AuthNotificationsLazyRoute = AuthNotificationsLazyImport.update({
+  path: '/notifications',
+  getParentRoute: () => AuthRoute,
+} as any).lazy(() =>
+  import('./routes/_auth/notifications.lazy').then((d) => d.Route),
+)
+
+const AuthLogoutLazyRoute = AuthLogoutLazyImport.update({
+  path: '/logout',
+  getParentRoute: () => AuthRoute,
+} as any).lazy(() => import('./routes/_auth/logout.lazy').then((d) => d.Route))
+
+const LoginSuccessRoute = LoginSuccessImport.update({
+  path: '/login/success',
   getParentRoute: () => rootRoute,
+} as any)
+
+const AuthoptionalForumsIndexLazyRoute =
+  AuthoptionalForumsIndexLazyImport.update({
+    path: '/forums/',
+    getParentRoute: () => AuthoptionalRoute,
+  } as any).lazy(() =>
+    import('./routes/_authoptional/forums.index.lazy').then((d) => d.Route),
+  )
+
+const AuthReportIndexLazyRoute = AuthReportIndexLazyImport.update({
+  path: '/report/',
+  getParentRoute: () => AuthRoute,
 } as any).lazy(() =>
-  import('./routes/forums.$forum_id.lazy').then((d) => d.Route),
+  import('./routes/_auth/report.index.lazy').then((d) => d.Route),
 )
 
-const ContestsContestidLazyRoute = ContestsContestidLazyImport.update({
-  path: '/$contest_id',
-  getParentRoute: () => ContestsLazyRoute,
+const AuthoptionalWikiSlugLazyRoute = AuthoptionalWikiSlugLazyImport.update({
+  path: '/$slug',
+  getParentRoute: () => AuthoptionalWikiLazyRoute,
 } as any).lazy(() =>
-  import('./routes/contests.$contest_id.lazy').then((d) => d.Route),
+  import('./routes/_authoptional/wiki.$slug.lazy').then((d) => d.Route),
 )
 
-const AdminVotesLazyRoute = AdminVotesLazyImport.update({
+const AuthoptionalForumsForumidLazyRoute =
+  AuthoptionalForumsForumidLazyImport.update({
+    path: '/forums/$forum_id',
+    getParentRoute: () => AuthoptionalRoute,
+  } as any).lazy(() =>
+    import('./routes/_authoptional/forums.$forum_id.lazy').then((d) => d.Route),
+  )
+
+const AuthoptionalContestsContestidLazyRoute =
+  AuthoptionalContestsContestidLazyImport.update({
+    path: '/$contest_id',
+    getParentRoute: () => AuthoptionalContestsLazyRoute,
+  } as any).lazy(() =>
+    import('./routes/_authoptional/contests.$contest_id.lazy').then(
+      (d) => d.Route,
+    ),
+  )
+
+const AuthReportReportidLazyRoute = AuthReportReportidLazyImport.update({
+  path: '/report/$report_id',
+  getParentRoute: () => AuthRoute,
+} as any).lazy(() =>
+  import('./routes/_auth/report.$report_id.lazy').then((d) => d.Route),
+)
+
+const AuthMatchMatchidLazyRoute = AuthMatchMatchidLazyImport.update({
+  path: '/match/$match_id',
+  getParentRoute: () => AuthRoute,
+} as any).lazy(() =>
+  import('./routes/_auth/match.$match_id.lazy').then((d) => d.Route),
+)
+
+const AuthLogsMatchidLazyRoute = AuthLogsMatchidLazyImport.update({
+  path: '/logs/$match_id',
+  getParentRoute: () => AuthRoute,
+} as any).lazy(() =>
+  import('./routes/_auth/logs.$match_id.lazy').then((d) => d.Route),
+)
+
+const AuthBanBanidLazyRoute = AuthBanBanidLazyImport.update({
+  path: '/ban/$ban_id',
+  getParentRoute: () => AuthRoute,
+} as any).lazy(() =>
+  import('./routes/_auth/ban.$ban_id.lazy').then((d) => d.Route),
+)
+
+const AuthAdminVotesLazyRoute = AuthAdminVotesLazyImport.update({
   path: '/admin/votes',
-  getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/admin.votes.lazy').then((d) => d.Route))
+  getParentRoute: () => AuthRoute,
+} as any).lazy(() =>
+  import('./routes/_auth/admin.votes.lazy').then((d) => d.Route),
+)
 
-const AdminServersLazyRoute = AdminServersLazyImport.update({
+const AuthAdminServersLazyRoute = AuthAdminServersLazyImport.update({
   path: '/admin/servers',
-  getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/admin.servers.lazy').then((d) => d.Route))
+  getParentRoute: () => AuthRoute,
+} as any).lazy(() =>
+  import('./routes/_auth/admin.servers.lazy').then((d) => d.Route),
+)
 
-const AdminReportsLazyRoute = AdminReportsLazyImport.update({
+const AuthAdminReportsLazyRoute = AuthAdminReportsLazyImport.update({
   path: '/admin/reports',
-  getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/admin.reports.lazy').then((d) => d.Route))
+  getParentRoute: () => AuthRoute,
+} as any).lazy(() =>
+  import('./routes/_auth/admin.reports.lazy').then((d) => d.Route),
+)
 
-const AdminPeopleLazyRoute = AdminPeopleLazyImport.update({
+const AuthAdminPeopleLazyRoute = AuthAdminPeopleLazyImport.update({
   path: '/admin/people',
-  getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/admin.people.lazy').then((d) => d.Route))
+  getParentRoute: () => AuthRoute,
+} as any).lazy(() =>
+  import('./routes/_auth/admin.people.lazy').then((d) => d.Route),
+)
 
-const AdminNewsLazyRoute = AdminNewsLazyImport.update({
+const AuthAdminNewsLazyRoute = AuthAdminNewsLazyImport.update({
   path: '/admin/news',
-  getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/admin.news.lazy').then((d) => d.Route))
+  getParentRoute: () => AuthRoute,
+} as any).lazy(() =>
+  import('./routes/_auth/admin.news.lazy').then((d) => d.Route),
+)
 
-const AdminNetworkLazyRoute = AdminNetworkLazyImport.update({
+const AuthAdminNetworkLazyRoute = AuthAdminNetworkLazyImport.update({
   path: '/admin/network',
-  getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/admin.network.lazy').then((d) => d.Route))
+  getParentRoute: () => AuthRoute,
+} as any).lazy(() =>
+  import('./routes/_auth/admin.network.lazy').then((d) => d.Route),
+)
 
-const AdminFiltersLazyRoute = AdminFiltersLazyImport.update({
+const AuthAdminFiltersLazyRoute = AuthAdminFiltersLazyImport.update({
   path: '/admin/filters',
-  getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/admin.filters.lazy').then((d) => d.Route))
+  getParentRoute: () => AuthRoute,
+} as any).lazy(() =>
+  import('./routes/_auth/admin.filters.lazy').then((d) => d.Route),
+)
 
-const AdminContestsLazyRoute = AdminContestsLazyImport.update({
+const AuthAdminContestsLazyRoute = AuthAdminContestsLazyImport.update({
   path: '/admin/contests',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => AuthRoute,
 } as any).lazy(() =>
-  import('./routes/admin.contests.lazy').then((d) => d.Route),
+  import('./routes/_auth/admin.contests.lazy').then((d) => d.Route),
 )
 
-const AdminAppealsLazyRoute = AdminAppealsLazyImport.update({
+const AuthAdminAppealsLazyRoute = AuthAdminAppealsLazyImport.update({
   path: '/admin/appeals',
-  getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/admin.appeals.lazy').then((d) => d.Route))
-
-const StatsWeaponWeaponidLazyRoute = StatsWeaponWeaponidLazyImport.update({
-  path: '/weapon/$weapon_id',
-  getParentRoute: () => StatsLazyRoute,
+  getParentRoute: () => AuthRoute,
 } as any).lazy(() =>
-  import('./routes/stats.weapon.$weapon_id.lazy').then((d) => d.Route),
+  import('./routes/_auth/admin.appeals.lazy').then((d) => d.Route),
 )
 
-const StatsPlayerSteamidLazyRoute = StatsPlayerSteamidLazyImport.update({
-  path: '/player/$steam_id',
-  getParentRoute: () => StatsLazyRoute,
-} as any).lazy(() =>
-  import('./routes/stats.player.$steam_id.lazy').then((d) => d.Route),
-)
-
-const ForumsThreadForumthreadidLazyRoute =
-  ForumsThreadForumthreadidLazyImport.update({
+const AuthoptionalForumsThreadForumthreadidLazyRoute =
+  AuthoptionalForumsThreadForumthreadidLazyImport.update({
     path: '/forums/thread/$forum_thread_id',
-    getParentRoute: () => rootRoute,
+    getParentRoute: () => AuthoptionalRoute,
   } as any).lazy(() =>
-    import('./routes/forums.thread.$forum_thread_id.lazy').then((d) => d.Route),
+    import('./routes/_authoptional/forums.thread.$forum_thread_id.lazy').then(
+      (d) => d.Route,
+    ),
   )
 
-const AdminNetworkPlayersbyipLazyRoute =
-  AdminNetworkPlayersbyipLazyImport.update({
-    path: '/players_by_ip',
-    getParentRoute: () => AdminNetworkLazyRoute,
+const AuthStatsWeaponWeaponidLazyRoute =
+  AuthStatsWeaponWeaponidLazyImport.update({
+    path: '/weapon/$weapon_id',
+    getParentRoute: () => AuthStatsLazyRoute,
   } as any).lazy(() =>
-    import('./routes/admin.network.players_by_ip.lazy').then((d) => d.Route),
+    import('./routes/_auth/stats.weapon.$weapon_id.lazy').then((d) => d.Route),
   )
 
-const AdminNetworkIphistLazyRoute = AdminNetworkIphistLazyImport.update({
-  path: '/ip_hist',
-  getParentRoute: () => AdminNetworkLazyRoute,
-} as any).lazy(() =>
-  import('./routes/admin.network.ip_hist.lazy').then((d) => d.Route),
-)
-
-const AdminNetworkIpInfoLazyRoute = AdminNetworkIpInfoLazyImport.update({
-  path: '/ip_Info',
-  getParentRoute: () => AdminNetworkLazyRoute,
-} as any).lazy(() =>
-  import('./routes/admin.network.ip_Info.lazy').then((d) => d.Route),
-)
-
-const AdminNetworkCidrblocksLazyRoute = AdminNetworkCidrblocksLazyImport.update(
+const AuthStatsPlayerSteamidLazyRoute = AuthStatsPlayerSteamidLazyImport.update(
   {
-    path: '/cidr_blocks',
-    getParentRoute: () => AdminNetworkLazyRoute,
+    path: '/player/$steam_id',
+    getParentRoute: () => AuthStatsLazyRoute,
   } as any,
 ).lazy(() =>
-  import('./routes/admin.network.cidr_blocks.lazy').then((d) => d.Route),
+  import('./routes/_auth/stats.player.$steam_id.lazy').then((d) => d.Route),
 )
 
-const AdminBanSteamLazyRoute = AdminBanSteamLazyImport.update({
+const AuthAdminNetworkPlayersbyipLazyRoute =
+  AuthAdminNetworkPlayersbyipLazyImport.update({
+    path: '/players_by_ip',
+    getParentRoute: () => AuthAdminNetworkLazyRoute,
+  } as any).lazy(() =>
+    import('./routes/_auth/admin.network.players_by_ip.lazy').then(
+      (d) => d.Route,
+    ),
+  )
+
+const AuthAdminNetworkIphistLazyRoute = AuthAdminNetworkIphistLazyImport.update(
+  {
+    path: '/ip_hist',
+    getParentRoute: () => AuthAdminNetworkLazyRoute,
+  } as any,
+).lazy(() =>
+  import('./routes/_auth/admin.network.ip_hist.lazy').then((d) => d.Route),
+)
+
+const AuthAdminNetworkIpInfoLazyRoute = AuthAdminNetworkIpInfoLazyImport.update(
+  {
+    path: '/ip_Info',
+    getParentRoute: () => AuthAdminNetworkLazyRoute,
+  } as any,
+).lazy(() =>
+  import('./routes/_auth/admin.network.ip_Info.lazy').then((d) => d.Route),
+)
+
+const AuthAdminNetworkCidrblocksLazyRoute =
+  AuthAdminNetworkCidrblocksLazyImport.update({
+    path: '/cidr_blocks',
+    getParentRoute: () => AuthAdminNetworkLazyRoute,
+  } as any).lazy(() =>
+    import('./routes/_auth/admin.network.cidr_blocks.lazy').then(
+      (d) => d.Route,
+    ),
+  )
+
+const AuthAdminBanSteamLazyRoute = AuthAdminBanSteamLazyImport.update({
   path: '/admin/ban/steam',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => AuthRoute,
 } as any).lazy(() =>
-  import('./routes/admin.ban.steam.lazy').then((d) => d.Route),
+  import('./routes/_auth/admin.ban.steam.lazy').then((d) => d.Route),
 )
 
-const AdminBanGroupLazyRoute = AdminBanGroupLazyImport.update({
+const AuthAdminBanGroupLazyRoute = AuthAdminBanGroupLazyImport.update({
   path: '/admin/ban/group',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => AuthRoute,
 } as any).lazy(() =>
-  import('./routes/admin.ban.group.lazy').then((d) => d.Route),
+  import('./routes/_auth/admin.ban.group.lazy').then((d) => d.Route),
 )
 
-const AdminBanCidrLazyRoute = AdminBanCidrLazyImport.update({
+const AuthAdminBanCidrLazyRoute = AuthAdminBanCidrLazyImport.update({
   path: '/admin/ban/cidr',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => AuthRoute,
 } as any).lazy(() =>
-  import('./routes/admin.ban.cidr.lazy').then((d) => d.Route),
+  import('./routes/_auth/admin.ban.cidr.lazy').then((d) => d.Route),
 )
 
-const AdminBanAsnLazyRoute = AdminBanAsnLazyImport.update({
+const AuthAdminBanAsnLazyRoute = AuthAdminBanAsnLazyImport.update({
   path: '/admin/ban/asn',
-  getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/admin.ban.asn.lazy').then((d) => d.Route))
+  getParentRoute: () => AuthRoute,
+} as any).lazy(() =>
+  import('./routes/_auth/admin.ban.asn.lazy').then((d) => d.Route),
+)
 
 // Populate the FileRoutesByPath interface
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      preLoaderRoute: typeof IndexLazyImport
+    '/_auth': {
+      preLoaderRoute: typeof AuthImport
+      parentRoute: typeof rootRoute
+    }
+    '/_authoptional': {
+      preLoaderRoute: typeof AuthoptionalImport
       parentRoute: typeof rootRoute
     }
     '/chatlogs': {
       preLoaderRoute: typeof ChatlogsImport
-      parentRoute: typeof rootRoute
-    }
-    '/ban': {
-      preLoaderRoute: typeof BanLazyImport
-      parentRoute: typeof rootRoute
-    }
-    '/contests': {
-      preLoaderRoute: typeof ContestsLazyImport
-      parentRoute: typeof rootRoute
-    }
-    '/login': {
-      preLoaderRoute: typeof LoginLazyImport
-      parentRoute: typeof rootRoute
-    }
-    '/logout': {
-      preLoaderRoute: typeof LogoutLazyImport
-      parentRoute: typeof rootRoute
-    }
-    '/match': {
-      preLoaderRoute: typeof MatchLazyImport
-      parentRoute: typeof rootRoute
-    }
-    '/notifications': {
-      preLoaderRoute: typeof NotificationsLazyImport
       parentRoute: typeof rootRoute
     }
     '/page-not-found': {
@@ -391,145 +460,173 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivacyPolicyLazyImport
       parentRoute: typeof rootRoute
     }
-    '/profile': {
-      preLoaderRoute: typeof ProfileLazyImport
-      parentRoute: typeof rootRoute
-    }
     '/servers': {
       preLoaderRoute: typeof ServersLazyImport
       parentRoute: typeof rootRoute
     }
-    '/settings': {
-      preLoaderRoute: typeof SettingsLazyImport
+    '/login/success': {
+      preLoaderRoute: typeof LoginSuccessImport
       parentRoute: typeof rootRoute
     }
-    '/stats': {
-      preLoaderRoute: typeof StatsLazyImport
-      parentRoute: typeof rootRoute
+    '/_auth/logout': {
+      preLoaderRoute: typeof AuthLogoutLazyImport
+      parentRoute: typeof AuthImport
     }
-    '/stv': {
-      preLoaderRoute: typeof StvLazyImport
-      parentRoute: typeof rootRoute
+    '/_auth/notifications': {
+      preLoaderRoute: typeof AuthNotificationsLazyImport
+      parentRoute: typeof AuthImport
     }
-    '/wiki': {
-      preLoaderRoute: typeof WikiLazyImport
-      parentRoute: typeof rootRoute
+    '/_auth/settings': {
+      preLoaderRoute: typeof AuthSettingsLazyImport
+      parentRoute: typeof AuthImport
     }
-    '/admin/appeals': {
-      preLoaderRoute: typeof AdminAppealsLazyImport
-      parentRoute: typeof rootRoute
+    '/_auth/stats': {
+      preLoaderRoute: typeof AuthStatsLazyImport
+      parentRoute: typeof AuthImport
     }
-    '/admin/contests': {
-      preLoaderRoute: typeof AdminContestsLazyImport
-      parentRoute: typeof rootRoute
+    '/_authoptional/contests': {
+      preLoaderRoute: typeof AuthoptionalContestsLazyImport
+      parentRoute: typeof AuthoptionalImport
     }
-    '/admin/filters': {
-      preLoaderRoute: typeof AdminFiltersLazyImport
-      parentRoute: typeof rootRoute
+    '/_authoptional/profile': {
+      preLoaderRoute: typeof AuthoptionalProfileLazyImport
+      parentRoute: typeof AuthoptionalImport
     }
-    '/admin/network': {
-      preLoaderRoute: typeof AdminNetworkLazyImport
-      parentRoute: typeof rootRoute
+    '/_authoptional/stv': {
+      preLoaderRoute: typeof AuthoptionalStvLazyImport
+      parentRoute: typeof AuthoptionalImport
     }
-    '/admin/news': {
-      preLoaderRoute: typeof AdminNewsLazyImport
-      parentRoute: typeof rootRoute
-    }
-    '/admin/people': {
-      preLoaderRoute: typeof AdminPeopleLazyImport
-      parentRoute: typeof rootRoute
-    }
-    '/admin/reports': {
-      preLoaderRoute: typeof AdminReportsLazyImport
-      parentRoute: typeof rootRoute
-    }
-    '/admin/servers': {
-      preLoaderRoute: typeof AdminServersLazyImport
-      parentRoute: typeof rootRoute
-    }
-    '/admin/votes': {
-      preLoaderRoute: typeof AdminVotesLazyImport
-      parentRoute: typeof rootRoute
-    }
-    '/contests/$contest_id': {
-      preLoaderRoute: typeof ContestsContestidLazyImport
-      parentRoute: typeof ContestsLazyImport
-    }
-    '/forums/$forum_id': {
-      preLoaderRoute: typeof ForumsForumidLazyImport
-      parentRoute: typeof rootRoute
+    '/_authoptional/wiki': {
+      preLoaderRoute: typeof AuthoptionalWikiLazyImport
+      parentRoute: typeof AuthoptionalImport
     }
     '/login/discord': {
       preLoaderRoute: typeof LoginDiscordLazyImport
-      parentRoute: typeof LoginLazyImport
-    }
-    '/login/success': {
-      preLoaderRoute: typeof LoginSuccessLazyImport
-      parentRoute: typeof LoginLazyImport
-    }
-    '/logs/$match_id': {
-      preLoaderRoute: typeof LogsMatchidLazyImport
       parentRoute: typeof rootRoute
     }
-    '/report/$report_id': {
-      preLoaderRoute: typeof ReportReportidLazyImport
+    '/login/': {
+      preLoaderRoute: typeof LoginIndexImport
       parentRoute: typeof rootRoute
     }
-    '/wiki/$slug': {
-      preLoaderRoute: typeof WikiSlugLazyImport
-      parentRoute: typeof WikiLazyImport
+    '/_authoptional/': {
+      preLoaderRoute: typeof AuthoptionalIndexLazyImport
+      parentRoute: typeof AuthoptionalImport
     }
-    '/forums/': {
-      preLoaderRoute: typeof ForumsIndexLazyImport
-      parentRoute: typeof rootRoute
+    '/_auth/admin/appeals': {
+      preLoaderRoute: typeof AuthAdminAppealsLazyImport
+      parentRoute: typeof AuthImport
     }
-    '/report/': {
-      preLoaderRoute: typeof ReportIndexLazyImport
-      parentRoute: typeof rootRoute
+    '/_auth/admin/contests': {
+      preLoaderRoute: typeof AuthAdminContestsLazyImport
+      parentRoute: typeof AuthImport
     }
-    '/admin/ban/asn': {
-      preLoaderRoute: typeof AdminBanAsnLazyImport
-      parentRoute: typeof rootRoute
+    '/_auth/admin/filters': {
+      preLoaderRoute: typeof AuthAdminFiltersLazyImport
+      parentRoute: typeof AuthImport
     }
-    '/admin/ban/cidr': {
-      preLoaderRoute: typeof AdminBanCidrLazyImport
-      parentRoute: typeof rootRoute
+    '/_auth/admin/network': {
+      preLoaderRoute: typeof AuthAdminNetworkLazyImport
+      parentRoute: typeof AuthImport
     }
-    '/admin/ban/group': {
-      preLoaderRoute: typeof AdminBanGroupLazyImport
-      parentRoute: typeof rootRoute
+    '/_auth/admin/news': {
+      preLoaderRoute: typeof AuthAdminNewsLazyImport
+      parentRoute: typeof AuthImport
     }
-    '/admin/ban/steam': {
-      preLoaderRoute: typeof AdminBanSteamLazyImport
-      parentRoute: typeof rootRoute
+    '/_auth/admin/people': {
+      preLoaderRoute: typeof AuthAdminPeopleLazyImport
+      parentRoute: typeof AuthImport
     }
-    '/admin/network/cidr_blocks': {
-      preLoaderRoute: typeof AdminNetworkCidrblocksLazyImport
-      parentRoute: typeof AdminNetworkLazyImport
+    '/_auth/admin/reports': {
+      preLoaderRoute: typeof AuthAdminReportsLazyImport
+      parentRoute: typeof AuthImport
     }
-    '/admin/network/ip_Info': {
-      preLoaderRoute: typeof AdminNetworkIpInfoLazyImport
-      parentRoute: typeof AdminNetworkLazyImport
+    '/_auth/admin/servers': {
+      preLoaderRoute: typeof AuthAdminServersLazyImport
+      parentRoute: typeof AuthImport
     }
-    '/admin/network/ip_hist': {
-      preLoaderRoute: typeof AdminNetworkIphistLazyImport
-      parentRoute: typeof AdminNetworkLazyImport
+    '/_auth/admin/votes': {
+      preLoaderRoute: typeof AuthAdminVotesLazyImport
+      parentRoute: typeof AuthImport
     }
-    '/admin/network/players_by_ip': {
-      preLoaderRoute: typeof AdminNetworkPlayersbyipLazyImport
-      parentRoute: typeof AdminNetworkLazyImport
+    '/_auth/ban/$ban_id': {
+      preLoaderRoute: typeof AuthBanBanidLazyImport
+      parentRoute: typeof AuthImport
     }
-    '/forums/thread/$forum_thread_id': {
-      preLoaderRoute: typeof ForumsThreadForumthreadidLazyImport
-      parentRoute: typeof rootRoute
+    '/_auth/logs/$match_id': {
+      preLoaderRoute: typeof AuthLogsMatchidLazyImport
+      parentRoute: typeof AuthImport
     }
-    '/stats/player/$steam_id': {
-      preLoaderRoute: typeof StatsPlayerSteamidLazyImport
-      parentRoute: typeof StatsLazyImport
+    '/_auth/match/$match_id': {
+      preLoaderRoute: typeof AuthMatchMatchidLazyImport
+      parentRoute: typeof AuthImport
     }
-    '/stats/weapon/$weapon_id': {
-      preLoaderRoute: typeof StatsWeaponWeaponidLazyImport
-      parentRoute: typeof StatsLazyImport
+    '/_auth/report/$report_id': {
+      preLoaderRoute: typeof AuthReportReportidLazyImport
+      parentRoute: typeof AuthImport
+    }
+    '/_authoptional/contests/$contest_id': {
+      preLoaderRoute: typeof AuthoptionalContestsContestidLazyImport
+      parentRoute: typeof AuthoptionalContestsLazyImport
+    }
+    '/_authoptional/forums/$forum_id': {
+      preLoaderRoute: typeof AuthoptionalForumsForumidLazyImport
+      parentRoute: typeof AuthoptionalImport
+    }
+    '/_authoptional/wiki/$slug': {
+      preLoaderRoute: typeof AuthoptionalWikiSlugLazyImport
+      parentRoute: typeof AuthoptionalWikiLazyImport
+    }
+    '/_auth/report/': {
+      preLoaderRoute: typeof AuthReportIndexLazyImport
+      parentRoute: typeof AuthImport
+    }
+    '/_authoptional/forums/': {
+      preLoaderRoute: typeof AuthoptionalForumsIndexLazyImport
+      parentRoute: typeof AuthoptionalImport
+    }
+    '/_auth/admin/ban/asn': {
+      preLoaderRoute: typeof AuthAdminBanAsnLazyImport
+      parentRoute: typeof AuthImport
+    }
+    '/_auth/admin/ban/cidr': {
+      preLoaderRoute: typeof AuthAdminBanCidrLazyImport
+      parentRoute: typeof AuthImport
+    }
+    '/_auth/admin/ban/group': {
+      preLoaderRoute: typeof AuthAdminBanGroupLazyImport
+      parentRoute: typeof AuthImport
+    }
+    '/_auth/admin/ban/steam': {
+      preLoaderRoute: typeof AuthAdminBanSteamLazyImport
+      parentRoute: typeof AuthImport
+    }
+    '/_auth/admin/network/cidr_blocks': {
+      preLoaderRoute: typeof AuthAdminNetworkCidrblocksLazyImport
+      parentRoute: typeof AuthAdminNetworkLazyImport
+    }
+    '/_auth/admin/network/ip_Info': {
+      preLoaderRoute: typeof AuthAdminNetworkIpInfoLazyImport
+      parentRoute: typeof AuthAdminNetworkLazyImport
+    }
+    '/_auth/admin/network/ip_hist': {
+      preLoaderRoute: typeof AuthAdminNetworkIphistLazyImport
+      parentRoute: typeof AuthAdminNetworkLazyImport
+    }
+    '/_auth/admin/network/players_by_ip': {
+      preLoaderRoute: typeof AuthAdminNetworkPlayersbyipLazyImport
+      parentRoute: typeof AuthAdminNetworkLazyImport
+    }
+    '/_auth/stats/player/$steam_id': {
+      preLoaderRoute: typeof AuthStatsPlayerSteamidLazyImport
+      parentRoute: typeof AuthStatsLazyImport
+    }
+    '/_auth/stats/weapon/$weapon_id': {
+      preLoaderRoute: typeof AuthStatsWeaponWeaponidLazyImport
+      parentRoute: typeof AuthStatsLazyImport
+    }
+    '/_authoptional/forums/thread/$forum_thread_id': {
+      preLoaderRoute: typeof AuthoptionalForumsThreadForumthreadidLazyImport
+      parentRoute: typeof AuthoptionalImport
     }
   }
 }
@@ -537,50 +634,58 @@ declare module '@tanstack/react-router' {
 // Create and export the route tree
 
 export const routeTree = rootRoute.addChildren([
-  IndexLazyRoute,
+  AuthRoute.addChildren([
+    AuthLogoutLazyRoute,
+    AuthNotificationsLazyRoute,
+    AuthSettingsLazyRoute,
+    AuthStatsLazyRoute.addChildren([
+      AuthStatsPlayerSteamidLazyRoute,
+      AuthStatsWeaponWeaponidLazyRoute,
+    ]),
+    AuthAdminAppealsLazyRoute,
+    AuthAdminContestsLazyRoute,
+    AuthAdminFiltersLazyRoute,
+    AuthAdminNetworkLazyRoute.addChildren([
+      AuthAdminNetworkCidrblocksLazyRoute,
+      AuthAdminNetworkIpInfoLazyRoute,
+      AuthAdminNetworkIphistLazyRoute,
+      AuthAdminNetworkPlayersbyipLazyRoute,
+    ]),
+    AuthAdminNewsLazyRoute,
+    AuthAdminPeopleLazyRoute,
+    AuthAdminReportsLazyRoute,
+    AuthAdminServersLazyRoute,
+    AuthAdminVotesLazyRoute,
+    AuthBanBanidLazyRoute,
+    AuthLogsMatchidLazyRoute,
+    AuthMatchMatchidLazyRoute,
+    AuthReportReportidLazyRoute,
+    AuthReportIndexLazyRoute,
+    AuthAdminBanAsnLazyRoute,
+    AuthAdminBanCidrLazyRoute,
+    AuthAdminBanGroupLazyRoute,
+    AuthAdminBanSteamLazyRoute,
+  ]),
+  AuthoptionalRoute.addChildren([
+    AuthoptionalContestsLazyRoute.addChildren([
+      AuthoptionalContestsContestidLazyRoute,
+    ]),
+    AuthoptionalProfileLazyRoute,
+    AuthoptionalStvLazyRoute,
+    AuthoptionalWikiLazyRoute.addChildren([AuthoptionalWikiSlugLazyRoute]),
+    AuthoptionalIndexLazyRoute,
+    AuthoptionalForumsForumidLazyRoute,
+    AuthoptionalForumsIndexLazyRoute,
+    AuthoptionalForumsThreadForumthreadidLazyRoute,
+  ]),
   ChatlogsRoute,
-  BanLazyRoute,
-  ContestsLazyRoute.addChildren([ContestsContestidLazyRoute]),
-  LoginLazyRoute.addChildren([LoginDiscordLazyRoute, LoginSuccessLazyRoute]),
-  LogoutLazyRoute,
-  MatchLazyRoute,
-  NotificationsLazyRoute,
   PageNotFoundLazyRoute,
   PatreonLazyRoute,
   PrivacyPolicyLazyRoute,
-  ProfileLazyRoute,
   ServersLazyRoute,
-  SettingsLazyRoute,
-  StatsLazyRoute.addChildren([
-    StatsPlayerSteamidLazyRoute,
-    StatsWeaponWeaponidLazyRoute,
-  ]),
-  StvLazyRoute,
-  WikiLazyRoute.addChildren([WikiSlugLazyRoute]),
-  AdminAppealsLazyRoute,
-  AdminContestsLazyRoute,
-  AdminFiltersLazyRoute,
-  AdminNetworkLazyRoute.addChildren([
-    AdminNetworkCidrblocksLazyRoute,
-    AdminNetworkIpInfoLazyRoute,
-    AdminNetworkIphistLazyRoute,
-    AdminNetworkPlayersbyipLazyRoute,
-  ]),
-  AdminNewsLazyRoute,
-  AdminPeopleLazyRoute,
-  AdminReportsLazyRoute,
-  AdminServersLazyRoute,
-  AdminVotesLazyRoute,
-  ForumsForumidLazyRoute,
-  LogsMatchidLazyRoute,
-  ReportReportidLazyRoute,
-  ForumsIndexLazyRoute,
-  ReportIndexLazyRoute,
-  AdminBanAsnLazyRoute,
-  AdminBanCidrLazyRoute,
-  AdminBanGroupLazyRoute,
-  AdminBanSteamLazyRoute,
-  ForumsThreadForumthreadidLazyRoute,
+  LoginSuccessRoute,
+  LoginDiscordLazyRoute,
+  LoginIndexRoute,
 ])
 
 /* prettier-ignore-end */

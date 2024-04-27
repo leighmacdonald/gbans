@@ -8,13 +8,9 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import {
-    apiDeleteCIDRBlockSource,
-    CIDRBlockSource,
-    PermissionLevel
-} from '../api';
+import { useRouteContext } from '@tanstack/react-router';
+import { apiDeleteCIDRBlockSource, CIDRBlockSource, PermissionLevel } from '../api';
 import { useCIDRBlocks } from '../hooks/useCIDRBlocks';
-import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.ts';
 import { logErr } from '../util/errors';
 import { LoadingPlaceholder } from './LoadingPlaceholder';
 import { VCenterBox } from './VCenterBox';
@@ -26,7 +22,7 @@ export const NetworkBlockSources = () => {
     const [newSources, setNewSources] = useState<CIDRBlockSource[]>([]);
     const confirmModal = useModal(ModalConfirm);
     const editorModal = useModal(ModalCIDRBlockEditor);
-    const { currentUser } = useCurrentUserCtx();
+    const { hasPermission } = useRouteContext({ from: '/_auth/admin/network/cidr_blocks' });
 
     const sources = useMemo(() => {
         if (loading) {
@@ -58,22 +54,12 @@ export const NetworkBlockSources = () => {
 
     const onEdit = useCallback(async (source?: CIDRBlockSource) => {
         try {
-            const updated = await NiceModal.show<CIDRBlockSource>(
-                ModalCIDRBlockEditor,
-                {
-                    source
-                }
-            );
+            const updated = await NiceModal.show<CIDRBlockSource>(ModalCIDRBlockEditor, {
+                source
+            });
 
             setNewSources((prevState) => {
-                return [
-                    updated,
-                    ...prevState.filter(
-                        (s) =>
-                            s.cidr_block_source_id !=
-                            updated.cidr_block_source_id
-                    )
-                ];
+                return [updated, ...prevState.filter((s) => s.cidr_block_source_id != updated.cidr_block_source_id)];
             });
         } catch (e) {
             logErr(e);
@@ -110,26 +96,13 @@ export const NetworkBlockSources = () => {
                     <Grid xs={12}>
                         {sources.map((s) => {
                             return (
-                                <Stack
-                                    spacing={1}
-                                    direction={'row'}
-                                    key={`cidr-source-${s.cidr_block_source_id}`}
-                                >
-                                    <ButtonGroup
-                                        size={'small'}
-                                        disabled={
-                                            currentUser.permission_level !=
-                                            PermissionLevel.Admin
-                                        }
-                                    >
+                                <Stack spacing={1} direction={'row'} key={`cidr-source-${s.cidr_block_source_id}`}>
+                                    <ButtonGroup size={'small'} disabled={!hasPermission(PermissionLevel.Admin)}>
                                         <Button
                                             startIcon={<EditIcon />}
                                             variant={'contained'}
                                             color={'warning'}
-                                            disabled={
-                                                currentUser.permission_level !=
-                                                PermissionLevel.Admin
-                                            }
+                                            disabled={!hasPermission(PermissionLevel.Admin)}
                                             onClick={async () => {
                                                 await onEdit(s);
                                             }}
@@ -141,9 +114,7 @@ export const NetworkBlockSources = () => {
                                             variant={'contained'}
                                             color={'error'}
                                             onClick={async () => {
-                                                await onDeleteSource(
-                                                    s.cidr_block_source_id
-                                                );
+                                                await onDeleteSource(s.cidr_block_source_id);
                                             }}
                                         >
                                             Delete
@@ -151,19 +122,13 @@ export const NetworkBlockSources = () => {
                                     </ButtonGroup>
 
                                     <VCenterBox>
-                                        <Typography variant={'body1'}>
-                                            {s.name}
-                                        </Typography>
+                                        <Typography variant={'body1'}>{s.name}</Typography>
                                     </VCenterBox>
                                     <VCenterBox>
-                                        <Typography variant={'body2'}>
-                                            {s.enabled ? 'Enabled' : 'Disabled'}
-                                        </Typography>
+                                        <Typography variant={'body2'}>{s.enabled ? 'Enabled' : 'Disabled'}</Typography>
                                     </VCenterBox>
                                     <VCenterBox>
-                                        <Typography variant={'body2'}>
-                                            {s.url}
-                                        </Typography>
+                                        <Typography variant={'body2'}>{s.url}</Typography>
                                     </VCenterBox>
                                 </Stack>
                             );
