@@ -45,13 +45,12 @@ import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
-import { useNavigate, Link as RouterLink } from '@tanstack/react-router';
+import { useNavigate, Link as RouterLink, useRouteContext } from '@tanstack/react-router';
 import { MenuItemData, NestedDropdown } from 'mui-nested-menu';
 import SteamID from 'steamid';
 import { generateOIDCLink, PermissionLevel, UserNotification } from '../api';
 import { NotificationsProvider } from '../contexts/NotificationsCtx';
 import { useColourModeCtx } from '../hooks/useColourModeCtx.ts';
-import { useCurrentUserCtx } from '../hooks/useCurrentUserCtx.tsx';
 import { useNotificationsCtx } from '../hooks/useNotificationsCtx.ts';
 import steamLogo from '../icons/steam_login_sm.png';
 import { tf2Fonts } from '../theme';
@@ -65,7 +64,8 @@ interface menuRoute {
 }
 
 export const TopBar = () => {
-    const { currentUser } = useCurrentUserCtx();
+    const { user, hasPermission, userSteamID, isAuthenticated } = useRouteContext({ from: '/_authoptional/' });
+
     const { notifications } = useNotificationsCtx();
     const theme = useTheme();
     const colourMode = useColourModeCtx();
@@ -107,14 +107,14 @@ export const TopBar = () => {
                 icon: <DashboardIcon color={'primary'} sx={topColourOpts} />
             }
         ];
-        if (currentUser.ban_id <= 0) {
+        if (user.ban_id <= 0) {
             items.push({
                 to: '/servers',
                 text: 'Servers',
                 icon: <StorageIcon sx={topColourOpts} />
             });
         }
-        if (currentUser.permission_level >= PermissionLevel.Moderator) {
+        if (hasPermission(PermissionLevel.Moderator)) {
             items.push({
                 to: '/forums',
                 text: 'Forums',
@@ -126,27 +126,27 @@ export const TopBar = () => {
             text: 'Wiki',
             icon: <ArticleIcon sx={topColourOpts} />
         });
-        if (currentUser.ban_id <= 0) {
+        if (user.ban_id <= 0) {
             items.push({
                 to: '/report',
                 text: 'Report',
                 icon: <ReportIcon sx={topColourOpts} />
             });
         }
-        if (currentUser.ban_id > 0) {
+        if (user.ban_id > 0) {
             items.push({
-                to: `/ban/${currentUser.ban_id}`,
+                to: `/ban/${user.ban_id}`,
                 text: 'Appeal',
                 icon: <SupportIcon sx={topColourOpts} />
             });
         }
         return items;
-    }, [currentUser.ban_id, currentUser.permission_level, topColourOpts]);
+    }, [hasPermission, topColourOpts, user.ban_id]);
 
     const userItems: menuRoute[] = useMemo(
         () => [
             {
-                to: `/profile/${currentUser?.steam_id}`,
+                to: `/profile/${userSteamID}`,
                 text: 'Profile',
                 icon: <AccountCircleIcon sx={colourOpts} />
             },
@@ -157,7 +157,7 @@ export const TopBar = () => {
             },
 
             {
-                to: `/logs/${currentUser?.steam_id}`,
+                to: `/logs/${userSteamID}`,
                 text: 'Match History',
                 icon: <TimelineIcon sx={colourOpts} />
             },
@@ -167,7 +167,7 @@ export const TopBar = () => {
                 icon: <ExitToAppIcon sx={colourOpts} />
             }
         ],
-        [colourOpts, currentUser?.steam_id]
+        [colourOpts, userSteamID]
     );
 
     // @ts-expect-error label defined as string
@@ -241,9 +241,7 @@ export const TopBar = () => {
                         {
                             leftIcon: <WifiFindIcon sx={colourOpts} />,
                             label: 'Find Players By IP',
-                            callback: onClickHandler(
-                                '/admin/network/players_by_ip'
-                            )
+                            callback: onClickHandler('/admin/network/players_by_ip')
                         },
                         {
                             leftIcon: <CellTowerIcon sx={colourOpts} />,
@@ -253,9 +251,7 @@ export const TopBar = () => {
                         {
                             leftIcon: <WifiOffIcon sx={colourOpts} />,
                             label: 'External CIDR Bans',
-                            callback: onClickHandler(
-                                '/admin/network/cidr_blocks'
-                            )
+                            callback: onClickHandler('/admin/network/cidr_blocks')
                         }
                     ]
                 },
@@ -283,11 +279,7 @@ export const TopBar = () => {
         };
     }, [colourOpts, navigate]);
 
-    const renderLinkedMenuItem = (
-        text: string,
-        route: string,
-        icon: JSX.Element
-    ) => (
+    const renderLinkedMenuItem = (text: string, route: string, icon: JSX.Element) => (
         <MenuItem
             component={RouterLink}
             to={route}
@@ -303,17 +295,13 @@ export const TopBar = () => {
     );
 
     const themeIcon = useMemo(() => {
-        return theme.palette.mode == 'light' ? (
-            <DarkModeIcon sx={{ color: '#ada03a' }} />
-        ) : (
-            <LightModeIcon sx={{ color: '#ada03a' }} />
-        );
+        return theme.palette.mode == 'light' ? <DarkModeIcon sx={{ color: '#ada03a' }} /> : <LightModeIcon sx={{ color: '#ada03a' }} />;
     }, [theme.palette.mode]);
 
     const validSteamId = useMemo(() => {
         try {
-            if (currentUser?.steam_id) {
-                const sid = new SteamID(currentUser?.steam_id);
+            if (userSteamID) {
+                const sid = new SteamID(userSteamID);
                 return sid.isValidIndividual();
             }
             return false;
@@ -321,7 +309,7 @@ export const TopBar = () => {
             logErr(e);
         }
         return false;
-    }, [currentUser?.steam_id]);
+    }, [userSteamID]);
 
     return (
         <AppBar position="sticky">
@@ -374,11 +362,7 @@ export const TopBar = () => {
                             }}
                         >
                             {menuItems.map((value) => {
-                                return renderLinkedMenuItem(
-                                    value.text,
-                                    value.to,
-                                    value.icon
-                                );
+                                return renderLinkedMenuItem(value.text, value.to, value.icon);
                             })}
                         </Menu>
                     </Box>
@@ -400,89 +384,52 @@ export const TopBar = () => {
                         }}
                     >
                         {menuItems.map((value) => {
-                            return renderLinkedMenuItem(
-                                value.text,
-                                value.to,
-                                value.icon
-                            );
+                            return renderLinkedMenuItem(value.text, value.to, value.icon);
                         })}
                     </Box>
 
                     <Box sx={{ flexGrow: 0 }}>
                         <Stack direction={'row'} spacing={1}>
                             <Tooltip title="Toggle BLU/RED mode">
-                                <IconButton
-                                    onClick={colourMode.toggleColorMode}
-                                >
-                                    {themeIcon}
-                                </IconButton>
+                                <IconButton onClick={colourMode.toggleColorMode}>{themeIcon}</IconButton>
                             </Tooltip>
-                            {currentUser.permission_level >=
-                                PermissionLevel.Admin && (
+                            {hasPermission(PermissionLevel.Admin) && (
                                 <NotificationsProvider>
-                                    <IconButton
-                                        component={RouterLink}
-                                        to={'/notifications'}
-                                        color={'inherit'}
-                                    >
-                                        <Badge
-                                            badgeContent={
-                                                (notifications ?? []).filter(
-                                                    (n: UserNotification) =>
-                                                        !n.read
-                                                ).length
-                                            }
-                                        >
+                                    <IconButton component={RouterLink} to={'/notifications'} color={'inherit'}>
+                                        <Badge badgeContent={(notifications ?? []).filter((n: UserNotification) => !n.read).length}>
                                             <MailIcon />
                                         </Badge>
                                     </IconButton>
                                 </NotificationsProvider>
                             )}
-                            {!currentUser ||
+                            {!isAuthenticated() ||
                                 (!validSteamId && (
                                     <Tooltip title="Steam Login">
-                                        <Button
-                                            component={Link}
-                                            href={generateOIDCLink(
-                                                window.location.pathname
-                                            )}
-                                        >
-                                            <img
-                                                src={steamLogo}
-                                                alt={'Steam Login'}
-                                            />
+                                        <Button component={Link} href={generateOIDCLink(window.location.pathname)}>
+                                            <img src={steamLogo} alt={'Steam Login'} />
                                         </Button>
                                     </Tooltip>
                                 ))}
-                            {currentUser &&
-                                validSteamId &&
-                                currentUser.permission_level >=
-                                    PermissionLevel.Moderator && (
-                                    <VCenterBox>
-                                        <NestedDropdown
-                                            menuItemsData={adminItems}
-                                            MenuProps={{
-                                                elevation: 0
-                                            }}
-                                            ButtonProps={{
-                                                sx: { color: 'common.white' },
-                                                variant: 'text'
-                                            }}
-                                        />
-                                    </VCenterBox>
-                                )}
+                            {validSteamId && hasPermission(PermissionLevel.Moderator) && (
+                                <VCenterBox>
+                                    <NestedDropdown
+                                        menuItemsData={adminItems}
+                                        MenuProps={{
+                                            elevation: 0
+                                        }}
+                                        ButtonProps={{
+                                            sx: { color: 'common.white' },
+                                            variant: 'text'
+                                        }}
+                                    />
+                                </VCenterBox>
+                            )}
 
-                            {currentUser && validSteamId && (
+                            {isAuthenticated() && (
                                 <>
                                     <Tooltip title="User Settings">
-                                        <IconButton
-                                            onClick={handleOpenUserMenu}
-                                            sx={{ p: 0 }}
-                                        >
-                                            <Avatar
-                                                alt={currentUser.name}
-                                                src={currentUser.avatarhash}
-                                            />
+                                        <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+                                            <Avatar alt={user.name} src={user.avatarhash} />
                                         </IconButton>
                                     </Tooltip>
                                     <Menu
@@ -502,11 +449,7 @@ export const TopBar = () => {
                                         onClose={handleCloseUserMenu}
                                     >
                                         {userItems.map((value) => {
-                                            return renderLinkedMenuItem(
-                                                value.text,
-                                                value.to,
-                                                value.icon
-                                            );
+                                            return renderLinkedMenuItem(value.text, value.to, value.icon);
                                         })}
                                     </Menu>
                                 </>

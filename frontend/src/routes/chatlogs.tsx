@@ -80,6 +80,7 @@ function ChatLogs() {
     const { data: rows } = useQuery({
         queryKey: ['chatlogs'],
         queryFn: async () => {
+            console.log('running query');
             const resp = await apiGetMessages({
                 server_id: server,
                 personaname: personaName,
@@ -98,6 +99,7 @@ function ChatLogs() {
         onSubmit: async ({ value }) => {
             console.log(value);
             await navigate({
+                replace: true,
                 search: (prev) => ({
                     ...prev,
                     message: value.message,
@@ -106,29 +108,6 @@ function ChatLogs() {
                     server: value.server
                 })
             });
-            // apiGetMessages({
-            //     server_id:
-            //         (values.server_id ?? anyServerSimple.server_id) > 0
-            //             ? values.server_id
-            //             : undefined,
-            //     personaname: values.personaname,
-            //     query: values.message,
-            //     source_id: values.source_id,
-            //     limit: Number(rowPerPageCount),
-            //     offset: Number(page ?? 0) * Number(rowPerPageCount),
-            //     order_by: sortColumn,
-            //     desc: sortOrder == 'desc'
-            // })
-            //     .then((resp) => {
-            //         setRows(resp.data || []);
-            //         setTotalRows(resp.count);
-            //     })
-            //     .catch((e) => {
-            //         logErr(e);
-            //     })
-            //     .finally(() => {
-            //         setLoading(false);
-            //     });
         },
         defaultValues: {
             message: message,
