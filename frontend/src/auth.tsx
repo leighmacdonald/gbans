@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { createContext, ReactNode, useContext } from 'react';
 import { defaultAvatarHash, PermissionLevel, UserProfile } from './api';
 
 const guestProfile: UserProfile = {
@@ -12,34 +12,66 @@ const guestProfile: UserProfile = {
     created_on: new Date(),
     updated_on: new Date()
 };
-export const useAuth = (): AuthContext => {
-    const [user, setUser] = useState<UserProfile>(guestProfile);
+
+const AuthContext = createContext<AuthContext | null>(null);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+    const profileKey = 'profile';
 
     const login = (profile: UserProfile) => {
-        setUser(profile);
+        localStorage.setItem(profileKey, JSON.stringify(profile));
     };
 
     const logout = () => {
-        setUser(guestProfile);
+        localStorage.removeItem(profileKey);
+    };
+
+    const profile = (): UserProfile => {
+        try {
+            const userData = localStorage.getItem(profileKey);
+            if (!userData) {
+                return guestProfile;
+            }
+
+            return JSON.parse(userData);
+        } catch (e) {
+            return guestProfile;
+        }
     };
 
     const isAuthenticated = () => {
-        return user.steam_id != '';
+        return profile().steam_id != '';
     };
 
     const permissionLevel = () => {
-        return user ? user.permission_level : PermissionLevel.Guest;
+        return profile().permission_level;
     };
 
     const hasPermission = (wantedLevel: PermissionLevel) => {
-        return permissionLevel() >= wantedLevel;
+        const currentLevel = permissionLevel();
+        console.log(`have: ${currentLevel} want: ${wantedLevel}`);
+        return currentLevel >= wantedLevel;
     };
 
-    return { login, user, logout, isAuthenticated, permissionLevel, userSteamID: user ? user.steam_id : '', hasPermission };
+    return (
+        <AuthContext.Provider
+            value={{ profile, logout, isAuthenticated, permissionLevel, hasPermission, login, userSteamID: profile().steam_id }}
+        >
+            {children}
+        </AuthContext.Provider>
+    );
+}
+
+export const useAuth = (): AuthContext => {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
 };
 
 export type AuthContext = {
-    user: UserProfile;
+    profile: () => UserProfile;
     login: (profile: UserProfile) => void;
     logout: () => void;
     isAuthenticated: () => boolean;

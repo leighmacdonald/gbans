@@ -1,5 +1,4 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import HistoryIcon from '@mui/icons-material/History';
 import ReportIcon from '@mui/icons-material/Report';
 import ReportGmailerrorredIcon from '@mui/icons-material/ReportGmailerrorred';
@@ -9,10 +8,8 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import {
-    sessionKeyReportPersonMessageIdName,
-    sessionKeyReportSteamID
-} from '../api';
+import { useNavigate } from '@tanstack/react-router';
+import { sessionKeyReportPersonMessageIdName, sessionKeyReportSteamID } from '../api';
 
 interface ChatContextMenuProps {
     person_message_id: number;
@@ -20,11 +17,7 @@ interface ChatContextMenuProps {
     steamId: string;
 }
 
-export const ChatContextMenu = ({
-    person_message_id,
-    flagged,
-    steamId
-}: ChatContextMenuProps) => {
+export const ChatContextMenu = ({ person_message_id, flagged, steamId }: ChatContextMenuProps) => {
     const navigate = useNavigate();
 
     const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -37,12 +30,9 @@ export const ChatContextMenu = ({
     };
 
     const onClickReport = () => {
-        sessionStorage.setItem(
-            sessionKeyReportPersonMessageIdName,
-            `${person_message_id}`
-        );
+        sessionStorage.setItem(sessionKeyReportPersonMessageIdName, `${person_message_id}`);
         sessionStorage.setItem(sessionKeyReportSteamID, steamId);
-        navigate('/report');
+        navigate({ to: '/report' });
         handleClose();
     };
 
@@ -73,10 +63,7 @@ export const ChatContextMenu = ({
                 </MenuItem>
                 <MenuItem onClick={onClickReport} disabled={true}>
                     <ListItemIcon>
-                        <ReportGmailerrorredIcon
-                            fontSize="small"
-                            color={'error'}
-                        />
+                        <ReportGmailerrorredIcon fontSize="small" color={'error'} />
                     </ListItemIcon>
                     <ListItemText>Create Report (1-Click)</ListItemText>
                 </MenuItem>

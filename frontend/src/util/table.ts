@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Theme } from '@mui/material';
 import { SxProps } from '@mui/material/styles';
+import { z } from 'zod';
 import { DataCount } from '../api';
 
 export enum RowsPerPage {
@@ -10,8 +11,13 @@ export enum RowsPerPage {
     Hundred = 100
 }
 
-export const descendingComparator = <T>(a: T, b: T, orderBy: keyof T) =>
-    b[orderBy] < a[orderBy] ? -1 : b[orderBy] > a[orderBy] ? 1 : 0;
+export const commonTableSearchSchema = {
+    page: z.number().catch(0),
+    rows: z.number().catch(RowsPerPage.TwentyFive),
+    sortOrder: z.enum(['desc', 'asc']).catch('desc')
+};
+
+export const descendingComparator = <T>(a: T, b: T, orderBy: keyof T) => (b[orderBy] < a[orderBy] ? -1 : b[orderBy] > a[orderBy] ? 1 : 0);
 
 export type Order = 'asc' | 'desc';
 
@@ -32,18 +38,10 @@ export interface HeadingCell<T> {
     hideSm?: boolean;
 }
 
-export const compare = <T>(
-    order: Order,
-    orderBy: keyof T
-): ((a: T, b: T) => number) =>
-    order === 'desc'
-        ? (a, b) => descendingComparator(a, b, orderBy)
-        : (a, b) => -descendingComparator(a, b, orderBy);
+export const compare = <T>(order: Order, orderBy: keyof T): ((a: T, b: T) => number) =>
+    order === 'desc' ? (a, b) => descendingComparator(a, b, orderBy) : (a, b) => -descendingComparator(a, b, orderBy);
 
-export const stableSort = <T>(
-    array: T[],
-    comparator: (a: T, b: T) => number
-) => {
+export const stableSort = <T>(array: T[], comparator: (a: T, b: T) => number) => {
     const stabilizedThis = array.map((el, index) => [el, index] as [T, number]);
     stabilizedThis.sort((a, b) => {
         const order = comparator(a[0], b[0]);

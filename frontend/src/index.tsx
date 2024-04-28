@@ -7,9 +7,10 @@ import '@fontsource/roboto/latin-700.css';
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createRouter, RouterProvider } from '@tanstack/react-router';
-import { useAuth } from './auth.tsx';
-import { ErrorComponent } from './component/ErrorComponent.tsx';
+import { AuthProvider, useAuth } from './auth.tsx';
+import { ErrorDetails } from './component/ErrorDetails.tsx';
 import { LoadingPlaceholder } from './component/LoadingPlaceholder.tsx';
+import { AppError, ErrorCode } from './error.tsx';
 import './fonts/tf2build.css';
 import { routeTree } from './routeTree.gen';
 
@@ -24,7 +25,9 @@ const router = createRouter({
         queryClient
     },
     defaultPendingComponent: LoadingPlaceholder,
-    defaultErrorComponent: ErrorComponent,
+    defaultErrorComponent: () => {
+        return <ErrorDetails error={new AppError(ErrorCode.Unknown)} />;
+    },
     // Since we're using React Query, we don't want loader calls to ever be stale
     // This will ensure that the loader is always called when the route is preloaded or visited
     defaultPreloadStaleTime: 0
@@ -77,11 +80,13 @@ function InnerApp() {
 
 function App() {
     return (
-        <QueryClientProvider client={queryClient}>
-            <StrictMode>
-                <InnerApp />
-            </StrictMode>
-        </QueryClientProvider>
+        <AuthProvider>
+            <QueryClientProvider client={queryClient}>
+                <StrictMode>
+                    <InnerApp />
+                </StrictMode>
+            </QueryClientProvider>
+        </AuthProvider>
     );
 }
 

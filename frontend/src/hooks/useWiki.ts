@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { APIError, PermissionLevel } from '../api';
+import { PermissionLevel } from '../api';
 import { apiGetWikiPage, Page } from '../api/wiki';
+import { AppError } from '../error.tsx';
 import { logErr } from '../util/errors';
 
 const defaultPage: Page = {
@@ -16,7 +17,7 @@ const defaultPage: Page = {
 export const useWiki = (slug: string = 'home') => {
     const [data, setData] = useState<Page>(defaultPage);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<APIError>();
+    const [error, setError] = useState<AppError>();
 
     useEffect(() => {
         const abortController = new AbortController();

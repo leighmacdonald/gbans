@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { APIError } from '../api';
 import { apiForum, Forum } from '../api/forum';
+import { AppError } from '../error.tsx';
 
 export const useForum = (forumId: number) => {
     const [data, setData] = useState<Forum>();
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<APIError>();
+    const [error, setError] = useState<AppError>();
 
     useEffect(() => {
         const abortController = new AbortController();

@@ -26,9 +26,6 @@ devDependencies:
   '@fontsource/roboto':
     specifier: ^5.0.12
     version: 5.0.12
-  '@loadable/component':
-    specifier: ^5.16.3
-    version: 5.16.3(react@18.2.0)
   '@mui/icons-material':
     specifier: ^5.15.15
     version: 5.15.15(@mui/material@5.15.15)(@types/react@18.2.79)(react@18.2.0)
@@ -1199,18 +1196,6 @@ packages:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.4.15
-    dev: true
-
-  /@loadable/component@5.16.3(react@18.2.0):
-    resolution: {integrity: sha512-2mVvHs2988oVX2/zM0y6nYhJ4rTVHhkhRnpupBA0Rjl5tS8op9uSR4u5SLVfMLxzpspr2UiIBQD+wEuMsuq4Dg==}
-    engines: {node: '>=8'}
-    peerDependencies:
-      react: ^16.3.0 || ^17.0.0 || ^18.0.0
-    dependencies:
-      '@babel/runtime': 7.23.9
-      hoist-non-react-statics: 3.3.2
-      react: 18.2.0
-      react-is: 16.13.1
     dev: true
 
   /@mui/base@5.0.0-beta.36(@types/react@18.2.79)(react-dom@18.2.0)(react@18.2.0):

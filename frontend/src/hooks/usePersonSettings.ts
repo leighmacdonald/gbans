@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { APIError, apiGetPersonSettings, PersonSettings } from '../api';
+import { apiGetPersonSettings, PersonSettings } from '../api';
+import { AppError } from '../error.tsx';
 
 export const usePersonSettings = () => {
     const [data, setData] = useState<PersonSettings>();
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<APIError>();
+    const [error, setError] = useState<AppError>();
 
     useEffect(() => {
         const abortController = new AbortController();

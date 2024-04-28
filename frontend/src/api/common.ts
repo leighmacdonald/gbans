@@ -1,19 +1,9 @@
+import { AppError, ErrorCode } from '../error.tsx';
 import { logErr } from '../util/errors';
 import { parseDateTime } from '../util/text.tsx';
 import { emptyOrNullString } from '../util/types';
-import {
-    isTokenExpired,
-    readAccessToken,
-    readRefreshToken,
-    refreshToken
-} from './auth';
-import {
-    AppealState,
-    ASNBanRecord,
-    CIDRBanRecord,
-    GroupBanRecord,
-    SteamBanRecord
-} from './bans';
+import { isTokenExpired, readAccessToken, readRefreshToken, refreshToken } from './auth';
+import { AppealState, ASNBanRecord, CIDRBanRecord, GroupBanRecord, SteamBanRecord } from './bans';
 import { MatchResult } from './match';
 import { ReportStatus, ReportWithAuthor } from './report';
 
@@ -57,52 +47,12 @@ export class EmptyBody {}
 // isRefresh is to track if the token is being used as an auth refresh token. In that
 // case its returned instead of the standard access token.
 const getAccessToken = async (isRefresh: boolean) => {
-    if (
-        isTokenExpired(readAccessToken()) &&
-        !isTokenExpired(readRefreshToken()) &&
-        !isRefresh
-    ) {
+    if (isTokenExpired(readAccessToken()) && !isTokenExpired(readRefreshToken()) && !isRefresh) {
         await refreshToken();
     }
 
     return isRefresh ? readRefreshToken() : readAccessToken();
 };
-
-export enum ErrorCode {
-    InvalidMimetype,
-    DependencyMissing,
-    PermissionDenied,
-    Unknown,
-    LoginRequired
-}
-
-export class APIError extends Error {
-    public code: ErrorCode;
-
-    constructor(code: ErrorCode, message?: string, options?: never) {
-        if (emptyOrNullString(message)) {
-            switch (code) {
-                case ErrorCode.InvalidMimetype:
-                    message = 'Forbidden file format (mimetype)';
-                    break;
-                case ErrorCode.DependencyMissing:
-                    message = 'Dependency missing, cannot continue';
-                    break;
-                case ErrorCode.PermissionDenied:
-                    message = 'Permission Denied';
-                    break;
-                case ErrorCode.LoginRequired:
-                    message = 'Please Login';
-                    break;
-                default:
-                    message = 'Unhandled Error';
-            }
-        }
-        // @ts-expect-error not supported
-        super(message, options);
-        this.code = code;
-    }
-}
 
 interface errorMessage {
     message: string;
@@ -119,12 +69,9 @@ const apiRootURL = (): string => `${location.protocol}//${location.host}`;
  * @param body
  * @param isRefresh
  * @param abortController
- * @throws APIError
+ * @throws AppError
  */
-export const apiCall = async <
-    TResponse = EmptyBody,
-    TRequestBody = Record<string, unknown> | object
->(
+export const apiCall = async <TResponse = EmptyBody, TRequestBody = Record<string, unknown> | object>(
     url: string,
     method: string = 'GET',
     body?: TRequestBody | undefined,
@@ -163,17 +110,17 @@ export const apiCall = async <
 
     switch (response.status) {
         case 415:
-            throw new APIError(ErrorCode.InvalidMimetype);
+            throw new AppError(ErrorCode.InvalidMimetype);
         case 424:
-            throw new APIError(ErrorCode.DependencyMissing);
+            throw new AppError(ErrorCode.DependencyMissing);
         case 401:
             if (accessToken != '') {
-                throw new APIError(ErrorCode.LoginRequired);
+                throw new AppError(ErrorCode.LoginRequired);
             }
             break;
         case 403:
             if (accessToken != '') {
-                throw new APIError(ErrorCode.PermissionDenied);
+                throw new AppError(ErrorCode.PermissionDenied);
             }
     }
 
@@ -182,9 +129,9 @@ export const apiCall = async <
         try {
             err = (await response.json()) as errorMessage;
         } catch (e) {
-            throw new APIError(ErrorCode.Unknown);
+            throw new AppError(ErrorCode.Unknown);
         }
-        throw new APIError(err.code ?? ErrorCode.Unknown, err.message);
+        throw new AppError(err.code ?? ErrorCode.Unknown, err.message);
     }
 
     return (await response.json()) as TResponse;
@@ -229,9 +176,7 @@ export const transformTimeStampedDates = <T>(item: T & TimeStamped) => {
     return item;
 };
 
-export const transformTimeStampedDatesList = <T>(
-    items: (T & TimeStamped)[]
-) => {
+export const transformTimeStampedDatesList = <T>(items: (T & TimeStamped)[]) => {
     return items ? items.map(transformTimeStampedDates) : items;
 };
 
