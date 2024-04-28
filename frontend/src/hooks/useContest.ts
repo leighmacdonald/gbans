@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { apiContest, APIError, Contest } from '../api';
+import { apiContest, Contest } from '../api';
+import { AppError } from '../error.tsx';
 
 export const useContest = (contest_id?: string) => {
     const [loading, setLoading] = useState(false);
     const [contest, setContest] = useState<Contest>();
-    const [error, setError] = useState<APIError>();
+    const [error, setError] = useState<AppError>();
 
     useEffect(() => {
         if (!contest_id) {
@@ -16,7 +17,7 @@ export const useContest = (contest_id?: string) => {
                 setContest(contest);
             })
             .catch((reason) => {
-                setError(reason as APIError);
+                setError(reason as AppError);
             })
             .finally(() => {
                 setLoading(false);

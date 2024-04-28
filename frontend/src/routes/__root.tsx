@@ -1,4 +1,4 @@
-import { Fragment, StrictMode, useCallback, useMemo, useState } from 'react';
+import { Fragment, useCallback, useMemo, useState } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import { PaletteMode } from '@mui/material';
 import { AlertColor } from '@mui/material/Alert';
@@ -82,26 +82,24 @@ function Root() {
                     <ColourModeContext.Provider value={colorMode}>
                         <ThemeProvider theme={theme}>
                             <NotificationsProvider>
-                                <StrictMode>
-                                    <NiceModal.Provider>
-                                        <LogoutHandler />
-                                        <CssBaseline />
-                                        <Container maxWidth={'lg'}>
-                                            <TopBar />
-                                            <div
-                                                style={{
-                                                    marginTop: 24
-                                                }}
-                                            >
-                                                <Outlet />
-                                                <ReactQueryDevtools buttonPosition="top-right" />
-                                                <TanStackRouterDevtools position="bottom-right" />
-                                            </div>
-                                            <Footer />
-                                        </Container>
-                                        <Flashes />
-                                    </NiceModal.Provider>
-                                </StrictMode>
+                                <NiceModal.Provider>
+                                    <LogoutHandler />
+                                    <CssBaseline />
+                                    <Container maxWidth={'lg'}>
+                                        <TopBar />
+                                        <div
+                                            style={{
+                                                marginTop: 24
+                                            }}
+                                        >
+                                            <Outlet />
+                                            <ReactQueryDevtools buttonPosition="bottom-left" />
+                                            <TanStackRouterDevtools position="bottom-right" />
+                                        </div>
+                                        <Footer />
+                                    </Container>
+                                    <Flashes />
+                                </NiceModal.Provider>
                             </NotificationsProvider>
                         </ThemeProvider>
                     </ColourModeContext.Provider>

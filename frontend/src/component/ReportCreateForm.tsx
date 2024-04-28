@@ -8,19 +8,9 @@ import { useNavigate } from '@tanstack/react-router';
 import { Formik } from 'formik';
 import { FormikHelpers } from 'formik/dist/types';
 import * as yup from 'yup';
-import {
-    apiCreateReport,
-    BanReason,
-    sessionKeyDemoName,
-    sessionKeyReportPersonMessageIdName,
-    sessionKeyReportSteamID
-} from '../api';
+import { apiCreateReport, BanReason, sessionKeyDemoName, sessionKeyReportPersonMessageIdName, sessionKeyReportSteamID } from '../api';
 import { logErr } from '../util/errors';
-import {
-    banReasonFieldValidator,
-    banReasonTextFieldValidator,
-    steamIdValidator
-} from '../util/validators.ts';
+import { banReasonFieldValidator, banReasonTextFieldValidator, steamIdValidator } from '../util/validators.ts';
 import { ContainerWithHeader } from './ContainerWithHeader';
 import { MDBodyField } from './MDBodyField';
 import { PlayerMessageContext } from './PlayerMessageContext';
@@ -43,10 +33,7 @@ interface ReportValues {
 
 const validationSchema = yup.object({
     steam_id: steamIdValidator(),
-    body_md: yup
-        .string()
-        .min(10, 'Message too short (min 10)')
-        .required('Description is required'),
+    body_md: yup.string().min(10, 'Message too short (min 10)').required('Description is required'),
     reason: banReasonFieldValidator,
     reason_text: banReasonTextFieldValidator,
     //person_message_id: yup.number().min(1, 'Invalid message id').optional()
@@ -55,15 +42,8 @@ const validationSchema = yup.object({
 });
 
 export const ReportCreateForm = (): JSX.Element => {
-    const [personMessageID] = useState(
-        parseInt(
-            sessionStorage.getItem(sessionKeyReportPersonMessageIdName) ?? '0',
-            10
-        )
-    );
-    const [demoName] = useState(
-        sessionStorage.getItem(sessionKeyDemoName) ?? ''
-    );
+    const [personMessageID] = useState(parseInt(sessionStorage.getItem(sessionKeyReportPersonMessageIdName) ?? '0', 10));
+    const [demoName] = useState(sessionStorage.getItem(sessionKeyDemoName) ?? '');
 
     const navigate = useNavigate();
 
@@ -76,10 +56,7 @@ export const ReportCreateForm = (): JSX.Element => {
     }, []);
 
     const onSubmit = useCallback(
-        async (
-            values: ReportValues,
-            formikHelpers: FormikHelpers<ReportValues>
-        ) => {
+        async (values: ReportValues, formikHelpers: FormikHelpers<ReportValues>) => {
             try {
                 const report = await apiCreateReport({
                     demo_name: values.demo_name,
@@ -90,7 +67,7 @@ export const ReportCreateForm = (): JSX.Element => {
                     person_message_id: values.person_message_id,
                     reason: values.reason
                 });
-                navigate(`/report/${report.report_id}`);
+                await navigate({ to: `/report/${report.report_id}` });
                 formikHelpers.resetForm();
             } catch (e) {
                 logErr(e);
@@ -100,11 +77,7 @@ export const ReportCreateForm = (): JSX.Element => {
     );
 
     return (
-        <ContainerWithHeader
-            title={'Create a New Report'}
-            iconLeft={<EditNotificationsIcon />}
-            spacing={2}
-        >
+        <ContainerWithHeader title={'Create a New Report'} iconLeft={<EditNotificationsIcon />} spacing={2}>
             <Formik<ReportValues>
                 onSubmit={onSubmit}
                 validateOnBlur={true}
@@ -129,20 +102,14 @@ export const ReportCreateForm = (): JSX.Element => {
                     </Stack>
 
                     {personMessageID != undefined && personMessageID > 0 && (
-                        <PlayerMessageContext
-                            playerMessageId={personMessageID}
-                            padding={5}
-                        />
+                        <PlayerMessageContext playerMessageId={personMessageID} padding={5} />
                     )}
                     <Box minHeight={365}>
                         <MDBodyField />
                     </Box>
                     <ButtonGroup>
                         <ResetButton />
-                        <SubmitButton
-                            label={'Report'}
-                            startIcon={<SendIcon />}
-                        />
+                        <SubmitButton label={'Report'} startIcon={<SendIcon />} />
                     </ButtonGroup>
                 </Stack>
             </Formik>

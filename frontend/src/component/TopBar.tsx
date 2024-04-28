@@ -45,16 +45,15 @@ import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
-import { useNavigate, Link as RouterLink, useRouteContext } from '@tanstack/react-router';
+import { useNavigate, Link as RouterLink } from '@tanstack/react-router';
 import { MenuItemData, NestedDropdown } from 'mui-nested-menu';
-import SteamID from 'steamid';
 import { generateOIDCLink, PermissionLevel, UserNotification } from '../api';
+import { useAuth } from '../auth.tsx';
 import { NotificationsProvider } from '../contexts/NotificationsCtx';
 import { useColourModeCtx } from '../hooks/useColourModeCtx.ts';
 import { useNotificationsCtx } from '../hooks/useNotificationsCtx.ts';
 import steamLogo from '../icons/steam_login_sm.png';
 import { tf2Fonts } from '../theme';
-import { logErr } from '../util/errors';
 import { VCenterBox } from './VCenterBox.tsx';
 
 interface menuRoute {
@@ -64,7 +63,7 @@ interface menuRoute {
 }
 
 export const TopBar = () => {
-    const { user, hasPermission, userSteamID, isAuthenticated } = useRouteContext({ from: '/_authoptional/' });
+    const { profile, hasPermission, userSteamID, isAuthenticated } = useAuth();
 
     const { notifications } = useNotificationsCtx();
     const theme = useTheme();
@@ -107,7 +106,7 @@ export const TopBar = () => {
                 icon: <DashboardIcon color={'primary'} sx={topColourOpts} />
             }
         ];
-        if (user.ban_id <= 0) {
+        if (profile().ban_id <= 0) {
             items.push({
                 to: '/servers',
                 text: 'Servers',
@@ -126,22 +125,22 @@ export const TopBar = () => {
             text: 'Wiki',
             icon: <ArticleIcon sx={topColourOpts} />
         });
-        if (user.ban_id <= 0) {
+        if (profile().ban_id <= 0) {
             items.push({
                 to: '/report',
                 text: 'Report',
                 icon: <ReportIcon sx={topColourOpts} />
             });
         }
-        if (user.ban_id > 0) {
+        if (profile().ban_id > 0) {
             items.push({
-                to: `/ban/${user.ban_id}`,
+                to: `/ban/${profile().ban_id}`,
                 text: 'Appeal',
                 icon: <SupportIcon sx={topColourOpts} />
             });
         }
         return items;
-    }, [hasPermission, topColourOpts, user.ban_id]);
+    }, [hasPermission, profile, topColourOpts]);
 
     const userItems: menuRoute[] = useMemo(
         () => [
@@ -298,19 +297,6 @@ export const TopBar = () => {
         return theme.palette.mode == 'light' ? <DarkModeIcon sx={{ color: '#ada03a' }} /> : <LightModeIcon sx={{ color: '#ada03a' }} />;
     }, [theme.palette.mode]);
 
-    const validSteamId = useMemo(() => {
-        try {
-            if (userSteamID) {
-                const sid = new SteamID(userSteamID);
-                return sid.isValidIndividual();
-            }
-            return false;
-        } catch (e) {
-            logErr(e);
-        }
-        return false;
-    }, [userSteamID]);
-
     return (
         <AppBar position="sticky">
             <Container maxWidth="xl">
@@ -402,15 +388,14 @@ export const TopBar = () => {
                                     </IconButton>
                                 </NotificationsProvider>
                             )}
-                            {!isAuthenticated() ||
-                                (!validSteamId && (
-                                    <Tooltip title="Steam Login">
-                                        <Button component={Link} href={generateOIDCLink(window.location.pathname)}>
-                                            <img src={steamLogo} alt={'Steam Login'} />
-                                        </Button>
-                                    </Tooltip>
-                                ))}
-                            {validSteamId && hasPermission(PermissionLevel.Moderator) && (
+                            {!isAuthenticated() && (
+                                <Tooltip title="Steam Login">
+                                    <Button component={Link} href={generateOIDCLink(window.location.pathname)}>
+                                        <img src={steamLogo} alt={'Steam Login'} />
+                                    </Button>
+                                </Tooltip>
+                            )}
+                            {hasPermission(PermissionLevel.Moderator) && (
                                 <VCenterBox>
                                     <NestedDropdown
                                         menuItemsData={adminItems}
@@ -429,7 +414,7 @@ export const TopBar = () => {
                                 <>
                                     <Tooltip title="User Settings">
                                         <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                                            <Avatar alt={user.name} src={user.avatarhash} />
+                                            <Avatar alt={profile().name} src={profile().avatarhash} />
                                         </IconButton>
                                     </Tooltip>
                                     <Menu

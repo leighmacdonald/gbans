@@ -22,7 +22,7 @@ export const NetworkBlockSources = () => {
     const [newSources, setNewSources] = useState<CIDRBlockSource[]>([]);
     const confirmModal = useModal(ModalConfirm);
     const editorModal = useModal(ModalCIDRBlockEditor);
-    const { hasPermission } = useRouteContext({ from: '/_auth/admin/network/cidr_blocks' });
+    const { hasPermission } = useRouteContext({ from: '/_mod/admin/network/cidr_blocks' });
 
     const sources = useMemo(() => {
         if (loading) {
