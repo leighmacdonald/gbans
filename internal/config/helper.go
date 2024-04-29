@@ -127,4 +127,6 @@ func setDefaultConfigValues() {
 	for configKey, value := range defaultConfig {
 		viper.SetDefault(configKey, value)
 	}
+
+	viper.SafeWriteConfig()
 }
