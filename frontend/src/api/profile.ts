@@ -157,7 +157,7 @@ export interface MessageQuery extends QueryFilter<PersonMessage> {
 }
 
 export const apiGetMessages = async (opts: MessageQuery, abortController?: AbortController) => {
-    const resp = await apiCall<LazyResult<PersonMessage>, MessageQuery>(
+    const resp = await apiCall<PersonMessage[], MessageQuery>(
         `/api/messages`,
         'POST',
         {
@@ -168,14 +168,12 @@ export const apiGetMessages = async (opts: MessageQuery, abortController?: Abort
         abortController
     );
 
-    resp.data = resp.data.map((msg) => {
+    return resp.map((msg) => {
         return {
             ...msg,
             created_on: parseDateTime(msg.created_on as unknown as string)
         };
     });
-
-    return resp;
 };
 
 export type NotificationsQuery = QueryFilter<UserNotification>;

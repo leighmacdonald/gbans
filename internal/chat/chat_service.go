@@ -40,7 +40,7 @@ func (h chatHandler) onAPIQueryMessages() gin.HandlerFunc {
 			return
 		}
 
-		messages, count, errChat := h.cu.QueryChatHistory(ctx, httphelper.CurrentUserProfile(ctx), req)
+		messages, errChat := h.cu.QueryChatHistory(ctx, httphelper.CurrentUserProfile(ctx), req)
 		if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
 			slog.Error("Failed to query messages history",
 				log.ErrAttr(errChat), slog.String("sid", req.SourceID))
@@ -49,7 +49,7 @@ func (h chatHandler) onAPIQueryMessages() gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, domain.NewLazyResult(count, messages))
+		ctx.JSON(http.StatusOK, messages)
 	}
 }
 
