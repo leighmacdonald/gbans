@@ -48,7 +48,9 @@ export class EmptyBody {}
 // isRefresh is to track if the token is being used as an auth refresh token. In that
 // case its returned instead of the standard access token.
 const getAccessToken = async (isRefresh: boolean) => {
-    if (isTokenExpired(readAccessToken()) && !isTokenExpired(readRefreshToken()) && !isRefresh) {
+    const access = readAccessToken();
+    const refresh = readRefreshToken();
+    if (isTokenExpired(access) && !isTokenExpired(refresh) && !isRefresh) {
         await refreshToken();
     }
 

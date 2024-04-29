@@ -190,13 +190,13 @@ func (r chatRepository) AddChatHistory(ctx context.Context, message *domain.Pers
 	return nil
 }
 
-func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.ChatHistoryQueryFilter) ([]domain.QueryChatHistoryResult, int64, error) { //nolint:maintidx
+func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.ChatHistoryQueryFilter) ([]domain.QueryChatHistoryResult, error) { //nolint:maintidx
 	if filters.Query != "" && len(filters.Query) < minQueryLen {
-		return nil, 0, fmt.Errorf("%w: query", domain.ErrTooShort)
+		return nil, fmt.Errorf("%w: query", domain.ErrTooShort)
 	}
 
 	if filters.Personaname != "" && len(filters.Personaname) < minQueryLen {
-		return nil, 0, fmt.Errorf("%w: name", domain.ErrTooShort)
+		return nil, fmt.Errorf("%w: name", domain.ErrTooShort)
 	}
 
 	builder := r.db.
@@ -231,7 +231,7 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.Cha
 	if !filters.Unrestricted {
 		unrTime := now.AddDate(0, 0, -14)
 		if filters.DateStart != nil && filters.DateStart.Before(unrTime) {
-			return nil, 0, util.ErrInvalidDuration
+			return nil, util.ErrInvalidDuration
 		}
 	}
 
@@ -268,7 +268,7 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.Cha
 
 	rows, errQuery := r.db.QueryBuilder(ctx, builder.Where(constraints))
 	if errQuery != nil {
-		return nil, 0, r.db.DBErr(errQuery)
+		return nil, r.db.DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -292,7 +292,7 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.Cha
 			&message.AutoFilterFlagged,
 			&message.AvatarHash,
 			&message.Pattern); errScan != nil {
-			return nil, 0, r.db.DBErr(errScan)
+			return nil, r.db.DBErr(errScan)
 		}
 
 		if matchID != nil {
@@ -310,20 +310,7 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.Cha
 		messages = []domain.QueryChatHistoryResult{}
 	}
 
-	count, errCount := r.db.GetCount(ctx, r.db.
-		Builder().
-		Select("count(m.created_on) as count").
-		From("person_messages m").
-		LeftJoin("server s on m.server_id = m.server_id").
-		LeftJoin("person_messages_filter f on m.person_message_id = f.person_message_id").
-		LeftJoin("person p on p.steam_id = m.steam_id").
-		Where(constraints))
-
-	if errCount != nil {
-		return nil, 0, r.db.DBErr(errCount)
-	}
-
-	return messages, count, nil
+	return messages, nil
 }
 
 func (r chatRepository) GetPersonMessage(ctx context.Context, messageID int64) (domain.QueryChatHistoryResult, error) {

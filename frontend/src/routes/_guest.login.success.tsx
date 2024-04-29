@@ -37,16 +37,17 @@ function LoginSteamSuccess() {
 
         login(profile);
         router.invalidate();
-    }, [login, profile, router]);
+    }, [login, profile, router, search.refresh, search.token]);
 
     useLayoutEffect(() => {
         if (!profile) {
             return;
         }
+
         if (profile.steam_id != '' && search.next_url) {
             router.history.push(search.next_url);
         }
-    }, [profile, router.history, search.next_url]);
+    }, [profile, router.history, search, search.next_url]);
 
     return <>{<Typography variant={'h3'}>Logging In...</Typography>}</>;
 }

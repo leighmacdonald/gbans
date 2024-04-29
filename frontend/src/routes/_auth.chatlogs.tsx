@@ -1,5 +1,8 @@
 import ChatIcon from '@mui/icons-material/Chat';
+import ClearIcon from '@mui/icons-material/Clear';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import SearchIcon from '@mui/icons-material/Search';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import FormControl from '@mui/material/FormControl';
@@ -15,14 +18,16 @@ import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import { FieldApi, useForm } from '@tanstack/react-form';
+import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useLoaderData, useNavigate } from '@tanstack/react-router';
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { z } from 'zod';
-import { apiGetMessages, apiGetServers, PersonMessage } from '../api';
+import { apiGetMessages, apiGetServers, PersonMessage, ServerSimple } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
+import { PaginationInfinite } from '../component/PaginationInfinite.tsx';
 import { RowsPerPage } from '../util/table.ts';
+import { renderDateTime } from '../util/text.tsx';
 
 const chatlogsSchema = z.object({
     sortOrder: z.enum(['desc', 'asc']).catch('desc'),
@@ -31,99 +36,67 @@ const chatlogsSchema = z.object({
         .catch('person_message_id'),
     page: z.number().min(0).catch(0),
     rowPerPageCount: z.number().min(RowsPerPage.Ten).max(RowsPerPage.Hundred).catch(RowsPerPage.TwentyFive),
-    server: z.number().catch(0),
-    personaName: z.string().catch(''),
-    message: z.string().catch(''),
-    steamId: z.string().catch('')
+    server_id: z.number().catch(0),
+    persona_name: z.string().catch(''),
+    body: z.string().catch(''),
+    steam_id: z.string().catch('')
 });
 
 type chatLogForm = {
-    server: number;
-    personaName: string;
-    message: string;
-    steamId: string;
+    server_id: number;
+    persona_name: string;
+    body: string;
+    steam_id: string;
 };
 
 export const Route = createFileRoute('/_auth/chatlogs')({
     component: ChatLogs,
-    validateSearch: (search) => chatlogsSchema.parse(search)
+    validateSearch: (search) => chatlogsSchema.parse(search),
+    loader: async ({ context }) => {
+        return {
+            servers: await context.queryClient.ensureQueryData({
+                queryKey: ['serversSimple'],
+                queryFn: apiGetServers
+            })
+        };
+    }
 });
 
 const columnHelper = createColumnHelper<PersonMessage>();
 
-const columns = [
-    columnHelper.accessor('server_id', {
-        cell: (info) => info.getValue(),
-        footer: (props) => props.column.id
-    }),
-    columnHelper.accessor('persona_name', {
-        cell: (info) => info.getValue(),
-        footer: (props) => props.column.id
-    }),
-    columnHelper.accessor('body', {
-        cell: (info) => info.getValue(),
-        footer: (props) => props.column.id
-    })
-];
-
 function ChatLogs() {
-    const { message, personaName, steamId, server, page, sortColumn, rowPerPageCount, sortOrder } = Route.useSearch();
-    //const [totalRows, setTotalRows] = useState<number>(0);
+    const { body, persona_name, steam_id, server_id, page, sortColumn, rowPerPageCount, sortOrder } = Route.useSearch();
     //const { currentUser } = useCurrentUserCtx();
+    const { servers } = useLoaderData({ from: '/_auth/chatlogs' }) as { servers: ServerSimple[] };
     const navigate = useNavigate({ from: Route.fullPath });
 
-    const { data: servers, isLoading: isLoadingServers } = useQuery({
-        queryKey: ['serversSimple'],
-        queryFn: apiGetServers
-    });
-
-    const { data: rows } = useQuery({
-        queryKey: ['chatlogs'],
+    const { data: rows, isLoading } = useQuery({
+        queryKey: ['chatlogs', { page, server_id, persona_name, steam_id }],
         queryFn: async () => {
-            console.log('running query');
-            const resp = await apiGetMessages({
-                server_id: server,
-                personaname: personaName,
-                query: message,
-                source_id: steamId,
+            return await apiGetMessages({
+                server_id: server_id,
+                personaname: persona_name,
+                query: body,
+                source_id: steam_id,
                 limit: Number(rowPerPageCount),
                 offset: Number(page ?? 0) * Number(rowPerPageCount),
                 order_by: sortColumn,
                 desc: sortOrder == 'desc'
             });
-            return resp.data;
         }
     });
 
-    const form = useForm<chatLogForm>({
+    const { Field, Subscribe, handleSubmit, reset } = useForm<chatLogForm>({
         onSubmit: async ({ value }) => {
-            console.log(value);
-            await navigate({
-                replace: true,
-                search: (prev) => ({
-                    ...prev,
-                    message: value.message,
-                    personaName: value.personaName,
-                    steamId: value.steamId,
-                    server: value.server
-                })
-            });
+            await navigate({ search: (prev) => ({ ...prev, ...value }) });
         },
         defaultValues: {
-            message: message,
-            personaName: personaName,
-            server: server,
-            steamId: steamId
+            body,
+            persona_name,
+            server_id,
+            steam_id
         }
     });
-
-    const table = useReactTable({
-        data: rows ?? [],
-        columns: columns,
-        getCoreRowModel: getCoreRowModel()
-    });
-
-    //const { data: realServers } = useServers();
 
     return (
         <>
@@ -131,100 +104,86 @@ function ChatLogs() {
                 <Grid xs={12}>
                     <ContainerWithHeader title={'Chat Filters'} iconLeft={<FilterAltIcon />}>
                         <form
-                            onSubmit={async (e) => {
+                            onSubmit={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                await form.handleSubmit();
+                                handleSubmit();
                             }}
                         >
                             <Grid container padding={2} spacing={2} justifyContent={'center'} alignItems={'center'}>
                                 <Grid xs={6} md={3}>
-                                    <form.Field
-                                        name={'personaName'}
-                                        children={(field) => {
+                                    <Field
+                                        name={'persona_name'}
+                                        children={({ state, handleChange, handleBlur }) => {
                                             return (
                                                 <>
                                                     <TextField
                                                         fullWidth
-                                                        id={field.name}
-                                                        name={field.name}
                                                         label="Name"
-                                                        value={field.state.value}
-                                                        onChange={(e) => field.handleChange(e.target.value)}
-                                                        onBlur={field.handleBlur}
+                                                        defaultValue={state.value}
+                                                        onChange={(e) => handleChange(e.target.value)}
+                                                        onBlur={handleBlur}
                                                         variant="outlined"
                                                     />
-                                                    <FieldInfo field={field} />
                                                 </>
                                             );
                                         }}
                                     />
                                 </Grid>
                                 <Grid xs={6} md={3}>
-                                    <form.Field
-                                        name={'steamId'}
-                                        children={(field) => {
+                                    <Field
+                                        name={'steam_id'}
+                                        children={({ state, handleChange, handleBlur }) => {
                                             return (
                                                 <>
                                                     <TextField
                                                         fullWidth
-                                                        id={field.name}
-                                                        name={field.name}
                                                         label="SteamID"
-                                                        value={field.state.value}
-                                                        onChange={(e) => field.handleChange(e.target.value)}
-                                                        onBlur={field.handleBlur}
+                                                        value={state.value}
+                                                        onChange={(e) => handleChange(e.target.value)}
+                                                        onBlur={handleBlur}
                                                         variant="outlined"
                                                     />
-                                                    <FieldInfo field={field} />
                                                 </>
                                             );
                                         }}
                                     />
                                 </Grid>
                                 <Grid xs={6} md={3}>
-                                    <form.Field
-                                        name={'message'}
-                                        children={(field) => {
+                                    <Field
+                                        name={'body'}
+                                        children={({ state, handleChange, handleBlur }) => {
                                             return (
                                                 <>
                                                     <TextField
                                                         fullWidth
-                                                        id={field.name}
-                                                        name={field.name}
                                                         label="Message"
-                                                        value={field.state.value}
-                                                        onChange={(e) => field.handleChange(e.target.value)}
-                                                        onBlur={field.handleBlur}
+                                                        value={state.value}
+                                                        onChange={(e) => handleChange(e.target.value)}
+                                                        onBlur={handleBlur}
                                                         variant="outlined"
                                                     />
-                                                    <FieldInfo field={field} />
                                                 </>
                                             );
                                         }}
                                     />
                                 </Grid>
                                 <Grid xs={6} md={3}>
-                                    <form.Field
-                                        name={'server'}
-                                        children={(field) => {
+                                    <Field
+                                        name={'server_id'}
+                                        children={({ state, handleChange, handleBlur }) => {
                                             return (
                                                 <>
                                                     <FormControl fullWidth>
                                                         <InputLabel id="server-select-label">Servers</InputLabel>
-                                                        <Select<number>
+                                                        <Select
                                                             fullWidth
-                                                            labelId="server_ids-label"
-                                                            id={field.name}
-                                                            disabled={isLoadingServers}
-                                                            value={field.state.value}
-                                                            name={field.name}
+                                                            value={state.value}
                                                             label="Servers"
                                                             onChange={(e) => {
-                                                                console.log(e.target);
-                                                                field.handleChange(Number(e.target.value));
+                                                                handleChange(Number(e.target.value));
                                                             }}
-                                                            onBlur={field.handleBlur}
+                                                            onBlur={handleBlur}
                                                         >
                                                             <MenuItem value={0}>All</MenuItem>
                                                             {servers &&
@@ -235,7 +194,6 @@ function ChatLogs() {
                                                                 ))}
                                                         </Select>
                                                     </FormControl>
-                                                    <FieldInfo field={field} />
                                                 </>
                                             );
                                         }}
@@ -247,16 +205,50 @@ function ChatLogs() {
                                 {/*        <AutoRefreshField />*/}
                                 {/*    )}*/}
                                 {/*</Grid>*/}
-                                <Grid xs={6} md={3}>
-                                    <form.Subscribe
+                                <Grid xs={12} md={12}>
+                                    <Subscribe
                                         selector={(state) => [state.canSubmit, state.isSubmitting]}
                                         children={([canSubmit, isSubmitting]) => (
                                             <ButtonGroup>
-                                                <Button type="submit" disabled={!canSubmit} variant={'contained'}>
-                                                    {isSubmitting ? '...' : 'Submit'}
+                                                <Button
+                                                    type="submit"
+                                                    disabled={!canSubmit}
+                                                    variant={'contained'}
+                                                    color={'success'}
+                                                    startIcon={<SearchIcon />}
+                                                >
+                                                    {isSubmitting ? '...' : 'Search'}
                                                 </Button>
-                                                <Button type="reset" onClick={() => form.reset()} variant={'contained'}>
+                                                <Button
+                                                    type="reset"
+                                                    onClick={() => reset()}
+                                                    variant={'contained'}
+                                                    color={'warning'}
+                                                    startIcon={<RestartAltIcon />}
+                                                >
                                                     Reset
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    onClick={async () => {
+                                                        await navigate({
+                                                            search: (prev) => {
+                                                                return {
+                                                                    ...prev,
+                                                                    page: 0,
+                                                                    steam_id: '',
+                                                                    body: '',
+                                                                    persona_name: '',
+                                                                    server_id: 0
+                                                                };
+                                                            }
+                                                        });
+                                                    }}
+                                                    variant={'contained'}
+                                                    color={'error'}
+                                                    startIcon={<ClearIcon />}
+                                                >
+                                                    Clear
                                                 </Button>
                                             </ButtonGroup>
                                         )}
@@ -267,56 +259,96 @@ function ChatLogs() {
                     </ContainerWithHeader>
                 </Grid>
                 <Grid xs={12}>
-                    <ContainerWithHeader iconLeft={<ChatIcon />} title={'Chat Logs'}>
-                        <TableContainer>
-                            <Table>
-                                <TableHead>
-                                    {table.getHeaderGroups().map((headerGroup) => (
-                                        <TableRow key={headerGroup.id}>
-                                            {headerGroup.headers.map((header) => (
-                                                <TableCell key={header.id}>
-                                                    <Typography
-                                                        padding={0}
-                                                        sx={{
-                                                            fontWeight: 'bold'
-                                                        }}
-                                                        variant={'button'}
-                                                    >
-                                                        {header.isPlaceholder
-                                                            ? null
-                                                            : flexRender(header.column.columnDef.header, header.getContext())}
-                                                    </Typography>
-                                                </TableCell>
-                                            ))}
-                                        </TableRow>
-                                    ))}
-                                </TableHead>
-                                <TableBody>
-                                    {table.getRowModel().rows.map((row) => (
-                                        <tr key={row.id}>
-                                            {row.getVisibleCells().map((cell) => (
-                                                <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
-                                            ))}
-                                        </tr>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-                    </ContainerWithHeader>
+                    <ChatTable rows={isLoading || !rows ? [] : rows} />
                 </Grid>
             </Grid>
         </>
     );
 }
 
-function FieldInfo({ field }: { field: FieldApi<any, any, any, any> }) {
+const ChatTable = ({ rows }: { rows: PersonMessage[] }) => {
+    const { page } = Route.useSearch();
+    const navigate = useNavigate({ from: '/chatlogs' });
+
+    const columns = [
+        columnHelper.accessor('server_id', {
+            cell: (info) => {
+                return (
+                    <Button
+                        onClick={async () => {
+                            await navigate({ search: (prev) => ({ ...prev, server_id: info.getValue() }) });
+                        }}
+                    >
+                        {info.getValue()}
+                    </Button>
+                );
+            },
+            footer: (props) => props.column.id
+        }),
+        columnHelper.accessor('steam_id', {
+            cell: (info) => info.getValue(),
+            footer: (props) => props.column.id
+        }),
+        columnHelper.accessor('created_on', {
+            cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>,
+            footer: (props) => props.column.id
+        }),
+        columnHelper.accessor('persona_name', {
+            cell: (info) => info.getValue(),
+            footer: (props) => props.column.id
+        }),
+        columnHelper.accessor('body', {
+            cell: (info) => info.getValue(),
+            footer: (props) => props.column.id
+        })
+    ];
+
+    const table = useReactTable({
+        data: rows,
+        columns: columns,
+        getCoreRowModel: getCoreRowModel(),
+        manualPagination: true,
+        autoResetPageIndex: true
+    });
+
     return (
-        <>
-            {field.state.meta.touchedErrors ? <em>{field.state.meta.touchedErrors}</em> : null}
-            {field.state.meta.isValidating ? 'Validating...' : null}
-        </>
+        <ContainerWithHeader iconLeft={<ChatIcon />} title={'Chat Logs'}>
+            <TableContainer>
+                <Table>
+                    <TableHead>
+                        {table.getHeaderGroups().map((headerGroup) => (
+                            <TableRow key={headerGroup.id}>
+                                {headerGroup.headers.map((header) => (
+                                    <TableCell key={header.id}>
+                                        <Typography
+                                            padding={0}
+                                            sx={{
+                                                fontWeight: 'bold'
+                                            }}
+                                            variant={'button'}
+                                        >
+                                            {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                                        </Typography>
+                                    </TableCell>
+                                ))}
+                            </TableRow>
+                        ))}
+                    </TableHead>
+                    <TableBody>
+                        {table.getRowModel().rows.map((row) => (
+                            <TableRow key={row.id}>
+                                {row.getVisibleCells().map((cell) => (
+                                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                                ))}
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+            <PaginationInfinite route={'/_auth/chatlogs'} page={page} />
+        </ContainerWithHeader>
     );
-}
+};
 
 //
 // interface ChatContextMenuProps {
