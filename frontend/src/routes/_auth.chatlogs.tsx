@@ -9,23 +9,21 @@ import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useLoaderData, useNavigate } from '@tanstack/react-router';
-import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import stc from 'string-to-color';
 import { z } from 'zod';
 import { apiGetMessages, apiGetServers, PersonMessage, ServerSimple } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
+import { DataTable } from '../component/DataTable.tsx';
+import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
 import { PaginationInfinite } from '../component/PaginationInfinite.tsx';
+import { PersonCell } from '../component/PersonCell.tsx';
 import { RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 
@@ -259,47 +257,67 @@ function ChatLogs() {
                     </ContainerWithHeader>
                 </Grid>
                 <Grid xs={12}>
-                    <ChatTable rows={isLoading || !rows ? [] : rows} />
+                    <ChatTable rows={isLoading || !rows ? [] : rows} servers={servers} isLoading={isLoading} />
                 </Grid>
             </Grid>
         </>
     );
 }
 
-const ChatTable = ({ rows }: { rows: PersonMessage[] }) => {
+const HeadingCell = ({ name }: { name: string }) => {
+    return <Typography align={'center'}>{name}</Typography>;
+};
+const ChatTable = ({ rows, servers, isLoading }: { rows: PersonMessage[]; servers: ServerSimple[]; isLoading: boolean }) => {
     const { page } = Route.useSearch();
     const navigate = useNavigate({ from: '/chatlogs' });
 
     const columns = [
         columnHelper.accessor('server_id', {
+            header: () => <HeadingCell name={'Server'} />,
             cell: (info) => {
+                const serv = servers.find((s) => (s.server_id = info.getValue())) || { server_name: 'unk-1' };
                 return (
                     <Button
+                        sx={{
+                            color: stc(serv.server_name)
+                        }}
                         onClick={async () => {
                             await navigate({ search: (prev) => ({ ...prev, server_id: info.getValue() }) });
                         }}
                     >
-                        {info.getValue()}
+                        {serv?.server_name}
                     </Button>
                 );
             },
-            footer: (props) => props.column.id
-        }),
-        columnHelper.accessor('steam_id', {
-            cell: (info) => info.getValue(),
-            footer: (props) => props.column.id
+            footer: () => <HeadingCell name={'Server'} />
         }),
         columnHelper.accessor('created_on', {
-            cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>,
-            footer: (props) => props.column.id
+            header: () => <HeadingCell name={'Created'} />,
+            cell: (info) => <Typography align={'center'}>{renderDateTime(info.getValue())}</Typography>,
+            footer: () => <HeadingCell name={'Created'} />
         }),
         columnHelper.accessor('persona_name', {
-            cell: (info) => info.getValue(),
-            footer: (props) => props.column.id
+            header: () => <HeadingCell name={'Name'} />,
+            cell: (info) => (
+                <PersonCell
+                    steam_id={info.row.getValue('steam_id')}
+                    avatar_hash={rows[info.row.index].avatar_hash}
+                    personaname={info.row.getValue('persona_name')}
+                    onClick={async () => {
+                        await navigate({ params: { steamId: info.row.getValue<string>('steam_id') }, to: `/profile/$steamId` });
+                    }}
+                />
+            ),
+            footer: () => <HeadingCell name={'Name'} />
         }),
         columnHelper.accessor('body', {
-            cell: (info) => info.getValue(),
-            footer: (props) => props.column.id
+            header: () => <HeadingCell name={'Message'} />,
+            cell: (info) => (
+                <Typography padding={0} variant={'body1'}>
+                    {info.getValue()}
+                </Typography>
+            ),
+            footer: () => <HeadingCell name={'Message'} />
         })
     ];
 
@@ -313,38 +331,7 @@ const ChatTable = ({ rows }: { rows: PersonMessage[] }) => {
 
     return (
         <ContainerWithHeader iconLeft={<ChatIcon />} title={'Chat Logs'}>
-            <TableContainer>
-                <Table>
-                    <TableHead>
-                        {table.getHeaderGroups().map((headerGroup) => (
-                            <TableRow key={headerGroup.id}>
-                                {headerGroup.headers.map((header) => (
-                                    <TableCell key={header.id}>
-                                        <Typography
-                                            padding={0}
-                                            sx={{
-                                                fontWeight: 'bold'
-                                            }}
-                                            variant={'button'}
-                                        >
-                                            {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                                        </Typography>
-                                    </TableCell>
-                                ))}
-                            </TableRow>
-                        ))}
-                    </TableHead>
-                    <TableBody>
-                        {table.getRowModel().rows.map((row) => (
-                            <TableRow key={row.id}>
-                                {row.getVisibleCells().map((cell) => (
-                                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
-                                ))}
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+            {isLoading ? <LoadingPlaceholder /> : <DataTable table={table} />}
             <PaginationInfinite route={'/_auth/chatlogs'} page={page} />
         </ContainerWithHeader>
     );

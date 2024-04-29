@@ -1,4 +1,6 @@
-import { ArrowCircleLeft, ArrowCircleRight } from '@mui/icons-material';
+import FirstPageIcon from '@mui/icons-material/FirstPage';
+import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
@@ -14,10 +16,19 @@ export const PaginationInfinite = ({ route, page }: { route: string; page: numbe
                 color={'primary'}
                 disabled={page <= 0}
                 onClick={async () => {
+                    await navigate({ search: (prev) => ({ ...prev, page: 0 }) });
+                }}
+            >
+                <FirstPageIcon />
+            </IconButton>
+            <IconButton
+                color={'primary'}
+                disabled={page <= 0}
+                onClick={async () => {
                     await navigate({ search: (prev) => ({ ...prev, page: page - 1 }) });
                 }}
             >
-                <ArrowCircleLeft />
+                <KeyboardArrowLeftIcon />
             </IconButton>
             <VCenterBox>
                 <Typography variant={'h6'} color={'primary'}>
@@ -30,7 +41,7 @@ export const PaginationInfinite = ({ route, page }: { route: string; page: numbe
                     await navigate({ search: (prev) => ({ ...prev, page: page + 1 }) });
                 }}
             >
-                <ArrowCircleRight />
+                <KeyboardArrowRightIcon />
             </IconButton>
         </Stack>
     );
