@@ -16,27 +16,18 @@ import { VCenterBox } from '../VCenterBox';
 import { ModalCIDRWhitelistEditor, ModalConfirm } from '../modal';
 import { LazyTable } from './LazyTable';
 
-export const CIDRWhitelistSection = ({
-    rows
-}: {
-    rows: CIDRBlockWhitelist[];
-}) => {
+export const CIDRWhitelistSection = ({ rows }: { rows: CIDRBlockWhitelist[] }) => {
     const [sortOrder, setSortOrder] = useState<Order>('desc');
-    const [sortColumn, setSortColumn] =
-        useState<keyof CIDRBlockWhitelist>('address');
+    const [sortColumn, setSortColumn] = useState<keyof CIDRBlockWhitelist>('address');
     const [page, setPage] = useState(0);
-    const [rowPerPageCount, setRowPerPageCount] = useState<number>(
-        RowsPerPage.TwentyFive
-    );
+    const [rowPerPageCount, setRowPerPageCount] = useState<number>(RowsPerPage.TwentyFive);
     const [deletedIds, setDeletedIds] = useState<number[]>([]);
     const [newWhitelist, setNewWhitelist] = useState<CIDRBlockWhitelist[]>([]);
     const confirmModal = useModal(ModalConfirm);
     const editorModal = useModal(ModalCIDRWhitelistEditor);
 
     const whitelists = useMemo(() => {
-        return [...newWhitelist, ...(rows ?? [])].filter(
-            (w) => !deletedIds.includes(w.cidr_block_whitelist_id)
-        );
+        return [...newWhitelist, ...(rows ?? [])].filter((w) => !deletedIds.includes(w.cidr_block_whitelist_id));
     }, [newWhitelist, rows, deletedIds]);
 
     const sorted = useMemo(() => {
@@ -48,22 +39,12 @@ export const CIDRWhitelistSection = ({
 
     const onEdit = useCallback(async (source?: CIDRBlockWhitelist) => {
         try {
-            const updated = await NiceModal.show<CIDRBlockWhitelist>(
-                ModalCIDRWhitelistEditor,
-                {
-                    source
-                }
-            );
+            const updated = await NiceModal.show<CIDRBlockWhitelist>(ModalCIDRWhitelistEditor, {
+                source
+            });
 
             setNewWhitelist((prevState) => {
-                return [
-                    updated,
-                    ...prevState.filter(
-                        (s) =>
-                            s.cidr_block_whitelist_id !=
-                            updated.cidr_block_whitelist_id
-                    )
-                ];
+                return [updated, ...prevState.filter((s) => s.cidr_block_whitelist_id != updated.cidr_block_whitelist_id)];
             });
         } catch (e) {
             logErr(e);
@@ -111,9 +92,7 @@ export const CIDRWhitelistSection = ({
                         </Button>
                     </ButtonGroup>
                     <VCenterBox>
-                        <Typography variant={'h6'}>
-                            CIDR/IP Whitelists
-                        </Typography>
+                        <Typography variant={'h6'}>CIDR/IP Whitelists</Typography>
                     </VCenterBox>
                 </Stack>
             </Grid>
@@ -127,11 +106,7 @@ export const CIDRWhitelistSection = ({
                             sortKey: 'cidr_block_whitelist_id',
                             tooltip: 'Whitelisted IP Address',
                             renderer: (obj) => {
-                                return (
-                                    <Typography variant={'body2'}>
-                                        {obj.cidr_block_whitelist_id}
-                                    </Typography>
-                                );
+                                return <Typography variant={'body2'}>{obj.cidr_block_whitelist_id}</Typography>;
                             }
                         },
                         {
@@ -141,11 +116,7 @@ export const CIDRWhitelistSection = ({
                             sortKey: 'address',
                             tooltip: 'Whitelisted IP Address',
                             renderer: (obj) => {
-                                return (
-                                    <Typography variant={'body1'}>
-                                        {obj.address}
-                                    </Typography>
-                                );
+                                return <Typography variant={'body1'}>{obj.address}</Typography>;
                             }
                         },
                         {
@@ -155,11 +126,7 @@ export const CIDRWhitelistSection = ({
                             sortType: 'date',
                             tooltip: 'Whitelisted address',
                             renderer: (obj) => {
-                                return (
-                                    <Typography variant={'body1'}>
-                                        {renderDateTime(obj.created_on)}
-                                    </Typography>
-                                );
+                                return <Typography variant={'body1'}>{renderDateTime(obj.created_on)}</Typography>;
                             }
                         },
                         {
@@ -169,11 +136,7 @@ export const CIDRWhitelistSection = ({
                             sortType: 'date',
                             tooltip: 'Whitelisted address',
                             renderer: (obj) => {
-                                return (
-                                    <Typography variant={'body1'}>
-                                        {renderDateTime(obj.updated_on)}
-                                    </Typography>
-                                );
+                                return <Typography variant={'body1'}>{renderDateTime(obj.updated_on)}</Typography>;
                             }
                         },
                         {
@@ -199,9 +162,7 @@ export const CIDRWhitelistSection = ({
                                             variant={'contained'}
                                             color={'error'}
                                             onClick={async () => {
-                                                await onDeleteWhitelist(
-                                                    obj.cidr_block_whitelist_id
-                                                );
+                                                await onDeleteWhitelist(obj.cidr_block_whitelist_id);
                                             }}
                                         >
                                             Delete
@@ -228,11 +189,7 @@ export const CIDRWhitelistSection = ({
                     onPageChange={(_, newPage: number) => {
                         setPage(newPage);
                     }}
-                    onRowsPerPageChange={(
-                        event: ChangeEvent<
-                            HTMLInputElement | HTMLTextAreaElement
-                        >
-                    ) => {
+                    onRowsPerPageChange={(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                         setRowPerPageCount(parseInt(event.target.value, 10));
                         setPage(0);
                     }}

@@ -1,42 +1,29 @@
 import NiceModal from '@ebay/nice-modal-react';
-import loadable from '@loadable/component';
-
-const AssetViewer = loadable(() => import('./AssetViewer'));
-const BanASNModal = loadable(() => import('./BanASNModal'));
-const BanCIDRModal = loadable(() => import('./BanCIDRModal'));
-const BanGroupModal = loadable(() => import('./BanGroupModal'));
-const BanSteamModal = loadable(() => import('./BanSteamModal'));
-const CIDRBlockEditorModal = loadable(() => import('./CIDRBlockEditorModal'));
-const CIDRWhitelistEditorModal = loadable(
-    () => import('./CIDRWhitelistEditorModal')
-);
-
-const ConfirmationModal = loadable(() => import('./ConfirmationModal'));
-const ContestEditor = loadable(() => import('./ContestEditor'));
-const ContestEntryDeleteModal = loadable(
-    () => import('./ContestEntryDeleteModal')
-);
-const ContestEntryModal = loadable(() => import('./ContestEntryModal'));
-const FileUploadModal = loadable(() => import('./FileUploadModal'));
-const FilterEditModal = loadable(() => import('./FilterEditModal'));
-const ForumCategoryEditorModal = loadable(
-    () => import('./ForumCategoryEditorModal')
-);
-const ForumForumEditorModal = loadable(() => import('./ForumForumEditorModal'));
-const ForumThreadCreatorModal = loadable(
-    () => import('./ForumThreadCreatorModal')
-);
-const ForumThreadEditorModal = loadable(
-    () => import('./ForumThreadEditorModal')
-);
-const MessageContextModal = loadable(() => import('./MessageContextModal'));
-const PersonEditModal = loadable(() => import('./PersonEditModal'));
-const ServerDeleteModal = loadable(() => import('./ServerDeleteModal'));
-const ServerEditorModal = loadable(() => import('./ServerEditorModal'));
-const UnbanASNModal = loadable(() => import('./UnbanASNModal'));
-const UnbanCIDRModal = loadable(() => import('./UnbanCIDRModal'));
-const UnbanGroupModal = loadable(() => import('./UnbanGroupModal'));
-const UnbanSteamModal = loadable(() => import('./UnbanSteamModal'));
+import AssetViewer from './AssetViewer.tsx';
+import BanASNModal from './BanASNModal.tsx';
+import BanCIDRModal from './BanCIDRModal.tsx';
+import BanGroupModal from './BanGroupModal.tsx';
+import BanSteamModal from './BanSteamModal.tsx';
+import CIDRBlockEditorModal from './CIDRBlockEditorModal.tsx';
+import CIDRWhitelistEditorModal from './CIDRWhitelistEditorModal.tsx';
+import ConfirmationModal from './ConfirmationModal.tsx';
+import ContestEditor from './ContestEditor.tsx';
+import ContestEntryDeleteModal from './ContestEntryDeleteModal.tsx';
+import ContestEntryModal from './ContestEntryModal.tsx';
+import FileUploadModal from './FileUploadModal.tsx';
+import FilterEditModal from './FilterEditModal.tsx';
+import ForumCategoryEditorModal from './ForumCategoryEditorModal.tsx';
+import ForumForumEditorModal from './ForumForumEditorModal.tsx';
+import ForumThreadCreatorModal from './ForumThreadCreatorModal.tsx';
+import ForumThreadEditorModal from './ForumThreadEditorModal.tsx';
+import MessageContextModal from './MessageContextModal.tsx';
+import PersonEditModal from './PersonEditModal.tsx';
+import ServerDeleteModal from './ServerDeleteModal.tsx';
+import ServerEditorModal from './ServerEditorModal.tsx';
+import UnbanASNModal from './UnbanASNModal.tsx';
+import UnbanCIDRModal from './UnbanCIDRModal.tsx';
+import UnbanGroupModal from './UnbanGroupModal.tsx';
+import UnbanSteamModal from './UnbanSteamModal.tsx';
 
 export const ModalCIDRWhitelistEditor = 'modal-cidr-whitelist-editor';
 export const ModalCIDRBlockEditor = 'modal-cidr-block-editor';

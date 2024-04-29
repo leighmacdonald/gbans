@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useParams } from 'react-router';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import BuildIcon from '@mui/icons-material/Build';
 import LockIcon from '@mui/icons-material/Lock';
@@ -140,7 +139,7 @@ const ForumThreadRow = ({ thread }: { thread: ForumThread }) => {
 };
 
 function ForumPage() {
-    const { forum_id } = useParams();
+    const { forum_id } = Route.useParams();
     const [page, setPage] = useState(1);
     const modalCreate = useModal(ModalForumThreadCreator);
     const { hasPermission } = useRouteContext({ from: '/_auth/forums/$forum_id' });

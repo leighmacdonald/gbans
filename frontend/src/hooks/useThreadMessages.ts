@@ -1,9 +1,5 @@
 import { useEffect, useState } from 'react';
-import {
-    apiGetThreadMessages,
-    ForumMessage,
-    ThreadMessageQueryOpts
-} from '../api/forum';
+import { apiGetThreadMessages, ForumMessage, ThreadMessageQueryOpts } from '../api/forum';
 import { logErr } from '../util/errors';
 
 export const useThreadMessages = (opts: ThreadMessageQueryOpts) => {

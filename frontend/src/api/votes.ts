@@ -23,16 +23,8 @@ export type VoteQueryFilter = {
     success: boolean;
 } & QueryFilter<VoteResult>;
 
-export const apiVotesQuery = async (
-    opts: VoteQueryFilter,
-    abortController?: AbortController
-) => {
-    const resp = await apiCall<LazyResult<VoteResult>>(
-        '/api/votes',
-        'POST',
-        opts,
-        abortController
-    );
+export const apiVotesQuery = async (opts: VoteQueryFilter, abortController?: AbortController) => {
+    const resp = await apiCall<LazyResult<VoteResult>>('/api/votes', 'POST', opts, abortController);
     resp.data = resp.data.map(transformCreatedOnDate);
 
     return resp;

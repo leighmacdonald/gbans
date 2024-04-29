@@ -7,24 +7,14 @@ import { renderDateTime } from '../../util/text.tsx';
 import { PersonCell } from '../PersonCell';
 import { LazyTable } from './LazyTable';
 
-export const WarningStateTable = ({
-    warnings
-}: {
-    warnings: UserWarning[];
-}) => {
+export const WarningStateTable = ({ warnings }: { warnings: UserWarning[] }) => {
     const [sortOrder, setSortOrder] = useState<Order>('desc');
-    const [sortColumn, setSortColumn] =
-        useState<keyof UserWarning>('created_on');
+    const [sortColumn, setSortColumn] = useState<keyof UserWarning>('created_on');
     const [page, setPage] = useState(0);
-    const [rowPerPageCount, setRowPerPageCount] = useState<number>(
-        RowsPerPage.Fifty
-    );
+    const [rowPerPageCount, setRowPerPageCount] = useState<number>(RowsPerPage.Fifty);
 
     const sorted = useMemo(() => {
-        return stableSort(warnings, compare(sortOrder, sortColumn)).slice(
-            page * rowPerPageCount,
-            page * rowPerPageCount + rowPerPageCount
-        );
+        return stableSort(warnings, compare(sortOrder, sortColumn)).slice(page * rowPerPageCount, page * rowPerPageCount + rowPerPageCount);
     }, [warnings, sortOrder, sortColumn, page, rowPerPageCount]);
 
     const renderFilter = (f: Filter) => {
@@ -32,14 +22,10 @@ export const WarningStateTable = ({
 
         return (
             <>
-                <Typography variant={'h6'}>
-                    Matched {f.is_regex ? 'Regex' : 'Text'}
-                </Typography>
+                <Typography variant={'h6'}>Matched {f.is_regex ? 'Regex' : 'Text'}</Typography>
                 <Typography variant={'body1'}>{pat}</Typography>
                 <Typography variant={'body1'}>Weight: {f.weight}</Typography>
-                <Typography variant={'body1'}>
-                    Action: {filterActionString(f.action)}
-                </Typography>
+                <Typography variant={'body1'}>Action: {filterActionString(f.action)}</Typography>
             </>
         );
     };
@@ -63,9 +49,7 @@ export const WarningStateTable = ({
             onPageChange={(_, newPage: number) => {
                 setPage(newPage);
             }}
-            onRowsPerPageChange={(
-                event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-            ) => {
+            onRowsPerPageChange={(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                 setRowPerPageCount(parseInt(event.target.value, 10));
                 setPage(0);
             }}
@@ -77,13 +61,7 @@ export const WarningStateTable = ({
                     align: 'left',
                     width: '150px',
                     renderer: (row) => {
-                        return (
-                            <PersonCell
-                                personaname={row.personaname}
-                                steam_id={row.steam_id}
-                                avatar_hash={row.avatar}
-                            />
-                        );
+                        return <PersonCell personaname={row.personaname} steam_id={row.steam_id} avatar_hash={row.avatar} />;
                     }
                 },
                 {
@@ -105,11 +83,7 @@ export const WarningStateTable = ({
                     align: 'left',
                     width: '100px',
                     renderer: (row) => {
-                        return (
-                            <Typography variant={'body2'}>
-                                {row.server_name}
-                            </Typography>
-                        );
+                        return <Typography variant={'body2'}>{row.server_name}</Typography>;
                     }
                 },
                 {
@@ -141,11 +115,7 @@ export const WarningStateTable = ({
                     sortKey: 'current_total',
                     width: '50px',
                     renderer: (row) => {
-                        return (
-                            <Typography variant={'body1'}>
-                                {row.current_total}
-                            </Typography>
-                        );
+                        return <Typography variant={'body1'}>{row.current_total}</Typography>;
                     }
                 },
                 {

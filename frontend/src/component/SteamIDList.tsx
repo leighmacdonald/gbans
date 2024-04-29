@@ -21,11 +21,7 @@ export const SteamIDList = ({ steam_id }: SteamIDListProps) => {
     }
 
     return (
-        <ContainerWithHeader
-            title={'Steam ID'}
-            iconLeft={<FingerprintIcon />}
-            marginTop={0}
-        >
+        <ContainerWithHeader title={'Steam ID'} iconLeft={<FingerprintIcon />} marginTop={0}>
             <List dense={true}>
                 {[
                     [sid.getSteamID64(), 'steam64'],
@@ -36,16 +32,12 @@ export const SteamIDList = ({ steam_id }: SteamIDListProps) => {
                         <ListItem
                             onClick={async () => {
                                 await navigator.clipboard.writeText(s[0]);
-                                sendFlash(
-                                    'success',
-                                    `Copied to clipboard: ${s[0]}`
-                                );
+                                sendFlash('success', `Copied to clipboard: ${s[0]}`);
                             }}
                             key={s[0]}
                             sx={{
                                 '&:hover': {
-                                    backgroundColor:
-                                        theme.palette.background.default,
+                                    backgroundColor: theme.palette.background.default,
                                     cursor: 'pointer'
                                 }
                             }}

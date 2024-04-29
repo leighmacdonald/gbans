@@ -8,12 +8,7 @@ interface ForumRowLinkProps {
     variant?: 'body2' | 'body1' | 'h6';
 }
 
-export const ForumRowLink = ({
-    to,
-    label,
-    align,
-    variant = 'h6'
-}: ForumRowLinkProps) => {
+export const ForumRowLink = ({ to, label, align, variant = 'h6' }: ForumRowLinkProps) => {
     return (
         <Typography
             noWrap

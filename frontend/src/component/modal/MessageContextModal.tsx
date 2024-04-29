@@ -6,8 +6,7 @@ import { LoadingSpinner } from '../LoadingSpinner';
 import { PersonMessageTable } from '../table/PersonMessageTable';
 import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
 
-export interface UnbanASNModalProps
-    extends ConfirmationModalProps<ASNBanRecord> {
+export interface UnbanASNModalProps extends ConfirmationModalProps<ASNBanRecord> {
     messageId: number;
 }
 
@@ -20,12 +19,7 @@ export const MessageContextModal = ({ messageId }: UnbanASNModalProps) => {
             <Stack spacing={2}>
                 <Heading>{`Message Context (#${messageId})`}</Heading>
                 <Stack spacing={3} alignItems={'center'}>
-                    {(isLoading && <LoadingSpinner />) || (
-                        <PersonMessageTable
-                            steam_id={''}
-                            selectedIndex={selectedMessageIndex}
-                        />
-                    )}
+                    {(isLoading && <LoadingSpinner />) || <PersonMessageTable steam_id={''} selectedIndex={selectedMessageIndex} />}
                 </Stack>
             </Stack>
         </ConfirmationModal>

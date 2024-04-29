@@ -3,11 +3,7 @@ import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import { Heading } from './Heading';
 
-export type JustifyTypes =
-    | 'flex-start'
-    | 'center'
-    | 'flex-end'
-    | 'space-between';
+export type JustifyTypes = 'flex-start' | 'center' | 'flex-end' | 'space-between';
 
 interface ContainerWithHeaderProps {
     title: string;

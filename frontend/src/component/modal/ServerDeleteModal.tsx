@@ -9,10 +9,7 @@ export interface DeleteServerModalProps extends ConfirmationModalProps<Server> {
     server: Server;
 }
 
-export const ServerDeleteModal = ({
-    onSuccess,
-    server
-}: DeleteServerModalProps) => {
+export const ServerDeleteModal = ({ onSuccess, server }: DeleteServerModalProps) => {
     const { sendFlash } = useUserFlashCtx();
 
     const handleSubmit = useCallback(() => {

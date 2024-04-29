@@ -10,11 +10,7 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { formatDistance } from 'date-fns';
 import { apiGetPlayerStats, PlayerOverallResult } from '../api';
-import {
-    defaultFloatFmt,
-    defaultFloatFmtPct,
-    humanCount
-} from '../util/text.tsx';
+import { defaultFloatFmt, defaultFloatFmtPct, humanCount } from '../util/text.tsx';
 import { ContainerWithHeader } from './ContainerWithHeader';
 import FmtWhenGt from './FmtWhenGT.tsx';
 import { LoadingPlaceholder } from './LoadingPlaceholder';
@@ -42,10 +38,7 @@ interface BasicStatTableProps {
     showHeading?: boolean;
 }
 
-const BasicStatTable = ({
-    stats,
-    showHeading = false
-}: BasicStatTableProps) => (
+const BasicStatTable = ({ stats, showHeading = false }: BasicStatTableProps) => (
     <TableContainer>
         <Table padding={'none'}>
             {showHeading && (
@@ -65,9 +58,7 @@ const BasicStatTable = ({
     </TableContainer>
 );
 
-export const PlayerStatsOverallContainer = ({
-    steam_id
-}: PlayerStatsOverallContainerProps) => {
+export const PlayerStatsOverallContainer = ({ steam_id }: PlayerStatsOverallContainerProps) => {
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<PlayerOverallResult>();
 
@@ -86,10 +77,7 @@ export const PlayerStatsOverallContainer = ({
     }, [steam_id]);
 
     return (
-        <ContainerWithHeader
-            title={'Player Overall Stats'}
-            iconLeft={<BarChartIcon />}
-        >
+        <ContainerWithHeader title={'Player Overall Stats'} iconLeft={<BarChartIcon />}>
             <Grid container spacing={1}>
                 <Grid xs={6} md={4}>
                     {loading || !stats ? (
@@ -107,10 +95,7 @@ export const PlayerStatsOverallContainer = ({
                                 },
                                 {
                                     label: 'Losses',
-                                    value: FmtWhenGt(
-                                        stats.matches - stats.wins,
-                                        humanCount
-                                    )
+                                    value: FmtWhenGt(stats.matches - stats.wins, humanCount)
                                 },
                                 {
                                     label: 'Win Rate %',
@@ -118,34 +103,21 @@ export const PlayerStatsOverallContainer = ({
                                 },
                                 {
                                     label: 'Playtime',
-                                    value: `${formatDistance(
-                                        0,
-                                        stats.playtime * 1000,
-                                        {
-                                            includeSeconds: false
-                                        }
-                                    )}`
+                                    value: `${formatDistance(0, stats.playtime * 1000, {
+                                        includeSeconds: false
+                                    })}`
                                 },
                                 {
                                     label: 'Extinguishes',
-                                    value: FmtWhenGt(
-                                        stats.extinguishes,
-                                        humanCount
-                                    )
+                                    value: FmtWhenGt(stats.extinguishes, humanCount)
                                 },
                                 {
                                     label: 'Buildings Created',
-                                    value: FmtWhenGt(
-                                        stats.buildings,
-                                        humanCount
-                                    )
+                                    value: FmtWhenGt(stats.buildings, humanCount)
                                 },
                                 {
                                     label: 'Buildings Destroyed',
-                                    value: FmtWhenGt(
-                                        stats.buildings_destroyed,
-                                        humanCount
-                                    )
+                                    value: FmtWhenGt(stats.buildings_destroyed, humanCount)
                                 },
                                 {
                                     label: 'Captures',
@@ -153,24 +125,15 @@ export const PlayerStatsOverallContainer = ({
                                 },
                                 {
                                     label: 'Captured Blocked',
-                                    value: FmtWhenGt(
-                                        stats.captures_blocked,
-                                        humanCount
-                                    )
+                                    value: FmtWhenGt(stats.captures_blocked, humanCount)
                                 },
                                 {
                                     label: 'Dominations',
-                                    value: FmtWhenGt(
-                                        stats.dominations,
-                                        humanCount
-                                    )
+                                    value: FmtWhenGt(stats.dominations, humanCount)
                                 },
                                 {
                                     label: 'Dominated',
-                                    value: FmtWhenGt(
-                                        stats.dominated,
-                                        humanCount
-                                    )
+                                    value: FmtWhenGt(stats.dominated, humanCount)
                                 },
                                 {
                                     label: 'Revenges',
@@ -232,10 +195,7 @@ export const PlayerStatsOverallContainer = ({
                                 },
                                 {
                                     label: 'Headshots',
-                                    value: FmtWhenGt(
-                                        stats.headshots,
-                                        humanCount
-                                    )
+                                    value: FmtWhenGt(stats.headshots, humanCount)
                                 },
                                 {
                                     label: 'Airshots',
@@ -243,10 +203,7 @@ export const PlayerStatsOverallContainer = ({
                                 },
                                 {
                                     label: 'Backstabs',
-                                    value: FmtWhenGt(
-                                        stats.backstabs,
-                                        humanCount
-                                    )
+                                    value: FmtWhenGt(stats.backstabs, humanCount)
                                 }
                             ]}
                         />
@@ -264,24 +221,15 @@ export const PlayerStatsOverallContainer = ({
                                 },
                                 {
                                     label: 'Damage Taken',
-                                    value: FmtWhenGt(
-                                        stats.damage_taken,
-                                        humanCount
-                                    )
+                                    value: FmtWhenGt(stats.damage_taken, humanCount)
                                 },
                                 {
                                     label: 'Healing Taken',
-                                    value: FmtWhenGt(
-                                        stats.healing_taken,
-                                        humanCount
-                                    )
+                                    value: FmtWhenGt(stats.healing_taken, humanCount)
                                 },
                                 {
                                     label: 'Health Packs',
-                                    value: FmtWhenGt(
-                                        stats.health_packs,
-                                        humanCount
-                                    )
+                                    value: FmtWhenGt(stats.health_packs, humanCount)
                                 },
                                 {
                                     label: 'Drops',
@@ -289,10 +237,7 @@ export const PlayerStatsOverallContainer = ({
                                 },
                                 {
                                     label: 'Near Full Charge Deaths',
-                                    value: FmtWhenGt(
-                                        stats.near_full_charge_death,
-                                        humanCount
-                                    )
+                                    value: FmtWhenGt(stats.near_full_charge_death, humanCount)
                                 },
                                 {
                                     label: 'Avg. Uber Length',
@@ -300,31 +245,19 @@ export const PlayerStatsOverallContainer = ({
                                 },
                                 {
                                     label: 'Charges Uber',
-                                    value: FmtWhenGt(
-                                        stats.charges_uber,
-                                        humanCount
-                                    )
+                                    value: FmtWhenGt(stats.charges_uber, humanCount)
                                 },
                                 {
                                     label: 'Charges Kritz',
-                                    value: FmtWhenGt(
-                                        stats.charges_kritz,
-                                        humanCount
-                                    )
+                                    value: FmtWhenGt(stats.charges_kritz, humanCount)
                                 },
                                 {
                                     label: 'Charges Vaccinator',
-                                    value: FmtWhenGt(
-                                        stats.charges_vacc,
-                                        humanCount
-                                    )
+                                    value: FmtWhenGt(stats.charges_vacc, humanCount)
                                 },
                                 {
                                     label: 'Charges QuickFix',
-                                    value: FmtWhenGt(
-                                        stats.charges_quickfix,
-                                        humanCount
-                                    )
+                                    value: FmtWhenGt(stats.charges_quickfix, humanCount)
                                 }
                             ]}
                         />

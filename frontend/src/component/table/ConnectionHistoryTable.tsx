@@ -1,9 +1,5 @@
 import { ChangeEvent, useEffect, useState } from 'react';
-import {
-    apiGetConnections,
-    PersonConnection,
-    ConnectionQuery
-} from '../../api';
+import { apiGetConnections, PersonConnection, ConnectionQuery } from '../../api';
 import { logErr } from '../../util/errors';
 import { Order, RowsPerPage } from '../../util/table.ts';
 import { LoadingPlaceholder } from '../LoadingPlaceholder';
@@ -13,13 +9,9 @@ import { connectionColumns } from './connectionColumns.tsx';
 export const ConnectionHistoryTable = ({ steam_id }: { steam_id?: string }) => {
     const [bans, setBans] = useState<PersonConnection[]>([]);
     const [sortOrder, setSortOrder] = useState<Order>('desc');
-    const [sortColumn, setSortColumn] = useState<keyof PersonConnection>(
-        'person_connection_id'
-    );
+    const [sortColumn, setSortColumn] = useState<keyof PersonConnection>('person_connection_id');
     const [loading, setLoading] = useState(false);
-    const [rowPerPageCount, setRowPerPageCount] = useState<number>(
-        RowsPerPage.Ten
-    );
+    const [rowPerPageCount, setRowPerPageCount] = useState<number>(RowsPerPage.Ten);
     const [page, setPage] = useState(0);
     const [totalRows, setTotalRows] = useState<number>(0);
 
@@ -71,9 +63,7 @@ export const ConnectionHistoryTable = ({ steam_id }: { steam_id?: string }) => {
             onPageChange={(_, newPage: number) => {
                 setPage(newPage);
             }}
-            onRowsPerPageChange={(
-                event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-            ) => {
+            onRowsPerPageChange={(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                 setRowPerPageCount(parseInt(event.target.value, 10));
                 setPage(0);
             }}

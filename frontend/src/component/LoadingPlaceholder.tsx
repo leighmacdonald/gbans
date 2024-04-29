@@ -3,12 +3,7 @@ import { LoadingSpinner } from './LoadingSpinner';
 
 export const LoadingPlaceholder = () => {
     return (
-        <Box
-            height={400}
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-        >
+        <Box height={400} display="flex" justifyContent="center" alignItems="center">
             <LoadingSpinner />
         </Box>
     );

@@ -6,7 +6,6 @@ import CloseIcon from '@mui/icons-material/Close';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SaveIcon from '@mui/icons-material/Save';
 import Button from '@mui/material/Button';
-import { useFormikContext } from 'formik';
 
 interface onClickProps {
     onClick?: () => void;
@@ -16,19 +15,13 @@ interface onClickProps {
 export const CancelButton = ({ onClick }: onClickProps) => {
     const modal = useModal();
     return (
-        <Button
-            startIcon={<CloseIcon />}
-            color={'error'}
-            variant={'contained'}
-            onClick={onClick ?? modal.hide}
-        >
+        <Button startIcon={<CloseIcon />} color={'error'} variant={'contained'} onClick={onClick ?? modal.hide}>
             Cancel
         </Button>
     );
 };
 
 export const SubmitButton = ({
-    onClick,
     formId,
     disabled = false,
     label = 'Save',
@@ -40,14 +33,12 @@ export const SubmitButton = ({
     startIcon?: ReactNode;
     fullWidth?: boolean;
 }) => {
-    const { submitForm } = useFormikContext();
     return (
         <Button
             fullWidth={fullWidth}
             startIcon={startIcon}
             color={'success'}
             variant={'contained'}
-            onClick={onClick ?? submitForm}
             disabled={disabled}
             type={'submit'}
             form={formId}
@@ -58,18 +49,9 @@ export const SubmitButton = ({
         </Button>
     );
 };
-export const ConfirmButton = ({
-    onClick,
-    disabled = false
-}: onClickProps & { disabled?: boolean }) => {
+export const ConfirmButton = ({ onClick, disabled = false }: onClickProps & { disabled?: boolean }) => {
     return (
-        <Button
-            startIcon={<CheckIcon />}
-            color={'success'}
-            variant={'contained'}
-            onClick={onClick ?? undefined}
-            disabled={disabled}
-        >
+        <Button startIcon={<CheckIcon />} color={'success'} variant={'contained'} onClick={onClick ?? undefined} disabled={disabled}>
             Confirm
         </Button>
     );
@@ -77,33 +59,15 @@ export const ConfirmButton = ({
 
 export const CloseButton = ({ onClick }: onClickProps) => {
     return (
-        <Button
-            startIcon={<ClearIcon />}
-            color={'warning'}
-            variant={'contained'}
-            onClick={onClick}
-        >
+        <Button startIcon={<ClearIcon />} color={'warning'} variant={'contained'} onClick={onClick}>
             Close
         </Button>
     );
 };
 
-export const ResetButton = ({
-    formId,
-    disabled = false
-}: onClickProps & { disabled?: boolean }) => {
-    const { resetForm } = useFormikContext();
-
+export const ResetButton = ({ formId, disabled = false }: onClickProps & { disabled?: boolean }) => {
     return (
-        <Button
-            onClick={() => resetForm()}
-            startIcon={<RestartAltIcon />}
-            color={'warning'}
-            variant={'contained'}
-            type={'reset'}
-            form={formId}
-            disabled={disabled}
-        >
+        <Button startIcon={<RestartAltIcon />} color={'warning'} variant={'contained'} type={'reset'} form={formId} disabled={disabled}>
             Reset
         </Button>
     );

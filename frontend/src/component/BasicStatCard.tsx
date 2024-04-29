@@ -16,14 +16,7 @@ interface BasicStatCardProps {
     icon?: ReactNode;
 }
 
-export const BasicStatCard = ({
-    title,
-    value,
-    desc,
-    actionLabel,
-    onAction,
-    icon
-}: BasicStatCardProps) => (
+export const BasicStatCard = ({ title, value, desc, actionLabel, onAction, icon }: BasicStatCardProps) => (
     <Card sx={{ minWidth: 275 }} variant={'outlined'}>
         <CardContent>
             <Stack direction={'row'} spacing={1}>

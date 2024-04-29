@@ -31,15 +31,7 @@ export const useAppeals = (opts: AppealQueryFilter) => {
             .finally(() => setLoading(false));
 
         return () => abortController.abort();
-    }, [
-        opts.appeal_state,
-        opts.desc,
-        opts.limit,
-        opts.offset,
-        opts.order_by,
-        opts.source_id,
-        opts.target_id
-    ]);
+    }, [opts.appeal_state, opts.desc, opts.limit, opts.offset, opts.order_by, opts.source_id, opts.target_id]);
 
     return { appeals, count, loading };
 };

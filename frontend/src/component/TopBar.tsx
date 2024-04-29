@@ -47,8 +47,8 @@ import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import { useNavigate, Link as RouterLink } from '@tanstack/react-router';
 import { MenuItemData, NestedDropdown } from 'mui-nested-menu';
-import { generateOIDCLink, PermissionLevel, UserNotification } from '../api';
-import { useAuth } from '../auth.tsx';
+import { PermissionLevel, UserNotification } from '../api';
+import { generateOIDCLink, useAuth } from '../auth.tsx';
 import { NotificationsProvider } from '../contexts/NotificationsCtx';
 import { useColourModeCtx } from '../hooks/useColourModeCtx.ts';
 import { useNotificationsCtx } from '../hooks/useNotificationsCtx.ts';
@@ -235,22 +235,22 @@ export const TopBar = () => {
                         {
                             leftIcon: <SensorOccupiedIcon sx={colourOpts} />,
                             label: 'Player IP History',
-                            callback: onClickHandler('/admin/network/ip_hist')
+                            callback: onClickHandler('/admin/network/iphist')
                         },
                         {
                             leftIcon: <WifiFindIcon sx={colourOpts} />,
                             label: 'Find Players By IP',
-                            callback: onClickHandler('/admin/network/players_by_ip')
+                            callback: onClickHandler('/admin/network/playersbyip')
                         },
                         {
                             leftIcon: <CellTowerIcon sx={colourOpts} />,
                             label: 'IP Info',
-                            callback: onClickHandler('/admin/network/ip_info')
+                            callback: onClickHandler('/admin/network/ipinfo')
                         },
                         {
                             leftIcon: <WifiOffIcon sx={colourOpts} />,
                             label: 'External CIDR Bans',
-                            callback: onClickHandler('/admin/network/cidr_blocks')
+                            callback: onClickHandler('/admin/network/cidrblocks')
                         }
                     ]
                 },

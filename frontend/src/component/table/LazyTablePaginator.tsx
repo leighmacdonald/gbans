@@ -7,23 +7,11 @@ interface LazyTablePaginatorProps {
     page: number;
     total: number;
     rowsPerPage: RowsPerPage;
-    onRowsPerPageChange: (
-        event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-    ) => void;
-    onPageChange: (
-        event: MouseEvent<HTMLButtonElement> | null,
-        page: number
-    ) => void;
+    onRowsPerPageChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+    onPageChange: (event: MouseEvent<HTMLButtonElement> | null, page: number) => void;
 }
 
-export const LazyTablePaginator = ({
-    loading,
-    page,
-    total,
-    rowsPerPage,
-    onPageChange,
-    onRowsPerPageChange
-}: LazyTablePaginatorProps) => {
+export const LazyTablePaginator = ({ loading, page, total, rowsPerPage, onPageChange, onRowsPerPageChange }: LazyTablePaginatorProps) => {
     return (
         <TablePagination
             SelectProps={{

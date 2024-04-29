@@ -29,15 +29,7 @@ export const useVotes = (opts: VoteQueryFilter): hookResult<VoteResult[]> => {
             .finally(() => {
                 setLoading(false);
             });
-    }, [
-        opts.desc,
-        opts.limit,
-        opts.offset,
-        opts.success,
-        opts.order_by,
-        opts.source_id,
-        opts.target_id
-    ]);
+    }, [opts.desc, opts.limit, opts.offset, opts.success, opts.order_by, opts.source_id, opts.target_id]);
 
     return { data, count, loading };
 };

@@ -37,22 +37,17 @@ export const NewsView = ({ itemsPerPage }: NewsViewProps) => {
 
     return (
         <Stack spacing={3}>
-            {(articles || [])
-                ?.slice(page * itemsPerPage, page * itemsPerPage + itemsPerPage)
-                .map((article) => {
-                    if (!article.created_on || !article.updated_on) {
-                        return null;
-                    }
-                    return (
-                        <Paper elevation={1} key={`news_` + article.news_id}>
-                            <SplitHeading
-                                left={article.title}
-                                right={renderDate(article.created_on)}
-                            />
-                            <MarkDownRenderer body_md={article.body_md} />
-                        </Paper>
-                    );
-                })}
+            {(articles || [])?.slice(page * itemsPerPage, page * itemsPerPage + itemsPerPage).map((article) => {
+                if (!article.created_on || !article.updated_on) {
+                    return null;
+                }
+                return (
+                    <Paper elevation={1} key={`news_` + article.news_id}>
+                        <SplitHeading left={article.title} right={renderDate(article.created_on)} />
+                        <MarkDownRenderer body_md={article.body_md} />
+                    </Paper>
+                );
+            })}
             <Pagination
                 count={articles ? Math.ceil(articles.length / itemsPerPage) : 0}
                 defaultValue={1}

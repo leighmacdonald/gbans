@@ -48,9 +48,7 @@ export const MatchChatTable = ({ match_id }: { match_id: string }) => {
             onSortOrderChanged={async (direction) => {
                 setState({ sortOrder: direction });
             }}
-            onRowsPerPageChange={(
-                event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-            ) => {
+            onRowsPerPageChange={(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                 setState({
                     rows: Number(event.target.value),
                     page: '0'
@@ -69,11 +67,7 @@ export const MatchChatTable = ({ match_id }: { match_id: string }) => {
                     align: 'center',
                     width: 220,
                     hideSm: true,
-                    renderer: (row) => (
-                        <Typography variant={'body1'}>
-                            {`${formatISO9075(row.created_on)}`}
-                        </Typography>
-                    )
+                    renderer: (row) => <Typography variant={'body1'}>{`${formatISO9075(row.created_on)}`}</Typography>
                 },
                 {
                     label: 'Name',
@@ -84,11 +78,7 @@ export const MatchChatTable = ({ match_id }: { match_id: string }) => {
                     renderer: (row) => (
                         <PersonCellFieldNonInteractive
                             steam_id={row.steam_id}
-                            avatar_hash={
-                                row.avatar_hash != ''
-                                    ? row.avatar_hash
-                                    : defaultAvatarHash
-                            }
+                            avatar_hash={row.avatar_hash != '' ? row.avatar_hash : defaultAvatarHash}
                             personaname={row.persona_name}
                         />
                     )
@@ -102,39 +92,21 @@ export const MatchChatTable = ({ match_id }: { match_id: string }) => {
                         return (
                             <Grid container>
                                 <Grid xs padding={1}>
-                                    <Typography variant={'body1'}>
-                                        {row.body}
-                                    </Typography>
+                                    <Typography variant={'body1'}>{row.body}</Typography>
                                 </Grid>
 
                                 {row.auto_filter_flagged > 0 && (
-                                    <Grid
-                                        xs={'auto'}
-                                        padding={1}
-                                        display="flex"
-                                        justifyContent="center"
-                                        alignItems="center"
-                                    >
+                                    <Grid xs={'auto'} padding={1} display="flex" justifyContent="center" alignItems="center">
                                         <>
-                                            <FlagIcon
-                                                color={'error'}
-                                                fontSize="small"
-                                            />
+                                            <FlagIcon color={'error'} fontSize="small" />
                                         </>
                                     </Grid>
                                 )}
-                                <Grid
-                                    xs={'auto'}
-                                    display="flex"
-                                    justifyContent="center"
-                                    alignItems="center"
-                                >
+                                <Grid xs={'auto'} display="flex" justifyContent="center" alignItems="center">
                                     <ChatContextMenu
                                         flagged={row.auto_filter_flagged > 0}
                                         steamId={row.steam_id}
-                                        person_message_id={
-                                            row.person_message_id
-                                        }
+                                        person_message_id={row.person_message_id}
                                     />
                                 </Grid>
                             </Grid>

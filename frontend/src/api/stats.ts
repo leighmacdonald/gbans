@@ -17,8 +17,7 @@ export interface DatabaseStats {
     servers_total: number;
 }
 
-export const apiGetStats = async () =>
-    await apiCall<DatabaseStats>(`/api/stats`, 'GET');
+export const apiGetStats = async () => await apiCall<DatabaseStats>(`/api/stats`, 'GET');
 
 export interface TeamScores {
     red: number;
@@ -64,35 +63,19 @@ export interface WeaponsOverallResult extends Weapon, BaseWeaponStats {
 }
 
 export const apiGetWeaponsOverall = async () => {
-    return await apiCall<LazyResult<WeaponsOverallResult>>(
-        `/api/stats/weapons`,
-        'GET'
-    );
+    return await apiCall<LazyResult<WeaponsOverallResult>>(`/api/stats/weapons`, 'GET');
 };
 
 export const apiGetPlayerWeaponsOverall = async (steam_id: string) => {
-    return await apiCall<LazyResult<WeaponsOverallResult>>(
-        `/api/stats/player/${steam_id}/weapons`,
-        'GET'
-    );
+    return await apiCall<LazyResult<WeaponsOverallResult>>(`/api/stats/player/${steam_id}/weapons`, 'GET');
 };
 
 export const apiGetPlayersOverall = async () => {
-    return await apiCall<LazyResult<PlayerWeaponStats>>(
-        `/api/stats/players`,
-        'GET'
-    );
+    return await apiCall<LazyResult<PlayerWeaponStats>>(`/api/stats/players`, 'GET');
 };
 
-export const apiGetHealersOverall = async (
-    abortController?: AbortController
-) => {
-    return await apiCall<LazyResult<HealingOverallResult>>(
-        `/api/stats/healers`,
-        'GET',
-        undefined,
-        abortController
-    );
+export const apiGetHealersOverall = async (abortController?: AbortController) => {
+    return await apiCall<LazyResult<HealingOverallResult>>(`/api/stats/healers`, 'GET', undefined, abortController);
 };
 
 export interface BaseWeaponStats {
@@ -126,9 +109,7 @@ export interface GamePlayerClass {
     class_key: string;
 }
 
-export interface PlayerClassOverallResult
-    extends GamePlayerClass,
-        MatchPlayerClassStats {}
+export interface PlayerClassOverallResult extends GamePlayerClass, MatchPlayerClassStats {}
 
 export interface MatchPlayerClassStats {
     kills: number;
@@ -188,10 +169,7 @@ export interface WinSums {
     win_rate: number;
 }
 
-export interface PlayerOverallResult
-    extends HealingStats,
-        MatchPlayerClassStats,
-        WinSums {
+export interface PlayerOverallResult extends HealingStats, MatchPlayerClassStats, WinSums {
     buildings: number;
     extinguishes: number;
     health_packs: number;
@@ -204,23 +182,12 @@ export interface PlayerOverallResult
     healing_taken: number;
 }
 
-export const apiGetPlayerStats = async (
-    steam_id: string,
-    abortController: AbortController
-) => {
-    return await apiCall<PlayerOverallResult>(
-        `/api/stats/player/${steam_id}/overall`,
-        'GET',
-        undefined,
-        abortController
-    );
+export const apiGetPlayerStats = async (steam_id: string, abortController: AbortController) => {
+    return await apiCall<PlayerOverallResult>(`/api/stats/player/${steam_id}/overall`, 'GET', undefined, abortController);
 };
 
 export const apiGetPlayerClassOverallStats = async (steam_id: string) => {
-    return await apiCall<LazyResult<PlayerClassOverallResult>>(
-        `/api/stats/player/${steam_id}/classes`,
-        'GET'
-    );
+    return await apiCall<LazyResult<PlayerClassOverallResult>>(`/api/stats/player/${steam_id}/classes`, 'GET');
 };
 
 export interface PlayerWeaponStats extends BaseWeaponStats {
@@ -230,14 +197,10 @@ export interface PlayerWeaponStats extends BaseWeaponStats {
     rank: number;
 }
 
-export interface PlayerWeaponStatsResponse
-    extends LazyResult<PlayerWeaponStats> {
+export interface PlayerWeaponStatsResponse extends LazyResult<PlayerWeaponStats> {
     weapon: Weapon;
 }
 
 export const apiGetPlayerWeaponStats = async (weapon_id: number) => {
-    return await apiCall<PlayerWeaponStatsResponse>(
-        `/api/stats/weapon/${weapon_id}`,
-        'GET'
-    );
+    return await apiCall<PlayerWeaponStatsResponse>(`/api/stats/weapon/${weapon_id}`, 'GET');
 };

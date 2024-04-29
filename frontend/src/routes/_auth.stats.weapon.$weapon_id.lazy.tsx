@@ -25,8 +25,7 @@ const WeaponStatsContainer = ({ weapon_id }: WeaponStatsContainerProps) => {
     const [page, setPage] = useState(0);
     const [sortOrder, setSortOrder] = useState<Order>('asc');
     const [rows, setRows] = useState<RowsPerPage>(RowsPerPage.TwentyFive);
-    const [sortColumn, setSortColumn] =
-        useState<keyof PlayerWeaponStats>('rank');
+    const [sortColumn, setSortColumn] = useState<keyof PlayerWeaponStats>('rank');
 
     const { data, weapon, loading, count } = useWeaponsStats(weapon_id, {
         offset: page * rows,
@@ -36,10 +35,7 @@ const WeaponStatsContainer = ({ weapon_id }: WeaponStatsContainerProps) => {
     });
 
     return (
-        <ContainerWithHeader
-            title={`Top 250 Weapon Users: ${weapon?.name}`}
-            iconLeft={<InsightsIcon />}
-        >
+        <ContainerWithHeader title={`Top 250 Weapon Users: ${weapon?.name}`} iconLeft={<InsightsIcon />}>
             {loading ? (
                 <LoadingPlaceholder />
             ) : (
@@ -60,11 +56,7 @@ const WeaponStatsContainer = ({ weapon_id }: WeaponStatsContainerProps) => {
                     onPageChange={(_, newPage: number) => {
                         setPage(newPage);
                     }}
-                    onRowsPerPageChange={(
-                        event: ChangeEvent<
-                            HTMLInputElement | HTMLTextAreaElement
-                        >
-                    ) => {
+                    onRowsPerPageChange={(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                         setRows(Number(event.target.value));
                         setPage(0);
                     }}
@@ -84,11 +76,7 @@ const WeaponStatsContainer = ({ weapon_id }: WeaponStatsContainerProps) => {
                             tooltip: 'Player Name',
                             align: 'left',
                             renderer: (obj) => (
-                                <PersonCell
-                                    avatar_hash={obj.avatar_hash}
-                                    personaname={obj.personaname}
-                                    steam_id={obj.steam_id}
-                                />
+                                <PersonCell avatar_hash={obj.avatar_hash} personaname={obj.personaname} steam_id={obj.steam_id} />
                             )
                         },
                         {
@@ -125,18 +113,14 @@ const WeaponStatsContainer = ({ weapon_id }: WeaponStatsContainerProps) => {
                             virtual: true,
                             virtualKey: 'accuracy',
                             tooltip: 'Overall Accuracy',
-                            renderer: (obj) =>
-                                FmtWhenGt(obj.shots, () =>
-                                    defaultFloatFmtPct(obj.accuracy)
-                                )
+                            renderer: (obj) => FmtWhenGt(obj.shots, () => defaultFloatFmtPct(obj.accuracy))
                         },
                         {
                             label: 'As',
                             sortable: true,
                             sortKey: 'airshots',
                             tooltip: 'Total Airshots',
-                            renderer: (obj) =>
-                                FmtWhenGt(obj.airshots, humanCount)
+                            renderer: (obj) => FmtWhenGt(obj.airshots, humanCount)
                         },
 
                         {
@@ -144,8 +128,7 @@ const WeaponStatsContainer = ({ weapon_id }: WeaponStatsContainerProps) => {
                             sortable: true,
                             sortKey: 'backstabs',
                             tooltip: 'Total Backstabs',
-                            renderer: (obj) =>
-                                FmtWhenGt(obj.backstabs, humanCount)
+                            renderer: (obj) => FmtWhenGt(obj.backstabs, humanCount)
                         },
 
                         {
@@ -153,8 +136,7 @@ const WeaponStatsContainer = ({ weapon_id }: WeaponStatsContainerProps) => {
                             sortable: true,
                             sortKey: 'headshots',
                             tooltip: 'Total Headshots',
-                            renderer: (obj) =>
-                                FmtWhenGt(obj.headshots, humanCount)
+                            renderer: (obj) => FmtWhenGt(obj.headshots, humanCount)
                         }
                     ]}
                 />

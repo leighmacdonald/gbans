@@ -1,11 +1,6 @@
 import { LazyResult } from '../util/table.ts';
 import { parseDateTime } from '../util/text.tsx';
-import {
-    apiCall,
-    MatchTimes,
-    QueryFilter,
-    transformMatchDates
-} from './common';
+import { apiCall, MatchTimes, QueryFilter, transformMatchDates } from './common';
 import { PlayerClass, Team } from './const';
 import { TeamScores } from './stats';
 
@@ -126,16 +121,8 @@ export interface MatchesQueryOpts extends QueryFilter<MatchSummary> {
     time_end?: Date;
 }
 
-export const apiGetMatches = async (
-    opts: MatchesQueryOpts,
-    abortController: AbortController
-) => {
-    const resp = await apiCall<LazyResult<MatchSummary>, MatchesQueryOpts>(
-        `/api/logs`,
-        'POST',
-        opts,
-        abortController
-    );
+export const apiGetMatches = async (opts: MatchesQueryOpts, abortController: AbortController) => {
+    const resp = await apiCall<LazyResult<MatchSummary>, MatchesQueryOpts>(`/api/logs`, 'POST', opts, abortController);
     resp.data = resp.data.map((m) => {
         m.time_start = parseDateTime(m.time_start as unknown as string);
         m.time_end = parseDateTime(m.time_end as unknown as string);

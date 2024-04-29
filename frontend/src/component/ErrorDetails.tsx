@@ -3,7 +3,7 @@ import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { generateOIDCLink } from '../api';
+import { generateOIDCLink } from '../auth.tsx';
 import { AppError, ErrorCode } from '../error.tsx';
 import steamLogo from '../icons/steam_login_lg.png';
 import { ContainerWithHeader } from './ContainerWithHeader.tsx';

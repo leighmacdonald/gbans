@@ -9,9 +9,7 @@ interface ReportStatusIconProps {
     reportStatus: ReportStatus;
 }
 
-export const ReportStatusIcon = ({
-    reportStatus
-}: ReportStatusIconProps): JSX.Element => {
+export const ReportStatusIcon = ({ reportStatus }: ReportStatusIconProps): JSX.Element => {
     switch (reportStatus) {
         case ReportStatus.NeedMoreInfo:
             return (

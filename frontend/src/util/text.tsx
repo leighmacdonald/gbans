@@ -19,13 +19,9 @@ export const renderTime = (t: Date): string => {
     return format(t, 'HH:mm');
 };
 
-export const isValidSteamDate = (date: Date) =>
-    isAfter(new Date(2000, 0, 0), date);
+export const isValidSteamDate = (date: Date) => isAfter(new Date(2000, 0, 0), date);
 
-export const renderTimeDistance = (
-    t1: Date | string,
-    t2?: Date | string
-): string => {
+export const renderTimeDistance = (t1: Date | string, t2?: Date | string): string => {
     if (typeof t1 === 'string') {
         t1 = parseJSON(t1);
     }
@@ -60,10 +56,7 @@ const humanize = (count: number, thresh: number, dp = 1, units: string[]) => {
     do {
         count /= thresh;
         ++u;
-    } while (
-        Math.round(Math.abs(count) * r) / r >= thresh &&
-        u < units.length - 1
-    );
+    } while (Math.round(Math.abs(count) * r) / r >= thresh && u < units.length - 1);
 
     return count.toFixed(dp) + '' + units[u];
 };
@@ -75,9 +68,7 @@ export const humanFileSize = (bytes: number, si = false, dp = 1) => {
         return bytes + ' B';
     }
 
-    const units = si
-        ? ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
-        : ['KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
+    const units = si ? ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'] : ['KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
     return humanize(bytes, thresh, dp, units);
 };
 
@@ -95,7 +86,5 @@ export const defaultFloatFmt = (value: number) => value.toFixed(2);
 type avatarSize = 'small' | 'medium' | 'full';
 
 export const avatarHashToURL = (hash?: string, size: avatarSize = 'full') => {
-    return `https://avatars.steamstatic.com/${hash ?? defaultAvatarHash}${
-        size == 'small' ? '' : `_${size}`
-    }.jpg`;
+    return `https://avatars.steamstatic.com/${hash ?? defaultAvatarHash}${size == 'small' ? '' : `_${size}`}.jpg`;
 };

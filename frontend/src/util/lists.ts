@@ -5,6 +5,4 @@ export const sum = (list: number[]) =>
         return acc + current;
     }, 0);
 
-export const uniqCI = (values: string[]): string[] => [
-    ...new Map(values.map((s) => [s.toLowerCase(), s])).values()
-];
+export const uniqCI = (values: string[]): string[] => [...new Map(values.map((s) => [s.toLowerCase(), s])).values()];

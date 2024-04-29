@@ -3,7 +3,8 @@ import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useLayoutEffect, useRouter } from '@tanstack/react-router';
 import { z } from 'zod';
-import { apiGetCurrentProfile, writeAccessToken, writeRefreshToken } from '../api';
+import { apiGetCurrentProfile } from '../api';
+import { writeAccessToken, writeRefreshToken } from '../auth.tsx';
 
 export const Route = createFileRoute('/_guest/login/success')({
     validateSearch: z.object({

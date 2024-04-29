@@ -3,9 +3,7 @@ import { apiGetReports, ReportQueryFilter, ReportWithAuthor } from '../api';
 import { logErr } from '../util/errors';
 import { hookResult } from './hookResult';
 
-export const useReports = (
-    opts: ReportQueryFilter
-): hookResult<ReportWithAuthor[]> => {
+export const useReports = (opts: ReportQueryFilter): hookResult<ReportWithAuthor[]> => {
     const [loading, setLoading] = useState(false);
     const [count, setCount] = useState<number>(0);
     const [data, setData] = useState<ReportWithAuthor[]>([]);
@@ -31,15 +29,7 @@ export const useReports = (
             .finally(() => {
                 setLoading(false);
             });
-    }, [
-        opts.desc,
-        opts.limit,
-        opts.offset,
-        opts.order_by,
-        opts.report_status,
-        opts.source_id,
-        opts.target_id
-    ]);
+    }, [opts.desc, opts.limit, opts.offset, opts.order_by, opts.report_status, opts.source_id, opts.target_id]);
 
     return { data, count, loading };
 };

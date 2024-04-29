@@ -29,29 +29,17 @@ export const Footer = (): JSX.Element => {
                 height: '100%'
             }}
         >
-            <Grid
-                container
-                spacing={0}
-                direction="column"
-                alignItems="center"
-                justifyContent="center"
-            >
+            <Grid container spacing={0} direction="column" alignItems="center" justifyContent="center">
                 <Grid xs={3}>
                     <Typography variant={'subtitle2'} color={'text'}>
-                        Copyright &copy; {window.gbans.site_name || 'gbans'}{' '}
-                        {new Date().getFullYear()}{' '}
+                        Copyright &copy; {window.gbans.site_name || 'gbans'} {new Date().getFullYear()}{' '}
                     </Typography>
                     <Stack
                         // direction={'row'}
                         alignItems="center"
                         justifyContent="center"
                     >
-                        <Link
-                            component={RouterLink}
-                            variant={'subtitle2'}
-                            to={gbansUrl}
-                            sx={{ color: theme.palette.text.primary }}
-                        >
+                        <Link component={RouterLink} variant={'subtitle2'} to={gbansUrl} sx={{ color: theme.palette.text.primary }}>
                             {window.gbans.build_version}
                         </Link>
                         <Link

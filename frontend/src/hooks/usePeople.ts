@@ -37,16 +37,7 @@ export const usePeople = (opts: PlayerQuery) => {
             });
 
         return () => abortController.abort();
-    }, [
-        opts.deleted,
-        opts.desc,
-        opts.ip,
-        opts.limit,
-        opts.offset,
-        opts.order_by,
-        opts.personaname,
-        opts.target_id
-    ]);
+    }, [opts.deleted, opts.desc, opts.ip, opts.limit, opts.offset, opts.order_by, opts.personaname, opts.target_id]);
 
     return { data, count, loading, error };
 };
