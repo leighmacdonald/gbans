@@ -16,11 +16,8 @@ export interface PersonMessageTableProps {
 export const PersonMessageTable = ({ steam_id }: PersonMessageTableProps) => {
     const [messages, setMessages] = useState<PersonMessage[]>([]);
     const [sortOrder, setSortOrder] = useState<Order>('desc');
-    const [sortColumn, setSortColumn] =
-        useState<keyof PersonMessage>('person_message_id');
-    const [rowPerPageCount, setRowPerPageCount] = useState<number>(
-        RowsPerPage.Ten
-    );
+    const [sortColumn, setSortColumn] = useState<keyof PersonMessage>('person_message_id');
+    const [rowPerPageCount, setRowPerPageCount] = useState<number>(RowsPerPage.Ten);
     const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(0);
     const [totalRows, setTotalRows] = useState<number>(0);
@@ -70,9 +67,7 @@ export const PersonMessageTable = ({ steam_id }: PersonMessageTableProps) => {
             onPageChange={(_, newPage: number) => {
                 setPage(newPage);
             }}
-            onRowsPerPageChange={(
-                event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-            ) => {
+            onRowsPerPageChange={(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                 setRowPerPageCount(parseInt(event.target.value, 10));
                 setPage(0);
             }}
@@ -117,11 +112,7 @@ export const PersonMessageTable = ({ steam_id }: PersonMessageTableProps) => {
                     align: 'left',
                     width: '150px',
                     renderer: (row) => (
-                        <PersonCell
-                            steam_id={row.steam_id}
-                            personaname={row.persona_name}
-                            avatar_hash={row.avatar_hash}
-                        ></PersonCell>
+                        <PersonCell steam_id={row.steam_id} personaname={row.persona_name} avatar_hash={row.avatar_hash}></PersonCell>
                     )
                 },
                 {

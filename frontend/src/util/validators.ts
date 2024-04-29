@@ -13,69 +13,40 @@ export const isValidHttpURL = (value: string): boolean => {
     }
 };
 
-export const banReasonFieldValidator = yup
-    .string()
-    .label('Select a reason')
-    .required('reason is required');
+export const banReasonFieldValidator = yup.string().label('Select a reason').required('reason is required');
 
-export const appealStateFielValidator = yup
-    .string()
-    .label('Select a appeal state')
-    .required('Appeal state is required');
+export const appealStateFielValidator = yup.string().label('Select a appeal state').required('Appeal state is required');
 
-export const ipFieldValidator = yup
-    .string()
-    .test('valid_ip', 'Invalid IP', (value) => {
-        if (emptyOrNullString(value)) {
-            return true;
-        }
-        return isValidIP(value as string);
-    });
+export const ipFieldValidator = yup.string().test('valid_ip', 'Invalid IP', (value) => {
+    if (emptyOrNullString(value)) {
+        return true;
+    }
+    return isValidIP(value as string);
+});
 
-export const unbanReasonTextFieldValidator = yup
-    .string()
-    .min(5, 'Message to short')
-    .label('Unban Reason')
-    .required('Reason is required');
+export const unbanReasonTextFieldValidator = yup.string().min(5, 'Message to short').label('Unban Reason').required('Reason is required');
 
 export const unbanValidationSchema = yup.object({
     unban_reason: unbanReasonTextFieldValidator
 });
 
-export const banReasonTextFieldValidator = yup
-    .string()
-    .test('reason_text', '${path} invalid', (value, context) => {
-        if (context.parent.reason != BanReason.Custom) {
-            return true;
-        } else {
-            return value != undefined && value.length > 3;
-        }
-    });
+export const banReasonTextFieldValidator = yup.string().test('reason_text', '${path} invalid', (value, context) => {
+    if (context.parent.reason != BanReason.Custom) {
+        return true;
+    } else {
+        return value != undefined && value.length > 3;
+    }
+});
 
-export const discordRequiredValidator = yup
-    .boolean()
-    .label('Is discord required')
-    .required();
+export const discordRequiredValidator = yup.boolean().label('Is discord required').required();
 
-export const weightFieldValidator = yup
-    .number()
-    .min(1, 'Min weight is 1')
-    .required('Weight required')
-    .label('Weight');
+export const weightFieldValidator = yup.number().min(1, 'Min weight is 1').required('Weight required').label('Weight');
 
 export const serverIDsValidator = yup.array().label('Select a server');
 
-export const mapNameFieldValidator = yup
-    .string()
-    .label('Select a map')
-    .min(3, 'Minimum 3 characters required')
-    .optional();
+export const mapNameFieldValidator = yup.string().label('Select a map').min(3, 'Minimum 3 characters required').optional();
 
-export const titleFieldValidator = yup
-    .string()
-    .min(3, 'Title to short')
-    .label('Title')
-    .required('Title is required');
+export const titleFieldValidator = yup.string().min(3, 'Title to short').label('Title').required('Title is required');
 
 export const mapValidator = yup
     .string()
@@ -86,11 +57,7 @@ export const mapValidator = yup
     .required('map is required');
 
 export const makeNetworkRangeFieldValidator = (required: boolean) => {
-    return (
-        required
-            ? yup.string().required('CIDR address is required')
-            : yup.string().optional()
-    )
+    return (required ? yup.string().required('CIDR address is required') : yup.string().optional())
         .label('Input a CIDR network range')
         .test('rangeValid', 'IP / CIDR invalid', (addr) => {
             if (addr == undefined && !required) {
@@ -113,57 +80,38 @@ export const makeNetworkRangeFieldValidator = (required: boolean) => {
 
 export const orderingFieldValidator = yup.number().label('Ordering').integer();
 
-export const personanameFieldValidator = yup
-    .string()
-    .min(3, 'Minimum length 3')
-    .label('Name Query');
+export const personanameFieldValidator = yup.string().min(3, 'Minimum length 3').label('Name Query');
 
-export const reportStatusFieldValidator = yup
-    .string()
-    .label('Select a report status')
-    .required('report status is required');
+export const reportStatusFieldValidator = yup.string().label('Select a report status').required('report status is required');
 
-export const selectOwnValidator = yup
-    .boolean()
-    .label('Include only results with yourself')
-    .required();
+export const selectOwnValidator = yup.boolean().label('Include only results with yourself').required();
 
 export const steamIdValidator = (attr_name: string = 'steam_id') => {
     return yup
         .string()
-        .test(
-            'checkSteamId',
-            'Invalid steamid or profile url',
-            async (steamId, ctx) => {
-                if (!steamId) {
-                    return false;
-                }
-                try {
-                    const sid = await steamIDOrEmptyString(steamId);
-                    if (sid == '') {
-                        return false;
-                    }
-                    ctx.parent[attr_name] = sid;
-                    return true;
-                } catch (e) {
-                    logErr(e);
-                    return false;
-                }
+        .test('checkSteamId', 'Invalid steamid or profile url', async (steamId, ctx) => {
+            if (!steamId) {
+                return false;
             }
-        )
+            try {
+                const sid = await steamIDOrEmptyString(steamId);
+                if (sid == '') {
+                    return false;
+                }
+                ctx.parent[attr_name] = sid;
+                return true;
+            } catch (e) {
+                logErr(e);
+                return false;
+            }
+        })
         .label('Enter your Steam ID')
         .required('Steam ID is required');
 };
 
-export const filterActionValidator = yup
-    .number()
-    .label('Select a action')
-    .required('Filter action is required');
+export const filterActionValidator = yup.number().label('Select a action').required('Filter action is required');
 
-export const deletedValidator = yup
-    .boolean()
-    .label('Include deleted results')
-    .required();
+export const deletedValidator = yup.boolean().label('Include deleted results').required();
 
 export const asNumberFieldValidator = yup
     .number()
@@ -195,9 +143,7 @@ export const groupIdFieldValidator = yup
     })
     .length(18, 'Must be positive integer with a length of 18');
 
-export const nonResolvingSteamIDInputTest = async (
-    steamId: string | undefined
-) => {
+export const nonResolvingSteamIDInputTest = async (steamId: string | undefined) => {
     // Only validate once there is data.
     if (emptyOrNullString(steamId)) {
         return true;
@@ -213,11 +159,7 @@ export const nonResolvingSteamIDInputTest = async (
 export const targetIdValidator = yup
     .string()
     .label('Target Steam ID')
-    .test(
-        'checkTargetId',
-        'Invalid target steamid',
-        nonResolvingSteamIDInputTest
-    );
+    .test('checkTargetId', 'Invalid target steamid', nonResolvingSteamIDInputTest);
 
 export const sourceIdValidator = yup
     .string()
@@ -231,13 +173,9 @@ export const steamIDValidatorSimple = yup
 
 export const bodyMDValidator = yup.string().min(3, 'Message to short');
 
-const profileIDRx = new RegExp(
-    /https:\/\/steamcommunity.com\/profiles\/(\d+)\/?/
-);
+const profileIDRx = new RegExp(/https:\/\/steamcommunity.com\/profiles\/(\d+)\/?/);
 
-const profileVanityRx = new RegExp(
-    /https:\/\/steamcommunity.com\/id\/(\w+)\/?/
-);
+const profileVanityRx = new RegExp(/https:\/\/steamcommunity.com\/id\/(\w+)\/?/);
 
 const hasWhiteSpace = (s: string) => /\s/.test(s);
 
@@ -254,10 +192,7 @@ const hasWhiteSpace = (s: string) => /\s/.test(s);
  * @param input
  * @param individualOnly Only consider ids belonging to individuals in public universe as valid
  */
-export const steamIDOrEmptyString = async (
-    input: string,
-    individualOnly: boolean = true
-) => {
+export const steamIDOrEmptyString = async (input: string, individualOnly: boolean = true) => {
     const steamIdInput = input.trim();
 
     if (emptyOrNullString(steamIdInput)) {
@@ -325,7 +260,6 @@ export const steamIDOrEmptyString = async (
     return steamId;
 };
 
-const ipRegex =
-    /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/gi;
+const ipRegex = /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/gi;
 
 export const isValidIP = (value: string): boolean => ipRegex.test(value);

@@ -17,10 +17,7 @@ interface SourceBansListProps {
     is_reporter: boolean;
 }
 
-export const SourceBansList = ({
-    steam_id,
-    is_reporter
-}: SourceBansListProps): JSX.Element => {
+export const SourceBansList = ({ steam_id, is_reporter }: SourceBansListProps): JSX.Element => {
     const [bans, setBans] = useState<sbBanRecord[]>([]);
 
     useEffect(() => {
@@ -36,16 +33,9 @@ export const SourceBansList = ({
     }
 
     return (
-        <ContainerWithHeader
-            title={'Suspect SourceBans History'}
-            iconLeft={<HistoryIcon />}
-        >
+        <ContainerWithHeader title={'Suspect SourceBans History'} iconLeft={<HistoryIcon />}>
             <Stack spacing={1}>
-                <Typography variant={'h5'}>
-                    {is_reporter
-                        ? 'Reporter SourceBans History'
-                        : 'Suspect SourceBans History'}
-                </Typography>
+                <Typography variant={'h5'}>{is_reporter ? 'Reporter SourceBans History' : 'Suspect SourceBans History'}</Typography>
                 <TableContainer>
                     <Table size="small">
                         <TableHead>
@@ -63,13 +53,9 @@ export const SourceBansList = ({
                                     <TableRow key={`ban-${ban.ban_id}`} hover>
                                         <TableCell>{ban.created_on}</TableCell>
                                         <TableCell>{ban.site_name}</TableCell>
-                                        <TableCell>
-                                            {ban.persona_name}
-                                        </TableCell>
+                                        <TableCell>{ban.persona_name}</TableCell>
                                         <TableCell>{ban.reason}</TableCell>
-                                        <TableCell>
-                                            {ban.permanent ? 'True' : 'False'}
-                                        </TableCell>
+                                        <TableCell>{ban.permanent ? 'True' : 'False'}</TableCell>
                                     </TableRow>
                                 );
                             })}

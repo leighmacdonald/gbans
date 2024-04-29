@@ -17,12 +17,7 @@ export interface PlayerClassImgProps {
     onMouseLeave?: MouseEventHandler | undefined;
 }
 
-export const PlayerClassImg = ({
-    cls,
-    size = 24,
-    onMouseEnter,
-    onMouseLeave
-}: PlayerClassImgProps) => {
+export const PlayerClassImg = ({ cls, size = 24, onMouseEnter, onMouseLeave }: PlayerClassImgProps) => {
     switch (cls) {
         case PlayerClass.Demo:
             return (

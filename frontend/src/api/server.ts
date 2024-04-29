@@ -1,10 +1,5 @@
 import { LazyResult } from '../util/table.ts';
-import {
-    apiCall,
-    QueryFilter,
-    TimeStamped,
-    transformTimeStampedDates
-} from './common';
+import { apiCall, QueryFilter, TimeStamped, transformTimeStampedDates } from './common';
 
 export interface BaseServer {
     server_id: number;
@@ -79,12 +74,7 @@ interface UserServers {
 }
 
 export const apiGetServerStates = async (abortController?: AbortController) =>
-    await apiCall<UserServers>(
-        `/api/servers/state`,
-        'GET',
-        undefined,
-        abortController
-    );
+    await apiCall<UserServers>(`/api/servers/state`, 'GET', undefined, abortController);
 
 export interface SaveServerOpts {
     server_name_short: string;
@@ -103,39 +93,21 @@ export interface SaveServerOpts {
 }
 
 export const apiCreateServer = async (opts: SaveServerOpts) =>
-    transformTimeStampedDates(
-        await apiCall<Server, SaveServerOpts>(`/api/servers`, 'POST', opts)
-    );
+    transformTimeStampedDates(await apiCall<Server, SaveServerOpts>(`/api/servers`, 'POST', opts));
 
 export const apiSaveServer = async (server_id: number, opts: SaveServerOpts) =>
-    transformTimeStampedDates(
-        await apiCall<Server, SaveServerOpts>(
-            `/api/servers/${server_id}`,
-            'POST',
-            opts
-        )
-    );
+    transformTimeStampedDates(await apiCall<Server, SaveServerOpts>(`/api/servers/${server_id}`, 'POST', opts));
 
 export interface ServerQueryFilter extends QueryFilter<Server> {
     include_disabled?: boolean;
 }
 
-export const apiGetServersAdmin = async (
-    opts: ServerQueryFilter,
-    abortController?: AbortController
-) =>
-    await apiCall<LazyResult<Server>>(
-        `/api/servers_admin`,
-        'POST',
-        opts,
-        abortController
-    );
+export const apiGetServersAdmin = async (opts: ServerQueryFilter, abortController?: AbortController) =>
+    await apiCall<LazyResult<Server>>(`/api/servers_admin`, 'POST', opts, abortController);
 
-export const apiGetServers = async () =>
-    apiCall<ServerSimple[]>(`/api/servers`, 'GET', undefined);
+export const apiGetServers = async () => apiCall<ServerSimple[]>(`/api/servers`, 'GET', undefined);
 
-export const apiDeleteServer = async (server_id: number) =>
-    await apiCall(`/api/servers/${server_id}`, 'DELETE');
+export const apiDeleteServer = async (server_id: number) => await apiCall(`/api/servers/${server_id}`, 'DELETE');
 
 export interface SlimServer {
     addr: string;

@@ -10,11 +10,7 @@ interface SplitHeadingProps {
     bgColor?: string;
 }
 
-export const SplitHeading: FC<SplitHeadingProps> = ({
-    left,
-    right,
-    bgColor
-}: SplitHeadingProps) => {
+export const SplitHeading: FC<SplitHeadingProps> = ({ left, right, bgColor }: SplitHeadingProps) => {
     const theme = useTheme();
     return (
         <Stack direction={'row'}>

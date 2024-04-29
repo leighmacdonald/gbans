@@ -11,22 +11,14 @@ import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import { HeadingCell, Order, RowsPerPage } from '../../util/table.ts';
 
-const defaultRenderer = (
-    _: unknown,
-    value: unknown,
-    type: string
-): ReactNode => {
+const defaultRenderer = (_: unknown, value: unknown, type: string): ReactNode => {
     switch (type) {
         case 'boolean':
             return value ? 'Yes' : 'No';
         case 'date':
             return new Date(value as string).toDateString();
         case 'float':
-            return (
-                <Typography variant={'body1'}>
-                    {((value as number) ?? 0).toFixed(2)}
-                </Typography>
-            );
+            return <Typography variant={'body1'}>{((value as number) ?? 0).toFixed(2)}</Typography>;
         default:
             return <Typography variant={'body1'}>{value as string}</Typography>;
     }
@@ -42,13 +34,8 @@ export interface LazyTableProps<T> {
     loading?: boolean;
     showPager?: boolean;
     hideHeader?: boolean;
-    onRowsPerPageChange?: ChangeEventHandler<
-        HTMLTextAreaElement | HTMLInputElement
-    >;
-    onPageChange?: (
-        event: MouseEvent<HTMLButtonElement> | null,
-        page: number
-    ) => void;
+    onRowsPerPageChange?: ChangeEventHandler<HTMLTextAreaElement | HTMLInputElement>;
+    onPageChange?: (event: MouseEvent<HTMLButtonElement> | null, page: number) => void;
     // Current page, used to calculate db offset
     page?: number;
     // Total rows in query without paging.
@@ -68,11 +55,7 @@ export const LazyTableBody = <T,>({ rows, columns }: TableBodyRows<T>) => {
                 return (
                     <TableRow key={`row-${idx}`} hover>
                         {columns.map((col: HeadingCell<T>, colIdx) => {
-                            const value = (col?.renderer ?? defaultRenderer)(
-                                row,
-                                row[col.sortKey as keyof T],
-                                col?.sortType ?? 'string'
-                            );
+                            const value = (col?.renderer ?? defaultRenderer)(row, row[col.sortKey as keyof T], col?.sortType ?? 'string');
                             const style = {
                                 paddingLeft: 0.5,
                                 paddingRight: 0.5,
@@ -140,9 +123,7 @@ export const LazyTableHeader = <T,>({
                         <TableCell
                             variant="head"
                             align={col.align ?? 'right'}
-                            key={`${col.tooltip}-${col.label}-${
-                                col.sortKey as string
-                            }-${col.virtualKey}`}
+                            key={`${col.tooltip}-${col.label}-${col.sortKey as string}-${col.virtualKey}`}
                             sortDirection={order}
                             padding={'none'}
                             sx={{
@@ -168,15 +149,9 @@ export const LazyTableHeader = <T,>({
                                     onClick={() => {
                                         if (col.sortKey) {
                                             if (sortColumn == col.sortKey) {
-                                                onSortOrderChanged(
-                                                    order == 'asc'
-                                                        ? 'desc'
-                                                        : 'asc'
-                                                );
+                                                onSortOrderChanged(order == 'asc' ? 'desc' : 'asc');
                                             } else {
-                                                onSortColumnChanged(
-                                                    col.sortKey
-                                                );
+                                                onSortColumnChanged(col.sortKey);
                                             }
                                         }
                                     }}
@@ -196,12 +171,7 @@ export const LazyTableHeader = <T,>({
                                     <Typography
                                         padding={0}
                                         sx={{
-                                            textDecoration:
-                                                col.sortKey != sortColumn
-                                                    ? 'none'
-                                                    : order == 'asc'
-                                                      ? 'underline'
-                                                      : 'overline'
+                                            textDecoration: col.sortKey != sortColumn ? 'none' : order == 'asc' ? 'underline' : 'overline'
                                         }}
                                         variant={'button'}
                                     >
@@ -249,17 +219,12 @@ export const LazyTable = <T,>({
                     />
                 )}
                 <LazyTableBody rows={rows} columns={columns} />
-                {showPager &&
-                page != undefined &&
-                count != undefined &&
-                rowsPerPage != undefined &&
-                onPageChange != undefined ? (
+                {showPager && page != undefined && count != undefined && rowsPerPage != undefined && onPageChange != undefined ? (
                     <TableFooter>
                         <TableRow>
                             <TablePagination
                                 SelectProps={{
-                                    disabled:
-                                        loading != undefined ? loading : false
+                                    disabled: loading != undefined ? loading : false
                                 }}
                                 backIconButtonProps={
                                     (loading != undefined ? loading : false)

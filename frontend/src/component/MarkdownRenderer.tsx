@@ -10,10 +10,7 @@ const renderLinks = (body_md: string): string => {
     return body_md
         .replace('/^[\u200B\u200C\u200D\u200E\u200F\uFEFF]/', '')
         .replace(/(wiki:\/\/)/gi, '/wiki/')
-        .replace(
-            /(media:\/\/)/gi,
-            window.gbans.asset_url + '/' + window.gbans.bucket_media + '/'
-        );
+        .replace(/(media:\/\/)/gi, window.gbans.asset_url + '/' + window.gbans.bucket_media + '/');
 };
 
 interface MDImgProps {
@@ -67,8 +64,7 @@ export const MarkDownRenderer = ({ body_md }: { body_md: string }) => {
                         ...getOverrides({
                             Highlight,
                             themes,
-                            theme:
-                                theme == 'dark' ? themes.vsDark : themes.vsLight
+                            theme: theme == 'dark' ? themes.vsDark : themes.vsLight
                         }),
                         a: {
                             component: MDLink

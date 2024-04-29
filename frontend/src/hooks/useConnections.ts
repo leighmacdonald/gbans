@@ -36,15 +36,7 @@ export const useConnections = (opts: ConnectionQuery) => {
             });
 
         return () => abortController.abort();
-    }, [
-        opts.desc,
-        opts.limit,
-        opts.offset,
-        opts.order_by,
-        opts.cidr,
-        opts.asn,
-        opts.source_id
-    ]);
+    }, [opts.desc, opts.limit, opts.offset, opts.order_by, opts.cidr, opts.asn, opts.source_id]);
 
     return { data, count, loading };
 };

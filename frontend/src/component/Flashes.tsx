@@ -12,21 +12,15 @@ export interface Flash {
     link_to?: string;
 }
 
-const Alert = forwardRef<HTMLDivElement, AlertProps>(
-    function Alert(props, ref) {
-        return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
-    }
-);
+const Alert = forwardRef<HTMLDivElement, AlertProps>(function Alert(props, ref) {
+    return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
+});
 
 interface State extends SnackbarOrigin {
     open: boolean;
 }
 
-export const PositionedSnackbar = ({
-    notification
-}: {
-    notification: Flash;
-}) => {
+export const PositionedSnackbar = ({ notification }: { notification: Flash }) => {
     const [state, setState] = useState<State>({
         open: true,
         vertical: 'bottom',
@@ -42,11 +36,7 @@ export const PositionedSnackbar = ({
     };
 
     return (
-        <Snackbar
-            open={state.open}
-            autoHideDuration={10000}
-            onClose={handleClose}
-        >
+        <Snackbar open={state.open} autoHideDuration={10000} onClose={handleClose}>
             <Alert severity={notification.level} sx={{ width: '100%' }}>
                 {notification.message}
             </Alert>
@@ -60,12 +50,7 @@ export const Flashes = (): JSX.Element => {
     return (
         <>
             {flashes.map((flash, index) => {
-                return (
-                    <PositionedSnackbar
-                        notification={flash}
-                        key={`flash-${index}`}
-                    />
-                );
+                return <PositionedSnackbar notification={flash} key={`flash-${index}`} />;
             })}
         </>
     );

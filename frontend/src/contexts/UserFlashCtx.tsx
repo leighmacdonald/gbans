@@ -6,12 +6,7 @@ import { noop } from '../util/lists.ts';
 export type CurrentFlashes = {
     flashes: Flash[];
     setFlashes: (flashes: Flash[]) => void;
-    sendFlash: (
-        level: AlertColor,
-        message: string,
-        heading?: string,
-        closable?: boolean
-    ) => void;
+    sendFlash: (level: AlertColor, message: string, heading?: string, closable?: boolean) => void;
 };
 export const UserFlashCtx = createContext<CurrentFlashes>({
     flashes: [],

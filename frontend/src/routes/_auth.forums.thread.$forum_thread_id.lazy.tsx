@@ -1,6 +1,4 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useParams } from 'react-router';
-import useUrlState from '@ahooksjs/use-url-state';
 import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ConstructionIcon from '@mui/icons-material/Construction';
@@ -20,30 +18,31 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
-import { Link as RouterLink, createLazyFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
+import { createFileRoute, Link as RouterLink, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { isAfter } from 'date-fns/fp';
-import { Formik } from 'formik';
-import * as yup from 'yup';
+import { z } from 'zod';
 import { PermissionLevel, permissionLevelString } from '../api';
-import { apiDeleteMessage, apiSaveThreadMessage, ForumMessage, ForumThread } from '../api/forum.ts';
+import { apiDeleteMessage, ForumMessage, ForumThread } from '../api/forum.ts';
 import { ForumRowLink } from '../component/ForumRowLink.tsx';
 import { ForumThreadReplyBox } from '../component/ForumThreadReplyBox.tsx';
-import { MDBodyField } from '../component/MDBodyField.tsx';
 import { MarkDownRenderer } from '../component/MarkdownRenderer.tsx';
 import { VCenterBox } from '../component/VCenterBox.tsx';
 import { ModalConfirm, ModalForumThreadEditor } from '../component/modal';
-import { SubmitButton } from '../component/modal/Buttons.tsx';
 import { useThread } from '../hooks/useThread.ts';
 import { useThreadMessages } from '../hooks/useThreadMessages.ts';
 import { logErr } from '../util/errors.ts';
 import { useScrollToLocation } from '../util/history.ts';
-import { RowsPerPage } from '../util/table.ts';
+import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
 import { avatarHashToURL, renderDateTime } from '../util/text.tsx';
-import { bodyMDValidator } from '../util/validators.ts';
 import { LoginPage } from './_guest.login.index.tsx';
 
-export const Route = createLazyFileRoute('/_auth/forums/thread/$forum_thread_id')({
-    component: ForumThreadPage
+const forumThreadSearchSchema = z.object({
+    ...commonTableSearchSchema
+});
+
+export const Route = createFileRoute('/_auth/forums/thread/$forum_thread_id')({
+    component: ForumThreadPage,
+    validateSearch: (search) => forumThreadSearchSchema.parse(search)
 });
 
 const ForumAvatar = ({ src, alt, online }: { src: string; alt: string; online: boolean }) => {
@@ -240,67 +239,60 @@ const ThreadMessageContainer = ({
     );
 };
 
-interface MessageEditValues {
-    body_md: string;
-}
+// interface MessageEditValues {
+//     body_md: string;
+// }
+//
+// const validationSchema = z.object({
+//     body_md: bodyMDValidator
+// });
 
-const validationSchema = yup.object({
-    body_md: bodyMDValidator
-});
-
-const MessageEditor = ({
-    message,
-    onUpdate,
-    onCancel
-}: {
-    message: ForumMessage;
-    onUpdate: (msg: ForumMessage) => void;
-    onCancel: () => void;
-}) => {
-    const onSubmit = useCallback(
-        async (values: MessageEditValues) => {
-            try {
-                const updated = await apiSaveThreadMessage(message.forum_message_id, values.body_md);
-                onUpdate(updated);
-            } catch (e) {
-                logErr(e);
-            }
-        },
-        [message.forum_message_id, onUpdate]
-    );
+const MessageEditor = ({ onCancel }: { message: ForumMessage; onUpdate: (msg: ForumMessage) => void; onCancel: () => void }) => {
+    // const onSubmit = useCallback(
+    //     async (values: MessageEditValues) => {
+    //         try {
+    //             const updated = await apiSaveThreadMessage(message.forum_message_id, values.body_md);
+    //             onUpdate(updated);
+    //         } catch (e) {
+    //             logErr(e);
+    //         }
+    //     },
+    //     [message.forum_message_id, onUpdate]
+    // );
 
     return (
-        <Formik<MessageEditValues>
-            onSubmit={onSubmit}
-            initialValues={{ body_md: message.body_md }}
-            validationSchema={validationSchema}
-            validateOnBlur={true}
-        >
-            <Stack padding={1}>
-                <MDBodyField />
-                <ButtonGroup>
-                    <Button variant={'contained'} color={'error'} onClick={onCancel}>
-                        Cancel
-                    </Button>
-                    <SubmitButton />
-                </ButtonGroup>
-            </Stack>
-        </Formik>
+        // <Formik<MessageEditValues>
+        //     onSubmit={onSubmit}
+        //     initialValues={{ body_md: message.body_md }}
+        //     validationSchema={validationSchema}
+        //     validateOnBlur={true}
+        // >
+        <Stack padding={1}>
+            {/*<MDBodyField />*/}
+            <ButtonGroup>
+                <Button variant={'contained'} color={'error'} onClick={onCancel}>
+                    Cancel
+                </Button>
+                {/*<SubmitButton />*/}
+            </ButtonGroup>
+        </Stack>
+        // </Formik>
     );
 };
 
 function ForumThreadPage() {
     const [updatedMessages, setUpdatedMessages] = useState<ForumMessage[]>();
     const [updatedThread, setUpdatedThread] = useState<ForumThread>();
-    const [state, setState] = useUrlState({ page: '1' });
-    const { forum_thread_id } = useParams();
+    const { forum_thread_id } = Route.useParams();
+    const { page } = Route.useSearch();
+
     const { hasPermission, permissionLevel } = useRouteContext({ from: '/_auth/forums/thread/$forum_thread_id' });
     const thread_id = parseInt(forum_thread_id ?? '');
     const navigate = useNavigate();
     const { data: threadOrig } = useThread(thread_id);
     const { data: messagesOrig, count } = useThreadMessages({
         forum_thread_id: thread_id,
-        offset: (Number(state.page) - 1) * RowsPerPage.Ten,
+        offset: (Number(page) - 1) * RowsPerPage.Ten,
         limit: RowsPerPage.Ten,
         order_by: 'forum_message_id',
         desc: false
@@ -317,14 +309,14 @@ function ForumThreadPage() {
     useScrollToLocation();
 
     const firstPostID = useMemo(() => {
-        if (Number(state.page) > 1) {
+        if (Number(page) > 1) {
             return -1;
         }
         if (messages.length > 0) {
             return messages[0].forum_message_id;
         }
         return -1;
-    }, [messages, state.page]);
+    }, [messages, page]);
 
     const onEditThread = useCallback(async () => {
         try {
@@ -406,9 +398,9 @@ function ForumThreadPage() {
             ))}
             <Pagination
                 count={count > 0 ? Math.ceil(count / RowsPerPage.Ten) : 0}
-                page={Number(state.page)}
-                onChange={(_, newPage) => {
-                    setState({ page: String(newPage) });
+                page={Number(page)}
+                onChange={async (_, newPage) => {
+                    await navigate({ search: (prev) => ({ ...prev, page: newPage }) });
                 }}
             />
             {activeThread?.locked && (

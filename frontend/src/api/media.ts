@@ -1,7 +1,6 @@
 import { apiCall, TimeStamped } from './common';
 
-const assetUrl = (bucket: string, asset: Asset): string =>
-    `${window.gbans.asset_url}/${bucket}/${asset.name}`;
+const assetUrl = (bucket: string, asset: Asset): string => `${window.gbans.asset_url}/${bucket}/${asset.name}`;
 
 export const assetURLMedia = (asset: Asset) => assetUrl('media', asset);
 
@@ -56,18 +55,7 @@ export interface UserUploadedFile {
 }
 
 export const apiSaveMedia = async (upload: UserUploadedFile) =>
-    await apiCall<MediaUploadResponse, UserUploadedFile>(
-        `/api/media`,
-        'POST',
-        upload
-    );
+    await apiCall<MediaUploadResponse, UserUploadedFile>(`/api/media`, 'POST', upload);
 
-export const apiSaveContestEntryMedia = async (
-    contest_id: string,
-    upload: UserUploadedFile
-) =>
-    await apiCall<MediaUploadResponse, UserUploadedFile>(
-        `/api/contests/${contest_id}/upload`,
-        'POST',
-        upload
-    );
+export const apiSaveContestEntryMedia = async (contest_id: string, upload: UserUploadedFile) =>
+    await apiCall<MediaUploadResponse, UserUploadedFile>(`/api/contests/${contest_id}/upload`, 'POST', upload);

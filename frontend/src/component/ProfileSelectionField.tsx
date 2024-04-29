@@ -20,17 +20,13 @@ interface ProfileSelectionFieldProps {
     steam_id: string;
 }
 
-export const ProfileSelectionField = <T,>({
-    label
-}: ProfileSelectionInputProps) => {
+export const ProfileSelectionField = <T,>({ label }: ProfileSelectionInputProps) => {
     const debounceRate = 1;
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState<boolean>(false);
     const [lProfile, setLProfile] = useState<Nullable<PlayerProfile>>();
 
-    const { setFieldValue, touched, errors } = useFormikContext<
-        T & ProfileSelectionFieldProps
-    >();
+    const { setFieldValue, touched, errors } = useFormikContext<T & ProfileSelectionFieldProps>();
 
     const loadProfile = useCallback(async () => {
         if (input) {
@@ -86,19 +82,11 @@ export const ProfileSelectionField = <T,>({
                     startAdornment: (
                         <InputAdornment position="start">
                             {touched.steam_id && Boolean(errors.steam_id) ? (
-                                <ErrorOutlineIcon
-                                    color={'error'}
-                                    sx={{ width: 40 }}
-                                />
+                                <ErrorOutlineIcon color={'error'} sx={{ width: 40 }} />
                             ) : loading ? (
                                 <HourglassBottomIcon sx={{ width: 40 }} />
                             ) : (
-                                <Avatar
-                                    src={avatarHashToURL(
-                                        lProfile?.player.avatarhash
-                                    )}
-                                    variant={'square'}
-                                />
+                                <Avatar src={avatarHashToURL(lProfile?.player.avatarhash)} variant={'square'} />
                             )}
                         </InputAdornment>
                     )

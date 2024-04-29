@@ -45,8 +45,7 @@ export const MatchHealersTable = ({ players }: MatchHealersTableProps) => {
                         drops: p.medic_stats?.drops ?? 0,
                         match_medic_id: p.medic_stats?.match_medic_id ?? 0,
                         major_adv_lost: p.medic_stats?.major_adv_lost ?? 0,
-                        near_full_charge_death:
-                            p.medic_stats?.near_full_charge_death ?? 0
+                        near_full_charge_death: p.medic_stats?.near_full_charge_death ?? 0
                     };
                 });
         }, [players]),
@@ -94,9 +93,7 @@ export const MatchHealersTable = ({ players }: MatchHealersTableProps) => {
                     renderer: (row) => (
                         <PersonCell
                             steam_id={row.steam_id}
-                            personaname={
-                                row.name != '' ? row.name : row.steam_id
-                            }
+                            personaname={row.name != '' ? row.name : row.steam_id}
                             avatar_hash={row.avatar_hash}
                         />
                     )
@@ -108,9 +105,7 @@ export const MatchHealersTable = ({ players }: MatchHealersTableProps) => {
                     sortable: true,
                     align: 'left',
                     width: 250,
-                    renderer: (row) => (
-                        <Typography variant={'body1'}>{row.healing}</Typography>
-                    )
+                    renderer: (row) => <Typography variant={'body1'}>{row.healing}</Typography>
                 },
                 {
                     label: 'Uber',
@@ -118,11 +113,7 @@ export const MatchHealersTable = ({ players }: MatchHealersTableProps) => {
                     sortKey: 'charges_uber',
                     sortable: true,
                     align: 'left',
-                    renderer: (row) => (
-                        <Typography variant={'body1'}>
-                            {row.charges_uber}
-                        </Typography>
-                    )
+                    renderer: (row) => <Typography variant={'body1'}>{row.charges_uber}</Typography>
                 },
                 {
                     label: 'Krit',
@@ -130,11 +121,7 @@ export const MatchHealersTable = ({ players }: MatchHealersTableProps) => {
                     sortKey: 'charges_kritz',
                     sortable: true,
                     align: 'left',
-                    renderer: (row) => (
-                        <Typography variant={'body1'}>
-                            {row.charges_kritz}
-                        </Typography>
-                    )
+                    renderer: (row) => <Typography variant={'body1'}>{row.charges_kritz}</Typography>
                 },
                 {
                     label: 'Vacc',
@@ -142,11 +129,7 @@ export const MatchHealersTable = ({ players }: MatchHealersTableProps) => {
                     sortKey: 'charges_vacc',
                     sortable: true,
                     align: 'left',
-                    renderer: (row) => (
-                        <Typography variant={'body1'}>
-                            {row.charges_vacc}
-                        </Typography>
-                    )
+                    renderer: (row) => <Typography variant={'body1'}>{row.charges_vacc}</Typography>
                 },
                 {
                     label: 'Quickfix',
@@ -154,11 +137,7 @@ export const MatchHealersTable = ({ players }: MatchHealersTableProps) => {
                     sortKey: 'charges_quickfix',
                     sortable: true,
                     align: 'left',
-                    renderer: (row) => (
-                        <Typography variant={'body1'}>
-                            {row.charges_quickfix}
-                        </Typography>
-                    )
+                    renderer: (row) => <Typography variant={'body1'}>{row.charges_quickfix}</Typography>
                 },
                 {
                     label: 'Drops',
@@ -166,9 +145,7 @@ export const MatchHealersTable = ({ players }: MatchHealersTableProps) => {
                     sortKey: 'drops',
                     sortable: true,
                     align: 'left',
-                    renderer: (row) => (
-                        <Typography variant={'body1'}>{row.drops}</Typography>
-                    )
+                    renderer: (row) => <Typography variant={'body1'}>{row.drops}</Typography>
                 },
                 {
                     label: 'Avg. Len',
@@ -176,11 +153,7 @@ export const MatchHealersTable = ({ players }: MatchHealersTableProps) => {
                     sortKey: 'avg_uber_length',
                     sortable: true,
                     align: 'left',
-                    renderer: (row) => (
-                        <Typography variant={'body1'}>
-                            {row.avg_uber_length}
-                        </Typography>
-                    )
+                    renderer: (row) => <Typography variant={'body1'}>{row.avg_uber_length}</Typography>
                 }
             ]}
             sortColumn={sortColumn}

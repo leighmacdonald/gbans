@@ -1,4 +1,4 @@
-import { logoutKey, writeAccessToken, writeRefreshToken } from '../api';
+import { logoutKey, writeAccessToken, writeRefreshToken } from '../auth.tsx';
 
 export const LogoutHandler = () => {
     // Listen for storage events with the logout key and logout from all browser sessions/tabs when fired.

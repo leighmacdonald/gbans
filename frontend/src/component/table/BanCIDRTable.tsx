@@ -18,12 +18,7 @@ import { useBansCIDR } from '../../hooks/useBansCIDR';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { logErr } from '../../util/errors';
 import { RowsPerPage } from '../../util/table.ts';
-import {
-    deletedValidator,
-    ipFieldValidator,
-    sourceIdValidator,
-    targetIdValidator
-} from '../../util/validators.ts';
+import { deletedValidator, ipFieldValidator, sourceIdValidator, targetIdValidator } from '../../util/validators.ts';
 import { DeletedField } from '../formik/DeletedField';
 import { FilterButtons } from '../formik/FilterButtons';
 import { IPField } from '../formik/IPField';
@@ -80,12 +75,9 @@ export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
     const onEditCIDR = useCallback(
         async (existing: CIDRBanRecord) => {
             try {
-                await NiceModal.show<CIDRBanRecord, BanCIDRModalProps>(
-                    ModalBanCIDR,
-                    {
-                        existing
-                    }
-                );
+                await NiceModal.show<CIDRBanRecord, BanCIDRModalProps>(ModalBanCIDR, {
+                    existing
+                });
                 sendFlash('success', 'Updated CIDR ban successfully');
             } catch (e) {
                 sendFlash('error', `Failed to update ban: ${e}`);
@@ -126,10 +118,7 @@ export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
     );
 
     const onReset = useCallback(
-        async (
-            _: CIDRBanFilterValues,
-            formikHelpers: FormikHelpers<CIDRBanFilterValues>
-        ) => {
+        async (_: CIDRBanFilterValues, formikHelpers: FormikHelpers<CIDRBanFilterValues>) => {
             setState({
                 ip: undefined,
                 source: undefined,
@@ -195,11 +184,7 @@ export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
                         onPageChange={(_, newPage: number) => {
                             setState({ page: newPage });
                         }}
-                        onRowsPerPageChange={(
-                            event: ChangeEvent<
-                                HTMLInputElement | HTMLTextAreaElement
-                            >
-                        ) => {
+                        onRowsPerPageChange={(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                             setState({
                                 rows: Number(event.target.value),
                                 page: 0
@@ -212,11 +197,7 @@ export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
                                 sortKey: 'net_id',
                                 sortable: true,
                                 align: 'left',
-                                renderer: (obj) => (
-                                    <Typography variant={'body1'}>
-                                        #{obj.net_id.toString()}
-                                    </Typography>
-                                )
+                                renderer: (obj) => <Typography variant={'body1'}>#{obj.net_id.toString()}</Typography>
                             },
                             {
                                 label: 'A',
@@ -256,11 +237,7 @@ export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
                                 align: 'left',
                                 renderer: (obj) => {
                                     try {
-                                        return (
-                                            <Typography variant={'body1'}>
-                                                {obj.cidr}
-                                            </Typography>
-                                        );
+                                        return <Typography variant={'body1'}>{obj.cidr}</Typography>;
                                     } catch (e) {
                                         return <>?</>;
                                     }
@@ -275,19 +252,11 @@ export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
                                     try {
                                         const network = new IPCIDR(obj.cidr);
                                         const hosts = network.toArray().length;
-                                        return (
-                                            <Typography variant={'body1'}>
-                                                {hosts}
-                                            </Typography>
-                                        );
+                                        return <Typography variant={'body1'}>{hosts}</Typography>;
                                     } catch (e) {
                                         logErr(e);
                                     }
-                                    return (
-                                        <Typography variant={'body1'}>
-                                            ?
-                                        </Typography>
-                                    );
+                                    return <Typography variant={'body1'}>?</Typography>;
                                 }
                             },
                             {
@@ -297,16 +266,8 @@ export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
                                 sortable: true,
                                 align: 'left',
                                 renderer: (row) => (
-                                    <Tooltip
-                                        title={
-                                            row.reason == BanReason.Custom
-                                                ? row.reason_text
-                                                : BanReason[row.reason]
-                                        }
-                                    >
-                                        <Typography variant={'body1'}>
-                                            {BanReason[row.reason]}
-                                        </Typography>
+                                    <Tooltip title={row.reason == BanReason.Custom ? row.reason_text : BanReason[row.reason]}>
+                                        <Typography variant={'body1'}>{BanReason[row.reason]}</Typography>
                                     </Tooltip>
                                 )
                             },
@@ -319,12 +280,7 @@ export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
                                 virtual: true,
                                 virtualKey: 'created_on',
                                 renderer: (obj) => {
-                                    return (
-                                        <TableCellRelativeDateField
-                                            date={obj.created_on}
-                                            suffix={true}
-                                        />
-                                    );
+                                    return <TableCellRelativeDateField date={obj.created_on} suffix={true} />;
                                 }
                             },
                             {
@@ -337,11 +293,7 @@ export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
                                 virtualKey: 'valid_until',
                                 sortable: true,
                                 renderer: (obj) => {
-                                    return (
-                                        <TableCellRelativeDateField
-                                            date={obj.valid_until}
-                                        />
-                                    );
+                                    return <TableCellRelativeDateField date={obj.valid_until} />;
                                 }
                             },
                             {
@@ -357,15 +309,9 @@ export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
                                         start: row.created_on,
                                         end: row.valid_until
                                     });
-                                    const durationText =
-                                        dur.years && dur.years > 5
-                                            ? 'Permanent'
-                                            : formatDuration(dur);
+                                    const durationText = dur.years && dur.years > 5 ? 'Permanent' : formatDuration(dur);
                                     return (
-                                        <Typography
-                                            variant={'body1'}
-                                            overflow={'hidden'}
-                                        >
+                                        <Typography variant={'body1'} overflow={'hidden'}>
                                             {durationText}
                                         </Typography>
                                     );
@@ -373,14 +319,11 @@ export const BanCIDRTable = ({ newBans }: { newBans: CIDRBanRecord[] }) => {
                             },
                             {
                                 label: 'A',
-                                tooltip:
-                                    'Is this ban active (not deleted/inactive/unbanned)',
+                                tooltip: 'Is this ban active (not deleted/inactive/unbanned)',
                                 align: 'center',
                                 width: '50px',
                                 sortKey: 'deleted',
-                                renderer: (row) => (
-                                    <TableCellBool enabled={!row.deleted} />
-                                )
+                                renderer: (row) => <TableCellBool enabled={!row.deleted} />
                             },
                             {
                                 label: 'Act.',

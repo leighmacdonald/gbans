@@ -66,17 +66,8 @@ const BarChartWithTable = ({ loading, data }: BarChartWithTableProps) => {
     return (
         <Grid container>
             <Grid md={6} xs={12}>
-                <Box
-                    paddingLeft={10}
-                    display="flex"
-                    justifyContent="center"
-                    alignItems="center"
-                >
-                    {loading ? (
-                        <LoadingSpinner />
-                    ) : (
-                        <MapUseChart details={data} />
-                    )}
+                <Box paddingLeft={10} display="flex" justifyContent="center" alignItems="center">
+                    {loading ? <LoadingSpinner /> : <MapUseChart details={data} />}
                 </Box>
             </Grid>
             <Grid md={6} xs={12}>
@@ -157,9 +148,7 @@ export const MapUsageContainer = () => {
 
                 // eslint-disable-next-line no-loops/no-loops
                 for (let i = 0; i < resp.length; i++) {
-                    const key = resp[i].map
-                        .replace('workshop/', '')
-                        .split('_')[0];
+                    const key = resp[i].map.replace('workshop/', '').split('_')[0];
                     if (!maps[key]) {
                         maps[key] = 0;
                     }
@@ -185,16 +174,10 @@ export const MapUsageContainer = () => {
     }, []);
 
     return (
-        <ContainerWithHeader
-            title={'Map Playtime Distribution'}
-            iconLeft={<MapIcon />}
-        >
+        <ContainerWithHeader title={'Map Playtime Distribution'} iconLeft={<MapIcon />}>
             <TabContext value={value}>
                 <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                    <TabList
-                        onChange={handleChange}
-                        aria-label="lab API tabs example"
-                    >
+                    <TabList onChange={handleChange} aria-label="lab API tabs example">
                         <Tab label="By Map" value="1" />
                         <Tab label="By Mode" value="2" />
                     </TabList>

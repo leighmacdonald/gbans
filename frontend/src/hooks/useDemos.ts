@@ -19,10 +19,7 @@ export const useDemos = (opts: DemoQueryFilter) => {
                 desc: opts.desc,
                 steam_id: opts.steam_id,
                 map_name: opts.map_name,
-                server_ids: (Array.isArray(opts.server_ids)
-                    ? opts.server_ids
-                    : [opts.server_ids]
-                ).map((i) => Number(i))
+                server_ids: (Array.isArray(opts.server_ids) ? opts.server_ids : [opts.server_ids]).map((i) => Number(i))
             },
             abortController
         )
@@ -39,16 +36,7 @@ export const useDemos = (opts: DemoQueryFilter) => {
             });
 
         return () => abortController.abort();
-    }, [
-        opts.deleted,
-        opts.desc,
-        opts.limit,
-        opts.map_name,
-        opts.offset,
-        opts.order_by,
-        opts.server_ids,
-        opts.steam_id
-    ]);
+    }, [opts.deleted, opts.desc, opts.limit, opts.map_name, opts.offset, opts.order_by, opts.server_ids, opts.steam_id]);
 
     return { data, count, loading, error };
 };

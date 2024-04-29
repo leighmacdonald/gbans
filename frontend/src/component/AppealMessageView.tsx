@@ -29,10 +29,7 @@ interface AppealMessageValues {
     body_md: string;
 }
 
-export const AppealMessageView = ({
-    message,
-    onDelete
-}: AppealMessageViewProps) => {
+export const AppealMessageView = ({ message, onDelete }: AppealMessageViewProps) => {
     const theme = useTheme();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
@@ -42,10 +39,7 @@ export const AppealMessageView = ({
     const onSubmit = useCallback(
         async (values: AppealMessageValues) => {
             try {
-                await apiUpdateBanMessage(
-                    message.ban_message_id,
-                    values.body_md
-                );
+                await apiUpdateBanMessage(message.ban_message_id, values.body_md);
                 message.message_md = values.body_md;
                 setEditing(false);
             } catch (e) {
@@ -70,10 +64,7 @@ export const AppealMessageView = ({
     if (editing) {
         return (
             <Box component={Paper} padding={1}>
-                <Formik<AppealMessageValues>
-                    onSubmit={onSubmit}
-                    initialValues={{ body_md: message.message_md }}
-                >
+                <Formik<AppealMessageValues> onSubmit={onSubmit} initialValues={{ body_md: message.message_md }}>
                     <Stack spacing={1}>
                         <MDBodyField />
 
@@ -96,10 +87,7 @@ export const AppealMessageView = ({
                         backgroundColor: theme.palette.background.paper
                     }}
                     avatar={
-                        <Avatar
-                            aria-label="Avatar"
-                            src={avatarHashToURL(message.avatarhash)}
-                        >
+                        <Avatar aria-label="Avatar" src={avatarHashToURL(message.avatarhash)}>
                             ?
                         </Avatar>
                     }

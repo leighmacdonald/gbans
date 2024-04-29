@@ -35,19 +35,10 @@ export interface Filter {
 
 export interface FiltersQueryFilter extends QueryFilter<Filter> {}
 
-export const apiGetFilters = async (
-    opts: FiltersQueryFilter,
-    abortController?: AbortController
-) =>
-    await apiCall<LazyResult<Filter>>(
-        `/api/filters/query`,
-        'POST',
-        opts,
-        abortController
-    );
+export const apiGetFilters = async (opts: FiltersQueryFilter, abortController?: AbortController) =>
+    await apiCall<LazyResult<Filter>>(`/api/filters/query`, 'POST', opts, abortController);
 
-export const apiCreateFilter = async (filter: Filter) =>
-    await apiCall<Filter>(`/api/filters`, 'POST', filter);
+export const apiCreateFilter = async (filter: Filter) => await apiCall<Filter>(`/api/filters`, 'POST', filter);
 
 export const apiEditFilter = async (filter_id: number, filter: Filter) =>
     await apiCall<Filter>(`/api/filters/${filter_id}`, 'POST', filter);
@@ -57,8 +48,7 @@ export interface FilterQuery {
     corpus: string;
 }
 
-export const apiDeleteFilter = async (word_id: number) =>
-    await apiCall(`/api/filters/${word_id}`, 'DELETE');
+export const apiDeleteFilter = async (word_id: number) => await apiCall(`/api/filters/${word_id}`, 'DELETE');
 
 export interface UserWarning {
     warn_reason: BanReason;
@@ -80,12 +70,7 @@ export interface warningState {
 }
 
 export const apiGetWarningState = async (abortController?: AbortController) => {
-    const resp = await apiCall<warningState>(
-        '/api/filters/state',
-        'GET',
-        undefined,
-        abortController
-    );
+    const resp = await apiCall<warningState>('/api/filters/state', 'GET', undefined, abortController);
 
     resp.current = resp.current.map(transformCreatedOnDate);
 

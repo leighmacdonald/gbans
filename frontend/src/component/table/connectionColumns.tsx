@@ -13,11 +13,7 @@ export const connectionColumns: HeadingCell<PersonConnection>[] = [
         align: 'left',
         width: '150px',
         sortable: true,
-        renderer: (obj: PersonConnection) => (
-            <Typography variant={'body1'}>
-                {renderDateTime(obj.created_on)}
-            </Typography>
-        )
+        renderer: (obj: PersonConnection) => <Typography variant={'body1'}>{renderDateTime(obj.created_on)}</Typography>
     },
     {
         label: 'Name',
@@ -47,9 +43,7 @@ export const connectionColumns: HeadingCell<PersonConnection>[] = [
         renderer: (obj: PersonConnection) => {
             return (
                 <Tooltip title={obj.server_name ?? 'Unknown'}>
-                    <Typography variant={'body1'}>
-                        {obj.server_name_short ?? 'Unknown'}
-                    </Typography>
+                    <Typography variant={'body1'}>{obj.server_name_short ?? 'Unknown'}</Typography>
                 </Tooltip>
             );
         }

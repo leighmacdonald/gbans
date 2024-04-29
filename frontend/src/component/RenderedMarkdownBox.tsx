@@ -9,11 +9,7 @@ export interface MarkdownBoxProps {
     setEditMode: (mode: boolean) => void;
 }
 
-export const RenderedMarkdownBox = ({
-    bodyHTML,
-    readonly,
-    setEditMode
-}: MarkdownBoxProps) => {
+export const RenderedMarkdownBox = ({ bodyHTML, readonly, setEditMode }: MarkdownBoxProps) => {
     return (
         <Box padding={2}>
             <Box

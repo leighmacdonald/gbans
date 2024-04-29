@@ -28,7 +28,6 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "@ahooksjs/use-url-state": "^3.5.1",
     "@date-io/date-fns": "^2.17.0",
     "@ebay/nice-modal-react": "^1.2.13",
     "@emotion/react": "^11.11.4",
@@ -77,8 +76,6 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.6",
     "file-type": "^18.7.0",
-    "formik": "^2.4.5",
-    "history": "^5.3.0",
     "ip-cidr": "^4.0.0",
     "js-cookie": "^3.0.5",
     "jwt-decode": "^4.0.0",
@@ -94,9 +91,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-leaflet": "^4.2.1",
-    "react-router": "^6.22.3",
     "react-timer-hook": "^3.0.7",
-    "rollup-plugin-visualizer": "^5.12.0",
     "steamid": "^2.0.0",
     "string-to-color": "^2.2.2",
     "typescript": "^5.4.5",
@@ -104,7 +99,6 @@
     "vite": "^5.2.9",
     "vite-plugin-html": "^3.2.2",
     "vitest": "^1.5.0",
-    "yup": "^1.4.0",
     "zod": "^3.23.4"
   },
   "browserslist": {

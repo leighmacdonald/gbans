@@ -24,11 +24,7 @@ export const ProfileInfoBox = ({ steam_id }: { steam_id: string }) => {
     }, [steam_id]);
 
     return (
-        <ContainerWithHeader
-            title={'Profile'}
-            iconLeft={<PregnantWomanIcon />}
-            marginTop={0}
-        >
+        <ContainerWithHeader title={'Profile'} iconLeft={<PregnantWomanIcon />} marginTop={0}>
             {profile == undefined ? (
                 <LoadingPlaceholder />
             ) : (
@@ -40,29 +36,14 @@ export const ProfileInfoBox = ({ steam_id }: { steam_id: string }) => {
                         sx={{ width: 160, height: 160 }}
                     />
                     <Stack spacing={2} paddingTop={0}>
-                        <Typography variant={'h1'}>
-                            {profile.player.personaname}
-                        </Typography>
-                        <Typography variant={'subtitle1'}>
-                            {profile.player.realname}
-                        </Typography>
+                        <Typography variant={'h1'}>{profile.player.personaname}</Typography>
+                        <Typography variant={'subtitle1'}>{profile.player.realname}</Typography>
                         <Typography variant={'body1'}>
-                            {[
-                                profile.player.locstatecode,
-                                profile.player.loccountrycode
-                            ]
-                                .filter((x) => x)
-                                .join(',')}
+                            {[profile.player.locstatecode, profile.player.loccountrycode].filter((x) => x).join(',')}
                         </Typography>
-                        {isValidSteamDate(
-                            fromUnixTime(profile.player.timecreated)
-                        ) && (
+                        {isValidSteamDate(fromUnixTime(profile.player.timecreated)) && (
                             <Typography variant={'body1'}>
-                                Created:{' '}
-                                {format(
-                                    fromUnixTime(profile.player.timecreated),
-                                    'yyyy-MM-dd'
-                                )}
+                                Created: {format(fromUnixTime(profile.player.timecreated), 'yyyy-MM-dd')}
                             </Typography>
                         )}
                     </Stack>

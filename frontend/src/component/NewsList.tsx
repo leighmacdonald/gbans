@@ -26,8 +26,7 @@ export const NewsList = ({ setSelectedNewsEntry }: NewsListProps) => {
                                 {
                                     '&:hover': {
                                         cursor: 'pointer',
-                                        backgroundColor:
-                                            theme.palette.background.default
+                                        backgroundColor: theme.palette.background.default
                                     }
                                 }
                             ]}

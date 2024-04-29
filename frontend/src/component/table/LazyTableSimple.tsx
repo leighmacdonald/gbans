@@ -1,15 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Stack from '@mui/material/Stack';
 import { logErr } from '../../util/errors';
-import {
-    compare,
-    HeadingCell,
-    LazyFetchOpts,
-    LazyResult,
-    Order,
-    RowsPerPage,
-    stableSort
-} from '../../util/table.ts';
+import { compare, HeadingCell, LazyFetchOpts, LazyResult, Order, RowsPerPage, stableSort } from '../../util/table.ts';
 import { LoadingPlaceholder } from '../LoadingPlaceholder';
 import { LazyTable } from './LazyTable.tsx';
 
@@ -76,18 +68,12 @@ export const LazyTableSimple = <T,>({
     }, [data, fetchData, hasLoaded, page, paged, sortColumn, sortOrder]);
 
     const rows = useMemo(() => {
-        return stableSort(data ?? [], compare(sortOrder, sortColumn)).slice(
-            page * rowsPerPage,
-            page * rowsPerPage + rowsPerPage
-        );
+        return stableSort(data ?? [], compare(sortOrder, sortColumn)).slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
     }, [data, page, rowsPerPage, sortColumn, sortOrder]);
 
-    const onPagerRowsPerPageChange = useCallback(
-        (event: { target: { value: string } }) => {
-            setRowsPerPage(parseInt(event.target.value));
-        },
-        []
-    );
+    const onPagerRowsPerPageChange = useCallback((event: { target: { value: string } }) => {
+        setRowsPerPage(parseInt(event.target.value));
+    }, []);
 
     const onPagerRowsChange = useCallback(
         () => (_: never, newPage: number) => {

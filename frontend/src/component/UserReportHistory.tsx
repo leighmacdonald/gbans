@@ -15,11 +15,8 @@ import { LazyTable } from './table/LazyTable';
 
 export const UserReportHistory = ({ steam_id }: { steam_id: string }) => {
     const [sortOrder, setSortOrder] = useState<Order>('desc');
-    const [sortColumn, setSortColumn] =
-        useState<keyof ReportWithAuthor>('created_on');
-    const [rowPerPageCount, setRowPerPageCount] = useState<number>(
-        RowsPerPage.TwentyFive
-    );
+    const [sortColumn, setSortColumn] = useState<keyof ReportWithAuthor>('created_on');
+    const [rowPerPageCount, setRowPerPageCount] = useState<number>(RowsPerPage.TwentyFive);
     const [page, setPage] = useState(0);
 
     const { data, count } = useReports({
@@ -50,9 +47,7 @@ export const UserReportHistory = ({ steam_id }: { steam_id: string }) => {
             onPageChange={(_, newPage: number) => {
                 setPage(newPage);
             }}
-            onRowsPerPageChange={(
-                event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-            ) => {
+            onRowsPerPageChange={(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                 setRowPerPageCount(parseInt(event.target.value, 10));
                 setPage(0);
             }}
@@ -65,12 +60,8 @@ export const UserReportHistory = ({ steam_id }: { steam_id: string }) => {
                     align: 'left',
                     renderer: (obj) => (
                         <Stack direction={'row'} spacing={1}>
-                            <ReportStatusIcon
-                                reportStatus={obj.report_status}
-                            />
-                            <Typography variant={'body1'}>
-                                {reportStatusString(obj.report_status)}
-                            </Typography>
+                            <ReportStatusIcon reportStatus={obj.report_status} />
+                            <Typography variant={'body1'}>{reportStatusString(obj.report_status)}</Typography>
                         </Stack>
                     )
                 },
@@ -97,11 +88,7 @@ export const UserReportHistory = ({ steam_id }: { steam_id: string }) => {
                     align: 'right',
                     renderer: (row) => (
                         <ButtonGroup>
-                            <IconButton
-                                color={'primary'}
-                                component={RouterLink}
-                                to={`/report/${row.report_id}`}
-                            >
+                            <IconButton color={'primary'} component={RouterLink} to={`/report/${row.report_id}`}>
                                 <Tooltip title={'View'}>
                                     <VisibilityIcon />
                                 </Tooltip>

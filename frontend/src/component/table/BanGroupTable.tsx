@@ -19,12 +19,7 @@ import { useBansGroup } from '../../hooks/useBansGroup';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { RowsPerPage } from '../../util/table.ts';
 import { renderDate } from '../../util/text.tsx';
-import {
-    deletedValidator,
-    groupIdFieldValidator,
-    sourceIdValidator,
-    targetIdValidator
-} from '../../util/validators.ts';
+import { deletedValidator, groupIdFieldValidator, sourceIdValidator, targetIdValidator } from '../../util/validators.ts';
 import { DeletedField } from '../formik/DeletedField';
 import { FilterButtons } from '../formik/FilterButtons';
 import { GroupIdField } from '../formik/GroupIdField';
@@ -85,12 +80,9 @@ export const BanGroupTable = ({ newBans }: { newBans: GroupBanRecord[] }) => {
     const onEditGroup = useCallback(
         async (existing: GroupBanRecord) => {
             try {
-                await NiceModal.show<GroupBanRecord, BanGroupModalProps>(
-                    ModalBanGroup,
-                    {
-                        existing
-                    }
-                );
+                await NiceModal.show<GroupBanRecord, BanGroupModalProps>(ModalBanGroup, {
+                    existing
+                });
                 sendFlash('success', 'Updated steam group ban successfully');
             } catch (e) {
                 sendFlash('error', `Failed to update steam group ban: ${e}`);
@@ -127,10 +119,7 @@ export const BanGroupTable = ({ newBans }: { newBans: GroupBanRecord[] }) => {
     );
 
     const onReset = useCallback(
-        async (
-            _: GroupBanFilterValues,
-            formikHelpers: FormikHelpers<GroupBanFilterValues>
-        ) => {
+        async (_: GroupBanFilterValues, formikHelpers: FormikHelpers<GroupBanFilterValues>) => {
             setState({
                 group: undefined,
                 source: undefined,
@@ -194,11 +183,7 @@ export const BanGroupTable = ({ newBans }: { newBans: GroupBanRecord[] }) => {
                         onPageChange={(_, newPage: number) => {
                             setState({ page: newPage });
                         }}
-                        onRowsPerPageChange={(
-                            event: ChangeEvent<
-                                HTMLInputElement | HTMLTextAreaElement
-                            >
-                        ) => {
+                        onRowsPerPageChange={(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                             setState({
                                 rows: Number(event.target.value),
                                 page: 0
@@ -211,11 +196,7 @@ export const BanGroupTable = ({ newBans }: { newBans: GroupBanRecord[] }) => {
                                 sortKey: 'ban_group_id',
                                 sortable: true,
                                 align: 'left',
-                                renderer: (obj) => (
-                                    <Typography variant={'body1'}>
-                                        #{obj.ban_group_id.toString()}
-                                    </Typography>
-                                )
+                                renderer: (obj) => <Typography variant={'body1'}>#{obj.ban_group_id.toString()}</Typography>
                             },
                             {
                                 label: 'A',
@@ -253,11 +234,7 @@ export const BanGroupTable = ({ newBans }: { newBans: GroupBanRecord[] }) => {
                                 sortKey: 'group_id',
                                 sortable: true,
                                 align: 'left',
-                                renderer: (row) => (
-                                    <Typography variant={'body1'}>
-                                        {row.group_id}
-                                    </Typography>
-                                )
+                                renderer: (row) => <Typography variant={'body1'}>{row.group_id}</Typography>
                             },
                             {
                                 label: 'Note',
@@ -280,11 +257,7 @@ export const BanGroupTable = ({ newBans }: { newBans: GroupBanRecord[] }) => {
                                 virtual: true,
                                 virtualKey: 'created_on',
                                 renderer: (obj) => {
-                                    return (
-                                        <Typography variant={'body1'}>
-                                            {renderDate(obj.created_on)}
-                                        </Typography>
-                                    );
+                                    return <Typography variant={'body1'}>{renderDate(obj.created_on)}</Typography>;
                                 }
                             },
                             {
@@ -297,11 +270,7 @@ export const BanGroupTable = ({ newBans }: { newBans: GroupBanRecord[] }) => {
                                 virtualKey: 'valid_until',
                                 sortable: true,
                                 renderer: (obj) => {
-                                    return (
-                                        <Typography variant={'body1'}>
-                                            {renderDate(obj.valid_until)}
-                                        </Typography>
-                                    );
+                                    return <Typography variant={'body1'}>{renderDate(obj.valid_until)}</Typography>;
                                 }
                             },
                             {
@@ -317,15 +286,9 @@ export const BanGroupTable = ({ newBans }: { newBans: GroupBanRecord[] }) => {
                                         start: row.created_on,
                                         end: row.valid_until
                                     });
-                                    const durationText =
-                                        dur.years && dur.years > 5
-                                            ? 'Permanent'
-                                            : formatDuration(dur);
+                                    const durationText = dur.years && dur.years > 5 ? 'Permanent' : formatDuration(dur);
                                     return (
-                                        <Typography
-                                            variant={'body1'}
-                                            overflow={'hidden'}
-                                        >
+                                        <Typography variant={'body1'} overflow={'hidden'}>
                                             {durationText}
                                         </Typography>
                                     );
@@ -333,14 +296,11 @@ export const BanGroupTable = ({ newBans }: { newBans: GroupBanRecord[] }) => {
                             },
                             {
                                 label: 'A',
-                                tooltip:
-                                    'Is this ban active (not deleted/inactive/unbanned)',
+                                tooltip: 'Is this ban active (not deleted/inactive/unbanned)',
                                 align: 'center',
                                 width: '50px',
                                 sortKey: 'deleted',
-                                renderer: (row) => (
-                                    <TableCellBool enabled={!row.deleted} />
-                                )
+                                renderer: (row) => <TableCellBool enabled={!row.deleted} />
                             },
                             {
                                 label: 'Act.',
@@ -353,11 +313,7 @@ export const BanGroupTable = ({ newBans }: { newBans: GroupBanRecord[] }) => {
                                         <IconButton
                                             color={'info'}
                                             onClick={() => {
-                                                window.open(
-                                                    `https://steamcommunity.com/gid/${row.group_id}`,
-                                                    '_blank',
-                                                    'noreferrer'
-                                                );
+                                                window.open(`https://steamcommunity.com/gid/${row.group_id}`, '_blank', 'noreferrer');
                                             }}
                                         >
                                             <Tooltip title={'Open Steam Group'}>
@@ -377,9 +333,7 @@ export const BanGroupTable = ({ newBans }: { newBans: GroupBanRecord[] }) => {
                                         <IconButton
                                             color={'success'}
                                             onClick={async () => {
-                                                await onUnbanGroup(
-                                                    row.ban_group_id
-                                                );
+                                                await onUnbanGroup(row.ban_group_id);
                                             }}
                                         >
                                             <Tooltip title={'Remove Ban'}>

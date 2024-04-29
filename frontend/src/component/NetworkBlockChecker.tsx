@@ -32,16 +32,11 @@ export const NetworkBlockChecker = () => {
     }, []);
 
     return (
-        <Formik<NetworkBlockCheckerValues>
-            initialValues={{ ip: '' }}
-            onSubmit={onSubmit}
-            validationSchema={validationSchema}
-        >
+        <Formik<NetworkBlockCheckerValues> initialValues={{ ip: '' }} onSubmit={onSubmit} validationSchema={validationSchema}>
             <Grid container spacing={1}>
                 <Grid xs={12}>
                     <Typography variant={'body2'} padding={1}>
-                        Check if an IP is currently blocked via cidr ban
-                        sources.
+                        Check if an IP is currently blocked via cidr ban sources.
                     </Typography>
                 </Grid>
                 <Grid xs={8}>
@@ -51,10 +46,7 @@ export const NetworkBlockChecker = () => {
                 </Grid>
                 <Grid xs={4}>
                     <VCenterBox>
-                        <SubmitButton
-                            label={'Check IP'}
-                            startIcon={<SendIcon />}
-                        />
+                        <SubmitButton label={'Check IP'} startIcon={<SendIcon />} />
                     </VCenterBox>
                 </Grid>
                 {status != undefined && (

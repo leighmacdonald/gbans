@@ -1,8 +1,9 @@
+import { readAccessToken, readRefreshToken } from '../auth.tsx';
 import { AppError, ErrorCode } from '../error.tsx';
 import { logErr } from '../util/errors';
 import { parseDateTime } from '../util/text.tsx';
 import { emptyOrNullString } from '../util/types';
-import { isTokenExpired, readAccessToken, readRefreshToken, refreshToken } from './auth';
+import { isTokenExpired, refreshToken } from './auth';
 import { AppealState, ASNBanRecord, CIDRBanRecord, GroupBanRecord, SteamBanRecord } from './bans';
 import { MatchResult } from './match';
 import { ReportStatus, ReportWithAuthor } from './report';

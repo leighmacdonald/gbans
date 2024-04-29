@@ -23,10 +23,7 @@ export const ServerList = () => {
 
     if (selectedServers.length === 0) {
         return (
-            <ContainerWithHeader
-                title={'Servers Loading...'}
-                iconLeft={<StorageIcon />}
-            >
+            <ContainerWithHeader title={'Servers Loading...'} iconLeft={<StorageIcon />}>
                 <LoadingSpinner />
             </ContainerWithHeader>
         );
@@ -49,9 +46,7 @@ export const ServerList = () => {
                         sortKey: 'cc',
                         sortType: 'string',
                         sortable: false,
-                        renderer: (_, value) => (
-                            <Flag countryCode={value as string} />
-                        )
+                        renderer: (_, value) => <Flag countryCode={value as string} />
                     },
                     {
                         label: 'Server',
@@ -62,10 +57,7 @@ export const ServerList = () => {
                         align: 'left',
                         width: '100%',
                         renderer: (_, value) => (
-                            <Typography
-                                variant={'button'}
-                                fontFamily={tf2Fonts}
-                            >
+                            <Typography variant={'button'} fontFamily={tf2Fonts}>
                                 {value as string}
                             </Typography>
                         )
@@ -77,11 +69,7 @@ export const ServerList = () => {
                         sortType: 'string',
                         sortable: false,
                         renderer: (obj) => {
-                            return (
-                                <Typography variant={'body2'}>
-                                    {cleanMapName(obj.map)}
-                                </Typography>
-                            );
+                            return <Typography variant={'body2'}>{cleanMapName(obj.map)}</Typography>;
                         }
                     },
                     {
@@ -90,11 +78,7 @@ export const ServerList = () => {
                         sortKey: 'players',
                         sortable: false,
                         renderer: (obj, value) => {
-                            return (
-                                <Typography variant={'body2'}>
-                                    {`${value}/${obj.max_players}`}
-                                </Typography>
-                            );
+                            return <Typography variant={'body2'}>{`${value}/${obj.max_players}`}</Typography>;
                         }
                     },
                     {
@@ -104,14 +88,8 @@ export const ServerList = () => {
                         sortable: false,
                         renderer: (obj) => {
                             return (
-                                <Tooltip
-                                    title={`Distance in hammer units: ${Math.round(
-                                        (obj.distance ?? 1) * 52.49
-                                    )} khu`}
-                                >
-                                    <Typography variant={'caption'}>
-                                        {`${obj.distance.toFixed(0)}km`}
-                                    </Typography>
+                                <Tooltip title={`Distance in hammer units: ${Math.round((obj.distance ?? 1) * 52.49)} khu`}>
+                                    <Typography variant={'caption'}>{`${obj.distance.toFixed(0)}km`}</Typography>
                                 </Tooltip>
                             );
                         }
@@ -125,25 +103,15 @@ export const ServerList = () => {
                             return (
                                 <IconButton
                                     color={'primary'}
-                                    aria-label={
-                                        'Copy connect string to clipboard'
-                                    }
+                                    aria-label={'Copy connect string to clipboard'}
                                     onClick={() => {
                                         navigator.clipboard
-                                            .writeText(
-                                                `connect ${obj.host}:${obj.port}`
-                                            )
+                                            .writeText(`connect ${obj.host}:${obj.port}`)
                                             .then(() => {
-                                                sendFlash(
-                                                    'success',
-                                                    'Copied address to clipboard'
-                                                );
+                                                sendFlash('success', 'Copied address to clipboard');
                                             })
                                             .catch((e) => {
-                                                sendFlash(
-                                                    'error',
-                                                    'Failed to copy address'
-                                                );
+                                                sendFlash('error', 'Failed to copy address');
                                                 logErr(e);
                                             });
                                     }}

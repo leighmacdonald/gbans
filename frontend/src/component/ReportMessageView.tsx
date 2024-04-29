@@ -29,10 +29,7 @@ interface ReportMessageValues {
     body_md: string;
 }
 
-export const ReportMessageView = ({
-    message,
-    onDelete
-}: ReportMessageViewProps) => {
+export const ReportMessageView = ({ message, onDelete }: ReportMessageViewProps) => {
     const theme = useTheme();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
@@ -42,10 +39,7 @@ export const ReportMessageView = ({
     const onSubmit = useCallback(
         async (values: ReportMessageValues) => {
             try {
-                await apiUpdateReportMessage(
-                    message.report_message_id,
-                    values.body_md
-                );
+                await apiUpdateReportMessage(message.report_message_id, values.body_md);
                 message.message_md = values.body_md;
                 setEditing(false);
             } catch (e) {
@@ -70,10 +64,7 @@ export const ReportMessageView = ({
     if (editing) {
         return (
             <Box component={Paper} padding={1}>
-                <Formik<ReportMessageValues>
-                    onSubmit={onSubmit}
-                    initialValues={{ body_md: message.message_md }}
-                >
+                <Formik<ReportMessageValues> onSubmit={onSubmit} initialValues={{ body_md: message.message_md }}>
                     <Stack spacing={1}>
                         <MDBodyField />
 
@@ -96,10 +87,7 @@ export const ReportMessageView = ({
                         backgroundColor: theme.palette.background.paper
                     }}
                     avatar={
-                        <Avatar
-                            aria-label="Avatar"
-                            src={avatarHashToURL(message.avatarhash)}
-                        >
+                        <Avatar aria-label="Avatar" src={avatarHashToURL(message.avatarhash)}>
                             ?
                         </Avatar>
                     }

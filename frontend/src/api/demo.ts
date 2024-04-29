@@ -22,16 +22,8 @@ export interface DemoQueryFilter extends QueryFilter<DemoFile> {
     server_ids: number[];
 }
 
-export const apiGetDemos = async (
-    opts: DemoQueryFilter,
-    abortController?: AbortController
-) => {
-    const resp = await apiCall<LazyResult<DemoFile>, DemoQueryFilter>(
-        '/api/demos',
-        'POST',
-        opts,
-        abortController
-    );
+export const apiGetDemos = async (opts: DemoQueryFilter, abortController?: AbortController) => {
+    const resp = await apiCall<LazyResult<DemoFile>, DemoQueryFilter>('/api/demos', 'POST', opts, abortController);
     resp.data = resp.data.map(transformCreatedOnDate);
     return resp;
 };

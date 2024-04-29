@@ -6,10 +6,7 @@ import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import Link from '@mui/material/Link';
 import Grid from '@mui/material/Unstable_Grid2';
-import {
-    createLazyFileRoute,
-    Link as RouterLink
-} from '@tanstack/react-router';
+import { createLazyFileRoute, Link as RouterLink } from '@tanstack/react-router';
 import { format } from 'date-fns';
 import formatDistanceToNowStrict from 'date-fns/formatDistanceToNowStrict';
 import { isAfter } from 'date-fns/fp';
@@ -49,11 +46,7 @@ function Contests() {
                                 tooltip: 'Title',
                                 align: 'left',
                                 renderer: (contest) => (
-                                    <Link
-                                        component={RouterLink}
-                                        to={`/contests/${contest.contest_id}`}
-                                        variant={'button'}
-                                    >
+                                    <Link component={RouterLink} to={`/contests/${contest.contest_id}`} variant={'button'}>
                                         {contest.title}
                                     </Link>
                                 )
@@ -72,8 +65,7 @@ function Contests() {
                                 label: 'Starts',
                                 tooltip: 'Starting date',
                                 align: 'left',
-                                renderer: (contest) =>
-                                    format(contest.date_start, 'dd/MM/yy H:m')
+                                renderer: (contest) => format(contest.date_start, 'dd/MM/yy H:m')
                             },
                             {
                                 sortKey: 'date_end',
@@ -82,8 +74,7 @@ function Contests() {
                                 label: 'Ends',
                                 tooltip: 'Ending date',
                                 align: 'left',
-                                renderer: (contest) =>
-                                    format(contest.date_end, 'dd/MM/yy H:m')
+                                renderer: (contest) => format(contest.date_end, 'dd/MM/yy H:m')
                             },
                             {
                                 sortable: true,
@@ -97,9 +88,7 @@ function Contests() {
                                         return 'Expired';
                                     }
 
-                                    return formatDistanceToNowStrict(
-                                        contest.date_end
-                                    );
+                                    return formatDistanceToNowStrict(contest.date_end);
                                 }
                             },
                             {
@@ -122,15 +111,10 @@ function Contests() {
                                                 fullWidth
                                                 variant={'contained'}
                                                 color={'success'}
-                                                disabled={isAfter(
-                                                    contest.date_end,
-                                                    new Date()
-                                                )}
+                                                disabled={isAfter(contest.date_end, new Date())}
                                                 startIcon={<PublishIcon />}
                                                 onClick={async () => {
-                                                    await onEnter(
-                                                        contest.contest_id
-                                                    );
+                                                    await onEnter(contest.contest_id);
                                                 }}
                                             >
                                                 Submit Entry

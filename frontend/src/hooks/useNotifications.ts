@@ -1,9 +1,5 @@
 import { useEffect, useState } from 'react';
-import {
-    apiGetNotifications,
-    NotificationsQuery,
-    UserNotification
-} from '../api';
+import { apiGetNotifications, NotificationsQuery, UserNotification } from '../api';
 import { logErr } from '../util/errors';
 
 export const useNotifications = (opts: NotificationsQuery) => {

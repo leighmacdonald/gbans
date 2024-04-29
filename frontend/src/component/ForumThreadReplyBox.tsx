@@ -14,10 +14,7 @@ interface ThreadReplyValues {
 }
 
 const validationSchema = yup.object({
-    body_md: yup
-        .string()
-        .min(3, 'Message Too Short')
-        .required('Message is required')
+    body_md: yup.string().min(3, 'Message Too Short').required('Message is required')
 });
 
 export const ForumThreadReplyBox = ({
@@ -28,15 +25,9 @@ export const ForumThreadReplyBox = ({
     onSuccess: (message: ForumMessage) => void;
 }) => {
     const onSubmit = useCallback(
-        async (
-            values: ThreadReplyValues,
-            formikHelpers: FormikHelpers<ThreadReplyValues>
-        ) => {
+        async (values: ThreadReplyValues, formikHelpers: FormikHelpers<ThreadReplyValues>) => {
             try {
-                const message = await apiCreateThreadReply(
-                    forum_thread_id,
-                    values.body_md
-                );
+                const message = await apiCreateThreadReply(forum_thread_id, values.body_md);
                 onSuccess(message);
                 formikHelpers.resetForm();
             } catch (e) {

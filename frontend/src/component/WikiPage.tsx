@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import ArticleIcon from '@mui/icons-material/Article';
 import BuildIcon from '@mui/icons-material/Build';
 import Button from '@mui/material/Button';
@@ -8,45 +8,39 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useRouteContext } from '@tanstack/react-router';
-import { Formik } from 'formik';
-import * as yup from 'yup';
-import { ErrorCode, PermissionLevel } from '../api';
-import { apiSaveWikiPage, Page } from '../api/wiki.ts';
+import { PermissionLevel } from '../api';
+import { Page } from '../api/wiki.ts';
+import { ErrorCode } from '../error.tsx';
 import { useWiki } from '../hooks/useWiki.ts';
 import { PageNotFound } from '../routes/_auth.page-not-found.lazy.tsx';
 import { LoginPage } from '../routes/_guest.login.index.tsx';
-import { logErr } from '../util/errors.ts';
-import { bodyMDValidator } from '../util/validators.ts';
 import { ContainerWithHeader } from './ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from './ContainerWithHeaderAndButtons.tsx';
-import { MDBodyField } from './MDBodyField.tsx';
 import { MarkDownRenderer } from './MarkdownRenderer.tsx';
-import { PermissionLevelField } from './formik/PermissionLevelField.tsx';
-import { SubmitButton } from './modal/Buttons.tsx';
 
-interface WikiValues {
-    body_md: string;
-    permission_level: PermissionLevel;
-}
+// interface WikiValues {
+//     body_md: string;
+//     permission_level: PermissionLevel;
+// }
 
-const validationSchema = yup.object({
-    body_md: bodyMDValidator,
-    permission_level: yup
-        .number()
-        .oneOf([
-            PermissionLevel.Guest,
-            PermissionLevel.User,
-            PermissionLevel.Reserved,
-            PermissionLevel.Editor,
-            PermissionLevel.Moderator,
-            PermissionLevel.Admin
-        ])
-        .label('Permission Level')
-        .required('Minimum permission value required')
-});
+// const validationSchema = yup.object({
+//     body_md: bodyMDValidator,
+//     permission_level: yup
+//         .number()
+//         .oneOf([
+//             PermissionLevel.Guest,
+//             PermissionLevel.User,
+//             PermissionLevel.Reserved,
+//             PermissionLevel.Editor,
+//             PermissionLevel.Moderator,
+//             PermissionLevel.Admin
+//         ])
+//         .label('Permission Level')
+//         .required('Minimum permission value required')
+// });
 
 export const WikiPage = ({ slug = 'home' }: { slug: string }) => {
-    const [updatedPage, setUpdatedPage] = useState<Page>();
+    const [updatedPage] = useState<Page>();
     const [editMode, setEditMode] = useState<boolean>(false);
     const { hasPermission, permissionLevel } = useRouteContext({ from: '/_guest/wiki' });
     const { data, loading, error } = useWiki(slug);
@@ -63,24 +57,24 @@ export const WikiPage = ({ slug = 'home' }: { slug: string }) => {
         return updatedPage ?? data;
     }, [data, updatedPage]);
 
-    const onSubmit = useCallback(
-        async (values: WikiValues) => {
-            try {
-                const newPage = {
-                    ...page,
-                    body_md: values.body_md,
-                    slug: slug ?? 'home',
-                    permission_level: values.permission_level
-                };
-                const resp = await apiSaveWikiPage(newPage);
-                setUpdatedPage(resp);
-                setEditMode(false);
-            } catch (e) {
-                logErr(e);
-            }
-        },
-        [page, slug]
-    );
+    // const onSubmit = useCallback(
+    //     async (values: WikiValues) => {
+    //         try {
+    //             const newPage = {
+    //                 ...page,
+    //                 body_md: values.body_md,
+    //                 slug: slug ?? 'home',
+    //                 permission_level: values.permission_level
+    //             };
+    //             const resp = await apiSaveWikiPage(newPage);
+    //             setUpdatedPage(resp);
+    //             setEditMode(false);
+    //         } catch (e) {
+    //             logErr(e);
+    //         }
+    //     },
+    //     [page, slug]
+    // );
 
     const bodyHTML = useMemo(() => {
         return page.revision > 0 && page.body_md ? <MarkDownRenderer body_md={page.body_md} /> : '';
@@ -149,43 +143,43 @@ export const WikiPage = ({ slug = 'home' }: { slug: string }) => {
             )}
             {!loading && editMode && !isPermDenied && (
                 <Grid xs={12}>
-                    <Formik<WikiValues>
-                        onSubmit={onSubmit}
-                        validationSchema={validationSchema}
-                        validateOnBlur={true}
-                        initialValues={{
-                            body_md: page.body_md,
-                            permission_level: page.permission_level
-                        }}
-                    >
-                        <Paper elevation={1}>
-                            <Stack spacing={1} padding={1}>
-                                <MDBodyField />
-                                <PermissionLevelField
-                                    levels={[
-                                        PermissionLevel.Guest,
-                                        PermissionLevel.User,
-                                        PermissionLevel.Reserved,
-                                        PermissionLevel.Editor,
-                                        PermissionLevel.Moderator,
-                                        PermissionLevel.Admin
-                                    ]}
-                                />
-                                <ButtonGroup>
-                                    <Button
-                                        color={'warning'}
-                                        variant={'contained'}
-                                        onClick={() => {
-                                            setEditMode(false);
-                                        }}
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <SubmitButton />
-                                </ButtonGroup>
-                            </Stack>
-                        </Paper>
-                    </Formik>
+                    {/*<Formik<WikiValues>*/}
+                    {/*    onSubmit={onSubmit}*/}
+                    {/*    validationSchema={validationSchema}*/}
+                    {/*    validateOnBlur={true}*/}
+                    {/*    initialValues={{*/}
+                    {/*        body_md: page.body_md,*/}
+                    {/*        permission_level: page.permission_level*/}
+                    {/*    }}*/}
+                    {/*>*/}
+                    <Paper elevation={1}>
+                        <Stack spacing={1} padding={1}>
+                            {/*<MDBodyField />*/}
+                            {/*<PermissionLevelField*/}
+                            {/*    levels={[*/}
+                            {/*        PermissionLevel.Guest,*/}
+                            {/*        PermissionLevel.User,*/}
+                            {/*        PermissionLevel.Reserved,*/}
+                            {/*        PermissionLevel.Editor,*/}
+                            {/*        PermissionLevel.Moderator,*/}
+                            {/*        PermissionLevel.Admin*/}
+                            {/*    ]}*/}
+                            {/*/>*/}
+                            <ButtonGroup>
+                                <Button
+                                    color={'warning'}
+                                    variant={'contained'}
+                                    onClick={() => {
+                                        setEditMode(false);
+                                    }}
+                                >
+                                    Cancel
+                                </Button>
+                                {/*<SubmitButton />*/}
+                            </ButtonGroup>
+                        </Stack>
+                    </Paper>
+                    {/*</Formik>*/}
                 </Grid>
             )}
         </Grid>

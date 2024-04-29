@@ -18,10 +18,7 @@ interface PlayerMessageContextProps {
     padding: number;
 }
 
-export const PlayerMessageContext = ({
-    playerMessageId,
-    padding = 3
-}: PlayerMessageContextProps) => {
+export const PlayerMessageContext = ({ playerMessageId, padding = 3 }: PlayerMessageContextProps) => {
     const [messages, setMessages] = useState<PersonMessage[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -54,12 +51,8 @@ export const PlayerMessageContext = ({
                             <Table size={'small'}>
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell width={'75px'}>
-                                            Server
-                                        </TableCell>
-                                        <TableCell width={'200px'}>
-                                            Name
-                                        </TableCell>
+                                        <TableCell width={'75px'}>Server</TableCell>
+                                        <TableCell width={'200px'}>Name</TableCell>
                                         <TableCell>Message</TableCell>
                                     </TableRow>
                                 </TableHead>
@@ -69,31 +62,16 @@ export const PlayerMessageContext = ({
                                             return (
                                                 <TableRow
                                                     key={`chat-msg-${m.person_message_id}`}
-                                                    selected={
-                                                        playerMessageId ==
-                                                        m.person_message_id
-                                                    }
+                                                    selected={playerMessageId == m.person_message_id}
                                                 >
                                                     <TableCell>
-                                                        <Typography
-                                                            variant={'body2'}
-                                                        >
-                                                            {m.server_name}
-                                                        </Typography>
+                                                        <Typography variant={'body2'}>{m.server_name}</Typography>
                                                     </TableCell>
                                                     <TableCell>
-                                                        <Link
-                                                            href={`/profile/${m.steam_id}`}
-                                                        >
-                                                            {m.persona_name}
-                                                        </Link>
+                                                        <Link href={`/profile/${m.steam_id}`}>{m.persona_name}</Link>
                                                     </TableCell>
                                                     <TableCell>
-                                                        <Typography
-                                                            variant={'body1'}
-                                                        >
-                                                            {m.body}
-                                                        </Typography>
+                                                        <Typography variant={'body1'}>{m.body}</Typography>
                                                     </TableCell>
                                                 </TableRow>
                                             );

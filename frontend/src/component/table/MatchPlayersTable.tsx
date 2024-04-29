@@ -30,11 +30,7 @@ export const MatchPlayersTable = ({ players }: MatchPlayersTableProps) => {
 
     const validRows = useMemo(() => {
         return stableSort(
-            players.filter(
-                (m) =>
-                    m.classes != null &&
-                    !(m.kills == 0 && m.assists == 0 && m.deaths == 0)
-            ),
+            players.filter((m) => m.classes != null && !(m.kills == 0 && m.assists == 0 && m.deaths == 0)),
             compare(sortOrder, sortColumn)
         );
     }, [players, sortColumn, sortOrder]);
@@ -66,10 +62,7 @@ export const MatchPlayersTable = ({ players }: MatchPlayersTableProps) => {
                         };
                     },
                     renderer: (row) => (
-                        <Typography
-                            variant={'button'}
-                            color={theme.palette.common.white}
-                        >
+                        <Typography variant={'button'} color={theme.palette.common.white}>
                             {row.team == Team.RED ? 'RED' : 'BLU'}
                         </Typography>
                     )
@@ -84,9 +77,7 @@ export const MatchPlayersTable = ({ players }: MatchPlayersTableProps) => {
                     renderer: (row) => (
                         <PersonCell
                             steam_id={row.steam_id}
-                            personaname={
-                                row.name != '' ? row.name : row.steam_id
-                            }
+                            personaname={row.name != '' ? row.name : row.steam_id}
                             avatar_hash={row.avatar_hash}
                         />
                         // <Typography variant={'body1'}>
@@ -101,19 +92,9 @@ export const MatchPlayersTable = ({ players }: MatchPlayersTableProps) => {
                     align: 'left',
                     //width: 50,
                     renderer: (row) => (
-                        <Stack
-                            direction={'row'}
-                            display="flex"
-                            justifyContent="right"
-                            alignItems="center"
-                        >
+                        <Stack direction={'row'} display="flex" justifyContent="right" alignItems="center">
                             {row.classes ? (
-                                row.classes.map((pc) => (
-                                    <PlayerClassHoverStats
-                                        key={`pc-${row.steam_id}-${pc.player_class}`}
-                                        stats={pc}
-                                    />
-                                ))
+                                row.classes.map((pc) => <PlayerClassHoverStats key={`pc-${row.steam_id}-${pc.player_class}`} stats={pc} />)
                             ) : (
                                 <></>
                             )}
@@ -128,9 +109,7 @@ export const MatchPlayersTable = ({ players }: MatchPlayersTableProps) => {
                     sortable: false,
                     align: 'center',
                     // width: '25px',
-                    renderer: (row) => (
-                        <PlayerWeaponHoverStats stats={row.weapons} />
-                    )
+                    renderer: (row) => <PlayerWeaponHoverStats stats={row.weapons} />
                 },
                 {
                     label: 'K',
@@ -140,10 +119,7 @@ export const MatchPlayersTable = ({ players }: MatchPlayersTableProps) => {
                     align: 'left',
                     width: '25px',
                     renderer: (row) => (
-                        <Typography
-                            variant={'body2'}
-                            sx={{ fontFamily: 'Monospace' }}
-                        >
+                        <Typography variant={'body2'} sx={{ fontFamily: 'Monospace' }}>
                             {row.kills}
                         </Typography>
                     )
@@ -156,10 +132,7 @@ export const MatchPlayersTable = ({ players }: MatchPlayersTableProps) => {
                     align: 'left',
                     width: '25px',
                     renderer: (row) => (
-                        <Typography
-                            variant={'body2'}
-                            sx={{ fontFamily: 'Monospace' }}
-                        >
+                        <Typography variant={'body2'} sx={{ fontFamily: 'Monospace' }}>
                             {row.assists}
                         </Typography>
                     )
@@ -172,10 +145,7 @@ export const MatchPlayersTable = ({ players }: MatchPlayersTableProps) => {
                     align: 'left',
                     width: '25px',
                     renderer: (row) => (
-                        <Typography
-                            variant={'body2'}
-                            sx={{ fontFamily: 'Monospace' }}
-                        >
+                        <Typography variant={'body2'} sx={{ fontFamily: 'Monospace' }}>
                             {row.deaths}
                         </Typography>
                     )
@@ -188,10 +158,7 @@ export const MatchPlayersTable = ({ players }: MatchPlayersTableProps) => {
                     align: 'left',
                     width: '25px',
                     renderer: (row) => (
-                        <Typography
-                            variant={'body2'}
-                            sx={{ fontFamily: 'Monospace' }}
-                        >
+                        <Typography variant={'body2'} sx={{ fontFamily: 'Monospace' }}>
                             {row.damage}
                         </Typography>
                     )
@@ -204,10 +171,7 @@ export const MatchPlayersTable = ({ players }: MatchPlayersTableProps) => {
                     align: 'left',
                     width: '25px',
                     renderer: (row) => (
-                        <Typography
-                            variant={'body2'}
-                            sx={{ fontFamily: 'Monospace' }}
-                        >
+                        <Typography variant={'body2'} sx={{ fontFamily: 'Monospace' }}>
                             {row.damage_taken}
                         </Typography>
                     )
@@ -220,10 +184,7 @@ export const MatchPlayersTable = ({ players }: MatchPlayersTableProps) => {
                     align: 'left',
                     width: '25px',
                     renderer: (row) => (
-                        <Typography
-                            variant={'body2'}
-                            sx={{ fontFamily: 'Monospace' }}
-                        >
+                        <Typography variant={'body2'} sx={{ fontFamily: 'Monospace' }}>
                             {row.health_packs}
                         </Typography>
                     )
@@ -236,10 +197,7 @@ export const MatchPlayersTable = ({ players }: MatchPlayersTableProps) => {
                     align: 'left',
                     width: '25px',
                     renderer: (row) => (
-                        <Typography
-                            variant={'body2'}
-                            sx={{ fontFamily: 'Monospace' }}
-                        >
+                        <Typography variant={'body2'} sx={{ fontFamily: 'Monospace' }}>
                             {row.backstabs}
                         </Typography>
                     )
@@ -252,10 +210,7 @@ export const MatchPlayersTable = ({ players }: MatchPlayersTableProps) => {
                     align: 'left',
                     width: '25px',
                     renderer: (row) => (
-                        <Typography
-                            variant={'body2'}
-                            sx={{ fontFamily: 'Monospace' }}
-                        >
+                        <Typography variant={'body2'} sx={{ fontFamily: 'Monospace' }}>
                             {row.headshots}
                         </Typography>
                     )
@@ -268,10 +223,7 @@ export const MatchPlayersTable = ({ players }: MatchPlayersTableProps) => {
                     align: 'left',
                     width: '25px',
                     renderer: (row) => (
-                        <Typography
-                            variant={'body2'}
-                            sx={{ fontFamily: 'Monospace' }}
-                        >
+                        <Typography variant={'body2'} sx={{ fontFamily: 'Monospace' }}>
                             {row.airshots}
                         </Typography>
                     )
@@ -284,10 +236,7 @@ export const MatchPlayersTable = ({ players }: MatchPlayersTableProps) => {
                     align: 'left',
                     width: '25px',
                     renderer: (row) => (
-                        <Typography
-                            variant={'body2'}
-                            sx={{ fontFamily: 'Monospace' }}
-                        >
+                        <Typography variant={'body2'} sx={{ fontFamily: 'Monospace' }}>
                             {row.captures}
                         </Typography>
                     )
@@ -311,11 +260,7 @@ const ClassStatRow = ({ name, value }: ClassStatRowProp) => {
                 </Typography>
             </TableCell>
             <TableCell>
-                <Typography
-                    variant={'body2'}
-                    padding={1}
-                    sx={{ fontFamily: 'Monospace' }}
-                >
+                <Typography variant={'body2'} padding={1} sx={{ fontFamily: 'Monospace' }}>
                     {value}
                 </Typography>
             </TableCell>
@@ -342,11 +287,7 @@ const PlayerClassHoverStats = ({ stats }: PlayerClassHoverStatsProps) => {
 
     return (
         <Box display="flex" justifyContent="right" alignItems="center">
-            <PlayerClassImg
-                cls={stats.player_class}
-                onMouseEnter={handlePopoverOpen}
-                onMouseLeave={handlePopoverClose}
-            />
+            <PlayerClassImg cls={stats.player_class} onMouseEnter={handlePopoverOpen} onMouseLeave={handlePopoverClose} />
             <Popover
                 id="mouse-over-popover"
                 sx={{
@@ -365,69 +306,26 @@ const PlayerClassHoverStats = ({ stats }: PlayerClassHoverStatsProps) => {
                 onClose={handlePopoverClose}
                 disableRestoreFocus
             >
-                <ContainerWithHeader
-                    iconLeft={<PlayerClassImg cls={stats.player_class} />}
-                    title={'Class Stats'}
-                >
+                <ContainerWithHeader iconLeft={<PlayerClassImg cls={stats.player_class} />} title={'Class Stats'}>
                     <TableContainer>
                         <Table padding={'none'}>
                             <TableBody>
-                                <ClassStatRow
-                                    name={'Kills'}
-                                    value={stats.kills}
-                                />
-                                <ClassStatRow
-                                    name={'Assists'}
-                                    value={stats.assists}
-                                />
-                                <ClassStatRow
-                                    name={'Deaths'}
-                                    value={stats.deaths}
-                                />
+                                <ClassStatRow name={'Kills'} value={stats.kills} />
+                                <ClassStatRow name={'Assists'} value={stats.assists} />
+                                <ClassStatRow name={'Deaths'} value={stats.deaths} />
                                 <ClassStatRow
                                     name={'Playtime'}
-                                    value={formatDistance(
-                                        0,
-                                        stats.playtime * 1000,
-                                        { includeSeconds: true }
-                                    )}
+                                    value={formatDistance(0, stats.playtime * 1000, { includeSeconds: true })}
                                 />
-                                <ClassStatRow
-                                    name={'Dominations'}
-                                    value={stats.dominations}
-                                />
-                                <ClassStatRow
-                                    name={'Dominated'}
-                                    value={stats.dominated}
-                                />
-                                <ClassStatRow
-                                    name={'Revenges'}
-                                    value={stats.revenges}
-                                />
-                                <ClassStatRow
-                                    name={'Damage'}
-                                    value={stats.damage}
-                                />
-                                <ClassStatRow
-                                    name={'Damage Taken'}
-                                    value={stats.damage_taken}
-                                />
-                                <ClassStatRow
-                                    name={'Healing Taken'}
-                                    value={stats.healing_taken}
-                                />
-                                <ClassStatRow
-                                    name={'Captures'}
-                                    value={stats.captures}
-                                />
-                                <ClassStatRow
-                                    name={'Captures Blocked'}
-                                    value={stats.captures_blocked}
-                                />
-                                <ClassStatRow
-                                    name={'Buildings Destroyed'}
-                                    value={stats.building_destroyed}
-                                />
+                                <ClassStatRow name={'Dominations'} value={stats.dominations} />
+                                <ClassStatRow name={'Dominated'} value={stats.dominated} />
+                                <ClassStatRow name={'Revenges'} value={stats.revenges} />
+                                <ClassStatRow name={'Damage'} value={stats.damage} />
+                                <ClassStatRow name={'Damage Taken'} value={stats.damage_taken} />
+                                <ClassStatRow name={'Healing Taken'} value={stats.healing_taken} />
+                                <ClassStatRow name={'Captures'} value={stats.captures} />
+                                <ClassStatRow name={'Captures Blocked'} value={stats.captures_blocked} />
+                                <ClassStatRow name={'Buildings Destroyed'} value={stats.building_destroyed} />
                             </TableBody>
                         </Table>
                     </TableContainer>

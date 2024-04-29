@@ -1,10 +1,4 @@
-import {
-    ChangeEvent,
-    Dispatch,
-    SetStateAction,
-    useEffect,
-    useState
-} from 'react';
+import { ChangeEvent, Dispatch, SetStateAction, useEffect, useState } from 'react';
 import Typography from '@mui/material/Typography';
 import { apiGetBansSteam, BanReasons, SteamBanRecord } from '../../api';
 import { logErr } from '../../util/errors';
@@ -13,20 +7,11 @@ import { PersonCell } from '../PersonCell';
 import { LazyTable } from './LazyTable';
 import { TableCellBool } from './TableCellBool';
 
-export const BanHistoryTable = ({
-    steam_id,
-    setBanCount
-}: {
-    steam_id?: string;
-    setBanCount: Dispatch<SetStateAction<number>>;
-}) => {
+export const BanHistoryTable = ({ steam_id, setBanCount }: { steam_id?: string; setBanCount: Dispatch<SetStateAction<number>> }) => {
     const [bans, setBans] = useState<SteamBanRecord[]>([]);
     const [sortOrder, setSortOrder] = useState<Order>('desc');
-    const [sortColumn, setSortColumn] =
-        useState<keyof SteamBanRecord>('ban_id');
-    const [rowPerPageCount, setRowPerPageCount] = useState<number>(
-        RowsPerPage.Ten
-    );
+    const [sortColumn, setSortColumn] = useState<keyof SteamBanRecord>('ban_id');
+    const [rowPerPageCount, setRowPerPageCount] = useState<number>(RowsPerPage.Ten);
     const [page, setPage] = useState(0);
     const [totalRows, setTotalRows] = useState<number>(0);
 
@@ -75,17 +60,14 @@ export const BanHistoryTable = ({
             onPageChange={(_, newPage: number) => {
                 setPage(newPage);
             }}
-            onRowsPerPageChange={(
-                event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-            ) => {
+            onRowsPerPageChange={(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                 setRowPerPageCount(parseInt(event.target.value, 10));
                 setPage(0);
             }}
             columns={[
                 {
                     label: 'A',
-                    tooltip:
-                        'Is this ban active (not deleted/inactive/unbanned)',
+                    tooltip: 'Is this ban active (not deleted/inactive/unbanned)',
                     align: 'center',
                     width: '50px',
                     sortKey: 'deleted',
@@ -116,11 +98,7 @@ export const BanHistoryTable = ({
                     align: 'left',
                     width: '150px',
                     renderer: (row) => (
-                        <PersonCell
-                            steam_id={row.source_id}
-                            personaname={row.source_personaname}
-                            avatar_hash={row.source_avatarhash}
-                        />
+                        <PersonCell steam_id={row.source_id} personaname={row.source_personaname} avatar_hash={row.source_avatarhash} />
                     )
                 },
                 {
@@ -130,11 +108,7 @@ export const BanHistoryTable = ({
                     sortable: true,
                     sortType: 'string',
                     align: 'left',
-                    renderer: (row) => (
-                        <Typography variant={'body1'}>
-                            {BanReasons[row.reason]}
-                        </Typography>
-                    )
+                    renderer: (row) => <Typography variant={'body1'}>{BanReasons[row.reason]}</Typography>
                 },
                 {
                     label: 'Custom',

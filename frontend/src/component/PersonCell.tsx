@@ -15,12 +15,7 @@ export interface PersonCellProps {
     onClick?: MouseEventHandler | undefined;
 }
 
-export const PersonCell = ({
-    steam_id,
-    avatar_hash,
-    personaname,
-    onClick
-}: PersonCellProps) => {
+export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick }: PersonCellProps) => {
     const navigate = useNavigate();
     const theme = useTheme();
 

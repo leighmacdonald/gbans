@@ -29,26 +29,17 @@ export const ServerFilters = () => {
         setShowOpenOnly,
         showOpenOnly
     } = useMapStateCtx();
-    const regions = uniqCI([
-        'any',
-        ...(servers || []).map((value) => value.region)
-    ]);
+    const regions = uniqCI(['any', ...(servers || []).map((value) => value.region)]);
 
     const onRegionsChange = (event: SelectChangeEvent) => {
         setSelectedRegion(event.target.value);
     };
 
-    const onShowOpenOnlyChanged = (
-        _: ChangeEvent<HTMLInputElement>,
-        checked: boolean
-    ) => {
+    const onShowOpenOnlyChanged = (_: ChangeEvent<HTMLInputElement>, checked: boolean) => {
         setShowOpenOnly(checked);
     };
 
-    const onRegionsToggleEnabledChanged = (
-        _: ChangeEvent<HTMLInputElement>,
-        checked: boolean
-    ) => {
+    const onRegionsToggleEnabledChanged = (_: ChangeEvent<HTMLInputElement>, checked: boolean) => {
         setFilterByRegion(checked);
     };
     useEffect(() => {
@@ -68,11 +59,7 @@ export const ServerFilters = () => {
             return;
         }
         setShowOpenOnly(state?.showOpenOnly || defaultState.showOpenOnly);
-        setSelectedRegion(
-            state?.selectedRegion != ''
-                ? state.selectedRegion
-                : defaultState.selectedRegion
-        );
+        setSelectedRegion(state?.selectedRegion != '' ? state.selectedRegion : defaultState.selectedRegion);
         setFilterByRegion(state?.filterByRegion || defaultState.filterByRegion);
         setCustomRange(state?.customRange || defaultState.customRange);
     }, [setCustomRange, setFilterByRegion, setSelectedRegion, setShowOpenOnly]);
@@ -108,26 +95,14 @@ export const ServerFilters = () => {
             s = s.filter((srv) => selectedRegion.includes(srv.region));
         }
         if (showOpenOnly) {
-            s = s.filter(
-                (srv) => (srv?.players || 0) < (srv?.max_players || 32)
-            );
+            s = s.filter((srv) => (srv?.players || 0) < (srv?.max_players || 32));
         }
         if (filterByRegion && customRange && customRange > 0) {
             s = s.filter((srv) => srv.distance < customRange);
         }
         setSelectedServers(s);
         saveFilterState();
-    }, [
-        selectedRegion,
-        showOpenOnly,
-        filterByRegion,
-        customRange,
-        setServers,
-        servers,
-        setSelectedServers,
-        saveFilterState,
-        pos
-    ]);
+    }, [selectedRegion, showOpenOnly, filterByRegion, customRange, setServers, servers, setSelectedServers, saveFilterState, pos]);
 
     const marks = [
         {
@@ -163,21 +138,13 @@ export const ServerFilters = () => {
             >
                 <Grid xs>
                     <FormControlLabel
-                        control={
-                            <Switch
-                                checked={showOpenOnly}
-                                onChange={onShowOpenOnlyChanged}
-                                name="checkedA"
-                            />
-                        }
+                        control={<Switch checked={showOpenOnly} onChange={onShowOpenOnlyChanged} name="checkedA" />}
                         label="Open Slots"
                     />
                 </Grid>
                 <Grid xs>
                     <FormControl>
-                        <InputLabel id="region-selector-label">
-                            Region
-                        </InputLabel>
+                        <InputLabel id="region-selector-label">Region</InputLabel>
                         <Select<string>
                             disabled={filterByRegion}
                             labelId="region-selector-label"
@@ -197,13 +164,7 @@ export const ServerFilters = () => {
                 </Grid>
                 <Grid xs>
                     <FormControlLabel
-                        control={
-                            <Switch
-                                checked={filterByRegion}
-                                onChange={onRegionsToggleEnabledChanged}
-                                name="regionsEnabled"
-                            />
-                        }
+                        control={<Switch checked={filterByRegion} onChange={onRegionsToggleEnabledChanged} name="regionsEnabled" />}
                         label="By Range"
                     />
                 </Grid>

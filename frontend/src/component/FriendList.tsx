@@ -1,5 +1,4 @@
 import { Suspense, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
 import Avatar from '@mui/material/Avatar';
@@ -14,6 +13,7 @@ import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
+import { useNavigate } from '@tanstack/react-router';
 import { Person } from '../api';
 import { avatarHashToURL, filterPerson } from '../util/text.tsx';
 import { Heading } from './Heading';
@@ -85,32 +85,20 @@ export const FriendList = ({ friends, limit = 25 }: FriendListProps) => {
                         </Container>
                     )}
                     {friends.length > 0 &&
-                        filtered
-                            .slice(page * limit, page * limit + limit)
-                            .map((p) => (
-                                <ListItemButton
-                                    color={
-                                        p.vac_bans > 0
-                                            ? theme.palette.error.main
-                                            : undefined
-                                    }
-                                    key={`${p.steamid}`}
-                                    onClick={() => {
-                                        navigate(`/profile/${p.steamid}`);
-                                    }}
-                                >
-                                    <ListItemAvatar>
-                                        <Avatar
-                                            alt={'Profile Picture'}
-                                            src={avatarHashToURL(p.avatarhash)}
-                                        />
-                                    </ListItemAvatar>
-                                    <ListItemText
-                                        primary={p.personaname}
-                                        secondary={`${p.steamid}`}
-                                    />
-                                </ListItemButton>
-                            ))}
+                        filtered.slice(page * limit, page * limit + limit).map((p) => (
+                            <ListItemButton
+                                color={p.vac_bans > 0 ? theme.palette.error.main : undefined}
+                                key={`${p.steamid}`}
+                                onClick={async () => {
+                                    await navigate({ to: `/profile/${p.steamid}` });
+                                }}
+                            >
+                                <ListItemAvatar>
+                                    <Avatar alt={'Profile Picture'} src={avatarHashToURL(p.avatarhash)} />
+                                </ListItemAvatar>
+                                <ListItemText primary={p.personaname} secondary={`${p.steamid}`} />
+                            </ListItemButton>
+                        ))}
                 </Suspense>
             </List>
             {friends.length > 0 && (

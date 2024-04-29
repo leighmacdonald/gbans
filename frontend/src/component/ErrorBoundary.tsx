@@ -29,12 +29,7 @@ export class ErrorBoundary extends Component<BoundaryProps, BoundaryState> {
     render(): ReactNode {
         if (this.state.hasError) {
             return (
-                <Typography
-                    marginTop={3}
-                    variant={'h2'}
-                    color={'error'}
-                    textAlign={'center'}
-                >
+                <Typography marginTop={3} variant={'h2'} color={'error'} textAlign={'center'}>
                     🤯 🤯 🤯 Something went wrong 🤯 🤯 🤯
                 </Typography>
             );

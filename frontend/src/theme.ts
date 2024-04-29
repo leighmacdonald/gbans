@@ -4,13 +4,7 @@ import darkScrollbar from '@mui/material/darkScrollbar';
 export const blu = '#547d8c';
 export const red = '#a7584b';
 
-const baseFontSet = [
-    '"Helvetica Neue"',
-    'Helvetica',
-    'Roboto',
-    'Arial',
-    'sans-serif'
-];
+const baseFontSet = ['"Helvetica Neue"', 'Helvetica', 'Roboto', 'Arial', 'sans-serif'];
 
 export const readableFonts = {
     fontFamily: baseFontSet.join(',')
@@ -107,13 +101,7 @@ export const createThemeByMode = (mode: PaletteMode) => {
             // }
         },
         typography: {
-            fontFamily: [
-                '"Helvetica Neue"',
-                'Helvetica',
-                'Roboto',
-                'Arial',
-                'sans-serif'
-            ].join(','),
+            fontFamily: ['"Helvetica Neue"', 'Helvetica', 'Roboto', 'Arial', 'sans-serif'].join(','),
             // allVariants: {
             //     color: mode === 'dark' ? '#34302d' : '#f5e7de'
             // },

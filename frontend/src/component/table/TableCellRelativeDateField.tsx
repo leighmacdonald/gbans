@@ -9,11 +9,7 @@ interface DataTableRelativeDateFieldProps {
     suffix?: boolean;
 }
 
-export const TableCellRelativeDateField = ({
-    date,
-    compareDate,
-    suffix = false
-}: DataTableRelativeDateFieldProps) => {
+export const TableCellRelativeDateField = ({ date, compareDate, suffix = false }: DataTableRelativeDateFieldProps) => {
     const opts = {
         addSuffix: suffix
     };
@@ -21,9 +17,7 @@ export const TableCellRelativeDateField = ({
         <Tooltip title={date.toUTCString()}>
             <>
                 <Typography variant={'body1'}>
-                    {compareDate
-                        ? formatDistanceStrict(date, compareDate, opts)
-                        : formatDistanceToNowStrict(date, opts)}
+                    {compareDate ? formatDistanceStrict(date, compareDate, opts) : formatDistanceToNowStrict(date, opts)}
                 </Typography>
             </>
         </Tooltip>

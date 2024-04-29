@@ -24,13 +24,7 @@ export const VCenteredElement = ({ icon }: VCenteredImageProps) => {
     );
 };
 
-export const Heading: FC<HeadingProps> = ({
-    children,
-    bgColor,
-    iconLeft,
-    iconRight,
-    align
-}: HeadingProps) => {
+export const Heading: FC<HeadingProps> = ({ children, bgColor, iconLeft, iconRight, align }: HeadingProps) => {
     const theme = useTheme();
     return (
         <Grid

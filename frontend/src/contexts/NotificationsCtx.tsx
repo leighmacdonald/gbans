@@ -16,11 +16,7 @@ export const NotificationsCtx = createContext<NotificationState>({
     setSelectedIds: () => noop
 });
 
-export const NotificationsProvider = ({
-    children
-}: {
-    children: JSX.Element;
-}) => {
+export const NotificationsProvider = ({ children }: { children: JSX.Element }) => {
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [notifications, setNotifications] = useState<UserNotification[]>([]);
 

@@ -46,12 +46,7 @@ interface HeadingWithButtonsProps {
     buttons?: ReactNode[];
 }
 
-export const HeadingWithButtons: FC<HeadingWithButtonsProps> = ({
-    children,
-    bgColor,
-    iconLeft,
-    buttons
-}: HeadingWithButtonsProps) => {
+export const HeadingWithButtons: FC<HeadingWithButtonsProps> = ({ children, bgColor, iconLeft, buttons }: HeadingWithButtonsProps) => {
     const theme = useTheme();
     return (
         <Grid

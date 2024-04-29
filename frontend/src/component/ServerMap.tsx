@@ -42,13 +42,7 @@ export const ServerMarkers = () => {
 
 const UserPositionMarker = () => {
     const { pos } = useMapStateCtx();
-    return (
-        <>
-            {pos.lat != 0 && (
-                <Marker autoPan={true} title={'You'} position={pos} />
-            )}
-        </>
-    );
+    return <>{pos.lat != 0 && <Marker autoPan={true} title={'You'} position={pos} />}</>;
 };
 
 export const UserPingRadius = () => {
@@ -68,29 +62,13 @@ export const UserPingRadius = () => {
     }, [map, pos]);
 
     const c = useMemo(() => {
-        return (
-            filterByRegion && (
-                <Circle
-                    center={pos}
-                    radius={customRange * 1000}
-                    color={'green'}
-                />
-            )
-        );
+        return filterByRegion && <Circle center={pos} radius={customRange * 1000} color={'green'} />;
     }, [customRange, pos, filterByRegion]);
 
     return (
         <>
             {c}
-            {pos.lat != 0 &&
-                markers.map((m) => (
-                    <Circle
-                        center={pos}
-                        key={m.radius}
-                        {...m}
-                        fillOpacity={0.1}
-                    />
-                ))}
+            {pos.lat != 0 && markers.map((m) => <Circle center={pos} key={m.radius} {...m} fillOpacity={0.1} />)}
         </>
     );
 };
@@ -106,10 +84,7 @@ export const ServerMap = () => {
             minZoom={3}
             worldCopyJump={true}
         >
-            <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution={'© OpenStreetMap contributors '}
-            />
+            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution={'© OpenStreetMap contributors '} />
 
             <UserPingRadius />
             <ServerMarkers />

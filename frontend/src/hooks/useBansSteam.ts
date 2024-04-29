@@ -37,17 +37,7 @@ export const useBansSteam = (opts: BanSteamQueryFilter) => {
             });
 
         return () => abortController.abort();
-    }, [
-        opts.limit,
-        opts.offset,
-        opts.order_by,
-        opts.desc,
-        opts.source_id,
-        opts.target_id,
-        opts.appeal_state,
-        opts.deleted,
-        error
-    ]);
+    }, [opts.limit, opts.offset, opts.order_by, opts.desc, opts.source_id, opts.target_id, opts.appeal_state, opts.deleted, error]);
 
     return { data, count, loading, error };
 };
