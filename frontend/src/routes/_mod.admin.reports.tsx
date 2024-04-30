@@ -1,15 +1,28 @@
 import FilterListIcon from '@mui/icons-material/FilterList';
 import ReportIcon from '@mui/icons-material/Report';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import ButtonGroup from '@mui/material/ButtonGroup';
+import IconButton from '@mui/material/IconButton';
+import Stack from '@mui/material/Stack';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import { createFileRoute } from '@tanstack/react-router';
+import { useQuery } from '@tanstack/react-query';
+import { createFileRoute, Link as RouterLink } from '@tanstack/react-router';
+import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { z } from 'zod';
-import { ReportStatus } from '../api';
+import { apiGetReports, BanReasons, ReportStatus, reportStatusString, ReportWithAuthor } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { commonTableSearchSchema } from '../util/table.ts';
+import { DataTable, HeadingCell } from '../component/DataTable.tsx';
+import { Paginator } from '../component/Paginator.tsx';
+import { PersonCell } from '../component/PersonCell.tsx';
+import { ReportStatusIcon } from '../component/ReportStatusIcon.tsx';
+import { commonTableSearchSchema, LazyResult } from '../util/table.ts';
+import { renderDateTime } from '../util/text.tsx';
 
 const reportsSearchSchema = z.object({
     ...commonTableSearchSchema,
-    // sortColumn: z.enum(['ban_asn_id', 'source_id', 'target_id', 'deleted', 'reason', 'as_num', 'valid_until']).catch('ban_asn_id'),
+    sortColumn: z.enum(['report_id', 'source_id', 'target_id', 'report_status', 'reason', 'created_on', 'updated_on']).catch('updated_on'),
     source_id: z.string().catch(''),
     target_id: z.string().catch(''),
     deleted: z.boolean().catch(false),
@@ -22,16 +35,21 @@ export const Route = createFileRoute('/_mod/admin/reports')({
 });
 
 function AdminReports() {
-    //
-    // const { data, count, loading } = useReports({
-    //     limit: Number(state.rows ?? RowsPerPage.Ten),
-    //     offset: Number((state.page ?? 0) * (state.rows ?? RowsPerPage.Ten)),
-    //     order_by: state.sortColumn ?? 'report_id',
-    //     desc: (state.sortOrder ?? 'desc') == 'desc',
-    //     source_id: state.source ?? '',
-    //     target_id: state.target ?? '',
-    //     report_status: Number(state.reportStatus ?? ReportStatus.Any)
-    // });
+    const { page, sortColumn, rows, sortOrder, source_id, target_id, report_status } = Route.useSearch();
+    const { data: reports, isLoading } = useQuery({
+        queryKey: ['reports', { page, rows, sortOrder, sortColumn, source_id, target_id, report_status }],
+        queryFn: async () => {
+            return apiGetReports({
+                limit: Number(rows),
+                offset: Number((page ?? 0) * rows),
+                order_by: sortColumn ?? 'report_id',
+                desc: sortOrder == 'desc',
+                source_id: source_id,
+                target_id: target_id,
+                report_status: Number(report_status)
+            });
+        }
+    });
     //
     // const onFilterSubmit = useCallback(
     //     (values: FilterValues) => {
@@ -86,125 +104,83 @@ function AdminReports() {
             </Grid>
             <Grid xs={12}>
                 <ContainerWithHeader title={'Current User Reports'} iconLeft={<ReportIcon />}>
-                    {/*<LazyTable*/}
-                    {/*    showPager={true}*/}
-                    {/*    count={count}*/}
-                    {/*    rows={data}*/}
-                    {/*    page={Number(state.page ?? 0)}*/}
-                    {/*    rowsPerPage={Number(state.rows ?? RowsPerPage.Ten)}*/}
-                    {/*    sortOrder={state.sortOrder}*/}
-                    {/*    sortColumn={state.sortColumn}*/}
-                    {/*    onSortColumnChanged={async (column) => {*/}
-                    {/*        setState({ sortColumn: column });*/}
-                    {/*    }}*/}
-                    {/*    onSortOrderChanged={async (direction) => {*/}
-                    {/*        setState({ sortOrder: direction });*/}
-                    {/*    }}*/}
-                    {/*    onPageChange={(_, newPage: number) => {*/}
-                    {/*        setState({ page: newPage });*/}
-                    {/*    }}*/}
-                    {/*    onRowsPerPageChange={(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {*/}
-                    {/*        setState({*/}
-                    {/*            rows: Number(event.target.value),*/}
-                    {/*            page: 0*/}
-                    {/*        });*/}
-                    {/*    }}*/}
-                    {/*    columns={[*/}
-                    {/*        {*/}
-                    {/*            label: 'ID',*/}
-                    {/*            tooltip: 'Report ID',*/}
-                    {/*            sortType: 'number',*/}
-                    {/*            sortKey: 'report_id',*/}
-                    {/*            sortable: true,*/}
-                    {/*            align: 'left',*/}
-                    {/*            renderer: (obj) => <TableCellLink to={`/report/${obj.report_id}`} label={`#${obj.report_id}`} />*/}
-                    {/*        },*/}
-                    {/*        {*/}
-                    {/*            label: 'Status',*/}
-                    {/*            tooltip: 'Status',*/}
-                    {/*            sortKey: 'report_status',*/}
-                    {/*            sortable: true,*/}
-                    {/*            align: 'left',*/}
-                    {/*            width: '200px',*/}
-                    {/*            renderer: (obj) => {*/}
-                    {/*                return <Typography variant={'subtitle1'}>{reportStatusString(obj.report_status)}</Typography>;*/}
-                    {/*            }*/}
-                    {/*        },*/}
-                    {/*        {*/}
-                    {/*            label: 'Reporter',*/}
-                    {/*            tooltip: 'Reporter',*/}
-                    {/*            sortType: 'string',*/}
-                    {/*            align: 'left',*/}
-                    {/*            renderer: (row) => (*/}
-                    {/*                <SteamIDSelectField*/}
-                    {/*                    steam_id={row.author.steam_id}*/}
-                    {/*                    personaname={row.author.personaname || row.source_id}*/}
-                    {/*                    avatarhash={row.author.avatarhash}*/}
-                    {/*                    field_name={'source_id'}*/}
-                    {/*                />*/}
-                    {/*            )*/}
-                    {/*        },*/}
-                    {/*        {*/}
-                    {/*            label: 'Subject',*/}
-                    {/*            tooltip: 'Subject',*/}
-                    {/*            sortType: 'string',*/}
-                    {/*            align: 'left',*/}
-                    {/*            width: '250px',*/}
-                    {/*            renderer: (row) => (*/}
-                    {/*                <SteamIDSelectField*/}
-                    {/*                    steam_id={row.subject.steam_id}*/}
-                    {/*                    personaname={row.subject.personaname || row.target_id}*/}
-                    {/*                    avatarhash={row.subject.avatarhash}*/}
-                    {/*                    field_name={'target_id'}*/}
-                    {/*                />*/}
-                    {/*            )*/}
-                    {/*        },*/}
-                    {/*        {*/}
-                    {/*            label: 'Reason',*/}
-                    {/*            tooltip: 'Reason For Report',*/}
-                    {/*            sortType: 'number',*/}
-                    {/*            sortKey: 'reason',*/}
-                    {/*            align: 'left',*/}
-                    {/*            width: '250px',*/}
-                    {/*            renderer: (row) => <Typography variant={'body1'}>{BanReasons[row.reason]}</Typography>*/}
-                    {/*        },*/}
-                    {/*        {*/}
-                    {/*            label: 'Created',*/}
-                    {/*            tooltip: 'Created On',*/}
-                    {/*            sortType: 'date',*/}
-                    {/*            align: 'left',*/}
-                    {/*            width: '150px',*/}
-                    {/*            sortable: true,*/}
-                    {/*            sortKey: 'created_on',*/}
-                    {/*            renderer: (obj) => {*/}
-                    {/*                return (*/}
-                    {/*                    <Typography variant={'body1'}>*/}
-                    {/*                        {renderDateTime(parseISO(obj.created_on as never as string))}*/}
-                    {/*                    </Typography>*/}
-                    {/*                );*/}
-                    {/*            }*/}
-                    {/*        },*/}
-                    {/*        {*/}
-                    {/*            label: 'Last Activity',*/}
-                    {/*            tooltip: 'Last Activity',*/}
-                    {/*            sortType: 'date',*/}
-                    {/*            align: 'left',*/}
-                    {/*            width: '150px',*/}
-                    {/*            sortable: true,*/}
-                    {/*            sortKey: 'updated_on',*/}
-                    {/*            renderer: (obj) => {*/}
-                    {/*                return (*/}
-                    {/*                    <Typography variant={'body1'}>*/}
-                    {/*                        {renderDateTime(parseISO(obj.updated_on as never as string))}*/}
-                    {/*                    </Typography>*/}
-                    {/*                );*/}
-                    {/*            }*/}
-                    {/*        }*/}
-                    {/*    ]}*/}
-                    {/*/>*/}
+                    <ReportTable reports={reports ?? { data: [], count: 0 }} isLoading={isLoading} />
+                    <Paginator data={reports} page={page} rows={rows} />
                 </ContainerWithHeader>
             </Grid>
         </Grid>
         // </Formik>
     );
 }
+
+const columnHelper = createColumnHelper<ReportWithAuthor>();
+
+const ReportTable = ({ reports, isLoading }: { reports: LazyResult<ReportWithAuthor>; isLoading: boolean }) => {
+    const columns = [
+        columnHelper.accessor('report_id', {
+            header: () => <HeadingCell name={'View'} />,
+            cell: (info) => (
+                <ButtonGroup>
+                    <IconButton color={'primary'} component={RouterLink} to={`/report/$reportId`} params={{ reportId: info.getValue() }}>
+                        <Tooltip title={'View'}>
+                            <VisibilityIcon />
+                        </Tooltip>
+                    </IconButton>
+                </ButtonGroup>
+            )
+        }),
+        columnHelper.accessor('report_status', {
+            header: () => <HeadingCell name={'Status'} />,
+            cell: (info) => {
+                return (
+                    <Stack direction={'row'} spacing={1}>
+                        <ReportStatusIcon reportStatus={info.getValue()} />
+                        <Typography variant={'body1'}>{reportStatusString(info.getValue())}</Typography>
+                    </Stack>
+                );
+            }
+        }),
+        columnHelper.accessor('source_id', {
+            header: () => <HeadingCell name={'Reporter'} />,
+            cell: (info) => (
+                <PersonCell
+                    steam_id={reports.data[info.row.index].author.steam_id}
+                    personaname={reports.data[info.row.index].author.personaname}
+                    avatar_hash={reports.data[info.row.index].author.avatarhash}
+                />
+            )
+        }),
+        columnHelper.accessor('subject', {
+            header: () => <HeadingCell name={'Subject'} />,
+            cell: (info) => (
+                <PersonCell
+                    steam_id={reports.data[info.row.index].subject.steam_id}
+                    personaname={reports.data[info.row.index].subject.personaname}
+                    avatar_hash={reports.data[info.row.index].subject.avatarhash}
+                />
+            )
+        }),
+        columnHelper.accessor('reason', {
+            header: () => <HeadingCell name={'Reason'} />,
+            cell: (info) => <Typography>{BanReasons[info.getValue()]}</Typography>
+        }),
+        columnHelper.accessor('created_on', {
+            header: () => <HeadingCell name={'Created'} />,
+            cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>
+        }),
+        columnHelper.accessor('updated_on', {
+            header: () => <HeadingCell name={'Updated'} />,
+            cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>
+        })
+    ];
+
+    const table = useReactTable({
+        data: reports.data,
+        columns: columns,
+        getCoreRowModel: getCoreRowModel(),
+        manualPagination: true,
+        autoResetPageIndex: true
+    });
+
+    return <DataTable table={table} isLoading={isLoading} />;
+};
