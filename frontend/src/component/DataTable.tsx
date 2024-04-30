@@ -7,12 +7,17 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
 import { flexRender, Table as TSTable } from '@tanstack/react-table';
+import { LoadingPlaceholder } from './LoadingPlaceholder.tsx';
 
 export const HeadingCell = ({ name }: { name: string }) => {
     return <Typography align={'center'}>{name}</Typography>;
 };
 
-export const DataTable = <T,>({ table }: { table: TSTable<T> }) => {
+export const DataTable = <T,>({ table, isLoading }: { table: TSTable<T>; isLoading: boolean }) => {
+    if (isLoading) {
+        return <LoadingPlaceholder />;
+    }
+
     return (
         <TableContainer>
             <Table>

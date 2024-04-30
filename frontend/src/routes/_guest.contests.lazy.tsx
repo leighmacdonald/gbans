@@ -16,7 +16,7 @@ import { ModalContestEntry } from '../component/modal';
 import { LazyTableSimple } from '../component/table/LazyTableSimple';
 import { logErr } from '../util/errors';
 
-export const Route = createLazyFileRoute('/_auth/contests')({
+export const Route = createLazyFileRoute('/_guest/contests')({
     component: Contests
 });
 
