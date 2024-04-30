@@ -42,7 +42,7 @@ export const DataTable = <T,>({ table, isLoading }: { table: TSTable<T>; isLoadi
                 </TableHead>
                 <TableBody>
                     {table.getRowModel().rows.map((row) => (
-                        <TableRow key={row.id}>
+                        <TableRow key={row.id} hover>
                             {row.getVisibleCells().map((cell) => (
                                 <TableCell padding={'none'} key={cell.id}>
                                     {flexRender(cell.column.columnDef.cell, cell.getContext())}

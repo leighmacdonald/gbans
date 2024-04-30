@@ -81,7 +81,11 @@ function ReportCreate() {
                         </ContainerWithHeader>
                     )}
                     <ContainerWithHeader title={'Your Report History'} iconLeft={<HistoryIcon />}>
-                        {isLoading ? <LoadingPlaceholder /> : <UserReportHistory history={logs ?? { data: [], count: 0 }} />}
+                        {isLoading ? (
+                            <LoadingPlaceholder />
+                        ) : (
+                            <UserReportHistory history={logs ?? { data: [], count: 0 }} isLoading={isLoading} />
+                        )}
                         <TablePagination
                             count={logs ? logs.count : 0}
                             page={page}
@@ -135,7 +139,7 @@ function ReportCreate() {
 
 const columnHelper = createColumnHelper<ReportWithAuthor>();
 
-const UserReportHistory = ({ history }: { history: LazyResult<ReportWithAuthor> }) => {
+const UserReportHistory = ({ history, isLoading }: { history: LazyResult<ReportWithAuthor>; isLoading: boolean }) => {
     const columns = [
         columnHelper.accessor('report_status', {
             header: () => <HeadingCell name={'Status'} />,
@@ -185,7 +189,7 @@ const UserReportHistory = ({ history }: { history: LazyResult<ReportWithAuthor> 
 
     return (
         <Stack>
-            <DataTable table={table} />
+            <DataTable table={table} isLoading={isLoading} />
         </Stack>
     );
 };

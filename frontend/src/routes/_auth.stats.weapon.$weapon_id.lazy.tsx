@@ -1,5 +1,4 @@
-import { ChangeEvent, JSX, useState } from 'react';
-import { useParams } from 'react-router';
+import { ChangeEvent, useState } from 'react';
 import InsightsIcon from '@mui/icons-material/Insights';
 import Grid from '@mui/material/Unstable_Grid2';
 import { createLazyFileRoute } from '@tanstack/react-router';
@@ -145,13 +144,11 @@ const WeaponStatsContainer = ({ weapon_id }: WeaponStatsContainerProps) => {
     );
 };
 
-function StatsWeapon() {
-    const { weapon_id } = useParams();
-
+function StatsWeapon({ weaponId }: { weaponId: number }) {
     return (
         <Grid container spacing={2}>
             <Grid xs={12}>
-                <WeaponStatsContainer weapon_id={Number(weapon_id ?? '0')} />
+                <WeaponStatsContainer weapon_id={Number(weaponId ?? '0')} />
             </Grid>
         </Grid>
     );

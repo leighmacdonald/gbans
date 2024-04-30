@@ -61,7 +61,7 @@ const GuestProfileSteamIdLazyImport = createFileRoute(
 const AuthReportReportIdLazyImport = createFileRoute(
   '/_auth/report/$reportId',
 )()
-const AuthMatchMatchidLazyImport = createFileRoute('/_auth/match/$match_id')()
+const AuthMatchMatchIdLazyImport = createFileRoute('/_auth/match/$matchId')()
 const AuthLogsSteamIdLazyImport = createFileRoute('/_auth/logs/$steamId')()
 const AuthLoginDiscordLazyImport = createFileRoute('/_auth/login/discord')()
 const AuthForumsForumidLazyImport = createFileRoute('/_auth/forums/$forum_id')()
@@ -229,11 +229,11 @@ const AuthReportReportIdLazyRoute = AuthReportReportIdLazyImport.update({
   import('./routes/_auth.report.$reportId.lazy').then((d) => d.Route),
 )
 
-const AuthMatchMatchidLazyRoute = AuthMatchMatchidLazyImport.update({
-  path: '/match/$match_id',
+const AuthMatchMatchIdLazyRoute = AuthMatchMatchIdLazyImport.update({
+  path: '/match/$matchId',
   getParentRoute: () => AuthRoute,
 } as any).lazy(() =>
-  import('./routes/_auth.match.$match_id.lazy').then((d) => d.Route),
+  import('./routes/_auth.match.$matchId.lazy').then((d) => d.Route),
 )
 
 const AuthLogsSteamIdLazyRoute = AuthLogsSteamIdLazyImport.update({
@@ -515,8 +515,8 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLogsSteamIdLazyImport
       parentRoute: typeof AuthImport
     }
-    '/_auth/match/$match_id': {
-      preLoaderRoute: typeof AuthMatchMatchidLazyImport
+    '/_auth/match/$matchId': {
+      preLoaderRoute: typeof AuthMatchMatchIdLazyImport
       parentRoute: typeof AuthImport
     }
     '/_auth/report/$reportId': {
@@ -620,7 +620,7 @@ export const routeTree = rootRoute.addChildren([
     AuthForumsForumidLazyRoute,
     AuthLoginDiscordLazyRoute,
     AuthLogsSteamIdLazyRoute,
-    AuthMatchMatchidLazyRoute,
+    AuthMatchMatchIdLazyRoute,
     AuthReportReportIdLazyRoute,
     AuthReportIndexRoute,
     AuthForumsIndexLazyRoute,
