@@ -20,20 +20,18 @@ import stc from 'string-to-color';
 import { z } from 'zod';
 import { apiGetMessages, apiGetServers, PersonMessage, ServerSimple } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
-import { DataTable } from '../component/DataTable.tsx';
+import { DataTable, HeadingCell } from '../component/DataTable.tsx';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
 import { PaginationInfinite } from '../component/PaginationInfinite.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
-import { RowsPerPage } from '../util/table.ts';
+import { commonTableSearchSchema } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 
 const chatlogsSchema = z.object({
-    sortOrder: z.enum(['desc', 'asc']).catch('desc'),
+    ...commonTableSearchSchema,
     sortColumn: z
         .enum(['person_message_id', 'steam_id', 'persona_name', 'server_name', 'server_id', 'team', 'created_on', 'pattern'])
         .catch('person_message_id'),
-    page: z.number().min(0).catch(0),
-    rowPerPageCount: z.number().min(RowsPerPage.Ten).max(RowsPerPage.Hundred).catch(RowsPerPage.TwentyFive),
     server_id: z.number().catch(0),
     persona_name: z.string().catch(''),
     body: z.string().catch(''),
@@ -63,12 +61,12 @@ export const Route = createFileRoute('/_auth/chatlogs')({
 const columnHelper = createColumnHelper<PersonMessage>();
 
 function ChatLogs() {
-    const { body, persona_name, steam_id, server_id, page, sortColumn, rowPerPageCount, sortOrder } = Route.useSearch();
+    const { body, persona_name, steam_id, server_id, page, sortColumn, rows, sortOrder } = Route.useSearch();
     //const { currentUser } = useCurrentUserCtx();
     const { servers } = useLoaderData({ from: '/_auth/chatlogs' }) as { servers: ServerSimple[] };
     const navigate = useNavigate({ from: Route.fullPath });
 
-    const { data: rows, isLoading } = useQuery({
+    const { data: logs, isLoading } = useQuery({
         queryKey: ['chatlogs', { page, server_id, persona_name, steam_id }],
         queryFn: async () => {
             return await apiGetMessages({
@@ -76,8 +74,8 @@ function ChatLogs() {
                 personaname: persona_name,
                 query: body,
                 source_id: steam_id,
-                limit: Number(rowPerPageCount),
-                offset: Number(page ?? 0) * Number(rowPerPageCount),
+                limit: Number(rows),
+                offset: Number(page ?? 0) * Number(rows),
                 order_by: sortColumn,
                 desc: sortOrder == 'desc'
             });
@@ -257,16 +255,13 @@ function ChatLogs() {
                     </ContainerWithHeader>
                 </Grid>
                 <Grid xs={12}>
-                    <ChatTable rows={isLoading || !rows ? [] : rows} servers={servers} isLoading={isLoading} />
+                    <ChatTable rows={isLoading || !logs ? [] : logs} servers={servers} isLoading={isLoading} />
                 </Grid>
             </Grid>
         </>
     );
 }
 
-const HeadingCell = ({ name }: { name: string }) => {
-    return <Typography align={'center'}>{name}</Typography>;
-};
 const ChatTable = ({ rows, servers, isLoading }: { rows: PersonMessage[]; servers: ServerSimple[]; isLoading: boolean }) => {
     const { page } = Route.useSearch();
     const navigate = useNavigate({ from: '/chatlogs' });

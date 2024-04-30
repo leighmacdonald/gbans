@@ -8,6 +8,10 @@ import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
 import { flexRender, Table as TSTable } from '@tanstack/react-table';
 
+export const HeadingCell = ({ name }: { name: string }) => {
+    return <Typography align={'center'}>{name}</Typography>;
+};
+
 export const DataTable = <T,>({ table }: { table: TSTable<T> }) => {
     return (
         <TableContainer>

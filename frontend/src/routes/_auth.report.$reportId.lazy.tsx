@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState, useMemo } from 'react';
-import { useParams } from 'react-router';
 import NiceModal from '@ebay/nice-modal-react';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import AutoFixNormalIcon from '@mui/icons-material/AutoFixNormal';
@@ -23,39 +22,21 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import { createLazyFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { isBefore } from 'date-fns';
-import {
-    apiGetBansSteam,
-    apiReportSetState,
-    BanReasons,
-    BanType,
-    PermissionLevel,
-    ReportStatus,
-    reportStatusColour,
-    reportStatusString,
-    SteamBanRecord
-} from '../../api';
-import { ContainerWithHeader } from '../../component/ContainerWithHeader.tsx';
-import { Heading } from '../../component/Heading.tsx';
-import { ProfileInfoBox } from '../../component/ProfileInfoBox.tsx';
-import { ReportViewComponent } from '../../component/ReportViewComponent.tsx';
-import { SteamIDList } from '../../component/SteamIDList.tsx';
-import { ModalBanSteam } from '../../component/modal';
-import { useReport } from '../../hooks/useReport.ts';
-import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
-import { logErr } from '../../util/errors.ts';
-import { avatarHashToURL } from '../../util/text.tsx';
+import { ReportStatus, SteamBanRecord } from '../api';
+import { useReport } from '../hooks/useReport.ts';
+import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 
-export const Route = createLazyFileRoute('/_auth/report/$report_id')({
+export const Route = createLazyFileRoute('/_auth/report/$reportId')({
     component: ReportView
 });
 
 function ReportView() {
-    const { report_id } = useParams();
+    const { reportId } = Route.useParams();
     const theme = useTheme();
-    const id = parseInt(report_id || '');
+    const id = parseInt(reportId || '');
     const [stateAction, setStateAction] = useState(ReportStatus.Opened);
     const [newStateAction, setNewStateAction] = useState(stateAction);
-    const { hasPermission } = useRouteContext({ from: '/_auth/report/$report_id' });
+    const { hasPermission } = useRouteContext({ from: '/_auth/report/$reportId' });
     const [ban, setBan] = useState<SteamBanRecord>();
     const { sendFlash } = useUserFlashCtx();
     const navigate = useNavigate();

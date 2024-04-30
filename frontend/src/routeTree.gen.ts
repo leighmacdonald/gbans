@@ -22,6 +22,7 @@ import { Route as GuestStvImport } from './routes/_guest.stv'
 import { Route as AuthPermissionImport } from './routes/_auth.permission'
 import { Route as AuthChatlogsImport } from './routes/_auth.chatlogs'
 import { Route as GuestLoginIndexImport } from './routes/_guest.login.index'
+import { Route as AuthReportIndexImport } from './routes/_auth.report.index'
 import { Route as ModAdminVotesImport } from './routes/_mod.admin.votes'
 import { Route as ModAdminReportsImport } from './routes/_mod.admin.reports'
 import { Route as ModAdminPeopleImport } from './routes/_mod.admin.people'
@@ -51,15 +52,14 @@ const AuthPageNotFoundLazyImport = createFileRoute('/_auth/page-not-found')()
 const AuthNotificationsLazyImport = createFileRoute('/_auth/notifications')()
 const AuthLogoutLazyImport = createFileRoute('/_auth/logout')()
 const AuthContestsLazyImport = createFileRoute('/_auth/contests')()
-const AuthReportIndexLazyImport = createFileRoute('/_auth/report/')()
 const AuthForumsIndexLazyImport = createFileRoute('/_auth/forums/')()
 const ModAdminNewsLazyImport = createFileRoute('/_mod/admin/news')()
 const GuestWikiSlugLazyImport = createFileRoute('/_guest/wiki/$slug')()
 const GuestProfileSteamIdLazyImport = createFileRoute(
   '/_guest/profile/$steamId',
 )()
-const AuthReportReportidLazyImport = createFileRoute(
-  '/_auth/report/$report_id',
+const AuthReportReportIdLazyImport = createFileRoute(
+  '/_auth/report/$reportId',
 )()
 const AuthMatchMatchidLazyImport = createFileRoute('/_auth/match/$match_id')()
 const AuthLogsSteamIdLazyImport = createFileRoute('/_auth/logs/$steamId')()
@@ -184,13 +184,6 @@ const AuthChatlogsRoute = AuthChatlogsImport.update({
   getParentRoute: () => AuthRoute,
 } as any)
 
-const AuthReportIndexLazyRoute = AuthReportIndexLazyImport.update({
-  path: '/report/',
-  getParentRoute: () => AuthRoute,
-} as any).lazy(() =>
-  import('./routes/_auth.report.index.lazy').then((d) => d.Route),
-)
-
 const AuthForumsIndexLazyRoute = AuthForumsIndexLazyImport.update({
   path: '/forums/',
   getParentRoute: () => AuthRoute,
@@ -201,6 +194,11 @@ const AuthForumsIndexLazyRoute = AuthForumsIndexLazyImport.update({
 const GuestLoginIndexRoute = GuestLoginIndexImport.update({
   path: '/login/',
   getParentRoute: () => GuestRoute,
+} as any)
+
+const AuthReportIndexRoute = AuthReportIndexImport.update({
+  path: '/report/',
+  getParentRoute: () => AuthRoute,
 } as any)
 
 const ModAdminNewsLazyRoute = ModAdminNewsLazyImport.update({
@@ -224,11 +222,11 @@ const GuestProfileSteamIdLazyRoute = GuestProfileSteamIdLazyImport.update({
   import('./routes/_guest.profile.$steamId.lazy').then((d) => d.Route),
 )
 
-const AuthReportReportidLazyRoute = AuthReportReportidLazyImport.update({
-  path: '/report/$report_id',
+const AuthReportReportIdLazyRoute = AuthReportReportIdLazyImport.update({
+  path: '/report/$reportId',
   getParentRoute: () => AuthRoute,
 } as any).lazy(() =>
-  import('./routes/_auth.report.$report_id.lazy').then((d) => d.Route),
+  import('./routes/_auth.report.$reportId.lazy').then((d) => d.Route),
 )
 
 const AuthMatchMatchidLazyRoute = AuthMatchMatchidLazyImport.update({
@@ -521,8 +519,8 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthMatchMatchidLazyImport
       parentRoute: typeof AuthImport
     }
-    '/_auth/report/$report_id': {
-      preLoaderRoute: typeof AuthReportReportidLazyImport
+    '/_auth/report/$reportId': {
+      preLoaderRoute: typeof AuthReportReportIdLazyImport
       parentRoute: typeof AuthImport
     }
     '/_guest/profile/$steamId': {
@@ -537,16 +535,16 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ModAdminNewsLazyImport
       parentRoute: typeof ModImport
     }
+    '/_auth/report/': {
+      preLoaderRoute: typeof AuthReportIndexImport
+      parentRoute: typeof AuthImport
+    }
     '/_guest/login/': {
       preLoaderRoute: typeof GuestLoginIndexImport
       parentRoute: typeof GuestImport
     }
     '/_auth/forums/': {
       preLoaderRoute: typeof AuthForumsIndexLazyImport
-      parentRoute: typeof AuthImport
-    }
-    '/_auth/report/': {
-      preLoaderRoute: typeof AuthReportIndexLazyImport
       parentRoute: typeof AuthImport
     }
     '/_mod/admin/ban/asn': {
@@ -623,9 +621,9 @@ export const routeTree = rootRoute.addChildren([
     AuthLoginDiscordLazyRoute,
     AuthLogsSteamIdLazyRoute,
     AuthMatchMatchidLazyRoute,
-    AuthReportReportidLazyRoute,
+    AuthReportReportIdLazyRoute,
+    AuthReportIndexRoute,
     AuthForumsIndexLazyRoute,
-    AuthReportIndexLazyRoute,
     AuthForumsThreadForumthreadidLazyRoute,
   ]),
   GuestRoute.addChildren([
