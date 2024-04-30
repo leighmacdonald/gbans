@@ -44,6 +44,7 @@ import { Route as ModAdminBanAsnImport } from './routes/_mod.admin.ban.asn'
 
 const GuestWikiLazyImport = createFileRoute('/_guest/wiki')()
 const GuestServersLazyImport = createFileRoute('/_guest/servers')()
+const GuestContestsLazyImport = createFileRoute('/_guest/contests')()
 const AuthStatsLazyImport = createFileRoute('/_auth/stats')()
 const AuthSettingsLazyImport = createFileRoute('/_auth/settings')()
 const AuthPrivacyPolicyLazyImport = createFileRoute('/_auth/privacy-policy')()
@@ -51,7 +52,6 @@ const AuthPatreonLazyImport = createFileRoute('/_auth/patreon')()
 const AuthPageNotFoundLazyImport = createFileRoute('/_auth/page-not-found')()
 const AuthNotificationsLazyImport = createFileRoute('/_auth/notifications')()
 const AuthLogoutLazyImport = createFileRoute('/_auth/logout')()
-const AuthContestsLazyImport = createFileRoute('/_auth/contests')()
 const AuthForumsIndexLazyImport = createFileRoute('/_auth/forums/')()
 const ModAdminNewsLazyImport = createFileRoute('/_mod/admin/news')()
 const GuestWikiSlugLazyImport = createFileRoute('/_guest/wiki/$slug')()
@@ -119,6 +119,13 @@ const GuestServersLazyRoute = GuestServersLazyImport.update({
   import('./routes/_guest.servers.lazy').then((d) => d.Route),
 )
 
+const GuestContestsLazyRoute = GuestContestsLazyImport.update({
+  path: '/contests',
+  getParentRoute: () => GuestRoute,
+} as any).lazy(() =>
+  import('./routes/_guest.contests.lazy').then((d) => d.Route),
+)
+
 const AuthStatsLazyRoute = AuthStatsLazyImport.update({
   path: '/stats',
   getParentRoute: () => AuthRoute,
@@ -161,13 +168,6 @@ const AuthLogoutLazyRoute = AuthLogoutLazyImport.update({
   path: '/logout',
   getParentRoute: () => AuthRoute,
 } as any).lazy(() => import('./routes/_auth.logout.lazy').then((d) => d.Route))
-
-const AuthContestsLazyRoute = AuthContestsLazyImport.update({
-  path: '/contests',
-  getParentRoute: () => AuthRoute,
-} as any).lazy(() =>
-  import('./routes/_auth.contests.lazy').then((d) => d.Route),
-)
 
 const GuestStvRoute = GuestStvImport.update({
   path: '/stv',
@@ -258,8 +258,8 @@ const AuthForumsForumidLazyRoute = AuthForumsForumidLazyImport.update({
 )
 
 const AuthContestsContestidLazyRoute = AuthContestsContestidLazyImport.update({
-  path: '/$contest_id',
-  getParentRoute: () => AuthContestsLazyRoute,
+  path: '/contests/$contest_id',
+  getParentRoute: () => AuthRoute,
 } as any).lazy(() =>
   import('./routes/_auth.contests.$contest_id.lazy').then((d) => d.Route),
 )
@@ -419,10 +419,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuestStvImport
       parentRoute: typeof GuestImport
     }
-    '/_auth/contests': {
-      preLoaderRoute: typeof AuthContestsLazyImport
-      parentRoute: typeof AuthImport
-    }
     '/_auth/logout': {
       preLoaderRoute: typeof AuthLogoutLazyImport
       parentRoute: typeof AuthImport
@@ -450,6 +446,10 @@ declare module '@tanstack/react-router' {
     '/_auth/stats': {
       preLoaderRoute: typeof AuthStatsLazyImport
       parentRoute: typeof AuthImport
+    }
+    '/_guest/contests': {
+      preLoaderRoute: typeof GuestContestsLazyImport
+      parentRoute: typeof GuestImport
     }
     '/_guest/servers': {
       preLoaderRoute: typeof GuestServersLazyImport
@@ -501,7 +501,7 @@ declare module '@tanstack/react-router' {
     }
     '/_auth/contests/$contest_id': {
       preLoaderRoute: typeof AuthContestsContestidLazyImport
-      parentRoute: typeof AuthContestsLazyImport
+      parentRoute: typeof AuthImport
     }
     '/_auth/forums/$forum_id': {
       preLoaderRoute: typeof AuthForumsForumidLazyImport
@@ -605,7 +605,6 @@ export const routeTree = rootRoute.addChildren([
   AuthRoute.addChildren([
     AuthChatlogsRoute,
     AuthPermissionRoute,
-    AuthContestsLazyRoute.addChildren([AuthContestsContestidLazyRoute]),
     AuthLogoutLazyRoute,
     AuthNotificationsLazyRoute,
     AuthPageNotFoundLazyRoute,
@@ -617,6 +616,7 @@ export const routeTree = rootRoute.addChildren([
       AuthStatsWeaponWeaponidLazyRoute,
     ]),
     AuthBanBanidLazyRoute,
+    AuthContestsContestidLazyRoute,
     AuthForumsForumidLazyRoute,
     AuthLoginDiscordLazyRoute,
     AuthLogsSteamIdLazyRoute,
@@ -628,6 +628,7 @@ export const routeTree = rootRoute.addChildren([
   ]),
   GuestRoute.addChildren([
     GuestStvRoute,
+    GuestContestsLazyRoute,
     GuestServersLazyRoute,
     GuestWikiLazyRoute.addChildren([GuestWikiSlugLazyRoute]),
     GuestIndexRoute,
