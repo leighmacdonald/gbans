@@ -31,7 +31,7 @@ import { logErr } from '../util/errors.ts';
 import { compare, Order, stableSort } from '../util/table.ts';
 import { PageNotFound } from './_auth.page-not-found.lazy.tsx';
 
-export const Route = createLazyFileRoute('/_auth/match/$match_id')({
+export const Route = createLazyFileRoute('/_auth/match/$matchId')({
     component: MatchPage
 });
 
