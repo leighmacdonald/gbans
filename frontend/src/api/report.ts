@@ -96,8 +96,11 @@ export const apiCreateReport = async (opts: CreateReportRequest) => await apiCal
 export const apiGetReport = async (report_id: number, abortController?: AbortController) =>
     await apiCall<ReportWithAuthor>(`/api/report/${report_id}`, 'GET', abortController);
 
-export const apiGetReports = async (opts?: ReportQueryFilter, abortController?: AbortController) =>
-    await apiCall<LazyResult<ReportWithAuthor>, ReportQueryFilter>(`/api/reports`, 'POST', opts, abortController);
+export const apiGetReports = async (opts?: ReportQueryFilter, abortController?: AbortController) => {
+    const resp = await apiCall<LazyResult<ReportWithAuthor>, ReportQueryFilter>(`/api/reports`, 'POST', opts, abortController);
+    resp.data = resp.data.map(transformTimeStampedDates);
+    return resp;
+};
 
 export const apiGetReportMessages = async (report_id: number, abortController?: AbortController) =>
     transformTimeStampedDatesList(
