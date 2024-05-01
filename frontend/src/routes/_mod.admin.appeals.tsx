@@ -1,14 +1,25 @@
 import FilterListIcon from '@mui/icons-material/FilterList';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import Link from '@mui/material/Link';
+import TableCell from '@mui/material/TableCell';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import { createFileRoute } from '@tanstack/react-router';
+import { useQuery } from '@tanstack/react-query';
+import { createFileRoute, Link as RouterLink } from '@tanstack/react-router';
+import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { z } from 'zod';
-import { AppealState } from '../api';
+import { apiGetAppeals, AppealState, appealStateString, BanReasons, SteamBanRecord } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
-import { commonTableSearchSchema } from '../util/table.ts';
+import { DataTable, HeadingCell } from '../component/DataTable.tsx';
+import { Paginator } from '../component/Paginator.tsx';
+import { PersonCell } from '../component/PersonCell.tsx';
+import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
+import { renderDateTime } from '../util/text.tsx';
 
 const appealSearchSchema = z.object({
     ...commonTableSearchSchema,
-    // sortColumn: z.enum(['ban_asn_id', 'source_id', 'target_id', 'deleted', 'reason', 'as_num', 'valid_until']).catch('ban_asn_id'),
+    sortColumn: z.enum(['report_id', 'source_id', 'target_id', 'appeal_state', 'reason', 'created_on', 'updated_on']).catch('updated_on'),
     source_id: z.string().catch(''),
     target_id: z.string().catch(''),
     appeal_state: z.nativeEnum(AppealState).catch(AppealState.Any)
@@ -20,16 +31,23 @@ export const Route = createFileRoute('/_mod/admin/appeals')({
 });
 
 function AdminAppeals() {
-    // const { appeals, count, loading } = useAppeals({
-    //     limit: Number(state.rows ?? RowsPerPage.Ten),
-    //     offset: Number((state.page ?? 0) * (state.rows ?? RowsPerPage.Ten)),
-    //     order_by: state.sortColumn ?? 'ban_id',
-    //     desc: (state.sortOrder ?? 'desc') == 'desc',
-    //     source_id: state.source ?? '',
-    //     target_id: state.target ?? '',
-    //     appeal_state: Number(state.appealState ?? AppealState.Any)
-    // });
-    //
+    const { page, sortColumn, rows, sortOrder, source_id, target_id, appeal_state } = Route.useSearch();
+
+    const { data: appeals, isLoading } = useQuery({
+        queryKey: ['appeals'],
+        queryFn: async () => {
+            return await apiGetAppeals({
+                limit: Number(rows ?? RowsPerPage.TwentyFive),
+                offset: Number((page ?? 0) * (rows ?? RowsPerPage.TwentyFive)),
+                order_by: sortColumn ?? 'ban_id',
+                desc: (sortOrder ?? 'desc') == 'desc',
+                source_id: source_id ?? '',
+                target_id: target_id ?? '',
+                appeal_state: Number(appeal_state ?? AppealState.Any)
+            });
+        }
+    });
+
     // const tableIcon = useMemo(() => {
     //     if (loading) {
     //         return <LoadingSpinner />;
@@ -99,114 +117,83 @@ function AdminAppeals() {
 
             <Grid xs={12}>
                 <ContainerWithHeader title={'Recent Open Appeal Activity'}>
-                    {/*<LazyTable<SteamBanRecord>*/}
-                    {/*    rows={appeals}*/}
-                    {/*    showPager*/}
-                    {/*    page={Number(state.page ?? 0)}*/}
-                    {/*    rowsPerPage={Number(state.rows ?? RowsPerPage.Ten)}*/}
-                    {/*    count={count}*/}
-                    {/*    sortOrder={state.sortOrder}*/}
-                    {/*    sortColumn={state.sortColumn}*/}
-                    {/*    onSortColumnChanged={async (column) => {*/}
-                    {/*        setState({ sortColumn: column });*/}
-                    {/*    }}*/}
-                    {/*    onSortOrderChanged={async (direction) => {*/}
-                    {/*        setState({ sortOrder: direction });*/}
-                    {/*    }}*/}
-                    {/*    onRowsPerPageChange={(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {*/}
-                    {/*        setState({*/}
-                    {/*            rows: Number(event.target.value),*/}
-                    {/*            page: 0*/}
-                    {/*        });*/}
-                    {/*    }}*/}
-                    {/*    onPageChange={(_, newPage) => {*/}
-                    {/*        setState({ page: newPage });*/}
-                    {/*    }}*/}
-                    {/*    columns={[*/}
-                    {/*        {*/}
-                    {/*            label: '#',*/}
-                    {/*            tooltip: 'Ban ID',*/}
-                    {/*            sortable: true,*/}
-                    {/*            align: 'left',*/}
-                    {/*            renderer: (obj) => <TableCellLink label={`#${obj.ban_id}`} to={`/ban/${obj.ban_id}`} />*/}
-                    {/*        },*/}
-                    {/*        {*/}
-                    {/*            label: 'Appeal',*/}
-                    {/*            tooltip: 'Appeal State',*/}
-                    {/*            sortable: true,*/}
-                    {/*            sortKey: 'appeal_state',*/}
-                    {/*            align: 'left',*/}
-                    {/*            renderer: (row) => <Typography variant={'body1'}>{appealStateString(row.appeal_state)}</Typography>*/}
-                    {/*        },*/}
-                    {/*        {*/}
-                    {/*            label: 'Author',*/}
-                    {/*            tooltip: 'Author',*/}
-                    {/*            sortable: true,*/}
-                    {/*            align: 'left',*/}
-                    {/*            renderer: (row) => (*/}
-                    {/*                <SteamIDSelectField*/}
-                    {/*                    steam_id={row.source_id}*/}
-                    {/*                    personaname={row.source_personaname || row.source_id}*/}
-                    {/*                    avatarhash={row.source_avatarhash}*/}
-                    {/*                    field_name={'source_id'}*/}
-                    {/*                />*/}
-                    {/*            )*/}
-                    {/*        },*/}
-                    {/*        {*/}
-                    {/*            label: 'Target',*/}
-                    {/*            tooltip: 'Target',*/}
-                    {/*            sortable: true,*/}
-                    {/*            align: 'left',*/}
-                    {/*            renderer: (row) => (*/}
-                    {/*                <SteamIDSelectField*/}
-                    {/*                    steam_id={row.target_id}*/}
-                    {/*                    personaname={row.target_personaname || row.target_id}*/}
-                    {/*                    avatarhash={row.target_avatarhash}*/}
-                    {/*                    field_name={'target_id'}*/}
-                    {/*                />*/}
-                    {/*            )*/}
-                    {/*        },*/}
-                    {/*        {*/}
-                    {/*            label: 'Reason',*/}
-                    {/*            tooltip: 'Reason',*/}
-                    {/*            sortKey: 'reason',*/}
-                    {/*            sortable: true,*/}
-                    {/*            align: 'left',*/}
-                    {/*            renderer: (row) => <Typography variant={'body1'}>{BanReason[row.reason]}</Typography>*/}
-                    {/*        },*/}
-                    {/*        {*/}
-                    {/*            label: 'Custom Reason',*/}
-                    {/*            tooltip: 'Custom',*/}
-                    {/*            sortKey: 'reason_text',*/}
-                    {/*            sortable: false,*/}
-                    {/*            align: 'left'*/}
-                    {/*        },*/}
-                    {/*        {*/}
-                    {/*            label: 'Created',*/}
-                    {/*            tooltip: 'Created On',*/}
-                    {/*            sortable: true,*/}
-                    {/*            align: 'left',*/}
-                    {/*            width: '150px',*/}
-                    {/*            renderer: (obj) => {*/}
-                    {/*                return <Typography variant={'body1'}>{renderDate(obj.created_on)}</Typography>;*/}
-                    {/*            }*/}
-                    {/*        },*/}
-                    {/*        {*/}
-                    {/*            label: 'Last Activity',*/}
-                    {/*            tooltip: 'Updated when a user sends/edits an appeal message',*/}
-                    {/*            sortable: true,*/}
-                    {/*            sortKey: 'updated_on',*/}
-                    {/*            align: 'left',*/}
-                    {/*            width: '150px',*/}
-                    {/*            renderer: (obj) => {*/}
-                    {/*                return <Typography variant={'body1'}>{renderDateTime(obj.updated_on)}</Typography>;*/}
-                    {/*            }*/}
-                    {/*        }*/}
-                    {/*    ]}*/}
-                    {/*/>*/}
+                    <AppealsTable appeals={appeals ?? { data: [], count: 0 }} isLoading={isLoading} />
+                    <Paginator page={page} rows={rows} />
                 </ContainerWithHeader>
             </Grid>
         </Grid>
         // </Formik>
     );
 }
+const columnHelper = createColumnHelper<SteamBanRecord>();
+
+const AppealsTable = ({ appeals, isLoading }: { appeals: LazyResult<SteamBanRecord>; isLoading: boolean }) => {
+    const columns = [
+        columnHelper.accessor('ban_id', {
+            header: () => <HeadingCell name={'View'} />,
+            cell: (info) => (
+                <Link color={'primary'} component={RouterLink} to={`/ban/$ban_id`} params={{ ban_id: info.getValue() }}>
+                    <Tooltip title={'View'}>
+                        <VisibilityIcon />
+                    </Tooltip>
+                </Link>
+            )
+        }),
+        columnHelper.accessor('appeal_state', {
+            header: () => <HeadingCell name={'Status'} />,
+            cell: (info) => {
+                return (
+                    <TableCell>
+                        <Typography variant={'body1'}>{appealStateString(info.getValue())}</Typography>
+                    </TableCell>
+                );
+            }
+        }),
+        columnHelper.accessor('source_id', {
+            header: () => <HeadingCell name={'Author'} />,
+            cell: (info) => (
+                <PersonCell
+                    steam_id={appeals.data[info.row.index].source_id}
+                    personaname={appeals.data[info.row.index].source_personaname}
+                    avatar_hash={appeals.data[info.row.index].source_avatarhash}
+                />
+            )
+        }),
+        columnHelper.accessor('target_id', {
+            header: () => <HeadingCell name={'Subject'} />,
+            cell: (info) => (
+                <PersonCell
+                    steam_id={appeals.data[info.row.index].target_id}
+                    personaname={appeals.data[info.row.index].target_personaname}
+                    avatar_hash={appeals.data[info.row.index].target_avatarhash}
+                />
+            )
+        }),
+        columnHelper.accessor('reason', {
+            header: () => <HeadingCell name={'Reason'} />,
+            cell: (info) => <Typography>{BanReasons[info.getValue()]}</Typography>
+        }),
+        columnHelper.accessor('reason_text', {
+            header: () => <HeadingCell name={'Custom Reason'} />,
+            cell: (info) => <Typography>{info.getValue()}</Typography>
+        }),
+        columnHelper.accessor('created_on', {
+            header: () => <HeadingCell name={'Created'} />,
+            cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>
+        }),
+        columnHelper.accessor('updated_on', {
+            header: () => <HeadingCell name={'Last Active'} />,
+            cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>
+        })
+    ];
+
+    const table = useReactTable({
+        data: appeals.data,
+        columns: columns,
+        getCoreRowModel: getCoreRowModel(),
+        manualPagination: true,
+        autoResetPageIndex: true
+    });
+
+    return <DataTable table={table} isLoading={isLoading} />;
+};
