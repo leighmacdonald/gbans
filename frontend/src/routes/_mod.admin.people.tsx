@@ -1,14 +1,26 @@
 import FilterListIcon from '@mui/icons-material/FilterList';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
+import IconButton from '@mui/material/IconButton';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import { createFileRoute } from '@tanstack/react-router';
+import { useQuery } from '@tanstack/react-query';
+import { createFileRoute, useRouteContext } from '@tanstack/react-router';
+import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import { fromUnixTime } from 'date-fns';
 import { z } from 'zod';
+import { apiSearchPeople, communityVisibilityState, PermissionLevel, permissionLevelString, Person } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
-import { commonTableSearchSchema } from '../util/table.ts';
+import { DataTable, HeadingCell } from '../component/DataTable.tsx';
+import { Paginator } from '../component/Paginator.tsx';
+import { PersonCell } from '../component/PersonCell.tsx';
+import { commonTableSearchSchema, LazyResult } from '../util/table.ts';
+import { renderDate, renderDateTime } from '../util/text.tsx';
 
 const peopleSearchSchema = z.object({
     ...commonTableSearchSchema,
-    // sortColumn: z.enum(['ban_asn_id', 'source_id', 'target_id', 'deleted', 'reason', 'as_num', 'valid_until']).catch('ban_asn_id'),
+    sortColumn: z.enum(['vac_bans', 'steam_id', 'timecreated', 'personaname']).catch('timecreated'),
     steam_id: z.string().catch(''),
     personaname: z.string().catch('')
 });
@@ -19,18 +31,23 @@ export const Route = createFileRoute('/_mod/admin/people')({
 });
 
 function AdminPeople() {
-    // const { hasPermission } = useRouteContext({ from: '/_mod/admin/people' });
-    //
-    // const { data, count, loading } = usePeople({
-    //     personaname: state.personaname,
-    //     deleted: false,
-    //     desc: state.sortOrder == 'desc',
-    //     limit: Number(state.rows ?? RowsPerPage.Ten),
-    //     offset: Number((state.page ?? 0) * (state.rows ?? RowsPerPage.Ten)),
-    //     order_by: state.sortColumn ?? 'created_on',
-    //     target_id: state.target_id,
-    //     ip: state.ip
-    // });
+    const { hasPermission } = useRouteContext({ from: '/_mod/admin/people' });
+    const { steam_id, page, personaname, sortColumn, rows, sortOrder } = Route.useSearch();
+
+    const { data: people, isLoading } = useQuery({
+        queryKey: ['people', {}],
+        queryFn: async () => {
+            return await apiSearchPeople({
+                personaname: personaname,
+                desc: sortOrder == 'desc',
+                offset: Number((page ?? 0) * rows),
+                limit: rows,
+                order_by: sortColumn,
+                target_id: steam_id,
+                ip: ''
+            });
+        }
+    });
     //
     // const onFilterSubmit = useCallback(
     //     (values: PeopleFilterValues) => {
@@ -90,135 +107,78 @@ function AdminPeople() {
             </Grid>
             <Grid xs={12}>
                 <ContainerWithHeader title={'Player Search'} iconLeft={<PersonSearchIcon />}>
-                    {/*<LazyTable*/}
-                    {/*    count={count}*/}
-                    {/*    sortOrder={state.sortOrder}*/}
-                    {/*    sortColumn={state.sortColumn}*/}
-                    {/*    onSortColumnChanged={async (column) => {*/}
-                    {/*        setState({ sortColumn: column });*/}
-                    {/*    }}*/}
-                    {/*    onSortOrderChanged={async (direction) => {*/}
-                    {/*        setState({ sortOrder: direction });*/}
-                    {/*    }}*/}
-                    {/*    onRowsPerPageChange={(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {*/}
-                    {/*        setState({*/}
-                    {/*            rows: Number(event.target.value),*/}
-                    {/*            page: 0*/}
-                    {/*        });*/}
-                    {/*    }}*/}
-                    {/*    onPageChange={(_, newPage) => {*/}
-                    {/*        setState({ page: newPage });*/}
-                    {/*    }}*/}
-                    {/*    rows={data}*/}
-                    {/*    showPager*/}
-                    {/*    page={Number(state.page ?? 0)}*/}
-                    {/*    rowsPerPage={Number(state.rows ?? RowsPerPage.TwentyFive)}*/}
-                    {/*    columns={[*/}
-                    {/*        {*/}
-                    {/*            label: 'Steam ID',*/}
-                    {/*            tooltip: 'Steam ID',*/}
-                    {/*            sortKey: 'steam_id',*/}
-                    {/*            align: 'left',*/}
-                    {/*            sortable: true,*/}
-                    {/*            renderer: (row) => (*/}
-                    {/*                <PersonCell*/}
-                    {/*                    steam_id={row.steam_id}*/}
-                    {/*                    personaname={row.personaname != '' ? row.personaname : row.steam_id}*/}
-                    {/*                    avatar_hash={row.avatarhash != '' ? row.avatarhash : defaultAvatarHash}*/}
-                    {/*                />*/}
-                    {/*            )*/}
-                    {/*        },*/}
-                    {/*        {*/}
-                    {/*            label: 'Profile',*/}
-                    {/*            tooltip: 'Community Visibility State',*/}
-                    {/*            sortKey: 'communityvisibilitystate',*/}
-                    {/*            align: 'left',*/}
-                    {/*            sortable: true,*/}
-                    {/*            renderer: (row) => (*/}
-                    {/*                <Typography variant={'body1'}>*/}
-                    {/*                    {row.communityvisibilitystate == communityVisibilityState.Public ? 'Public' : 'Private'}*/}
-                    {/*                </Typography>*/}
-                    {/*            )*/}
-                    {/*        },*/}
-                    {/*        {*/}
-                    {/*            label: 'Vac Ban',*/}
-                    {/*            tooltip: 'Amount of vac bans',*/}
-                    {/*            sortKey: 'vac_bans',*/}
-                    {/*            align: 'left',*/}
-                    {/*            sortable: true,*/}
-                    {/*            renderer: (row) => <Typography variant={'body1'}>{row.vac_bans}</Typography>*/}
-                    {/*        },*/}
-                    {/*        {*/}
-                    {/*            label: 'Comm. Ban',*/}
-                    {/*            tooltip: 'Is the player community banned',*/}
-                    {/*            sortKey: 'community_banned',*/}
-                    {/*            align: 'left',*/}
-                    {/*            sortable: true,*/}
-                    {/*            renderer: (row) => <Typography variant={'body1'}>{row.community_banned ? 'Yes' : 'No'}</Typography>*/}
-                    {/*        },*/}
-                    {/*        {*/}
-                    {/*            label: 'Account Created',*/}
-                    {/*            tooltip: 'When the account was created',*/}
-                    {/*            sortKey: 'timecreated',*/}
-                    {/*            align: 'left',*/}
-                    {/*            sortable: true,*/}
-                    {/*            renderer: (row) => (*/}
-                    {/*                <Typography variant={'body1'}>*/}
-                    {/*                    {!isValidSteamDate(fromUnixTime(row.timecreated))*/}
-                    {/*                        ? 'Unknown'*/}
-                    {/*                        : renderDate(fromUnixTime(row.timecreated))}*/}
-                    {/*                </Typography>*/}
-                    {/*            )*/}
-                    {/*        },*/}
-                    {/*        {*/}
-                    {/*            label: 'First Seen',*/}
-                    {/*            tooltip: 'When the user was first seen',*/}
-                    {/*            sortable: true,*/}
-                    {/*            sortKey: 'created_on',*/}
-                    {/*            align: 'left',*/}
-                    {/*            width: '150px',*/}
-                    {/*            renderer: (obj) => {*/}
-                    {/*                return <Typography variant={'body1'}>{renderDate(obj.created_on)}</Typography>;*/}
-                    {/*            }*/}
-                    {/*        },*/}
-                    {/*        {*/}
-                    {/*            label: 'Perms',*/}
-                    {/*            tooltip: 'Permission Level',*/}
-                    {/*            sortKey: 'permission_level',*/}
-                    {/*            align: 'left',*/}
-                    {/*            sortable: true,*/}
-                    {/*            renderer: (row) => <Typography variant={'body1'}>{permissionLevelString(row.permission_level)}</Typography>*/}
-                    {/*        },*/}
-                    {/*        {*/}
-                    {/*            virtual: true,*/}
-                    {/*            virtualKey: 'actions',*/}
-                    {/*            label: '',*/}
-                    {/*            tooltip: '',*/}
-                    {/*            align: 'right',*/}
-                    {/*            renderer: (obj) => {*/}
-                    {/*                return (*/}
-                    {/*                    <ButtonGroup>*/}
-                    {/*                        <IconButton*/}
-                    {/*                            disabled={!auth.user || auth.user.permission_level < PermissionLevel.Admin}*/}
-                    {/*                            color={'warning'}*/}
-                    {/*                            onClick={async () => {*/}
-                    {/*                                try {*/}
-                    {/*                                    await onEditPerson(obj);*/}
-                    {/*                                } catch (e) {*/}
-                    {/*                                    logErr(e);*/}
-                    {/*                                }*/}
-                    {/*                            }}*/}
-                    {/*                        >*/}
-                    {/*                            <VpnKeyIcon />*/}
-                    {/*                        </IconButton>*/}
-                    {/*                    </ButtonGroup>*/}
-                    {/*                );*/}
-                    {/*            }*/}
-                    {/*        }*/}
-                    {/*    ]}*/}
-                    {/*/>*/}
+                    <PeopleTable
+                        people={people ?? { data: [], count: 0 }}
+                        isLoading={isLoading}
+                        isAdmin={hasPermission(PermissionLevel.Admin)}
+                    />
+                    <Paginator page={page} rows={rows} />
                 </ContainerWithHeader>
             </Grid>
         </Grid>
     );
 }
+
+const columnHelper = createColumnHelper<Person>();
+
+const PeopleTable = ({ people, isLoading, isAdmin }: { people: LazyResult<Person>; isLoading: boolean; isAdmin: boolean }) => {
+    const columns = [
+        columnHelper.accessor('steam_id', {
+            header: () => <HeadingCell name={'View'} />,
+            cell: (info) => (
+                <PersonCell
+                    steam_id={people.data[info.row.index].steam_id}
+                    personaname={people.data[info.row.index].personaname}
+                    avatar_hash={people.data[info.row.index].avatarhash}
+                />
+            )
+        }),
+        columnHelper.accessor('communityvisibilitystate', {
+            header: () => <HeadingCell name={'Profile'} />,
+            cell: (info) => {
+                return (
+                    <Typography variant={'body1'}>{info.getValue() == communityVisibilityState.Public ? 'Public' : 'Private'}</Typography>
+                );
+            }
+        }),
+        columnHelper.accessor('vac_bans', {
+            header: () => <HeadingCell name={'Reporter'} />,
+            cell: (info) => <Typography variant={'body1'}>{info.getValue()}</Typography>
+        }),
+        columnHelper.accessor('community_banned', {
+            header: () => <HeadingCell name={'Subject'} />,
+            cell: (info) => <Typography variant={'body1'}>{info.getValue() ? 'Yes' : 'No'}</Typography>
+        }),
+        columnHelper.accessor('timecreated', {
+            header: () => <HeadingCell name={'Reason'} />,
+            cell: (info) => <Typography>{renderDate(fromUnixTime(info.getValue()))}</Typography>
+        }),
+        columnHelper.accessor('created_on', {
+            header: () => <HeadingCell name={'Created'} />,
+            cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>
+        }),
+        columnHelper.accessor('permission_level', {
+            header: () => <HeadingCell name={'Updated'} />,
+            cell: (info) => (
+                <Stack direction={'row'}>
+                    {isAdmin && (
+                        <IconButton color={'warning'}>
+                            <VpnKeyIcon />
+                        </IconButton>
+                    )}
+                    <Typography>{permissionLevelString(info.getValue())}</Typography>
+                </Stack>
+            )
+        })
+    ];
+
+    const table = useReactTable({
+        data: people.data,
+        columns: columns,
+        getCoreRowModel: getCoreRowModel(),
+        manualPagination: true,
+        autoResetPageIndex: true
+    });
+
+    return <DataTable table={table} isLoading={isLoading} />;
+};
