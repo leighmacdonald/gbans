@@ -11,6 +11,7 @@ import { z } from 'zod';
 import { apiGetBansSteam, AppealState, BanReason, BanReasons, SteamBanRecord } from '../api';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { DataTable, HeadingCell } from '../component/DataTable.tsx';
+import { Paginator } from '../component/Paginator.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { TableCellBool } from '../component/table/TableCellBool.tsx';
 import { TableCellRelativeDateField } from '../component/table/TableCellRelativeDateField.tsx';
@@ -37,7 +38,7 @@ export const Route = createFileRoute('/_mod/admin/ban/steam')({
 function AdminBanSteam() {
     const { page, rows, sortOrder, sortColumn, target_id, source_id } = Route.useSearch();
     const { data: bans, isLoading } = useQuery({
-        queryKey: ['steamBans'],
+        queryKey: ['steamBans', { page, rows, sortOrder, sortColumn, target_id, source_id }],
         queryFn: async () => {
             return await apiGetBansSteam({
                 limit: Number(rows),
@@ -211,7 +212,8 @@ function AdminBanSteam() {
                             {/*        }*/}
                             {/*    ]}*/}
                             {/*/>*/}
-                            <ReportTable bans={bans ?? { data: [], count: 0 }} isLoading={isLoading} />
+                            <BanSteamTable bans={bans ?? { data: [], count: 0 }} isLoading={isLoading} />
+                            <Paginator page={page} rows={rows} data={bans} />
                         </Grid>
                     </Grid>
                     {/*</Formik>*/}
@@ -223,7 +225,7 @@ function AdminBanSteam() {
 
 const columnHelper = createColumnHelper<SteamBanRecord>();
 
-const ReportTable = ({ bans, isLoading }: { bans: LazyResult<SteamBanRecord>; isLoading: boolean }) => {
+const BanSteamTable = ({ bans, isLoading }: { bans: LazyResult<SteamBanRecord>; isLoading: boolean }) => {
     const columns = [
         columnHelper.accessor('ban_id', {
             header: () => <HeadingCell name={'Ban ID'} />,
