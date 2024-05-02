@@ -7,6 +7,7 @@ export const Paginator = <T,>({ data, page, rows }: { data?: LazyResult<T>; page
 
     return (
         <TablePagination
+            component={'div'}
             count={data ? data.count : 0}
             page={page}
             rowsPerPage={rows}

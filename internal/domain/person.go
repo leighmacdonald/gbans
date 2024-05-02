@@ -277,25 +277,24 @@ type PersonConnection struct {
 type PersonConnections []PersonConnection
 
 type PersonMessage struct {
-	PersonMessageID int64           `json:"person_message_id"`
-	MatchID         uuid.UUID       `json:"match_id"`
-	SteamID         steamid.SteamID `json:"steam_id"`
-	AvatarHash      string          `json:"avatar_hash"`
-	PersonaName     string          `json:"persona_name"`
-	ServerName      string          `json:"server_name"`
-	ServerID        int             `json:"server_id"`
-	Body            string          `json:"body"`
-	Team            bool            `json:"team"`
-	CreatedOn       time.Time       `json:"created_on"`
-	Flagged         bool            `json:"flagged"`
+	PersonMessageID   int64           `json:"person_message_id"`
+	MatchID           uuid.UUID       `json:"match_id"`
+	SteamID           steamid.SteamID `json:"steam_id"`
+	AvatarHash        string          `json:"avatar_hash"`
+	PersonaName       string          `json:"persona_name"`
+	ServerName        string          `json:"server_name"`
+	ServerID          int             `json:"server_id"`
+	Body              string          `json:"body"`
+	Team              bool            `json:"team"`
+	CreatedOn         time.Time       `json:"created_on"`
+	AutoFilterFlagged int64           `json:"auto_filter_flagged"`
 }
 
 type PersonMessages []PersonMessage
 
 type QueryChatHistoryResult struct {
 	PersonMessage
-	AutoFilterFlagged int64  `json:"auto_filter_flagged"`
-	Pattern           string `json:"pattern"`
+	Pattern string `json:"pattern"`
 }
 
 type PersonSettings struct {
