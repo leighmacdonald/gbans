@@ -1,19 +1,28 @@
 import FilterListIcon from '@mui/icons-material/FilterList';
 import HowToVoteIcon from '@mui/icons-material/HowToVote';
 import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
+import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
+import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { z } from 'zod';
+import { ReportWithAuthor } from '../api';
+import { apiVotesQuery, VoteResult } from '../api/votes.ts';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
-import { commonTableSearchSchema } from '../util/table.ts';
+import { DataTable, HeadingCell } from '../component/DataTable.tsx';
+import { PersonCell } from '../component/PersonCell.tsx';
+import { TableCellBool } from '../component/table/TableCellBool.tsx';
+import { commonTableSearchSchema, LazyResult } from '../util/table.ts';
+import { renderDateTime } from '../util/text.tsx';
 
 const votesSearchSchema = z.object({
     ...commonTableSearchSchema,
-    sortColumn: z.enum(['ban_asn_id', 'source_id', 'target_id', 'deleted', 'reason', 'as_num', 'valid_until']).catch('ban_asn_id'),
+    sortColumn: z.enum(['target_id', 'source_id', 'success', 'created_on']).catch('created_on'),
     source_id: z.string().catch(''),
     target_id: z.string().catch(''),
-    success: z.boolean().optional()
+    success: z.number().catch(-1)
 });
 
 export const Route = createFileRoute('/_mod/admin/votes')({
@@ -22,7 +31,22 @@ export const Route = createFileRoute('/_mod/admin/votes')({
 });
 
 function AdminVotes() {
-    //
+    const { success, page, sortColumn, rows, sortOrder, source_id, target_id } = Route.useSearch();
+
+    const { data: votes, isLoading } = useQuery({
+        queryKey: ['votes', {}],
+        queryFn: async () => {
+            return apiVotesQuery({
+                limit: Number(rows),
+                offset: Number((page ?? 0) * rows),
+                order_by: sortColumn,
+                desc: sortOrder == 'desc',
+                source_id: source_id,
+                target_id: target_id,
+                success: success
+            });
+        }
+    });
     // const { data, count } = useVotes({
     //     order_by: state.sortColumn ?? 'vote_id',
     //     desc: (state.sortOrder ?? 'desc') == 'desc',
@@ -86,98 +110,60 @@ function AdminVotes() {
                 </Grid>
             </ContainerWithHeader>
             <ContainerWithHeaderAndButtons title={'Vote History'} iconLeft={<HowToVoteIcon />}>
-                {/*<LazyTable<VoteResult>*/}
-                {/*    showPager={true}*/}
-                {/*    count={count}*/}
-                {/*    rows={data}*/}
-                {/*    page={Number(state.page ?? 0)}*/}
-                {/*    rowsPerPage={Number(state.rows ?? RowsPerPage.Ten)}*/}
-                {/*    sortOrder={state.sortOrder}*/}
-                {/*    sortColumn={state.sortColumn}*/}
-                {/*    onSortColumnChanged={async (column) => {*/}
-                {/*        setState({ sortColumn: column });*/}
-                {/*    }}*/}
-                {/*    onSortOrderChanged={async (direction) => {*/}
-                {/*        setState({ sortOrder: direction });*/}
-                {/*    }}*/}
-                {/*    onPageChange={(_, newPage: number) => {*/}
-                {/*        setState({ page: newPage });*/}
-                {/*    }}*/}
-                {/*    onRowsPerPageChange={(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {*/}
-                {/*        setState({*/}
-                {/*            rows: Number(event.target.value),*/}
-                {/*            page: 0*/}
-                {/*        });*/}
-                {/*    }}*/}
-                {/*    columns={[*/}
-                {/*        {*/}
-                {/*            label: 'Source',*/}
-                {/*            tooltip: 'Vote Initiator',*/}
-                {/*            sortKey: 'source_id',*/}
-                {/*            sortable: true,*/}
-                {/*            align: 'left',*/}
-                {/*            renderer: (row) => {*/}
-                {/*                return (*/}
-                {/*                    <SteamIDSelectField*/}
-                {/*                        steam_id={row.source_id}*/}
-                {/*                        personaname={row.source_name}*/}
-                {/*                        avatarhash={row.source_avatar_hash}*/}
-                {/*                        field_name={'source_id'}*/}
-                {/*                    />*/}
-                {/*                );*/}
-                {/*            }*/}
-                {/*        },*/}
-                {/*        {*/}
-                {/*            label: 'Target',*/}
-                {/*            tooltip: 'Vote Target',*/}
-                {/*            sortKey: 'target_id',*/}
-                {/*            sortable: true,*/}
-                {/*            align: 'left',*/}
-                {/*            renderer: (row) => {*/}
-                {/*                return (*/}
-                {/*                    <SteamIDSelectField*/}
-                {/*                        steam_id={row.target_id}*/}
-                {/*                        personaname={row.target_name}*/}
-                {/*                        avatarhash={row.target_avatar_hash}*/}
-                {/*                        field_name={'target_id'}*/}
-                {/*                    />*/}
-                {/*                );*/}
-                {/*            }*/}
-                {/*        },*/}
-                {/*        {*/}
-                {/*            label: 'Success',*/}
-                {/*            tooltip: 'Was the vote successful',*/}
-                {/*            sortable: true,*/}
-                {/*            sortKey: 'success',*/}
-                {/*            align: 'right',*/}
-                {/*            renderer: (row) => {*/}
-                {/*                return <TableCellBool enabled={row.success} />;*/}
-                {/*            }*/}
-                {/*        },*/}
-                {/*        {*/}
-                {/*            label: 'Server',*/}
-                {/*            tooltip: 'Server',*/}
-                {/*            sortKey: 'server_id',*/}
-                {/*            sortable: true,*/}
-                {/*            align: 'right',*/}
-                {/*            renderer: (row) => {*/}
-                {/*                return row.server_name;*/}
-                {/*            }*/}
-                {/*        },*/}
-                {/*        {*/}
-                {/*            label: 'Created On',*/}
-                {/*            tooltip: 'When the vote occurred',*/}
-                {/*            sortKey: 'created_on',*/}
-                {/*            sortable: true,*/}
-                {/*            align: 'right',*/}
-                {/*            renderer: (row) => {*/}
-                {/*                return renderDateTime(row.created_on);*/}
-                {/*            }*/}
-                {/*        }*/}
-                {/*    ]}*/}
-                {/*/>*/}
+                <VotesTable votes={votes ?? { data: [], count: 0 }} isLoading={isLoading} />
             </ContainerWithHeaderAndButtons>
         </Stack>
         // </Formik>
     );
 }
+
+const columnHelper = createColumnHelper<VoteResult>();
+
+const VotesTable = ({ votes, isLoading }: { votes: LazyResult<VoteResult>; isLoading: boolean }) => {
+    const columns = [
+        columnHelper.accessor('source_id', {
+            header: () => <HeadingCell name={'Initiator'} />,
+            cell: (info) => (
+                <PersonCell
+                    steam_id={votes.data[info.row.index].source_id}
+                    personaname={votes.data[info.row.index].source_name}
+                    avatar_hash={votes.data[info.row.index].source_avatar_hash}
+                />
+            )
+        }),
+        columnHelper.accessor('target_id', {
+            header: () => <HeadingCell name={'Subject'} />,
+            cell: (info) => {
+                return (
+                    <PersonCell
+                        steam_id={votes.data[info.row.index].target_id}
+                        personaname={votes.data[info.row.index].target_name}
+                        avatar_hash={votes.data[info.row.index].target_avatar_hash}
+                    />
+                );
+            }
+        }),
+        columnHelper.accessor('success', {
+            header: () => <HeadingCell name={'Success'} />,
+            cell: (info) => <TableCellBool enabled={info.getValue()} />
+        }),
+        columnHelper.accessor('server_name', {
+            header: () => <HeadingCell name={'Server'} />,
+            cell: (info) => <Typography>{info.getValue()}</Typography>
+        }),
+        columnHelper.accessor('created_on', {
+            header: () => <HeadingCell name={'Created'} />,
+            cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>
+        })
+    ];
+
+    const table = useReactTable({
+        data: votes.data,
+        columns: columns,
+        getCoreRowModel: getCoreRowModel(),
+        manualPagination: true,
+        autoResetPageIndex: true
+    });
+
+    return <DataTable table={table} isLoading={isLoading} />;
+};
