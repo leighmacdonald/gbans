@@ -189,7 +189,7 @@ export type ConnectionQuery = {
     asn?: number;
 } & QueryFilter<PersonConnection>;
 
-export const apiGetConnections = async (opts: ConnectionQuery, abortController: AbortController) => {
+export const apiGetConnections = async (opts: ConnectionQuery, abortController?: AbortController) => {
     const resp = await apiCall<LazyResult<PersonConnection>, ConnectionQuery>(`/api/connections`, 'POST', opts, abortController);
 
     resp.data = resp.data.map(transformCreatedOnDate);
