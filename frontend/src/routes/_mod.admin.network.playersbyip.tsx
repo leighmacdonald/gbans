@@ -1,13 +1,46 @@
 import WifiFindIcon from '@mui/icons-material/WifiFind';
+import TableCell from '@mui/material/TableCell';
+import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
+import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
+import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import { z } from 'zod';
+import { apiGetConnections, PersonConnection } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
+import { DataTable, HeadingCell } from '../component/DataTable.tsx';
+import { Paginator } from '../component/Paginator.tsx';
+import { commonTableSearchSchema, LazyResult } from '../util/table.ts';
+import { renderDateTime } from '../util/text.tsx';
+
+const playersByIPSearchSchema = z.object({
+    ...commonTableSearchSchema,
+    sortColumn: z.enum(['person_connection_id', 'steam_id', 'created_on', 'ip_addr', 'server_id']).catch('person_connection_id'),
+    cidr: z.string().catch('')
+});
 
 export const Route = createFileRoute('/_mod/admin/network/playersbyip')({
-    component: AdminNetworkPlayersByCIDR
+    component: AdminNetworkPlayersByCIDR,
+    validateSearch: (search) => playersByIPSearchSchema.parse(search)
 });
 
 function AdminNetworkPlayersByCIDR() {
+    const { page, rows, sortOrder, sortColumn, cidr } = Route.useSearch();
+    const { data: connections, isLoading } = useQuery({
+        queryKey: ['playersByIP', { page, rows, sortOrder, sortColumn, cidr }],
+        queryFn: async () => {
+            if (cidr == '') {
+                return { data: [], count: 0 };
+            }
+            return await apiGetConnections({
+                limit: Number(rows),
+                offset: Number((page ?? 0) * rows),
+                order_by: sortColumn ?? 'steam_id',
+                desc: sortOrder == 'desc',
+                cidr: cidr
+            });
+        }
+    });
     // const [state, setState] = useUrlState({
     //     page: undefined,
     //     source_id: undefined,
@@ -165,6 +198,61 @@ function AdminNetworkPlayersByCIDR() {
                     {/*)}*/}
                 </Grid>
             </Grid>
+            <PayersByIPTable connections={connections ?? { data: [], count: 0 }} isLoading={isLoading} />
+            <Paginator page={page} rows={rows} data={connections} />
         </ContainerWithHeader>
     );
 }
+
+const columnHelper = createColumnHelper<PersonConnection>();
+
+const PayersByIPTable = ({ connections, isLoading }: { connections: LazyResult<PersonConnection>; isLoading: boolean }) => {
+    const columns = [
+        columnHelper.accessor('created_on', {
+            header: () => <HeadingCell name={'Created'} />,
+            cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>
+        }),
+        columnHelper.accessor('persona_name', {
+            header: () => <HeadingCell name={'Name'} />,
+            cell: (info) => (
+                <TableCell>
+                    <Typography>{info.getValue()}</Typography>
+                </TableCell>
+            )
+        }),
+        columnHelper.accessor('steam_id', {
+            header: () => <HeadingCell name={'Name'} />,
+            cell: (info) => (
+                <TableCell>
+                    <Typography>{info.getValue()}</Typography>
+                </TableCell>
+            )
+        }),
+        columnHelper.accessor('ip_addr', {
+            header: () => <HeadingCell name={'IP Address'} />,
+            cell: (info) => (
+                <TableCell>
+                    <Typography>{info.getValue()}</Typography>
+                </TableCell>
+            )
+        }),
+        columnHelper.accessor('server_id', {
+            header: () => <HeadingCell name={'Server'} />,
+            cell: (info) => (
+                <TableCell>
+                    <Typography>{connections.data[info.row.index].server_name_short}</Typography>
+                </TableCell>
+            )
+        })
+    ];
+
+    const table = useReactTable({
+        data: connections.data,
+        columns: columns,
+        getCoreRowModel: getCoreRowModel(),
+        manualPagination: true,
+        autoResetPageIndex: true
+    });
+
+    return <DataTable table={table} isLoading={isLoading} />;
+};

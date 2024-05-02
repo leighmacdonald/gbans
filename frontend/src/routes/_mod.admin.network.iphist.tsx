@@ -27,7 +27,7 @@ export const Route = createFileRoute('/_mod/admin/network/iphist')({
 function AdminNetworkPlayerIPHistory() {
     const { page, rows, sortOrder, sortColumn, source_id } = Route.useSearch();
     const { data: connections, isLoading } = useQuery({
-        queryKey: ['steamBans', { page, rows, sortOrder, sortColumn, source_id }],
+        queryKey: ['connectionHist', { page, rows, sortOrder, sortColumn, source_id }],
         queryFn: async () => {
             if (source_id == '') {
                 return { data: [], count: 0 };
