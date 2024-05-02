@@ -1,28 +1,30 @@
 import AddIcon from '@mui/icons-material/Add';
 import GavelIcon from '@mui/icons-material/Gavel';
 import Button from '@mui/material/Button';
+import Link from '@mui/material/Link';
+import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import { createFileRoute } from '@tanstack/react-router';
-import { intervalToDuration } from 'date-fns';
+import { useQuery } from '@tanstack/react-query';
+import { createFileRoute, Link as RouterLink } from '@tanstack/react-router';
+import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { z } from 'zod';
-import { AppealState } from '../api';
+import { apiGetBansSteam, AppealState, BanReason, BanReasons, SteamBanRecord } from '../api';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
-import { commonTableSearchSchema } from '../util/table.ts';
-
-export const isPermanentBan = (start: Date, end: Date): boolean => {
-    const dur = intervalToDuration({
-        start,
-        end
-    });
-    const { years } = dur;
-    return years != null && years > 5;
-};
+import { DataTable, HeadingCell } from '../component/DataTable.tsx';
+import { PersonCell } from '../component/PersonCell.tsx';
+import { TableCellBool } from '../component/table/TableCellBool.tsx';
+import { TableCellRelativeDateField } from '../component/table/TableCellRelativeDateField.tsx';
+import { commonTableSearchSchema, isPermanentBan, LazyResult } from '../util/table.ts';
+import { renderDate } from '../util/text.tsx';
 
 const banSteamSearchSchema = z.object({
     ...commonTableSearchSchema,
-    sortColumn: z.enum(['ban_id', 'source_id', 'target_id', 'deleted', 'reason', 'appeal_state', 'valid_until']).catch('ban_id'),
+    sortColumn: z
+        .enum(['ban_id', 'source_id', 'target_id', 'deleted', 'reason', 'created_on', 'valid_until', 'appeal_state'])
+        .catch('ban_id'),
     source_id: z.string().catch(''),
     target_id: z.string().catch(''),
+    reason: z.nativeEnum(BanReason).optional(),
     appeal_state: z.nativeEnum(AppealState).catch(AppealState.Any),
     deleted: z.boolean().catch(false)
 });
@@ -33,7 +35,20 @@ export const Route = createFileRoute('/_mod/admin/ban/steam')({
 });
 
 function AdminBanSteam() {
-    // const { page, rows, sortOrder, sortColumn, deleted, target_id, appeal_state, source_id } = Route.useSearch();
+    const { page, rows, sortOrder, sortColumn, target_id, source_id } = Route.useSearch();
+    const { data: bans, isLoading } = useQuery({
+        queryKey: ['steamBans'],
+        queryFn: async () => {
+            return await apiGetBansSteam({
+                limit: Number(rows),
+                offset: Number((page ?? 0) * rows),
+                order_by: sortColumn ?? 'ban_id',
+                desc: sortOrder == 'desc',
+                source_id: source_id,
+                target_id: target_id
+            });
+        }
+    });
     // const [newSteamBans, setNewSteamBans] = useState<SteamBanRecord[]>([]);
     // const { sendFlash } = useUserFlashCtx();
     //
@@ -163,169 +178,6 @@ function AdminBanSteam() {
                             </Grid>
                         </Grid>
                         <Grid xs={12}>
-                            {/*<LazyTable<SteamBanRecord>*/}
-                            {/*    showPager={true}*/}
-                            {/*    count={count}*/}
-                            {/*    rows={allBans}*/}
-                            {/*    page={Number(state.page ?? 0)}*/}
-                            {/*    rowsPerPage={Number(state.rows ?? RowsPerPage.Ten)}*/}
-                            {/*    sortOrder={state.sortOrder}*/}
-                            {/*    sortColumn={state.sortColumn}*/}
-                            {/*    onSortColumnChanged={async (column) => {*/}
-                            {/*        setState({ sortColumn: column });*/}
-                            {/*    }}*/}
-                            {/*    onSortOrderChanged={async (direction) => {*/}
-                            {/*        setState({ sortOrder: direction });*/}
-                            {/*    }}*/}
-                            {/*    onPageChange={(_, newPage: number) => {*/}
-                            {/*        setState({ page: newPage });*/}
-                            {/*    }}*/}
-                            {/*    onRowsPerPageChange={(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {*/}
-                            {/*        setState({*/}
-                            {/*            rows: Number(event.target.value),*/}
-                            {/*            page: 0*/}
-                            {/*        });*/}
-                            {/*    }}*/}
-                            {/*    columns={[*/}
-                            {/*        {*/}
-                            {/*            label: '#',*/}
-                            {/*            tooltip: 'Ban ID',*/}
-                            {/*            sortKey: 'ban_id',*/}
-                            {/*            sortable: true,*/}
-                            {/*            align: 'left',*/}
-                            {/*            renderer: (row) => (*/}
-                            {/*                <TableCellLink label={`#${row.ban_id.toString()}`} to={`/ban/${row.ban_id}`} />*/}
-                            {/*            )*/}
-                            {/*        },*/}
-                            {/*        {*/}
-                            {/*            label: 'A',*/}
-                            {/*            tooltip: 'Ban Author',*/}
-                            {/*            sortKey: 'source_personaname',*/}
-                            {/*            sortable: true,*/}
-                            {/*            align: 'center',*/}
-                            {/*            renderer: (row) => (*/}
-                            {/*                <SteamIDSelectField*/}
-                            {/*                    steam_id={row.source_id}*/}
-                            {/*                    personaname={row.source_personaname}*/}
-                            {/*                    avatarhash={row.source_avatarhash}*/}
-                            {/*                    field_name={'source_id'}*/}
-                            {/*                />*/}
-                            {/*            )*/}
-                            {/*        },*/}
-                            {/*        {*/}
-                            {/*            label: 'Target',*/}
-                            {/*            tooltip: 'Steam Name',*/}
-                            {/*            sortKey: 'target_personaname',*/}
-                            {/*            sortable: true,*/}
-                            {/*            align: 'left',*/}
-                            {/*            renderer: (row) => (*/}
-                            {/*                <SteamIDSelectField*/}
-                            {/*                    steam_id={row.target_id}*/}
-                            {/*                    personaname={row.target_personaname}*/}
-                            {/*                    avatarhash={row.target_avatarhash}*/}
-                            {/*                    field_name={'target_id'}*/}
-                            {/*                />*/}
-                            {/*            )*/}
-                            {/*        },*/}
-                            {/*        {*/}
-                            {/*            label: 'Reason',*/}
-                            {/*            tooltip: 'Reason',*/}
-                            {/*            sortKey: 'reason',*/}
-                            {/*            sortable: true,*/}
-                            {/*            align: 'left',*/}
-                            {/*            renderer: (row) => (*/}
-                            {/*                <Box>*/}
-                            {/*                    <Tooltip*/}
-                            {/*                        title={row.reason == BanReason.Custom ? row.reason_text : BanReason[row.reason]}*/}
-                            {/*                    >*/}
-                            {/*                        <Typography variant={'body1'}>{`${BanReason[row.reason]}`}</Typography>*/}
-                            {/*                    </Tooltip>*/}
-                            {/*                </Box>*/}
-                            {/*            )*/}
-                            {/*        },*/}
-                            {/*        {*/}
-                            {/*            label: 'Created',*/}
-                            {/*            tooltip: 'Created On',*/}
-                            {/*            sortType: 'date',*/}
-                            {/*            align: 'left',*/}
-                            {/*            width: '150px',*/}
-                            {/*            virtual: true,*/}
-                            {/*            virtualKey: 'created_on',*/}
-                            {/*            renderer: (obj) => {*/}
-                            {/*                return <Typography variant={'body1'}>{renderDate(obj.created_on)}</Typography>;*/}
-                            {/*            }*/}
-                            {/*        },*/}
-                            {/*        {*/}
-                            {/*            label: 'Expires',*/}
-                            {/*            tooltip: 'Valid Until',*/}
-                            {/*            sortType: 'date',*/}
-                            {/*            align: 'left',*/}
-                            {/*            width: '150px',*/}
-                            {/*            virtual: true,*/}
-                            {/*            virtualKey: 'valid_until',*/}
-                            {/*            sortable: true,*/}
-                            {/*            renderer: (obj) => {*/}
-                            {/*                return <TableCellRelativeDateField date={obj.valid_until} />;*/}
-                            {/*            }*/}
-                            {/*        },*/}
-                            {/*        {*/}
-                            {/*            label: 'Duration',*/}
-                            {/*            tooltip: 'Total Ban Duration',*/}
-                            {/*            sortType: 'number',*/}
-                            {/*            align: 'left',*/}
-                            {/*            width: '150px',*/}
-                            {/*            virtual: true,*/}
-                            {/*            virtualKey: 'duration',*/}
-                            {/*            renderer: (row) => {*/}
-                            {/*                return isPermanentBan(row.created_on, row.valid_until) ? (*/}
-                            {/*                    'Permanent'*/}
-                            {/*                ) : (*/}
-                            {/*                    <TableCellRelativeDateField date={row.created_on} compareDate={row.valid_until} />*/}
-                            {/*                );*/}
-                            {/*            }*/}
-                            {/*        },*/}
-                            {/*        {*/}
-                            {/*            label: 'F',*/}
-                            {/*            tooltip: 'Are friends also included in the ban',*/}
-                            {/*            align: 'center',*/}
-                            {/*            width: '50px',*/}
-                            {/*            sortKey: 'include_friends',*/}
-                            {/*            renderer: (row) => <TableCellBool enabled={row.include_friends} />*/}
-                            {/*        },*/}
-                            {/*        {*/}
-                            {/*            label: 'E',*/}
-                            {/*            tooltip:*/}
-                            {/*                'Are othere players allowed to play from the same ip when a ban on that ip is active (eg. banned roomate/family)',*/}
-                            {/*            align: 'center',*/}
-                            {/*            width: '50px',*/}
-                            {/*            sortKey: 'evade_ok',*/}
-                            {/*            renderer: (row) => <TableCellBool enabled={row.evade_ok} />*/}
-                            {/*        },*/}
-                            {/*        {*/}
-                            {/*            label: 'A',*/}
-                            {/*            tooltip: 'Is this ban active (not deleted/inactive/unbanned)',*/}
-                            {/*            align: 'center',*/}
-                            {/*            width: '50px',*/}
-                            {/*            sortKey: 'deleted',*/}
-                            {/*            renderer: (row) => <TableCellBool enabled={!row.deleted} />*/}
-                            {/*        },*/}
-                            {/*        {*/}
-                            {/*            label: 'Rep.',*/}
-                            {/*            tooltip: 'Report',*/}
-                            {/*            sortable: false,*/}
-                            {/*            align: 'center',*/}
-                            {/*            width: '20px',*/}
-                            {/*            renderer: (row) =>*/}
-                            {/*                row.report_id > 0 ? (*/}
-                            {/*                    <Tooltip title={'View Report'}>*/}
-                            {/*                        <>*/}
-                            {/*                            <TableCellLink label={`#${row.report_id}`} to={`/report/${row.report_id}`} />*/}
-                            {/*                        </>*/}
-                            {/*                    </Tooltip>*/}
-                            {/*                ) : (*/}
-                            {/*                    <></>*/}
-                            {/*                )*/}
-                            {/*        },*/}
                             {/*        {*/}
                             {/*            label: 'Act.',*/}
                             {/*            tooltip: 'Actions',*/}
@@ -359,6 +211,7 @@ function AdminBanSteam() {
                             {/*        }*/}
                             {/*    ]}*/}
                             {/*/>*/}
+                            <ReportTable bans={bans ?? { data: [], count: 0 }} isLoading={isLoading} />
                         </Grid>
                     </Grid>
                     {/*</Formik>*/}
@@ -367,3 +220,85 @@ function AdminBanSteam() {
         </Grid>
     );
 }
+
+const columnHelper = createColumnHelper<SteamBanRecord>();
+
+const ReportTable = ({ bans, isLoading }: { bans: LazyResult<SteamBanRecord>; isLoading: boolean }) => {
+    const columns = [
+        columnHelper.accessor('ban_id', {
+            header: () => <HeadingCell name={'Ban ID'} />,
+            cell: (info) => (
+                <Link component={RouterLink} to={`/ban/$ban_id`} params={{ ban_id: info.getValue() }}>
+                    {`#${info.getValue()}`}
+                </Link>
+            )
+        }),
+        columnHelper.accessor('source_id', {
+            header: () => <HeadingCell name={'Author'} />,
+            cell: (info) => (
+                <PersonCell
+                    steam_id={bans.data[info.row.index].source_id}
+                    personaname={bans.data[info.row.index].source_personaname}
+                    avatar_hash={bans.data[info.row.index].source_avatarhash}
+                />
+            )
+        }),
+        columnHelper.accessor('target_id', {
+            header: () => <HeadingCell name={'Subject'} />,
+            cell: (info) => (
+                <PersonCell
+                    steam_id={bans.data[info.row.index].target_id}
+                    personaname={bans.data[info.row.index].target_personaname}
+                    avatar_hash={bans.data[info.row.index].target_avatarhash}
+                />
+            )
+        }),
+        columnHelper.accessor('reason', {
+            header: () => <HeadingCell name={'Reason'} />,
+            cell: (info) => <Typography>{BanReasons[info.getValue()]}</Typography>
+        }),
+        columnHelper.accessor('created_on', {
+            header: () => <HeadingCell name={'Created'} />,
+            cell: (info) => <Typography>{renderDate(info.getValue())}</Typography>
+        }),
+        columnHelper.accessor('valid_until', {
+            header: () => <HeadingCell name={'Expires'} />,
+            cell: (info) =>
+                isPermanentBan(bans.data[info.row.index].created_on, bans.data[info.row.index].valid_until) ? (
+                    'Permanent'
+                ) : (
+                    <TableCellRelativeDateField
+                        date={bans.data[info.row.index].created_on}
+                        compareDate={bans.data[info.row.index].valid_until}
+                    />
+                )
+        }),
+        columnHelper.accessor('include_friends', {
+            header: () => <HeadingCell name={'F'} />,
+            cell: (info) => <TableCellBool enabled={info.getValue()} />
+        }),
+        columnHelper.accessor('evade_ok', {
+            header: () => <HeadingCell name={'E'} />,
+            cell: (info) => <TableCellBool enabled={info.getValue()} />
+        }),
+        columnHelper.accessor('report_id', {
+            header: () => <HeadingCell name={'Rep.'} />,
+            cell: (info) =>
+                info.getValue() > 0 && (
+                    <Link component={RouterLink} to={`/report/$reportId`} params={{ reportId: info.getValue() }}>
+                        {`#${info.getValue()}`}
+                    </Link>
+                )
+        })
+    ];
+
+    const table = useReactTable({
+        data: bans.data,
+        columns: columns,
+        getCoreRowModel: getCoreRowModel(),
+        manualPagination: true,
+        autoResetPageIndex: true
+    });
+
+    return <DataTable table={table} isLoading={isLoading} />;
+};

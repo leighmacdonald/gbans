@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Theme } from '@mui/material';
 import { SxProps } from '@mui/material/styles';
+import { intervalToDuration } from 'date-fns';
 import { z } from 'zod';
 import { DataCount } from '../api';
 
@@ -10,6 +11,15 @@ export enum RowsPerPage {
     Fifty = 50,
     Hundred = 100
 }
+
+export const isPermanentBan = (start: Date, end: Date): boolean => {
+    const dur = intervalToDuration({
+        start,
+        end
+    });
+    const { years } = dur;
+    return years != null && years > 5;
+};
 
 export const commonTableSearchSchema = {
     page: z.number().catch(0),

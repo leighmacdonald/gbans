@@ -3,15 +3,44 @@ import StorageIcon from '@mui/icons-material/Storage';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import { createLazyFileRoute } from '@tanstack/react-router';
+import { useQuery } from '@tanstack/react-query';
+import { createFileRoute } from '@tanstack/react-router';
+import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import { z } from 'zod';
+import { apiGetServersAdmin, Server } from '../api';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
+import { DataTable, HeadingCell } from '../component/DataTable.tsx';
+import { Paginator } from '../component/Paginator.tsx';
+import { TableCellBool } from '../component/table/TableCellBool.tsx';
+import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
 
-export const Route = createLazyFileRoute('/_admin/admin/servers')({
-    component: AdminServers
+const serversSearchSchema = z.object({
+    ...commonTableSearchSchema,
+    sortColumn: z.enum(['server_id', 'short_name', 'name', 'address', 'port', 'region', 'cc', 'enable_stats', 'is_enabled']).catch('name')
+});
+
+export const Route = createFileRoute('/_admin/admin/servers')({
+    component: AdminServers,
+    validateSearch: (search) => serversSearchSchema.parse(search)
 });
 
 function AdminServers() {
+    const { page, sortColumn, rows, sortOrder } = Route.useSearch();
+
+    const { data: servers, isLoading } = useQuery({
+        queryKey: ['serversAdmin', { page, sortColumn, sortOrder, rows }],
+        queryFn: async () => {
+            return await apiGetServersAdmin({
+                limit: rows ?? RowsPerPage.TwentyFive,
+                offset: Number((page ?? 0) * (rows ?? RowsPerPage.TwentyFive)),
+                order_by: sortColumn ?? 'name',
+                desc: sortOrder == 'desc',
+                include_disabled: false
+            });
+        }
+    });
     // const [newServers, setNewServers] = useState<Server[]>([]);
     //
     // const { sendFlash } = useUserFlashCtx();
@@ -78,133 +107,67 @@ function AdminServers() {
                             </ButtonGroup>
                         ]}
                     >
-                        {/*<LazyTable<Server>*/}
-                        {/*    showPager={true}*/}
-                        {/*    count={count}*/}
-                        {/*    rows={servers}*/}
-                        {/*    page={Number(state.page ?? 0)}*/}
-                        {/*    rowsPerPage={Number(state.rows ?? RowsPerPage.TwentyFive)}*/}
-                        {/*    sortOrder={state.sortOrder}*/}
-                        {/*    sortColumn={state.sortColumn}*/}
-                        {/*    onSortColumnChanged={async (column) => {*/}
-                        {/*        setState({ sortColumn: column });*/}
-                        {/*    }}*/}
-                        {/*    onSortOrderChanged={async (direction) => {*/}
-                        {/*        setState({ sortOrder: direction });*/}
-                        {/*    }}*/}
-                        {/*    onPageChange={(_, newPage: number) => {*/}
-                        {/*        setState({ page: newPage });*/}
-                        {/*    }}*/}
-                        {/*    onRowsPerPageChange={(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {*/}
-                        {/*        setState({*/}
-                        {/*            rows: Number(event.target.value),*/}
-                        {/*            page: 0*/}
-                        {/*        });*/}
-                        {/*    }}*/}
-                        {/*    columns={[*/}
-                        {/*        {*/}
-                        {/*            tooltip: 'Name',*/}
-                        {/*            label: 'Name',*/}
-                        {/*            sortKey: 'short_name',*/}
-                        {/*            align: 'left',*/}
-                        {/*            sortable: true*/}
-                        {/*        },*/}
-                        {/*        {*/}
-                        {/*            tooltip: 'Name Long',*/}
-                        {/*            label: 'Name Long',*/}
-                        {/*            sortKey: 'name',*/}
-                        {/*            align: 'left',*/}
-                        {/*            sortable: true*/}
-                        {/*        },*/}
-                        {/*        {*/}
-                        {/*            tooltip: 'Address',*/}
-                        {/*            label: 'Address',*/}
-                        {/*            sortKey: 'address',*/}
-                        {/*            align: 'left',*/}
-                        {/*            sortable: true*/}
-                        {/*        },*/}
-                        {/*        {*/}
-                        {/*            tooltip: 'Port',*/}
-                        {/*            label: 'Port',*/}
-                        {/*            sortKey: 'port',*/}
-                        {/*            align: 'left',*/}
-                        {/*            sortable: true*/}
-                        {/*        },*/}
-                        {/*        {*/}
-                        {/*            tooltip: 'RCON Password',*/}
-                        {/*            label: 'rcon',*/}
-                        {/*            sortKey: 'rcon',*/}
-                        {/*            align: 'left'*/}
-                        {/*        },*/}
-                        {/*        {*/}
-                        {/*            tooltip: 'Region',*/}
-                        {/*            label: 'Region',*/}
-                        {/*            sortKey: 'region',*/}
-                        {/*            align: 'left',*/}
-                        {/*            sortable: true*/}
-                        {/*        },*/}
-                        {/*        {*/}
-                        {/*            tooltip: 'CC',*/}
-                        {/*            label: 'CC',*/}
-                        {/*            sortKey: 'cc',*/}
-                        {/*            align: 'left',*/}
-                        {/*            sortable: true*/}
-                        {/*        },*/}
-                        {/*        {*/}
-                        {/*            tooltip: 'Stats Recording Enabled',*/}
-                        {/*            label: 'Stats',*/}
-                        {/*            sortKey: 'enable_stats',*/}
-                        {/*            align: 'left',*/}
-                        {/*            sortable: true,*/}
-                        {/*            renderer: (row) => {*/}
-                        {/*                return <TableCellBool enabled={row.enable_stats} />;*/}
-                        {/*            }*/}
-                        {/*        },*/}
-                        {/*        {*/}
-                        {/*            tooltip: 'Enabled',*/}
-                        {/*            label: 'En.',*/}
-                        {/*            sortKey: 'is_enabled',*/}
-                        {/*            sortable: true,*/}
-                        {/*            align: 'center',*/}
-                        {/*            renderer: (row) => <TableCellBool enabled={row.is_enabled} />*/}
-                        {/*        },*/}
-                        {/*        {*/}
-                        {/*            label: 'Act.',*/}
-                        {/*            tooltip: 'Actions',*/}
-                        {/*            sortable: false,*/}
-                        {/*            align: 'center',*/}
-                        {/*            renderer: (row) => (*/}
-                        {/*                <ButtonGroup fullWidth>*/}
-                        {/*                    <IconButton*/}
-                        {/*                        color={'warning'}*/}
-                        {/*                        onClick={async () => {*/}
-                        {/*                            await NiceModal.show(ModalServerEditor, {*/}
-                        {/*                                server: row*/}
-                        {/*                            });*/}
-                        {/*                        }}*/}
-                        {/*                    >*/}
-                        {/*                        <Tooltip title={'Edit Server'}>*/}
-                        {/*                            <EditIcon />*/}
-                        {/*                        </Tooltip>*/}
-                        {/*                    </IconButton>*/}
-                        {/*                    <IconButton*/}
-                        {/*                        color={'warning'}*/}
-                        {/*                        onClick={async () => {*/}
-                        {/*                            await onEdit(row);*/}
-                        {/*                        }}*/}
-                        {/*                    >*/}
-                        {/*                        <Tooltip title={'Delete Server'}>*/}
-                        {/*                            <DeleteIcon color={'error'} />*/}
-                        {/*                        </Tooltip>*/}
-                        {/*                    </IconButton>*/}
-                        {/*                </ButtonGroup>*/}
-                        {/*            )*/}
-                        {/*        }*/}
-                        {/*    ]}*/}
-                        {/*/>*/}
+                        <AdminServersTable servers={servers ?? { data: [], count: 0 }} isLoading={isLoading} />
+                        <Paginator data={servers} page={page} rows={rows} />
                     </ContainerWithHeaderAndButtons>
                 </Stack>
             </Grid>
         </Grid>
     );
 }
+const columnHelper = createColumnHelper<Server>();
+
+const AdminServersTable = ({ servers, isLoading }: { servers: LazyResult<Server>; isLoading: boolean }) => {
+    const columns = [
+        columnHelper.accessor('server_id', {
+            header: () => <HeadingCell name={'ID'} />,
+            cell: (info) => <Typography>{info.getValue()}</Typography>
+        }),
+        columnHelper.accessor('short_name', {
+            header: () => <HeadingCell name={'Name'} />,
+            cell: (info) => <Typography>{info.getValue()}</Typography>
+        }),
+        columnHelper.accessor('name', {
+            header: () => <HeadingCell name={'Name Long'} />,
+            cell: (info) => <Typography>{info.getValue()}</Typography>
+        }),
+        columnHelper.accessor('address', {
+            header: () => <HeadingCell name={'Address'} />,
+            cell: (info) => <Typography>{info.getValue()}</Typography>
+        }),
+        columnHelper.accessor('port', {
+            header: () => <HeadingCell name={'Reason'} />,
+            cell: (info) => <Typography>{info.getValue()}</Typography>
+        }),
+        columnHelper.accessor('rcon', {
+            header: () => <HeadingCell name={'RCON'} />,
+            cell: (info) => <Typography>{info.getValue()}</Typography>
+        }),
+        columnHelper.accessor('region', {
+            header: () => <HeadingCell name={'Region'} />,
+            cell: (info) => <Typography>{info.getValue()}</Typography>
+        }),
+        columnHelper.accessor('cc', {
+            header: () => <HeadingCell name={'CC'} />,
+            cell: (info) => <Typography>{info.getValue()}</Typography>
+        }),
+        columnHelper.accessor('enable_stats', {
+            header: () => <HeadingCell name={'Stats'} />,
+            cell: (info) => <TableCellBool enabled={info.getValue()} />
+        }),
+        columnHelper.accessor('is_enabled', {
+            header: () => <HeadingCell name={'En.'} />,
+            cell: (info) => <TableCellBool enabled={info.getValue()} />
+        })
+    ];
+
+    const table = useReactTable({
+        data: servers.data,
+        columns: columns,
+        getCoreRowModel: getCoreRowModel(),
+        manualPagination: true,
+        autoResetPageIndex: true
+    });
+
+    return <DataTable table={table} isLoading={isLoading} />;
+};
