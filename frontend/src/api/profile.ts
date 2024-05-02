@@ -154,6 +154,7 @@ export interface MessageQuery extends QueryFilter<PersonMessage> {
     date_start?: Date;
     date_end?: Date;
     match_id?: string;
+    auto_filter_flagged?: boolean;
 }
 
 export const apiGetMessages = async (opts: MessageQuery, abortController?: AbortController) => {

@@ -210,7 +210,7 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.Cha
 			"m.persona_name",
 			"m.match_id",
 			"s.short_name",
-			"CASE WHEN mf.person_message_id::int::boolean THEN mf.person_message_filter_id ELSE 0 END as flagged",
+			"mf.person_message_filter_id",
 			"p.avatarhash",
 			"CASE WHEN f.pattern IS NULL THEN '' ELSE f.pattern END").
 		From("person_messages m").
@@ -261,7 +261,7 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.Cha
 	}
 
 	if filters.FlaggedOnly {
-		constraints = append(constraints, sq.Eq{"flagged": true})
+		constraints = append(constraints, sq.Gt{"mf.person_message_filter_id": 0})
 	}
 
 	var messages []domain.QueryChatHistoryResult
@@ -278,6 +278,7 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.Cha
 			message domain.QueryChatHistoryResult
 			steamID int64
 			matchID []byte
+			flagged *int64
 		)
 
 		if errScan := rows.Scan(&message.PersonMessageID,
@@ -289,7 +290,7 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.Cha
 			&message.PersonaName,
 			&matchID,
 			&message.ServerName,
-			&message.AutoFilterFlagged,
+			&flagged,
 			&message.AvatarHash,
 			&message.Pattern); errScan != nil {
 			return nil, r.db.DBErr(errScan)
@@ -298,6 +299,10 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.Cha
 		if matchID != nil {
 			// Support for old messages which existed before matches
 			message.MatchID = uuid.FromBytesOrNil(matchID)
+		}
+
+		if flagged != nil {
+			message.AutoFilterFlagged = *flagged
 		}
 
 		message.SteamID = steamid.New(steamID)

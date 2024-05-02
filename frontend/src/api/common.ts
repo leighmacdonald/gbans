@@ -201,6 +201,7 @@ export interface QueryFilter<T> {
     query?: string;
     order_by?: keyof T;
     deleted?: boolean;
+    flagged_only?: boolean;
 }
 
 export interface BanQueryCommon<T> extends QueryFilter<T> {

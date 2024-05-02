@@ -493,7 +493,7 @@ func (r *matchRepository) matchGetChat(ctx context.Context, matchID uuid.UUID) (
 		if errRow := chatRows.
 			Scan(&msg.PersonMessageID, &steamID, &msg.ServerID, &msg.Body,
 				&msg.PersonaName, &msg.Team, &msg.CreatedOn,
-				&msg.MatchID, &msg.Flagged); errRow != nil {
+				&msg.MatchID, &msg.AutoFilterFlagged); errRow != nil {
 			return nil, errors.Join(errQuery, domain.ErrScanResult)
 		}
 
