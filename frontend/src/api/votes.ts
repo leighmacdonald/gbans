@@ -20,7 +20,7 @@ export type VoteResult = {
 export type VoteQueryFilter = {
     source_id: string;
     target_id: string;
-    success: boolean;
+    success: number;
 } & QueryFilter<VoteResult>;
 
 export const apiVotesQuery = async (opts: VoteQueryFilter, abortController?: AbortController) => {
