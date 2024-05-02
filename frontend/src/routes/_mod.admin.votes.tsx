@@ -7,11 +7,11 @@ import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { z } from 'zod';
-import { ReportWithAuthor } from '../api';
 import { apiVotesQuery, VoteResult } from '../api/votes.ts';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { DataTable, HeadingCell } from '../component/DataTable.tsx';
+import { Paginator } from '../component/Paginator.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { TableCellBool } from '../component/table/TableCellBool.tsx';
 import { commonTableSearchSchema, LazyResult } from '../util/table.ts';
@@ -34,7 +34,7 @@ function AdminVotes() {
     const { success, page, sortColumn, rows, sortOrder, source_id, target_id } = Route.useSearch();
 
     const { data: votes, isLoading } = useQuery({
-        queryKey: ['votes', {}],
+        queryKey: ['votes', { success, page, sortColumn, rows, sortOrder, source_id, target_id }],
         queryFn: async () => {
             return apiVotesQuery({
                 limit: Number(rows),
@@ -111,6 +111,7 @@ function AdminVotes() {
             </ContainerWithHeader>
             <ContainerWithHeaderAndButtons title={'Vote History'} iconLeft={<HowToVoteIcon />}>
                 <VotesTable votes={votes ?? { data: [], count: 0 }} isLoading={isLoading} />
+                <Paginator data={votes} page={page} rows={rows} />
             </ContainerWithHeaderAndButtons>
         </Stack>
         // </Formik>
