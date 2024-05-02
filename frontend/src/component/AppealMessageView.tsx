@@ -1,33 +1,27 @@
-import { MouseEvent, useCallback, useState } from 'react';
+import { MouseEvent, useState } from 'react';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
-import ButtonGroup from '@mui/material/ButtonGroup';
 import Card from '@mui/material/Card';
 import CardHeader from '@mui/material/CardHeader';
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
-import Stack from '@mui/material/Stack';
 import { useTheme } from '@mui/material/styles';
 import { formatDistance } from 'date-fns';
-import { Formik } from 'formik';
-import { apiUpdateBanMessage, BanAppealMessage } from '../api';
-import { logErr } from '../util/errors';
+import { BanAppealMessage } from '../api';
 import { avatarHashToURL } from '../util/text.tsx';
-import { MDBodyField } from './MDBodyField';
 import { MarkDownRenderer } from './MarkdownRenderer';
-import { ResetButton, SubmitButton } from './modal/Buttons';
 
 interface AppealMessageViewProps {
     message: BanAppealMessage;
     onDelete: (report_message_id: number) => void;
 }
 
-interface AppealMessageValues {
-    body_md: string;
-}
+// interface AppealMessageValues {
+//     body_md: string;
+// }
 
 export const AppealMessageView = ({ message, onDelete }: AppealMessageViewProps) => {
     const theme = useTheme();
@@ -36,18 +30,18 @@ export const AppealMessageView = ({ message, onDelete }: AppealMessageViewProps)
     const [editing, setEditing] = useState<boolean>(false);
     const [deleted, setDeleted] = useState<boolean>(false);
 
-    const onSubmit = useCallback(
-        async (values: AppealMessageValues) => {
-            try {
-                await apiUpdateBanMessage(message.ban_message_id, values.body_md);
-                message.message_md = values.body_md;
-                setEditing(false);
-            } catch (e) {
-                logErr(e);
-            }
-        },
-        [message]
-    );
+    // const onSubmit = useCallback(
+    //     async (values: AppealMessageValues) => {
+    //         try {
+    //             await apiUpdateBanMessage(message.ban_message_id, values.body_md);
+    //             message.message_md = values.body_md;
+    //             setEditing(false);
+    //         } catch (e) {
+    //             logErr(e);
+    //         }
+    //     },
+    //     [message]
+    // );
 
     const handleClick = (event: MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
@@ -64,16 +58,16 @@ export const AppealMessageView = ({ message, onDelete }: AppealMessageViewProps)
     if (editing) {
         return (
             <Box component={Paper} padding={1}>
-                <Formik<AppealMessageValues> onSubmit={onSubmit} initialValues={{ body_md: message.message_md }}>
-                    <Stack spacing={1}>
-                        <MDBodyField />
+                {/*<Formik<AppealMessageValues> onSubmit={onSubmit} initialValues={{ body_md: message.message_md }}>*/}
+                {/*    <Stack spacing={1}>*/}
+                {/*        <MDBodyField />*/}
 
-                        <ButtonGroup>
-                            <ResetButton />
-                            <SubmitButton />
-                        </ButtonGroup>
-                    </Stack>
-                </Formik>
+                {/*        <ButtonGroup>*/}
+                {/*            <ResetButton />*/}
+                {/*            <SubmitButton />*/}
+                {/*        </ButtonGroup>*/}
+                {/*    </Stack>*/}
+                {/*</Formik>*/}
             </Box>
         );
     } else {
