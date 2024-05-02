@@ -22,9 +22,27 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import { createLazyFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { isBefore } from 'date-fns';
-import { ReportStatus, SteamBanRecord } from '../api';
+import {
+    apiGetBansSteam,
+    apiReportSetState,
+    BanReasons,
+    BanType,
+    PermissionLevel,
+    ReportStatus,
+    reportStatusColour,
+    reportStatusString,
+    SteamBanRecord
+} from '../api';
+import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
+import { Heading } from '../component/Heading.tsx';
+import { ProfileInfoBox } from '../component/ProfileInfoBox.tsx';
+import { ReportViewComponent } from '../component/ReportViewComponent.tsx';
+import { SteamIDList } from '../component/SteamIDList.tsx';
+import { ModalBanSteam } from '../component/modal';
 import { useReport } from '../hooks/useReport.ts';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import { logErr } from '../util/errors.ts';
+import { avatarHashToURL } from '../util/text.tsx';
 
 export const Route = createLazyFileRoute('/_auth/report/$reportId')({
     component: ReportView

@@ -44,10 +44,10 @@ import { Route as ModAdminBanAsnImport } from './routes/_mod.admin.ban.asn'
 
 const GuestWikiLazyImport = createFileRoute('/_guest/wiki')()
 const GuestServersLazyImport = createFileRoute('/_guest/servers')()
+const GuestPrivacyPolicyLazyImport = createFileRoute('/_guest/privacy-policy')()
 const GuestContestsLazyImport = createFileRoute('/_guest/contests')()
 const AuthStatsLazyImport = createFileRoute('/_auth/stats')()
 const AuthSettingsLazyImport = createFileRoute('/_auth/settings')()
-const AuthPrivacyPolicyLazyImport = createFileRoute('/_auth/privacy-policy')()
 const AuthPatreonLazyImport = createFileRoute('/_auth/patreon')()
 const AuthPageNotFoundLazyImport = createFileRoute('/_auth/page-not-found')()
 const AuthNotificationsLazyImport = createFileRoute('/_auth/notifications')()
@@ -119,6 +119,13 @@ const GuestServersLazyRoute = GuestServersLazyImport.update({
   import('./routes/_guest.servers.lazy').then((d) => d.Route),
 )
 
+const GuestPrivacyPolicyLazyRoute = GuestPrivacyPolicyLazyImport.update({
+  path: '/privacy-policy',
+  getParentRoute: () => GuestRoute,
+} as any).lazy(() =>
+  import('./routes/_guest.privacy-policy.lazy').then((d) => d.Route),
+)
+
 const GuestContestsLazyRoute = GuestContestsLazyImport.update({
   path: '/contests',
   getParentRoute: () => GuestRoute,
@@ -136,13 +143,6 @@ const AuthSettingsLazyRoute = AuthSettingsLazyImport.update({
   getParentRoute: () => AuthRoute,
 } as any).lazy(() =>
   import('./routes/_auth.settings.lazy').then((d) => d.Route),
-)
-
-const AuthPrivacyPolicyLazyRoute = AuthPrivacyPolicyLazyImport.update({
-  path: '/privacy-policy',
-  getParentRoute: () => AuthRoute,
-} as any).lazy(() =>
-  import('./routes/_auth.privacy-policy.lazy').then((d) => d.Route),
 )
 
 const AuthPatreonLazyRoute = AuthPatreonLazyImport.update({
@@ -435,10 +435,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthPatreonLazyImport
       parentRoute: typeof AuthImport
     }
-    '/_auth/privacy-policy': {
-      preLoaderRoute: typeof AuthPrivacyPolicyLazyImport
-      parentRoute: typeof AuthImport
-    }
     '/_auth/settings': {
       preLoaderRoute: typeof AuthSettingsLazyImport
       parentRoute: typeof AuthImport
@@ -449,6 +445,10 @@ declare module '@tanstack/react-router' {
     }
     '/_guest/contests': {
       preLoaderRoute: typeof GuestContestsLazyImport
+      parentRoute: typeof GuestImport
+    }
+    '/_guest/privacy-policy': {
+      preLoaderRoute: typeof GuestPrivacyPolicyLazyImport
       parentRoute: typeof GuestImport
     }
     '/_guest/servers': {
@@ -609,7 +609,6 @@ export const routeTree = rootRoute.addChildren([
     AuthNotificationsLazyRoute,
     AuthPageNotFoundLazyRoute,
     AuthPatreonLazyRoute,
-    AuthPrivacyPolicyLazyRoute,
     AuthSettingsLazyRoute,
     AuthStatsLazyRoute.addChildren([
       AuthStatsPlayerSteamidLazyRoute,
@@ -629,6 +628,7 @@ export const routeTree = rootRoute.addChildren([
   GuestRoute.addChildren([
     GuestStvRoute,
     GuestContestsLazyRoute,
+    GuestPrivacyPolicyLazyRoute,
     GuestServersLazyRoute,
     GuestWikiLazyRoute.addChildren([GuestWikiSlugLazyRoute]),
     GuestIndexRoute,

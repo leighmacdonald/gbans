@@ -9,7 +9,6 @@ import TabContext from '@mui/lab/TabContext';
 import TabList from '@mui/lab/TabList';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import ButtonGroup from '@mui/material/ButtonGroup';
 import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
@@ -18,20 +17,16 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import { useRouteContext } from '@tanstack/react-router';
-import { Formik } from 'formik';
-import { FormikHelpers } from 'formik/dist/types';
-import { apiCreateReportMessage, apiDeleteReportMessage, PermissionLevel, Report, ReportMessage } from '../api';
+import { apiDeleteReportMessage, PermissionLevel, Report, ReportMessage } from '../api';
 import { useReportMessages } from '../hooks/useReportMessages';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors';
 import { ContainerWithHeader } from './ContainerWithHeader';
-import { MDBodyField } from './MDBodyField';
 import { MarkDownRenderer } from './MarkdownRenderer';
 import { PlayerMessageContext } from './PlayerMessageContext';
 import { ReportMessageView } from './ReportMessageView';
 import { SourceBansList } from './SourceBansList';
 import { TabPanel } from './TabPanel';
-import { ResetButton, SubmitButton } from './modal/Buttons';
 import { BanHistoryTable } from './table/BanHistoryTable';
 import { ConnectionHistoryTable } from './table/ConnectionHistoryTable';
 import { PersonMessageTable } from './table/PersonMessageTable';
@@ -40,18 +35,18 @@ interface ReportComponentProps {
     report: Report;
 }
 
-interface ReportViewValues {
-    body_md: string;
-}
+// interface ReportViewValues {
+//     body_md: string;
+// }
 
 export const ReportViewComponent = ({ report }: ReportComponentProps): JSX.Element => {
     const theme = useTheme();
     const { data: messagesServer } = useReportMessages(report.report_id);
-    const [newMessages, setNewMessages] = useState<ReportMessage[]>([]);
+    const [newMessages] = useState<ReportMessage[]>([]);
     const [deletedMessages, setDeletedMessages] = useState<number[]>([]);
     const [value, setValue] = useState<number>(0);
     const [banCount, setBanCount] = useState(0);
-    const { hasPermission } = useRouteContext({ from: '/_auth/report/$report_id' });
+    const { hasPermission } = useRouteContext({ from: '/_auth/report/$reportId' });
     const { sendFlash } = useUserFlashCtx();
 
     const messages = useMemo(() => {
@@ -62,21 +57,21 @@ export const ReportViewComponent = ({ report }: ReportComponentProps): JSX.Eleme
         setValue(newValue);
     };
 
-    const onSubmit = useCallback(
-        async (values: ReportViewValues, formikHelpers: FormikHelpers<ReportViewValues>) => {
-            try {
-                const message = await apiCreateReportMessage(report.report_id, values.body_md);
-                setNewMessages((prevState) => {
-                    return [...prevState, message];
-                });
-                formikHelpers.resetForm();
-            } catch (e) {
-                logErr(e);
-                sendFlash('error', 'Error trying to create message');
-            }
-        },
-        [report.report_id, sendFlash]
-    );
+    // const onSubmit = useCallback(
+    //     async (values: ReportViewValues, formikHelpers: FormikHelpers<ReportViewValues>) => {
+    //         try {
+    //             const message = await apiCreateReportMessage(report.report_id, values.body_md);
+    //             setNewMessages((prevState) => {
+    //                 return [...prevState, message];
+    //             });
+    //             formikHelpers.resetForm();
+    //         } catch (e) {
+    //             logErr(e);
+    //             sendFlash('error', 'Error trying to create message');
+    //         }
+    //     },
+    //     [report.report_id, sendFlash]
+    // );
 
     const onDelete = useCallback(
         async (message_id: number) => {
@@ -190,17 +185,17 @@ export const ReportViewComponent = ({ report }: ReportComponentProps): JSX.Eleme
                             <ReportMessageView onDelete={onDelete} message={m} key={`report-msg-${m.report_message_id}`} />
                         ))}
                         <Paper elevation={1}>
-                            <Formik<ReportViewValues> initialValues={{ body_md: '' }} onSubmit={onSubmit}>
-                                <Stack spacing={2} padding={1}>
-                                    <Box minHeight={465}>
-                                        <MDBodyField />
-                                    </Box>
-                                    <ButtonGroup>
-                                        <ResetButton />
-                                        <SubmitButton />
-                                    </ButtonGroup>
-                                </Stack>
-                            </Formik>
+                            {/*<Formik<ReportViewValues> initialValues={{ body_md: '' }} onSubmit={onSubmit}>*/}
+                            {/*    <Stack spacing={2} padding={1}>*/}
+                            {/*        <Box minHeight={465}>*/}
+                            {/*            <MDBodyField />*/}
+                            {/*        </Box>*/}
+                            {/*        <ButtonGroup>*/}
+                            {/*            <ResetButton />*/}
+                            {/*            <SubmitButton />*/}
+                            {/*        </ButtonGroup>*/}
+                            {/*    </Stack>*/}
+                            {/*</Formik>*/}
                         </Paper>
                     </Stack>
                 </TabContext>

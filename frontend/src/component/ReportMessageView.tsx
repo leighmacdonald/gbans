@@ -1,33 +1,27 @@
-import { MouseEvent, useCallback, useState } from 'react';
+import { MouseEvent, useState } from 'react';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
-import ButtonGroup from '@mui/material/ButtonGroup';
 import Card from '@mui/material/Card';
 import CardHeader from '@mui/material/CardHeader';
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
-import Stack from '@mui/material/Stack';
 import { useTheme } from '@mui/material/styles';
 import { formatDistance } from 'date-fns';
-import { Formik } from 'formik';
-import { apiUpdateReportMessage, ReportMessage } from '../api';
-import { logErr } from '../util/errors';
+import { ReportMessage } from '../api';
 import { avatarHashToURL } from '../util/text.tsx';
-import { MDBodyField } from './MDBodyField';
 import { MarkDownRenderer } from './MarkdownRenderer';
-import { ResetButton, SubmitButton } from './modal/Buttons';
 
 export interface ReportMessageViewProps {
     message: ReportMessage;
     onDelete: (report_message_id: number) => void;
 }
 
-interface ReportMessageValues {
-    body_md: string;
-}
+// interface ReportMessageValues {
+//     body_md: string;
+// }
 
 export const ReportMessageView = ({ message, onDelete }: ReportMessageViewProps) => {
     const theme = useTheme();
@@ -36,18 +30,18 @@ export const ReportMessageView = ({ message, onDelete }: ReportMessageViewProps)
     const [editing, setEditing] = useState<boolean>(false);
     const [deleted, setDeleted] = useState<boolean>(false);
 
-    const onSubmit = useCallback(
-        async (values: ReportMessageValues) => {
-            try {
-                await apiUpdateReportMessage(message.report_message_id, values.body_md);
-                message.message_md = values.body_md;
-                setEditing(false);
-            } catch (e) {
-                logErr(e);
-            }
-        },
-        [message]
-    );
+    // const onSubmit = useCallback(
+    //     async (values: ReportMessageValues) => {
+    //         try {
+    //             await apiUpdateReportMessage(message.report_message_id, values.body_md);
+    //             message.message_md = values.body_md;
+    //             setEditing(false);
+    //         } catch (e) {
+    //             logErr(e);
+    //         }
+    //     },
+    //     [message]
+    // );
 
     const handleClick = (event: MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
@@ -64,16 +58,16 @@ export const ReportMessageView = ({ message, onDelete }: ReportMessageViewProps)
     if (editing) {
         return (
             <Box component={Paper} padding={1}>
-                <Formik<ReportMessageValues> onSubmit={onSubmit} initialValues={{ body_md: message.message_md }}>
-                    <Stack spacing={1}>
-                        <MDBodyField />
+                {/*<Formik<ReportMessageValues> onSubmit={onSubmit} initialValues={{ body_md: message.message_md }}>*/}
+                {/*    <Stack spacing={1}>*/}
+                {/*        <MDBodyField />*/}
 
-                        <ButtonGroup>
-                            <ResetButton />
-                            <SubmitButton />
-                        </ButtonGroup>
-                    </Stack>
-                </Formik>
+                {/*        <ButtonGroup>*/}
+                {/*            <ResetButton />*/}
+                {/*            <SubmitButton />*/}
+                {/*        </ButtonGroup>*/}
+                {/*    </Stack>*/}
+                {/*</Formik>*/}
             </Box>
         );
     } else {
