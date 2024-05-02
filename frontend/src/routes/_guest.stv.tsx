@@ -1,14 +1,29 @@
+import { useMemo, useState } from 'react';
+import ClearIcon from '@mui/icons-material/Clear';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import SearchIcon from '@mui/icons-material/Search';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import { TablePagination } from '@mui/material';
 import Button from '@mui/material/Button';
+import ButtonGroup from '@mui/material/ButtonGroup';
+import Checkbox from '@mui/material/Checkbox';
+import FormControl from '@mui/material/FormControl';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormGroup from '@mui/material/FormGroup';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
+import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
+import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
-import { createFileRoute, useLoaderData, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useLoaderData, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import stc from 'string-to-color';
 import { z } from 'zod';
-import { apiGetDemos, apiGetServers, DemoFile, ServerSimple } from '../api';
+import { apiGetDemos, apiGetServers, DemoFile, PermissionLevel, ServerSimple } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { DataTable, HeadingCell } from '../component/DataTable.tsx';
 import { commonTableSearchSchema, LazyResult } from '../util/table.ts';
@@ -18,35 +33,66 @@ const demosSchema = z.object({
     ...commonTableSearchSchema,
     sortColumn: z.enum(['server_id', 'created_on', 'map_name']).catch('created_on'),
     map_name: z.string().catch(''),
-    servers_ids: z.number().array().catch([]),
+    server_id: z.number().catch(0),
     steam_id: z.string().catch(''),
-    orderBy: z.enum(['map_name', 'created_on']).catch('created_on')
+    orderBy: z.enum(['map_name', 'created_on']).catch('created_on'),
+    only_mine: z.boolean().catch(false)
 });
 
 export const Route = createFileRoute('/_guest/stv')({
     component: STV,
     validateSearch: (search) => demosSchema.parse(search),
     loader: async ({ context }) => {
+        const unsorted = await context.queryClient.ensureQueryData({
+            queryKey: ['serversSimple'],
+            queryFn: apiGetServers
+        });
         return {
-            servers: await context.queryClient.ensureQueryData({
-                queryKey: ['serversSimple'],
-                queryFn: apiGetServers
+            servers: unsorted.sort((a, b) => {
+                if (a.server_name > b.server_name) {
+                    return 1;
+                }
+                if (a.server_name < b.server_name) {
+                    return -1;
+                }
+                return 0;
             })
         };
     }
 });
 
+type STVFilterForm = {
+    server_id: number;
+    steam_id: string;
+    map_name: string;
+    only_mine: boolean;
+};
+
 function STV() {
-    const { page, sortColumn, steam_id, map_name, servers_ids, sortOrder, rows } = Route.useSearch();
+    const navigate = useNavigate({ from: Route.fullPath });
+    const { page, only_mine, sortColumn, steam_id, map_name, server_id, sortOrder, rows } = Route.useSearch();
     const { servers } = useLoaderData({ from: '/_guest/stv' }) as { servers: ServerSimple[] };
+    const { hasPermission, userSteamID } = useRouteContext({ from: '/_guest/stv' });
+    const [steamIdEnabled, setSteamIdEnabled] = useState(only_mine);
+
+    const selectedSteamID = useMemo(() => {
+        if (only_mine) {
+            return userSteamID;
+        } else if (steam_id) {
+            return steam_id;
+        } else {
+            return '';
+        }
+    }, [only_mine, steam_id, userSteamID]);
+
     const { data: demos, isLoading } = useQuery({
-        queryKey: ['demos', { page, rows, map_name, steam_id, sortOrder, sortColumn }],
+        queryKey: ['demos', { page, rows, map_name, steam_id, sortOrder, sortColumn, selectedSteamID, server_id }],
         queryFn: async () => {
             return await apiGetDemos({
                 deleted: false,
                 map_name: map_name,
-                server_ids: servers_ids,
-                steam_id: steam_id,
+                server_ids: server_id > 0 ? [server_id] : [],
+                steam_id: selectedSteamID,
                 offset: page * rows,
                 limit: rows,
                 desc: sortOrder == 'desc',
@@ -55,16 +101,187 @@ function STV() {
         }
     });
 
+    const { Field, Subscribe, handleSubmit, reset } = useForm<STVFilterForm>({
+        onSubmit: async ({ value }) => {
+            await navigate({ search: (prev) => ({ ...prev, ...value }) });
+        },
+        defaultValues: {
+            map_name,
+            server_id,
+            steam_id,
+            only_mine
+        }
+    });
+
     return (
-        <ContainerWithHeader title={'SourceTV Recordings'} iconLeft={<VideocamIcon />}>
-            <STVTable demos={demos ?? { data: [], count: 0 }} servers={servers} isLoading={isLoading} />
-        </ContainerWithHeader>
+        <Stack spacing={2}>
+            <ContainerWithHeader title={'Filters'}>
+                <form
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleSubmit();
+                    }}
+                >
+                    <Grid container spacing={2} padding={2}>
+                        <Grid xs={6} md={3}>
+                            <Field
+                                name={'server_id'}
+                                children={({ state, handleChange, handleBlur }) => {
+                                    return (
+                                        <>
+                                            <FormControl fullWidth>
+                                                <InputLabel id="server-select-label">Servers</InputLabel>
+                                                <Select
+                                                    fullWidth
+                                                    value={state.value}
+                                                    label="Servers"
+                                                    onChange={(e) => {
+                                                        handleChange(Number(e.target.value));
+                                                    }}
+                                                    onBlur={handleBlur}
+                                                >
+                                                    <MenuItem value={0}>All</MenuItem>
+                                                    {servers.map((s) => (
+                                                        <MenuItem value={s.server_id} key={s.server_id}>
+                                                            {s.server_name}
+                                                        </MenuItem>
+                                                    ))}
+                                                </Select>
+                                            </FormControl>
+                                        </>
+                                    );
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={6} md={3}>
+                            <Field
+                                name={'map_name'}
+                                children={({ state, handleChange, handleBlur }) => {
+                                    return (
+                                        <>
+                                            <TextField
+                                                fullWidth
+                                                label="Name"
+                                                defaultValue={state.value}
+                                                onChange={(e) => handleChange(e.target.value)}
+                                                onBlur={handleBlur}
+                                                variant="outlined"
+                                            />
+                                        </>
+                                    );
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={6} md={3}>
+                            <Field
+                                name={'steam_id'}
+                                children={({ state, handleChange, handleBlur }) => {
+                                    return (
+                                        <>
+                                            <TextField
+                                                disabled={steamIdEnabled}
+                                                fullWidth
+                                                label="SteamID"
+                                                value={state.value}
+                                                onChange={(e) => handleChange(e.target.value)}
+                                                onBlur={handleBlur}
+                                                variant="outlined"
+                                            />
+                                        </>
+                                    );
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={2}>
+                            <Field
+                                name={'only_mine'}
+                                children={({ state, handleChange, handleBlur }) => {
+                                    return (
+                                        <FormGroup>
+                                            <FormControlLabel
+                                                disabled={!hasPermission(PermissionLevel.User)}
+                                                control={
+                                                    <Checkbox
+                                                        checked={state.value}
+                                                        onBlur={handleBlur}
+                                                        onChange={(_, v) => {
+                                                            handleChange(v);
+                                                            setSteamIdEnabled(v);
+                                                        }}
+                                                    />
+                                                }
+                                                label="Only Mine"
+                                            />
+                                        </FormGroup>
+                                    );
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={12}>
+                            <Subscribe
+                                selector={(state) => [state.canSubmit, state.isSubmitting]}
+                                children={([canSubmit, isSubmitting]) => (
+                                    <ButtonGroup>
+                                        <Button
+                                            type="submit"
+                                            disabled={!canSubmit}
+                                            variant={'contained'}
+                                            color={'success'}
+                                            startIcon={<SearchIcon />}
+                                        >
+                                            {isSubmitting ? '...' : 'Search'}
+                                        </Button>
+                                        <Button
+                                            type="reset"
+                                            onClick={() => reset()}
+                                            variant={'contained'}
+                                            color={'warning'}
+                                            startIcon={<RestartAltIcon />}
+                                        >
+                                            Reset
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            onClick={async () => {
+                                                await navigate({
+                                                    search: (prev) => {
+                                                        return {
+                                                            ...prev,
+                                                            page: 0,
+                                                            steam_id: '',
+                                                            body: '',
+                                                            persona_name: '',
+                                                            server_id: 0
+                                                        };
+                                                    }
+                                                });
+                                                // TODO fix this hackjob
+                                                window.location.reload();
+                                            }}
+                                            variant={'contained'}
+                                            color={'error'}
+                                            startIcon={<ClearIcon />}
+                                        >
+                                            Clear
+                                        </Button>
+                                    </ButtonGroup>
+                                )}
+                            />
+                        </Grid>
+                    </Grid>
+                </form>
+            </ContainerWithHeader>
+            <ContainerWithHeader title={'SourceTV Recordings'} iconLeft={<VideocamIcon />}>
+                <STVTable demos={demos ?? { data: [], count: 0 }} isLoading={isLoading} />
+            </ContainerWithHeader>
+        </Stack>
     );
 }
 
 const columnHelper = createColumnHelper<DemoFile>();
 
-export const STVTable = ({ demos, servers, isLoading }: { demos: LazyResult<DemoFile>; servers: ServerSimple[]; isLoading: boolean }) => {
+export const STVTable = ({ demos, isLoading }: { demos: LazyResult<DemoFile>; isLoading: boolean }) => {
     const { page, rows } = Route.useSearch();
     const navigate = useNavigate({ from: Route.fullPath });
 
@@ -72,46 +289,39 @@ export const STVTable = ({ demos, servers, isLoading }: { demos: LazyResult<Demo
         columnHelper.accessor('server_id', {
             header: () => <HeadingCell name={'Server'} />,
             cell: (info) => {
-                const serv = servers.find((s) => (s.server_id = info.getValue())) || { server_name: 'unk-1' };
                 return (
                     <Button
                         sx={{
-                            color: stc(serv.server_name)
+                            color: stc(demos.data[info.row.index].server_name_short)
                         }}
                         onClick={async () => {
                             await navigate({ search: (prev) => ({ ...prev, server_id: info.getValue() }) });
                         }}
                     >
-                        {serv?.server_name}
+                        {demos.data[info.row.index].server_name_short}
                     </Button>
                 );
-            },
-            footer: () => <HeadingCell name={'Server'} />
+            }
         }),
         columnHelper.accessor('created_on', {
             header: () => <HeadingCell name={'Created'} />,
-            cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>,
-            footer: () => <HeadingCell name={'Created'} />
+            cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>
         }),
         columnHelper.accessor('map_name', {
             header: () => <HeadingCell name={'Map Name'} />,
-            cell: (info) => <Typography>{info.getValue()}</Typography>,
-            footer: () => <HeadingCell name={'Name'} />
+            cell: (info) => <Typography>{info.getValue()}</Typography>
         }),
         columnHelper.accessor('size', {
             header: () => <HeadingCell name={'Size'} />,
-            cell: (info) => <Typography>{humanFileSize(info.getValue())}</Typography>,
-            footer: () => <HeadingCell name={'Size'} />
+            cell: (info) => <Typography>{humanFileSize(info.getValue())}</Typography>
         }),
         columnHelper.accessor('downloads', {
             header: () => <HeadingCell name={'DL'} />,
-            cell: (info) => <Typography>{info.getValue()}</Typography>,
-            footer: () => <HeadingCell name={'DL'} />
+            cell: (info) => <Typography>{info.getValue()}</Typography>
         }),
         columnHelper.accessor('asset.asset_id', {
             header: () => <HeadingCell name={'Links'} />,
-            cell: (info) => <Typography>{info.getValue()}</Typography>,
-            footer: () => <HeadingCell name={'Links'} />
+            cell: (info) => <Typography>{info.getValue()}</Typography>
         })
     ];
 
