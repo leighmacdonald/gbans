@@ -1,23 +1,23 @@
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
-import { TablePagination } from '@mui/material';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { z } from 'zod';
 import { apiGetFilters, Filter, FilterAction, filterActionString } from '../api/filters.ts';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { DataTable, HeadingCell } from '../component/DataTable.tsx';
+import { Paginator } from '../component/Paginator.tsx';
 import { WarningStateContainer } from '../component/WarningStateContainer.tsx';
 import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
 
 const filterSearchSchema = z.object({
     ...commonTableSearchSchema,
-    sortColumn: z.enum(['filter_id', 'is_regex', 'is_enabled', 'weight', 'trigger_count']).catch('filter_id')
+    sortColumn: z.enum(['filter_id', 'is_regex', 'is_enabled', 'weight', 'trigger_count']).optional()
 });
 
 export const Route = createFileRoute('/_mod/admin/filters')({
@@ -26,16 +26,16 @@ export const Route = createFileRoute('/_mod/admin/filters')({
 });
 
 function AdminFilters() {
+    const defaultRows = RowsPerPage.Ten;
     const { page, rows, sortOrder, sortColumn } = Route.useSearch();
-    const navigate = useNavigate();
     const { data: filters, isLoading } = useQuery({
         queryKey: ['filters', { page, rows, sortOrder, sortColumn }],
         queryFn: async () => {
             return await apiGetFilters({
                 order_by: sortColumn ?? 'filter_id',
                 desc: (sortOrder ?? 'desc') == 'desc',
-                limit: Number(rows ?? RowsPerPage.Ten),
-                offset: Number((page ?? 0) * (rows ?? RowsPerPage.Ten))
+                limit: rows ?? defaultRows,
+                offset: (page ?? 0) * (rows ?? defaultRows)
             });
         }
     });
@@ -122,17 +122,7 @@ function AdminFilters() {
                 ]}
             >
                 <FiltersTable filters={filters ?? { data: [], count: 0 }} isLoading={isLoading} />
-                <TablePagination
-                    count={filters ? filters.count : 0}
-                    page={page}
-                    rowsPerPage={rows}
-                    onRowsPerPageChange={async (event) => {
-                        await navigate({ search: (search) => ({ ...search, rows: Number(event.target.value) }) });
-                    }}
-                    onPageChange={async (_, newPage: number) => {
-                        await navigate({ search: (search) => ({ ...search, page: newPage }) });
-                    }}
-                />
+                <Paginator page={page ?? 0} rows={rows ?? defaultRows} data={filters} path={'/admin/filters'} />
             </ContainerWithHeaderAndButtons>
             <WarningStateContainer />
         </Stack>
@@ -208,9 +198,5 @@ const FiltersTable = ({ filters, isLoading }: { filters: LazyResult<Filter>; isL
         autoResetPageIndex: true
     });
 
-    return (
-        <>
-            <DataTable table={table} isLoading={isLoading} />
-        </>
-    );
+    return <DataTable table={table} isLoading={isLoading} />;
 };

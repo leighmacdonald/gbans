@@ -1,22 +1,27 @@
+import FilterListIcon from '@mui/icons-material/FilterList';
 import SensorOccupiedIcon from '@mui/icons-material/SensorOccupied';
 import TableCell from '@mui/material/TableCell';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
+import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiGetConnections, PersonConnection } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { DataTable, HeadingCell } from '../component/DataTable.tsx';
 import { Paginator } from '../component/Paginator.tsx';
-import { commonTableSearchSchema, LazyResult } from '../util/table.ts';
+import { Buttons } from '../component/field/Buttons.tsx';
+import { makeSteamidValidators, SteamIDField } from '../component/field/SteamIDField.tsx';
+import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 
 const ipHistorySearchSchema = z.object({
     ...commonTableSearchSchema,
-    sortColumn: z.enum(['person_connection_id', 'steam_id', 'created_on', 'ip_addr', 'server_id']).catch('person_connection_id'),
-    source_id: z.string().catch('')
+    sortColumn: z.enum(['person_connection_id', 'steam_id', 'created_on', 'server_id']).optional(),
+    steam_id: z.string().optional()
 });
 
 export const Route = createFileRoute('/_mod/admin/network/iphist')({
@@ -25,110 +30,91 @@ export const Route = createFileRoute('/_mod/admin/network/iphist')({
 });
 
 function AdminNetworkPlayerIPHistory() {
-    const { page, rows, sortOrder, sortColumn, source_id } = Route.useSearch();
+    const defaultRows = RowsPerPage.TwentyFive;
+    const navigate = useNavigate({ from: Route.fullPath });
+    const { page, rows, sortOrder, sortColumn, steam_id } = Route.useSearch();
     const { data: connections, isLoading } = useQuery({
-        queryKey: ['connectionHist', { page, rows, sortOrder, sortColumn, source_id }],
+        queryKey: ['connectionHist', { page, rows, sortOrder, sortColumn, steam_id }],
         queryFn: async () => {
-            if (source_id == '') {
-                return { data: [], count: 0 };
-            }
             return await apiGetConnections({
-                limit: Number(rows),
-                offset: Number((page ?? 0) * rows),
+                limit: rows ?? defaultRows,
+                offset: (page ?? 0) * (rows ?? defaultRows),
                 order_by: sortColumn ?? 'steam_id',
-                desc: sortOrder == 'desc',
-                source_id: source_id
+                desc: (sortOrder ?? 'desc') == 'desc',
+                source_id: steam_id
             });
         }
     });
-    // const {
-    //     data: rows,
-    //     count,
-    //     loading
-    // } = useConnections({
-    //     limit: state.rows ?? RowsPerPage.TwentyFive,
-    //     offset: Number((state.page ?? 0) * (state.rows ?? RowsPerPage.Ten)),
-    //     order_by: state.sortColumn ?? 'created_on',
-    //     desc: (state.sortOrder ?? 'desc') == 'desc',
-    //     source_id: state.source_id ?? '',
-    //     asn: 0,
-    //     cidr: state.cidr ?? ''
-    // });
-    //
-    // const onSubmit = (values: SourceIDFieldValue) => {
-    //     setState((prevState) => {
-    //         return { ...prevState, source_id: values.source_id };
-    //     });
-    // };
+
+    const { Field, Subscribe, handleSubmit, reset } = useForm({
+        onSubmit: async ({ value }) => {
+            await navigate({ to: '/admin/network/iphist', search: (prev) => ({ ...prev, ...value }) });
+        },
+        validatorAdapter: zodValidator,
+        validators: {
+            onChange: ipHistorySearchSchema
+        },
+        defaultValues: {
+            steam_id: steam_id ?? ''
+        }
+    });
+
+    const clear = async () => {
+        await navigate({
+            to: '/admin/network/iphist',
+            search: (prev) => ({ ...prev, source_id: undefined })
+        });
+    };
 
     return (
-        <ContainerWithHeader title="Player IP History" iconLeft={<SensorOccupiedIcon />}>
-            <Grid container spacing={2}>
-                <Grid xs={12}>
-                    {/*<Formik onSubmit={onSubmit} initialValues={{ source_id: '' }}>*/}
-                    <Grid container direction="row" alignItems="top" justifyContent="center" spacing={2}>
-                        {/*<Grid xs>*/}
-                        {/*    <SourceIDField />*/}
-                        {/*</Grid>*/}
-                        {/*<Grid xs={2}>*/}
-                        {/*    <SubmitButton*/}
-                        {/*        label={'Submit'}*/}
-                        {/*        fullWidth*/}
-                        {/*        disabled={loading}*/}
-                        {/*        startIcon={<SearchIcon />}*/}
-                        {/*    />*/}
-                        {/*</Grid>*/}
-                    </Grid>
-                    {/*</Formik>*/}
-                </Grid>
-                <Grid xs={12}>
-                    {/*{loading ? (*/}
-                    {/*    <LoadingPlaceholder />*/}
-                    {/*) : (*/}
-                    {/*    <LazyTable<PersonConnection>*/}
-                    {/*        showPager={true}*/}
-                    {/*        count={count}*/}
-                    {/*        rows={rows}*/}
-                    {/*        page={state.page}*/}
-                    {/*        rowsPerPage={state.rows}*/}
-                    {/*        sortOrder={state.sortOrder}*/}
-                    {/*        sortColumn={state.sortColumn}*/}
-                    {/*        onSortColumnChanged={async (column) => {*/}
-                    {/*            setState((prevState) => {*/}
-                    {/*                return { ...prevState, sortColumn: column };*/}
-                    {/*            });*/}
-                    {/*        }}*/}
-                    {/*        onSortOrderChanged={async (direction) => {*/}
-                    {/*            setState((prevState) => {*/}
-                    {/*                return { ...prevState, sortOrder: direction };*/}
-                    {/*            });*/}
-                    {/*        }}*/}
-                    {/*        onPageChange={(_, newPage: number) => {*/}
-                    {/*            setState((prevState) => {*/}
-                    {/*                return { ...prevState, page: newPage };*/}
-                    {/*            });*/}
-                    {/*        }}*/}
-                    {/*        onRowsPerPageChange={(*/}
-                    {/*            event: ChangeEvent<*/}
-                    {/*                HTMLInputElement | HTMLTextAreaElement*/}
-                    {/*            >*/}
-                    {/*        ) => {*/}
-                    {/*            setState((prevState) => {*/}
-                    {/*                return {*/}
-                    {/*                    ...prevState,*/}
-                    {/*                    rows: parseInt(event.target.value, 10),*/}
-                    {/*                    page: 0*/}
-                    {/*                };*/}
-                    {/*            });*/}
-                    {/*        }}*/}
-                    {/*        columns={connectionColumns}*/}
-                    {/*    />*/}
-                    {/*)}*/}
-                    <IPHistoryTable connections={connections ?? { data: [], count: 0 }} isLoading={isLoading} />
-                    <Paginator page={page} rows={rows} data={connections} />
-                </Grid>
+        <Grid container spacing={2}>
+            <Grid xs={12}>
+                <ContainerWithHeader title={'Filters'} iconLeft={<FilterListIcon />} marginTop={2}>
+                    <form
+                        onSubmit={async (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            await handleSubmit();
+                        }}
+                    >
+                        <Grid container spacing={2}>
+                            <Grid xs={12}>
+                                <Field
+                                    name={'steam_id'}
+                                    validators={makeSteamidValidators()}
+                                    children={({ state, handleChange, handleBlur }) => {
+                                        return (
+                                            <SteamIDField
+                                                state={state}
+                                                handleBlur={handleBlur}
+                                                handleChange={handleChange}
+                                                fullwidth={true}
+                                            />
+                                        );
+                                    }}
+                                />
+                            </Grid>
+
+                            <Grid xs={12} mdOffset="auto">
+                                <Subscribe
+                                    selector={(state) => [state.canSubmit, state.isSubmitting]}
+                                    children={([canSubmit, isSubmitting]) => (
+                                        <Buttons reset={reset} canSubmit={canSubmit} isSubmitting={isSubmitting} onClear={clear} />
+                                    )}
+                                />
+                            </Grid>
+                        </Grid>
+                    </form>
+                </ContainerWithHeader>
             </Grid>
-        </ContainerWithHeader>
+            <Grid xs={12}>
+                <ContainerWithHeader title="Player IP History" iconLeft={<SensorOccupiedIcon />}>
+                    <IPHistoryTable connections={connections ?? { data: [], count: 0 }} isLoading={isLoading} />
+                    <Paginator page={page ?? 0} rows={rows ?? defaultRows} data={connections} path={'/admin/network/ip_hist'} />
+                </ContainerWithHeader>
+            </Grid>
+            ;
+        </Grid>
     );
 }
 

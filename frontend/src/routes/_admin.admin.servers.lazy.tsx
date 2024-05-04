@@ -18,7 +18,7 @@ import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.
 
 const serversSearchSchema = z.object({
     ...commonTableSearchSchema,
-    sortColumn: z.enum(['server_id', 'short_name', 'name', 'address', 'port', 'region', 'cc', 'enable_stats', 'is_enabled']).catch('name')
+    sortColumn: z.enum(['server_id', 'short_name', 'name', 'address', 'port', 'region', 'cc', 'enable_stats', 'is_enabled']).optional()
 });
 
 export const Route = createFileRoute('/_admin/admin/servers')({
@@ -27,14 +27,15 @@ export const Route = createFileRoute('/_admin/admin/servers')({
 });
 
 function AdminServers() {
+    const defaultRows = RowsPerPage.TwentyFive;
     const { page, sortColumn, rows, sortOrder } = Route.useSearch();
 
     const { data: servers, isLoading } = useQuery({
         queryKey: ['serversAdmin', { page, sortColumn, sortOrder, rows }],
         queryFn: async () => {
             return await apiGetServersAdmin({
-                limit: rows ?? RowsPerPage.TwentyFive,
-                offset: Number((page ?? 0) * (rows ?? RowsPerPage.TwentyFive)),
+                limit: rows ?? defaultRows,
+                offset: (page ?? 0) * (rows ?? defaultRows),
                 order_by: sortColumn ?? 'name',
                 desc: sortOrder == 'desc',
                 include_disabled: false
@@ -108,7 +109,7 @@ function AdminServers() {
                         ]}
                     >
                         <AdminServersTable servers={servers ?? { data: [], count: 0 }} isLoading={isLoading} />
-                        <Paginator data={servers} page={page} rows={rows} />
+                        <Paginator data={servers} page={page ?? 0} rows={rows ?? defaultRows} path={'/admin/servers'} />
                     </ContainerWithHeaderAndButtons>
                 </Stack>
             </Grid>
