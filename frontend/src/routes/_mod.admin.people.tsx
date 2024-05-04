@@ -5,9 +5,11 @@ import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
+import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
-import { createFileRoute, useRouteContext } from '@tanstack/react-router';
+import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import { zodValidator } from '@tanstack/zod-form-adapter';
 import { fromUnixTime } from 'date-fns';
 import { z } from 'zod';
 import { apiSearchPeople, communityVisibilityState, PermissionLevel, permissionLevelString, Person } from '../api';
@@ -15,14 +17,17 @@ import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { DataTable, HeadingCell } from '../component/DataTable.tsx';
 import { Paginator } from '../component/Paginator.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
-import { commonTableSearchSchema, LazyResult } from '../util/table.ts';
+import { Buttons } from '../component/field/Buttons.tsx';
+import { makeSteamidValidatorsOptional } from '../component/field/SteamIDField.tsx';
+import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
+import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
 import { renderDate, renderDateTime } from '../util/text.tsx';
 
 const peopleSearchSchema = z.object({
     ...commonTableSearchSchema,
-    sortColumn: z.enum(['vac_bans', 'steam_id', 'timecreated', 'personaname']).catch('timecreated'),
-    steam_id: z.string().catch(''),
-    personaname: z.string().catch('')
+    sortColumn: z.enum(['vac_bans', 'steam_id', 'timecreated', 'personaname']).optional(),
+    steam_id: z.string().optional(),
+    personaname: z.string().optional()
 });
 
 export const Route = createFileRoute('/_mod/admin/people')({
@@ -31,19 +36,20 @@ export const Route = createFileRoute('/_mod/admin/people')({
 });
 
 function AdminPeople() {
+    const defaultRows = RowsPerPage.TwentyFive;
+    const navigate = useNavigate({ from: Route.fullPath });
     const { hasPermission } = useRouteContext({ from: '/_mod/admin/people' });
     const { steam_id, page, personaname, sortColumn, rows, sortOrder } = Route.useSearch();
-
     const { data: people, isLoading } = useQuery({
-        queryKey: ['people', {}],
+        queryKey: ['people', { rows, page, sortColumn, sortOrder, personaname, steam_id }],
         queryFn: async () => {
             return await apiSearchPeople({
-                personaname: personaname,
+                personaname: personaname ?? '',
                 desc: sortOrder == 'desc',
-                offset: Number((page ?? 0) * rows),
-                limit: rows,
+                offset: (page ?? 0) * (rows ?? defaultRows),
+                limit: rows ?? defaultRows,
                 order_by: sortColumn,
-                target_id: steam_id,
+                target_id: steam_id ?? '',
                 ip: ''
             });
         }
@@ -74,35 +80,68 @@ function AdminPeople() {
     //     }
     // }, []);
 
+    const { Field, Subscribe, handleSubmit, reset } = useForm({
+        onSubmit: async ({ value }) => {
+            await navigate({ to: '/admin/people', search: (prev) => ({ ...prev, ...value }) });
+        },
+        validatorAdapter: zodValidator,
+        validators: {
+            onChange: peopleSearchSchema
+        },
+        defaultValues: {
+            steam_id: steam_id ?? '',
+            personaname: personaname ?? ''
+        }
+    });
+
+    const clear = async () => {
+        await navigate({
+            to: '/admin/people',
+            search: (prev) => ({ ...prev, steam_id: undefined, personaname: undefined })
+        });
+    };
+
     return (
         <Grid container spacing={2}>
             <Grid xs={12}>
-                <ContainerWithHeader title={'Person Filters'} iconLeft={<FilterListIcon />}>
-                    {/*<Formik*/}
-                    {/*    onSubmit={onFilterSubmit}*/}
-                    {/*    onReset={onFilterReset}*/}
-                    {/*    initialValues={{*/}
-                    {/*        personaname: '',*/}
-                    {/*        target_id: '',*/}
-                    {/*        ip: ''*/}
-                    {/*    }}*/}
-                    {/*    validationSchema={validationSchema}*/}
-                    {/*>*/}
-                    {/*<Grid container spacing={2}>*/}
-                    {/*    <Grid xs={6} sm={4} md={3}>*/}
-                    {/*        <TargetIDField />*/}
-                    {/*    </Grid>*/}
-                    {/*    <Grid xs={6} sm={4} md={3}>*/}
-                    {/*        <PersonanameField />*/}
-                    {/*    </Grid>*/}
-                    {/*    <Grid xs={6} sm={4} md={3}>*/}
-                    {/*        <IPField />*/}
-                    {/*    </Grid>*/}
-                    {/*    <Grid xs={6} sm={4} md={3}>*/}
-                    {/*        <FilterButtons />*/}
-                    {/*    </Grid>*/}
-                    {/*</Grid>*/}
-                    {/*</Formik>*/}
+                <ContainerWithHeader title={'Filters'} iconLeft={<FilterListIcon />} marginTop={2}>
+                    <form
+                        onSubmit={async (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            await handleSubmit();
+                        }}
+                    >
+                        <Grid container spacing={2}>
+                            <Grid xs={6} md={6}>
+                                <Field
+                                    name={'steam_id'}
+                                    validators={makeSteamidValidatorsOptional()}
+                                    children={(props) => {
+                                        return <TextFieldSimple {...props} label={'Steam ID'} fullwidth={true} />;
+                                    }}
+                                />
+                            </Grid>
+
+                            <Grid xs={6} md={6}>
+                                <Field
+                                    name={'personaname'}
+                                    children={(props) => {
+                                        return <TextFieldSimple {...props} label={'Name'} fullwidth={true} />;
+                                    }}
+                                />
+                            </Grid>
+
+                            <Grid xs={12} mdOffset="auto">
+                                <Subscribe
+                                    selector={(state) => [state.canSubmit, state.isSubmitting]}
+                                    children={([canSubmit, isSubmitting]) => (
+                                        <Buttons reset={reset} canSubmit={canSubmit} isSubmitting={isSubmitting} onClear={clear} />
+                                    )}
+                                />
+                            </Grid>
+                        </Grid>
+                    </form>
                 </ContainerWithHeader>
             </Grid>
             <Grid xs={12}>
@@ -112,7 +151,7 @@ function AdminPeople() {
                         isLoading={isLoading}
                         isAdmin={hasPermission(PermissionLevel.Admin)}
                     />
-                    <Paginator page={page} rows={rows} />
+                    <Paginator page={page ?? 0} rows={rows ?? defaultRows} data={people} path={'/admin/people'} />
                 </ContainerWithHeader>
             </Grid>
         </Grid>
