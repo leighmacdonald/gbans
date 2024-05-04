@@ -1,28 +1,36 @@
 import AddIcon from '@mui/icons-material/Add';
+import FilterListIcon from '@mui/icons-material/FilterList';
 import GavelIcon from '@mui/icons-material/Gavel';
 import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
+import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
-import { createFileRoute, Link as RouterLink } from '@tanstack/react-router';
+import { createFileRoute, Link as RouterLink, useNavigate } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiGetBansASN, ASNBanRecord, BanReasons } from '../api';
+import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { DataTable, HeadingCell } from '../component/DataTable.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
+import { Buttons } from '../component/field/Buttons.tsx';
+import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
+import { makeSteamidValidatorsOptional } from '../component/field/SteamIDField.tsx';
+import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { TableCellRelativeDateField } from '../component/table/TableCellRelativeDateField.tsx';
-import { commonTableSearchSchema, isPermanentBan, LazyResult } from '../util/table.ts';
+import { commonTableSearchSchema, isPermanentBan, LazyResult, RowsPerPage } from '../util/table.ts';
 import { renderDate } from '../util/text.tsx';
 
 const banASNSearchSchema = z.object({
     ...commonTableSearchSchema,
-    sortColumn: z.enum(['ban_asn_id', 'source_id', 'target_id', 'deleted', 'reason', 'as_num', 'valid_until']).catch('ban_asn_id'),
-    source_id: z.string().catch(''),
-    target_id: z.string().catch(''),
-    as_num: z.number().catch(0),
-    deleted: z.boolean().catch(false)
+    sortColumn: z.enum(['ban_asn_id', 'source_id', 'target_id', 'deleted', 'reason', 'as_num', 'valid_until']).optional(),
+    source_id: z.string().optional(),
+    target_id: z.string().optional(),
+    as_num: z.string().optional(),
+    deleted: z.boolean().optional()
 });
 
 export const Route = createFileRoute('/_mod/admin/ban/asn')({
@@ -31,20 +39,49 @@ export const Route = createFileRoute('/_mod/admin/ban/asn')({
 });
 
 function AdminBanASN() {
-    const { page, rows, sortOrder, sortColumn, target_id, source_id } = Route.useSearch();
+    const defaultRows = RowsPerPage.TwentyFive;
+
+    const navigate = useNavigate({ from: Route.fullPath });
+    const { page, rows, deleted, as_num, sortOrder, sortColumn, target_id, source_id } = Route.useSearch();
     const { data: bans, isLoading } = useQuery({
         queryKey: ['steamBans', { page, rows, sortOrder, sortColumn, target_id, source_id }],
         queryFn: async () => {
             return await apiGetBansASN({
-                limit: Number(rows),
-                offset: Number((page ?? 0) * rows),
+                limit: rows ?? defaultRows,
+                offset: (page ?? 0) * (rows ?? defaultRows),
                 order_by: sortColumn ?? 'ban_asn_id',
                 desc: sortOrder == 'desc',
                 source_id: source_id,
-                target_id: target_id
+                target_id: target_id,
+                as_num: as_num ? Number(as_num) : undefined,
+                deleted: deleted ?? false
             });
         }
     });
+
+    const { Field, Subscribe, handleSubmit, reset } = useForm({
+        onSubmit: async ({ value }) => {
+            await navigate({ to: '/admin/ban/asn', search: (prev) => ({ ...prev, ...value }) });
+        },
+        validatorAdapter: zodValidator,
+        validators: {
+            onChange: banASNSearchSchema
+        },
+        defaultValues: {
+            source_id: source_id ?? '',
+            target_id: target_id ?? '',
+            as_num: as_num ?? '',
+            deleted: deleted ?? false
+        }
+    });
+
+    const clear = async () => {
+        await navigate({
+            to: '/admin/ban/asn',
+            search: (prev) => ({ ...prev, source_id: '', target_id: '', as_num: '', deleted: false })
+        });
+    };
+
     // const [newASNBans, setNewASNBans] = useState<ASNBanRecord[]>([]);
 
     // const onNewBanASN = useCallback(async () => {
@@ -60,7 +97,69 @@ function AdminBanASN() {
     // }, [sendFlash]);
 
     return (
-        <Grid container>
+        <Grid container spacing={2}>
+            <Grid xs={12}>
+                <ContainerWithHeader title={'Filters'} iconLeft={<FilterListIcon />} marginTop={2}>
+                    <form
+                        onSubmit={async (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            await handleSubmit();
+                        }}
+                    >
+                        <Grid container spacing={2}>
+                            <Grid xs={4}>
+                                <Grid xs={6} md={3}>
+                                    <Field
+                                        name={'source_id'}
+                                        validators={makeSteamidValidatorsOptional()}
+                                        children={(props) => {
+                                            return <TextFieldSimple {...props} label={'Author Steam ID'} fullwidth={true} />;
+                                        }}
+                                    />
+                                </Grid>
+                            </Grid>
+                            <Grid xs={6} md={3}>
+                                <Field
+                                    name={'target_id'}
+                                    validators={makeSteamidValidatorsOptional()}
+                                    children={(props) => {
+                                        return <TextFieldSimple {...props} label={'Subject Steam ID'} fullwidth={true} />;
+                                    }}
+                                />
+                            </Grid>
+
+                            <Grid xs={6} md={3}>
+                                <Field
+                                    name={'as_num'}
+                                    children={(props) => {
+                                        return <TextFieldSimple {...props} label={'AS Number'} fullwidth={true} />;
+                                    }}
+                                />
+                            </Grid>
+
+                            <Grid xs="auto">
+                                <Field
+                                    name={'deleted'}
+                                    children={(props) => {
+                                        return <CheckboxSimple {...props} label={'Show Deleted'} />;
+                                    }}
+                                />
+                            </Grid>
+
+                            <Grid xs={12} mdOffset="auto">
+                                <Subscribe
+                                    selector={(state) => [state.canSubmit, state.isSubmitting]}
+                                    children={([canSubmit, isSubmitting]) => (
+                                        <Buttons reset={reset} canSubmit={canSubmit} isSubmitting={isSubmitting} onClear={clear} />
+                                    )}
+                                />
+                            </Grid>
+                        </Grid>
+                    </form>
+                </ContainerWithHeader>
+            </Grid>
+
             <Grid xs={12}>
                 <ContainerWithHeaderAndButtons
                     title={'ASN Ban History'}
