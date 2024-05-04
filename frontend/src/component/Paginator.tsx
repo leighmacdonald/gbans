@@ -2,7 +2,7 @@ import { TablePagination } from '@mui/material';
 import { useNavigate } from '@tanstack/react-router';
 import { LazyResult } from '../util/table.ts';
 
-export const Paginator = <T,>({ data, page, rows }: { data?: LazyResult<T>; page: number; rows: number }) => {
+export const Paginator = <T,>({ data, page, rows, path }: { data?: LazyResult<T>; page: number; rows: number; path: string }) => {
     const navigate = useNavigate();
 
     return (
@@ -12,10 +12,10 @@ export const Paginator = <T,>({ data, page, rows }: { data?: LazyResult<T>; page
             page={page}
             rowsPerPage={rows}
             onRowsPerPageChange={async (event) => {
-                await navigate({ search: (search) => ({ ...search, rows: Number(event.target.value) }) });
+                await navigate({ to: path, search: (search) => ({ ...search, rows: Number(event.target.value) }) });
             }}
             onPageChange={async (_, newPage: number) => {
-                await navigate({ search: (search) => ({ ...search, page: newPage }) });
+                await navigate({ to: path, search: (search) => ({ ...search, page: newPage }) });
             }}
         />
     );

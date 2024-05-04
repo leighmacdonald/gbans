@@ -97,8 +97,8 @@ func (r banNetRepository) Get(ctx context.Context, filter domain.CIDRBansQueryFi
 
 	var constraints sq.And
 
-	if !filter.Deleted {
-		constraints = append(constraints, sq.Eq{"b.deleted": false})
+	if filter.Deleted {
+		constraints = append(constraints, sq.Eq{"b.deleted": true})
 	}
 
 	if filter.Reason > 0 {

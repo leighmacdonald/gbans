@@ -1,18 +1,23 @@
 import AddIcon from '@mui/icons-material/Add';
+import FilterListIcon from '@mui/icons-material/FilterList';
 import GavelIcon from '@mui/icons-material/Gavel';
-import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
+import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { z } from 'zod';
-import { apiGetBansCIDR, BanReason, BanReasons, CIDRBanRecord } from '../api';
+import { apiGetBansCIDR, BanReasons, CIDRBanRecord } from '../api';
+import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { DataTable, HeadingCell } from '../component/DataTable.tsx';
 import { Paginator } from '../component/Paginator.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
+import { Buttons } from '../component/field/Buttons.tsx';
+import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
+import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { TableCellBool } from '../component/table/TableCellBool.tsx';
 import { TableCellRelativeDateField } from '../component/table/TableCellRelativeDateField.tsx';
 import { commonTableSearchSchema, isPermanentBan, LazyResult } from '../util/table.ts';
@@ -23,8 +28,8 @@ const banCIDRSearchSchema = z.object({
     sortColumn: z.enum(['net_id', 'source_id', 'target_id', 'deleted', 'reason', 'created_on', 'valid_until']).catch('net_id'),
     source_id: z.string().catch(''),
     target_id: z.string().catch(''),
-    cidr: z.string().optional().catch(''),
-    reason: z.nativeEnum(BanReason).optional()
+    cidr: z.string().catch(''),
+    deleted: z.boolean().catch(false)
 });
 
 export const Route = createFileRoute('/_mod/admin/ban/cidr')({
@@ -33,9 +38,10 @@ export const Route = createFileRoute('/_mod/admin/ban/cidr')({
 });
 
 function AdminBanCIDR() {
-    const { page, rows, sortOrder, sortColumn, target_id, source_id } = Route.useSearch();
+    const navigate = useNavigate({ from: Route.fullPath });
+    const { page, rows, sortOrder, sortColumn, deleted, cidr, target_id, source_id } = Route.useSearch();
     const { data: bans, isLoading } = useQuery({
-        queryKey: ['steamBans', { page, rows, sortOrder, sortColumn, target_id, source_id }],
+        queryKey: ['steamBans', { page, rows, sortOrder, sortColumn, target_id, source_id, cidr, deleted }],
         queryFn: async () => {
             return await apiGetBansCIDR({
                 limit: Number(rows),
@@ -43,7 +49,9 @@ function AdminBanCIDR() {
                 order_by: sortColumn,
                 desc: sortOrder == 'desc',
                 source_id: source_id,
-                target_id: target_id
+                target_id: target_id,
+                deleted: deleted,
+                ip: cidr
             });
         }
     });
@@ -62,10 +70,82 @@ function AdminBanCIDR() {
     //     }
     // }, [sendFlash]);
 
+    const { Field, Subscribe, handleSubmit, reset } = useForm({
+        onSubmit: async ({ value }) => {
+            await navigate({ to: '/admin/ban/cidr', search: (prev) => ({ ...prev, ...value }) });
+        },
+        defaultValues: {
+            source_id,
+            target_id,
+            cidr,
+            deleted
+        }
+    });
+    const clear = async () => {
+        await navigate({
+            to: '/admin/ban/cidr',
+            search: (prev) => ({ ...prev, source_id: '', target_id: '', cidr: '', deleted: false })
+        });
+    };
+
     return (
         <Grid container>
             <Grid xs={12} marginBottom={2}>
-                <Box></Box>
+                <ContainerWithHeader title={'Filters'} iconLeft={<FilterListIcon />} marginTop={2}>
+                    <form
+                        onSubmit={async (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            await handleSubmit();
+                        }}
+                    >
+                        <Grid container spacing={2}>
+                            <Grid xs={6} md={3}>
+                                <Field
+                                    name={'source_id'}
+                                    children={(props) => {
+                                        return <TextFieldSimple {...props} label={'Author Steam ID'} fullwidth={true} />;
+                                    }}
+                                />
+                            </Grid>
+                            <Grid xs={6} md={3}>
+                                <Field
+                                    name={'target_id'}
+                                    children={(props) => {
+                                        return <TextFieldSimple {...props} label={'Subject Steam ID'} fullwidth={true} />;
+                                    }}
+                                />
+                            </Grid>
+
+                            <Grid xs={6} md={3}>
+                                <Field
+                                    name={'cidr'}
+                                    children={(props) => {
+                                        return <TextFieldSimple {...props} label={'IP/CIDR'} fullwidth={true} />;
+                                    }}
+                                />
+                            </Grid>
+
+                            <Grid xs={6} md={3}>
+                                <Field
+                                    name={'deleted'}
+                                    children={(props) => {
+                                        return <CheckboxSimple {...props} label={'Incl. Deleted'} />;
+                                    }}
+                                />
+                            </Grid>
+
+                            <Grid xs={12} mdOffset="auto">
+                                <Subscribe
+                                    selector={(state) => [state.canSubmit, state.isSubmitting]}
+                                    children={([canSubmit, isSubmitting]) => (
+                                        <Buttons reset={reset} canSubmit={canSubmit} isSubmitting={isSubmitting} onClear={clear} />
+                                    )}
+                                />
+                            </Grid>
+                        </Grid>
+                    </form>
+                </ContainerWithHeader>
             </Grid>
             <Grid xs={12}>
                 <ContainerWithHeaderAndButtons
@@ -86,7 +166,7 @@ function AdminBanCIDR() {
                     ]}
                 >
                     <BanCIDRTable bans={bans ?? { data: [], count: 0 }} isLoading={isLoading} />
-                    <Paginator data={bans} page={page} rows={rows} />
+                    <Paginator data={bans} page={page} rows={rows} path={Route.fullPath} />
                 </ContainerWithHeaderAndButtons>
             </Grid>
         </Grid>
