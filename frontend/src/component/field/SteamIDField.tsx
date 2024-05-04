@@ -65,11 +65,18 @@ export const makeSteamidValidatorsOptional = (onSuccess?: (profile: PlayerProfil
     };
 };
 
-export const SteamIDField = ({ state, handleBlur, handleChange, fullwidth, profile }: FieldProps<string> & { profile?: PlayerProfile }) => {
+export const SteamIDField = ({
+    state,
+    handleBlur,
+    handleChange,
+    fullwidth,
+    profile,
+    label = 'SteamID/Profile'
+}: FieldProps<string> & { profile?: PlayerProfile }) => {
     return (
         <TextField
             fullWidth={fullwidth}
-            label="SteamID/Profile"
+            label={label}
             defaultValue={state.value}
             onChange={(e) => handleChange(e.target.value)}
             onBlur={handleBlur}
