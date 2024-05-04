@@ -1,22 +1,30 @@
+import FilterListIcon from '@mui/icons-material/FilterList';
 import WifiFindIcon from '@mui/icons-material/WifiFind';
+import Link from '@mui/material/Link';
 import TableCell from '@mui/material/TableCell';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
+import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiGetConnections, PersonConnection } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { DataTable, HeadingCell } from '../component/DataTable.tsx';
 import { Paginator } from '../component/Paginator.tsx';
-import { commonTableSearchSchema, LazyResult } from '../util/table.ts';
+import RouterLink from '../component/RouterLink.tsx';
+import { Buttons } from '../component/field/Buttons.tsx';
+import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
+import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
+import { emptyOrNullString } from '../util/types.ts';
 
 const playersByIPSearchSchema = z.object({
     ...commonTableSearchSchema,
-    sortColumn: z.enum(['person_connection_id', 'steam_id', 'created_on', 'ip_addr', 'server_id']).catch('person_connection_id'),
-    cidr: z.string().catch('')
+    sortColumn: z.enum(['person_connection_id', 'steam_id', 'created_on', 'ip_addr', 'server_id']).optional(),
+    cidr: z.string().optional()
 });
 
 export const Route = createFileRoute('/_mod/admin/network/playersbyip')({
@@ -25,16 +33,18 @@ export const Route = createFileRoute('/_mod/admin/network/playersbyip')({
 });
 
 function AdminNetworkPlayersByCIDR() {
+    const defaultRows = RowsPerPage.TwentyFive;
+    const navigate = useNavigate({ from: Route.fullPath });
     const { page, rows, sortOrder, sortColumn, cidr } = Route.useSearch();
     const { data: connections, isLoading } = useQuery({
         queryKey: ['playersByIP', { page, rows, sortOrder, sortColumn, cidr }],
         queryFn: async () => {
-            if (cidr == '') {
+            if (emptyOrNullString(cidr)) {
                 return { data: [], count: 0 };
             }
             return await apiGetConnections({
-                limit: Number(rows),
-                offset: Number((page ?? 0) * rows),
+                limit: rows ?? defaultRows,
+                offset: (page ?? 0) * (rows ?? defaultRows),
                 order_by: sortColumn ?? 'steam_id',
                 desc: sortOrder == 'desc',
                 cidr: cidr
@@ -64,143 +74,67 @@ function AdminNetworkPlayersByCIDR() {
     //     asn: 0,
     //     cidr: state.cidr ?? ''
     // });
-    //
-    // const onSubmit = (values: CIDRInputFieldProps) => {
-    //     setState((prevState) => {
-    //         return { ...prevState, cidr: values.cidr };
-    //     });
-    // };
+
+    const { Field, Subscribe, handleSubmit, reset } = useForm({
+        onSubmit: async ({ value }) => {
+            await navigate({ to: '/admin/network/playersbyip', search: (prev) => ({ ...prev, ...value }) });
+        },
+        validatorAdapter: zodValidator,
+        validators: {
+            onChange: playersByIPSearchSchema
+        },
+        defaultValues: {
+            cidr: cidr ?? ''
+        }
+    });
+
+    const clear = async () => {
+        await navigate({
+            to: '/admin/network/playersbyip',
+            search: (prev) => ({ ...prev, source_id: undefined })
+        });
+    };
 
     return (
-        <ContainerWithHeader title={'Find Players By IP/CIDR'} iconLeft={<WifiFindIcon />}>
-            <Grid container>
-                <Grid xs={12}>
-                    {/*<Formik onSubmit={onSubmit} initialValues={{ cidr: '' }}>*/}
-                    <Grid container direction="row" alignItems="top" justifyContent="center" spacing={2}>
-                        {/*<Grid xs>*/}
-                        {/*    <NetworkRangeField />*/}
-                        {/*</Grid>*/}
-                        {/*<Grid xs={2}>*/}
-                        {/*    <SubmitButton*/}
-                        {/*        label={'Submit'}*/}
-                        {/*        fullWidth*/}
-                        {/*        disabled={loading}*/}
-                        {/*        startIcon={<SearchIcon />}*/}
-                        {/*    />*/}
-                        {/*</Grid>*/}
-                    </Grid>
-                    {/*</Formik>*/}
-                </Grid>
-                <Grid xs={12}>
-                    {/*{loading ? (*/}
-                    {/*    <LoadingPlaceholder />*/}
-                    {/*) : (*/}
-                    {/*    <LazyTable<PersonConnection>*/}
-                    {/*        showPager={true}*/}
-                    {/*        count={count}*/}
-                    {/*        rows={rows}*/}
-                    {/*        page={state.page}*/}
-                    {/*        rowsPerPage={state.rows}*/}
-                    {/*        sortOrder={state.sortOrder}*/}
-                    {/*        sortColumn={state.sortColumn}*/}
-                    {/*        onSortColumnChanged={async (column) => {*/}
-                    {/*            setState((prevState) => {*/}
-                    {/*                return { ...prevState, sortColumn: column };*/}
-                    {/*            });*/}
-                    {/*        }}*/}
-                    {/*        onSortOrderChanged={async (direction) => {*/}
-                    {/*            setState((prevState) => {*/}
-                    {/*                return { ...prevState, sortOrder: direction };*/}
-                    {/*            });*/}
-                    {/*        }}*/}
-                    {/*        onPageChange={(_, newPage: number) => {*/}
-                    {/*            setState((prevState) => {*/}
-                    {/*                return { ...prevState, page: newPage };*/}
-                    {/*            });*/}
-                    {/*        }}*/}
-                    {/*        onRowsPerPageChange={(*/}
-                    {/*            event: ChangeEvent<*/}
-                    {/*                HTMLInputElement | HTMLTextAreaElement*/}
-                    {/*            >*/}
-                    {/*        ) => {*/}
-                    {/*            setState((prevState) => {*/}
-                    {/*                return {*/}
-                    {/*                    ...prevState,*/}
-                    {/*                    rows: parseInt(event.target.value, 10),*/}
-                    {/*                    page: 0*/}
-                    {/*                };*/}
-                    {/*            });*/}
-                    {/*        }}*/}
-                    {/*        columns={[*/}
-                    {/*            {*/}
-                    {/*                label: 'Created',*/}
-                    {/*                tooltip: 'Created On',*/}
-                    {/*                sortKey: 'created_on',*/}
-                    {/*                sortType: 'date',*/}
-                    {/*                align: 'left',*/}
-                    {/*                width: '150px',*/}
-                    {/*                sortable: true,*/}
-                    {/*                renderer: (obj: PersonConnection) => (*/}
-                    {/*                    <Typography variant={'body1'}>*/}
-                    {/*                        {renderDateTime(obj.created_on)}*/}
-                    {/*                    </Typography>*/}
-                    {/*                )*/}
-                    {/*            },*/}
-                    {/*            {*/}
-                    {/*                label: 'Name',*/}
-                    {/*                tooltip: 'Name',*/}
-                    {/*                sortKey: 'persona_name',*/}
-                    {/*                sortType: 'string',*/}
-                    {/*                align: 'left',*/}
-                    {/*                width: '200px',*/}
-                    {/*                sortable: true*/}
-                    {/*            },*/}
-                    {/*            {*/}
-                    {/*                label: 'SteamID',*/}
-                    {/*                tooltip: 'Name',*/}
-                    {/*                sortKey: 'steam_id',*/}
-                    {/*                sortType: 'string',*/}
-                    {/*                align: 'left',*/}
-                    {/*                width: '200px',*/}
-                    {/*                sortable: true*/}
-                    {/*            },*/}
-                    {/*            {*/}
-                    {/*                label: 'IP Address',*/}
-                    {/*                tooltip: 'IP Address',*/}
-                    {/*                sortKey: 'ip_addr',*/}
-                    {/*                sortType: 'string',*/}
-                    {/*                align: 'left',*/}
-                    {/*                width: '150px',*/}
-                    {/*                sortable: true*/}
-                    {/*            },*/}
-                    {/*            {*/}
-                    {/*                label: 'Server',*/}
-                    {/*                tooltip: 'IP Address',*/}
-                    {/*                sortKey: 'ip_addr',*/}
-                    {/*                sortType: 'string',*/}
-                    {/*                align: 'left',*/}
-                    {/*                sortable: true,*/}
-                    {/*                renderer: (obj: PersonConnection) => {*/}
-                    {/*                    return (*/}
-                    {/*                        <Tooltip*/}
-                    {/*                            title={obj.server_name ?? 'Unknown'}*/}
-                    {/*                        >*/}
-                    {/*                            <Typography variant={'body1'}>*/}
-                    {/*                                {obj.server_name_short ??*/}
-                    {/*                                    'Unknown'}*/}
-                    {/*                            </Typography>*/}
-                    {/*                        </Tooltip>*/}
-                    {/*                    );*/}
-                    {/*                }*/}
-                    {/*            }*/}
-                    {/*        ]}*/}
-                    {/*    />*/}
-                    {/*)}*/}
-                </Grid>
+        <Grid container spacing={2}>
+            <Grid xs={12}>
+                <ContainerWithHeader title={'Filters'} iconLeft={<FilterListIcon />} marginTop={2}>
+                    <form
+                        onSubmit={async (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            await handleSubmit();
+                        }}
+                    >
+                        <Grid container spacing={2}>
+                            <Grid xs={12}>
+                                <Field
+                                    name={'cidr'}
+                                    children={(props) => {
+                                        return <TextFieldSimple {...props} fullwidth={true} label={'CIDR/IP'} />;
+                                    }}
+                                />
+                            </Grid>
+
+                            <Grid xs={12} mdOffset="auto">
+                                <Subscribe
+                                    selector={(state) => [state.canSubmit, state.isSubmitting]}
+                                    children={([canSubmit, isSubmitting]) => (
+                                        <Buttons reset={reset} canSubmit={canSubmit} isSubmitting={isSubmitting} onClear={clear} />
+                                    )}
+                                />
+                            </Grid>
+                        </Grid>
+                    </form>
+                </ContainerWithHeader>
             </Grid>
-            <PayersByIPTable connections={connections ?? { data: [], count: 0 }} isLoading={isLoading} />
-            <Paginator page={page} rows={rows} data={connections} />
-        </ContainerWithHeader>
+            <Grid xs={12}>
+                <ContainerWithHeader title={'Find Players By IP/CIDR'} iconLeft={<WifiFindIcon />}>
+                    <PayersByIPTable connections={connections ?? { data: [], count: 0 }} isLoading={isLoading} />
+                    <Paginator page={page ?? 0} rows={rows ?? defaultRows} data={connections} path={'/admin/network/playersbyip'} />
+                </ContainerWithHeader>
+            </Grid>
+        </Grid>
     );
 }
 
@@ -221,10 +155,12 @@ const PayersByIPTable = ({ connections, isLoading }: { connections: LazyResult<P
             )
         }),
         columnHelper.accessor('steam_id', {
-            header: () => <HeadingCell name={'Name'} />,
+            header: () => <HeadingCell name={'Steam ID'} />,
             cell: (info) => (
                 <TableCell>
-                    <Typography>{info.getValue()}</Typography>
+                    <Link component={RouterLink} to={'/profile/$steamId'} params={{ steamId: info.getValue() }}>
+                        {info.getValue()}
+                    </Link>
                 </TableCell>
             )
         }),
