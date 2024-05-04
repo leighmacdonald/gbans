@@ -1,48 +1,74 @@
-import { useMemo } from 'react';
+import { JSX, useMemo, useState } from 'react';
+import EditNotificationsIcon from '@mui/icons-material/EditNotifications';
 import HistoryIcon from '@mui/icons-material/History';
 import InfoIcon from '@mui/icons-material/Info';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import { TablePagination } from '@mui/material';
+import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
+import FormControl from '@mui/material/FormControl';
+import FormHelperText from '@mui/material/FormHelperText';
 import IconButton from '@mui/material/IconButton';
+import InputLabel from '@mui/material/InputLabel';
 import Link from '@mui/material/Link';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
+import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import { useQuery } from '@tanstack/react-query';
+import { useForm } from '@tanstack/react-form';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute, Link as RouterLink, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
-import { apiGetReports, ReportStatus, reportStatusString, ReportWithAuthor } from '../api';
+import {
+    apiCreateReport,
+    apiGetReports,
+    BanReason,
+    BanReasons,
+    banReasonsList,
+    CreateReportRequest,
+    PlayerProfile,
+    ReportStatus,
+    reportStatusString,
+    ReportWithAuthor
+} from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { DataTable, HeadingCell } from '../component/DataTable.tsx';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
+import { Paginator } from '../component/Paginator.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
-import { ReportCreateForm } from '../component/ReportCreateForm.tsx';
+import { PlayerMessageContext } from '../component/PlayerMessageContext.tsx';
 import { ReportStatusIcon } from '../component/ReportStatusIcon.tsx';
+import { MDBodyField } from '../component/_formik/MDBodyField.tsx';
+import { Buttons } from '../component/field/Buttons.tsx';
+import { makeSteamidValidators, SteamIDField } from '../component/field/SteamIDField.tsx';
 import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
 
-const reportLogsSchema = z.object({
+const reportSchema = z.object({
     ...commonTableSearchSchema,
     rows: z.number().catch(RowsPerPage.Ten),
     sortColumn: z.enum(['report_status', 'created_on']).catch('created_on'),
-    report_status: z.nativeEnum(ReportStatus).catch(ReportStatus.Any)
+    report_status: z.nativeEnum(ReportStatus).catch(ReportStatus.Any),
+    steam_id: z.string().optional(),
+    demo_name: z.string().optional(),
+    person_message_id: z.number().optional()
 });
 
 export const Route = createFileRoute('/_auth/report/')({
     component: ReportCreate,
-    validateSearch: (search) => reportLogsSchema.parse(search)
+    validateSearch: (search) => reportSchema.parse(search)
 });
 
 function ReportCreate() {
     const { profile, userSteamID } = useRouteContext({ from: '/_auth/report/' });
     const { page, sortColumn, rows, sortOrder } = Route.useSearch();
-    const navigate = useNavigate();
 
     const canReport = useMemo(() => {
         const user = profile();
@@ -86,14 +112,7 @@ function ReportCreate() {
                         ) : (
                             <UserReportHistory history={logs ?? { data: [], count: 0 }} isLoading={isLoading} />
                         )}
-                        <TablePagination
-                            count={logs ? logs.count : 0}
-                            page={page}
-                            rowsPerPage={rows}
-                            onPageChange={async (_, newPage: number) => {
-                                await navigate({ search: (search) => ({ ...search, page: newPage }) });
-                            }}
-                        />
+                        <Paginator page={page} rows={rows} data={logs} />
                     </ContainerWithHeader>
                 </Stack>
             </Grid>
@@ -187,9 +206,216 @@ const UserReportHistory = ({ history, isLoading }: { history: LazyResult<ReportW
         autoResetPageIndex: true
     });
 
+    return <DataTable table={table} isLoading={isLoading} />;
+};
+
+const validationSchema = z.object({
+    steam_id: z.string(),
+    body_md: z.string().min(10, 'Message too short (min 10)'),
+    reason: z.nativeEnum(BanReason),
+    reason_text: z.string().optional(),
+
+    //person_message_id: yup.number().min(1, 'Invalid message id').optional()
+    demo_name: z.string().optional(),
+    demo_tick: z.number().min(0, 'invalid demo tick value').optional()
+});
+
+export const ReportCreateForm = (): JSX.Element => {
+    const { demo_name, steam_id, person_message_id } = Route.useSearch();
+    const [validatedProfile, setValidatedProfile] = useState<PlayerProfile>();
+
+    const mutation = useMutation({
+        mutationFn: async (variables: CreateReportRequest) => {
+            return await apiCreateReport(variables);
+        },
+        onSuccess: async (data) => {
+            await navigate({ to: '/report/$reportId', params: { reportId: String(data.report_id) } });
+        }
+    });
+
+    const navigate = useNavigate();
+
+    const form = useForm({
+        onSubmit: async ({ value }) => {
+            mutation.mutate({
+                demo_name: value.demo_name,
+                target_id: validatedProfile?.player.steam_id ?? '',
+                demo_tick: value.demo_tick,
+                reason: value.reason,
+                reason_text: value.reason_text,
+                description: value.body_md,
+                person_message_id: value.person_message_id
+            });
+        },
+        validatorAdapter: zodValidator,
+        validators: {
+            onChange: validationSchema
+        },
+        defaultValues: {
+            body_md: '',
+            demo_name: demo_name ?? '',
+            demo_tick: 0,
+            person_message_id: person_message_id ?? 0,
+            steam_id: steam_id ?? '',
+            reason: BanReason.Custom,
+            reason_text: ''
+        }
+    });
+
+    // const onSubmit = useCallback(
+    //     async (values: ReportValues, formikHelpers: FormikHelpers<ReportValues>) => {
+    //         try {
+    //             const report = await apiCreateReport({
+    //                 demo_name: values.demo_name,
+    //                 demo_tick: values.demo_tick ?? 0,
+    //                 description: values.body_md,
+    //                 reason_text: values.reason_text,
+    //                 target_id: values.steam_id,
+    //                 person_message_id: values.person_message_id,
+    //                 reason: values.reason
+    //             });
+    //             await navigate({ to: `/report/${report.report_id}` });
+    //             formikHelpers.resetForm();
+    //         } catch (e) {
+    //             logErr(e);
+    //         }
+    //     },
+    //     [navigate]
+    // );
+
     return (
-        <Stack>
-            <DataTable table={table} isLoading={isLoading} />
-        </Stack>
+        <ContainerWithHeader title={'Create a New Report'} iconLeft={<EditNotificationsIcon />} spacing={2} marginTop={3}>
+            <form
+                onSubmit={async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    await form.handleSubmit();
+                }}
+            >
+                <Grid container spacing={2}>
+                    <Grid xs={12}>
+                        <form.Field
+                            name={'steam_id'}
+                            validators={makeSteamidValidators(setValidatedProfile)}
+                            children={({ state, handleChange, handleBlur }) => {
+                                return <SteamIDField state={state} handleBlur={handleBlur} handleChange={handleChange} fullwidth={true} />;
+                            }}
+                        />
+                    </Grid>
+                    <Grid xs={6}>
+                        <form.Field
+                            name={'reason'}
+                            validators={{
+                                onChange: z.nativeEnum(BanReason, { message: 'Invalid ban reason' })
+                            }}
+                            children={({ state, handleChange, handleBlur }) => {
+                                return (
+                                    <>
+                                        <FormControl fullWidth>
+                                            <InputLabel id="server-select-label">Reason</InputLabel>
+                                            <Select
+                                                fullWidth
+                                                value={state.value}
+                                                label="Servers"
+                                                onChange={(e) => {
+                                                    handleChange(Number(e.target.value));
+                                                }}
+                                                onBlur={handleBlur}
+                                                error={state.meta.touchedErrors.length > 0}
+                                            >
+                                                {banReasonsList.map((r) => (
+                                                    <MenuItem value={r} key={`reason-${r}`}>
+                                                        {BanReasons[r]}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                            {state.meta.touchedErrors.length > 0 && <FormHelperText>Error</FormHelperText>}
+                                        </FormControl>
+                                    </>
+                                );
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid xs={6}>
+                        <form.Field
+                            name={'reason_text'}
+                            children={({ state, handleChange, handleBlur }) => {
+                                return (
+                                    <>
+                                        <TextField
+                                            fullWidth
+                                            label="Custom Reason"
+                                            value={state.value}
+                                            onChange={(e) => handleChange(e.target.value)}
+                                            onBlur={handleBlur}
+                                            variant="outlined"
+                                        />
+                                    </>
+                                );
+                            }}
+                        />
+                    </Grid>
+                    <Grid md={6}>
+                        <form.Field
+                            name={'demo_name'}
+                            children={({ state, handleChange, handleBlur }) => {
+                                return (
+                                    <TextField
+                                        fullWidth
+                                        label="Demo Name"
+                                        value={state.value}
+                                        onChange={(e) => handleChange(e.target.value)}
+                                        onBlur={handleBlur}
+                                        variant="outlined"
+                                    />
+                                );
+                            }}
+                        />
+                    </Grid>
+                    <Grid md={6}>
+                        <form.Field
+                            name={'demo_tick'}
+                            children={({ state, handleChange, handleBlur }) => {
+                                return (
+                                    <TextField
+                                        fullWidth
+                                        label="Demo Tick"
+                                        value={state.value}
+                                        onChange={(e) => handleChange(Number(e.target.value))}
+                                        onBlur={handleBlur}
+                                        variant="outlined"
+                                    />
+                                );
+                            }}
+                        />
+                    </Grid>
+
+                    {person_message_id != undefined && person_message_id > 0 && (
+                        <Grid md={12}>
+                            <PlayerMessageContext playerMessageId={person_message_id} padding={5} />
+                        </Grid>
+                    )}
+                    <Grid md={12}>
+                        <Box minHeight={365}>
+                            <form.Field
+                                name={'body_md'}
+                                children={({ state, handleChange, handleBlur }) => {
+                                    return <MDBodyField state={state} handleBlur={handleBlur} handleChange={handleChange} />;
+                                }}
+                            />
+                        </Box>
+                    </Grid>
+                    <Grid xs={12}>
+                        <form.Subscribe
+                            selector={(state) => [state.canSubmit, state.isSubmitting]}
+                            children={([canSubmit, isSubmitting]) => (
+                                <Buttons canSubmit={canSubmit} isSubmitting={isSubmitting} reset={form.reset} />
+                            )}
+                        />
+                    </Grid>
+                </Grid>
+            </form>
+        </ContainerWithHeader>
     );
 };

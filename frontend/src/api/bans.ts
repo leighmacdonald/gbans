@@ -23,6 +23,7 @@ export enum AppealState {
 }
 
 export const AppealStateCollection = [
+    AppealState.Any,
     AppealState.Open,
     AppealState.Denied,
     AppealState.Accepted,

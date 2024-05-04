@@ -1,4 +1,4 @@
-import { useState, useCallback, SyntheticEvent } from 'react';
+import { useState, SyntheticEvent } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import EditIcon from '@mui/icons-material/Edit';
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
@@ -16,46 +16,42 @@ import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
-import { apiSaveMedia, UserUploadedFile } from '../api/media';
-import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
-import { logErr } from '../util/errors';
-import { MarkDownRenderer } from './MarkdownRenderer';
-import { TabPanel } from './TabPanel';
-import { ModalFileUpload } from './modal';
+import { UserUploadedFile } from '../../api/media.ts';
+import { MarkDownRenderer } from '../MarkdownRenderer.tsx';
+import { TabPanel } from '../TabPanel.tsx';
+import { FieldProps } from '../field/common.ts';
+import { ModalFileUpload } from '../modal';
 
-interface BodyMDFieldProps {
-    body_md: string;
-}
+type MDBodyFieldProps = {
+    fileUpload?: boolean;
+} & FieldProps;
 
-export const MDBodyField = <T,>({ fileUpload = true }: { fileUpload?: boolean }) => {
+export const MDBodyField = ({ state, handleChange, handleBlur, fileUpload = true }: MDBodyFieldProps) => {
     const [setTabValue, setTabSetTabValue] = useState(0);
-    const [cursorPos, setCursorPos] = useState(0);
-    // const { values, touched, setFieldValue, errors } = useFormikContext<T & BodyMDFieldProps>();
-    const { sendFlash } = useUserFlashCtx();
     const extraButtons = false;
 
     const handleTabChange = (_: SyntheticEvent, newValue: number) => setTabSetTabValue(newValue);
 
-    const onFileSave = useCallback(
-        async (v: UserUploadedFile, onSuccess?: () => void) => {
-            try {
-                const resp = await apiSaveMedia(v);
-                if (!resp.author_id) {
-                    return;
-                }
-                const newBody =
-                    values.body_md.slice(0, cursorPos) +
-                    `![${resp.asset.name}](media://${resp.asset.asset_id})` +
-                    values.body_md.slice(cursorPos);
-                await setFieldValue('body_md', newBody);
-                onSuccess && onSuccess();
-            } catch (e) {
-                logErr(e);
-                sendFlash('error', 'Failed to save media');
-            }
-        },
-        [cursorPos, sendFlash, setFieldValue, values.body_md]
-    );
+    // const onFileSave = useCallback(
+    //     async (v: UserUploadedFile, onSuccess?: () => void) => {
+    //         try {
+    //             const resp = await apiSaveMedia(v);
+    //             if (!resp.author_id) {
+    //                 return;
+    //             }
+    //             const newBody =
+    //                 values.body_md.slice(0, cursorPos) +
+    //                 `![${resp.asset.name}](media://${resp.asset.asset_id})` +
+    //                 values.body_md.slice(cursorPos);
+    //             await setFieldValue('body_md', newBody);
+    //             onSuccess && onSuccess();
+    //         } catch (e) {
+    //             logErr(e);
+    //             sendFlash('error', 'Failed to save media');
+    //         }
+    //     },
+    //     [cursorPos, sendFlash, setFieldValue, values.body_md]
+    // );
 
     return (
         <Stack>
@@ -82,8 +78,8 @@ export const MDBodyField = <T,>({ fileUpload = true }: { fileUpload?: boolean })
                                         component="span"
                                         variant={'text'}
                                         onClick={async () => {
-                                            const resp = await NiceModal.show<UserUploadedFile>(ModalFileUpload, {});
-                                            await onFileSave(resp);
+                                            await NiceModal.show<UserUploadedFile>(ModalFileUpload, {});
+                                            //await onFileSave(resp);
                                         }}
                                         startIcon={<ImageIcon />}
                                     >
@@ -117,34 +113,34 @@ export const MDBodyField = <T,>({ fileUpload = true }: { fileUpload?: boolean })
                             )}
                         </Stack>
                     )}
-                    <Box>
+                    <>
                         <TextField
                             sx={{
                                 padding: 0,
                                 minHeight: 350,
                                 height: '100%'
                             }}
-                            id="body_md"
-                            name={'body_md'}
                             label="Body (Markdown)"
                             fullWidth
                             multiline
                             rows={20}
-                            value={values.body_md}
-                            error={touched.body_md && Boolean(errors.body_md)}
-                            helperText={touched.body_md && errors.body_md && `${errors.body_md}`}
-                            onChange={async (event) => {
-                                const body = event.target.value;
-                                setCursorPos(event.target.selectionEnd ?? 0);
-                                await setFieldValue('body_md', body);
-                            }}
+                            value={state.value}
+                            error={state.meta.touchedErrors.length > 0}
+                            helperText={state.meta.touchedErrors}
+                            onChange={(e) => handleChange(e.target.value)}
+                            onBlur={handleBlur}
+                            // onChange={async (event) => {
+                            //     const body = event.target.value;
+                            //     setCursorPos(event.target.selectionEnd ?? 0);
+                            //     await setFieldValue('body_md', body);
+                            // }}
                         />
-                    </Box>
+                    </>
                 </Stack>
             </TabPanel>
             <TabPanel value={setTabValue} index={1}>
                 <Box padding={2}>
-                    <MarkDownRenderer body_md={values.body_md} />
+                    <MarkDownRenderer body_md={state.value} />
                 </Box>
             </TabPanel>
         </Stack>

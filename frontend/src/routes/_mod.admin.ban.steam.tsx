@@ -1,18 +1,35 @@
 import AddIcon from '@mui/icons-material/Add';
+import FilterListIcon from '@mui/icons-material/FilterList';
 import GavelIcon from '@mui/icons-material/Gavel';
 import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
+import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
+import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
-import { createFileRoute, Link as RouterLink } from '@tanstack/react-router';
+import { createFileRoute, Link as RouterLink, useNavigate } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { z } from 'zod';
-import { apiGetBansSteam, AppealState, BanReason, BanReasons, SteamBanRecord } from '../api';
+import {
+    apiGetBansSteam,
+    AppealState,
+    AppealStateCollection,
+    appealStateString,
+    BanReason,
+    BanReasons,
+    PermissionLevel,
+    SteamBanRecord
+} from '../api';
+import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { DataTable, HeadingCell } from '../component/DataTable.tsx';
 import { Paginator } from '../component/Paginator.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
+import { Buttons } from '../component/field/Buttons.tsx';
+import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
+import { SelectFieldSimple } from '../component/field/SelectFieldSimple.tsx';
+import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { TableCellBool } from '../component/table/TableCellBool.tsx';
 import { TableCellRelativeDateField } from '../component/table/TableCellRelativeDateField.tsx';
 import { commonTableSearchSchema, isPermanentBan, LazyResult } from '../util/table.ts';
@@ -36,9 +53,11 @@ export const Route = createFileRoute('/_mod/admin/ban/steam')({
 });
 
 function AdminBanSteam() {
-    const { page, rows, sortOrder, sortColumn, target_id, source_id } = Route.useSearch();
+    const { hasPermission } = Route.useRouteContext();
+    const navigate = useNavigate({ from: Route.fullPath });
+    const { page, rows, sortOrder, sortColumn, target_id, source_id, appeal_state, deleted } = Route.useSearch();
     const { data: bans, isLoading } = useQuery({
-        queryKey: ['steamBans', { page, rows, sortOrder, sortColumn, target_id, source_id }],
+        queryKey: ['steamBans', { page, rows, sortOrder, sortColumn, target_id, source_id, appeal_state }],
         queryFn: async () => {
             return await apiGetBansSteam({
                 limit: Number(rows),
@@ -46,10 +65,12 @@ function AdminBanSteam() {
                 order_by: sortColumn ?? 'ban_id',
                 desc: sortOrder == 'desc',
                 source_id: source_id,
-                target_id: target_id
+                target_id: target_id,
+                appeal_state: appeal_state
             });
         }
     });
+
     // const [newSteamBans, setNewSteamBans] = useState<SteamBanRecord[]>([]);
     // const { sendFlash } = useUserFlashCtx();
     //
@@ -79,7 +100,7 @@ function AdminBanSteam() {
     //     },
     //     [sendFlash]
     // );
-    //
+
     // const onEditSteam = useCallback(
     //     async (ban: SteamBanRecord) => {
     //         try {
@@ -96,49 +117,105 @@ function AdminBanSteam() {
     //     [sendFlash]
     // );
 
-    // const { data, count } = useBansSteam({
-    //     limit: Number(rows ?? RowsPerPage.Ten),
-    //     offset: Number((page ?? 0) * (rows ?? RowsPerPage.Ten)),
-    //     order_by: sortColumn ?? 'ban_id',
-    //     desc: (sortOrder ?? 'desc') == 'desc',
-    //     source_id: source_id ?? '',
-    //     target_id: target_id ?? '',
-    //     appeal_state: Number(appeal_state ?? AppealState.Any),
-    //     deleted: deleted ?? false
-    // });
+    const { Field, Subscribe, handleSubmit, reset } = useForm({
+        onSubmit: async ({ value }) => {
+            await navigate({ to: '/admin/ban/steam', search: (prev) => ({ ...prev, ...value }) });
+        },
+        defaultValues: {
+            source_id,
+            target_id,
+            appeal_state,
+            deleted
+        }
+    });
 
-    // const allBans = useMemo(() => {
-    //     if (newSteamBans.length > 0) {
-    //         return [...newSteamBans, ...data];
-    //     }
-    //
-    //     return data;
-    // }, [data, newSteamBans]);
-
-    // const onSubmit = useCallback(() => {
-    //     // (values: SteamBanFilterValues) => {
-    //     //     const newState = {
-    //     //         appealState: values.appeal_state != AppealState.Any ? values.appeal_state : undefined,
-    //     //         source: values.source_id != '' ? values.source_id : undefined,
-    //     //         target: values.target_id != '' ? values.target_id : undefined,
-    //     //         deleted: values.deleted ? true : undefined
-    //     //     };
-    //     //     setState(newState);
-    // }, []);
-    //
-    // const onReset = useCallback(async () => {
-    //     // setState({
-    //     //     appealState: undefined,
-    //     //     source: undefined,
-    //     //     target: undefined,
-    //     //     deleted: undefined
-    //     // });
-    //     // await formikHelpers.setFieldValue('source_id', '');
-    //     // await formikHelpers.setFieldValue('target_id', '');
-    // }, []);
+    const clear = async () => {
+        await navigate({
+            to: '/admin/ban/steam',
+            search: (prev) => ({ ...prev, source_id: '', target_id: '', appeal_state: AppealState.Any, deleted: false })
+        });
+    };
 
     return (
-        <Grid container>
+        <Grid container spacing={2}>
+            <Grid xs={12}>
+                <ContainerWithHeader title={'Filters'} iconLeft={<FilterListIcon />}>
+                    <form
+                        onSubmit={async (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            await handleSubmit();
+                        }}
+                    >
+                        <Grid container spacing={2}>
+                            <Grid xs={4}>
+                                <Grid xs={6} md={3}>
+                                    <Field
+                                        name={'source_id'}
+                                        children={(props) => {
+                                            return <TextFieldSimple {...props} label={'Author Steam ID'} fullwidth={true} />;
+                                        }}
+                                    />
+                                </Grid>
+                            </Grid>
+                            <Grid xs={6} md={3}>
+                                <Field
+                                    name={'target_id'}
+                                    children={(props) => {
+                                        return <TextFieldSimple {...props} label={'Subject Steam ID'} fullwidth={true} />;
+                                    }}
+                                />
+                            </Grid>
+
+                            <Grid xs={6} md={3}>
+                                <Field
+                                    name={'appeal_state'}
+                                    children={(props) => {
+                                        return (
+                                            <SelectFieldSimple
+                                                {...props}
+                                                label={'Appeal State'}
+                                                items={AppealStateCollection.map((i) => i)}
+                                                renderMenu={(i) => {
+                                                    return (
+                                                        <MenuItem value={i} key={`${i}-${appealStateString(Number(i))}`}>
+                                                            {appealStateString(Number(i))}
+                                                        </MenuItem>
+                                                    );
+                                                }}
+                                            />
+                                        );
+                                    }}
+                                />
+                            </Grid>
+
+                            <Grid xs="auto">
+                                <Field
+                                    name={'deleted'}
+                                    children={(props) => {
+                                        return (
+                                            <CheckboxSimple
+                                                {...props}
+                                                label={'Incl. Deleted'}
+                                                disabled={!hasPermission(PermissionLevel.User)}
+                                            />
+                                        );
+                                    }}
+                                />
+                            </Grid>
+
+                            <Grid xs={12} mdOffset="auto">
+                                <Subscribe
+                                    selector={(state) => [state.canSubmit, state.isSubmitting]}
+                                    children={([canSubmit, isSubmitting]) => (
+                                        <Buttons reset={reset} canSubmit={canSubmit} isSubmitting={isSubmitting} onClear={clear} />
+                                    )}
+                                />
+                            </Grid>
+                        </Grid>
+                    </form>
+                </ContainerWithHeader>
+            </Grid>
             <Grid xs={12}>
                 <ContainerWithHeaderAndButtons
                     title={'Steam Ban History'}
@@ -157,27 +234,7 @@ function AdminBanSteam() {
                         </Button>
                     ]}
                 >
-                    {/*<Formik onReset={onReset} onSubmit={onSubmit} initialValues={{}}>*/}
                     <Grid container spacing={3}>
-                        <Grid xs={12}>
-                            <Grid container spacing={2}>
-                                {/*<Grid xs={4} sm={3} md={2}>*/}
-                                {/*    <SourceIDField />*/}
-                                {/*</Grid>*/}
-                                {/*<Grid xs={4} sm={3} md={2}>*/}
-                                {/*    <TargetIDField />*/}
-                                {/*</Grid>*/}
-                                {/*<Grid xs={4} sm={3} md={2}>*/}
-                                {/*    <AppealStateField />*/}
-                                {/*</Grid>*/}
-                                {/*<Grid xs={4} sm={3} md={2}>*/}
-                                {/*    <DeletedField />*/}
-                                {/*</Grid>*/}
-                                {/*<Grid xs={4} sm={3} md={2}>*/}
-                                {/*    <FilterButtons />*/}
-                                {/*</Grid>*/}
-                            </Grid>
-                        </Grid>
                         <Grid xs={12}>
                             {/*        {*/}
                             {/*            label: 'Act.',*/}
