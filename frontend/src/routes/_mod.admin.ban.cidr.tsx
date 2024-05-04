@@ -20,16 +20,16 @@ import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { TableCellBool } from '../component/table/TableCellBool.tsx';
 import { TableCellRelativeDateField } from '../component/table/TableCellRelativeDateField.tsx';
-import { commonTableSearchSchema, isPermanentBan, LazyResult } from '../util/table.ts';
+import { commonTableSearchSchema, isPermanentBan, LazyResult, RowsPerPage } from '../util/table.ts';
 import { renderDate } from '../util/text.tsx';
 
 const banCIDRSearchSchema = z.object({
     ...commonTableSearchSchema,
-    sortColumn: z.enum(['net_id', 'source_id', 'target_id', 'deleted', 'reason', 'created_on', 'valid_until']).catch('net_id'),
-    source_id: z.string().catch(''),
-    target_id: z.string().catch(''),
-    cidr: z.string().catch(''),
-    deleted: z.boolean().catch(false)
+    sortColumn: z.enum(['net_id', 'source_id', 'target_id', 'deleted', 'reason', 'created_on', 'valid_until']).optional(),
+    source_id: z.string().optional(),
+    target_id: z.string().optional(),
+    cidr: z.string().optional(),
+    deleted: z.boolean().optional()
 });
 
 export const Route = createFileRoute('/_mod/admin/ban/cidr')({
@@ -38,14 +38,15 @@ export const Route = createFileRoute('/_mod/admin/ban/cidr')({
 });
 
 function AdminBanCIDR() {
+    const defaultRows = RowsPerPage.TwentyFive;
     const navigate = useNavigate({ from: Route.fullPath });
     const { page, rows, sortOrder, sortColumn, deleted, cidr, target_id, source_id } = Route.useSearch();
     const { data: bans, isLoading } = useQuery({
         queryKey: ['steamBans', { page, rows, sortOrder, sortColumn, target_id, source_id, cidr, deleted }],
         queryFn: async () => {
             return await apiGetBansCIDR({
-                limit: Number(rows),
-                offset: Number((page ?? 0) * rows),
+                limit: rows ?? defaultRows,
+                offset: (page ?? 0) * (rows ?? defaultRows),
                 order_by: sortColumn,
                 desc: sortOrder == 'desc',
                 source_id: source_id,
@@ -75,10 +76,10 @@ function AdminBanCIDR() {
             await navigate({ to: '/admin/ban/cidr', search: (prev) => ({ ...prev, ...value }) });
         },
         defaultValues: {
-            source_id,
-            target_id,
-            cidr,
-            deleted
+            source_id: source_id ?? '',
+            target_id: target_id ?? '',
+            cidr: cidr ?? '',
+            deleted: deleted ?? false
         }
     });
     const clear = async () => {
@@ -166,7 +167,7 @@ function AdminBanCIDR() {
                     ]}
                 >
                     <BanCIDRTable bans={bans ?? { data: [], count: 0 }} isLoading={isLoading} />
-                    <Paginator data={bans} page={page} rows={rows} path={Route.fullPath} />
+                    <Paginator data={bans} page={page ?? 0} rows={rows ?? defaultRows} path={Route.fullPath} />
                 </ContainerWithHeaderAndButtons>
             </Grid>
         </Grid>

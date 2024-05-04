@@ -32,7 +32,7 @@ import { SelectFieldSimple } from '../component/field/SelectFieldSimple.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { TableCellBool } from '../component/table/TableCellBool.tsx';
 import { TableCellRelativeDateField } from '../component/table/TableCellRelativeDateField.tsx';
-import { commonTableSearchSchema, isPermanentBan, LazyResult } from '../util/table.ts';
+import { commonTableSearchSchema, isPermanentBan, LazyResult, RowsPerPage } from '../util/table.ts';
 import { renderDate } from '../util/text.tsx';
 
 const banSteamSearchSchema = z.object({
@@ -40,11 +40,11 @@ const banSteamSearchSchema = z.object({
     sortColumn: z
         .enum(['ban_id', 'source_id', 'target_id', 'deleted', 'reason', 'created_on', 'valid_until', 'appeal_state'])
         .catch('ban_id'),
-    source_id: z.string().catch(''),
-    target_id: z.string().catch(''),
+    source_id: z.string().optional(),
+    target_id: z.string().optional(),
     reason: z.nativeEnum(BanReason).optional(),
-    appeal_state: z.nativeEnum(AppealState).catch(AppealState.Any),
-    deleted: z.boolean().catch(false)
+    appeal_state: z.nativeEnum(AppealState).optional(),
+    deleted: z.boolean().optional()
 });
 
 export const Route = createFileRoute('/_mod/admin/ban/steam')({
@@ -53,6 +53,7 @@ export const Route = createFileRoute('/_mod/admin/ban/steam')({
 });
 
 function AdminBanSteam() {
+    const defaultRows = RowsPerPage.TwentyFive;
     const { hasPermission } = Route.useRouteContext();
     const navigate = useNavigate({ from: Route.fullPath });
     const { page, rows, sortOrder, sortColumn, target_id, source_id, appeal_state, deleted } = Route.useSearch();
@@ -60,8 +61,8 @@ function AdminBanSteam() {
         queryKey: ['steamBans', { page, rows, sortOrder, sortColumn, target_id, source_id, appeal_state }],
         queryFn: async () => {
             return await apiGetBansSteam({
-                limit: Number(rows),
-                offset: Number((page ?? 0) * rows),
+                limit: rows ?? defaultRows,
+                offset: (page ?? 0) * (rows ?? defaultRows),
                 order_by: sortColumn ?? 'ban_id',
                 desc: sortOrder == 'desc',
                 source_id: source_id,
@@ -122,10 +123,10 @@ function AdminBanSteam() {
             await navigate({ to: '/admin/ban/steam', search: (prev) => ({ ...prev, ...value }) });
         },
         defaultValues: {
-            source_id,
-            target_id,
-            appeal_state,
-            deleted
+            source_id: source_id ?? '',
+            target_id: target_id ?? '',
+            appeal_state: appeal_state ?? AppealState.Any,
+            deleted: deleted ?? false
         }
     });
 
@@ -270,7 +271,7 @@ function AdminBanSteam() {
                             {/*    ]}*/}
                             {/*/>*/}
                             <BanSteamTable bans={bans ?? { data: [], count: 0 }} isLoading={isLoading} />
-                            <Paginator page={page} rows={rows} data={bans} />
+                            <Paginator page={page ?? 0} rows={rows ?? defaultRows} data={bans} path={'/admin/ban/steam'} />
                         </Grid>
                     </Grid>
                     {/*</Formik>*/}

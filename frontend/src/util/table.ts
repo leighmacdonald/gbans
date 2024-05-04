@@ -22,9 +22,9 @@ export const isPermanentBan = (start: Date, end: Date): boolean => {
 };
 
 export const commonTableSearchSchema = {
-    page: z.number().catch(0),
-    rows: z.number().catch(RowsPerPage.TwentyFive),
-    sortOrder: z.enum(['desc', 'asc']).catch('desc')
+    page: z.number().optional().catch(0),
+    rows: z.number().optional().catch(RowsPerPage.TwentyFive),
+    sortOrder: z.enum(['desc', 'asc']).optional()
 };
 
 export const descendingComparator = <T>(a: T, b: T, orderBy: keyof T) => (b[orderBy] < a[orderBy] ? -1 : b[orderBy] > a[orderBy] ? 1 : 0);
