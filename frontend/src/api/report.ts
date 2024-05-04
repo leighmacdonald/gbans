@@ -12,6 +12,14 @@ export enum ReportStatus {
     ClosedWithAction = 3
 }
 
+export const ReportStatusCollection = [
+    ReportStatus.Any,
+    ReportStatus.Opened,
+    ReportStatus.NeedMoreInfo,
+    ReportStatus.ClosedWithoutAction,
+    ReportStatus.ClosedWithAction
+];
+
 export const reportStatusString = (rs: ReportStatus): string => {
     switch (rs) {
         case ReportStatus.NeedMoreInfo:
