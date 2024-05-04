@@ -241,7 +241,7 @@ export type NetworkDetails = {
     proxy: NetworkProxy;
 };
 
-export const apiGetNetworkDetails = async (opts: IPQuery, abortController: AbortController) => {
+export const apiGetNetworkDetails = async (opts: IPQuery, abortController?: AbortController) => {
     return await apiCall<NetworkDetails, IPQuery>(`/api/network`, 'POST', opts, abortController);
 };
 
