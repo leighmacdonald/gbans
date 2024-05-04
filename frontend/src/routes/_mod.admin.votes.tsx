@@ -1,11 +1,12 @@
 import FilterListIcon from '@mui/icons-material/FilterList';
 import HowToVoteIcon from '@mui/icons-material/HowToVote';
-import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
+import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiVotesQuery, VoteResult } from '../api/votes.ts';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
@@ -13,16 +14,19 @@ import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderA
 import { DataTable, HeadingCell } from '../component/DataTable.tsx';
 import { Paginator } from '../component/Paginator.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
+import { Buttons } from '../component/field/Buttons.tsx';
+import { makeSteamidValidatorsOptional } from '../component/field/SteamIDField.tsx';
+import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { TableCellBool } from '../component/table/TableCellBool.tsx';
-import { commonTableSearchSchema, LazyResult } from '../util/table.ts';
+import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 
 const votesSearchSchema = z.object({
     ...commonTableSearchSchema,
-    sortColumn: z.enum(['target_id', 'source_id', 'success', 'created_on']).catch('created_on'),
-    source_id: z.string().catch(''),
-    target_id: z.string().catch(''),
-    success: z.number().catch(-1)
+    sortColumn: z.enum(['target_id', 'source_id', 'success', 'created_on']).optional(),
+    source_id: z.string().optional(),
+    target_id: z.string().optional(),
+    success: z.number().optional()
 });
 
 export const Route = createFileRoute('/_mod/admin/votes')({
@@ -31,90 +35,96 @@ export const Route = createFileRoute('/_mod/admin/votes')({
 });
 
 function AdminVotes() {
+    const defaultRows = RowsPerPage.TwentyFive;
+    const navigate = useNavigate({ from: Route.fullPath });
     const { success, page, sortColumn, rows, sortOrder, source_id, target_id } = Route.useSearch();
-
     const { data: votes, isLoading } = useQuery({
         queryKey: ['votes', { success, page, sortColumn, rows, sortOrder, source_id, target_id }],
         queryFn: async () => {
             return apiVotesQuery({
-                limit: Number(rows),
-                offset: Number((page ?? 0) * rows),
+                limit: rows ?? defaultRows,
+                offset: (page ?? 0) * (rows ?? defaultRows),
                 order_by: sortColumn,
                 desc: sortOrder == 'desc',
-                source_id: source_id,
-                target_id: target_id,
-                success: success
+                source_id: source_id ?? '',
+                target_id: target_id ?? '',
+                success: success ?? -1
             });
         }
     });
-    // const { data, count } = useVotes({
-    //     order_by: state.sortColumn ?? 'vote_id',
-    //     desc: (state.sortOrder ?? 'desc') == 'desc',
-    //     limit: Number(state.rows ?? RowsPerPage.TwentyFive),
-    //     offset: Number((state.page ?? 0) * (state.rows ?? RowsPerPage.Ten)),
-    //     source_id: state.source_id,
-    //     target_id: state.target_id,
-    //     success: state.success ?? -1
-    // });
-    //
-    // const onReset = useCallback(
-    //     async (_: VoteResultFilterValues, formikHelpers: FormikHelpers<VoteResultFilterValues>) => {
-    //         setState({
-    //             page: undefined,
-    //             rows: undefined,
-    //             sortOrder: undefined,
-    //             sortColumn: undefined,
-    //             source_id: undefined,
-    //             target_id: undefined
-    //         });
-    //         await formikHelpers.setFieldValue('source_id', '');
-    //         await formikHelpers.setFieldValue('target_id', '');
-    //     },
-    //     [setState]
-    // );
-    //
-    // const onSubmit = useCallback(
-    //     (values: VoteResultFilterValues) => {
-    //         setState((prevState) => {
-    //             return {
-    //                 ...prevState,
-    //                 source_id: values.source_id,
-    //                 target_id: values.target_id
-    //             };
-    //         });
-    //     },
-    //     [setState]
-    // );
+
+    const { Field, Subscribe, handleSubmit, reset } = useForm({
+        onSubmit: async ({ value }) => {
+            await navigate({ to: '/admin/votes', search: (prev) => ({ ...prev, ...value }) });
+        },
+        validatorAdapter: zodValidator,
+        validators: {
+            onChange: votesSearchSchema
+        },
+        defaultValues: {
+            source_id: source_id ?? '',
+            target_id: target_id ?? ''
+        }
+    });
+
+    const clear = async () => {
+        await navigate({
+            to: '/admin/votes',
+            search: (prev) => ({ ...prev, source_id: undefined, target_id: undefined, success: undefined })
+        });
+    };
 
     return (
-        // <Formik<VoteResultFilterValues>
-        //     initialValues={{
-        //         source_id: '',
-        //         target_id: ''
-        //     }}
-        //     onReset={onReset}
-        //     onSubmit={onSubmit}
-        // >
-        <Stack spacing={2}>
-            <ContainerWithHeader title={'Filters'} iconLeft={<FilterListIcon />}>
-                <Grid container spacing={2}>
-                    {/*<Grid xs={4} sm={4} md={4}>*/}
-                    {/*    <SourceIDField />*/}
-                    {/*</Grid>*/}
-                    {/*<Grid xs={4} sm={4} md={4}>*/}
-                    {/*    <TargetIDField />*/}
-                    {/*</Grid>*/}
-                    {/*<Grid xs={4} sm={4} md={4}>*/}
-                    {/*    <FilterButtons />*/}
-                    {/*</Grid>*/}
-                </Grid>
-            </ContainerWithHeader>
-            <ContainerWithHeaderAndButtons title={'Vote History'} iconLeft={<HowToVoteIcon />}>
-                <VotesTable votes={votes ?? { data: [], count: 0 }} isLoading={isLoading} />
-                <Paginator data={votes} page={page} rows={rows} />
-            </ContainerWithHeaderAndButtons>
-        </Stack>
-        // </Formik>
+        <Grid container spacing={2}>
+            <Grid xs={12}>
+                <ContainerWithHeader title={'Filters'} iconLeft={<FilterListIcon />} marginTop={2}>
+                    <form
+                        onSubmit={async (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            await handleSubmit();
+                        }}
+                    >
+                        <Grid container spacing={2}>
+                            <Grid xs={6} md={6}>
+                                <Field
+                                    name={'source_id'}
+                                    validators={makeSteamidValidatorsOptional()}
+                                    children={(props) => {
+                                        return <TextFieldSimple {...props} label={'Initiator Steam ID'} fullwidth={true} />;
+                                    }}
+                                />
+                            </Grid>
+
+                            <Grid xs={6} md={6}>
+                                <Field
+                                    name={'target_id'}
+                                    validators={makeSteamidValidatorsOptional()}
+                                    children={(props) => {
+                                        return <TextFieldSimple {...props} label={'Target Steam ID'} fullwidth={true} />;
+                                    }}
+                                />
+                            </Grid>
+
+                            <Grid xs={12} mdOffset="auto">
+                                <Subscribe
+                                    selector={(state) => [state.canSubmit, state.isSubmitting]}
+                                    children={([canSubmit, isSubmitting]) => (
+                                        <Buttons reset={reset} canSubmit={canSubmit} isSubmitting={isSubmitting} onClear={clear} />
+                                    )}
+                                />
+                            </Grid>
+                        </Grid>
+                    </form>
+                </ContainerWithHeader>
+            </Grid>
+            <Grid xs={12}>
+                <ContainerWithHeaderAndButtons title={'Vote History'} iconLeft={<HowToVoteIcon />}>
+                    <VotesTable votes={votes ?? { data: [], count: 0 }} isLoading={isLoading} />
+                    <Paginator data={votes} page={page ?? 0} rows={rows ?? defaultRows} path={'/admin/votes'} />
+                </ContainerWithHeaderAndButtons>
+            </Grid>
+        </Grid>
     );
 }
 
