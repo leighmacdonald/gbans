@@ -6,6 +6,7 @@ import TextField from '@mui/material/TextField';
 import { z } from 'zod';
 import { apiGetProfile, defaultAvatarHash, PlayerProfile } from '../../api';
 import { avatarHashToURL } from '../../util/text.tsx';
+import { emptyOrNullString } from '../../util/types.ts';
 import { FieldProps } from './common.ts';
 
 const validateSteamID = async (arg: string | undefined) => {
@@ -19,7 +20,7 @@ const validateSteamID = async (arg: string | undefined) => {
     }
 };
 
-export const makeSteamidValidators = (onSuccess: (profile: PlayerProfile) => void) => {
+export const makeSteamidValidators = (onSuccess?: (profile: PlayerProfile) => void) => {
     return {
         onChange: z.string(),
         onChangeAsyncDebounceMs: 1000,
@@ -30,7 +31,7 @@ export const makeSteamidValidators = (onSuccess: (profile: PlayerProfile) => voi
                     return false;
                 }
                 //TODO should this be done differently?
-                onSuccess(profile);
+                onSuccess && onSuccess(profile);
                 return true;
             },
             {
@@ -40,7 +41,31 @@ export const makeSteamidValidators = (onSuccess: (profile: PlayerProfile) => voi
     };
 };
 
-export const SteamIDField = ({ state, handleBlur, handleChange, fullwidth, profile }: FieldProps & { profile?: PlayerProfile }) => {
+export const makeSteamidValidatorsOptional = (onSuccess?: (profile: PlayerProfile) => void) => {
+    return {
+        onChange: z.string().optional(),
+        onChangeAsyncDebounceMs: 1000,
+        onChangeAsync: z.string().refine(
+            async (value) => {
+                if (emptyOrNullString(value)) {
+                    return true;
+                }
+                const profile = await validateSteamID(value);
+                if (!profile || !profile.player.steam_id) {
+                    return false;
+                }
+                //TODO should this be done differently?
+                onSuccess && onSuccess(profile);
+                return true;
+            },
+            {
+                message: 'SteamID / Profile invalid'
+            }
+        )
+    };
+};
+
+export const SteamIDField = ({ state, handleBlur, handleChange, fullwidth, profile }: FieldProps<string> & { profile?: PlayerProfile }) => {
     return (
         <TextField
             fullWidth={fullwidth}

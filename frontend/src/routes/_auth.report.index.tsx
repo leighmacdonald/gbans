@@ -53,9 +53,9 @@ import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.
 
 const reportSchema = z.object({
     ...commonTableSearchSchema,
-    rows: z.number().catch(RowsPerPage.Ten),
-    sortColumn: z.enum(['report_status', 'created_on']).catch('created_on'),
-    report_status: z.nativeEnum(ReportStatus).catch(ReportStatus.Any),
+    rows: z.number().optional(),
+    sortColumn: z.enum(['report_status', 'created_on']).optional(),
+    report_status: z.nativeEnum(ReportStatus).optional(),
     steam_id: z.string().optional(),
     demo_name: z.string().optional(),
     person_message_id: z.number().optional()
@@ -67,8 +67,9 @@ export const Route = createFileRoute('/_auth/report/')({
 });
 
 function ReportCreate() {
+    const defaultRows = RowsPerPage.Ten;
     const { profile, userSteamID } = useRouteContext({ from: '/_auth/report/' });
-    const { page, sortColumn, rows, sortOrder } = Route.useSearch();
+    const { page, sortColumn, report_status, rows, sortOrder } = Route.useSearch();
 
     const canReport = useMemo(() => {
         const user = profile();
@@ -80,11 +81,11 @@ function ReportCreate() {
         queryFn: async () => {
             return await apiGetReports({
                 source_id: userSteamID,
-                limit: Number(rows),
-                offset: Number(page ?? 0) * Number(rows),
+                limit: rows ?? defaultRows,
+                offset: (page ?? 0) * (rows ?? defaultRows),
                 order_by: sortColumn ?? 'created_on',
-                desc: sortOrder == 'desc',
-                report_status: ReportStatus.Any
+                desc: (sortOrder ?? 'desc') == 'desc',
+                report_status: report_status ?? ReportStatus.Any
             });
         }
     });
@@ -112,7 +113,7 @@ function ReportCreate() {
                         ) : (
                             <UserReportHistory history={logs ?? { data: [], count: 0 }} isLoading={isLoading} />
                         )}
-                        <Paginator page={page} rows={rows} data={logs} />
+                        <Paginator page={page ?? 0} rows={rows ?? defaultRows} data={logs} path={'/report'} />
                     </ContainerWithHeader>
                 </Stack>
             </Grid>
@@ -298,7 +299,15 @@ export const ReportCreateForm = (): JSX.Element => {
                             name={'steam_id'}
                             validators={makeSteamidValidators(setValidatedProfile)}
                             children={({ state, handleChange, handleBlur }) => {
-                                return <SteamIDField state={state} handleBlur={handleBlur} handleChange={handleChange} fullwidth={true} />;
+                                return (
+                                    <SteamIDField
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
+                                        fullwidth={true}
+                                        label={'SteamID'}
+                                    />
+                                );
                             }}
                         />
                     </Grid>
@@ -401,7 +410,14 @@ export const ReportCreateForm = (): JSX.Element => {
                             <form.Field
                                 name={'body_md'}
                                 children={({ state, handleChange, handleBlur }) => {
-                                    return <MDBodyField state={state} handleBlur={handleBlur} handleChange={handleChange} />;
+                                    return (
+                                        <MDBodyField
+                                            state={state}
+                                            handleBlur={handleBlur}
+                                            handleChange={handleChange}
+                                            label={'Message (Markdown)'}
+                                        />
+                                    );
                                 }}
                             />
                         </Box>
