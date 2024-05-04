@@ -1,29 +1,51 @@
 import AddIcon from '@mui/icons-material/Add';
+import FilterListIcon from '@mui/icons-material/FilterList';
 import GavelIcon from '@mui/icons-material/Gavel';
 import Button from '@mui/material/Button';
 import TableCell from '@mui/material/TableCell';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
+import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiGetBansGroups, BanReasons, GroupBanRecord } from '../api';
+import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { DataTable, HeadingCell } from '../component/DataTable.tsx';
 import { Paginator } from '../component/Paginator.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
+import { Buttons } from '../component/field/Buttons.tsx';
+import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
+import { makeSteamidValidatorsOptional } from '../component/field/SteamIDField.tsx';
+import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { TableCellRelativeDateField } from '../component/table/TableCellRelativeDateField.tsx';
-import { commonTableSearchSchema, isPermanentBan, LazyResult } from '../util/table.ts';
+import { commonTableSearchSchema, isPermanentBan, LazyResult, RowsPerPage } from '../util/table.ts';
 import { renderDate } from '../util/text.tsx';
+import { emptyOrNullString } from '../util/types.ts';
+
+const sourceIDValidator = z.string().optional();
+const targetIDValidator = z.string().optional();
+const groupIDValidator = z
+    .string()
+    .optional()
+    .refine((arg) => {
+        if (emptyOrNullString(arg)) {
+            return true;
+        }
+        return arg?.match(/^\d+$/);
+    }, 'Invalid group ID');
+const deletedValidator = z.boolean().optional();
 
 const banGroupSearchSchema = z.object({
     ...commonTableSearchSchema,
-    sortColumn: z.enum(['ban_group_id', 'source_id', 'target_id', 'deleted', 'reason', 'valid_until']).catch('ban_group_id'),
-    source_id: z.string().catch(''),
-    target_id: z.string().catch(''),
-    group_id: z.number().catch(0),
-    deleted: z.boolean().catch(false)
+    sortColumn: z.enum(['ban_group_id', 'source_id', 'target_id', 'deleted', 'reason', 'valid_until']).optional(),
+    source_id: sourceIDValidator,
+    target_id: targetIDValidator,
+    group_id: groupIDValidator,
+    deleted: deletedValidator
 });
 
 export const Route = createFileRoute('/_mod/admin/ban/group')({
@@ -32,17 +54,20 @@ export const Route = createFileRoute('/_mod/admin/ban/group')({
 });
 
 function AdminBanGroup() {
-    const { page, rows, sortOrder, sortColumn, target_id, source_id } = Route.useSearch();
+    const defaultRows = RowsPerPage.TwentyFive;
+    const navigate = useNavigate({ from: Route.fullPath });
+    const { page, rows, sortOrder, sortColumn, target_id, source_id, group_id, deleted } = Route.useSearch();
     const { data: bans, isLoading } = useQuery({
         queryKey: ['steamBans', { page, rows, sortOrder, sortColumn, target_id, source_id }],
         queryFn: async () => {
             return await apiGetBansGroups({
-                limit: Number(rows),
-                offset: Number((page ?? 0) * rows),
+                limit: rows ?? defaultRows,
+                offset: (page ?? 0) * (rows ?? defaultRows),
                 order_by: sortColumn ?? 'ban_group_id',
                 desc: sortOrder == 'desc',
-                source_id: source_id,
-                target_id: target_id
+                source_id: source_id ?? '',
+                target_id: target_id ?? '',
+                group_id: group_id ?? ''
             });
         }
     });
@@ -61,8 +86,95 @@ function AdminBanGroup() {
     //     }
     // }, [sendFlash]);
 
+    const { Field, Subscribe, handleSubmit, reset } = useForm({
+        onSubmit: async ({ value }) => {
+            await navigate({ to: '/admin/ban/group', search: (prev) => ({ ...prev, ...value }) });
+        },
+        validatorAdapter: zodValidator,
+        validators: {
+            onChange: banGroupSearchSchema
+        },
+        defaultValues: {
+            source_id: source_id ?? '',
+            target_id: target_id ?? '',
+            group_id: group_id ?? '',
+            deleted: deleted ?? false
+        }
+    });
+
+    const clear = async () => {
+        await navigate({
+            to: '/admin/ban/group',
+            search: (prev) => ({ ...prev, source_id: '', target_id: '', group_id: '', deleted: false })
+        });
+    };
+
     return (
-        <Grid container>
+        <Grid container spacing={2}>
+            <Grid xs={12}>
+                <ContainerWithHeader title={'Filters'} iconLeft={<FilterListIcon />}>
+                    <form
+                        onSubmit={async (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            await handleSubmit();
+                        }}
+                    >
+                        <Grid container spacing={2}>
+                            <Grid xs={4}>
+                                <Grid xs={6} md={3}>
+                                    <Field
+                                        name={'source_id'}
+                                        validators={makeSteamidValidatorsOptional()}
+                                        children={(props) => {
+                                            return <TextFieldSimple {...props} label={'Author Steam ID'} fullwidth={true} />;
+                                        }}
+                                    />
+                                </Grid>
+                            </Grid>
+                            <Grid xs={6} md={3}>
+                                <Field
+                                    name={'target_id'}
+                                    validators={makeSteamidValidatorsOptional()}
+                                    children={(props) => {
+                                        return <TextFieldSimple {...props} label={'Subject Steam ID'} fullwidth={true} />;
+                                    }}
+                                />
+                            </Grid>
+
+                            <Grid xs={6} md={3}>
+                                <Field
+                                    name={'group_id'}
+                                    validators={{
+                                        onChange: groupIDValidator
+                                    }}
+                                    children={(props) => {
+                                        return <TextFieldSimple {...props} label={'Group ID'} fullwidth={true} />;
+                                    }}
+                                />
+                            </Grid>
+
+                            <Grid xs="auto">
+                                <Field
+                                    name={'deleted'}
+                                    children={(props) => {
+                                        return <CheckboxSimple {...props} label={'Show Deleted'} />;
+                                    }}
+                                />
+                            </Grid>
+
+                            <Grid xs={12} mdOffset="auto">
+                                <Subscribe
+                                    selector={(state) => [state.canSubmit, state.isSubmitting]}
+                                    children={([canSubmit, isSubmitting]) => (
+                                        <Buttons reset={reset} canSubmit={canSubmit} isSubmitting={isSubmitting} onClear={clear} />
+                                    )}
+                                />
+                            </Grid>
+                        </Grid>
+                    </form>
+                </ContainerWithHeader>
+            </Grid>
             <Grid xs={12}>
                 <ContainerWithHeaderAndButtons
                     title={'Steam Group Ban History'}
@@ -83,7 +195,7 @@ function AdminBanGroup() {
                 >
                     {/*<BanGroupTable newBans={newGroupBans} />*/}
                     <BanGroupTable bans={bans ?? { data: [], count: 0 }} isLoading={isLoading} />
-                    <Paginator page={page} rows={rows} data={bans} />
+                    <Paginator page={page ?? 0} rows={rows ?? defaultRows} data={bans} path={'/admin/ban/group'} />
                 </ContainerWithHeaderAndButtons>
             </Grid>
         </Grid>
@@ -95,7 +207,7 @@ const columnHelper = createColumnHelper<GroupBanRecord>();
 const BanGroupTable = ({ bans, isLoading }: { bans: LazyResult<GroupBanRecord>; isLoading: boolean }) => {
     const columns = [
         columnHelper.accessor('ban_group_id', {
-            header: () => <HeadingCell name={'Ban ID'} />,
+            header: () => <HeadingCell name={'ID'} />,
             cell: (info) => <TableCell>{`#${info.getValue()}`}</TableCell>
         }),
         columnHelper.accessor('source_id', {
