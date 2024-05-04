@@ -78,7 +78,7 @@ function AdminBanASN() {
     const clear = async () => {
         await navigate({
             to: '/admin/ban/asn',
-            search: (prev) => ({ ...prev, source_id: '', target_id: '', as_num: '', deleted: false })
+            search: (prev) => ({ ...prev, source_id: undefined, target_id: undefined, as_num: undefined, deleted: undefined })
         });
     };
 
