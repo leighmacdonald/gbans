@@ -182,6 +182,10 @@ func (h *wordFilterHandler) filterStates() gin.HandlerFunc {
 			outputState.Current = append(outputState.Current, warn...)
 		}
 
+		if outputState.Current == nil {
+			outputState.Current = []domain.UserWarning{}
+		}
+
 		ctx.JSON(http.StatusOK, outputState)
 	}
 }
