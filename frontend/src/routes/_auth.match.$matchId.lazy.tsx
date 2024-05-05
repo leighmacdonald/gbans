@@ -256,17 +256,12 @@ function MatchPage() {
     const navigate = useNavigate();
     const [match, setMatch] = useState<MatchResult>();
     const [loading, setLoading] = useState<boolean>(true);
-    const { match_id } = Route.useParams();
+    const { matchId } = Route.useParams();
     const theme = useTheme();
     const { sendFlash } = useUserFlashCtx();
 
-    if (!match_id || match_id == '') {
-        sendFlash('error', 'Invalid match id');
-        navigate({ to: '/page-not-found' });
-    }
-
     useEffect(() => {
-        apiGetMatch(match_id as string)
+        apiGetMatch(matchId as string)
             .then((resp) => {
                 setMatch(resp);
             })
@@ -274,7 +269,7 @@ function MatchPage() {
             .finally(() => {
                 setLoading(false);
             });
-    }, [match_id, navigate, sendFlash, setMatch]);
+    }, [matchId, navigate, sendFlash, setMatch]);
 
     const headerColour = useMemo(() => {
         return theme.palette.common.white;

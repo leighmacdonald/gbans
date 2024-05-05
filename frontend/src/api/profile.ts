@@ -260,11 +260,11 @@ export interface PersonSettings extends TimeStamped {
     stats_hidden: boolean;
 }
 
-export const apiGetPersonSettings = async (abortController: AbortController) => {
+export const apiGetPersonSettings = async (abortController?: AbortController) => {
     return transformTimeStampedDates(await apiCall<PersonSettings>(`/api/current_profile/settings`, 'GET', undefined, abortController));
 };
 
-export const apSavePersonSettings = async (
+export const apiSavePersonSettings = async (
     forum_signature: string,
     forum_profile_messages: boolean,
     stats_hidden: boolean,

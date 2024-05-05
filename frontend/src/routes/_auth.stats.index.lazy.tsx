@@ -5,7 +5,7 @@ import { MapUsageContainer } from '../component/MapUsageContainer.tsx';
 import { PlayersOverallContainer } from '../component/PlayersOverallContainer.tsx';
 import { WeaponsStatListContainer } from '../component/WeaponsStatListContainer.tsx';
 
-export const Route = createLazyFileRoute('/_auth/stats')({
+export const Route = createLazyFileRoute('/_auth/stats/')({
     component: Stats
 });
 

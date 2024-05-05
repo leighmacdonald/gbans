@@ -5,8 +5,9 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Stack from '@mui/material/Stack';
 import { useTheme } from '@mui/material/styles';
-import { NewsEntry } from '../api/news';
-import { useNews } from '../hooks/useNews';
+import { useQuery } from '@tanstack/react-query';
+import { apiGetNewsAll, NewsEntry } from '../api/news';
+import { LoadingPlaceholder } from './LoadingPlaceholder.tsx';
 
 interface NewsListProps {
     setSelectedNewsEntry: (entry: NewsEntry) => void;
@@ -14,34 +15,43 @@ interface NewsListProps {
 
 export const NewsList = ({ setSelectedNewsEntry }: NewsListProps) => {
     const theme = useTheme();
-    const { data } = useNews();
 
+    const { data, isLoading } = useQuery({
+        queryKey: ['newsList'],
+        queryFn: async () => {
+            return await apiGetNewsAll();
+        }
+    });
     return (
         <Stack spacing={3} padding={3}>
             <List dense={true}>
-                {data.map((entry) => {
-                    return (
-                        <ListItem
-                            sx={[
-                                {
-                                    '&:hover': {
-                                        cursor: 'pointer',
-                                        backgroundColor: theme.palette.background.default
+                {isLoading ? (
+                    <LoadingPlaceholder />
+                ) : (
+                    (data ?? []).map((entry) => {
+                        return (
+                            <ListItem
+                                sx={[
+                                    {
+                                        '&:hover': {
+                                            cursor: 'pointer',
+                                            backgroundColor: theme.palette.background.default
+                                        }
                                     }
-                                }
-                            ]}
-                            key={entry.news_id}
-                            onClick={() => {
-                                setSelectedNewsEntry(entry);
-                            }}
-                        >
-                            <ListItemIcon>
-                                <FolderIcon />
-                            </ListItemIcon>
-                            <ListItemText primary={entry.title} />
-                        </ListItem>
-                    );
-                })}
+                                ]}
+                                key={entry.news_id}
+                                onClick={() => {
+                                    setSelectedNewsEntry(entry);
+                                }}
+                            >
+                                <ListItemIcon>
+                                    <FolderIcon />
+                                </ListItemIcon>
+                                <ListItemText primary={entry.title} />
+                            </ListItem>
+                        );
+                    })
+                )}
             </List>
         </Stack>
     );

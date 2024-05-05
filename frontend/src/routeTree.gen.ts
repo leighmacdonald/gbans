@@ -42,16 +42,16 @@ import { Route as ModAdminBanAsnImport } from './routes/_mod.admin.ban.asn'
 
 // Create Virtual Routes
 
-const GuestWikiLazyImport = createFileRoute('/_guest/wiki')()
 const GuestServersLazyImport = createFileRoute('/_guest/servers')()
 const GuestPrivacyPolicyLazyImport = createFileRoute('/_guest/privacy-policy')()
 const GuestContestsLazyImport = createFileRoute('/_guest/contests')()
-const AuthStatsLazyImport = createFileRoute('/_auth/stats')()
 const AuthSettingsLazyImport = createFileRoute('/_auth/settings')()
 const AuthPatreonLazyImport = createFileRoute('/_auth/patreon')()
 const AuthPageNotFoundLazyImport = createFileRoute('/_auth/page-not-found')()
 const AuthNotificationsLazyImport = createFileRoute('/_auth/notifications')()
 const AuthLogoutLazyImport = createFileRoute('/_auth/logout')()
+const GuestWikiIndexLazyImport = createFileRoute('/_guest/wiki/')()
+const AuthStatsIndexLazyImport = createFileRoute('/_auth/stats/')()
 const AuthForumsIndexLazyImport = createFileRoute('/_auth/forums/')()
 const ModAdminNewsLazyImport = createFileRoute('/_mod/admin/news')()
 const GuestWikiSlugLazyImport = createFileRoute('/_guest/wiki/$slug')()
@@ -107,11 +107,6 @@ const GuestIndexRoute = GuestIndexImport.update({
   getParentRoute: () => GuestRoute,
 } as any)
 
-const GuestWikiLazyRoute = GuestWikiLazyImport.update({
-  path: '/wiki',
-  getParentRoute: () => GuestRoute,
-} as any).lazy(() => import('./routes/_guest.wiki.lazy').then((d) => d.Route))
-
 const GuestServersLazyRoute = GuestServersLazyImport.update({
   path: '/servers',
   getParentRoute: () => GuestRoute,
@@ -132,11 +127,6 @@ const GuestContestsLazyRoute = GuestContestsLazyImport.update({
 } as any).lazy(() =>
   import('./routes/_guest.contests.lazy').then((d) => d.Route),
 )
-
-const AuthStatsLazyRoute = AuthStatsLazyImport.update({
-  path: '/stats',
-  getParentRoute: () => AuthRoute,
-} as any).lazy(() => import('./routes/_auth.stats.lazy').then((d) => d.Route))
 
 const AuthSettingsLazyRoute = AuthSettingsLazyImport.update({
   path: '/settings',
@@ -184,6 +174,20 @@ const AuthChatlogsRoute = AuthChatlogsImport.update({
   getParentRoute: () => AuthRoute,
 } as any)
 
+const GuestWikiIndexLazyRoute = GuestWikiIndexLazyImport.update({
+  path: '/wiki/',
+  getParentRoute: () => GuestRoute,
+} as any).lazy(() =>
+  import('./routes/_guest.wiki.index.lazy').then((d) => d.Route),
+)
+
+const AuthStatsIndexLazyRoute = AuthStatsIndexLazyImport.update({
+  path: '/stats/',
+  getParentRoute: () => AuthRoute,
+} as any).lazy(() =>
+  import('./routes/_auth.stats.index.lazy').then((d) => d.Route),
+)
+
 const AuthForumsIndexLazyRoute = AuthForumsIndexLazyImport.update({
   path: '/forums/',
   getParentRoute: () => AuthRoute,
@@ -209,8 +213,8 @@ const ModAdminNewsLazyRoute = ModAdminNewsLazyImport.update({
 )
 
 const GuestWikiSlugLazyRoute = GuestWikiSlugLazyImport.update({
-  path: '/$slug',
-  getParentRoute: () => GuestWikiLazyRoute,
+  path: '/wiki/$slug',
+  getParentRoute: () => GuestRoute,
 } as any).lazy(() =>
   import('./routes/_guest.wiki.$slug.lazy').then((d) => d.Route),
 )
@@ -320,16 +324,16 @@ const ModAdminNetworkIndexRoute = ModAdminNetworkIndexImport.update({
 
 const AuthStatsWeaponWeaponidLazyRoute =
   AuthStatsWeaponWeaponidLazyImport.update({
-    path: '/weapon/$weapon_id',
-    getParentRoute: () => AuthStatsLazyRoute,
+    path: '/stats/weapon/$weapon_id',
+    getParentRoute: () => AuthRoute,
   } as any).lazy(() =>
     import('./routes/_auth.stats.weapon.$weapon_id.lazy').then((d) => d.Route),
   )
 
 const AuthStatsPlayerSteamidLazyRoute = AuthStatsPlayerSteamidLazyImport.update(
   {
-    path: '/player/$steam_id',
-    getParentRoute: () => AuthStatsLazyRoute,
+    path: '/stats/player/$steam_id',
+    getParentRoute: () => AuthRoute,
   } as any,
 ).lazy(() =>
   import('./routes/_auth.stats.player.$steam_id.lazy').then((d) => d.Route),
@@ -439,10 +443,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthSettingsLazyImport
       parentRoute: typeof AuthImport
     }
-    '/_auth/stats': {
-      preLoaderRoute: typeof AuthStatsLazyImport
-      parentRoute: typeof AuthImport
-    }
     '/_guest/contests': {
       preLoaderRoute: typeof GuestContestsLazyImport
       parentRoute: typeof GuestImport
@@ -453,10 +453,6 @@ declare module '@tanstack/react-router' {
     }
     '/_guest/servers': {
       preLoaderRoute: typeof GuestServersLazyImport
-      parentRoute: typeof GuestImport
-    }
-    '/_guest/wiki': {
-      preLoaderRoute: typeof GuestWikiLazyImport
       parentRoute: typeof GuestImport
     }
     '/_guest/': {
@@ -529,7 +525,7 @@ declare module '@tanstack/react-router' {
     }
     '/_guest/wiki/$slug': {
       preLoaderRoute: typeof GuestWikiSlugLazyImport
-      parentRoute: typeof GuestWikiLazyImport
+      parentRoute: typeof GuestImport
     }
     '/_mod/admin/news': {
       preLoaderRoute: typeof ModAdminNewsLazyImport
@@ -546,6 +542,14 @@ declare module '@tanstack/react-router' {
     '/_auth/forums/': {
       preLoaderRoute: typeof AuthForumsIndexLazyImport
       parentRoute: typeof AuthImport
+    }
+    '/_auth/stats/': {
+      preLoaderRoute: typeof AuthStatsIndexLazyImport
+      parentRoute: typeof AuthImport
+    }
+    '/_guest/wiki/': {
+      preLoaderRoute: typeof GuestWikiIndexLazyImport
+      parentRoute: typeof GuestImport
     }
     '/_mod/admin/ban/asn': {
       preLoaderRoute: typeof ModAdminBanAsnImport
@@ -585,11 +589,11 @@ declare module '@tanstack/react-router' {
     }
     '/_auth/stats/player/$steam_id': {
       preLoaderRoute: typeof AuthStatsPlayerSteamidLazyImport
-      parentRoute: typeof AuthStatsLazyImport
+      parentRoute: typeof AuthImport
     }
     '/_auth/stats/weapon/$weapon_id': {
       preLoaderRoute: typeof AuthStatsWeaponWeaponidLazyImport
-      parentRoute: typeof AuthStatsLazyImport
+      parentRoute: typeof AuthImport
     }
     '/_mod/admin/network/': {
       preLoaderRoute: typeof ModAdminNetworkIndexImport
@@ -610,10 +614,6 @@ export const routeTree = rootRoute.addChildren([
     AuthPageNotFoundLazyRoute,
     AuthPatreonLazyRoute,
     AuthSettingsLazyRoute,
-    AuthStatsLazyRoute.addChildren([
-      AuthStatsPlayerSteamidLazyRoute,
-      AuthStatsWeaponWeaponidLazyRoute,
-    ]),
     AuthBanBanidLazyRoute,
     AuthContestsContestidLazyRoute,
     AuthForumsForumidLazyRoute,
@@ -623,18 +623,22 @@ export const routeTree = rootRoute.addChildren([
     AuthReportReportIdLazyRoute,
     AuthReportIndexRoute,
     AuthForumsIndexLazyRoute,
+    AuthStatsIndexLazyRoute,
     AuthForumsThreadForumthreadidLazyRoute,
+    AuthStatsPlayerSteamidLazyRoute,
+    AuthStatsWeaponWeaponidLazyRoute,
   ]),
   GuestRoute.addChildren([
     GuestStvRoute,
     GuestContestsLazyRoute,
     GuestPrivacyPolicyLazyRoute,
     GuestServersLazyRoute,
-    GuestWikiLazyRoute.addChildren([GuestWikiSlugLazyRoute]),
     GuestIndexRoute,
     GuestLoginSuccessRoute,
     GuestProfileSteamIdLazyRoute,
+    GuestWikiSlugLazyRoute,
     GuestLoginIndexRoute,
+    GuestWikiIndexLazyRoute,
   ]),
   ModRoute.addChildren([
     ModAdminAppealsRoute,
