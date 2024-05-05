@@ -8,5 +8,5 @@ export const Route = createLazyFileRoute('/_guest/wiki/$slug')({
 function Wiki() {
     const { slug } = Route.useParams();
 
-    return <WikiPage slug={slug} />;
+    return <WikiPage slug={slug} path={'/_guest/wiki/$slug'} />;
 }

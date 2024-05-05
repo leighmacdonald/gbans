@@ -1,155 +1,176 @@
-import { ChangeEvent, useState } from 'react';
+import { useState } from 'react';
 import InsightsIcon from '@mui/icons-material/Insights';
+import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
+import { useQuery } from '@tanstack/react-query';
 import { createLazyFileRoute } from '@tanstack/react-router';
-import { PlayerWeaponStats } from '../api';
+import { createColumnHelper, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
+import { apiGetPlayerWeaponStats, PlayerWeaponStats, PlayerWeaponStatsResponse } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
+import { DataTable, HeadingCell } from '../component/DataTable.tsx';
 import FmtWhenGt from '../component/FmtWhenGT.tsx';
-import { LoadingPlaceholder } from '../component/LoadingPlaceholder';
+import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import { PersonCell } from '../component/PersonCell';
-import { LazyTable } from '../component/table/LazyTable';
-import { useWeaponsStats } from '../hooks/useWeaponsStats';
-import { Order, RowsPerPage } from '../util/table.ts';
+import { TableCellSmall } from '../component/TableCellSmall.tsx';
+import { RowsPerPage } from '../util/table.ts';
 import { defaultFloatFmtPct, humanCount } from '../util/text.tsx';
 
 export const Route = createLazyFileRoute('/_auth/stats/weapon/$weapon_id')({
     component: StatsWeapon
 });
 
-interface WeaponStatsContainerProps {
-    weapon_id: number;
-}
-
-const WeaponStatsContainer = ({ weapon_id }: WeaponStatsContainerProps) => {
-    const [page, setPage] = useState(0);
-    const [sortOrder, setSortOrder] = useState<Order>('asc');
-    const [rows, setRows] = useState<RowsPerPage>(RowsPerPage.TwentyFive);
-    const [sortColumn, setSortColumn] = useState<keyof PlayerWeaponStats>('rank');
-
-    const { data, weapon, loading, count } = useWeaponsStats(weapon_id, {
-        offset: page * rows,
-        limit: rows,
-        order_by: sortColumn,
-        desc: sortOrder == 'desc'
+function StatsWeapon() {
+    const { weapon_id } = Route.useParams();
+    const { data, isLoading } = useQuery({
+        queryKey: ['statsWeapons', { weapon_id }],
+        queryFn: async () => apiGetPlayerWeaponStats(Number(weapon_id))
     });
 
     return (
-        <ContainerWithHeader title={`Top 250 Weapon Users: ${weapon?.name}`} iconLeft={<InsightsIcon />}>
-            {loading ? (
-                <LoadingPlaceholder />
-            ) : (
-                <LazyTable<PlayerWeaponStats>
-                    showPager={true}
-                    count={count}
-                    rows={data}
-                    page={Number(page ?? 0)}
-                    rowsPerPage={rows}
-                    sortOrder={sortOrder}
-                    sortColumn={sortColumn}
-                    onSortColumnChanged={async (column) => {
-                        setSortColumn(column);
-                    }}
-                    onSortOrderChanged={async (direction) => {
-                        setSortOrder(direction);
-                    }}
-                    onPageChange={(_, newPage: number) => {
-                        setPage(newPage);
-                    }}
-                    onRowsPerPageChange={(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-                        setRows(Number(event.target.value));
-                        setPage(0);
-                    }}
-                    columns={[
-                        {
-                            label: '#',
-                            sortable: true,
-                            sortKey: 'rank',
-                            tooltip: 'Overall Rank',
-                            align: 'center',
-                            renderer: (obj) => obj.rank
-                        },
-                        {
-                            label: 'Player Name',
-                            sortable: true,
-                            sortKey: 'personaname',
-                            tooltip: 'Player Name',
-                            align: 'left',
-                            renderer: (obj) => (
-                                <PersonCell avatar_hash={obj.avatar_hash} personaname={obj.personaname} steam_id={obj.steam_id} />
-                            )
-                        },
-                        {
-                            label: 'Kills',
-                            sortable: true,
-                            sortKey: 'kills',
-                            tooltip: 'Total Kills',
-                            renderer: (obj) => FmtWhenGt(obj.kills, humanCount)
-                        },
-                        {
-                            label: 'Dmg',
-                            sortable: true,
-                            sortKey: 'damage',
-                            tooltip: 'Total Damage',
-                            renderer: (obj) => FmtWhenGt(obj.damage, humanCount)
-                        },
-                        {
-                            label: 'Shots',
-                            sortable: true,
-                            sortKey: 'shots',
-                            tooltip: 'Total Shots',
-                            renderer: (obj) => FmtWhenGt(obj.shots, humanCount)
-                        },
-                        {
-                            label: 'Hits',
-                            sortable: true,
-                            sortKey: 'hits',
-                            tooltip: 'Total Shots Landed',
-                            renderer: (obj) => FmtWhenGt(obj.hits, humanCount)
-                        },
-                        {
-                            label: 'Acc%',
-                            sortable: false,
-                            virtual: true,
-                            virtualKey: 'accuracy',
-                            tooltip: 'Overall Accuracy',
-                            renderer: (obj) => FmtWhenGt(obj.shots, () => defaultFloatFmtPct(obj.accuracy))
-                        },
-                        {
-                            label: 'As',
-                            sortable: true,
-                            sortKey: 'airshots',
-                            tooltip: 'Total Airshots',
-                            renderer: (obj) => FmtWhenGt(obj.airshots, humanCount)
-                        },
-
-                        {
-                            label: 'Bs',
-                            sortable: true,
-                            sortKey: 'backstabs',
-                            tooltip: 'Total Backstabs',
-                            renderer: (obj) => FmtWhenGt(obj.backstabs, humanCount)
-                        },
-
-                        {
-                            label: 'Hs',
-                            sortable: true,
-                            sortKey: 'headshots',
-                            tooltip: 'Total Headshots',
-                            renderer: (obj) => FmtWhenGt(obj.headshots, humanCount)
-                        }
-                    ]}
-                />
-            )}
-        </ContainerWithHeader>
-    );
-};
-
-function StatsWeapon({ weaponId }: { weaponId: number }) {
-    return (
         <Grid container spacing={2}>
             <Grid xs={12}>
-                <WeaponStatsContainer weapon_id={Number(weaponId ?? '0')} />
+                <ContainerWithHeader
+                    title={`Top 250 Weapon Users: ${isLoading ? 'Loading...' : data?.weapon?.name}`}
+                    iconLeft={<InsightsIcon />}
+                >
+                    <StatsWeapons
+                        stats={data ?? { data: [], weapon: { weapon_id: 0, name: '', key: '' }, count: 0 }}
+                        isLoading={isLoading}
+                    />
+                </ContainerWithHeader>
             </Grid>
         </Grid>
     );
 }
+
+const columnHelper = createColumnHelper<PlayerWeaponStats>();
+
+const StatsWeapons = ({ stats, isLoading }: { stats: PlayerWeaponStatsResponse; isLoading: boolean }) => {
+    const [pagination, setPagination] = useState({
+        pageIndex: 0, //initial page index
+        pageSize: RowsPerPage.TwentyFive //default page size
+    });
+
+    const columns = [
+        columnHelper.accessor('rank', {
+            header: () => <HeadingCell name={'#'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography>{info.getValue()}</Typography>
+                </TableCellSmall>
+            )
+        }),
+        columnHelper.accessor('steam_id', {
+            header: () => <HeadingCell name={'Name'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <PersonCell
+                        steam_id={stats.data[info.row.index].steam_id}
+                        personaname={stats.data[info.row.index].personaname}
+                        avatar_hash={stats.data[info.row.index].avatar_hash}
+                    />
+                </TableCellSmall>
+            )
+        }),
+        columnHelper.accessor('kills', {
+            header: () => <HeadingCell name={'Kills'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
+                </TableCellSmall>
+            )
+        }),
+
+        columnHelper.accessor('damage', {
+            header: () => <HeadingCell name={'Kills%'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmtPct)}</Typography>
+                </TableCellSmall>
+            )
+        }),
+        columnHelper.accessor('shots', {
+            header: () => <HeadingCell name={'Shots'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
+                </TableCellSmall>
+            )
+        }),
+        columnHelper.accessor('hits', {
+            header: () => <HeadingCell name={'Hits'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
+                </TableCellSmall>
+            )
+        }),
+
+        columnHelper.accessor('accuracy', {
+            header: () => <HeadingCell name={'Acc%'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography>{FmtWhenGt(info.getValue(), () => defaultFloatFmtPct(info.getValue()))}</Typography>
+                </TableCellSmall>
+            )
+        }),
+        columnHelper.accessor('airshots', {
+            header: () => <HeadingCell name={'As'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
+                </TableCellSmall>
+            )
+        }),
+
+        columnHelper.accessor('backstabs', {
+            header: () => <HeadingCell name={'Bs'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
+                </TableCellSmall>
+            )
+        }),
+
+        columnHelper.accessor('headshots', {
+            header: () => <HeadingCell name={'Hs'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
+                </TableCellSmall>
+            )
+        })
+    ];
+
+    const table = useReactTable({
+        data: stats.data,
+        columns: columns,
+        getCoreRowModel: getCoreRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        onPaginationChange: setPagination,
+        state: {
+            pagination
+        }
+    });
+
+    return (
+        <>
+            <DataTable table={table} isLoading={isLoading} />
+            <PaginatorLocal
+                onRowsChange={(rows) => {
+                    setPagination((prev) => {
+                        return { ...prev, pageSize: rows };
+                    });
+                }}
+                onPageChange={(page) => {
+                    setPagination((prev) => {
+                        return { ...prev, pageIndex: page };
+                    });
+                }}
+                count={stats.count}
+                rows={pagination.pageSize}
+                page={pagination.pageIndex}
+            />
+        </>
+    );
+};
