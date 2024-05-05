@@ -1,6 +1,6 @@
 import 'core-js/stable/atob';
 import { jwtDecode, JwtPayload } from 'jwt-decode';
-import { readRefreshToken, writeAccessToken } from '../auth.tsx';
+import { logoutFn, readRefreshToken, writeAccessToken } from '../auth.tsx';
 import { logErr } from '../util/errors';
 import { emptyOrNullString } from '../util/types';
 import { apiCall } from './common';
@@ -28,6 +28,7 @@ export const refreshToken = async () => {
         writeAccessToken(resp.access_token);
     } catch (e) {
         logErr(e);
+        await logoutFn();
     }
 };
 
