@@ -92,17 +92,17 @@ const guestProfile: UserProfile = {
 
 const AuthContext = createContext<AuthContext | null>(null);
 
+export const logoutFn = async () => {
+    localStorage.removeItem(profileKey);
+    localStorage.removeItem(tokenKey);
+    localStorage.removeItem(refreshKey);
+    localStorage.setItem(logoutKey, Date.now().toString());
+    await apiCall<EmptyBody>('/api/auth/logout', 'GET', undefined);
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
     const login = (profile: UserProfile) => {
         localStorage.setItem(profileKey, JSON.stringify(profile));
-    };
-
-    const logout = () => {
-        localStorage.removeItem(profileKey);
-        localStorage.removeItem(tokenKey);
-        localStorage.removeItem(refreshKey);
-        localStorage.setItem(logoutKey, Date.now().toString());
-        apiCall<EmptyBody>('/api/auth/logout', 'GET', undefined);
     };
 
     const profile = (): UserProfile => {
@@ -133,7 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return (
         <AuthContext.Provider
-            value={{ profile, logout, isAuthenticated, permissionLevel, hasPermission, login, userSteamID: profile().steam_id }}
+            value={{ profile, logout: logoutFn, isAuthenticated, permissionLevel, hasPermission, login, userSteamID: profile().steam_id }}
         >
             {children}
         </AuthContext.Provider>
@@ -151,7 +151,7 @@ export const useAuth = (): AuthContext => {
 export type AuthContext = {
     profile: () => UserProfile;
     login: (profile: UserProfile) => void;
-    logout: () => void;
+    logout: () => Promise<void>;
     isAuthenticated: () => boolean;
     permissionLevel: () => PermissionLevel;
     hasPermission: (level: PermissionLevel) => boolean;

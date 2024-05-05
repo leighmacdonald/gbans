@@ -1,174 +1,206 @@
-import { ChangeEvent, useState } from 'react';
+import { useState } from 'react';
 import HealthAndSafetyIcon from '@mui/icons-material/HealthAndSafety';
-import { HealingOverallResult } from '../api';
-import { useHealerOverallStats } from '../hooks/useHealerOverallStats';
-import { Order, RowsPerPage } from '../util/table.ts';
+import Typography from '@mui/material/Typography';
+import { useQuery } from '@tanstack/react-query';
+import { createColumnHelper, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
+import { apiGetHealersOverall, HealingOverallResult } from '../api';
+import { LazyResult, RowsPerPage } from '../util/table.ts';
 import { defaultFloatFmt, defaultFloatFmtPct, humanCount } from '../util/text.tsx';
 import { ContainerWithHeader } from './ContainerWithHeader';
+import { DataTable, HeadingCell } from './DataTable.tsx';
 import FmtWhenGt from './FmtWhenGT.tsx';
-import { LoadingPlaceholder } from './LoadingPlaceholder';
+import { PaginatorLocal } from './PaginatorLocal.tsx';
 import { PersonCell } from './PersonCell';
-import { LazyTable } from './table/LazyTable';
+import { TableCellSmall } from './TableCellSmall.tsx';
 
 export const HealersOverallContainer = () => {
-    const [page, setPage] = useState(0);
-    const [sortOrder, setSortOrder] = useState<Order>('desc');
-    const [rows, setRows] = useState<RowsPerPage>(RowsPerPage.TwentyFive);
-    const [sortColumn, setSortColumn] = useState<keyof HealingOverallResult>('healing');
-
-    const { data, loading, count } = useHealerOverallStats({
-        offset: page * rows,
-        limit: rows,
-        order_by: sortColumn,
-        desc: sortOrder == 'desc'
+    const { data, isLoading } = useQuery({
+        queryKey: ['statsHealingOverall'],
+        queryFn: async () => {
+            return await apiGetHealersOverall();
+        }
     });
 
     return (
         <ContainerWithHeader title={'Top 250 Medic By Healing'} iconLeft={<HealthAndSafetyIcon />}>
-            {loading ? (
-                <LoadingPlaceholder />
-            ) : (
-                <LazyTable<HealingOverallResult>
-                    showPager={true}
-                    count={count}
-                    rows={data}
-                    page={Number(page ?? 0)}
-                    rowsPerPage={rows}
-                    sortOrder={sortOrder}
-                    sortColumn={sortColumn}
-                    onSortColumnChanged={async (column) => {
-                        setSortColumn(column);
-                    }}
-                    onSortOrderChanged={async (direction) => {
-                        setSortOrder(direction);
-                    }}
-                    onPageChange={(_, newPage: number) => {
-                        setPage(newPage);
-                    }}
-                    onRowsPerPageChange={(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-                        setRows(Number(event.target.value));
-                        setPage(0);
-                    }}
-                    columns={[
-                        {
-                            label: '#',
-                            sortable: true,
-                            sortKey: 'rank',
-                            align: 'center',
-                            tooltip: 'Overall Rank By Healing',
-                            renderer: (obj) => obj.rank
-                        },
-                        {
-                            label: 'Name',
-                            sortable: true,
-                            sortKey: 'personaname',
-                            tooltip: 'Name',
-                            align: 'left',
-                            renderer: (obj) => {
-                                return <PersonCell steam_id={obj.steam_id} avatar_hash={obj.avatar_hash} personaname={obj.personaname} />;
-                            }
-                        },
-                        {
-                            label: 'Healing',
-                            sortable: true,
-                            sortKey: 'healing',
-                            tooltip: 'Total Healing',
-                            renderer: (obj) => FmtWhenGt(obj.healing, humanCount)
-                        },
-                        {
-                            label: 'A',
-                            sortable: true,
-                            sortKey: 'assists',
-                            tooltip: 'Total Assists',
-                            renderer: (obj) => FmtWhenGt(obj.assists, humanCount)
-                        },
-                        {
-                            label: 'D',
-                            sortable: true,
-                            sortKey: 'deaths',
-                            tooltip: 'Total Deaths',
-                            renderer: (obj) => FmtWhenGt(obj.deaths, humanCount)
-                        },
-                        {
-                            label: 'KAD',
-                            sortable: true,
-                            sortKey: 'kad',
-                            tooltip: 'Kills+Assists:Deaths Ratio',
-                            renderer: (obj) => FmtWhenGt(obj.kad, defaultFloatFmt)
-                        },
-                        {
-                            label: 'HPM',
-                            sortable: true,
-                            sortKey: 'hpm',
-                            tooltip: 'Overall Healing Per Minute',
-                            renderer: (obj) => FmtWhenGt(obj.hpm, () => defaultFloatFmt(obj.hpm))
-                        },
-                        {
-                            label: 'DT',
-                            sortable: true,
-                            sortKey: 'damage_taken',
-                            tooltip: 'Total Damage Taken',
-                            renderer: (obj) => FmtWhenGt(obj.damage_taken, humanCount)
-                        },
-                        {
-                            label: 'DTM',
-                            sortable: true,
-                            sortKey: 'dtm',
-                            tooltip: 'Overall Damage Taken Per Minute',
-                            renderer: (obj) => FmtWhenGt(obj.dtm, () => defaultFloatFmt(obj.dtm))
-                        },
-                        {
-                            label: 'DM',
-                            sortable: true,
-                            sortKey: 'dominations',
-                            tooltip: 'Total Dominations',
-                            renderer: (obj) => FmtWhenGt(obj.dominations, humanCount)
-                        },
-                        {
-                            label: 'Dr',
-                            sortable: true,
-                            sortKey: 'drops',
-                            tooltip: 'Total Drops',
-                            renderer: (obj) => FmtWhenGt(obj.drops, humanCount)
-                        },
-                        {
-                            label: 'Ub',
-                            sortable: true,
-                            sortKey: 'charges_uber',
-                            tooltip: 'Total Uber Charges',
-                            renderer: (obj) => FmtWhenGt(obj.charges_uber, humanCount)
-                        },
-                        {
-                            label: 'Kr',
-                            sortable: true,
-                            sortKey: 'charges_kritz',
-                            tooltip: 'Total Kritz Charges',
-                            renderer: (obj) => FmtWhenGt(obj.charges_kritz, humanCount)
-                        },
-                        {
-                            label: 'Qf',
-                            sortable: true,
-                            sortKey: 'charges_quickfix',
-                            tooltip: 'Total Quick-Fix Charges',
-                            renderer: (obj) => FmtWhenGt(obj.charges_quickfix, humanCount)
-                        },
-                        {
-                            label: 'Va',
-                            sortable: true,
-                            sortKey: 'charges_vacc',
-                            tooltip: 'Total Vaccinator Charges',
-                            renderer: (obj) => FmtWhenGt(obj.charges_vacc, humanCount)
-                        },
-                        {
-                            label: 'WR',
-                            sortable: true,
-                            sortKey: 'win_rate',
-                            tooltip: 'Win Rate %',
-                            renderer: (obj) => FmtWhenGt(obj.win_rate, defaultFloatFmtPct)
-                        }
-                    ]}
-                />
-            )}
+            <StatsHealingOverall stats={data ?? { data: [], count: 0 }} isLoading={isLoading} />
         </ContainerWithHeader>
+    );
+};
+
+const columnHelper = createColumnHelper<HealingOverallResult>();
+
+const StatsHealingOverall = ({ stats, isLoading }: { stats: LazyResult<HealingOverallResult>; isLoading: boolean }) => {
+    const [pagination, setPagination] = useState({
+        pageIndex: 0, //initial page index
+        pageSize: RowsPerPage.TwentyFive //default page size
+    });
+
+    const columns = [
+        columnHelper.accessor('rank', {
+            header: () => <HeadingCell name={'#'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography>{info.getValue()}</Typography>
+                </TableCellSmall>
+            )
+        }),
+        columnHelper.accessor('personaname', {
+            header: () => <HeadingCell name={'Name'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <PersonCell
+                        steam_id={stats.data[info.row.index].steam_id}
+                        personaname={stats.data[info.row.index].personaname}
+                        avatar_hash={stats.data[info.row.index].avatar_hash}
+                    />
+                </TableCellSmall>
+            )
+        }),
+        columnHelper.accessor('healing', {
+            header: () => <HeadingCell name={'Healing'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
+                </TableCellSmall>
+            )
+        }),
+
+        columnHelper.accessor('assists', {
+            header: () => <HeadingCell name={'A'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
+                </TableCellSmall>
+            )
+        }),
+        columnHelper.accessor('deaths', {
+            header: () => <HeadingCell name={'D'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
+                </TableCellSmall>
+            )
+        }),
+        columnHelper.accessor('kad', {
+            header: () => <HeadingCell name={'KAD'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmt)}</Typography>
+                </TableCellSmall>
+            )
+        }),
+        columnHelper.accessor('hpm', {
+            header: () => <HeadingCell name={'HPM'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography>{FmtWhenGt(info.getValue(), () => defaultFloatFmt(info.getValue()))}</Typography>
+                </TableCellSmall>
+            )
+        }),
+        columnHelper.accessor('damage_taken', {
+            header: () => <HeadingCell name={'DT'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
+                </TableCellSmall>
+            )
+        }),
+        columnHelper.accessor('dtm', {
+            header: () => <HeadingCell name={'DTM%'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography>{FmtWhenGt(info.getValue(), () => defaultFloatFmtPct(info.getValue()))}</Typography>
+                </TableCellSmall>
+            )
+        }),
+        columnHelper.accessor('dominations', {
+            header: () => <HeadingCell name={'DM'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
+                </TableCellSmall>
+            )
+        }),
+        columnHelper.accessor('drops', {
+            header: () => <HeadingCell name={'Dr'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
+                </TableCellSmall>
+            )
+        }),
+        columnHelper.accessor('charges_uber', {
+            header: () => <HeadingCell name={'Ub'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
+                </TableCellSmall>
+            )
+        }),
+        columnHelper.accessor('charges_kritz', {
+            header: () => <HeadingCell name={'Kr'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
+                </TableCellSmall>
+            )
+        }),
+        columnHelper.accessor('charges_quickfix', {
+            header: () => <HeadingCell name={'Qf'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
+                </TableCellSmall>
+            )
+        }),
+        columnHelper.accessor('charges_vacc', {
+            header: () => <HeadingCell name={'Va'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
+                </TableCellSmall>
+            )
+        }),
+        columnHelper.accessor('win_rate', {
+            header: () => <HeadingCell name={'WR%'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmtPct)}</Typography>
+                </TableCellSmall>
+            )
+        })
+    ];
+
+    const table = useReactTable({
+        data: stats.data,
+        columns: columns,
+        getCoreRowModel: getCoreRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        onPaginationChange: setPagination, //update the pagination state when internal APIs mutate the pagination state
+        state: {
+            pagination
+        }
+    });
+
+    return (
+        <>
+            <DataTable table={table} isLoading={isLoading} />
+            <PaginatorLocal
+                onRowsChange={(rows) => {
+                    setPagination((prev) => {
+                        return { ...prev, pageSize: rows };
+                    });
+                }}
+                onPageChange={(page) => {
+                    setPagination((prev) => {
+                        return { ...prev, pageIndex: page };
+                    });
+                }}
+                count={stats.count}
+                rows={pagination.pageSize}
+                page={pagination.pageIndex}
+            />
+        </>
     );
 };
