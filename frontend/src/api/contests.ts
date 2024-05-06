@@ -33,7 +33,7 @@ export const apiContests = async () => {
     return resp;
 };
 
-export const apiContest = async (contest_id: string) => {
+export const apiContest = async (contest_id: number) => {
     const contest = await apiCall<Contest>(`/api/contests/${contest_id}`, 'GET');
     return transformDateRange(contest);
 };

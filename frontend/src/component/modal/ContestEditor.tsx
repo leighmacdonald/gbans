@@ -2,8 +2,8 @@ import NiceModal, { useModal, muiDialogV5 } from '@ebay/nice-modal-react';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import Stack from '@mui/material/Stack';
-import { EmptyUUID } from '../../api';
-import { useContest } from '../../hooks/useContest.ts';
+import { useQuery } from '@tanstack/react-query';
+import { apiContest, EmptyUUID } from '../../api';
 import { Heading } from '../Heading';
 import { LoadingSpinner } from '../LoadingSpinner';
 
@@ -36,8 +36,16 @@ import { LoadingSpinner } from '../LoadingSpinner';
 //     min_permission_level: permissionValidator()
 // });
 
-export const ContestEditor = NiceModal.create(({ contest_id }: { contest_id?: string }) => {
-    const { loading, contest } = useContest(contest_id);
+export const ContestEditor = NiceModal.create(({ contest_id }: { contest_id?: number }) => {
+    const { data: contest, isLoading } = useQuery({
+        queryKey: ['contest', { contest_id }],
+        queryFn: async () => {
+            if (!contest_id) {
+                return undefined;
+            }
+            return await apiContest(contest_id);
+        }
+    });
     const modal = useModal();
 
     // const { sendFlash } = useUserFlashCtx();
@@ -117,12 +125,12 @@ export const ContestEditor = NiceModal.create(({ contest_id }: { contest_id?: st
         //     }}
         // >
         <Dialog fullWidth {...muiDialogV5(modal)}>
-            <DialogTitle component={Heading} iconLeft={loading ? <LoadingSpinner /> : <EmojiEventsIcon />}>
+            <DialogTitle component={Heading} iconLeft={isLoading ? <LoadingSpinner /> : <EmojiEventsIcon />}>
                 {`${contest?.contest_id == EmptyUUID ? 'Create' : 'Edit'} A Contest`}
             </DialogTitle>
 
             <DialogContent>
-                {loading ? (
+                {isLoading ? (
                     <LoadingSpinner />
                 ) : (
                     <Stack spacing={2}>

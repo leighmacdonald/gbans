@@ -57,5 +57,5 @@ export interface UserUploadedFile {
 export const apiSaveMedia = async (upload: UserUploadedFile) =>
     await apiCall<MediaUploadResponse, UserUploadedFile>(`/api/media`, 'POST', upload);
 
-export const apiSaveContestEntryMedia = async (contest_id: string, upload: UserUploadedFile) =>
+export const apiSaveContestEntryMedia = async (contest_id: number, upload: UserUploadedFile) =>
     await apiCall<MediaUploadResponse, UserUploadedFile>(`/api/contests/${contest_id}/upload`, 'POST', upload);

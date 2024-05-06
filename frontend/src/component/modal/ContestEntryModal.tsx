@@ -8,10 +8,11 @@ import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
+import { useQuery } from '@tanstack/react-query';
 import { fromByteArray } from 'base64-js';
+import { apiContest } from '../../api';
 import { apiSaveContestEntryMedia, UserUploadedFile } from '../../api/media';
 import { AppError } from '../../error.tsx';
-import { useContest } from '../../hooks/useContest.ts';
 import { logErr } from '../../util/errors';
 import { Nullable } from '../../util/types';
 import { Heading } from '../Heading';
@@ -27,7 +28,7 @@ import { LoadingSpinner } from '../LoadingSpinner';
 //     body_md: minStringValidator('Description', 1)
 // });
 
-export const ContestEntryModal = NiceModal.create(({ contest_id }: { contest_id: string }) => {
+export const ContestEntryModal = NiceModal.create(({ contest_id }: { contest_id: number }) => {
     const [userUpload, setUserUpload] = useState<Nullable<UserUploadedFile>>();
     const [submittedOnce, setSubmittedOnce] = useState(false);
     const [progress, setProgress] = useState(0);
@@ -36,7 +37,14 @@ export const ContestEntryModal = NiceModal.create(({ contest_id }: { contest_id:
     const [name, setName] = useState('');
     const [assetID, setAssetID] = useState('');
     const [assetError, setAssetError] = useState('');
-    const { loading, contest } = useContest(contest_id);
+
+    const { data: contest, isLoading } = useQuery({
+        queryKey: ['contest', { contest_id }],
+        queryFn: async () => {
+            return await apiContest(contest_id);
+        }
+    });
+
     const modal = useModal();
     // const { sendFlash } = useUserFlashCtx();
 
@@ -140,12 +148,12 @@ export const ContestEntryModal = NiceModal.create(({ contest_id }: { contest_id:
         //     enableReinitialize={true}
         // >
         <Dialog fullWidth {...muiDialogV5(modal)}>
-            <DialogTitle component={Heading} iconLeft={loading ? <LoadingSpinner /> : <EmojiEventsIcon />}>
+            <DialogTitle component={Heading} iconLeft={isLoading ? <LoadingSpinner /> : <EmojiEventsIcon />}>
                 {`Submit Entry For: ${contest?.title}`}
             </DialogTitle>
 
             <DialogContent>
-                {loading ? (
+                {isLoading ? (
                     <LoadingSpinner />
                 ) : (
                     <Grid container spacing={2}>
