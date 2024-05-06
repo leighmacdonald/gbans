@@ -10,6 +10,7 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { createLazyFileRoute } from '@tanstack/react-router';
 import { LatLngLiteral } from 'leaflet';
 import { apiGetServerStates, BaseServer } from '../api';
+import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ServerFilters } from '../component/ServerFilters.tsx';
 import { ServerList } from '../component/ServerList.tsx';
 import { ServerMap } from '../component/ServerMap.tsx';
@@ -163,7 +164,9 @@ function Servers() {
                         <ServerMap />
                     </Paper>
                     <ServerFilters />
-                    <ServerList />
+                    <ContainerWithHeader title={'Servers'}>
+                        <ServerList />
+                    </ContainerWithHeader>
                     <ServerStats />
                 </Stack>
             </MapStateCtx.Provider>

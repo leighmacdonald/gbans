@@ -1,133 +1,135 @@
-import { useCallback } from 'react';
-import NiceModal from '@ebay/nice-modal-react';
+import { useState } from 'react';
 import InsightsIcon from '@mui/icons-material/Insights';
-import PublishIcon from '@mui/icons-material/Publish';
-import Button from '@mui/material/Button';
-import ButtonGroup from '@mui/material/ButtonGroup';
 import Link from '@mui/material/Link';
+import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
+import { useQuery } from '@tanstack/react-query';
 import { createLazyFileRoute } from '@tanstack/react-router';
+import {
+    createColumnHelper,
+    getCoreRowModel,
+    getPaginationRowModel,
+    OnChangeFn,
+    PaginationState,
+    useReactTable
+} from '@tanstack/react-table';
 import { format } from 'date-fns';
-import formatDistanceToNowStrict from 'date-fns/formatDistanceToNowStrict';
-import { isAfter } from 'date-fns/fp';
 import { apiContests, Contest } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
+import { DataTable } from '../component/DataTable.tsx';
 import RouterLink from '../component/RouterLink.tsx';
-import { ModalContestEntry } from '../component/modal';
-import { LazyTableSimple } from '../component/table/LazyTableSimple';
-import { logErr } from '../util/errors';
+import { TableCellSmall } from '../component/TableCellSmall.tsx';
+import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
+import { LazyResult, RowsPerPage } from '../util/table.ts';
 
 export const Route = createLazyFileRoute('/_guest/contests')({
     component: Contests
 });
 
 function Contests() {
-    const onEnter = useCallback(async (contest_id: string) => {
-        try {
-            await NiceModal.show(ModalContestEntry, { contest_id });
-        } catch (e) {
-            logErr(e);
+    const [pagination, setPagination] = useState({
+        pageIndex: 0, //initial page index
+        pageSize: RowsPerPage.TwentyFive //default page size
+    });
+
+    const { data: contests, isLoading } = useQuery({
+        queryKey: ['adminContests'],
+        queryFn: async () => {
+            return await apiContests();
         }
-    }, []);
+    });
+
+    // const onEnter = useCallback(async (contest_id: string) => {
+    //     try {
+    //         await NiceModal.show(ModalContestEntry, { contest_id });
+    //     } catch (e) {
+    //         logErr(e);
+    //     }
+    // }, []);
 
     return (
-        <ContainerWithHeader title={'Contests'} iconLeft={<InsightsIcon />}>
-            <Grid container>
-                <Grid xs={12}>
-                    <LazyTableSimple<Contest>
-                        fetchData={apiContests}
-                        showPager={true}
-                        defaultSortDir={'desc'}
-                        defaultSortColumn={'date_end'}
-                        columns={[
-                            {
-                                sortKey: 'title',
-                                sortable: true,
-                                label: 'Title',
-                                tooltip: 'Title',
-                                align: 'left',
-                                renderer: (contest) => (
-                                    <Link component={RouterLink} to={`/contests/${contest.contest_id}`} variant={'button'}>
-                                        {contest.title}
-                                    </Link>
-                                )
-                            },
-                            {
-                                sortKey: 'num_entries',
-                                sortable: true,
-                                label: 'Entries',
-                                tooltip: 'Number of entries',
-                                align: 'left'
-                            },
-                            {
-                                sortKey: 'date_start',
-                                sortable: true,
-                                sortType: 'date',
-                                label: 'Starts',
-                                tooltip: 'Starting date',
-                                align: 'left',
-                                renderer: (contest) => format(contest.date_start, 'dd/MM/yy H:m')
-                            },
-                            {
-                                sortKey: 'date_end',
-                                sortable: true,
-                                sortType: 'date',
-                                label: 'Ends',
-                                tooltip: 'Ending date',
-                                align: 'left',
-                                renderer: (contest) => format(contest.date_end, 'dd/MM/yy H:m')
-                            },
-                            {
-                                sortable: true,
-                                virtualKey: 'remaining',
-                                virtual: true,
-                                label: 'Remaining',
-                                tooltip: 'Remaining Time',
-                                align: 'left',
-                                renderer: (contest) => {
-                                    if (isAfter(contest.date_end, new Date())) {
-                                        return 'Expired';
-                                    }
-
-                                    return formatDistanceToNowStrict(contest.date_end);
-                                }
-                            },
-                            {
-                                sortable: true,
-                                virtualKey: 'actions',
-                                virtual: true,
-                                label: '',
-                                tooltip: '',
-                                align: 'center',
-                                width: '200px',
-                                renderer: (contest) => {
-                                    return (
-                                        <ButtonGroup
-                                            sx={{
-                                                marginTop: 1,
-                                                marginBottom: 1
-                                            }}
-                                        >
-                                            <Button
-                                                fullWidth
-                                                variant={'contained'}
-                                                color={'success'}
-                                                disabled={isAfter(contest.date_end, new Date())}
-                                                startIcon={<PublishIcon />}
-                                                onClick={async () => {
-                                                    await onEnter(contest.contest_id);
-                                                }}
-                                            >
-                                                Submit Entry
-                                            </Button>
-                                        </ButtonGroup>
-                                    );
-                                }
-                            }
-                        ]}
+        <Grid container>
+            <Grid xs={12}>
+                <ContainerWithHeader title={'Contests'} iconLeft={<InsightsIcon />}>
+                    <ContestsTable
+                        contests={contests ?? { data: [], count: 0 }}
+                        isLoading={isLoading}
+                        pagination={pagination}
+                        setPagination={setPagination}
                     />
-                </Grid>
+                </ContainerWithHeader>
             </Grid>
-        </ContainerWithHeader>
+        </Grid>
     );
 }
+
+const columnHelper = createColumnHelper<Contest>();
+
+const ContestsTable = ({
+    contests,
+    isLoading,
+    pagination,
+    setPagination
+}: {
+    contests: LazyResult<Contest>;
+    isLoading: boolean;
+    pagination?: PaginationState;
+    setPagination?: OnChangeFn<PaginationState>;
+}) => {
+    const columns = [
+        columnHelper.accessor('title', {
+            header: () => <TableHeadingCell name={'Server'} />,
+            cell: (info) => {
+                return (
+                    <TableCellSmall>
+                        <Link
+                            component={RouterLink}
+                            to={`/contests/$contest_id}`}
+                            variant={'button'}
+                            params={{ contest_id: contests.data[info.row.index].contest_id }}
+                        >
+                            {info.getValue()}
+                        </Link>
+                    </TableCellSmall>
+                );
+            }
+        }),
+        columnHelper.accessor('num_entries', {
+            header: () => <TableHeadingCell name={'Created'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography align={'center'}>{info.getValue()}</Typography>
+                </TableCellSmall>
+            )
+        }),
+        columnHelper.accessor('date_start', {
+            header: () => <TableHeadingCell name={'Name'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography>{format(info.getValue(), 'dd/MM/yy H:m')}</Typography>
+                </TableCellSmall>
+            )
+        }),
+        columnHelper.accessor('date_end', {
+            header: () => <TableHeadingCell name={'Message'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography>{format(info.getValue(), 'dd/MM/yy H:m')}</Typography>
+                </TableCellSmall>
+            )
+        })
+    ];
+
+    const table = useReactTable({
+        data: contests.data,
+        columns: columns,
+        getCoreRowModel: getCoreRowModel(),
+        manualPagination: false,
+        autoResetPageIndex: true,
+        onPaginationChange: setPagination,
+        getPaginationRowModel: getPaginationRowModel(),
+        state: { pagination }
+    });
+
+    return <DataTable table={table} isLoading={isLoading} />;
+};
