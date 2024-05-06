@@ -222,7 +222,7 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.Cha
 	builder = filters.ApplySafeOrder(builder, map[string][]string{
 		"m.": {"persona_name", "person_message_id"},
 	}, "person_message_id")
-	builder = filters.ApplyLimitOffsetDefault(builder)
+	builder = filters.ApplyLimitOffset(builder, 10000)
 
 	var constraints sq.And
 
