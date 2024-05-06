@@ -8,6 +8,7 @@ import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
 import { flexRender, Table as TSTable } from '@tanstack/react-table';
 import { LoadingPlaceholder } from './LoadingPlaceholder.tsx';
+import { TableCellSmall } from './TableCellSmall.tsx';
 
 export const DataTable = <T,>({ table, isLoading }: { table: TSTable<T>; isLoading: boolean }) => {
     if (isLoading) {
@@ -21,7 +22,7 @@ export const DataTable = <T,>({ table, isLoading }: { table: TSTable<T>; isLoadi
                     {table.getHeaderGroups().map((headerGroup) => (
                         <TableRow key={headerGroup.id}>
                             {headerGroup.headers.map((header) => (
-                                <TableCell key={header.id}>
+                                <TableCellSmall key={header.id}>
                                     <Typography
                                         padding={0}
                                         sx={{
@@ -31,7 +32,7 @@ export const DataTable = <T,>({ table, isLoading }: { table: TSTable<T>; isLoadi
                                     >
                                         {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                                     </Typography>
-                                </TableCell>
+                                </TableCellSmall>
                             ))}
                         </TableRow>
                     ))}

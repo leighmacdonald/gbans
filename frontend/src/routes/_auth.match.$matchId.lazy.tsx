@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, MouseEvent } from 'react';
+import { useMemo, useState, MouseEvent } from 'react';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import MasksIcon from '@mui/icons-material/Masks';
@@ -15,20 +15,21 @@ import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
-import { createLazyFileRoute, useNavigate } from '@tanstack/react-router';
+import { useQuery } from '@tanstack/react-query';
+import { createLazyFileRoute } from '@tanstack/react-router';
+import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { formatDistance } from 'date-fns';
-import { apiGetMatch, MatchHealer, MatchPlayer, MatchPlayerClass, MatchPlayerWeapon, MatchResult, Team } from '../api';
+import { apiGetMatch, MatchHealer, MatchPlayer, MatchPlayerClass, MatchPlayerWeapon, Team } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
+import { DataTable } from '../component/DataTable.tsx';
 import { Heading } from '../component/Heading.tsx';
 import { LoadingSpinner } from '../component/LoadingSpinner.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { PlayerClassImg } from '../component/PlayerClassImg.tsx';
-import { LazyTable } from '../component/table/LazyTable.tsx';
-import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import { TableCellSmall } from '../component/TableCellSmall.tsx';
+import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import bluLogoImg from '../icons/blu_logo.png';
 import redLogoImg from '../icons/red_logo.png';
-import { logErr } from '../util/errors.ts';
-import { compare, Order, stableSort } from '../util/table.ts';
 import { PageNotFound } from './_auth.page-not-found.lazy.tsx';
 
 export const Route = createLazyFileRoute('/_auth/match/$matchId')({
@@ -253,29 +254,21 @@ const blu = '#547d8c';
 const red = '#a7584b';
 
 function MatchPage() {
-    const navigate = useNavigate();
-    const [match, setMatch] = useState<MatchResult>();
-    const [loading, setLoading] = useState<boolean>(true);
     const { matchId } = Route.useParams();
     const theme = useTheme();
-    const { sendFlash } = useUserFlashCtx();
 
-    useEffect(() => {
-        apiGetMatch(matchId as string)
-            .then((resp) => {
-                setMatch(resp);
-            })
-            .catch(logErr)
-            .finally(() => {
-                setLoading(false);
-            });
-    }, [matchId, navigate, sendFlash, setMatch]);
+    const { data: match, isLoading } = useQuery({
+        queryKey: ['match', { matchId }],
+        queryFn: async () => {
+            return await apiGetMatch(matchId);
+        }
+    });
 
     const headerColour = useMemo(() => {
         return theme.palette.common.white;
     }, [theme.palette.common.white]);
 
-    if (loading) {
+    if (isLoading) {
         return <LoadingSpinner />;
     }
 
@@ -325,7 +318,7 @@ function MatchPage() {
                     </Heading>
                 </Grid>
                 <Grid xs={12} padding={0} paddingTop={1}>
-                    <MatchPlayersTable players={match.players} />
+                    <MatchPlayersTable players={match.players} isLoading={isLoading} />
                 </Grid>
                 <Grid xs={12} padding={0} paddingTop={1}>
                     <Heading align={'center'} iconLeft={<MasksIcon />}>
@@ -333,243 +326,111 @@ function MatchPage() {
                     </Heading>
                 </Grid>
                 <Grid xs={12} padding={0} paddingTop={1}>
-                    <MatchHealersTable players={match.players} />
+                    <MatchHealersTable players={match.players} isLoading={isLoading} />
                 </Grid>
             </Grid>
         </ContainerWithHeader>
     );
 }
 
-interface MatchPlayersTableProps {
-    players: MatchPlayer[];
-}
+const MatchPlayersTable = ({ players, isLoading }: { players: MatchPlayer[]; isLoading: boolean }) => {
+    const columnHelper = createColumnHelper<MatchPlayer>();
+    const columns = [
+        columnHelper.accessor('team', {
+            header: () => <TableHeadingCell name={'Team'} />,
+            cell: (info) => (
+                <Typography color={players[info.row.index].team == Team.BLU ? blu : red} textAlign={'center'}>
+                    {info.getValue() == Team.RED ? 'RED' : 'BLU'}
+                </Typography>
+            )
+        }),
+        columnHelper.accessor('name', {
+            header: () => <TableHeadingCell name={'Name'} />,
+            cell: (info) => (
+                <PersonCell
+                    steam_id={players[info.row.index].steam_id}
+                    personaname={players[info.row.index].name}
+                    avatar_hash={players[info.row.index].avatar_hash}
+                />
+            )
+        }),
+        columnHelper.accessor('classes', {
+            header: () => <TableHeadingCell name={'Classes'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    {info.getValue() ? (
+                        info
+                            .getValue()
+                            .map((pc) => (
+                                <PlayerClassHoverStats key={`pc-${players[info.row.index].steam_id}-${pc.player_class}`} stats={pc} />
+                            ))
+                    ) : (
+                        <></>
+                    )}
+                </TableCellSmall>
+            )
+        }),
+        columnHelper.accessor('weapons', {
+            header: () => <TableHeadingCell name={'W'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <PlayerWeaponHoverStats stats={info.getValue()} />
+                </TableCellSmall>
+            )
+        }),
 
-const MatchPlayersTable = ({ players }: MatchPlayersTableProps) => {
-    const [sortOrder, setSortOrder] = useState<Order>('desc');
-    const [sortColumn, setSortColumn] = useState<keyof MatchPlayer>('kills');
-    const theme = useTheme();
+        columnHelper.accessor('kills', {
+            header: () => <TableHeadingCell name={'K'} />,
+            cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
+        }),
+        columnHelper.accessor('assists', {
+            header: () => <TableHeadingCell name={'A'} />,
+            cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
+        }),
+        columnHelper.accessor('deaths', {
+            header: () => <TableHeadingCell name={'D'} />,
+            cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
+        }),
+        columnHelper.accessor('damage', {
+            header: () => <TableHeadingCell name={'Dmg'} />,
+            cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
+        }),
+        columnHelper.accessor('damage_taken', {
+            header: () => <TableHeadingCell name={'DT'} />,
+            cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
+        }),
+        columnHelper.accessor('health_packs', {
+            header: () => <TableHeadingCell name={'HP'} />,
+            cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
+        }),
+        columnHelper.accessor('backstabs', {
+            header: () => <TableHeadingCell name={'BS'} />,
+            cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
+        }),
+        columnHelper.accessor('headshots', {
+            header: () => <TableHeadingCell name={'HS'} />,
+            cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
+        }),
+        columnHelper.accessor('airshots', {
+            header: () => <TableHeadingCell name={'AS'} />,
+            cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
+        }),
+        columnHelper.accessor('captures', {
+            header: () => <TableHeadingCell name={'CP'} />,
+            cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
+        })
+    ];
 
-    const validRows = useMemo(() => {
-        return stableSort(
-            players.filter((m) => m.classes != null && !(m.kills == 0 && m.assists == 0 && m.deaths == 0)),
-            compare(sortOrder, sortColumn)
-        );
-    }, [players, sortColumn, sortOrder]);
+    const table = useReactTable({
+        data: players,
+        columns: columns,
+        getCoreRowModel: getCoreRowModel(),
+        manualPagination: true,
+        autoResetPageIndex: true
+    });
 
-    return (
-        <LazyTable<MatchPlayer>
-            sortOrder={sortOrder}
-            sortColumn={sortColumn}
-            onSortColumnChanged={async (column) => {
-                setSortColumn(column);
-            }}
-            onSortOrderChanged={async (direction) => {
-                setSortOrder(direction);
-            }}
-            rows={validRows}
-            columns={[
-                {
-                    label: 'Team',
-                    tooltip: 'Team',
-                    sortKey: 'team',
-                    sortable: true,
-                    align: 'center',
-                    width: '50px',
-                    style: (row) => {
-                        return {
-                            height: '100%',
-                            backgroundColor: row.team == Team.BLU ? blu : red,
-                            textAlign: 'center'
-                        };
-                    },
-                    renderer: (row) => (
-                        <Typography variant={'button'} color={theme.palette.common.white}>
-                            {row.team == Team.RED ? 'RED' : 'BLU'}
-                        </Typography>
-                    )
-                },
-                {
-                    label: 'Player Name',
-                    tooltip: 'In Game Name',
-                    sortKey: 'name',
-                    sortable: true,
-                    align: 'left',
-                    //width: 250,
-                    renderer: (row) => (
-                        <PersonCell
-                            steam_id={row.steam_id}
-                            personaname={row.name != '' ? row.name : row.steam_id}
-                            avatar_hash={row.avatar_hash}
-                        />
-                        // <Typography variant={'body1'}>
-                        //     {row.name != '' ? row.name : row.steam_id}
-                        // </Typography>
-                    )
-                },
-                {
-                    label: '',
-                    tooltip: 'Classes',
-                    sortKey: 'classes',
-                    align: 'left',
-                    //width: 50,
-                    renderer: (row) => (
-                        <Stack direction={'row'} display="flex" justifyContent="right" alignItems="center">
-                            {row.classes ? (
-                                row.classes.map((pc) => <PlayerClassHoverStats key={`pc-${row.steam_id}-${pc.player_class}`} stats={pc} />)
-                            ) : (
-                                <></>
-                            )}
-                        </Stack>
-                    )
-                },
-                {
-                    label: '',
-                    tooltip: 'Detailed Weapon Stats',
-                    virtual: true,
-                    virtualKey: 'weapons',
-                    sortable: false,
-                    align: 'center',
-                    // width: '25px',
-                    renderer: (row) => <PlayerWeaponHoverStats stats={row.weapons} />
-                },
-                {
-                    label: 'K',
-                    tooltip: 'Kills',
-                    sortKey: 'kills',
-                    sortable: true,
-                    align: 'left',
-                    width: '25px',
-                    renderer: (row) => (
-                        <Typography variant={'body2'} sx={{ fontFamily: 'Monospace' }}>
-                            {row.kills}
-                        </Typography>
-                    )
-                },
-                {
-                    label: 'A',
-                    tooltip: 'Assists',
-                    sortKey: 'assists',
-                    sortable: true,
-                    align: 'left',
-                    width: '25px',
-                    renderer: (row) => (
-                        <Typography variant={'body2'} sx={{ fontFamily: 'Monospace' }}>
-                            {row.assists}
-                        </Typography>
-                    )
-                },
-                {
-                    label: 'D',
-                    tooltip: 'Deaths',
-                    sortKey: 'deaths',
-                    sortable: true,
-                    align: 'left',
-                    width: '25px',
-                    renderer: (row) => (
-                        <Typography variant={'body2'} sx={{ fontFamily: 'Monospace' }}>
-                            {row.deaths}
-                        </Typography>
-                    )
-                },
-                {
-                    label: 'DA',
-                    tooltip: 'Damage',
-                    sortKey: 'damage',
-                    sortable: true,
-                    align: 'left',
-                    width: '25px',
-                    renderer: (row) => (
-                        <Typography variant={'body2'} sx={{ fontFamily: 'Monospace' }}>
-                            {row.damage}
-                        </Typography>
-                    )
-                },
-                {
-                    label: 'DT',
-                    tooltip: 'Damage Taken',
-                    sortKey: 'damage_taken',
-                    sortable: true,
-                    align: 'left',
-                    width: '25px',
-                    renderer: (row) => (
-                        <Typography variant={'body2'} sx={{ fontFamily: 'Monospace' }}>
-                            {row.damage_taken}
-                        </Typography>
-                    )
-                },
-                {
-                    label: 'HP',
-                    tooltip: 'Total Health Packs',
-                    sortKey: 'health_packs',
-                    sortable: true,
-                    align: 'left',
-                    width: '25px',
-                    renderer: (row) => (
-                        <Typography variant={'body2'} sx={{ fontFamily: 'Monospace' }}>
-                            {row.health_packs}
-                        </Typography>
-                    )
-                },
-                {
-                    label: 'BS',
-                    tooltip: 'Total Backstabs',
-                    sortKey: 'backstabs',
-                    sortable: true,
-                    align: 'left',
-                    width: '25px',
-                    renderer: (row) => (
-                        <Typography variant={'body2'} sx={{ fontFamily: 'Monospace' }}>
-                            {row.backstabs}
-                        </Typography>
-                    )
-                },
-                {
-                    label: 'HS',
-                    tooltip: 'Total Headshots',
-                    sortKey: 'headshots',
-                    sortable: true,
-                    align: 'left',
-                    width: '25px',
-                    renderer: (row) => (
-                        <Typography variant={'body2'} sx={{ fontFamily: 'Monospace' }}>
-                            {row.headshots}
-                        </Typography>
-                    )
-                },
-                {
-                    label: 'AS',
-                    tooltip: 'Total Airshots',
-                    sortKey: 'airshots',
-                    sortable: true,
-                    align: 'left',
-                    width: '25px',
-                    renderer: (row) => (
-                        <Typography variant={'body2'} sx={{ fontFamily: 'Monospace' }}>
-                            {row.airshots}
-                        </Typography>
-                    )
-                },
-                {
-                    label: 'CAP',
-                    tooltip: 'Total Point Captures',
-                    sortKey: 'captures',
-                    sortable: true,
-                    align: 'left',
-                    width: '25px',
-                    renderer: (row) => (
-                        <Typography variant={'body2'} sx={{ fontFamily: 'Monospace' }}>
-                            {row.captures}
-                        </Typography>
-                    )
-                }
-            ]}
-        />
-    );
+    return <DataTable table={table} isLoading={isLoading} />;
 };
-
-interface MatchHealersTableProps {
-    players: MatchPlayer[];
-}
 
 interface MedicRow extends MatchHealer {
     steam_id: string;
@@ -580,151 +441,93 @@ interface MedicRow extends MatchHealer {
     time_end: Date;
 }
 
-const MatchHealersTable = ({ players }: MatchHealersTableProps) => {
-    const [sortOrder, setSortOrder] = useState<Order>('desc'),
-        [sortColumn, setSortColumn] = useState<keyof MedicRow>('healing'),
-        rows = useMemo(() => {
-            return players
-                .filter((p) => p.medic_stats)
-                .map((p): MedicRow => {
-                    return {
-                        match_player_id: p.match_player_id,
-                        steam_id: p.steam_id,
-                        avatar_hash: p.avatar_hash,
-                        name: p.name,
-                        team: p.team,
-                        time_start: p.time_start,
-                        time_end: p.time_end,
-                        healing: p.medic_stats?.healing ?? 0,
-                        avg_uber_length: p.medic_stats?.avg_uber_length ?? 0,
-                        biggest_adv_lost: p.medic_stats?.biggest_adv_lost ?? 0,
-                        charges_kritz: p.medic_stats?.charges_kritz ?? 0,
-                        charges_uber: p.medic_stats?.charges_uber ?? 0,
-                        charges_vacc: p.medic_stats?.charges_vacc ?? 0,
-                        charges_quickfix: p.medic_stats?.charges_quickfix ?? 0,
-                        drops: p.medic_stats?.drops ?? 0,
-                        match_medic_id: p.medic_stats?.match_medic_id ?? 0,
-                        major_adv_lost: p.medic_stats?.major_adv_lost ?? 0,
-                        near_full_charge_death: p.medic_stats?.near_full_charge_death ?? 0
-                    };
-                });
-        }, [players]),
-        validRows = useMemo(() => {
-            return stableSort(rows, compare(sortOrder, sortColumn));
-        }, [rows, sortColumn, sortOrder]);
+const MatchHealersTable = ({ players, isLoading }: { players: MatchPlayer[]; isLoading: boolean }) => {
+    const medics = useMemo(() => {
+        return players
+            .filter((p) => p.medic_stats)
+            .map((p): MedicRow => {
+                return {
+                    match_player_id: p.match_player_id,
+                    steam_id: p.steam_id,
+                    avatar_hash: p.avatar_hash,
+                    name: p.name,
+                    team: p.team,
+                    time_start: p.time_start,
+                    time_end: p.time_end,
+                    healing: p.medic_stats?.healing ?? 0,
+                    avg_uber_length: p.medic_stats?.avg_uber_length ?? 0,
+                    biggest_adv_lost: p.medic_stats?.biggest_adv_lost ?? 0,
+                    charges_kritz: p.medic_stats?.charges_kritz ?? 0,
+                    charges_uber: p.medic_stats?.charges_uber ?? 0,
+                    charges_vacc: p.medic_stats?.charges_vacc ?? 0,
+                    charges_quickfix: p.medic_stats?.charges_quickfix ?? 0,
+                    drops: p.medic_stats?.drops ?? 0,
+                    match_medic_id: p.medic_stats?.match_medic_id ?? 0,
+                    major_adv_lost: p.medic_stats?.major_adv_lost ?? 0,
+                    near_full_charge_death: p.medic_stats?.near_full_charge_death ?? 0
+                };
+            });
+    }, [players]);
 
-    const theme = useTheme();
+    const columnHelper = createColumnHelper<MedicRow>();
+    const columns = [
+        columnHelper.accessor('team', {
+            header: () => <TableHeadingCell name={'Team'} />,
+            cell: (info) => (
+                <Typography color={players[info.row.index].team == Team.BLU ? blu : red} textAlign={'center'}>
+                    {info.getValue() == Team.RED ? 'RED' : 'BLU'}
+                </Typography>
+            )
+        }),
+        columnHelper.accessor('name', {
+            header: () => <TableHeadingCell name={'Name'} />,
+            cell: (info) => (
+                <PersonCell
+                    steam_id={players[info.row.index].steam_id}
+                    personaname={players[info.row.index].name}
+                    avatar_hash={players[info.row.index].avatar_hash}
+                />
+            )
+        }),
 
-    return (
-        <LazyTable<MedicRow>
-            columns={[
-                {
-                    label: 'Team',
-                    tooltip: 'Team',
-                    sortKey: 'team',
-                    sortable: true,
-                    align: 'center',
-                    width: '50px',
-                    style: (row) => {
-                        return {
-                            height: '100%',
-                            backgroundColor: row.team == Team.BLU ? blu : red,
-                            textAlign: 'center'
-                        };
-                    },
-                    renderer: (row) => (
-                        <Typography
-                            variant={'button'}
-                            sx={{
-                                color: theme.palette.common.white
-                            }}
-                        >
-                            {row.team == Team.RED ? 'RED' : 'BLU'}
-                        </Typography>
-                    )
-                },
-                {
-                    label: 'Name',
-                    tooltip: 'In Game Name',
-                    sortKey: 'name',
-                    sortable: true,
-                    align: 'left',
-                    width: 250,
-                    renderer: (row) => (
-                        <PersonCell
-                            steam_id={row.steam_id}
-                            personaname={row.name != '' ? row.name : row.steam_id}
-                            avatar_hash={row.avatar_hash}
-                        />
-                    )
-                },
-                {
-                    label: 'Healing',
-                    tooltip: 'Total healing',
-                    sortKey: 'healing',
-                    sortable: true,
-                    align: 'left',
-                    width: 250,
-                    renderer: (row) => <Typography variant={'body1'}>{row.healing}</Typography>
-                },
-                {
-                    label: 'Uber',
-                    tooltip: 'Total Uber Deploys',
-                    sortKey: 'charges_uber',
-                    sortable: true,
-                    align: 'left',
-                    renderer: (row) => <Typography variant={'body1'}>{row.charges_uber}</Typography>
-                },
-                {
-                    label: 'Krit',
-                    tooltip: 'Total Kritz Deploys',
-                    sortKey: 'charges_kritz',
-                    sortable: true,
-                    align: 'left',
-                    renderer: (row) => <Typography variant={'body1'}>{row.charges_kritz}</Typography>
-                },
-                {
-                    label: 'Vacc',
-                    tooltip: 'Total Uber Deploys',
-                    sortKey: 'charges_vacc',
-                    sortable: true,
-                    align: 'left',
-                    renderer: (row) => <Typography variant={'body1'}>{row.charges_vacc}</Typography>
-                },
-                {
-                    label: 'Quickfix',
-                    tooltip: 'Total Uber Deploys',
-                    sortKey: 'charges_quickfix',
-                    sortable: true,
-                    align: 'left',
-                    renderer: (row) => <Typography variant={'body1'}>{row.charges_quickfix}</Typography>
-                },
-                {
-                    label: 'Drops',
-                    tooltip: 'Total Drops',
-                    sortKey: 'drops',
-                    sortable: true,
-                    align: 'left',
-                    renderer: (row) => <Typography variant={'body1'}>{row.drops}</Typography>
-                },
-                {
-                    label: 'Avg. Len',
-                    tooltip: 'Average Uber Length',
-                    sortKey: 'avg_uber_length',
-                    sortable: true,
-                    align: 'left',
-                    renderer: (row) => <Typography variant={'body1'}>{row.avg_uber_length}</Typography>
-                }
-            ]}
-            sortColumn={sortColumn}
-            onSortColumnChanged={async (column) => {
-                setSortColumn(column);
-            }}
-            onSortOrderChanged={async (direction) => {
-                setSortOrder(direction);
-            }}
-            sortOrder={sortOrder}
-            rows={validRows}
-        />
-    );
+        columnHelper.accessor('healing', {
+            header: () => <TableHeadingCell name={'Healing'} />,
+            cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
+        }),
+
+        columnHelper.accessor('charges_uber', {
+            header: () => <TableHeadingCell name={'Uber'} />,
+            cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
+        }),
+        columnHelper.accessor('charges_kritz', {
+            header: () => <TableHeadingCell name={'Kritz'} />,
+            cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
+        }),
+        columnHelper.accessor('charges_vacc', {
+            header: () => <TableHeadingCell name={'Vacc'} />,
+            cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
+        }),
+        columnHelper.accessor('charges_quickfix', {
+            header: () => <TableHeadingCell name={'Quickfix'} />,
+            cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
+        }),
+        columnHelper.accessor('drops', {
+            header: () => <TableHeadingCell name={'Drops'} />,
+            cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
+        }),
+        columnHelper.accessor('avg_uber_length', {
+            header: () => <TableHeadingCell name={'Avg. Len'} />,
+            cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
+        })
+    ];
+
+    const table = useReactTable({
+        data: medics,
+        columns: columns,
+        getCoreRowModel: getCoreRowModel(),
+        manualPagination: true,
+        autoResetPageIndex: true
+    });
+
+    return <DataTable table={table} isLoading={isLoading} />;
 };
