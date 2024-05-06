@@ -185,6 +185,10 @@ func (u networkUsecase) QueryConnectionHistory(ctx context.Context, opts domain.
 		opts.Sid64 = sid.Int64()
 	}
 
+	if opts.QueryFilter.Limit > 1000 {
+		opts.QueryFilter.Limit = 1000
+	}
+
 	if opts.CIDR != "" {
 		if !strings.Contains(opts.CIDR, "/") {
 			opts.CIDR += "/32"

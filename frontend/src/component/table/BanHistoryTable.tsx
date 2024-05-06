@@ -1,130 +1,100 @@
-import { ChangeEvent, Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { useState } from 'react';
 import Typography from '@mui/material/Typography';
-import { apiGetBansSteam, BanReasons, SteamBanRecord } from '../../api';
-import { logErr } from '../../util/errors';
-import { Order, RowsPerPage } from '../../util/table.ts';
+import { useNavigate } from '@tanstack/react-router';
+import { createColumnHelper, getCoreRowModel, getPaginationRowModel, TableOptions, useReactTable } from '@tanstack/react-table';
+import { BanReasons, SteamBanRecord } from '../../api';
+import { LazyResult, RowsPerPage } from '../../util/table.ts';
+import { renderDateTime } from '../../util/text.tsx';
+import { DataTable } from '../DataTable.tsx';
 import { PersonCell } from '../PersonCell';
 import { TableCellBool } from '../TableCellBool.tsx';
-import { LazyTable } from './LazyTable';
+import { TableCellSmall } from '../TableCellSmall.tsx';
+import { TableHeadingCell } from '../TableHeadingCell.tsx';
 
-export const BanHistoryTable = ({ steam_id, setBanCount }: { steam_id?: string; setBanCount: Dispatch<SetStateAction<number>> }) => {
-    const [bans, setBans] = useState<SteamBanRecord[]>([]);
-    const [sortOrder, setSortOrder] = useState<Order>('desc');
-    const [sortColumn, setSortColumn] = useState<keyof SteamBanRecord>('ban_id');
-    const [rowPerPageCount, setRowPerPageCount] = useState<number>(RowsPerPage.Ten);
-    const [page, setPage] = useState(0);
-    const [totalRows, setTotalRows] = useState<number>(0);
+const columnHelper = createColumnHelper<SteamBanRecord>();
 
-    useEffect(() => {
-        const abortController = new AbortController();
-        apiGetBansSteam(
-            {
-                limit: rowPerPageCount,
-                offset: page * rowPerPageCount,
-                order_by: sortColumn,
-                desc: sortOrder == 'desc',
-                target_id: steam_id,
-                deleted: true
-            },
-            abortController
-        )
-            .then((resp) => {
-                setBans(resp.data);
-                setTotalRows(resp.count);
-                setBanCount(resp.count);
-                if (page * rowPerPageCount > resp.count) {
-                    setPage(0);
-                }
-            })
-            .catch((e) => {
-                logErr(e);
-            });
-        return () => abortController.abort();
-    }, [page, rowPerPageCount, setBanCount, sortColumn, sortOrder, steam_id]);
+export const BanHistoryTable = ({ bans, isLoading }: { bans: LazyResult<SteamBanRecord>; isLoading: boolean }) => {
+    const navigate = useNavigate();
+    const [pagination, setPagination] = useState({
+        pageIndex: 0, //initial page index
+        pageSize: RowsPerPage.TwentyFive //default page size
+    });
 
-    return (
-        <LazyTable<SteamBanRecord>
-            showPager={true}
-            count={totalRows}
-            rows={bans}
-            page={page}
-            rowsPerPage={rowPerPageCount}
-            sortOrder={sortOrder}
-            sortColumn={sortColumn}
-            onSortColumnChanged={async (column) => {
-                setSortColumn(column);
-            }}
-            onSortOrderChanged={async (direction) => {
-                setSortOrder(direction);
-            }}
-            onPageChange={(_, newPage: number) => {
-                setPage(newPage);
-            }}
-            onRowsPerPageChange={(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-                setRowPerPageCount(parseInt(event.target.value, 10));
-                setPage(0);
-            }}
-            columns={[
-                {
-                    label: 'A',
-                    tooltip: 'Is this ban active (not deleted/inactive/unbanned)',
-                    align: 'center',
-                    width: '50px',
-                    sortKey: 'deleted',
-                    renderer: (row) => <TableCellBool enabled={!row.deleted} />
-                },
-                {
-                    label: 'Created',
-                    tooltip: 'Created On',
-                    sortKey: 'created_on',
-                    sortType: 'date',
-                    sortable: true,
-                    align: 'left',
-                    width: '150px'
-                },
-                {
-                    label: 'Expires',
-                    tooltip: 'Expires',
-                    sortKey: 'valid_until',
-                    sortType: 'date',
-                    sortable: true,
-                    align: 'left'
-                },
-                {
-                    label: 'Ban Author',
-                    tooltip: 'Ban Author',
-                    sortKey: 'source_id',
-                    sortType: 'string',
-                    align: 'left',
-                    width: '150px',
-                    renderer: (row) => (
-                        <PersonCell steam_id={row.source_id} personaname={row.source_personaname} avatar_hash={row.source_avatarhash} />
-                    )
-                },
-                {
-                    label: 'Reason',
-                    tooltip: 'Reason',
-                    sortKey: 'reason',
-                    sortable: true,
-                    sortType: 'string',
-                    align: 'left',
-                    renderer: (row) => <Typography variant={'body1'}>{BanReasons[row.reason]}</Typography>
-                },
-                {
-                    label: 'Custom',
-                    tooltip: 'Custom Reason',
-                    sortKey: 'reason_text',
-                    sortType: 'string',
-                    align: 'left'
-                },
-                {
-                    label: 'Unban Reason',
-                    tooltip: 'Unban Reason',
-                    sortKey: 'unban_reason_text',
-                    sortType: 'string',
-                    align: 'left'
-                }
-            ]}
-        />
-    );
+    const columns = [
+        columnHelper.accessor('deleted', {
+            header: () => <TableHeadingCell name={'A'} />,
+            cell: (info) => {
+                return <TableCellBool enabled={!info.getValue()} />;
+            }
+        }),
+        columnHelper.accessor('created_on', {
+            header: () => <TableHeadingCell name={'Created'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography align={'center'}>{renderDateTime(info.getValue())}</Typography>
+                </TableCellSmall>
+            )
+        }),
+        columnHelper.accessor('source_id', {
+            header: () => <TableHeadingCell name={'Author'} />,
+            cell: (info) => (
+                <PersonCell
+                    steam_id={bans.data[info.row.index].source_id}
+                    avatar_hash={bans.data[info.row.index].source_avatarhash}
+                    personaname={bans.data[info.row.index].source_personaname}
+                    onClick={async () => {
+                        await navigate({
+                            params: { steamId: bans.data[info.row.index].source_id },
+                            to: `/profile/$steamId`
+                        });
+                    }}
+                />
+            )
+        }),
+        columnHelper.accessor('reason', {
+            header: () => <TableHeadingCell name={'Reason'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography padding={0} variant={'body1'}>
+                        {BanReasons[info.getValue()]}
+                    </Typography>
+                </TableCellSmall>
+            )
+        }),
+        columnHelper.accessor('reason_text', {
+            header: () => <TableHeadingCell name={'Custom'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography padding={0} variant={'body1'}>
+                        {info.getValue()}
+                    </Typography>
+                </TableCellSmall>
+            )
+        }),
+        columnHelper.accessor('unban_reason_text', {
+            header: () => <TableHeadingCell name={'Unban Reason'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography padding={0} variant={'body1'}>
+                        {info.getValue()}
+                    </Typography>
+                </TableCellSmall>
+            )
+        })
+    ];
+
+    const opts: TableOptions<SteamBanRecord> = {
+        data: bans.data,
+        columns: columns,
+        getCoreRowModel: getCoreRowModel(),
+        manualPagination: false,
+        autoResetPageIndex: true,
+        onPaginationChange: setPagination,
+        getPaginationRowModel: getPaginationRowModel(),
+        state: { pagination }
+    };
+
+    const table = useReactTable(opts);
+
+    return <DataTable table={table} isLoading={isLoading} />;
 };

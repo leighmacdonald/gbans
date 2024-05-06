@@ -18,13 +18,14 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import { useQuery } from '@tanstack/react-query';
 import { useRouteContext } from '@tanstack/react-router';
-import { apiDeleteReportMessage, apiGetMessages, PermissionLevel, Report, ReportMessage } from '../api';
+import { apiDeleteReportMessage, apiGetBansSteam, apiGetConnections, apiGetMessages, PermissionLevel, Report, ReportMessage } from '../api';
 import { useReportMessages } from '../hooks/useReportMessages';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors';
 import { RowsPerPage } from '../util/table.ts';
 import { ChatTable } from './ChatTable.tsx';
 import { ContainerWithHeader } from './ContainerWithHeader';
+import { IPHistoryTable } from './IPHistoryTable.tsx';
 import { MarkDownRenderer } from './MarkdownRenderer';
 import { PaginatorLocal } from './PaginatorLocal.tsx';
 import { PlayerMessageContext } from './PlayerMessageContext';
@@ -32,7 +33,6 @@ import { ReportMessageView } from './ReportMessageView';
 import { SourceBansList } from './SourceBansList';
 import { TabPanel } from './TabPanel';
 import { BanHistoryTable } from './table/BanHistoryTable';
-import { ConnectionHistoryTable } from './table/ConnectionHistoryTable';
 
 interface ReportComponentProps {
     report: Report;
@@ -44,7 +44,6 @@ export const ReportViewComponent = ({ report }: ReportComponentProps): JSX.Eleme
     const [newMessages] = useState<ReportMessage[]>([]);
     const [deletedMessages, setDeletedMessages] = useState<number[]>([]);
     const [value, setValue] = useState<number>(0);
-    const [banCount, setBanCount] = useState(0);
     const { hasPermission } = useRouteContext({ from: '/_auth/report/$reportId' });
 
     const [chatPagination, setChatPagination] = useState({
@@ -52,7 +51,25 @@ export const ReportViewComponent = ({ report }: ReportComponentProps): JSX.Eleme
         pageSize: RowsPerPage.TwentyFive //default page size
     });
 
+    const [connectionPagination, setConnectionPagination] = useState({
+        pageIndex: 0, //initial page index
+        pageSize: RowsPerPage.TwentyFive //default page size
+    });
+
     const { sendFlash } = useUserFlashCtx();
+
+    const { data: connections, isLoading: isLoadingConnections } = useQuery({
+        queryKey: ['reportConnectionHist', { steamId: report.target_id }],
+        queryFn: async () => {
+            return await apiGetConnections({
+                limit: 1000,
+                offset: 0,
+                order_by: 'person_connection_id',
+                desc: true,
+                source_id: report.target_id
+            });
+        }
+    });
 
     const { data: chat, isLoading: isLoadingChat } = useQuery({
         queryKey: ['reportChat'],
@@ -66,6 +83,20 @@ export const ReportViewComponent = ({ report }: ReportComponentProps): JSX.Eleme
                 order_by: 'person_message_id',
                 desc: true,
                 flagged_only: false
+            });
+        }
+    });
+
+    const { data: bans, isLoading: isLoadingBans } = useQuery({
+        queryKey: ['reportBanHistory', { steamId: report.target_id }],
+        queryFn: async () => {
+            return await apiGetBansSteam({
+                limit: 100,
+                offset: 0,
+                order_by: 'ban_id',
+                desc: true,
+                target_id: report.target_id,
+                deleted: true
             });
         }
     });
@@ -132,7 +163,7 @@ export const ReportViewComponent = ({ report }: ReportComponentProps): JSX.Eleme
                                     )}
                                     {hasPermission(PermissionLevel.Moderator) && (
                                         <Tab
-                                            label={`Ban History ${banCount ? `(${banCount})` : ''}`}
+                                            label={`Ban History ${bans ? `(${bans.data.length})` : ''}`}
                                             icon={<ReportGmailerrorredIcon />}
                                             iconPosition={'start'}
                                         />
@@ -176,7 +207,28 @@ export const ReportViewComponent = ({ report }: ReportComponentProps): JSX.Eleme
                             </TabPanel>
                             <TabPanel value={value} index={2}>
                                 <Box minHeight={300}>
-                                    <ConnectionHistoryTable steam_id={report.target_id} />
+                                    <IPHistoryTable
+                                        connections={connections ?? { data: [], count: 0 }}
+                                        isLoading={isLoadingConnections}
+                                        manualPaging={false}
+                                        pagination={connectionPagination}
+                                        setPagination={setConnectionPagination}
+                                    />
+                                    <PaginatorLocal
+                                        onRowsChange={(rows) => {
+                                            setConnectionPagination((prev) => {
+                                                return { ...prev, pageSize: rows };
+                                            });
+                                        }}
+                                        onPageChange={(page) => {
+                                            setConnectionPagination((prev) => {
+                                                return { ...prev, pageIndex: page };
+                                            });
+                                        }}
+                                        count={connections?.data?.length ?? 0}
+                                        rows={connectionPagination.pageSize}
+                                        page={connectionPagination.pageIndex}
+                                    />
                                 </Box>
                             </TabPanel>
                             <TabPanel value={value} index={3}>
@@ -186,7 +238,7 @@ export const ReportViewComponent = ({ report }: ReportComponentProps): JSX.Eleme
                                         display: value == 3 ? 'block' : 'none'
                                     }}
                                 >
-                                    <BanHistoryTable steam_id={report.target_id} setBanCount={setBanCount} />
+                                    <BanHistoryTable bans={bans ?? { data: [], count: 0 }} isLoading={isLoadingBans} />
                                 </Box>
                             </TabPanel>
                         </ContainerWithHeader>
