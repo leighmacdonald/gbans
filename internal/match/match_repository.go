@@ -463,12 +463,20 @@ func (r *matchRepository) matchGetMedics(ctx context.Context, matchID uuid.UUID)
 
 func (r *matchRepository) matchGetChat(ctx context.Context, matchID uuid.UUID) (domain.PersonMessages, error) {
 	const query = `
-		SELECT c.person_message_id, c.steam_id, c.server_id, c.body, c.persona_name, c.team, 
-		       c.created_on, c.match_id, COUNT(f.person_message_id)::int::boolean as flagged
-		FROM person_messages c
-		LEFT JOIN person_messages_filter f on c.person_message_id = f.person_message_id
-		WHERE c.match_id = $1
-		GROUP BY c.person_message_id
+		SELECT x.*, coalesce(f.person_message_filter_id, 0)
+		FROM (SELECT c.person_message_id,
+					 c.steam_id,
+					 c.server_id,
+					 c.body,
+					 c.persona_name,
+					 c.team,
+					 c.created_on,
+					 c.match_id
+			  FROM person_messages c
+		
+			  WHERE c.match_id = $1
+			  GROUP BY c.person_message_id) x
+         LEFT JOIN person_messages_filter f on x.person_message_id = f.person_message_id
 		`
 
 	messages := domain.PersonMessages{}

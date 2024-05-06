@@ -7,11 +7,12 @@ import { apiGetPlayersOverall, PlayerWeaponStats } from '../api';
 import { LazyResult, RowsPerPage } from '../util/table.ts';
 import { defaultFloatFmt, defaultFloatFmtPct, humanCount } from '../util/text.tsx';
 import { ContainerWithHeader } from './ContainerWithHeader';
-import { DataTable, HeadingCell } from './DataTable.tsx';
+import { DataTable } from './DataTable.tsx';
 import FmtWhenGt from './FmtWhenGT.tsx';
 import { PaginatorLocal } from './PaginatorLocal.tsx';
 import { PersonCell } from './PersonCell.tsx';
 import { TableCellSmall } from './TableCellSmall.tsx';
+import { TableHeadingCell } from './TableHeadingCell.tsx';
 
 export const PlayersOverallContainer = () => {
     const { data, isLoading } = useQuery({
