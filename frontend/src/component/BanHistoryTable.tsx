@@ -2,14 +2,14 @@ import { useState } from 'react';
 import Typography from '@mui/material/Typography';
 import { useNavigate } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, getPaginationRowModel, TableOptions, useReactTable } from '@tanstack/react-table';
-import { BanReasons, SteamBanRecord } from '../../api';
-import { LazyResult, RowsPerPage } from '../../util/table.ts';
-import { renderDateTime } from '../../util/text.tsx';
-import { DataTable } from '../DataTable.tsx';
-import { PersonCell } from '../PersonCell';
-import { TableCellBool } from '../TableCellBool.tsx';
-import { TableCellSmall } from '../TableCellSmall.tsx';
-import { TableHeadingCell } from '../TableHeadingCell.tsx';
+import { BanReasons, SteamBanRecord } from '../api';
+import { LazyResult, RowsPerPage } from '../util/table.ts';
+import { renderDateTime } from '../util/text.tsx';
+import { DataTable } from './DataTable.tsx';
+import { PersonCell } from './PersonCell.tsx';
+import { TableCellBool } from './TableCellBool.tsx';
+import { TableCellSmall } from './TableCellSmall.tsx';
+import { TableHeadingCell } from './TableHeadingCell.tsx';
 
 const columnHelper = createColumnHelper<SteamBanRecord>();
 
