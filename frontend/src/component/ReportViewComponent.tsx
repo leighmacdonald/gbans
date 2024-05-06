@@ -23,6 +23,7 @@ import { useReportMessages } from '../hooks/useReportMessages';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors';
 import { RowsPerPage } from '../util/table.ts';
+import { BanHistoryTable } from './BanHistoryTable.tsx';
 import { ChatTable } from './ChatTable.tsx';
 import { ContainerWithHeader } from './ContainerWithHeader';
 import { IPHistoryTable } from './IPHistoryTable.tsx';
@@ -32,7 +33,6 @@ import { PlayerMessageContext } from './PlayerMessageContext';
 import { ReportMessageView } from './ReportMessageView';
 import { SourceBansList } from './SourceBansList';
 import { TabPanel } from './TabPanel';
-import { BanHistoryTable } from './table/BanHistoryTable';
 
 interface ReportComponentProps {
     report: Report;
