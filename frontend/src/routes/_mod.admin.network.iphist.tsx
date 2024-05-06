@@ -1,23 +1,18 @@
 import FilterListIcon from '@mui/icons-material/FilterList';
 import SensorOccupiedIcon from '@mui/icons-material/SensorOccupied';
-import TableCell from '@mui/material/TableCell';
-import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
-import { apiGetConnections, PersonConnection } from '../api';
+import { apiGetConnections } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { DataTable } from '../component/DataTable.tsx';
+import { IPHistoryTable } from '../component/IPHistoryTable.tsx';
 import { Paginator } from '../component/Paginator.tsx';
-import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { makeSteamidValidators, SteamIDField } from '../component/field/SteamIDField.tsx';
-import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
-import { renderDateTime } from '../util/text.tsx';
+import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
 
 const ipHistorySearchSchema = z.object({
     ...commonTableSearchSchema,
@@ -111,55 +106,10 @@ function AdminNetworkPlayerIPHistory() {
             <Grid xs={12}>
                 <ContainerWithHeader title="Player IP History" iconLeft={<SensorOccupiedIcon />}>
                     <IPHistoryTable connections={connections ?? { data: [], count: 0 }} isLoading={isLoading} />
-                    <Paginator page={page ?? 0} rows={rows ?? defaultRows} data={connections} path={'/admin/network/ip_hist'} />
+                    <Paginator page={page ?? 0} rows={rows ?? defaultRows} data={connections} path={'/admin/network/iphist'} />
                 </ContainerWithHeader>
             </Grid>
             ;
         </Grid>
     );
 }
-
-const columnHelper = createColumnHelper<PersonConnection>();
-
-const IPHistoryTable = ({ connections, isLoading }: { connections: LazyResult<PersonConnection>; isLoading: boolean }) => {
-    const columns = [
-        columnHelper.accessor('created_on', {
-            header: () => <TableHeadingCell name={'Created'} />,
-            cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>
-        }),
-        columnHelper.accessor('persona_name', {
-            header: () => <TableHeadingCell name={'Name'} />,
-            cell: (info) => (
-                <TableCell>
-                    <Typography>{info.getValue()}</Typography>
-                </TableCell>
-            )
-        }),
-        columnHelper.accessor('ip_addr', {
-            header: () => <TableHeadingCell name={'IP Address'} />,
-            cell: (info) => (
-                <TableCell>
-                    <Typography>{info.getValue()}</Typography>
-                </TableCell>
-            )
-        }),
-        columnHelper.accessor('server_id', {
-            header: () => <TableHeadingCell name={'Server'} />,
-            cell: (info) => (
-                <TableCell>
-                    <Typography>{connections.data[info.row.index].server_name_short}</Typography>
-                </TableCell>
-            )
-        })
-    ];
-
-    const table = useReactTable({
-        data: connections.data,
-        columns: columns,
-        getCoreRowModel: getCoreRowModel(),
-        manualPagination: true,
-        autoResetPageIndex: true
-    });
-
-    return <DataTable table={table} isLoading={isLoading} />;
-};
