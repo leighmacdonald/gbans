@@ -13,10 +13,11 @@ import { createColumnHelper, getCoreRowModel, getPaginationRowModel, useReactTab
 import { apiGetMapUsage } from '../api';
 import { RowsPerPage } from '../util/table.ts';
 import { ContainerWithHeader } from './ContainerWithHeader';
-import { DataTable, HeadingCell } from './DataTable.tsx';
+import { DataTable } from './DataTable.tsx';
 import { LoadingSpinner } from './LoadingSpinner';
 import { PaginatorLocal } from './PaginatorLocal.tsx';
 import { TableCellSmall } from './TableCellSmall.tsx';
+import { TableHeadingCell } from './TableHeadingCell.tsx';
 
 interface MapUseChartProps {
     details: SeriesData[];
@@ -159,7 +160,7 @@ const SeriesTable = ({ stats, isLoading }: { stats: SeriesData[]; isLoading: boo
 
     const columns = [
         columnHelper.accessor('label', {
-            header: () => <HeadingCell name={'Name'} />,
+            header: () => <TableHeadingCell name={'Name'} />,
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{info.getValue()}</Typography>
@@ -168,7 +169,7 @@ const SeriesTable = ({ stats, isLoading }: { stats: SeriesData[]; isLoading: boo
         }),
 
         columnHelper.accessor('value', {
-            header: () => <HeadingCell name={'Value'} />,
+            header: () => <TableHeadingCell name={'Value'} />,
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{info.getValue().toFixed(2)} %</Typography>

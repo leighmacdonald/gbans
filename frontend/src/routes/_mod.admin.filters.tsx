@@ -16,12 +16,13 @@ import { z } from 'zod';
 import { apiGetFilters, apiGetWarningState, Filter, FilterAction, filterActionString, UserWarning } from '../api/filters.ts';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
-import { DataTable, HeadingCell } from '../component/DataTable.tsx';
+import { DataTable } from '../component/DataTable.tsx';
 import { Paginator } from '../component/Paginator.tsx';
 import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { TableCellSmall } from '../component/TableCellSmall.tsx';
 import { TableCellString } from '../component/TableCellString.tsx';
+import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 
@@ -169,29 +170,29 @@ const FiltersTable = ({ filters, isLoading }: { filters: LazyResult<Filter>; isL
 
     const columns = [
         columnHelper.accessor('pattern', {
-            header: () => <HeadingCell name={'Pattern'} />,
+            header: () => <TableHeadingCell name={'Pattern'} />,
             cell: (info) => <TableCellString>{`${info.getValue()}`}</TableCellString>
         }),
         columnHelper.accessor('is_regex', {
-            header: () => <HeadingCell name={'Rx'} />,
+            header: () => <TableHeadingCell name={'Rx'} />,
             cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
         }),
         columnHelper.accessor('action', {
-            header: () => <HeadingCell name={'Action'} />,
+            header: () => <TableHeadingCell name={'Action'} />,
             cell: (info) => <TableCellString>{filterActionString(info.getValue())}</TableCellString>
         }),
         columnHelper.accessor('duration', {
-            header: () => <HeadingCell name={'Duration'} />,
+            header: () => <TableHeadingCell name={'Duration'} />,
             cell: (info) => (
                 <TableCellString>{filters.data[info.row.index].action == FilterAction.Kick ? '' : info.getValue()}</TableCellString>
             )
         }),
         columnHelper.accessor('weight', {
-            header: () => <HeadingCell name={'Weight'} />,
+            header: () => <TableHeadingCell name={'Weight'} />,
             cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
         }),
         columnHelper.accessor('trigger_count', {
-            header: () => <HeadingCell name={'Triggered'} />,
+            header: () => <TableHeadingCell name={'Triggered'} />,
             cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
         })
     ];
@@ -200,7 +201,7 @@ const FiltersTable = ({ filters, isLoading }: { filters: LazyResult<Filter>; isL
     //     accessorFn: () => {
     //         return 'action';
     //     },
-    //     header: () => <HeadingCell name={'Actions'} />,
+    //     header: () => <TableHeadingCell name={'Actions'} />,
     //     cell: () => (
     //         <ButtonGroup>
     //             <Tooltip title={'Edit filter'}>
@@ -260,7 +261,7 @@ export const WarningStateTable = ({ warnings, isLoading }: { warnings: UserWarni
 
     const columns = [
         columnHelper.accessor('steam_id', {
-            header: () => <HeadingCell name={'Pattern'} />,
+            header: () => <TableHeadingCell name={'Pattern'} />,
             cell: (info) => (
                 <TableCellSmall>
                     <PersonCell
@@ -272,11 +273,11 @@ export const WarningStateTable = ({ warnings, isLoading }: { warnings: UserWarni
             )
         }),
         columnHelper.accessor('created_on', {
-            header: () => <HeadingCell name={'Rx'} />,
+            header: () => <TableHeadingCell name={'Rx'} />,
             cell: (info) => <TableCellString>{renderDateTime(info.getValue())}</TableCellString>
         }),
         columnHelper.accessor('server_name', {
-            header: () => <HeadingCell name={'Action'} />,
+            header: () => <TableHeadingCell name={'Action'} />,
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{info.getValue()}</Typography>
@@ -284,7 +285,7 @@ export const WarningStateTable = ({ warnings, isLoading }: { warnings: UserWarni
             )
         }),
         columnHelper.accessor('matched', {
-            header: () => <HeadingCell name={'Duration'} />,
+            header: () => <TableHeadingCell name={'Duration'} />,
             cell: (info) => (
                 <TableCell>
                     <Tooltip title={renderFilter(warnings[info.row.index].matched_filter)}>
@@ -294,11 +295,11 @@ export const WarningStateTable = ({ warnings, isLoading }: { warnings: UserWarni
             )
         }),
         columnHelper.accessor('current_total', {
-            header: () => <HeadingCell name={'Weight'} />,
+            header: () => <TableHeadingCell name={'Weight'} />,
             cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
         }),
         columnHelper.accessor('message', {
-            header: () => <HeadingCell name={'Triggered'} />,
+            header: () => <TableHeadingCell name={'Triggered'} />,
             cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
         })
     ];

@@ -19,9 +19,10 @@ import stc from 'string-to-color';
 import { z } from 'zod';
 import { apiGetMessages, apiGetServers, PermissionLevel, PersonMessage, ServerSimple } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
-import { DataTable, HeadingCell } from '../component/DataTable.tsx';
+import { DataTable } from '../component/DataTable.tsx';
 import { Paginator } from '../component/Paginator.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
+import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { SteamIDField } from '../component/field/SteamIDField.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
@@ -298,7 +299,7 @@ const ChatTable = ({ messages, isLoading }: { messages: PersonMessage[]; isLoadi
 
     const columns = [
         columnHelper.accessor('server_id', {
-            header: () => <HeadingCell name={'Server'} />,
+            header: () => <TableHeadingCell name={'Server'} />,
             cell: (info) => {
                 return (
                     <Button
@@ -315,11 +316,11 @@ const ChatTable = ({ messages, isLoading }: { messages: PersonMessage[]; isLoadi
             }
         }),
         columnHelper.accessor('created_on', {
-            header: () => <HeadingCell name={'Created'} />,
+            header: () => <TableHeadingCell name={'Created'} />,
             cell: (info) => <Typography align={'center'}>{renderDateTime(info.getValue())}</Typography>
         }),
         columnHelper.accessor('persona_name', {
-            header: () => <HeadingCell name={'Name'} />,
+            header: () => <TableHeadingCell name={'Name'} />,
             cell: (info) => (
                 <PersonCell
                     steam_id={messages[info.row.index].steam_id}
@@ -335,7 +336,7 @@ const ChatTable = ({ messages, isLoading }: { messages: PersonMessage[]; isLoadi
             )
         }),
         columnHelper.accessor('body', {
-            header: () => <HeadingCell name={'Message'} />,
+            header: () => <TableHeadingCell name={'Message'} />,
             cell: (info) => (
                 <Typography padding={0} variant={'body1'}>
                     {info.getValue()}
@@ -343,7 +344,7 @@ const ChatTable = ({ messages, isLoading }: { messages: PersonMessage[]; isLoadi
             )
         }),
         columnHelper.accessor('auto_filter_flagged', {
-            header: () => <HeadingCell name={'F'} />,
+            header: () => <TableHeadingCell name={'F'} />,
             cell: (info) => (info.getValue() > 0 ? <FlagIcon color={'error'} /> : <></>)
         })
     ];

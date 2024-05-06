@@ -14,14 +14,15 @@ import { z } from 'zod';
 import { apiGetBansGroups, BanReasons, GroupBanRecord } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
-import { DataTable, HeadingCell } from '../component/DataTable.tsx';
+import { DataTable } from '../component/DataTable.tsx';
 import { Paginator } from '../component/Paginator.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
+import { TableCellRelativeDateField } from '../component/TableCellRelativeDateField.tsx';
+import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
 import { makeSteamidValidatorsOptional } from '../component/field/SteamIDField.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
-import { TableCellRelativeDateField } from '../component/table/TableCellRelativeDateField.tsx';
 import { commonTableSearchSchema, isPermanentBan, LazyResult, RowsPerPage } from '../util/table.ts';
 import { renderDate } from '../util/text.tsx';
 import { emptyOrNullString } from '../util/types.ts';
@@ -207,11 +208,11 @@ const columnHelper = createColumnHelper<GroupBanRecord>();
 const BanGroupTable = ({ bans, isLoading }: { bans: LazyResult<GroupBanRecord>; isLoading: boolean }) => {
     const columns = [
         columnHelper.accessor('ban_group_id', {
-            header: () => <HeadingCell name={'ID'} />,
+            header: () => <TableHeadingCell name={'ID'} />,
             cell: (info) => <TableCell>{`#${info.getValue()}`}</TableCell>
         }),
         columnHelper.accessor('source_id', {
-            header: () => <HeadingCell name={'Author'} />,
+            header: () => <TableHeadingCell name={'Author'} />,
             cell: (info) => (
                 <PersonCell
                     steam_id={bans.data[info.row.index].source_id}
@@ -221,7 +222,7 @@ const BanGroupTable = ({ bans, isLoading }: { bans: LazyResult<GroupBanRecord>; 
             )
         }),
         columnHelper.accessor('target_id', {
-            header: () => <HeadingCell name={'Subject'} />,
+            header: () => <TableHeadingCell name={'Subject'} />,
             cell: (info) => (
                 <PersonCell
                     steam_id={bans.data[info.row.index].target_id}
@@ -231,23 +232,23 @@ const BanGroupTable = ({ bans, isLoading }: { bans: LazyResult<GroupBanRecord>; 
             )
         }),
         columnHelper.accessor('group_id', {
-            header: () => <HeadingCell name={'Group'} />,
+            header: () => <TableHeadingCell name={'Group'} />,
             cell: (info) => <Typography>{info.getValue()}</Typography>
         }),
         columnHelper.accessor('note', {
-            header: () => <HeadingCell name={'Note'} />,
+            header: () => <TableHeadingCell name={'Note'} />,
             cell: (info) => <Typography>{info.getValue()}</Typography>
         }),
         columnHelper.accessor('reason', {
-            header: () => <HeadingCell name={'Reason'} />,
+            header: () => <TableHeadingCell name={'Reason'} />,
             cell: (info) => <Typography>{BanReasons[info.getValue()]}</Typography>
         }),
         columnHelper.accessor('created_on', {
-            header: () => <HeadingCell name={'Created'} />,
+            header: () => <TableHeadingCell name={'Created'} />,
             cell: (info) => <Typography>{renderDate(info.getValue())}</Typography>
         }),
         columnHelper.accessor('valid_until', {
-            header: () => <HeadingCell name={'Expires'} />,
+            header: () => <TableHeadingCell name={'Expires'} />,
             cell: (info) =>
                 isPermanentBan(bans.data[info.row.index].created_on, bans.data[info.row.index].valid_until) ? (
                     'Permanent'

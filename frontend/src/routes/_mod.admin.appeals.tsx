@@ -8,15 +8,17 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
-import { createFileRoute, Link as RouterLink, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiGetAppeals, AppealState, AppealStateCollection, appealStateString, BanReasons, SteamBanRecord } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
-import { DataTable, HeadingCell } from '../component/DataTable.tsx';
+import { DataTable } from '../component/DataTable.tsx';
 import { Paginator } from '../component/Paginator.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
+import RouterLink from '../component/RouterLink.tsx';
+import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { SelectFieldSimple } from '../component/field/SelectFieldSimple.tsx';
 import { makeSteamidValidatorsOptional } from '../component/field/SteamIDField.tsx';
@@ -194,7 +196,7 @@ const columnHelper = createColumnHelper<SteamBanRecord>();
 const AppealsTable = ({ appeals, isLoading }: { appeals: LazyResult<SteamBanRecord>; isLoading: boolean }) => {
     const columns = [
         columnHelper.accessor('ban_id', {
-            header: () => <HeadingCell name={'View'} />,
+            header: () => <TableHeadingCell name={'View'} />,
             cell: (info) => (
                 <Link color={'primary'} component={RouterLink} to={`/ban/$ban_id`} params={{ ban_id: info.getValue() }}>
                     <Tooltip title={'View'}>
@@ -204,7 +206,7 @@ const AppealsTable = ({ appeals, isLoading }: { appeals: LazyResult<SteamBanReco
             )
         }),
         columnHelper.accessor('appeal_state', {
-            header: () => <HeadingCell name={'Status'} />,
+            header: () => <TableHeadingCell name={'Status'} />,
             cell: (info) => {
                 return (
                     <TableCell>
@@ -214,7 +216,7 @@ const AppealsTable = ({ appeals, isLoading }: { appeals: LazyResult<SteamBanReco
             }
         }),
         columnHelper.accessor('source_id', {
-            header: () => <HeadingCell name={'Author'} />,
+            header: () => <TableHeadingCell name={'Author'} />,
             cell: (info) => (
                 <PersonCell
                     steam_id={appeals.data[info.row.index].source_id}
@@ -224,7 +226,7 @@ const AppealsTable = ({ appeals, isLoading }: { appeals: LazyResult<SteamBanReco
             )
         }),
         columnHelper.accessor('target_id', {
-            header: () => <HeadingCell name={'Subject'} />,
+            header: () => <TableHeadingCell name={'Subject'} />,
             cell: (info) => (
                 <PersonCell
                     steam_id={appeals.data[info.row.index].target_id}
@@ -234,19 +236,19 @@ const AppealsTable = ({ appeals, isLoading }: { appeals: LazyResult<SteamBanReco
             )
         }),
         columnHelper.accessor('reason', {
-            header: () => <HeadingCell name={'Reason'} />,
+            header: () => <TableHeadingCell name={'Reason'} />,
             cell: (info) => <Typography>{BanReasons[info.getValue()]}</Typography>
         }),
         columnHelper.accessor('reason_text', {
-            header: () => <HeadingCell name={'Custom Reason'} />,
+            header: () => <TableHeadingCell name={'Custom Reason'} />,
             cell: (info) => <Typography>{info.getValue()}</Typography>
         }),
         columnHelper.accessor('created_on', {
-            header: () => <HeadingCell name={'Created'} />,
+            header: () => <TableHeadingCell name={'Created'} />,
             cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>
         }),
         columnHelper.accessor('updated_on', {
-            header: () => <HeadingCell name={'Last Active'} />,
+            header: () => <TableHeadingCell name={'Last Active'} />,
             cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>
         })
     ];

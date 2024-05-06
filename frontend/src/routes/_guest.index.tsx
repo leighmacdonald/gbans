@@ -12,8 +12,9 @@ import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Grid from '@mui/material/Unstable_Grid2';
-import { useNavigate, Link as RouterLink, useRouteContext, createFileRoute } from '@tanstack/react-router';
+import { useNavigate, useRouteContext, createFileRoute } from '@tanstack/react-router';
 import { NewsView } from '../component/NewsView';
+import RouterLink from '../component/RouterLink.tsx';
 
 export const Route = createFileRoute('/_guest/')({
     component: Index

@@ -16,8 +16,9 @@ import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/re
 import { z } from 'zod';
 import { apiDeleteCIDRBlockSource, apiGetCIDRBlockLists, CIDRBlockSource, CIDRBlockWhitelist, PermissionLevel } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
-import { DataTable, HeadingCell } from '../component/DataTable.tsx';
+import { DataTable } from '../component/DataTable.tsx';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
+import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { VCenterBox } from '../component/VCenterBox.tsx';
 import { ModalCIDRBlockEditor, ModalConfirm } from '../component/modal';
 import { useCIDRBlocks } from '../hooks/useCIDRBlocks.ts';
@@ -238,11 +239,11 @@ const columnHelper = createColumnHelper<CIDRBlockWhitelist>();
 const IPHistoryTable = ({ whitelist, isLoading }: { whitelist: CIDRBlockWhitelist[]; isLoading: boolean }) => {
     const columns = [
         columnHelper.accessor('cidr_block_whitelist_id', {
-            header: () => <HeadingCell name={'ID'} />,
+            header: () => <TableHeadingCell name={'ID'} />,
             cell: (info) => <Typography>{info.getValue()}</Typography>
         }),
         columnHelper.accessor('address', {
-            header: () => <HeadingCell name={'Address'} />,
+            header: () => <TableHeadingCell name={'Address'} />,
             cell: (info) => (
                 <TableCell>
                     <Typography>{info.getValue()}</Typography>
@@ -250,7 +251,7 @@ const IPHistoryTable = ({ whitelist, isLoading }: { whitelist: CIDRBlockWhitelis
             )
         }),
         columnHelper.accessor('created_on', {
-            header: () => <HeadingCell name={'IP Address'} />,
+            header: () => <TableHeadingCell name={'IP Address'} />,
             cell: (info) => (
                 <TableCell>
                     <Typography>{renderDate(info.getValue())}</Typography>
@@ -258,7 +259,7 @@ const IPHistoryTable = ({ whitelist, isLoading }: { whitelist: CIDRBlockWhitelis
             )
         }),
         columnHelper.accessor('updated_on', {
-            header: () => <HeadingCell name={'Server'} />,
+            header: () => <TableHeadingCell name={'Server'} />,
             cell: (info) => (
                 <TableCell>
                     <Typography>{renderDate(info.getValue())}</Typography>

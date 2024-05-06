@@ -9,10 +9,6 @@ import Typography from '@mui/material/Typography';
 import { flexRender, Table as TSTable } from '@tanstack/react-table';
 import { LoadingPlaceholder } from './LoadingPlaceholder.tsx';
 
-export const HeadingCell = ({ name }: { name: string }) => {
-    return <Typography align={'left'}>{name}</Typography>;
-};
-
 export const DataTable = <T,>({ table, isLoading }: { table: TSTable<T>; isLoading: boolean }) => {
     if (isLoading) {
         return <LoadingPlaceholder />;

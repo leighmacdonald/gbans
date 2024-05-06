@@ -11,13 +11,14 @@ import { z } from 'zod';
 import { apiVotesQuery, VoteResult } from '../api/votes.ts';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
-import { DataTable, HeadingCell } from '../component/DataTable.tsx';
+import { DataTable } from '../component/DataTable.tsx';
 import { Paginator } from '../component/Paginator.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
+import { TableCellBool } from '../component/TableCellBool.tsx';
+import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { makeSteamidValidatorsOptional } from '../component/field/SteamIDField.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
-import { TableCellBool } from '../component/table/TableCellBool.tsx';
 import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 
@@ -133,7 +134,7 @@ const columnHelper = createColumnHelper<VoteResult>();
 const VotesTable = ({ votes, isLoading }: { votes: LazyResult<VoteResult>; isLoading: boolean }) => {
     const columns = [
         columnHelper.accessor('source_id', {
-            header: () => <HeadingCell name={'Initiator'} />,
+            header: () => <TableHeadingCell name={'Initiator'} />,
             cell: (info) => (
                 <PersonCell
                     steam_id={votes.data[info.row.index].source_id}
@@ -143,7 +144,7 @@ const VotesTable = ({ votes, isLoading }: { votes: LazyResult<VoteResult>; isLoa
             )
         }),
         columnHelper.accessor('target_id', {
-            header: () => <HeadingCell name={'Subject'} />,
+            header: () => <TableHeadingCell name={'Subject'} />,
             cell: (info) => {
                 return (
                     <PersonCell
@@ -155,15 +156,15 @@ const VotesTable = ({ votes, isLoading }: { votes: LazyResult<VoteResult>; isLoa
             }
         }),
         columnHelper.accessor('success', {
-            header: () => <HeadingCell name={'Success'} />,
+            header: () => <TableHeadingCell name={'Success'} />,
             cell: (info) => <TableCellBool enabled={info.getValue()} />
         }),
         columnHelper.accessor('server_name', {
-            header: () => <HeadingCell name={'Server'} />,
+            header: () => <TableHeadingCell name={'Server'} />,
             cell: (info) => <Typography>{info.getValue()}</Typography>
         }),
         columnHelper.accessor('created_on', {
-            header: () => <HeadingCell name={'Created'} />,
+            header: () => <TableHeadingCell name={'Created'} />,
             cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>
         })
     ];

@@ -15,11 +15,9 @@ export const TableCellRelativeDateField = ({ date, compareDate, suffix = false }
     };
     return (
         <Tooltip title={date.toUTCString()}>
-            <>
-                <Typography variant={'body1'}>
-                    {compareDate ? formatDistanceStrict(date, compareDate, opts) : formatDistanceToNowStrict(date, opts)}
-                </Typography>
-            </>
+            <Typography variant={'body1'}>
+                {compareDate ? formatDistanceStrict(date, compareDate, opts) : formatDistanceToNowStrict(date, opts)}
+            </Typography>
         </Tooltip>
     );
 };

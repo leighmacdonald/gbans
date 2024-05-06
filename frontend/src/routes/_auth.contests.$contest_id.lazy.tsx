@@ -16,7 +16,7 @@ import { createLazyFileRoute, useRouteContext } from '@tanstack/react-router';
 import { format } from 'date-fns';
 import formatDistanceToNowStrict from 'date-fns/formatDistanceToNowStrict';
 import { isAfter } from 'date-fns/fp';
-import { apiContestEntries, apiContestEntryVote, ContestEntry, ErrorCode, PermissionLevel } from '../api';
+import { apiContestEntries, apiContestEntryVote, ContestEntry, PermissionLevel } from '../api';
 import { Asset, mediaType, MediaTypes } from '../api/media.ts';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { InfoBar } from '../component/InfoBar.tsx';
@@ -114,7 +114,7 @@ function Contest() {
     if (!contest_id) {
         return <PageNotFound />;
     }
-    if (error && error.code == ErrorCode.PermissionDenied) {
+    if (error) {
         return <PageNotFound />;
     }
     return loading ? (

@@ -10,16 +10,18 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
-import { createFileRoute, Link as RouterLink, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiGetReports, BanReasons, ReportStatus, ReportStatusCollection, reportStatusString, ReportWithAuthor } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { DataTable, HeadingCell } from '../component/DataTable.tsx';
+import { DataTable } from '../component/DataTable.tsx';
 import { Paginator } from '../component/Paginator.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { ReportStatusIcon } from '../component/ReportStatusIcon.tsx';
+import RouterLink from '../component/RouterLink.tsx';
+import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { SelectFieldSimple } from '../component/field/SelectFieldSimple.tsx';
 import { makeSteamidValidatorsOptional } from '../component/field/SteamIDField.tsx';
@@ -164,7 +166,7 @@ const columnHelper = createColumnHelper<ReportWithAuthor>();
 const ReportTable = ({ reports, isLoading }: { reports: LazyResult<ReportWithAuthor>; isLoading: boolean }) => {
     const columns = [
         columnHelper.accessor('report_id', {
-            header: () => <HeadingCell name={'View'} />,
+            header: () => <TableHeadingCell name={'View'} />,
             cell: (info) => (
                 <ButtonGroup>
                     <IconButton color={'primary'} component={RouterLink} to={`/report/$reportId`} params={{ reportId: info.getValue() }}>
@@ -176,7 +178,7 @@ const ReportTable = ({ reports, isLoading }: { reports: LazyResult<ReportWithAut
             )
         }),
         columnHelper.accessor('report_status', {
-            header: () => <HeadingCell name={'Status'} />,
+            header: () => <TableHeadingCell name={'Status'} />,
             cell: (info) => {
                 return (
                     <Stack direction={'row'} spacing={1}>
@@ -187,7 +189,7 @@ const ReportTable = ({ reports, isLoading }: { reports: LazyResult<ReportWithAut
             }
         }),
         columnHelper.accessor('source_id', {
-            header: () => <HeadingCell name={'Reporter'} />,
+            header: () => <TableHeadingCell name={'Reporter'} />,
             cell: (info) => (
                 <PersonCell
                     steam_id={reports.data[info.row.index].author.steam_id}
@@ -197,7 +199,7 @@ const ReportTable = ({ reports, isLoading }: { reports: LazyResult<ReportWithAut
             )
         }),
         columnHelper.accessor('subject', {
-            header: () => <HeadingCell name={'Subject'} />,
+            header: () => <TableHeadingCell name={'Subject'} />,
             cell: (info) => (
                 <PersonCell
                     steam_id={reports.data[info.row.index].subject.steam_id}
@@ -207,15 +209,15 @@ const ReportTable = ({ reports, isLoading }: { reports: LazyResult<ReportWithAut
             )
         }),
         columnHelper.accessor('reason', {
-            header: () => <HeadingCell name={'Reason'} />,
+            header: () => <TableHeadingCell name={'Reason'} />,
             cell: (info) => <Typography>{BanReasons[info.getValue()]}</Typography>
         }),
         columnHelper.accessor('created_on', {
-            header: () => <HeadingCell name={'Created'} />,
+            header: () => <TableHeadingCell name={'Created'} />,
             cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>
         }),
         columnHelper.accessor('updated_on', {
-            header: () => <HeadingCell name={'Updated'} />,
+            header: () => <TableHeadingCell name={'Updated'} />,
             cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>
         })
     ];

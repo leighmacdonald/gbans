@@ -18,7 +18,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
-import { createFileRoute, Link as RouterLink, useNavigate, useRouteContext } from '@tanstack/react-router';
+import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { isAfter } from 'date-fns/fp';
 import { z } from 'zod';
 import { PermissionLevel, permissionLevelString } from '../api';
@@ -26,6 +26,7 @@ import { apiDeleteMessage, ForumMessage, ForumThread } from '../api/forum.ts';
 import { ForumRowLink } from '../component/ForumRowLink.tsx';
 import { ForumThreadReplyBox } from '../component/ForumThreadReplyBox.tsx';
 import { MarkDownRenderer } from '../component/MarkdownRenderer.tsx';
+import RouterLink from '../component/RouterLink.tsx';
 import { VCenterBox } from '../component/VCenterBox.tsx';
 import { ModalConfirm, ModalForumThreadEditor } from '../component/modal';
 import { useThread } from '../hooks/useThread.ts';
@@ -141,7 +142,7 @@ const ThreadMessageContainer = ({
             }
             await confirmModal.hide();
             if (isFirstMessage) {
-                await navigate({ to: '/forums/' });
+                await navigate({ to: '/forums' });
             }
         } catch (e) {
             logErr(e);

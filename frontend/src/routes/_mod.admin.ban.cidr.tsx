@@ -12,14 +12,15 @@ import { z } from 'zod';
 import { apiGetBansCIDR, BanReasons, CIDRBanRecord } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
-import { DataTable, HeadingCell } from '../component/DataTable.tsx';
+import { DataTable } from '../component/DataTable.tsx';
 import { Paginator } from '../component/Paginator.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
+import { TableCellBool } from '../component/TableCellBool.tsx';
+import { TableCellRelativeDateField } from '../component/TableCellRelativeDateField.tsx';
+import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
-import { TableCellBool } from '../component/table/TableCellBool.tsx';
-import { TableCellRelativeDateField } from '../component/table/TableCellRelativeDateField.tsx';
 import { commonTableSearchSchema, isPermanentBan, LazyResult, RowsPerPage } from '../util/table.ts';
 import { renderDate } from '../util/text.tsx';
 
@@ -179,11 +180,11 @@ const columnHelper = createColumnHelper<CIDRBanRecord>();
 const BanCIDRTable = ({ bans, isLoading }: { bans: LazyResult<CIDRBanRecord>; isLoading: boolean }) => {
     const columns = [
         columnHelper.accessor('net_id', {
-            header: () => <HeadingCell name={'Ban ID'} />,
+            header: () => <TableHeadingCell name={'Ban ID'} />,
             cell: (info) => <Typography>{`#${info.getValue()}`}</Typography>
         }),
         columnHelper.accessor('source_id', {
-            header: () => <HeadingCell name={'Author'} />,
+            header: () => <TableHeadingCell name={'Author'} />,
             cell: (info) => (
                 <PersonCell
                     steam_id={bans.data[info.row.index].source_id}
@@ -193,7 +194,7 @@ const BanCIDRTable = ({ bans, isLoading }: { bans: LazyResult<CIDRBanRecord>; is
             )
         }),
         columnHelper.accessor('target_id', {
-            header: () => <HeadingCell name={'Subject'} />,
+            header: () => <TableHeadingCell name={'Subject'} />,
             cell: (info) => (
                 <PersonCell
                     steam_id={bans.data[info.row.index].target_id}
@@ -203,20 +204,20 @@ const BanCIDRTable = ({ bans, isLoading }: { bans: LazyResult<CIDRBanRecord>; is
             )
         }),
         columnHelper.accessor('cidr', {
-            header: () => <HeadingCell name={'CIDR (hosts)'} />,
+            header: () => <TableHeadingCell name={'CIDR (hosts)'} />,
             cell: (info) => <Typography>{`${info.getValue()}`}</Typography>
         }),
 
         columnHelper.accessor('reason', {
-            header: () => <HeadingCell name={'Reason'} />,
+            header: () => <TableHeadingCell name={'Reason'} />,
             cell: (info) => <Typography>{BanReasons[info.getValue()]}</Typography>
         }),
         columnHelper.accessor('created_on', {
-            header: () => <HeadingCell name={'Created'} />,
+            header: () => <TableHeadingCell name={'Created'} />,
             cell: (info) => <Typography>{renderDate(info.getValue())}</Typography>
         }),
         columnHelper.accessor('valid_until', {
-            header: () => <HeadingCell name={'Expires'} />,
+            header: () => <TableHeadingCell name={'Expires'} />,
             cell: (info) =>
                 isPermanentBan(bans.data[info.row.index].created_on, bans.data[info.row.index].valid_until) ? (
                     'Permanent'
@@ -228,7 +229,7 @@ const BanCIDRTable = ({ bans, isLoading }: { bans: LazyResult<CIDRBanRecord>; is
                 )
         }),
         columnHelper.accessor('deleted', {
-            header: () => <HeadingCell name={'D'} />,
+            header: () => <TableHeadingCell name={'D'} />,
             cell: (info) => <TableCellBool enabled={info.getValue()} />
         })
     ];
