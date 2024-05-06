@@ -16,28 +16,27 @@ import Tab from '@mui/material/Tab';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
+import { useQuery } from '@tanstack/react-query';
 import { useRouteContext } from '@tanstack/react-router';
-import { apiDeleteReportMessage, PermissionLevel, Report, ReportMessage } from '../api';
+import { apiDeleteReportMessage, apiGetMessages, PermissionLevel, Report, ReportMessage } from '../api';
 import { useReportMessages } from '../hooks/useReportMessages';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors';
+import { RowsPerPage } from '../util/table.ts';
+import { ChatTable } from './ChatTable.tsx';
 import { ContainerWithHeader } from './ContainerWithHeader';
 import { MarkDownRenderer } from './MarkdownRenderer';
+import { PaginatorLocal } from './PaginatorLocal.tsx';
 import { PlayerMessageContext } from './PlayerMessageContext';
 import { ReportMessageView } from './ReportMessageView';
 import { SourceBansList } from './SourceBansList';
 import { TabPanel } from './TabPanel';
 import { BanHistoryTable } from './table/BanHistoryTable';
 import { ConnectionHistoryTable } from './table/ConnectionHistoryTable';
-import { PersonMessageTable } from './table/PersonMessageTable';
 
 interface ReportComponentProps {
     report: Report;
 }
-
-// interface ReportViewValues {
-//     body_md: string;
-// }
 
 export const ReportViewComponent = ({ report }: ReportComponentProps): JSX.Element => {
     const theme = useTheme();
@@ -47,7 +46,29 @@ export const ReportViewComponent = ({ report }: ReportComponentProps): JSX.Eleme
     const [value, setValue] = useState<number>(0);
     const [banCount, setBanCount] = useState(0);
     const { hasPermission } = useRouteContext({ from: '/_auth/report/$reportId' });
+
+    const [chatPagination, setChatPagination] = useState({
+        pageIndex: 0, //initial page index
+        pageSize: RowsPerPage.TwentyFive //default page size
+    });
+
     const { sendFlash } = useUserFlashCtx();
+
+    const { data: chat, isLoading: isLoadingChat } = useQuery({
+        queryKey: ['reportChat'],
+        queryFn: async () => {
+            return await apiGetMessages({
+                personaname: '',
+                query: '',
+                source_id: report.target_id,
+                limit: 2500,
+                offset: 0,
+                order_by: 'person_message_id',
+                desc: true,
+                flagged_only: false
+            });
+        }
+    });
 
     const messages = useMemo(() => {
         return [...messagesServer, ...newMessages].filter((m) => !deletedMessages.includes(m.report_message_id));
@@ -129,7 +150,28 @@ export const ReportViewComponent = ({ report }: ReportComponentProps): JSX.Eleme
 
                             <TabPanel value={value} index={1}>
                                 <Box minHeight={300}>
-                                    <PersonMessageTable steam_id={report.target_id} />
+                                    <ChatTable
+                                        messages={chat ?? []}
+                                        isLoading={isLoadingChat}
+                                        manualPaging={false}
+                                        pagination={chatPagination}
+                                        setPagination={setChatPagination}
+                                    />
+                                    <PaginatorLocal
+                                        onRowsChange={(rows) => {
+                                            setChatPagination((prev) => {
+                                                return { ...prev, pageSize: rows };
+                                            });
+                                        }}
+                                        onPageChange={(page) => {
+                                            setChatPagination((prev) => {
+                                                return { ...prev, pageIndex: page };
+                                            });
+                                        }}
+                                        count={chat?.length ?? 0}
+                                        rows={chatPagination.pageSize}
+                                        page={chatPagination.pageIndex}
+                                    />
                                 </Box>
                             </TabPanel>
                             <TabPanel value={value} index={2}>

@@ -1,7 +1,5 @@
 import ChatIcon from '@mui/icons-material/Chat';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
-import FlagIcon from '@mui/icons-material/Flag';
-import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -9,25 +7,19 @@ import FormGroup from '@mui/material/FormGroup';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
-import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useLoaderData, useNavigate, useRouteContext } from '@tanstack/react-router';
-import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
-import stc from 'string-to-color';
 import { z } from 'zod';
-import { apiGetMessages, apiGetServers, PermissionLevel, PersonMessage, ServerSimple } from '../api';
+import { apiGetMessages, apiGetServers, PermissionLevel, ServerSimple } from '../api';
+import { ChatTable } from '../component/ChatTable.tsx';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
-import { DataTable } from '../component/DataTable.tsx';
 import { Paginator } from '../component/Paginator.tsx';
-import { PersonCell } from '../component/PersonCell.tsx';
-import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { SteamIDField } from '../component/field/SteamIDField.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
-import { renderDateTime } from '../util/text.tsx';
 
 const chatlogsSchema = z.object({
     ...commonTableSearchSchema,
@@ -82,8 +74,6 @@ export const Route = createFileRoute('/_auth/chatlogs')({
         };
     }
 });
-
-const columnHelper = createColumnHelper<PersonMessage>();
 
 function ChatLogs() {
     const defaultRows = RowsPerPage.TwentyFive;
@@ -293,72 +283,6 @@ function ChatLogs() {
         </>
     );
 }
-
-const ChatTable = ({ messages, isLoading }: { messages: PersonMessage[]; isLoading: boolean }) => {
-    const navigate = useNavigate({ from: '/chatlogs' });
-
-    const columns = [
-        columnHelper.accessor('server_id', {
-            header: () => <TableHeadingCell name={'Server'} />,
-            cell: (info) => {
-                return (
-                    <Button
-                        sx={{
-                            color: stc(messages[info.row.index].server_name)
-                        }}
-                        onClick={async () => {
-                            await navigate({ to: '/chatlogs', search: (prev) => ({ ...prev, server_id: info.getValue() }) });
-                        }}
-                    >
-                        {messages[info.row.index].server_name}
-                    </Button>
-                );
-            }
-        }),
-        columnHelper.accessor('created_on', {
-            header: () => <TableHeadingCell name={'Created'} />,
-            cell: (info) => <Typography align={'center'}>{renderDateTime(info.getValue())}</Typography>
-        }),
-        columnHelper.accessor('persona_name', {
-            header: () => <TableHeadingCell name={'Name'} />,
-            cell: (info) => (
-                <PersonCell
-                    steam_id={messages[info.row.index].steam_id}
-                    avatar_hash={messages[info.row.index].avatar_hash}
-                    personaname={messages[info.row.index].persona_name}
-                    onClick={async () => {
-                        await navigate({
-                            params: { steamId: messages[info.row.index].steam_id },
-                            to: `/profile/$steamId`
-                        });
-                    }}
-                />
-            )
-        }),
-        columnHelper.accessor('body', {
-            header: () => <TableHeadingCell name={'Message'} />,
-            cell: (info) => (
-                <Typography padding={0} variant={'body1'}>
-                    {info.getValue()}
-                </Typography>
-            )
-        }),
-        columnHelper.accessor('auto_filter_flagged', {
-            header: () => <TableHeadingCell name={'F'} />,
-            cell: (info) => (info.getValue() > 0 ? <FlagIcon color={'error'} /> : <></>)
-        })
-    ];
-
-    const table = useReactTable({
-        data: messages,
-        columns: columns,
-        getCoreRowModel: getCoreRowModel(),
-        manualPagination: true,
-        autoResetPageIndex: true
-    });
-
-    return <DataTable table={table} isLoading={isLoading} />;
-};
 
 //
 // interface ChatContextMenuProps {

@@ -15,7 +15,7 @@ const MaxResultsDefault = 100
 // QueryFilter provides a structure for common query parameters.
 type QueryFilter struct {
 	Offset  uint64 `json:"offset,omitempty" uri:"offset" binding:"gte=0"`
-	Limit   uint64 `json:"limit,omitempty" uri:"limit" binding:"gte=0,lte=1000"`
+	Limit   uint64 `json:"limit,omitempty" uri:"limit" binding:"gte=0,lte=10000"`
 	Desc    bool   `json:"desc,omitempty" uri:"desc"`
 	Query   string `json:"query,omitempty" uri:"query"`
 	OrderBy string `json:"order_by,omitempty" uri:"order_by"`

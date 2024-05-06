@@ -16,7 +16,6 @@ import ForumCategoryEditorModal from './ForumCategoryEditorModal.tsx';
 import ForumForumEditorModal from './ForumForumEditorModal.tsx';
 import ForumThreadCreatorModal from './ForumThreadCreatorModal.tsx';
 import ForumThreadEditorModal from './ForumThreadEditorModal.tsx';
-import MessageContextModal from './MessageContextModal.tsx';
 import PersonEditModal from './PersonEditModal.tsx';
 import ServerDeleteModal from './ServerDeleteModal.tsx';
 import ServerEditorModal from './ServerEditorModal.tsx';
@@ -65,7 +64,6 @@ export const ModalForumThreadEditor = 'modal-forum-thread-editor';
     [ModalConfirm, ConfirmationModal],
     [ModalServerEditor, ServerEditorModal],
     [ModalServerDelete, ServerDeleteModal],
-    [ModalMessageContext, MessageContextModal],
     [ModalPersonEditor, PersonEditModal],
     [ModalFileUpload, FileUploadModal],
     [ModalFilterEditor, FilterEditModal],
