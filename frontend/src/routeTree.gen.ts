@@ -73,9 +73,6 @@ const AdminAdminServersLazyImport = createFileRoute('/_admin/admin/servers')()
 const AuthStatsWeaponWeaponidLazyImport = createFileRoute(
   '/_auth/stats/weapon/$weapon_id',
 )()
-const AuthStatsPlayerSteamidLazyImport = createFileRoute(
-  '/_auth/stats/player/$steam_id',
-)()
 const AuthForumsThreadForumthreadidLazyImport = createFileRoute(
   '/_auth/forums/thread/$forum_thread_id',
 )()
@@ -330,15 +327,6 @@ const AuthStatsWeaponWeaponidLazyRoute =
     import('./routes/_auth.stats.weapon.$weapon_id.lazy').then((d) => d.Route),
   )
 
-const AuthStatsPlayerSteamidLazyRoute = AuthStatsPlayerSteamidLazyImport.update(
-  {
-    path: '/stats/player/$steam_id',
-    getParentRoute: () => AuthRoute,
-  } as any,
-).lazy(() =>
-  import('./routes/_auth.stats.player.$steam_id.lazy').then((d) => d.Route),
-)
-
 const AuthForumsThreadForumthreadidLazyRoute =
   AuthForumsThreadForumthreadidLazyImport.update({
     path: '/forums/thread/$forum_thread_id',
@@ -587,10 +575,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthForumsThreadForumthreadidLazyImport
       parentRoute: typeof AuthImport
     }
-    '/_auth/stats/player/$steam_id': {
-      preLoaderRoute: typeof AuthStatsPlayerSteamidLazyImport
-      parentRoute: typeof AuthImport
-    }
     '/_auth/stats/weapon/$weapon_id': {
       preLoaderRoute: typeof AuthStatsWeaponWeaponidLazyImport
       parentRoute: typeof AuthImport
@@ -625,7 +609,6 @@ export const routeTree = rootRoute.addChildren([
     AuthForumsIndexLazyRoute,
     AuthStatsIndexLazyRoute,
     AuthForumsThreadForumthreadidLazyRoute,
-    AuthStatsPlayerSteamidLazyRoute,
     AuthStatsWeaponWeaponidLazyRoute,
   ]),
   GuestRoute.addChildren([

@@ -7,12 +7,14 @@ import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useQuery } from '@tanstack/react-query';
-import { createFileRoute, Link as RouterLink, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { z } from 'zod';
 import { apiGetMatches, MatchSummary } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
-import { DataTable, HeadingCell } from '../component/DataTable.tsx';
+import { DataTable } from '../component/DataTable.tsx';
+import RouterLink from '../component/RouterLink.tsx';
+import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 
@@ -62,7 +64,7 @@ const MatchSummaryTable = ({ count, matches, isLoading }: { matches: MatchSummar
 
     const columns = [
         columnHelper.accessor('title', {
-            header: () => <HeadingCell name={'Server'} />,
+            header: () => <TableHeadingCell name={'Server'} />,
             cell: (info) => {
                 return (
                     <Link
@@ -77,25 +79,25 @@ const MatchSummaryTable = ({ count, matches, isLoading }: { matches: MatchSummar
             }
         }),
         columnHelper.accessor('map_name', {
-            header: () => <HeadingCell name={'Map'} />,
+            header: () => <TableHeadingCell name={'Map'} />,
             cell: (info) => <Typography>{info.getValue()}</Typography>
         }),
         columnHelper.accessor('score_red', {
-            header: () => <HeadingCell name={'RED'} />,
+            header: () => <TableHeadingCell name={'RED'} />,
             cell: (info) => <Typography>{info.getValue()}</Typography>
         }),
         columnHelper.accessor('score_blu', {
-            header: () => <HeadingCell name={'BLU'} />,
+            header: () => <TableHeadingCell name={'BLU'} />,
             cell: (info) => <Typography>{info.getValue()}</Typography>
         }),
         columnHelper.accessor('is_winner', {
-            header: () => <HeadingCell name={'W'} />,
+            header: () => <TableHeadingCell name={'W'} />,
             cell: (info) => {
                 return info.getValue() ? <CheckIcon color={'success'} /> : <CloseIcon color={'error'} />;
             }
         }),
         columnHelper.accessor('time_end', {
-            header: () => <HeadingCell name={'Created'} />,
+            header: () => <TableHeadingCell name={'Created'} />,
             cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>
         })
     ];

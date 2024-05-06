@@ -45,7 +45,7 @@ import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
-import { useNavigate, Link as RouterLink } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import { MenuItemData, NestedDropdown } from 'mui-nested-menu';
 import { PermissionLevel, UserNotification } from '../api';
 import { generateOIDCLink, useAuth } from '../auth.tsx';
@@ -54,6 +54,7 @@ import { useColourModeCtx } from '../hooks/useColourModeCtx.ts';
 import { useNotificationsCtx } from '../hooks/useNotificationsCtx.ts';
 import steamLogo from '../icons/steam_login_sm.png';
 import { tf2Fonts } from '../theme';
+import RouterLink from './RouterLink.tsx';
 import { VCenterBox } from './VCenterBox.tsx';
 
 interface menuRoute {

@@ -2,9 +2,9 @@ import { JSX } from 'react';
 import { PaletteMode } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import { Link as RouterLink } from '@tanstack/react-router';
 import { getOverrides, MuiMarkdown } from 'mui-markdown';
 import { Highlight, themes } from 'prism-react-renderer';
+import RouterLink from './RouterLink.tsx';
 
 const renderLinks = (body_md: string): string => {
     return body_md

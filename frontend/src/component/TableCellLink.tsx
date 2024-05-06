@@ -1,5 +1,5 @@
 import Button from '@mui/material/Button';
-import { Link as RouterLink } from '@tanstack/react-router';
+import RouterLink from './RouterLink.tsx';
 
 interface TableCellLinkProps {
     label: string;

@@ -11,9 +11,10 @@ import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/re
 import { z } from 'zod';
 import { apiGetServersAdmin, Server } from '../api';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
-import { DataTable, HeadingCell } from '../component/DataTable.tsx';
+import { DataTable } from '../component/DataTable.tsx';
 import { Paginator } from '../component/Paginator.tsx';
-import { TableCellBool } from '../component/table/TableCellBool.tsx';
+import { TableCellBool } from '../component/TableCellBool.tsx';
+import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
 
 const serversSearchSchema = z.object({
@@ -121,43 +122,43 @@ const columnHelper = createColumnHelper<Server>();
 const AdminServersTable = ({ servers, isLoading }: { servers: LazyResult<Server>; isLoading: boolean }) => {
     const columns = [
         columnHelper.accessor('server_id', {
-            header: () => <HeadingCell name={'ID'} />,
+            header: () => <TableHeadingCell name={'ID'} />,
             cell: (info) => <Typography>{info.getValue()}</Typography>
         }),
         columnHelper.accessor('short_name', {
-            header: () => <HeadingCell name={'Name'} />,
+            header: () => <TableHeadingCell name={'Name'} />,
             cell: (info) => <Typography>{info.getValue()}</Typography>
         }),
         columnHelper.accessor('name', {
-            header: () => <HeadingCell name={'Name Long'} />,
+            header: () => <TableHeadingCell name={'Name Long'} />,
             cell: (info) => <Typography>{info.getValue()}</Typography>
         }),
         columnHelper.accessor('address', {
-            header: () => <HeadingCell name={'Address'} />,
+            header: () => <TableHeadingCell name={'Address'} />,
             cell: (info) => <Typography>{info.getValue()}</Typography>
         }),
         columnHelper.accessor('port', {
-            header: () => <HeadingCell name={'Reason'} />,
+            header: () => <TableHeadingCell name={'Reason'} />,
             cell: (info) => <Typography>{info.getValue()}</Typography>
         }),
         columnHelper.accessor('rcon', {
-            header: () => <HeadingCell name={'RCON'} />,
+            header: () => <TableHeadingCell name={'RCON'} />,
             cell: (info) => <Typography>{info.getValue()}</Typography>
         }),
         columnHelper.accessor('region', {
-            header: () => <HeadingCell name={'Region'} />,
+            header: () => <TableHeadingCell name={'Region'} />,
             cell: (info) => <Typography>{info.getValue()}</Typography>
         }),
         columnHelper.accessor('cc', {
-            header: () => <HeadingCell name={'CC'} />,
+            header: () => <TableHeadingCell name={'CC'} />,
             cell: (info) => <Typography>{info.getValue()}</Typography>
         }),
         columnHelper.accessor('enable_stats', {
-            header: () => <HeadingCell name={'Stats'} />,
+            header: () => <TableHeadingCell name={'Stats'} />,
             cell: (info) => <TableCellBool enabled={info.getValue()} />
         }),
         columnHelper.accessor('is_enabled', {
-            header: () => <HeadingCell name={'En.'} />,
+            header: () => <TableHeadingCell name={'En.'} />,
             cell: (info) => <TableCellBool enabled={info.getValue()} />
         })
     ];

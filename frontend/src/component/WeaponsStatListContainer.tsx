@@ -37,7 +37,7 @@ const StatsWeaponsOverall = ({ stats, isLoading }: { stats: LazyResult<WeaponsOv
 
     const columns = [
         columnHelper.accessor('weapon_id', {
-            header: () => <HeadingCell name={'#'} />,
+            header: () => <TableHeadingCell name={'#'} />,
             cell: (info) => (
                 <TableCellSmall>
                     <Link component={RouterLink} to={'/stats/weapon/$weapon_id'} params={{ weapon_id: info.getValue() }}>
@@ -48,7 +48,7 @@ const StatsWeaponsOverall = ({ stats, isLoading }: { stats: LazyResult<WeaponsOv
         }),
 
         columnHelper.accessor('kills', {
-            header: () => <HeadingCell name={'Kills'} />,
+            header: () => <TableHeadingCell name={'Kills'} />,
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -57,7 +57,7 @@ const StatsWeaponsOverall = ({ stats, isLoading }: { stats: LazyResult<WeaponsOv
         }),
 
         columnHelper.accessor('kills_pct', {
-            header: () => <HeadingCell name={'Kills%'} />,
+            header: () => <TableHeadingCell name={'Kills%'} />,
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmtPct)}</Typography>
@@ -65,7 +65,7 @@ const StatsWeaponsOverall = ({ stats, isLoading }: { stats: LazyResult<WeaponsOv
             )
         }),
         columnHelper.accessor('shots', {
-            header: () => <HeadingCell name={'Shots'} />,
+            header: () => <TableHeadingCell name={'Shots'} />,
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -73,7 +73,7 @@ const StatsWeaponsOverall = ({ stats, isLoading }: { stats: LazyResult<WeaponsOv
             )
         }),
         columnHelper.accessor('shots_pct', {
-            header: () => <HeadingCell name={'Shots%'} />,
+            header: () => <TableHeadingCell name={'Shots%'} />,
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmt)}</Typography>
@@ -81,7 +81,7 @@ const StatsWeaponsOverall = ({ stats, isLoading }: { stats: LazyResult<WeaponsOv
             )
         }),
         columnHelper.accessor('hits', {
-            header: () => <HeadingCell name={'Hits'} />,
+            header: () => <TableHeadingCell name={'Hits'} />,
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -89,7 +89,7 @@ const StatsWeaponsOverall = ({ stats, isLoading }: { stats: LazyResult<WeaponsOv
             )
         }),
         columnHelper.accessor('hits_pct', {
-            header: () => <HeadingCell name={'Hits%'} />,
+            header: () => <TableHeadingCell name={'Hits%'} />,
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmtPct)}</Typography>
@@ -97,7 +97,7 @@ const StatsWeaponsOverall = ({ stats, isLoading }: { stats: LazyResult<WeaponsOv
             )
         }),
         columnHelper.accessor('accuracy', {
-            header: () => <HeadingCell name={'Acc%'} />,
+            header: () => <TableHeadingCell name={'Acc%'} />,
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmtPct)}</Typography>
@@ -105,7 +105,7 @@ const StatsWeaponsOverall = ({ stats, isLoading }: { stats: LazyResult<WeaponsOv
             )
         }),
         columnHelper.accessor('airshots', {
-            header: () => <HeadingCell name={'As'} />,
+            header: () => <TableHeadingCell name={'As'} />,
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -113,7 +113,7 @@ const StatsWeaponsOverall = ({ stats, isLoading }: { stats: LazyResult<WeaponsOv
             )
         }),
         columnHelper.accessor('airshots_pct', {
-            header: () => <HeadingCell name={'As%'} />,
+            header: () => <TableHeadingCell name={'As%'} />,
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmtPct)}</Typography>
@@ -121,7 +121,7 @@ const StatsWeaponsOverall = ({ stats, isLoading }: { stats: LazyResult<WeaponsOv
             )
         }),
         columnHelper.accessor('backstabs', {
-            header: () => <HeadingCell name={'Bs'} />,
+            header: () => <TableHeadingCell name={'Bs'} />,
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -129,7 +129,7 @@ const StatsWeaponsOverall = ({ stats, isLoading }: { stats: LazyResult<WeaponsOv
             )
         }),
         columnHelper.accessor('backstabs_pct', {
-            header: () => <HeadingCell name={'Bs%'} />,
+            header: () => <TableHeadingCell name={'Bs%'} />,
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmtPct)}</Typography>
@@ -137,7 +137,7 @@ const StatsWeaponsOverall = ({ stats, isLoading }: { stats: LazyResult<WeaponsOv
             )
         }),
         columnHelper.accessor('headshots', {
-            header: () => <HeadingCell name={'Hs'} />,
+            header: () => <TableHeadingCell name={'Hs'} />,
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -145,7 +145,7 @@ const StatsWeaponsOverall = ({ stats, isLoading }: { stats: LazyResult<WeaponsOv
             )
         }),
         columnHelper.accessor('headshots_pct', {
-            header: () => <HeadingCell name={'Hs%'} />,
+            header: () => <TableHeadingCell name={'Hs%'} />,
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmtPct)}</Typography>
@@ -153,7 +153,7 @@ const StatsWeaponsOverall = ({ stats, isLoading }: { stats: LazyResult<WeaponsOv
             )
         }),
         columnHelper.accessor('damage', {
-            header: () => <HeadingCell name={'Dmg'} />,
+            header: () => <TableHeadingCell name={'Dmg'} />,
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -161,7 +161,7 @@ const StatsWeaponsOverall = ({ stats, isLoading }: { stats: LazyResult<WeaponsOv
             )
         }),
         columnHelper.accessor('damage_pct', {
-            header: () => <HeadingCell name={'Dmg%'} />,
+            header: () => <TableHeadingCell name={'Dmg%'} />,
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmtPct)}</Typography>

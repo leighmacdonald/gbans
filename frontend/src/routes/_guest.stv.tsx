@@ -17,8 +17,9 @@ import stc from 'string-to-color';
 import { z } from 'zod';
 import { apiGetDemos, apiGetServers, DemoFile, PermissionLevel, ServerSimple } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { DataTable, HeadingCell } from '../component/DataTable.tsx';
+import { DataTable } from '../component/DataTable.tsx';
 import { Paginator } from '../component/Paginator.tsx';
+import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
 import { makeSteamidValidatorsOptional } from '../component/field/SteamIDField.tsx';
@@ -228,7 +229,7 @@ export const STVTable = ({ demos, isLoading }: { demos: LazyResult<DemoFile>; is
 
     const columns = [
         columnHelper.accessor('server_id', {
-            header: () => <HeadingCell name={'Server'} />,
+            header: () => <TableHeadingCell name={'Server'} />,
             cell: (info) => {
                 return (
                     <Button
@@ -245,23 +246,23 @@ export const STVTable = ({ demos, isLoading }: { demos: LazyResult<DemoFile>; is
             }
         }),
         columnHelper.accessor('created_on', {
-            header: () => <HeadingCell name={'Created'} />,
+            header: () => <TableHeadingCell name={'Created'} />,
             cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>
         }),
         columnHelper.accessor('map_name', {
-            header: () => <HeadingCell name={'Map Name'} />,
+            header: () => <TableHeadingCell name={'Map Name'} />,
             cell: (info) => <Typography>{info.getValue()}</Typography>
         }),
         columnHelper.accessor('size', {
-            header: () => <HeadingCell name={'Size'} />,
+            header: () => <TableHeadingCell name={'Size'} />,
             cell: (info) => <Typography>{humanFileSize(info.getValue())}</Typography>
         }),
         columnHelper.accessor('downloads', {
-            header: () => <HeadingCell name={'DL'} />,
+            header: () => <TableHeadingCell name={'DL'} />,
             cell: (info) => <Typography>{info.getValue()}</Typography>
         }),
         columnHelper.accessor('asset.asset_id', {
-            header: () => <HeadingCell name={'Links'} />,
+            header: () => <TableHeadingCell name={'Links'} />,
             cell: (info) => <Typography>{info.getValue()}</Typography>
         })
     ];

@@ -4,8 +4,8 @@ import { apiGetBansSteam, BanReasons, SteamBanRecord } from '../../api';
 import { logErr } from '../../util/errors';
 import { Order, RowsPerPage } from '../../util/table.ts';
 import { PersonCell } from '../PersonCell';
+import { TableCellBool } from '../TableCellBool.tsx';
 import { LazyTable } from './LazyTable';
-import { TableCellBool } from './TableCellBool';
 
 export const BanHistoryTable = ({ steam_id, setBanCount }: { steam_id?: string; setBanCount: Dispatch<SetStateAction<number>> }) => {
     const [bans, setBans] = useState<SteamBanRecord[]>([]);

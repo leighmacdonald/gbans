@@ -23,7 +23,7 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { createFileRoute, Link as RouterLink, useNavigate, useRouteContext } from '@tanstack/react-router';
+import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
@@ -40,12 +40,14 @@ import {
     ReportWithAuthor
 } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
-import { DataTable, HeadingCell } from '../component/DataTable.tsx';
+import { DataTable } from '../component/DataTable.tsx';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
 import { Paginator } from '../component/Paginator.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { PlayerMessageContext } from '../component/PlayerMessageContext.tsx';
 import { ReportStatusIcon } from '../component/ReportStatusIcon.tsx';
+import RouterLink from '../component/RouterLink.tsx';
+import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { MDBodyField } from '../component/_formik/MDBodyField.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { makeSteamidValidators, SteamIDField } from '../component/field/SteamIDField.tsx';
@@ -162,7 +164,7 @@ const columnHelper = createColumnHelper<ReportWithAuthor>();
 const UserReportHistory = ({ history, isLoading }: { history: LazyResult<ReportWithAuthor>; isLoading: boolean }) => {
     const columns = [
         columnHelper.accessor('report_status', {
-            header: () => <HeadingCell name={'Status'} />,
+            header: () => <TableHeadingCell name={'Status'} />,
             cell: (info) => {
                 return (
                     <Stack direction={'row'} spacing={1}>
@@ -171,10 +173,10 @@ const UserReportHistory = ({ history, isLoading }: { history: LazyResult<ReportW
                     </Stack>
                 );
             },
-            footer: () => <HeadingCell name={'Server'} />
+            footer: () => <TableHeadingCell name={'Server'} />
         }),
         columnHelper.accessor('subject', {
-            header: () => <HeadingCell name={'Player'} />,
+            header: () => <TableHeadingCell name={'Player'} />,
             cell: (info) => (
                 <PersonCell
                     steam_id={history.data[info.row.index].subject.steam_id}
@@ -182,10 +184,10 @@ const UserReportHistory = ({ history, isLoading }: { history: LazyResult<ReportW
                     avatar_hash={history.data[info.row.index].subject.avatarhash}
                 />
             ),
-            footer: () => <HeadingCell name={'Created'} />
+            footer: () => <TableHeadingCell name={'Created'} />
         }),
         columnHelper.accessor('report_id', {
-            header: () => <HeadingCell name={'View'} />,
+            header: () => <TableHeadingCell name={'View'} />,
             cell: (info) => (
                 <ButtonGroup>
                     <IconButton color={'primary'} component={RouterLink} to={`/report/$reportId`} params={{ reportId: info.getValue() }}>
@@ -195,7 +197,7 @@ const UserReportHistory = ({ history, isLoading }: { history: LazyResult<ReportW
                     </IconButton>
                 </ButtonGroup>
             ),
-            footer: () => <HeadingCell name={'Name'} />
+            footer: () => <TableHeadingCell name={'Name'} />
         })
     ];
 

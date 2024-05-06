@@ -14,9 +14,10 @@ import { fromUnixTime } from 'date-fns';
 import { z } from 'zod';
 import { apiSearchPeople, communityVisibilityState, PermissionLevel, permissionLevelString, Person } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
-import { DataTable, HeadingCell } from '../component/DataTable.tsx';
+import { DataTable } from '../component/DataTable.tsx';
 import { Paginator } from '../component/Paginator.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
+import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { makeSteamidValidatorsOptional } from '../component/field/SteamIDField.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
@@ -163,7 +164,7 @@ const columnHelper = createColumnHelper<Person>();
 const PeopleTable = ({ people, isLoading, isAdmin }: { people: LazyResult<Person>; isLoading: boolean; isAdmin: boolean }) => {
     const columns = [
         columnHelper.accessor('steam_id', {
-            header: () => <HeadingCell name={'View'} />,
+            header: () => <TableHeadingCell name={'View'} />,
             cell: (info) => (
                 <PersonCell
                     steam_id={people.data[info.row.index].steam_id}
@@ -173,7 +174,7 @@ const PeopleTable = ({ people, isLoading, isAdmin }: { people: LazyResult<Person
             )
         }),
         columnHelper.accessor('communityvisibilitystate', {
-            header: () => <HeadingCell name={'Profile'} />,
+            header: () => <TableHeadingCell name={'Profile'} />,
             cell: (info) => {
                 return (
                     <Typography variant={'body1'}>{info.getValue() == communityVisibilityState.Public ? 'Public' : 'Private'}</Typography>
@@ -181,23 +182,23 @@ const PeopleTable = ({ people, isLoading, isAdmin }: { people: LazyResult<Person
             }
         }),
         columnHelper.accessor('vac_bans', {
-            header: () => <HeadingCell name={'Reporter'} />,
+            header: () => <TableHeadingCell name={'Reporter'} />,
             cell: (info) => <Typography variant={'body1'}>{info.getValue()}</Typography>
         }),
         columnHelper.accessor('community_banned', {
-            header: () => <HeadingCell name={'Subject'} />,
+            header: () => <TableHeadingCell name={'Subject'} />,
             cell: (info) => <Typography variant={'body1'}>{info.getValue() ? 'Yes' : 'No'}</Typography>
         }),
         columnHelper.accessor('timecreated', {
-            header: () => <HeadingCell name={'Reason'} />,
+            header: () => <TableHeadingCell name={'Reason'} />,
             cell: (info) => <Typography>{renderDate(fromUnixTime(info.getValue()))}</Typography>
         }),
         columnHelper.accessor('created_on', {
-            header: () => <HeadingCell name={'Created'} />,
+            header: () => <TableHeadingCell name={'Created'} />,
             cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>
         }),
         columnHelper.accessor('permission_level', {
-            header: () => <HeadingCell name={'Updated'} />,
+            header: () => <TableHeadingCell name={'Updated'} />,
             cell: (info) => (
                 <Stack direction={'row'}>
                     {isAdmin && (

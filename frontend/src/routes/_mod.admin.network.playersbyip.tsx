@@ -12,9 +12,10 @@ import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiGetConnections, PersonConnection } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
-import { DataTable, HeadingCell } from '../component/DataTable.tsx';
+import { DataTable } from '../component/DataTable.tsx';
 import { Paginator } from '../component/Paginator.tsx';
 import RouterLink from '../component/RouterLink.tsx';
+import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
@@ -143,11 +144,11 @@ const columnHelper = createColumnHelper<PersonConnection>();
 const PayersByIPTable = ({ connections, isLoading }: { connections: LazyResult<PersonConnection>; isLoading: boolean }) => {
     const columns = [
         columnHelper.accessor('created_on', {
-            header: () => <HeadingCell name={'Created'} />,
+            header: () => <TableHeadingCell name={'Created'} />,
             cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>
         }),
         columnHelper.accessor('persona_name', {
-            header: () => <HeadingCell name={'Name'} />,
+            header: () => <TableHeadingCell name={'Name'} />,
             cell: (info) => (
                 <TableCell>
                     <Typography>{info.getValue()}</Typography>
@@ -155,7 +156,7 @@ const PayersByIPTable = ({ connections, isLoading }: { connections: LazyResult<P
             )
         }),
         columnHelper.accessor('steam_id', {
-            header: () => <HeadingCell name={'Steam ID'} />,
+            header: () => <TableHeadingCell name={'Steam ID'} />,
             cell: (info) => (
                 <TableCell>
                     <Link component={RouterLink} to={'/profile/$steamId'} params={{ steamId: info.getValue() }}>
@@ -165,7 +166,7 @@ const PayersByIPTable = ({ connections, isLoading }: { connections: LazyResult<P
             )
         }),
         columnHelper.accessor('ip_addr', {
-            header: () => <HeadingCell name={'IP Address'} />,
+            header: () => <TableHeadingCell name={'IP Address'} />,
             cell: (info) => (
                 <TableCell>
                     <Typography>{info.getValue()}</Typography>
@@ -173,7 +174,7 @@ const PayersByIPTable = ({ connections, isLoading }: { connections: LazyResult<P
             )
         }),
         columnHelper.accessor('server_id', {
-            header: () => <HeadingCell name={'Server'} />,
+            header: () => <TableHeadingCell name={'Server'} />,
             cell: (info) => (
                 <TableCell>
                     <Typography>{connections.data[info.row.index].server_name_short}</Typography>
