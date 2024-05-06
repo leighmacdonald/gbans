@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useMemo } from 'react';
+import { useCallback, useState, useMemo } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import AutoFixNormalIcon from '@mui/icons-material/AutoFixNormal';
@@ -20,10 +20,12 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
+import { useQuery } from '@tanstack/react-query';
 import { createLazyFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { isBefore } from 'date-fns';
 import {
     apiGetBansSteam,
+    apiGetReport,
     apiReportSetState,
     BanReasons,
     BanType,
@@ -39,7 +41,6 @@ import { ProfileInfoBox } from '../component/ProfileInfoBox.tsx';
 import { ReportViewComponent } from '../component/ReportViewComponent.tsx';
 import { SteamIDList } from '../component/SteamIDList.tsx';
 import { ModalBanSteam } from '../component/modal';
-import { useReport } from '../hooks/useReport.ts';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors.ts';
 import { avatarHashToURL } from '../util/text.tsx';
@@ -51,38 +52,39 @@ export const Route = createLazyFileRoute('/_auth/report/$reportId')({
 function ReportView() {
     const { reportId } = Route.useParams();
     const theme = useTheme();
-    const id = parseInt(reportId || '');
     const [stateAction, setStateAction] = useState(ReportStatus.Opened);
     const [newStateAction, setNewStateAction] = useState(stateAction);
     const { hasPermission } = useRouteContext({ from: '/_auth/report/$reportId' });
-    const [ban, setBan] = useState<SteamBanRecord>();
+    // const [ban, setBan] = useState<SteamBanRecord>();
     const { sendFlash } = useUserFlashCtx();
     const navigate = useNavigate();
-    const { data: report } = useReport(id);
 
-    useEffect(() => {
-        if (report?.report_status) {
-            setStateAction(report?.report_status);
+    const { data: report, isLoading: isLoadingReport } = useQuery({
+        queryKey: ['report', { reportId }],
+        queryFn: async () => {
+            const report = await apiGetReport(Number(reportId));
+            setStateAction(report.report_status);
+            return report;
         }
-    }, [report?.report_status]);
+    });
+
+    const { data: ban, isLoading: isLoadingBan } = useQuery({
+        queryKey: ['ban', { targetId: report?.target_id }],
+        queryFn: async () => {
+            const bans = await apiGetBansSteam({ target_id: report?.target_id, desc: true });
+            const active = bans.data.filter((b: SteamBanRecord) => isBefore(new Date(), b.valid_until));
+
+            return active.length > 0 ? active[0] : false;
+        },
+        enabled: !isLoadingReport && Boolean(report?.target_id)
+    });
 
     const handleReportStateChange = (event: SelectChangeEvent<number>) => {
         setNewStateAction(event.target.value as ReportStatus);
     };
 
-    useEffect(() => {
-        const abortController = new AbortController();
-        apiGetBansSteam({ target_id: report?.target_id, desc: true }, abortController).then((bans) => {
-            const active = bans.data.filter((b: SteamBanRecord) => isBefore(new Date(), b.valid_until));
-            if (active.length > 0) {
-                setBan(active[0]);
-            }
-        });
-        return () => abortController.abort();
-    }, [report?.target_id]);
-
     const onSetReportState = useCallback(() => {
-        apiReportSetState(id, newStateAction)
+        apiReportSetState(Number(reportId), newStateAction)
             .then(() => {
                 sendFlash(
                     'success',
@@ -93,10 +95,10 @@ function ReportView() {
                 setStateAction(newStateAction);
             })
             .catch(logErr);
-    }, [id, newStateAction, report?.report_status, sendFlash]);
+    }, [reportId, newStateAction, report?.report_status, sendFlash]);
 
     const renderBan = useMemo(() => {
-        if (!ban) {
+        if (isLoadingBan || !ban) {
             return null;
         }
 
@@ -106,7 +108,7 @@ function ReportView() {
             default:
                 return <Heading bgColor={theme.palette.warning.main}>Muted</Heading>;
         }
-    }, [ban, theme.palette.error.main, theme.palette.warning.main]);
+    }, [ban, isLoadingBan, theme.palette.error.main, theme.palette.warning.main]);
 
     const reportStatusView = useMemo(() => {
         return (

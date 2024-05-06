@@ -12,9 +12,10 @@ import Pagination from '@mui/material/Pagination';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
+import { useQuery } from '@tanstack/react-query';
 import { createLazyFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { PermissionLevel } from '../api';
-import { Forum, ForumThread } from '../api/forum.ts';
+import { apiForum, Forum, ForumThread } from '../api/forum.ts';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { ErrorDetails } from '../component/ErrorDetails.tsx';
 import { ForumRowLink } from '../component/ForumRowLink.tsx';
@@ -22,8 +23,7 @@ import { VCenteredElement } from '../component/Heading.tsx';
 import RouterLink from '../component/RouterLink.tsx';
 import { VCenterBox } from '../component/VCenterBox.tsx';
 import { ModalForumForumEditor, ModalForumThreadCreator } from '../component/modal';
-import { ErrorCode } from '../error.tsx';
-import { useForum } from '../hooks/useForum.ts';
+import { AppError, ErrorCode } from '../error.tsx';
 import { useThreads } from '../hooks/useThreads.ts';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors.ts';
@@ -146,13 +146,23 @@ function ForumPage() {
     const { hasPermission } = useRouteContext({ from: '/_auth/forums/$forum_id' });
     const { sendFlash } = useUserFlashCtx();
     const navigate = useNavigate();
-    const id = parseInt(forum_id as string);
     const rpp = RowsPerPage.TwentyFive;
     const [forumUpdated, setForumUpdated] = useState<Forum>();
 
-    const { data: forum, loading, error } = useForum(id);
+    const {
+        data: forum,
+        isLoading: isLoadingForum,
+        isError: isErrorForum
+    } = useQuery({
+        queryKey: ['forum', { forum_id }],
+        queryFn: async () => {
+            return await apiForum(Number(forum_id));
+        }
+    });
+    //const { data: forum, loading, error } = useForum(id);
+
     const { data: threads, count } = useThreads({
-        forum_id: id,
+        forum_id: Number(forum_id),
         offset: (page - 1) * rpp,
         limit: rpp,
         order_by: 'updated_on',
@@ -163,8 +173,9 @@ function ForumPage() {
         if (forum && !hasPermission(forum?.permission_level)) {
             return true;
         }
-        return !!(error && (error.code == ErrorCode.PermissionDenied || error.code == ErrorCode.LoginRequired));
-    }, [forum, hasPermission, error]);
+        return !isErrorForum;
+        // return !!( && (error.code == ErrorCode.PermissionDenied || error.code == ErrorCode.LoginRequired));
+    }, [forum, hasPermission, isErrorForum]);
 
     const currentForum = useMemo(() => {
         return forumUpdated ?? forum;
@@ -173,25 +184,25 @@ function ForumPage() {
     const onNewThread = useCallback(async () => {
         try {
             const thread = (await modalCreate.show({
-                forum_id: id
+                forum_id: Number(forum_id)
             })) as ForumThread;
             await navigate({ to: `/forums/thread/${thread.forum_thread_id}` });
             await modalCreate.hide();
         } catch (e) {
             sendFlash('error', `${e}`);
         }
-    }, [id, modalCreate, navigate, sendFlash]);
+    }, [forum_id, modalCreate, navigate, sendFlash]);
 
     const onEditForum = useCallback(async () => {
         try {
             const forum = await NiceModal.show<Forum>(ModalForumForumEditor, {
-                initial_forum_id: id
+                initial_forum_id: Number(forum_id)
             });
             setForumUpdated(forum);
         } catch (e) {
             logErr(e);
         }
-    }, [id]);
+    }, [forum_id]);
 
     const headerButtons = useMemo(() => {
         const buttons = [];
@@ -226,13 +237,13 @@ function ForumPage() {
         return [<ButtonGroup key={'forum-header-buttons'}>{buttons}</ButtonGroup>];
     }, [hasPermission, onEditForum, onNewThread]);
 
-    if (showLogin && error) {
-        return <ErrorDetails error={error} />;
+    if (showLogin && isErrorForum) {
+        return <ErrorDetails error={new AppError(ErrorCode.Unknown)} />;
     }
 
     return (
         <ContainerWithHeaderAndButtons
-            title={loading ? 'Loading...' : currentForum?.title ?? 'Forum'}
+            title={isLoadingForum ? 'Loading...' : currentForum?.title ?? 'Forum'}
             iconLeft={<MessageIcon />}
             buttons={headerButtons}
         >

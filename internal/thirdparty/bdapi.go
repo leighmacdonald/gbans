@@ -12,7 +12,7 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-const bdAPIURL = "https://bd-api.roto.lol/sourcebans/%s"
+const bdAPIURL = "https://bd-api.roto.lol/sourcebans?steamids=%s"
 
 type BDSourceBansRecord struct {
 	BanID       int             `json:"ban_id"`
@@ -26,7 +26,7 @@ type BDSourceBansRecord struct {
 	CreatedOn   time.Time       `json:"created_on"`
 }
 
-func BDSourceBans(ctx context.Context, steamID steamid.SteamID) ([]BDSourceBansRecord, error) {
+func BDSourceBans(ctx context.Context, steamID steamid.SteamID) (map[string][]BDSourceBansRecord, error) {
 	client := &http.Client{Timeout: time.Second * 10}
 	url := fmt.Sprintf(bdAPIURL, steamID.String())
 
@@ -44,7 +44,7 @@ func BDSourceBans(ctx context.Context, steamID steamid.SteamID) ([]BDSourceBansR
 		_ = resp.Body.Close()
 	}()
 
-	var records []BDSourceBansRecord
+	var records map[string][]BDSourceBansRecord
 	if errJSON := json.NewDecoder(resp.Body).Decode(&records); errJSON != nil {
 		return nil, errors.Join(errJSON, domain.ErrRequestDecode)
 	}

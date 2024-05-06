@@ -21,7 +21,6 @@ import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { VCenterBox } from '../component/VCenterBox.tsx';
 import { ModalCIDRBlockEditor, ModalConfirm } from '../component/modal';
-import { useCIDRBlocks } from '../hooks/useCIDRBlocks.ts';
 import { logErr } from '../util/errors.ts';
 import { commonTableSearchSchema } from '../util/table.ts';
 import { renderDate } from '../util/text.tsx';
@@ -38,14 +37,13 @@ export const Route = createFileRoute('/_mod/admin/network/cidrblocks')({
 
 function AdminNetworkCIDRBlocks() {
     const { page, rows, sortOrder, sortColumn } = Route.useSearch();
-    const { data: whitelist, isLoading } = useQuery({
-        queryKey: ['connectionHist', { page, rows, sortOrder, sortColumn }],
+    const { data: blockLists, isLoading } = useQuery({
+        queryKey: ['cidrBlockLists', { page, rows, sortOrder, sortColumn }],
         queryFn: async () => {
             return await apiGetCIDRBlockLists();
         }
     });
 
-    const { loading, data } = useCIDRBlocks();
     const [newSources, setNewSources] = useState<CIDRBlockSource[]>([]);
     const confirmModal = useModal(ModalConfirm);
     const editorModal = useModal(ModalCIDRBlockEditor);
@@ -92,11 +90,11 @@ function AdminNetworkCIDRBlocks() {
     // );
 
     const sources = useMemo(() => {
-        if (loading) {
+        if (isLoading) {
             return [];
         }
-        return [...newSources, ...(data?.sources ?? [])];
-    }, [data?.sources, loading, newSources]);
+        return [...newSources, ...(blockLists?.sources ?? [])];
+    }, [blockLists?.sources, isLoading, newSources]);
 
     const onDeleteSource = useCallback(
         async (cidr_block_source_id: number) => {
@@ -158,7 +156,7 @@ function AdminNetworkCIDRBlocks() {
                             </VCenterBox>
                         </Stack>
                     </Grid>
-                    {loading ? (
+                    {isLoading ? (
                         <LoadingPlaceholder />
                     ) : (
                         <Grid xs={12}>
@@ -226,7 +224,7 @@ function AdminNetworkCIDRBlocks() {
                         </Stack>
                     </Grid>
                     <Grid xs={12}>
-                        <IPHistoryTable whitelist={whitelist?.whitelist ?? []} isLoading={isLoading} />
+                        <WhitelistTable whitelist={blockLists?.whitelist ?? []} isLoading={isLoading} />
                     </Grid>
                 </Grid>
             </Stack>
@@ -236,7 +234,7 @@ function AdminNetworkCIDRBlocks() {
 
 const columnHelper = createColumnHelper<CIDRBlockWhitelist>();
 
-const IPHistoryTable = ({ whitelist, isLoading }: { whitelist: CIDRBlockWhitelist[]; isLoading: boolean }) => {
+const WhitelistTable = ({ whitelist, isLoading }: { whitelist: CIDRBlockWhitelist[]; isLoading: boolean }) => {
     const columns = [
         columnHelper.accessor('cidr_block_whitelist_id', {
             header: () => <TableHeadingCell name={'ID'} />,

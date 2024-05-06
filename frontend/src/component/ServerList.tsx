@@ -110,11 +110,7 @@ export const ServerList = () => {
     const table = useReactTable(opts);
 
     if (selectedServers.length === 0) {
-        return (
-            <ContainerWithHeader title={'Servers Loading...'} iconLeft={<StorageIcon />}>
-                <LoadingSpinner />
-            </ContainerWithHeader>
-        );
+        return <LoadingSpinner />;
     }
 
     return <DataTable table={table} isLoading={false} />;

@@ -16,9 +16,12 @@ import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
+import { useQuery } from '@tanstack/react-query';
 import { createLazyFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
 import {
     apiDeleteBanMessage,
+    apiGetBanMessages,
+    apiGetBanSteam,
     apiSetBanAppealState,
     AppealState,
     AppealStateCollection,
@@ -34,8 +37,6 @@ import { ProfileInfoBox } from '../component/ProfileInfoBox.tsx';
 import { SourceBansList } from '../component/SourceBansList.tsx';
 import { SteamIDList } from '../component/SteamIDList.tsx';
 import { ModalBanSteam, ModalUnbanSteam } from '../component/modal';
-import { useBan } from '../hooks/useBan.ts';
-import { useBanAppealMessages } from '../hooks/useBanAppealMessages.ts';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors.ts';
 import { renderDateTime, renderTimeDistance } from '../util/text.tsx';
@@ -44,23 +45,32 @@ export const Route = createLazyFileRoute('/_auth/ban/$ban_id')({
     component: BanPage
 });
 
-// interface NewReplyValues {
-//     body_md: string;
-// }
-
 function BanPage() {
     const [appealState, setAppealState] = useState<AppealState>(AppealState.Open);
     const [newMessages] = useState<BanAppealMessage[]>([]);
     const { permissionLevel, userSteamID } = useRouteContext({ from: '/_auth/ban/$ban_id' });
     const { sendFlash } = useUserFlashCtx();
     const { ban_id } = Route.useParams();
-    const id = useMemo(() => Number(ban_id || '0'), [ban_id]);
     const [deletedMessages, setDeletedMessages] = useState<number[]>([]);
-    const { data: ban } = useBan(id);
-    const { data: messagesServer } = useBanAppealMessages(ban?.ban_id ?? 0);
+
+    const { data: ban, isLoading: isLoadingBan } = useQuery({
+        queryKey: ['ban', { ban_id }],
+        queryFn: async () => {
+            return await apiGetBanSteam(Number(ban_id), true);
+        }
+    });
+
+    const { data: messagesServer } = useQuery({
+        queryKey: ['banMessages', { ban_id }],
+        queryFn: async () => {
+            return await apiGetBanMessages(Number(ban_id));
+        },
+        enabled: !isLoadingBan && (ban?.ban_id ?? 0) > 0
+    });
+
     const navigate = useNavigate();
     const messages = useMemo(() => {
-        return [...messagesServer, ...newMessages].filter((m) => !deletedMessages.includes(m.ban_message_id));
+        return [...(messagesServer ?? []), ...newMessages].filter((m) => !deletedMessages.includes(m.ban_message_id));
     }, [deletedMessages, messagesServer, newMessages]);
 
     const canPost = useMemo(() => {
@@ -103,7 +113,7 @@ function BanPage() {
     );
 
     const onSaveAppealState = useCallback(() => {
-        apiSetBanAppealState(id, appealState)
+        apiSetBanAppealState(Number(ban_id), appealState)
             .then(() => {
                 sendFlash('success', 'Appeal state updated');
             })
@@ -112,7 +122,7 @@ function BanPage() {
                 logErr(reason);
                 return;
             });
-    }, [appealState, id, sendFlash]);
+    }, [appealState, ban_id, sendFlash]);
 
     const onUnban = useCallback(async () => {
         await NiceModal.show(ModalUnbanSteam, {
@@ -212,7 +222,7 @@ function BanPage() {
             <Grid xs={8}>
                 <Stack spacing={2}>
                     {canPost && messages.length == 0 && (
-                        <ContainerWithHeader title={`Ban Appeal #${id}`}>
+                        <ContainerWithHeader title={`Ban Appeal #${ban_id}`}>
                             <Typography variant={'body2'} padding={2} textAlign={'center'}>
                                 You can start the appeal process by replying on this form.
                             </Typography>

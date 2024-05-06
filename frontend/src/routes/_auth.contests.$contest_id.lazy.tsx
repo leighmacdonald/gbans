@@ -12,11 +12,12 @@ import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
+import { useQuery } from '@tanstack/react-query';
 import { createLazyFileRoute, useRouteContext } from '@tanstack/react-router';
 import { format } from 'date-fns';
 import formatDistanceToNowStrict from 'date-fns/formatDistanceToNowStrict';
 import { isAfter } from 'date-fns/fp';
-import { apiContestEntries, apiContestEntryVote, ContestEntry, PermissionLevel } from '../api';
+import { apiContest, apiContestEntries, apiContestEntryVote, ContestEntry, PermissionLevel } from '../api';
 import { Asset, mediaType, MediaTypes } from '../api/media.ts';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { InfoBar } from '../component/InfoBar.tsx';
@@ -26,7 +27,6 @@ import { MarkDownRenderer } from '../component/MarkdownRenderer.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { VCenterBox } from '../component/VCenterBox.tsx';
 import { ModalAssetViewer, ModalContestEntry, ModalContestEntryDelete } from '../component/modal';
-import { useContest } from '../hooks/useContest.ts';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors.ts';
 import { humanFileSize } from '../util/text.tsx';
@@ -38,11 +38,21 @@ export const Route = createLazyFileRoute('/_auth/contests/$contest_id')({
 
 function Contest() {
     const { contest_id } = Route.useParams();
-    const { loading, contest, error } = useContest(contest_id);
     const [entries, setEntries] = useState<ContestEntry[]>([]);
     const [entriesLoading, setEntriesLoading] = useState(false);
     const { hasPermission, userSteamID } = useRouteContext({ from: '/_auth/contests/$contest_id' });
     const { sendFlash } = useUserFlashCtx();
+
+    const {
+        data: contest,
+        isLoading,
+        isError
+    } = useQuery({
+        queryKey: ['contest', { contest_id }],
+        queryFn: async () => {
+            return await apiContest(Number(contest_id));
+        }
+    });
 
     const onEnter = useCallback(async (contest_id: string) => {
         try {
@@ -114,17 +124,20 @@ function Contest() {
     if (!contest_id) {
         return <PageNotFound />;
     }
-    if (error) {
+    if (isError) {
         return <PageNotFound />;
     }
-    return loading ? (
+    return isLoading ? (
         <LoadingPlaceholder />
     ) : (
         contest && (
             <Grid container spacing={3}>
                 <Grid xs={8}>
-                    <ContainerWithHeader title={`Contest: ${contest?.title}`} iconLeft={loading ? <LoadingSpinner /> : <EmojiEventsIcon />}>
-                        {loading ? (
+                    <ContainerWithHeader
+                        title={`Contest: ${contest?.title}`}
+                        iconLeft={isLoading ? <LoadingSpinner /> : <EmojiEventsIcon />}
+                    >
+                        {isLoading ? (
                             <LoadingSpinner />
                         ) : (
                             contest && (
@@ -140,7 +153,7 @@ function Contest() {
                     </ContainerWithHeader>
                 </Grid>
                 <Grid xs={4}>
-                    <ContainerWithHeader title={`Contest Details`} iconLeft={loading ? <LoadingSpinner /> : <InfoIcon />}>
+                    <ContainerWithHeader title={`Contest Details`} iconLeft={isLoading ? <LoadingSpinner /> : <InfoIcon />}>
                         <Stack spacing={2}>
                             <InfoBar title={'Starting Date'} value={format(contest.date_start, 'dd/MM/yy H:m')} align={'right'} />
 
