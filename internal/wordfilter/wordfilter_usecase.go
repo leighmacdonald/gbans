@@ -20,7 +20,7 @@ func NewWordFilterUsecase(filterRepository domain.WordFilterRepository) domain.W
 }
 
 func (w *wordFilterUsecase) Import(ctx context.Context) error {
-	filters, _, errFilters := w.filterRepository.GetFilters(ctx, domain.FiltersQueryFilter{})
+	filters, errFilters := w.filterRepository.GetFilters(ctx)
 	if errFilters != nil && !errors.Is(errFilters, domain.ErrNoResult) {
 		return errFilters
 	}
@@ -114,8 +114,8 @@ func (w *wordFilterUsecase) GetFilterByID(ctx context.Context, filterID int64) (
 	return w.filterRepository.GetFilterByID(ctx, filterID)
 }
 
-func (w *wordFilterUsecase) GetFilters(ctx context.Context, opts domain.FiltersQueryFilter) ([]domain.Filter, int64, error) {
-	return w.filterRepository.GetFilters(ctx, opts)
+func (w *wordFilterUsecase) GetFilters(ctx context.Context) ([]domain.Filter, error) {
+	return w.filterRepository.GetFilters(ctx)
 }
 
 func (w *wordFilterUsecase) AddMessageFilterMatch(ctx context.Context, messageID int64, filterID int64) error {

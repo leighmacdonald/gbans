@@ -15,18 +15,18 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
+import { useQuery } from '@tanstack/react-query';
 import { createLazyFileRoute, useRouteContext } from '@tanstack/react-router';
 import { PermissionLevel } from '../api';
-import { Forum, ForumCategory } from '../api/forum.ts';
+import { apiForumRecentActivity, apiGetForumOverview, Forum, ForumCategory } from '../api/forum.ts';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { ForumRowLink } from '../component/ForumRowLink.tsx';
 import { VCenteredElement } from '../component/Heading.tsx';
+import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
 import RouterLink from '../component/RouterLink.tsx';
 import { VCenterBox } from '../component/VCenterBox.tsx';
 import { ModalForumCategoryEditor, ModalForumForumEditor } from '../component/modal';
-import { useForumOverview } from '../hooks/useForumOverview.ts';
-import { useForumRecentMessageActivity } from '../hooks/useForumRecentMessageActivity.ts';
 import { useForumRecentUserActivity } from '../hooks/useForumRecentUserActivity.ts';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors.ts';
@@ -176,7 +176,13 @@ const CategoryBlock = ({ category }: { category: ForumCategory }) => {
 function ForumOverview() {
     const { sendFlash } = useUserFlashCtx();
     const { hasPermission } = useRouteContext({ from: '/_auth/forums/' });
-    const { data: overview } = useForumOverview();
+
+    const { data: overview, isLoading } = useQuery({
+        queryKey: ['forumOverview'],
+        queryFn: async () => {
+            return await apiGetForumOverview();
+        }
+    });
 
     const onNewCategory = useCallback(async () => {
         try {
@@ -203,11 +209,15 @@ function ForumOverview() {
             </Grid>
             <Grid md={9} xs={12}>
                 <Stack spacing={3}>
-                    {overview?.categories
-                        .filter((c) => c.forums.length > 0)
-                        .map((cat) => {
-                            return <CategoryBlock category={cat} key={`category-${cat.forum_category_id}`} />;
-                        })}
+                    {isLoading ? (
+                        <LoadingPlaceholder />
+                    ) : (
+                        overview?.categories
+                            .filter((c) => c.forums.length > 0)
+                            .map((cat) => {
+                                return <CategoryBlock category={cat} key={`category-${cat.forum_category_id}`} />;
+                            })
+                    )}
                 </Stack>
             </Grid>
             <Grid md={3} xs={12}>
@@ -264,72 +274,81 @@ export const RecentUserActivity = () => {
 };
 
 export const RecentMessageActivity = () => {
-    const { data } = useForumRecentMessageActivity();
+    const { data: messages, isLoading } = useQuery({
+        queryKey: ['forumMessageActivity'],
+        queryFn: async () => {
+            return await apiForumRecentActivity();
+        }
+    });
 
     return (
         <ContainerWithHeader title={'Latest Activity'} iconLeft={<TodayIcon />}>
             <Stack spacing={1}>
-                {data.map((m) => {
-                    return (
-                        <Stack
-                            direction={'row'}
-                            key={`message-${m.forum_message_id}`}
-                            spacing={1}
-                            sx={{
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                width: '100%'
-                            }}
-                        >
-                            <VCenteredElement icon={<Avatar alt={m.personaname} src={avatarHashToURL(m.avatarhash, 'medium')} />} />
-                            <Stack>
-                                <Box
-                                    sx={{
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap',
-                                        width: '100%'
-                                    }}
-                                >
-                                    <ForumRowLink
-                                        variant={'body1'}
-                                        label={m.title ?? ''}
-                                        to={`/forums/thread/${m.forum_thread_id}#${m.forum_message_id}`}
-                                    />
-                                </Box>
-                                <Stack direction={'row'} spacing={1}>
-                                    <AccessTimeIcon scale={0.5} />
-                                    <VCenterBox>
-                                        <Tooltip title={renderDateTime(m.created_on)}>
-                                            <Typography variant={'body2'}>{renderTime(m.created_on ?? new Date())}</Typography>
-                                        </Tooltip>
-                                    </VCenterBox>
-                                    <Person2 scale={0.5} />
-                                    <VCenterBox>
-                                        <Typography
-                                            overflow={'hidden'}
-                                            color={(theme) => {
-                                                return theme.palette.text.secondary;
-                                            }}
-                                            component={RouterLink}
-                                            to={`/profile/${m.source_id}`}
-                                            variant={'body2'}
-                                            sx={{
-                                                textDecoration: 'none',
-                                                '&:hover': {
-                                                    textDecoration: 'underline'
-                                                }
-                                            }}
-                                        >
-                                            {m.personaname}
-                                        </Typography>
-                                    </VCenterBox>
+                {isLoading ? (
+                    <LoadingPlaceholder />
+                ) : (
+                    (messages ?? []).map((m) => {
+                        return (
+                            <Stack
+                                direction={'row'}
+                                key={`message-${m.forum_message_id}`}
+                                spacing={1}
+                                sx={{
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    width: '100%'
+                                }}
+                            >
+                                <VCenteredElement icon={<Avatar alt={m.personaname} src={avatarHashToURL(m.avatarhash, 'medium')} />} />
+                                <Stack>
+                                    <Box
+                                        sx={{
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            whiteSpace: 'nowrap',
+                                            width: '100%'
+                                        }}
+                                    >
+                                        <ForumRowLink
+                                            variant={'body1'}
+                                            label={m.title ?? ''}
+                                            to={`/forums/thread/${m.forum_thread_id}#${m.forum_message_id}`}
+                                        />
+                                    </Box>
+                                    <Stack direction={'row'} spacing={1}>
+                                        <AccessTimeIcon scale={0.5} />
+                                        <VCenterBox>
+                                            <Tooltip title={renderDateTime(m.created_on)}>
+                                                <Typography variant={'body2'}>{renderTime(m.created_on ?? new Date())}</Typography>
+                                            </Tooltip>
+                                        </VCenterBox>
+                                        <Person2 scale={0.5} />
+                                        <VCenterBox>
+                                            <Typography
+                                                overflow={'hidden'}
+                                                color={(theme) => {
+                                                    return theme.palette.text.secondary;
+                                                }}
+                                                component={RouterLink}
+                                                to={`/profile/${m.source_id}`}
+                                                variant={'body2'}
+                                                sx={{
+                                                    textDecoration: 'none',
+                                                    '&:hover': {
+                                                        textDecoration: 'underline'
+                                                    }
+                                                }}
+                                            >
+                                                {m.personaname}
+                                            </Typography>
+                                        </VCenterBox>
+                                    </Stack>
                                 </Stack>
                             </Stack>
-                        </Stack>
-                    );
-                })}
+                        );
+                    })
+                )}
             </Stack>
         </ContainerWithHeader>
     );

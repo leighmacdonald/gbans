@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import { useFormikContext } from 'formik';
 import { logErr } from '../../util/errors';
 
 interface FilterTestFieldProps {

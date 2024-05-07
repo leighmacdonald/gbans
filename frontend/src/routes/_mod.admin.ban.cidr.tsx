@@ -49,7 +49,7 @@ function AdminBanCIDR() {
                 limit: rows ?? defaultRows,
                 offset: (page ?? 0) * (rows ?? defaultRows),
                 order_by: sortColumn,
-                desc: sortOrder == 'desc',
+                desc: (sortOrder ?? 'desc') == 'desc',
                 source_id: source_id,
                 target_id: target_id,
                 deleted: deleted,

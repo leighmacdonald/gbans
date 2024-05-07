@@ -39,9 +39,7 @@ import { renderDate } from '../util/text.tsx';
 
 const banSteamSearchSchema = z.object({
     ...commonTableSearchSchema,
-    sortColumn: z
-        .enum(['ban_id', 'source_id', 'target_id', 'deleted', 'reason', 'created_on', 'valid_until', 'appeal_state'])
-        .catch('ban_id'),
+    sortColumn: z.enum(['ban_id', 'source_id', 'target_id', 'deleted', 'reason', 'created_on', 'valid_until', 'appeal_state']).optional(),
     source_id: z.string().optional(),
     target_id: z.string().optional(),
     reason: z.nativeEnum(BanReason).optional(),
@@ -66,7 +64,7 @@ function AdminBanSteam() {
                 limit: rows ?? defaultRows,
                 offset: (page ?? 0) * (rows ?? defaultRows),
                 order_by: sortColumn ?? 'ban_id',
-                desc: sortOrder == 'desc',
+                desc: (sortOrder ?? 'desc') == 'desc',
                 source_id: source_id,
                 target_id: target_id,
                 appeal_state: appeal_state

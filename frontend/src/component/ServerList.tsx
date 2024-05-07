@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import StorageIcon from '@mui/icons-material/Storage';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
@@ -13,7 +12,6 @@ import { useMapStateCtx } from '../hooks/useMapStateCtx.ts';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { tf2Fonts } from '../theme';
 import { logErr } from '../util/errors';
-import { ContainerWithHeader } from './ContainerWithHeader';
 import { DataTable } from './DataTable.tsx';
 import { Flag } from './Flag';
 import { LoadingSpinner } from './LoadingSpinner';
