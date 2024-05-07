@@ -1,4 +1,3 @@
-import { LazyResult } from '../util/table.ts';
 import { parseDateTime } from '../util/text.tsx';
 import { apiCall, PermissionLevel, QueryFilter, TimeStamped, transformCreatedOnDate, transformTimeStampedDates } from './common';
 
@@ -155,12 +154,12 @@ export interface ForumThread extends TimeStamped {
 
 export interface ThreadMessageQueryOpts extends QueryFilter<ForumMessage> {
     forum_thread_id: number;
+    deleted?: boolean;
 }
 
 export const apiGetThreadMessages = async (opts: ThreadMessageQueryOpts, abortController?: AbortController) => {
-    const resp = await apiCall<LazyResult<ForumMessage>>(`/api/forum/messages`, 'POST', opts, abortController);
-    resp.data = resp.data.map(transformTimeStampedDates);
-    return resp;
+    const resp = await apiCall<ForumMessage[]>(`/api/forum/messages`, 'POST', opts, abortController);
+    return resp.map(transformTimeStampedDates);
 };
 
 export const apiSaveThreadMessage = async (forum_message_id: number, body_md: string, abortController?: AbortController) => {
@@ -173,13 +172,12 @@ export interface ThreadQueryOpts extends QueryFilter<ForumThread> {
 }
 
 export const apiGetThreads = async (opts: ThreadQueryOpts, abortController?: AbortController) => {
-    const resp = await apiCall<LazyResult<ForumThread>>(`/api/forum/threads`, 'POST', opts, abortController);
-    resp.data = resp.data.map((t) => {
+    const resp = await apiCall<ForumThread[]>(`/api/forum/threads`, 'POST', opts, abortController);
+    return resp.map((t) => {
         const thread = transformTimeStampedDates(t);
         thread.recent_created_on = parseDateTime(thread.recent_created_on as unknown as string);
         return thread;
     });
-    return resp;
 };
 
 export const apiGetThread = async (thread_id: number, abortController?: AbortController) => {

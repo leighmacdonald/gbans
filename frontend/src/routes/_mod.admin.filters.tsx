@@ -1,5 +1,8 @@
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import NiceModal from '@ebay/nice-modal-react';
 import AddBoxIcon from '@mui/icons-material/AddBox';
+import CancelIcon from '@mui/icons-material/Cancel';
+import EditIcon from '@mui/icons-material/Edit';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import InfoIcon from '@mui/icons-material/Info';
 import WarningIcon from '@mui/icons-material/Warning';
@@ -9,21 +12,42 @@ import TableCell from '@mui/material/TableCell';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { createColumnHelper, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
+import {
+    ColumnDef,
+    createColumnHelper,
+    getCoreRowModel,
+    getPaginationRowModel,
+    OnChangeFn,
+    PaginationState,
+    RowSelectionState,
+    useReactTable
+} from '@tanstack/react-table';
 import { z } from 'zod';
-import { apiGetFilters, apiGetWarningState, Filter, FilterAction, filterActionString, UserWarning } from '../api/filters.ts';
+import {
+    apiDeleteFilter,
+    apiGetFilters,
+    apiGetWarningState,
+    Filter,
+    filterActionString,
+    UserWarning
+} from '../api/filters.ts';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { DataTable } from '../component/DataTable.tsx';
-import { Paginator } from '../component/Paginator.tsx';
+import { IndeterminateCheckbox } from '../component/IndeterminateCheckbox.tsx';
 import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
+import { TableCellBool } from '../component/TableCellBool.tsx';
 import { TableCellSmall } from '../component/TableCellSmall.tsx';
 import { TableCellString } from '../component/TableCellString.tsx';
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
-import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
+import { ModalConfirm, ModalFilterEditor } from '../component/modal';
+import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import { findSelectedRow } from '../util/findSelectedRow.ts';
+import { findSelectedRows } from '../util/findSelectedRows.ts';
+import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 
 const filterSearchSchema = z.object({
@@ -37,17 +61,20 @@ export const Route = createFileRoute('/_mod/admin/filters')({
 });
 
 function AdminFilters() {
-    const defaultRows = RowsPerPage.Ten;
-    const { page, rows, sortOrder, sortColumn } = Route.useSearch();
+    const { sendFlash } = useUserFlashCtx();
+    const queryClient = useQueryClient();
+    const [rowSelection, setRowSelection] = useState({});
+
+    // const { page, rows, sortOrder, sortColumn } = Route.useSearch();
+    const [pagination, setPagination] = useState({
+        pageIndex: 0, //initial page index
+        pageSize: RowsPerPage.TwentyFive //default page size
+    });
+
     const { data: filters, isLoading } = useQuery({
-        queryKey: ['filters', { page, rows, sortOrder, sortColumn }],
+        queryKey: ['filters'],
         queryFn: async () => {
-            return await apiGetFilters({
-                order_by: sortColumn ?? 'filter_id',
-                desc: (sortOrder ?? 'desc') == 'desc',
-                limit: rows ?? defaultRows,
-                offset: (page ?? 0) * (rows ?? defaultRows)
-            });
+            return await apiGetFilters();
         }
     });
 
@@ -57,90 +84,128 @@ function AdminFilters() {
             return await apiGetWarningState();
         }
     });
-    // const onCreate = useCallback(async () => {
-    //     try {
-    //         const resp = await NiceModal.show<Filter>(ModalFilterEditor, {
-    //             defaultPattern: '',
-    //             defaultIsRegex: false
-    //         });
-    //         sendFlash('success', `Filter created successfully: ${resp.filter_id}`);
-    //         setNewFilters((prevState) => {
-    //             return [resp, ...prevState.filter((f) => f.filter_id != resp.filter_id)];
-    //         });
-    //     } catch (e) {
-    //         sendFlash('error', `${e}`);
-    //     }
-    // }, [sendFlash]);
-    //
-    // const onEdit = useCallback(async (filter: Filter) => {
-    //     try {
-    //         const resp = await NiceModal.show<Filter>(ModalFilterEditor, {
-    //             filter
-    //         });
-    //         setEditedFilters((prevState) => {
-    //             return [...prevState, resp];
-    //         });
-    //     } catch (e) {
-    //         logErr(e);
-    //     }
-    // }, []);
-    //
-    // const handleDelete = useCallback(
-    //     async (filter: Filter) => {
-    //         if (!filter.filter_id) {
-    //             logErr(new Error('filter_id not present, cannot delete'));
-    //             return;
-    //         }
-    //         apiDeleteFilter(filter.filter_id)
-    //             .then(() => {
-    //                 setDeletedFiltersIDs((prevState) => {
-    //                     return [...prevState, filter.filter_id ?? 0];
-    //                 });
-    //                 sendFlash('success', `Deleted filter successfully`);
-    //             })
-    //             .catch((err) => {
-    //                 sendFlash('error', `Failed to delete filter: ${err}`);
-    //             });
-    //     },
-    //     [sendFlash]
-    // );
-    //
-    // const onConfirmDelete = useCallback(
-    //     async (filter: Filter) => {
-    //         try {
-    //             const confirmed = await NiceModal.show(ModalConfirm, {
-    //                 title: 'Are you sure you want to delete this filter?'
-    //             });
-    //
-    //             if (!confirmed) {
-    //                 return;
-    //             }
-    //
-    //             await handleDelete(filter);
-    //         } catch (e) {
-    //             logErr(e);
-    //             return;
-    //         }
-    //     },
-    //     [handleDelete]
-    // );
+
+    const onCreate = useCallback(async () => {
+        try {
+            const resp = await NiceModal.show<Filter>(ModalFilterEditor, {});
+            queryClient.setQueryData(['filters'], [...(filters ?? []), resp]);
+        } catch (e) {
+            sendFlash('error', `${e}`);
+        }
+    }, [filters, queryClient, sendFlash]);
+
+    const onEdit = useCallback(async () => {
+        try {
+            const filter = findSelectedRow(rowSelection, filters ?? [], 'filter_id');
+            const resp = await NiceModal.show<Filter>(ModalFilterEditor, { filter });
+
+            queryClient.setQueryData(
+                ['filters'],
+                (filters ?? []).map((f) => {
+                    return f.filter_id == resp.filter_id ? resp : f;
+                })
+            );
+        } catch (e) {
+            sendFlash('error', `${e}`);
+        }
+    }, [filters, queryClient, rowSelection, sendFlash]);
+
+    const deleteMutation = useMutation({
+        mutationKey: ['filters'],
+        mutationFn: async (filter_id: number) => {
+            await apiDeleteFilter(filter_id);
+        },
+        onSuccess: (_, filterId) => {
+            sendFlash('error', `Deleted filter: ${filterId}`);
+        }
+    });
+
+    const onDelete = useCallback(async () => {
+        const selectedFiltersIds = findSelectedRows(rowSelection, filters ?? [])?.map((f) => f.filter_id);
+        if (!selectedFiltersIds) {
+            return;
+        }
+
+        try {
+            const confirmed = await NiceModal.show(ModalConfirm, {
+                title: `Are you sure you want to delete ${selectedFiltersIds.length} filter(s)?`
+            });
+
+            if (!confirmed) {
+                return;
+            }
+
+            selectedFiltersIds.map((f) => {
+                deleteMutation.mutate(f as number);
+            });
+            queryClient.setQueryData(
+                ['filters'],
+                (filters ?? []).filter((filter) => !selectedFiltersIds.includes(filter.filter_id))
+            );
+            setRowSelection({});
+        } catch (e) {
+            sendFlash('error', `${e}`);
+            return;
+        }
+    }, [deleteMutation, filters, queryClient, rowSelection, sendFlash]);
 
     return (
         <Grid container spacing={2}>
             <Grid xs={12}>
                 <ContainerWithHeaderAndButtons
-                    title={'Word Filters'}
+                    title={`Word Filters ${Object.values(rowSelection).length ? `Selected: ${Object.values(rowSelection).length}` : ''}`}
                     iconLeft={<FilterAltIcon />}
                     buttons={[
-                        <ButtonGroup variant="contained" aria-label="outlined primary button group" key={`btn-headers-filters`}>
-                            <Button startIcon={<AddBoxIcon />} color={'success'}>
+                        <ButtonGroup
+                            variant="contained"
+                            aria-label="outlined primary button group"
+                            key={`btn-headers-filters`}
+                        >
+                            <Button
+                                disabled={Object.values(rowSelection).length == 0}
+                                color={'error'}
+                                onClick={onDelete}
+                                startIcon={<CancelIcon />}
+                            >
+                                Delete
+                            </Button>
+                            <Button
+                                disabled={Object.values(rowSelection).length != 1}
+                                color={'warning'}
+                                onClick={onEdit}
+                                startIcon={<EditIcon />}
+                            >
+                                Edit
+                            </Button>
+                            <Button startIcon={<AddBoxIcon />} color={'success'} onClick={onCreate}>
                                 New
                             </Button>
                         </ButtonGroup>
                     ]}
                 >
-                    <FiltersTable filters={filters ?? { data: [], count: 0 }} isLoading={isLoading} />
-                    <Paginator page={page ?? 0} rows={rows ?? defaultRows} data={filters} path={'/admin/filters'} />
+                    <FiltersTable
+                        filters={filters ?? []}
+                        isLoading={isLoading}
+                        rowSelection={rowSelection}
+                        setRowSelection={setRowSelection}
+                        pagination={pagination}
+                        setPagination={setPagination}
+                    />
+                    <PaginatorLocal
+                        onRowsChange={(rows) => {
+                            setPagination((prev) => {
+                                return { ...prev, pageSize: rows };
+                            });
+                        }}
+                        onPageChange={(page) => {
+                            setPagination((prev) => {
+                                return { ...prev, pageIndex: page };
+                            });
+                        }}
+                        count={filters?.length ?? 0}
+                        rows={pagination.pageSize}
+                        page={pagination.pageIndex}
+                    />
                 </ContainerWithHeaderAndButtons>
             </Grid>
             <Grid xs={12}>
@@ -154,10 +219,11 @@ function AdminFilters() {
             <Grid xs={12}>
                 <ContainerWithHeader title={'How it works'} iconLeft={<InfoIcon />}>
                     <Typography variant={'body1'}>
-                        The way the warning tracking works is that each time a user triggers a match, it gets a entry in the table based on
-                        the weight of the match. The individual match weight is determined by the word filter defined above. Once the sum of
-                        their triggers exceeds the max weight the user will have action taken against them automatically. Matched entries
-                        are ephemeral and are removed over time based on the configured timeout value.
+                        The way the warning tracking works is that each time a user triggers a match, it gets a entry in
+                        the table based on the weight of the match. The individual match weight is determined by the
+                        word filter defined above. Once the sum of their triggers exceeds the max weight the user will
+                        have action taken against them automatically. Matched entries are ephemeral and are removed over
+                        time based on the configured timeout value.
                     </Typography>
                 </ContainerWithHeader>
             </Grid>
@@ -165,75 +231,109 @@ function AdminFilters() {
     );
 }
 
-const FiltersTable = ({ filters, isLoading }: { filters: LazyResult<Filter>; isLoading: boolean }) => {
-    const columnHelper = createColumnHelper<Filter>();
+const FiltersTable = ({
+    filters,
+    isLoading,
+    rowSelection,
+    setRowSelection,
+    pagination,
+    setPagination
+}: {
+    filters: Filter[];
+    isLoading: boolean;
+    rowSelection: RowSelectionState;
+    setRowSelection: OnChangeFn<RowSelectionState>;
+    pagination: PaginationState;
+    setPagination: OnChangeFn<PaginationState>;
+}) => {
+    // const columnHelper = createColumnHelper<Filter>();
+    const columns = useMemo<ColumnDef<Filter>[]>(
+        () => [
+            {
+                id: 'select',
+                header: ({ table }) => (
+                    <IndeterminateCheckbox
+                        {...{
+                            checked: table.getIsAllRowsSelected(),
+                            indeterminate: table.getIsSomeRowsSelected(),
+                            onChange: table.getToggleAllRowsSelectedHandler()
+                        }}
+                    />
+                ),
+                cell: ({ row }) => (
+                    <div className="px-1">
+                        <IndeterminateCheckbox
+                            {...{
+                                checked: row.getIsSelected(),
+                                disabled: !row.getCanSelect(),
+                                indeterminate: row.getIsSomeSelected(),
+                                onChange: row.getToggleSelectedHandler()
+                            }}
+                        />
+                    </div>
+                )
+            },
 
-    const columns = [
-        columnHelper.accessor('pattern', {
-            header: () => <TableHeadingCell name={'Pattern'} />,
-            cell: (info) => <TableCellString>{`${info.getValue()}`}</TableCellString>
-        }),
-        columnHelper.accessor('is_regex', {
-            header: () => <TableHeadingCell name={'Rx'} />,
-            cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
-        }),
-        columnHelper.accessor('action', {
-            header: () => <TableHeadingCell name={'Action'} />,
-            cell: (info) => <TableCellString>{filterActionString(info.getValue())}</TableCellString>
-        }),
-        columnHelper.accessor('duration', {
-            header: () => <TableHeadingCell name={'Duration'} />,
-            cell: (info) => (
-                <TableCellString>{filters.data[info.row.index].action == FilterAction.Kick ? '' : info.getValue()}</TableCellString>
-            )
-        }),
-        columnHelper.accessor('weight', {
-            header: () => <TableHeadingCell name={'Weight'} />,
-            cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
-        }),
-        columnHelper.accessor('trigger_count', {
-            header: () => <TableHeadingCell name={'Triggered'} />,
-            cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
-        })
-    ];
-
-    // const actions: ColumnDef<Filter> = {
-    //     accessorFn: () => {
-    //         return 'action';
-    //     },
-    //     header: () => <TableHeadingCell name={'Actions'} />,
-    //     cell: () => (
-    //         <ButtonGroup>
-    //             <Tooltip title={'Edit filter'}>
-    //                 <IconButton
-    //                     color={'warning'}
-    //                     onClick={async () => {
-    //                         await onEdit(row);
-    //                     }}
-    //                 >
-    //                     <EditIcon />
-    //                 </IconButton>
-    //             </Tooltip>
-    //             <Tooltip title={'Delete filter'}>
-    //                 <IconButton
-    //                     color={'error'}
-    //                     onClick={async () => {
-    //                         await onConfirmDelete(row);
-    //                     }}
-    //                 >
-    //                     <DeleteForeverIcon />
-    //                 </IconButton>
-    //             </Tooltip>
-    //         </ButtonGroup>
-    //     )
-    // };
+            {
+                accessorKey: 'pattern',
+                cell: (info) => info.getValue()
+            },
+            {
+                accessorKey: 'is_regex',
+                accessorFn: (originalRow) => originalRow.is_regex,
+                cell: (info) => <TableCellBool enabled={info.getValue() as boolean} />,
+                header: () => <TableHeadingCell name={'Rx'} />
+            },
+            {
+                accessorKey: 'action',
+                accessorFn: (originalRow) => originalRow.action,
+                cell: (info) => {
+                    return (
+                        <TableCellString>
+                            {typeof filters[info.row.index] === 'undefined'
+                                ? ''
+                                : filterActionString(filters[info.row.index].action)}
+                        </TableCellString>
+                    );
+                },
+                header: () => <TableHeadingCell name={'Action'} />
+            },
+            {
+                accessorKey: 'duration',
+                accessorFn: (originalRow) => originalRow.duration,
+                cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>,
+                header: () => <TableHeadingCell name={'Duration'} />
+            },
+            {
+                accessorKey: 'weight',
+                accessorFn: (originalRow) => originalRow.weight,
+                cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>,
+                header: () => <TableHeadingCell name={'Weight'} />
+            },
+            {
+                accessorKey: 'trigger_count',
+                accessorFn: (originalRow) => originalRow.trigger_count,
+                cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>,
+                header: () => <TableHeadingCell name={'Enabled'} />
+            }
+        ],
+        [filters]
+    );
 
     const table = useReactTable({
-        data: filters.data,
+        data: filters,
         columns: columns,
         getCoreRowModel: getCoreRowModel(),
-        manualPagination: true,
-        autoResetPageIndex: true
+        manualPagination: false,
+        autoResetPageIndex: true,
+        enableRowSelection: true,
+        onRowSelectionChange: setRowSelection,
+        onPaginationChange: setPagination,
+        getPaginationRowModel: getPaginationRowModel(),
+        state: {
+            rowSelection,
+            pagination
+        }
     });
 
     return <DataTable table={table} isLoading={isLoading} />;

@@ -552,8 +552,8 @@ func (f *forumHandler) onAPIMessageDelete() gin.HandlerFunc {
 			return
 		}
 
-		messages, count, errMessage := f.fuc.ForumMessages(ctx, domain.ThreadMessagesQueryFilter{ForumThreadID: message.ForumThreadID})
-		if errMessage != nil || count <= 0 {
+		messages, errMessage := f.fuc.ForumMessages(ctx, domain.ThreadMessagesQuery{ForumThreadID: message.ForumThreadID})
+		if errMessage != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
@@ -734,7 +734,7 @@ func (f *forumHandler) onAPIForumThreads() gin.HandlerFunc {
 			return
 		}
 
-		threads, count, errThreads := f.fuc.ForumThreads(ctx, tqf)
+		threads, errThreads := f.fuc.ForumThreads(ctx, tqf)
 		if errThreads != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
@@ -760,7 +760,7 @@ func (f *forumHandler) onAPIForumThreads() gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, domain.NewLazyResult(count, threads))
+		ctx.JSON(http.StatusOK, threads)
 	}
 }
 
@@ -830,12 +830,12 @@ func (f *forumHandler) onAPIForum() gin.HandlerFunc {
 
 func (f *forumHandler) onAPIForumMessages() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var queryFilter domain.ThreadMessagesQueryFilter
+		var queryFilter domain.ThreadMessagesQuery
 		if !httphelper.Bind(ctx, &queryFilter) {
 			return
 		}
 
-		messages, count, errMessages := f.fuc.ForumMessages(ctx, queryFilter)
+		messages, errMessages := f.fuc.ForumMessages(ctx, queryFilter)
 		if errMessages != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
@@ -856,7 +856,7 @@ func (f *forumHandler) onAPIForumMessages() gin.HandlerFunc {
 			}
 		}
 
-		ctx.JSON(http.StatusOK, domain.NewLazyResult(count, messages))
+		ctx.JSON(http.StatusOK, messages)
 	}
 }
 

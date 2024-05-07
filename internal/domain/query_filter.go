@@ -146,8 +146,8 @@ type FiltersQueryFilter struct {
 	QueryFilter
 }
 
-type ThreadMessagesQueryFilter struct {
-	QueryFilter
+type ThreadMessagesQuery struct {
+	Deleted       bool  `json:"deleted,omitempty" uri:"deleted"`
 	ForumThreadID int64 `json:"forum_thread_id"`
 }
 

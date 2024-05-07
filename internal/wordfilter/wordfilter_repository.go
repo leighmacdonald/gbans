@@ -105,25 +105,16 @@ func (r *wordFilterRepository) GetFilterByID(ctx context.Context, filterID int64
 	return filter, nil
 }
 
-func (r *wordFilterRepository) GetFilters(ctx context.Context, opts domain.FiltersQueryFilter) ([]domain.Filter, int64, error) {
+func (r *wordFilterRepository) GetFilters(ctx context.Context) ([]domain.Filter, error) {
 	builder := r.db.
 		Builder().
 		Select("r.filter_id", "r.author_id", "r.pattern", "r.is_regex",
 			"r.is_enabled", "r.trigger_count", "r.created_on", "r.updated_on", "r.action", "r.duration", "r.weight").
 		From("filtered_word r")
 
-	builder = opts.QueryFilter.ApplySafeOrder(builder, map[string][]string{
-		"r.": {
-			"filter_id", "author_id", "pattern", "is_regex", "is_enabled", "trigger_count",
-			"created_on", "updated_on", "action", "duration", "weight",
-		},
-	}, "filter_id")
-
-	builder = opts.QueryFilter.ApplyLimitOffset(builder, domain.MaxResultsDefault)
-
 	rows, errExec := r.db.QueryBuilder(ctx, builder)
 	if errExec != nil {
-		return nil, 0, r.db.DBErr(errExec)
+		return nil, r.db.DBErr(errExec)
 	}
 
 	defer rows.Close()
@@ -139,7 +130,7 @@ func (r *wordFilterRepository) GetFilters(ctx context.Context, opts domain.Filte
 		if errScan := rows.Scan(&filter.FilterID, &authorID, &filter.Pattern, &filter.IsRegex,
 			&filter.IsEnabled, &filter.TriggerCount, &filter.CreatedOn, &filter.UpdatedOn, &filter.Action,
 			&filter.Duration, &filter.Weight); errScan != nil {
-			return nil, 0, r.db.DBErr(errScan)
+			return nil, r.db.DBErr(errScan)
 		}
 
 		filter.AuthorID = steamid.New(authorID)
@@ -149,15 +140,7 @@ func (r *wordFilterRepository) GetFilters(ctx context.Context, opts domain.Filte
 		filters = append(filters, filter)
 	}
 
-	count, errCount := r.db.GetCount(ctx, r.db.
-		Builder().
-		Select("count(filter_id)").
-		From("filtered_word r"))
-	if errCount != nil {
-		return nil, 0, r.db.DBErr(errCount)
-	}
-
-	return filters, count, nil
+	return filters, nil
 }
 
 func (r *wordFilterRepository) AddMessageFilterMatch(ctx context.Context, messageID int64, filterID int64) error {
