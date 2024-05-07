@@ -22,10 +22,10 @@ import { Paginator } from '../component/Paginator.tsx';
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
-import { makeSteamidValidatorsOptional } from '../component/field/SteamIDField.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
 import { humanFileSize, renderDateTime } from '../util/text.tsx';
+import { makeSteamidValidatorsOptional } from '../util/validator/makeSteamidValidatorsOptional.ts';
 
 const demosSchema = z.object({
     ...commonTableSearchSchema,
@@ -78,7 +78,10 @@ function STV() {
     }, [only_mine, steam_id, userSteamID]);
 
     const { data: demos, isLoading } = useQuery({
-        queryKey: ['demos', { page, rows, map_name, steam_id, sortOrder, sortColumn, selectedSteamID, server_id, only_mine }],
+        queryKey: [
+            'demos',
+            { page, rows, map_name, steam_id, sortOrder, sortColumn, selectedSteamID, server_id, only_mine }
+        ],
         queryFn: async () => {
             return await apiGetDemos({
                 deleted: false,
@@ -181,7 +184,14 @@ function STV() {
                                     name={'steam_id'}
                                     validators={makeSteamidValidatorsOptional()}
                                     children={(props) => {
-                                        return <TextFieldSimple {...props} label={'Steam ID'} fullwidth={true} disabled={steamIdEnabled} />;
+                                        return (
+                                            <TextFieldSimple
+                                                {...props}
+                                                label={'Steam ID'}
+                                                fullwidth={true}
+                                                disabled={steamIdEnabled}
+                                            />
+                                        );
                                     }}
                                 />
                             </Grid>
@@ -204,7 +214,12 @@ function STV() {
                                 <Subscribe
                                     selector={(state) => [state.canSubmit, state.isSubmitting]}
                                     children={([canSubmit, isSubmitting]) => (
-                                        <Buttons canSubmit={canSubmit} isSubmitting={isSubmitting} reset={reset} onClear={clear} />
+                                        <Buttons
+                                            canSubmit={canSubmit}
+                                            isSubmitting={isSubmitting}
+                                            reset={reset}
+                                            onClear={clear}
+                                        />
                                     )}
                                 />
                             </Grid>

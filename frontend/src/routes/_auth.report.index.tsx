@@ -32,7 +32,7 @@ import {
     apiGetReports,
     BanReason,
     BanReasons,
-    banReasonsList,
+    banReasonsCollection,
     CreateReportRequest,
     PlayerProfile,
     ReportStatus,
@@ -50,8 +50,9 @@ import RouterLink from '../component/RouterLink.tsx';
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { MDBodyField } from '../component/_formik/MDBodyField.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
-import { makeSteamidValidators, SteamIDField } from '../component/field/SteamIDField.tsx';
+import { SteamIDField } from '../component/field/SteamIDField.tsx';
 import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
+import { makeSteamidValidators } from '../util/validator/makeSteamidValidators.ts';
 
 const reportSchema = z.object({
     ...commonTableSearchSchema,
@@ -103,7 +104,12 @@ function ReportCreate() {
                                 You are unable to report players while you are currently banned/muted.
                             </Typography>
                             <ButtonGroup sx={{ padding: 2 }}>
-                                <Button component={RouterLink} variant={'contained'} color={'primary'} to={`/ban/${profile().ban_id}`}>
+                                <Button
+                                    component={RouterLink}
+                                    variant={'contained'}
+                                    color={'primary'}
+                                    to={`/ban/${profile().ban_id}`}
+                                >
                                     Appeal Ban
                                 </Button>
                             </ButtonGroup>
@@ -124,8 +130,8 @@ function ReportCreate() {
                     <List>
                         <ListItem>
                             <ListItemText>
-                                Once your report is posted, it will be reviewed by a moderator. If further details are required you will be
-                                notified about it.
+                                Once your report is posted, it will be reviewed by a moderator. If further details are
+                                required you will be notified about it.
                             </ListItemText>
                         </ListItem>
                         <ListItem>
@@ -134,22 +140,24 @@ function ReportCreate() {
                                 <Link component={RouterLink} to={'/stv'}>
                                     here
                                 </Link>
-                                . Once you find the recording you want, you may select the report icon which will open a new report with the
-                                demo attached. From there you will optionally be able to enter a specific tick if you have one.
+                                . Once you find the recording you want, you may select the report icon which will open a
+                                new report with the demo attached. From there you will optionally be able to enter a
+                                specific tick if you have one.
                             </ListItemText>
                         </ListItem>
                         <ListItem>
                             <ListItemText>
-                                Reports that are made in bad faith, or otherwise are considered to be trolling will be closed, and the
-                                reporter will be banned.
+                                Reports that are made in bad faith, or otherwise are considered to be trolling will be
+                                closed, and the reporter will be banned.
                             </ListItemText>
                         </ListItem>
 
                         <ListItem>
                             <ListItemText>
-                                Its only possible to open a single report against a particular player. If you wish to add more evidence or
-                                discuss further an existing report, please open the existing report and add it by creating a new message
-                                there. You can see your current report history below.
+                                Its only possible to open a single report against a particular player. If you wish to
+                                add more evidence or discuss further an existing report, please open the existing report
+                                and add it by creating a new message there. You can see your current report history
+                                below.
                             </ListItemText>
                         </ListItem>
                     </List>
@@ -190,7 +198,12 @@ const UserReportHistory = ({ history, isLoading }: { history: LazyResult<ReportW
             header: () => <TableHeadingCell name={'View'} />,
             cell: (info) => (
                 <ButtonGroup>
-                    <IconButton color={'primary'} component={RouterLink} to={`/report/$reportId`} params={{ reportId: info.getValue() }}>
+                    <IconButton
+                        color={'primary'}
+                        component={RouterLink}
+                        to={`/report/$reportId`}
+                        params={{ reportId: info.getValue() }}
+                    >
                         <Tooltip title={'View'}>
                             <VisibilityIcon />
                         </Tooltip>
@@ -287,7 +300,12 @@ export const ReportCreateForm = (): JSX.Element => {
     // );
 
     return (
-        <ContainerWithHeader title={'Create a New Report'} iconLeft={<EditNotificationsIcon />} spacing={2} marginTop={3}>
+        <ContainerWithHeader
+            title={'Create a New Report'}
+            iconLeft={<EditNotificationsIcon />}
+            spacing={2}
+            marginTop={3}
+        >
             <form
                 onSubmit={async (e) => {
                     e.preventDefault();
@@ -334,13 +352,15 @@ export const ReportCreateForm = (): JSX.Element => {
                                                 onBlur={handleBlur}
                                                 error={state.meta.touchedErrors.length > 0}
                                             >
-                                                {banReasonsList.map((r) => (
+                                                {banReasonsCollection.map((r) => (
                                                     <MenuItem value={r} key={`reason-${r}`}>
                                                         {BanReasons[r]}
                                                     </MenuItem>
                                                 ))}
                                             </Select>
-                                            {state.meta.touchedErrors.length > 0 && <FormHelperText>Error</FormHelperText>}
+                                            {state.meta.touchedErrors.length > 0 && (
+                                                <FormHelperText>Error</FormHelperText>
+                                            )}
                                         </FormControl>
                                     </>
                                 );

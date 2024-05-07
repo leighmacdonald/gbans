@@ -87,7 +87,7 @@ export enum Duration {
     durCustom = 'custom'
 }
 
-export const Durations = [
+export const DurationCollection = [
     Duration.dur15m,
     Duration.dur6h,
     Duration.dur12h,
@@ -119,7 +119,7 @@ export const BanReasons: Record<BanReason, string> = {
     [BanReason.Evading]: 'Evading'
 };
 
-export const banReasonsList = [
+export const banReasonsCollection = [
     BanReason.Cheating,
     BanReason.Racism,
     BanReason.Harassment,
@@ -141,6 +141,8 @@ export enum BanType {
     NoComm = 1,
     Banned = 2
 }
+
+export const BanTypeCollection = [BanType.OK, BanType.NoComm, BanType.Banned];
 
 export const banTypeString = (bt: BanType) => {
     switch (bt) {
@@ -171,13 +173,13 @@ export interface BanBase extends TimeStamped {
     target_avatarhash: string;
 }
 
-export interface SteamBanRecord extends BanBase {
+export type SteamBanRecord = {
     ban_id: number;
     report_id: number;
     ban_type: BanType;
     include_friends: boolean;
     evade_ok: boolean;
-}
+} & BanBase;
 
 export interface GroupBanRecord extends BanBase {
     ban_group_id: number;
@@ -231,7 +233,12 @@ export interface BanPayloadGroup extends BanBasePayload {
 }
 
 export const apiGetBansSteam = async (opts: BanSteamQueryFilter, abortController?: AbortController) => {
-    const resp = await apiCall<LazyResult<SteamBanRecord>, BanSteamQueryFilter>(`/api/bans/steam`, 'POST', opts, abortController);
+    const resp = await apiCall<LazyResult<SteamBanRecord>, BanSteamQueryFilter>(
+        `/api/bans/steam`,
+        'POST',
+        opts,
+        abortController
+    );
     resp.data = resp.data.map(applyDateTime);
 
     return resp;
@@ -250,7 +257,12 @@ export function applyDateTime<T>(row: T & TimeStamped) {
 }
 
 export const apiGetBanSteam = async (ban_id: number, deleted = false, abortController?: AbortController) => {
-    const resp = await apiCall<SteamBanRecord>(`/api/bans/steam/${ban_id}?deleted=${deleted}`, 'GET', undefined, abortController);
+    const resp = await apiCall<SteamBanRecord>(
+        `/api/bans/steam/${ban_id}?deleted=${deleted}`,
+        'GET',
+        undefined,
+        abortController
+    );
 
     return resp ? transformTimeStampedDates(resp) : undefined;
 };
@@ -262,7 +274,12 @@ export interface AppealQueryFilter extends QueryFilter<SteamBanRecord> {
 }
 
 export const apiGetAppeals = async (opts: AppealQueryFilter, abortController?: AbortController) => {
-    const appeals = await apiCall<LazyResult<SteamBanRecord>, AppealQueryFilter>(`/api/appeals`, 'POST', opts, abortController);
+    const appeals = await apiCall<LazyResult<SteamBanRecord>, AppealQueryFilter>(
+        `/api/appeals`,
+        'POST',
+        opts,
+        abortController
+    );
     appeals.data = appeals.data.map(applyDateTime);
     return appeals;
 };
@@ -284,7 +301,10 @@ export const apiUpdateBanSteam = async (
         evade_ok: boolean;
         ban_type: BanType;
     }
-) => transformTimeStampedDates(await apiCall<SteamBanRecord, UpdateBanPayload>(`/api/bans/steam/${ban_id}`, 'POST', payload));
+) =>
+    transformTimeStampedDates(
+        await apiCall<SteamBanRecord, UpdateBanPayload>(`/api/bans/steam/${ban_id}`, 'POST', payload)
+    );
 
 export const apiCreateBanCIDR = async (payload: BanPayloadCIDR) =>
     transformTimeStampedDates(await apiCall<CIDRBanRecord, BanPayloadCIDR>(`/api/bans/cidr/create`, 'POST', payload));
@@ -295,7 +315,10 @@ export const apiUpdateBanCIDR = async (
         cidr: string;
         target_id: string;
     }
-) => transformTimeStampedDates(await apiCall<CIDRBanRecord, UpdateBanPayload>(`/api/bans/cidr/${ban_id}`, 'POST', payload));
+) =>
+    transformTimeStampedDates(
+        await apiCall<CIDRBanRecord, UpdateBanPayload>(`/api/bans/cidr/${ban_id}`, 'POST', payload)
+    );
 export const apiCreateBanASN = async (payload: BanPayloadASN) =>
     transformTimeStampedDates(await apiCall<ASNBanRecord, BanPayloadASN>(`/api/bans/asn/create`, 'POST', payload));
 
@@ -311,7 +334,9 @@ export const apiUpdateBanASN = async (asn: number, payload: UpdateBanASNPayload)
     await apiCall<ASNBanRecord, UpdateBanASNPayload>(`/api/bans/asn/${asn}`, 'POST', payload);
 
 export const apiCreateBanGroup = async (payload: BanPayloadGroup) =>
-    transformTimeStampedDates(await apiCall<GroupBanRecord, BanPayloadGroup>(`/api/bans/group/create`, 'POST', payload));
+    transformTimeStampedDates(
+        await apiCall<GroupBanRecord, BanPayloadGroup>(`/api/bans/group/create`, 'POST', payload)
+    );
 
 interface UpdateBanGroupPayload {
     target_id: string;
@@ -347,7 +372,8 @@ export const apiUpdateBanMessage = async (ban_message_id: number, message: strin
         body_md: message
     });
 
-export const apiDeleteBanMessage = async (ban_message_id: number) => await apiCall(`/api/bans/message/${ban_message_id}`, 'DELETE', {});
+export const apiDeleteBanMessage = async (ban_message_id: number) =>
+    await apiCall(`/api/bans/message/${ban_message_id}`, 'DELETE', {});
 
 export const apiGetBansCIDR = async (opts: BanCIDRQueryFilter, abortController?: AbortController) => {
     const resp = await apiCall<LazyResult<CIDRBanRecord>>('/api/bans/cidr', 'POST', opts, abortController);
@@ -401,4 +427,5 @@ export interface sbBanRecord {
     created_on: string;
 }
 
-export const apiGetSourceBans = async (steam_id: string) => await apiCall<sbBanRecord[]>(`/api/sourcebans/${steam_id}`, 'GET');
+export const apiGetSourceBans = async (steam_id: string) =>
+    await apiCall<sbBanRecord[]>(`/api/sourcebans/${steam_id}`, 'GET');

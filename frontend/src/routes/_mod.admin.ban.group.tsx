@@ -21,11 +21,11 @@ import { TableCellRelativeDateField } from '../component/TableCellRelativeDateFi
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
-import { makeSteamidValidatorsOptional } from '../component/field/SteamIDField.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { commonTableSearchSchema, isPermanentBan, LazyResult, RowsPerPage } from '../util/table.ts';
 import { renderDate } from '../util/text.tsx';
 import { emptyOrNullString } from '../util/types.ts';
+import { makeSteamidValidatorsOptional } from '../util/validator/makeSteamidValidatorsOptional.ts';
 
 const sourceIDValidator = z.string().optional();
 const targetIDValidator = z.string().optional();
@@ -128,7 +128,13 @@ function AdminBanGroup() {
                                         name={'source_id'}
                                         validators={makeSteamidValidatorsOptional()}
                                         children={(props) => {
-                                            return <TextFieldSimple {...props} label={'Author Steam ID'} fullwidth={true} />;
+                                            return (
+                                                <TextFieldSimple
+                                                    {...props}
+                                                    label={'Author Steam ID'}
+                                                    fullwidth={true}
+                                                />
+                                            );
                                         }}
                                     />
                                 </Grid>
@@ -138,7 +144,9 @@ function AdminBanGroup() {
                                     name={'target_id'}
                                     validators={makeSteamidValidatorsOptional()}
                                     children={(props) => {
-                                        return <TextFieldSimple {...props} label={'Subject Steam ID'} fullwidth={true} />;
+                                        return (
+                                            <TextFieldSimple {...props} label={'Subject Steam ID'} fullwidth={true} />
+                                        );
                                     }}
                                 />
                             </Grid>
@@ -168,7 +176,12 @@ function AdminBanGroup() {
                                 <Subscribe
                                     selector={(state) => [state.canSubmit, state.isSubmitting]}
                                     children={([canSubmit, isSubmitting]) => (
-                                        <Buttons reset={reset} canSubmit={canSubmit} isSubmitting={isSubmitting} onClear={clear} />
+                                        <Buttons
+                                            reset={reset}
+                                            canSubmit={canSubmit}
+                                            isSubmitting={isSubmitting}
+                                            onClear={clear}
+                                        />
                                     )}
                                 />
                             </Grid>

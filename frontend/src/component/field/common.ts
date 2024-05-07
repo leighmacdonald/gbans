@@ -8,4 +8,6 @@ export type FieldProps<T = string> = {
     handleBlur: () => void;
     readonly fullwidth?: boolean;
     onChange?: (value: T) => void;
+    multiline?: boolean;
+    rows?: number;
 };

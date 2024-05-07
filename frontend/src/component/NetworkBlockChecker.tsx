@@ -9,7 +9,6 @@ import { apiCIDRBlockCheck, CIDRBlockCheckResponse } from '../api';
 import { logErr } from '../util/errors';
 import { ipFieldValidator } from '../util/validators';
 import { VCenterBox } from './VCenterBox';
-import { IPField } from './formik/IPField';
 import { SubmitButton } from './modal/Buttons';
 
 interface NetworkBlockCheckerValues {
@@ -32,7 +31,11 @@ export const NetworkBlockChecker = () => {
     }, []);
 
     return (
-        <Formik<NetworkBlockCheckerValues> initialValues={{ ip: '' }} onSubmit={onSubmit} validationSchema={validationSchema}>
+        <Formik<NetworkBlockCheckerValues>
+            initialValues={{ ip: '' }}
+            onSubmit={onSubmit}
+            validationSchema={validationSchema}
+        >
             <Grid container spacing={1}>
                 <Grid xs={12}>
                     <Typography variant={'body2'} padding={1}>
