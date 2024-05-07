@@ -12,7 +12,14 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
-import { apiGetAppeals, AppealState, AppealStateCollection, appealStateString, BanReasons, SteamBanRecord } from '../api';
+import {
+    apiGetAppeals,
+    AppealState,
+    AppealStateCollection,
+    appealStateString,
+    BanReasons,
+    SteamBanRecord
+} from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { DataTable } from '../component/DataTable.tsx';
 import { Paginator } from '../component/Paginator.tsx';
@@ -21,14 +28,16 @@ import RouterLink from '../component/RouterLink.tsx';
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { SelectFieldSimple } from '../component/field/SelectFieldSimple.tsx';
-import { makeSteamidValidatorsOptional } from '../component/field/SteamIDField.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
+import { makeSteamidValidatorsOptional } from '../util/validator/makeSteamidValidatorsOptional.ts';
 
 const appealSearchSchema = z.object({
     ...commonTableSearchSchema,
-    sortColumn: z.enum(['report_id', 'source_id', 'target_id', 'appeal_state', 'reason', 'created_on', 'updated_on']).optional(),
+    sortColumn: z
+        .enum(['report_id', 'source_id', 'target_id', 'appeal_state', 'reason', 'created_on', 'updated_on'])
+        .optional(),
     source_id: z.string().optional(),
     target_id: z.string().optional(),
     appeal_state: z.nativeEnum(AppealState).optional()
@@ -131,7 +140,9 @@ function AdminAppeals() {
                                     name={'source_id'}
                                     validators={makeSteamidValidatorsOptional()}
                                     children={(props) => {
-                                        return <TextFieldSimple {...props} label={'Author Steam ID'} fullwidth={true} />;
+                                        return (
+                                            <TextFieldSimple {...props} label={'Author Steam ID'} fullwidth={true} />
+                                        );
                                     }}
                                 />
                             </Grid>
@@ -141,7 +152,9 @@ function AdminAppeals() {
                                     name={'target_id'}
                                     validators={makeSteamidValidatorsOptional()}
                                     children={(props) => {
-                                        return <TextFieldSimple {...props} label={'Subject Steam ID'} fullwidth={true} />;
+                                        return (
+                                            <TextFieldSimple {...props} label={'Subject Steam ID'} fullwidth={true} />
+                                        );
                                     }}
                                 />
                             </Grid>
@@ -172,7 +185,12 @@ function AdminAppeals() {
                                 <Subscribe
                                     selector={(state) => [state.canSubmit, state.isSubmitting]}
                                     children={([canSubmit, isSubmitting]) => (
-                                        <Buttons reset={reset} canSubmit={canSubmit} isSubmitting={isSubmitting} onClear={clear} />
+                                        <Buttons
+                                            reset={reset}
+                                            canSubmit={canSubmit}
+                                            isSubmitting={isSubmitting}
+                                            onClear={clear}
+                                        />
                                     )}
                                 />
                             </Grid>

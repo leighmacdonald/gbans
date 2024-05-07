@@ -1,4 +1,5 @@
 import ClearIcon from '@mui/icons-material/Clear';
+import CloseIcon from '@mui/icons-material/Close';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SendIcon from '@mui/icons-material/Send';
 import Button from '@mui/material/Button';
@@ -13,7 +14,9 @@ type ButtonProps = {
     resetLabel?: string;
     clearLabel?: string;
     showClear?: boolean;
+    closeLabel?: string;
     onClear?: () => Promise<void>;
+    onClose?: () => Promise<void>;
 };
 
 export const Buttons = ({
@@ -24,16 +27,30 @@ export const Buttons = ({
     submitLabel = 'Submit',
     resetLabel = 'Reset',
     clearLabel = 'Clear',
-    showClear = false
+    closeLabel = 'Close',
+    showClear = false,
+    onClose
 }: ButtonProps) => {
     const navigate = useNavigate();
 
     return (
         <ButtonGroup>
-            <Button type="submit" disabled={!canSubmit} variant={'contained'} color={'success'} startIcon={<SendIcon />}>
+            <Button
+                type="submit"
+                disabled={!canSubmit}
+                variant={'contained'}
+                color={'success'}
+                startIcon={<SendIcon />}
+            >
                 {isSubmitting ? '...' : submitLabel}
             </Button>
-            <Button type="reset" onClick={() => reset()} variant={'contained'} color={'warning'} startIcon={<RestartAltIcon />}>
+            <Button
+                type="reset"
+                onClick={() => reset()}
+                variant={'contained'}
+                color={'warning'}
+                startIcon={<RestartAltIcon />}
+            >
                 {resetLabel}
             </Button>
             {showClear ||
@@ -66,6 +83,11 @@ export const Buttons = ({
                         {clearLabel}
                     </Button>
                 ))}
+            {onClose && (
+                <Button onClick={onClose} variant={'contained'} color={'error'} startIcon={<CloseIcon />}>
+                    {closeLabel}
+                </Button>
+            )}
         </ButtonGroup>
     );
 };

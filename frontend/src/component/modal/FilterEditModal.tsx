@@ -36,7 +36,6 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
     const mutation = useMutation({
         mutationKey: ['filters'],
         mutationFn: async (values: FilterEditFormValues) => {
-            console.log(values);
             if (filter?.filter_id) {
                 return await apiEditFilter(filter?.filter_id, {
                     is_enabled: values.is_enabled,
@@ -90,7 +89,6 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
         <Dialog {...muiDialogV5(modal)} fullWidth maxWidth={'md'}>
             <form
                 onSubmit={async (e) => {
-                    console.log('x');
                     e.preventDefault();
                     e.stopPropagation();
                     await handleSubmit();

@@ -19,10 +19,10 @@ import { Paginator } from '../component/Paginator.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
-import { makeSteamidValidatorsOptional } from '../component/field/SteamIDField.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
 import { renderDate, renderDateTime } from '../util/text.tsx';
+import { makeSteamidValidatorsOptional } from '../util/validator/makeSteamidValidatorsOptional.ts';
 
 const peopleSearchSchema = z.object({
     ...commonTableSearchSchema,
@@ -137,7 +137,12 @@ function AdminPeople() {
                                 <Subscribe
                                     selector={(state) => [state.canSubmit, state.isSubmitting]}
                                     children={([canSubmit, isSubmitting]) => (
-                                        <Buttons reset={reset} canSubmit={canSubmit} isSubmitting={isSubmitting} onClear={clear} />
+                                        <Buttons
+                                            reset={reset}
+                                            canSubmit={canSubmit}
+                                            isSubmitting={isSubmitting}
+                                            onClear={clear}
+                                        />
                                     )}
                                 />
                             </Grid>
@@ -161,7 +166,15 @@ function AdminPeople() {
 
 const columnHelper = createColumnHelper<Person>();
 
-const PeopleTable = ({ people, isLoading, isAdmin }: { people: LazyResult<Person>; isLoading: boolean; isAdmin: boolean }) => {
+const PeopleTable = ({
+    people,
+    isLoading,
+    isAdmin
+}: {
+    people: LazyResult<Person>;
+    isLoading: boolean;
+    isAdmin: boolean;
+}) => {
     const columns = [
         columnHelper.accessor('steam_id', {
             header: () => <TableHeadingCell name={'View'} />,
@@ -177,7 +190,9 @@ const PeopleTable = ({ people, isLoading, isAdmin }: { people: LazyResult<Person
             header: () => <TableHeadingCell name={'Profile'} />,
             cell: (info) => {
                 return (
-                    <Typography variant={'body1'}>{info.getValue() == communityVisibilityState.Public ? 'Public' : 'Private'}</Typography>
+                    <Typography variant={'body1'}>
+                        {info.getValue() == communityVisibilityState.Public ? 'Public' : 'Private'}
+                    </Typography>
                 );
             }
         }),

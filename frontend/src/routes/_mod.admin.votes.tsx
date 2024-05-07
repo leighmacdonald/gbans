@@ -17,10 +17,10 @@ import { PersonCell } from '../component/PersonCell.tsx';
 import { TableCellBool } from '../component/TableCellBool.tsx';
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
-import { makeSteamidValidatorsOptional } from '../component/field/SteamIDField.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
+import { makeSteamidValidatorsOptional } from '../util/validator/makeSteamidValidatorsOptional.ts';
 
 const votesSearchSchema = z.object({
     ...commonTableSearchSchema,
@@ -92,7 +92,9 @@ function AdminVotes() {
                                     name={'source_id'}
                                     validators={makeSteamidValidatorsOptional()}
                                     children={(props) => {
-                                        return <TextFieldSimple {...props} label={'Initiator Steam ID'} fullwidth={true} />;
+                                        return (
+                                            <TextFieldSimple {...props} label={'Initiator Steam ID'} fullwidth={true} />
+                                        );
                                     }}
                                 />
                             </Grid>
@@ -102,7 +104,9 @@ function AdminVotes() {
                                     name={'target_id'}
                                     validators={makeSteamidValidatorsOptional()}
                                     children={(props) => {
-                                        return <TextFieldSimple {...props} label={'Target Steam ID'} fullwidth={true} />;
+                                        return (
+                                            <TextFieldSimple {...props} label={'Target Steam ID'} fullwidth={true} />
+                                        );
                                     }}
                                 />
                             </Grid>
@@ -111,7 +115,12 @@ function AdminVotes() {
                                 <Subscribe
                                     selector={(state) => [state.canSubmit, state.isSubmitting]}
                                     children={([canSubmit, isSubmitting]) => (
-                                        <Buttons reset={reset} canSubmit={canSubmit} isSubmitting={isSubmitting} onClear={clear} />
+                                        <Buttons
+                                            reset={reset}
+                                            canSubmit={canSubmit}
+                                            isSubmitting={isSubmitting}
+                                            onClear={clear}
+                                        />
                                     )}
                                 />
                             </Grid>

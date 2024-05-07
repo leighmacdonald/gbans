@@ -11,8 +11,9 @@ import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { IPHistoryTable } from '../component/IPHistoryTable.tsx';
 import { Paginator } from '../component/Paginator.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
-import { makeSteamidValidators, SteamIDField } from '../component/field/SteamIDField.tsx';
+import { SteamIDField } from '../component/field/SteamIDField.tsx';
 import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
+import { makeSteamidValidators } from '../util/validator/makeSteamidValidators.ts';
 
 const ipHistorySearchSchema = z.object({
     ...commonTableSearchSchema,
@@ -95,7 +96,12 @@ function AdminNetworkPlayerIPHistory() {
                                 <Subscribe
                                     selector={(state) => [state.canSubmit, state.isSubmitting]}
                                     children={([canSubmit, isSubmitting]) => (
-                                        <Buttons reset={reset} canSubmit={canSubmit} isSubmitting={isSubmitting} onClear={clear} />
+                                        <Buttons
+                                            reset={reset}
+                                            canSubmit={canSubmit}
+                                            isSubmitting={isSubmitting}
+                                            onClear={clear}
+                                        />
                                     )}
                                 />
                             </Grid>
@@ -106,7 +112,12 @@ function AdminNetworkPlayerIPHistory() {
             <Grid xs={12}>
                 <ContainerWithHeader title="Player IP History" iconLeft={<SensorOccupiedIcon />}>
                     <IPHistoryTable connections={connections ?? { data: [], count: 0 }} isLoading={isLoading} />
-                    <Paginator page={page ?? 0} rows={rows ?? defaultRows} data={connections} path={'/admin/network/iphist'} />
+                    <Paginator
+                        page={page ?? 0}
+                        rows={rows ?? defaultRows}
+                        data={connections}
+                        path={'/admin/network/iphist'}
+                    />
                 </ContainerWithHeader>
             </Grid>
             ;

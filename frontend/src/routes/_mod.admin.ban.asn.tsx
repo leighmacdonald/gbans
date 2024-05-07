@@ -21,14 +21,16 @@ import { TableCellRelativeDateField } from '../component/TableCellRelativeDateFi
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
-import { makeSteamidValidatorsOptional } from '../component/field/SteamIDField.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { commonTableSearchSchema, isPermanentBan, LazyResult, RowsPerPage } from '../util/table.ts';
 import { renderDate } from '../util/text.tsx';
+import { makeSteamidValidatorsOptional } from '../util/validator/makeSteamidValidatorsOptional.ts';
 
 const banASNSearchSchema = z.object({
     ...commonTableSearchSchema,
-    sortColumn: z.enum(['ban_asn_id', 'source_id', 'target_id', 'deleted', 'reason', 'as_num', 'valid_until']).optional(),
+    sortColumn: z
+        .enum(['ban_asn_id', 'source_id', 'target_id', 'deleted', 'reason', 'as_num', 'valid_until'])
+        .optional(),
     source_id: z.string().optional(),
     target_id: z.string().optional(),
     as_num: z.string().optional(),
@@ -80,7 +82,13 @@ function AdminBanASN() {
     const clear = async () => {
         await navigate({
             to: '/admin/ban/asn',
-            search: (prev) => ({ ...prev, source_id: undefined, target_id: undefined, as_num: undefined, deleted: undefined })
+            search: (prev) => ({
+                ...prev,
+                source_id: undefined,
+                target_id: undefined,
+                as_num: undefined,
+                deleted: undefined
+            })
         });
     };
 
@@ -116,7 +124,13 @@ function AdminBanASN() {
                                         name={'source_id'}
                                         validators={makeSteamidValidatorsOptional()}
                                         children={(props) => {
-                                            return <TextFieldSimple {...props} label={'Author Steam ID'} fullwidth={true} />;
+                                            return (
+                                                <TextFieldSimple
+                                                    {...props}
+                                                    label={'Author Steam ID'}
+                                                    fullwidth={true}
+                                                />
+                                            );
                                         }}
                                     />
                                 </Grid>
@@ -126,7 +140,9 @@ function AdminBanASN() {
                                     name={'target_id'}
                                     validators={makeSteamidValidatorsOptional()}
                                     children={(props) => {
-                                        return <TextFieldSimple {...props} label={'Subject Steam ID'} fullwidth={true} />;
+                                        return (
+                                            <TextFieldSimple {...props} label={'Subject Steam ID'} fullwidth={true} />
+                                        );
                                     }}
                                 />
                             </Grid>
@@ -153,7 +169,12 @@ function AdminBanASN() {
                                 <Subscribe
                                     selector={(state) => [state.canSubmit, state.isSubmitting]}
                                     children={([canSubmit, isSubmitting]) => (
-                                        <Buttons reset={reset} canSubmit={canSubmit} isSubmitting={isSubmitting} onClear={clear} />
+                                        <Buttons
+                                            reset={reset}
+                                            canSubmit={canSubmit}
+                                            isSubmitting={isSubmitting}
+                                            onClear={clear}
+                                        />
                                     )}
                                 />
                             </Grid>

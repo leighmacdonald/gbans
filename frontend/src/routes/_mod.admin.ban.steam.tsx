@@ -1,3 +1,4 @@
+import NiceModal from '@ebay/nice-modal-react';
 import AddIcon from '@mui/icons-material/Add';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import GavelIcon from '@mui/icons-material/Gavel';
@@ -7,7 +8,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { z } from 'zod';
@@ -34,12 +35,15 @@ import { Buttons } from '../component/field/Buttons.tsx';
 import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
 import { SelectFieldSimple } from '../component/field/SelectFieldSimple.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
+import { ModalBanSteam } from '../component/modal';
 import { commonTableSearchSchema, isPermanentBan, LazyResult, RowsPerPage } from '../util/table.ts';
 import { renderDate } from '../util/text.tsx';
 
 const banSteamSearchSchema = z.object({
     ...commonTableSearchSchema,
-    sortColumn: z.enum(['ban_id', 'source_id', 'target_id', 'deleted', 'reason', 'created_on', 'valid_until', 'appeal_state']).optional(),
+    sortColumn: z
+        .enum(['ban_id', 'source_id', 'target_id', 'deleted', 'reason', 'created_on', 'valid_until', 'appeal_state'])
+        .optional(),
     source_id: z.string().optional(),
     target_id: z.string().optional(),
     reason: z.nativeEnum(BanReason).optional(),
@@ -54,6 +58,7 @@ export const Route = createFileRoute('/_mod/admin/ban/steam')({
 
 function AdminBanSteam() {
     const defaultRows = RowsPerPage.TwentyFive;
+    const queryClient = useQueryClient();
     const { hasPermission } = Route.useRouteContext();
     const navigate = useNavigate({ from: Route.fullPath });
     const { page, rows, sortOrder, sortColumn, target_id, source_id, appeal_state, deleted } = Route.useSearch();
@@ -75,17 +80,16 @@ function AdminBanSteam() {
     // const [newSteamBans, setNewSteamBans] = useState<SteamBanRecord[]>([]);
     // const { sendFlash } = useUserFlashCtx();
     //
-    // const onNewBanSteam = useCallback(async () => {
-    //     try {
-    //         const ban = await NiceModal.show<SteamBanRecord>(ModalBanSteam, {});
-    //         setNewSteamBans((prevState) => {
-    //             return [ban, ...prevState];
-    //         });
-    //         sendFlash('success', `Created steam ban successfully #${ban.ban_id}`);
-    //     } catch (e) {
-    //         logErr(e);
-    //     }
-    // }, [sendFlash]);
+    const onNewBanSteam = async () => {
+        const ban = await NiceModal.show<SteamBanRecord>(ModalBanSteam, {});
+        queryClient.setQueryData(
+            ['steamBans', { page, rows, sortOrder, sortColumn, target_id, source_id, appeal_state }],
+            { data: [...(bans?.data ?? []), ban], count: (bans?.count ?? 0) + 1 }
+        );
+        // setNewSteamBans((prevState) => {
+        //     return [ban, ...prevState];
+        // });
+    };
 
     // const onUnbanSteam = useCallback(
     //     async (ban: SteamBanRecord) => {
@@ -154,7 +158,13 @@ function AdminBanSteam() {
                                     <Field
                                         name={'source_id'}
                                         children={(props) => {
-                                            return <TextFieldSimple {...props} label={'Author Steam ID'} fullwidth={true} />;
+                                            return (
+                                                <TextFieldSimple
+                                                    {...props}
+                                                    label={'Author Steam ID'}
+                                                    fullwidth={true}
+                                                />
+                                            );
                                         }}
                                     />
                                 </Grid>
@@ -163,7 +173,9 @@ function AdminBanSteam() {
                                 <Field
                                     name={'target_id'}
                                     children={(props) => {
-                                        return <TextFieldSimple {...props} label={'Subject Steam ID'} fullwidth={true} />;
+                                        return (
+                                            <TextFieldSimple {...props} label={'Subject Steam ID'} fullwidth={true} />
+                                        );
                                     }}
                                 />
                             </Grid>
@@ -179,7 +191,10 @@ function AdminBanSteam() {
                                                 items={AppealStateCollection.map((i) => i)}
                                                 renderMenu={(i) => {
                                                     return (
-                                                        <MenuItem value={i} key={`${i}-${appealStateString(Number(i))}`}>
+                                                        <MenuItem
+                                                            value={i}
+                                                            key={`${i}-${appealStateString(Number(i))}`}
+                                                        >
                                                             {appealStateString(Number(i))}
                                                         </MenuItem>
                                                     );
@@ -209,7 +224,12 @@ function AdminBanSteam() {
                                 <Subscribe
                                     selector={(state) => [state.canSubmit, state.isSubmitting]}
                                     children={([canSubmit, isSubmitting]) => (
-                                        <Buttons reset={reset} canSubmit={canSubmit} isSubmitting={isSubmitting} onClear={clear} />
+                                        <Buttons
+                                            reset={reset}
+                                            canSubmit={canSubmit}
+                                            isSubmitting={isSubmitting}
+                                            onClear={clear}
+                                        />
                                     )}
                                 />
                             </Grid>
@@ -229,7 +249,7 @@ function AdminBanSteam() {
                             color={'success'}
                             startIcon={<AddIcon />}
                             sx={{ marginRight: 2 }}
-                            // onClick={onNewBanSteam}
+                            onClick={onNewBanSteam}
                         >
                             Create
                         </Button>
@@ -271,7 +291,12 @@ function AdminBanSteam() {
                             {/*    ]}*/}
                             {/*/>*/}
                             <BanSteamTable bans={bans ?? { data: [], count: 0 }} isLoading={isLoading} />
-                            <Paginator page={page ?? 0} rows={rows ?? defaultRows} data={bans} path={'/admin/ban/steam'} />
+                            <Paginator
+                                page={page ?? 0}
+                                rows={rows ?? defaultRows}
+                                data={bans}
+                                path={'/admin/ban/steam'}
+                            />
                         </Grid>
                     </Grid>
                     {/*</Formik>*/}
