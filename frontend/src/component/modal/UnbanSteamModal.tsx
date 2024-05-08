@@ -75,21 +75,25 @@ export const UnbanSteamModal = NiceModal.create(({ banId, personaName }: UnbanMo
                 </DialogContent>
 
                 <DialogActions>
-                    <Subscribe
-                        selector={(state) => [state.canSubmit, state.isSubmitting]}
-                        children={([canSubmit, isSubmitting]) => {
-                            return (
-                                <Buttons
-                                    reset={reset}
-                                    canSubmit={canSubmit}
-                                    isSubmitting={isSubmitting}
-                                    onClose={async () => {
-                                        await modal.hide();
-                                    }}
-                                />
-                            );
-                        }}
-                    />
+                    <Grid container>
+                        <Grid xs={12}>
+                            <Subscribe
+                                selector={(state) => [state.canSubmit, state.isSubmitting]}
+                                children={([canSubmit, isSubmitting]) => {
+                                    return (
+                                        <Buttons
+                                            reset={reset}
+                                            canSubmit={canSubmit}
+                                            isSubmitting={isSubmitting}
+                                            onClose={async () => {
+                                                await modal.hide();
+                                            }}
+                                        />
+                                    );
+                                }}
+                            />
+                        </Grid>
+                    </Grid>
                 </DialogActions>
             </form>
         </Dialog>
