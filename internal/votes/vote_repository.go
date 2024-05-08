@@ -20,12 +20,12 @@ func NewVoteRepository(database database.Database) domain.VoteRepository {
 func (r voteRepository) Query(ctx context.Context, filter domain.VoteQueryFilter) ([]domain.VoteResult, int64, error) {
 	var constraints sq.And
 
-	if filter.SourceSID.Valid() {
-		constraints = append(constraints, sq.Eq{"source_id": filter.SourceSID.Int64()})
+	if sid, ok := filter.SourceIDField.SourceSteamID(ctx); ok {
+		constraints = append(constraints, sq.Eq{"source_id": sid.Int64()})
 	}
 
-	if filter.TargetSID.Valid() {
-		constraints = append(constraints, sq.Eq{"target_id": filter.TargetSID.Int64()})
+	if sid, ok := filter.TargetIDField.TargetSteamID(ctx); ok {
+		constraints = append(constraints, sq.Eq{"target_id": sid.Int64()})
 	}
 
 	if filter.ServerID > 0 {

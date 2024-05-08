@@ -64,7 +64,23 @@ func (h personHandler) onAPIPutPlayerPermission() gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, gin.H{})
+		person, errPerson := h.pu.GetPersonBySteamID(ctx, steamID)
+		if errPerson != nil {
+			httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrBadRequest)
+
+			return
+		}
+
+		// todo move logic to usecase
+		person.PermissionLevel = req.PermissionLevel
+
+		if errSave := h.pu.SavePerson(ctx, &person); errSave != nil {
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrBadRequest)
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, person)
 
 		slog.Info("Player permission updated",
 			slog.Int64("steam_id", steamID.Int64()),
