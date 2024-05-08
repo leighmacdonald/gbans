@@ -8,86 +8,92 @@ import { z } from 'zod';
 import { apiDeleteCIDRBan } from '../../api';
 import { Buttons } from '../field/Buttons.tsx';
 import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
-import { UnbanModalProps } from './UnbanSteamModal';
 
-export const UnbanCIDRModal = NiceModal.create(({ banId }: UnbanModalProps) => {
-    const modal = useModal();
+export const UnbanCIDRModal = NiceModal.create(
+    ({
+        banId
+    }: {
+        banId: number; // common placeholder for any primary key id for a ban
+        personaName?: string;
+    }) => {
+        const modal = useModal();
 
-    const mutation = useMutation({
-        mutationKey: ['deleteCIDRBan', { banId }],
-        mutationFn: async (unban_reason: string) => {
-            await apiDeleteCIDRBan(banId, unban_reason);
-        },
-        onSuccess: async () => {
-            modal.resolve();
-            await modal.hide();
-        },
-        onError: (error) => {
-            modal.reject(error);
-        }
-    });
+        const mutation = useMutation({
+            mutationKey: ['deleteCIDRBan', { banId }],
+            mutationFn: async (unban_reason: string) => {
+                await apiDeleteCIDRBan(banId, unban_reason);
+            },
+            onSuccess: async () => {
+                modal.resolve();
+                await modal.hide();
+            },
+            onError: (error) => {
+                modal.reject(error);
+            }
+        });
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
-        onSubmit: async ({ value }) => {
-            mutation.mutate(value.unban_reason);
-        },
-        validatorAdapter: zodValidator,
-        defaultValues: {
-            unban_reason: ''
-        }
-    });
+        const { Field, Subscribe, handleSubmit, reset } = useForm({
+            onSubmit: async ({ value }) => {
+                mutation.mutate(value.unban_reason);
+            },
+            validatorAdapter: zodValidator,
+            defaultValues: {
+                unban_reason: ''
+            }
+        });
 
-    return (
-        <Dialog {...muiDialogV5(modal)}>
-            <form
-                onSubmit={async (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    await handleSubmit();
-                }}
-            >
-                <DialogTitle>Unban CIDR (#{banId})</DialogTitle>
+        return (
+            <Dialog {...muiDialogV5(modal)}>
+                <form
+                    onSubmit={async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        await handleSubmit();
+                    }}
+                >
+                    <DialogTitle>Unban CIDR (#{banId})</DialogTitle>
 
-                <DialogContent>
-                    <Grid container>
-                        <Grid xs={12}>
-                            <Field
-                                name={'unban_reason'}
-                                validators={{
-                                    onChange: z.string().min(5)
-                                }}
-                                children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Unban Reason'} />;
-                                }}
-                            />
+                    <DialogContent>
+                        <Grid container>
+                            <Grid xs={12}>
+                                <Field
+                                    name={'unban_reason'}
+                                    validators={{
+                                        onChange: z.string().min(5)
+                                    }}
+                                    children={(props) => {
+                                        return <TextFieldSimple {...props} label={'Unban Reason'} />;
+                                    }}
+                                />
+                            </Grid>
                         </Grid>
-                    </Grid>
-                </DialogContent>
+                    </DialogContent>
 
-                <DialogActions>
-                    <Grid container>
-                        <Grid xs={12}>
-                            <Subscribe
-                                selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                children={([canSubmit, isSubmitting]) => {
-                                    return (
-                                        <Buttons
-                                            reset={reset}
-                                            canSubmit={canSubmit}
-                                            isSubmitting={isSubmitting}
-                                            onClose={async () => {
-                                                await modal.hide();
-                                            }}
-                                        />
-                                    );
-                                }}
-                            />
+                    <DialogActions>
+                        <Grid container>
+                            <Grid xs={12}>
+                                <Subscribe
+                                    selector={(state) => [state.canSubmit, state.isSubmitting]}
+                                    children={([canSubmit, isSubmitting]) => {
+                                        return (
+                                            <Buttons
+                                                reset={reset}
+                                                canSubmit={canSubmit}
+                                                isSubmitting={isSubmitting}
+                                                onClose={async () => {
+                                                    await modal.hide();
+                                                }}
+                                            />
+                                        );
+                                    }}
+                                />
+                            </Grid>
                         </Grid>
-                    </Grid>
-                </DialogActions>
-            </form>
-        </Dialog>
-    );
-});
+                    </DialogActions>
+                </form>
+            </Dialog>
+        );
+    }
+);
 
 export default UnbanCIDRModal;

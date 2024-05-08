@@ -11,7 +11,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
-	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type steamgroupHandler struct {
@@ -35,22 +34,29 @@ func NewSteamgroupHandler(engine *gin.Engine, bgu domain.BanGroupUsecase, ath do
 }
 
 func (h steamgroupHandler) onAPIPostBansGroupCreate() gin.HandlerFunc {
-	type apiBanRequest struct {
+	type apiBanGroupRequest struct {
 		domain.TargetIDField
-		GroupID    steamid.SteamID `json:"group_id"`
-		Duration   string          `json:"duration"`
-		Note       string          `json:"note"`
-		ValidUntil time.Time       `json:"valid_until"`
+		domain.TargetGIDField
+		Duration   string    `json:"duration"`
+		Note       string    `json:"note"`
+		ValidUntil time.Time `json:"valid_until"`
 	}
 
 	return func(ctx *gin.Context) {
-		var req apiBanRequest
+		var req apiBanGroupRequest
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
+		groupID, errGroupID := req.TargetGroupID(ctx)
+		if !errGroupID {
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+
+			return
+		}
+
 		var existing domain.BanGroup
-		if errExist := h.bgu.GetByGID(ctx, req.GroupID, &existing); errExist != nil {
+		if errExist := h.bgu.GetByGID(ctx, groupID, &existing); errExist != nil {
 			if !errors.Is(errExist, domain.ErrNoResult) {
 				httphelper.ResponseErr(ctx, http.StatusConflict, domain.ErrDuplicate)
 
@@ -77,7 +83,14 @@ func (h steamgroupHandler) onAPIPostBansGroupCreate() gin.HandlerFunc {
 			return
 		}
 
-		if errBanSteamGroup := domain.NewBanSteamGroup(sid, targetID, duration, req.Note, domain.Web, req.GroupID,
+		groupID, groupIDOk := req.TargetGroupID(ctx)
+		if !groupIDOk {
+			httphelper.ErrorHandled(ctx, domain.ErrTargetID)
+
+			return
+		}
+
+		if errBanSteamGroup := domain.NewBanSteamGroup(sid, targetID, duration, req.Note, domain.Web, groupID,
 			"", domain.Banned, &banSteamGroup); errBanSteamGroup != nil {
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 			slog.Error("Failed to save group ban", log.ErrAttr(errBanSteamGroup))
@@ -159,9 +172,9 @@ func (h steamgroupHandler) onAPIDeleteBansGroup() gin.HandlerFunc {
 
 func (h steamgroupHandler) onAPIPostBansGroupUpdate() gin.HandlerFunc {
 	type apiBanUpdateRequest struct {
-		TargetID   steamid.SteamID `json:"target_id"`
-		Note       string          `json:"note"`
-		ValidUntil time.Time       `json:"valid_until"`
+		domain.TargetIDField
+		Note       string    `json:"note"`
+		ValidUntil time.Time `json:"valid_until"`
 	}
 
 	return func(ctx *gin.Context) {
@@ -177,7 +190,8 @@ func (h steamgroupHandler) onAPIPostBansGroupUpdate() gin.HandlerFunc {
 			return
 		}
 
-		if !req.TargetID.Valid() {
+		targetSID, sidValid := req.TargetSteamID(ctx)
+		if !sidValid {
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
 
 			return
@@ -199,7 +213,7 @@ func (h steamgroupHandler) onAPIPostBansGroupUpdate() gin.HandlerFunc {
 
 		ban.Note = req.Note
 		ban.ValidUntil = req.ValidUntil
-		ban.TargetID = req.TargetID
+		ban.TargetID = targetSID
 
 		if errSave := h.bgu.Save(ctx, &ban); errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)

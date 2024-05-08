@@ -29,6 +29,7 @@ import { Buttons } from '../component/field/Buttons.tsx';
 import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { ModalBanCIDR, ModalUnbanCIDR } from '../component/modal';
+import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { commonTableSearchSchema, isPermanentBan, LazyResult, RowsPerPage } from '../util/table.ts';
 import { renderDate } from '../util/text.tsx';
 
@@ -49,6 +50,7 @@ export const Route = createFileRoute('/_mod/admin/ban/cidr')({
 });
 
 function AdminBanCIDR() {
+    const { sendFlash } = useUserFlashCtx();
     const defaultRows = RowsPerPage.TwentyFive;
     const navigate = useNavigate({ from: Route.fullPath });
     const { page, rows, sortOrder, sortColumn, deleted, cidr, target_id, source_id } = Route.useSearch();
@@ -70,17 +72,14 @@ function AdminBanCIDR() {
     // const [newCIDRBans, setNewCIDRBans] = useState<CIDRBanRecord[]>([]);
     // const { sendFlash } = useUserFlashCtx();
 
-    // const onNewBanCIDR = useCallback(async () => {
-    //     try {
-    //         const ban = await NiceModal.show<CIDRBanRecord>(ModalBanCIDR, {});
-    //         setNewCIDRBans((prevState) => {
-    //             return [ban, ...prevState];
-    //         });
-    //         sendFlash('success', `Created CIDR ban successfully #${ban.net_id}`);
-    //     } catch (e) {
-    //         logErr(e);
-    //     }
-    // }, [sendFlash]);
+    const onNewBanCIDR = async () => {
+        try {
+            const ban = await NiceModal.show<CIDRBanRecord>(ModalBanCIDR, {});
+            sendFlash('success', `Created CIDR ban successfully #${ban.net_id}`);
+        } catch (e) {
+            sendFlash('error', `${e}`);
+        }
+    };
 
     const onUnbanCIDR = async (ban: CIDRBanRecord) => {
         await NiceModal.show(ModalUnbanCIDR, {
@@ -195,7 +194,7 @@ function AdminBanCIDR() {
                             color={'success'}
                             startIcon={<AddIcon />}
                             sx={{ marginRight: 2 }}
-                            // onClick={onNewBanCIDR}
+                            onClick={onNewBanCIDR}
                         >
                             Create
                         </Button>
