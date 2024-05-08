@@ -91,6 +91,32 @@ func (r banASNRepository) GetByASN(ctx context.Context, asNum int64, banASN *dom
 
 	return nil
 }
+func (r banASNRepository) GetByID(ctx context.Context, banID int64, banASN *domain.BanASN) error {
+	const query = `
+		SELECT ban_asn_id, as_num, origin, source_id, target_id, reason_text, valid_until, created_on, updated_on, 
+		       deleted, reason, is_enabled, unban_reason_text, appeal_state
+		FROM ban_asn 
+		WHERE deleted = false AND ban_asn_id = $1`
+
+	var (
+		targetID int64
+		sourceID int64
+	)
+
+	if errQuery := r.db.
+		QueryRow(ctx, query, banID).
+		Scan(&banASN.BanASNId, &banASN.ASNum, &banASN.Origin,
+			&sourceID, &targetID, &banASN.ReasonText, &banASN.ValidUntil, &banASN.CreatedOn,
+			&banASN.UpdatedOn, &banASN.Deleted, &banASN.Reason, &banASN.IsEnabled, &banASN.UnbanReasonText,
+			&banASN.AppealState); errQuery != nil {
+		return r.db.DBErr(errQuery)
+	}
+
+	banASN.TargetID = steamid.New(targetID)
+	banASN.SourceID = steamid.New(sourceID)
+
+	return nil
+}
 
 func (r banASNRepository) Get(ctx context.Context, filter domain.ASNBansQueryFilter) ([]domain.BannedASNPerson, int64, error) {
 	builder := r.db.

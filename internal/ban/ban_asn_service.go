@@ -11,7 +11,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
-	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type banASNHandler struct {
@@ -128,7 +127,7 @@ func (h banASNHandler) onAPIDeleteBansASN() gin.HandlerFunc {
 		}
 
 		var banAsn domain.BanASN
-		if errFetch := h.banASNUsecase.GetByASN(ctx, asnID, &banAsn); errFetch != nil {
+		if errFetch := h.banASNUsecase.GetByID(ctx, asnID, &banAsn); errFetch != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
@@ -152,11 +151,12 @@ func (h banASNHandler) onAPIDeleteBansASN() gin.HandlerFunc {
 
 func (h banASNHandler) onAPIPostBansASNUpdate() gin.HandlerFunc {
 	type apiBanRequest struct {
-		TargetID   steamid.SteamID `json:"target_id"`
-		Note       string          `json:"note"`
-		Reason     domain.Reason   `json:"reason"`
-		ReasonText string          `json:"reason_text"`
-		ValidUntil time.Time       `json:"valid_until"`
+		domain.TargetIDField
+		ASNum      int64         `json:"as_num"`
+		Note       string        `json:"note"`
+		Reason     domain.Reason `json:"reason"`
+		ReasonText string        `json:"reason_text"`
+		ValidUntil time.Time     `json:"valid_until"`
 	}
 
 	return func(ctx *gin.Context) {
@@ -168,7 +168,7 @@ func (h banASNHandler) onAPIPostBansASNUpdate() gin.HandlerFunc {
 		}
 
 		var ban domain.BanASN
-		if errBan := h.banASNUsecase.GetByASN(ctx, asnID, &ban); errBan != nil {
+		if errBan := h.banASNUsecase.GetByID(ctx, asnID, &ban); errBan != nil {
 			if errors.Is(errBan, domain.ErrNoResult) {
 				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
 
@@ -191,15 +191,17 @@ func (h banASNHandler) onAPIPostBansASNUpdate() gin.HandlerFunc {
 			return
 		}
 
-		if !req.TargetID.Valid() {
+		targetID, targetIDOK := req.TargetSteamID(ctx)
+		if !targetIDOK {
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 
 			return
 		}
 
 		ban.Note = req.Note
+		ban.ASNum = req.ASNum
 		ban.ValidUntil = req.ValidUntil
-		ban.TargetID = req.TargetID
+		ban.TargetID = targetID
 		ban.Reason = req.Reason
 		ban.ReasonText = req.ReasonText
 
