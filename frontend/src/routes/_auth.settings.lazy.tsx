@@ -12,9 +12,9 @@ import { z } from 'zod';
 import { apiGetPersonSettings, apiSavePersonSettings, PersonSettings } from '../api';
 import { Accordion, AccordionDetails, AccordionSummary } from '../component/Accordian.tsx';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
-import { MDBodyField } from '../component/_formik/MDBodyField.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
+import { MarkdownField } from '../component/field/MarkdownField.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 
 export const Route = createFileRoute('/_auth/settings')({
@@ -52,7 +52,11 @@ function ProfileSettings() {
 
     const mutation = useMutation({
         mutationFn: async (values: SettingsValues) => {
-            return await apiSavePersonSettings(values.forum_signature, values.forum_profile_messages, values.stats_hidden);
+            return await apiSavePersonSettings(
+                values.forum_signature,
+                values.forum_profile_messages,
+                values.stats_hidden
+            );
         },
         onSuccess: async () => {
             sendFlash('success', 'Updated Settings');
@@ -88,7 +92,11 @@ function ProfileSettings() {
             >
                 <>
                     <Accordion expanded={expanded === 'general'} onChange={handleChange('general')}>
-                        <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="general-content" id="general-header">
+                        <AccordionSummary
+                            expandIcon={<ExpandMoreIcon />}
+                            aria-controls="general-content"
+                            id="general-header"
+                        >
                             <Typography sx={{ width: '16%', flexShrink: 0 }}>General</Typography>
                             <Typography sx={{ color: 'text.secondary' }}>General account settings</Typography>
                         </AccordionSummary>
@@ -98,7 +106,9 @@ function ProfileSettings() {
                                     <Field
                                         name={'stats_hidden'}
                                         children={(props) => {
-                                            return <CheckboxSimple {...props} label={'Hide Profile Stats From Public'} />;
+                                            return (
+                                                <CheckboxSimple {...props} label={'Hide Profile Stats From Public'} />
+                                            );
                                         }}
                                     />
                                 </Grid>
@@ -106,9 +116,15 @@ function ProfileSettings() {
                         </AccordionDetails>
                     </Accordion>
                     <Accordion expanded={expanded === 'forum'} onChange={handleChange('forum')}>
-                        <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="forum-content" id="forum-header">
+                        <AccordionSummary
+                            expandIcon={<ExpandMoreIcon />}
+                            aria-controls="forum-content"
+                            id="forum-header"
+                        >
                             <Typography sx={{ width: '16%', flexShrink: 0 }}>Forum</Typography>
-                            <Typography sx={{ color: 'text.secondary' }}>Configure forum signature and notification</Typography>
+                            <Typography sx={{ color: 'text.secondary' }}>
+                                Configure forum signature and notification
+                            </Typography>
                         </AccordionSummary>
                         <AccordionDetails>
                             <Grid container>
@@ -116,7 +132,9 @@ function ProfileSettings() {
                                     <Field
                                         name={'forum_profile_messages'}
                                         children={(props) => {
-                                            return <CheckboxSimple {...props} label={'Allow Messages On Public Profile'} />;
+                                            return (
+                                                <CheckboxSimple {...props} label={'Allow Messages On Public Profile'} />
+                                            );
                                         }}
                                     />
                                 </Grid>
@@ -124,7 +142,7 @@ function ProfileSettings() {
                                     <Field
                                         name={'forum_signature'}
                                         children={(props) => {
-                                            return <MDBodyField {...props} label={'Forum Signature'} />;
+                                            return <MarkdownField {...props} label={'Forum Signature'} />;
                                         }}
                                     />
                                 </Grid>

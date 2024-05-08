@@ -287,13 +287,17 @@ func (r *personRepository) GetPeople(ctx context.Context, filter domain.PlayerQu
 		conditions = append(conditions, sq.Eq{"p.steam_id": foundIds})
 	}
 
-	if filter.SteamID.Valid() {
-		conditions = append(conditions, sq.Eq{"p.steam_id": filter.SteamID.Int64()})
+	if sid, ok := filter.TargetSteamID(ctx); ok {
+		conditions = append(conditions, sq.Eq{"p.steam_id": sid.Int64()})
 	}
 
 	if filter.Personaname != "" {
 		// TODO add lower-cased functional index to avoid table scan
 		conditions = append(conditions, sq.ILike{"p.personaname": normalizeStringLikeQuery(filter.Personaname)})
+	}
+
+	if filter.StaffOnly {
+		conditions = append(conditions, sq.Gt{"p.permission_level": domain.PUser})
 	}
 
 	builder = filter.ApplyLimitOffsetDefault(builder)

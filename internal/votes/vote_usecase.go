@@ -33,24 +33,6 @@ func NewVoteUsecase(voteRepository domain.VoteRepository, personUsecase domain.P
 }
 
 func (u voteUsecase) Query(ctx context.Context, filter domain.VoteQueryFilter) ([]domain.VoteResult, int64, error) {
-	if filter.SourceID != "" {
-		sourceID, valid := filter.SourceIDField.SourceSteamID(ctx)
-		if !valid {
-			return nil, 0, domain.ErrInvalidAuthorSID
-		}
-
-		filter.SourceSID = sourceID
-	}
-
-	if filter.TargetID != "" {
-		targetID, valid := filter.TargetIDField.TargetSteamID(ctx)
-		if !valid {
-			return nil, 0, domain.ErrInvalidTargetSID
-		}
-
-		filter.TargetSID = targetID
-	}
-
 	return u.voteRepository.Query(ctx, filter)
 }
 

@@ -118,15 +118,10 @@ type ConnectionHistoryQuery struct {
 
 type PlayerQuery struct {
 	QueryFilter
-	SteamID     steamid.SteamID `json:"steam_id"`
-	Personaname string          `json:"personaname"`
-	IP          string          `json:"ip"`
-}
-
-func (f PlayerQuery) TargetSteamID() (steamid.SteamID, bool) {
-	sid := steamid.New(f.SteamID)
-
-	return sid, sid.Valid()
+	TargetIDField
+	Personaname string `json:"personaname"`
+	IP          string `json:"ip"`
+	StaffOnly   bool   `json:"staff_only"`
 }
 
 type DemoFilter struct {
@@ -224,14 +219,19 @@ type AppealQueryFilter struct {
 	AppealState AppealState `json:"appeal_state"`
 }
 
-func (f AppealQueryFilter) SourceSteamID() (steamid.SteamID, bool) {
-	sid := steamid.New(f.SourceID)
-
-	return sid, sid.Valid()
+type TargetID struct {
+	SteamID string `json:"steam_id"`
 }
 
-func (f AppealQueryFilter) TargetSteamID() (steamid.SteamID, bool) {
-	sid := steamid.New(f.SourceID)
+func (f TargetID) SteamSteamID(ctx context.Context) (steamid.SteamID, bool) {
+	if f.SteamID == "" {
+		return steamid.SteamID{}, false
+	}
+
+	sid, err := steamid.Resolve(ctx, f.SteamID)
+	if err != nil {
+		return sid, false
+	}
 
 	return sid, sid.Valid()
 }
@@ -241,6 +241,10 @@ type SourceIDField struct {
 }
 
 func (f SourceIDField) SourceSteamID(ctx context.Context) (steamid.SteamID, bool) {
+	if f.SourceID == "" {
+		return steamid.SteamID{}, false
+	}
+
 	sid, err := steamid.Resolve(ctx, f.SourceID)
 	if err != nil {
 		return sid, false
@@ -254,6 +258,10 @@ type TargetIDField struct {
 }
 
 func (f TargetIDField) TargetSteamID(ctx context.Context) (steamid.SteamID, bool) {
+	if f.TargetID == "" {
+		return steamid.SteamID{}, false
+	}
+
 	sid, err := steamid.Resolve(ctx, f.TargetID)
 	if err != nil {
 		return sid, false

@@ -1,6 +1,13 @@
 import { LazyResult } from '../util/table.ts';
 import { parseDateTime } from '../util/text.tsx';
-import { apiCall, PermissionLevel, QueryFilter, TimeStamped, transformCreatedOnDate, transformTimeStampedDates } from './common';
+import {
+    apiCall,
+    PermissionLevel,
+    QueryFilter,
+    TimeStamped,
+    transformCreatedOnDate,
+    transformTimeStampedDates
+} from './common';
 
 export const defaultAvatarHash = 'fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb';
 
@@ -86,6 +93,7 @@ export interface PlayerQuery extends QueryFilter<Person> {
     target_id: string;
     personaname: string;
     ip: string;
+    staff_only: boolean;
 }
 
 export const apiSearchPeople = async (opts: PlayerQuery, abortController?: AbortController) => {
@@ -94,7 +102,8 @@ export const apiSearchPeople = async (opts: PlayerQuery, abortController?: Abort
     return people;
 };
 
-export const apiLinkDiscord = async (opts: { code: string }) => await apiCall(`/api/auth/discord?code=${opts.code}`, 'GET');
+export const apiLinkDiscord = async (opts: { code: string }) =>
+    await apiCall(`/api/auth/discord?code=${opts.code}`, 'GET');
 
 export interface PersonIPRecord {
     ip_addr: string;
@@ -180,7 +189,12 @@ export const apiGetMessages = async (opts: MessageQuery, abortController?: Abort
 export type NotificationsQuery = QueryFilter<UserNotification>;
 
 export const apiGetNotifications = async (opts: NotificationsQuery, abortController: AbortController) => {
-    return await apiCall<LazyResult<UserNotification>>(`/api/current_profile/notifications`, 'POST', opts, abortController);
+    return await apiCall<LazyResult<UserNotification>>(
+        `/api/current_profile/notifications`,
+        'POST',
+        opts,
+        abortController
+    );
 };
 
 export type ConnectionQuery = {
@@ -191,7 +205,12 @@ export type ConnectionQuery = {
 } & QueryFilter<PersonConnection>;
 
 export const apiGetConnections = async (opts: ConnectionQuery, abortController?: AbortController) => {
-    const resp = await apiCall<LazyResult<PersonConnection>, ConnectionQuery>(`/api/connections`, 'POST', opts, abortController);
+    const resp = await apiCall<LazyResult<PersonConnection>, ConnectionQuery>(
+        `/api/connections`,
+        'POST',
+        opts,
+        abortController
+    );
 
     resp.data = resp.data.map(transformCreatedOnDate);
     return resp;
@@ -249,8 +268,14 @@ interface PermissionUpdate {
     permission_level: PermissionLevel;
 }
 
-export const apiUpdatePlayerPermission = async (steamId: string, args: PermissionUpdate, abortController: AbortController) =>
-    transformTimeStampedDates(await apiCall<Person, PermissionUpdate>(`/api/player/${steamId}/permissions`, 'PUT', args, abortController));
+export const apiUpdatePlayerPermission = async (
+    steamId: string,
+    args: PermissionUpdate,
+    abortController?: AbortController
+) =>
+    transformTimeStampedDates(
+        await apiCall<Person, PermissionUpdate>(`/api/player/${steamId}/permissions`, 'PUT', args, abortController)
+    );
 
 export interface PersonSettings extends TimeStamped {
     person_settings_id: number;
@@ -261,7 +286,9 @@ export interface PersonSettings extends TimeStamped {
 }
 
 export const apiGetPersonSettings = async (abortController?: AbortController) => {
-    return transformTimeStampedDates(await apiCall<PersonSettings>(`/api/current_profile/settings`, 'GET', undefined, abortController));
+    return transformTimeStampedDates(
+        await apiCall<PersonSettings>(`/api/current_profile/settings`, 'GET', undefined, abortController)
+    );
 };
 
 export const apiSavePersonSettings = async (

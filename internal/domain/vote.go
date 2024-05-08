@@ -12,12 +12,10 @@ type VoteQueryFilter struct {
 	QueryFilter
 	SourceIDField
 	TargetIDField
-	ServerID  int             `json:"server_id"`
-	Name      string          `json:"name"`
-	Success   int             `json:"success"` // -1 = any, 0 = false, 1 = true
-	Code      bool            `json:"code"`
-	SourceSID steamid.SteamID `json:"-"`
-	TargetSID steamid.SteamID `json:"-"`
+	ServerID int    `json:"server_id"`
+	Name     string `json:"name"`
+	Success  int    `json:"success"` // -1 = any, 0 = false, 1 = true
+	Code     bool   `json:"code"`
 }
 
 type VoteRepository interface {
