@@ -1,119 +1,276 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import LanIcon from '@mui/icons-material/Lan';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
-import { ASNBanRecord } from '../../api';
+import Grid from '@mui/material/Unstable_Grid2';
+import { useForm } from '@tanstack/react-form';
+import { useMutation } from '@tanstack/react-query';
+import { zodValidator } from '@tanstack/zod-form-adapter';
+import { parseISO } from 'date-fns';
+import { z } from 'zod';
+import {
+    apiCreateBanASN,
+    apiUpdateBanASN,
+    ASNBanRecord,
+    BanReason,
+    BanReasons,
+    banReasonsCollection,
+    Duration,
+    DurationCollection
+} from '../../api';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+import { makeSteamidValidators } from '../../util/validator/makeSteamidValidators.ts';
 import { Heading } from '../Heading';
+import { Buttons } from '../field/Buttons.tsx';
+import { DateTimeSimple } from '../field/DateTimeSimple.tsx';
+import { SelectFieldSimple } from '../field/SelectFieldSimple.tsx';
+import { SteamIDField } from '../field/SteamIDField.tsx';
+import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
-// type BanASNFormValues = {
-//     ban_asn_id?: number;
-//     as_num: number;
-//     reason: BanReason;
-//     reason_text: string;
-//     duration: Duration;
-//     duration_custom: Date;
-//     note: string;
-// } & TargetIDInputValue;
-//
-// const validationSchema = yup.object({
-//     target_id: steamIdValidator('target_id'),
-//     as_num: asNumberFieldValidator,
-//     reason: banReasonFieldValidator,
-//     reason_text: banReasonTextFieldValidator,
-//     duration: DurationFieldValidator,
-//     duration_custom: DurationCustomFieldValidator,
-//     note: NoteFieldValidator
-// });
+type BanASNFormValues = {
+    target_id: string;
+    ban_asn_id?: number;
+    as_num: string;
+    reason: BanReason;
+    reason_text: string;
+    duration: Duration;
+    duration_custom?: string;
+    note: string;
+};
 
-export interface BanASNModalProps {
-    existing?: ASNBanRecord;
-}
-
-export const BanASNModal = NiceModal.create((/**{ existing }: BanASNModalProps*/) => {
-    // const [error, setError] = useState<string>();
+export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRecord }) => {
+    const { sendFlash } = useUserFlashCtx();
     const modal = useModal();
-    // const onSubmit = useCallback(
-    //     async (values: BanASNFormValues) => {
-    //         try {
-    //             if (existing && existing.as_num > 0) {
-    //                 modal.resolve(
-    //                     await apiUpdateBanASN(existing.as_num, {
-    //                         note: values.note,
-    //                         valid_until: values.duration_custom,
-    //                         reason: values.reason,
-    //                         reason_text: values.reason_text,
-    //                         target_id: values.target_id
-    //                     })
-    //                 );
-    //             } else {
-    //                 modal.resolve(
-    //                     await apiCreateBanASN({
-    //                         note: values.note,
-    //                         duration: values.duration,
-    //                         valid_until: values.duration_custom,
-    //                         reason: values.reason,
-    //                         reason_text: values.reason_text,
-    //                         target_id: values.target_id,
-    //                         as_num: values.as_num
-    //                     })
-    //                 );
-    //             }
-    //             await modal.hide();
-    //             setError(undefined);
-    //         } catch (e) {
-    //             modal.resolve(e);
-    //             if (e instanceof AppError) {
-    //                 setError(e.message);
-    //             } else {
-    //                 setError('Unknown internal error');
-    //             }
-    //         }
-    //     },
-    //     [existing, modal]
-    // );
+
+    const mutation = useMutation({
+        mutationKey: ['banASN'],
+        mutationFn: async (values: BanASNFormValues) => {
+            console.log(values);
+            if (existing?.ban_asn_id) {
+                const ban_record = apiUpdateBanASN(existing.ban_asn_id, {
+                    note: values.note,
+                    reason: values.reason,
+                    reason_text: values.reason_text,
+                    target_id: values.target_id,
+                    as_num: Number(values.as_num),
+                    valid_until: values.duration_custom ? parseISO(values.duration_custom) : undefined
+                });
+
+                sendFlash('success', 'Updated ASN ban successfully');
+                modal.resolve(ban_record);
+            } else {
+                const ban_record = await apiCreateBanASN({
+                    note: values.note,
+                    duration: values.duration,
+                    valid_until: values.duration_custom ? parseISO(values.duration_custom) : undefined,
+                    reason: values.reason,
+                    reason_text: values.reason_text,
+                    target_id: values.target_id,
+                    as_num: Number(values.as_num)
+                });
+                sendFlash('success', 'Created ASN ban successfully');
+                modal.resolve(ban_record);
+            }
+            await modal.hide();
+        }
+    });
+
+    const { Field, Subscribe, handleSubmit, reset } = useForm({
+        onSubmit: async ({ value }) => {
+            mutation.mutate({
+                target_id: value.target_id,
+                reason: value.reason,
+                reason_text: value.reason_text,
+                duration: value.duration,
+                duration_custom: value.duration_custom,
+                note: value.note,
+                as_num: value.as_num
+            });
+        },
+        validatorAdapter: zodValidator,
+        defaultValues: {
+            target_id: existing ? existing.target_id : '',
+            reason: existing ? existing.reason : BanReason.Cheating,
+            reason_text: existing ? existing.reason_text : '',
+            duration: existing ? Duration.durCustom : Duration.dur2w,
+            duration_custom: existing ? existing.valid_until.toISOString() : '',
+            note: existing ? existing.note : '',
+            as_num: existing ? String(existing.as_num) : ''
+        }
+    });
 
     return (
-        // <Formik
-        //     onSubmit={onSubmit}
-        //     id={'banASNForm'}
-        //     initialValues={{
-        //         ban_asn_id: existing?.ban_asn_id,
-        //         duration: existing ? Duration.durCustom : Duration.dur2w,
-        //         duration_custom: existing ? existing.valid_until : new Date(),
-        //         note: existing ? existing.note : '',
-        //         reason: existing ? existing.reason : BanReason.Cheating,
-        //         target_id: existing ? existing.target_id : '',
-        //         reason_text: existing ? existing.reason_text : '',
-        //         as_num: existing ? existing.as_num : 0
-        //     }}
-        //     validateOnBlur={true}
-        //     validateOnChange={false}
-        //     validationSchema={validationSchema}
-        // >
         <Dialog fullWidth {...muiDialogV5(modal)}>
-            <DialogTitle component={Heading} iconLeft={<LanIcon />}>
-                Ban Autonomous System Number Range
-            </DialogTitle>
+            <form
+                onSubmit={async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    await handleSubmit();
+                }}
+            >
+                <DialogTitle component={Heading} iconLeft={<LanIcon />}>
+                    Ban Autonomous System Number Range
+                </DialogTitle>
 
-            <DialogContent>
-                <Stack spacing={2}>
-                    {/*<TargetIDField />*/}
-                    {/*<ASNumberField />*/}
-                    {/*<BanReasonField />*/}
-                    {/*<BanReasonTextField />*/}
-                    {/*<DurationField />*/}
-                    {/*<DurationCustomField />*/}
-                    {/*<NoteField />*/}
-                    {/*<ErrorField error={error} />*/}
-                </Stack>
-            </DialogContent>
-            <DialogActions>
-                {/*<CancelButton />*/}
-                {/*<ResetButton />*/}
-                {/*<SubmitButton />*/}
-            </DialogActions>
+                <DialogContent>
+                    <Grid container spacing={2}>
+                        <Grid xs={12}>
+                            <Field
+                                name={'target_id'}
+                                validators={makeSteamidValidators()}
+                                children={(props) => {
+                                    return (
+                                        <SteamIDField
+                                            {...props}
+                                            label={'Target Steam ID'}
+                                            fullwidth={true}
+                                            disabled={Boolean(existing?.ban_asn_id)}
+                                        />
+                                    );
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={12}>
+                            <Field
+                                name={'as_num'}
+                                validators={{
+                                    onChange: z.string()
+                                }}
+                                children={(props) => {
+                                    return <TextFieldSimple {...props} label={'AS Number'} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={12}>
+                            <Field
+                                name={'reason'}
+                                children={(props) => {
+                                    return (
+                                        <SelectFieldSimple
+                                            {...props}
+                                            label={'Reason'}
+                                            fullwidth={true}
+                                            items={banReasonsCollection}
+                                            renderMenu={(br) => {
+                                                return (
+                                                    <MenuItem value={br} key={`br-${br}`}>
+                                                        {BanReasons[br]}
+                                                    </MenuItem>
+                                                );
+                                            }}
+                                        />
+                                    );
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={12}>
+                            <Field
+                                name={'reason_text'}
+                                validators={{
+                                    onSubmit: ({ value, fieldApi }) => {
+                                        if (fieldApi.form.getFieldValue('reason') != BanReason.Custom) {
+                                            if (value.length == 0) {
+                                                return undefined;
+                                            }
+                                            return 'Must use custom ban reason';
+                                        }
+                                        const result = z.string().min(5).safeParse(value);
+                                        if (!result.success) {
+                                            return result.error.errors.map((e) => e.message).join(',');
+                                        }
+
+                                        return undefined;
+                                    }
+                                }}
+                                children={(props) => {
+                                    return <TextFieldSimple {...props} label={'Custom Ban Reason'} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={6}>
+                            <Field
+                                name={'duration'}
+                                validators={{
+                                    onChange: z.nativeEnum(Duration)
+                                }}
+                                children={(props) => {
+                                    return (
+                                        <SelectFieldSimple
+                                            {...props}
+                                            label={'Duration'}
+                                            fullwidth={true}
+                                            items={DurationCollection}
+                                            renderMenu={(du) => {
+                                                return (
+                                                    <MenuItem value={du} key={`du-${du}`}>
+                                                        {du}
+                                                    </MenuItem>
+                                                );
+                                            }}
+                                        />
+                                    );
+                                }}
+                            />
+                        </Grid>
+
+                        <Grid xs={6}>
+                            <Field
+                                name={'duration_custom'}
+                                children={(props) => {
+                                    return <DateTimeSimple {...props} label={'Custom Expire Date'} />;
+                                }}
+                            />
+                        </Grid>
+
+                        <Grid xs={12}>
+                            <Field
+                                name={'note'}
+                                validators={{
+                                    onChange: z.string()
+                                }}
+                                children={(props) => {
+                                    return (
+                                        <TextFieldSimple {...props} multiline={true} rows={10} label={'Mod Notes'} />
+                                    );
+                                }}
+                            />
+                        </Grid>
+                    </Grid>
+                    <Stack spacing={2}>
+                        {/*<TargetIDField />*/}
+                        {/*<ASNumberField />*/}
+                        {/*<BanReasonField />*/}
+                        {/*<BanReasonTextField />*/}
+                        {/*<DurationField />*/}
+                        {/*<DurationCustomField />*/}
+                        {/*<NoteField />*/}
+                        {/*<ErrorField error={error} />*/}
+                    </Stack>
+                </DialogContent>
+                <DialogActions>
+                    <Grid container>
+                        <Grid xs={12} mdOffset="auto">
+                            <Subscribe
+                                selector={(state) => [state.canSubmit, state.isSubmitting]}
+                                children={([canSubmit, isSubmitting]) => {
+                                    return (
+                                        <Buttons
+                                            reset={reset}
+                                            canSubmit={canSubmit}
+                                            isSubmitting={isSubmitting}
+                                            onClose={async () => {
+                                                await modal.hide();
+                                            }}
+                                        />
+                                    );
+                                }}
+                            />
+                        </Grid>
+                    </Grid>
+                </DialogActions>
+            </form>
         </Dialog>
-        // </Formik>
     );
 });
 

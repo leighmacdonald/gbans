@@ -62,6 +62,10 @@ func (s banASNUsecase) Unban(ctx context.Context, asnNum string) (bool, error) {
 	return true, nil
 }
 
+func (s banASNUsecase) GetByID(ctx context.Context, banID int64, banASN *domain.BanASN) error {
+	return s.repository.GetByID(ctx, banID, banASN)
+}
+
 func (s banASNUsecase) GetByASN(ctx context.Context, asNum int64, banASN *domain.BanASN) error {
 	return s.repository.GetByASN(ctx, asNum, banASN)
 }

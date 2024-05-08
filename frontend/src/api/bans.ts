@@ -325,9 +325,10 @@ export const apiCreateBanASN = async (payload: BanPayloadASN) =>
 interface UpdateBanASNPayload {
     target_id: string;
     reason: BanReason;
+    as_num: number;
     reason_text: string;
     note: string;
-    valid_until: Date;
+    valid_until?: Date;
 }
 
 export const apiUpdateBanASN = async (asn: number, payload: UpdateBanASNPayload) =>
