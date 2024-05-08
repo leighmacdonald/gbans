@@ -204,7 +204,7 @@ export interface UnbanPayload {
 export interface BanBasePayload {
     target_id: string;
     duration: string;
-    valid_until: Date;
+    valid_until?: Date;
     note: string;
 }
 
@@ -291,7 +291,7 @@ interface UpdateBanPayload {
     reason: BanReason;
     reason_text: string;
     note: string;
-    valid_until: Date;
+    valid_until?: Date;
 }
 
 export const apiUpdateBanSteam = async (

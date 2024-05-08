@@ -48,8 +48,8 @@ import { PlayerMessageContext } from '../component/PlayerMessageContext.tsx';
 import { ReportStatusIcon } from '../component/ReportStatusIcon.tsx';
 import RouterLink from '../component/RouterLink.tsx';
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
-import { MDBodyField } from '../component/_formik/MDBodyField.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
+import { MarkdownField } from '../component/field/MarkdownField.tsx';
 import { SteamIDField } from '../component/field/SteamIDField.tsx';
 import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
 import { makeSteamidValidators } from '../util/validator/makeSteamidValidators.ts';
@@ -431,15 +431,8 @@ export const ReportCreateForm = (): JSX.Element => {
                         <Box minHeight={365}>
                             <form.Field
                                 name={'body_md'}
-                                children={({ state, handleChange, handleBlur }) => {
-                                    return (
-                                        <MDBodyField
-                                            state={state}
-                                            handleBlur={handleBlur}
-                                            handleChange={handleChange}
-                                            label={'Message (Markdown)'}
-                                        />
-                                    );
+                                children={(props) => {
+                                    return <MarkdownField {...props} label={'Message (Markdown)'} />;
                                 }}
                             />
                         </Box>

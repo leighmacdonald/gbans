@@ -1,16 +1,22 @@
+import { useMemo } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import GavelIcon from '@mui/icons-material/Gavel';
+import UndoIcon from '@mui/icons-material/Undo';
 import Button from '@mui/material/Button';
+import ButtonGroup from '@mui/material/ButtonGroup';
+import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 import MenuItem from '@mui/material/MenuItem';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import { ColumnDef, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { z } from 'zod';
 import {
     apiGetBansSteam,
@@ -35,7 +41,7 @@ import { Buttons } from '../component/field/Buttons.tsx';
 import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
 import { SelectFieldSimple } from '../component/field/SelectFieldSimple.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
-import { ModalBanSteam } from '../component/modal';
+import { ModalBanSteam, ModalUnbanSteam } from '../component/modal';
 import { commonTableSearchSchema, isPermanentBan, LazyResult, RowsPerPage } from '../util/table.ts';
 import { renderDate } from '../util/text.tsx';
 
@@ -77,50 +83,28 @@ function AdminBanSteam() {
         }
     });
 
-    // const [newSteamBans, setNewSteamBans] = useState<SteamBanRecord[]>([]);
-    // const { sendFlash } = useUserFlashCtx();
-    //
     const onNewBanSteam = async () => {
         const ban = await NiceModal.show<SteamBanRecord>(ModalBanSteam, {});
         queryClient.setQueryData(
             ['steamBans', { page, rows, sortOrder, sortColumn, target_id, source_id, appeal_state }],
             { data: [...(bans?.data ?? []), ban], count: (bans?.count ?? 0) + 1 }
         );
-        // setNewSteamBans((prevState) => {
-        //     return [ban, ...prevState];
-        // });
     };
 
-    // const onUnbanSteam = useCallback(
-    //     async (ban: SteamBanRecord) => {
-    //         try {
-    //             await NiceModal.show(ModalUnbanSteam, {
-    //                 banId: ban.ban_id,
-    //                 personaName: ban.target_personaname
-    //             });
-    //             sendFlash('success', 'Unbanned successfully');
-    //         } catch (e) {
-    //             sendFlash('error', `Failed to unban: ${e}`);
-    //         }
-    //     },
-    //     [sendFlash]
-    // );
+    const onUnbanSteam = async (ban: SteamBanRecord) => {
+        await NiceModal.show(ModalUnbanSteam, {
+            banId: ban.ban_id,
+            personaName: ban.target_personaname
+        });
+    };
 
-    // const onEditSteam = useCallback(
-    //     async (ban: SteamBanRecord) => {
-    //         try {
-    //             await NiceModal.show(ModalBanSteam, {
-    //                 banId: ban.ban_id,
-    //                 personaName: ban.target_personaname,
-    //                 existing: ban
-    //             });
-    //             sendFlash('success', 'Updated ban successfully');
-    //         } catch (e) {
-    //             sendFlash('error', `Failed to update ban: ${e}`);
-    //         }
-    //     },
-    //     [sendFlash]
-    // );
+    const onEditSteam = async (ban: SteamBanRecord) => {
+        await NiceModal.show(ModalBanSteam, {
+            banId: ban.ban_id,
+            personaName: ban.target_personaname,
+            existing: ban
+        });
+    };
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({
         onSubmit: async ({ value }) => {
@@ -144,7 +128,7 @@ function AdminBanSteam() {
     return (
         <Grid container spacing={2}>
             <Grid xs={12}>
-                <ContainerWithHeader title={'Filters'} iconLeft={<FilterListIcon />}>
+                <ContainerWithHeader title={'Filters'} iconLeft={<FilterListIcon />} marginTop={2}>
                     <form
                         onSubmit={async (e) => {
                             e.preventDefault();
@@ -257,40 +241,12 @@ function AdminBanSteam() {
                 >
                     <Grid container spacing={3}>
                         <Grid xs={12}>
-                            {/*        {*/}
-                            {/*            label: 'Act.',*/}
-                            {/*            tooltip: 'Actions',*/}
-                            {/*            sortKey: 'reason',*/}
-                            {/*            sortable: false,*/}
-                            {/*            align: 'center',*/}
-                            {/*            renderer: (row) => (*/}
-                            {/*                <ButtonGroup fullWidth>*/}
-                            {/*                    <IconButton*/}
-                            {/*                        color={'warning'}*/}
-                            {/*                        onClick={async () => {*/}
-                            {/*                            await onEditSteam(row);*/}
-                            {/*                        }}*/}
-                            {/*                    >*/}
-                            {/*                        <Tooltip title={'Edit Ban'}>*/}
-                            {/*                            <EditIcon />*/}
-                            {/*                        </Tooltip>*/}
-                            {/*                    </IconButton>*/}
-                            {/*                    <IconButton*/}
-                            {/*                        color={'success'}*/}
-                            {/*                        onClick={async () => {*/}
-                            {/*                            await onUnbanSteam(row);*/}
-                            {/*                        }}*/}
-                            {/*                    >*/}
-                            {/*                        <Tooltip title={'Remove Ban'}>*/}
-                            {/*                            <UndoIcon />*/}
-                            {/*                        </Tooltip>*/}
-                            {/*                    </IconButton>*/}
-                            {/*                </ButtonGroup>*/}
-                            {/*            )*/}
-                            {/*        }*/}
-                            {/*    ]}*/}
-                            {/*/>*/}
-                            <BanSteamTable bans={bans ?? { data: [], count: 0 }} isLoading={isLoading} />
+                            <BanSteamTable
+                                bans={bans ?? { data: [], count: 0 }}
+                                isLoading={isLoading}
+                                onEditSteam={onEditSteam}
+                                onUnbanSteam={onUnbanSteam}
+                            />
                             <Paginator
                                 page={page ?? 0}
                                 rows={rows ?? defaultRows}
@@ -306,76 +262,139 @@ function AdminBanSteam() {
     );
 }
 
-const columnHelper = createColumnHelper<SteamBanRecord>();
-
-const BanSteamTable = ({ bans, isLoading }: { bans: LazyResult<SteamBanRecord>; isLoading: boolean }) => {
-    const columns = [
-        columnHelper.accessor('ban_id', {
-            header: () => <TableHeadingCell name={'Ban ID'} />,
-            cell: (info) => (
-                <Link component={RouterLink} to={`/ban/$ban_id`} params={{ ban_id: info.getValue() }}>
-                    {`#${info.getValue()}`}
-                </Link>
-            )
-        }),
-        columnHelper.accessor('source_id', {
-            header: () => <TableHeadingCell name={'Author'} />,
-            cell: (info) => (
-                <PersonCell
-                    steam_id={bans.data[info.row.index].source_id}
-                    personaname={bans.data[info.row.index].source_personaname}
-                    avatar_hash={bans.data[info.row.index].source_avatarhash}
-                />
-            )
-        }),
-        columnHelper.accessor('target_id', {
-            header: () => <TableHeadingCell name={'Subject'} />,
-            cell: (info) => (
-                <PersonCell
-                    steam_id={bans.data[info.row.index].target_id}
-                    personaname={bans.data[info.row.index].target_personaname}
-                    avatar_hash={bans.data[info.row.index].target_avatarhash}
-                />
-            )
-        }),
-        columnHelper.accessor('reason', {
-            header: () => <TableHeadingCell name={'Reason'} />,
-            cell: (info) => <Typography>{BanReasons[info.getValue()]}</Typography>
-        }),
-        columnHelper.accessor('created_on', {
-            header: () => <TableHeadingCell name={'Created'} />,
-            cell: (info) => <Typography>{renderDate(info.getValue())}</Typography>
-        }),
-        columnHelper.accessor('valid_until', {
-            header: () => <TableHeadingCell name={'Expires'} />,
-            cell: (info) =>
-                isPermanentBan(bans.data[info.row.index].created_on, bans.data[info.row.index].valid_until) ? (
-                    'Permanent'
-                ) : (
-                    <TableCellRelativeDateField
-                        date={bans.data[info.row.index].created_on}
-                        compareDate={bans.data[info.row.index].valid_until}
-                    />
-                )
-        }),
-        columnHelper.accessor('include_friends', {
-            header: () => <TableHeadingCell name={'F'} />,
-            cell: (info) => <TableCellBool enabled={info.getValue()} />
-        }),
-        columnHelper.accessor('evade_ok', {
-            header: () => <TableHeadingCell name={'E'} />,
-            cell: (info) => <TableCellBool enabled={info.getValue()} />
-        }),
-        columnHelper.accessor('report_id', {
-            header: () => <TableHeadingCell name={'Rep.'} />,
-            cell: (info) =>
-                info.getValue() > 0 && (
-                    <Link component={RouterLink} to={`/report/$reportId`} params={{ reportId: info.getValue() }}>
+const BanSteamTable = ({
+    bans,
+    isLoading,
+    onEditSteam,
+    onUnbanSteam
+}: {
+    bans: LazyResult<SteamBanRecord>;
+    isLoading: boolean;
+    onUnbanSteam: (ban: SteamBanRecord) => Promise<void>;
+    onEditSteam: (ban: SteamBanRecord) => Promise<void>;
+}) => {
+    const columns = useMemo<ColumnDef<SteamBanRecord>[]>(
+        () => [
+            {
+                accessorKey: 'ban_id',
+                header: () => <TableHeadingCell name={'Ban ID'} />,
+                cell: (info) => (
+                    <Link component={RouterLink} to={`/ban/$ban_id`} params={{ ban_id: info.getValue() }}>
                         {`#${info.getValue()}`}
                     </Link>
                 )
-        })
-    ];
+            },
+            {
+                accessorKey: 'source_id',
+                header: () => <TableHeadingCell name={'Author'} />,
+                cell: (info) => {
+                    return typeof bans.data[info.row.index] === 'undefined' ? (
+                        ''
+                    ) : (
+                        <PersonCell
+                            steam_id={bans.data[info.row.index].source_id}
+                            personaname={bans.data[info.row.index].source_personaname}
+                            avatar_hash={bans.data[info.row.index].source_avatarhash}
+                        />
+                    );
+                }
+            },
+            {
+                accessorKey: 'target_id',
+                header: () => <TableHeadingCell name={'Subject'} />,
+                cell: (info) => {
+                    return typeof bans.data[info.row.index] === 'undefined' ? (
+                        ''
+                    ) : (
+                        <PersonCell
+                            steam_id={bans.data[info.row.index].target_id}
+                            personaname={bans.data[info.row.index].target_personaname}
+                            avatar_hash={bans.data[info.row.index].target_avatarhash}
+                        />
+                    );
+                }
+            },
+            {
+                accessorKey: 'reason',
+                header: () => <TableHeadingCell name={'Reason'} />,
+                cell: (info) => <Typography>{BanReasons[info.getValue() as BanReason]}</Typography>
+            },
+            {
+                accessorKey: 'created_on',
+                header: () => <TableHeadingCell name={'Created'} />,
+                cell: (info) => <Typography>{renderDate(info.getValue() as Date)}</Typography>
+            },
+            {
+                accessorKey: 'valid_until',
+                header: () => <TableHeadingCell name={'Expires'} />,
+                cell: (info) => {
+                    return typeof bans.data[info.row.index] === 'undefined' ? (
+                        ''
+                    ) : isPermanentBan(bans.data[info.row.index].created_on, bans.data[info.row.index].valid_until) ? (
+                        'Permanent'
+                    ) : (
+                        <TableCellRelativeDateField
+                            date={bans.data[info.row.index].created_on}
+                            compareDate={bans.data[info.row.index].valid_until}
+                        />
+                    );
+                }
+            },
+            {
+                accessorKey: 'include_friends',
+                header: () => <TableHeadingCell name={'F'} />,
+                cell: (info) => <TableCellBool enabled={info.getValue() as boolean} />
+            },
+            {
+                accessorKey: 'evade_ok',
+                header: () => <TableHeadingCell name={'E'} />,
+                cell: (info) => <TableCellBool enabled={info.getValue() as boolean} />
+            },
+            {
+                accessorKey: 'report_id',
+                header: () => <TableHeadingCell name={'Rep.'} />,
+                cell: (info) =>
+                    Boolean(info.getValue()) && (
+                        <Link component={RouterLink} to={`/report/$reportId`} params={{ reportId: info.getValue() }}>
+                            {`#${info.getValue()}`}
+                        </Link>
+                    )
+            },
+            {
+                id: 'actions',
+                header: () => {
+                    return <TableHeadingCell name={'Actions'} />;
+                },
+                cell: (info) => {
+                    return (
+                        <ButtonGroup fullWidth>
+                            <IconButton
+                                color={'warning'}
+                                onClick={async () => {
+                                    await onEditSteam(info.row.original);
+                                }}
+                            >
+                                <Tooltip title={'Edit Ban'}>
+                                    <EditIcon />
+                                </Tooltip>
+                            </IconButton>
+                            <IconButton
+                                color={'success'}
+                                onClick={async () => {
+                                    await onUnbanSteam(info.row.original);
+                                }}
+                            >
+                                <Tooltip title={'Remove Ban'}>
+                                    <UndoIcon />
+                                </Tooltip>
+                            </IconButton>
+                        </ButtonGroup>
+                    );
+                }
+            }
+        ],
+        [bans.data, onEditSteam, onUnbanSteam]
+    );
 
     const table = useReactTable({
         data: bans.data,

@@ -40,8 +40,8 @@ import { PlayerMessageContext } from './PlayerMessageContext';
 import { ReportMessageView } from './ReportMessageView';
 import { SourceBansList } from './SourceBansList';
 import { TabPanel } from './TabPanel';
-import { MDBodyField } from './_formik/MDBodyField.tsx';
 import { Buttons } from './field/Buttons.tsx';
+import { MarkdownField } from './field/MarkdownField.tsx';
 
 const messagesQueryOptions = (reportId: number) => ({
     queryKey: ['reportMessages', { reportID: reportId }],
@@ -165,10 +165,19 @@ export const ReportViewComponent = ({ report }: { report: Report }): JSX.Element
                                     backgroundColor: theme.palette.background.paper
                                 }}
                             >
-                                <TabList variant={'fullWidth'} onChange={handleChange} aria-label="ReportCreatePage detail tabs">
+                                <TabList
+                                    variant={'fullWidth'}
+                                    onChange={handleChange}
+                                    aria-label="ReportCreatePage detail tabs"
+                                >
                                     <Tab label="Description" icon={<DescriptionIcon />} iconPosition={'start'} />
                                     {hasPermission(PermissionLevel.Moderator) && (
-                                        <Tab sx={{ height: 20 }} label={`Chat Logs`} icon={<MessageIcon />} iconPosition={'start'} />
+                                        <Tab
+                                            sx={{ height: 20 }}
+                                            label={`Chat Logs`}
+                                            icon={<MessageIcon />}
+                                            iconPosition={'start'}
+                                        />
                                     )}
                                     {hasPermission(PermissionLevel.Moderator) && (
                                         <Tab label={`Connections`} icon={<LanIcon />} iconPosition={'start'} />
@@ -283,14 +292,22 @@ export const ReportViewComponent = ({ report }: { report: Report }): JSX.Element
                             </ContainerWithHeader>
                         )}
 
-                        {hasPermission(PermissionLevel.Moderator) && <SourceBansList steam_id={report.source_id} is_reporter={true} />}
+                        {hasPermission(PermissionLevel.Moderator) && (
+                            <SourceBansList steam_id={report.source_id} is_reporter={true} />
+                        )}
 
-                        {hasPermission(PermissionLevel.Moderator) && <SourceBansList steam_id={report.target_id} is_reporter={false} />}
+                        {hasPermission(PermissionLevel.Moderator) && (
+                            <SourceBansList steam_id={report.target_id} is_reporter={false} />
+                        )}
 
                         {!isLoadingMessages &&
                             messages &&
                             messages.map((m) => (
-                                <ReportMessageView onDelete={onDelete} message={m} key={`report-msg-${m.report_message_id}`} />
+                                <ReportMessageView
+                                    onDelete={onDelete}
+                                    message={m}
+                                    key={`report-msg-${m.report_message_id}`}
+                                />
                             ))}
                         <Paper elevation={1}>
                             <form
@@ -305,7 +322,7 @@ export const ReportViewComponent = ({ report }: { report: Report }): JSX.Element
                                         <Field
                                             name={'body_md'}
                                             children={(props) => {
-                                                return <MDBodyField {...props} label={'Message'} fullwidth={true} />;
+                                                return <MarkdownField {...props} label={'Message'} fullwidth={true} />;
                                             }}
                                         />
                                     </Grid>
@@ -313,7 +330,11 @@ export const ReportViewComponent = ({ report }: { report: Report }): JSX.Element
                                         <Subscribe
                                             selector={(state) => [state.canSubmit, state.isSubmitting]}
                                             children={([canSubmit, isSubmitting]) => (
-                                                <Buttons reset={reset} canSubmit={canSubmit} isSubmitting={isSubmitting} />
+                                                <Buttons
+                                                    reset={reset}
+                                                    canSubmit={canSubmit}
+                                                    isSubmitting={isSubmitting}
+                                                />
                                             )}
                                         />
                                     </Grid>
