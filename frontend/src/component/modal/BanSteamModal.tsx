@@ -38,7 +38,7 @@ type BanSteamFormValues = {
     reason: BanReason;
     reason_text: string;
     duration: Duration;
-    duration_custom: string;
+    duration_custom?: string;
     note: string;
     include_friends: boolean;
     evade_ok: boolean;
@@ -51,6 +51,7 @@ export const BanSteamModal = NiceModal.create(({ existing }: { existing?: SteamB
     const mutation = useMutation({
         mutationKey: ['banSteam'],
         mutationFn: async (values: BanSteamFormValues) => {
+            console.log(values);
             if (existing?.ban_id) {
                 const ban_record = apiUpdateBanSteam(existing.ban_id, {
                     note: values.note,
@@ -59,7 +60,7 @@ export const BanSteamModal = NiceModal.create(({ existing }: { existing?: SteamB
                     reason_text: values.reason_text,
                     include_friends: values.include_friends,
                     evade_ok: values.evade_ok,
-                    valid_until: parseISO(values.duration_custom)
+                    valid_until: values.duration_custom ? parseISO(values.duration_custom) : undefined
                 });
                 sendFlash('success', 'Updated ban successfully');
                 modal.resolve(ban_record);
@@ -68,7 +69,7 @@ export const BanSteamModal = NiceModal.create(({ existing }: { existing?: SteamB
                     note: values.note,
                     ban_type: values.ban_type,
                     duration: values.duration,
-                    valid_until: parseISO(values.duration_custom),
+                    valid_until: values.duration_custom ? parseISO(values.duration_custom) : undefined,
                     reason: values.reason,
                     reason_text: values.reason_text,
                     report_id: values.report_id,
@@ -106,7 +107,7 @@ export const BanSteamModal = NiceModal.create(({ existing }: { existing?: SteamB
             reason: existing ? existing.reason : BanReason.Cheating,
             reason_text: existing ? existing.reason_text : '',
             duration: existing ? Duration.durCustom : Duration.dur2w,
-            duration_custom: existing ? existing.valid_until.toString() : '',
+            duration_custom: existing ? existing.valid_until.toISOString() : '',
             note: existing ? existing.note : '',
             include_friends: existing ? existing.include_friends : false,
             evade_ok: existing ? existing.evade_ok : false
@@ -267,23 +268,6 @@ export const BanSteamModal = NiceModal.create(({ existing }: { existing?: SteamB
                         <Grid xs={6}>
                             <Field
                                 name={'duration_custom'}
-                                validators={{
-                                    onSubmit: ({ value, fieldApi }) => {
-                                        if (fieldApi.form.getFieldValue('duration') != Duration.durCustom) {
-                                            if (value.length == 0) {
-                                                return undefined;
-                                            }
-                                            console.log(value);
-                                            return 'Must use custom duration';
-                                        }
-                                        const result = z.date().safeParse(value);
-                                        if (!result.success) {
-                                            return result.error.errors.map((e) => e.message).join(',');
-                                        }
-
-                                        return undefined;
-                                    }
-                                }}
                                 children={(props) => {
                                     return <DateTimeSimple {...props} label={'Custom Expire Date'} />;
                                 }}
