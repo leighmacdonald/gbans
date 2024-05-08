@@ -9,95 +9,94 @@ import { apiDeleteBan } from '../../api';
 import { Buttons } from '../field/Buttons.tsx';
 import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
-export interface UnbanModalProps {
-    banId: number; // common placeholder for any primary key id for a ban
-    personaName?: string;
-}
+export const UnbanSteamModal = NiceModal.create(
+    ({
+        banId,
+        personaName
+    }: {
+        banId: number; // common placeholder for any primary key id for a ban
+        personaName?: string;
+    }) => {
+        const modal = useModal();
 
-export interface UnbanFormValues {
-    unban_reason: string;
-}
+        const mutation = useMutation({
+            mutationKey: ['deleteSteamBan', { banId }],
+            mutationFn: async (unban_reason: string) => {
+                await apiDeleteBan(banId, unban_reason);
+            },
+            onSuccess: async () => {
+                modal.resolve();
+                await modal.hide();
+            },
+            onError: (error) => {
+                modal.reject(error);
+            }
+        });
 
-export const UnbanSteamModal = NiceModal.create(({ banId, personaName }: UnbanModalProps) => {
-    const modal = useModal();
+        const { Field, Subscribe, handleSubmit, reset } = useForm({
+            onSubmit: async ({ value }) => {
+                mutation.mutate(value.unban_reason);
+            },
+            validatorAdapter: zodValidator,
+            defaultValues: {
+                unban_reason: ''
+            }
+        });
 
-    const mutation = useMutation({
-        mutationKey: ['deleteSteamBan', { banId }],
-        mutationFn: async (unban_reason: string) => {
-            await apiDeleteBan(banId, unban_reason);
-        },
-        onSuccess: async () => {
-            modal.resolve();
-            await modal.hide();
-        },
-        onError: (error) => {
-            modal.reject(error);
-        }
-    });
+        return (
+            <Dialog {...muiDialogV5(modal)}>
+                <form
+                    onSubmit={async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        await handleSubmit();
+                    }}
+                >
+                    <DialogTitle>
+                        Unban {personaName} (#{banId})
+                    </DialogTitle>
 
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
-        onSubmit: async ({ value }) => {
-            mutation.mutate(value.unban_reason);
-        },
-        validatorAdapter: zodValidator,
-        defaultValues: {
-            unban_reason: ''
-        }
-    });
-
-    return (
-        <Dialog {...muiDialogV5(modal)}>
-            <form
-                onSubmit={async (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    await handleSubmit();
-                }}
-            >
-                <DialogTitle>
-                    Unban {personaName} (#{banId})
-                </DialogTitle>
-
-                <DialogContent>
-                    <Grid container>
-                        <Grid xs={12}>
-                            <Field
-                                name={'unban_reason'}
-                                validators={{
-                                    onChange: z.string().min(5)
-                                }}
-                                children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Unban Reason'} />;
-                                }}
-                            />
+                    <DialogContent>
+                        <Grid container>
+                            <Grid xs={12}>
+                                <Field
+                                    name={'unban_reason'}
+                                    validators={{
+                                        onChange: z.string().min(5)
+                                    }}
+                                    children={(props) => {
+                                        return <TextFieldSimple {...props} label={'Unban Reason'} />;
+                                    }}
+                                />
+                            </Grid>
                         </Grid>
-                    </Grid>
-                </DialogContent>
+                    </DialogContent>
 
-                <DialogActions>
-                    <Grid container>
-                        <Grid xs={12}>
-                            <Subscribe
-                                selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                children={([canSubmit, isSubmitting]) => {
-                                    return (
-                                        <Buttons
-                                            reset={reset}
-                                            canSubmit={canSubmit}
-                                            isSubmitting={isSubmitting}
-                                            onClose={async () => {
-                                                await modal.hide();
-                                            }}
-                                        />
-                                    );
-                                }}
-                            />
+                    <DialogActions>
+                        <Grid container>
+                            <Grid xs={12}>
+                                <Subscribe
+                                    selector={(state) => [state.canSubmit, state.isSubmitting]}
+                                    children={([canSubmit, isSubmitting]) => {
+                                        return (
+                                            <Buttons
+                                                reset={reset}
+                                                canSubmit={canSubmit}
+                                                isSubmitting={isSubmitting}
+                                                onClose={async () => {
+                                                    await modal.hide();
+                                                }}
+                                            />
+                                        );
+                                    }}
+                                />
+                            </Grid>
                         </Grid>
-                    </Grid>
-                </DialogActions>
-            </form>
-        </Dialog>
-    );
-});
+                    </DialogActions>
+                </form>
+            </Dialog>
+        );
+    }
+);
 
 export default UnbanSteamModal;

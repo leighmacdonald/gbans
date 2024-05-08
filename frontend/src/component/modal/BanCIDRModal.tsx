@@ -112,7 +112,7 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                 </DialogTitle>
 
                 <DialogContent>
-                    <Grid container>
+                    <Grid container spacing={2}>
                         <Grid xs={12}>
                             <Field
                                 name={'target_id'}

@@ -261,3 +261,16 @@ func (f TargetIDField) TargetSteamID(ctx context.Context) (steamid.SteamID, bool
 
 	return sid, sid.Valid()
 }
+
+type TargetGIDField struct {
+	GroupID string `json:"group_id"`
+}
+
+func (f TargetGIDField) TargetGroupID(ctx context.Context) (steamid.SteamID, bool) {
+	sid, err := steamid.Resolve(ctx, f.GroupID)
+	if err != nil {
+		return sid, false
+	}
+
+	return sid, sid.Valid()
+}

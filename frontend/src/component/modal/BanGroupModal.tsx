@@ -1,108 +1,201 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import GroupsIcon from '@mui/icons-material/Groups';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import Stack from '@mui/material/Stack';
-import { GroupBanRecord } from '../../api';
+import MenuItem from '@mui/material/MenuItem';
+import Grid from '@mui/material/Unstable_Grid2';
+import { useForm } from '@tanstack/react-form';
+import { useMutation } from '@tanstack/react-query';
+import { zodValidator } from '@tanstack/zod-form-adapter';
+import { parseISO } from 'date-fns';
+import { z } from 'zod';
+import { apiCreateBanGroup, apiUpdateBanGroup, Duration, DurationCollection, GroupBanRecord } from '../../api';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+import { makeSteamidValidators } from '../../util/validator/makeSteamidValidators.ts';
 import { Heading } from '../Heading';
-import { CancelButton, ResetButton, SubmitButton } from './Buttons';
+import { Buttons } from '../field/Buttons.tsx';
+import { DateTimeSimple } from '../field/DateTimeSimple.tsx';
+import { SelectFieldSimple } from '../field/SelectFieldSimple.tsx';
+import { SteamIDField } from '../field/SteamIDField.tsx';
+import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
-// type BanGroupFormValues = {
-//     ban_group_id?: number;
-//     group_id: string;
-//     duration: Duration;
-//     duration_custom: Date;
-//     note: string;
-// } & TargetIDInputValue;
-//
-// const validationSchema = yup.object({
-//     target_id: steamIdValidator('target_id'),
-//     group_id: groupIdFieldValidator,
-//     duration: DurationFieldValidator,
-//     duration_custom: DurationCustomFieldValidator,
-//     note: NoteFieldValidator
-// });
+type BanGroupFormValues = {
+    ban_group_id?: number;
+    target_id: string;
+    group_id: string;
+    duration: Duration;
+    duration_custom: string;
+    note: string;
+};
 
-export interface BanGroupModalProps {
-    existing?: GroupBanRecord;
-}
-
-export const BanGroupModal = NiceModal.create((/**{ existing }: BanGroupModalProps*/) => {
-    // const [error, setError] = useState<string>();
+export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupBanRecord }) => {
     const modal = useModal();
-    // const onSubmit = useCallback(
-    //     async (values: BanGroupFormValues) => {
-    //         try {
-    //             if (existing != undefined && existing.ban_group_id > 0) {
-    //                 modal.resolve(
-    //                     await apiUpdateBanGroup(existing.ban_group_id, {
-    //                         note: values.note,
-    //                         valid_until: values.duration_custom,
-    //                         target_id: values.target_id
-    //                     })
-    //                 );
-    //             } else {
-    //                 modal.resolve(
-    //                     await apiCreateBanGroup({
-    //                         group_id: values.group_id,
-    //                         note: values.note,
-    //                         duration: values.duration,
-    //                         valid_until: values.duration_custom,
-    //                         target_id: values.target_id
-    //                     })
-    //                 );
-    //             }
-    //             await modal.hide();
-    //             setError(undefined);
-    //         } catch (e) {
-    //             modal.reject(e);
-    //             if (e instanceof AppError) {
-    //                 setError(e.message);
-    //             } else {
-    //                 setError('Unknown internal error');
-    //             }
-    //         }
-    //     },
-    //     [existing, modal]
-    // );
+    const { sendFlash } = useUserFlashCtx();
 
+    const mutation = useMutation({
+        mutationKey: ['banGroup'],
+        mutationFn: async (values: BanGroupFormValues) => {
+            console.log(values);
+            try {
+                if (existing?.ban_group_id) {
+                    const ban_record = apiUpdateBanGroup(existing.ban_group_id, {
+                        note: values.note,
+                        target_id: values.target_id,
+                        valid_until: values.duration_custom ? parseISO(values.duration_custom) : undefined
+                    });
+                    sendFlash('success', 'Updated CIDR ban successfully');
+                    modal.resolve(ban_record);
+                } else {
+                    const ban_record = await apiCreateBanGroup({
+                        note: values.note,
+                        duration: values.duration,
+                        valid_until: values.duration_custom ? parseISO(values.duration_custom) : undefined,
+                        target_id: values.target_id,
+                        group_id: values.group_id
+                    });
+                    sendFlash('success', 'Created CIDR ban successfully');
+                    modal.resolve(ban_record);
+                }
+                await modal.hide();
+            } catch (e) {
+                modal.reject(e);
+            }
+        }
+    });
+
+    const { Field, Subscribe, handleSubmit, reset } = useForm({
+        onSubmit: async ({ value }) => {
+            mutation.mutate({
+                target_id: value.target_id,
+                group_id: value.group_id,
+                duration: value.duration,
+                duration_custom: value.duration_custom,
+                note: value.note
+            });
+        },
+        validatorAdapter: zodValidator,
+        defaultValues: {
+            target_id: existing ? existing.target_id : '',
+            group_id: existing ? existing.group_id : '',
+            duration: existing ? Duration.durCustom : Duration.dur2w,
+            duration_custom: existing ? existing.valid_until.toISOString() : '',
+            note: existing ? existing.note : ''
+        }
+    });
     return (
-        // <Formik
-        //     onSubmit={onSubmit}
-        //     id={'banGroupForm'}
-        //     initialValues={{
-        //         ban_group_id: existing?.ban_group_id,
-        //         target_id: existing ? existing.target_id : '',
-        //         duration: existing ? Duration.durCustom : Duration.dur2w,
-        //         duration_custom: existing ? existing.valid_until : new Date(),
-        //         note: existing ? existing.note : '',
-        //         group_id: existing ? existing.group_id : ''
-        //     }}
-        //     validateOnBlur={true}
-        //     validateOnChange={false}
-        //     validationSchema={validationSchema}
-        // >
         <Dialog fullWidth {...muiDialogV5(modal)}>
-            <DialogTitle component={Heading} iconLeft={<GroupsIcon />}>
-                Ban Steam Group
-            </DialogTitle>
+            <form
+                onSubmit={async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    await handleSubmit();
+                }}
+            >
+                <DialogTitle component={Heading} iconLeft={<GroupsIcon />}>
+                    Ban Steam Group
+                </DialogTitle>
 
-            <DialogContent>
-                <Stack spacing={2}>
-                    {/*<TargetIDField />*/}
-                    {/*<GroupIdField />*/}
-                    {/*<DurationField />*/}
-                    {/*<DurationCustomField />*/}
-                    {/*<NoteField />*/}
-                    {/*<ErrorField error={error} />*/}
-                </Stack>
-            </DialogContent>
-            <DialogActions>
-                <CancelButton />
-                <ResetButton />
-                <SubmitButton />
-            </DialogActions>
+                <DialogContent>
+                    <Grid container spacing={2}>
+                        <Grid xs={12}>
+                            <Field
+                                name={'target_id'}
+                                validators={makeSteamidValidators()}
+                                children={(props) => {
+                                    return (
+                                        <SteamIDField
+                                            {...props}
+                                            label={'Target Steam ID'}
+                                            fullwidth={true}
+                                            disabled={Boolean(existing?.ban_group_id)}
+                                        />
+                                    );
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={12}>
+                            <Field
+                                name={'group_id'}
+                                validators={{
+                                    onChange: z.string()
+                                }}
+                                children={(props) => {
+                                    return <TextFieldSimple {...props} label={'Steam Group ID'} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={6}>
+                            <Field
+                                name={'duration'}
+                                validators={{
+                                    onChange: z.nativeEnum(Duration)
+                                }}
+                                children={(props) => {
+                                    return (
+                                        <SelectFieldSimple
+                                            {...props}
+                                            label={'Duration'}
+                                            fullwidth={true}
+                                            items={DurationCollection}
+                                            renderMenu={(du) => {
+                                                return (
+                                                    <MenuItem value={du} key={`du-${du}`}>
+                                                        {du}
+                                                    </MenuItem>
+                                                );
+                                            }}
+                                        />
+                                    );
+                                }}
+                            />
+                        </Grid>
+
+                        <Grid xs={6}>
+                            <Field
+                                name={'duration_custom'}
+                                children={(props) => {
+                                    return <DateTimeSimple {...props} label={'Custom Expire Date'} />;
+                                }}
+                            />
+                        </Grid>
+
+                        <Grid xs={12}>
+                            <Field
+                                name={'note'}
+                                validators={{
+                                    onChange: z.string()
+                                }}
+                                children={(props) => {
+                                    return (
+                                        <TextFieldSimple {...props} multiline={true} rows={10} label={'Mod Notes'} />
+                                    );
+                                }}
+                            />
+                        </Grid>
+                    </Grid>
+                </DialogContent>
+                <DialogActions>
+                    <Grid container>
+                        <Grid xs={12} mdOffset="auto">
+                            <Subscribe
+                                selector={(state) => [state.canSubmit, state.isSubmitting]}
+                                children={([canSubmit, isSubmitting]) => {
+                                    return (
+                                        <Buttons
+                                            reset={reset}
+                                            canSubmit={canSubmit}
+                                            isSubmitting={isSubmitting}
+                                            onClose={async () => {
+                                                await modal.hide();
+                                            }}
+                                        />
+                                    );
+                                }}
+                            />
+                        </Grid>
+                    </Grid>
+                </DialogActions>
+            </form>
         </Dialog>
-        // </Formik>
     );
 });
 

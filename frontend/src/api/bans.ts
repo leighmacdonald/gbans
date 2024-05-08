@@ -341,7 +341,7 @@ export const apiCreateBanGroup = async (payload: BanPayloadGroup) =>
 interface UpdateBanGroupPayload {
     target_id: string;
     note: string;
-    valid_until: Date;
+    valid_until?: Date;
 }
 
 export const apiUpdateBanGroup = async (ban_group_id: number, payload: UpdateBanGroupPayload) =>
