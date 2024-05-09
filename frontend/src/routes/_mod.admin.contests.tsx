@@ -1,16 +1,32 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
+import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import Button from '@mui/material/Button';
-import Stack from '@mui/material/Stack';
-import Grid from '@mui/material/Unstable_Grid2';
+import IconButton from '@mui/material/IconButton';
+import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
+import {
+    ColumnDef,
+    getCoreRowModel,
+    getPaginationRowModel,
+    OnChangeFn,
+    PaginationState,
+    useReactTable
+} from '@tanstack/react-table';
 import { z } from 'zod';
-import { Contest } from '../api';
-import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
+import { apiContests, Contest, PermissionLevel, permissionLevelString } from '../api';
+import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
+import { DataTable } from '../component/DataTable.tsx';
+import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
+import { TableCellBool } from '../component/TableCellBool.tsx';
+import { TableCellString } from '../component/TableCellString.tsx';
+import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { ModalContestEditor } from '../component/modal';
 import { logErr } from '../util/errors.ts';
-import { commonTableSearchSchema } from '../util/table.ts';
+import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
+import { renderDateTime } from '../util/text.tsx';
 
 const contestsSearchSchema = z.object({
     ...commonTableSearchSchema,
@@ -26,10 +42,21 @@ export const Route = createFileRoute('/_mod/admin/contests')({
 function AdminContests() {
     //const modal = useModal(ModalConfirm);
     // const theme = useTheme();
+    const [pagination, setPagination] = useState({
+        pageIndex: 0, //initial page index
+        pageSize: RowsPerPage.TwentyFive //default page size
+    });
 
-    const onEditContest = useCallback(async (contest_id?: string) => {
+    const { data: contests, isLoading } = useQuery({
+        queryKey: ['adminContests'],
+        queryFn: async () => {
+            return await apiContests();
+        }
+    });
+
+    const onEditContest = useCallback(async (contest?: Contest) => {
         try {
-            await NiceModal.show<Contest>(ModalContestEditor, contest_id ? { contest_id } : {});
+            await NiceModal.show<Contest>(ModalContestEditor, { contest });
         } catch (e) {
             logErr(e);
         }
@@ -49,161 +76,150 @@ function AdminContests() {
     // );
 
     return (
-        <>
-            <Grid container marginBottom={3}>
-                <Grid xs={12}>
-                    <Button
-                        variant={'contained'}
-                        onClick={async () => {
-                            await onEditContest();
-                        }}
-                        color={'success'}
-                    >
-                        Create New Contest
-                    </Button>
-                </Grid>
-            </Grid>
-            <ContainerWithHeader title={'User Submission Contests'} iconLeft={<EmojiEventsIcon />}>
-                <Stack>
-                    {/*<LazyTableSimple<Contest>*/}
-                    {/*    fetchData={apiContests}*/}
-                    {/*    columns={[*/}
-                    {/*        {*/}
-                    {/*            sortKey: 'title',*/}
-                    {/*            label: 'title',*/}
-                    {/*            tooltip: 'unique contest identifier',*/}
-                    {/*            align: 'left',*/}
-                    {/*            renderer: (obj) => {*/}
-                    {/*                return (*/}
-                    {/*                    <Link*/}
-                    {/*                        component={RouterLink}*/}
-                    {/*                        variant={'subtitle2'}*/}
-                    {/*                        to={`/contests/${obj.contest_id}`}*/}
-                    {/*                        sx={{*/}
-                    {/*                            color: theme.palette.text.primary*/}
-                    {/*                        }}*/}
-                    {/*                    >*/}
-                    {/*                        {obj.title}*/}
-                    {/*                    </Link>*/}
-                    {/*                );*/}
-                    {/*            }*/}
-                    {/*        },*/}
-                    {/*        {*/}
-                    {/*            sortKey: 'description',*/}
-                    {/*            label: 'description',*/}
-                    {/*            tooltip: 'description',*/}
-                    {/*            align: 'left',*/}
-                    {/*            renderer: (obj) => {*/}
-                    {/*                return obj.description.slice(0, 100);*/}
-                    {/*            }*/}
-                    {/*        },*/}
-                    {/*        {*/}
-                    {/*            sortKey: 'num_entries',*/}
-                    {/*            label: 'Entries',*/}
-                    {/*            tooltip: 'num_entries',*/}
-                    {/*            align: 'center',*/}
-                    {/*            sortType: 'number'*/}
-                    {/*        },*/}
-                    {/*        {*/}
-                    {/*            sortKey: 'public',*/}
-                    {/*            label: 'public',*/}
-                    {/*            tooltip: 'public',*/}
-                    {/*            align: 'center',*/}
-                    {/*            sortType: 'boolean'*/}
-                    {/*        },*/}
-                    {/*        {*/}
-                    {/*            sortKey: 'hide_submissions',*/}
-                    {/*            label: 'Hide Subs.',*/}
-                    {/*            tooltip: 'Hide submissions from the public until contest is over',*/}
-                    {/*            align: 'center',*/}
-                    {/*            sortType: 'boolean'*/}
-                    {/*        },*/}
-                    {/*        {*/}
-                    {/*            sortKey: 'voting',*/}
-                    {/*            label: 'Voting',*/}
-                    {/*            tooltip: 'User entry voting enabled',*/}
-                    {/*            align: 'center',*/}
-                    {/*            sortType: 'boolean'*/}
-                    {/*        },*/}
-                    {/*        {*/}
-                    {/*            sortKey: 'down_votes',*/}
-                    {/*            label: 'Down Votes',*/}
-                    {/*            tooltip: 'If User entry voting enabled, this will enable/disable the ability to down vote',*/}
-                    {/*            align: 'center',*/}
-                    {/*            sortType: 'boolean'*/}
-                    {/*        },*/}
-                    {/*        {*/}
-                    {/*            sortKey: 'date_start',*/}
-                    {/*            sortType: 'date',*/}
-                    {/*            label: 'Starting',*/}
-                    {/*            tooltip: 'Starting date',*/}
-                    {/*            sortable: true,*/}
-                    {/*            align: 'left',*/}
-                    {/*            renderer: (obj) => {*/}
-                    {/*                return obj.date_start.toISOString();*/}
-                    {/*            }*/}
-                    {/*        },*/}
-                    {/*        {*/}
-                    {/*            sortKey: 'date_end',*/}
-                    {/*            sortType: 'date',*/}
-                    {/*            sortable: true,*/}
-                    {/*            label: 'Ending',*/}
-                    {/*            tooltip: 'Ending date',*/}
-                    {/*            align: 'left',*/}
-                    {/*            renderer: (obj) => {*/}
-                    {/*                return obj.date_end.toISOString();*/}
-                    {/*            }*/}
-                    {/*        },*/}
-                    {/*        {*/}
-                    {/*            virtual: true,*/}
-                    {/*            virtualKey: 'actions',*/}
-                    {/*            label: '',*/}
-                    {/*            tooltip: '',*/}
-                    {/*            align: 'right',*/}
-                    {/*            renderer: (obj) => {*/}
-                    {/*                return (*/}
-                    {/*                    <ButtonGroup>*/}
-                    {/*                        <IconButton*/}
-                    {/*                            color={'warning'}*/}
-                    {/*                            onClick={async () => {*/}
-                    {/*                                try {*/}
-                    {/*                                    await onEditContest(obj.contest_id);*/}
-                    {/*                                } catch (e) {*/}
-                    {/*                                    logErr(e);*/}
-                    {/*                                }*/}
-                    {/*                            }}*/}
-                    {/*                        >*/}
-                    {/*                            <EditIcon />*/}
-                    {/*                        </IconButton>*/}
-                    {/*                        <IconButton*/}
-                    {/*                            color={'error'}*/}
-                    {/*                            onClick={async () => {*/}
-                    {/*                                try {*/}
-                    {/*                                    await NiceModal.show(ModalConfirm, {*/}
-                    {/*                                        title: 'Delete contest?',*/}
-                    {/*                                        description: `Are you sure you want to delete the contest: ${obj.title}`,*/}
-                    {/*                                        onConfirm: async () => {*/}
-                    {/*                                            await onDeleteContest(obj.contest_id);*/}
-                    {/*                                        }*/}
-                    {/*                                    });*/}
-                    {/*                                    await modal.hide();*/}
-                    {/*                                } catch (e) {*/}
-                    {/*                                    logErr(e);*/}
-                    {/*                                }*/}
-                    {/*                            }}*/}
-                    {/*                        >*/}
-                    {/*                            <DeleteIcon />*/}
-                    {/*                        </IconButton>*/}
-                    {/*                    </ButtonGroup>*/}
-                    {/*                );*/}
-                    {/*            }*/}
-                    {/*        }*/}
-                    {/*    ]}*/}
-                    {/*    defaultSortColumn={'date_end'}*/}
-                    {/*    defaultSortDir={'desc'}*/}
-                    {/*/>*/}
-                </Stack>
-            </ContainerWithHeader>
-        </>
+        <ContainerWithHeaderAndButtons
+            title={'User Submission Contests'}
+            iconLeft={<EmojiEventsIcon />}
+            buttons={[
+                <Button
+                    startIcon={<AddIcon />}
+                    variant={'contained'}
+                    onClick={async () => {
+                        await onEditContest();
+                    }}
+                    color={'success'}
+                >
+                    New Contest
+                </Button>
+            ]}
+        >
+            <ContestTable
+                contests={contests ?? []}
+                isLoading={isLoading}
+                onEdit={onEditContest}
+                pagination={pagination}
+                setPagination={setPagination}
+            />
+            <PaginatorLocal
+                onRowsChange={(rows) => {
+                    setPagination((prev) => {
+                        return { ...prev, pageSize: rows };
+                    });
+                }}
+                onPageChange={(page) => {
+                    setPagination((prev) => {
+                        return { ...prev, pageIndex: page };
+                    });
+                }}
+                count={contests?.length ?? 0}
+                rows={pagination.pageSize}
+                page={pagination.pageIndex}
+            />
+        </ContainerWithHeaderAndButtons>
     );
 }
+
+const ContestTable = ({
+    contests,
+    isLoading,
+    onEdit,
+    pagination,
+    setPagination
+}: {
+    contests: Contest[];
+    isLoading: boolean;
+    onEdit: (person: Contest) => Promise<void>;
+    pagination: PaginationState;
+    setPagination: OnChangeFn<PaginationState>;
+}) => {
+    const columns = useMemo<ColumnDef<Contest>[]>(
+        () => [
+            {
+                accessorKey: 'title',
+                header: () => <TableHeadingCell name={'Title'} />,
+                cell: (info) => <TableCellString>{String(info.getValue())}</TableCellString>
+            },
+            {
+                accessorKey: 'public',
+                header: () => <TableHeadingCell name={'Public'} tooltip={'Is this visible to regular users'} />,
+                cell: (info) => <TableCellBool enabled={Boolean(info.getValue())} />
+            },
+            {
+                accessorKey: 'hide_submissions',
+                header: () => <TableHeadingCell name={'Hide Sub.'} tooltip={'Are submissions hidden from public'} />,
+                cell: (info) => <TableCellBool enabled={Boolean(info.getValue())} />
+            },
+            {
+                accessorKey: 'voting',
+                header: () => <TableHeadingCell name={'Voting'} tooltip={'Is voting enabled on submissions'} />,
+                cell: (info) => <TableCellBool enabled={Boolean(info.getValue())} />
+            },
+            {
+                accessorKey: 'down_votes',
+                header: () => (
+                    <TableHeadingCell
+                        name={'Down Votes'}
+                        tooltip={'Is down voting enabled. Required voting to be enabled'}
+                    />
+                ),
+                cell: (info) => <TableCellBool enabled={Boolean(info.getValue())} />
+            },
+            {
+                accessorKey: 'max_submissions',
+                header: () => (
+                    <TableHeadingCell name={'Max Subs.'} tooltip={'Max number of submissions a single user can make'} />
+                ),
+                cell: (info) => <TableCellString>{String(info.getValue())}</TableCellString>
+            },
+            {
+                accessorKey: 'min_permission_level',
+                header: () => (
+                    <TableHeadingCell
+                        name={'Min. Perms'}
+                        tooltip={'Minumum permission level required to participate'}
+                    />
+                ),
+                cell: (info) => (
+                    <TableCellString>{permissionLevelString(info.getValue() as PermissionLevel)}</TableCellString>
+                )
+            },
+            {
+                accessorKey: 'date_start',
+                header: () => <TableHeadingCell name={'Starts'} tooltip={'Start date'} />,
+                cell: (info) => <TableCellString>{renderDateTime(info.getValue() as Date)}</TableCellString>
+            },
+            {
+                accessorKey: 'date_end',
+                header: () => <TableHeadingCell name={'Ends'} tooltip={'End date'} />,
+                cell: (info) => <TableCellString>{renderDateTime(info.getValue() as Date)}</TableCellString>
+            },
+            {
+                accessorKey: 'updated_on',
+                header: () => <TableHeadingCell name={'Updated'} />,
+                cell: (info) => <TableCellString>{renderDateTime(info.getValue() as Date)}</TableCellString>
+            },
+            {
+                id: 'actions',
+                cell: (info) => {
+                    return (
+                        <IconButton color={'warning'} onClick={() => onEdit(info.row.original)}>
+                            <EditIcon />
+                        </IconButton>
+                    );
+                }
+            }
+        ],
+        [onEdit]
+    );
+    const table = useReactTable({
+        data: contests,
+        columns: columns,
+        getCoreRowModel: getCoreRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        onPaginationChange: setPagination, //update the pagination state when internal APIs mutate the pagination state
+        state: {
+            pagination
+        }
+    });
+
+    return <DataTable table={table} isLoading={isLoading} />;
+};

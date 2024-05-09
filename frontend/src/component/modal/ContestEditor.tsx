@@ -1,27 +1,44 @@
-import NiceModal, { useModal, muiDialogV5 } from '@ebay/nice-modal-react';
+import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import Stack from '@mui/material/Stack';
-import { useQuery } from '@tanstack/react-query';
-import { apiContest, EmptyUUID } from '../../api';
+import MenuItem from '@mui/material/MenuItem';
+import Grid from '@mui/material/Unstable_Grid2';
+import { useForm } from '@tanstack/react-form';
+import { useMutation } from '@tanstack/react-query';
+import { zodValidator } from '@tanstack/zod-form-adapter';
+import { parseISO } from 'date-fns';
+import { z } from 'zod';
+import {
+    apiContestSave,
+    Contest,
+    EmptyUUID,
+    PermissionLevel,
+    PermissionLevelCollection,
+    permissionLevelString
+} from '../../api';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+import { numberStringValidator } from '../../util/validator/numberStringValidator.ts';
 import { Heading } from '../Heading';
-import { LoadingSpinner } from '../LoadingSpinner';
+import { Buttons } from '../field/Buttons.tsx';
+import { CheckboxSimple } from '../field/CheckboxSimple.tsx';
+import { DateTimeSimple } from '../field/DateTimeSimple.tsx';
+import { SelectFieldSimple } from '../field/SelectFieldSimple.tsx';
+import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
-// interface ContestEditorFormValues {
-//     contest_id: string;
-//     title: string;
-//     description: string;
-//     hide_submissions: boolean;
-//     public: boolean;
-//     date_start: Date;
-//     date_end: Date;
-//     max_submissions: number;
-//     media_types: string;
-//     voting: boolean;
-//     min_permission_level: PermissionLevel;
-//     down_votes: boolean;
-// }
-//
+type ContestEditorFormValues = {
+    title: string;
+    description: string;
+    hide_submissions: boolean;
+    public: boolean;
+    date_start: string;
+    date_end: string;
+    max_submissions: string;
+    media_types: string;
+    voting: boolean;
+    min_permission_level: PermissionLevel;
+    down_votes: boolean;
+};
+
 // const validationSchema = yup.object({
 //     title: minStringValidator('Title', 4),
 //     description: minStringValidator('Description', 1),
@@ -36,279 +53,240 @@ import { LoadingSpinner } from '../LoadingSpinner';
 //     min_permission_level: permissionValidator()
 // });
 
-export const ContestEditor = NiceModal.create(({ contest_id }: { contest_id?: number }) => {
-    const { data: contest, isLoading } = useQuery({
-        queryKey: ['contest', { contest_id }],
-        queryFn: async () => {
-            if (!contest_id) {
-                return undefined;
-            }
-            return await apiContest(contest_id);
+export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest }) => {
+    const modal = useModal();
+    const { sendFlash } = useUserFlashCtx();
+
+    const mutation = useMutation({
+        mutationKey: ['adminContest'],
+        mutationFn: async (values: ContestEditorFormValues) => {
+            return await apiContestSave({
+                contest_id: contest?.contest_id ?? EmptyUUID,
+                date_start: parseISO(values.date_start),
+                date_end: parseISO(values.date_end),
+                description: values.description,
+                hide_submissions: values.hide_submissions,
+                title: values.title,
+                voting: values.voting,
+                down_votes: values.down_votes,
+                max_submissions: Number(values.max_submissions),
+                media_types: values.media_types,
+                public: values.public,
+                min_permission_level: values.min_permission_level,
+                deleted: false,
+                num_entries: 0,
+                updated_on: new Date(),
+                created_on: new Date()
+            });
+        },
+        onSuccess: async (contest) => {
+            modal.resolve(contest);
+            await modal.hide();
+        },
+        onError: (error) => {
+            sendFlash('error', `${error}`);
         }
     });
-    const modal = useModal();
 
-    // const { sendFlash } = useUserFlashCtx();
-    //
-    // const defaultStartDate = useMemo(() => new Date(), []);
-
-    // const defaultEndDate = useMemo(() => {
-    //     const endDate = new Date();
-    //     endDate.setDate(defaultStartDate.getDate() + 1);
-    //     return endDate;
-    // }, [defaultStartDate]);
-    //
-    // const onSubmit = useCallback(
-    //     async (values: ContestEditorFormValues) => {
-    //         try {
-    //             const contest = await apiContestSave({
-    //                 contest_id:
-    //                     values.contest_id != ''
-    //                         ? values.contest_id
-    //                         : EmptyUUID,
-    //                 date_start: values.date_start,
-    //                 date_end: values.date_end,
-    //                 description: values.description,
-    //                 hide_submissions: values.hide_submissions,
-    //                 title: values.title,
-    //                 voting: values.voting,
-    //                 down_votes: values.down_votes,
-    //                 max_submissions: values.max_submissions,
-    //                 media_types: values.media_types,
-    //                 public: values.public,
-    //                 min_permission_level: values.min_permission_level,
-    //                 deleted: false,
-    //                 num_entries: 0,
-    //                 updated_on: new Date(),
-    //                 created_on: new Date()
-    //             });
-    //             sendFlash(
-    //                 'success',
-    //                 `Contest created successfully (${contest.contest_id}`
-    //             );
-    //             modal.resolve(contest);
-    //             await modal.hide();
-    //         } catch (e) {
-    //             logErr(e);
-    //             sendFlash('error', 'Error saving contest');
-    //         }
-    //     },
-    //     [modal, sendFlash]
-    // );
-    //
-    // const formId = 'contestEditorForm';
+    const { Field, Subscribe, handleSubmit, reset } = useForm({
+        onSubmit: async ({ value }) => {
+            mutation.mutate(value);
+        },
+        validatorAdapter: zodValidator,
+        defaultValues: {
+            date_start: contest?.date_start.toISOString() ?? '',
+            date_end: contest ? contest.date_end.toISOString() : '',
+            description: contest ? contest.description : '',
+            hide_submissions: contest ? contest.hide_submissions : false,
+            title: contest ? contest.title : '',
+            voting: contest ? contest.voting : true,
+            down_votes: contest ? contest.down_votes : true,
+            max_submissions: contest ? String(contest.max_submissions) : '1',
+            media_types: contest ? contest.media_types : '',
+            public: contest ? contest.public : true,
+            min_permission_level: contest ? contest.min_permission_level : PermissionLevel.User,
+            deleted: contest ? contest.deleted : false,
+            num_entries: 0,
+            updated_on: new Date(),
+            created_on: new Date()
+        }
+    });
 
     return (
-        // <Formik
-        //     onSubmit={onSubmit}
-        //     id={formId}
-        //     validateOnBlur={false}
-        //     validateOnChange={true}
-        //     validationSchema={validationSchema}
-        //     enableReinitialize={true}
-        //     initialValues={{
-        //         contest_id: contest?.contest_id ?? EmptyUUID,
-        //         title: contest?.title ?? '',
-        //         description: contest?.description ?? '',
-        //         public: contest?.public ?? false,
-        //         date_start: contest?.date_start ?? defaultStartDate,
-        //         date_end: contest?.date_end ?? defaultEndDate,
-        //         hide_submissions: contest?.hide_submissions ?? false,
-        //         max_submissions: contest?.max_submissions ?? 1,
-        //         media_types: contest?.media_types ?? '',
-        //         voting: contest?.voting ?? false,
-        //         down_votes: contest?.down_votes ?? false,
-        //         min_permission_level:
-        //             contest?.min_permission_level != undefined
-        //                 ? contest?.min_permission_level
-        //                 : PermissionLevel.User
-        //     }}
-        // >
         <Dialog fullWidth {...muiDialogV5(modal)}>
-            <DialogTitle component={Heading} iconLeft={isLoading ? <LoadingSpinner /> : <EmojiEventsIcon />}>
-                {`${contest?.contest_id == EmptyUUID ? 'Create' : 'Edit'} A Contest`}
-            </DialogTitle>
+            <form
+                onSubmit={async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    await handleSubmit();
+                }}
+            >
+                <DialogTitle component={Heading} iconLeft={<EmojiEventsIcon />}>
+                    {`${contest?.contest_id == EmptyUUID ? 'Create' : 'Edit'} A Contest`}
+                </DialogTitle>
 
-            <DialogContent>
-                {isLoading ? (
-                    <LoadingSpinner />
-                ) : (
-                    <Stack spacing={2}>
-                        {/*<TitleField />*/}
-                        {/*<DescriptionField />*/}
-                        {/*<Stack direction={'row'} spacing={2}>*/}
-                        {/*    <PublicField />*/}
-                        {/*    <HideSubmissionsField />*/}
-                        {/*    <MaxSubmissionsField />*/}
-                        {/*    <MinPermissionLevelField />*/}
-                        {/*</Stack>*/}
-                        {/*<Stack direction={'row'} spacing={2}>*/}
-                        {/*    <VotingField />*/}
-                        {/*    <DownVotesField />*/}
-                        {/*</Stack>*/}
+                <DialogContent>
+                    <Grid container spacing={2}>
+                        <Grid xs={12}>
+                            <Field
+                                name={'title'}
+                                validators={{
+                                    onChange: z.string().min(5)
+                                }}
+                                children={(props) => {
+                                    return <TextFieldSimple {...props} label={'Title'} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={12}>
+                            <Field
+                                name={'description'}
+                                validators={{
+                                    onChange: z.string().min(5)
+                                }}
+                                children={(props) => {
+                                    return (
+                                        <TextFieldSimple {...props} label={'Description'} multiline={true} rows={10} />
+                                    );
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={4}>
+                            <Field
+                                name={'public'}
+                                validators={{
+                                    onChange: z.boolean()
+                                }}
+                                children={(props) => {
+                                    return <CheckboxSimple {...props} label={'Public'} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={4}>
+                            <Field
+                                name={'hide_submissions'}
+                                validators={{
+                                    onChange: z.boolean()
+                                }}
+                                children={(props) => {
+                                    return <CheckboxSimple {...props} label={'Hide Submissions'} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={6}>
+                            <Field
+                                name={'max_submissions'}
+                                validators={{
+                                    onChange: z.string().transform(numberStringValidator(1, 10))
+                                }}
+                                children={(props) => {
+                                    return <TextFieldSimple {...props} label={'Max Submissions'} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={6}>
+                            <Field
+                                name={'min_permission_level'}
+                                children={(props) => {
+                                    return (
+                                        <SelectFieldSimple
+                                            {...props}
+                                            label={'Min Permissions'}
+                                            fullwidth={true}
+                                            items={PermissionLevelCollection}
+                                            renderMenu={(pl) => {
+                                                return (
+                                                    <MenuItem value={pl} key={`pl-${pl}`}>
+                                                        {permissionLevelString(pl)}
+                                                    </MenuItem>
+                                                );
+                                            }}
+                                        />
+                                    );
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={6}>
+                            <Field
+                                name={'voting'}
+                                validators={{
+                                    onChange: z.boolean()
+                                }}
+                                children={(props) => {
+                                    return <CheckboxSimple {...props} label={'Voting Enabled'} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={6}>
+                            <Field
+                                name={'down_votes'}
+                                validators={{
+                                    onChange: z.boolean()
+                                }}
+                                children={(props) => {
+                                    return <CheckboxSimple {...props} label={'Downvotes Enabled'} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={6}>
+                            <Field
+                                name={'date_start'}
+                                children={(props) => {
+                                    return <DateTimeSimple {...props} label={'Custom Expire Date'} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={6}>
+                            <Field
+                                name={'date_end'}
+                                children={(props) => {
+                                    return <DateTimeSimple {...props} label={'Custom Expire Date'} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={6}>
+                            <Field
+                                name={'media_types'}
+                                validators={{
+                                    onChange: z.string().refine((arg) => {
+                                        if (arg == '') {
+                                            return true;
+                                        }
 
-                        {/*<Stack direction={'row'} spacing={2}>*/}
-                        {/*    <DateStartField />*/}
-                        {/*    <DateEndField />*/}
-                        {/*</Stack>*/}
-
-                        {/*<MimeTypeField />*/}
-                    </Stack>
-                )}
-            </DialogContent>
-            <DialogActions>
-                {/*<CancelButton />*/}
-                {/*<ResetButton />*/}
-                {/*<SubmitButton />*/}
-            </DialogActions>
+                                        const parts = arg?.split(',');
+                                        const matches = parts.filter((p) => p.match(/^\S+\/\S+$/));
+                                        return matches.length == parts.length;
+                                    })
+                                }}
+                                children={(props) => {
+                                    return <TextFieldSimple {...props} label={'Allowed Mime Types'} />;
+                                }}
+                            />
+                        </Grid>
+                    </Grid>
+                </DialogContent>
+                <DialogActions>
+                    <Grid container>
+                        <Grid xs={12} mdOffset="auto">
+                            <Subscribe
+                                selector={(state) => [state.canSubmit, state.isSubmitting]}
+                                children={([canSubmit, isSubmitting]) => {
+                                    return (
+                                        <Buttons
+                                            reset={reset}
+                                            canSubmit={canSubmit}
+                                            isSubmitting={isSubmitting}
+                                            onClose={async () => {
+                                                await modal.hide();
+                                            }}
+                                        />
+                                    );
+                                }}
+                            />
+                        </Grid>
+                    </Grid>
+                </DialogActions>
+            </form>
         </Dialog>
-        // </Formik>
     );
 });
-//
-// const MaxSubmissionsField = () => {
-//     const { handleChange, values, touched, errors } =
-//         useFormikContext<ContestEditorFormValues>();
-//     return (
-//         <FormControl fullWidth>
-//             <InputLabel id="max_submissions-label">
-//                 Maximum Submissions Per User
-//             </InputLabel>
-//             <Select<number>
-//                 name={`max_submissions`}
-//                 labelId={`max_submissions-label`}
-//                 id={`max_submissions`}
-//                 label={'Maximum Submissions Per User'}
-//                 error={
-//                     touched.max_submissions && Boolean(errors.max_submissions)
-//                 }
-//                 value={values.max_submissions}
-//                 onChange={handleChange}
-//             >
-//                 {[-1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((c) => (
-//                     <MenuItem key={`max-subs-${c}`} value={c}>
-//                         {c < 0 ? 'Unlimited' : c}
-//                     </MenuItem>
-//                 ))}
-//             </Select>
-//             <FormHelperText>
-//                 {touched.max_submissions &&
-//                     Boolean(errors.max_submissions) &&
-//                     errors.max_submissions}
-//             </FormHelperText>
-//         </FormControl>
-//     );
-// };
-//
-// const MinPermissionLevelField = () => {
-//     const { values, touched, errors, handleChange } =
-//         useFormikContext<ContestEditorFormValues>();
-//     return (
-//         <FormControl fullWidth>
-//             <InputLabel id="min_permission_level-label">
-//                 Minimum permissions required to submit
-//             </InputLabel>
-//             <Select<number>
-//                 name={`min_permission_level`}
-//                 labelId={`min_permission_level-label`}
-//                 id={`min_permission_level`}
-//                 label={'Minimum permissions required to submit'}
-//                 value={values.min_permission_level}
-//                 onChange={handleChange}
-//             >
-//                 <MenuItem value={PermissionLevel.User}>Logged In User</MenuItem>
-//                 <MenuItem value={PermissionLevel.Editor}>Editor</MenuItem>
-//                 <MenuItem value={PermissionLevel.Moderator}>Moderator</MenuItem>
-//                 <MenuItem value={PermissionLevel.Admin}>Admin</MenuItem>
-//             </Select>
-//             <FormHelperText>
-//                 {touched.min_permission_level &&
-//                     Boolean(errors.min_permission_level) &&
-//                     errors.min_permission_level}
-//             </FormHelperText>
-//         </FormControl>
-//     );
-// };
-//
-// const PublicField = () => {
-//     const { values, handleChange } =
-//         useFormikContext<ContestEditorFormValues>();
-//     return (
-//         <FormGroup>
-//             <FormControlLabel
-//                 control={<Checkbox checked={values.public} />}
-//                 label="Public"
-//                 name={'public'}
-//                 onChange={handleChange}
-//             />
-//         </FormGroup>
-//     );
-// };
-//
-// const HideSubmissionsField = () => {
-//     const { values, handleChange } =
-//         useFormikContext<ContestEditorFormValues>();
-//     return (
-//         <FormGroup>
-//             <FormControlLabel
-//                 control={<Checkbox checked={values.hide_submissions} />}
-//                 label="Hide Submissions"
-//                 name={'hide_submissions'}
-//                 onChange={handleChange}
-//             />
-//         </FormGroup>
-//     );
-// };
-//
-// const VotingField = () => {
-//     const { values, handleChange } =
-//         useFormikContext<ContestEditorFormValues>();
-//     return (
-//         <FormGroup>
-//             <FormControlLabel
-//                 control={<Checkbox checked={values.voting} />}
-//                 label="Voting Allowed"
-//                 name={'voting'}
-//                 onChange={handleChange}
-//             />
-//         </FormGroup>
-//     );
-// };
-//
-// const DownVotesField = () => {
-//     const { values, handleChange } =
-//         useFormikContext<ContestEditorFormValues>();
-//
-//     return (
-//         <FormGroup>
-//             <FormControlLabel
-//                 disabled={!values.voting}
-//                 control={<Checkbox checked={values.down_votes} />}
-//                 label="Down Votes Allowed"
-//                 name={'down_votes'}
-//                 onChange={handleChange}
-//             />
-//         </FormGroup>
-//     );
-// };
-//
-// const MimeTypeField = ({ isReadOnly }: BaseFormikInputProps) => {
-//     const { errors, touched, values, handleBlur, handleChange } =
-//         useFormikContext<ContestEditorFormValues>();
-//     return (
-//         <TextField
-//             fullWidth
-//             disabled={isReadOnly ?? false}
-//             name={'media_types'}
-//             id={'media_types'}
-//             label={'Mime Types Allowed'}
-//             value={values.media_types}
-//             onChange={handleChange}
-//             onBlur={handleBlur}
-//             error={touched.media_types && Boolean(errors.media_types)}
-//             helperText={touched.media_types && errors.media_types}
-//         />
-//     );
-// };
-
-export default ContestEditor;

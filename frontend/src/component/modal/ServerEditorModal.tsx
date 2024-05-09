@@ -13,25 +13,25 @@ import { Buttons } from '../field/Buttons.tsx';
 import { CheckboxSimple } from '../field/CheckboxSimple.tsx';
 import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
+type ServerEditValues = {
+    short_name: string;
+    name: string;
+    address: string;
+    port: string;
+    password: string;
+    rcon: string;
+    region: string;
+    cc: string;
+    latitude: string;
+    longitude: string;
+    reserved_slots: string;
+    is_enabled: boolean;
+    enabled_stats: boolean;
+    log_secret: string;
+};
+
 export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server }) => {
     const modal = useModal();
-
-    type ServerEditValues = {
-        short_name: string;
-        name: string;
-        address: string;
-        port: string;
-        password: string;
-        rcon: string;
-        region: string;
-        cc: string;
-        latitude: string;
-        longitude: string;
-        reserved_slots: string;
-        is_enabled: boolean;
-        enabled_stats: boolean;
-        log_secret: string;
-    };
 
     const mutation = useMutation({
         mutationKey: ['adminServer'],
