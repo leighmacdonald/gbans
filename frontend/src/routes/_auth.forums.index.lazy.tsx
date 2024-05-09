@@ -128,7 +128,10 @@ const CategoryBlock = ({ category }: { category: ForumCategory }) => {
                                     <Stack direction={'row'} spacing={2}>
                                         <VCenteredElement
                                             icon={
-                                                <Avatar alt={f.recent_personaname} src={avatarHashToURL(f.recent_avatarhash, 'medium')} />
+                                                <Avatar
+                                                    alt={f.recent_personaname}
+                                                    src={avatarHashToURL(f.recent_avatarhash, 'medium')}
+                                                />
                                             }
                                         />
                                         <Stack>
@@ -300,7 +303,9 @@ export const RecentMessageActivity = () => {
                                     width: '100%'
                                 }}
                             >
-                                <VCenteredElement icon={<Avatar alt={m.personaname} src={avatarHashToURL(m.avatarhash, 'medium')} />} />
+                                <VCenteredElement
+                                    icon={<Avatar alt={m.personaname} src={avatarHashToURL(m.avatarhash, 'medium')} />}
+                                />
                                 <Stack>
                                     <Box
                                         sx={{
@@ -320,7 +325,9 @@ export const RecentMessageActivity = () => {
                                         <AccessTimeIcon scale={0.5} />
                                         <VCenterBox>
                                             <Tooltip title={renderDateTime(m.created_on)}>
-                                                <Typography variant={'body2'}>{renderTime(m.created_on ?? new Date())}</Typography>
+                                                <Typography variant={'body2'}>
+                                                    {renderTime(m.created_on ?? new Date())}
+                                                </Typography>
                                             </Tooltip>
                                         </VCenterBox>
                                         <Person2 scale={0.5} />

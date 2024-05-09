@@ -121,7 +121,12 @@ function AdminNetworkPlayersByCIDR() {
                                 <Subscribe
                                     selector={(state) => [state.canSubmit, state.isSubmitting]}
                                     children={([canSubmit, isSubmitting]) => (
-                                        <Buttons reset={reset} canSubmit={canSubmit} isSubmitting={isSubmitting} onClear={clear} />
+                                        <Buttons
+                                            reset={reset}
+                                            canSubmit={canSubmit}
+                                            isSubmitting={isSubmitting}
+                                            onClear={clear}
+                                        />
                                     )}
                                 />
                             </Grid>
@@ -132,7 +137,12 @@ function AdminNetworkPlayersByCIDR() {
             <Grid xs={12}>
                 <ContainerWithHeader title={'Find Players By IP/CIDR'} iconLeft={<WifiFindIcon />}>
                     <PayersByIPTable connections={connections ?? { data: [], count: 0 }} isLoading={isLoading} />
-                    <Paginator page={page ?? 0} rows={rows ?? defaultRows} data={connections} path={'/admin/network/playersbyip'} />
+                    <Paginator
+                        page={page ?? 0}
+                        rows={rows ?? defaultRows}
+                        data={connections}
+                        path={'/admin/network/playersbyip'}
+                    />
                 </ContainerWithHeader>
             </Grid>
         </Grid>
@@ -141,7 +151,13 @@ function AdminNetworkPlayersByCIDR() {
 
 const columnHelper = createColumnHelper<PersonConnection>();
 
-const PayersByIPTable = ({ connections, isLoading }: { connections: LazyResult<PersonConnection>; isLoading: boolean }) => {
+const PayersByIPTable = ({
+    connections,
+    isLoading
+}: {
+    connections: LazyResult<PersonConnection>;
+    isLoading: boolean;
+}) => {
     const columns = [
         columnHelper.accessor('created_on', {
             header: () => <TableHeadingCell name={'Created'} />,

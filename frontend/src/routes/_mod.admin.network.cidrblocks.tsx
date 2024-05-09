@@ -14,7 +14,13 @@ import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useRouteContext } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { z } from 'zod';
-import { apiDeleteCIDRBlockSource, apiGetCIDRBlockLists, CIDRBlockSource, CIDRBlockWhitelist, PermissionLevel } from '../api';
+import {
+    apiDeleteCIDRBlockSource,
+    apiGetCIDRBlockLists,
+    CIDRBlockSource,
+    CIDRBlockWhitelist,
+    PermissionLevel
+} from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { DataTable } from '../component/DataTable.tsx';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
@@ -27,7 +33,9 @@ import { renderDate } from '../util/text.tsx';
 
 const ipHistorySearchSchema = z.object({
     ...commonTableSearchSchema,
-    sortColumn: z.enum(['person_connection_id', 'steam_id', 'created_on', 'ip_addr', 'server_id']).catch('person_connection_id')
+    sortColumn: z
+        .enum(['person_connection_id', 'steam_id', 'created_on', 'ip_addr', 'server_id'])
+        .catch('person_connection_id')
 });
 
 export const Route = createFileRoute('/_mod/admin/network/cidrblocks')({
@@ -191,7 +199,9 @@ function AdminNetworkCIDRBlocks() {
                                             <Typography variant={'body1'}>{s.name}</Typography>
                                         </VCenterBox>
                                         <VCenterBox>
-                                            <Typography variant={'body2'}>{s.enabled ? 'Enabled' : 'Disabled'}</Typography>
+                                            <Typography variant={'body2'}>
+                                                {s.enabled ? 'Enabled' : 'Disabled'}
+                                            </Typography>
                                         </VCenterBox>
                                         <VCenterBox>
                                             <Typography variant={'body2'}>{s.url}</Typography>

@@ -1,6 +1,9 @@
 import { HTMLProps, useEffect, useRef } from 'react';
 
-export function IndeterminateCheckbox({ indeterminate, ...rest }: { indeterminate?: boolean } & HTMLProps<HTMLInputElement>) {
+export function IndeterminateCheckbox({
+    indeterminate,
+    ...rest
+}: { indeterminate?: boolean } & HTMLProps<HTMLInputElement>) {
     const ref = useRef<HTMLInputElement>(null!);
 
     useEffect(() => {

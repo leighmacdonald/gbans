@@ -1,7 +1,13 @@
 import { Theme } from '@mui/material';
 import { LazyResult } from '../util/table.ts';
 import { BanReason } from './bans';
-import { apiCall, ReportQueryFilter, TimeStamped, transformTimeStampedDates, transformTimeStampedDatesList } from './common';
+import {
+    apiCall,
+    ReportQueryFilter,
+    TimeStamped,
+    transformTimeStampedDates,
+    transformTimeStampedDatesList
+} from './common';
 import { Person } from './profile';
 
 export enum ReportStatus {
@@ -99,20 +105,31 @@ export interface ReportWithAuthor extends Report {
     subject: Person;
 }
 
-export const apiCreateReport = async (opts: CreateReportRequest) => await apiCall<Report, CreateReportRequest>('/api/report', 'POST', opts);
+export const apiCreateReport = async (opts: CreateReportRequest) =>
+    await apiCall<Report, CreateReportRequest>('/api/report', 'POST', opts);
 
 export const apiGetReport = async (report_id: number, abortController?: AbortController) =>
     await apiCall<ReportWithAuthor>(`/api/report/${report_id}`, 'GET', abortController);
 
 export const apiGetReports = async (opts?: ReportQueryFilter, abortController?: AbortController) => {
-    const resp = await apiCall<LazyResult<ReportWithAuthor>, ReportQueryFilter>(`/api/reports`, 'POST', opts, abortController);
+    const resp = await apiCall<LazyResult<ReportWithAuthor>, ReportQueryFilter>(
+        `/api/reports`,
+        'POST',
+        opts,
+        abortController
+    );
     resp.data = resp.data.map(transformTimeStampedDates);
     return resp;
 };
 
 export const apiGetReportMessages = async (report_id: number, abortController?: AbortController) =>
     transformTimeStampedDatesList(
-        await apiCall<ReportMessage[], CreateReportRequest>(`/api/report/${report_id}/messages`, 'GET', undefined, abortController)
+        await apiCall<ReportMessage[], CreateReportRequest>(
+            `/api/report/${report_id}/messages`,
+            'GET',
+            undefined,
+            abortController
+        )
     );
 
 export interface CreateReportMessage {
@@ -120,7 +137,9 @@ export interface CreateReportMessage {
 }
 
 export const apiCreateReportMessage = async (report_id: number, message: string) =>
-    transformTimeStampedDates(await apiCall<ReportMessage, CreateReportMessage>(`/api/report/${report_id}/messages`, 'POST', { message }));
+    transformTimeStampedDates(
+        await apiCall<ReportMessage, CreateReportMessage>(`/api/report/${report_id}/messages`, 'POST', { message })
+    );
 
 export const apiReportSetState = async (report_id: number, stateAction: ReportStatus) =>
     await apiCall(`/api/report_status/${report_id}`, 'POST', {

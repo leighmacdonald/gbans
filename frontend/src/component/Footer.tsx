@@ -39,7 +39,12 @@ export const Footer = (): JSX.Element => {
                         alignItems="center"
                         justifyContent="center"
                     >
-                        <Link component={RouterLink} variant={'subtitle2'} to={gbansUrl} sx={{ color: theme.palette.text.primary }}>
+                        <Link
+                            component={RouterLink}
+                            variant={'subtitle2'}
+                            to={gbansUrl}
+                            sx={{ color: theme.palette.text.primary }}
+                        >
                             {window.gbans.build_version}
                         </Link>
                         <Link

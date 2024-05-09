@@ -48,12 +48,13 @@ import { useTheme } from '@mui/material/styles';
 import { useNavigate } from '@tanstack/react-router';
 import { MenuItemData, NestedDropdown } from 'mui-nested-menu';
 import { PermissionLevel, UserNotification } from '../api';
-import { generateOIDCLink, useAuth } from '../auth.tsx';
 import { NotificationsProvider } from '../contexts/NotificationsCtx';
+import { useAuth } from '../hooks/useAuth.ts';
 import { useColourModeCtx } from '../hooks/useColourModeCtx.ts';
 import { useNotificationsCtx } from '../hooks/useNotificationsCtx.ts';
 import steamLogo from '../icons/steam_login_sm.png';
 import { tf2Fonts } from '../theme';
+import { generateOIDCLink } from '../util/auth/generateOIDCLink.ts';
 import RouterLink from './RouterLink.tsx';
 import { VCenterBox } from './VCenterBox.tsx';
 
@@ -295,7 +296,11 @@ export const TopBar = () => {
     );
 
     const themeIcon = useMemo(() => {
-        return theme.palette.mode == 'light' ? <DarkModeIcon sx={{ color: '#ada03a' }} /> : <LightModeIcon sx={{ color: '#ada03a' }} />;
+        return theme.palette.mode == 'light' ? (
+            <DarkModeIcon sx={{ color: '#ada03a' }} />
+        ) : (
+            <LightModeIcon sx={{ color: '#ada03a' }} />
+        );
     }, [theme.palette.mode]);
 
     return (
@@ -383,7 +388,11 @@ export const TopBar = () => {
                             {hasPermission(PermissionLevel.Admin) && (
                                 <NotificationsProvider>
                                     <IconButton component={RouterLink} to={'/notifications'} color={'inherit'}>
-                                        <Badge badgeContent={(notifications ?? []).filter((n: UserNotification) => !n.read).length}>
+                                        <Badge
+                                            badgeContent={
+                                                (notifications ?? []).filter((n: UserNotification) => !n.read).length
+                                            }
+                                        >
                                             <MailIcon />
                                         </Badge>
                                     </IconButton>

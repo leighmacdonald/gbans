@@ -27,7 +27,8 @@ export const commonTableSearchSchema = {
     sortOrder: z.enum(['desc', 'asc']).optional()
 };
 
-export const descendingComparator = <T>(a: T, b: T, orderBy: keyof T) => (b[orderBy] < a[orderBy] ? -1 : b[orderBy] > a[orderBy] ? 1 : 0);
+export const descendingComparator = <T>(a: T, b: T, orderBy: keyof T) =>
+    b[orderBy] < a[orderBy] ? -1 : b[orderBy] > a[orderBy] ? 1 : 0;
 
 export type Order = 'asc' | 'desc';
 

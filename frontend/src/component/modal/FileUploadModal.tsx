@@ -155,7 +155,12 @@ export const FileUploadModal = NiceModal.create((): JSX.Element => {
                                     hidden={true}
                                     onChange={handleUploadedFile}
                                 />
-                                <Button variant="contained" component="span" fullWidth disabled={!['all', 'file'].includes(enabledPanel)}>
+                                <Button
+                                    variant="contained"
+                                    component="span"
+                                    fullWidth
+                                    disabled={!['all', 'file'].includes(enabledPanel)}
+                                >
                                     Select File
                                 </Button>
                             </label>
@@ -172,8 +177,8 @@ export const FileUploadModal = NiceModal.create((): JSX.Element => {
                                         : theme.typography.body2.color
                                 }}
                             >
-                                You can capture a screen shot (Windows screenshot shortcut: <kbd>win+shift+s</kbd>) and paste it anywhere in
-                                the window using <kbd>ctrl+v</kbd>.
+                                You can capture a screen shot (Windows screenshot shortcut: <kbd>win+shift+s</kbd>) and
+                                paste it anywhere in the window using <kbd>ctrl+v</kbd>.
                             </Typography>
                         </MethodPaper>
                     </Stack>

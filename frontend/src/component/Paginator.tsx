@@ -2,7 +2,17 @@ import { TablePagination } from '@mui/material';
 import { useNavigate } from '@tanstack/react-router';
 import { LazyResult } from '../util/table.ts';
 
-export const Paginator = <T,>({ data, page, rows, path }: { data?: LazyResult<T>; page: number; rows: number; path: string }) => {
+export const Paginator = <T,>({
+    data,
+    page,
+    rows,
+    path
+}: {
+    data?: LazyResult<T>;
+    page: number;
+    rows: number;
+    path: string;
+}) => {
     const navigate = useNavigate();
 
     return (

@@ -37,7 +37,9 @@ function Root() {
     const [flashes, setFlashes] = useState<Flash[]>([]);
 
     const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
-    const [mode, setMode] = useState<'light' | 'dark'>(initialTheme ? initialTheme : prefersDarkMode ? 'dark' : 'light');
+    const [mode, setMode] = useState<'light' | 'dark'>(
+        initialTheme ? initialTheme : prefersDarkMode ? 'dark' : 'light'
+    );
 
     const updateMode = (prevMode: PaletteMode): PaletteMode => {
         const m = prevMode === 'light' ? 'dark' : ('light' as PaletteMode);

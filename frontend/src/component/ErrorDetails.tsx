@@ -3,9 +3,9 @@ import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import { generateOIDCLink } from '../auth.tsx';
 import { AppError, ErrorCode } from '../error.tsx';
 import steamLogo from '../icons/steam_login_lg.png';
+import { generateOIDCLink } from '../util/auth/generateOIDCLink.ts';
 import { ContainerWithHeader } from './ContainerWithHeader.tsx';
 
 const ErrorBox = ({ error }: { error: AppError }) => {
@@ -23,7 +23,11 @@ export const ErrorDetails = ({ error }: { error: AppError }) => {
                 <>
                     <ErrorBox error={error} />
                     <Stack justifyContent="center" gap={2} flexDirection="row" width={1.0} flexWrap="wrap" padding={2}>
-                        <Button sx={{ alignSelf: 'center' }} component={Link} href={generateOIDCLink(window.location.pathname)}>
+                        <Button
+                            sx={{ alignSelf: 'center' }}
+                            component={Link}
+                            href={generateOIDCLink(window.location.pathname)}
+                        >
                             <img src={steamLogo} alt={'Steam Login'} />
                         </Button>
                     </Stack>

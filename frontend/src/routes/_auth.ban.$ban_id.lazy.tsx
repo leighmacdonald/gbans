@@ -74,7 +74,10 @@ function BanPage() {
     }, [deletedMessages, messagesServer, newMessages]);
 
     const canPost = useMemo(() => {
-        return permissionLevel() >= PermissionLevel.Moderator || (ban?.appeal_state == AppealState.Open && ban?.target_id == userSteamID);
+        return (
+            permissionLevel() >= PermissionLevel.Moderator ||
+            (ban?.appeal_state == AppealState.Open && ban?.target_id == userSteamID)
+        );
     }, [ban?.appeal_state, ban?.target_id, permissionLevel, userSteamID]);
 
     // const onSubmit = useCallback(

@@ -84,7 +84,10 @@ export const ServerMap = () => {
             minZoom={3}
             worldCopyJump={true}
         >
-            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution={'© OpenStreetMap contributors '} />
+            <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution={'© OpenStreetMap contributors '}
+            />
 
             <UserPingRadius />
             <ServerMarkers />

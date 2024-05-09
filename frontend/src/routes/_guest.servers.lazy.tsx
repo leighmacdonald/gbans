@@ -75,10 +75,14 @@ export const ServerStats = () => {
 
                 {keys.map((v) => {
                     const pSum = sum(
-                        ((Object.prototype.hasOwnProperty.call(regions, v) && regions[v]) || []).map((value) => value?.players || 0)
+                        ((Object.prototype.hasOwnProperty.call(regions, v) && regions[v]) || []).map(
+                            (value) => value?.players || 0
+                        )
                     );
                     const pMax = sum(
-                        ((Object.prototype.hasOwnProperty.call(regions, v) && regions[v]) || []).map((value) => value?.max_players || 24)
+                        ((Object.prototype.hasOwnProperty.call(regions, v) && regions[v]) || []).map(
+                            (value) => value?.max_players || 24
+                        )
                     );
                     return (
                         <Grid xs={3} xl={4} key={`stat-${v}`}>
