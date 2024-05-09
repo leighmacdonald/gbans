@@ -36,6 +36,7 @@ export const Buttons = ({
     return (
         <ButtonGroup>
             <Button
+                key={'submit-button'}
                 type="submit"
                 disabled={!canSubmit}
                 variant={'contained'}
@@ -45,6 +46,7 @@ export const Buttons = ({
                 {isSubmitting ? '...' : submitLabel}
             </Button>
             <Button
+                key={'reset-button'}
                 type="reset"
                 onClick={() => reset()}
                 variant={'contained'}
@@ -56,6 +58,7 @@ export const Buttons = ({
             {showClear ||
                 (onClear && (
                     <Button
+                        key={'clear-button'}
                         type="button"
                         onClick={async () => {
                             if (onClear) {
@@ -84,7 +87,13 @@ export const Buttons = ({
                     </Button>
                 ))}
             {onClose && (
-                <Button onClick={onClose} variant={'contained'} color={'error'} startIcon={<CloseIcon />}>
+                <Button
+                    key={'close-button'}
+                    onClick={onClose}
+                    variant={'contained'}
+                    color={'error'}
+                    startIcon={<CloseIcon />}
+                >
                     {closeLabel}
                 </Button>
             )}

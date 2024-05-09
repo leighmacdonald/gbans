@@ -2,10 +2,9 @@ import { apiCall, PermissionLevel, TimeStamped } from './common';
 
 export interface Page extends TimeStamped {
     slug: string;
-    title: string;
     body_md: string;
-    revision: number;
     permission_level: PermissionLevel;
+    revision?: number;
 }
 
 export const apiGetWikiPage = async (slug: string, abortController?: AbortController) =>
