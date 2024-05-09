@@ -6,5 +6,6 @@ export const logoutFn = async () => {
     localStorage.removeItem(tokenKey);
     localStorage.removeItem(refreshKey);
     localStorage.setItem(logoutKey, Date.now().toString());
+    sessionStorage.removeItem(tokenKey);
     await apiCall<EmptyBody>('/api/auth/logout', 'GET', undefined);
 };

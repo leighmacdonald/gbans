@@ -32,7 +32,7 @@ func (w *wikiUsecase) GetWikiPageBySlug(ctx context.Context, user domain.PersonI
 		return page, domain.ErrPermissionDenied
 	}
 
-	return w.wikiRepo.GetWikiPageBySlug(ctx, slug)
+	return page, nil
 }
 
 func (w *wikiUsecase) DeleteWikiPageBySlug(ctx context.Context, slug string) error {
