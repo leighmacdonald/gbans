@@ -16,56 +16,58 @@ import Stack from '@mui/material/Stack';
 //     title: titleFieldValidator
 // });
 
-export const ForumCategoryEditorModal = NiceModal.create((/**{ initial_forum_category_id }: ForumCategoryEditorProps*/) => {
-    const modal = useModal();
+export const ForumCategoryEditorModal = NiceModal.create(
+    (/**{ initial_forum_category_id }: ForumCategoryEditorProps*/) => {
+        const modal = useModal();
 
-    // const onSubmit = useCallback(
-    //     async (values: ForumCategoryEditorValues) => {
-    //         try {
-    //             if (initial_forum_category_id) {
-    //                 modal.resolve(await apiSaveForumCategory(initial_forum_category_id, values.title, values.description, values.ordering));
-    //             } else {
-    //                 modal.resolve(await apiCreateForumCategory(values.title, values.description, values.ordering));
-    //             }
-    //         } catch (e) {
-    //             modal.reject(e);
-    //         } finally {
-    //             await modal.hide();
-    //         }
-    //     },
-    //     [initial_forum_category_id, modal]
-    // );
+        // const onSubmit = useCallback(
+        //     async (values: ForumCategoryEditorValues) => {
+        //         try {
+        //             if (initial_forum_category_id) {
+        //                 modal.resolve(await apiSaveForumCategory(initial_forum_category_id, values.title, values.description, values.ordering));
+        //             } else {
+        //                 modal.resolve(await apiCreateForumCategory(values.title, values.description, values.ordering));
+        //             }
+        //         } catch (e) {
+        //             modal.reject(e);
+        //         } finally {
+        //             await modal.hide();
+        //         }
+        //     },
+        //     [initial_forum_category_id, modal]
+        // );
 
-    return (
-        // <Formik<ForumCategoryEditorValues>
-        //     initialValues={{
-        //         title: '',
-        //         description: '',
-        //         ordering: 0
-        //     }}
-        //     onSubmit={onSubmit}
-        //     validationSchema={validationSchema}
-        // >
-        <Dialog {...muiDialogV5(modal)} fullWidth maxWidth={'lg'}>
-            <DialogTitle>Category Editor</DialogTitle>
+        return (
+            // <Formik<ForumCategoryEditorValues>
+            //     initialValues={{
+            //         title: '',
+            //         description: '',
+            //         ordering: 0
+            //     }}
+            //     onSubmit={onSubmit}
+            //     validationSchema={validationSchema}
+            // >
+            <Dialog {...muiDialogV5(modal)} fullWidth maxWidth={'lg'}>
+                <DialogTitle>Category Editor</DialogTitle>
 
-            <DialogContent>
-                {/*<CatLoader initial_forum_category_id={initial_forum_category_id ?? 0} />*/}
-                <Stack spacing={2}>
-                    {/*<TitleField />*/}
-                    {/*<DescriptionField />*/}
-                    {/*<OrderingField />*/}
-                </Stack>
-            </DialogContent>
+                <DialogContent>
+                    {/*<CatLoader initial_forum_category_id={initial_forum_category_id ?? 0} />*/}
+                    <Stack spacing={2}>
+                        {/*<TitleField />*/}
+                        {/*<DescriptionField />*/}
+                        {/*<OrderingField />*/}
+                    </Stack>
+                </DialogContent>
 
-            <DialogActions>
-                {/*<CancelButton />*/}
-                {/*<SubmitButton />*/}
-            </DialogActions>
-        </Dialog>
-        // </Formik>
-    );
-});
+                <DialogActions>
+                    {/*<CancelButton />*/}
+                    {/*<SubmitButton />*/}
+                </DialogActions>
+            </Dialog>
+            // </Formik>
+        );
+    }
+);
 
 // export const CatLoader = ({ initial_forum_category_id }: { initial_forum_category_id: number }) => {
 //     const { setFieldValue } = useFormikContext<ForumCategory>();

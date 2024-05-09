@@ -1,7 +1,13 @@
 import { useState } from 'react';
 import Typography from '@mui/material/Typography';
 import { useNavigate } from '@tanstack/react-router';
-import { createColumnHelper, getCoreRowModel, getPaginationRowModel, TableOptions, useReactTable } from '@tanstack/react-table';
+import {
+    createColumnHelper,
+    getCoreRowModel,
+    getPaginationRowModel,
+    TableOptions,
+    useReactTable
+} from '@tanstack/react-table';
 import { BanReasons, SteamBanRecord } from '../api';
 import { LazyResult, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';

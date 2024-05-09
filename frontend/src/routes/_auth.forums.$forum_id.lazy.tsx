@@ -47,7 +47,9 @@ const ForumThreadRow = ({ thread }: { thread: ForumThread }) => {
         >
             <Grid md={8} xs={12}>
                 <Stack direction={'row'} spacing={2}>
-                    <VCenteredElement icon={<Avatar alt={thread.personaname} src={avatarHashToURL(thread.avatarhash, 'medium')} />} />
+                    <VCenteredElement
+                        icon={<Avatar alt={thread.personaname} src={avatarHashToURL(thread.avatarhash, 'medium')} />}
+                    />
                     <Stack>
                         <Stack direction={'row'} justifyContent="space-between">
                             <ForumRowLink label={thread.title} to={`/forums/thread/${thread.forum_thread_id}`} />
@@ -128,7 +130,10 @@ const ForumThreadRow = ({ thread }: { thread: ForumThread }) => {
                             </Typography>
                         </Stack>
                         <VCenterBox>
-                            <Avatar sx={{ height: '32px', width: '32px' }} alt={avatarHashToURL(thread.recent_avatarhash, 'small')} />
+                            <Avatar
+                                sx={{ height: '32px', width: '32px' }}
+                                alt={avatarHashToURL(thread.recent_avatarhash, 'small')}
+                            />
                         </VCenterBox>
                     </Stack>
                 ) : (

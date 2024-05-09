@@ -58,7 +58,15 @@ function MatchListPage() {
 
 const columnHelper = createColumnHelper<MatchSummary>();
 
-const MatchSummaryTable = ({ count, matches, isLoading }: { matches: MatchSummary[]; count: number; isLoading: boolean }) => {
+const MatchSummaryTable = ({
+    count,
+    matches,
+    isLoading
+}: {
+    matches: MatchSummary[];
+    count: number;
+    isLoading: boolean;
+}) => {
     const { page, rows } = Route.useSearch();
     const navigate = useNavigate();
 

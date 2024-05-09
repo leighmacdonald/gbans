@@ -118,7 +118,9 @@ const StatsKillsOverall = ({ stats, isLoading }: { stats: LazyResult<PlayerWeapo
             header: () => <TableHeadingCell name={'Acc%'} />,
             cell: (info) => (
                 <TableCellSmall>
-                    <Typography>{FmtWhenGt(stats.data[info.row.index].shots, () => defaultFloatFmtPct(info.getValue()))}</Typography>
+                    <Typography>
+                        {FmtWhenGt(stats.data[info.row.index].shots, () => defaultFloatFmtPct(info.getValue()))}
+                    </Typography>
                 </TableCellSmall>
             )
         }),
@@ -158,7 +160,9 @@ const StatsKillsOverall = ({ stats, isLoading }: { stats: LazyResult<PlayerWeapo
             header: () => <TableHeadingCell name={'DPM'} />,
             cell: (info) => (
                 <TableCellSmall>
-                    <Typography>{FmtWhenGt(stats.data[info.row.index].shots, () => defaultFloatFmt(info.getValue()))}</Typography>
+                    <Typography>
+                        {FmtWhenGt(stats.data[info.row.index].shots, () => defaultFloatFmt(info.getValue()))}
+                    </Typography>
                 </TableCellSmall>
             )
         }),

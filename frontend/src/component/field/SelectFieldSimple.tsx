@@ -9,7 +9,14 @@ type SelectFieldProps<T> = {
     renderMenu: (item: T) => ReactNode;
 } & FieldProps<T>;
 
-export const SelectFieldSimple = <T,>({ state, label, handleChange, handleBlur, items, renderMenu }: SelectFieldProps<T>) => {
+export const SelectFieldSimple = <T,>({
+    state,
+    label,
+    handleChange,
+    handleBlur,
+    items,
+    renderMenu
+}: SelectFieldProps<T>) => {
     return (
         <FormControl fullWidth>
             <InputLabel id="server-select-label">{label}</InputLabel>

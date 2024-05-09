@@ -77,7 +77,11 @@ const PlayerClassHoverStats = ({ stats }: PlayerClassHoverStatsProps) => {
 
     return (
         <Box display="flex" justifyContent="right" alignItems="center">
-            <PlayerClassImg cls={stats.player_class} onMouseEnter={handlePopoverOpen} onMouseLeave={handlePopoverClose} />
+            <PlayerClassImg
+                cls={stats.player_class}
+                onMouseEnter={handlePopoverOpen}
+                onMouseLeave={handlePopoverClose}
+            />
             <Popover
                 id="mouse-over-popover"
                 sx={{
@@ -148,7 +152,9 @@ const WeaponStatRow = ({ weaponStat }: WeaponStatRowProps) => {
             <WeaponCell value={weaponStat.hits} />
             <WeaponCell
                 value={`${
-                    !isNaN((weaponStat.hits / weaponStat.shots) * 100) ? ((weaponStat.hits / weaponStat.shots) * 100).toFixed(2) : 0
+                    !isNaN((weaponStat.hits / weaponStat.shots) * 100)
+                        ? ((weaponStat.hits / weaponStat.shots) * 100).toFixed(2)
+                        : 0
                 }%`}
             />
             <WeaponCell value={weaponStat.backstabs} />
@@ -239,7 +245,12 @@ const PlayerWeaponHoverStats = ({ stats }: PlayerWeaponHoverStatsProps) => {
                             </TableHead>
                             <TableBody>
                                 {stats.map((ws, index) => {
-                                    return <WeaponStatRow weaponStat={ws} key={`ws-${ws.damage}-${ws.weapon_id}-${index}`} />;
+                                    return (
+                                        <WeaponStatRow
+                                            weaponStat={ws}
+                                            key={`ws-${ws.damage}-${ws.weapon_id}-${index}`}
+                                        />
+                                    );
                                 })}
                             </TableBody>
                         </Table>
@@ -304,12 +315,26 @@ function MatchPage() {
                         {match.team_scores.blu}
                     </Typography>
                 </Grid>
-                <Grid xs={1} bgcolor={red} color={headerColour} display="flex" justifyContent="left" alignItems="center">
+                <Grid
+                    xs={1}
+                    bgcolor={red}
+                    color={headerColour}
+                    display="flex"
+                    justifyContent="left"
+                    alignItems="center"
+                >
                     <Typography variant={'h1'} sx={{ fontWeight: 900 }}>
                         {match.team_scores.red}
                     </Typography>
                 </Grid>
-                <Grid xs={5} bgcolor={red} color={headerColour} display="flex" justifyContent="right" alignItems="center">
+                <Grid
+                    xs={5}
+                    bgcolor={red}
+                    color={headerColour}
+                    display="flex"
+                    justifyContent="right"
+                    alignItems="center"
+                >
                     <img src={redLogoImg} alt={'RED Team'} />
                 </Grid>
                 <Grid xs={12} padding={0} paddingTop={1}>
@@ -362,7 +387,10 @@ const MatchPlayersTable = ({ players, isLoading }: { players: MatchPlayer[]; isL
                         info
                             .getValue()
                             .map((pc) => (
-                                <PlayerClassHoverStats key={`pc-${players[info.row.index].steam_id}-${pc.player_class}`} stats={pc} />
+                                <PlayerClassHoverStats
+                                    key={`pc-${players[info.row.index].steam_id}-${pc.player_class}`}
+                                    stats={pc}
+                                />
                             ))
                     ) : (
                         <></>

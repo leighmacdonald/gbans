@@ -47,7 +47,10 @@ function ProfilePage() {
                     <Stack spacing={1} padding={1} justifyContent={'space-evenly'}>
                         <Chip color={profile.player.vac_bans > 0 ? 'error' : 'success'} label={'VAC'} />
                         <Chip color={profile.player.game_bans > 0 ? 'error' : 'success'} label={'Game Ban'} />
-                        <Chip color={profile.player.economy_ban != 'none' ? 'error' : 'success'} label={'Economy Ban'} />
+                        <Chip
+                            color={profile.player.economy_ban != 'none' ? 'error' : 'success'}
+                            label={'Economy Ban'}
+                        />
                         <Chip color={profile.player.community_banned ? 'error' : 'success'} label={'Community Ban'} />
                     </Stack>
                 </ContainerWithHeader>
@@ -76,7 +79,14 @@ function ProfilePage() {
                         {createExternalLinks(profile.player.steam_id).map((l) => {
                             return (
                                 <Grid xs={4} key={`btn-${l.url}`} padding={1}>
-                                    <Button fullWidth color={'secondary'} variant={'contained'} component={Link} href={l.url} key={l.url}>
+                                    <Button
+                                        fullWidth
+                                        color={'secondary'}
+                                        variant={'contained'}
+                                        component={Link}
+                                        href={l.url}
+                                        key={l.url}
+                                    >
                                         {l.title}
                                     </Button>
                                 </Grid>

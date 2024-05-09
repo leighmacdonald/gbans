@@ -91,6 +91,7 @@ func (r banASNRepository) GetByASN(ctx context.Context, asNum int64, banASN *dom
 
 	return nil
 }
+
 func (r banASNRepository) GetByID(ctx context.Context, banID int64, banASN *domain.BanASN) error {
 	const query = `
 		SELECT ban_asn_id, as_num, origin, source_id, target_id, reason_text, valid_until, created_on, updated_on, 

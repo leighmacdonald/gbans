@@ -35,7 +35,9 @@ export const SourceBansList = ({ steam_id, is_reporter }: SourceBansListProps): 
     return (
         <ContainerWithHeader title={'Suspect SourceBans History'} iconLeft={<HistoryIcon />}>
             <Stack spacing={1}>
-                <Typography variant={'h5'}>{is_reporter ? 'Reporter SourceBans History' : 'Suspect SourceBans History'}</Typography>
+                <Typography variant={'h5'}>
+                    {is_reporter ? 'Reporter SourceBans History' : 'Suspect SourceBans History'}
+                </Typography>
                 <TableContainer>
                     <Table size="small">
                         <TableHead>

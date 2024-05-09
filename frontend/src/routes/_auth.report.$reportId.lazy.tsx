@@ -171,7 +171,12 @@ function ReportView() {
                                         Ban Player
                                     </Button>
                                 )}
-                                <Button variant={'contained'} color={'warning'} startIcon={<SendIcon />} onClick={onSetReportState}>
+                                <Button
+                                    variant={'contained'}
+                                    color={'warning'}
+                                    startIcon={<SendIcon />}
+                                    onClick={onSetReportState}
+                                >
                                     Set State
                                 </Button>
                             </ButtonGroup>

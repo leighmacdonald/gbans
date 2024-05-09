@@ -41,7 +41,11 @@ const StatsWeaponsOverall = ({ stats, isLoading }: { stats: LazyResult<WeaponsOv
             header: () => <TableHeadingCell name={'#'} />,
             cell: (info) => (
                 <TableCellSmall>
-                    <Link component={RouterLink} to={'/stats/weapon/$weapon_id'} params={{ weapon_id: info.getValue() }}>
+                    <Link
+                        component={RouterLink}
+                        to={'/stats/weapon/$weapon_id'}
+                        params={{ weapon_id: info.getValue() }}
+                    >
                         {stats.data[info.row.index].name}
                     </Link>
                 </TableCellSmall>

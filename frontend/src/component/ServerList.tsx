@@ -44,7 +44,11 @@ export const ServerList = () => {
         }),
         columnHelper.accessor('players', {
             header: () => <TableHeadingCell name={'Players'} />,
-            cell: (info) => <Typography variant={'body2'}>{`${info.getValue()}/${selectedServers[info.row.index].max_players}`}</Typography>
+            cell: (info) => (
+                <Typography
+                    variant={'body2'}
+                >{`${info.getValue()}/${selectedServers[info.row.index].max_players}`}</Typography>
+            )
         }),
         columnHelper.accessor('distance', {
             header: () => <TableHeadingCell name={'Dist'} />,
@@ -62,7 +66,9 @@ export const ServerList = () => {
                     aria-label={'Copy connect string to clipboard'}
                     onClick={() => {
                         navigator.clipboard
-                            .writeText(`connect ${selectedServers[info.row.index].host}:${selectedServers[info.row.index].port}`)
+                            .writeText(
+                                `connect ${selectedServers[info.row.index].host}:${selectedServers[info.row.index].port}`
+                            )
                             .then(() => {
                                 sendFlash('success', 'Copied address to clipboard');
                             })

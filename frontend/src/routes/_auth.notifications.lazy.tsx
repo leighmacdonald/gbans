@@ -84,7 +84,9 @@ function NotificationsPage() {
                                     <Stack direction={'row'} justifyContent="left" alignItems="center" spacing={1}>
                                         <CB id={n.person_notification_id} />
 
-                                        <Typography variant={'button'}>{renderDateTime(parseISO(n.created_on))}</Typography>
+                                        <Typography variant={'button'}>
+                                            {renderDateTime(parseISO(n.created_on))}
+                                        </Typography>
 
                                         <Typography variant={'body1'} textOverflow={'ellipsis'}>
                                             {n.message.substring(0, 200)}

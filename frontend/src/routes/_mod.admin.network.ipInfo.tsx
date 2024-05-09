@@ -114,7 +114,12 @@ function AdminNetworkInfo() {
                                 <Subscribe
                                     selector={(state) => [state.canSubmit, state.isSubmitting]}
                                     children={([canSubmit, isSubmitting]) => (
-                                        <Buttons reset={reset} canSubmit={canSubmit} isSubmitting={isSubmitting} onClear={clear} />
+                                        <Buttons
+                                            reset={reset}
+                                            canSubmit={canSubmit}
+                                            isSubmitting={isSubmitting}
+                                            onClear={clear}
+                                        />
                                     )}
                                 />
                             </Grid>
@@ -162,15 +167,24 @@ function AdminNetworkInfo() {
                                                                 {data && (
                                                                     <>
                                                                         {data?.location.country_code &&
-                                                                            getFlagEmoji(data?.location.country_code)}{' '}
-                                                                        {data?.location.country_code} ({data?.location.country_code})
+                                                                            getFlagEmoji(
+                                                                                data?.location.country_code
+                                                                            )}{' '}
+                                                                        {data?.location.country_code} (
+                                                                        {data?.location.country_code})
                                                                     </>
                                                                 )}
                                                             </InfoRow>
-                                                            <InfoRow label={'Region'}>{data?.location.region_name}</InfoRow>
+                                                            <InfoRow label={'Region'}>
+                                                                {data?.location.region_name}
+                                                            </InfoRow>
                                                             <InfoRow label={'City'}>{data?.location.city_name}</InfoRow>
-                                                            <InfoRow label={'Latitude'}>{data?.location.lat_long.latitude}</InfoRow>
-                                                            <InfoRow label={'Longitude'}>{data?.location.lat_long.longitude}</InfoRow>
+                                                            <InfoRow label={'Latitude'}>
+                                                                {data?.location.lat_long.latitude}
+                                                            </InfoRow>
+                                                            <InfoRow label={'Longitude'}>
+                                                                {data?.location.lat_long.longitude}
+                                                            </InfoRow>
                                                         </TableBody>
                                                     </Table>
                                                 </TableContainer>
@@ -207,7 +221,9 @@ function AdminNetworkInfo() {
                                                         <TableBody>
                                                             <InfoRow label={'AS Name'}>{data?.asn.as_name}</InfoRow>
                                                             <InfoRow label={'AS Number'}>
-                                                                <Link href={`https://bgpview.io/asn/${data?.asn.as_num}`}>
+                                                                <Link
+                                                                    href={`https://bgpview.io/asn/${data?.asn.as_num}`}
+                                                                >
                                                                     {data?.asn.as_num}
                                                                 </Link>
                                                             </InfoRow>
@@ -223,11 +239,17 @@ function AdminNetworkInfo() {
                                                 <TableContainer>
                                                     <Table>
                                                         <TableBody>
-                                                            <InfoRow label={'Proxy Type'}>{data?.proxy.proxy_type}</InfoRow>
+                                                            <InfoRow label={'Proxy Type'}>
+                                                                {data?.proxy.proxy_type}
+                                                            </InfoRow>
                                                             <InfoRow label={'ISP'}>{data?.proxy.isp}</InfoRow>
                                                             <InfoRow label={'Domain'}>{data?.proxy.domain}</InfoRow>
-                                                            <InfoRow label={'Usage Type'}>{data?.proxy.usage_type}</InfoRow>
-                                                            <InfoRow label={'Last Seen'}>{data?.proxy.last_seen}</InfoRow>
+                                                            <InfoRow label={'Usage Type'}>
+                                                                {data?.proxy.usage_type}
+                                                            </InfoRow>
+                                                            <InfoRow label={'Last Seen'}>
+                                                                {data?.proxy.last_seen}
+                                                            </InfoRow>
                                                             <InfoRow label={'Threat'}>{data?.proxy.threat}</InfoRow>
                                                         </TableBody>
                                                     </Table>

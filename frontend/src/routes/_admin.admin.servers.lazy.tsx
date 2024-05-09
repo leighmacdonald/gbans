@@ -248,7 +248,7 @@ const AdminServersTable = ({
                 }
             }
         ],
-        []
+        [onEdit]
     );
 
     const table = useReactTable({

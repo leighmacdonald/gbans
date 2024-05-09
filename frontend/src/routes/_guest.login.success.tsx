@@ -4,7 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useLayoutEffect, useRouter } from '@tanstack/react-router';
 import { z } from 'zod';
 import { apiGetCurrentProfile } from '../api';
-import { writeAccessToken, writeRefreshToken } from '../auth.tsx';
+import { writeAccessToken } from '../util/auth/writeAccessToken.ts';
+import { writeRefreshToken } from '../util/auth/writeRefreshToken.ts';
 
 export const Route = createFileRoute('/_guest/login/success')({
     validateSearch: z.object({

@@ -1,6 +1,8 @@
 import 'core-js/stable/atob';
 import { jwtDecode, JwtPayload } from 'jwt-decode';
-import { logoutFn, readRefreshToken, writeAccessToken } from '../auth.tsx';
+import { logoutFn } from '../util/auth/logoutFn.ts';
+import { readRefreshToken } from '../util/auth/readRefreshToken.ts';
+import { writeAccessToken } from '../util/auth/writeAccessToken.ts';
 import { logErr } from '../util/errors';
 import { emptyOrNullString } from '../util/types';
 import { apiCall } from './common';

@@ -30,7 +30,9 @@ export const DataTable = <T,>({ table, isLoading }: { table: TSTable<T>; isLoadi
                                         }}
                                         variant={'button'}
                                     >
-                                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                                        {header.isPlaceholder
+                                            ? null
+                                            : flexRender(header.column.columnDef.header, header.getContext())}
                                     </Typography>
                                 </TableCellSmall>
                             ))}
@@ -53,7 +55,9 @@ export const DataTable = <T,>({ table, isLoading }: { table: TSTable<T>; isLoadi
                         <TableRow key={footerGroup.id}>
                             {footerGroup.headers.map((header) => (
                                 <TableCell key={header.id}>
-                                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.footer, header.getContext())}
+                                    {header.isPlaceholder
+                                        ? null
+                                        : flexRender(header.column.columnDef.footer, header.getContext())}
                                 </TableCell>
                             ))}
                         </TableRow>

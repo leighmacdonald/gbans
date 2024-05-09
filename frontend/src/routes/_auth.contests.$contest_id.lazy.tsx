@@ -153,15 +153,30 @@ function Contest() {
                     </ContainerWithHeader>
                 </Grid>
                 <Grid xs={4}>
-                    <ContainerWithHeader title={`Contest Details`} iconLeft={isLoading ? <LoadingSpinner /> : <InfoIcon />}>
+                    <ContainerWithHeader
+                        title={`Contest Details`}
+                        iconLeft={isLoading ? <LoadingSpinner /> : <InfoIcon />}
+                    >
                         <Stack spacing={2}>
-                            <InfoBar title={'Starting Date'} value={format(contest.date_start, 'dd/MM/yy H:m')} align={'right'} />
+                            <InfoBar
+                                title={'Starting Date'}
+                                value={format(contest.date_start, 'dd/MM/yy H:m')}
+                                align={'right'}
+                            />
 
-                            <InfoBar title={'Ending Date'} value={format(contest.date_end, 'dd/MM/yy H:m')} align={'right'} />
+                            <InfoBar
+                                title={'Ending Date'}
+                                value={format(contest.date_end, 'dd/MM/yy H:m')}
+                                align={'right'}
+                            />
 
                             <InfoBar
                                 title={'Remaining'}
-                                value={isAfter(contest.date_end, new Date()) ? 'Expired' : formatDistanceToNowStrict(contest.date_end)}
+                                value={
+                                    isAfter(contest.date_end, new Date())
+                                        ? 'Expired'
+                                        : formatDistanceToNowStrict(contest.date_end)
+                                }
                                 align={'right'}
                             />
 
@@ -209,7 +224,9 @@ function Contest() {
                                                             <Typography variant={'subtitle1'}>Description</Typography>
                                                             <MarkDownRenderer
                                                                 body_md={
-                                                                    entry.description != '' ? entry.description : 'No description provided'
+                                                                    entry.description != ''
+                                                                        ? entry.description
+                                                                        : 'No description provided'
                                                                 }
                                                             />
                                                         </Grid>
@@ -220,9 +237,15 @@ function Contest() {
                                                                 avatar_hash={entry.avatar_hash}
                                                             />
                                                             <Typography variant={'subtitle1'}>File Details</Typography>
-                                                            <Typography variant={'body2'}>{entry.asset.name}</Typography>
-                                                            <Typography variant={'body2'}>{entry.asset.mime_type}</Typography>
-                                                            <Typography variant={'body2'}>{humanFileSize(entry.asset.size)}</Typography>
+                                                            <Typography variant={'body2'}>
+                                                                {entry.asset.name}
+                                                            </Typography>
+                                                            <Typography variant={'body2'}>
+                                                                {entry.asset.mime_type}
+                                                            </Typography>
+                                                            <Typography variant={'body2'}>
+                                                                {humanFileSize(entry.asset.size)}
+                                                            </Typography>
                                                             <ButtonGroup fullWidth>
                                                                 <Button
                                                                     disabled={
@@ -240,7 +263,8 @@ function Contest() {
                                                                     Delete
                                                                 </Button>
 
-                                                                {mediaType(entry.asset.mime_type) != MediaTypes.other ? (
+                                                                {mediaType(entry.asset.mime_type) !=
+                                                                MediaTypes.other ? (
                                                                     <Button
                                                                         startIcon={<PageviewIcon />}
                                                                         fullWidth
@@ -260,7 +284,11 @@ function Contest() {
                                                     </Grid>
                                                 </Paper>
                                                 <Stack direction={'row'} padding={1} spacing={2}>
-                                                    <ButtonGroup disabled={!contest.voting || isAfter(contest.date_end, new Date())}>
+                                                    <ButtonGroup
+                                                        disabled={
+                                                            !contest.voting || isAfter(contest.date_end, new Date())
+                                                        }
+                                                    >
                                                         <Button
                                                             size={'small'}
                                                             variant={'contained'}

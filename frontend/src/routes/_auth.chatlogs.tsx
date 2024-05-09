@@ -77,14 +77,18 @@ export const Route = createFileRoute('/_auth/chatlogs')({
 
 function ChatLogs() {
     const defaultRows = RowsPerPage.TwentyFive;
-    const { body, autoRefresh, persona_name, steam_id, server_id, page, sortColumn, flagged_only, rows, sortOrder } = Route.useSearch();
+    const { body, autoRefresh, persona_name, steam_id, server_id, page, sortColumn, flagged_only, rows, sortOrder } =
+        Route.useSearch();
     //const { currentUser } = useCurrentUserCtx();
     const { hasPermission } = useRouteContext({ from: '/_auth/chatlogs' });
     const { servers } = useLoaderData({ from: '/_auth/chatlogs' }) as { servers: ServerSimple[] };
     const navigate = useNavigate({ from: Route.fullPath });
 
     const { data: messages, isLoading } = useQuery({
-        queryKey: ['chatlogs', { page, server_id, persona_name, steam_id, rows, sortOrder, sortColumn, body, autoRefresh, flagged_only }],
+        queryKey: [
+            'chatlogs',
+            { page, server_id, persona_name, steam_id, rows, sortOrder, sortColumn, body, autoRefresh, flagged_only }
+        ],
         queryFn: async () => {
             return await apiGetMessages({
                 server_id: server_id,
@@ -237,7 +241,9 @@ function ChatLogs() {
                                                 children={({ state, handleChange, handleBlur }) => {
                                                     return (
                                                         <FormControl fullWidth>
-                                                            <InputLabel id="server-select-label">Auto-Refresh</InputLabel>
+                                                            <InputLabel id="server-select-label">
+                                                                Auto-Refresh
+                                                            </InputLabel>
                                                             <Select
                                                                 fullWidth
                                                                 value={state.value}
@@ -265,7 +271,12 @@ function ChatLogs() {
                                     <Subscribe
                                         selector={(state) => [state.canSubmit, state.isSubmitting]}
                                         children={([canSubmit, isSubmitting]) => (
-                                            <Buttons reset={reset} canSubmit={canSubmit} isSubmitting={isSubmitting} onClear={clear} />
+                                            <Buttons
+                                                reset={reset}
+                                                canSubmit={canSubmit}
+                                                isSubmitting={isSubmitting}
+                                                onClear={clear}
+                                            />
                                         )}
                                     />
                                 </Grid>
@@ -276,7 +287,12 @@ function ChatLogs() {
                 <Grid xs={12}>
                     <ContainerWithHeader iconLeft={<ChatIcon />} title={'Chat Logs'}>
                         <ChatTable messages={messages ?? []} isLoading={isLoading} />
-                        <Paginator page={page ?? 0} rows={rows ?? defaultRows} path={'/chatlogs'} data={{ data: [], count: -1 }} />
+                        <Paginator
+                            page={page ?? 0}
+                            rows={rows ?? defaultRows}
+                            path={'/chatlogs'}
+                            data={{ data: [], count: -1 }}
+                        />
                     </ContainerWithHeader>
                 </Grid>
             </Grid>

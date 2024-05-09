@@ -12,7 +12,6 @@ import Badge from '@mui/material/Badge';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
-import Pagination from '@mui/material/Pagination';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
@@ -24,13 +23,19 @@ import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-r
 import { isAfter } from 'date-fns/fp';
 import { z } from 'zod';
 import { PermissionLevel, permissionLevelString } from '../api';
-import { apiCreateThreadReply, apiDeleteMessage, apiGetThread, apiGetThreadMessages, ForumMessage, ForumThread } from '../api/forum.ts';
+import {
+    apiCreateThreadReply,
+    apiDeleteMessage,
+    apiGetThread,
+    apiGetThreadMessages,
+    ForumMessage,
+    ForumThread
+} from '../api/forum.ts';
 import { ForumRowLink } from '../component/ForumRowLink.tsx';
 import { MarkDownRenderer } from '../component/MarkdownRenderer.tsx';
 import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import RouterLink from '../component/RouterLink.tsx';
 import { VCenterBox } from '../component/VCenterBox.tsx';
-import { MDBodyField } from '../component/_formik/MDBodyField.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { ModalConfirm, ModalForumThreadEditor } from '../component/modal';
 import { logErr } from '../util/errors.ts';
@@ -130,8 +135,8 @@ const ThreadMessageContainer = ({
                     <Box>
                         {isFirstMessage && (
                             <Typography variant={'body1'} fontWeight={700} color={theme.palette.error.dark}>
-                                Please be aware that by deleting the first post in the thread, this will result in the deletion of the{' '}
-                                <i>entire thread</i>.
+                                Please be aware that by deleting the first post in the thread, this will result in the
+                                deletion of the <i>entire thread</i>.
                             </Typography>
                         )}
                         <Typography variant={'body1'}>This action cannot be undone.</Typography>
@@ -149,7 +154,14 @@ const ThreadMessageContainer = ({
         } catch (e) {
             logErr(e);
         }
-    }, [activeMessage.forum_message_id, confirmModal, isFirstMessage, navigate, onDeleteSuccess, theme.palette.error.dark]);
+    }, [
+        activeMessage.forum_message_id,
+        confirmModal,
+        isFirstMessage,
+        navigate,
+        onDeleteSuccess,
+        theme.palette.error.dark
+    ]);
 
     return (
         <Paper elevation={1} id={`${activeMessage.forum_message_id}`}>
@@ -162,7 +174,11 @@ const ThreadMessageContainer = ({
                             src={avatarHashToURL(activeMessage.avatarhash, 'medium')}
                         />
 
-                        <ForumRowLink label={activeMessage.personaname} to={`/profile/${activeMessage.source_id}`} align={'center'} />
+                        <ForumRowLink
+                            label={activeMessage.personaname}
+                            to={`/profile/${activeMessage.source_id}`}
+                            align={'center'}
+                        />
                         <Typography variant={'subtitle1'} align={'center'}>
                             {permissionLevelString(activeMessage.permission_level)}
                         </Typography>
@@ -250,7 +266,13 @@ const ThreadMessageContainer = ({
 //     body_md: bodyMDValidator
 // });
 
-const MessageEditor = ({ onCancel }: { message: ForumMessage; onUpdate: (msg: ForumMessage) => void; onCancel: () => void }) => {
+const MessageEditor = ({
+    onCancel
+}: {
+    message: ForumMessage;
+    onUpdate: (msg: ForumMessage) => void;
+    onCancel: () => void;
+}) => {
     // const onSubmit = useCallback(
     //     async (values: MessageEditValues) => {
     //         try {
@@ -310,7 +332,9 @@ function ForumThreadPage() {
         }
     });
 
-    const { data: messages, isLoading: isLoadingMessages } = useQuery(forumMessagesQueryOptions(Number(forum_thread_id)));
+    const { data: messages, isLoading: isLoadingMessages } = useQuery(
+        forumMessagesQueryOptions(Number(forum_thread_id))
+    );
 
     useScrollToLocation();
 
@@ -355,7 +379,10 @@ function ForumThreadPage() {
             return await apiCreateThreadReply(Number(forum_thread_id), body_md);
         },
         onSuccess: (message) => {
-            queryClient.setQueryData(forumMessagesQueryOptions(Number(forum_thread_id)).queryKey, [...[messages ?? []], message]);
+            queryClient.setQueryData(forumMessagesQueryOptions(Number(forum_thread_id)).queryKey, [
+                ...[messages ?? []],
+                message
+            ]);
         }
     });
 
@@ -405,7 +432,7 @@ function ForumThreadPage() {
         } else {
             return <></>;
         }
-    }, [thread?.forum_thread_id, thread?.locked, messages, permissionLevel]);
+    }, [permissionLevel, thread?.forum_thread_id, thread?.locked, Field, Subscribe, handleSubmit, reset]);
 
     return (
         <Stack spacing={1}>
