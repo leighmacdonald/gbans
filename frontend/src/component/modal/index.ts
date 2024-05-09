@@ -18,7 +18,7 @@ import ForumThreadCreatorModal from './ForumThreadCreatorModal.tsx';
 import ForumThreadEditorModal from './ForumThreadEditorModal.tsx';
 import PersonEditModal from './PersonEditModal.tsx';
 import ServerDeleteModal from './ServerDeleteModal.tsx';
-import ServerEditorModal from './ServerEditorModal.tsx';
+import { ServerEditorModal } from './ServerEditorModal.tsx';
 import UnbanASNModal from './UnbanASNModal.tsx';
 import UnbanCIDRModal from './UnbanCIDRModal.tsx';
 import UnbanGroupModal from './UnbanGroupModal.tsx';

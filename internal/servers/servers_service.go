@@ -200,6 +200,7 @@ func (h *serversHandler) onAPIPostServer() gin.HandlerFunc {
 
 		server := domain.NewServer(req.ServerNameShort, req.Host, req.Port)
 		server.Name = req.ServerName
+		server.Password = req.AuthPassword
 		server.ReservedSlots = req.ReservedSlots
 		server.RCON = req.RCON
 		server.Latitude = req.Lat
@@ -207,6 +208,7 @@ func (h *serversHandler) onAPIPostServer() gin.HandlerFunc {
 		server.CC = req.CC
 		server.Region = req.Region
 		server.IsEnabled = req.IsEnabled
+		server.LogSecret = req.LogSecret
 
 		if errSave := h.serversUsecase.SaveServer(ctx, &server); errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
@@ -229,6 +231,7 @@ type serverUpdateRequest struct {
 	Host            string  `json:"host"`
 	Port            int     `json:"port"`
 	ReservedSlots   int     `json:"reserved_slots"`
+	AuthPassword    string  `json:"auth_password"`
 	RCON            string  `json:"rcon"`
 	Lat             float64 `json:"lat"`
 	Lon             float64 `json:"lon"`
@@ -267,6 +270,7 @@ func (h *serversHandler) onAPIPostServerUpdate() gin.HandlerFunc {
 		server.Port = req.Port
 		server.ReservedSlots = req.ReservedSlots
 		server.RCON = req.RCON
+		server.Password = req.AuthPassword
 		server.Latitude = req.Lat
 		server.Longitude = req.Lon
 		server.CC = req.CC
@@ -292,19 +296,18 @@ func (h *serversHandler) onAPIPostServerUpdate() gin.HandlerFunc {
 
 func (h *serversHandler) onAPIGetServersAdmin() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var filter domain.ServerQueryFilter
-		if !httphelper.Bind(ctx, &filter) {
-			return
+		filter := domain.ServerQueryFilter{
+			IncludeDisabled: true,
 		}
 
-		servers, count, errServers := h.serversUsecase.GetServers(ctx, filter)
+		servers, _, errServers := h.serversUsecase.GetServers(ctx, filter)
 		if errServers != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
 
-		ctx.JSON(http.StatusOK, domain.NewLazyResult(count, servers))
+		ctx.JSON(http.StatusOK, servers)
 	}
 }
 
