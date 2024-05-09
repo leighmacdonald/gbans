@@ -6,6 +6,7 @@ import { Variant } from '@mui/material/styles/createTypography';
 interface TextProps {
     variant?: Variant;
     component?: ElementType;
+    onClick?: () => void;
 }
 
 export const TableCellString = ({ children, variant = 'body1', component = 'p' }: PropsWithChildren<TextProps>) => {

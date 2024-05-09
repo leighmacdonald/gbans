@@ -1,5 +1,4 @@
-import { LazyResult } from '../util/table.ts';
-import { apiCall, QueryFilter, TimeStamped, transformTimeStampedDates } from './common';
+import { apiCall, TimeStamped, transformTimeStampedDates } from './common';
 
 export interface BaseServer {
     server_id: number;
@@ -82,6 +81,7 @@ export interface SaveServerOpts {
     host: string;
     port: number;
     rcon: string;
+    password: string;
     reserved_slots: number;
     region: string;
     cc: string;
@@ -98,12 +98,8 @@ export const apiCreateServer = async (opts: SaveServerOpts) =>
 export const apiSaveServer = async (server_id: number, opts: SaveServerOpts) =>
     transformTimeStampedDates(await apiCall<Server, SaveServerOpts>(`/api/servers/${server_id}`, 'POST', opts));
 
-export interface ServerQueryFilter extends QueryFilter<Server> {
-    include_disabled?: boolean;
-}
-
-export const apiGetServersAdmin = async (opts: ServerQueryFilter, abortController?: AbortController) =>
-    await apiCall<LazyResult<Server>>(`/api/servers_admin`, 'POST', opts, abortController);
+export const apiGetServersAdmin = async (abortController?: AbortController) =>
+    await apiCall<Server[]>(`/api/servers_admin`, 'POST', undefined, abortController);
 
 export const apiGetServers = async () => apiCall<ServerSimple[]>(`/api/servers`, 'GET', undefined);
 
