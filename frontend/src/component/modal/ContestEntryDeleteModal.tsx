@@ -38,5 +38,3 @@ export const ContestEntryDeleteModal = NiceModal.create(({ contest_entry_id }: {
         // </Formik>
     );
 });
-
-export default ContestEntryDeleteModal;

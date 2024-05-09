@@ -77,8 +77,8 @@ export const WikiPage = ({ slug = 'home', path }: { slug: string; path: '/_guest
         },
         validatorAdapter: zodValidator,
         defaultValues: {
-            permission_level: page?.permission_level ? page.permission_level : PermissionLevel.Guest,
-            body_md: page?.body_md ? page.body_md : ''
+            permission_level: page?.permission_level ?? PermissionLevel.Guest,
+            body_md: page?.body_md ?? ''
         }
     });
 

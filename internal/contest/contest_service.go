@@ -94,7 +94,7 @@ func (c *contestHandler) onAPIGetContests() gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, domain.NewLazyResult(int64(len(contests)), contests))
+		ctx.JSON(http.StatusOK, contests)
 	}
 }
 
