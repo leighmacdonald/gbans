@@ -130,6 +130,13 @@ const (
 	ActionBan  ConfigAction = "ban"
 )
 
+type FileServeMode string
+
+const (
+	S3Mode    FileServeMode = "s3"
+	LocalMode FileServeMode = "local"
+)
+
 type ConfigGeneral struct {
 	SiteName                     string        `mapstructure:"site_name"`
 	SteamKey                     string        `mapstructure:"steam_key"`
@@ -144,6 +151,7 @@ type ConfigGeneral struct {
 	ExternalURL                  string        `mapstructure:"external_url"`
 	DemoCleanupEnabled           bool          `mapstructure:"demo_cleanup_enabled"`
 	DemoCountLimit               uint64        `mapstructure:"demo_count_limit"`
+	FileServeMode                FileServeMode `mapstructure:"file_serve_mode"`
 }
 
 type ConfigDiscord struct {

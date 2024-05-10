@@ -64,6 +64,7 @@ func setDefaultConfigValues() {
 		"general.banned_server_addresses":          []string{},
 		"general.demo_cleanup_enabled":             true,
 		"general.demo_count_limit":                 10000,
+		"general.file_serve_mode":                  domain.LocalMode,
 		"patreon.enabled":                          false,
 		"patreon.client_id":                        "",
 		"patreon.client_secret":                    "",
