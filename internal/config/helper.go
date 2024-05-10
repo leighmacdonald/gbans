@@ -115,6 +115,8 @@ func setDefaultConfigValues() {
 		"database.dsn":                             "postgresql://gbans:gbans@localhost/gbans",
 		"database.auto_migrate":                    true,
 		"database.log_queries":                     false,
+		"localstore.path_demo":                     "./store/demos",
+		"localstore.path_media":                    "./store/media",
 		"s3.enabled":                               false,
 		"s3.access_key":                            "",
 		"s3.secret_key":                            "",
