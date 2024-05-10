@@ -53,11 +53,11 @@ const MDLink = ({ children, href, title }: MDLnkProps) => {
     );
 };
 
-export const MarkDownRenderer = ({ body_md }: { body_md: string }) => {
+export const MarkDownRenderer = ({ body_md, minHeight }: { body_md: string; minHeight?: number }) => {
     const theme = (localStorage.getItem('theme') as PaletteMode) || 'dark';
 
     return (
-        <Box padding={2} maxWidth={'100%'}>
+        <Box padding={2} maxWidth={'100%'} minHeight={minHeight}>
             <MuiMarkdown
                 options={{
                     overrides: {

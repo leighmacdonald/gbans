@@ -1,12 +1,19 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import Stack from '@mui/material/Stack';
+import Grid from '@mui/material/Unstable_Grid2';
+import { useForm } from '@tanstack/react-form';
+import { useMutation } from '@tanstack/react-query';
+import { zodValidator } from '@tanstack/zod-form-adapter';
+import { apiCreateForumCategory, apiSaveForumCategory, ForumCategory } from '../../api/forum.ts';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+import { Buttons } from '../field/Buttons.tsx';
+import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
-// interface ForumCategoryEditorValues {
-//     title: string;
-//     description: string;
-//     ordering: number;
-// }
+type ForumCategoryEditorValues = {
+    title: string;
+    description: string;
+    ordering: string;
+};
 
 // interface ForumCategoryEditorProps {
 //     initial_forum_category_id?: number;
@@ -16,75 +23,107 @@ import Stack from '@mui/material/Stack';
 //     title: titleFieldValidator
 // });
 
-export const ForumCategoryEditorModal = NiceModal.create(
-    (/**{ initial_forum_category_id }: ForumCategoryEditorProps*/) => {
-        const modal = useModal();
+export const ForumCategoryEditorModal = NiceModal.create(({ category }: { category?: ForumCategory }) => {
+    const modal = useModal();
+    const { sendFlash } = useUserFlashCtx();
 
-        // const onSubmit = useCallback(
-        //     async (values: ForumCategoryEditorValues) => {
-        //         try {
-        //             if (initial_forum_category_id) {
-        //                 modal.resolve(await apiSaveForumCategory(initial_forum_category_id, values.title, values.description, values.ordering));
-        //             } else {
-        //                 modal.resolve(await apiCreateForumCategory(values.title, values.description, values.ordering));
-        //             }
-        //         } catch (e) {
-        //             modal.reject(e);
-        //         } finally {
-        //             await modal.hide();
-        //         }
-        //     },
-        //     [initial_forum_category_id, modal]
-        // );
+    const mutation = useMutation({
+        mutationKey: ['forumCategory'],
+        mutationFn: async (values: ForumCategoryEditorValues) => {
+            if (category?.forum_category_id) {
+                return await apiSaveForumCategory(
+                    category.forum_category_id,
+                    values.title,
+                    values.description,
+                    Number(values.ordering)
+                );
+            } else {
+                return await apiCreateForumCategory(values.title, values.description, Number(values.ordering));
+            }
+        },
+        onSuccess: async (category: ForumCategory) => {
+            modal.resolve(category);
+            await modal.hide();
+        },
+        onError: (error) => {
+            sendFlash('error', `${error}`);
+        }
+    });
 
-        return (
-            // <Formik<ForumCategoryEditorValues>
-            //     initialValues={{
-            //         title: '',
-            //         description: '',
-            //         ordering: 0
-            //     }}
-            //     onSubmit={onSubmit}
-            //     validationSchema={validationSchema}
-            // >
-            <Dialog {...muiDialogV5(modal)} fullWidth maxWidth={'lg'}>
+    const { Field, Subscribe, handleSubmit, reset } = useForm({
+        onSubmit: async ({ value }) => {
+            mutation.mutate({ ...value });
+        },
+        validatorAdapter: zodValidator,
+        defaultValues: {
+            title: category?.title ?? '',
+            description: category?.description ?? '',
+            ordering: category?.ordering ? String(category.ordering) : '1'
+        }
+    });
+
+    return (
+        <Dialog {...muiDialogV5(modal)} fullWidth maxWidth={'lg'}>
+            <form
+                onSubmit={async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    await handleSubmit();
+                }}
+            >
                 <DialogTitle>Category Editor</DialogTitle>
 
                 <DialogContent>
-                    {/*<CatLoader initial_forum_category_id={initial_forum_category_id ?? 0} />*/}
-                    <Stack spacing={2}>
-                        {/*<TitleField />*/}
-                        {/*<DescriptionField />*/}
-                        {/*<OrderingField />*/}
-                    </Stack>
+                    <Grid container spacing={2}>
+                        <Grid xs={12}>
+                            <Field
+                                name={'title'}
+                                children={(props) => {
+                                    return <TextFieldSimple {...props} label={'Title'} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={12}>
+                            <Field
+                                name={'description'}
+                                children={(props) => {
+                                    return <TextFieldSimple {...props} label={'Description'} rows={5} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={12}>
+                            <Field
+                                name={'ordering'}
+                                children={(props) => {
+                                    return <TextFieldSimple {...props} label={'Order'} />;
+                                }}
+                            />
+                        </Grid>
+                    </Grid>
                 </DialogContent>
 
                 <DialogActions>
-                    {/*<CancelButton />*/}
-                    {/*<SubmitButton />*/}
+                    <Grid container>
+                        <Grid xs={12} mdOffset="auto">
+                            <Subscribe
+                                selector={(state) => [state.canSubmit, state.isSubmitting]}
+                                children={([canSubmit, isSubmitting]) => {
+                                    return (
+                                        <Buttons
+                                            reset={reset}
+                                            canSubmit={canSubmit}
+                                            isSubmitting={isSubmitting}
+                                            onClose={async () => {
+                                                await modal.hide();
+                                            }}
+                                        />
+                                    );
+                                }}
+                            />
+                        </Grid>
+                    </Grid>
                 </DialogActions>
-            </Dialog>
-            // </Formik>
-        );
-    }
-);
-
-// export const CatLoader = ({ initial_forum_category_id }: { initial_forum_category_id: number }) => {
-//     const { setFieldValue } = useFormikContext<ForumCategory>();
-//
-//     useEffect(() => {
-//         if (initial_forum_category_id) {
-//             apiGetForumCategory(initial_forum_category_id).then((cat) => {
-//                 setFieldValue('title', cat.title).then(() => {
-//                     setFieldValue('description', cat.description).then(() => {
-//                         setFieldValue('ordering', cat.ordering).catch(logErr);
-//                     });
-//                 });
-//             });
-//         }
-//     }, [initial_forum_category_id, setFieldValue]);
-//
-//     return <></>;
-// };
-
-export default ForumCategoryEditorModal;
+            </form>
+        </Dialog>
+    );
+});

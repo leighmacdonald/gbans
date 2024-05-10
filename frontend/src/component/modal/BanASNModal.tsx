@@ -2,7 +2,6 @@ import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import LanIcon from '@mui/icons-material/Lan';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import MenuItem from '@mui/material/MenuItem';
-import Stack from '@mui/material/Stack';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
@@ -237,16 +236,6 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                             />
                         </Grid>
                     </Grid>
-                    <Stack spacing={2}>
-                        {/*<TargetIDField />*/}
-                        {/*<ASNumberField />*/}
-                        {/*<BanReasonField />*/}
-                        {/*<BanReasonTextField />*/}
-                        {/*<DurationField />*/}
-                        {/*<DurationCustomField />*/}
-                        {/*<NoteField />*/}
-                        {/*<ErrorField error={error} />*/}
-                    </Stack>
                 </DialogContent>
                 <DialogActions>
                     <Grid container>

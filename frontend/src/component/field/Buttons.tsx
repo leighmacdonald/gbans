@@ -17,6 +17,7 @@ type ButtonProps = {
     closeLabel?: string;
     onClear?: () => Promise<void>;
     onClose?: () => Promise<void>;
+    fullWidth?: boolean;
 };
 
 export const Buttons = ({
@@ -29,12 +30,13 @@ export const Buttons = ({
     clearLabel = 'Clear',
     closeLabel = 'Close',
     showClear = false,
+    fullWidth = false,
     onClose
 }: ButtonProps) => {
     const navigate = useNavigate();
 
     return (
-        <ButtonGroup>
+        <ButtonGroup fullWidth={fullWidth}>
             <Button
                 key={'submit-button'}
                 type="submit"

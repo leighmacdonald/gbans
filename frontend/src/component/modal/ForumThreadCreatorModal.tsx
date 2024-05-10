@@ -1,55 +1,36 @@
 import { useCallback } from 'react';
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import Stack from '@mui/material/Stack';
+import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
+import { useForm } from '@tanstack/react-form';
+import { useMutation } from '@tanstack/react-query';
+import { zodValidator } from '@tanstack/zod-form-adapter';
+import { z } from 'zod';
+import { apiCreateThread, Forum, ForumThread } from '../../api/forum.ts';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { logErr } from '../../util/errors';
+import { Buttons } from '../field/Buttons.tsx';
+import { CheckboxSimple } from '../field/CheckboxSimple.tsx';
+import { MarkdownField } from '../field/MarkdownField.tsx';
+import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 import { ModalConfirm, ModalForumThreadCreator } from './index';
 
-// interface ForumThreadEditorValues {
-//     forum_id: number;
-//     title: string;
-//     body_md: string;
-//     sticky: boolean;
-//     locked: boolean;
-// }
-//
-// interface ForumThreadEditorProps {
-//     forum_id: number;
-// }
+type ForumThreadEditorValues = {
+    title: string;
+    body_md: string;
+    sticky: boolean;
+    locked: boolean;
+};
 
-// const validationSchema = yup.object({
-//     title: titleFieldValidator,
-//     body_md: bodyMDValidator
-// });
-
-export const ForumThreadCreatorModal = NiceModal.create((/**{ forum_id }: ForumThreadEditorProps**/) => {
+export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: Forum }) => {
     const threadModal = useModal(ModalForumThreadCreator);
     const confirmModal = useModal(ModalConfirm);
+    const { sendFlash } = useUserFlashCtx();
     const theme = useTheme();
+    const modal = useModal();
     const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
-
-    // const iv: ForumThreadEditorValues = {
-    //     forum_id: forum_id,
-    //     body_md: '',
-    //     title: '',
-    //     locked: false,
-    //     sticky: false
-    // };
-    //
-    // const onSubmit = useCallback(
-    //     async (values: ForumThreadEditorValues) => {
-    //         try {
-    //             threadModal.resolve(await apiCreateThread(forum_id, values.title, values.body_md, values.sticky, values.locked));
-    //
-    //             await threadModal.hide();
-    //         } catch (e) {
-    //             threadModal.reject(e);
-    //         }
-    //     },
-    //     [forum_id, threadModal]
-    // );
 
     const onClose = useCallback(
         async (_: unknown, reason: 'escapeKeyDown' | 'backdropClick') => {
@@ -73,12 +54,34 @@ export const ForumThreadCreatorModal = NiceModal.create((/**{ forum_id }: ForumT
         [confirmModal, threadModal]
     );
 
+    const mutation = useMutation({
+        mutationKey: ['forumThreadCreate', { forum_id: forum.forum_id }],
+        mutationFn: async (values: ForumThreadEditorValues) => {
+            return await apiCreateThread(forum.forum_id, values.title, values.body_md, values.sticky, values.locked);
+        },
+        onSuccess: async (editedThread: ForumThread) => {
+            modal.resolve(editedThread);
+            await modal.hide();
+        },
+        onError: (error) => {
+            sendFlash('error', `${error}`);
+        }
+    });
+
+    const { Field, Subscribe, handleSubmit, reset } = useForm({
+        onSubmit: async ({ value }) => {
+            mutation.mutate({ ...value });
+        },
+        validatorAdapter: zodValidator,
+        defaultValues: {
+            title: '',
+            body_md: '',
+            sticky: false,
+            locked: false
+        }
+    });
+
     return (
-        // <Formik<ForumThreadEditorValues>
-        //     initialValues={iv}
-        //     onSubmit={onSubmit}
-        //     validationSchema={validationSchema}
-        // >
         <Dialog
             {...muiDialogV5(threadModal)}
             fullWidth
@@ -87,22 +90,79 @@ export const ForumThreadCreatorModal = NiceModal.create((/**{ forum_id }: ForumT
             onClose={onClose}
             fullScreen={fullScreen}
         >
-            <DialogTitle>Create New Thread</DialogTitle>
-            <DialogContent>
-                <Stack spacing={2}>
-                    {/*<TitleField />*/}
-                    {/*<MDBodyField />*/}
-                    {/*<StickyField />*/}
-                    {/*<LockedField />*/}
-                </Stack>
-            </DialogContent>
-            <DialogActions>
-                {/*<CancelButton />*/}
-                {/*<SubmitButton label={'Post'} />*/}
-            </DialogActions>
+            <form
+                onSubmit={async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    await handleSubmit();
+                }}
+            >
+                <DialogTitle>Create New Thread</DialogTitle>
+                <DialogContent>
+                    <Grid container spacing={2}>
+                        <Grid xs={12}>
+                            <Field
+                                validators={{
+                                    onChange: z.string().min(3)
+                                }}
+                                name={'title'}
+                                children={(props) => {
+                                    return <TextFieldSimple {...props} label={'Title'} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={12}>
+                            <Field
+                                validators={{
+                                    onChange: z.string().min(10)
+                                }}
+                                name={'body_md'}
+                                children={(props) => {
+                                    return <MarkdownField {...props} label={'Message'} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={12}>
+                            <Field
+                                name={'sticky'}
+                                children={(props) => {
+                                    return <CheckboxSimple {...props} label={'Stickied'} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={12}>
+                            <Field
+                                name={'locked'}
+                                children={(props) => {
+                                    return <CheckboxSimple {...props} label={'Locked'} />;
+                                }}
+                            />
+                        </Grid>
+                    </Grid>
+                </DialogContent>
+                <DialogActions>
+                    <Grid container>
+                        <Grid xs={12} mdOffset="auto">
+                            <Subscribe
+                                selector={(state) => [state.canSubmit, state.isSubmitting]}
+                                children={([canSubmit, isSubmitting]) => {
+                                    return (
+                                        <Buttons
+                                            reset={reset}
+                                            canSubmit={canSubmit}
+                                            isSubmitting={isSubmitting}
+                                            clearLabel={'Delete Thread'}
+                                            onClose={async () => {
+                                                await modal.hide();
+                                            }}
+                                        />
+                                    );
+                                }}
+                            />
+                        </Grid>
+                    </Grid>
+                </DialogActions>
+            </form>
         </Dialog>
-        // </Formik>
     );
 });
-
-export default ForumThreadCreatorModal;
