@@ -13,15 +13,18 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import {
     ColumnDef,
+    ColumnSort,
     createColumnHelper,
     getCoreRowModel,
     getPaginationRowModel,
+    getSortedRowModel,
     OnChangeFn,
     PaginationState,
     RowSelectionState,
+    SortingState,
     useReactTable
 } from '@tanstack/react-table';
 import { z } from 'zod';
@@ -48,12 +51,12 @@ import { ModalConfirm, ModalFilterEditor } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { findSelectedRow } from '../util/findSelectedRow.ts';
 import { findSelectedRows } from '../util/findSelectedRows.ts';
-import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
+import { RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 
 const filterSearchSchema = z.object({
-    ...commonTableSearchSchema,
-    sortColumn: z.enum(['filter_id', 'is_regex', 'is_enabled', 'weight', 'trigger_count']).optional()
+    sortColumn: z.string().optional(),
+    desc: z.boolean().optional()
 });
 
 export const Route = createFileRoute('/_mod/admin/filters')({
@@ -63,8 +66,25 @@ export const Route = createFileRoute('/_mod/admin/filters')({
 
 function AdminFilters() {
     const { sendFlash } = useUserFlashCtx();
+    const navigate = useNavigate();
+    const { sortColumn, desc } = Route.useSearch();
     const queryClient = useQueryClient();
     const [rowSelection, setRowSelection] = useState({});
+    const [sorting, setSorting] = useState<SortingState>([
+        {
+            id: sortColumn ?? 'pattern',
+            desc: desc ?? true
+        }
+    ]);
+
+    const onSort = async (sortColumn: ColumnSort) => {
+        console.log(sortColumn);
+        await navigate({
+            to: '/admin/filters',
+            replace: true,
+            search: { sortColumn: sortColumn.id, desc: sortColumn.desc }
+        });
+    };
 
     // const { page, rows, sortOrder, sortColumn } = Route.useSearch();
     const [pagination, setPagination] = useState({
@@ -192,6 +212,9 @@ function AdminFilters() {
                         setRowSelection={setRowSelection}
                         pagination={pagination}
                         setPagination={setPagination}
+                        setSorting={setSorting}
+                        sorting={sorting}
+                        onSort={onSort}
                     />
                     <PaginatorLocal
                         onRowsChange={(rows) => {
@@ -239,7 +262,10 @@ const FiltersTable = ({
     rowSelection,
     setRowSelection,
     pagination,
-    setPagination
+    setPagination,
+    sorting,
+    setSorting,
+    onSort
 }: {
     filters: Filter[];
     isLoading: boolean;
@@ -247,6 +273,9 @@ const FiltersTable = ({
     setRowSelection: OnChangeFn<RowSelectionState>;
     pagination: PaginationState;
     setPagination: OnChangeFn<PaginationState>;
+    sorting: SortingState;
+    setSorting: OnChangeFn<SortingState>;
+    onSort: (sortColumn: ColumnSort) => void;
 }) => {
     // const columnHelper = createColumnHelper<Filter>();
     const columns = useMemo<ColumnDef<Filter>[]>(
@@ -278,13 +307,15 @@ const FiltersTable = ({
 
             {
                 accessorKey: 'pattern',
-                cell: (info) => info.getValue()
+                cell: (info) => info.getValue(),
+                enableSorting: true
             },
             {
                 accessorKey: 'is_regex',
                 accessorFn: (originalRow) => originalRow.is_regex,
                 cell: (info) => <TableCellBool enabled={info.getValue() as boolean} />,
-                header: () => <TableHeadingCell name={'Rx'} />
+                header: () => <TableHeadingCell name={'Rx'} />,
+                enableSorting: true
             },
             {
                 accessorKey: 'action',
@@ -298,25 +329,29 @@ const FiltersTable = ({
                         </TableCellString>
                     );
                 },
-                header: () => <TableHeadingCell name={'Action'} />
+                header: () => <TableHeadingCell name={'Action'} />,
+                enableSorting: true
             },
             {
                 accessorKey: 'duration',
                 accessorFn: (originalRow) => originalRow.duration,
                 cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>,
-                header: () => <TableHeadingCell name={'Duration'} />
+                header: () => <TableHeadingCell name={'Duration'} />,
+                enableSorting: true
             },
             {
                 accessorKey: 'weight',
                 accessorFn: (originalRow) => originalRow.weight,
                 cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>,
-                header: () => <TableHeadingCell name={'Weight'} />
+                header: () => <TableHeadingCell name={'Weight'} />,
+                enableSorting: true
             },
             {
                 accessorKey: 'trigger_count',
                 accessorFn: (originalRow) => originalRow.trigger_count,
                 cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>,
-                header: () => <TableHeadingCell name={'Enabled'} />
+                header: () => <TableHeadingCell name={'Enabled'} />,
+                enableSorting: true
             }
         ],
         [filters]
@@ -325,20 +360,23 @@ const FiltersTable = ({
     const table = useReactTable({
         data: filters,
         columns: columns,
-        getCoreRowModel: getCoreRowModel(),
-        manualPagination: false,
         autoResetPageIndex: true,
         enableRowSelection: true,
+        enableSorting: true,
+        getCoreRowModel: getCoreRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
         onRowSelectionChange: setRowSelection,
         onPaginationChange: setPagination,
-        getPaginationRowModel: getPaginationRowModel(),
+        onSortingChange: setSorting,
         state: {
             rowSelection,
-            pagination
+            pagination,
+            sorting
         }
     });
 
-    return <DataTable table={table} isLoading={isLoading} />;
+    return <DataTable table={table} isLoading={isLoading} onSort={onSort} />;
 };
 
 export const WarningStateTable = ({ warnings, isLoading }: { warnings: UserWarning[]; isLoading: boolean }) => {
