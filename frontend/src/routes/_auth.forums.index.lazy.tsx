@@ -5,32 +5,28 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import CategoryIcon from '@mui/icons-material/Category';
 import ChatIcon from '@mui/icons-material/Chat';
 import ConstructionIcon from '@mui/icons-material/Construction';
-import PeopleIcon from '@mui/icons-material/People';
-import TodayIcon from '@mui/icons-material/Today';
 import Avatar from '@mui/material/Avatar';
-import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
-import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import { useTheme } from '@mui/material/styles';
 import { useQuery } from '@tanstack/react-query';
 import { createLazyFileRoute, useRouteContext } from '@tanstack/react-router';
 import { PermissionLevel } from '../api';
-import { apiForumRecentActivity, apiGetForumOverview, Forum, ForumCategory } from '../api/forum.ts';
+import { apiGetForumOverview, Forum, ForumCategory } from '../api/forum.ts';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
+import { ForumRecentUserActivity } from '../component/ForumRecentUserActivity.tsx';
+import { ForumRecentMessageActivity } from '../component/ForumRecentmessageActivity.tsx';
 import { ForumRowLink } from '../component/ForumRowLink.tsx';
 import { VCenteredElement } from '../component/Heading.tsx';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
 import RouterLink from '../component/RouterLink.tsx';
 import { VCenterBox } from '../component/VCenterBox.tsx';
 import { ModalForumCategoryEditor, ModalForumForumEditor } from '../component/modal';
-import { useForumRecentUserActivity } from '../hooks/useForumRecentUserActivity.ts';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors.ts';
-import { avatarHashToURL, humanCount, renderDateTime, renderTime } from '../util/text.tsx';
+import { avatarHashToURL, humanCount, renderDateTime } from '../util/text.tsx';
 
 export const Route = createLazyFileRoute('/_auth/forums/')({
     component: ForumOverview
@@ -42,12 +38,12 @@ const CategoryBlock = ({ category }: { category: ForumCategory }) => {
     const onEdit = useCallback(async () => {
         try {
             await NiceModal.show(ModalForumCategoryEditor, {
-                initial_forum_category_id: category.forum_category_id
+                category
             });
         } catch (e) {
             logErr(e);
         }
-    }, [category.forum_category_id]);
+    }, [category]);
 
     const buttons = useMemo(() => {
         return hasPermission(PermissionLevel.Moderator)
@@ -77,6 +73,7 @@ const CategoryBlock = ({ category }: { category: ForumCategory }) => {
                     width: '100%'
                 }}
             >
+                {category.description != '' && <Typography>{category.description}</Typography>}
                 {category.forums.map((f) => {
                     return (
                         <Grid
@@ -198,12 +195,12 @@ function ForumOverview() {
 
     const onNewForum = useCallback(async () => {
         try {
-            await NiceModal.show<Forum>(ModalForumForumEditor, {});
+            await NiceModal.show<Forum>(ModalForumForumEditor, { categories: overview?.categories ?? [] });
             sendFlash('success', 'Created new forum successfully');
         } catch (e) {
             logErr(e);
         }
-    }, [sendFlash]);
+    }, [overview?.categories, sendFlash]);
 
     return (
         <Grid container spacing={3}>
@@ -225,8 +222,8 @@ function ForumOverview() {
             </Grid>
             <Grid md={3} xs={12}>
                 <Stack spacing={3}>
-                    <RecentMessageActivity />
-                    <RecentUserActivity />
+                    <ForumRecentMessageActivity />
+                    <ForumRecentUserActivity />
                     {hasPermission(PermissionLevel.Moderator) && (
                         <ContainerWithHeader title={'Mod Tools'} iconLeft={<ConstructionIcon />}>
                             <Button onClick={onNewCategory} variant={'contained'} color={'success'}>
@@ -242,121 +239,3 @@ function ForumOverview() {
         </Grid>
     );
 }
-
-export const RecentUserActivity = () => {
-    const { data } = useForumRecentUserActivity();
-    const theme = useTheme();
-
-    return (
-        <ContainerWithHeader title={`Users Online ${data?.length ?? 0}`} iconLeft={<PeopleIcon />}>
-            <Grid container>
-                {data?.map((a) => {
-                    return (
-                        <Grid xs={'auto'} spacing={1} key={`activity-${a.steam_id}`}>
-                            <Typography
-                                sx={{
-                                    display: 'inline',
-                                    textDecoration: 'none',
-                                    '&:hover': {
-                                        textDecoration: 'underline'
-                                    }
-                                }}
-                                variant={'body2'}
-                                color={theme.palette.text.secondary}
-                                component={RouterLink}
-                                to={`/profile/${a.steam_id}`}
-                            >
-                                {a.personaname}
-                            </Typography>
-                        </Grid>
-                    );
-                })}
-            </Grid>
-        </ContainerWithHeader>
-    );
-};
-
-export const RecentMessageActivity = () => {
-    const { data: messages, isLoading } = useQuery({
-        queryKey: ['forumMessageActivity'],
-        queryFn: async () => {
-            return await apiForumRecentActivity();
-        }
-    });
-
-    return (
-        <ContainerWithHeader title={'Latest Activity'} iconLeft={<TodayIcon />}>
-            <Stack spacing={1}>
-                {isLoading ? (
-                    <LoadingPlaceholder />
-                ) : (
-                    (messages ?? []).map((m) => {
-                        return (
-                            <Stack
-                                direction={'row'}
-                                key={`message-${m.forum_message_id}`}
-                                spacing={1}
-                                sx={{
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap',
-                                    width: '100%'
-                                }}
-                            >
-                                <VCenteredElement
-                                    icon={<Avatar alt={m.personaname} src={avatarHashToURL(m.avatarhash, 'medium')} />}
-                                />
-                                <Stack>
-                                    <Box
-                                        sx={{
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            whiteSpace: 'nowrap',
-                                            width: '100%'
-                                        }}
-                                    >
-                                        <ForumRowLink
-                                            variant={'body1'}
-                                            label={m.title ?? ''}
-                                            to={`/forums/thread/${m.forum_thread_id}#${m.forum_message_id}`}
-                                        />
-                                    </Box>
-                                    <Stack direction={'row'} spacing={1}>
-                                        <AccessTimeIcon scale={0.5} />
-                                        <VCenterBox>
-                                            <Tooltip title={renderDateTime(m.created_on)}>
-                                                <Typography variant={'body2'}>
-                                                    {renderTime(m.created_on ?? new Date())}
-                                                </Typography>
-                                            </Tooltip>
-                                        </VCenterBox>
-                                        <Person2 scale={0.5} />
-                                        <VCenterBox>
-                                            <Typography
-                                                overflow={'hidden'}
-                                                color={(theme) => {
-                                                    return theme.palette.text.secondary;
-                                                }}
-                                                component={RouterLink}
-                                                to={`/profile/${m.source_id}`}
-                                                variant={'body2'}
-                                                sx={{
-                                                    textDecoration: 'none',
-                                                    '&:hover': {
-                                                        textDecoration: 'underline'
-                                                    }
-                                                }}
-                                            >
-                                                {m.personaname}
-                                            </Typography>
-                                        </VCenterBox>
-                                    </Stack>
-                                </Stack>
-                            </Stack>
-                        );
-                    })
-                )}
-            </Stack>
-        </ContainerWithHeader>
-    );
-};

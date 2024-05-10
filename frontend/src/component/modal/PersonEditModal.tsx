@@ -59,7 +59,7 @@ export const PersonEditModal = NiceModal.create(({ person }: { person: Person })
                     Person Editor: {person.personaname}
                 </DialogTitle>
                 <DialogContent>
-                    <Grid container>
+                    <Grid container spacing={2}>
                         <Grid xs={12}>
                             <Field
                                 name={'permission_level'}

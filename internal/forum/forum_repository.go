@@ -321,6 +321,7 @@ func (f *forumRepository) ForumThreads(ctx context.Context, filter domain.Thread
 		return nil, domain.ErrInvalidThread
 	}
 
+	// todo deleted archive
 	constraints := sq.And{sq.Eq{"forum_id": filter.ForumID}}
 
 	builder := f.db.
@@ -342,19 +343,7 @@ func (f *forumRepository) ForumThreads(ctx context.Context, filter domain.Thread
                      FROM forum_message m
                      WHERE m.forum_thread_id = t.forum_thread_id
 					) c ON TRUE`).
-		OrderBy("t.sticky DESC, a.updated_on DESC")
-
-	builder = filter.ApplySafeOrder(builder, map[string][]string{
-		"t.": {
-			"forum_thread_id", "forum_id", "source_id", "title", "sticky",
-			"locked", "views", "created_on", "updated_on",
-		},
-		"p.": {"personaname", "avatar_hash", "permission_level"},
-		"m.": {"created_on", "forum_message_id"},
-		"a.": {"steam_id", "personaname", "avatarhash", "permission_level"},
-	}, "short_name")
-
-	builder = filter.ApplyLimitOffset(builder, 100).Where(constraints)
+		OrderBy("t.sticky DESC, a.updated_on DESC").Where(constraints)
 
 	rows, errRows := f.db.QueryBuilder(ctx, builder)
 	if errRows != nil {

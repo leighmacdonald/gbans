@@ -1,12 +1,5 @@
 import { parseDateTime } from '../util/text.tsx';
-import {
-    apiCall,
-    PermissionLevel,
-    QueryFilter,
-    TimeStamped,
-    transformCreatedOnDate,
-    transformTimeStampedDates
-} from './common';
+import { apiCall, PermissionLevel, TimeStamped, transformCreatedOnDate, transformTimeStampedDates } from './common';
 
 export interface Forum extends TimeStamped {
     forum_id: number;
@@ -173,7 +166,7 @@ export interface ForumThread extends TimeStamped {
     recent_avatarhash: string;
 }
 
-export interface ThreadMessageQueryOpts extends QueryFilter<ForumMessage> {
+export interface ThreadMessageQueryOpts {
     forum_thread_id: number;
     deleted?: boolean;
 }
@@ -197,12 +190,15 @@ export const apiSaveThreadMessage = async (
     return transformTimeStampedDates(resp);
 };
 
-export interface ThreadQueryOpts extends QueryFilter<ForumThread> {
+export interface ThreadQueryOpts {
     forum_id: number;
 }
 
 export const apiGetThreads = async (opts: ThreadQueryOpts, abortController?: AbortController) => {
     const resp = await apiCall<ForumThread[]>(`/api/forum/threads`, 'POST', opts, abortController);
+    if (!resp) {
+        return [];
+    }
     return resp.map((t) => {
         const thread = transformTimeStampedDates(t);
         thread.recent_created_on = parseDateTime(thread.recent_created_on as unknown as string);

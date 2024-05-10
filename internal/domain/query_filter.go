@@ -147,7 +147,6 @@ type ThreadMessagesQuery struct {
 }
 
 type ThreadQueryFilter struct {
-	QueryFilter
 	ForumID int `json:"forum_id"`
 }
 

@@ -24,9 +24,10 @@ import { FieldProps } from './common.ts';
 
 type MDBodyFieldProps = {
     fileUpload?: boolean;
+    minHeight?: number;
 } & FieldProps;
 
-export const MarkdownField = ({ state, handleChange, handleBlur, fileUpload = true }: MDBodyFieldProps) => {
+export const MarkdownField = ({ state, handleChange, handleBlur, minHeight, fileUpload = true }: MDBodyFieldProps) => {
     const [setTabValue, setTabSetTabValue] = useState(0);
     const extraButtons = false;
 
@@ -145,7 +146,7 @@ export const MarkdownField = ({ state, handleChange, handleBlur, fileUpload = tr
             </TabPanel>
             <TabPanel value={setTabValue} index={1}>
                 <Box padding={2}>
-                    <MarkDownRenderer body_md={state.value} />
+                    <MarkDownRenderer body_md={state.value} minHeight={minHeight} />
                 </Box>
             </TabPanel>
         </Stack>

@@ -8,13 +8,12 @@ export const TextFieldSimple = ({
     handleBlur,
     fullwidth = true,
     disabled = false,
-    multiline = false,
-    rows = undefined
+    rows = 1
 }: FieldProps) => {
     return (
         <TextField
-            multiline={multiline}
-            rows={rows}
+            multiline={rows > 1}
+            rows={rows > 1 ? rows : undefined}
             disabled={disabled}
             fullWidth={fullwidth}
             label={label}
