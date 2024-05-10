@@ -38,6 +38,7 @@ type Config struct {
 	Debug       ConfigDebug       `mapstructure:"debug"`
 	Patreon     ConfigPatreon     `mapstructure:"patreon"`
 	S3          ConfigS3          `mapstructure:"s3"`
+	Exports     ConfigExports     `mapstructure:"exports"`
 }
 
 func (c Config) ExtURL(obj LinkablePath) string {
@@ -46,6 +47,12 @@ func (c Config) ExtURL(obj LinkablePath) string {
 
 func (c Config) ExtURLRaw(path string, args ...any) string {
 	return strings.TrimRight(c.General.ExternalURL, "/") + fmt.Sprintf(strings.TrimLeft(path, "."), args...)
+}
+
+type ConfigExports struct {
+	BDEnabled      bool     `mapstructure:"bd_enabled"`
+	ValveEnabled   bool     `mapstructure:"valve_enabled"`
+	AuthorizedKeys []string `mapstructure:"authorized_keys"`
 }
 
 type ConfigFilter struct {
