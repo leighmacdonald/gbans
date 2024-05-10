@@ -316,11 +316,12 @@ func (f *forumRepository) ForumThreadDelete(ctx context.Context, forumThreadID i
 		Where(sq.Eq{"forum_thread_id": forumThreadID})))
 }
 
-func (f *forumRepository) ForumThreads(ctx context.Context, filter domain.ThreadQueryFilter) ([]domain.ThreadWithSource, int64, error) {
+func (f *forumRepository) ForumThreads(ctx context.Context, filter domain.ThreadQueryFilter) ([]domain.ThreadWithSource, error) {
 	if filter.ForumID <= 0 {
-		return nil, 0, domain.ErrInvalidThread
+		return nil, domain.ErrInvalidThread
 	}
 
+	// todo deleted archive
 	constraints := sq.And{sq.Eq{"forum_id": filter.ForumID}}
 
 	builder := f.db.
@@ -342,37 +343,11 @@ func (f *forumRepository) ForumThreads(ctx context.Context, filter domain.Thread
                      FROM forum_message m
                      WHERE m.forum_thread_id = t.forum_thread_id
 					) c ON TRUE`).
-		OrderBy("t.sticky DESC, a.updated_on DESC")
-
-	builder = filter.ApplySafeOrder(builder, map[string][]string{
-		"t.": {
-			"forum_thread_id", "forum_id", "source_id", "title", "sticky",
-			"locked", "views", "created_on", "updated_on",
-		},
-		"p.": {"personaname", "avatar_hash", "permission_level"},
-		"m.": {"created_on", "forum_message_id"},
-		"a.": {"steam_id", "personaname", "avatarhash", "permission_level"},
-	}, "short_name")
-
-	builder = filter.ApplyLimitOffset(builder, 100).Where(constraints)
-
-	count, errCount := f.db.GetCount(ctx, f.db.
-		Builder().
-		Select("COUNT(forum_thread_id)").
-		From("forum_thread").
-		Where(constraints))
-
-	if errCount != nil {
-		return nil, 0, f.db.DBErr(errCount)
-	}
-
-	if count == 0 {
-		return []domain.ThreadWithSource{}, 0, nil
-	}
+		OrderBy("t.sticky DESC, a.updated_on DESC").Where(constraints)
 
 	rows, errRows := f.db.QueryBuilder(ctx, builder)
 	if errRows != nil {
-		return nil, 0, f.db.DBErr(errRows)
+		return nil, f.db.DBErr(errRows)
 	}
 
 	defer rows.Close()
@@ -394,7 +369,7 @@ func (f *forumRepository) ForumThreads(ctx context.Context, filter domain.Thread
 				&tws.Locked, &tws.Views, &tws.CreatedOn, &tws.UpdatedOn, &tws.Personaname, &tws.Avatarhash,
 				&tws.PermissionLevel, &RecentSteamID, &RecentPersonaname, &RecentAvatarHash, &RecentForumMessageID,
 				&RecentCreatedOn, &tws.Replies); errScan != nil {
-			return nil, 0, f.db.DBErr(errScan)
+			return nil, f.db.DBErr(errScan)
 		}
 
 		if RecentForumMessageID != nil {
@@ -408,7 +383,7 @@ func (f *forumRepository) ForumThreads(ctx context.Context, filter domain.Thread
 		threads = append(threads, tws)
 	}
 
-	return threads, count, nil
+	return threads, nil
 }
 
 func (f *forumRepository) ForumIncrMessageCount(ctx context.Context, forumID int, incr bool) error {
@@ -538,7 +513,7 @@ func (f *forumRepository) ForumMessage(ctx context.Context, messageID int64, for
 		&forumMessage.Avatarhash, &forumMessage.PermissionLevel, &forumMessage.Signature))
 }
 
-func (f *forumRepository) ForumMessages(ctx context.Context, filters domain.ThreadMessagesQueryFilter) ([]domain.ForumMessage, int64, error) {
+func (f *forumRepository) ForumMessages(ctx context.Context, filters domain.ThreadMessagesQuery) ([]domain.ForumMessage, error) {
 	constraints := sq.And{sq.Eq{"forum_thread_id": filters.ForumThreadID}}
 
 	builder := f.db.
@@ -551,9 +526,9 @@ func (f *forumRepository) ForumMessages(ctx context.Context, filters domain.Thre
 		Where(constraints).
 		OrderBy("m.forum_message_id")
 
-	rows, errRows := f.db.QueryBuilder(ctx, filters.ApplyLimitOffset(builder, 100).Where(constraints))
+	rows, errRows := f.db.QueryBuilder(ctx, builder.Where(constraints))
 	if errRows != nil {
-		return nil, 0, f.db.DBErr(errRows)
+		return nil, f.db.DBErr(errRows)
 	}
 	defer rows.Close()
 
@@ -563,23 +538,13 @@ func (f *forumRepository) ForumMessages(ctx context.Context, filters domain.Thre
 		var msg domain.ForumMessage
 		if errScan := rows.Scan(&msg.ForumMessageID, &msg.ForumThreadID, &msg.SourceID, &msg.BodyMD, &msg.CreatedOn, &msg.UpdatedOn,
 			&msg.Personaname, &msg.Avatarhash, &msg.PermissionLevel, &msg.Signature); errScan != nil {
-			return nil, 0, f.db.DBErr(errScan)
+			return nil, f.db.DBErr(errScan)
 		}
 
 		messages = append(messages, msg)
 	}
 
-	count, errCount := f.db.GetCount(ctx, f.db.
-		Builder().
-		Select("COUNT(m.forum_message_id)").
-		From("forum_message m").
-		Where(constraints))
-
-	if errCount != nil {
-		return nil, 0, f.db.DBErr(errCount)
-	}
-
-	return messages, count, nil
+	return messages, nil
 }
 
 func (f *forumRepository) ForumMessageDelete(ctx context.Context, messageID int64) error {

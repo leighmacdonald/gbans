@@ -21,12 +21,12 @@ type ForumRepository interface {
 	ForumThread(ctx context.Context, forumThreadID int64, thread *ForumThread) error
 	ForumThreadIncrView(ctx context.Context, forumThreadID int64) error
 	ForumThreadDelete(ctx context.Context, forumThreadID int64) error
-	ForumThreads(ctx context.Context, filter ThreadQueryFilter) ([]ThreadWithSource, int64, error)
+	ForumThreads(ctx context.Context, filter ThreadQueryFilter) ([]ThreadWithSource, error)
 	ForumIncrMessageCount(ctx context.Context, forumID int, incr bool) error
 	ForumMessageSave(ctx context.Context, message *ForumMessage) error
 	ForumRecentActivity(ctx context.Context, limit uint64, permissionLevel Privilege) ([]ForumMessage, error)
 	ForumMessage(ctx context.Context, messageID int64, forumMessage *ForumMessage) error
-	ForumMessages(ctx context.Context, filters ThreadMessagesQueryFilter) ([]ForumMessage, int64, error)
+	ForumMessages(ctx context.Context, filters ThreadMessagesQuery) ([]ForumMessage, error)
 	ForumMessageDelete(ctx context.Context, messageID int64) error
 	ForumMessageVoteApply(ctx context.Context, messageVote *ForumMessageVote) error
 	ForumMessageVoteByID(ctx context.Context, messageVoteID int64, messageVote *ForumMessageVote) error
@@ -48,12 +48,12 @@ type ForumUsecase interface {
 	ForumThread(ctx context.Context, forumThreadID int64, thread *ForumThread) error
 	ForumThreadIncrView(ctx context.Context, forumThreadID int64) error
 	ForumThreadDelete(ctx context.Context, forumThreadID int64) error
-	ForumThreads(ctx context.Context, filter ThreadQueryFilter) ([]ThreadWithSource, int64, error)
+	ForumThreads(ctx context.Context, filter ThreadQueryFilter) ([]ThreadWithSource, error)
 	ForumIncrMessageCount(ctx context.Context, forumID int, incr bool) error
 	ForumMessageSave(ctx context.Context, message *ForumMessage) error
 	ForumRecentActivity(ctx context.Context, limit uint64, permissionLevel Privilege) ([]ForumMessage, error)
 	ForumMessage(ctx context.Context, messageID int64, forumMessage *ForumMessage) error
-	ForumMessages(ctx context.Context, filters ThreadMessagesQueryFilter) ([]ForumMessage, int64, error)
+	ForumMessages(ctx context.Context, filters ThreadMessagesQuery) ([]ForumMessage, error)
 	ForumMessageDelete(ctx context.Context, messageID int64) error
 	ForumMessageVoteApply(ctx context.Context, messageVote *ForumMessageVote) error
 	ForumMessageVoteByID(ctx context.Context, messageVoteID int64, messageVote *ForumMessageVote) error

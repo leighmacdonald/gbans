@@ -94,7 +94,12 @@ export const PlayerWeaponHoverStats = ({ stats }: PlayerWeaponHoverStatsProps) =
                             </TableHead>
                             <TableBody>
                                 {stats.map((ws, index) => {
-                                    return <WeaponStatRow weaponStat={ws} key={`ws-${ws.damage}-${ws.weapon_id}-${index}`} />;
+                                    return (
+                                        <WeaponStatRow
+                                            weaponStat={ws}
+                                            key={`ws-${ws.damage}-${ws.weapon_id}-${index}`}
+                                        />
+                                    );
                                 })}
                             </TableBody>
                         </Table>

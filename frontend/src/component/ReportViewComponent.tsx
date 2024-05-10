@@ -1,4 +1,4 @@
-import { useCallback, useState, JSX, useMemo, SyntheticEvent } from 'react';
+import { useState, JSX, SyntheticEvent } from 'react';
 import DescriptionIcon from '@mui/icons-material/Description';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import LanIcon from '@mui/icons-material/Lan';
@@ -9,7 +9,6 @@ import TabContext from '@mui/lab/TabContext';
 import TabList from '@mui/lab/TabList';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import ButtonGroup from '@mui/material/ButtonGroup';
 import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
@@ -17,81 +16,141 @@ import Tab from '@mui/material/Tab';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
+import { useForm } from '@tanstack/react-form';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouteContext } from '@tanstack/react-router';
-import { Formik } from 'formik';
-import { FormikHelpers } from 'formik/dist/types';
-import { apiCreateReportMessage, apiDeleteReportMessage, PermissionLevel, Report, ReportMessage } from '../api';
-import { useReportMessages } from '../hooks/useReportMessages';
-import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
-import { logErr } from '../util/errors';
+import {
+    apiCreateReportMessage,
+    apiDeleteReportMessage,
+    apiGetBansSteam,
+    apiGetConnections,
+    apiGetMessages,
+    apiGetReportMessages,
+    PermissionLevel,
+    Report
+} from '../api';
+import { RowsPerPage } from '../util/table.ts';
+import { BanHistoryTable } from './BanHistoryTable.tsx';
+import { ChatTable } from './ChatTable.tsx';
 import { ContainerWithHeader } from './ContainerWithHeader';
-import { MDBodyField } from './MDBodyField';
+import { IPHistoryTable } from './IPHistoryTable.tsx';
 import { MarkDownRenderer } from './MarkdownRenderer';
+import { PaginatorLocal } from './PaginatorLocal.tsx';
 import { PlayerMessageContext } from './PlayerMessageContext';
 import { ReportMessageView } from './ReportMessageView';
 import { SourceBansList } from './SourceBansList';
 import { TabPanel } from './TabPanel';
-import { ResetButton, SubmitButton } from './modal/Buttons';
-import { BanHistoryTable } from './table/BanHistoryTable';
-import { ConnectionHistoryTable } from './table/ConnectionHistoryTable';
-import { PersonMessageTable } from './table/PersonMessageTable';
+import { Buttons } from './field/Buttons.tsx';
+import { MarkdownField } from './field/MarkdownField.tsx';
 
-interface ReportComponentProps {
-    report: Report;
-}
+const messagesQueryOptions = (reportId: number) => ({
+    queryKey: ['reportMessages', { reportID: reportId }],
+    queryFn: async () => {
+        return (await apiGetReportMessages(reportId)) ?? [];
+    }
+});
 
-interface ReportViewValues {
-    body_md: string;
-}
-
-export const ReportViewComponent = ({ report }: ReportComponentProps): JSX.Element => {
+export const ReportViewComponent = ({ report }: { report: Report }): JSX.Element => {
     const theme = useTheme();
-    const { data: messagesServer } = useReportMessages(report.report_id);
-    const [newMessages, setNewMessages] = useState<ReportMessage[]>([]);
-    const [deletedMessages, setDeletedMessages] = useState<number[]>([]);
+    const queryClient = useQueryClient();
+    // const { data: messagesServer } = useReportMessages(report.report_id);
+    // const [deletedMessages, setDeletedMessages] = useState<number[]>([]);
     const [value, setValue] = useState<number>(0);
-    const [banCount, setBanCount] = useState(0);
-    const { hasPermission } = useRouteContext({ from: '/_auth/report/$report_id' });
-    const { sendFlash } = useUserFlashCtx();
+    const { hasPermission } = useRouteContext({ from: '/_auth/report/$reportId' });
 
-    const messages = useMemo(() => {
-        return [...messagesServer, ...newMessages].filter((m) => !deletedMessages.includes(m.report_message_id));
-    }, [deletedMessages, messagesServer, newMessages]);
+    const [chatPagination, setChatPagination] = useState({
+        pageIndex: 0, //initial page index
+        pageSize: RowsPerPage.TwentyFive //default page size
+    });
+
+    const [connectionPagination, setConnectionPagination] = useState({
+        pageIndex: 0, //initial page index
+        pageSize: RowsPerPage.TwentyFive //default page size
+    });
+
+    const { data: connections, isLoading: isLoadingConnections } = useQuery({
+        queryKey: ['reportConnectionHist', { steamId: report.target_id }],
+        queryFn: async () => {
+            return await apiGetConnections({
+                limit: 1000,
+                offset: 0,
+                order_by: 'person_connection_id',
+                desc: true,
+                source_id: report.target_id
+            });
+        }
+    });
+
+    const { data: chat, isLoading: isLoadingChat } = useQuery({
+        queryKey: ['reportChat', { steamId: report.target_id }],
+        queryFn: async () => {
+            return await apiGetMessages({
+                personaname: '',
+                query: '',
+                source_id: report.target_id,
+                limit: 2500,
+                offset: 0,
+                order_by: 'person_message_id',
+                desc: true,
+                flagged_only: false
+            });
+        }
+    });
+
+    const { data: messages, isLoading: isLoadingMessages } = useQuery(messagesQueryOptions(report.report_id));
+
+    const { data: bans, isLoading: isLoadingBans } = useQuery({
+        queryKey: ['reportBanHistory', { steamId: report.target_id }],
+        queryFn: async () => {
+            return await apiGetBansSteam({
+                limit: 100,
+                offset: 0,
+                order_by: 'ban_id',
+                desc: true,
+                target_id: report.target_id,
+                deleted: true
+            });
+        }
+    });
 
     const handleChange = (_: SyntheticEvent, newValue: number) => {
         setValue(newValue);
     };
 
-    const onSubmit = useCallback(
-        async (values: ReportViewValues, formikHelpers: FormikHelpers<ReportViewValues>) => {
-            try {
-                const message = await apiCreateReportMessage(report.report_id, values.body_md);
-                setNewMessages((prevState) => {
-                    return [...prevState, message];
-                });
-                formikHelpers.resetForm();
-            } catch (e) {
-                logErr(e);
-                sendFlash('error', 'Error trying to create message');
-            }
+    const createMessageMutation = useMutation({
+        mutationFn: async ({ body_md }: { body_md: string }) => {
+            return await apiCreateReportMessage(report.report_id, body_md);
         },
-        [report.report_id, sendFlash]
-    );
+        onSuccess: (message) => {
+            queryClient.setQueryData(messagesQueryOptions(report.report_id).queryKey, [...(messages ?? []), message]);
+            reset();
+        }
+    });
 
-    const onDelete = useCallback(
-        async (message_id: number) => {
-            try {
-                await apiDeleteReportMessage(message_id);
-                setDeletedMessages((prevState) => {
-                    return [...prevState, message_id];
-                });
-            } catch (e) {
-                logErr(e);
-                sendFlash('error', 'Failed to delete message');
-            }
+    const deleteMessageMutation = useMutation({
+        mutationFn: async ({ message_id }: { message_id: number }) => {
+            return await apiDeleteReportMessage(message_id);
         },
-        [sendFlash]
-    );
+        onSuccess: (_, { message_id }) => {
+            queryClient.setQueryData(
+                messagesQueryOptions(report.report_id).queryKey,
+                (messages ?? []).filter((m) => m.report_message_id != message_id)
+            );
+        }
+    });
+
+    const onDelete = async (message_id: number) => {
+        deleteMessageMutation.mutate({ message_id });
+    };
+
+    const { Field, Subscribe, handleSubmit, reset } = useForm({
+        onSubmit: async ({ value }) => {
+            createMessageMutation.mutate(value);
+        },
+        defaultValues: {
+            body_md: ''
+        }
+    });
 
     return (
         <Grid container>
@@ -106,17 +165,26 @@ export const ReportViewComponent = ({ report }: ReportComponentProps): JSX.Eleme
                                     backgroundColor: theme.palette.background.paper
                                 }}
                             >
-                                <TabList variant={'fullWidth'} onChange={handleChange} aria-label="ReportCreatePage detail tabs">
+                                <TabList
+                                    variant={'fullWidth'}
+                                    onChange={handleChange}
+                                    aria-label="ReportCreatePage detail tabs"
+                                >
                                     <Tab label="Description" icon={<DescriptionIcon />} iconPosition={'start'} />
                                     {hasPermission(PermissionLevel.Moderator) && (
-                                        <Tab sx={{ height: 20 }} label={`Chat Logs`} icon={<MessageIcon />} iconPosition={'start'} />
+                                        <Tab
+                                            sx={{ height: 20 }}
+                                            label={`Chat Logs`}
+                                            icon={<MessageIcon />}
+                                            iconPosition={'start'}
+                                        />
                                     )}
                                     {hasPermission(PermissionLevel.Moderator) && (
                                         <Tab label={`Connections`} icon={<LanIcon />} iconPosition={'start'} />
                                     )}
                                     {hasPermission(PermissionLevel.Moderator) && (
                                         <Tab
-                                            label={`Ban History ${banCount ? `(${banCount})` : ''}`}
+                                            label={`Ban History ${bans ? `(${bans.data.length})` : ''}`}
                                             icon={<ReportGmailerrorredIcon />}
                                             iconPosition={'start'}
                                         />
@@ -134,12 +202,54 @@ export const ReportViewComponent = ({ report }: ReportComponentProps): JSX.Eleme
 
                             <TabPanel value={value} index={1}>
                                 <Box minHeight={300}>
-                                    <PersonMessageTable steam_id={report.target_id} />
+                                    <ChatTable
+                                        messages={chat ?? []}
+                                        isLoading={isLoadingChat}
+                                        manualPaging={false}
+                                        pagination={chatPagination}
+                                        setPagination={setChatPagination}
+                                    />
+                                    <PaginatorLocal
+                                        onRowsChange={(rows) => {
+                                            setChatPagination((prev) => {
+                                                return { ...prev, pageSize: rows };
+                                            });
+                                        }}
+                                        onPageChange={(page) => {
+                                            setChatPagination((prev) => {
+                                                return { ...prev, pageIndex: page };
+                                            });
+                                        }}
+                                        count={chat?.length ?? 0}
+                                        rows={chatPagination.pageSize}
+                                        page={chatPagination.pageIndex}
+                                    />
                                 </Box>
                             </TabPanel>
                             <TabPanel value={value} index={2}>
                                 <Box minHeight={300}>
-                                    <ConnectionHistoryTable steam_id={report.target_id} />
+                                    <IPHistoryTable
+                                        connections={connections ?? { data: [], count: 0 }}
+                                        isLoading={isLoadingConnections}
+                                        manualPaging={false}
+                                        pagination={connectionPagination}
+                                        setPagination={setConnectionPagination}
+                                    />
+                                    <PaginatorLocal
+                                        onRowsChange={(rows) => {
+                                            setConnectionPagination((prev) => {
+                                                return { ...prev, pageSize: rows };
+                                            });
+                                        }}
+                                        onPageChange={(page) => {
+                                            setConnectionPagination((prev) => {
+                                                return { ...prev, pageIndex: page };
+                                            });
+                                        }}
+                                        count={connections?.data?.length ?? 0}
+                                        rows={connectionPagination.pageSize}
+                                        page={connectionPagination.pageIndex}
+                                    />
                                 </Box>
                             </TabPanel>
                             <TabPanel value={value} index={3}>
@@ -149,7 +259,7 @@ export const ReportViewComponent = ({ report }: ReportComponentProps): JSX.Eleme
                                         display: value == 3 ? 'block' : 'none'
                                     }}
                                 >
-                                    <BanHistoryTable steam_id={report.target_id} setBanCount={setBanCount} />
+                                    <BanHistoryTable bans={bans ?? { data: [], count: 0 }} isLoading={isLoadingBans} />
                                 </Box>
                             </TabPanel>
                         </ContainerWithHeader>
@@ -182,25 +292,54 @@ export const ReportViewComponent = ({ report }: ReportComponentProps): JSX.Eleme
                             </ContainerWithHeader>
                         )}
 
-                        {hasPermission(PermissionLevel.Moderator) && <SourceBansList steam_id={report.source_id} is_reporter={true} />}
+                        {hasPermission(PermissionLevel.Moderator) && (
+                            <SourceBansList steam_id={report.source_id} is_reporter={true} />
+                        )}
 
-                        {hasPermission(PermissionLevel.Moderator) && <SourceBansList steam_id={report.target_id} is_reporter={false} />}
+                        {hasPermission(PermissionLevel.Moderator) && (
+                            <SourceBansList steam_id={report.target_id} is_reporter={false} />
+                        )}
 
-                        {messages.map((m) => (
-                            <ReportMessageView onDelete={onDelete} message={m} key={`report-msg-${m.report_message_id}`} />
-                        ))}
+                        {!isLoadingMessages &&
+                            messages &&
+                            messages.map((m) => (
+                                <ReportMessageView
+                                    onDelete={onDelete}
+                                    message={m}
+                                    key={`report-msg-${m.report_message_id}`}
+                                />
+                            ))}
                         <Paper elevation={1}>
-                            <Formik<ReportViewValues> initialValues={{ body_md: '' }} onSubmit={onSubmit}>
-                                <Stack spacing={2} padding={1}>
-                                    <Box minHeight={465}>
-                                        <MDBodyField />
-                                    </Box>
-                                    <ButtonGroup>
-                                        <ResetButton />
-                                        <SubmitButton />
-                                    </ButtonGroup>
-                                </Stack>
-                            </Formik>
+                            <form
+                                onSubmit={async (e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    await handleSubmit();
+                                }}
+                            >
+                                <Grid container>
+                                    <Grid xs={12}>
+                                        <Field
+                                            name={'body_md'}
+                                            children={(props) => {
+                                                return <MarkdownField {...props} label={'Message'} fullwidth={true} />;
+                                            }}
+                                        />
+                                    </Grid>
+                                    <Grid xs={12} mdOffset="auto">
+                                        <Subscribe
+                                            selector={(state) => [state.canSubmit, state.isSubmitting]}
+                                            children={([canSubmit, isSubmitting]) => (
+                                                <Buttons
+                                                    reset={reset}
+                                                    canSubmit={canSubmit}
+                                                    isSubmitting={isSubmitting}
+                                                />
+                                            )}
+                                        />
+                                    </Grid>
+                                </Grid>
+                            </form>
                         </Paper>
                     </Stack>
                 </TabContext>

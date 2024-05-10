@@ -1,49 +1,91 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import Stack from '@mui/material/Stack';
-import { UnbanModalProps } from './UnbanSteamModal';
+import Grid from '@mui/material/Unstable_Grid2';
+import { useForm } from '@tanstack/react-form';
+import { useMutation } from '@tanstack/react-query';
+import { zodValidator } from '@tanstack/zod-form-adapter';
+import { z } from 'zod';
+import { apiDeleteASNBan } from '../../api';
+import { Buttons } from '../field/Buttons.tsx';
+import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
-export const UnbanASNModal = NiceModal.create(({ banId }: UnbanModalProps) => {
+export const UnbanASNModal = NiceModal.create(({ banId }: { banId: number }) => {
     const modal = useModal();
-    //
-    // const onSubmit = useCallback(
-    //     async (values: UnbanFormValues) => {
-    //         if (values.unban_reason == '') {
-    //             modal.reject({ error: 'Reason cannot be empty' });
-    //             await modal.hide();
-    //             return;
-    //         }
-    //         try {
-    //             await apiDeleteASNBan(banId, values.unban_reason);
-    //             modal.resolve();
-    //         } catch (e) {
-    //             modal.reject(e);
-    //         } finally {
-    //             await modal.hide();
-    //         }
-    //     },
-    //     [banId, modal]
-    // );
+
+    const mutation = useMutation({
+        mutationKey: ['deleteASNBan', { banId }],
+        mutationFn: async (unban_reason: string) => {
+            await apiDeleteASNBan(banId, unban_reason);
+        },
+        onSuccess: async () => {
+            modal.resolve();
+            await modal.hide();
+        },
+        onError: (error) => {
+            modal.reject(error);
+        }
+    });
+
+    const { Field, Subscribe, handleSubmit, reset } = useForm({
+        onSubmit: async ({ value }) => {
+            mutation.mutate(value.unban_reason);
+        },
+        validatorAdapter: zodValidator,
+        defaultValues: {
+            unban_reason: ''
+        }
+    });
 
     return (
-        // <Formik<UnbanFormValues>
-        //     initialValues={{ unban_reason: '' }}
-        //     onSubmit={onSubmit}
-        //     validationSchema={unbanValidationSchema}
-        // >
         <Dialog {...muiDialogV5(modal)}>
-            <DialogTitle>Unban ASN (#{banId})</DialogTitle>
+            <form
+                onSubmit={async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    await handleSubmit();
+                }}
+            >
+                <DialogTitle>Unban ASN (#{banId})</DialogTitle>
 
-            <DialogContent>
-                <Stack spacing={2}>{/*<UnbanReasonTextField />*/}</Stack>
-            </DialogContent>
+                <DialogContent>
+                    <Grid container spacing={2}>
+                        <Grid xs={12}>
+                            <Field
+                                name={'unban_reason'}
+                                validators={{
+                                    onChange: z.string().min(5)
+                                }}
+                                children={(props) => {
+                                    return <TextFieldSimple {...props} label={'Unban Reason'} />;
+                                }}
+                            />
+                        </Grid>
+                    </Grid>
+                </DialogContent>
 
-            <DialogActions>
-                {/*<CancelButton />*/}
-                {/*<SubmitButton />*/}
-            </DialogActions>
+                <DialogActions>
+                    <Grid container>
+                        <Grid xs={12}>
+                            <Subscribe
+                                selector={(state) => [state.canSubmit, state.isSubmitting]}
+                                children={([canSubmit, isSubmitting]) => {
+                                    return (
+                                        <Buttons
+                                            reset={reset}
+                                            canSubmit={canSubmit}
+                                            isSubmitting={isSubmitting}
+                                            onClose={async () => {
+                                                await modal.hide();
+                                            }}
+                                        />
+                                    );
+                                }}
+                            />
+                        </Grid>
+                    </Grid>
+                </DialogActions>
+            </form>
         </Dialog>
-        // </Formik>
     );
 });
 

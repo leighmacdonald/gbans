@@ -122,6 +122,9 @@ func setDefaultConfigValues() {
 		"s3.region":                                "",
 		"s3.bucket_media":                          "media",
 		"s3.bucket_demo":                           "demos",
+		"exports.bd_enabled":                       false,
+		"exports.valve_enabled":                    false,
+		"exports.authorized_keys":                  []string{},
 	}
 
 	for configKey, value := range defaultConfig {

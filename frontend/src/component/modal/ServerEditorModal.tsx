@@ -1,305 +1,282 @@
-import NiceModal from '@ebay/nice-modal-react';
-import Stack from '@mui/material/Stack';
-import { Server } from '../../api';
+import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
+import RouterIcon from '@mui/icons-material/Router';
+import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import Grid from '@mui/material/Unstable_Grid2';
+import { useForm } from '@tanstack/react-form';
+import { useMutation } from '@tanstack/react-query';
+import { zodValidator } from '@tanstack/zod-form-adapter';
+import { z } from 'zod';
+import { apiCreateServer, apiSaveServer, SaveServerOpts, Server } from '../../api';
+import { numberStringValidator } from '../../util/validator/numberStringValidator.ts';
 import { Heading } from '../Heading';
-import { ConfirmationModal, ConfirmationModalProps } from './ConfirmationModal';
+import { Buttons } from '../field/Buttons.tsx';
+import { CheckboxSimple } from '../field/CheckboxSimple.tsx';
+import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
-export interface ServerEditorModalProps extends ConfirmationModalProps<Server> {
-    server?: Server;
-}
+type ServerEditValues = {
+    short_name: string;
+    name: string;
+    address: string;
+    port: string;
+    password: string;
+    rcon: string;
+    region: string;
+    cc: string;
+    latitude: string;
+    longitude: string;
+    reserved_slots: string;
+    is_enabled: boolean;
+    enabled_stats: boolean;
+    log_secret: string;
+};
 
-export const ServerEditorModal = NiceModal.create((/** { server }: ServerEditorModalProps*/) => {
-    // const [serverId, setServerId] = useState<number>(0);
-    // const [serverName, setServerName] = useState<string>(server?.short_name ?? '');
-    // const [serverNameLong, setServerNameLong] = useState<string>(server?.name ?? '');
-    // const [address, setAddress] = useState<string>('');
-    // const [port, setPort] = useState<number>(7015);
-    // const [password, setPassword] = useState<string>('');
-    // const [rcon, setRcon] = useState<string>('');
-    // const [region, setRegion] = useState<string>('');
-    // const [countryCode, setCountryCode] = useState<string>('');
-    // const [latitude, setLatitude] = useState<number>(0.0);
-    // const [longitude, setLongitude] = useState<number>(0.0);
-    // const [reservedSlots, setReservedSlots] = useState<number>(0);
-    // const [playersMax, setPlayersMax] = useState<number>(24);
-    // const [isEnabled, setIsEnabled] = useState<boolean>(false);
-    // const [enableStats, setEnableStats] = useState<boolean>(false);
-    // const [logSecret, setLogSecret] = useState<number>(0);
-    // const [error, setError] = useState<string>();
-    //
-    // const modal = useModal(ModalServerEditor);
-    //
-    // useEffect(() => {
-    //     setServerId(server?.server_id ?? 0);
-    //     setServerName(server?.short_name ?? '');
-    //     setServerNameLong(server?.name ?? '');
-    //     setAddress(server?.address ?? '');
-    //     setPort(server?.port ?? 27015);
-    //     setPassword(server?.password ?? '');
-    //     setRcon(server?.rcon ?? '');
-    //     setRegion(server?.region ?? '');
-    //     setCountryCode(server?.cc ?? '');
-    //     setEnableStats(server?.enable_stats ?? false);
-    //     setReservedSlots(server?.reserved_slots ?? 0);
-    //     setPlayersMax(server?.players_max ?? 24);
-    //     setLogSecret(server?.log_secret ?? 0);
-    //     if (server) {
-    //         setLatitude(server?.latitude);
-    //         setLongitude(server?.longitude);
-    //         setIsEnabled(server?.is_enabled);
-    //     }
-    // }, [server]);
-    //
-    // const { sendFlash } = useUserFlashCtx();
-    //
-    // const handleSubmit = useCallback(async () => {
-    //     if (!serverName || !serverNameLong || !address || !rcon || !countryCode || port <= 0 || port > 65535) {
-    //         sendFlash('error', 'Invalid values');
-    //         return;
-    //     }
-    //     const opts: SaveServerOpts = {
-    //         port: port,
-    //         cc: countryCode,
-    //         host: address,
-    //         rcon: rcon,
-    //         lat: latitude,
-    //         lon: longitude,
-    //         server_name: serverNameLong,
-    //         server_name_short: serverName,
-    //         region: region,
-    //         reserved_slots: reservedSlots,
-    //         is_enabled: isEnabled,
-    //         enable_stats: enableStats,
-    //         log_secret: logSecret
-    //     };
-    //     try {
-    //         if (serverId > 0) {
-    //             modal.resolve(await apiSaveServer(serverId, opts));
-    //         } else {
-    //             modal.resolve(await apiCreateServer(opts));
-    //         }
-    //         await modal.hide();
-    //         setError(undefined);
-    //     } catch (e) {
-    //         modal.reject(e);
-    //         if (e instanceof AppError) {
-    //             setError(e.message);
-    //         } else {
-    //             setError('Unknown internal error');
-    //         }
-    //     }
-    // }, [
-    //     serverName,
-    //     serverNameLong,
-    //     address,
-    //     rcon,
-    //     countryCode,
-    //     port,
-    //     latitude,
-    //     longitude,
-    //     region,
-    //     reservedSlots,
-    //     isEnabled,
-    //     enableStats,
-    //     logSecret,
-    //     sendFlash,
-    //     serverId,
-    //     modal
-    // ]);
+export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server }) => {
+    const modal = useModal();
+
+    const mutation = useMutation({
+        mutationKey: ['adminServer'],
+        mutationFn: async (values: ServerEditValues) => {
+            const opts: SaveServerOpts = {
+                server_name_short: values.short_name,
+                server_name: values.name,
+                host: values.address,
+                port: Number(values.port),
+                password: values.password,
+                rcon: values.rcon,
+                region: values.region,
+                cc: values.cc,
+                lat: Number(values.latitude),
+                lon: Number(values.longitude),
+                reserved_slots: Number(values.reserved_slots),
+                is_enabled: values.is_enabled,
+                enable_stats: values.enabled_stats,
+                log_secret: Number(values.log_secret)
+            };
+            if (server?.server_id) {
+                modal.resolve(await apiSaveServer(server.server_id, opts));
+            } else {
+                modal.resolve(await apiCreateServer(opts));
+            }
+            await modal.hide();
+        }
+    });
+
+    const { Field, Subscribe, handleSubmit, reset } = useForm({
+        onSubmit: async ({ value }) => {
+            mutation.mutate(value);
+        },
+        validatorAdapter: zodValidator,
+        defaultValues: {
+            short_name: server ? server.short_name : '',
+            name: server ? server.name : '',
+            address: server ? server.address : '',
+            port: server ? String(server.port) : '27015',
+            password: server ? server.password : '',
+            rcon: server ? server.rcon : '',
+            region: server ? server.region : '',
+            cc: server ? server.cc : '',
+            latitude: server ? String(server.latitude) : '',
+            longitude: server ? String(server.longitude) : '',
+            reserved_slots: server ? String(server.reserved_slots) : '0',
+            is_enabled: server ? server.is_enabled : true,
+            enabled_stats: server ? server.enable_stats : true,
+            log_secret: server ? String(server.log_secret) : ''
+        }
+    });
 
     return (
-        <ConfirmationModal
-            id={'modal-server-editor'}
-            // onAccept={handleSubmit}
-            aria-labelledby="modal-title"
-            aria-describedby="modal-description"
-        >
-            <Stack spacing={2}>
-                <Heading>Server Editor</Heading>
+        <Dialog fullWidth {...muiDialogV5(modal)}>
+            <form
+                onSubmit={async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    await handleSubmit();
+                }}
+            >
+                <DialogTitle component={Heading} iconLeft={<RouterIcon />}>
+                    Server {server?.server_id ? 'Creator' : 'Editor'}
+                </DialogTitle>
 
-                <Stack spacing={3} alignItems={'center'}>
-                    {/*<TextField*/}
-                    {/*    fullWidth*/}
-                    {/*    id={'server_name'}*/}
-                    {/*    label={'Server Name'}*/}
-                    {/*    value={serverName}*/}
-                    {/*    onChange={(evt: ChangeEvent<HTMLInputElement>) => {*/}
-                    {/*        setServerName(evt.target.value);*/}
-                    {/*    }}*/}
-                    {/*/>*/}
-
-                    {/*<TextField*/}
-                    {/*    fullWidth*/}
-                    {/*    value={serverNameLong}*/}
-                    {/*    id={'server_name_long'}*/}
-                    {/*    label={'Server Name Long'}*/}
-                    {/*    onChange={(evt: ChangeEvent<HTMLInputElement>) => {*/}
-                    {/*        setServerNameLong(evt.target.value);*/}
-                    {/*    }}*/}
-                    {/*/>*/}
-
-                    {/*<FormGroup>*/}
-                    {/*    <FormControlLabel*/}
-                    {/*        checked={isEnabled}*/}
-                    {/*        control={<Switch />}*/}
-                    {/*        label="Enabled"*/}
-                    {/*        onChange={(_, enabled) => setIsEnabled(enabled)}*/}
-                    {/*    />*/}
-                    {/*</FormGroup>*/}
-
-                    {/*<TextField*/}
-                    {/*    fullWidth*/}
-                    {/*    id={'address'}*/}
-                    {/*    label={'Host Address'}*/}
-                    {/*    value={address}*/}
-                    {/*    onChange={(evt: ChangeEvent<HTMLInputElement>) => {*/}
-                    {/*        setAddress(evt.target.value);*/}
-                    {/*    }}*/}
-                    {/*/>*/}
-
-                    {/*<TextField*/}
-                    {/*    fullWidth*/}
-                    {/*    id={'port'}*/}
-                    {/*    label={'Server Port'}*/}
-                    {/*    value={port}*/}
-                    {/*    onChange={(evt: ChangeEvent<HTMLInputElement>) => {*/}
-                    {/*        try {*/}
-                    {/*            setPort(parseInt(evt.target.value, 10));*/}
-                    {/*        } catch (e) {*/}
-                    {/*            logErr(e);*/}
-                    {/*        }*/}
-                    {/*    }}*/}
-                    {/*/>*/}
-
-                    {/*<TextField*/}
-                    {/*    fullWidth*/}
-                    {/*    id={'password'}*/}
-                    {/*    label={'Server Password'}*/}
-                    {/*    value={password}*/}
-                    {/*    onChange={(evt: ChangeEvent<HTMLInputElement>) => {*/}
-                    {/*        setPassword(evt.target.value);*/}
-                    {/*    }}*/}
-                    {/*/>*/}
-
-                    {/*<TextField*/}
-                    {/*    fullWidth*/}
-                    {/*    id={'rcon'}*/}
-                    {/*    label={'RCON Password'}*/}
-                    {/*    value={rcon}*/}
-                    {/*    onChange={(evt: ChangeEvent<HTMLInputElement>) => {*/}
-                    {/*        setRcon(evt.target.value);*/}
-                    {/*    }}*/}
-                    {/*/>*/}
-                    {/*<VCenterBox>*/}
-                    {/*    <FormControl fullWidth>*/}
-                    {/*        <FormGroup>*/}
-                    {/*            <FormControlLabel*/}
-                    {/*                value={enableStats}*/}
-                    {/*                id={'enable_stats'}*/}
-                    {/*                name={'enable_stats'}*/}
-                    {/*                onChange={(_, value) => {*/}
-                    {/*                    setEnableStats(value);*/}
-                    {/*                }}*/}
-                    {/*                control={<Switch checked={enableStats} />}*/}
-                    {/*                label="Enable Stats"*/}
-                    {/*            />*/}
-                    {/*        </FormGroup>*/}
-                    {/*    </FormControl>*/}
-                    {/*</VCenterBox>*/}
-                    {/*<TextField*/}
-                    {/*    fullWidth*/}
-                    {/*    id={'log_secret'}*/}
-                    {/*    label={'Log Secret'}*/}
-                    {/*    value={logSecret}*/}
-                    {/*    onChange={(evt: ChangeEvent<HTMLInputElement>) => {*/}
-                    {/*        try {*/}
-                    {/*            setLogSecret(parseInt(evt.target.value));*/}
-                    {/*        } catch (e) {*/}
-                    {/*            logErr(e);*/}
-                    {/*        }*/}
-                    {/*    }}*/}
-                    {/*/>*/}
-
-                    {/*<TextField*/}
-                    {/*    fullWidth*/}
-                    {/*    id={'region'}*/}
-                    {/*    label={'Region'}*/}
-                    {/*    value={region}*/}
-                    {/*    onChange={(evt: ChangeEvent<HTMLInputElement>) => {*/}
-                    {/*        setRegion(evt.target.value);*/}
-                    {/*    }}*/}
-                    {/*/>*/}
-
-                    {/*<TextField*/}
-                    {/*    fullWidth*/}
-                    {/*    id={'cc'}*/}
-                    {/*    label={'Country Code'}*/}
-                    {/*    value={countryCode}*/}
-                    {/*    onChange={(evt: ChangeEvent<HTMLInputElement>) => {*/}
-                    {/*        setCountryCode(evt.target.value);*/}
-                    {/*    }}*/}
-                    {/*/>*/}
-                    {/*<Stack direction={'row'}>*/}
-                    {/*    <TextField*/}
-                    {/*        fullWidth*/}
-                    {/*        id={'latitude'}*/}
-                    {/*        label={'Latitude'}*/}
-                    {/*        value={latitude}*/}
-                    {/*        onChange={(evt: ChangeEvent<HTMLInputElement>) => {*/}
-                    {/*            try {*/}
-                    {/*                setLatitude(parseFloat(evt.target.value));*/}
-                    {/*            } catch (e) {*/}
-                    {/*                logErr(e);*/}
-                    {/*            }*/}
-                    {/*        }}*/}
-                    {/*    />*/}
-                    {/*    <TextField*/}
-                    {/*        fullWidth*/}
-                    {/*        id={'longitude'}*/}
-                    {/*        label={'Longitude'}*/}
-                    {/*        value={longitude}*/}
-                    {/*        onChange={(evt: ChangeEvent<HTMLInputElement>) => {*/}
-                    {/*            try {*/}
-                    {/*                setLongitude(parseFloat(evt.target.value));*/}
-                    {/*            } catch (e) {*/}
-                    {/*                logErr(e);*/}
-                    {/*            }*/}
-                    {/*        }}*/}
-                    {/*    />*/}
-                    {/*</Stack>*/}
-
-                    {/*<TextField*/}
-                    {/*    fullWidth*/}
-                    {/*    id={'reserved_slots'}*/}
-                    {/*    label={'Reserved Slots'}*/}
-                    {/*    value={reservedSlots}*/}
-                    {/*    onChange={(evt: ChangeEvent<HTMLInputElement>) => {*/}
-                    {/*        try {*/}
-                    {/*            setReservedSlots(parseInt(evt.target.value, 10));*/}
-                    {/*        } catch (e) {*/}
-                    {/*            logErr(e);*/}
-                    {/*        }*/}
-                    {/*    }}*/}
-                    {/*/>*/}
-
-                    {/*<TextField*/}
-                    {/*    fullWidth*/}
-                    {/*    id={'players_max'}*/}
-                    {/*    label={'Players Max'}*/}
-                    {/*    value={playersMax}*/}
-                    {/*    onChange={(evt: ChangeEvent<HTMLInputElement>) => {*/}
-                    {/*        try {*/}
-                    {/*            setPlayersMax(parseInt(evt.target.value, 10));*/}
-                    {/*        } catch (e) {*/}
-                    {/*            logErr(e);*/}
-                    {/*        }*/}
-                    {/*    }}*/}
-                    {/*/>*/}
-                    {/*<ErrorField error={error} />*/}
-                </Stack>
-            </Stack>
-        </ConfirmationModal>
+                <DialogContent>
+                    <Grid container spacing={2}>
+                        <Grid xs={4}>
+                            <Field
+                                name={'short_name'}
+                                validators={{
+                                    onChange: z.string().min(1)
+                                }}
+                                children={(props) => {
+                                    return <TextFieldSimple {...props} label={'Short Name/Tag'} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={8}>
+                            <Field
+                                name={'name'}
+                                validators={{
+                                    onChange: z.string().min(1)
+                                }}
+                                children={(props) => {
+                                    return <TextFieldSimple {...props} label={'Long Name'} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={8}>
+                            <Field
+                                name={'address'}
+                                validators={{
+                                    onChange: z.string().min(1)
+                                }}
+                                children={(props) => {
+                                    return <TextFieldSimple {...props} label={'Address'} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={4}>
+                            <Field
+                                name={'port'}
+                                validators={{
+                                    onChange: z.string().transform(numberStringValidator(1024, 65535))
+                                }}
+                                children={(props) => {
+                                    return <TextFieldSimple {...props} label={'Port'} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={4}>
+                            <Field
+                                name={'password'}
+                                validators={{
+                                    onChange: z.string().length(20)
+                                }}
+                                children={(props) => {
+                                    return <TextFieldSimple {...props} label={'Server Auth Password'} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={4}>
+                            <Field
+                                name={'rcon'}
+                                validators={{
+                                    onChange: z.string().min(6)
+                                }}
+                                children={(props) => {
+                                    return <TextFieldSimple {...props} label={'RCON Password'} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={4}>
+                            <Field
+                                name={'log_secret'}
+                                validators={{
+                                    onChange: z.string().transform(numberStringValidator(100000000, 999999999))
+                                }}
+                                children={(props) => {
+                                    return <TextFieldSimple {...props} label={'Log Secret'} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={6}>
+                            <Field
+                                name={'region'}
+                                validators={{
+                                    onChange: z.string().min(1)
+                                }}
+                                children={(props) => {
+                                    return <TextFieldSimple {...props} label={'Region'} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={6}>
+                            <Field
+                                name={'cc'}
+                                validators={{
+                                    onChange: z.string().length(2)
+                                }}
+                                children={(props) => {
+                                    return <TextFieldSimple {...props} label={'Country Code'} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={6}>
+                            <Field
+                                name={'latitude'}
+                                validators={{
+                                    onChange: z.string().transform(numberStringValidator(-99, 99))
+                                }}
+                                children={(props) => {
+                                    return <TextFieldSimple {...props} label={'Latitude'} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={6}>
+                            <Field
+                                name={'longitude'}
+                                validators={{
+                                    onChange: z.string().transform(numberStringValidator(-180, 180))
+                                }}
+                                children={(props) => {
+                                    return <TextFieldSimple {...props} label={'Longitude'} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={4}>
+                            <Field
+                                name={'reserved_slots'}
+                                validators={{
+                                    onChange: z.string()
+                                }}
+                                children={(props) => {
+                                    return <TextFieldSimple {...props} label={'Reserved Slots'} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={4}>
+                            <Field
+                                name={'is_enabled'}
+                                validators={{
+                                    onChange: z.boolean()
+                                }}
+                                children={(props) => {
+                                    return <CheckboxSimple {...props} label={'Is Enabled'} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={4}>
+                            <Field
+                                name={'enabled_stats'}
+                                validators={{
+                                    onChange: z.boolean()
+                                }}
+                                children={(props) => {
+                                    return <CheckboxSimple {...props} label={'Stats Enabled'} />;
+                                }}
+                            />
+                        </Grid>
+                    </Grid>
+                </DialogContent>
+                <DialogActions>
+                    <Grid container>
+                        <Grid xs={12} mdOffset="auto">
+                            <Subscribe
+                                selector={(state) => [state.canSubmit, state.isSubmitting]}
+                                children={([canSubmit, isSubmitting]) => {
+                                    return (
+                                        <Buttons
+                                            reset={reset}
+                                            canSubmit={canSubmit}
+                                            isSubmitting={isSubmitting}
+                                            onClose={async () => {
+                                                await modal.hide();
+                                            }}
+                                        />
+                                    );
+                                }}
+                            />
+                        </Grid>
+                    </Grid>
+                </DialogActions>
+            </form>
+        </Dialog>
     );
 });
-
-export default ServerEditorModal;

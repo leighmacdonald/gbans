@@ -102,7 +102,17 @@ export const ServerFilters = () => {
         }
         setSelectedServers(s);
         saveFilterState();
-    }, [selectedRegion, showOpenOnly, filterByRegion, customRange, setServers, servers, setSelectedServers, saveFilterState, pos]);
+    }, [
+        selectedRegion,
+        showOpenOnly,
+        filterByRegion,
+        customRange,
+        setServers,
+        servers,
+        setSelectedServers,
+        saveFilterState,
+        pos
+    ]);
 
     const marks = [
         {
@@ -164,7 +174,13 @@ export const ServerFilters = () => {
                 </Grid>
                 <Grid xs>
                     <FormControlLabel
-                        control={<Switch checked={filterByRegion} onChange={onRegionsToggleEnabledChanged} name="regionsEnabled" />}
+                        control={
+                            <Switch
+                                checked={filterByRegion}
+                                onChange={onRegionsToggleEnabledChanged}
+                                name="regionsEnabled"
+                            />
+                        }
                         label="By Range"
                     />
                 </Grid>

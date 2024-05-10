@@ -16,12 +16,12 @@ import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
+import { useQuery } from '@tanstack/react-query';
 import { createLazyFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
-import { Formik } from 'formik';
-import { FormikHelpers } from 'formik/dist/types';
 import {
-    apiCreateBanMessage,
     apiDeleteBanMessage,
+    apiGetBanMessages,
+    apiGetBanSteam,
     apiSetBanAppealState,
     AppealState,
     AppealStateCollection,
@@ -33,14 +33,10 @@ import {
 } from '../api';
 import { AppealMessageView } from '../component/AppealMessageView.tsx';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
-import { MDBodyField } from '../component/MDBodyField.tsx';
 import { ProfileInfoBox } from '../component/ProfileInfoBox.tsx';
 import { SourceBansList } from '../component/SourceBansList.tsx';
 import { SteamIDList } from '../component/SteamIDList.tsx';
 import { ModalBanSteam, ModalUnbanSteam } from '../component/modal';
-import { ResetButton, SubmitButton } from '../component/modal/Buttons.tsx';
-import { useBan } from '../hooks/useBan.ts';
-import { useBanAppealMessages } from '../hooks/useBanAppealMessages.ts';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors.ts';
 import { renderDateTime, renderTimeDistance } from '../util/text.tsx';
@@ -49,47 +45,59 @@ export const Route = createLazyFileRoute('/_auth/ban/$ban_id')({
     component: BanPage
 });
 
-interface NewReplyValues {
-    body_md: string;
-}
-
 function BanPage() {
     const [appealState, setAppealState] = useState<AppealState>(AppealState.Open);
-    const [newMessages, setNewMessages] = useState<BanAppealMessage[]>([]);
+    const [newMessages] = useState<BanAppealMessage[]>([]);
     const { permissionLevel, userSteamID } = useRouteContext({ from: '/_auth/ban/$ban_id' });
     const { sendFlash } = useUserFlashCtx();
     const { ban_id } = Route.useParams();
-    const id = useMemo(() => Number(ban_id || '0'), [ban_id]);
     const [deletedMessages, setDeletedMessages] = useState<number[]>([]);
-    const { data: ban } = useBan(id);
-    const { data: messagesServer } = useBanAppealMessages(ban?.ban_id ?? 0);
+
+    const { data: ban, isLoading: isLoadingBan } = useQuery({
+        queryKey: ['ban', { ban_id }],
+        queryFn: async () => {
+            return await apiGetBanSteam(Number(ban_id), true);
+        }
+    });
+
+    const { data: messagesServer } = useQuery({
+        queryKey: ['banMessages', { ban_id }],
+        queryFn: async () => {
+            return await apiGetBanMessages(Number(ban_id));
+        },
+        enabled: !isLoadingBan && (ban?.ban_id ?? 0) > 0
+    });
+
     const navigate = useNavigate();
     const messages = useMemo(() => {
-        return [...messagesServer, ...newMessages].filter((m) => !deletedMessages.includes(m.ban_message_id));
+        return [...(messagesServer ?? []), ...newMessages].filter((m) => !deletedMessages.includes(m.ban_message_id));
     }, [deletedMessages, messagesServer, newMessages]);
 
     const canPost = useMemo(() => {
-        return permissionLevel() >= PermissionLevel.Moderator || (ban?.appeal_state == AppealState.Open && ban?.target_id == userSteamID);
+        return (
+            permissionLevel() >= PermissionLevel.Moderator ||
+            (ban?.appeal_state == AppealState.Open && ban?.target_id == userSteamID)
+        );
     }, [ban?.appeal_state, ban?.target_id, permissionLevel, userSteamID]);
 
-    const onSubmit = useCallback(
-        async (values: NewReplyValues, helpers: FormikHelpers<NewReplyValues>) => {
-            if (!ban) {
-                return;
-            }
-            try {
-                const msg = await apiCreateBanMessage(ban?.ban_id, values.body_md);
-                setNewMessages((prevState) => {
-                    return [...prevState, msg];
-                });
-                helpers.resetForm();
-            } catch (e) {
-                sendFlash('error', 'Failed to create message');
-                logErr(e);
-            }
-        },
-        [ban, sendFlash]
-    );
+    // const onSubmit = useCallback(
+    //     async (values: NewReplyValues, helpers: FormikHelpers<NewReplyValues>) => {
+    //         if (!ban) {
+    //             return;
+    //         }
+    //         try {
+    //             const msg = await apiCreateBanMessage(ban?.ban_id, values.body_md);
+    //             setNewMessages((prevState) => {
+    //                 return [...prevState, msg];
+    //             });
+    //             helpers.resetForm();
+    //         } catch (e) {
+    //             sendFlash('error', 'Failed to create message');
+    //             logErr(e);
+    //         }
+    //     },
+    //     [ban, sendFlash]
+    // );
 
     const onDelete = useCallback(
         async (message_id: number) => {
@@ -108,7 +116,7 @@ function BanPage() {
     );
 
     const onSaveAppealState = useCallback(() => {
-        apiSetBanAppealState(id, appealState)
+        apiSetBanAppealState(Number(ban_id), appealState)
             .then(() => {
                 sendFlash('success', 'Appeal state updated');
             })
@@ -117,7 +125,7 @@ function BanPage() {
                 logErr(reason);
                 return;
             });
-    }, [appealState, id, sendFlash]);
+    }, [appealState, ban_id, sendFlash]);
 
     const onUnban = useCallback(async () => {
         await NiceModal.show(ModalUnbanSteam, {
@@ -217,7 +225,7 @@ function BanPage() {
             <Grid xs={8}>
                 <Stack spacing={2}>
                     {canPost && messages.length == 0 && (
-                        <ContainerWithHeader title={`Ban Appeal #${id}`}>
+                        <ContainerWithHeader title={`Ban Appeal #${ban_id}`}>
                             <Typography variant={'body2'} padding={2} textAlign={'center'}>
                                 You can start the appeal process by replying on this form.
                             </Typography>
@@ -237,15 +245,15 @@ function BanPage() {
                     ))}
                     {canPost && (
                         <Paper elevation={1}>
-                            <Formik<NewReplyValues> onSubmit={onSubmit} initialValues={{ body_md: '' }}>
-                                <Stack spacing={2} padding={1}>
-                                    <MDBodyField />
-                                    <ButtonGroup>
-                                        <ResetButton />
-                                        <SubmitButton />
-                                    </ButtonGroup>
-                                </Stack>
-                            </Formik>
+                            {/*<Formik<NewReplyValues> onSubmit={onSubmit} initialValues={{ body_md: '' }}>*/}
+                            <Stack spacing={2} padding={1}>
+                                {/*<MDBodyField />*/}
+                                {/*<ButtonGroup>*/}
+                                {/*    <ResetButton />*/}
+                                {/*    <SubmitButton />*/}
+                                {/*</ButtonGroup>*/}
+                            </Stack>
+                            {/*</Formik>*/}
                         </Paper>
                     )}
                     {!canPost && ban && (

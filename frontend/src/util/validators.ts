@@ -15,7 +15,10 @@ export const isValidHttpURL = (value: string): boolean => {
 
 export const banReasonFieldValidator = yup.string().label('Select a reason').required('reason is required');
 
-export const appealStateFielValidator = yup.string().label('Select a appeal state').required('Appeal state is required');
+export const appealStateFielValidator = yup
+    .string()
+    .label('Select a appeal state')
+    .required('Appeal state is required');
 
 export const ipFieldValidator = yup.string().test('valid_ip', 'Invalid IP', (value) => {
     if (emptyOrNullString(value)) {
@@ -24,7 +27,11 @@ export const ipFieldValidator = yup.string().test('valid_ip', 'Invalid IP', (val
     return isValidIP(value as string);
 });
 
-export const unbanReasonTextFieldValidator = yup.string().min(5, 'Message to short').label('Unban Reason').required('Reason is required');
+export const unbanReasonTextFieldValidator = yup
+    .string()
+    .min(5, 'Message to short')
+    .label('Unban Reason')
+    .required('Reason is required');
 
 export const unbanValidationSchema = yup.object({
     unban_reason: unbanReasonTextFieldValidator
@@ -44,7 +51,11 @@ export const weightFieldValidator = yup.number().min(1, 'Min weight is 1').requi
 
 export const serverIDsValidator = yup.array().label('Select a server');
 
-export const mapNameFieldValidator = yup.string().label('Select a map').min(3, 'Minimum 3 characters required').optional();
+export const mapNameFieldValidator = yup
+    .string()
+    .label('Select a map')
+    .min(3, 'Minimum 3 characters required')
+    .optional();
 
 export const titleFieldValidator = yup.string().min(3, 'Title to short').label('Title').required('Title is required');
 
@@ -82,7 +93,10 @@ export const orderingFieldValidator = yup.number().label('Ordering').integer();
 
 export const personanameFieldValidator = yup.string().min(3, 'Minimum length 3').label('Name Query');
 
-export const reportStatusFieldValidator = yup.string().label('Select a report status').required('report status is required');
+export const reportStatusFieldValidator = yup
+    .string()
+    .label('Select a report status')
+    .required('report status is required');
 
 export const selectOwnValidator = yup.boolean().label('Include only results with yourself').required();
 
@@ -260,6 +274,7 @@ export const steamIDOrEmptyString = async (input: string, individualOnly: boolea
     return steamId;
 };
 
-const ipRegex = /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/gi;
+const ipRegex =
+    /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/gi;
 
 export const isValidIP = (value: string): boolean => ipRegex.test(value);

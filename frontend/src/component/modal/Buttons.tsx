@@ -51,7 +51,13 @@ export const SubmitButton = ({
 };
 export const ConfirmButton = ({ onClick, disabled = false }: onClickProps & { disabled?: boolean }) => {
     return (
-        <Button startIcon={<CheckIcon />} color={'success'} variant={'contained'} onClick={onClick ?? undefined} disabled={disabled}>
+        <Button
+            startIcon={<CheckIcon />}
+            color={'success'}
+            variant={'contained'}
+            onClick={onClick ?? undefined}
+            disabled={disabled}
+        >
             Confirm
         </Button>
     );
@@ -67,7 +73,14 @@ export const CloseButton = ({ onClick }: onClickProps) => {
 
 export const ResetButton = ({ formId, disabled = false }: onClickProps & { disabled?: boolean }) => {
     return (
-        <Button startIcon={<RestartAltIcon />} color={'warning'} variant={'contained'} type={'reset'} form={formId} disabled={disabled}>
+        <Button
+            startIcon={<RestartAltIcon />}
+            color={'warning'}
+            variant={'contained'}
+            type={'reset'}
+            form={formId}
+            disabled={disabled}
+        >
             Reset
         </Button>
     );

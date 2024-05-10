@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import Typography from '@mui/material/Typography';
 import { createLazyFileRoute, useNavigate } from '@tanstack/react-router';
-import { apiLinkDiscord } from '../../api';
-import { logErr } from '../../util/errors';
+import { apiLinkDiscord } from '../api';
+import { logErr } from '../util/errors.ts';
 
 export const Route = createLazyFileRoute('/_auth/login/discord')({
     component: LoginDiscordSuccess

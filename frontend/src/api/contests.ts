@@ -1,11 +1,17 @@
 import { logErr } from '../util/errors';
-import { LazyResult } from '../util/table.ts';
-import { apiCall, DateRange, PermissionLevel, TimeStamped, transformDateRange, transformTimeStampedDates } from './common';
+import {
+    apiCall,
+    DateRange,
+    PermissionLevel,
+    TimeStamped,
+    transformDateRange,
+    transformTimeStampedDates
+} from './common';
 import { EmptyUUID } from './const';
 import { Asset } from './media';
 
 export interface Contest extends DateRange, TimeStamped {
-    contest_id: string;
+    contest_id?: string;
     title: string;
     description: string;
     public: boolean;
@@ -20,20 +26,16 @@ export interface Contest extends DateRange, TimeStamped {
 }
 
 export const apiContestSave = async (contest: Contest) =>
-    contest.contest_id == EmptyUUID
+    (contest?.contest_id ?? EmptyUUID) == EmptyUUID
         ? await apiCall<Contest, Contest>(`/api/contests`, 'POST', contest)
         : await apiCall<Contest, Contest>(`/api/contests/${contest.contest_id}`, 'PUT', contest);
 
 export const apiContests = async () => {
-    const resp = await apiCall<LazyResult<Contest>>(`/api/contests`, 'GET');
-    if (resp.data) {
-        resp.data = resp.data.map(transformDateRange).map(transformTimeStampedDates);
-    }
-
-    return resp;
+    const resp = await apiCall<Contest[]>(`/api/contests`, 'GET');
+    return resp.map(transformDateRange).map(transformTimeStampedDates);
 };
 
-export const apiContest = async (contest_id: string) => {
+export const apiContest = async (contest_id: number) => {
     const contest = await apiCall<Contest>(`/api/contests/${contest_id}`, 'GET');
     return transformDateRange(contest);
 };
@@ -47,7 +49,8 @@ export const apiContestEntries = async (contest_id: string) => {
         return [];
     }
 };
-export const apiContestDelete = async (contest_id: string) => await apiCall<Contest>(`/api/contests/${contest_id}`, 'DELETE');
+export const apiContestDelete = async (contest_id: string) =>
+    await apiCall<Contest>(`/api/contests/${contest_id}`, 'DELETE');
 
 export interface ContestEntry extends TimeStamped {
     contest_id: string;
@@ -63,7 +66,8 @@ export interface ContestEntry extends TimeStamped {
     asset: Asset;
 }
 
-export const apiContestEntryDelete = async (contest_entry_id: string) => await apiCall(`/api/contest_entry/${contest_entry_id}`, 'DELETE');
+export const apiContestEntryDelete = async (contest_entry_id: string) =>
+    await apiCall(`/api/contest_entry/${contest_entry_id}`, 'DELETE');
 
 export const apiContestEntrySave = async (contest_id: string, description: string, asset_id: string) =>
     await apiCall<ContestEntry>(`/api/contests/${contest_id}/submit`, 'POST', {

@@ -1,68 +1,112 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import PersonIcon from '@mui/icons-material/Person';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import Stack from '@mui/material/Stack';
-import { Person } from '../../api';
+import MenuItem from '@mui/material/MenuItem';
+import Grid from '@mui/material/Unstable_Grid2';
+import { useForm } from '@tanstack/react-form';
+import { useMutation } from '@tanstack/react-query';
+import { zodValidator } from '@tanstack/zod-form-adapter';
+import {
+    apiUpdatePlayerPermission,
+    PermissionLevel,
+    PermissionLevelCollection,
+    permissionLevelString,
+    Person
+} from '../../api';
 import { Heading } from '../Heading';
+import { Buttons } from '../field/Buttons.tsx';
+import { SelectFieldSimple } from '../field/SelectFieldSimple.tsx';
 
-export interface PersonEditModalProps {
-    person: Person;
-}
-
-// type PersonEditFormValues = {
-//     permission_level: PermissionLevel;
-// } & TargetIDInputValue;
-
-export const PersonEditModal = NiceModal.create(({ person }: PersonEditModalProps) => {
+export const PersonEditModal = NiceModal.create(({ person }: { person: Person }) => {
     const modal = useModal();
 
-    // const onSave = useCallback(
-    //     async (values: PersonEditFormValues) => {
-    //         const abortConroller = new AbortController();
-    //         try {
-    //             const resp = await apiUpdatePlayerPermission(
-    //                 person.steam_id,
-    //                 {
-    //                     permission_level: values.permission_level
-    //                 },
-    //                 abortConroller
-    //             );
-    //             modal.resolve(resp);
-    //             await modal.hide();
-    //         } catch (e) {
-    //             modal.reject(e);
-    //         }
-    //     },
-    //     [modal, person.steam_id]
-    // );
+    const mutation = useMutation({
+        mutationKey: ['banCIDR'],
+        mutationFn: async (values: { permission_level: PermissionLevel }) => {
+            try {
+                const updatedPerson = await apiUpdatePlayerPermission(person.steam_id, {
+                    permission_level: values.permission_level
+                });
+                modal.resolve(updatedPerson);
+            } catch (e) {
+                modal.reject(e);
+            }
+            await modal.hide();
+        }
+    });
 
+    const { Field, Subscribe, handleSubmit, reset } = useForm({
+        onSubmit: async ({ value }) => {
+            mutation.mutate({
+                permission_level: value.permission_level
+            });
+        },
+        validatorAdapter: zodValidator,
+        defaultValues: {
+            permission_level: person.permission_level
+        }
+    });
     return (
-        // <Formik<PersonEditFormValues>
-        //     onSubmit={onSave}
-        //     initialValues={{
-        //         permission_level:
-        //             person.permission_level ?? PermissionLevel.User,
-        //         target_id: person.steam_id
-        //     }}
-        // >
         <Dialog {...muiDialogV5(modal)} fullWidth maxWidth={'sm'}>
-            <DialogTitle component={Heading} iconLeft={<PersonIcon />}>
-                Person Editor: {person.personaname}
-            </DialogTitle>
-            <DialogContent>
-                <Stack spacing={2}>
-                    {/*<TargetIDField*/}
-                    {/*    isReadOnly={!emptyOrNullString(person.steam_id)}*/}
-                    {/*/>*/}
-                    {/*<PermissionLevelField />*/}
-                </Stack>
-            </DialogContent>
-            <DialogActions>
-                {/*<CancelButton />*/}
-                {/*<SubmitButton />*/}
-            </DialogActions>
+            <form
+                onSubmit={async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    await handleSubmit();
+                }}
+            >
+                <DialogTitle component={Heading} iconLeft={<PersonIcon />}>
+                    Person Editor: {person.personaname}
+                </DialogTitle>
+                <DialogContent>
+                    <Grid container spacing={2}>
+                        <Grid xs={12}>
+                            <Field
+                                name={'permission_level'}
+                                children={(props) => {
+                                    return (
+                                        <SelectFieldSimple
+                                            {...props}
+                                            label={'Permissions'}
+                                            fullwidth={true}
+                                            items={PermissionLevelCollection}
+                                            renderMenu={(pl) => {
+                                                return (
+                                                    <MenuItem value={pl} key={`pl-${pl}`}>
+                                                        {permissionLevelString(pl)}
+                                                    </MenuItem>
+                                                );
+                                            }}
+                                        />
+                                    );
+                                }}
+                            />
+                        </Grid>
+                    </Grid>
+                </DialogContent>
+                <DialogActions>
+                    <Grid container>
+                        <Grid xs={12} mdOffset="auto">
+                            <Subscribe
+                                selector={(state) => [state.canSubmit, state.isSubmitting]}
+                                children={([canSubmit, isSubmitting]) => {
+                                    return (
+                                        <Buttons
+                                            reset={reset}
+                                            canSubmit={canSubmit}
+                                            isSubmitting={isSubmitting}
+                                            onClose={async () => {
+                                                await modal.hide();
+                                            }}
+                                        />
+                                    );
+                                }}
+                            />
+                        </Grid>
+                    </Grid>
+                </DialogActions>
+            </form>
         </Dialog>
-        //</Formik>
     );
 });
 

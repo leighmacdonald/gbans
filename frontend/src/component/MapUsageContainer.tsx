@@ -1,26 +1,47 @@
-import { SyntheticEvent, useEffect, useMemo, useState } from 'react';
+import { SyntheticEvent, useMemo, useState } from 'react';
 import MapIcon from '@mui/icons-material/Map';
 import TabContext from '@mui/lab/TabContext';
 import TabList from '@mui/lab/TabList';
 import TabPanel from '@mui/lab/TabPanel';
 import Box from '@mui/material/Box';
-import Pagination from '@mui/material/Pagination';
-import Stack from '@mui/material/Stack';
 import Tab from '@mui/material/Tab';
+import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { PieChart } from '@mui/x-charts';
+import { useQuery } from '@tanstack/react-query';
+import { createColumnHelper, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
 import { apiGetMapUsage } from '../api';
-import { logErr } from '../util/errors';
-import { compare, Order, RowsPerPage, stableSort } from '../util/table.ts';
+import { RowsPerPage } from '../util/table.ts';
 import { ContainerWithHeader } from './ContainerWithHeader';
+import { DataTable } from './DataTable.tsx';
 import { LoadingSpinner } from './LoadingSpinner';
-import { LazyTable } from './table/LazyTable';
+import { PaginatorLocal } from './PaginatorLocal.tsx';
+import { TableCellSmall } from './TableCellSmall.tsx';
+import { TableHeadingCell } from './TableHeadingCell.tsx';
 
 interface MapUseChartProps {
     details: SeriesData[];
 }
 
 const MapUseChart = ({ details }: MapUseChartProps) => {
+    const merged = useMemo(() => {
+        if (details.length < 20) {
+            return details;
+        }
+        const small: SeriesData = { value: 0, label: 'other', id: 'other' };
+        const large: SeriesData[] = [];
+
+        // eslint-disable-next-line no-loops/no-loops
+        for (let i = 0; i < details.length; i++) {
+            if (details[i].value < 1) {
+                small.value += details[i].value;
+            } else {
+                large.push(details[i]);
+            }
+        }
+        return [small, ...large];
+    }, [details]);
+
     return (
         <PieChart
             height={600}
@@ -28,7 +49,7 @@ const MapUseChart = ({ details }: MapUseChartProps) => {
             slotProps={{ legend: { hidden: true } }}
             series={[
                 {
-                    data: details,
+                    data: merged,
                     highlightScope: { faded: 'global', highlighted: 'item' },
                     faded: { innerRadius: 30, additionalRadius: -30 },
                     valueFormatter: (value) => {
@@ -47,131 +68,67 @@ interface SeriesData {
 }
 
 interface BarChartWithTableProps {
-    loading: boolean;
+    isLoading: boolean;
     data: SeriesData[];
 }
 
-const BarChartWithTable = ({ loading, data }: BarChartWithTableProps) => {
-    const [sortOrder, setSortOrder] = useState<Order>('desc');
-    const [sortColumn, setSortColumn] = useState<keyof SeriesData>('value');
-    const [page, setPage] = useState(1);
-
-    const rows = useMemo(() => {
-        return stableSort(data, compare(sortOrder, sortColumn)).slice(
-            (page - 1) * RowsPerPage.TwentyFive,
-            (page - 1) * RowsPerPage.TwentyFive + RowsPerPage.TwentyFive
-        );
-    }, [data, page, sortColumn, sortOrder]);
-
+const BarChartWithTable = ({ isLoading, data }: BarChartWithTableProps) => {
     return (
         <Grid container>
             <Grid md={6} xs={12}>
                 <Box paddingLeft={10} display="flex" justifyContent="center" alignItems="center">
-                    {loading ? <LoadingSpinner /> : <MapUseChart details={data} />}
+                    {isLoading ? <LoadingSpinner /> : <MapUseChart details={data} />}
                 </Box>
             </Grid>
             <Grid md={6} xs={12}>
-                {loading ? (
-                    <LoadingSpinner />
-                ) : (
-                    <Stack>
-                        <Stack direction={'row-reverse'}>
-                            <Pagination
-                                page={page}
-                                count={Math.ceil(data.length / 25)}
-                                showFirstButton
-                                showLastButton
-                                onChange={(_, newPage) => {
-                                    setPage(newPage);
-                                }}
-                            />
-                        </Stack>
-                        <LazyTable<SeriesData>
-                            columns={[
-                                {
-                                    label: 'Map',
-                                    sortable: true,
-                                    sortKey: 'label',
-                                    tooltip: 'Map'
-                                },
-                                {
-                                    label: 'Percent',
-                                    sortable: true,
-                                    sortKey: 'value',
-                                    tooltip: 'Percentage of overall playtime',
-                                    renderer: (obj) => {
-                                        return obj.value.toFixed(2) + ' %';
-                                    }
-                                }
-                            ]}
-                            sortOrder={sortOrder}
-                            sortColumn={sortColumn}
-                            onSortColumnChanged={async (column) => {
-                                setSortColumn(column);
-                            }}
-                            onSortOrderChanged={async (direction) => {
-                                setSortOrder(direction);
-                            }}
-                            rows={rows}
-                        />
-                    </Stack>
-                )}
+                <SeriesTable stats={data} isLoading={isLoading} />
             </Grid>
         </Grid>
     );
 };
 
 export const MapUsageContainer = () => {
-    const [series, setSeries] = useState<SeriesData[]>([]);
-    const [seriesMode, setSeriesMode] = useState<SeriesData[]>([]);
-    const [loading, setLoading] = useState(true);
-
     const [value, setValue] = useState('1');
 
     const handleChange = (_: SyntheticEvent, newValue: string) => {
         setValue(newValue);
     };
 
-    useEffect(() => {
-        apiGetMapUsage()
-            .then((resp) => {
-                setSeries(
-                    resp.map((value1): SeriesData => {
-                        return {
-                            id: value1.map,
-                            value: value1.percent,
-                            label: value1.map
-                        };
-                    })
-                );
-                const maps: Record<string, number> = {};
-
-                // eslint-disable-next-line no-loops/no-loops
-                for (let i = 0; i < resp.length; i++) {
-                    const key = resp[i].map.replace('workshop/', '').split('_')[0];
-                    if (!maps[key]) {
-                        maps[key] = 0;
-                    }
-                    maps[key] += resp[i].percent;
-                }
-                const values: SeriesData[] = [];
-                // eslint-disable-next-line no-loops/no-loops
-                for (const mapsKey in maps) {
-                    values.push({
-                        label: mapsKey,
-                        id: mapsKey,
-                        value: maps[mapsKey]
-                    });
-                }
-                setSeriesMode(values);
-            })
-            .catch((e) => {
-                logErr(e);
-            })
-            .finally(() => {
-                setLoading(false);
+    const { data: stats, isLoading } = useQuery({
+        queryKey: ['mapStats'],
+        queryFn: async () => {
+            const resp = await apiGetMapUsage();
+            const maps = resp.map((value1): SeriesData => {
+                return {
+                    id: value1.map,
+                    value: value1.percent,
+                    label: value1.map.replace('workshop/', '').split('.')[0]
+                };
             });
-    }, []);
+
+            const mapsRecords: Record<string, number> = {};
+
+            // eslint-disable-next-line no-loops/no-loops
+            for (let i = 0; i < resp.length; i++) {
+                const key = resp[i].map.replace('workshop/', '').split('_')[0];
+                if (!mapsRecords[key]) {
+                    mapsRecords[key] = 0;
+                }
+                mapsRecords[key] += resp[i].percent;
+            }
+            const modes: SeriesData[] = [];
+            // eslint-disable-next-line no-loops/no-loops
+            for (const mapsKey in mapsRecords) {
+                modes.push({
+                    label: mapsKey,
+                    id: mapsKey,
+                    value: mapsRecords[mapsKey]
+                });
+            }
+
+            return { maps, modes };
+        }
+    });
 
     return (
         <ContainerWithHeader title={'Map Playtime Distribution'} iconLeft={<MapIcon />}>
@@ -183,12 +140,73 @@ export const MapUsageContainer = () => {
                     </TabList>
                 </Box>
                 <TabPanel value="1">
-                    <BarChartWithTable loading={loading} data={series} />
+                    <BarChartWithTable isLoading={isLoading} data={stats?.maps ?? []} />
                 </TabPanel>
                 <TabPanel value="2">
-                    <BarChartWithTable loading={loading} data={seriesMode} />
+                    <BarChartWithTable isLoading={isLoading} data={stats?.modes ?? []} />
                 </TabPanel>
             </TabContext>
         </ContainerWithHeader>
+    );
+};
+
+const SeriesTable = ({ stats, isLoading }: { stats: SeriesData[]; isLoading: boolean }) => {
+    const columnHelper = createColumnHelper<SeriesData>();
+
+    const [pagination, setPagination] = useState({
+        pageIndex: 0, //initial page index
+        pageSize: RowsPerPage.TwentyFive //default page size
+    });
+
+    const columns = [
+        columnHelper.accessor('label', {
+            header: () => <TableHeadingCell name={'Name'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography>{info.getValue()}</Typography>
+                </TableCellSmall>
+            )
+        }),
+
+        columnHelper.accessor('value', {
+            header: () => <TableHeadingCell name={'Value'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography>{info.getValue().toFixed(2)} %</Typography>
+                </TableCellSmall>
+            )
+        })
+    ];
+
+    const table = useReactTable({
+        data: stats,
+        columns: columns,
+        getCoreRowModel: getCoreRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        onPaginationChange: setPagination, //update the pagination state when internal APIs mutate the pagination state
+        state: {
+            pagination
+        }
+    });
+
+    return (
+        <>
+            <DataTable table={table} isLoading={isLoading} />
+            <PaginatorLocal
+                onRowsChange={(rows) => {
+                    setPagination((prev) => {
+                        return { ...prev, pageSize: rows };
+                    });
+                }}
+                onPageChange={(page) => {
+                    setPagination((prev) => {
+                        return { ...prev, pageIndex: page };
+                    });
+                }}
+                count={stats.length}
+                rows={pagination.pageSize}
+                page={pagination.pageIndex}
+            />
+        </>
     );
 };

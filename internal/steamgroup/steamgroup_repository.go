@@ -160,7 +160,8 @@ func (r *steamGroupRepository) Get(ctx context.Context, filter domain.GroupBansQ
 			"g.note", "g.unban_reason_text", "g.origin", "g.created_on", "g.updated_on", "g.valid_until",
 			"g.appeal_state", "g.group_id",
 			"s.personaname as source_personaname", "s.avatarhash",
-			"t.personaname as target_personaname", "t.avatarhash", "t.community_banned", "t.vac_bans", "t.game_bans").
+			"coalesce(t.personaname, '') as target_personaname", "coalesce(t.avatarhash, '')",
+			"coalesce(t.community_banned, false)", "coalesce(t.vac_bans, 0)", "coalesce(t.game_bans, 0)").
 		From("ban_group g").
 		LeftJoin("person s ON s.steam_id = g.source_id").
 		LeftJoin("person t ON t.steam_id = g.target_id")

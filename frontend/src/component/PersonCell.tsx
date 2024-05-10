@@ -27,8 +27,8 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick }: Pers
             onClick={
                 onClick != undefined
                     ? onClick
-                    : () => {
-                          navigate(`/profile/${steam_id}`);
+                    : async () => {
+                          await navigate({ to: `/profile/${steam_id}` });
                       }
             }
             sx={{

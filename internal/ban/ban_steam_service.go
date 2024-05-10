@@ -16,6 +16,7 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+	"golang.org/x/exp/slices"
 )
 
 type banHandler struct {
@@ -26,13 +27,19 @@ type banHandler struct {
 }
 
 func NewBanHandler(engine *gin.Engine, bu domain.BanSteamUsecase, du domain.DiscordUsecase,
-	pu domain.PersonUsecase, cu domain.ConfigUsecase, ath domain.AuthUsecase,
+	pu domain.PersonUsecase, configUsecase domain.ConfigUsecase, ath domain.AuthUsecase,
 ) {
-	handler := banHandler{bu: bu, du: du, pu: pu, cu: cu}
+	handler := banHandler{bu: bu, du: du, pu: pu, cu: configUsecase}
 
 	engine.GET("/api/stats", handler.onAPIGetStats())
-	engine.GET("/export/bans/tf2bd", handler.onAPIExportBansTF2BD())
-	engine.GET("/export/bans/valve/steamid", handler.onAPIExportBansValveSteamID())
+
+	if configUsecase.Config().Exports.BDEnabled {
+		engine.GET("/export/bans/tf2bd", handler.onAPIExportBansTF2BD())
+	}
+
+	if configUsecase.Config().Exports.ValveEnabled {
+		engine.GET("/export/bans/valve/steamid", handler.onAPIExportBansValveSteamID())
+	}
 
 	// auth
 	authedGrp := engine.Group("/")
@@ -262,7 +269,18 @@ func (h banHandler) onAPIGetStats() gin.HandlerFunc {
 }
 
 func (h banHandler) onAPIExportBansValveSteamID() gin.HandlerFunc {
+	authorizedKeys := h.cu.Config().Exports.AuthorizedKeys
+
 	return func(ctx *gin.Context) {
+		if len(authorizedKeys) > 0 {
+			key, ok := ctx.GetQuery("key")
+			if !ok || !slices.Contains(authorizedKeys, key) {
+				httphelper.ResponseErr(ctx, http.StatusForbidden, domain.ErrPermissionDenied)
+
+				return
+			}
+		}
+
 		bans, _, errBans := h.bu.Get(ctx, domain.SteamBansQueryFilter{
 			BansQueryFilter: domain.BansQueryFilter{PermanentOnly: true},
 		})
@@ -289,7 +307,18 @@ func (h banHandler) onAPIExportBansValveSteamID() gin.HandlerFunc {
 }
 
 func (h banHandler) onAPIExportBansTF2BD() gin.HandlerFunc {
+	authorizedKeys := h.cu.Config().Exports.AuthorizedKeys
+
 	return func(ctx *gin.Context) {
+		if len(authorizedKeys) > 0 {
+			key, ok := ctx.GetQuery("key")
+			if !ok || !slices.Contains(authorizedKeys, key) {
+				httphelper.ResponseErr(ctx, http.StatusForbidden, domain.ErrPermissionDenied)
+
+				return
+			}
+		}
+
 		// TODO limit / make specialized query since this returns all results
 		bans, _, errBans := h.bu.Get(ctx, domain.SteamBansQueryFilter{
 			BansQueryFilter: domain.BansQueryFilter{

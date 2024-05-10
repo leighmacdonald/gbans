@@ -1,12 +1,13 @@
-import { LazyResult } from '../util/table.ts';
 import { BanReason } from './bans';
-import { apiCall, QueryFilter, transformCreatedOnDate } from './common';
+import { apiCall, transformCreatedOnDate } from './common';
 
 export enum FilterAction {
     Kick,
     Mute,
     Ban
 }
+
+export const FilterActionCollection = [FilterAction.Kick, FilterAction.Mute, FilterAction.Ban];
 
 export const filterActionString = (fa: FilterAction) => {
     switch (fa) {
@@ -33,10 +34,8 @@ export interface Filter {
     updated_on?: Date;
 }
 
-export interface FiltersQueryFilter extends QueryFilter<Filter> {}
-
-export const apiGetFilters = async (opts: FiltersQueryFilter, abortController?: AbortController) =>
-    await apiCall<LazyResult<Filter>>(`/api/filters/query`, 'POST', opts, abortController);
+export const apiGetFilters = async (abortController?: AbortController) =>
+    await apiCall<Filter[]>(`/api/filters/query`, 'POST', abortController);
 
 export const apiCreateFilter = async (filter: Filter) => await apiCall<Filter>(`/api/filters`, 'POST', filter);
 

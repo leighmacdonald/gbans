@@ -261,9 +261,9 @@ func (u chatUsecase) AddChatHistory(ctx context.Context, message *domain.PersonM
 	return u.cr.AddChatHistory(ctx, message)
 }
 
-func (u chatUsecase) QueryChatHistory(ctx context.Context, user domain.PersonInfo, req domain.ChatHistoryQueryFilter) ([]domain.QueryChatHistoryResult, int64, error) {
-	if req.Limit <= 0 || req.Limit > 1000 {
-		req.Limit = 50
+func (u chatUsecase) QueryChatHistory(ctx context.Context, user domain.PersonInfo, req domain.ChatHistoryQueryFilter) ([]domain.QueryChatHistoryResult, error) {
+	if req.Limit <= 0 || (req.Limit > 100 && !user.HasPermission(domain.PModerator)) {
+		req.Limit = 100
 	}
 
 	if !user.HasPermission(domain.PModerator) {

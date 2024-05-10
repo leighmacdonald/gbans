@@ -30,11 +30,11 @@ func (r *appealRepository) GetAppealsByActivity(ctx context.Context, opts domain
 		constraints = append(constraints, sq.Eq{"b.appeal_state": opts.AppealState})
 	}
 
-	if sid, ok := opts.SourceSteamID(); ok {
+	if sid, ok := opts.SourceSteamID(ctx); ok {
 		constraints = append(constraints, sq.Eq{"b.source_id": sid})
 	}
 
-	if sid, ok := opts.TargetSteamID(); ok {
+	if sid, ok := opts.TargetSteamID(ctx); ok {
 		constraints = append(constraints, sq.Eq{"b.target_id": sid})
 	}
 

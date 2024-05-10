@@ -24,7 +24,9 @@ function AdminNetwork() {
                 <Link href={`/admin/network/players_by_ip`}>
                     <Paper component={Box} padding={2}>
                         <Typography variant="h5">Find Players By IP</Typography>
-                        <Typography variant="body1">Find all players who fall under a particular IP or CIDR range.</Typography>
+                        <Typography variant="body1">
+                            Find all players who fall under a particular IP or CIDR range.
+                        </Typography>
                     </Paper>
                 </Link>
             </Grid>
@@ -33,8 +35,8 @@ function AdminNetwork() {
                     <Paper component={Box} padding={2}>
                         <Typography variant="h5">Network Info</Typography>
                         <Typography variant="body1">
-                            Get higher level info about a particular ip. This include location, proxy info, ASN network blocks that the IP
-                            belongs to
+                            Get higher level info about a particular ip. This include location, proxy info, ASN network
+                            blocks that the IP belongs to
                         </Typography>
                     </Paper>
                 </Link>
@@ -44,9 +46,9 @@ function AdminNetwork() {
                     <Paper component={Box} padding={2}>
                         <Typography variant="h5">External CIDR Bans</Typography>
                         <Typography variant="body1">
-                            Used for banning large range of address blocks using 3rd party URL sources. Response should be in the format of
-                            1 cidr address per line. Invalid lines are discarded. Use the whitelist to override blocked addresses you want
-                            to allow.
+                            Used for banning large range of address blocks using 3rd party URL sources. Response should
+                            be in the format of 1 cidr address per line. Invalid lines are discarded. Use the whitelist
+                            to override blocked addresses you want to allow.
                         </Typography>
                     </Paper>
                 </Link>

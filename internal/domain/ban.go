@@ -84,6 +84,7 @@ type BanNetUsecase interface {
 type BanASNRepository interface {
 	Save(ctx context.Context, banASN *BanASN) error
 	GetByASN(ctx context.Context, asNum int64, banASN *BanASN) error
+	GetByID(ctx context.Context, banID int64, banASN *BanASN) error
 	Get(ctx context.Context, filter ASNBansQueryFilter) ([]BannedASNPerson, int64, error)
 	Delete(ctx context.Context, banASN *BanASN) error
 	Expired(ctx context.Context) ([]BanASN, error)
@@ -92,6 +93,7 @@ type BanASNRepository interface {
 type BanASNUsecase interface {
 	Ban(ctx context.Context, banASN *BanASN) error
 	GetByASN(ctx context.Context, asNum int64, banASN *BanASN) error
+	GetByID(ctx context.Context, banID int64, banASN *BanASN) error
 	Get(ctx context.Context, filter ASNBansQueryFilter) ([]BannedASNPerson, int64, error)
 	Save(ctx context.Context, banASN *BanASN) error
 	Delete(ctx context.Context, banASN *BanASN) error

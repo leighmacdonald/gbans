@@ -10,6 +10,7 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { createLazyFileRoute } from '@tanstack/react-router';
 import { LatLngLiteral } from 'leaflet';
 import { apiGetServerStates, BaseServer } from '../api';
+import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ServerFilters } from '../component/ServerFilters.tsx';
 import { ServerList } from '../component/ServerList.tsx';
 import { ServerMap } from '../component/ServerMap.tsx';
@@ -74,10 +75,14 @@ export const ServerStats = () => {
 
                 {keys.map((v) => {
                     const pSum = sum(
-                        ((Object.prototype.hasOwnProperty.call(regions, v) && regions[v]) || []).map((value) => value?.players || 0)
+                        ((Object.prototype.hasOwnProperty.call(regions, v) && regions[v]) || []).map(
+                            (value) => value?.players || 0
+                        )
                     );
                     const pMax = sum(
-                        ((Object.prototype.hasOwnProperty.call(regions, v) && regions[v]) || []).map((value) => value?.max_players || 24)
+                        ((Object.prototype.hasOwnProperty.call(regions, v) && regions[v]) || []).map(
+                            (value) => value?.max_players || 24
+                        )
                     );
                     return (
                         <Grid xs={3} xl={4} key={`stat-${v}`}>
@@ -163,7 +168,9 @@ function Servers() {
                         <ServerMap />
                     </Paper>
                     <ServerFilters />
-                    <ServerList />
+                    <ContainerWithHeader title={'Servers'}>
+                        <ServerList />
+                    </ContainerWithHeader>
                     <ServerStats />
                 </Stack>
             </MapStateCtx.Provider>

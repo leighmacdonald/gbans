@@ -190,13 +190,13 @@ func (r chatRepository) AddChatHistory(ctx context.Context, message *domain.Pers
 	return nil
 }
 
-func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.ChatHistoryQueryFilter) ([]domain.QueryChatHistoryResult, int64, error) { //nolint:maintidx
+func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.ChatHistoryQueryFilter) ([]domain.QueryChatHistoryResult, error) { //nolint:maintidx
 	if filters.Query != "" && len(filters.Query) < minQueryLen {
-		return nil, 0, fmt.Errorf("%w: query", domain.ErrTooShort)
+		return nil, fmt.Errorf("%w: query", domain.ErrTooShort)
 	}
 
 	if filters.Personaname != "" && len(filters.Personaname) < minQueryLen {
-		return nil, 0, fmt.Errorf("%w: name", domain.ErrTooShort)
+		return nil, fmt.Errorf("%w: name", domain.ErrTooShort)
 	}
 
 	builder := r.db.
@@ -210,7 +210,7 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.Cha
 			"m.persona_name",
 			"m.match_id",
 			"s.short_name",
-			"CASE WHEN mf.person_message_id::int::boolean THEN mf.person_message_filter_id ELSE 0 END as flagged",
+			"mf.person_message_filter_id",
 			"p.avatarhash",
 			"CASE WHEN f.pattern IS NULL THEN '' ELSE f.pattern END").
 		From("person_messages m").
@@ -222,7 +222,7 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.Cha
 	builder = filters.ApplySafeOrder(builder, map[string][]string{
 		"m.": {"persona_name", "person_message_id"},
 	}, "person_message_id")
-	builder = filters.ApplyLimitOffsetDefault(builder)
+	builder = filters.ApplyLimitOffset(builder, 10000)
 
 	var constraints sq.And
 
@@ -231,7 +231,7 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.Cha
 	if !filters.Unrestricted {
 		unrTime := now.AddDate(0, 0, -14)
 		if filters.DateStart != nil && filters.DateStart.Before(unrTime) {
-			return nil, 0, util.ErrInvalidDuration
+			return nil, util.ErrInvalidDuration
 		}
 	}
 
@@ -261,14 +261,14 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.Cha
 	}
 
 	if filters.FlaggedOnly {
-		constraints = append(constraints, sq.Eq{"flagged": true})
+		constraints = append(constraints, sq.Gt{"mf.person_message_filter_id": 0})
 	}
 
 	var messages []domain.QueryChatHistoryResult
 
 	rows, errQuery := r.db.QueryBuilder(ctx, builder.Where(constraints))
 	if errQuery != nil {
-		return nil, 0, r.db.DBErr(errQuery)
+		return nil, r.db.DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -278,6 +278,7 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.Cha
 			message domain.QueryChatHistoryResult
 			steamID int64
 			matchID []byte
+			flagged *int64
 		)
 
 		if errScan := rows.Scan(&message.PersonMessageID,
@@ -289,15 +290,19 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.Cha
 			&message.PersonaName,
 			&matchID,
 			&message.ServerName,
-			&message.AutoFilterFlagged,
+			&flagged,
 			&message.AvatarHash,
 			&message.Pattern); errScan != nil {
-			return nil, 0, r.db.DBErr(errScan)
+			return nil, r.db.DBErr(errScan)
 		}
 
 		if matchID != nil {
 			// Support for old messages which existed before matches
 			message.MatchID = uuid.FromBytesOrNil(matchID)
+		}
+
+		if flagged != nil {
+			message.AutoFilterFlagged = *flagged
 		}
 
 		message.SteamID = steamid.New(steamID)
@@ -310,20 +315,7 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.Cha
 		messages = []domain.QueryChatHistoryResult{}
 	}
 
-	count, errCount := r.db.GetCount(ctx, r.db.
-		Builder().
-		Select("count(m.created_on) as count").
-		From("person_messages m").
-		LeftJoin("server s on m.server_id = m.server_id").
-		LeftJoin("person_messages_filter f on m.person_message_id = f.person_message_id").
-		LeftJoin("person p on p.steam_id = m.steam_id").
-		Where(constraints))
-
-	if errCount != nil {
-		return nil, 0, r.db.DBErr(errCount)
-	}
-
-	return messages, count, nil
+	return messages, nil
 }
 
 func (r chatRepository) GetPersonMessage(ctx context.Context, messageID int64) (domain.QueryChatHistoryResult, error) {

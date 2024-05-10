@@ -24,7 +24,9 @@ export const ContestEntryDeleteModal = NiceModal.create(({ contest_entry_id }: {
 
             <DialogContent>
                 <Stack spacing={2}>
-                    <Typography variant={'body1'}>This is irreversible and will also remove user vote history for the entry</Typography>
+                    <Typography variant={'body1'}>
+                        This is irreversible and will also remove user vote history for the entry
+                    </Typography>
                 </Stack>
             </DialogContent>
 
@@ -36,5 +38,3 @@ export const ContestEntryDeleteModal = NiceModal.create(({ contest_entry_id }: {
         // </Formik>
     );
 });
-
-export default ContestEntryDeleteModal;

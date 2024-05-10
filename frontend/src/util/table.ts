@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Theme } from '@mui/material';
 import { SxProps } from '@mui/material/styles';
+import { intervalToDuration } from 'date-fns';
 import { z } from 'zod';
 import { DataCount } from '../api';
 
@@ -11,13 +12,23 @@ export enum RowsPerPage {
     Hundred = 100
 }
 
-export const commonTableSearchSchema = {
-    page: z.number().catch(0),
-    rows: z.number().catch(RowsPerPage.TwentyFive),
-    sortOrder: z.enum(['desc', 'asc']).catch('desc')
+export const isPermanentBan = (start: Date, end: Date): boolean => {
+    const dur = intervalToDuration({
+        start,
+        end
+    });
+    const { years } = dur;
+    return years != null && years > 5;
 };
 
-export const descendingComparator = <T>(a: T, b: T, orderBy: keyof T) => (b[orderBy] < a[orderBy] ? -1 : b[orderBy] > a[orderBy] ? 1 : 0);
+export const commonTableSearchSchema = {
+    page: z.number().optional().catch(0),
+    rows: z.number().optional().catch(RowsPerPage.TwentyFive),
+    sortOrder: z.enum(['desc', 'asc']).optional()
+};
+
+export const descendingComparator = <T>(a: T, b: T, orderBy: keyof T) =>
+    b[orderBy] < a[orderBy] ? -1 : b[orderBy] > a[orderBy] ? 1 : 0;
 
 export type Order = 'asc' | 'desc';
 

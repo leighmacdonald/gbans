@@ -121,7 +121,7 @@ export interface MatchesQueryOpts extends QueryFilter<MatchSummary> {
     time_end?: Date;
 }
 
-export const apiGetMatches = async (opts: MatchesQueryOpts, abortController: AbortController) => {
+export const apiGetMatches = async (opts: MatchesQueryOpts, abortController?: AbortController) => {
     const resp = await apiCall<LazyResult<MatchSummary>, MatchesQueryOpts>(`/api/logs`, 'POST', opts, abortController);
     resp.data = resp.data.map((m) => {
         m.time_start = parseDateTime(m.time_start as unknown as string);

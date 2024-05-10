@@ -183,7 +183,12 @@ export interface PlayerOverallResult extends HealingStats, MatchPlayerClassStats
 }
 
 export const apiGetPlayerStats = async (steam_id: string, abortController: AbortController) => {
-    return await apiCall<PlayerOverallResult>(`/api/stats/player/${steam_id}/overall`, 'GET', undefined, abortController);
+    return await apiCall<PlayerOverallResult>(
+        `/api/stats/player/${steam_id}/overall`,
+        'GET',
+        undefined,
+        abortController
+    );
 };
 
 export const apiGetPlayerClassOverallStats = async (steam_id: string) => {

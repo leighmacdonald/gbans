@@ -38,19 +38,14 @@ func NewWordFilterHandler(engine *gin.Engine, confUsecase domain.ConfigUsecase, 
 
 func (h *wordFilterHandler) queryFilters() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var opts domain.FiltersQueryFilter
-		if !httphelper.Bind(ctx, &opts) {
-			return
-		}
-
-		words, count, errGetFilters := h.filterUsecase.GetFilters(ctx, opts)
+		words, errGetFilters := h.filterUsecase.GetFilters(ctx)
 		if errGetFilters != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
 
-		ctx.JSON(http.StatusOK, domain.NewLazyResult(count, words))
+		ctx.JSON(http.StatusOK, words)
 	}
 }
 
@@ -146,7 +141,7 @@ func (h *wordFilterHandler) checkFilter() gin.HandlerFunc {
 			return
 		}
 
-		words, _, errGetFilters := h.filterUsecase.GetFilters(ctx, domain.FiltersQueryFilter{})
+		words, errGetFilters := h.filterUsecase.GetFilters(ctx)
 		if errGetFilters != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
@@ -180,6 +175,10 @@ func (h *wordFilterHandler) filterStates() gin.HandlerFunc {
 
 		for _, warn := range state {
 			outputState.Current = append(outputState.Current, warn...)
+		}
+
+		if outputState.Current == nil {
+			outputState.Current = []domain.UserWarning{}
 		}
 
 		ctx.JSON(http.StatusOK, outputState)

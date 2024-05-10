@@ -2,9 +2,9 @@ import { JSX } from 'react';
 import { PaletteMode } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import { Link as RouterLink } from '@tanstack/react-router';
 import { getOverrides, MuiMarkdown } from 'mui-markdown';
 import { Highlight, themes } from 'prism-react-renderer';
+import RouterLink from './RouterLink.tsx';
 
 const renderLinks = (body_md: string): string => {
     return body_md
@@ -53,11 +53,11 @@ const MDLink = ({ children, href, title }: MDLnkProps) => {
     );
 };
 
-export const MarkDownRenderer = ({ body_md }: { body_md: string }) => {
+export const MarkDownRenderer = ({ body_md, minHeight }: { body_md: string; minHeight?: number }) => {
     const theme = (localStorage.getItem('theme') as PaletteMode) || 'dark';
 
     return (
-        <Box padding={2} maxWidth={'100%'}>
+        <Box padding={2} maxWidth={'100%'} minHeight={minHeight}>
             <MuiMarkdown
                 options={{
                     overrides: {

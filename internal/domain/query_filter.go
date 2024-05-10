@@ -15,7 +15,7 @@ const MaxResultsDefault = 100
 // QueryFilter provides a structure for common query parameters.
 type QueryFilter struct {
 	Offset  uint64 `json:"offset,omitempty" uri:"offset" binding:"gte=0"`
-	Limit   uint64 `json:"limit,omitempty" uri:"limit" binding:"gte=0,lte=1000"`
+	Limit   uint64 `json:"limit,omitempty" uri:"limit" binding:"gte=0,lte=10000"`
 	Desc    bool   `json:"desc,omitempty" uri:"desc"`
 	Query   string `json:"query,omitempty" uri:"query"`
 	OrderBy string `json:"order_by,omitempty" uri:"order_by"`
@@ -118,15 +118,10 @@ type ConnectionHistoryQuery struct {
 
 type PlayerQuery struct {
 	QueryFilter
-	SteamID     steamid.SteamID `json:"steam_id"`
-	Personaname string          `json:"personaname"`
-	IP          string          `json:"ip"`
-}
-
-func (f PlayerQuery) TargetSteamID() (steamid.SteamID, bool) {
-	sid := steamid.New(f.SteamID)
-
-	return sid, sid.Valid()
+	TargetIDField
+	Personaname string `json:"personaname"`
+	IP          string `json:"ip"`
+	StaffOnly   bool   `json:"staff_only"`
 }
 
 type DemoFilter struct {
@@ -146,13 +141,12 @@ type FiltersQueryFilter struct {
 	QueryFilter
 }
 
-type ThreadMessagesQueryFilter struct {
-	QueryFilter
+type ThreadMessagesQuery struct {
+	Deleted       bool  `json:"deleted,omitempty" uri:"deleted"`
 	ForumThreadID int64 `json:"forum_thread_id"`
 }
 
 type ThreadQueryFilter struct {
-	QueryFilter
 	ForumID int `json:"forum_id"`
 }
 
@@ -224,14 +218,19 @@ type AppealQueryFilter struct {
 	AppealState AppealState `json:"appeal_state"`
 }
 
-func (f AppealQueryFilter) SourceSteamID() (steamid.SteamID, bool) {
-	sid := steamid.New(f.SourceID)
-
-	return sid, sid.Valid()
+type TargetID struct {
+	SteamID string `json:"steam_id"`
 }
 
-func (f AppealQueryFilter) TargetSteamID() (steamid.SteamID, bool) {
-	sid := steamid.New(f.SourceID)
+func (f TargetID) SteamSteamID(ctx context.Context) (steamid.SteamID, bool) {
+	if f.SteamID == "" {
+		return steamid.SteamID{}, false
+	}
+
+	sid, err := steamid.Resolve(ctx, f.SteamID)
+	if err != nil {
+		return sid, false
+	}
 
 	return sid, sid.Valid()
 }
@@ -241,6 +240,10 @@ type SourceIDField struct {
 }
 
 func (f SourceIDField) SourceSteamID(ctx context.Context) (steamid.SteamID, bool) {
+	if f.SourceID == "" {
+		return steamid.SteamID{}, false
+	}
+
 	sid, err := steamid.Resolve(ctx, f.SourceID)
 	if err != nil {
 		return sid, false
@@ -254,7 +257,24 @@ type TargetIDField struct {
 }
 
 func (f TargetIDField) TargetSteamID(ctx context.Context) (steamid.SteamID, bool) {
+	if f.TargetID == "" {
+		return steamid.SteamID{}, false
+	}
+
 	sid, err := steamid.Resolve(ctx, f.TargetID)
+	if err != nil {
+		return sid, false
+	}
+
+	return sid, sid.Valid()
+}
+
+type TargetGIDField struct {
+	GroupID string `json:"group_id"`
+}
+
+func (f TargetGIDField) TargetGroupID(ctx context.Context) (steamid.SteamID, bool) {
+	sid, err := steamid.Resolve(ctx, f.GroupID)
 	if err != nil {
 		return sid, false
 	}

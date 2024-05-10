@@ -1,30 +1,58 @@
-import { ChangeEvent, useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import AddBoxIcon from '@mui/icons-material/AddBox';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import CancelIcon from '@mui/icons-material/Cancel';
 import EditIcon from '@mui/icons-material/Edit';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import InfoIcon from '@mui/icons-material/Info';
+import WarningIcon from '@mui/icons-material/Warning';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
-import IconButton from '@mui/material/IconButton';
-import Stack from '@mui/material/Stack';
+import TableCell from '@mui/material/TableCell';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import Grid from '@mui/material/Unstable_Grid2';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { createFileRoute } from '@tanstack/react-router';
+import {
+    ColumnDef,
+    createColumnHelper,
+    getCoreRowModel,
+    getPaginationRowModel,
+    OnChangeFn,
+    PaginationState,
+    RowSelectionState,
+    useReactTable
+} from '@tanstack/react-table';
 import { z } from 'zod';
-import { apiDeleteFilter, Filter, FilterAction, filterActionString } from '../api/filters.ts';
+import {
+    apiDeleteFilter,
+    apiGetFilters,
+    apiGetWarningState,
+    Filter,
+    filterActionString,
+    UserWarning
+} from '../api/filters.ts';
+import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
-import { WarningStateContainer } from '../component/WarningStateContainer.tsx';
+import { DataTable } from '../component/DataTable.tsx';
+import { IndeterminateCheckbox } from '../component/IndeterminateCheckbox.tsx';
+import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
+import { PersonCell } from '../component/PersonCell.tsx';
+import { TableCellBool } from '../component/TableCellBool.tsx';
+import { TableCellSmall } from '../component/TableCellSmall.tsx';
+import { TableCellString } from '../component/TableCellString.tsx';
+import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { ModalConfirm, ModalFilterEditor } from '../component/modal';
-import { LazyTable } from '../component/table/LazyTable.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
-import { useWordFilters } from '../hooks/useWordFilters.ts';
-import { logErr } from '../util/errors.ts';
+import { findSelectedRow } from '../util/findSelectedRow.ts';
+import { findSelectedRows } from '../util/findSelectedRows.ts';
 import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
+import { renderDateTime } from '../util/text.tsx';
 
 const filterSearchSchema = z.object({
     ...commonTableSearchSchema,
-    sortColumn: z.enum(['filter_id', 'is_regex', 'is_enabled', 'weight', 'trigger_count']).catch('filter_id')
+    sortColumn: z.enum(['filter_id', 'is_regex', 'is_enabled', 'weight', 'trigger_count']).optional()
 });
 
 export const Route = createFileRoute('/_mod/admin/filters')({
@@ -33,230 +61,378 @@ export const Route = createFileRoute('/_mod/admin/filters')({
 });
 
 function AdminFilters() {
-    const [newFilters, setNewFilters] = useState<Filter[]>([]);
-    const { page, rows, sortOrder, sortColumn } = Route.useSearch();
-    const [deletedFiltersIDs, setDeletedFiltersIDs] = useState<number[]>([]);
-    const [editedFilters, setEditedFilters] = useState<Filter[]>([]);
-    const navigate = useNavigate();
     const { sendFlash } = useUserFlashCtx();
+    const queryClient = useQueryClient();
+    const [rowSelection, setRowSelection] = useState({});
 
-    const { data, count } = useWordFilters({
-        order_by: sortColumn ?? 'filter_id',
-        desc: (sortOrder ?? 'desc') == 'desc',
-        limit: Number(rows ?? RowsPerPage.Ten),
-        offset: Number((page ?? 0) * (rows ?? RowsPerPage.Ten))
+    // const { page, rows, sortOrder, sortColumn } = Route.useSearch();
+    const [pagination, setPagination] = useState({
+        pageIndex: 0, //initial page index
+        pageSize: RowsPerPage.TwentyFive //default page size
     });
 
-    const allRows = useMemo(() => {
-        const edited = data.map((value) => {
-            return editedFilters.find((f) => f.filter_id == value.filter_id) || value;
-        });
+    const { data: filters, isLoading } = useQuery({
+        queryKey: ['filters'],
+        queryFn: async () => {
+            return await apiGetFilters();
+        }
+    });
 
-        const undeleted = edited.filter((f) => f.filter_id && !deletedFiltersIDs.includes(f.filter_id));
-        return [...newFilters, ...undeleted];
-    }, [data, deletedFiltersIDs, editedFilters, newFilters]);
+    const { data: warnings, isLoading: isLoadingWarnings } = useQuery({
+        queryKey: ['filterWarnings'],
+        queryFn: async () => {
+            return await apiGetWarningState();
+        }
+    });
 
     const onCreate = useCallback(async () => {
         try {
-            const resp = await NiceModal.show<Filter>(ModalFilterEditor, {
-                defaultPattern: '',
-                defaultIsRegex: false
-            });
-            sendFlash('success', `Filter created successfully: ${resp.filter_id}`);
-            setNewFilters((prevState) => {
-                return [resp, ...prevState.filter((f) => f.filter_id != resp.filter_id)];
-            });
+            const resp = await NiceModal.show<Filter>(ModalFilterEditor, {});
+            queryClient.setQueryData(['filters'], [...(filters ?? []), resp]);
         } catch (e) {
             sendFlash('error', `${e}`);
         }
-    }, [sendFlash]);
+    }, [filters, queryClient, sendFlash]);
 
-    const onEdit = useCallback(async (filter: Filter) => {
+    const onEdit = useCallback(async () => {
         try {
-            const resp = await NiceModal.show<Filter>(ModalFilterEditor, {
-                filter
-            });
-            setEditedFilters((prevState) => {
-                return [...prevState, resp];
-            });
-        } catch (e) {
-            logErr(e);
-        }
-    }, []);
+            const filter = findSelectedRow(rowSelection, filters ?? [], 'filter_id');
+            const resp = await NiceModal.show<Filter>(ModalFilterEditor, { filter });
 
-    const handleDelete = useCallback(
-        async (filter: Filter) => {
-            if (!filter.filter_id) {
-                logErr(new Error('filter_id not present, cannot delete'));
-                return;
-            }
-            apiDeleteFilter(filter.filter_id)
-                .then(() => {
-                    setDeletedFiltersIDs((prevState) => {
-                        return [...prevState, filter.filter_id ?? 0];
-                    });
-                    sendFlash('success', `Deleted filter successfully`);
+            queryClient.setQueryData(
+                ['filters'],
+                (filters ?? []).map((f) => {
+                    return f.filter_id == resp.filter_id ? resp : f;
                 })
-                .catch((err) => {
-                    sendFlash('error', `Failed to delete filter: ${err}`);
-                });
+            );
+        } catch (e) {
+            sendFlash('error', `${e}`);
+        }
+    }, [filters, queryClient, rowSelection, sendFlash]);
+
+    const deleteMutation = useMutation({
+        mutationKey: ['filters'],
+        mutationFn: async (filter_id: number) => {
+            await apiDeleteFilter(filter_id);
         },
-        [sendFlash]
-    );
+        onSuccess: (_, filterId) => {
+            sendFlash('error', `Deleted filter: ${filterId}`);
+        }
+    });
 
-    const onConfirmDelete = useCallback(
-        async (filter: Filter) => {
-            try {
-                const confirmed = await NiceModal.show(ModalConfirm, {
-                    title: 'Are you sure you want to delete this filter?'
-                });
+    const onDelete = useCallback(async () => {
+        const selectedFiltersIds = findSelectedRows(rowSelection, filters ?? [])?.map((f) => f.filter_id);
+        if (!selectedFiltersIds) {
+            return;
+        }
 
-                if (!confirmed) {
-                    return;
-                }
+        try {
+            const confirmed = await NiceModal.show(ModalConfirm, {
+                title: `Are you sure you want to delete ${selectedFiltersIds.length} filter(s)?`
+            });
 
-                await handleDelete(filter);
-            } catch (e) {
-                logErr(e);
+            if (!confirmed) {
                 return;
             }
-        },
-        [handleDelete]
-    );
+
+            selectedFiltersIds.map((f) => {
+                deleteMutation.mutate(f as number);
+            });
+            queryClient.setQueryData(
+                ['filters'],
+                (filters ?? []).filter((filter) => !selectedFiltersIds.includes(filter.filter_id))
+            );
+            setRowSelection({});
+        } catch (e) {
+            sendFlash('error', `${e}`);
+            return;
+        }
+    }, [deleteMutation, filters, queryClient, rowSelection, sendFlash]);
 
     return (
-        <Stack spacing={2}>
-            <ContainerWithHeaderAndButtons
-                title={'Word Filters'}
-                iconLeft={<FilterAltIcon />}
-                buttons={[
-                    <ButtonGroup variant="contained" aria-label="outlined primary button group" key={`btn-headers-filters`}>
-                        <Button startIcon={<AddBoxIcon />} color={'success'} onClick={onCreate}>
-                            New
-                        </Button>
-                    </ButtonGroup>
-                ]}
-            >
-                <LazyTable<Filter>
-                    showPager={true}
-                    count={count}
-                    rows={allRows}
-                    page={Number(page ?? 0)}
-                    rowsPerPage={Number(rows ?? RowsPerPage.Ten)}
-                    sortOrder={sortOrder}
-                    sortColumn={sortColumn}
-                    onSortColumnChanged={async (column) => {
-                        await navigate({ search: (prev) => ({ ...prev, sortColumn: column }) });
-                    }}
-                    onSortOrderChanged={async (direction) => {
-                        await navigate({ search: (prev) => ({ ...prev, sortOrder: direction }) });
-                    }}
-                    onPageChange={async (_, newPage: number) => {
-                        await navigate({ search: (prev) => ({ ...prev, page: newPage }) });
-                    }}
-                    onRowsPerPageChange={async (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-                        await navigate({ search: (prev) => ({ ...prev, rows: Number(event.target.value), page: 0 }) });
-                    }}
-                    columns={[
-                        {
-                            label: 'Pattern',
-                            tooltip: 'Pattern',
-                            sortKey: 'pattern',
-                            sortable: true,
-                            align: 'left',
-                            renderer: (row) => {
-                                return row.pattern as string;
-                            }
-                        },
-                        {
-                            label: 'Regex',
-                            tooltip: 'Regular Expression',
-                            sortKey: 'is_regex',
-                            sortable: true,
-                            align: 'right',
-                            renderer: (row) => {
-                                return row.is_regex ? 'true' : 'false';
-                            }
-                        },
-                        {
-                            label: 'Action',
-                            tooltip: 'What will happen when its triggered',
-                            sortKey: 'action',
-                            sortable: true,
-                            align: 'right',
-                            renderer: (row) => {
-                                return filterActionString(row.action);
-                            }
-                        },
-                        {
-                            label: 'Duration',
-                            tooltip: 'Duration when the action is triggered',
-                            sortKey: 'duration',
-                            sortable: false,
-                            align: 'right',
-                            renderer: (row) => {
-                                return row.action == FilterAction.Kick ? '' : row.duration;
-                            }
-                        },
-                        {
-                            label: 'Weight',
-                            tooltip: 'Weight per match',
-                            sortKey: 'weight',
-                            sortable: true,
-                            align: 'right',
-                            renderer: (_, weight) => {
-                                return <Typography variant={'body2'}>{weight as number}</Typography>;
-                            }
-                        },
-                        {
-                            label: 'Triggered',
-                            tooltip: 'Number of times the filter has been triggered',
-                            sortKey: 'trigger_count',
-                            sortable: true,
-                            sortType: 'number',
-                            align: 'right',
-                            renderer: (row) => {
-                                return row.trigger_count;
-                            }
-                        },
-                        {
-                            label: 'Actions',
-                            tooltip: 'Action',
-                            virtualKey: 'actions',
-                            sortable: false,
-                            align: 'right',
-                            virtual: true,
-                            renderer: (row) => {
-                                return (
-                                    <ButtonGroup>
-                                        <Tooltip title={'Edit filter'}>
-                                            <IconButton
-                                                color={'warning'}
-                                                onClick={async () => {
-                                                    await onEdit(row);
-                                                }}
-                                            >
-                                                <EditIcon />
-                                            </IconButton>
-                                        </Tooltip>
-                                        <Tooltip title={'Delete filter'}>
-                                            <IconButton
-                                                color={'error'}
-                                                onClick={async () => {
-                                                    await onConfirmDelete(row);
-                                                }}
-                                            >
-                                                <DeleteForeverIcon />
-                                            </IconButton>
-                                        </Tooltip>
-                                    </ButtonGroup>
-                                );
-                            }
-                        }
+        <Grid container spacing={2}>
+            <Grid xs={12}>
+                <ContainerWithHeaderAndButtons
+                    title={`Word Filters ${Object.values(rowSelection).length ? `Selected: ${Object.values(rowSelection).length}` : ''}`}
+                    iconLeft={<FilterAltIcon />}
+                    buttons={[
+                        <ButtonGroup
+                            variant="contained"
+                            aria-label="outlined primary button group"
+                            key={`btn-headers-filters`}
+                        >
+                            <Button
+                                disabled={Object.values(rowSelection).length == 0}
+                                color={'error'}
+                                onClick={onDelete}
+                                startIcon={<CancelIcon />}
+                            >
+                                Delete
+                            </Button>
+                            <Button
+                                disabled={Object.values(rowSelection).length != 1}
+                                color={'warning'}
+                                onClick={onEdit}
+                                startIcon={<EditIcon />}
+                            >
+                                Edit
+                            </Button>
+                            <Button startIcon={<AddBoxIcon />} color={'success'} onClick={onCreate}>
+                                New
+                            </Button>
+                        </ButtonGroup>
                     ]}
-                />
-            </ContainerWithHeaderAndButtons>
-            <WarningStateContainer />
-        </Stack>
+                >
+                    <FiltersTable
+                        filters={filters ?? []}
+                        isLoading={isLoading}
+                        rowSelection={rowSelection}
+                        setRowSelection={setRowSelection}
+                        pagination={pagination}
+                        setPagination={setPagination}
+                    />
+                    <PaginatorLocal
+                        onRowsChange={(rows) => {
+                            setPagination((prev) => {
+                                return { ...prev, pageSize: rows };
+                            });
+                        }}
+                        onPageChange={(page) => {
+                            setPagination((prev) => {
+                                return { ...prev, pageIndex: page };
+                            });
+                        }}
+                        count={filters?.length ?? 0}
+                        rows={pagination.pageSize}
+                        page={pagination.pageIndex}
+                    />
+                </ContainerWithHeaderAndButtons>
+            </Grid>
+            <Grid xs={12}>
+                <ContainerWithHeader
+                    title={`Current Warning State (Max Weight: ${warnings?.max_weight ?? '...'})`}
+                    iconLeft={<WarningIcon />}
+                >
+                    <WarningStateTable warnings={warnings?.current ?? []} isLoading={isLoadingWarnings} />
+                </ContainerWithHeader>
+            </Grid>
+            <Grid xs={12}>
+                <ContainerWithHeader title={'How it works'} iconLeft={<InfoIcon />}>
+                    <Typography variant={'body1'}>
+                        The way the warning tracking works is that each time a user triggers a match, it gets a entry in
+                        the table based on the weight of the match. The individual match weight is determined by the
+                        word filter defined above. Once the sum of their triggers exceeds the max weight the user will
+                        have action taken against them automatically. Matched entries are ephemeral and are removed over
+                        time based on the configured timeout value.
+                    </Typography>
+                </ContainerWithHeader>
+            </Grid>
+        </Grid>
     );
 }
+
+const FiltersTable = ({
+    filters,
+    isLoading,
+    rowSelection,
+    setRowSelection,
+    pagination,
+    setPagination
+}: {
+    filters: Filter[];
+    isLoading: boolean;
+    rowSelection: RowSelectionState;
+    setRowSelection: OnChangeFn<RowSelectionState>;
+    pagination: PaginationState;
+    setPagination: OnChangeFn<PaginationState>;
+}) => {
+    // const columnHelper = createColumnHelper<Filter>();
+    const columns = useMemo<ColumnDef<Filter>[]>(
+        () => [
+            {
+                id: 'select',
+                header: ({ table }) => (
+                    <IndeterminateCheckbox
+                        {...{
+                            checked: table.getIsAllRowsSelected(),
+                            indeterminate: table.getIsSomeRowsSelected(),
+                            onChange: table.getToggleAllRowsSelectedHandler()
+                        }}
+                    />
+                ),
+                cell: ({ row }) => (
+                    <div className="px-1">
+                        <IndeterminateCheckbox
+                            {...{
+                                checked: row.getIsSelected(),
+                                disabled: !row.getCanSelect(),
+                                indeterminate: row.getIsSomeSelected(),
+                                onChange: row.getToggleSelectedHandler()
+                            }}
+                        />
+                    </div>
+                )
+            },
+
+            {
+                accessorKey: 'pattern',
+                cell: (info) => info.getValue()
+            },
+            {
+                accessorKey: 'is_regex',
+                accessorFn: (originalRow) => originalRow.is_regex,
+                cell: (info) => <TableCellBool enabled={info.getValue() as boolean} />,
+                header: () => <TableHeadingCell name={'Rx'} />
+            },
+            {
+                accessorKey: 'action',
+                accessorFn: (originalRow) => originalRow.action,
+                cell: (info) => {
+                    return (
+                        <TableCellString>
+                            {typeof filters[info.row.index] === 'undefined'
+                                ? ''
+                                : filterActionString(filters[info.row.index].action)}
+                        </TableCellString>
+                    );
+                },
+                header: () => <TableHeadingCell name={'Action'} />
+            },
+            {
+                accessorKey: 'duration',
+                accessorFn: (originalRow) => originalRow.duration,
+                cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>,
+                header: () => <TableHeadingCell name={'Duration'} />
+            },
+            {
+                accessorKey: 'weight',
+                accessorFn: (originalRow) => originalRow.weight,
+                cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>,
+                header: () => <TableHeadingCell name={'Weight'} />
+            },
+            {
+                accessorKey: 'trigger_count',
+                accessorFn: (originalRow) => originalRow.trigger_count,
+                cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>,
+                header: () => <TableHeadingCell name={'Enabled'} />
+            }
+        ],
+        [filters]
+    );
+
+    const table = useReactTable({
+        data: filters,
+        columns: columns,
+        getCoreRowModel: getCoreRowModel(),
+        manualPagination: false,
+        autoResetPageIndex: true,
+        enableRowSelection: true,
+        onRowSelectionChange: setRowSelection,
+        onPaginationChange: setPagination,
+        getPaginationRowModel: getPaginationRowModel(),
+        state: {
+            rowSelection,
+            pagination
+        }
+    });
+
+    return <DataTable table={table} isLoading={isLoading} />;
+};
+
+export const WarningStateTable = ({ warnings, isLoading }: { warnings: UserWarning[]; isLoading: boolean }) => {
+    const [pagination, setPagination] = useState({
+        pageIndex: 0, //initial page index
+        pageSize: RowsPerPage.TwentyFive //default page size
+    });
+
+    const renderFilter = (f: Filter) => {
+        const pat = f.is_regex ? (f.pattern as string) : (f.pattern as string);
+
+        return (
+            <>
+                <Typography variant={'h6'}>Matched {f.is_regex ? 'Regex' : 'Text'}</Typography>
+                <Typography variant={'body1'}>{pat}</Typography>
+                <Typography variant={'body1'}>Weight: {f.weight}</Typography>
+                <Typography variant={'body1'}>Action: {filterActionString(f.action)}</Typography>
+            </>
+        );
+    };
+    const columnHelper = createColumnHelper<UserWarning>();
+
+    const columns = [
+        columnHelper.accessor('steam_id', {
+            header: () => <TableHeadingCell name={'Pattern'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <PersonCell
+                        steam_id={info.getValue()}
+                        personaname={warnings[info.row.index].personaname}
+                        avatar_hash={warnings[info.row.index].avatar}
+                    />
+                </TableCellSmall>
+            )
+        }),
+        columnHelper.accessor('created_on', {
+            header: () => <TableHeadingCell name={'Rx'} />,
+            cell: (info) => <TableCellString>{renderDateTime(info.getValue())}</TableCellString>
+        }),
+        columnHelper.accessor('server_name', {
+            header: () => <TableHeadingCell name={'Action'} />,
+            cell: (info) => (
+                <TableCellSmall>
+                    <Typography>{info.getValue()}</Typography>
+                </TableCellSmall>
+            )
+        }),
+        columnHelper.accessor('matched', {
+            header: () => <TableHeadingCell name={'Duration'} />,
+            cell: (info) => (
+                <TableCell>
+                    <Tooltip title={renderFilter(warnings[info.row.index].matched_filter)}>
+                        <Typography>{info.getValue()}</Typography>
+                    </Tooltip>
+                </TableCell>
+            )
+        }),
+        columnHelper.accessor('current_total', {
+            header: () => <TableHeadingCell name={'Weight'} />,
+            cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
+        }),
+        columnHelper.accessor('message', {
+            header: () => <TableHeadingCell name={'Triggered'} />,
+            cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
+        })
+    ];
+
+    const table = useReactTable({
+        data: warnings,
+        columns: columns,
+        getCoreRowModel: getCoreRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        onPaginationChange: setPagination, //update the pagination state when internal APIs mutate the pagination state
+        state: {
+            pagination
+        }
+    });
+
+    return (
+        <>
+            <DataTable table={table} isLoading={isLoading} />
+            <PaginatorLocal
+                onRowsChange={(rows) => {
+                    setPagination((prev) => {
+                        return { ...prev, pageSize: rows };
+                    });
+                }}
+                onPageChange={(page) => {
+                    setPagination((prev) => {
+                        return { ...prev, pageIndex: page };
+                    });
+                }}
+                count={warnings.length}
+                rows={pagination.pageSize}
+                page={pagination.pageIndex}
+            />
+        </>
+    );
+};

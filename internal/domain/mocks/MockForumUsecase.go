@@ -650,7 +650,7 @@ func (_c *MockForumUsecase_ForumMessageVoteByID_Call) RunAndReturn(run func(cont
 }
 
 // ForumMessages provides a mock function with given fields: ctx, filters
-func (_m *MockForumUsecase) ForumMessages(ctx context.Context, filters domain.ThreadMessagesQueryFilter) ([]domain.ForumMessage, int64, error) {
+func (_m *MockForumUsecase) ForumMessages(ctx context.Context, filters domain.ThreadMessagesQuery) ([]domain.ForumMessage, int64, error) {
 	ret := _m.Called(ctx, filters)
 
 	if len(ret) == 0 {
@@ -660,10 +660,10 @@ func (_m *MockForumUsecase) ForumMessages(ctx context.Context, filters domain.Th
 	var r0 []domain.ForumMessage
 	var r1 int64
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, domain.ThreadMessagesQueryFilter) ([]domain.ForumMessage, int64, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, domain.ThreadMessagesQuery) ([]domain.ForumMessage, int64, error)); ok {
 		return rf(ctx, filters)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, domain.ThreadMessagesQueryFilter) []domain.ForumMessage); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, domain.ThreadMessagesQuery) []domain.ForumMessage); ok {
 		r0 = rf(ctx, filters)
 	} else {
 		if ret.Get(0) != nil {
@@ -671,13 +671,13 @@ func (_m *MockForumUsecase) ForumMessages(ctx context.Context, filters domain.Th
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, domain.ThreadMessagesQueryFilter) int64); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, domain.ThreadMessagesQuery) int64); ok {
 		r1 = rf(ctx, filters)
 	} else {
 		r1 = ret.Get(1).(int64)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, domain.ThreadMessagesQueryFilter) error); ok {
+	if rf, ok := ret.Get(2).(func(context.Context, domain.ThreadMessagesQuery) error); ok {
 		r2 = rf(ctx, filters)
 	} else {
 		r2 = ret.Error(2)
@@ -693,14 +693,14 @@ type MockForumUsecase_ForumMessages_Call struct {
 
 // ForumMessages is a helper method to define mock.On call
 //   - ctx context.Context
-//   - filters domain.ThreadMessagesQueryFilter
+//   - filters domain.ThreadMessagesQuery
 func (_e *MockForumUsecase_Expecter) ForumMessages(ctx interface{}, filters interface{}) *MockForumUsecase_ForumMessages_Call {
 	return &MockForumUsecase_ForumMessages_Call{Call: _e.mock.On("ForumMessages", ctx, filters)}
 }
 
-func (_c *MockForumUsecase_ForumMessages_Call) Run(run func(ctx context.Context, filters domain.ThreadMessagesQueryFilter)) *MockForumUsecase_ForumMessages_Call {
+func (_c *MockForumUsecase_ForumMessages_Call) Run(run func(ctx context.Context, filters domain.ThreadMessagesQuery)) *MockForumUsecase_ForumMessages_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(domain.ThreadMessagesQueryFilter))
+		run(args[0].(context.Context), args[1].(domain.ThreadMessagesQuery))
 	})
 	return _c
 }
@@ -710,7 +710,7 @@ func (_c *MockForumUsecase_ForumMessages_Call) Return(_a0 []domain.ForumMessage,
 	return _c
 }
 
-func (_c *MockForumUsecase_ForumMessages_Call) RunAndReturn(run func(context.Context, domain.ThreadMessagesQueryFilter) ([]domain.ForumMessage, int64, error)) *MockForumUsecase_ForumMessages_Call {
+func (_c *MockForumUsecase_ForumMessages_Call) RunAndReturn(run func(context.Context, domain.ThreadMessagesQuery) ([]domain.ForumMessage, int64, error)) *MockForumUsecase_ForumMessages_Call {
 	_c.Call.Return(run)
 	return _c
 }

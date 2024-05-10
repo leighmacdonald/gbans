@@ -1,62 +1,91 @@
+import { useMemo, useState } from 'react';
+import NiceModal from '@ebay/nice-modal-react';
 import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
 import StorageIcon from '@mui/icons-material/Storage';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
+import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
+import Tooltip from '@mui/material/Tooltip';
 import Grid from '@mui/material/Unstable_Grid2';
-import { createLazyFileRoute } from '@tanstack/react-router';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { createFileRoute } from '@tanstack/react-router';
+import {
+    ColumnDef,
+    getCoreRowModel,
+    getPaginationRowModel,
+    OnChangeFn,
+    PaginationState,
+    useReactTable
+} from '@tanstack/react-table';
+import { z } from 'zod';
+import { apiGetServersAdmin, Server } from '../api';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
+import { DataTable } from '../component/DataTable.tsx';
+import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
+import { TableCellBool } from '../component/TableCellBool.tsx';
+import { TableCellString } from '../component/TableCellString.tsx';
+import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
+import { TableCellStringHidden } from '../component/field/TableCellStringHidden.tsx';
+import { ModalServerEditor } from '../component/modal';
+import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
 
-export const Route = createLazyFileRoute('/_admin/admin/servers')({
-    component: AdminServers
+const serversSearchSchema = z.object({
+    ...commonTableSearchSchema,
+    sortColumn: z
+        .enum(['server_id', 'short_name', 'name', 'address', 'port', 'region', 'cc', 'enable_stats', 'is_enabled'])
+        .optional()
+});
+
+export const Route = createFileRoute('/_admin/admin/servers')({
+    component: AdminServers,
+    validateSearch: (search) => serversSearchSchema.parse(search)
 });
 
 function AdminServers() {
-    // const [newServers, setNewServers] = useState<Server[]>([]);
-    //
-    // const { sendFlash } = useUserFlashCtx();
-    // const { data, count } = useServersAdmin({
-    //     limit: Number(state.rows ?? RowsPerPage.TwentyFive),
-    //     offset: Number((state.page ?? 0) * (state.rows ?? RowsPerPage.TwentyFive)),
-    //     order_by: state.sortColumn ?? 'short_name',
-    //     desc: state.sortOrder == 'desc',
-    //     deleted: false,
-    //     include_disabled: true
-    // });
-    //
-    // const servers = useMemo(() => {
-    //     return [...newServers, ...data];
-    // }, [data, newServers]);
-    //
-    // const onCreate = useCallback(async () => {
-    //     try {
-    //         const newServer = await NiceModal.show<Server>(ModalServerEditor, {});
-    //         setNewServers((prevState) => {
-    //             return [newServer, ...prevState];
-    //         });
-    //
-    //         sendFlash('success', 'Server created successfully');
-    //     } catch (e) {
-    //         sendFlash('error', `Failed to create new server: ${e}`);
-    //     }
-    // }, [sendFlash]);
-    //
-    // const onEdit = useCallback(
-    //     async (server: Server) => {
-    //         try {
-    //             const newServer = await NiceModal.show<Server>(ModalServerEditor, { server });
-    //             setNewServers((prevState) => {
-    //                 return [newServer, ...prevState];
-    //             });
-    //
-    //             sendFlash('success', 'Server edited successfully');
-    //         } catch (e) {
-    //             sendFlash('error', `Failed to edit server: ${e}`);
-    //         }
-    //     },
-    //     [sendFlash]
-    // );
+    const { sendFlash } = useUserFlashCtx();
+    const queryClient = useQueryClient();
+    //const { page, sortColumn, rows, sortOrder } = Route.useSearch();
 
+    const [pagination, setPagination] = useState({
+        pageIndex: 0, //initial page index
+        pageSize: RowsPerPage.TwentyFive //default page size
+    });
+
+    const { data: servers, isLoading } = useQuery({
+        queryKey: ['serversAdmin'],
+        queryFn: async () => {
+            return await apiGetServersAdmin();
+        }
+    });
+
+    const onCreate = async () => {
+        try {
+            const newServer = await NiceModal.show<Server>(ModalServerEditor, {});
+            queryClient.setQueryData(['serversAdmin'], [...(servers ?? []), newServer]);
+            sendFlash('success', 'Server created successfully');
+        } catch (e) {
+            sendFlash('error', `Failed to create new server: ${e}`);
+        }
+    };
+
+    const onEdit = async (server: Server) => {
+        try {
+            const editedServer = await NiceModal.show<Server>(ModalServerEditor, { server });
+            console.log(editedServer);
+            queryClient.setQueryData(
+                ['serversAdmin'],
+                (servers ?? []).map((s) => {
+                    return s.server_id == editedServer.server_id ? editedServer : s;
+                })
+            );
+            sendFlash('success', 'Server edited successfully');
+        } catch (e) {
+            sendFlash('error', `Failed to edit server: ${e}`);
+        }
+    };
     return (
         <Grid container spacing={2}>
             <Grid xs={12}>
@@ -71,140 +100,167 @@ function AdminServers() {
                                     color={'success'}
                                     startIcon={<AddIcon />}
                                     sx={{ marginRight: 2 }}
-                                    // onClick={onCreate}
+                                    onClick={onCreate}
                                 >
                                     Create Server
                                 </Button>
                             </ButtonGroup>
                         ]}
                     >
-                        {/*<LazyTable<Server>*/}
-                        {/*    showPager={true}*/}
-                        {/*    count={count}*/}
-                        {/*    rows={servers}*/}
-                        {/*    page={Number(state.page ?? 0)}*/}
-                        {/*    rowsPerPage={Number(state.rows ?? RowsPerPage.TwentyFive)}*/}
-                        {/*    sortOrder={state.sortOrder}*/}
-                        {/*    sortColumn={state.sortColumn}*/}
-                        {/*    onSortColumnChanged={async (column) => {*/}
-                        {/*        setState({ sortColumn: column });*/}
-                        {/*    }}*/}
-                        {/*    onSortOrderChanged={async (direction) => {*/}
-                        {/*        setState({ sortOrder: direction });*/}
-                        {/*    }}*/}
-                        {/*    onPageChange={(_, newPage: number) => {*/}
-                        {/*        setState({ page: newPage });*/}
-                        {/*    }}*/}
-                        {/*    onRowsPerPageChange={(event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {*/}
-                        {/*        setState({*/}
-                        {/*            rows: Number(event.target.value),*/}
-                        {/*            page: 0*/}
-                        {/*        });*/}
-                        {/*    }}*/}
-                        {/*    columns={[*/}
-                        {/*        {*/}
-                        {/*            tooltip: 'Name',*/}
-                        {/*            label: 'Name',*/}
-                        {/*            sortKey: 'short_name',*/}
-                        {/*            align: 'left',*/}
-                        {/*            sortable: true*/}
-                        {/*        },*/}
-                        {/*        {*/}
-                        {/*            tooltip: 'Name Long',*/}
-                        {/*            label: 'Name Long',*/}
-                        {/*            sortKey: 'name',*/}
-                        {/*            align: 'left',*/}
-                        {/*            sortable: true*/}
-                        {/*        },*/}
-                        {/*        {*/}
-                        {/*            tooltip: 'Address',*/}
-                        {/*            label: 'Address',*/}
-                        {/*            sortKey: 'address',*/}
-                        {/*            align: 'left',*/}
-                        {/*            sortable: true*/}
-                        {/*        },*/}
-                        {/*        {*/}
-                        {/*            tooltip: 'Port',*/}
-                        {/*            label: 'Port',*/}
-                        {/*            sortKey: 'port',*/}
-                        {/*            align: 'left',*/}
-                        {/*            sortable: true*/}
-                        {/*        },*/}
-                        {/*        {*/}
-                        {/*            tooltip: 'RCON Password',*/}
-                        {/*            label: 'rcon',*/}
-                        {/*            sortKey: 'rcon',*/}
-                        {/*            align: 'left'*/}
-                        {/*        },*/}
-                        {/*        {*/}
-                        {/*            tooltip: 'Region',*/}
-                        {/*            label: 'Region',*/}
-                        {/*            sortKey: 'region',*/}
-                        {/*            align: 'left',*/}
-                        {/*            sortable: true*/}
-                        {/*        },*/}
-                        {/*        {*/}
-                        {/*            tooltip: 'CC',*/}
-                        {/*            label: 'CC',*/}
-                        {/*            sortKey: 'cc',*/}
-                        {/*            align: 'left',*/}
-                        {/*            sortable: true*/}
-                        {/*        },*/}
-                        {/*        {*/}
-                        {/*            tooltip: 'Stats Recording Enabled',*/}
-                        {/*            label: 'Stats',*/}
-                        {/*            sortKey: 'enable_stats',*/}
-                        {/*            align: 'left',*/}
-                        {/*            sortable: true,*/}
-                        {/*            renderer: (row) => {*/}
-                        {/*                return <TableCellBool enabled={row.enable_stats} />;*/}
-                        {/*            }*/}
-                        {/*        },*/}
-                        {/*        {*/}
-                        {/*            tooltip: 'Enabled',*/}
-                        {/*            label: 'En.',*/}
-                        {/*            sortKey: 'is_enabled',*/}
-                        {/*            sortable: true,*/}
-                        {/*            align: 'center',*/}
-                        {/*            renderer: (row) => <TableCellBool enabled={row.is_enabled} />*/}
-                        {/*        },*/}
-                        {/*        {*/}
-                        {/*            label: 'Act.',*/}
-                        {/*            tooltip: 'Actions',*/}
-                        {/*            sortable: false,*/}
-                        {/*            align: 'center',*/}
-                        {/*            renderer: (row) => (*/}
-                        {/*                <ButtonGroup fullWidth>*/}
-                        {/*                    <IconButton*/}
-                        {/*                        color={'warning'}*/}
-                        {/*                        onClick={async () => {*/}
-                        {/*                            await NiceModal.show(ModalServerEditor, {*/}
-                        {/*                                server: row*/}
-                        {/*                            });*/}
-                        {/*                        }}*/}
-                        {/*                    >*/}
-                        {/*                        <Tooltip title={'Edit Server'}>*/}
-                        {/*                            <EditIcon />*/}
-                        {/*                        </Tooltip>*/}
-                        {/*                    </IconButton>*/}
-                        {/*                    <IconButton*/}
-                        {/*                        color={'warning'}*/}
-                        {/*                        onClick={async () => {*/}
-                        {/*                            await onEdit(row);*/}
-                        {/*                        }}*/}
-                        {/*                    >*/}
-                        {/*                        <Tooltip title={'Delete Server'}>*/}
-                        {/*                            <DeleteIcon color={'error'} />*/}
-                        {/*                        </Tooltip>*/}
-                        {/*                    </IconButton>*/}
-                        {/*                </ButtonGroup>*/}
-                        {/*            )*/}
-                        {/*        }*/}
-                        {/*    ]}*/}
-                        {/*/>*/}
+                        <AdminServersTable
+                            servers={servers ?? []}
+                            isLoading={isLoading}
+                            setPagination={setPagination}
+                            pagination={pagination}
+                            onEdit={onEdit}
+                        />
+                        <PaginatorLocal
+                            onRowsChange={(rows) => {
+                                setPagination((prev) => {
+                                    return { ...prev, pageSize: rows };
+                                });
+                            }}
+                            onPageChange={(page) => {
+                                setPagination((prev) => {
+                                    return { ...prev, pageIndex: page };
+                                });
+                            }}
+                            count={servers?.length ?? 0}
+                            rows={pagination.pageSize}
+                            page={pagination.pageIndex}
+                        />
                     </ContainerWithHeaderAndButtons>
                 </Stack>
             </Grid>
         </Grid>
     );
 }
+
+const AdminServersTable = ({
+    servers,
+    isLoading,
+    setPagination,
+    pagination,
+    onEdit
+}: {
+    servers: Server[];
+    isLoading: boolean;
+    onEdit: (server: Server) => Promise<void>;
+    pagination: PaginationState;
+    setPagination: OnChangeFn<PaginationState>;
+}) => {
+    const columns = useMemo<ColumnDef<Server>[]>(
+        () => [
+            {
+                accessorKey: 'server_id',
+                header: () => <TableHeadingCell name={'ID'} />,
+                cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>
+            },
+            {
+                accessorKey: 'short_name',
+                header: () => <TableHeadingCell name={'Name'} tooltip={'Short unique server identifier'} />,
+                cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>
+            },
+            {
+                accessorKey: 'name',
+                header: () => (
+                    <TableHeadingCell name={'Name Long'} tooltip={'Full name of the server, AKA srcds hostname'} />
+                ),
+                cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>
+            },
+            {
+                accessorKey: 'address',
+                header: () => <TableHeadingCell name={'Address'} tooltip={'IP or DNS/Hostname of the server'} />,
+                cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>
+            },
+            {
+                accessorKey: 'port',
+                header: () => <TableHeadingCell name={'Port'} />,
+                cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>
+            },
+            {
+                accessorKey: 'rcon',
+                header: () => <TableHeadingCell name={'RCON'} tooltip={'Standard RCON password'} />,
+                cell: (info) => <TableCellStringHidden>{info.getValue() as string}</TableCellStringHidden>
+            },
+            {
+                accessorKey: 'password',
+                header: () => (
+                    <TableHeadingCell
+                        name={'Server Auth Pass'}
+                        tooltip={'A password that the server uses to authenticate with the central gbans server'}
+                    />
+                ),
+                cell: (info) => <TableCellStringHidden>{info.getValue() as string}</TableCellStringHidden>
+            },
+            {
+                accessorKey: 'region',
+                header: () => <TableHeadingCell name={'Region'} />,
+                cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>
+            },
+            {
+                accessorKey: 'cc',
+                header: () => <TableHeadingCell name={'CC'} tooltip={'2 character country code'} />,
+                cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>
+            },
+            {
+                accessorKey: 'latitude',
+                header: () => <TableHeadingCell name={'Lat'} tooltip={'Latitude'} />,
+                cell: (info) => <TableCellString>{Number(info.getValue()).toFixed(2)}</TableCellString>
+            },
+            {
+                accessorKey: 'longitude',
+                header: () => <TableHeadingCell name={'Lon'} tooltip={'Longitude'} />,
+                cell: (info) => <TableCellString>{Number(info.getValue()).toFixed(2)}</TableCellString>
+            },
+            {
+                accessorKey: 'reserved_slots',
+                header: () => <TableHeadingCell name={'RS'} tooltip={'Reserved slots count'} />,
+                cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>
+            },
+            {
+                accessorKey: 'enable_stats',
+                header: () => <TableHeadingCell name={'St'} tooltip={'Stat Tracking Enabled'} />,
+                cell: (info) => <TableCellBool enabled={info.getValue() as boolean} />
+            },
+            {
+                accessorKey: 'is_enabled',
+                header: () => <TableHeadingCell name={'En.'} tooltip={'Enabled'} />,
+                cell: (info) => <TableCellBool enabled={info.getValue() as boolean} />
+            },
+            {
+                id: 'actions',
+                cell: (info) => {
+                    return (
+                        <ButtonGroup fullWidth>
+                            <IconButton
+                                color={'warning'}
+                                onClick={async () => {
+                                    await onEdit(info.row.original);
+                                }}
+                            >
+                                <Tooltip title={'Edit Ban'}>
+                                    <EditIcon />
+                                </Tooltip>
+                            </IconButton>
+                        </ButtonGroup>
+                    );
+                }
+            }
+        ],
+        [onEdit]
+    );
+
+    const table = useReactTable({
+        data: servers,
+        columns: columns,
+        getCoreRowModel: getCoreRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        onPaginationChange: setPagination, //update the pagination state when internal APIs mutate the pagination state
+        state: {
+            pagination
+        }
+    });
+
+    return <DataTable table={table} isLoading={isLoading} />;
+};

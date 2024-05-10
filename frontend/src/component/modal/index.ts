@@ -7,19 +7,18 @@ import BanSteamModal from './BanSteamModal.tsx';
 import CIDRBlockEditorModal from './CIDRBlockEditorModal.tsx';
 import CIDRWhitelistEditorModal from './CIDRWhitelistEditorModal.tsx';
 import ConfirmationModal from './ConfirmationModal.tsx';
-import ContestEditor from './ContestEditor.tsx';
-import ContestEntryDeleteModal from './ContestEntryDeleteModal.tsx';
+import { ContestEditor } from './ContestEditor.tsx';
+import { ContestEntryDeleteModal } from './ContestEntryDeleteModal.tsx';
 import ContestEntryModal from './ContestEntryModal.tsx';
 import FileUploadModal from './FileUploadModal.tsx';
-import FilterEditModal from './FilterEditModal.tsx';
-import ForumCategoryEditorModal from './ForumCategoryEditorModal.tsx';
-import ForumForumEditorModal from './ForumForumEditorModal.tsx';
-import ForumThreadCreatorModal from './ForumThreadCreatorModal.tsx';
-import ForumThreadEditorModal from './ForumThreadEditorModal.tsx';
-import MessageContextModal from './MessageContextModal.tsx';
+import { FilterEditModal } from './FilterEditModal.tsx';
+import { ForumCategoryEditorModal } from './ForumCategoryEditorModal.tsx';
+import { ForumForumEditorModal } from './ForumForumEditorModal.tsx';
+import { ForumThreadCreatorModal } from './ForumThreadCreatorModal.tsx';
+import { ForumThreadEditorModal } from './ForumThreadEditorModal.tsx';
 import PersonEditModal from './PersonEditModal.tsx';
 import ServerDeleteModal from './ServerDeleteModal.tsx';
-import ServerEditorModal from './ServerEditorModal.tsx';
+import { ServerEditorModal } from './ServerEditorModal.tsx';
 import UnbanASNModal from './UnbanASNModal.tsx';
 import UnbanCIDRModal from './UnbanCIDRModal.tsx';
 import UnbanGroupModal from './UnbanGroupModal.tsx';
@@ -42,7 +41,6 @@ export const ModalUnbanCIDR = 'modal-unban-cidr';
 export const ModalUnbanGroup = 'modal-unban-group';
 export const ModalServerEditor = 'modal-server-editor';
 export const ModalServerDelete = 'modal-server-delete';
-export const ModalMessageContext = 'modal-message-context';
 export const ModalFileUpload = 'modal-file-upload';
 export const ModalFilterEditor = 'modal-filter-editor';
 export const ModalPersonEditor = 'modal-person-editor';
@@ -65,7 +63,6 @@ export const ModalForumThreadEditor = 'modal-forum-thread-editor';
     [ModalConfirm, ConfirmationModal],
     [ModalServerEditor, ServerEditorModal],
     [ModalServerDelete, ServerDeleteModal],
-    [ModalMessageContext, MessageContextModal],
     [ModalPersonEditor, PersonEditModal],
     [ModalFileUpload, FileUploadModal],
     [ModalFilterEditor, FilterEditModal],

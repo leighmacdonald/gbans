@@ -1,5 +1,6 @@
-import { readAccessToken, readRefreshToken } from '../auth.tsx';
 import { AppError, ErrorCode } from '../error.tsx';
+import { readAccessToken } from '../util/auth/readAccessToken.ts';
+import { readRefreshToken } from '../util/auth/readRefreshToken.ts';
 import { logErr } from '../util/errors';
 import { parseDateTime } from '../util/text.tsx';
 import { emptyOrNullString } from '../util/types';
@@ -17,6 +18,15 @@ export enum PermissionLevel {
     Moderator = 50,
     Admin = 100
 }
+export const PermissionLevelCollection = [
+    PermissionLevel.Banned,
+    PermissionLevel.Guest,
+    PermissionLevel.User,
+    PermissionLevel.Reserved,
+    PermissionLevel.Editor,
+    PermissionLevel.Moderator,
+    PermissionLevel.Admin
+];
 
 export const permissionLevelString = (level: PermissionLevel) => {
     switch (level) {
@@ -48,7 +58,9 @@ export class EmptyBody {}
 // isRefresh is to track if the token is being used as an auth refresh token. In that
 // case its returned instead of the standard access token.
 const getAccessToken = async (isRefresh: boolean) => {
-    if (isTokenExpired(readAccessToken()) && !isTokenExpired(readRefreshToken()) && !isRefresh) {
+    const access = readAccessToken();
+    const refresh = readRefreshToken();
+    if (isTokenExpired(access) && !isTokenExpired(refresh) && !isRefresh) {
         await refreshToken();
     }
 
@@ -199,6 +211,7 @@ export interface QueryFilter<T> {
     query?: string;
     order_by?: keyof T;
     deleted?: boolean;
+    flagged_only?: boolean;
 }
 
 export interface BanQueryCommon<T> extends QueryFilter<T> {

@@ -75,7 +75,7 @@ func (f forumUsecase) ForumThreadDelete(ctx context.Context, forumThreadID int64
 	return f.forumRepo.ForumThreadDelete(ctx, forumThreadID)
 }
 
-func (f forumUsecase) ForumThreads(ctx context.Context, filter domain.ThreadQueryFilter) ([]domain.ThreadWithSource, int64, error) {
+func (f forumUsecase) ForumThreads(ctx context.Context, filter domain.ThreadQueryFilter) ([]domain.ThreadWithSource, error) {
 	return f.forumRepo.ForumThreads(ctx, filter)
 }
 
@@ -95,7 +95,7 @@ func (f forumUsecase) ForumMessage(ctx context.Context, messageID int64, forumMe
 	return f.forumRepo.ForumMessage(ctx, messageID, forumMessage)
 }
 
-func (f forumUsecase) ForumMessages(ctx context.Context, filters domain.ThreadMessagesQueryFilter) ([]domain.ForumMessage, int64, error) {
+func (f forumUsecase) ForumMessages(ctx context.Context, filters domain.ThreadMessagesQuery) ([]domain.ForumMessage, error) {
 	return f.forumRepo.ForumMessages(ctx, filters)
 }
 
