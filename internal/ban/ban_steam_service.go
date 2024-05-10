@@ -3,7 +3,6 @@ package ban
 import (
 	"errors"
 	"fmt"
-	"golang.org/x/exp/slices"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -17,6 +16,7 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+	"golang.org/x/exp/slices"
 )
 
 type banHandler struct {
