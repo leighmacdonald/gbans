@@ -13,7 +13,7 @@ import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { fromByteArray } from 'base64-js';
-import { apiSaveMedia, UserUploadedFile } from '../../api/media.ts';
+import { apiSaveAsset, UserUploadedFile } from '../../api/media.ts';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { humanFileSize } from '../../util/text.tsx';
 import { Heading } from '../Heading';
@@ -109,7 +109,7 @@ export const FileUploadModal = NiceModal.create((): JSX.Element => {
             if (name != '') {
                 file.name = name;
             }
-            return await apiSaveMedia(file);
+            return await apiSaveAsset(file);
         },
         onSuccess: async (media) => {
             modal.resolve(media);

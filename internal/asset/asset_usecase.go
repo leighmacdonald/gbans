@@ -1,74 +1,126 @@
 package asset
 
 import (
-	"bytes"
 	"context"
-	"errors"
+	"crypto/sha256"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type assetUsecase struct {
-	ar domain.AssetRepository
+	assetRepository domain.AssetRepository
 }
 
 func NewAssetUsecase(assetRepository domain.AssetRepository) domain.AssetUsecase {
-	return &assetUsecase{ar: assetRepository}
+	return &assetUsecase{assetRepository: assetRepository}
 }
 
-func (s assetUsecase) GetAsset(ctx context.Context, uuid uuid.UUID) (domain.Asset, io.Reader, error) {
-	asset, errAsset := s.ar.GetAsset(ctx, uuid)
+func (s assetUsecase) Create(ctx context.Context, author steamid.SteamID, bucket string, fileName string, content io.ReadSeeker) (domain.Asset, error) {
+	if bucket != "demos" && bucket != "media" {
+		return domain.Asset{}, domain.ErrBucketType
+	}
+
+	if fileName == "" {
+		return domain.Asset{}, domain.ErrAssetName
+	}
+
+	if bucket != "demos" && !author.Valid() {
+		// Non demo assets must have a real author
+		return domain.Asset{}, domain.ErrInvalidAuthorSID
+	}
+
+	asset, errAsset := NewAsset(author, fileName, bucket, content)
+	if errAsset != nil {
+		return domain.Asset{}, errAsset
+	}
+
+	newAsset, errPut := s.assetRepository.Put(ctx, asset, content)
+	if errPut != nil {
+		return domain.Asset{}, errPut
+	}
+
+	return newAsset, nil
+}
+
+func (s assetUsecase) Get(ctx context.Context, uuid uuid.UUID) (domain.Asset, io.ReadSeeker, error) {
+	if uuid.IsNil() {
+		return domain.Asset{}, nil, domain.ErrUUIDInvalid
+	}
+
+	asset, reader, errAsset := s.assetRepository.Get(ctx, uuid)
 	if errAsset != nil {
 		return asset, nil, errAsset
 	}
 
-	content, err := s.ar.Get(ctx, asset.Bucket, asset.Name)
-	if err != nil {
-		return asset, nil, err
-	}
-
-	return asset, content, nil
+	return asset, reader, nil
 }
 
-func (s assetUsecase) SaveAsset(ctx context.Context, bucket string, asset *domain.Asset, content []byte) error {
-	if errPut := s.ar.Put(ctx, bucket, asset.Name, bytes.NewReader(content), asset.Size, asset.MimeType); errPut != nil {
-		return errPut
+func (s assetUsecase) Delete(ctx context.Context, assetID uuid.UUID) error {
+	if assetID.IsNil() {
+		return domain.ErrUUIDInvalid
 	}
 
-	if errSaveAsset := s.ar.SaveAsset(ctx, asset); errSaveAsset != nil {
-		return errSaveAsset
-	}
-
-	return nil
-}
-
-func (s assetUsecase) DropAsset(ctx context.Context, asset *domain.Asset) error {
-	if err := s.ar.Remove(ctx, asset.Bucket, asset.Name); err != nil {
-		return err
-	}
-
-	if err := s.ar.DeleteAsset(ctx, asset); err != nil {
+	if err := s.assetRepository.Delete(ctx, assetID); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func GenerateFileMeta(body io.Reader, name string) (string, string, int64, error) {
-	content, errRead := io.ReadAll(body)
-	if errRead != nil {
-		return "", "", 0, errors.Join(errRead, domain.ErrReadContent)
+func generateFileHash(file io.Reader) ([]byte, error) {
+	hasher := sha256.New()
+	if _, err := io.Copy(hasher, file); err != nil {
+		return nil, err
 	}
 
-	mime := mimetype.Detect(content)
+	return hasher.Sum(nil), nil
+}
 
-	if !strings.HasSuffix(strings.ToLower(name), mime.Extension()) {
-		name += mime.Extension()
+func NewAsset(author steamid.SteamID, name string, bucket string, contentReader io.ReadSeeker) (domain.Asset, error) {
+	mType, errMime := mimetype.DetectReader(contentReader)
+	if errMime != nil {
+		return domain.Asset{}, errMime
 	}
 
-	return name, mime.String(), int64(len(content)), nil
+	_, _ = contentReader.Seek(0, 0)
+
+	size, errSize := io.Copy(io.Discard, contentReader)
+	if errSize != nil {
+		return domain.Asset{}, errSize
+	}
+
+	_, _ = contentReader.Seek(0, 0)
+
+	hash, errHash := generateFileHash(contentReader)
+	if errHash != nil {
+		return domain.Asset{}, errHash
+	}
+
+	curTime := time.Now()
+
+	id, errID := uuid.NewV4()
+	if errID != nil {
+		return domain.Asset{}, errID
+	}
+
+	asset := domain.Asset{
+		AssetID:   id,
+		Bucket:    bucket,
+		AuthorID:  author,
+		Hash:      hash,
+		IsPrivate: false,
+		MimeType:  mType.String(),
+		Name:      strings.ReplaceAll(name, " ", "_"),
+		Size:      size,
+		CreatedOn: curTime,
+		UpdatedOn: curTime,
+	}
+
+	return asset, nil
 }

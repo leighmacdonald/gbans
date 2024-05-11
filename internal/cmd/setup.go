@@ -13,7 +13,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/match"
-	"github.com/leighmacdonald/gbans/internal/media"
 	"github.com/leighmacdonald/gbans/internal/news"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/servers"
@@ -73,10 +72,16 @@ func setupCmd() *cobra.Command {
 			serversUsecase := servers.NewServersUsecase(servers.NewServersRepository(databaseRepository))
 			stateUsecase := state.NewStateUsecase(broadcaster, state.NewStateRepository(state.NewCollector(serversUsecase)), configUsecase, serversUsecase)
 			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(databaseRepository), configUsecase)
-			assetUsecase := asset.NewAssetUsecase(asset.NewS3Repository(databaseRepository, nil, conf.S3.Region))
-			mediaUsecase := media.NewMediaUsecase(conf.S3.BucketMedia, media.NewMediaRepository(databaseRepository), assetUsecase)
+
+			assetRepo := asset.NewLocalRepository(databaseRepository, configUsecase)
+			if errAssetInit := assetRepo.Init(ctx); errAssetInit != nil {
+				slog.Error("Failed to init local asset repo", log.ErrAttr(errAssetInit))
+
+				return
+			}
+
 			newsUsecase := news.NewNewsUsecase(news.NewNewsRepository(databaseRepository))
-			wikiUsecase := wiki.NewWikiUsecase(wiki.NewWikiRepository(databaseRepository, mediaUsecase))
+			wikiUsecase := wiki.NewWikiUsecase(wiki.NewWikiRepository(databaseRepository))
 			matchRepo := match.NewMatchRepository(broadcaster, databaseRepository, personUsecase, serversUsecase, nil, stateUsecase, weaponMap)
 			matchUsecase := match.NewMatchUsecase(matchRepo, stateUsecase, serversUsecase, nil)
 

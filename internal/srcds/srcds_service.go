@@ -16,7 +16,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/log"
-	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -72,7 +71,6 @@ func NewSRCDSHandler(engine *gin.Engine, srcdsUsecase domain.SRCDSUsecase, serve
 		server.GET("/api/server/admins", handler.onAPIGetServerAdmins())
 		server.POST("/api/ping_mod", handler.onAPIPostPingMod())
 		server.POST("/api/check", handler.onAPIPostServerCheck())
-		server.POST("/api/demo", handler.onAPIPostDemo())
 
 		// Duplicated since we need to authenticate via server middleware
 		server.POST("/api/sm/bans/steam/create", handler.onAPIPostBanSteamCreate())
@@ -169,35 +167,6 @@ func (s *srcdsHandler) onAPIPostReportCreate() gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusCreated, report)
-	}
-}
-
-func (s *srcdsHandler) onAPIPostDemo() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		demoFormFile, errDemoFile := ctx.FormFile("demo")
-		if errDemoFile != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
-
-			return
-		}
-
-		demoFile, errDemoHandle := demoFormFile.Open()
-		if errDemoHandle != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
-
-			return
-		}
-
-		defer util.LogCloser(demoFile)
-
-		newDemo, errCreateDemo := s.demoUsecase.Create(ctx, demoFormFile.Filename, demoFile, demoFormFile.Filename, httphelper.ServerIDFromCtx(ctx))
-		if errCreateDemo != nil {
-			httphelper.HandleErrInternal(ctx)
-
-			return
-		}
-
-		ctx.JSON(http.StatusCreated, gin.H{"demo_id": newDemo.DemoID})
 	}
 }
 

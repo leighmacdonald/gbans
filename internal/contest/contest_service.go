@@ -1,6 +1,7 @@
 package contest
 
 import (
+	"bytes"
 	"encoding/base64"
 	"errors"
 	"log/slog"
@@ -8,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gabriel-vasile/mimetype"
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -19,16 +21,16 @@ import (
 type contestHandler struct {
 	contestUsecase domain.ContestUsecase
 	configUsecase  domain.ConfigUsecase
-	mediaUsecase   domain.MediaUsecase
+	assetUsecase   domain.AssetUsecase
 }
 
 func NewContestHandler(engine *gin.Engine, cu domain.ContestUsecase,
-	configUsecase domain.ConfigUsecase, mediaUsecase domain.MediaUsecase, ath domain.AuthUsecase,
+	configUsecase domain.ConfigUsecase, assetUsecase domain.AssetUsecase, ath domain.AuthUsecase,
 ) {
 	handler := &contestHandler{
 		contestUsecase: cu,
 		configUsecase:  configUsecase,
-		mediaUsecase:   mediaUsecase,
+		assetUsecase:   assetUsecase,
 	}
 
 	// opt
@@ -233,18 +235,33 @@ func (c *contestHandler) onAPISaveContestEntryMedia() gin.HandlerFunc {
 			return
 		}
 
-		media, errCreate := c.mediaUsecase.Create(ctx, httphelper.CurrentUserProfile(ctx).SteamID,
-			req.Name, req.Mime, content, strings.Split(contest.MediaTypes, ","))
+		reader := bytes.NewReader(content)
+
+		if contest.MediaTypes != "" {
+			mimeType, errMimeType := mimetype.DetectReader(reader)
+			if errMimeType != nil {
+				httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+
+				return
+			}
+
+			if !slices.Contains(strings.Split(strings.ToLower(contest.MediaTypes), ","), strings.ToLower(mimeType.String())) {
+				httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrMimeTypeNotAllowed)
+
+				return
+			}
+		}
+
+		authorID := httphelper.CurrentUserProfile(ctx).SteamID
+
+		asset, errCreate := c.assetUsecase.Create(ctx, authorID, "media", req.Name, reader)
 		if errHandle := httphelper.ErrorHandledWithReturn(ctx, errCreate); errHandle != nil {
 			slog.Error("Failed to save user contest media", log.ErrAttr(errHandle))
 
 			return
 		}
 
-		// Don't bother to resend entire body
-		media.Contents = nil
-
-		ctx.JSON(http.StatusCreated, media)
+		ctx.JSON(http.StatusCreated, asset)
 	}
 }
 
@@ -316,22 +333,6 @@ func (c *contestHandler) onAPISaveContestEntrySubmit() gin.HandlerFunc {
 			return
 		}
 
-		if contest.MediaTypes != "" {
-			// TODO delete assets? reformat this?
-			var media domain.Media
-			if errMedia := c.mediaUsecase.GetMediaByAssetID(ctx, req.AssetID, &media); errMedia != nil {
-				httphelper.ResponseErr(ctx, http.StatusFailedDependency, domain.ErrFetchMedia)
-
-				return
-			}
-
-			if !slices.Contains(strings.Split(contest.MediaTypes, ","), strings.ToLower(media.MimeType)) {
-				httphelper.ResponseErr(ctx, http.StatusFailedDependency, domain.ErrInvalidFormat)
-
-				return
-			}
-		}
-
 		existingEntries, errEntries := c.contestUsecase.ContestEntries(ctx, contest.ContestID)
 		if errEntries != nil && !errors.Is(errEntries, domain.ErrNoResult) {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrContestLoadEntries)
@@ -354,6 +355,19 @@ func (c *contestHandler) onAPISaveContestEntrySubmit() gin.HandlerFunc {
 		}
 
 		steamID := httphelper.CurrentUserProfile(ctx).SteamID
+
+		asset, _, errAsset := c.assetUsecase.Get(ctx, req.AssetID)
+		if errAsset != nil {
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrEntryCreate)
+
+			return
+		}
+
+		if asset.AuthorID != steamID {
+			httphelper.ResponseErr(ctx, http.StatusForbidden, domain.ErrPermissionDenied)
+
+			return
+		}
 
 		entry, errEntry := contest.NewEntry(steamID, req.AssetID, req.Description)
 		if errEntry != nil {

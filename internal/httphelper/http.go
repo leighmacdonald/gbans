@@ -71,7 +71,7 @@ func useSecure(mode domain.RunMode, cspOrigin string) gin.HandlerFunc {
 //	SiteName        string `json:"site_name"`
 //	DiscordClientID string `json:"discord_client_id"`
 //	DiscordLinkID   string `json:"discord_link_id"`
-//	// External URL used to access S3 assets. media:// links are replaces with this url
+//	// External URL used to access S3Store assets. media:// links are replaces with this url
 //	AssetURL     string `json:"asset_url"`
 //	BucketDemo   string `json:"bucket_demo"`
 //	BucketMedia  string `json:"bucket_media"`
@@ -151,7 +151,7 @@ func useSentry(engine *gin.Engine, version string) {
 
 func useCors(engine *gin.Engine, conf domain.Config) {
 	engine.Use(httpErrorHandler(), gin.Recovery())
-	engine.Use(useSecure(conf.General.Mode, conf.S3.ExternalURL))
+	engine.Use(useSecure(conf.General.Mode, conf.S3Store.ExternalURL))
 
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = conf.HTTP.CorsOrigins
