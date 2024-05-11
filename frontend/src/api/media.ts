@@ -40,7 +40,6 @@ export interface Asset {
     name: string;
     mime_type: string;
     size: number;
-    old_id: number;
 }
 
 export interface MediaUploadResponse extends BaseUploadedMedia {
@@ -54,8 +53,8 @@ export interface UserUploadedFile {
     size: number;
 }
 
-export const apiSaveMedia = async (upload: UserUploadedFile) =>
-    await apiCall<MediaUploadResponse, UserUploadedFile>(`/api/media`, 'POST', upload);
+export const apiSaveAsset = async (upload: UserUploadedFile) =>
+    await apiCall<MediaUploadResponse, UserUploadedFile>(`/api/asset`, 'POST', upload);
 
 export const apiSaveContestEntryMedia = async (contest_id: number, upload: UserUploadedFile) =>
     await apiCall<MediaUploadResponse, UserUploadedFile>(`/api/contests/${contest_id}/upload`, 'POST', upload);

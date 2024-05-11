@@ -11,11 +11,10 @@ import (
 
 type wikiRepository struct {
 	db database.Database
-	mu domain.MediaUsecase
 }
 
-func NewWikiRepository(database database.Database, mu domain.MediaUsecase) domain.WikiRepository {
-	return &wikiRepository{db: database, mu: mu}
+func NewWikiRepository(database database.Database) domain.WikiRepository {
+	return &wikiRepository{db: database}
 }
 
 func (r *wikiRepository) GetWikiPageBySlug(ctx context.Context, slug string) (domain.WikiPage, error) {

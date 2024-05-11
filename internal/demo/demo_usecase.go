@@ -5,8 +5,6 @@ import (
 	"errors"
 	"io"
 	"log/slog"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -14,6 +12,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/demoparser"
 	"github.com/leighmacdonald/gbans/pkg/log"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type demoUsecase struct {
@@ -75,7 +74,7 @@ func (d demoUsecase) Start(ctx context.Context) {
 			for _, demo := range expired {
 				if errDrop := d.DropDemo(ctx, &domain.DemoFile{DemoID: demo.DemoID, Title: demo.Title}); errDrop != nil {
 					slog.Error("Failed to remove demo", log.ErrAttr(errDrop),
-						slog.String("bucket", conf.S3.BucketDemo), slog.String("name", demo.Title))
+						slog.String("bucket", conf.S3Store.BucketDemo), slog.String("name", demo.Title))
 
 					continue
 				}
@@ -108,27 +107,11 @@ func (d demoUsecase) GetDemos(ctx context.Context, opts domain.DemoFilter) ([]do
 	return d.repository.GetDemos(ctx, opts)
 }
 
-func (d demoUsecase) Create(ctx context.Context, name string, content io.Reader, demoName string, serverID int) (*domain.DemoFile, error) {
+func (d demoUsecase) Create(ctx context.Context, content io.ReadSeeker, demoName string, serverID int) (*domain.DemoFile, error) {
 	_, errGetServer := d.serversUsecase.GetServer(ctx, serverID)
 	if errGetServer != nil {
 		return nil, domain.ErrGetServer
 	}
-
-	demoContent, errRead := io.ReadAll(content)
-	if errRead != nil {
-		return nil, errors.Join(errRead, domain.ErrReadContent)
-	}
-
-	dir, errDir := os.MkdirTemp("", "gbans-demo")
-	if errDir != nil {
-		return nil, errors.Join(errDir, domain.ErrTempDir)
-	}
-
-	defer func() {
-		if err := os.RemoveAll(dir); err != nil {
-			slog.Error("Failed to cleanup temp demo path", log.ErrAttr(err))
-		}
-	}()
 
 	namePartsAll := strings.Split(demoName, "-")
 
@@ -143,21 +126,13 @@ func (d demoUsecase) Create(ctx context.Context, name string, content io.Reader,
 		mapName = nameParts[0]
 	}
 
-	tempPath := filepath.Join(dir, demoName)
-
-	localFile, errLocalFile := os.Create(tempPath)
-	if errLocalFile != nil {
-		return nil, errors.Join(errLocalFile, domain.ErrOpenFile)
+	newAsset, errPut := d.assetUsecase.Create(ctx, steamid.SteamID{}, d.bucket, demoName, content)
+	if errPut != nil {
+		return nil, errPut
 	}
-
-	if _, err := localFile.Write(demoContent); err != nil {
-		return nil, errors.Join(err, domain.ErrWriteDemo)
-	}
-
-	_ = localFile.Close()
 
 	var demoInfo demoparser.DemoInfo
-	if errParse := demoparser.Parse(ctx, tempPath, &demoInfo); errParse != nil {
+	if errParse := demoparser.Parse(ctx, newAsset.LocalPath, &demoInfo); errParse != nil {
 		return nil, errParse
 	}
 
@@ -167,27 +142,13 @@ func (d demoUsecase) Create(ctx context.Context, name string, content io.Reader,
 		intStats[steamID.String()] = gin.H{}
 	}
 
-	fileContents, errReadContent := io.ReadAll(content)
-	if errReadContent != nil {
-		return nil, errors.Join(errReadContent, domain.ErrReadContent)
-	}
-
-	asset, errAsset := domain.NewAsset(fileContents, d.bucket, name)
-	if errAsset != nil {
-		return nil, errAsset
-	}
-
-	if errPut := d.assetUsecase.SaveAsset(ctx, d.bucket, &asset, fileContents); errPut != nil {
-		return nil, errPut
-	}
-
 	newDemo := domain.DemoFile{
 		ServerID:  serverID,
-		Title:     asset.Name,
+		Title:     newAsset.Name,
 		CreatedOn: time.Now(),
 		MapName:   mapName,
 		Stats:     intStats,
-		AssetID:   asset.AssetID,
+		AssetID:   newAsset.AssetID,
 	}
 
 	if errSave := d.repository.SaveDemo(ctx, &newDemo); errSave != nil {
@@ -200,11 +161,12 @@ func (d demoUsecase) Create(ctx context.Context, name string, content io.Reader,
 func (d demoUsecase) DropDemo(ctx context.Context, demoFile *domain.DemoFile) error {
 	conf := d.configUsecase.Config()
 
-	if asset, _, errAsset := d.assetUsecase.GetAsset(ctx, demoFile.AssetID); errAsset == nil {
+	asset, _, errAsset := d.assetUsecase.Get(ctx, demoFile.AssetID)
+	if errAsset == nil {
 		// TODO assets should exist, but can be missing
-		if errRemove := d.assetUsecase.DropAsset(ctx, &asset); errRemove != nil {
-			slog.Warn("Failed to remove demo asset from S3",
-				log.ErrAttr(errRemove), slog.String("bucket", conf.S3.BucketDemo), slog.String("name", demoFile.Title))
+		if errRemove := d.assetUsecase.Delete(ctx, demoFile.AssetID); errRemove != nil {
+			slog.Warn("Failed to remove demo asset from S3Store",
+				log.ErrAttr(errRemove), slog.String("bucket", conf.S3Store.BucketDemo), slog.String("name", demoFile.Title))
 		}
 
 		if err := d.repository.DropDemo(ctx, demoFile); err != nil {
@@ -212,8 +174,8 @@ func (d demoUsecase) DropDemo(ctx context.Context, demoFile *domain.DemoFile) er
 		}
 	}
 
-	// slog.Debug("Demo expired and removed",
-	//	slog.String("bucket", conf.S3.BucketDemo), slog.String("name", demoFile.Title))
+	slog.Debug("Demo expired and removed",
+		slog.String("bucket", asset.Bucket), slog.String("name", asset.Name))
 
 	return nil
 }

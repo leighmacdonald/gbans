@@ -50,3 +50,4 @@ parse_demo
 /frontend/.env.sentry-build-plugin
 /frontend/stats.html
 .cache
+/assets/

@@ -37,7 +37,8 @@ type Config struct {
 	IP2Location ConfigIP2Location `mapstructure:"ip2location"`
 	Debug       ConfigDebug       `mapstructure:"debug"`
 	Patreon     ConfigPatreon     `mapstructure:"patreon"`
-	S3          ConfigS3Store     `mapstructure:"s3"`
+	S3Store     ConfigS3Store     `mapstructure:"s3"`
+	LocalStore  ConfigLocalStore  `mapstructure:"local_store"`
 	Exports     ConfigExports     `mapstructure:"exports"`
 }
 
@@ -65,8 +66,7 @@ type ConfigFilter struct {
 }
 
 type ConfigLocalStore struct {
-	PathDemo  string `mapstructure:"path_demo"`
-	PathMedia string `mapstructure:"path_media"`
+	PathRoot string `mapstructure:"path_root"`
 }
 
 type ConfigS3Store struct {
