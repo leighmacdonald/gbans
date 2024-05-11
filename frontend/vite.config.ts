@@ -4,7 +4,6 @@ import react from '@vitejs/plugin-react-swc';
 import { defineConfig } from 'vite';
 import { createHtmlPlugin } from 'vite-plugin-html';
 
-
 // https://vitejs.dev/config/
 export default defineConfig({
     base: '/',
@@ -37,6 +36,11 @@ export default defineConfig({
                 target: 'http://gbans.localhost:6006',
                 changeOrigin: true,
                 secure: false
+            },
+            '/asset': {
+                target: 'http://gbans.localhost:6006',
+                changeOrigin: true,
+                secure: false
             }
         }
     },
@@ -53,9 +57,7 @@ export default defineConfig({
                     site_name: 'Uncletopia',
                     build_version: 'v0.6.6',
                     discord_link_id: 'caQKCWFMrN',
-                    asset_url: 'https://assets.uncletopia.com',
-                    bucket_demo: 'demos',
-                    bucket_media: 'media'
+                    asset_url: ''
                 }
             }
         })

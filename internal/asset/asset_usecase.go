@@ -3,6 +3,8 @@ package asset
 import (
 	"context"
 	"crypto/sha256"
+	"errors"
+	"fmt"
 	"io"
 	"strings"
 	"time"
@@ -76,23 +78,29 @@ func (s assetUsecase) Delete(ctx context.Context, assetID uuid.UUID) error {
 func generateFileHash(file io.Reader) ([]byte, error) {
 	hasher := sha256.New()
 	if _, err := io.Copy(hasher, file); err != nil {
-		return nil, err
+		return nil, domain.ErrHashFileContent
 	}
 
 	return hasher.Sum(nil), nil
 }
 
+const maxFileSize = 25000000
+
 func NewAsset(author steamid.SteamID, name string, bucket string, contentReader io.ReadSeeker) (domain.Asset, error) {
 	mType, errMime := mimetype.DetectReader(contentReader)
 	if errMime != nil {
-		return domain.Asset{}, errMime
+		return domain.Asset{}, errors.Join(errMime, domain.ErrMimeTypeReadFailed)
 	}
 
 	_, _ = contentReader.Seek(0, 0)
 
 	size, errSize := io.Copy(io.Discard, contentReader)
 	if errSize != nil {
-		return domain.Asset{}, errSize
+		return domain.Asset{}, errors.Join(errSize, domain.ErrCopyFileContent)
+	}
+
+	if size > maxFileSize {
+		return domain.Asset{}, domain.ErrAssetTooLarge
 	}
 
 	_, _ = contentReader.Seek(0, 0)
@@ -104,13 +112,17 @@ func NewAsset(author steamid.SteamID, name string, bucket string, contentReader 
 
 	curTime := time.Now()
 
-	id, errID := uuid.NewV4()
+	newID, errID := uuid.NewV4()
 	if errID != nil {
-		return domain.Asset{}, errID
+		return domain.Asset{}, errors.Join(errID, domain.ErrUUIDCreate)
+	}
+
+	if name == domain.UnknownMediaTag {
+		name = fmt.Sprintf("%x%s", hash, mType.Extension())
 	}
 
 	asset := domain.Asset{
-		AssetID:   id,
+		AssetID:   newID,
 		Bucket:    bucket,
 		AuthorID:  author,
 		Hash:      hash,

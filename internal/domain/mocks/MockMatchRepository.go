@@ -30,6 +30,39 @@ func (_m *MockMatchRepository) EXPECT() *MockMatchRepository_Expecter {
 	return &MockMatchRepository_Expecter{mock: &_m.Mock}
 }
 
+// EndMatch provides a mock function with given fields: endTrigger
+func (_m *MockMatchRepository) EndMatch(endTrigger domain.MatchTrigger) {
+	_m.Called(endTrigger)
+}
+
+// MockMatchRepository_EndMatch_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EndMatch'
+type MockMatchRepository_EndMatch_Call struct {
+	*mock.Call
+}
+
+// EndMatch is a helper method to define mock.On call
+//   - endTrigger domain.MatchTrigger
+func (_e *MockMatchRepository_Expecter) EndMatch(endTrigger interface{}) *MockMatchRepository_EndMatch_Call {
+	return &MockMatchRepository_EndMatch_Call{Call: _e.mock.On("EndMatch", endTrigger)}
+}
+
+func (_c *MockMatchRepository_EndMatch_Call) Run(run func(endTrigger domain.MatchTrigger)) *MockMatchRepository_EndMatch_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(domain.MatchTrigger))
+	})
+	return _c
+}
+
+func (_c *MockMatchRepository_EndMatch_Call) Return() *MockMatchRepository_EndMatch_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockMatchRepository_EndMatch_Call) RunAndReturn(run func(domain.MatchTrigger)) *MockMatchRepository_EndMatch_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetMapUsageStats provides a mock function with given fields: ctx
 func (_m *MockMatchRepository) GetMapUsageStats(ctx context.Context) ([]domain.MapUseDetail, error) {
 	ret := _m.Called(ctx)
@@ -84,6 +117,64 @@ func (_c *MockMatchRepository_GetMapUsageStats_Call) Return(_a0 []domain.MapUseD
 }
 
 func (_c *MockMatchRepository_GetMapUsageStats_Call) RunAndReturn(run func(context.Context) ([]domain.MapUseDetail, error)) *MockMatchRepository_GetMapUsageStats_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetMatchIDFromServerID provides a mock function with given fields: serverID
+func (_m *MockMatchRepository) GetMatchIDFromServerID(serverID int) (uuid.UUID, bool) {
+	ret := _m.Called(serverID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetMatchIDFromServerID")
+	}
+
+	var r0 uuid.UUID
+	var r1 bool
+	if rf, ok := ret.Get(0).(func(int) (uuid.UUID, bool)); ok {
+		return rf(serverID)
+	}
+	if rf, ok := ret.Get(0).(func(int) uuid.UUID); ok {
+		r0 = rf(serverID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(uuid.UUID)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(int) bool); ok {
+		r1 = rf(serverID)
+	} else {
+		r1 = ret.Get(1).(bool)
+	}
+
+	return r0, r1
+}
+
+// MockMatchRepository_GetMatchIDFromServerID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetMatchIDFromServerID'
+type MockMatchRepository_GetMatchIDFromServerID_Call struct {
+	*mock.Call
+}
+
+// GetMatchIDFromServerID is a helper method to define mock.On call
+//   - serverID int
+func (_e *MockMatchRepository_Expecter) GetMatchIDFromServerID(serverID interface{}) *MockMatchRepository_GetMatchIDFromServerID_Call {
+	return &MockMatchRepository_GetMatchIDFromServerID_Call{Call: _e.mock.On("GetMatchIDFromServerID", serverID)}
+}
+
+func (_c *MockMatchRepository_GetMatchIDFromServerID_Call) Run(run func(serverID int)) *MockMatchRepository_GetMatchIDFromServerID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(int))
+	})
+	return _c
+}
+
+func (_c *MockMatchRepository_GetMatchIDFromServerID_Call) Return(_a0 uuid.UUID, _a1 bool) *MockMatchRepository_GetMatchIDFromServerID_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockMatchRepository_GetMatchIDFromServerID_Call) RunAndReturn(run func(int) (uuid.UUID, bool)) *MockMatchRepository_GetMatchIDFromServerID_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -709,6 +800,72 @@ func (_c *MockMatchRepository_SaveWeapon_Call) Return(_a0 error) *MockMatchRepos
 }
 
 func (_c *MockMatchRepository_SaveWeapon_Call) RunAndReturn(run func(context.Context, *domain.Weapon) error) *MockMatchRepository_SaveWeapon_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Start provides a mock function with given fields: ctx
+func (_m *MockMatchRepository) Start(ctx context.Context) {
+	_m.Called(ctx)
+}
+
+// MockMatchRepository_Start_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Start'
+type MockMatchRepository_Start_Call struct {
+	*mock.Call
+}
+
+// Start is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockMatchRepository_Expecter) Start(ctx interface{}) *MockMatchRepository_Start_Call {
+	return &MockMatchRepository_Start_Call{Call: _e.mock.On("Start", ctx)}
+}
+
+func (_c *MockMatchRepository_Start_Call) Run(run func(ctx context.Context)) *MockMatchRepository_Start_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockMatchRepository_Start_Call) Return() *MockMatchRepository_Start_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockMatchRepository_Start_Call) RunAndReturn(run func(context.Context)) *MockMatchRepository_Start_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// StartMatch provides a mock function with given fields: startTrigger
+func (_m *MockMatchRepository) StartMatch(startTrigger domain.MatchTrigger) {
+	_m.Called(startTrigger)
+}
+
+// MockMatchRepository_StartMatch_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'StartMatch'
+type MockMatchRepository_StartMatch_Call struct {
+	*mock.Call
+}
+
+// StartMatch is a helper method to define mock.On call
+//   - startTrigger domain.MatchTrigger
+func (_e *MockMatchRepository_Expecter) StartMatch(startTrigger interface{}) *MockMatchRepository_StartMatch_Call {
+	return &MockMatchRepository_StartMatch_Call{Call: _e.mock.On("StartMatch", startTrigger)}
+}
+
+func (_c *MockMatchRepository_StartMatch_Call) Run(run func(startTrigger domain.MatchTrigger)) *MockMatchRepository_StartMatch_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(domain.MatchTrigger))
+	})
+	return _c
+}
+
+func (_c *MockMatchRepository_StartMatch_Call) Return() *MockMatchRepository_StartMatch_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockMatchRepository_StartMatch_Call) RunAndReturn(run func(domain.MatchTrigger)) *MockMatchRepository_StartMatch_Call {
 	_c.Call.Return(run)
 	return _c
 }

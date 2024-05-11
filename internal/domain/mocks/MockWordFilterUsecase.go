@@ -339,41 +339,34 @@ func (_c *MockWordFilterUsecase_GetFilterByID_Call) RunAndReturn(run func(contex
 	return _c
 }
 
-// GetFilters provides a mock function with given fields: ctx, opts
-func (_m *MockWordFilterUsecase) GetFilters(ctx context.Context, opts domain.FiltersQueryFilter) ([]domain.Filter, int64, error) {
-	ret := _m.Called(ctx, opts)
+// GetFilters provides a mock function with given fields: ctx
+func (_m *MockWordFilterUsecase) GetFilters(ctx context.Context) ([]domain.Filter, error) {
+	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetFilters")
 	}
 
 	var r0 []domain.Filter
-	var r1 int64
-	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, domain.FiltersQueryFilter) ([]domain.Filter, int64, error)); ok {
-		return rf(ctx, opts)
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) ([]domain.Filter, error)); ok {
+		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, domain.FiltersQueryFilter) []domain.Filter); ok {
-		r0 = rf(ctx, opts)
+	if rf, ok := ret.Get(0).(func(context.Context) []domain.Filter); ok {
+		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]domain.Filter)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, domain.FiltersQueryFilter) int64); ok {
-		r1 = rf(ctx, opts)
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
 	} else {
-		r1 = ret.Get(1).(int64)
+		r1 = ret.Error(1)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, domain.FiltersQueryFilter) error); ok {
-		r2 = rf(ctx, opts)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
+	return r0, r1
 }
 
 // MockWordFilterUsecase_GetFilters_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetFilters'
@@ -383,24 +376,23 @@ type MockWordFilterUsecase_GetFilters_Call struct {
 
 // GetFilters is a helper method to define mock.On call
 //   - ctx context.Context
-//   - opts domain.FiltersQueryFilter
-func (_e *MockWordFilterUsecase_Expecter) GetFilters(ctx interface{}, opts interface{}) *MockWordFilterUsecase_GetFilters_Call {
-	return &MockWordFilterUsecase_GetFilters_Call{Call: _e.mock.On("GetFilters", ctx, opts)}
+func (_e *MockWordFilterUsecase_Expecter) GetFilters(ctx interface{}) *MockWordFilterUsecase_GetFilters_Call {
+	return &MockWordFilterUsecase_GetFilters_Call{Call: _e.mock.On("GetFilters", ctx)}
 }
 
-func (_c *MockWordFilterUsecase_GetFilters_Call) Run(run func(ctx context.Context, opts domain.FiltersQueryFilter)) *MockWordFilterUsecase_GetFilters_Call {
+func (_c *MockWordFilterUsecase_GetFilters_Call) Run(run func(ctx context.Context)) *MockWordFilterUsecase_GetFilters_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(domain.FiltersQueryFilter))
+		run(args[0].(context.Context))
 	})
 	return _c
 }
 
-func (_c *MockWordFilterUsecase_GetFilters_Call) Return(_a0 []domain.Filter, _a1 int64, _a2 error) *MockWordFilterUsecase_GetFilters_Call {
-	_c.Call.Return(_a0, _a1, _a2)
+func (_c *MockWordFilterUsecase_GetFilters_Call) Return(_a0 []domain.Filter, _a1 error) *MockWordFilterUsecase_GetFilters_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockWordFilterUsecase_GetFilters_Call) RunAndReturn(run func(context.Context, domain.FiltersQueryFilter) ([]domain.Filter, int64, error)) *MockWordFilterUsecase_GetFilters_Call {
+func (_c *MockWordFilterUsecase_GetFilters_Call) RunAndReturn(run func(context.Context) ([]domain.Filter, error)) *MockWordFilterUsecase_GetFilters_Call {
 	_c.Call.Return(run)
 	return _c
 }

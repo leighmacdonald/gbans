@@ -188,7 +188,7 @@ func (_c *MockChatRepository_GetPersonMessageContext_Call) RunAndReturn(run func
 }
 
 // QueryChatHistory provides a mock function with given fields: ctx, filters
-func (_m *MockChatRepository) QueryChatHistory(ctx context.Context, filters domain.ChatHistoryQueryFilter) ([]domain.QueryChatHistoryResult, int64, error) {
+func (_m *MockChatRepository) QueryChatHistory(ctx context.Context, filters domain.ChatHistoryQueryFilter) ([]domain.QueryChatHistoryResult, error) {
 	ret := _m.Called(ctx, filters)
 
 	if len(ret) == 0 {
@@ -196,9 +196,8 @@ func (_m *MockChatRepository) QueryChatHistory(ctx context.Context, filters doma
 	}
 
 	var r0 []domain.QueryChatHistoryResult
-	var r1 int64
-	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, domain.ChatHistoryQueryFilter) ([]domain.QueryChatHistoryResult, int64, error)); ok {
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, domain.ChatHistoryQueryFilter) ([]domain.QueryChatHistoryResult, error)); ok {
 		return rf(ctx, filters)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, domain.ChatHistoryQueryFilter) []domain.QueryChatHistoryResult); ok {
@@ -209,19 +208,13 @@ func (_m *MockChatRepository) QueryChatHistory(ctx context.Context, filters doma
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, domain.ChatHistoryQueryFilter) int64); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, domain.ChatHistoryQueryFilter) error); ok {
 		r1 = rf(ctx, filters)
 	} else {
-		r1 = ret.Get(1).(int64)
+		r1 = ret.Error(1)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, domain.ChatHistoryQueryFilter) error); ok {
-		r2 = rf(ctx, filters)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
+	return r0, r1
 }
 
 // MockChatRepository_QueryChatHistory_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'QueryChatHistory'
@@ -243,12 +236,45 @@ func (_c *MockChatRepository_QueryChatHistory_Call) Run(run func(ctx context.Con
 	return _c
 }
 
-func (_c *MockChatRepository_QueryChatHistory_Call) Return(_a0 []domain.QueryChatHistoryResult, _a1 int64, _a2 error) *MockChatRepository_QueryChatHistory_Call {
-	_c.Call.Return(_a0, _a1, _a2)
+func (_c *MockChatRepository_QueryChatHistory_Call) Return(_a0 []domain.QueryChatHistoryResult, _a1 error) *MockChatRepository_QueryChatHistory_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockChatRepository_QueryChatHistory_Call) RunAndReturn(run func(context.Context, domain.ChatHistoryQueryFilter) ([]domain.QueryChatHistoryResult, int64, error)) *MockChatRepository_QueryChatHistory_Call {
+func (_c *MockChatRepository_QueryChatHistory_Call) RunAndReturn(run func(context.Context, domain.ChatHistoryQueryFilter) ([]domain.QueryChatHistoryResult, error)) *MockChatRepository_QueryChatHistory_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Start provides a mock function with given fields: ctx
+func (_m *MockChatRepository) Start(ctx context.Context) {
+	_m.Called(ctx)
+}
+
+// MockChatRepository_Start_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Start'
+type MockChatRepository_Start_Call struct {
+	*mock.Call
+}
+
+// Start is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockChatRepository_Expecter) Start(ctx interface{}) *MockChatRepository_Start_Call {
+	return &MockChatRepository_Start_Call{Call: _e.mock.On("Start", ctx)}
+}
+
+func (_c *MockChatRepository_Start_Call) Run(run func(ctx context.Context)) *MockChatRepository_Start_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockChatRepository_Start_Call) Return() *MockChatRepository_Start_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockChatRepository_Start_Call) RunAndReturn(run func(context.Context)) *MockChatRepository_Start_Call {
 	_c.Call.Return(run)
 	return _c
 }

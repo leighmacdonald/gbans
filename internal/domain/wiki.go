@@ -5,8 +5,6 @@ import (
 	"time"
 )
 
-const unknownMediaTag = "__unknown__"
-
 type WikiRepository interface {
 	GetWikiPageBySlug(ctx context.Context, slug string) (WikiPage, error)
 	DeleteWikiPageBySlug(ctx context.Context, slug string) error

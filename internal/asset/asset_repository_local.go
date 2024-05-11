@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"path"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -41,16 +43,20 @@ func (l localRepository) Put(ctx context.Context, asset domain.Asset, body io.Re
 
 	file, errFile := os.Create(outPath)
 	if errFile != nil {
-		return domain.Asset{}, errFile
+		return domain.Asset{}, errors.Join(errFile, domain.ErrCreateAddFile)
 	}
 
-	defer file.Close()
+	defer func() {
+		if errClose := file.Close(); errClose != nil {
+			slog.Error("failed to close asset file", log.ErrAttr(errClose))
+		}
+	}()
 
 	_, _ = body.Seek(0, 0)
 
 	_, errWrite := io.Copy(file, body)
 	if errWrite != nil {
-		return domain.Asset{}, errWrite
+		return domain.Asset{}, errors.Join(errWrite, domain.ErrCopyFileContent)
 	}
 
 	if errSave := l.saveAssetToDB(ctx, asset); errSave != nil {
@@ -82,7 +88,7 @@ func (l localRepository) Delete(ctx context.Context, assetID uuid.UUID) error {
 	}
 
 	if errRemove := os.Remove(assetPath); errRemove != nil {
-		return errRemove
+		return errors.Join(errRemove, domain.ErrDeleteAssetFile)
 	}
 
 	return nil
@@ -95,7 +101,7 @@ func (l localRepository) Init(_ context.Context) error {
 	}
 
 	if errDir := os.MkdirAll(rootPath, 0o770); errDir != nil {
-		return errors.Join(errDir, fmt.Errorf("failed to create asset store path: %s", rootPath))
+		return errors.Join(errDir, fmt.Errorf("%w: %s", domain.ErrCreateAssetPath, rootPath))
 	}
 
 	return nil
@@ -114,7 +120,7 @@ func (l localRepository) Get(ctx context.Context, assetID uuid.UUID) (domain.Ass
 
 	reader, errReader := os.Open(assetPath)
 	if errReader != nil {
-		return domain.Asset{}, nil, errReader
+		return domain.Asset{}, nil, errors.Join(errReader, domain.ErrOpenFile)
 	}
 
 	return asset, reader, nil
@@ -132,13 +138,11 @@ func (l localRepository) genAssetPath(hash string) (string, error) {
 	fullPath := path.Join(root, firstLevel, secondLevel)
 
 	if err := os.MkdirAll(fullPath, 0o770); err != nil {
-		return "", err
+		return "", errors.Join(err, domain.ErrCreateAssetPath)
 	}
 
 	return path.Join(fullPath, hash), nil
 }
-
-var errWriteCount = errors.New("written byte count differs")
 
 func (l localRepository) getAssetByUUID(ctx context.Context, assetID uuid.UUID) (domain.Asset, error) {
 	query, args, errSQL := l.db.Builder().
@@ -157,7 +161,7 @@ func (l localRepository) getAssetByUUID(ctx context.Context, assetID uuid.UUID) 
 
 	if errScan := l.db.QueryRow(ctx, query, args...).
 		Scan(&asset.AssetID, &asset.Bucket, &authorID, &asset.MimeType, &asset.Name,
-			&asset.Size, &asset.CreatedOn, &asset.UpdatedOn); errScan != nil {
+			&asset.Size, &asset.Hash, &asset.CreatedOn, &asset.UpdatedOn); errScan != nil {
 		return domain.Asset{}, l.db.DBErr(errScan)
 	}
 
@@ -190,7 +194,7 @@ func (l localRepository) getAssetByHash(ctx context.Context, hash []byte) (domai
 
 	if errScan := l.db.QueryRow(ctx, query, args...).
 		Scan(&asset.AssetID, &asset.Bucket, &authorID, &asset.MimeType, &asset.Name,
-			&asset.Size, &asset.IsPrivate, &asset.CreatedOn, &asset.UpdatedOn); errScan != nil {
+			&asset.Size, &asset.Hash, &asset.IsPrivate, &asset.CreatedOn, &asset.UpdatedOn); errScan != nil {
 		return domain.Asset{}, l.db.DBErr(errScan)
 	}
 

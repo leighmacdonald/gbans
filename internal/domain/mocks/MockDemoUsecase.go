@@ -24,9 +24,9 @@ func (_m *MockDemoUsecase) EXPECT() *MockDemoUsecase_Expecter {
 	return &MockDemoUsecase_Expecter{mock: &_m.Mock}
 }
 
-// Create provides a mock function with given fields: ctx, name, content, demoName, serverID
-func (_m *MockDemoUsecase) Create(ctx context.Context, name string, content io.Reader, demoName string, serverID int) (*domain.DemoFile, error) {
-	ret := _m.Called(ctx, name, content, demoName, serverID)
+// Create provides a mock function with given fields: ctx, content, demoName, serverID
+func (_m *MockDemoUsecase) Create(ctx context.Context, content io.ReadSeeker, demoName string, serverID int) (*domain.DemoFile, error) {
+	ret := _m.Called(ctx, content, demoName, serverID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Create")
@@ -34,19 +34,19 @@ func (_m *MockDemoUsecase) Create(ctx context.Context, name string, content io.R
 
 	var r0 *domain.DemoFile
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, io.Reader, string, int) (*domain.DemoFile, error)); ok {
-		return rf(ctx, name, content, demoName, serverID)
+	if rf, ok := ret.Get(0).(func(context.Context, io.ReadSeeker, string, int) (*domain.DemoFile, error)); ok {
+		return rf(ctx, content, demoName, serverID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, io.Reader, string, int) *domain.DemoFile); ok {
-		r0 = rf(ctx, name, content, demoName, serverID)
+	if rf, ok := ret.Get(0).(func(context.Context, io.ReadSeeker, string, int) *domain.DemoFile); ok {
+		r0 = rf(ctx, content, demoName, serverID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*domain.DemoFile)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, io.Reader, string, int) error); ok {
-		r1 = rf(ctx, name, content, demoName, serverID)
+	if rf, ok := ret.Get(1).(func(context.Context, io.ReadSeeker, string, int) error); ok {
+		r1 = rf(ctx, content, demoName, serverID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -61,17 +61,16 @@ type MockDemoUsecase_Create_Call struct {
 
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
-//   - name string
-//   - content io.Reader
+//   - content io.ReadSeeker
 //   - demoName string
 //   - serverID int
-func (_e *MockDemoUsecase_Expecter) Create(ctx interface{}, name interface{}, content interface{}, demoName interface{}, serverID interface{}) *MockDemoUsecase_Create_Call {
-	return &MockDemoUsecase_Create_Call{Call: _e.mock.On("Create", ctx, name, content, demoName, serverID)}
+func (_e *MockDemoUsecase_Expecter) Create(ctx interface{}, content interface{}, demoName interface{}, serverID interface{}) *MockDemoUsecase_Create_Call {
+	return &MockDemoUsecase_Create_Call{Call: _e.mock.On("Create", ctx, content, demoName, serverID)}
 }
 
-func (_c *MockDemoUsecase_Create_Call) Run(run func(ctx context.Context, name string, content io.Reader, demoName string, serverID int)) *MockDemoUsecase_Create_Call {
+func (_c *MockDemoUsecase_Create_Call) Run(run func(ctx context.Context, content io.ReadSeeker, demoName string, serverID int)) *MockDemoUsecase_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(io.Reader), args[3].(string), args[4].(int))
+		run(args[0].(context.Context), args[1].(io.ReadSeeker), args[2].(string), args[3].(int))
 	})
 	return _c
 }
@@ -81,7 +80,7 @@ func (_c *MockDemoUsecase_Create_Call) Return(_a0 *domain.DemoFile, _a1 error) *
 	return _c
 }
 
-func (_c *MockDemoUsecase_Create_Call) RunAndReturn(run func(context.Context, string, io.Reader, string, int) (*domain.DemoFile, error)) *MockDemoUsecase_Create_Call {
+func (_c *MockDemoUsecase_Create_Call) RunAndReturn(run func(context.Context, io.ReadSeeker, string, int) (*domain.DemoFile, error)) *MockDemoUsecase_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -15,8 +15,6 @@ declare global {
             discord_client_id: string;
             discord_link_id: string;
             asset_url: string;
-            bucket_media: string;
-            bucket_demo: string;
             build_version: string;
             build_date: string;
             build_commit: string;

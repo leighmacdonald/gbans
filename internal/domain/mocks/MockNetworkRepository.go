@@ -12,6 +12,8 @@ import (
 
 	net "net"
 
+	netip "net/netip"
+
 	steamid "github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -75,22 +77,32 @@ func (_c *MockNetworkRepository_AddConnectionHistory_Call) RunAndReturn(run func
 	return _c
 }
 
-// GetASNRecordByIP provides a mock function with given fields: ctx, ipAddr, asnRecord
-func (_m *MockNetworkRepository) GetASNRecordByIP(ctx context.Context, ipAddr net.IP, asnRecord *ip2location.ASNRecord) error {
-	ret := _m.Called(ctx, ipAddr, asnRecord)
+// GetASNRecordByIP provides a mock function with given fields: ctx, ipAddr
+func (_m *MockNetworkRepository) GetASNRecordByIP(ctx context.Context, ipAddr netip.Addr) (domain.NetworkASN, error) {
+	ret := _m.Called(ctx, ipAddr)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetASNRecordByIP")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, net.IP, *ip2location.ASNRecord) error); ok {
-		r0 = rf(ctx, ipAddr, asnRecord)
+	var r0 domain.NetworkASN
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, netip.Addr) (domain.NetworkASN, error)); ok {
+		return rf(ctx, ipAddr)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, netip.Addr) domain.NetworkASN); ok {
+		r0 = rf(ctx, ipAddr)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(domain.NetworkASN)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, netip.Addr) error); ok {
+		r1 = rf(ctx, ipAddr)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // MockNetworkRepository_GetASNRecordByIP_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetASNRecordByIP'
@@ -100,47 +112,46 @@ type MockNetworkRepository_GetASNRecordByIP_Call struct {
 
 // GetASNRecordByIP is a helper method to define mock.On call
 //   - ctx context.Context
-//   - ipAddr net.IP
-//   - asnRecord *ip2location.ASNRecord
-func (_e *MockNetworkRepository_Expecter) GetASNRecordByIP(ctx interface{}, ipAddr interface{}, asnRecord interface{}) *MockNetworkRepository_GetASNRecordByIP_Call {
-	return &MockNetworkRepository_GetASNRecordByIP_Call{Call: _e.mock.On("GetASNRecordByIP", ctx, ipAddr, asnRecord)}
+//   - ipAddr netip.Addr
+func (_e *MockNetworkRepository_Expecter) GetASNRecordByIP(ctx interface{}, ipAddr interface{}) *MockNetworkRepository_GetASNRecordByIP_Call {
+	return &MockNetworkRepository_GetASNRecordByIP_Call{Call: _e.mock.On("GetASNRecordByIP", ctx, ipAddr)}
 }
 
-func (_c *MockNetworkRepository_GetASNRecordByIP_Call) Run(run func(ctx context.Context, ipAddr net.IP, asnRecord *ip2location.ASNRecord)) *MockNetworkRepository_GetASNRecordByIP_Call {
+func (_c *MockNetworkRepository_GetASNRecordByIP_Call) Run(run func(ctx context.Context, ipAddr netip.Addr)) *MockNetworkRepository_GetASNRecordByIP_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(net.IP), args[2].(*ip2location.ASNRecord))
+		run(args[0].(context.Context), args[1].(netip.Addr))
 	})
 	return _c
 }
 
-func (_c *MockNetworkRepository_GetASNRecordByIP_Call) Return(_a0 error) *MockNetworkRepository_GetASNRecordByIP_Call {
-	_c.Call.Return(_a0)
+func (_c *MockNetworkRepository_GetASNRecordByIP_Call) Return(_a0 domain.NetworkASN, _a1 error) *MockNetworkRepository_GetASNRecordByIP_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockNetworkRepository_GetASNRecordByIP_Call) RunAndReturn(run func(context.Context, net.IP, *ip2location.ASNRecord) error) *MockNetworkRepository_GetASNRecordByIP_Call {
+func (_c *MockNetworkRepository_GetASNRecordByIP_Call) RunAndReturn(run func(context.Context, netip.Addr) (domain.NetworkASN, error)) *MockNetworkRepository_GetASNRecordByIP_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetASNRecordsByNum provides a mock function with given fields: ctx, asNum
-func (_m *MockNetworkRepository) GetASNRecordsByNum(ctx context.Context, asNum int64) (ip2location.ASNRecords, error) {
+func (_m *MockNetworkRepository) GetASNRecordsByNum(ctx context.Context, asNum int64) ([]domain.NetworkASN, error) {
 	ret := _m.Called(ctx, asNum)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetASNRecordsByNum")
 	}
 
-	var r0 ip2location.ASNRecords
+	var r0 []domain.NetworkASN
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64) (ip2location.ASNRecords, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int64) ([]domain.NetworkASN, error)); ok {
 		return rf(ctx, asNum)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int64) ip2location.ASNRecords); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int64) []domain.NetworkASN); ok {
 		r0 = rf(ctx, asNum)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ip2location.ASNRecords)
+			r0 = ret.Get(0).([]domain.NetworkASN)
 		}
 	}
 
@@ -172,32 +183,42 @@ func (_c *MockNetworkRepository_GetASNRecordsByNum_Call) Run(run func(ctx contex
 	return _c
 }
 
-func (_c *MockNetworkRepository_GetASNRecordsByNum_Call) Return(_a0 ip2location.ASNRecords, _a1 error) *MockNetworkRepository_GetASNRecordsByNum_Call {
+func (_c *MockNetworkRepository_GetASNRecordsByNum_Call) Return(_a0 []domain.NetworkASN, _a1 error) *MockNetworkRepository_GetASNRecordsByNum_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockNetworkRepository_GetASNRecordsByNum_Call) RunAndReturn(run func(context.Context, int64) (ip2location.ASNRecords, error)) *MockNetworkRepository_GetASNRecordsByNum_Call {
+func (_c *MockNetworkRepository_GetASNRecordsByNum_Call) RunAndReturn(run func(context.Context, int64) ([]domain.NetworkASN, error)) *MockNetworkRepository_GetASNRecordsByNum_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetLocationRecord provides a mock function with given fields: ctx, ipAddr, record
-func (_m *MockNetworkRepository) GetLocationRecord(ctx context.Context, ipAddr net.IP, record *ip2location.LocationRecord) error {
-	ret := _m.Called(ctx, ipAddr, record)
+// GetLocationRecord provides a mock function with given fields: ctx, ipAddr
+func (_m *MockNetworkRepository) GetLocationRecord(ctx context.Context, ipAddr netip.Addr) (domain.NetworkLocation, error) {
+	ret := _m.Called(ctx, ipAddr)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetLocationRecord")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, net.IP, *ip2location.LocationRecord) error); ok {
-		r0 = rf(ctx, ipAddr, record)
+	var r0 domain.NetworkLocation
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, netip.Addr) (domain.NetworkLocation, error)); ok {
+		return rf(ctx, ipAddr)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, netip.Addr) domain.NetworkLocation); ok {
+		r0 = rf(ctx, ipAddr)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(domain.NetworkLocation)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, netip.Addr) error); ok {
+		r1 = rf(ctx, ipAddr)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // MockNetworkRepository_GetLocationRecord_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetLocationRecord'
@@ -207,25 +228,24 @@ type MockNetworkRepository_GetLocationRecord_Call struct {
 
 // GetLocationRecord is a helper method to define mock.On call
 //   - ctx context.Context
-//   - ipAddr net.IP
-//   - record *ip2location.LocationRecord
-func (_e *MockNetworkRepository_Expecter) GetLocationRecord(ctx interface{}, ipAddr interface{}, record interface{}) *MockNetworkRepository_GetLocationRecord_Call {
-	return &MockNetworkRepository_GetLocationRecord_Call{Call: _e.mock.On("GetLocationRecord", ctx, ipAddr, record)}
+//   - ipAddr netip.Addr
+func (_e *MockNetworkRepository_Expecter) GetLocationRecord(ctx interface{}, ipAddr interface{}) *MockNetworkRepository_GetLocationRecord_Call {
+	return &MockNetworkRepository_GetLocationRecord_Call{Call: _e.mock.On("GetLocationRecord", ctx, ipAddr)}
 }
 
-func (_c *MockNetworkRepository_GetLocationRecord_Call) Run(run func(ctx context.Context, ipAddr net.IP, record *ip2location.LocationRecord)) *MockNetworkRepository_GetLocationRecord_Call {
+func (_c *MockNetworkRepository_GetLocationRecord_Call) Run(run func(ctx context.Context, ipAddr netip.Addr)) *MockNetworkRepository_GetLocationRecord_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(net.IP), args[2].(*ip2location.LocationRecord))
+		run(args[0].(context.Context), args[1].(netip.Addr))
 	})
 	return _c
 }
 
-func (_c *MockNetworkRepository_GetLocationRecord_Call) Return(_a0 error) *MockNetworkRepository_GetLocationRecord_Call {
-	_c.Call.Return(_a0)
+func (_c *MockNetworkRepository_GetLocationRecord_Call) Return(_a0 domain.NetworkLocation, _a1 error) *MockNetworkRepository_GetLocationRecord_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockNetworkRepository_GetLocationRecord_Call) RunAndReturn(run func(context.Context, net.IP, *ip2location.LocationRecord) error) *MockNetworkRepository_GetLocationRecord_Call {
+func (_c *MockNetworkRepository_GetLocationRecord_Call) RunAndReturn(run func(context.Context, netip.Addr) (domain.NetworkLocation, error)) *MockNetworkRepository_GetLocationRecord_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -339,22 +359,32 @@ func (_c *MockNetworkRepository_GetPlayerMostRecentIP_Call) RunAndReturn(run fun
 	return _c
 }
 
-// GetProxyRecord provides a mock function with given fields: ctx, ipAddr, proxyRecord
-func (_m *MockNetworkRepository) GetProxyRecord(ctx context.Context, ipAddr net.IP, proxyRecord *ip2location.ProxyRecord) error {
-	ret := _m.Called(ctx, ipAddr, proxyRecord)
+// GetProxyRecord provides a mock function with given fields: ctx, ipAddr
+func (_m *MockNetworkRepository) GetProxyRecord(ctx context.Context, ipAddr netip.Addr) (domain.NetworkProxy, error) {
+	ret := _m.Called(ctx, ipAddr)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetProxyRecord")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, net.IP, *ip2location.ProxyRecord) error); ok {
-		r0 = rf(ctx, ipAddr, proxyRecord)
+	var r0 domain.NetworkProxy
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, netip.Addr) (domain.NetworkProxy, error)); ok {
+		return rf(ctx, ipAddr)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, netip.Addr) domain.NetworkProxy); ok {
+		r0 = rf(ctx, ipAddr)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(domain.NetworkProxy)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, netip.Addr) error); ok {
+		r1 = rf(ctx, ipAddr)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // MockNetworkRepository_GetProxyRecord_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetProxyRecord'
@@ -364,84 +394,24 @@ type MockNetworkRepository_GetProxyRecord_Call struct {
 
 // GetProxyRecord is a helper method to define mock.On call
 //   - ctx context.Context
-//   - ipAddr net.IP
-//   - proxyRecord *ip2location.ProxyRecord
-func (_e *MockNetworkRepository_Expecter) GetProxyRecord(ctx interface{}, ipAddr interface{}, proxyRecord interface{}) *MockNetworkRepository_GetProxyRecord_Call {
-	return &MockNetworkRepository_GetProxyRecord_Call{Call: _e.mock.On("GetProxyRecord", ctx, ipAddr, proxyRecord)}
+//   - ipAddr netip.Addr
+func (_e *MockNetworkRepository_Expecter) GetProxyRecord(ctx interface{}, ipAddr interface{}) *MockNetworkRepository_GetProxyRecord_Call {
+	return &MockNetworkRepository_GetProxyRecord_Call{Call: _e.mock.On("GetProxyRecord", ctx, ipAddr)}
 }
 
-func (_c *MockNetworkRepository_GetProxyRecord_Call) Run(run func(ctx context.Context, ipAddr net.IP, proxyRecord *ip2location.ProxyRecord)) *MockNetworkRepository_GetProxyRecord_Call {
+func (_c *MockNetworkRepository_GetProxyRecord_Call) Run(run func(ctx context.Context, ipAddr netip.Addr)) *MockNetworkRepository_GetProxyRecord_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(net.IP), args[2].(*ip2location.ProxyRecord))
+		run(args[0].(context.Context), args[1].(netip.Addr))
 	})
 	return _c
 }
 
-func (_c *MockNetworkRepository_GetProxyRecord_Call) Return(_a0 error) *MockNetworkRepository_GetProxyRecord_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockNetworkRepository_GetProxyRecord_Call) RunAndReturn(run func(context.Context, net.IP, *ip2location.ProxyRecord) error) *MockNetworkRepository_GetProxyRecord_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetSteamIDsAtIP provides a mock function with given fields: ctx, ipNet
-func (_m *MockNetworkRepository) GetSteamIDsAtIP(ctx context.Context, ipNet *net.IPNet) (steamid.Collection, error) {
-	ret := _m.Called(ctx, ipNet)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetSteamIDsAtIP")
-	}
-
-	var r0 steamid.Collection
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *net.IPNet) (steamid.Collection, error)); ok {
-		return rf(ctx, ipNet)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *net.IPNet) steamid.Collection); ok {
-		r0 = rf(ctx, ipNet)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(steamid.Collection)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *net.IPNet) error); ok {
-		r1 = rf(ctx, ipNet)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockNetworkRepository_GetSteamIDsAtIP_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSteamIDsAtIP'
-type MockNetworkRepository_GetSteamIDsAtIP_Call struct {
-	*mock.Call
-}
-
-// GetSteamIDsAtIP is a helper method to define mock.On call
-//   - ctx context.Context
-//   - ipNet *net.IPNet
-func (_e *MockNetworkRepository_Expecter) GetSteamIDsAtIP(ctx interface{}, ipNet interface{}) *MockNetworkRepository_GetSteamIDsAtIP_Call {
-	return &MockNetworkRepository_GetSteamIDsAtIP_Call{Call: _e.mock.On("GetSteamIDsAtIP", ctx, ipNet)}
-}
-
-func (_c *MockNetworkRepository_GetSteamIDsAtIP_Call) Run(run func(ctx context.Context, ipNet *net.IPNet)) *MockNetworkRepository_GetSteamIDsAtIP_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*net.IPNet))
-	})
-	return _c
-}
-
-func (_c *MockNetworkRepository_GetSteamIDsAtIP_Call) Return(_a0 steamid.Collection, _a1 error) *MockNetworkRepository_GetSteamIDsAtIP_Call {
+func (_c *MockNetworkRepository_GetProxyRecord_Call) Return(_a0 domain.NetworkProxy, _a1 error) *MockNetworkRepository_GetProxyRecord_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockNetworkRepository_GetSteamIDsAtIP_Call) RunAndReturn(run func(context.Context, *net.IPNet) (steamid.Collection, error)) *MockNetworkRepository_GetSteamIDsAtIP_Call {
+func (_c *MockNetworkRepository_GetProxyRecord_Call) RunAndReturn(run func(context.Context, netip.Addr) (domain.NetworkProxy, error)) *MockNetworkRepository_GetProxyRecord_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -493,12 +463,12 @@ func (_c *MockNetworkRepository_InsertBlockListData_Call) RunAndReturn(run func(
 	return _c
 }
 
-// QueryConnectionHistory provides a mock function with given fields: ctx, opts
-func (_m *MockNetworkRepository) QueryConnectionHistory(ctx context.Context, opts domain.ConnectionHistoryQuery) ([]domain.PersonConnection, int64, error) {
+// QueryConnections provides a mock function with given fields: ctx, opts
+func (_m *MockNetworkRepository) QueryConnections(ctx context.Context, opts domain.ConnectionHistoryQuery) ([]domain.PersonConnection, int64, error) {
 	ret := _m.Called(ctx, opts)
 
 	if len(ret) == 0 {
-		panic("no return value specified for QueryConnectionHistory")
+		panic("no return value specified for QueryConnections")
 	}
 
 	var r0 []domain.PersonConnection
@@ -530,31 +500,31 @@ func (_m *MockNetworkRepository) QueryConnectionHistory(ctx context.Context, opt
 	return r0, r1, r2
 }
 
-// MockNetworkRepository_QueryConnectionHistory_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'QueryConnectionHistory'
-type MockNetworkRepository_QueryConnectionHistory_Call struct {
+// MockNetworkRepository_QueryConnections_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'QueryConnections'
+type MockNetworkRepository_QueryConnections_Call struct {
 	*mock.Call
 }
 
-// QueryConnectionHistory is a helper method to define mock.On call
+// QueryConnections is a helper method to define mock.On call
 //   - ctx context.Context
 //   - opts domain.ConnectionHistoryQuery
-func (_e *MockNetworkRepository_Expecter) QueryConnectionHistory(ctx interface{}, opts interface{}) *MockNetworkRepository_QueryConnectionHistory_Call {
-	return &MockNetworkRepository_QueryConnectionHistory_Call{Call: _e.mock.On("QueryConnectionHistory", ctx, opts)}
+func (_e *MockNetworkRepository_Expecter) QueryConnections(ctx interface{}, opts interface{}) *MockNetworkRepository_QueryConnections_Call {
+	return &MockNetworkRepository_QueryConnections_Call{Call: _e.mock.On("QueryConnections", ctx, opts)}
 }
 
-func (_c *MockNetworkRepository_QueryConnectionHistory_Call) Run(run func(ctx context.Context, opts domain.ConnectionHistoryQuery)) *MockNetworkRepository_QueryConnectionHistory_Call {
+func (_c *MockNetworkRepository_QueryConnections_Call) Run(run func(ctx context.Context, opts domain.ConnectionHistoryQuery)) *MockNetworkRepository_QueryConnections_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(domain.ConnectionHistoryQuery))
 	})
 	return _c
 }
 
-func (_c *MockNetworkRepository_QueryConnectionHistory_Call) Return(_a0 []domain.PersonConnection, _a1 int64, _a2 error) *MockNetworkRepository_QueryConnectionHistory_Call {
+func (_c *MockNetworkRepository_QueryConnections_Call) Return(_a0 []domain.PersonConnection, _a1 int64, _a2 error) *MockNetworkRepository_QueryConnections_Call {
 	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *MockNetworkRepository_QueryConnectionHistory_Call) RunAndReturn(run func(context.Context, domain.ConnectionHistoryQuery) ([]domain.PersonConnection, int64, error)) *MockNetworkRepository_QueryConnectionHistory_Call {
+func (_c *MockNetworkRepository_QueryConnections_Call) RunAndReturn(run func(context.Context, domain.ConnectionHistoryQuery) ([]domain.PersonConnection, int64, error)) *MockNetworkRepository_QueryConnections_Call {
 	_c.Call.Return(run)
 	return _c
 }
