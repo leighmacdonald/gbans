@@ -30,6 +30,65 @@ func (_m *MockMatchUsecase) EXPECT() *MockMatchUsecase_Expecter {
 	return &MockMatchUsecase_Expecter{mock: &_m.Mock}
 }
 
+// EndMatch provides a mock function with given fields: ctx, serverID
+func (_m *MockMatchUsecase) EndMatch(ctx context.Context, serverID int) (uuid.UUID, error) {
+	ret := _m.Called(ctx, serverID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for EndMatch")
+	}
+
+	var r0 uuid.UUID
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int) (uuid.UUID, error)); ok {
+		return rf(ctx, serverID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int) uuid.UUID); ok {
+		r0 = rf(ctx, serverID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(uuid.UUID)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
+		r1 = rf(ctx, serverID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockMatchUsecase_EndMatch_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EndMatch'
+type MockMatchUsecase_EndMatch_Call struct {
+	*mock.Call
+}
+
+// EndMatch is a helper method to define mock.On call
+//   - ctx context.Context
+//   - serverID int
+func (_e *MockMatchUsecase_Expecter) EndMatch(ctx interface{}, serverID interface{}) *MockMatchUsecase_EndMatch_Call {
+	return &MockMatchUsecase_EndMatch_Call{Call: _e.mock.On("EndMatch", ctx, serverID)}
+}
+
+func (_c *MockMatchUsecase_EndMatch_Call) Run(run func(ctx context.Context, serverID int)) *MockMatchUsecase_EndMatch_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(int))
+	})
+	return _c
+}
+
+func (_c *MockMatchUsecase_EndMatch_Call) Return(_a0 uuid.UUID, _a1 error) *MockMatchUsecase_EndMatch_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockMatchUsecase_EndMatch_Call) RunAndReturn(run func(context.Context, int) (uuid.UUID, error)) *MockMatchUsecase_EndMatch_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetMapUsageStats provides a mock function with given fields: ctx
 func (_m *MockMatchUsecase) GetMapUsageStats(ctx context.Context) ([]domain.MapUseDetail, error) {
 	ret := _m.Called(ctx)
@@ -771,35 +830,62 @@ func (_c *MockMatchUsecase_SaveWeapon_Call) RunAndReturn(run func(context.Contex
 	return _c
 }
 
-// Start provides a mock function with given fields: ctx
-func (_m *MockMatchUsecase) Start(ctx context.Context) {
-	_m.Called(ctx)
+// StartMatch provides a mock function with given fields: server, mapName, demoName
+func (_m *MockMatchUsecase) StartMatch(server domain.Server, mapName string, demoName string) (uuid.UUID, error) {
+	ret := _m.Called(server, mapName, demoName)
+
+	if len(ret) == 0 {
+		panic("no return value specified for StartMatch")
+	}
+
+	var r0 uuid.UUID
+	var r1 error
+	if rf, ok := ret.Get(0).(func(domain.Server, string, string) (uuid.UUID, error)); ok {
+		return rf(server, mapName, demoName)
+	}
+	if rf, ok := ret.Get(0).(func(domain.Server, string, string) uuid.UUID); ok {
+		r0 = rf(server, mapName, demoName)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(uuid.UUID)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(domain.Server, string, string) error); ok {
+		r1 = rf(server, mapName, demoName)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
-// MockMatchUsecase_Start_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Start'
-type MockMatchUsecase_Start_Call struct {
+// MockMatchUsecase_StartMatch_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'StartMatch'
+type MockMatchUsecase_StartMatch_Call struct {
 	*mock.Call
 }
 
-// Start is a helper method to define mock.On call
-//   - ctx context.Context
-func (_e *MockMatchUsecase_Expecter) Start(ctx interface{}) *MockMatchUsecase_Start_Call {
-	return &MockMatchUsecase_Start_Call{Call: _e.mock.On("Start", ctx)}
+// StartMatch is a helper method to define mock.On call
+//   - server domain.Server
+//   - mapName string
+//   - demoName string
+func (_e *MockMatchUsecase_Expecter) StartMatch(server interface{}, mapName interface{}, demoName interface{}) *MockMatchUsecase_StartMatch_Call {
+	return &MockMatchUsecase_StartMatch_Call{Call: _e.mock.On("StartMatch", server, mapName, demoName)}
 }
 
-func (_c *MockMatchUsecase_Start_Call) Run(run func(ctx context.Context)) *MockMatchUsecase_Start_Call {
+func (_c *MockMatchUsecase_StartMatch_Call) Run(run func(server domain.Server, mapName string, demoName string)) *MockMatchUsecase_StartMatch_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
+		run(args[0].(domain.Server), args[1].(string), args[2].(string))
 	})
 	return _c
 }
 
-func (_c *MockMatchUsecase_Start_Call) Return() *MockMatchUsecase_Start_Call {
-	_c.Call.Return()
+func (_c *MockMatchUsecase_StartMatch_Call) Return(_a0 uuid.UUID, _a1 error) *MockMatchUsecase_StartMatch_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockMatchUsecase_Start_Call) RunAndReturn(run func(context.Context)) *MockMatchUsecase_Start_Call {
+func (_c *MockMatchUsecase_StartMatch_Call) RunAndReturn(run func(domain.Server, string, string) (uuid.UUID, error)) *MockMatchUsecase_StartMatch_Call {
 	_c.Call.Return(run)
 	return _c
 }

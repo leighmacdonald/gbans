@@ -187,7 +187,7 @@ func (_c *MockChatUsecase_GetPersonMessageContext_Call) RunAndReturn(run func(co
 }
 
 // QueryChatHistory provides a mock function with given fields: ctx, user, filters
-func (_m *MockChatUsecase) QueryChatHistory(ctx context.Context, user domain.PersonInfo, filters domain.ChatHistoryQueryFilter) ([]domain.QueryChatHistoryResult, int64, error) {
+func (_m *MockChatUsecase) QueryChatHistory(ctx context.Context, user domain.PersonInfo, filters domain.ChatHistoryQueryFilter) ([]domain.QueryChatHistoryResult, error) {
 	ret := _m.Called(ctx, user, filters)
 
 	if len(ret) == 0 {
@@ -195,9 +195,8 @@ func (_m *MockChatUsecase) QueryChatHistory(ctx context.Context, user domain.Per
 	}
 
 	var r0 []domain.QueryChatHistoryResult
-	var r1 int64
-	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, domain.PersonInfo, domain.ChatHistoryQueryFilter) ([]domain.QueryChatHistoryResult, int64, error)); ok {
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, domain.PersonInfo, domain.ChatHistoryQueryFilter) ([]domain.QueryChatHistoryResult, error)); ok {
 		return rf(ctx, user, filters)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, domain.PersonInfo, domain.ChatHistoryQueryFilter) []domain.QueryChatHistoryResult); ok {
@@ -208,19 +207,13 @@ func (_m *MockChatUsecase) QueryChatHistory(ctx context.Context, user domain.Per
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, domain.PersonInfo, domain.ChatHistoryQueryFilter) int64); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, domain.PersonInfo, domain.ChatHistoryQueryFilter) error); ok {
 		r1 = rf(ctx, user, filters)
 	} else {
-		r1 = ret.Get(1).(int64)
+		r1 = ret.Error(1)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, domain.PersonInfo, domain.ChatHistoryQueryFilter) error); ok {
-		r2 = rf(ctx, user, filters)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
+	return r0, r1
 }
 
 // MockChatUsecase_QueryChatHistory_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'QueryChatHistory'
@@ -243,12 +236,12 @@ func (_c *MockChatUsecase_QueryChatHistory_Call) Run(run func(ctx context.Contex
 	return _c
 }
 
-func (_c *MockChatUsecase_QueryChatHistory_Call) Return(_a0 []domain.QueryChatHistoryResult, _a1 int64, _a2 error) *MockChatUsecase_QueryChatHistory_Call {
-	_c.Call.Return(_a0, _a1, _a2)
+func (_c *MockChatUsecase_QueryChatHistory_Call) Return(_a0 []domain.QueryChatHistoryResult, _a1 error) *MockChatUsecase_QueryChatHistory_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockChatUsecase_QueryChatHistory_Call) RunAndReturn(run func(context.Context, domain.PersonInfo, domain.ChatHistoryQueryFilter) ([]domain.QueryChatHistoryResult, int64, error)) *MockChatUsecase_QueryChatHistory_Call {
+func (_c *MockChatUsecase_QueryChatHistory_Call) RunAndReturn(run func(context.Context, domain.PersonInfo, domain.ChatHistoryQueryFilter) ([]domain.QueryChatHistoryResult, error)) *MockChatUsecase_QueryChatHistory_Call {
 	_c.Call.Return(run)
 	return _c
 }

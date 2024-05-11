@@ -1,4 +1,4 @@
-import { useState, SyntheticEvent } from 'react';
+import { useState, SyntheticEvent, useCallback } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import EditIcon from '@mui/icons-material/Edit';
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
@@ -16,7 +16,8 @@ import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
-import { UserUploadedFile } from '../../api/media.ts';
+import { Asset } from '../../api/media.ts';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { MarkDownRenderer } from '../MarkdownRenderer.tsx';
 import { TabPanel } from '../TabPanel.tsx';
 import { ModalFileUpload } from '../modal';
@@ -28,31 +29,30 @@ type MDBodyFieldProps = {
 } & FieldProps;
 
 export const MarkdownField = ({ state, handleChange, handleBlur, minHeight, fileUpload = true }: MDBodyFieldProps) => {
+    const { sendFlash } = useUserFlashCtx();
     const [setTabValue, setTabSetTabValue] = useState(0);
     const extraButtons = false;
+    const [cursorPos, setCursorPos] = useState(0);
 
     const handleTabChange = (_: SyntheticEvent, newValue: number) => setTabSetTabValue(newValue);
 
-    // const onFileSave = useCallback(
-    //     async (v: UserUploadedFile, onSuccess?: () => void) => {
-    //         try {
-    //             const resp = await apiSaveMedia(v);
-    //             if (!resp.author_id) {
-    //                 return;
-    //             }
-    //             const newBody =
-    //                 values.body_md.slice(0, cursorPos) +
-    //                 `![${resp.asset.name}](media://${resp.asset.asset_id})` +
-    //                 values.body_md.slice(cursorPos);
-    //             await setFieldValue('body_md', newBody);
-    //             onSuccess && onSuccess();
-    //         } catch (e) {
-    //             logErr(e);
-    //             sendFlash('error', 'Failed to save media');
-    //         }
-    //     },
-    //     [cursorPos, sendFlash, setFieldValue, values.body_md]
-    // );
+    const onFileSave = useCallback(
+        async (v: Asset, onSuccess?: () => void) => {
+            try {
+                const newBody =
+                    state.value.slice(0, cursorPos) +
+                    `![${v.name}](media://${v.asset_id})` +
+                    state.value.slice(cursorPos);
+                handleChange(() => {
+                    return newBody;
+                });
+                onSuccess && onSuccess();
+            } catch (e) {
+                sendFlash('error', `Failed to save media: ${e}`);
+            }
+        },
+        [cursorPos, handleChange, sendFlash, state.value]
+    );
 
     return (
         <Stack>
@@ -84,8 +84,8 @@ export const MarkdownField = ({ state, handleChange, handleBlur, minHeight, file
                                         component="span"
                                         variant={'text'}
                                         onClick={async () => {
-                                            await NiceModal.show<UserUploadedFile>(ModalFileUpload, {});
-                                            //await onFileSave(resp);
+                                            const asset = await NiceModal.show<Asset>(ModalFileUpload, {});
+                                            await onFileSave(asset);
                                         }}
                                         startIcon={<ImageIcon />}
                                     >
@@ -133,13 +133,11 @@ export const MarkdownField = ({ state, handleChange, handleBlur, minHeight, file
                             value={state.value}
                             error={state.meta.touchedErrors.length > 0}
                             helperText={state.meta.touchedErrors}
-                            onChange={(e) => handleChange(e.target.value)}
+                            onChange={(e) => {
+                                setCursorPos(e.target.selectionEnd ?? 0);
+                                handleChange(e.target.value);
+                            }}
                             onBlur={handleBlur}
-                            // onChange={async (event) => {
-                            //     const body = event.target.value;
-                            //     setCursorPos(event.target.selectionEnd ?? 0);
-                            //     await setFieldValue('body_md', body);
-                            // }}
                         />
                     </>
                 </Stack>

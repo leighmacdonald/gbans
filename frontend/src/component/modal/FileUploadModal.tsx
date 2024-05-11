@@ -97,8 +97,6 @@ export const FileUploadModal = NiceModal.create((): JSX.Element => {
                     setUploadInProgress(false);
                 }; // data url!
                 reader.readAsArrayBuffer(blob);
-            } else {
-                sendFlash('error', 'Invalid paste type, must copy file/image');
             }
         }
     }, []);
@@ -270,5 +268,3 @@ export const FileUploadModal = NiceModal.create((): JSX.Element => {
         </Dialog>
     );
 });
-
-export default FileUploadModal;

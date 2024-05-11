@@ -12,6 +12,8 @@ import (
 
 	net "net"
 
+	netip "net/netip"
+
 	steamid "github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -167,72 +169,24 @@ func (_c *MockNetworkUsecase_AddWhitelist_Call) RunAndReturn(run func(int, *net.
 	return _c
 }
 
-// GetASNRecordByIP provides a mock function with given fields: ctx, ipAddr, asnRecord
-func (_m *MockNetworkUsecase) GetASNRecordByIP(ctx context.Context, ipAddr net.IP, asnRecord *ip2location.ASNRecord) error {
-	ret := _m.Called(ctx, ipAddr, asnRecord)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetASNRecordByIP")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, net.IP, *ip2location.ASNRecord) error); ok {
-		r0 = rf(ctx, ipAddr, asnRecord)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// MockNetworkUsecase_GetASNRecordByIP_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetASNRecordByIP'
-type MockNetworkUsecase_GetASNRecordByIP_Call struct {
-	*mock.Call
-}
-
-// GetASNRecordByIP is a helper method to define mock.On call
-//   - ctx context.Context
-//   - ipAddr net.IP
-//   - asnRecord *ip2location.ASNRecord
-func (_e *MockNetworkUsecase_Expecter) GetASNRecordByIP(ctx interface{}, ipAddr interface{}, asnRecord interface{}) *MockNetworkUsecase_GetASNRecordByIP_Call {
-	return &MockNetworkUsecase_GetASNRecordByIP_Call{Call: _e.mock.On("GetASNRecordByIP", ctx, ipAddr, asnRecord)}
-}
-
-func (_c *MockNetworkUsecase_GetASNRecordByIP_Call) Run(run func(ctx context.Context, ipAddr net.IP, asnRecord *ip2location.ASNRecord)) *MockNetworkUsecase_GetASNRecordByIP_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(net.IP), args[2].(*ip2location.ASNRecord))
-	})
-	return _c
-}
-
-func (_c *MockNetworkUsecase_GetASNRecordByIP_Call) Return(_a0 error) *MockNetworkUsecase_GetASNRecordByIP_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockNetworkUsecase_GetASNRecordByIP_Call) RunAndReturn(run func(context.Context, net.IP, *ip2location.ASNRecord) error) *MockNetworkUsecase_GetASNRecordByIP_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // GetASNRecordsByNum provides a mock function with given fields: ctx, asNum
-func (_m *MockNetworkUsecase) GetASNRecordsByNum(ctx context.Context, asNum int64) (ip2location.ASNRecords, error) {
+func (_m *MockNetworkUsecase) GetASNRecordsByNum(ctx context.Context, asNum int64) ([]domain.NetworkASN, error) {
 	ret := _m.Called(ctx, asNum)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetASNRecordsByNum")
 	}
 
-	var r0 ip2location.ASNRecords
+	var r0 []domain.NetworkASN
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64) (ip2location.ASNRecords, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int64) ([]domain.NetworkASN, error)); ok {
 		return rf(ctx, asNum)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int64) ip2location.ASNRecords); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int64) []domain.NetworkASN); ok {
 		r0 = rf(ctx, asNum)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ip2location.ASNRecords)
+			r0 = ret.Get(0).([]domain.NetworkASN)
 		}
 	}
 
@@ -264,60 +218,12 @@ func (_c *MockNetworkUsecase_GetASNRecordsByNum_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *MockNetworkUsecase_GetASNRecordsByNum_Call) Return(_a0 ip2location.ASNRecords, _a1 error) *MockNetworkUsecase_GetASNRecordsByNum_Call {
+func (_c *MockNetworkUsecase_GetASNRecordsByNum_Call) Return(_a0 []domain.NetworkASN, _a1 error) *MockNetworkUsecase_GetASNRecordsByNum_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockNetworkUsecase_GetASNRecordsByNum_Call) RunAndReturn(run func(context.Context, int64) (ip2location.ASNRecords, error)) *MockNetworkUsecase_GetASNRecordsByNum_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetLocationRecord provides a mock function with given fields: ctx, ipAddr, record
-func (_m *MockNetworkUsecase) GetLocationRecord(ctx context.Context, ipAddr net.IP, record *ip2location.LocationRecord) error {
-	ret := _m.Called(ctx, ipAddr, record)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetLocationRecord")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, net.IP, *ip2location.LocationRecord) error); ok {
-		r0 = rf(ctx, ipAddr, record)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// MockNetworkUsecase_GetLocationRecord_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetLocationRecord'
-type MockNetworkUsecase_GetLocationRecord_Call struct {
-	*mock.Call
-}
-
-// GetLocationRecord is a helper method to define mock.On call
-//   - ctx context.Context
-//   - ipAddr net.IP
-//   - record *ip2location.LocationRecord
-func (_e *MockNetworkUsecase_Expecter) GetLocationRecord(ctx interface{}, ipAddr interface{}, record interface{}) *MockNetworkUsecase_GetLocationRecord_Call {
-	return &MockNetworkUsecase_GetLocationRecord_Call{Call: _e.mock.On("GetLocationRecord", ctx, ipAddr, record)}
-}
-
-func (_c *MockNetworkUsecase_GetLocationRecord_Call) Run(run func(ctx context.Context, ipAddr net.IP, record *ip2location.LocationRecord)) *MockNetworkUsecase_GetLocationRecord_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(net.IP), args[2].(*ip2location.LocationRecord))
-	})
-	return _c
-}
-
-func (_c *MockNetworkUsecase_GetLocationRecord_Call) Return(_a0 error) *MockNetworkUsecase_GetLocationRecord_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockNetworkUsecase_GetLocationRecord_Call) RunAndReturn(run func(context.Context, net.IP, *ip2location.LocationRecord) error) *MockNetworkUsecase_GetLocationRecord_Call {
+func (_c *MockNetworkUsecase_GetASNRecordsByNum_Call) RunAndReturn(run func(context.Context, int64) ([]domain.NetworkASN, error)) *MockNetworkUsecase_GetASNRecordsByNum_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -431,54 +337,6 @@ func (_c *MockNetworkUsecase_GetPlayerMostRecentIP_Call) RunAndReturn(run func(c
 	return _c
 }
 
-// GetProxyRecord provides a mock function with given fields: ctx, ipAddr, proxyRecord
-func (_m *MockNetworkUsecase) GetProxyRecord(ctx context.Context, ipAddr net.IP, proxyRecord *ip2location.ProxyRecord) error {
-	ret := _m.Called(ctx, ipAddr, proxyRecord)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetProxyRecord")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, net.IP, *ip2location.ProxyRecord) error); ok {
-		r0 = rf(ctx, ipAddr, proxyRecord)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// MockNetworkUsecase_GetProxyRecord_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetProxyRecord'
-type MockNetworkUsecase_GetProxyRecord_Call struct {
-	*mock.Call
-}
-
-// GetProxyRecord is a helper method to define mock.On call
-//   - ctx context.Context
-//   - ipAddr net.IP
-//   - proxyRecord *ip2location.ProxyRecord
-func (_e *MockNetworkUsecase_Expecter) GetProxyRecord(ctx interface{}, ipAddr interface{}, proxyRecord interface{}) *MockNetworkUsecase_GetProxyRecord_Call {
-	return &MockNetworkUsecase_GetProxyRecord_Call{Call: _e.mock.On("GetProxyRecord", ctx, ipAddr, proxyRecord)}
-}
-
-func (_c *MockNetworkUsecase_GetProxyRecord_Call) Run(run func(ctx context.Context, ipAddr net.IP, proxyRecord *ip2location.ProxyRecord)) *MockNetworkUsecase_GetProxyRecord_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(net.IP), args[2].(*ip2location.ProxyRecord))
-	})
-	return _c
-}
-
-func (_c *MockNetworkUsecase_GetProxyRecord_Call) Return(_a0 error) *MockNetworkUsecase_GetProxyRecord_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockNetworkUsecase_GetProxyRecord_Call) RunAndReturn(run func(context.Context, net.IP, *ip2location.ProxyRecord) error) *MockNetworkUsecase_GetProxyRecord_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // InsertBlockListData provides a mock function with given fields: ctx, blockListData
 func (_m *MockNetworkUsecase) InsertBlockListData(ctx context.Context, blockListData *ip2location.BlockListData) error {
 	ret := _m.Called(ctx, blockListData)
@@ -527,7 +385,7 @@ func (_c *MockNetworkUsecase_InsertBlockListData_Call) RunAndReturn(run func(con
 }
 
 // IsMatch provides a mock function with given fields: addr
-func (_m *MockNetworkUsecase) IsMatch(addr net.IP) (string, bool) {
+func (_m *MockNetworkUsecase) IsMatch(addr netip.Addr) (string, bool) {
 	ret := _m.Called(addr)
 
 	if len(ret) == 0 {
@@ -536,16 +394,16 @@ func (_m *MockNetworkUsecase) IsMatch(addr net.IP) (string, bool) {
 
 	var r0 string
 	var r1 bool
-	if rf, ok := ret.Get(0).(func(net.IP) (string, bool)); ok {
+	if rf, ok := ret.Get(0).(func(netip.Addr) (string, bool)); ok {
 		return rf(addr)
 	}
-	if rf, ok := ret.Get(0).(func(net.IP) string); ok {
+	if rf, ok := ret.Get(0).(func(netip.Addr) string); ok {
 		r0 = rf(addr)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(net.IP) bool); ok {
+	if rf, ok := ret.Get(1).(func(netip.Addr) bool); ok {
 		r1 = rf(addr)
 	} else {
 		r1 = ret.Get(1).(bool)
@@ -560,14 +418,14 @@ type MockNetworkUsecase_IsMatch_Call struct {
 }
 
 // IsMatch is a helper method to define mock.On call
-//   - addr net.IP
+//   - addr netip.Addr
 func (_e *MockNetworkUsecase_Expecter) IsMatch(addr interface{}) *MockNetworkUsecase_IsMatch_Call {
 	return &MockNetworkUsecase_IsMatch_Call{Call: _e.mock.On("IsMatch", addr)}
 }
 
-func (_c *MockNetworkUsecase_IsMatch_Call) Run(run func(addr net.IP)) *MockNetworkUsecase_IsMatch_Call {
+func (_c *MockNetworkUsecase_IsMatch_Call) Run(run func(addr netip.Addr)) *MockNetworkUsecase_IsMatch_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(net.IP))
+		run(args[0].(netip.Addr))
 	})
 	return _c
 }
@@ -577,7 +435,7 @@ func (_c *MockNetworkUsecase_IsMatch_Call) Return(_a0 string, _a1 bool) *MockNet
 	return _c
 }
 
-func (_c *MockNetworkUsecase_IsMatch_Call) RunAndReturn(run func(net.IP) (string, bool)) *MockNetworkUsecase_IsMatch_Call {
+func (_c *MockNetworkUsecase_IsMatch_Call) RunAndReturn(run func(netip.Addr) (string, bool)) *MockNetworkUsecase_IsMatch_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -694,6 +552,63 @@ func (_c *MockNetworkUsecase_QueryConnectionHistory_Call) RunAndReturn(run func(
 	return _c
 }
 
+// QueryNetwork provides a mock function with given fields: ctx, ip
+func (_m *MockNetworkUsecase) QueryNetwork(ctx context.Context, ip netip.Addr) (domain.NetworkDetails, error) {
+	ret := _m.Called(ctx, ip)
+
+	if len(ret) == 0 {
+		panic("no return value specified for QueryNetwork")
+	}
+
+	var r0 domain.NetworkDetails
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, netip.Addr) (domain.NetworkDetails, error)); ok {
+		return rf(ctx, ip)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, netip.Addr) domain.NetworkDetails); ok {
+		r0 = rf(ctx, ip)
+	} else {
+		r0 = ret.Get(0).(domain.NetworkDetails)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, netip.Addr) error); ok {
+		r1 = rf(ctx, ip)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockNetworkUsecase_QueryNetwork_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'QueryNetwork'
+type MockNetworkUsecase_QueryNetwork_Call struct {
+	*mock.Call
+}
+
+// QueryNetwork is a helper method to define mock.On call
+//   - ctx context.Context
+//   - ip netip.Addr
+func (_e *MockNetworkUsecase_Expecter) QueryNetwork(ctx interface{}, ip interface{}) *MockNetworkUsecase_QueryNetwork_Call {
+	return &MockNetworkUsecase_QueryNetwork_Call{Call: _e.mock.On("QueryNetwork", ctx, ip)}
+}
+
+func (_c *MockNetworkUsecase_QueryNetwork_Call) Run(run func(ctx context.Context, ip netip.Addr)) *MockNetworkUsecase_QueryNetwork_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(netip.Addr))
+	})
+	return _c
+}
+
+func (_c *MockNetworkUsecase_QueryNetwork_Call) Return(_a0 domain.NetworkDetails, _a1 error) *MockNetworkUsecase_QueryNetwork_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockNetworkUsecase_QueryNetwork_Call) RunAndReturn(run func(context.Context, netip.Addr) (domain.NetworkDetails, error)) *MockNetworkUsecase_QueryNetwork_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // RemoveWhitelist provides a mock function with given fields: id
 func (_m *MockNetworkUsecase) RemoveWhitelist(id int) {
 	_m.Called(id)
@@ -723,6 +638,39 @@ func (_c *MockNetworkUsecase_RemoveWhitelist_Call) Return() *MockNetworkUsecase_
 }
 
 func (_c *MockNetworkUsecase_RemoveWhitelist_Call) RunAndReturn(run func(int)) *MockNetworkUsecase_RemoveWhitelist_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Start provides a mock function with given fields: ctx
+func (_m *MockNetworkUsecase) Start(ctx context.Context) {
+	_m.Called(ctx)
+}
+
+// MockNetworkUsecase_Start_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Start'
+type MockNetworkUsecase_Start_Call struct {
+	*mock.Call
+}
+
+// Start is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockNetworkUsecase_Expecter) Start(ctx interface{}) *MockNetworkUsecase_Start_Call {
+	return &MockNetworkUsecase_Start_Call{Call: _e.mock.On("Start", ctx)}
+}
+
+func (_c *MockNetworkUsecase_Start_Call) Run(run func(ctx context.Context)) *MockNetworkUsecase_Start_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockNetworkUsecase_Start_Call) Return() *MockNetworkUsecase_Start_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockNetworkUsecase_Start_Call) RunAndReturn(run func(context.Context)) *MockNetworkUsecase_Start_Call {
 	_c.Call.Return(run)
 	return _c
 }

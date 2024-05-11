@@ -10,6 +10,8 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
+const UnknownMediaTag = "__unknown__"
+
 type AssetRepository interface {
 	Init(ctx context.Context) error
 	Get(ctx context.Context, uuid uuid.UUID) (Asset, io.ReadSeeker, error)

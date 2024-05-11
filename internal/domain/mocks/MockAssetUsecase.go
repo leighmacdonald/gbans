@@ -10,6 +10,8 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 
+	steamid "github.com/leighmacdonald/steamid/v4/steamid"
+
 	uuid "github.com/gofrs/uuid/v5"
 )
 
@@ -26,17 +28,77 @@ func (_m *MockAssetUsecase) EXPECT() *MockAssetUsecase_Expecter {
 	return &MockAssetUsecase_Expecter{mock: &_m.Mock}
 }
 
-// DropAsset provides a mock function with given fields: ctx, asset
-func (_m *MockAssetUsecase) DropAsset(ctx context.Context, asset *domain.Asset) error {
-	ret := _m.Called(ctx, asset)
+// Create provides a mock function with given fields: ctx, author, bucket, fileName, content
+func (_m *MockAssetUsecase) Create(ctx context.Context, author steamid.SteamID, bucket string, fileName string, content io.ReadSeeker) (domain.Asset, error) {
+	ret := _m.Called(ctx, author, bucket, fileName, content)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DropAsset")
+		panic("no return value specified for Create")
+	}
+
+	var r0 domain.Asset
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, steamid.SteamID, string, string, io.ReadSeeker) (domain.Asset, error)); ok {
+		return rf(ctx, author, bucket, fileName, content)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, steamid.SteamID, string, string, io.ReadSeeker) domain.Asset); ok {
+		r0 = rf(ctx, author, bucket, fileName, content)
+	} else {
+		r0 = ret.Get(0).(domain.Asset)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, steamid.SteamID, string, string, io.ReadSeeker) error); ok {
+		r1 = rf(ctx, author, bucket, fileName, content)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockAssetUsecase_Create_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Create'
+type MockAssetUsecase_Create_Call struct {
+	*mock.Call
+}
+
+// Create is a helper method to define mock.On call
+//   - ctx context.Context
+//   - author steamid.SteamID
+//   - bucket string
+//   - fileName string
+//   - content io.ReadSeeker
+func (_e *MockAssetUsecase_Expecter) Create(ctx interface{}, author interface{}, bucket interface{}, fileName interface{}, content interface{}) *MockAssetUsecase_Create_Call {
+	return &MockAssetUsecase_Create_Call{Call: _e.mock.On("Create", ctx, author, bucket, fileName, content)}
+}
+
+func (_c *MockAssetUsecase_Create_Call) Run(run func(ctx context.Context, author steamid.SteamID, bucket string, fileName string, content io.ReadSeeker)) *MockAssetUsecase_Create_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(steamid.SteamID), args[2].(string), args[3].(string), args[4].(io.ReadSeeker))
+	})
+	return _c
+}
+
+func (_c *MockAssetUsecase_Create_Call) Return(_a0 domain.Asset, _a1 error) *MockAssetUsecase_Create_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockAssetUsecase_Create_Call) RunAndReturn(run func(context.Context, steamid.SteamID, string, string, io.ReadSeeker) (domain.Asset, error)) *MockAssetUsecase_Create_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Delete provides a mock function with given fields: ctx, assetID
+func (_m *MockAssetUsecase) Delete(ctx context.Context, assetID uuid.UUID) error {
+	ret := _m.Called(ctx, assetID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Delete")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *domain.Asset) error); ok {
-		r0 = rf(ctx, asset)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) error); ok {
+		r0 = rf(ctx, assetID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -44,65 +106,65 @@ func (_m *MockAssetUsecase) DropAsset(ctx context.Context, asset *domain.Asset) 
 	return r0
 }
 
-// MockAssetUsecase_DropAsset_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DropAsset'
-type MockAssetUsecase_DropAsset_Call struct {
+// MockAssetUsecase_Delete_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Delete'
+type MockAssetUsecase_Delete_Call struct {
 	*mock.Call
 }
 
-// DropAsset is a helper method to define mock.On call
+// Delete is a helper method to define mock.On call
 //   - ctx context.Context
-//   - asset *domain.Asset
-func (_e *MockAssetUsecase_Expecter) DropAsset(ctx interface{}, asset interface{}) *MockAssetUsecase_DropAsset_Call {
-	return &MockAssetUsecase_DropAsset_Call{Call: _e.mock.On("DropAsset", ctx, asset)}
+//   - assetID uuid.UUID
+func (_e *MockAssetUsecase_Expecter) Delete(ctx interface{}, assetID interface{}) *MockAssetUsecase_Delete_Call {
+	return &MockAssetUsecase_Delete_Call{Call: _e.mock.On("Delete", ctx, assetID)}
 }
 
-func (_c *MockAssetUsecase_DropAsset_Call) Run(run func(ctx context.Context, asset *domain.Asset)) *MockAssetUsecase_DropAsset_Call {
+func (_c *MockAssetUsecase_Delete_Call) Run(run func(ctx context.Context, assetID uuid.UUID)) *MockAssetUsecase_Delete_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*domain.Asset))
+		run(args[0].(context.Context), args[1].(uuid.UUID))
 	})
 	return _c
 }
 
-func (_c *MockAssetUsecase_DropAsset_Call) Return(_a0 error) *MockAssetUsecase_DropAsset_Call {
+func (_c *MockAssetUsecase_Delete_Call) Return(_a0 error) *MockAssetUsecase_Delete_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockAssetUsecase_DropAsset_Call) RunAndReturn(run func(context.Context, *domain.Asset) error) *MockAssetUsecase_DropAsset_Call {
+func (_c *MockAssetUsecase_Delete_Call) RunAndReturn(run func(context.Context, uuid.UUID) error) *MockAssetUsecase_Delete_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetAsset provides a mock function with given fields: ctx, _a1
-func (_m *MockAssetUsecase) GetAsset(ctx context.Context, _a1 uuid.UUID) (domain.Asset, io.Reader, error) {
-	ret := _m.Called(ctx, _a1)
+// Get provides a mock function with given fields: ctx, assetID
+func (_m *MockAssetUsecase) Get(ctx context.Context, assetID uuid.UUID) (domain.Asset, io.ReadSeeker, error) {
+	ret := _m.Called(ctx, assetID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetAsset")
+		panic("no return value specified for Get")
 	}
 
 	var r0 domain.Asset
-	var r1 io.Reader
+	var r1 io.ReadSeeker
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (domain.Asset, io.Reader, error)); ok {
-		return rf(ctx, _a1)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (domain.Asset, io.ReadSeeker, error)); ok {
+		return rf(ctx, assetID)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) domain.Asset); ok {
-		r0 = rf(ctx, _a1)
+		r0 = rf(ctx, assetID)
 	} else {
 		r0 = ret.Get(0).(domain.Asset)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) io.Reader); ok {
-		r1 = rf(ctx, _a1)
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) io.ReadSeeker); ok {
+		r1 = rf(ctx, assetID)
 	} else {
 		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(io.Reader)
+			r1 = ret.Get(1).(io.ReadSeeker)
 		}
 	}
 
 	if rf, ok := ret.Get(2).(func(context.Context, uuid.UUID) error); ok {
-		r2 = rf(ctx, _a1)
+		r2 = rf(ctx, assetID)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -110,80 +172,31 @@ func (_m *MockAssetUsecase) GetAsset(ctx context.Context, _a1 uuid.UUID) (domain
 	return r0, r1, r2
 }
 
-// MockAssetUsecase_GetAsset_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAsset'
-type MockAssetUsecase_GetAsset_Call struct {
+// MockAssetUsecase_Get_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Get'
+type MockAssetUsecase_Get_Call struct {
 	*mock.Call
 }
 
-// GetAsset is a helper method to define mock.On call
+// Get is a helper method to define mock.On call
 //   - ctx context.Context
-//   - _a1 uuid.UUID
-func (_e *MockAssetUsecase_Expecter) GetAsset(ctx interface{}, _a1 interface{}) *MockAssetUsecase_GetAsset_Call {
-	return &MockAssetUsecase_GetAsset_Call{Call: _e.mock.On("GetAsset", ctx, _a1)}
+//   - assetID uuid.UUID
+func (_e *MockAssetUsecase_Expecter) Get(ctx interface{}, assetID interface{}) *MockAssetUsecase_Get_Call {
+	return &MockAssetUsecase_Get_Call{Call: _e.mock.On("Get", ctx, assetID)}
 }
 
-func (_c *MockAssetUsecase_GetAsset_Call) Run(run func(ctx context.Context, _a1 uuid.UUID)) *MockAssetUsecase_GetAsset_Call {
+func (_c *MockAssetUsecase_Get_Call) Run(run func(ctx context.Context, assetID uuid.UUID)) *MockAssetUsecase_Get_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(uuid.UUID))
 	})
 	return _c
 }
 
-func (_c *MockAssetUsecase_GetAsset_Call) Return(_a0 domain.Asset, _a1 io.Reader, _a2 error) *MockAssetUsecase_GetAsset_Call {
+func (_c *MockAssetUsecase_Get_Call) Return(_a0 domain.Asset, _a1 io.ReadSeeker, _a2 error) *MockAssetUsecase_Get_Call {
 	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *MockAssetUsecase_GetAsset_Call) RunAndReturn(run func(context.Context, uuid.UUID) (domain.Asset, io.Reader, error)) *MockAssetUsecase_GetAsset_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// SaveAsset provides a mock function with given fields: ctx, bucket, asset, content
-func (_m *MockAssetUsecase) SaveAsset(ctx context.Context, bucket string, asset *domain.Asset, content []byte) error {
-	ret := _m.Called(ctx, bucket, asset, content)
-
-	if len(ret) == 0 {
-		panic("no return value specified for SaveAsset")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, *domain.Asset, []byte) error); ok {
-		r0 = rf(ctx, bucket, asset, content)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// MockAssetUsecase_SaveAsset_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SaveAsset'
-type MockAssetUsecase_SaveAsset_Call struct {
-	*mock.Call
-}
-
-// SaveAsset is a helper method to define mock.On call
-//   - ctx context.Context
-//   - bucket string
-//   - asset *domain.Asset
-//   - content []byte
-func (_e *MockAssetUsecase_Expecter) SaveAsset(ctx interface{}, bucket interface{}, asset interface{}, content interface{}) *MockAssetUsecase_SaveAsset_Call {
-	return &MockAssetUsecase_SaveAsset_Call{Call: _e.mock.On("SaveAsset", ctx, bucket, asset, content)}
-}
-
-func (_c *MockAssetUsecase_SaveAsset_Call) Run(run func(ctx context.Context, bucket string, asset *domain.Asset, content []byte)) *MockAssetUsecase_SaveAsset_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(*domain.Asset), args[3].([]byte))
-	})
-	return _c
-}
-
-func (_c *MockAssetUsecase_SaveAsset_Call) Return(_a0 error) *MockAssetUsecase_SaveAsset_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockAssetUsecase_SaveAsset_Call) RunAndReturn(run func(context.Context, string, *domain.Asset, []byte) error) *MockAssetUsecase_SaveAsset_Call {
+func (_c *MockAssetUsecase_Get_Call) RunAndReturn(run func(context.Context, uuid.UUID) (domain.Asset, io.ReadSeeker, error)) *MockAssetUsecase_Get_Call {
 	_c.Call.Return(run)
 	return _c
 }

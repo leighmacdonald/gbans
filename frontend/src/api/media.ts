@@ -1,4 +1,4 @@
-import { apiCall, TimeStamped } from './common';
+import { apiCall, TimeStamped, transformTimeStampedDates } from './common';
 
 const assetUrl = (bucket: string, asset: Asset): string => `${window.gbans.asset_url}/${bucket}/${asset.name}`;
 
@@ -33,14 +33,17 @@ export interface BaseUploadedMedia extends TimeStamped {
     asset: Asset;
 }
 
-export interface Asset {
+export type Asset = {
     asset_id: string;
     bucket: string;
-    path: string;
-    name: string;
     mime_type: string;
     size: number;
-}
+    name: string;
+    author_id: string;
+    is_private: boolean;
+    updated_on: Date;
+    created_on: Date;
+};
 
 export interface MediaUploadResponse extends BaseUploadedMedia {
     url: string;
@@ -54,7 +57,7 @@ export interface UserUploadedFile {
 }
 
 export const apiSaveAsset = async (upload: UserUploadedFile) =>
-    await apiCall<MediaUploadResponse, UserUploadedFile>(`/api/asset`, 'POST', upload);
+    transformTimeStampedDates(await apiCall<MediaUploadResponse, UserUploadedFile>(`/api/asset`, 'POST', upload));
 
 export const apiSaveContestEntryMedia = async (contest_id: number, upload: UserUploadedFile) =>
     await apiCall<MediaUploadResponse, UserUploadedFile>(`/api/contests/${contest_id}/upload`, 'POST', upload);

@@ -10,7 +10,7 @@ import ConfirmationModal from './ConfirmationModal.tsx';
 import { ContestEditor } from './ContestEditor.tsx';
 import { ContestEntryDeleteModal } from './ContestEntryDeleteModal.tsx';
 import ContestEntryModal from './ContestEntryModal.tsx';
-import FileUploadModal from './FileUploadModal.tsx';
+import { FileUploadModal } from './FileUploadModal.tsx';
 import { FilterEditModal } from './FilterEditModal.tsx';
 import { ForumCategoryEditorModal } from './ForumCategoryEditorModal.tsx';
 import { ForumForumEditorModal } from './ForumForumEditorModal.tsx';
