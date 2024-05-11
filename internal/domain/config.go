@@ -37,7 +37,8 @@ type Config struct {
 	IP2Location ConfigIP2Location `mapstructure:"ip2location"`
 	Debug       ConfigDebug       `mapstructure:"debug"`
 	Patreon     ConfigPatreon     `mapstructure:"patreon"`
-	S3Store     ConfigS3Store     `mapstructure:"s3"`
+	S3          ConfigS3          `mapstructure:"s3"`
+	SSH         ConfigSSH         `mapstructure:"ssh"`
 	LocalStore  ConfigLocalStore  `mapstructure:"local_store"`
 	Exports     ConfigExports     `mapstructure:"exports"`
 }
@@ -48,6 +49,14 @@ func (c Config) ExtURL(obj LinkablePath) string {
 
 func (c Config) ExtURLRaw(path string, args ...any) string {
 	return strings.TrimRight(c.General.ExternalURL, "/") + fmt.Sprintf(strings.TrimLeft(path, "."), args...)
+}
+
+type ConfigSSH struct {
+	Username       string        `mapstructure:"username"`
+	PrivateKeyPath string        `mapstructure:"private_key_path"`
+	Password       string        `mapstructure:"password"`
+	UpdateInterval time.Duration `mapstructure:"update_interval"`
+	Timeout        time.Duration `mapstructure:"timeout"`
 }
 
 type ConfigExports struct {
