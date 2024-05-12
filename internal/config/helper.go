@@ -3,10 +3,12 @@ package config
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"reflect"
 	"strings"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/mitchellh/go-homedir"
@@ -123,5 +125,9 @@ func setDefaultConfigValues() {
 
 	for configKey, value := range defaultConfig {
 		viper.SetDefault(configKey, value)
+	}
+
+	if errWriteConfig := viper.SafeWriteConfig(); errWriteConfig == nil {
+		slog.Error("Failed to write config file", log.ErrAttr(errWriteConfig))
 	}
 }
