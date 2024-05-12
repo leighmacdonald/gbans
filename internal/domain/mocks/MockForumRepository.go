@@ -603,7 +603,7 @@ func (_c *MockForumRepository_ForumMessageVoteByID_Call) RunAndReturn(run func(c
 }
 
 // ForumMessages provides a mock function with given fields: ctx, filters
-func (_m *MockForumRepository) ForumMessages(ctx context.Context, filters domain.ThreadMessagesQuery) ([]domain.ForumMessage, int64, error) {
+func (_m *MockForumRepository) ForumMessages(ctx context.Context, filters domain.ThreadMessagesQuery) ([]domain.ForumMessage, error) {
 	ret := _m.Called(ctx, filters)
 
 	if len(ret) == 0 {
@@ -611,9 +611,8 @@ func (_m *MockForumRepository) ForumMessages(ctx context.Context, filters domain
 	}
 
 	var r0 []domain.ForumMessage
-	var r1 int64
-	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, domain.ThreadMessagesQuery) ([]domain.ForumMessage, int64, error)); ok {
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, domain.ThreadMessagesQuery) ([]domain.ForumMessage, error)); ok {
 		return rf(ctx, filters)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, domain.ThreadMessagesQuery) []domain.ForumMessage); ok {
@@ -624,19 +623,13 @@ func (_m *MockForumRepository) ForumMessages(ctx context.Context, filters domain
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, domain.ThreadMessagesQuery) int64); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, domain.ThreadMessagesQuery) error); ok {
 		r1 = rf(ctx, filters)
 	} else {
-		r1 = ret.Get(1).(int64)
+		r1 = ret.Error(1)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, domain.ThreadMessagesQuery) error); ok {
-		r2 = rf(ctx, filters)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
+	return r0, r1
 }
 
 // MockForumRepository_ForumMessages_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ForumMessages'
@@ -658,12 +651,12 @@ func (_c *MockForumRepository_ForumMessages_Call) Run(run func(ctx context.Conte
 	return _c
 }
 
-func (_c *MockForumRepository_ForumMessages_Call) Return(_a0 []domain.ForumMessage, _a1 int64, _a2 error) *MockForumRepository_ForumMessages_Call {
-	_c.Call.Return(_a0, _a1, _a2)
+func (_c *MockForumRepository_ForumMessages_Call) Return(_a0 []domain.ForumMessage, _a1 error) *MockForumRepository_ForumMessages_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockForumRepository_ForumMessages_Call) RunAndReturn(run func(context.Context, domain.ThreadMessagesQuery) ([]domain.ForumMessage, int64, error)) *MockForumRepository_ForumMessages_Call {
+func (_c *MockForumRepository_ForumMessages_Call) RunAndReturn(run func(context.Context, domain.ThreadMessagesQuery) ([]domain.ForumMessage, error)) *MockForumRepository_ForumMessages_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -965,7 +958,7 @@ func (_c *MockForumRepository_ForumThreadSave_Call) RunAndReturn(run func(contex
 }
 
 // ForumThreads provides a mock function with given fields: ctx, filter
-func (_m *MockForumRepository) ForumThreads(ctx context.Context, filter domain.ThreadQueryFilter) ([]domain.ThreadWithSource, int64, error) {
+func (_m *MockForumRepository) ForumThreads(ctx context.Context, filter domain.ThreadQueryFilter) ([]domain.ThreadWithSource, error) {
 	ret := _m.Called(ctx, filter)
 
 	if len(ret) == 0 {
@@ -973,9 +966,8 @@ func (_m *MockForumRepository) ForumThreads(ctx context.Context, filter domain.T
 	}
 
 	var r0 []domain.ThreadWithSource
-	var r1 int64
-	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, domain.ThreadQueryFilter) ([]domain.ThreadWithSource, int64, error)); ok {
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, domain.ThreadQueryFilter) ([]domain.ThreadWithSource, error)); ok {
 		return rf(ctx, filter)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, domain.ThreadQueryFilter) []domain.ThreadWithSource); ok {
@@ -986,19 +978,13 @@ func (_m *MockForumRepository) ForumThreads(ctx context.Context, filter domain.T
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, domain.ThreadQueryFilter) int64); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, domain.ThreadQueryFilter) error); ok {
 		r1 = rf(ctx, filter)
 	} else {
-		r1 = ret.Get(1).(int64)
+		r1 = ret.Error(1)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, domain.ThreadQueryFilter) error); ok {
-		r2 = rf(ctx, filter)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
+	return r0, r1
 }
 
 // MockForumRepository_ForumThreads_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ForumThreads'
@@ -1020,12 +1006,12 @@ func (_c *MockForumRepository_ForumThreads_Call) Run(run func(ctx context.Contex
 	return _c
 }
 
-func (_c *MockForumRepository_ForumThreads_Call) Return(_a0 []domain.ThreadWithSource, _a1 int64, _a2 error) *MockForumRepository_ForumThreads_Call {
-	_c.Call.Return(_a0, _a1, _a2)
+func (_c *MockForumRepository_ForumThreads_Call) Return(_a0 []domain.ThreadWithSource, _a1 error) *MockForumRepository_ForumThreads_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockForumRepository_ForumThreads_Call) RunAndReturn(run func(context.Context, domain.ThreadQueryFilter) ([]domain.ThreadWithSource, int64, error)) *MockForumRepository_ForumThreads_Call {
+func (_c *MockForumRepository_ForumThreads_Call) RunAndReturn(run func(context.Context, domain.ThreadQueryFilter) ([]domain.ThreadWithSource, error)) *MockForumRepository_ForumThreads_Call {
 	_c.Call.Return(run)
 	return _c
 }

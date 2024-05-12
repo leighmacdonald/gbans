@@ -241,6 +241,54 @@ func (_c *MockBanASNRepository_GetByASN_Call) RunAndReturn(run func(context.Cont
 	return _c
 }
 
+// GetByID provides a mock function with given fields: ctx, banID, banASN
+func (_m *MockBanASNRepository) GetByID(ctx context.Context, banID int64, banASN *domain.BanASN) error {
+	ret := _m.Called(ctx, banID, banASN)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByID")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64, *domain.BanASN) error); ok {
+		r0 = rf(ctx, banID, banASN)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockBanASNRepository_GetByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByID'
+type MockBanASNRepository_GetByID_Call struct {
+	*mock.Call
+}
+
+// GetByID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - banID int64
+//   - banASN *domain.BanASN
+func (_e *MockBanASNRepository_Expecter) GetByID(ctx interface{}, banID interface{}, banASN interface{}) *MockBanASNRepository_GetByID_Call {
+	return &MockBanASNRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, banID, banASN)}
+}
+
+func (_c *MockBanASNRepository_GetByID_Call) Run(run func(ctx context.Context, banID int64, banASN *domain.BanASN)) *MockBanASNRepository_GetByID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(int64), args[2].(*domain.BanASN))
+	})
+	return _c
+}
+
+func (_c *MockBanASNRepository_GetByID_Call) Return(_a0 error) *MockBanASNRepository_GetByID_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockBanASNRepository_GetByID_Call) RunAndReturn(run func(context.Context, int64, *domain.BanASN) error) *MockBanASNRepository_GetByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Save provides a mock function with given fields: ctx, banASN
 func (_m *MockBanASNRepository) Save(ctx context.Context, banASN *domain.BanASN) error {
 	ret := _m.Called(ctx, banASN)

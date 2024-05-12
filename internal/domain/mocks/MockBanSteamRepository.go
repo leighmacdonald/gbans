@@ -8,7 +8,7 @@ import (
 	domain "github.com/leighmacdonald/gbans/internal/domain"
 	mock "github.com/stretchr/testify/mock"
 
-	net "net"
+	netip "net/netip"
 
 	steamid "github.com/leighmacdonald/steamid/v4/steamid"
 
@@ -259,7 +259,7 @@ func (_c *MockBanSteamRepository_GetByBanID_Call) RunAndReturn(run func(context.
 }
 
 // GetByLastIP provides a mock function with given fields: ctx, lastIP, deletedOk
-func (_m *MockBanSteamRepository) GetByLastIP(ctx context.Context, lastIP net.IP, deletedOk bool) (domain.BannedSteamPerson, error) {
+func (_m *MockBanSteamRepository) GetByLastIP(ctx context.Context, lastIP netip.Addr, deletedOk bool) (domain.BannedSteamPerson, error) {
 	ret := _m.Called(ctx, lastIP, deletedOk)
 
 	if len(ret) == 0 {
@@ -268,16 +268,16 @@ func (_m *MockBanSteamRepository) GetByLastIP(ctx context.Context, lastIP net.IP
 
 	var r0 domain.BannedSteamPerson
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, net.IP, bool) (domain.BannedSteamPerson, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, netip.Addr, bool) (domain.BannedSteamPerson, error)); ok {
 		return rf(ctx, lastIP, deletedOk)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, net.IP, bool) domain.BannedSteamPerson); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, netip.Addr, bool) domain.BannedSteamPerson); ok {
 		r0 = rf(ctx, lastIP, deletedOk)
 	} else {
 		r0 = ret.Get(0).(domain.BannedSteamPerson)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, net.IP, bool) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, netip.Addr, bool) error); ok {
 		r1 = rf(ctx, lastIP, deletedOk)
 	} else {
 		r1 = ret.Error(1)
@@ -293,15 +293,15 @@ type MockBanSteamRepository_GetByLastIP_Call struct {
 
 // GetByLastIP is a helper method to define mock.On call
 //   - ctx context.Context
-//   - lastIP net.IP
+//   - lastIP netip.Addr
 //   - deletedOk bool
 func (_e *MockBanSteamRepository_Expecter) GetByLastIP(ctx interface{}, lastIP interface{}, deletedOk interface{}) *MockBanSteamRepository_GetByLastIP_Call {
 	return &MockBanSteamRepository_GetByLastIP_Call{Call: _e.mock.On("GetByLastIP", ctx, lastIP, deletedOk)}
 }
 
-func (_c *MockBanSteamRepository_GetByLastIP_Call) Run(run func(ctx context.Context, lastIP net.IP, deletedOk bool)) *MockBanSteamRepository_GetByLastIP_Call {
+func (_c *MockBanSteamRepository_GetByLastIP_Call) Run(run func(ctx context.Context, lastIP netip.Addr, deletedOk bool)) *MockBanSteamRepository_GetByLastIP_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(net.IP), args[2].(bool))
+		run(args[0].(context.Context), args[1].(netip.Addr), args[2].(bool))
 	})
 	return _c
 }
@@ -311,7 +311,7 @@ func (_c *MockBanSteamRepository_GetByLastIP_Call) Return(_a0 domain.BannedSteam
 	return _c
 }
 
-func (_c *MockBanSteamRepository_GetByLastIP_Call) RunAndReturn(run func(context.Context, net.IP, bool) (domain.BannedSteamPerson, error)) *MockBanSteamRepository_GetByLastIP_Call {
+func (_c *MockBanSteamRepository_GetByLastIP_Call) RunAndReturn(run func(context.Context, netip.Addr, bool) (domain.BannedSteamPerson, error)) *MockBanSteamRepository_GetByLastIP_Call {
 	_c.Call.Return(run)
 	return _c
 }

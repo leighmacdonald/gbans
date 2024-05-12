@@ -26,17 +26,17 @@ func (_m *MockAssetRepository) EXPECT() *MockAssetRepository_Expecter {
 	return &MockAssetRepository_Expecter{mock: &_m.Mock}
 }
 
-// CreateBucketIfNotExists provides a mock function with given fields: ctx, name
-func (_m *MockAssetRepository) CreateBucketIfNotExists(ctx context.Context, name string) error {
-	ret := _m.Called(ctx, name)
+// Delete provides a mock function with given fields: ctx, _a1
+func (_m *MockAssetRepository) Delete(ctx context.Context, _a1 uuid.UUID) error {
+	ret := _m.Called(ctx, _a1)
 
 	if len(ret) == 0 {
-		panic("no return value specified for CreateBucketIfNotExists")
+		panic("no return value specified for Delete")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, name)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) error); ok {
+		r0 = rf(ctx, _a1)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -44,110 +44,70 @@ func (_m *MockAssetRepository) CreateBucketIfNotExists(ctx context.Context, name
 	return r0
 }
 
-// MockAssetRepository_CreateBucketIfNotExists_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateBucketIfNotExists'
-type MockAssetRepository_CreateBucketIfNotExists_Call struct {
+// MockAssetRepository_Delete_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Delete'
+type MockAssetRepository_Delete_Call struct {
 	*mock.Call
 }
 
-// CreateBucketIfNotExists is a helper method to define mock.On call
+// Delete is a helper method to define mock.On call
 //   - ctx context.Context
-//   - name string
-func (_e *MockAssetRepository_Expecter) CreateBucketIfNotExists(ctx interface{}, name interface{}) *MockAssetRepository_CreateBucketIfNotExists_Call {
-	return &MockAssetRepository_CreateBucketIfNotExists_Call{Call: _e.mock.On("CreateBucketIfNotExists", ctx, name)}
+//   - _a1 uuid.UUID
+func (_e *MockAssetRepository_Expecter) Delete(ctx interface{}, _a1 interface{}) *MockAssetRepository_Delete_Call {
+	return &MockAssetRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, _a1)}
 }
 
-func (_c *MockAssetRepository_CreateBucketIfNotExists_Call) Run(run func(ctx context.Context, name string)) *MockAssetRepository_CreateBucketIfNotExists_Call {
+func (_c *MockAssetRepository_Delete_Call) Run(run func(ctx context.Context, _a1 uuid.UUID)) *MockAssetRepository_Delete_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(uuid.UUID))
 	})
 	return _c
 }
 
-func (_c *MockAssetRepository_CreateBucketIfNotExists_Call) Return(_a0 error) *MockAssetRepository_CreateBucketIfNotExists_Call {
+func (_c *MockAssetRepository_Delete_Call) Return(_a0 error) *MockAssetRepository_Delete_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockAssetRepository_CreateBucketIfNotExists_Call) RunAndReturn(run func(context.Context, string) error) *MockAssetRepository_CreateBucketIfNotExists_Call {
+func (_c *MockAssetRepository_Delete_Call) RunAndReturn(run func(context.Context, uuid.UUID) error) *MockAssetRepository_Delete_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// DeleteAsset provides a mock function with given fields: ctx, asset
-func (_m *MockAssetRepository) DeleteAsset(ctx context.Context, asset *domain.Asset) error {
-	ret := _m.Called(ctx, asset)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DeleteAsset")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *domain.Asset) error); ok {
-		r0 = rf(ctx, asset)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// MockAssetRepository_DeleteAsset_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteAsset'
-type MockAssetRepository_DeleteAsset_Call struct {
-	*mock.Call
-}
-
-// DeleteAsset is a helper method to define mock.On call
-//   - ctx context.Context
-//   - asset *domain.Asset
-func (_e *MockAssetRepository_Expecter) DeleteAsset(ctx interface{}, asset interface{}) *MockAssetRepository_DeleteAsset_Call {
-	return &MockAssetRepository_DeleteAsset_Call{Call: _e.mock.On("DeleteAsset", ctx, asset)}
-}
-
-func (_c *MockAssetRepository_DeleteAsset_Call) Run(run func(ctx context.Context, asset *domain.Asset)) *MockAssetRepository_DeleteAsset_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*domain.Asset))
-	})
-	return _c
-}
-
-func (_c *MockAssetRepository_DeleteAsset_Call) Return(_a0 error) *MockAssetRepository_DeleteAsset_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockAssetRepository_DeleteAsset_Call) RunAndReturn(run func(context.Context, *domain.Asset) error) *MockAssetRepository_DeleteAsset_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Get provides a mock function with given fields: ctx, bucket, name
-func (_m *MockAssetRepository) Get(ctx context.Context, bucket string, name string) (io.Reader, error) {
-	ret := _m.Called(ctx, bucket, name)
+// Get provides a mock function with given fields: ctx, _a1
+func (_m *MockAssetRepository) Get(ctx context.Context, _a1 uuid.UUID) (domain.Asset, io.ReadSeeker, error) {
+	ret := _m.Called(ctx, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Get")
 	}
 
-	var r0 io.Reader
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (io.Reader, error)); ok {
-		return rf(ctx, bucket, name)
+	var r0 domain.Asset
+	var r1 io.ReadSeeker
+	var r2 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (domain.Asset, io.ReadSeeker, error)); ok {
+		return rf(ctx, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) io.Reader); ok {
-		r0 = rf(ctx, bucket, name)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) domain.Asset); ok {
+		r0 = rf(ctx, _a1)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(io.Reader)
+		r0 = ret.Get(0).(domain.Asset)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) io.ReadSeeker); ok {
+		r1 = rf(ctx, _a1)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(io.ReadSeeker)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, bucket, name)
+	if rf, ok := ret.Get(2).(func(context.Context, uuid.UUID) error); ok {
+		r2 = rf(ctx, _a1)
 	} else {
-		r1 = ret.Error(1)
+		r2 = ret.Error(2)
 	}
 
-	return r0, r1
+	return r0, r1, r2
 }
 
 // MockAssetRepository_Get_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Get'
@@ -157,82 +117,24 @@ type MockAssetRepository_Get_Call struct {
 
 // Get is a helper method to define mock.On call
 //   - ctx context.Context
-//   - bucket string
-//   - name string
-func (_e *MockAssetRepository_Expecter) Get(ctx interface{}, bucket interface{}, name interface{}) *MockAssetRepository_Get_Call {
-	return &MockAssetRepository_Get_Call{Call: _e.mock.On("Get", ctx, bucket, name)}
-}
-
-func (_c *MockAssetRepository_Get_Call) Run(run func(ctx context.Context, bucket string, name string)) *MockAssetRepository_Get_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
-	})
-	return _c
-}
-
-func (_c *MockAssetRepository_Get_Call) Return(_a0 io.Reader, _a1 error) *MockAssetRepository_Get_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockAssetRepository_Get_Call) RunAndReturn(run func(context.Context, string, string) (io.Reader, error)) *MockAssetRepository_Get_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetAsset provides a mock function with given fields: ctx, _a1
-func (_m *MockAssetRepository) GetAsset(ctx context.Context, _a1 uuid.UUID) (domain.Asset, error) {
-	ret := _m.Called(ctx, _a1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetAsset")
-	}
-
-	var r0 domain.Asset
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (domain.Asset, error)); ok {
-		return rf(ctx, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) domain.Asset); ok {
-		r0 = rf(ctx, _a1)
-	} else {
-		r0 = ret.Get(0).(domain.Asset)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
-		r1 = rf(ctx, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockAssetRepository_GetAsset_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAsset'
-type MockAssetRepository_GetAsset_Call struct {
-	*mock.Call
-}
-
-// GetAsset is a helper method to define mock.On call
-//   - ctx context.Context
 //   - _a1 uuid.UUID
-func (_e *MockAssetRepository_Expecter) GetAsset(ctx interface{}, _a1 interface{}) *MockAssetRepository_GetAsset_Call {
-	return &MockAssetRepository_GetAsset_Call{Call: _e.mock.On("GetAsset", ctx, _a1)}
+func (_e *MockAssetRepository_Expecter) Get(ctx interface{}, _a1 interface{}) *MockAssetRepository_Get_Call {
+	return &MockAssetRepository_Get_Call{Call: _e.mock.On("Get", ctx, _a1)}
 }
 
-func (_c *MockAssetRepository_GetAsset_Call) Run(run func(ctx context.Context, _a1 uuid.UUID)) *MockAssetRepository_GetAsset_Call {
+func (_c *MockAssetRepository_Get_Call) Run(run func(ctx context.Context, _a1 uuid.UUID)) *MockAssetRepository_Get_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(uuid.UUID))
 	})
 	return _c
 }
 
-func (_c *MockAssetRepository_GetAsset_Call) Return(_a0 domain.Asset, _a1 error) *MockAssetRepository_GetAsset_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *MockAssetRepository_Get_Call) Return(_a0 domain.Asset, _a1 io.ReadSeeker, _a2 error) *MockAssetRepository_Get_Call {
+	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *MockAssetRepository_GetAsset_Call) RunAndReturn(run func(context.Context, uuid.UUID) (domain.Asset, error)) *MockAssetRepository_GetAsset_Call {
+func (_c *MockAssetRepository_Get_Call) RunAndReturn(run func(context.Context, uuid.UUID) (domain.Asset, io.ReadSeeker, error)) *MockAssetRepository_Get_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -283,69 +185,32 @@ func (_c *MockAssetRepository_Init_Call) RunAndReturn(run func(context.Context) 
 	return _c
 }
 
-// LinkObject provides a mock function with given fields: bucket, name
-func (_m *MockAssetRepository) LinkObject(bucket string, name string) string {
-	ret := _m.Called(bucket, name)
-
-	if len(ret) == 0 {
-		panic("no return value specified for LinkObject")
-	}
-
-	var r0 string
-	if rf, ok := ret.Get(0).(func(string, string) string); ok {
-		r0 = rf(bucket, name)
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	return r0
-}
-
-// MockAssetRepository_LinkObject_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LinkObject'
-type MockAssetRepository_LinkObject_Call struct {
-	*mock.Call
-}
-
-// LinkObject is a helper method to define mock.On call
-//   - bucket string
-//   - name string
-func (_e *MockAssetRepository_Expecter) LinkObject(bucket interface{}, name interface{}) *MockAssetRepository_LinkObject_Call {
-	return &MockAssetRepository_LinkObject_Call{Call: _e.mock.On("LinkObject", bucket, name)}
-}
-
-func (_c *MockAssetRepository_LinkObject_Call) Run(run func(bucket string, name string)) *MockAssetRepository_LinkObject_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string), args[1].(string))
-	})
-	return _c
-}
-
-func (_c *MockAssetRepository_LinkObject_Call) Return(_a0 string) *MockAssetRepository_LinkObject_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockAssetRepository_LinkObject_Call) RunAndReturn(run func(string, string) string) *MockAssetRepository_LinkObject_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Put provides a mock function with given fields: ctx, bucket, name, body, size, contentType
-func (_m *MockAssetRepository) Put(ctx context.Context, bucket string, name string, body io.Reader, size int64, contentType string) error {
-	ret := _m.Called(ctx, bucket, name, body, size, contentType)
+// Put provides a mock function with given fields: ctx, asset, body
+func (_m *MockAssetRepository) Put(ctx context.Context, asset domain.Asset, body io.ReadSeeker) (domain.Asset, error) {
+	ret := _m.Called(ctx, asset, body)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Put")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, io.Reader, int64, string) error); ok {
-		r0 = rf(ctx, bucket, name, body, size, contentType)
+	var r0 domain.Asset
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, domain.Asset, io.ReadSeeker) (domain.Asset, error)); ok {
+		return rf(ctx, asset, body)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, domain.Asset, io.ReadSeeker) domain.Asset); ok {
+		r0 = rf(ctx, asset, body)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(domain.Asset)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, domain.Asset, io.ReadSeeker) error); ok {
+		r1 = rf(ctx, asset, body)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // MockAssetRepository_Put_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Put'
@@ -355,123 +220,25 @@ type MockAssetRepository_Put_Call struct {
 
 // Put is a helper method to define mock.On call
 //   - ctx context.Context
-//   - bucket string
-//   - name string
-//   - body io.Reader
-//   - size int64
-//   - contentType string
-func (_e *MockAssetRepository_Expecter) Put(ctx interface{}, bucket interface{}, name interface{}, body interface{}, size interface{}, contentType interface{}) *MockAssetRepository_Put_Call {
-	return &MockAssetRepository_Put_Call{Call: _e.mock.On("Put", ctx, bucket, name, body, size, contentType)}
+//   - asset domain.Asset
+//   - body io.ReadSeeker
+func (_e *MockAssetRepository_Expecter) Put(ctx interface{}, asset interface{}, body interface{}) *MockAssetRepository_Put_Call {
+	return &MockAssetRepository_Put_Call{Call: _e.mock.On("Put", ctx, asset, body)}
 }
 
-func (_c *MockAssetRepository_Put_Call) Run(run func(ctx context.Context, bucket string, name string, body io.Reader, size int64, contentType string)) *MockAssetRepository_Put_Call {
+func (_c *MockAssetRepository_Put_Call) Run(run func(ctx context.Context, asset domain.Asset, body io.ReadSeeker)) *MockAssetRepository_Put_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(io.Reader), args[4].(int64), args[5].(string))
+		run(args[0].(context.Context), args[1].(domain.Asset), args[2].(io.ReadSeeker))
 	})
 	return _c
 }
 
-func (_c *MockAssetRepository_Put_Call) Return(_a0 error) *MockAssetRepository_Put_Call {
-	_c.Call.Return(_a0)
+func (_c *MockAssetRepository_Put_Call) Return(_a0 domain.Asset, _a1 error) *MockAssetRepository_Put_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockAssetRepository_Put_Call) RunAndReturn(run func(context.Context, string, string, io.Reader, int64, string) error) *MockAssetRepository_Put_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Remove provides a mock function with given fields: ctx, bucket, name
-func (_m *MockAssetRepository) Remove(ctx context.Context, bucket string, name string) error {
-	ret := _m.Called(ctx, bucket, name)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Remove")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
-		r0 = rf(ctx, bucket, name)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// MockAssetRepository_Remove_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Remove'
-type MockAssetRepository_Remove_Call struct {
-	*mock.Call
-}
-
-// Remove is a helper method to define mock.On call
-//   - ctx context.Context
-//   - bucket string
-//   - name string
-func (_e *MockAssetRepository_Expecter) Remove(ctx interface{}, bucket interface{}, name interface{}) *MockAssetRepository_Remove_Call {
-	return &MockAssetRepository_Remove_Call{Call: _e.mock.On("Remove", ctx, bucket, name)}
-}
-
-func (_c *MockAssetRepository_Remove_Call) Run(run func(ctx context.Context, bucket string, name string)) *MockAssetRepository_Remove_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
-	})
-	return _c
-}
-
-func (_c *MockAssetRepository_Remove_Call) Return(_a0 error) *MockAssetRepository_Remove_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockAssetRepository_Remove_Call) RunAndReturn(run func(context.Context, string, string) error) *MockAssetRepository_Remove_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// SaveAsset provides a mock function with given fields: ctx, asset
-func (_m *MockAssetRepository) SaveAsset(ctx context.Context, asset *domain.Asset) error {
-	ret := _m.Called(ctx, asset)
-
-	if len(ret) == 0 {
-		panic("no return value specified for SaveAsset")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *domain.Asset) error); ok {
-		r0 = rf(ctx, asset)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// MockAssetRepository_SaveAsset_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SaveAsset'
-type MockAssetRepository_SaveAsset_Call struct {
-	*mock.Call
-}
-
-// SaveAsset is a helper method to define mock.On call
-//   - ctx context.Context
-//   - asset *domain.Asset
-func (_e *MockAssetRepository_Expecter) SaveAsset(ctx interface{}, asset interface{}) *MockAssetRepository_SaveAsset_Call {
-	return &MockAssetRepository_SaveAsset_Call{Call: _e.mock.On("SaveAsset", ctx, asset)}
-}
-
-func (_c *MockAssetRepository_SaveAsset_Call) Run(run func(ctx context.Context, asset *domain.Asset)) *MockAssetRepository_SaveAsset_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*domain.Asset))
-	})
-	return _c
-}
-
-func (_c *MockAssetRepository_SaveAsset_Call) Return(_a0 error) *MockAssetRepository_SaveAsset_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockAssetRepository_SaveAsset_Call) RunAndReturn(run func(context.Context, *domain.Asset) error) *MockAssetRepository_SaveAsset_Call {
+func (_c *MockAssetRepository_Put_Call) RunAndReturn(run func(context.Context, domain.Asset, io.ReadSeeker) (domain.Asset, error)) *MockAssetRepository_Put_Call {
 	_c.Call.Return(run)
 	return _c
 }

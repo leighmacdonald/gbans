@@ -29,7 +29,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/forum"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/match"
-	"github.com/leighmacdonald/gbans/internal/media"
 	"github.com/leighmacdonald/gbans/internal/metrics"
 	"github.com/leighmacdonald/gbans/internal/network"
 	"github.com/leighmacdonald/gbans/internal/news"
@@ -47,8 +46,6 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
-	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/spf13/cobra"
 )
 
@@ -128,16 +125,16 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			defer discordUsecase.Shutdown(conf.Discord.GuildID)
 
-			// Initialize minio client object.
-			minioClient, errMinio := minio.New(conf.S3.Endpoint, &minio.Options{
-				Creds:  credentials.NewStaticV4(conf.S3.AccessKey, conf.S3.SecretKey, ""),
-				Secure: conf.S3.SSL,
-			})
-			if errMinio != nil {
-				slog.Error("Cannot initialize minio", log.ErrAttr(errDR))
-
-				return
-			}
+			// // Initialize minio client object.
+			// minioClient, errMinio := minio.New(conf.S3Store.Endpoint, &minio.Options{
+			//	Creds:  credentials.NewStaticV4(conf.S3Store.AccessKey, conf.S3Store.SecretKey, ""),
+			//	Secure: conf.S3Store.SSL,
+			// })
+			// if errMinio != nil {
+			//	slog.Error("Cannot initialize minio", log.ErrAttr(errDR))
+			//
+			//	return
+			// }
 
 			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(dbUsecase), configUsecase)
 
@@ -152,16 +149,27 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			go networkUsecase.Start(ctx)
 
-			assetRepository := asset.NewS3Repository(dbUsecase, minioClient, conf.S3.Region)
-			if errInit := assetRepository.Init(ctx); errInit != nil {
-				slog.Error("Failed to ensure s3 buckets exist", log.ErrAttr(errInit))
+			assetRepository := asset.NewLocalRepository(dbUsecase, configUsecase)
+			if errInitAssets := assetRepository.Init(ctx); errInitAssets != nil {
+				slog.Error("Failed to init local asset repo", log.ErrAttr(errInitAssets))
+
+				return
 			}
+
+			dbUsecase.
+				Builder().
+				Select("a.asset_id", "a.bucket", "a.mime_type", "a.size", "a.name", "m.author_id").
+				From("asset_temp")
+
+			// assetRepository := asset.NewS3Repository(dbUsecase, minioClient, conf.S3Store.Region)
+			// if errInit := assetRepository.Init(ctx); errInit != nil {
+			//	slog.Error("Failed to ensure s3 buckets exist", log.ErrAttr(errInit))
+			// }
 
 			assetUsecase := asset.NewAssetUsecase(assetRepository)
 
-			mediaUsecase := media.NewMediaUsecase(conf.S3.BucketMedia, media.NewMediaRepository(dbUsecase), assetUsecase)
 			serversUsecase := servers.NewServersUsecase(servers.NewServersRepository(dbUsecase))
-			demoUsecase := demo.NewDemoUsecase(conf.S3.BucketDemo, demo.NewDemoRepository(dbUsecase), assetUsecase, configUsecase, serversUsecase)
+			demoUsecase := demo.NewDemoUsecase(conf.S3Store.BucketDemo, demo.NewDemoRepository(dbUsecase), assetUsecase, configUsecase, serversUsecase)
 			go demoUsecase.Start(ctx)
 
 			banGroupUsecase := steamgroup.NewBanGroupUsecase(steamgroup.NewSteamGroupRepository(dbUsecase))
@@ -211,7 +219,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			srcdsUsecase := srcds.NewSrcdsUsecase(configUsecase, serversUsecase, personUsecase, reportUsecase, discordUsecase)
 
-			wikiUsecase := wiki.NewWikiUsecase(wiki.NewWikiRepository(dbUsecase, mediaUsecase))
+			wikiUsecase := wiki.NewWikiUsecase(wiki.NewWikiRepository(dbUsecase))
 
 			authUsecase := auth.NewAuthUsecase(auth.NewAuthRepository(dbUsecase), configUsecase, personUsecase, banUsecase, serversUsecase)
 			go authUsecase.Start(ctx)
@@ -249,11 +257,11 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			steamgroup.NewSteamgroupHandler(router, banGroupUsecase, authUsecase)
 			blocklist.NewBlocklistHandler(router, blocklistUsecase, networkUsecase, authUsecase)
 			chat.NewChatHandler(router, chatUsecase, authUsecase)
-			contest.NewContestHandler(router, contestUsecase, configUsecase, mediaUsecase, authUsecase)
+			contest.NewContestHandler(router, contestUsecase, configUsecase, assetUsecase, authUsecase)
 			demo.NewDemoHandler(router, demoUsecase)
 			forum.NewForumHandler(router, forumUsecase, authUsecase)
 			match.NewMatchHandler(ctx, router, matchUsecase, serversUsecase, authUsecase, configUsecase)
-			media.NewMediaHandler(router, mediaUsecase, configUsecase, assetUsecase, authUsecase)
+			asset.NewAssetHandler(router, configUsecase, assetUsecase, authUsecase)
 			metrics.NewMetricsHandler(router)
 			network.NewNetworkHandler(router, networkUsecase, authUsecase)
 			news.NewNewsHandler(router, newsUsecase, discordUsecase, authUsecase)

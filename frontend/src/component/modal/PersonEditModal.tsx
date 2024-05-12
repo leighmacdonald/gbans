@@ -46,6 +46,7 @@ export const PersonEditModal = NiceModal.create(({ person }: { person: Person })
             permission_level: person.permission_level
         }
     });
+
     return (
         <Dialog {...muiDialogV5(modal)} fullWidth maxWidth={'sm'}>
             <form

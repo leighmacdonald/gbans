@@ -189,7 +189,6 @@ func (c *contestRepository) ContestEntry(ctx context.Context, contestID uuid.UUI
 			coalesce(v.votes_up, 0),
 			coalesce(v.votes_down, 0),
 			a.size,
-			a.path,
 			a.bucket,
 			a.mime_type,
 			a.name,
@@ -212,7 +211,7 @@ func (c *contestRepository) ContestEntry(ctx context.Context, contestID uuid.UUI
 		Scan(&entry.ContestEntryID, &entry.ContestID, &entry.SteamID, &entry.AssetID, &entry.Description,
 			&entry.Placement, &entry.Deleted, &entry.CreatedOn, &entry.UpdatedOn,
 			&entry.Personaname, &entry.AvatarHash, &entry.VotesUp, &entry.VotesDown,
-			&entry.Asset.Size, &entry.Asset.Path, &entry.Asset.Bucket,
+			&entry.Asset.Size, &entry.Asset.Bucket,
 			&entry.Asset.MimeType, &entry.Asset.Name, &entry.Asset.AssetID); errScan != nil {
 		return c.db.DBErr(errScan)
 	}
@@ -237,7 +236,6 @@ func (c *contestRepository) ContestEntries(ctx context.Context, contestID uuid.U
 			coalesce(v.votes_up, 0),
 			coalesce(v.votes_down, 0),
 			a.size,
-			a.path,
 			a.bucket,
 			a.mime_type,
 			a.name,
@@ -275,7 +273,7 @@ func (c *contestRepository) ContestEntries(ctx context.Context, contestID uuid.U
 		if errScan := rows.Scan(&entry.ContestEntryID, &entry.ContestID, &entry.SteamID, &entry.AssetID, &entry.Description,
 			&entry.Placement, &entry.Deleted, &entry.CreatedOn, &entry.UpdatedOn,
 			&entry.Personaname, &entry.AvatarHash, &entry.VotesUp, &entry.VotesDown,
-			&entry.Asset.Size, &entry.Asset.Path, &entry.Asset.Bucket,
+			&entry.Asset.Size, &entry.Asset.Bucket,
 			&entry.Asset.MimeType, &entry.Asset.Name, &entry.Asset.AssetID); errScan != nil {
 			return nil, c.db.DBErr(errScan)
 		}

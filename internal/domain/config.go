@@ -37,7 +37,8 @@ type Config struct {
 	IP2Location ConfigIP2Location `mapstructure:"ip2location"`
 	Debug       ConfigDebug       `mapstructure:"debug"`
 	Patreon     ConfigPatreon     `mapstructure:"patreon"`
-	S3          ConfigS3          `mapstructure:"s3"`
+	S3Store     ConfigS3Store     `mapstructure:"s3"`
+	LocalStore  ConfigLocalStore  `mapstructure:"local_store"`
 	Exports     ConfigExports     `mapstructure:"exports"`
 }
 
@@ -64,7 +65,11 @@ type ConfigFilter struct {
 	MatchTimeout time.Duration `mapstructure:"match_timeout"`
 }
 
-type ConfigS3 struct {
+type ConfigLocalStore struct {
+	PathRoot string `mapstructure:"path_root"`
+}
+
+type ConfigS3Store struct {
 	Enabled     bool   `mapstructure:"enabled"`
 	AccessKey   string `mapstructure:"access_key"`
 	SecretKey   string `mapstructure:"secret_key"`
@@ -130,6 +135,13 @@ const (
 	ActionBan  ConfigAction = "ban"
 )
 
+type FileServeMode string
+
+const (
+	S3Mode    FileServeMode = "s3"
+	LocalMode FileServeMode = "local"
+)
+
 type ConfigGeneral struct {
 	SiteName                     string        `mapstructure:"site_name"`
 	SteamKey                     string        `mapstructure:"steam_key"`
@@ -144,6 +156,7 @@ type ConfigGeneral struct {
 	ExternalURL                  string        `mapstructure:"external_url"`
 	DemoCleanupEnabled           bool          `mapstructure:"demo_cleanup_enabled"`
 	DemoCountLimit               uint64        `mapstructure:"demo_count_limit"`
+	FileServeMode                FileServeMode `mapstructure:"file_serve_mode"`
 }
 
 type ConfigDiscord struct {
