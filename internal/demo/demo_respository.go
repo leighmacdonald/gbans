@@ -3,7 +3,6 @@ package demo
 import (
 	"context"
 	"errors"
-	"strings"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/gofrs/uuid/v5"
@@ -105,11 +104,8 @@ func (r *demoRepository) GetDemoByName(ctx context.Context, demoName string, dem
 	return nil
 }
 
-func (r *demoRepository) GetDemos(ctx context.Context, opts domain.DemoFilter) ([]domain.DemoFile, int64, error) {
-	var (
-		demos       []domain.DemoFile
-		constraints sq.And
-	)
+func (r *demoRepository) GetDemos(ctx context.Context) ([]domain.DemoFile, error) {
+	var demos []domain.DemoFile
 
 	builder := r.db.
 		Builder().
@@ -119,45 +115,13 @@ func (r *demoRepository) GetDemos(ctx context.Context, opts domain.DemoFilter) (
 		LeftJoin("server s ON s.server_id = d.server_id").
 		LeftJoin("asset a ON a.asset_id = d.asset_id")
 
-	if opts.MapName != "" {
-		constraints = append(constraints, sq.ILike{"d.map_name": "%" + strings.ToLower(opts.MapName) + "%"})
-	}
-
-	if sid, ok := opts.SourceSteamID(); ok {
-		constraints = append(constraints, sq.Expr("d.stats ?? ?", sid.String()))
-	}
-
-	if len(opts.ServerIds) > 0 && opts.ServerIds[0] != 0 {
-		anyServer := false
-
-		for _, serverID := range opts.ServerIds {
-			if serverID == 0 {
-				anyServer = true
-
-				break
-			}
-		}
-
-		if !anyServer {
-			constraints = append(constraints, sq.Eq{"d.server_id": opts.ServerIds})
-		}
-	}
-
-	builder = opts.ApplySafeOrder(builder, map[string][]string{
-		"d.": {"demo_id", "server_id", "title", "created_on", "downloads", "map_name"},
-		"s.": {"short_name", "name"},
-		"a.": {"size"},
-	}, "demo_id")
-
-	builder = opts.ApplyLimitOffsetDefault(builder).Where(constraints)
-
 	rows, errQuery := r.db.QueryBuilder(ctx, builder)
 	if errQuery != nil {
 		if errors.Is(errQuery, domain.ErrNoResult) {
-			return demos, 0, nil
+			return demos, nil
 		}
 
-		return nil, 0, r.db.DBErr(errQuery)
+		return nil, r.db.DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -171,7 +135,7 @@ func (r *demoRepository) GetDemos(ctx context.Context, opts domain.DemoFilter) (
 		if errScan := rows.Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title, &demoFile.CreatedOn,
 			&demoFile.Downloads, &demoFile.MapName, &demoFile.Archive, &demoFile.Stats,
 			&demoFile.ServerNameShort, &demoFile.ServerNameLong, &uuidScan, &demoFile.Size); errScan != nil {
-			return nil, 0, r.db.DBErr(errScan)
+			return nil, r.db.DBErr(errScan)
 		}
 
 		if uuidScan != nil {
@@ -182,19 +146,10 @@ func (r *demoRepository) GetDemos(ctx context.Context, opts domain.DemoFilter) (
 	}
 
 	if demos == nil {
-		return []domain.DemoFile{}, 0, nil
+		return []domain.DemoFile{}, nil
 	}
 
-	count, errCount := r.db.GetCount(ctx, r.db.
-		Builder().
-		Select("count(d.demo_id)").
-		From("demo d").
-		Where(constraints))
-	if errCount != nil {
-		return []domain.DemoFile{}, 0, r.db.DBErr(errCount)
-	}
-
-	return demos, count, nil
+	return demos, nil
 }
 
 func (r *demoRepository) SaveDemo(ctx context.Context, demoFile *domain.DemoFile) error {

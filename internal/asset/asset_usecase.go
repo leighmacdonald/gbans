@@ -23,7 +23,7 @@ func NewAssetUsecase(assetRepository domain.AssetRepository) domain.AssetUsecase
 	return &assetUsecase{assetRepository: assetRepository}
 }
 
-func (s assetUsecase) Create(ctx context.Context, author steamid.SteamID, bucket string, fileName string, content io.ReadSeeker) (domain.Asset, error) {
+func (s assetUsecase) Create(ctx context.Context, author steamid.SteamID, bucket domain.Bucket, fileName string, content io.ReadSeeker) (domain.Asset, error) {
 	if bucket != "demos" && bucket != "media" {
 		return domain.Asset{}, domain.ErrBucketType
 	}
@@ -84,9 +84,12 @@ func generateFileHash(file io.Reader) ([]byte, error) {
 	return hasher.Sum(nil), nil
 }
 
-const maxFileSize = 25000000
+const (
+	maxMediaFileSize = 25000000
+	maxDemoFileSize  = 500000000
+)
 
-func NewAsset(author steamid.SteamID, name string, bucket string, contentReader io.ReadSeeker) (domain.Asset, error) {
+func NewAsset(author steamid.SteamID, name string, bucket domain.Bucket, contentReader io.ReadSeeker) (domain.Asset, error) {
 	mType, errMime := mimetype.DetectReader(contentReader)
 	if errMime != nil {
 		return domain.Asset{}, errors.Join(errMime, domain.ErrMimeTypeReadFailed)
@@ -99,7 +102,7 @@ func NewAsset(author steamid.SteamID, name string, bucket string, contentReader 
 		return domain.Asset{}, errors.Join(errSize, domain.ErrCopyFileContent)
 	}
 
-	if size > maxFileSize {
+	if bucket == domain.BucketMedia && size > maxMediaFileSize || bucket == domain.BucketDemo && size > maxDemoFileSize {
 		return domain.Asset{}, domain.ErrAssetTooLarge
 	}
 

@@ -2,7 +2,6 @@ package domain
 
 import (
 	"context"
-	"io"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -14,8 +13,8 @@ type DemoUsecase interface {
 	ExpiredDemos(ctx context.Context, limit uint64) ([]DemoInfo, error)
 	GetDemoByID(ctx context.Context, demoID int64, demoFile *DemoFile) error
 	GetDemoByName(ctx context.Context, demoName string, demoFile *DemoFile) error
-	GetDemos(ctx context.Context, opts DemoFilter) ([]DemoFile, int64, error)
-	Create(ctx context.Context, content io.ReadSeeker, demoName string, serverID int) (*DemoFile, error)
+	GetDemos(ctx context.Context) ([]DemoFile, error)
+	CreateFromAsset(ctx context.Context, asset Asset, serverID int) (*DemoFile, error)
 	DropDemo(ctx context.Context, demoFile *DemoFile) error
 }
 
@@ -23,7 +22,7 @@ type DemoRepository interface {
 	ExpiredDemos(ctx context.Context, limit uint64) ([]DemoInfo, error)
 	GetDemoByID(ctx context.Context, demoID int64, demoFile *DemoFile) error
 	GetDemoByName(ctx context.Context, demoName string, demoFile *DemoFile) error
-	GetDemos(ctx context.Context, opts DemoFilter) ([]DemoFile, int64, error)
+	GetDemos(ctx context.Context) ([]DemoFile, error)
 	SaveDemo(ctx context.Context, demoFile *DemoFile) error
 	DropDemo(ctx context.Context, demoFile *DemoFile) error
 }

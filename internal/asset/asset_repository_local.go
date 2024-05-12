@@ -67,6 +67,8 @@ func (l localRepository) Put(ctx context.Context, asset domain.Asset, body io.Re
 		return domain.Asset{}, errSave
 	}
 
+	asset.LocalPath = outPath
+
 	return asset, nil
 }
 

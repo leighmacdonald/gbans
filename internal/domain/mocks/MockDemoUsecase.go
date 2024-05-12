@@ -25,7 +25,7 @@ func (_m *MockDemoUsecase) EXPECT() *MockDemoUsecase_Expecter {
 }
 
 // Create provides a mock function with given fields: ctx, content, demoName, serverID
-func (_m *MockDemoUsecase) Create(ctx context.Context, content io.ReadSeeker, demoName string, serverID int) (*domain.DemoFile, error) {
+func (_m *MockDemoUsecase) CreateFromAsset(ctx context.Context, content io.ReadSeeker, demoName string, serverID int) (*domain.DemoFile, error) {
 	ret := _m.Called(ctx, content, demoName, serverID)
 
 	if len(ret) == 0 {

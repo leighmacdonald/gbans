@@ -54,7 +54,11 @@ func NewSCPExecer(database database.Database, configUsecase domain.ConfigUsecase
 }
 
 func (f SCPExecer) Start(ctx context.Context) {
-	updateTicker := time.NewTicker(time.Second * 5)
+	updateTicker := time.NewTicker(time.Minute)
+
+	if errUpdate := f.update(ctx); errUpdate != nil {
+		slog.Error("Error querying ssh demo", log.ErrAttr(errUpdate))
+	}
 
 	for {
 		select {
@@ -96,29 +100,33 @@ func (f SCPExecer) update(ctx context.Context) error {
 	for address := range mappedServers {
 		waitGroup.Add(1)
 
-		go func(addr string, addrServers []domain.Server) {
-			defer waitGroup.Done()
-
-			scpClient, errClient := f.configAndDialClient(ctx, sshConfig, net.JoinHostPort(addr, fmt.Sprintf("%d", sshConfig.Port)))
-			if errClient != nil {
-				slog.Error("failed to connect to remote host", log.ErrAttr(errClient))
-
-				return
-			}
-
-			if err := f.onConnect(ctx, scpClient, addrServers); err != nil {
-				slog.Error("onConnect function errored", log.ErrAttr(err))
-			}
-
-			if errClose := scpClient.Close(); errClose != nil {
-				slog.Error("failed to close scp client", log.ErrAttr(errClose))
-			}
-		}(address, mappedServers[address])
+		go f.updateServer(ctx, waitGroup, address, mappedServers[address], sshConfig)
 	}
 
 	waitGroup.Wait()
 
 	return nil
+}
+
+func (f SCPExecer) updateServer(ctx context.Context, waitGroup *sync.WaitGroup, addr string, addrServers []domain.Server, sshConfig domain.ConfigSSH) {
+	defer waitGroup.Done()
+
+	scpClient, errClient := f.configAndDialClient(ctx, sshConfig, net.JoinHostPort(addr, fmt.Sprintf("%d", sshConfig.Port)))
+	if errClient != nil {
+		slog.Error("failed to connect to remote host", log.ErrAttr(errClient))
+
+		return
+	}
+
+	if err := f.onConnect(ctx, scpClient, addrServers); err != nil {
+		slog.Error("onConnect function errored", log.ErrAttr(err))
+
+		return
+	}
+
+	if errClose := scpClient.Close(); errClose != nil {
+		slog.Error("failed to close scp client", log.ErrAttr(errClose))
+	}
 }
 
 // configAndDialClient connects to the remote server with the config. client.Close must be called.

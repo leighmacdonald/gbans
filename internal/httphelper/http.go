@@ -151,7 +151,7 @@ func useSentry(engine *gin.Engine, version string) {
 
 func useCors(engine *gin.Engine, conf domain.Config) {
 	engine.Use(httpErrorHandler(), gin.Recovery())
-	engine.Use(useSecure(conf.General.Mode, conf.S3Store.ExternalURL))
+	engine.Use(useSecure(conf.General.Mode, conf.S3.ExternalURL))
 
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = conf.HTTP.CorsOrigins

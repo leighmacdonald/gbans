@@ -169,7 +169,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			assetUsecase := asset.NewAssetUsecase(assetRepository)
 
 			serversUsecase := servers.NewServersUsecase(servers.NewServersRepository(dbUsecase))
-			demoUsecase := demo.NewDemoUsecase(conf.S3Store.BucketDemo, demo.NewDemoRepository(dbUsecase), assetUsecase, configUsecase, serversUsecase)
+			demoUsecase := demo.NewDemoUsecase(domain.BucketDemo, demo.NewDemoRepository(dbUsecase), assetUsecase, configUsecase, serversUsecase)
 			go demoUsecase.Start(ctx)
 
 			banGroupUsecase := steamgroup.NewBanGroupUsecase(steamgroup.NewSteamGroupRepository(dbUsecase))
@@ -283,7 +283,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			}
 
 			if conf.SSH.Enabled {
-				demoFetcher := demo.NewFetcher(dbUsecase, configUsecase, serversUsecase)
+				demoFetcher := demo.NewFetcher(dbUsecase, configUsecase, serversUsecase, assetUsecase, demoUsecase)
 				go demoFetcher.Start(ctx)
 			}
 

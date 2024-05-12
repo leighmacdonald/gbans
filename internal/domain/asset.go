@@ -12,6 +12,13 @@ import (
 
 const UnknownMediaTag = "__unknown__"
 
+type Bucket string
+
+const (
+	BucketDemo  Bucket = "demos"
+	BucketMedia Bucket = "media"
+)
+
 type AssetRepository interface {
 	Init(ctx context.Context) error
 	Get(ctx context.Context, uuid uuid.UUID) (Asset, io.ReadSeeker, error)
@@ -20,7 +27,7 @@ type AssetRepository interface {
 }
 
 type AssetUsecase interface {
-	Create(ctx context.Context, author steamid.SteamID, bucket string, fileName string, content io.ReadSeeker) (Asset, error)
+	Create(ctx context.Context, author steamid.SteamID, bucket Bucket, fileName string, content io.ReadSeeker) (Asset, error)
 	Get(ctx context.Context, assetID uuid.UUID) (Asset, io.ReadSeeker, error)
 	Delete(ctx context.Context, assetID uuid.UUID) error
 }
@@ -36,7 +43,7 @@ type Asset struct {
 	AssetID   uuid.UUID       `json:"asset_id"`
 	Hash      []byte          `json:"-"` // 32 bytes
 	AuthorID  steamid.SteamID `json:"author_id"`
-	Bucket    string          `json:"bucket"`
+	Bucket    Bucket          `json:"bucket"`
 	MimeType  string          `json:"mime_type"`
 	Name      string          `json:"name"`
 	Size      int64           `json:"size"`
