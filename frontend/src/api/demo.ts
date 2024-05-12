@@ -1,6 +1,4 @@
-import { LazyResult } from '../util/table.ts';
 import { apiCall, QueryFilter, transformCreatedOnDate } from './common';
-import { Asset } from './media';
 
 export interface DemoFile {
     demo_id: number;
@@ -13,7 +11,8 @@ export interface DemoFile {
     downloads: number;
     map_name: string;
     archive: boolean;
-    asset: Asset;
+    stats: Record<string, object>;
+    asset_id: string;
 }
 
 export interface DemoQueryFilter extends QueryFilter<DemoFile> {
@@ -22,8 +21,7 @@ export interface DemoQueryFilter extends QueryFilter<DemoFile> {
     server_ids: number[];
 }
 
-export const apiGetDemos = async (opts: DemoQueryFilter, abortController?: AbortController) => {
-    const resp = await apiCall<LazyResult<DemoFile>, DemoQueryFilter>('/api/demos', 'POST', opts, abortController);
-    resp.data = resp.data.map(transformCreatedOnDate);
-    return resp;
+export const apiGetDemos = async (abortController?: AbortController) => {
+    const resp = await apiCall<DemoFile[]>('/api/demos', 'POST', undefined, abortController);
+    return resp.map(transformCreatedOnDate);
 };

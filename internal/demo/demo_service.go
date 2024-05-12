@@ -24,12 +24,7 @@ func NewDemoHandler(engine *gin.Engine, du domain.DemoUsecase) {
 
 func (h demoHandler) onAPIPostDemosQuery() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req domain.DemoFilter
-		if !httphelper.Bind(ctx, &req) {
-			return
-		}
-
-		demos, count, errDemos := h.du.GetDemos(ctx, req)
+		demos, errDemos := h.du.GetDemos(ctx)
 		if errDemos != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			slog.Error("Failed to query demos", log.ErrAttr(errDemos))
@@ -37,6 +32,6 @@ func (h demoHandler) onAPIPostDemosQuery() gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, domain.NewLazyResult(count, demos))
+		ctx.JSON(http.StatusCreated, demos)
 	}
 }
