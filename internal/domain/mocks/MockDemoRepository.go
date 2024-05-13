@@ -224,41 +224,34 @@ func (_c *MockDemoRepository_GetDemoByName_Call) RunAndReturn(run func(context.C
 	return _c
 }
 
-// GetDemos provides a mock function with given fields: ctx, opts
-func (_m *MockDemoRepository) GetDemos(ctx context.Context, opts domain.DemoFilter) ([]domain.DemoFile, int64, error) {
-	ret := _m.Called(ctx, opts)
+// GetDemos provides a mock function with given fields: ctx
+func (_m *MockDemoRepository) GetDemos(ctx context.Context) ([]domain.DemoFile, error) {
+	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetDemos")
 	}
 
 	var r0 []domain.DemoFile
-	var r1 int64
-	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, domain.DemoFilter) ([]domain.DemoFile, int64, error)); ok {
-		return rf(ctx, opts)
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) ([]domain.DemoFile, error)); ok {
+		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, domain.DemoFilter) []domain.DemoFile); ok {
-		r0 = rf(ctx, opts)
+	if rf, ok := ret.Get(0).(func(context.Context) []domain.DemoFile); ok {
+		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]domain.DemoFile)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, domain.DemoFilter) int64); ok {
-		r1 = rf(ctx, opts)
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
 	} else {
-		r1 = ret.Get(1).(int64)
+		r1 = ret.Error(1)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, domain.DemoFilter) error); ok {
-		r2 = rf(ctx, opts)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
+	return r0, r1
 }
 
 // MockDemoRepository_GetDemos_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetDemos'
@@ -268,24 +261,23 @@ type MockDemoRepository_GetDemos_Call struct {
 
 // GetDemos is a helper method to define mock.On call
 //   - ctx context.Context
-//   - opts domain.DemoFilter
-func (_e *MockDemoRepository_Expecter) GetDemos(ctx interface{}, opts interface{}) *MockDemoRepository_GetDemos_Call {
-	return &MockDemoRepository_GetDemos_Call{Call: _e.mock.On("GetDemos", ctx, opts)}
+func (_e *MockDemoRepository_Expecter) GetDemos(ctx interface{}) *MockDemoRepository_GetDemos_Call {
+	return &MockDemoRepository_GetDemos_Call{Call: _e.mock.On("GetDemos", ctx)}
 }
 
-func (_c *MockDemoRepository_GetDemos_Call) Run(run func(ctx context.Context, opts domain.DemoFilter)) *MockDemoRepository_GetDemos_Call {
+func (_c *MockDemoRepository_GetDemos_Call) Run(run func(ctx context.Context)) *MockDemoRepository_GetDemos_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(domain.DemoFilter))
+		run(args[0].(context.Context))
 	})
 	return _c
 }
 
-func (_c *MockDemoRepository_GetDemos_Call) Return(_a0 []domain.DemoFile, _a1 int64, _a2 error) *MockDemoRepository_GetDemos_Call {
-	_c.Call.Return(_a0, _a1, _a2)
+func (_c *MockDemoRepository_GetDemos_Call) Return(_a0 []domain.DemoFile, _a1 error) *MockDemoRepository_GetDemos_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockDemoRepository_GetDemos_Call) RunAndReturn(run func(context.Context, domain.DemoFilter) ([]domain.DemoFile, int64, error)) *MockDemoRepository_GetDemos_Call {
+func (_c *MockDemoRepository_GetDemos_Call) RunAndReturn(run func(context.Context) ([]domain.DemoFile, error)) *MockDemoRepository_GetDemos_Call {
 	_c.Call.Return(run)
 	return _c
 }
