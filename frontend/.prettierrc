@@ -5,6 +5,7 @@
   "tabWidth": 4,
   "endOfLine": "lf",
   "printWidth": 120,
+
   "plugins": [
     "@trivago/prettier-plugin-sort-imports"
   ],
