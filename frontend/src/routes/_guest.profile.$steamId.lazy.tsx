@@ -21,13 +21,15 @@ import { createExternalLinks } from '../util/history.ts';
 
 export const Route = createFileRoute('/_guest/profile/$steamId')({
     component: ProfilePage,
-    loader: async ({ context, abortController }) => {
-        const getOwnProfile = queryOptions({
-            queryKey: ['ownProfile'],
-            queryFn: async () => await apiGetProfile(context.auth.userSteamID, abortController)
-        });
+    loader: async ({ context, abortController, params }) => {
+        const { steamId } = params;
 
-        return context.queryClient.fetchQuery(getOwnProfile);
+        return context.queryClient.fetchQuery(
+            queryOptions({
+                queryKey: ['profile', { steamId }],
+                queryFn: async () => await apiGetProfile(steamId, abortController)
+            })
+        );
     }
 });
 
