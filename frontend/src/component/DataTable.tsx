@@ -10,14 +10,22 @@ import { flexRender, Table as TSTable } from '@tanstack/react-table';
 import { LoadingPlaceholder } from './LoadingPlaceholder.tsx';
 import { TableCellSmall } from './TableCellSmall.tsx';
 
-export const DataTable = <T,>({ table, isLoading }: { table: TSTable<T>; isLoading: boolean }) => {
+export const DataTable = <T,>({
+    table,
+    isLoading,
+    padding = 'none'
+}: {
+    table: TSTable<T>;
+    isLoading: boolean;
+    padding?: 'normal' | 'checkbox' | 'none';
+}) => {
     if (isLoading) {
         return <LoadingPlaceholder />;
     }
 
     return (
         <TableContainer>
-            <Table>
+            <Table padding={padding}>
                 <TableHead>
                     {table.getHeaderGroups().map((headerGroup) => (
                         <TableRow key={headerGroup.id}>
@@ -43,7 +51,7 @@ export const DataTable = <T,>({ table, isLoading }: { table: TSTable<T>; isLoadi
                     {table.getRowModel().rows.map((row) => (
                         <TableRow key={row.id} hover>
                             {row.getVisibleCells().map((cell) => (
-                                <TableCell padding={'none'} key={cell.id}>
+                                <TableCell key={cell.id}>
                                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                 </TableCell>
                             ))}
