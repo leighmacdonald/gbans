@@ -4,10 +4,8 @@ package mocks
 
 import (
 	context "context"
-	io "io"
 
 	domain "github.com/leighmacdonald/gbans/internal/domain"
-
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -24,29 +22,29 @@ func (_m *MockDemoUsecase) EXPECT() *MockDemoUsecase_Expecter {
 	return &MockDemoUsecase_Expecter{mock: &_m.Mock}
 }
 
-// Create provides a mock function with given fields: ctx, content, demoName, serverID
-func (_m *MockDemoUsecase) CreateFromAsset(ctx context.Context, content io.ReadSeeker, demoName string, serverID int) (*domain.DemoFile, error) {
-	ret := _m.Called(ctx, content, demoName, serverID)
+// CreateFromAsset provides a mock function with given fields: ctx, asset, serverID
+func (_m *MockDemoUsecase) CreateFromAsset(ctx context.Context, asset domain.Asset, serverID int) (*domain.DemoFile, error) {
+	ret := _m.Called(ctx, asset, serverID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Create")
+		panic("no return value specified for CreateFromAsset")
 	}
 
 	var r0 *domain.DemoFile
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, io.ReadSeeker, string, int) (*domain.DemoFile, error)); ok {
-		return rf(ctx, content, demoName, serverID)
+	if rf, ok := ret.Get(0).(func(context.Context, domain.Asset, int) (*domain.DemoFile, error)); ok {
+		return rf(ctx, asset, serverID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, io.ReadSeeker, string, int) *domain.DemoFile); ok {
-		r0 = rf(ctx, content, demoName, serverID)
+	if rf, ok := ret.Get(0).(func(context.Context, domain.Asset, int) *domain.DemoFile); ok {
+		r0 = rf(ctx, asset, serverID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*domain.DemoFile)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, io.ReadSeeker, string, int) error); ok {
-		r1 = rf(ctx, content, demoName, serverID)
+	if rf, ok := ret.Get(1).(func(context.Context, domain.Asset, int) error); ok {
+		r1 = rf(ctx, asset, serverID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -54,33 +52,32 @@ func (_m *MockDemoUsecase) CreateFromAsset(ctx context.Context, content io.ReadS
 	return r0, r1
 }
 
-// MockDemoUsecase_Create_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Create'
-type MockDemoUsecase_Create_Call struct {
+// MockDemoUsecase_CreateFromAsset_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateFromAsset'
+type MockDemoUsecase_CreateFromAsset_Call struct {
 	*mock.Call
 }
 
-// Create is a helper method to define mock.On call
+// CreateFromAsset is a helper method to define mock.On call
 //   - ctx context.Context
-//   - content io.ReadSeeker
-//   - demoName string
+//   - asset domain.Asset
 //   - serverID int
-func (_e *MockDemoUsecase_Expecter) Create(ctx interface{}, content interface{}, demoName interface{}, serverID interface{}) *MockDemoUsecase_Create_Call {
-	return &MockDemoUsecase_Create_Call{Call: _e.mock.On("Create", ctx, content, demoName, serverID)}
+func (_e *MockDemoUsecase_Expecter) CreateFromAsset(ctx interface{}, asset interface{}, serverID interface{}) *MockDemoUsecase_CreateFromAsset_Call {
+	return &MockDemoUsecase_CreateFromAsset_Call{Call: _e.mock.On("CreateFromAsset", ctx, asset, serverID)}
 }
 
-func (_c *MockDemoUsecase_Create_Call) Run(run func(ctx context.Context, content io.ReadSeeker, demoName string, serverID int)) *MockDemoUsecase_Create_Call {
+func (_c *MockDemoUsecase_CreateFromAsset_Call) Run(run func(ctx context.Context, asset domain.Asset, serverID int)) *MockDemoUsecase_CreateFromAsset_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(io.ReadSeeker), args[2].(string), args[3].(int))
+		run(args[0].(context.Context), args[1].(domain.Asset), args[2].(int))
 	})
 	return _c
 }
 
-func (_c *MockDemoUsecase_Create_Call) Return(_a0 *domain.DemoFile, _a1 error) *MockDemoUsecase_Create_Call {
+func (_c *MockDemoUsecase_CreateFromAsset_Call) Return(_a0 *domain.DemoFile, _a1 error) *MockDemoUsecase_CreateFromAsset_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockDemoUsecase_Create_Call) RunAndReturn(run func(context.Context, io.ReadSeeker, string, int) (*domain.DemoFile, error)) *MockDemoUsecase_Create_Call {
+func (_c *MockDemoUsecase_CreateFromAsset_Call) RunAndReturn(run func(context.Context, domain.Asset, int) (*domain.DemoFile, error)) *MockDemoUsecase_CreateFromAsset_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -287,41 +284,34 @@ func (_c *MockDemoUsecase_GetDemoByName_Call) RunAndReturn(run func(context.Cont
 	return _c
 }
 
-// GetDemos provides a mock function with given fields: ctx, opts
-func (_m *MockDemoUsecase) GetDemos(ctx context.Context, opts domain.DemoFilter) ([]domain.DemoFile, int64, error) {
-	ret := _m.Called(ctx, opts)
+// GetDemos provides a mock function with given fields: ctx
+func (_m *MockDemoUsecase) GetDemos(ctx context.Context) ([]domain.DemoFile, error) {
+	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetDemos")
 	}
 
 	var r0 []domain.DemoFile
-	var r1 int64
-	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, domain.DemoFilter) ([]domain.DemoFile, int64, error)); ok {
-		return rf(ctx, opts)
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) ([]domain.DemoFile, error)); ok {
+		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, domain.DemoFilter) []domain.DemoFile); ok {
-		r0 = rf(ctx, opts)
+	if rf, ok := ret.Get(0).(func(context.Context) []domain.DemoFile); ok {
+		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]domain.DemoFile)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, domain.DemoFilter) int64); ok {
-		r1 = rf(ctx, opts)
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
 	} else {
-		r1 = ret.Get(1).(int64)
+		r1 = ret.Error(1)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, domain.DemoFilter) error); ok {
-		r2 = rf(ctx, opts)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
+	return r0, r1
 }
 
 // MockDemoUsecase_GetDemos_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetDemos'
@@ -331,24 +321,23 @@ type MockDemoUsecase_GetDemos_Call struct {
 
 // GetDemos is a helper method to define mock.On call
 //   - ctx context.Context
-//   - opts domain.DemoFilter
-func (_e *MockDemoUsecase_Expecter) GetDemos(ctx interface{}, opts interface{}) *MockDemoUsecase_GetDemos_Call {
-	return &MockDemoUsecase_GetDemos_Call{Call: _e.mock.On("GetDemos", ctx, opts)}
+func (_e *MockDemoUsecase_Expecter) GetDemos(ctx interface{}) *MockDemoUsecase_GetDemos_Call {
+	return &MockDemoUsecase_GetDemos_Call{Call: _e.mock.On("GetDemos", ctx)}
 }
 
-func (_c *MockDemoUsecase_GetDemos_Call) Run(run func(ctx context.Context, opts domain.DemoFilter)) *MockDemoUsecase_GetDemos_Call {
+func (_c *MockDemoUsecase_GetDemos_Call) Run(run func(ctx context.Context)) *MockDemoUsecase_GetDemos_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(domain.DemoFilter))
+		run(args[0].(context.Context))
 	})
 	return _c
 }
 
-func (_c *MockDemoUsecase_GetDemos_Call) Return(_a0 []domain.DemoFile, _a1 int64, _a2 error) *MockDemoUsecase_GetDemos_Call {
-	_c.Call.Return(_a0, _a1, _a2)
+func (_c *MockDemoUsecase_GetDemos_Call) Return(_a0 []domain.DemoFile, _a1 error) *MockDemoUsecase_GetDemos_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockDemoUsecase_GetDemos_Call) RunAndReturn(run func(context.Context, domain.DemoFilter) ([]domain.DemoFile, int64, error)) *MockDemoUsecase_GetDemos_Call {
+func (_c *MockDemoUsecase_GetDemos_Call) RunAndReturn(run func(context.Context) ([]domain.DemoFile, error)) *MockDemoUsecase_GetDemos_Call {
 	_c.Call.Return(run)
 	return _c
 }

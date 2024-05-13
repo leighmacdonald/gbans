@@ -29,7 +29,7 @@ func (_m *MockAssetUsecase) EXPECT() *MockAssetUsecase_Expecter {
 }
 
 // Create provides a mock function with given fields: ctx, author, bucket, fileName, content
-func (_m *MockAssetUsecase) Create(ctx context.Context, author steamid.SteamID, bucket string, fileName string, content io.ReadSeeker) (domain.Asset, error) {
+func (_m *MockAssetUsecase) Create(ctx context.Context, author steamid.SteamID, bucket domain.Bucket, fileName string, content io.ReadSeeker) (domain.Asset, error) {
 	ret := _m.Called(ctx, author, bucket, fileName, content)
 
 	if len(ret) == 0 {
@@ -38,16 +38,16 @@ func (_m *MockAssetUsecase) Create(ctx context.Context, author steamid.SteamID, 
 
 	var r0 domain.Asset
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, steamid.SteamID, string, string, io.ReadSeeker) (domain.Asset, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, steamid.SteamID, domain.Bucket, string, io.ReadSeeker) (domain.Asset, error)); ok {
 		return rf(ctx, author, bucket, fileName, content)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, steamid.SteamID, string, string, io.ReadSeeker) domain.Asset); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, steamid.SteamID, domain.Bucket, string, io.ReadSeeker) domain.Asset); ok {
 		r0 = rf(ctx, author, bucket, fileName, content)
 	} else {
 		r0 = ret.Get(0).(domain.Asset)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, steamid.SteamID, string, string, io.ReadSeeker) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, steamid.SteamID, domain.Bucket, string, io.ReadSeeker) error); ok {
 		r1 = rf(ctx, author, bucket, fileName, content)
 	} else {
 		r1 = ret.Error(1)
@@ -64,16 +64,16 @@ type MockAssetUsecase_Create_Call struct {
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
 //   - author steamid.SteamID
-//   - bucket string
+//   - bucket domain.Bucket
 //   - fileName string
 //   - content io.ReadSeeker
 func (_e *MockAssetUsecase_Expecter) Create(ctx interface{}, author interface{}, bucket interface{}, fileName interface{}, content interface{}) *MockAssetUsecase_Create_Call {
 	return &MockAssetUsecase_Create_Call{Call: _e.mock.On("Create", ctx, author, bucket, fileName, content)}
 }
 
-func (_c *MockAssetUsecase_Create_Call) Run(run func(ctx context.Context, author steamid.SteamID, bucket string, fileName string, content io.ReadSeeker)) *MockAssetUsecase_Create_Call {
+func (_c *MockAssetUsecase_Create_Call) Run(run func(ctx context.Context, author steamid.SteamID, bucket domain.Bucket, fileName string, content io.ReadSeeker)) *MockAssetUsecase_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(steamid.SteamID), args[2].(string), args[3].(string), args[4].(io.ReadSeeker))
+		run(args[0].(context.Context), args[1].(steamid.SteamID), args[2].(domain.Bucket), args[3].(string), args[4].(io.ReadSeeker))
 	})
 	return _c
 }
@@ -83,7 +83,7 @@ func (_c *MockAssetUsecase_Create_Call) Return(_a0 domain.Asset, _a1 error) *Moc
 	return _c
 }
 
-func (_c *MockAssetUsecase_Create_Call) RunAndReturn(run func(context.Context, steamid.SteamID, string, string, io.ReadSeeker) (domain.Asset, error)) *MockAssetUsecase_Create_Call {
+func (_c *MockAssetUsecase_Create_Call) RunAndReturn(run func(context.Context, steamid.SteamID, domain.Bucket, string, io.ReadSeeker) (domain.Asset, error)) *MockAssetUsecase_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
