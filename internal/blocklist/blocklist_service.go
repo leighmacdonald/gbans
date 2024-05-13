@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/netip"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -26,10 +27,17 @@ func NewBlocklistHandler(engine *gin.Engine, bu domain.BlocklistUsecase, nu doma
 	modGrp := engine.Group("/")
 	{
 		mod := modGrp.Use(ath.AuthMiddleware(domain.PModerator))
-		mod.POST("/api/block_list/whitelist", handler.onAPIPostBlockListWhitelistCreate())
-		mod.POST("/api/block_list/whitelist/:cidr_block_whitelist_id", handler.onAPIPostBlockListWhitelistUpdate())
-		mod.DELETE("/api/block_list/whitelist/:cidr_block_whitelist_id", handler.onAPIDeleteBlockListWhitelist())
-		mod.GET("/api/block_list", handler.onAPIGetBlockLists())
+		mod.GET("/api/block_list/sources", handler.onAPIGetBlockListSources())
+
+		mod.GET("/api/block_list/whitelist/ip", handler.onAPIWhitelistIPs())
+		mod.POST("/api/block_list/whitelist/ip", handler.onAPICreateWhitelistIP())
+		mod.DELETE("/api/block_list/whitelist/ip/:cidr_block_whitelist_id", handler.onAPIDeleteBlockListWhitelist())
+		mod.POST("/api/block_list/whitelist/ip/:cidr_block_whitelist_id", handler.onAPIUpdateWhitelistIP())
+
+		mod.GET("/api/block_list/whitelist/steam", handler.onAPIWhitelistSteam())
+		mod.DELETE("/api/block_list/whitelist/steam/:steam_id", handler.onAPIDeleteWhitelistSteam())
+		mod.POST("/api/block_list/whitelist/steam", handler.onAPICreateWhitelistSteam())
+
 		mod.POST("/api/block_list/checker", handler.onAPIPostBlocklistCheck())
 	}
 
@@ -37,9 +45,9 @@ func NewBlocklistHandler(engine *gin.Engine, bu domain.BlocklistUsecase, nu doma
 	adminGrp := engine.Group("/")
 	{
 		admin := adminGrp.Use(ath.AuthMiddleware(domain.PAdmin))
-		admin.POST("/api/block_list", handler.onAPIPostBlockListCreate())
-		admin.POST("/api/block_list/:cidr_block_source_id", handler.onAPIPostBlockListUpdate())
-		admin.DELETE("/api/block_list/:cidr_block_source_id", handler.onAPIDeleteBlockList())
+		admin.POST("/api/block_list/sources", handler.onAPIPostBlockListCreate())
+		admin.POST("/api/block_list/sources/:cidr_block_source_id", handler.onAPIPostBlockListUpdate())
+		admin.DELETE("/api/block_list/sources/:cidr_block_source_id", handler.onAPIDeleteBlockList())
 	}
 }
 
@@ -50,6 +58,50 @@ type (
 		domain.TimeStamped
 	}
 )
+
+func (b *blocklistHandler) onAPIWhitelistSteam() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		whiteLists, errWl := b.BlocklistUsecase.GetSteamBlockWhitelists(ctx)
+		if errWl != nil {
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+
+			slog.Error("Failed to load ip whitelist", log.ErrAttr(errWl))
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, whiteLists)
+	}
+}
+
+func (b *blocklistHandler) onAPICreateWhitelistSteam() gin.HandlerFunc {
+	type createRequest struct {
+		domain.SteamIDField
+	}
+
+	return func(ctx *gin.Context) {
+		var req createRequest
+		if !httphelper.Bind(ctx, &req) {
+			return
+		}
+
+		steamID, ok := req.SteamID(ctx)
+		if !ok {
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidSID)
+
+			return
+		}
+
+		whitelist, errSave := b.BlocklistUsecase.CreateSteamBlockWhitelists(ctx, steamID)
+		if errSave != nil {
+			_ = httphelper.ErrorHandledWithReturn(ctx, errSave)
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, whitelist)
+	}
+}
 
 func (b *blocklistHandler) onAPIDeleteBlockList() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
@@ -72,27 +124,13 @@ func (b *blocklistHandler) onAPIDeleteBlockList() gin.HandlerFunc {
 	}
 }
 
-func (b *blocklistHandler) onAPIGetBlockLists() gin.HandlerFunc {
-	type BlockSources struct {
-		Sources   []domain.CIDRBlockSource   `json:"sources"`
-		Whitelist []CIDRBlockWhitelistExport `json:"whitelist"`
-	}
-
+func (b *blocklistHandler) onAPIWhitelistIPs() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		blockLists, err := b.BlocklistUsecase.GetCIDRBlockSources(ctx)
-		if err != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-
-			slog.Error("Failed to load blocklist", log.ErrAttr(err))
-
-			return
-		}
-
 		whiteLists, errWl := b.BlocklistUsecase.GetCIDRBlockWhitelists(ctx)
 		if errWl != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
-			slog.Error("Failed to load blocklist", log.ErrAttr(err))
+			slog.Error("Failed to load ip whitelist", log.ErrAttr(errWl))
 
 			return
 		}
@@ -106,7 +144,44 @@ func (b *blocklistHandler) onAPIGetBlockLists() gin.HandlerFunc {
 			})
 		}
 
-		ctx.JSON(http.StatusOK, BlockSources{Sources: blockLists, Whitelist: wlExported})
+		ctx.JSON(http.StatusOK, wlExported)
+	}
+}
+
+func (b *blocklistHandler) onAPIDeleteWhitelistSteam() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		steamID, errID := httphelper.GetSID64Param(ctx, "steam_id")
+		if errID != nil {
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+
+			return
+		}
+
+		errSave := b.BlocklistUsecase.DeleteSteamBlockWhitelists(ctx, steamID)
+		if errSave != nil {
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+
+			slog.Error("Failed to save whitelist", log.ErrAttr(errSave))
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{})
+	}
+}
+
+func (b *blocklistHandler) onAPIGetBlockListSources() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		blockLists, err := b.BlocklistUsecase.GetCIDRBlockSources(ctx)
+		if err != nil {
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+
+			slog.Error("Failed to load blocklist sources", log.ErrAttr(err))
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, blockLists)
 	}
 }
 
@@ -167,7 +242,7 @@ func (b *blocklistHandler) onAPIPostBlockListUpdate() gin.HandlerFunc {
 	}
 }
 
-func (b *blocklistHandler) onAPIPostBlockListWhitelistCreate() gin.HandlerFunc {
+func (b *blocklistHandler) onAPICreateWhitelistIP() gin.HandlerFunc {
 	type createRequest struct {
 		Address string `json:"address"`
 	}
@@ -195,7 +270,7 @@ func (b *blocklistHandler) onAPIPostBlockListWhitelistCreate() gin.HandlerFunc {
 	}
 }
 
-func (b *blocklistHandler) onAPIPostBlockListWhitelistUpdate() gin.HandlerFunc {
+func (b *blocklistHandler) onAPIUpdateWhitelistIP() gin.HandlerFunc {
 	type updateRequest struct {
 		Address string `json:"address"`
 	}
@@ -211,6 +286,10 @@ func (b *blocklistHandler) onAPIPostBlockListWhitelistUpdate() gin.HandlerFunc {
 		var req updateRequest
 		if !httphelper.Bind(ctx, &req) {
 			return
+		}
+
+		if !strings.Contains(req.Address, "/") {
+			req.Address += "/32"
 		}
 
 		whiteList, errSave := b.BlocklistUsecase.UpdateCIDRBlockWhitelist(ctx, whitelistID, req.Address)

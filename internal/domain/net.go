@@ -46,10 +46,17 @@ type CIDRBlockSource struct {
 	TimeStamped
 }
 
-type CIDRBlockWhitelist struct {
+type WhitelistIP struct {
 	CIDRBlockWhitelistID int        `json:"cidr_block_whitelist_id"`
 	Address              *net.IPNet `json:"address"`
 	TimeStamped
+}
+
+type WhitelistSteam struct {
+	TimeStamped
+	SteamIDField
+	Personaname string `json:"personaname"`
+	AvatarHash  string `json:"avatar_hash"`
 }
 
 type NetworkDetailsQuery struct {

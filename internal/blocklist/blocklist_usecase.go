@@ -9,10 +9,23 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/network"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type blocklistUsecase struct {
 	blocklistRepo domain.BlocklistRepository
+}
+
+func (b blocklistUsecase) CreateSteamBlockWhitelists(ctx context.Context, steamID steamid.SteamID) (domain.WhitelistSteam, error) {
+	return b.blocklistRepo.CreateSteamBlockWhitelists(ctx, steamID)
+}
+
+func (b blocklistUsecase) GetSteamBlockWhitelists(ctx context.Context) ([]domain.WhitelistSteam, error) {
+	return b.blocklistRepo.GetSteamBlockWhitelists(ctx)
+}
+
+func (b blocklistUsecase) DeleteSteamBlockWhitelists(ctx context.Context, steamID steamid.SteamID) error {
+	return b.blocklistRepo.DeleteSteamBlockWhitelists(ctx, steamID)
 }
 
 func NewBlocklistUsecase(br domain.BlocklistRepository) domain.BlocklistUsecase {
@@ -82,48 +95,52 @@ func (b blocklistUsecase) DeleteCIDRBlockSources(ctx context.Context, blockSourc
 	return b.blocklistRepo.DeleteCIDRBlockSources(ctx, blockSourceID)
 }
 
-func (b blocklistUsecase) GetCIDRBlockWhitelists(ctx context.Context) ([]domain.CIDRBlockWhitelist, error) {
+func (b blocklistUsecase) GetCIDRBlockWhitelists(ctx context.Context) ([]domain.WhitelistIP, error) {
 	return b.blocklistRepo.GetCIDRBlockWhitelists(ctx)
 }
 
-func (b blocklistUsecase) GetCIDRBlockWhitelist(ctx context.Context, whitelistID int, whitelist *domain.CIDRBlockWhitelist) error {
+func (b blocklistUsecase) GetCIDRBlockWhitelist(ctx context.Context, whitelistID int, whitelist *domain.WhitelistIP) error {
 	return b.blocklistRepo.GetCIDRBlockWhitelist(ctx, whitelistID, whitelist)
 }
 
-func (b blocklistUsecase) CreateCIDRBlockWhitelist(ctx context.Context, address string) (domain.CIDRBlockWhitelist, error) {
+func (b blocklistUsecase) CreateCIDRBlockWhitelist(ctx context.Context, address string) (domain.WhitelistIP, error) {
 	if !strings.Contains(address, "/") {
 		address += "/32"
 	}
 
 	_, cidr, errParse := net.ParseCIDR(address)
 	if errParse != nil {
-		return domain.CIDRBlockWhitelist{}, domain.ErrInvalidCIDR
+		return domain.WhitelistIP{}, domain.ErrInvalidCIDR
 	}
 
-	whitelist := domain.CIDRBlockWhitelist{
+	whitelist := domain.WhitelistIP{
 		Address:     cidr,
 		TimeStamped: domain.NewTimeStamped(),
 	}
 
 	if errSave := b.blocklistRepo.SaveCIDRBlockWhitelist(ctx, &whitelist); errSave != nil {
-		return domain.CIDRBlockWhitelist{}, errSave
+		return domain.WhitelistIP{}, errSave
 	}
 
 	return whitelist, nil
 }
 
-func (b blocklistUsecase) UpdateCIDRBlockWhitelist(ctx context.Context, whitelistID int, address string) (domain.CIDRBlockWhitelist, error) {
+func (b blocklistUsecase) UpdateCIDRBlockWhitelist(ctx context.Context, whitelistID int, address string) (domain.WhitelistIP, error) {
 	_, cidr, errParse := net.ParseCIDR(address)
 	if errParse != nil {
-		return domain.CIDRBlockWhitelist{}, domain.ErrInvalidCIDR
+		return domain.WhitelistIP{}, domain.ErrInvalidCIDR
 	}
 
-	var whitelist domain.CIDRBlockWhitelist
+	var whitelist domain.WhitelistIP
 	if errGet := b.GetCIDRBlockWhitelist(ctx, whitelistID, &whitelist); errGet != nil {
-		return domain.CIDRBlockWhitelist{}, errGet
+		return domain.WhitelistIP{}, errGet
 	}
 
 	whitelist.Address = cidr
+
+	if errSave := b.blocklistRepo.SaveCIDRBlockWhitelist(ctx, &whitelist); errSave != nil {
+		return domain.WhitelistIP{}, errSave
+	}
 
 	return whitelist, nil
 }

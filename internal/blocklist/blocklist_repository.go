@@ -8,6 +8,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type blocklistRepository struct {
@@ -16,6 +17,77 @@ type blocklistRepository struct {
 
 func NewBlocklistRepository(database database.Database) domain.BlocklistRepository {
 	return &blocklistRepository{db: database}
+}
+
+func (b *blocklistRepository) CreateSteamBlockWhitelists(ctx context.Context, steamID steamid.SteamID) (domain.WhitelistSteam, error) {
+	now := time.Now()
+
+	if err := b.db.ExecInsertBuilder(ctx, b.db.Builder().Insert("person_whitelist").SetMap(map[string]interface{}{
+		"steam_id":   steamID.Int64(),
+		"created_on": now,
+		"updated_on": now,
+	})); err != nil {
+		return domain.WhitelistSteam{}, b.db.DBErr(err)
+	}
+
+	entry, errEntry := b.GetSteamBlockWhitelists(ctx)
+	if errEntry != nil {
+		return domain.WhitelistSteam{}, b.db.DBErr(errEntry)
+	}
+
+	for _, wl := range entry {
+		if wl.SteamIDValue == steamID.String() {
+			return wl, nil
+		}
+	}
+
+	return domain.WhitelistSteam{}, domain.ErrInternal
+}
+
+func (b *blocklistRepository) GetSteamBlockWhitelists(ctx context.Context) ([]domain.WhitelistSteam, error) {
+	blocks := make([]domain.WhitelistSteam, 0)
+
+	rows, errRows := b.db.QueryBuilder(ctx, b.db.
+		Builder().
+		Select("w.steam_id", "p.personaname", "p.avatarhash", "w.created_on", "w.updated_on").
+		From("person_whitelist w").
+		LeftJoin("person p USING(steam_id)"))
+
+	if errRows != nil {
+		if errors.Is(errRows, domain.ErrNoResult) {
+			return blocks, nil
+		}
+
+		return nil, b.db.DBErr(errRows)
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var (
+			block   domain.WhitelistSteam
+			steamID int64
+		)
+
+		if errScan := rows.Scan(&steamID, &block.Personaname, &block.AvatarHash, &block.CreatedOn, &block.UpdatedOn); errScan != nil {
+			return nil, b.db.DBErr(errScan)
+		}
+
+		sid := steamid.New(steamID)
+
+		block.SteamIDValue = sid.String()
+
+		blocks = append(blocks, block)
+	}
+
+	return blocks, nil
+}
+
+func (b *blocklistRepository) DeleteSteamBlockWhitelists(ctx context.Context, steamID steamid.SteamID) error {
+	return b.db.DBErr(b.db.ExecDeleteBuilder(ctx, b.db.
+		Builder().
+		Delete("person_whitelist").
+		Where(sq.Eq{"steam_id": steamID.Int64()})))
 }
 
 func (b *blocklistRepository) GetCIDRBlockSources(ctx context.Context) ([]domain.CIDRBlockSource, error) {
@@ -104,8 +176,8 @@ func (b *blocklistRepository) DeleteCIDRBlockSources(ctx context.Context, blockS
 		Where(sq.Eq{"cidr_block_source_id": blockSourceID})))
 }
 
-func (b *blocklistRepository) GetCIDRBlockWhitelists(ctx context.Context) ([]domain.CIDRBlockWhitelist, error) {
-	whitelists := make([]domain.CIDRBlockWhitelist, 0)
+func (b *blocklistRepository) GetCIDRBlockWhitelists(ctx context.Context) ([]domain.WhitelistIP, error) {
+	whitelists := make([]domain.WhitelistIP, 0)
 
 	rows, errRows := b.db.QueryBuilder(ctx, b.db.
 		Builder().
@@ -122,7 +194,7 @@ func (b *blocklistRepository) GetCIDRBlockWhitelists(ctx context.Context) ([]dom
 	defer rows.Close()
 
 	for rows.Next() {
-		var whitelist domain.CIDRBlockWhitelist
+		var whitelist domain.WhitelistIP
 		if errScan := rows.Scan(&whitelist.CIDRBlockWhitelistID, &whitelist.Address, &whitelist.CreatedOn, &whitelist.UpdatedOn); errScan != nil {
 			return nil, b.db.DBErr(errScan)
 		}
@@ -133,7 +205,7 @@ func (b *blocklistRepository) GetCIDRBlockWhitelists(ctx context.Context) ([]dom
 	return whitelists, nil
 }
 
-func (b *blocklistRepository) GetCIDRBlockWhitelist(ctx context.Context, whitelistID int, whitelist *domain.CIDRBlockWhitelist) error {
+func (b *blocklistRepository) GetCIDRBlockWhitelist(ctx context.Context, whitelistID int, whitelist *domain.WhitelistIP) error {
 	rows, errRow := b.db.QueryRowBuilder(ctx, b.db.
 		Builder().
 		Select("cidr_block_whitelist_id", "address", "created_on", "updated_on").
@@ -150,7 +222,7 @@ func (b *blocklistRepository) GetCIDRBlockWhitelist(ctx context.Context, whiteli
 	return nil
 }
 
-func (b *blocklistRepository) SaveCIDRBlockWhitelist(ctx context.Context, whitelist *domain.CIDRBlockWhitelist) error {
+func (b *blocklistRepository) SaveCIDRBlockWhitelist(ctx context.Context, whitelist *domain.WhitelistIP) error {
 	now := time.Now()
 
 	whitelist.UpdatedOn = now

@@ -218,16 +218,16 @@ type AppealQueryFilter struct {
 	AppealState AppealState `json:"appeal_state"`
 }
 
-type TargetID struct {
-	SteamID string `json:"steam_id"`
+type SteamIDField struct {
+	SteamIDValue string `json:"steam_id"` //nolint:tagliatelle
 }
 
-func (f TargetID) SteamSteamID(ctx context.Context) (steamid.SteamID, bool) {
-	if f.SteamID == "" {
+func (f SteamIDField) SteamID(ctx context.Context) (steamid.SteamID, bool) {
+	if f.SteamIDValue == "" {
 		return steamid.SteamID{}, false
 	}
 
-	sid, err := steamid.Resolve(ctx, f.SteamID)
+	sid, err := steamid.Resolve(ctx, f.SteamIDValue)
 	if err != nil {
 		return sid, false
 	}
