@@ -184,12 +184,11 @@ function STV() {
             {
                 id: 'download',
                 enableSorting: false,
-                header: () => <TableHeadingCell name={'Download'} />,
                 cell: (info) => (
                     <Button
                         fullWidth
                         component={Link}
-                        href={`/asset/${info.getValue()}`}
+                        href={`/asset/${info.row.original.asset_id}`}
                         variant={'contained'}
                         startIcon={<CloudDownload />}
                     >
