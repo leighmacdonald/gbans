@@ -15,7 +15,6 @@ type DemoUsecase interface {
 	GetDemoByName(ctx context.Context, demoName string, demoFile *DemoFile) error
 	GetDemos(ctx context.Context) ([]DemoFile, error)
 	CreateFromAsset(ctx context.Context, asset Asset, serverID int) (*DemoFile, error)
-	DropDemo(ctx context.Context, demoFile *DemoFile) error
 }
 
 type DemoRepository interface {
@@ -24,7 +23,6 @@ type DemoRepository interface {
 	GetDemoByName(ctx context.Context, demoName string, demoFile *DemoFile) error
 	GetDemos(ctx context.Context) ([]DemoFile, error)
 	SaveDemo(ctx context.Context, demoFile *DemoFile) error
-	DropDemo(ctx context.Context, demoFile *DemoFile) error
 }
 
 type DemoPlayerStats struct {
