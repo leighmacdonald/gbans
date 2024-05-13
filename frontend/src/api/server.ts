@@ -1,3 +1,4 @@
+import { parseDateTime } from '../util/text.tsx';
 import { apiCall, TimeStamped, transformTimeStampedDates } from './common';
 
 export interface BaseServer {
@@ -60,6 +61,7 @@ export interface Server extends TimeStamped {
     colour: string;
     enable_stats: boolean;
     log_secret: number;
+    token_created_on: Date;
 }
 
 export interface Location {
@@ -98,8 +100,13 @@ export const apiCreateServer = async (opts: SaveServerOpts) =>
 export const apiSaveServer = async (server_id: number, opts: SaveServerOpts) =>
     transformTimeStampedDates(await apiCall<Server, SaveServerOpts>(`/api/servers/${server_id}`, 'POST', opts));
 
-export const apiGetServersAdmin = async (abortController?: AbortController) =>
-    await apiCall<Server[]>(`/api/servers_admin`, 'POST', undefined, abortController);
+export const apiGetServersAdmin = async (abortController?: AbortController) => {
+    const resp = await apiCall<Server[]>(`/api/servers_admin`, 'POST', undefined, abortController);
+    return resp.map(transformTimeStampedDates).map((s) => {
+        s.token_created_on = parseDateTime(s.token_created_on as unknown as string);
+        return s;
+    });
+};
 
 export const apiGetServers = async () => apiCall<ServerSimple[]>(`/api/servers`, 'GET', undefined);
 

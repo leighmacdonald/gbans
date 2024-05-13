@@ -31,6 +31,7 @@ import { TableCellStringHidden } from '../component/field/TableCellStringHidden.
 import { ModalServerEditor } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
+import { renderDateTime } from '../util/text.tsx';
 
 const serversSearchSchema = z.object({
     ...commonTableSearchSchema,
@@ -187,7 +188,7 @@ const AdminServersTable = ({
                 accessorKey: 'password',
                 header: () => (
                     <TableHeadingCell
-                        name={'Server Auth Pass'}
+                        name={'Auth PSK'}
                         tooltip={'A password that the server uses to authenticate with the central gbans server'}
                     />
                 ),
@@ -214,9 +215,11 @@ const AdminServersTable = ({
                 cell: (info) => <TableCellString>{Number(info.getValue()).toFixed(2)}</TableCellString>
             },
             {
-                accessorKey: 'reserved_slots',
-                header: () => <TableHeadingCell name={'RS'} tooltip={'Reserved slots count'} />,
-                cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>
+                accessorKey: 'token_created_on',
+                header: () => (
+                    <TableHeadingCell name={'Last Auth'} tooltip={'Last time the server authenticated itself'} />
+                ),
+                cell: (info) => <TableCellString>{renderDateTime(info.getValue() as Date)}</TableCellString>
             },
             {
                 accessorKey: 'enable_stats',
