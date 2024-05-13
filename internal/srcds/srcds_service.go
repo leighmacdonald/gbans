@@ -20,20 +20,21 @@ import (
 )
 
 type srcdsHandler struct {
-	sru             domain.SRCDSUsecase
-	ServerUsecase   domain.ServersUsecase
-	PersonUsecase   domain.PersonUsecase
-	stateUsecase    domain.StateUsecase
-	discordUsecase  domain.DiscordUsecase
-	configUsecase   domain.ConfigUsecase
-	reportUsecase   domain.ReportUsecase
-	assetUsecase    domain.AssetUsecase
-	banUsecase      domain.BanSteamUsecase
-	banGroupUsecase domain.BanGroupUsecase
-	banASNUsecase   domain.BanASNUsecase
-	banNetUsecase   domain.BanNetUsecase
-	networkUsecase  domain.NetworkUsecase
-	demoUsecase     domain.DemoUsecase
+	sru              domain.SRCDSUsecase
+	ServerUsecase    domain.ServersUsecase
+	PersonUsecase    domain.PersonUsecase
+	stateUsecase     domain.StateUsecase
+	discordUsecase   domain.DiscordUsecase
+	configUsecase    domain.ConfigUsecase
+	reportUsecase    domain.ReportUsecase
+	assetUsecase     domain.AssetUsecase
+	banUsecase       domain.BanSteamUsecase
+	banGroupUsecase  domain.BanGroupUsecase
+	banASNUsecase    domain.BanASNUsecase
+	banNetUsecase    domain.BanNetUsecase
+	networkUsecase   domain.NetworkUsecase
+	demoUsecase      domain.DemoUsecase
+	blocklistUsecase domain.BlocklistUsecase
 }
 
 const authTokenDuration = time.Minute * 15
@@ -43,22 +44,24 @@ func NewSRCDSHandler(engine *gin.Engine, srcdsUsecase domain.SRCDSUsecase, serve
 	banUsecase domain.BanSteamUsecase, networkUsecase domain.NetworkUsecase, banGroupUsecase domain.BanGroupUsecase,
 	demoUsecase domain.DemoUsecase, authUsecase domain.AuthUsecase, banASNUsecase domain.BanASNUsecase, banNetUsecase domain.BanNetUsecase,
 	configUsecase domain.ConfigUsecase, discordUsecase domain.DiscordUsecase, stateUsecase domain.StateUsecase,
+	blocklistUsecase domain.BlocklistUsecase,
 ) {
 	handler := srcdsHandler{
-		sru:             srcdsUsecase,
-		ServerUsecase:   serversUsecase,
-		PersonUsecase:   personUsecase,
-		reportUsecase:   reportUsecase,
-		banUsecase:      banUsecase,
-		assetUsecase:    assetUsecase,
-		networkUsecase:  networkUsecase,
-		banGroupUsecase: banGroupUsecase,
-		demoUsecase:     demoUsecase,
-		banASNUsecase:   banASNUsecase,
-		banNetUsecase:   banNetUsecase,
-		configUsecase:   configUsecase,
-		discordUsecase:  discordUsecase,
-		stateUsecase:    stateUsecase,
+		sru:              srcdsUsecase,
+		ServerUsecase:    serversUsecase,
+		PersonUsecase:    personUsecase,
+		reportUsecase:    reportUsecase,
+		banUsecase:       banUsecase,
+		assetUsecase:     assetUsecase,
+		networkUsecase:   networkUsecase,
+		banGroupUsecase:  banGroupUsecase,
+		demoUsecase:      demoUsecase,
+		banASNUsecase:    banASNUsecase,
+		banNetUsecase:    banNetUsecase,
+		configUsecase:    configUsecase,
+		discordUsecase:   discordUsecase,
+		stateUsecase:     stateUsecase,
+		blocklistUsecase: blocklistUsecase,
 	}
 
 	// unauthed
@@ -528,6 +531,17 @@ func (s *srcdsHandler) checkIPBan(ctx *gin.Context, steamID steamid.SteamID, add
 
 func (s *srcdsHandler) checkNetBlockBan(ctx *gin.Context, steamID steamid.SteamID, addr netip.Addr, resp *CheckResponse) bool {
 	if source, cidrBanned := s.networkUsecase.IsMatch(addr); cidrBanned {
+		whiteLists, errWhitelists := s.blocklistUsecase.GetSteamBlockWhitelists(ctx)
+		if errWhitelists == nil {
+			for _, wl := range whiteLists {
+				if wl.SteamIDValue == steamID.String() {
+					slog.Info("Whitelisted steam user granted access", slog.String("steam_id", steamID.String()))
+
+					return false
+				}
+			}
+		}
+
 		resp.BanType = domain.Network
 		resp.Msg = "Network Range Banned.\nIf you using a VPN try disabling it"
 

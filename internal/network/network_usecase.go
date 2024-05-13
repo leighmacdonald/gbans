@@ -118,7 +118,8 @@ func (u networkUsecase) LoadNetBlocks(ctx context.Context) error {
 
 			count, errAdd := u.blocker.AddRemoteSource(ctx, src.Name, src.URL)
 			if errAdd != nil {
-				slog.Error("Could not load remote source URL")
+				slog.Error("Could not load remote source URL",
+					slog.String("name", src.Name), slog.String("url", src.URL))
 			}
 
 			total.Add(count)
