@@ -7,18 +7,22 @@ export interface CIDRBlockSource extends TimeStamped {
     enabled: boolean;
 }
 
-export interface CIDRBlockLists {
-    sources: CIDRBlockSource[];
-    whitelist: CIDRBlockWhitelist[];
-}
+export const apiGetCIDRBlockListsSteamWhitelist = async (abortController?: AbortController) => {
+    return transformTimeStampedDatesList(
+        await apiCall<WhitelistSteam[]>(`/api/block_list/whitelist/steam`, 'GET', undefined, abortController)
+    );
+};
+
+export const apiGetCIDRBlockListsIPWhitelist = async (abortController?: AbortController) => {
+    return transformTimeStampedDatesList(
+        await apiCall<WhitelistIP[]>(`/api/block_list/whitelist/ip`, 'GET', undefined, abortController)
+    );
+};
 
 export const apiGetCIDRBlockLists = async (abortController?: AbortController) => {
-    const resp = await apiCall<CIDRBlockLists>(`/api/block_list`, 'GET', undefined, abortController);
-
-    resp.sources = transformTimeStampedDatesList(resp.sources);
-    resp.whitelist = transformTimeStampedDatesList(resp.whitelist);
-
-    return resp;
+    return transformTimeStampedDatesList(
+        await apiCall<CIDRBlockSource[]>(`/api/block_list/sources`, 'GET', undefined, abortController)
+    );
 };
 
 export const apiCreateCIDRBlockSource = async (
@@ -27,7 +31,12 @@ export const apiCreateCIDRBlockSource = async (
     enabled: boolean,
     abortController?: AbortController
 ) => {
-    const resp = await apiCall<CIDRBlockSource>(`/api/block_list`, 'POST', { name, url, enabled }, abortController);
+    const resp = await apiCall<CIDRBlockSource>(
+        `/api/block_list/sources`,
+        'POST',
+        { name, url, enabled },
+        abortController
+    );
     return transformTimeStampedDates(resp);
 };
 
@@ -39,7 +48,7 @@ export const apiUpdateCIDRBlockSource = async (
     abortController?: AbortController
 ) => {
     const resp = await apiCall<CIDRBlockSource>(
-        `/api/block_list/${cidr_block_source_id}`,
+        `/api/block_list/sources/${cidr_block_source_id}`,
         'POST',
         { name, url, enabled },
         abortController
@@ -48,27 +57,53 @@ export const apiUpdateCIDRBlockSource = async (
 };
 
 export const apiDeleteCIDRBlockSource = async (cidr_block_source_id: number, abortController?: AbortController) => {
-    return await apiCall<EmptyBody>(`/api/block_list/${cidr_block_source_id}`, 'DELETE', undefined, abortController);
+    return await apiCall<EmptyBody>(
+        `/api/block_list/sources/${cidr_block_source_id}`,
+        'DELETE',
+        undefined,
+        abortController
+    );
 };
 
-export interface CIDRBlockWhitelist extends TimeStamped {
+export interface WhitelistIP extends TimeStamped {
     cidr_block_whitelist_id: number;
     address: string;
 }
 
-export const apiCreateCIDRBlockWhitelist = async (address: string, abortController?: AbortController) => {
-    const resp = await apiCall<CIDRBlockWhitelist>(`/api/block_list/whitelist`, 'POST', { address }, abortController);
+export interface WhitelistSteam extends TimeStamped {
+    steam_id: string;
+    personaname: string;
+    avatar_hash: string;
+}
+
+export const apiCreateWhitelistSteam = async (steam_id: string, abortController?: AbortController) => {
+    const resp = await apiCall<WhitelistIP>(`/api/block_list/whitelist/steam`, 'POST', { steam_id }, abortController);
 
     return transformTimeStampedDates(resp);
 };
 
-export const apiUpdateCIDRBlockWhitelist = async (
+export const apiDeleteWhitelistSteam = async (steam_id: string, abortController?: AbortController) => {
+    return await apiCall<EmptyBody>(
+        `/api/block_list/whitelist/steam/${steam_id}`,
+        'DELETE',
+        undefined,
+        abortController
+    );
+};
+
+export const apiCreateWhitelistIP = async (address: string, abortController?: AbortController) => {
+    const resp = await apiCall<WhitelistIP>(`/api/block_list/whitelist/ip`, 'POST', { address }, abortController);
+
+    return transformTimeStampedDates(resp);
+};
+
+export const apiUpdateWhitelistIP = async (
     cidr_block_whitelist_id: number,
     address: string,
     abortController?: AbortController
 ) => {
-    const resp = await apiCall<CIDRBlockWhitelist>(
-        `/api/block_list/whitelist/${cidr_block_whitelist_id}`,
+    const resp = await apiCall<WhitelistIP>(
+        `/api/block_list/whitelist/ip/${cidr_block_whitelist_id}`,
         'POST',
         { address },
         abortController
@@ -82,7 +117,7 @@ export const apiDeleteCIDRBlockWhitelist = async (
     abortController?: AbortController
 ) => {
     return await apiCall<EmptyBody>(
-        `/api/block_list/whitelist/${cidr_block_whitelist_id}`,
+        `/api/block_list/whitelist/ip/${cidr_block_whitelist_id}`,
         'DELETE',
         undefined,
         abortController

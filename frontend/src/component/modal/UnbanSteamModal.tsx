@@ -57,7 +57,7 @@ export const UnbanSteamModal = NiceModal.create(
                     </DialogTitle>
 
                     <DialogContent>
-                        <Grid container>
+                        <Grid container spacing={2}>
                             <Grid xs={12}>
                                 <Field
                                     name={'unban_reason'}

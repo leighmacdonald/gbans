@@ -175,7 +175,7 @@ const ContestTable = ({
                 header: () => (
                     <TableHeadingCell
                         name={'Min. Perms'}
-                        tooltip={'Minumum permission level required to participate'}
+                        tooltip={'Minimum permission level required to participate'}
                     />
                 ),
                 cell: (info) => (

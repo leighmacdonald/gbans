@@ -5,7 +5,6 @@ import BanCIDRModal from './BanCIDRModal.tsx';
 import BanGroupModal from './BanGroupModal.tsx';
 import BanSteamModal from './BanSteamModal.tsx';
 import CIDRBlockEditorModal from './CIDRBlockEditorModal.tsx';
-import CIDRWhitelistEditorModal from './CIDRWhitelistEditorModal.tsx';
 import ConfirmationModal from './ConfirmationModal.tsx';
 import { ContestEditor } from './ContestEditor.tsx';
 import { ContestEntryDeleteModal } from './ContestEntryDeleteModal.tsx';
@@ -16,14 +15,17 @@ import { ForumCategoryEditorModal } from './ForumCategoryEditorModal.tsx';
 import { ForumForumEditorModal } from './ForumForumEditorModal.tsx';
 import { ForumThreadCreatorModal } from './ForumThreadCreatorModal.tsx';
 import { ForumThreadEditorModal } from './ForumThreadEditorModal.tsx';
+import IPWhitelistEditorModal from './IPWhitelistEditorModal.tsx';
 import PersonEditModal from './PersonEditModal.tsx';
 import ServerDeleteModal from './ServerDeleteModal.tsx';
 import { ServerEditorModal } from './ServerEditorModal.tsx';
+import { SteamWhitelistEditorModal } from './SteamWhitelistEditorModal.tsx';
 import UnbanASNModal from './UnbanASNModal.tsx';
 import UnbanCIDRModal from './UnbanCIDRModal.tsx';
 import UnbanGroupModal from './UnbanGroupModal.tsx';
 import UnbanSteamModal from './UnbanSteamModal.tsx';
 
+export const ModalSteamWhitelistEditor = 'modal-steam-whitelist-editor';
 export const ModalCIDRWhitelistEditor = 'modal-cidr-whitelist-editor';
 export const ModalCIDRBlockEditor = 'modal-cidr-block-editor';
 export const ModalContestEditor = 'modal-contest-editor';
@@ -50,7 +52,8 @@ export const ModalForumThreadCreator = 'modal-forum-thread-creator';
 export const ModalForumThreadEditor = 'modal-forum-thread-editor';
 
 [
-    [ModalCIDRWhitelistEditor, CIDRWhitelistEditorModal],
+    [ModalSteamWhitelistEditor, SteamWhitelistEditorModal],
+    [ModalCIDRWhitelistEditor, IPWhitelistEditorModal],
     [ModalCIDRBlockEditor, CIDRBlockEditorModal],
     [ModalForumThreadEditor, ForumThreadEditorModal],
     [ModalForumThreadCreator, ForumThreadCreatorModal],

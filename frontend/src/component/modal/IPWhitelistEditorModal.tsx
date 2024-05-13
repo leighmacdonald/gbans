@@ -1,39 +1,27 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
-import BlockIcon from '@mui/icons-material/Block';
+import CloudDoneIcon from '@mui/icons-material/CloudDone';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
-import { apiCreateCIDRBlockSource, apiUpdateCIDRBlockSource, CIDRBlockSource } from '../../api';
+import { apiCreateWhitelistIP, apiUpdateWhitelistIP, WhitelistIP } from '../../api';
 import { Heading } from '../Heading';
 import { Buttons } from '../field/Buttons.tsx';
-import { CheckboxSimple } from '../field/CheckboxSimple.tsx';
 import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
-interface CIDRBlockEditorValues {
-    name: string;
-    url: string;
-    enabled: boolean;
-}
-
-export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CIDRBlockSource }) => {
+export const IPWhitelistEditorModal = NiceModal.create(({ source }: { source?: WhitelistIP }) => {
     const modal = useModal();
 
     const mutation = useMutation({
         mutationKey: ['blockSource'],
-        mutationFn: async (values: CIDRBlockEditorValues) => {
-            if (source?.cidr_block_source_id) {
-                const resp = await apiUpdateCIDRBlockSource(
-                    source.cidr_block_source_id,
-                    values.name,
-                    values.url,
-                    values.enabled
-                );
+        mutationFn: async (values: { address: string }) => {
+            if (source?.cidr_block_whitelist_id) {
+                const resp = await apiUpdateWhitelistIP(source.cidr_block_whitelist_id, values.address);
                 modal.resolve(resp);
             } else {
-                const resp = await apiCreateCIDRBlockSource(values.name, values.url, values.enabled);
+                const resp = await apiCreateWhitelistIP(values.address);
                 modal.resolve(resp);
             }
         },
@@ -52,13 +40,9 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
         },
         validatorAdapter: zodValidator,
         defaultValues: {
-            cidr_block_source_id: source?.cidr_block_source_id ?? 0,
-            name: source?.name ?? '',
-            url: source?.url ?? '',
-            enabled: source?.enabled ?? true
+            address: source?.address ?? ''
         }
     });
-
     return (
         <Dialog {...muiDialogV5(modal)} fullWidth maxWidth={'md'}>
             <form
@@ -68,43 +52,26 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
                     await handleSubmit();
                 }}
             >
-                <DialogTitle component={Heading} iconLeft={<BlockIcon />}>
-                    CIDR Block Source Editor
+                <DialogTitle component={Heading} iconLeft={<CloudDoneIcon />}>
+                    CIDR Block Whitelist Editor
                 </DialogTitle>
                 <DialogContent>
                     <Grid container spacing={2}>
                         <Grid xs={12}>
                             <Field
-                                name={'name'}
+                                name={'address'}
                                 validators={{
-                                    onChange: z.string().min(2)
+                                    onChange: z.string().refine((arg) => {
+                                        const pieces = arg.split('/');
+                                        const addr = pieces[0];
+                                        const result = z.string().ip(addr).safeParse(addr);
+                                        return result.success;
+                                    })
                                 }}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Source Name'} />;
+                                    return <TextFieldSimple {...props} label={'IP Addr'} />;
                                 }}
                             />
-                            <Grid xs={12}>
-                                <Field
-                                    name={'url'}
-                                    validators={{
-                                        onChange: z.string().url()
-                                    }}
-                                    children={(props) => {
-                                        return <TextFieldSimple {...props} label={'Source URL'} />;
-                                    }}
-                                />
-                            </Grid>
-                            <Grid xs={12}>
-                                <Field
-                                    name={'enabled'}
-                                    validators={{
-                                        onChange: z.boolean()
-                                    }}
-                                    children={(props) => {
-                                        return <CheckboxSimple {...props} label={'Enabled'} />;
-                                    }}
-                                />
-                            </Grid>
                         </Grid>
                     </Grid>
                 </DialogContent>
@@ -134,4 +101,4 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
     );
 });
 
-export default CIDRBlockEditorModal;
+export default IPWhitelistEditorModal;
