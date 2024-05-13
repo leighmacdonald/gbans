@@ -3,6 +3,7 @@ package demo
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"strings"
 	"time"
@@ -70,8 +71,9 @@ func (d demoUsecase) Start(ctx context.Context) {
 			count := 0
 
 			for _, demo := range expired {
-				if errDrop := d.DropDemo(ctx, &domain.DemoFile{DemoID: demo.DemoID, Title: demo.Title}); errDrop != nil {
-					slog.Error("Failed to remove demo", log.ErrAttr(errDrop),
+				// Dropping asset will cascade to demo
+				if errDrop := d.assetUsecase.Delete(ctx, demo.AssetID); errDrop != nil {
+					slog.Error("Failed to remove demo asset", log.ErrAttr(errDrop),
 						slog.String("bucket", string(d.bucket)), slog.String("name", demo.Title))
 
 					continue
@@ -135,10 +137,19 @@ func (d demoUsecase) CreateFromAsset(ctx context.Context, asset domain.Asset, se
 		intStats[steamID.String()] = gin.H{}
 	}
 
+	timeStr := fmt.Sprintf("%s-%s", namePartsAll[0], namePartsAll[1])
+
+	createdTime, errTime := time.Parse("20060102-150405", timeStr) // 20240511-211121
+	if errTime != nil {
+		slog.Warn("Failed to parse demo time, using current time", slog.String("time", timeStr))
+
+		createdTime = time.Now()
+	}
+
 	newDemo := domain.DemoFile{
 		ServerID:  serverID,
 		Title:     asset.Name,
-		CreatedOn: time.Now(),
+		CreatedOn: createdTime,
 		MapName:   mapName,
 		Stats:     intStats,
 		AssetID:   asset.AssetID,
@@ -149,24 +160,4 @@ func (d demoUsecase) CreateFromAsset(ctx context.Context, asset domain.Asset, se
 	}
 
 	return &newDemo, nil
-}
-
-func (d demoUsecase) DropDemo(ctx context.Context, demoFile *domain.DemoFile) error {
-	asset, _, errAsset := d.assetUsecase.Get(ctx, demoFile.AssetID)
-	if errAsset == nil {
-		// TODO assets should exist, but can be missing
-		if errRemove := d.assetUsecase.Delete(ctx, demoFile.AssetID); errRemove != nil {
-			slog.Warn("Failed to remove demo asset from S3Store",
-				log.ErrAttr(errRemove), slog.String("bucket", string(domain.BucketDemo)), slog.String("name", demoFile.Title))
-		}
-
-		if err := d.repository.DropDemo(ctx, demoFile); err != nil {
-			return err
-		}
-	}
-
-	slog.Debug("Demo expired and removed",
-		slog.String("bucket", string(asset.Bucket)), slog.String("name", asset.Name))
-
-	return nil
 }

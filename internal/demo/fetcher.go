@@ -63,7 +63,7 @@ func (d Fetcher) onDemoReceived(ctx context.Context, demo demoUpdate) error {
 		return errNewAsset
 	}
 
-	newDemo, errDemo := d.demoUsecase.CreateFromAsset(ctx, demoAsset, demo.server.ServerID)
+	_, errDemo := d.demoUsecase.CreateFromAsset(ctx, demoAsset, demo.server.ServerID)
 	if errDemo != nil {
 		if errDelete := d.assetUsecase.Delete(ctx, demoAsset.AssetID); errDelete != nil {
 			return errors.Join(errDelete, errDelete)
@@ -71,8 +71,6 @@ func (d Fetcher) onDemoReceived(ctx context.Context, demo demoUpdate) error {
 
 		return errDemo
 	}
-
-	slog.Info("Created new demo", slog.Int64("demo_id", newDemo.DemoID))
 
 	return nil
 }
