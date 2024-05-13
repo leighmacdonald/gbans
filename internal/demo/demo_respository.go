@@ -224,16 +224,3 @@ func (r *demoRepository) updateDemo(ctx context.Context, demoFile *domain.DemoFi
 
 	return nil
 }
-
-func (r *demoRepository) DropDemo(ctx context.Context, demoFile *domain.DemoFile) error {
-	if errExec := r.db.ExecDeleteBuilder(ctx, r.db.
-		Builder().
-		Delete("demo").
-		Where(sq.Eq{"demo_id": demoFile.DemoID})); errExec != nil {
-		return r.db.DBErr(errExec)
-	}
-
-	demoFile.DemoID = 0
-
-	return nil
-}
