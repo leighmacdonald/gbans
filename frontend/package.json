@@ -82,6 +82,7 @@
     "jwt-decode": "^4.0.0",
     "leaflet": "^1.9.4",
     "markdown-to-jsx": "^7.4.7",
+    "material-ui-popup-state": "^5.1.0",
     "minimatch": "^9.0.4",
     "mui-markdown": "^1.1.13",
     "mui-nested-menu": "^3.4.0",

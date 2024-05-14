@@ -51,7 +51,6 @@ export const BanSteamModal = NiceModal.create(({ existing }: { existing?: SteamB
     const mutation = useMutation({
         mutationKey: ['banSteam'],
         mutationFn: async (values: BanSteamFormValues) => {
-            console.log(values);
             if (existing?.ban_id) {
                 const ban_record = apiUpdateBanSteam(existing.ban_id, {
                     note: values.note,

@@ -70,15 +70,10 @@ export const ChatTable = ({
                 header: () => <TableHeadingCell name={'Name'} />,
                 cell: (info) => (
                     <PersonCell
+                        showCopy={true}
                         steam_id={messages[info.row.index].steam_id}
                         avatar_hash={messages[info.row.index].avatar_hash}
                         personaname={messages[info.row.index].persona_name}
-                        onClick={async () => {
-                            await navigate({
-                                params: { steamId: messages[info.row.index].steam_id },
-                                to: `/profile/$steamId`
-                            });
-                        }}
                     />
                 )
             },

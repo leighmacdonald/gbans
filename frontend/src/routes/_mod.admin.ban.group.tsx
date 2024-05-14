@@ -260,6 +260,7 @@ const BanGroupTable = ({
                         ''
                     ) : (
                         <PersonCell
+                            showCopy={true}
                             steam_id={bans.data[info.row.index].source_id}
                             personaname={bans.data[info.row.index].source_personaname}
                             avatar_hash={bans.data[info.row.index].source_avatarhash}
