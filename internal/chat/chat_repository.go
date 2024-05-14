@@ -346,7 +346,6 @@ func (r chatRepository) GetPersonMessage(ctx context.Context, messageID int64) (
 }
 
 func (r chatRepository) GetPersonMessageContext(ctx context.Context, serverID int, messageID int64, paddedMessageCount int) ([]domain.QueryChatHistoryResult, error) {
-
 	const query = `
 		SELECT x.person_message_id, x.steam_id, x.server_id, x.body, x.team, x.created_on, x.persona_name, x.match_id, s.short_name, COALESCE(f.person_message_filter_id, 0) as flagged
 		FROM ((SELECT m.person_message_id,
@@ -382,8 +381,8 @@ func (r chatRepository) GetPersonMessageContext(ctx context.Context, serverID in
 			   LIMIT $2)
 			  ORDER BY person_message_id ASC) x
 				 LEFT JOIN server s ON x.server_id = s.server_id
-				 LEFT JOIN person_messages_filter f on x.person_message_id = f.person_message_id
-`
+				 LEFT JOIN person_messages_filter f on x.person_message_id = f.person_message_id`
+
 	if paddedMessageCount > 1000 {
 		paddedMessageCount = 1000
 	}

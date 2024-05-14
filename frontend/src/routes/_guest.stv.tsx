@@ -211,7 +211,7 @@ function STV() {
                 )
             }
         ],
-        [handleSubmit, setFieldValue]
+        [handleSubmit, isAuthenticated, setFieldValue]
     );
 
     const table = useReactTable({
