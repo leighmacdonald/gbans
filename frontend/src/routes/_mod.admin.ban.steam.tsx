@@ -307,6 +307,7 @@ const BanSteamTable = ({
                         ''
                     ) : (
                         <PersonCell
+                            showCopy={true}
                             steam_id={bans.data[info.row.index].target_id}
                             personaname={bans.data[info.row.index].target_personaname}
                             avatar_hash={bans.data[info.row.index].target_avatarhash}

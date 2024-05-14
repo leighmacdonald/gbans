@@ -170,6 +170,9 @@ importers:
       markdown-to-jsx:
         specifier: ^7.4.7
         version: 7.4.7(react@18.3.1)
+      material-ui-popup-state:
+        specifier: ^5.1.0
+        version: 5.1.0(@mui/material@5.15.17(@emotion/react@11.11.4(@types/react@18.3.2)(react@18.3.1))(@emotion/styled@11.11.5(@emotion/react@11.11.4(@types/react@18.3.2)(react@18.3.1))(@types/react@18.3.2)(react@18.3.1))(@types/react@18.3.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
       minimatch:
         specifier: ^9.0.4
         version: 9.0.4
@@ -2454,6 +2457,13 @@ packages:
     engines: {node: '>= 10'}
     peerDependencies:
       react: '>= 0.14.0'
+
+  material-ui-popup-state@5.1.0:
+    resolution: {integrity: sha512-kG0xGqdPx3WM6AYnq0h7hCb3gk2M1FM/G/NFQN+HahcyABxCx3EFzLj5mdJICu2NYj0etZ2s7VDhAbrAezkxYg==}
+    engines: {node: '>=16'}
+    peerDependencies:
+      '@mui/material': ^5.0.0
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
 
   merge-stream@2.0.0:
     resolution: {integrity: sha512-abv/qOcuPfk3URPfDzmZU1LKmuw8kT+0nIHvKrKgFrwifol/doWcdA4ZqsWQ8ENrFKkd67Mfpo/LovbIUsbt3w==}
@@ -5702,6 +5712,16 @@ snapshots:
 
   markdown-to-jsx@7.4.7(react@18.3.1):
     dependencies:
+      react: 18.3.1
+
+  material-ui-popup-state@5.1.0(@mui/material@5.15.17(@emotion/react@11.11.4(@types/react@18.3.2)(react@18.3.1))(@emotion/styled@11.11.5(@emotion/react@11.11.4(@types/react@18.3.2)(react@18.3.1))(@types/react@18.3.2)(react@18.3.1))(@types/react@18.3.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1):
+    dependencies:
+      '@babel/runtime': 7.23.9
+      '@mui/material': 5.15.17(@emotion/react@11.11.4(@types/react@18.3.2)(react@18.3.1))(@emotion/styled@11.11.5(@emotion/react@11.11.4(@types/react@18.3.2)(react@18.3.1))(@types/react@18.3.2)(react@18.3.1))(@types/react@18.3.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@types/prop-types': 15.7.11
+      '@types/react': 18.3.2
+      classnames: 2.5.1
+      prop-types: 15.8.1
       react: 18.3.1
 
   merge-stream@2.0.0: {}

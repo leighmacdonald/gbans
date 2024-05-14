@@ -1,11 +1,15 @@
 import { MouseEventHandler } from 'react';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
+import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import { useNavigate } from '@tanstack/react-router';
+import SteamID from 'steamid';
+import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { avatarHashToURL } from '../util/text.tsx';
 
 export interface PersonCellProps {
@@ -13,11 +17,13 @@ export interface PersonCellProps {
     personaname: string;
     avatar_hash: string;
     onClick?: MouseEventHandler | undefined;
+    showCopy?: boolean;
 }
 
-export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick }: PersonCellProps) => {
+export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick, showCopy = false }: PersonCellProps) => {
     const navigate = useNavigate();
     const theme = useTheme();
+    const { sendFlash } = useUserFlashCtx();
 
     return (
         <Stack
@@ -38,6 +44,21 @@ export const PersonCell = ({ steam_id, avatar_hash, personaname, onClick }: Pers
                 }
             }}
         >
+            {showCopy && (
+                <Tooltip title={'Copy Steamid'}>
+                    <IconButton
+                        onClick={async (event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            const sid = new SteamID(steam_id);
+                            await navigator.clipboard.writeText(sid.toString());
+                            sendFlash('success', `Copied to clipboard: ${sid.toString()}`);
+                        }}
+                    >
+                        <ContentCopyIcon />
+                    </IconButton>
+                </Tooltip>
+            )}
             <Tooltip title={personaname}>
                 <>
                     <Avatar

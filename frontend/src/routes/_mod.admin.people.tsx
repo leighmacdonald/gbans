@@ -190,6 +190,7 @@ const PeopleTable = ({
                         ''
                     ) : (
                         <PersonCell
+                            showCopy={true}
                             steam_id={people.data[info.row.index].steam_id}
                             personaname={people.data[info.row.index].personaname}
                             avatar_hash={people.data[info.row.index].avatarhash}

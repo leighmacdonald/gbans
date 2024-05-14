@@ -3,6 +3,7 @@ import ReportIcon from '@mui/icons-material/Report';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import IconButton from '@mui/material/IconButton';
+import Link from '@mui/material/Link';
 import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
@@ -184,20 +185,16 @@ const columnHelper = createColumnHelper<ReportWithAuthor>();
 const ReportTable = ({ reports, isLoading }: { reports: LazyResult<ReportWithAuthor>; isLoading: boolean }) => {
     const columns = [
         columnHelper.accessor('report_id', {
-            header: () => <TableHeadingCell name={'View'} />,
+            header: () => <TableHeadingCell name={'ID'} />,
             cell: (info) => (
-                <ButtonGroup>
-                    <IconButton
-                        color={'primary'}
-                        component={RouterLink}
-                        to={`/report/$reportId`}
-                        params={{ reportId: info.getValue() }}
-                    >
-                        <Tooltip title={'View'}>
-                            <VisibilityIcon />
-                        </Tooltip>
-                    </IconButton>
-                </ButtonGroup>
+                <Link
+                    color={'primary'}
+                    component={RouterLink}
+                    to={`/report/$reportId`}
+                    params={{ reportId: info.getValue() }}
+                >
+                    #{info.getValue()}
+                </Link>
             )
         }),
         columnHelper.accessor('report_status', {
@@ -205,7 +202,6 @@ const ReportTable = ({ reports, isLoading }: { reports: LazyResult<ReportWithAut
             cell: (info) => {
                 return (
                     <Stack direction={'row'} spacing={1}>
-                        <ReportStatusIcon reportStatus={info.getValue()} />
                         <Typography variant={'body1'}>{reportStatusString(info.getValue())}</Typography>
                     </Stack>
                 );
@@ -215,6 +211,7 @@ const ReportTable = ({ reports, isLoading }: { reports: LazyResult<ReportWithAut
             header: () => <TableHeadingCell name={'Reporter'} />,
             cell: (info) => (
                 <PersonCell
+                    showCopy={true}
                     steam_id={reports.data[info.row.index].author.steam_id}
                     personaname={reports.data[info.row.index].author.personaname}
                     avatar_hash={reports.data[info.row.index].author.avatarhash}
@@ -225,6 +222,7 @@ const ReportTable = ({ reports, isLoading }: { reports: LazyResult<ReportWithAut
             header: () => <TableHeadingCell name={'Subject'} />,
             cell: (info) => (
                 <PersonCell
+                    showCopy={true}
                     steam_id={reports.data[info.row.index].subject.steam_id}
                     personaname={reports.data[info.row.index].subject.personaname}
                     avatar_hash={reports.data[info.row.index].subject.avatarhash}

@@ -1,9 +1,7 @@
 import FilterListIcon from '@mui/icons-material/FilterList';
-import VisibilityIcon from '@mui/icons-material/Visibility';
 import Link from '@mui/material/Link';
 import MenuItem from '@mui/material/MenuItem';
 import TableCell from '@mui/material/TableCell';
-import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
@@ -214,12 +212,16 @@ const columnHelper = createColumnHelper<SteamBanRecord>();
 const AppealsTable = ({ appeals, isLoading }: { appeals: LazyResult<SteamBanRecord>; isLoading: boolean }) => {
     const columns = [
         columnHelper.accessor('ban_id', {
-            header: () => <TableHeadingCell name={'View'} />,
+            header: () => <TableHeadingCell name={'ID'} />,
             cell: (info) => (
-                <Link color={'primary'} component={RouterLink} to={`/ban/$ban_id`} params={{ ban_id: info.getValue() }}>
-                    <Tooltip title={'View'}>
-                        <VisibilityIcon />
-                    </Tooltip>
+                <Link
+                    color={'primary'}
+                    component={RouterLink}
+                    to={`/ban/$ban_id`}
+                    params={{ ban_id: info.getValue() }}
+                    marginRight={2}
+                >
+                    #{info.getValue()}
                 </Link>
             )
         }),
@@ -237,6 +239,7 @@ const AppealsTable = ({ appeals, isLoading }: { appeals: LazyResult<SteamBanReco
             header: () => <TableHeadingCell name={'Author'} />,
             cell: (info) => (
                 <PersonCell
+                    showCopy={true}
                     steam_id={appeals.data[info.row.index].source_id}
                     personaname={appeals.data[info.row.index].source_personaname}
                     avatar_hash={appeals.data[info.row.index].source_avatarhash}
@@ -247,6 +250,7 @@ const AppealsTable = ({ appeals, isLoading }: { appeals: LazyResult<SteamBanReco
             header: () => <TableHeadingCell name={'Subject'} />,
             cell: (info) => (
                 <PersonCell
+                    showCopy={true}
                     steam_id={appeals.data[info.row.index].target_id}
                     personaname={appeals.data[info.row.index].target_personaname}
                     avatar_hash={appeals.data[info.row.index].target_avatarhash}
