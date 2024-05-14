@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
 import { CloudDownload } from '@mui/icons-material';
 import FilterListIcon from '@mui/icons-material/FilterList';
+import FlagIcon from '@mui/icons-material/Flag';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import Button from '@mui/material/Button';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Link from '@mui/material/Link';
@@ -29,6 +31,7 @@ import { apiGetDemos, apiGetServers, DemoFile } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { DataTable } from '../component/DataTable.tsx';
 import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
+import RouterLink from '../component/RouterLink.tsx';
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
@@ -185,87 +188,31 @@ function STV() {
                 id: 'download',
                 enableSorting: false,
                 cell: (info) => (
-                    <Button
-                        fullWidth
-                        component={Link}
-                        href={`/asset/${info.row.original.asset_id}`}
-                        variant={'contained'}
-                        startIcon={<CloudDownload />}
-                    >
-                        Download
-                    </Button>
+                    <ButtonGroup variant={'contained'} fullWidth>
+                        <Button
+                            disabled={!isAuthenticated()}
+                            color={'error'}
+                            startIcon={<FlagIcon />}
+                            component={RouterLink}
+                            to={'/report'}
+                            search={{ demo_id: info.row.original.demo_id }}
+                        >
+                            Report
+                        </Button>
+                        <Button
+                            color={'success'}
+                            component={Link}
+                            href={`/asset/${info.row.original.asset_id}`}
+                            startIcon={<CloudDownload />}
+                        >
+                            Download
+                        </Button>
+                    </ButtonGroup>
                 )
             }
         ],
         [handleSubmit, setFieldValue]
     );
-    //
-    // const columns = [
-    //     columnHelper.accessor('server_id', {
-    //         // filterFn: 'inNumberRange',
-    //         filterFn: (row, _, filterValue) => {
-    //             return filterValue == 0 || row.original.server_id == filterValue;
-    //         },
-    //         enableSorting: true,
-    //         header: () => <TableHeadingCell name={'Server'} />,
-    //         cell: (info) => {
-    //             return (
-    //                 <Button
-    //                     sx={{
-    //                         color: stc(info.row.original.server_name_short)
-    //                     }}
-    //                     onClick={async () => {
-    //                         setFieldValue('server_id', info.getValue());
-    //                         await handleSubmit();
-    //                     }}
-    //                 >
-    //                     {info.row.original.server_name_short}
-    //                 </Button>
-    //             );
-    //         }
-    //     }),
-    //     columnHelper.accessor('created_on', {
-    //         enableSorting: true,
-    //         header: () => <TableHeadingCell name={'Created'} />,
-    //         cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>
-    //     }),
-    //     columnHelper.accessor('map_name', {
-    //         filterFn: 'includesString',
-    //         enableSorting: true,
-    //
-    //         header: () => <TableHeadingCell name={'Map Name'} />,
-    //         cell: (info) => <Typography>{info.getValue()}</Typography>
-    //     }),
-    //     columnHelper.accessor('size', {
-    //         enableSorting: true,
-    //         header: () => <TableHeadingCell name={'Size'} />,
-    //         cell: (info) => <Typography>{humanFileSize(info.getValue())}</Typography>
-    //     }),
-    //     columnHelper.accessor('stats', {
-    //         enableSorting: true,
-    //         enableColumnFilter: true,
-    //         filterFn: (row, _, filterValue) => {
-    //             return Object.keys(row.original.stats).includes(filterValue);
-    //         },
-    //         header: () => <TableHeadingCell name={'Players'} />,
-    //         cell: (info) => <Typography>{Object.keys(info.getValue()).length}</Typography>
-    //     }),
-    //     columnHelper.accessor('asset_id', {
-    //         enableSorting: false,
-    //         header: () => <TableHeadingCell name={'Download'} />,
-    //         cell: (info) => (
-    //             <Button
-    //                 fullWidth
-    //                 component={Link}
-    //                 href={`/asset/${info.getValue()}`}
-    //                 variant={'contained'}
-    //                 startIcon={<CloudDownload />}
-    //             >
-    //                 Download
-    //             </Button>
-    //         )
-    //     })
-    // ];
 
     const table = useReactTable({
         data: demos ?? [],
@@ -384,7 +331,7 @@ function STV() {
             </Grid>
             <Grid xs={12}>
                 <ContainerWithHeader title={'SourceTV Recordings'} iconLeft={<VideocamIcon />}>
-                    <DataTable table={table} isLoading={false} />
+                    <DataTable table={table} isLoading={false} padding={'normal'} />
                     <PaginatorLocal
                         onRowsChange={(rows) => {
                             setPagination((prev) => {

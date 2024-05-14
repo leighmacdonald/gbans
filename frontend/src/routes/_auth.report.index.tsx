@@ -60,7 +60,7 @@ const reportSchema = z.object({
     sortColumn: z.enum(['report_status', 'created_on']).optional(),
     report_status: z.nativeEnum(ReportStatus).optional(),
     steam_id: z.string().optional(),
-    demo_name: z.string().optional(),
+    demo_id: z.number({ coerce: true }).optional(),
     person_message_id: z.number().optional()
 });
 
@@ -232,12 +232,12 @@ const validationSchema = z.object({
     reason_text: z.string().optional(),
 
     //person_message_id: yup.number().min(1, 'Invalid message id').optional()
-    demo_name: z.string().optional(),
+    demo_id: z.number().optional(),
     demo_tick: z.number().min(0, 'invalid demo tick value').optional()
 });
 
 export const ReportCreateForm = (): JSX.Element => {
-    const { demo_name, steam_id, person_message_id } = Route.useSearch();
+    const { demo_id, steam_id, person_message_id } = Route.useSearch();
     const [validatedProfile, setValidatedProfile] = useState<PlayerProfile>();
 
     const mutation = useMutation({
@@ -254,8 +254,8 @@ export const ReportCreateForm = (): JSX.Element => {
     const form = useForm({
         onSubmit: async ({ value }) => {
             mutation.mutate({
-                demo_name: value.demo_name,
-                target_id: validatedProfile?.player.steam_id ?? '',
+                demo_id: value.demo_id ?? 0,
+                target_id: steam_id ?? validatedProfile?.player.steam_id ?? '',
                 demo_tick: value.demo_tick,
                 reason: value.reason,
                 reason_text: value.reason_text,
@@ -269,7 +269,7 @@ export const ReportCreateForm = (): JSX.Element => {
         },
         defaultValues: {
             body_md: '',
-            demo_name: demo_name ?? '',
+            demo_id: demo_id ?? undefined,
             demo_tick: 0,
             person_message_id: person_message_id ?? 0,
             steam_id: steam_id ?? '',
@@ -277,27 +277,6 @@ export const ReportCreateForm = (): JSX.Element => {
             reason_text: ''
         }
     });
-
-    // const onSubmit = useCallback(
-    //     async (values: ReportValues, formikHelpers: FormikHelpers<ReportValues>) => {
-    //         try {
-    //             const report = await apiCreateReport({
-    //                 demo_name: values.demo_name,
-    //                 demo_tick: values.demo_tick ?? 0,
-    //                 description: values.body_md,
-    //                 reason_text: values.reason_text,
-    //                 target_id: values.steam_id,
-    //                 person_message_id: values.person_message_id,
-    //                 reason: values.reason
-    //             });
-    //             await navigate({ to: `/report/${report.report_id}` });
-    //             formikHelpers.resetForm();
-    //         } catch (e) {
-    //             logErr(e);
-    //         }
-    //     },
-    //     [navigate]
-    // );
 
     return (
         <ContainerWithHeader
@@ -321,6 +300,7 @@ export const ReportCreateForm = (): JSX.Element => {
                             children={({ state, handleChange, handleBlur }) => {
                                 return (
                                     <SteamIDField
+                                        disabled={Boolean(steam_id)}
                                         state={state}
                                         handleBlur={handleBlur}
                                         handleChange={handleChange}
@@ -387,41 +367,46 @@ export const ReportCreateForm = (): JSX.Element => {
                             }}
                         />
                     </Grid>
-                    <Grid md={6}>
-                        <form.Field
-                            name={'demo_name'}
-                            children={({ state, handleChange, handleBlur }) => {
-                                return (
-                                    <TextField
-                                        fullWidth
-                                        label="Demo Name"
-                                        value={state.value}
-                                        onChange={(e) => handleChange(e.target.value)}
-                                        onBlur={handleBlur}
-                                        variant="outlined"
-                                    />
-                                );
-                            }}
-                        />
-                    </Grid>
-                    <Grid md={6}>
-                        <form.Field
-                            name={'demo_tick'}
-                            children={({ state, handleChange, handleBlur }) => {
-                                return (
-                                    <TextField
-                                        fullWidth
-                                        label="Demo Tick"
-                                        value={state.value}
-                                        onChange={(e) => handleChange(Number(e.target.value))}
-                                        onBlur={handleBlur}
-                                        variant="outlined"
-                                    />
-                                );
-                            }}
-                        />
-                    </Grid>
-
+                    {Boolean(demo_id) && (
+                        <>
+                            <Grid md={6}>
+                                <form.Field
+                                    name={'demo_id'}
+                                    children={({ state, handleChange, handleBlur }) => {
+                                        return (
+                                            <TextField
+                                                disabled={Boolean(demo_id)}
+                                                fullWidth
+                                                label="Demo ID"
+                                                value={state.value}
+                                                onChange={(e) => handleChange(Number(e.target.value))}
+                                                onBlur={handleBlur}
+                                                variant="outlined"
+                                            />
+                                        );
+                                    }}
+                                />
+                            </Grid>
+                            <Grid md={6}>
+                                <form.Field
+                                    name={'demo_tick'}
+                                    children={({ state, handleChange, handleBlur }) => {
+                                        return (
+                                            <TextField
+                                                disabled={!demo_id}
+                                                fullWidth
+                                                label="Demo Tick"
+                                                value={state.value}
+                                                onChange={(e) => handleChange(Number(e.target.value))}
+                                                onBlur={handleBlur}
+                                                variant="outlined"
+                                            />
+                                        );
+                                    }}
+                                />
+                            </Grid>
+                        </>
+                    )}
                     {person_message_id != undefined && person_message_id > 0 && (
                         <Grid md={12}>
                             <PlayerMessageContext playerMessageId={person_message_id} padding={5} />
