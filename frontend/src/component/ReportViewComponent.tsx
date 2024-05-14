@@ -5,6 +5,7 @@ import LanIcon from '@mui/icons-material/Lan';
 import MessageIcon from '@mui/icons-material/Message';
 import ReportIcon from '@mui/icons-material/Report';
 import ReportGmailerrorredIcon from '@mui/icons-material/ReportGmailerrorred';
+import VideocamIcon from '@mui/icons-material/Videocam';
 import TabContext from '@mui/lab/TabContext';
 import TabList from '@mui/lab/TabList';
 import Box from '@mui/material/Box';
@@ -27,12 +28,13 @@ import {
     apiGetMessages,
     apiGetReportMessages,
     PermissionLevel,
-    Report
+    ReportWithAuthor
 } from '../api';
 import { RowsPerPage } from '../util/table.ts';
 import { BanHistoryTable } from './BanHistoryTable.tsx';
 import { ChatTable } from './ChatTable.tsx';
 import { ContainerWithHeader } from './ContainerWithHeader';
+import { ContainerWithHeaderAndButtons } from './ContainerWithHeaderAndButtons.tsx';
 import { IPHistoryTable } from './IPHistoryTable.tsx';
 import { MarkDownRenderer } from './MarkdownRenderer';
 import { PaginatorLocal } from './PaginatorLocal.tsx';
@@ -50,7 +52,7 @@ const messagesQueryOptions = (reportId: number) => ({
     }
 });
 
-export const ReportViewComponent = ({ report }: { report: Report }): JSX.Element => {
+export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): JSX.Element => {
     const theme = useTheme();
     const queryClient = useQueryClient();
     // const { data: messagesServer } = useReportMessages(report.report_id);
@@ -263,27 +265,39 @@ export const ReportViewComponent = ({ report }: { report: Report }): JSX.Element
                                 </Box>
                             </TabPanel>
                         </ContainerWithHeader>
-                        {report.demo_name != '' && (
-                            <Paper>
-                                <Stack direction={'row'} padding={1}>
-                                    <Typography padding={2} variant={'button'} alignContent={'center'}>
-                                        Demo&nbsp;Info
-                                    </Typography>
-                                    <Typography padding={2} variant={'body1'} alignContent={'center'}>
-                                        Tick:&nbsp;{report.demo_tick}
-                                    </Typography>
+                        {report.demo.demo_id > 0 && (
+                            <ContainerWithHeaderAndButtons
+                                title={`Demo Details: ${report.demo.title}`}
+                                iconLeft={<VideocamIcon />}
+                                buttons={[
                                     <Button
+                                        variant={'contained'}
                                         fullWidth
+                                        key={'demo_download'}
                                         startIcon={<FileDownloadIcon />}
                                         component={Link}
-                                        variant={'text'}
-                                        href={`${window.gbans.asset_url}/${window.gbans.bucket_demo}/${report.demo_name}`}
-                                        color={'primary'}
+                                        href={`/asset/${report.demo_id}`}
+                                        color={'success'}
                                     >
-                                        {report.demo_name}
+                                        Download
                                     </Button>
-                                </Stack>
-                            </Paper>
+                                ]}
+                            >
+                                <Grid container padding={2}>
+                                    <Grid xs={4}>
+                                        <Typography>Map:&nbsp;{report.demo.map_name}</Typography>
+                                    </Grid>
+                                    <Grid xs={4}>
+                                        <Typography>Server:&nbsp;{report.demo.server_name_short}</Typography>
+                                    </Grid>
+                                    <Grid xs={2}>
+                                        <Typography>Tick:&nbsp;{report.demo_tick}</Typography>
+                                    </Grid>
+                                    <Grid xs={2}>
+                                        <Typography>ID:&nbsp;{report.demo_id}</Typography>
+                                    </Grid>
+                                </Grid>
+                            </ContainerWithHeaderAndButtons>
                         )}
 
                         {report.person_message_id > 0 && (

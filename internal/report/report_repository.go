@@ -22,7 +22,7 @@ func NewReportRepository(database database.Database) domain.ReportRepository {
 func (r reportRepository) insertReport(ctx context.Context, report *domain.Report) error {
 	const query = `INSERT INTO report (
 		    author_id, reported_id, report_status, description, deleted, created_on, updated_on, reason, 
-            reason_text, demo_name, demo_tick, person_message_id
+            reason_text, demo_id, demo_tick, person_message_id
 		)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 		RETURNING report_id`
@@ -42,7 +42,7 @@ func (r reportRepository) insertReport(ctx context.Context, report *domain.Repor
 		report.UpdatedOn,
 		report.Reason,
 		report.ReasonText,
-		report.DemoName,
+		report.DemoID,
 		report.DemoTick,
 		msgID,
 	).
@@ -72,7 +72,7 @@ func (r reportRepository) updateReport(ctx context.Context, report *domain.Repor
 		Set("updated_on", report.UpdatedOn).
 		Set("reason", report.Reason).
 		Set("reason_text", report.ReasonText).
-		Set("demo_name", report.DemoName).
+		Set("demo_id", report.DemoID).
 		Set("demo_tick", report.DemoTick).
 		Set("person_message_id", msgID).
 		Where(sq.Eq{"report_id": report.ReportID})))
@@ -187,10 +187,10 @@ func (r reportRepository) GetReports(ctx context.Context, opts domain.ReportQuer
 		Builder().
 		Select("r.report_id", "r.author_id", "r.reported_id", "r.report_status",
 			"r.description", "r.deleted", "r.created_on", "r.updated_on", "r.reason", "r.reason_text",
-			"r.demo_name", "r.demo_tick", "coalesce(d.demo_id, 0)", "r.person_message_id").
+			"coalesce(d.demo_id, 0)", "r.demo_tick", "r.person_message_id").
 		From("report r").
 		Where(constraints).
-		LeftJoin("demo d on d.title = r.demo_name")
+		LeftJoin("demo d on d.demo_id = r.demo_id")
 
 	builder = opts.ApplySafeOrder(builder, map[string][]string{
 		"r.": {"report_id", "author_id", "reported_id", "report_status", "deleted", "created_on", "updated_on", "reason"},
@@ -231,9 +231,8 @@ func (r reportRepository) GetReports(ctx context.Context, opts domain.ReportQuer
 			&report.UpdatedOn,
 			&report.Reason,
 			&report.ReasonText,
-			&report.DemoName,
-			&report.DemoTick,
 			&report.DemoID,
+			&report.DemoTick,
 			&personMessageID,
 		); errScan != nil {
 			return nil, 0, r.db.DBErr(errScan)
@@ -259,10 +258,10 @@ func (r reportRepository) GetReportBySteamID(ctx context.Context, authorID steam
 	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
 		Builder().
 		Select("s.report_id", "s.author_id", "s.reported_id", "s.report_status", "s.description",
-			"s.deleted", "s.created_on", "s.updated_on", "s.reason", "s.reason_text", "s.demo_name", "s.demo_tick",
+			"s.deleted", "s.created_on", "s.updated_on", "s.reason", "s.reason_text", "s.demo_tick",
 			"coalesce(d.demo_id, 0)", "coalesce(s.person_message_id, 0)").
 		From("report s").
-		LeftJoin("demo d on s.demo_name = d.title").
+		LeftJoin("demo d on s.demo_id = d.demo_id").
 		Where(sq.And{
 			sq.Eq{"s.deleted": false},
 			sq.Eq{"s.reported_id": steamID},
@@ -290,7 +289,6 @@ func (r reportRepository) GetReportBySteamID(ctx context.Context, authorID steam
 		&report.UpdatedOn,
 		&report.Reason,
 		&report.ReasonText,
-		&report.DemoName,
 		&report.DemoTick,
 		&report.DemoID,
 		&report.PersonMessageID,
@@ -310,10 +308,10 @@ func (r reportRepository) GetReport(ctx context.Context, reportID int64) (domain
 	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
 		Builder().
 		Select("s.report_id", "s.author_id", "s.reported_id", "s.report_status", "s.description",
-			"s.deleted", "s.created_on", "s.updated_on", "s.reason", "s.reason_text", "s.demo_name", "s.demo_tick",
+			"s.deleted", "s.created_on", "s.updated_on", "s.reason", "s.reason_text", "s.demo_tick",
 			"coalesce(d.demo_id, 0)", "coalesce(s.person_message_id, 0)").
 		From("report s").
-		LeftJoin("demo d on s.demo_name = d.title").
+		LeftJoin("demo d on s.demo_id = d.demo_id").
 		Where(sq.And{sq.Eq{"deleted": false}, sq.Eq{"report_id": reportID}}))
 
 	if errRow != nil {
@@ -336,7 +334,6 @@ func (r reportRepository) GetReport(ctx context.Context, reportID int64) (domain
 		&report.UpdatedOn,
 		&report.Reason,
 		&report.ReasonText,
-		&report.DemoName,
 		&report.DemoTick,
 		&report.DemoID,
 		&report.PersonMessageID,

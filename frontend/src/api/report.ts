@@ -8,6 +8,7 @@ import {
     transformTimeStampedDates,
     transformTimeStampedDatesList
 } from './common';
+import { DemoFile } from './demo.ts';
 import { Person } from './profile';
 
 export enum ReportStatus {
@@ -95,7 +96,7 @@ export interface CreateReportRequest {
     description: string;
     reason: BanReason;
     reason_text: string;
-    demo_name: string;
+    demo_id: number;
     demo_tick: number;
     person_message_id: number;
 }
@@ -103,6 +104,7 @@ export interface CreateReportRequest {
 export interface ReportWithAuthor extends Report {
     author: Person;
     subject: Person;
+    demo: DemoFile;
 }
 
 export const apiCreateReport = async (opts: CreateReportRequest) =>

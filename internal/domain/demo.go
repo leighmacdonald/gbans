@@ -12,6 +12,7 @@ type DemoUsecase interface {
 	Start(ctx context.Context)
 	ExpiredDemos(ctx context.Context, limit uint64) ([]DemoInfo, error)
 	GetDemoByID(ctx context.Context, demoID int64, demoFile *DemoFile) error
+	MarkArchived(ctx context.Context, demo *DemoFile) error
 	GetDemoByName(ctx context.Context, demoName string, demoFile *DemoFile) error
 	GetDemos(ctx context.Context) ([]DemoFile, error)
 	CreateFromAsset(ctx context.Context, asset Asset, serverID int) (*DemoFile, error)

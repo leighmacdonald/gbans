@@ -308,14 +308,6 @@ func NewInGameReportResponse(report domain.Report, reportURL string, author doma
 		msgEmbed.Embed().AddField("Custom Reason", report.ReasonText)
 	}
 
-	if report.DemoName != "" {
-		if demoURL != "" {
-			msgEmbed.Embed().AddField("Demo", demoURL)
-		}
-
-		msgEmbed.Embed().AddField("Demo Tick", fmt.Sprintf("%d", report.DemoTick))
-	}
-
 	return msgEmbed.AddFieldsSteamID(report.TargetID).Embed().Truncate().MessageEmbed
 }
 

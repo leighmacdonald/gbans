@@ -15,20 +15,22 @@ import (
 )
 
 type reportUsecase struct {
-	rr domain.ReportRepository
-	du domain.DiscordUsecase
-	cu domain.ConfigUsecase
-	pu domain.PersonUsecase
+	rr          domain.ReportRepository
+	du          domain.DiscordUsecase
+	cu          domain.ConfigUsecase
+	pu          domain.PersonUsecase
+	demoUsecase domain.DemoUsecase
 }
 
 func NewReportUsecase(repository domain.ReportRepository, discordUsecase domain.DiscordUsecase,
-	configUsecase domain.ConfigUsecase, personUsecase domain.PersonUsecase,
+	configUsecase domain.ConfigUsecase, personUsecase domain.PersonUsecase, demoUsecase domain.DemoUsecase,
 ) domain.ReportUsecase {
 	return &reportUsecase{
-		du: discordUsecase,
-		rr: repository,
-		cu: configUsecase,
-		pu: personUsecase,
+		du:          discordUsecase,
+		rr:          repository,
+		cu:          configUsecase,
+		pu:          personUsecase,
+		demoUsecase: demoUsecase,
 	}
 }
 
@@ -179,10 +181,18 @@ func (r reportUsecase) GetReport(ctx context.Context, curUser domain.PersonInfo,
 		return domain.ReportWithAuthor{}, errTarget
 	}
 
+	var demo domain.DemoFile
+	if report.DemoID > 0 {
+		if errDemo := r.demoUsecase.GetDemoByID(ctx, report.DemoID, &demo); errDemo != nil {
+			slog.Error("Failed to load report demo", slog.Int64("report_id", report.ReportID))
+		}
+	}
+
 	return domain.ReportWithAuthor{
 		Author:  author,
 		Subject: target,
 		Report:  report,
+		Demo:    demo,
 	}, nil
 }
 

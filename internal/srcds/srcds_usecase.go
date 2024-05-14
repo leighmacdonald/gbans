@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"strings"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/discord"
@@ -125,8 +124,6 @@ func (h srcdsUsecase) Report(ctx context.Context, currentUser domain.UserProfile
 	report.TargetID = req.TargetID
 	report.Reason = req.Reason
 	report.ReasonText = req.ReasonText
-	parts := strings.Split(req.DemoName, "/")
-	report.DemoName = parts[len(parts)-1]
 	report.DemoTick = req.DemoTick
 	report.PersonMessageID = req.PersonMessageID
 
@@ -139,10 +136,6 @@ func (h srcdsUsecase) Report(ctx context.Context, currentUser domain.UserProfile
 	conf := h.cu.Config()
 
 	demoURL := ""
-
-	if report.DemoName != "" {
-		demoURL = conf.ExtURLRaw("/demos/name/%s", report.DemoName)
-	}
 
 	msg := discord.NewInGameReportResponse(report, conf.ExtURL(report), currentUser, conf.ExtURL(currentUser), demoURL)
 
