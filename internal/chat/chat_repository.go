@@ -319,22 +319,25 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.Cha
 }
 
 func (r chatRepository) GetPersonMessage(ctx context.Context, messageID int64) (domain.QueryChatHistoryResult, error) {
+	const query = `
+		SELECT x.person_message_id, x.steam_id, x.server_id, x.body, x.team, x.created_on, x.persona_name, x.match_id, s.short_name, COALESCE(f.person_message_filter_id, 0) as flagged
+		FROM (
+		SELECT m.person_message_id,
+			   m.steam_id,
+			   m.server_id,
+			   m.body,
+			   m.team,
+			   m.created_on,
+			   m.persona_name,
+			   m.match_id
+		FROM person_messages m
+		WHERE m.person_message_id = $1) x
+		LEFT JOIN server s ON x.server_id = s.server_id
+		LEFT JOIN person_messages_filter f on x.person_message_id = f.person_message_id`
+
 	var msg domain.QueryChatHistoryResult
 
-	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
-		Builder().
-		Select("m.person_message_id", "m.steam_id", "m.server_id", "m.body", "m.team", "m.created_on",
-			"m.persona_name", "m.match_id", "s.short_name", "COUNT(f.person_message_id)::int::boolean as flagged").
-		From("person_messages m").
-		LeftJoin("server s USING(server_id)").
-		LeftJoin("person_messages_filter f USING(person_message_id)").
-		Where(sq.Eq{"m.person_message_id": messageID}).
-		GroupBy("m.person_message_id", "s.short_name"))
-	if errRow != nil {
-		return msg, r.db.DBErr(errRow)
-	}
-
-	if err := r.db.DBErr(row.Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.Team, &msg.CreatedOn,
+	if err := r.db.DBErr(r.db.QueryRow(ctx, query, messageID).Scan(&msg.PersonMessageID, &msg.SteamID, &msg.ServerID, &msg.Body, &msg.Team, &msg.CreatedOn,
 		&msg.PersonaName, &msg.MatchID, &msg.ServerName, &msg.AutoFilterFlagged)); err != nil {
 		return msg, err
 	}
@@ -343,33 +346,44 @@ func (r chatRepository) GetPersonMessage(ctx context.Context, messageID int64) (
 }
 
 func (r chatRepository) GetPersonMessageContext(ctx context.Context, serverID int, messageID int64, paddedMessageCount int) ([]domain.QueryChatHistoryResult, error) {
-	const query = `
-		(
-			SELECT m.person_message_id, m.steam_id,	m.server_id, m.body, m.team, m.created_on, 
-			       m.persona_name,  m.match_id, s.short_name, COUNT(f.person_message_id)::int::boolean as flagged
-			FROM person_messages m 
-			LEFT JOIN server s on m.server_id = s.server_id
-			LEFT JOIN person_messages_filter f on m.person_message_id = f.person_message_id
-		 	WHERE m.server_id = $3 AND m.person_message_id >= $1 
-		 	GROUP BY m.person_message_id, s.short_name 
-		 	ORDER BY m.person_message_id ASC
-		 	
-		 	LIMIT $2+1
-		)
-		UNION
-		(
-			SELECT m.person_message_id, m.steam_id, m.server_id, m.body, m.team, m.created_on, 
-			       m.persona_name,  m.match_id, s.short_name, COUNT(f.person_message_id)::int::boolean as flagged
-		 	FROM person_messages m 
-		 	    LEFT JOIN server s on m.server_id = s.server_id 
-		 	LEFT JOIN person_messages_filter f on m.person_message_id = f.person_message_id
-		 	WHERE m.server_id = $3 AND  m.person_message_id < $1
-		 	GROUP BY m.person_message_id, r.short_name
-		 	ORDER BY m.person_message_id DESC
-		 	LIMIT $2
-		)
-		ORDER BY person_message_id DESC`
 
+	const query = `
+		SELECT x.person_message_id, x.steam_id, x.server_id, x.body, x.team, x.created_on, x.persona_name, x.match_id, s.short_name, COALESCE(f.person_message_filter_id, 0) as flagged
+		FROM ((SELECT m.person_message_id,
+					  m.steam_id,
+					  m.server_id,
+					  m.body,
+					  m.team,
+					  m.created_on,
+					  m.persona_name,
+					  m.match_id
+			   FROM person_messages m
+						LEFT JOIN server s on m.server_id = s.server_id
+			   WHERE m.server_id = $3
+				 AND m.person_message_id >= $1
+			   GROUP BY m.person_message_id
+			   ORDER BY person_message_id ASC
+			   LIMIT $2+1)
+			  UNION
+			  (SELECT m.person_message_id,
+					  m.steam_id,
+					  m.server_id,
+					  m.body,
+					  m.team,
+					  m.created_on,
+					  m.persona_name,
+					  m.match_id
+			   FROM person_messages m
+						LEFT JOIN server s on m.server_id = s.server_id
+			   WHERE m.server_id = $3
+				 AND m.person_message_id < $1
+			   GROUP BY m.person_message_id
+			   ORDER BY person_message_id DESC
+			   LIMIT $2)
+			  ORDER BY person_message_id ASC) x
+				 LEFT JOIN server s ON x.server_id = s.server_id
+				 LEFT JOIN person_messages_filter f on x.person_message_id = f.person_message_id
+`
 	if paddedMessageCount > 1000 {
 		paddedMessageCount = 1000
 	}
