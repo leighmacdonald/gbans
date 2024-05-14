@@ -173,7 +173,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			go demoUsecase.Start(ctx)
 
 			banGroupUsecase := steamgroup.NewBanGroupUsecase(steamgroup.NewSteamGroupRepository(dbUsecase))
-			reportUsecase := report.NewReportUsecase(report.NewReportRepository(dbUsecase), discordUsecase, configUsecase, personUsecase)
+			reportUsecase := report.NewReportUsecase(report.NewReportRepository(dbUsecase), discordUsecase, configUsecase, personUsecase, demoUsecase)
 
 			stateUsecase := state.NewStateUsecase(eventBroadcaster,
 				state.NewStateRepository(state.NewCollector(serversUsecase)), configUsecase, serversUsecase)
@@ -268,7 +268,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			notification.NewNotificationHandler(router, notificationUsecase, authUsecase)
 			patreon.NewPatreonHandler(router, patreonUsecase, authUsecase)
 			person.NewPersonHandler(router, configUsecase, personUsecase, authUsecase)
-			report.NewReportHandler(router, reportUsecase, configUsecase, discordUsecase, personUsecase, authUsecase)
+			report.NewReportHandler(router, reportUsecase, configUsecase, discordUsecase, personUsecase, authUsecase, demoUsecase)
 			servers.NewServerHandler(router, serversUsecase, stateUsecase, authUsecase, personUsecase)
 			srcds.NewSRCDSHandler(router, srcdsUsecase, serversUsecase, personUsecase, assetUsecase,
 				reportUsecase, banUsecase, networkUsecase, banGroupUsecase, demoUsecase, authUsecase, banASNUsecase, banNetUsecase,

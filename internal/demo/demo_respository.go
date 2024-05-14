@@ -51,7 +51,7 @@ func (r *demoRepository) GetDemoByID(ctx context.Context, demoID int64, demoFile
 		Builder().
 		Select("d.demo_id", "d.server_id", "d.title", "d.created_on", "d.downloads",
 			"d.map_name", "d.archive", "d.stats", "d.asset_id", "a.size", "s.short_name", "s.name").
-		From("demo r").
+		From("demo d").
 		LeftJoin("server s ON s.server_id = d.server_id").
 		LeftJoin("asset a ON a.asset_id = d.asset_id").
 		Where(sq.Eq{"demo_id": demoID}))
@@ -63,7 +63,7 @@ func (r *demoRepository) GetDemoByID(ctx context.Context, demoID int64, demoFile
 
 	if errQuery := row.Scan(&demoFile.DemoID, &demoFile.ServerID, &demoFile.Title,
 		&demoFile.CreatedOn, &demoFile.Downloads, &demoFile.MapName,
-		&demoFile.Archive, &demoFile.Stats, uuidScan, &demoFile.Size, &demoFile.ServerNameShort,
+		&demoFile.Archive, &demoFile.Stats, &uuidScan, &demoFile.Size, &demoFile.ServerNameShort,
 		&demoFile.ServerNameLong); errQuery != nil {
 		return r.db.DBErr(errQuery)
 	}

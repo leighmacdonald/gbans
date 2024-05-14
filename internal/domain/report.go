@@ -38,7 +38,7 @@ type CreateReportReq struct {
 	Description     string          `json:"description"`
 	Reason          Reason          `json:"reason"`
 	ReasonText      string          `json:"reason_text"`
-	DemoName        string          `json:"demo_name"`
+	DemoID          int64           `json:"demo_id"`
 	DemoTick        int             `json:"demo_tick"`
 	PersonMessageID int64           `json:"person_message_id"`
 }
@@ -67,22 +67,19 @@ func (status ReportStatus) String() string {
 }
 
 type Report struct {
-	ReportID     int64           `json:"report_id"`
-	SourceID     steamid.SteamID `json:"source_id"`
-	TargetID     steamid.SteamID `json:"target_id"`
-	Description  string          `json:"description"`
-	ReportStatus ReportStatus    `json:"report_status"`
-	Reason       Reason          `json:"reason"`
-	ReasonText   string          `json:"reason_text"`
-	Deleted      bool            `json:"deleted"`
-	// Note that we do not use a foreign key here since the demos are not sent until completion
-	// and reports can happen mid-game
-	DemoName        string    `json:"demo_name"`
-	DemoTick        int       `json:"demo_tick"`
-	DemoID          int       `json:"demo_id"`
-	PersonMessageID int64     `json:"person_message_id"`
-	CreatedOn       time.Time `json:"created_on"`
-	UpdatedOn       time.Time `json:"updated_on"`
+	ReportID        int64           `json:"report_id"`
+	SourceID        steamid.SteamID `json:"source_id"`
+	TargetID        steamid.SteamID `json:"target_id"`
+	Description     string          `json:"description"`
+	ReportStatus    ReportStatus    `json:"report_status"`
+	Reason          Reason          `json:"reason"`
+	ReasonText      string          `json:"reason_text"`
+	Deleted         bool            `json:"deleted"`
+	DemoTick        int             `json:"demo_tick"`
+	DemoID          int64           `json:"demo_id"`
+	PersonMessageID int64           `json:"person_message_id"`
+	CreatedOn       time.Time       `json:"created_on"`
+	UpdatedOn       time.Time       `json:"updated_on"`
 }
 
 func (report Report) Path() string {
@@ -98,13 +95,14 @@ func NewReport() Report {
 		CreatedOn:    time.Now(),
 		UpdatedOn:    time.Now(),
 		DemoTick:     -1,
-		DemoName:     "",
+		DemoID:       0,
 	}
 }
 
 type ReportWithAuthor struct {
-	Author  Person `json:"author"`
-	Subject Person `json:"subject"`
+	Author  Person   `json:"author"`
+	Subject Person   `json:"subject"`
+	Demo    DemoFile `json:"demo"`
 	Report
 }
 

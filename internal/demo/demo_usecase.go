@@ -22,6 +22,12 @@ type demoUsecase struct {
 	bucket         domain.Bucket
 }
 
+func (d demoUsecase) MarkArchived(ctx context.Context, demo *domain.DemoFile) error {
+	demo.Archive = true
+
+	return d.repository.SaveDemo(ctx, demo)
+}
+
 func NewDemoUsecase(bucket domain.Bucket, demoRepository domain.DemoRepository, assetUsecase domain.AssetUsecase,
 	configUsecase domain.ConfigUsecase, serversUsecase domain.ServersUsecase,
 ) domain.DemoUsecase {

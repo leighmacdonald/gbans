@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -22,16 +21,18 @@ type reportHandler struct {
 	configUsecase  domain.ConfigUsecase
 	discordUsecase domain.DiscordUsecase
 	personUsecase  domain.PersonUsecase
+	demoUsecase    domain.DemoUsecase
 }
 
 func NewReportHandler(engine *gin.Engine, reportUsecase domain.ReportUsecase, configUsecase domain.ConfigUsecase,
-	discordUsecase domain.DiscordUsecase, personUsecase domain.PersonUsecase, authUsecase domain.AuthUsecase,
+	discordUsecase domain.DiscordUsecase, personUsecase domain.PersonUsecase, authUsecase domain.AuthUsecase, demoUsecase domain.DemoUsecase,
 ) {
 	handler := reportHandler{
 		reportUsecase:  reportUsecase,
 		configUsecase:  configUsecase,
 		discordUsecase: discordUsecase,
 		personUsecase:  personUsecase,
+		demoUsecase:    demoUsecase,
 	}
 
 	// auth
@@ -163,6 +164,17 @@ func (h reportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 			return
 		}
 
+		var demo domain.DemoFile
+
+		if req.DemoID > 0 {
+			if errDemo := h.demoUsecase.GetDemoByID(ctx, req.DemoID, &demo); errDemo != nil {
+				httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+				slog.Error("Failed to load demo for report", slog.Int64("demo_id", req.DemoID))
+
+				return
+			}
+		}
+
 		// TODO encapsulate all operations in single tx
 		report := domain.NewReport()
 		report.SourceID = req.SourceID
@@ -171,8 +183,7 @@ func (h reportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 		report.TargetID = req.TargetID
 		report.Reason = req.Reason
 		report.ReasonText = req.ReasonText
-		parts := strings.Split(req.DemoName, "/")
-		report.DemoName = parts[len(parts)-1]
+		report.DemoID = req.DemoID
 		report.DemoTick = req.DemoTick
 		report.PersonMessageID = req.PersonMessageID
 
@@ -181,6 +192,14 @@ func (h reportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 			slog.Error("Failed to save report", log.ErrAttr(errReportSave))
 
 			return
+		}
+
+		if demo.DemoID > 0 && !demo.Archive {
+			demo.Archive = true
+
+			if errMark := h.demoUsecase.MarkArchived(ctx, &demo); errMark != nil {
+				slog.Error("Failed to mark demo as archived", log.ErrAttr(errMark))
+			}
 		}
 
 		ctx.JSON(http.StatusCreated, report)
@@ -195,8 +214,8 @@ func (h reportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 
 		demoURL := ""
 
-		if report.DemoName != "" {
-			demoURL = conf.ExtURLRaw("/demos/name/%s", report.DemoName)
+		if report.DemoID > 0 {
+			demoURL = conf.ExtURLRaw("/asset/%s", demo.AssetID.String())
 		}
 
 		msg := discord.NewInGameReportResponse(report, conf.ExtURL(report), currentUser, conf.ExtURL(currentUser), demoURL)
