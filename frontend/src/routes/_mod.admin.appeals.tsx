@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import Link from '@mui/material/Link';
 import MenuItem from '@mui/material/MenuItem';
@@ -7,7 +8,16 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import {
+    ColumnFiltersState,
+    createColumnHelper,
+    getCoreRowModel,
+    getFilteredRowModel,
+    getPaginationRowModel,
+    getSortedRowModel,
+    SortingState,
+    useReactTable
+} from '@tanstack/react-table';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import {
@@ -20,14 +30,15 @@ import {
 } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { DataTable } from '../component/DataTable.tsx';
-import { Paginator } from '../component/Paginator.tsx';
+import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import RouterLink from '../component/RouterLink.tsx';
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { SelectFieldSimple } from '../component/field/SelectFieldSimple.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
-import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
+import { initColumnFilter, initPagination, initSortOrder, TablePropsAll } from '../types/table.ts';
+import { commonTableSearchSchema } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 import { makeSteamidValidatorsOptional } from '../util/validator/makeSteamidValidatorsOptional.ts';
 
@@ -47,25 +58,37 @@ export const Route = createFileRoute('/_mod/admin/appeals')({
 });
 
 function AdminAppeals() {
-    const defaultRows = RowsPerPage.TwentyFive;
     const navigate = useNavigate({ from: Route.fullPath });
     const { page, sortColumn, rows, sortOrder, source_id, target_id, appeal_state } = Route.useSearch();
+    const [pagination, setPagination] = useState(initPagination(page, rows));
+    const [sorting, setSorting] = useState<SortingState>(
+        initSortOrder(sortColumn, sortOrder, {
+            id: 'created_on',
+            desc: true
+        })
+    );
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
+        initColumnFilter({
+            appeal_state: appeal_state ?? AppealState.Any,
+            source_id: source_id ?? undefined,
+            target_id: target_id ?? undefined
+        })
+    );
     const { data: appeals, isLoading } = useQuery({
         queryKey: ['appeals', { page, rows, sortOrder, appeal_state, source_id, target_id }],
         queryFn: async () => {
-            return await apiGetAppeals({
-                limit: rows ?? defaultRows,
-                offset: (page ?? 0) * (rows ?? defaultRows),
-                order_by: sortColumn ?? 'ban_id',
-                desc: (sortOrder ?? 'desc') == 'desc',
-                source_id: source_id ?? '',
-                target_id: target_id ?? '',
-                appeal_state: Number(appeal_state ?? AppealState.Any)
-            });
+            return await apiGetAppeals({});
         }
     });
-    const { Field, Subscribe, handleSubmit, reset } = useForm({
+    const { Field, Subscribe, handleSubmit, reset, setFieldValue } = useForm({
         onSubmit: async ({ value }) => {
+            setColumnFilters(
+                initColumnFilter({
+                    appeal_state: value.appeal_state ?? AppealState.Any,
+                    source_id: value.source_id ?? undefined,
+                    target_id: value.target_id ?? undefined
+                })
+            );
             await navigate({ to: '/admin/appeals', search: (prev) => ({ ...prev, ...value }) });
         },
         validatorAdapter: zodValidator,
@@ -80,46 +103,17 @@ function AdminAppeals() {
     });
 
     const clear = async () => {
+        //reset();
+        setFieldValue('appeal_state', AppealState.Any);
+        setFieldValue('source_id', '');
+        setFieldValue('target_id', '');
+
+        await handleSubmit();
         await navigate({
             to: '/admin/appeals',
             search: (prev) => ({ ...prev, source_id: undefined, target_id: undefined, appeal_state: undefined })
         });
     };
-
-    // const tableIcon = useMemo(() => {
-    //     if (loading) {
-    //         return <LoadingSpinner />;
-    //     }
-    //     switch (state.appealState) {
-    //         case AppealState.Accepted:
-    //             return <GppGoodIcon />;
-    //         case AppealState.Open:
-    //             return <FiberNewIcon />;
-    //         case AppealState.Denied:
-    //             return <DoNotDisturbIcon />;
-    //         default:
-    //             return <SnoozeIcon />;
-    //     }
-    // }, [loading, state.appealState]);
-    //
-    // const onSubmit = useCallback(
-    //     (values: AppealFilterValues) => {
-    //         setState({
-    //             appealState: values.appeal_state != AppealState.Any ? values.appeal_state : undefined,
-    //             source: values.source_id != '' ? values.source_id : undefined,
-    //             target: values.target_id != '' ? values.target_id : undefined
-    //         });
-    //     },
-    //     [setState]
-    // );
-    //
-    // const onReset = useCallback(() => {
-    //     setState({
-    //         appealState: undefined,
-    //         source: undefined,
-    //         target: undefined
-    //     });
-    // }, [setState]);
 
     return (
         <Grid container spacing={2}>
@@ -199,8 +193,16 @@ function AdminAppeals() {
 
             <Grid xs={12}>
                 <ContainerWithHeader title={'Recent Open Appeal Activity'}>
-                    <AppealsTable appeals={appeals ?? { data: [], count: 0 }} isLoading={isLoading} />
-                    <Paginator page={page ?? 0} rows={rows ?? defaultRows} path={'/admin/appeals'} />
+                    <AppealsTable
+                        appeals={appeals ?? []}
+                        isLoading={isLoading}
+                        setColumnFilters={setColumnFilters}
+                        columnFilters={columnFilters}
+                        setSorting={setSorting}
+                        sorting={sorting}
+                        setPagination={setPagination}
+                        pagination={pagination}
+                    />
                 </ContainerWithHeader>
             </Grid>
         </Grid>
@@ -209,7 +211,16 @@ function AdminAppeals() {
 }
 const columnHelper = createColumnHelper<SteamBanRecord>();
 
-const AppealsTable = ({ appeals, isLoading }: { appeals: LazyResult<SteamBanRecord>; isLoading: boolean }) => {
+const AppealsTable = ({
+    appeals,
+    isLoading,
+    setPagination,
+    pagination,
+    columnFilters,
+    setColumnFilters,
+    sorting,
+    setSorting
+}: { appeals: SteamBanRecord[]; isLoading: boolean } & TablePropsAll) => {
     const columns = [
         columnHelper.accessor('ban_id', {
             header: () => <TableHeadingCell name={'ID'} />,
@@ -226,6 +237,13 @@ const AppealsTable = ({ appeals, isLoading }: { appeals: LazyResult<SteamBanReco
             )
         }),
         columnHelper.accessor('appeal_state', {
+            enableColumnFilter: true,
+            filterFn: (row, _, value) => {
+                if (value == AppealState.Any) {
+                    return true;
+                }
+                return row.original.appeal_state == value;
+            },
             header: () => <TableHeadingCell name={'Status'} />,
             cell: (info) => {
                 return (
@@ -236,24 +254,26 @@ const AppealsTable = ({ appeals, isLoading }: { appeals: LazyResult<SteamBanReco
             }
         }),
         columnHelper.accessor('source_id', {
+            enableColumnFilter: true,
             header: () => <TableHeadingCell name={'Author'} />,
             cell: (info) => (
                 <PersonCell
                     showCopy={true}
-                    steam_id={appeals.data[info.row.index].source_id}
-                    personaname={appeals.data[info.row.index].source_personaname}
-                    avatar_hash={appeals.data[info.row.index].source_avatarhash}
+                    steam_id={info.row.original.source_id}
+                    personaname={info.row.original.source_personaname}
+                    avatar_hash={info.row.original.source_avatarhash}
                 />
             )
         }),
         columnHelper.accessor('target_id', {
+            enableColumnFilter: true,
             header: () => <TableHeadingCell name={'Subject'} />,
             cell: (info) => (
                 <PersonCell
                     showCopy={true}
-                    steam_id={appeals.data[info.row.index].target_id}
-                    personaname={appeals.data[info.row.index].target_personaname}
-                    avatar_hash={appeals.data[info.row.index].target_avatarhash}
+                    steam_id={info.row.original.target_id}
+                    personaname={info.row.original.target_personaname}
+                    avatar_hash={info.row.original.target_avatarhash}
                 />
             )
         }),
@@ -276,12 +296,42 @@ const AppealsTable = ({ appeals, isLoading }: { appeals: LazyResult<SteamBanReco
     ];
 
     const table = useReactTable({
-        data: appeals.data,
+        data: appeals,
         columns: columns,
+        autoResetPageIndex: true,
         getCoreRowModel: getCoreRowModel(),
-        manualPagination: true,
-        autoResetPageIndex: true
+        getFilteredRowModel: getFilteredRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        onPaginationChange: setPagination,
+        onSortingChange: setSorting,
+        onColumnFiltersChange: setColumnFilters,
+
+        state: {
+            sorting,
+            pagination,
+            columnFilters
+        }
     });
 
-    return <DataTable table={table} isLoading={isLoading} />;
+    return (
+        <>
+            <DataTable table={table} isLoading={isLoading} />{' '}
+            <PaginatorLocal
+                onRowsChange={(rows) => {
+                    setPagination((prev) => {
+                        return { ...prev, pageSize: rows };
+                    });
+                }}
+                onPageChange={(page) => {
+                    setPagination((prev) => {
+                        return { ...prev, pageIndex: page };
+                    });
+                }}
+                count={table.getRowCount()}
+                rows={pagination.pageSize}
+                page={pagination.pageIndex}
+            />
+        </>
+    );
 };

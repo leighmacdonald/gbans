@@ -7,7 +7,7 @@ type AppealRepository interface {
 	GetBanMessages(ctx context.Context, banID int64) ([]BanAppealMessage, error)
 	GetBanMessageByID(ctx context.Context, banMessageID int64) (BanAppealMessage, error)
 	DropBanMessage(ctx context.Context, message *BanAppealMessage) error
-	GetAppealsByActivity(ctx context.Context, opts AppealQueryFilter) ([]AppealOverview, int64, error)
+	GetAppealsByActivity(ctx context.Context, opts AppealQueryFilter) ([]AppealOverview, error)
 }
 
 type AppealUsecase interface {
@@ -16,7 +16,7 @@ type AppealUsecase interface {
 	GetBanMessages(ctx context.Context, userProfile UserProfile, banID int64) ([]BanAppealMessage, error)
 	GetBanMessageByID(ctx context.Context, banMessageID int64) (BanAppealMessage, error)
 	DropBanMessage(ctx context.Context, curUser UserProfile, banMessageID int64) error
-	GetAppealsByActivity(ctx context.Context, opts AppealQueryFilter) ([]AppealOverview, int64, error)
+	GetAppealsByActivity(ctx context.Context, opts AppealQueryFilter) ([]AppealOverview, error)
 }
 
 type NewBanMessage struct {

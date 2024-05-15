@@ -210,10 +210,7 @@ type ReportQueryFilter struct {
 }
 
 type AppealQueryFilter struct {
-	QueryFilter
-	SourceIDField
-	TargetIDField
-	AppealState AppealState `json:"appeal_state"`
+	Deleted bool `json:"deleted"`
 }
 
 type SteamIDField struct {

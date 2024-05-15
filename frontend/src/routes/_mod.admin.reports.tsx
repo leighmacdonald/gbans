@@ -326,7 +326,7 @@ const ReportTable = ({
                         return { ...prev, pageIndex: page };
                     });
                 }}
-                count={reports.length}
+                count={table.getRowCount()}
                 rows={pagination.pageSize}
                 page={pagination.pageIndex}
             />
