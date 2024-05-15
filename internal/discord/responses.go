@@ -661,12 +661,12 @@ func HistoryMessage(person domain.PersonInfo) *discordgo.MessageEmbed {
 //	return msgEmbed.Embed().Truncate().MessageEmbed
 // }
 
-func UnbanMessage(person domain.PersonInfo) *discordgo.MessageEmbed {
+func UnbanMessage(cu domain.ConfigUsecase, person domain.PersonInfo) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed("User Unbanned Successfully")
 	msgEmbed.Embed().
 		SetColor(ColourSuccess).
 		SetImage(person.GetAvatar().Full()).
-		SetURL(person.Path())
+		SetURL(cu.ExtURL(person))
 	msgEmbed.AddFieldsSteamID(person.GetSteamID())
 
 	return msgEmbed.Embed().Truncate().MessageEmbed
