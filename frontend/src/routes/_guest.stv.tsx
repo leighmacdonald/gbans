@@ -188,7 +188,7 @@ function STV() {
                 id: 'download',
                 enableSorting: false,
                 cell: (info) => (
-                    <ButtonGroup variant={'contained'} fullWidth>
+                    <ButtonGroup variant={'contained'} fullWidth sx={{ margin: 1 }}>
                         <Button
                             disabled={!isAuthenticated()}
                             color={'error'}
@@ -331,7 +331,7 @@ function STV() {
             </Grid>
             <Grid xs={12}>
                 <ContainerWithHeader title={'SourceTV Recordings'} iconLeft={<VideocamIcon />}>
-                    <DataTable table={table} isLoading={false} padding={'normal'} />
+                    <DataTable table={table} isLoading={false} padding={'none'} />
                     <PaginatorLocal
                         onRowsChange={(rows) => {
                             setPagination((prev) => {
