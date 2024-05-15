@@ -16,7 +16,7 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import { useQuery } from '@tanstack/react-query';
-import { createLazyFileRoute } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { formatDistance } from 'date-fns';
 import { apiGetMatch, MatchHealer, MatchPlayer, MatchPlayerClass, MatchPlayerWeapon, Team } from '../api';
@@ -30,9 +30,9 @@ import { TableCellSmall } from '../component/TableCellSmall.tsx';
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import bluLogoImg from '../icons/blu_logo.png';
 import redLogoImg from '../icons/red_logo.png';
-import { PageNotFound } from './_auth.page-not-found.lazy.tsx';
+import { PageNotFound } from './_auth.page-not-found.tsx';
 
-export const Route = createLazyFileRoute('/_auth/match/$matchId')({
+export const Route = createFileRoute('/_auth/match/$matchId')({
     component: MatchPage
 });
 

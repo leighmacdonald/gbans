@@ -7,7 +7,7 @@ import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import { createLazyFileRoute } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { LatLngLiteral } from 'leaflet';
 import { apiGetServerStates, BaseServer } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
@@ -18,7 +18,7 @@ import { MapStateCtx } from '../contexts/MapStateCtx.tsx';
 import { useMapStateCtx } from '../hooks/useMapStateCtx.ts';
 import { sum } from '../util/lists.ts';
 
-export const Route = createLazyFileRoute('/_guest/servers')({
+export const Route = createFileRoute('/_guest/servers')({
     component: Servers
 });
 

@@ -21,7 +21,7 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import { useQuery } from '@tanstack/react-query';
-import { createLazyFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
+import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { isBefore } from 'date-fns';
 import {
     apiGetBansSteam,
@@ -45,7 +45,7 @@ import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors.ts';
 import { avatarHashToURL } from '../util/text.tsx';
 
-export const Route = createLazyFileRoute('/_auth/report/$reportId')({
+export const Route = createFileRoute('/_auth/report/$reportId')({
     component: ReportView
 });
 

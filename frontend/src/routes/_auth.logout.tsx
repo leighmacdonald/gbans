@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import Typography from '@mui/material/Typography';
-import { createLazyFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
+import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
 
-export const Route = createLazyFileRoute('/_auth/logout')({
+export const Route = createFileRoute('/_auth/logout')({
     component: LogoutPage
 });
 

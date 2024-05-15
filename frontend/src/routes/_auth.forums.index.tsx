@@ -11,7 +11,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useQuery } from '@tanstack/react-query';
-import { createLazyFileRoute, useRouteContext } from '@tanstack/react-router';
+import { createFileRoute, useRouteContext } from '@tanstack/react-router';
 import { PermissionLevel } from '../api';
 import { apiGetForumOverview, Forum, ForumCategory } from '../api/forum.ts';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
@@ -28,7 +28,7 @@ import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors.ts';
 import { avatarHashToURL, humanCount, renderDateTime } from '../util/text.tsx';
 
-export const Route = createLazyFileRoute('/_auth/forums/')({
+export const Route = createFileRoute('/_auth/forums/')({
     component: ForumOverview
 });
 

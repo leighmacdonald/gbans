@@ -3,7 +3,7 @@ import InsightsIcon from '@mui/icons-material/Insights';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useQuery } from '@tanstack/react-query';
-import { createLazyFileRoute } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
 import { apiGetPlayerWeaponStats, PlayerWeaponStats, PlayerWeaponStatsResponse } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
@@ -16,7 +16,7 @@ import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { RowsPerPage } from '../util/table.ts';
 import { defaultFloatFmtPct, humanCount } from '../util/text.tsx';
 
-export const Route = createLazyFileRoute('/_auth/stats/weapon/$weapon_id')({
+export const Route = createFileRoute('/_auth/stats/weapon/$weapon_id')({
     component: StatsWeapon
 });
 

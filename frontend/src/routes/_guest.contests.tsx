@@ -3,7 +3,7 @@ import InsightsIcon from '@mui/icons-material/Insights';
 import Link from '@mui/material/Link';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useQuery } from '@tanstack/react-query';
-import { createLazyFileRoute } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import {
     createColumnHelper,
     getCoreRowModel,
@@ -22,7 +22,7 @@ import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 
-export const Route = createLazyFileRoute('/_guest/contests')({
+export const Route = createFileRoute('/_guest/contests')({
     component: Contests
 });
 

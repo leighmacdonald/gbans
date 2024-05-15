@@ -1,8 +1,8 @@
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import { createLazyFileRoute } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 
-export const Route = createLazyFileRoute('/_auth/page-not-found')({
+export const Route = createFileRoute('/_auth/page-not-found')({
     component: PageNotFound
 });
 

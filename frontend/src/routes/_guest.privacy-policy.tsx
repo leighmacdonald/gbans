@@ -3,10 +3,10 @@ import PolicyIcon from '@mui/icons-material/Policy';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import { createLazyFileRoute } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 
-export const Route = createLazyFileRoute('/_guest/privacy-policy')({
+export const Route = createFileRoute('/_guest/privacy-policy')({
     component: PrivacyPolicy
 });
 

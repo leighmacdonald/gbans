@@ -24,7 +24,7 @@ const matchSummarySchema = z.object({
     map: z.string().catch('')
 });
 
-export const Route = createFileRoute('/_auth/logs/$steamId')({
+export const Route = createFileRoute('/_auth/logs/$steamId/')({
     component: MatchListPage,
     validateSearch: (search) => matchSummarySchema.parse(search)
 });

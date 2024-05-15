@@ -27,7 +27,7 @@ import {
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import stc from 'string-to-color';
 import { z } from 'zod';
-import { apiGetDemos, apiGetServers, DemoFile } from '../api';
+import { apiGetDemos, apiGetServers, DemoFile, ServerSimple } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { DataTable } from '../component/DataTable.tsx';
 import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
@@ -115,7 +115,7 @@ function STV() {
                               : steam_id
                 })
             );
-            await navigate({ to: '/stv', search: (prev) => ({ ...prev, ...value }) });
+            await navigate({ to: '/_guest/stv', search: (prev: any) => ({ ...prev, ...value }) });
         },
         validatorAdapter: zodValidator,
         validators: {
@@ -269,7 +269,7 @@ function STV() {
                                                         onBlur={handleBlur}
                                                     >
                                                         <MenuItem value={0}>All</MenuItem>
-                                                        {servers.map((s) => (
+                                                        {servers.map((s: ServerSimple) => (
                                                             <MenuItem value={s.server_id} key={s.server_id}>
                                                                 {s.server_name}
                                                             </MenuItem>

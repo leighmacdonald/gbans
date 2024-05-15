@@ -1,11 +1,11 @@
 import Grid from '@mui/material/Unstable_Grid2';
-import { createLazyFileRoute } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { HealersOverallContainer } from '../component/HealersOverallContainer.tsx';
 import { MapUsageContainer } from '../component/MapUsageContainer.tsx';
 import { PlayersOverallContainer } from '../component/PlayersOverallContainer.tsx';
 import { WeaponsStatListContainer } from '../component/WeaponsStatListContainer.tsx';
 
-export const Route = createLazyFileRoute('/_auth/stats/')({
+export const Route = createFileRoute('/_auth/stats/')({
     component: Stats
 });
 

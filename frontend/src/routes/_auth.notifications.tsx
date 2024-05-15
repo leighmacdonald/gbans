@@ -11,7 +11,7 @@ import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid2 from '@mui/material/Unstable_Grid2';
-import { createLazyFileRoute } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { parseISO } from 'date-fns';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { useNotifications } from '../hooks/useNotifications.ts';
@@ -19,7 +19,7 @@ import { useNotificationsCtx } from '../hooks/useNotificationsCtx.ts';
 import { RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 
-export const Route = createLazyFileRoute('/_auth/notifications')({
+export const Route = createFileRoute('/_auth/notifications')({
     component: NotificationsPage
 });
 

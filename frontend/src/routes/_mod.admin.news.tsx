@@ -12,7 +12,7 @@ import Tabs from '@mui/material/Tabs';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
-import { createLazyFileRoute } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router';
 import { apiNewsSave, NewsEntry } from '../api/news.ts';
 import { MarkDownRenderer } from '../component/MarkdownRenderer.tsx';
 import { NewsList } from '../component/NewsList.tsx';
@@ -20,7 +20,7 @@ import { TabPanel } from '../component/TabPanel.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors.ts';
 
-export const Route = createLazyFileRoute('/_mod/admin/news')({
+export const Route = createFileRoute('/_mod/admin/news')({
     component: AdminNews
 });
 

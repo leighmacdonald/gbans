@@ -13,7 +13,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useQuery } from '@tanstack/react-query';
-import { createLazyFileRoute, useRouteContext } from '@tanstack/react-router';
+import { createFileRoute, useRouteContext } from '@tanstack/react-router';
 import { format } from 'date-fns';
 import formatDistanceToNowStrict from 'date-fns/formatDistanceToNowStrict';
 import { isAfter } from 'date-fns/fp';
@@ -30,9 +30,9 @@ import { ModalAssetViewer, ModalContestEntry, ModalContestEntryDelete } from '..
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors.ts';
 import { humanFileSize } from '../util/text.tsx';
-import { PageNotFound } from './_auth.page-not-found.lazy.tsx';
+import { PageNotFound } from './_auth.page-not-found.tsx';
 
-export const Route = createLazyFileRoute('/_auth/contests/$contest_id')({
+export const Route = createFileRoute('/_auth/contests/$contest_id')({
     component: Contest
 });
 
