@@ -5,7 +5,8 @@ export enum ErrorCode {
     DependencyMissing,
     PermissionDenied,
     Unknown,
-    LoginRequired
+    LoginRequired,
+    NotFound = 5
 }
 
 export class AppError extends Error {
@@ -25,6 +26,9 @@ export class AppError extends Error {
                     break;
                 case ErrorCode.LoginRequired:
                     message = 'Please Login';
+                    break;
+                case ErrorCode.NotFound:
+                    message = 'Not Found';
                     break;
                 default:
                     message = '🤯 🤯 🤯 Something went wrong 🤯 🤯 🤯';

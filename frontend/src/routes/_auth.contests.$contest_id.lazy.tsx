@@ -190,7 +190,7 @@ function Contest() {
                                 disabled={isAfter(contest.date_end, new Date())}
                                 startIcon={<PublishIcon />}
                                 onClick={async () => {
-                                    await onEnter(contest.contest_id);
+                                    await onEnter(contest.contest_id as string);
                                 }}
                             >
                                 Submit Entry

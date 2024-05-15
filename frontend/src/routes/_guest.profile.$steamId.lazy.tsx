@@ -2,22 +2,25 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import InsightsIcon from '@mui/icons-material/Insights';
 import LinkIcon from '@mui/icons-material/Link';
 import LocalLibraryIcon from '@mui/icons-material/LocalLibrary';
-import Box from '@mui/material/Box';
+import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { queryOptions } from '@tanstack/react-query';
 import { createFileRoute, useLoaderData, useRouteContext } from '@tanstack/react-router';
+import { format, fromUnixTime } from 'date-fns';
 import { apiGetProfile, PlayerProfile } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { PlayerClassStatsTable } from '../component/PlayerClassStatsTable.tsx';
 import { PlayerStatsOverallContainer } from '../component/PlayerStatsOverallContainer.tsx';
 import { PlayerWeaponsStatListContainer } from '../component/PlayerWeaponsStatListContainer.tsx';
-import { ProfileInfoBox } from '../component/ProfileInfoBox.tsx';
 import { SteamIDList } from '../component/SteamIDList.tsx';
 import { createExternalLinks } from '../util/history.ts';
+import { avatarHashToURL, isValidSteamDate, renderDateTime } from '../util/text.tsx';
+import { emptyOrNullString } from '../util/types.ts';
 
 export const Route = createFileRoute('/_guest/profile/$steamId')({
     component: ProfilePage,
@@ -40,9 +43,45 @@ function ProfilePage() {
     return (
         <Grid container spacing={2}>
             <Grid xs={12} md={8}>
-                <Box width={'100%'}>
-                    <ProfileInfoBox steam_id={profile.player.steam_id} />
-                </Box>
+                <ContainerWithHeader title={'Profile'}>
+                    <Grid container spacing={2}>
+                        <Grid xs={4}>
+                            <Avatar
+                                variant={'square'}
+                                src={avatarHashToURL(profile.player.avatarhash)}
+                                alt={'Profile Avatar'}
+                                sx={{ width: '100%', height: '100%', minHeight: 240 }}
+                            />
+                        </Grid>
+                        <Grid xs={8}>
+                            <Stack spacing={2}>
+                                <Typography
+                                    variant={'h3'}
+                                    display="inline"
+                                    style={{ wordBreak: 'break-word', whiteSpace: 'pre-line' }}
+                                >
+                                    {profile.player.personaname + profile.player.personaname}
+                                </Typography>
+                                <Typography variant={'body1'}>
+                                    First Seen: {renderDateTime(profile.player.created_on)}
+                                </Typography>
+                                {!emptyOrNullString(profile.player.locstatecode) ||
+                                    (!emptyOrNullString(profile.player.loccountrycode) && (
+                                        <Typography variant={'body1'}>
+                                            {[profile.player.locstatecode, profile.player.loccountrycode]
+                                                .filter((x) => x)
+                                                .join(',')}
+                                        </Typography>
+                                    ))}
+                                {isValidSteamDate(fromUnixTime(profile.player.timecreated)) && (
+                                    <Typography variant={'body1'}>
+                                        Created: {format(fromUnixTime(profile.player.timecreated), 'yyyy-MM-dd')}
+                                    </Typography>
+                                )}
+                            </Stack>
+                        </Grid>
+                    </Grid>
+                </ContainerWithHeader>
             </Grid>
             <Grid xs={6} md={2}>
                 <ContainerWithHeader title={'Status'} iconLeft={<LocalLibraryIcon />} marginTop={0}>

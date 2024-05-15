@@ -8,20 +8,23 @@ import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
+import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
+import { useForm } from '@tanstack/react-form';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { zodValidator } from '@tanstack/zod-form-adapter';
 import { formatDistance } from 'date-fns';
-import { BanAppealMessage } from '../api';
+import { z } from 'zod';
+import { apiUpdateBanMessage, BanAppealMessage } from '../api';
 import { avatarHashToURL } from '../util/text.tsx';
 import { MarkDownRenderer } from './MarkdownRenderer';
+import { Buttons } from './field/Buttons.tsx';
+import { MarkdownField } from './field/MarkdownField.tsx';
 
 interface AppealMessageViewProps {
     message: BanAppealMessage;
     onDelete: (report_message_id: number) => void;
 }
-
-// interface AppealMessageValues {
-//     body_md: string;
-// }
 
 export const AppealMessageView = ({ message, onDelete }: AppealMessageViewProps) => {
     const theme = useTheme();
@@ -29,19 +32,7 @@ export const AppealMessageView = ({ message, onDelete }: AppealMessageViewProps)
     const open = Boolean(anchorEl);
     const [editing, setEditing] = useState<boolean>(false);
     const [deleted, setDeleted] = useState<boolean>(false);
-
-    // const onSubmit = useCallback(
-    //     async (values: AppealMessageValues) => {
-    //         try {
-    //             await apiUpdateBanMessage(message.ban_message_id, values.body_md);
-    //             message.message_md = values.body_md;
-    //             setEditing(false);
-    //         } catch (e) {
-    //             logErr(e);
-    //         }
-    //     },
-    //     [message]
-    // );
+    const queryClient = useQueryClient();
 
     const handleClick = (event: MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
@@ -51,6 +42,30 @@ export const AppealMessageView = ({ message, onDelete }: AppealMessageViewProps)
         setAnchorEl(null);
     };
 
+    const mutation = useMutation({
+        mutationKey: ['banSteam'],
+        mutationFn: async (values: { body_md: string }) => {
+            const msg = await apiUpdateBanMessage(message.ban_message_id, values.body_md);
+
+            queryClient.setQueryData(['banMessages', { ban_id: message.ban_id }], (prev: BanAppealMessage[]) => {
+                return prev.map((m) => (m.ban_message_id == message.ban_message_id ? msg : m));
+            });
+            setEditing(false);
+        }
+    });
+
+    const { Field, Subscribe, handleSubmit, reset } = useForm({
+        onSubmit: async ({ value }) => {
+            mutation.mutate({
+                body_md: value.body_md
+            });
+        },
+        validatorAdapter: zodValidator,
+        defaultValues: {
+            body_md: message.message_md
+        }
+    });
+
     if (deleted) {
         return <></>;
     }
@@ -58,16 +73,35 @@ export const AppealMessageView = ({ message, onDelete }: AppealMessageViewProps)
     if (editing) {
         return (
             <Box component={Paper} padding={1}>
-                {/*<Formik<AppealMessageValues> onSubmit={onSubmit} initialValues={{ body_md: message.message_md }}>*/}
-                {/*    <Stack spacing={1}>*/}
-                {/*        <MDBodyField />*/}
-
-                {/*        <ButtonGroup>*/}
-                {/*            <ResetButton />*/}
-                {/*            <SubmitButton />*/}
-                {/*        </ButtonGroup>*/}
-                {/*    </Stack>*/}
-                {/*</Formik>*/}
+                <form
+                    onSubmit={async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        await handleSubmit();
+                    }}
+                >
+                    <Grid container spacing={2} padding={1}>
+                        <Grid xs={12}>
+                            <Field
+                                validators={{
+                                    onChange: z.string().min(4)
+                                }}
+                                name={'body_md'}
+                                children={(props) => {
+                                    return <MarkdownField {...props} label={'Message'} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={12} mdOffset="auto">
+                            <Subscribe
+                                selector={(state) => [state.canSubmit, state.isSubmitting]}
+                                children={([canSubmit, isSubmitting]) => {
+                                    return <Buttons reset={reset} canSubmit={canSubmit} isSubmitting={isSubmitting} />;
+                                }}
+                            />
+                        </Grid>
+                    </Grid>
+                </form>
             </Box>
         );
     } else {

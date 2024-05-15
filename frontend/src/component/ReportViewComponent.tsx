@@ -22,14 +22,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouteContext } from '@tanstack/react-router';
 import {
     apiCreateReportMessage,
-    apiDeleteReportMessage,
     apiGetBansSteam,
     apiGetConnections,
     apiGetMessages,
-    apiGetReportMessages,
     PermissionLevel,
     ReportWithAuthor
 } from '../api';
+import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import { reportMessagesQueryOptions } from '../queries/reportMessages.ts';
 import { RowsPerPage } from '../util/table.ts';
 import { BanHistoryTable } from './BanHistoryTable.tsx';
 import { ChatTable } from './ChatTable.tsx';
@@ -45,18 +45,10 @@ import { TabPanel } from './TabPanel';
 import { Buttons } from './field/Buttons.tsx';
 import { MarkdownField } from './field/MarkdownField.tsx';
 
-const messagesQueryOptions = (reportId: number) => ({
-    queryKey: ['reportMessages', { reportID: reportId }],
-    queryFn: async () => {
-        return (await apiGetReportMessages(reportId)) ?? [];
-    }
-});
-
 export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): JSX.Element => {
     const theme = useTheme();
     const queryClient = useQueryClient();
-    // const { data: messagesServer } = useReportMessages(report.report_id);
-    // const [deletedMessages, setDeletedMessages] = useState<number[]>([]);
+    const { sendFlash } = useUserFlashCtx();
     const [value, setValue] = useState<number>(0);
     const { hasPermission } = useRouteContext({ from: '/_auth/report/$reportId' });
 
@@ -99,7 +91,7 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
         }
     });
 
-    const { data: messages, isLoading: isLoadingMessages } = useQuery(messagesQueryOptions(report.report_id));
+    const { data: messages, isLoading: isLoadingMessages } = useQuery(reportMessagesQueryOptions(report.report_id));
 
     const { data: bans, isLoading: isLoadingBans } = useQuery({
         queryKey: ['reportBanHistory', { steamId: report.target_id }],
@@ -124,26 +116,17 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
             return await apiCreateReportMessage(report.report_id, body_md);
         },
         onSuccess: (message) => {
-            queryClient.setQueryData(messagesQueryOptions(report.report_id).queryKey, [...(messages ?? []), message]);
+            queryClient.setQueryData(reportMessagesQueryOptions(report.report_id).queryKey, [
+                ...(messages ?? []),
+                message
+            ]);
             reset();
-        }
-    });
-
-    const deleteMessageMutation = useMutation({
-        mutationFn: async ({ message_id }: { message_id: number }) => {
-            return await apiDeleteReportMessage(message_id);
+            sendFlash('success', 'Created message successfully');
         },
-        onSuccess: (_, { message_id }) => {
-            queryClient.setQueryData(
-                messagesQueryOptions(report.report_id).queryKey,
-                (messages ?? []).filter((m) => m.report_message_id != message_id)
-            );
+        onError: (error) => {
+            sendFlash('error', `Failed to create message: ${error}`);
         }
     });
-
-    const onDelete = async (message_id: number) => {
-        deleteMessageMutation.mutate({ message_id });
-    };
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({
         onSubmit: async ({ value }) => {
@@ -317,11 +300,7 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
                         {!isLoadingMessages &&
                             messages &&
                             messages.map((m) => (
-                                <ReportMessageView
-                                    onDelete={onDelete}
-                                    message={m}
-                                    key={`report-msg-${m.report_message_id}`}
-                                />
+                                <ReportMessageView message={m} key={`report-msg-${m.report_message_id}`} />
                             ))}
                         <Paper elevation={1}>
                             <form
@@ -331,7 +310,7 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
                                     await handleSubmit();
                                 }}
                             >
-                                <Grid container>
+                                <Grid container spacing={2} padding={1}>
                                     <Grid xs={12}>
                                         <Field
                                             name={'body_md'}

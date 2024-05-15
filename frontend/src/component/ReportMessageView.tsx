@@ -1,47 +1,91 @@
 import { MouseEvent, useState } from 'react';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import Avatar from '@mui/material/Avatar';
-import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardHeader from '@mui/material/CardHeader';
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
+import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
+import { useForm } from '@tanstack/react-form';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { zodValidator } from '@tanstack/zod-form-adapter';
 import { formatDistance } from 'date-fns';
-import { ReportMessage } from '../api';
+import { z } from 'zod';
+import { apiDeleteReportMessage, apiUpdateReportMessage, ReportMessage } from '../api';
+import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import { reportMessagesQueryOptions } from '../queries/reportMessages.ts';
 import { avatarHashToURL } from '../util/text.tsx';
 import { MarkDownRenderer } from './MarkdownRenderer';
+import { Buttons } from './field/Buttons.tsx';
+import { MarkdownField } from './field/MarkdownField.tsx';
 
 export interface ReportMessageViewProps {
     message: ReportMessage;
-    onDelete: (report_message_id: number) => void;
 }
 
-// interface ReportMessageValues {
-//     body_md: string;
-// }
-
-export const ReportMessageView = ({ message, onDelete }: ReportMessageViewProps) => {
+export const ReportMessageView = ({ message }: ReportMessageViewProps) => {
     const theme = useTheme();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
+    const { sendFlash } = useUserFlashCtx();
+    const queryClient = useQueryClient();
+
     const [editing, setEditing] = useState<boolean>(false);
     const [deleted, setDeleted] = useState<boolean>(false);
 
-    // const onSubmit = useCallback(
-    //     async (values: ReportMessageValues) => {
-    //         try {
-    //             await apiUpdateReportMessage(message.report_message_id, values.body_md);
-    //             message.message_md = values.body_md;
-    //             setEditing(false);
-    //         } catch (e) {
-    //             logErr(e);
-    //         }
-    //     },
-    //     [message]
-    // );
+    const deleteMessageMutation = useMutation({
+        mutationFn: async ({ message_id }: { message_id: number }) => {
+            return await apiDeleteReportMessage(message_id);
+        },
+        onSuccess: (_, { message_id }) => {
+            queryClient.setQueryData(
+                reportMessagesQueryOptions(message.report_id).queryKey,
+                (messages: ReportMessage[]) => (messages ?? []).filter((m) => m.report_message_id != message_id)
+            );
+            sendFlash('success', 'Deleted message successfully');
+        }
+    });
+
+    const onDelete = async (message_id: number) => {
+        deleteMessageMutation.mutate({ message_id });
+    };
+
+    const mutation = useMutation({
+        mutationKey: ['reportMessage'],
+        mutationFn: async (values: { body_md: string }) => {
+            return await apiUpdateReportMessage(message.report_message_id, values.body_md);
+        },
+        onSuccess: (msg) => {
+            queryClient.setQueryData(
+                reportMessagesQueryOptions(message.report_id).queryKey,
+                (msgs: ReportMessage[]) => {
+                    return msgs.map((m) => {
+                        return m.report_message_id == msg.report_message_id ? msg : m;
+                    });
+                }
+            );
+            setEditing(false);
+            sendFlash('success', 'Edited message successfully');
+        },
+        onError: (e) => {
+            sendFlash('error', `Error editing message: ${e}`);
+        }
+    });
+
+    const { Field, Subscribe, handleSubmit, reset } = useForm({
+        onSubmit: async ({ value }) => {
+            mutation.mutate({
+                body_md: value.body_md
+            });
+        },
+        validatorAdapter: zodValidator,
+        defaultValues: {
+            body_md: message.message_md
+        }
+    });
 
     const handleClick = (event: MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
@@ -57,18 +101,47 @@ export const ReportMessageView = ({ message, onDelete }: ReportMessageViewProps)
 
     if (editing) {
         return (
-            <Box component={Paper} padding={1}>
-                {/*<Formik<ReportMessageValues> onSubmit={onSubmit} initialValues={{ body_md: message.message_md }}>*/}
-                {/*    <Stack spacing={1}>*/}
-                {/*        <MDBodyField />*/}
-
-                {/*        <ButtonGroup>*/}
-                {/*            <ResetButton />*/}
-                {/*            <SubmitButton />*/}
-                {/*        </ButtonGroup>*/}
-                {/*    </Stack>*/}
-                {/*</Formik>*/}
-            </Box>
+            <form
+                onSubmit={async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    await handleSubmit();
+                }}
+            >
+                <Paper>
+                    <Grid container spacing={2} padding={1}>
+                        <Grid xs={12}>
+                            <Field
+                                name={'body_md'}
+                                validators={{
+                                    onChange: z.string().min(3)
+                                }}
+                                children={(props) => {
+                                    return <MarkdownField {...props} label={'Message'} fullwidth={true} />;
+                                }}
+                            />
+                        </Grid>
+                        <Grid xs={12} mdOffset="auto">
+                            <Subscribe
+                                selector={(state) => [state.canSubmit, state.isSubmitting]}
+                                children={([canSubmit, isSubmitting]) => {
+                                    return (
+                                        <Buttons
+                                            reset={reset}
+                                            canSubmit={canSubmit}
+                                            isSubmitting={isSubmitting}
+                                            closeLabel={'Cancel'}
+                                            onClose={async () => {
+                                                setEditing(false);
+                                            }}
+                                        />
+                                    );
+                                }}
+                            />
+                        </Grid>
+                    </Grid>
+                </Paper>
+            </form>
         );
     } else {
         const d1 = formatDistance(message.created_on, new Date(), {

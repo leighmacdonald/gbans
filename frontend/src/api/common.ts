@@ -84,7 +84,7 @@ const apiRootURL = (): string => `${location.protocol}//${location.host}`;
  * @param abortController
  * @throws AppError
  */
-export const apiCall = async <TResponse = EmptyBody, TRequestBody = Record<string, unknown> | object>(
+export const apiCall = async <TResponse = EmptyBody | null, TRequestBody = Record<string, unknown> | object>(
     url: string,
     method: string = 'GET',
     body?: TRequestBody | undefined,
@@ -147,6 +147,9 @@ export const apiCall = async <TResponse = EmptyBody, TRequestBody = Record<strin
         throw new AppError(err.code ?? ErrorCode.Unknown, err.message);
     }
 
+    if (response.status == 204) {
+        return null as TResponse;
+    }
     return (await response.json()) as TResponse;
 };
 
