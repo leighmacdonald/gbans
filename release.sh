@@ -21,4 +21,5 @@ echo "Setting version from $CURRENT_VERSION -> $NEXT_VERSION"
 
 sed -i "s/"${CURRENT_VERSION}"/"${NEXT_VERSION}"/g" sourcemod/scripting/gbans/globals.sp
 sed -i "s/"${CURRENT_VERSION}"/"${NEXT_VERSION}"/g" frontend/package.json
+sed -i "s/"${CURRENT_VERSION}"/"${NEXT_VERSION}"/g" frontend/vite.config.ts
 sed -i "s/v${CURRENT_VERSION}/v${NEXT_VERSION}/g" Makefile
