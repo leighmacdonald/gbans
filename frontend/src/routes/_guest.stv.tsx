@@ -115,7 +115,7 @@ function STV() {
                               : steam_id
                 })
             );
-            await navigate({ to: '/stv', search: (prev: any) => ({ ...prev, ...value }) });
+            await navigate({ to: '/stv', search: (prev) => ({ ...prev, ...value }) });
         },
         validatorAdapter: zodValidator,
         validators: {

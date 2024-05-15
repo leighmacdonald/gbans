@@ -153,9 +153,7 @@ func (s *banSteamUsecase) Unban(ctx context.Context, targetSID steamid.SteamID, 
 		return false, errors.Join(err, domain.ErrFetchPerson)
 	}
 
-	s.discordUsecase.SendPayload(domain.ChannelModLog, discord.UnbanMessage(person))
-
-	// env.Log().Info("Player unbanned", slog.Int64("sid64", targetSID.Int64()), slog.String("reason", reason))
+	s.discordUsecase.SendPayload(domain.ChannelModLog, discord.UnbanMessage(s.configUsecase, person))
 
 	return true, nil
 }

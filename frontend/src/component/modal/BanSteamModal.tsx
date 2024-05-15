@@ -52,7 +52,7 @@ export const BanSteamModal = NiceModal.create(({ existing }: { existing?: SteamB
         mutationKey: ['banSteam'],
         mutationFn: async (values: BanSteamFormValues) => {
             if (existing?.ban_id) {
-                const ban_record = apiUpdateBanSteam(existing.ban_id, {
+                return await apiUpdateBanSteam(existing.ban_id, {
                     note: values.note,
                     ban_type: values.ban_type,
                     reason: values.reason,
@@ -61,10 +61,8 @@ export const BanSteamModal = NiceModal.create(({ existing }: { existing?: SteamB
                     evade_ok: values.evade_ok,
                     valid_until: values.duration_custom ? parseISO(values.duration_custom) : undefined
                 });
-                sendFlash('success', 'Updated ban successfully');
-                modal.resolve(ban_record);
             } else {
-                const ban_record = await apiCreateBanSteam({
+                return await apiCreateBanSteam({
                     note: values.note,
                     ban_type: values.ban_type,
                     duration: values.duration,
@@ -76,10 +74,19 @@ export const BanSteamModal = NiceModal.create(({ existing }: { existing?: SteamB
                     include_friends: values.include_friends,
                     evade_ok: values.evade_ok
                 });
-                sendFlash('success', 'Created ban successfully');
-                modal.resolve(ban_record);
             }
+        },
+        onSuccess: async (banRecord) => {
+            if (existing?.ban_id) {
+                sendFlash('success', 'Updated ban successfully');
+            } else {
+                sendFlash('success', 'Created ban successfully');
+            }
+            modal.resolve(banRecord);
             await modal.hide();
+        },
+        onError: (error) => {
+            sendFlash('error', `Failed to create ban: ${error}`);
         }
     });
 

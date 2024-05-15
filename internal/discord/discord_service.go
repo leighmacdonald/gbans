@@ -318,7 +318,7 @@ func (h discordService) onUnbanSteam(ctx context.Context, _ *discordgo.Session, 
 		slog.Warn("Could not fetch unbanned Person", slog.String("steam_id", steamID.String()), log.ErrAttr(errUser))
 	}
 
-	return UnbanMessage(user), nil
+	return UnbanMessage(h.cu, user), nil
 }
 
 func (h discordService) onUnbanASN(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
