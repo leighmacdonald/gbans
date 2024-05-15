@@ -161,7 +161,7 @@ func (r *demoRepository) SaveDemo(ctx context.Context, demoFile *domain.DemoFile
 		Builder().
 		Select("count(report_id)").
 		From("report").
-		Where(sq.Eq{"demo_name": demoFile.Title}))
+		Where(sq.Eq{"demo_id": demoFile.DemoID}))
 	if reportRowErr != nil {
 		return errors.Join(reportRowErr, domain.ErrReportCountQuery)
 	}
