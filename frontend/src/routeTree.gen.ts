@@ -322,202 +322,352 @@ const AuthLogsSteamIdRoute = AuthLogsSteamIdImport.update({
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
     '/_admin': {
+      id: '/_admin'
+      path: ''
+      fullPath: ''
       preLoaderRoute: typeof AdminImport
       parentRoute: typeof rootRoute
     }
     '/_auth': {
+      id: '/_auth'
+      path: ''
+      fullPath: ''
       preLoaderRoute: typeof AuthImport
       parentRoute: typeof rootRoute
     }
     '/_guest': {
+      id: '/_guest'
+      path: ''
+      fullPath: ''
       preLoaderRoute: typeof GuestImport
       parentRoute: typeof rootRoute
     }
     '/_mod': {
+      id: '/_mod'
+      path: ''
+      fullPath: ''
       preLoaderRoute: typeof ModImport
       parentRoute: typeof rootRoute
     }
     '/_auth/chatlogs': {
+      id: '/_auth/chatlogs'
+      path: '/chatlogs'
+      fullPath: '/chatlogs'
       preLoaderRoute: typeof AuthChatlogsImport
       parentRoute: typeof AuthImport
     }
     '/_auth/logout': {
+      id: '/_auth/logout'
+      path: '/logout'
+      fullPath: '/logout'
       preLoaderRoute: typeof AuthLogoutImport
       parentRoute: typeof AuthImport
     }
     '/_auth/notifications': {
+      id: '/_auth/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
       preLoaderRoute: typeof AuthNotificationsImport
       parentRoute: typeof AuthImport
     }
     '/_auth/page-not-found': {
+      id: '/_auth/page-not-found'
+      path: '/page-not-found'
+      fullPath: '/page-not-found'
       preLoaderRoute: typeof AuthPageNotFoundImport
       parentRoute: typeof AuthImport
     }
     '/_auth/permission': {
+      id: '/_auth/permission'
+      path: '/permission'
+      fullPath: '/permission'
       preLoaderRoute: typeof AuthPermissionImport
       parentRoute: typeof AuthImport
     }
     '/_auth/settings': {
+      id: '/_auth/settings'
+      path: '/settings'
+      fullPath: '/settings'
       preLoaderRoute: typeof AuthSettingsImport
       parentRoute: typeof AuthImport
     }
     '/_guest/contests': {
+      id: '/_guest/contests'
+      path: '/contests'
+      fullPath: '/contests'
       preLoaderRoute: typeof GuestContestsImport
       parentRoute: typeof GuestImport
     }
     '/_guest/patreon': {
+      id: '/_guest/patreon'
+      path: '/patreon'
+      fullPath: '/patreon'
       preLoaderRoute: typeof GuestPatreonImport
       parentRoute: typeof GuestImport
     }
     '/_guest/privacy-policy': {
+      id: '/_guest/privacy-policy'
+      path: '/privacy-policy'
+      fullPath: '/privacy-policy'
       preLoaderRoute: typeof GuestPrivacyPolicyImport
       parentRoute: typeof GuestImport
     }
     '/_guest/servers': {
+      id: '/_guest/servers'
+      path: '/servers'
+      fullPath: '/servers'
       preLoaderRoute: typeof GuestServersImport
       parentRoute: typeof GuestImport
     }
     '/_guest/stv': {
+      id: '/_guest/stv'
+      path: '/stv'
+      fullPath: '/stv'
       preLoaderRoute: typeof GuestStvImport
       parentRoute: typeof GuestImport
     }
     '/_guest/': {
+      id: '/_guest/'
+      path: '/'
+      fullPath: '/'
       preLoaderRoute: typeof GuestIndexImport
       parentRoute: typeof GuestImport
     }
     '/_admin/admin/servers': {
+      id: '/_admin/admin/servers'
+      path: '/admin/servers'
+      fullPath: '/admin/servers'
       preLoaderRoute: typeof AdminAdminServersImport
       parentRoute: typeof AdminImport
     }
     '/_auth/ban/$ban_id': {
+      id: '/_auth/ban/$ban_id'
+      path: '/ban/$ban_id'
+      fullPath: '/ban/$ban_id'
       preLoaderRoute: typeof AuthBanBanidImport
       parentRoute: typeof AuthImport
     }
     '/_auth/contests/$contest_id': {
+      id: '/_auth/contests/$contest_id'
+      path: '/contests/$contest_id'
+      fullPath: '/contests/$contest_id'
       preLoaderRoute: typeof AuthContestsContestidImport
       parentRoute: typeof AuthImport
     }
     '/_auth/forums/$forum_id': {
+      id: '/_auth/forums/$forum_id'
+      path: '/forums/$forum_id'
+      fullPath: '/forums/$forum_id'
       preLoaderRoute: typeof AuthForumsForumidImport
       parentRoute: typeof AuthImport
     }
     '/_auth/login/discord': {
+      id: '/_auth/login/discord'
+      path: '/login/discord'
+      fullPath: '/login/discord'
       preLoaderRoute: typeof AuthLoginDiscordImport
       parentRoute: typeof AuthImport
     }
     '/_auth/match/$matchId': {
+      id: '/_auth/match/$matchId'
+      path: '/match/$matchId'
+      fullPath: '/match/$matchId'
       preLoaderRoute: typeof AuthMatchMatchIdImport
       parentRoute: typeof AuthImport
     }
     '/_auth/report/$reportId': {
+      id: '/_auth/report/$reportId'
+      path: '/report/$reportId'
+      fullPath: '/report/$reportId'
       preLoaderRoute: typeof AuthReportReportIdImport
       parentRoute: typeof AuthImport
     }
     '/_guest/login/success': {
+      id: '/_guest/login/success'
+      path: '/login/success'
+      fullPath: '/login/success'
       preLoaderRoute: typeof GuestLoginSuccessImport
       parentRoute: typeof GuestImport
     }
     '/_guest/profile/$steamId': {
+      id: '/_guest/profile/$steamId'
+      path: '/profile/$steamId'
+      fullPath: '/profile/$steamId'
       preLoaderRoute: typeof GuestProfileSteamIdImport
       parentRoute: typeof GuestImport
     }
     '/_guest/wiki/$slug': {
+      id: '/_guest/wiki/$slug'
+      path: '/wiki/$slug'
+      fullPath: '/wiki/$slug'
       preLoaderRoute: typeof GuestWikiSlugImport
       parentRoute: typeof GuestImport
     }
     '/_mod/admin/appeals': {
+      id: '/_mod/admin/appeals'
+      path: '/admin/appeals'
+      fullPath: '/admin/appeals'
       preLoaderRoute: typeof ModAdminAppealsImport
       parentRoute: typeof ModImport
     }
     '/_mod/admin/contests': {
+      id: '/_mod/admin/contests'
+      path: '/admin/contests'
+      fullPath: '/admin/contests'
       preLoaderRoute: typeof ModAdminContestsImport
       parentRoute: typeof ModImport
     }
     '/_mod/admin/filters': {
+      id: '/_mod/admin/filters'
+      path: '/admin/filters'
+      fullPath: '/admin/filters'
       preLoaderRoute: typeof ModAdminFiltersImport
       parentRoute: typeof ModImport
     }
     '/_mod/admin/news': {
+      id: '/_mod/admin/news'
+      path: '/admin/news'
+      fullPath: '/admin/news'
       preLoaderRoute: typeof ModAdminNewsImport
       parentRoute: typeof ModImport
     }
     '/_mod/admin/people': {
+      id: '/_mod/admin/people'
+      path: '/admin/people'
+      fullPath: '/admin/people'
       preLoaderRoute: typeof ModAdminPeopleImport
       parentRoute: typeof ModImport
     }
     '/_mod/admin/reports': {
+      id: '/_mod/admin/reports'
+      path: '/admin/reports'
+      fullPath: '/admin/reports'
       preLoaderRoute: typeof ModAdminReportsImport
       parentRoute: typeof ModImport
     }
     '/_mod/admin/votes': {
+      id: '/_mod/admin/votes'
+      path: '/admin/votes'
+      fullPath: '/admin/votes'
       preLoaderRoute: typeof ModAdminVotesImport
       parentRoute: typeof ModImport
     }
     '/_auth/forums/': {
+      id: '/_auth/forums/'
+      path: '/forums/'
+      fullPath: '/forums/'
       preLoaderRoute: typeof AuthForumsIndexImport
       parentRoute: typeof AuthImport
     }
     '/_auth/report/': {
+      id: '/_auth/report/'
+      path: '/report/'
+      fullPath: '/report/'
       preLoaderRoute: typeof AuthReportIndexImport
       parentRoute: typeof AuthImport
     }
     '/_auth/stats/': {
+      id: '/_auth/stats/'
+      path: '/stats/'
+      fullPath: '/stats/'
       preLoaderRoute: typeof AuthStatsIndexImport
       parentRoute: typeof AuthImport
     }
     '/_guest/login/': {
+      id: '/_guest/login/'
+      path: '/login/'
+      fullPath: '/login/'
       preLoaderRoute: typeof GuestLoginIndexImport
       parentRoute: typeof GuestImport
     }
     '/_guest/wiki/': {
+      id: '/_guest/wiki/'
+      path: '/wiki/'
+      fullPath: '/wiki/'
       preLoaderRoute: typeof GuestWikiIndexImport
       parentRoute: typeof GuestImport
     }
     '/_auth/logs/$steamId/': {
+      id: '/_auth/logs/$steamId/'
+      path: '/logs/$steamId/'
+      fullPath: '/logs/$steamId/'
       preLoaderRoute: typeof AuthLogsSteamIdImport
       parentRoute: typeof AuthImport
     }
     '/_auth/forums/thread/$forum_thread_id': {
+      id: '/_auth/forums/thread/$forum_thread_id'
+      path: '/forums/thread/$forum_thread_id'
+      fullPath: '/forums/thread/$forum_thread_id'
       preLoaderRoute: typeof AuthForumsThreadForumthreadidImport
       parentRoute: typeof AuthImport
     }
     '/_auth/stats/weapon/$weapon_id': {
+      id: '/_auth/stats/weapon/$weapon_id'
+      path: '/stats/weapon/$weapon_id'
+      fullPath: '/stats/weapon/$weapon_id'
       preLoaderRoute: typeof AuthStatsWeaponWeaponidImport
       parentRoute: typeof AuthImport
     }
     '/_mod/admin/ban/asn': {
+      id: '/_mod/admin/ban/asn'
+      path: '/admin/ban/asn'
+      fullPath: '/admin/ban/asn'
       preLoaderRoute: typeof ModAdminBanAsnImport
       parentRoute: typeof ModImport
     }
     '/_mod/admin/ban/cidr': {
+      id: '/_mod/admin/ban/cidr'
+      path: '/admin/ban/cidr'
+      fullPath: '/admin/ban/cidr'
       preLoaderRoute: typeof ModAdminBanCidrImport
       parentRoute: typeof ModImport
     }
     '/_mod/admin/ban/group': {
+      id: '/_mod/admin/ban/group'
+      path: '/admin/ban/group'
+      fullPath: '/admin/ban/group'
       preLoaderRoute: typeof ModAdminBanGroupImport
       parentRoute: typeof ModImport
     }
     '/_mod/admin/ban/steam': {
+      id: '/_mod/admin/ban/steam'
+      path: '/admin/ban/steam'
+      fullPath: '/admin/ban/steam'
       preLoaderRoute: typeof ModAdminBanSteamImport
       parentRoute: typeof ModImport
     }
     '/_mod/admin/network/cidrblocks': {
+      id: '/_mod/admin/network/cidrblocks'
+      path: '/admin/network/cidrblocks'
+      fullPath: '/admin/network/cidrblocks'
       preLoaderRoute: typeof ModAdminNetworkCidrblocksImport
       parentRoute: typeof ModImport
     }
     '/_mod/admin/network/ipInfo': {
+      id: '/_mod/admin/network/ipInfo'
+      path: '/admin/network/ipInfo'
+      fullPath: '/admin/network/ipInfo'
       preLoaderRoute: typeof ModAdminNetworkIpInfoImport
       parentRoute: typeof ModImport
     }
     '/_mod/admin/network/iphist': {
+      id: '/_mod/admin/network/iphist'
+      path: '/admin/network/iphist'
+      fullPath: '/admin/network/iphist'
       preLoaderRoute: typeof ModAdminNetworkIphistImport
       parentRoute: typeof ModImport
     }
     '/_mod/admin/network/playersbyip': {
+      id: '/_mod/admin/network/playersbyip'
+      path: '/admin/network/playersbyip'
+      fullPath: '/admin/network/playersbyip'
       preLoaderRoute: typeof ModAdminNetworkPlayersbyipImport
       parentRoute: typeof ModImport
     }
     '/_mod/admin/network/': {
+      id: '/_mod/admin/network/'
+      path: '/admin/network/'
+      fullPath: '/admin/network/'
       preLoaderRoute: typeof ModAdminNetworkIndexImport
       parentRoute: typeof ModImport
     }
@@ -526,9 +676,9 @@ declare module '@tanstack/react-router' {
 
 // Create and export the route tree
 
-export const routeTree = rootRoute.addChildren([
-  AdminRoute.addChildren([AdminAdminServersRoute]),
-  AuthRoute.addChildren([
+export const routeTree = rootRoute.addChildren({
+  AdminRoute: AdminRoute.addChildren({ AdminAdminServersRoute }),
+  AuthRoute: AuthRoute.addChildren({
     AuthChatlogsRoute,
     AuthLogoutRoute,
     AuthNotificationsRoute,
@@ -547,8 +697,8 @@ export const routeTree = rootRoute.addChildren([
     AuthLogsSteamIdRoute,
     AuthForumsThreadForumthreadidRoute,
     AuthStatsWeaponWeaponidRoute,
-  ]),
-  GuestRoute.addChildren([
+  }),
+  GuestRoute: GuestRoute.addChildren({
     GuestContestsRoute,
     GuestPatreonRoute,
     GuestPrivacyPolicyRoute,
@@ -560,8 +710,8 @@ export const routeTree = rootRoute.addChildren([
     GuestWikiSlugRoute,
     GuestLoginIndexRoute,
     GuestWikiIndexRoute,
-  ]),
-  ModRoute.addChildren([
+  }),
+  ModRoute: ModRoute.addChildren({
     ModAdminAppealsRoute,
     ModAdminContestsRoute,
     ModAdminFiltersRoute,
@@ -578,7 +728,7 @@ export const routeTree = rootRoute.addChildren([
     ModAdminNetworkIphistRoute,
     ModAdminNetworkPlayersbyipRoute,
     ModAdminNetworkIndexRoute,
-  ]),
-])
+  }),
+})
 
 /* prettier-ignore-end */
