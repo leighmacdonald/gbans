@@ -253,14 +253,14 @@ func (h reportHandler) onAPIGetReports() gin.HandlerFunc {
 			return
 		}
 
-		reports, count, errReports := h.reportUsecase.GetReports(ctx, user, req)
+		reports, errReports := h.reportUsecase.GetReports(ctx, user, req)
 		if errReports != nil {
 			httphelper.ErrorHandled(ctx, errReports)
 
 			return
 		}
 
-		ctx.JSON(http.StatusOK, domain.NewLazyResult(count, reports))
+		ctx.JSON(http.StatusOK, reports)
 	}
 }
 

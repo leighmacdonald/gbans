@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import ReportIcon from '@mui/icons-material/Report';
 import Link from '@mui/material/Link';
@@ -6,9 +7,17 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
-import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import {
+    ColumnFiltersState,
+    createColumnHelper,
+    getCoreRowModel,
+    getFilteredRowModel,
+    getPaginationRowModel,
+    getSortedRowModel,
+    SortingState,
+    useReactTable
+} from '@tanstack/react-table';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import {
@@ -21,14 +30,15 @@ import {
 } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { DataTable } from '../component/DataTable.tsx';
-import { Paginator } from '../component/Paginator.tsx';
+import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import RouterLink from '../component/RouterLink.tsx';
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { SelectFieldSimple } from '../component/field/SelectFieldSimple.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
-import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
+import { initColumnFilter, initPagination, initSortOrder, TablePropsAll } from '../types/table.ts';
+import { commonTableSearchSchema } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 import { makeSteamidValidatorsOptional } from '../util/validator/makeSteamidValidatorsOptional.ts';
 
@@ -45,31 +55,47 @@ const reportsSearchSchema = z.object({
 
 export const Route = createFileRoute('/_mod/admin/reports')({
     component: AdminReports,
-    validateSearch: (search) => reportsSearchSchema.parse(search)
+    validateSearch: (search) => reportsSearchSchema.parse(search),
+    loader: async ({ context, abortController }) => {
+        const reports = await context.queryClient.fetchQuery({
+            queryKey: ['adminReports'],
+            queryFn: async () => {
+                return apiGetReports({ deleted: false }, abortController);
+            }
+        });
+        return reports ?? [];
+    }
 });
 
 function AdminReports() {
-    const defaultRows = RowsPerPage.TwentyFive;
     const navigate = useNavigate({ from: Route.fullPath });
-    const { page, sortColumn, rows, sortOrder, source_id, target_id, report_status } = Route.useSearch();
-    const { data: reports, isLoading } = useQuery({
-        queryKey: ['reports', { page, rows, sortOrder, sortColumn, source_id, target_id, report_status }],
-        queryFn: async () => {
-            return apiGetReports({
-                limit: rows ?? defaultRows,
-                offset: (page ?? 0) * (rows ?? defaultRows),
-                order_by: sortColumn ?? 'report_id',
-                desc: sortOrder == 'desc',
-                source_id: source_id,
-                target_id: target_id,
-                report_status: Number(report_status)
-            });
-        }
-    });
+    const { sortColumn, sortOrder, page, rows, source_id, target_id, report_status } = Route.useSearch();
+    const reports = Route.useLoaderData();
+    const [pagination, setPagination] = useState(initPagination(page, rows));
+    const [sorting, setSorting] = useState<SortingState>(
+        initSortOrder(sortColumn, sortOrder, {
+            id: 'created_on',
+            desc: true
+        })
+    );
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
+        initColumnFilter({
+            report_status: report_status ?? ReportStatus.Any,
+            source_id: source_id ?? undefined,
+            target_id: target_id ?? undefined
+        })
+    );
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({
         onSubmit: async ({ value }) => {
-            await navigate({ to: '/admin/reports', search: (prev) => ({ ...prev, ...value }) });
+            setColumnFilters(
+                initColumnFilter({
+                    report_status: value.report_status ?? ReportStatus.Any,
+                    source_id: value.source_id ?? undefined,
+                    target_id: value.target_id ?? undefined
+                })
+            );
+            await navigate({ to: '/admin/reports', replace: true, search: (prev) => ({ ...prev, ...value }) });
         },
         validatorAdapter: zodValidator,
         validators: {
@@ -87,6 +113,8 @@ function AdminReports() {
             to: '/admin/reports',
             search: (prev) => ({ ...prev, source_id: undefined, target_id: undefined, report_status: undefined })
         });
+        reset();
+        await handleSubmit();
     };
 
     return (
@@ -166,20 +194,37 @@ function AdminReports() {
             </Grid>
             <Grid xs={12}>
                 <ContainerWithHeader title={'Current User Reports'} iconLeft={<ReportIcon />}>
-                    <ReportTable reports={reports ?? { data: [], count: 0 }} isLoading={isLoading} />
-                    <Paginator data={reports} page={page ?? 0} rows={rows ?? defaultRows} path={'/admin/reports'} />
+                    <ReportTable
+                        reports={reports}
+                        isLoading={false}
+                        setColumnFilters={setColumnFilters}
+                        columnFilters={columnFilters}
+                        setSorting={setSorting}
+                        sorting={sorting}
+                        setPagination={setPagination}
+                        pagination={pagination}
+                    />
                 </ContainerWithHeader>
             </Grid>
         </Grid>
-        // </Formik>
     );
 }
 
 const columnHelper = createColumnHelper<ReportWithAuthor>();
 
-const ReportTable = ({ reports, isLoading }: { reports: LazyResult<ReportWithAuthor>; isLoading: boolean }) => {
+const ReportTable = ({
+    reports,
+    isLoading,
+    setPagination,
+    pagination,
+    columnFilters,
+    setColumnFilters,
+    sorting,
+    setSorting
+}: { reports: ReportWithAuthor[]; isLoading: boolean } & TablePropsAll) => {
     const columns = [
         columnHelper.accessor('report_id', {
+            enableColumnFilter: false,
             header: () => <TableHeadingCell name={'ID'} />,
             cell: (info) => (
                 <Link
@@ -193,6 +238,12 @@ const ReportTable = ({ reports, isLoading }: { reports: LazyResult<ReportWithAut
             )
         }),
         columnHelper.accessor('report_status', {
+            filterFn: (row, _, value: ReportStatus) => {
+                if (value == ReportStatus.Any) {
+                    return true;
+                }
+                return row.original.report_status == value;
+            },
             header: () => <TableHeadingCell name={'Status'} />,
             cell: (info) => {
                 return (
@@ -203,48 +254,82 @@ const ReportTable = ({ reports, isLoading }: { reports: LazyResult<ReportWithAut
             }
         }),
         columnHelper.accessor('source_id', {
+            enableColumnFilter: true,
             header: () => <TableHeadingCell name={'Reporter'} />,
             cell: (info) => (
                 <PersonCell
                     showCopy={true}
-                    steam_id={reports.data[info.row.index].author.steam_id}
-                    personaname={reports.data[info.row.index].author.personaname}
-                    avatar_hash={reports.data[info.row.index].author.avatarhash}
+                    steam_id={info.row.original.author.steam_id}
+                    personaname={info.row.original.author.personaname}
+                    avatar_hash={info.row.original.author.avatarhash}
                 />
             )
         }),
-        columnHelper.accessor('subject', {
+        columnHelper.accessor('target_id', {
+            enableColumnFilter: true,
             header: () => <TableHeadingCell name={'Subject'} />,
             cell: (info) => (
                 <PersonCell
                     showCopy={true}
-                    steam_id={reports.data[info.row.index].subject.steam_id}
-                    personaname={reports.data[info.row.index].subject.personaname}
-                    avatar_hash={reports.data[info.row.index].subject.avatarhash}
+                    steam_id={info.row.original.subject.steam_id}
+                    personaname={info.row.original.subject.personaname}
+                    avatar_hash={info.row.original.subject.avatarhash}
                 />
             )
         }),
         columnHelper.accessor('reason', {
+            enableColumnFilter: false,
             header: () => <TableHeadingCell name={'Reason'} />,
             cell: (info) => <Typography>{BanReasons[info.getValue()]}</Typography>
         }),
         columnHelper.accessor('created_on', {
+            enableColumnFilter: false,
             header: () => <TableHeadingCell name={'Created'} />,
             cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>
         }),
         columnHelper.accessor('updated_on', {
+            enableColumnFilter: false,
             header: () => <TableHeadingCell name={'Updated'} />,
             cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>
         })
     ];
 
     const table = useReactTable({
-        data: reports.data,
+        data: reports,
         columns: columns,
+        autoResetPageIndex: true,
         getCoreRowModel: getCoreRowModel(),
-        manualPagination: true,
-        autoResetPageIndex: true
+        getFilteredRowModel: getFilteredRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        onPaginationChange: setPagination,
+        onSortingChange: setSorting,
+        onColumnFiltersChange: setColumnFilters,
+        state: {
+            sorting,
+            pagination,
+            columnFilters
+        }
     });
 
-    return <DataTable table={table} isLoading={isLoading} />;
+    return (
+        <>
+            <DataTable table={table} isLoading={isLoading} />
+            <PaginatorLocal
+                onRowsChange={(rows) => {
+                    setPagination((prev) => {
+                        return { ...prev, pageSize: rows };
+                    });
+                }}
+                onPageChange={(page) => {
+                    setPagination((prev) => {
+                        return { ...prev, pageIndex: page };
+                    });
+                }}
+                count={reports.length}
+                rows={pagination.pageSize}
+                page={pagination.pageIndex}
+            />
+        </>
+    );
 };

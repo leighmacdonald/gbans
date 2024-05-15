@@ -24,7 +24,7 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
-import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import { createColumnHelper, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import {
@@ -42,7 +42,7 @@ import {
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { DataTable } from '../component/DataTable.tsx';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
-import { Paginator } from '../component/Paginator.tsx';
+import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { PlayerMessageContext } from '../component/PlayerMessageContext.tsx';
 import { ReportStatusIcon } from '../component/ReportStatusIcon.tsx';
@@ -51,7 +51,8 @@ import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { MarkdownField } from '../component/field/MarkdownField.tsx';
 import { SteamIDField } from '../component/field/SteamIDField.tsx';
-import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
+import { initPagination } from '../types/table.ts';
+import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
 import { makeSteamidValidators } from '../util/validator/makeSteamidValidators.ts';
 
 const reportSchema = z.object({
@@ -70,9 +71,7 @@ export const Route = createFileRoute('/_auth/report/')({
 });
 
 function ReportCreate() {
-    const defaultRows = RowsPerPage.Ten;
     const { profile, userSteamID } = useRouteContext({ from: '/_auth/report/' });
-    const { page, sortColumn, report_status, rows, sortOrder } = Route.useSearch();
 
     const canReport = useMemo(() => {
         const user = profile();
@@ -80,15 +79,10 @@ function ReportCreate() {
     }, [profile]);
 
     const { data: logs, isLoading } = useQuery({
-        queryKey: ['history', { page, userSteamID }],
+        queryKey: ['history', { userSteamID }],
         queryFn: async () => {
             return await apiGetReports({
-                source_id: userSteamID,
-                limit: rows ?? defaultRows,
-                offset: (page ?? 0) * (rows ?? defaultRows),
-                order_by: sortColumn ?? 'created_on',
-                desc: (sortOrder ?? 'desc') == 'desc',
-                report_status: report_status ?? ReportStatus.Any
+                source_id: userSteamID
             });
         }
     });
@@ -119,9 +113,8 @@ function ReportCreate() {
                         {isLoading ? (
                             <LoadingPlaceholder />
                         ) : (
-                            <UserReportHistory history={logs ?? { data: [], count: 0 }} isLoading={isLoading} />
+                            <UserReportHistory history={logs ?? []} isLoading={isLoading} />
                         )}
-                        <Paginator page={page ?? 0} rows={rows ?? defaultRows} data={logs} path={'/report'} />
                     </ContainerWithHeader>
                 </Stack>
             </Grid>
@@ -169,7 +162,9 @@ function ReportCreate() {
 
 const columnHelper = createColumnHelper<ReportWithAuthor>();
 
-const UserReportHistory = ({ history, isLoading }: { history: LazyResult<ReportWithAuthor>; isLoading: boolean }) => {
+const UserReportHistory = ({ history, isLoading }: { history: ReportWithAuthor[]; isLoading: boolean }) => {
+    const [pagination, setPagination] = useState(initPagination(0, RowsPerPage.Ten));
+
     const columns = [
         columnHelper.accessor('report_status', {
             header: () => <TableHeadingCell name={'Status'} />,
@@ -187,9 +182,9 @@ const UserReportHistory = ({ history, isLoading }: { history: LazyResult<ReportW
             header: () => <TableHeadingCell name={'Player'} />,
             cell: (info) => (
                 <PersonCell
-                    steam_id={history.data[info.row.index].subject.steam_id}
-                    personaname={history.data[info.row.index].subject.personaname}
-                    avatar_hash={history.data[info.row.index].subject.avatarhash}
+                    steam_id={info.row.original.subject.steam_id}
+                    personaname={info.row.original.subject.personaname}
+                    avatar_hash={info.row.original.subject.avatarhash}
                 />
             ),
             footer: () => <TableHeadingCell name={'Created'} />
@@ -215,14 +210,38 @@ const UserReportHistory = ({ history, isLoading }: { history: LazyResult<ReportW
     ];
 
     const table = useReactTable({
-        data: history.data,
+        data: history,
         columns: columns,
         getCoreRowModel: getCoreRowModel(),
-        manualPagination: true,
-        autoResetPageIndex: true
+        manualPagination: false,
+        autoResetPageIndex: true,
+        getPaginationRowModel: getPaginationRowModel(),
+        onPaginationChange: setPagination,
+        state: {
+            pagination
+        }
     });
 
-    return <DataTable table={table} isLoading={isLoading} />;
+    return (
+        <>
+            <DataTable table={table} isLoading={isLoading} />
+            <PaginatorLocal
+                onRowsChange={(rows) => {
+                    setPagination((prev) => {
+                        return { ...prev, pageSize: rows };
+                    });
+                }}
+                onPageChange={(page) => {
+                    setPagination((prev) => {
+                        return { ...prev, pageIndex: page };
+                    });
+                }}
+                count={history?.length ?? 0}
+                rows={pagination.pageSize}
+                page={pagination.pageIndex}
+            />
+        </>
+    );
 };
 
 const validationSchema = z.object({

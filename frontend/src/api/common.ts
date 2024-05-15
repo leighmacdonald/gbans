@@ -7,7 +7,6 @@ import { emptyOrNullString } from '../util/types';
 import { isTokenExpired, refreshToken } from './auth';
 import { AppealState, ASNBanRecord, CIDRBanRecord, GroupBanRecord, SteamBanRecord } from './bans';
 import { MatchResult } from './match';
-import { ReportStatus, ReportWithAuthor } from './report';
 
 export enum PermissionLevel {
     Banned = 0,
@@ -238,8 +237,7 @@ export interface BanASNQueryFilter extends BanQueryCommon<ASNBanRecord> {
     as_num?: number;
 }
 
-export interface ReportQueryFilter extends QueryFilter<ReportWithAuthor> {
-    report_status?: ReportStatus;
+export interface ReportQueryFilter {
+    deleted?: boolean;
     source_id?: string;
-    target_id?: string;
 }

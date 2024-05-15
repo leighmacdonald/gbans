@@ -1,5 +1,4 @@
 import { Theme } from '@mui/material';
-import { LazyResult } from '../util/table.ts';
 import { BanReason } from './bans';
 import {
     apiCall,
@@ -114,14 +113,8 @@ export const apiGetReport = async (report_id: number, abortController?: AbortCon
     await apiCall<ReportWithAuthor>(`/api/report/${report_id}`, 'GET', abortController);
 
 export const apiGetReports = async (opts?: ReportQueryFilter, abortController?: AbortController) => {
-    const resp = await apiCall<LazyResult<ReportWithAuthor>, ReportQueryFilter>(
-        `/api/reports`,
-        'POST',
-        opts,
-        abortController
-    );
-    resp.data = resp.data.map(transformTimeStampedDates);
-    return resp;
+    const resp = await apiCall<ReportWithAuthor[], ReportQueryFilter>(`/api/reports`, 'POST', opts, abortController);
+    return resp.map(transformTimeStampedDates);
 };
 
 export const apiGetReportMessages = async (report_id: number, abortController?: AbortController) =>

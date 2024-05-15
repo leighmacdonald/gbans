@@ -162,26 +162,12 @@ func (r reportRepository) DropReportMessage(ctx context.Context, message *domain
 	return nil
 }
 
-func (r reportRepository) GetReports(ctx context.Context, opts domain.ReportQueryFilter) ([]domain.Report, int64, error) {
+func (r reportRepository) GetReports(ctx context.Context, opts domain.ReportQueryFilter) ([]domain.Report, error) {
 	constraints := sq.And{sq.Eq{"r.deleted": opts.Deleted}}
 
 	if sid, ok := opts.SourceSteamID(ctx); ok {
-		constraints = append(constraints, sq.Eq{"r.author_id": sid})
+		constraints = append(constraints, sq.Eq{"r.author_id": sid.Int64()})
 	}
-
-	if sid, ok := opts.TargetSteamID(ctx); ok {
-		constraints = append(constraints, sq.Eq{"r.reported_id": sid})
-	}
-
-	if opts.ReportStatus >= 0 {
-		constraints = append(constraints, sq.Eq{"r.report_status": opts.ReportStatus})
-	}
-
-	counterQuery := r.db.
-		Builder().
-		Select("count(r.report_id) as total").
-		From("report r").
-		Where(constraints)
 
 	builder := r.db.
 		Builder().
@@ -192,20 +178,9 @@ func (r reportRepository) GetReports(ctx context.Context, opts domain.ReportQuer
 		Where(constraints).
 		LeftJoin("demo d on d.demo_id = r.demo_id")
 
-	builder = opts.ApplySafeOrder(builder, map[string][]string{
-		"r.": {"report_id", "author_id", "reported_id", "report_status", "deleted", "created_on", "updated_on", "reason"},
-	}, "report_id")
-
-	builder = opts.ApplyLimitOffsetDefault(builder)
-
-	count, errCount := r.db.GetCount(ctx, counterQuery)
-	if errCount != nil {
-		return nil, 0, r.db.DBErr(errCount)
-	}
-
 	rows, errQuery := r.db.QueryBuilder(ctx, builder)
 	if errQuery != nil {
-		return nil, 0, r.db.DBErr(errQuery)
+		return nil, r.db.DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -235,7 +210,7 @@ func (r reportRepository) GetReports(ctx context.Context, opts domain.ReportQuer
 			&report.DemoTick,
 			&personMessageID,
 		); errScan != nil {
-			return nil, 0, r.db.DBErr(errScan)
+			return nil, r.db.DBErr(errScan)
 		}
 
 		if personMessageID != nil {
@@ -248,7 +223,7 @@ func (r reportRepository) GetReports(ctx context.Context, opts domain.ReportQuer
 		reports = append(reports, report)
 	}
 
-	return reports, count, nil
+	return reports, nil
 }
 
 // GetReportBySteamID returns any open report for the user by the author.
