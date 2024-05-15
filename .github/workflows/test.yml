@@ -74,8 +74,8 @@ jobs:
       - name: Build the docker-compose stack
         run: make docker_test
 
-  release:
-    needs: [docker-test]
-    if: success() && startsWith(github.event.ref, 'refs/tags/v')
-    uses: ./.github/workflows/release.yml
+#  release:
+#    needs: [docker-test]
+#    if: success() && startsWith(github.event.ref, 'refs/tags/v')
+#    uses: ./.github/workflows/release.yml
 
