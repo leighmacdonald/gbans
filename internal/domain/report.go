@@ -10,7 +10,7 @@ import (
 
 type ReportRepository interface {
 	GetReportBySteamID(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID) (Report, error)
-	GetReports(ctx context.Context, opts ReportQueryFilter) ([]Report, int64, error)
+	GetReports(ctx context.Context, opts ReportQueryFilter) ([]Report, error)
 	GetReport(ctx context.Context, reportID int64) (Report, error)
 	GetReportMessages(ctx context.Context, reportID int64) ([]ReportMessage, error)
 	GetReportMessageByID(ctx context.Context, reportMessageID int64) (ReportMessage, error)
@@ -22,7 +22,7 @@ type ReportRepository interface {
 
 type ReportUsecase interface {
 	GetReportBySteamID(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID) (Report, error)
-	GetReports(ctx context.Context, user PersonInfo, opts ReportQueryFilter) ([]ReportWithAuthor, int64, error)
+	GetReports(ctx context.Context, user PersonInfo, opts ReportQueryFilter) ([]ReportWithAuthor, error)
 	GetReport(ctx context.Context, curUser PersonInfo, reportID int64) (ReportWithAuthor, error)
 	GetReportMessages(ctx context.Context, reportID int64) ([]ReportMessage, error)
 	GetReportMessageByID(ctx context.Context, reportMessageID int64) (ReportMessage, error)

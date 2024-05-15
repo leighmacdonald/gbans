@@ -205,10 +205,8 @@ type SteamBansQueryFilter struct {
 }
 
 type ReportQueryFilter struct {
-	QueryFilter
 	SourceIDField
-	TargetIDField
-	ReportStatus ReportStatus `json:"report_status"`
+	Deleted bool `json:"deleted"`
 }
 
 type AppealQueryFilter struct {

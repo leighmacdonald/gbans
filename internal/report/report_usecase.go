@@ -50,11 +50,7 @@ func (r reportUsecase) Start(ctx context.Context) {
 		case <-ticker.C:
 			updateChan <- true
 		case <-updateChan:
-			reports, _, errReports := r.GetReports(ctx, admin, domain.ReportQueryFilter{
-				QueryFilter: domain.QueryFilter{
-					Limit: 0,
-				},
-			})
+			reports, errReports := r.GetReports(ctx, admin, domain.ReportQueryFilter{})
 			if errReports != nil {
 				slog.Error("failed to fetch reports for report metadata", log.ErrAttr(errReports))
 
@@ -106,11 +102,7 @@ func (r reportUsecase) GetReportBySteamID(ctx context.Context, authorID steamid.
 	return r.rr.GetReportBySteamID(ctx, authorID, steamID)
 }
 
-func (r reportUsecase) GetReports(ctx context.Context, user domain.PersonInfo, opts domain.ReportQueryFilter) ([]domain.ReportWithAuthor, int64, error) {
-	if opts.Limit <= 0 && opts.Limit > 100 {
-		opts.Limit = 25
-	}
-
+func (r reportUsecase) GetReports(ctx context.Context, user domain.PersonInfo, opts domain.ReportQueryFilter) ([]domain.ReportWithAuthor, error) {
 	// Make sure the person requesting is either a moderator, or a user
 	// only able to request their own reports
 	var sourceID steamid.SteamID
@@ -127,13 +119,13 @@ func (r reportUsecase) GetReports(ctx context.Context, user domain.PersonInfo, o
 		opts.SourceID = sourceID.String()
 	}
 
-	reports, count, errReports := r.rr.GetReports(ctx, opts)
+	reports, errReports := r.rr.GetReports(ctx, opts)
 	if errReports != nil {
 		if errors.Is(errReports, domain.ErrNoResult) {
-			return nil, 0, nil
+			return nil, nil
 		}
 
-		return nil, 0, errReports
+		return nil, errReports
 	}
 
 	var peopleIDs steamid.Collection
@@ -143,7 +135,7 @@ func (r reportUsecase) GetReports(ctx context.Context, user domain.PersonInfo, o
 
 	people, errAuthors := r.pu.GetPeopleBySteamID(ctx, fp.Uniq(peopleIDs))
 	if errAuthors != nil {
-		return nil, 0, errAuthors
+		return nil, errAuthors
 	}
 
 	peopleMap := people.AsMap()
@@ -158,7 +150,7 @@ func (r reportUsecase) GetReports(ctx context.Context, user domain.PersonInfo, o
 		}
 	}
 
-	return userReports, count, nil
+	return userReports, nil
 }
 
 func (r reportUsecase) GetReport(ctx context.Context, curUser domain.PersonInfo, reportID int64) (domain.ReportWithAuthor, error) {
