@@ -24,7 +24,7 @@ func NewAppealUsecase(ar domain.AppealRepository, banUsecase domain.BanSteamUsec
 	return &appealUsecase{appealRepository: ar, banUsecase: banUsecase, personUsecase: personUsecase, discordUsecase: discordUsecase, configUsecase: configUsecase}
 }
 
-func (u *appealUsecase) GetAppealsByActivity(ctx context.Context, opts domain.AppealQueryFilter) ([]domain.AppealOverview, int64, error) {
+func (u *appealUsecase) GetAppealsByActivity(ctx context.Context, opts domain.AppealQueryFilter) ([]domain.AppealOverview, error) {
 	return u.appealRepository.GetAppealsByActivity(ctx, opts)
 }
 

@@ -6,7 +6,6 @@ import {
     BanCIDRQueryFilter,
     BanGroupQueryFilter,
     BanSteamQueryFilter,
-    QueryFilter,
     TimeStamped,
     transformTimeStampedDates,
     transformTimeStampedDatesList
@@ -267,21 +266,13 @@ export const apiGetBanSteam = async (ban_id: number, deleted = false, abortContr
     return resp ? transformTimeStampedDates(resp) : undefined;
 };
 
-export interface AppealQueryFilter extends QueryFilter<SteamBanRecord> {
-    source_id?: string;
-    target_id?: string;
-    appeal_state: AppealState;
+export interface AppealQueryFilter {
+    deleted?: boolean;
 }
 
 export const apiGetAppeals = async (opts: AppealQueryFilter, abortController?: AbortController) => {
-    const appeals = await apiCall<LazyResult<SteamBanRecord>, AppealQueryFilter>(
-        `/api/appeals`,
-        'POST',
-        opts,
-        abortController
-    );
-    appeals.data = appeals.data.map(applyDateTime);
-    return appeals;
+    const appeals = await apiCall<SteamBanRecord[], AppealQueryFilter>(`/api/appeals`, 'POST', opts, abortController);
+    return appeals.map(applyDateTime);
 };
 
 export const apiCreateBanSteam = async (p: BanPayloadSteam) =>

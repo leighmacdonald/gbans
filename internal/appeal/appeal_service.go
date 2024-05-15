@@ -149,7 +149,7 @@ func (h *appealHandler) onAPIGetAppeals() gin.HandlerFunc {
 			return
 		}
 
-		bans, total, errBans := h.appealUsecase.GetAppealsByActivity(ctx, req)
+		bans, errBans := h.appealUsecase.GetAppealsByActivity(ctx, req)
 		if errBans != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			slog.Error("Failed to fetch appeals", log.ErrAttr(errBans))
@@ -157,6 +157,6 @@ func (h *appealHandler) onAPIGetAppeals() gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, domain.NewLazyResult(total, bans))
+		ctx.JSON(http.StatusOK, bans)
 	}
 }
