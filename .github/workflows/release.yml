@@ -28,7 +28,7 @@ jobs:
           run_install: false
 
       - name: Run release.sh
-        run: ./release.sh ${{ inputs.version }}
+        run: bash release.sh ${{ inputs.version }}
 
       - name: commit version
         uses: stefanzweifel/git-auto-commit-action@v5
