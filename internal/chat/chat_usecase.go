@@ -268,15 +268,6 @@ func (u chatUsecase) QueryChatHistory(ctx context.Context, user domain.PersonInf
 
 	if !user.HasPermission(domain.PModerator) {
 		req.Unrestricted = false
-		beforeLimit := time.Now().Add(-time.Minute * 20)
-
-		if req.DateEnd != nil && req.DateEnd.After(beforeLimit) {
-			req.DateEnd = &beforeLimit
-		}
-
-		if req.DateEnd == nil {
-			req.DateEnd = &beforeLimit
-		}
 	} else {
 		req.Unrestricted = true
 	}

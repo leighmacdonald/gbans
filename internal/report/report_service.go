@@ -477,7 +477,7 @@ func (h reportHandler) onAPIEditReportMessage() gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, req)
+		ctx.JSON(http.StatusCreated, existing)
 
 		conf := h.configUsecase.Config()
 

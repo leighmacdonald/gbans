@@ -369,9 +369,11 @@ export const apiCreateBanMessage = async (ban_id: number, message: string) => {
 };
 
 export const apiUpdateBanMessage = async (ban_message_id: number, message: string) =>
-    await apiCall<{ body_md: string }>(`/api/bans/message/${ban_message_id}`, 'POST', {
-        body_md: message
-    });
+    transformTimeStampedDates(
+        await apiCall<BanAppealMessage>(`/api/bans/message/${ban_message_id}`, 'POST', {
+            body_md: message
+        })
+    );
 
 export const apiDeleteBanMessage = async (ban_message_id: number) =>
     await apiCall(`/api/bans/message/${ban_message_id}`, 'DELETE', {});

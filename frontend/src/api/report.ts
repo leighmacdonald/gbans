@@ -149,9 +149,11 @@ export const apiReportSetState = async (report_id: number, stateAction: ReportSt
     });
 
 export const apiUpdateReportMessage = async (report_message_id: number, message: string) =>
-    await apiCall(`/api/report/message/${report_message_id}`, 'POST', {
-        body_md: message
-    });
+    transformTimeStampedDates(
+        await apiCall<ReportMessage>(`/api/report/message/${report_message_id}`, 'POST', {
+            body_md: message
+        })
+    );
 
 export const apiDeleteReportMessage = async (report_message_id: number) =>
     await apiCall(`/api/report/message/${report_message_id}`, 'DELETE', {});

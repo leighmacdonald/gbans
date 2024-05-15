@@ -229,7 +229,7 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.Cha
 	now := time.Now()
 
 	if !filters.Unrestricted {
-		unrTime := now.AddDate(0, 0, -14)
+		unrTime := now.AddDate(0, 0, -30)
 		if filters.DateStart != nil && filters.DateStart.Before(unrTime) {
 			return nil, util.ErrInvalidDuration
 		}

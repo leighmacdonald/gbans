@@ -84,8 +84,11 @@ export interface PlayerProfile {
     settings: PersonSettings;
 }
 
-export const apiGetProfile = async (query: string, abortController?: AbortController) =>
-    await apiCall<PlayerProfile>(`/api/profile?query=${query}`, 'GET', undefined, abortController);
+export const apiGetProfile = async (query: string, abortController?: AbortController) => {
+    const profile = await apiCall<PlayerProfile>(`/api/profile?query=${query}`, 'GET', undefined, abortController);
+    profile.player = transformTimeStampedDates(profile.player);
+    return profile;
+};
 
 export const apiGetCurrentProfile = async () => apiCall<UserProfile>(`/api/current_profile`, 'GET', undefined);
 
