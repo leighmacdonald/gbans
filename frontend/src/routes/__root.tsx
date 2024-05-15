@@ -9,9 +9,7 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { QueryClient } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { createRootRouteWithContext, Outlet } from '@tanstack/react-router';
-import { TanStackRouterDevtools } from '@tanstack/router-devtools';
 import { AuthContext } from '../auth.tsx';
 import { Flash, Flashes } from '../component/Flashes.tsx';
 import { Footer } from '../component/Footer.tsx';
@@ -95,8 +93,6 @@ function Root() {
                                             }}
                                         >
                                             <Outlet />
-                                            <ReactQueryDevtools buttonPosition="bottom-left" />
-                                            <TanStackRouterDevtools position="bottom-right" />
                                         </div>
                                         <Footer />
                                     </Container>

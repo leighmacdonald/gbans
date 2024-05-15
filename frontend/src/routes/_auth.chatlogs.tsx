@@ -97,7 +97,7 @@ function ChatLogs() {
                 source_id: steam_id,
                 limit: rows ?? defaultRows,
                 offset: (page ?? 0) * (rows ?? defaultRows),
-                order_by: sortColumn,
+                order_by: 'person_message_id',
                 desc: (sortOrder ?? 'desc') == 'desc',
                 flagged_only: flagged_only ?? false
             });
