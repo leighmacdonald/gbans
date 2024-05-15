@@ -232,6 +232,7 @@ const ReportTable = ({
                     component={RouterLink}
                     to={`/report/$reportId`}
                     params={{ reportId: info.getValue() }}
+                    marginRight={2}
                 >
                     #{info.getValue()}
                 </Link>
