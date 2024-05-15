@@ -1,7 +1,11 @@
 name: release
 
 on:
-  workflow_call:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'New version'
+        required: true
 
 jobs:
   release:
@@ -10,7 +14,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.head_ref }}
+          fetch-depth: 2
 
       - uses: actions/setup-go@v4
         with:
@@ -20,6 +26,15 @@ jobs:
         with:
           version: 8
           run_install: false
+
+      - name: Run release.sh
+        run: ./release.sh ${{ inputs.version }}
+
+      - name: commit version
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: ${{ inputs.version }} Release
+          tagging_message: ${{ inputs.version }}
 
       - name: Setup nodejs
         uses: actions/setup-node@v4
