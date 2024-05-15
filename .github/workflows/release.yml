@@ -33,8 +33,8 @@ jobs:
       - name: commit version
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: ${{ inputs.version }} Release
-          tagging_message: ${{ inputs.version }}
+          commit_message: v${{ inputs.version }} Release
+          tagging_message: v${{ inputs.version }}
 
       - name: Setup nodejs
         uses: actions/setup-node@v4
