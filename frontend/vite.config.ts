@@ -55,7 +55,7 @@ export default defineConfig({
             inject: {
                 data: {
                     site_name: 'Uncletopia',
-                    build_version: 'v0.6.6',
+                    build_version: 'v0.7.0',
                     discord_link_id: 'caQKCWFMrN',
                     asset_url: ''
                 }
