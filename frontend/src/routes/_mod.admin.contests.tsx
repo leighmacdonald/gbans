@@ -23,6 +23,7 @@ import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import { TableCellBool } from '../component/TableCellBool.tsx';
 import { TableCellString } from '../component/TableCellString.tsx';
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
+import { Title } from '../component/Title.tsx';
 import { ModalContestEditor } from '../component/modal';
 import { logErr } from '../util/errors.ts';
 import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
@@ -92,6 +93,7 @@ function AdminContests() {
                 </Button>
             ]}
         >
+            <Title>Contests</Title>
             <ContestTable
                 contests={contests ?? []}
                 isLoading={isLoading}
