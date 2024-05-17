@@ -45,7 +45,7 @@ export const ProfileInfoBox = ({ steam_id }: { steam_id: string }) => {
                             display="inline"
                             style={{ wordBreak: 'break-word', whiteSpace: 'pre-line' }}
                         >
-                            {profile.player.personaname + profile.player.personaname}
+                            {profile.player.personaname}
                         </Typography>
                     </Box>
                 </Grid>

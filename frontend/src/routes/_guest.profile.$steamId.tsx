@@ -60,7 +60,7 @@ function ProfilePage() {
                                     display="inline"
                                     style={{ wordBreak: 'break-word', whiteSpace: 'pre-line' }}
                                 >
-                                    {profile.player.personaname + profile.player.personaname}
+                                    {profile.player.personaname}
                                 </Typography>
                                 <Typography variant={'body1'}>
                                     First Seen: {renderDateTime(profile.player.created_on)}
