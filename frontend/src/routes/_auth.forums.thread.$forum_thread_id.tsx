@@ -28,6 +28,7 @@ import { ThreadMessageContainer } from '../component/ForumThreadMessageContainer
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
 import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import RouterLink from '../component/RouterLink.tsx';
+import { Title } from '../component/Title';
 import { VCenterBox } from '../component/VCenterBox.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { MarkdownField } from '../component/field/MarkdownField.tsx';
@@ -229,6 +230,8 @@ function ForumThreadPage() {
 
     return (
         <Stack spacing={1}>
+            {thread?.title ? <Title>{thread?.title}</Title> : null}
+
             <Stack direction={'row'}>
                 {hasPermission(PermissionLevel.Moderator) && (
                     <IconButton color={'warning'} onClick={onEditThread}>

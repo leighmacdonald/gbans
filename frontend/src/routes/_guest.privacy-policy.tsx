@@ -5,6 +5,7 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { createFileRoute } from '@tanstack/react-router';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
+import { Title } from '../component/Title.tsx';
 
 export const Route = createFileRoute('/_guest/privacy-policy')({
     component: PrivacyPolicy
@@ -24,6 +25,7 @@ const PPBox = ({ heading, children }: { heading: string; children: ReactNode }) 
 function PrivacyPolicy() {
     return (
         <ContainerWithHeader title={'Privacy Policy'} padding={2} iconLeft={<PolicyIcon />}>
+            <Title>Privacy Policy</Title>
             <Grid container>
                 <PPBox heading={'Why We Collect Personal Information'}>
                     <ul>

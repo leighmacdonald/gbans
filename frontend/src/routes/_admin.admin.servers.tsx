@@ -27,6 +27,7 @@ import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import { TableCellBool } from '../component/TableCellBool.tsx';
 import { TableCellString } from '../component/TableCellString.tsx';
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
+import { Title } from '../component/Title';
 import { TableCellStringHidden } from '../component/field/TableCellStringHidden.tsx';
 import { ModalServerEditor } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
@@ -89,6 +90,7 @@ function AdminServers() {
     };
     return (
         <Grid container spacing={2}>
+            <Title>Edit Servers</Title>
             <Grid xs={12}>
                 <Stack spacing={2}>
                     <ContainerWithHeaderAndButtons

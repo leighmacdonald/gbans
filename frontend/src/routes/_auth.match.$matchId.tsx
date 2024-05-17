@@ -28,6 +28,7 @@ import { PersonCell } from '../component/PersonCell.tsx';
 import { PlayerClassImg } from '../component/PlayerClassImg.tsx';
 import { TableCellSmall } from '../component/TableCellSmall.tsx';
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
+import { Title } from '../component/Title';
 import bluLogoImg from '../icons/blu_logo.png';
 import redLogoImg from '../icons/red_logo.png';
 import { PageNotFound } from './_auth.page-not-found.tsx';
@@ -289,6 +290,7 @@ function MatchPage() {
 
     return (
         <ContainerWithHeader title={'Match Results'} iconLeft={<SportsIcon />}>
+            <Title>{match.title}</Title>
             <Grid container spacing={2}>
                 <Grid xs={8}>
                     <Stack>

@@ -18,6 +18,7 @@ import { PlayerClassStatsTable } from '../component/PlayerClassStatsTable.tsx';
 import { PlayerStatsOverallContainer } from '../component/PlayerStatsOverallContainer.tsx';
 import { PlayerWeaponsStatListContainer } from '../component/PlayerWeaponsStatListContainer.tsx';
 import { SteamIDList } from '../component/SteamIDList.tsx';
+import { Title } from '../component/Title';
 import { createExternalLinks } from '../util/history.ts';
 import { avatarHashToURL, isValidSteamDate, renderDateTime } from '../util/text.tsx';
 import { emptyOrNullString } from '../util/types.ts';
@@ -42,6 +43,7 @@ function ProfilePage() {
 
     return (
         <Grid container spacing={2}>
+            {profile.player.personaname ? <Title>{profile.player.personaname}</Title> : null}
             <Grid xs={12} md={8}>
                 <ContainerWithHeader title={'Profile'}>
                     <Grid container spacing={2}>

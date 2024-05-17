@@ -19,6 +19,7 @@ import { DataTable } from '../component/DataTable.tsx';
 import { Paginator } from '../component/Paginator.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
+import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
 import { SteamIDField } from '../component/field/SteamIDField.tsx';
@@ -99,6 +100,7 @@ function AdminPeople() {
 
     return (
         <Grid container spacing={2}>
+            <Title>People</Title>
             <Grid xs={12}>
                 <ContainerWithHeader title={'Filters'} iconLeft={<FilterListIcon />} marginTop={2}>
                     <form

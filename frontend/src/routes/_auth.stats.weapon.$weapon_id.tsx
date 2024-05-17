@@ -13,6 +13,7 @@ import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import { PersonCell } from '../component/PersonCell';
 import { TableCellSmall } from '../component/TableCellSmall.tsx';
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
+import { Title } from '../component/Title';
 import { RowsPerPage } from '../util/table.ts';
 import { defaultFloatFmtPct, humanCount } from '../util/text.tsx';
 
@@ -29,6 +30,7 @@ function StatsWeapon() {
 
     return (
         <Grid container spacing={2}>
+            {data?.weapon?.name ? <Title>{data?.weapon?.name}</Title> : null}
             <Grid xs={12}>
                 <ContainerWithHeader
                     title={`Top 250 Weapon Users: ${isLoading ? 'Loading...' : data?.weapon?.name}`}

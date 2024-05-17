@@ -3,6 +3,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { HealersOverallContainer } from '../component/HealersOverallContainer.tsx';
 import { MapUsageContainer } from '../component/MapUsageContainer.tsx';
 import { PlayersOverallContainer } from '../component/PlayersOverallContainer.tsx';
+import { Title } from '../component/Title';
 import { WeaponsStatListContainer } from '../component/WeaponsStatListContainer.tsx';
 
 export const Route = createFileRoute('/_auth/stats/')({
@@ -12,6 +13,7 @@ export const Route = createFileRoute('/_auth/stats/')({
 function Stats() {
     return (
         <Grid container spacing={2}>
+            <Title>Stats</Title>
             <Grid xs={12}>
                 <PlayersOverallContainer />
             </Grid>

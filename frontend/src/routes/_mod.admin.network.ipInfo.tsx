@@ -19,6 +19,7 @@ import { z } from 'zod';
 import { apiGetNetworkDetails } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
+import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { getFlagEmoji } from '../util/emoji.ts';
@@ -90,6 +91,7 @@ function AdminNetworkInfo() {
     };
     return (
         <Grid container spacing={2}>
+            <Title>IP Info</Title>
             <Grid xs={12}>
                 <ContainerWithHeader title={'Filters'} iconLeft={<FilterListIcon />} marginTop={2}>
                     <form

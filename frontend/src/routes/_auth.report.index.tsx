@@ -48,6 +48,7 @@ import { PlayerMessageContext } from '../component/PlayerMessageContext.tsx';
 import { ReportStatusIcon } from '../component/ReportStatusIcon.tsx';
 import RouterLink from '../component/RouterLink.tsx';
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
+import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { MarkdownField } from '../component/field/MarkdownField.tsx';
 import { SteamIDField } from '../component/field/SteamIDField.tsx';
@@ -89,6 +90,7 @@ function ReportCreate() {
 
     return (
         <Grid container spacing={3}>
+            <Title>Create Report</Title>
             <Grid xs={12} md={8}>
                 <Stack spacing={2}>
                     {canReport && <ReportCreateForm />}
