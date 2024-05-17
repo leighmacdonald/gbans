@@ -1,10 +1,9 @@
-import { useMemo, useState } from 'react';
-import { CloudDownload } from '@mui/icons-material';
+import { useEffect, useState } from 'react';
+import { ChevronLeft, CloudDownload } from '@mui/icons-material';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import FlagIcon from '@mui/icons-material/Flag';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import Button from '@mui/material/Button';
-import ButtonGroup from '@mui/material/ButtonGroup';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Link from '@mui/material/Link';
@@ -15,13 +14,11 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { createFileRoute, useLoaderData, useNavigate, useRouteContext } from '@tanstack/react-router';
 import {
-    ColumnDef,
     ColumnFiltersState,
+    createColumnHelper,
     getCoreRowModel,
     getFilteredRowModel,
     getPaginationRowModel,
-    getSortedRowModel,
-    SortingState,
     useReactTable
 } from '@tanstack/react-table';
 import { zodValidator } from '@tanstack/zod-form-adapter';
@@ -34,9 +31,8 @@ import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import RouterLink from '../component/RouterLink.tsx';
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
-import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
-import { initColumnFilter, initPagination, initSortOrder } from '../types/table.ts';
+import { initColumnFilter, initPagination } from '../types/table.ts';
 import { commonTableSearchSchema } from '../util/table.ts';
 import { humanFileSize, renderDateTime } from '../util/text.tsx';
 import { emptyOrNullString } from '../util/types.ts';
@@ -47,8 +43,7 @@ const demosSchema = z.object({
     sortColumn: z.enum(['server_id', 'created_on', 'map_name']).optional(),
     map_name: z.string().optional(),
     server_id: z.number().optional(),
-    steam_id: z.string().optional(),
-    only_mine: z.boolean().optional()
+    stats: z.string().optional()
 });
 
 export const Route = createFileRoute('/_guest/stv')({
@@ -81,22 +76,19 @@ export const Route = createFileRoute('/_guest/stv')({
     }
 });
 
+const columnHelper = createColumnHelper<DemoFile>();
+
 function STV() {
     const navigate = useNavigate({ from: Route.fullPath });
-    const { page, only_mine, steam_id, map_name, server_id, sortOrder, rows } = Route.useSearch();
+    const { page, stats, map_name, server_id, rows } = Route.useSearch();
     const { servers, demos } = useLoaderData({ from: '/_guest/stv' });
     const { userSteamID, isAuthenticated } = useRouteContext({ from: '/_guest/stv' });
-    const [sorting, setSorting] = useState<SortingState>(
-        initSortOrder(sortOrder, sortOrder, {
-            id: 'created_on',
-            desc: true
-        })
-    );
+
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
         initColumnFilter({
             map_name: !emptyOrNullString(map_name) ? map_name : undefined,
             server_id: server_id ?? 0,
-            steam_id: isAuthenticated() && only_mine ? userSteamID : emptyOrNullString(steam_id) ? undefined : steam_id
+            stats: emptyOrNullString(stats) ? stats : undefined
         })
     );
     const [pagination, setPagination] = useState(initPagination(page, rows));
@@ -107,12 +99,7 @@ function STV() {
                 initColumnFilter({
                     map_name: !emptyOrNullString(value.map_name) ? value.map_name : undefined,
                     server_id: value.server_id > 0 ? value.server_id : 0,
-                    steam_id:
-                        isAuthenticated() && only_mine
-                            ? userSteamID
-                            : emptyOrNullString(steam_id)
-                              ? undefined
-                              : steam_id
+                    stats: !emptyOrNullString(stats) ? stats : undefined
                 })
             );
             await navigate({ to: '/stv', search: (prev) => ({ ...prev, ...value }) });
@@ -124,95 +111,83 @@ function STV() {
         defaultValues: {
             map_name: map_name ?? '',
             server_id: server_id ?? 0,
-            steam_id: steam_id ?? '',
-            only_mine: only_mine ?? false
+            stats: stats ?? ''
         }
     });
-
-    const columns = useMemo<ColumnDef<DemoFile>[]>(
-        () => [
-            {
-                accessorKey: 'server_id',
-                filterFn: (row, _, filterValue) => {
-                    return filterValue == 0 || row.original.server_id == filterValue;
-                },
-                enableSorting: true,
-                header: () => <TableHeadingCell name={'Server'} />,
-                cell: (info) => {
-                    return (
-                        <Button
-                            sx={{
-                                color: stc(info.row.original.server_name_short)
-                            }}
-                            onClick={async () => {
-                                setFieldValue('server_id', info.getValue() as number);
-                                await handleSubmit();
-                            }}
-                        >
-                            {info.row.original.server_name_short}
-                        </Button>
-                    );
-                }
+    const columns = [
+        columnHelper.accessor('server_id', {
+            filterFn: (row, _, filterValue) => {
+                return filterValue == 0 || row.original.server_id == filterValue;
             },
-            {
-                accessorKey: 'created_on',
-                enableSorting: true,
-                header: () => <TableHeadingCell name={'Created'} />,
-                cell: (info) => <Typography>{renderDateTime(info.getValue() as Date)}</Typography>
-            },
-            {
-                accessorKey: 'map_name',
-                filterFn: 'includesString',
-                enableSorting: true,
-
-                header: () => <TableHeadingCell name={'Map Name'} />,
-                cell: (info) => <Typography>{info.getValue() as string}</Typography>
-            },
-            {
-                accessorKey: 'size',
-                enableSorting: true,
-                header: () => <TableHeadingCell name={'Size'} />,
-                cell: (info) => <Typography>{humanFileSize(info.getValue() as number)}</Typography>
-            },
-            {
-                id: 'steam_id',
-                enableSorting: true,
-                enableColumnFilter: true,
-                filterFn: (row, _, filterValue) => {
-                    return Object.keys(row.original.stats).includes(filterValue);
-                },
-                header: () => <TableHeadingCell name={'Players'} />,
-                cell: (info) => <Typography>{Object.keys(Object(info.getValue())).length}</Typography>
-            },
-            {
-                id: 'download',
-                enableSorting: false,
-                cell: (info) => (
-                    <ButtonGroup variant={'contained'} fullWidth sx={{ margin: 1 }}>
-                        <Button
-                            disabled={!isAuthenticated()}
-                            color={'error'}
-                            startIcon={<FlagIcon />}
-                            component={RouterLink}
-                            to={'/report'}
-                            search={{ demo_id: info.row.original.demo_id }}
-                        >
-                            Report
-                        </Button>
-                        <Button
-                            color={'success'}
-                            component={Link}
-                            href={`/asset/${info.row.original.asset_id}`}
-                            startIcon={<CloudDownload />}
-                        >
-                            Download
-                        </Button>
-                    </ButtonGroup>
-                )
+            enableSorting: true,
+            header: () => <TableHeadingCell name={'Server'} />,
+            cell: (info) => {
+                return (
+                    <Button
+                        sx={{
+                            color: stc(info.row.original.server_name_short)
+                        }}
+                        onClick={async () => {
+                            setFieldValue('server_id', info.getValue() as number);
+                            await handleSubmit();
+                        }}
+                    >
+                        {info.row.original.server_name_short}
+                    </Button>
+                );
             }
-        ],
-        [handleSubmit, isAuthenticated, setFieldValue]
-    );
+        }),
+        columnHelper.accessor('created_on', {
+            header: () => <TableHeadingCell name={'Created'} />,
+            cell: (info) => <Typography>{renderDateTime(info.getValue() as Date)}</Typography>
+        }),
+        columnHelper.accessor('map_name', {
+            filterFn: 'includesString',
+            header: () => <TableHeadingCell name={'Map Name'} />,
+            cell: (info) => <Typography>{info.getValue() as string}</Typography>
+        }),
+        columnHelper.accessor('size', {
+            header: () => <TableHeadingCell name={'Size'} />,
+            cell: (info) => <Typography>{humanFileSize(info.getValue() as number)}</Typography>
+        }),
+        columnHelper.accessor('stats', {
+            enableColumnFilter: true,
+            filterFn: (row, _, filterValue) => {
+                return Object.keys(row.original.stats).includes(filterValue);
+            },
+            header: () => <TableHeadingCell name={'Players'} />,
+            cell: (info) => <Typography>{Object.keys(Object(info.getValue())).length}</Typography>
+        }),
+
+        columnHelper.display({
+            id: 'report',
+            cell: (info) => (
+                <Button
+                    disabled={!isAuthenticated()}
+                    color={'error'}
+                    startIcon={<FlagIcon />}
+                    component={RouterLink}
+                    to={'/report'}
+                    search={{ demo_id: info.row.original.demo_id }}
+                >
+                    Report
+                </Button>
+            )
+        }),
+        columnHelper.display({
+            id: 'download',
+            cell: (info) => (
+                <Button
+                    color={'success'}
+                    component={Link}
+                    href={`/asset/${info.row.original.asset_id}`}
+                    startIcon={<CloudDownload />}
+                >
+                    Download
+                </Button>
+            )
+        })
+    ];
 
     const table = useReactTable({
         data: demos ?? [],
@@ -220,24 +195,27 @@ function STV() {
         getCoreRowModel: getCoreRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
-        getSortedRowModel: getSortedRowModel(),
         onPaginationChange: setPagination,
-        onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
         state: {
-            sorting,
             pagination,
             columnFilters
         }
     });
 
     const clear = async () => {
-        setFieldValue('only_mine', false);
         setFieldValue('server_id', 0);
         setFieldValue('map_name', '');
-        setFieldValue('steam_id', '');
+        setFieldValue('stats', '');
+        await handleSubmit();
         await handleSubmit();
     };
+
+    useEffect(() => {
+        // FIXME why does the stats/steam_id field not function correctly?
+        // Performs a submit on page load because otherwise the stats filter does not apply.
+        handleSubmit();
+    }, [handleSubmit]);
 
     return (
         <Grid container spacing={2}>
@@ -291,26 +269,31 @@ function STV() {
                             </Grid>
                             <Grid xs={6} md={3}>
                                 <Field
-                                    name={'steam_id'}
+                                    name={'stats'}
                                     validators={makeSteamidValidatorsOptional()}
                                     children={(props) => {
                                         return <TextFieldSimple {...props} label={'Steam ID'} fullwidth={true} />;
                                     }}
                                 />
                             </Grid>
-                            <Grid xs={2}>
-                                <Field
-                                    name={'only_mine'}
-                                    children={(props) => {
-                                        return (
-                                            <CheckboxSimple
-                                                {...props}
-                                                disabled={!isAuthenticated()}
-                                                label={'Only Mine'}
-                                            />
-                                        );
+                            <Grid xs={6} md={3} padding={2}>
+                                <Button
+                                    fullWidth
+                                    disabled={!isAuthenticated()}
+                                    startIcon={<ChevronLeft />}
+                                    variant={'contained'}
+                                    onClick={async () => {
+                                        setFieldValue('stats', userSteamID, {
+                                            touch: false
+                                        });
+                                        setColumnFilters((prev) => {
+                                            return { ...prev, stats: !emptyOrNullString(stats) ? stats : undefined };
+                                        });
+                                        await handleSubmit();
                                     }}
-                                />
+                                >
+                                    My SteamID
+                                </Button>
                             </Grid>
                             <Grid xs={12}>
                                 <Subscribe
@@ -343,7 +326,7 @@ function STV() {
                                 return { ...prev, pageIndex: page };
                             });
                         }}
-                        count={demos?.length ?? 0}
+                        count={table.getRowCount()}
                         rows={pagination.pageSize}
                         page={pagination.pageIndex}
                     />
