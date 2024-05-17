@@ -16,6 +16,7 @@ import (
 type srcdsUsecase struct {
 	cu     domain.ConfigUsecase
 	sv     domain.ServersUsecase
+	sr     srcdsRepository
 	pu     domain.PersonUsecase
 	ru     domain.ReportUsecase
 	du     domain.DiscordUsecase
@@ -142,4 +143,19 @@ func (h srcdsUsecase) Report(ctx context.Context, currentUser domain.UserProfile
 	h.du.SendPayload(domain.ChannelModLog, msg)
 
 	return &report, nil
+}
+
+func (h srcdsUsecase) SetAdminGroups(ctx context.Context, authType AuthType, identity string, groups ...int) error {
+	admin, errAdmin := h.sr.GetAdminByID(ctx, authType, identity)
+	if errAdmin != nil {
+		return errAdmin
+	}
+
+	// Delete existing groups.
+	h.sr.DeleteAdminGroups(ctx, admin)
+
+	// If no groups are given to add, this is treated purely as a delete function
+	if len(groups) == 0 {
+		return nil
+	}
 }
