@@ -188,7 +188,7 @@ const AdminServersTable = ({
                 accessorKey: 'password',
                 header: () => (
                     <TableHeadingCell
-                        name={'Auth PSK'}
+                        name={'Auth Key'}
                         tooltip={'A password that the server uses to authenticate with the central gbans server'}
                     />
                 ),
