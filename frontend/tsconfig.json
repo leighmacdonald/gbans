@@ -27,5 +27,8 @@
   "include": [
     "src"
   ],
+  "exclude": [
+    "src/component/NetworkBlockChecker.tsx"
+  ],
   "references": [{ "path": "./tsconfig.node.json"}]
 }

@@ -38,6 +38,9 @@ jobs:
       - name: Prettier
         run: make lint_ts
 
+      - name: TypeScript
+        run: make typecheck_ts
+
   lint-golangci:
     runs-on: ubuntu-latest
     steps:
@@ -78,4 +81,3 @@ jobs:
 #    needs: [docker-test]
 #    if: success() && startsWith(github.event.ref, 'refs/tags/v')
 #    uses: ./.github/workflows/release.yml
-
