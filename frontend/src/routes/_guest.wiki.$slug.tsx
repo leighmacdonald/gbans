@@ -3,8 +3,10 @@ import { createFileRoute } from '@tanstack/react-router';
 import { PermissionLevel } from '../api';
 import { apiGetWikiPage, Page } from '../api/wiki.ts';
 import { ErrorDetails } from '../component/ErrorDetails.tsx';
+import { Title } from '../component/Title.tsx';
 import { WikiPage } from '../component/WikiPage.tsx';
 import { AppError } from '../error.tsx';
+import { toTitleCase } from '../util/text.tsx';
 
 export const Route = createFileRoute('/_guest/wiki/$slug')({
     component: Wiki,
@@ -42,5 +44,10 @@ export const Route = createFileRoute('/_guest/wiki/$slug')({
 function Wiki() {
     const { slug } = Route.useParams();
 
-    return <WikiPage slug={slug} path={'/_guest/wiki/$slug'} />;
+    return (
+        <>
+            <Title>{toTitleCase(slug.replace(/-/g, ' '))}</Title>
+            <WikiPage slug={slug} path={'/_guest/wiki/$slug'} />
+        </>
+    );
 }

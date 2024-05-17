@@ -14,6 +14,7 @@ import Grid2 from '@mui/material/Unstable_Grid2';
 import { createFileRoute } from '@tanstack/react-router';
 import { parseISO } from 'date-fns';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
+import { Title } from '../component/Title';
 import { useNotifications } from '../hooks/useNotifications.ts';
 import { useNotificationsCtx } from '../hooks/useNotificationsCtx.ts';
 import { RowsPerPage } from '../util/table.ts';
@@ -63,6 +64,7 @@ function NotificationsPage() {
 
     return (
         <Grid2 container spacing={2}>
+            <Title>Notifications</Title>
             <Grid2 xs={3}>
                 <ContainerWithHeader title={'Manage'}>
                     <ButtonGroup orientation={'vertical'} variant="contained">

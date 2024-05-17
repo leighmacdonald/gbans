@@ -37,6 +37,7 @@ import RouterLink from '../component/RouterLink.tsx';
 import { TableCellBool } from '../component/TableCellBool.tsx';
 import { TableCellRelativeDateField } from '../component/TableCellRelativeDateField.tsx';
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
+import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
 import { SelectFieldSimple } from '../component/field/SelectFieldSimple.tsx';
@@ -127,6 +128,7 @@ function AdminBanSteam() {
 
     return (
         <Grid container spacing={2}>
+            <Title>Ban SteamID</Title>
             <Grid xs={12}>
                 <ContainerWithHeader title={'Filters'} iconLeft={<FilterListIcon />} marginTop={2}>
                     <form

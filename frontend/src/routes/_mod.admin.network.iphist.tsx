@@ -10,6 +10,7 @@ import { apiGetConnections } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { IPHistoryTable } from '../component/IPHistoryTable.tsx';
 import { Paginator } from '../component/Paginator.tsx';
+import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { SteamIDField } from '../component/field/SteamIDField.tsx';
 import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
@@ -65,6 +66,7 @@ function AdminNetworkPlayerIPHistory() {
 
     return (
         <Grid container spacing={2}>
+            <Title>Player IP History</Title>
             <Grid xs={12}>
                 <ContainerWithHeader title={'Filters'} iconLeft={<FilterListIcon />} marginTop={2}>
                     <form

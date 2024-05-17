@@ -32,6 +32,7 @@ import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderA
 import { DataTable } from '../component/DataTable.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
+import { Title } from '../component/Title';
 import { VCenterBox } from '../component/VCenterBox.tsx';
 import {
     ModalCIDRBlockEditor,
@@ -235,6 +236,7 @@ function AdminNetworkCIDRBlocks() {
 
     return (
         <Stack spacing={2}>
+            <Title>Admin Network CIDR</Title>
             <ContainerWithHeaderAndButtons
                 title="Admin Network CIDR"
                 iconLeft={<WifiOffIcon />}

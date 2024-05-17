@@ -43,6 +43,7 @@ import { TableCellBool } from '../component/TableCellBool.tsx';
 import { TableCellSmall } from '../component/TableCellSmall.tsx';
 import { TableCellString } from '../component/TableCellString.tsx';
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
+import { Title } from '../component/Title';
 import { ModalConfirm, ModalFilterEditor } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { findSelectedRow } from '../util/findSelectedRow.ts';
@@ -151,6 +152,7 @@ function AdminFilters() {
 
     return (
         <Grid container spacing={2}>
+            <Title>Filtered Words</Title>
             <Grid xs={12}>
                 <ContainerWithHeaderAndButtons
                     title={`Word Filters ${Object.values(rowSelection).length ? `Selected: ${Object.values(rowSelection).length}` : ''}`}

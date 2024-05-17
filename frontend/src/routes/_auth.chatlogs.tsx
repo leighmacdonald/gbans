@@ -16,6 +16,7 @@ import { apiGetMessages, apiGetServers, PermissionLevel, ServerSimple } from '..
 import { ChatTable } from '../component/ChatTable.tsx';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { Paginator } from '../component/Paginator.tsx';
+import { Title } from '../component/Title.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { SteamIDField } from '../component/field/SteamIDField.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
@@ -135,6 +136,7 @@ function ChatLogs() {
     };
     return (
         <>
+            <Title>Chat Logs</Title>
             <Grid container spacing={2}>
                 <Grid xs={12}>
                     <ContainerWithHeader title={'Chat Filters'} iconLeft={<FilterAltIcon />}>

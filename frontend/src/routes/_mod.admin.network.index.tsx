@@ -4,6 +4,7 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import Box from '@mui/system/Box';
 import { createFileRoute } from '@tanstack/react-router';
+import { Title } from '../component/Title';
 
 export const Route = createFileRoute('/_mod/admin/network/')({
     component: AdminNetwork
@@ -12,6 +13,7 @@ export const Route = createFileRoute('/_mod/admin/network/')({
 function AdminNetwork() {
     return (
         <Grid container spacing={2}>
+            <Title>IP History</Title>
             <Grid xs={6} md={6}>
                 <Link href={`/admin/network/ip_hist`}>
                     <Paper component={Box} padding={2}>

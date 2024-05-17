@@ -25,6 +25,7 @@ import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
 import { LoadingSpinner } from '../component/LoadingSpinner.tsx';
 import { MarkDownRenderer } from '../component/MarkdownRenderer.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
+import { Title } from '../component/Title';
 import { VCenterBox } from '../component/VCenterBox.tsx';
 import { ModalAssetViewer, ModalContestEntry, ModalContestEntryDelete } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
@@ -132,6 +133,7 @@ function Contest() {
     ) : (
         contest && (
             <Grid container spacing={3}>
+                <Title>{contest?.title ?? 'Contest'}</Title>
                 <Grid xs={8}>
                     <ContainerWithHeader
                         title={`Contest: ${contest?.title}`}

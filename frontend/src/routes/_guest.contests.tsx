@@ -19,6 +19,7 @@ import RouterLink from '../component/RouterLink.tsx';
 import { TableCellSmall } from '../component/TableCellSmall.tsx';
 import { TableCellString } from '../component/TableCellString.tsx';
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
+import { Title } from '../component/Title.tsx';
 import { RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 
@@ -49,6 +50,7 @@ function Contests() {
 
     return (
         <Grid container>
+            <Title>Contests</Title>
             <Grid xs={12}>
                 <ContainerWithHeader title={'Contests'} iconLeft={<InsightsIcon />}>
                     <ContestsTable

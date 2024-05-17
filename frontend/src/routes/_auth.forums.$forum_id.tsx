@@ -21,6 +21,7 @@ import { ForumRowLink } from '../component/ForumRowLink.tsx';
 import { VCenteredElement } from '../component/Heading.tsx';
 import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import RouterLink from '../component/RouterLink.tsx';
+import { Title } from '../component/Title';
 import { VCenterBox } from '../component/VCenterBox.tsx';
 import { ModalForumForumEditor, ModalForumThreadCreator } from '../component/modal';
 import { AppError } from '../error.tsx';
@@ -136,6 +137,7 @@ function ForumPage() {
 
     return (
         <ContainerWithHeaderAndButtons title={forum.title} iconLeft={<MessageIcon />} buttons={headerButtons}>
+            <Title>Forums</Title>
             <Stack spacing={2}>
                 {threads.map((t) => {
                     return <ForumThreadRow thread={t} key={`ft-${t.forum_thread_id}`} />;

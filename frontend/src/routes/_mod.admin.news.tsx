@@ -17,6 +17,7 @@ import { apiNewsSave, NewsEntry } from '../api/news.ts';
 import { MarkDownRenderer } from '../component/MarkdownRenderer.tsx';
 import { NewsList } from '../component/NewsList.tsx';
 import { TabPanel } from '../component/TabPanel.tsx';
+import { Title } from '../component/Title';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors.ts';
 
@@ -53,6 +54,7 @@ function AdminNews() {
 
     return (
         <Grid container spacing={2}>
+            <Title>Edit News</Title>
             <Grid xs={8}>
                 <Paper elevation={1}>
                     <Stack spacing={3} padding={3}>

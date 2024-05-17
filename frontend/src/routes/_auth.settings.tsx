@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { apiGetPersonSettings, apiSavePersonSettings, PersonSettings } from '../api';
 import { Accordion, AccordionDetails, AccordionSummary } from '../component/Accordian.tsx';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
+import { Title } from '../component/Title.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
 import { MarkdownField } from '../component/field/MarkdownField.tsx';
@@ -83,6 +84,7 @@ function ProfileSettings() {
 
     return (
         <ContainerWithHeader title={'User Settings'} iconLeft={<ConstructionIcon />}>
+            <Title>User Settings</Title>
             <form
                 onSubmit={async (e) => {
                     e.preventDefault();

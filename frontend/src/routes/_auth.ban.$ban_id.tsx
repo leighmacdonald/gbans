@@ -41,6 +41,7 @@ import { ProfileInfoBox } from '../component/ProfileInfoBox.tsx';
 import RouterLink from '../component/RouterLink.tsx';
 import { SourceBansList } from '../component/SourceBansList.tsx';
 import { SteamIDList } from '../component/SteamIDList.tsx';
+import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { MarkdownField } from '../component/field/MarkdownField.tsx';
 import { ModalBanSteam, ModalUnbanSteam } from '../component/modal';
@@ -144,6 +145,7 @@ function BanPage() {
     const modTools = useMemo(() => {
         return (
             <ContainerWithHeader title={'Moderation Tools'} iconLeft={<AddModeratorIcon />}>
+                <Title>Moderation Tools</Title>
                 <Stack spacing={2} padding={2}>
                     <Stack direction={'row'} spacing={2}>
                         {!expired && (

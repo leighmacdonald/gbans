@@ -90,3 +90,8 @@ type avatarSize = 'small' | 'medium' | 'full';
 export const avatarHashToURL = (hash?: string, size: avatarSize = 'full') => {
     return `https://avatars.steamstatic.com/${hash ?? defaultAvatarHash}${size == 'small' ? '' : `_${size}`}.jpg`;
 };
+
+export const toTitleCase = (string: string) => {
+    const titleCaseWord = (s: string) => s[0].toUpperCase() + s.slice(1);
+    return string.replace(/\w\S*/g, titleCaseWord);
+};

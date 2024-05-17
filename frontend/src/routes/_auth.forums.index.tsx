@@ -22,6 +22,7 @@ import { ForumRowLink } from '../component/ForumRowLink.tsx';
 import { VCenteredElement } from '../component/Heading.tsx';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
 import RouterLink from '../component/RouterLink.tsx';
+import { Title } from '../component/Title';
 import { VCenterBox } from '../component/VCenterBox.tsx';
 import { ModalForumCategoryEditor, ModalForumForumEditor } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
@@ -64,6 +65,7 @@ const CategoryBlock = ({ category }: { category: ForumCategory }) => {
 
     return (
         <ContainerWithHeaderAndButtons title={category.title} iconLeft={<CategoryIcon />} buttons={buttons}>
+            <Title>Forums</Title>
             <Stack
                 spacing={1}
                 sx={{

@@ -15,6 +15,7 @@ import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { DataTable } from '../component/DataTable.tsx';
 import RouterLink from '../component/RouterLink.tsx';
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
+import { Title } from '../component/Title';
 import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 
@@ -49,6 +50,7 @@ function MatchListPage() {
 
     return (
         <Grid container>
+            <Title>Match History</Title>
             <Grid xs={12}>
                 <MatchSummaryTable matches={matches?.data ?? []} count={matches?.count ?? 0} isLoading={isLoading} />
             </Grid>

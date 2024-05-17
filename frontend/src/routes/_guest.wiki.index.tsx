@@ -2,6 +2,7 @@ import { queryOptions } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { PermissionLevel } from '../api';
 import { apiGetWikiPage, Page } from '../api/wiki.ts';
+import { Title } from '../component/Title.tsx';
 import { WikiPage } from '../component/WikiPage.tsx';
 
 export const Route = createFileRoute('/_guest/wiki/')({
@@ -28,5 +29,10 @@ export const Route = createFileRoute('/_guest/wiki/')({
 });
 
 function Wiki() {
-    return <WikiPage slug={'home'} path={'/_guest/wiki/'} />;
+    return (
+        <>
+            <Title>Wiki</Title>
+            <WikiPage slug={'home'} path={'/_guest/wiki/'} />
+        </>
+    );
 }

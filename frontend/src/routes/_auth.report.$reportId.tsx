@@ -40,6 +40,7 @@ import { Heading } from '../component/Heading.tsx';
 import { ProfileInfoBox } from '../component/ProfileInfoBox.tsx';
 import { ReportViewComponent } from '../component/ReportViewComponent.tsx';
 import { SteamIDList } from '../component/SteamIDList.tsx';
+import { Title } from '../component/Title';
 import { ModalBanSteam } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors.ts';
@@ -189,6 +190,7 @@ function ReportView() {
 
     return (
         <Grid container spacing={2}>
+            <Title>Report</Title>
             <Grid xs={12} md={8}>
                 {report && <ReportViewComponent report={report} />}
             </Grid>
