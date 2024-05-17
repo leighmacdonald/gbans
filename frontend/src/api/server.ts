@@ -97,8 +97,13 @@ export interface SaveServerOpts {
 export const apiCreateServer = async (opts: SaveServerOpts) =>
     transformTimeStampedDates(await apiCall<Server, SaveServerOpts>(`/api/servers`, 'POST', opts));
 
-export const apiSaveServer = async (server_id: number, opts: SaveServerOpts) =>
-    transformTimeStampedDates(await apiCall<Server, SaveServerOpts>(`/api/servers/${server_id}`, 'POST', opts));
+export const apiSaveServer = async (server_id: number, opts: SaveServerOpts) => {
+    const resp = transformTimeStampedDates(
+        await apiCall<Server, SaveServerOpts>(`/api/servers/${server_id}`, 'POST', opts)
+    );
+    resp.token_created_on = parseDateTime(resp.token_created_on as unknown as string);
+    return resp;
+};
 
 export const apiGetServersAdmin = async (abortController?: AbortController) => {
     const resp = await apiCall<Server[]>(`/api/servers_admin`, 'POST', undefined, abortController);
