@@ -20,7 +20,7 @@ export const Title = ({ children }: TitleProps) => {
             originalTitle.current = document.title;
         }
 
-        document.title = `${children} | ${window.gbans.site_name}`;
+        document.title = `${children} | ${__SITE_NAME__}`;
 
         return () => {
             document.title = originalTitle.current!;

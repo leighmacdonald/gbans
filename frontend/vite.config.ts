@@ -4,6 +4,15 @@ import react from '@vitejs/plugin-react-swc';
 import { defineConfig } from 'vite';
 import { createHtmlPlugin } from 'vite-plugin-html';
 
+const CONFIG = {
+    __SITE_NAME__: 'Uncletopia',
+    __BUILD_VERSION__: 'v0.7.4',
+    __DISCORD_LINK_ID__: 'caQKCWFMrN',
+    __ASSET_URL__: ''
+};
+
+const mapValues = (o, fn) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, fn(v)]));
+
 // https://vitejs.dev/config/
 export default defineConfig({
     base: '/',
@@ -21,6 +30,10 @@ export default defineConfig({
             }
         }
     },
+
+    // https://vitejs.dev/config/shared-options.html#define
+    define: mapValues(CONFIG, JSON.stringify),
+
     server: {
         open: true,
         port: 6007,
@@ -53,12 +66,7 @@ export default defineConfig({
             template: 'index.html',
 
             inject: {
-                data: {
-                    site_name: 'Uncletopia',
-                    build_version: 'v0.7.4',
-                    discord_link_id: 'caQKCWFMrN',
-                    asset_url: ''
-                }
+                data: CONFIG
             }
         })
     ]

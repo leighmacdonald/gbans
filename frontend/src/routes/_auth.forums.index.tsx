@@ -205,7 +205,7 @@ function ForumOverview() {
     return (
         <Grid container spacing={3}>
             <Grid xs={12}>
-                <Typography variant={'h2'}>{window.gbans.site_name} community</Typography>
+                <Typography variant={'h2'}>{__SITE_NAME__} community</Typography>
             </Grid>
             <Grid md={9} xs={12}>
                 <Stack spacing={3}>

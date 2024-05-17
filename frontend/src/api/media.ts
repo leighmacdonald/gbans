@@ -1,6 +1,6 @@
 import { apiCall, TimeStamped, transformTimeStampedDates } from './common';
 
-const assetUrl = (bucket: string, asset: Asset): string => `${window.gbans.asset_url}/${bucket}/${asset.name}`;
+const assetUrl = (bucket: string, asset: Asset): string => `${__ASSET_URL__}/${bucket}/${asset.name}`;
 
 export const assetURLMedia = (asset: Asset) => assetUrl('media', asset);
 
