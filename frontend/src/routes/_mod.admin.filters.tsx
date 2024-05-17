@@ -97,7 +97,7 @@ function AdminFilters() {
 
     const onEdit = useCallback(async () => {
         try {
-            const filter = findSelectedRow(rowSelection, filters ?? [], 'filter_id');
+            const filter = findSelectedRow(rowSelection, filters ?? []);
             const resp = await NiceModal.show<Filter>(ModalFilterEditor, { filter });
 
             queryClient.setQueryData(

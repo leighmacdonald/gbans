@@ -68,7 +68,7 @@ install_deps:
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.57.2
 	go install honnef.co/go/tools/cmd/staticcheck@v0.4.6
 
-check: lint_golangci static lint_ts
+check: lint_golangci static lint_ts typecheck_ts
 
 lint_golangci:
 	golangci-lint run --timeout 3m ./...
@@ -78,6 +78,9 @@ fix: fmt
 
 lint_ts:
 	cd frontend && pnpm run eslint:check && pnpm prettier src/ --check
+
+typecheck_ts:
+	cd frontend && pnpm run typecheck
 
 static:
 	staticcheck -go 1.22 ./...
