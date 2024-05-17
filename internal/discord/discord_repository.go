@@ -14,6 +14,22 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/util"
 )
 
+type nullDiscordRepository struct{}
+
+func (bot *nullDiscordRepository) RegisterHandler(cmd domain.Cmd, handler domain.SlashCommandHandler) error {
+	return nil
+}
+
+func (bot *nullDiscordRepository) Shutdown(guildID string) {
+}
+
+func (bot *nullDiscordRepository) Start() error {
+	return nil
+}
+
+func (bot *nullDiscordRepository) SendPayload(channel domain.DiscordChannel, payload *discordgo.MessageEmbed) {
+}
+
 type discordRepository struct {
 	session           *discordgo.Session
 	isReady           atomic.Bool
@@ -23,6 +39,10 @@ type discordRepository struct {
 }
 
 func NewDiscordRepository(conf domain.Config) (domain.DiscordRepository, error) {
+	if !conf.Discord.Enabled {
+		return &nullDiscordRepository{}, nil
+	}
+
 	// Immediately connects
 	session, errNewSession := discordgo.New("Bot " + conf.Discord.Token)
 	if errNewSession != nil {
