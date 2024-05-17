@@ -1,10 +1,11 @@
 BEGIN;
-
+-- Basically taken from https://github.com/alliedmodders/sourcemod/blob/master/configs/sql-init-scripts/pgsql/create_admins.sql
+-- A few extra constraints and fk's added
 
 CREATE TABLE sm_admins
 (
     id       serial,
-    steam_id bigint      NOT NULL REFERENCES person (steam_id) ON DELETE CASCADE,
+    steam_id bigint      REFERENCES person (steam_id) ON DELETE CASCADE,
     authtype varchar(6)  NOT NULL CHECK ( authtype in ('steam', 'name', 'ip') ),
     identity varchar(65) NOT NULL,
     password varchar(65),
@@ -18,7 +19,7 @@ CREATE TABLE sm_groups
 (
     id             serial,
     flags          varchar(30)  NOT NULL,
-    name           varchar(120) NOT NULL,
+    name           varchar(120) NOT NULL UNIQUE,
     immunity_level int          NOT NULL,
     PRIMARY KEY (id)
 );

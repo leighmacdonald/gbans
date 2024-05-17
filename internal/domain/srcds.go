@@ -1,12 +1,113 @@
 package domain
 
-import "context"
+import (
+	"context"
+	"errors"
 
-type SRCDSRepository interface{}
+	"github.com/leighmacdonald/steamid/v4/steamid"
+)
+
+var (
+	ErrSMInvalidAuthName = errors.New("invalid auth name")
+	ErrSMImmunity        = errors.New("invalid immunity level, must be between 0-100")
+	ErrSMGroupName       = errors.New("group name cannot be empty")
+	ErrSMAdminExists     = errors.New("admin already exists")
+)
+
+type SRCDSRepository interface {
+	AddAdmin(ctx context.Context, admin SMAdmin) (SMAdmin, error)
+	DelAdmin(ctx context.Context, admin SMAdmin) error
+	AddGroup(ctx context.Context, group SMGroups) (SMGroups, error)
+	DeleteGroup(ctx context.Context, group SMGroups) error
+	DeleteAdminGroups(ctx context.Context, admin SMAdmin) error
+	InsertAdminGroup(ctx context.Context, admin SMAdmin, group SMGroups, inheritOrder int) error
+	GetGroupByID(ctx context.Context, groupID int) (SMGroups, error)
+	GetGroupByName(ctx context.Context, groupName string) (SMGroups, error)
+	GetAdminByID(ctx context.Context, authType AuthType, identity string) (SMAdmin, error)
+}
 
 type SRCDSUsecase interface {
 	ServerAuth(ctx context.Context, req ServerAuthReq) (string, error)
 	Report(ctx context.Context, currentUser UserProfile, req CreateReportReq) (*Report, error)
+	AddAdmin(ctx context.Context, alias string, authType AuthType, identity string, flags string, immunity int, password string) (SMAdmin, error)
+	DelAdmin(ctx context.Context, authType AuthType, identity string) error
+	AddGroup(ctx context.Context, name string, flags string, immunityLevel int) (SMGroups, error)
+	DelGroup(ctx context.Context, groupID int) error
+	SetAdminGroups(ctx context.Context, authType AuthType, identity string, groups ...SMGroups) error
+}
+
+type AuthType string
+
+const (
+	AuthTypeSteam AuthType = "steam"
+	AuthTypeName  AuthType = "name"
+	AuthTypeIP    AuthType = "ip"
+)
+
+type OverrideType string
+
+const (
+	OverrideTypeCommand OverrideType = "command"
+	OverrideTypeGroup   OverrideType = "group"
+)
+
+type OverrideAccess string
+
+const (
+	OverrideAccessAllow OverrideAccess = "allow"
+	OverrideAccessDeny  OverrideAccess = "deny"
+)
+
+type SRCSDRepository interface {
+	Admins()
+	Groups()
+}
+
+type SMAdmin struct {
+	AdminID  int             `json:"admin_id"`
+	SteamID  steamid.SteamID `json:"steam_id"`
+	AuthType AuthType        `json:"auth_type"` // steam | name |ip
+	Identity string          `json:"identity"`
+	Password string          `json:"password"`
+	Flags    string          `json:"flags"`
+	Name     string          `json:"name"`
+	Immunity int             `json:"immunity"`
+}
+
+type SMGroups struct {
+	GroupID       int    `json:"group_id"`
+	Flags         string `json:"flags"`
+	Name          string `json:"name"`
+	ImmunityLevel int    `json:"immunity_level"`
+}
+
+type SMGroupImmunity struct {
+	GroupID int `json:"group_id"`
+	OtherID int `json:"other_id"`
+}
+
+type SMGroupOverrides struct {
+	GroupID int            `json:"group_id"`
+	Type    OverrideType   `json:"type"` // command | group
+	Name    string         `json:"name"`
+	Access  OverrideAccess `json:"access"` // allow | deny
+}
+
+type SMOverrides struct {
+	Type  OverrideType `json:"type"` // command | group
+	Name  string       `json:"name"`
+	Flags string       `json:"flags"`
+}
+
+type SMAdminGroups struct {
+	AdminID      int `json:"admin_id"`
+	GroupID      int `json:"group_id"`
+	InheritOrder int `json:"inherit_order"`
+}
+
+type SMConfig struct {
+	CfgKey   string `json:"cfg_key"`
+	CfgValue string `json:"cfg_value"`
 }
 
 type ServerAuthReq struct {
