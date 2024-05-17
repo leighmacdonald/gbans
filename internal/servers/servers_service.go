@@ -200,7 +200,7 @@ func (h *serversHandler) onAPIPostServer() gin.HandlerFunc {
 
 		server := domain.NewServer(req.ServerNameShort, req.Host, req.Port)
 		server.Name = req.ServerName
-		server.Password = req.AuthPassword
+		server.Password = req.Password
 		server.ReservedSlots = req.ReservedSlots
 		server.RCON = req.RCON
 		server.Latitude = req.Lat
@@ -231,7 +231,7 @@ type serverUpdateRequest struct {
 	Host            string  `json:"host"`
 	Port            int     `json:"port"`
 	ReservedSlots   int     `json:"reserved_slots"`
-	AuthPassword    string  `json:"auth_password"`
+	Password        string  `json:"password"`
 	RCON            string  `json:"rcon"`
 	Lat             float64 `json:"lat"`
 	Lon             float64 `json:"lon"`
@@ -270,7 +270,7 @@ func (h *serversHandler) onAPIPostServerUpdate() gin.HandlerFunc {
 		server.Port = req.Port
 		server.ReservedSlots = req.ReservedSlots
 		server.RCON = req.RCON
-		server.Password = req.AuthPassword
+		server.Password = req.Password
 		server.Latitude = req.Lat
 		server.Longitude = req.Lon
 		server.CC = req.CC

@@ -94,7 +94,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                 }}
             >
                 <DialogTitle component={Heading} iconLeft={<RouterIcon />}>
-                    Server {server?.server_id ? 'Creator' : 'Editor'}
+                    Server {server?.server_id ? 'Editor' : 'Creator'}
                 </DialogTitle>
 
                 <DialogContent>
@@ -150,7 +150,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                     onChange: z.string().length(20)
                                 }}
                                 children={(props) => {
-                                    return <TextFieldSimple {...props} label={'Server Auth Password'} />;
+                                    return <TextFieldSimple {...props} label={'Server Auth Key'} />;
                                 }}
                             />
                         </Grid>
