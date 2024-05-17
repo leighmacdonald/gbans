@@ -11,7 +11,8 @@ const CONFIG = {
     __ASSET_URL__: ''
 };
 
-const mapValues = (o, fn) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, fn(v)]));
+const mapValues = (o: object, fn: (v: unknown) => unknown) =>
+    Object.fromEntries(Object.entries(o).map(([k, v]) => [k, fn(v)]));
 
 // https://vitejs.dev/config/
 export default defineConfig({
