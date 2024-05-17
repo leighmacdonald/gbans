@@ -5,12 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/log"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type srcdsUsecase struct {
@@ -145,17 +147,119 @@ func (h srcdsUsecase) Report(ctx context.Context, currentUser domain.UserProfile
 	return &report, nil
 }
 
-func (h srcdsUsecase) SetAdminGroups(ctx context.Context, authType AuthType, identity string, groups ...int) error {
+func (h srcdsUsecase) SetAdminGroups(ctx context.Context, authType domain.AuthType, identity string, groups ...domain.SMGroups) error {
 	admin, errAdmin := h.sr.GetAdminByID(ctx, authType, identity)
 	if errAdmin != nil {
 		return errAdmin
 	}
 
 	// Delete existing groups.
-	h.sr.DeleteAdminGroups(ctx, admin)
+	if errDelete := h.sr.DeleteAdminGroups(ctx, admin); errDelete != nil && !errors.Is(errDelete, domain.ErrNoResult) {
+		return errDelete
+	}
 
 	// If no groups are given to add, this is treated purely as a delete function
 	if len(groups) == 0 {
 		return nil
 	}
+
+	for i := range groups {
+		if errInsert := h.sr.InsertAdminGroup(ctx, admin, groups[i], i); errInsert != nil {
+			return errInsert
+		}
+	}
+
+	return nil
+}
+
+func (h srcdsUsecase) DelGroup(ctx context.Context, groupID int) error {
+	group, errGroup := h.sr.GetGroupByID(ctx, groupID)
+	if errGroup != nil {
+		return errGroup
+	}
+
+	return h.sr.DeleteGroup(ctx, group)
+}
+
+func (h srcdsUsecase) AddGroup(ctx context.Context, name string, flags string, immunityLevel int) (domain.SMGroups, error) {
+	if name == "" {
+		return domain.SMGroups{}, domain.ErrSMGroupName
+	}
+
+	if immunityLevel > 100 || immunityLevel < 0 {
+		return domain.SMGroups{}, domain.ErrSMImmunity
+	}
+
+	return h.sr.AddGroup(ctx, domain.SMGroups{
+		Flags:         flags,
+		Name:          name,
+		ImmunityLevel: immunityLevel,
+	})
+}
+
+func validateAuthTypeOpts(authType domain.AuthType, adminID string) error {
+	switch {
+	case authType == domain.AuthTypeSteam:
+		sid := steamid.New(adminID)
+		if !sid.Valid() {
+			return domain.ErrInvalidSID
+		}
+	case authType == domain.AuthTypeIP:
+		if net.ParseIP(adminID) == nil {
+			return domain.ErrInvalidIP
+		}
+	case authType == domain.AuthTypeName:
+		if adminID == "" {
+			return domain.ErrSMInvalidAuthName
+		}
+	}
+
+	return nil
+}
+
+func (h srcdsUsecase) DelAdmin(ctx context.Context, authType domain.AuthType, identity string) error {
+	if errValidate := validateAuthTypeOpts(authType, identity); errValidate != nil {
+		return errValidate
+	}
+
+	admin, errAdmin := h.sr.GetAdminByID(ctx, authType, identity)
+	if errAdmin != nil {
+		return errAdmin
+	}
+
+	return h.sr.DelAdmin(ctx, admin)
+}
+
+func (h srcdsUsecase) AddAdmin(ctx context.Context, alias string, authType domain.AuthType, identity string, flags string, immunity int, password string) (domain.SMAdmin, error) {
+	if errValidate := validateAuthTypeOpts(authType, identity); errValidate != nil {
+		return domain.SMAdmin{}, errValidate
+	}
+
+	if immunity < 0 || immunity > 100 {
+		return domain.SMAdmin{}, domain.ErrSMImmunity
+	}
+
+	admin, errAdmin := h.sr.GetAdminByID(ctx, authType, identity)
+	if errAdmin != nil && errors.Is(errAdmin, domain.ErrNoResult) {
+		return domain.SMAdmin{}, errAdmin
+	}
+
+	if errAdmin == nil {
+		return admin, domain.ErrSMAdminExists
+	}
+
+	var steamID steamid.SteamID
+	if authType == domain.AuthTypeSteam {
+		steamID = steamid.New(identity)
+	}
+
+	return h.sr.AddAdmin(ctx, domain.SMAdmin{
+		SteamID:  steamID,
+		AuthType: authType,
+		Identity: identity,
+		Password: password,
+		Flags:    flags,
+		Name:     alias,
+		Immunity: immunity,
+	})
 }
