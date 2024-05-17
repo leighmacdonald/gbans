@@ -135,14 +135,14 @@ function Index() {
                         Stats (Beta)
                     </Button>
 
-                    {window.gbans.discord_link_id != '' && (
+                    {__DISCORD_LINK_ID__ != '' && (
                         <Button
                             component={Link}
                             startIcon={<MarkUnreadChatAltIcon />}
                             fullWidth
                             sx={{ backgroundColor: '#5865F2' }}
                             variant={'contained'}
-                            href={`https://discord.gg/${window.gbans.discord_link_id}`}
+                            href={`https://discord.gg/${__DISCORD_LINK_ID__}`}
                         >
                             Join Discord
                         </Button>

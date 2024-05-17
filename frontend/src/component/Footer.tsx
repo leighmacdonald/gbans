@@ -11,10 +11,10 @@ export const Footer = (): JSX.Element => {
     const theme = useTheme();
 
     const gbansUrl = useMemo(() => {
-        if (window.gbans.build_version == 'master') {
+        if (__BUILD_VERSION__ == 'master') {
             return 'https://github.com/leighmacdonald/gbans/tree/master';
-        } else if (window.gbans.build_version.startsWith('v')) {
-            return `https://github.com/leighmacdonald/gbans/releases/tag/${window.gbans.build_version}`;
+        } else if (__BUILD_VERSION__.startsWith('v')) {
+            return `https://github.com/leighmacdonald/gbans/releases/tag/${__BUILD_VERSION__}`;
         }
         return 'https://github.com/leighmacdonald/gbans';
     }, []);
@@ -32,7 +32,7 @@ export const Footer = (): JSX.Element => {
             <Grid container spacing={0} direction="column" alignItems="center" justifyContent="center">
                 <Grid xs={3}>
                     <Typography variant={'subtitle2'} color={'text'}>
-                        Copyright &copy; {window.gbans.site_name || 'gbans'} {new Date().getFullYear()}{' '}
+                        Copyright &copy; {__SITE_NAME__} {new Date().getFullYear()}{' '}
                     </Typography>
                     <Stack
                         // direction={'row'}
@@ -45,7 +45,7 @@ export const Footer = (): JSX.Element => {
                             to={gbansUrl}
                             sx={{ color: theme.palette.text.primary }}
                         >
-                            {window.gbans.build_version}
+                            {__BUILD_VERSION__}
                         </Link>
                         <Link
                             component={RouterLink}

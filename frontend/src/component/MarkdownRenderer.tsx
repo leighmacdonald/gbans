@@ -10,7 +10,7 @@ const renderLinks = (body_md: string): string => {
     return body_md
         .replace('/^[\u200B\u200C\u200D\u200E\u200F\uFEFF]/', '')
         .replace(/(wiki:\/\/)/gi, '/wiki/')
-        .replace(/(media:\/\/)/gi, window.gbans.asset_url != '' ? window.gbans.asset_url : '/asset' + '/');
+        .replace(/(media:\/\/)/gi, __ASSET_URL__ != '' ? __ASSET_URL__ : '/asset' + '/');
 };
 
 interface MDImgProps {

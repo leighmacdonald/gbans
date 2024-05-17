@@ -11,11 +11,7 @@ import './fonts/tf2build.css';
 declare global {
     interface Window {
         gbans: {
-            site_name: string;
             discord_client_id: string;
-            discord_link_id: string;
-            asset_url: string;
-            build_version: string;
             build_date: string;
             build_commit: string;
             sentry_dsn_web: string;
@@ -29,7 +25,7 @@ if (window.gbans.sentry_dsn_web != '') {
     // TODO instrumentation for tanstack router, not currently officially supported
     Sentry.init({
         dsn: window.gbans.sentry_dsn_web,
-        release: window.gbans.build_version,
+        release: __BUILD_VERSION__,
         // Performance Monitoring
         tracesSampleRate: 1.0, //  Capture 100% of the transactions
         // Session Replay
