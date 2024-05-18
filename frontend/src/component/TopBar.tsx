@@ -1,5 +1,6 @@
 import { JSX, useMemo, useState, MouseEvent } from 'react';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import AddModeratorIcon from '@mui/icons-material/AddModerator';
 import ArticleIcon from '@mui/icons-material/Article';
 import BlockIcon from '@mui/icons-material/Block';
 import CellTowerIcon from '@mui/icons-material/CellTower';
@@ -275,6 +276,11 @@ export const TopBar = () => {
                     leftIcon: <SettingsIcon sx={colourOpts} />,
                     label: 'Servers',
                     callback: onClickHandler('/admin/servers')
+                },
+                {
+                    leftIcon: <AddModeratorIcon sx={colourOpts} />,
+                    label: 'Game Admins',
+                    callback: onClickHandler('/admin/game-admins')
                 }
             ]
         };

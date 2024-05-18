@@ -20,9 +20,9 @@ import (
 )
 
 type srcdsHandler struct {
-	sru              domain.SRCDSUsecase
+	srcdsUsecase     domain.SRCDSUsecase
 	ServerUsecase    domain.ServersUsecase
-	PersonUsecase    domain.PersonUsecase
+	personUsecase    domain.PersonUsecase
 	stateUsecase     domain.StateUsecase
 	discordUsecase   domain.DiscordUsecase
 	configUsecase    domain.ConfigUsecase
@@ -47,9 +47,9 @@ func NewSRCDSHandler(engine *gin.Engine, srcdsUsecase domain.SRCDSUsecase, serve
 	blocklistUsecase domain.BlocklistUsecase,
 ) {
 	handler := srcdsHandler{
-		sru:              srcdsUsecase,
+		srcdsUsecase:     srcdsUsecase,
 		ServerUsecase:    serversUsecase,
-		PersonUsecase:    personUsecase,
+		personUsecase:    personUsecase,
 		reportUsecase:    reportUsecase,
 		banUsecase:       banUsecase,
 		assetUsecase:     assetUsecase,
@@ -67,10 +67,24 @@ func NewSRCDSHandler(engine *gin.Engine, srcdsUsecase domain.SRCDSUsecase, serve
 	// unauthed
 	engine.POST("/api/server/auth", handler.onSAPIPostServerAuth())
 
-	// serverAuth := srvGrp.Use(authServerMiddleWare(env))
-	srvGrp := engine.Group("/")
+	adminGroup := engine.Group("/")
 	{
-		server := srvGrp.Use(authUsecase.AuthServerMiddleWare())
+		admin := adminGroup.Use(authUsecase.AuthMiddleware(domain.PAdmin))
+		admin.GET("/api/smadmin/groups", handler.onAPISMGroups())
+		admin.POST("/api/smadmin/groups", handler.onCreateSMGroup())
+		admin.POST("/api/smadmin/groups/:group_id", handler.onSaveSMGroup())
+		admin.DELETE("/api/smadmin/groups/:group_id", handler.onDeleteSMGroup())
+
+		admin.GET("/api/smadmin/admins", handler.onGetSMAdmins())
+		admin.POST("/api/smadmin/admins", handler.onCreateSMAdmin())
+		admin.POST("/api/smadmin/admins/:admin_id", handler.onSaveSMAdmin())
+		admin.DELETE("/api/smadmin/admins/:admin_id", handler.onDeleteSMAdmin())
+	}
+
+	// Endpoints called by sourcemod plugin
+	srcdsGroup := engine.Group("/")
+	{
+		server := srcdsGroup.Use(authUsecase.AuthServerMiddleWare())
 		server.GET("/api/server/admins", handler.onAPIGetServerAdmins())
 		server.POST("/api/ping_mod", handler.onAPIPostPingMod())
 		server.POST("/api/check", handler.onAPIPostServerCheck())
@@ -109,6 +123,175 @@ func newServerToken(serverID int, cookieKey string) (string, error) {
 	return signedToken, nil
 }
 
+func (s *srcdsHandler) onSaveSMAdmin() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+
+	}
+}
+
+func (s *srcdsHandler) onDeleteSMAdmin() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		adminID, errAdminID := httphelper.GetIntParam(ctx, "admin_id")
+		if errAdminID != nil {
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+
+			return
+		}
+
+		if err := s.srcdsUsecase.DelAdmin(ctx, adminID); err != nil {
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{})
+	}
+}
+
+type smAdminRequest struct {
+	AuthType domain.AuthType `json:"auth_type"`
+	Identity string          `json:"identity"`
+	Password string          `json:"password"`
+	Flags    string          `json:"flags"`
+	Name     string          `json:"name"`
+	Immunity int             `json:"immunity"`
+}
+
+func (s *srcdsHandler) onCreateSMAdmin() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var req smAdminRequest
+		if !httphelper.Bind(ctx, &req) {
+			return
+		}
+
+		admin, errAdmin := s.srcdsUsecase.AddAdmin(ctx, req.Name, req.AuthType, req.Identity, req.Flags, req.Immunity, req.Password)
+		if errAdmin != nil {
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, admin)
+	}
+}
+
+func (s *srcdsHandler) onDeleteSMGroup() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		groupID, errGroupID := httphelper.GetIntParam(ctx, "group_id")
+		if errGroupID != nil {
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+
+			return
+		}
+
+		if err := s.srcdsUsecase.DelGroup(ctx, groupID); err != nil {
+			if errors.Is(err, domain.ErrNoResult) {
+				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
+
+				return
+			}
+
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{})
+	}
+}
+
+type smGroupRequest struct {
+	Name     string `json:"name"`
+	Immunity int    `json:"immunity"`
+	Flags    string `json:"flags"`
+}
+
+func (s *srcdsHandler) onSaveSMGroup() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		groupID, errGroupID := httphelper.GetIntParam(ctx, "group_id")
+		if errGroupID != nil {
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+
+			return
+		}
+
+		group, errGroup := s.srcdsUsecase.GetGroupByID(ctx, groupID)
+		if errGroup != nil {
+			if errors.Is(errGroup, domain.ErrNoResult) {
+				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
+
+				return
+			}
+
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+
+			return
+		}
+
+		var req smGroupRequest
+		if !httphelper.Bind(ctx, &req) {
+			return
+		}
+
+		group.Name = req.Name
+		group.Flags = req.Flags
+		group.ImmunityLevel = req.Immunity
+
+		editedGroup, errSave := s.srcdsUsecase.SaveGroup(ctx, group)
+		if errSave != nil {
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, editedGroup)
+	}
+}
+
+func (s *srcdsHandler) onCreateSMGroup() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var req smGroupRequest
+		if !httphelper.Bind(ctx, &req) {
+			return
+		}
+
+		group, errGroup := s.srcdsUsecase.AddGroup(ctx, req.Name, req.Flags, req.Immunity)
+		if errGroup != nil {
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+
+			return
+		}
+
+		ctx.JSON(http.StatusCreated, group)
+	}
+}
+
+func (s *srcdsHandler) onAPISMGroups() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		groups, errGroups := s.srcdsUsecase.Groups(ctx)
+		if errGroups != nil {
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, groups)
+	}
+}
+
+func (s *srcdsHandler) onGetSMAdmins() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		admins, errAdmins := s.srcdsUsecase.Admins(ctx)
+		if errAdmins != nil {
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, admins)
+	}
+}
+
 func (s *srcdsHandler) onSAPIPostServerAuth() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req domain.ServerAuthReq
@@ -116,7 +299,7 @@ func (s *srcdsHandler) onSAPIPostServerAuth() gin.HandlerFunc {
 			return
 		}
 
-		token, err := s.sru.ServerAuth(ctx, req)
+		token, err := s.srcdsUsecase.ServerAuth(ctx, req)
 		if err != nil {
 			httphelper.ResponseErr(ctx, http.StatusUnauthorized, domain.ErrPermissionDenied)
 			slog.Warn("Failed to check server auth", log.ErrAttr(err), slog.String("key", req.Key))
@@ -161,7 +344,7 @@ func (s *srcdsHandler) onAPIPostReportCreate() gin.HandlerFunc {
 			return
 		}
 
-		report, errReport := s.sru.Report(ctx, currentUser, req)
+		report, errReport := s.srcdsUsecase.Report(ctx, currentUser, req)
 		if errReport != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, errReport)
 			slog.Error("Failed to create report", log.ErrAttr(errReport))
@@ -293,7 +476,7 @@ func (s *srcdsHandler) onAPIPostPingMod() gin.HandlerFunc {
 			return
 		}
 
-		author, err := s.PersonUsecase.GetOrCreatePersonBySteamID(ctx, req.SteamID)
+		author, err := s.personUsecase.GetOrCreatePersonBySteamID(ctx, req.SteamID)
 		if err != nil {
 			slog.Error("Failed to load user", log.ErrAttr(err))
 
@@ -364,14 +547,14 @@ func (s *srcdsHandler) onAPIPostServerCheck() gin.HandlerFunc {
 			return
 		}
 
-		person, errPerson := s.PersonUsecase.GetOrCreatePersonBySteamID(responseCtx, sid)
+		person, errPerson := s.personUsecase.GetOrCreatePersonBySteamID(responseCtx, sid)
 		if errPerson != nil {
 			slog.Error("Failed to create connecting player", log.ErrAttr(errPerson))
 		} else if person.Expired() {
 			if err := thirdparty.UpdatePlayerSummary(ctx, &person); err != nil {
 				slog.Error("Failed to update connecting player", log.ErrAttr(err))
 			} else {
-				if errSave := s.PersonUsecase.SavePerson(ctx, &person); errSave != nil {
+				if errSave := s.personUsecase.SavePerson(ctx, &person); errSave != nil {
 					slog.Error("Failed to save connecting player summary", log.ErrAttr(err))
 				}
 			}

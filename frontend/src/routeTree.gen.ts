@@ -49,6 +49,7 @@ import { Route as AuthForumsForumidImport } from './routes/_auth.forums.$forum_i
 import { Route as AuthContestsContestidImport } from './routes/_auth.contests.$contest_id'
 import { Route as AuthBanBanidImport } from './routes/_auth.ban.$ban_id'
 import { Route as AdminAdminServersImport } from './routes/_admin.admin.servers'
+import { Route as AdminAdminGameAdminsImport } from './routes/_admin.admin.game-admins'
 import { Route as ModAdminNetworkIndexImport } from './routes/_mod.admin.network.index'
 import { Route as ModAdminNetworkPlayersbyipImport } from './routes/_mod.admin.network.playersbyip'
 import { Route as ModAdminNetworkIphistImport } from './routes/_mod.admin.network.iphist'
@@ -254,6 +255,11 @@ const AdminAdminServersRoute = AdminAdminServersImport.update({
   getParentRoute: () => AdminRoute,
 } as any)
 
+const AdminAdminGameAdminsRoute = AdminAdminGameAdminsImport.update({
+  path: '/admin/game-admins',
+  getParentRoute: () => AdminRoute,
+} as any)
+
 const ModAdminNetworkIndexRoute = ModAdminNetworkIndexImport.update({
   path: '/admin/network/',
   getParentRoute: () => ModRoute,
@@ -432,6 +438,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof GuestIndexImport
       parentRoute: typeof GuestImport
+    }
+    '/_admin/admin/game-admins': {
+      id: '/_admin/admin/game-admins'
+      path: '/admin/game-admins'
+      fullPath: '/admin/game-admins'
+      preLoaderRoute: typeof AdminAdminGameAdminsImport
+      parentRoute: typeof AdminImport
     }
     '/_admin/admin/servers': {
       id: '/_admin/admin/servers'
@@ -677,7 +690,10 @@ declare module '@tanstack/react-router' {
 // Create and export the route tree
 
 export const routeTree = rootRoute.addChildren({
-  AdminRoute: AdminRoute.addChildren({ AdminAdminServersRoute }),
+  AdminRoute: AdminRoute.addChildren({
+    AdminAdminGameAdminsRoute,
+    AdminAdminServersRoute,
+  }),
   AuthRoute: AuthRoute.addChildren({
     AuthChatlogsRoute,
     AuthLogoutRoute,

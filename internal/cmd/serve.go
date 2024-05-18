@@ -161,11 +161,6 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				Select("a.asset_id", "a.bucket", "a.mime_type", "a.size", "a.name", "m.author_id").
 				From("asset_temp")
 
-			// assetRepository := asset.NewS3Repository(dbUsecase, minioClient, conf.S3Store.Region)
-			// if errInit := assetRepository.Init(ctx); errInit != nil {
-			//	slog.Error("Failed to ensure s3 buckets exist", log.ErrAttr(errInit))
-			// }
-
 			assetUsecase := asset.NewAssetUsecase(assetRepository)
 
 			serversUsecase := servers.NewServersUsecase(servers.NewServersRepository(dbUsecase))
@@ -217,7 +212,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			patreonUsecase := patreon.NewPatreonUsecase(patreon.NewPatreonRepository(dbUsecase))
 			go patreonUsecase.Start(ctx)
 
-			srcdsUsecase := srcds.NewSrcdsUsecase(configUsecase, serversUsecase, personUsecase, reportUsecase, discordUsecase)
+			srcdsUsecase := srcds.NewSrcdsUsecase(srcds.NewRepository(dbUsecase), configUsecase, serversUsecase, personUsecase, reportUsecase, discordUsecase)
 
 			wikiUsecase := wiki.NewWikiUsecase(wiki.NewWikiRepository(dbUsecase))
 

@@ -117,16 +117,96 @@ export const apiGetServers = async () => apiCall<ServerSimple[]>(`/api/servers`,
 
 export const apiDeleteServer = async (server_id: number) => await apiCall(`/api/servers/${server_id}`, 'DELETE');
 
-export interface SlimServer {
-    addr: string;
+export type AuthType = 'steam' | 'name' | 'ip';
+
+export type OverrideType = 'command' | 'group';
+
+export type OverrideAccess = 'allow' | 'deny';
+
+export type SMAdmin = {
+    admin_id: number;
+    steam_id: string;
+    auth_type: AuthType;
+    identity: string;
+    password: string;
+    flags: string;
     name: string;
-    region: number;
-    players: number;
-    max_players: number;
-    bots: number;
-    map: string;
-    game_types: string[];
-    latitude: number;
-    longitude: number;
-    distance: number;
-}
+    immunity: number;
+} & TimeStamped;
+
+export type SMGroups = {
+    group_id: number;
+    flags: string;
+    name: string;
+    immunity_level: number;
+} & TimeStamped;
+
+type Flags =
+    | 'z'
+    | 'a'
+    | 'b'
+    | 'c'
+    | 'd'
+    | 'e'
+    | 'f'
+    | 'g'
+    | 'h'
+    | 'i'
+    | 'j'
+    | 'k'
+    | 'l'
+    | 'm'
+    | 'n'
+    | 'o'
+    | 'p'
+    | 'q'
+    | 'r'
+    | 's'
+    | 't';
+
+export const hasFlag = (flag: Flags, entity?: SMGroups | SMAdmin) => {
+    return entity?.flags.includes(flag) ?? false;
+};
+
+export type SMGroupImmunity = {
+    group_id: number;
+    other_id: number;
+};
+
+export type SMOverrides = {
+    type: OverrideType;
+    name: string;
+    flags: string;
+};
+
+export type SMAdminGroups = {
+    admin_id: number;
+    group_id: number;
+    inherit_order: number;
+};
+
+export const apiGetSMGroups = async () =>
+    (await apiCall<SMGroups[]>('/api/smadmin/groups')).map(transformTimeStampedDates);
+
+export const apiGetSMAdmins = async () => await apiCall<SMAdmin[]>('/api/smadmin/admins');
+
+export const apiCreateSMGroup = async (name: string, immunity: number, flags: string) =>
+    transformTimeStampedDates(
+        await apiCall<SMGroups>('/api/smadmin/groups', 'POST', {
+            name,
+            immunity,
+            flags
+        })
+    );
+
+export const apiSaveSMGroup = async (group_id: number, name: string, immunity: number, flags: string) =>
+    transformTimeStampedDates(
+        await apiCall<SMGroups>(`/api/smadmin/groups/${group_id}`, 'POST', {
+            name,
+            immunity,
+            flags
+        })
+    );
+
+export const apiDeleteSMGroup = async (group_id: number) =>
+    await apiCall(`/api/smadmin/groups/${group_id}`, 'DELETE', undefined);
