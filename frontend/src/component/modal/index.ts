@@ -17,6 +17,8 @@ import { ForumThreadCreatorModal } from './ForumThreadCreatorModal.tsx';
 import { ForumThreadEditorModal } from './ForumThreadEditorModal.tsx';
 import IPWhitelistEditorModal from './IPWhitelistEditorModal.tsx';
 import PersonEditModal from './PersonEditModal.tsx';
+import { SMAdminEditorModal } from './SMAdminEditorModal.tsx';
+import { SMGroupEditorModal } from './SMGroupEditorModal.tsx';
 import ServerDeleteModal from './ServerDeleteModal.tsx';
 import { ServerEditorModal } from './ServerEditorModal.tsx';
 import { SteamWhitelistEditorModal } from './SteamWhitelistEditorModal.tsx';
@@ -25,6 +27,8 @@ import UnbanCIDRModal from './UnbanCIDRModal.tsx';
 import UnbanGroupModal from './UnbanGroupModal.tsx';
 import UnbanSteamModal from './UnbanSteamModal.tsx';
 
+export const ModalSMGroupEditor = 'modal-sm-group-editor';
+export const ModalSMAdminEditor = 'modal-sm-admin-editor';
 export const ModalSteamWhitelistEditor = 'modal-steam-whitelist-editor';
 export const ModalCIDRWhitelistEditor = 'modal-cidr-whitelist-editor';
 export const ModalCIDRBlockEditor = 'modal-cidr-block-editor';
@@ -52,6 +56,8 @@ export const ModalForumThreadCreator = 'modal-forum-thread-creator';
 export const ModalForumThreadEditor = 'modal-forum-thread-editor';
 
 [
+    [ModalSMGroupEditor, SMGroupEditorModal],
+    [ModalSMAdminEditor, SMAdminEditorModal],
     [ModalSteamWhitelistEditor, SteamWhitelistEditorModal],
     [ModalCIDRWhitelistEditor, IPWhitelistEditorModal],
     [ModalCIDRBlockEditor, CIDRBlockEditorModal],

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/discord"
@@ -18,15 +19,16 @@ import (
 type srcdsUsecase struct {
 	cu     domain.ConfigUsecase
 	sv     domain.ServersUsecase
-	sr     srcdsRepository
+	sr     domain.SRCDSRepository
 	pu     domain.PersonUsecase
 	ru     domain.ReportUsecase
 	du     domain.DiscordUsecase
 	cookie string
 }
 
-func NewSrcdsUsecase(configUsecase domain.ConfigUsecase, serversUsecase domain.ServersUsecase,
+func NewSrcdsUsecase(srcdsRepository domain.SRCDSRepository, configUsecase domain.ConfigUsecase, serversUsecase domain.ServersUsecase,
 	personUsecase domain.PersonUsecase, reportUsecase domain.ReportUsecase, discordUsecase domain.DiscordUsecase,
+
 ) domain.SRCDSUsecase {
 	return &srcdsUsecase{
 		cu:     configUsecase,
@@ -34,6 +36,7 @@ func NewSrcdsUsecase(configUsecase domain.ConfigUsecase, serversUsecase domain.S
 		pu:     personUsecase,
 		ru:     reportUsecase,
 		du:     discordUsecase,
+		sr:     srcdsRepository,
 		cookie: configUsecase.Config().HTTP.CookieKey,
 	}
 }
@@ -148,7 +151,7 @@ func (h srcdsUsecase) Report(ctx context.Context, currentUser domain.UserProfile
 }
 
 func (h srcdsUsecase) SetAdminGroups(ctx context.Context, authType domain.AuthType, identity string, groups ...domain.SMGroups) error {
-	admin, errAdmin := h.sr.GetAdminByID(ctx, authType, identity)
+	admin, errAdmin := h.sr.GetAdminByIdentity(ctx, authType, identity)
 	if errAdmin != nil {
 		return errAdmin
 	}
@@ -181,6 +184,8 @@ func (h srcdsUsecase) DelGroup(ctx context.Context, groupID int) error {
 	return h.sr.DeleteGroup(ctx, group)
 }
 
+const validFlags = "zabcdefghijklmnopqrst"
+
 func (h srcdsUsecase) AddGroup(ctx context.Context, name string, flags string, immunityLevel int) (domain.SMGroups, error) {
 	if name == "" {
 		return domain.SMGroups{}, domain.ErrSMGroupName
@@ -188,6 +193,12 @@ func (h srcdsUsecase) AddGroup(ctx context.Context, name string, flags string, i
 
 	if immunityLevel > 100 || immunityLevel < 0 {
 		return domain.SMGroups{}, domain.ErrSMImmunity
+	}
+
+	for _, flag := range flags {
+		if !strings.ContainsRune(validFlags, flag) {
+			return domain.SMGroups{}, domain.ErrSMAdminFlagInvalid
+		}
 	}
 
 	return h.sr.AddGroup(ctx, domain.SMGroups{
@@ -217,12 +228,8 @@ func validateAuthTypeOpts(authType domain.AuthType, adminID string) error {
 	return nil
 }
 
-func (h srcdsUsecase) DelAdmin(ctx context.Context, authType domain.AuthType, identity string) error {
-	if errValidate := validateAuthTypeOpts(authType, identity); errValidate != nil {
-		return errValidate
-	}
-
-	admin, errAdmin := h.sr.GetAdminByID(ctx, authType, identity)
+func (h srcdsUsecase) DelAdmin(ctx context.Context, adminID int) error {
+	admin, errAdmin := h.sr.GetAdminByID(ctx, adminID)
 	if errAdmin != nil {
 		return errAdmin
 	}
@@ -239,7 +246,7 @@ func (h srcdsUsecase) AddAdmin(ctx context.Context, alias string, authType domai
 		return domain.SMAdmin{}, domain.ErrSMImmunity
 	}
 
-	admin, errAdmin := h.sr.GetAdminByID(ctx, authType, identity)
+	admin, errAdmin := h.sr.GetAdminByIdentity(ctx, authType, identity)
 	if errAdmin != nil && errors.Is(errAdmin, domain.ErrNoResult) {
 		return domain.SMAdmin{}, errAdmin
 	}
@@ -262,4 +269,34 @@ func (h srcdsUsecase) AddAdmin(ctx context.Context, alias string, authType domai
 		Name:     alias,
 		Immunity: immunity,
 	})
+}
+
+func (h srcdsUsecase) Admins(ctx context.Context) ([]domain.SMAdmin, error) {
+	return h.sr.Admins(ctx)
+}
+
+func (h srcdsUsecase) Groups(ctx context.Context) ([]domain.SMGroups, error) {
+	return h.sr.Groups(ctx)
+}
+
+func (h srcdsUsecase) GetGroupByID(ctx context.Context, groupID int) (domain.SMGroups, error) {
+	return h.sr.GetGroupByID(ctx, groupID)
+}
+
+func (h srcdsUsecase) SaveGroup(ctx context.Context, group domain.SMGroups) (domain.SMGroups, error) {
+	if group.Name == "" {
+		return domain.SMGroups{}, domain.ErrSMGroupName
+	}
+
+	if group.ImmunityLevel > 100 || group.ImmunityLevel < 0 {
+		return domain.SMGroups{}, domain.ErrSMImmunity
+	}
+
+	for _, flag := range group.Flags {
+		if !strings.ContainsRune(validFlags, flag) {
+			return domain.SMGroups{}, domain.ErrSMAdminFlagInvalid
+		}
+	}
+
+	return h.sr.SaveGroup(ctx, group)
 }
