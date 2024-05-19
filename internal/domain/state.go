@@ -25,6 +25,7 @@ type StateUsecase interface {
 	FindByName(name string) []PlayerServerInfo
 	FindBySteamID(steamID steamid.SteamID) []PlayerServerInfo
 	Kick(ctx context.Context, target steamid.SteamID, reason Reason) error
+	KickPlayerID(ctx context.Context, targetPlayerID int, targetServerID int, reason Reason) error
 	LogAddressAdd(ctx context.Context, logAddress string)
 	OnFindExec(ctx context.Context, name string, steamID steamid.SteamID, ip net.IP, cidr *net.IPNet, onFoundCmd func(info PlayerServerInfo) string) error
 	PSay(ctx context.Context, target steamid.SteamID, message string) error

@@ -27,8 +27,8 @@ func (r *wordFilterRepository) SaveFilter(ctx context.Context, filter *domain.Fi
 
 func (r *wordFilterRepository) insertFilter(ctx context.Context, filter *domain.Filter) error {
 	const query = `
-		INSERT INTO filtered_word (author_id, pattern, is_regex, is_enabled, trigger_count, created_on, updated_on, action, duration, weight) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
+		INSERT INTO filtered_word (author_id, pattern, is_regex, is_enabled, trigger_count, created_on, updated_on, action, duration, weight)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		RETURNING filter_id`
 
 	if errQuery := r.db.QueryRow(ctx, query, filter.AuthorID.Int64(), filter.Pattern,

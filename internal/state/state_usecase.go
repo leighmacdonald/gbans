@@ -354,6 +354,13 @@ func (s *stateUsecase) Kick(ctx context.Context, target steamid.SteamID, reason 
 	return nil
 }
 
+// Kick will kick the steam id from whatever server it is connected to.
+func (s *stateUsecase) KickPlayerID(ctx context.Context, targetPlayerID int, targetServerID int, reason domain.Reason) error {
+	_, err := s.ExecServer(ctx, targetServerID, fmt.Sprintf("sm_kick #%d %s", targetPlayerID, reason.String()))
+
+	return err
+}
+
 // Silence will gag & mute a player.
 func (s *stateUsecase) Silence(ctx context.Context, target steamid.SteamID, reason domain.Reason,
 ) error {

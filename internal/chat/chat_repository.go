@@ -42,9 +42,81 @@ func NewChatRepository(database database.Database, personUsecase domain.PersonUs
 	}
 }
 
+func (r chatRepository) handleMessage(ctx context.Context, evt logparse.ServerEvent, person logparse.SourcePlayer, msg string, team bool, created time.Time, reason domain.Reason) {
+	if msg == "" {
+		slog.Warn("Empty message body, skipping")
+
+		return
+	}
+
+	_, errPerson := r.personUsecase.GetOrCreatePersonBySteamID(ctx, person.SID)
+	if errPerson != nil {
+		slog.Error("Failed to handle message, could not get author", log.ErrAttr(errPerson), slog.String("message", msg))
+
+		return
+	}
+
+	matchID, _ := r.matchUsecase.GetMatchIDFromServerID(evt.ServerID)
+
+	personMsg := domain.PersonMessage{
+		SteamID:     person.SID,
+		PersonaName: strings.ToValidUTF8(person.Name, "_"),
+		ServerName:  evt.ServerName,
+		ServerID:    evt.ServerID,
+		Body:        strings.ToValidUTF8(msg, "_"),
+		Team:        team,
+		CreatedOn:   created,
+		MatchID:     matchID,
+	}
+
+	if errChat := r.AddChatHistory(ctx, &personMsg); errChat != nil {
+		slog.Error("Failed to add chat history", log.ErrAttr(errChat))
+
+		return
+	}
+
+	go func(userMsg domain.PersonMessage) {
+		if userMsg.ServerName == "localhost-1" {
+			slog.Debug("Chat message",
+				slog.Int64("id", userMsg.PersonMessageID),
+				slog.String("server", evt.ServerName),
+				slog.String("name", person.Name),
+				slog.String("steam_id", person.SID.String()),
+				slog.Bool("team", userMsg.Team),
+				slog.String("message", userMsg.Body))
+		}
+
+		matchedFilter := r.wordFilterUsecase.Check(userMsg.Body)
+		if len(matchedFilter) > 0 {
+			if errSaveMatch := r.wordFilterUsecase.AddMessageFilterMatch(ctx, userMsg.PersonMessageID, matchedFilter[0].FilterID); errSaveMatch != nil {
+				slog.Error("Failed to save message findMatch status", log.ErrAttr(errSaveMatch))
+			}
+
+			matchResult := matchedFilter[0]
+			r.WarningChan <- domain.NewUserWarning{
+				UserMessage: userMsg,
+				PlayerID:    person.PID,
+				UserWarning: domain.UserWarning{
+					WarnReason: reason,
+					Message:    userMsg.Body,
+					// todo
+					// Matched:       matchResult,
+					MatchedFilter: matchResult,
+					CreatedOn:     time.Now(),
+					Personaname:   userMsg.PersonaName,
+					Avatar:        userMsg.AvatarHash,
+					ServerName:    userMsg.ServerName,
+					ServerID:      userMsg.ServerID,
+					SteamID:       userMsg.SteamID.String(),
+				},
+			}
+		}
+	}(personMsg)
+}
+
 func (r chatRepository) Start(ctx context.Context) {
 	eventChan := make(chan logparse.ServerEvent)
-	if errRegister := r.broadcaster.Consume(eventChan, logparse.Say, logparse.SayTeam); errRegister != nil {
+	if errRegister := r.broadcaster.Consume(eventChan, logparse.Connected, logparse.Say, logparse.SayTeam); errRegister != nil {
 		slog.Warn("logWriter Tried to register duplicate reader channel", log.ErrAttr(errRegister))
 
 		return
@@ -56,86 +128,31 @@ func (r chatRepository) Start(ctx context.Context) {
 			return
 		case evt := <-eventChan:
 			switch evt.EventType {
-			case logparse.Say:
-				fallthrough
-			case logparse.SayTeam:
-				newServerEvent, ok := evt.Event.(logparse.SayEvt)
+			case logparse.Connected:
+				connectEvent, ok := evt.Event.(logparse.ConnectedEvt)
 				if !ok {
 					continue
 				}
 
-				if newServerEvent.Msg == "" {
-					slog.Warn("Empty Person message body, skipping")
+				connectMsg := "Player connected with username: " + connectEvent.SourcePlayer.Name
 
+				r.handleMessage(ctx, evt, connectEvent.SourcePlayer, connectMsg, false, connectEvent.CreatedOn, domain.Username)
+			case logparse.Say:
+				fallthrough
+			case logparse.SayTeam:
+				sayEvent, ok := evt.Event.(logparse.SayEvt)
+				if !ok {
 					continue
 				}
 
-				_, errPerson := r.personUsecase.GetOrCreatePersonBySteamID(ctx, newServerEvent.SID)
-				if errPerson != nil {
-					slog.Error("Failed to add chat history, could not get author", log.ErrAttr(errPerson))
-
-					continue
-				}
-
-				matchID, _ := r.matchUsecase.GetMatchIDFromServerID(evt.ServerID)
-
-				msg := domain.PersonMessage{
-					SteamID:     newServerEvent.SID,
-					PersonaName: strings.ToValidUTF8(newServerEvent.Name, "_"),
-					ServerName:  evt.ServerName,
-					ServerID:    evt.ServerID,
-					Body:        strings.ToValidUTF8(newServerEvent.Msg, "_"),
-					Team:        newServerEvent.Team,
-					CreatedOn:   newServerEvent.CreatedOn,
-					MatchID:     matchID,
-				}
-
-				if errChat := r.AddChatHistory(ctx, &msg); errChat != nil {
-					slog.Error("Failed to add chat history", log.ErrAttr(errChat))
-
-					continue
-				}
-
-				go func(userMsg domain.PersonMessage) {
-					if msg.ServerName == "localhost-1" {
-						slog.Debug("Chat message",
-							slog.Int64("id", msg.PersonMessageID),
-							slog.String("server", evt.ServerName),
-							slog.String("name", newServerEvent.Name),
-							slog.String("steam_id", newServerEvent.SID.String()),
-							slog.Bool("team", msg.Team),
-							slog.String("message", msg.Body))
-					}
-
-					matchedFilter := r.wordFilterUsecase.Check(userMsg.Body)
-					if len(matchedFilter) > 0 {
-						if errSaveMatch := r.wordFilterUsecase.AddMessageFilterMatch(ctx, userMsg.PersonMessageID, matchedFilter[0].FilterID); errSaveMatch != nil {
-							slog.Error("Failed to save message findMatch status", log.ErrAttr(errSaveMatch))
-						}
-
-						matchResult := matchedFilter[0]
-
-						r.WarningChan <- domain.NewUserWarning{
-							UserMessage: userMsg,
-							UserWarning: domain.UserWarning{
-								WarnReason: domain.Language,
-								Message:    userMsg.Body,
-								// todo
-								// Matched:       matchResult,
-								MatchedFilter: matchResult,
-								CreatedOn:     time.Now(),
-								Personaname:   userMsg.PersonaName,
-								Avatar:        userMsg.AvatarHash,
-								ServerName:    userMsg.ServerName,
-								ServerID:      userMsg.ServerID,
-								SteamID:       userMsg.SteamID.String(),
-							},
-						}
-					}
-				}(msg)
+				r.handleMessage(ctx, evt, sayEvent.SourcePlayer, sayEvent.Msg, sayEvent.Team, sayEvent.CreatedOn, domain.Language)
 			}
 		}
 	}
+}
+
+func (r chatRepository) GetWarningChan() chan domain.NewUserWarning {
+	return r.WarningChan
 }
 
 func (r chatRepository) TopChatters(ctx context.Context, count uint64) ([]domain.TopChatterResult, error) {
@@ -175,8 +192,8 @@ func (r chatRepository) TopChatters(ctx context.Context, count uint64) ([]domain
 const minQueryLen = 2
 
 func (r chatRepository) AddChatHistory(ctx context.Context, message *domain.PersonMessage) error {
-	const query = `INSERT INTO person_messages 
-    		(steam_id, server_id, body, team, created_on, persona_name, match_id) 
+	const query = `INSERT INTO person_messages
+    		(steam_id, server_id, body, team, created_on, persona_name, match_id)
 			VALUES ($1, $2, $3, $4, $5, $6, $7)
 			RETURNING person_message_id`
 
