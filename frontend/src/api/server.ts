@@ -132,6 +132,7 @@ export type SMAdmin = {
     flags: string;
     name: string;
     immunity: number;
+    groups: SMGroups[];
 } & TimeStamped;
 
 export type SMGroups = {
@@ -205,6 +206,14 @@ export const apiCreateSMAdmin = async (
             identity,
             password
         })
+    );
+
+export const apiAddAdminToGroup = async (admin_id: number, group_id: number) =>
+    transformTimeStampedDates(await apiCall<SMAdmin>(`/api/smadmin/admins/${admin_id}/groups`, 'POST', { group_id }));
+
+export const apiDelAdminFromGroup = async (admin_id: number, group_id: number) =>
+    transformTimeStampedDates(
+        await apiCall<SMAdmin>(`/api/smadmin/admins/${admin_id}/groups/${group_id}`, 'DELETE', undefined)
     );
 
 export const apiSaveSMAdmin = async (

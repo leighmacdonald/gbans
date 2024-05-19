@@ -12,6 +12,7 @@ var (
 	ErrSMInvalidAuthName  = errors.New("invalid auth name")
 	ErrSMImmunity         = errors.New("invalid immunity level, must be between 0-100")
 	ErrSMGroupName        = errors.New("group name cannot be empty")
+	ErrSMAdminGroupExists = errors.New("admin group already exists")
 	ErrSMAdminExists      = errors.New("admin already exists")
 	ErrSMAdminFlagInvalid = errors.New("invalid admin flag")
 	ErrSMRequirePassword  = errors.New("name auth type requires password")
@@ -24,14 +25,20 @@ type SRCDSRepository interface {
 	AddGroup(ctx context.Context, group SMGroups) (SMGroups, error)
 	DeleteGroup(ctx context.Context, group SMGroups) error
 	DeleteAdminGroups(ctx context.Context, admin SMAdmin) error
+	DeleteAdminGroup(ctx context.Context, admin SMAdmin, group SMGroups) error
 	InsertAdminGroup(ctx context.Context, admin SMAdmin, group SMGroups, inheritOrder int) error
 	GetGroupByID(ctx context.Context, groupID int) (SMGroups, error)
 	GetGroupByName(ctx context.Context, groupName string) (SMGroups, error)
 	GetAdminByID(ctx context.Context, adminID int) (SMAdmin, error)
 	GetAdminByIdentity(ctx context.Context, authType AuthType, identity string) (SMAdmin, error)
 	SaveGroup(ctx context.Context, group SMGroups) (SMGroups, error)
+	GetAdminGroups(ctx context.Context, admin SMAdmin) ([]SMGroups, error)
 	Admins(ctx context.Context) ([]SMAdmin, error)
 	Groups(ctx context.Context) ([]SMGroups, error)
+	AddGroupOverride(ctx context.Context, override SMGroupOverrides) error
+	AddOverride(ctx context.Context, overrides SMOverrides) error
+	GroupOverrides(ctx context.Context) ([]SMGroupOverrides, error)
+	Overrides(ctx context.Context) ([]SMOverrides, error)
 }
 
 type SRCDSUsecase interface {
@@ -47,7 +54,10 @@ type SRCDSUsecase interface {
 	GetGroupByID(ctx context.Context, groupID int) (SMGroups, error)
 	Groups(ctx context.Context) ([]SMGroups, error)
 	SaveGroup(ctx context.Context, group SMGroups) (SMGroups, error)
+	GetAdminGroups(ctx context.Context, admin SMAdmin) ([]SMGroups, error)
 	SetAdminGroups(ctx context.Context, authType AuthType, identity string, groups ...SMGroups) error
+	AddAdminGroup(ctx context.Context, adminID int, groupID int) (SMAdmin, error)
+	DelAdminGroup(ctx context.Context, adminID int, groupID int) (SMAdmin, error)
 }
 
 type AuthType string
@@ -81,6 +91,7 @@ type SMAdmin struct {
 	Flags    string          `json:"flags"`
 	Name     string          `json:"name"`
 	Immunity int             `json:"immunity"`
+	Groups   []SMGroups      `json:"groups"`
 	TimeStamped
 }
 

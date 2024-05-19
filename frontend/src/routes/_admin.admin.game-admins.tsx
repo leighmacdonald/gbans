@@ -4,21 +4,32 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import GroupsIcon from '@mui/icons-material/Groups';
+import PersonIcon from '@mui/icons-material/Person';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
+import Tooltip from '@mui/material/Tooltip';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { createColumnHelper } from '@tanstack/react-table';
-import { apiDeleteSMAdmin, apiDeleteSMGroup, apiGetSMAdmins, apiGetSMGroups, SMAdmin, SMGroups } from '../api';
+import {
+    apiAddAdminToGroup,
+    apiDelAdminFromGroup,
+    apiDeleteSMAdmin,
+    apiDeleteSMGroup,
+    apiGetSMAdmins,
+    apiGetSMGroups,
+    SMAdmin,
+    SMGroups
+} from '../api';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { FullTable } from '../component/FullTable.tsx';
 import { TableCellString } from '../component/TableCellString.tsx';
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Title } from '../component/Title';
-import { ModalConfirm, ModalSMAdminEditor, ModalSMGroupEditor } from '../component/modal';
+import { ModalConfirm, ModalSMAdminEditor, ModalSMGroupEditor, ModalSMGroupSelect } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
@@ -89,7 +100,13 @@ const makeGroupColumns = (
 
 const adminColumnHelper = createColumnHelper<SMAdmin>();
 
-const makeAdminColumns = (onEdit: (admin: SMAdmin) => Promise<void>, onDelete: (admin: SMAdmin) => Promise<void>) => [
+const makeAdminColumns = (
+    groupCount: number,
+    onEdit: (admin: SMAdmin) => Promise<void>,
+    onDelete: (admin: SMAdmin) => Promise<void>,
+    onAddGroup: (admin: SMAdmin) => Promise<void>,
+    onDelGroup: (admin: SMAdmin) => Promise<void>
+) => [
     adminColumnHelper.accessor('admin_id', {
         header: () => <TableHeadingCell name={'ID'} />,
         cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
@@ -131,31 +148,67 @@ const makeAdminColumns = (onEdit: (admin: SMAdmin) => Promise<void>, onDelete: (
         cell: (info) => <TableCellString>{renderDateTime(info.getValue())}</TableCellString>
     }),
     adminColumnHelper.display({
+        id: 'add_group',
+        cell: (info) => (
+            <Tooltip title={'Add user to group'}>
+                <IconButton
+                    disabled={info.row.original.groups.length == groupCount}
+                    color={'success'}
+                    onClick={async () => {
+                        await onAddGroup(info.row.original);
+                    }}
+                >
+                    <GroupAddIcon />
+                </IconButton>
+            </Tooltip>
+        )
+    }),
+    adminColumnHelper.display({
+        id: 'del_group',
+        cell: (info) => (
+            <Tooltip title={'Remove user from group'}>
+                <IconButton
+                    disabled={info.row.original.groups.length == 0}
+                    color={'error'}
+                    onClick={async () => {
+                        await onDelGroup(info.row.original);
+                    }}
+                >
+                    <GroupAddIcon />
+                </IconButton>
+            </Tooltip>
+        )
+    }),
+    adminColumnHelper.display({
         id: 'edit',
         maxSize: 10,
         cell: (info) => (
-            <IconButton
-                color={'warning'}
-                onClick={async () => {
-                    await onEdit(info.row.original);
-                }}
-            >
-                <EditIcon />
-            </IconButton>
+            <Tooltip title={'Edit admin'}>
+                <IconButton
+                    color={'warning'}
+                    onClick={async () => {
+                        await onEdit(info.row.original);
+                    }}
+                >
+                    <EditIcon />
+                </IconButton>
+            </Tooltip>
         )
     }),
     adminColumnHelper.display({
         id: 'delete',
         maxSize: 10,
         cell: (info) => (
-            <IconButton
-                color={'error'}
-                onClick={async () => {
-                    await onDelete(info.row.original);
-                }}
-            >
-                <DeleteIcon />
-            </IconButton>
+            <Tooltip title={'Remove admin'}>
+                <IconButton
+                    color={'error'}
+                    onClick={async () => {
+                        await onDelete(info.row.original);
+                    }}
+                >
+                    <DeleteIcon />
+                </IconButton>
+            </Tooltip>
         )
     })
 ];
@@ -208,7 +261,7 @@ function AdminsEditor() {
 
     const onCreateAdmin = async () => {
         try {
-            const admin = await NiceModal.show<SMAdmin>(ModalSMAdminEditor);
+            const admin = await NiceModal.show<SMAdmin>(ModalSMAdminEditor, { groups });
             queryClient.setQueryData(['serverAdmins'], [...(admins ?? []), admin]);
             sendFlash('success', `Admin created successfully: ${admin.name}`);
         } catch (e) {
@@ -231,6 +284,38 @@ function AdminsEditor() {
         },
         onError: (error) => {
             sendFlash('error', `Error trying to delete admin: ${error}`);
+        }
+    });
+
+    const addGroupMutation = useMutation({
+        mutationKey: ['addAdminGroup'],
+        mutationFn: async ({ admin, group }: { admin: SMAdmin; group: SMGroups }) => {
+            return await apiAddAdminToGroup(admin.admin_id, group.group_id);
+        },
+        onSuccess: (edited) => {
+            queryClient.setQueryData(
+                ['serverAdmins'],
+                (admins ?? []).map((a) => {
+                    return a.admin_id == edited.admin_id ? edited : a;
+                })
+            );
+            sendFlash('success', `Admin updated successfully: ${edited.name}`);
+        }
+    });
+
+    const delGroupMutation = useMutation({
+        mutationKey: ['addAdminGroup'],
+        mutationFn: async ({ admin, group }: { admin: SMAdmin; group: SMGroups }) => {
+            return await apiDelAdminFromGroup(admin.admin_id, group.group_id);
+        },
+        onSuccess: (edited) => {
+            queryClient.setQueryData(
+                ['serverAdmins'],
+                (admins ?? []).map((a) => {
+                    return a.admin_id == edited.admin_id ? edited : a;
+                })
+            );
+            sendFlash('success', `Admin updated successfully: ${edited.name}`);
         }
     });
 
@@ -270,7 +355,7 @@ function AdminsEditor() {
     const adminColumns = useMemo(() => {
         const onEdit = async (admin: SMAdmin) => {
             try {
-                const edited = await NiceModal.show<SMAdmin>(ModalSMAdminEditor, { admin });
+                const edited = await NiceModal.show<SMAdmin>(ModalSMAdminEditor, { admin, groups });
                 queryClient.setQueryData(
                     ['serverAdmins'],
                     (admins ?? []).map((a) => {
@@ -296,8 +381,33 @@ function AdminsEditor() {
                 sendFlash('error', `Failed to create confirmation modal: ${e}`);
             }
         };
-        return makeAdminColumns(onEdit, onDelete);
-    }, [admins, deleteAdmin, queryClient, sendFlash]);
+
+        const onAddGroup = async (admin: SMAdmin) => {
+            try {
+                const existingGroupIds = admin.groups.map((g) => g.group_id);
+                const group = await NiceModal.show<SMGroups>(ModalSMGroupSelect, {
+                    groups: groups?.filter((g) => !existingGroupIds.includes(g.group_id))
+                });
+                addGroupMutation.mutate({ admin, group });
+            } catch (e) {
+                sendFlash('error', `Error trying to add group: ${e}`);
+            }
+        };
+
+        const onDelGroup = async (admin: SMAdmin) => {
+            try {
+                const existingGroupIds = admin.groups.map((g) => g.group_id);
+                const group = await NiceModal.show<SMGroups>(ModalSMGroupSelect, {
+                    groups: groups?.filter((g) => existingGroupIds.includes(g.group_id))
+                });
+                delGroupMutation.mutate({ admin, group });
+            } catch (e) {
+                sendFlash('error', 'Error trying to add group');
+            }
+        };
+
+        return makeAdminColumns(groups?.length ?? 0, onEdit, onDelete, onAddGroup, onDelGroup);
+    }, [addGroupMutation, admins, delGroupMutation, deleteAdmin, groups, queryClient, sendFlash]);
 
     return (
         <>
@@ -305,7 +415,7 @@ function AdminsEditor() {
             <Stack spacing={2}>
                 <ContainerWithHeaderAndButtons
                     title={'Admins'}
-                    iconLeft={<GroupsIcon />}
+                    iconLeft={<PersonIcon />}
                     buttons={[
                         <ButtonGroup key={`server-header-buttons`}>
                             <Button
@@ -324,6 +434,8 @@ function AdminsEditor() {
                         data={admins ?? []}
                         isLoading={isLoadingAdmins}
                         columns={adminColumns}
+                        initialSortColumn={'admin_id'}
+                        initialSortDesc={false}
                     />
                 </ContainerWithHeaderAndButtons>
                 <ContainerWithHeaderAndButtons
@@ -347,6 +459,8 @@ function AdminsEditor() {
                         data={groups ?? []}
                         isLoading={isLoadingGroups}
                         columns={groupColumns}
+                        initialSortColumn={'group_id'}
+                        initialSortDesc={false}
                     />
                 </ContainerWithHeaderAndButtons>
             </Stack>

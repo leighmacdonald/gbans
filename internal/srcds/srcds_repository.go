@@ -20,11 +20,118 @@ func NewRepository(database database.Database) domain.SRCDSRepository {
 	return srcdsRepository{database: database}
 }
 
-func (r srcdsRepository) Admins(ctx context.Context) ([]domain.SMAdmin, error) {
+func (r srcdsRepository) GroupOverrides(ctx context.Context) ([]domain.SMGroupOverrides, error) {
 	rows, errRows := r.database.QueryBuilder(ctx, r.database.Builder().
-		Select("id", "steam_id", "authtype", "identity", "password", "flags", "name", "immunity",
-			"created_on", "updated_on").
-		From("sm_admins"))
+		Select("group_id", "type", "name", "access", "created_on", "updated_on").
+		From("sm_group_overrides"))
+	if errRows != nil {
+		return nil, r.database.DBErr(errRows)
+	}
+
+	var overrides []domain.SMGroupOverrides
+
+	for rows.Next() {
+		var override domain.SMGroupOverrides
+		if errScan := rows.Scan(&override.GroupID, &override.Type, &override.Name, &override.Access,
+			&override.CreatedOn, &override.UpdatedOn); errScan != nil {
+			return nil, r.database.DBErr(errScan)
+		}
+
+		overrides = append(overrides, override)
+	}
+
+	return overrides, nil
+}
+
+func (r srcdsRepository) Overrides(ctx context.Context) ([]domain.SMOverrides, error) {
+	rows, errRows := r.database.QueryBuilder(ctx, r.database.Builder().
+		Select("type", "name", "flags", "created_on", "updated_on").
+		From("sm_overrides"))
+	if errRows != nil {
+		return nil, r.database.DBErr(errRows)
+	}
+
+	var overrides []domain.SMOverrides
+
+	for rows.Next() {
+		var override domain.SMOverrides
+		if errScan := rows.Scan(&override.Type, &override.Name, &override.Flags,
+			&override.CreatedOn, &override.UpdatedOn); errScan != nil {
+			return nil, r.database.DBErr(errScan)
+		}
+
+		overrides = append(overrides, override)
+	}
+
+	return overrides, nil
+}
+
+func (r srcdsRepository) AddGroupOverride(ctx context.Context, override domain.SMGroupOverrides) error {
+	return r.database.DBErr(r.database.ExecInsertBuilder(ctx, r.database.Builder().
+		Insert("sm_group_overrides").
+		SetMap(map[string]interface{}{
+			"group_id":   override.GroupID,
+			"type":       override.Type,
+			"name":       override.Name,
+			"access":     override.Access,
+			"created_in": override.CreatedOn,
+			"updated_on": override.UpdatedOn,
+		})))
+}
+
+func (r srcdsRepository) AddOverride(ctx context.Context, overrides domain.SMOverrides) error {
+	return r.database.DBErr(r.database.ExecInsertBuilder(ctx, r.database.Builder().
+		Insert("sm_overrides").
+		SetMap(map[string]interface{}{
+			"type":       overrides.Type,
+			"name":       overrides.Name,
+			"flags":      overrides.Flags,
+			"created_on": overrides.CreatedOn,
+			"updated_on": overrides.UpdatedOn,
+		})))
+}
+
+func (r srcdsRepository) GetAdminGroups(ctx context.Context, admin domain.SMAdmin) ([]domain.SMGroups, error) {
+	rows, errRows := r.database.QueryBuilder(ctx, r.database.Builder().
+		Select("g.id", "g.flags", "g.name", "g.immunity_level", "g.created_on", "g.updated_on").
+		From("sm_groups g").
+		LeftJoin("sm_admins_groups ag ON ag.group_id = g.id").
+		Where(sq.Eq{"ag.admin_id": admin.AdminID}))
+	if errRows != nil {
+		return nil, errRows
+	}
+
+	var groups []domain.SMGroups
+
+	for rows.Next() {
+		var group domain.SMGroups
+		if errScan := rows.Scan(&group.GroupID, &group.Flags, &group.Name, &group.ImmunityLevel,
+			&group.CreatedOn, &group.UpdatedOn); errScan != nil {
+			return nil, r.database.DBErr(errScan)
+		}
+
+		groups = append(groups, group)
+	}
+
+	if groups == nil {
+		groups = []domain.SMGroups{}
+	}
+
+	return groups, nil
+}
+
+func (r srcdsRepository) Admins(ctx context.Context) ([]domain.SMAdmin, error) {
+	groups, errGroups := r.Groups(ctx)
+	if errGroups != nil && !errors.Is(errGroups, domain.ErrNoResult) {
+		return nil, errGroups
+	}
+
+	rows, errRows := r.database.QueryBuilder(ctx, r.database.Builder().
+		Select("a.id", "a.steam_id", "a.authtype", "a.identity", "a.password", "a.flags", "a.name", "a.immunity",
+			"a.created_on", "a.updated_on", "array_agg(sag.group_id) as group_ids").
+		From("sm_admins a").
+		LeftJoin("sm_admins_groups sag on a.id = sag.admin_id").
+		GroupBy("a.id"))
 	if errRows != nil {
 		if errors.Is(errRows, domain.ErrNoResult) {
 			return []domain.SMAdmin{}, nil
@@ -36,10 +143,27 @@ func (r srcdsRepository) Admins(ctx context.Context) ([]domain.SMAdmin, error) {
 	var admins []domain.SMAdmin
 
 	for rows.Next() {
-		var admin domain.SMAdmin
+		var (
+			// array_agg will return a {null} if no group entry exists
+			groupIds []*int
+			admin    = domain.SMAdmin{Groups: []domain.SMGroups{}}
+		)
+
 		if errScan := rows.Scan(&admin.AdminID, &admin.SteamID, &admin.AuthType, &admin.Identity, &admin.Password,
-			&admin.Flags, &admin.Name, &admin.Immunity, &admin.CreatedOn, &admin.UpdatedOn); errScan != nil {
+			&admin.Flags, &admin.Name, &admin.Immunity, &admin.CreatedOn, &admin.UpdatedOn, &groupIds); errScan != nil {
 			return nil, r.database.DBErr(errScan)
+		}
+
+		for _, groupID := range groupIds {
+			if groupID == nil {
+				continue
+			}
+
+			for _, group := range groups {
+				if group.GroupID == *groupID {
+					admin.Groups = append(admin.Groups, group)
+				}
+			}
 		}
 
 		admins = append(admins, admin)
@@ -99,6 +223,13 @@ func (r srcdsRepository) GetAdminByID(ctx context.Context, adminID int) (domain.
 	}
 
 	admin.SteamID = steamid.New(id64)
+
+	groups, errGroup := r.GetAdminGroups(ctx, admin)
+	if errGroup != nil && !errors.Is(errGroup, domain.ErrNoResult) {
+		return domain.SMAdmin{}, errGroup
+	}
+
+	admin.Groups = groups
 
 	return admin, nil
 }
@@ -217,6 +348,12 @@ func (r srcdsRepository) DeleteAdminGroups(ctx context.Context, admin domain.SMA
 	slog.Info("Deleted SM admin groups", slog.String("steam_id", admin.SteamID.String()))
 
 	return nil
+}
+
+func (r srcdsRepository) DeleteAdminGroup(ctx context.Context, admin domain.SMAdmin, group domain.SMGroups) error {
+	return r.database.ExecDeleteBuilder(ctx, r.database.Builder().
+		Delete("sm_admins_groups").
+		Where(sq.And{sq.Eq{"admin_id": admin.AdminID}, sq.Eq{"group_id": group.GroupID}}))
 }
 
 func (r srcdsRepository) SaveGroup(ctx context.Context, group domain.SMGroups) (domain.SMGroups, error) {

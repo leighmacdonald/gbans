@@ -9,7 +9,7 @@ import { useMutation } from '@tanstack/react-query';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import 'video-react/dist/video-react.css';
 import { z } from 'zod';
-import { apiCreateSMAdmin, apiSaveSMAdmin, AuthType, hasSMFlag, SMAdmin } from '../../api';
+import { apiCreateSMAdmin, apiSaveSMAdmin, AuthType, hasSMFlag, SMAdmin, SMGroups } from '../../api';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { numberStringValidator } from '../../util/validator/numberStringValidator.ts';
 import { Heading } from '../Heading';
@@ -27,7 +27,7 @@ type mutateAdminArgs = {
     password: string;
 };
 
-export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin }) => {
+export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin; groups: SMGroups[] }) => {
     const modal = useModal();
     const { sendFlash } = useUserFlashCtx();
 
@@ -166,6 +166,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                 }}
                             />
                         </Grid>
+
                         <Grid xs={12}>
                             <Field
                                 name={'immunity'}
