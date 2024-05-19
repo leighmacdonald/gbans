@@ -79,6 +79,8 @@ func NewSRCDSHandler(engine *gin.Engine, srcdsUsecase domain.SRCDSUsecase, serve
 		admin.POST("/api/smadmin/admins", handler.onCreateSMAdmin())
 		admin.POST("/api/smadmin/admins/:admin_id", handler.onSaveSMAdmin())
 		admin.DELETE("/api/smadmin/admins/:admin_id", handler.onDeleteSMAdmin())
+		admin.POST("/api/smadmin/admins/:admin_id/groups", handler.onAddAdminGroup())
+		admin.DELETE("/api/smadmin/admins/:admin_id/groups/:group_id", handler.onDeleteAdminGroup())
 	}
 
 	// Endpoints called by sourcemod plugin
@@ -121,6 +123,62 @@ func newServerToken(serverID int, cookieKey string) (string, error) {
 	}
 
 	return signedToken, nil
+}
+
+type groupRequest struct {
+	GroupID int `json:"group_id"`
+}
+
+func (s *srcdsHandler) onAddAdminGroup() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		adminID, errAdminID := httphelper.GetIntParam(ctx, "admin_id")
+		if errAdminID != nil {
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+
+			return
+		}
+
+		var req groupRequest
+		if !httphelper.Bind(ctx, &req) {
+			return
+		}
+
+		admin, err := s.srcdsUsecase.AddAdminGroup(ctx, adminID, req.GroupID)
+		if err != nil {
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, admin)
+	}
+}
+
+func (s *srcdsHandler) onDeleteAdminGroup() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		adminID, errAdminID := httphelper.GetIntParam(ctx, "admin_id")
+		if errAdminID != nil {
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+
+			return
+		}
+
+		groupID, errGroupID := httphelper.GetIntParam(ctx, "group_id")
+		if errGroupID != nil {
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+
+			return
+		}
+
+		admin, errDel := s.srcdsUsecase.DelAdminGroup(ctx, adminID, groupID)
+		if errDel != nil {
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, admin)
+	}
 }
 
 func (s *srcdsHandler) onSaveSMAdmin() gin.HandlerFunc {

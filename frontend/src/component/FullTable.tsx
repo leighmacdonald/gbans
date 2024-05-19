@@ -22,6 +22,8 @@ type FullTableProps<T> = {
     enableFiltering?: boolean;
     enablePaging?: boolean;
     pageSize?: RowsPerPage;
+    initialSortDesc?: boolean;
+    initialSortColumn?: string;
 };
 
 // Higher level table component. Most/all tables with client side data should use this eventually.
@@ -32,13 +34,24 @@ export const FullTable = <T,>({
     enableSorting = true,
     enablePaging = true,
     enableFiltering = true,
-    pageSize = RowsPerPage.TwentyFive
+    pageSize = RowsPerPage.TwentyFive,
+    initialSortDesc = true,
+    initialSortColumn = undefined
 }: FullTableProps<T>) => {
     const [pagination, setPagination] = useState({
         pageIndex: 0, //initial page index
         pageSize: pageSize //default page size
     });
-    const [sorting, setSorting] = useState<SortingState>([]);
+    const [sorting, setSorting] = useState<SortingState>(
+        initialSortColumn
+            ? [
+                  {
+                      id: initialSortColumn,
+                      desc: initialSortDesc
+                  }
+              ]
+            : []
+    );
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
     const table = useReactTable<T>({

@@ -14,6 +14,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+	"golang.org/x/exp/slices"
 )
 
 type srcdsUsecase struct {
@@ -38,6 +39,70 @@ func NewSrcdsUsecase(srcdsRepository domain.SRCDSRepository, configUsecase domai
 		srcdsRepository: srcdsRepository,
 		cookie:          configUsecase.Config().HTTP.CookieKey,
 	}
+}
+
+func (h srcdsUsecase) DelAdminGroup(ctx context.Context, adminID int, groupID int) (domain.SMAdmin, error) {
+	admin, errAdmin := h.GetAdminByID(ctx, adminID)
+	if errAdmin != nil {
+		return domain.SMAdmin{}, errAdmin
+	}
+
+	group, errGroup := h.GetGroupByID(ctx, groupID)
+	if errGroup != nil {
+		return domain.SMAdmin{}, errGroup
+	}
+
+	existing, errExisting := h.GetAdminGroups(ctx, admin)
+	if errExisting != nil && !errors.Is(errExisting, domain.ErrNoResult) {
+		return admin, errExisting
+	}
+
+	if !slices.Contains(existing, group) {
+		return admin, domain.ErrSMAdminGroupExists
+	}
+
+	if err := h.srcdsRepository.DeleteAdminGroup(ctx, admin, group); err != nil {
+		return domain.SMAdmin{}, err
+	}
+
+	admin.Groups = slices.DeleteFunc(admin.Groups, func(g domain.SMGroups) bool {
+		return g.GroupID == groupID
+	})
+
+	return admin, nil
+}
+
+func (h srcdsUsecase) AddAdminGroup(ctx context.Context, adminID int, groupID int) (domain.SMAdmin, error) {
+	admin, errAdmin := h.GetAdminByID(ctx, adminID)
+	if errAdmin != nil {
+		return domain.SMAdmin{}, errAdmin
+	}
+
+	group, errGroup := h.GetGroupByID(ctx, groupID)
+	if errGroup != nil {
+		return domain.SMAdmin{}, errGroup
+	}
+
+	existing, errExisting := h.GetAdminGroups(ctx, admin)
+	if errExisting != nil && !errors.Is(errExisting, domain.ErrNoResult) {
+		return admin, errExisting
+	}
+
+	if slices.Contains(existing, group) {
+		return admin, domain.ErrSMAdminGroupExists
+	}
+
+	if err := h.srcdsRepository.InsertAdminGroup(ctx, admin, group, len(existing)+1); err != nil {
+		return domain.SMAdmin{}, err
+	}
+
+	admin.Groups = append(admin.Groups, group)
+
+	return admin, nil
+}
+
+func (h srcdsUsecase) GetAdminGroups(ctx context.Context, admin domain.SMAdmin) ([]domain.SMGroups, error) {
+	return h.srcdsRepository.GetAdminGroups(ctx, admin)
 }
 
 func (h srcdsUsecase) ServerAuth(ctx context.Context, req domain.ServerAuthReq) (string, error) {

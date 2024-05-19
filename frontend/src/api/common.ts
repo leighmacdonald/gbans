@@ -73,6 +73,8 @@ interface errorMessage {
 
 const apiRootURL = (): string => `${location.protocol}//${location.host}`;
 
+type httpMethods = 'POST' | 'GET' | 'DELETE';
+
 /**
  * All api requests are handled through this interface.
  *
@@ -85,7 +87,7 @@ const apiRootURL = (): string => `${location.protocol}//${location.host}`;
  */
 export const apiCall = async <TResponse = EmptyBody | null, TRequestBody = Record<string, unknown> | object>(
     url: string,
-    method: string = 'GET',
+    method: httpMethods = 'GET',
     body?: TRequestBody | undefined,
     abortController?: AbortController,
     isRefresh?: boolean
