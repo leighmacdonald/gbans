@@ -22,7 +22,7 @@ func NewRepository(database database.Database) domain.SRCDSRepository {
 
 func (r srcdsRepository) Admins(ctx context.Context) ([]domain.SMAdmin, error) {
 	rows, errRows := r.database.QueryBuilder(ctx, r.database.Builder().
-		Select("id", "steam_id", "auth_type", "identity", "password", "flags", "name", "immunity",
+		Select("id", "steam_id", "authtype", "identity", "password", "flags", "name", "immunity",
 			"created_on", "updated_on").
 		From("sm_admins"))
 	if errRows != nil {
@@ -99,6 +99,34 @@ func (r srcdsRepository) GetAdminByID(ctx context.Context, adminID int) (domain.
 	}
 
 	admin.SteamID = steamid.New(id64)
+
+	return admin, nil
+}
+
+func (r srcdsRepository) SaveAdmin(ctx context.Context, admin domain.SMAdmin) (domain.SMAdmin, error) {
+	admin.UpdatedOn = time.Now()
+
+	var sid64 *int64
+
+	if admin.SteamID.Valid() {
+		sidValue := admin.SteamID.Int64()
+		sid64 = &sidValue
+	}
+
+	if err := r.database.ExecUpdateBuilder(ctx, r.database.Builder().
+		Update("sm_admins").
+		SetMap(map[string]interface{}{
+			"steam_id":   sid64,
+			"authtype":   admin.AuthType,
+			"identity":   admin.Identity,
+			"password":   admin.Password,
+			"flags":      admin.Flags,
+			"name":       admin.Name,
+			"immunity":   admin.Immunity,
+			"updated_on": admin.UpdatedOn,
+		}).Where(sq.Eq{"id": admin.AdminID})); err != nil {
+		return domain.SMAdmin{}, err
+	}
 
 	return admin, nil
 }
@@ -261,18 +289,18 @@ func (r srcdsRepository) AddGroup(ctx context.Context, group domain.SMGroups) (d
 
 func (r srcdsRepository) DelAdmin(ctx context.Context, admin domain.SMAdmin) error {
 	if err := r.database.ExecDeleteBuilder(ctx, r.database.Builder().
-		Delete("sm_admins_group").
+		Delete("sm_admins_groups").
 		Where(sq.Eq{"admin_id": admin.AdminID})); err != nil {
 		return r.database.DBErr(err)
 	}
 
 	if err := r.database.ExecDeleteBuilder(ctx, r.database.Builder().
 		Delete("sm_admins").
-		Where(sq.Eq{"admin_id": admin.AdminID})); err != nil {
+		Where(sq.Eq{"id": admin.AdminID})); err != nil {
 		return r.database.DBErr(err)
 	}
 
-	slog.Info("Deleted SM Admin", slog.Int("admin_id", admin.AdminID),
+	slog.Info("Deleted SM Admin", slog.Int("id", admin.AdminID),
 		slog.String("steam_id", admin.SteamID.String()))
 
 	return nil
@@ -304,11 +332,11 @@ func (r srcdsRepository) AddAdmin(ctx context.Context, admin domain.SMAdmin) (do
 			"created_on": admin.CreatedOn,
 			"updated_on": admin.UpdatedOn,
 		}).
-		Suffix("RETURNING admin_id"), &admin.AdminID); err != nil {
+		Suffix("RETURNING id"), &admin.AdminID); err != nil {
 		return admin, r.database.DBErr(err)
 	}
 
-	slog.Info("Added SM Admin", slog.Int("admin_id", admin.AdminID), slog.String("identity", admin.Identity))
+	slog.Info("Added SM Admin", slog.Int("id", admin.AdminID), slog.String("identity", admin.Identity))
 
 	return admin, nil
 }

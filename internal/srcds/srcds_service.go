@@ -125,7 +125,46 @@ func newServerToken(serverID int, cookieKey string) (string, error) {
 
 func (s *srcdsHandler) onSaveSMAdmin() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		adminID, errAdminID := httphelper.GetIntParam(ctx, "admin_id")
+		if errAdminID != nil {
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 
+			return
+		}
+
+		admin, errAdmin := s.srcdsUsecase.GetAdminByID(ctx, adminID)
+		if errAdmin != nil {
+			if errors.Is(errAdmin, domain.ErrNoResult) {
+				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
+
+				return
+			}
+
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+
+			return
+		}
+
+		var req smAdminRequest
+		if !httphelper.Bind(ctx, &req) {
+			return
+		}
+
+		admin.Name = req.Name
+		admin.Flags = req.Flags
+		admin.Immunity = req.Immunity
+		admin.AuthType = req.AuthType
+		admin.Identity = req.Identity
+		admin.Password = req.Password
+
+		editedGroup, errSave := s.srcdsUsecase.SaveAdmin(ctx, admin)
+		if errSave != nil {
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, editedGroup)
 	}
 }
 
@@ -286,6 +325,10 @@ func (s *srcdsHandler) onGetSMAdmins() gin.HandlerFunc {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
+		}
+
+		if admins == nil {
+			admins = []domain.SMAdmin{}
 		}
 
 		ctx.JSON(http.StatusOK, admins)

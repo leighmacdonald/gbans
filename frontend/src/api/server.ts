@@ -164,7 +164,7 @@ type Flags =
     | 's'
     | 't';
 
-export const hasFlag = (flag: Flags, entity?: SMGroups | SMAdmin) => {
+export const hasSMFlag = (flag: Flags, entity?: SMGroups | SMAdmin) => {
     return entity?.flags.includes(flag) ?? false;
 };
 
@@ -185,10 +185,53 @@ export type SMAdminGroups = {
     inherit_order: number;
 };
 
+export const apiGetSMAdmins = async () =>
+    (await apiCall<SMAdmin[]>('/api/smadmin/admins')).map(transformTimeStampedDates);
+
+export const apiCreateSMAdmin = async (
+    name: string,
+    immunity: number,
+    flags: string,
+    auth_type: AuthType,
+    identity: string,
+    password: string
+) =>
+    transformTimeStampedDates(
+        await apiCall<SMAdmin>('/api/smadmin/admins', 'POST', {
+            name,
+            immunity,
+            flags,
+            auth_type,
+            identity,
+            password
+        })
+    );
+
+export const apiSaveSMAdmin = async (
+    admin_id: number,
+    name: string,
+    immunity: number,
+    flags: string,
+    auth_type: AuthType,
+    identity: string,
+    password: string
+) =>
+    transformTimeStampedDates(
+        await apiCall<SMAdmin>(`/api/smadmin/admins/${admin_id}`, 'POST', {
+            name,
+            immunity,
+            flags,
+            auth_type,
+            identity,
+            password
+        })
+    );
+
+export const apiDeleteSMAdmin = async (admin_id: number) =>
+    await apiCall(`/api/smadmin/admins/${admin_id}`, 'DELETE', undefined);
+
 export const apiGetSMGroups = async () =>
     (await apiCall<SMGroups[]>('/api/smadmin/groups')).map(transformTimeStampedDates);
-
-export const apiGetSMAdmins = async () => await apiCall<SMAdmin[]>('/api/smadmin/admins');
 
 export const apiCreateSMGroup = async (name: string, immunity: number, flags: string) =>
     transformTimeStampedDates(
