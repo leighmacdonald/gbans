@@ -66,7 +66,8 @@ export enum BanReason {
     Profile = 10,
     ItemDescriptions = 11,
     BotHost = 12,
-    Evading = 13
+    Evading = 13,
+    Username = 14
 }
 
 export enum Duration {
@@ -114,7 +115,8 @@ export const BanReasons: Record<BanReason, string> = {
     [BanReason.Profile]: 'Inappropriate Steam Profile',
     [BanReason.ItemDescriptions]: 'Item Name/Descriptions',
     [BanReason.BotHost]: 'Bot Host',
-    [BanReason.Evading]: 'Evading'
+    [BanReason.Evading]: 'Evading',
+    [BanReason.Username]: 'Inappropriate Username'
 };
 
 export const banReasonsCollection = [
@@ -130,7 +132,8 @@ export const banReasonsCollection = [
     BanReason.External,
     BanReason.Custom,
     BanReason.BotHost,
-    BanReason.Evading
+    BanReason.Evading,
+    BanReason.Username
 ];
 
 export enum BanType {

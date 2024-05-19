@@ -9,6 +9,7 @@ type ChatRepository interface {
 	AddChatHistory(ctx context.Context, message *PersonMessage) error
 	QueryChatHistory(ctx context.Context, filters ChatHistoryQueryFilter) ([]QueryChatHistoryResult, error)
 	GetPersonMessageContext(ctx context.Context, serverID int, messageID int64, paddedMessageCount int) ([]QueryChatHistoryResult, error)
+	GetWarningChan() chan NewUserWarning
 }
 
 type ChatUsecase interface {

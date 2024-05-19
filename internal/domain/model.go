@@ -77,6 +77,7 @@ const (
 	ItemDescriptions
 	BotHost
 	Evading
+	Username
 )
 
 func (r Reason) String() string {
@@ -94,6 +95,7 @@ func (r Reason) String() string {
 		ItemDescriptions: "Item Name or Descriptions",
 		BotHost:          "BotHost",
 		Evading:          "Evading",
+		Username:         "Inappropriate Username",
 	}[r]
 }
 

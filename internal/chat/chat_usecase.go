@@ -27,7 +27,6 @@ type chatUsecase struct {
 	dry          bool
 	maxWeight    int
 	warnings     map[steamid.SteamID][]domain.UserWarning
-	WarningChan  chan domain.NewUserWarning
 	owner        steamid.SteamID
 	matchTimeout time.Duration
 	checkTimeout time.Duration
@@ -51,10 +50,10 @@ func NewChatUsecase(configUsecase domain.ConfigUsecase, chatRepository domain.Ch
 		pingDiscord:  conf.Filter.PingDiscord,
 		warnings:     make(map[steamid.SteamID][]domain.UserWarning),
 		warningMu:    &sync.RWMutex{},
-		WarningChan:  make(chan domain.NewUserWarning),
 		matchTimeout: conf.Filter.MatchTimeout,
 		dry:          conf.Filter.Dry,
 		maxWeight:    conf.Filter.MaxWeight,
+		owner:        steamid.New(conf.General.Owner),
 		checkTimeout: conf.Filter.CheckTimeout,
 	}
 }
@@ -91,7 +90,11 @@ func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.Ne
 		banSteam.BanType = domain.Banned
 		errBan = u.bu.Ban(ctx, admin, &banSteam)
 	case domain.Kick:
-		errBan = u.st.Kick(ctx, newWarning.UserMessage.SteamID, newWarning.WarnReason)
+		// Kicks are temporary, so should be done by Player ID to avoid
+		// missing players who weren't in the latest state update
+		// (otherwise, kicking players very shortly after they connect
+		// will usually fail).
+		errBan = u.st.KickPlayerID(ctx, newWarning.PlayerID, newWarning.ServerID, newWarning.WarnReason)
 	}
 
 	if errBan != nil {
@@ -243,7 +246,7 @@ func (u chatUsecase) Start(ctx context.Context) {
 		case now := <-ticker.C:
 			u.check(now)
 			ticker.Reset(u.checkTimeout)
-		case newWarn := <-u.WarningChan:
+		case newWarn := <-u.cr.GetWarningChan():
 			u.trigger(ctx, newWarn)
 		case <-ctx.Done():
 			return
