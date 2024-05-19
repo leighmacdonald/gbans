@@ -7,7 +7,7 @@ import { useMutation } from '@tanstack/react-query';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import 'video-react/dist/video-react.css';
 import { z } from 'zod';
-import { apiCreateSMGroup, apiSaveSMGroup, hasFlag, SMGroups } from '../../api';
+import { apiCreateSMGroup, apiSaveSMGroup, hasSMFlag, SMGroups } from '../../api';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { numberStringValidator } from '../../util/validator/numberStringValidator.ts';
 import { Heading } from '../Heading';
@@ -52,27 +52,27 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
         defaultValues: {
             name: group?.name ?? '',
             immunity: group?.immunity_level ? String(group.immunity_level) : '',
-            z: hasFlag('z', group),
-            a: hasFlag('a', group),
-            b: hasFlag('b', group),
-            c: hasFlag('c', group),
-            d: hasFlag('d', group),
-            e: hasFlag('e', group),
-            f: hasFlag('f', group),
-            g: hasFlag('g', group),
-            h: hasFlag('h', group),
-            i: hasFlag('i', group),
-            j: hasFlag('j', group),
-            k: hasFlag('k', group),
-            l: hasFlag('l', group),
-            m: hasFlag('m', group),
-            n: hasFlag('n', group),
-            o: hasFlag('o', group),
-            p: hasFlag('p', group),
-            q: hasFlag('q', group),
-            r: hasFlag('r', group),
-            s: hasFlag('s', group),
-            t: hasFlag('t', group)
+            z: hasSMFlag('z', group),
+            a: hasSMFlag('a', group),
+            b: hasSMFlag('b', group),
+            c: hasSMFlag('c', group),
+            d: hasSMFlag('d', group),
+            e: hasSMFlag('e', group),
+            f: hasSMFlag('f', group),
+            g: hasSMFlag('g', group),
+            h: hasSMFlag('h', group),
+            i: hasSMFlag('i', group),
+            j: hasSMFlag('j', group),
+            k: hasSMFlag('k', group),
+            l: hasSMFlag('l', group),
+            m: hasSMFlag('m', group),
+            n: hasSMFlag('n', group),
+            o: hasSMFlag('o', group),
+            p: hasSMFlag('p', group),
+            q: hasSMFlag('q', group),
+            r: hasSMFlag('r', group),
+            s: hasSMFlag('s', group),
+            t: hasSMFlag('t', group)
         }
     });
 

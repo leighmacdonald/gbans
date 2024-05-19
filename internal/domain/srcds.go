@@ -14,10 +14,12 @@ var (
 	ErrSMGroupName        = errors.New("group name cannot be empty")
 	ErrSMAdminExists      = errors.New("admin already exists")
 	ErrSMAdminFlagInvalid = errors.New("invalid admin flag")
+	ErrSMRequirePassword  = errors.New("name auth type requires password")
 )
 
 type SRCDSRepository interface {
 	AddAdmin(ctx context.Context, admin SMAdmin) (SMAdmin, error)
+	SaveAdmin(ctx context.Context, admin SMAdmin) (SMAdmin, error)
 	DelAdmin(ctx context.Context, admin SMAdmin) error
 	AddGroup(ctx context.Context, group SMGroups) (SMGroups, error)
 	DeleteGroup(ctx context.Context, group SMGroups) error
@@ -35,9 +37,11 @@ type SRCDSRepository interface {
 type SRCDSUsecase interface {
 	ServerAuth(ctx context.Context, req ServerAuthReq) (string, error)
 	Report(ctx context.Context, currentUser UserProfile, req CreateReportReq) (*Report, error)
+	GetAdminByID(ctx context.Context, adminID int) (SMAdmin, error)
 	AddAdmin(ctx context.Context, alias string, authType AuthType, identity string, flags string, immunity int, password string) (SMAdmin, error)
 	DelAdmin(ctx context.Context, adminID int) error
 	Admins(ctx context.Context) ([]SMAdmin, error)
+	SaveAdmin(ctx context.Context, admin SMAdmin) (SMAdmin, error)
 	AddGroup(ctx context.Context, name string, flags string, immunityLevel int) (SMGroups, error)
 	DelGroup(ctx context.Context, groupID int) error
 	GetGroupByID(ctx context.Context, groupID int) (SMGroups, error)

@@ -12,7 +12,7 @@ import Stack from '@mui/material/Stack';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { createColumnHelper } from '@tanstack/react-table';
-import { apiDeleteSMGroup, apiGetSMAdmins, apiGetSMGroups, SMAdmin, SMGroups } from '../api';
+import { apiDeleteSMAdmin, apiDeleteSMGroup, apiGetSMAdmins, apiGetSMGroups, SMAdmin, SMGroups } from '../api';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { FullTable } from '../component/FullTable.tsx';
 import { TableCellString } from '../component/TableCellString.tsx';
@@ -94,8 +94,8 @@ const makeAdminColumns = (onEdit: (admin: SMAdmin) => Promise<void>, onDelete: (
         header: () => <TableHeadingCell name={'ID'} />,
         cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
     }),
-    adminColumnHelper.accessor('steam_id', {
-        header: () => <TableHeadingCell name={'SteamID'} />,
+    adminColumnHelper.accessor('name', {
+        header: () => <TableHeadingCell name={'Name'} />,
         cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
     }),
     adminColumnHelper.accessor('auth_type', {
@@ -106,16 +106,16 @@ const makeAdminColumns = (onEdit: (admin: SMAdmin) => Promise<void>, onDelete: (
         header: () => <TableHeadingCell name={'Identity'} />,
         cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
     }),
+    adminColumnHelper.accessor('steam_id', {
+        header: () => <TableHeadingCell name={'SteamID'} />,
+        cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
+    }),
     adminColumnHelper.accessor('password', {
         header: () => <TableHeadingCell name={'Password'} />,
         cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
     }),
     adminColumnHelper.accessor('flags', {
         header: () => <TableHeadingCell name={'Flags'} />,
-        cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
-    }),
-    adminColumnHelper.accessor('name', {
-        header: () => <TableHeadingCell name={'Name'} />,
         cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
     }),
     adminColumnHelper.accessor('immunity', {
@@ -188,16 +188,6 @@ function AdminsEditor() {
         }
     };
 
-    const onCreateAdmin = async () => {
-        try {
-            const admin = await NiceModal.show<SMAdmin>(ModalSMAdminEditor);
-            queryClient.setQueryData(['serverAdmins'], [...(admins ?? []), admin]);
-            sendFlash('success', `Admin created successfully: ${admin.name}`);
-        } catch (e) {
-            sendFlash('error', 'Error trying to add admin');
-        }
-    };
-
     const deleteGroup = useMutation({
         mutationKey: ['SMGroupDelete'],
         mutationFn: async (group: SMGroups) => {
@@ -213,6 +203,34 @@ function AdminsEditor() {
         },
         onError: (error) => {
             sendFlash('error', `Error trying to delete group: ${error}`);
+        }
+    });
+
+    const onCreateAdmin = async () => {
+        try {
+            const admin = await NiceModal.show<SMAdmin>(ModalSMAdminEditor);
+            queryClient.setQueryData(['serverAdmins'], [...(admins ?? []), admin]);
+            sendFlash('success', `Admin created successfully: ${admin.name}`);
+        } catch (e) {
+            sendFlash('error', 'Error trying to add admin');
+        }
+    };
+
+    const deleteAdmin = useMutation({
+        mutationKey: ['SMAdminDelete'],
+        mutationFn: async (admin: SMAdmin) => {
+            await apiDeleteSMAdmin(admin.admin_id);
+            return admin;
+        },
+        onSuccess: (admin) => {
+            queryClient.setQueryData(
+                ['serverAdmins'],
+                (admins ?? []).filter((a) => a.admin_id != admin.admin_id)
+            );
+            sendFlash('success', 'Admin deleted successfully');
+        },
+        onError: (error) => {
+            sendFlash('error', `Error trying to delete admin: ${error}`);
         }
     });
 
@@ -250,10 +268,36 @@ function AdminsEditor() {
     }, [deleteGroup, groups, queryClient, sendFlash]);
 
     const adminColumns = useMemo(() => {
-        const onEdit = async (_: SMAdmin) => {};
-        const onDelete = async (_: SMAdmin) => {};
+        const onEdit = async (admin: SMAdmin) => {
+            try {
+                const edited = await NiceModal.show<SMAdmin>(ModalSMAdminEditor, { admin });
+                queryClient.setQueryData(
+                    ['serverAdmins'],
+                    (admins ?? []).map((a) => {
+                        return a.admin_id == edited.admin_id ? edited : a;
+                    })
+                );
+                sendFlash('success', `Admin updated successfully: ${admin.name}`);
+            } catch (e) {
+                sendFlash('error', 'Error trying to update admin');
+            }
+        };
+        const onDelete = async (admin: SMAdmin) => {
+            try {
+                const confirmed = await NiceModal.show<boolean>(ModalConfirm, {
+                    title: 'Delete admin?',
+                    children: 'This cannot be undone'
+                });
+                if (!confirmed) {
+                    return;
+                }
+                deleteAdmin.mutate(admin);
+            } catch (e) {
+                sendFlash('error', `Failed to create confirmation modal: ${e}`);
+            }
+        };
         return makeAdminColumns(onEdit, onDelete);
-    }, []);
+    }, [admins, deleteAdmin, queryClient, sendFlash]);
 
     return (
         <>

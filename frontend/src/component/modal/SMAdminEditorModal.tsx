@@ -9,7 +9,7 @@ import { useMutation } from '@tanstack/react-query';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import 'video-react/dist/video-react.css';
 import { z } from 'zod';
-import { hasFlag, SMAdmin } from '../../api';
+import { apiCreateSMAdmin, apiSaveSMAdmin, AuthType, hasSMFlag, SMAdmin } from '../../api';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { numberStringValidator } from '../../util/validator/numberStringValidator.ts';
 import { Heading } from '../Heading';
@@ -18,17 +18,25 @@ import { CheckboxSimple } from '../field/CheckboxSimple.tsx';
 import { SelectFieldSimple } from '../field/SelectFieldSimple.tsx';
 import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
+type mutateAdminArgs = {
+    name: string;
+    immunity: number;
+    flags: string;
+    auth_type: AuthType;
+    identity: string;
+    password: string;
+};
+
 export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin }) => {
     const modal = useModal();
     const { sendFlash } = useUserFlashCtx();
 
     const edit = useMutation({
         mutationKey: ['adminSMAdmin'],
-        mutationFn: async ({ name, immunity, flags }: { name: string; immunity: number; flags: string }) => {
-            if (admin?.admin_id) {
-                //return await apiSaveSMAdmin(admin.admin_id, name, immunity, flags);
-            }
-            //return await apiCreateSMAdmin(name, immunity, flags);
+        mutationFn: async ({ name, immunity, flags, auth_type, identity, password }: mutateAdminArgs) => {
+            return admin?.admin_id
+                ? await apiSaveSMAdmin(admin.admin_id, name, immunity, flags, auth_type, identity, password)
+                : await apiCreateSMAdmin(name, immunity, flags, auth_type, identity, password);
         },
         onSuccess: async (admin) => {
             modal.resolve(admin);
@@ -41,15 +49,16 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({
         onSubmit: async ({ value }) => {
+            const filteredKeys = ['name', 'immunity', 'auth_type', 'password', 'identity'];
             const flags = Object.entries(value)
-                .filter((v) => !['name', 'immunity'].includes(v[0]))
+                .filter((v) => !filteredKeys.includes(v[0]))
                 .reduce((acc, value) => {
                     if (value[1]) {
                         acc += value[0];
                     }
                     return acc;
                 }, '');
-            edit.mutate({ name: value.name, immunity: Number(value.immunity), flags: flags });
+            edit.mutate({ ...value, immunity: Number(value.immunity), flags: flags });
         },
         validatorAdapter: zodValidator,
         defaultValues: {
@@ -58,27 +67,27 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
             password: admin?.password ? admin.password : '',
             name: admin?.name ?? '',
             immunity: admin?.immunity ? String(admin.immunity) : '',
-            z: hasFlag('z', admin),
-            a: hasFlag('a', admin),
-            b: hasFlag('b', admin),
-            c: hasFlag('c', admin),
-            d: hasFlag('d', admin),
-            e: hasFlag('e', admin),
-            f: hasFlag('f', admin),
-            g: hasFlag('g', admin),
-            h: hasFlag('h', admin),
-            i: hasFlag('i', admin),
-            j: hasFlag('j', admin),
-            k: hasFlag('k', admin),
-            l: hasFlag('l', admin),
-            m: hasFlag('m', admin),
-            n: hasFlag('n', admin),
-            o: hasFlag('o', admin),
-            p: hasFlag('p', admin),
-            q: hasFlag('q', admin),
-            r: hasFlag('r', admin),
-            s: hasFlag('s', admin),
-            t: hasFlag('t', admin)
+            z: hasSMFlag('z', admin),
+            a: hasSMFlag('a', admin),
+            b: hasSMFlag('b', admin),
+            c: hasSMFlag('c', admin),
+            d: hasSMFlag('d', admin),
+            e: hasSMFlag('e', admin),
+            f: hasSMFlag('f', admin),
+            g: hasSMFlag('g', admin),
+            h: hasSMFlag('h', admin),
+            i: hasSMFlag('i', admin),
+            j: hasSMFlag('j', admin),
+            k: hasSMFlag('k', admin),
+            l: hasSMFlag('l', admin),
+            m: hasSMFlag('m', admin),
+            n: hasSMFlag('n', admin),
+            o: hasSMFlag('o', admin),
+            p: hasSMFlag('p', admin),
+            q: hasSMFlag('q', admin),
+            r: hasSMFlag('r', admin),
+            s: hasSMFlag('s', admin),
+            t: hasSMFlag('t', admin)
         }
     });
 
