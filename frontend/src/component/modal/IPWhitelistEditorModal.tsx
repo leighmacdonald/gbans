@@ -100,5 +100,3 @@ export const IPWhitelistEditorModal = NiceModal.create(({ source }: { source?: W
         </Dialog>
     );
 });
-
-export default IPWhitelistEditorModal;

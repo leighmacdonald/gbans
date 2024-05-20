@@ -165,7 +165,7 @@ type Flags =
     | 's'
     | 't';
 
-export const hasSMFlag = (flag: Flags, entity?: SMGroups | SMAdmin) => {
+export const hasSMFlag = (flag: Flags, entity?: SMGroups | SMAdmin | SMOverrides) => {
     return entity?.flags.includes(flag) ?? false;
 };
 
@@ -175,15 +175,43 @@ export type SMGroupImmunity = {
 };
 
 export type SMOverrides = {
+    override_id: number;
     type: OverrideType;
     name: string;
     flags: string;
-};
+} & TimeStamped;
+
+export type SMGroupOverrides = {
+    group_id: number;
+    type: OverrideType;
+    name: string;
+    access: OverrideAccess;
+} & TimeStamped;
 
 export type SMAdminGroups = {
     admin_id: number;
     group_id: number;
     inherit_order: number;
+};
+
+export const apiGetSMOverrides = async () =>
+    (await apiCall<SMOverrides[]>(`/api/smadmin/overrides`, 'GET')).map(transformTimeStampedDates);
+
+export const apiCreateSMOverrides = async (name: string, type: OverrideType, flags: string) =>
+    transformTimeStampedDates(await apiCall<SMOverrides>(`/api/smadmin/overrides`, 'POST', { name, type, flags }));
+
+export const apiSaveSMOverrides = async (override_id: number, name: string, type: OverrideType, flags: string) =>
+    transformTimeStampedDates(
+        await apiCall<SMOverrides>(`/api/smadmin/overrides/${override_id}`, 'POST', { name, type, flags })
+    );
+
+export const apiDeleteSMOverride = async (override_id: number) =>
+    await apiCall(`/api/smadmin/overrides/${override_id}`, 'DELETE', undefined);
+
+export const apiGetSMGroupOverrides = async (groupId: number) => {
+    (await apiCall<SMGroupOverrides[]>(`/api/smadmin/groups/${groupId}/overrides`, 'GET')).map(
+        transformTimeStampedDates
+    );
 };
 
 export const apiGetSMAdmins = async () =>

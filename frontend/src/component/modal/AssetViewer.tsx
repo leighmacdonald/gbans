@@ -62,5 +62,3 @@ export const AssetViewer = NiceModal.create((asset: Asset) => {
         </Dialog>
     );
 });
-
-export default AssetViewer;

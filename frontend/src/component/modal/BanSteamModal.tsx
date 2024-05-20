@@ -320,5 +320,3 @@ export const BanSteamModal = NiceModal.create(({ existing }: { existing?: SteamB
         </Dialog>
     );
 });
-
-export default BanSteamModal;

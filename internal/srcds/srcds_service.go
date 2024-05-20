@@ -74,6 +74,7 @@ func NewSRCDSHandler(engine *gin.Engine, srcdsUsecase domain.SRCDSUsecase, serve
 		admin.POST("/api/smadmin/groups", handler.onCreateSMGroup())
 		admin.POST("/api/smadmin/groups/:group_id", handler.onSaveSMGroup())
 		admin.DELETE("/api/smadmin/groups/:group_id", handler.onDeleteSMGroup())
+		admin.GET("/api/smadmin/groups/:group_id/overrides", handler.onGroupOverrides())
 
 		admin.GET("/api/smadmin/admins", handler.onGetSMAdmins())
 		admin.POST("/api/smadmin/admins", handler.onCreateSMAdmin())
@@ -81,6 +82,11 @@ func NewSRCDSHandler(engine *gin.Engine, srcdsUsecase domain.SRCDSUsecase, serve
 		admin.DELETE("/api/smadmin/admins/:admin_id", handler.onDeleteSMAdmin())
 		admin.POST("/api/smadmin/admins/:admin_id/groups", handler.onAddAdminGroup())
 		admin.DELETE("/api/smadmin/admins/:admin_id/groups/:group_id", handler.onDeleteAdminGroup())
+
+		admin.GET("/api/smadmin/overrides", handler.onGetOverrides())
+		admin.POST("/api/smadmin/overrides", handler.onCreateOverrides())
+		admin.POST("/api/smadmin/overrides/:override_id", handler.onSaveOverrides())
+		admin.DELETE("/api/smadmin/overrides/:override_id", handler.onDeleteOverrides())
 	}
 
 	// Endpoints called by sourcemod plugin
@@ -127,6 +133,132 @@ func newServerToken(serverID int, cookieKey string) (string, error) {
 
 type groupRequest struct {
 	GroupID int `json:"group_id"`
+}
+
+func (s *srcdsHandler) onGroupOverrides() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		groupID, errGroupID := httphelper.GetIntParam(ctx, "group_id")
+		if errGroupID != nil {
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+
+			return
+		}
+
+		overrides, errOverrides := s.srcdsUsecase.GroupOverrides(ctx, groupID)
+		if errOverrides != nil {
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+
+			return
+		}
+
+		if overrides == nil {
+			overrides = []domain.SMGroupOverrides{}
+		}
+
+		ctx.JSON(http.StatusOK, overrides)
+	}
+}
+
+type overrideRequest struct {
+	Name  string              `json:"name"`
+	Type  domain.OverrideType `json:"type"`
+	Flags string              `json:"flags"`
+}
+
+func (s *srcdsHandler) onSaveOverrides() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		overrideID, errOverrideID := httphelper.GetIntParam(ctx, "override_id")
+		if errOverrideID != nil {
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+
+			return
+		}
+
+		var req overrideRequest
+		if !httphelper.Bind(ctx, &req) {
+			return
+		}
+
+		override, errOverride := s.srcdsUsecase.GetOverride(ctx, overrideID)
+		if errOverride != nil {
+			if errors.Is(errOverride, domain.ErrNoResult) {
+				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
+
+				return
+			}
+
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+
+			return
+		}
+
+		override.Type = req.Type
+		override.Name = req.Name
+		override.Flags = req.Flags
+
+		edited, errSave := s.srcdsUsecase.SaveOverride(ctx, override)
+		if errSave != nil {
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, edited)
+	}
+}
+
+func (s *srcdsHandler) onCreateOverrides() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var req overrideRequest
+		if !httphelper.Bind(ctx, &req) {
+			return
+		}
+
+		override, errCreate := s.srcdsUsecase.AddOverride(ctx, req.Name, req.Type, req.Flags)
+		if errCreate != nil {
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, override)
+	}
+}
+
+func (s *srcdsHandler) onDeleteOverrides() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		override, errOverride := httphelper.GetIntParam(ctx, "override_id")
+		if errOverride != nil {
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+
+			return
+		}
+
+		if errCreate := s.srcdsUsecase.DelOverride(ctx, override); errCreate != nil {
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{})
+	}
+}
+
+func (s *srcdsHandler) onGetOverrides() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		overrides, errOverrides := s.srcdsUsecase.Overrides(ctx)
+		if errOverrides != nil {
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+
+			return
+		}
+
+		if overrides == nil {
+			overrides = []domain.SMOverrides{}
+		}
+
+		ctx.JSON(http.StatusOK, overrides)
+	}
 }
 
 func (s *srcdsHandler) onAddAdminGroup() gin.HandlerFunc {

@@ -198,5 +198,3 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
         </Dialog>
     );
 });
-
-export default BanGroupModal;

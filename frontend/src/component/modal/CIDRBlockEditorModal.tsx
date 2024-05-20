@@ -133,5 +133,3 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
         </Dialog>
     );
 });
-
-export default CIDRBlockEditorModal;

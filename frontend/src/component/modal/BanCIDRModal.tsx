@@ -262,5 +262,3 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
         // </Formik>
     );
 });
-
-export default BanCIDRModal;

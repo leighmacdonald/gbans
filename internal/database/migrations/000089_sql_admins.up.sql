@@ -40,25 +40,29 @@ CREATE TABLE sm_group_immunity
 
 CREATE TABLE sm_group_overrides
 (
+    group_override_id serial primary key,
     group_id   int         NOT NULL,
     FOREIGN KEY (group_id) REFERENCES sm_groups (id) ON DELETE CASCADE,
     type       varchar(10) NOT NULL CHECK (type in ('command', 'group')),
     name       varchar(32) NOT NULL,
     access     varchar(5)  NOT NULL CHECK (access in ('allow', 'deny')),
     created_on timestamp   NOT NULL,
-    updated_on timestamp   NOT NULL,
-    PRIMARY KEY (group_id, type, name)
+    updated_on timestamp   NOT NULL
 );
+
+CREATE INDEX ON sm_group_overrides (group_id, type, name);
 
 CREATE TABLE sm_overrides
 (
+    override_id serial primary key,
     type       varchar(10) NOT NULL CHECK (type in ('command', 'group')),
     name       varchar(32) NOT NULL,
     flags      varchar(30) NOT NULL,
     created_on timestamp   NOT NULL,
-    updated_on timestamp   NOT NULL,
-    PRIMARY KEY (type, name)
+    updated_on timestamp   NOT NULL
 );
+
+CREATE INDEX ON sm_overrides (type, name);
 
 CREATE TABLE sm_admins_groups
 (

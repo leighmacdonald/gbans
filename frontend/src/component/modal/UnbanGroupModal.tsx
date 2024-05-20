@@ -94,5 +94,3 @@ export const UnbanGroupModal = NiceModal.create(
         );
     }
 );
-
-export default UnbanGroupModal;

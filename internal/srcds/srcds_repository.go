@@ -20,10 +20,29 @@ func NewRepository(database database.Database) domain.SRCDSRepository {
 	return srcdsRepository{database: database}
 }
 
-func (r srcdsRepository) GroupOverrides(ctx context.Context) ([]domain.SMGroupOverrides, error) {
+func (r srcdsRepository) SaveOverride(ctx context.Context, override domain.SMOverrides) (domain.SMOverrides, error) {
+	override.UpdatedOn = time.Now()
+
+	if err := r.database.ExecUpdateBuilder(ctx, r.database.Builder().
+		Update("sm_overrides").
+		SetMap(map[string]interface{}{
+			"type":       override.Type,
+			"name":       override.Name,
+			"flags":      override.Flags,
+			"updated_on": override.UpdatedOn,
+		}).
+		Where(sq.Eq{"override_id": override.OverrideID})); err != nil {
+		return domain.SMOverrides{}, r.database.DBErr(err)
+	}
+
+	return override, nil
+}
+
+func (r srcdsRepository) GroupOverrides(ctx context.Context, group domain.SMGroups) ([]domain.SMGroupOverrides, error) {
 	rows, errRows := r.database.QueryBuilder(ctx, r.database.Builder().
 		Select("group_id", "type", "name", "access", "created_on", "updated_on").
-		From("sm_group_overrides"))
+		From("sm_group_overrides").
+		Where(sq.Eq{"group_id": group.GroupID}))
 	if errRows != nil {
 		return nil, r.database.DBErr(errRows)
 	}
@@ -43,9 +62,50 @@ func (r srcdsRepository) GroupOverrides(ctx context.Context) ([]domain.SMGroupOv
 	return overrides, nil
 }
 
+func (r srcdsRepository) GetOverride(ctx context.Context, overrideID int) (domain.SMOverrides, error) {
+	var override domain.SMOverrides
+
+	row, err := r.database.QueryRowBuilder(ctx, r.database.Builder().
+		Select("override_id", "type", "name", "flags", "created_on", "updated_on").
+		From("sm_overrides").
+		Where(sq.Eq{"override_id": overrideID}))
+	if err != nil {
+		return override, r.database.DBErr(err)
+	}
+
+	if errScan := row.Scan(&override.OverrideID, &override.Type, &override.Name,
+		&override.Flags, &override.CreatedOn, &override.UpdatedOn); errScan != nil {
+		return override, r.database.DBErr(errScan)
+	}
+
+	return override, nil
+}
+
+func (r srcdsRepository) AddOverride(ctx context.Context, overrides domain.SMOverrides) (domain.SMOverrides, error) {
+	if err := r.database.ExecInsertBuilder(ctx, r.database.Builder().
+		Insert("sm_overrides").SetMap(map[string]interface{}{
+		"type":       overrides.Type,
+		"name":       overrides.Name,
+		"flags":      overrides.Flags,
+		"created_on": overrides.CreatedOn,
+		"updated_on": overrides.UpdatedOn,
+	})); err != nil {
+		return overrides, r.database.DBErr(err)
+	}
+
+	return overrides, nil
+}
+
+func (r srcdsRepository) DelOverride(ctx context.Context, override domain.SMOverrides) error {
+	return r.database.DBErr(r.database.ExecDeleteBuilder(ctx, r.database.Builder().
+		Delete("sm_overrides").
+		Where(sq.Eq{"override_id": override.OverrideID}),
+	))
+}
+
 func (r srcdsRepository) Overrides(ctx context.Context) ([]domain.SMOverrides, error) {
 	rows, errRows := r.database.QueryBuilder(ctx, r.database.Builder().
-		Select("type", "name", "flags", "created_on", "updated_on").
+		Select("override_id", "type", "name", "flags", "created_on", "updated_on").
 		From("sm_overrides"))
 	if errRows != nil {
 		return nil, r.database.DBErr(errRows)
@@ -55,7 +115,7 @@ func (r srcdsRepository) Overrides(ctx context.Context) ([]domain.SMOverrides, e
 
 	for rows.Next() {
 		var override domain.SMOverrides
-		if errScan := rows.Scan(&override.Type, &override.Name, &override.Flags,
+		if errScan := rows.Scan(&override.OverrideID, &override.Type, &override.Name, &override.Flags,
 			&override.CreatedOn, &override.UpdatedOn); errScan != nil {
 			return nil, r.database.DBErr(errScan)
 		}
@@ -76,18 +136,6 @@ func (r srcdsRepository) AddGroupOverride(ctx context.Context, override domain.S
 			"access":     override.Access,
 			"created_in": override.CreatedOn,
 			"updated_on": override.UpdatedOn,
-		})))
-}
-
-func (r srcdsRepository) AddOverride(ctx context.Context, overrides domain.SMOverrides) error {
-	return r.database.DBErr(r.database.ExecInsertBuilder(ctx, r.database.Builder().
-		Insert("sm_overrides").
-		SetMap(map[string]interface{}{
-			"type":       overrides.Type,
-			"name":       overrides.Name,
-			"flags":      overrides.Flags,
-			"created_on": overrides.CreatedOn,
-			"updated_on": overrides.UpdatedOn,
 		})))
 }
 

@@ -262,5 +262,3 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
         </Dialog>
     );
 });
-
-export default BanASNModal;

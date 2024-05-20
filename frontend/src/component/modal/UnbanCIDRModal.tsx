@@ -95,5 +95,3 @@ export const UnbanCIDRModal = NiceModal.create(
         );
     }
 );
-
-export default UnbanCIDRModal;
