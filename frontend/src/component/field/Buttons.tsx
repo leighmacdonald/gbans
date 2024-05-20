@@ -14,6 +14,7 @@ type ButtonProps = {
     resetLabel?: string;
     clearLabel?: string;
     showClear?: boolean;
+    showReset?: boolean;
     closeLabel?: string;
     onClear?: () => Promise<void>;
     onClose?: () => Promise<void>;
@@ -30,6 +31,7 @@ export const Buttons = ({
     clearLabel = 'Clear',
     closeLabel = 'Close',
     showClear = false,
+    showReset = true,
     fullWidth = false,
     onClose
 }: ButtonProps) => {
@@ -47,16 +49,18 @@ export const Buttons = ({
             >
                 {isSubmitting ? '...' : submitLabel}
             </Button>
-            <Button
-                key={'reset-button'}
-                type="reset"
-                onClick={() => reset()}
-                variant={'contained'}
-                color={'warning'}
-                startIcon={<RestartAltIcon />}
-            >
-                {resetLabel}
-            </Button>
+            {showReset && (
+                <Button
+                    key={'reset-button'}
+                    type="reset"
+                    onClick={() => reset()}
+                    variant={'contained'}
+                    color={'warning'}
+                    startIcon={<RestartAltIcon />}
+                >
+                    {resetLabel}
+                </Button>
+            )}
             {showClear ||
                 (onClear && (
                     <Button

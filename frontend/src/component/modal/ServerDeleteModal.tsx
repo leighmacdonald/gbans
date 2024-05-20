@@ -42,5 +42,3 @@ export const ServerDeleteModal = ({ onSuccess, server }: DeleteServerModalProps)
         </ConfirmationModal>
     );
 };
-
-export default ServerDeleteModal;

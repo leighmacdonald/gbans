@@ -88,5 +88,3 @@ export const UnbanASNModal = NiceModal.create(({ banId }: { banId: number }) => 
         </Dialog>
     );
 });
-
-export default UnbanASNModal;

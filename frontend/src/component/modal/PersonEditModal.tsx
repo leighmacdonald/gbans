@@ -110,5 +110,3 @@ export const PersonEditModal = NiceModal.create(({ person }: { person: Person })
         </Dialog>
     );
 });
-
-export default PersonEditModal;

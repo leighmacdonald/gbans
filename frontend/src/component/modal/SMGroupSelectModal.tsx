@@ -40,7 +40,7 @@ export const SMGroupSelectModal = NiceModal.create(({ groups }: { groups: SMGrou
 
                 <DialogContent>
                     <Grid container spacing={2}>
-                        <Grid xs={6}>
+                        <Grid xs={12}>
                             <Field
                                 name={'group'}
                                 children={(props) => {
@@ -78,6 +78,8 @@ export const SMGroupSelectModal = NiceModal.create(({ groups }: { groups: SMGrou
                                         <Buttons
                                             reset={reset}
                                             canSubmit={canSubmit}
+                                            showReset={false}
+                                            submitLabel={'Select Group'}
                                             isSubmitting={isSubmitting}
                                             onClose={async () => {
                                                 await modal.hide();

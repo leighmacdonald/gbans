@@ -1,33 +1,37 @@
 import NiceModal from '@ebay/nice-modal-react';
-import AssetViewer from './AssetViewer.tsx';
-import BanASNModal from './BanASNModal.tsx';
-import BanCIDRModal from './BanCIDRModal.tsx';
-import BanGroupModal from './BanGroupModal.tsx';
-import BanSteamModal from './BanSteamModal.tsx';
-import CIDRBlockEditorModal from './CIDRBlockEditorModal.tsx';
-import ConfirmationModal from './ConfirmationModal.tsx';
+import { AssetViewer } from './AssetViewer.tsx';
+import { BanASNModal } from './BanASNModal.tsx';
+import { BanCIDRModal } from './BanCIDRModal.tsx';
+import { BanGroupModal } from './BanGroupModal.tsx';
+import { BanSteamModal } from './BanSteamModal.tsx';
+import { CIDRBlockEditorModal } from './CIDRBlockEditorModal.tsx';
+import { ConfirmationModal } from './ConfirmationModal.tsx';
 import { ContestEditor } from './ContestEditor.tsx';
 import { ContestEntryDeleteModal } from './ContestEntryDeleteModal.tsx';
-import ContestEntryModal from './ContestEntryModal.tsx';
+import { ContestEntryModal } from './ContestEntryModal.tsx';
 import { FileUploadModal } from './FileUploadModal.tsx';
 import { FilterEditModal } from './FilterEditModal.tsx';
 import { ForumCategoryEditorModal } from './ForumCategoryEditorModal.tsx';
 import { ForumForumEditorModal } from './ForumForumEditorModal.tsx';
 import { ForumThreadCreatorModal } from './ForumThreadCreatorModal.tsx';
 import { ForumThreadEditorModal } from './ForumThreadEditorModal.tsx';
-import IPWhitelistEditorModal from './IPWhitelistEditorModal.tsx';
-import PersonEditModal from './PersonEditModal.tsx';
+import { IPWhitelistEditorModal } from './IPWhitelistEditorModal.tsx';
+import { PersonEditModal } from './PersonEditModal.tsx';
 import { SMAdminEditorModal } from './SMAdminEditorModal.tsx';
 import { SMGroupEditorModal } from './SMGroupEditorModal.tsx';
+import { SMGroupOverridesModal } from './SMGroupOverridesModal.tsx';
 import { SMGroupSelectModal } from './SMGroupSelectModal.tsx';
-import ServerDeleteModal from './ServerDeleteModal.tsx';
+import { SMOverrideEditorModal } from './SMOverrideEditorModal.tsx';
+import { ServerDeleteModal } from './ServerDeleteModal.tsx';
 import { ServerEditorModal } from './ServerEditorModal.tsx';
 import { SteamWhitelistEditorModal } from './SteamWhitelistEditorModal.tsx';
-import UnbanASNModal from './UnbanASNModal.tsx';
-import UnbanCIDRModal from './UnbanCIDRModal.tsx';
-import UnbanGroupModal from './UnbanGroupModal.tsx';
-import UnbanSteamModal from './UnbanSteamModal.tsx';
+import { UnbanASNModal } from './UnbanASNModal.tsx';
+import { UnbanCIDRModal } from './UnbanCIDRModal.tsx';
+import { UnbanGroupModal } from './UnbanGroupModal.tsx';
+import { UnbanSteamModal } from './UnbanSteamModal.tsx';
 
+export const ModalSMOverridesEditor = 'modal-sm-overrides-editor';
+export const ModalSMGroupOverrides = 'modal-sm-group-overrides';
 export const ModalSMGroupSelect = 'modal-sm-group-select';
 export const ModalSMGroupEditor = 'modal-sm-group-editor';
 export const ModalSMAdminEditor = 'modal-sm-admin-editor';
@@ -58,6 +62,8 @@ export const ModalForumThreadCreator = 'modal-forum-thread-creator';
 export const ModalForumThreadEditor = 'modal-forum-thread-editor';
 
 [
+    [ModalSMOverridesEditor, SMOverrideEditorModal],
+    [ModalSMGroupOverrides, SMGroupOverridesModal],
     [ModalSMGroupSelect, SMGroupSelectModal],
     [ModalSMGroupEditor, SMGroupEditorModal],
     [ModalSMAdminEditor, SMAdminEditorModal],

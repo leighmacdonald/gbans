@@ -27,6 +27,10 @@ type srcdsUsecase struct {
 	cookie          string
 }
 
+func (h srcdsUsecase) GetOverride(ctx context.Context, overrideID int) (domain.SMOverrides, error) {
+	return h.srcdsRepository.GetOverride(ctx, overrideID)
+}
+
 func NewSrcdsUsecase(srcdsRepository domain.SRCDSRepository, configUsecase domain.ConfigUsecase, serversUsecase domain.ServersUsecase,
 	personUsecase domain.PersonUsecase, reportUsecase domain.ReportUsecase, discordUsecase domain.DiscordUsecase,
 ) domain.SRCDSUsecase {
@@ -39,6 +43,54 @@ func NewSrcdsUsecase(srcdsRepository domain.SRCDSRepository, configUsecase domai
 		srcdsRepository: srcdsRepository,
 		cookie:          configUsecase.Config().HTTP.CookieKey,
 	}
+}
+
+func (h srcdsUsecase) GroupOverrides(ctx context.Context, groupID int) ([]domain.SMGroupOverrides, error) {
+	group, errGroup := h.GetGroupByID(ctx, groupID)
+	if errGroup != nil {
+		return []domain.SMGroupOverrides{}, errGroup
+	}
+
+	return h.srcdsRepository.GroupOverrides(ctx, group)
+}
+
+func (h srcdsUsecase) Overrides(ctx context.Context) ([]domain.SMOverrides, error) {
+	return h.srcdsRepository.Overrides(ctx)
+}
+
+func (h srcdsUsecase) SaveOverride(ctx context.Context, override domain.SMOverrides) (domain.SMOverrides, error) {
+	if override.Name == "" || override.Flags == "" || override.Type != domain.OverrideTypeCommand && override.Type != domain.OverrideTypeGroup {
+		return domain.SMOverrides{}, domain.ErrInvalidParameter
+	}
+
+	return h.srcdsRepository.SaveOverride(ctx, override)
+}
+
+func (h srcdsUsecase) AddOverride(ctx context.Context, name string, overrideType domain.OverrideType, flags string) (domain.SMOverrides, error) {
+	if name == "" || flags == "" || overrideType != domain.OverrideTypeCommand && overrideType != domain.OverrideTypeGroup {
+		return domain.SMOverrides{}, domain.ErrInvalidParameter
+	}
+
+	now := time.Now()
+
+	return h.srcdsRepository.AddOverride(ctx, domain.SMOverrides{
+		Type:  overrideType,
+		Name:  name,
+		Flags: flags,
+		TimeStamped: domain.TimeStamped{
+			CreatedOn: now,
+			UpdatedOn: now,
+		},
+	})
+}
+
+func (h srcdsUsecase) DelOverride(ctx context.Context, overrideID int) error {
+	override, errOverride := h.srcdsRepository.GetOverride(ctx, overrideID)
+	if errOverride != nil {
+		return errOverride
+	}
+
+	return h.srcdsRepository.DelOverride(ctx, override)
 }
 
 func (h srcdsUsecase) DelAdminGroup(ctx context.Context, adminID int, groupID int) (domain.SMAdmin, error) {

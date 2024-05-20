@@ -226,5 +226,3 @@ export const ContestEntryModal = NiceModal.create(({ contest_id }: { contest_id:
         // </Formik>
     );
 });
-
-export default ContestEntryModal;

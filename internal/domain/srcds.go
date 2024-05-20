@@ -36,9 +36,12 @@ type SRCDSRepository interface {
 	Admins(ctx context.Context) ([]SMAdmin, error)
 	Groups(ctx context.Context) ([]SMGroups, error)
 	AddGroupOverride(ctx context.Context, override SMGroupOverrides) error
-	AddOverride(ctx context.Context, overrides SMOverrides) error
-	GroupOverrides(ctx context.Context) ([]SMGroupOverrides, error)
+	AddOverride(ctx context.Context, overrides SMOverrides) (SMOverrides, error)
+	GroupOverrides(ctx context.Context, group SMGroups) ([]SMGroupOverrides, error)
 	Overrides(ctx context.Context) ([]SMOverrides, error)
+	DelOverride(ctx context.Context, override SMOverrides) error
+	GetOverride(ctx context.Context, overrideID int) (SMOverrides, error)
+	SaveOverride(ctx context.Context, override SMOverrides) (SMOverrides, error)
 }
 
 type SRCDSUsecase interface {
@@ -58,6 +61,12 @@ type SRCDSUsecase interface {
 	SetAdminGroups(ctx context.Context, authType AuthType, identity string, groups ...SMGroups) error
 	AddAdminGroup(ctx context.Context, adminID int, groupID int) (SMAdmin, error)
 	DelAdminGroup(ctx context.Context, adminID int, groupID int) (SMAdmin, error)
+	GroupOverrides(ctx context.Context, groupID int) ([]SMGroupOverrides, error)
+	Overrides(ctx context.Context) ([]SMOverrides, error)
+	AddOverride(ctx context.Context, name string, overrideType OverrideType, flags string) (SMOverrides, error)
+	DelOverride(ctx context.Context, overrideID int) error
+	GetOverride(ctx context.Context, overrideID int) (SMOverrides, error)
+	SaveOverride(ctx context.Context, override SMOverrides) (SMOverrides, error)
 }
 
 type AuthType string
@@ -110,17 +119,19 @@ type SMGroupImmunity struct {
 }
 
 type SMGroupOverrides struct {
-	GroupID int            `json:"group_id"`
-	Type    OverrideType   `json:"type"` // command | group
-	Name    string         `json:"name"`
-	Access  OverrideAccess `json:"access"` // allow | deny
+	GroupOverrideID int            `json:"group_override_id"`
+	GroupID         int            `json:"group_id"`
+	Type            OverrideType   `json:"type"` // command | group
+	Name            string         `json:"name"`
+	Access          OverrideAccess `json:"access"` // allow | deny
 	TimeStamped
 }
 
 type SMOverrides struct {
-	Type  OverrideType `json:"type"` // command | group
-	Name  string       `json:"name"`
-	Flags string       `json:"flags"`
+	OverrideID int          `json:"override_id"`
+	Type       OverrideType `json:"type"` // command | group
+	Name       string       `json:"name"`
+	Flags      string       `json:"flags"`
 	TimeStamped
 }
 

@@ -102,6 +102,15 @@ func GetIntParam(ctx *gin.Context, key string) (int, error) {
 	return util.StringToInt(valueStr), nil
 }
 
+func GetStringParam(ctx *gin.Context, key string) (string, error) {
+	valueStr := ctx.Param(key)
+	if valueStr == "" {
+		return "", fmt.Errorf("%w: %s", domain.ErrParamKeyMissing, key)
+	}
+
+	return valueStr, nil
+}
+
 func GetUUIDParam(ctx *gin.Context, key string) (uuid.UUID, error) {
 	valueStr := ctx.Param(key)
 	if valueStr == "" {
