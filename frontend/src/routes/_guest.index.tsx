@@ -30,7 +30,7 @@ function Index() {
             </Grid>
             <Grid xs={12} sm={12} md={3}>
                 <Stack spacing={3}>
-                    {profile().ban_id == 0 ? (
+                    {profile.ban_id == 0 ? (
                         <Button
                             startIcon={<StorageIcon />}
                             fullWidth
@@ -50,7 +50,7 @@ function Index() {
                             variant={'contained'}
                             onClick={async () => {
                                 await navigate({
-                                    to: `/ban/${profile().ban_id}`
+                                    to: `/ban/${profile.ban_id}`
                                 });
                             }}
                         >

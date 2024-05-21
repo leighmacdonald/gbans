@@ -66,7 +66,7 @@ interface menuRoute {
 }
 
 export const TopBar = () => {
-    const { profile, hasPermission, userSteamID, isAuthenticated } = useAuth();
+    const { profile, hasPermission, isAuthenticated } = useAuth();
 
     const { notifications } = useNotificationsCtx();
     const theme = useTheme();
@@ -109,7 +109,7 @@ export const TopBar = () => {
                 icon: <DashboardIcon color={'primary'} sx={topColourOpts} />
             }
         ];
-        if (profile().ban_id <= 0) {
+        if (profile.ban_id <= 0) {
             items.push({
                 to: '/servers',
                 text: 'Servers',
@@ -128,16 +128,16 @@ export const TopBar = () => {
             text: 'Wiki',
             icon: <ArticleIcon sx={topColourOpts} />
         });
-        if (profile().ban_id <= 0) {
+        if (profile.ban_id <= 0) {
             items.push({
                 to: '/report',
                 text: 'Report',
                 icon: <ReportIcon sx={topColourOpts} />
             });
         }
-        if (profile().ban_id > 0) {
+        if (profile.ban_id > 0) {
             items.push({
-                to: `/ban/${profile().ban_id}`,
+                to: `/ban/${profile.ban_id}`,
                 text: 'Appeal',
                 icon: <SupportIcon sx={topColourOpts} />
             });
@@ -148,7 +148,7 @@ export const TopBar = () => {
     const userItems: menuRoute[] = useMemo(
         () => [
             {
-                to: `/profile/${userSteamID}`,
+                to: `/profile/${profile.steam_id}`,
                 text: 'Profile',
                 icon: <AccountCircleIcon sx={colourOpts} />
             },
@@ -159,7 +159,7 @@ export const TopBar = () => {
             },
 
             {
-                to: `/logs/${userSteamID}`,
+                to: `/logs/${profile.steam_id}`,
                 text: 'Match History',
                 icon: <TimelineIcon sx={colourOpts} />
             },
@@ -169,7 +169,7 @@ export const TopBar = () => {
                 icon: <ExitToAppIcon sx={colourOpts} />
             }
         ],
-        [colourOpts, userSteamID]
+        [colourOpts, profile.steam_id]
     );
 
     // @ts-expect-error label defined as string
@@ -430,7 +430,7 @@ export const TopBar = () => {
                                 <>
                                     <Tooltip title="User Settings">
                                         <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                                            <Avatar alt={profile().name} src={profile().avatarhash} />
+                                            <Avatar alt={profile.name} src={profile.avatarhash} />
                                         </IconButton>
                                     </Tooltip>
                                     <Menu

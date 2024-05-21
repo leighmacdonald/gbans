@@ -72,18 +72,17 @@ export const Route = createFileRoute('/_auth/report/')({
 });
 
 function ReportCreate() {
-    const { profile, userSteamID } = useRouteContext({ from: '/_auth/report/' });
+    const { profile } = useRouteContext({ from: '/_auth/report/' });
 
     const canReport = useMemo(() => {
-        const user = profile();
-        return user.steam_id && user.ban_id == 0;
+        return profile.steam_id && profile.ban_id == 0;
     }, [profile]);
 
     const { data: logs, isLoading } = useQuery({
-        queryKey: ['history', { userSteamID }],
+        queryKey: ['history', { steam_id: profile.steam_id }],
         queryFn: async () => {
             return await apiGetReports({
-                source_id: userSteamID
+                source_id: profile.steam_id
             });
         }
     });
@@ -104,7 +103,7 @@ function ReportCreate() {
                                     component={RouterLink}
                                     variant={'contained'}
                                     color={'primary'}
-                                    to={`/ban/${profile().ban_id}`}
+                                    to={`/ban/${profile.ban_id}`}
                                 >
                                     Appeal Ban
                                 </Button>

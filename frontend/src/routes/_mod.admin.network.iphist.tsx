@@ -122,7 +122,6 @@ function AdminNetworkPlayerIPHistory() {
                     />
                 </ContainerWithHeader>
             </Grid>
-            ;
         </Grid>
     );
 }
