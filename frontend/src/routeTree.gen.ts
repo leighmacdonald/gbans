@@ -567,43 +567,43 @@ declare module '@tanstack/react-router' {
     }
     '/_auth/forums/': {
       id: '/_auth/forums/'
-      path: '/forums'
-      fullPath: '/forums'
+      path: '/forums/'
+      fullPath: '/forums/'
       preLoaderRoute: typeof AuthForumsIndexImport
       parentRoute: typeof AuthImport
     }
     '/_auth/report/': {
       id: '/_auth/report/'
-      path: '/report'
-      fullPath: '/report'
+      path: '/report/'
+      fullPath: '/report/'
       preLoaderRoute: typeof AuthReportIndexImport
       parentRoute: typeof AuthImport
     }
     '/_auth/stats/': {
       id: '/_auth/stats/'
-      path: '/stats'
-      fullPath: '/stats'
+      path: '/stats/'
+      fullPath: '/stats/'
       preLoaderRoute: typeof AuthStatsIndexImport
       parentRoute: typeof AuthImport
     }
     '/_guest/login/': {
       id: '/_guest/login/'
-      path: '/login'
-      fullPath: '/login'
+      path: '/login/'
+      fullPath: '/login/'
       preLoaderRoute: typeof GuestLoginIndexImport
       parentRoute: typeof GuestImport
     }
     '/_guest/wiki/': {
       id: '/_guest/wiki/'
-      path: '/wiki'
-      fullPath: '/wiki'
+      path: '/wiki/'
+      fullPath: '/wiki/'
       preLoaderRoute: typeof GuestWikiIndexImport
       parentRoute: typeof GuestImport
     }
     '/_auth/logs/$steamId/': {
       id: '/_auth/logs/$steamId/'
-      path: '/logs/$steamId'
-      fullPath: '/logs/$steamId'
+      path: '/logs/$steamId/'
+      fullPath: '/logs/$steamId/'
       preLoaderRoute: typeof AuthLogsSteamIdImport
       parentRoute: typeof AuthImport
     }
@@ -679,8 +679,8 @@ declare module '@tanstack/react-router' {
     }
     '/_mod/admin/network/': {
       id: '/_mod/admin/network/'
-      path: '/admin/network'
-      fullPath: '/admin/network'
+      path: '/admin/network/'
+      fullPath: '/admin/network/'
       preLoaderRoute: typeof ModAdminNetworkIndexImport
       parentRoute: typeof ModImport
     }
