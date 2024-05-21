@@ -24,7 +24,7 @@ func (r *demoRepository) ExpiredDemos(ctx context.Context, limit uint64) ([]doma
 		Select("d.demo_id", "d.title", "d.asset_id").
 		From("demo d").
 		Where(sq.NotEq{"d.archive": true}).
-		OrderBy("d.created_on desc").
+		OrderBy("d.created_on asc").
 		Offset(limit))
 	if errRow != nil {
 		return nil, r.db.DBErr(errRow)

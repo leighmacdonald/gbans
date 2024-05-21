@@ -154,6 +154,13 @@ const (
 	LocalMode FileServeMode = "local"
 )
 
+type DemoStrategy string
+
+const (
+	DemoStrategyPctFree DemoStrategy = "pctfree"
+	DemoStrategyCount   DemoStrategy = "count"
+)
+
 type ConfigGeneral struct {
 	SiteName                     string        `mapstructure:"site_name"`
 	SteamKey                     string        `mapstructure:"steam_key"`
@@ -167,6 +174,9 @@ type ConfigGeneral struct {
 	DefaultMaps                  []string      `mapstructure:"default_maps"`
 	ExternalURL                  string        `mapstructure:"external_url"`
 	DemoCleanupEnabled           bool          `mapstructure:"demo_cleanup_enabled"`
+	DemoCleanupStrategy          DemoStrategy  `mapstructure:"demo_cleanup_strategy"`
+	DemoCleanupMinPct            float32       `mapstructure:"demo_cleanup_min_pct"`
+	DemoCleanupMount             string        `mapstructure:"demo_cleanup_mount"`
 	DemoCountLimit               uint64        `mapstructure:"demo_count_limit"`
 	FileServeMode                FileServeMode `mapstructure:"file_serve_mode"`
 }
