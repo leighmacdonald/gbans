@@ -50,8 +50,6 @@ export const FileUploadModal = NiceModal.create((): JSX.Element => {
         const file = target.files[0];
         const reader = new FileReader();
         reader.addEventListener('load', (event) => {
-            console.log('loaded');
-            console.log(event);
             if (event?.target?.result) {
                 setUpload({
                     content: fromByteArray(new Uint8Array(event.target.result as ArrayBuffer)),

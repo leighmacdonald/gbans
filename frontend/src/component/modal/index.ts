@@ -19,6 +19,8 @@ import { IPWhitelistEditorModal } from './IPWhitelistEditorModal.tsx';
 import { PersonEditModal } from './PersonEditModal.tsx';
 import { SMAdminEditorModal } from './SMAdminEditorModal.tsx';
 import { SMGroupEditorModal } from './SMGroupEditorModal.tsx';
+import { SMGroupImmunityCreateModal } from './SMGroupImmunityCreateModal.tsx';
+import { SMGroupOverrideEditorModal } from './SMGroupOverrideEditorModal.tsx';
 import { SMGroupOverridesModal } from './SMGroupOverridesModal.tsx';
 import { SMGroupSelectModal } from './SMGroupSelectModal.tsx';
 import { SMOverrideEditorModal } from './SMOverrideEditorModal.tsx';
@@ -30,6 +32,8 @@ import { UnbanCIDRModal } from './UnbanCIDRModal.tsx';
 import { UnbanGroupModal } from './UnbanGroupModal.tsx';
 import { UnbanSteamModal } from './UnbanSteamModal.tsx';
 
+export const ModalSMGroupImmunityEditor = 'modal-sm-group-immunity-editor';
+export const ModalSMGroupOverridesEditor = 'modal-sm-group-overrides-editor';
 export const ModalSMOverridesEditor = 'modal-sm-overrides-editor';
 export const ModalSMGroupOverrides = 'modal-sm-group-overrides';
 export const ModalSMGroupSelect = 'modal-sm-group-select';
@@ -62,6 +66,8 @@ export const ModalForumThreadCreator = 'modal-forum-thread-creator';
 export const ModalForumThreadEditor = 'modal-forum-thread-editor';
 
 [
+    [ModalSMGroupImmunityEditor, SMGroupImmunityCreateModal],
+    [ModalSMGroupOverridesEditor, SMGroupOverrideEditorModal],
     [ModalSMOverridesEditor, SMOverrideEditorModal],
     [ModalSMGroupOverrides, SMGroupOverridesModal],
     [ModalSMGroupSelect, SMGroupSelectModal],

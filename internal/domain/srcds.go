@@ -18,7 +18,7 @@ var (
 	ErrSMRequirePassword  = errors.New("name auth type requires password")
 )
 
-type SRCDSRepository interface {
+type SRCDSRepository interface { //nolint:interfacebloat
 	AddAdmin(ctx context.Context, admin SMAdmin) (SMAdmin, error)
 	SaveAdmin(ctx context.Context, admin SMAdmin) (SMAdmin, error)
 	DelAdmin(ctx context.Context, admin SMAdmin) error
@@ -35,16 +35,23 @@ type SRCDSRepository interface {
 	GetAdminGroups(ctx context.Context, admin SMAdmin) ([]SMGroups, error)
 	Admins(ctx context.Context) ([]SMAdmin, error)
 	Groups(ctx context.Context) ([]SMGroups, error)
-	AddGroupOverride(ctx context.Context, override SMGroupOverrides) error
 	AddOverride(ctx context.Context, overrides SMOverrides) (SMOverrides, error)
-	GroupOverrides(ctx context.Context, group SMGroups) ([]SMGroupOverrides, error)
 	Overrides(ctx context.Context) ([]SMOverrides, error)
 	DelOverride(ctx context.Context, override SMOverrides) error
 	GetOverride(ctx context.Context, overrideID int) (SMOverrides, error)
 	SaveOverride(ctx context.Context, override SMOverrides) (SMOverrides, error)
+	GroupOverrides(ctx context.Context, group SMGroups) ([]SMGroupOverrides, error)
+	AddGroupOverride(ctx context.Context, override SMGroupOverrides) (SMGroupOverrides, error)
+	DelGroupOverride(ctx context.Context, override SMGroupOverrides) error
+	GetGroupOverride(ctx context.Context, overrideID int) (SMGroupOverrides, error)
+	SaveGroupOverride(ctx context.Context, override SMGroupOverrides) (SMGroupOverrides, error)
+	GetGroupImmunities(ctx context.Context) ([]SMGroupImmunity, error)
+	GetGroupImmunityByID(ctx context.Context, groupImmunityID int) (SMGroupImmunity, error)
+	AddGroupImmunity(ctx context.Context, group SMGroups, other SMGroups) (SMGroupImmunity, error)
+	DelGroupImmunity(ctx context.Context, groupImmunity SMGroupImmunity) error
 }
 
-type SRCDSUsecase interface {
+type SRCDSUsecase interface { //nolint:interfacebloat
 	ServerAuth(ctx context.Context, req ServerAuthReq) (string, error)
 	Report(ctx context.Context, currentUser UserProfile, req CreateReportReq) (*Report, error)
 	GetAdminByID(ctx context.Context, adminID int) (SMAdmin, error)
@@ -67,6 +74,14 @@ type SRCDSUsecase interface {
 	DelOverride(ctx context.Context, overrideID int) error
 	GetOverride(ctx context.Context, overrideID int) (SMOverrides, error)
 	SaveOverride(ctx context.Context, override SMOverrides) (SMOverrides, error)
+	AddGroupOverride(ctx context.Context, groupID int, name string, overrideType OverrideType, access OverrideAccess) (SMGroupOverrides, error)
+	DelGroupOverride(ctx context.Context, groupOverrideID int) error
+	GetGroupOverride(ctx context.Context, groupOverrideID int) (SMGroupOverrides, error)
+	SaveGroupOverride(ctx context.Context, override SMGroupOverrides) (SMGroupOverrides, error)
+	GetGroupImmunities(ctx context.Context) ([]SMGroupImmunity, error)
+	GetGroupImmunityByID(ctx context.Context, groupImmunityID int) (SMGroupImmunity, error)
+	AddGroupImmunity(ctx context.Context, groupID int, otherID int) (SMGroupImmunity, error)
+	DelGroupImmunity(ctx context.Context, groupImmunityID int) error
 }
 
 type AuthType string
@@ -113,9 +128,10 @@ type SMGroups struct {
 }
 
 type SMGroupImmunity struct {
-	GroupID   int       `json:"group_id"`
-	OtherID   int       `json:"other_id"`
-	CreatedOn time.Time `json:"created_on"`
+	GroupImmunityID int       `json:"group_immunity_id"`
+	Group           SMGroups  `json:"group"`
+	Other           SMGroups  `json:"other"`
+	CreatedOn       time.Time `json:"created_on"`
 }
 
 type SMGroupOverrides struct {

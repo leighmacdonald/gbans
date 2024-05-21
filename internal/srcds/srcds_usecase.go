@@ -45,6 +45,77 @@ func NewSrcdsUsecase(srcdsRepository domain.SRCDSRepository, configUsecase domai
 	}
 }
 
+func (h srcdsUsecase) GetGroupImmunityByID(ctx context.Context, groupImmunityID int) (domain.SMGroupImmunity, error) {
+	return h.srcdsRepository.GetGroupImmunityByID(ctx, groupImmunityID)
+}
+
+func (h srcdsUsecase) GetGroupImmunities(ctx context.Context) ([]domain.SMGroupImmunity, error) {
+	return h.srcdsRepository.GetGroupImmunities(ctx)
+}
+
+func (h srcdsUsecase) AddGroupImmunity(ctx context.Context, groupID int, otherID int) (domain.SMGroupImmunity, error) {
+	if groupID == otherID {
+		return domain.SMGroupImmunity{}, domain.ErrBadRequest
+	}
+
+	group, errGroup := h.GetGroupByID(ctx, groupID)
+	if errGroup != nil {
+		return domain.SMGroupImmunity{}, errGroup
+	}
+
+	other, errOther := h.GetGroupByID(ctx, otherID)
+	if errOther != nil {
+		return domain.SMGroupImmunity{}, errOther
+	}
+
+	return h.srcdsRepository.AddGroupImmunity(ctx, group, other)
+}
+
+func (h srcdsUsecase) DelGroupImmunity(ctx context.Context, groupImmunityID int) error {
+	immunity, errImmunity := h.GetGroupImmunityByID(ctx, groupImmunityID)
+	if errImmunity != nil {
+		return errImmunity
+	}
+
+	return h.srcdsRepository.DelGroupImmunity(ctx, immunity)
+}
+
+func (h srcdsUsecase) AddGroupOverride(ctx context.Context, groupID int, name string, overrideType domain.OverrideType, access domain.OverrideAccess) (domain.SMGroupOverrides, error) {
+	if name == "" || overrideType == "" || access == "" {
+		return domain.SMGroupOverrides{}, domain.ErrInvalidParameter
+	}
+
+	now := time.Now()
+
+	return h.srcdsRepository.AddGroupOverride(ctx, domain.SMGroupOverrides{
+		GroupID: groupID,
+		Type:    overrideType,
+		Name:    name,
+		Access:  access,
+		TimeStamped: domain.TimeStamped{
+			CreatedOn: now,
+			UpdatedOn: now,
+		},
+	})
+}
+
+func (h srcdsUsecase) DelGroupOverride(ctx context.Context, groupOverrideID int) error {
+	override, errOverride := h.GetGroupOverride(ctx, groupOverrideID)
+	if errOverride != nil {
+		return errOverride
+	}
+
+	return h.srcdsRepository.DelGroupOverride(ctx, override)
+}
+
+func (h srcdsUsecase) GetGroupOverride(ctx context.Context, groupOverrideID int) (domain.SMGroupOverrides, error) {
+	return h.srcdsRepository.GetGroupOverride(ctx, groupOverrideID)
+}
+
+func (h srcdsUsecase) SaveGroupOverride(ctx context.Context, override domain.SMGroupOverrides) (domain.SMGroupOverrides, error) {
+	return h.srcdsRepository.SaveGroupOverride(ctx, override)
+}
+
 func (h srcdsUsecase) GroupOverrides(ctx context.Context, groupID int) ([]domain.SMGroupOverrides, error) {
 	group, errGroup := h.GetGroupByID(ctx, groupID)
 	if errGroup != nil {

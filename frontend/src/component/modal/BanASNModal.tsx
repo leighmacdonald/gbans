@@ -45,7 +45,6 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
     const mutation = useMutation({
         mutationKey: ['banASN'],
         mutationFn: async (values: BanASNFormValues) => {
-            console.log(values);
             if (existing?.ban_asn_id) {
                 const ban_record = apiUpdateBanASN(existing.ban_asn_id, {
                     note: values.note,

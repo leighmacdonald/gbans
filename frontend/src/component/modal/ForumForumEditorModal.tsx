@@ -30,7 +30,6 @@ export const ForumForumEditorModal = NiceModal.create(
         const mutation = useMutation({
             mutationKey: ['forumCategory'],
             mutationFn: async (values: ForumEditorValues) => {
-                console.log(values);
                 if (forum?.forum_id) {
                     return await apiSaveForum(
                         forum.forum_id,
