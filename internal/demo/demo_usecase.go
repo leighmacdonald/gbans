@@ -12,6 +12,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/demoparser"
 	"github.com/leighmacdonald/gbans/pkg/log"
+	"github.com/ricochet2200/go-disk-usage/du"
 )
 
 type demoUsecase struct {
@@ -20,12 +21,6 @@ type demoUsecase struct {
 	configUsecase  domain.ConfigUsecase
 	serversUsecase domain.ServersUsecase
 	bucket         domain.Bucket
-}
-
-func (d demoUsecase) MarkArchived(ctx context.Context, demo *domain.DemoFile) error {
-	demo.Archive = true
-
-	return d.repository.SaveDemo(ctx, demo)
 }
 
 func NewDemoUsecase(bucket domain.Bucket, demoRepository domain.DemoRepository, assetUsecase domain.AssetUsecase,
@@ -37,6 +32,60 @@ func NewDemoUsecase(bucket domain.Bucket, demoRepository domain.DemoRepository, 
 		assetUsecase:   assetUsecase,
 		configUsecase:  configUsecase,
 		serversUsecase: serversUsecase,
+	}
+}
+
+func (d demoUsecase) OldestDemo(ctx context.Context) (domain.DemoInfo, error) {
+	demos, errDemos := d.repository.ExpiredDemos(ctx, 1)
+	if errDemos != nil {
+		return domain.DemoInfo{}, errDemos
+	}
+
+	if len(demos) == 0 {
+		return domain.DemoInfo{}, domain.ErrNoResult
+	}
+
+	return demos[0], nil
+}
+
+func (d demoUsecase) MarkArchived(ctx context.Context, demo *domain.DemoFile) error {
+	demo.Archive = true
+
+	return d.repository.SaveDemo(ctx, demo)
+}
+
+func diskPercentageUsed(path string) float32 {
+	info := du.NewDiskUsage(path)
+
+	return info.Usage() * 100
+}
+
+func (d demoUsecase) truncateBySpace(ctx context.Context, root string, maxAllowedPctUsed float32) {
+	for {
+		usedSpace := diskPercentageUsed(root)
+
+		if usedSpace < maxAllowedPctUsed {
+			return
+		}
+
+		oldestDemo, errOldest := d.OldestDemo(ctx)
+		if errOldest != nil {
+			if errors.Is(errOldest, domain.ErrNoResult) {
+				return
+			}
+
+			slog.Error("Failed to fetch oldest demo", log.ErrAttr(errOldest))
+
+			return
+		}
+
+		if err := d.assetUsecase.Delete(ctx, oldestDemo.AssetID); err != nil {
+			slog.Error("Failed to fetch oldest demo", log.ErrAttr(errOldest))
+
+			return
+		}
+
+		slog.Debug("Pruned demo", slog.String("demo", oldestDemo.Title), slog.Float64("free_pct", float64(usedSpace)))
 	}
 }
 
@@ -57,6 +106,12 @@ func (d demoUsecase) Start(ctx context.Context) {
 
 			if !conf.General.DemoCleanupEnabled {
 				continue
+			}
+
+			if conf.General.DemoCleanupStrategy == domain.DemoStrategyPctFree {
+				d.truncateBySpace(ctx, conf.General.DemoCleanupMount, conf.General.DemoCleanupMinPct)
+
+				return
 			}
 
 			slog.Debug("Starting demo cleanup")
