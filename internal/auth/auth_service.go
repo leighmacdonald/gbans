@@ -448,7 +448,7 @@ func (h authHandler) onAPILogout() gin.HandlerFunc {
 			return
 		}
 
-		ctx.Status(http.StatusNoContent)
+		ctx.JSON(http.StatusOK, gin.H{})
 	}
 }
 

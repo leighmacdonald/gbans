@@ -73,7 +73,7 @@ interface errorMessage {
 
 const apiRootURL = (): string => `${location.protocol}//${location.host}`;
 
-type httpMethods = 'POST' | 'GET' | 'DELETE';
+type httpMethods = 'POST' | 'GET' | 'DELETE' | 'PUT';
 
 /**
  * All api requests are handled through this interface.

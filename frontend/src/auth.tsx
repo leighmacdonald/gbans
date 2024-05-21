@@ -1,5 +1,6 @@
 import { createContext, ReactNode } from 'react';
-import { defaultAvatarHash, PermissionLevel, UserProfile } from './api';
+import { PermissionLevel, UserProfile } from './api';
+import { guestProfile } from './util/auth/guestProfile.ts';
 import { logoutFn } from './util/auth/logoutFn.ts';
 
 export const refreshKey = 'refresh';
@@ -7,44 +8,38 @@ export const tokenKey = 'token';
 export const profileKey = 'profile';
 export const logoutKey = 'logout';
 
-const guestProfile: UserProfile = {
-    steam_id: '',
-    permission_level: PermissionLevel.Guest,
-    avatarhash: defaultAvatarHash,
-    name: '',
-    ban_id: 0,
-    muted: false,
-    discord_id: '',
-    created_on: new Date(),
-    updated_on: new Date()
-};
-
 export const AuthContext = createContext<AuthContext | null>(null);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({
+    children,
+    profile,
+    setProfile
+}: {
+    children: ReactNode;
+    profile: UserProfile;
+    setProfile: (v?: UserProfile) => void;
+}) {
     const login = (profile: UserProfile) => {
         localStorage.setItem(profileKey, JSON.stringify(profile));
+        setProfile(profile);
     };
 
-    const profile = (): UserProfile => {
+    const logout = async () => {
         try {
-            const userData = localStorage.getItem(profileKey);
-            if (!userData) {
-                return guestProfile;
-            }
-
-            return JSON.parse(userData);
+            await logoutFn();
         } catch (e) {
-            return guestProfile;
+            console.log(`error logging out: ${e}`);
+        } finally {
+            setProfile(guestProfile);
         }
     };
 
     const isAuthenticated = () => {
-        return profile().steam_id != '';
+        return Boolean(profile?.steam_id ?? false);
     };
 
     const permissionLevel = () => {
-        return profile().permission_level;
+        return profile?.permission_level ?? PermissionLevel.Guest;
     };
 
     const hasPermission = (wantedLevel: PermissionLevel) => {
@@ -56,12 +51,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         <AuthContext.Provider
             value={{
                 profile,
-                logout: logoutFn,
+                logout,
                 isAuthenticated,
                 permissionLevel,
                 hasPermission,
-                login,
-                userSteamID: profile().steam_id
+                login
             }}
         >
             {children}
@@ -70,11 +64,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 }
 
 export type AuthContext = {
-    profile: () => UserProfile;
+    profile: UserProfile;
     login: (profile: UserProfile) => void;
     logout: () => Promise<void>;
     isAuthenticated: () => boolean;
     permissionLevel: () => PermissionLevel;
     hasPermission: (level: PermissionLevel) => boolean;
-    userSteamID: string;
 };

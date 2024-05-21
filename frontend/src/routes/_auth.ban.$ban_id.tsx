@@ -72,7 +72,7 @@ export const Route = createFileRoute('/_auth/ban/$ban_id')({
 
 function BanPage() {
     const [appealState, setAppealState] = useState<AppealState>(AppealState.Open);
-    const { permissionLevel, userSteamID } = useRouteContext({ from: '/_auth/ban/$ban_id' });
+    const { permissionLevel, profile } = useRouteContext({ from: '/_auth/ban/$ban_id' });
     const ban = Route.useLoaderData();
     const { sendFlash } = useUserFlashCtx();
     const navigate = useNavigate();
@@ -88,9 +88,9 @@ function BanPage() {
     const canPost = useMemo(() => {
         return (
             permissionLevel() >= PermissionLevel.Moderator ||
-            (ban?.appeal_state == AppealState.Open && ban?.target_id == userSteamID)
+            (ban?.appeal_state == AppealState.Open && ban?.target_id == profile.steam_id)
         );
-    }, [ban?.appeal_state, ban?.target_id, permissionLevel, userSteamID]);
+    }, [ban?.appeal_state, ban?.target_id, permissionLevel, profile.steam_id]);
 
     const onDelete = useCallback(
         async (message_id: number) => {
