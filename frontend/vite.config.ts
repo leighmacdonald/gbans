@@ -6,7 +6,7 @@ import { createHtmlPlugin } from 'vite-plugin-html';
 
 const CONFIG = {
     __SITE_NAME__: 'Uncletopia',
-    __BUILD_VERSION__: 'v0.7.6',
+    __BUILD_VERSION__: 'v0.7.5',
     __DISCORD_LINK_ID__: 'caQKCWFMrN',
     __ASSET_URL__: ''
 };
