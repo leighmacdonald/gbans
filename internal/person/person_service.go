@@ -34,14 +34,14 @@ func NewPersonHandler(engine *gin.Engine, configUsecase domain.ConfigUsecase, pe
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(ath.AuthMiddleware(domain.PUser))
+		mod := modGrp.Use(ath.AuthMiddleware(domain.PModerator))
 		mod.POST("/api/players", handler.searchPlayers())
 	}
 
 	// admin
 	adminGrp := engine.Group("/")
 	{
-		admin := adminGrp.Use(ath.AuthMiddleware(domain.PUser))
+		admin := adminGrp.Use(ath.AuthMiddleware(domain.PAdmin))
 		admin.PUT("/api/player/:steam_id/permissions", handler.onAPIPutPlayerPermission())
 	}
 }
