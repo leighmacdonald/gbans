@@ -30,13 +30,15 @@ CREATE TABLE sm_groups
 
 CREATE TABLE sm_group_immunity
 (
+    group_immunity_id server primary key,
     group_id   int       NOT NULL,
     other_id   int       NOT NULL,
     created_on timestamp NOT NULL,
     FOREIGN KEY (group_id) REFERENCES sm_groups (id) ON DELETE CASCADE,
-    FOREIGN KEY (other_id) REFERENCES sm_groups (id) ON DELETE CASCADE,
-    PRIMARY KEY (group_id, other_id)
+    FOREIGN KEY (other_id) REFERENCES sm_groups (id) ON DELETE CASCADE
 );
+
+CREATE INDEX ON sm_group_immunity (group_id, other_id);
 
 CREATE TABLE sm_group_overrides
 (

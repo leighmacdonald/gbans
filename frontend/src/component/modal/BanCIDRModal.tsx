@@ -45,7 +45,6 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
     const mutation = useMutation({
         mutationKey: ['banCIDR'],
         mutationFn: async (values: BanCIDRFormValues) => {
-            console.log(values);
             if (existing?.net_id) {
                 const ban_record = apiUpdateBanCIDR(existing.net_id, {
                     note: values.note,

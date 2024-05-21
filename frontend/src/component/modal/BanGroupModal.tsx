@@ -34,7 +34,6 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
     const mutation = useMutation({
         mutationKey: ['banGroup'],
         mutationFn: async (values: BanGroupFormValues) => {
-            console.log(values);
             try {
                 if (existing?.ban_group_id) {
                     const ban_record = apiUpdateBanGroup(existing.ban_group_id, {

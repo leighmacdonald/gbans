@@ -76,7 +76,6 @@ function AdminServers() {
     const onEdit = async (server: Server) => {
         try {
             const editedServer = await NiceModal.show<Server>(ModalServerEditor, { server });
-            console.log(editedServer);
             queryClient.setQueryData(
                 ['serversAdmin'],
                 (servers ?? []).map((s) => {
