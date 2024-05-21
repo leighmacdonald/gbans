@@ -24,6 +24,16 @@
 #include "gbans/report.sp"
 #include "gbans/stv.sp"
 
+Database DB;
+char logfile[256];
+const logFilename = "gbans.log";
+const databaseName = "gbans";
+bool g_bConnecting = false;
+int curLoading;
+bool LateLoaded;
+
+bool PlayerStatus[MAXPLAYERS + 1];
+
 public Plugin myinfo =
 {
 	name = "gbans",
@@ -78,8 +88,42 @@ public void OnPluginStart()
 
 	AutoExecConfig_ExecuteFile();
 	AutoExecConfig_CleanFile();
+
+	BuildPath(Path_SM, logFile, sizeof(logFile), "logs/gbans.log");
+	
+	g_bConnecting = true;
+	
+	if (!SQL_CheckConfig("gbans")) {
+		LogToFile(logFile, "Failed to load database conf \"%s\"", logFilename);
+		SetFailState("Failed to load database conf \"%s\"", logFilename);
+		return;
+	}
+
+	Database.Connect(onDatabaseConnect, databaseName);
+
+	if (LateLoaded)
+	{
+		AccountForLateLoading();
+	}
+
 }
 
+stock void AccountForLateLoading()
+{
+	char auth[30];
+
+	for (int i = 1; i <= MaxClients; i++)
+	{
+		if (IsClientConnected(i) && !IsFakeClient(i))
+		{
+			PlayerStatus[i] = false;
+		}
+		if (IsClientInGame(i) && !IsFakeClient(i) && IsClientAuthorized(i) && GetClientAuthId(i, AuthId_Steam2, auth, sizeof(auth)))
+		{
+			OnClientAuthorized(i, auth);
+		}
+	}
+}
 public void OnConfigsExecuted()
 {
 	gb_stv_minplayers.AddChangeHook(OnConVarChanged);
@@ -159,6 +203,8 @@ public void OnClientPutInServer(int clientId)
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
 	CreateNative("GB_BanClient", Native_GB_BanClient);
+
+	LateLoaded = late;
 	
 	return APLRes_Success;
 }
