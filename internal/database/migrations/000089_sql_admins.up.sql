@@ -83,4 +83,9 @@ CREATE TABLE sm_config
     PRIMARY KEY (cfg_key)
 );
 
+-- Probably not necessary, but satisfy the current schema version, so it does not try
+-- and auto update the schema.
+-- https://github.com/alliedmodders/sourcemod/blob/master/plugins/sql-admin-manager.sp#L40
+INSERT INTO sm_config (cfg_key, cfg_value) VALUES ('admin_version', '1.0.0.1409');
+
 COMMIT;
