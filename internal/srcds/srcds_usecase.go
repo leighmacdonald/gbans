@@ -81,7 +81,11 @@ func (h srcdsUsecase) DelGroupImmunity(ctx context.Context, groupImmunityID int)
 }
 
 func (h srcdsUsecase) AddGroupOverride(ctx context.Context, groupID int, name string, overrideType domain.OverrideType, access domain.OverrideAccess) (domain.SMGroupOverrides, error) {
-	if name == "" || overrideType == "" || access == "" {
+	if name == "" || overrideType == "" {
+		return domain.SMGroupOverrides{}, domain.ErrInvalidParameter
+	}
+
+	if access != domain.OverrideAccessAllow && access != domain.OverrideAccessDeny {
 		return domain.SMGroupOverrides{}, domain.ErrInvalidParameter
 	}
 
@@ -113,6 +117,14 @@ func (h srcdsUsecase) GetGroupOverride(ctx context.Context, groupOverrideID int)
 }
 
 func (h srcdsUsecase) SaveGroupOverride(ctx context.Context, override domain.SMGroupOverrides) (domain.SMGroupOverrides, error) {
+	if override.Name == "" || override.Type == "" {
+		return domain.SMGroupOverrides{}, domain.ErrInvalidParameter
+	}
+
+	if override.Access != domain.OverrideAccessAllow && override.Access != domain.OverrideAccessDeny {
+		return domain.SMGroupOverrides{}, domain.ErrInvalidParameter
+	}
+
 	return h.srcdsRepository.SaveGroupOverride(ctx, override)
 }
 
