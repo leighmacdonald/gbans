@@ -23,14 +23,14 @@ import (
 // IPs can be individually whitelisted if a remote/3rd party source cannot be changed.
 type Blocker struct {
 	cidrRx      *regexp.Regexp
-	blocks      map[string][]*net.IPNet
+	Blocks      map[string][]*net.IPNet
 	whitelisted map[int]*net.IPNet
 	sync.RWMutex
 }
 
 func NewBlocker() *Blocker {
 	return &Blocker{
-		blocks:      make(map[string][]*net.IPNet),
+		Blocks:      make(map[string][]*net.IPNet),
 		whitelisted: make(map[int]*net.IPNet),
 		cidrRx:      regexp.MustCompile(`^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(/(3[0-2]|2[0-9]|1[0-9]|[0-9]))?$`),
 	}
@@ -48,7 +48,7 @@ func (b *Blocker) IsMatch(addr netip.Addr) (string, bool) {
 		}
 	}
 
-	for name, networks := range b.blocks {
+	for name, networks := range b.Blocks {
 		for _, block := range networks {
 			if block.Contains(address) {
 				return name, true
@@ -63,7 +63,7 @@ func (b *Blocker) RemoveSource(name string) {
 	b.Lock()
 	defer b.Unlock()
 
-	delete(b.blocks, name)
+	delete(b.Blocks, name)
 }
 
 func (b *Blocker) RemoveWhitelist(id int) {
@@ -123,7 +123,7 @@ func (b *Blocker) AddRemoteSource(ctx context.Context, name string, url string) 
 	}
 
 	b.Lock()
-	b.blocks[name] = blocks
+	b.Blocks[name] = blocks
 	b.Unlock()
 
 	return int64(len(blocks)), nil

@@ -3,6 +3,7 @@ package blocklist
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net"
 	"net/url"
 	"strings"
@@ -14,6 +15,35 @@ import (
 
 type blocklistUsecase struct {
 	blocklistRepo domain.BlocklistRepository
+}
+
+func (b blocklistUsecase) SyncBlocklists(ctx context.Context) error {
+	lists, errLists := b.GetCIDRBlockSources(ctx)
+	if errLists != nil {
+		return errLists
+	}
+
+	blocker := network.NewBlocker()
+
+	for _, list := range lists {
+		if !list.Enabled {
+			continue
+		}
+
+		count, errAdd := blocker.AddRemoteSource(ctx, list.Name, list.URL)
+		if errAdd != nil {
+			slog.Error("Failed to load source data", slog.String("name", list.Name), slog.String("url", list.URL))
+			continue
+		}
+	}
+
+	if err := b.blocklistRepo.TruncateCachedEntries(ctx); err != nil {
+		return err
+	}
+
+	for k, v := range blocker.Blocks {
+
+	}
 }
 
 func (b blocklistUsecase) CreateSteamBlockWhitelists(ctx context.Context, steamID steamid.SteamID) (domain.WhitelistSteam, error) {
