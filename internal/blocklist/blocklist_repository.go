@@ -18,6 +18,9 @@ type blocklistRepository struct {
 func NewBlocklistRepository(database database.Database) domain.BlocklistRepository {
 	return &blocklistRepository{db: database}
 }
+func (b *blocklistRepository) TruncateCachedEntries(ctx context.Context) error {
+	return b.db.DBErr(b.db.ExecDeleteBuilder(ctx, b.db.Builder().Delete("cidr_block_entries")))
+}
 
 func (b *blocklistRepository) CreateSteamBlockWhitelists(ctx context.Context, steamID steamid.SteamID) (domain.WhitelistSteam, error) {
 	now := time.Now()

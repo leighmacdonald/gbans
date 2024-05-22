@@ -1,3 +1,10 @@
+CREATE TABLE cidr_block_entries (
+    cidr_block_entries_id bigserial primary key,
+    cidr_block_source_id int NOT NULL REFERENCES cidr_block_source (cidr_block_source_id) ON DELETE CASCADE,
+    net_block cidr not null,
+    created_on timestamp not null
+);
+
 BEGIN;
 -- select steam_to_steam64('STEAM_0:1:583502767'); -- -> 76561199127271263
 CREATE OR REPLACE FUNCTION steam_to_steam64(steam2 text) RETURNS bigint as

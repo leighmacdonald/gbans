@@ -32,7 +32,7 @@ type BlocklistRepository interface {
 	GetCIDRBlockWhitelist(ctx context.Context, whitelistID int, whitelist *WhitelistIP) error
 	SaveCIDRBlockWhitelist(ctx context.Context, whitelist *WhitelistIP) error
 	DeleteCIDRBlockWhitelist(ctx context.Context, whitelistID int) error
-
+	TruncateCachedEntries(ctx context.Context) error
 	CreateSteamBlockWhitelists(ctx context.Context, steamID steamid.SteamID) (WhitelistSteam, error)
 	GetSteamBlockWhitelists(ctx context.Context) ([]WhitelistSteam, error)
 	DeleteSteamBlockWhitelists(ctx context.Context, steamID steamid.SteamID) error
