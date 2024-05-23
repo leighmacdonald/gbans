@@ -3,6 +3,7 @@ package ban
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/netip"
 	"time"
 
@@ -53,26 +54,24 @@ func (r *banSteamRepository) Delete(ctx context.Context, ban *domain.BanSteam, h
 		ban.BanID = 0
 
 		return nil
+	} else {
+		ban.Deleted = true
+
+		return r.updateBan(ctx, ban)
 	}
-
-	ban.Deleted = true
-
-	return r.updateBan(ctx, ban)
 }
 
 func (r *banSteamRepository) getBanByColumn(ctx context.Context, column string, identifier any, deletedOk bool) (domain.BannedSteamPerson, error) {
 	person := domain.NewBannedPerson()
 
 	whereClauses := sq.And{
-		sq.Eq{"b." + column: identifier}, // valid columns are immutable
+		sq.Eq{fmt.Sprintf("b.%s", column): identifier}, // valid columns are immutable
+		sq.Gt{"b.valid_until": time.Now()},
 	}
 
 	if !deletedOk {
 		whereClauses = append(whereClauses, sq.Eq{"b.deleted": false})
 	}
-	// else {
-	//	whereClauses = append(whereClauses, sq.Gt{"b.valid_until": time.Now()})
-	// }
 
 	query := r.db.
 		Builder().
@@ -264,7 +263,7 @@ func (r *banSteamRepository) ExpiredBans(ctx context.Context) ([]domain.BanSteam
 }
 
 // Get returns all bans that fit the filter criteria passed in.
-func (r *banSteamRepository) Get(ctx context.Context, filter domain.SteamBansQueryFilter) ([]domain.BannedSteamPerson, int64, error) {
+func (r *banSteamRepository) Get(ctx context.Context, filter domain.SteamBansQueryFilter) ([]domain.BannedSteamPerson, error) {
 	builder := r.db.
 		Builder().
 		Select("b.ban_id", "b.target_id", "b.source_id", "b.ban_type", "b.reason",
@@ -283,64 +282,15 @@ func (r *banSteamRepository) Get(ctx context.Context, filter domain.SteamBansQue
 		ands = append(ands, sq.Eq{"b.deleted": false})
 	}
 
-	if filter.Reason > 0 {
-		ands = append(ands, sq.Eq{"b.reason": filter.Reason})
-	}
-
-	if filter.PermanentOnly {
-		ands = append(ands, sq.Gt{"b.valid_until": time.Now()})
-	}
-
-	if sid, ok := filter.TargetSteamID(ctx); ok {
-		ands = append(ands, sq.Eq{"b.target_id": sid})
-	}
-
-	if sid, ok := filter.SourceSteamID(ctx); ok {
-		ands = append(ands, sq.Eq{"b.source_id": sid})
-	}
-
-	if filter.IncludeFriendsOnly {
-		ands = append(ands, sq.Eq{"b.include_friends": true})
-	}
-
-	if filter.AppealState > domain.AnyState {
-		ands = append(ands, sq.Eq{"b.appeal_state": filter.AppealState})
-	}
-
 	if len(ands) > 0 {
 		builder = builder.Where(ands)
-	}
-
-	builder = filter.QueryFilter.ApplySafeOrder(builder, map[string][]string{
-		"b.": {
-			"ban_id", "target_id", "source_id", "ban_type", "reason",
-			"origin", "valid_until", "created_on", "updated_on", "include_friends", "evade_ok",
-			"deleted", "report_id", "is_enabled", "appeal_state",
-		},
-		"s.": {"source_personaname"},
-		"t.": {"target_personaname", "community_banned", "vac_bans", "game_bans"},
-	}, "ban_id")
-
-	builder = filter.QueryFilter.ApplyLimitOffsetDefault(builder)
-
-	count, errCount := r.db.GetCount(ctx, r.db.
-		Builder().
-		Select("COUNT(b.ban_id)").
-		From("ban b").
-		Where(ands))
-	if errCount != nil {
-		return nil, 0, r.db.DBErr(errCount)
-	}
-
-	if count == 0 {
-		return []domain.BannedSteamPerson{}, 0, nil
 	}
 
 	var bans []domain.BannedSteamPerson
 
 	rows, errQuery := r.db.QueryBuilder(ctx, builder)
 	if errQuery != nil {
-		return nil, 0, r.db.DBErr(errQuery)
+		return nil, r.db.DBErr(errQuery)
 	}
 
 	defer rows.Close()
@@ -360,7 +310,7 @@ func (r *banSteamRepository) Get(ctx context.Context, filter domain.SteamBansQue
 				&person.SourceTarget.SourcePersonaname, &person.SourceTarget.SourceAvatarhash,
 				&person.SourceTarget.TargetPersonaname, &person.SourceTarget.TargetAvatarhash,
 				&person.CommunityBanned, &person.VacBans, &person.GameBans); errScan != nil {
-			return nil, 0, r.db.DBErr(errScan)
+			return nil, r.db.DBErr(errScan)
 		}
 
 		person.TargetID = steamid.New(targetID)
@@ -373,7 +323,7 @@ func (r *banSteamRepository) Get(ctx context.Context, filter domain.SteamBansQue
 		bans = []domain.BannedSteamPerson{}
 	}
 
-	return bans, count, nil
+	return bans, nil
 }
 
 func (r *banSteamRepository) GetOlderThan(ctx context.Context, filter domain.QueryFilter, since time.Time) ([]domain.BanSteam, error) {

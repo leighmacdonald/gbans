@@ -27,7 +27,7 @@ func NewSteamgroupHandler(engine *gin.Engine, bgu domain.BanGroupUsecase, ath do
 	{
 		mod := modGrp.Use(ath.AuthMiddleware(domain.PUser))
 		mod.POST("/api/bans/group/create", handler.onAPIPostBansGroupCreate())
-		mod.POST("/api/bans/group", handler.onAPIGetBansGroup())
+		mod.GET("/api/bans/group", handler.onAPIGetBansGroup())
 		mod.DELETE("/api/bans/group/:ban_group_id", handler.onAPIDeleteBansGroup())
 		mod.POST("/api/bans/group/:ban_group_id", handler.onAPIPostBansGroupUpdate())
 	}
@@ -117,11 +117,11 @@ func (h steamgroupHandler) onAPIPostBansGroupCreate() gin.HandlerFunc {
 func (h steamgroupHandler) onAPIGetBansGroup() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req domain.GroupBansQueryFilter
-		if !httphelper.Bind(ctx, &req) {
+		if !httphelper.BindQuery(ctx, &req) {
 			return
 		}
 
-		banGroups, count, errBans := h.bgu.Get(ctx, req)
+		banGroups, errBans := h.bgu.Get(ctx, req)
 		if errBans != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			slog.Error("Failed to fetch banGroups", log.ErrAttr(errBans))
@@ -129,7 +129,7 @@ func (h steamgroupHandler) onAPIGetBansGroup() gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, domain.NewLazyResult(count, banGroups))
+		ctx.JSON(http.StatusOK, banGroups)
 	}
 }
 

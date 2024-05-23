@@ -2,7 +2,6 @@ package ban
 
 import (
 	"context"
-	"errors"
 	"net"
 	"net/netip"
 	"time"
@@ -73,16 +72,7 @@ func (r banNetRepository) GetByAddress(ctx context.Context, ipAddr netip.Addr) (
 }
 
 // Get returns the BanCIDR matching intersecting the supplied ip.
-func (r banNetRepository) Get(ctx context.Context, filter domain.CIDRBansQueryFilter) ([]domain.BannedCIDRPerson, int64, error) {
-	validColumns := map[string][]string{
-		"b.": {
-			"net_id", "cidr", "origin", "created_on", "updated_on",
-			"reason", "valid_until", "deleted", "is_enabled", "target_id", "source_id", "appeal_state",
-		},
-		"s.": {"source_personaname"},
-		"t.": {"target_personaname", "community_banned", "vac_bans", "game_bans"},
-	}
-
+func (r banNetRepository) Get(ctx context.Context, filter domain.CIDRBansQueryFilter) ([]domain.BannedCIDRPerson, error) {
 	builder := r.db.
 		Builder().
 		Select("b.net_id", "b.cidr", "b.origin", "b.created_on", "b.updated_on",
@@ -101,49 +91,11 @@ func (r banNetRepository) Get(ctx context.Context, filter domain.CIDRBansQueryFi
 		constraints = append(constraints, sq.Eq{"b.deleted": false})
 	}
 
-	if filter.Reason > 0 {
-		constraints = append(constraints, sq.Eq{"b.reason": filter.Reason})
-	}
-
-	if filter.PermanentOnly {
-		constraints = append(constraints, sq.Gt{"b.valid_until": time.Now()})
-	}
-
-	if sid, ok := filter.TargetSteamID(ctx); ok {
-		constraints = append(constraints, sq.Eq{"b.target_id": sid})
-	}
-
-	if sid, ok := filter.SourceSteamID(ctx); ok {
-		constraints = append(constraints, sq.Eq{"b.source_id": sid})
-	}
-
-	if filter.IP != "" {
-		var addr string
-
-		_, cidr, errCidr := net.ParseCIDR(filter.IP)
-
-		if errCidr != nil {
-			ip := net.ParseIP(filter.IP)
-			if ip == nil {
-				return nil, 0, errors.Join(errCidr, domain.ErrNetworkInvalidIP)
-			}
-
-			addr = ip.String()
-		} else {
-			addr = cidr.String()
-		}
-
-		constraints = append(constraints, sq.Expr("? <<= cidr", addr))
-	}
-
-	builder = filter.QueryFilter.ApplySafeOrder(builder, validColumns, "net_id")
-	builder = filter.QueryFilter.ApplyLimitOffsetDefault(builder)
-
 	var nets []domain.BannedCIDRPerson
 
 	rows, errRows := r.db.QueryBuilder(ctx, builder.Where(constraints))
 	if errRows != nil {
-		return nil, 0, r.db.DBErr(errRows)
+		return nil, r.db.DBErr(errRows)
 	}
 
 	defer rows.Close()
@@ -164,7 +116,7 @@ func (r banNetRepository) Get(ctx context.Context, filter domain.CIDRBansQueryFi
 				&banNet.SourceTarget.SourcePersonaname, &banNet.SourceTarget.SourceAvatarhash,
 				&banNet.SourceTarget.TargetPersonaname, &banNet.SourceTarget.TargetAvatarhash,
 				&banNet.CommunityBanned, &banNet.VacBans, &banNet.GameBans); errScan != nil {
-			return nil, 0, r.db.DBErr(errScan)
+			return nil, r.db.DBErr(errScan)
 		}
 
 		banNet.CIDR = cidr.String()
@@ -174,25 +126,11 @@ func (r banNetRepository) Get(ctx context.Context, filter domain.CIDRBansQueryFi
 		nets = append(nets, banNet)
 	}
 
-	count, errCount := r.db.GetCount(ctx, r.db.
-		Builder().
-		Select("COUNT(b.net_id)").
-		From("ban_net b").
-		Where(constraints))
-
-	if errCount != nil {
-		if errors.Is(errCount, domain.ErrNoResult) {
-			return []domain.BannedCIDRPerson{}, 0, nil
-		}
-
-		return nil, count, r.db.DBErr(errCount)
-	}
-
 	if nets == nil {
-		return []domain.BannedCIDRPerson{}, 0, nil
+		return []domain.BannedCIDRPerson{}, nil
 	}
 
-	return nets, count, nil
+	return nets, nil
 }
 
 func (r banNetRepository) updateBanNet(ctx context.Context, banNet *domain.BanCIDR) error {

@@ -2,7 +2,11 @@ package steamgroup
 
 import (
 	"context"
+	"encoding/xml"
 	"errors"
+	"fmt"
+	"github.com/leighmacdonald/gbans/pkg/util"
+	"net/http"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -11,28 +15,80 @@ import (
 
 type banGroupUsecase struct {
 	banGroupRepository domain.BanGroupRepository
-	groupMemberships   *Memberships
+	personUsecase      domain.PersonUsecase
 }
 
-func NewBanGroupUsecase(banGroupRepository domain.BanGroupRepository) domain.BanGroupUsecase {
-	sg := NewMemberships(banGroupRepository)
-
+func NewBanGroupUsecase(banGroupRepository domain.BanGroupRepository, personUsecase domain.PersonUsecase) domain.BanGroupUsecase {
 	return &banGroupUsecase{
 		banGroupRepository: banGroupRepository,
-		groupMemberships:   sg,
+		personUsecase:      personUsecase,
 	}
+}
+
+func (s *banGroupUsecase) SyncSteamGroupMembers(ctx context.Context) error {
+	groups, errGroups := s.Get(ctx, domain.GroupBansQueryFilter{Deleted: false})
+	if errGroups != nil {
+		return errGroups
+	}
+
+	if err := s.banGroupRepository.TruncateCachedMemberEntries(ctx); err != nil {
+		return err
+	}
+
+	client := util.NewHTTPClient()
+
+	for _, group := range groups {
+		listURL := fmt.Sprintf("https://steamcommunity.com/gid/%d/memberslistxml/?xml=1", group.GroupID.Int64())
+
+		req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, listURL, nil)
+		if errReq != nil {
+			return errReq
+		}
+
+		resp, errResp := client.Do(req)
+		if errResp != nil {
+			return errResp
+		}
+
+		var list domain.GroupMemberList
+
+		decoder := xml.NewDecoder(resp.Body)
+		if err := decoder.Decode(&list); err != nil {
+			resp.Body.Close()
+
+			return err
+		}
+
+		resp.Body.Close()
+
+		groupID := steamid.New(list.GroupID64)
+		if !groupID.Valid() {
+			return domain.ErrInvalidSID
+		}
+
+		for _, member := range list.Members.SteamID64 {
+			steamID := steamid.New(member)
+			if !steamID.Valid() {
+				continue
+			}
+
+			// Statisfy FK
+			_, errCreate := s.personUsecase.GetOrCreatePersonBySteamID(ctx, steamID)
+			if errCreate != nil {
+				return errCreate
+			}
+		}
+
+		if err := s.banGroupRepository.WriteCachedMemberEntries(ctx, groupID, list.Members.SteamID64); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *banGroupUsecase) Save(ctx context.Context, banGroup *domain.BanGroup) error {
 	return s.banGroupRepository.Save(ctx, banGroup)
-}
-
-func (s *banGroupUsecase) Start(ctx context.Context) {
-	s.groupMemberships.Start(ctx)
-}
-
-func (s *banGroupUsecase) IsMember(steamID steamid.SteamID) (steamid.SteamID, bool) {
-	return s.groupMemberships.IsMember(steamID)
 }
 
 func (s *banGroupUsecase) GetByGID(ctx context.Context, groupID steamid.SteamID, banGroup *domain.BanGroup) error {
@@ -43,7 +99,7 @@ func (s *banGroupUsecase) GetByID(ctx context.Context, banGroupID int64, banGrou
 	return s.banGroupRepository.GetByID(ctx, banGroupID, banGroup)
 }
 
-func (s *banGroupUsecase) Get(ctx context.Context, filter domain.GroupBansQueryFilter) ([]domain.BannedGroupPerson, int64, error) {
+func (s *banGroupUsecase) Get(ctx context.Context, filter domain.GroupBansQueryFilter) ([]domain.BannedGroupPerson, error) {
 	return s.banGroupRepository.Get(ctx, filter)
 }
 

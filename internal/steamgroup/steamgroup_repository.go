@@ -3,6 +3,7 @@ package steamgroup
 import (
 	"context"
 	"errors"
+	"github.com/jackc/pgx/v5"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -15,6 +16,10 @@ type steamGroupRepository struct {
 	db database.Database
 }
 
+func NewSteamGroupRepository(database database.Database) domain.BanGroupRepository {
+	return &steamGroupRepository{db: database}
+}
+
 func (r *steamGroupRepository) Delete(ctx context.Context, banGroup *domain.BanGroup) error {
 	banGroup.IsEnabled = false
 	banGroup.Deleted = true
@@ -22,8 +27,26 @@ func (r *steamGroupRepository) Delete(ctx context.Context, banGroup *domain.BanG
 	return r.Ban(ctx, banGroup)
 }
 
-func NewSteamGroupRepository(database database.Database) domain.BanGroupRepository {
-	return &steamGroupRepository{db: database}
+func (r *steamGroupRepository) TruncateCachedMemberEntries(ctx context.Context) error {
+	return r.db.ExecDeleteBuilder(ctx, r.db.Builder().Delete("steam_group_members"))
+}
+
+func (r *steamGroupRepository) WriteCachedMemberEntries(ctx context.Context, groupID steamid.SteamID, entries []int64) error {
+	const query = "INSERT INTO steam_group_members (steam_id, group_id, created_on) VALUES ($1, $2, $3)"
+
+	batch := pgx.Batch{}
+	now := time.Now()
+
+	for _, v := range entries {
+		batch.Queue(query, v, groupID.Int64(), now)
+	}
+
+	batchResults := r.db.SendBatch(ctx, &batch)
+	if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
+		return errors.Join(errCloseBatch, domain.ErrCloseBatch)
+	}
+
+	return nil
 }
 
 func (r *steamGroupRepository) Save(ctx context.Context, banGroup *domain.BanGroup) error {
@@ -153,7 +176,7 @@ func (r *steamGroupRepository) GetByID(ctx context.Context, banGroupID int64, ba
 	return nil
 }
 
-func (r *steamGroupRepository) Get(ctx context.Context, filter domain.GroupBansQueryFilter) ([]domain.BannedGroupPerson, int64, error) {
+func (r *steamGroupRepository) Get(ctx context.Context, filter domain.GroupBansQueryFilter) ([]domain.BannedGroupPerson, error) {
 	builder := r.db.
 		Builder().
 		Select("g.ban_group_id", "g.source_id", "g.target_id", "g.group_name", "g.is_enabled", "g.deleted",
@@ -172,49 +195,13 @@ func (r *steamGroupRepository) Get(ctx context.Context, filter domain.GroupBansQ
 		constraints = append(constraints, sq.Eq{"g.deleted": false})
 	}
 
-	if filter.Reason > 0 {
-		constraints = append(constraints, sq.Eq{"g.reason": filter.Reason})
-	}
-
-	if filter.PermanentOnly {
-		constraints = append(constraints, sq.Gt{"g.valid_until": time.Now()})
-	}
-
-	if filter.GroupID != "" {
-		gid := steamid.New(filter.GroupID)
-		if !gid.Valid() {
-			return nil, 0, steamid.ErrInvalidGID
-		}
-
-		constraints = append(constraints, sq.Eq{"g.group_id": gid.Int64()})
-	}
-
-	if sid, ok := filter.TargetSteamID(ctx); ok {
-		constraints = append(constraints, sq.Eq{"g.target_id": sid})
-	}
-
-	if sid, ok := filter.SourceSteamID(ctx); ok {
-		constraints = append(constraints, sq.Eq{"g.source_id": sid})
-	}
-
-	builder = filter.QueryFilter.ApplySafeOrder(builder, map[string][]string{
-		"g.": {
-			"ban_group_id", "source_id", "target_id", "group_name", "is_enabled", "deleted",
-			"origin", "created_on", "updated_on", "valid_until", "appeal_state", "group_id",
-		},
-		"s.": {"source_personaname"},
-		"t.": {"target_personaname", "community_banned", "vac_bans", "game_bans"},
-	}, "ban_group_id")
-
-	builder = filter.ApplyLimitOffsetDefault(builder).Where(constraints)
-
 	rows, errRows := r.db.QueryBuilder(ctx, builder)
 	if errRows != nil {
 		if errors.Is(errRows, domain.ErrNoResult) {
-			return []domain.BannedGroupPerson{}, 0, nil
+			return []domain.BannedGroupPerson{}, nil
 		}
 
-		return nil, 0, r.db.DBErr(errRows)
+		return nil, r.db.DBErr(errRows)
 	}
 
 	defer rows.Close()
@@ -248,7 +235,7 @@ func (r *steamGroupRepository) Get(ctx context.Context, filter domain.GroupBansQ
 			&group.SourceTarget.TargetPersonaname, &group.SourceTarget.TargetAvatarhash,
 			&group.CommunityBanned, &group.VacBans, &group.GameBans,
 		); errScan != nil {
-			return nil, 0, r.db.DBErr(errScan)
+			return nil, r.db.DBErr(errScan)
 		}
 
 		group.SourceID = steamid.New(sourceID)
@@ -258,24 +245,11 @@ func (r *steamGroupRepository) Get(ctx context.Context, filter domain.GroupBansQ
 		groups = append(groups, group)
 	}
 
-	count, errCount := r.db.GetCount(ctx, r.db.
-		Builder().
-		Select("g.ban_group_id").
-		From("ban_group g").
-		Where(constraints))
-	if errCount != nil {
-		if errors.Is(errCount, domain.ErrNoResult) {
-			return []domain.BannedGroupPerson{}, 0, nil
-		}
-
-		return nil, 0, r.db.DBErr(errCount)
-	}
-
 	if groups == nil {
 		groups = []domain.BannedGroupPerson{}
 	}
 
-	return groups, count, nil
+	return groups, nil
 }
 
 func (r *steamGroupRepository) GetMembersList(ctx context.Context, parentID int64, list *domain.MembersList) error {

@@ -119,7 +119,7 @@ func (r banASNRepository) GetByID(ctx context.Context, banID int64, banASN *doma
 	return nil
 }
 
-func (r banASNRepository) Get(ctx context.Context, filter domain.ASNBansQueryFilter) ([]domain.BannedASNPerson, int64, error) {
+func (r banASNRepository) Get(ctx context.Context, filter domain.ASNBansQueryFilter) ([]domain.BannedASNPerson, error) {
 	builder := r.db.
 		Builder().
 		Select("b.ban_asn_id", "b.as_num", "b.origin", "b.source_id",
@@ -138,44 +138,13 @@ func (r banASNRepository) Get(ctx context.Context, filter domain.ASNBansQueryFil
 		constraints = append(constraints, sq.Eq{"b.deleted": false})
 	}
 
-	if filter.Reason > 0 {
-		constraints = append(constraints, sq.Eq{"b.reason": filter.Reason})
-	}
-
-	if filter.PermanentOnly {
-		constraints = append(constraints, sq.Gt{"b.valid_until": time.Now()})
-	}
-
-	if sid, ok := filter.TargetSteamID(ctx); ok {
-		constraints = append(constraints, sq.Eq{"b.target_id": sid})
-	}
-
-	if sid, ok := filter.SourceSteamID(ctx); ok {
-		constraints = append(constraints, sq.Eq{"b.source_id": sid})
-	}
-
-	if filter.ASNum > 0 {
-		constraints = append(constraints, sq.Eq{"b.as_num": filter.ASNum})
-	}
-
-	builder = filter.QueryFilter.ApplySafeOrder(builder, map[string][]string{
-		"b.": {
-			"ban_asn_id", "as_num", "origin", "source_id", "target_id", "valid_until", "created_on", "updated_on",
-			"deleted", "reason", "is_enabled", "appeal_state",
-		},
-		"s.": {"source_personaname"},
-		"t.": {"target_personaname", "community_banned", "vac_bans", "game_bans"},
-	}, "ban_asn_id")
-
-	builder = filter.QueryFilter.ApplyLimitOffsetDefault(builder)
-
 	rows, errRows := r.db.QueryBuilder(ctx, builder.Where(constraints))
 	if errRows != nil {
 		if errors.Is(errRows, domain.ErrNoResult) {
-			return []domain.BannedASNPerson{}, 0, nil
+			return []domain.BannedASNPerson{}, nil
 		}
 
-		return nil, 0, r.db.DBErr(errRows)
+		return nil, r.db.DBErr(errRows)
 	}
 
 	defer rows.Close()
@@ -196,7 +165,7 @@ func (r banASNRepository) Get(ctx context.Context, filter domain.ASNBansQueryFil
 				&ban.SourceTarget.SourcePersonaname, &ban.SourceTarget.SourceAvatarhash,
 				&ban.SourceTarget.TargetPersonaname, &ban.SourceTarget.TargetAvatarhash,
 				&ban.CommunityBanned, &ban.VacBans, &ban.GameBans); errScan != nil {
-			return nil, 0, r.db.DBErr(errScan)
+			return nil, r.db.DBErr(errScan)
 		}
 
 		ban.SourceID = steamid.New(sourceID)
@@ -205,25 +174,11 @@ func (r banASNRepository) Get(ctx context.Context, filter domain.ASNBansQueryFil
 		records = append(records, ban)
 	}
 
-	count, errCount := r.db.GetCount(ctx, r.db.
-		Builder().
-		Select("COUNT(b.ban_asn_id)").
-		From("ban_asn b").
-		Where(constraints))
-
-	if errCount != nil {
-		if errors.Is(errCount, domain.ErrNoResult) {
-			return []domain.BannedASNPerson{}, 0, nil
-		}
-
-		return nil, 0, r.db.DBErr(errCount)
-	}
-
 	if records == nil {
 		records = []domain.BannedASNPerson{}
 	}
 
-	return records, count, nil
+	return records, nil
 }
 
 func (r banASNRepository) Save(ctx context.Context, banASN *domain.BanASN) error {
