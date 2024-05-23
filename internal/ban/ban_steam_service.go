@@ -54,7 +54,7 @@ func NewBanHandler(engine *gin.Engine, bu domain.BanSteamUsecase, du domain.Disc
 	{
 		mod := modGrp.Use(ath.AuthMiddleware(domain.PModerator))
 
-		mod.POST("/api/bans/steam", handler.onAPIGetBansSteam())
+		mod.GET("/api/bans/steam", handler.onAPIGetBansSteam())
 		mod.POST("/api/bans/steam/create", handler.onAPIPostBanSteamCreate())
 		mod.DELETE("/api/bans/steam/:ban_id", handler.onAPIPostBanDelete())
 		mod.POST("/api/bans/steam/:ban_id", handler.onAPIPostBanUpdate())
@@ -281,10 +281,8 @@ func (h banHandler) onAPIExportBansValveSteamID() gin.HandlerFunc {
 			}
 		}
 
-		bans, _, errBans := h.bu.Get(ctx, domain.SteamBansQueryFilter{
-			BansQueryFilter: domain.BansQueryFilter{PermanentOnly: true},
-		})
-
+		// TODO limit to perm?
+		bans, errBans := h.bu.Get(ctx, domain.SteamBansQueryFilter{})
 		if errBans != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
@@ -319,14 +317,7 @@ func (h banHandler) onAPIExportBansTF2BD() gin.HandlerFunc {
 			}
 		}
 
-		// TODO limit / make specialized query since this returns all results
-		bans, _, errBans := h.bu.Get(ctx, domain.SteamBansQueryFilter{
-			BansQueryFilter: domain.BansQueryFilter{
-				QueryFilter: domain.QueryFilter{
-					Deleted: false,
-				},
-			},
-		})
+		bans, errBans := h.bu.Get(ctx, domain.SteamBansQueryFilter{})
 
 		if errBans != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
@@ -376,12 +367,12 @@ func (h banHandler) onAPIExportBansTF2BD() gin.HandlerFunc {
 
 func (h banHandler) onAPIGetBansSteam() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req domain.SteamBansQueryFilter
-		if !httphelper.Bind(ctx, &req) {
+		var params domain.SteamBansQueryFilter
+		if !httphelper.BindQuery(ctx, &params) {
 			return
 		}
 
-		bans, count, errBans := h.bu.Get(ctx, req)
+		bans, errBans := h.bu.Get(ctx, params)
 		if errBans != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			slog.Error("Failed to fetch steam bans", log.ErrAttr(errBans))
@@ -389,7 +380,7 @@ func (h banHandler) onAPIGetBansSteam() gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, domain.NewLazyResult(count, bans))
+		ctx.JSON(http.StatusOK, bans)
 	}
 }
 

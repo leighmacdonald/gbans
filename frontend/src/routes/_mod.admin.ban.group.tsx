@@ -6,7 +6,6 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import GavelIcon from '@mui/icons-material/Gavel';
 import UndoIcon from '@mui/icons-material/Undo';
 import Button from '@mui/material/Button';
-import ButtonGroup from '@mui/material/ButtonGroup';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
@@ -14,14 +13,13 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { ColumnDef, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import { createColumnHelper } from '@tanstack/react-table';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiGetBansGroups, BanReason, BanReasons, GroupBanRecord } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
-import { DataTable } from '../component/DataTable.tsx';
-import { Paginator } from '../component/Paginator.tsx';
+import { FullTable } from '../component/FullTable.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { TableCellRelativeDateField } from '../component/TableCellRelativeDateField.tsx';
 import { TableCellString } from '../component/TableCellString.tsx';
@@ -31,7 +29,7 @@ import { Buttons } from '../component/field/Buttons.tsx';
 import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { ModalBanGroup, ModalUnbanGroup } from '../component/modal';
-import { commonTableSearchSchema, isPermanentBan, LazyResult, RowsPerPage } from '../util/table.ts';
+import { commonTableSearchSchema, isPermanentBan, RowsPerPage } from '../util/table.ts';
 import { renderDate } from '../util/text.tsx';
 import { emptyOrNullString } from '../util/types.ts';
 import { makeSteamidValidatorsOptional } from '../util/validator/makeSteamidValidatorsOptional.ts';
@@ -64,41 +62,17 @@ export const Route = createFileRoute('/_mod/admin/ban/group')({
 });
 
 function AdminBanGroup() {
-    const defaultRows = RowsPerPage.TwentyFive;
     const navigate = useNavigate({ from: Route.fullPath });
     const { page, rows, sortOrder, sortColumn, target_id, source_id, group_id, deleted } = Route.useSearch();
     const { data: bans, isLoading } = useQuery({
         queryKey: ['steamBans', { page, rows, sortOrder, sortColumn, target_id, source_id }],
         queryFn: async () => {
-            return await apiGetBansGroups({
-                limit: rows ?? defaultRows,
-                offset: (page ?? 0) * (rows ?? defaultRows),
-                order_by: sortColumn ?? 'ban_group_id',
-                desc: (sortOrder ?? 'desc') == 'desc',
-                source_id: source_id ?? '',
-                target_id: target_id ?? '',
-                group_id: group_id ?? ''
-            });
+            return await apiGetBansGroups({ deleted: false });
         }
     });
-    // const [newGroupBans, setNewGroupBans] = useState<GroupBanRecord[]>([]);
-    // const { sendFlash } = useUserFlashCtx();
 
     const onNewGroup = async () => {
         await NiceModal.show(ModalBanGroup, {});
-    };
-
-    const onUnbanGroup = async (ban: GroupBanRecord) => {
-        await NiceModal.show(ModalUnbanGroup, {
-            banId: ban.ban_group_id
-        });
-    };
-
-    const onEditGroup = async (ban: GroupBanRecord) => {
-        await NiceModal.show(ModalBanGroup, {
-            banId: ban.ban_group_id,
-            existing: ban
-        });
     };
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({
@@ -123,6 +97,22 @@ function AdminBanGroup() {
             search: (prev) => ({ ...prev, source_id: '', target_id: '', group_id: '', deleted: false })
         });
     };
+
+    const columns = useMemo(() => {
+        const onUnban = async (ban: GroupBanRecord) => {
+            await NiceModal.show(ModalUnbanGroup, {
+                banId: ban.ban_group_id
+            });
+        };
+
+        const onEdit = async (ban: GroupBanRecord) => {
+            await NiceModal.show(ModalBanGroup, {
+                banId: ban.ban_group_id,
+                existing: ban
+            });
+        };
+        return makeColumns(onEdit, onUnban);
+    }, []);
 
     return (
         <Grid container spacing={2}>
@@ -222,144 +212,127 @@ function AdminBanGroup() {
                         </Button>
                     ]}
                 >
-                    {/*<BanGroupTable newBans={newGroupBans} />*/}
-                    <BanGroupTable
-                        bans={bans ?? { data: [], count: 0 }}
+                    <FullTable
+                        initialSortColumn={'ban_group_id'}
+                        initialSortDesc={true}
+                        enableSorting={true}
+                        enablePaging={true}
+                        enableFiltering={true}
+                        data={bans ?? []}
                         isLoading={isLoading}
-                        onEditGroup={onEditGroup}
-                        onUnbanGroup={onUnbanGroup}
+                        columns={columns}
+                        pageSize={RowsPerPage.TwentyFive}
                     />
-                    <Paginator page={page ?? 0} rows={rows ?? defaultRows} data={bans} path={'/admin/ban/group'} />
                 </ContainerWithHeaderAndButtons>
             </Grid>
         </Grid>
     );
 }
 
-const BanGroupTable = ({
-    bans,
-    isLoading,
-    onEditGroup,
-    onUnbanGroup
-}: {
-    bans: LazyResult<GroupBanRecord>;
-    isLoading: boolean;
-    onUnbanGroup: (ban: GroupBanRecord) => Promise<void>;
-    onEditGroup: (ban: GroupBanRecord) => Promise<void>;
-}) => {
-    const columns = useMemo<ColumnDef<GroupBanRecord>[]>(
-        () => [
-            {
-                accessorKey: 'ban_group_id',
-                header: () => <TableHeadingCell name={'Ban ID'} />,
-                cell: (info) => <TableCellString>{`#${info.getValue()}`}</TableCellString>
-            },
-            {
-                accessorKey: 'source_id',
-                header: () => <TableHeadingCell name={'Author'} />,
-                cell: (info) => {
-                    return typeof bans.data[info.row.index] === 'undefined' ? (
-                        ''
-                    ) : (
-                        <PersonCell
-                            showCopy={true}
-                            steam_id={bans.data[info.row.index].source_id}
-                            personaname={bans.data[info.row.index].source_personaname}
-                            avatar_hash={bans.data[info.row.index].source_avatarhash}
-                        />
-                    );
-                }
-            },
-            {
-                accessorKey: 'target_id',
-                header: () => <TableHeadingCell name={'Subject'} />,
-                cell: (info) => {
-                    return typeof bans.data[info.row.index] === 'undefined' ? (
-                        ''
-                    ) : (
-                        <PersonCell
-                            steam_id={bans.data[info.row.index].target_id}
-                            personaname={bans.data[info.row.index].target_personaname}
-                            avatar_hash={bans.data[info.row.index].target_avatarhash}
-                        />
-                    );
-                }
-            },
-            {
-                accessorKey: 'group_id',
-                header: () => <TableHeadingCell name={'Group ID'} />,
-                cell: (info) => <Typography>{`${info.getValue()}`}</Typography>
-            },
-            {
-                accessorKey: 'reason',
-                header: () => <TableHeadingCell name={'Reason'} />,
-                cell: (info) => <Typography>{BanReasons[info.getValue() as BanReason]}</Typography>
-            },
-            {
-                accessorKey: 'created_on',
-                header: () => <TableHeadingCell name={'Created'} />,
-                cell: (info) => <Typography>{renderDate(info.getValue() as Date)}</Typography>
-            },
-            {
-                accessorKey: 'valid_until',
-                header: () => <TableHeadingCell name={'Expires'} />,
-                cell: (info) => {
-                    return typeof bans.data[info.row.index] === 'undefined' ? (
-                        ''
-                    ) : isPermanentBan(bans.data[info.row.index].created_on, bans.data[info.row.index].valid_until) ? (
-                        'Permanent'
-                    ) : (
-                        <TableCellRelativeDateField
-                            date={bans.data[info.row.index].created_on}
-                            compareDate={bans.data[info.row.index].valid_until}
-                        />
-                    );
-                }
-            },
+const columnHelper = createColumnHelper<GroupBanRecord>();
 
-            {
-                id: 'actions',
-                header: () => {
-                    return <TableHeadingCell name={'Actions'} />;
-                },
-                cell: (info) => {
-                    return (
-                        <ButtonGroup fullWidth>
-                            <IconButton
-                                color={'warning'}
-                                onClick={async () => {
-                                    await onEditGroup(info.row.original);
-                                }}
-                            >
-                                <Tooltip title={'Edit Ban'}>
-                                    <EditIcon />
-                                </Tooltip>
-                            </IconButton>
-                            <IconButton
-                                color={'success'}
-                                onClick={async () => {
-                                    await onUnbanGroup(info.row.original);
-                                }}
-                            >
-                                <Tooltip title={'Remove Ban'}>
-                                    <UndoIcon />
-                                </Tooltip>
-                            </IconButton>
-                        </ButtonGroup>
-                    );
-                }
-            }
-        ],
-        [bans.data, onEditGroup, onUnbanGroup]
-    );
-
-    const table = useReactTable({
-        data: bans.data,
-        columns: columns,
-        getCoreRowModel: getCoreRowModel(),
-        manualPagination: true,
-        autoResetPageIndex: true
-    });
-
-    return <DataTable table={table} isLoading={isLoading} />;
-};
+const makeColumns = (
+    onEdit: (ban: GroupBanRecord) => Promise<void>,
+    onUnban: (ban: GroupBanRecord) => Promise<void>
+) => [
+    columnHelper.accessor('ban_group_id', {
+        header: () => <TableHeadingCell name={'Ban ID'} />,
+        cell: (info) => <TableCellString>{`#${info.getValue()}`}</TableCellString>
+    }),
+    columnHelper.accessor('source_id', {
+        header: () => <TableHeadingCell name={'Author'} />,
+        cell: (info) => {
+            return typeof info.row.original === 'undefined' ? (
+                ''
+            ) : (
+                <PersonCell
+                    showCopy={true}
+                    steam_id={info.row.original.source_id}
+                    personaname={info.row.original.source_personaname}
+                    avatar_hash={info.row.original.source_avatarhash}
+                />
+            );
+        }
+    }),
+    columnHelper.accessor('target_id', {
+        header: () => <TableHeadingCell name={'Subject'} />,
+        cell: (info) => {
+            return typeof info.row.original === 'undefined' ? (
+                ''
+            ) : (
+                <PersonCell
+                    steam_id={info.row.original.target_id}
+                    personaname={info.row.original.target_personaname}
+                    avatar_hash={info.row.original.target_avatarhash}
+                />
+            );
+        }
+    }),
+    columnHelper.accessor('group_id', {
+        header: () => <TableHeadingCell name={'Group ID'} />,
+        cell: (info) => <Typography>{`${info.getValue()}`}</Typography>
+    }),
+    columnHelper.accessor('reason', {
+        header: () => <TableHeadingCell name={'Reason'} />,
+        cell: (info) => <Typography>{BanReasons[info.getValue() as BanReason]}</Typography>
+    }),
+    columnHelper.accessor('created_on', {
+        header: () => <TableHeadingCell name={'Created'} />,
+        cell: (info) => <Typography>{renderDate(info.getValue() as Date)}</Typography>
+    }),
+    columnHelper.accessor('valid_until', {
+        header: () => <TableHeadingCell name={'Expires'} />,
+        cell: (info) => {
+            return typeof info.row.original === 'undefined' ? (
+                ''
+            ) : isPermanentBan(info.row.original.created_on, info.row.original.valid_until) ? (
+                'Permanent'
+            ) : (
+                <TableCellRelativeDateField
+                    date={info.row.original.created_on}
+                    compareDate={info.row.original.valid_until}
+                />
+            );
+        }
+    }),
+    columnHelper.display({
+        id: 'edit',
+        header: () => {
+            return <TableHeadingCell name={'Actions'} />;
+        },
+        cell: (info) => {
+            return (
+                <IconButton
+                    color={'warning'}
+                    onClick={async () => {
+                        await onEdit(info.row.original);
+                    }}
+                >
+                    <Tooltip title={'Edit Ban'}>
+                        <EditIcon />
+                    </Tooltip>
+                </IconButton>
+            );
+        }
+    }),
+    columnHelper.display({
+        id: 'unban',
+        header: () => {
+            return <TableHeadingCell name={'Actions'} />;
+        },
+        cell: (info) => {
+            return (
+                <IconButton
+                    color={'success'}
+                    onClick={async () => {
+                        await onUnban(info.row.original);
+                    }}
+                >
+                    <Tooltip title={'Remove Ban'}>
+                        <UndoIcon />
+                    </Tooltip>
+                </IconButton>
+            );
+        }
+    })
+];

@@ -95,7 +95,7 @@ func (s *banNetUsecase) GetByID(ctx context.Context, netID int64, banNet *domain
 	return s.banRepo.GetByID(ctx, netID, banNet)
 }
 
-func (s *banNetUsecase) Get(ctx context.Context, filter domain.CIDRBansQueryFilter) ([]domain.BannedCIDRPerson, int64, error) {
+func (s *banNetUsecase) Get(ctx context.Context, filter domain.CIDRBansQueryFilter) ([]domain.BannedCIDRPerson, error) {
 	return s.banRepo.Get(ctx, filter)
 }
 

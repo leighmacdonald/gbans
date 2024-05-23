@@ -30,7 +30,7 @@ func NewBanNetHandler(engine *gin.Engine, banNetUsecase domain.BanNetUsecase, at
 		mod := modGrp.Use(ath.AuthMiddleware(domain.PModerator))
 		mod.GET("/export/bans/valve/network", handler.onAPIExportBansValveIP())
 		mod.POST("/api/bans/cidr/create", handler.onAPIPostBansCIDRCreate())
-		mod.POST("/api/bans/cidr", handler.onAPIGetBansCIDR())
+		mod.GET("/api/bans/cidr", handler.onAPIGetBansCIDR())
 		mod.DELETE("/api/bans/cidr/:net_id", handler.onAPIDeleteBansCIDR())
 		mod.POST("/api/bans/cidr/:net_id", handler.onAPIPostBansCIDRUpdate())
 	}
@@ -38,7 +38,7 @@ func NewBanNetHandler(engine *gin.Engine, banNetUsecase domain.BanNetUsecase, at
 
 func (h banNetHandler) onAPIExportBansValveIP() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		bans, _, errBans := h.banNetUsecase.Get(ctx, domain.CIDRBansQueryFilter{})
+		bans, errBans := h.banNetUsecase.Get(ctx, domain.CIDRBansQueryFilter{})
 		if errBans != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
@@ -123,11 +123,11 @@ func (h banNetHandler) onAPIPostBansCIDRCreate() gin.HandlerFunc {
 func (h banNetHandler) onAPIGetBansCIDR() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req domain.CIDRBansQueryFilter
-		if !httphelper.Bind(ctx, &req) {
+		if !httphelper.BindQuery(ctx, &req) {
 			return
 		}
 
-		bans, count, errBans := h.banNetUsecase.Get(ctx, req)
+		bans, errBans := h.banNetUsecase.Get(ctx, req)
 		if errBans != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			slog.Error("Failed to fetch cidr bans", log.ErrAttr(errBans))
@@ -135,7 +135,7 @@ func (h banNetHandler) onAPIGetBansCIDR() gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, domain.NewLazyResult(count, bans))
+		ctx.JSON(http.StatusOK, bans)
 	}
 }
 

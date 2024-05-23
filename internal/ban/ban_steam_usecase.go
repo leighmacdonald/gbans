@@ -162,7 +162,7 @@ func (s *banSteamUsecase) Delete(ctx context.Context, ban *domain.BanSteam, hard
 	return s.banRepo.Delete(ctx, ban, hardDelete)
 }
 
-func (s *banSteamUsecase) Get(ctx context.Context, filter domain.SteamBansQueryFilter) ([]domain.BannedSteamPerson, int64, error) {
+func (s *banSteamUsecase) Get(ctx context.Context, filter domain.SteamBansQueryFilter) ([]domain.BannedSteamPerson, error) {
 	return s.banRepo.Get(ctx, filter)
 }
 

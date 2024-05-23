@@ -70,7 +70,7 @@ func (s banASNUsecase) GetByASN(ctx context.Context, asNum int64, banASN *domain
 	return s.repository.GetByASN(ctx, asNum, banASN)
 }
 
-func (s banASNUsecase) Get(ctx context.Context, filter domain.ASNBansQueryFilter) ([]domain.BannedASNPerson, int64, error) {
+func (s banASNUsecase) Get(ctx context.Context, filter domain.ASNBansQueryFilter) ([]domain.BannedASNPerson, error) {
 	return s.repository.Get(ctx, filter)
 }
 

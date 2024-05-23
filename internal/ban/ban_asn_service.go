@@ -26,7 +26,7 @@ func NewBanASNHandler(engine *gin.Engine, banASNUsecase domain.BanASNUsecase, at
 	{
 		mod := modGrp.Use(ath.AuthMiddleware(domain.PModerator))
 		mod.POST("/api/bans/asn/create", handler.onAPIPostBansASNCreate())
-		mod.POST("/api/bans/asn", handler.onAPIGetBansASN())
+		mod.GET("/api/bans/asn", handler.onAPIGetBansASN())
 		mod.DELETE("/api/bans/asn/:asn_id", handler.onAPIDeleteBansASN())
 		mod.POST("/api/bans/asn/:asn_id", handler.onAPIPostBansASNUpdate())
 	}
@@ -96,11 +96,11 @@ func (h banASNHandler) onAPIPostBansASNCreate() gin.HandlerFunc {
 func (h banASNHandler) onAPIGetBansASN() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req domain.ASNBansQueryFilter
-		if !httphelper.Bind(ctx, &req) {
+		if !httphelper.BindQuery(ctx, &req) {
 			return
 		}
 
-		bansASN, count, errBans := h.banASNUsecase.Get(ctx, req)
+		bansASN, errBans := h.banASNUsecase.Get(ctx, req)
 		if errBans != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			slog.Error("Failed to fetch banASN", log.ErrAttr(errBans))
@@ -108,7 +108,7 @@ func (h banASNHandler) onAPIGetBansASN() gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, domain.NewLazyResult(count, bansASN))
+		ctx.JSON(http.StatusOK, bansASN)
 	}
 }
 
