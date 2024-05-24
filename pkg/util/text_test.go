@@ -14,5 +14,5 @@ cccccccccc
 dddddddddd
 `
 	v := util.StringChunkDelimited(s, 30, "\n")
-	require.Equal(t, 2, len(v))
+	require.Len(t, v, 2)
 }

@@ -46,16 +46,16 @@ func makeClassStatsTable(classes domain.PlayerClassStatsCollection) string {
 
 	table.Append([]string{
 		"total",
-		fmt.Sprintf("%d", classes.Kills()),
-		fmt.Sprintf("%d", classes.Assists()),
-		fmt.Sprintf("%d", classes.Deaths()),
+		strconv.FormatInt(int64(classes.Kills()), 10),
+		strconv.Itoa(classes.Assists()),
+		strconv.Itoa(classes.Deaths()),
 		infString(classes.KDRatio()),
 		infString(classes.KDARatio()),
-		fmt.Sprintf("%d", classes.Damage()),
+		strconv.Itoa(classes.Damage()),
 		// fmt.Sprintf("%d", classes.DamagePerMin()),
-		fmt.Sprintf("%d", classes.DamageTaken()),
+		strconv.Itoa(classes.DamageTaken()),
 		// fmt.Sprintf("%d", classes.Captures()),
-		fmt.Sprintf("%d", classes.Dominations()),
+		strconv.Itoa(classes.Dominations()),
 		// fmt.Sprintf("%d", classes.Dominated()),
 		fmt.Sprintf("%.1fh", (time.Duration(int64(classes.Playtime())) * time.Second).Hours()),
 	})
@@ -67,16 +67,16 @@ func makeClassStatsTable(classes domain.PlayerClassStatsCollection) string {
 	for _, player := range classes {
 		table.Append([]string{
 			player.ClassName,
-			fmt.Sprintf("%d", player.Kills),
-			fmt.Sprintf("%d", player.Assists),
-			fmt.Sprintf("%d", player.Deaths),
+			strconv.Itoa(player.Kills),
+			strconv.Itoa(player.Assists),
+			strconv.Itoa(player.Deaths),
 			infString(player.KDRatio()),
 			infString(player.KDARatio()),
-			fmt.Sprintf("%d", player.Damage),
+			strconv.Itoa(player.Damage),
 			// fmt.Sprintf("%d", player.DamagePerMin()),
-			fmt.Sprintf("%d", player.DamageTaken),
+			strconv.Itoa(player.DamageTaken),
 			// fmt.Sprintf("%d", player.Captures),
-			fmt.Sprintf("%d", player.Dominations),
+			strconv.Itoa(player.Dominations),
 			// fmt.Sprintf("%d", player.Dominated),
 			fmt.Sprintf("%.1fh", (time.Duration(int64(player.Playtime)) * time.Second).Hours()),
 		})
@@ -103,14 +103,14 @@ func makeWeaponStatsTable(weapons []domain.PlayerWeaponStats) string {
 
 		table.Append([]string{
 			weapon.WeaponName,
-			fmt.Sprintf("%d", weapon.Kills),
-			fmt.Sprintf("%d", weapon.Damage),
-			fmt.Sprintf("%d", weapon.Shots),
-			fmt.Sprintf("%d", weapon.Hits),
+			strconv.Itoa(weapon.Kills),
+			strconv.Itoa(weapon.Damage),
+			strconv.Itoa(weapon.Shots),
+			strconv.Itoa(weapon.Hits),
 			fmt.Sprintf("%.1f", weapon.Accuracy()),
-			fmt.Sprintf("%d", weapon.Backstabs),
-			fmt.Sprintf("%d", weapon.Headshots),
-			fmt.Sprintf("%d", weapon.Airshots),
+			strconv.Itoa(weapon.Backstabs),
+			strconv.Itoa(weapon.Headshots),
+			strconv.Itoa(weapon.Airshots),
 		})
 	}
 
@@ -134,9 +134,9 @@ func makeKillstreakStatsTable(killstreaks []domain.PlayerKillstreakStats) string
 		}
 
 		table.Append([]string{
-			fmt.Sprintf("%d", killstreak.Kills),
+			strconv.Itoa(killstreak.Kills),
 			killstreak.Class.String(),
-			fmt.Sprintf("%d", killstreak.Duration),
+			strconv.Itoa(killstreak.Duration),
 			killstreak.CreatedOn.Format(time.DateOnly),
 		})
 	}
@@ -161,14 +161,14 @@ func makeMedicStatsTable(stats []domain.PlayerMedicStats) string {
 		}
 
 		table.Append([]string{
-			fmt.Sprintf("%d", medicStats.Healing),
-			fmt.Sprintf("%d", medicStats.Drops),
-			fmt.Sprintf("%d", medicStats.NearFullChargeDeath),
+			strconv.Itoa(medicStats.Healing),
+			strconv.Itoa(medicStats.Drops),
+			strconv.Itoa(medicStats.NearFullChargeDeath),
 			fmt.Sprintf("%.2f", medicStats.AvgUberLength),
-			fmt.Sprintf("%d", medicStats.ChargesUber),
-			fmt.Sprintf("%d", medicStats.ChargesKritz),
-			fmt.Sprintf("%d", medicStats.ChargesVacc),
-			fmt.Sprintf("%d", medicStats.ChargesQuickfix),
+			strconv.Itoa(medicStats.ChargesUber),
+			strconv.Itoa(medicStats.ChargesKritz),
+			strconv.Itoa(medicStats.ChargesVacc),
+			strconv.Itoa(medicStats.ChargesQuickfix),
 		})
 	}
 
@@ -239,7 +239,7 @@ func BanSteamResponse(banSteam domain.BanSteam) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed(title)
 	msgEmbed.Embed().
 		SetColor(colour).
-		SetURL(fmt.Sprintf("https://steamcommunity.com/profiles/%s", banSteam.TargetID.String()))
+		SetURL("https://steamcommunity.com/profiles/" + banSteam.TargetID.String())
 
 	msgEmbed.AddFieldsSteamID(banSteam.TargetID)
 
@@ -264,7 +264,7 @@ func BanCIDRResponse(cidr *net.IPNet, author domain.PersonInfo, authorURL string
 	msgEmbed.Embed().
 		SetColor(ColourSuccess).
 		AddField("cidr", cidr.String()).
-		AddField("net_id", fmt.Sprintf("%d", banNet.NetID)).
+		AddField("net_id", strconv.FormatInt(banNet.NetID, 10)).
 		AddField("Reason", banNet.Reason.String())
 
 	msgEmbed.AddTargetPerson(target)
@@ -283,7 +283,7 @@ func DeleteReportMessage(existing domain.ReportMessage, user domain.PersonInfo, 
 	return msgEmbed.AddAuthorPersonInfo(user, userURL).Embed().Truncate().MessageEmbed
 }
 
-func NewInGameReportResponse(report domain.Report, reportURL string, author domain.PersonInfo, authorURL string, demoURL string) *discordgo.MessageEmbed {
+func NewInGameReportResponse(report domain.Report, reportURL string, author domain.PersonInfo, authorURL string, _ string) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed("New User Report Created")
 	msgEmbed.
 		Embed().
@@ -435,7 +435,7 @@ func WarningMessage(newWarning domain.NewUserWarning, banSteam domain.BanSteam, 
 	msgEmbed.Embed().
 		SetDescription(newWarning.UserWarning.Message).
 		SetColor(ColourWarn).
-		AddField("Filter ID", fmt.Sprintf("%d", newWarning.MatchedFilter.FilterID)).
+		AddField("Filter ID", strconv.FormatInt(newWarning.MatchedFilter.FilterID, 10)).
 		AddField("Matched", newWarning.Matched).
 		AddField("ServerStore", newWarning.UserMessage.ServerName).InlineAllFields().
 		AddField("Pattern", newWarning.MatchedFilter.Pattern)
@@ -473,9 +473,9 @@ func CheckMessage(player domain.Person, ban domain.BannedSteamPerson, banURL str
 
 	if ban.BanID > 0 {
 		if ban.BanType == domain.Banned {
-			title = fmt.Sprintf("%s (BANNED)", title)
+			title += " (BANNED)"
 		} else if ban.BanType == domain.NoComm {
-			title = fmt.Sprintf("%s (MUTED)", title)
+			title += " (MUTED)"
 		}
 	}
 
@@ -487,7 +487,7 @@ func CheckMessage(player domain.Person, ban domain.BannedSteamPerson, banURL str
 
 	cd := time.Unix(int64(player.TimeCreated), 0)
 	msgEmbed.Embed().AddField("Age", util.FmtDuration(cd))
-	msgEmbed.Embed().AddField("Private", fmt.Sprintf("%v", player.CommunityVisibilityState == 1))
+	msgEmbed.Embed().AddField("Private", strconv.FormatBool(player.CommunityVisibilityState == 1))
 	msgEmbed.AddFieldsSteamID(player.SteamID)
 
 	if player.VACBans > 0 {
@@ -517,8 +517,8 @@ func CheckMessage(player domain.Person, ban domain.BannedSteamPerson, banURL str
 			}
 		}
 
-		msgEmbed.Embed().AddField("Total Mutes", fmt.Sprintf("%d", numMutes))
-		msgEmbed.Embed().AddField("Total Bans", fmt.Sprintf("%d", numBans))
+		msgEmbed.Embed().AddField("Total Mutes", strconv.Itoa(numMutes))
+		msgEmbed.Embed().AddField("Total Bans", strconv.Itoa(numBans))
 	}
 
 	msgEmbed.Embed().InlineAllFields()
@@ -568,7 +568,7 @@ func CheckMessage(player domain.Person, ban domain.BannedSteamPerson, banURL str
 		// ip = bannedNets[0].CIDR.String()
 		netReason := fmt.Sprintf("Banned from %d networks", len(bannedNets))
 		netExpiry := bannedNets[0].ValidUntil
-		msgEmbed.Embed().AddField("Network Bans", fmt.Sprintf("%d", len(bannedNets)))
+		msgEmbed.Embed().AddField("Network Bans", strconv.Itoa(len(bannedNets)))
 		msgEmbed.Embed().AddField("Network Reason", netReason)
 		msgEmbed.Embed().AddField("Network Expires", util.FmtDuration(netExpiry)).MakeFieldInline()
 	}
@@ -611,7 +611,7 @@ func CheckMessage(player domain.Person, ban domain.BannedSteamPerson, banURL str
 	}
 
 	if logData != nil && logData.Total > 0 {
-		msgEmbed.Embed().AddField("Logs.tf", fmt.Sprintf("%d", logData.Total)).MakeFieldInline()
+		msgEmbed.Embed().AddField("Logs.tf", strconv.Itoa(logData.Total)).MakeFieldInline()
 	}
 
 	if createdAt != "" {
@@ -627,7 +627,7 @@ func CheckMessage(player domain.Person, ban domain.BannedSteamPerson, banURL str
 }
 
 func HistoryMessage(person domain.PersonInfo) *discordgo.MessageEmbed {
-	return NewEmbed(fmt.Sprintf("IP History of: %s", person.GetName())).Embed().
+	return NewEmbed("IP History of: " + person.GetName()).Embed().
 		SetDescription("IP history (20 max)").
 		Truncate().MessageEmbed
 }
@@ -676,7 +676,7 @@ func UnbanASNMessage(asn int64) *discordgo.MessageEmbed {
 	return NewEmbed("ASN Networks Unbanned Successfully").
 		Embed().
 		SetColor(ColourSuccess).
-		AddField("ASN", fmt.Sprintf("%d", asn)).
+		AddField("ASN", strconv.FormatInt(asn, 10)).
 		Truncate().MessageEmbed
 }
 
@@ -878,7 +878,7 @@ func FindMessage(found []domain.FoundPlayer) *discordgo.MessageEmbed {
 			AddField("Name", info.Player.Player.Name).
 			AddField("ServerStore", info.Server.ShortName).MakeFieldInline().
 			AddField("steam", fmt.Sprintf("https://steamcommunity.com/profiles/%d", info.Player.Player.SID.Int64())).
-			AddField("connect", fmt.Sprintf("connect %s", info.Server.Addr()))
+			AddField("connect", "connect "+info.Server.Addr())
 	}
 
 	return msgEmbed.Embed().Truncate().MessageEmbed
@@ -892,10 +892,10 @@ func MatchMessage(match domain.MatchResult, link string) *discordgo.MessageEmbed
 
 	msgEmbed.Embed().SetDescription(matchASCIITable(match))
 
-	msgEmbed.Embed().AddField("Red Score", fmt.Sprintf("%d", match.TeamScores.Red)).MakeFieldInline()
-	msgEmbed.Embed().AddField("Blu Score", fmt.Sprintf("%d", match.TeamScores.Blu)).MakeFieldInline()
+	msgEmbed.Embed().AddField("Red Score", strconv.Itoa(match.TeamScores.Red)).MakeFieldInline()
+	msgEmbed.Embed().AddField("Blu Score", strconv.Itoa(match.TeamScores.Blu)).MakeFieldInline()
 	msgEmbed.Embed().AddField("Map", match.MapName).MakeFieldInline()
-	msgEmbed.Embed().AddField("Chat Messages", fmt.Sprintf("%d", len(match.Chat))).MakeFieldInline()
+	msgEmbed.Embed().AddField("Chat Messages", strconv.Itoa(len(match.Chat))).MakeFieldInline()
 
 	msgCounts := map[steamid.SteamID]int{}
 
@@ -930,7 +930,7 @@ func MatchMessage(match domain.MatchResult, link string) *discordgo.MessageEmbed
 	}
 
 	msgEmbed.Embed().AddField("Top Chatter", fmt.Sprintf("%s (count: %d)", kathyName, count)).MakeFieldInline()
-	msgEmbed.Embed().AddField("Players", fmt.Sprintf("%d", len(match.Players))).MakeFieldInline()
+	msgEmbed.Embed().AddField("Players", strconv.Itoa(len(match.Players))).MakeFieldInline()
 	msgEmbed.Embed().AddField("Duration", match.TimeEnd.Sub(match.TimeStart).String()).MakeFieldInline()
 
 	return msgEmbed.Embed().Truncate().MessageEmbed
@@ -970,12 +970,12 @@ func matchASCIITable(match domain.MatchResult) string {
 		tablePlayers.Append([]string{
 			player.Team.String()[0:1],
 			name,
-			fmt.Sprintf("%d", player.Kills),
-			fmt.Sprintf("%d", player.Assists),
-			fmt.Sprintf("%d", player.Deaths),
+			strconv.Itoa(player.Kills),
+			strconv.Itoa(player.Assists),
+			strconv.Itoa(player.Deaths),
 			infString(player.KDRatio()),
 			infString(player.KDARatio()),
-			fmt.Sprintf("%d", player.Damage),
+			strconv.Itoa(player.Damage),
 			fmt.Sprintf("%d/%d/%d/%d", player.Backstabs, player.Headshots, player.Airshots, player.Captures),
 		})
 	}
@@ -1003,11 +1003,11 @@ func matchASCIITable(match domain.MatchResult) string {
 		tableHealers.Append([]string{
 			player.Team.String()[0:1],
 			name,
-			fmt.Sprintf("%d", player.Assists),
-			fmt.Sprintf("%d", player.Deaths),
-			fmt.Sprintf("%d", player.MedicStats.Healing),
-			fmt.Sprintf("%d", player.MedicStats.HealingPerMin(player.TimeEnd.Sub(player.TimeStart))),
-			fmt.Sprintf("%d", player.MedicStats.Drops),
+			strconv.Itoa(player.Assists),
+			strconv.Itoa(player.Deaths),
+			strconv.Itoa(player.MedicStats.Healing),
+			strconv.Itoa(player.MedicStats.HealingPerMin(player.TimeEnd.Sub(player.TimeStart))),
+			strconv.Itoa(player.MedicStats.Drops),
 			fmt.Sprintf("%d/%d/%d/%d", player.MedicStats.ChargesUber, player.MedicStats.ChargesKritz,
 				player.MedicStats.ChargesQuickfix, player.MedicStats.ChargesVacc),
 
@@ -1041,7 +1041,7 @@ func matchASCIITable(match domain.MatchResult) string {
 			tableKillstreaks.Append([]string{
 				player.Team.String()[0:1],
 				name,
-				fmt.Sprintf("%d", killstreak.Killstreak),
+				strconv.Itoa(killstreak.Killstreak),
 				killstreak.PlayerClass.String(),
 				(time.Duration(killstreak.Duration) * time.Second).String(),
 			})
@@ -1069,7 +1069,7 @@ func MuteMessage(banSteam domain.BanSteam) *discordgo.MessageEmbed {
 func BanASNMessage(asNum int64) *discordgo.MessageEmbed {
 	return NewEmbed("ASN BanSteam Created Successfully").Embed().
 		SetColor(ColourSuccess).
-		AddField("ASNum", fmt.Sprintf("%d", asNum)).
+		AddField("ASNum", strconv.FormatInt(asNum, 10)).
 		Truncate().
 		MessageEmbed
 }
@@ -1106,7 +1106,7 @@ func VoteResultMessage(result domain.VoteResult) *discordgo.MessageEmbed {
 		AddField("Target", result.TargetID.String()).
 		AddField("Code", fmt.Sprintf("%d", result.Code)).
 		AddField("Success", strconv.FormatBool(result.Success)).
-		AddField("Server", fmt.Sprintf("%d", result.ServerID))
+		AddField("Server", strconv.FormatInt(int64(result.ServerID), 10))
 
 	return msgEmbed.Embed().Truncate().MessageEmbed
 }

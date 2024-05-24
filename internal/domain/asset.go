@@ -2,7 +2,7 @@ package domain
 
 import (
 	"context"
-	"fmt"
+	"encoding/hex"
 	"io"
 	"time"
 
@@ -54,5 +54,5 @@ type Asset struct {
 }
 
 func (a Asset) HashString() string {
-	return fmt.Sprintf("%x", a.Hash)
+	return hex.EncodeToString(a.Hash)
 }

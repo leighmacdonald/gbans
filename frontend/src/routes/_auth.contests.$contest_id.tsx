@@ -41,7 +41,7 @@ function Contest() {
     const { contest_id } = Route.useParams();
     const [entries, setEntries] = useState<ContestEntry[]>([]);
     const [entriesLoading, setEntriesLoading] = useState(false);
-    const { hasPermission, userSteamID } = useRouteContext({ from: '/_auth/contests/$contest_id' });
+    const { hasPermission, profile } = useRouteContext({ from: '/_auth/contests/$contest_id' });
     const { sendFlash } = useUserFlashCtx();
 
     const {
@@ -216,7 +216,7 @@ function Contest() {
                         <Grid xs={12}>
                             <Stack spacing={2}>
                                 {entries
-                                    .filter((e) => showEntries || e.steam_id == userSteamID)
+                                    .filter((e) => showEntries || e.steam_id == profile.steam_id)
                                     .map((entry) => {
                                         return (
                                             <Stack key={entry.contest_entry_id}>
@@ -253,7 +253,7 @@ function Contest() {
                                                                     disabled={
                                                                         !(
                                                                             hasPermission(PermissionLevel.Moderator) ||
-                                                                            userSteamID == entry.steam_id
+                                                                            profile.steam_id == entry.steam_id
                                                                         )
                                                                     }
                                                                     color={'error'}

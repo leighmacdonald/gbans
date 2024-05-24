@@ -155,8 +155,8 @@ func ServerIDFromCtx(ctx *gin.Context) int {
 // HasPrivilege first checks if the steamId matches one of the provided allowedSteamIds, otherwise it will check
 // if the user has appropriate privilege levels.
 // Error responses are handled by this function, no further action needs to take place in the handlers.
-func HasPrivilege(person domain.PersonInfo, allowedSteamIds steamid.Collection, minPrivilege domain.Privilege) bool {
-	for _, steamID := range allowedSteamIds {
+func HasPrivilege(person domain.PersonInfo, allowedSteamIDs steamid.Collection, minPrivilege domain.Privilege) bool {
+	for _, steamID := range allowedSteamIDs {
 		if steamID == person.GetSteamID() {
 			return true
 		}

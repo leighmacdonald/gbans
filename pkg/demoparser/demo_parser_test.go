@@ -21,10 +21,10 @@ func TestParse(t *testing.T) {
 	var info demoparser.DemoInfo
 
 	require.NoError(t, demoparser.Parse(context.Background(), path, &info))
-	require.Equal(t, 20, len(info.Chat))
-	require.Equal(t, 243, len(info.Deaths))
-	require.Equal(t, 2, len(info.Rounds))
-	require.Equal(t, 45, len(info.Users))
+	require.Len(t, info.Chat, 20)
+	require.Len(t, info.Deaths, 243)
+	require.Len(t, info.Rounds, 2)
+	require.Len(t, info.Users, 45)
 	require.Equal(t, 509, info.StartTick)
-	require.Equal(t, 0.015, info.IntervalPerTick)
+	require.InEpsilon(t, 0.015, info.IntervalPerTick, 0.001)
 }

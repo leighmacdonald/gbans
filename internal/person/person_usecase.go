@@ -23,7 +23,8 @@ type personUsecase struct {
 
 func NewPersonUsecase(repository domain.PersonRepository, configUsecase domain.ConfigUsecase) domain.PersonUsecase {
 	return &personUsecase{
-		personRepo: repository,
+		personRepo:    repository,
+		configUsecase: configUsecase,
 	}
 }
 
@@ -219,8 +220,8 @@ func (u personUsecase) SavePerson(ctx context.Context, person *domain.Person) er
 	return u.personRepo.SavePerson(ctx, person)
 }
 
-func (u personUsecase) GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collection) (domain.People, error) {
-	return u.personRepo.GetPeopleBySteamID(ctx, steamIds)
+func (u personUsecase) GetPeopleBySteamID(ctx context.Context, steamIDs steamid.Collection) (domain.People, error) {
+	return u.personRepo.GetPeopleBySteamID(ctx, steamIDs)
 }
 
 func (u personUsecase) GetSteamsAtAddress(ctx context.Context, addr net.IP) (steamid.Collection, error) {
@@ -257,8 +258,8 @@ func (u personUsecase) GetPersonMessageByID(ctx context.Context, personMessageID
 	return u.personRepo.GetPersonMessageByID(ctx, personMessageID)
 }
 
-func (u personUsecase) GetSteamIdsAbove(ctx context.Context, privilege domain.Privilege) (steamid.Collection, error) {
-	return u.personRepo.GetSteamIdsAbove(ctx, privilege)
+func (u personUsecase) GetSteamIDsAbove(ctx context.Context, privilege domain.Privilege) (steamid.Collection, error) {
+	return u.personRepo.GetSteamIDsAbove(ctx, privilege)
 }
 
 func (u personUsecase) GetPersonSettings(ctx context.Context, steamID steamid.SteamID) (domain.PersonSettings, error) {

@@ -8,7 +8,6 @@ import (
 	"log/slog"
 
 	sq "github.com/Masterminds/squirrel"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgerrcode"
 	pgxuuid "github.com/jackc/pgx-gofrs-uuid"
 	"github.com/jackc/pgx/v5"
@@ -112,7 +111,7 @@ func (db *postgresStore) Connect(ctx context.Context) error {
 		return fmt.Errorf("unable to parse db config/dsn: %w", errConfig)
 	}
 
-	cfg.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
+	cfg.AfterConnect = func(_ context.Context, conn *pgx.Conn) error {
 		pgxuuid.Register(conn.TypeMap())
 
 		return nil

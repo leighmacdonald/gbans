@@ -181,9 +181,9 @@ func (r *personRepository) GetPersonBySteamID(ctx context.Context, sid64 steamid
 	return person, nil
 }
 
-func (r *personRepository) GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collection) (domain.People, error) {
+func (r *personRepository) GetPeopleBySteamID(ctx context.Context, steamIDs steamid.Collection) (domain.People, error) {
 	var ids []int64 //nolint:prealloc
-	for _, sid := range fp.Uniq[steamid.SteamID](steamIds) {
+	for _, sid := range fp.Uniq[steamid.SteamID](steamIDs) {
 		ids = append(ids, sid.Int64())
 	}
 
@@ -275,16 +275,16 @@ func (r *personRepository) GetPeople(ctx context.Context, filter domain.PlayerQu
 			return nil, 0, domain.ErrNetworkInvalidIP
 		}
 
-		foundIds, errFoundIds := r.GetSteamsAtAddress(ctx, addr)
-		if errFoundIds != nil {
-			if errors.Is(errFoundIds, domain.ErrNoResult) {
+		foundIDs, errFoundIDs := r.GetSteamsAtAddress(ctx, addr)
+		if errFoundIDs != nil {
+			if errors.Is(errFoundIDs, domain.ErrNoResult) {
 				return domain.People{}, 0, nil
 			}
 
-			return nil, 0, r.db.DBErr(errFoundIds)
+			return nil, 0, r.db.DBErr(errFoundIDs)
 		}
 
-		conditions = append(conditions, sq.Eq{"p.steam_id": foundIds})
+		conditions = append(conditions, sq.Eq{"p.steam_id": foundIDs})
 	}
 
 	if sid, ok := filter.TargetSteamID(ctx); ok {
@@ -483,7 +483,7 @@ func (r *personRepository) GetPersonMessageByID(ctx context.Context, personMessa
 //		Where(sq.Eq{"person_notification_id": notificationIds})))
 //}
 
-func (r *personRepository) GetSteamIdsAbove(ctx context.Context, privilege domain.Privilege) (steamid.Collection, error) {
+func (r *personRepository) GetSteamIDsAbove(ctx context.Context, privilege domain.Privilege) (steamid.Collection, error) {
 	rows, errRows := r.db.QueryBuilder(ctx, r.db.
 		Builder().
 		Select("steam_id").

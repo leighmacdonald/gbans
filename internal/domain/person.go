@@ -21,14 +21,14 @@ type PersonUsecase interface {
 	SavePerson(ctx context.Context, person *Person) error
 	QueryProfile(ctx context.Context, query string) (ProfileResponse, error)
 	GetPersonBySteamID(ctx context.Context, sid64 steamid.SteamID) (Person, error)
-	GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collection) (People, error)
+	GetPeopleBySteamID(ctx context.Context, steamIDs steamid.Collection) (People, error)
 	GetSteamsAtAddress(ctx context.Context, addr net.IP) (steamid.Collection, error)
 	GetPeople(ctx context.Context, filter PlayerQuery) (People, int64, error)
 	GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.SteamID) (Person, error)
 	GetPersonByDiscordID(ctx context.Context, discordID string) (Person, error)
 	GetExpiredProfiles(ctx context.Context, limit uint64) ([]Person, error)
 	GetPersonMessageByID(ctx context.Context, personMessageID int64) (PersonMessage, error)
-	GetSteamIdsAbove(ctx context.Context, privilege Privilege) (steamid.Collection, error)
+	GetSteamIDsAbove(ctx context.Context, privilege Privilege) (steamid.Collection, error)
 	GetPersonSettings(ctx context.Context, steamID steamid.SteamID) (PersonSettings, error)
 	SavePersonSettings(ctx context.Context, user PersonInfo, req PersonSettingsUpdate) (PersonSettings, error)
 	SetSteam(ctx context.Context, sid64 steamid.SteamID, discordID string) error
@@ -39,13 +39,13 @@ type PersonRepository interface {
 	DropPerson(ctx context.Context, steamID steamid.SteamID) error
 	SavePerson(ctx context.Context, person *Person) error
 	GetPersonBySteamID(ctx context.Context, sid64 steamid.SteamID) (Person, error)
-	GetPeopleBySteamID(ctx context.Context, steamIds steamid.Collection) (People, error)
+	GetPeopleBySteamID(ctx context.Context, steamIDs steamid.Collection) (People, error)
 	GetSteamsAtAddress(ctx context.Context, addr net.IP) (steamid.Collection, error)
 	GetPeople(ctx context.Context, filter PlayerQuery) (People, int64, error)
 	GetPersonByDiscordID(ctx context.Context, discordID string) (Person, error)
 	GetExpiredProfiles(ctx context.Context, limit uint64) ([]Person, error)
 	GetPersonMessageByID(ctx context.Context, personMessageID int64) (PersonMessage, error)
-	GetSteamIdsAbove(ctx context.Context, privilege Privilege) (steamid.Collection, error)
+	GetSteamIDsAbove(ctx context.Context, privilege Privilege) (steamid.Collection, error)
 	GetPersonSettings(ctx context.Context, steamID steamid.SteamID) (PersonSettings, error)
 	SavePersonSettings(ctx context.Context, settings *PersonSettings) error
 }
@@ -56,7 +56,7 @@ type PersonInfo interface {
 	GetAvatar() AvatarLinks
 	GetSteamID() steamid.SteamID
 	Path() string // config.LinkablePath
-	HasPermission(Privilege) bool
+	HasPermission(permission Privilege) bool
 }
 
 type SimplePerson struct {

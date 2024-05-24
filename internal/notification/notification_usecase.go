@@ -26,17 +26,17 @@ func (n notificationUsecase) SendNotification(ctx context.Context, targetID stea
 	notification := domain.NotificationPayload{}
 	// Collect all required ids
 	if notification.MinPerms >= domain.PUser {
-		sids, errIds := n.pu.GetSteamIdsAbove(ctx, notification.MinPerms)
-		if errIds != nil {
-			return errors.Join(errIds, domain.ErrNotificationSteamIDs)
+		sids, errIDs := n.pu.GetSteamIDsAbove(ctx, notification.MinPerms)
+		if errIDs != nil {
+			return errors.Join(errIDs, domain.ErrNotificationSteamIDs)
 		}
 
 		notification.Sids = append(notification.Sids, sids...)
 	}
 
-	uniqueIds := fp.Uniq[steamid.SteamID](notification.Sids)
+	uniqueIDs := fp.Uniq[steamid.SteamID](notification.Sids)
 
-	people, errPeople := n.pu.GetPeopleBySteamID(ctx, uniqueIds)
+	people, errPeople := n.pu.GetPeopleBySteamID(ctx, uniqueIDs)
 	if errPeople != nil && !errors.Is(errPeople, domain.ErrNoResult) {
 		return errors.Join(errPeople, domain.ErrNotificationPeople)
 	}
@@ -49,7 +49,7 @@ func (n notificationUsecase) SendNotification(ctx context.Context, targetID stea
 		}
 	}
 
-	go func(ids []domain.Person, payload domain.NotificationPayload) {
+	go func(_ []domain.Person, _ domain.NotificationPayload) {
 		for _, discordPerson := range discordPeople {
 			if err := n.nr.SendNotification(ctx, discordPerson.SteamID, notification.Severity, notification.Message, notification.Link); err != nil {
 				slog.Error("Failed to send discord notification", log.ErrAttr(err))
@@ -57,7 +57,7 @@ func (n notificationUsecase) SendNotification(ctx context.Context, targetID stea
 		}
 	}(discordPeople, notification)
 
-	for _, sid := range uniqueIds {
+	for _, sid := range uniqueIDs {
 		// Todo, prep stmt at least.
 		if errSend := n.nr.SendNotification(ctx, sid, notification.Severity,
 			notification.Message, notification.Link); errSend != nil {

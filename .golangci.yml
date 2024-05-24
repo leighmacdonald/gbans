@@ -17,19 +17,19 @@ linters:
     - bidichk
     - bodyclose
     - containedctx
+    - copyloopvar
     #- contextcheck
     #- cyclop
     - decorder
     #- depguard
     - dogsled
     #- dupl
-    #- dupword
+    - dupword
     #- durationcheck
     - errcheck
     - errchkjson
     - errname
     - errorlint
-    #- execinquery
     #- exhaustive
     #- exhaustruct
     - exportloopref
@@ -40,11 +40,14 @@ linters:
     - ginkgolinter
     - gocheckcompilerdirectives
     - gochecknoglobals
-    #- gochecknoinits
+    - gochecknoinits
     #- gocognit
-    #- goconst
+    - goconst
     - gocritic
     #- gocyclo
+    - gochecksumtype
+    - goconst
+    - gocritic
     - godot
     #- godox
     - err113
@@ -57,17 +60,21 @@ linters:
     - gomodguard
     - goprintffuncname
     - gosec
+    - gosmopolitan
     - gosimple
     - govet
     - grouper
     - importas
+    - inamedparam
     - ineffassign
     - interfacebloat
+    - intrange
     #- ireturn
     #- lll
     - loggercheck
     - maintidx
     - makezero
+    - mirror
     - misspell
     - musttag
     - nakedret
@@ -80,32 +87,36 @@ linters:
     - nonamedreturns
     - nosprintfhostport
     #- paralleltest
+    - perfsprint
     - prealloc
     - predeclared
     - promlinter
     - reassign
-    #- revive
+    - revive
     - rowserrcheck
     - sqlclosecheck
+    - sloglint
+    - spancheck
     #- staticcheck
     - stylecheck
+    #- tagalign
     - tagliatelle
     - tenv
     - testableexamples
+    - testifylint
     - testpackage
     - thelper
     #- tparallel
     - typecheck
     - unconvert
-    #- unparam
-    #- unused
+    - unparam
+    - unused
     - usestdlibvars
     - varnamelen
     - wastedassign
     - whitespace
     - wrapcheck
     - wsl
-    #- zerologlint
 
 linters-settings:
   wrapcheck:

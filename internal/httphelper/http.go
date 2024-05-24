@@ -170,7 +170,7 @@ func usePrometheus(engine *gin.Engine) {
 	engine.Use(prom.Instrument())
 }
 
-func useFrontend(engine *gin.Engine, conf domain.Config, version domain.BuildInfo) error {
+func useFrontend(engine *gin.Engine, conf domain.Config) error {
 	staticPath := conf.HTTP.StaticPath
 	if staticPath == "" {
 		staticPath = "./frontend/dist"
@@ -208,7 +208,7 @@ func CreateRouter(conf domain.Config, version domain.BuildInfo) (*gin.Engine, er
 	// TODO add config toggle
 	usePrometheus(engine)
 
-	if err := useFrontend(engine, conf, version); err != nil {
+	if err := useFrontend(engine, conf); err != nil {
 		return nil, err
 	}
 

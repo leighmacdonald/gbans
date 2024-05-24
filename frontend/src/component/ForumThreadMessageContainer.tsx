@@ -31,7 +31,7 @@ export const ThreadMessageContainer = ({
     const [edit, setEdit] = useState(false);
     const [updatedMessage, setUpdatedMessage] = useState<ForumMessage>();
 
-    const { hasPermission, userSteamID } = useRouteContext({ from: '/_auth/forums/thread/$forum_thread_id' });
+    const { hasPermission, profile } = useRouteContext({ from: '/_auth/forums/thread/$forum_thread_id' });
     const theme = useTheme();
 
     const activeMessage = useMemo(() => {
@@ -47,8 +47,8 @@ export const ThreadMessageContainer = ({
     }, []);
 
     const editable = useMemo(() => {
-        return userSteamID == message.source_id || hasPermission(PermissionLevel.Moderator);
-    }, [hasPermission, message.source_id, userSteamID]);
+        return profile.steam_id == message.source_id || hasPermission(PermissionLevel.Moderator);
+    }, [hasPermission, message.source_id, profile.steam_id]);
 
     return (
         <Paper elevation={1} id={`${activeMessage.forum_message_id}`}>
@@ -100,7 +100,7 @@ export const ThreadMessageContainer = ({
                                         <IconButton
                                             color={'error'}
                                             onClick={async () => {
-                                                onDelete(message);
+                                                await onDelete(message);
                                             }}
                                         >
                                             <DeleteForeverIcon />

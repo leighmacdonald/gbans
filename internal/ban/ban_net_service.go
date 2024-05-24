@@ -2,7 +2,6 @@ package ban
 
 import (
 	"errors"
-	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
@@ -54,7 +53,7 @@ func (h banNetHandler) onAPIExportBansValveIP() gin.HandlerFunc {
 				continue
 			}
 			// TODO Shouldn't be cidr?
-			entries = append(entries, fmt.Sprintf("addip 0 %s", ban.CIDR))
+			entries = append(entries, "addip 0 "+ban.CIDR)
 		}
 
 		ctx.Data(http.StatusOK, "text/plain", []byte(strings.Join(entries, "\n")))

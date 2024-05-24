@@ -77,15 +77,14 @@ func UpdatePlayerSummary(ctx context.Context, person *domain.Person) error {
 	vac, errBans := FetchPlayerBans(ctx, steamid.Collection{person.SteamID})
 	if errBans != nil || len(vac) != 1 {
 		return errBans
-	} else {
-		person.CommunityBanned = vac[0].CommunityBanned
-		person.VACBans = vac[0].NumberOfVACBans
-		person.GameBans = vac[0].NumberOfGameBans
-		person.EconomyBan = steamweb.EconBanNone
-		person.CommunityBanned = vac[0].CommunityBanned
-		person.DaysSinceLastBan = vac[0].DaysSinceLastBan
 	}
 
+	person.CommunityBanned = vac[0].CommunityBanned
+	person.VACBans = vac[0].NumberOfVACBans
+	person.GameBans = vac[0].NumberOfGameBans
+	person.EconomyBan = steamweb.EconBanNone
+	person.CommunityBanned = vac[0].CommunityBanned
+	person.DaysSinceLastBan = vac[0].DaysSinceLastBan
 	person.UpdatedOnSteam = time.Now()
 
 	return nil

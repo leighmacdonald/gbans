@@ -136,9 +136,9 @@ func (match *Match) Winner() Team {
 	if strings.HasPrefix(match.MapName, "pl_") {
 		if match.TeamScores.RedTime > match.TeamScores.BluTime {
 			return BLU
-		} else {
-			return RED
 		}
+
+		return RED
 	}
 
 	return UNASSIGNED
@@ -568,11 +568,13 @@ func (match *Match) Apply(result *Results) error { //nolint:maintidx
 	case SteamAuth:
 		return nil
 	default:
-		return errors.New(fmt.Sprintf("Unhandled apply event: %d %v", result.EventType, result.Event))
+		return fmt.Errorf("%w: %d %v", ErrUnhandledEvent, result.EventType, result.Event)
 	}
 
 	return nil
 }
+
+var ErrUnhandledEvent = errors.New("unhandled apply event")
 
 func (match *Match) player(evtTime time.Time, sid steamid.SteamID) *PlayerStats {
 	if playerSum, found := match.PlayerSums[sid]; found {

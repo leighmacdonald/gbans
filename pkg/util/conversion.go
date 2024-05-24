@@ -208,12 +208,12 @@ func CalcDuration(durationString string, validUntil time.Time) (time.Duration, e
 		}
 
 		return dur, nil
-	} else {
-		dur, errDuration := ParseDuration(durationString)
-		if errDuration != nil {
-			return 0, errDuration
-		}
-
-		return dur, nil
 	}
+
+	dur, errDuration := ParseDuration(durationString)
+	if errDuration != nil {
+		return 0, errDuration
+	}
+
+	return dur, nil
 }

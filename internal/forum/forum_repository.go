@@ -583,13 +583,13 @@ func (f *forumRepository) ForumMessageVoteApply(ctx context.Context, messageVote
 				Builder().
 				Delete("forum_message_vote").
 				Where(sq.Eq{"forum_message_vote_id": existingVote.ForumMessageVoteID})))
-		} else {
-			return f.db.DBErr(f.db.ExecUpdateBuilder(ctx, f.db.
-				Builder().
-				Update("forum_message_vote").
-				Set("vote", messageVote.Vote).
-				Where(sq.Eq{"forum_message_vote_id": existingVote.ForumMessageVoteID})))
 		}
+
+		return f.db.DBErr(f.db.ExecUpdateBuilder(ctx, f.db.
+			Builder().
+			Update("forum_message_vote").
+			Set("vote", messageVote.Vote).
+			Where(sq.Eq{"forum_message_vote_id": existingVote.ForumMessageVoteID})))
 	}
 
 	return f.db.DBErr(f.db.ExecInsertBuilderWithReturnValue(ctx, f.db.

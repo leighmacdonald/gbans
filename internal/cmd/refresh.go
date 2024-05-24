@@ -41,7 +41,7 @@ func refreshFiltersCmd() *cobra.Command {
 		Use:   "filters",
 		Short: "refresh filters",
 		Long:  `refresh filters`,
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			configUsecase := config.NewConfigUsecase(config.NewConfigRepository())
 			if errConfig := configUsecase.Read(false); errConfig != nil {
 				panic(fmt.Sprintf("Failed to read config: %v", errConfig))

@@ -46,7 +46,7 @@ func (s *stateUsecase) Start(ctx context.Context) error {
 	conf := s.configUsecase.Config()
 
 	logSrc, errLogSrc := logparse.NewUDPLogListener(conf.Log.SrcdsLogAddr,
-		func(eventType logparse.EventType, event logparse.ServerEvent) {
+		func(_ logparse.EventType, event logparse.ServerEvent) {
 			s.broadcaster.Emit(event.EventType, event)
 		})
 
@@ -272,7 +272,7 @@ func (s *stateUsecase) ExecRaw(ctx context.Context, addr string, password string
 }
 
 func (s *stateUsecase) LogAddressAdd(ctx context.Context, logAddress string) {
-	s.Broadcast(ctx, nil, fmt.Sprintf("logaddress_add %s", logAddress))
+	s.Broadcast(ctx, nil, "logaddress_add "+logAddress)
 }
 
 type broadcastResult struct {
@@ -381,14 +381,14 @@ func (s *stateUsecase) Silence(ctx context.Context, target steamid.SteamID, reas
 
 // Say is used to send a message to the server via sm_say.
 func (s *stateUsecase) Say(ctx context.Context, serverID int, message string) error {
-	_, errExec := s.ExecServer(ctx, serverID, fmt.Sprintf(`sm_say %s`, message))
+	_, errExec := s.ExecServer(ctx, serverID, `sm_say `+message)
 
 	return errors.Join(errExec, fmt.Errorf("%w: sm_say", domain.ErrCommandFailed))
 }
 
 // CSay is used to send a centered message to the server via sm_csay.
 func (s *stateUsecase) CSay(ctx context.Context, serverID int, message string) error {
-	_, errExec := s.ExecServer(ctx, serverID, fmt.Sprintf(`sm_csay %s`, message))
+	_, errExec := s.ExecServer(ctx, serverID, `sm_csay `+message)
 
 	return errors.Join(errExec, fmt.Errorf("%w: sm_csay", domain.ErrCommandFailed))
 }
@@ -399,7 +399,7 @@ func (s *stateUsecase) PSay(ctx context.Context, target steamid.SteamID, message
 		return domain.ErrInvalidTargetSID
 	}
 
-	if errExec := s.OnFindExec(ctx, "", target, nil, nil, func(info domain.PlayerServerInfo) string {
+	if errExec := s.OnFindExec(ctx, "", target, nil, nil, func(_ domain.PlayerServerInfo) string {
 		return fmt.Sprintf(`sm_psay "#%s" "%s"`, target.Steam(false), message)
 	}); errExec != nil {
 		return errors.Join(errExec, fmt.Errorf("%w: sm_psay", domain.ErrCommandFailed))

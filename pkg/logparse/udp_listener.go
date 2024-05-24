@@ -3,7 +3,6 @@ package logparse
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net"
 	"strconv"
@@ -89,7 +88,7 @@ func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 	}()
 
 	slog.Info("Starting log reader",
-		slog.String("listen_addr", fmt.Sprintf("%s/udp", remoteSrc.udpAddr.String())))
+		slog.String("listen_addr", remoteSrc.udpAddr.String()+"/udp"))
 
 	var (
 		count          = uint64(0)

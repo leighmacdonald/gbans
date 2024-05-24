@@ -76,7 +76,7 @@ func SecureRandomString(n int) string {
 
 	ret := make([]byte, n)
 
-	for currentChar := 0; currentChar < n; currentChar++ {
+	for currentChar := range n {
 		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(letters))))
 		if err != nil {
 			return ""

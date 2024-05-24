@@ -3,10 +3,10 @@ package auth
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -261,7 +261,7 @@ func (u *authUsecase) AuthServerMiddleWare() gin.HandlerFunc {
 		if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
 			hub.WithScope(func(scope *sentry.Scope) {
 				scope.SetUser(sentry.User{
-					ID:        fmt.Sprintf("%d", server.ServerID),
+					ID:        strconv.Itoa(server.ServerID),
 					IPAddress: server.Addr(),
 					Name:      server.ShortName,
 				})

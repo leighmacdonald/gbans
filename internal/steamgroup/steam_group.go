@@ -19,15 +19,15 @@ var (
 	errSaveGroupBanMembers     = errors.New("failed to save group ban members list")
 )
 
-type SteamGroupMemberships struct {
+type Memberships struct {
 	members map[steamid.SteamID]steamid.Collection
 	*sync.RWMutex
 	store      domain.BanGroupRepository
 	updateFreq time.Duration
 }
 
-func NewSteamGroupMemberships(db domain.BanGroupRepository) *SteamGroupMemberships {
-	return &SteamGroupMemberships{
+func NewMemberships(db domain.BanGroupRepository) *Memberships {
+	return &Memberships{
 		RWMutex:    &sync.RWMutex{},
 		store:      db,
 		members:    map[steamid.SteamID]steamid.Collection{},
@@ -35,7 +35,7 @@ func NewSteamGroupMemberships(db domain.BanGroupRepository) *SteamGroupMembershi
 	}
 }
 
-func (g *SteamGroupMemberships) Start(ctx context.Context) {
+func (g *Memberships) Start(ctx context.Context) {
 	ticker := time.NewTicker(g.updateFreq)
 	updateChan := make(chan any)
 
@@ -51,7 +51,7 @@ func (g *SteamGroupMemberships) Start(ctx context.Context) {
 			g.update(ctx)
 			ticker.Reset(g.updateFreq)
 		case <-ctx.Done():
-			slog.Debug("SteamGroupMemberships shutting down")
+			slog.Debug("Memberships shutting down")
 
 			return
 		}
@@ -59,7 +59,7 @@ func (g *SteamGroupMemberships) Start(ctx context.Context) {
 }
 
 // IsMember checks membership in the currently known banned group members.
-func (g *SteamGroupMemberships) IsMember(steamID steamid.SteamID) (steamid.SteamID, bool) {
+func (g *Memberships) IsMember(steamID steamid.SteamID) (steamid.SteamID, bool) {
 	g.RLock()
 	defer g.RUnlock()
 
@@ -74,7 +74,7 @@ func (g *SteamGroupMemberships) IsMember(steamID steamid.SteamID) (steamid.Steam
 	return steamid.SteamID{}, false
 }
 
-func (g *SteamGroupMemberships) update(ctx context.Context) {
+func (g *Memberships) update(ctx context.Context) {
 	newMap := map[steamid.SteamID]steamid.Collection{}
 
 	var total int
@@ -98,7 +98,7 @@ func (g *SteamGroupMemberships) update(ctx context.Context) {
 // NOT use the steam API, so be careful to not call too often.
 //
 // Group IDs can be found using https://steamcommunity.com/groups/<GROUP_NAME>/memberslistxml/?xml=1
-func (g *SteamGroupMemberships) updateGroupBanMembers(ctx context.Context) (map[steamid.SteamID]steamid.Collection, error) {
+func (g *Memberships) updateGroupBanMembers(ctx context.Context) (map[steamid.SteamID]steamid.Collection, error) {
 	newMap := map[steamid.SteamID]steamid.Collection{}
 
 	localCtx, cancel := context.WithTimeout(ctx, time.Second*120)

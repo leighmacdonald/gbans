@@ -11,11 +11,11 @@ import (
 
 type banGroupUsecase struct {
 	banGroupRepository domain.BanGroupRepository
-	groupMemberships   *SteamGroupMemberships
+	groupMemberships   *Memberships
 }
 
 func NewBanGroupUsecase(banGroupRepository domain.BanGroupRepository) domain.BanGroupUsecase {
-	sg := NewSteamGroupMemberships(banGroupRepository)
+	sg := NewMemberships(banGroupRepository)
 
 	return &banGroupUsecase{
 		banGroupRepository: banGroupRepository,
