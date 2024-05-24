@@ -2,7 +2,6 @@ package domain
 
 import (
 	"context"
-	"fmt"
 	"math"
 	"sort"
 	"time"
@@ -490,5 +489,5 @@ type MatchSummary struct {
 }
 
 func (m MatchSummary) Path() string {
-	return fmt.Sprintf("/log/%s", m.MatchID.String())
+	return "/log/" + m.MatchID.String()
 }

@@ -18,8 +18,8 @@ func Exists(filePath string) bool {
 // FindFile will walk up the directory tree until it find a file. Max depth of 4 or the minRootDir directory
 // is matched.
 func FindFile(fileName string, minRootDir string) string {
-	var dots []string
-	for i := 0; i < 4; i++ {
+	var dots []string //nolint:prealloc
+	for range 4 {
 		dir := path.Join(dots...)
 		fPath := path.Join(dir, fileName)
 

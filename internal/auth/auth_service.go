@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -271,7 +270,7 @@ func (h authHandler) onOAuthDiscordCallback() gin.HandlerFunc {
 			return "", errors.Join(errReq, domain.ErrCreateRequest)
 		}
 
-		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+		req.Header.Add("Authorization", "Bearer "+accessToken)
 		resp, errResp := client.Do(req)
 
 		if errResp != nil {

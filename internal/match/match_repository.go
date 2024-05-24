@@ -86,9 +86,9 @@ func (r *matchRepository) onMatchComplete(ctx context.Context, matchContext *act
 	if errSave := r.MatchSave(ctx, &matchContext.match, r.wm); errSave != nil {
 		if errors.Is(errSave, domain.ErrInsufficientPlayers) {
 			return domain.ErrInsufficientPlayers
-		} else {
-			return errors.Join(errSave, domain.ErrSaveMatch)
 		}
+
+		return errors.Join(errSave, domain.ErrSaveMatch)
 	}
 
 	var result domain.MatchResult

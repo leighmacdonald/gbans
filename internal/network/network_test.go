@@ -16,7 +16,7 @@ func TestNetworkBlocker(t *testing.T) {
 
 	count, errAdd := blocker.AddRemoteSource(context.Background(), testName, testSource)
 	require.NoError(t, errAdd)
-	require.True(t, count > 100)
+	require.Greater(t, count, int64(100))
 
 	name, matched := blocker.IsMatch(netip.MustParseAddr("3.2.2.2"))
 	require.True(t, matched)

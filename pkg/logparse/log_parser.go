@@ -733,6 +733,7 @@ type Results struct {
 // Parse will parse the log line into a known type and values.
 //
 //nolint:gocognit,funlen,maintidx
+//nolint:gocyclo
 func (p *LogParser) Parse(logLine string) (*Results, error) {
 	for _, parser := range p.rxParsers {
 		matchMap, found := reSubMatchMap(parser.Rx, strings.TrimSuffix(strings.TrimSuffix(logLine, "\n"), "\r"))
@@ -1213,7 +1214,7 @@ func (p *LogParser) Parse(logLine string) (*Results, error) {
 }
 
 func (p *LogParser) decodeTeam() func(reflect.Type, reflect.Type, any) (any, error) {
-	return func(fromType reflect.Type, toType reflect.Type, value any) (any, error) {
+	return func(fromType reflect.Type, _ reflect.Type, value any) (any, error) {
 		if fromType.Kind() != reflect.String {
 			return value, nil
 		}
@@ -1234,7 +1235,7 @@ func (p *LogParser) decodeTeam() func(reflect.Type, reflect.Type, any) (any, err
 }
 
 func (p *LogParser) decodePlayerClass() func(reflect.Type, reflect.Type, any) (any, error) {
-	return func(fromType reflect.Type, toType reflect.Type, value any) (any, error) {
+	return func(fromType reflect.Type, _ reflect.Type, value any) (any, error) {
 		if fromType.Kind() != reflect.String {
 			return value, nil
 		}
@@ -1255,7 +1256,7 @@ func (p *LogParser) decodePlayerClass() func(reflect.Type, reflect.Type, any) (a
 }
 
 func (p *LogParser) decodePos() func(reflect.Type, reflect.Type, any) (any, error) {
-	return func(fromType reflect.Type, toType reflect.Type, value any) (any, error) {
+	return func(fromType reflect.Type, _ reflect.Type, value any) (any, error) {
 		if fromType.Kind() != reflect.String {
 			return value, nil
 		}
@@ -1279,7 +1280,7 @@ func (p *LogParser) decodePos() func(reflect.Type, reflect.Type, any) (any, erro
 var BotSid = steamid.New(807) //nolint:gochecknoglobals
 
 func (p *LogParser) decodeSID3() func(reflect.Type, reflect.Type, any) (any, error) {
-	return func(fromType reflect.Type, toType reflect.Type, value any) (any, error) {
+	return func(fromType reflect.Type, _ reflect.Type, value any) (any, error) {
 		if fromType.Kind() != reflect.String {
 			return value, nil
 		}
@@ -1320,7 +1321,7 @@ func (p *LogParser) decodeSID3() func(reflect.Type, reflect.Type, any) (any, err
 //}
 
 func (p *LogParser) decodePickupItem() func(reflect.Type, reflect.Type, any) (any, error) {
-	return func(fromType reflect.Type, toType reflect.Type, value any) (any, error) {
+	return func(fromType reflect.Type, _ reflect.Type, value any) (any, error) {
 		if fromType.Kind() != reflect.String {
 			return value, nil
 		}
@@ -1341,7 +1342,7 @@ func (p *LogParser) decodePickupItem() func(reflect.Type, reflect.Type, any) (an
 }
 
 func (p *LogParser) decodeWeapon() func(reflect.Type, reflect.Type, any) (any, error) {
-	return func(fromType reflect.Type, toType reflect.Type, value any) (any, error) {
+	return func(fromType reflect.Type, _ reflect.Type, value any) (any, error) {
 		if fromType.Kind() != reflect.String {
 			return value, nil
 		}
@@ -1361,7 +1362,7 @@ func (p *LogParser) decodeWeapon() func(reflect.Type, reflect.Type, any) (any, e
 }
 
 func (p *LogParser) decodeTime() func(reflect.Type, reflect.Type, any) (any, error) {
-	return func(fromType reflect.Type, toType reflect.Type, value any) (any, error) {
+	return func(fromType reflect.Type, _ reflect.Type, value any) (any, error) {
 		if fromType.Kind() != reflect.String {
 			return value, nil
 		}

@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 
@@ -111,7 +111,7 @@ func (f SCPExecer) update(ctx context.Context) error {
 func (f SCPExecer) updateServer(ctx context.Context, waitGroup *sync.WaitGroup, addr string, addrServers []domain.Server, sshConfig domain.ConfigSSH) {
 	defer waitGroup.Done()
 
-	scpClient, errClient := f.configAndDialClient(ctx, sshConfig, net.JoinHostPort(addr, fmt.Sprintf("%d", sshConfig.Port)))
+	scpClient, errClient := f.configAndDialClient(ctx, sshConfig, net.JoinHostPort(addr, strconv.Itoa(sshConfig.Port)))
 	if errClient != nil {
 		slog.Error("failed to connect to remote host", log.ErrAttr(errClient))
 

@@ -20,9 +20,9 @@ func NewWordFilterRepository(database database.Database) domain.WordFilterReposi
 func (r *wordFilterRepository) SaveFilter(ctx context.Context, filter *domain.Filter) error {
 	if filter.FilterID > 0 {
 		return r.updateFilter(ctx, filter)
-	} else {
-		return r.insertFilter(ctx, filter)
 	}
+
+	return r.insertFilter(ctx, filter)
 }
 
 func (r *wordFilterRepository) insertFilter(ctx context.Context, filter *domain.Filter) error {

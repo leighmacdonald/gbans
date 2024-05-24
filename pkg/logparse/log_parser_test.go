@@ -786,7 +786,7 @@ func TestParseMilkAttackEvt(t *testing.T) {
 		logparse.MilkAttackEvt{
 			TimeStamp:        logparse.TimeStamp{CreatedOn: time.Date(2021, time.February, 21, 6, 22, 23, 0, time.UTC)},
 			SourcePlayer:     logparse.SourcePlayer{Name: "✪lil vandal", PID: 2953, SID: steamid.New("[U:1:178417727]"), Team: logparse.BLU},
-			TargetPlayer:     logparse.TargetPlayer{Name2: "Darth Jar Jar", PID2: 2965, SID2: steamid.New("[U:1:209106507]"), Team2: logparse.RED},
+			TargetPlayer:     logparse.TargetPlayer{Name2: "Darth Jar Jar", PID2: 2965, SID2: steamid.New("[U:1:209106507]"), Team2: logparse.RED}, //nolint:dupword
 			Weapon:           logparse.JarBased,
 			AttackerPosition: logparse.Pos{X: -1040, Y: -854, Z: 128},
 			VictimPosition:   logparse.Pos{X: -1516, Y: -382, Z: 128},

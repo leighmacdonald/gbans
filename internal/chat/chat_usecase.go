@@ -120,8 +120,8 @@ func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.Ne
 }
 
 func (u chatUsecase) onWarningHandler(ctx context.Context, newWarning domain.NewUserWarning) error {
-	msg := fmt.Sprintf("[WARN] Please refrain from using slurs/toxicity (see: rules & MOTD). " +
-		"Further offenses will result in mutes/bans")
+	msg := "[WARN] Please refrain from using slurs/toxicity (see: rules & MOTD). " +
+		"Further offenses will result in mutes/bans"
 
 	newWarning.MatchedFilter.TriggerCount++
 
@@ -192,43 +192,45 @@ func (u chatUsecase) trigger(ctx context.Context, newWarn domain.NewUserWarning)
 		return
 	}
 
-	if !u.dry {
-		u.warningMu.Lock()
+	if u.dry {
+		return
+	}
 
-		_, found := u.warnings[newWarn.UserMessage.SteamID]
-		if !found {
-			u.warnings[newWarn.UserMessage.SteamID] = []domain.UserWarning{}
+	u.warningMu.Lock()
+
+	_, found := u.warnings[newWarn.UserMessage.SteamID]
+	if !found {
+		u.warnings[newWarn.UserMessage.SteamID] = []domain.UserWarning{}
+	}
+
+	var (
+		currentWeight = newWarn.MatchedFilter.Weight
+		count         int
+	)
+
+	for _, existing := range u.warnings[newWarn.UserMessage.SteamID] {
+		currentWeight += existing.MatchedFilter.Weight
+		count++
+	}
+
+	newWarn.CurrentTotal = currentWeight + newWarn.MatchedFilter.Weight
+
+	u.warnings[newWarn.UserMessage.SteamID] = append(u.warnings[newWarn.UserMessage.SteamID], newWarn.UserWarning)
+
+	u.warningMu.Unlock()
+
+	if currentWeight > u.maxWeight {
+		slog.Info("Warn limit exceeded",
+			slog.Int64("sid64", newWarn.UserMessage.SteamID.Int64()),
+			slog.Int("count", count),
+			slog.Int("weight", currentWeight))
+
+		if err := u.onWarningExceeded(ctx, newWarn); err != nil {
+			slog.Error("Failed to execute warning exceeded handler", log.ErrAttr(err))
 		}
-
-		var (
-			currentWeight = newWarn.MatchedFilter.Weight
-			count         int
-		)
-
-		for _, existing := range u.warnings[newWarn.UserMessage.SteamID] {
-			currentWeight += existing.MatchedFilter.Weight
-			count++
-		}
-
-		newWarn.CurrentTotal = currentWeight + newWarn.MatchedFilter.Weight
-
-		u.warnings[newWarn.UserMessage.SteamID] = append(u.warnings[newWarn.UserMessage.SteamID], newWarn.UserWarning)
-
-		u.warningMu.Unlock()
-
-		if currentWeight > u.maxWeight {
-			slog.Info("Warn limit exceeded",
-				slog.Int64("sid64", newWarn.UserMessage.SteamID.Int64()),
-				slog.Int("count", count),
-				slog.Int("weight", currentWeight))
-
-			if err := u.onWarningExceeded(ctx, newWarn); err != nil {
-				slog.Error("Failed to execute warning exceeded handler", log.ErrAttr(err))
-			}
-		} else {
-			if err := u.onWarningHandler(ctx, newWarn); err != nil {
-				slog.Error("Failed to execute warning handler", log.ErrAttr(err))
-			}
+	} else {
+		if err := u.onWarningHandler(ctx, newWarn); err != nil {
+			slog.Error("Failed to execute warning handler", log.ErrAttr(err))
 		}
 	}
 }

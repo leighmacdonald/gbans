@@ -55,7 +55,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 		Use:   "serve",
 		Short: "Starts the gbans service",
 		Long:  `Starts the main gbans application`,
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer stop()
 

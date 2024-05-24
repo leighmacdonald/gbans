@@ -519,6 +519,46 @@ func stringInt2ip(ipString string, ipv6 bool) (net.IP, error) {
 	return parseIpv4Int(ipString)
 }
 
+func extractAndWriteFile(zipFile *zip.File, dest string) error {
+	readCloser, errOpen := zipFile.Open()
+	if errOpen != nil {
+		return errors.Join(errOpen, ErrOpenFile)
+	}
+
+	defer func() {
+		_ = readCloser.Close()
+	}()
+
+	filePath := filepath.Join(dest, zipFile.Name) //nolint:gosec
+	if strings.Contains(filePath, "..") {
+		return ErrInsecureZip
+	}
+
+	if zipFile.FileInfo().IsDir() {
+		if errM := os.MkdirAll(filePath, zipFile.Mode()); errM != nil {
+			return errors.Join(errM, ErrDir)
+		}
+	} else {
+		if errMkDir := os.MkdirAll(filepath.Dir(filePath), zipFile.Mode()); errMkDir != nil {
+			return errors.Join(errMkDir, ErrDir)
+		}
+
+		outFile, errOpenFile := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, zipFile.Mode())
+		if errOpenFile != nil {
+			return errors.Join(errOpen, ErrOpenDest)
+		}
+
+		defer func() { _ = outFile.Close() }()
+
+		_, errCopy := io.Copy(outFile, readCloser) //nolint:gosec
+		if errCopy != nil {
+			return errors.Join(errCopy, ErrCopyDest)
+		}
+	}
+
+	return nil
+}
+
 func extractZip(data []byte, dest string, filename string) error {
 	zipReader, errNewReader := zip.NewReader(bytes.NewReader(data), int64(len(data)))
 	if errNewReader != nil {
@@ -526,49 +566,10 @@ func extractZip(data []byte, dest string, filename string) error {
 	}
 
 	// Closure to address file descriptors issue with all the deferred .Close() methods
-	extractAndWriteFile := func(zipFile *zip.File) error {
-		readCloser, errOpen := zipFile.Open()
-		if errOpen != nil {
-			return errors.Join(errOpen, ErrOpenFile)
-		}
-
-		defer func() {
-			_ = readCloser.Close()
-		}()
-
-		filePath := filepath.Join(dest, zipFile.Name) //nolint:gosec
-		if strings.Contains(filePath, "..") {
-			return ErrInsecureZip
-		}
-
-		if zipFile.FileInfo().IsDir() {
-			if errM := os.MkdirAll(filePath, zipFile.Mode()); errM != nil {
-				return errors.Join(errM, ErrDir)
-			}
-		} else {
-			if errMkDir := os.MkdirAll(filepath.Dir(filePath), zipFile.Mode()); errMkDir != nil {
-				return errors.Join(errMkDir, ErrDir)
-			}
-
-			outFile, errOpenFile := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, zipFile.Mode())
-			if errOpenFile != nil {
-				return errors.Join(errOpen, ErrOpenDest)
-			}
-
-			defer func() { _ = outFile.Close() }()
-
-			_, errNewReader = io.Copy(outFile, readCloser) //nolint:gosec
-			if errNewReader != nil {
-				return errors.Join(errNewReader, ErrCopyDest)
-			}
-		}
-
-		return nil
-	}
 
 	for _, readerFile := range zipReader.File {
 		if readerFile.Name == filename {
-			errExtractFile := extractAndWriteFile(readerFile)
+			errExtractFile := extractAndWriteFile(readerFile, dest)
 			if errExtractFile != nil {
 				return errExtractFile
 			}
@@ -596,7 +597,7 @@ func Read(root string) (*BlockListData, error) {
 		errs      []error
 	)
 
-	errWalkPath := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+	errWalkPath := filepath.Walk(root, func(path string, info os.FileInfo, _ error) error {
 		files = append(files, []string{path, info.Name()})
 
 		return nil

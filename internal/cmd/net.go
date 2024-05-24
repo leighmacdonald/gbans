@@ -32,7 +32,7 @@ func netUpdateCmd() *cobra.Command {
 		Use:   "update",
 		Short: "Updates ip2location dataset",
 		Long:  `Updates ip2location dataset`,
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			configUsecase := config.NewConfigUsecase(config.NewConfigRepository())
 			if errConfig := configUsecase.Read(false); errConfig != nil {
 				panic(fmt.Sprintf("Failed to read config: %v", errConfig))

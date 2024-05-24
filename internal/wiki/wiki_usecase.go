@@ -48,7 +48,7 @@ func (w *wikiUsecase) SaveWikiPage(ctx context.Context, user domain.PersonInfo, 
 	if errGetWikiSlug != nil {
 		if errors.Is(errGetWikiSlug, domain.ErrNoResult) {
 			page.CreatedOn = time.Now()
-			page.Revision += 1
+			page.Revision++
 			page.Slug = slug
 		} else {
 			return page, domain.ErrInternal

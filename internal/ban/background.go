@@ -31,31 +31,35 @@ func Start(ctx context.Context, banUsecase domain.BanSteamUsecase, banNetUsecase
 				expiredBans, errExpiredBans := banUsecase.Expired(ctx)
 				if errExpiredBans != nil && !errors.Is(errExpiredBans, domain.ErrNoResult) {
 					slog.Error("Failed to get expired expiredBans", log.ErrAttr(errExpiredBans))
-				} else {
-					for _, expiredBan := range expiredBans {
-						ban := expiredBan
-						if errDrop := banUsecase.Delete(ctx, &ban, false); errDrop != nil {
-							slog.Error("Failed to drop expired expiredBan", log.ErrAttr(errDrop))
-						} else {
-							person, errPerson := personUsecase.GetPersonBySteamID(ctx, ban.TargetID)
-							if errPerson != nil {
-								slog.Error("Failed to get expired Person", log.ErrAttr(errPerson))
 
-								continue
-							}
+					return
+				}
 
-							name := person.PersonaName
-							if name == "" {
-								name = person.SteamID.String()
-							}
+				for _, expiredBan := range expiredBans {
+					ban := expiredBan
+					if errDrop := banUsecase.Delete(ctx, &ban, false); errDrop != nil {
+						slog.Error("Failed to drop expired expiredBan", log.ErrAttr(errDrop))
 
-							discordUsecase.SendPayload(domain.ChannelModLog, discord.BanExpiresMessage(ban, person, configUsecase.ExtURL(ban)))
-
-							slog.Info("Ban expired",
-								slog.String("reason", ban.Reason.String()),
-								slog.Int64("sid64", ban.TargetID.Int64()), slog.String("name", name))
-						}
+						continue
 					}
+
+					person, errPerson := personUsecase.GetPersonBySteamID(ctx, ban.TargetID)
+					if errPerson != nil {
+						slog.Error("Failed to get expired Person", log.ErrAttr(errPerson))
+
+						continue
+					}
+
+					name := person.PersonaName
+					if name == "" {
+						name = person.SteamID.String()
+					}
+
+					discordUsecase.SendPayload(domain.ChannelModLog, discord.BanExpiresMessage(ban, person, configUsecase.ExtURL(ban)))
+
+					slog.Info("Ban expired",
+						slog.String("reason", ban.Reason.String()),
+						slog.Int64("sid64", ban.TargetID.Int64()), slog.String("name", name))
 				}
 			}()
 

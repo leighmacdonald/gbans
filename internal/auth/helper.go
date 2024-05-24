@@ -2,11 +2,11 @@ package auth
 
 import (
 	"crypto/sha256"
-	"fmt"
+	"encoding/hex"
 )
 
 func FingerprintHash(fingerprint string) string {
 	hasher := sha256.New()
 
-	return fmt.Sprintf("%x", hasher.Sum([]byte(fingerprint)))
+	return hex.EncodeToString(hasher.Sum([]byte(fingerprint)))
 }

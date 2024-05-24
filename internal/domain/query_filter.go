@@ -2,7 +2,6 @@ package domain
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -50,9 +49,9 @@ func (qf QueryFilter) ApplySafeOrder(builder sq.SelectBuilder, validColumns map[
 	}
 
 	if qf.Desc {
-		builder = builder.OrderBy(fmt.Sprintf("%s DESC", qf.OrderBy))
+		builder = builder.OrderBy(qf.OrderBy + " DESC")
 	} else {
-		builder = builder.OrderBy(fmt.Sprintf("%s ASC", qf.OrderBy))
+		builder = builder.OrderBy(qf.OrderBy + " ASC")
 	}
 
 	return builder
@@ -127,7 +126,7 @@ type PlayerQuery struct {
 type DemoFilter struct {
 	QueryFilter
 	SteamID   string `json:"steam_id"`
-	ServerIds []int  `json:"server_ids"`
+	ServerIDs []int  `json:"server_ids"` //nolint:tagliatelle
 	MapName   string `json:"map_name"`
 }
 
@@ -166,11 +165,11 @@ func (mqf MatchesQueryOpts) TargetSteamID() (steamid.SteamID, bool) {
 }
 
 type SourceIDProvider interface {
-	SourceSteamID(context.Context) (steamid.SteamID, bool)
+	SourceSteamID(ctx context.Context) (steamid.SteamID, bool)
 }
 
 type TargetIDProvider interface {
-	TargetSteamID(context.Context) (steamid.SteamID, bool)
+	TargetSteamID(ctx context.Context) (steamid.SteamID, bool)
 }
 
 type BansQueryFilter struct {

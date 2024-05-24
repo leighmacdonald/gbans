@@ -353,7 +353,7 @@ func (h banHandler) onAPIExportBansTF2BD() gin.HandlerFunc {
 			FileInfo: thirdparty.FileInfo{
 				Authors:     []string{config.General.SiteName},
 				Description: "Players permanently banned for cheating",
-				Title:       fmt.Sprintf("%s Cheater List", config.General.SiteName),
+				Title:       config.General.SiteName + " Cheater List",
 				UpdateURL:   h.cu.ExtURLRaw("/export/bans/tf2bd"),
 			},
 			Players: []thirdparty.Players{},

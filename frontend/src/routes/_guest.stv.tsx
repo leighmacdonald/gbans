@@ -83,7 +83,7 @@ function STV() {
     const navigate = useNavigate({ from: Route.fullPath });
     const { page, stats, map_name, server_id, rows } = Route.useSearch();
     const { servers, demos } = useLoaderData({ from: '/_guest/stv' });
-    const { userSteamID, isAuthenticated } = useRouteContext({ from: '/_guest/stv' });
+    const { profile, isAuthenticated } = useRouteContext({ from: '/_guest/stv' });
 
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
         initColumnFilter({
@@ -285,7 +285,7 @@ function STV() {
                                     startIcon={<ChevronLeft />}
                                     variant={'contained'}
                                     onClick={async () => {
-                                        setFieldValue('stats', userSteamID, {
+                                        setFieldValue('stats', profile.steam_id, {
                                             touch: false
                                         });
                                         setColumnFilters((prev) => {

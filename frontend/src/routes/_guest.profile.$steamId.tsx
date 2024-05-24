@@ -38,7 +38,7 @@ export const Route = createFileRoute('/_guest/profile/$steamId')({
 });
 
 function ProfilePage() {
-    const { userSteamID, isAuthenticated } = useRouteContext({ from: '/_guest/profile/$steamId' });
+    const { profile: userProfile, isAuthenticated } = useRouteContext({ from: '/_guest/profile/$steamId' });
     const profile = useLoaderData({ from: '/_guest/profile/$steamId' }) as PlayerProfile;
 
     return (
@@ -101,21 +101,22 @@ function ProfilePage() {
             <Grid xs={6} md={2}>
                 <SteamIDList steam_id={profile.player.steam_id} />
             </Grid>
-            {isAuthenticated() && (userSteamID == profile.player.steam_id || !profile.settings.stats_hidden) && (
-                <>
-                    <Grid xs={12}>{<PlayerStatsOverallContainer steam_id={profile.player.steam_id} />}</Grid>
-                    <Grid xs={12}>
-                        <ContainerWithHeader title={'Player Overall Stats By Class'} iconLeft={<BarChartIcon />}>
-                            <PlayerClassStatsTable steam_id={profile.player.steam_id} />
-                        </ContainerWithHeader>
-                    </Grid>
-                    <Grid xs={12}>
-                        <ContainerWithHeader title={'Overall Player Weapon Stats'} iconLeft={<InsightsIcon />}>
-                            <PlayerWeaponsStatListContainer steamId={profile.player.steam_id} />
-                        </ContainerWithHeader>
-                    </Grid>
-                </>
-            )}
+            {isAuthenticated() &&
+                (userProfile.steam_id == profile.player.steam_id || !profile.settings.stats_hidden) && (
+                    <>
+                        <Grid xs={12}>{<PlayerStatsOverallContainer steam_id={profile.player.steam_id} />}</Grid>
+                        <Grid xs={12}>
+                            <ContainerWithHeader title={'Player Overall Stats By Class'} iconLeft={<BarChartIcon />}>
+                                <PlayerClassStatsTable steam_id={profile.player.steam_id} />
+                            </ContainerWithHeader>
+                        </Grid>
+                        <Grid xs={12}>
+                            <ContainerWithHeader title={'Overall Player Weapon Stats'} iconLeft={<InsightsIcon />}>
+                                <PlayerWeaponsStatListContainer steamId={profile.player.steam_id} />
+                            </ContainerWithHeader>
+                        </Grid>
+                    </>
+                )}
             <Grid xs={12}>
                 <ContainerWithHeader title={'External Links'} iconLeft={<LinkIcon />}>
                     <Grid container spacing={1} paddingLeft={1}>

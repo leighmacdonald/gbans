@@ -326,16 +326,16 @@ func (r srcdsRepository) Admins(ctx context.Context) ([]domain.SMAdmin, error) {
 	for rows.Next() {
 		var (
 			// array_agg will return a {null} if no group entry exists
-			groupIds []*int
+			groupIDs []*int
 			admin    = domain.SMAdmin{Groups: []domain.SMGroups{}}
 		)
 
 		if errScan := rows.Scan(&admin.AdminID, &admin.SteamID, &admin.AuthType, &admin.Identity, &admin.Password,
-			&admin.Flags, &admin.Name, &admin.Immunity, &admin.CreatedOn, &admin.UpdatedOn, &groupIds); errScan != nil {
+			&admin.Flags, &admin.Name, &admin.Immunity, &admin.CreatedOn, &admin.UpdatedOn, &groupIDs); errScan != nil {
 			return nil, r.database.DBErr(errScan)
 		}
 
-		for _, groupID := range groupIds {
+		for _, groupID := range groupIDs {
 			if groupID == nil {
 				continue
 			}

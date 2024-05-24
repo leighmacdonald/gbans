@@ -1061,7 +1061,7 @@ func (s *srcdsHandler) onAPIPostServerCheck() gin.HandlerFunc {
 	}
 }
 
-func (s *srcdsHandler) checkASN(ctx *gin.Context, steamID steamid.SteamID, addr netip.Addr, responseCtx context.Context, resp *CheckResponse) bool {
+func (s *srcdsHandler) checkASN(ctx *gin.Context, steamID steamid.SteamID, addr netip.Addr, responseCtx context.Context, resp *CheckResponse) bool { //nolint:revive
 	details, errDetails := s.networkUsecase.QueryNetwork(ctx, addr)
 	if errDetails == nil && details.Asn.ASNum > 0 {
 		var asnBan domain.BanASN
@@ -1085,7 +1085,7 @@ func (s *srcdsHandler) checkASN(ctx *gin.Context, steamID steamid.SteamID, addr 
 	return false
 }
 
-func (s *srcdsHandler) checkIPBan(ctx *gin.Context, steamID steamid.SteamID, addr netip.Addr, responseCtx context.Context, resp *CheckResponse) bool {
+func (s *srcdsHandler) checkIPBan(ctx *gin.Context, steamID steamid.SteamID, addr netip.Addr, responseCtx context.Context, resp *CheckResponse) bool { //nolint:revive
 	// Check IP first
 	banNet, errGetBanNet := s.banNetUsecase.GetByAddress(responseCtx, addr)
 	if errGetBanNet != nil {

@@ -3,7 +3,6 @@ package ban
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/netip"
 	"time"
 
@@ -54,18 +53,18 @@ func (r *banSteamRepository) Delete(ctx context.Context, ban *domain.BanSteam, h
 		ban.BanID = 0
 
 		return nil
-	} else {
-		ban.Deleted = true
-
-		return r.updateBan(ctx, ban)
 	}
+
+	ban.Deleted = true
+
+	return r.updateBan(ctx, ban)
 }
 
 func (r *banSteamRepository) getBanByColumn(ctx context.Context, column string, identifier any, deletedOk bool) (domain.BannedSteamPerson, error) {
 	person := domain.NewBannedPerson()
 
 	whereClauses := sq.And{
-		sq.Eq{fmt.Sprintf("b.%s", column): identifier}, // valid columns are immutable
+		sq.Eq{"b." + column: identifier}, // valid columns are immutable
 	}
 
 	if !deletedOk {

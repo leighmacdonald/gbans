@@ -61,7 +61,7 @@ func NewForumHandler(engine *gin.Engine, fuc domain.ForumUsecase, ath domain.Aut
 	}
 }
 
-type ForumCategoryRequest struct {
+type CategoryRequest struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	Ordering    int    `json:"ordering"`
@@ -90,7 +90,7 @@ func (f *forumHandler) onAPIForumMessagesRecent() gin.HandlerFunc {
 
 func (f *forumHandler) onAPICreateForumCategory() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req ForumCategoryRequest
+		var req CategoryRequest
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
@@ -155,7 +155,7 @@ func (f *forumHandler) onAPIUpdateForumCategory() gin.HandlerFunc {
 			return
 		}
 
-		var req ForumCategoryRequest
+		var req CategoryRequest
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
@@ -178,15 +178,15 @@ func (f *forumHandler) onAPIUpdateForumCategory() gin.HandlerFunc {
 	}
 }
 
-type ForumForumRequest struct {
+type CreateForumRequest struct {
 	ForumCategoryID int              `json:"forum_category_id"`
 	PermissionLevel domain.Privilege `json:"permission_level"`
-	ForumCategoryRequest
+	CategoryRequest
 }
 
 func (f *forumHandler) onAPICreateForumForum() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req ForumForumRequest
+		var req CreateForumRequest
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
@@ -230,7 +230,7 @@ func (f *forumHandler) onAPIUpdateForumForum() gin.HandlerFunc {
 			return
 		}
 
-		var req ForumForumRequest
+		var req CreateForumRequest
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
@@ -447,7 +447,7 @@ func (f *forumHandler) onAPIThreadDelete() gin.HandlerFunc {
 			return
 		}
 
-		forum.CountThreads -= 1
+		forum.CountThreads--
 
 		if errSave := f.fuc.ForumSave(ctx, &forum); errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
@@ -578,7 +578,7 @@ func (f *forumHandler) onAPIMessageDelete() gin.HandlerFunc {
 				return
 			}
 
-			forum.CountThreads -= 1
+			forum.CountThreads--
 
 			if errSave := f.fuc.ForumSave(ctx, &forum); errSave != nil {
 				httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)

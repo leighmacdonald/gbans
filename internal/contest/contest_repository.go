@@ -336,10 +336,10 @@ func (c *contestRepository) ContestEntryVote(ctx context.Context, contestEntryID
 		}
 
 		return domain.ErrVoteDeleted
-	} else {
-		if errSave := c.ContestEntryVoteUpdate(ctx, record.ContestEntryVoteID, vote); errSave != nil {
-			return errSave
-		}
+	}
+
+	if errSave := c.ContestEntryVoteUpdate(ctx, record.ContestEntryVoteID, vote); errSave != nil {
+		return errSave
 	}
 
 	return nil

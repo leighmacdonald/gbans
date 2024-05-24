@@ -16,18 +16,18 @@ import (
 
 type nullDiscordRepository struct{}
 
-func (bot *nullDiscordRepository) RegisterHandler(cmd domain.Cmd, handler domain.SlashCommandHandler) error {
+func (bot *nullDiscordRepository) RegisterHandler(_ domain.Cmd, _ domain.SlashCommandHandler) error {
 	return nil
 }
 
-func (bot *nullDiscordRepository) Shutdown(guildID string) {
+func (bot *nullDiscordRepository) Shutdown(_ string) {
 }
 
 func (bot *nullDiscordRepository) Start() error {
 	return nil
 }
 
-func (bot *nullDiscordRepository) SendPayload(channel domain.DiscordChannel, payload *discordgo.MessageEmbed) {
+func (bot *nullDiscordRepository) SendPayload(_ domain.DiscordChannel, _ *discordgo.MessageEmbed) {
 }
 
 type discordRepository struct {

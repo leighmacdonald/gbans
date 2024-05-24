@@ -245,9 +245,9 @@ type PointCapturedEvt struct {
 }
 
 func (e *PointCapturedEvt) Players() []SourcePlayerPosition {
-	var captors []SourcePlayerPosition
+	var captors []SourcePlayerPosition //nolint:prealloc
 
-	for index := 0; index < e.Numcappers; index++ {
+	for index := range e.Numcappers {
 		var (
 			playerString string
 			pos          Pos

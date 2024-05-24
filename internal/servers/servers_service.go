@@ -54,14 +54,14 @@ type serverInfoSafe struct {
 
 func (h *serversHandler) onAPIExportSourcemodSimpleAdmins() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		privilegedIds, errPrivilegedIds := h.personUsecase.GetSteamIdsAbove(ctx, domain.PReserved)
-		if errPrivilegedIds != nil {
+		privilegedIDs, errPrivilegedIDs := h.personUsecase.GetSteamIDsAbove(ctx, domain.PReserved)
+		if errPrivilegedIDs != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
 
-		players, errPlayers := h.personUsecase.GetPeopleBySteamID(ctx, privilegedIds)
+		players, errPlayers := h.personUsecase.GetPeopleBySteamID(ctx, privilegedIDs)
 		if errPlayers != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 

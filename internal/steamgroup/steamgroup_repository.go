@@ -298,10 +298,10 @@ func (r *steamGroupRepository) SaveMembersList(ctx context.Context, list *domain
 		const update = `UPDATE members SET members = $2::jsonb, updated_on = $3 WHERE members_id = $1`
 
 		return r.db.DBErr(r.db.Exec(ctx, update, list.MembersID, list.Members, list.UpdatedOn))
-	} else {
-		const insert = `INSERT INTO members (parent_id, members, created_on, updated_on) 
+	}
+
+	const insert = `INSERT INTO members (parent_id, members, created_on, updated_on) 
 		VALUES ($1, $2::jsonb, $3, $4) RETURNING members_id`
 
-		return r.db.DBErr(r.db.QueryRow(ctx, insert, list.ParentID, list.Members, list.CreatedOn, list.UpdatedOn).Scan(&list.MembersID))
-	}
+	return r.db.DBErr(r.db.QueryRow(ctx, insert, list.ParentID, list.Members, list.CreatedOn, list.UpdatedOn).Scan(&list.MembersID))
 }
