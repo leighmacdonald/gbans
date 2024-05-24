@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/jackc/pgx/v5"
+	"github.com/leighmacdonald/gbans/pkg/log"
+	"log/slog"
 	"net/netip"
 	"time"
 
@@ -23,7 +26,35 @@ func NewBanSteamRepository(database database.Database, pu domain.PersonUsecase, 
 	return &banSteamRepository{db: database, pu: pu, nu: nu}
 }
 
-func (r *banSteamRepository) Stats(ctx context.Context, stats *domain.Stats) error {
+func (r banSteamRepository) TruncateCache(ctx context.Context) error {
+	return r.db.DBErr(r.db.ExecDeleteBuilder(ctx, r.db.Builder().Delete("steam_friends")))
+}
+
+func (r banSteamRepository) InsertCache(ctx context.Context, steamID steamid.SteamID, entries []int64) error {
+	const query = "INSERT INTO steam_friends (steam_id, friend_id, created_on) VALUES ($1, $2, $3)"
+
+	batch := pgx.Batch{}
+	now := time.Now()
+
+	for _, entrySteamID := range entries {
+		_, errPerson := r.pu.GetOrCreatePersonBySteamID(ctx, steamid.New(entrySteamID))
+		if errPerson != nil {
+			slog.Error("Failed to validate person for friend insertion", log.ErrAttr(errPerson))
+
+			continue
+		}
+		batch.Queue(query, steamID.Int64(), entrySteamID, now)
+	}
+
+	batchResults := r.db.SendBatch(ctx, &batch)
+	if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
+		return errors.Join(errCloseBatch, domain.ErrCloseBatch)
+	}
+
+	return nil
+}
+
+func (r banSteamRepository) Stats(ctx context.Context, stats *domain.Stats) error {
 	const query = `
 	SELECT 
 		(SELECT COUNT(ban_id) FROM ban) as bans_total,
@@ -45,7 +76,7 @@ func (r *banSteamRepository) Stats(ctx context.Context, stats *domain.Stats) err
 	return nil
 }
 
-func (r *banSteamRepository) Delete(ctx context.Context, ban *domain.BanSteam, hardDelete bool) error {
+func (r banSteamRepository) Delete(ctx context.Context, ban *domain.BanSteam, hardDelete bool) error {
 	if hardDelete {
 		if errExec := r.db.Exec(ctx, `DELETE FROM ban WHERE ban_id = $1`, ban.BanID); errExec != nil {
 			return r.db.DBErr(errExec)
@@ -61,7 +92,7 @@ func (r *banSteamRepository) Delete(ctx context.Context, ban *domain.BanSteam, h
 	}
 }
 
-func (r *banSteamRepository) getBanByColumn(ctx context.Context, column string, identifier any, deletedOk bool) (domain.BannedSteamPerson, error) {
+func (r banSteamRepository) getBanByColumn(ctx context.Context, column string, identifier any, deletedOk bool) (domain.BannedSteamPerson, error) {
 	person := domain.NewBannedPerson()
 
 	whereClauses := sq.And{
@@ -118,22 +149,22 @@ func (r *banSteamRepository) getBanByColumn(ctx context.Context, column string, 
 	return person, nil
 }
 
-func (r *banSteamRepository) GetBySteamID(ctx context.Context, sid64 steamid.SteamID, deletedOk bool) (domain.BannedSteamPerson, error) {
+func (r banSteamRepository) GetBySteamID(ctx context.Context, sid64 steamid.SteamID, deletedOk bool) (domain.BannedSteamPerson, error) {
 	return r.getBanByColumn(ctx, "target_id", sid64, deletedOk)
 }
 
-func (r *banSteamRepository) GetByBanID(ctx context.Context, banID int64, deletedOk bool) (domain.BannedSteamPerson, error) {
+func (r banSteamRepository) GetByBanID(ctx context.Context, banID int64, deletedOk bool) (domain.BannedSteamPerson, error) {
 	return r.getBanByColumn(ctx, "ban_id", banID, deletedOk)
 }
 
-func (r *banSteamRepository) GetByLastIP(ctx context.Context, lastIP netip.Addr, deletedOk bool) (domain.BannedSteamPerson, error) {
+func (r banSteamRepository) GetByLastIP(ctx context.Context, lastIP netip.Addr, deletedOk bool) (domain.BannedSteamPerson, error) {
 	// TODO check if works still
 	return r.getBanByColumn(ctx, "last_ip", lastIP.String(), deletedOk)
 }
 
 // Save will insert or update the ban record
 // New records will have the Ban.BanID set automatically.
-func (r *banSteamRepository) Save(ctx context.Context, ban *domain.BanSteam) error {
+func (r banSteamRepository) Save(ctx context.Context, ban *domain.BanSteam) error {
 	// Ensure the foreign keys are satisfied
 	_, errGetPerson := r.pu.GetOrCreatePersonBySteamID(ctx, ban.TargetID)
 	if errGetPerson != nil {
@@ -168,7 +199,7 @@ func (r *banSteamRepository) Save(ctx context.Context, ban *domain.BanSteam) err
 	return r.insertBan(ctx, ban)
 }
 
-func (r *banSteamRepository) insertBan(ctx context.Context, ban *domain.BanSteam) error {
+func (r banSteamRepository) insertBan(ctx context.Context, ban *domain.BanSteam) error {
 	const query = `
 		INSERT INTO ban (target_id, source_id, ban_type, reason, reason_text, note, valid_until, 
 		                 created_on, updated_on, origin, report_id, appeal_state, include_friends, evade_ok, last_ip)
@@ -188,7 +219,7 @@ func (r *banSteamRepository) insertBan(ctx context.Context, ban *domain.BanSteam
 	return nil
 }
 
-func (r *banSteamRepository) updateBan(ctx context.Context, ban *domain.BanSteam) error {
+func (r banSteamRepository) updateBan(ctx context.Context, ban *domain.BanSteam) error {
 	var reportID *int64
 	if ban.ReportID > 0 {
 		reportID = &ban.ReportID
@@ -218,7 +249,7 @@ func (r *banSteamRepository) updateBan(ctx context.Context, ban *domain.BanSteam
 	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, query))
 }
 
-func (r *banSteamRepository) ExpiredBans(ctx context.Context) ([]domain.BanSteam, error) {
+func (r banSteamRepository) ExpiredBans(ctx context.Context) ([]domain.BanSteam, error) {
 	query := r.db.
 		Builder().
 		Select("ban_id", "target_id", "source_id", "ban_type", "reason", "reason_text", "note",
@@ -263,7 +294,7 @@ func (r *banSteamRepository) ExpiredBans(ctx context.Context) ([]domain.BanSteam
 }
 
 // Get returns all bans that fit the filter criteria passed in.
-func (r *banSteamRepository) Get(ctx context.Context, filter domain.SteamBansQueryFilter) ([]domain.BannedSteamPerson, error) {
+func (r banSteamRepository) Get(ctx context.Context, filter domain.SteamBansQueryFilter) ([]domain.BannedSteamPerson, error) {
 	builder := r.db.
 		Builder().
 		Select("b.ban_id", "b.target_id", "b.source_id", "b.ban_type", "b.reason",
@@ -326,7 +357,7 @@ func (r *banSteamRepository) Get(ctx context.Context, filter domain.SteamBansQue
 	return bans, nil
 }
 
-func (r *banSteamRepository) GetOlderThan(ctx context.Context, filter domain.QueryFilter, since time.Time) ([]domain.BanSteam, error) {
+func (r banSteamRepository) GetOlderThan(ctx context.Context, filter domain.QueryFilter, since time.Time) ([]domain.BanSteam, error) {
 	query := r.db.
 		Builder().
 		Select("b.ban_id", "b.target_id", "b.source_id", "b.ban_type", "b.reason",

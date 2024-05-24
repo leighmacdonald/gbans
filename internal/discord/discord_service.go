@@ -159,14 +159,7 @@ func (h discordService) makeOnCheck() func(_ context.Context, _ *discordgo.Sessi
 			}
 		}
 
-		oldBans, _, errOld := h.bu.Get(ctx, domain.SteamBansQueryFilter{
-			BansQueryFilter: domain.BansQueryFilter{
-				QueryFilter: domain.QueryFilter{Deleted: true},
-				TargetIDField: domain.TargetIDField{
-					TargetID: sid.String(),
-				},
-			},
-		})
+		oldBans, errOld := h.bu.Get(ctx, domain.SteamBansQueryFilter{})
 		if errOld != nil {
 			if !errors.Is(errOld, domain.ErrNoResult) {
 				slog.Error("Failed to fetch old bans", log.ErrAttr(errOld))

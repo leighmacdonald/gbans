@@ -1,4 +1,3 @@
-import { LazyResult } from '../util/table.ts';
 import { parseDateTime } from '../util/text.tsx';
 import {
     apiCall,
@@ -232,15 +231,8 @@ export interface BanPayloadGroup extends BanBasePayload {
 }
 
 export const apiGetBansSteam = async (opts: BanSteamQueryFilter, abortController?: AbortController) => {
-    const resp = await apiCall<LazyResult<SteamBanRecord>, BanSteamQueryFilter>(
-        `/api/bans/steam`,
-        'POST',
-        opts,
-        abortController
-    );
-    resp.data = resp.data.map(applyDateTime);
-
-    return resp;
+    const resp = await apiCall<SteamBanRecord[], BanSteamQueryFilter>(`/api/bans/steam`, 'GET', opts, abortController);
+    return resp.map(transformTimeStampedDates);
 };
 
 export function applyDateTime<T>(row: T & TimeStamped) {
@@ -370,23 +362,18 @@ export const apiDeleteBanMessage = async (ban_message_id: number) =>
     await apiCall(`/api/bans/message/${ban_message_id}`, 'DELETE', {});
 
 export const apiGetBansCIDR = async (opts: BanCIDRQueryFilter, abortController?: AbortController) => {
-    const resp = await apiCall<LazyResult<CIDRBanRecord>>('/api/bans/cidr', 'POST', opts, abortController);
-
-    resp.data = resp.data.map((record) => applyDateTime(record));
-    return resp;
+    const resp = await apiCall<CIDRBanRecord[]>('/api/bans/cidr', 'GET', opts, abortController);
+    return resp.map(transformTimeStampedDates);
 };
 
 export const apiGetBansASN = async (opts: BanASNQueryFilter, abortController?: AbortController) => {
-    const resp = await apiCall<LazyResult<ASNBanRecord>>('/api/bans/asn', 'POST', opts, abortController);
-    resp.data = resp.data.map(applyDateTime);
-    return resp;
+    const resp = await apiCall<ASNBanRecord[]>('/api/bans/asn', 'GET', opts, abortController);
+    return resp.map(transformTimeStampedDates);
 };
 
 export const apiGetBansGroups = async (opts: BanGroupQueryFilter, abortController?: AbortController) => {
-    const resp = await apiCall<LazyResult<GroupBanRecord>>('/api/bans/group', 'POST', opts, abortController);
-
-    resp.data = resp.data.map(applyDateTime);
-    return resp;
+    const resp = await apiCall<GroupBanRecord[]>('/api/bans/group', 'GET', opts, abortController);
+    return resp.map(transformTimeStampedDates);
 };
 
 export const apiDeleteCIDRBan = async (cidr_id: number, unban_reason_text: string) =>

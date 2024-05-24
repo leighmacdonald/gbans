@@ -3,6 +3,7 @@ package ban
 import (
 	"context"
 	"errors"
+	"github.com/leighmacdonald/steamweb/v2"
 	"log/slog"
 	"net/netip"
 	"time"
@@ -21,48 +22,78 @@ type banSteamUsecase struct {
 	discordUsecase domain.DiscordUsecase
 	stateUsecase   domain.StateUsecase
 	reportUsecase  domain.ReportUsecase
-	friends        *SteamFriends
 }
 
 func NewBanSteamUsecase(repository domain.BanSteamRepository, personUsecase domain.PersonUsecase,
-	configUsecase domain.ConfigUsecase, discordUsecase domain.DiscordUsecase, groupUsecase domain.BanGroupUsecase,
+	configUsecase domain.ConfigUsecase, discordUsecase domain.DiscordUsecase,
 	reportUsecase domain.ReportUsecase, stateUsecase domain.StateUsecase,
 ) domain.BanSteamUsecase {
-	bu := &banSteamUsecase{banRepo: repository, personUsecase: personUsecase, configUsecase: configUsecase, discordUsecase: discordUsecase, reportUsecase: reportUsecase, stateUsecase: stateUsecase}
-	friendTracker := NewSteamFriends(bu, groupUsecase)
-
-	bu.friends = friendTracker
-
-	return bu
+	return &banSteamUsecase{
+		banRepo:        repository,
+		personUsecase:  personUsecase,
+		configUsecase:  configUsecase,
+		discordUsecase: discordUsecase,
+		reportUsecase:  reportUsecase,
+		stateUsecase:   stateUsecase,
+	}
 }
 
-func (s *banSteamUsecase) Stats(ctx context.Context, stats *domain.Stats) error {
+func (s banSteamUsecase) UpdateCache(ctx context.Context) error {
+	bans, errBans := s.Get(ctx, domain.SteamBansQueryFilter{Deleted: false})
+	if errBans != nil {
+		return errBans
+	}
+
+	if err := s.banRepo.TruncateCache(ctx); err != nil {
+		return err
+	}
+
+	for _, ban := range bans {
+		if ban.Deleted || ban.ValidUntil.Before(time.Now()) {
+			continue
+		}
+
+		friends, errFriends := steamweb.GetFriendList(ctx, ban.TargetID)
+		if errFriends != nil {
+			continue
+		}
+
+		var list []int64
+		for _, friend := range friends {
+			list = append(list, friend.SteamID.Int64())
+		}
+
+		if err := s.banRepo.InsertCache(ctx, ban.TargetID, list); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s banSteamUsecase) Stats(ctx context.Context, stats *domain.Stats) error {
 	return s.banRepo.Stats(ctx, stats)
 }
 
-func (s *banSteamUsecase) IsFriendBanned(steamID steamid.SteamID) (steamid.SteamID, bool) {
-	return s.friends.IsMember(steamID)
-}
-
-func (s *banSteamUsecase) GetBySteamID(ctx context.Context, sid64 steamid.SteamID, deletedOk bool) (domain.BannedSteamPerson, error) {
+func (s banSteamUsecase) GetBySteamID(ctx context.Context, sid64 steamid.SteamID, deletedOk bool) (domain.BannedSteamPerson, error) {
 	return s.banRepo.GetBySteamID(ctx, sid64, deletedOk)
 }
 
-func (s *banSteamUsecase) GetByBanID(ctx context.Context, banID int64, deletedOk bool) (domain.BannedSteamPerson, error) {
+func (s banSteamUsecase) GetByBanID(ctx context.Context, banID int64, deletedOk bool) (domain.BannedSteamPerson, error) {
 	return s.banRepo.GetByBanID(ctx, banID, deletedOk)
 }
 
-func (s *banSteamUsecase) GetByLastIP(ctx context.Context, lastIP netip.Addr, deletedOk bool) (domain.BannedSteamPerson, error) {
+func (s banSteamUsecase) GetByLastIP(ctx context.Context, lastIP netip.Addr, deletedOk bool) (domain.BannedSteamPerson, error) {
 	return s.banRepo.GetByLastIP(ctx, lastIP, deletedOk)
 }
 
-func (s *banSteamUsecase) Save(ctx context.Context, ban *domain.BanSteam) error {
+func (s banSteamUsecase) Save(ctx context.Context, ban *domain.BanSteam) error {
 	return s.banRepo.Save(ctx, ban)
 }
 
 // Ban will ban the steam id from all servers. Players are immediately kicked from servers
 // once executed. If duration is 0, the value of Config.DefaultExpiration() will be used.
-func (s *banSteamUsecase) Ban(ctx context.Context, curUser domain.PersonInfo, banSteam *domain.BanSteam) error {
+func (s banSteamUsecase) Ban(ctx context.Context, curUser domain.PersonInfo, banSteam *domain.BanSteam) error {
 	if !banSteam.TargetID.Valid() {
 		return errors.Join(domain.ErrInvalidSID, domain.ErrTargetID)
 	}
@@ -130,7 +161,7 @@ func (s *banSteamUsecase) Ban(ctx context.Context, curUser domain.PersonInfo, ba
 // Unban will set the Current ban to now, making it expired.
 // Returns true, nil if the ban exists, and was successfully banned.
 // Returns false, nil if the ban does not exist.
-func (s *banSteamUsecase) Unban(ctx context.Context, targetSID steamid.SteamID, reason string) (bool, error) {
+func (s banSteamUsecase) Unban(ctx context.Context, targetSID steamid.SteamID, reason string) (bool, error) {
 	bannedPerson, errGetBan := s.banRepo.GetBySteamID(ctx, targetSID, false)
 
 	if errGetBan != nil {
@@ -158,25 +189,25 @@ func (s *banSteamUsecase) Unban(ctx context.Context, targetSID steamid.SteamID, 
 	return true, nil
 }
 
-func (s *banSteamUsecase) Delete(ctx context.Context, ban *domain.BanSteam, hardDelete bool) error {
+func (s banSteamUsecase) Delete(ctx context.Context, ban *domain.BanSteam, hardDelete bool) error {
 	return s.banRepo.Delete(ctx, ban, hardDelete)
 }
 
-func (s *banSteamUsecase) Get(ctx context.Context, filter domain.SteamBansQueryFilter) ([]domain.BannedSteamPerson, error) {
+func (s banSteamUsecase) Get(ctx context.Context, filter domain.SteamBansQueryFilter) ([]domain.BannedSteamPerson, error) {
 	return s.banRepo.Get(ctx, filter)
 }
 
-func (s *banSteamUsecase) Expired(ctx context.Context) ([]domain.BanSteam, error) {
+func (s banSteamUsecase) Expired(ctx context.Context) ([]domain.BanSteam, error) {
 	return s.banRepo.ExpiredBans(ctx)
 }
 
-func (s *banSteamUsecase) GetOlderThan(ctx context.Context, filter domain.QueryFilter, since time.Time) ([]domain.BanSteam, error) {
+func (s banSteamUsecase) GetOlderThan(ctx context.Context, filter domain.QueryFilter, since time.Time) ([]domain.BanSteam, error) {
 	return s.banRepo.GetOlderThan(ctx, filter, since)
 }
 
 // IsOnIPWithBan checks if the address matches an existing user who is currently banned already. This
 // function will always fail-open and allow players in if an error occurs.
-func (s *banSteamUsecase) IsOnIPWithBan(ctx context.Context, curUser domain.PersonInfo, steamID steamid.SteamID, address netip.Addr) (bool, error) {
+func (s banSteamUsecase) IsOnIPWithBan(ctx context.Context, curUser domain.PersonInfo, steamID steamid.SteamID, address netip.Addr) (bool, error) {
 	existing, errMatch := s.GetByLastIP(ctx, address, false)
 	if errMatch != nil {
 		if errors.Is(errMatch, domain.ErrNoResult) {

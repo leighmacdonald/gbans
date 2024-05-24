@@ -3,6 +3,8 @@ package blocklist
 import (
 	"context"
 	"errors"
+	"github.com/jackc/pgx/v5"
+	"net"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -18,6 +20,25 @@ type blocklistRepository struct {
 func NewBlocklistRepository(database database.Database) domain.BlocklistRepository {
 	return &blocklistRepository{db: database}
 }
+
+func (b *blocklistRepository) InsertCache(ctx context.Context, list domain.CIDRBlockSource, entries []*net.IPNet) error {
+	const query = "INSERT INTO cidr_block_entries (cidr_block_source_id, net_block, created_on) VALUES ($1, $2, $3)"
+
+	batch := pgx.Batch{}
+	now := time.Now()
+
+	for _, cidrRange := range entries {
+		batch.Queue(query, list.CIDRBlockSourceID, cidrRange, now)
+	}
+
+	batchResults := b.db.SendBatch(ctx, &batch)
+	if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
+		return errors.Join(errCloseBatch, domain.ErrCloseBatch)
+	}
+
+	return nil
+}
+
 func (b *blocklistRepository) TruncateCachedEntries(ctx context.Context) error {
 	return b.db.DBErr(b.db.ExecDeleteBuilder(ctx, b.db.Builder().Delete("cidr_block_entries")))
 }

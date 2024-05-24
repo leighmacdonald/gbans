@@ -138,15 +138,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(dbUsecase), configUsecase)
 
-			blocklistUsecase := blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(dbUsecase))
-
-			networkUsecase := network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(dbUsecase), blocklistUsecase, personUsecase)
-			if err := networkUsecase.LoadNetBlocks(ctx); err != nil {
-				slog.Error("Failed to load network blocks", log.ErrAttr(err))
-
-				return
-			}
-
+			networkUsecase := network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(dbUsecase), personUsecase)
 			go networkUsecase.Start(ctx)
 
 			assetRepository := asset.NewLocalRepository(dbUsecase, configUsecase)
@@ -156,22 +148,20 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				return
 			}
 
-			dbUsecase.
-				Builder().
-				Select("a.asset_id", "a.bucket", "a.mime_type", "a.size", "a.name", "m.author_id").
-				From("asset_temp")
-
 			assetUsecase := asset.NewAssetUsecase(assetRepository)
-
 			serversUsecase := servers.NewServersUsecase(servers.NewServersRepository(dbUsecase))
 			demoUsecase := demo.NewDemoUsecase(domain.BucketDemo, demo.NewDemoRepository(dbUsecase), assetUsecase, configUsecase, serversUsecase)
 			go demoUsecase.Start(ctx)
-
-			banGroupUsecase := steamgroup.NewBanGroupUsecase(steamgroup.NewSteamGroupRepository(dbUsecase))
 			reportUsecase := report.NewReportUsecase(report.NewReportRepository(dbUsecase), discordUsecase, configUsecase, personUsecase, demoUsecase)
 
 			stateUsecase := state.NewStateUsecase(eventBroadcaster,
 				state.NewStateRepository(state.NewCollector(serversUsecase)), configUsecase, serversUsecase)
+			banUsecase := ban.NewBanSteamUsecase(ban.NewBanSteamRepository(dbUsecase, personUsecase, networkUsecase), personUsecase, configUsecase, discordUsecase, reportUsecase, stateUsecase)
+
+			banGroupUsecase := steamgroup.NewBanGroupUsecase(steamgroup.NewSteamGroupRepository(dbUsecase), personUsecase)
+
+			blocklistUsecase := blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(dbUsecase), banUsecase, banGroupUsecase)
+			go blocklistUsecase.Start(ctx)
 
 			go func() {
 				if err := stateUsecase.Start(ctx); err != nil {
@@ -179,16 +169,11 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				}
 			}()
 
-			banRepository := ban.NewBanSteamRepository(dbUsecase, personUsecase, networkUsecase)
-			banUsecase := ban.NewBanSteamUsecase(banRepository, personUsecase, configUsecase, discordUsecase, banGroupUsecase, reportUsecase, stateUsecase)
-
 			banASNUsecase := ban.NewBanASNUsecase(ban.NewBanASNRepository(dbUsecase), discordUsecase, networkUsecase)
-
 			banNetUsecase := ban.NewBanNetUsecase(ban.NewBanNetRepository(dbUsecase), personUsecase, configUsecase, discordUsecase, stateUsecase)
 
-			ban.NewBanNetRepository(dbUsecase)
-
 			apu := appeal.NewAppealUsecase(appeal.NewAppealRepository(dbUsecase), banUsecase, personUsecase, discordUsecase, configUsecase)
+
 			matchRepo := match.NewMatchRepository(eventBroadcaster, dbUsecase, personUsecase, serversUsecase, discordUsecase, stateUsecase, weaponsMap)
 			go matchRepo.Start(ctx)
 

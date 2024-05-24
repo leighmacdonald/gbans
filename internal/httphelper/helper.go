@@ -11,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/uuid/v5"
+	"github.com/gorilla/schema"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
@@ -34,6 +35,22 @@ func Bind(ctx *gin.Context, target any) bool {
 	if errBind := ctx.BindJSON(&target); errBind != nil {
 		ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 		slog.Error("Failed to bind request", log.ErrAttr(errBind))
+
+		return false
+	}
+
+	return true
+}
+
+// Set a Decoder instance as a package global, because it caches
+// meta-data about structs, and an instance can be shared safely.
+var decoder = schema.NewDecoder() //nolint:gochecknoglobals
+
+func BindQuery(ctx *gin.Context, target any) bool {
+
+	if errBind := decoder.Decode(target, ctx.Request.URL.Query()); errBind != nil {
+		ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+		slog.Error("Failed to bind query request", log.ErrAttr(errBind))
 
 		return false
 	}
