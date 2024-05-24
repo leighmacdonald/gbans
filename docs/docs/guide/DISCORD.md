@@ -2,7 +2,7 @@
 
 Here you will find an outline of the various available discord bot commands you can use.
 
-This of course assumes you have discord integration enabled. See [INSTALL.md](INSTALL.md) for details on
+This of course assumes you have discord integration enabled. See [INSTALL.md](../install/INSTALL.md) for details on
 how to enable it.
 
 ## Overview
@@ -44,11 +44,11 @@ Current supported formats, N being the count, eg: `10s` for 10 seconds:
 
 ## Command Reference
 
-### /ban <user_identifier> <duration> \[reason\]
+### /ban user_identifier duration \[reason\]
 
 Ban a user from the server 
 
-### /banip <cidr> <duration> \[reason\]
+### /banip cidr duration \[reason\]
 
 Ban a network block or IP. To ban a single ip use a /32 block, eg: `10.11.12.100/32`. To ban a 
 subnet block use a larger mask. eg: `10.11.12.0/24`. This would block all ips between: `10.11.12.1 - 10.11.12.255`
@@ -65,7 +65,7 @@ Banning an IP:
 gbans: IP ban created successfully
 ```
 
-### /find <user_identifier>
+### /find user_identifier
 
 Locate a player by name or steamid, returning their steamid and current server-id.
 
@@ -74,10 +74,10 @@ Locate a player by name or steamid, returning their steamid and current server-i
 gbans: Found player Recliner_Tim (76561198282517317) @ us-1
 ```
 
-### /mute <user_identifier> <duration> \[reason\]
+### /mute user_identifier duration \[reason\]
 
 
-### /check <steamid>
+### /check steamid
 
 Check the current ban state of a steamid
 
@@ -86,7 +86,7 @@ Check the current ban state of a steamid
 
 ```
 
-### /unban <steamid>
+### /unban steamid
 
 Unbans a previously banned user ahead of the expiration time.
 
@@ -95,17 +95,18 @@ Unbans a previously banned user ahead of the expiration time.
 gbans: User ban is now inactive
 ```
 
-### /kick <user_identifier> \[reason\]
+### /kick user_identifier \[reason\]
 
 Kick a currently playing user from the server
 
-### /players <server-id>
+### /players server-id
 
 Returns a table of player info similar to a `status` command.
 
 Columns: `<player-id> <steam-id> <ip> <name>`
 
-```/players example-1
+```markdown
+/players example-1
 
 ┌────────────────┬───────────────────┬───────────────────────────────┐
 │ IP             │ STEAM64           │ NAME                          │
@@ -137,17 +138,17 @@ Columns: `<player-id> <steam-id> <ip> <name>`
 └────────────────┴───────────────────┴───────────────────────────────┘
 ```
 
-### /psay <server-id> <name/steamid> <message>
+### /psay server-id name/steamid message
 
 Sends a private chat message to a single target. This just calls the [sourcemod command](https://wiki.alliedmods.net/Admin_Commands_(SourceMod)) 
 `sm_psay`
 
-### /csay <server-id | *> <message>
+### /csay server-id|* message
 
 Sends a centered message to all players. This just calls the [sourcemod command](https://wiki.alliedmods.net/Admin_Commands_(SourceMod)) 
 `sm_csay`
 
-### /say <server-id | *> <message>
+### /say server-id|* message
 
 Sends a say-chat message to all players.  This just calls the [sourcemod command](https://wiki.alliedmods.net/Admin_Commands_(SourceMod)) 
 `sm_say`

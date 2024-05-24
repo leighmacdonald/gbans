@@ -1,0 +1,8 @@
+{
+  "label": "Usage Guide",
+  "position": 3,
+  "link": {
+    "type": "generated-index",
+    "description": "How to use and configure gbans"
+  }
+}

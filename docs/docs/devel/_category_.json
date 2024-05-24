@@ -1,0 +1,8 @@
+{
+  "label": "Development Guide",
+  "position": 4,
+  "link": {
+    "type": "generated-index",
+    "description": "Overview of the development process and how to contribute"
+  }
+}

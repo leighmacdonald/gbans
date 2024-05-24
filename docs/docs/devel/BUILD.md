@@ -25,10 +25,11 @@ under the `logging.sentry_dsn_web` key.
 
 For frontend integration you much also create a new auth token and save it under `frontend/.env.sentry-build-plugin` along
 with the `ORG` and `PROJECT` you have configured in sentry.
-
-    SENTRY_ORG="<YOUR_ORG>"
-    SENTRY_PROJECT="<YOUR_PROJECT>"
-    SENTRY_AUTH_TOKEN=<YOUR_TOKEN>
+```shell
+SENTRY_ORG="<YOUR_ORG>"
+SENTRY_PROJECT="<YOUR_PROJECT>"
+SENTRY_AUTH_TOKEN=<YOUR_TOKEN>
+```
 
 You can find out more details under their [webpack docs](https://docs.sentry.io/platforms/javascript/guides/react/sourcemaps/uploading/webpack/)
 
