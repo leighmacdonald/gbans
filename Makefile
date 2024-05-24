@@ -62,11 +62,11 @@ test-go:
 	@go test $(GO_FLAGS) -race -cover . ./...
 
 install_deps:
-	go install github.com/vektra/mockery/v2@v2.41.0
-	go install github.com/daixiang0/gci@v0.12.1
+	go install github.com/vektra/mockery/v2@v2.43.1
+	go install github.com/daixiang0/gci@v0.13.4
 	go install mvdan.cc/gofumpt@v0.6.0
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.57.2
-	go install honnef.co/go/tools/cmd/staticcheck@v0.4.6
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.58.2
+	go install honnef.co/go/tools/cmd/staticcheck@v0.4.7
 
 check: lint_golangci static lint_ts typecheck_ts
 
