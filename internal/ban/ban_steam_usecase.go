@@ -3,7 +3,6 @@ package ban
 import (
 	"context"
 	"errors"
-	"github.com/leighmacdonald/steamweb/v2"
 	"log/slog"
 	"net/netip"
 	"time"
@@ -13,6 +12,7 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+	"github.com/leighmacdonald/steamweb/v2"
 )
 
 type banSteamUsecase struct {

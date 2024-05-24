@@ -96,14 +96,7 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
     const { data: bans, isLoading: isLoadingBans } = useQuery({
         queryKey: ['reportBanHistory', { steamId: report.target_id }],
         queryFn: async () => {
-            return await apiGetBansSteam({
-                limit: 100,
-                offset: 0,
-                order_by: 'ban_id',
-                desc: true,
-                target_id: report.target_id,
-                deleted: true
-            });
+            return await apiGetBansSteam({ target_id: report.target_id });
         }
     });
 
@@ -169,7 +162,7 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
                                     )}
                                     {hasPermission(PermissionLevel.Moderator) && (
                                         <Tab
-                                            label={`Ban History ${bans ? `(${bans.data.length})` : ''}`}
+                                            label={`Ban History ${bans ? `(${bans.length})` : ''}`}
                                             icon={<ReportGmailerrorredIcon />}
                                             iconPosition={'start'}
                                         />
@@ -244,7 +237,7 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
                                         display: value == 3 ? 'block' : 'none'
                                     }}
                                 >
-                                    <BanHistoryTable bans={bans ?? { data: [], count: 0 }} isLoading={isLoadingBans} />
+                                    <BanHistoryTable bans={bans ?? []} isLoading={isLoadingBans} />
                                 </Box>
                             </TabPanel>
                         </ContainerWithHeader>

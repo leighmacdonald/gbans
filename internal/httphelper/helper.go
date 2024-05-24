@@ -47,7 +47,6 @@ func Bind(ctx *gin.Context, target any) bool {
 var decoder = schema.NewDecoder() //nolint:gochecknoglobals
 
 func BindQuery(ctx *gin.Context, target any) bool {
-
 	if errBind := decoder.Decode(target, ctx.Request.URL.Query()); errBind != nil {
 		ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 		slog.Error("Failed to bind query request", log.ErrAttr(errBind))
