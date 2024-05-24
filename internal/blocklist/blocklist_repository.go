@@ -3,11 +3,11 @@ package blocklist
 import (
 	"context"
 	"errors"
-	"github.com/jackc/pgx/v5"
 	"net"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v4/steamid"

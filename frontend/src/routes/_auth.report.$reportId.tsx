@@ -73,7 +73,7 @@ function ReportView() {
         queryKey: ['ban', { targetId: report?.target_id }],
         queryFn: async () => {
             const bans = await apiGetBansSteam({ target_id: report?.target_id, desc: true });
-            const active = bans.data.filter((b: SteamBanRecord) => isBefore(new Date(), b.valid_until));
+            const active = bans.filter((b: SteamBanRecord) => isBefore(new Date(), b.valid_until));
 
             return active.length > 0 ? active[0] : false;
         },

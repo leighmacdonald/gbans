@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/leighmacdonald/gbans/pkg/log"
-	"github.com/leighmacdonald/gbans/pkg/util"
 	"io"
 	"log/slog"
 	"net"
@@ -17,6 +15,8 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/pkg/log"
+	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -109,10 +109,11 @@ func (b blocklistUsecase) UpdateCache(ctx context.Context) error {
 func (b blocklistUsecase) updateSource(ctx context.Context, list domain.CIDRBlockSource) error {
 	req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, list.URL, nil)
 	if errReq != nil {
-		return errReq
+		return errors.Join(errReq, domain.ErrCreateRequest)
 	}
 
 	client := util.NewHTTPClient()
+
 	resp, errResp := client.Do(req)
 	if errResp != nil {
 		return errors.Join(errResp, domain.ErrRequestPerform)

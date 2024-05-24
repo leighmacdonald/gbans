@@ -9,7 +9,7 @@ import {
     useReactTable
 } from '@tanstack/react-table';
 import { BanReasons, SteamBanRecord } from '../api';
-import { LazyResult, RowsPerPage } from '../util/table.ts';
+import { RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 import { DataTable } from './DataTable.tsx';
 import { PersonCell } from './PersonCell.tsx';
@@ -19,7 +19,7 @@ import { TableHeadingCell } from './TableHeadingCell.tsx';
 
 const columnHelper = createColumnHelper<SteamBanRecord>();
 
-export const BanHistoryTable = ({ bans, isLoading }: { bans: LazyResult<SteamBanRecord>; isLoading: boolean }) => {
+export const BanHistoryTable = ({ bans, isLoading }: { bans: SteamBanRecord[]; isLoading: boolean }) => {
     const navigate = useNavigate();
     const [pagination, setPagination] = useState({
         pageIndex: 0, //initial page index
@@ -45,12 +45,12 @@ export const BanHistoryTable = ({ bans, isLoading }: { bans: LazyResult<SteamBan
             header: () => <TableHeadingCell name={'Author'} />,
             cell: (info) => (
                 <PersonCell
-                    steam_id={bans.data[info.row.index].source_id}
-                    avatar_hash={bans.data[info.row.index].source_avatarhash}
-                    personaname={bans.data[info.row.index].source_personaname}
+                    steam_id={info.row.original.source_id}
+                    avatar_hash={info.row.original.source_avatarhash}
+                    personaname={info.row.original.source_personaname}
                     onClick={async () => {
                         await navigate({
-                            params: { steamId: bans.data[info.row.index].source_id },
+                            params: { steamId: info.row.original.source_id },
                             to: `/profile/$steamId`
                         });
                     }}
@@ -90,7 +90,7 @@ export const BanHistoryTable = ({ bans, isLoading }: { bans: LazyResult<SteamBan
     ];
 
     const opts: TableOptions<SteamBanRecord> = {
-        data: bans.data,
+        data: bans,
         columns: columns,
         getCoreRowModel: getCoreRowModel(),
         manualPagination: false,

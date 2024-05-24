@@ -4,15 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/jackc/pgx/v5"
-	"github.com/leighmacdonald/gbans/pkg/log"
 	"log/slog"
 	"net/netip"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -43,6 +43,7 @@ func (r banSteamRepository) InsertCache(ctx context.Context, steamID steamid.Ste
 
 			continue
 		}
+
 		batch.Queue(query, steamID.Int64(), entrySteamID, now)
 	}
 

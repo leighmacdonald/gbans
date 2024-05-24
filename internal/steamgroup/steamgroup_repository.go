@@ -3,10 +3,10 @@ package steamgroup
 import (
 	"context"
 	"errors"
-	"github.com/jackc/pgx/v5"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -194,6 +194,8 @@ func (r *steamGroupRepository) Get(ctx context.Context, filter domain.GroupBansQ
 	if !filter.Deleted {
 		constraints = append(constraints, sq.Eq{"g.deleted": false})
 	}
+
+	builder = builder.Where(constraints)
 
 	rows, errRows := r.db.QueryBuilder(ctx, builder)
 	if errRows != nil {

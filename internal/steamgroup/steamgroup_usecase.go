@@ -5,10 +5,10 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/leighmacdonald/gbans/pkg/util"
 	"net/http"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 )
