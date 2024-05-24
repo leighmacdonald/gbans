@@ -101,3 +101,8 @@ There is also a docker-compose config you can use which provides the database as
 ## Documentation
 
 For installation, configuration and usage instruction, developer notes, please see the [docs](docs) directory.
+
+## Contributors
+
+<!-- readme: contributors -start -->
+<!-- readme: contributors -end -->
