@@ -20,25 +20,18 @@ func NewSteamGroupRepository(database database.Database) domain.BanGroupReposito
 	return &steamGroupRepository{db: database}
 }
 
-func (r *steamGroupRepository) Delete(ctx context.Context, banGroup *domain.BanGroup) error {
-	banGroup.IsEnabled = false
-	banGroup.Deleted = true
-
-	return r.Ban(ctx, banGroup)
+func (r *steamGroupRepository) TruncateCache(ctx context.Context) error {
+	return r.db.DBErr(r.db.ExecDeleteBuilder(ctx, r.db.Builder().Delete("steam_group_members")))
 }
 
-func (r *steamGroupRepository) TruncateCachedMemberEntries(ctx context.Context) error {
-	return r.db.ExecDeleteBuilder(ctx, r.db.Builder().Delete("steam_group_members"))
-}
-
-func (r *steamGroupRepository) WriteCachedMemberEntries(ctx context.Context, groupID steamid.SteamID, entries []int64) error {
+func (r *steamGroupRepository) InsertCache(ctx context.Context, groupID steamid.SteamID, entries []int64) error {
 	const query = "INSERT INTO steam_group_members (steam_id, group_id, created_on) VALUES ($1, $2, $3)"
 
 	batch := pgx.Batch{}
 	now := time.Now()
 
-	for _, v := range entries {
-		batch.Queue(query, v, groupID.Int64(), now)
+	for _, entrySteamID := range entries {
+		batch.Queue(query, entrySteamID, groupID.Int64(), now)
 	}
 
 	batchResults := r.db.SendBatch(ctx, &batch)
@@ -47,6 +40,13 @@ func (r *steamGroupRepository) WriteCachedMemberEntries(ctx context.Context, gro
 	}
 
 	return nil
+}
+
+func (r *steamGroupRepository) Delete(ctx context.Context, banGroup *domain.BanGroup) error {
+	banGroup.IsEnabled = false
+	banGroup.Deleted = true
+
+	return r.Ban(ctx, banGroup)
 }
 
 func (r *steamGroupRepository) Save(ctx context.Context, banGroup *domain.BanGroup) error {

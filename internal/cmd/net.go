@@ -7,7 +7,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/blocklist"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/network"
@@ -88,9 +87,9 @@ func netUpdateCmd() *cobra.Command {
 			networkUsecase := network.NewNetworkUsecase(
 				eventBroadcaster,
 				network.NewNetworkRepository(dbUsecase),
-				blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(dbUsecase)), personUsecase)
+				personUsecase)
 
-			if errInsert := networkUsecase.InsertBlockListData(updateCtx, blockListData); errInsert != nil {
+			if errInsert := networkUsecase.InsertIP2LocationData(updateCtx, blockListData); errInsert != nil {
 				slog.Error("Failed to import", log.ErrAttr(errInsert))
 
 				return

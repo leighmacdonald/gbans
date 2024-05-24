@@ -104,7 +104,7 @@ func (g *Memberships) updateGroupBanMembers(ctx context.Context) (map[steamid.St
 	localCtx, cancel := context.WithTimeout(ctx, time.Second*120)
 	defer cancel()
 
-	groups, _, errGroups := g.store.Get(ctx, domain.GroupBansQueryFilter{})
+	groups, errGroups := g.store.Get(ctx, domain.GroupBansQueryFilter{})
 	if errGroups != nil {
 		if errors.Is(errGroups, domain.ErrNoResult) {
 			return newMap, nil

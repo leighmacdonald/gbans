@@ -11,19 +11,14 @@ import (
 )
 
 type NetworkUsecase interface {
-	LoadNetBlocks(ctx context.Context) error
 	GetASNRecordsByNum(ctx context.Context, asNum int64) ([]NetworkASN, error)
-	InsertBlockListData(ctx context.Context, blockListData *ip2location.BlockListData) error
 	GetPersonIPHistory(ctx context.Context, sid64 steamid.SteamID, limit uint64) (PersonConnections, error)
 	GetPlayerMostRecentIP(ctx context.Context, steamID steamid.SteamID) net.IP
 	QueryConnectionHistory(ctx context.Context, opts ConnectionHistoryQuery) ([]PersonConnection, int64, error)
 	AddConnectionHistory(ctx context.Context, conn *PersonConnection) error
-	IsMatch(addr netip.Addr) (string, bool)
-	AddWhitelist(id int, network *net.IPNet)
-	RemoveWhitelist(id int)
 	Start(ctx context.Context)
-	AddRemoteSource(ctx context.Context, name string, url string) (int64, error)
 	QueryNetwork(ctx context.Context, ip netip.Addr) (NetworkDetails, error)
+	InsertIP2LocationData(ctx context.Context, blockListData *ip2location.BlockListData) error
 }
 
 type NetworkRepository interface {
@@ -35,7 +30,7 @@ type NetworkRepository interface {
 	GetASNRecordByIP(ctx context.Context, ipAddr netip.Addr) (NetworkASN, error)
 	GetLocationRecord(ctx context.Context, ipAddr netip.Addr) (NetworkLocation, error)
 	GetProxyRecord(ctx context.Context, ipAddr netip.Addr) (NetworkProxy, error)
-	InsertBlockListData(ctx context.Context, blockListData *ip2location.BlockListData) error
+	InsertIP2LocationData(ctx context.Context, blockListData *ip2location.BlockListData) error
 }
 
 type CIDRBlockSource struct {

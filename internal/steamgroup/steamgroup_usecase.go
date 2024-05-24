@@ -25,13 +25,13 @@ func NewBanGroupUsecase(banGroupRepository domain.BanGroupRepository, personUsec
 	}
 }
 
-func (s *banGroupUsecase) SyncSteamGroupMembers(ctx context.Context) error {
+func (s banGroupUsecase) UpdateCache(ctx context.Context) error {
 	groups, errGroups := s.Get(ctx, domain.GroupBansQueryFilter{Deleted: false})
 	if errGroups != nil {
 		return errGroups
 	}
 
-	if err := s.banGroupRepository.TruncateCachedMemberEntries(ctx); err != nil {
+	if err := s.banGroupRepository.TruncateCache(ctx); err != nil {
 		return err
 	}
 
@@ -42,24 +42,24 @@ func (s *banGroupUsecase) SyncSteamGroupMembers(ctx context.Context) error {
 
 		req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, listURL, nil)
 		if errReq != nil {
-			return errReq
+			return errors.Join(errReq, domain.ErrCreateRequest)
 		}
 
 		resp, errResp := client.Do(req)
 		if errResp != nil {
-			return errResp
+			return errors.Join(errResp, domain.ErrRequestPerform)
 		}
 
-		var list domain.GroupMemberList
+		var list domain.SteamGroupInfo
 
 		decoder := xml.NewDecoder(resp.Body)
 		if err := decoder.Decode(&list); err != nil {
-			resp.Body.Close()
+			_ = resp.Body.Close()
 
-			return err
+			return errors.Join(err, domain.ErrRequestDecode)
 		}
 
-		resp.Body.Close()
+		_ = resp.Body.Close()
 
 		groupID := steamid.New(list.GroupID64)
 		if !groupID.Valid() {
@@ -79,7 +79,7 @@ func (s *banGroupUsecase) SyncSteamGroupMembers(ctx context.Context) error {
 			}
 		}
 
-		if err := s.banGroupRepository.WriteCachedMemberEntries(ctx, groupID, list.Members.SteamID64); err != nil {
+		if err := s.banGroupRepository.InsertCache(ctx, groupID, list.Members.SteamID64); err != nil {
 			return err
 		}
 	}
@@ -87,35 +87,35 @@ func (s *banGroupUsecase) SyncSteamGroupMembers(ctx context.Context) error {
 	return nil
 }
 
-func (s *banGroupUsecase) Save(ctx context.Context, banGroup *domain.BanGroup) error {
+func (s banGroupUsecase) Save(ctx context.Context, banGroup *domain.BanGroup) error {
 	return s.banGroupRepository.Save(ctx, banGroup)
 }
 
-func (s *banGroupUsecase) GetByGID(ctx context.Context, groupID steamid.SteamID, banGroup *domain.BanGroup) error {
+func (s banGroupUsecase) GetByGID(ctx context.Context, groupID steamid.SteamID, banGroup *domain.BanGroup) error {
 	return s.banGroupRepository.GetByGID(ctx, groupID, banGroup)
 }
 
-func (s *banGroupUsecase) GetByID(ctx context.Context, banGroupID int64, banGroup *domain.BanGroup) error {
+func (s banGroupUsecase) GetByID(ctx context.Context, banGroupID int64, banGroup *domain.BanGroup) error {
 	return s.banGroupRepository.GetByID(ctx, banGroupID, banGroup)
 }
 
-func (s *banGroupUsecase) Get(ctx context.Context, filter domain.GroupBansQueryFilter) ([]domain.BannedGroupPerson, error) {
+func (s banGroupUsecase) Get(ctx context.Context, filter domain.GroupBansQueryFilter) ([]domain.BannedGroupPerson, error) {
 	return s.banGroupRepository.Get(ctx, filter)
 }
 
-func (s *banGroupUsecase) Delete(ctx context.Context, banGroup *domain.BanGroup) error {
+func (s banGroupUsecase) Delete(ctx context.Context, banGroup *domain.BanGroup) error {
 	return s.banGroupRepository.Delete(ctx, banGroup)
 }
 
-func (s *banGroupUsecase) GetMembersList(ctx context.Context, parentID int64, list *domain.MembersList) error {
+func (s banGroupUsecase) GetMembersList(ctx context.Context, parentID int64, list *domain.MembersList) error {
 	return s.banGroupRepository.GetMembersList(ctx, parentID, list)
 }
 
-func (s *banGroupUsecase) SaveMembersList(ctx context.Context, list *domain.MembersList) error {
+func (s banGroupUsecase) SaveMembersList(ctx context.Context, list *domain.MembersList) error {
 	return s.banGroupRepository.SaveMembersList(ctx, list)
 }
 
-func (s *banGroupUsecase) Ban(ctx context.Context, banGroup *domain.BanGroup) error {
+func (s banGroupUsecase) Ban(ctx context.Context, banGroup *domain.BanGroup) error {
 	members, membersErr := steamweb.GetGroupMembers(ctx, banGroup.GroupID)
 	if membersErr != nil || len(members) == 0 {
 		return errors.Join(membersErr, domain.ErrGroupValidate)

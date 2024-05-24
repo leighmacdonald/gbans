@@ -265,8 +265,6 @@ func (b *blocklistHandler) onAPICreateWhitelistIP() gin.HandlerFunc {
 			Address:              whitelist.Address.String(),
 			TimeStamped:          whitelist.TimeStamped,
 		})
-
-		b.nu.AddWhitelist(whitelist.CIDRBlockWhitelistID, whitelist.Address)
 	}
 }
 
@@ -325,8 +323,6 @@ func (b *blocklistHandler) onAPIDeleteBlockListWhitelist() gin.HandlerFunc {
 		slog.Info("Blocklist deleted", slog.Int("cidr_block_source_id", whitelistID))
 
 		ctx.JSON(http.StatusOK, nil)
-
-		b.nu.RemoveWhitelist(whitelistID)
 	}
 }
 
@@ -346,11 +342,6 @@ func (b *blocklistHandler) onAPIPostBlocklistCheck() gin.HandlerFunc {
 			return
 		}
 
-		source, isBlocked := b.nu.IsMatch(req.Address)
-
-		ctx.JSON(http.StatusOK, checkResp{
-			Blocked: isBlocked,
-			Source:  source,
-		})
+		ctx.JSON(http.StatusInternalServerError, checkResp{Blocked: false, Source: ""})
 	}
 }

@@ -165,10 +165,6 @@ func (r reportRepository) DropReportMessage(ctx context.Context, message *domain
 func (r reportRepository) GetReports(ctx context.Context, opts domain.ReportQueryFilter) ([]domain.Report, error) {
 	constraints := sq.And{sq.Eq{"r.deleted": opts.Deleted}}
 
-	if sid, ok := opts.SourceSteamID(ctx); ok {
-		constraints = append(constraints, sq.Eq{"r.author_id": sid.Int64()})
-	}
-
 	builder := r.db.
 		Builder().
 		Select("r.report_id", "r.author_id", "r.reported_id", "r.report_status",

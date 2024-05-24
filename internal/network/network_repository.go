@@ -410,7 +410,7 @@ func (r networkRepository) loadProxies(ctx context.Context, records []ip2locatio
 //
 // Note that this can take a while on slower machines. For reference, it takes
 // about ~90s with a local database on a Ryzen 3900X/PCIe4 NVMe SSD.
-func (r networkRepository) InsertBlockListData(ctx context.Context, blockListData *ip2location.BlockListData) error {
+func (r networkRepository) InsertIP2LocationData(ctx context.Context, blockListData *ip2location.BlockListData) error {
 	if len(blockListData.Proxies) > 0 {
 		if errProxies := r.loadProxies(ctx, blockListData.Proxies, false); errProxies != nil {
 			return errProxies

@@ -13,20 +13,20 @@ CREATE INDEX ON cidr_block_entries using gist (net_block);
 
 CREATE TABLE steam_group_members
 (
+    steam_group_memeber_id bigserial primary key,
     steam_id   bigint    not null REFERENCES person (steam_id) ON DELETE CASCADE,
     group_id   bigint    not null, -- Cannot use as FK as ban_group.group_id is not unique constrained
-    created_on timestamp not null,
-    PRIMARY KEY (steam_id, group_id)
+    created_on timestamp not null
 );
 
 CREATE INDEX on steam_group_members (steam_id);
 
 CREATE TABLE steam_friends
 (
+    steam_friend_id bigserial primary key,
     steam_id   bigint    not null REFERENCES person (steam_id) ON DELETE CASCADE,
     friend_id  bigint    not null REFERENCES person (steam_id) ON DELETE CASCADE,
-    created_on timestamp not null,
-    PRIMARY KEY (steam_id, friend_id)
+    created_on timestamp not null
 );
 
 CREATE INDEX on steam_friends (friend_id);

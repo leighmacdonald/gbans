@@ -7,8 +7,6 @@ import (
 	"net"
 	"net/netip"
 	"strings"
-	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -20,22 +18,18 @@ import (
 )
 
 type networkUsecase struct {
-	nr      domain.NetworkRepository
-	bl      domain.BlocklistUsecase
-	pu      domain.PersonUsecase
-	blocker *Blocker
-	eb      *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
+	nr domain.NetworkRepository
+	pu domain.PersonUsecase
+	eb *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 }
 
 func NewNetworkUsecase(broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
-	repository domain.NetworkRepository, blocklistUsecase domain.BlocklistUsecase, personUsecase domain.PersonUsecase,
+	repository domain.NetworkRepository, personUsecase domain.PersonUsecase,
 ) domain.NetworkUsecase {
 	return networkUsecase{
-		nr:      repository,
-		bl:      blocklistUsecase,
-		blocker: NewBlocker(),
-		eb:      broadcaster,
-		pu:      personUsecase,
+		nr: repository,
+		eb: broadcaster,
+		pu: personUsecase,
 	}
 }
 
@@ -96,81 +90,16 @@ func (u networkUsecase) Start(ctx context.Context) {
 	}
 }
 
-func (u networkUsecase) LoadNetBlocks(ctx context.Context) error {
-	sources, errSource := u.bl.GetCIDRBlockSources(ctx)
-	if errSource != nil {
-		return errors.Join(errSource, domain.ErrInitNetBlocks)
-	}
-
-	var total atomic.Int64
-
-	waitGroup := sync.WaitGroup{}
-
-	for _, source := range sources {
-		if !source.Enabled {
-			continue
-		}
-
-		waitGroup.Add(1)
-
-		go func(src domain.CIDRBlockSource) {
-			defer waitGroup.Done()
-
-			count, errAdd := u.blocker.AddRemoteSource(ctx, src.Name, src.URL)
-			if errAdd != nil {
-				slog.Error("Could not load remote source URL",
-					slog.String("name", src.Name), slog.String("url", src.URL))
-			}
-
-			total.Add(count)
-		}(source)
-	}
-
-	waitGroup.Wait()
-
-	whitelists, errWhitelists := u.bl.GetCIDRBlockWhitelists(ctx)
-	if errWhitelists != nil {
-		if !errors.Is(errWhitelists, domain.ErrNoResult) {
-			return errors.Join(errWhitelists, domain.ErrInitNetWhitelist)
-		}
-	}
-
-	for _, whitelist := range whitelists {
-		u.blocker.AddWhitelist(whitelist.CIDRBlockWhitelistID, whitelist.Address)
-	}
-
-	slog.Info("Loaded cidr block lists",
-		slog.Int64("cidr_blocks", total.Load()), slog.Int("whitelisted", len(whitelists)))
-
-	return nil
-}
-
 func (u networkUsecase) AddConnectionHistory(ctx context.Context, conn *domain.PersonConnection) error {
 	return u.nr.AddConnectionHistory(ctx, conn)
-}
-
-func (u networkUsecase) IsMatch(addr netip.Addr) (string, bool) {
-	return u.blocker.IsMatch(addr)
-}
-
-func (u networkUsecase) AddWhitelist(id int, network *net.IPNet) {
-	u.blocker.AddWhitelist(id, network)
-}
-
-func (u networkUsecase) RemoveWhitelist(id int) {
-	u.blocker.RemoveWhitelist(id)
-}
-
-func (u networkUsecase) AddRemoteSource(ctx context.Context, name string, url string) (int64, error) {
-	return u.blocker.AddRemoteSource(ctx, name, url)
 }
 
 func (u networkUsecase) GetASNRecordsByNum(ctx context.Context, asNum int64) ([]domain.NetworkASN, error) {
 	return u.nr.GetASNRecordsByNum(ctx, asNum)
 }
 
-func (u networkUsecase) InsertBlockListData(ctx context.Context, blockListData *ip2location.BlockListData) error {
-	return u.nr.InsertBlockListData(ctx, blockListData)
+func (u networkUsecase) InsertIP2LocationData(ctx context.Context, blockListData *ip2location.BlockListData) error {
+	return u.nr.InsertIP2LocationData(ctx, blockListData)
 }
 
 func (u networkUsecase) GetPersonIPHistory(ctx context.Context, sid64 steamid.SteamID, limit uint64) (domain.PersonConnections, error) {

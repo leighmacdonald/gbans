@@ -212,7 +212,7 @@ function AdminBanASN() {
                         </Button>
                     ]}
                 >
-                    <FullTable<ASNBanRecord>
+                    <FullTable
                         initialSortColumn={'ban_asn_id'}
                         initialSortDesc={true}
                         enableSorting={true}

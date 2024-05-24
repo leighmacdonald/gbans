@@ -3,47 +3,155 @@ package blocklist
 import (
 	"context"
 	"errors"
+	"fmt"
+	"github.com/leighmacdonald/gbans/pkg/log"
+	"github.com/leighmacdonald/gbans/pkg/util"
+	"io"
 	"log/slog"
 	"net"
+	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/network"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type blocklistUsecase struct {
-	blocklistRepo domain.BlocklistRepository
+	blocklistRepo   domain.BlocklistRepository
+	banUsecase      domain.BanSteamUsecase
+	banGroupUsecase domain.BanGroupUsecase
+	cidrRx          *regexp.Regexp
 }
 
-func (b blocklistUsecase) SyncBlocklists(ctx context.Context) error {
+func NewBlocklistUsecase(br domain.BlocklistRepository, banUsecase domain.BanSteamUsecase, banGroupUsecase domain.BanGroupUsecase) domain.BlocklistUsecase {
+	return &blocklistUsecase{
+		blocklistRepo:   br,
+		banUsecase:      banUsecase,
+		banGroupUsecase: banGroupUsecase,
+		cidrRx:          regexp.MustCompile(`^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(/(3[0-2]|2[0-9]|1[0-9]|[0-9]))?$`),
+	}
+}
+
+func (b blocklistUsecase) Start(ctx context.Context) {
+	ticker := time.NewTicker(time.Hour * 12)
+
+	update := func() {
+		b.syncBlocklists(ctx)
+	}
+
+	update()
+
+	for {
+		select {
+		case <-ticker.C:
+			update()
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func (b blocklistUsecase) syncBlocklists(ctx context.Context) {
+	waitGroup := &sync.WaitGroup{}
+
+	waitGroup.Add(1)
+
+	go func() {
+		defer waitGroup.Done()
+
+		if err := b.banGroupUsecase.UpdateCache(ctx); err != nil {
+			slog.Error("failed to update banned group members", log.ErrAttr(err))
+		}
+	}()
+
+	waitGroup.Add(1)
+
+	go func() {
+		defer waitGroup.Done()
+
+		if err := b.banUsecase.UpdateCache(ctx); err != nil {
+			slog.Error("failed to update banned friends", log.ErrAttr(err))
+		}
+	}()
+
+	waitGroup.Add(1)
+
+	go func() {
+		defer waitGroup.Done()
+
+		if err := b.UpdateCache(ctx); err != nil {
+			slog.Error("failed to update banned friends", log.ErrAttr(err))
+		}
+	}()
+
+	waitGroup.Wait()
+}
+
+func (b blocklistUsecase) UpdateCache(ctx context.Context) error {
 	lists, errLists := b.GetCIDRBlockSources(ctx)
 	if errLists != nil {
 		return errLists
 	}
 
-	blocker := network.NewBlocker()
-
 	for _, list := range lists {
-		if !list.Enabled {
-			continue
-		}
-
-		count, errAdd := blocker.AddRemoteSource(ctx, list.Name, list.URL)
-		if errAdd != nil {
-			slog.Error("Failed to load source data", slog.String("name", list.Name), slog.String("url", list.URL))
-			continue
+		if err := b.updateSource(ctx, list); err != nil {
+			slog.Error("Failed to update cidr block source", log.ErrAttr(err))
 		}
 	}
 
-	if err := b.blocklistRepo.TruncateCachedEntries(ctx); err != nil {
+	return nil
+}
+
+func (b blocklistUsecase) updateSource(ctx context.Context, list domain.CIDRBlockSource) error {
+	req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, list.URL, nil)
+	if errReq != nil {
+		return errReq
+	}
+
+	client := util.NewHTTPClient()
+	resp, errResp := client.Do(req)
+	if errResp != nil {
+		return errors.Join(errResp, domain.ErrRequestPerform)
+	}
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("%w: %d", domain.ErrRequestInvalidCode, resp.StatusCode)
+	}
+
+	bodyBytes, errRead := io.ReadAll(resp.Body)
+	if errRead != nil {
+		return errors.Join(errRead, domain.ErrResponseBody)
+	}
+
+	var blocks []*net.IPNet //nolint:prealloc
+
+	for _, line := range strings.Split(string(bodyBytes), "\n") {
+		trimmed := strings.TrimSpace(line)
+		if !b.cidrRx.MatchString(trimmed) {
+			continue
+		}
+
+		_, cidrBlock, errBlock := net.ParseCIDR(trimmed)
+		if errBlock != nil {
+			continue
+		}
+
+		blocks = append(blocks, cidrBlock)
+	}
+
+	if err := b.blocklistRepo.InsertCache(ctx, list, blocks); err != nil {
 		return err
 	}
 
-	for k, v := range blocker.Blocks {
-
-	}
+	return nil
 }
 
 func (b blocklistUsecase) CreateSteamBlockWhitelists(ctx context.Context, steamID steamid.SteamID) (domain.WhitelistSteam, error) {
@@ -56,10 +164,6 @@ func (b blocklistUsecase) GetSteamBlockWhitelists(ctx context.Context) ([]domain
 
 func (b blocklistUsecase) DeleteSteamBlockWhitelists(ctx context.Context, steamID steamid.SteamID) error {
 	return b.blocklistRepo.DeleteSteamBlockWhitelists(ctx, steamID)
-}
-
-func NewBlocklistUsecase(br domain.BlocklistRepository) domain.BlocklistUsecase {
-	return &blocklistUsecase{blocklistRepo: br}
 }
 
 func (b blocklistUsecase) GetCIDRBlockSources(ctx context.Context) ([]domain.CIDRBlockSource, error) {
@@ -103,11 +207,6 @@ func (b blocklistUsecase) UpdateCIDRBlockSource(ctx context.Context, sourceID in
 		}
 
 		return blockSource, domain.ErrBadRequest
-	}
-
-	testBlocker := network.NewBlocker()
-	if count, errTest := testBlocker.AddRemoteSource(ctx, name, url); errTest != nil || count == 0 {
-		return blockSource, domain.ErrValidateURL
 	}
 
 	blockSource.Enabled = enabled

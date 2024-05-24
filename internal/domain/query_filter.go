@@ -173,34 +173,23 @@ type TargetIDProvider interface {
 }
 
 type BansQueryFilter struct {
-	QueryFilter
-	SourceIDField
-	TargetIDField
-	Reason        Reason `json:"reason,omitempty"`
-	PermanentOnly bool   `json:"permanent_only,omitempty"`
+	Deleted bool `json:"deleted"`
 }
 
 type CIDRBansQueryFilter struct {
-	BansQueryFilter
-	IP string `json:"ip,omitempty"`
+	Deleted bool `json:"deleted"`
 }
 
 type ASNBansQueryFilter struct {
-	BansQueryFilter
-	ASNum int64 `json:"as_num,omitempty"`
+	Deleted bool `json:"deleted"`
 }
 
 type GroupBansQueryFilter struct {
-	BansQueryFilter
-	GroupID string `json:"group_id"`
+	Deleted bool `json:"deleted"`
 }
 
 type SteamBansQueryFilter struct {
-	BansQueryFilter
-	// IncludeFriendsOnly Return results that have "deep" bans where players friends list is
-	// also banned while the primary targets ban has not Expired.
-	IncludeFriendsOnly bool        `json:"include_friends_only"`
-	AppealState        AppealState `json:"appeal_state"`
+	Deleted bool `schema:"deleted"`
 }
 
 type ReportQueryFilter struct {
