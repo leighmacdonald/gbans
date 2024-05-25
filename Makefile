@@ -1,4 +1,4 @@
-.PHONY: all test clean build install frontend sourcemod
+.PHONY: all test clean build install frontend sourcemod build
 VERSION=v0.7.7
 GO_CMD=go
 GO_BUILD=$(GO_CMD) build
@@ -119,3 +119,6 @@ docs_start:
 
 docs_deploy:
 	cd docs && pnpm deploy
+
+docs_build:
+	cd docs && pnpm build

@@ -30,7 +30,6 @@ jobs:
           cache: 'pnpm'
           cache-dependency-path: 'frontend/pnpm-lock.yaml'
 
-
       - name: Install modules
         working-directory: ./frontend
         run: pnpm install --frozen-lockfile --strict-peer-dependencies

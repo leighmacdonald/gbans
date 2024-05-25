@@ -20,15 +20,25 @@ jobs:
           node-version: 18
           cache: yarn
 
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
+      - name: Setup nodejs
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'pnpm'
+          cache-dependency-path: 'docs/pnpm-lock.yaml'
+
+      - name: Install modules
+        working-directory: ./docs
+        run: pnpm install --frozen-lockfile --strict-peer-dependencies
+
       - name: Build website
-        run: yarn build
+        working-directory: ./docs
+        run: pnpm build
 
       - name: Upload Build Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: build
+          path: docs/build
 
   deploy:
     name: Deploy to GitHub Pages
