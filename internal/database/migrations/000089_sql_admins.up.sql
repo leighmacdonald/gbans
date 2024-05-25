@@ -30,7 +30,7 @@ CREATE TABLE sm_groups
 
 CREATE TABLE sm_group_immunity
 (
-    group_immunity_id server primary key,
+    group_immunity_id serial primary key,
     group_id   int       NOT NULL,
     other_id   int       NOT NULL,
     created_on timestamp NOT NULL,

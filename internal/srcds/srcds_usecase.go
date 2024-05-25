@@ -507,6 +507,7 @@ func (h srcdsUsecase) AddAdmin(ctx context.Context, alias string, authType domai
 		Flags:    flags,
 		Name:     alias,
 		Immunity: immunity,
+		Groups:   []domain.SMGroups{},
 	})
 }
 

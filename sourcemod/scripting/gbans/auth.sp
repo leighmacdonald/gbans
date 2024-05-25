@@ -37,7 +37,6 @@ public void refreshToken()
 
 public void onAuthReqReceived(HTTPResponse response, any value)
 {
-	gbLog("Refreshing token reponded");
 
 	if (response.Status != HTTPStatus_OK) {
         gbLog("Invalid refreshToken response code: %d", response.Status);
@@ -65,6 +64,8 @@ public void onAuthReqReceived(HTTPResponse response, any value)
 	gAccessToken = token;
 	gbLog("Successfully authenticated with gbans server");
 
+	gIsAuthenticated = true;
+
 	reloadAdmins(true);
 }
 
@@ -77,55 +78,12 @@ public Action onAdminCmdReload(int clientId, int argc)
 
 public void reloadAdmins(bool force)
 {
-	gbLog("Reloading admin users");
-	char path[PLATFORM_MAX_PATH];
-	getAdminCachePath(path);
-
-	bool doRequest = false;
-
-	if (force || !FileExists(path)) {
-		doRequest = true;
-	} else {
-		int time = GetFileTime(path, FileTime_LastChange);
-		doRequest = time == -1 || (GetTime() - time) > 3600;
-	}
-
-	if (!doRequest) {
-		gbLog("Using cached admins");
-		ServerCommand("sm_reloadadmins");
-		
+	if (!gIsAuthenticated) {
 		return;
 	}
 
-	char url[1024];
-	makeURL("/export/sourcemod/admins_simple.ini", url, sizeof url);
-
-	char savePath[PLATFORM_MAX_PATH];
-	getAdminCachePath(savePath);
-
-	HTTPRequest request = new HTTPRequest(url);
-	
-	addAuthHeader(request);
-	
-	request.DownloadFile(savePath, onAdminsReqReceived); 
-}
-
-void getAdminCachePath(char[] out) {
-	BuildPath(Path_SM, out, PLATFORM_MAX_PATH, "configs/admins_simple.ini");
-}
-
-void onAdminsReqReceived(HTTPStatus status, any value)
-{
-	if (status != HTTPStatus_OK) {
-        gbLog("Invalid reloadAdmins response code: %d", status);
-        return;
-    } 
-
 	ServerCommand("sm_reloadadmins");
-
-	gbLog("Reloaded admins");
 }
-
 
 public void writeCachedFile(const char[] name, const char[] data)
 {

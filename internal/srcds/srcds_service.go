@@ -17,7 +17,7 @@ import (
 
 type srcdsHandler struct {
 	srcdsUsecase     domain.SRCDSUsecase
-	ServerUsecase    domain.ServersUsecase
+	serverUsecase    domain.ServersUsecase
 	personUsecase    domain.PersonUsecase
 	stateUsecase     domain.StateUsecase
 	discordUsecase   domain.DiscordUsecase
@@ -44,7 +44,7 @@ func NewSRCDSHandler(engine *gin.Engine, srcdsUsecase domain.SRCDSUsecase, serve
 ) {
 	handler := srcdsHandler{
 		srcdsUsecase:     srcdsUsecase,
-		ServerUsecase:    serversUsecase,
+		serverUsecase:    serversUsecase,
 		personUsecase:    personUsecase,
 		reportUsecase:    reportUsecase,
 		banUsecase:       banUsecase,
@@ -100,7 +100,9 @@ func NewSRCDSHandler(engine *gin.Engine, srcdsUsecase domain.SRCDSUsecase, serve
 	srcdsGroup := engine.Group("/")
 	{
 		server := srcdsGroup.Use(authUsecase.AuthServerMiddleWare())
-		server.GET("/api/server/admins", handler.onAPIGetServerAdmins())
+		server.GET("/api/sm/overrides", handler.onAPIGetServerOverrides())
+		server.GET("/api/sm/users", handler.onAPIGetServerUsers())
+		server.GET("/api/sm/groups", handler.onAPIGetServerGroups())
 		server.POST("/api/ping_mod", handler.onAPIPostPingMod())
 
 		// Duplicated since we need to authenticate via server middleware
@@ -828,16 +830,147 @@ func (s *srcdsHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 	}
 }
 
-func (s *srcdsHandler) onAPIGetServerAdmins() gin.HandlerFunc {
+func (s *srcdsHandler) onAPIGetServerOverrides() gin.HandlerFunc {
+	type smOverride struct {
+		Type  domain.OverrideType `json:"type"`
+		Name  string              `json:"name"`
+		Flags string              `json:"flags"`
+	}
+
 	return func(ctx *gin.Context) {
-		perms, err := s.ServerUsecase.GetServerPermissions(ctx)
-		if err != nil {
+		overrides, errOverrides := s.srcdsUsecase.Overrides(ctx)
+		if errOverrides != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
 
-		ctx.JSON(http.StatusOK, perms)
+		//goland:noinspection ALL
+		smOverrides := []smOverride{}
+		for _, group := range overrides {
+			smOverrides = append(smOverrides, smOverride{
+				Flags: group.Flags,
+				Name:  group.Name,
+				Type:  group.Type,
+			})
+		}
+
+		ctx.JSON(http.StatusOK, smOverrides)
+	}
+}
+
+func (s *srcdsHandler) onAPIGetServerGroups() gin.HandlerFunc {
+	type smGroup struct {
+		Flags         string `json:"flags"`
+		Name          string `json:"name"`
+		ImmunityLevel int    `json:"immunity_level"`
+	}
+
+	type smGroupImmunity struct {
+		GroupName string `json:"group_name"`
+		OtherName string `json:"other_name"`
+	}
+
+	type smGroupsResp struct {
+		Groups     []smGroup         `json:"groups"`
+		Immunities []smGroupImmunity `json:"immunities"`
+	}
+
+	return func(ctx *gin.Context) {
+		groups, errGroups := s.srcdsUsecase.Groups(ctx)
+		if errGroups != nil && !errors.Is(errGroups, domain.ErrNoResult) {
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+
+			return
+		}
+
+		immunities, errImmunities := s.srcdsUsecase.GetGroupImmunities(ctx)
+		if errImmunities != nil && !errors.Is(errImmunities, domain.ErrNoResult) {
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+
+			return
+		}
+
+		resp := smGroupsResp{
+			// Make sure we return an empty list instead of null
+			Groups:     []smGroup{},
+			Immunities: []smGroupImmunity{},
+		}
+
+		//goland:noinspection ALL
+		for _, group := range groups {
+			resp.Groups = append(resp.Groups, smGroup{
+				Flags:         group.Flags,
+				Name:          group.Name,
+				ImmunityLevel: group.ImmunityLevel,
+			})
+		}
+
+		for _, immunity := range immunities {
+			resp.Immunities = append(resp.Immunities, smGroupImmunity{
+				GroupName: immunity.Group.Name,
+				OtherName: immunity.Other.Name,
+			})
+		}
+
+		ctx.JSON(http.StatusOK, resp)
+	}
+}
+
+func (s *srcdsHandler) onAPIGetServerUsers() gin.HandlerFunc {
+	type smUser struct {
+		ID       int             `json:"id"`
+		Authtype domain.AuthType `json:"authtype"`
+		Identity string          `json:"identity"`
+		Password string          `json:"password"`
+		Flags    string          `json:"flags"`
+		Name     string          `json:"name"`
+		Immunity int             `json:"immunity"`
+	}
+
+	type smUserGroup struct {
+		AdminID   int    `json:"admin_id"`
+		GroupName string `json:"group_name"`
+	}
+
+	type smUsersResponse struct {
+		Users      []smUser      `json:"users"`
+		UserGroups []smUserGroup `json:"user_groups"`
+	}
+
+	return func(ctx *gin.Context) {
+		users, errUsers := s.srcdsUsecase.Admins(ctx)
+		if errUsers != nil {
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+
+			return
+		}
+
+		smResp := smUsersResponse{
+			Users:      []smUser{},
+			UserGroups: []smUserGroup{},
+		}
+
+		for _, user := range users {
+			smResp.Users = append(smResp.Users, smUser{
+				ID:       user.AdminID,
+				Authtype: user.AuthType,
+				Identity: user.Identity,
+				Password: user.Password,
+				Flags:    user.Flags,
+				Name:     user.Name,
+				Immunity: user.Immunity,
+			})
+
+			for _, ug := range user.Groups {
+				smResp.UserGroups = append(smResp.UserGroups, smUserGroup{
+					AdminID:   user.AdminID,
+					GroupName: ug.Name,
+				})
+			}
+		}
+
+		ctx.JSON(http.StatusOK, smResp)
 	}
 }
 

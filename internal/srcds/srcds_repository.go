@@ -387,7 +387,7 @@ func (r srcdsRepository) Groups(ctx context.Context) ([]domain.SMGroups, error) 
 func (r srcdsRepository) GetAdminByID(ctx context.Context, adminID int) (domain.SMAdmin, error) {
 	var (
 		admin domain.SMAdmin
-		id64  int64
+		id64  *int64
 	)
 
 	row, errRow := r.database.QueryRowBuilder(ctx, r.database.Builder().
@@ -403,7 +403,9 @@ func (r srcdsRepository) GetAdminByID(ctx context.Context, adminID int) (domain.
 		return admin, r.database.DBErr(errScan)
 	}
 
-	admin.SteamID = steamid.New(id64)
+	if id64 != nil {
+		admin.SteamID = steamid.New(*id64)
+	}
 
 	groups, errGroup := r.GetAdminGroups(ctx, admin)
 	if errGroup != nil && !errors.Is(errGroup, domain.ErrNoResult) {

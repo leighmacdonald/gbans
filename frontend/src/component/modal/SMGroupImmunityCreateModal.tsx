@@ -17,7 +17,8 @@ export const SMGroupImmunityCreateModal = NiceModal.create(({ groups }: { groups
     const mutation = useMutation({
         mutationKey: ['createGroupImmunity'],
         mutationFn: async ({ group, other }: { group: SMGroups; other: SMGroups }) => {
-            return await apiCreateSMGroupImmunity(group.group_id, other.group_id);
+            // FIXME How to get number from select properly typed?
+            return await apiCreateSMGroupImmunity(group as unknown as number, other as unknown as number);
         },
         onSuccess: async (immunity) => {
             modal.resolve(immunity);
