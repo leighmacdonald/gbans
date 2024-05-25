@@ -15,6 +15,7 @@
 #include <tf2_stocks>
 
 #include "gbans/globals.sp"
+#include "gbans/admins.sp"
 #include "gbans/auth.sp"
 #include "gbans/balance.sp"
 #include "gbans/ban.sp"
@@ -24,15 +25,10 @@
 #include "gbans/report.sp"
 #include "gbans/stv.sp"
 
-Database DB;
-char logfile[256];
-const logFilename = "gbans.log";
-const databaseName = "gbans";
-bool g_bConnecting = false;
-int curLoading;
 bool LateLoaded;
 
 bool PlayerStatus[MAXPLAYERS + 1];
+
 
 public Plugin myinfo =
 {
@@ -89,17 +85,7 @@ public void OnPluginStart()
 	AutoExecConfig_ExecuteFile();
 	AutoExecConfig_CleanFile();
 
-	BuildPath(Path_SM, logFile, sizeof(logFile), "logs/gbans.log");
-	
-	g_bConnecting = true;
-	
-	if (!SQL_CheckConfig("gbans")) {
-		LogToFile(logFile, "Failed to load database conf \"%s\"", logFilename);
-		SetFailState("Failed to load database conf \"%s\"", logFilename);
-		return;
-	}
-
-	Database.Connect(onDatabaseConnect, databaseName);
+	//BuildPath(Path_SM, logFile, sizeof(logFile), "logs/gbans.log");
 
 	if (LateLoaded)
 	{
@@ -124,6 +110,7 @@ stock void AccountForLateLoading()
 		}
 	}
 }
+
 public void OnConfigsExecuted()
 {
 	gb_stv_minplayers.AddChangeHook(OnConVarChanged);

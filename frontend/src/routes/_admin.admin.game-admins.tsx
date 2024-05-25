@@ -43,7 +43,7 @@ function AdminsEditor() {
 
     return (
         <>
-            <Title>Edit Server Admin Permissions</Title>
+            <Title>Game Admins</Title>
             <Stack spacing={2}>
                 <SMAdminsTable
                     admins={admins ?? []}

@@ -6,6 +6,8 @@
 
 #define MAX_SCORES 256
 
+bool gIsAuthenticated = false;
+
 // Core gbans options
 ConVar gb_core_host;
 ConVar gb_core_port;
@@ -54,3 +56,7 @@ int gReportStartedAtTime = -1;
 bool gStvMapChanged = false;
 bool gIsRecording = false;
 bool gIsManual = false;
+
+bool gReloadOverridesQueued = false;
+bool gReloadGroupsQueued = false;
+bool gReloadAdminsQueued = false;

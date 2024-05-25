@@ -748,3 +748,275 @@ export const routeTree = rootRoute.addChildren({
 })
 
 /* prettier-ignore-end */
+
+
+/* ROUTE_MANIFEST_START
+{
+  "routes": {
+    "__root__": {
+      "filePath": "__root.tsx",
+      "children": [
+        "/_admin",
+        "/_auth",
+        "/_guest",
+        "/_mod"
+      ]
+    },
+    "/_admin": {
+      "filePath": "_admin.tsx",
+      "children": [
+        "/_admin/admin/game-admins",
+        "/_admin/admin/servers"
+      ]
+    },
+    "/_auth": {
+      "filePath": "_auth.tsx",
+      "children": [
+        "/_auth/chatlogs",
+        "/_auth/logout",
+        "/_auth/notifications",
+        "/_auth/page-not-found",
+        "/_auth/permission",
+        "/_auth/settings",
+        "/_auth/ban/$ban_id",
+        "/_auth/contests/$contest_id",
+        "/_auth/forums/$forum_id",
+        "/_auth/login/discord",
+        "/_auth/match/$matchId",
+        "/_auth/report/$reportId",
+        "/_auth/forums/",
+        "/_auth/report/",
+        "/_auth/stats/",
+        "/_auth/logs/$steamId/",
+        "/_auth/forums/thread/$forum_thread_id",
+        "/_auth/stats/weapon/$weapon_id"
+      ]
+    },
+    "/_guest": {
+      "filePath": "_guest.tsx",
+      "children": [
+        "/_guest/contests",
+        "/_guest/patreon",
+        "/_guest/privacy-policy",
+        "/_guest/servers",
+        "/_guest/stv",
+        "/_guest/",
+        "/_guest/login/success",
+        "/_guest/profile/$steamId",
+        "/_guest/wiki/$slug",
+        "/_guest/login/",
+        "/_guest/wiki/"
+      ]
+    },
+    "/_mod": {
+      "filePath": "_mod.tsx",
+      "children": [
+        "/_mod/admin/appeals",
+        "/_mod/admin/contests",
+        "/_mod/admin/filters",
+        "/_mod/admin/news",
+        "/_mod/admin/people",
+        "/_mod/admin/reports",
+        "/_mod/admin/votes",
+        "/_mod/admin/ban/asn",
+        "/_mod/admin/ban/cidr",
+        "/_mod/admin/ban/group",
+        "/_mod/admin/ban/steam",
+        "/_mod/admin/network/cidrblocks",
+        "/_mod/admin/network/ipInfo",
+        "/_mod/admin/network/iphist",
+        "/_mod/admin/network/playersbyip",
+        "/_mod/admin/network/"
+      ]
+    },
+    "/_auth/chatlogs": {
+      "filePath": "_auth.chatlogs.tsx",
+      "parent": "/_auth"
+    },
+    "/_auth/logout": {
+      "filePath": "_auth.logout.tsx",
+      "parent": "/_auth"
+    },
+    "/_auth/notifications": {
+      "filePath": "_auth.notifications.tsx",
+      "parent": "/_auth"
+    },
+    "/_auth/page-not-found": {
+      "filePath": "_auth.page-not-found.tsx",
+      "parent": "/_auth"
+    },
+    "/_auth/permission": {
+      "filePath": "_auth.permission.tsx",
+      "parent": "/_auth"
+    },
+    "/_auth/settings": {
+      "filePath": "_auth.settings.tsx",
+      "parent": "/_auth"
+    },
+    "/_guest/contests": {
+      "filePath": "_guest.contests.tsx",
+      "parent": "/_guest"
+    },
+    "/_guest/patreon": {
+      "filePath": "_guest.patreon.tsx",
+      "parent": "/_guest"
+    },
+    "/_guest/privacy-policy": {
+      "filePath": "_guest.privacy-policy.tsx",
+      "parent": "/_guest"
+    },
+    "/_guest/servers": {
+      "filePath": "_guest.servers.tsx",
+      "parent": "/_guest"
+    },
+    "/_guest/stv": {
+      "filePath": "_guest.stv.tsx",
+      "parent": "/_guest"
+    },
+    "/_guest/": {
+      "filePath": "_guest.index.tsx",
+      "parent": "/_guest"
+    },
+    "/_admin/admin/game-admins": {
+      "filePath": "_admin.admin.game-admins.tsx",
+      "parent": "/_admin"
+    },
+    "/_admin/admin/servers": {
+      "filePath": "_admin.admin.servers.tsx",
+      "parent": "/_admin"
+    },
+    "/_auth/ban/$ban_id": {
+      "filePath": "_auth.ban.$ban_id.tsx",
+      "parent": "/_auth"
+    },
+    "/_auth/contests/$contest_id": {
+      "filePath": "_auth.contests.$contest_id.tsx",
+      "parent": "/_auth"
+    },
+    "/_auth/forums/$forum_id": {
+      "filePath": "_auth.forums.$forum_id.tsx",
+      "parent": "/_auth"
+    },
+    "/_auth/login/discord": {
+      "filePath": "_auth.login.discord.tsx",
+      "parent": "/_auth"
+    },
+    "/_auth/match/$matchId": {
+      "filePath": "_auth.match.$matchId.tsx",
+      "parent": "/_auth"
+    },
+    "/_auth/report/$reportId": {
+      "filePath": "_auth.report.$reportId.tsx",
+      "parent": "/_auth"
+    },
+    "/_guest/login/success": {
+      "filePath": "_guest.login.success.tsx",
+      "parent": "/_guest"
+    },
+    "/_guest/profile/$steamId": {
+      "filePath": "_guest.profile.$steamId.tsx",
+      "parent": "/_guest"
+    },
+    "/_guest/wiki/$slug": {
+      "filePath": "_guest.wiki.$slug.tsx",
+      "parent": "/_guest"
+    },
+    "/_mod/admin/appeals": {
+      "filePath": "_mod.admin.appeals.tsx",
+      "parent": "/_mod"
+    },
+    "/_mod/admin/contests": {
+      "filePath": "_mod.admin.contests.tsx",
+      "parent": "/_mod"
+    },
+    "/_mod/admin/filters": {
+      "filePath": "_mod.admin.filters.tsx",
+      "parent": "/_mod"
+    },
+    "/_mod/admin/news": {
+      "filePath": "_mod.admin.news.tsx",
+      "parent": "/_mod"
+    },
+    "/_mod/admin/people": {
+      "filePath": "_mod.admin.people.tsx",
+      "parent": "/_mod"
+    },
+    "/_mod/admin/reports": {
+      "filePath": "_mod.admin.reports.tsx",
+      "parent": "/_mod"
+    },
+    "/_mod/admin/votes": {
+      "filePath": "_mod.admin.votes.tsx",
+      "parent": "/_mod"
+    },
+    "/_auth/forums/": {
+      "filePath": "_auth.forums.index.tsx",
+      "parent": "/_auth"
+    },
+    "/_auth/report/": {
+      "filePath": "_auth.report.index.tsx",
+      "parent": "/_auth"
+    },
+    "/_auth/stats/": {
+      "filePath": "_auth.stats.index.tsx",
+      "parent": "/_auth"
+    },
+    "/_guest/login/": {
+      "filePath": "_guest.login.index.tsx",
+      "parent": "/_guest"
+    },
+    "/_guest/wiki/": {
+      "filePath": "_guest.wiki.index.tsx",
+      "parent": "/_guest"
+    },
+    "/_auth/logs/$steamId/": {
+      "filePath": "_auth.logs.$steamId..tsx",
+      "parent": "/_auth"
+    },
+    "/_auth/forums/thread/$forum_thread_id": {
+      "filePath": "_auth.forums.thread.$forum_thread_id.tsx",
+      "parent": "/_auth"
+    },
+    "/_auth/stats/weapon/$weapon_id": {
+      "filePath": "_auth.stats.weapon.$weapon_id.tsx",
+      "parent": "/_auth"
+    },
+    "/_mod/admin/ban/asn": {
+      "filePath": "_mod.admin.ban.asn.tsx",
+      "parent": "/_mod"
+    },
+    "/_mod/admin/ban/cidr": {
+      "filePath": "_mod.admin.ban.cidr.tsx",
+      "parent": "/_mod"
+    },
+    "/_mod/admin/ban/group": {
+      "filePath": "_mod.admin.ban.group.tsx",
+      "parent": "/_mod"
+    },
+    "/_mod/admin/ban/steam": {
+      "filePath": "_mod.admin.ban.steam.tsx",
+      "parent": "/_mod"
+    },
+    "/_mod/admin/network/cidrblocks": {
+      "filePath": "_mod.admin.network.cidrblocks.tsx",
+      "parent": "/_mod"
+    },
+    "/_mod/admin/network/ipInfo": {
+      "filePath": "_mod.admin.network.ipInfo.tsx",
+      "parent": "/_mod"
+    },
+    "/_mod/admin/network/iphist": {
+      "filePath": "_mod.admin.network.iphist.tsx",
+      "parent": "/_mod"
+    },
+    "/_mod/admin/network/playersbyip": {
+      "filePath": "_mod.admin.network.playersbyip.tsx",
+      "parent": "/_mod"
+    },
+    "/_mod/admin/network/": {
+      "filePath": "_mod.admin.network.index.tsx",
+      "parent": "/_mod"
+    }
+  }
+}
+ROUTE_MANIFEST_END */

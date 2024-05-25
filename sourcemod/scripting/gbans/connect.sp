@@ -33,7 +33,7 @@ public void OnClientAuthorized(int clientId, const char[] auth)
 	GetClientName(clientId, name, sizeof name);
 
 	/* Do not check bots nor check player with lan steamid. */
-	if (auth[0] == 'B' || auth[9] == 'L' || DB == INVALID_HANDLE)
+	if (auth[0] == 'B' || auth[9] == 'L')
 	{
 		gPlayers[clientId].authed = true;
 		gPlayers[clientId].ip = ip;
