@@ -118,4 +118,4 @@ docs_start:
 	cd docs && pnpm start
 
 docs_deploy:
-	cd docs && USE_SSH=true pnpm deploy
+	cd docs && pnpm deploy
