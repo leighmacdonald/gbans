@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo } from 'react';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import Link from '@mui/material/Link';
 import MenuItem from '@mui/material/MenuItem';
@@ -8,16 +8,7 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import {
-    ColumnFiltersState,
-    createColumnHelper,
-    getCoreRowModel,
-    getFilteredRowModel,
-    getPaginationRowModel,
-    getSortedRowModel,
-    SortingState,
-    useReactTable
-} from '@tanstack/react-table';
+import { createColumnHelper } from '@tanstack/react-table';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import {
@@ -29,8 +20,7 @@ import {
     SteamBanRecord
 } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
-import { DataTable } from '../component/DataTable.tsx';
-import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
+import { FullTable } from '../component/FullTable.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import RouterLink from '../component/RouterLink.tsx';
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
@@ -38,7 +28,6 @@ import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { SelectFieldSimple } from '../component/field/SelectFieldSimple.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
-import { initColumnFilter, initPagination, initSortOrder, TablePropsAll } from '../types/table.ts';
 import { commonTableSearchSchema } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 import { makeSteamidValidatorsOptional } from '../util/validator/makeSteamidValidatorsOptional.ts';
@@ -60,21 +49,8 @@ export const Route = createFileRoute('/_mod/admin/appeals')({
 
 function AdminAppeals() {
     const navigate = useNavigate({ from: Route.fullPath });
-    const { page, sortColumn, rows, sortOrder, source_id, target_id, appeal_state } = Route.useSearch();
-    const [pagination, setPagination] = useState(initPagination(page, rows));
-    const [sorting, setSorting] = useState<SortingState>(
-        initSortOrder(sortColumn, sortOrder, {
-            id: 'created_on',
-            desc: true
-        })
-    );
-    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
-        initColumnFilter({
-            appeal_state: appeal_state ?? AppealState.Any,
-            source_id: source_id ?? undefined,
-            target_id: target_id ?? undefined
-        })
-    );
+    const { page, rows, sortOrder, source_id, target_id, appeal_state } = Route.useSearch();
+
     const { data: appeals, isLoading } = useQuery({
         queryKey: ['appeals', { page, rows, sortOrder, appeal_state, source_id, target_id }],
         queryFn: async () => {
@@ -83,13 +59,13 @@ function AdminAppeals() {
     });
     const { Field, Subscribe, handleSubmit, reset, setFieldValue } = useForm({
         onSubmit: async ({ value }) => {
-            setColumnFilters(
-                initColumnFilter({
-                    appeal_state: value.appeal_state ?? AppealState.Any,
-                    source_id: value.source_id ?? undefined,
-                    target_id: value.target_id ?? undefined
-                })
-            );
+            // setColumnFilters(
+            //     initColumnFilter({
+            //         appeal_state: value.appeal_state ?? AppealState.Any,
+            //         source_id: value.source_id ?? undefined,
+            //         target_id: value.target_id ?? undefined
+            //     })
+            // );
             await navigate({ to: '/admin/appeals', search: (prev) => ({ ...prev, ...value }) });
         },
         validatorAdapter: zodValidator,
@@ -115,6 +91,10 @@ function AdminAppeals() {
             search: (prev) => ({ ...prev, source_id: undefined, target_id: undefined, appeal_state: undefined })
         });
     };
+
+    const columns = useMemo(() => {
+        return makeColumns();
+    }, []);
 
     return (
         <Grid container spacing={2}>
@@ -195,15 +175,12 @@ function AdminAppeals() {
 
             <Grid xs={12}>
                 <ContainerWithHeader title={'Recent Open Appeal Activity'}>
-                    <AppealsTable
-                        appeals={appeals ?? []}
+                    <FullTable
+                        data={appeals ?? []}
                         isLoading={isLoading}
-                        setColumnFilters={setColumnFilters}
-                        columnFilters={columnFilters}
-                        setSorting={setSorting}
-                        sorting={sorting}
-                        setPagination={setPagination}
-                        pagination={pagination}
+                        columns={columns}
+                        initialSortColumn={'updated_on'}
+                        initialSortDesc={true}
                     />
                 </ContainerWithHeader>
             </Grid>
@@ -211,19 +188,11 @@ function AdminAppeals() {
         // </Formik>
     );
 }
+
 const columnHelper = createColumnHelper<SteamBanRecord>();
 
-const AppealsTable = ({
-    appeals,
-    isLoading,
-    setPagination,
-    pagination,
-    columnFilters,
-    setColumnFilters,
-    sorting,
-    setSorting
-}: { appeals: SteamBanRecord[]; isLoading: boolean } & TablePropsAll) => {
-    const columns = [
+const makeColumns = () => {
+    return [
         columnHelper.accessor('ban_id', {
             header: () => <TableHeadingCell name={'ID'} />,
             cell: (info) => (
@@ -296,44 +265,4 @@ const AppealsTable = ({
             cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>
         })
     ];
-
-    const table = useReactTable({
-        data: appeals,
-        columns: columns,
-        autoResetPageIndex: true,
-        getCoreRowModel: getCoreRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-        getSortedRowModel: getSortedRowModel(),
-        onPaginationChange: setPagination,
-        onSortingChange: setSorting,
-        onColumnFiltersChange: setColumnFilters,
-
-        state: {
-            sorting,
-            pagination,
-            columnFilters
-        }
-    });
-
-    return (
-        <>
-            <DataTable table={table} isLoading={isLoading} />{' '}
-            <PaginatorLocal
-                onRowsChange={(rows) => {
-                    setPagination((prev) => {
-                        return { ...prev, pageSize: rows };
-                    });
-                }}
-                onPageChange={(page) => {
-                    setPagination((prev) => {
-                        return { ...prev, pageIndex: page };
-                    });
-                }}
-                count={table.getRowCount()}
-                rows={pagination.pageSize}
-                page={pagination.pageIndex}
-            />
-        </>
-    );
 };
