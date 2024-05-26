@@ -145,7 +145,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			//	return
 			// }
 
-			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(dbUsecase), configUsecase)
+			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(conf, dbUsecase), configUsecase)
 
 			networkUsecase := network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(dbUsecase), personUsecase)
 			go networkUsecase.Start(ctx)

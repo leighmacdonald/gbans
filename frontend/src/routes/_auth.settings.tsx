@@ -61,9 +61,11 @@ interface SettingsValues {
     forum_signature: string;
     forum_profile_messages: boolean;
     stats_hidden: boolean;
+    center_projectiles: boolean;
 }
 
 type userSettingTabs = 'general' | 'connections' | 'forums';
+
 
 function ProfileSettings() {
     const { sendFlash } = useUserFlashCtx();
@@ -79,7 +81,8 @@ function ProfileSettings() {
             return await apiSavePersonSettings(
                 values.forum_signature,
                 values.forum_profile_messages,
-                values.stats_hidden
+                values.stats_hidden,
+                values.center_projectiles ?? false
             );
         },
         onSuccess: async () => {

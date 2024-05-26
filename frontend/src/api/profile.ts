@@ -284,6 +284,7 @@ export interface PersonSettings extends TimeStamped {
     forum_signature: string;
     forum_profile_messages: boolean;
     stats_hidden: boolean;
+    center_projectiles?: boolean;
 }
 
 export const apiGetPersonSettings = async (abortController?: AbortController) => {
@@ -296,13 +297,14 @@ export const apiSavePersonSettings = async (
     forum_signature: string,
     forum_profile_messages: boolean,
     stats_hidden: boolean,
+    center_projectiles: boolean,
     abortController?: AbortController
 ) => {
     return transformTimeStampedDates(
         await apiCall<PersonSettings>(
             `/api/current_profile/settings`,
             'POST',
-            { forum_signature, forum_profile_messages, stats_hidden },
+            { forum_signature, forum_profile_messages, stats_hidden, center_projectiles },
             abortController
         )
     );

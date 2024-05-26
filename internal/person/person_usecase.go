@@ -275,6 +275,7 @@ func (u personUsecase) SavePersonSettings(ctx context.Context, user domain.Perso
 	settings.ForumProfileMessages = update.ForumProfileMessages
 	settings.StatsHidden = update.StatsHidden
 	settings.ForumSignature = util.SanitizeUGC(update.ForumSignature)
+	settings.CenterProjectiles = update.CenterProjectiles
 
 	if errSave := u.personRepo.SavePersonSettings(ctx, &settings); errSave != nil {
 		return settings, errSave

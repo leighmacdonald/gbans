@@ -18,11 +18,12 @@ import (
 )
 
 type personRepository struct {
-	db database.Database
+	conf domain.Config
+	db   database.Database
 }
 
-func NewPersonRepository(database database.Database) domain.PersonRepository {
-	return &personRepository{db: database}
+func NewPersonRepository(conf domain.Config, database database.Database) domain.PersonRepository {
+	return &personRepository{conf: conf, db: database}
 }
 
 func (r *personRepository) DropPerson(ctx context.Context, steamID steamid.SteamID) error {
@@ -540,20 +541,73 @@ func (r *personRepository) GetPersonSettings(ctx context.Context, steamID steami
 		return settings, r.db.DBErr(errScan)
 	}
 
+	if r.conf.Clientprefs.CenterProjectiles {
+		rows, errRow := r.db.QueryBuilder(ctx, r.db.
+			Builder().
+			Select("name", "value").
+			From("sm_cookie_cache").
+			Join("sm_cookies ON cookie_id=id").
+			Where(sq.And{
+				sq.Eq{"player": steamID.Steam(false)},
+				sq.Eq{"name": "tf2centerprojectiles"},
+			}))
+		if errRow != nil {
+			return settings, r.db.DBErr(errRow)
+		}
+
+		defer rows.Close()
+
+		for rows.Next() {
+			key := ""
+			value := ""
+
+			if errScan := rows.Scan(&key, &value); errScan != nil {
+				return settings, r.db.DBErr(errScan)
+			}
+
+			if key == "tf2centerprojectiles" {
+				settings.CenterProjectiles = makeBool(value == "1")
+			}
+		}
+	}
+
 	return settings, nil
 }
 
+// Helper to make a bool pointer, useful for optional json fields.
+func makeBool(v bool) *bool { return &v }
+
+// Format booleans for storage as a sourcemod Clientpref.
+func boolToStringDigit(b bool) string {
+	if b {
+		return "1"
+	}
+
+	return "0"
+}
+
 func (r *personRepository) SavePersonSettings(ctx context.Context, settings *domain.PersonSettings) error {
+	const (
+		query = `
+    INSERT INTO sm_cookie_cache (player, cookie_id, value, timestamp)
+    VALUES ($1, (select id from sm_cookies where name='tf2centerprojectiles'), $2, cast(extract(epoch from current_timestamp) as integer))
+    ON CONFLICT (player, cookie_id)
+    DO UPDATE SET value = EXCLUDED.value, timestamp = EXCLUDED.timestamp
+    RETURNING value;`
+	)
+
 	if !settings.SteamID.Valid() {
 		return domain.ErrInvalidSID
 	}
 
 	settings.UpdatedOn = time.Now()
 
+	var errSiteSettings error
+
 	if settings.PersonSettingsID == 0 {
 		settings.CreatedOn = settings.UpdatedOn
 
-		return r.db.DBErr(r.db.ExecInsertBuilderWithReturnValue(ctx, r.db.
+		errSiteSettings = r.db.DBErr(r.db.ExecInsertBuilderWithReturnValue(ctx, r.db.
 			Builder().
 			Insert("person_settings").
 			SetMap(map[string]interface{}{
@@ -566,16 +620,27 @@ func (r *personRepository) SavePersonSettings(ctx context.Context, settings *dom
 			}).
 			Suffix("RETURNING person_settings_id"),
 			&settings.PersonSettingsID))
+	} else {
+		errSiteSettings = r.db.DBErr(r.db.ExecUpdateBuilder(ctx, r.db.
+			Builder().
+			Update("person_settings").
+			SetMap(map[string]interface{}{
+				"forum_signature":        settings.ForumSignature,
+				"forum_profile_messages": settings.ForumProfileMessages,
+				"stats_hidden":           settings.StatsHidden,
+				"updated_on":             settings.UpdatedOn,
+			}).
+			Where(sq.Eq{"steam_id": settings.SteamID.Int64()})))
 	}
 
-	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, r.db.
-		Builder().
-		Update("person_settings").
-		SetMap(map[string]interface{}{
-			"forum_signature":        settings.ForumSignature,
-			"forum_profile_messages": settings.ForumProfileMessages,
-			"stats_hidden":           settings.StatsHidden,
-			"updated_on":             settings.UpdatedOn,
-		}).
-		Where(sq.Eq{"steam_id": settings.SteamID.Int64()})))
+	value := ""
+
+	var errGameSettings error
+	if r.conf.Clientprefs.CenterProjectiles && settings.CenterProjectiles != nil {
+		errGameSettings = r.db.DBErr(r.db.QueryRow(ctx, query,
+			settings.SteamID.Steam(false),
+			boolToStringDigit(*settings.CenterProjectiles)).Scan(&value))
+	}
+
+	return errors.Join(errSiteSettings, errGameSettings)
 }
