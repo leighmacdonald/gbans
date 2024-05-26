@@ -76,16 +76,6 @@ func (r chatRepository) handleMessage(ctx context.Context, evt logparse.ServerEv
 	}
 
 	go func(userMsg domain.PersonMessage) {
-		if userMsg.ServerName == "localhost-1" {
-			slog.Debug("Chat message",
-				slog.Int64("id", userMsg.PersonMessageID),
-				slog.String("server", evt.ServerName),
-				slog.String("name", person.Name),
-				slog.String("steam_id", person.SID.String()),
-				slog.Bool("team", userMsg.Team),
-				slog.String("message", userMsg.Body))
-		}
-
 		matchedFilter := r.wordFilterUsecase.Check(userMsg.Body)
 		if len(matchedFilter) > 0 {
 			if errSaveMatch := r.wordFilterUsecase.AddMessageFilterMatch(ctx, userMsg.PersonMessageID, matchedFilter[0].FilterID); errSaveMatch != nil {
