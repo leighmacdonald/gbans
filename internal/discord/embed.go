@@ -71,6 +71,7 @@ func (e *Embed) AddAuthorPersonInfo(person domain.PersonInfo, url string) *Embed
 	}
 
 	e.Embed().SetAuthor(name, person.GetAvatar().Full(), url)
+	e.AddFieldsSteamID(person.GetSteamID())
 
 	return e
 }
