@@ -85,59 +85,49 @@ public void reloadAdmins(bool force)
 	ServerCommand("sm_reloadadmins");
 }
 
-public void writeCachedFile(const char[] name, const char[] data)
+public void OnClientAuthorized(int clientId, const char[] auth)
 {
-	char path[PLATFORM_MAX_PATH];
-	BuildPath(Path_SM, path, sizeof path, "data/gbans/%s.cache", name);
-	File fp = OpenFile(path, "w");
-	WriteFileString(fp, data, false);
-	CloseHandle(fp);
+	gbLog("--- OnClientAuthorized");
+
 }
 
-
-public void readCachedFile(const char[] name)
-{
-	char path[PLATFORM_MAX_PATH];
-	BuildPath(Path_SM, path, sizeof path, "data/gbans/%s.cache", name);
-	// File fp = OpenFile(path, "r");
-	// ReadFileString(fp, )
-}
-
-public void onClientPostAdminCheck(int clientId)
-{
-    // BSNoComm handled in OnClientPutInServer
-	switch(gPlayers[clientId].banType)
-	{
-
-		case BSNetwork:
-		{
-		    KickClient(clientId, gPlayers[clientId].message);
-		    LogAction(0, clientId, "Kicked \"%L\" for a network block.", clientId);
-		}
-		case BSBanned:
-		{
-			KickClient(clientId, gPlayers[clientId].message);
-			LogAction(0, clientId, "Kicked \"%L\" for an unfinished ban.", clientId);
-		}
+public void OnClientPostAdminCheck(int clientId) {
+	gbLog("--- OnClientPostAdminCheck");
+	if (!(clientId > 0 && IsClientInGame(clientId) && !IsFakeClient(clientId))) {
+		return;
 	}
+
+	checkPlayer(clientId);
 }
 
-
-void checkPlayer(int clientId, const char[] auth, const char[] ip, const char[] name)
+void checkPlayer(int clientId)
 {
-	if(!IsClientConnected(clientId) || IsFakeClient(clientId)) {
+	
+	if (!(clientId > 0 && IsClientInGame(clientId) && !IsFakeClient(clientId))) {
 		gbLog("Skipping check on invalid player");
 		return ;
 	}
+	
+	gbLog("--- checkPlayer");
+
+	char ip[16];
+	GetClientIP(clientId, ip, sizeof ip);
+
+	char name[32];
+	GetClientName(clientId, name, sizeof name);
+
+	char clientAuth[64];
+	GetClientAuthId(clientId, AuthId_SteamID64, clientAuth, sizeof(clientAuth));
+
 
 	JSONObject obj = new JSONObject(); 
-	obj.SetString("steam_id", auth);
+	obj.SetString("steam_id", clientAuth);
 	obj.SetInt("client_id", clientId);
 	obj.SetString("ip", ip);
 	obj.SetString("name", name);
 
 	char url[1024];
-	makeURL("/api/check", url, sizeof url);
+	makeURL("/api/sm/check", url, sizeof url);
 
 	HTTPRequest request = new HTTPRequest(url);
 	addAuthHeader(request);
@@ -150,6 +140,7 @@ void checkPlayer(int clientId, const char[] auth, const char[] ip, const char[] 
 
 void onCheckResp(HTTPResponse response, any value)
 {
+	gbLog("--- onCheckResp");
 	if (response.Status != HTTPStatus_OK) {
 		LogError("Invalid check response code: %d", response.Status);
 
@@ -157,29 +148,34 @@ void onCheckResp(HTTPResponse response, any value)
     } 
 
 	JSONObject data = view_as<JSONObject>(response.Data); 
-
+	
+	char msg[256];
+	data.GetString("msg", msg, sizeof msg);
 	int clientId = data.GetInt("client_id");
 	int banType = data.GetInt("ban_type");
-	int permissionLevel = data.GetInt("permission_level");
-	
-	char msg[256];	// welcome or ban message
-	data.GetString("msg", msg, sizeof msg);
 
-	if(IsFakeClient(clientId))
+	switch(banType)
 	{
-		return ;
+		case BSNoComm: {
+			if(!BaseComm_IsClientMuted(clientId)) {
+				BaseComm_SetClientMute(clientId, true);
+			}
+			if(!BaseComm_IsClientGagged(clientId)){
+				BaseComm_SetClientGag(clientId, true);
+			}
+			ReplyToCommand(clientId, "You are currently muted/gag, it will expire automatically");
+			gbLog("Muted \"%L\" for an unfinished mute punishment.", clientId);
+		}
+		case BSNetwork:
+		{
+		    KickClient(clientId, msg);
+		    LogAction(0, clientId, "Kicked \"%L\" for a network block.", clientId);
+		}
+		case BSBanned:
+		{
+			KickClient(clientId, msg);
+			LogAction(0, clientId, "Kicked \"%L\" for an unfinished ban.", clientId);
+		}
 	}
 
-	char ip[16];
-	GetClientIP(clientId, ip, sizeof ip);
-	gPlayers[clientId].authed = true;
-	gPlayers[clientId].ip = ip;
-	gPlayers[clientId].banType = banType;
-	gPlayers[clientId].message = msg;
-	gPlayers[clientId].permissionLevel = permissionLevel;
-
-	gbLog("Client authenticated (banType: %d level: %d)", banType, permissionLevel);
-
-	// Called manually since we are using the connect extension
-	onClientPostAdminCheck(clientId);
 }

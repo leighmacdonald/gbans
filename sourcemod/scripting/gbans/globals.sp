@@ -29,20 +29,6 @@ ConVar gb_stv_finishmap;
 ConVar gb_stv_path;
 ConVar gb_stv_path_complete;
 
-// clang-format off
-enum struct PlayerInfo
-{
-	bool authed;
-	char ip[16] ;
-	int banType;
-	int permissionLevel;
-	char message[256];
-}
-// clang-format on
-
-// Globals must all start with g
-PlayerInfo gPlayers[MAXPLAYERS + 1];
-
 char gAccessToken[512];
 
 // Reports command
