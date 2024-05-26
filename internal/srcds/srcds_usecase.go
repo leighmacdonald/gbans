@@ -27,10 +27,6 @@ type srcdsUsecase struct {
 	cookie          string
 }
 
-func (h srcdsUsecase) GetOverride(ctx context.Context, overrideID int) (domain.SMOverrides, error) {
-	return h.srcdsRepository.GetOverride(ctx, overrideID)
-}
-
 func NewSrcdsUsecase(srcdsRepository domain.SRCDSRepository, configUsecase domain.ConfigUsecase, serversUsecase domain.ServersUsecase,
 	personUsecase domain.PersonUsecase, reportUsecase domain.ReportUsecase, discordUsecase domain.DiscordUsecase,
 ) domain.SRCDSUsecase {
@@ -43,6 +39,54 @@ func NewSrcdsUsecase(srcdsRepository domain.SRCDSRepository, configUsecase domai
 		srcdsRepository: srcdsRepository,
 		cookie:          configUsecase.Config().HTTP.CookieKey,
 	}
+}
+
+func (h srcdsUsecase) GetBanState(ctx context.Context, steamID steamid.SteamID, ip net.IP) (domain.PlayerBanState, string, error) {
+	banState, errBanState := h.srcdsRepository.QueryBanState(ctx, steamID, ip)
+	if errBanState != nil || banState.BanID == 0 {
+		return banState, "", errBanState
+	}
+
+	const format = "Banned\nReason: %s (%s)\nUntil: %s\nAppeal: %s"
+
+	var msg string
+
+	validUntil := banState.ValidUntil.Format(time.ANSIC)
+	if banState.ValidUntil.After(time.Now().AddDate(5, 0, 0)) {
+		validUntil = "Permanent"
+	}
+
+	appealURL := "n/a"
+	if banState.BanSource == domain.BanSourceSteam {
+		appealURL = h.configUsecase.ExtURLRaw("/appeal/%d", banState.BanID)
+	}
+
+	if banState.BanID > 0 && banState.BanType >= domain.NoComm {
+		switch banState.BanSource {
+		case domain.BanSourceSteam:
+			if banState.BanType == domain.NoComm {
+				msg = fmt.Sprintf("You are muted & gagged. Expires: %s. Appeal: %s", banState.ValidUntil.Format(time.DateTime), appealURL)
+			} else {
+				msg = fmt.Sprintf(format, banState.Reason.String(), "Steam", validUntil, appealURL)
+			}
+		case domain.BanSourceASN:
+			msg = fmt.Sprintf(format, banState.Reason.String(), "Special", "Permanent", appealURL)
+		case domain.BanSourceCIDR:
+			msg = "Blocked Network/VPN\nPlease disable your VPN."
+		case domain.BanSourceSteamFriend:
+			msg = "Friend Network Ban"
+		case domain.BanSourceSteamGroup:
+			msg = "Blocked Steam Group"
+		case domain.BanSourceSteamNet:
+			msg = fmt.Sprintf(format, banState.Reason.String(), "Special", "Permanent", appealURL)
+		}
+	}
+
+	return banState, msg, nil
+}
+
+func (h srcdsUsecase) GetOverride(ctx context.Context, overrideID int) (domain.SMOverrides, error) {
+	return h.srcdsRepository.GetOverride(ctx, overrideID)
 }
 
 func (h srcdsUsecase) GetGroupImmunityByID(ctx context.Context, groupImmunityID int) (domain.SMGroupImmunity, error) {

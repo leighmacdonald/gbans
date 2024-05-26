@@ -4,7 +4,13 @@
 
 #include "ripext"
 
-// overrides -> groups -> admins
+/**
+ * Implements a HTTP version of the standard sourcemod  admin-sql-prefetch plugin.
+ */
+
+
+// Naively expects to be called in the order of: overrides -> groups -> admins
+// TODO improve call logic
 public void OnRebuildAdminCache(AdminCachePart part)
 {
     if (!gIsAuthenticated) {
@@ -57,8 +63,6 @@ void onRebuildGroups(HTTPResponse response, any value) {
 	char name[128];
 	int immunity;
 
-    PrintToServer("\n\n\n\nLoading Groups\n");
-
     for (int i = 0; i < numGroups; i++) {
         group = view_as<JSONObject>(groups.Get(i));
 
@@ -66,8 +70,9 @@ void onRebuildGroups(HTTPResponse response, any value) {
         group.GetString("name", name, sizeof(name));
         immunity = group.GetInt("immunity_level");
 
+#if defined _DEBUG
         PrintToServer("Retrieved group: name: '%s' flag: '%s' immunity: '%d'", name, flags, immunity);
-
+#endif
         GroupId grp;
 		if ((grp = FindAdmGroup(name)) == INVALID_GROUP_ID)
 		{
@@ -112,7 +117,9 @@ void onRebuildGroups(HTTPResponse response, any value) {
 		
 		grp.AddGroupImmunity(other);
 
+#if defined _DEBUG
 		PrintToServer("SetAdmGroupImmuneFrom(%d, %d)", grp, other);
+#endif
 
         delete groupImmunity;
 
@@ -160,7 +167,7 @@ void onRebuildUsers(HTTPResponse response, any value) {
 	int immunity;
 	AdminId adm;
 	GroupId grp;
-	int id;
+
     
     int numUsers = users.Length;
     int numUserGroups = userGroups.Length;
@@ -169,8 +176,6 @@ void onRebuildUsers(HTTPResponse response, any value) {
 	 * enable group lookups en masse */
 	StringMap htAdmins = new StringMap();
 	char key[16];
-
-    PrintToServer("\n\n\nLoading Users");
     
     for (int i = 0; i < numUsers; i++) {
         user = view_as<JSONObject>(users.Get(i));
@@ -181,7 +186,7 @@ void onRebuildUsers(HTTPResponse response, any value) {
         user.GetString("flags", flags, sizeof(flags));
         user.GetString("name", name, sizeof(name));
         immunity = user.GetInt("immunity");
-        id = user.GetInt("id");
+       
 
         		/* Use a pre-existing admin if we can */
 		if ((adm = FindAdminByIdentity(authtype, identity)) == INVALID_ADMIN_ID)
@@ -195,9 +200,11 @@ void onRebuildUsers(HTTPResponse response, any value) {
 		}
 
 		htAdmins.SetValue(key, adm);
-		
-		PrintToServer("User (%d,%s,%s,%s,%s,%s,%d):%d", id, authtype, identity, password, flags, name, immunity, adm);
 
+#if defined _DEBUG
+        int id = user.GetInt("id");
+		PrintToServer("User (%d,%s,%s,%s,%s,%s,%d):%d", id, authtype, identity, password, flags, name, immunity, adm);
+#endif
 		
 		/* See if this admin wants a password */
 		if (password[0] != '\0')
@@ -276,8 +283,6 @@ void onRebuildOverrides(HTTPResponse response, any value) {
 	char flags[32];
 	int flag_bits;
 
-    PrintToServer("\n\n\nLoading OVerrides");
-
     for (int i = 0; i < numOverrides; i++) {
         override = view_as<JSONObject>(overrides.Get(i));
 
@@ -285,8 +290,10 @@ void onRebuildOverrides(HTTPResponse response, any value) {
         override.GetString("name", name, sizeof(name));
         override.GetString("flags", flags, sizeof(flags));
 
+#if defined _DEBUG
         PrintToServer("Adding override (%s, %s, %s)", type, name, flags);
-        
+#endif
+
         flag_bits = ReadFlagString(flags);
 		if (StrEqual(type, "command")) {
 			AddCommandOverride(name, Override_Command, flag_bits);

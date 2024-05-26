@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"errors"
+	"net"
 	"time"
 
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -49,9 +50,11 @@ type SRCDSRepository interface { //nolint:interfacebloat
 	GetGroupImmunityByID(ctx context.Context, groupImmunityID int) (SMGroupImmunity, error)
 	AddGroupImmunity(ctx context.Context, group SMGroups, other SMGroups) (SMGroupImmunity, error)
 	DelGroupImmunity(ctx context.Context, groupImmunity SMGroupImmunity) error
+	QueryBanState(ctx context.Context, steamID steamid.SteamID, ipAddr net.IP) (PlayerBanState, error)
 }
 
 type SRCDSUsecase interface { //nolint:interfacebloat
+	GetBanState(ctx context.Context, steamID steamid.SteamID, ip net.IP) (PlayerBanState, string, error)
 	ServerAuth(ctx context.Context, req ServerAuthReq) (string, error)
 	Report(ctx context.Context, currentUser UserProfile, req CreateReportReq) (*Report, error)
 	GetAdminByID(ctx context.Context, adminID int) (SMAdmin, error)
@@ -82,6 +85,27 @@ type SRCDSUsecase interface { //nolint:interfacebloat
 	GetGroupImmunityByID(ctx context.Context, groupImmunityID int) (SMGroupImmunity, error)
 	AddGroupImmunity(ctx context.Context, groupID int, otherID int) (SMGroupImmunity, error)
 	DelGroupImmunity(ctx context.Context, groupImmunityID int) error
+}
+
+type BanSource string
+
+const (
+	BanSourceNone        BanSource = ""
+	BanSourceSteam       BanSource = "ban_steam"
+	BanSourceSteamFriend BanSource = "ban_steam_friend"
+	BanSourceSteamGroup  BanSource = "steam_group"
+	BanSourceSteamNet    BanSource = "ban_net"
+	BanSourceCIDR        BanSource = "cidr_block"
+	BanSourceASN         BanSource = "ban_asn"
+)
+
+type PlayerBanState struct {
+	BanSource  BanSource `json:"ban_source"`
+	BanID      int       `json:"ban_id"`
+	BanType    BanType   `json:"ban_type"`
+	Reason     Reason    `json:"reason"`
+	EvadeOK    bool      `json:"evade_ok"`
+	ValidUntil time.Time `json:"valid_until"`
 }
 
 type AuthType string

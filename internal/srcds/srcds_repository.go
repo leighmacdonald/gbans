@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"net"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -18,6 +19,40 @@ type srcdsRepository struct {
 
 func NewRepository(database database.Database) domain.SRCDSRepository {
 	return srcdsRepository{database: database}
+}
+
+func (r srcdsRepository) QueryBanState(ctx context.Context, steamID steamid.SteamID, ipAddr net.IP) (domain.PlayerBanState, error) {
+	const query = `
+		SELECT out_ban_source, out_ban_id, out_ban_type, out_reason, out_evade_ok, out_valid_until 
+		FROM check_ban($1, $2)`
+
+	var banState domain.PlayerBanState
+
+	// If there is no matches, a row of NULL values are returned from the stored proc
+	var (
+		banSource  *domain.BanSource
+		banID      *int
+		banType    *domain.BanType
+		reason     *domain.Reason
+		evadeOK    *bool
+		validUntil *time.Time
+	)
+
+	row := r.database.QueryRow(ctx, query, steamID.String(), ipAddr.String())
+	if errScan := row.Scan(&banSource, &banID, &banType, &reason, &evadeOK, &validUntil); errScan != nil {
+		return banState, errors.Join(errScan, domain.ErrScanResult)
+	}
+
+	if banSource != nil {
+		banState.BanSource = *banSource
+		banState.BanID = *banID
+		banState.BanType = *banType
+		banState.Reason = *reason
+		banState.EvadeOK = *evadeOK
+		banState.ValidUntil = *validUntil
+	}
+
+	return banState, nil
 }
 
 func (r srcdsRepository) GetGroupImmunities(ctx context.Context) ([]domain.SMGroupImmunity, error) {

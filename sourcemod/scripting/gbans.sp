@@ -106,7 +106,7 @@ stock void AccountForLateLoading()
 		}
 		if (IsClientInGame(i) && !IsFakeClient(i) && IsClientAuthorized(i) && GetClientAuthId(i, AuthId_Steam2, auth, sizeof(auth)))
 		{
-			OnClientAuthorized(i, auth);
+			checkPlayer(i);
 		}
 	}
 }
@@ -163,28 +163,6 @@ public void OnMapEnd()
 		StopRecord();
 		gIsManual = false;
 	}
-}
-
-public void OnClientPutInServer(int clientId)
-{
-	switch(gPlayers[clientId].banType)
-	{
-		case BSNoComm:
-		{
-			if(!BaseComm_IsClientMuted(clientId))
-			{
-				BaseComm_SetClientMute(clientId, true);
-			}
-			if(!BaseComm_IsClientGagged(clientId))
-			{
-				BaseComm_SetClientGag(clientId, true);
-			}
-			ReplyToCommand(clientId, "You are currently muted/gag, it will expire automatically");
-			gbLog("Muted \"%L\" for an unfinished mute punishment.", clientId);
-		}
-	}
-	
-	CheckStatus();
 }
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)

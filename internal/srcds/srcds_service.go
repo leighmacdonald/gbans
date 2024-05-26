@@ -3,6 +3,7 @@ package srcds
 import (
 	"errors"
 	"log/slog"
+	"net"
 	"net/http"
 	"time"
 
@@ -100,6 +101,7 @@ func NewSRCDSHandler(engine *gin.Engine, srcdsUsecase domain.SRCDSUsecase, serve
 	srcdsGroup := engine.Group("/")
 	{
 		server := srcdsGroup.Use(authUsecase.AuthServerMiddleWare())
+		server.POST("/api/sm/check", handler.onAPICheckPlayer())
 		server.GET("/api/sm/overrides", handler.onAPIGetServerOverrides())
 		server.GET("/api/sm/users", handler.onAPIGetServerUsers())
 		server.GET("/api/sm/groups", handler.onAPIGetServerGroups())
@@ -137,6 +139,59 @@ func newServerToken(serverID int, cookieKey string) (string, error) {
 	}
 
 	return signedToken, nil
+}
+
+func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
+	type checkRequest struct {
+		SteamID  string `json:"steam_id"`
+		ClientID int    `json:"client_id"`
+		IP       net.IP `json:"ip"`
+		Name     string `json:"name"`
+	}
+
+	type checkResponse struct {
+		ClientID int            `json:"client_id"`
+		BanType  domain.BanType `json:"ban_type"`
+		Msg      string         `json:"msg"`
+	}
+
+	return func(ctx *gin.Context) {
+		var req checkRequest
+		if !httphelper.Bind(ctx, &req) {
+			slog.Error("Failed to bind check request")
+
+			return
+		}
+
+		steamID := steamid.New(req.SteamID)
+		if !steamID.Valid() {
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidSID)
+
+			return
+		}
+
+		banState, msg, errBS := s.srcdsUsecase.GetBanState(ctx, steamID, req.IP)
+		if errBS != nil {
+			slog.Error("failed to get ban state", log.ErrAttr(errBS))
+
+			// Fail Open
+			ctx.JSON(http.StatusOK, checkResponse{})
+
+			return
+		}
+
+		if banState.BanID == 0 {
+			ctx.JSON(http.StatusOK, checkResponse{})
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, checkResponse{
+			ClientID: req.ClientID,
+			BanType:  banState.BanType,
+			Msg:      msg,
+		})
+	}
 }
 
 func (s *srcdsHandler) onGetGroupImmunities() gin.HandlerFunc {
