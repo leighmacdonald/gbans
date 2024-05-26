@@ -305,14 +305,20 @@ type PersonSettings struct {
 	ForumSignature       string          `json:"forum_signature"`
 	ForumProfileMessages bool            `json:"forum_profile_messages"`
 	StatsHidden          bool            `json:"stats_hidden"`
-	CreatedOn            time.Time       `json:"created_on"`
-	UpdatedOn            time.Time       `json:"updated_on"`
+
+	// This key will be absent to indicate that this feature
+	// is disabled (and UI should not be shown to the user).
+	CenterProjectiles *bool `json:"center_projectiles,omitempty"`
+
+	CreatedOn time.Time `json:"created_on"`
+	UpdatedOn time.Time `json:"updated_on"`
 }
 
 type PersonSettingsUpdate struct {
 	ForumSignature       string `json:"forum_signature"`
 	ForumProfileMessages bool   `json:"forum_profile_messages"`
 	StatsHidden          bool   `json:"stats_hidden"`
+	CenterProjectiles    *bool  `json:"center_projectiles,omitempty"`
 }
 
 type UserWarning struct {

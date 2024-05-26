@@ -56,6 +56,7 @@ type Config struct {
 	Demo        ConfigDemo        `json:"demo"`
 	Filters     ConfigFilter      `json:"filters"`
 	Discord     ConfigDiscord     `json:"discord"`
+	Clientprefs ConfigClientprefs `mapstructure:"clientprefs"`
 	Log         ConfigLog         `json:"log"`
 	GeoLocation ConfigIP2Location `json:"geo_location"`
 	Debug       ConfigDebug       `json:"debug"`
@@ -110,6 +111,10 @@ type ConfigDB struct {
 	DSN         string `mapstructure:"dsn"`
 	AutoMigrate bool   `mapstructure:"auto_migrate"`
 	LogQueries  bool   `mapstructure:"log_queries"`
+}
+
+type ConfigClientprefs struct {
+	CenterProjectiles bool `mapstructure:"center_projectiles"`
 }
 
 type ConfigPatreon struct {

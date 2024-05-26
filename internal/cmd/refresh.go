@@ -96,7 +96,7 @@ func refreshFiltersCmd() *cobra.Command {
 
 			discordUsecase := discord.NewDiscordUsecase(discordRepository, wordFilterUsecase)
 
-			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(dbUsecase), configUsecase)
+			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(conf, dbUsecase), configUsecase)
 			reportUsecase := report.NewReportUsecase(report.NewReportRepository(dbUsecase), discordUsecase, configUsecase, personUsecase, nil)
 			// banGroupUsecase := steamgroup.NewBanGroupUsecase(steamgroup.NewSteamGroupRepository(dbUsecase), personUsecase)
 			networkUsecase := network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(dbUsecase), personUsecase)
