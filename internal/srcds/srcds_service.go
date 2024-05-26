@@ -2,6 +2,7 @@ package srcds
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
@@ -105,7 +106,7 @@ func NewSRCDSHandler(engine *gin.Engine, srcdsUsecase domain.SRCDSUsecase, serve
 		server.GET("/api/sm/overrides", handler.onAPIGetServerOverrides())
 		server.GET("/api/sm/users", handler.onAPIGetServerUsers())
 		server.GET("/api/sm/groups", handler.onAPIGetServerGroups())
-		server.POST("/api/ping_mod", handler.onAPIPostPingMod())
+		server.POST("/api/sm/ping_mod", handler.onAPIPostPingMod())
 
 		// Duplicated since we need to authenticate via server middleware
 		server.POST("/api/sm/bans/steam/create", handler.onAPIPostBanSteamCreate())
@@ -1045,11 +1046,11 @@ func (s *srcdsHandler) onAPIPostPingMod() gin.HandlerFunc {
 		}
 
 		conf := s.configUsecase.Config()
-		players := s.stateUsecase.Find("", req.SteamID, nil, nil)
+		players := s.stateUsecase.FindBySteamID(req.SteamID)
 
 		if len(players) == 0 && conf.General.Mode != domain.TestMode {
 			slog.Error("Failed to find player on /mod call")
-			httphelper.ResponseErr(ctx, http.StatusFailedDependency, domain.ErrInternal)
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
@@ -1067,7 +1068,26 @@ func (s *srcdsHandler) onAPIPostPingMod() gin.HandlerFunc {
 			return
 		}
 
+		server, errServer := s.serverUsecase.GetServer(ctx, players[0].ServerID)
+		if errServer != nil {
+			slog.Error("Failed to load server", log.ErrAttr(errServer))
+
+			return
+		}
+
+		var connect string
+
+		if addr, errIP := server.IP(ctx); errIP != nil {
+			slog.Error("Failed to resolve server ip", log.ErrAttr(errIP))
+		} else {
+			connect = fmt.Sprintf("steam://connect/%s:%d", addr.String(), server.Port)
+		}
+
 		s.discordUsecase.SendPayload(domain.ChannelMod,
-			discord.PingModMessage(author, conf.ExtURL(author), req.Reason, req.ServerName, conf.Discord.ModPingRoleID))
+			discord.PingModMessage(author, conf.ExtURL(author), req.Reason, server, conf.Discord.ModPingRoleID, connect))
+
+		if errSay := s.stateUsecase.PSay(ctx, author.SteamID, "Moderators have been notified"); errSay != nil {
+			slog.Error("Failed to reply to user", log.ErrAttr(errSay))
+		}
 	}
 }

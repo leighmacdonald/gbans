@@ -53,7 +53,7 @@ public Action onCmdMod(int clientId, int argc)
 	obj.SetInt("client", clientId);
 
 	char url[1024];
-	makeURL("/api/ping_mod", url, sizeof url);
+	makeURL("/api/sm/ping_mod", url, sizeof url);
 
 	HTTPRequest request = new HTTPRequest(url);
 	addAuthHeader(request);

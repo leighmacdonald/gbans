@@ -392,12 +392,16 @@ func EditBanAppealStatusMessage() *discordgo.MessageEmbed {
 	return NewEmbed("Ban state updates").Embed().MessageEmbed
 }
 
-func PingModMessage(author domain.PersonInfo, authorURL string, reason string, serverName string, roleID string) *discordgo.MessageEmbed {
+func PingModMessage(author domain.PersonInfo, authorURL string, reason string, server domain.Server, roleID string, connect string) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed("New User In-Game Report")
 	msgEmbed.
 		Embed().
 		SetDescription(fmt.Sprintf("%s | <@&%s>", reason, roleID)).
-		AddField("server", serverName)
+		AddField("server", server.Name)
+
+	if connect != "" {
+		msgEmbed.Embed().AddField("connect", connect)
+	}
 
 	msgEmbed.AddAuthorPersonInfo(author, authorURL).Embed().Truncate()
 
