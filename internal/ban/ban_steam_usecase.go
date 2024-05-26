@@ -49,7 +49,7 @@ func (s banSteamUsecase) UpdateCache(ctx context.Context) error {
 	}
 
 	for _, ban := range bans {
-		if ban.Deleted || ban.ValidUntil.Before(time.Now()) {
+		if !ban.IncludeFriends || ban.Deleted || ban.ValidUntil.Before(time.Now()) {
 			continue
 		}
 
