@@ -51,7 +51,6 @@ public void OnPluginStart()
 	RegConsoleCmd("autoteam", onCmdAutoTeamAction);
 
 	RegAdminCmd("gb_ban", onAdminCmdBan, ADMFLAG_BAN);
-	RegAdminCmd("gb_reauth", onAdminCmdReauth, ADMFLAG_ROOT);
 	RegAdminCmd("gb_reload", onAdminCmdReload, ADMFLAG_ROOT);
 	RegAdminCmd("gb_stv_record", Command_Record, ADMFLAG_KICK, "Starts a SourceTV demo");
 	RegAdminCmd("gb_stv_stoprecord", Command_StopRecord, ADMFLAG_KICK, "Stops the current SourceTV demo");
@@ -64,7 +63,6 @@ public void OnPluginStart()
 	// Core settings
 	gb_core_host = AutoExecConfig_CreateConVar("gb_core_host", "localhost", "Remote gbans host", FCVAR_NONE);
     gb_core_port = AutoExecConfig_CreateConVar("gb_core_port", "6006", "Remote gbans port", FCVAR_NONE, true, 1.0, true, 65535.0);
-	gb_core_server_name = AutoExecConfig_CreateConVar("gb_core_server_name", "", "Short hand server name", FCVAR_NONE);
 	gb_core_server_key = AutoExecConfig_CreateConVar("gb_core_server_key", "", "GBans server key used to authenticate with the service", FCVAR_NONE);
 
 	// In Game Tweaks
@@ -118,8 +116,6 @@ public void OnConfigsExecuted()
 	gb_stv_timestart.AddChangeHook(OnConVarChanged);
 	gb_stv_timestop.AddChangeHook(OnConVarChanged);
 	gb_stv_path.AddChangeHook(OnConVarChanged);
-
-	refreshToken();
 
 	char sPath[PLATFORM_MAX_PATH];
 

@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
@@ -35,8 +34,6 @@ type srcdsHandler struct {
 	blocklistUsecase domain.BlocklistUsecase
 }
 
-const authTokenDuration = time.Minute * 15
-
 func NewSRCDSHandler(engine *gin.Engine, srcdsUsecase domain.SRCDSUsecase, serversUsecase domain.ServersUsecase,
 	personUsecase domain.PersonUsecase, assetUsecase domain.AssetUsecase, reportUsecase domain.ReportUsecase,
 	banUsecase domain.BanSteamUsecase, networkUsecase domain.NetworkUsecase, banGroupUsecase domain.BanGroupUsecase,
@@ -61,9 +58,6 @@ func NewSRCDSHandler(engine *gin.Engine, srcdsUsecase domain.SRCDSUsecase, serve
 		stateUsecase:     stateUsecase,
 		blocklistUsecase: blocklistUsecase,
 	}
-
-	// unauthed
-	engine.POST("/api/server/auth", handler.onSAPIPostServerAuth())
 
 	adminGroup := engine.Group("/")
 	{
@@ -118,28 +112,6 @@ func NewSRCDSHandler(engine *gin.Engine, srcdsUsecase domain.SRCDSUsecase, serve
 type ServerAuthResp struct {
 	Status bool   `json:"status"`
 	Token  string `json:"token"`
-}
-
-func newServerToken(serverID int, cookieKey string) (string, error) {
-	curTime := time.Now()
-
-	claims := &domain.ServerAuthClaims{
-		ServerID: serverID,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(curTime.Add(authTokenDuration)),
-			IssuedAt:  jwt.NewNumericDate(curTime),
-			NotBefore: jwt.NewNumericDate(curTime),
-		},
-	}
-
-	tokenWithClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	signedToken, errSigned := tokenWithClaims.SignedString([]byte(cookieKey))
-	if errSigned != nil {
-		return "", errors.Join(errSigned, domain.ErrSignJWT)
-	}
-
-	return signedToken, nil
 }
 
 func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
@@ -743,25 +715,6 @@ func (s *srcdsHandler) onGetSMAdmins() gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusOK, admins)
-	}
-}
-
-func (s *srcdsHandler) onSAPIPostServerAuth() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		var req domain.ServerAuthReq
-		if !httphelper.Bind(ctx, &req) {
-			return
-		}
-
-		token, err := s.srcdsUsecase.ServerAuth(ctx, req)
-		if err != nil {
-			httphelper.ResponseErr(ctx, http.StatusUnauthorized, domain.ErrPermissionDenied)
-			slog.Warn("Failed to check server auth", log.ErrAttr(err), slog.String("key", req.Key))
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, ServerAuthResp{Status: true, Token: token})
 	}
 }
 

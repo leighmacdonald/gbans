@@ -6,12 +6,9 @@
 
 #define MAX_SCORES 256
 
-bool gIsAuthenticated = false;
-
 // Core gbans options
 ConVar gb_core_host;
 ConVar gb_core_port;
-ConVar gb_core_server_name;
 ConVar gb_core_server_key;
 
 // In Game Tweaks
@@ -28,8 +25,6 @@ ConVar gb_stv_timestop;
 ConVar gb_stv_finishmap;
 ConVar gb_stv_path;
 ConVar gb_stv_path_complete;
-
-char gAccessToken[512];
 
 // Reports command
 int gReportSourceId = -1;

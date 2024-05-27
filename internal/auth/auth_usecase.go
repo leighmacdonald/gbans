@@ -197,8 +197,6 @@ func (u *authUsecase) MakeGetTokenKey(cookieKey string) func(_ *jwt.Token) (any,
 }
 
 func (u *authUsecase) AuthServerMiddleWare() gin.HandlerFunc {
-	cookieKey := u.configUsecase.Config().HTTP.CookieKey
-
 	return func(ctx *gin.Context) {
 		reqAuthHeader := ctx.GetHeader("Authorization")
 		if reqAuthHeader == "" {
@@ -218,45 +216,15 @@ func (u *authUsecase) AuthServerMiddleWare() gin.HandlerFunc {
 			reqAuthHeader = parts[1]
 		}
 
-		claims := &domain.ServerAuthClaims{}
-
-		parsedToken, errParseClaims := jwt.ParseWithClaims(reqAuthHeader, claims, u.MakeGetTokenKey(cookieKey))
-		if errParseClaims != nil {
-			if errors.Is(errParseClaims, jwt.ErrSignatureInvalid) {
-				slog.Error("jwt signature invalid!", log.ErrAttr(errParseClaims))
-				ctx.AbortWithStatus(http.StatusUnauthorized)
-
-				return
-			}
-
+		var server domain.Server
+		if errServer := u.serverUsecase.GetServerByPassword(ctx, reqAuthHeader, &server, false, false); errServer != nil {
+			slog.Error("Failed to load server during auth", log.ErrAttr(errServer))
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 
 			return
 		}
 
-		if !parsedToken.Valid {
-			ctx.AbortWithStatus(http.StatusUnauthorized)
-			slog.Error("Invalid jwt token parsed")
-
-			return
-		}
-
-		if claims.ServerID <= 0 {
-			ctx.AbortWithStatus(http.StatusUnauthorized)
-			slog.Error("Invalid jwt claim server")
-
-			return
-		}
-
-		server, errGetServer := u.serverUsecase.GetServer(ctx, claims.ServerID)
-		if errGetServer != nil {
-			slog.Error("Failed to load server during auth", log.ErrAttr(errGetServer))
-			ctx.AbortWithStatus(http.StatusUnauthorized)
-
-			return
-		}
-
-		ctx.Set("server_id", claims.ServerID)
+		ctx.Set("server_id", server.ServerID)
 
 		if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
 			hub.WithScope(func(scope *sentry.Scope) {

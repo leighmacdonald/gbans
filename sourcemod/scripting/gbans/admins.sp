@@ -13,11 +13,6 @@
 // TODO improve call logic
 public void OnRebuildAdminCache(AdminCachePart part)
 {
-    if (!gIsAuthenticated) {
-        gbLog("Tried to rebuild admin cache, but we are not authenticated yet");
-        return;
-    }
-
 	if (part == AdminCache_Groups) {
         if (!gReloadGroupsQueued) {
 		    RebuildGroups();

@@ -2,73 +2,6 @@
 #pragma tabsize 4
 #pragma newdecls required
 
-/**
-Authenticates the server with the backend API system.
-
-Send unauthenticated request for token to -> API /api/server/auth
-Recv Token <- API
-Send authenticated commands with header "Authorization $token" set for subsequent calls -> API /api/<path>
-
-*/
-public void refreshToken()
-{
-	gbLog("Refreshing token");
-
-	char serverName[PLATFORM_MAX_PATH];
-	GetConVarString(gb_core_server_name, serverName, sizeof serverName);
-
-	char serverKey[PLATFORM_MAX_PATH];
-	GetConVarString(gb_core_server_key, serverKey, sizeof serverKey);
-
-	JSONObject obj = new JSONObject();
-	obj.SetString("server_name", serverName);
-	obj.SetString("key", serverKey);
-
-	char url[1024];
-	makeURL("/api/server/auth", url, sizeof url);
-	
-	gbLog("Calling: %s", url);
-	
-	HTTPRequest request = new HTTPRequest(url);
-    request.Post(obj, onAuthReqReceived);
-
-	delete obj;
-}
-
-public void onAuthReqReceived(HTTPResponse response, any value)
-{
-
-	if (response.Status != HTTPStatus_OK) {
-        gbLog("Invalid refreshToken response code: %d", response.Status);
-        return;
-    } 
-
-	JSONObject resp = view_as<JSONObject>(response.Data); 
-
-	char token[512];
-
-	bool status = resp.GetBool("status");
-	if (!status) {
-		gbLog("Invalid server auth status returned");
-		return;
-	}
-
-	resp.GetString("token", token, sizeof token);
-
-	if(strlen(token) == 0)
-	{
-		gbLog("Invalid response status, invalid token");
-		return;
-	}
-
-	gAccessToken = token;
-	gbLog("Successfully authenticated with gbans server");
-
-	gIsAuthenticated = true;
-
-	reloadAdmins(true);
-}
-
 public Action onAdminCmdReload(int clientId, int argc)
 {
 	reloadAdmins(true);
@@ -78,10 +11,6 @@ public Action onAdminCmdReload(int clientId, int argc)
 
 public void reloadAdmins(bool force)
 {
-	if (!gIsAuthenticated) {
-		return;
-	}
-
 	ServerCommand("sm_reloadadmins");
 }
 

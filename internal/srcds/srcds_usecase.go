@@ -284,31 +284,6 @@ func (h srcdsUsecase) GetAdminGroups(ctx context.Context, admin domain.SMAdmin) 
 	return h.srcdsRepository.GetAdminGroups(ctx, admin)
 }
 
-func (h srcdsUsecase) ServerAuth(ctx context.Context, req domain.ServerAuthReq) (string, error) {
-	var server domain.Server
-
-	errGetServer := h.serversUsecase.GetServerByPassword(ctx, req.Key, &server, true, false)
-	if errGetServer != nil {
-		return "", errGetServer
-	}
-
-	if server.Password != req.Key {
-		return "", domain.ErrPermissionDenied
-	}
-
-	accessToken, errToken := newServerToken(server.ServerID, h.cookie)
-	if errToken != nil {
-		return "", errToken
-	}
-
-	server.TokenCreatedOn = time.Now()
-	if errSaveServer := h.serversUsecase.SaveServer(ctx, &server); errSaveServer != nil {
-		return "", errSaveServer
-	}
-
-	return accessToken, nil
-}
-
 func (h srcdsUsecase) Report(ctx context.Context, currentUser domain.UserProfile, req domain.CreateReportReq) (*domain.Report, error) {
 	if req.Description == "" || len(req.Description) < 10 {
 		return nil, fmt.Errorf("%w: description", domain.ErrParamInvalid)

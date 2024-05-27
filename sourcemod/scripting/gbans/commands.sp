@@ -72,7 +72,6 @@ void onPingModRespReceived(HTTPResponse response, any clientId)
 
         return;
     } 
-
 	ReplyToCommand(clientId, "Mods have been alerted, thanks!");
 }
 
@@ -88,14 +87,6 @@ public Action onCmdHelp(int clientId, int argc)
 	ReplyToCommand(clientId, "gb_version -- Show the current version");
 	return Plugin_Handled;
 }
-
-
-public Action onAdminCmdReauth(int clientId, int argc)
-{
-	refreshToken();
-	return Plugin_Handled;
-}
-
 
 public Action onAdminCmdBan(int clientId, int argc)
 {
