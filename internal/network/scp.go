@@ -54,7 +54,7 @@ func NewSCPExecer(database database.Database, configUsecase domain.ConfigUsecase
 }
 
 func (f SCPExecer) Start(ctx context.Context) {
-	updateTicker := time.NewTicker(time.Minute)
+	updateTimer := time.NewTimer(time.Minute * 5)
 
 	if errUpdate := f.update(ctx); errUpdate != nil {
 		slog.Error("Error querying ssh demo", log.ErrAttr(errUpdate))
@@ -62,12 +62,12 @@ func (f SCPExecer) Start(ctx context.Context) {
 
 	for {
 		select {
-		case <-updateTicker.C:
+		case <-updateTimer.C:
 			if errUpdate := f.update(ctx); errUpdate != nil {
 				slog.Error("Error querying ssh demo", log.ErrAttr(errUpdate))
-
-				continue
 			}
+
+			updateTimer.Reset(time.Minute * 5)
 		case <-ctx.Done():
 			return
 		}
@@ -118,14 +118,14 @@ func (f SCPExecer) updateServer(ctx context.Context, waitGroup *sync.WaitGroup, 
 		return
 	}
 
+	defer func() {
+		if errClose := scpClient.Close(); errClose != nil {
+			slog.Error("failed to close scp client", log.ErrAttr(errClose))
+		}
+	}()
+
 	if err := f.onConnect(ctx, scpClient, addrServers); err != nil {
 		slog.Error("onConnect function errored", log.ErrAttr(err))
-
-		return
-	}
-
-	if errClose := scpClient.Close(); errClose != nil {
-		slog.Error("failed to close scp client", log.ErrAttr(errClose))
 	}
 }
 
