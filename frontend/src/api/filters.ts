@@ -20,9 +20,9 @@ export const filterActionString = (fa: FilterAction) => {
     }
 };
 
-export interface Filter {
+export type Filter = {
     filter_id?: number;
-    author_id?: bigint;
+    author_id?: string;
     pattern: RegExp | string;
     is_regex: boolean;
     is_enabled?: boolean;
@@ -32,7 +32,7 @@ export interface Filter {
     weight: number;
     created_on?: Date;
     updated_on?: Date;
-}
+};
 
 export const apiGetFilters = async (abortController?: AbortController) =>
     await apiCall<Filter[]>(`/api/filters/query`, 'POST', abortController);

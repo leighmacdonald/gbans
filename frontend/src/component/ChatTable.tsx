@@ -41,6 +41,7 @@ export const ChatTable = ({
         () => [
             {
                 accessorKey: 'server_id',
+                enableSorting: false,
                 header: () => <TableHeadingCell name={'Server'} />,
                 cell: (info) => {
                     return (
@@ -62,11 +63,13 @@ export const ChatTable = ({
             },
             {
                 accessorKey: 'created_on',
+                enableSorting: false,
                 header: () => <TableHeadingCell name={'Created'} />,
                 cell: (info) => <Typography align={'center'}>{renderDateTime(info.getValue() as Date)}</Typography>
             },
             {
                 accessorKey: 'persona_name',
+                enableSorting: false,
                 header: () => <TableHeadingCell name={'Name'} />,
                 cell: (info) => (
                     <PersonCell
@@ -79,6 +82,7 @@ export const ChatTable = ({
             },
             {
                 accessorKey: 'body',
+                enableSorting: false,
                 header: () => <TableHeadingCell name={'Message'} />,
                 cell: (info) => (
                     <Typography padding={0} variant={'body1'}>
@@ -88,6 +92,7 @@ export const ChatTable = ({
             },
             {
                 accessorKey: 'auto_filter_flagged',
+                enableSorting: false,
                 header: () => <TableHeadingCell name={''} />,
                 cell: (info) =>
                     (info.getValue() as number) > 0 ? (
@@ -100,6 +105,7 @@ export const ChatTable = ({
             },
             {
                 id: 'actions',
+                enableSorting: false,
                 header: () => <TableHeadingCell name={''} />,
                 cell: (info) => (
                     <Tooltip title={'Create Report'}>

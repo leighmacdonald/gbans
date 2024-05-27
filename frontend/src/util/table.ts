@@ -1,3 +1,4 @@
+import { ColumnFiltersState } from '@tanstack/react-table';
 import { intervalToDuration } from 'date-fns';
 import { z } from 'zod';
 import { DataCount } from '../api';
@@ -29,3 +30,15 @@ export type Order = 'asc' | 'desc';
 export interface LazyResult<T> extends DataCount {
     data: T[];
 }
+
+export const getColumnFilters = <T>(value: T): ColumnFiltersState => {
+    const filters: ColumnFiltersState = [];
+    let t: keyof T;
+    for (t in value) {
+        if (value[t] != undefined) {
+            filters.push({ id: t, value: value[t] });
+        }
+    }
+
+    return filters;
+};

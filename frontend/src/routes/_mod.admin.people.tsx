@@ -186,6 +186,7 @@ const PeopleTable = ({
         () => [
             {
                 accessorKey: 'source_id',
+                enableSorting: false,
                 header: () => <TableHeadingCell name={'Profile'} />,
                 cell: (info) => {
                     return typeof people.data[info.row.index] === 'undefined' ? (
@@ -202,6 +203,7 @@ const PeopleTable = ({
             },
             {
                 accessorKey: 'communityvisibilitystate',
+                enableSorting: false,
                 header: () => <TableHeadingCell name={'Visibility'} />,
                 cell: (info) => (
                     <Typography variant={'body1'}>
@@ -211,26 +213,31 @@ const PeopleTable = ({
             },
             {
                 accessorKey: 'vac_bans',
+                enableSorting: false,
                 header: () => <TableHeadingCell name={'Vac Ban'} />,
                 cell: (info) => <Typography variant={'body1'}>{info.getValue() ? 'Yes' : 'No'}</Typography>
             },
             {
                 accessorKey: 'community_banned',
+                enableSorting: false,
                 header: () => <TableHeadingCell name={'Comm. Ban'} />,
                 cell: (info) => <Typography variant={'body1'}>{info.getValue() ? 'Yes' : 'No'}</Typography>
             },
             {
                 accessorKey: 'timecreated',
+                enableSorting: false,
                 header: () => <TableHeadingCell name={'Account Created'} />,
                 cell: (info) => <Typography>{renderDate(fromUnixTime(info.getValue() as number))}</Typography>
             },
             {
                 accessorKey: 'created_on',
+                enableSorting: false,
                 header: () => <TableHeadingCell name={'First Seen'} />,
                 cell: (info) => <Typography>{renderDateTime(info.getValue() as Date)}</Typography>
             },
             {
                 accessorKey: 'permission_level',
+                enableSorting: false,
                 header: () => <TableHeadingCell name={'First Seen'} />,
                 cell: (info) => (
                     <Typography>
@@ -240,7 +247,7 @@ const PeopleTable = ({
             },
             {
                 id: 'actions',
-                header: () => <TableHeadingCell name={'Edit'} />,
+                enableSorting: false,
                 cell: (info) => {
                     return isAdmin ? (
                         <IconButton color={'warning'} onClick={() => onEditPerson(info.row.original)}>
