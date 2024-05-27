@@ -48,6 +48,7 @@ import { Route as AuthLoginDiscordImport } from './routes/_auth.login.discord'
 import { Route as AuthForumsForumidImport } from './routes/_auth.forums.$forum_id'
 import { Route as AuthContestsContestidImport } from './routes/_auth.contests.$contest_id'
 import { Route as AuthBanBanidImport } from './routes/_auth.ban.$ban_id'
+import { Route as AdminAdminSettingsImport } from './routes/_admin.admin.settings'
 import { Route as AdminAdminServersImport } from './routes/_admin.admin.servers'
 import { Route as AdminAdminGameAdminsImport } from './routes/_admin.admin.game-admins'
 import { Route as ModAdminNetworkIndexImport } from './routes/_mod.admin.network.index'
@@ -248,6 +249,11 @@ const AuthContestsContestidRoute = AuthContestsContestidImport.update({
 const AuthBanBanidRoute = AuthBanBanidImport.update({
   path: '/ban/$ban_id',
   getParentRoute: () => AuthRoute,
+} as any)
+
+const AdminAdminSettingsRoute = AdminAdminSettingsImport.update({
+  path: '/admin/settings',
+  getParentRoute: () => AdminRoute,
 } as any)
 
 const AdminAdminServersRoute = AdminAdminServersImport.update({
@@ -451,6 +457,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/servers'
       fullPath: '/admin/servers'
       preLoaderRoute: typeof AdminAdminServersImport
+      parentRoute: typeof AdminImport
+    }
+    '/_admin/admin/settings': {
+      id: '/_admin/admin/settings'
+      path: '/admin/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminAdminSettingsImport
       parentRoute: typeof AdminImport
     }
     '/_auth/ban/$ban_id': {
@@ -693,6 +706,7 @@ export const routeTree = rootRoute.addChildren({
   AdminRoute: AdminRoute.addChildren({
     AdminAdminGameAdminsRoute,
     AdminAdminServersRoute,
+    AdminAdminSettingsRoute,
   }),
   AuthRoute: AuthRoute.addChildren({
     AuthChatlogsRoute,
@@ -766,7 +780,8 @@ export const routeTree = rootRoute.addChildren({
       "filePath": "_admin.tsx",
       "children": [
         "/_admin/admin/game-admins",
-        "/_admin/admin/servers"
+        "/_admin/admin/servers",
+        "/_admin/admin/settings"
       ]
     },
     "/_auth": {
@@ -883,6 +898,10 @@ export const routeTree = rootRoute.addChildren({
     },
     "/_admin/admin/servers": {
       "filePath": "_admin.admin.servers.tsx",
+      "parent": "/_admin"
+    },
+    "/_admin/admin/settings": {
+      "filePath": "_admin.admin.settings.tsx",
       "parent": "/_admin"
     },
     "/_auth/ban/$ban_id": {
