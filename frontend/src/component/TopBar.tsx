@@ -281,6 +281,11 @@ export const TopBar = () => {
                     leftIcon: <AddModeratorIcon sx={colourOpts} />,
                     label: 'Game Admins',
                     callback: onClickHandler('/admin/game-admins')
+                },
+                {
+                    leftIcon: <AddModeratorIcon sx={colourOpts} />,
+                    label: 'System Settings',
+                    callback: onClickHandler('/admin/settings')
                 }
             ]
         };
