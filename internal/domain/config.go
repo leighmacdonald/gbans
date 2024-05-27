@@ -37,7 +37,6 @@ type Config struct {
 	IP2Location ConfigIP2Location `mapstructure:"ip2location"`
 	Debug       ConfigDebug       `mapstructure:"debug"`
 	Patreon     ConfigPatreon     `mapstructure:"patreon"`
-	S3          ConfigS3Store     `mapstructure:"s3"`
 	SSH         ConfigSSH         `mapstructure:"ssh"`
 	LocalStore  ConfigLocalStore  `mapstructure:"local_store"`
 	Exports     ConfigExports     `mapstructure:"exports"`
@@ -69,28 +68,18 @@ type ConfigExports struct {
 }
 
 type ConfigFilter struct {
-	Enabled      bool          `mapstructure:"enabled"`
-	Dry          bool          `mapstructure:"dry"`
-	PingDiscord  bool          `mapstructure:"ping_discord"`
-	MaxWeight    int           `mapstructure:"max_weight"`
-	CheckTimeout time.Duration `mapstructure:"check_timeout"`
-	MatchTimeout time.Duration `mapstructure:"match_timeout"`
+	Enabled        bool          `mapstructure:"enabled"`
+	WarningTimeout time.Duration `mapstructure:"warning_timeout"`
+	WarningLimit   int           `mapstructure:"warning_limit"`
+	Dry            bool          `mapstructure:"dry"`
+	PingDiscord    bool          `mapstructure:"ping_discord"`
+	MaxWeight      int           `mapstructure:"max_weight"`
+	CheckTimeout   time.Duration `mapstructure:"check_timeout"`
+	MatchTimeout   time.Duration `mapstructure:"match_timeout"`
 }
 
 type ConfigLocalStore struct {
 	PathRoot string `mapstructure:"path_root"`
-}
-
-type ConfigS3Store struct {
-	Enabled     bool   `mapstructure:"enabled"`
-	AccessKey   string `mapstructure:"access_key"`
-	SecretKey   string `mapstructure:"secret_key"`
-	Endpoint    string `mapstructure:"endpoint"`
-	ExternalURL string `mapstructure:"external_url"`
-	Region      string `mapstructure:"region"`
-	SSL         bool   `mapstructure:"ssl"`
-	BucketMedia string `mapstructure:"bucket_media"`
-	BucketDemo  string `mapstructure:"bucket_demo"`
 }
 
 type ConfigDB struct {
@@ -162,23 +151,17 @@ const (
 )
 
 type ConfigGeneral struct {
-	SiteName                     string        `mapstructure:"site_name"`
-	SteamKey                     string        `mapstructure:"steam_key"`
-	Owner                        string        `mapstructure:"owner"`
-	Mode                         RunMode       `mapstructure:"mode"`
-	WarningTimeout               time.Duration `mapstructure:"warning_timeout"`
-	WarningLimit                 int           `mapstructure:"warning_limit"`
-	UseUTC                       bool          `mapstructure:"use_utc"`
-	ServerStatusUpdateFreq       time.Duration `mapstructure:"server_status_update_freq"`
-	MasterServerStatusUpdateFreq time.Duration `mapstructure:"master_server_status_update_freq"`
-	DefaultMaps                  []string      `mapstructure:"default_maps"`
-	ExternalURL                  string        `mapstructure:"external_url"`
-	DemoCleanupEnabled           bool          `mapstructure:"demo_cleanup_enabled"`
-	DemoCleanupStrategy          DemoStrategy  `mapstructure:"demo_cleanup_strategy"`
-	DemoCleanupMinPct            float32       `mapstructure:"demo_cleanup_min_pct"`
-	DemoCleanupMount             string        `mapstructure:"demo_cleanup_mount"`
-	DemoCountLimit               uint64        `mapstructure:"demo_count_limit"`
-	FileServeMode                FileServeMode `mapstructure:"file_serve_mode"`
+	SiteName            string        `mapstructure:"site_name"`
+	SteamKey            string        `mapstructure:"steam_key"`
+	Owner               string        `mapstructure:"owner"`
+	Mode                RunMode       `mapstructure:"mode"`
+	ExternalURL         string        `mapstructure:"external_url"`
+	DemoCleanupEnabled  bool          `mapstructure:"demo_cleanup_enabled"`
+	DemoCleanupStrategy DemoStrategy  `mapstructure:"demo_cleanup_strategy"`
+	DemoCleanupMinPct   float32       `mapstructure:"demo_cleanup_min_pct"`
+	DemoCleanupMount    string        `mapstructure:"demo_cleanup_mount"`
+	DemoCountLimit      uint64        `mapstructure:"demo_count_limit"`
+	FileServeMode       FileServeMode `mapstructure:"file_serve_mode"`
 }
 
 type ConfigDiscord struct {
@@ -199,8 +182,6 @@ type ConfigDiscord struct {
 type ConfigLog struct {
 	Level            string  `mapstructure:"level"`
 	File             string  `mapstructure:"file"`
-	ReportCaller     bool    `mapstructure:"report_caller"`
-	FullTimestamp    bool    `mapstructure:"full_timestamp"`
 	SrcdsLogAddr     string  `mapstructure:"srcds_log_addr"`
 	SentryDSN        string  `mapstructure:"sentry_dsn"`
 	SentryDSNWeb     string  `mapstructure:"sentry_dsn_web"`
@@ -209,17 +190,12 @@ type ConfigLog struct {
 }
 
 type ConfigDebug struct {
-	UpdateSRCDSLogSecrets   bool   `mapstructure:"update_srcds_log_secrets"`
-	SkipOpenIDValidation    bool   `mapstructure:"skip_open_id_validation"`
-	WriteUnhandledLogEvents bool   `mapstructure:"write_unhandled_log_events"`
-	AddRCONLogAddress       string `mapstructure:"add_rcon_log_address"`
+	SkipOpenIDValidation bool   `mapstructure:"skip_open_id_validation"`
+	AddRCONLogAddress    string `mapstructure:"add_rcon_log_address"`
 }
 
 type ConfigIP2Location struct {
-	Enabled      bool   `mapstructure:"enabled"`
-	CachePath    string `mapstructure:"cache_path"`
-	Token        string `mapstructure:"token"`
-	ASNEnabled   bool   `mapstructure:"asn_enabled"`
-	IPEnabled    bool   `mapstructure:"ip_enabled"`
-	ProxyEnabled bool   `mapstructure:"proxy_enabled"`
+	Enabled   bool   `mapstructure:"enabled"`
+	CachePath string `mapstructure:"cache_path"`
+	Token     string `mapstructure:"token"`
 }

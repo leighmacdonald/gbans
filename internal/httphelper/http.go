@@ -29,9 +29,14 @@ func httpErrorHandler() gin.HandlerFunc {
 }
 
 func useSecure(mode domain.RunMode, cspOrigin string) gin.HandlerFunc {
+	defaultSrc := []string{"'self'"}
+	if cspOrigin != "" {
+		defaultSrc = append(defaultSrc, cspOrigin)
+	}
+
 	cspBuilder := cspbuilder.Builder{
 		Directives: map[string][]string{
-			cspbuilder.DefaultSrc: {"'self'", cspOrigin},
+			cspbuilder.DefaultSrc: defaultSrc,
 			cspbuilder.StyleSrc:   {"'self'", "'unsafe-inline'", "https://fonts.cdnfonts.com", "https://fonts.googleapis.com"},
 			cspbuilder.ScriptSrc:  {"'self'", "'unsafe-inline'", "https://www.google-analytics.com", "https://browser.sentry-cdn.com/*"}, // TODO  "'strict-dynamic'", "$NONCE",
 			cspbuilder.FontSrc:    {"'self'", "data:", "https://fonts.gstatic.com", "https://fonts.cdnfonts.com"},
@@ -151,7 +156,7 @@ func useSentry(engine *gin.Engine, version string) {
 
 func useCors(engine *gin.Engine, conf domain.Config) {
 	engine.Use(httpErrorHandler(), gin.Recovery())
-	engine.Use(useSecure(conf.General.Mode, conf.S3.ExternalURL))
+	engine.Use(useSecure(conf.General.Mode, ""))
 
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = conf.HTTP.CorsOrigins
