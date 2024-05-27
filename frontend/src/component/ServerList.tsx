@@ -27,10 +27,12 @@ export const ServerList = () => {
 
     const columns = [
         columnHelper.accessor('cc', {
+            enableSorting: false,
             header: () => <TableHeadingCell name={'CC'} />,
             cell: (info) => <Flag countryCode={info.getValue()} />
         }),
         columnHelper.accessor('name', {
+            enableSorting: false,
             header: () => <TableHeadingCell name={'Server'} />,
             cell: (info) => (
                 <Typography variant={'button'} fontFamily={tf2Fonts}>
@@ -39,10 +41,12 @@ export const ServerList = () => {
             )
         }),
         columnHelper.accessor('map', {
+            enableSorting: false,
             header: () => <TableHeadingCell name={'Map'} />,
             cell: (info) => <Typography variant={'body2'}>{cleanMapName(info.getValue())}</Typography>
         }),
         columnHelper.accessor('players', {
+            enableSorting: false,
             header: () => <TableHeadingCell name={'Players'} />,
             cell: (info) => (
                 <Typography
@@ -51,6 +55,7 @@ export const ServerList = () => {
             )
         }),
         columnHelper.accessor('distance', {
+            enableSorting: false,
             header: () => <TableHeadingCell name={'Dist'} />,
             cell: (info) => (
                 <Tooltip title={`Distance in hammer units: ${Math.round((info.getValue() ?? 1) * 52.49)} khu`}>
@@ -59,6 +64,7 @@ export const ServerList = () => {
             )
         }),
         columnHelper.accessor('copy', {
+            enableSorting: false,
             header: () => <TableHeadingCell name={'Cp'} />,
             cell: (info) => (
                 <IconButton
@@ -83,6 +89,7 @@ export const ServerList = () => {
             )
         }),
         columnHelper.accessor('connect', {
+            enableSorting: false,
             header: () => <TableHeadingCell name={'Connect'} />,
             cell: (info) => (
                 <Button
