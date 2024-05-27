@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -15,13 +15,22 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { createColumnHelper } from '@tanstack/react-table';
-import { z } from 'zod';
+import {
+    ColumnFiltersState,
+    createColumnHelper,
+    getCoreRowModel,
+    getFilteredRowModel,
+    getPaginationRowModel,
+    getSortedRowModel,
+    SortingState,
+    useReactTable
+} from '@tanstack/react-table';
 import {
     apiGetBansSteam,
     AppealState,
     AppealStateCollection,
     appealStateString,
+    BanPayloadSteam,
     BanReason,
     BanReasons,
     PermissionLevel,
@@ -29,7 +38,8 @@ import {
 } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
-import { FullTable } from '../component/FullTable.tsx';
+import { DataTable } from '../component/DataTable.tsx';
+import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import RouterLink from '../component/RouterLink.tsx';
 import { TableCellBool } from '../component/TableCellBool.tsx';
@@ -41,31 +51,39 @@ import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
 import { SelectFieldSimple } from '../component/field/SelectFieldSimple.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { ModalBanSteam, ModalUnbanSteam } from '../component/modal';
-import { commonTableSearchSchema, isPermanentBan, RowsPerPage } from '../util/table.ts';
+import { getColumnFilters, isPermanentBan, RowsPerPage } from '../util/table.ts';
 import { renderDate } from '../util/text.tsx';
 
-const banSteamSearchSchema = z.object({
-    ...commonTableSearchSchema,
-    sortColumn: z
-        .enum(['ban_id', 'source_id', 'target_id', 'deleted', 'reason', 'created_on', 'valid_until', 'appeal_state'])
-        .optional(),
-    source_id: z.string().optional(),
-    target_id: z.string().optional(),
-    reason: z.nativeEnum(BanReason).optional(),
-    appeal_state: z.nativeEnum(AppealState).optional(),
-    deleted: z.boolean().optional()
+export const Route = createFileRoute('/_mod/admin/ban/steam')({
+    component: AdminBanSteam
 });
 
-export const Route = createFileRoute('/_mod/admin/ban/steam')({
-    component: AdminBanSteam,
-    validateSearch: (search) => banSteamSearchSchema.parse(search)
-});
+type SearchValues = {
+    sortColumn?: keyof BanPayloadSteam;
+    sortDesc?: boolean;
+    source_id?: string;
+    target_id?: string;
+    appeal_state?: AppealState;
+    deleted?: boolean;
+};
 
 function AdminBanSteam() {
     const queryClient = useQueryClient();
     const { hasPermission } = Route.useRouteContext();
     const navigate = useNavigate({ from: Route.fullPath });
-    const { target_id, source_id, appeal_state, deleted } = Route.useSearch();
+    const { sortColumn, sortDesc, target_id, source_id, appeal_state, deleted } = Route.useSearch<SearchValues>();
+    const [pagination, setPagination] = useState({
+        pageIndex: 0, //initial page index
+        pageSize: RowsPerPage.TwentyFive //default page size
+    });
+    const [sorting, setSorting] = useState<SortingState>([
+        {
+            id: sortColumn ?? 'ban_id',
+            desc: sortDesc ?? true
+        }
+    ]);
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+
     const { data: bans, isLoading } = useQuery({
         queryKey: ['steamBans'],
         queryFn: async () => {
@@ -82,7 +100,9 @@ function AdminBanSteam() {
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({
         onSubmit: async ({ value }) => {
-            await navigate({ to: '/admin/ban/steam', search: (prev) => ({ ...prev, ...value }) });
+            await navigate({ to: '/admin/ban/steam', replace: true, search: (prev) => ({ ...prev, ...value }) });
+
+            table.setColumnFilters(getColumnFilters(value));
         },
         defaultValues: {
             source_id: source_id ?? '',
@@ -117,6 +137,27 @@ function AdminBanSteam() {
 
         return makeColumns(onEdit, onUnban);
     }, []);
+
+    const table = useReactTable({
+        onStateChange: (updater) => {
+            console.log(updater);
+        },
+        data: bans ?? [],
+        columns: columns,
+        autoResetPageIndex: true,
+        getCoreRowModel: getCoreRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        onPaginationChange: setPagination,
+        onSortingChange: setSorting,
+        onColumnFiltersChange: setColumnFilters,
+        state: {
+            sorting,
+            pagination,
+            columnFilters
+        }
+    });
 
     return (
         <Grid container spacing={2}>
@@ -235,12 +276,22 @@ function AdminBanSteam() {
                 >
                     <Grid container spacing={3}>
                         <Grid xs={12}>
-                            <FullTable
-                                data={bans ?? []}
-                                isLoading={isLoading}
-                                columns={columns}
-                                pageSize={RowsPerPage.TwentyFive}
-                                initialSortColumn={'ban_id'}
+                            <DataTable table={table} isLoading={isLoading} />
+
+                            <PaginatorLocal
+                                onRowsChange={(rows) => {
+                                    setPagination((prev) => {
+                                        return { ...prev, pageSize: rows };
+                                    });
+                                }}
+                                onPageChange={(page) => {
+                                    setPagination((prev) => {
+                                        return { ...prev, pageIndex: page };
+                                    });
+                                }}
+                                count={table.getRowCount()}
+                                rows={pagination.pageSize}
+                                page={pagination.pageIndex}
                             />
                         </Grid>
                     </Grid>
@@ -257,6 +308,8 @@ const makeColumns = (
     onUnban: (ban: SteamBanRecord) => Promise<void>
 ) => [
     columnHelper.accessor('ban_id', {
+        enableSorting: true,
+        sortingFn: 'alphanumeric',
         header: () => <TableHeadingCell name={'Ban ID'} />,
         cell: (info) => (
             <Link component={RouterLink} to={`/ban/$ban_id`} params={{ ban_id: info.getValue() }}>
@@ -279,6 +332,13 @@ const makeColumns = (
         }
     }),
     columnHelper.accessor('target_id', {
+        sortingFn: (rowA, rowB) => {
+            return rowA.original.target_personaname < rowB.original.target_personaname
+                ? -1
+                : rowA.original.target_personaname == rowB.original.target_personaname
+                  ? 0
+                  : 1;
+        },
         header: () => <TableHeadingCell name={'Subject'} />,
         cell: (info) => {
             return typeof info.row.original === 'undefined' ? (
