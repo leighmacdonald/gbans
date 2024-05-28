@@ -1,7 +1,6 @@
 package httphelper
 
 import (
-	"crypto/tls"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -187,33 +186,13 @@ type ResultsCount struct {
 
 const ctxKeyUserProfile = "user_profile"
 
-func NewHTTPServer(tlsEnabled bool, listenAddr string, handler http.Handler) *http.Server {
+func NewHTTPServer(listenAddr string, handler http.Handler) *http.Server {
 	httpServer := &http.Server{
 		Addr:           listenAddr,
 		Handler:        handler,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   120 * time.Second,
 		MaxHeaderBytes: 1 << 20,
-	}
-
-	if tlsEnabled {
-		tlsVar := &tls.Config{
-			// Only use curves which have assembly implementations
-			CurvePreferences: []tls.CurveID{
-				tls.CurveP256,
-				tls.X25519, // Go 1.8 only
-			},
-			MinVersion: tls.VersionTLS12,
-			CipherSuites: []uint16{
-				tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-				tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305, // Go 1.8 only
-				tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,   // Go 1.8 only
-				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-			},
-		}
-		httpServer.TLSConfig = tlsVar
 	}
 
 	return httpServer

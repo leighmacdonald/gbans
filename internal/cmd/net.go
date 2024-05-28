@@ -32,24 +32,16 @@ func netUpdateCmd() *cobra.Command {
 		Short: "Updates ip2location dataset",
 		Long:  `Updates ip2location dataset`,
 		Run: func(_ *cobra.Command, _ []string) {
-			configUsecase := config.NewConfigUsecase(config.NewConfigRepository())
-			if errConfig := configUsecase.Read(false); errConfig != nil {
-				panic(fmt.Sprintf("Failed to read config: %v", errConfig))
-			}
-
-			conf := configUsecase.Config()
-			logCloser := log.MustCreateLogger(conf.Log.File, conf.Log.Level)
-			defer logCloser()
-
 			ctx := context.Background()
 
-			connCtx, cancelConn := context.WithTimeout(ctx, time.Second*5)
-			defer cancelConn()
-			dbUsecase := database.New(conf.DB.DSN, false, conf.DB.LogQueries)
+			staticConfig, errStatic := config.ReadStaticConfig()
+			if errStatic != nil {
+				panic(fmt.Sprintf("Failed to read static config: %v", errStatic))
+			}
 
-			slog.Info("Connecting to database")
-			if errConnect := dbUsecase.Connect(connCtx); errConnect != nil {
-				slog.Error("Failed to connect to database", log.ErrAttr(errConnect))
+			dbUsecase := database.New(staticConfig.DatabaseDSN, staticConfig.DatabaseAutoMigrate, staticConfig.DatabaseLogQueries)
+			if errConnect := dbUsecase.Connect(ctx); errConnect != nil {
+				slog.Error("Cannot initialize database", log.ErrAttr(errConnect))
 
 				return
 			}
@@ -59,6 +51,20 @@ func netUpdateCmd() *cobra.Command {
 					slog.Error("Failed to close database cleanly", log.ErrAttr(errClose))
 				}
 			}()
+
+			configUsecase := config.NewConfigUsecase(staticConfig, config.NewConfigRepository(dbUsecase))
+
+			if err := configUsecase.Init(ctx); err != nil {
+				panic(fmt.Sprintf("Failed to init config: %v", err))
+			}
+
+			if errConfig := configUsecase.Reload(ctx); errConfig != nil {
+				panic(fmt.Sprintf("Failed to read config: %v", errConfig))
+			}
+
+			conf := configUsecase.Config()
+			logCloser := log.MustCreateLogger(conf.Log.File, conf.Log.Level)
+			defer logCloser()
 
 			eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
 

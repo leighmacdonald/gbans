@@ -1,25 +1,22 @@
 package config
 
 import (
+	"context"
 	"errors"
-	"strings"
+	"github.com/leighmacdonald/gbans/internal/database"
 	"sync"
 
-	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/steamid/v4/steamid"
-	"github.com/leighmacdonald/steamweb/v2"
-	"github.com/mitchellh/mapstructure"
-	"github.com/spf13/viper"
 )
 
 type configRepository struct {
+	db   database.Database
 	Conf domain.Config
 	mu   sync.RWMutex
 }
 
-func NewConfigRepository() domain.ConfigRepository {
-	return &configRepository{Conf: domain.Config{}}
+func NewConfigRepository(db database.Database) domain.ConfigRepository {
+	return &configRepository{db: db, Conf: domain.Config{}}
 }
 
 func (c *configRepository) Config() domain.Config {
@@ -29,40 +26,141 @@ func (c *configRepository) Config() domain.Config {
 	return c.Conf
 }
 
-func (c *configRepository) Read(noFileOk bool) error {
-	if errReadConfig := viper.ReadInConfig(); errReadConfig != nil && !noFileOk {
-		return errors.Join(errReadConfig, domain.ErrReadConfig)
+func (c *configRepository) Read(ctx context.Context) (domain.Config, error) {
+	const query = `
+		SELECT general_site_name, general_steam_key, general_mode, general_file_serve_mode, general_srcds_log_addr,
+		       
+		       filters_enabled, filters_dry, filters_ping_discord, filters_max_weight, filters_warning_timeout, filters_check_timeout, filters_match_timeout,
+		       
+		       demo_cleanup_enabled, demo_cleanup_strategy, demo_cleanup_min_pct, demo_cleanup_mount, demo_count_limit,
+		       
+		       patreon_enabled, patreon_client_id, patreon_client_secret, patreon_creator_access_token, patreon_creator_refresh_token,
+		       
+		       discord_enabled, discord_app_id, discord_app_secret, discord_link_id, discord_token, discord_guild_id, discord_log_channel_id,
+		       discord_public_log_channel_enabled, discord_public_log_channel_id, discord_public_match_log_channel_id, discord_mod_ping_role_id,
+		       discord_unregister_on_start,
+		       
+		       logging_level, logging_file,
+		       
+		       sentry_sentry_dsn, sentry_sentry_dsn_web, sentry_sentry_trace, sentry_sentry_sample_rate,
+		       
+		       ip2location_enabled, ip2location_cache_path, ip2location_token,
+		       
+		       debug_skip_open_id_validation, debug_add_rcon_log_address,
+		       
+		       local_store_path_root,
+		       
+		       ssh_enabled, ssh_username, ssh_password, ssh_port, ssh_private_key_path, ssh_update_interval, ssh_timeout, ssh_demo_path_fmt,
+		       
+		       exports_bd_enabled, exports_valve_enabled, exports_authorized_keys
+		 FROM config`
+
+	var cfg domain.Config
+
+	err := c.db.QueryRow(ctx, query).
+		Scan(&cfg.General.SiteName, &cfg.General.SteamKey, &cfg.General.Mode, &cfg.General.FileServeMode, &cfg.General.SrcdsLogAddr,
+			&cfg.Filter.Enabled, &cfg.Filter.Dry, &cfg.Filter.PingDiscord, &cfg.Filter.MaxWeight, &cfg.Filter.WarningTimeout, &cfg.Filter.CheckTimeout, &cfg.Filter.MatchTimeout,
+			&cfg.Demo.DemoCleanupEnabled, &cfg.Demo.DemoCleanupStrategy, &cfg.Demo.DemoCleanupMinPct, &cfg.Demo.DemoCleanupMount, &cfg.Demo.DemoCountLimit,
+			&cfg.Patreon.Enabled, &cfg.Patreon.ClientID, &cfg.Patreon.ClientSecret, &cfg.Patreon.CreatorAccessToken, &cfg.Patreon.CreatorRefreshToken,
+			&cfg.Discord.Enabled, &cfg.Discord.AppID, &cfg.Discord.AppSecret, &cfg.Discord.LinkID, &cfg.Discord.Token, &cfg.Discord.GuildID, &cfg.Discord.LogChannelID,
+			&cfg.Discord.PublicLogChannelEnable, &cfg.Discord.PublicMatchLogChannelID, &cfg.Discord.PublicMatchLogChannelID, &cfg.Discord.ModPingRoleID,
+			&cfg.Discord.UnregisterOnStart,
+			&cfg.Log.Level, &cfg.Log.File,
+			&cfg.Sentry.SentryDSN, &cfg.Sentry.SentryDSNWeb, &cfg.Sentry.SentryTrace, &cfg.Sentry.SentrySampleRate,
+			&cfg.IP2Location.Enabled, &cfg.IP2Location.CachePath, &cfg.IP2Location.Token,
+			&cfg.Debug.SkipOpenIDValidation, &cfg.Debug.AddRCONLogAddress,
+			&cfg.LocalStore.PathRoot,
+			&cfg.SSH.Enabled, &cfg.SSH.Username, &cfg.SSH.Password, &cfg.SSH.Port, &cfg.SSH.PrivateKeyPath, &cfg.SSH.UpdateInterval,
+			&cfg.SSH.Timeout, &cfg.SSH.DemoPathFmt,
+			&cfg.Exports.BDEnabled, &cfg.Exports.ValveEnabled, &cfg.Exports.AuthorizedKeys)
+	if err != nil {
+		return cfg, c.db.DBErr(err)
 	}
 
-	var newConfig domain.Config
+	return cfg, nil
+}
 
-	if errUnmarshal := viper.Unmarshal(&newConfig, viper.DecodeHook(mapstructure.DecodeHookFunc(decodeDuration()))); errUnmarshal != nil {
-		return errors.Join(errUnmarshal, domain.ErrFormatConfig)
+func (c *configRepository) Init(ctx context.Context) error {
+	if _, errRead := c.Read(ctx); errRead != nil {
+		if errors.Is(errRead, domain.ErrNoResult) {
+			// Insert a value so that the database will populate a row of defaults.
+			if err := c.db.ExecInsertBuilder(ctx, c.db.Builder().
+				Insert("config").
+				SetMap(map[string]interface{}{
+					"general_site_name": "New gbans site",
+				})); err != nil {
+				return err
+			}
+
+			return nil
+		}
+
+		return errRead
 	}
-
-	if strings.HasPrefix(newConfig.DB.DSN, "pgx://") {
-		newConfig.DB.DSN = strings.Replace(newConfig.DB.DSN, "pgx://", "postgres://", 1)
-	}
-
-	gin.SetMode(newConfig.General.Mode.String())
-
-	if errSteam := steamid.SetKey(newConfig.General.SteamKey); errSteam != nil {
-		return errors.Join(errSteam, domain.ErrSteamAPIKey)
-	}
-
-	if errSteamWeb := steamweb.SetKey(newConfig.General.SteamKey); errSteamWeb != nil {
-		return errors.Join(errSteamWeb, domain.ErrSteamAPIKey)
-	}
-
-	ownerSID := steamid.New(newConfig.General.Owner)
-	if !ownerSID.Valid() {
-		return domain.ErrInvalidSID
-	}
-
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	c.Conf = newConfig
 
 	return nil
+}
+
+func (c *configRepository) Write(ctx context.Context, config domain.Config) error {
+	return c.db.DBErr(c.db.ExecUpdateBuilder(ctx, c.db.Builder().
+		Update("config").
+		SetMap(map[string]interface{}{
+			"general_site_name":                   config.General.SiteName,
+			"general_steam_key":                   config.General.SteamKey,
+			"general_mode":                        config.General.Mode,
+			"general_file_serve_mode":             config.General.FileServeMode,
+			"general_srcds_log_addr":              config.General.SrcdsLogAddr,
+			"filters_enabled":                     config.Filter.Enabled,
+			"filters_dry":                         config.Filter.Dry,
+			"filters_ping_discord":                config.Filter.PingDiscord,
+			"filters_max_weight":                  config.Filter.MaxWeight,
+			"filters_warning_timeout":             config.Filter.WarningTimeout,
+			"filters_check_timeout":               config.Filter.CheckTimeout,
+			"filters_match_timeout":               config.Filter.MatchTimeout,
+			"demo_cleanup_enabled":                config.Demo.DemoCleanupEnabled,
+			"demo_cleanup_strategy":               config.Demo.DemoCleanupStrategy,
+			"demo_cleanup_min_pct":                config.Demo.DemoCleanupMinPct,
+			"demo_cleanup_mount":                  config.Demo.DemoCleanupMount,
+			"demo_count_limit":                    config.Demo.DemoCountLimit,
+			"patreon_enabled":                     config.Patreon.Enabled,
+			"patreon_client_id":                   config.Patreon.ClientID,
+			"patreon_client_secret":               config.Patreon.ClientSecret,
+			"patreon_creator_access_token":        config.Patreon.CreatorAccessToken,
+			"patreon_creator_refresh_token":       config.Patreon.CreatorRefreshToken,
+			"discord_enabled":                     config.Discord.Enabled,
+			"discord_app_id":                      config.Discord.AppID,
+			"discord_app_secret":                  config.Discord.AppSecret,
+			"discord_link_id":                     config.Discord.LinkID,
+			"discord_token":                       config.Discord.Token,
+			"discord_guild_id":                    config.Discord.GuildID,
+			"discord_log_channel_id":              config.Discord.LogChannelID,
+			"discord_public_log_channel_enabled":  config.Discord.PublicLogChannelEnable,
+			"discord_public_log_channel_id":       config.Discord.PublicLogChannelID,
+			"discord_public_match_log_channel_id": config.Discord.PublicMatchLogChannelID,
+			"discord_mod_ping_role_id":            config.Discord.ModPingRoleID,
+			"discord_unregister_on_start":         config.Discord.UnregisterOnStart,
+			"logging_level":                       config.Log.Level,
+			"logging_file":                        config.Log.File,
+			"sentry_sentry_dsn":                   config.Sentry.SentryDSN,
+			"sentry_sentry_dsn_web":               config.Sentry.SentryDSNWeb,
+			"sentry_sentry_trace":                 config.Sentry.SentryTrace,
+			"sentry_sentry_sample_rate":           config.Sentry.SentrySampleRate,
+			"ip2location_enabled":                 config.IP2Location.Enabled,
+			"ip2location_cache_path":              config.IP2Location.CachePath,
+			"ip2location_token":                   config.IP2Location.Token,
+			"debug_skip_open_id_validation":       config.Debug.SkipOpenIDValidation,
+			"debug_add_rcon_log_address":          config.Debug.AddRCONLogAddress,
+			"local_store_path_root":               config.LocalStore.PathRoot,
+			"ssh_enabled":                         config.SSH.Enabled,
+			"ssh_username":                        config.SSH.Username,
+			"ssh_password":                        config.SSH.Password,
+			"ssh_port":                            config.SSH.Port,
+			"ssh_private_key_path":                config.SSH.PrivateKeyPath,
+			"ssh_update_interval":                 config.SSH.UpdateInterval,
+			"ssh_timeout":                         config.SSH.Timeout,
+			"ssh_demo_path_fmt":                   config.SSH.DemoPathFmt,
+			"exports_bd_enabled":                  config.Exports.BDEnabled,
+			"exports_valve_enabled":               config.Exports.ValveEnabled,
+			"exports_authorized_keys":             config.Exports.AuthorizedKeys,
+		})))
 }

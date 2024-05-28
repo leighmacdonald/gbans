@@ -59,33 +59,17 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer stop()
 
-			configUsecase := config.NewConfigUsecase(config.NewConfigRepository())
-			if errConfig := configUsecase.Read(false); errConfig != nil {
-				panic(fmt.Sprintf("Failed to read config: %v", errConfig))
-			}
-
-			conf := configUsecase.Config()
-
-			var sentryClient *sentry.Client
-			var errSentry error
-
-			sentryClient, errSentry = log.NewSentryClient(conf.Log.SentryDSN, conf.Log.SentryTrace, conf.Log.SentrySampleRate, app.BuildVersion)
-
-			logCloser := log.MustCreateLogger(conf.Log.File, conf.Log.Level)
-			defer logCloser()
-
-			if errSentry != nil {
-				slog.Error("Failed to setup sentry client")
-			} else {
-				defer sentryClient.Flush(2 * time.Second)
-			}
-
 			slog.Info("Starting gbans...",
 				slog.String("version", app.BuildVersion),
 				slog.String("commit", app.BuildCommit),
 				slog.String("date", app.BuildDate))
 
-			dbUsecase := database.New(conf.DB.DSN, conf.DB.AutoMigrate, conf.DB.LogQueries)
+			staticConfig, errStatic := config.ReadStaticConfig()
+			if errStatic != nil {
+				panic(fmt.Sprintf("Failed to read static config: %v", errStatic))
+			}
+
+			dbUsecase := database.New(staticConfig.DatabaseDSN, staticConfig.DatabaseAutoMigrate, staticConfig.DatabaseLogQueries)
 			if errConnect := dbUsecase.Connect(ctx); errConnect != nil {
 				slog.Error("Cannot initialize database", log.ErrAttr(errConnect))
 
@@ -97,6 +81,31 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 					slog.Error("Failed to close database cleanly")
 				}
 			}()
+
+			configUsecase := config.NewConfigUsecase(staticConfig, config.NewConfigRepository(dbUsecase))
+			if err := configUsecase.Init(ctx); err != nil {
+				panic(fmt.Sprintf("Failed to init config: %v", err))
+			}
+
+			if errConfig := configUsecase.Reload(ctx); errConfig != nil {
+				panic(fmt.Sprintf("Failed to read config: %v", errConfig))
+			}
+
+			conf := configUsecase.Config()
+
+			var sentryClient *sentry.Client
+			var errSentry error
+
+			sentryClient, errSentry = log.NewSentryClient(conf.Sentry.SentryDSN, conf.Sentry.SentryTrace, conf.Sentry.SentrySampleRate, app.BuildVersion)
+
+			logCloser := log.MustCreateLogger(conf.Log.File, conf.Log.Level)
+			defer logCloser()
+
+			if errSentry != nil {
+				slog.Error("Failed to setup sentry client")
+			} else {
+				defer sentryClient.Flush(2 * time.Second)
+			}
 
 			eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
 			weaponsMap := fp.NewMutexMap[logparse.Weapon, int]()
@@ -234,6 +243,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			ban.NewBanHandler(router, banUsecase, discordUsecase, personUsecase, configUsecase, authUsecase)
 			ban.NewBanNetHandler(router, banNetUsecase, authUsecase)
 			ban.NewBanASNHandler(router, banASNUsecase, authUsecase)
+			config.NewConfigHandler(router, configUsecase)
 			steamgroup.NewSteamgroupHandler(router, banGroupUsecase, authUsecase)
 			blocklist.NewBlocklistHandler(router, blocklistUsecase, networkUsecase, authUsecase)
 			chat.NewChatHandler(router, chatUsecase, authUsecase)
@@ -267,7 +277,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				go demoFetcher.Start(ctx)
 			}
 
-			httpServer := httphelper.NewHTTPServer(conf.HTTP.TLS, conf.HTTP.Addr(), router)
+			httpServer := httphelper.NewHTTPServer(conf.HTTP.Addr(), router)
 
 			go func() {
 				<-ctx.Done()

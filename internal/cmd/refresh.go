@@ -3,10 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log/slog"
-	"os"
-	"time"
-
 	"github.com/leighmacdonald/gbans/internal/ban"
 	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/config"
@@ -24,6 +20,8 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/spf13/cobra"
+	"log/slog"
+	"os"
 )
 
 func refreshCmd() *cobra.Command {
@@ -40,25 +38,16 @@ func refreshFiltersCmd() *cobra.Command {
 		Short: "refresh filters",
 		Long:  `refresh filters`,
 		Run: func(_ *cobra.Command, _ []string) {
-			configUsecase := config.NewConfigUsecase(config.NewConfigRepository())
-			if errConfig := configUsecase.Read(false); errConfig != nil {
-				panic(fmt.Sprintf("Failed to read config: %v", errConfig))
-			}
-
-			conf := configUsecase.Config()
-
-			logCloser := log.MustCreateLogger(conf.Log.File, conf.Log.Level)
-			defer logCloser()
-
 			ctx := context.Background()
 
-			connCtx, cancelConn := context.WithTimeout(ctx, time.Second*5)
-			defer cancelConn()
-			dbUsecase := database.New(conf.DB.DSN, false, conf.DB.LogQueries)
+			staticConfig, errStatic := config.ReadStaticConfig()
+			if errStatic != nil {
+				panic(fmt.Sprintf("Failed to read static config: %v", errStatic))
+			}
 
-			slog.Info("Connecting to database")
-			if errConnect := dbUsecase.Connect(connCtx); errConnect != nil {
-				slog.Error("Failed to connect to database", log.ErrAttr(errConnect))
+			dbUsecase := database.New(staticConfig.DatabaseDSN, staticConfig.DatabaseAutoMigrate, staticConfig.DatabaseLogQueries)
+			if errConnect := dbUsecase.Connect(ctx); errConnect != nil {
+				slog.Error("Cannot initialize database", log.ErrAttr(errConnect))
 
 				return
 			}
@@ -68,6 +57,20 @@ func refreshFiltersCmd() *cobra.Command {
 					slog.Error("Failed to close database cleanly", log.ErrAttr(errClose))
 				}
 			}()
+
+			configUsecase := config.NewConfigUsecase(staticConfig, config.NewConfigRepository(dbUsecase))
+			if err := configUsecase.Init(ctx); err != nil {
+				panic(fmt.Sprintf("Failed to init config: %v", err))
+			}
+
+			if errConfig := configUsecase.Reload(ctx); errConfig != nil {
+				panic(fmt.Sprintf("Failed to read config: %v", errConfig))
+			}
+
+			conf := configUsecase.Config()
+
+			logCloser := log.MustCreateLogger(conf.Log.File, conf.Log.Level)
+			defer logCloser()
 
 			if //goland:noinspection ALL
 			errDelete := dbUsecase.Exec(ctx, "DELETE FROM person_messages_filter"); errDelete != nil {

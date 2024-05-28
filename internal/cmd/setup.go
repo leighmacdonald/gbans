@@ -31,8 +31,32 @@ func setupCmd() *cobra.Command {
 		Short: "Run Initial Setup",
 		Long:  `Run Initial Setup`,
 		Run: func(_ *cobra.Command, _ []string) {
-			configUsecase := config.NewConfigUsecase(config.NewConfigRepository())
-			if errConfig := configUsecase.Read(false); errConfig != nil {
+			ctx := context.Background()
+
+			staticConfig, errStatic := config.ReadStaticConfig()
+			if errStatic != nil {
+				panic(fmt.Sprintf("Failed to read static config: %v", errStatic))
+			}
+
+			dbUsecase := database.New(staticConfig.DatabaseDSN, staticConfig.DatabaseAutoMigrate, staticConfig.DatabaseLogQueries)
+			if errConnect := dbUsecase.Connect(ctx); errConnect != nil {
+				slog.Error("Cannot initialize database", log.ErrAttr(errConnect))
+
+				return
+			}
+
+			defer func() {
+				if errClose := dbUsecase.Close(); errClose != nil {
+					slog.Error("Failed to close database cleanly", log.ErrAttr(errClose))
+				}
+			}()
+
+			configUsecase := config.NewConfigUsecase(staticConfig, config.NewConfigRepository(dbUsecase))
+			if err := configUsecase.Init(ctx); err != nil {
+				panic(fmt.Sprintf("Failed to init config: %v", err))
+			}
+
+			if errConfig := configUsecase.Reload(ctx); errConfig != nil {
 				panic(fmt.Sprintf("Failed to read config: %v", errConfig))
 			}
 
@@ -41,27 +65,8 @@ func setupCmd() *cobra.Command {
 			logCloser := log.MustCreateLogger(conf.Log.File, conf.Log.Level)
 			defer logCloser()
 
-			ctx := context.Background()
-
-			connCtx, cancelConn := context.WithTimeout(ctx, time.Second*5)
-			defer cancelConn()
-			databaseRepository := database.New(conf.DB.DSN, false, conf.DB.LogQueries)
-
-			slog.Info("Connecting to database")
-			if errConnect := databaseRepository.Connect(connCtx); errConnect != nil {
-				slog.Error("Failed to connect to database", log.ErrAttr(errConnect))
-
-				return
-			}
-
-			defer func() {
-				if errClose := databaseRepository.Close(); errClose != nil {
-					slog.Error("Failed to close database cleanly", log.ErrAttr(errClose))
-				}
-			}()
-
 			if //goland:noinspection ALL
-			errDelete := databaseRepository.Exec(ctx, "DELETE FROM person_messages_filter"); errDelete != nil {
+			errDelete := dbUsecase.Exec(ctx, "DELETE FROM person_messages_filter"); errDelete != nil {
 				slog.Error("Failed to delete existing", log.ErrAttr(errDelete))
 
 				return
@@ -69,20 +74,20 @@ func setupCmd() *cobra.Command {
 			broadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
 			weaponMap := fp.NewMutexMap[logparse.Weapon, int]()
 
-			serversUsecase := servers.NewServersUsecase(servers.NewServersRepository(databaseRepository))
+			serversUsecase := servers.NewServersUsecase(servers.NewServersRepository(dbUsecase))
 			stateUsecase := state.NewStateUsecase(broadcaster, state.NewStateRepository(state.NewCollector(serversUsecase)), configUsecase, serversUsecase)
-			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(databaseRepository), configUsecase)
+			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(dbUsecase), configUsecase)
 
-			assetRepo := asset.NewLocalRepository(databaseRepository, configUsecase)
+			assetRepo := asset.NewLocalRepository(dbUsecase, configUsecase)
 			if errAssetInit := assetRepo.Init(ctx); errAssetInit != nil {
 				slog.Error("Failed to init local asset repo", log.ErrAttr(errAssetInit))
 
 				return
 			}
 
-			newsUsecase := news.NewNewsUsecase(news.NewNewsRepository(databaseRepository))
-			wikiUsecase := wiki.NewWikiUsecase(wiki.NewWikiRepository(databaseRepository))
-			matchRepo := match.NewMatchRepository(broadcaster, databaseRepository, personUsecase, serversUsecase, nil, stateUsecase, weaponMap)
+			newsUsecase := news.NewNewsUsecase(news.NewNewsRepository(dbUsecase))
+			wikiUsecase := wiki.NewWikiUsecase(wiki.NewWikiRepository(dbUsecase))
+			matchRepo := match.NewMatchRepository(broadcaster, dbUsecase, personUsecase, serversUsecase, nil, stateUsecase, weaponMap)
 			matchUsecase := match.NewMatchUsecase(matchRepo, stateUsecase, serversUsecase, nil)
 
 			owner, errRootUser := personUsecase.GetPersonBySteamID(ctx, steamid.New(conf.General.Owner))

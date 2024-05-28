@@ -34,7 +34,7 @@ func AddRoutes(engine *gin.Engine, root string, conf domain.Config) error {
 				slog.Error("failed to open index.html", log.ErrAttr(errIndex))
 			}
 
-			if conf.Log.SentryDSNWeb != "" {
+			if conf.Sentry.SentryDSNWeb != "" {
 				ctx.Header("Document-Policy", "js-profiling")
 			}
 

@@ -1,6 +1,7 @@
 import { PropsWithChildren, ReactNode, useState } from 'react';
 import AddModeratorIcon from '@mui/icons-material/AddModerator';
 import BugReportIcon from '@mui/icons-material/BugReport';
+import DeveloperBoardIcon from '@mui/icons-material/DeveloperBoard';
 import EmergencyRecordingIcon from '@mui/icons-material/EmergencyRecording';
 import GradingIcon from '@mui/icons-material/Grading';
 import HeadsetMicIcon from '@mui/icons-material/HeadsetMic';
@@ -128,7 +129,7 @@ function AdminServers() {
         <>
             <Title>Edit Settings</Title>
 
-            <ContainerWithHeaderAndButtons title={'System Settings'} iconLeft={<SettingsIcon />}>
+            <ContainerWithHeaderAndButtons title={'System Settings'} iconLeft={<DeveloperBoardIcon />}>
                 <Grid container spacing={2}>
                     <Grid xs={4} sm={3} md={2} padding={0}>
                         <Stack spacing={1} padding={2}>
