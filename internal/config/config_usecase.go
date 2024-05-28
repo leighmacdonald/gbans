@@ -3,14 +3,17 @@ package config
 import (
 	"context"
 	"errors"
+	"log/slog"
+	"strings"
+	"sync"
+
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
-	"strings"
-	"sync"
 )
 
 type configUsecase struct {
@@ -29,7 +32,21 @@ func (c *configUsecase) Init(ctx context.Context) error {
 }
 
 func (c *configUsecase) Write(ctx context.Context, config domain.Config) error {
-	return c.configRepo.Write(ctx, config)
+	if err := c.configRepo.Write(ctx, config); err != nil {
+		slog.Error("Failed to write new config", log.ErrAttr(err))
+
+		return err
+	}
+
+	if errReload := c.Reload(ctx); errReload != nil {
+		slog.Error("Failed to reload config", log.ErrAttr(errReload))
+
+		return errReload
+	}
+
+	slog.Info("Wrote new config")
+
+	return nil
 }
 
 func (c *configUsecase) ExtURL(obj domain.LinkablePath) string {

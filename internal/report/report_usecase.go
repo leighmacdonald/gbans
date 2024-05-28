@@ -43,7 +43,7 @@ func (r reportUsecase) Start(ctx context.Context) {
 		updateChan <- true
 	}()
 
-	admin := domain.UserProfile{SteamID: steamid.New(r.cu.Config().General.Owner)}
+	admin := domain.UserProfile{SteamID: steamid.New(r.cu.Config().Owner)}
 
 	for {
 		select {

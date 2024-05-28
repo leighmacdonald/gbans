@@ -3,9 +3,9 @@ package config
 import (
 	"context"
 	"errors"
-	"github.com/leighmacdonald/gbans/internal/database"
 	"sync"
 
+	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 )
 
@@ -59,7 +59,7 @@ func (c *configRepository) Read(ctx context.Context) (domain.Config, error) {
 
 	err := c.db.QueryRow(ctx, query).
 		Scan(&cfg.General.SiteName, &cfg.General.SteamKey, &cfg.General.Mode, &cfg.General.FileServeMode, &cfg.General.SrcdsLogAddr,
-			&cfg.Filter.Enabled, &cfg.Filter.Dry, &cfg.Filter.PingDiscord, &cfg.Filter.MaxWeight, &cfg.Filter.WarningTimeout, &cfg.Filter.CheckTimeout, &cfg.Filter.MatchTimeout,
+			&cfg.Filters.Enabled, &cfg.Filters.Dry, &cfg.Filters.PingDiscord, &cfg.Filters.MaxWeight, &cfg.Filters.WarningTimeout, &cfg.Filters.CheckTimeout, &cfg.Filters.MatchTimeout,
 			&cfg.Demo.DemoCleanupEnabled, &cfg.Demo.DemoCleanupStrategy, &cfg.Demo.DemoCleanupMinPct, &cfg.Demo.DemoCleanupMount, &cfg.Demo.DemoCountLimit,
 			&cfg.Patreon.Enabled, &cfg.Patreon.ClientID, &cfg.Patreon.ClientSecret, &cfg.Patreon.CreatorAccessToken, &cfg.Patreon.CreatorRefreshToken,
 			&cfg.Discord.Enabled, &cfg.Discord.AppID, &cfg.Discord.AppSecret, &cfg.Discord.LinkID, &cfg.Discord.Token, &cfg.Discord.GuildID, &cfg.Discord.LogChannelID,
@@ -67,7 +67,7 @@ func (c *configRepository) Read(ctx context.Context) (domain.Config, error) {
 			&cfg.Discord.UnregisterOnStart,
 			&cfg.Log.Level, &cfg.Log.File,
 			&cfg.Sentry.SentryDSN, &cfg.Sentry.SentryDSNWeb, &cfg.Sentry.SentryTrace, &cfg.Sentry.SentrySampleRate,
-			&cfg.IP2Location.Enabled, &cfg.IP2Location.CachePath, &cfg.IP2Location.Token,
+			&cfg.GeoLocation.Enabled, &cfg.GeoLocation.CachePath, &cfg.GeoLocation.Token,
 			&cfg.Debug.SkipOpenIDValidation, &cfg.Debug.AddRCONLogAddress,
 			&cfg.LocalStore.PathRoot,
 			&cfg.SSH.Enabled, &cfg.SSH.Username, &cfg.SSH.Password, &cfg.SSH.Port, &cfg.SSH.PrivateKeyPath, &cfg.SSH.UpdateInterval,
@@ -110,13 +110,13 @@ func (c *configRepository) Write(ctx context.Context, config domain.Config) erro
 			"general_mode":                        config.General.Mode,
 			"general_file_serve_mode":             config.General.FileServeMode,
 			"general_srcds_log_addr":              config.General.SrcdsLogAddr,
-			"filters_enabled":                     config.Filter.Enabled,
-			"filters_dry":                         config.Filter.Dry,
-			"filters_ping_discord":                config.Filter.PingDiscord,
-			"filters_max_weight":                  config.Filter.MaxWeight,
-			"filters_warning_timeout":             config.Filter.WarningTimeout,
-			"filters_check_timeout":               config.Filter.CheckTimeout,
-			"filters_match_timeout":               config.Filter.MatchTimeout,
+			"filters_enabled":                     config.Filters.Enabled,
+			"filters_dry":                         config.Filters.Dry,
+			"filters_ping_discord":                config.Filters.PingDiscord,
+			"filters_max_weight":                  config.Filters.MaxWeight,
+			"filters_warning_timeout":             config.Filters.WarningTimeout,
+			"filters_check_timeout":               config.Filters.CheckTimeout,
+			"filters_match_timeout":               config.Filters.MatchTimeout,
 			"demo_cleanup_enabled":                config.Demo.DemoCleanupEnabled,
 			"demo_cleanup_strategy":               config.Demo.DemoCleanupStrategy,
 			"demo_cleanup_min_pct":                config.Demo.DemoCleanupMinPct,
@@ -145,9 +145,9 @@ func (c *configRepository) Write(ctx context.Context, config domain.Config) erro
 			"sentry_sentry_dsn_web":               config.Sentry.SentryDSNWeb,
 			"sentry_sentry_trace":                 config.Sentry.SentryTrace,
 			"sentry_sentry_sample_rate":           config.Sentry.SentrySampleRate,
-			"ip2location_enabled":                 config.IP2Location.Enabled,
-			"ip2location_cache_path":              config.IP2Location.CachePath,
-			"ip2location_token":                   config.IP2Location.Token,
+			"ip2location_enabled":                 config.GeoLocation.Enabled,
+			"ip2location_cache_path":              config.GeoLocation.CachePath,
+			"ip2location_token":                   config.GeoLocation.Token,
 			"debug_skip_open_id_validation":       config.Debug.SkipOpenIDValidation,
 			"debug_add_rcon_log_address":          config.Debug.AddRCONLogAddress,
 			"local_store_path_root":               config.LocalStore.PathRoot,

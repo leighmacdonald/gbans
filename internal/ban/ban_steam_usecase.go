@@ -239,7 +239,7 @@ func (s banSteamUsecase) IsOnIPWithBan(ctx context.Context, curUser domain.Perso
 	}
 
 	var newBan domain.BanSteam
-	if errNewBan := domain.NewBanSteam(steamid.New(s.configUsecase.Config().General.Owner),
+	if errNewBan := domain.NewBanSteam(steamid.New(s.configUsecase.Config().Owner),
 		steamID, duration, domain.Evading, domain.Evading.String(),
 		"Connecting from same IP as banned player", domain.System,
 		0, domain.Banned, false, false, &newBan); errNewBan != nil {

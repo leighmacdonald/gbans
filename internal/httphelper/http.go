@@ -158,9 +158,9 @@ func useCors(engine *gin.Engine, conf domain.Config) {
 	engine.Use(httpErrorHandler(), gin.Recovery())
 	engine.Use(useSecure(conf.General.Mode, ""))
 
-	if len(conf.HTTP.CorsOrigins) > 0 {
+	if len(conf.HTTPCorsOrigins) > 0 {
 		corsConfig := cors.DefaultConfig()
-		corsConfig.AllowOrigins = conf.HTTP.CorsOrigins
+		corsConfig.AllowOrigins = conf.HTTPCorsOrigins
 		corsConfig.AllowHeaders = append(corsConfig.AllowHeaders, "Authorization")
 		corsConfig.AllowWildcard = true
 		corsConfig.AllowCredentials = true
@@ -180,7 +180,7 @@ func usePrometheus(engine *gin.Engine) {
 }
 
 func useFrontend(engine *gin.Engine, conf domain.Config) error {
-	staticPath := conf.HTTP.StaticPath
+	staticPath := conf.HTTPStaticPath
 	if staticPath == "" {
 		staticPath = "./frontend/dist"
 	}

@@ -166,7 +166,7 @@ func (h *wordFilterHandler) filterStates() gin.HandlerFunc {
 		Current   []domain.UserWarning `json:"current"`
 	}
 
-	maxWeight := h.confUsecase.Config().Filter.MaxWeight
+	maxWeight := h.confUsecase.Config().Filters.MaxWeight
 
 	return func(ctx *gin.Context) {
 		state := h.chatUsecase.WarningState()

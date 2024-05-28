@@ -136,7 +136,7 @@ func (f SCPExecer) configAndDialClient(ctx context.Context, sshConfig domain.Con
 		return nil, errConfig
 	}
 
-	client, errClient := scp.NewStorager(address, sshConfig.Timeout, clientConfig)
+	client, errClient := scp.NewStorager(address, time.Duration(sshConfig.Timeout)*time.Second, clientConfig)
 	if errClient != nil {
 		return nil, errors.Join(errClient, errConnect)
 	}
@@ -169,7 +169,7 @@ func (f SCPExecer) createConfig(ctx context.Context, config domain.ConfigSSH) (*
 		User:            config.Username,
 		Auth:            authMethod,
 		HostKeyCallback: f.trustedHostKeyCallback(ctx),
-		Timeout:         config.Timeout,
+		Timeout:         time.Duration(config.Timeout) * time.Second,
 	}
 
 	return sshClientConfig, nil

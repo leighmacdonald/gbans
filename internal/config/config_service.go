@@ -1,30 +1,34 @@
 package config
 
 import (
+	"log/slog"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/log"
-	"log/slog"
-	"net/http"
 )
 
 type configHandler struct {
-	cu domain.ConfigUsecase
+	cu   domain.ConfigUsecase
+	auth domain.AuthUsecase
 }
 
-func NewConfigHandler(engine *gin.Engine, cu domain.ConfigUsecase) {
-	handler := configHandler{cu: cu}
+func NewConfigHandler(engine *gin.Engine, cu domain.ConfigUsecase, auth domain.AuthUsecase) {
+	handler := configHandler{cu: cu, auth: auth}
 
-	engine.GET("/api/config", handler.onAPIGetConfig())
-	engine.PUT("/api/config", handler.onAPIPutConfig())
+	adminGroup := engine.Group("/")
+	{
+		admin := adminGroup.Use(auth.AuthMiddleware(domain.PAdmin))
+		admin.GET("/api/config", handler.onAPIGetConfig())
+		admin.PUT("/api/config", handler.onAPIPutConfig())
+	}
 }
 
 func (c configHandler) onAPIGetConfig() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		config := c.cu.Config()
-
-		ctx.JSON(http.StatusOK, config)
+		ctx.JSON(http.StatusOK, c.cu.Config())
 	}
 }
 

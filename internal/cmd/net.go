@@ -70,7 +70,7 @@ func netUpdateCmd() *cobra.Command {
 
 			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(dbUsecase), configUsecase)
 
-			if errUpdate := ip2location.Update(ctx, conf.IP2Location.CachePath, conf.IP2Location.Token); errUpdate != nil {
+			if errUpdate := ip2location.Update(ctx, conf.GeoLocation.CachePath, conf.GeoLocation.Token); errUpdate != nil {
 				slog.Error("Failed to update", log.ErrAttr(errUpdate))
 
 				return
@@ -78,7 +78,7 @@ func netUpdateCmd() *cobra.Command {
 
 			slog.Info("Reading data")
 
-			blockListData, errRead := ip2location.Read(conf.IP2Location.CachePath)
+			blockListData, errRead := ip2location.Read(conf.GeoLocation.CachePath)
 			if errRead != nil {
 				slog.Error("Failed to read data", log.ErrAttr(errRead))
 
