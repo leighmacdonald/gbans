@@ -104,19 +104,19 @@ func (d demoUsecase) Start(ctx context.Context) {
 		case <-triggerChan:
 			conf := d.configUsecase.Config()
 
-			if !conf.General.DemoCleanupEnabled {
+			if !conf.Demo.DemoCleanupEnabled {
 				continue
 			}
 
-			if conf.General.DemoCleanupStrategy == domain.DemoStrategyPctFree {
-				d.truncateBySpace(ctx, conf.General.DemoCleanupMount, conf.General.DemoCleanupMinPct)
+			if conf.Demo.DemoCleanupStrategy == domain.DemoStrategyPctFree {
+				d.truncateBySpace(ctx, conf.Demo.DemoCleanupMount, conf.Demo.DemoCleanupMinPct)
 
 				return
 			}
 
 			slog.Debug("Starting demo cleanup")
 
-			expired, errExpired := d.repository.ExpiredDemos(ctx, conf.General.DemoCountLimit)
+			expired, errExpired := d.repository.ExpiredDemos(ctx, conf.Demo.DemoCountLimit)
 			if errExpired != nil {
 				if errors.Is(errExpired, domain.ErrNoResult) {
 					continue

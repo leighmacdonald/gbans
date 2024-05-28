@@ -158,13 +158,17 @@ func useCors(engine *gin.Engine, conf domain.Config) {
 	engine.Use(httpErrorHandler(), gin.Recovery())
 	engine.Use(useSecure(conf.General.Mode, ""))
 
-	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowOrigins = conf.HTTP.CorsOrigins
-	corsConfig.AllowHeaders = append(corsConfig.AllowHeaders, "Authorization")
-	corsConfig.AllowWildcard = true
-	corsConfig.AllowCredentials = true
+	if len(conf.HTTP.CorsOrigins) > 0 {
+		corsConfig := cors.DefaultConfig()
+		corsConfig.AllowOrigins = conf.HTTP.CorsOrigins
+		corsConfig.AllowHeaders = append(corsConfig.AllowHeaders, "Authorization")
+		corsConfig.AllowWildcard = true
+		corsConfig.AllowCredentials = true
 
-	engine.Use(cors.New(corsConfig))
+		engine.Use(cors.New(corsConfig))
+	} else {
+		slog.Warn("No cors origins defined, disabling")
+	}
 }
 
 func usePrometheus(engine *gin.Engine) {
@@ -198,7 +202,7 @@ func CreateRouter(conf domain.Config, version domain.BuildInfo) (*gin.Engine, er
 	engine.MaxMultipartMemory = 8 << 24
 	engine.Use(gin.Recovery())
 
-	if conf.Log.SentryDSN != "" {
+	if conf.Sentry.SentryDSN != "" {
 		useSentry(engine, version.BuildVersion)
 	}
 

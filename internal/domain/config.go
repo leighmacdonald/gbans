@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -11,15 +12,33 @@ type LinkablePath interface {
 }
 
 type ConfigRepository interface {
-	Config() Config
-	Read(noFileOk bool) error
+	Read(ctx context.Context) (Config, error)
+	Write(ctx context.Context, config Config) error
+	Init(ctx context.Context) error
 }
 
 type ConfigUsecase interface {
-	Read(noFileOk bool) error
 	Config() Config
 	ExtURL(obj LinkablePath) string
 	ExtURLRaw(path string, args ...any) string
+	Reload(ctx context.Context) error
+	Write(ctx context.Context, config Config) error
+	Init(ctx context.Context) error
+}
+
+// StaticConfig defines non-dynamic config values that cannot be changed during runtime.
+type StaticConfig struct {
+	Owner               string   `mapstructure:"owner"`
+	ExternalURL         string   `mapstructure:"external_url"`
+	HTTPHost            string   `mapstructure:"http_host"`
+	HTTPPort            int      `mapstructure:"http_port"`
+	HTTPStaticPath      string   `mapstructure:"http_static_path"`
+	HTTPCookieKey       string   `mapstructure:"http_cookie_key"`
+	HTTPClientTimeout   int      `mapstructure:"http_client_timeout"`
+	HTTPCorsOrigins     []string `mapstructure:"http_cors_origins"`
+	DatabaseDSN         string   `mapstructure:"database_dsn"`
+	DatabaseAutoMigrate bool     `mapstructure:"database_auto_migrate"`
+	DatabaseLogQueries  bool     `mapstructure:"database_log_queries"`
 }
 
 // Config is the root config container
@@ -28,8 +47,10 @@ type ConfigUsecase interface {
 //	export general.steam_key=STEAM_KEY_STEAM_KEY_STEAM_KEY
 //	./gbans serve
 type Config struct {
+	StaticConfig
 	General     ConfigGeneral     `mapstructure:"general"`
 	HTTP        ConfigHTTP        `mapstructure:"http"`
+	Demo        ConfigDemo        `mapstructure:"demo"`
 	Filter      ConfigFilter      `mapstructure:"word_filter"`
 	DB          ConfigDB          `mapstructure:"database"`
 	Discord     ConfigDiscord     `mapstructure:"discord"`
@@ -40,6 +61,7 @@ type Config struct {
 	SSH         ConfigSSH         `mapstructure:"ssh"`
 	LocalStore  ConfigLocalStore  `mapstructure:"local_store"`
 	Exports     ConfigExports     `mapstructure:"exports"`
+	Sentry      ConfigSentry
 }
 
 func (c Config) ExtURL(obj LinkablePath) string {
@@ -99,8 +121,6 @@ type ConfigPatreon struct {
 type ConfigHTTP struct {
 	Host          string        `mapstructure:"host"`
 	Port          int           `mapstructure:"port"`
-	TLS           bool          `mapstructure:"tls"`
-	TLSAuto       bool          `mapstructure:"tls_auto"`
 	StaticPath    string        `mapstructure:"static_path"`
 	CookieKey     string        `mapstructure:"cookie_key"`
 	ClientTimeout time.Duration `mapstructure:"client_timeout"`
@@ -151,17 +171,22 @@ const (
 )
 
 type ConfigGeneral struct {
-	SiteName            string        `mapstructure:"site_name"`
-	SteamKey            string        `mapstructure:"steam_key"`
-	Owner               string        `mapstructure:"owner"`
-	Mode                RunMode       `mapstructure:"mode"`
-	ExternalURL         string        `mapstructure:"external_url"`
-	DemoCleanupEnabled  bool          `mapstructure:"demo_cleanup_enabled"`
-	DemoCleanupStrategy DemoStrategy  `mapstructure:"demo_cleanup_strategy"`
-	DemoCleanupMinPct   float32       `mapstructure:"demo_cleanup_min_pct"`
-	DemoCleanupMount    string        `mapstructure:"demo_cleanup_mount"`
-	DemoCountLimit      uint64        `mapstructure:"demo_count_limit"`
-	FileServeMode       FileServeMode `mapstructure:"file_serve_mode"`
+	SiteName    string  `mapstructure:"site_name"`
+	SteamKey    string  `mapstructure:"steam_key"`
+	Owner       string  `mapstructure:"owner"`
+	Mode        RunMode `mapstructure:"mode"`
+	ExternalURL string  `mapstructure:"external_url"`
+
+	FileServeMode FileServeMode `mapstructure:"file_serve_mode"`
+	SrcdsLogAddr  string        `mapstructure:"srcds_log_addr"`
+}
+
+type ConfigDemo struct {
+	DemoCleanupEnabled  bool         `mapstructure:"demo_cleanup_enabled"`
+	DemoCleanupStrategy DemoStrategy `mapstructure:"demo_cleanup_strategy"`
+	DemoCleanupMinPct   float32      `mapstructure:"demo_cleanup_min_pct"`
+	DemoCleanupMount    string       `mapstructure:"demo_cleanup_mount"`
+	DemoCountLimit      uint64       `mapstructure:"demo_count_limit"`
 }
 
 type ConfigDiscord struct {
@@ -179,14 +204,16 @@ type ConfigDiscord struct {
 	UnregisterOnStart       bool   `mapstructure:"unregister_on_start"`
 }
 
-type ConfigLog struct {
-	Level            string  `mapstructure:"level"`
-	File             string  `mapstructure:"file"`
-	SrcdsLogAddr     string  `mapstructure:"srcds_log_addr"`
+type ConfigSentry struct {
 	SentryDSN        string  `mapstructure:"sentry_dsn"`
 	SentryDSNWeb     string  `mapstructure:"sentry_dsn_web"`
 	SentryTrace      bool    `mapstructure:"sentry_trace"`
 	SentrySampleRate float64 `mapstructure:"sentry_sample_rate"`
+}
+
+type ConfigLog struct {
+	Level string `mapstructure:"level"`
+	File  string `mapstructure:"file"`
 }
 
 type ConfigDebug struct {

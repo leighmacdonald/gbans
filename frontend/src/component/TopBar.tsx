@@ -6,6 +6,7 @@ import BlockIcon from '@mui/icons-material/Block';
 import CellTowerIcon from '@mui/icons-material/CellTower';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import DashboardIcon from '@mui/icons-material/Dashboard';
+import DeveloperBoardIcon from '@mui/icons-material/DeveloperBoard';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import ForumIcon from '@mui/icons-material/Forum';
@@ -283,7 +284,7 @@ export const TopBar = () => {
                     callback: onClickHandler('/admin/game-admins')
                 },
                 {
-                    leftIcon: <AddModeratorIcon sx={colourOpts} />,
+                    leftIcon: <DeveloperBoardIcon sx={colourOpts} />,
                     label: 'System Settings',
                     callback: onClickHandler('/admin/settings')
                 }

@@ -45,7 +45,7 @@ func NewStateUsecase(broadcaster *fp.Broadcaster[logparse.EventType, logparse.Se
 func (s *stateUsecase) Start(ctx context.Context) error {
 	conf := s.configUsecase.Config()
 
-	logSrc, errLogSrc := logparse.NewUDPLogListener(conf.Log.SrcdsLogAddr,
+	logSrc, errLogSrc := logparse.NewUDPLogListener(conf.General.SrcdsLogAddr,
 		func(_ logparse.EventType, event logparse.ServerEvent) {
 			s.broadcaster.Emit(event.EventType, event)
 		})
