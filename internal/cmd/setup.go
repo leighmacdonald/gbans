@@ -90,13 +90,13 @@ func setupCmd() *cobra.Command {
 			matchRepo := match.NewMatchRepository(broadcaster, dbUsecase, personUsecase, serversUsecase, nil, stateUsecase, weaponMap)
 			matchUsecase := match.NewMatchUsecase(matchRepo, stateUsecase, serversUsecase, nil)
 
-			owner, errRootUser := personUsecase.GetPersonBySteamID(ctx, steamid.New(conf.General.Owner))
+			owner, errRootUser := personUsecase.GetPersonBySteamID(ctx, steamid.New(conf.Owner))
 			if errRootUser != nil {
 				if !errors.Is(errRootUser, domain.ErrNoResult) {
 					slog.Error("Failed checking owner state", log.ErrAttr(errRootUser))
 				}
 
-				newOwner := domain.NewPerson(steamid.New(conf.General.Owner))
+				newOwner := domain.NewPerson(steamid.New(conf.Owner))
 				newOwner.PermissionLevel = domain.PAdmin
 
 				if errSave := personUsecase.SavePerson(ctx, &newOwner); errSave != nil {

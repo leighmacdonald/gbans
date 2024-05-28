@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 )
 
 type LinkablePath interface {
@@ -28,17 +27,22 @@ type ConfigUsecase interface {
 
 // StaticConfig defines non-dynamic config values that cannot be changed during runtime.
 type StaticConfig struct {
-	Owner               string   `mapstructure:"owner"`
-	ExternalURL         string   `mapstructure:"external_url"`
-	HTTPHost            string   `mapstructure:"http_host"`
-	HTTPPort            int      `mapstructure:"http_port"`
-	HTTPStaticPath      string   `mapstructure:"http_static_path"`
-	HTTPCookieKey       string   `mapstructure:"http_cookie_key"`
-	HTTPClientTimeout   int      `mapstructure:"http_client_timeout"`
-	HTTPCorsOrigins     []string `mapstructure:"http_cors_origins"`
-	DatabaseDSN         string   `mapstructure:"database_dsn"`
-	DatabaseAutoMigrate bool     `mapstructure:"database_auto_migrate"`
-	DatabaseLogQueries  bool     `mapstructure:"database_log_queries"`
+	Owner               string   `mapstructure:"owner" json:"owner,omitempty"`
+	ExternalURL         string   `mapstructure:"external_url" json:"external_url,omitempty"`
+	HTTPHost            string   `mapstructure:"http_host" json:"http_host,omitempty"`
+	HTTPPort            int      `mapstructure:"http_port" json:"http_port,omitempty"`
+	HTTPStaticPath      string   `mapstructure:"http_static_path" json:"http_static_path,omitempty"`
+	HTTPCookieKey       string   `mapstructure:"http_cookie_key" json:"-"`
+	HTTPClientTimeout   int      `mapstructure:"http_client_timeout" json:"http_client_timeout,omitempty"`
+	HTTPCorsOrigins     []string `mapstructure:"http_cors_origins" json:"http_cors_origins,omitempty"`
+	DatabaseDSN         string   `mapstructure:"database_dsn" json:"-"`
+	DatabaseAutoMigrate bool     `mapstructure:"database_auto_migrate" json:"database_auto_migrate,omitempty"`
+	DatabaseLogQueries  bool     `mapstructure:"database_log_queries" json:"database_log_queries,omitempty"`
+}
+
+// Addr returns the address in host:port format.
+func (s StaticConfig) Addr() string {
+	return fmt.Sprintf("%s:%d", s.HTTPHost, s.HTTPPort)
 }
 
 // Config is the root config container
@@ -48,20 +52,18 @@ type StaticConfig struct {
 //	./gbans serve
 type Config struct {
 	StaticConfig
-	General     ConfigGeneral     `mapstructure:"general"`
-	HTTP        ConfigHTTP        `mapstructure:"http"`
-	Demo        ConfigDemo        `mapstructure:"demo"`
-	Filter      ConfigFilter      `mapstructure:"word_filter"`
-	DB          ConfigDB          `mapstructure:"database"`
-	Discord     ConfigDiscord     `mapstructure:"discord"`
-	Log         ConfigLog         `mapstructure:"logging"`
-	IP2Location ConfigIP2Location `mapstructure:"ip2location"`
-	Debug       ConfigDebug       `mapstructure:"debug"`
-	Patreon     ConfigPatreon     `mapstructure:"patreon"`
-	SSH         ConfigSSH         `mapstructure:"ssh"`
-	LocalStore  ConfigLocalStore  `mapstructure:"local_store"`
-	Exports     ConfigExports     `mapstructure:"exports"`
-	Sentry      ConfigSentry
+	General     ConfigGeneral     `json:"general"`
+	Demo        ConfigDemo        `json:"demo"`
+	Filters     ConfigFilter      `json:"filters"`
+	Discord     ConfigDiscord     `json:"discord"`
+	Log         ConfigLog         `json:"log"`
+	GeoLocation ConfigIP2Location `json:"geo_location"`
+	Debug       ConfigDebug       `json:"debug"`
+	Patreon     ConfigPatreon     `json:"patreon"`
+	SSH         ConfigSSH         `json:"ssh"`
+	LocalStore  ConfigLocalStore  `json:"local_store"`
+	Exports     ConfigExports     `json:"exports"`
+	Sentry      ConfigSentry      `json:"sentry"`
 }
 
 func (c Config) ExtURL(obj LinkablePath) string {
@@ -69,39 +71,39 @@ func (c Config) ExtURL(obj LinkablePath) string {
 }
 
 func (c Config) ExtURLRaw(path string, args ...any) string {
-	return strings.TrimRight(c.General.ExternalURL, "/") + fmt.Sprintf(strings.TrimLeft(path, "."), args...)
+	return strings.TrimRight(c.StaticConfig.ExternalURL, "/") + fmt.Sprintf(strings.TrimLeft(path, "."), args...)
 }
 
 type ConfigSSH struct {
-	Enabled        bool          `mapstructure:"enabled"`
-	Username       string        `mapstructure:"username"`
-	Port           int           `mapstructure:"port"`
-	PrivateKeyPath string        `mapstructure:"private_key_path"`
-	Password       string        `mapstructure:"password"`
-	UpdateInterval time.Duration `mapstructure:"update_interval"`
-	Timeout        time.Duration `mapstructure:"timeout"`
-	DemoPathFmt    string        `mapstructure:"demo_path_fmt"`
+	Enabled        bool   `json:"enabled"`
+	Username       string `json:"username"`
+	Port           int    `json:"port,string"`
+	PrivateKeyPath string `json:"private_key_path"`
+	Password       string `json:"password"`
+	UpdateInterval int    `json:"update_interval,string"`
+	Timeout        int    `json:"timeout,string"`
+	DemoPathFmt    string `json:"demo_path_fmt"`
 }
 
 type ConfigExports struct {
-	BDEnabled      bool     `mapstructure:"bd_enabled"`
-	ValveEnabled   bool     `mapstructure:"valve_enabled"`
-	AuthorizedKeys []string `mapstructure:"authorized_keys"`
+	BDEnabled      bool     `json:"bd_enabled"`
+	ValveEnabled   bool     `json:"valve_enabled"`
+	AuthorizedKeys []string `json:"authorized_keys"`
 }
 
 type ConfigFilter struct {
-	Enabled        bool          `mapstructure:"enabled"`
-	WarningTimeout time.Duration `mapstructure:"warning_timeout"`
-	WarningLimit   int           `mapstructure:"warning_limit"`
-	Dry            bool          `mapstructure:"dry"`
-	PingDiscord    bool          `mapstructure:"ping_discord"`
-	MaxWeight      int           `mapstructure:"max_weight"`
-	CheckTimeout   time.Duration `mapstructure:"check_timeout"`
-	MatchTimeout   time.Duration `mapstructure:"match_timeout"`
+	Enabled        bool `json:"enabled"`
+	WarningTimeout int  `json:"warning_timeout,string"`
+	WarningLimit   int  `json:"warning_limit,string"`
+	Dry            bool `json:"dry"`
+	PingDiscord    bool `json:"ping_discord"`
+	MaxWeight      int  `json:"max_weight,string"`
+	CheckTimeout   int  `json:"check_timeout,string"`
+	MatchTimeout   int  `json:"match_timeout,string"`
 }
 
 type ConfigLocalStore struct {
-	PathRoot string `mapstructure:"path_root"`
+	PathRoot string `json:"path_root"`
 }
 
 type ConfigDB struct {
@@ -111,25 +113,11 @@ type ConfigDB struct {
 }
 
 type ConfigPatreon struct {
-	Enabled             bool   `mapstructure:"enabled"`
-	ClientID            string `mapstructure:"client_id"`
-	ClientSecret        string `mapstructure:"client_secret"`
-	CreatorAccessToken  string `mapstructure:"creator_access_token"`
-	CreatorRefreshToken string `mapstructure:"creator_refresh_token"`
-}
-
-type ConfigHTTP struct {
-	Host          string        `mapstructure:"host"`
-	Port          int           `mapstructure:"port"`
-	StaticPath    string        `mapstructure:"static_path"`
-	CookieKey     string        `mapstructure:"cookie_key"`
-	ClientTimeout time.Duration `mapstructure:"client_timeout"`
-	CorsOrigins   []string      `mapstructure:"cors_origins"`
-}
-
-// Addr returns the address in host:port format.
-func (h ConfigHTTP) Addr() string {
-	return fmt.Sprintf("%s:%d", h.Host, h.Port)
+	Enabled             bool   `json:"enabled"`
+	ClientID            string `json:"client_id"`
+	ClientSecret        string `json:"client_secret"`
+	CreatorAccessToken  string `json:"creator_access_token"`
+	CreatorRefreshToken string `json:"creator_refresh_token"`
 }
 
 type RunMode string
@@ -171,58 +159,55 @@ const (
 )
 
 type ConfigGeneral struct {
-	SiteName    string  `mapstructure:"site_name"`
-	SteamKey    string  `mapstructure:"steam_key"`
-	Owner       string  `mapstructure:"owner"`
-	Mode        RunMode `mapstructure:"mode"`
-	ExternalURL string  `mapstructure:"external_url"`
-
-	FileServeMode FileServeMode `mapstructure:"file_serve_mode"`
-	SrcdsLogAddr  string        `mapstructure:"srcds_log_addr"`
+	SiteName      string        `json:"site_name"`
+	SteamKey      string        `json:"steam_key"`
+	Mode          RunMode       `json:"mode"`
+	FileServeMode FileServeMode `json:"file_serve_mode"`
+	SrcdsLogAddr  string        `json:"srcds_log_addr"`
 }
 
 type ConfigDemo struct {
-	DemoCleanupEnabled  bool         `mapstructure:"demo_cleanup_enabled"`
-	DemoCleanupStrategy DemoStrategy `mapstructure:"demo_cleanup_strategy"`
-	DemoCleanupMinPct   float32      `mapstructure:"demo_cleanup_min_pct"`
-	DemoCleanupMount    string       `mapstructure:"demo_cleanup_mount"`
-	DemoCountLimit      uint64       `mapstructure:"demo_count_limit"`
+	DemoCleanupEnabled  bool         `json:"demo_cleanup_enabled"`
+	DemoCleanupStrategy DemoStrategy `json:"demo_cleanup_strategy"`
+	DemoCleanupMinPct   float32      `json:"demo_cleanup_min_pct,string"`
+	DemoCleanupMount    string       `json:"demo_cleanup_mount"`
+	DemoCountLimit      uint64       `json:"demo_count_limit,string"`
 }
 
 type ConfigDiscord struct {
-	Enabled                 bool   `mapstructure:"enabled"`
-	AppID                   string `mapstructure:"app_id"`
-	AppSecret               string `mapstructure:"app_secret"`
-	LinkID                  string `mapstructure:"link_id"`
-	Token                   string `mapstructure:"token"`
-	GuildID                 string `mapstructure:"guild_id"`
-	LogChannelID            string `mapstructure:"log_channel_id"`
-	PublicLogChannelEnable  bool   `mapstructure:"public_log_channel_enable"`
-	PublicLogChannelID      string `mapstructure:"public_log_channel_id"`
-	PublicMatchLogChannelID string `mapstructure:"public_match_log_channel_id"`
-	ModPingRoleID           string `mapstructure:"mod_ping_role_id"`
-	UnregisterOnStart       bool   `mapstructure:"unregister_on_start"`
+	Enabled                 bool   `json:"enabled"`
+	AppID                   string `json:"app_id"`
+	AppSecret               string `json:"app_secret"`
+	LinkID                  string `json:"link_id"`
+	Token                   string `json:"token"`
+	GuildID                 string `json:"guild_id"`
+	LogChannelID            string `json:"log_channel_id"`
+	PublicLogChannelEnable  bool   `json:"public_log_channel_enable"`
+	PublicLogChannelID      string `json:"public_log_channel_id"`
+	PublicMatchLogChannelID string `json:"public_match_log_channel_id"`
+	ModPingRoleID           string `json:"mod_ping_role_id"`
+	UnregisterOnStart       bool   `json:"unregister_on_start"`
 }
 
 type ConfigSentry struct {
-	SentryDSN        string  `mapstructure:"sentry_dsn"`
-	SentryDSNWeb     string  `mapstructure:"sentry_dsn_web"`
-	SentryTrace      bool    `mapstructure:"sentry_trace"`
-	SentrySampleRate float64 `mapstructure:"sentry_sample_rate"`
+	SentryDSN        string  `json:"sentry_dsn"`
+	SentryDSNWeb     string  `json:"sentry_dsn_web"`
+	SentryTrace      bool    `json:"sentry_trace"`
+	SentrySampleRate float64 `json:"sentry_sample_rate,string"`
 }
 
 type ConfigLog struct {
-	Level string `mapstructure:"level"`
-	File  string `mapstructure:"file"`
+	Level string `json:"level"`
+	File  string `json:"file"`
 }
 
 type ConfigDebug struct {
-	SkipOpenIDValidation bool   `mapstructure:"skip_open_id_validation"`
-	AddRCONLogAddress    string `mapstructure:"add_rcon_log_address"`
+	SkipOpenIDValidation bool   `json:"skip_open_id_validation"`
+	AddRCONLogAddress    string `json:"add_rcon_log_address"`
 }
 
 type ConfigIP2Location struct {
-	Enabled   bool   `mapstructure:"enabled"`
-	CachePath string `mapstructure:"cache_path"`
-	Token     string `mapstructure:"token"`
+	Enabled   bool   `json:"enabled"`
+	CachePath string `json:"cache_path"`
+	Token     string `json:"token"`
 }

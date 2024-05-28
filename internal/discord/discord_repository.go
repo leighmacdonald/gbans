@@ -135,7 +135,7 @@ func (bot *discordRepository) onConnect(_ *discordgo.Session, _ *discordgo.Conne
 			{
 				Name:     "Cheeseburgers",
 				Type:     discordgo.ActivityTypeListening,
-				URL:      bot.conf.General.ExternalURL,
+				URL:      bot.conf.ExternalURL,
 				State:    "state field",
 				Details:  "Blah",
 				Instance: true,

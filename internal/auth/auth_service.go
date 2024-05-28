@@ -58,7 +58,7 @@ func (h authHandler) onOpenIDCallback() gin.HandlerFunc {
 
 		referralURL := httphelper.Referral(ctx)
 		conf := h.configUsecase.Config()
-		fullURL := conf.General.ExternalURL + ctx.Request.URL.String()
+		fullURL := conf.ExternalURL + ctx.Request.URL.String()
 
 		if conf.Debug.SkipOpenIDValidation {
 			// Pull the sid out of the query without doing a signature check
@@ -114,7 +114,7 @@ func (h authHandler) onOpenIDCallback() gin.HandlerFunc {
 			}
 		}
 
-		tokens, errToken := h.authUsecase.MakeTokens(ctx, conf.HTTP.CookieKey, sid, true)
+		tokens, errToken := h.authUsecase.MakeTokens(ctx, conf.HTTPCookieKey, sid, true)
 		if errToken != nil {
 			ctx.Redirect(302, referralURL)
 			slog.Error("Failed to create access token pair", log.ErrAttr(errToken))
@@ -135,7 +135,7 @@ func (h authHandler) onOpenIDCallback() gin.HandlerFunc {
 		query.Set("next_url", referralURL)
 		parsedURL.RawQuery = query.Encode()
 
-		parsedExternal, errExternal := url.Parse(conf.General.ExternalURL)
+		parsedExternal, errExternal := url.Parse(conf.ExternalURL)
 		if errExternal != nil {
 			ctx.Redirect(302, referralURL)
 			slog.Error("Failed to parse ext url", log.ErrAttr(errExternal))
@@ -187,7 +187,7 @@ func (h authHandler) onTokenRefresh() gin.HandlerFunc {
 
 		userClaims := domain.UserAuthClaims{}
 
-		refreshToken, errParseClaims := jwt.ParseWithClaims(refreshTokenString, &userClaims, h.authUsecase.MakeGetTokenKey(conf.HTTP.CookieKey))
+		refreshToken, errParseClaims := jwt.ParseWithClaims(refreshTokenString, &userClaims, h.authUsecase.MakeGetTokenKey(conf.HTTPCookieKey))
 		if errParseClaims != nil {
 			if errors.Is(errParseClaims, jwt.ErrSignatureInvalid) {
 				slog.Error("jwt signature invalid!", log.ErrAttr(errParseClaims))
@@ -222,7 +222,7 @@ func (h authHandler) onTokenRefresh() gin.HandlerFunc {
 			return
 		}
 
-		tokens, errMakeToken := h.authUsecase.MakeTokens(ctx, conf.HTTP.CookieKey, personAuth.SteamID, false)
+		tokens, errMakeToken := h.authUsecase.MakeTokens(ctx, conf.HTTPCookieKey, personAuth.SteamID, false)
 		if errMakeToken != nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			slog.Error("Failed to create access token pair", log.ErrAttr(errMakeToken))
@@ -421,7 +421,7 @@ func (h authHandler) onAPILogout() gin.HandlerFunc {
 			return
 		}
 
-		parsedExternal, errExternal := url.Parse(conf.General.ExternalURL)
+		parsedExternal, errExternal := url.Parse(conf.ExternalURL)
 		if errExternal != nil {
 			ctx.Status(http.StatusInternalServerError)
 			slog.Error("Failed to parse ext url", log.ErrAttr(errExternal))

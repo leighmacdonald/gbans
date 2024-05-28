@@ -1,41 +1,22 @@
 import { apiCall } from './common.ts';
 
 export const apiSaveSettings = async (settings: Config) => {
-    return await apiCall(`/api/settings`, 'PUT', settings);
+    return await apiCall(`/api/config`, 'PUT', settings);
 };
 
-export const apiGetSettings = (): Config => {
-    return {
-        debug: undefined,
-        demos: undefined,
-        discord: undefined,
-        exports: undefined,
-        filters: undefined,
-        general: {
-            srcds_log_addr: '',
-            file_serve_mode: 'local',
-            steam_key: '12345',
-            mode: 'release',
-            site_name: 'Site name'
-        },
-        ip2location: undefined,
-        local_store: undefined,
-        logging: undefined,
-        patreon: undefined,
-        sentry: undefined,
-        ssh: undefined
-    };
+export const apiGetSettings = async () => {
+    return await apiCall<Config>('/api/config', 'GET');
 };
 
 export type Config = {
     general: General;
     filters: Filters;
-    demos: Demos;
+    demo: Demos;
     patreon: Patreon;
     discord: Discord;
-    logging: Logging;
+    log: Logging;
     sentry: Sentry;
-    ip2location: IP2Location;
+    geo_location: GeoLocation;
     debug: Debug;
     local_store: LocalStore;
     ssh: SSH;
@@ -54,19 +35,19 @@ type Filters = {
     enabled: boolean;
     dry: boolean;
     ping_discord: boolean;
-    max_weight: number;
-    warning_timeout: number;
-    warning_limit: number;
-    check_timeout: number;
-    match_timeout: number;
+    max_weight: string;
+    warning_timeout: string;
+    warning_limit: string;
+    check_timeout: string;
+    match_timeout: string;
 };
 
 type Demos = {
     demo_cleanup_enabled: boolean;
     demo_cleanup_strategy: 'pctfree' | 'count';
-    demo_cleanup_min_pct: number;
+    demo_cleanup_min_pct: string;
     demo_cleanup_mount: string;
-    demo_count_limit: number;
+    demo_count_limit: string;
 };
 
 type Patreon = {
@@ -103,10 +84,10 @@ type Sentry = {
     sentry_dsn: string;
     sentry_dsn_web: string;
     sentry_trace: boolean;
-    sentry_sample_rate: number;
+    sentry_sample_rate: string;
 };
 
-type IP2Location = {
+type GeoLocation = {
     enabled: boolean;
     cache_path: string;
     token: string;
@@ -124,16 +105,16 @@ type LocalStore = {
 type SSH = {
     enabled: boolean;
     username: string;
-    port: number;
+    port: string;
     private_key_path: string;
     password: string;
-    update_interval: number;
-    timeout: number;
+    update_interval: string;
+    timeout: string;
     demo_path_fmt: string;
 };
 
 type Exports = {
     bd_enabled: boolean;
     valve_enabled: boolean;
-    authorized_keys: string[];
+    // authorized_keys: string[];
 };

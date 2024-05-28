@@ -37,7 +37,7 @@ func NewSrcdsUsecase(srcdsRepository domain.SRCDSRepository, configUsecase domai
 		reportUsecase:   reportUsecase,
 		discordUsecase:  discordUsecase,
 		srcdsRepository: srcdsRepository,
-		cookie:          configUsecase.Config().HTTP.CookieKey,
+		cookie:          configUsecase.Config().HTTPCookieKey,
 	}
 }
 

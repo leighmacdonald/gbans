@@ -47,14 +47,14 @@ func NewChatUsecase(configUsecase domain.ConfigUsecase, chatRepository domain.Ch
 		pu:           personUsecase,
 		du:           discordUsecase,
 		st:           stateUsecase,
-		pingDiscord:  conf.Filter.PingDiscord,
+		pingDiscord:  conf.Filters.PingDiscord,
 		warnings:     make(map[steamid.SteamID][]domain.UserWarning),
 		warningMu:    &sync.RWMutex{},
-		matchTimeout: conf.Filter.MatchTimeout,
-		dry:          conf.Filter.Dry,
-		maxWeight:    conf.Filter.MaxWeight,
-		owner:        steamid.New(conf.General.Owner),
-		checkTimeout: conf.Filter.CheckTimeout,
+		matchTimeout: time.Duration(conf.Filters.MatchTimeout) * time.Second,
+		dry:          conf.Filters.Dry,
+		maxWeight:    conf.Filters.MaxWeight,
+		owner:        steamid.New(conf.Owner),
+		checkTimeout: time.Duration(conf.Filters.CheckTimeout) * time.Second,
 	}
 }
 

@@ -111,7 +111,7 @@ func (u *authUsecase) MakeTokens(ctx *gin.Context, cookieKey string, sid steamid
 }
 
 func (u *authUsecase) AuthMiddleware(level domain.Privilege) gin.HandlerFunc {
-	cookieKey := u.configUsecase.Config().HTTP.CookieKey
+	cookieKey := u.configUsecase.Config().HTTPCookieKey
 
 	return func(ctx *gin.Context) {
 		var token string

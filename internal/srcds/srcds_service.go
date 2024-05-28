@@ -795,7 +795,7 @@ func (s *srcdsHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 		if sid, valid := req.SourceSteamID(ctx); valid {
 			sourceID = sid
 		} else {
-			sourceID = steamid.New(s.configUsecase.Config().General.Owner)
+			sourceID = steamid.New(s.configUsecase.Config().Owner)
 		}
 
 		targetID, valid := req.TargetSteamID(ctx)
