@@ -3,7 +3,7 @@ package domain
 import (
 	"context"
 	"encoding/xml"
-	"net"
+	"net/netip"
 
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -35,7 +35,7 @@ type BlocklistRepository interface {
 	SaveCIDRBlockWhitelist(ctx context.Context, whitelist *WhitelistIP) error
 	DeleteCIDRBlockWhitelist(ctx context.Context, whitelistID int) error
 	TruncateCachedEntries(ctx context.Context) error
-	InsertCache(ctx context.Context, list CIDRBlockSource, entries []*net.IPNet) error
+	InsertCache(ctx context.Context, list CIDRBlockSource, entries []netip.Prefix) error
 	CreateSteamBlockWhitelists(ctx context.Context, steamID steamid.SteamID) (WhitelistSteam, error)
 	GetSteamBlockWhitelists(ctx context.Context) ([]WhitelistSteam, error)
 	DeleteSteamBlockWhitelists(ctx context.Context, steamID steamid.SteamID) error
