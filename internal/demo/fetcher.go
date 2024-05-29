@@ -118,12 +118,15 @@ func (d Fetcher) OnClientConnect(ctx context.Context, client storage.Storager, s
 
 			_ = reader.Close()
 
+			// need Seeker, but afs does not provide
 			demo := demoUpdate{name: file.Name(), server: server, content: data}
 
 			if errDemo := d.onDemoReceived(ctx, demo); errDemo != nil {
-				slog.Error("Failed to create new demo asset", log.ErrAttr(errDemo))
+				if !errors.Is(errDemo, domain.ErrAssetTooLarge) {
+					slog.Error("Failed to create new demo asset", log.ErrAttr(errDemo))
 
-				continue
+					continue
+				}
 			}
 
 			if errDelete := client.Delete(ctx, demoPath); errDelete != nil {
