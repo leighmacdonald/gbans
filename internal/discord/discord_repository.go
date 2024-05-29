@@ -120,7 +120,7 @@ func (bot *discordRepository) Start() error {
 }
 
 func (bot *discordRepository) onReady(session *discordgo.Session, _ *discordgo.Ready) {
-	slog.Info("Service state changed", slog.String("state", "ready"), slog.String("username",
+	slog.Info("Discord state changed", slog.String("state", "ready"), slog.String("username",
 		fmt.Sprintf("%v#%v", session.State.User.Username, session.State.User.Discriminator)))
 }
 
@@ -149,7 +149,7 @@ func (bot *discordRepository) onConnect(_ *discordgo.Session, _ *discordgo.Conne
 		slog.Error("Failed to update status complex", log.ErrAttr(errUpdateStatus))
 	}
 
-	slog.Info("Service state changed", slog.String("state", "connected"))
+	slog.Info("Discord state changed", slog.String("state", "connected"))
 
 	bot.isReady.Store(true)
 }
@@ -157,7 +157,7 @@ func (bot *discordRepository) onConnect(_ *discordgo.Session, _ *discordgo.Conne
 func (bot *discordRepository) onDisconnect(_ *discordgo.Session, _ *discordgo.Disconnect) {
 	bot.isReady.Store(false)
 
-	slog.Info("Service state changed", slog.String("state", "disconnected"))
+	slog.Info("Discord state changed", slog.String("state", "disconnected"))
 }
 
 // onInteractionCreate is called when a user initiates an application command. All commands are sent

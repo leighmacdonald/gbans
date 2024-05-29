@@ -10,4 +10,5 @@ export type FieldProps<T = string> = {
     onChange?: (value: T) => void;
     multiline?: boolean;
     rows?: number;
+    placeholder?: string;
 };

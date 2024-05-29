@@ -63,7 +63,7 @@ func (c *configRepository) Read(ctx context.Context) (domain.Config, error) {
 			&cfg.Demo.DemoCleanupEnabled, &cfg.Demo.DemoCleanupStrategy, &cfg.Demo.DemoCleanupMinPct, &cfg.Demo.DemoCleanupMount, &cfg.Demo.DemoCountLimit,
 			&cfg.Patreon.Enabled, &cfg.Patreon.ClientID, &cfg.Patreon.ClientSecret, &cfg.Patreon.CreatorAccessToken, &cfg.Patreon.CreatorRefreshToken,
 			&cfg.Discord.Enabled, &cfg.Discord.AppID, &cfg.Discord.AppSecret, &cfg.Discord.LinkID, &cfg.Discord.Token, &cfg.Discord.GuildID, &cfg.Discord.LogChannelID,
-			&cfg.Discord.PublicLogChannelEnable, &cfg.Discord.PublicMatchLogChannelID, &cfg.Discord.PublicMatchLogChannelID, &cfg.Discord.ModPingRoleID,
+			&cfg.Discord.PublicLogChannelEnable, &cfg.Discord.PublicLogChannelID, &cfg.Discord.PublicMatchLogChannelID, &cfg.Discord.ModPingRoleID,
 			&cfg.Discord.UnregisterOnStart,
 			&cfg.Log.Level, &cfg.Log.File,
 			&cfg.Sentry.SentryDSN, &cfg.Sentry.SentryDSNWeb, &cfg.Sentry.SentryTrace, &cfg.Sentry.SentrySampleRate,
