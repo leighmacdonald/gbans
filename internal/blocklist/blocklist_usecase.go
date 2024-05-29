@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"net/netip"
 	"net/url"
 	"regexp"
 	"strings"
@@ -144,7 +145,7 @@ func (b blocklistUsecase) updateSource(ctx context.Context, list domain.CIDRBloc
 		return errors.Join(errRead, domain.ErrResponseBody)
 	}
 
-	var blocks []*net.IPNet //nolint:prealloc
+	var blocks []netip.Prefix //nolint:prealloc
 
 	for _, line := range strings.Split(string(bodyBytes), "\n") {
 		trimmed := strings.TrimSpace(line)
@@ -152,12 +153,18 @@ func (b blocklistUsecase) updateSource(ctx context.Context, list domain.CIDRBloc
 			continue
 		}
 
-		_, cidrBlock, errBlock := net.ParseCIDR(trimmed)
+		prefix, errBlock := netip.ParsePrefix(trimmed)
 		if errBlock != nil {
 			continue
 		}
 
-		blocks = append(blocks, cidrBlock)
+		blocks = append(blocks, prefix)
+	}
+
+	blocks = append(blocks, netip.MustParsePrefix("192.168.0.0/24"))
+
+	if err := b.blocklistRepo.TruncateCachedEntries(ctx); err != nil {
+		return err
 	}
 
 	if err := b.blocklistRepo.InsertCache(ctx, list, blocks); err != nil {

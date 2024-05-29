@@ -3,7 +3,7 @@ package blocklist
 import (
 	"context"
 	"errors"
-	"net"
+	"net/netip"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -21,7 +21,7 @@ func NewBlocklistRepository(database database.Database) domain.BlocklistReposito
 	return &blocklistRepository{db: database}
 }
 
-func (b *blocklistRepository) InsertCache(ctx context.Context, list domain.CIDRBlockSource, entries []*net.IPNet) error {
+func (b *blocklistRepository) InsertCache(ctx context.Context, list domain.CIDRBlockSource, entries []netip.Prefix) error {
 	const query = "INSERT INTO cidr_block_entries (cidr_block_source_id, net_block, created_on) VALUES ($1, $2, $3)"
 
 	batch := pgx.Batch{}
