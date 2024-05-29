@@ -8,7 +8,8 @@ export const TextFieldSimple = ({
     handleBlur,
     fullwidth = true,
     disabled = false,
-    rows = 1
+    rows = 1,
+    placeholder = undefined
 }: FieldProps) => {
     return (
         <TextField
@@ -18,6 +19,7 @@ export const TextFieldSimple = ({
             fullWidth={fullwidth}
             label={label}
             value={state.value}
+            placeholder={placeholder}
             onChange={(e) => handleChange(e.target.value)}
             onBlur={handleBlur}
             variant="outlined"
