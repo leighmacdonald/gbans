@@ -37,6 +37,7 @@ import {
 import { AppealMessageView } from '../component/AppealMessageView.tsx';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ErrorDetails } from '../component/ErrorDetails.tsx';
+import { MarkDownRenderer } from '../component/MarkdownRenderer.tsx';
 import { ProfileInfoBox } from '../component/ProfileInfoBox.tsx';
 import RouterLink from '../component/RouterLink.tsx';
 import { SourceBansList } from '../component/SourceBansList.tsx';
@@ -352,7 +353,7 @@ function BanPage() {
                     {permissionLevel() >= PermissionLevel.Moderator && ban.note != '' && (
                         <ContainerWithHeader title={'Mod Notes'} iconLeft={<DocumentScannerIcon />}>
                             <Typography variant={'body2'} padding={2}>
-                                {ban.note}
+                                <MarkDownRenderer body_md={ban.note} />
                             </Typography>
                         </ContainerWithHeader>
                     )}

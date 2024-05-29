@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"net/netip"
 	"strings"
 	"time"
 
@@ -18,6 +19,7 @@ import (
 )
 
 type srcdsUsecase struct {
+	banState        domain.BanSteamUsecase
 	configUsecase   domain.ConfigUsecase
 	serversUsecase  domain.ServersUsecase
 	srcdsRepository domain.SRCDSRepository
@@ -28,7 +30,7 @@ type srcdsUsecase struct {
 }
 
 func NewSrcdsUsecase(srcdsRepository domain.SRCDSRepository, configUsecase domain.ConfigUsecase, serversUsecase domain.ServersUsecase,
-	personUsecase domain.PersonUsecase, reportUsecase domain.ReportUsecase, discordUsecase domain.DiscordUsecase,
+	personUsecase domain.PersonUsecase, reportUsecase domain.ReportUsecase, discordUsecase domain.DiscordUsecase, banUsecase domain.BanSteamUsecase,
 ) domain.SRCDSUsecase {
 	return &srcdsUsecase{
 		configUsecase:   configUsecase,
@@ -36,12 +38,13 @@ func NewSrcdsUsecase(srcdsRepository domain.SRCDSRepository, configUsecase domai
 		personUsecase:   personUsecase,
 		reportUsecase:   reportUsecase,
 		discordUsecase:  discordUsecase,
+		banState:        banUsecase,
 		srcdsRepository: srcdsRepository,
 		cookie:          configUsecase.Config().HTTPCookieKey,
 	}
 }
 
-func (h srcdsUsecase) GetBanState(ctx context.Context, steamID steamid.SteamID, ip net.IP) (domain.PlayerBanState, string, error) {
+func (h srcdsUsecase) GetBanState(ctx context.Context, steamID steamid.SteamID, ip netip.Addr) (domain.PlayerBanState, string, error) {
 	banState, errBanState := h.srcdsRepository.QueryBanState(ctx, steamID, ip)
 	if errBanState != nil || banState.BanID == 0 {
 		return banState, "", errBanState

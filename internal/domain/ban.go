@@ -13,9 +13,9 @@ import (
 
 type BanSteamRepository interface {
 	Save(ctx context.Context, ban *BanSteam) error
-	GetBySteamID(ctx context.Context, sid64 steamid.SteamID, deletedOk bool) (BannedSteamPerson, error)
-	GetByBanID(ctx context.Context, banID int64, deletedOk bool) (BannedSteamPerson, error)
-	GetByLastIP(ctx context.Context, lastIP netip.Addr, deletedOk bool) (BannedSteamPerson, error)
+	GetBySteamID(ctx context.Context, sid64 steamid.SteamID, deletedOk bool, evadeOK bool) (BannedSteamPerson, error)
+	GetByBanID(ctx context.Context, banID int64, deletedOk bool, evadeOK bool) (BannedSteamPerson, error)
+	GetByLastIP(ctx context.Context, lastIP netip.Addr, deletedOk bool, evadeOK bool) (BannedSteamPerson, error)
 	Delete(ctx context.Context, ban *BanSteam, hardDelete bool) error
 	Get(ctx context.Context, filter SteamBansQueryFilter) ([]BannedSteamPerson, error)
 	ExpiredBans(ctx context.Context) ([]BanSteam, error)
@@ -26,10 +26,10 @@ type BanSteamRepository interface {
 }
 
 type BanSteamUsecase interface {
-	IsOnIPWithBan(ctx context.Context, curUser PersonInfo, steamID steamid.SteamID, address netip.Addr) (bool, error)
-	GetBySteamID(ctx context.Context, sid64 steamid.SteamID, deletedOk bool) (BannedSteamPerson, error)
-	GetByBanID(ctx context.Context, banID int64, deletedOk bool) (BannedSteamPerson, error)
-	GetByLastIP(ctx context.Context, lastIP netip.Addr, deletedOk bool) (BannedSteamPerson, error)
+	CheckEvadeStatus(ctx context.Context, curUser PersonInfo, steamID steamid.SteamID, address netip.Addr) (bool, error)
+	GetBySteamID(ctx context.Context, sid64 steamid.SteamID, deletedOk bool, evadeOK bool) (BannedSteamPerson, error)
+	GetByBanID(ctx context.Context, banID int64, deletedOk bool, evadeOK bool) (BannedSteamPerson, error)
+	GetByLastIP(ctx context.Context, lastIP netip.Addr, deletedOk bool, evadeOK bool) (BannedSteamPerson, error)
 	Save(ctx context.Context, ban *BanSteam) error
 	Ban(ctx context.Context, curUser PersonInfo, banSteam *BanSteam) error
 	Unban(ctx context.Context, targetSID steamid.SteamID, reason string) (bool, error)

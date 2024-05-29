@@ -151,7 +151,7 @@ func (u *authUsecase) AuthMiddleware(level domain.Privilege) gin.HandlerFunc {
 					return
 				}
 
-				bannedPerson, errBan := u.banUsecase.GetBySteamID(ctx, sid, false)
+				bannedPerson, errBan := u.banUsecase.GetBySteamID(ctx, sid, false, true)
 				if errBan != nil {
 					if !errors.Is(errBan, domain.ErrNoResult) {
 						slog.Error("Failed to fetch authed user ban", log.ErrAttr(errBan))

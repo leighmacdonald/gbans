@@ -92,7 +92,7 @@ func (r banSteamRepository) Delete(ctx context.Context, ban *domain.BanSteam, ha
 	return r.updateBan(ctx, ban)
 }
 
-func (r banSteamRepository) getBanByColumn(ctx context.Context, column string, identifier any, deletedOk bool) (domain.BannedSteamPerson, error) {
+func (r banSteamRepository) getBanByColumn(ctx context.Context, column string, identifier any, deletedOk bool, evadeOK bool) (domain.BannedSteamPerson, error) {
 	person := domain.NewBannedPerson()
 
 	whereClauses := sq.And{
@@ -102,6 +102,10 @@ func (r banSteamRepository) getBanByColumn(ctx context.Context, column string, i
 
 	if !deletedOk {
 		whereClauses = append(whereClauses, sq.Eq{"b.deleted": false})
+	}
+
+	if !evadeOK {
+		whereClauses = append(whereClauses, sq.Eq{"b.evade_ok": false})
 	}
 
 	query := r.db.
@@ -149,17 +153,17 @@ func (r banSteamRepository) getBanByColumn(ctx context.Context, column string, i
 	return person, nil
 }
 
-func (r banSteamRepository) GetBySteamID(ctx context.Context, sid64 steamid.SteamID, deletedOk bool) (domain.BannedSteamPerson, error) {
-	return r.getBanByColumn(ctx, "target_id", sid64, deletedOk)
+func (r banSteamRepository) GetBySteamID(ctx context.Context, sid64 steamid.SteamID, deletedOk bool, evadeOK bool) (domain.BannedSteamPerson, error) {
+	return r.getBanByColumn(ctx, "target_id", sid64, deletedOk, evadeOK)
 }
 
-func (r banSteamRepository) GetByBanID(ctx context.Context, banID int64, deletedOk bool) (domain.BannedSteamPerson, error) {
-	return r.getBanByColumn(ctx, "ban_id", banID, deletedOk)
+func (r banSteamRepository) GetByBanID(ctx context.Context, banID int64, deletedOk bool, evadeOK bool) (domain.BannedSteamPerson, error) {
+	return r.getBanByColumn(ctx, "ban_id", banID, deletedOk, evadeOK)
 }
 
-func (r banSteamRepository) GetByLastIP(ctx context.Context, lastIP netip.Addr, deletedOk bool) (domain.BannedSteamPerson, error) {
+func (r banSteamRepository) GetByLastIP(ctx context.Context, lastIP netip.Addr, deletedOk bool, evadeOK bool) (domain.BannedSteamPerson, error) {
 	// TODO check if works still
-	return r.getBanByColumn(ctx, "last_ip", lastIP.String(), deletedOk)
+	return r.getBanByColumn(ctx, "last_ip", lastIP.String(), deletedOk, evadeOK)
 }
 
 // Save will insert or update the ban record
@@ -183,7 +187,7 @@ func (r banSteamRepository) Save(ctx context.Context, ban *domain.BanSteam) erro
 
 	ban.CreatedOn = ban.UpdatedOn
 
-	existing, errGetBan := r.GetBySteamID(ctx, ban.TargetID, false)
+	existing, errGetBan := r.GetBySteamID(ctx, ban.TargetID, false, true)
 	if errGetBan != nil {
 		if !errors.Is(errGetBan, domain.ErrNoResult) {
 			return errors.Join(errGetBan, domain.ErrGetBan)

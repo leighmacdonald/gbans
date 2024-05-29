@@ -34,7 +34,7 @@ func (u *appealUsecase) EditBanMessage(ctx context.Context, curUser domain.UserP
 		return domain.BanAppealMessage{}, err
 	}
 
-	bannedPerson, errReport := u.banUsecase.GetByBanID(ctx, existing.BanID, true)
+	bannedPerson, errReport := u.banUsecase.GetByBanID(ctx, existing.BanID, true, true)
 	if errReport != nil {
 		return existing, errReport
 	}
@@ -74,7 +74,7 @@ func (u *appealUsecase) CreateBanMessage(ctx context.Context, curUser domain.Use
 		return domain.BanAppealMessage{}, domain.ErrBadRequest
 	}
 
-	bannedPerson, errReport := u.banUsecase.GetByBanID(ctx, banID, true)
+	bannedPerson, errReport := u.banUsecase.GetByBanID(ctx, banID, true, true)
 	if errReport != nil {
 		return domain.BanAppealMessage{}, errReport
 	}
@@ -119,7 +119,7 @@ func (u *appealUsecase) CreateBanMessage(ctx context.Context, curUser domain.Use
 }
 
 func (u *appealUsecase) GetBanMessages(ctx context.Context, userProfile domain.UserProfile, banID int64) ([]domain.BanAppealMessage, error) {
-	banPerson, errGetBan := u.banUsecase.GetByBanID(ctx, banID, true)
+	banPerson, errGetBan := u.banUsecase.GetByBanID(ctx, banID, true, true)
 	if errGetBan != nil {
 		return nil, errGetBan
 	}
