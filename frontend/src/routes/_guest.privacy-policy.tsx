@@ -6,6 +6,7 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { createFileRoute } from '@tanstack/react-router';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { Title } from '../component/Title.tsx';
+import { useAppInfoCtx } from '../contexts/AppInfoCtx.ts';
 
 export const Route = createFileRoute('/_guest/privacy-policy')({
     component: PrivacyPolicy
@@ -23,6 +24,8 @@ const PPBox = ({ heading, children }: { heading: string; children: ReactNode }) 
 };
 
 function PrivacyPolicy() {
+    const { appInfo } = useAppInfoCtx();
+
     return (
         <ContainerWithHeader title={'Privacy Policy'} padding={2} iconLeft={<PolicyIcon />}>
             <Title>Privacy Policy</Title>
@@ -31,8 +34,8 @@ function PrivacyPolicy() {
                     <ul>
                         <li>
                             Where it is necessary for the purposes of the legitimate and legal interests of{' '}
-                            {__SITE_NAME__}, except where such interests are overridden by your prevailing legitimate
-                            interests and rights; or
+                            {appInfo.site_name}, except where such interests are overridden by your prevailing
+                            legitimate interests and rights; or
                         </li>
                         <li>Where you have given consent to it.</li>
                     </ul>

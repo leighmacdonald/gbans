@@ -31,6 +31,7 @@ function AdminNews() {
     const handleChange = (_: SyntheticEvent, newValue: number) => {
         setTabSetTabValue(newValue);
     };
+
     const [selectedNewsEntry, setSelectedNewsEntry] = useState<NewsEntry>({
         news_id: 0,
         body_md: '',

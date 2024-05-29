@@ -72,6 +72,7 @@ function AdminReports() {
     const navigate = useNavigate({ from: Route.fullPath });
     const { sortColumn, sortOrder, page, rows, source_id, target_id, report_status } = Route.useSearch();
     const reports = Route.useLoaderData();
+
     const [pagination, setPagination] = useState(initPagination(page, rows));
     const [sorting, setSorting] = useState<SortingState>(
         initSortOrder(sortColumn, sortOrder, {

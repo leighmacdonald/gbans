@@ -50,6 +50,7 @@ import { useTheme } from '@mui/material/styles';
 import { useNavigate } from '@tanstack/react-router';
 import { MenuItemData, NestedDropdown } from 'mui-nested-menu';
 import { PermissionLevel, UserNotification } from '../api';
+import { useAppInfoCtx } from '../contexts/AppInfoCtx.ts';
 import { NotificationsProvider } from '../contexts/NotificationsCtx';
 import { useAuth } from '../hooks/useAuth.ts';
 import { useColourModeCtx } from '../hooks/useColourModeCtx.ts';
@@ -68,7 +69,7 @@ interface menuRoute {
 
 export const TopBar = () => {
     const { profile, hasPermission, isAuthenticated } = useAuth();
-
+    const { appInfo } = useAppInfoCtx();
     const { notifications } = useNotificationsCtx();
     const theme = useTheme();
     const colourMode = useColourModeCtx();
@@ -329,7 +330,7 @@ export const TopBar = () => {
                             ...tf2Fonts
                         }}
                     >
-                        {__SITE_NAME__}
+                        {appInfo.site_name}
                     </Typography>
 
                     <Box
@@ -379,7 +380,7 @@ export const TopBar = () => {
                             display: { xs: 'flex', md: 'none' }
                         }}
                     >
-                        {__SITE_NAME__}
+                        {appInfo.site_name}
                     </Typography>
                     <Box
                         sx={{

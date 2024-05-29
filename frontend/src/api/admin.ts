@@ -29,6 +29,7 @@ type General = {
     mode: 'release' | 'debug' | 'test';
     file_serve_mode: 'local';
     srcds_log_addr: string;
+    asset_url: string;
 };
 
 type Filters = {

@@ -25,6 +25,7 @@ import RouterLink from '../component/RouterLink.tsx';
 import { Title } from '../component/Title';
 import { VCenterBox } from '../component/VCenterBox.tsx';
 import { ModalForumCategoryEditor, ModalForumForumEditor } from '../component/modal';
+import { useAppInfoCtx } from '../contexts/AppInfoCtx.ts';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors.ts';
 import { avatarHashToURL, humanCount, renderDateTime } from '../util/text.tsx';
@@ -177,8 +178,8 @@ const CategoryBlock = ({ category }: { category: ForumCategory }) => {
 
 function ForumOverview() {
     const { sendFlash } = useUserFlashCtx();
+    const { appInfo } = useAppInfoCtx();
     const { hasPermission } = useRouteContext({ from: '/_auth/forums/' });
-
     const { data: overview, isLoading } = useQuery({
         queryKey: ['forumOverview'],
         queryFn: async () => {
@@ -207,7 +208,7 @@ function ForumOverview() {
     return (
         <Grid container spacing={3}>
             <Grid xs={12}>
-                <Typography variant={'h2'}>{__SITE_NAME__} community</Typography>
+                <Typography variant={'h2'}>{appInfo.site_name} community</Typography>
             </Grid>
             <Grid md={9} xs={12}>
                 <Stack spacing={3}>

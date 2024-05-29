@@ -28,7 +28,7 @@ func (c *configRepository) Config() domain.Config {
 
 func (c *configRepository) Read(ctx context.Context) (domain.Config, error) {
 	const query = `
-		SELECT general_site_name, general_steam_key, general_mode, general_file_serve_mode, general_srcds_log_addr,
+		SELECT general_site_name, general_steam_key, general_mode, general_file_serve_mode, general_srcds_log_addr, general_asset_url,
 		       
 		       filters_enabled, filters_dry, filters_ping_discord, filters_max_weight, filters_warning_timeout, filters_check_timeout, filters_match_timeout,
 		       
@@ -58,7 +58,7 @@ func (c *configRepository) Read(ctx context.Context) (domain.Config, error) {
 	var cfg domain.Config
 
 	err := c.db.QueryRow(ctx, query).
-		Scan(&cfg.General.SiteName, &cfg.General.SteamKey, &cfg.General.Mode, &cfg.General.FileServeMode, &cfg.General.SrcdsLogAddr,
+		Scan(&cfg.General.SiteName, &cfg.General.SteamKey, &cfg.General.Mode, &cfg.General.FileServeMode, &cfg.General.SrcdsLogAddr, &cfg.General.AssetURL,
 			&cfg.Filters.Enabled, &cfg.Filters.Dry, &cfg.Filters.PingDiscord, &cfg.Filters.MaxWeight, &cfg.Filters.WarningTimeout, &cfg.Filters.CheckTimeout, &cfg.Filters.MatchTimeout,
 			&cfg.Demo.DemoCleanupEnabled, &cfg.Demo.DemoCleanupStrategy, &cfg.Demo.DemoCleanupMinPct, &cfg.Demo.DemoCleanupMount, &cfg.Demo.DemoCountLimit,
 			&cfg.Patreon.Enabled, &cfg.Patreon.ClientID, &cfg.Patreon.ClientSecret, &cfg.Patreon.CreatorAccessToken, &cfg.Patreon.CreatorRefreshToken,
@@ -110,6 +110,7 @@ func (c *configRepository) Write(ctx context.Context, config domain.Config) erro
 			"general_mode":                        config.General.Mode,
 			"general_file_serve_mode":             config.General.FileServeMode,
 			"general_srcds_log_addr":              config.General.SrcdsLogAddr,
+			"general_asset_url":                   config.General.AssetURL,
 			"filters_enabled":                     config.Filters.Enabled,
 			"filters_dry":                         config.Filters.Dry,
 			"filters_ping_discord":                config.Filters.PingDiscord,

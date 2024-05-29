@@ -49,7 +49,6 @@ export const Route = createFileRoute('/_admin/admin/servers')({
 function AdminServers() {
     const { sendFlash } = useUserFlashCtx();
     const queryClient = useQueryClient();
-    //const { page, sortColumn, rows, sortOrder } = Route.useSearch();
 
     const [pagination, setPagination] = useState({
         pageIndex: 0, //initial page index

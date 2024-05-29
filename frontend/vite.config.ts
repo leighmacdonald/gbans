@@ -5,10 +5,7 @@ import { defineConfig } from 'vite';
 import { createHtmlPlugin } from 'vite-plugin-html';
 
 const CONFIG = {
-    __SITE_NAME__: 'Uncletopia',
-    __BUILD_VERSION__: 'v0.7.7',
-    __DISCORD_LINK_ID__: 'caQKCWFMrN',
-    __ASSET_URL__: ''
+    __BUILD_VERSION__: 'v0.7.7'
 };
 
 const mapValues = (o: object, fn: (v: unknown) => unknown) =>

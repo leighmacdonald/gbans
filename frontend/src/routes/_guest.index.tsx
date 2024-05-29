@@ -15,6 +15,8 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { useNavigate, useRouteContext, createFileRoute } from '@tanstack/react-router';
 import { NewsView } from '../component/NewsView';
 import RouterLink from '../component/RouterLink.tsx';
+import { Title } from '../component/Title.tsx';
+import { useAppInfoCtx } from '../contexts/AppInfoCtx.ts';
 
 export const Route = createFileRoute('/_guest/')({
     component: Index
@@ -22,133 +24,138 @@ export const Route = createFileRoute('/_guest/')({
 
 function Index() {
     const navigate = useNavigate();
+    const { appInfo } = useAppInfoCtx();
     const { profile } = useRouteContext({ from: '/_guest/' });
+
     return (
-        <Grid container spacing={3}>
-            <Grid xs={12} sm={12} md={9}>
-                <NewsView itemsPerPage={3} />
+        <>
+            <Title />
+            <Grid container spacing={3}>
+                <Grid xs={12} sm={12} md={9}>
+                    <NewsView itemsPerPage={3} />
+                </Grid>
+                <Grid xs={12} sm={12} md={3}>
+                    <Stack spacing={3}>
+                        {profile.ban_id == 0 ? (
+                            <Button
+                                startIcon={<StorageIcon />}
+                                fullWidth
+                                color={'success'}
+                                variant={'contained'}
+                                onClick={async () => {
+                                    await navigate({ to: '/servers' });
+                                }}
+                            >
+                                Play Now!
+                            </Button>
+                        ) : (
+                            <Button
+                                startIcon={<SupportIcon />}
+                                fullWidth
+                                color={'success'}
+                                variant={'contained'}
+                                onClick={async () => {
+                                    await navigate({
+                                        to: `/ban/${profile.ban_id}`
+                                    });
+                                }}
+                            >
+                                Appeal Ban
+                            </Button>
+                        )}
+
+                        <Button
+                            component={RouterLink}
+                            startIcon={<GavelIcon />}
+                            fullWidth
+                            color={'primary'}
+                            variant={'contained'}
+                            to={`/wiki/Rules`}
+                        >
+                            Rules
+                        </Button>
+
+                        <Button
+                            component={RouterLink}
+                            startIcon={<EventIcon />}
+                            fullWidth
+                            color={'primary'}
+                            variant={'contained'}
+                            to={'/wiki/Events'}
+                        >
+                            Events
+                        </Button>
+
+                        <Button
+                            component={RouterLink}
+                            startIcon={<AttachMoneyIcon />}
+                            fullWidth
+                            color={'primary'}
+                            variant={'contained'}
+                            to={`/wiki/Donate`}
+                        >
+                            Donate
+                        </Button>
+
+                        <Button
+                            component={RouterLink}
+                            startIcon={<EmojiEventsIcon />}
+                            fullWidth
+                            color={'primary'}
+                            variant={'contained'}
+                            to={`/contests`}
+                        >
+                            Contests
+                        </Button>
+
+                        <Button
+                            component={RouterLink}
+                            startIcon={<ChatIcon />}
+                            fullWidth
+                            color={'primary'}
+                            variant={'contained'}
+                            to={`/chatlogs`}
+                        >
+                            Chat Logs
+                        </Button>
+
+                        <Button
+                            component={RouterLink}
+                            startIcon={<VideocamIcon />}
+                            fullWidth
+                            color={'primary'}
+                            variant={'contained'}
+                            to={`/stv`}
+                        >
+                            SourceTV
+                        </Button>
+
+                        <Button
+                            component={RouterLink}
+                            startIcon={<PieChartIcon />}
+                            fullWidth
+                            color={'primary'}
+                            variant={'contained'}
+                            to={`/stats`}
+                        >
+                            Stats (Beta)
+                        </Button>
+
+                        {appInfo.link_id != '' && (
+                            <Button
+                                component={Link}
+                                startIcon={<MarkUnreadChatAltIcon />}
+                                fullWidth
+                                sx={{ backgroundColor: '#5865F2' }}
+                                variant={'contained'}
+                                href={`https://discord.gg/${appInfo.link_id}`}
+                            >
+                                Join Discord
+                            </Button>
+                        )}
+                    </Stack>
+                </Grid>
             </Grid>
-            <Grid xs={12} sm={12} md={3}>
-                <Stack spacing={3}>
-                    {profile.ban_id == 0 ? (
-                        <Button
-                            startIcon={<StorageIcon />}
-                            fullWidth
-                            color={'success'}
-                            variant={'contained'}
-                            onClick={async () => {
-                                await navigate({ to: '/servers' });
-                            }}
-                        >
-                            Play Now!
-                        </Button>
-                    ) : (
-                        <Button
-                            startIcon={<SupportIcon />}
-                            fullWidth
-                            color={'success'}
-                            variant={'contained'}
-                            onClick={async () => {
-                                await navigate({
-                                    to: `/ban/${profile.ban_id}`
-                                });
-                            }}
-                        >
-                            Appeal Ban
-                        </Button>
-                    )}
-
-                    <Button
-                        component={RouterLink}
-                        startIcon={<GavelIcon />}
-                        fullWidth
-                        color={'primary'}
-                        variant={'contained'}
-                        to={`/wiki/Rules`}
-                    >
-                        Rules
-                    </Button>
-
-                    <Button
-                        component={RouterLink}
-                        startIcon={<EventIcon />}
-                        fullWidth
-                        color={'primary'}
-                        variant={'contained'}
-                        to={'/wiki/Events'}
-                    >
-                        Events
-                    </Button>
-
-                    <Button
-                        component={RouterLink}
-                        startIcon={<AttachMoneyIcon />}
-                        fullWidth
-                        color={'primary'}
-                        variant={'contained'}
-                        to={`/wiki/Donate`}
-                    >
-                        Donate
-                    </Button>
-
-                    <Button
-                        component={RouterLink}
-                        startIcon={<EmojiEventsIcon />}
-                        fullWidth
-                        color={'primary'}
-                        variant={'contained'}
-                        to={`/contests`}
-                    >
-                        Contests
-                    </Button>
-
-                    <Button
-                        component={RouterLink}
-                        startIcon={<ChatIcon />}
-                        fullWidth
-                        color={'primary'}
-                        variant={'contained'}
-                        to={`/chatlogs`}
-                    >
-                        Chat Logs
-                    </Button>
-
-                    <Button
-                        component={RouterLink}
-                        startIcon={<VideocamIcon />}
-                        fullWidth
-                        color={'primary'}
-                        variant={'contained'}
-                        to={`/stv`}
-                    >
-                        SourceTV
-                    </Button>
-
-                    <Button
-                        component={RouterLink}
-                        startIcon={<PieChartIcon />}
-                        fullWidth
-                        color={'primary'}
-                        variant={'contained'}
-                        to={`/stats`}
-                    >
-                        Stats (Beta)
-                    </Button>
-
-                    {__DISCORD_LINK_ID__ != '' && (
-                        <Button
-                            component={Link}
-                            startIcon={<MarkUnreadChatAltIcon />}
-                            fullWidth
-                            sx={{ backgroundColor: '#5865F2' }}
-                            variant={'contained'}
-                            href={`https://discord.gg/${__DISCORD_LINK_ID__}`}
-                        >
-                            Join Discord
-                        </Button>
-                    )}
-                </Stack>
-            </Grid>
-        </Grid>
+        </>
     );
 }

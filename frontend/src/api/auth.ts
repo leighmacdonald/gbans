@@ -24,6 +24,7 @@ export const refreshToken = async () => {
             true
         );
         if (!resp?.access_token) {
+            await logoutFn();
             logErr('Failed to refresh auth token');
             return;
         }
