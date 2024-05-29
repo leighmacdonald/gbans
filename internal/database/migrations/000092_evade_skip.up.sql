@@ -1,56 +1,4 @@
 BEGIN;
-DROP TABLE sm_group_immunity;
-
-CREATE TABLE sm_group_immunity
-(
-    group_immunity_id serial primary key,
-    group_id   int       NOT NULL,
-    other_id   int       NOT NULL,
-    created_on timestamp NOT NULL,
-    FOREIGN KEY (group_id) REFERENCES sm_groups (id) ON DELETE CASCADE,
-    FOREIGN KEY (other_id) REFERENCES sm_groups (id) ON DELETE CASCADE
-);
-
--- Add temp tables
-CREATE TABLE cidr_block_entries
-(
-    cidr_block_entries_id bigserial primary key,
-    cidr_block_source_id  int       NOT NULL REFERENCES cidr_block_source (cidr_block_source_id) ON DELETE CASCADE,
-    net_block             ip4r      not null,
-    created_on            timestamp not null
-);
-
-CREATE INDEX ON cidr_block_entries using gist (net_block);
-
-CREATE TABLE steam_group_members
-(
-    steam_group_memeber_id bigserial primary key,
-    steam_id   bigint    not null REFERENCES person (steam_id) ON DELETE CASCADE,
-    group_id   bigint    not null, -- Cannot use as FK as ban_group.group_id is not unique constrained
-    created_on timestamp not null
-);
-
-CREATE INDEX on steam_group_members (steam_id);
-
-CREATE TABLE steam_friends
-(
-    steam_friend_id bigserial primary key,
-    steam_id   bigint    not null REFERENCES person (steam_id) ON DELETE CASCADE,
-    friend_id  bigint    not null REFERENCES person (steam_id) ON DELETE CASCADE,
-    created_on timestamp not null
-);
-
-CREATE INDEX on steam_friends (friend_id);
-
--- Migrate more column types to use ip4r extension
-ALTER TABLE net_asn
-    ALTER COLUMN ip_range TYPE ip4r;
-ALTER TABLE net_location
-    ALTER COLUMN ip_range TYPE ip4r;
-ALTER TABLE ban_net
-    ALTER COLUMN cidr TYPE ip4r;
-ALTER TABLE cidr_block_whitelist
-    ALTER COLUMN address TYPE ip4r;
 
 -- select steam_to_steam64('STEAM_0:1:583502767'); -- -> 76561199127271263
 -- select steam_to_steam64('76561199127271263'); -- -> 76561199127271263
@@ -79,8 +27,8 @@ BEGIN
     INTO out_ban_source, out_ban_id, out_ban_type, out_reason, out_evade_ok, out_valid_until
     FROM ban
     WHERE deleted = false
-      AND target_id = in_steam_id
-      AND valid_until > now();
+      AND valid_until > now()
+      AND (target_id = in_steam_id OR ( evade_ok = false AND last_ip = ip::inet));
 
     if out_ban_id > 0 then
         return;
@@ -139,33 +87,7 @@ BEGIN
 END
 $$
     LANGUAGE plpgsql;
-
--- https://steamcommunity.com/profiles/76561198084134025/
--- SELECT * from check_ban('STEAM_1:1:566689572', '1.2.3.4');
--- SELECT 'ban_steam', *
--- from check_ban('76561198084134025', '192.168.0.57') -- ban_steam bigint
--- UNION
--- SELECT 'ban_steam2', *
--- from check_ban('STEAM_0:1:430013878', '1.2.3.4') -- ban_steam STEAM_0:1:430013878
--- UNION
--- SELECT 'ban_steam_friend', *
--- from check_ban('STEAM_0:0:58744148', '1.2.3.4') -- ban_steam_friend
--- UNION
--- SELECT 'ban_net', *
--- from check_ban('STEAM_1:1:566689574', '162.222.198.2') -- ban_net
--- UNION
--- SELECT 'cidr_block_whitelist', *
--- from check_ban('STEAM_1:1:566689573', '1.12.36.4') -- cidr_block_whitelist
--- UNION
--- SELECT 'cidr_block', *
--- from check_ban('STEAM_1:1:566689573', '2.57.68.6') -- cidr_block
--- UNION
--- SELECT 'steam_group', *
--- FROM check_ban('76561198011576839', '7.7.7.7') -- steam_group
--- UNION
--- SELECT 'ban_asn', *
--- FROM check_ban('76561198820293489', '1.1.8.2');
--- ban_asn
--- 8 rows retrieved starting from 1 in 89 ms (execution: 74 ms, fetching: 15 ms)
-
 COMMIT;
+
+SELECT 'ban_steam', *
+from check_ban('76561198084134025', '192.168.0.57') -- ban_steam bigint

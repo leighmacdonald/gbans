@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-	"net"
+	"net/netip"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -21,10 +21,10 @@ func NewRepository(database database.Database) domain.SRCDSRepository {
 	return srcdsRepository{database: database}
 }
 
-func (r srcdsRepository) QueryBanState(ctx context.Context, steamID steamid.SteamID, ipAddr net.IP) (domain.PlayerBanState, error) {
+func (r srcdsRepository) QueryBanState(ctx context.Context, steamID steamid.SteamID, ipAddr netip.Addr) (domain.PlayerBanState, error) {
 	const query = `
 		SELECT out_ban_source, out_ban_id, out_ban_type, out_reason, out_evade_ok, out_valid_until 
-		FROM check_ban($1, $2)`
+		FROM check_ban($1, $2::text)`
 
 	var banState domain.PlayerBanState
 

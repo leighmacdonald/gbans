@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"net"
 	"net/http"
+	"net/netip"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -116,10 +116,10 @@ type ServerAuthResp struct {
 
 func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
 	type checkRequest struct {
-		SteamID  string `json:"steam_id"`
-		ClientID int    `json:"client_id"`
-		IP       net.IP `json:"ip"`
-		Name     string `json:"name"`
+		domain.SteamIDField
+		ClientID int        `json:"client_id"`
+		IP       netip.Addr `json:"ip"`
+		Name     string     `json:"name"`
 	}
 
 	type checkResponse struct {
@@ -129,16 +129,47 @@ func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
 	}
 
 	return func(ctx *gin.Context) {
-		var req checkRequest
+		var (
+			currentUser = httphelper.CurrentUserProfile(ctx)
+			req         checkRequest
+		)
+
 		if !httphelper.Bind(ctx, &req) {
 			slog.Error("Failed to bind check request")
 
 			return
 		}
 
-		steamID := steamid.New(req.SteamID)
-		if !steamID.Valid() {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidSID)
+		defaultValue := checkResponse{
+			ClientID: req.ClientID,
+			BanType:  domain.OK,
+			Msg:      "",
+		}
+
+		steamID, valid := req.SteamID(ctx)
+		if !valid {
+			ctx.JSON(http.StatusOK, defaultValue)
+
+			slog.Error("Did not receive valid steamid for check response", log.ErrAttr(domain.ErrInvalidSID))
+
+			return
+		}
+
+		evadeBanned, err := s.banUsecase.CheckEvadeStatus(ctx, currentUser, steamID, req.IP)
+		if err != nil {
+			ctx.JSON(http.StatusOK, defaultValue)
+
+			return
+		}
+
+		if evadeBanned {
+			defaultValue = checkResponse{
+				ClientID: req.ClientID,
+				BanType:  domain.Banned,
+				Msg:      "Evasion ban",
+			}
+
+			ctx.JSON(http.StatusOK, defaultValue)
 
 			return
 		}
@@ -148,22 +179,22 @@ func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
 			slog.Error("failed to get ban state", log.ErrAttr(errBS))
 
 			// Fail Open
-			ctx.JSON(http.StatusOK, checkResponse{})
+			ctx.JSON(http.StatusOK, defaultValue)
 
 			return
 		}
 
-		if banState.BanID == 0 {
-			ctx.JSON(http.StatusOK, checkResponse{})
+		if banState.BanID != 0 {
+			ctx.JSON(http.StatusOK, checkResponse{
+				ClientID: req.ClientID,
+				BanType:  banState.BanType,
+				Msg:      msg,
+			})
 
 			return
 		}
 
-		ctx.JSON(http.StatusOK, checkResponse{
-			ClientID: req.ClientID,
-			BanType:  banState.BanType,
-			Msg:      msg,
-		})
+		ctx.JSON(http.StatusOK, defaultValue)
 	}
 }
 

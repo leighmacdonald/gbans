@@ -3,7 +3,7 @@ package domain
 import (
 	"context"
 	"errors"
-	"net"
+	"net/netip"
 	"time"
 
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -50,11 +50,11 @@ type SRCDSRepository interface { //nolint:interfacebloat
 	GetGroupImmunityByID(ctx context.Context, groupImmunityID int) (SMGroupImmunity, error)
 	AddGroupImmunity(ctx context.Context, group SMGroups, other SMGroups) (SMGroupImmunity, error)
 	DelGroupImmunity(ctx context.Context, groupImmunity SMGroupImmunity) error
-	QueryBanState(ctx context.Context, steamID steamid.SteamID, ipAddr net.IP) (PlayerBanState, error)
+	QueryBanState(ctx context.Context, steamID steamid.SteamID, ipAddr netip.Addr) (PlayerBanState, error)
 }
 
 type SRCDSUsecase interface { //nolint:interfacebloat
-	GetBanState(ctx context.Context, steamID steamid.SteamID, ip net.IP) (PlayerBanState, string, error)
+	GetBanState(ctx context.Context, steamID steamid.SteamID, ip netip.Addr) (PlayerBanState, string, error)
 	Report(ctx context.Context, currentUser UserProfile, req CreateReportReq) (*Report, error)
 	GetAdminByID(ctx context.Context, adminID int) (SMAdmin, error)
 	AddAdmin(ctx context.Context, alias string, authType AuthType, identity string, flags string, immunity int, password string) (SMAdmin, error)
@@ -99,12 +99,13 @@ const (
 )
 
 type PlayerBanState struct {
-	BanSource  BanSource `json:"ban_source"`
-	BanID      int       `json:"ban_id"`
-	BanType    BanType   `json:"ban_type"`
-	Reason     Reason    `json:"reason"`
-	EvadeOK    bool      `json:"evade_ok"`
-	ValidUntil time.Time `json:"valid_until"`
+	SteamID    steamid.SteamID `json:"steam_id"`
+	BanSource  BanSource       `json:"ban_source"`
+	BanID      int             `json:"ban_id"`
+	BanType    BanType         `json:"ban_type"`
+	Reason     Reason          `json:"reason"`
+	EvadeOK    bool            `json:"evade_ok"`
+	ValidUntil time.Time       `json:"valid_until"`
 }
 
 type AuthType string

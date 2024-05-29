@@ -80,7 +80,7 @@ func (h banHandler) onAPIPostSetBanAppealStatus() gin.HandlerFunc {
 			return
 		}
 
-		bannedPerson, banErr := h.bu.GetByBanID(ctx, banID, false)
+		bannedPerson, banErr := h.bu.GetByBanID(ctx, banID, false, true)
 		if banErr != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
@@ -218,7 +218,7 @@ func (h banHandler) onAPIGetBanByID() gin.HandlerFunc {
 			}
 		}
 
-		bannedPerson, errGet := h.bu.GetByBanID(ctx, banID, deletedOk)
+		bannedPerson, errGet := h.bu.GetByBanID(ctx, banID, deletedOk, true)
 		if errGet != nil {
 			httphelper.ErrorHandled(ctx, errGet)
 
@@ -398,7 +398,7 @@ func (h banHandler) onAPIPostBanDelete() gin.HandlerFunc {
 			return
 		}
 
-		bannedPerson, banErr := h.bu.GetByBanID(ctx, banID, false)
+		bannedPerson, banErr := h.bu.GetByBanID(ctx, banID, false, true)
 		if banErr != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
@@ -453,7 +453,7 @@ func (h banHandler) onAPIPostBanUpdate() gin.HandlerFunc {
 			return
 		}
 
-		bannedPerson, banErr := h.bu.GetByBanID(ctx, banID, false)
+		bannedPerson, banErr := h.bu.GetByBanID(ctx, banID, false, true)
 		if banErr != nil {
 			httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
 

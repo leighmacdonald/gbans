@@ -150,7 +150,7 @@ func (h discordService) makeOnCheck() func(_ context.Context, _ *discordgo.Sessi
 			return nil, domain.ErrCommandFailed
 		}
 
-		ban, errGetBanBySID := h.bu.GetBySteamID(ctx, sid, false)
+		ban, errGetBanBySID := h.bu.GetBySteamID(ctx, sid, false, true)
 		if errGetBanBySID != nil {
 			if !errors.Is(errGetBanBySID, domain.ErrNoResult) {
 				slog.Error("Failed to get ban by steamid", log.ErrAttr(errGetBanBySID))

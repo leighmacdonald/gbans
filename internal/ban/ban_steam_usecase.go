@@ -3,6 +3,7 @@ package ban
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/netip"
 	"time"
@@ -75,16 +76,16 @@ func (s banSteamUsecase) Stats(ctx context.Context, stats *domain.Stats) error {
 	return s.banRepo.Stats(ctx, stats)
 }
 
-func (s banSteamUsecase) GetBySteamID(ctx context.Context, sid64 steamid.SteamID, deletedOk bool) (domain.BannedSteamPerson, error) {
-	return s.banRepo.GetBySteamID(ctx, sid64, deletedOk)
+func (s banSteamUsecase) GetBySteamID(ctx context.Context, sid64 steamid.SteamID, deletedOk bool, evadeOK bool) (domain.BannedSteamPerson, error) {
+	return s.banRepo.GetBySteamID(ctx, sid64, deletedOk, evadeOK)
 }
 
-func (s banSteamUsecase) GetByBanID(ctx context.Context, banID int64, deletedOk bool) (domain.BannedSteamPerson, error) {
-	return s.banRepo.GetByBanID(ctx, banID, deletedOk)
+func (s banSteamUsecase) GetByBanID(ctx context.Context, banID int64, deletedOk bool, evadeOK bool) (domain.BannedSteamPerson, error) {
+	return s.banRepo.GetByBanID(ctx, banID, deletedOk, evadeOK)
 }
 
-func (s banSteamUsecase) GetByLastIP(ctx context.Context, lastIP netip.Addr, deletedOk bool) (domain.BannedSteamPerson, error) {
-	return s.banRepo.GetByLastIP(ctx, lastIP, deletedOk)
+func (s banSteamUsecase) GetByLastIP(ctx context.Context, lastIP netip.Addr, deletedOk bool, evadeOK bool) (domain.BannedSteamPerson, error) {
+	return s.banRepo.GetByLastIP(ctx, lastIP, deletedOk, evadeOK)
 }
 
 func (s banSteamUsecase) Save(ctx context.Context, ban *domain.BanSteam) error {
@@ -98,7 +99,7 @@ func (s banSteamUsecase) Ban(ctx context.Context, curUser domain.PersonInfo, ban
 		return errors.Join(domain.ErrInvalidSID, domain.ErrTargetID)
 	}
 
-	existing, errGetExistingBan := s.banRepo.GetBySteamID(ctx, banSteam.TargetID, false)
+	existing, errGetExistingBan := s.banRepo.GetBySteamID(ctx, banSteam.TargetID, false, true)
 
 	if existing.BanID > 0 {
 		return domain.ErrDuplicate
@@ -162,7 +163,7 @@ func (s banSteamUsecase) Ban(ctx context.Context, curUser domain.PersonInfo, ban
 // Returns true, nil if the ban exists, and was successfully banned.
 // Returns false, nil if the ban does not exist.
 func (s banSteamUsecase) Unban(ctx context.Context, targetSID steamid.SteamID, reason string) (bool, error) {
-	bannedPerson, errGetBan := s.banRepo.GetBySteamID(ctx, targetSID, false)
+	bannedPerson, errGetBan := s.banRepo.GetBySteamID(ctx, targetSID, false, true)
 
 	if errGetBan != nil {
 		if errors.Is(errGetBan, domain.ErrNoResult) {
@@ -205,10 +206,10 @@ func (s banSteamUsecase) GetOlderThan(ctx context.Context, filter domain.QueryFi
 	return s.banRepo.GetOlderThan(ctx, filter, since)
 }
 
-// IsOnIPWithBan checks if the address matches an existing user who is currently banned already. This
+// CheckEvadeStatus checks if the address matches an existing user who is currently banned already. This
 // function will always fail-open and allow players in if an error occurs.
-func (s banSteamUsecase) IsOnIPWithBan(ctx context.Context, curUser domain.PersonInfo, steamID steamid.SteamID, address netip.Addr) (bool, error) {
-	existing, errMatch := s.GetByLastIP(ctx, address, false)
+func (s banSteamUsecase) CheckEvadeStatus(ctx context.Context, curUser domain.PersonInfo, steamID steamid.SteamID, address netip.Addr) (bool, error) {
+	existing, errMatch := s.GetByLastIP(ctx, address, false, false)
 	if errMatch != nil {
 		if errors.Is(errMatch, domain.ErrNoResult) {
 			return false, nil
@@ -217,12 +218,8 @@ func (s banSteamUsecase) IsOnIPWithBan(ctx context.Context, curUser domain.Perso
 		return false, errMatch
 	}
 
-	if existing.EvadeOk {
-		slog.Warn("Whitelisted player connecting from a banned ip",
-			slog.String("sid", existing.TargetID.String()),
-			slog.String("reason", existing.Reason.String()))
-
-		return false, nil
+	if existing.BanType == domain.NoComm {
+		return false, errMatch
 	}
 
 	duration, errDuration := util.ParseUserStringDuration("10y")
@@ -243,12 +240,22 @@ func (s banSteamUsecase) IsOnIPWithBan(ctx context.Context, curUser domain.Perso
 		steamID, duration, domain.Evading, domain.Evading.String(),
 		"Connecting from same IP as banned player", domain.System,
 		0, domain.Banned, false, false, &newBan); errNewBan != nil {
-		slog.Error("Could not create evade ban", log.ErrAttr(errDuration))
+		slog.Error("Could not create evade ban", log.ErrAttr(errNewBan))
 
 		return false, errNewBan
 	}
 
+	config := s.configUsecase.Config()
+
+	newBan.Note += fmt.Sprintf("\nEvasion of: [#%d](%s)", existing.BanID, config.ExtURL(existing))
+
 	if errSave := s.Ban(ctx, curUser, &newBan); errSave != nil {
+		if errors.Is(errSave, domain.ErrDuplicate) {
+			// Already banned
+
+			return true, nil
+		}
+
 		slog.Error("Could not save evade ban", log.ErrAttr(errSave))
 
 		return false, errSave
