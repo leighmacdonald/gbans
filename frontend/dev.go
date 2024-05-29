@@ -11,12 +11,11 @@ import (
 
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
 )
 
-func AddRoutes(engine *gin.Engine, root string, conf domain.Config) error {
+func AddRoutes(engine *gin.Engine, root string) error {
 	if root == "" {
 		root = "frontend/dist"
 	}
@@ -32,10 +31,6 @@ func AddRoutes(engine *gin.Engine, root string, conf domain.Config) error {
 			indexData, errIndex := os.ReadFile(path.Join(root, "index.html"))
 			if errIndex != nil {
 				slog.Error("failed to open index.html", log.ErrAttr(errIndex))
-			}
-
-			if conf.Sentry.SentryDSNWeb != "" {
-				ctx.Header("Document-Policy", "js-profiling")
 			}
 
 			ctx.Data(http.StatusOK, "text/html", indexData)

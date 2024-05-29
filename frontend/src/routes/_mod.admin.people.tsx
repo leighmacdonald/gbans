@@ -234,7 +234,11 @@ const PeopleTable = ({
                 header: () => <TableHeadingCell name={'First Seen'} />,
                 cell: (info) => (
                     <Typography>
-                        {permissionLevelString(info.row.original.permission_level as PermissionLevel)}
+                        {permissionLevelString(
+                            info.row.original
+                                ? info.row.original.permission_level
+                                : (PermissionLevel.Guest as PermissionLevel)
+                        )}
                     </Typography>
                 )
             },

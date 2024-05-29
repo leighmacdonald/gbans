@@ -38,6 +38,7 @@ export const Route = createFileRoute('/_mod/admin/votes')({
 
 function AdminVotes() {
     const defaultRows = RowsPerPage.TwentyFive;
+
     const navigate = useNavigate({ from: Route.fullPath });
     const { success, page, sortColumn, rows, sortOrder, source_id, target_id } = Route.useSearch();
     const { data: votes, isLoading } = useQuery({

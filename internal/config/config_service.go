@@ -15,9 +15,9 @@ type configHandler struct {
 	auth domain.AuthUsecase
 }
 
-func NewConfigHandler(engine *gin.Engine, cu domain.ConfigUsecase, auth domain.AuthUsecase) {
+func NewConfigHandler(engine *gin.Engine, cu domain.ConfigUsecase, auth domain.AuthUsecase, version domain.BuildInfo) {
 	handler := configHandler{cu: cu, auth: auth}
-
+	engine.GET("/api/info", handler.onAppInfo(version))
 	adminGroup := engine.Group("/")
 	{
 		admin := adminGroup.Use(auth.AuthMiddleware(domain.PAdmin))
@@ -47,5 +47,27 @@ func (c configHandler) onAPIPutConfig() gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusOK, req)
+	}
+}
+
+func (c configHandler) onAppInfo(buildInfo domain.BuildInfo) gin.HandlerFunc {
+	type appInfo struct {
+		SiteName       string `json:"site_name"`
+		AssetURL       string `json:"asset_url"`
+		LinkID         string `json:"link_id"`
+		AppVersion     string `json:"app_version"`
+		DocumentPolicy string `json:"document_policy"`
+	}
+
+	return func(ctx *gin.Context) {
+		conf := c.cu.Config()
+
+		ctx.JSON(http.StatusOK, appInfo{
+			SiteName:       conf.General.SiteName,
+			AssetURL:       conf.General.AssetURL,
+			LinkID:         conf.Discord.LinkID,
+			AppVersion:     buildInfo.BuildVersion,
+			DocumentPolicy: "",
+		})
 	}
 }

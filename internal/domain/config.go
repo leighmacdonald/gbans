@@ -164,6 +164,7 @@ type ConfigGeneral struct {
 	Mode          RunMode       `json:"mode"`
 	FileServeMode FileServeMode `json:"file_serve_mode"`
 	SrcdsLogAddr  string        `json:"srcds_log_addr"`
+	AssetURL      string        `json:"asset_url"`
 }
 
 type ConfigDemo struct {

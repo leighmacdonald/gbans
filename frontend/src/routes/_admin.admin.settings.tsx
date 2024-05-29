@@ -276,7 +276,8 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
             file_serve_mode: settings.general.file_serve_mode,
             steam_key: settings.general.steam_key,
             mode: settings.general.mode,
-            site_name: settings.general.site_name
+            site_name: settings.general.site_name,
+            asset_url: settings.general.asset_url
         }
     });
 
@@ -312,21 +313,6 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                     </Grid>
                     <Grid xs={12}>
                         <Field
-                            name={'srcds_log_addr'}
-                            validators={{
-                                onChange: z.string()
-                            }}
-                            children={(props) => {
-                                return <TextFieldSimple {...props} label={'UDP Log Listen Address'} />;
-                            }}
-                        />
-                        <SubHeading>
-                            What address to listen for UDP log events. host:port format. If host is empty, it will
-                            listen on all available hosts.
-                        </SubHeading>
-                    </Grid>
-                    <Grid xs={12}>
-                        <Field
                             name={'steam_key'}
                             validators={{
                                 onChange: z.string().refine(
@@ -345,6 +331,34 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>
                             You can create or retrieve your API key{' '}
                             <Link href={'https://steamcommunity.com/dev/apikey'}>here</Link>
+                        </SubHeading>
+                    </Grid>
+                    <Grid xs={12}>
+                        <Field
+                            name={'asset_url'}
+                            validators={{
+                                onChange: z.string()
+                            }}
+                            children={(props) => {
+                                return <TextFieldSimple {...props} label={'URL path pointing to assets'} />;
+                            }}
+                        />
+                        <SubHeading>If you have a asset under a different subdir you should change this.</SubHeading>
+                    </Grid>
+
+                    <Grid xs={12}>
+                        <Field
+                            name={'srcds_log_addr'}
+                            validators={{
+                                onChange: z.string()
+                            }}
+                            children={(props) => {
+                                return <TextFieldSimple {...props} label={'UDP Log Listen Address'} />;
+                            }}
+                        />
+                        <SubHeading>
+                            What address to listen for UDP log events. host:port format. If host is empty, it will
+                            listen on all available hosts.
                         </SubHeading>
                     </Grid>
 
@@ -1397,7 +1411,7 @@ const LocalStoreSection = ({ tab, settings, mutate }: { tab: tabs; settings: Con
                                 return <TextFieldSimple {...props} label={'Path to store assets'} />;
                             }}
                         />
-                        <SubHeading>Path to store all assets.</SubHeading>
+                        <SubHeading>Path to store all assets. Path is relative to gbans binary.</SubHeading>
                     </Grid>
 
                     <Grid xs={12}>

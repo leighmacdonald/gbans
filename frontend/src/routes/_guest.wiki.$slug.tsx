@@ -43,7 +43,6 @@ export const Route = createFileRoute('/_guest/wiki/$slug')({
 
 function Wiki() {
     const { slug } = Route.useParams();
-
     return (
         <>
             <Title>{toTitleCase(slug.replace(/-/g, ' '))}</Title>

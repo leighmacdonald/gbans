@@ -243,3 +243,11 @@ export interface ReportQueryFilter {
     deleted?: boolean;
     source_id?: string;
 }
+
+export interface appInfoDetail {
+    site_name: string;
+    app_version: string;
+    link_id: string;
+    sentry_dns_web: string;
+    asset_url: string;
+}

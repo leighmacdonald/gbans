@@ -10,6 +10,7 @@ CREATE TABLE config
     general_mode text not null default 'release' CHECK ( general_mode IN ('release' , 'debug' , 'test') ),
     general_file_serve_mode text not null default 'local' CHECK ( general_file_serve_mode IN ('local') ),
     general_srcds_log_addr text not null default ':27115',
+    general_asset_url text not null default '/asset',
 
     filters_enabled bool not null default false,
     filters_dry bool not null default false,

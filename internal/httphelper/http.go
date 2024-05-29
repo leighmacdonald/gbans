@@ -162,6 +162,7 @@ func useCors(engine *gin.Engine, conf domain.Config) {
 		corsConfig := cors.DefaultConfig()
 		corsConfig.AllowOrigins = conf.HTTPCorsOrigins
 		corsConfig.AllowHeaders = append(corsConfig.AllowHeaders, "Authorization")
+		corsConfig.ExposeHeaders = append(corsConfig.ExposeHeaders, "GBANS-AppVersion")
 		corsConfig.AllowWildcard = true
 		corsConfig.AllowCredentials = true
 
@@ -190,7 +191,7 @@ func useFrontend(engine *gin.Engine, conf domain.Config) error {
 		return errors.Join(errStaticPath, domain.ErrStaticPathError)
 	}
 
-	if errRoute := frontend.AddRoutes(engine, absStaticPath, conf); errRoute != nil {
+	if errRoute := frontend.AddRoutes(engine, absStaticPath); errRoute != nil {
 		return errors.Join(errRoute, domain.ErrFrontendRoutes)
 	}
 

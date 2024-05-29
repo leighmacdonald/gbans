@@ -9,13 +9,12 @@ import (
 
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
-	"github.com/leighmacdonald/gbans/internal/domain"
 )
 
 //go:embed dist/*
 var embedFS embed.FS
 
-func AddRoutes(engine *gin.Engine, _ string, conf domain.Config) error {
+func AddRoutes(engine *gin.Engine, _ string, conf HeaderValues) error {
 	engine.Use(static.Serve("/", static.EmbedFolder(embedFS, "dist")))
 
 	engine.NoRoute(func(c *gin.Context) {
@@ -29,10 +28,6 @@ func AddRoutes(engine *gin.Engine, _ string, conf domain.Config) error {
 
 	for _, rt := range jsRoutes {
 		engine.GET(rt, func(ctx *gin.Context) {
-			if conf.Log.SentryDSNWeb != "" {
-				ctx.Header("Document-Policy", "js-profiling")
-			}
-
 			ctx.Data(http.StatusOK, "text/html", indexData)
 		})
 	}

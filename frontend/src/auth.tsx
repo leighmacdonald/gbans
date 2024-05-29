@@ -1,6 +1,5 @@
 import { createContext, ReactNode } from 'react';
-import { PermissionLevel, UserProfile } from './api';
-import { guestProfile } from './util/auth/guestProfile.ts';
+import { defaultAvatarHash, PermissionLevel, UserProfile } from './api';
 import { logoutFn } from './util/auth/logoutFn.ts';
 
 export const refreshKey = 'refresh';
@@ -30,7 +29,17 @@ export function AuthProvider({
         } catch (e) {
             console.log(`error logging out: ${e}`);
         } finally {
-            setProfile(guestProfile);
+            setProfile({
+                steam_id: '',
+                permission_level: PermissionLevel.Guest,
+                avatarhash: defaultAvatarHash,
+                name: '',
+                ban_id: 0,
+                muted: false,
+                discord_id: '',
+                created_on: new Date(),
+                updated_on: new Date()
+            });
         }
     };
 
