@@ -1,153 +1,26 @@
-general:
-  # The site name. Shows in the copyright footer, in the title bar, and as the "logo" text.
-  site_name: "gbans"
-  # Web API key from https://steamcommunity.com/dev. Be aware that each Steam account can only have one API key, which
-  # needs to be linked to a URL. The key can be used, theoretically, on multiple sites, but any rate limiting will be
-  # shared amongst them all.
-  steam_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-  # The (decimal) SteamID64 for the primary admin. Use https://www.steamidfinder.com/ if you don't know it.
-  owner: 76561198084134025
-  # Run mode for the HTTP service
-  # Should normally be "release"
-  mode: "release" # release, debug, test
-  # How often the backend will poll the game servers for new player info / game state.
-  server_status_update_freq: 10s
-  # The URL people will use to access the site. Be sure to check the schema!
-  external_url: "http://gbans.localhost:6006"
+# The (decimal) SteamID64 for the primary admin. Use https://www.steamidfinder.com/ if you don't know it.
+owner: 00000000000000000
 
-  # A list of steam community group IDs of which their memebers will be banned from connecting.
-  # banned_steam_group_ids:
-  #  - 103582791429521412 # valve
+# The URL people will use to access the site. Be sure to check the schema!
+external_url: "http://gbans.localhost:6006"
 
-debug:
-  # Ensure we don't clobber and configuration done
-  # by the production instances if we have the same servers
-  # configured
-  update_srcds_log_secrets: false
-  # If set, will enable UDP logs for the address. This needs
-  # to be forwarded to your local client for testing.
-  add_rcon_log_address:
-  # Skip validation of openid responses
-  # This is mostly helpful to ignore mismatch hosts
-  skip_open_id_validation: false
-  # When receiving an unknown log line over udp it will get written to ./unhandled_messages.log
-  write_unhandled_log_events: true
+# Listen on this IP address. 0.0.0.0 will bind to all available interfaces. 127.0.0.1 can be used if using a reverse
+# proxy, or a specific IP can be assigned if you have failover IPs.
+http_host: 0.0.0.0
+# Listen on this port
+http_port: 6006
+# The path the frontend files are in. DO NOT change if using the official Docker image.
+http_static_path: ./dist/
+# Default timeout when making outboung http calls
+client_timeout: 20s
+# Encryption key for JWT. https://numbergenerator.org/random-64-digit-hex-codes-generator is a good option.
+http_cookie_key: change_me
+# Used to let JS and cookies work properly. At a minimum, requires the same address as in
+# general.external_url.
+http_cors_origins:
+  - "https://gbans.localhost"
+  - "http://gbans.localhost:5173"
+  - "https://gbans.localhost:6006"
 
-http:
-  # Listen on this IP address. 0.0.0.0 will bind to all available interfaces. 127.0.0.1 can be used if using a reverse
-  # proxy, or a specific IP can be assigned if you have failover IPs.
-  host: 0.0.0.0
-  # Listen on this port
-  port: 6006
-  # The path the frontend files are in. DO NOT change if using the official Docker image.
-  static_path: ./dist/
-  # Default timeout when making outboung http calls
-  client_timeout: 20s
-  # Encryption key for JWT. https://numbergenerator.org/random-64-digit-hex-codes-generator is a good option.
-  cookie_key: change_me
-  # Used to let JS and cookies work properly. At a minimum, requires the same address as in
-  # general.external_url.
-  cors_origins:
-    - "https://gbans.localhost"
-    - "http://gbans.localhost:5173"
-    - "https://gbans.localhost:6006"
-
-database:
-  # DSN to your database
-  dsn: "postgresql://gbans:gbans@localhost:5432/gbans"
-
-word_filter:
-  # Enable or disable the word filter. If enabled, will monitor chat for people using naughty  words. Literally 1984.
-  enabled: true
-  # How many warnings to give before a ban/mute.
-  warnings: 2
-  # Whether to log warnings to a Discord channel.
-  ping_discord: true
-  # Whether to use external sources in addition to manually defined rules.
-  external_enabled: false
-  # A list of external sources. Should be a .txt file, with each word or phrase on a new line.
-  external_sources:
-    - https://github.com/coffee-and-fun/google-profanity-words/blob/main/data/en.txt
-
-# When enabled, will use s3-compatible backend for storing demos and media uploads. They will otherwise be served from the
-# database. The data will *not* also be duplicated in the local database when using s3.
-s3:
-  # S3 Access Key (Username)
-  access_key: "xxxxxxxxxxxxxxxxxxxx"
-  # S3 Secret Key (Password
-  secret_key: "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
-  # S3 API Endpoint
-  endpoint: "localhost:9001"
-  # Use SSL (HTTPS) to access API
-  ssl: false
-  # External URL users use to access the asset
-  external_url: "http://asset.localhost:9000"
-  # Optional S3 Region
-  region: ""
-  # Name of the buckete used for storing media
-  bucket_media: media
-  # Name of the buckete used for storing demos
-  bucket_demo: demos
-
-discord:
-  # Enable optional discord integration
-  enabled: false
-  # The app ID of your bot, as created through the developer site.
-  app_id: 11111111111111111
-  # Your server's ID.
-  guild_id: 111111111111111111
-  # The invite link for your community's server. Only the bit after the slash - don't include the main part of the URL.
-  link_id:
-  # Your discord bot token
-  # See: https://discord.com/developers/applications
-  token: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-  # Channel used for announcing moderator level events, these can contain more sensitive information and should
-  # not generally be exposed.
-  log_channel_id: "33333333333333333333"
-
-  # If enabled, announce bans/mutes to this channel. These contain minimal info and is suitable for public.
-  public_log_channel_enable: true
-  # Discord channel ID
-  public_log_channel_id: "444444444444444444"
-  # Separate channel for match results.
-  public_match_log_channel_id: "555555555555555555"
-  # Unregister all discord bot commands before recreating. This maybe help if your bot is timing out on commands or the commands
-  # are otherwise out of sync
-  unregister_on_start: false
-
-logging:
-  # NOTE: These settings are ignored in official images tagged as master, unless also a release image.
-  # Set the debug log level
-  level: debug
-  # Force console colours when it cant guess. This is mostly useful on windows
-  force_colours: true
-  # Force disable any colouring
-  disable_colours: false
-  # Show the function + line number where the log message was created
-  report_caller: false
-  # Show full timestamps in the logs
-  full_timestamp: false
-  # Listen on UDP host:port for incoming game log lines. This is required to be open for much functionality such as
-  # match history, stats, message logs and user warnings.
-  srcds_log_addr: ":27115"
-  # The external host:port that srcds will use to connect eg: `logaddress_add sink.localhost:27115`
-  srcds_log_external_host: "sink.localhost:27115"
-
-ip2location:
-  # Where to store IP2Location databases while being processed.
-  enabled: true
-  cache_path: .cache
-  # The API token. NOTE: This is for ip2location.com, NOT ip2location.io
-  token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-  asn_enabled: true
-  ip_enabled: true
-  proxy_enabled: true
-
-ssh:
-  username: tf2server
-  port: 22
-  private_key_path: "~/.ssh/id_rsa" # if empty, password auth used
-  password: "" # used as passphrase if not empty and private key path set
-  update_interval: 5m
-  timeout: 10s
-  demo_path_fmt: "~/srcds-%s/tf/stv_demos/complete/" # %s is replaced with short server identifier name
+database_dsn: "postgresql://gbans:gbans@localhost:5432/gbans"
+database_log_queries: false
