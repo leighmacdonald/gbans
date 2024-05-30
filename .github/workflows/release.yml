@@ -14,8 +14,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-#          repository: ${{ github.event.pull_request.head.repo.full_name }}
-#          ref: ${{ github.head_ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.head_ref }}
           fetch-depth: 0
 
       - uses: actions/setup-go@v5
@@ -26,11 +26,6 @@ jobs:
         with:
           version: 9
           run_install: false
-
-      - name: Update contributor list
-        uses: akhilmhdh/contributors-readme-action@v2.3.10
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run release.sh
         run: bash release.sh ${{ inputs.version }}
@@ -94,3 +89,8 @@ jobs:
           docker push ghcr.io/leighmacdonald/gbans:v${{ inputs.version }}
           docker build . --tag ghcr.io/leighmacdonald/gbans:latest
           docker push ghcr.io/leighmacdonald/gbans:latest
+
+      - name: Update contributor list
+        uses: akhilmhdh/contributors-readme-action@v2.3.10
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
