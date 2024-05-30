@@ -14,7 +14,7 @@ import (
 //go:embed dist/*
 var embedFS embed.FS
 
-func AddRoutes(engine *gin.Engine, _ string, conf HeaderValues) error {
+func AddRoutes(engine *gin.Engine, _ string) error {
 	engine.Use(static.Serve("/", static.EmbedFolder(embedFS, "dist")))
 
 	engine.NoRoute(func(c *gin.Context) {

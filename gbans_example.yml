@@ -10,13 +10,12 @@ http_host: 0.0.0.0
 # Listen on this port
 http_port: 6006
 # The path the frontend files are in. DO NOT change if using the official Docker image.
-http_static_path: ./dist/
+http_static_path:
 # Default timeout when making outboung http calls
 client_timeout: 20s
 # Encryption key for JWT. https://numbergenerator.org/random-64-digit-hex-codes-generator is a good option.
 http_cookie_key: change_me
-# Used to let JS and cookies work properly. At a minimum, requires the same address as in
-# general.external_url.
+
 http_cors_origins:
   - "https://gbans.localhost"
   - "http://gbans.localhost:5173"
