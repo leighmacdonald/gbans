@@ -19,6 +19,8 @@ CREATE OR REPLACE FUNCTION check_ban(steam text, ip text,
 $$
 DECLARE
     in_steam_id bigint ;
+    is_whitelist bigint;
+    is_whitelist_addr bool;
 BEGIN
     in_steam_id := steam_to_steam64(steam);
 
@@ -28,9 +30,11 @@ BEGIN
     FROM ban
     WHERE deleted = false
       AND valid_until > now()
-      AND (target_id = in_steam_id OR ( evade_ok = false AND last_ip = ip::inet));
+      AND (target_id = in_steam_id OR ( evade_ok = false AND last_ip = ip::inet ));
 
-    if out_ban_id > 0 then
+    if out_ban_id > 0 and out_evade_ok then
+        SELECT true INTO is_whitelist_addr FROM cidr_block_whitelist WHERE ip::ip4 <<= address LIMIT 1;
+
         return;
     end if;
 
@@ -52,6 +56,18 @@ BEGIN
         return;
     end if;
 
+
+    SELECT steam_id INTO is_whitelist FROM person_whitelist where steam_id = in_steam_id;
+    if is_whitelist > 0 then
+        return;
+    end if;
+
+    SELECT true INTO is_whitelist_addr FROM cidr_block_whitelist WHERE ip::ip4 <<= address LIMIT 1;
+    if is_whitelist_addr then
+        return;
+    end if;
+
+
     SELECT 'ban_net', net_id, 2, reason, false, valid_until
     INTO out_ban_source, out_ban_id, out_ban_type, out_reason, out_evade_ok, out_valid_until
     FROM ban_net
@@ -66,8 +82,7 @@ BEGIN
     SELECT 'cidr_block', 1, 2, 14, false, NOW() + (INTERVAL '10 years')
     INTO out_ban_source, out_ban_id, out_ban_type, out_reason, out_evade_ok, out_valid_until
     FROM cidr_block_entries
-    WHERE ip::ip4 <<= net_block
-      AND NOT ip::ip4 IN (SELECT address FROM cidr_block_whitelist);
+    WHERE ip::ip4 <<= net_block;
 
     if out_ban_id > 0 then
         return;
@@ -77,8 +92,7 @@ BEGIN
     INTO out_ban_source, out_ban_id, out_ban_type, out_reason, out_evade_ok, out_valid_until
     FROM ban_asn
              LEFT JOIN net_asn na on ban_asn.as_num = na.as_num
-    WHERE ip::ip4 <<= na.ip_range
-      AND NOT ip::ip4 IN (SELECT address FROM cidr_block_whitelist);
+    WHERE ip::ip4 <<= na.ip_range;
 
     if out_ban_id > 0 then
         return;

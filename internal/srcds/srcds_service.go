@@ -155,25 +155,6 @@ func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
 			return
 		}
 
-		evadeBanned, err := s.banUsecase.CheckEvadeStatus(ctx, currentUser, steamID, req.IP)
-		if err != nil {
-			ctx.JSON(http.StatusOK, defaultValue)
-
-			return
-		}
-
-		if evadeBanned {
-			defaultValue = checkResponse{
-				ClientID: req.ClientID,
-				BanType:  domain.Banned,
-				Msg:      "Evasion ban",
-			}
-
-			ctx.JSON(http.StatusOK, defaultValue)
-
-			return
-		}
-
 		banState, msg, errBS := s.srcdsUsecase.GetBanState(ctx, steamID, req.IP)
 		if errBS != nil {
 			slog.Error("failed to get ban state", log.ErrAttr(errBS))
@@ -185,6 +166,25 @@ func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
 		}
 
 		if banState.BanID != 0 {
+			evadeBanned, err := s.banUsecase.CheckEvadeStatus(ctx, currentUser, steamID, req.IP)
+			if err != nil {
+				ctx.JSON(http.StatusOK, defaultValue)
+
+				return
+			}
+
+			if evadeBanned {
+				defaultValue = checkResponse{
+					ClientID: req.ClientID,
+					BanType:  domain.Banned,
+					Msg:      "Evasion ban",
+				}
+
+				ctx.JSON(http.StatusOK, defaultValue)
+
+				return
+			}
+
 			ctx.JSON(http.StatusOK, checkResponse{
 				ClientID: req.ClientID,
 				BanType:  banState.BanType,
