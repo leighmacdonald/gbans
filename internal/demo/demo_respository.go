@@ -113,7 +113,8 @@ func (r *demoRepository) GetDemos(ctx context.Context) ([]domain.DemoFile, error
 			"d.map_name", "d.archive", "d.stats", "s.short_name", "s.name", "d.asset_id", "a.size").
 		From("demo d").
 		LeftJoin("server s ON s.server_id = d.server_id").
-		LeftJoin("asset a ON a.asset_id = d.asset_id")
+		LeftJoin("asset a ON a.asset_id = d.asset_id").
+		OrderBy("d.demo_id DESC")
 
 	rows, errQuery := r.db.QueryBuilder(ctx, builder)
 	if errQuery != nil {

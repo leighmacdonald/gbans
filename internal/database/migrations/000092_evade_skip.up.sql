@@ -102,6 +102,6 @@ END
 $$
     LANGUAGE plpgsql;
 COMMIT;
-
-SELECT 'ban_steam', *
-from check_ban('76561198084134025', '192.168.0.57') -- ban_steam bigint
+--
+-- SELECT 'ban_steam', *
+-- from check_ban('76561198084134025', '192.168.0.57') -- ban_steam bigint
