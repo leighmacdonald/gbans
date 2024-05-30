@@ -1,31 +1,25 @@
+/**
+ * Implements a HTTP version of the standard sourcemod  admin-sql-prefetch plugin.
+ */
 #pragma semicolon 1
 #pragma tabsize 4
 #pragma newdecls required
 
 #include "ripext"
 
-/**
- * Implements a HTTP version of the standard sourcemod  admin-sql-prefetch plugin.
- */
-
+// Are we already running admin update
+bool gQueuedAdminUpdate = false;
 
 // Naively expects to be called in the order of: overrides -> groups -> admins
 // TODO improve call logic
 public void OnRebuildAdminCache(AdminCachePart part)
 {
-	if (part == AdminCache_Groups) {
-        if (!gReloadGroupsQueued) {
-		    RebuildGroups();
-        }
-	} else if (part == AdminCache_Admins) {
-        if (!gReloadAdminsQueued) {
-		    RebuildUsers();
-        }
-    } else if (part == AdminCache_Overrides) {
-        if (!gReloadOverridesQueued) {
-            RebuildOverrides();
-        }
+    if (gQueuedAdminUpdate) {
+        return;
     }
+
+    gQueuedAdminUpdate = true;
+    RebuildGroups();
 }
 
 void RebuildGroups() {
@@ -36,13 +30,12 @@ void RebuildGroups() {
 	addAuthHeader(request);
 	
     request.Get(onRebuildGroups); 
-
-    gReloadGroupsQueued = true;
 }
 
 void onRebuildGroups(HTTPResponse response, any value) {
     if(response.Status != HTTPStatus_OK) {
         gbLog("Invalid response code reading user groups: %d", response.Status);
+        gQueuedAdminUpdate = false;
 		return;
     }
 
@@ -65,9 +58,7 @@ void onRebuildGroups(HTTPResponse response, any value) {
         group.GetString("name", name, sizeof(name));
         immunity = group.GetInt("immunity_level");
 
-#if defined _DEBUG
-        PrintToServer("Retrieved group: name: '%s' flag: '%s' immunity: '%d'", name, flags, immunity);
-#endif
+
         GroupId grp;
 		if ((grp = FindAdmGroup(name)) == INVALID_GROUP_ID)
 		{
@@ -122,12 +113,10 @@ void onRebuildGroups(HTTPResponse response, any value) {
 
     delete immunities;
     delete groups; 
+    
+    gbLog("Loaded %d groups", numGroups);
 
-    if (gReloadAdminsQueued) {
-        RebuildUsers();
-    }
-
-    gReloadGroupsQueued = true;
+    RebuildUsers();
 }
 
 void RebuildUsers() {
@@ -138,13 +127,12 @@ void RebuildUsers() {
 	addAuthHeader(request);
 	
     request.Get(onRebuildUsers); 
-
-    gReloadAdminsQueued = true;
 }
 
 void onRebuildUsers(HTTPResponse response, any value) {
     if(response.Status != HTTPStatus_OK) {
         gbLog("Invalid response code reading users: %d", response.Status);
+        gQueuedAdminUpdate = false;
 		return;
     }
 
@@ -181,9 +169,8 @@ void onRebuildUsers(HTTPResponse response, any value) {
         user.GetString("flags", flags, sizeof(flags));
         user.GetString("name", name, sizeof(name));
         immunity = user.GetInt("immunity");
-       
-
-        		/* Use a pre-existing admin if we can */
+             
+        /* Use a pre-existing admin if we can */
 		if ((adm = FindAdminByIdentity(authtype, identity)) == INVALID_ADMIN_ID)
 		{
 			adm = CreateAdmin(name);
@@ -194,13 +181,10 @@ void onRebuildUsers(HTTPResponse response, any value) {
 			}
 		}
 
-		htAdmins.SetValue(key, adm);
-
-#if defined _DEBUG
-        int id = user.GetInt("id");
-		PrintToServer("User (%d,%s,%s,%s,%s,%s,%d):%d", id, authtype, identity, password, flags, name, immunity, adm);
-#endif
+        IntToString(user.GetInt("id"), key, sizeof(key));
 		
+        htAdmins.SetValue(key, adm);
+
 		/* See if this admin wants a password */
 		if (password[0] != '\0')
 		{
@@ -231,23 +215,27 @@ void onRebuildUsers(HTTPResponse response, any value) {
 		IntToString(userGroup.GetInt("admin_id"), key, sizeof(key));
 		userGroup.GetString("group_name", group, sizeof(group));
 
+
 		if (htAdmins.GetValue(key, adm))
 		{
 			if ((grp = FindAdmGroup(group)) == INVALID_GROUP_ID)
 			{
 				/* Group wasn't found, don't bother with it.  */
+                gbLog("Failed to add group, it doesnt exist: %s", group);
 				continue;
 			}
 
 			adm.InheritGroup(grp);
-            PrintToServer("Added user to group: %d", grp);
 		}
+
         delete userGroup;
     }
 
     delete htAdmins;
-
-    gReloadAdminsQueued = false;
+    
+    gbLog("Loaded %d users into %d groups", numUsers, numUserGroups);
+    
+    RebuildOverrides();
 }
 
 void RebuildOverrides() {
@@ -258,13 +246,12 @@ void RebuildOverrides() {
 	addAuthHeader(request);
 	
     request.Get(onRebuildOverrides);
-
-    gReloadOverridesQueued = true;
 }
 
 void onRebuildOverrides(HTTPResponse response, any value) {
     if(response.Status != HTTPStatus_OK) {
         gbLog("Invalid response code reading overrides: %d", response.Status);
+        gQueuedAdminUpdate = false;
 		return;
     }
 
@@ -299,9 +286,8 @@ void onRebuildOverrides(HTTPResponse response, any value) {
         delete override;
     }
 
-    if (gReloadGroupsQueued) {
-        RebuildGroups();
-    }
+    gbLog("Loaded %d overrides", numOverrides);
 
-    gReloadOverridesQueued = false;
+    gQueuedAdminUpdate = false;
+
 }

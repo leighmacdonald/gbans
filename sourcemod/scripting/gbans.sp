@@ -5,7 +5,6 @@
 #include <admin>
 #include <adminmenu>
 #include <basecomm>
-#include <connect>	// connect extension
 #include <gbans>
 #include <sdktools>
 #include <ripext>
@@ -90,6 +89,7 @@ public void OnPluginStart()
 		AccountForLateLoading();
 	}
 
+	reloadAdmins(true);
 }
 
 stock void AccountForLateLoading()
@@ -109,8 +109,9 @@ stock void AccountForLateLoading()
 	}
 }
 
-public void OnConfigsExecuted()
-{
+public void OnConfigsExecuted() {
+
+
 	gb_stv_minplayers.AddChangeHook(OnConVarChanged);
 	gb_stv_ignorebots.AddChangeHook(OnConVarChanged);
 	gb_stv_timestart.AddChangeHook(OnConVarChanged);
@@ -159,6 +160,10 @@ public void OnMapEnd()
 		StopRecord();
 		gIsManual = false;
 	}
+}
+
+public void OnMapStart() {
+	reloadAdmins(true);
 }
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)

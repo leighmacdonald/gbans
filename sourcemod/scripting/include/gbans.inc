@@ -44,7 +44,10 @@ enum GB_BanReason {
     spam = 8,
     languageUsed = 9,
     profile = 10,
-    itemDescriptions = 11
+    itemDescriptions = 11,
+    botHost = 12,
+    Evading = 13,
+    Username = 14
 }
 
 /**

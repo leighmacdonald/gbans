@@ -14,12 +14,6 @@ public void reloadAdmins(bool force)
 	ServerCommand("sm_reloadadmins");
 }
 
-public void OnClientAuthorized(int clientId, const char[] auth)
-{
-	gbLog("--- OnClientAuthorized");
-
-}
-
 public void OnClientPostAdminCheck(int clientId) {
 	gbLog("--- OnClientPostAdminCheck");
 	if (!(clientId > 0 && IsClientInGame(clientId) && !IsFakeClient(clientId))) {
