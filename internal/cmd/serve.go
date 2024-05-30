@@ -268,7 +268,6 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			wordfilter.NewWordFilterHandler(router, configUsecase, wordFilterUsecase, chatUsecase, authUsecase)
 
 			if conf.Debug.AddRCONLogAddress != "" {
-				slog.Info("Enabling log forwarding for local host")
 				stateUsecase.LogAddressAdd(ctx, conf.Debug.AddRCONLogAddress)
 			}
 
