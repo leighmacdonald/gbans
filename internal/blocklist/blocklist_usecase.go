@@ -70,7 +70,7 @@ func (b blocklistUsecase) syncBlocklists(ctx context.Context) {
 			return
 		}
 
-		slog.Info("Banned group members updated")
+		slog.Debug("Banned group members updated")
 	}()
 
 	waitGroup.Add(1)
@@ -84,7 +84,7 @@ func (b blocklistUsecase) syncBlocklists(ctx context.Context) {
 			return
 		}
 
-		slog.Info("Banned friends updated")
+		slog.Debug("Banned friends updated")
 	}()
 
 	waitGroup.Add(1)
@@ -98,7 +98,7 @@ func (b blocklistUsecase) syncBlocklists(ctx context.Context) {
 			return
 		}
 
-		slog.Info("Banned CIDR ranges updated")
+		slog.Debug("Banned CIDR ranges updated")
 	}()
 
 	waitGroup.Wait()

@@ -252,7 +252,6 @@ func (s banSteamUsecase) CheckEvadeStatus(ctx context.Context, curUser domain.Pe
 	if errSave := s.Ban(ctx, curUser, &newBan); errSave != nil {
 		if errors.Is(errSave, domain.ErrDuplicate) {
 			// Already banned
-
 			return true, nil
 		}
 

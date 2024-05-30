@@ -57,7 +57,7 @@ export const SteamWhitelistEditorModal = NiceModal.create(() => {
                                 name={'steam_id'}
                                 validators={makeSteamidValidators()}
                                 children={(props) => {
-                                    return <SteamIDField {...props} label={'IP Addr'} fullwidth />;
+                                    return <SteamIDField {...props} label={'Steam ID'} fullwidth />;
                                 }}
                             />
                         </Grid>
