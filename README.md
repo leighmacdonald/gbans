@@ -124,4 +124,82 @@ For installation, configuration and usage instruction, developer notes, please s
 ## Contributors
 
 <!-- readme: contributors -start -->
+<table>
+	<tbody>
+		<tr>
+            <td align="center">
+                <a href="https://github.com/leighmacdonald">
+                    <img src="https://avatars.githubusercontent.com/u/591973?v=4" width="100;" alt="leighmacdonald"/>
+                    <br />
+                    <sub><b>Leigh MacDonald</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/Gcommer">
+                    <img src="https://avatars.githubusercontent.com/u/243352?v=4" width="100;" alt="Gcommer"/>
+                    <br />
+                    <sub><b>Gcommer</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/rjdXpxigYxNT">
+                    <img src="https://avatars.githubusercontent.com/u/168137561?v=4" width="100;" alt="rjdXpxigYxNT"/>
+                    <br />
+                    <sub><b>rjdXpxigYxNT</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/crescentrose">
+                    <img src="https://avatars.githubusercontent.com/u/9057156?v=4" width="100;" alt="crescentrose"/>
+                    <br />
+                    <sub><b>Ivan</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/Mircoxi">
+                    <img src="https://avatars.githubusercontent.com/u/95107897?v=4" width="100;" alt="Mircoxi"/>
+                    <br />
+                    <sub><b>Mircoxi</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/Tolfx">
+                    <img src="https://avatars.githubusercontent.com/u/57797792?v=4" width="100;" alt="Tolfx"/>
+                    <br />
+                    <sub><b>Matthew</b></sub>
+                </a>
+            </td>
+		</tr>
+		<tr>
+            <td align="center">
+                <a href="https://github.com/Naleksuh">
+                    <img src="https://avatars.githubusercontent.com/u/24828999?v=4" width="100;" alt="Naleksuh"/>
+                    <br />
+                    <sub><b>Naleksuh</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/camp3r101">
+                    <img src="https://avatars.githubusercontent.com/u/10223311?v=4" width="100;" alt="camp3r101"/>
+                    <br />
+                    <sub><b>camp3r101</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/jack-avery">
+                    <img src="https://avatars.githubusercontent.com/u/47289484?v=4" width="100;" alt="jack-avery"/>
+                    <br />
+                    <sub><b>Jack Avery</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/tdurieux">
+                    <img src="https://avatars.githubusercontent.com/u/5577568?v=4" width="100;" alt="tdurieux"/>
+                    <br />
+                    <sub><b>Thomas Durieux</b></sub>
+                </a>
+            </td>
+		</tr>
+	<tbody>
+</table>
 <!-- readme: contributors -end -->
