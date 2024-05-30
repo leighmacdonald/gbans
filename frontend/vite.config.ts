@@ -5,7 +5,7 @@ import { defineConfig } from 'vite';
 import { createHtmlPlugin } from 'vite-plugin-html';
 
 const CONFIG = {
-    __BUILD_VERSION__: 'v0.7.7'
+    __BUILD_VERSION__: 'v0.7.8'
 };
 
 const mapValues = (o: object, fn: (v: unknown) => unknown) =>
