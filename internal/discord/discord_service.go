@@ -487,18 +487,13 @@ func (h discordService) makeOnPlayers() func(context.Context, *discordgo.Session
 					flag = fmt.Sprintf(":flag_%s: ", strings.ToLower(network.Location.CountryCode))
 				}
 
-				asStr := ""
-				if network.Asn.ASNum > 0 {
-					asStr = fmt.Sprintf("[ASN](https://spyse.com/target/as/%d) ", network.Asn.ASNum)
-				}
-
 				proxyStr := ""
 				if network.Proxy.ProxyType != "" {
 					proxyStr = fmt.Sprintf("Threat: %s | %s | %s", network.Proxy.ProxyType, network.Proxy.Threat, network.Proxy.UsageType)
 				}
 
-				rows = append(rows, fmt.Sprintf("%s`%s` %s`%3dms` [%s](https://steamcommunity.com/profiles/%s)%s",
-					flag, player.SID.String(), asStr, player.Ping, player.Name, player.SID.String(), proxyStr))
+				rows = append(rows, fmt.Sprintf("%s`%s` `%3dms` [%s](https://steamcommunity.com/profiles/%s)%s",
+					flag, player.SID.Steam3(), player.Ping, player.Name, player.SID.String(), proxyStr))
 			}
 		}
 
