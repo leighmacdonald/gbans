@@ -37,7 +37,3 @@ int gReportStartedAtTime = -1;
 bool gStvMapChanged = false;
 bool gIsRecording = false;
 bool gIsManual = false;
-
-bool gReloadOverridesQueued = false;
-bool gReloadGroupsQueued = false;
-bool gReloadAdminsQueued = false;
