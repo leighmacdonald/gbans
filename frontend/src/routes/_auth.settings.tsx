@@ -274,7 +274,7 @@ const PatreonSection = ({
     const confirmModal = useModal(ModalConfirm);
     const followCallback = async () => {
         const result = await queryClient.fetchQuery({ queryKey: ['callback'], queryFn: apiGetPatreonLogin });
-        window.open(result.url);
+        window.open(result.url, '_self');
     };
 
     const onForget = async () => {
