@@ -92,7 +92,7 @@ function Index() {
                             fullWidth
                             color={'primary'}
                             variant={'contained'}
-                            to={`/wiki/Donate`}
+                            to={`/patreon`}
                         >
                             Donate
                         </Button>

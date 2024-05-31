@@ -156,8 +156,10 @@ func (r *personRepository) GetPersonBySteamID(ctx context.Context, sid64 steamid
 			"p.economy_ban",
 			"p.days_since_last_ban",
 			"p.updated_on_steam",
-			"p.muted").
+			"p.muted",
+			"coalesce(pt.patreon_id, '')").
 		From("person p").
+		LeftJoin("patreon_auth pt USING (steam_id)").
 		Where(sq.Eq{"p.steam_id": sid64.Int64()}))
 
 	if errRow != nil {
@@ -174,7 +176,7 @@ func (r *personRepository) GetPersonBySteamID(ctx context.Context, sid64 steamid
 		&person.PersonaState, &person.RealName, &person.TimeCreated, &person.LocCountryCode, &person.LocStateCode,
 		&person.LocCityID, &person.PermissionLevel, &person.DiscordID, &person.CommunityBanned,
 		&person.VACBans, &person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan, &person.UpdatedOnSteam,
-		&person.Muted)); err != nil {
+		&person.Muted, &person.PatreonID)); err != nil {
 		return person, err
 	}
 
@@ -264,8 +266,9 @@ func (r *personRepository) GetPeople(ctx context.Context, filter domain.PlayerQu
 			"p.avatarmedium", "p.avatarfull", "p.avatarhash", "p.personastate", "p.realname", "p.timecreated",
 			"p.loccountrycode", "p.locstatecode", "p.loccityid", "p.permission_level", "p.discord_id",
 			"p.community_banned", "p.vac_bans", "p.game_bans", "p.economy_ban", "p.days_since_last_ban",
-			"p.updated_on_steam", "p.muted").
-		From("person p")
+			"p.updated_on_steam", "p.muted", "coalesce(pt.patreon_id, '')").
+		From("person p").
+		LeftJoin("patreon_auth pt USING (steam_id)")
 
 	conditions := sq.And{}
 
@@ -310,6 +313,7 @@ func (r *personRepository) GetPeople(ctx context.Context, filter domain.PlayerQu
 			"community_banned", "vac_bans", "game_bans", "economy_ban", "days_since_last_ban",
 			"updated_on_steam", "muted",
 		},
+		"pt.": {"patreon_id"},
 	}, "steam_id")
 
 	var people domain.People
@@ -334,7 +338,7 @@ func (r *personRepository) GetPeople(ctx context.Context, filter domain.PlayerQu
 				&person.RealName, &person.TimeCreated, &person.LocCountryCode, &person.LocStateCode,
 				&person.LocCityID, &person.PermissionLevel, &person.DiscordID, &person.CommunityBanned,
 				&person.VACBans, &person.GameBans, &person.EconomyBan, &person.DaysSinceLastBan,
-				&person.UpdatedOnSteam, &person.Muted); errScan != nil {
+				&person.UpdatedOnSteam, &person.Muted, &person.PatreonID); errScan != nil {
 			return nil, 0, errors.Join(errScan, domain.ErrScanResult)
 		}
 

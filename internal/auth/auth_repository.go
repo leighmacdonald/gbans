@@ -23,7 +23,7 @@ func (r authRepository) SavePersonAuth(ctx context.Context, auth *domain.PersonA
 		Builder().
 		Insert("person_auth").
 		Columns("steam_id", "ip_addr", "refresh_token", "created_on").
-		Values(auth.SteamID.Int64(), auth.IPAddr.String(), auth.RefreshToken, auth.CreatedOn).
+		Values(auth.SteamID.Int64(), auth.IPAddr.String(), auth.AccessToken, auth.CreatedOn).
 		Suffix("RETURNING \"person_auth_id\"").
 		ToSql()
 
@@ -48,19 +48,19 @@ func (r authRepository) PrunePersonAuth(ctx context.Context) error {
 		Where(sq.Gt{"created_on + interval '1 month'": time.Now()})))
 }
 
-func (r authRepository) GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *domain.PersonAuth) error {
+func (r authRepository) GetPersonAuthByFingerprint(ctx context.Context, fingerprint string, auth *domain.PersonAuth) error {
 	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
 		Builder().
 		Select("person_auth_id", "steam_id", "ip_addr", "refresh_token", "created_on").
 		From("person_auth").
-		Where(sq.And{sq.Eq{"refresh_token": token}}))
+		Where(sq.And{sq.Eq{"fingerprint": fingerprint}}))
 	if errRow != nil {
 		return r.db.DBErr(errRow)
 	}
 
 	var steamID int64
 
-	if errScan := row.Scan(&auth.PersonAuthID, &steamID, &auth.IPAddr, &auth.RefreshToken, &auth.CreatedOn); errScan != nil {
+	if errScan := row.Scan(&auth.PersonAuthID, &steamID, &auth.IPAddr, &auth.AccessToken, &auth.CreatedOn); errScan != nil {
 		return r.db.DBErr(errScan)
 	}
 

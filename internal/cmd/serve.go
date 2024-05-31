@@ -203,7 +203,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			newsUsecase := news.NewNewsUsecase(news.NewNewsRepository(dbUsecase))
 			notificationUsecase := notification.NewNotificationUsecase(notification.NewNotificationRepository(dbUsecase), personUsecase)
-			patreonUsecase := patreon.NewPatreonUsecase(patreon.NewPatreonRepository(dbUsecase))
+			patreonUsecase := patreon.NewPatreonUsecase(patreon.NewPatreonRepository(dbUsecase), configUsecase)
 			go patreonUsecase.Start(ctx)
 
 			srcdsUsecase := srcds.NewSrcdsUsecase(srcds.NewRepository(dbUsecase), configUsecase, serversUsecase, personUsecase, reportUsecase, discordUsecase, banUsecase)
@@ -256,7 +256,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			network.NewNetworkHandler(router, networkUsecase, authUsecase)
 			news.NewNewsHandler(router, newsUsecase, discordUsecase, authUsecase)
 			notification.NewNotificationHandler(router, notificationUsecase, authUsecase)
-			patreon.NewPatreonHandler(router, patreonUsecase, authUsecase)
+			patreon.NewPatreonHandler(router, patreonUsecase, authUsecase, configUsecase)
 			person.NewPersonHandler(router, configUsecase, personUsecase, authUsecase)
 			report.NewReportHandler(router, reportUsecase, configUsecase, discordUsecase, personUsecase, authUsecase, demoUsecase)
 			servers.NewServerHandler(router, serversUsecase, stateUsecase, authUsecase, personUsecase)

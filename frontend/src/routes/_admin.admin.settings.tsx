@@ -80,15 +80,15 @@ type tabs =
     | 'ssh'
     | 'exports';
 
-type TabButtonProps = {
+type TabButtonProps<Tabs> = {
     label: string;
-    tab: tabs;
-    onClick: (tab: tabs) => void;
-    currentTab: tabs;
+    tab: Tabs;
+    onClick: (tab: Tabs) => void;
+    currentTab: Tabs;
     icon: ReactNode;
 };
 
-const TabButton = ({ currentTab, tab, label, onClick, icon }: TabButtonProps) => {
+export const TabButton = <Tabs,>({ currentTab, tab, label, onClick, icon }: TabButtonProps<Tabs>) => {
     return (
         <Button
             color={currentTab == tab ? 'secondary' : 'primary'}
@@ -104,13 +104,13 @@ const TabButton = ({ currentTab, tab, label, onClick, icon }: TabButtonProps) =>
     );
 };
 
-const TabSection = ({
+export const TabSection = <Tabs,>({
     children,
     tab,
     currentTab,
     label,
     description
-}: PropsWithChildren & { tab: tabs; currentTab: tabs; label: string; description: string }) => {
+}: PropsWithChildren & { tab: Tabs; currentTab: Tabs; label: string; description: string }) => {
     return (
         <Grid xs={8} sm={9} md={10} display={tab == currentTab ? undefined : 'none'} marginTop={1}>
             <Typography variant={'h1'}>{label}</Typography>
@@ -122,7 +122,7 @@ const TabSection = ({
     );
 };
 
-const SubHeading = ({ children }: PropsWithChildren) => <Typography variant={'caption'}>{children}</Typography>;
+export const SubHeading = ({ children }: PropsWithChildren) => <Typography variant={'caption'}>{children}</Typography>;
 
 function AdminServers() {
     const { sendFlash } = useUserFlashCtx();
@@ -711,7 +711,7 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <Field
                             name={'client_secret'}
                             validators={{
-                                onChange: z.string().transform(numberStringValidator(0, 100))
+                                onChange: z.string()
                             }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Client Secret'} />;
@@ -851,16 +851,7 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <Field
                             name={'token'}
                             validators={{
-                                onChange: z.string().refine((arg) => {
-                                    if (arg.length == 0) {
-                                        return true;
-                                    }
-
-                                    return z
-                                        .string()
-                                        .regex(/^\S{24}\.\S{6}\.\S{4}-\S{33}$/)
-                                        .safeParse(arg).success;
-                                })
+                                onChange: z.string()
                             }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Discord Bot Token'} />;

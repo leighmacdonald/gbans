@@ -7,6 +7,7 @@ toolchain go1.22.1
 require (
 	github.com/Depado/ginprom v1.8.1
 	github.com/Masterminds/squirrel v1.5.4
+	github.com/austinbspencer/patreon-go-wrapper v1.0.2
 	github.com/bwmarrin/discordgo v0.28.1
 	github.com/dotse/slug v0.1.0
 	github.com/gabriel-vasile/mimetype v1.4.4
@@ -45,6 +46,7 @@ require (
 	github.com/yohcop/openid-go v1.0.1
 	golang.org/x/crypto v0.23.0
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842
+	golang.org/x/oauth2 v0.18.0
 	golang.org/x/sync v0.7.0
 	gopkg.in/mxpv/patreon-go.v1 v1.0.0-20171031001022-1d2f253ac700
 )
@@ -68,6 +70,7 @@ require (
 	github.com/go-playground/validator/v10 v10.20.0 // indirect
 	github.com/goccy/go-json v0.10.3 // indirect
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect
+	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/gorilla/websocket v1.5.1 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
@@ -118,6 +121,7 @@ require (
 	golang.org/x/net v0.25.0 // indirect
 	golang.org/x/sys v0.20.0 // indirect
 	golang.org/x/text v0.15.0 // indirect
+	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

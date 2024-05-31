@@ -122,7 +122,7 @@ func (b blocklistUsecase) UpdateCache(ctx context.Context) error {
 func (b blocklistUsecase) updateSource(ctx context.Context, list domain.CIDRBlockSource) error {
 	req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, list.URL, nil)
 	if errReq != nil {
-		return errors.Join(errReq, domain.ErrCreateRequest)
+		return errors.Join(errReq, domain.ErrRequestCreate)
 	}
 
 	client := util.NewHTTPClient()

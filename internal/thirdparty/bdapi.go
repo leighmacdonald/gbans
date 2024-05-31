@@ -32,7 +32,7 @@ func BDSourceBans(ctx context.Context, steamID steamid.SteamID) (map[string][]BD
 
 	req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if errReq != nil {
-		return nil, errors.Join(errReq, domain.ErrCreateRequest)
+		return nil, errors.Join(errReq, domain.ErrRequestCreate)
 	}
 
 	resp, errResp := client.Do(req)

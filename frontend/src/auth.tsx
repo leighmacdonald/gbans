@@ -1,9 +1,10 @@
-import { createContext, ReactNode } from 'react';
-import { defaultAvatarHash, PermissionLevel, UserProfile } from './api';
+import { createContext, ReactNode, useCallback, useEffect } from 'react';
+import { apiGetCurrentProfile, defaultAvatarHash, PermissionLevel, UserProfile } from './api';
 import { logoutFn } from './util/auth/logoutFn.ts';
+import { readAccessToken } from './util/auth/readAccessToken.ts';
+import { emptyOrNullString } from './util/types.ts';
 
-export const refreshKey = 'refresh';
-export const tokenKey = 'token';
+export const accessTokenKey = 'token';
 export const profileKey = 'profile';
 export const logoutKey = 'logout';
 
@@ -18,12 +19,15 @@ export function AuthProvider({
     profile: UserProfile;
     setProfile: (v?: UserProfile) => void;
 }) {
-    const login = (profile: UserProfile) => {
-        localStorage.setItem(profileKey, JSON.stringify(profile));
-        setProfile(profile);
-    };
+    const login = useCallback(
+        async (profile: UserProfile) => {
+            localStorage.setItem(profileKey, JSON.stringify(profile));
+            setProfile(profile);
+        },
+        [setProfile]
+    );
 
-    const logout = async () => {
+    const logout = useCallback(async () => {
         try {
             await logoutFn();
         } catch (e) {
@@ -38,10 +42,11 @@ export function AuthProvider({
                 muted: false,
                 discord_id: '',
                 created_on: new Date(),
-                updated_on: new Date()
+                updated_on: new Date(),
+                patreon_id: ''
             });
         }
-    };
+    }, [setProfile]);
 
     const isAuthenticated = () => {
         return Boolean(profile?.steam_id ?? false);
@@ -55,6 +60,20 @@ export function AuthProvider({
         const currentLevel = permissionLevel();
         return currentLevel >= wantedLevel;
     };
+
+    useEffect(() => {
+        const loadProfile = async () => {
+            try {
+                const token = readAccessToken();
+                if (!emptyOrNullString(token)) {
+                    await login(await apiGetCurrentProfile());
+                }
+            } catch (e) {
+                await logout();
+            }
+        };
+        loadProfile();
+    }, [login, logout]);
 
     return (
         <AuthContext.Provider
