@@ -64,50 +64,35 @@ func (u *authUsecase) DeletePersonAuth(ctx context.Context, authID int64) error 
 }
 
 func (u *authUsecase) GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *domain.PersonAuth) error {
-	return u.authRepository.GetPersonAuthByRefreshToken(ctx, token, auth)
+	return u.authRepository.GetPersonAuthByFingerprint(ctx, token, auth)
 }
 
-// MakeTokens generates new jwt auth tokens
+// MakeToken generates new jwt auth tokens
 // fingerprint is a random string used to prevent side-jacking.
-func (u *authUsecase) MakeTokens(ctx *gin.Context, cookieKey string, sid steamid.SteamID, createRefresh bool) (domain.UserTokens, error) {
+func (u *authUsecase) MakeToken(ctx *gin.Context, cookieKey string, sid steamid.SteamID) (domain.UserTokens, error) {
 	if cookieKey == "" {
 		return domain.UserTokens{}, domain.ErrCookieKeyMissing
 	}
 
 	fingerprint := util.SecureRandomString(40)
 
-	accessToken, errJWT := u.NewUserToken(sid, cookieKey, fingerprint, domain.AuthTokenDuration)
-	if errJWT != nil {
-		return domain.UserTokens{}, errors.Join(errJWT, domain.ErrCreateToken)
+	accessToken, errAccess := u.NewUserToken(sid, cookieKey, fingerprint, domain.AuthTokenDuration)
+	if errAccess != nil {
+		return domain.UserTokens{}, errors.Join(errAccess, domain.ErrCreateToken)
 	}
 
-	refreshToken := ""
-
-	if createRefresh {
-		newRefreshToken, errRefresh := u.NewUserToken(sid, cookieKey, fingerprint, domain.RefreshTokenDuration)
-		if errRefresh != nil {
-			return domain.UserTokens{}, errors.Join(errRefresh, domain.ErrRefreshToken)
-		}
-
-		ipAddr := net.ParseIP(ctx.ClientIP())
-		if ipAddr == nil {
-			return domain.UserTokens{}, domain.ErrClientIP
-		}
-
-		personAuth := domain.NewPersonAuth(sid, ipAddr, fingerprint)
-		// TODO move to authUsecase
-		if saveErr := u.authRepository.SavePersonAuth(ctx, &personAuth); saveErr != nil {
-			return domain.UserTokens{}, errors.Join(saveErr, domain.ErrSaveToken)
-		}
-
-		refreshToken = newRefreshToken
+	ipAddr := net.ParseIP(ctx.ClientIP())
+	if ipAddr == nil {
+		return domain.UserTokens{}, domain.ErrClientIP
 	}
 
-	return domain.UserTokens{
-		Access:      accessToken,
-		Refresh:     refreshToken,
-		Fingerprint: fingerprint,
-	}, nil
+	personAuth := domain.NewPersonAuth(sid, ipAddr, accessToken)
+
+	if saveErr := u.authRepository.SavePersonAuth(ctx, &personAuth); saveErr != nil {
+		return domain.UserTokens{}, errors.Join(saveErr, domain.ErrSaveToken)
+	}
+
+	return domain.UserTokens{Access: accessToken, Fingerprint: fingerprint}, nil
 }
 
 func (u *authUsecase) AuthMiddleware(level domain.Privilege) gin.HandlerFunc {
@@ -123,7 +108,15 @@ func (u *authUsecase) AuthMiddleware(level domain.Privilege) gin.HandlerFunc {
 			token = hdrToken
 
 			if level >= domain.PGuest {
-				sid, errFromToken := u.Sid64FromJWTToken(token, cookieKey)
+				fingerprint, errFingerprint := ctx.Cookie("fingerprint")
+				if errFingerprint != nil {
+					slog.Error("Failed to load fingerprint cookie", log.ErrAttr(errFingerprint))
+					ctx.AbortWithStatus(http.StatusForbidden)
+
+					return
+				}
+
+				sid, errFromToken := u.Sid64FromJWTToken(token, cookieKey, fingerprint)
 				if errFromToken != nil {
 					if errors.Is(errFromToken, domain.ErrExpired) {
 						ctx.AbortWithStatus(http.StatusUnauthorized)
@@ -164,6 +157,7 @@ func (u *authUsecase) AuthMiddleware(level domain.Privilege) gin.HandlerFunc {
 					UpdatedOn:       loggedInPerson.UpdatedOn,
 					PermissionLevel: loggedInPerson.PermissionLevel,
 					DiscordID:       loggedInPerson.DiscordID,
+					PatreonID:       loggedInPerson.PatreonID,
 					Name:            loggedInPerson.PersonaName,
 					Avatarhash:      loggedInPerson.AvatarHash,
 					Muted:           loggedInPerson.Muted,
@@ -240,13 +234,13 @@ func (u *authUsecase) AuthServerMiddleWare() gin.HandlerFunc {
 	}
 }
 
-func (u *authUsecase) NewUserToken(steamID steamid.SteamID, cookieKey string, userContext string, validDuration time.Duration) (string, error) {
+func (u *authUsecase) NewUserToken(steamID steamid.SteamID, cookieKey string, fingerPrint string, validDuration time.Duration) (string, error) {
 	nowTime := time.Now()
-
+	conf := u.configUsecase.Config()
 	claims := domain.UserAuthClaims{
-		Fingerprint: FingerprintHash(userContext),
+		Fingerprint: FingerprintHash(fingerPrint),
 		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer:    "gbans",
+			Issuer:    conf.General.SiteName,
 			Subject:   steamID.String(),
 			ExpiresAt: jwt.NewNumericDate(nowTime.Add(validDuration)),
 			IssuedAt:  jwt.NewNumericDate(nowTime),
@@ -287,8 +281,8 @@ func (u *authUsecase) TokenFromHeader(ctx *gin.Context, emptyOK bool) (string, e
 	return pcs[1], nil
 }
 
-func (u *authUsecase) Sid64FromJWTToken(token string, cookieKey string) (steamid.SteamID, error) {
-	claims := &jwt.RegisteredClaims{}
+func (u *authUsecase) Sid64FromJWTToken(token string, cookieKey string, fingerprint string) (steamid.SteamID, error) {
+	claims := &domain.UserAuthClaims{}
 
 	tkn, errParseClaims := jwt.ParseWithClaims(token, claims, u.MakeGetTokenKey(cookieKey))
 	if errParseClaims != nil {
@@ -304,6 +298,12 @@ func (u *authUsecase) Sid64FromJWTToken(token string, cookieKey string) (steamid
 	}
 
 	if !tkn.Valid {
+		return steamid.SteamID{}, domain.ErrAuthentication
+	}
+
+	if claims.Fingerprint != FingerprintHash(fingerprint) {
+		slog.Error("Invalid cookie fingerprint, token rejected")
+
 		return steamid.SteamID{}, domain.ErrAuthentication
 	}
 

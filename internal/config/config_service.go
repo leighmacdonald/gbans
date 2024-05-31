@@ -52,22 +52,24 @@ func (c configHandler) onAPIPutConfig() gin.HandlerFunc {
 
 func (c configHandler) onAppInfo(buildInfo domain.BuildInfo) gin.HandlerFunc {
 	type appInfo struct {
-		SiteName       string `json:"site_name"`
-		AssetURL       string `json:"asset_url"`
-		LinkID         string `json:"link_id"`
-		AppVersion     string `json:"app_version"`
-		DocumentPolicy string `json:"document_policy"`
+		SiteName        string `json:"site_name"`
+		AssetURL        string `json:"asset_url"`
+		LinkID          string `json:"link_id"`
+		AppVersion      string `json:"app_version"`
+		DocumentPolicy  string `json:"document_policy"`
+		PatreonClientID string `json:"patreon_client_id"`
 	}
 
 	return func(ctx *gin.Context) {
 		conf := c.cu.Config()
 
 		ctx.JSON(http.StatusOK, appInfo{
-			SiteName:       conf.General.SiteName,
-			AssetURL:       conf.General.AssetURL,
-			LinkID:         conf.Discord.LinkID,
-			AppVersion:     buildInfo.BuildVersion,
-			DocumentPolicy: "",
+			SiteName:        conf.General.SiteName,
+			AssetURL:        conf.General.AssetURL,
+			LinkID:          conf.Discord.LinkID,
+			AppVersion:      buildInfo.BuildVersion,
+			DocumentPolicy:  "",
+			PatreonClientID: conf.Patreon.ClientID,
 		})
 	}
 }

@@ -1,8 +1,8 @@
-import { tokenKey } from '../../auth.tsx';
+import { accessTokenKey } from '../../auth.tsx';
 
 export const readAccessToken = () => {
     try {
-        return sessionStorage.getItem(tokenKey) as string;
+        return localStorage.getItem(accessTokenKey) as string;
     } catch (e) {
         return '';
     }

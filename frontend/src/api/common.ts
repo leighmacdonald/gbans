@@ -1,10 +1,7 @@
 import { AppError, ErrorCode } from '../error.tsx';
 import { readAccessToken } from '../util/auth/readAccessToken.ts';
-import { readRefreshToken } from '../util/auth/readRefreshToken.ts';
-import { logErr } from '../util/errors';
 import { parseDateTime } from '../util/text.tsx';
 import { emptyOrNullString } from '../util/types';
-import { isTokenExpired, refreshToken } from './auth';
 import { AppealState, ASNBanRecord, CIDRBanRecord, GroupBanRecord, SteamBanRecord } from './bans';
 import { MatchResult } from './match';
 
@@ -56,14 +53,19 @@ export class EmptyBody {}
 
 // isRefresh is to track if the token is being used as an auth refresh token. In that
 // case its returned instead of the standard access token.
-const getAccessToken = async (isRefresh: boolean) => {
-    const access = readAccessToken();
-    const refresh = readRefreshToken();
-    if (isTokenExpired(access) && !isTokenExpired(refresh) && !isRefresh) {
-        await refreshToken();
+const getAccessToken = async () => {
+    try {
+        const access = readAccessToken();
+        // const refresh = readRefreshToken();
+        // if (isTokenExpired(access) && !isTokenExpired(refresh)) {
+        //     await refreshToken();
+        //     return;
+        // }
+        return access;
+    } catch (e) {
+        console.log(`failed to refersh: ${e}`);
+        return '';
     }
-
-    return isRefresh ? readRefreshToken() : readAccessToken();
 };
 
 interface errorMessage {
@@ -71,7 +73,7 @@ interface errorMessage {
     code?: number;
 }
 
-const apiRootURL = (): string => `${location.protocol}//${location.host}`;
+export const apiRootURL = (): string => `${location.protocol}//${location.host}`;
 
 type httpMethods = 'POST' | 'GET' | 'DELETE' | 'PUT';
 
@@ -81,7 +83,6 @@ type httpMethods = 'POST' | 'GET' | 'DELETE' | 'PUT';
  * @param url
  * @param method
  * @param body
- * @param isRefresh
  * @param abortController
  * @throws AppError
  */
@@ -89,8 +90,7 @@ export const apiCall = async <TResponse = EmptyBody | null, TRequestBody = Recor
     url: string,
     method: httpMethods = 'GET',
     body?: TRequestBody | undefined,
-    abortController?: AbortController,
-    isRefresh?: boolean
+    abortController?: AbortController
 ): Promise<TResponse> => {
     const headers: Record<string, string> = {
         'Content-Type': 'application/json; charset=UTF-8'
@@ -100,12 +100,9 @@ export const apiCall = async <TResponse = EmptyBody | null, TRequestBody = Recor
         credentials: 'include',
         method: method.toUpperCase()
     };
-    let accessToken = '';
-    try {
-        accessToken = await getAccessToken(isRefresh ?? false);
-    } catch (e) {
-        logErr(e);
-    }
+
+    const accessToken = await getAccessToken();
+
     if (!emptyOrNullString(accessToken)) {
         headers['Authorization'] = `Bearer ${accessToken}`;
     }
@@ -250,4 +247,5 @@ export interface appInfoDetail {
     link_id: string;
     sentry_dns_web: string;
     asset_url: string;
+    patreon_client_id: string;
 }

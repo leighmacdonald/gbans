@@ -5,7 +5,6 @@ export * from './profile';
 export * from './server';
 export * from './report';
 export * from './stats';
-export * from './auth';
 export * from './demo';
 export * from './match';
 export * from './contests';

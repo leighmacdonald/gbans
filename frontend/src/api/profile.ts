@@ -44,6 +44,7 @@ export interface UserProfile extends TimeStamped {
     steam_id: string;
     permission_level: PermissionLevel;
     discord_id: string;
+    patreon_id: string;
     name: string;
     avatarhash: string;
     ban_id: number;

@@ -5,12 +5,10 @@ import { createFileRoute, useLayoutEffect, useRouter } from '@tanstack/react-rou
 import { z } from 'zod';
 import { apiGetCurrentProfile } from '../api';
 import { writeAccessToken } from '../util/auth/writeAccessToken.ts';
-import { writeRefreshToken } from '../util/auth/writeRefreshToken.ts';
 
 export const Route = createFileRoute('/_guest/login/success')({
     validateSearch: z.object({
         next_url: z.string().optional().catch(''),
-        refresh: z.string(),
         token: z.string()
     })
 }).update({
@@ -23,13 +21,14 @@ function LoginSteamSuccess() {
         select: ({ auth }) => auth
     });
     const search = Route.useSearch();
-    const { data: profile } = useQuery({
-        queryKey: ['user'],
-        queryFn: apiGetCurrentProfile
-    });
 
-    writeRefreshToken(search.refresh);
-    writeAccessToken(search.token);
+    const { data: profile } = useQuery({
+        queryKey: ['currentUser'],
+        queryFn: async () => {
+            writeAccessToken(search.token);
+            return await apiGetCurrentProfile();
+        }
+    });
 
     useEffect(() => {
         if (!profile) {
@@ -38,7 +37,7 @@ function LoginSteamSuccess() {
 
         login(profile);
         router.invalidate();
-    }, [login, profile, router, search.refresh, search.token]);
+    }, [login, profile, router, search.token]);
 
     useLayoutEffect(() => {
         if (!profile) {

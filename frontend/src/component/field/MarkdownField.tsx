@@ -26,9 +26,17 @@ import { FieldProps } from './common.ts';
 type MDBodyFieldProps = {
     fileUpload?: boolean;
     minHeight?: number;
+    rows?: number;
 } & FieldProps;
 
-export const MarkdownField = ({ state, handleChange, handleBlur, minHeight, fileUpload = true }: MDBodyFieldProps) => {
+export const MarkdownField = ({
+    state,
+    handleChange,
+    handleBlur,
+    minHeight,
+    rows = 20,
+    fileUpload = true
+}: MDBodyFieldProps) => {
     const { sendFlash } = useUserFlashCtx();
     const [setTabValue, setTabSetTabValue] = useState(0);
     const extraButtons = false;
@@ -123,13 +131,13 @@ export const MarkdownField = ({ state, handleChange, handleBlur, minHeight, file
                         <TextField
                             sx={{
                                 padding: 0,
-                                minHeight: 350,
+                                minHeight: 150,
                                 height: '100%'
                             }}
                             label="Body (Markdown)"
                             fullWidth
                             multiline
-                            rows={20}
+                            rows={rows}
                             value={state.value}
                             error={state.meta.touchedErrors.length > 0}
                             helperText={state.meta.touchedErrors}

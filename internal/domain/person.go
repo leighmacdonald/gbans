@@ -72,6 +72,7 @@ type UserProfile struct {
 	UpdatedOn       time.Time       `json:"updated_on"`
 	PermissionLevel Privilege       `json:"permission_level"`
 	DiscordID       string          `json:"discord_id"`
+	PatreonID       string          `json:"patreon_id"`
 	Name            string          `json:"name"`
 	Avatarhash      string          `json:"avatarhash"`
 	BanID           int64           `json:"ban_id"`
@@ -124,6 +125,7 @@ type Person struct {
 	Muted            bool                  `json:"muted"`
 	IsNew            bool                  `json:"-"`
 	DiscordID        string                `json:"discord_id"`
+	PatreonID        string                `json:"patreon_id"`
 	IPAddr           netip.Addr            `json:"-"` // TODO Allow json for admins endpoints
 	CommunityBanned  bool                  `json:"community_banned"`
 	VACBans          int                   `json:"vac_bans"`
@@ -249,16 +251,16 @@ type PersonAuth struct {
 	PersonAuthID int64           `json:"person_auth_id"`
 	SteamID      steamid.SteamID `json:"steam_id"`
 	IPAddr       net.IP          `json:"ip_addr"`
-	RefreshToken string          `json:"refresh_token"`
+	AccessToken  string          `json:"access_token"`
 	CreatedOn    time.Time       `json:"created_on"`
 }
 
-func NewPersonAuth(sid64 steamid.SteamID, addr net.IP, fingerPrint string) PersonAuth {
+func NewPersonAuth(sid64 steamid.SteamID, addr net.IP, accessToken string) PersonAuth {
 	return PersonAuth{
 		PersonAuthID: 0,
 		SteamID:      sid64,
 		IPAddr:       addr,
-		RefreshToken: fingerPrint,
+		AccessToken:  accessToken,
 		CreatedOn:    time.Now(),
 	}
 }

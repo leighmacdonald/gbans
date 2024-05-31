@@ -10,24 +10,23 @@ import (
 )
 
 const (
-	AuthTokenDuration    = time.Minute * 15
-	RefreshTokenDuration = time.Hour * 24 * 31
+	AuthTokenDuration = time.Hour * 24 * 31
 )
 
 type AuthRepository interface {
 	SavePersonAuth(ctx context.Context, auth *PersonAuth) error
 	DeletePersonAuth(ctx context.Context, authID int64) error
 	PrunePersonAuth(ctx context.Context) error
-	GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *PersonAuth) error
+	GetPersonAuthByFingerprint(ctx context.Context, fingerprint string, auth *PersonAuth) error
 }
 type AuthUsecase interface {
 	Start(ctx context.Context)
 	DeletePersonAuth(ctx context.Context, authID int64) error
 	NewUserToken(steamID steamid.SteamID, cookieKey string, userContext string, validDuration time.Duration) (string, error)
-	Sid64FromJWTToken(token string, cookieKey string) (steamid.SteamID, error)
+	Sid64FromJWTToken(token string, cookieKey string, fingerprint string) (steamid.SteamID, error)
 	AuthMiddleware(level Privilege) gin.HandlerFunc
 	AuthServerMiddleWare() gin.HandlerFunc
-	MakeTokens(ctx *gin.Context, cookieKey string, sid steamid.SteamID, createRefresh bool) (UserTokens, error)
+	MakeToken(ctx *gin.Context, cookieKey string, sid steamid.SteamID) (UserTokens, error)
 	TokenFromHeader(ctx *gin.Context, emptyOK bool) (string, error)
 	MakeGetTokenKey(cookieKey string) func(_ *jwt.Token) (any, error)
 	GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *PersonAuth) error
@@ -35,7 +34,6 @@ type AuthUsecase interface {
 
 type UserTokens struct {
 	Access      string `json:"access"`
-	Refresh     string `json:"refresh"`
 	Fingerprint string `json:"fingerprint"`
 }
 

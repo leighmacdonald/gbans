@@ -42,7 +42,7 @@ func (s banGroupUsecase) UpdateCache(ctx context.Context) error {
 
 		req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, listURL, nil)
 		if errReq != nil {
-			return errors.Join(errReq, domain.ErrCreateRequest)
+			return errors.Join(errReq, domain.ErrRequestCreate)
 		}
 
 		resp, errResp := client.Do(req)
