@@ -40,7 +40,7 @@ function Patreon() {
 
     const followCallback = async () => {
         const result = await queryClient.fetchQuery({ queryKey: ['callback'], queryFn: apiGetPatreonLogin });
-        window.open(result.url);
+        window.open(result.url, '_self');
     };
 
     return (

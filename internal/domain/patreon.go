@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"time"
 
 	"github.com/austinbspencer/patreon-go-wrapper"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -21,6 +22,7 @@ type PatreonRepository interface {
 	SaveTokens(ctx context.Context, creds PatreonCredential) error
 	GetTokens(ctx context.Context, steamID steamid.SteamID) (PatreonCredential, error)
 	DeleteTokens(ctx context.Context, steamID steamid.SteamID) error
+	OldAuths(ctx context.Context) ([]PatreonCredential, error)
 }
 
 type PatreonCredential struct {
@@ -32,4 +34,6 @@ type PatreonCredential struct {
 	Scope        string          `json:"scope"`
 	TokenType    string          `json:"token_type"`
 	Version      string          `json:"version"`
+	CreatedOn    time.Time       `json:"created_on"`
+	UpdatedOn    time.Time       `json:"updated_on"`
 }
