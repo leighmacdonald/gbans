@@ -3,6 +3,7 @@ export * from './const';
 export * from './bans';
 export * from './profile';
 export * from './server';
+export * from './discord';
 export * from './report';
 export * from './stats';
 export * from './demo';

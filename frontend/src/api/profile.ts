@@ -310,3 +310,22 @@ export const apiSavePersonSettings = async (
         )
     );
 };
+
+export type DiscordUser = {
+    username: string;
+    id: string;
+    avatar: string;
+    mfa_enabled: boolean;
+} & TimeStamped;
+
+export const apiDiscordUser = async () => {
+    return transformTimeStampedDates(await apiCall<DiscordUser>('/api/discord/user'));
+};
+
+export const discordAvatarURL = (user: DiscordUser) => {
+    return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
+};
+
+export const apiDiscordLogout = async () => {
+    return await apiCall<DiscordUser>('/api/discord/logout');
+};

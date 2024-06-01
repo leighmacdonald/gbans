@@ -21,7 +21,7 @@ import (
 type patreonUsecase struct {
 	repository   domain.PatreonRepository
 	manager      *Manager
-	stateTracker *loginStateTracker
+	stateTracker *util.LoginStateTracker
 	cu           domain.ConfigUsecase
 }
 
@@ -30,7 +30,7 @@ func NewPatreonUsecase(repository domain.PatreonRepository, configUsecase domain
 		repository:   repository,
 		cu:           configUsecase,
 		manager:      NewPatreonManager(configUsecase),
-		stateTracker: newLoginStateTracker(),
+		stateTracker: util.NewLoginStateTracker(),
 	}
 }
 
@@ -131,16 +131,19 @@ func (p patreonUsecase) refreshToken(ctx context.Context, auth domain.PatreonCre
 
 func (p patreonUsecase) CreateOAuthRedirect(steamID steamid.SteamID) string {
 	conf := p.cu.Config()
-	state := p.stateTracker.create(steamID)
+	state := p.stateTracker.Create(steamID)
 
 	authorizeURL := fmt.Sprintf("https://www.patreon.com/oauth2/authorize?client_id=%s"+
 		"&allow_signup=false"+
 		"&response_type=code"+
 		"&redirect_uri=%s"+
-		"&state=%s",
+		"&state=%s"+
+		"&scope=%s",
 		conf.Patreon.ClientID,
 		conf.ExtURLRaw("/patreon/oauth"),
-		state)
+		state,
+		url.QueryEscape("campaigns identity campaigns.members"),
+	)
 
 	return authorizeURL
 }
@@ -150,7 +153,7 @@ func (p patreonUsecase) Campaign() patreon.Campaign {
 }
 
 func (p patreonUsecase) OnOauthLogin(ctx context.Context, state string, code string) error {
-	steamID, valid := p.stateTracker.get(state)
+	steamID, valid := p.stateTracker.Get(state)
 	if !valid {
 		return domain.ErrInvalidSID
 	}
@@ -195,8 +198,8 @@ func (p patreonUsecase) OnOauthLogin(ctx context.Context, state string, code str
 
 	now := time.Now()
 	creds.CreatedOn = now
-	creds.SteamID = steamID
 	creds.UpdatedOn = now
+	creds.SteamID = steamID
 
 	client := p.manager.createClient(ctx, creds.AccessToken, creds.RefreshToken)
 

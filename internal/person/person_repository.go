@@ -159,7 +159,7 @@ func (r *personRepository) GetPersonBySteamID(ctx context.Context, sid64 steamid
 			"p.muted",
 			"coalesce(pt.patreon_id, '')").
 		From("person p").
-		LeftJoin("patreon_auth pt USING (steam_id)").
+		LeftJoin("auth_patreon pt USING (steam_id)").
 		Where(sq.Eq{"p.steam_id": sid64.Int64()}))
 
 	if errRow != nil {
@@ -268,7 +268,7 @@ func (r *personRepository) GetPeople(ctx context.Context, filter domain.PlayerQu
 			"p.community_banned", "p.vac_bans", "p.game_bans", "p.economy_ban", "p.days_since_last_ban",
 			"p.updated_on_steam", "p.muted", "coalesce(pt.patreon_id, '')").
 		From("person p").
-		LeftJoin("patreon_auth pt USING (steam_id)")
+		LeftJoin("auth_patreon pt USING (steam_id)")
 
 	conditions := sq.And{}
 

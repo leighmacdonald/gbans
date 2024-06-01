@@ -289,7 +289,7 @@ func (h banHandler) onAPIExportBansValveSteamID() gin.HandlerFunc {
 			return
 		}
 
-		var entries []string
+		var entries strings.Builder
 
 		for _, ban := range bans {
 			if ban.Deleted ||
@@ -297,10 +297,10 @@ func (h banHandler) onAPIExportBansValveSteamID() gin.HandlerFunc {
 				continue
 			}
 
-			entries = append(entries, fmt.Sprintf("banid 0 %s", ban.TargetID.Steam(false)))
+			entries.WriteString(fmt.Sprintf("banid 0 %s\n", ban.TargetID.Steam(false)))
 		}
 
-		ctx.Data(http.StatusOK, "text/plain", []byte(strings.Join(entries, "\n")))
+		ctx.Data(http.StatusOK, "text/plain", []byte(entries.String()))
 	}
 }
 

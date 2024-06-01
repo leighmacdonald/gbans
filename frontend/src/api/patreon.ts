@@ -1,4 +1,4 @@
-import { apiCall } from './common.ts';
+import { apiCall, CallbackLink } from './common.ts';
 
 export interface Relationships {}
 
@@ -48,12 +48,8 @@ export const apiGetPatreonCampaigns = async () => {
     return apiCall<PatreonCampaign>('/api/patreon/campaigns');
 };
 
-export type PatreonLink = {
-    url: string;
-};
-
 export const apiGetPatreonLogin = async () => {
-    return apiCall<PatreonLink>('/api/patreon/login');
+    return apiCall<CallbackLink>('/api/patreon/login');
 };
 
 export const apiGetPatreonLogout = async () => {

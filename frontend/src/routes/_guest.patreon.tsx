@@ -80,7 +80,7 @@ function Patreon() {
 
                                 <MarkDownRenderer body_md={campaign.attributes.summary} />
 
-                                <Typography>{campaign.attributes.thanks_msg}</Typography>
+                                <MarkDownRenderer body_md={campaign.attributes.thanks_msg} />
                             </Stack>
                         </Grid>
                         <Grid xs={12}>

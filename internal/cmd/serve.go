@@ -181,6 +181,9 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			banASNUsecase := ban.NewBanASNUsecase(ban.NewBanASNRepository(dbUsecase), discordUsecase, networkUsecase)
 			banNetUsecase := ban.NewBanNetUsecase(ban.NewBanNetRepository(dbUsecase), personUsecase, configUsecase, discordUsecase, stateUsecase)
 
+			discordOAuthUsecase := discord.NewDiscordOAuthUsecase(discord.NewDiscordOAuthRepository(dbUsecase), configUsecase)
+			go discordOAuthUsecase.Start(ctx)
+
 			apu := appeal.NewAppealUsecase(appeal.NewAppealRepository(dbUsecase), banUsecase, personUsecase, discordUsecase, configUsecase)
 
 			matchRepo := match.NewMatchRepository(eventBroadcaster, dbUsecase, personUsecase, serversUsecase, discordUsecase, stateUsecase, weaponsMap)
@@ -244,6 +247,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			ban.NewBanNetHandler(router, banNetUsecase, authUsecase)
 			ban.NewBanASNHandler(router, banASNUsecase, authUsecase)
 			config.NewConfigHandler(router, configUsecase, authUsecase, app.Version())
+			discord.NewDiscordOAuthHandler(router, authUsecase, configUsecase, personUsecase, discordOAuthUsecase)
 			steamgroup.NewSteamgroupHandler(router, banGroupUsecase, authUsecase)
 			blocklist.NewBlocklistHandler(router, blocklistUsecase, networkUsecase, authUsecase)
 			chat.NewChatHandler(router, chatUsecase, authUsecase)
@@ -268,7 +272,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			wordfilter.NewWordFilterHandler(router, configUsecase, wordFilterUsecase, chatUsecase, authUsecase)
 
 			if conf.Debug.AddRCONLogAddress != "" {
-				stateUsecase.LogAddressAdd(ctx, conf.Debug.AddRCONLogAddress)
+				go stateUsecase.LogAddressAdd(ctx, conf.Debug.AddRCONLogAddress)
 			}
 
 			if conf.SSH.Enabled {

@@ -1,21 +1,34 @@
 import { useState } from 'react';
 import { useModal } from '@ebay/nice-modal-react';
+import CableIcon from '@mui/icons-material/Cable';
 import ConstructionIcon from '@mui/icons-material/Construction';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ForumIcon from '@mui/icons-material/Forum';
-import PaymentIcon from '@mui/icons-material/Payment';
+import LoginIcon from '@mui/icons-material/Login';
 import SettingsIcon from '@mui/icons-material/Settings';
 import SettingsInputComponentIcon from '@mui/icons-material/SettingsInputComponent';
+import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useLoaderData, useNavigate } from '@tanstack/react-router';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
-import { apiGetPersonSettings, apiSavePersonSettings, PermissionLevel, PersonSettings } from '../api';
+import {
+    apiDiscordLogout,
+    apiDiscordUser,
+    apiGetDiscordLogin,
+    apiGetPersonSettings,
+    apiSavePersonSettings,
+    discordAvatarURL,
+    PermissionLevel,
+    PersonSettings
+} from '../api';
 import { apiGetPatreonLogin, apiGetPatreonLogout } from '../api/patreon.ts';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { Title } from '../component/Title.tsx';
@@ -26,8 +39,13 @@ import { ModalConfirm } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { SubHeading, TabButton, TabSection } from './_admin.admin.settings.tsx';
 
+const settingsSchema = z.object({
+    section: z.enum(['general', 'forums', 'connections']).optional().default('general')
+});
+
 export const Route = createFileRoute('/_auth/settings')({
     component: ProfileSettings,
+    validateSearch: (search) => settingsSchema.parse(search),
     loader: async ({ context }) => {
         return await context.queryClient.ensureQueryData({
             queryKey: ['settings'],
@@ -44,13 +62,14 @@ interface SettingsValues {
     stats_hidden: boolean;
 }
 
-type userSettingTabs = 'general' | 'patreon' | 'forums';
+type userSettingTabs = 'general' | 'connections' | 'forums';
 
 function ProfileSettings() {
     const { sendFlash } = useUserFlashCtx();
     const { profile, hasPermission } = Route.useRouteContext();
     const settings = useLoaderData({ from: '/_auth/settings' }) as PersonSettings;
-    const [tab, setTab] = useState<userSettingTabs>('general');
+    const { section } = Route.useSearch();
+    const [tab, setTab] = useState<userSettingTabs>(section);
     const navigate = useNavigate();
 
     const mutation = useMutation({
@@ -99,11 +118,11 @@ function ProfileSettings() {
                                 />
                             )}
                             <TabButton
-                                tab={'patreon'}
+                                tab={'connections'}
                                 onClick={onTabClick}
-                                icon={<PaymentIcon />}
+                                icon={<CableIcon />}
                                 currentTab={tab}
-                                label={'Patreon'}
+                                label={'Connections'}
                             />
                         </Stack>
                     </Grid>
@@ -111,7 +130,7 @@ function ProfileSettings() {
                     {hasPermission(PermissionLevel.Moderator) && (
                         <ForumSection tab={tab} settings={settings} mutate={mutation.mutate} />
                     )}
-                    <PatreonSection
+                    <ConnectionsSection
                         tab={tab}
                         settings={settings}
                         mutate={mutation.mutate}
@@ -259,7 +278,7 @@ const ForumSection = ({
     );
 };
 
-const PatreonSection = ({
+const ConnectionsSection = ({
     tab,
     patreon_id
 }: {
@@ -272,9 +291,44 @@ const PatreonSection = ({
     const { profile, login } = Route.useRouteContext();
     const { sendFlash } = useUserFlashCtx();
     const confirmModal = useModal(ModalConfirm);
-    const followCallback = async () => {
-        const result = await queryClient.fetchQuery({ queryKey: ['callback'], queryFn: apiGetPatreonLogin });
+
+    const { data: user, isLoading } = useQuery({
+        queryKey: ['discordProfile', { steamID: profile.steam_id }],
+        queryFn: async () => {
+            return apiDiscordUser();
+        }
+    });
+
+    const followPatreonCallback = async () => {
+        const result = await queryClient.fetchQuery({ queryKey: ['callbackPatreon'], queryFn: apiGetPatreonLogin });
         window.open(result.url, '_self');
+    };
+
+    const followDiscordCallback = async () => {
+        const result = await queryClient.fetchQuery({ queryKey: ['callbackDiscord'], queryFn: apiGetDiscordLogin });
+        window.open(result.url, '_self');
+    };
+
+    const onForgetDiscord = async () => {
+        const confirmed = await confirmModal.show({
+            title: 'Are you sure you want to remove discord connection?',
+            children: 'You will need to reconnect if you want to use related features again in the future.'
+        });
+        if (!confirmed) {
+            return;
+        }
+        try {
+            await queryClient.fetchQuery({
+                queryKey: ['discordForget', { id: user?.id }],
+                queryFn: apiDiscordLogout
+            });
+
+            queryClient.setQueryData(['discordProfile', { steamID: profile.steam_id }], {});
+
+            sendFlash('success', 'Logged out successfully');
+        } catch (e) {
+            sendFlash('error', 'Could not logout fully');
+        }
     };
 
     const onForget = async () => {
@@ -299,31 +353,70 @@ const PatreonSection = ({
 
     return (
         <TabSection
-            tab={'patreon'}
+            tab={'connections'}
             currentTab={tab}
-            label={'Patreon'}
-            description={'Configure your patreon subscriptions and accounts'}
+            label={'Connections'}
+            description={'Configure your 3rd party connections to us.'}
         >
             <Grid container spacing={2}>
                 {patreon_id ? (
-                    <Grid xs={12}>
+                    <Grid xs={12} padding={0}>
+                        <Typography variant={'h3'}>Patreon</Typography>
                         <Box>
-                            <Button color={'error'} startIcon={<DeleteIcon />} variant={'contained'} onClick={onForget}>
-                                Forget Me
-                            </Button>
+                            <SubHeading>
+                                You are currently authenticated to us as:{' '}
+                                <Link href={`https://www.patreon.com/user/creators?u=${patreon_id}`}>{patreon_id}</Link>
+                            </SubHeading>
                         </Box>
-                        <SubHeading>You are currently authenticated to us as id: ${patreon_id}</SubHeading>
+                        <Button
+                            color={'error'}
+                            startIcon={<DeleteIcon />}
+                            variant={'contained'}
+                            onClick={onForget}
+                            fullWidth={false}
+                        >
+                            Remove Patreon
+                        </Button>
                     </Grid>
                 ) : (
-                    <Button
-                        key={'connect'}
-                        variant={'contained'}
-                        color={'success'}
-                        onClick={followCallback}
-                        startIcon={<SettingsInputComponentIcon />}
-                    >
-                        Connect Patreon
-                    </Button>
+                    <Grid xs={12}>
+                        <Button
+                            variant={'contained'}
+                            color={'success'}
+                            onClick={followPatreonCallback}
+                            startIcon={<SettingsInputComponentIcon />}
+                        >
+                            Connect Patreon
+                        </Button>
+                    </Grid>
+                )}
+                {!isLoading && user?.username ? (
+                    <>
+                        <Grid xs={12}>
+                            <Typography>You are connected to us as: {user.username}</Typography>
+                        </Grid>
+                        <Grid xs={12}>
+                            <Button
+                                variant={'contained'}
+                                color={'success'}
+                                onClick={onForgetDiscord}
+                                startIcon={<Avatar src={discordAvatarURL(user)} sx={{ height: 24, width: 24 }} />}
+                            >
+                                Disconnect {user.username}
+                            </Button>
+                        </Grid>
+                    </>
+                ) : (
+                    <Grid xs={12}>
+                        <Button
+                            variant={'contained'}
+                            color={'success'}
+                            onClick={followDiscordCallback}
+                            startIcon={<LoginIcon />}
+                        >
+                            Connect Discord
+                        </Button>
+                    </Grid>
                 )}
             </Grid>
         </TabSection>
