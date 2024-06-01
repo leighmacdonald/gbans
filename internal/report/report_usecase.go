@@ -43,14 +43,12 @@ func (r reportUsecase) Start(ctx context.Context) {
 		updateChan <- true
 	}()
 
-	admin := domain.UserProfile{SteamID: steamid.New(r.cu.Config().Owner)}
-
 	for {
 		select {
 		case <-ticker.C:
 			updateChan <- true
 		case <-updateChan:
-			reports, errReports := r.GetReports(ctx, admin, domain.ReportQueryFilter{})
+			reports, errReports := r.GetReports(ctx)
 			if errReports != nil {
 				slog.Error("failed to fetch reports for report metadata", log.ErrAttr(errReports))
 
@@ -98,36 +96,7 @@ func (r reportUsecase) Start(ctx context.Context) {
 	}
 }
 
-func (r reportUsecase) GetReportBySteamID(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID) (domain.Report, error) {
-	return r.rr.GetReportBySteamID(ctx, authorID, steamID)
-}
-
-func (r reportUsecase) GetReports(ctx context.Context, user domain.PersonInfo, opts domain.ReportQueryFilter) ([]domain.ReportWithAuthor, error) {
-	// Make sure the person requesting is either a moderator, or a user
-	// only able to request their own reports
-	var sourceID steamid.SteamID
-
-	if !user.HasPermission(domain.PModerator) {
-		sourceID = user.GetSteamID()
-	} else {
-		if sid, ok := opts.SourceSteamID(ctx); ok {
-			sourceID = sid
-		}
-	}
-
-	if sourceID.Valid() {
-		opts.SourceID = sourceID.String()
-	}
-
-	reports, errReports := r.rr.GetReports(ctx, opts)
-	if errReports != nil {
-		if errors.Is(errReports, domain.ErrNoResult) {
-			return nil, nil
-		}
-
-		return nil, errReports
-	}
-
+func (r reportUsecase) addAuthorsToReports(ctx context.Context, reports []domain.Report) ([]domain.ReportWithAuthor, error) {
 	var peopleIDs steamid.Collection
 	for _, report := range reports {
 		peopleIDs = append(peopleIDs, report.SourceID, report.TargetID)
@@ -151,6 +120,36 @@ func (r reportUsecase) GetReports(ctx context.Context, user domain.PersonInfo, o
 	}
 
 	return userReports, nil
+}
+
+func (r reportUsecase) GetReportsBySteamID(ctx context.Context, steamID steamid.SteamID) ([]domain.ReportWithAuthor, error) {
+	if !steamID.Valid() {
+		return nil, domain.ErrInvalidSID
+	}
+
+	reports, errReports := r.rr.GetReports(ctx, steamID)
+	if errReports != nil {
+		if errors.Is(errReports, domain.ErrNoResult) {
+			return nil, nil
+		}
+
+		return nil, errReports
+	}
+
+	return r.addAuthorsToReports(ctx, reports)
+}
+
+func (r reportUsecase) GetReports(ctx context.Context) ([]domain.ReportWithAuthor, error) {
+	reports, errReports := r.rr.GetReports(ctx, steamid.SteamID{})
+	if errReports != nil {
+		if errors.Is(errReports, domain.ErrNoResult) {
+			return nil, nil
+		}
+
+		return nil, errReports
+	}
+
+	return r.addAuthorsToReports(ctx, reports)
 }
 
 func (r reportUsecase) GetReport(ctx context.Context, curUser domain.PersonInfo, reportID int64) (domain.ReportWithAuthor, error) {

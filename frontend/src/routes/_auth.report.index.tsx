@@ -29,7 +29,7 @@ import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import {
     apiCreateReport,
-    apiGetReports,
+    apiGetUserReports,
     BanReason,
     BanReasons,
     banReasonsCollection,
@@ -81,9 +81,7 @@ function ReportCreate() {
     const { data: logs, isLoading } = useQuery({
         queryKey: ['history', { steam_id: profile.steam_id }],
         queryFn: async () => {
-            return await apiGetReports({
-                source_id: profile.steam_id
-            });
+            return await apiGetUserReports();
         }
     });
 

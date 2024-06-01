@@ -117,6 +117,11 @@ export const apiGetReports = async (opts?: ReportQueryFilter, abortController?: 
     return resp.map(transformTimeStampedDates);
 };
 
+export const apiGetUserReports = async (abortController?: AbortController) => {
+    const resp = await apiCall<ReportWithAuthor[], ReportQueryFilter>(`/api/reports/user`, 'POST', {}, abortController);
+    return resp.map(transformTimeStampedDates);
+};
+
 export const apiGetReportMessages = async (report_id: number, abortController?: AbortController) =>
     transformTimeStampedDatesList(
         await apiCall<ReportMessage[], CreateReportRequest>(
