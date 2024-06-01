@@ -44,7 +44,6 @@ import { Route as GuestProfileSteamIdImport } from './routes/_guest.profile.$ste
 import { Route as GuestLoginSuccessImport } from './routes/_guest.login.success'
 import { Route as AuthReportReportIdImport } from './routes/_auth.report.$reportId'
 import { Route as AuthMatchMatchIdImport } from './routes/_auth.match.$matchId'
-import { Route as AuthLoginDiscordImport } from './routes/_auth.login.discord'
 import { Route as AuthForumsForumidImport } from './routes/_auth.forums.$forum_id'
 import { Route as AuthContestsContestidImport } from './routes/_auth.contests.$contest_id'
 import { Route as AuthBanBanidImport } from './routes/_auth.ban.$ban_id'
@@ -228,11 +227,6 @@ const AuthReportReportIdRoute = AuthReportReportIdImport.update({
 
 const AuthMatchMatchIdRoute = AuthMatchMatchIdImport.update({
   path: '/match/$matchId',
-  getParentRoute: () => AuthRoute,
-} as any)
-
-const AuthLoginDiscordRoute = AuthLoginDiscordImport.update({
-  path: '/login/discord',
   getParentRoute: () => AuthRoute,
 } as any)
 
@@ -487,13 +481,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthForumsForumidImport
       parentRoute: typeof AuthImport
     }
-    '/_auth/login/discord': {
-      id: '/_auth/login/discord'
-      path: '/login/discord'
-      fullPath: '/login/discord'
-      preLoaderRoute: typeof AuthLoginDiscordImport
-      parentRoute: typeof AuthImport
-    }
     '/_auth/match/$matchId': {
       id: '/_auth/match/$matchId'
       path: '/match/$matchId'
@@ -718,7 +705,6 @@ export const routeTree = rootRoute.addChildren({
     AuthBanBanidRoute,
     AuthContestsContestidRoute,
     AuthForumsForumidRoute,
-    AuthLoginDiscordRoute,
     AuthMatchMatchIdRoute,
     AuthReportReportIdRoute,
     AuthForumsIndexRoute,
@@ -796,7 +782,6 @@ export const routeTree = rootRoute.addChildren({
         "/_auth/ban/$ban_id",
         "/_auth/contests/$contest_id",
         "/_auth/forums/$forum_id",
-        "/_auth/login/discord",
         "/_auth/match/$matchId",
         "/_auth/report/$reportId",
         "/_auth/forums/",
@@ -914,10 +899,6 @@ export const routeTree = rootRoute.addChildren({
     },
     "/_auth/forums/$forum_id": {
       "filePath": "_auth.forums.$forum_id.tsx",
-      "parent": "/_auth"
-    },
-    "/_auth/login/discord": {
-      "filePath": "_auth.login.discord.tsx",
       "parent": "/_auth"
     },
     "/_auth/match/$matchId": {

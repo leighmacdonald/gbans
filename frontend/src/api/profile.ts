@@ -106,9 +106,6 @@ export const apiSearchPeople = async (opts: PlayerQuery, abortController?: Abort
     return people;
 };
 
-export const apiLinkDiscord = async (opts: { code: string }) =>
-    await apiCall(`/api/auth/discord?code=${opts.code}`, 'GET');
-
 export interface PersonIPRecord {
     ip_addr: string;
     created_on: Date;
