@@ -53,6 +53,7 @@ type Demos = {
 
 type Patreon = {
     enabled: boolean;
+    integrations_enabled: boolean;
     client_id: string;
     client_secret: string;
     creator_access_token: string;
@@ -61,6 +62,8 @@ type Patreon = {
 
 type Discord = {
     enabled: boolean;
+    bot_enabled: boolean;
+    integrations_enabled: boolean;
     app_id: string;
     app_secret: string;
     link_id: string;

@@ -1041,10 +1041,6 @@ func (s *srcdsHandler) onAPIPostPingMod() gin.HandlerFunc {
 
 		ctx.JSON(http.StatusOK, gin.H{"client": req.Client, "message": "Moderators have been notified"})
 
-		if !conf.Discord.Enabled {
-			return
-		}
-
 		author, err := s.personUsecase.GetOrCreatePersonBySteamID(ctx, req.SteamID)
 		if err != nil {
 			slog.Error("Failed to load user", log.ErrAttr(err))

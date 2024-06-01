@@ -253,4 +253,7 @@ export interface appInfoDetail {
     sentry_dns_web: string;
     asset_url: string;
     patreon_client_id: string;
+    patreon_enabled: boolean;
+    discord_client_id: string;
+    discord_enabled: boolean;
 }

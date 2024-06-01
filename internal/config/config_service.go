@@ -58,6 +58,9 @@ func (c configHandler) onAppInfo(buildInfo domain.BuildInfo) gin.HandlerFunc {
 		AppVersion      string `json:"app_version"`
 		DocumentPolicy  string `json:"document_policy"`
 		PatreonClientID string `json:"patreon_client_id"`
+		DiscordClientID string `json:"discord_client_id"`
+		DiscordEnabled  bool   `json:"discord_enabled"`
+		PatreonEnabled  bool   `json:"patreon_enabled"`
 	}
 
 	return func(ctx *gin.Context) {
@@ -70,6 +73,9 @@ func (c configHandler) onAppInfo(buildInfo domain.BuildInfo) gin.HandlerFunc {
 			AppVersion:      buildInfo.BuildVersion,
 			DocumentPolicy:  "",
 			PatreonClientID: conf.Patreon.ClientID,
+			DiscordClientID: conf.Discord.AppID,
+			DiscordEnabled:  conf.Discord.IntegrationsEnabled && conf.Discord.Enabled,
+			PatreonEnabled:  conf.Patreon.IntegrationsEnabled && conf.Patreon.Enabled,
 		})
 	}
 }

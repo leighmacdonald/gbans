@@ -666,6 +666,7 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
         validatorAdapter: zodValidator,
         defaultValues: {
             enabled: settings.patreon.enabled,
+            integrations_enabled: settings.patreon.integrations_enabled,
             client_id: settings.patreon.client_id,
             client_secret: settings.patreon.client_secret,
             creator_access_token: settings.patreon.creator_access_token,
@@ -694,6 +695,20 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                         <SubHeading>Enabled/Disable patreon integrations</SubHeading>
+                    </Grid>
+                    <Grid xs={12}>
+                        <Field
+                            name={'integrations_enabled'}
+                            validators={{
+                                onChange: z.boolean()
+                            }}
+                            children={(props) => {
+                                return <CheckboxSimple {...props} label={'Enable website integrations'} />;
+                            }}
+                        />
+                        <SubHeading>
+                            Enables integration into the website. Enables: Donate button, Account Linking.
+                        </SubHeading>
                     </Grid>
                     <Grid xs={12}>
                         <Field
@@ -767,6 +782,8 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
         validatorAdapter: zodValidator,
         defaultValues: {
             enabled: settings.discord.enabled,
+            bot_enabled: settings.discord.bot_enabled,
+            integrations_enabled: settings.discord.integrations_enabled,
             app_id: settings.discord.app_id,
             app_secret: settings.discord.app_secret,
             link_id: settings.discord.link_id,
@@ -798,13 +815,40 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 onChange: z.boolean()
                             }}
                             children={(props) => {
-                                return <CheckboxSimple {...props} label={'Enable discord bot integration'} />;
+                                return <CheckboxSimple {...props} label={'Enable discord integration'} />;
+                            }}
+                        />
+                        <SubHeading>Enabled or disable all discord integration.</SubHeading>
+                    </Grid>
+                    <Grid xs={12}>
+                        <Field
+                            name={'bot_enabled'}
+                            validators={{
+                                onChange: z.boolean()
+                            }}
+                            children={(props) => {
+                                return <CheckboxSimple {...props} label={'Discord Bot'} />;
                             }}
                         />
                         <SubHeading>
                             Enabled the discord bot integration. This is self-hosted within the app. You must can create
                             a discord application{' '}
                             <Link href={'https://discord.com/developers/applications?new_application=true'}>here</Link>.
+                        </SubHeading>
+                    </Grid>
+                    <Grid xs={12}>
+                        <Field
+                            name={'integrations_enabled'}
+                            validators={{
+                                onChange: z.boolean()
+                            }}
+                            children={(props) => {
+                                return <CheckboxSimple {...props} label={'Enable website integrations'} />;
+                            }}
+                        />
+                        <SubHeading>
+                            Enables integrations into the website. Enables: Showing Join Discord button, Account
+                            Linking.
                         </SubHeading>
                     </Grid>
                     <Grid xs={12}>

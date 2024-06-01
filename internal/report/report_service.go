@@ -208,10 +208,6 @@ func (h reportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 
 		conf := h.configUsecase.Config()
 
-		if !conf.Discord.Enabled {
-			return
-		}
-
 		demoURL := ""
 
 		if report.DemoID > 0 {

@@ -39,7 +39,7 @@ type discordRepository struct {
 }
 
 func NewDiscordRepository(conf domain.Config) (domain.DiscordRepository, error) {
-	if !conf.Discord.Enabled {
+	if !conf.Discord.Enabled || !conf.Discord.BotEnabled {
 		return &nullDiscordRepository{}, nil
 	}
 

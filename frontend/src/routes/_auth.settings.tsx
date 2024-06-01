@@ -36,6 +36,7 @@ import { Buttons } from '../component/field/Buttons.tsx';
 import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
 import { MarkdownField } from '../component/field/MarkdownField.tsx';
 import { ModalConfirm } from '../component/modal';
+import { useAppInfoCtx } from '../contexts/AppInfoCtx.ts';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { SubHeading, TabButton, TabSection } from './_admin.admin.settings.tsx';
 
@@ -71,6 +72,7 @@ function ProfileSettings() {
     const { section } = Route.useSearch();
     const [tab, setTab] = useState<userSettingTabs>(section);
     const navigate = useNavigate();
+    const { appInfo } = useAppInfoCtx();
 
     const mutation = useMutation({
         mutationFn: async (values: SettingsValues) => {
@@ -117,13 +119,15 @@ function ProfileSettings() {
                                     label={'Forums'}
                                 />
                             )}
-                            <TabButton
-                                tab={'connections'}
-                                onClick={onTabClick}
-                                icon={<CableIcon />}
-                                currentTab={tab}
-                                label={'Connections'}
-                            />
+                            {(appInfo.patreon_enabled || appInfo.discord_enabled) && (
+                                <TabButton
+                                    tab={'connections'}
+                                    onClick={onTabClick}
+                                    icon={<CableIcon />}
+                                    currentTab={tab}
+                                    label={'Connections'}
+                                />
+                            )}
                         </Stack>
                     </Grid>
                     <GeneralSection tab={tab} settings={settings} mutate={mutation.mutate} />
@@ -291,6 +295,7 @@ const ConnectionsSection = ({
     const { profile, login } = Route.useRouteContext();
     const { sendFlash } = useUserFlashCtx();
     const confirmModal = useModal(ModalConfirm);
+    const { appInfo } = useAppInfoCtx();
 
     const { data: user, isLoading } = useQuery({
         queryKey: ['discordProfile', { steamID: profile.steam_id }],
@@ -359,60 +364,70 @@ const ConnectionsSection = ({
             description={'Configure your 3rd party connections to us.'}
         >
             <Grid container spacing={2} padding={0}>
-                {patreon_id ? (
-                    <Grid xs={12}>
-                        <Typography variant={'h3'}>Patreon</Typography>
-                        <Box>
-                            <SubHeading>
-                                You are currently authenticated to us as:{' '}
-                                <Link href={`https://www.patreon.com/user/creators?u=${patreon_id}`}>{patreon_id}</Link>
-                            </SubHeading>
-                        </Box>
-                        <Button
-                            color={'error'}
-                            startIcon={<DeleteIcon />}
-                            variant={'contained'}
-                            onClick={onForget}
-                            fullWidth={false}
-                        >
-                            Disconnect Patreon
-                        </Button>
-                    </Grid>
+                {appInfo.patreon_enabled ? (
+                    patreon_id ? (
+                        <Grid xs={12}>
+                            <Typography variant={'h3'}>Patreon</Typography>
+                            <Box>
+                                <SubHeading>
+                                    You are currently authenticated to us as:{' '}
+                                    <Link href={`https://www.patreon.com/user/creators?u=${patreon_id}`}>
+                                        {patreon_id}
+                                    </Link>
+                                </SubHeading>
+                            </Box>
+                            <Button
+                                color={'error'}
+                                startIcon={<DeleteIcon />}
+                                variant={'contained'}
+                                onClick={onForget}
+                                fullWidth={false}
+                            >
+                                Disconnect Patreon
+                            </Button>
+                        </Grid>
+                    ) : (
+                        <Grid xs={12}>
+                            <Button
+                                variant={'contained'}
+                                color={'success'}
+                                onClick={followPatreonCallback}
+                                startIcon={<SettingsInputComponentIcon />}
+                            >
+                                Connect Patreon
+                            </Button>
+                        </Grid>
+                    )
                 ) : (
-                    <Grid xs={12}>
-                        <Button
-                            variant={'contained'}
-                            color={'success'}
-                            onClick={followPatreonCallback}
-                            startIcon={<SettingsInputComponentIcon />}
-                        >
-                            Connect Patreon
-                        </Button>
-                    </Grid>
+                    <></>
                 )}
-                {!isLoading && user?.username ? (
-                    <Grid xs={12}>
-                        <Typography>You are connected to us as: {user.username}</Typography>
-                        <Button
-                            variant={'contained'}
-                            color={'error'}
-                            onClick={onForgetDiscord}
-                            startIcon={<Avatar src={discordAvatarURL(user)} sx={{ height: 20, width: 20 }} />}
-                        >
-                            Disconnect Discord
-                        </Button>
-                    </Grid>
+                {appInfo.discord_enabled ? (
+                    !isLoading && user?.username ? (
+                        <Grid xs={12}>
+                            <Typography>You are connected to us as: {user.username}</Typography>
+                            <Button
+                                variant={'contained'}
+                                color={'error'}
+                                onClick={onForgetDiscord}
+                                startIcon={<Avatar src={discordAvatarURL(user)} sx={{ height: 20, width: 20 }} />}
+                            >
+                                Disconnect Discord
+                            </Button>
+                        </Grid>
+                    ) : (
+                        <Grid xs={12}>
+                            <Button
+                                variant={'contained'}
+                                color={'success'}
+                                onClick={followDiscordCallback}
+                                startIcon={<LoginIcon />}
+                            >
+                                Connect Discord
+                            </Button>
+                        </Grid>
+                    )
                 ) : (
-                    <Grid xs={12}>
-                        <Button
-                            variant={'contained'}
-                            color={'success'}
-                            onClick={followDiscordCallback}
-                            startIcon={<LoginIcon />}
-                        >
-                            Connect Discord
-                        </Button>
-                    </Grid>
+                    <></>
                 )}
             </Grid>
         </TabSection>

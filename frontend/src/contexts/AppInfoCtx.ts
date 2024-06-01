@@ -15,7 +15,10 @@ export const UseAppInfoCtx = createContext<AppInfoCtx>({
         sentry_dns_web: '',
         site_name: 'Loading',
         asset_url: '/assets',
-        patreon_client_id: ''
+        patreon_client_id: '',
+        discord_client_id: '',
+        patreon_enabled: false,
+        discord_enabled: false
     }
 });
 
