@@ -86,16 +86,18 @@ function Index() {
                             Events
                         </Button>
 
-                        <Button
-                            component={RouterLink}
-                            startIcon={<AttachMoneyIcon />}
-                            fullWidth
-                            color={'primary'}
-                            variant={'contained'}
-                            to={`/patreon`}
-                        >
-                            Donate
-                        </Button>
+                        {appInfo.patreon_enabled && (
+                            <Button
+                                component={RouterLink}
+                                startIcon={<AttachMoneyIcon />}
+                                fullWidth
+                                color={'primary'}
+                                variant={'contained'}
+                                to={`/patreon`}
+                            >
+                                Donate
+                            </Button>
+                        )}
 
                         <Button
                             component={RouterLink}
@@ -141,7 +143,7 @@ function Index() {
                             Stats (Beta)
                         </Button>
 
-                        {appInfo.link_id != '' && (
+                        {appInfo.discord_enabled && appInfo.link_id != '' && (
                             <Button
                                 component={Link}
                                 startIcon={<MarkUnreadChatAltIcon />}

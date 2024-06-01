@@ -114,6 +114,7 @@ type ConfigDB struct {
 
 type ConfigPatreon struct {
 	Enabled             bool   `json:"enabled"`
+	IntegrationsEnabled bool   `json:"integrations_enabled"`
 	ClientID            string `json:"client_id"`
 	ClientSecret        string `json:"client_secret"`
 	CreatorAccessToken  string `json:"creator_access_token"`
@@ -177,6 +178,8 @@ type ConfigDemo struct {
 
 type ConfigDiscord struct {
 	Enabled                 bool   `json:"enabled"`
+	BotEnabled              bool   `json:"bot_enabled"`
+	IntegrationsEnabled     bool   `json:"integrations_enabled"`
 	AppID                   string `json:"app_id"`
 	AppSecret               string `json:"app_secret"`
 	LinkID                  string `json:"link_id"`

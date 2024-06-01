@@ -58,4 +58,8 @@ CREATE TABLE auth_discord
 );
 
 
+ALTER TABLE config ADD COLUMN patreon_integrations_enabled bool default false not null;
+ALTER TABLE config ADD COLUMN discord_bot_enabled bool default false not null;
+ALTER TABLE config ADD COLUMN discord_integrations_enabled bool default false not null;
+
 COMMIT;

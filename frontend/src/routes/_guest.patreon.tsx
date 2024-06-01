@@ -9,12 +9,13 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Navigate } from '@tanstack/react-router';
 import Image from 'mui-image';
 import { z } from 'zod';
 import { apiGetPatreonLogin, apiGetPatreonCampaigns } from '../api/patreon.ts';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { MarkDownRenderer } from '../component/MarkdownRenderer.tsx';
+import { useAppInfoCtx } from '../contexts/AppInfoCtx.ts';
 
 const patreonSearchSchema = z.object({
     redirect: z.string().catch('/')
@@ -37,11 +38,15 @@ function Patreon() {
     const { isAuthenticated, queryClient, profile } = Route.useRouteContext();
     const { campaign } = Route.useLoaderData();
     const theme = useTheme();
-
+    const { appInfo } = useAppInfoCtx();
     const followCallback = async () => {
         const result = await queryClient.fetchQuery({ queryKey: ['callback'], queryFn: apiGetPatreonLogin });
         window.open(result.url, '_self');
     };
+
+    if (!appInfo.patreon_enabled) {
+        return <Navigate to={'/'} />;
+    }
 
     return (
         <Grid container spacing={2}>

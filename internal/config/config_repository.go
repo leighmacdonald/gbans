@@ -34,11 +34,11 @@ func (c *configRepository) Read(ctx context.Context) (domain.Config, error) {
 		       
 		       demo_cleanup_enabled, demo_cleanup_strategy, demo_cleanup_min_pct, demo_cleanup_mount, demo_count_limit,
 		       
-		       patreon_enabled, patreon_client_id, patreon_client_secret, patreon_creator_access_token, patreon_creator_refresh_token,
+		       patreon_enabled, patreon_client_id, patreon_client_secret, patreon_creator_access_token, patreon_creator_refresh_token, patreon_integrations_enabled,
 		       
 		       discord_enabled, discord_app_id, discord_app_secret, discord_link_id, discord_token, discord_guild_id, discord_log_channel_id,
 		       discord_public_log_channel_enabled, discord_public_log_channel_id, discord_public_match_log_channel_id, discord_mod_ping_role_id,
-		       discord_unregister_on_start,
+		       discord_unregister_on_start, discord_bot_enabled, discord_integrations_enabled,
 		       
 		       logging_level, logging_file,
 		       
@@ -61,10 +61,10 @@ func (c *configRepository) Read(ctx context.Context) (domain.Config, error) {
 		Scan(&cfg.General.SiteName, &cfg.General.SteamKey, &cfg.General.Mode, &cfg.General.FileServeMode, &cfg.General.SrcdsLogAddr, &cfg.General.AssetURL,
 			&cfg.Filters.Enabled, &cfg.Filters.Dry, &cfg.Filters.PingDiscord, &cfg.Filters.MaxWeight, &cfg.Filters.WarningTimeout, &cfg.Filters.CheckTimeout, &cfg.Filters.MatchTimeout,
 			&cfg.Demo.DemoCleanupEnabled, &cfg.Demo.DemoCleanupStrategy, &cfg.Demo.DemoCleanupMinPct, &cfg.Demo.DemoCleanupMount, &cfg.Demo.DemoCountLimit,
-			&cfg.Patreon.Enabled, &cfg.Patreon.ClientID, &cfg.Patreon.ClientSecret, &cfg.Patreon.CreatorAccessToken, &cfg.Patreon.CreatorRefreshToken,
+			&cfg.Patreon.Enabled, &cfg.Patreon.ClientID, &cfg.Patreon.ClientSecret, &cfg.Patreon.CreatorAccessToken, &cfg.Patreon.CreatorRefreshToken, &cfg.Patreon.IntegrationsEnabled,
 			&cfg.Discord.Enabled, &cfg.Discord.AppID, &cfg.Discord.AppSecret, &cfg.Discord.LinkID, &cfg.Discord.Token, &cfg.Discord.GuildID, &cfg.Discord.LogChannelID,
 			&cfg.Discord.PublicLogChannelEnable, &cfg.Discord.PublicLogChannelID, &cfg.Discord.PublicMatchLogChannelID, &cfg.Discord.ModPingRoleID,
-			&cfg.Discord.UnregisterOnStart,
+			&cfg.Discord.UnregisterOnStart, &cfg.Discord.BotEnabled, &cfg.Discord.IntegrationsEnabled,
 			&cfg.Log.Level, &cfg.Log.File,
 			&cfg.Sentry.SentryDSN, &cfg.Sentry.SentryDSNWeb, &cfg.Sentry.SentryTrace, &cfg.Sentry.SentrySampleRate,
 			&cfg.GeoLocation.Enabled, &cfg.GeoLocation.CachePath, &cfg.GeoLocation.Token,
@@ -124,11 +124,14 @@ func (c *configRepository) Write(ctx context.Context, config domain.Config) erro
 			"demo_cleanup_mount":                  config.Demo.DemoCleanupMount,
 			"demo_count_limit":                    config.Demo.DemoCountLimit,
 			"patreon_enabled":                     config.Patreon.Enabled,
+			"patreon_integrations_enabled":        config.Patreon.IntegrationsEnabled,
 			"patreon_client_id":                   config.Patreon.ClientID,
 			"patreon_client_secret":               config.Patreon.ClientSecret,
 			"patreon_creator_access_token":        config.Patreon.CreatorAccessToken,
 			"patreon_creator_refresh_token":       config.Patreon.CreatorRefreshToken,
 			"discord_enabled":                     config.Discord.Enabled,
+			"discord_bot_enabled":                 config.Discord.BotEnabled,
+			"discord_integrations_enabled":        config.Discord.IntegrationsEnabled,
 			"discord_app_id":                      config.Discord.AppID,
 			"discord_app_secret":                  config.Discord.AppSecret,
 			"discord_link_id":                     config.Discord.LinkID,
