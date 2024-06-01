@@ -128,6 +128,7 @@ func (u voteUsecase) Start(ctx context.Context) {
 					CreatedOn: time.Now(),
 				}
 
+				// Vote results sometimes get sent twice
 				skip := false
 
 				for _, existing := range recent {

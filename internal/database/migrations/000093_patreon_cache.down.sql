@@ -1,6 +1,7 @@
 BEGIN;
 
-DROP TABLE patreon_auth;
+DROP TABLE IF EXISTS auth_discord;
+DROP TABLE IF EXISTS auth_patreon;
 
 COMMIT;
 

@@ -4,7 +4,55 @@ import (
 	"context"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
+
+type DiscordCredential struct {
+	SteamID      steamid.SteamID `json:"steam_id"`
+	DiscordID    string          `json:"discord_id"`
+	AccessToken  string          `json:"access_token"`
+	RefreshToken string          `json:"refresh_token"`
+	ExpiresIn    int             `json:"expires_in"`
+	Scope        string          `json:"scope"`
+	TokenType    string          `json:"token_type"`
+	TimeStamped
+}
+
+type DiscordUserDetail struct {
+	SteamID          steamid.SteamID `json:"steam_id"`
+	ID               string          `json:"id"`
+	Username         string          `json:"username"`
+	Avatar           string          `json:"avatar"`
+	AvatarDecoration interface{}     `json:"avatar_decoration"`
+	Discriminator    string          `json:"discriminator"`
+	PublicFlags      int             `json:"public_flags"`
+	Flags            int             `json:"flags"`
+	Banner           interface{}     `json:"banner"`
+	BannerColor      interface{}     `json:"banner_color"`
+	AccentColor      interface{}     `json:"accent_color"`
+	Locale           string          `json:"locale"`
+	MfaEnabled       bool            `json:"mfa_enabled"`
+	PremiumType      int             `json:"premium_type"`
+	TimeStamped
+}
+
+type DiscordOAuthUsecase interface {
+	CreateStatefulLoginURL(steamID steamid.SteamID) (string, error)
+	HandleOAuthCode(ctx context.Context, code string, state string) error
+	Logout(ctx context.Context, steamID steamid.SteamID) error
+	Start(ctx context.Context)
+	GetUserDetail(ctx context.Context, steamID steamid.SteamID) (DiscordUserDetail, error)
+}
+
+type DiscordOAuthRepository interface {
+	SaveTokens(ctx context.Context, creds DiscordCredential) error
+	GetTokens(ctx context.Context, steamID steamid.SteamID) (DiscordCredential, error)
+	DeleteTokens(ctx context.Context, steamID steamid.SteamID) error
+	OldAuths(ctx context.Context) ([]DiscordCredential, error)
+	SaveUserDetail(ctx context.Context, detail DiscordUserDetail) error
+	GetUserDetail(ctx context.Context, id steamid.SteamID) (DiscordUserDetail, error)
+	DeleteUserDetail(ctx context.Context, steamID steamid.SteamID) error
+}
 
 type SlashCommandHandler func(ctx context.Context, s *discordgo.Session, m *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error)
 
@@ -29,7 +77,6 @@ type DiscordUsecase interface {
 	Shutdown(guildID string)
 	SendPayload(channelID DiscordChannel, embed *discordgo.MessageEmbed)
 	RegisterHandler(cmd Cmd, handler SlashCommandHandler) error
-
 	FilterAdd(ctx context.Context, user PersonInfo, pattern string, isRegex bool) (*discordgo.MessageEmbed, error)
 }
 

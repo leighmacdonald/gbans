@@ -38,7 +38,7 @@ func (p *Manager) createClient(ctx context.Context, accessToken string, refreshT
 			AuthURL:  patreon.AuthorizationURL,
 			TokenURL: patreon.AccessTokenURL,
 		},
-		Scopes: []string{"users", "Pledges-to-me", "campaigns", "my-campaign"},
+		Scopes: []string{"campaigns", "identity", "memberships"},
 	}
 
 	tok := &oauth2.Token{

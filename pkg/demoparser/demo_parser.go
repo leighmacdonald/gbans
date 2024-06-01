@@ -179,6 +179,11 @@ func fullBinPath() string {
 func callBin(arg string) ([]byte, error) {
 	cmd, errOutput := exec.Command(fullBinPath(), arg).Output() //nolint:gosec
 	if errOutput != nil {
+		var ee *exec.ExitError
+		if errors.As(errOutput, &ee) {
+			return nil, errors.Join(ee, ErrCall)
+		}
+
 		return nil, errors.Join(errOutput, ErrCall)
 	}
 

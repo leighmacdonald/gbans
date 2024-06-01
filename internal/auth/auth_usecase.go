@@ -166,14 +166,16 @@ func (u *authUsecase) AuthMiddleware(level domain.Privilege) gin.HandlerFunc {
 
 				ctx.Set(ctxKeyUserProfile, profile)
 
-				if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
-					hub.WithScope(func(scope *sentry.Scope) {
-						scope.SetUser(sentry.User{
-							ID:        sid.String(),
-							IPAddress: ctx.ClientIP(),
-							Username:  loggedInPerson.PersonaName,
+				if u.configUsecase.Config().Sentry.SentryDSN != "" {
+					if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
+						hub.WithScope(func(scope *sentry.Scope) {
+							scope.SetUser(sentry.User{
+								ID:        sid.String(),
+								IPAddress: ctx.ClientIP(),
+								Username:  loggedInPerson.PersonaName,
+							})
 						})
-					})
+					}
 				}
 			} else {
 				ctx.Set(ctxKeyUserProfile, domain.UserProfile{PermissionLevel: domain.PGuest, Name: "Guest"})
@@ -212,7 +214,7 @@ func (u *authUsecase) AuthServerMiddleWare() gin.HandlerFunc {
 
 		var server domain.Server
 		if errServer := u.serverUsecase.GetServerByPassword(ctx, reqAuthHeader, &server, false, false); errServer != nil {
-			slog.Error("Failed to load server during auth", log.ErrAttr(errServer))
+			slog.Error("Failed to load server during auth", log.ErrAttr(errServer), slog.String("token", reqAuthHeader), slog.String("IP", ctx.ClientIP()))
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 
 			return
@@ -220,14 +222,16 @@ func (u *authUsecase) AuthServerMiddleWare() gin.HandlerFunc {
 
 		ctx.Set("server_id", server.ServerID)
 
-		if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
-			hub.WithScope(func(scope *sentry.Scope) {
-				scope.SetUser(sentry.User{
-					ID:        strconv.Itoa(server.ServerID),
-					IPAddress: server.Addr(),
-					Name:      server.ShortName,
+		if u.configUsecase.Config().Sentry.SentryDSN != "" {
+			if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
+				hub.WithScope(func(scope *sentry.Scope) {
+					scope.SetUser(sentry.User{
+						ID:        strconv.Itoa(server.ServerID),
+						IPAddress: server.Addr(),
+						Name:      server.ShortName,
+					})
 				})
-			})
+			}
 		}
 
 		ctx.Next()

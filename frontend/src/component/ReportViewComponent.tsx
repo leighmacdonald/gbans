@@ -96,7 +96,9 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
     const { data: bans, isLoading: isLoadingBans } = useQuery({
         queryKey: ['reportBanHistory', { steamId: report.target_id }],
         queryFn: async () => {
-            return await apiGetBansSteam({ target_id: report.target_id });
+            const bans = await apiGetBansSteam({ target_id: report.target_id });
+
+            return bans.filter((b) => b.target_id == report.target_id);
         }
     });
 

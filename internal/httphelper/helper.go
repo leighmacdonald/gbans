@@ -28,10 +28,6 @@ func ResponseErr(ctx *gin.Context, statusCode int, err error) {
 	}
 
 	ctx.JSON(statusCode, APIError{Message: userErr})
-
-	if err != nil {
-		slog.Error("Response error", slog.Int("code", statusCode), log.ErrAttr(err))
-	}
 }
 
 func Bind(ctx *gin.Context, target any) bool {

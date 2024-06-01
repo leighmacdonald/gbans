@@ -38,6 +38,11 @@ export default defineConfig({
         cors: true,
         host: 'gbans.localhost',
         proxy: {
+            '/discord/oauth': {
+                target: 'http://gbans.localhost:6006',
+                changeOrigin: true,
+                secure: false
+            },
             '/patreon/oauth': {
                 target: 'http://gbans.localhost:6006',
                 changeOrigin: true,

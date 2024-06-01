@@ -14,6 +14,7 @@ export enum PermissionLevel {
     Moderator = 50,
     Admin = 100
 }
+
 export const PermissionLevelCollection = [
     PermissionLevel.Banned,
     PermissionLevel.Guest,
@@ -72,6 +73,10 @@ interface errorMessage {
     message: string;
     code?: number;
 }
+
+export type CallbackLink = {
+    url: string;
+};
 
 export const apiRootURL = (): string => `${location.protocol}//${location.host}`;
 

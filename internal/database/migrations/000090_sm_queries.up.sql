@@ -52,6 +52,21 @@ ALTER TABLE ban_net
 ALTER TABLE cidr_block_whitelist
     ALTER COLUMN address TYPE ip4r;
 
+-- missing from older
+create or replace function steam_to_steam64(steam_id text) returns bigint
+    language plpgsql
+as
+$$
+DECLARE
+    parts text[];
+BEGIN
+    if starts_with(steam_id, '76561') then return cast(steam_id as bigint); end if;
+
+    parts := regexp_matches(steam_id, '^STEAM_([0-5]):([0-1]):([0-9]+)$');
+    return (cast(parts[3] as bigint) * 2) + 76561197960265728 + cast(parts[2] as bigint);
+END ;
+$$;
+
 -- select steam_to_steam64('STEAM_0:1:583502767'); -- -> 76561199127271263
 -- select steam_to_steam64('76561199127271263'); -- -> 76561199127271263
 

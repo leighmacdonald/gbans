@@ -1,21 +1,16 @@
 package auth
 
 import (
-	"context"
-	"encoding/json"
-	"errors"
 	"log/slog"
 	"net/http"
 	"net/url"
 	"regexp"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/log"
-	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/yohcop/openid-go"
 )
@@ -35,19 +30,18 @@ func NewAuthHandler(engine *gin.Engine, authUsecase domain.AuthUsecase, configUs
 		personUsecase: personUsecase,
 	}
 
-	engine.GET("/auth/callback", handler.onOpenIDCallback())
+	engine.GET("/auth/callback", handler.onSteamOIDCCallback())
 
 	authGrp := engine.Group("/")
 	{
 		// authed
 		env := authGrp.Use(authUsecase.AuthMiddleware(domain.PUser))
 
-		env.GET("/api/auth/discord", handler.onOAuthDiscordCallback())
 		env.GET("/api/auth/logout", handler.onAPILogout())
 	}
 }
 
-func (h authHandler) onOpenIDCallback() gin.HandlerFunc {
+func (h authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 	nonceStore := openid.NewSimpleNonceStore()
 	discoveryCache := &noOpDiscoveryCache{}
 	oidRx := regexp.MustCompile(`^https://steamcommunity\.com/openid/id/(\d+)$`)
@@ -84,6 +78,7 @@ func (h authHandler) onOpenIDCallback() gin.HandlerFunc {
 
 		match := oidRx.FindStringSubmatch(idStr)
 		if match == nil || len(match) != 2 {
+			slog.Error("Failed to match oid format provided")
 			ctx.Redirect(302, referralURL)
 
 			return
@@ -161,180 +156,6 @@ func (h authHandler) onOpenIDCallback() gin.HandlerFunc {
 }
 
 const fingerprintCookieName = "fingerprint"
-
-func (h authHandler) onOAuthDiscordCallback() gin.HandlerFunc {
-	type accessTokenResp struct {
-		AccessToken  string `json:"access_token"`
-		ExpiresIn    int    `json:"expires_in"`
-		RefreshToken string `json:"refresh_token"`
-		Scope        string `json:"scope"`
-		TokenType    string `json:"token_type"`
-	}
-
-	type discordUserDetail struct {
-		ID               string      `json:"id"`
-		Username         string      `json:"username"`
-		Avatar           string      `json:"avatar"`
-		AvatarDecoration interface{} `json:"avatar_decoration"`
-		Discriminator    string      `json:"discriminator"`
-		PublicFlags      int         `json:"public_flags"`
-		Flags            int         `json:"flags"`
-		Banner           interface{} `json:"banner"`
-		BannerColor      interface{} `json:"banner_color"`
-		AccentColor      interface{} `json:"accent_color"`
-		Locale           string      `json:"locale"`
-		MfaEnabled       bool        `json:"mfa_enabled"`
-		PremiumType      int         `json:"premium_type"`
-	}
-
-	client := util.NewHTTPClient()
-	conf := h.configUsecase.Config()
-
-	fetchDiscordID := func(ctx context.Context, accessToken string) (string, error) {
-		req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, "https://discord.com/api/users/@me", nil)
-		if errReq != nil {
-			return "", errors.Join(errReq, domain.ErrRequestCreate)
-		}
-
-		req.Header.Add("Authorization", "Bearer "+accessToken)
-		resp, errResp := client.Do(req)
-
-		if errResp != nil {
-			return "", errors.Join(errResp, domain.ErrRequestPerform)
-		}
-
-		defer func() {
-			_ = resp.Body.Close()
-		}()
-
-		var details discordUserDetail
-		if errJSON := json.NewDecoder(resp.Body).Decode(&details); errJSON != nil {
-			return "", errors.Join(errJSON, domain.ErrRequestDecode)
-		}
-
-		return details.ID, nil
-	}
-
-	fetchToken := func(ctx context.Context, code string) (string, error) {
-		// v, _ := go_oauth_pkce_code_verifier.CreateCodeVerifierFromBytes([]byte(code))
-		form := url.Values{}
-		form.Set("client_id", conf.Discord.AppID)
-		form.Set("client_secret", conf.Discord.AppSecret)
-		form.Set("redirect_uri", conf.ExtURLRaw("/login/discord"))
-		form.Set("code", code)
-		form.Set("grant_type", "authorization_code")
-		// form.Set("state", state.String())
-		form.Set("scope", "identify")
-		req, errReq := http.NewRequestWithContext(ctx, http.MethodPost, "https://discord.com/api/oauth2/token", strings.NewReader(form.Encode()))
-
-		if errReq != nil {
-			return "", errors.Join(errReq, domain.ErrRequestCreate)
-		}
-
-		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-
-		resp, errResp := client.Do(req)
-		if errResp != nil {
-			return "", errors.Join(errResp, domain.ErrRequestPerform)
-		}
-
-		defer func() {
-			_ = resp.Body.Close()
-		}()
-
-		var atr accessTokenResp
-		if errJSON := json.NewDecoder(resp.Body).Decode(&atr); errJSON != nil {
-			return "", errors.Join(errJSON, domain.ErrRequestDecode)
-		}
-
-		if atr.AccessToken == "" {
-			return "", domain.ErrEmptyToken
-		}
-
-		return atr.AccessToken, nil
-	}
-
-	return func(ctx *gin.Context) {
-		code := ctx.Query("code")
-		if code == "" {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, nil)
-			slog.Error("Failed to get code from query")
-
-			return
-		}
-
-		token, errToken := fetchToken(ctx, code)
-		if errToken != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, nil)
-			slog.Error("Failed to fetch token", log.ErrAttr(errToken))
-
-			return
-		}
-
-		discordID, errID := fetchDiscordID(ctx, token)
-		if errID != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, nil)
-			slog.Error("Failed to fetch discord ID", log.ErrAttr(errID))
-
-			return
-		}
-
-		if discordID == "" {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, nil)
-			slog.Error("Empty discord id received")
-
-			return
-		}
-
-		discordPerson, errDp := h.personUsecase.GetPersonByDiscordID(ctx, discordID)
-		if errDp != nil {
-			if !errors.Is(errDp, domain.ErrNoResult) {
-				httphelper.ResponseErr(ctx, http.StatusInternalServerError, nil)
-
-				return
-			}
-		}
-
-		if discordPerson.DiscordID != "" {
-			httphelper.ResponseErr(ctx, http.StatusConflict, nil)
-			slog.Error("Failed to update persons discord id")
-
-			return
-		}
-
-		sid := httphelper.CurrentUserProfile(ctx).SteamID
-
-		person, errPerson := h.personUsecase.GetPersonBySteamID(ctx, sid)
-		if errPerson != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, nil)
-
-			return
-		}
-
-		if person.Expired() {
-			if errGetProfile := thirdparty.UpdatePlayerSummary(ctx, &person); errGetProfile != nil {
-				slog.Error("Failed to fetch user profile", log.ErrAttr(errGetProfile))
-			} else {
-				if errSave := h.personUsecase.SavePerson(ctx, &person); errSave != nil {
-					slog.Error("Failed to save player summary update", log.ErrAttr(errSave))
-				}
-			}
-		}
-
-		person.DiscordID = discordID
-
-		if errSave := h.personUsecase.SavePerson(ctx, &person); errSave != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, nil)
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, nil)
-
-		slog.Info("Discord account linked successfully",
-			slog.String("discord_id", discordID), slog.Int64("sid64", sid.Int64()))
-	}
-}
 
 func (h authHandler) onAPILogout() gin.HandlerFunc {
 	conf := h.configUsecase.Config()

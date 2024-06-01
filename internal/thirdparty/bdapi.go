@@ -26,7 +26,7 @@ type BDSourceBansRecord struct {
 	CreatedOn   time.Time       `json:"created_on"`
 }
 
-func BDSourceBans(ctx context.Context, steamID steamid.SteamID) (map[string][]BDSourceBansRecord, error) {
+func BDSourceBans(ctx context.Context, steamID steamid.SteamID) (map[int64][]BDSourceBansRecord, error) {
 	client := &http.Client{Timeout: time.Second * 10}
 	url := fmt.Sprintf(bdAPIURL, steamID.String())
 
@@ -34,6 +34,8 @@ func BDSourceBans(ctx context.Context, steamID steamid.SteamID) (map[string][]BD
 	if errReq != nil {
 		return nil, errors.Join(errReq, domain.ErrRequestCreate)
 	}
+
+	req.Header.Add("Accept", " application/json")
 
 	resp, errResp := client.Do(req)
 	if errResp != nil {
@@ -44,7 +46,7 @@ func BDSourceBans(ctx context.Context, steamID steamid.SteamID) (map[string][]BD
 		_ = resp.Body.Close()
 	}()
 
-	var records map[string][]BDSourceBansRecord
+	var records map[int64][]BDSourceBansRecord
 	if errJSON := json.NewDecoder(resp.Body).Decode(&records); errJSON != nil {
 		return nil, errors.Join(errJSON, domain.ErrRequestDecode)
 	}

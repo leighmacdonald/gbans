@@ -6,6 +6,6 @@ create table patreon_auth
     creator_refresh_token text not null
 );
 
-insert into patreon_auth values ('', '');
+insert into auth_patreon values ('', '');
 
 COMMIT;
