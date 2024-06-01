@@ -358,9 +358,9 @@ const ConnectionsSection = ({
             label={'Connections'}
             description={'Configure your 3rd party connections to us.'}
         >
-            <Grid container spacing={2}>
+            <Grid container spacing={2} padding={0}>
                 {patreon_id ? (
-                    <Grid xs={12} padding={0}>
+                    <Grid xs={12}>
                         <Typography variant={'h3'}>Patreon</Typography>
                         <Box>
                             <SubHeading>
@@ -375,7 +375,7 @@ const ConnectionsSection = ({
                             onClick={onForget}
                             fullWidth={false}
                         >
-                            Remove Patreon
+                            Disconnect Patreon
                         </Button>
                     </Grid>
                 ) : (
@@ -391,21 +391,17 @@ const ConnectionsSection = ({
                     </Grid>
                 )}
                 {!isLoading && user?.username ? (
-                    <>
-                        <Grid xs={12}>
-                            <Typography>You are connected to us as: {user.username}</Typography>
-                        </Grid>
-                        <Grid xs={12}>
-                            <Button
-                                variant={'contained'}
-                                color={'success'}
-                                onClick={onForgetDiscord}
-                                startIcon={<Avatar src={discordAvatarURL(user)} sx={{ height: 24, width: 24 }} />}
-                            >
-                                Disconnect {user.username}
-                            </Button>
-                        </Grid>
-                    </>
+                    <Grid xs={12}>
+                        <Typography>You are connected to us as: {user.username}</Typography>
+                        <Button
+                            variant={'contained'}
+                            color={'error'}
+                            onClick={onForgetDiscord}
+                            startIcon={<Avatar src={discordAvatarURL(user)} sx={{ height: 20, width: 20 }} />}
+                        >
+                            Disconnect Discord
+                        </Button>
+                    </Grid>
                 ) : (
                     <Grid xs={12}>
                         <Button
