@@ -162,8 +162,11 @@ func (r reportRepository) DropReportMessage(ctx context.Context, message *domain
 	return nil
 }
 
-func (r reportRepository) GetReports(ctx context.Context, opts domain.ReportQueryFilter) ([]domain.Report, error) {
-	constraints := sq.And{sq.Eq{"r.deleted": opts.Deleted}}
+func (r reportRepository) GetReports(ctx context.Context, steamID steamid.SteamID) ([]domain.Report, error) {
+	constraints := sq.And{sq.Eq{"r.deleted": false}}
+	if steamID.Valid() {
+		constraints = append(constraints, sq.Eq{"r.author_id": steamID.Int64()})
+	}
 
 	builder := r.db.
 		Builder().

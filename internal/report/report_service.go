@@ -1,6 +1,7 @@
 package report
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -41,18 +42,19 @@ func NewReportHandler(engine *gin.Engine, reportUsecase domain.ReportUsecase, co
 		authed := authedGrp.Use(authUsecase.AuthMiddleware(domain.PUser))
 		authed.POST("/api/report", handler.onAPIPostReportCreate())
 		authed.GET("/api/report/:report_id", handler.onAPIGetReport())
-		authed.POST("/api/reports", handler.onAPIGetReports())
 		authed.POST("/api/report_status/:report_id", handler.onAPISetReportStatus())
 		authed.GET("/api/report/:report_id/messages", handler.onAPIGetReportMessages())
 		authed.POST("/api/report/:report_id/messages", handler.onAPIPostReportMessage())
 		authed.POST("/api/report/message/:report_message_id", handler.onAPIEditReportMessage())
 		authed.DELETE("/api/report/message/:report_message_id", handler.onAPIDeleteReportMessage())
+		authed.POST("/api/reports/user", handler.onAPIGetUserReports())
 	}
 	// mod
 	modGrp := engine.Group("/")
 	{
 		mod := modGrp.Use(authUsecase.AuthMiddleware(domain.PModerator))
 		mod.POST("/api/report/:report_id/state", handler.onAPIPostBanState())
+		mod.POST("/api/reports", handler.onAPIGetAllReports())
 	}
 }
 
@@ -240,16 +242,33 @@ func (h reportHandler) onAPIGetReport() gin.HandlerFunc {
 	}
 }
 
-func (h reportHandler) onAPIGetReports() gin.HandlerFunc {
+func (r reportUsecase) GetReportBySteamID(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID) (domain.Report, error) {
+	return r.rr.GetReportBySteamID(ctx, authorID, steamID)
+}
+
+func (h reportHandler) onAPIGetUserReports() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		user := httphelper.CurrentUserProfile(ctx)
 
+		reports, errReports := h.reportUsecase.GetReportsBySteamID(ctx, user.SteamID)
+		if errReports != nil {
+			httphelper.ErrorHandled(ctx, errReports)
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, reports)
+	}
+}
+
+func (h reportHandler) onAPIGetAllReports() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
 		var req domain.ReportQueryFilter
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
-		reports, errReports := h.reportUsecase.GetReports(ctx, user, req)
+		reports, errReports := h.reportUsecase.GetReports(ctx)
 		if errReports != nil {
 			httphelper.ErrorHandled(ctx, errReports)
 

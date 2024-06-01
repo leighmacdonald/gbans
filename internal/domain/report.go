@@ -9,8 +9,7 @@ import (
 )
 
 type ReportRepository interface {
-	GetReportBySteamID(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID) (Report, error)
-	GetReports(ctx context.Context, opts ReportQueryFilter) ([]Report, error)
+	GetReports(ctx context.Context, steamID steamid.SteamID) ([]Report, error)
 	GetReport(ctx context.Context, reportID int64) (Report, error)
 	GetReportMessages(ctx context.Context, reportID int64) ([]ReportMessage, error)
 	GetReportMessageByID(ctx context.Context, reportMessageID int64) (ReportMessage, error)
@@ -18,11 +17,13 @@ type ReportRepository interface {
 	DropReport(ctx context.Context, report *Report) error
 	SaveReport(ctx context.Context, report *Report) error
 	SaveReportMessage(ctx context.Context, message *ReportMessage) error
+	GetReportBySteamID(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID) (Report, error)
 }
 
 type ReportUsecase interface {
-	GetReportBySteamID(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID) (Report, error)
-	GetReports(ctx context.Context, user PersonInfo, opts ReportQueryFilter) ([]ReportWithAuthor, error)
+	GetReportsBySteamID(ctx context.Context, steamID steamid.SteamID) ([]ReportWithAuthor, error)
+	// GetReportBySteamID(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID) (Report, error)
+	GetReports(ctx context.Context) ([]ReportWithAuthor, error)
 	GetReport(ctx context.Context, curUser PersonInfo, reportID int64) (ReportWithAuthor, error)
 	GetReportMessages(ctx context.Context, reportID int64) ([]ReportMessage, error)
 	GetReportMessageByID(ctx context.Context, reportMessageID int64) (ReportMessage, error)
@@ -30,6 +31,7 @@ type ReportUsecase interface {
 	DropReport(ctx context.Context, report *Report) error
 	SaveReport(ctx context.Context, report *Report) error
 	SaveReportMessage(ctx context.Context, message *ReportMessage) error
+	GetReportBySteamID(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID) (Report, error)
 }
 
 type CreateReportReq struct {
