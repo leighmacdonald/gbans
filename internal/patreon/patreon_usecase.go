@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -133,19 +132,18 @@ func (p patreonUsecase) CreateOAuthRedirect(steamID steamid.SteamID) string {
 	conf := p.cu.Config()
 	state := p.stateTracker.Create(steamID)
 
-	authorizeURL := fmt.Sprintf("https://www.patreon.com/oauth2/authorize?client_id=%s"+
-		"&allow_signup=false"+
-		"&response_type=code"+
-		"&redirect_uri=%s"+
-		"&state=%s"+
-		"&scope=%s",
-		conf.Patreon.ClientID,
-		conf.ExtURLRaw("/patreon/oauth"),
-		state,
-		url.QueryEscape("campaigns identity campaigns.members"),
-	)
+	authURL, _ := url.Parse("https://www.patreon.com/oauth2/authorize")
+	values := authURL.Query()
+	values.Set("client_id", conf.Patreon.ClientID)
+	values.Set("allow_signup", "false")
+	values.Set("response_type", "code")
+	values.Set("redirect_uri", conf.ExtURLRaw("/patreon/oauth"))
+	values.Set("state", state)
+	values.Set("scope", "campaigns identity campaigns.members")
 
-	return authorizeURL
+	authURL.RawQuery = values.Encode()
+
+	return authURL.String()
 }
 
 func (p patreonUsecase) Campaign() patreon.Campaign {

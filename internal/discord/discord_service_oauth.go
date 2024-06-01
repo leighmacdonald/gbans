@@ -18,7 +18,7 @@ type discordOAuthHandler struct {
 	discordUsecase domain.DiscordOAuthUsecase
 }
 
-// NewDiscordOAuthHandler provides handlers for authentication with discord connect
+// NewDiscordOAuthHandler provides handlers for authentication with discord connect.
 func NewDiscordOAuthHandler(engine *gin.Engine, authUsecase domain.AuthUsecase, configUsecase domain.ConfigUsecase,
 	personUsecase domain.PersonUsecase, discordUsecase domain.DiscordOAuthUsecase,
 ) {
