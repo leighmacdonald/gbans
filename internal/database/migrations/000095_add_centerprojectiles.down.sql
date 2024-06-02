@@ -1,0 +1,6 @@
+BEGIN;
+
+DROP TABLE IF EXISTS sm_cookies_cache;
+DROP TABLE IF EXISTS sm_cookies;
+
+COMMIT;
