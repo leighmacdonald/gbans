@@ -21,7 +21,7 @@ export type VoteQueryFilter = {
     source_id: string;
     target_id: string;
     success: number;
-} & QueryFilter<VoteResult>;
+} & QueryFilter;
 
 export const apiVotesQuery = async (opts: VoteQueryFilter, abortController?: AbortController) => {
     const resp = await apiCall<LazyResult<VoteResult>>('/api/votes', 'POST', opts, abortController);

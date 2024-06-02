@@ -75,53 +75,27 @@ export const Route = createFileRoute('/_auth/chatlogs')({
 
 function ChatLogs() {
     const defaultRows = RowsPerPage.TwentyFive;
-    const {
-        body,
-        autoRefresh,
-        persona_name,
-        steam_id,
-        server_id,
-        pageIndex,
-        sortColumn,
-        flagged_only,
-        pageSize,
-        sortOrder
-    } = Route.useSearch();
-    //const { currentUser } = useCurrentUserCtx();
+    const search = Route.useSearch();
     const { hasPermission } = useRouteContext({ from: '/_auth/chatlogs' });
     const { servers } = useLoaderData({ from: '/_auth/chatlogs' }) as { servers: ServerSimple[] };
     const navigate = useNavigate({ from: Route.fullPath });
 
     const { data: messages, isLoading } = useQuery({
-        queryKey: [
-            'chatlogs',
-            {
-                pageIndex,
-                server_id,
-                persona_name,
-                steam_id,
-                pageSize,
-                sortOrder,
-                sortColumn,
-                body,
-                autoRefresh,
-                flagged_only
-            }
-        ],
+        queryKey: ['chatlogs', { search }],
         queryFn: async () => {
             return await apiGetMessages({
-                server_id: server_id,
-                personaname: persona_name,
-                query: body,
-                source_id: steam_id,
-                limit: pageSize ?? defaultRows,
-                offset: (pageIndex ?? 0) * (pageSize ?? defaultRows),
+                server_id: search.server_id,
+                personaname: search.persona_name,
+                query: search.body,
+                source_id: search.steam_id,
+                limit: search.pageSize ?? defaultRows,
+                offset: (search.pageIndex ?? 0) * (search.pageSize ?? defaultRows),
                 order_by: 'person_message_id',
-                desc: (sortOrder ?? 'desc') == 'desc',
-                flagged_only: flagged_only ?? false
+                desc: (search.sortOrder ?? 'desc') == 'desc',
+                flagged_only: search.flagged_only ?? false
             });
         },
-        refetchInterval: autoRefresh
+        refetchInterval: search.autoRefresh
     });
 
     const { Field, Subscribe, handleSubmit, reset } = useForm<chatLogForm>({
@@ -129,12 +103,12 @@ function ChatLogs() {
             await navigate({ to: '/chatlogs', search: (prev) => ({ ...prev, ...value }) });
         },
         defaultValues: {
-            body: body ?? '',
-            persona_name: persona_name ?? '',
-            server_id: server_id ?? 0,
-            steam_id: steam_id ?? '',
-            flagged_only: flagged_only ?? false,
-            autoRefresh: autoRefresh ?? 0
+            body: search.body ?? '',
+            persona_name: search.persona_name ?? '',
+            server_id: search.server_id ?? 0,
+            steam_id: search.steam_id ?? '',
+            flagged_only: search.flagged_only ?? false,
+            autoRefresh: search.autoRefresh ?? 0
         }
     });
 
@@ -152,10 +126,12 @@ function ChatLogs() {
                 autoRefresh: undefined
             })
         });
+        await handleSubmit();
     };
     return (
         <>
             <Title>Chat Logs</Title>
+
             <Grid container spacing={2}>
                 <Grid xs={12}>
                     <ContainerWithHeader title={'Chat Filters'} iconLeft={<FilterAltIcon />}>
@@ -309,8 +285,8 @@ function ChatLogs() {
                     <ContainerWithHeader iconLeft={<ChatIcon />} title={'Chat Logs'}>
                         <ChatTable messages={messages ?? []} isLoading={isLoading} />
                         <Paginator
-                            page={pageIndex ?? 0}
-                            rows={pageSize ?? defaultRows}
+                            page={search.pageIndex ?? 0}
+                            rows={search.pageSize ?? defaultRows}
                             path={'/chatlogs'}
                             data={{ data: [], count: -1 }}
                         />

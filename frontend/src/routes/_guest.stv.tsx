@@ -75,7 +75,7 @@ function STV() {
         queryFn: apiGetDemos
     });
 
-    const { Field, Subscribe, handleSubmit, reset, setFieldValue } = useForm({
+    const { Field, Subscribe, handleSubmit, reset } = useForm({
         onSubmit: async ({ value }) => {
             setColumnFilters(initColumnFilter(value));
             await navigate({ search: (prev) => ({ ...prev, ...value }) });
@@ -188,7 +188,7 @@ function STV() {
                 )
             })
         ];
-    }, [columnHelper, isAuthenticated, navigate]);
+    }, [columnHelper, handleSubmit, isAuthenticated, navigate]);
 
     return (
         <Grid container spacing={2}>

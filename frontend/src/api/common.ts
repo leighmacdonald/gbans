@@ -56,15 +56,8 @@ export class EmptyBody {}
 // case its returned instead of the standard access token.
 const getAccessToken = async () => {
     try {
-        const access = readAccessToken();
-        // const refresh = readRefreshToken();
-        // if (isTokenExpired(access) && !isTokenExpired(refresh)) {
-        //     await refreshToken();
-        //     return;
-        // }
-        return access;
+        return readAccessToken();
     } catch (e) {
-        console.log(`failed to refersh: ${e}`);
         return '';
     }
 };

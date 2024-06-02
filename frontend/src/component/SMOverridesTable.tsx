@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import AssuredWorkloadIcon from '@mui/icons-material/AssuredWorkload';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -11,6 +11,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createColumnHelper } from '@tanstack/react-table';
 import { apiDeleteSMOverride, SMOverrides } from '../api';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import { initPagination, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 import { ContainerWithHeaderAndButtons } from './ContainerWithHeaderAndButtons.tsx';
 import { FullTable } from './FullTable.tsx';
@@ -21,6 +22,7 @@ import { ModalConfirm, ModalSMOverridesEditor } from './modal';
 export const SMOverridesTable = ({ overrides, isLoading }: { overrides: SMOverrides[]; isLoading: boolean }) => {
     const { sendFlash } = useUserFlashCtx();
     const queryClient = useQueryClient();
+    const [pagination, setPagination] = useState(initPagination(0, RowsPerPage.Ten));
 
     const onCreateOverride = async () => {
         try {
@@ -97,7 +99,13 @@ export const SMOverridesTable = ({ overrides, isLoading }: { overrides: SMOverri
                 </ButtonGroup>
             ]}
         >
-            <FullTable data={overrides ?? []} isLoading={isLoading} columns={overridesColumns} />
+            <FullTable
+                data={overrides ?? []}
+                isLoading={isLoading}
+                columns={overridesColumns}
+                pagination={pagination}
+                setPagination={setPagination}
+            />
         </ContainerWithHeaderAndButtons>
     );
 };
