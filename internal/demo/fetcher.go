@@ -65,7 +65,8 @@ func (d Fetcher) onDemoReceived(ctx context.Context, demo demoUpdate) error {
 
 	_, errDemo := d.demoUsecase.CreateFromAsset(ctx, demoAsset, demo.server.ServerID)
 	if errDemo != nil {
-		if errDelete := d.assetUsecase.Delete(ctx, demoAsset.AssetID); errDelete != nil {
+		// Cleanup the asset not attached to a demo
+		if _, errDelete := d.assetUsecase.Delete(ctx, demoAsset.AssetID); errDelete != nil {
 			return errors.Join(errDelete, errDelete)
 		}
 

@@ -17,6 +17,7 @@ type DemoUsecase interface {
 	GetDemos(ctx context.Context) ([]DemoFile, error)
 	CreateFromAsset(ctx context.Context, asset Asset, serverID int) (*DemoFile, error)
 	OldestDemo(ctx context.Context) (DemoInfo, error)
+	TriggerCleanup()
 }
 
 type DemoRepository interface {
