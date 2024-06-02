@@ -2,7 +2,7 @@ import { AppError, ErrorCode } from '../error.tsx';
 import { readAccessToken } from '../util/auth/readAccessToken.ts';
 import { parseDateTime } from '../util/text.tsx';
 import { emptyOrNullString } from '../util/types';
-import { AppealState, ASNBanRecord, CIDRBanRecord, GroupBanRecord, SteamBanRecord } from './bans';
+import { AppealState } from './bans';
 import { MatchResult } from './match';
 
 export enum PermissionLevel {
@@ -210,34 +210,34 @@ export const transformMatchDates = (item: MatchResult) => {
     return item;
 };
 
-export interface QueryFilter<T> {
+export interface QueryFilter {
     offset?: number;
     limit?: number;
     desc?: boolean;
     query?: string;
-    order_by?: keyof T;
+    order_by?: string;
     deleted?: boolean;
     flagged_only?: boolean;
 }
 
-export interface BanQueryCommon<T> extends QueryFilter<T> {
+export interface BanQueryCommon extends QueryFilter {
     source_id?: string;
     target_id?: string;
     appeal_state?: AppealState;
     deleted?: boolean;
 }
 
-export type BanSteamQueryFilter = BanQueryCommon<SteamBanRecord>;
+export type BanSteamQueryFilter = BanQueryCommon;
 
-export interface BanCIDRQueryFilter extends BanQueryCommon<CIDRBanRecord> {
+export interface BanCIDRQueryFilter extends BanQueryCommon {
     ip?: string;
 }
 
-export interface BanGroupQueryFilter extends BanQueryCommon<GroupBanRecord> {
+export interface BanGroupQueryFilter extends BanQueryCommon {
     group_id?: string;
 }
 
-export interface BanASNQueryFilter extends BanQueryCommon<ASNBanRecord> {
+export interface BanASNQueryFilter extends BanQueryCommon {
     as_num?: number;
 }
 

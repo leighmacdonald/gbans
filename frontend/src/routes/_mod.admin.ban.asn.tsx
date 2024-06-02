@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -13,7 +13,7 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { createColumnHelper } from '@tanstack/react-table';
+import { ColumnFiltersState, createColumnHelper, PaginationState, SortingState } from '@tanstack/react-table';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiGetBansASN, ASNBanRecord, BanReason, BanReasons } from '../api';
@@ -30,15 +30,20 @@ import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { ModalBanASN, ModalUnbanASN } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
-import { commonTableSearchSchema, isPermanentBan, RowsPerPage } from '../util/table.ts';
+import { initColumnFilter, initPagination, isPermanentBan, makeCommonTableSearchSchema } from '../util/table.ts';
 import { renderDate } from '../util/text.tsx';
 import { makeSteamidValidatorsOptional } from '../util/validator/makeSteamidValidatorsOptional.ts';
 
 const banASNSearchSchema = z.object({
-    ...commonTableSearchSchema,
-    sortColumn: z
-        .enum(['ban_asn_id', 'source_id', 'target_id', 'deleted', 'reason', 'as_num', 'valid_until'])
-        .optional(),
+    ...makeCommonTableSearchSchema([
+        'ban_asn_id',
+        'source_id',
+        'target_id',
+        'deleted',
+        'reason',
+        'as_num',
+        'valid_until'
+    ]),
     source_id: z.string().optional(),
     target_id: z.string().optional(),
     as_num: z.string().optional(),
@@ -53,32 +58,41 @@ export const Route = createFileRoute('/_mod/admin/ban/asn')({
 function AdminBanASN() {
     const { sendFlash } = useUserFlashCtx();
     const navigate = useNavigate({ from: Route.fullPath });
-    const { deleted, as_num, target_id, source_id } = Route.useSearch();
+    const search = Route.useSearch();
+    const [pagination, setPagination] = useState<PaginationState>(initPagination(search.pageIndex, search.pageSize));
+    const [sorting] = useState<SortingState>([{ id: 'ban_asn_id', desc: true }]);
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initColumnFilter(search));
 
     const { data: bans, isLoading } = useQuery({
-        queryKey: ['asnBans', { deleted }],
+        queryKey: ['asnBans', { deleted: search.deleted }],
         queryFn: async () => {
-            return await apiGetBansASN({ deleted: deleted ?? false });
+            return await apiGetBansASN({ deleted: search.deleted ?? false });
         }
     });
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({
         onSubmit: async ({ value }) => {
-            await navigate({ to: '/admin/ban/asn', search: (prev) => ({ ...prev, ...value }) });
+            setColumnFilters(initColumnFilter(value));
+            await navigate({
+                to: '/admin/ban/asn',
+                search: (prev) => ({ ...prev, ...value })
+            });
         },
         validatorAdapter: zodValidator,
         validators: {
             onChange: banASNSearchSchema
         },
         defaultValues: {
-            source_id: source_id ?? '',
-            target_id: target_id ?? '',
-            as_num: as_num ?? '',
-            deleted: deleted ?? false
+            source_id: search.source_id ?? '',
+            target_id: search.target_id ?? '',
+            as_num: search.as_num ?? '',
+            deleted: search.deleted ?? false
         }
     });
 
     const clear = async () => {
+        reset();
+        setColumnFilters([]);
         await navigate({
             to: '/admin/ban/asn',
             search: (prev) => ({
@@ -213,15 +227,13 @@ function AdminBanASN() {
                     ]}
                 >
                     <FullTable
-                        initialSortColumn={'ban_asn_id'}
-                        initialSortDesc={true}
-                        enableSorting={true}
-                        enablePaging={true}
-                        enableFiltering={true}
                         data={bans ?? []}
                         isLoading={isLoading}
                         columns={columns}
-                        pageSize={RowsPerPage.TwentyFive}
+                        sorting={sorting}
+                        pagination={pagination}
+                        setPagination={setPagination}
+                        columnFilters={columnFilters}
                     />
                 </ContainerWithHeaderAndButtons>
             </Grid>
@@ -258,6 +270,7 @@ const makeColumns = (onEdit: (ban: ASNBanRecord) => Promise<void>, onUnban: (ban
                 ''
             ) : (
                 <PersonCell
+                    showCopy={true}
                     steam_id={info.row.original.target_id}
                     personaname={info.row.original.target_personaname}
                     avatar_hash={info.row.original.target_avatarhash}

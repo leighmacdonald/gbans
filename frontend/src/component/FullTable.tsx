@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import {
     ColumnDef,
     ColumnFiltersState,
@@ -6,10 +6,11 @@ import {
     getFilteredRowModel,
     getPaginationRowModel,
     getSortedRowModel,
+    OnChangeFn,
+    PaginationState,
     SortingState,
     useReactTable
 } from '@tanstack/react-table';
-import { RowsPerPage } from '../util/table.ts';
 import { DataTable } from './DataTable.tsx';
 import { PaginatorLocal } from './PaginatorLocal.tsx';
 
@@ -18,12 +19,11 @@ type FullTableProps<T> = {
     isLoading: boolean;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     columns: ColumnDef<T, any>[];
-    enableSorting?: boolean;
-    enableFiltering?: boolean;
-    enablePaging?: boolean;
-    pageSize?: RowsPerPage;
-    initialSortDesc?: boolean;
-    initialSortColumn?: string;
+    columnFilters?: ColumnFiltersState;
+    pagination: PaginationState;
+    setPagination: OnChangeFn<PaginationState>;
+    sorting?: SortingState;
+    infinitePage?: boolean;
 };
 
 // Higher level table component. Most/all tables with client side data should use this eventually.
@@ -31,40 +31,22 @@ export const FullTable = <T,>({
     data,
     columns,
     isLoading,
-    enableSorting = true,
-    enablePaging = true,
-    enableFiltering = true,
-    pageSize = RowsPerPage.TwentyFive,
-    initialSortDesc = true,
-    initialSortColumn = undefined
+    pagination,
+    setPagination,
+    infinitePage = false,
+    sorting = undefined,
+    columnFilters = undefined
 }: FullTableProps<T>) => {
-    const [pagination, setPagination] = useState({
-        pageIndex: 0, //initial page index
-        pageSize: pageSize //default page size
-    });
-    const [sorting, setSorting] = useState<SortingState>(
-        initialSortColumn
-            ? [
-                  {
-                      id: initialSortColumn,
-                      desc: initialSortDesc
-                  }
-              ]
-            : []
-    );
-    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+    const navigate = useNavigate();
 
     const table = useReactTable<T>({
         data: data,
         columns: columns,
         autoResetPageIndex: true,
         getCoreRowModel: getCoreRowModel(),
-        getFilteredRowModel: enableFiltering ? getFilteredRowModel() : undefined,
-        getPaginationRowModel: enablePaging ? getPaginationRowModel() : undefined,
-        getSortedRowModel: enableSorting ? getSortedRowModel() : undefined,
-        onPaginationChange: setPagination,
-        onSortingChange: setSorting,
-        onColumnFiltersChange: setColumnFilters,
+        getFilteredRowModel: columnFilters ? getFilteredRowModel() : undefined,
+        getPaginationRowModel: pagination ? getPaginationRowModel() : undefined,
+        getSortedRowModel: sorting ? getSortedRowModel() : undefined,
         state: {
             sorting,
             pagination,
@@ -75,19 +57,21 @@ export const FullTable = <T,>({
     return (
         <>
             <DataTable table={table} isLoading={isLoading} />
-            {enablePaging && (
+            {pagination && setPagination && (
                 <PaginatorLocal
-                    onRowsChange={(rows) => {
+                    onRowsChange={async (rows) => {
                         setPagination((prev) => {
                             return { ...prev, pageSize: rows };
                         });
+                        await navigate({ search: (search) => ({ ...search, pageSize: rows }) });
                     }}
-                    onPageChange={(page) => {
+                    onPageChange={async (page) => {
                         setPagination((prev) => {
                             return { ...prev, pageIndex: page };
                         });
+                        await navigate({ search: (search) => ({ ...search, pageIndex: page }) });
                     }}
-                    count={table.getRowCount()}
+                    count={infinitePage ? -1 : table.getRowCount()}
                     rows={pagination.pageSize}
                     page={pagination.pageIndex}
                 />

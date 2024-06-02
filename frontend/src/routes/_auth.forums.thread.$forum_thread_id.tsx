@@ -51,7 +51,7 @@ export const Route = createFileRoute('/_auth/forums/thread/$forum_thread_id')({
 
 function ForumThreadPage() {
     const { forum_thread_id } = Route.useParams();
-    const { page } = Route.useSearch();
+    const { pageIndex } = Route.useSearch();
     const { sendFlash } = useUserFlashCtx();
     const queryClient = useQueryClient();
     const confirmModal = useModal(ModalConfirm);
@@ -83,14 +83,14 @@ function ForumThreadPage() {
     useScrollToLocation();
 
     const firstPostID = useMemo(() => {
-        if (Number(page) > 1 || !messages) {
+        if (Number(pageIndex) > 1 || !messages) {
             return -1;
         }
         if (messages.length > 0) {
             return messages[0].forum_message_id;
         }
         return -1;
-    }, [messages, page]);
+    }, [messages, pageIndex]);
 
     const onEditThread = useCallback(async () => {
         try {

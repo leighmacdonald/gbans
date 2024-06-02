@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -13,7 +13,7 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { createColumnHelper } from '@tanstack/react-table';
+import { ColumnFiltersState, createColumnHelper, PaginationState, SortingState } from '@tanstack/react-table';
 import { z } from 'zod';
 import { apiGetBansCIDR, BanReason, BanReasons, CIDRBanRecord } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
@@ -29,14 +29,19 @@ import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { ModalBanCIDR, ModalUnbanCIDR } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
-import { commonTableSearchSchema, isPermanentBan, RowsPerPage } from '../util/table.ts';
+import { initColumnFilter, initPagination, isPermanentBan, makeCommonTableSearchSchema } from '../util/table.ts';
 import { renderDate } from '../util/text.tsx';
 
 const banCIDRSearchSchema = z.object({
-    ...commonTableSearchSchema,
-    sortColumn: z
-        .enum(['net_id', 'source_id', 'target_id', 'deleted', 'reason', 'created_on', 'valid_until'])
-        .optional(),
+    ...makeCommonTableSearchSchema([
+        'net_id',
+        'source_id',
+        'target_id',
+        'deleted',
+        'reason',
+        'created_on',
+        'valid_until'
+    ]),
     source_id: z.string().optional(),
     target_id: z.string().optional(),
     cidr: z.string().optional(),
@@ -51,11 +56,15 @@ export const Route = createFileRoute('/_mod/admin/ban/cidr')({
 function AdminBanCIDR() {
     const { sendFlash } = useUserFlashCtx();
     const navigate = useNavigate({ from: Route.fullPath });
-    const { deleted, cidr, target_id, source_id } = Route.useSearch();
+    const search = Route.useSearch();
+    const [pagination, setPagination] = useState<PaginationState>(initPagination(search.pageIndex, search.pageSize));
+    const [sorting] = useState<SortingState>([{ id: 'net_id', desc: true }]);
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initColumnFilter(search));
+
     const { data: bans, isLoading } = useQuery({
         queryKey: ['cidrBans'],
         queryFn: async () => {
-            return await apiGetBansCIDR({ deleted: deleted ?? false });
+            return await apiGetBansCIDR({ deleted: search.deleted ?? false });
         }
     });
 
@@ -70,16 +79,19 @@ function AdminBanCIDR() {
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({
         onSubmit: async ({ value }) => {
+            setColumnFilters(initColumnFilter(value));
             await navigate({ to: '/admin/ban/cidr', search: (prev) => ({ ...prev, ...value }) });
         },
         defaultValues: {
-            source_id: source_id ?? '',
-            target_id: target_id ?? '',
-            cidr: cidr ?? '',
-            deleted: deleted ?? false
+            source_id: search.source_id ?? '',
+            target_id: search.target_id ?? '',
+            cidr: search.cidr ?? '',
+            deleted: search.deleted ?? false
         }
     });
     const clear = async () => {
+        reset();
+        setColumnFilters([]);
         await navigate({
             to: '/admin/ban/cidr',
             search: (prev) => ({ ...prev, source_id: '', target_id: '', cidr: '', deleted: false })
@@ -192,16 +204,14 @@ function AdminBanCIDR() {
                         </Button>
                     ]}
                 >
-                    <FullTable<CIDRBanRecord>
-                        initialSortColumn={'net_id'}
-                        initialSortDesc={true}
-                        enableSorting={true}
-                        enablePaging={true}
-                        enableFiltering={true}
+                    <FullTable
+                        columnFilters={columnFilters}
+                        pagination={pagination}
+                        setPagination={setPagination}
                         data={bans ?? []}
                         isLoading={isLoading}
                         columns={columns}
-                        pageSize={RowsPerPage.TwentyFive}
+                        sorting={sorting}
                     />
                 </ContainerWithHeaderAndButtons>
             </Grid>

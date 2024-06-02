@@ -13,12 +13,11 @@ import { Paginator } from '../component/Paginator.tsx';
 import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { SteamIDField } from '../component/field/SteamIDField.tsx';
-import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
+import { makeCommonTableSearchSchema, RowsPerPage } from '../util/table.ts';
 import { makeSteamidValidators } from '../util/validator/makeSteamidValidators.ts';
 
 const ipHistorySearchSchema = z.object({
-    ...commonTableSearchSchema,
-    sortColumn: z.enum(['person_connection_id', 'steam_id', 'created_on', 'server_id']).optional(),
+    ...makeCommonTableSearchSchema(['person_connection_id', 'steam_id', 'created_on', 'server_id']),
     steam_id: z.string().optional()
 });
 
@@ -28,15 +27,14 @@ export const Route = createFileRoute('/_mod/admin/network/iphist')({
 });
 
 function AdminNetworkPlayerIPHistory() {
-    const defaultRows = RowsPerPage.TwentyFive;
     const navigate = useNavigate({ from: Route.fullPath });
-    const { page, rows, sortOrder, sortColumn, steam_id } = Route.useSearch();
+    const { pageIndex, pageSize, sortOrder, sortColumn, steam_id } = Route.useSearch();
     const { data: connections, isLoading } = useQuery({
-        queryKey: ['connectionHist', { page, rows, sortOrder, sortColumn, steam_id }],
+        queryKey: ['connectionHist', { pageIndex, pageSize, sortOrder, sortColumn, steam_id }],
         queryFn: async () => {
             return await apiGetConnections({
-                limit: rows ?? defaultRows,
-                offset: (page ?? 0) * (rows ?? defaultRows),
+                limit: pageSize,
+                offset: (pageIndex ?? 0) * (pageSize ?? RowsPerPage.TwentyFive),
                 order_by: sortColumn ?? 'steam_id',
                 desc: (sortOrder ?? 'desc') == 'desc',
                 source_id: steam_id
@@ -115,8 +113,8 @@ function AdminNetworkPlayerIPHistory() {
                 <ContainerWithHeader title="Player IP History" iconLeft={<SensorOccupiedIcon />}>
                     <IPHistoryTable connections={connections ?? { data: [], count: 0 }} isLoading={isLoading} />
                     <Paginator
-                        page={page ?? 0}
-                        rows={rows ?? defaultRows}
+                        page={pageIndex ?? 0}
+                        rows={pageSize ?? RowsPerPage.TwentyFive}
                         data={connections}
                         path={'/admin/network/iphist'}
                     />

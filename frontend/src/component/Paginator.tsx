@@ -22,10 +22,10 @@ export const Paginator = <T,>({
             page={page}
             rowsPerPage={rows}
             onRowsPerPageChange={async (event) => {
-                await navigate({ to: path, search: (search) => ({ ...search, rows: Number(event.target.value) }) });
+                await navigate({ to: path, search: (search) => ({ ...search, pageSize: Number(event.target.value) }) });
             }}
             onPageChange={async (_, newPage: number) => {
-                await navigate({ to: path, search: (search) => ({ ...search, page: newPage }) });
+                await navigate({ to: path, search: (search) => ({ ...search, pageIndex: newPage }) });
             }}
         />
     );

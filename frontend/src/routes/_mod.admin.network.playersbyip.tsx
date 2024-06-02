@@ -37,16 +37,16 @@ export const Route = createFileRoute('/_mod/admin/network/playersbyip')({
 function AdminNetworkPlayersByCIDR() {
     const defaultRows = RowsPerPage.TwentyFive;
     const navigate = useNavigate({ from: Route.fullPath });
-    const { page, rows, sortOrder, sortColumn, cidr } = Route.useSearch();
+    const { pageIndex, pageSize, sortOrder, sortColumn, cidr } = Route.useSearch();
     const { data: connections, isLoading } = useQuery({
-        queryKey: ['playersByIP', { page, rows, sortOrder, sortColumn, cidr }],
+        queryKey: ['playersByIP', { pageIndex, pageSize, sortOrder, sortColumn, cidr }],
         queryFn: async () => {
             if (emptyOrNullString(cidr)) {
                 return { data: [], count: 0 };
             }
             return await apiGetConnections({
-                limit: rows ?? defaultRows,
-                offset: (page ?? 0) * (rows ?? defaultRows),
+                limit: pageSize ?? defaultRows,
+                offset: (pageIndex ?? 0) * (pageSize ?? defaultRows),
                 order_by: sortColumn ?? 'steam_id',
                 desc: sortOrder == 'desc',
                 cidr: cidr
@@ -140,8 +140,8 @@ function AdminNetworkPlayersByCIDR() {
                 <ContainerWithHeader title={'Find Players By IP/CIDR'} iconLeft={<WifiFindIcon />}>
                     <PayersByIPTable connections={connections ?? { data: [], count: 0 }} isLoading={isLoading} />
                     <Paginator
-                        page={page ?? 0}
-                        rows={rows ?? defaultRows}
+                        page={pageIndex ?? 0}
+                        rows={pageSize ?? defaultRows}
                         data={connections}
                         path={'/admin/network/playersbyip'}
                     />

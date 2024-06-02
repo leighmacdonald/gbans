@@ -52,8 +52,7 @@ import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { MarkdownField } from '../component/field/MarkdownField.tsx';
 import { SteamIDField } from '../component/field/SteamIDField.tsx';
-import { initPagination } from '../types/table.ts';
-import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
+import { commonTableSearchSchema, initPagination, RowsPerPage } from '../util/table.ts';
 import { makeSteamidValidators } from '../util/validator/makeSteamidValidators.ts';
 
 const reportSchema = z.object({

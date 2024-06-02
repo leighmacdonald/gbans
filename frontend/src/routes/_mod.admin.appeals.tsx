@@ -38,8 +38,8 @@ import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { SelectFieldSimple } from '../component/field/SelectFieldSimple.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
-import { initColumnFilter, initPagination, initSortOrder, TablePropsAll } from '../types/table.ts';
-import { commonTableSearchSchema } from '../util/table.ts';
+import { TablePropsAll } from '../types/table.ts';
+import { commonTableSearchSchema, initColumnFilter, initPagination, initSortOrder } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 import { makeSteamidValidatorsOptional } from '../util/validator/makeSteamidValidatorsOptional.ts';
 
@@ -60,27 +60,22 @@ export const Route = createFileRoute('/_mod/admin/appeals')({
 
 function AdminAppeals() {
     const navigate = useNavigate({ from: Route.fullPath });
-    const { page, sortColumn, rows, sortOrder, source_id, target_id, appeal_state } = Route.useSearch();
-    const [pagination, setPagination] = useState(initPagination(page, rows));
+    const search = Route.useSearch();
+    const [pagination, setPagination] = useState(initPagination(search.pageIndex, search.pageSize));
     const [sorting, setSorting] = useState<SortingState>(
-        initSortOrder(sortColumn, sortOrder, {
+        initSortOrder(search.sortColumn, search.sortOrder, {
             id: 'created_on',
             desc: true
         })
     );
-    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
-        initColumnFilter({
-            appeal_state: appeal_state ?? AppealState.Any,
-            source_id: source_id ?? undefined,
-            target_id: target_id ?? undefined
-        })
-    );
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initColumnFilter(search));
     const { data: appeals, isLoading } = useQuery({
-        queryKey: ['appeals', { page, rows, sortOrder, appeal_state, source_id, target_id }],
+        queryKey: ['appeals'],
         queryFn: async () => {
             return await apiGetAppeals({});
         }
     });
+
     const { Field, Subscribe, handleSubmit, reset, setFieldValue } = useForm({
         onSubmit: async ({ value }) => {
             setColumnFilters(
@@ -97,9 +92,9 @@ function AdminAppeals() {
             onChange: appealSearchSchema
         },
         defaultValues: {
-            source_id: source_id ?? '',
-            target_id: target_id ?? '',
-            appeal_state: appeal_state ?? AppealState.Any
+            source_id: search.source_id ?? '',
+            target_id: search.target_id ?? '',
+            appeal_state: search.appeal_state ?? AppealState.Any
         }
     });
 

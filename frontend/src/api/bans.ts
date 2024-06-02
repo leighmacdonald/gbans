@@ -54,6 +54,7 @@ export enum Origin {
 }
 
 export enum BanReason {
+    Any = -1,
     Custom = 1,
     External = 2,
     Cheating = 3,
@@ -103,6 +104,7 @@ export const DurationCollection = [
 ];
 
 export const BanReasons: Record<BanReason, string> = {
+    [BanReason.Any]: 'Any',
     [BanReason.Custom]: 'Custom',
     [BanReason.External]: '3rd party',
     [BanReason.Cheating]: 'Cheating',
@@ -120,6 +122,7 @@ export const BanReasons: Record<BanReason, string> = {
 };
 
 export const banReasonsCollection = [
+    BanReason.Any,
     BanReason.Cheating,
     BanReason.Racism,
     BanReason.Harassment,
