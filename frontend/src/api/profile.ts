@@ -93,7 +93,7 @@ export const apiGetProfile = async (query: string, abortController?: AbortContro
 
 export const apiGetCurrentProfile = async () => apiCall<UserProfile>(`/api/current_profile`, 'GET', undefined);
 
-export interface PlayerQuery extends QueryFilter<Person> {
+export interface PlayerQuery extends QueryFilter {
     target_id: string;
     personaname: string;
     ip: string;
@@ -156,7 +156,7 @@ export const apiGetMessageContext = async (messageId: number, padding: number = 
     });
 };
 
-export interface MessageQuery extends QueryFilter<PersonMessage> {
+export interface MessageQuery extends QueryFilter {
     personaname?: string;
     source_id?: string;
     query?: string;
@@ -187,7 +187,7 @@ export const apiGetMessages = async (opts: MessageQuery, abortController?: Abort
     });
 };
 
-export type NotificationsQuery = QueryFilter<UserNotification>;
+export type NotificationsQuery = QueryFilter;
 
 export const apiGetNotifications = async (opts: NotificationsQuery, abortController: AbortController) => {
     return await apiCall<LazyResult<UserNotification>>(
@@ -203,7 +203,7 @@ export type ConnectionQuery = {
     source_id?: string;
     server_id?: number;
     asn?: number;
-} & QueryFilter<PersonConnection>;
+} & QueryFilter;
 
 export const apiGetConnections = async (opts: ConnectionQuery, abortController?: AbortController) => {
     const resp = await apiCall<LazyResult<PersonConnection>, ConnectionQuery>(

@@ -26,12 +26,11 @@ import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Title } from '../component/Title.tsx';
 import { ModalContestEditor } from '../component/modal';
 import { logErr } from '../util/errors.ts';
-import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
+import { initPagination, makeCommonTableSearchSchema } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 
 const contestsSearchSchema = z.object({
-    ...commonTableSearchSchema,
-    sortColumn: z.enum(['contest_id', 'deleted']).catch('contest_id'),
+    ...makeCommonTableSearchSchema(['contest_id', 'deleted']),
     deleted: z.boolean().catch(false)
 });
 
@@ -41,12 +40,8 @@ export const Route = createFileRoute('/_mod/admin/contests')({
 });
 
 function AdminContests() {
-    //const modal = useModal(ModalConfirm);
-    // const theme = useTheme();
-    const [pagination, setPagination] = useState({
-        pageIndex: 0, //initial page index
-        pageSize: RowsPerPage.TwentyFive //default page size
-    });
+    const search = Route.useSearch();
+    const [pagination, setPagination] = useState<PaginationState>(initPagination(search.pageIndex, search.pageSize));
 
     const { data: contests, isLoading } = useQuery({
         queryKey: ['adminContests'],

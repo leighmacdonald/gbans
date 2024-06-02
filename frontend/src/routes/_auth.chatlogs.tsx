@@ -20,23 +20,20 @@ import { Title } from '../component/Title.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { SteamIDField } from '../component/field/SteamIDField.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
-import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
+import { makeCommonTableSearchSchema, RowsPerPage } from '../util/table.ts';
 
 const chatlogsSchema = z.object({
-    ...commonTableSearchSchema,
-    sortColumn: z
-        .enum([
-            'person_message_id',
-            'steam_id',
-            'persona_name',
-            'server_name',
-            'server_id',
-            'team',
-            'created_on',
-            'pattern',
-            'auto_filter_flagged'
-        ])
-        .optional(),
+    ...makeCommonTableSearchSchema([
+        'person_message_id',
+        'steam_id',
+        'persona_name',
+        'server_name',
+        'server_id',
+        'team',
+        'created_on',
+        'pattern',
+        'auto_filter_flagged'
+    ]),
     server_id: z.number().optional(),
     persona_name: z.string().optional(),
     body: z.string().optional(),
@@ -78,8 +75,18 @@ export const Route = createFileRoute('/_auth/chatlogs')({
 
 function ChatLogs() {
     const defaultRows = RowsPerPage.TwentyFive;
-    const { body, autoRefresh, persona_name, steam_id, server_id, page, sortColumn, flagged_only, rows, sortOrder } =
-        Route.useSearch();
+    const {
+        body,
+        autoRefresh,
+        persona_name,
+        steam_id,
+        server_id,
+        pageIndex,
+        sortColumn,
+        flagged_only,
+        pageSize,
+        sortOrder
+    } = Route.useSearch();
     //const { currentUser } = useCurrentUserCtx();
     const { hasPermission } = useRouteContext({ from: '/_auth/chatlogs' });
     const { servers } = useLoaderData({ from: '/_auth/chatlogs' }) as { servers: ServerSimple[] };
@@ -88,7 +95,18 @@ function ChatLogs() {
     const { data: messages, isLoading } = useQuery({
         queryKey: [
             'chatlogs',
-            { page, server_id, persona_name, steam_id, rows, sortOrder, sortColumn, body, autoRefresh, flagged_only }
+            {
+                pageIndex,
+                server_id,
+                persona_name,
+                steam_id,
+                pageSize,
+                sortOrder,
+                sortColumn,
+                body,
+                autoRefresh,
+                flagged_only
+            }
         ],
         queryFn: async () => {
             return await apiGetMessages({
@@ -96,8 +114,8 @@ function ChatLogs() {
                 personaname: persona_name,
                 query: body,
                 source_id: steam_id,
-                limit: rows ?? defaultRows,
-                offset: (page ?? 0) * (rows ?? defaultRows),
+                limit: pageSize ?? defaultRows,
+                offset: (pageIndex ?? 0) * (pageSize ?? defaultRows),
                 order_by: 'person_message_id',
                 desc: (sortOrder ?? 'desc') == 'desc',
                 flagged_only: flagged_only ?? false
@@ -121,6 +139,7 @@ function ChatLogs() {
     });
 
     const clear = async () => {
+        reset();
         await navigate({
             to: '/chatlogs',
             search: (prev) => ({
@@ -290,8 +309,8 @@ function ChatLogs() {
                     <ContainerWithHeader iconLeft={<ChatIcon />} title={'Chat Logs'}>
                         <ChatTable messages={messages ?? []} isLoading={isLoading} />
                         <Paginator
-                            page={page ?? 0}
-                            rows={rows ?? defaultRows}
+                            page={pageIndex ?? 0}
+                            rows={pageSize ?? defaultRows}
                             path={'/chatlogs'}
                             data={{ data: [], count: -1 }}
                         />

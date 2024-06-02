@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import ReportIcon from '@mui/icons-material/Report';
 import Link from '@mui/material/Link';
@@ -8,16 +8,7 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import {
-    ColumnFiltersState,
-    createColumnHelper,
-    getCoreRowModel,
-    getFilteredRowModel,
-    getPaginationRowModel,
-    getSortedRowModel,
-    SortingState,
-    useReactTable
-} from '@tanstack/react-table';
+import { ColumnFiltersState, createColumnHelper, SortingState } from '@tanstack/react-table';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import {
@@ -29,8 +20,7 @@ import {
     ReportWithAuthor
 } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { DataTable } from '../component/DataTable.tsx';
-import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
+import { FullTable } from '../component/FullTable.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import RouterLink from '../component/RouterLink.tsx';
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
@@ -38,16 +28,20 @@ import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { SelectFieldSimple } from '../component/field/SelectFieldSimple.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
-import { initColumnFilter, initPagination, initSortOrder, TablePropsAll } from '../types/table.ts';
-import { commonTableSearchSchema } from '../util/table.ts';
+import { initColumnFilter, initPagination, initSortOrder, makeCommonTableSearchSchema } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 import { makeSteamidValidatorsOptional } from '../util/validator/makeSteamidValidatorsOptional.ts';
 
 const reportsSearchSchema = z.object({
-    ...commonTableSearchSchema,
-    sortColumn: z
-        .enum(['report_id', 'source_id', 'target_id', 'report_status', 'reason', 'created_on', 'updated_on'])
-        .optional(),
+    ...makeCommonTableSearchSchema([
+        'report_id',
+        'source_id',
+        'target_id',
+        'report_status',
+        'reason',
+        'created_on',
+        'updated_on'
+    ]),
     source_id: z.string().optional(),
     target_id: z.string().optional(),
     deleted: z.boolean().optional(),
@@ -70,23 +64,14 @@ export const Route = createFileRoute('/_mod/admin/reports')({
 
 function AdminReports() {
     const navigate = useNavigate({ from: Route.fullPath });
-    const { sortColumn, sortOrder, page, rows, source_id, target_id, report_status } = Route.useSearch();
+    const search = Route.useSearch();
     const reports = Route.useLoaderData();
 
-    const [pagination, setPagination] = useState(initPagination(page, rows));
-    const [sorting, setSorting] = useState<SortingState>(
-        initSortOrder(sortColumn, sortOrder, {
-            id: 'created_on',
-            desc: true
-        })
+    const [pagination, setPagination] = useState(initPagination(search.pageIndex, search.pageSize));
+    const [sorting] = useState<SortingState>(
+        initSortOrder(search.sortColumn, search.sortOrder, { id: 'report_id', desc: true })
     );
-    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
-        initColumnFilter({
-            report_status: report_status ?? ReportStatus.Any,
-            source_id: source_id ?? undefined,
-            target_id: target_id ?? undefined
-        })
-    );
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initColumnFilter(search));
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({
         onSubmit: async ({ value }) => {
@@ -104,20 +89,24 @@ function AdminReports() {
             onChange: reportsSearchSchema
         },
         defaultValues: {
-            source_id: source_id ?? '',
-            target_id: target_id ?? '',
-            report_status: report_status ?? ReportStatus.Any
+            source_id: search.source_id ?? '',
+            target_id: search.target_id ?? '',
+            report_status: search.report_status ?? ReportStatus.Any
         }
     });
 
     const clear = async () => {
+        reset();
+        setColumnFilters([]);
         await navigate({
             to: '/admin/reports',
             search: (prev) => ({ ...prev, source_id: undefined, target_id: undefined, report_status: undefined })
         });
-        reset();
-        await handleSubmit();
     };
+
+    const columns = useMemo(() => {
+        return makeColumns();
+    }, []);
 
     return (
         <Grid container spacing={2}>
@@ -197,15 +186,14 @@ function AdminReports() {
             </Grid>
             <Grid xs={12}>
                 <ContainerWithHeader title={'Current User Reports'} iconLeft={<ReportIcon />}>
-                    <ReportTable
-                        reports={reports}
+                    <FullTable
+                        data={reports ?? []}
                         isLoading={false}
-                        setColumnFilters={setColumnFilters}
-                        columnFilters={columnFilters}
-                        setSorting={setSorting}
+                        columns={columns}
                         sorting={sorting}
-                        setPagination={setPagination}
                         pagination={pagination}
+                        setPagination={setPagination}
+                        columnFilters={columnFilters}
                     />
                 </ContainerWithHeader>
             </Grid>
@@ -215,17 +203,8 @@ function AdminReports() {
 
 const columnHelper = createColumnHelper<ReportWithAuthor>();
 
-const ReportTable = ({
-    reports,
-    isLoading,
-    setPagination,
-    pagination,
-    columnFilters,
-    setColumnFilters,
-    sorting,
-    setSorting
-}: { reports: ReportWithAuthor[]; isLoading: boolean } & TablePropsAll) => {
-    const columns = [
+const makeColumns = () => {
+    return [
         columnHelper.accessor('report_id', {
             enableColumnFilter: false,
             header: () => <TableHeadingCell name={'ID'} />,
@@ -297,43 +276,4 @@ const ReportTable = ({
             cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>
         })
     ];
-
-    const table = useReactTable({
-        data: reports,
-        columns: columns,
-        autoResetPageIndex: true,
-        getCoreRowModel: getCoreRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-        getSortedRowModel: getSortedRowModel(),
-        onPaginationChange: setPagination,
-        onSortingChange: setSorting,
-        onColumnFiltersChange: setColumnFilters,
-        state: {
-            sorting,
-            pagination,
-            columnFilters
-        }
-    });
-
-    return (
-        <>
-            <DataTable table={table} isLoading={isLoading} />
-            <PaginatorLocal
-                onRowsChange={(rows) => {
-                    setPagination((prev) => {
-                        return { ...prev, pageSize: rows };
-                    });
-                }}
-                onPageChange={(page) => {
-                    setPagination((prev) => {
-                        return { ...prev, pageIndex: page };
-                    });
-                }}
-                count={table.getRowCount()}
-                rows={pagination.pageSize}
-                page={pagination.pageIndex}
-            />
-        </>
-    );
 };

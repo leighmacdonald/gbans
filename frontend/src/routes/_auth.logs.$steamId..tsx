@@ -31,16 +31,16 @@ export const Route = createFileRoute('/_auth/logs/$steamId/')({
 });
 
 function MatchListPage() {
-    const { sortColumn, map, sortOrder, page, rows } = Route.useSearch();
+    const { sortColumn, map, sortOrder, pageIndex, pageSize } = Route.useSearch();
     const { steamId } = Route.useParams();
 
     const { data: matches, isLoading } = useQuery({
-        queryKey: ['logs', { page, steamId, rows, sortOrder, sortColumn }],
+        queryKey: ['logs', { pageIndex, steamId, pageSize, sortOrder, sortColumn }],
         queryFn: async () => {
             return await apiGetMatches({
                 steam_id: steamId,
-                limit: Number(rows ?? RowsPerPage.Ten),
-                offset: Number((page ?? 0) * (rows ?? RowsPerPage.Ten)),
+                limit: Number(pageSize ?? RowsPerPage.Ten),
+                offset: Number((pageIndex ?? 0) * (pageSize ?? RowsPerPage.Ten)),
                 order_by: sortColumn ?? 'match_id',
                 desc: (sortOrder ?? 'desc') == 'desc',
                 map: map
@@ -69,7 +69,7 @@ const MatchSummaryTable = ({
     count: number;
     isLoading: boolean;
 }) => {
-    const { page, rows } = Route.useSearch();
+    const { pageIndex, pageSize } = Route.useSearch();
     const navigate = useNavigate();
 
     const columns = [
@@ -131,11 +131,11 @@ const MatchSummaryTable = ({
                 <TablePagination
                     component="div"
                     variant={'head'}
-                    page={Number(page ?? 0)}
+                    page={Number(pageIndex ?? 0)}
                     count={count}
                     showFirstButton
                     showLastButton
-                    rowsPerPage={Number(rows ?? RowsPerPage.Ten)}
+                    rowsPerPage={Number(pageSize ?? RowsPerPage.Ten)}
                     onRowsPerPageChange={async (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
                         await navigate({ search: (prev) => ({ ...prev, rows: Number(event.target.value), page: 0 }) });
                     }}

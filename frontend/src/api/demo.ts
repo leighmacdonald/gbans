@@ -1,4 +1,4 @@
-import { apiCall, QueryFilter, transformCreatedOnDate } from './common';
+import { apiCall, transformCreatedOnDate } from './common';
 
 export interface DemoFile {
     demo_id: number;
@@ -15,13 +15,7 @@ export interface DemoFile {
     asset_id: string;
 }
 
-export interface DemoQueryFilter extends QueryFilter<DemoFile> {
-    steam_id: string;
-    map_name: string;
-    server_ids: number[];
-}
-
-export const apiGetDemos = async (abortController?: AbortController) => {
-    const resp = await apiCall<DemoFile[]>('/api/demos', 'POST', undefined, abortController);
+export const apiGetDemos = async () => {
+    const resp = await apiCall<DemoFile[]>('/api/demos', 'POST', undefined);
     return resp.map(transformCreatedOnDate);
 };

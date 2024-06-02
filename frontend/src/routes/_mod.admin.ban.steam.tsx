@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -15,18 +15,10 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { createColumnHelper } from '@tanstack/react-table';
+import { ColumnFiltersState, createColumnHelper, PaginationState, SortingState } from '@tanstack/react-table';
+import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
-import {
-    apiGetBansSteam,
-    AppealState,
-    AppealStateCollection,
-    appealStateString,
-    BanReason,
-    BanReasons,
-    PermissionLevel,
-    SteamBanRecord
-} from '../api';
+import { apiGetBansSteam, BanReason, BanReasons, banReasonsCollection, SteamBanRecord } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { FullTable } from '../component/FullTable.tsx';
@@ -37,23 +29,25 @@ import { TableCellRelativeDateField } from '../component/TableCellRelativeDateFi
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
-import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
 import { SelectFieldSimple } from '../component/field/SelectFieldSimple.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { ModalBanSteam, ModalUnbanSteam } from '../component/modal';
-import { commonTableSearchSchema, isPermanentBan, RowsPerPage } from '../util/table.ts';
+import { initColumnFilter, initPagination, isPermanentBan, makeCommonTableSearchSchema } from '../util/table.ts';
 import { renderDate } from '../util/text.tsx';
 
 const banSteamSearchSchema = z.object({
-    ...commonTableSearchSchema,
-    sortColumn: z
-        .enum(['ban_id', 'source_id', 'target_id', 'deleted', 'reason', 'created_on', 'valid_until', 'appeal_state'])
-        .optional(),
+    ...makeCommonTableSearchSchema([
+        'ban_id',
+        'source_id',
+        'target_id',
+        'as_num',
+        'reason',
+        'created_on',
+        'updated_on'
+    ]),
     source_id: z.string().optional(),
     target_id: z.string().optional(),
-    reason: z.nativeEnum(BanReason).optional(),
-    appeal_state: z.nativeEnum(AppealState).optional(),
-    deleted: z.boolean().optional()
+    reason: z.nativeEnum(BanReason).optional()
 });
 
 export const Route = createFileRoute('/_mod/admin/ban/steam')({
@@ -63,9 +57,12 @@ export const Route = createFileRoute('/_mod/admin/ban/steam')({
 
 function AdminBanSteam() {
     const queryClient = useQueryClient();
-    const { hasPermission } = Route.useRouteContext();
     const navigate = useNavigate({ from: Route.fullPath });
-    const { target_id, source_id, appeal_state, deleted } = Route.useSearch();
+    const search = Route.useSearch();
+    const [pagination, setPagination] = useState<PaginationState>(initPagination(search.pageIndex, search.pageSize));
+    const [sorting] = useState<SortingState>([{ id: 'ban_id', desc: true }]);
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initColumnFilter(search));
+
     const { data: bans, isLoading } = useQuery({
         queryKey: ['steamBans'],
         queryFn: async () => {
@@ -82,20 +79,32 @@ function AdminBanSteam() {
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({
         onSubmit: async ({ value }) => {
-            await navigate({ to: '/admin/ban/steam', search: (prev) => ({ ...prev, ...value }) });
+            setColumnFilters(initColumnFilter(value));
+            await navigate({
+                to: '/admin/ban/steam',
+                search: (prev) => ({ ...prev, ...value })
+            });
         },
+        validatorAdapter: zodValidator,
         defaultValues: {
-            source_id: source_id ?? '',
-            target_id: target_id ?? '',
-            appeal_state: appeal_state ?? AppealState.Any,
-            deleted: deleted ?? false
+            source_id: search.source_id ?? '',
+            target_id: search.target_id ?? '',
+            reason: search.reason ?? BanReason.Any
         }
     });
 
     const clear = async () => {
+        setColumnFilters([]);
+        reset();
         await navigate({
             to: '/admin/ban/steam',
-            search: (prev) => ({ ...prev, source_id: '', target_id: '', appeal_state: AppealState.Any, deleted: false })
+            search: (prev) => ({
+                ...prev,
+                source_id: undefined,
+                target_id: undefined,
+                reason: undefined,
+                valid_until: undefined
+            })
         });
     };
 
@@ -136,13 +145,7 @@ function AdminBanSteam() {
                                     <Field
                                         name={'source_id'}
                                         children={(props) => {
-                                            return (
-                                                <TextFieldSimple
-                                                    {...props}
-                                                    label={'Author Steam ID'}
-                                                    fullwidth={true}
-                                                />
-                                            );
+                                            return <TextFieldSimple {...props} label={'Author Steam ID'} />;
                                         }}
                                     />
                                 </Grid>
@@ -151,47 +154,30 @@ function AdminBanSteam() {
                                 <Field
                                     name={'target_id'}
                                     children={(props) => {
-                                        return (
-                                            <TextFieldSimple {...props} label={'Subject Steam ID'} fullwidth={true} />
-                                        );
+                                        return <TextFieldSimple {...props} label={'Subject Steam ID'} />;
                                     }}
                                 />
                             </Grid>
 
                             <Grid xs={6} md={3}>
                                 <Field
-                                    name={'appeal_state'}
+                                    name={'reason'}
                                     children={(props) => {
                                         return (
                                             <SelectFieldSimple
                                                 {...props}
                                                 label={'Appeal State'}
-                                                items={AppealStateCollection.map((i) => i)}
+                                                items={banReasonsCollection}
                                                 renderMenu={(i) => {
+                                                    if (i == undefined) {
+                                                        return null;
+                                                    }
                                                     return (
-                                                        <MenuItem
-                                                            value={i}
-                                                            key={`${i}-${appealStateString(Number(i))}`}
-                                                        >
-                                                            {appealStateString(Number(i))}
+                                                        <MenuItem value={i} key={`${i}-${BanReasons[i]}`}>
+                                                            {BanReasons[i]}
                                                         </MenuItem>
                                                     );
                                                 }}
-                                            />
-                                        );
-                                    }}
-                                />
-                            </Grid>
-
-                            <Grid xs="auto">
-                                <Field
-                                    name={'deleted'}
-                                    children={(props) => {
-                                        return (
-                                            <CheckboxSimple
-                                                {...props}
-                                                label={'Incl. Deleted'}
-                                                disabled={!hasPermission(PermissionLevel.User)}
                                             />
                                         );
                                     }}
@@ -236,11 +222,13 @@ function AdminBanSteam() {
                     <Grid container spacing={3}>
                         <Grid xs={12}>
                             <FullTable
+                                columnFilters={columnFilters}
+                                pagination={pagination}
+                                setPagination={setPagination}
                                 data={bans ?? []}
                                 isLoading={isLoading}
                                 columns={columns}
-                                pageSize={RowsPerPage.TwentyFive}
-                                initialSortColumn={'ban_id'}
+                                sorting={sorting}
                             />
                         </Grid>
                     </Grid>
@@ -257,6 +245,7 @@ const makeColumns = (
     onUnban: (ban: SteamBanRecord) => Promise<void>
 ) => [
     columnHelper.accessor('ban_id', {
+        enableColumnFilter: false,
         header: () => <TableHeadingCell name={'Ban ID'} />,
         cell: (info) => (
             <Link component={RouterLink} to={`/ban/$ban_id`} params={{ ban_id: info.getValue() }}>
@@ -294,6 +283,10 @@ const makeColumns = (
         }
     }),
     columnHelper.accessor('reason', {
+        enableColumnFilter: true,
+        filterFn: (row, _, filterValue) => {
+            return filterValue == BanReason.Any || row.original.reason == filterValue;
+        },
         header: () => <TableHeadingCell name={'Reason'} />,
         cell: (info) => <Typography>{BanReasons[info.getValue() as BanReason]}</Typography>
     }),
@@ -324,6 +317,7 @@ const makeColumns = (
         header: () => <TableHeadingCell name={'E'} />,
         cell: (info) => <TableCellBool enabled={info.getValue() as boolean} />
     }),
+
     columnHelper.accessor('report_id', {
         header: () => <TableHeadingCell name={'Rep.'} />,
         cell: (info) =>
@@ -335,7 +329,6 @@ const makeColumns = (
     }),
     columnHelper.display({
         id: 'edit',
-        header: () => <TableHeadingCell name={'F'} />,
         cell: (info) => (
             <IconButton
                 color={'warning'}
@@ -351,7 +344,6 @@ const makeColumns = (
     }),
     columnHelper.display({
         id: 'unban',
-        header: () => <TableHeadingCell name={'F'} />,
         cell: (info) => (
             <IconButton
                 color={'success'}

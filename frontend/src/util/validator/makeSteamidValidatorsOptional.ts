@@ -6,7 +6,7 @@ import { validateSteamID } from './validateSteamID.ts';
 export const makeSteamidValidatorsOptional = (onSuccess?: (profile: PlayerProfile) => void) => {
     return {
         onChange: z.string().optional(),
-        onChangeAsyncDebounceMs: 1000,
+        onChangeAsyncDebounceMs: 500,
         onChangeAsync: z.string().refine(
             async (value) => {
                 if (emptyOrNullString(value)) {

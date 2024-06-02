@@ -48,15 +48,15 @@ function AdminPeople() {
     const defaultRows = RowsPerPage.TwentyFive;
     const navigate = useNavigate({ from: Route.fullPath });
     const { hasPermission } = useRouteContext({ from: '/_mod/admin/people' });
-    const { steam_id, staff_only, page, personaname, sortColumn, rows, sortOrder } = Route.useSearch();
+    const { steam_id, staff_only, pageIndex, personaname, sortColumn, pageSize, sortOrder } = Route.useSearch();
     const { data: people, isLoading } = useQuery({
-        queryKey: ['people', { rows, page, sortColumn, sortOrder, personaname, steam_id }],
+        queryKey: ['people', { pageSize, pageIndex, sortColumn, sortOrder, personaname, steam_id }],
         queryFn: async () => {
             return await apiSearchPeople({
                 personaname: personaname ?? '',
                 desc: (sortOrder ?? 'desc') == 'desc',
-                offset: (page ?? 0) * (rows ?? defaultRows),
-                limit: rows ?? defaultRows,
+                offset: (pageIndex ?? 0) * (pageSize ?? defaultRows),
+                limit: pageSize ?? defaultRows,
                 staff_only: staff_only ?? false,
                 order_by: sortColumn ?? 'created_on',
                 target_id: steam_id ?? '',
@@ -164,7 +164,12 @@ function AdminPeople() {
                         isAdmin={hasPermission(PermissionLevel.Admin)}
                         onEditPerson={onEditPerson}
                     />
-                    <Paginator page={page ?? 0} rows={rows ?? defaultRows} data={people} path={'/admin/people'} />
+                    <Paginator
+                        page={pageIndex ?? 0}
+                        rows={pageSize ?? defaultRows}
+                        data={people}
+                        path={'/admin/people'}
+                    />
                 </ContainerWithHeader>
             </Grid>
         </Grid>

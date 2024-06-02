@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -13,7 +13,7 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { createColumnHelper } from '@tanstack/react-table';
+import { ColumnFiltersState, createColumnHelper, PaginationState, SortingState } from '@tanstack/react-table';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiGetBansGroups, BanReason, BanReasons, GroupBanRecord } from '../api';
@@ -29,7 +29,7 @@ import { Buttons } from '../component/field/Buttons.tsx';
 import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { ModalBanGroup, ModalUnbanGroup } from '../component/modal';
-import { commonTableSearchSchema, isPermanentBan, RowsPerPage } from '../util/table.ts';
+import { initColumnFilter, initPagination, isPermanentBan, makeCommonTableSearchSchema } from '../util/table.ts';
 import { renderDate } from '../util/text.tsx';
 import { emptyOrNullString } from '../util/types.ts';
 import { makeSteamidValidatorsOptional } from '../util/validator/makeSteamidValidatorsOptional.ts';
@@ -48,8 +48,7 @@ const groupIDValidator = z
 const deletedValidator = z.boolean().optional();
 
 const banGroupSearchSchema = z.object({
-    ...commonTableSearchSchema,
-    sortColumn: z.enum(['ban_group_id', 'source_id', 'target_id', 'deleted', 'reason', 'valid_until']).optional(),
+    ...makeCommonTableSearchSchema(['ban_group_id', 'source_id', 'target_id', 'deleted', 'reason', 'valid_until']),
     source_id: sourceIDValidator,
     target_id: targetIDValidator,
     group_id: groupIDValidator,
@@ -63,9 +62,13 @@ export const Route = createFileRoute('/_mod/admin/ban/group')({
 
 function AdminBanGroup() {
     const navigate = useNavigate({ from: Route.fullPath });
-    const { page, rows, sortOrder, sortColumn, target_id, source_id, group_id, deleted } = Route.useSearch();
+    const search = Route.useSearch();
+    const [pagination, setPagination] = useState<PaginationState>(initPagination(search.pageIndex, search.pageSize));
+    const [sorting] = useState<SortingState>([{ id: 'ban_id', desc: true }]);
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initColumnFilter(search));
+
     const { data: bans, isLoading } = useQuery({
-        queryKey: ['steamBans', { page, rows, sortOrder, sortColumn, target_id, source_id }],
+        queryKey: ['steamGroupBans'],
         queryFn: async () => {
             return await apiGetBansGroups({ deleted: false });
         }
@@ -77,6 +80,7 @@ function AdminBanGroup() {
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({
         onSubmit: async ({ value }) => {
+            setColumnFilters(initColumnFilter(value));
             await navigate({ to: '/admin/ban/group', search: (prev) => ({ ...prev, ...value }) });
         },
         validatorAdapter: zodValidator,
@@ -84,14 +88,16 @@ function AdminBanGroup() {
             onChange: banGroupSearchSchema
         },
         defaultValues: {
-            source_id: source_id ?? '',
-            target_id: target_id ?? '',
-            group_id: group_id ?? '',
-            deleted: deleted ?? false
+            source_id: search.source_id ?? '',
+            target_id: search.target_id ?? '',
+            group_id: search.group_id ?? '',
+            deleted: search.deleted ?? false
         }
     });
 
     const clear = async () => {
+        reset();
+        setColumnFilters([]);
         await navigate({
             to: '/admin/ban/group',
             search: (prev) => ({ ...prev, source_id: '', target_id: '', group_id: '', deleted: false })
@@ -213,15 +219,13 @@ function AdminBanGroup() {
                     ]}
                 >
                     <FullTable
-                        initialSortColumn={'ban_group_id'}
-                        initialSortDesc={true}
-                        enableSorting={true}
-                        enablePaging={true}
-                        enableFiltering={true}
+                        columnFilters={columnFilters}
+                        pagination={pagination}
+                        setPagination={setPagination}
                         data={bans ?? []}
                         isLoading={isLoading}
                         columns={columns}
-                        pageSize={RowsPerPage.TwentyFive}
+                        sorting={sorting}
                     />
                 </ContainerWithHeaderAndButtons>
             </Grid>

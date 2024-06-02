@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ChevronLeft, CloudDownload } from '@mui/icons-material';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import FlagIcon from '@mui/icons-material/Flag';
@@ -12,36 +12,26 @@ import Select from '@mui/material/Select';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
+import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useLoaderData, useNavigate, useRouteContext } from '@tanstack/react-router';
-import {
-    ColumnFiltersState,
-    createColumnHelper,
-    getCoreRowModel,
-    getFilteredRowModel,
-    getPaginationRowModel,
-    useReactTable
-} from '@tanstack/react-table';
+import { ColumnFiltersState, createColumnHelper, SortingState } from '@tanstack/react-table';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import stc from 'string-to-color';
 import { z } from 'zod';
 import { apiGetDemos, apiGetServers, DemoFile, ServerSimple } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
-import { DataTable } from '../component/DataTable.tsx';
-import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
+import { FullTable } from '../component/FullTable.tsx';
 import RouterLink from '../component/RouterLink.tsx';
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Title } from '../component/Title.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
-import { initColumnFilter, initPagination } from '../types/table.ts';
-import { commonTableSearchSchema } from '../util/table.ts';
+import { initColumnFilter, initPagination, makeCommonTableSearchSchema } from '../util/table.ts';
 import { humanFileSize, renderDateTime } from '../util/text.tsx';
-import { emptyOrNullString } from '../util/types.ts';
 import { makeSteamidValidatorsOptional } from '../util/validator/makeSteamidValidatorsOptional.ts';
 
 const demosSchema = z.object({
-    ...commonTableSearchSchema,
-    sortColumn: z.enum(['server_id', 'created_on', 'map_name']).optional(),
+    ...makeCommonTableSearchSchema(['demo_id', 'server_id', 'created_on', 'map_name']),
     map_name: z.string().optional(),
     server_id: z.number().optional(),
     stats: z.string().optional()
@@ -55,12 +45,6 @@ export const Route = createFileRoute('/_guest/stv')({
             queryKey: ['serversSimple'],
             queryFn: apiGetServers
         });
-        const demos = await context.queryClient.ensureQueryData({
-            queryKey: ['demos'],
-            queryFn: async () => {
-                return await apiGetDemos();
-            }
-        });
 
         return {
             servers: unsorted.sort((a, b) => {
@@ -71,152 +55,140 @@ export const Route = createFileRoute('/_guest/stv')({
                     return -1;
                 }
                 return 0;
-            }),
-            demos: demos
+            })
         };
     }
 });
 
-const columnHelper = createColumnHelper<DemoFile>();
-
 function STV() {
     const navigate = useNavigate({ from: Route.fullPath });
-    const { page, stats, map_name, server_id, rows } = Route.useSearch();
-    const { servers, demos } = useLoaderData({ from: '/_guest/stv' });
+    const search = Route.useSearch();
+    const { servers } = useLoaderData({ from: '/_guest/stv' });
     const { profile, isAuthenticated } = useRouteContext({ from: '/_guest/stv' });
 
-    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
-        initColumnFilter({
-            map_name: !emptyOrNullString(map_name) ? map_name : undefined,
-            server_id: server_id ?? 0,
-            stats: emptyOrNullString(stats) ? stats : undefined
-        })
-    );
-    const [pagination, setPagination] = useState(initPagination(page, rows));
+    const [pagination, setPagination] = useState(initPagination(search.pageIndex, search.pageSize));
+    const [sorting] = useState<SortingState>([{ id: 'demo_id', desc: true }]);
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initColumnFilter(search));
+
+    const { data: demos, isLoading } = useQuery({
+        queryKey: ['demos'],
+        queryFn: apiGetDemos
+    });
 
     const { Field, Subscribe, handleSubmit, reset, setFieldValue } = useForm({
         onSubmit: async ({ value }) => {
-            setColumnFilters(
-                initColumnFilter({
-                    map_name: !emptyOrNullString(value.map_name) ? value.map_name : undefined,
-                    server_id: value.server_id > 0 ? value.server_id : 0,
-                    stats: !emptyOrNullString(stats) ? stats : undefined
-                })
-            );
-            await navigate({ to: '/stv', search: (prev) => ({ ...prev, ...value }) });
+            setColumnFilters(initColumnFilter(value));
+            await navigate({ search: (prev) => ({ ...prev, ...value }) });
         },
         validatorAdapter: zodValidator,
         validators: {
             onChange: demosSchema
         },
         defaultValues: {
-            map_name: map_name ?? '',
-            server_id: server_id ?? 0,
-            stats: stats ?? ''
-        }
-    });
-    const columns = [
-        columnHelper.accessor('server_id', {
-            filterFn: (row, _, filterValue) => {
-                return filterValue == 0 || row.original.server_id == filterValue;
-            },
-            enableSorting: true,
-            header: () => <TableHeadingCell name={'Server'} />,
-            cell: (info) => {
-                return (
-                    <Button
-                        sx={{
-                            color: stc(info.row.original.server_name_short)
-                        }}
-                        onClick={async () => {
-                            setFieldValue('server_id', info.getValue() as number);
-                            await handleSubmit();
-                        }}
-                    >
-                        {info.row.original.server_name_short}
-                    </Button>
-                );
-            }
-        }),
-        columnHelper.accessor('created_on', {
-            header: () => <TableHeadingCell name={'Created'} />,
-            cell: (info) => <Typography>{renderDateTime(info.getValue() as Date)}</Typography>
-        }),
-        columnHelper.accessor('map_name', {
-            filterFn: 'includesString',
-            header: () => <TableHeadingCell name={'Map Name'} />,
-            cell: (info) => <Typography>{info.getValue() as string}</Typography>
-        }),
-        columnHelper.accessor('size', {
-            header: () => <TableHeadingCell name={'Size'} />,
-            cell: (info) => <Typography>{humanFileSize(info.getValue() as number)}</Typography>
-        }),
-        columnHelper.accessor('stats', {
-            enableColumnFilter: true,
-            filterFn: (row, _, filterValue) => {
-                return Object.keys(row.original.stats).includes(filterValue);
-            },
-            header: () => <TableHeadingCell name={'Players'} />,
-            cell: (info) => <Typography>{Object.keys(Object(info.getValue())).length}</Typography>
-        }),
-
-        columnHelper.display({
-            id: 'report',
-            cell: (info) => (
-                <Button
-                    disabled={!isAuthenticated()}
-                    color={'error'}
-                    startIcon={<FlagIcon />}
-                    component={RouterLink}
-                    to={'/report'}
-                    search={{ demo_id: info.row.original.demo_id }}
-                >
-                    Report
-                </Button>
-            )
-        }),
-        columnHelper.display({
-            id: 'download',
-            cell: (info) => (
-                <Button
-                    color={'success'}
-                    component={Link}
-                    href={`/asset/${info.row.original.asset_id}`}
-                    startIcon={<CloudDownload />}
-                >
-                    Download
-                </Button>
-            )
-        })
-    ];
-
-    const table = useReactTable({
-        data: demos ?? [],
-        columns: columns,
-        getCoreRowModel: getCoreRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-        onPaginationChange: setPagination,
-        onColumnFiltersChange: setColumnFilters,
-        state: {
-            pagination,
-            columnFilters
+            map_name: search.map_name ?? '',
+            server_id: search.server_id ?? 0,
+            stats: search.stats ?? ''
         }
     });
 
     const clear = async () => {
-        setFieldValue('server_id', 0);
-        setFieldValue('map_name', '');
-        setFieldValue('stats', '');
-        await handleSubmit();
-        await handleSubmit();
+        setColumnFilters([]);
+        reset();
+        await navigate({
+            search: (prev) => ({
+                ...prev,
+                map_name: undefined,
+                server_id: undefined,
+                stats: undefined
+            })
+        });
     };
 
-    useEffect(() => {
-        // FIXME why does the stats/steam_id field not function correctly?
-        // Performs a submit on page load because otherwise the stats filter does not apply.
-        handleSubmit();
-    }, [handleSubmit]);
+    const columnHelper = createColumnHelper<DemoFile>();
+
+    const columns = useMemo(() => {
+        return [
+            columnHelper.accessor('demo_id', {
+                header: () => <TableHeadingCell name={'ID'} />,
+                cell: (info) => <Typography>#{info.getValue()}</Typography>
+            }),
+            columnHelper.accessor('server_id', {
+                filterFn: (row, _, filterValue) => {
+                    return filterValue == 0 || row.original.server_id == filterValue;
+                },
+                enableSorting: true,
+                enableColumnFilter: true,
+                header: () => <TableHeadingCell name={'Server'} />,
+                cell: (info) => {
+                    return (
+                        <Button
+                            sx={{
+                                color: stc(info.row.original.server_name_short)
+                            }}
+                            onClick={async () => {
+                                await navigate({
+                                    search: (prev) => ({ ...prev, server_id: info.row.original.server_id })
+                                });
+                                await handleSubmit();
+                            }}
+                        >
+                            {info.row.original.server_name_short}
+                        </Button>
+                    );
+                }
+            }),
+            columnHelper.accessor('created_on', {
+                header: () => <TableHeadingCell name={'Created'} />,
+                cell: (info) => <Typography>{renderDateTime(info.getValue() as Date)}</Typography>
+            }),
+            columnHelper.accessor('map_name', {
+                enableColumnFilter: true,
+                header: () => <TableHeadingCell name={'Map Name'} />,
+                cell: (info) => <Typography>{info.getValue() as string}</Typography>
+            }),
+            columnHelper.accessor('size', {
+                header: () => <TableHeadingCell name={'Size'} />,
+                cell: (info) => <Typography>{humanFileSize(info.getValue() as number)}</Typography>
+            }),
+            columnHelper.accessor('stats', {
+                enableColumnFilter: true,
+                filterFn: (row, _, filterValue) => {
+                    return filterValue == '' || Object.keys(row.original.stats).includes(filterValue);
+                },
+                header: () => <TableHeadingCell name={'Players'} />,
+                cell: (info) => <Typography>{Object.keys(Object(info.getValue())).length}</Typography>
+            }),
+
+            columnHelper.display({
+                id: 'report',
+                cell: (info) => (
+                    <Button
+                        disabled={!isAuthenticated()}
+                        color={'error'}
+                        startIcon={<FlagIcon />}
+                        component={RouterLink}
+                        to={'/report'}
+                        search={{ demo_id: info.row.original.demo_id }}
+                    >
+                        Report
+                    </Button>
+                )
+            }),
+            columnHelper.display({
+                id: 'download',
+                cell: (info) => (
+                    <Button
+                        color={'success'}
+                        component={Link}
+                        href={`/asset/${info.row.original.asset_id}`}
+                        startIcon={<CloudDownload />}
+                    >
+                        Download
+                    </Button>
+                )
+            })
+        ];
+    }, [columnHelper, isAuthenticated, navigate]);
 
     return (
         <Grid container spacing={2}>
@@ -285,12 +257,7 @@ function STV() {
                                     startIcon={<ChevronLeft />}
                                     variant={'contained'}
                                     onClick={async () => {
-                                        setFieldValue('stats', profile.steam_id, {
-                                            touch: false
-                                        });
-                                        setColumnFilters((prev) => {
-                                            return { ...prev, stats: !emptyOrNullString(stats) ? stats : undefined };
-                                        });
+                                        await navigate({ search: (prev) => ({ ...prev, stats: profile.steam_id }) });
                                         await handleSubmit();
                                     }}
                                 >
@@ -316,21 +283,14 @@ function STV() {
             </Grid>
             <Grid xs={12}>
                 <ContainerWithHeader title={'SourceTV Recordings'} iconLeft={<VideocamIcon />}>
-                    <DataTable table={table} isLoading={false} padding={'none'} />
-                    <PaginatorLocal
-                        onRowsChange={(rows) => {
-                            setPagination((prev) => {
-                                return { ...prev, pageSize: rows };
-                            });
-                        }}
-                        onPageChange={(page) => {
-                            setPagination((prev) => {
-                                return { ...prev, pageIndex: page };
-                            });
-                        }}
-                        count={table.getRowCount()}
-                        rows={pagination.pageSize}
-                        page={pagination.pageIndex}
+                    <FullTable
+                        columnFilters={columnFilters}
+                        pagination={pagination}
+                        setPagination={setPagination}
+                        data={demos ?? []}
+                        isLoading={isLoading}
+                        columns={columns}
+                        sorting={sorting}
                     />
                 </ContainerWithHeader>
             </Grid>
