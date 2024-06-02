@@ -196,15 +196,13 @@ func (h reportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 			return
 		}
 
-		if demo.DemoID > 0 && !demo.Archive {
-			demo.Archive = true
+		ctx.JSON(http.StatusCreated, report)
 
+		if demo.DemoID > 0 && !demo.Archive {
 			if errMark := h.demoUsecase.MarkArchived(ctx, &demo); errMark != nil {
 				slog.Error("Failed to mark demo as archived", log.ErrAttr(errMark))
 			}
 		}
-
-		ctx.JSON(http.StatusCreated, report)
 
 		slog.Info("New report created successfully", slog.Int64("report_id", report.ReportID))
 

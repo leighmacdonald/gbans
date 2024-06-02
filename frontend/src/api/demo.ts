@@ -19,3 +19,5 @@ export const apiGetDemos = async () => {
     const resp = await apiCall<DemoFile[]>('/api/demos', 'POST', undefined);
     return resp.map(transformCreatedOnDate);
 };
+
+export const apiGetDemoCleanup = async () => await apiCall('/api/demos/cleanup');

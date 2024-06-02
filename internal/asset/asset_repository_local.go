@@ -72,28 +72,28 @@ func (l localRepository) Put(ctx context.Context, asset domain.Asset, body io.Re
 	return asset, nil
 }
 
-func (l localRepository) Delete(ctx context.Context, assetID uuid.UUID) error {
+func (l localRepository) Delete(ctx context.Context, assetID uuid.UUID) (int64, error) {
 	asset, errAsset := l.getAssetByUUID(ctx, assetID)
 	if errAsset != nil {
-		return errAsset
+		return 0, errAsset
 	}
 
 	query := l.db.Builder().Delete("asset").Where(sq.Eq{"asset_id": assetID})
 
 	if errExec := l.db.ExecDeleteBuilder(ctx, query); errExec != nil {
-		return l.db.DBErr(errExec)
+		return 0, l.db.DBErr(errExec)
 	}
 
 	assetPath, errAssetPath := l.genAssetPath(asset.HashString())
 	if errAssetPath != nil {
-		return errAssetPath
+		return 0, errAssetPath
 	}
 
 	if errRemove := os.Remove(assetPath); errRemove != nil {
-		return errors.Join(errRemove, domain.ErrDeleteAssetFile)
+		return 0, errors.Join(errRemove, domain.ErrDeleteAssetFile)
 	}
 
-	return nil
+	return asset.Size, nil
 }
 
 func (l localRepository) Init(_ context.Context) error {

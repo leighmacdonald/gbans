@@ -20,6 +20,16 @@ func NewDemoHandler(engine *gin.Engine, du domain.DemoUsecase) {
 	}
 
 	engine.POST("/api/demos", handler.onAPIPostDemosQuery())
+
+	engine.GET("/api/demos/cleanup", handler.onAPIGetCleanup())
+}
+
+func (h demoHandler) onAPIGetCleanup() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		h.du.TriggerCleanup()
+
+		ctx.JSON(http.StatusOK, gin.H{})
+	}
 }
 
 func (h demoHandler) onAPIPostDemosQuery() gin.HandlerFunc {

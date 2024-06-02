@@ -90,15 +90,15 @@ export const createThemeByMode = (mode: PaletteMode) => {
                 styleOverrides: {
                     body: darkScrollbar()
                 }
+            },
+            MuiButton: {
+                variants: [
+                    {
+                        props: { variant: 'contained' },
+                        style: readableFonts
+                    }
+                ]
             }
-            // MuiButton: {
-            //     variants: [
-            //         {
-            //             props: { variant: 'contained' },
-            //             style: tf2Fonts
-            //         }
-            //     ]
-            // }
         },
         typography: {
             fontFamily: ['"Helvetica Neue"', 'Helvetica', 'Roboto', 'Arial', 'sans-serif'].join(','),

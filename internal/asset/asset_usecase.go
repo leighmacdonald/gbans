@@ -6,9 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"strings"
 	"time"
 
+	"github.com/dustin/go-humanize"
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -47,6 +49,9 @@ func (s assetUsecase) Create(ctx context.Context, author steamid.SteamID, bucket
 		return domain.Asset{}, errPut
 	}
 
+	slog.Debug("Created new asset",
+		slog.String("name", asset.Name), slog.String("asset_id", asset.AssetID.String()))
+
 	return newAsset, nil
 }
 
@@ -63,16 +68,19 @@ func (s assetUsecase) Get(ctx context.Context, uuid uuid.UUID) (domain.Asset, io
 	return asset, reader, nil
 }
 
-func (s assetUsecase) Delete(ctx context.Context, assetID uuid.UUID) error {
+func (s assetUsecase) Delete(ctx context.Context, assetID uuid.UUID) (int64, error) {
 	if assetID.IsNil() {
-		return domain.ErrUUIDInvalid
+		return 0, domain.ErrUUIDInvalid
 	}
 
-	if err := s.assetRepository.Delete(ctx, assetID); err != nil {
-		return err
+	size, err := s.assetRepository.Delete(ctx, assetID)
+	if err != nil {
+		return 0, err
 	}
 
-	return nil
+	slog.Debug("Removed demo asset", slog.String("asset_id", assetID.String()), slog.String("size", humanize.Bytes(uint64(size))))
+
+	return size, nil
 }
 
 func generateFileHash(file io.Reader) ([]byte, error) {

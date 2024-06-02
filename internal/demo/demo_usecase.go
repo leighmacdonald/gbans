@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dustin/go-humanize"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/demoparser"
@@ -16,22 +17,24 @@ import (
 )
 
 type demoUsecase struct {
-	repository     domain.DemoRepository
-	assetUsecase   domain.AssetUsecase
-	configUsecase  domain.ConfigUsecase
-	serversUsecase domain.ServersUsecase
-	bucket         domain.Bucket
+	repository  domain.DemoRepository
+	asset       domain.AssetUsecase
+	config      domain.ConfigUsecase
+	servers     domain.ServersUsecase
+	bucket      domain.Bucket
+	cleanupChan chan any
 }
 
 func NewDemoUsecase(bucket domain.Bucket, demoRepository domain.DemoRepository, assetUsecase domain.AssetUsecase,
 	configUsecase domain.ConfigUsecase, serversUsecase domain.ServersUsecase,
 ) domain.DemoUsecase {
 	return &demoUsecase{
-		bucket:         bucket,
-		repository:     demoRepository,
-		assetUsecase:   assetUsecase,
-		configUsecase:  configUsecase,
-		serversUsecase: serversUsecase,
+		bucket:      bucket,
+		repository:  demoRepository,
+		asset:       assetUsecase,
+		config:      configUsecase,
+		servers:     serversUsecase,
+		cleanupChan: make(chan any),
 	}
 }
 
@@ -60,93 +63,119 @@ func diskPercentageUsed(path string) float32 {
 	return info.Usage() * 100
 }
 
-func (d demoUsecase) truncateBySpace(ctx context.Context, root string, maxAllowedPctUsed float32) {
+func (d demoUsecase) truncateBySpace(ctx context.Context, root string, maxAllowedPctUsed float32) (int, int64, error) {
+	var (
+		count int
+		size  int64
+	)
+
 	for {
 		usedSpace := diskPercentageUsed(root)
 
 		if usedSpace < maxAllowedPctUsed {
-			return
+			return count, size, nil
 		}
 
 		oldestDemo, errOldest := d.OldestDemo(ctx)
 		if errOldest != nil {
 			if errors.Is(errOldest, domain.ErrNoResult) {
-				return
+				return count, size, nil
 			}
 
-			slog.Error("Failed to fetch oldest demo", log.ErrAttr(errOldest))
-
-			return
+			return count, size, errOldest
 		}
 
-		if err := d.assetUsecase.Delete(ctx, oldestDemo.AssetID); err != nil {
-			slog.Error("Failed to fetch oldest demo", log.ErrAttr(errOldest))
-
-			return
+		demoSize, err := d.asset.Delete(ctx, oldestDemo.AssetID)
+		if err != nil {
+			return count, size, err
 		}
 
-		slog.Debug("Pruned demo", slog.String("demo", oldestDemo.Title), slog.Float64("free_pct", float64(usedSpace)))
+		size += demoSize
+		count++
 	}
+}
+
+func (d demoUsecase) truncateByCount(ctx context.Context, maxCount uint64) (int, int64, error) {
+	var (
+		count int
+		size  int64
+	)
+
+	expired, errExpired := d.repository.ExpiredDemos(ctx, maxCount)
+	if errExpired != nil {
+		if errors.Is(errExpired, domain.ErrNoResult) {
+			return count, size, nil
+		}
+
+		return count, size, errExpired
+	}
+
+	if len(expired) == 0 {
+		return count, size, nil
+	}
+
+	for _, demo := range expired {
+		// Dropping asset will cascade to demo
+		demoSize, errDrop := d.asset.Delete(ctx, demo.AssetID)
+		if errDrop != nil {
+			slog.Error("Failed to remove demo asset", log.ErrAttr(errDrop),
+				slog.String("bucket", string(d.bucket)), slog.String("name", demo.Title))
+
+			continue
+		}
+
+		size += demoSize
+		count++
+	}
+
+	return count, size, nil
+}
+
+func (d demoUsecase) executeCleanup(ctx context.Context) {
+	conf := d.config.Config()
+
+	if !conf.Demo.DemoCleanupEnabled {
+		return
+	}
+
+	slog.Debug("Starting demo cleanup", slog.String("strategy", string(conf.Demo.DemoCleanupStrategy)))
+
+	var (
+		count int
+		err   error
+		size  int64
+	)
+
+	switch conf.Demo.DemoCleanupStrategy {
+	case domain.DemoStrategyPctFree:
+		count, size, err = d.truncateBySpace(ctx, conf.Demo.DemoCleanupMount, conf.Demo.DemoCleanupMinPct)
+	case domain.DemoStrategyCount:
+		count, size, err = d.truncateByCount(ctx, conf.Demo.DemoCountLimit)
+	}
+
+	if err != nil {
+		slog.Error("Error executing demo cleanup", slog.String("strategy", string(conf.Demo.DemoCleanupStrategy)))
+	}
+
+	slog.Debug("Old demos flushed", slog.Int("count", count), slog.String("size", humanize.Bytes(uint64(size))))
+}
+
+func (d demoUsecase) TriggerCleanup() {
+	d.cleanupChan <- true
 }
 
 func (d demoUsecase) Start(ctx context.Context) {
 	ticker := time.NewTicker(time.Hour)
-	triggerChan := make(chan any)
 
-	go func() {
-		triggerChan <- true
-	}()
+	d.executeCleanup(ctx)
 
 	for {
 		select {
 		case <-ticker.C:
-			triggerChan <- true
-		case <-triggerChan:
-			conf := d.configUsecase.Config()
-
-			if !conf.Demo.DemoCleanupEnabled {
-				continue
-			}
-
-			if conf.Demo.DemoCleanupStrategy == domain.DemoStrategyPctFree {
-				d.truncateBySpace(ctx, conf.Demo.DemoCleanupMount, conf.Demo.DemoCleanupMinPct)
-
-				return
-			}
-
-			slog.Debug("Starting demo cleanup")
-
-			expired, errExpired := d.repository.ExpiredDemos(ctx, conf.Demo.DemoCountLimit)
-			if errExpired != nil {
-				if errors.Is(errExpired, domain.ErrNoResult) {
-					continue
-				}
-
-				slog.Error("Failed to fetch expired demos", log.ErrAttr(errExpired))
-			}
-
-			if len(expired) == 0 {
-				continue
-			}
-
-			count := 0
-
-			for _, demo := range expired {
-				// Dropping asset will cascade to demo
-				if errDrop := d.assetUsecase.Delete(ctx, demo.AssetID); errDrop != nil {
-					slog.Error("Failed to remove demo asset", log.ErrAttr(errDrop),
-						slog.String("bucket", string(d.bucket)), slog.String("name", demo.Title))
-
-					continue
-				}
-
-				count++
-			}
-
-			slog.Info("Old demos flushed", slog.Int("count", count))
+			d.cleanupChan <- true
+		case <-d.cleanupChan:
+			d.executeCleanup(ctx)
 		case <-ctx.Done():
-			slog.Debug("demoCleaner shutting down")
-
 			return
 		}
 	}
@@ -169,7 +198,7 @@ func (d demoUsecase) GetDemos(ctx context.Context) ([]domain.DemoFile, error) {
 }
 
 func (d demoUsecase) CreateFromAsset(ctx context.Context, asset domain.Asset, serverID int) (*domain.DemoFile, error) {
-	_, errGetServer := d.serversUsecase.GetServer(ctx, serverID)
+	_, errGetServer := d.servers.GetServer(ctx, serverID)
 	if errGetServer != nil {
 		return nil, domain.ErrGetServer
 	}

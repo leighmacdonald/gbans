@@ -1,6 +1,7 @@
 import { PropsWithChildren, ReactNode, useState } from 'react';
 import AddModeratorIcon from '@mui/icons-material/AddModerator';
 import BugReportIcon from '@mui/icons-material/BugReport';
+import CleaningServicesIcon from '@mui/icons-material/CleaningServices';
 import DeveloperBoardIcon from '@mui/icons-material/DeveloperBoard';
 import EmergencyRecordingIcon from '@mui/icons-material/EmergencyRecording';
 import GradingIcon from '@mui/icons-material/Grading';
@@ -19,10 +20,11 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
+import { apiGetDemoCleanup } from '../api';
 import { apiGetSettings, apiSaveSettings, Config } from '../api/admin.ts';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { Title } from '../component/Title';
@@ -533,6 +535,9 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 };
 
 const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mutate: (s: Config) => void }) => {
+    const queryClient = useQueryClient();
+    const { sendFlash } = useUserFlashCtx();
+
     const { Field, Subscribe, handleSubmit, reset } = useForm({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, demo: value });
@@ -546,6 +551,15 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
             demo_count_limit: settings.demo.demo_count_limit
         }
     });
+
+    const onCleanup = async () => {
+        try {
+            await queryClient.fetchQuery({ queryKey: ['demoCleanup'], queryFn: apiGetDemoCleanup });
+            sendFlash('success', 'Cleanup started');
+        } catch (e) {
+            sendFlash('error', 'Cleanup failed to start');
+        }
+    };
 
     return (
         <TabSection
@@ -563,13 +577,23 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
             >
                 <Grid container spacing={2}>
                     <Grid xs={12}>
+                        <Button
+                            startIcon={<CleaningServicesIcon />}
+                            variant={'contained'}
+                            color={'secondary'}
+                            onClick={onCleanup}
+                        >
+                            Start Cleanup
+                        </Button>
+                    </Grid>
+                    <Grid xs={12}>
                         <Field
                             name={'demo_cleanup_enabled'}
                             validators={{
                                 onChange: z.boolean()
                             }}
                             children={(props) => {
-                                return <CheckboxSimple {...props} label={'Enable Demo Cleanup'} />;
+                                return <CheckboxSimple {...props} label={'Enable Scheduled Demo Cleanup'} />;
                             }}
                         />
                         <SubHeading>
