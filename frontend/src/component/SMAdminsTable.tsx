@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -14,7 +14,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createColumnHelper } from '@tanstack/react-table';
 import { apiAddAdminToGroup, apiDelAdminFromGroup, apiDeleteSMAdmin, SMAdmin, SMGroups } from '../api';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
-import { RowsPerPage } from '../util/table.ts';
+import { initPagination, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 import { ContainerWithHeaderAndButtons } from './ContainerWithHeaderAndButtons.tsx';
 import { FullTable } from './FullTable.tsx';
@@ -33,6 +33,7 @@ export const SMAdminsTable = ({
 }) => {
     const { sendFlash } = useUserFlashCtx();
     const queryClient = useQueryClient();
+    const [pagination, setPagination] = useState(initPagination(0, RowsPerPage.Ten));
 
     const onCreateAdmin = async () => {
         try {
@@ -170,12 +171,11 @@ export const SMAdminsTable = ({
             ]}
         >
             <FullTable
-                pageSize={RowsPerPage.Ten}
                 data={admins ?? []}
                 isLoading={isLoading}
                 columns={adminColumns}
-                initialSortColumn={'name'}
-                initialSortDesc={false}
+                pagination={pagination}
+                setPagination={setPagination}
             />
         </ContainerWithHeaderAndButtons>
     );

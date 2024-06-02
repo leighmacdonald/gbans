@@ -113,7 +113,7 @@ export const apiGetMatch = async (match_id: string) => {
     return transformMatchDates(match);
 };
 
-export interface MatchesQueryOpts extends QueryFilter<MatchSummary> {
+export interface MatchesQueryOpts extends QueryFilter {
     steam_id?: string;
     server_id?: number;
     map?: string;

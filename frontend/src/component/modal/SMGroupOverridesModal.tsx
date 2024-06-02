@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
@@ -15,6 +15,7 @@ import { createColumnHelper } from '@tanstack/react-table';
 import 'video-react/dist/video-react.css';
 import { apiDeleteSMGroupOverride, apiGetSMGroupOverrides, SMGroupOverrides, SMGroups } from '../../api';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+import { initPagination, RowsPerPage } from '../../util/table.ts';
 import { renderDateTime } from '../../util/text.tsx';
 import { FullTable } from '../FullTable.tsx';
 import { Heading } from '../Heading';
@@ -80,6 +81,7 @@ export const SMGroupOverridesModal = NiceModal.create(({ group }: { group: SMGro
     const modal = useModal();
     const queryClient = useQueryClient();
     const { sendFlash } = useUserFlashCtx();
+    const [pagination, setPagination] = useState(initPagination(0, RowsPerPage.Ten));
 
     const { data: overrides, isLoading } = useQuery({
         queryKey: ['serverGroupOverrides', { group_id: group.group_id }],
@@ -92,7 +94,7 @@ export const SMGroupOverridesModal = NiceModal.create(({ group }: { group: SMGro
         try {
             const created = await NiceModal.show<SMGroupOverrides>(ModalSMGroupOverridesEditor, { group });
             queryClient.setQueryData(
-                ['serverGroupOverides', { group_id: group.group_id }],
+                ['serverGroupOverrides', { group_id: group.group_id }],
                 [...(overrides ?? []), created]
             );
             sendFlash('success', `Group override created successfully: ${created.name}`);
@@ -159,7 +161,13 @@ export const SMGroupOverridesModal = NiceModal.create(({ group }: { group: SMGro
             </DialogTitle>
 
             <DialogContent>
-                <FullTable data={overrides ?? []} isLoading={isLoading} columns={columns} />
+                <FullTable
+                    data={overrides ?? []}
+                    isLoading={isLoading}
+                    columns={columns}
+                    pagination={pagination}
+                    setPagination={setPagination}
+                />
             </DialogContent>
 
             <DialogActions>

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import AssuredWorkloadIcon from '@mui/icons-material/AssuredWorkload';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -11,6 +11,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createColumnHelper } from '@tanstack/react-table';
 import { apiDeleteSMGroupImmunity, SMGroupImmunity, SMGroups } from '../api';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import { initPagination, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 import { ContainerWithHeaderAndButtons } from './ContainerWithHeaderAndButtons.tsx';
 import { FullTable } from './FullTable.tsx';
@@ -29,6 +30,7 @@ export const SMImmunityTable = ({
 }) => {
     const { sendFlash } = useUserFlashCtx();
     const queryClient = useQueryClient();
+    const [pagination, setPagination] = useState(initPagination(0, RowsPerPage.Ten));
 
     const onCreateImmunity = async () => {
         try {
@@ -96,7 +98,13 @@ export const SMImmunityTable = ({
                 </ButtonGroup>
             ]}
         >
-            <FullTable data={immunities ?? []} isLoading={isLoading} columns={immunityColumns} />
+            <FullTable
+                data={immunities ?? []}
+                isLoading={isLoading}
+                columns={immunityColumns}
+                pagination={pagination}
+                setPagination={setPagination}
+            />
         </ContainerWithHeaderAndButtons>
     );
 };

@@ -42,11 +42,6 @@ export const apiCreateFilter = async (filter: Filter) => await apiCall<Filter>(`
 export const apiEditFilter = async (filter_id: number, filter: Filter) =>
     await apiCall<Filter>(`/api/filters/${filter_id}`, 'POST', filter);
 
-export interface FilterQuery {
-    query: string;
-    corpus: string;
-}
-
 export const apiDeleteFilter = async (word_id: number) => await apiCall(`/api/filters/${word_id}`, 'DELETE');
 
 export interface UserWarning {

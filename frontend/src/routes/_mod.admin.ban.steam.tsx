@@ -166,7 +166,7 @@ function AdminBanSteam() {
                                         return (
                                             <SelectFieldSimple
                                                 {...props}
-                                                label={'Appeal State'}
+                                                label={'Ban Reason'}
                                                 items={banReasonsCollection}
                                                 renderMenu={(i) => {
                                                     if (i == undefined) {
@@ -295,7 +295,7 @@ const makeColumns = (
         cell: (info) => <Typography>{renderDate(info.getValue() as Date)}</Typography>
     }),
     columnHelper.accessor('valid_until', {
-        header: () => <TableHeadingCell name={'Expires'} />,
+        header: () => <TableHeadingCell name={'Duration'} />,
         cell: (info) => {
             return typeof info.row.original === 'undefined' ? (
                 ''

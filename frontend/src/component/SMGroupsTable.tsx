@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import AssuredWorkloadIcon from '@mui/icons-material/AssuredWorkload';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -13,7 +13,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createColumnHelper } from '@tanstack/react-table';
 import { apiDeleteSMGroup, SMAdmin, SMGroups } from '../api';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
-import { RowsPerPage } from '../util/table.ts';
+import { initPagination, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 import { ContainerWithHeaderAndButtons } from './ContainerWithHeaderAndButtons.tsx';
 import { FullTable } from './FullTable.tsx';
@@ -24,6 +24,7 @@ import { ModalConfirm, ModalSMGroupEditor, ModalSMGroupOverrides } from './modal
 export const SMGroupsTable = ({ groups, isLoading }: { groups: SMGroups[]; isLoading: boolean }) => {
     const { sendFlash } = useUserFlashCtx();
     const queryClient = useQueryClient();
+    const [pagination, setPagination] = useState(initPagination(0, RowsPerPage.Ten));
 
     const onCreateGroup = async () => {
         try {
@@ -35,7 +36,7 @@ export const SMGroupsTable = ({ groups, isLoading }: { groups: SMGroups[]; isLoa
         }
     };
 
-    const deleteGroupMutatuin = useMutation({
+    const deleteGroupMutation = useMutation({
         mutationKey: ['SMGroupDelete'],
         mutationFn: async (group: SMGroups) => {
             await apiDeleteSMGroup(group.group_id);
@@ -67,7 +68,7 @@ export const SMGroupsTable = ({ groups, isLoading }: { groups: SMGroups[]; isLoa
                 if (!confirmed) {
                     return;
                 }
-                deleteGroupMutatuin.mutate(group);
+                deleteGroupMutation.mutate(group);
             } catch (e) {
                 sendFlash('error', `Failed to create confirmation modal: ${e}`);
             }
@@ -88,7 +89,7 @@ export const SMGroupsTable = ({ groups, isLoading }: { groups: SMGroups[]; isLoa
         };
 
         return makeGroupColumns(onEditGroup, onDeleteGroup, onOverride);
-    }, [deleteGroupMutatuin, groups, queryClient, sendFlash]);
+    }, [deleteGroupMutation, groups, queryClient, sendFlash]);
 
     return (
         <ContainerWithHeaderAndButtons
@@ -103,12 +104,11 @@ export const SMGroupsTable = ({ groups, isLoading }: { groups: SMGroups[]; isLoa
             ]}
         >
             <FullTable
-                pageSize={RowsPerPage.Ten}
                 data={groups ?? []}
                 isLoading={isLoading}
                 columns={groupColumns}
-                initialSortColumn={'name'}
-                initialSortDesc={false}
+                pagination={pagination}
+                setPagination={setPagination}
             />
         </ContainerWithHeaderAndButtons>
     );
