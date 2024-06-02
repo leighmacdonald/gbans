@@ -7,6 +7,7 @@ import ForumIcon from '@mui/icons-material/Forum';
 import LoginIcon from '@mui/icons-material/Login';
 import SettingsIcon from '@mui/icons-material/Settings';
 import SettingsInputComponentIcon from '@mui/icons-material/SettingsInputComponent';
+import SportsEsportsIcon from '@mui/icons-material/SportsEsports';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -41,7 +42,7 @@ import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { SubHeading, TabButton, TabSection } from './_admin.admin.settings.tsx';
 
 const settingsSchema = z.object({
-    section: z.enum(['general', 'forums', 'connections']).optional().default('general')
+    section: z.enum(['general', 'forums', 'connections', 'game']).optional().default('general')
 });
 
 export const Route = createFileRoute('/_auth/settings')({
@@ -64,8 +65,7 @@ interface SettingsValues {
     center_projectiles: boolean;
 }
 
-type userSettingTabs = 'general' | 'connections' | 'forums';
-
+type userSettingTabs = 'general' | 'connections' | 'forums' | 'game';
 
 function ProfileSettings() {
     const { sendFlash } = useUserFlashCtx();
@@ -113,6 +113,13 @@ function ProfileSettings() {
                                 currentTab={tab}
                                 label={'General'}
                             />
+                            <TabButton
+                                tab={'game'}
+                                onClick={onTabClick}
+                                icon={<SportsEsportsIcon />}
+                                currentTab={tab}
+                                label={'Gameplay'}
+                            />
                             {hasPermission(PermissionLevel.Moderator) && (
                                 <TabButton
                                     tab={'forums'}
@@ -134,6 +141,7 @@ function ProfileSettings() {
                         </Stack>
                     </Grid>
                     <GeneralSection tab={tab} settings={settings} mutate={mutation.mutate} />
+                    <GameplaySection tab={tab} settings={settings} mutate={mutation.mutate} />
                     {hasPermission(PermissionLevel.Moderator) && (
                         <ForumSection tab={tab} settings={settings} mutate={mutation.mutate} />
                     )}
@@ -194,6 +202,62 @@ const GeneralSection = ({
                             }}
                         />
                         <SubHeading>It is still viewable by yourself.</SubHeading>
+                    </Grid>
+
+                    <Grid xs={12}>
+                        <Subscribe
+                            selector={(state) => [state.canSubmit, state.isSubmitting]}
+                            children={([canSubmit, isSubmitting]) => (
+                                <Buttons reset={reset} canSubmit={canSubmit} isSubmitting={isSubmitting} />
+                            )}
+                        />
+                    </Grid>
+                </Grid>
+            </form>
+        </TabSection>
+    );
+};
+
+const GameplaySection = ({
+    tab,
+    settings,
+    mutate
+}: {
+    tab: userSettingTabs;
+    settings: PersonSettings;
+    mutate: (s: PersonSettings) => void;
+}) => {
+    const { Field, Subscribe, handleSubmit, reset } = useForm({
+        onSubmit: async ({ value }) => {
+            mutate({ ...settings, ...value });
+        },
+        validatorAdapter: zodValidator,
+        defaultValues: {
+            center_projectiles: settings.center_projectiles ?? false
+        }
+    });
+
+    return (
+        <TabSection tab={'game'} currentTab={tab} label={'Gameplay'} description={'Configure your in-game clientprefs'}>
+            <form
+                onSubmit={async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    await handleSubmit();
+                }}
+            >
+                <Grid container spacing={2}>
+                    <Grid xs={12}>
+                        <Field
+                            name={'center_projectiles'}
+                            validators={{
+                                onChange: z.boolean()
+                            }}
+                            children={(props) => {
+                                return <CheckboxSimple {...props} label={'Use center projectiles'} />;
+                            }}
+                        />
+                        <SubHeading>Applies to all projectile weapons</SubHeading>
                     </Grid>
 
                     <Grid xs={12}>

@@ -284,7 +284,7 @@ export interface PersonSettings extends TimeStamped {
     forum_signature: string;
     forum_profile_messages: boolean;
     stats_hidden: boolean;
-    center_projectiles?: boolean;
+    center_projectiles: boolean;
 }
 
 export const apiGetPersonSettings = async (abortController?: AbortController) => {

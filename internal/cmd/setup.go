@@ -76,7 +76,7 @@ func setupCmd() *cobra.Command {
 
 			serversUsecase := servers.NewServersUsecase(servers.NewServersRepository(dbUsecase))
 			stateUsecase := state.NewStateUsecase(broadcaster, state.NewStateRepository(state.NewCollector(serversUsecase)), configUsecase, serversUsecase)
-			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(dbUsecase), configUsecase)
+			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(conf, dbUsecase), configUsecase)
 
 			assetRepo := asset.NewLocalRepository(dbUsecase, configUsecase)
 			if errAssetInit := assetRepo.Init(ctx); errAssetInit != nil {
