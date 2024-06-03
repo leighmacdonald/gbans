@@ -5,14 +5,12 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"time"
 
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/network"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/pkg/fp"
-	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/spf13/cobra"
@@ -67,43 +65,15 @@ func netUpdateCmd() *cobra.Command {
 			defer logCloser()
 
 			eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
-
 			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(conf, dbUsecase), configUsecase)
+			networkUsecase := network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(dbUsecase), personUsecase, configUsecase)
 
-			if errUpdate := ip2location.Update(ctx, conf.GeoLocation.CachePath, conf.GeoLocation.Token); errUpdate != nil {
-				slog.Error("Failed to update", log.ErrAttr(errUpdate))
-
-				return
-			}
-
-			slog.Info("Reading data")
-
-			blockListData, errRead := ip2location.Read(conf.GeoLocation.CachePath)
-			if errRead != nil {
-				slog.Error("Failed to read data", log.ErrAttr(errRead))
-
-				return
-			}
-
-			updateCtx, cancelUpdate := context.WithTimeout(ctx, time.Minute*30)
-			defer cancelUpdate()
-
-			slog.Info("Starting import")
-
-			networkUsecase := network.NewNetworkUsecase(
-				eventBroadcaster,
-				network.NewNetworkRepository(dbUsecase),
-				personUsecase)
-
-			if errInsert := networkUsecase.InsertIP2LocationData(updateCtx, blockListData); errInsert != nil {
-				slog.Error("Failed to import", log.ErrAttr(errInsert))
-
-				return
+			if err := networkUsecase.RefreshLocationData(ctx); err != nil {
+				slog.Error("Failed to refresh location data", log.ErrAttr(err))
+				os.Exit(1)
 			}
 
 			slog.Info("Import Complete")
-
-			os.Exit(0)
 		},
 	}
 }

@@ -275,11 +275,11 @@ func (r networkRepository) GetProxyRecord(ctx context.Context, ipAddr netip.Addr
 	return proxyRecord, nil
 }
 
-func (r networkRepository) loadASN(ctx context.Context, records []ip2location.ASNRecord) error {
-	curTime := time.Now()
-
-	if errTruncate := r.db.TruncateTable(ctx, "net_asn"); errTruncate != nil {
-		return errTruncate
+func (r networkRepository) LoadASN(ctx context.Context, truncate bool, records []any) error {
+	if truncate {
+		if errTruncate := r.db.TruncateTable(ctx, "net_asn"); errTruncate != nil {
+			return errTruncate
+		}
 	}
 
 	const query = `
@@ -289,7 +289,14 @@ func (r networkRepository) loadASN(ctx context.Context, records []ip2location.AS
 	batch := pgx.Batch{}
 
 	for recordIdx, asnRecord := range records {
-		batch.Queue(query, fmt.Sprintf("%s-%s", asnRecord.IPFrom, asnRecord.IPTo), asnRecord.CIDR, asnRecord.ASNum, asnRecord.ASName)
+		rec, ok := asnRecord.(ip2location.ASNRecord)
+		if !ok {
+			slog.Error("Could not convert to asn record type")
+
+			return domain.ErrNetworkInvalidASNRecord
+		}
+
+		batch.Queue(query, fmt.Sprintf("%s-%s", rec.IPFrom, rec.IPTo), rec.CIDR, rec.ASNum, rec.ASName)
 
 		if recordIdx > 0 && recordIdx%100000 == 0 || len(records) == recordIdx+1 {
 			if batch.Len() > 0 {
@@ -312,17 +319,14 @@ func (r networkRepository) loadASN(ctx context.Context, records []ip2location.AS
 		}
 	}
 
-	slog.Info("Loaded ASN4 records",
-		slog.Int("count", len(records)), slog.Duration("duration", time.Since(curTime)))
-
 	return nil
 }
 
-func (r networkRepository) loadLocation(ctx context.Context, records []ip2location.LocationRecord, _ bool) error {
-	curTime := time.Now()
-
-	if errTruncate := r.db.TruncateTable(ctx, "net_location"); errTruncate != nil {
-		return errTruncate
+func (r networkRepository) LoadLocation(ctx context.Context, truncate bool, records []any) error {
+	if truncate {
+		if errTruncate := r.db.TruncateTable(ctx, "net_location"); errTruncate != nil {
+			return errTruncate
+		}
 	}
 
 	const query = `
@@ -332,7 +336,14 @@ func (r networkRepository) loadLocation(ctx context.Context, records []ip2locati
 	batch := pgx.Batch{}
 
 	for recordIdx, locationRecord := range records {
-		batch.Queue(query, fmt.Sprintf("%s-%s", locationRecord.IPFrom, locationRecord.IPTo), locationRecord.CountryCode, locationRecord.CountryName, locationRecord.RegionName, locationRecord.CityName, locationRecord.LatLong.Latitude, locationRecord.LatLong.Longitude)
+		rec, ok := locationRecord.(ip2location.LocationRecord)
+		if !ok {
+			slog.Error("Could not convert to location record type")
+
+			return domain.ErrNetworkInvalidLocationRecord
+		}
+
+		batch.Queue(query, fmt.Sprintf("%s-%s", rec.IPFrom, rec.IPTo), rec.CountryCode, rec.CountryName, rec.RegionName, rec.CityName, rec.LatLong.Latitude, rec.LatLong.Longitude)
 
 		if recordIdx > 0 && recordIdx%100000 == 0 || len(records) == recordIdx+1 {
 			if batch.Len() > 0 {
@@ -355,17 +366,14 @@ func (r networkRepository) loadLocation(ctx context.Context, records []ip2locati
 		}
 	}
 
-	slog.Info("Loaded Location4 records",
-		slog.Int("count", len(records)), slog.Duration("duration", time.Since(curTime)))
-
 	return nil
 }
 
-func (r networkRepository) loadProxies(ctx context.Context, records []ip2location.ProxyRecord, _ bool) error {
-	curTime := time.Now()
-
-	if errTruncate := r.db.TruncateTable(ctx, "net_proxy"); errTruncate != nil {
-		return errTruncate
+func (r networkRepository) LoadProxies(ctx context.Context, truncate bool, records []any) error {
+	if truncate {
+		if errTruncate := r.db.TruncateTable(ctx, "net_proxy"); errTruncate != nil {
+			return errTruncate
+		}
 	}
 
 	const query = `
@@ -376,8 +384,15 @@ func (r networkRepository) loadProxies(ctx context.Context, records []ip2locatio
 	batch := pgx.Batch{}
 
 	for recordIdx, proxyRecord := range records {
-		batch.Queue(query, proxyRecord.IPFrom.To4().String(), proxyRecord.IPTo.To4().String(), proxyRecord.ProxyType, proxyRecord.CountryCode, proxyRecord.CountryName, proxyRecord.RegionName, proxyRecord.CityName,
-			proxyRecord.ISP, proxyRecord.Domain, proxyRecord.UsageType, proxyRecord.ASN, proxyRecord.AS, proxyRecord.LastSeen, proxyRecord.Threat)
+		rec, ok := proxyRecord.(ip2location.ProxyRecord)
+		if !ok {
+			slog.Error("Could not convert to proxy record type")
+
+			return domain.ErrNetworkInvalidProxyRecord
+		}
+
+		batch.Queue(query, rec.IPFrom.To4().String(), rec.IPTo.To4().String(), rec.ProxyType, rec.CountryCode, rec.CountryName, rec.RegionName, rec.CityName,
+			rec.ISP, rec.Domain, rec.UsageType, rec.ASN, rec.AS, rec.LastSeen, rec.Threat)
 
 		if recordIdx > 0 && recordIdx%100000 == 0 || len(records) == recordIdx+1 {
 			if batch.Len() > 0 {
@@ -397,35 +412,6 @@ func (r networkRepository) loadProxies(ctx context.Context, records []ip2locatio
 				slog.Info(fmt.Sprintf("Proxy Progress: %d/%d (%.0f%%)",
 					recordIdx, len(records)-1, float64(recordIdx)/float64(len(records)-1)*100))
 			}
-		}
-	}
-
-	slog.Info("Loaded Proxy records",
-		slog.Int("count", len(records)), slog.Duration("duration", time.Since(curTime)))
-
-	return nil
-}
-
-// InsertBlockListData will load the provided datasets into the database
-//
-// Note that this can take a while on slower machines. For reference, it takes
-// about ~90s with a local database on a Ryzen 3900X/PCIe4 NVMe SSD.
-func (r networkRepository) InsertIP2LocationData(ctx context.Context, blockListData *ip2location.BlockListData) error {
-	if len(blockListData.Proxies) > 0 {
-		if errProxies := r.loadProxies(ctx, blockListData.Proxies, false); errProxies != nil {
-			return errProxies
-		}
-	}
-
-	if len(blockListData.Locations4) > 0 {
-		if errLocation := r.loadLocation(ctx, blockListData.Locations4, false); errLocation != nil {
-			return errLocation
-		}
-	}
-
-	if len(blockListData.ASN4) > 0 {
-		if errASN := r.loadASN(ctx, blockListData.ASN4); errASN != nil {
-			return errASN
 		}
 	}
 

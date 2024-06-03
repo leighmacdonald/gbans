@@ -11,7 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"math/big"
 	"net"
 	"net/http"
@@ -23,25 +23,32 @@ import (
 	"sync"
 	"time"
 
+	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/util"
 )
 
+const downloadURL = "https://www.ip2location.com/download/?token=%s&file=%s"
+
+type DatabaseName string
+
 const (
-	geoDownloadURL = "https://www.ip2location.com/download/?token=%s&file=%s"
-
-	geoDatabaseASN4     = "DBASNLITE"
-	geoDatabaseASNFile4 = "IP2LOCATION-LITE-ASN.CSV"
-	geoDatabaseASN6     = "DBASNLITEIPV6"
-	geoDatabaseASNFile6 = "IP2LOCATION-LITE-ASN.IPV6.CSV"
-
-	geoDatabaseLocation4     = "DB5LITECSV"
-	geoDatabaseLocationFile4 = "IP2LOCATION-LITE-DB5.CSV"
-	geoDatabaseLocation6     = "DB5LITECSVIPV6"
-	geoDatabaseLocationFile6 = "IP2LOCATION-LITE-DB5.IPV6.CSV"
+	GeoDatabaseASN4      DatabaseName = "DBASNLITE"
+	GeoDatabaseASN6      DatabaseName = "DBASNLITEIPV6"
+	GeoDatabaseLocation4 DatabaseName = "DB5LITECSV"
+	GeoDatabaseLocation6 DatabaseName = "DB5LITECSVIPV6"
 
 	// No ipv6 for proxy.
-	geoDatabaseProxy     = "PX10LITECSV"
-	geoDatabaseProxyFile = "IP2PROXY-LITE-PX10.CSV"
+	GeoDatabaseProxy DatabaseName = "PX10LITECSV"
+)
+
+type DatabaseFile string
+
+const (
+	GeoDatabaseASNFile4      DatabaseFile = "IP2LOCATION-LITE-ASN.CSV"
+	GeoDatabaseASNFile6      DatabaseFile = "IP2LOCATION-LITE-ASN.IPV6.CSV"
+	GeoDatabaseLocationFile4 DatabaseFile = "IP2LOCATION-LITE-DB5.CSV"
+	GeoDatabaseLocationFile6 DatabaseFile = "IP2LOCATION-LITE-DB5.IPV6.CSV"
+	GeoDatabaseProxyFile     DatabaseFile = "IP2PROXY-LITE-PX10.CSV"
 )
 
 var (
@@ -259,8 +266,8 @@ var (
 // into the configured geodb_path defined in the configuration file.
 func Update(ctx context.Context, outputPath string, apiKey string) error {
 	type dlParam struct {
-		dbName   string
-		fileName string
+		dbName   DatabaseName
+		fileName DatabaseFile
 	}
 
 	downloadDatabase := func(params dlParam) error {
@@ -268,7 +275,7 @@ func Update(ctx context.Context, outputPath string, apiKey string) error {
 			Timeout: time.Minute * 5,
 		}
 
-		req, reqErr := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf(geoDownloadURL, apiKey, params.dbName), nil)
+		req, reqErr := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf(downloadURL, apiKey, params.dbName), nil)
 		if reqErr != nil {
 			return errors.Join(reqErr, ErrCreateRequest)
 		}
@@ -287,7 +294,7 @@ func Update(ctx context.Context, outputPath string, apiKey string) error {
 			return errors.Join(errCloseBody, ErrClose)
 		}
 
-		return extractZip(body, outputPath, params.fileName)
+		return extractZip(body, outputPath, string(params.fileName))
 	}
 
 	if apiKey == "" {
@@ -300,18 +307,18 @@ func Update(ctx context.Context, outputPath string, apiKey string) error {
 	)
 
 	for _, param := range []dlParam{
-		{dbName: geoDatabaseASN4, fileName: geoDatabaseASNFile4},
-		{dbName: geoDatabaseASN6, fileName: geoDatabaseASNFile6},
-		{dbName: geoDatabaseLocation4, fileName: geoDatabaseLocationFile4},
-		{dbName: geoDatabaseLocation6, fileName: geoDatabaseLocationFile6},
-		{dbName: geoDatabaseProxy, fileName: geoDatabaseProxyFile},
+		{dbName: GeoDatabaseASN4, fileName: GeoDatabaseASNFile4},
+		{dbName: GeoDatabaseASN6, fileName: GeoDatabaseASNFile6},
+		{dbName: GeoDatabaseLocation4, fileName: GeoDatabaseLocationFile4},
+		{dbName: GeoDatabaseLocation6, fileName: GeoDatabaseLocationFile6},
+		{dbName: GeoDatabaseProxy, fileName: GeoDatabaseProxyFile},
 	} {
 		waitGroup.Add(1)
 
 		go func(param dlParam) {
 			defer waitGroup.Done()
 
-			fileInfo, errStat := os.Stat(path.Join(outputPath, param.fileName))
+			fileInfo, errStat := os.Stat(path.Join(outputPath, string(param.fileName)))
 			if errStat == nil {
 				age := time.Since(fileInfo.ModTime())
 				if age < time.Hour*24 {
@@ -319,8 +326,10 @@ func Update(ctx context.Context, outputPath string, apiKey string) error {
 				}
 			}
 
+			slog.Debug("Downloading ip2location records", slog.String("db", string(param.dbName)))
+
 			if errDownload := downloadDatabase(param); errDownload != nil {
-				log.Printf("Failed to download geo database: %v", errDownload)
+				slog.Error("Failed to download geo database", log.ErrAttr(errDownload))
 			}
 		}(param)
 	}
@@ -332,12 +341,10 @@ func Update(ctx context.Context, outputPath string, apiKey string) error {
 
 // New opens the .mmdb file for querying and sets up the ellipsoid configuration for more accurate
 // geo queries.
-func readASNRecords(path string, ipv6 bool) ([]ASNRecord, error) {
-	var records []ASNRecord
-
+func readASNRecords(path string, ipv6 bool, lineOut chan any) error {
 	asnFile, errOpen := os.Open(path)
 	if errOpen != nil {
-		return nil, errors.Join(errOpen, ErrOpenFile)
+		return errors.Join(errOpen, ErrOpenFile)
 	}
 
 	reader := csv.NewReader(asnFile)
@@ -349,22 +356,22 @@ func readASNRecords(path string, ipv6 bool) ([]ASNRecord, error) {
 		}
 
 		if errReadLine != nil {
-			return nil, errors.Join(errReadLine, ErrCSVRow)
+			return errors.Join(errReadLine, ErrCSVRow)
 		}
 
 		ipFrom, errParseFromIP := stringInt2ip(recordLine[0], ipv6)
 		if errParseFromIP != nil {
-			return nil, errors.Join(errParseFromIP, ErrParseIP)
+			return errors.Join(errParseFromIP, ErrParseIP)
 		}
 
 		ipTo, errParseToIP := stringInt2ip(recordLine[1], ipv6)
 		if errParseToIP != nil {
-			return nil, errors.Join(errParseToIP, ErrParseIP)
+			return errors.Join(errParseToIP, ErrParseIP)
 		}
 
 		_, network, errParseCIDR := net.ParseCIDR(recordLine[2])
 		if errParseCIDR != nil {
-			return nil, errors.Join(errParseCIDR, ErrParseCIDR)
+			return errors.Join(errParseCIDR, ErrParseCIDR)
 		}
 
 		if recordLine[3] == "-" {
@@ -373,21 +380,19 @@ func readASNRecords(path string, ipv6 bool) ([]ASNRecord, error) {
 
 		asNum, errParseASNum := strconv.ParseUint(recordLine[3], 10, 64)
 		if errParseASNum != nil {
-			return nil, errors.Join(errParseCIDR, ErrParseASN)
+			return errors.Join(errParseCIDR, ErrParseASN)
 		}
 
-		records = append(records, ASNRecord{IPFrom: &ipFrom, IPTo: &ipTo, CIDR: network, ASNum: asNum, ASName: recordLine[4]})
+		lineOut <- ASNRecord{IPFrom: &ipFrom, IPTo: &ipTo, CIDR: network, ASNum: asNum, ASName: recordLine[4]}
 	}
 
-	return records, nil
+	return nil
 }
 
-func readLocationRecords(path string, ipv6 bool) ([]LocationRecord, error) {
-	var records []LocationRecord
-
+func readLocationRecords(path string, ipv6 bool, lineOut chan any) error {
 	asnFile, errOpen := os.Open(path)
 	if errOpen != nil {
-		return nil, errors.Join(errOpen, ErrOpenFile)
+		return errors.Join(errOpen, ErrOpenFile)
 	}
 
 	reader := csv.NewReader(asnFile)
@@ -400,15 +405,15 @@ func readLocationRecords(path string, ipv6 bool) ([]LocationRecord, error) {
 
 		ipFrom, errParseFromIP := stringInt2ip(recordLine[0], ipv6)
 		if errParseFromIP != nil {
-			return nil, errors.Join(errParseFromIP, ErrParseIP)
+			return errors.Join(errParseFromIP, ErrParseIP)
 		}
 
 		ipTo, errParseToIP := stringInt2ip(recordLine[1], ipv6)
 		if errParseToIP != nil {
-			return nil, errors.Join(errParseToIP, ErrParseIP)
+			return errors.Join(errParseToIP, ErrParseIP)
 		}
 
-		records = append(records, LocationRecord{
+		record := LocationRecord{
 			IPFrom:      &ipFrom,
 			IPTo:        &ipTo,
 			CountryCode: recordLine[2],
@@ -419,18 +424,18 @@ func readLocationRecords(path string, ipv6 bool) ([]LocationRecord, error) {
 				util.StringToFloat64(recordLine[6], 0),
 				util.StringToFloat64(recordLine[7], 0),
 			},
-		})
+		}
+
+		lineOut <- record
 	}
 
-	return records, nil
+	return nil
 }
 
-func readProxyRecords(path string) ([]ProxyRecord, error) {
-	var records []ProxyRecord
-
+func readProxyRecords(path string, lineOut chan any) error {
 	asnFile, errOpen := os.Open(path)
 	if errOpen != nil {
-		return nil, errors.Join(errOpen, ErrOpenFile)
+		return errors.Join(errOpen, ErrOpenFile)
 	}
 
 	reader := csv.NewReader(asnFile)
@@ -443,12 +448,12 @@ func readProxyRecords(path string) ([]ProxyRecord, error) {
 
 		ipFrom, errParseFromIP := stringInt2ip(recordLine[0], false)
 		if errParseFromIP != nil {
-			return nil, errors.Join(errParseFromIP, ErrParseIP)
+			return errors.Join(errParseFromIP, ErrParseIP)
 		}
 
 		ipTo, errParseToIP := stringInt2ip(recordLine[1], false)
 		if errParseToIP != nil {
-			return nil, errors.Join(errParseToIP, ErrParseIP)
+			return errors.Join(errParseToIP, ErrParseIP)
 		}
 
 		asn := int64(0)
@@ -456,7 +461,7 @@ func readProxyRecords(path string) ([]ProxyRecord, error) {
 		if recordLine[10] != "-" {
 			parsedAsn, errParseASN := strconv.ParseInt(recordLine[10], 10, 64)
 			if errParseASN != nil {
-				return nil, errors.Join(errParseASN, fmt.Errorf("failed to convert asn: %s (%w)", recordLine[10], errParseASN))
+				return errors.Join(errParseASN, fmt.Errorf("failed to convert asn: %s (%w)", recordLine[10], errParseASN))
 			}
 
 			asn = parsedAsn
@@ -464,10 +469,10 @@ func readProxyRecords(path string) ([]ProxyRecord, error) {
 
 		lastSeen, errParseLastSeen := strconv.ParseInt(recordLine[12], 10, 64)
 		if errParseLastSeen != nil {
-			return nil, errors.Join(errParseLastSeen, fmt.Errorf("failed to convert last_seen: %s (%w)", recordLine[10], errParseLastSeen))
+			return errors.Join(errParseLastSeen, fmt.Errorf("failed to convert last_seen: %s (%w)", recordLine[10], errParseLastSeen))
 		}
 
-		records = append(records, ProxyRecord{
+		lineOut <- ProxyRecord{
 			IPFrom:      &ipFrom,
 			IPTo:        &ipTo,
 			ProxyType:   ProxyType(recordLine[2]),
@@ -482,10 +487,10 @@ func readProxyRecords(path string) ([]ProxyRecord, error) {
 			AS:          recordLine[11],
 			LastSeen:    time.Unix(lastSeen, 0),
 			Threat:      ThreatType(recordLine[13]),
-		})
+		}
 	}
 
-	return records, nil
+	return nil
 }
 
 func parseIpv6Int(s string) (net.IP, error) {
@@ -589,85 +594,21 @@ type BlockListData struct {
 	Proxies    []ProxyRecord
 }
 
-func Read(root string) (*BlockListData, error) {
-	var (
-		files     [][]string
-		waitGroup = &sync.WaitGroup{}
-		data      BlockListData
-		errs      []error
-	)
+func LineReader(root string, file DatabaseFile, lineOut chan any) error {
+	fullPath := path.Join(root, string(file))
 
-	errWalkPath := filepath.Walk(root, func(path string, info os.FileInfo, _ error) error {
-		files = append(files, []string{path, info.Name()})
-
-		return nil
-	})
-
-	if errWalkPath != nil {
-		return nil, errors.Join(errWalkPath, ErrFileList)
+	switch file {
+	case GeoDatabaseASNFile4:
+		return readASNRecords(fullPath, false, lineOut)
+	case GeoDatabaseASNFile6:
+		return readASNRecords(fullPath, true, lineOut)
+	case GeoDatabaseLocationFile4:
+		return readLocationRecords(fullPath, false, lineOut)
+	case GeoDatabaseLocationFile6:
+		return readLocationRecords(fullPath, true, lineOut)
+	case GeoDatabaseProxyFile:
+		return readProxyRecords(fullPath, lineOut)
 	}
 
-	for _, file := range files {
-		waitGroup.Add(1)
-
-		go func(filePaths []string) {
-			defer waitGroup.Done()
-
-			switch filePaths[1] {
-			case geoDatabaseASNFile4:
-				records, errReadASN := readASNRecords(filePaths[0], false)
-				if errReadASN != nil {
-					errs = append(errs, errors.Join(errReadASN, fmt.Errorf("%w: %s", ErrLoad, filePaths[0])))
-
-					return
-				}
-
-				data.ASN4 = records
-			case geoDatabaseASNFile6:
-				records, errReadASN := readASNRecords(filePaths[0], true)
-				if errReadASN != nil {
-					errs = append(errs, errors.Join(errReadASN, fmt.Errorf("%w: %s", ErrLoad, filePaths[0])))
-
-					return
-				}
-
-				data.ASN6 = records
-			case geoDatabaseLocationFile4:
-				records, errReadLocation := readLocationRecords(filePaths[0], false)
-				if errReadLocation != nil {
-					errs = append(errs, errors.Join(errReadLocation, fmt.Errorf("%w: %s", ErrLoad, filePaths[0])))
-
-					return
-				}
-
-				data.Locations4 = records
-			case geoDatabaseLocationFile6:
-				records, errReadLocation := readLocationRecords(filePaths[0], true)
-				if errReadLocation != nil {
-					errs = append(errs, errors.Join(errReadLocation, fmt.Errorf("%w: %s", ErrLoad, filePaths[0])))
-
-					return
-				}
-
-				data.Locations6 = records
-			case geoDatabaseProxyFile:
-				records, errReadProxy := readProxyRecords(filePaths[0])
-				if errReadProxy != nil {
-					errs = append(errs, errors.Join(errReadProxy, fmt.Errorf("%w: %s", ErrLoad, filePaths[0])))
-
-					return
-				}
-
-				data.Proxies = records
-			}
-		}(file)
-	}
-
-	waitGroup.Wait()
-
-	if len(errs) != 0 {
-		return nil, errs[0]
-	}
-
-	return &data, nil
+	return nil
 }

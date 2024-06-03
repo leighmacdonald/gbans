@@ -99,7 +99,7 @@ func refreshFiltersCmd() *cobra.Command {
 			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(conf, dbUsecase), configUsecase)
 			reportUsecase := report.NewReportUsecase(report.NewReportRepository(dbUsecase), discordUsecase, configUsecase, personUsecase, nil)
 			// banGroupUsecase := steamgroup.NewBanGroupUsecase(steamgroup.NewSteamGroupRepository(dbUsecase), personUsecase)
-			networkUsecase := network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(dbUsecase), personUsecase)
+			networkUsecase := network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(dbUsecase), personUsecase, configUsecase)
 			banUsecase := ban.NewBanSteamUsecase(ban.NewBanSteamRepository(dbUsecase, personUsecase, networkUsecase), personUsecase, configUsecase, discordUsecase, reportUsecase, stateUsecase)
 
 			// blocklistUsecase := blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(dbUsecase), banUsecase)

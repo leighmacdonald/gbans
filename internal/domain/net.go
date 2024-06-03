@@ -2,12 +2,19 @@ package domain
 
 import (
 	"context"
+	"errors"
 	"net"
 	"net/netip"
 	"time"
 
 	"github.com/leighmacdonald/gbans/pkg/ip2location"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+)
+
+var (
+	ErrNetworkInvalidASNRecord      = errors.New("invalid asn record")
+	ErrNetworkInvalidLocationRecord = errors.New("invalid location record")
+	ErrNetworkInvalidProxyRecord    = errors.New("invalid proxy record")
 )
 
 type NetworkUsecase interface {
@@ -18,7 +25,7 @@ type NetworkUsecase interface {
 	AddConnectionHistory(ctx context.Context, conn *PersonConnection) error
 	Start(ctx context.Context)
 	QueryNetwork(ctx context.Context, ip netip.Addr) (NetworkDetails, error)
-	InsertIP2LocationData(ctx context.Context, blockListData *ip2location.BlockListData) error
+	RefreshLocationData(ctx context.Context) error
 }
 
 type NetworkRepository interface {
@@ -30,7 +37,9 @@ type NetworkRepository interface {
 	GetASNRecordByIP(ctx context.Context, ipAddr netip.Addr) (NetworkASN, error)
 	GetLocationRecord(ctx context.Context, ipAddr netip.Addr) (NetworkLocation, error)
 	GetProxyRecord(ctx context.Context, ipAddr netip.Addr) (NetworkProxy, error)
-	InsertIP2LocationData(ctx context.Context, blockListData *ip2location.BlockListData) error
+	LoadASN(ctx context.Context, truncate bool, records []any) error
+	LoadLocation(ctx context.Context, truncate bool, records []any) error
+	LoadProxies(ctx context.Context, truncate bool, records []any) error
 }
 
 type CIDRBlockSource struct {
