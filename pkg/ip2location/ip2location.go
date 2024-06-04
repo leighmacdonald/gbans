@@ -339,20 +339,36 @@ func Update(ctx context.Context, outputPath string, apiKey string) error {
 	return exitErr
 }
 
-// New opens the .mmdb file for querying and sets up the ellipsoid configuration for more accurate
-// geo queries.
-func readASNRecords(path string, ipv6 bool, lineOut chan any) error {
+type ASNLoader func(ctx context.Context, truncate bool, records []ASNRecord) error
+
+func ReadASNRecords(ctx context.Context, path string, ipv6 bool, onRecords ASNLoader) error {
 	asnFile, errOpen := os.Open(path)
 	if errOpen != nil {
 		return errors.Join(errOpen, ErrOpenFile)
 	}
 
-	reader := csv.NewReader(asnFile)
+	defer asnFile.Close()
+
+	var (
+		reader  = csv.NewReader(asnFile)
+		records []ASNRecord
+		first   = true
+		total   int64
+		started = time.Now()
+	)
+
+	defer func() {
+		slog.Info("Import asn records complete", slog.Int64("total", total), slog.Duration("duration", time.Since(started)))
+	}()
 
 	for {
 		recordLine, errReadLine := reader.Read()
 		if errors.Is(errReadLine, io.EOF) {
-			break
+			if len(records) == 0 {
+				return nil
+			}
+
+			return onRecords(ctx, first, records)
 		}
 
 		if errReadLine != nil {
@@ -371,6 +387,10 @@ func readASNRecords(path string, ipv6 bool, lineOut chan any) error {
 
 		_, network, errParseCIDR := net.ParseCIDR(recordLine[2])
 		if errParseCIDR != nil {
+			if recordLine[2] == "-" {
+				continue
+			}
+
 			return errors.Join(errParseCIDR, ErrParseCIDR)
 		}
 
@@ -383,24 +403,49 @@ func readASNRecords(path string, ipv6 bool, lineOut chan any) error {
 			return errors.Join(errParseCIDR, ErrParseASN)
 		}
 
-		lineOut <- ASNRecord{IPFrom: &ipFrom, IPTo: &ipTo, CIDR: network, ASNum: asNum, ASName: recordLine[4]}
-	}
+		records = append(records, ASNRecord{IPFrom: &ipFrom, IPTo: &ipTo, CIDR: network, ASNum: asNum, ASName: recordLine[4]})
 
-	return nil
+		total++
+
+		if len(records) == 10000 {
+			if err := onRecords(ctx, first, records); err != nil {
+				return err
+			}
+
+			slog.Debug("Imported asn records", slog.Int64("total", total))
+
+			records = nil
+			first = false
+		}
+	}
 }
 
-func readLocationRecords(path string, ipv6 bool, lineOut chan any) error {
-	asnFile, errOpen := os.Open(path)
+type LocationLoader func(ctx context.Context, truncate bool, records []LocationRecord) error
+
+func ReadLocationRecords(ctx context.Context, path string, ipv6 bool, onRecords LocationLoader) error {
+	locationFile, errOpen := os.Open(path)
 	if errOpen != nil {
 		return errors.Join(errOpen, ErrOpenFile)
 	}
 
-	reader := csv.NewReader(asnFile)
+	defer locationFile.Close()
+
+	var (
+		reader  = csv.NewReader(locationFile)
+		records []LocationRecord
+		first   = true
+		total   int64
+		started = time.Now()
+	)
+
+	defer func() {
+		slog.Info("Import location records complete", slog.Int64("total", total), slog.Duration("duration", time.Since(started)))
+	}()
 
 	for {
 		recordLine, errReadLine := reader.Read()
 		if errors.Is(errReadLine, io.EOF) {
-			break
+			return onRecords(ctx, first, records)
 		}
 
 		ipFrom, errParseFromIP := stringInt2ip(recordLine[0], ipv6)
@@ -426,24 +471,52 @@ func readLocationRecords(path string, ipv6 bool, lineOut chan any) error {
 			},
 		}
 
-		lineOut <- record
-	}
+		total++
 
-	return nil
+		records = append(records, record)
+		if len(records) == 10000 {
+			if err := onRecords(ctx, first, records); err != nil {
+				return err
+			}
+
+			slog.Debug("Imported location records", slog.Int64("total", total))
+
+			first = false
+			records = nil
+		}
+	}
 }
 
-func readProxyRecords(path string, lineOut chan any) error {
+type ProxyLoader func(ctx context.Context, truncate bool, records []ProxyRecord) error
+
+func ReadProxyRecords(ctx context.Context, path string, onRecords ProxyLoader) error {
 	asnFile, errOpen := os.Open(path)
 	if errOpen != nil {
 		return errors.Join(errOpen, ErrOpenFile)
 	}
 
-	reader := csv.NewReader(asnFile)
+	defer asnFile.Close()
+
+	var (
+		reader  = csv.NewReader(asnFile)
+		records []ProxyRecord
+		first   = true
+		total   int64
+		started = time.Now()
+	)
+
+	defer func() {
+		slog.Info("Import proxy records complete", slog.Int64("total", total), slog.Duration("duration", time.Since(started)))
+	}()
 
 	for {
-		recordLine, errReadRecordLine := reader.Read()
-		if errors.Is(errReadRecordLine, io.EOF) {
-			break
+		recordLine, errReadLine := reader.Read()
+		if errors.Is(errReadLine, io.EOF) {
+			if len(records) == 0 {
+				return nil
+			}
+
+			return onRecords(ctx, first, records)
 		}
 
 		ipFrom, errParseFromIP := stringInt2ip(recordLine[0], false)
@@ -472,7 +545,7 @@ func readProxyRecords(path string, lineOut chan any) error {
 			return errors.Join(errParseLastSeen, fmt.Errorf("failed to convert last_seen: %s (%w)", recordLine[10], errParseLastSeen))
 		}
 
-		lineOut <- ProxyRecord{
+		record := ProxyRecord{
 			IPFrom:      &ipFrom,
 			IPTo:        &ipTo,
 			ProxyType:   ProxyType(recordLine[2]),
@@ -488,9 +561,22 @@ func readProxyRecords(path string, lineOut chan any) error {
 			LastSeen:    time.Unix(lastSeen, 0),
 			Threat:      ThreatType(recordLine[13]),
 		}
-	}
 
-	return nil
+		records = append(records, record)
+
+		total++
+
+		if len(records) == 10000 {
+			if err := onRecords(ctx, first, records); err != nil {
+				return err
+			}
+
+			slog.Debug("Imported proxy records", slog.Int64("total", total))
+
+			first = false
+			records = nil
+		}
+	}
 }
 
 func parseIpv6Int(s string) (net.IP, error) {
@@ -581,33 +667,6 @@ func extractZip(data []byte, dest string, filename string) error {
 
 			break
 		}
-	}
-
-	return nil
-}
-
-type BlockListData struct {
-	ASN4       []ASNRecord
-	ASN6       []ASNRecord
-	Locations4 []LocationRecord
-	Locations6 []LocationRecord
-	Proxies    []ProxyRecord
-}
-
-func LineReader(root string, file DatabaseFile, lineOut chan any) error {
-	fullPath := path.Join(root, string(file))
-
-	switch file {
-	case GeoDatabaseASNFile4:
-		return readASNRecords(fullPath, false, lineOut)
-	case GeoDatabaseASNFile6:
-		return readASNRecords(fullPath, true, lineOut)
-	case GeoDatabaseLocationFile4:
-		return readLocationRecords(fullPath, false, lineOut)
-	case GeoDatabaseLocationFile6:
-		return readLocationRecords(fullPath, true, lineOut)
-	case GeoDatabaseProxyFile:
-		return readProxyRecords(fullPath, lineOut)
 	}
 
 	return nil

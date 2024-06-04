@@ -1,4 +1,4 @@
-import { PropsWithChildren, ReactNode, useState } from 'react';
+import { PropsWithChildren, ReactNode, useCallback, useState } from 'react';
 import AddModeratorIcon from '@mui/icons-material/AddModerator';
 import BugReportIcon from '@mui/icons-material/BugReport';
 import CleaningServicesIcon from '@mui/icons-material/CleaningServices';
@@ -12,6 +12,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import ShareIcon from '@mui/icons-material/Share';
 import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import TroubleshootIcon from '@mui/icons-material/Troubleshoot';
+import UpdateIcon from '@mui/icons-material/Update';
 import WebAssetIcon from '@mui/icons-material/WebAsset';
 import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
@@ -24,7 +25,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
-import { apiGetDemoCleanup } from '../api';
+import { apiGetDemoCleanup, apiGetNetworkUpdateDB } from '../api';
 import { apiGetSettings, apiSaveSettings, Config } from '../api/admin.ts';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { Title } from '../component/Title';
@@ -1273,6 +1274,7 @@ const GeoLocationSection = ({
     settings: Config;
     mutate: (s: Config) => void;
 }) => {
+    const { sendFlash } = useUserFlashCtx();
     const { Field, Subscribe, handleSubmit, reset } = useForm({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, geo_location: value });
@@ -1284,6 +1286,15 @@ const GeoLocationSection = ({
             token: settings.geo_location.token
         }
     });
+
+    const onUpdateDB = useCallback(async () => {
+        try {
+            await apiGetNetworkUpdateDB();
+            sendFlash('success', 'Started database update');
+        } catch (e) {
+            sendFlash('error', 'Update already running');
+        }
+    }, [sendFlash]);
 
     return (
         <TabSection
@@ -1305,6 +1316,11 @@ const GeoLocationSection = ({
                         detections. gbans uses the IP2Location LITE database for{' '}
                         <Link href="https://lite.ip2location.com">IP geolocation</Link>. You must register for an
                         account to get an API key.
+                    </Grid>
+                    <Grid xs={12}>
+                        <Button variant={'contained'} startIcon={<UpdateIcon />} onClick={onUpdateDB}>
+                            Update Database
+                        </Button>
                     </Grid>
                     <Grid xs={12}>
                         <Field

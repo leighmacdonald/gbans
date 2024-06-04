@@ -72,8 +72,6 @@ func netUpdateCmd() *cobra.Command {
 				slog.Error("Failed to refresh location data", log.ErrAttr(err))
 				os.Exit(1)
 			}
-
-			slog.Info("Import Complete")
 		},
 	}
 }

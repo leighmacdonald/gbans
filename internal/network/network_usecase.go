@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net"
 	"net/netip"
+	"path"
 	"strings"
 	"time"
 
@@ -102,54 +103,17 @@ func (u networkUsecase) GetASNRecordsByNum(ctx context.Context, asNum int64) ([]
 
 func (u networkUsecase) importDatabase(ctx context.Context, dbName ip2location.DatabaseFile) error {
 	conf := u.config.Config()
+	filePath := path.Join(conf.GeoLocation.CachePath, string(dbName))
 
-	linesInput := make(chan any, 1000)
-
-	go func() {
-		defer close(linesInput)
-
-		errRead := ip2location.LineReader(conf.GeoLocation.CachePath, dbName, linesInput)
-		if errRead != nil {
-			slog.Error("Failed to read data", log.ErrAttr(errRead))
-		}
-
-		slog.Debug("Line reader completed")
-	}()
-
-	var rows []any
-
-	first := true
-
-	for {
-		select {
-		case line, ok := <-linesInput:
-			if ok {
-				rows = append(rows, line)
-			}
-
-			if !ok || len(rows) == 1000 {
-				var err error
-
-				switch dbName {
-				case ip2location.GeoDatabaseLocationFile4:
-					err = u.nr.LoadLocation(ctx, first, rows)
-				case ip2location.GeoDatabaseASNFile4:
-					err = u.nr.LoadASN(ctx, first, rows)
-				case ip2location.GeoDatabaseProxyFile:
-					err = u.nr.LoadProxies(ctx, first, rows)
-				}
-
-				if err != nil {
-					return err
-				}
-
-				clear(rows)
-
-				first = false
-			}
-		case <-ctx.Done():
-			return nil
-		}
+	switch dbName {
+	case ip2location.GeoDatabaseLocationFile4:
+		return ip2location.ReadLocationRecords(ctx, filePath, false, u.nr.LoadLocation)
+	case ip2location.GeoDatabaseASNFile4:
+		return ip2location.ReadASNRecords(ctx, filePath, false, u.nr.LoadASN)
+	case ip2location.GeoDatabaseProxyFile:
+		return ip2location.ReadProxyRecords(ctx, filePath, u.nr.LoadProxies)
+	default:
+		return domain.ErrNetworkLocationUnknown
 	}
 }
 

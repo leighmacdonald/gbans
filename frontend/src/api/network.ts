@@ -7,6 +7,8 @@ export interface CIDRBlockSource extends TimeStamped {
     enabled: boolean;
 }
 
+export const apiGetNetworkUpdateDB = async () => apiCall('/api/network/update_db');
+
 export const apiGetCIDRBlockListsSteamWhitelist = async (abortController?: AbortController) => {
     return transformTimeStampedDatesList(
         await apiCall<WhitelistSteam[]>(`/api/block_list/whitelist/steam`, 'GET', undefined, abortController)
