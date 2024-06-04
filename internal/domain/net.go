@@ -37,9 +37,9 @@ type NetworkRepository interface {
 	GetASNRecordByIP(ctx context.Context, ipAddr netip.Addr) (NetworkASN, error)
 	GetLocationRecord(ctx context.Context, ipAddr netip.Addr) (NetworkLocation, error)
 	GetProxyRecord(ctx context.Context, ipAddr netip.Addr) (NetworkProxy, error)
-	LoadASN(ctx context.Context, truncate bool, records []any) error
-	LoadLocation(ctx context.Context, truncate bool, records []any) error
-	LoadProxies(ctx context.Context, truncate bool, records []any) error
+	LoadASN(ctx context.Context, truncate bool, records []ip2location.ASNRecord) error
+	LoadLocation(ctx context.Context, truncate bool, records []ip2location.LocationRecord) error
+	LoadProxies(ctx context.Context, truncate bool, records []ip2location.ProxyRecord) error
 }
 
 type CIDRBlockSource struct {

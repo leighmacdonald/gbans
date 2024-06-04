@@ -275,8 +275,10 @@ func (r networkRepository) GetProxyRecord(ctx context.Context, ipAddr netip.Addr
 	return proxyRecord, nil
 }
 
-func (r networkRepository) LoadASN(ctx context.Context, truncate bool, records []any) error {
+func (r networkRepository) LoadASN(ctx context.Context, truncate bool, records []ip2location.ASNRecord) error {
 	if truncate {
+		slog.Debug("Truncating asn table")
+
 		if errTruncate := r.db.TruncateTable(ctx, "net_asn"); errTruncate != nil {
 			return errTruncate
 		}
@@ -288,42 +290,25 @@ func (r networkRepository) LoadASN(ctx context.Context, truncate bool, records [
 
 	batch := pgx.Batch{}
 
-	for recordIdx, asnRecord := range records {
-		rec, ok := asnRecord.(ip2location.ASNRecord)
-		if !ok {
-			slog.Error("Could not convert to asn record type")
-
-			return domain.ErrNetworkInvalidASNRecord
-		}
-
+	for _, rec := range records {
 		batch.Queue(query, fmt.Sprintf("%s-%s", rec.IPFrom, rec.IPTo), rec.CIDR, rec.ASNum, rec.ASName)
+	}
 
-		if recordIdx > 0 && recordIdx%100000 == 0 || len(records) == recordIdx+1 {
-			if batch.Len() > 0 {
-				c, cancel := context.WithTimeout(ctx, time.Second*10)
+	c, cancel := context.WithTimeout(ctx, time.Second*10)
+	defer cancel()
 
-				batchResults := r.db.SendBatch(c, &batch)
-				if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
-					cancel()
-
-					return errors.Join(errCloseBatch, domain.ErrCloseBatch)
-				}
-
-				cancel()
-
-				batch = pgx.Batch{}
-
-				slog.Info(fmt.Sprintf("ASN Progress: %d/%d (%.0f%%)",
-					recordIdx, len(records)-1, float64(recordIdx)/float64(len(records)-1)*100))
-			}
-		}
+	batchResults := r.db.SendBatch(c, &batch)
+	if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
+		return errors.Join(errCloseBatch, domain.ErrCloseBatch)
 	}
 
 	return nil
 }
 
-func (r networkRepository) LoadLocation(ctx context.Context, truncate bool, records []any) error {
+func (r networkRepository) LoadLocation(ctx context.Context, truncate bool, records []ip2location.LocationRecord) error {
 	if truncate {
+		slog.Debug("Truncating location table")
+
 		if errTruncate := r.db.TruncateTable(ctx, "net_location"); errTruncate != nil {
 			return errTruncate
 		}
@@ -335,42 +320,25 @@ func (r networkRepository) LoadLocation(ctx context.Context, truncate bool, reco
 
 	batch := pgx.Batch{}
 
-	for recordIdx, locationRecord := range records {
-		rec, ok := locationRecord.(ip2location.LocationRecord)
-		if !ok {
-			slog.Error("Could not convert to location record type")
-
-			return domain.ErrNetworkInvalidLocationRecord
-		}
-
+	for _, rec := range records {
 		batch.Queue(query, fmt.Sprintf("%s-%s", rec.IPFrom, rec.IPTo), rec.CountryCode, rec.CountryName, rec.RegionName, rec.CityName, rec.LatLong.Latitude, rec.LatLong.Longitude)
+	}
 
-		if recordIdx > 0 && recordIdx%100000 == 0 || len(records) == recordIdx+1 {
-			if batch.Len() > 0 {
-				c, cancel := context.WithTimeout(ctx, time.Second*10)
+	c, cancel := context.WithTimeout(ctx, time.Second*10)
+	defer cancel()
 
-				batchResults := r.db.SendBatch(c, &batch)
-				if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
-					cancel()
-
-					return errors.Join(errCloseBatch, domain.ErrCloseBatch)
-				}
-
-				cancel()
-
-				batch = pgx.Batch{}
-
-				slog.Info(fmt.Sprintf("Location4 Progress: %d/%d (%.0f%%)",
-					recordIdx, len(records)-1, float64(recordIdx)/float64(len(records)-1)*100))
-			}
-		}
+	batchResults := r.db.SendBatch(c, &batch)
+	if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
+		return errors.Join(errCloseBatch, domain.ErrCloseBatch)
 	}
 
 	return nil
 }
 
-func (r networkRepository) LoadProxies(ctx context.Context, truncate bool, records []any) error {
+func (r networkRepository) LoadProxies(ctx context.Context, truncate bool, records []ip2location.ProxyRecord) error {
 	if truncate {
+		slog.Debug("Truncating proxy table")
+
 		if errTruncate := r.db.TruncateTable(ctx, "net_proxy"); errTruncate != nil {
 			return errTruncate
 		}
@@ -383,36 +351,17 @@ func (r networkRepository) LoadProxies(ctx context.Context, truncate bool, recor
 
 	batch := pgx.Batch{}
 
-	for recordIdx, proxyRecord := range records {
-		rec, ok := proxyRecord.(ip2location.ProxyRecord)
-		if !ok {
-			slog.Error("Could not convert to proxy record type")
-
-			return domain.ErrNetworkInvalidProxyRecord
-		}
-
+	for _, rec := range records {
 		batch.Queue(query, rec.IPFrom.To4().String(), rec.IPTo.To4().String(), rec.ProxyType, rec.CountryCode, rec.CountryName, rec.RegionName, rec.CityName,
 			rec.ISP, rec.Domain, rec.UsageType, rec.ASN, rec.AS, rec.LastSeen, rec.Threat)
+	}
 
-		if recordIdx > 0 && recordIdx%100000 == 0 || len(records) == recordIdx+1 {
-			if batch.Len() > 0 {
-				c, cancel := context.WithTimeout(ctx, time.Second*120)
+	c, cancel := context.WithTimeout(ctx, time.Second*10)
+	defer cancel()
 
-				batchResults := r.db.SendBatch(c, &batch)
-				if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
-					cancel()
-
-					return errors.Join(errCloseBatch, domain.ErrCloseBatch)
-				}
-
-				cancel()
-
-				batch = pgx.Batch{}
-
-				slog.Info(fmt.Sprintf("Proxy Progress: %d/%d (%.0f%%)",
-					recordIdx, len(records)-1, float64(recordIdx)/float64(len(records)-1)*100))
-			}
-		}
+	batchResults := r.db.SendBatch(c, &batch)
+	if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
+		return errors.Join(errCloseBatch, domain.ErrCloseBatch)
 	}
 
 	return nil
