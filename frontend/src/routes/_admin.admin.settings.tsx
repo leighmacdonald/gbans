@@ -892,7 +892,7 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <Field
                             name={'app_secret'}
                             validators={{
-                                onChange: z.string().refine((arg) => arg.length == 0 || arg.length == 32)
+                                onChange: z.string()
                             }}
                             children={(props) => {
                                 return <TextFieldSimple {...props} label={'Discord bot app secret'} />;
