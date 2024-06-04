@@ -69,7 +69,7 @@ func (u networkUsecase) Start(ctx context.Context) {
 
 			// Maybe ignore these and wait for connect call to create?
 			_, errPerson := u.pu.GetOrCreatePersonBySteamID(ctx, newServerEvent.SID)
-			if errPerson != nil {
+			if errPerson != nil && !errors.Is(errPerson, domain.ErrDuplicate) {
 				slog.Error("Failed to fetch connecting person", slog.String("steam_id", newServerEvent.SID.String()), log.ErrAttr(errPerson))
 
 				continue

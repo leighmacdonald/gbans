@@ -235,7 +235,6 @@ func (u personUsecase) GetPeople(ctx context.Context, filter domain.PlayerQuery)
 func (u personUsecase) GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.SteamID) (domain.Person, error) {
 	person, errGetPerson := u.personRepo.GetPersonBySteamID(ctx, sid64)
 	if errGetPerson != nil && errors.Is(errGetPerson, domain.ErrNoResult) {
-		// FIXME
 		person = domain.NewPerson(sid64)
 
 		if err := u.personRepo.SavePerson(ctx, &person); err != nil {
