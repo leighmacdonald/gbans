@@ -35,6 +35,7 @@
     "@emotion/styled": "^11.11.5",
     "@eslint/js": "^8.57.0",
     "@fontsource/roboto": "^5.0.13",
+    "@mdxeditor/editor": "^3.4.0",
     "@mui/icons-material": "^5.15.19",
     "@mui/lab": "5.0.0-alpha.165",
     "@mui/material": "^5.15.19",

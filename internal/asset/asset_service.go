@@ -1,8 +1,6 @@
 package asset
 
 import (
-	"bytes"
-	"encoding/base64"
 	"fmt"
 	"net/http"
 
@@ -38,20 +36,25 @@ func NewAssetHandler(engine *gin.Engine, cu domain.ConfigUsecase, au domain.Asse
 func (h mediaHandler) onAPISaveMedia() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req domain.UserUploadedFile
-		if !httphelper.Bind(ctx, &req) {
-			return
-		}
 
-		content, decodeErr := base64.StdEncoding.DecodeString(req.Content)
-		if decodeErr != nil {
-			ctx.JSON(http.StatusBadRequest, domain.ErrBadRequest)
+		if err := ctx.ShouldBind(&req); err != nil {
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 
 			return
 		}
 
-		reader := bytes.NewReader(content)
+		mediaFile, errOpen := req.File.Open()
+		if errOpen != nil {
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
-		media, errMedia := h.au.Create(ctx, httphelper.CurrentUserProfile(ctx).SteamID, "media", req.Name, reader)
+			return
+		}
+
+		if req.Name == "" {
+			req.Name = req.File.Filename
+		}
+
+		media, errMedia := h.au.Create(ctx, httphelper.CurrentUserProfile(ctx).SteamID, "media", req.Name, mediaFile)
 		if errMedia != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, errMedia)
 

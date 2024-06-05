@@ -22,6 +22,7 @@ import { Heading } from '../Heading';
 import { Buttons } from '../field/Buttons.tsx';
 import { CheckboxSimple } from '../field/CheckboxSimple.tsx';
 import { DateTimeSimple } from '../field/DateTimeSimple.tsx';
+import { MarkdownField } from '../field/MarkdownField.tsx';
 import { SelectFieldSimple } from '../field/SelectFieldSimple.tsx';
 import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
@@ -146,7 +147,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                                 }}
                                 children={(props) => {
                                     return (
-                                        <TextFieldSimple {...props} label={'Description'} multiline={true} rows={10} />
+                                        <MarkdownField {...props} label={'Description'} multiline={true} rows={10} />
                                     );
                                 }}
                             />

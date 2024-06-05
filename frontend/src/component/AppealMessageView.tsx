@@ -19,7 +19,7 @@ import { apiUpdateBanMessage, BanAppealMessage } from '../api';
 import { avatarHashToURL } from '../util/text.tsx';
 import { MarkDownRenderer } from './MarkdownRenderer';
 import { Buttons } from './field/Buttons.tsx';
-import { MarkdownField } from './field/MarkdownField.tsx';
+import { MarkdownField, mdEditorRef } from './field/MarkdownField.tsx';
 
 interface AppealMessageViewProps {
     message: BanAppealMessage;
@@ -50,6 +50,7 @@ export const AppealMessageView = ({ message, onDelete }: AppealMessageViewProps)
             queryClient.setQueryData(['banMessages', { ban_id: message.ban_id }], (prev: BanAppealMessage[]) => {
                 return prev.map((m) => (m.ban_message_id == message.ban_message_id ? msg : m));
             });
+            mdEditorRef.current?.setMarkdown('');
             setEditing(false);
         }
     });

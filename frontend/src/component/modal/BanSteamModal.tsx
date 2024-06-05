@@ -27,6 +27,7 @@ import { Heading } from '../Heading';
 import { Buttons } from '../field/Buttons.tsx';
 import { CheckboxSimple } from '../field/CheckboxSimple.tsx';
 import { DateTimeSimple } from '../field/DateTimeSimple.tsx';
+import { MarkdownField } from '../field/MarkdownField.tsx';
 import { SelectFieldSimple } from '../field/SelectFieldSimple.tsx';
 import { SteamIDField } from '../field/SteamIDField.tsx';
 import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
@@ -287,9 +288,7 @@ export const BanSteamModal = NiceModal.create(({ existing }: { existing?: SteamB
                                     onChange: z.string()
                                 }}
                                 children={(props) => {
-                                    return (
-                                        <TextFieldSimple {...props} multiline={true} rows={10} label={'Mod Notes'} />
-                                    );
+                                    return <MarkdownField {...props} multiline={true} rows={10} label={'Mod Notes'} />;
                                 }}
                             />
                         </Grid>

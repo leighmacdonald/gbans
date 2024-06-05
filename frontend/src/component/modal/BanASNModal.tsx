@@ -23,6 +23,7 @@ import { makeSteamidValidators } from '../../util/validator/makeSteamidValidator
 import { Heading } from '../Heading';
 import { Buttons } from '../field/Buttons.tsx';
 import { DateTimeSimple } from '../field/DateTimeSimple.tsx';
+import { MarkdownField } from '../field/MarkdownField.tsx';
 import { SelectFieldSimple } from '../field/SelectFieldSimple.tsx';
 import { SteamIDField } from '../field/SteamIDField.tsx';
 import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
@@ -228,9 +229,7 @@ export const BanASNModal = NiceModal.create(({ existing }: { existing?: ASNBanRe
                                     onChange: z.string()
                                 }}
                                 children={(props) => {
-                                    return (
-                                        <TextFieldSimple {...props} multiline={true} rows={10} label={'Mod Notes'} />
-                                    );
+                                    return <MarkdownField {...props} multiline={true} rows={10} label={'Mod Notes'} />;
                                 }}
                             />
                         </Grid>

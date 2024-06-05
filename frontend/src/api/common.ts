@@ -82,17 +82,17 @@ type httpMethods = 'POST' | 'GET' | 'DELETE' | 'PUT';
  * @param method
  * @param body
  * @param abortController
+ * @param isFormData
  * @throws AppError
  */
 export const apiCall = async <TResponse = EmptyBody | null, TRequestBody = Record<string, unknown> | object>(
     url: string,
     method: httpMethods = 'GET',
-    body?: TRequestBody | undefined,
-    abortController?: AbortController
+    body?: TRequestBody | undefined | FormData,
+    abortController?: AbortController,
+    isFormData: boolean = false
 ): Promise<TResponse> => {
-    const headers: Record<string, string> = {
-        'Content-Type': 'application/json; charset=UTF-8'
-    };
+    const headers: Record<string, string> = {};
     const requestOptions: RequestInit = {
         mode: 'cors',
         credentials: 'include',
@@ -105,10 +105,14 @@ export const apiCall = async <TResponse = EmptyBody | null, TRequestBody = Recor
         headers['Authorization'] = `Bearer ${accessToken}`;
     }
 
+    if (!isFormData) {
+        headers['Content-Type'] = 'application/json; charset=UTF-8';
+    }
+
     requestOptions.headers = headers;
 
     if (method !== 'GET' && body) {
-        requestOptions['body'] = JSON.stringify(body);
+        requestOptions.body = isFormData ? (body as FormData) : JSON.stringify(body);
     }
 
     if (abortController != undefined) {

@@ -35,7 +35,7 @@ import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { Title } from '../component/Title.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
-import { MarkdownField } from '../component/field/MarkdownField.tsx';
+import { MarkdownField, mdEditorRef } from '../component/field/MarkdownField.tsx';
 import { ModalConfirm } from '../component/modal';
 import { useAppInfoCtx } from '../contexts/AppInfoCtx.ts';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
@@ -86,6 +86,7 @@ function ProfileSettings() {
             );
         },
         onSuccess: async () => {
+            mdEditorRef.current?.setMarkdown('');
             sendFlash('success', 'Updated Settings');
         },
         onError: (error) => {

@@ -1,10 +1,6 @@
 import { apiCall, TimeStamped, transformTimeStampedDates } from './common';
 
-const assetUrl = (bucket: string, asset: Asset): string => `${__ASSET_URL__}/${bucket}/${asset.name}`;
-
-export const assetURLMedia = (asset: Asset) => assetUrl('media', asset);
-
-export const assetURLDemo = (asset: Asset) => assetUrl('demo', asset);
+export const assetURL = (asset: Asset): string => `/asset/${asset.asset_id}`;
 
 export enum MediaTypes {
     video,
@@ -45,19 +41,18 @@ export type Asset = {
     created_on: Date;
 };
 
-export interface MediaUploadResponse extends BaseUploadedMedia {
-    url: string;
-}
-
 export interface UserUploadedFile {
     content: string;
     name: string;
-    mime: string;
-    size: number;
 }
 
-export const apiSaveAsset = async (upload: UserUploadedFile) =>
-    transformTimeStampedDates(await apiCall<MediaUploadResponse, UserUploadedFile>(`/api/asset`, 'POST', upload));
+export const apiSaveAsset = async (file: File, name = '') => {
+    const imageData = new FormData();
+    imageData.append('file', file);
+    imageData.append('name', name);
+
+    return transformTimeStampedDates(await apiCall<Asset>(`/api/asset`, 'POST', imageData, undefined, true));
+};
 
 export const apiSaveContestEntryMedia = async (contest_id: number, upload: UserUploadedFile) =>
-    await apiCall<MediaUploadResponse, UserUploadedFile>(`/api/contests/${contest_id}/upload`, 'POST', upload);
+    await apiCall<Asset, UserUploadedFile>(`/api/contests/${contest_id}/upload`, 'POST', upload);

@@ -17,7 +17,7 @@ import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { ContainerWithHeaderAndButtons } from './ContainerWithHeaderAndButtons.tsx';
 import { MarkDownRenderer } from './MarkdownRenderer.tsx';
 import { Buttons } from './field/Buttons.tsx';
-import { MarkdownField } from './field/MarkdownField.tsx';
+import { MarkdownField, mdEditorRef } from './field/MarkdownField.tsx';
 import { SelectFieldSimple } from './field/SelectFieldSimple.tsx';
 
 interface WikiValues {
@@ -62,11 +62,13 @@ export const WikiPage = ({ slug = 'home', path }: { slug: string; path: '/_guest
                 created_on: page?.created_on ?? new Date(),
                 updated_on: page?.updated_on ?? new Date()
             };
+
             return await apiSaveWikiPage(newPage);
         },
         onSuccess: (savedPage) => {
             queryClient.setQueryData(['wiki', { slug }], savedPage);
             setEditMode(false);
+            mdEditorRef.current?.setMarkdown('');
             sendFlash('success', `Updated ${slug} successfully. Revision: ${savedPage.revision}`);
         }
     });
@@ -82,40 +84,15 @@ export const WikiPage = ({ slug = 'home', path }: { slug: string; path: '/_guest
         }
     });
 
-    const editButtons = (
-        <Subscribe
-            key={'edit-form-buttons'}
-            selector={(state) => [state.canSubmit, state.isSubmitting]}
-            children={([canSubmit, isSubmitting]) => {
-                return (
-                    <Buttons
-                        key={'edit-buttons'}
-                        reset={reset}
-                        canSubmit={canSubmit}
-                        isSubmitting={isSubmitting}
-                        closeLabel={'Cancel'}
-                        onClose={async () => {
-                            setEditMode(false);
-                        }}
-                    />
-                );
-            }}
-        />
-    );
-
     if (editMode) {
         return (
-            <form
-                onSubmit={async (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    await handleSubmit();
-                }}
-            >
-                <ContainerWithHeaderAndButtons
-                    title={`Editing: ${slug}`}
-                    buttons={[editButtons]}
-                    iconLeft={<EditIcon />}
+            <ContainerWithHeaderAndButtons title={`Editing: ${slug}`} iconLeft={<EditIcon />}>
+                <form
+                    onSubmit={async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        await handleSubmit();
+                    }}
                 >
                     <Grid container spacing={2}>
                         <Grid xs={12}>
@@ -155,10 +132,29 @@ export const WikiPage = ({ slug = 'home', path }: { slug: string; path: '/_guest
                                 }}
                             />
                         </Grid>
+                        <Grid xs={12}>
+                            <Subscribe
+                                key={'edit-form-buttons'}
+                                selector={(state) => [state.canSubmit, state.isSubmitting]}
+                                children={([canSubmit, isSubmitting]) => {
+                                    return (
+                                        <Buttons
+                                            key={'edit-buttons'}
+                                            reset={reset}
+                                            canSubmit={canSubmit}
+                                            isSubmitting={isSubmitting}
+                                            closeLabel={'Cancel'}
+                                            onClose={async () => {
+                                                setEditMode(false);
+                                            }}
+                                        />
+                                    );
+                                }}
+                            />
+                        </Grid>
                     </Grid>
-                    <Grid xs={12} mdOffset="auto"></Grid>
-                </ContainerWithHeaderAndButtons>
-            </form>
+                </form>
+            </ContainerWithHeaderAndButtons>
         );
     }
     return (

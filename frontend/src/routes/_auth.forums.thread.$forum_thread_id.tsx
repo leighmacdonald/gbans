@@ -31,7 +31,7 @@ import RouterLink from '../component/RouterLink.tsx';
 import { Title } from '../component/Title';
 import { VCenterBox } from '../component/VCenterBox.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
-import { MarkdownField } from '../component/field/MarkdownField.tsx';
+import { MarkdownField, mdEditorRef } from '../component/field/MarkdownField.tsx';
 import { ModalConfirm, ModalForumThreadEditor } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors.ts';
@@ -50,6 +50,7 @@ export const Route = createFileRoute('/_auth/forums/thread/$forum_thread_id')({
 });
 
 function ForumThreadPage() {
+    const { hasPermission, permissionLevel } = useRouteContext({ from: '/_auth/forums/thread/$forum_thread_id' });
     const { forum_thread_id } = Route.useParams();
     const { pageIndex } = Route.useSearch();
     const { sendFlash } = useUserFlashCtx();
@@ -78,7 +79,14 @@ function ForumThreadPage() {
         pageSize: RowsPerPage.TwentyFive //default page size
     });
 
-    const { hasPermission, permissionLevel } = useRouteContext({ from: '/_auth/forums/thread/$forum_thread_id' });
+    const onSave = async (message: ForumMessage) => {
+        queryClient.setQueryData(
+            ['threadMessages', { forum_thread_id }],
+            messages?.map((m) => {
+                return message.forum_message_id == m.forum_message_id ? message : m;
+            })
+        );
+    };
 
     useScrollToLocation();
 
@@ -161,8 +169,9 @@ function ForumThreadPage() {
         onSuccess: (message) => {
             const newMessages = [...(messages ?? []), message];
             queryClient.setQueryData(['threadMessages', { forum_thread_id }], newMessages);
+            mdEditorRef.current?.setMarkdown('');
             reset();
-            sendFlash('success', `New message (#${message.forum_message_id} posted`);
+            sendFlash('success', `New message created (#${message.forum_message_id})`);
         }
     });
 
@@ -262,6 +271,7 @@ function ForumThreadPage() {
             ) : (
                 (messages ?? []).map((m) => (
                     <ThreadMessageContainer
+                        onSave={onSave}
                         message={m}
                         key={`thread-message-id-${m.forum_message_id}`}
                         onDelete={onMessageDeleted}
