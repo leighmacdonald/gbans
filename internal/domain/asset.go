@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"io"
+	"mime/multipart"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
@@ -33,10 +34,8 @@ type AssetUsecase interface {
 }
 
 type UserUploadedFile struct {
-	Content string `json:"content"`
-	Name    string `json:"name"`
-	Mime    string `json:"mime"`
-	Size    int64  `json:"size"`
+	File *multipart.FileHeader `form:"file" binding:"required"`
+	Name string                `form:"name"`
 }
 
 type Asset struct {

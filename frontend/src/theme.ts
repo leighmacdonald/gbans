@@ -15,6 +15,15 @@ export const tf2Fonts = {
     letterSpacing: '1px'
 };
 
+declare module '@mui/material/styles' {
+    export interface Theme {
+        mode: string;
+    }
+    export interface ThemeOptions {
+        mode?: string;
+    }
+}
+
 export const createThemeByMode = (mode: PaletteMode) => {
     const opts: PaletteOptions =
         mode == 'light'
@@ -128,6 +137,7 @@ export const createThemeByMode = (mode: PaletteMode) => {
                 fontSize: 16
             }
         },
-        palette: opts
+        palette: opts,
+        mode: mode
     });
 };

@@ -21,6 +21,7 @@ import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { zodValidator } from '@tanstack/zod-form-adapter';
+import { z } from 'zod';
 import {
     apiCreateBanMessage,
     apiDeleteBanMessage,
@@ -44,7 +45,7 @@ import { SourceBansList } from '../component/SourceBansList.tsx';
 import { SteamIDList } from '../component/SteamIDList.tsx';
 import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
-import { MarkdownField } from '../component/field/MarkdownField.tsx';
+import { MarkdownField, mdEditorRef } from '../component/field/MarkdownField.tsx';
 import { ModalBanSteam, ModalUnbanSteam } from '../component/modal';
 import { AppError, ErrorCode } from '../error.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
@@ -229,6 +230,7 @@ function BanPage() {
 
             queryClient.setQueryData(['banMessages', { ban_id: ban.ban_id }], [...(messages ?? []), msg]);
             sendFlash('success', 'Created message successfully');
+            mdEditorRef.current?.setMarkdown('');
             reset();
         }
     });
@@ -281,6 +283,9 @@ function BanPage() {
                                     <Grid xs={12}>
                                         <Field
                                             name={'body_md'}
+                                            validators={{
+                                                onChange: z.string().min(2)
+                                            }}
                                             children={(props) => {
                                                 return <MarkdownField {...props} label={'Message'} />;
                                             }}

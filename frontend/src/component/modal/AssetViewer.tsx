@@ -6,13 +6,13 @@ import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import { Player } from 'video-react';
 import 'video-react/dist/video-react.css';
-import { Asset, assetURLMedia, mediaType, MediaTypes } from '../../api/media';
+import { Asset, assetURL, mediaType, MediaTypes } from '../../api/media';
 import { Heading } from '../Heading';
 
 const VideoAsset = ({ asset }: AssetViewerProps) => (
     <Box>
         <Player>
-            <source src={assetURLMedia(asset)} type={asset.mime_type} />
+            <source src={assetURL(asset)} type={asset.mime_type} />
         </Player>
     </Box>
 );
@@ -24,7 +24,7 @@ const ImageAsset = ({ asset }: AssetViewerProps) => {
                 <CardMedia
                     component="img"
                     //height="140"
-                    image={assetURLMedia(asset)}
+                    image={assetURL(asset)}
                     alt={asset.name}
                 />
             </CardActionArea>

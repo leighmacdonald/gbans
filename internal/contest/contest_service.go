@@ -1,8 +1,6 @@
 package contest
 
 import (
-	"bytes"
-	"encoding/base64"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -228,17 +226,15 @@ func (c *contestHandler) onAPISaveContestEntryMedia() gin.HandlerFunc {
 			return
 		}
 
-		content, decodeErr := base64.StdEncoding.DecodeString(req.Content)
-		if decodeErr != nil {
-			ctx.JSON(http.StatusBadRequest, domain.ErrBadRequest)
+		mediaFile, errOpen := req.File.Open()
+		if errOpen != nil {
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
 
-		reader := bytes.NewReader(content)
-
 		if contest.MediaTypes != "" {
-			mimeType, errMimeType := mimetype.DetectReader(reader)
+			mimeType, errMimeType := mimetype.DetectReader(mediaFile)
 			if errMimeType != nil {
 				httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
@@ -254,7 +250,7 @@ func (c *contestHandler) onAPISaveContestEntryMedia() gin.HandlerFunc {
 
 		authorID := httphelper.CurrentUserProfile(ctx).SteamID
 
-		asset, errCreate := c.assetUsecase.Create(ctx, authorID, "media", req.Name, reader)
+		asset, errCreate := c.assetUsecase.Create(ctx, authorID, "media", req.Name, mediaFile)
 		if errHandle := httphelper.ErrorHandledWithReturn(ctx, errCreate); errHandle != nil {
 			slog.Error("Failed to save user contest media", log.ErrAttr(errHandle))
 

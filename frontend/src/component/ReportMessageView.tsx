@@ -20,7 +20,7 @@ import { reportMessagesQueryOptions } from '../queries/reportMessages.ts';
 import { avatarHashToURL } from '../util/text.tsx';
 import { MarkDownRenderer } from './MarkdownRenderer';
 import { Buttons } from './field/Buttons.tsx';
-import { MarkdownField } from './field/MarkdownField.tsx';
+import { MarkdownField, mdEditorRef } from './field/MarkdownField.tsx';
 
 export interface ReportMessageViewProps {
     message: ReportMessage;
@@ -67,6 +67,7 @@ export const ReportMessageView = ({ message }: ReportMessageViewProps) => {
                     });
                 }
             );
+            mdEditorRef.current?.setMarkdown('');
             setEditing(false);
             sendFlash('success', 'Edited message successfully');
         },

@@ -3,6 +3,7 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import LanIcon from '@mui/icons-material/Lan';
 import MessageIcon from '@mui/icons-material/Message';
+import QuickreplyIcon from '@mui/icons-material/Quickreply';
 import ReportIcon from '@mui/icons-material/Report';
 import ReportGmailerrorredIcon from '@mui/icons-material/ReportGmailerrorred';
 import VideocamIcon from '@mui/icons-material/Videocam';
@@ -20,6 +21,8 @@ import { useTheme } from '@mui/material/styles';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouteContext } from '@tanstack/react-router';
+import { zodValidator } from '@tanstack/zod-form-adapter';
+import { z } from 'zod';
 import {
     apiCreateReportMessage,
     apiGetBansSteam,
@@ -43,7 +46,7 @@ import { ReportMessageView } from './ReportMessageView';
 import { SourceBansList } from './SourceBansList';
 import { TabPanel } from './TabPanel';
 import { Buttons } from './field/Buttons.tsx';
-import { MarkdownField } from './field/MarkdownField.tsx';
+import { MarkdownField, mdEditorRef } from './field/MarkdownField.tsx';
 
 export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): JSX.Element => {
     const theme = useTheme();
@@ -115,6 +118,7 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
                 ...(messages ?? []),
                 message
             ]);
+            mdEditorRef.current?.setMarkdown('');
             reset();
             sendFlash('success', 'Created message successfully');
         },
@@ -127,6 +131,7 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
         onSubmit: async ({ value }) => {
             createMessageMutation.mutate(value);
         },
+        validatorAdapter: zodValidator,
         defaultValues: {
             body_md: ''
         }
@@ -279,7 +284,7 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
                         )}
 
                         {report.person_message_id > 0 && (
-                            <ContainerWithHeader title={'Message Context'}>
+                            <ContainerWithHeader title={'Message Context'} iconLeft={<QuickreplyIcon />}>
                                 <PlayerMessageContext playerMessageId={report.person_message_id} padding={4} />
                             </ContainerWithHeader>
                         )}
@@ -309,6 +314,9 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
                                     <Grid xs={12}>
                                         <Field
                                             name={'body_md'}
+                                            validators={{
+                                                onChange: z.string().min(2)
+                                            }}
                                             children={(props) => {
                                                 return <MarkdownField {...props} label={'Message'} fullwidth={true} />;
                                             }}

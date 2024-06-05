@@ -9,7 +9,6 @@ import { ConfirmationModal } from './ConfirmationModal.tsx';
 import { ContestEditor } from './ContestEditor.tsx';
 import { ContestEntryDeleteModal } from './ContestEntryDeleteModal.tsx';
 import { ContestEntryModal } from './ContestEntryModal.tsx';
-import { FileUploadModal } from './FileUploadModal.tsx';
 import { FilterEditModal } from './FilterEditModal.tsx';
 import { ForumCategoryEditorModal } from './ForumCategoryEditorModal.tsx';
 import { ForumForumEditorModal } from './ForumForumEditorModal.tsx';
@@ -57,7 +56,6 @@ export const ModalUnbanCIDR = 'modal-unban-cidr';
 export const ModalUnbanGroup = 'modal-unban-group';
 export const ModalServerEditor = 'modal-server-editor';
 export const ModalServerDelete = 'modal-server-delete';
-export const ModalFileUpload = 'modal-file-upload';
 export const ModalFilterEditor = 'modal-filter-editor';
 export const ModalPersonEditor = 'modal-person-editor';
 export const ModalForumCategoryEditor = 'modal-forum-category-editor';
@@ -88,7 +86,6 @@ export const ModalForumThreadEditor = 'modal-forum-thread-editor';
     [ModalServerEditor, ServerEditorModal],
     [ModalServerDelete, ServerDeleteModal],
     [ModalPersonEditor, PersonEditModal],
-    [ModalFileUpload, FileUploadModal],
     [ModalFilterEditor, FilterEditModal],
     [ModalBanSteam, BanSteamModal],
     [ModalBanASN, BanASNModal],

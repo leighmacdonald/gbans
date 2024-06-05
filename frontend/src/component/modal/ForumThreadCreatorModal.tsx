@@ -13,7 +13,7 @@ import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { logErr } from '../../util/errors';
 import { Buttons } from '../field/Buttons.tsx';
 import { CheckboxSimple } from '../field/CheckboxSimple.tsx';
-import { MarkdownField } from '../field/MarkdownField.tsx';
+import { MarkdownField, mdEditorRef } from '../field/MarkdownField.tsx';
 import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 import { ModalConfirm, ModalForumThreadCreator } from './index';
 
@@ -61,6 +61,7 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
         },
         onSuccess: async (editedThread: ForumThread) => {
             modal.resolve(editedThread);
+            mdEditorRef.current?.setMarkdown('');
             await modal.hide();
         },
         onError: (error) => {

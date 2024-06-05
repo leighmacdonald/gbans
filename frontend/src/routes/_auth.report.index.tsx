@@ -50,7 +50,7 @@ import RouterLink from '../component/RouterLink.tsx';
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
-import { MarkdownField } from '../component/field/MarkdownField.tsx';
+import { MarkdownField, mdEditorRef } from '../component/field/MarkdownField.tsx';
 import { SteamIDField } from '../component/field/SteamIDField.tsx';
 import { commonTableSearchSchema, initPagination, RowsPerPage } from '../util/table.ts';
 import { makeSteamidValidators } from '../util/validator/makeSteamidValidators.ts';
@@ -262,6 +262,7 @@ export const ReportCreateForm = (): JSX.Element => {
             return await apiCreateReport(variables);
         },
         onSuccess: async (data) => {
+            mdEditorRef.current?.setMarkdown('');
             await navigate({ to: '/report/$reportId', params: { reportId: String(data.report_id) } });
         }
     });
@@ -433,6 +434,9 @@ export const ReportCreateForm = (): JSX.Element => {
                         <Box minHeight={365}>
                             <form.Field
                                 name={'body_md'}
+                                validators={{
+                                    onChange: z.string().min(4)
+                                }}
                                 children={(props) => {
                                     return <MarkdownField {...props} label={'Message (Markdown)'} />;
                                 }}

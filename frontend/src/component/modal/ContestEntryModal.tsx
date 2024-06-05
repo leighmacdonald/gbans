@@ -9,7 +9,6 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useQuery } from '@tanstack/react-query';
-import { fromByteArray } from 'base64-js';
 import { apiContest } from '../../api';
 import { apiSaveContestEntryMedia, UserUploadedFile } from '../../api/media';
 import { AppError } from '../../error.tsx';
@@ -65,12 +64,13 @@ export const ContestEntryModal = NiceModal.create(({ contest_id }: { contest_id:
                     if (!name) {
                         setName(file.name);
                     }
-                    setUserUpload({
-                        content: fromByteArray(new Uint8Array(event.target.result as ArrayBuffer)),
-                        mime: file.type,
-                        name: file.name,
-                        size: file.size
-                    });
+                    // TODO use new Blob() to upload via form.
+                    // setUserUpload({
+                    //     content: fromByteArray(new Uint8Array(event.target.result as ArrayBuffer)),
+                    //     mime: file.type,
+                    //     name: file.name,
+                    //     size: file.size
+                    // });
                     setProgress(progressTotal);
                 }
 
@@ -90,7 +90,7 @@ export const ContestEntryModal = NiceModal.create(({ contest_id }: { contest_id:
         const uploadMedia = async () => {
             try {
                 const media = await apiSaveContestEntryMedia(contest_id, userUpload);
-                setAssetID(media.asset.asset_id);
+                setAssetID(media.asset_id);
                 setAssetError('');
             } catch (err) {
                 if (err instanceof AppError) {
