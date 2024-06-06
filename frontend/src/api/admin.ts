@@ -29,6 +29,7 @@ type General = {
     mode: 'release' | 'debug' | 'test';
     file_serve_mode: 'local';
     srcds_log_addr: string;
+    srcds_log_addr_external: string;
     asset_url: string;
 };
 

@@ -276,6 +276,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
         validatorAdapter: zodValidator,
         defaultValues: {
             srcds_log_addr: settings.general.srcds_log_addr,
+            srcds_log_addr_external: settings.general.srcds_log_addr_external,
             file_serve_mode: settings.general.file_serve_mode,
             steam_key: settings.general.steam_key,
             mode: settings.general.mode,
@@ -360,11 +361,25 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                         <SubHeading>
-                            What address to listen for UDP log events. host:port format. If host is empty, it will
-                            listen on all available hosts.
+                            What address to bind to for listening for UDP log events. host:port format. If host is
+                            empty, it will listen on all available hosts.
                         </SubHeading>
                     </Grid>
-
+                    <Grid xs={12}>
+                        <Field
+                            name={'srcds_log_addr_external'}
+                            validators={{
+                                onChange: z.string()
+                            }}
+                            children={(props) => {
+                                return <TextFieldSimple {...props} label={'External UDP Log Listen Address'} />;
+                            }}
+                        />
+                        <SubHeading>
+                            When sending out the <kbd>logaddress_add</kbd> to receive log events over UDP, use this
+                            address. This need to be enabled in your firewall.
+                        </SubHeading>
+                    </Grid>
                     <Grid xs={12}>
                         <Subscribe
                             selector={(state) => [state.canSubmit, state.isSubmitting]}

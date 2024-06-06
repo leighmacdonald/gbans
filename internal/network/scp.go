@@ -75,7 +75,7 @@ func (f SCPExecer) Start(ctx context.Context) {
 }
 
 func (f SCPExecer) update(ctx context.Context) error {
-	servers, _, errServers := f.serversUsecase.GetServers(ctx, domain.ServerQueryFilter{})
+	servers, errServers := f.serversUsecase.GetServers(ctx, domain.ServerQueryFilter{})
 	if errServers != nil {
 		return errServers
 	}

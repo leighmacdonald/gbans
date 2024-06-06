@@ -209,7 +209,10 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			patreonUsecase := patreon.NewPatreonUsecase(patreon.NewPatreonRepository(dbUsecase), configUsecase)
 			go patreonUsecase.Start(ctx)
 
-			srcdsUsecase := srcds.NewSrcdsUsecase(srcds.NewRepository(dbUsecase), configUsecase, serversUsecase, personUsecase, reportUsecase, discordUsecase, banUsecase)
+			srcdsUsecase := srcds.NewSRCDS(srcds.NewRepository(dbUsecase), configUsecase, serversUsecase, personUsecase, reportUsecase, discordUsecase, banUsecase)
+
+			watchdog := srcds.NewPlayerWatchdog(stateUsecase, srcdsUsecase)
+			go watchdog.Start(ctx)
 
 			wikiUsecase := wiki.NewWikiUsecase(wiki.NewWikiRepository(dbUsecase))
 

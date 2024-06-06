@@ -364,23 +364,18 @@ func (h discordService) makeOnKick() func(_ context.Context, _ *discordgo.Sessio
 			return nil, domain.ErrInvalidSID
 		}
 
-		players := h.su.FindBySteamID(target)
-
-		if len(players) == 0 {
+		player, found := h.su.FindBySteamID(target)
+		if !found {
 			return nil, domain.ErrPlayerNotFound
 		}
 
 		var err error
 
-		for _, player := range players {
-			if errKick := h.su.Kick(ctx, player.Player.SID, reason); errKick != nil {
-				err = errors.Join(err, errKick)
-
-				continue
-			}
+		if errKick := h.su.Kick(ctx, player.Player.SID, reason); errKick != nil {
+			return nil, errors.Join(err, errKick)
 		}
 
-		return KickMessage(players), err
+		return KickMessage([]domain.PlayerServerInfo{player}), err
 	}
 }
 

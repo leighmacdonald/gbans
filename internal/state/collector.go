@@ -352,10 +352,7 @@ func (c *Collector) Start(ctx context.Context) {
 		case <-updateTicker.C:
 			trigger <- true
 		case <-trigger:
-			servers, _, errServers := c.serverUsecase.GetServers(ctx, domain.ServerQueryFilter{
-				QueryFilter:     domain.QueryFilter{Deleted: false},
-				IncludeDisabled: false,
-			})
+			servers, errServers := c.serverUsecase.GetServers(ctx, domain.ServerQueryFilter{})
 			if errServers != nil && !errors.Is(errServers, domain.ErrNoResult) {
 				slog.Error("Failed to fetch servers, cannot update State", log.ErrAttr(errServers))
 

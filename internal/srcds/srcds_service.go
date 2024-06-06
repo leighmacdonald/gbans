@@ -1030,9 +1030,9 @@ func (s *srcdsHandler) onAPIPostPingMod() gin.HandlerFunc {
 		}
 
 		conf := s.configUsecase.Config()
-		players := s.stateUsecase.FindBySteamID(req.SteamID)
+		player, playerFound := s.stateUsecase.FindBySteamID(req.SteamID)
 
-		if len(players) == 0 && conf.General.Mode != domain.TestMode {
+		if !playerFound && conf.General.Mode != domain.TestMode {
 			slog.Error("Failed to find player on /mod call")
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
@@ -1048,7 +1048,7 @@ func (s *srcdsHandler) onAPIPostPingMod() gin.HandlerFunc {
 			return
 		}
 
-		server, errServer := s.serverUsecase.GetServer(ctx, players[0].ServerID)
+		server, errServer := s.serverUsecase.GetServer(ctx, player.ServerID)
 		if errServer != nil {
 			slog.Error("Failed to load server", log.ErrAttr(errServer))
 

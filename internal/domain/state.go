@@ -23,7 +23,7 @@ type StateUsecase interface {
 	FindByCIDR(cidr *net.IPNet) []PlayerServerInfo
 	FindByIP(addr net.IP) []PlayerServerInfo
 	FindByName(name string) []PlayerServerInfo
-	FindBySteamID(steamID steamid.SteamID) []PlayerServerInfo
+	FindBySteamID(steamID steamid.SteamID) (PlayerServerInfo, bool)
 	Kick(ctx context.Context, target steamid.SteamID, reason Reason) error
 	KickPlayerID(ctx context.Context, targetPlayerID int, targetServerID int, reason Reason) error
 	LogAddressAdd(ctx context.Context, logAddress string)

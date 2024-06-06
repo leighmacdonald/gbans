@@ -26,7 +26,7 @@ func (s *serversUsecase) GetServerPermissions(ctx context.Context) ([]domain.Ser
 	return s.serversRepo.GetServerPermissions(ctx)
 }
 
-func (s *serversUsecase) GetServers(ctx context.Context, filter domain.ServerQueryFilter) ([]domain.Server, int64, error) {
+func (s *serversUsecase) GetServers(ctx context.Context, filter domain.ServerQueryFilter) ([]domain.Server, error) {
 	return s.serversRepo.GetServers(ctx, filter)
 }
 

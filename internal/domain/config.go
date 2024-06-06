@@ -165,12 +165,13 @@ const (
 )
 
 type ConfigGeneral struct {
-	SiteName      string        `json:"site_name"`
-	SteamKey      string        `json:"steam_key"`
-	Mode          RunMode       `json:"mode"`
-	FileServeMode FileServeMode `json:"file_serve_mode"`
-	SrcdsLogAddr  string        `json:"srcds_log_addr"`
-	AssetURL      string        `json:"asset_url"`
+	SiteName             string        `json:"site_name"`
+	SteamKey             string        `json:"steam_key"`
+	Mode                 RunMode       `json:"mode"`
+	FileServeMode        FileServeMode `json:"file_serve_mode"`
+	SrcdsLogAddr         string        `json:"srcds_log_addr"`
+	SrcdsLogAddrExternal string        `json:"srcds_log_addr_external"`
+	AssetURL             string        `json:"asset_url"`
 }
 
 type ConfigDemo struct {

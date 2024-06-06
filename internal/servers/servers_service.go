@@ -101,7 +101,7 @@ func (h *serversHandler) onAPIExportSourcemodSimpleAdmins() gin.HandlerFunc {
 
 func (h *serversHandler) onAPIGetServers() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		fullServers, _, errServers := h.serversUsecase.GetServers(ctx, domain.ServerQueryFilter{})
+		fullServers, errServers := h.serversUsecase.GetServers(ctx, domain.ServerQueryFilter{})
 		if errServers != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
@@ -300,7 +300,7 @@ func (h *serversHandler) onAPIGetServersAdmin() gin.HandlerFunc {
 			IncludeDisabled: true,
 		}
 
-		servers, _, errServers := h.serversUsecase.GetServers(ctx, filter)
+		servers, errServers := h.serversUsecase.GetServers(ctx, filter)
 		if errServers != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 

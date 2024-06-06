@@ -96,7 +96,7 @@ func (r *serversRepository) GetServerPermissions(ctx context.Context) ([]domain.
 	return perms, nil
 }
 
-func (r *serversRepository) GetServers(ctx context.Context, filter domain.ServerQueryFilter) ([]domain.Server, int64, error) {
+func (r *serversRepository) GetServers(ctx context.Context, filter domain.ServerQueryFilter) ([]domain.Server, error) {
 	builder := r.db.
 		Builder().
 		Select("s.server_id", "s.short_name", "s.name", "s.address", "s.port", "s.rcon", "s.password",
@@ -114,19 +114,9 @@ func (r *serversRepository) GetServers(ctx context.Context, filter domain.Server
 		constraints = append(constraints, sq.Eq{"s.is_enabled": true})
 	}
 
-	builder = filter.ApplySafeOrder(builder, map[string][]string{
-		"s.": {
-			"server_id", "short_name", "name", "address", "port",
-			"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
-			"latitude", "longitude", "deleted", "enable_stats",
-		},
-	}, "short_name")
-
-	builder = filter.ApplyLimitOffset(builder, 250).Where(constraints)
-
-	rows, errQueryExec := r.db.QueryBuilder(ctx, builder)
+	rows, errQueryExec := r.db.QueryBuilder(ctx, builder.Where(constraints))
 	if errQueryExec != nil {
-		return []domain.Server{}, 0, r.db.DBErr(errQueryExec)
+		return []domain.Server{}, r.db.DBErr(errQueryExec)
 	}
 
 	defer rows.Close()
@@ -144,7 +134,7 @@ func (r *serversRepository) GetServers(ctx context.Context, filter domain.Server
 				&server.Password, &tokenDate, &server.CreatedOn, &server.UpdatedOn, &server.ReservedSlots,
 				&server.IsEnabled, &server.Region, &server.CC, &server.Latitude, &server.Longitude,
 				&server.Deleted, &server.LogSecret, &server.EnableStats); errScan != nil {
-			return nil, 0, errors.Join(errScan, domain.ErrScanResult)
+			return nil, errors.Join(errScan, domain.ErrScanResult)
 		}
 
 		if tokenDate != nil {
@@ -155,19 +145,10 @@ func (r *serversRepository) GetServers(ctx context.Context, filter domain.Server
 	}
 
 	if rows.Err() != nil {
-		return nil, 0, r.db.DBErr(rows.Err())
+		return nil, r.db.DBErr(rows.Err())
 	}
 
-	count, errCount := r.db.GetCount(ctx, r.db.
-		Builder().
-		Select("count(s.server_id)").
-		From("server s").
-		Where(constraints))
-	if errCount != nil {
-		return nil, 0, r.db.DBErr(errCount)
-	}
-
-	return servers, count, nil
+	return servers, nil
 }
 
 func (r *serversRepository) GetServerByName(ctx context.Context, serverName string, server *domain.Server, disabledOk bool, deletedOk bool) error {

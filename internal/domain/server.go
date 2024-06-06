@@ -15,7 +15,7 @@ import (
 type ServersUsecase interface {
 	GetServer(ctx context.Context, serverID int) (Server, error)
 	GetServerPermissions(ctx context.Context) ([]ServerPermission, error)
-	GetServers(ctx context.Context, filter ServerQueryFilter) ([]Server, int64, error)
+	GetServers(ctx context.Context, filter ServerQueryFilter) ([]Server, error)
 	GetServerByName(ctx context.Context, serverName string, server *Server, disabledOk bool, deletedOk bool) error
 	GetServerByPassword(ctx context.Context, serverPassword string, server *Server, disabledOk bool, deletedOk bool) error
 	SaveServer(ctx context.Context, server *Server) error
@@ -25,7 +25,7 @@ type ServersUsecase interface {
 type ServersRepository interface {
 	GetServer(ctx context.Context, serverID int) (Server, error)
 	GetServerPermissions(ctx context.Context) ([]ServerPermission, error)
-	GetServers(ctx context.Context, filter ServerQueryFilter) ([]Server, int64, error)
+	GetServers(ctx context.Context, filter ServerQueryFilter) ([]Server, error)
 	GetServerByName(ctx context.Context, serverName string, server *Server, disabledOk bool, deletedOk bool) error
 	GetServerByPassword(ctx context.Context, serverPassword string, server *Server, disabledOk bool, deletedOk bool) error
 	SaveServer(ctx context.Context, server *Server) error
@@ -109,8 +109,8 @@ func (s Server) Slots(statusSlots int) int {
 }
 
 type ServerQueryFilter struct {
-	QueryFilter
 	IncludeDisabled bool `json:"include_disabled"`
+	Deleted         bool `json:"deleted"`
 }
 
 // SafeServer provides a server struct stripped of any sensitive info suitable for public facing

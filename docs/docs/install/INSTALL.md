@@ -18,7 +18,7 @@ Larger communities will inherently require more resources.
 The following extensions must be installed for gbans to work, see their documentation for up to date installation
 instructions:
 
-- [System2](https://github.com/dordnung/System2) Provides HTTP(S) client functionality
+- [sm-ripext](https://github.com/ErikMinekus/sm-ripext) Provides HTTP(S) client functionality
 - [sm-json](https://github.com/clugg/sm-json) `Required for development only` Provides JSON encoding/decoding.
 - [Connect](https://github.com/asherkin/connect) Provides `OnClientPreConnectEx`
 
@@ -30,12 +30,11 @@ Precompiled binaries will be provided once the project is in a more stable state
 images as they are currently the only tested usecase.
 
 - [make](https://www.gnu.org/software/make/) Not strictly required but provides predefined build commands
-- [minio](https://min.io/) You will need to have set up minio access/secret keys. Other s3 compatible options should
-  work but are untested
 - [golang 1.22+](https://golang.org/) Version >=1.22 is required.
 - [PostgreSQL](https://www.postgresql.org/) Version 15 is the only version currently tested against. However, anything
   10 and up should work, ymmv.
     - [PostGIS](https://postgis.net/) extension is also used for some GIS functionality.
+    - [ip4r](https://github.com/RhodiumToad/ip4r) New index types for ips
 - [NodeJS >=18.17.1](https://nodejs.org/en/) To build frontend
     - [pnpm](https://pnpm.io/) JS package manager
 - [Sourcemod 1.12](https://www.sourcemod.net/) - Sourcemod installation
@@ -54,7 +53,7 @@ Clone the gbans repository
 Build the projects, replace SM_ROOT with the path to your sourcemod installation directory (the folder with addons and
 cfg folders inside).
 
-    SM_ROOT=~/sourcemod make 
+    SM_ROOT=~/sourcemod make -C sourcemod
 
 You should now have a binary located at `./build/$platform/gbans`
 
@@ -113,8 +112,8 @@ This config file should be places in `tf/addons/sourcemod/configs/gbans.cfg`.
 	// Unique server name for this server, the same as a "server-id"
 	"server_name"	"example-1"
 
-	// The authentication token used to retrieve a auth token
-	"server_key"	"YOUR_TOKEN"
+	// The authentication password
+	"server_key"	"YOUR_PASSWORD"
 }
 ```
 
@@ -214,7 +213,7 @@ If using Cloudflare to provide user location, you can use Origin Certificates to
 
 ## IP2Location
 
-To install the GeoLite2 databases, create an account on [IP2location Lite](https://lite.ip2location.com). After
+To install the geolocation databases, create an account on [IP2location Lite](https://lite.ip2location.com). After
 confirmation, you'll be given a download token for use in gbans.yaml.
 
 If using Docker, open a terminal with `docker exec -it gbans /bin/sh`, or if using a compiled binary, navigate to the

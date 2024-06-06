@@ -58,7 +58,11 @@ func (s *stateUsecase) Start(ctx context.Context) error {
 
 	go s.stateRepository.Start(ctx)
 
-	s.updateSrcdsLogSecrets(ctx)
+	if conf.General.SrcdsLogAddrExternal == "" {
+		slog.Warn("No external log address configured. You must ensure `logaddress_add` is setup to receive log events.")
+	} else {
+		s.Broadcast(ctx, nil, "logaddress_add "+conf.General.SrcdsLogAddrExternal)
+	}
 
 	// TODO run on server Config changes
 	s.updateSrcdsLogSecrets(ctx)
@@ -74,10 +78,7 @@ func (s *stateUsecase) updateSrcdsLogSecrets(ctx context.Context) {
 
 	defer cancelServers()
 
-	servers, _, errServers := s.serversUsecase.GetServers(serversCtx, domain.ServerQueryFilter{
-		IncludeDisabled: false,
-		QueryFilter:     domain.QueryFilter{Deleted: false},
-	})
+	servers, errServers := s.serversUsecase.GetServers(serversCtx, domain.ServerQueryFilter{})
 	if errServers != nil {
 		slog.Error("Failed to update srcds log secrets", log.ErrAttr(errServers))
 
@@ -110,8 +111,13 @@ func (s *stateUsecase) FindByName(name string) []domain.PlayerServerInfo {
 	return s.Find(name, steamid.SteamID{}, nil, nil)
 }
 
-func (s *stateUsecase) FindBySteamID(steamID steamid.SteamID) []domain.PlayerServerInfo {
-	return s.Find("", steamID, nil, nil)
+func (s *stateUsecase) FindBySteamID(steamID steamid.SteamID) (domain.PlayerServerInfo, bool) {
+	players := s.Find("", steamID, nil, nil)
+	if len(players) == 0 {
+		return domain.PlayerServerInfo{}, false
+	}
+
+	return players[0], true
 }
 
 func (s *stateUsecase) Update(serverID int, update domain.PartialStateUpdate) error {
@@ -288,28 +294,38 @@ func (s *stateUsecase) Broadcast(ctx context.Context, serverIDs []int, cmd strin
 	results := map[int]string{}
 	errGroup, egCtx := errgroup.WithContext(ctx)
 
-	configs := s.stateRepository.Configs()
+	servers, errServers := s.serversUsecase.GetServers(ctx, domain.ServerQueryFilter{})
+	if errServers != nil {
+		slog.Error("Failed to fetch broadcast servers", log.ErrAttr(errServers))
+
+		return nil
+	}
+
+	var selected []domain.Server
 
 	if len(serverIDs) == 0 {
-		for _, conf := range configs {
-			serverIDs = append(serverIDs, conf.ServerID)
+		selected = servers
+	} else {
+		for _, serverID := range serverIDs {
+			for _, server := range servers {
+				if server.ServerID == serverID {
+					selected = append(selected, server)
+
+					continue
+				}
+			}
 		}
 	}
 
 	resultChan := make(chan broadcastResult)
 
-	for _, serverID := range serverIDs {
-		sid := serverID
+	for _, server := range selected {
+		serverCopy := server
 
 		errGroup.Go(func() error {
-			serverConf, errServerConf := s.stateRepository.GetServer(sid)
-			if errServerConf != nil {
-				return errServerConf
-			}
-
-			resp, errExec := s.stateRepository.ExecRaw(egCtx, serverConf.Addr(), serverConf.RconPassword, cmd)
+			resp, errExec := s.stateRepository.ExecRaw(egCtx, serverCopy.Addr(), serverCopy.RCON, cmd)
 			if errExec != nil {
-				slog.Error("Failed to exec server command", slog.Int("server_id", sid), log.ErrAttr(errExec))
+				slog.Error("Failed to exec RCON command", slog.String("server", serverCopy.ShortName), log.ErrAttr(errExec), slog.String("cmd", cmd))
 
 				// Don't error out since we don't want a single servers potentially temporary issue to prevent the rest
 				// from executing.
@@ -317,7 +333,7 @@ func (s *stateUsecase) Broadcast(ctx context.Context, serverIDs []int, cmd strin
 			}
 
 			resultChan <- broadcastResult{
-				serverID: sid,
+				serverID: serverCopy.ServerID,
 				resp:     resp,
 			}
 
@@ -338,6 +354,8 @@ func (s *stateUsecase) Broadcast(ctx context.Context, serverIDs []int, cmd strin
 		results[result.serverID] = result.resp
 	}
 
+	slog.Debug("Added external logaddress to servers", slog.Int("count", len(results)))
+
 	return results
 }
 
@@ -356,7 +374,7 @@ func (s *stateUsecase) Kick(ctx context.Context, target steamid.SteamID, reason 
 	return nil
 }
 
-// Kick will kick the steam id from whatever server it is connected to.
+// KickPlayerID will kick the player with the steam id from whatever server it is connected to.
 func (s *stateUsecase) KickPlayerID(ctx context.Context, targetPlayerID int, targetServerID int, reason domain.Reason) error {
 	_, err := s.ExecServer(ctx, targetServerID, fmt.Sprintf("sm_kick #%d %s", targetPlayerID, reason.String()))
 
