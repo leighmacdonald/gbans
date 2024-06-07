@@ -153,7 +153,7 @@ func (u voteUsecase) Start(ctx context.Context) {
 					slog.Error("Failed to add vote result", log.ErrAttr(err))
 				}
 
-				u.discordUsecase.SendPayload(domain.ChannelModLog, discord.VoteResultMessage(result))
+				u.discordUsecase.SendPayload(domain.ChannelModVoteLog, discord.VoteResultMessage(result))
 
 				recent = append(recent, result)
 

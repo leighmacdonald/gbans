@@ -111,44 +111,56 @@ export const TopBar = () => {
                 icon: <DashboardIcon color={'primary'} sx={topColourOpts} />
             }
         ];
-        if (profile.ban_id <= 0) {
+        if (appInfo.servers_enabled && profile.ban_id <= 0) {
             items.push({
                 to: '/servers',
                 text: 'Servers',
                 icon: <StorageIcon sx={topColourOpts} />
             });
         }
-        if (hasPermission(PermissionLevel.Moderator)) {
+        if (appInfo.forums_enabled && hasPermission(PermissionLevel.Moderator)) {
             items.push({
                 to: '/forums',
                 text: 'Forums',
                 icon: <ForumIcon sx={topColourOpts} />
             });
         }
-        items.push({
-            to: '/wiki',
-            text: 'Wiki',
-            icon: <ArticleIcon sx={topColourOpts} />
-        });
-        if (profile.ban_id <= 0) {
+        if (appInfo.wiki_enabled) {
             items.push({
-                to: '/report',
-                text: 'Report',
-                icon: <ReportIcon sx={topColourOpts} />
+                to: '/wiki',
+                text: 'Wiki',
+                icon: <ArticleIcon sx={topColourOpts} />
             });
         }
-        if (profile.ban_id > 0) {
-            items.push({
-                to: `/ban/${profile.ban_id}`,
-                text: 'Appeal',
-                icon: <SupportIcon sx={topColourOpts} />
-            });
+        if (appInfo.reports_enabled) {
+            if (profile.ban_id <= 0) {
+                items.push({
+                    to: '/report',
+                    text: 'Report',
+                    icon: <ReportIcon sx={topColourOpts} />
+                });
+            }
+            if (profile.ban_id > 0) {
+                items.push({
+                    to: `/ban/${profile.ban_id}`,
+                    text: 'Appeal',
+                    icon: <SupportIcon sx={topColourOpts} />
+                });
+            }
         }
         return items;
-    }, [hasPermission, profile, topColourOpts]);
+    }, [
+        appInfo.forums_enabled,
+        appInfo.reports_enabled,
+        appInfo.servers_enabled,
+        appInfo.wiki_enabled,
+        hasPermission,
+        profile.ban_id,
+        topColourOpts
+    ]);
 
-    const userItems: menuRoute[] = useMemo(
-        () => [
+    const userItems: menuRoute[] = useMemo(() => {
+        const items = [
             {
                 to: `/profile/${profile.steam_id}`,
                 text: 'Profile',
@@ -158,21 +170,22 @@ export const TopBar = () => {
                 to: '/settings',
                 text: 'Settings',
                 icon: <SettingsIcon sx={colourOpts} />
-            },
-
-            {
+            }
+        ];
+        if (appInfo.stats_enabled) {
+            items.push({
                 to: `/logs/${profile.steam_id}`,
                 text: 'Match History',
                 icon: <TimelineIcon sx={colourOpts} />
-            },
-            {
-                to: '/logout',
-                text: 'Logout',
-                icon: <ExitToAppIcon sx={colourOpts} />
-            }
-        ],
-        [colourOpts, profile.steam_id]
-    );
+            });
+        }
+        items.push({
+            to: '/logout',
+            text: 'Logout',
+            icon: <ExitToAppIcon sx={colourOpts} />
+        });
+        return items;
+    }, [appInfo.stats_enabled, colourOpts, profile.steam_id]);
 
     // @ts-expect-error label defined as string
     const adminItems: MenuItemData = useMemo(() => {

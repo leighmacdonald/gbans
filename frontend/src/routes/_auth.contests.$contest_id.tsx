@@ -30,11 +30,15 @@ import { VCenterBox } from '../component/VCenterBox.tsx';
 import { ModalAssetViewer, ModalContestEntry, ModalContestEntryDelete } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors.ts';
+import { checkFeatureEnabled } from '../util/features.ts';
 import { humanFileSize } from '../util/text.tsx';
 import { PageNotFound } from './_auth.page-not-found.tsx';
 
 export const Route = createFileRoute('/_auth/contests/$contest_id')({
-    component: Contest
+    component: Contest,
+    beforeLoad: () => {
+        checkFeatureEnabled('contests_enabled');
+    }
 });
 
 function Contest() {

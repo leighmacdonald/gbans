@@ -253,4 +253,14 @@ export interface appInfoDetail {
     patreon_enabled: boolean;
     discord_client_id: string;
     discord_enabled: boolean;
+    default_route: string;
+    news_enabled: boolean;
+    forums_enabled: boolean;
+    contests_enabled: boolean;
+    wiki_enabled: boolean;
+    stats_enabled: boolean;
+    servers_enabled: boolean;
+    reports_enabled: boolean;
+    chatlogs_enabled: boolean;
+    demos_enabled: boolean;
 }

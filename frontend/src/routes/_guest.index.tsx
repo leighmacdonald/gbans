@@ -36,7 +36,7 @@ function Index() {
                 </Grid>
                 <Grid xs={12} sm={12} md={3}>
                     <Stack spacing={3}>
-                        {profile.ban_id == 0 ? (
+                        {profile.ban_id == 0 && appInfo.servers_enabled && (
                             <Button
                                 startIcon={<StorageIcon />}
                                 fullWidth
@@ -48,7 +48,8 @@ function Index() {
                             >
                                 Play Now!
                             </Button>
-                        ) : (
+                        )}
+                        {profile.ban_id != 0 && appInfo.reports_enabled && (
                             <Button
                                 startIcon={<SupportIcon />}
                                 fullWidth
@@ -63,29 +64,31 @@ function Index() {
                                 Appeal Ban
                             </Button>
                         )}
+                        {appInfo.wiki_enabled && (
+                            <>
+                                <Button
+                                    component={RouterLink}
+                                    startIcon={<GavelIcon />}
+                                    fullWidth
+                                    color={'primary'}
+                                    variant={'contained'}
+                                    to={`/wiki/Rules`}
+                                >
+                                    Rules
+                                </Button>
 
-                        <Button
-                            component={RouterLink}
-                            startIcon={<GavelIcon />}
-                            fullWidth
-                            color={'primary'}
-                            variant={'contained'}
-                            to={`/wiki/Rules`}
-                        >
-                            Rules
-                        </Button>
-
-                        <Button
-                            component={RouterLink}
-                            startIcon={<EventIcon />}
-                            fullWidth
-                            color={'primary'}
-                            variant={'contained'}
-                            to={'/wiki/Events'}
-                        >
-                            Events
-                        </Button>
-
+                                <Button
+                                    component={RouterLink}
+                                    startIcon={<EventIcon />}
+                                    fullWidth
+                                    color={'primary'}
+                                    variant={'contained'}
+                                    to={'/wiki/Events'}
+                                >
+                                    Events
+                                </Button>
+                            </>
+                        )}
                         {appInfo.patreon_enabled && (
                             <Button
                                 component={RouterLink}
@@ -98,51 +101,54 @@ function Index() {
                                 Donate
                             </Button>
                         )}
-
-                        <Button
-                            component={RouterLink}
-                            startIcon={<EmojiEventsIcon />}
-                            fullWidth
-                            color={'primary'}
-                            variant={'contained'}
-                            to={`/contests`}
-                        >
-                            Contests
-                        </Button>
-
-                        <Button
-                            component={RouterLink}
-                            startIcon={<ChatIcon />}
-                            fullWidth
-                            color={'primary'}
-                            variant={'contained'}
-                            to={`/chatlogs`}
-                        >
-                            Chat Logs
-                        </Button>
-
-                        <Button
-                            component={RouterLink}
-                            startIcon={<VideocamIcon />}
-                            fullWidth
-                            color={'primary'}
-                            variant={'contained'}
-                            to={`/stv`}
-                        >
-                            SourceTV
-                        </Button>
-
-                        <Button
-                            component={RouterLink}
-                            startIcon={<PieChartIcon />}
-                            fullWidth
-                            color={'primary'}
-                            variant={'contained'}
-                            to={`/stats`}
-                        >
-                            Stats (Beta)
-                        </Button>
-
+                        {appInfo.contests_enabled && (
+                            <Button
+                                component={RouterLink}
+                                startIcon={<EmojiEventsIcon />}
+                                fullWidth
+                                color={'primary'}
+                                variant={'contained'}
+                                to={`/contests`}
+                            >
+                                Contests
+                            </Button>
+                        )}
+                        {appInfo.chatlogs_enabled && (
+                            <Button
+                                component={RouterLink}
+                                startIcon={<ChatIcon />}
+                                fullWidth
+                                color={'primary'}
+                                variant={'contained'}
+                                to={`/chatlogs`}
+                            >
+                                Chat Logs
+                            </Button>
+                        )}
+                        {appInfo.demos_enabled && (
+                            <Button
+                                component={RouterLink}
+                                startIcon={<VideocamIcon />}
+                                fullWidth
+                                color={'primary'}
+                                variant={'contained'}
+                                to={`/stv`}
+                            >
+                                SourceTV
+                            </Button>
+                        )}
+                        {appInfo.stats_enabled && (
+                            <Button
+                                component={RouterLink}
+                                startIcon={<PieChartIcon />}
+                                fullWidth
+                                color={'primary'}
+                                variant={'contained'}
+                                to={`/stats`}
+                            >
+                                Stats (Beta)
+                            </Button>
+                        )}
                         {appInfo.discord_enabled && appInfo.link_id != '' && (
                             <Button
                                 component={Link}

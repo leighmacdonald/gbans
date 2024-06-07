@@ -70,6 +70,11 @@ const (
 	ChannelModLog
 	ChannelPublicLog
 	ChannelPublicMatchLog
+	ChannelModAppealLog
+	ChannelModVoteLog
+	ChannelBanLog
+	ChannelForumLog
+	ChannelWordFilterLog
 )
 
 type DiscordUsecase interface {

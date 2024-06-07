@@ -16,16 +16,20 @@ import { Route as GuestImport } from './routes/_guest'
 import { Route as AuthImport } from './routes/_auth'
 import { Route as AdminImport } from './routes/_admin'
 import { Route as GuestIndexImport } from './routes/_guest.index'
+import { Route as GuestWikiImport } from './routes/_guest.wiki'
 import { Route as GuestStvImport } from './routes/_guest.stv'
 import { Route as GuestServersImport } from './routes/_guest.servers'
 import { Route as GuestPrivacyPolicyImport } from './routes/_guest.privacy-policy'
 import { Route as GuestPatreonImport } from './routes/_guest.patreon'
 import { Route as GuestContestsImport } from './routes/_guest.contests'
+import { Route as AuthStatsImport } from './routes/_auth.stats'
 import { Route as AuthSettingsImport } from './routes/_auth.settings'
+import { Route as AuthReportImport } from './routes/_auth.report'
 import { Route as AuthPermissionImport } from './routes/_auth.permission'
 import { Route as AuthPageNotFoundImport } from './routes/_auth.page-not-found'
 import { Route as AuthNotificationsImport } from './routes/_auth.notifications'
 import { Route as AuthLogoutImport } from './routes/_auth.logout'
+import { Route as AuthForumsImport } from './routes/_auth.forums'
 import { Route as AuthChatlogsImport } from './routes/_auth.chatlogs'
 import { Route as GuestWikiIndexImport } from './routes/_guest.wiki.index'
 import { Route as GuestLoginIndexImport } from './routes/_guest.login.index'
@@ -90,6 +94,11 @@ const GuestIndexRoute = GuestIndexImport.update({
   getParentRoute: () => GuestRoute,
 } as any)
 
+const GuestWikiRoute = GuestWikiImport.update({
+  path: '/wiki',
+  getParentRoute: () => GuestRoute,
+} as any)
+
 const GuestStvRoute = GuestStvImport.update({
   path: '/stv',
   getParentRoute: () => GuestRoute,
@@ -115,8 +124,18 @@ const GuestContestsRoute = GuestContestsImport.update({
   getParentRoute: () => GuestRoute,
 } as any)
 
+const AuthStatsRoute = AuthStatsImport.update({
+  path: '/stats',
+  getParentRoute: () => AuthRoute,
+} as any)
+
 const AuthSettingsRoute = AuthSettingsImport.update({
   path: '/settings',
+  getParentRoute: () => AuthRoute,
+} as any)
+
+const AuthReportRoute = AuthReportImport.update({
+  path: '/report',
   getParentRoute: () => AuthRoute,
 } as any)
 
@@ -140,14 +159,19 @@ const AuthLogoutRoute = AuthLogoutImport.update({
   getParentRoute: () => AuthRoute,
 } as any)
 
+const AuthForumsRoute = AuthForumsImport.update({
+  path: '/forums',
+  getParentRoute: () => AuthRoute,
+} as any)
+
 const AuthChatlogsRoute = AuthChatlogsImport.update({
   path: '/chatlogs',
   getParentRoute: () => AuthRoute,
 } as any)
 
 const GuestWikiIndexRoute = GuestWikiIndexImport.update({
-  path: '/wiki/',
-  getParentRoute: () => GuestRoute,
+  path: '/',
+  getParentRoute: () => GuestWikiRoute,
 } as any)
 
 const GuestLoginIndexRoute = GuestLoginIndexImport.update({
@@ -156,18 +180,18 @@ const GuestLoginIndexRoute = GuestLoginIndexImport.update({
 } as any)
 
 const AuthStatsIndexRoute = AuthStatsIndexImport.update({
-  path: '/stats/',
-  getParentRoute: () => AuthRoute,
+  path: '/',
+  getParentRoute: () => AuthStatsRoute,
 } as any)
 
 const AuthReportIndexRoute = AuthReportIndexImport.update({
-  path: '/report/',
-  getParentRoute: () => AuthRoute,
+  path: '/',
+  getParentRoute: () => AuthReportRoute,
 } as any)
 
 const AuthForumsIndexRoute = AuthForumsIndexImport.update({
-  path: '/forums/',
-  getParentRoute: () => AuthRoute,
+  path: '/',
+  getParentRoute: () => AuthForumsRoute,
 } as any)
 
 const ModAdminVotesRoute = ModAdminVotesImport.update({
@@ -206,8 +230,8 @@ const ModAdminAppealsRoute = ModAdminAppealsImport.update({
 } as any)
 
 const GuestWikiSlugRoute = GuestWikiSlugImport.update({
-  path: '/wiki/$slug',
-  getParentRoute: () => GuestRoute,
+  path: '/$slug',
+  getParentRoute: () => GuestWikiRoute,
 } as any)
 
 const GuestProfileSteamIdRoute = GuestProfileSteamIdImport.update({
@@ -221,8 +245,8 @@ const GuestLoginSuccessRoute = GuestLoginSuccessImport.update({
 } as any)
 
 const AuthReportReportIdRoute = AuthReportReportIdImport.update({
-  path: '/report/$reportId',
-  getParentRoute: () => AuthRoute,
+  path: '/$reportId',
+  getParentRoute: () => AuthReportRoute,
 } as any)
 
 const AuthMatchMatchIdRoute = AuthMatchMatchIdImport.update({
@@ -231,8 +255,8 @@ const AuthMatchMatchIdRoute = AuthMatchMatchIdImport.update({
 } as any)
 
 const AuthForumsForumidRoute = AuthForumsForumidImport.update({
-  path: '/forums/$forum_id',
-  getParentRoute: () => AuthRoute,
+  path: '/$forum_id',
+  getParentRoute: () => AuthForumsRoute,
 } as any)
 
 const AuthContestsContestidRoute = AuthContestsContestidImport.update({
@@ -308,14 +332,14 @@ const ModAdminBanAsnRoute = ModAdminBanAsnImport.update({
 } as any)
 
 const AuthStatsWeaponWeaponidRoute = AuthStatsWeaponWeaponidImport.update({
-  path: '/stats/weapon/$weapon_id',
-  getParentRoute: () => AuthRoute,
+  path: '/weapon/$weapon_id',
+  getParentRoute: () => AuthStatsRoute,
 } as any)
 
 const AuthForumsThreadForumthreadidRoute =
   AuthForumsThreadForumthreadidImport.update({
-    path: '/forums/thread/$forum_thread_id',
-    getParentRoute: () => AuthRoute,
+    path: '/thread/$forum_thread_id',
+    getParentRoute: () => AuthForumsRoute,
   } as any)
 
 const AuthLogsSteamIdRoute = AuthLogsSteamIdImport.update({
@@ -362,6 +386,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthChatlogsImport
       parentRoute: typeof AuthImport
     }
+    '/_auth/forums': {
+      id: '/_auth/forums'
+      path: '/forums'
+      fullPath: '/forums'
+      preLoaderRoute: typeof AuthForumsImport
+      parentRoute: typeof AuthImport
+    }
     '/_auth/logout': {
       id: '/_auth/logout'
       path: '/logout'
@@ -390,11 +421,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthPermissionImport
       parentRoute: typeof AuthImport
     }
+    '/_auth/report': {
+      id: '/_auth/report'
+      path: '/report'
+      fullPath: '/report'
+      preLoaderRoute: typeof AuthReportImport
+      parentRoute: typeof AuthImport
+    }
     '/_auth/settings': {
       id: '/_auth/settings'
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AuthSettingsImport
+      parentRoute: typeof AuthImport
+    }
+    '/_auth/stats': {
+      id: '/_auth/stats'
+      path: '/stats'
+      fullPath: '/stats'
+      preLoaderRoute: typeof AuthStatsImport
       parentRoute: typeof AuthImport
     }
     '/_guest/contests': {
@@ -430,6 +475,13 @@ declare module '@tanstack/react-router' {
       path: '/stv'
       fullPath: '/stv'
       preLoaderRoute: typeof GuestStvImport
+      parentRoute: typeof GuestImport
+    }
+    '/_guest/wiki': {
+      id: '/_guest/wiki'
+      path: '/wiki'
+      fullPath: '/wiki'
+      preLoaderRoute: typeof GuestWikiImport
       parentRoute: typeof GuestImport
     }
     '/_guest/': {
@@ -476,10 +528,10 @@ declare module '@tanstack/react-router' {
     }
     '/_auth/forums/$forum_id': {
       id: '/_auth/forums/$forum_id'
-      path: '/forums/$forum_id'
+      path: '/$forum_id'
       fullPath: '/forums/$forum_id'
       preLoaderRoute: typeof AuthForumsForumidImport
-      parentRoute: typeof AuthImport
+      parentRoute: typeof AuthForumsImport
     }
     '/_auth/match/$matchId': {
       id: '/_auth/match/$matchId'
@@ -490,10 +542,10 @@ declare module '@tanstack/react-router' {
     }
     '/_auth/report/$reportId': {
       id: '/_auth/report/$reportId'
-      path: '/report/$reportId'
+      path: '/$reportId'
       fullPath: '/report/$reportId'
       preLoaderRoute: typeof AuthReportReportIdImport
-      parentRoute: typeof AuthImport
+      parentRoute: typeof AuthReportImport
     }
     '/_guest/login/success': {
       id: '/_guest/login/success'
@@ -511,10 +563,10 @@ declare module '@tanstack/react-router' {
     }
     '/_guest/wiki/$slug': {
       id: '/_guest/wiki/$slug'
-      path: '/wiki/$slug'
+      path: '/$slug'
       fullPath: '/wiki/$slug'
       preLoaderRoute: typeof GuestWikiSlugImport
-      parentRoute: typeof GuestImport
+      parentRoute: typeof GuestWikiImport
     }
     '/_mod/admin/appeals': {
       id: '/_mod/admin/appeals'
@@ -567,24 +619,24 @@ declare module '@tanstack/react-router' {
     }
     '/_auth/forums/': {
       id: '/_auth/forums/'
-      path: '/forums'
-      fullPath: '/forums'
+      path: '/'
+      fullPath: '/forums/'
       preLoaderRoute: typeof AuthForumsIndexImport
-      parentRoute: typeof AuthImport
+      parentRoute: typeof AuthForumsImport
     }
     '/_auth/report/': {
       id: '/_auth/report/'
-      path: '/report'
-      fullPath: '/report'
+      path: '/'
+      fullPath: '/report/'
       preLoaderRoute: typeof AuthReportIndexImport
-      parentRoute: typeof AuthImport
+      parentRoute: typeof AuthReportImport
     }
     '/_auth/stats/': {
       id: '/_auth/stats/'
-      path: '/stats'
-      fullPath: '/stats'
+      path: '/'
+      fullPath: '/stats/'
       preLoaderRoute: typeof AuthStatsIndexImport
-      parentRoute: typeof AuthImport
+      parentRoute: typeof AuthStatsImport
     }
     '/_guest/login/': {
       id: '/_guest/login/'
@@ -595,10 +647,10 @@ declare module '@tanstack/react-router' {
     }
     '/_guest/wiki/': {
       id: '/_guest/wiki/'
-      path: '/wiki'
-      fullPath: '/wiki'
+      path: '/'
+      fullPath: '/wiki/'
       preLoaderRoute: typeof GuestWikiIndexImport
-      parentRoute: typeof GuestImport
+      parentRoute: typeof GuestWikiImport
     }
     '/_auth/logs/$steamId/': {
       id: '/_auth/logs/$steamId/'
@@ -609,17 +661,17 @@ declare module '@tanstack/react-router' {
     }
     '/_auth/forums/thread/$forum_thread_id': {
       id: '/_auth/forums/thread/$forum_thread_id'
-      path: '/forums/thread/$forum_thread_id'
+      path: '/thread/$forum_thread_id'
       fullPath: '/forums/thread/$forum_thread_id'
       preLoaderRoute: typeof AuthForumsThreadForumthreadidImport
-      parentRoute: typeof AuthImport
+      parentRoute: typeof AuthForumsImport
     }
     '/_auth/stats/weapon/$weapon_id': {
       id: '/_auth/stats/weapon/$weapon_id'
-      path: '/stats/weapon/$weapon_id'
+      path: '/weapon/$weapon_id'
       fullPath: '/stats/weapon/$weapon_id'
       preLoaderRoute: typeof AuthStatsWeaponWeaponidImport
-      parentRoute: typeof AuthImport
+      parentRoute: typeof AuthStatsImport
     }
     '/_mod/admin/ban/asn': {
       id: '/_mod/admin/ban/asn'
@@ -697,22 +749,28 @@ export const routeTree = rootRoute.addChildren({
   }),
   AuthRoute: AuthRoute.addChildren({
     AuthChatlogsRoute,
+    AuthForumsRoute: AuthForumsRoute.addChildren({
+      AuthForumsForumidRoute,
+      AuthForumsIndexRoute,
+      AuthForumsThreadForumthreadidRoute,
+    }),
     AuthLogoutRoute,
     AuthNotificationsRoute,
     AuthPageNotFoundRoute,
     AuthPermissionRoute,
+    AuthReportRoute: AuthReportRoute.addChildren({
+      AuthReportReportIdRoute,
+      AuthReportIndexRoute,
+    }),
     AuthSettingsRoute,
+    AuthStatsRoute: AuthStatsRoute.addChildren({
+      AuthStatsIndexRoute,
+      AuthStatsWeaponWeaponidRoute,
+    }),
     AuthBanBanidRoute,
     AuthContestsContestidRoute,
-    AuthForumsForumidRoute,
     AuthMatchMatchIdRoute,
-    AuthReportReportIdRoute,
-    AuthForumsIndexRoute,
-    AuthReportIndexRoute,
-    AuthStatsIndexRoute,
     AuthLogsSteamIdRoute,
-    AuthForumsThreadForumthreadidRoute,
-    AuthStatsWeaponWeaponidRoute,
   }),
   GuestRoute: GuestRoute.addChildren({
     GuestContestsRoute,
@@ -720,12 +778,14 @@ export const routeTree = rootRoute.addChildren({
     GuestPrivacyPolicyRoute,
     GuestServersRoute,
     GuestStvRoute,
+    GuestWikiRoute: GuestWikiRoute.addChildren({
+      GuestWikiSlugRoute,
+      GuestWikiIndexRoute,
+    }),
     GuestIndexRoute,
     GuestLoginSuccessRoute,
     GuestProfileSteamIdRoute,
-    GuestWikiSlugRoute,
     GuestLoginIndexRoute,
-    GuestWikiIndexRoute,
   }),
   ModRoute: ModRoute.addChildren({
     ModAdminAppealsRoute,
@@ -773,22 +833,18 @@ export const routeTree = rootRoute.addChildren({
       "filePath": "_auth.tsx",
       "children": [
         "/_auth/chatlogs",
+        "/_auth/forums",
         "/_auth/logout",
         "/_auth/notifications",
         "/_auth/page-not-found",
         "/_auth/permission",
+        "/_auth/report",
         "/_auth/settings",
+        "/_auth/stats",
         "/_auth/ban/$ban_id",
         "/_auth/contests/$contest_id",
-        "/_auth/forums/$forum_id",
         "/_auth/match/$matchId",
-        "/_auth/report/$reportId",
-        "/_auth/forums/",
-        "/_auth/report/",
-        "/_auth/stats/",
-        "/_auth/logs/$steamId/",
-        "/_auth/forums/thread/$forum_thread_id",
-        "/_auth/stats/weapon/$weapon_id"
+        "/_auth/logs/$steamId/"
       ]
     },
     "/_guest": {
@@ -799,12 +855,11 @@ export const routeTree = rootRoute.addChildren({
         "/_guest/privacy-policy",
         "/_guest/servers",
         "/_guest/stv",
+        "/_guest/wiki",
         "/_guest/",
         "/_guest/login/success",
         "/_guest/profile/$steamId",
-        "/_guest/wiki/$slug",
-        "/_guest/login/",
-        "/_guest/wiki/"
+        "/_guest/login/"
       ]
     },
     "/_mod": {
@@ -832,6 +887,15 @@ export const routeTree = rootRoute.addChildren({
       "filePath": "_auth.chatlogs.tsx",
       "parent": "/_auth"
     },
+    "/_auth/forums": {
+      "filePath": "_auth.forums.tsx",
+      "parent": "/_auth",
+      "children": [
+        "/_auth/forums/$forum_id",
+        "/_auth/forums/",
+        "/_auth/forums/thread/$forum_thread_id"
+      ]
+    },
     "/_auth/logout": {
       "filePath": "_auth.logout.tsx",
       "parent": "/_auth"
@@ -848,9 +912,25 @@ export const routeTree = rootRoute.addChildren({
       "filePath": "_auth.permission.tsx",
       "parent": "/_auth"
     },
+    "/_auth/report": {
+      "filePath": "_auth.report.tsx",
+      "parent": "/_auth",
+      "children": [
+        "/_auth/report/$reportId",
+        "/_auth/report/"
+      ]
+    },
     "/_auth/settings": {
       "filePath": "_auth.settings.tsx",
       "parent": "/_auth"
+    },
+    "/_auth/stats": {
+      "filePath": "_auth.stats.tsx",
+      "parent": "/_auth",
+      "children": [
+        "/_auth/stats/",
+        "/_auth/stats/weapon/$weapon_id"
+      ]
     },
     "/_guest/contests": {
       "filePath": "_guest.contests.tsx",
@@ -871,6 +951,14 @@ export const routeTree = rootRoute.addChildren({
     "/_guest/stv": {
       "filePath": "_guest.stv.tsx",
       "parent": "/_guest"
+    },
+    "/_guest/wiki": {
+      "filePath": "_guest.wiki.ts",
+      "parent": "/_guest",
+      "children": [
+        "/_guest/wiki/$slug",
+        "/_guest/wiki/"
+      ]
     },
     "/_guest/": {
       "filePath": "_guest.index.tsx",
@@ -898,7 +986,7 @@ export const routeTree = rootRoute.addChildren({
     },
     "/_auth/forums/$forum_id": {
       "filePath": "_auth.forums.$forum_id.tsx",
-      "parent": "/_auth"
+      "parent": "/_auth/forums"
     },
     "/_auth/match/$matchId": {
       "filePath": "_auth.match.$matchId.tsx",
@@ -906,7 +994,7 @@ export const routeTree = rootRoute.addChildren({
     },
     "/_auth/report/$reportId": {
       "filePath": "_auth.report.$reportId.tsx",
-      "parent": "/_auth"
+      "parent": "/_auth/report"
     },
     "/_guest/login/success": {
       "filePath": "_guest.login.success.tsx",
@@ -918,7 +1006,7 @@ export const routeTree = rootRoute.addChildren({
     },
     "/_guest/wiki/$slug": {
       "filePath": "_guest.wiki.$slug.tsx",
-      "parent": "/_guest"
+      "parent": "/_guest/wiki"
     },
     "/_mod/admin/appeals": {
       "filePath": "_mod.admin.appeals.tsx",
@@ -950,15 +1038,15 @@ export const routeTree = rootRoute.addChildren({
     },
     "/_auth/forums/": {
       "filePath": "_auth.forums.index.tsx",
-      "parent": "/_auth"
+      "parent": "/_auth/forums"
     },
     "/_auth/report/": {
       "filePath": "_auth.report.index.tsx",
-      "parent": "/_auth"
+      "parent": "/_auth/report"
     },
     "/_auth/stats/": {
       "filePath": "_auth.stats.index.tsx",
-      "parent": "/_auth"
+      "parent": "/_auth/stats"
     },
     "/_guest/login/": {
       "filePath": "_guest.login.index.tsx",
@@ -966,7 +1054,7 @@ export const routeTree = rootRoute.addChildren({
     },
     "/_guest/wiki/": {
       "filePath": "_guest.wiki.index.tsx",
-      "parent": "/_guest"
+      "parent": "/_guest/wiki"
     },
     "/_auth/logs/$steamId/": {
       "filePath": "_auth.logs.$steamId..tsx",
@@ -974,11 +1062,11 @@ export const routeTree = rootRoute.addChildren({
     },
     "/_auth/forums/thread/$forum_thread_id": {
       "filePath": "_auth.forums.thread.$forum_thread_id.tsx",
-      "parent": "/_auth"
+      "parent": "/_auth/forums"
     },
     "/_auth/stats/weapon/$weapon_id": {
       "filePath": "_auth.stats.weapon.$weapon_id.tsx",
-      "parent": "/_auth"
+      "parent": "/_auth/stats"
     },
     "/_mod/admin/ban/asn": {
       "filePath": "_mod.admin.ban.asn.tsx",

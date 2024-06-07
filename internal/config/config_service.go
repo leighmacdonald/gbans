@@ -61,6 +61,16 @@ func (c configHandler) onAppInfo(buildInfo domain.BuildInfo) gin.HandlerFunc {
 		DiscordClientID string `json:"discord_client_id"`
 		DiscordEnabled  bool   `json:"discord_enabled"`
 		PatreonEnabled  bool   `json:"patreon_enabled"`
+		DefaultRoute    string `json:"default_route"`
+		NewsEnabled     bool   `json:"news_enabled"`
+		ForumsEnabled   bool   `json:"forums_enabled"`
+		ContestsEnabled bool   `json:"contests_enabled"`
+		WikiEnabled     bool   `json:"wiki_enabled"`
+		StatsEnabled    bool   `json:"stats_enabled"`
+		ServersEnabled  bool   `json:"servers_enabled"`
+		ReportsEnabled  bool   `json:"reports_enabled"`
+		ChatlogsEnabled bool   `json:"chatlogs_enabled"`
+		DemosEnabled    bool   `json:"demos_enabled"`
 	}
 
 	return func(ctx *gin.Context) {
@@ -76,6 +86,15 @@ func (c configHandler) onAppInfo(buildInfo domain.BuildInfo) gin.HandlerFunc {
 			DiscordClientID: conf.Discord.AppID,
 			DiscordEnabled:  conf.Discord.IntegrationsEnabled && conf.Discord.Enabled,
 			PatreonEnabled:  conf.Patreon.IntegrationsEnabled && conf.Patreon.Enabled,
+			DefaultRoute:    conf.General.DefaultRoute,
+			NewsEnabled:     conf.General.NewsEnabled,
+			ForumsEnabled:   conf.General.ForumsEnabled,
+			ContestsEnabled: conf.General.ContestsEnabled,
+			WikiEnabled:     conf.General.WikiEnabled,
+			StatsEnabled:    conf.General.StatsEnabled,
+			ServersEnabled:  conf.General.ServersEnabled,
+			ReportsEnabled:  conf.General.ReportsEnabled,
+			ChatlogsEnabled: conf.General.ChatlogsEnabled,
 		})
 	}
 }

@@ -248,6 +248,15 @@ func (bot *discordRepository) SendPayload(channel domain.DiscordChannel, payload
 		channelID = bot.conf.Discord.PublicLogChannelID
 	case domain.ChannelPublicMatchLog:
 		channelID = bot.conf.Discord.PublicMatchLogChannelID
+	case domain.ChannelModAppealLog:
+	case domain.ChannelModVoteLog:
+	case domain.ChannelBanLog:
+	case domain.ChannelForumLog:
+	case domain.ChannelWordFilterLog:
+	}
+
+	if channelID == "" {
+		channelID = bot.conf.Discord.LogChannelID
 	}
 
 	if _, errSend := bot.session.ChannelMessageSendEmbed(channelID, payload); errSend != nil {

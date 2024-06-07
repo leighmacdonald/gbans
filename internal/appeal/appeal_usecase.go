@@ -59,7 +59,7 @@ func (u *appealUsecase) EditBanMessage(ctx context.Context, curUser domain.UserP
 
 	conf := u.configUsecase.Config()
 
-	u.discordUsecase.SendPayload(domain.ChannelModLog, discord.NewAppealMessage(existing.MessageMD,
+	u.discordUsecase.SendPayload(domain.ChannelModAppealLog, discord.NewAppealMessage(existing.MessageMD,
 		conf.ExtURL(bannedPerson.BanSteam), curUser, conf.ExtURL(curUser)))
 
 	return existing, nil
@@ -104,7 +104,7 @@ func (u *appealUsecase) CreateBanMessage(ctx context.Context, curUser domain.Use
 
 	conf := u.configUsecase.Config()
 
-	u.discordUsecase.SendPayload(domain.ChannelModLog, discord.NewAppealMessage(msg.MessageMD,
+	u.discordUsecase.SendPayload(domain.ChannelModAppealLog, discord.NewAppealMessage(msg.MessageMD,
 		conf.ExtURL(bannedPerson.BanSteam), curUser, conf.ExtURL(curUser)))
 
 	bannedPerson.UpdatedOn = time.Now()
@@ -112,8 +112,6 @@ func (u *appealUsecase) CreateBanMessage(ctx context.Context, curUser domain.Use
 	if errUpdate := u.banUsecase.Save(ctx, &bannedPerson.BanSteam); errUpdate != nil {
 		return domain.BanAppealMessage{}, errUpdate
 	}
-
-	u.discordUsecase.SendPayload(domain.ChannelModLog, discord.EditAppealMessage(msg, msg.MessageMD, curUser, u.configUsecase.ExtURL(curUser)))
 
 	return msg, nil
 }
@@ -149,7 +147,7 @@ func (u *appealUsecase) DropBanMessage(ctx context.Context, curUser domain.UserP
 		return errDrop
 	}
 
-	u.discordUsecase.SendPayload(domain.ChannelModLog, discord.DeleteAppealMessage(&existing, curUser, u.configUsecase.ExtURL(curUser)))
+	u.discordUsecase.SendPayload(domain.ChannelModAppealLog, discord.DeleteAppealMessage(&existing, curUser, u.configUsecase.ExtURL(curUser)))
 
 	return nil
 }

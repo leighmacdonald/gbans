@@ -30,6 +30,16 @@ type General = {
     file_serve_mode: 'local';
     srcds_log_addr: string;
     asset_url: string;
+    default_route: string;
+    news_enabled: boolean;
+    forums_enabled: boolean;
+    contests_enabled: boolean;
+    wiki_enabled: boolean;
+    stats_enabled: boolean;
+    servers_enabled: boolean;
+    reports_enabled: boolean;
+    chatlogs_enabled: boolean;
+    demos_enabled: boolean;
 };
 
 type Filters = {
@@ -75,6 +85,11 @@ type Discord = {
     public_match_log_channel_id: string;
     mod_ping_role_id: string;
     unregister_on_start: boolean;
+    vote_log_channel_id: string;
+    appeal_log_channel_id: string;
+    ban_log_channel_id: string;
+    forum_log_channel_id: string;
+    word_filter_log_channel_id: string;
 };
 
 type Logging = {
