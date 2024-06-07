@@ -39,7 +39,7 @@ type ForumUsecase interface {
 	ForumCategories(ctx context.Context) ([]ForumCategory, error)
 	ForumCategorySave(ctx context.Context, category *ForumCategory) error
 	ForumCategory(ctx context.Context, categoryID int, category *ForumCategory) error
-	ForumCategoryDelete(ctx context.Context, categoryID int) error
+	ForumCategoryDelete(ctx context.Context, categoryI ForumCategory) error
 	Forums(ctx context.Context) ([]Forum, error)
 	ForumSave(ctx context.Context, forum *Forum) error
 	Forum(ctx context.Context, forumID int, forum *Forum) error

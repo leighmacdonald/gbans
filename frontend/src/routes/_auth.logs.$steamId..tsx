@@ -16,6 +16,7 @@ import { DataTable } from '../component/DataTable.tsx';
 import RouterLink from '../component/RouterLink.tsx';
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Title } from '../component/Title';
+import { checkFeatureEnabled } from '../util/features.ts';
 import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 
@@ -27,6 +28,9 @@ const matchSummarySchema = z.object({
 
 export const Route = createFileRoute('/_auth/logs/$steamId/')({
     component: MatchListPage,
+    beforeLoad: () => {
+        checkFeatureEnabled('stats_enabled');
+    },
     validateSearch: (search) => matchSummarySchema.parse(search)
 });
 

@@ -18,7 +18,17 @@ export const UseAppInfoCtx = createContext<AppInfoCtx>({
         patreon_client_id: '',
         discord_client_id: '',
         patreon_enabled: false,
-        discord_enabled: false
+        discord_enabled: false,
+        default_route: '/',
+        forums_enabled: false,
+        news_enabled: true,
+        chatlogs_enabled: false,
+        demos_enabled: false,
+        contests_enabled: false,
+        reports_enabled: false,
+        servers_enabled: true,
+        stats_enabled: false,
+        wiki_enabled: false
     }
 });
 

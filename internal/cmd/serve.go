@@ -197,7 +197,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			chatUsecase := chat.NewChatUsecase(configUsecase, chatRepository, wordFilterUsecase, stateUsecase, banUsecase, personUsecase, discordUsecase)
 			go chatUsecase.Start(ctx)
 
-			forumUsecase := forum.NewForumUsecase(forum.NewForumRepository(dbUsecase))
+			forumUsecase := forum.NewForumUsecase(forum.NewForumRepository(dbUsecase), discordUsecase)
 
 			metricsUsecase := metrics.NewMetricsUsecase(eventBroadcaster)
 			go metricsUsecase.Start(ctx)

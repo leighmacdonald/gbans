@@ -16,6 +16,7 @@ import { apiGetPatreonLogin, apiGetPatreonCampaigns } from '../api/patreon.ts';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { MarkDownRenderer } from '../component/MarkdownRenderer.tsx';
 import { useAppInfoCtx } from '../contexts/AppInfoCtx.ts';
+import { checkFeatureEnabled } from '../util/features.ts';
 
 const patreonSearchSchema = z.object({
     redirect: z.string().catch('/')
@@ -23,6 +24,9 @@ const patreonSearchSchema = z.object({
 
 export const Route = createFileRoute('/_guest/patreon')({
     component: Patreon,
+    beforeLoad: () => {
+        checkFeatureEnabled('patreon_enabled');
+    },
     validateSearch: (search) => patreonSearchSchema.parse(search),
     loader: async ({ context }) => {
         const campaign = await context.queryClient.fetchQuery({

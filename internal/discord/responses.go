@@ -1114,3 +1114,50 @@ func VoteResultMessage(result domain.VoteResult) *discordgo.MessageEmbed {
 
 	return msgEmbed.Embed().Truncate().MessageEmbed
 }
+
+func ForumCategorySave(category domain.ForumCategory) *discordgo.MessageEmbed {
+	embed := NewEmbed("Forum Category Saved")
+	embed.Embed().AddField("Category", category.Title)
+	embed.Embed().AddField("ID", strconv.Itoa(category.ForumCategoryID))
+
+	if category.Description != "" {
+		embed.Embed().AddField("Description", category.Description)
+	}
+
+	return embed.Embed().MessageEmbed
+}
+
+func ForumCategoryDelete(category domain.ForumCategory) *discordgo.MessageEmbed {
+	embed := NewEmbed("Forum Category Deleted")
+	embed.Embed().AddField("Category", category.Title)
+	embed.Embed().AddField("ID", strconv.Itoa(category.ForumCategoryID))
+
+	if category.Description != "" {
+		embed.Embed().AddField("Description", category.Description)
+	}
+
+	return embed.Embed().MessageEmbed
+}
+
+func ForumMessageSaved(message domain.ForumMessage) *discordgo.MessageEmbed {
+	embed := NewEmbed("Forum Message Created/Edited", message.BodyMD)
+	embed.Embed().
+		AddField("Category", message.Title)
+
+	embed.Embed().Author.Name = message.Personaname
+	embed.Embed().Author.IconURL = domain.NewAvatarLinks(message.Avatarhash).Medium()
+
+	return embed.Embed().MessageEmbed
+}
+
+func ForumSaved(message domain.Forum) *discordgo.MessageEmbed {
+	embed := NewEmbed("Forum Created/Edited")
+	embed.Embed().
+		AddField("Forum", message.Title)
+
+	if message.Description != "" {
+		embed.Embed().AddField("Description", message.Description)
+	}
+
+	return embed.Embed().MessageEmbed
+}

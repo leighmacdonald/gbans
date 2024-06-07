@@ -20,11 +20,15 @@ import { TableCellSmall } from '../component/TableCellSmall.tsx';
 import { TableCellString } from '../component/TableCellString.tsx';
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Title } from '../component/Title.tsx';
+import { checkFeatureEnabled } from '../util/features.ts';
 import { RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 
 export const Route = createFileRoute('/_guest/contests')({
-    component: Contests
+    component: Contests,
+    beforeLoad: () => {
+        checkFeatureEnabled('contests_enabled');
+    }
 });
 
 function Contests() {

@@ -280,7 +280,17 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
             steam_key: settings.general.steam_key,
             mode: settings.general.mode,
             site_name: settings.general.site_name,
-            asset_url: settings.general.asset_url
+            asset_url: settings.general.asset_url,
+            default_route: settings.general.default_route,
+            news_enabled: settings.general.news_enabled,
+            forums_enabled: settings.general.forums_enabled,
+            contests_enabled: settings.general.contests_enabled,
+            wiki_enabled: settings.general.wiki_enabled,
+            stats_enabled: settings.general.stats_enabled,
+            servers_enabled: settings.general.servers_enabled,
+            reports_enabled: settings.general.reports_enabled,
+            chatlogs_enabled: settings.general.chatlogs_enabled,
+            demos_enabled: settings.general.demos_enabled
         }
     });
 
@@ -363,6 +373,145 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             What address to listen for UDP log events. host:port format. If host is empty, it will
                             listen on all available hosts.
                         </SubHeading>
+                    </Grid>
+
+                    <Typography variant={'h5'}>Configure Toplevel Features</Typography>
+
+                    <Grid xs={12}>
+                        <Field
+                            name={'default_route'}
+                            validators={{
+                                onChange: z.string()
+                            }}
+                            children={(props) => {
+                                return <TextFieldSimple {...props} label={'Default Index Route'} />;
+                            }}
+                        />
+                        <SubHeading>
+                            Sets the default page to load when a user opens the root url <kbd>example.com/</kbd>.
+                        </SubHeading>
+                    </Grid>
+
+                    <Grid xs={12}>
+                        <Field
+                            name={'news_enabled'}
+                            validators={{
+                                onChange: z.boolean()
+                            }}
+                            children={(props) => {
+                                return <CheckboxSimple {...props} label={'Enable news features.'} />;
+                            }}
+                        />
+                        <SubHeading>Enable the news/blog functionality.</SubHeading>
+                    </Grid>
+
+                    <Grid xs={12}>
+                        <Field
+                            name={'forums_enabled'}
+                            validators={{
+                                onChange: z.boolean()
+                            }}
+                            children={(props) => {
+                                return <CheckboxSimple {...props} label={'Enable forums'} />;
+                            }}
+                        />
+                        <SubHeading>Enabled/disable the forums functionality.</SubHeading>
+                    </Grid>
+
+                    <Grid xs={12}>
+                        <Field
+                            name={'contests_enabled'}
+                            validators={{
+                                onChange: z.boolean()
+                            }}
+                            children={(props) => {
+                                return <CheckboxSimple {...props} label={'Enable contests'} />;
+                            }}
+                        />
+                        <SubHeading>
+                            Enable contests in which users can participate. Users can submit entries and users can vote
+                            on them.
+                        </SubHeading>
+                    </Grid>
+
+                    <Grid xs={12}>
+                        <Field
+                            name={'wiki_enabled'}
+                            validators={{
+                                onChange: z.boolean()
+                            }}
+                            children={(props) => {
+                                return <CheckboxSimple {...props} label={'Enable Wiki'} />;
+                            }}
+                        />
+                        <SubHeading>
+                            Enables a wiki section which is editable by moderators, and viewable by the public.
+                        </SubHeading>
+                    </Grid>
+                    <Grid xs={12}>
+                        <Field
+                            name={'demos_enabled'}
+                            validators={{
+                                onChange: z.boolean()
+                            }}
+                            children={(props) => {
+                                return <CheckboxSimple {...props} label={'Enable Demo/STV Support'} />;
+                            }}
+                        />
+                        <SubHeading>Allows users to search and download demos.</SubHeading>
+                    </Grid>
+                    <Grid xs={12}>
+                        <Field
+                            name={'stats_enabled'}
+                            validators={{
+                                onChange: z.boolean()
+                            }}
+                            children={(props) => {
+                                return <CheckboxSimple {...props} label={'Enable Game Stats'} />;
+                            }}
+                        />
+                        <SubHeading>Process demos and calculate game stats.</SubHeading>
+                    </Grid>
+
+                    <Grid xs={12}>
+                        <Field
+                            name={'servers_enabled'}
+                            validators={{
+                                onChange: z.boolean()
+                            }}
+                            children={(props) => {
+                                return <CheckboxSimple {...props} label={'Enable Servers Page'} />;
+                            }}
+                        />
+                        <SubHeading>
+                            Enables the server status page showing the current map and player counts.
+                        </SubHeading>
+                    </Grid>
+
+                    <Grid xs={12}>
+                        <Field
+                            name={'reports_enabled'}
+                            validators={{
+                                onChange: z.boolean()
+                            }}
+                            children={(props) => {
+                                return <CheckboxSimple {...props} label={'Enable User Reports'} />;
+                            }}
+                        />
+                        <SubHeading>Allows users to report other users.</SubHeading>
+                    </Grid>
+
+                    <Grid xs={12}>
+                        <Field
+                            name={'chatlogs_enabled'}
+                            validators={{
+                                onChange: z.boolean()
+                            }}
+                            children={(props) => {
+                                return <CheckboxSimple {...props} label={'Enable public chatlogs'} />;
+                            }}
+                        />
+                        <SubHeading>Enable showing the searchable chatlogs.</SubHeading>
                     </Grid>
 
                     <Grid xs={12}>
@@ -819,7 +968,12 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
             public_log_channel_id: settings.discord.public_log_channel_id,
             public_match_log_channel_id: settings.discord.public_match_log_channel_id,
             mod_ping_role_id: settings.discord.mod_ping_role_id,
-            unregister_on_start: settings.discord.unregister_on_start
+            unregister_on_start: settings.discord.unregister_on_start,
+            vote_log_channel_id: settings.discord.vote_log_channel_id,
+            appeal_log_channel_id: settings.discord.appeal_log_channel_id,
+            ban_log_channel_id: settings.discord.ban_log_channel_id,
+            forum_log_channel_id: settings.discord.forum_log_channel_id,
+            word_filter_log_channel_id: settings.discord.word_filter_log_channel_id
         }
     });
 
@@ -953,7 +1107,10 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                                 return <TextFieldSimple {...props} label={'Log channel ID'} />;
                             }}
                         />
-                        <SubHeading>Private channel id used for moderation related log events to be sent.</SubHeading>
+                        <SubHeading>
+                            This should be a private channel. Its the default log channel and is used as the default for
+                            other channels if their id is empty.
+                        </SubHeading>
                     </Grid>
                     <Grid xs={12}>
                         <Field
@@ -966,6 +1123,18 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                         <SubHeading>Whether or not to enable public notices for less sensitive log events.</SubHeading>
+                    </Grid>
+                    <Grid xs={12}>
+                        <Field
+                            name={'mod_ping_role_id'}
+                            validators={{
+                                onChange: z.string()
+                            }}
+                            children={(props) => {
+                                return <TextFieldSimple {...props} label={'Mod ping role ID'} />;
+                            }}
+                        />
+                        <SubHeading>What role to include when pinging for certain events being sent.</SubHeading>
                     </Grid>
                     <Grid xs={12}>
                         <Field
@@ -994,17 +1163,74 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             use a separate channel, but not required.
                         </SubHeading>
                     </Grid>
+
                     <Grid xs={12}>
                         <Field
-                            name={'mod_ping_role_id'}
+                            name={'vote_log_channel_id'}
                             validators={{
                                 onChange: z.string()
                             }}
                             children={(props) => {
-                                return <TextFieldSimple {...props} label={'Mod ping role ID'} />;
+                                return <TextFieldSimple {...props} label={'Vote log channel ID'} />;
                             }}
                         />
-                        <SubHeading>What role to include when pinging for certain events being sent.</SubHeading>
+                        <SubHeading>
+                            A channel to send in-game kick voting. This can be very noisy, so its generally best to use
+                            a separate channel, but not required.
+                        </SubHeading>
+                    </Grid>
+                    <Grid xs={12}>
+                        <Field
+                            name={'appeal_log_channel_id'}
+                            validators={{
+                                onChange: z.string()
+                            }}
+                            children={(props) => {
+                                return <TextFieldSimple {...props} label={'Appeal changelog channel ID'} />;
+                            }}
+                        />
+                        <SubHeading>New appeals and appeal messages are shown here.</SubHeading>
+                    </Grid>
+                    <Grid xs={12}>
+                        <Field
+                            name={'ban_log_channel_id'}
+                            validators={{
+                                onChange: z.string()
+                            }}
+                            children={(props) => {
+                                return <TextFieldSimple {...props} label={'New ban log channel ID'} />;
+                            }}
+                        />
+                        <SubHeading>
+                            A channel to send match logs to. This can be very large and spammy, so its generally best to
+                            use a separate channel, but not required. This only shows steam based bans.
+                        </SubHeading>
+                    </Grid>
+                    <Grid xs={12}>
+                        <Field
+                            name={'forum_log_channel_id'}
+                            validators={{
+                                onChange: z.string()
+                            }}
+                            children={(props) => {
+                                return <TextFieldSimple {...props} label={'Forum activity log channel ID'} />;
+                            }}
+                        />
+                        <SubHeading>
+                            Show new forum activity. This includes threads, new messages, message deletions.
+                        </SubHeading>
+                    </Grid>
+                    <Grid xs={12}>
+                        <Field
+                            name={'word_filter_log_channel_id'}
+                            validators={{
+                                onChange: z.string()
+                            }}
+                            children={(props) => {
+                                return <TextFieldSimple {...props} label={'Word filter log channel ID'} />;
+                            }}
+                        />
+                        <SubHeading>A channel to send notices to when a user triggers a word filter.</SubHeading>
                     </Grid>
                     <Grid xs={12}>
                         <Field
@@ -1026,6 +1252,7 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             needed and its mostly useful when creating or modifying existing command.
                         </SubHeading>
                     </Grid>
+
                     <Grid xs={12}>
                         <Subscribe
                             selector={(state) => [state.canSubmit, state.isSubmitting]}

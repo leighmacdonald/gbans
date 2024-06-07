@@ -20,6 +20,7 @@ import { Title } from '../component/Title.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { SteamIDField } from '../component/field/SteamIDField.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
+import { checkFeatureEnabled } from '../util/features.ts';
 import { makeCommonTableSearchSchema, RowsPerPage } from '../util/table.ts';
 
 const chatlogsSchema = z.object({
@@ -53,6 +54,9 @@ type chatLogForm = {
 
 export const Route = createFileRoute('/_auth/chatlogs')({
     component: ChatLogs,
+    beforeLoad: () => {
+        checkFeatureEnabled('chatlogs_enabled');
+    },
     validateSearch: (search) => chatlogsSchema.parse(search),
     loader: async ({ context }) => {
         const unsorted = await context.queryClient.ensureQueryData({

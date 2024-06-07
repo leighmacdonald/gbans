@@ -56,7 +56,7 @@ type Config struct {
 	Demo        ConfigDemo        `json:"demo"`
 	Filters     ConfigFilter      `json:"filters"`
 	Discord     ConfigDiscord     `json:"discord"`
-	Clientprefs ConfigClientprefs `mapstructure:"clientprefs"`
+	Clientprefs ConfigClientprefs `json:"clientprefs"`
 	Log         ConfigLog         `json:"log"`
 	GeoLocation ConfigIP2Location `json:"geo_location"`
 	Debug       ConfigDebug       `json:"debug"`
@@ -165,12 +165,22 @@ const (
 )
 
 type ConfigGeneral struct {
-	SiteName      string        `json:"site_name"`
-	SteamKey      string        `json:"steam_key"`
-	Mode          RunMode       `json:"mode"`
-	FileServeMode FileServeMode `json:"file_serve_mode"`
-	SrcdsLogAddr  string        `json:"srcds_log_addr"`
-	AssetURL      string        `json:"asset_url"`
+	SiteName        string        `json:"site_name"`
+	SteamKey        string        `json:"steam_key"`
+	Mode            RunMode       `json:"mode"`
+	FileServeMode   FileServeMode `json:"file_serve_mode"`
+	SrcdsLogAddr    string        `json:"srcds_log_addr"`
+	AssetURL        string        `json:"asset_url"`
+	DefaultRoute    string        `json:"default_route"`
+	NewsEnabled     bool          `json:"news_enabled"`
+	ForumsEnabled   bool          `json:"forums_enabled"`
+	ContestsEnabled bool          `json:"contests_enabled"`
+	WikiEnabled     bool          `json:"wiki_enabled"`
+	StatsEnabled    bool          `json:"stats_enabled"`
+	ServersEnabled  bool          `json:"servers_enabled"`
+	ReportsEnabled  bool          `json:"reports_enabled"`
+	ChatlogsEnabled bool          `json:"chatlogs_enabled"`
+	DemosEnabled    bool          `json:"demos_enabled"`
 }
 
 type ConfigDemo struct {
@@ -194,6 +204,11 @@ type ConfigDiscord struct {
 	PublicLogChannelEnable  bool   `json:"public_log_channel_enable"`
 	PublicLogChannelID      string `json:"public_log_channel_id"`
 	PublicMatchLogChannelID string `json:"public_match_log_channel_id"`
+	VoteLogChannelID        string `json:"vote_log_channel_id"`
+	AppealLogChannelID      string `json:"appeal_log_channel_id"`
+	BanLogChannelID         string `json:"ban_log_channel_id"`
+	ForumLogChannelID       string `json:"forum_log_channel_id"`
+	WordFilterLogChannelID  string `json:"word_filter_log_channel_id"`
 	ModPingRoleID           string `json:"mod_ping_role_id"`
 	UnregisterOnStart       bool   `json:"unregister_on_start"`
 }

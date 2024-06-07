@@ -1,6 +1,7 @@
-import { PropsWithChildren, StrictMode, useEffect, useState } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { PropsWithChildren, StrictMode, useState } from 'react';
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { createRouter, RouterProvider } from '@tanstack/react-router';
+import { isBefore, parseISO } from 'date-fns';
 import { apiCall, appInfoDetail, defaultAvatarHash, PermissionLevel } from './api';
 import { AuthProvider, profileKey } from './auth.tsx';
 import { ErrorDetails } from './component/ErrorDetails.tsx';
@@ -92,19 +93,49 @@ const AppInfoProvider = ({ children }: PropsWithChildren) => {
         asset_url: '/assets',
         patreon_client_id: '',
         discord_client_id: '',
+        default_route: '/',
         discord_enabled: false,
-        patreon_enabled: false
+        patreon_enabled: false,
+        servers_enabled: false,
+        wiki_enabled: false,
+        forums_enabled: false,
+        stats_enabled: false,
+        reports_enabled: false,
+        contests_enabled: false,
+        chatlogs_enabled: false,
+        demos_enabled: false,
+        news_enabled: false
     });
 
-    useEffect(() => {
-        apiCall<appInfoDetail>('/api/info')
-            .then((value) => {
-                setAppInfo(value);
-            })
-            .catch((reason) => {
-                console.log(reason);
-            });
-    }, []);
+    useQuery({
+        queryKey: ['appInfo'],
+        queryFn: async () => {
+            const appInfoString = localStorage.getItem('appInfo');
+            const appInfoValidUntil = localStorage.getItem('appInfoValidUntil');
+            if (appInfoValidUntil && appInfoString) {
+                try {
+                    const validDate = parseISO(appInfoValidUntil);
+                    if (isBefore(validDate, new Date())) {
+                        const cached = JSON.parse(appInfoString) as appInfoDetail;
+                        setAppInfo(cached);
+                        return cached;
+                    }
+                } catch (e) {
+                    console.log(`Failed to parse appInfo: ${e}`);
+                }
+            }
+
+            const details = await apiCall<appInfoDetail>('/api/info');
+            setAppInfo(details);
+            localStorage.setItem('appInfo', JSON.stringify(details));
+
+            const expiry = new Date();
+            expiry.setDate(expiry.getHours() + 1);
+            localStorage.setItem('appInfoValidUntil', JSON.stringify(expiry));
+
+            return details;
+        }
+    });
 
     return (
         <UseAppInfoCtx.Provider

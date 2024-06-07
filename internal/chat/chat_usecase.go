@@ -117,7 +117,7 @@ func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.Ne
 		return nil
 	}
 
-	u.du.SendPayload(domain.ChannelModLog, discord.WarningMessage(newWarning, banSteam, person))
+	u.du.SendPayload(domain.ChannelWordFilterLog, discord.WarningMessage(newWarning, banSteam, person))
 
 	return nil
 }
