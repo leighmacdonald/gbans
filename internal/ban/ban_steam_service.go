@@ -502,9 +502,9 @@ func (h banHandler) onAPIGetBanBySteam() gin.HandlerFunc {
 		}
 
 		ban, errBans := h.bu.GetBySteamID(ctx, steamID, false, false)
-		if errBans != nil {
+		if errBans != nil && !errors.Is(errBans, domain.ErrNoResult) {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			slog.Error("Failed to get ban record for steamid", log.ErrAttr(err))
+			slog.Error("Failed to get ban record for steamid", log.ErrAttr(errBans))
 
 			return
 		}

@@ -1,13 +1,10 @@
-import { JSX, ReactNode } from 'react';
+import { PropsWithChildren, ReactNode } from 'react';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import { Heading } from './Heading';
 
-export type JustifyTypes = 'flex-start' | 'center' | 'flex-end' | 'space-between';
-
 interface ContainerWithHeaderProps {
     title: string;
-    children?: JSX.Element[] | JSX.Element | string | boolean;
     iconLeft?: ReactNode;
     spacing?: number;
     elevation?: number;
@@ -23,7 +20,7 @@ export const ContainerWithHeader = ({
     elevation = 1,
     marginTop = 0,
     padding = 1
-}: ContainerWithHeaderProps) => {
+}: PropsWithChildren<ContainerWithHeaderProps>) => {
     return (
         <Paper elevation={elevation}>
             <Heading iconLeft={iconLeft}>{title}</Heading>
