@@ -2,10 +2,10 @@ import { useCallback, useState, useMemo } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import AutoFixNormalIcon from '@mui/icons-material/AutoFixNormal';
-import ConstructionIcon from '@mui/icons-material/Construction';
 import GavelIcon from '@mui/icons-material/Gavel';
 import InfoIcon from '@mui/icons-material/Info';
 import SendIcon from '@mui/icons-material/Send';
+import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
@@ -102,7 +102,10 @@ function ReportView() {
         }
 
         return (
-            <ContainerWithHeader title={BanType.Banned ? 'Banned' : 'Muted'} iconLeft={<ConstructionIcon />}>
+            <ContainerWithHeader
+                title={ban.ban_type == BanType.Banned ? 'Banned' : 'Muted'}
+                iconLeft={ban.ban_type == BanType.Banned ? <GavelIcon /> : <VolumeOffIcon />}
+            >
                 <List dense={true}>
                     <ListItem>
                         <ListItemText primary={'Reason'} secondary={BanReasons[ban.reason]} />
@@ -112,6 +115,9 @@ function ReportView() {
                             <ListItemText primary={'Custom Reason'} secondary={ban.note} />
                         </ListItem>
                     )}
+                    <ListItem>
+                        <ListItemText primary={'Ban ID'} secondary={ban.ban_id} />
+                    </ListItem>
                     <ListItem>
                         <ListItemText primary={'Note'} secondary={ban.note} />
                     </ListItem>
