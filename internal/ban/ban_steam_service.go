@@ -55,6 +55,7 @@ func NewBanHandler(engine *gin.Engine, bu domain.BanSteamUsecase, du domain.Disc
 		mod := modGrp.Use(ath.AuthMiddleware(domain.PModerator))
 
 		mod.GET("/api/bans/steam", handler.onAPIGetBansSteam())
+		mod.GET("/api/bans/steamid/:steam_id", handler.onAPIGetBanBySteam())
 		mod.POST("/api/bans/steam/create", handler.onAPIPostBanSteamCreate())
 		mod.DELETE("/api/bans/steam/:ban_id", handler.onAPIPostBanDelete())
 		mod.POST("/api/bans/steam/:ban_id", handler.onAPIPostBanUpdate())
@@ -487,5 +488,27 @@ func (h banHandler) onAPIPostBanUpdate() gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusAccepted, bannedPerson)
+	}
+}
+
+func (h banHandler) onAPIGetBanBySteam() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		steamID, err := httphelper.GetSID64Param(ctx, "steam_id")
+		if err != nil {
+			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			slog.Error("Failed to get steamid", log.ErrAttr(err))
+
+			return
+		}
+
+		ban, errBans := h.bu.GetBySteamID(ctx, steamID, false, false)
+		if errBans != nil {
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			slog.Error("Failed to get ban record for steamid", log.ErrAttr(err))
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, ban)
 	}
 }

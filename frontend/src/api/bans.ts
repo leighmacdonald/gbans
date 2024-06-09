@@ -241,6 +241,11 @@ export const apiGetBansSteam = async (opts: BanSteamQueryFilter, abortController
     return resp.map(transformTimeStampedDates);
 };
 
+export const apiGetBanBySteam = async (steamID: string, abortController?: AbortController) =>
+    transformTimeStampedDates(
+        await apiCall<SteamBanRecord>(`/api/bans/steamid/${steamID}`, 'GET', undefined, abortController)
+    );
+
 export function applyDateTime<T>(row: T & TimeStamped) {
     const record = {
         ...row,

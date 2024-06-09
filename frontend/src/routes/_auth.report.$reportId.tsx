@@ -2,6 +2,7 @@ import { useCallback, useState, useMemo } from 'react';
 import NiceModal from '@ebay/nice-modal-react';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import AutoFixNormalIcon from '@mui/icons-material/AutoFixNormal';
+import ConstructionIcon from '@mui/icons-material/Construction';
 import GavelIcon from '@mui/icons-material/Gavel';
 import InfoIcon from '@mui/icons-material/Info';
 import SendIcon from '@mui/icons-material/Send';
@@ -22,21 +23,19 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
-import { isBefore } from 'date-fns';
 import {
-    apiGetBansSteam,
+    apiGetBanBySteam,
     apiGetReport,
     apiReportSetState,
+    appealStateString,
     BanReasons,
     BanType,
     PermissionLevel,
     ReportStatus,
     reportStatusColour,
-    reportStatusString,
-    SteamBanRecord
+    reportStatusString
 } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
-import { Heading } from '../component/Heading.tsx';
 import { ProfileInfoBox } from '../component/ProfileInfoBox.tsx';
 import { ReportViewComponent } from '../component/ReportViewComponent.tsx';
 import { SteamIDList } from '../component/SteamIDList.tsx';
@@ -44,7 +43,7 @@ import { Title } from '../component/Title';
 import { ModalBanSteam } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors.ts';
-import { avatarHashToURL } from '../util/text.tsx';
+import { avatarHashToURL, renderDateTime, renderTimeDistance } from '../util/text.tsx';
 
 export const Route = createFileRoute('/_auth/report/$reportId')({
     component: ReportView
@@ -72,10 +71,9 @@ function ReportView() {
     const { data: ban, isLoading: isLoadingBan } = useQuery({
         queryKey: ['ban', { targetId: report?.target_id }],
         queryFn: async () => {
-            const bans = await apiGetBansSteam({ target_id: report?.target_id, desc: true });
-            const active = bans.filter((b: SteamBanRecord) => isBefore(new Date(), b.valid_until));
-
-            return active.length > 0 ? active[0] : false;
+            if (report?.target_id) {
+                return await apiGetBanBySteam(report?.target_id);
+            }
         },
         enabled: !isLoadingReport && Boolean(report?.target_id)
     });
@@ -103,13 +101,45 @@ function ReportView() {
             return null;
         }
 
-        switch (ban.ban_type) {
-            case BanType.Banned:
-                return <Heading bgColor={theme.palette.error.main}>Banned</Heading>;
-            default:
-                return <Heading bgColor={theme.palette.warning.main}>Muted</Heading>;
-        }
-    }, [ban, isLoadingBan, theme.palette.error.main, theme.palette.warning.main]);
+        return (
+            <ContainerWithHeader title={BanType.Banned ? 'Banned' : 'Muted'} iconLeft={<ConstructionIcon />}>
+                <List dense={true}>
+                    <ListItem>
+                        <ListItemText primary={'Reason'} secondary={BanReasons[ban.reason]} />
+                    </ListItem>
+                    {ban.reason_text != '' && (
+                        <ListItem>
+                            <ListItemText primary={'Custom Reason'} secondary={ban.note} />
+                        </ListItem>
+                    )}
+                    <ListItem>
+                        <ListItemText primary={'Note'} secondary={ban.note} />
+                    </ListItem>
+                    <ListItem>
+                        <ListItemText primary={'Include Friends'} secondary={ban.include_friends ? 'Yes' : 'No'} />
+                    </ListItem>
+                    <ListItem>
+                        <ListItemText primary={'Evasion OK'} secondary={ban.evade_ok ? 'Yes' : 'No'} />
+                    </ListItem>
+                    <ListItem>
+                        <ListItemText primary={'Appeal State'} secondary={appealStateString(ban.appeal_state)} />
+                    </ListItem>
+                    <ListItem>
+                        <ListItemText primary={'Valid Until Date'} secondary={renderDateTime(ban.valid_until)} />
+                    </ListItem>
+                    <ListItem>
+                        <ListItemText
+                            primary={'Time Expires In'}
+                            secondary={renderTimeDistance(ban.valid_until, new Date())}
+                        />
+                    </ListItem>
+                    <ListItem>
+                        <ListItemText primary={'Author'} secondary={ban.source_personaname} />
+                    </ListItem>
+                </List>
+            </ContainerWithHeader>
+        );
+    }, [ban, isLoadingBan]);
 
     const reportStatusView = useMemo(() => {
         return (
@@ -212,7 +242,7 @@ function ReportView() {
                             {reportStatusView}
                         </Grid>
                         <Grid xs={6} md={12}>
-                            <ContainerWithHeader title={'Details'} iconLeft={<InfoIcon />}>
+                            <ContainerWithHeader title={'Report Details'} iconLeft={<InfoIcon />}>
                                 <List sx={{ width: '100%' }}>
                                     <ListItem
                                         sx={{
