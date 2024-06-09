@@ -25,7 +25,9 @@ import {
 } from '@mdxeditor/editor';
 import { headingsPlugin } from '@mdxeditor/editor';
 import '@mdxeditor/editor/style.css';
+import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import { apiSaveAsset, assetURL } from '../../api/media.ts';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
@@ -68,50 +70,57 @@ export const MarkdownField = ({ state, handleChange, handleBlur }: MDBodyFieldPr
 
     const classes = useMemo(() => {
         if (theme.mode == 'dark') {
-            return 'md-editor dark-editor';
+            return 'dark-theme md-editor dark-editor mdxeditor-root-contenteditable-dark';
         } else {
-            return 'md-editor light-editor';
+            return 'md-editor light-editor mdxeditor-root-contenteditable-light';
         }
     }, [theme.mode]);
 
     return (
-        <MDXEditor
-            className={classes}
-            autoFocus={true}
-            markdown={state.value}
-            plugins={[
-                toolbarPlugin({
-                    toolbarContents: () => (
-                        <Stack direction={'row'}>
-                            <UndoRedo />
-                            <BoldItalicUnderlineToggles />
-                            <CodeToggle />
-                            <InsertImage />
-                            <InsertTable />
-                            <InsertThematicBreak />
-                            <ListsToggle />
-                        </Stack>
-                    )
-                }),
-                listsPlugin(),
-                quotePlugin(),
-                headingsPlugin(),
-                linkPlugin(),
-                linkDialogPlugin(),
-                imagePlugin({ imageUploadHandler }),
-                tablePlugin(),
-                thematicBreakPlugin(),
-                frontmatterPlugin(),
-                codeBlockPlugin({ defaultCodeBlockLanguage: 'txt' }),
-                directivesPlugin({
-                    directiveDescriptors: [AdmonitionDirectiveDescriptor]
-                }),
-                markdownShortcutPlugin()
-            ]}
-            onError={onError}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            ref={mdEditorRef}
-        />
+        <Paper>
+            <MDXEditor
+                className={classes}
+                autoFocus={true}
+                markdown={state.value}
+                plugins={[
+                    toolbarPlugin({
+                        toolbarContents: () => (
+                            <Stack direction={'row'}>
+                                <UndoRedo />
+                                <BoldItalicUnderlineToggles />
+                                <CodeToggle />
+                                <InsertImage />
+                                <InsertTable />
+                                <InsertThematicBreak />
+                                <ListsToggle />
+                            </Stack>
+                        )
+                    }),
+                    listsPlugin(),
+                    quotePlugin(),
+                    headingsPlugin(),
+                    linkPlugin(),
+                    linkDialogPlugin(),
+                    imagePlugin({ imageUploadHandler }),
+                    tablePlugin(),
+                    thematicBreakPlugin(),
+                    frontmatterPlugin(),
+                    codeBlockPlugin({ defaultCodeBlockLanguage: 'txt' }),
+                    directivesPlugin({
+                        directiveDescriptors: [AdmonitionDirectiveDescriptor]
+                    }),
+                    markdownShortcutPlugin()
+                ]}
+                onError={onError}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                ref={mdEditorRef}
+            />
+            {state.meta.touchedErrors.length > 0 && (
+                <Typography padding={1} color={theme.palette.error.main}>
+                    {state.meta.touchedErrors}
+                </Typography>
+            )}
+        </Paper>
     );
 };
