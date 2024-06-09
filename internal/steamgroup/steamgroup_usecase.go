@@ -5,9 +5,9 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/leighmacdonald/gbans/internal/discord"
 	"net/http"
 
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -23,7 +23,8 @@ type banGroupUsecase struct {
 
 func NewBanGroupUsecase(banGroupRepository domain.BanGroupRepository, personUsecase domain.PersonUsecase,
 	discord domain.DiscordUsecase,
-	config domain.ConfigUsecase) domain.BanGroupUsecase {
+	config domain.ConfigUsecase,
+) domain.BanGroupUsecase {
 	return &banGroupUsecase{
 		banGroupRepository: banGroupRepository,
 		personUsecase:      personUsecase,
