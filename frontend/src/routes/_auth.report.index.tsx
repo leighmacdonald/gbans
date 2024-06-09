@@ -3,7 +3,6 @@ import EditNotificationsIcon from '@mui/icons-material/EditNotifications';
 import HistoryIcon from '@mui/icons-material/History';
 import InfoIcon from '@mui/icons-material/Info';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import FormControl from '@mui/material/FormControl';
@@ -24,7 +23,14 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
-import { createColumnHelper, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
+import {
+    createColumnHelper,
+    getCoreRowModel,
+    getPaginationRowModel,
+    getSortedRowModel,
+    SortingState,
+    useReactTable
+} from '@tanstack/react-table';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import {
@@ -162,6 +168,7 @@ const columnHelper = createColumnHelper<ReportWithAuthor>();
 
 const UserReportHistory = ({ history, isLoading }: { history: ReportWithAuthor[]; isLoading: boolean }) => {
     const [pagination, setPagination] = useState(initPagination(0, RowsPerPage.Ten));
+    const [sorting] = useState<SortingState>([{ id: 'report_id', desc: true }]);
 
     const columns = [
         columnHelper.accessor('report_status', {
@@ -173,8 +180,7 @@ const UserReportHistory = ({ history, isLoading }: { history: ReportWithAuthor[]
                         <Typography variant={'body1'}>{reportStatusString(info.getValue())}</Typography>
                     </Stack>
                 );
-            },
-            footer: () => <TableHeadingCell name={'Server'} />
+            }
         }),
         columnHelper.accessor('subject', {
             header: () => <TableHeadingCell name={'Player'} />,
@@ -184,8 +190,7 @@ const UserReportHistory = ({ history, isLoading }: { history: ReportWithAuthor[]
                     personaname={info.row.original.subject.personaname}
                     avatar_hash={info.row.original.subject.avatarhash}
                 />
-            ),
-            footer: () => <TableHeadingCell name={'Created'} />
+            )
         }),
         columnHelper.accessor('report_id', {
             header: () => <TableHeadingCell name={'View'} />,
@@ -202,8 +207,7 @@ const UserReportHistory = ({ history, isLoading }: { history: ReportWithAuthor[]
                         </Tooltip>
                     </IconButton>
                 </ButtonGroup>
-            ),
-            footer: () => <TableHeadingCell name={'Name'} />
+            )
         })
     ];
 
@@ -214,9 +218,11 @@ const UserReportHistory = ({ history, isLoading }: { history: ReportWithAuthor[]
         manualPagination: false,
         autoResetPageIndex: true,
         getPaginationRowModel: getPaginationRowModel(),
+        getSortedRowModel: getSortedRowModel(),
         onPaginationChange: setPagination,
         state: {
-            pagination
+            pagination,
+            sorting
         }
     });
 
@@ -291,7 +297,7 @@ export const ReportCreateForm = (): JSX.Element => {
             demo_tick: 0,
             person_message_id: person_message_id ?? 0,
             steam_id: steam_id ?? '',
-            reason: BanReason.Custom,
+            reason: person_message_id ? BanReason.Language : BanReason.Cheating,
             reason_text: ''
         }
     });
@@ -431,17 +437,15 @@ export const ReportCreateForm = (): JSX.Element => {
                         </Grid>
                     )}
                     <Grid md={12}>
-                        <Box minHeight={365}>
-                            <form.Field
-                                name={'body_md'}
-                                validators={{
-                                    onChange: z.string().min(4)
-                                }}
-                                children={(props) => {
-                                    return <MarkdownField {...props} label={'Message (Markdown)'} />;
-                                }}
-                            />
-                        </Box>
+                        <form.Field
+                            name={'body_md'}
+                            validators={{
+                                onChange: z.string().min(4, 'Body must contain at least 4 characters')
+                            }}
+                            children={(props) => {
+                                return <MarkdownField {...props} label={'Message (Markdown)'} />;
+                            }}
+                        />
                     </Grid>
                     <Grid xs={12}>
                         <form.Subscribe
