@@ -66,8 +66,6 @@ func (f SCPExecer) Start(ctx context.Context) {
 			if errUpdate := f.update(ctx); errUpdate != nil {
 				slog.Error("Error querying ssh demo", log.ErrAttr(errUpdate))
 			}
-
-			updateTimer.Reset(time.Minute * 5)
 		case <-ctx.Done():
 			return
 		}
