@@ -15,7 +15,6 @@ import (
 type DataUpdater[T any] struct {
 	data       T
 	update     func() (T, error)
-	updateChan chan any
 	updateRate time.Duration
 	dataMu     *sync.RWMutex
 }
@@ -23,7 +22,6 @@ type DataUpdater[T any] struct {
 func NewDataUpdater[T any](updateRate time.Duration, updateFn func() (T, error)) *DataUpdater[T] {
 	return &DataUpdater[T]{
 		update:     updateFn,
-		updateChan: make(chan any),
 		dataMu:     &sync.RWMutex{},
 		updateRate: updateRate,
 	}
@@ -36,28 +34,26 @@ func (c *DataUpdater[T]) Data() T { //nolint:ireturn
 	return c.data
 }
 
-func (c *DataUpdater[T]) Start(ctx context.Context) {
-	go func() {
-		c.updateChan <- true
-	}()
+func (c *DataUpdater[T]) execUpdate() {
+	newData, errUpdate := c.update()
+	if errUpdate != nil && !errors.Is(errUpdate, domain.ErrNoResult) {
+		slog.Error("Failed to update data source", log.ErrAttr(errUpdate))
 
+		return
+	}
+
+	c.dataMu.Lock()
+	c.data = newData
+	c.dataMu.Unlock()
+}
+
+func (c *DataUpdater[T]) Start(ctx context.Context) {
 	refreshTimer := time.NewTicker(c.updateRate)
 
 	for {
 		select {
-		case <-c.updateChan:
-			newData, errUpdate := c.update()
-			if errUpdate != nil && !errors.Is(errUpdate, domain.ErrNoResult) {
-				slog.Error("Failed to update data source", log.ErrAttr(errUpdate))
-
-				return
-			}
-
-			c.dataMu.Lock()
-			c.data = newData
-			c.dataMu.Unlock()
 		case <-refreshTimer.C:
-			c.updateChan <- true
+			c.execUpdate()
 		case <-ctx.Done():
 			return
 		}

@@ -104,18 +104,13 @@ func (p *Manager) Campaigns() patreon.Campaign {
 }
 
 func (p *Manager) Start(ctx context.Context) {
-	var (
-		updateTimer = time.NewTicker(time.Hour * 1)
-		updateChan  = make(chan any)
-	)
+	updateTimer := time.NewTicker(time.Hour * 1)
 
 	p.sync(ctx)
 
 	for {
 		select {
 		case <-updateTimer.C:
-			updateChan <- true
-		case <-updateChan:
 			p.sync(ctx)
 		case <-ctx.Done():
 			return
