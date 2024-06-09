@@ -73,15 +73,15 @@ func (h srcdsUsecase) GetBanState(ctx context.Context, steamID steamid.SteamID, 
 				msg = fmt.Sprintf(format, banState.Reason.String(), "Steam", validUntil, appealURL)
 			}
 		case domain.BanSourceASN:
-			msg = fmt.Sprintf(format, banState.Reason.String(), "Special", "Permanent", appealURL)
+			msg = fmt.Sprintf(format, banState.Reason.String(), "ASN", "Permanent", appealURL)
 		case domain.BanSourceCIDR:
-			msg = "Blocked Network/VPN\nPlease disable your VPN"
+			msg = "Blocked Network/VPN\nPlease disable your VPN if you are using one."
 		case domain.BanSourceSteamFriend:
 			msg = "Friend Network Ban"
 		case domain.BanSourceSteamGroup:
 			msg = "Blocked Steam Group"
 		case domain.BanSourceSteamNet:
-			msg = fmt.Sprintf(format, banState.Reason.String(), "Special", "Permanent", appealURL)
+			msg = fmt.Sprintf(format, banState.Reason.String(), "Steam Net", "Permanent", appealURL)
 		}
 	}
 

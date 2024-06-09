@@ -357,7 +357,7 @@ function BanPage() {
 
                     {permissionLevel() >= PermissionLevel.Moderator && ban.note != '' && (
                         <ContainerWithHeader title={'Mod Notes'} iconLeft={<DocumentScannerIcon />}>
-                            <Typography variant={'body2'} padding={2}>
+                            <Typography variant={'body2'} padding={0}>
                                 <MarkDownRenderer body_md={ban.note} />
                             </Typography>
                         </ContainerWithHeader>

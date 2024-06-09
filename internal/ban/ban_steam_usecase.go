@@ -229,6 +229,7 @@ func (s banSteamUsecase) CheckEvadeStatus(ctx context.Context, curUser domain.Pe
 		return false, errDuration
 	}
 
+	existing.Note += " Previous expiry: " + existing.BanSteam.ValidUntil.Format(time.DateTime)
 	existing.BanSteam.ValidUntil = time.Now().Add(duration)
 
 	if errSave := s.Save(ctx, &existing.BanSteam); errSave != nil {
@@ -240,7 +241,7 @@ func (s banSteamUsecase) CheckEvadeStatus(ctx context.Context, curUser domain.Pe
 	var newBan domain.BanSteam
 	if errNewBan := domain.NewBanSteam(steamid.New(s.configUsecase.Config().Owner),
 		steamID, duration, domain.Evading, domain.Evading.String(),
-		"Connecting from same IP as banned player", domain.System,
+		"Connecting from same IP as banned player. ", domain.System,
 		0, domain.Banned, false, false, &newBan); errNewBan != nil {
 		slog.Error("Could not create evade ban", log.ErrAttr(errNewBan))
 
