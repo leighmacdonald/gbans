@@ -13,13 +13,19 @@ type banASNUsecase struct {
 	repository     domain.BanASNRepository
 	discordUsecase domain.DiscordUsecase
 	networkUsecase domain.NetworkUsecase
+	config         domain.ConfigUsecase
+	person         domain.PersonUsecase
 }
 
-func NewBanASNUsecase(repository domain.BanASNRepository, discordUsecase domain.DiscordUsecase, networkUsecase domain.NetworkUsecase) domain.BanASNUsecase {
+func NewBanASNUsecase(repository domain.BanASNRepository, discordUsecase domain.DiscordUsecase,
+	networkUsecase domain.NetworkUsecase, config domain.ConfigUsecase, person domain.PersonUsecase,
+) domain.BanASNUsecase {
 	return banASNUsecase{
 		repository:     repository,
 		discordUsecase: discordUsecase,
 		networkUsecase: networkUsecase,
+		config:         config,
+		person:         person,
 	}
 }
 
@@ -35,10 +41,17 @@ func (s banASNUsecase) Ban(ctx context.Context, banASN *domain.BanASN) error {
 		}
 	}
 
+	author, errAuthor := s.person.GetPersonBySteamID(ctx, banASN.SourceID)
+	if errAuthor != nil {
+		return errors.Join(errAuthor, domain.ErrGetPerson)
+	}
+
 	if errSave := s.repository.Save(ctx, banASN); errSave != nil {
 		return errors.Join(errSave, domain.ErrSaveBan)
 	}
-	// TODO Kick all Current players matching
+
+	s.discordUsecase.SendPayload(domain.ChannelBanLog, discord.BanASNMessage(*banASN, author, s.config.Config()))
+
 	return nil
 }
 

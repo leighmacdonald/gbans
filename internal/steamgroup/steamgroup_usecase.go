@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"net/http"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -16,12 +17,18 @@ import (
 type banGroupUsecase struct {
 	banGroupRepository domain.BanGroupRepository
 	personUsecase      domain.PersonUsecase
+	discord            domain.DiscordUsecase
+	config             domain.ConfigUsecase
 }
 
-func NewBanGroupUsecase(banGroupRepository domain.BanGroupRepository, personUsecase domain.PersonUsecase) domain.BanGroupUsecase {
+func NewBanGroupUsecase(banGroupRepository domain.BanGroupRepository, personUsecase domain.PersonUsecase,
+	discord domain.DiscordUsecase,
+	config domain.ConfigUsecase) domain.BanGroupUsecase {
 	return &banGroupUsecase{
 		banGroupRepository: banGroupRepository,
 		personUsecase:      personUsecase,
+		discord:            discord,
+		config:             config,
 	}
 }
 
@@ -121,5 +128,16 @@ func (s banGroupUsecase) Ban(ctx context.Context, banGroup *domain.BanGroup) err
 		return errors.Join(membersErr, domain.ErrGroupValidate)
 	}
 
-	return s.banGroupRepository.Ban(ctx, banGroup)
+	author, errAuthor := s.personUsecase.GetPersonBySteamID(ctx, banGroup.SourceID)
+	if errAuthor != nil {
+		return errors.Join(membersErr, domain.ErrGetPerson)
+	}
+
+	if err := s.banGroupRepository.Ban(ctx, banGroup); err != nil {
+		return errors.Join(err, domain.ErrSaveBan)
+	}
+
+	s.discord.SendPayload(domain.ChannelBanLog, discord.BanGroupMessage(*banGroup, author, s.config.Config()))
+
+	return nil
 }
