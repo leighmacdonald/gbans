@@ -310,6 +310,7 @@ export const ReportCreateForm = (): JSX.Element => {
             marginTop={3}
         >
             <form
+                id={'reportForm'}
                 onSubmit={async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -345,7 +346,7 @@ export const ReportCreateForm = (): JSX.Element => {
                                 return (
                                     <>
                                         <FormControl fullWidth>
-                                            <InputLabel id="server-select-label">Reason</InputLabel>
+                                            <InputLabel id="serverSelectLabel">Reason</InputLabel>
                                             <Select
                                                 fullWidth
                                                 value={state.value}
@@ -375,6 +376,16 @@ export const ReportCreateForm = (): JSX.Element => {
                     <Grid xs={6}>
                         <form.Field
                             name={'reason_text'}
+                            validators={{
+                                onChangeListenTo: ['reason'],
+                                onChange: ({ value, fieldApi }) => {
+                                    if (fieldApi.form.getFieldValue('reason') == BanReason.Custom) {
+                                        return z.string().min(2, { message: 'Must enter custom reason' }).parse(value);
+                                    }
+
+                                    return z.string().parse(value);
+                                }
+                            }}
                             children={({ state, handleChange, handleBlur }) => {
                                 return (
                                     <>
