@@ -113,6 +113,8 @@ func (s banSteamUsecase) Ban(ctx context.Context, curUser domain.PersonInfo, ban
 		return errors.Join(errSave, domain.ErrSaveBan)
 	}
 
+	s.discordUsecase.SendPayload(domain.ChannelBanLog, discord.BanSteamResponse(*banSteam, curUser))
+
 	updateAppealState := func(reportId int64) error {
 		report, errReport := s.reportUsecase.GetReport(ctx, curUser, reportId)
 		if errReport != nil {

@@ -222,7 +222,7 @@ func BanExpiresMessage(ban domain.BanSteam, person domain.PersonInfo, banURL str
 	return msgEmbed.Embed().Truncate().MessageEmbed
 }
 
-func BanSteamResponse(banSteam domain.BanSteam) *discordgo.MessageEmbed {
+func BanSteamResponse(banSteam domain.BanSteam, author domain.PersonInfo) *discordgo.MessageEmbed {
 	var (
 		title  string
 		colour int
@@ -242,6 +242,7 @@ func BanSteamResponse(banSteam domain.BanSteam) *discordgo.MessageEmbed {
 		SetURL("https://steamcommunity.com/profiles/" + banSteam.TargetID.String())
 
 	msgEmbed.AddFieldsSteamID(banSteam.TargetID)
+	msgEmbed.AddAuthorPersonInfo(author, "https://steamcommunity.com/profiles/"+banSteam.SourceID.String())
 
 	expIn := "Permanent"
 	expAt := "Permanent"
@@ -256,6 +257,12 @@ func BanSteamResponse(banSteam domain.BanSteam) *discordgo.MessageEmbed {
 		AddField("Expires In", expIn).
 		AddField("Expires At", expAt)
 
+	if banSteam.Note != "" {
+		msgEmbed.emb.Description = banSteam.Note
+	}
+
+	msgEmbed.emb.URL = "https://steamcommunity.com/profiles/" + banSteam.TargetID.String()
+
 	return msgEmbed.Embed().MessageEmbed
 }
 
@@ -269,6 +276,10 @@ func BanCIDRResponse(cidr *net.IPNet, author domain.PersonInfo, authorURL string
 
 	msgEmbed.AddTargetPerson(target)
 	msgEmbed.AddAuthorPersonInfo(author, authorURL)
+
+	if banNet.Note != "" {
+		msgEmbed.emb.Description = banNet.Note
+	}
 
 	return msgEmbed.Embed().MessageEmbed
 }
@@ -1070,12 +1081,46 @@ func MuteMessage(banSteam domain.BanSteam) *discordgo.MessageEmbed {
 		Embed().Truncate().MessageEmbed
 }
 
-func BanASNMessage(asNum int64) *discordgo.MessageEmbed {
-	return NewEmbed("ASN BanSteam Created Successfully").Embed().
+func BanGroupMessage(ban domain.BanGroup, author domain.PersonInfo, config domain.Config) *discordgo.MessageEmbed {
+	embed := NewEmbed("Group Ban Created Successfully")
+	embed.Embed().
 		SetColor(ColourSuccess).
-		AddField("ASNum", strconv.FormatInt(asNum, 10)).
-		Truncate().
-		MessageEmbed
+		AddField("Steam ID", ban.GroupID.String()).
+		AddField("Reason", ban.Reason.String())
+
+	if ban.ReasonText != "" {
+		embed.Embed().AddField("reason_text", ban.ReasonText)
+	}
+
+	if ban.Note != "" {
+		embed.emb.Description = ban.Note
+	}
+
+	embed.emb.URL = "https://steamcommunity.com/gid/" + ban.GroupID.String()
+
+	embed.AddAuthorPersonInfo(author, config.ExtURL(author))
+
+	return embed.Embed().MessageEmbed
+}
+
+func BanASNMessage(ban domain.BanASN, author domain.PersonInfo, config domain.Config) *discordgo.MessageEmbed {
+	embed := NewEmbed("ASN Ban Created Successfully")
+	embed.Embed().
+		SetColor(ColourSuccess).
+		AddField("ASNum", strconv.FormatInt(ban.ASNum, 10)).
+		AddField("reason", ban.Reason.String())
+
+	if ban.ReasonText != "" {
+		embed.Embed().AddField("reason_text", ban.ReasonText)
+	}
+
+	if ban.Note != "" {
+		embed.emb.Description = ban.Note
+	}
+
+	embed.AddAuthorPersonInfo(author, config.ExtURL(author))
+
+	return embed.Embed().MessageEmbed
 }
 
 func BanIPMessage() *discordgo.MessageEmbed {

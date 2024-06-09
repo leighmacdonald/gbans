@@ -838,7 +838,7 @@ func (h discordService) onBanASN(ctx context.Context, _ *discordgo.Session,
 		return nil, domain.ErrCommandFailed
 	}
 
-	return BanASNMessage(asNum), nil
+	return BanASNMessage(banASN, author, h.cu.Config()), nil
 }
 
 func (h discordService) onBanIP(ctx context.Context, _ *discordgo.Session,
@@ -938,5 +938,5 @@ func (h discordService) onBanSteam(ctx context.Context, _ *discordgo.Session,
 		return nil, domain.ErrCommandFailed
 	}
 
-	return BanSteamResponse(banSteam), nil
+	return BanSteamResponse(banSteam, author), nil
 }
