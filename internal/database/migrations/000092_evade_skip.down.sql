@@ -13,7 +13,7 @@ CREATE OR REPLACE FUNCTION check_ban(steam text, ip text,
                                      OUT out_evade_ok bool,
                                      OUT out_valid_until timestamp,
                                      OUT out_ban_type int) AS
-$$
+$func$
 DECLARE
     in_steam_id bigint ;
 BEGIN
@@ -82,7 +82,6 @@ BEGIN
     end if;
 
 END
-$$
-    LANGUAGE plpgsql;
+$func$ LANGUAGE plpgsql;
 
 COMMIT;

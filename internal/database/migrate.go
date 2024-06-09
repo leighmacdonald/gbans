@@ -52,7 +52,7 @@ func (db *postgresStore) migrate(action MigrationAction, dsn string) error {
 	driver, errMigrate := pgxMigrate.WithInstance(instance, &pgxMigrate.Config{
 		MigrationsTable:       "_migration",
 		SchemaName:            "public",
-		MultiStatementEnabled: true,
+		MultiStatementEnabled: false,
 	})
 	if errMigrate != nil {
 		return errors.Join(errMigrate, ErrMigrationDriver)

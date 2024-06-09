@@ -1,14 +1,18 @@
 BEGIN;
+CREATE OR REPLACE FUNCTION steam_to_steam64(steam_id text) RETURNS bigint
+    LANGUAGE plpgsql
+as
+$func$
+DECLARE
+    parts text[];
+BEGIN
+    if starts_with(steam_id, '76561') then return cast(steam_id as bigint); end if;
 
--- select steam_to_steam64('STEAM_0:1:583502767'); -- -> 76561199127271263
--- select steam_to_steam64('76561199127271263'); -- -> 76561199127271263
+    parts := regexp_matches(steam_id, '^STEAM_([0-5]):([0-1]):([0-9]+)$');
+    return (cast(parts[3] as bigint) * 2) + 76561197960265728 + cast(parts[2] as bigint);
+END ;
+$func$;
 
--- Perform ban lookups for both the players steamid and IP. Accepts Steam and Steam64 string
--- inputs. Include some ability to also support ignoring whitelisted matches. Currently missing support
--- for the evade_ok exceptions for bans.
---
--- Seems more than fast enough @ ~10ms per execution on old i7-6700 CPU & Samsung 850 Pro SSD using
--- full mirror of ut dataset.
 CREATE OR REPLACE FUNCTION check_ban(steam text, ip text,
                                      OUT out_ban_source text,
                                      OUT out_ban_id int,
@@ -18,33 +22,51 @@ CREATE OR REPLACE FUNCTION check_ban(steam text, ip text,
                                      OUT out_ban_type int) AS
 $func$
 DECLARE
-    in_steam_id bigint ;
-    is_whitelist bigint;
+    in_steam_id       bigint ;
+    is_whitelist_sid  bool;
     is_whitelist_addr bool;
 BEGIN
     in_steam_id := steam_to_steam64(steam);
+
+    SELECT true INTO is_whitelist_addr FROM cidr_block_whitelist WHERE ip::ip4 <<= address LIMIT 1;
+    SELECT true INTO is_whitelist_sid FROM person_whitelist where steam_id = in_steam_id;
+
+    is_whitelist_addr = coalesce(is_whitelist_addr, false);
+    is_whitelist_sid = coalesce(is_whitelist_sid, false);
 
     -- These are executed in *roughly* the order of least expensive to most
     SELECT 'ban_steam', ban_id, ban_type, reason, evade_ok, valid_until
     INTO out_ban_source, out_ban_id, out_ban_type, out_reason, out_evade_ok, out_valid_until
     FROM ban
     WHERE deleted = false
-      AND valid_until > now()
-      AND (target_id = in_steam_id OR ( evade_ok = false AND last_ip = ip::inet ));
+        AND valid_until > now()
+        AND target_id = in_steam_id;
 
-    if out_ban_id > 0 and out_evade_ok then
-        SELECT true INTO is_whitelist_addr FROM cidr_block_whitelist WHERE ip::ip4 <<= address LIMIT 1;
-
+    IF out_ban_id > 0 THEN
         return;
-    end if;
+    END IF;
+
+    SELECT 'ban_steam', ban_id, ban_type, reason, evade_ok, valid_until
+    INTO out_ban_source, out_ban_id, out_ban_type, out_reason, out_evade_ok, out_valid_until
+    FROM ban
+    WHERE deleted = false
+      AND valid_until > now()
+      AND last_ip IS NOT NULL
+      AND last_ip::inet <<= ip::inet;
+
+    IF out_ban_id > 0 THEN
+        return;
+    END IF;
 
     SELECT 'ban_steam_friend', 1, 2, 15, false, NOW() + (INTERVAL '10 years')
     INTO out_ban_source, out_ban_id, out_ban_type, out_reason, out_evade_ok, out_valid_until
     FROM steam_friends
     WHERE friend_id = in_steam_id;
 
-    if out_ban_id > 0 then
+    if out_ban_id > 0 AND NOT is_whitelist_sid then
         return;
+    else
+        out_ban_id = null;
     end if;
 
     SELECT 'steam_group', 1, 2, 16, false, NOW() + (INTERVAL '10 years')
@@ -52,13 +74,7 @@ BEGIN
     FROM steam_group_members
     WHERE steam_id = in_steam_id;
 
-    if out_ban_id > 0 then
-        return;
-    end if;
-
-
-    SELECT steam_id INTO is_whitelist FROM person_whitelist where steam_id = in_steam_id;
-    if is_whitelist > 0 then
+    if out_ban_id > 0 AND NOT is_whitelist_sid then
         return;
     end if;
 
@@ -67,7 +83,6 @@ BEGIN
         return;
     end if;
 
-
     SELECT 'ban_net', net_id, 2, reason, false, valid_until
     INTO out_ban_source, out_ban_id, out_ban_type, out_reason, out_evade_ok, out_valid_until
     FROM ban_net
@@ -75,7 +90,7 @@ BEGIN
       AND (ip::ip4 <<= cidr OR target_id = in_steam_id)
       AND valid_until > now();
 
-    if out_ban_id > 0 then
+    if out_ban_id > 0 AND NOT (is_whitelist_addr OR is_whitelist_sid) then
         return;
     end if;
 
@@ -84,7 +99,7 @@ BEGIN
     FROM cidr_block_entries
     WHERE ip::ip4 <<= net_block;
 
-    if out_ban_id > 0 then
+    if out_ban_id > 0 AND NOT (is_whitelist_addr OR is_whitelist_sid) then
         return;
     end if;
 
@@ -94,14 +109,17 @@ BEGIN
              LEFT JOIN net_asn na on ban_asn.as_num = na.as_num
     WHERE ip::ip4 <<= na.ip_range;
 
-    if out_ban_id > 0 then
+    if out_ban_id > 0 AND NOT (is_whitelist_addr OR is_whitelist_sid) then
         return;
     end if;
 
 END
-$func$
-    LANGUAGE plpgsql;
-COMMIT;
+$func$ LANGUAGE plpgsql;
+
+-- update ban set evade_ok = true where target_id = 76561199533858043;
 --
--- SELECT 'ban_steam', *
--- from check_ban('76561198084134025', '192.168.0.57') -- ban_steam bigint
+select check_ban('76561199587429942', '1.1.1.6'); -- ip ok, diff ip
+select check_ban('76561197963621597', '1.12.36.4'); -- id diff, ip same
+select check_ban('76561199093644873', '1.12.36.4'); -- id diff, ip same
+
+COMMIT;
