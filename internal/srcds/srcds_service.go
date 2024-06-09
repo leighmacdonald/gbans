@@ -166,23 +166,25 @@ func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
 		}
 
 		if banState.BanID != 0 {
-			evadeBanned, err := s.banUsecase.CheckEvadeStatus(ctx, currentUser, steamID, req.IP)
-			if err != nil {
-				ctx.JSON(http.StatusOK, defaultValue)
+			if banState.SteamID != steamID {
+				evadeBanned, err := s.banUsecase.CheckEvadeStatus(ctx, currentUser, steamID, req.IP)
+				if err != nil {
+					ctx.JSON(http.StatusOK, defaultValue)
 
-				return
-			}
-
-			if evadeBanned {
-				defaultValue = checkResponse{
-					ClientID: req.ClientID,
-					BanType:  domain.Banned,
-					Msg:      "Evasion ban",
+					return
 				}
 
-				ctx.JSON(http.StatusOK, defaultValue)
+				if evadeBanned {
+					defaultValue = checkResponse{
+						ClientID: req.ClientID,
+						BanType:  domain.Banned,
+						Msg:      "Evasion ban",
+					}
 
-				return
+					ctx.JSON(http.StatusOK, defaultValue)
+
+					return
+				}
 			}
 
 			ctx.JSON(http.StatusOK, checkResponse{

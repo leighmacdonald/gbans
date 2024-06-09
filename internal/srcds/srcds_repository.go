@@ -23,8 +23,10 @@ func NewRepository(database database.Database) domain.SRCDSRepository {
 
 func (r srcdsRepository) QueryBanState(ctx context.Context, steamID steamid.SteamID, ipAddr netip.Addr) (domain.PlayerBanState, error) {
 	const query = `
-		SELECT out_ban_source, out_ban_id, out_ban_type, out_reason, out_evade_ok, out_valid_until 
-		FROM check_ban($1, $2::text)`
+		SELECT b.out_ban_source, b.out_ban_id, b.out_ban_type, b.out_reason, b.out_evade_ok, b.out_valid_until, p.steam_id 
+		FROM check_ban($1, $2::text) b
+		LEFT JOIN ban sb ON sb.ban_id = b.out_ban_id
+		LEFT JOIN person p on p.steam_id = sb.target_id`
 
 	var banState domain.PlayerBanState
 
@@ -36,10 +38,11 @@ func (r srcdsRepository) QueryBanState(ctx context.Context, steamID steamid.Stea
 		reason     *domain.Reason
 		evadeOK    *bool
 		validUntil *time.Time
+		banSteamID *int64
 	)
 
 	row := r.database.QueryRow(ctx, query, steamID.String(), ipAddr.String())
-	if errScan := row.Scan(&banSource, &banID, &banType, &reason, &evadeOK, &validUntil); errScan != nil {
+	if errScan := row.Scan(&banSource, &banID, &banType, &reason, &evadeOK, &validUntil, &banSteamID); errScan != nil {
 		return banState, errors.Join(errScan, domain.ErrScanResult)
 	}
 
@@ -50,6 +53,7 @@ func (r srcdsRepository) QueryBanState(ctx context.Context, steamID steamid.Stea
 		banState.Reason = *reason
 		banState.EvadeOK = *evadeOK
 		banState.ValidUntil = *validUntil
+		banState.SteamID = steamid.New(*banSteamID)
 	}
 
 	return banState, nil
