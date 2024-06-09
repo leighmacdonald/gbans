@@ -1,14 +1,5 @@
 BEGIN;
 
--- select steam_to_steam64('STEAM_0:1:583502767'); -- -> 76561199127271263
--- select steam_to_steam64('76561199127271263'); -- -> 76561199127271263
-
--- Perform ban lookups for both the players steamid and IP. Accepts Steam and Steam64 string
--- inputs. Include some ability to also support ignoring whitelisted matches. Currently missing support
--- for the evade_ok exceptions for bans.
---
--- Seems more than fast enough @ ~10ms per execution on old i7-6700 CPU & Samsung 850 Pro SSD using
--- full mirror of ut dataset.
 CREATE OR REPLACE FUNCTION check_ban(steam text, ip text,
                                      OUT out_ban_source text,
                                      OUT out_ban_id int,
@@ -101,7 +92,5 @@ BEGIN
 END
 $func$
     LANGUAGE plpgsql;
+
 COMMIT;
---
--- SELECT 'ban_steam', *
--- from check_ban('76561198084134025', '192.168.0.57') -- ban_steam bigint

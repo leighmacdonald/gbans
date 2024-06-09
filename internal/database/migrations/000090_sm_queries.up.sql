@@ -56,7 +56,7 @@ ALTER TABLE cidr_block_whitelist
 create or replace function steam_to_steam64(steam_id text) returns bigint
     language plpgsql
 as
-$$
+$func$
 DECLARE
     parts text[];
 BEGIN
@@ -64,8 +64,7 @@ BEGIN
 
     parts := regexp_matches(steam_id, '^STEAM_([0-5]):([0-1]):([0-9]+)$');
     return (cast(parts[3] as bigint) * 2) + 76561197960265728 + cast(parts[2] as bigint);
-END ;
-$$;
+END $func$;
 
 -- select steam_to_steam64('STEAM_0:1:583502767'); -- -> 76561199127271263
 -- select steam_to_steam64('76561199127271263'); -- -> 76561199127271263
@@ -83,7 +82,7 @@ CREATE OR REPLACE FUNCTION check_ban(steam text, ip text,
                                      OUT out_evade_ok bool,
                                      OUT out_valid_until timestamp,
                                      OUT out_ban_type int) AS
-$$
+$func$
 DECLARE
     in_steam_id bigint ;
 BEGIN
@@ -152,7 +151,7 @@ BEGIN
     end if;
 
 END
-$$
+$func$
     LANGUAGE plpgsql;
 
 -- https://steamcommunity.com/profiles/76561198084134025/
