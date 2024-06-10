@@ -226,7 +226,7 @@ const AppealsTable = ({
                     color={'primary'}
                     component={RouterLink}
                     to={`/ban/$ban_id`}
-                    params={{ ban_id: info.getValue() }}
+                    params={{ ban_id: String(info.getValue()) }}
                     marginRight={2}
                 >
                     #{info.getValue()}

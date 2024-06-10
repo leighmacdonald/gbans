@@ -33,12 +33,8 @@ export const PlayerWeaponsStatListContainer = ({ steamId }: { steamId: string })
             header: () => <TableHeadingCell name={'Weapon'} />,
             cell: (info) => (
                 <TableCellSmall>
-                    <Link
-                        component={RouterLink}
-                        to={'/stats/weapon/$weapon_id'}
-                        params={{ weapon_id: stats?.data[info.row.index].weapon_id }}
-                    >
-                        {info.getValue()}
+                    <Link component={RouterLink} to={`/stats/weapon/${info.row.original.weapon_id}`}>
+                        {String(info.getValue())}
                     </Link>
                 </TableCellSmall>
             )

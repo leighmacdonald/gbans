@@ -5,6 +5,7 @@ import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
+import { useTheme } from '@mui/material/styles';
 import { useNavigate } from '@tanstack/react-router';
 import {
     ColumnDef,
@@ -15,8 +16,8 @@ import {
     TableOptions,
     useReactTable
 } from '@tanstack/react-table';
-import stc from 'string-to-color';
 import { PersonMessage } from '../api';
+import { stringToColour } from '../util/colours.ts';
 import { renderDateTime } from '../util/text.tsx';
 import { DataTable } from './DataTable.tsx';
 import { PersonCell } from './PersonCell.tsx';
@@ -37,6 +38,8 @@ export const ChatTable = ({
     setPagination?: OnChangeFn<PaginationState>;
 }) => {
     const navigate = useNavigate({ from: '/chatlogs' });
+    const theme = useTheme();
+
     const columns = useMemo<ColumnDef<PersonMessage>[]>(
         () => [
             {
@@ -46,7 +49,7 @@ export const ChatTable = ({
                     return (
                         <Button
                             sx={{
-                                color: stc(messages[info.row.index].server_name)
+                                color: stringToColour(messages[info.row.index].server_name, theme.palette.mode)
                             }}
                             onClick={async () => {
                                 await navigate({
@@ -119,7 +122,7 @@ export const ChatTable = ({
                 )
             }
         ],
-        [messages, navigate]
+        [messages, navigate, theme.palette.mode]
     );
 
     const opts: TableOptions<PersonMessage> = {

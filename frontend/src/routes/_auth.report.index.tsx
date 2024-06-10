@@ -200,7 +200,7 @@ const UserReportHistory = ({ history, isLoading }: { history: ReportWithAuthor[]
                         color={'primary'}
                         component={RouterLink}
                         to={`/report/$reportId`}
-                        params={{ reportId: info.getValue() }}
+                        params={{ reportId: String(info.getValue()) }}
                     >
                         <Tooltip title={'View'}>
                             <VisibilityIcon />

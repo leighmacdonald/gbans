@@ -99,7 +99,6 @@
     "react-leaflet": "^4.2.1",
     "react-timer-hook": "^3.0.7",
     "steamid": "^2.0.0",
-    "string-to-color": "^2.2.2",
     "typescript": "^5.4.5",
     "video-react": "^0.16.0",
     "vite": "^5.2.13",

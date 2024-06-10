@@ -57,10 +57,9 @@ export const mdEditorRef = createRef<MDXEditorMethods>();
  *
  * @param state
  * @param handleChange
- * @param handleBlur
  * @constructor
  */
-export const MarkdownField = ({ state, handleChange, handleBlur }: MDBodyFieldProps) => {
+export const MarkdownField = ({ state, handleChange }: MDBodyFieldProps) => {
     const { sendFlash } = useUserFlashCtx();
     const theme = useTheme();
 
@@ -113,7 +112,6 @@ export const MarkdownField = ({ state, handleChange, handleBlur }: MDBodyFieldPr
                 ]}
                 onError={onError}
                 onChange={handleChange}
-                onBlur={handleBlur}
                 ref={mdEditorRef}
             />
             {state.meta.touchedErrors.length > 0 && (

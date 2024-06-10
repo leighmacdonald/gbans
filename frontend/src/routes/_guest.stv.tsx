@@ -16,7 +16,6 @@ import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useLoaderData, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { ColumnFiltersState, createColumnHelper, SortingState } from '@tanstack/react-table';
 import { zodValidator } from '@tanstack/zod-form-adapter';
-import stc from 'string-to-color';
 import { z } from 'zod';
 import { apiGetDemos, apiGetServers, DemoFile, ServerSimple } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
@@ -26,6 +25,7 @@ import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Title } from '../component/Title.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
+import { stringToColour } from '../util/colours.ts';
 import { checkFeatureEnabled } from '../util/features.ts';
 import { initColumnFilter, initPagination, makeCommonTableSearchSchema } from '../util/table.ts';
 import { humanFileSize, renderDateTime } from '../util/text.tsx';
@@ -69,7 +69,6 @@ function STV() {
     const search = Route.useSearch();
     const { servers } = useLoaderData({ from: '/_guest/stv' });
     const { profile, isAuthenticated } = useRouteContext({ from: '/_guest/stv' });
-
     const [pagination, setPagination] = useState(initPagination(search.pageIndex, search.pageSize));
     const [sorting] = useState<SortingState>([{ id: 'demo_id', desc: true }]);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initColumnFilter(search));
@@ -127,7 +126,7 @@ function STV() {
                     return (
                         <Button
                             sx={{
-                                color: stc(info.row.original.server_name_short)
+                                color: stringToColour(info.row.original.server_name_short)
                             }}
                             onClick={async () => {
                                 await navigate({
