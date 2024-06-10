@@ -18,7 +18,8 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ColumnFiltersState, createColumnHelper, PaginationState, SortingState } from '@tanstack/react-table';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
-import { apiGetBansSteam, BanReason, BanReasons, banReasonsCollection, SteamBanRecord } from '../api';
+import { BanReason, BanReasons, banReasonsCollection, SteamBanRecord } from '../api';
+import { steamBansQuery } from '../api/queries.ts';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { FullTable } from '../component/FullTable.tsx';
@@ -32,6 +33,7 @@ import { Buttons } from '../component/field/Buttons.tsx';
 import { SelectFieldSimple } from '../component/field/SelectFieldSimple.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { ModalBanSteam, ModalUnbanSteam } from '../component/modal';
+import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { initColumnFilter, initPagination, isPermanentBan, makeCommonTableSearchSchema } from '../util/table.ts';
 import { renderDate } from '../util/text.tsx';
 
@@ -62,19 +64,17 @@ function AdminBanSteam() {
     const [pagination, setPagination] = useState<PaginationState>(initPagination(search.pageIndex, search.pageSize));
     const [sorting] = useState<SortingState>([{ id: 'ban_id', desc: true }]);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initColumnFilter(search));
+    const { sendFlash } = useUserFlashCtx();
 
-    const { data: bans, isLoading } = useQuery({
-        queryKey: ['steamBans'],
-        queryFn: async () => {
-            return await apiGetBansSteam({
-                deleted: false
-            });
-        }
-    });
+    const { data: bans, isLoading } = useQuery(steamBansQuery());
 
     const onNewBanSteam = async () => {
-        const ban = await NiceModal.show<SteamBanRecord>(ModalBanSteam, {});
-        queryClient.setQueryData(['steamBans'], [...(bans ?? []), ban]);
+        try {
+            const ban = await NiceModal.show<SteamBanRecord>(ModalBanSteam, {});
+            queryClient.setQueryData(steamBansQuery().queryKey, [...(bans ?? []), ban]);
+        } catch (e) {
+            sendFlash('error', `Error trying to setup ban: ${e}`);
+        }
     };
 
     const { Field, Subscribe, handleSubmit, reset } = useForm({
@@ -110,22 +110,39 @@ function AdminBanSteam() {
 
     const columns = useMemo(() => {
         const onUnban = async (ban: SteamBanRecord) => {
-            await NiceModal.show(ModalUnbanSteam, {
-                banId: ban.ban_id,
-                personaName: ban.target_personaname
-            });
+            try {
+                await NiceModal.show(ModalUnbanSteam, {
+                    banId: ban.ban_id,
+                    personaName: ban.target_personaname
+                });
+                queryClient.setQueryData(
+                    steamBansQuery().queryKey,
+                    (bans ?? []).filter((b) => b.ban_id != ban.ban_id)
+                );
+                sendFlash('success', 'Unbanned player successfully');
+            } catch (e) {
+                sendFlash('error', `Error trying to unban: ${e}`);
+            }
         };
 
         const onEdit = async (ban: SteamBanRecord) => {
-            await NiceModal.show(ModalBanSteam, {
-                banId: ban.ban_id,
-                personaName: ban.target_personaname,
-                existing: ban
-            });
+            try {
+                const updated = await NiceModal.show<SteamBanRecord>(ModalBanSteam, {
+                    banId: ban.ban_id,
+                    personaName: ban.target_personaname,
+                    existing: ban
+                });
+                queryClient.setQueryData(
+                    steamBansQuery().queryKey,
+                    (bans ?? []).map((b) => (b.ban_id == updated.ban_id ? updated : b))
+                );
+            } catch (e) {
+                sendFlash('error', `Error trying to edit ban: ${e}`);
+            }
         };
 
         return makeColumns(onEdit, onUnban);
-    }, []);
+    }, [bans, queryClient, sendFlash]);
 
     return (
         <Grid container spacing={2}>

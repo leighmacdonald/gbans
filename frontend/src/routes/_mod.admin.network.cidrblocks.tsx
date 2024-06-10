@@ -14,7 +14,7 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useRouteContext } from '@tanstack/react-router';
-import { ColumnDef, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { z } from 'zod';
 import {
     apiDeleteCIDRBlockSource,
@@ -385,41 +385,39 @@ const IPWhitelistTable = ({
     onEdit: (wl: WhitelistIP) => Promise<void>;
     onDelete: (wl: WhitelistIP) => Promise<void>;
 }) => {
-    const columns = useMemo<ColumnDef<WhitelistIP>[]>(
+    const columnHelper = createColumnHelper<WhitelistIP>();
+
+    const columns = useMemo(
         () => [
-            {
-                accessorKey: 'cidr_block_whitelist_id',
+            columnHelper.accessor('cidr_block_whitelist_id', {
                 header: () => <TableHeadingCell name={'ID'} />,
                 cell: (info) => <Typography>{info.getValue() as number}</Typography>
-            },
-            {
-                accessorKey: 'address',
+            }),
+            columnHelper.accessor('address', {
                 header: () => <TableHeadingCell name={'Address'} />,
                 cell: (info) => (
                     <TableCell>
-                        <Typography>{info.getValue() as string}</Typography>
+                        <Typography>{info.getValue()}</Typography>
                     </TableCell>
                 )
-            },
-            {
-                accessorKey: 'created_on',
+            }),
+            columnHelper.accessor('created_on', {
                 header: () => <TableHeadingCell name={'IP Address'} />,
                 cell: (info) => (
                     <TableCell>
                         <Typography>{renderDate(info.getValue() as Date)}</Typography>
                     </TableCell>
                 )
-            },
-            {
-                accessorKey: 'updated_on',
+            }),
+            columnHelper.accessor('updated_on', {
                 header: () => <TableHeadingCell name={'Updated'} />,
                 cell: (info) => (
                     <TableCell>
                         <Typography>{renderDate(info.getValue() as Date)}</Typography>
                     </TableCell>
                 )
-            },
-            {
+            }),
+            columnHelper.display({
                 id: 'actions',
                 header: () => <TableHeadingCell name={'Actions'} />,
                 cell: (info) => (
@@ -445,9 +443,9 @@ const IPWhitelistTable = ({
                         </Button>
                     </ButtonGroup>
                 )
-            }
+            })
         ],
-        [onDelete, onEdit]
+        [columnHelper, onDelete, onEdit]
     );
 
     const table = useReactTable({
@@ -470,10 +468,11 @@ const SteamWhitelistTable = ({
     isLoading: boolean;
     onDelete: (wl: WhitelistSteam) => Promise<void>;
 }) => {
-    const columns = useMemo<ColumnDef<WhitelistSteam>[]>(
+    const columnHelper = createColumnHelper<WhitelistSteam>();
+
+    const columns = useMemo(
         () => [
-            {
-                accessorKey: 'steam_id',
+            columnHelper.accessor('steam_id', {
                 header: () => <TableHeadingCell name={'Steam ID'} />,
                 cell: (info) => (
                     <PersonCell
@@ -482,26 +481,24 @@ const SteamWhitelistTable = ({
                         personaname={info.row.original.personaname}
                     />
                 )
-            },
-            {
-                accessorKey: 'created_on',
-                header: () => <TableHeadingCell name={'IP Address'} />,
-                cell: (info) => (
-                    <TableCell>
-                        <Typography>{renderDate(info.getValue() as Date)}</Typography>
-                    </TableCell>
-                )
-            },
-            {
-                accessorKey: 'updated_on',
+            }),
+            columnHelper.accessor('created_on', {
                 header: () => <TableHeadingCell name={'Updated'} />,
                 cell: (info) => (
                     <TableCell>
-                        <Typography>{renderDate(info.getValue() as Date)}</Typography>
+                        <Typography>{renderDate(info.getValue())}</Typography>
                     </TableCell>
                 )
-            },
-            {
+            }),
+            columnHelper.accessor('updated_on', {
+                header: () => <TableHeadingCell name={'Updated'} />,
+                cell: (info) => (
+                    <TableCell>
+                        <Typography>{renderDate(info.getValue())}</Typography>
+                    </TableCell>
+                )
+            }),
+            columnHelper.display({
                 id: 'actions',
                 header: () => <TableHeadingCell name={'Actions'} />,
                 cell: (info) => (
@@ -515,9 +512,9 @@ const SteamWhitelistTable = ({
                         </Button>
                     </ButtonGroup>
                 )
-            }
+            })
         ],
-        [onDelete]
+        [columnHelper, onDelete]
     );
 
     const table = useReactTable({

@@ -224,7 +224,7 @@ func (u chatUsecase) trigger(ctx context.Context, newWarn domain.NewUserWarning)
 
 	if currentWeight > u.maxWeight {
 		slog.Info("Warn limit exceeded",
-			slog.Int64("sid64", newWarn.UserMessage.SteamID.Int64()),
+			slog.String("sid64", newWarn.UserMessage.SteamID.String()),
 			slog.Int("count", count),
 			slog.Int("weight", currentWeight))
 
