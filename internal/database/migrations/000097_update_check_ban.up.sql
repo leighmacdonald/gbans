@@ -78,11 +78,6 @@ BEGIN
         return;
     end if;
 
-    SELECT true INTO is_whitelist_addr FROM cidr_block_whitelist WHERE ip::ip4 <<= address LIMIT 1;
-    if is_whitelist_addr then
-        return;
-    end if;
-
     SELECT 'ban_net', net_id, 2, reason, false, valid_until
     INTO out_ban_source, out_ban_id, out_ban_type, out_reason, out_evade_ok, out_valid_until
     FROM ban_net
@@ -118,8 +113,9 @@ $func$ LANGUAGE plpgsql;
 
 -- update ban set evade_ok = true where target_id = 76561199533858043;
 --
-select check_ban('76561199587429942', '1.1.1.6'); -- ip ok, diff ip
-select check_ban('76561197963621597', '1.12.36.4'); -- id diff, ip same
-select check_ban('76561199093644873', '1.12.36.4'); -- id diff, ip same
+-- select check_ban('76561199587429942', '1.1.1.6'); -- ip ok, diff ip
+-- select check_ban('76561197963621597', '1.12.36.4'); -- id diff, ip same
+-- select check_ban('76561199093644873', '1.12.36.4'); -- id diff, ip same
+-- select check_ban('76561199093644873', '192.168.0.57'); -- id diff, ip same
 
 COMMIT;
