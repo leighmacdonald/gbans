@@ -88,7 +88,7 @@ type httpMethods = 'POST' | 'GET' | 'DELETE' | 'PUT';
 export const apiCall = async <TResponse = EmptyBody | null, TRequestBody = Record<string, unknown> | object>(
     url: string,
     method: httpMethods = 'GET',
-    body?: TRequestBody | undefined | FormData,
+    body?: TRequestBody | undefined | FormData | Record<string, string>,
     abortController?: AbortController,
     isFormData: boolean = false
 ): Promise<TResponse> => {
@@ -119,7 +119,12 @@ export const apiCall = async <TResponse = EmptyBody | null, TRequestBody = Recor
         requestOptions.signal = abortController.signal;
     }
 
-    const response = await fetch(new URL(url, apiRootURL()), requestOptions);
+    const fullURL = new URL(url, apiRootURL());
+    if (method == 'GET' && body) {
+        fullURL.search = new URLSearchParams(body as Record<string, string>).toString();
+    }
+
+    const response = await fetch(fullURL, requestOptions);
 
     switch (response.status) {
         case 415:
