@@ -1,4 +1,4 @@
-import { apiCall, TimeStamped, transformTimeStampedDatesList, ValidationException } from './common';
+import { apiCall, TimeStamped, transformTimeStampedDates, transformTimeStampedDatesList } from './common';
 
 export interface NewsEntry extends TimeStamped {
     news_id: number;
@@ -13,16 +13,18 @@ export const apiGetNewsLatest = async (abortController?: AbortController) =>
 export const apiGetNewsAll = async (abortController?: AbortController) =>
     transformTimeStampedDatesList(await apiCall<NewsEntry[]>(`/api/news_all`, 'POST', undefined, abortController));
 
-export const apiNewsSave = async (entry: NewsEntry) => {
-    if (entry.body_md === '') {
-        throw new ValidationException(`body_md cannot be empty`);
-    }
-    if (entry.title === '') {
-        throw new ValidationException(`title cannot be empty`);
-    }
-    if (entry.news_id > 0) {
-        return await apiCall<NewsEntry, NewsEntry>(`/api/news/${entry.news_id}`, 'POST', entry);
-    } else {
-        return await apiCall<NewsEntry, NewsEntry>(`/api/news`, 'POST', entry);
-    }
-};
+export const apiNewsCreate = async (title: string, body_md: string, is_published: boolean) =>
+    transformTimeStampedDates(
+        await apiCall<NewsEntry>(`/api/news`, 'POST', { title, body_md, is_published: is_published })
+    );
+
+export const apiNewsSave = async (entry: NewsEntry) =>
+    transformTimeStampedDates(
+        await apiCall<NewsEntry>(`/api/news/${entry.news_id}`, 'POST', {
+            title: entry.title,
+            body_md: entry.body_md,
+            is_published: entry.is_published
+        })
+    );
+
+export const apiNewsDelete = async (news_id: number) => await apiCall<NewsEntry>(`/api/news/${news_id}`, 'DELETE');
