@@ -11,6 +11,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
+import { useTheme } from '@mui/material/styles';
 import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useLoaderData, useNavigate, useRouteContext } from '@tanstack/react-router';
@@ -72,6 +73,7 @@ function STV() {
     const [pagination, setPagination] = useState(initPagination(search.pageIndex, search.pageSize));
     const [sorting] = useState<SortingState>([{ id: 'demo_id', desc: true }]);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initColumnFilter(search));
+    const theme = useTheme();
 
     const { data: demos, isLoading } = useQuery({
         queryKey: ['demos'],
@@ -126,7 +128,7 @@ function STV() {
                     return (
                         <Button
                             sx={{
-                                color: stringToColour(info.row.original.server_name_short)
+                                color: stringToColour(info.row.original.server_name_short, theme.palette.mode)
                             }}
                             onClick={async () => {
                                 await navigate({
@@ -191,7 +193,7 @@ function STV() {
                 )
             })
         ];
-    }, [columnHelper, handleSubmit, isAuthenticated, navigate]);
+    }, [columnHelper, handleSubmit, isAuthenticated, navigate, theme.palette.mode]);
 
     return (
         <Grid container spacing={2}>
