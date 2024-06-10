@@ -18,8 +18,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ColumnFiltersState, createColumnHelper, PaginationState, SortingState } from '@tanstack/react-table';
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
-import { BanReason, BanReasons, banReasonsCollection, SteamBanRecord } from '../api';
-import { steamBansQuery } from '../api/queries.ts';
+import { apiGetBansSteam, BanReason, BanReasons, banReasonsCollection, SteamBanRecord } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { FullTable } from '../component/FullTable.tsx';
@@ -30,6 +29,7 @@ import { TableCellRelativeDateField } from '../component/TableCellRelativeDateFi
 import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
+import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
 import { SelectFieldSimple } from '../component/field/SelectFieldSimple.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { ModalBanSteam, ModalUnbanSteam } from '../component/modal';
@@ -49,13 +49,16 @@ const banSteamSearchSchema = z.object({
     ]),
     source_id: z.string().optional(),
     target_id: z.string().optional(),
-    reason: z.nativeEnum(BanReason).optional()
+    reason: z.nativeEnum(BanReason).optional(),
+    deleted: z.boolean().optional()
 });
 
 export const Route = createFileRoute('/_mod/admin/ban/steam')({
     component: AdminBanSteam,
     validateSearch: (search) => banSteamSearchSchema.parse(search)
 });
+
+const queryKey = ['steamBans'];
 
 function AdminBanSteam() {
     const queryClient = useQueryClient();
@@ -66,12 +69,19 @@ function AdminBanSteam() {
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(initColumnFilter(search));
     const { sendFlash } = useUserFlashCtx();
 
-    const { data: bans, isLoading } = useQuery(steamBansQuery());
+    const { data: bans, isLoading } = useQuery({
+        queryKey: queryKey,
+        queryFn: async () => {
+            return await apiGetBansSteam({
+                deleted: true
+            });
+        }
+    });
 
     const onNewBanSteam = async () => {
         try {
             const ban = await NiceModal.show<SteamBanRecord>(ModalBanSteam, {});
-            queryClient.setQueryData(steamBansQuery().queryKey, [...(bans ?? []), ban]);
+            queryClient.setQueryData(queryKey, [...(bans ?? []), ban]);
         } catch (e) {
             sendFlash('error', `Error trying to setup ban: ${e}`);
         }
@@ -89,7 +99,8 @@ function AdminBanSteam() {
         defaultValues: {
             source_id: search.source_id ?? '',
             target_id: search.target_id ?? '',
-            reason: search.reason ?? BanReason.Any
+            reason: search.reason ?? BanReason.Any,
+            deleted: search.deleted ?? false
         }
     });
 
@@ -116,7 +127,7 @@ function AdminBanSteam() {
                     personaName: ban.target_personaname
                 });
                 queryClient.setQueryData(
-                    steamBansQuery().queryKey,
+                    queryKey,
                     (bans ?? []).filter((b) => b.ban_id != ban.ban_id)
                 );
                 sendFlash('success', 'Unbanned player successfully');
@@ -133,7 +144,7 @@ function AdminBanSteam() {
                     existing: ban
                 });
                 queryClient.setQueryData(
-                    steamBansQuery().queryKey,
+                    queryKey,
                     (bans ?? []).map((b) => (b.ban_id == updated.ban_id ? updated : b))
                 );
             } catch (e) {
@@ -157,16 +168,15 @@ function AdminBanSteam() {
                         }}
                     >
                         <Grid container spacing={2}>
-                            <Grid xs={4}>
-                                <Grid xs={6} md={3}>
-                                    <Field
-                                        name={'source_id'}
-                                        children={(props) => {
-                                            return <TextFieldSimple {...props} label={'Author Steam ID'} />;
-                                        }}
-                                    />
-                                </Grid>
+                            <Grid xs={6} md={3}>
+                                <Field
+                                    name={'source_id'}
+                                    children={(props) => {
+                                        return <TextFieldSimple {...props} label={'Author Steam ID'} />;
+                                    }}
+                                />
                             </Grid>
+
                             <Grid xs={6} md={3}>
                                 <Field
                                     name={'target_id'}
@@ -200,7 +210,14 @@ function AdminBanSteam() {
                                     }}
                                 />
                             </Grid>
-
+                            <Grid xs={6} md={3}>
+                                <Field
+                                    name={'deleted'}
+                                    children={(props) => {
+                                        return <CheckboxSimple {...props} label={'Show deleted/expired'} />;
+                                    }}
+                                />
+                            </Grid>
                             <Grid xs={12} mdOffset="auto">
                                 <Subscribe
                                     selector={(state) => [state.canSubmit, state.isSubmitting]}
@@ -327,14 +344,25 @@ const makeColumns = (
         }
     }),
     columnHelper.accessor('include_friends', {
-        header: () => <TableHeadingCell name={'F'} />,
-        cell: (info) => <TableCellBool enabled={info.getValue() as boolean} />
+        header: () => <TableHeadingCell name={'F'} tooltip={'Friends list also banned'} />,
+        cell: (info) => <TableCellBool enabled={info.getValue()} />
     }),
     columnHelper.accessor('evade_ok', {
-        header: () => <TableHeadingCell name={'E'} />,
-        cell: (info) => <TableCellBool enabled={info.getValue() as boolean} />
+        header: () => (
+            <TableHeadingCell
+                name={'E'}
+                tooltip={'Evasion OK. Players connecting from the same ip will not be banned.'}
+            />
+        ),
+        cell: (info) => <TableCellBool enabled={info.getValue()} />
     }),
-
+    columnHelper.accessor('deleted', {
+        filterFn: (row, _, filterValue) => {
+            return filterValue ? true : !row.original.deleted;
+        },
+        header: () => <TableHeadingCell name={'D'} tooltip={'Deleted / Expired Bans'} />,
+        cell: (info) => <TableCellBool enabled={info.getValue()} />
+    }),
     columnHelper.accessor('report_id', {
         header: () => <TableHeadingCell name={'Rep.'} />,
         cell: (info) =>
