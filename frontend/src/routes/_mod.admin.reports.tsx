@@ -213,7 +213,7 @@ const makeColumns = () => {
                     color={'primary'}
                     component={RouterLink}
                     to={`/report/$reportId`}
-                    params={{ reportId: info.getValue() }}
+                    params={{ reportId: String(info.getValue()) }}
                     marginRight={2}
                 >
                     #{info.getValue()}

@@ -282,7 +282,7 @@ const makeColumns = (
         enableColumnFilter: false,
         header: () => <TableHeadingCell name={'Ban ID'} />,
         cell: (info) => (
-            <Link component={RouterLink} to={`/ban/$ban_id`} params={{ ban_id: info.getValue() }}>
+            <Link component={RouterLink} to={`/ban/$ban_id`} params={{ ban_id: String(info.getValue()) }}>
                 {`#${info.getValue()}`}
             </Link>
         )
@@ -367,7 +367,7 @@ const makeColumns = (
         header: () => <TableHeadingCell name={'Rep.'} />,
         cell: (info) =>
             Boolean(info.getValue()) && (
-                <Link component={RouterLink} to={`/report/$reportId`} params={{ reportId: info.getValue() }}>
+                <Link component={RouterLink} to={`/report/$reportId`} params={{ reportId: String(info.getValue()) }}>
                     {`#${info.getValue()}`}
                 </Link>
             )
