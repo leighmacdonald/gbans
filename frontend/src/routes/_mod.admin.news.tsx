@@ -1,159 +1,203 @@
-import { SyntheticEvent, useCallback, useState } from 'react';
-import PublishedWithChangesIcon from '@mui/icons-material/PublishedWithChanges';
-import SaveIcon from '@mui/icons-material/Save';
-import UnpublishedIcon from '@mui/icons-material/Unpublished';
-import Box from '@mui/material/Box';
+import { useMemo, useState } from 'react';
+import NiceModal from '@ebay/nice-modal-react';
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import NewspaperIcon from '@mui/icons-material/Newspaper';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
-import Paper from '@mui/material/Paper';
-import Stack from '@mui/material/Stack';
-import Tab from '@mui/material/Tab';
-import Tabs from '@mui/material/Tabs';
-import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { apiNewsSave, NewsEntry } from '../api/news.ts';
-import { MarkDownRenderer } from '../component/MarkdownRenderer.tsx';
-import { NewsList } from '../component/NewsList.tsx';
-import { TabPanel } from '../component/TabPanel.tsx';
+import { createColumnHelper, SortingState } from '@tanstack/react-table';
+import { z } from 'zod';
+import { apiGetNewsAll, apiNewsDelete, NewsEntry } from '../api/news.ts';
+import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
+import { FullTable } from '../component/FullTable.tsx';
+import { TableCellBool } from '../component/TableCellBool.tsx';
+import { TableCellString } from '../component/TableCellString.tsx';
+import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Title } from '../component/Title';
+import { ModalConfirm, ModalNewsEditor } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
-import { logErr } from '../util/errors.ts';
+import { initPagination, makeCommonTableSearchSchema } from '../util/table.ts';
+import { renderDateTime } from '../util/text.tsx';
+
+const newsSchema = z.object({
+    ...makeCommonTableSearchSchema(['news_id', 'title', 'created_on', 'updated_on']),
+    published: z.boolean().optional()
+});
 
 export const Route = createFileRoute('/_mod/admin/news')({
-    component: AdminNews
+    component: AdminNews,
+    validateSearch: (search) => newsSchema.parse(search)
 });
 
 function AdminNews() {
-    const [setTabValue, setTabSetTabValue] = useState(0);
-    const { sendFlash } = useUserFlashCtx();
-    const handleChange = (_: SyntheticEvent, newValue: number) => {
-        setTabSetTabValue(newValue);
-    };
+    const search = Route.useSearch();
+    const queryClient = useQueryClient();
+    const [pagination, setPagination] = useState(initPagination(search.pageIndex, search.pageSize));
+    const [sorting] = useState<SortingState>([{ id: 'news_id', desc: true }]);
 
-    const [selectedNewsEntry, setSelectedNewsEntry] = useState<NewsEntry>({
-        news_id: 0,
-        body_md: '',
-        is_published: false,
-        title: '',
-        created_on: new Date(),
-        updated_on: new Date()
+    const { sendFlash } = useUserFlashCtx();
+
+    const { data: news, isLoading } = useQuery({
+        queryKey: ['newsList'],
+        queryFn: async () => {
+            return await apiGetNewsAll();
+        }
     });
 
-    const onSave = useCallback(() => {
-        apiNewsSave(selectedNewsEntry)
-            .then((response) => {
-                setSelectedNewsEntry(response);
-                sendFlash('success', `News published successfully: ${selectedNewsEntry.title}`);
+    const onCreate = async () => {
+        try {
+            const newEntry = await NiceModal.show<NewsEntry>(ModalNewsEditor);
+            queryClient.setQueryData(['newsList'], [...(news ?? []), newEntry]);
+            sendFlash('success', `Entry created successfully`);
+        } catch (e) {
+            sendFlash('error', `Error trying to create entry: ${e}`);
+        }
+    };
+
+    const deleteMutation = useMutation({
+        mutationKey: ['deleteNews'],
+        mutationFn: async (variables: { news_id: number }) => {
+            await apiNewsDelete(variables.news_id);
+            return variables.news_id;
+        },
+        onSuccess: (news_id) => {
+            queryClient.setQueryData(
+                ['newsList'],
+                (news ?? []).filter((e) => e.news_id != news_id)
+            );
+            sendFlash('success', `Entry deleted successfully`);
+        },
+        onError: (error) => {
+            sendFlash('error', `Failed to delete entry: ${error}`);
+        }
+    });
+
+    const columns = useMemo(() => {
+        const columnHelper = createColumnHelper<NewsEntry>();
+
+        const onDelete = async (entry: NewsEntry) => {
+            try {
+                const confirmed = await NiceModal.show<boolean>(ModalConfirm, {
+                    title: 'Delete news entry?',
+                    children: 'This cannot be undone'
+                });
+                if (!confirmed) {
+                    return;
+                }
+                deleteMutation.mutate({ news_id: entry.news_id });
+            } catch (e) {
+                sendFlash('error', `Failed to create confirmation modal: ${e}`);
+            }
+        };
+
+        const onEdit = async (entry: NewsEntry) => {
+            try {
+                const editedEntry = await NiceModal.show<NewsEntry>(ModalNewsEditor, { entry });
+                queryClient.setQueryData(
+                    ['newsList'],
+                    news?.map((e) => (e.news_id == editedEntry.news_id ? editedEntry : e))
+                );
+                sendFlash('success', `Entry updated successfully`);
+            } catch (e) {
+                sendFlash('error', `Error trying to update entry: ${e}`);
+            }
+        };
+
+        return [
+            columnHelper.accessor('news_id', {
+                header: () => <TableHeadingCell name={'ID'} />,
+                cell: (info) => {
+                    return <TableCellString>{info.getValue()}</TableCellString>;
+                }
+            }),
+            columnHelper.accessor('title', {
+                header: () => <TableHeadingCell name={'Title'} />,
+                cell: (info) => {
+                    return <TableCellString>{info.getValue()}</TableCellString>;
+                }
+            }),
+            columnHelper.accessor('created_on', {
+                header: () => <TableHeadingCell name={'Created'} />,
+                cell: (info) => {
+                    return <TableCellString>{renderDateTime(info.getValue())}</TableCellString>;
+                }
+            }),
+            columnHelper.accessor('updated_on', {
+                header: () => <TableHeadingCell name={'Updated'} />,
+                cell: (info) => {
+                    return <TableCellString>{renderDateTime(info.getValue())}</TableCellString>;
+                }
+            }),
+            columnHelper.accessor('is_published', {
+                header: () => <TableHeadingCell name={'Published'} />,
+                cell: (info) => {
+                    return <TableCellBool enabled={info.getValue()} />;
+                }
+            }),
+            columnHelper.display({
+                id: 'edit',
+                cell: (info) => {
+                    return (
+                        <ButtonGroup fullWidth>
+                            <Button
+                                variant={'contained'}
+                                color={'warning'}
+                                startIcon={<EditIcon />}
+                                onClick={async () => {
+                                    await onEdit(info.row.original);
+                                }}
+                            >
+                                Edit
+                            </Button>
+                            <Button
+                                variant={'contained'}
+                                color={'error'}
+                                startIcon={<DeleteIcon />}
+                                onClick={async () => {
+                                    await onDelete(info.row.original);
+                                }}
+                            >
+                                Delete
+                            </Button>
+                        </ButtonGroup>
+                    );
+                }
             })
-            .catch((e) => {
-                sendFlash('error', 'Failed to save news');
-                logErr(e);
-            });
-    }, [selectedNewsEntry, sendFlash]);
+        ];
+    }, [deleteMutation, news, queryClient, sendFlash]);
 
     return (
         <Grid container spacing={2}>
-            <Title>Edit News</Title>
-            <Grid xs={8}>
-                <Paper elevation={1}>
-                    <Stack spacing={3} padding={3}>
-                        <Box color={'primary'}>
-                            <Typography variant={'h4'}>
-                                {selectedNewsEntry.news_id > 0 ? 'Edit News Entry' : 'Create News Entry'}
-                            </Typography>
-                        </Box>
-                        <TextField
-                            id="headline"
-                            label="Headline"
-                            fullWidth
-                            value={selectedNewsEntry.title}
-                            onChange={(v) => {
-                                setSelectedNewsEntry((prevState) => {
-                                    return {
-                                        ...prevState,
-                                        title: v.target.value
-                                    };
-                                });
-                            }}
-                        />
-                        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                            <Tabs value={setTabValue} onChange={handleChange} aria-label="Markdown & HTML Preview">
-                                <Tab label="Edit" />
-                                <Tab label="Preview" />
-                            </Tabs>
-                        </Box>
-                        <TabPanel value={setTabValue} index={0}>
-                            <TextField
-                                id="body"
-                                label="Body (Markdown)"
-                                fullWidth
-                                multiline
-                                minRows={15}
-                                value={selectedNewsEntry.body_md}
-                                onChange={(event) => {
-                                    setSelectedNewsEntry((prevState) => {
-                                        return {
-                                            ...prevState,
-                                            body_md: event.target.value
-                                        };
-                                    });
-                                }}
-                            />
-                        </TabPanel>
-                        <TabPanel value={setTabValue} index={1}>
-                            <MarkDownRenderer body_md={selectedNewsEntry.body_md} />
-                        </TabPanel>
-                    </Stack>
-                </Paper>
-            </Grid>
-            <Grid xs={4}>
-                <Stack spacing={3}>
-                    <ButtonGroup fullWidth>
+            <Title>News</Title>
+            <Grid xs={12}>
+                <ContainerWithHeaderAndButtons
+                    title={'News Entries'}
+                    iconLeft={<NewspaperIcon />}
+                    buttons={[
                         <Button
-                            variant="contained"
-                            endIcon={<UnpublishedIcon />}
-                            color={'error'}
-                            disabled={!selectedNewsEntry.is_published}
-                            onClick={() => {
-                                setSelectedNewsEntry((prevState) => {
-                                    return {
-                                        ...prevState,
-                                        is_published: false
-                                    };
-                                });
-                            }}
-                        >
-                            UnPublish
-                        </Button>
-                        <Button
-                            variant="contained"
-                            endIcon={<PublishedWithChangesIcon />}
                             color={'success'}
-                            disabled={selectedNewsEntry.is_published}
-                            onClick={() => {
-                                setSelectedNewsEntry((prevState) => {
-                                    return {
-                                        ...prevState,
-                                        is_published: true
-                                    };
-                                });
-                            }}
+                            variant={'contained'}
+                            key={'addButton'}
+                            onClick={onCreate}
+                            startIcon={<AddIcon />}
                         >
-                            Publish
+                            Create
                         </Button>
-                    </ButtonGroup>
-                    <ButtonGroup fullWidth>
-                        <Button variant="contained" endIcon={<SaveIcon />} color={'success'} onClick={onSave}>
-                            {selectedNewsEntry.news_id > 0 ? 'Save Article' : 'Create Article'}
-                        </Button>
-                    </ButtonGroup>
-
-                    <Paper elevation={1}>
-                        <NewsList setSelectedNewsEntry={setSelectedNewsEntry} />
-                    </Paper>
-                </Stack>
+                    ]}
+                >
+                    <FullTable
+                        data={news ?? []}
+                        isLoading={isLoading}
+                        columns={columns}
+                        pagination={pagination}
+                        setPagination={setPagination}
+                        sorting={sorting}
+                    />
+                </ContainerWithHeaderAndButtons>
             </Grid>
         </Grid>
     );

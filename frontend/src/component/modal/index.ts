@@ -15,6 +15,7 @@ import { ForumForumEditorModal } from './ForumForumEditorModal.tsx';
 import { ForumThreadCreatorModal } from './ForumThreadCreatorModal.tsx';
 import { ForumThreadEditorModal } from './ForumThreadEditorModal.tsx';
 import { IPWhitelistEditorModal } from './IPWhitelistEditorModal.tsx';
+import { NewsEditModal } from './NewsEditModal.tsx';
 import { PersonEditModal } from './PersonEditModal.tsx';
 import { SMAdminEditorModal } from './SMAdminEditorModal.tsx';
 import { SMGroupEditorModal } from './SMGroupEditorModal.tsx';
@@ -62,6 +63,7 @@ export const ModalForumCategoryEditor = 'modal-forum-category-editor';
 export const ModalForumForumEditor = 'modal-forum-forum-editor';
 export const ModalForumThreadCreator = 'modal-forum-thread-creator';
 export const ModalForumThreadEditor = 'modal-forum-thread-editor';
+export const ModalNewsEditor = 'modal-news-editor';
 
 [
     [ModalSMGroupImmunityEditor, SMGroupImmunityCreateModal],
@@ -94,7 +96,8 @@ export const ModalForumThreadEditor = 'modal-forum-thread-editor';
     [ModalUnbanSteam, UnbanSteamModal],
     [ModalUnbanASN, UnbanASNModal],
     [ModalUnbanCIDR, UnbanCIDRModal],
-    [ModalUnbanGroup, UnbanGroupModal]
+    [ModalUnbanGroup, UnbanGroupModal],
+    [ModalNewsEditor, NewsEditModal]
 ].map((value) => {
     NiceModal.register(value[0] as never, value[1] as never);
 });

@@ -53,7 +53,11 @@ func (r srcdsRepository) QueryBanState(ctx context.Context, steamID steamid.Stea
 		banState.Reason = *reason
 		banState.EvadeOK = *evadeOK
 		banState.ValidUntil = *validUntil
-		banState.SteamID = steamid.New(*banSteamID)
+
+		// TODO ensure the person record exists, this will panic otherwise.
+		if banSteamID != nil {
+			banState.SteamID = steamid.New(*banSteamID)
+		}
 	}
 
 	return banState, nil

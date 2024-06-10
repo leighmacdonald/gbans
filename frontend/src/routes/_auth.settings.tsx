@@ -296,12 +296,7 @@ const ForumSection = ({
     });
 
     return (
-        <TabSection
-            tab={'forums'}
-            currentTab={tab}
-            label={'Forums'}
-            description={'Core settings that dont fit into a subcategory'}
-        >
+        <TabSection tab={'forums'} currentTab={tab} label={'Forums'} description={'Configure forum features'}>
             <form
                 onSubmit={async (e) => {
                     e.preventDefault();

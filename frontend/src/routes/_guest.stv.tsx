@@ -207,7 +207,7 @@ function STV() {
                             await handleSubmit();
                         }}
                     >
-                        <Grid container spacing={2} padding={2}>
+                        <Grid container spacing={2}>
                             <Grid xs={6} md={3}>
                                 <Field
                                     name={'server_id'}
