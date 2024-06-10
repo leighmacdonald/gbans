@@ -95,6 +95,7 @@ func (c configHandler) onAppInfo(buildInfo domain.BuildInfo) gin.HandlerFunc {
 			ServersEnabled:  conf.General.ServersEnabled,
 			ReportsEnabled:  conf.General.ReportsEnabled,
 			ChatlogsEnabled: conf.General.ChatlogsEnabled,
+			DemosEnabled:    conf.General.DemosEnabled,
 		})
 	}
 }
