@@ -92,7 +92,7 @@ func refreshFiltersCmd() *cobra.Command {
 				slog.Error("Failed to load filters")
 			}
 
-			discordRepository, _ := discord.NewDiscordRepository(conf)
+			discordRepository, _ := discord.NewDiscordRepository(configUsecase)
 
 			discordUsecase := discord.NewDiscordUsecase(discordRepository, wordFilterUsecase)
 

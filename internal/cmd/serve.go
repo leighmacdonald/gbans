@@ -110,7 +110,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
 			weaponsMap := fp.NewMutexMap[logparse.Weapon, int]()
 
-			discordRepository, errDR := discord.NewDiscordRepository(conf)
+			discordRepository, errDR := discord.NewDiscordRepository(configUsecase)
 			if errDR != nil {
 				slog.Error("Cannot initialize discord", log.ErrAttr(errDR))
 

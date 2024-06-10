@@ -35,10 +35,12 @@ type discordRepository struct {
 	isReady           atomic.Bool
 	commandHandlers   map[domain.Cmd]domain.SlashCommandHandler
 	unregisterOnStart bool
-	conf              domain.Config
+	config            domain.ConfigUsecase
 }
 
-func NewDiscordRepository(conf domain.Config) (domain.DiscordRepository, error) {
+func NewDiscordRepository(config domain.ConfigUsecase) (domain.DiscordRepository, error) {
+	conf := config.Config()
+
 	if !conf.Discord.Enabled || !conf.Discord.BotEnabled {
 		return &nullDiscordRepository{}, nil
 	}
@@ -55,7 +57,7 @@ func NewDiscordRepository(conf domain.Config) (domain.DiscordRepository, error) 
 	session.Identify.Intents |= discordgo.IntentGuildMembers
 	bot := &discordRepository{
 		session:           session,
-		conf:              conf,
+		config:            config,
 		isReady:           atomic.Bool{},
 		unregisterOnStart: conf.Discord.UnregisterOnStart,
 		commandHandlers:   map[domain.Cmd]domain.SlashCommandHandler{},
@@ -125,7 +127,9 @@ func (bot *discordRepository) onReady(session *discordgo.Session, _ *discordgo.R
 }
 
 func (bot *discordRepository) onConnect(_ *discordgo.Session, _ *discordgo.Connect) {
-	if errRegister := bot.botRegisterSlashCommands(bot.conf.Discord.AppID); errRegister != nil {
+	conf := bot.config.Config()
+
+	if errRegister := bot.botRegisterSlashCommands(conf.Discord.AppID); errRegister != nil {
 		slog.Error("Failed to register discord slash commands", log.ErrAttr(errRegister))
 	}
 
@@ -135,7 +139,7 @@ func (bot *discordRepository) onConnect(_ *discordgo.Session, _ *discordgo.Conne
 			{
 				Name:     "Cheeseburgers",
 				Type:     discordgo.ActivityTypeListening,
-				URL:      bot.conf.ExternalURL,
+				URL:      conf.ExternalURL,
 				State:    "state field",
 				Details:  "Blah",
 				Instance: true,
@@ -237,17 +241,19 @@ func (bot *discordRepository) SendPayload(channel domain.DiscordChannel, payload
 		return
 	}
 
+	conf := bot.config.Config()
+
 	var channelID string
 
 	switch channel {
 	case domain.ChannelMod:
-		channelID = bot.conf.Discord.LogChannelID
+		channelID = conf.Discord.LogChannelID
 	case domain.ChannelModLog:
-		channelID = bot.conf.Discord.LogChannelID
+		channelID = conf.Discord.LogChannelID
 	case domain.ChannelPublicLog:
-		channelID = bot.conf.Discord.PublicLogChannelID
+		channelID = conf.Discord.PublicLogChannelID
 	case domain.ChannelPublicMatchLog:
-		channelID = bot.conf.Discord.PublicMatchLogChannelID
+		channelID = conf.Discord.PublicMatchLogChannelID
 	case domain.ChannelModAppealLog:
 	case domain.ChannelModVoteLog:
 	case domain.ChannelBanLog:
@@ -256,7 +262,7 @@ func (bot *discordRepository) SendPayload(channel domain.DiscordChannel, payload
 	}
 
 	if channelID == "" {
-		channelID = bot.conf.Discord.LogChannelID
+		channelID = conf.Discord.LogChannelID
 	}
 
 	if _, errSend := bot.session.ChannelMessageSendEmbed(channelID, payload); errSend != nil {
