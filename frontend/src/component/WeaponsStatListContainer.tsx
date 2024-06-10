@@ -44,7 +44,7 @@ const StatsWeaponsOverall = ({ stats, isLoading }: { stats: LazyResult<WeaponsOv
                     <Link
                         component={RouterLink}
                         to={'/stats/weapon/$weapon_id'}
-                        params={{ weapon_id: info.getValue() }}
+                        params={{ weapon_id: String(info.getValue()) }}
                     >
                         {stats.data[info.row.index].name}
                     </Link>
