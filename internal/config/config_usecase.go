@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/leighmacdonald/gbans/pkg/util"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -14,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
+	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/mitchellh/mapstructure"
@@ -127,7 +127,7 @@ func applyGlobalConfig(config domain.Config) error {
 
 type GithubRelease struct {
 	URL             string    `json:"url"`
-	HTMLURL         string    `json:"html_url"`
+	HTMLUrl         string    `json:"html_url"`
 	AssetsURL       string    `json:"assets_url"`
 	UploadURL       string    `json:"upload_url"`
 	TarballURL      string    `json:"tarball_url"`
@@ -149,7 +149,7 @@ type GithubRelease struct {
 		AvatarURL         string `json:"avatar_url"`
 		GravatarID        string `json:"gravatar_id"`
 		URL               string `json:"url"`
-		HTMLURL           string `json:"html_url"`
+		HTMLUrl           string `json:"html_url"`
 		FollowersURL      string `json:"followers_url"`
 		FollowingURL      string `json:"following_url"`
 		GistsURL          string `json:"gists_url"`
@@ -182,7 +182,7 @@ type GithubRelease struct {
 			AvatarURL         string `json:"avatar_url"`
 			GravatarID        string `json:"gravatar_id"`
 			URL               string `json:"url"`
-			HTMLURL           string `json:"html_url"`
+			HTMLUrl           string `json:"html_url"`
 			FollowersURL      string `json:"followers_url"`
 			FollowingURL      string `json:"following_url"`
 			GistsURL          string `json:"gists_url"`
@@ -203,6 +203,7 @@ func getGithubReleases(ctx context.Context) ([]GithubRelease, error) {
 	if errReq != nil {
 		return nil, errors.Join(errReq, domain.ErrRequestCreate)
 	}
+
 	req.Header.Add("Accept", "application/vnd.github+json")
 	req.Header.Add("X-GitHub-Api-Version", "2022-11-28")
 
@@ -213,11 +214,16 @@ func getGithubReleases(ctx context.Context) ([]GithubRelease, error) {
 		return nil, errors.Join(errResp, domain.ErrRequestPerform)
 	}
 
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			slog.Error("Failed to close github releases body", log.ErrAttr(err))
+		}
+	}()
+
 	var releases []GithubRelease
 	if err := json.NewDecoder(resp.Body).Decode(&releases); err != nil {
 		return nil, errors.Join(err, domain.ErrRequestDecode)
 	}
 
 	return releases, nil
-
 }
