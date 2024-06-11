@@ -1,5 +1,5 @@
 import { redirect } from '@tanstack/react-router';
-import { appInfoDetail } from '../api';
+import { appInfoDetail } from '../api/app.ts';
 
 export const checkFeatureEnabled = (featureName: keyof appInfoDetail, redirectTo: string = '/') => {
     const item = localStorage.getItem('appInfo');
