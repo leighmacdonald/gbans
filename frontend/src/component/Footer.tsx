@@ -41,14 +41,25 @@ export const Footer = (): JSX.Element => {
                         alignItems="center"
                         justifyContent="center"
                     >
-                        <Link
-                            component={RouterLink}
-                            variant={'subtitle2'}
-                            to={gbansUrl}
-                            sx={{ color: theme.palette.text.primary }}
-                        >
-                            {appInfo.app_version}
-                        </Link>
+                        <Stack direction={'row'} spacing={1}>
+                            <Link
+                                component={RouterLink}
+                                variant={'subtitle2'}
+                                to={gbansUrl}
+                                sx={{ color: theme.palette.text.primary }}
+                            >
+                                {appInfo.app_version}
+                            </Link>
+                            <Link
+                                component={RouterLink}
+                                variant={'subtitle2'}
+                                to={'/changelog'}
+                                sx={{ color: theme.palette.text.primary }}
+                            >
+                                Changelog
+                            </Link>
+                        </Stack>
+
                         <Link
                             component={RouterLink}
                             variant={'subtitle2'}

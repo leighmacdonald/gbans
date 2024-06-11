@@ -10,7 +10,7 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
-type appealUsecase struct {
+type appeals struct {
 	appealRepository domain.AppealRepository
 	banUsecase       domain.BanSteamUsecase
 	personUsecase    domain.PersonUsecase
@@ -21,14 +21,14 @@ type appealUsecase struct {
 func NewAppealUsecase(ar domain.AppealRepository, banUsecase domain.BanSteamUsecase, personUsecase domain.PersonUsecase,
 	discordUsecase domain.DiscordUsecase, configUsecase domain.ConfigUsecase,
 ) domain.AppealUsecase {
-	return &appealUsecase{appealRepository: ar, banUsecase: banUsecase, personUsecase: personUsecase, discordUsecase: discordUsecase, configUsecase: configUsecase}
+	return &appeals{appealRepository: ar, banUsecase: banUsecase, personUsecase: personUsecase, discordUsecase: discordUsecase, configUsecase: configUsecase}
 }
 
-func (u *appealUsecase) GetAppealsByActivity(ctx context.Context, opts domain.AppealQueryFilter) ([]domain.AppealOverview, error) {
+func (u *appeals) GetAppealsByActivity(ctx context.Context, opts domain.AppealQueryFilter) ([]domain.AppealOverview, error) {
 	return u.appealRepository.GetAppealsByActivity(ctx, opts)
 }
 
-func (u *appealUsecase) EditBanMessage(ctx context.Context, curUser domain.UserProfile, reportID int64, newMsg string) (domain.BanAppealMessage, error) {
+func (u *appeals) EditBanMessage(ctx context.Context, curUser domain.UserProfile, reportID int64, newMsg string) (domain.BanAppealMessage, error) {
 	existing, err := u.GetBanMessageByID(ctx, reportID)
 	if err != nil {
 		return domain.BanAppealMessage{}, err
@@ -65,7 +65,7 @@ func (u *appealUsecase) EditBanMessage(ctx context.Context, curUser domain.UserP
 	return existing, nil
 }
 
-func (u *appealUsecase) CreateBanMessage(ctx context.Context, curUser domain.UserProfile, banID int64, newMsg string) (domain.BanAppealMessage, error) {
+func (u *appeals) CreateBanMessage(ctx context.Context, curUser domain.UserProfile, banID int64, newMsg string) (domain.BanAppealMessage, error) {
 	if !httphelper.HasPrivilege(curUser, steamid.Collection{curUser.GetSteamID()}, domain.PModerator) {
 		return domain.BanAppealMessage{}, domain.ErrPermissionDenied
 	}
@@ -116,7 +116,7 @@ func (u *appealUsecase) CreateBanMessage(ctx context.Context, curUser domain.Use
 	return msg, nil
 }
 
-func (u *appealUsecase) GetBanMessages(ctx context.Context, userProfile domain.UserProfile, banID int64) ([]domain.BanAppealMessage, error) {
+func (u *appeals) GetBanMessages(ctx context.Context, userProfile domain.UserProfile, banID int64) ([]domain.BanAppealMessage, error) {
 	banPerson, errGetBan := u.banUsecase.GetByBanID(ctx, banID, true, true)
 	if errGetBan != nil {
 		return nil, errGetBan
@@ -129,11 +129,11 @@ func (u *appealUsecase) GetBanMessages(ctx context.Context, userProfile domain.U
 	return u.appealRepository.GetBanMessages(ctx, banID)
 }
 
-func (u *appealUsecase) GetBanMessageByID(ctx context.Context, banMessageID int64) (domain.BanAppealMessage, error) {
+func (u *appeals) GetBanMessageByID(ctx context.Context, banMessageID int64) (domain.BanAppealMessage, error) {
 	return u.appealRepository.GetBanMessageByID(ctx, banMessageID)
 }
 
-func (u *appealUsecase) DropBanMessage(ctx context.Context, curUser domain.UserProfile, banMessageID int64) error {
+func (u *appeals) DropBanMessage(ctx context.Context, curUser domain.UserProfile, banMessageID int64) error {
 	existing, errExist := u.GetBanMessageByID(ctx, banMessageID)
 	if errExist != nil {
 		return errExist

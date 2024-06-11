@@ -11,13 +11,15 @@ import (
 )
 
 type configHandler struct {
-	cu   domain.ConfigUsecase
-	auth domain.AuthUsecase
+	config domain.ConfigUsecase
+	auth   domain.AuthUsecase
 }
 
 func NewConfigHandler(engine *gin.Engine, cu domain.ConfigUsecase, auth domain.AuthUsecase, version domain.BuildInfo) {
-	handler := configHandler{cu: cu, auth: auth}
+	handler := configHandler{config: cu, auth: auth}
 	engine.GET("/api/info", handler.onAppInfo(version))
+	engine.GET("/api/changelog", handler.onChangelog())
+
 	adminGroup := engine.Group("/")
 	{
 		admin := adminGroup.Use(auth.AuthMiddleware(domain.PAdmin))
@@ -28,7 +30,7 @@ func NewConfigHandler(engine *gin.Engine, cu domain.ConfigUsecase, auth domain.A
 
 func (c configHandler) onAPIGetConfig() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		ctx.JSON(http.StatusOK, c.cu.Config())
+		ctx.JSON(http.StatusOK, c.config.Config())
 	}
 }
 
@@ -39,7 +41,7 @@ func (c configHandler) onAPIPutConfig() gin.HandlerFunc {
 			return
 		}
 
-		if errSave := c.cu.Write(ctx, req); errSave != nil {
+		if errSave := c.config.Write(ctx, req); errSave != nil {
 			slog.Error("Failed to save new config", log.ErrAttr(errSave))
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 
@@ -74,7 +76,7 @@ func (c configHandler) onAppInfo(buildInfo domain.BuildInfo) gin.HandlerFunc {
 	}
 
 	return func(ctx *gin.Context) {
-		conf := c.cu.Config()
+		conf := c.config.Config()
 
 		ctx.JSON(http.StatusOK, appInfo{
 			SiteName:        conf.General.SiteName,
@@ -97,5 +99,19 @@ func (c configHandler) onAppInfo(buildInfo domain.BuildInfo) gin.HandlerFunc {
 			ChatlogsEnabled: conf.General.ChatlogsEnabled,
 			DemosEnabled:    conf.General.DemosEnabled,
 		})
+	}
+}
+
+func (c configHandler) onChangelog() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+
+		releases, err := getGithubReleases(ctx)
+		if err != nil {
+			slog.Error("Failed to fetch github releases")
+			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			return
+		}
+
+		ctx.JSON(http.StatusOK, releases)
 	}
 }

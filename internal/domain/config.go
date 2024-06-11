@@ -3,6 +3,8 @@ package domain
 import (
 	"context"
 	"fmt"
+	"net"
+	"strconv"
 	"strings"
 )
 
@@ -42,7 +44,7 @@ type StaticConfig struct {
 
 // Addr returns the address in host:port format.
 func (s StaticConfig) Addr() string {
-	return fmt.Sprintf("%s:%d", s.HTTPHost, s.HTTPPort)
+	return net.JoinHostPort(s.HTTPHost, strconv.Itoa(s.HTTPPort))
 }
 
 // Config is the root config container

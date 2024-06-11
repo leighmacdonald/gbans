@@ -22,6 +22,7 @@ import { Route as GuestServersImport } from './routes/_guest.servers'
 import { Route as GuestPrivacyPolicyImport } from './routes/_guest.privacy-policy'
 import { Route as GuestPatreonImport } from './routes/_guest.patreon'
 import { Route as GuestContestsImport } from './routes/_guest.contests'
+import { Route as GuestChangelogImport } from './routes/_guest.changelog'
 import { Route as AuthStatsImport } from './routes/_auth.stats'
 import { Route as AuthSettingsImport } from './routes/_auth.settings'
 import { Route as AuthReportImport } from './routes/_auth.report'
@@ -121,6 +122,11 @@ const GuestPatreonRoute = GuestPatreonImport.update({
 
 const GuestContestsRoute = GuestContestsImport.update({
   path: '/contests',
+  getParentRoute: () => GuestRoute,
+} as any)
+
+const GuestChangelogRoute = GuestChangelogImport.update({
+  path: '/changelog',
   getParentRoute: () => GuestRoute,
 } as any)
 
@@ -441,6 +447,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/stats'
       preLoaderRoute: typeof AuthStatsImport
       parentRoute: typeof AuthImport
+    }
+    '/_guest/changelog': {
+      id: '/_guest/changelog'
+      path: '/changelog'
+      fullPath: '/changelog'
+      preLoaderRoute: typeof GuestChangelogImport
+      parentRoute: typeof GuestImport
     }
     '/_guest/contests': {
       id: '/_guest/contests'
@@ -773,6 +786,7 @@ export const routeTree = rootRoute.addChildren({
     AuthLogsSteamIdRoute,
   }),
   GuestRoute: GuestRoute.addChildren({
+    GuestChangelogRoute,
     GuestContestsRoute,
     GuestPatreonRoute,
     GuestPrivacyPolicyRoute,
@@ -850,6 +864,7 @@ export const routeTree = rootRoute.addChildren({
     "/_guest": {
       "filePath": "_guest.tsx",
       "children": [
+        "/_guest/changelog",
         "/_guest/contests",
         "/_guest/patreon",
         "/_guest/privacy-policy",
@@ -931,6 +946,10 @@ export const routeTree = rootRoute.addChildren({
         "/_auth/stats/",
         "/_auth/stats/weapon/$weapon_id"
       ]
+    },
+    "/_guest/changelog": {
+      "filePath": "_guest.changelog.tsx",
+      "parent": "/_guest"
     },
     "/_guest/contests": {
       "filePath": "_guest.contests.tsx",
