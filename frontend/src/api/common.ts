@@ -188,6 +188,11 @@ export const transformCreatedOnDate = <T>(item: T & { created_on: Date }) => {
     return item;
 };
 
+export const transformCreatedAtDate = <T>(item: T & { created_at: Date }) => {
+    item.created_at = parseDateTime(item.created_at as unknown as string);
+    return item;
+};
+
 export const transformTimeStampedDates = <T>(item: T & TimeStamped) => {
     item.created_on = parseDateTime(item.created_on as unknown as string);
     item.updated_on = parseDateTime(item.updated_on as unknown as string);
@@ -246,26 +251,4 @@ export interface BanASNQueryFilter extends BanQueryCommon {
 export interface ReportQueryFilter {
     deleted?: boolean;
     source_id?: string;
-}
-
-export interface appInfoDetail {
-    site_name: string;
-    app_version: string;
-    link_id: string;
-    sentry_dns_web: string;
-    asset_url: string;
-    patreon_client_id: string;
-    patreon_enabled: boolean;
-    discord_client_id: string;
-    discord_enabled: boolean;
-    default_route: string;
-    news_enabled: boolean;
-    forums_enabled: boolean;
-    contests_enabled: boolean;
-    wiki_enabled: boolean;
-    stats_enabled: boolean;
-    servers_enabled: boolean;
-    reports_enabled: boolean;
-    chatlogs_enabled: boolean;
-    demos_enabled: boolean;
 }

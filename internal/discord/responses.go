@@ -1189,8 +1189,12 @@ func ForumMessageSaved(message domain.ForumMessage) *discordgo.MessageEmbed {
 	embed.Embed().
 		AddField("Category", message.Title)
 
-	embed.Embed().Author.Name = message.Personaname
-	embed.Embed().Author.IconURL = domain.NewAvatarLinks(message.Avatarhash).Medium()
+	if message.Personaname != "" {
+		embed.Embed().Author = &discordgo.MessageEmbedAuthor{
+			IconURL: domain.NewAvatarLinks(message.Avatarhash).Medium(),
+			Name:    message.Personaname,
+		}
+	}
 
 	return embed.Embed().MessageEmbed
 }

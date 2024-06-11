@@ -1,10 +1,10 @@
 import { PropsWithChildren, ReactNode } from 'react';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
-import { Heading } from './Heading';
+import { Heading } from './Heading.tsx';
 
 interface ContainerWithHeaderProps {
-    title: string;
+    title: ReactNode;
     iconLeft?: ReactNode;
     spacing?: number;
     elevation?: number;

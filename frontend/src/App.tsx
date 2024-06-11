@@ -2,7 +2,8 @@ import { PropsWithChildren, StrictMode, useState } from 'react';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { createRouter, RouterProvider } from '@tanstack/react-router';
 import { isBefore, parseISO } from 'date-fns';
-import { apiCall, appInfoDetail, defaultAvatarHash, PermissionLevel } from './api';
+import { defaultAvatarHash, PermissionLevel } from './api';
+import { appInfoDetail, getAppInfo } from './api/app.ts';
 import { AuthProvider, profileKey } from './auth.tsx';
 import { ErrorDetails } from './component/ErrorDetails.tsx';
 import { LoadingPlaceholder } from './component/LoadingPlaceholder.tsx';
@@ -125,7 +126,7 @@ const AppInfoProvider = ({ children }: PropsWithChildren) => {
                 }
             }
 
-            const details = await apiCall<appInfoDetail>('/api/info');
+            const details = await getAppInfo();
             setAppInfo(details);
             localStorage.setItem('appInfo', JSON.stringify(details));
 

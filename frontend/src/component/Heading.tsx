@@ -1,11 +1,10 @@
-import { FC, JSX, ReactNode } from 'react';
+import { PropsWithChildren, ReactNode } from 'react';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import { tf2Fonts } from '../theme';
 
 interface HeadingProps {
-    children: JSX.Element[] | JSX.Element | string;
     bgColor?: string;
     iconLeft?: ReactNode;
     iconRight?: ReactNode;
@@ -24,7 +23,7 @@ export const VCenteredElement = ({ icon }: VCenteredImageProps) => {
     );
 };
 
-export const Heading: FC<HeadingProps> = ({ children, bgColor, iconLeft, iconRight, align }: HeadingProps) => {
+export const Heading = ({ children, bgColor, iconLeft, iconRight, align }: PropsWithChildren<HeadingProps>) => {
     const theme = useTheme();
     return (
         <Grid
