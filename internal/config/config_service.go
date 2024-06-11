@@ -104,11 +104,11 @@ func (c configHandler) onAppInfo(buildInfo domain.BuildInfo) gin.HandlerFunc {
 
 func (c configHandler) onChangelog() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-
 		releases, err := getGithubReleases(ctx)
 		if err != nil {
 			slog.Error("Failed to fetch github releases")
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+
 			return
 		}
 
