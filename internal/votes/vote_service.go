@@ -11,7 +11,7 @@ import (
 )
 
 func NewVoteHandler(engine *gin.Engine, voteUsecase domain.VoteUsecase, authUsecase domain.AuthUsecase) {
-	handler := voteHandler{voteUsecase: voteUsecase}
+	handler := voteHandler{votes: voteUsecase}
 
 	modGrp := engine.Group("/")
 	{
@@ -21,7 +21,7 @@ func NewVoteHandler(engine *gin.Engine, voteUsecase domain.VoteUsecase, authUsec
 }
 
 type voteHandler struct {
-	voteUsecase domain.VoteUsecase
+	votes domain.VoteUsecase
 }
 
 func (h voteHandler) onVotes() gin.HandlerFunc {
@@ -31,10 +31,10 @@ func (h voteHandler) onVotes() gin.HandlerFunc {
 			return
 		}
 
-		votes, count, errVotes := h.voteUsecase.Query(ctx, req)
+		votes, count, errVotes := h.votes.Query(ctx, req)
 		if errVotes != nil {
+			httphelper.HandleErrInternal(ctx)
 			slog.Error("Failed to query vote history", log.ErrAttr(errVotes))
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}

@@ -16,18 +16,18 @@ import (
 )
 
 type serversHandler struct {
-	serversUsecase domain.ServersUsecase
-	stateUsecase   domain.StateUsecase
-	personUsecase  domain.PersonUsecase
+	servers domain.ServersUsecase
+	state   domain.StateUsecase
+	persons domain.PersonUsecase
 }
 
 func NewServerHandler(engine *gin.Engine, serversUsecase domain.ServersUsecase,
 	stateUsecase domain.StateUsecase, ath domain.AuthUsecase, personUsecase domain.PersonUsecase,
 ) {
 	handler := &serversHandler{
-		serversUsecase: serversUsecase,
-		stateUsecase:   stateUsecase,
-		personUsecase:  personUsecase,
+		servers: serversUsecase,
+		state:   stateUsecase,
+		persons: personUsecase,
 	}
 
 	engine.GET("/export/sourcemod/admins_simple.ini", handler.onAPIExportSourcemodSimpleAdmins())
@@ -54,16 +54,18 @@ type serverInfoSafe struct {
 
 func (h *serversHandler) onAPIExportSourcemodSimpleAdmins() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		privilegedIDs, errPrivilegedIDs := h.personUsecase.GetSteamIDsAbove(ctx, domain.PReserved)
+		privilegedIDs, errPrivilegedIDs := h.persons.GetSteamIDsAbove(ctx, domain.PReserved)
 		if errPrivilegedIDs != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to get steam ids", log.ErrAttr(errPrivilegedIDs))
 
 			return
 		}
 
-		players, errPlayers := h.personUsecase.GetPeopleBySteamID(ctx, privilegedIDs)
+		players, errPlayers := h.persons.GetPeopleBySteamID(ctx, privilegedIDs)
 		if errPlayers != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to get people by steamid", log.ErrAttr(errPlayers))
 
 			return
 		}
@@ -101,9 +103,10 @@ func (h *serversHandler) onAPIExportSourcemodSimpleAdmins() gin.HandlerFunc {
 
 func (h *serversHandler) onAPIGetServers() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		fullServers, _, errServers := h.serversUsecase.GetServers(ctx, domain.ServerQueryFilter{})
+		fullServers, _, errServers := h.servers.GetServers(ctx, domain.ServerQueryFilter{})
 		if errServers != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to get servers", log.ErrAttr(errServers))
 
 			return
 		}
@@ -152,7 +155,7 @@ func (h *serversHandler) onAPIGetServerStates() gin.HandlerFunc {
 			lat = httphelper.GetDefaultFloat64(ctx.GetHeader("cf-iplatitude"), 41.7774)
 			lon = httphelper.GetDefaultFloat64(ctx.GetHeader("cf-iplongitude"), -87.6160)
 			// region := ctx.GetHeader("cf-region-code")
-			curState = h.stateUsecase.Current()
+			curState = h.state.Current()
 			servers  []domain.SafeServer
 		)
 
@@ -210,18 +213,14 @@ func (h *serversHandler) onAPIPostServer() gin.HandlerFunc {
 		server.IsEnabled = req.IsEnabled
 		server.LogSecret = req.LogSecret
 
-		if errSave := h.serversUsecase.SaveServer(ctx, &server); errSave != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+		if errSave := h.servers.SaveServer(ctx, &server); errSave != nil {
+			httphelper.HandleErrInternal(ctx)
 			slog.Error("Failed to save new server", log.ErrAttr(errSave))
 
 			return
 		}
 
 		ctx.JSON(http.StatusOK, server)
-
-		slog.Info("ServerStore config created",
-			slog.Int("server_id", server.ServerID),
-			slog.String("name", server.ShortName))
 	}
 }
 
@@ -245,16 +244,18 @@ type serverUpdateRequest struct {
 
 func (h *serversHandler) onAPIPostServerUpdate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		serverID, idErr := httphelper.GetIntParam(ctx, "server_id")
-		if idErr != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+		serverID, errServerID := httphelper.GetIntParam(ctx, "server_id")
+		if errServerID != nil {
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Warn("Failed to get server_id", log.ErrAttr(errServerID))
 
 			return
 		}
 
-		server, errServer := h.serversUsecase.GetServer(ctx, serverID)
+		server, errServer := h.servers.GetServer(ctx, serverID)
 		if errServer != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to get server", log.ErrAttr(errServer))
 
 			return
 		}
@@ -279,18 +280,14 @@ func (h *serversHandler) onAPIPostServerUpdate() gin.HandlerFunc {
 		server.LogSecret = req.LogSecret
 		server.EnableStats = req.EnableStats
 
-		if errSave := h.serversUsecase.SaveServer(ctx, &server); errSave != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+		if errSave := h.servers.SaveServer(ctx, &server); errSave != nil {
+			httphelper.HandleErrInternal(ctx)
 			slog.Error("Failed to update server", log.ErrAttr(errSave))
 
 			return
 		}
 
 		ctx.JSON(http.StatusOK, server)
-
-		slog.Info("ServerStore config updated",
-			slog.Int("server_id", server.ServerID),
-			slog.String("name", server.ShortName))
 	}
 }
 
@@ -300,9 +297,10 @@ func (h *serversHandler) onAPIGetServersAdmin() gin.HandlerFunc {
 			IncludeDisabled: true,
 		}
 
-		servers, _, errServers := h.serversUsecase.GetServers(ctx, filter)
+		servers, _, errServers := h.servers.GetServers(ctx, filter)
 		if errServers != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to get servers", log.ErrAttr(errServers))
 
 			return
 		}
@@ -313,32 +311,31 @@ func (h *serversHandler) onAPIGetServersAdmin() gin.HandlerFunc {
 
 func (h *serversHandler) onAPIPostServerDelete() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		serverID, idErr := httphelper.GetIntParam(ctx, "server_id")
-		if idErr != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+		serverID, errID := httphelper.GetIntParam(ctx, "server_id")
+		if errID != nil {
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Error("Failed to get server_id", log.ErrAttr(errID))
 
 			return
 		}
 
-		server, errServer := h.serversUsecase.GetServer(ctx, serverID)
+		server, errServer := h.servers.GetServer(ctx, serverID)
 		if errServer != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to get server", log.ErrAttr(errServer))
 
 			return
 		}
 
 		server.Deleted = true
 
-		if errSave := h.serversUsecase.SaveServer(ctx, &server); errSave != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+		if errSave := h.servers.SaveServer(ctx, &server); errSave != nil {
+			httphelper.HandleErrInternal(ctx)
 			slog.Error("Failed to delete server", log.ErrAttr(errSave))
 
 			return
 		}
 
 		ctx.JSON(http.StatusOK, server)
-		slog.Info("ServerStore config deleted",
-			slog.Int("server_id", server.ServerID),
-			slog.String("name", server.ShortName))
 	}
 }

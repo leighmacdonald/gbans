@@ -20,12 +20,12 @@ import (
 )
 
 type stateUsecase struct {
-	stateRepository domain.StateRepository
-	configUsecase   domain.ConfigUsecase
-	serversUsecase  domain.ServersUsecase
-	logListener     *logparse.UDPLogListener
-	logFileChan     chan domain.LogFilePayload
-	broadcaster     *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
+	state       domain.StateRepository
+	config      domain.ConfigUsecase
+	servers     domain.ServersUsecase
+	logListener *logparse.UDPLogListener
+	logFileChan chan domain.LogFilePayload
+	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 }
 
 // NewStateUsecase created a interface to interact with server state and exec rcon commands
@@ -34,16 +34,16 @@ func NewStateUsecase(broadcaster *fp.Broadcaster[logparse.EventType, logparse.Se
 	repository domain.StateRepository, configUsecase domain.ConfigUsecase, serversUsecase domain.ServersUsecase,
 ) domain.StateUsecase {
 	return &stateUsecase{
-		stateRepository: repository,
-		configUsecase:   configUsecase,
-		broadcaster:     broadcaster,
-		serversUsecase:  serversUsecase,
-		logFileChan:     make(chan domain.LogFilePayload),
+		state:       repository,
+		config:      configUsecase,
+		broadcaster: broadcaster,
+		servers:     serversUsecase,
+		logFileChan: make(chan domain.LogFilePayload),
 	}
 }
 
 func (s *stateUsecase) Start(ctx context.Context) error {
-	conf := s.configUsecase.Config()
+	conf := s.config.Config()
 
 	logSrc, errLogSrc := logparse.NewUDPLogListener(conf.General.SrcdsLogAddr,
 		func(_ logparse.EventType, event logparse.ServerEvent) {
@@ -56,7 +56,7 @@ func (s *stateUsecase) Start(ctx context.Context) error {
 
 	s.logListener = logSrc
 
-	go s.stateRepository.Start(ctx)
+	go s.state.Start(ctx)
 
 	s.updateSrcdsLogSecrets(ctx)
 
@@ -74,7 +74,7 @@ func (s *stateUsecase) updateSrcdsLogSecrets(ctx context.Context) {
 
 	defer cancelServers()
 
-	servers, _, errServers := s.serversUsecase.GetServers(serversCtx, domain.ServerQueryFilter{
+	servers, _, errServers := s.servers.GetServers(serversCtx, domain.ServerQueryFilter{
 		IncludeDisabled: false,
 		QueryFilter:     domain.QueryFilter{Deleted: false},
 	})
@@ -95,7 +95,7 @@ func (s *stateUsecase) updateSrcdsLogSecrets(ctx context.Context) {
 }
 
 func (s *stateUsecase) Current() []domain.ServerState {
-	return s.stateRepository.Current()
+	return s.state.Current()
 }
 
 func (s *stateUsecase) FindByCIDR(cidr *net.IPNet) []domain.PlayerServerInfo {
@@ -115,13 +115,13 @@ func (s *stateUsecase) FindBySteamID(steamID steamid.SteamID) []domain.PlayerSer
 }
 
 func (s *stateUsecase) Update(serverID int, update domain.PartialStateUpdate) error {
-	return s.stateRepository.Update(serverID, update)
+	return s.state.Update(serverID, update)
 }
 
 func (s *stateUsecase) Find(name string, steamID steamid.SteamID, addr net.IP, cidr *net.IPNet) []domain.PlayerServerInfo {
 	var found []domain.PlayerServerInfo
 
-	current := s.stateRepository.Current()
+	current := s.state.Current()
 
 	for server := range current {
 		for _, player := range current[server].Players {
@@ -165,7 +165,7 @@ func (s *stateUsecase) Find(name string, steamID steamid.SteamID, addr net.IP, c
 
 func (s *stateUsecase) SortRegion() map[string][]domain.ServerState {
 	serverMap := map[string][]domain.ServerState{}
-	for _, server := range s.stateRepository.Current() {
+	for _, server := range s.state.Current() {
 		_, exists := serverMap[server.Region]
 		if !exists {
 			serverMap[server.Region] = []domain.ServerState{}
@@ -178,7 +178,7 @@ func (s *stateUsecase) SortRegion() map[string][]domain.ServerState {
 }
 
 func (s *stateUsecase) ByServerID(serverID int) (domain.ServerState, bool) {
-	for _, server := range s.stateRepository.Current() {
+	for _, server := range s.state.Current() {
 		if server.ServerID == serverID {
 			return server, true
 		}
@@ -190,7 +190,7 @@ func (s *stateUsecase) ByServerID(serverID int) (domain.ServerState, bool) {
 func (s *stateUsecase) ByName(name string, wildcardOk bool) []domain.ServerState {
 	var servers []domain.ServerState
 
-	current := s.stateRepository.Current()
+	current := s.state.Current()
 
 	if name == "*" && wildcardOk {
 		servers = append(servers, current...)
@@ -226,7 +226,7 @@ func (s *stateUsecase) ServerIDsByName(name string, wildcardOk bool) []int {
 }
 
 func (s *stateUsecase) OnFindExec(ctx context.Context, name string, steamID steamid.SteamID, ip net.IP, cidr *net.IPNet, onFoundCmd func(info domain.PlayerServerInfo) string) error {
-	currentState := s.stateRepository.Current()
+	currentState := s.state.Current()
 	players := s.Find(name, steamID, ip, cidr)
 
 	if len(players) == 0 {
@@ -252,7 +252,7 @@ func (s *stateUsecase) OnFindExec(ctx context.Context, name string, steamID stea
 func (s *stateUsecase) ExecServer(ctx context.Context, serverID int, cmd string) (string, error) {
 	var conf domain.ServerConfig
 
-	for _, server := range s.stateRepository.Configs() {
+	for _, server := range s.state.Configs() {
 		if server.ServerID == serverID {
 			conf = server
 
@@ -268,7 +268,7 @@ func (s *stateUsecase) ExecServer(ctx context.Context, serverID int, cmd string)
 }
 
 func (s *stateUsecase) ExecRaw(ctx context.Context, addr string, password string, cmd string) (string, error) {
-	return s.stateRepository.ExecRaw(ctx, addr, password, cmd)
+	return s.state.ExecRaw(ctx, addr, password, cmd)
 }
 
 func (s *stateUsecase) LogAddressAdd(ctx context.Context, logAddress string) {
@@ -288,7 +288,7 @@ func (s *stateUsecase) Broadcast(ctx context.Context, serverIDs []int, cmd strin
 	results := map[int]string{}
 	errGroup, egCtx := errgroup.WithContext(ctx)
 
-	configs := s.stateRepository.Configs()
+	configs := s.state.Configs()
 
 	if len(serverIDs) == 0 {
 		for _, conf := range configs {
@@ -302,12 +302,12 @@ func (s *stateUsecase) Broadcast(ctx context.Context, serverIDs []int, cmd strin
 		sid := serverID
 
 		errGroup.Go(func() error {
-			serverConf, errServerConf := s.stateRepository.GetServer(sid)
+			serverConf, errServerConf := s.state.GetServer(sid)
 			if errServerConf != nil {
 				return errServerConf
 			}
 
-			resp, errExec := s.stateRepository.ExecRaw(egCtx, serverConf.Addr(), serverConf.RconPassword, cmd)
+			resp, errExec := s.state.ExecRaw(egCtx, serverConf.Addr(), serverConf.RconPassword, cmd)
 			if errExec != nil {
 				slog.Error("Failed to exec server command", slog.Int("server_id", sid), log.ErrAttr(errExec))
 
@@ -356,7 +356,7 @@ func (s *stateUsecase) Kick(ctx context.Context, target steamid.SteamID, reason 
 	return nil
 }
 
-// Kick will kick the steam id from whatever server it is connected to.
+// KickPlayerID will kick the steam id from whatever server it is connected to.
 func (s *stateUsecase) KickPlayerID(ctx context.Context, targetPlayerID int, targetServerID int, reason domain.Reason) error {
 	_, err := s.ExecServer(ctx, targetServerID, fmt.Sprintf("sm_kick #%d %s", targetPlayerID, reason.String()))
 

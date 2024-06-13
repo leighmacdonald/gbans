@@ -2,6 +2,7 @@ package servers
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
 )
@@ -39,9 +40,17 @@ func (s *serversUsecase) GetServerByPassword(ctx context.Context, serverPassword
 }
 
 func (s *serversUsecase) SaveServer(ctx context.Context, server *domain.Server) error {
-	return s.serversRepo.SaveServer(ctx, server)
-}
+	isNew := server.ServerID == 0
 
-func (s *serversUsecase) DropServer(ctx context.Context, serverID int) error {
-	return s.serversRepo.DropServer(ctx, serverID)
+	if err := s.serversRepo.SaveServer(ctx, server); err != nil {
+		return err
+	}
+
+	if isNew {
+		slog.Info("Server config created", slog.Int("server_id", server.ServerID), slog.String("name", server.ShortName))
+	} else {
+		slog.Info("Server config updated", slog.Int("server_id", server.ServerID), slog.String("name", server.ShortName), slog.Bool("deleted", server.Deleted))
+	}
+
+	return nil
 }

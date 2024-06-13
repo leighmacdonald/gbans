@@ -14,12 +14,12 @@ import (
 )
 
 type steamgroupHandler struct {
-	bgu domain.BanGroupUsecase
+	bansGroup domain.BanGroupUsecase
 }
 
 func NewSteamgroupHandler(engine *gin.Engine, bgu domain.BanGroupUsecase, ath domain.AuthUsecase) {
 	handler := steamgroupHandler{
-		bgu: bgu,
+		bansGroup: bgu,
 	}
 
 	// mod
@@ -50,15 +50,17 @@ func (h steamgroupHandler) onAPIPostBansGroupCreate() gin.HandlerFunc {
 
 		groupID, errGroupID := req.TargetGroupID(ctx)
 		if !errGroupID {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Warn("Got invalid target group id")
 
 			return
 		}
 
 		var existing domain.BanGroup
-		if errExist := h.bgu.GetByGID(ctx, groupID, &existing); errExist != nil {
+		if errExist := h.bansGroup.GetByGID(ctx, groupID, &existing); errExist != nil {
 			if !errors.Is(errExist, domain.ErrNoResult) {
 				httphelper.ResponseErr(ctx, http.StatusConflict, domain.ErrDuplicate)
+				slog.Error("Tried to ban duplicate group", slog.String("group_id", groupID.String()))
 
 				return
 			}
@@ -71,7 +73,8 @@ func (h steamgroupHandler) onAPIPostBansGroupCreate() gin.HandlerFunc {
 
 		duration, errDuration := util.CalcDuration(req.Duration, req.ValidUntil)
 		if errDuration != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Warn("Got invalid duration", log.ErrAttr(errDuration))
 
 			return
 		}
@@ -79,6 +82,7 @@ func (h steamgroupHandler) onAPIPostBansGroupCreate() gin.HandlerFunc {
 		targetID, targetIDOk := req.TargetSteamID(ctx)
 		if !targetIDOk {
 			httphelper.ErrorHandled(ctx, domain.ErrTargetID)
+			slog.Warn("Got invalid target id", slog.String("target_id", req.TargetID))
 
 			return
 		}
@@ -86,26 +90,28 @@ func (h steamgroupHandler) onAPIPostBansGroupCreate() gin.HandlerFunc {
 		groupID, groupIDOk := req.TargetGroupID(ctx)
 		if !groupIDOk {
 			httphelper.ErrorHandled(ctx, domain.ErrTargetID)
+			slog.Warn("Got invalid group id", slog.String("group_id", req.GroupID))
 
 			return
 		}
 
 		if errBanSteamGroup := domain.NewBanSteamGroup(sid, targetID, duration, req.Note, domain.Web, groupID,
 			"", domain.Banned, &banSteamGroup); errBanSteamGroup != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.HandleErrBadRequest(ctx)
 			slog.Error("Failed to save group ban", log.ErrAttr(errBanSteamGroup))
 
 			return
 		}
 
-		if errBan := h.bgu.Ban(ctx, &banSteamGroup); errBan != nil {
+		if errBan := h.bansGroup.Ban(ctx, &banSteamGroup); errBan != nil {
 			if errors.Is(errBan, domain.ErrDuplicate) {
 				httphelper.ResponseErr(ctx, http.StatusConflict, domain.ErrDuplicate)
 
 				return
 			}
 
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to ban group", log.ErrAttr(errBan))
 
 			return
 		}
@@ -121,9 +127,9 @@ func (h steamgroupHandler) onAPIGetBansGroup() gin.HandlerFunc {
 			return
 		}
 
-		banGroups, errBans := h.bgu.Get(ctx, req)
+		banGroups, errBans := h.bansGroup.Get(ctx, req)
 		if errBans != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
 			slog.Error("Failed to fetch banGroups", log.ErrAttr(errBans))
 
 			return
@@ -137,7 +143,8 @@ func (h steamgroupHandler) onAPIDeleteBansGroup() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		groupID, groupIDErr := httphelper.GetInt64Param(ctx, "ban_group_id")
 		if groupIDErr != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInternal)
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Warn("Failed to get ban_group_id", log.ErrAttr(groupIDErr))
 
 			return
 		}
@@ -148,8 +155,9 @@ func (h steamgroupHandler) onAPIDeleteBansGroup() gin.HandlerFunc {
 		}
 
 		var banGroup domain.BanGroup
-		if errFetch := h.bgu.GetByID(ctx, groupID, &banGroup); errFetch != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInternal)
+		if errFetch := h.bansGroup.GetByID(ctx, groupID, &banGroup); errFetch != nil {
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to get group by id", slog.String("group_id", banGroup.GroupID.String()))
 
 			return
 		}
@@ -157,8 +165,8 @@ func (h steamgroupHandler) onAPIDeleteBansGroup() gin.HandlerFunc {
 		banGroup.UnbanReasonText = req.UnbanReasonText
 		banGroup.Deleted = true
 
-		if errSave := h.bgu.Save(ctx, &banGroup); errSave != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+		if errSave := h.bansGroup.Save(ctx, &banGroup); errSave != nil {
+			httphelper.HandleErrInternal(ctx)
 			slog.Error("Failed to delete asn ban", log.ErrAttr(errSave))
 
 			return
@@ -181,6 +189,7 @@ func (h steamgroupHandler) onAPIPostBansGroupUpdate() gin.HandlerFunc {
 		banGroupID, banIDErr := httphelper.GetInt64Param(ctx, "ban_group_id")
 		if banIDErr != nil {
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			slog.Warn("Failed to get ban_group_id", log.ErrAttr(banIDErr))
 
 			return
 		}
@@ -192,16 +201,18 @@ func (h steamgroupHandler) onAPIPostBansGroupUpdate() gin.HandlerFunc {
 
 		targetSID, sidValid := req.TargetSteamID(ctx)
 		if !sidValid {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Warn("Got invalid target id", slog.String("target_id", req.TargetID))
 
 			return
 		}
 
 		var ban domain.BanGroup
 
-		if errExist := h.bgu.GetByID(ctx, banGroupID, &ban); errExist != nil {
+		if errExist := h.bansGroup.GetByID(ctx, banGroupID, &ban); errExist != nil {
 			if !errors.Is(errExist, domain.ErrNoResult) {
-				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
+				httphelper.HandleErrNotFound(ctx)
+				slog.Warn("Unknown ban_group_id requested", slog.Int64("ban_group_id", banGroupID))
 
 				return
 			}
@@ -215,8 +226,9 @@ func (h steamgroupHandler) onAPIPostBansGroupUpdate() gin.HandlerFunc {
 		ban.ValidUntil = req.ValidUntil
 		ban.TargetID = targetSID
 
-		if errSave := h.bgu.Save(ctx, &ban); errSave != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+		if errSave := h.bansGroup.Save(ctx, &ban); errSave != nil {
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to save group ban", log.ErrAttr(errSave))
 
 			return
 		}

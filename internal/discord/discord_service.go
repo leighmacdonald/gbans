@@ -22,36 +22,36 @@ import (
 )
 
 type discordService struct {
-	du  domain.DiscordUsecase
-	pu  domain.PersonUsecase
-	bu  domain.BanSteamUsecase
-	bnu domain.BanNetUsecase
-	bau domain.BanASNUsecase
-	su  domain.StateUsecase
-	sv  domain.ServersUsecase
-	cu  domain.ConfigUsecase
-	nu  domain.NetworkUsecase
-	wfu domain.WordFilterUsecase
-	mu  domain.MatchUsecase
+	discord     domain.DiscordUsecase
+	persons     domain.PersonUsecase
+	bansSteam   domain.BanSteamUsecase
+	bansNet     domain.BanNetUsecase
+	bansASN     domain.BanASNUsecase
+	state       domain.StateUsecase
+	servers     domain.ServersUsecase
+	config      domain.ConfigUsecase
+	network     domain.NetworkUsecase
+	wordFilters domain.WordFilterUsecase
+	matches     domain.MatchUsecase
 }
 
-func NewDiscordHandler(discordUsecase domain.DiscordUsecase, personUsecase domain.PersonUsecase,
-	banUsecase domain.BanSteamUsecase, stateUsecase domain.StateUsecase, serversUsecase domain.ServersUsecase,
-	configUsecase domain.ConfigUsecase, networkUsecase domain.NetworkUsecase, filterUsecase domain.WordFilterUsecase,
-	matchUsecase domain.MatchUsecase, banNetUsecase domain.BanNetUsecase, banASNUsecase domain.BanASNUsecase,
+func NewDiscordHandler(discordUsecase domain.DiscordUsecase, persons domain.PersonUsecase,
+	bansSteam domain.BanSteamUsecase, state domain.StateUsecase, servers domain.ServersUsecase,
+	config domain.ConfigUsecase, network domain.NetworkUsecase, wordFilters domain.WordFilterUsecase,
+	matches domain.MatchUsecase, bansNet domain.BanNetUsecase, bansASN domain.BanASNUsecase,
 ) domain.ServiceStarter {
 	handler := &discordService{
-		du:  discordUsecase,
-		pu:  personUsecase,
-		su:  stateUsecase,
-		bu:  banUsecase,
-		sv:  serversUsecase,
-		cu:  configUsecase,
-		nu:  networkUsecase,
-		mu:  matchUsecase,
-		wfu: filterUsecase,
-		bnu: banNetUsecase,
-		bau: banASNUsecase,
+		discord:     discordUsecase,
+		persons:     persons,
+		state:       state,
+		bansSteam:   bansSteam,
+		servers:     servers,
+		config:      config,
+		network:     network,
+		matches:     matches,
+		wordFilters: wordFilters,
+		bansNet:     bansNet,
+		bansASN:     bansASN,
 	}
 
 	return handler
@@ -80,7 +80,7 @@ func (h discordService) Start(_ context.Context) {
 	}
 
 	for k, v := range cmdMap {
-		if errRegister := h.du.RegisterHandler(k, v); errRegister != nil {
+		if errRegister := h.discord.RegisterHandler(k, v); errRegister != nil {
 			slog.Error("Failed to register handler", log.ErrAttr(errRegister))
 		}
 	}
@@ -145,12 +145,12 @@ func (h discordService) makeOnCheck() func(_ context.Context, _ *discordgo.Sessi
 			return nil, domain.ErrInvalidSID
 		}
 
-		player, errGetPlayer := h.pu.GetOrCreatePersonBySteamID(ctx, sid)
+		player, errGetPlayer := h.persons.GetOrCreatePersonBySteamID(ctx, sid)
 		if errGetPlayer != nil {
 			return nil, domain.ErrCommandFailed
 		}
 
-		ban, errGetBanBySID := h.bu.GetBySteamID(ctx, sid, false, true)
+		ban, errGetBanBySID := h.bansSteam.GetBySteamID(ctx, sid, false, true)
 		if errGetBanBySID != nil {
 			if !errors.Is(errGetBanBySID, domain.ErrNoResult) {
 				slog.Error("Failed to get ban by steamid", log.ErrAttr(errGetBanBySID))
@@ -159,14 +159,14 @@ func (h discordService) makeOnCheck() func(_ context.Context, _ *discordgo.Sessi
 			}
 		}
 
-		oldBans, errOld := h.bu.Get(ctx, domain.SteamBansQueryFilter{})
+		oldBans, errOld := h.bansSteam.Get(ctx, domain.SteamBansQueryFilter{})
 		if errOld != nil {
 			if !errors.Is(errOld, domain.ErrNoResult) {
 				slog.Error("Failed to fetch old bans", log.ErrAttr(errOld))
 			}
 		}
 
-		bannedNets, errGetBanNet := h.bnu.GetByAddress(ctx, player.IPAddr)
+		bannedNets, errGetBanNet := h.bansNet.GetByAddress(ctx, player.IPAddr)
 		if errGetBanNet != nil {
 			if !errors.Is(errGetBanNet, domain.ErrNoResult) {
 				slog.Error("Failed to get ban nets by addr", log.ErrAttr(errGetBanNet))
@@ -178,7 +178,7 @@ func (h discordService) makeOnCheck() func(_ context.Context, _ *discordgo.Sessi
 		var banURL string
 
 		var (
-			conf = h.cu.Config()
+			conf = h.config.Config()
 
 			authorProfile domain.Person
 		)
@@ -186,7 +186,7 @@ func (h discordService) makeOnCheck() func(_ context.Context, _ *discordgo.Sessi
 		// TODO Show the longest remaining ban.
 		if ban.BanID > 0 {
 			if ban.SourceID.Valid() {
-				ap, errGetProfile := h.pu.GetPersonBySteamID(ctx, ban.SourceID)
+				ap, errGetProfile := h.persons.GetPersonBySteamID(ctx, ban.SourceID)
 				if errGetProfile != nil {
 					slog.Error("Failed to load author for ban", log.ErrAttr(errGetProfile))
 				} else {
@@ -203,7 +203,7 @@ func (h discordService) makeOnCheck() func(_ context.Context, _ *discordgo.Sessi
 			slog.Warn("Failed to fetch logTF data", log.ErrAttr(errLogs))
 		}
 
-		network, errNetwork := h.nu.QueryNetwork(ctx, player.IPAddr)
+		network, errNetwork := h.network.QueryNetwork(ctx, player.IPAddr)
 		if errNetwork != nil {
 			slog.Error("Failed to query network details")
 		}
@@ -232,7 +232,7 @@ func (h discordService) onHistoryIP(ctx context.Context, _ *discordgo.Session, i
 		return nil, domain.ErrInvalidSID
 	}
 
-	person, errPersonBySID := h.pu.GetOrCreatePersonBySteamID(ctx, steamID)
+	person, errPersonBySID := h.persons.GetOrCreatePersonBySteamID(ctx, steamID)
 	if errPersonBySID != nil {
 		return nil, domain.ErrCommandFailed
 	}
@@ -279,7 +279,7 @@ func (h discordService) makeOnSetSteam() func(_ context.Context, _ *discordgo.Se
 			return nil, domain.ErrInvalidSID
 		}
 
-		errSetSteam := h.pu.SetSteam(ctx, steamID, interaction.Member.User.ID)
+		errSetSteam := h.persons.SetSteam(ctx, steamID, interaction.Member.User.ID)
 		if errSetSteam != nil {
 			return nil, errSetSteam
 		}
@@ -297,7 +297,7 @@ func (h discordService) onUnbanSteam(ctx context.Context, _ *discordgo.Session, 
 		return nil, domain.ErrInvalidSID
 	}
 
-	found, errUnban := h.bu.Unban(ctx, steamID, reason)
+	found, errUnban := h.bansSteam.Unban(ctx, steamID, reason)
 	if errUnban != nil {
 		return nil, errUnban
 	}
@@ -306,19 +306,19 @@ func (h discordService) onUnbanSteam(ctx context.Context, _ *discordgo.Session, 
 		return nil, domain.ErrBanDoesNotExist
 	}
 
-	user, errUser := h.pu.GetPersonBySteamID(ctx, steamID)
+	user, errUser := h.persons.GetPersonBySteamID(ctx, steamID)
 	if errUser != nil {
 		slog.Warn("Could not fetch unbanned Person", slog.String("steam_id", steamID.String()), log.ErrAttr(errUser))
 	}
 
-	return UnbanMessage(h.cu, user), nil
+	return UnbanMessage(h.config, user), nil
 }
 
 func (h discordService) onUnbanASN(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	opts := domain.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 	asNumStr := opts[domain.OptASN].StringValue()
 
-	banExisted, errUnbanASN := h.bau.Unban(ctx, asNumStr)
+	banExisted, errUnbanASN := h.bansASN.Unban(ctx, asNumStr)
 	if errUnbanASN != nil {
 		if errors.Is(errUnbanASN, domain.ErrNoResult) {
 			return nil, domain.ErrBanDoesNotExist
@@ -340,7 +340,7 @@ func (h discordService) onUnbanASN(ctx context.Context, _ *discordgo.Session, in
 }
 
 func (h discordService) getDiscordAuthor(ctx context.Context, interaction *discordgo.InteractionCreate) (domain.Person, error) {
-	author, errPersonByDiscordID := h.pu.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID)
+	author, errPersonByDiscordID := h.persons.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID)
 	if errPersonByDiscordID != nil {
 		if errors.Is(errPersonByDiscordID, domain.ErrNoResult) {
 			return author, domain.ErrSteamUnset
@@ -364,7 +364,7 @@ func (h discordService) makeOnKick() func(_ context.Context, _ *discordgo.Sessio
 			return nil, domain.ErrInvalidSID
 		}
 
-		players := h.su.FindBySteamID(target)
+		players := h.state.FindBySteamID(target)
 
 		if len(players) == 0 {
 			return nil, domain.ErrPlayerNotFound
@@ -373,7 +373,7 @@ func (h discordService) makeOnKick() func(_ context.Context, _ *discordgo.Sessio
 		var err error
 
 		for _, player := range players {
-			if errKick := h.su.Kick(ctx, player.Player.SID, reason); errKick != nil {
+			if errKick := h.state.Kick(ctx, player.Player.SID, reason); errKick != nil {
 				err = errors.Join(err, errKick)
 
 				continue
@@ -391,11 +391,11 @@ func (h discordService) makeOnSay() func(context.Context, *discordgo.Session, *d
 		msg := opts[domain.OptMessage].StringValue()
 
 		var server domain.Server
-		if err := h.sv.GetServerByName(ctx, serverName, &server, false, false); err != nil {
+		if err := h.servers.GetServerByName(ctx, serverName, &server, false, false); err != nil {
 			return nil, domain.ErrUnknownServer
 		}
 
-		if errSay := h.su.Say(ctx, server.ServerID, msg); errSay != nil {
+		if errSay := h.state.Say(ctx, server.ServerID, msg); errSay != nil {
 			return nil, domain.ErrCommandFailed
 		}
 
@@ -411,11 +411,11 @@ func (h discordService) makeOnCSay() func(_ context.Context, _ *discordgo.Sessio
 		msg := opts[domain.OptMessage].StringValue()
 
 		var server domain.Server
-		if err := h.sv.GetServerByName(ctx, serverName, &server, false, false); err != nil {
+		if err := h.servers.GetServerByName(ctx, serverName, &server, false, false); err != nil {
 			return nil, domain.ErrUnknownServer
 		}
 
-		if errCSay := h.su.CSay(ctx, server.ServerID, msg); errCSay != nil {
+		if errCSay := h.state.CSay(ctx, server.ServerID, msg); errCSay != nil {
 			return nil, domain.ErrCommandFailed
 		}
 
@@ -433,7 +433,7 @@ func (h discordService) makeOnPSay() func(context.Context, *discordgo.Session, *
 			return nil, errors.Join(errPlayerSid, domain.ErrInvalidSID)
 		}
 
-		if errPSay := h.su.PSay(ctx, playerSid, msg); errPSay != nil {
+		if errPSay := h.state.PSay(ctx, playerSid, msg); errPSay != nil {
 			return nil, domain.ErrCommandFailed
 		}
 
@@ -443,7 +443,7 @@ func (h discordService) makeOnPSay() func(context.Context, *discordgo.Session, *
 
 func (h discordService) makeOnServers() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	return func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-		return ServersMessage(h.su.SortRegion(), h.cu.ExtURLRaw("/servers")), nil
+		return ServersMessage(h.state.SortRegion(), h.config.ExtURLRaw("/servers")), nil
 	}
 }
 
@@ -452,7 +452,7 @@ func (h discordService) makeOnPlayers() func(context.Context, *discordgo.Session
 		opts := domain.OptionMap(interaction.ApplicationCommandData().Options)
 		serverName := opts[domain.OptServerIdentifier].StringValue()
 
-		serverStates := h.su.ByName(serverName, false)
+		serverStates := h.state.ByName(serverName, false)
 
 		if len(serverStates) != 1 {
 			return nil, domain.ErrUnknownServer
@@ -475,7 +475,7 @@ func (h discordService) makeOnPlayers() func(context.Context, *discordgo.Session
 					continue
 				}
 
-				network, errNetwork := h.nu.QueryNetwork(ctx, address)
+				network, errNetwork := h.network.QueryNetwork(ctx, address)
 				if errNetwork != nil {
 					slog.Error("Failed to get network info", log.ErrAttr(errNetwork))
 
@@ -512,7 +512,7 @@ func (h discordService) onFilterAdd(ctx context.Context, _ *discordgo.Session, i
 		return nil, errAuthor
 	}
 
-	return h.du.FilterAdd(ctx, author, pattern, isRegex)
+	return h.discord.FilterAdd(ctx, author, pattern, isRegex)
 }
 
 func (h discordService) onFilterDel(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
@@ -523,12 +523,12 @@ func (h discordService) onFilterDel(ctx context.Context, _ *discordgo.Session, i
 		return nil, domain.ErrInvalidFilterID
 	}
 
-	filter, errGetFilter := h.wfu.GetFilterByID(ctx, wordID)
+	filter, errGetFilter := h.wordFilters.GetFilterByID(ctx, wordID)
 	if errGetFilter != nil {
 		return nil, domain.ErrCommandFailed
 	}
 
-	if errDropFilter := h.wfu.DropFilter(ctx, filter); errDropFilter != nil {
+	if errDropFilter := h.wordFilters.DropFilter(ctx, filter); errDropFilter != nil {
 		return nil, domain.ErrCommandFailed
 	}
 
@@ -539,7 +539,7 @@ func (h discordService) onFilterCheck(_ context.Context, _ *discordgo.Session, i
 	opts := domain.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 	message := opts[domain.OptMessage].StringValue()
 
-	return FilterCheckMessage(h.wfu.Check(message)), nil
+	return FilterCheckMessage(h.wordFilters.Check(message)), nil
 }
 
 func (h discordService) makeOnStats() func(context.Context, *discordgo.Session, *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
@@ -566,7 +566,7 @@ func (h discordService) onStatsPlayer(ctx context.Context, _ *discordgo.Session,
 		return nil, domain.ErrInvalidSID
 	}
 
-	person, errAuthor := h.pu.GetPersonBySteamID(ctx, steamID)
+	person, errAuthor := h.persons.GetPersonBySteamID(ctx, steamID)
 	if errAuthor != nil {
 		return nil, errAuthor
 	}
@@ -577,27 +577,27 @@ func (h discordService) onStatsPlayer(ctx context.Context, _ *discordgo.Session,
 	//	return nil, errAuthor
 	// }
 
-	classStats, errClassStats := h.mu.StatsPlayerClass(ctx, person.SteamID)
+	classStats, errClassStats := h.matches.StatsPlayerClass(ctx, person.SteamID)
 	if errClassStats != nil {
 		return nil, errors.Join(errClassStats, domain.ErrFetchClassStats)
 	}
 
-	weaponStats, errWeaponStats := h.mu.StatsPlayerWeapons(ctx, person.SteamID)
+	weaponStats, errWeaponStats := h.matches.StatsPlayerWeapons(ctx, person.SteamID)
 	if errWeaponStats != nil {
 		return nil, errors.Join(errWeaponStats, domain.ErrFetchWeaponStats)
 	}
 
-	killstreakStats, errKillstreakStats := h.mu.StatsPlayerKillstreaks(ctx, person.SteamID)
+	killstreakStats, errKillstreakStats := h.matches.StatsPlayerKillstreaks(ctx, person.SteamID)
 	if errKillstreakStats != nil {
 		return nil, errors.Join(errKillstreakStats, domain.ErrFetchKillstreakStats)
 	}
 
-	medicStats, errMedicStats := h.mu.StatsPlayerMedic(ctx, person.SteamID)
+	medicStats, errMedicStats := h.matches.StatsPlayerMedic(ctx, person.SteamID)
 	if errMedicStats != nil {
 		return nil, errors.Join(errMedicStats, domain.ErrFetchMedicStats)
 	}
 
-	return StatsPlayerMessage(person, h.cu.ExtURL(person), classStats, medicStats, weaponStats, killstreakStats), nil
+	return StatsPlayerMessage(person, h.config.ExtURL(person), classStats, medicStats, weaponStats, killstreakStats), nil
 }
 
 //	func (discord *discord) onStatsServer(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate, response *botResponse) error {
@@ -655,7 +655,7 @@ func (h discordService) makeOnLogs() func(context.Context, *discordgo.Session, *
 			return nil, errAuthor
 		}
 
-		matches, count, errMatch := h.mu.Matches(ctx, domain.MatchesQueryOpts{
+		matches, count, errMatch := h.matches.Matches(ctx, domain.MatchesQueryOpts{
 			SteamID:     author.SteamID.String(),
 			QueryFilter: domain.QueryFilter{Limit: 5},
 		})
@@ -673,7 +673,7 @@ func (h discordService) makeOnLogs() func(context.Context, *discordgo.Session, *
 			}
 
 			_, _ = matchesWriter.WriteString(fmt.Sprintf("%s [%s](%s) `%s` `%s`\n",
-				status, match.Title, h.cu.ExtURL(match), match.MapName, match.TimeStart.Format(time.DateOnly)))
+				status, match.Title, h.config.ExtURL(match), match.MapName, match.TimeStart.Format(time.DateOnly)))
 		}
 
 		return LogsMessage(count, matchesWriter.String()), nil
@@ -693,11 +693,11 @@ func (h discordService) makeOnLog() func(context.Context, *discordgo.Session, *d
 
 		var match domain.MatchResult
 
-		if errMatch := h.mu.MatchGetByID(ctx, matchID, &match); errMatch != nil {
+		if errMatch := h.matches.MatchGetByID(ctx, matchID, &match); errMatch != nil {
 			return nil, domain.ErrCommandFailed
 		}
 
-		return MatchMessage(match, h.cu.ExtURLRaw("/log/%s", match.MatchID.String())), nil
+		return MatchMessage(match, h.config.ExtURLRaw("/log/%s", match.MatchID.String())), nil
 	}
 }
 
@@ -715,7 +715,7 @@ func (h discordService) makeOnFind() func(context.Context, *discordgo.Session, *
 			name = userIdentifier
 		}
 
-		players := h.su.Find(name, steamID, nil, nil)
+		players := h.state.Find(name, steamID, nil, nil)
 
 		if len(players) == 0 {
 			return nil, domain.ErrUnknownID
@@ -724,12 +724,12 @@ func (h discordService) makeOnFind() func(context.Context, *discordgo.Session, *
 		var found []domain.FoundPlayer
 
 		for _, player := range players {
-			server, errServer := h.sv.GetServer(ctx, player.ServerID)
+			server, errServer := h.servers.GetServer(ctx, player.ServerID)
 			if errServer != nil {
 				return nil, errors.Join(errServer, domain.ErrGetServer)
 			}
 
-			_, errPerson := h.pu.GetOrCreatePersonBySteamID(ctx, player.Player.SID)
+			_, errPerson := h.persons.GetOrCreatePersonBySteamID(ctx, player.Player.SID)
 			if errPerson != nil {
 				return nil, errors.Join(errPerson, domain.ErrFetchPerson)
 			}
@@ -782,7 +782,7 @@ func (h discordService) makeOnMute() func(context.Context, *discordgo.Session, *
 			return nil, errOpts
 		}
 
-		if errBan := h.bu.Ban(ctx, author, &banSteam); errBan != nil {
+		if errBan := h.bansSteam.Ban(ctx, author, &banSteam); errBan != nil {
 			return nil, errBan
 		}
 
@@ -810,7 +810,7 @@ func (h discordService) onBanASN(ctx context.Context, _ *discordgo.Session,
 		return nil, util.ErrInvalidDuration
 	}
 
-	author, errGetPersonByDiscordID := h.pu.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID)
+	author, errGetPersonByDiscordID := h.persons.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID)
 	if errGetPersonByDiscordID != nil {
 		if errors.Is(errGetPersonByDiscordID, domain.ErrNoResult) {
 			return nil, domain.ErrSteamUnset
@@ -830,7 +830,7 @@ func (h discordService) onBanASN(ctx context.Context, _ *discordgo.Session,
 		return nil, errOpts
 	}
 
-	if errBanASN := h.bau.Ban(ctx, &banASN); errBanASN != nil {
+	if errBanASN := h.bansASN.Ban(ctx, &banASN); errBanASN != nil {
 		if errors.Is(errBanASN, domain.ErrDuplicate) {
 			return nil, domain.ErrDuplicateBan
 		}
@@ -838,7 +838,7 @@ func (h discordService) onBanASN(ctx context.Context, _ *discordgo.Session,
 		return nil, domain.ErrCommandFailed
 	}
 
-	return BanASNMessage(banASN, author, h.cu.Config()), nil
+	return BanASNMessage(banASN, author, h.config.Config()), nil
 }
 
 func (h discordService) onBanIP(ctx context.Context, _ *discordgo.Session,
@@ -865,7 +865,7 @@ func (h discordService) onBanIP(ctx context.Context, _ *discordgo.Session,
 
 	modNote := opts[domain.OptNote].StringValue()
 
-	author, errGetPerson := h.pu.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID)
+	author, errGetPerson := h.persons.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID)
 	if errGetPerson != nil {
 		if errors.Is(errGetPerson, domain.ErrNoResult) {
 			return nil, domain.ErrSteamUnset
@@ -880,18 +880,18 @@ func (h discordService) onBanIP(ctx context.Context, _ *discordgo.Session,
 		return nil, errOpts
 	}
 
-	if errBanNet := h.bnu.Ban(ctx, &banCIDR); errBanNet != nil {
+	if errBanNet := h.bansNet.Ban(ctx, &banCIDR); errBanNet != nil {
 		return nil, errBanNet
 	}
 
-	players := h.su.FindByCIDR(network)
+	players := h.state.FindByCIDR(network)
 
 	if len(players) == 0 {
 		return nil, domain.ErrPlayerNotFound
 	}
 
 	for _, player := range players {
-		if errKick := h.su.Kick(ctx, player.Player.SID, reason); errKick != nil {
+		if errKick := h.state.Kick(ctx, player.Player.SID, reason); errKick != nil {
 			slog.Error("Failed to perform kick", log.ErrAttr(errKick))
 		}
 	}
@@ -930,7 +930,7 @@ func (h discordService) onBanSteam(ctx context.Context, _ *discordgo.Session,
 		return nil, errOpts
 	}
 
-	if errBan := h.bu.Ban(ctx, author, &banSteam); errBan != nil {
+	if errBan := h.bansSteam.Ban(ctx, author, &banSteam); errBan != nil {
 		if errors.Is(errBan, domain.ErrDuplicate) {
 			return nil, domain.ErrDuplicateBan
 		}

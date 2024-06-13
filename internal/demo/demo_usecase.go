@@ -54,7 +54,13 @@ func (d demoUsecase) OldestDemo(ctx context.Context) (domain.DemoInfo, error) {
 func (d demoUsecase) MarkArchived(ctx context.Context, demo *domain.DemoFile) error {
 	demo.Archive = true
 
-	return d.repository.SaveDemo(ctx, demo)
+	if err := d.repository.SaveDemo(ctx, demo); err != nil {
+		slog.Error("Failed to mark demo as archived", log.ErrAttr(err), slog.Int64("demo_id", demo.DemoID))
+	}
+
+	slog.Debug("Demo marked as archived", slog.Int64("demo_id", demo.DemoID))
+
+	return nil
 }
 
 func diskPercentageUsed(path string) float32 {
@@ -68,6 +74,10 @@ func (d demoUsecase) truncateBySpace(ctx context.Context, root string, maxAllowe
 		count int
 		size  int64
 	)
+
+	defer func() {
+		slog.Debug("Truncate by space completed", slog.Int("count", count), slog.String("total_size", humanize.Bytes(uint64(size))))
+	}()
 
 	for {
 		usedSpace := diskPercentageUsed(root)
@@ -127,6 +137,8 @@ func (d demoUsecase) truncateByCount(ctx context.Context, maxCount uint64) (int,
 		size += demoSize
 		count++
 	}
+
+	slog.Debug("Truncate by count completed", slog.Int("count", count), slog.String("total_size", humanize.Bytes(uint64(size))))
 
 	return count, size, nil
 }
@@ -248,6 +260,8 @@ func (d demoUsecase) CreateFromAsset(ctx context.Context, asset domain.Asset, se
 	if errSave := d.repository.SaveDemo(ctx, &newDemo); errSave != nil {
 		return nil, errSave
 	}
+
+	slog.Debug("Created demo from asset successfully", slog.Int64("demo_id", newDemo.DemoID), slog.String("title", newDemo.Title))
 
 	return &newDemo, nil
 }

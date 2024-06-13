@@ -14,12 +14,12 @@ import (
 )
 
 type banASNHandler struct {
-	banASNUsecase domain.BanASNUsecase
+	banASN domain.BanASNUsecase
 }
 
 func NewBanASNHandler(engine *gin.Engine, banASNUsecase domain.BanASNUsecase, ath domain.AuthUsecase) {
 	handler := banASNHandler{
-		banASNUsecase: banASNUsecase,
+		banASN: banASNUsecase,
 	}
 	// mod
 	modGrp := engine.Group("/")
@@ -75,7 +75,7 @@ func (h banASNHandler) onAPIPostBansASNCreate() gin.HandlerFunc {
 			return
 		}
 
-		if errBan := h.banASNUsecase.Ban(ctx, &banASN); errBan != nil {
+		if errBan := h.banASN.Ban(ctx, &banASN); errBan != nil {
 			if errors.Is(errBan, domain.ErrDuplicate) {
 				httphelper.ResponseErr(ctx, http.StatusConflict, domain.ErrDuplicate)
 
@@ -100,7 +100,7 @@ func (h banASNHandler) onAPIGetBansASN() gin.HandlerFunc {
 			return
 		}
 
-		bansASN, errBans := h.banASNUsecase.Get(ctx, req)
+		bansASN, errBans := h.banASN.Get(ctx, req)
 		if errBans != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			slog.Error("Failed to fetch banASN", log.ErrAttr(errBans))
@@ -127,7 +127,7 @@ func (h banASNHandler) onAPIDeleteBansASN() gin.HandlerFunc {
 		}
 
 		var banAsn domain.BanASN
-		if errFetch := h.banASNUsecase.GetByID(ctx, asnID, &banAsn); errFetch != nil {
+		if errFetch := h.banASN.GetByID(ctx, asnID, &banAsn); errFetch != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
@@ -136,7 +136,7 @@ func (h banASNHandler) onAPIDeleteBansASN() gin.HandlerFunc {
 		banAsn.UnbanReasonText = req.UnbanReasonText
 		banAsn.Deleted = true
 
-		if errSave := h.banASNUsecase.Save(ctx, &banAsn); errSave != nil {
+		if errSave := h.banASN.Save(ctx, &banAsn); errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			slog.Error("Failed to delete asn ban", log.ErrAttr(errSave))
 
@@ -168,7 +168,7 @@ func (h banASNHandler) onAPIPostBansASNUpdate() gin.HandlerFunc {
 		}
 
 		var ban domain.BanASN
-		if errBan := h.banASNUsecase.GetByID(ctx, asnID, &ban); errBan != nil {
+		if errBan := h.banASN.GetByID(ctx, asnID, &ban); errBan != nil {
 			if errors.Is(errBan, domain.ErrNoResult) {
 				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
 
@@ -205,7 +205,7 @@ func (h banASNHandler) onAPIPostBansASNUpdate() gin.HandlerFunc {
 		ban.Reason = req.Reason
 		ban.ReasonText = req.ReasonText
 
-		if errSave := h.banASNUsecase.Save(ctx, &ban); errSave != nil {
+		if errSave := h.banASN.Save(ctx, &ban); errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return

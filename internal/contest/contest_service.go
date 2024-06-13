@@ -63,14 +63,14 @@ func NewContestHandler(engine *gin.Engine, cu domain.ContestUsecase,
 func (c *contestHandler) contestFromCtx(ctx *gin.Context) (domain.Contest, bool) {
 	contestID, idErr := httphelper.GetUUIDParam(ctx, "contest_id")
 	if idErr != nil {
-		httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+		httphelper.HandleErrBadRequest(ctx)
 
 		return domain.Contest{}, false
 	}
 
 	var contest domain.Contest
 	if errContests := c.contestUsecase.ContestByID(ctx, contestID, &contest); errContests != nil {
-		httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+		httphelper.HandleErrInternal(ctx)
 
 		return domain.Contest{}, false
 	}
@@ -89,7 +89,8 @@ func (c *contestHandler) onAPIGetContests() gin.HandlerFunc {
 		contests, errContests := c.contestUsecase.Contests(ctx, httphelper.CurrentUserProfile(ctx))
 
 		if errContests != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to fetch contests", log.ErrAttr(errContests))
 
 			return
 		}
@@ -118,7 +119,8 @@ func (c *contestHandler) onAPIGetContestEntries() gin.HandlerFunc {
 
 		entries, errEntries := c.contestUsecase.ContestEntries(ctx, contest.ContestID)
 		if errEntries != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to fetch contest entries", log.ErrAttr(errEntries))
 
 			return
 		}
@@ -149,7 +151,8 @@ func (c *contestHandler) onAPIDeleteContest() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		contestID, idErr := httphelper.GetUUIDParam(ctx, "contest_id")
 		if idErr != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Warn("Failed to get valid contest_id")
 
 			return
 		}
@@ -163,26 +166,20 @@ func (c *contestHandler) onAPIDeleteContest() gin.HandlerFunc {
 				return
 			}
 
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
-
+			httphelper.HandleErrBadRequest(ctx)
 			slog.Error("Error getting contest for deletion", log.ErrAttr(errContest))
 
 			return
 		}
 
 		if errDelete := c.contestUsecase.ContestDelete(ctx, contest.ContestID); errDelete != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-
+			httphelper.HandleErrInternal(ctx)
 			slog.Error("Error deleting contest", log.ErrAttr(errDelete))
 
 			return
 		}
 
 		ctx.Status(http.StatusAccepted)
-
-		slog.Info("Contest deleted",
-			slog.String("contest_id", contestID.String()),
-			slog.String("title", contest.Title))
 	}
 }
 
@@ -200,17 +197,12 @@ func (c *contestHandler) onAPIUpdateContest() gin.HandlerFunc {
 		contest, errSave := c.contestUsecase.ContestSave(ctx, req)
 		if errSave != nil {
 			httphelper.ErrorHandled(ctx, errSave)
-
 			slog.Error("Error updating contest", log.ErrAttr(errSave))
 
 			return
 		}
 
 		ctx.JSON(http.StatusAccepted, contest)
-
-		slog.Info("Contest updated",
-			slog.String("contest_id", req.ContestID.String()),
-			slog.String("title", req.Title))
 	}
 }
 
@@ -228,7 +220,8 @@ func (c *contestHandler) onAPISaveContestEntryMedia() gin.HandlerFunc {
 
 		mediaFile, errOpen := req.File.Open()
 		if errOpen != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to open form file", log.ErrAttr(errOpen))
 
 			return
 		}
@@ -236,13 +229,15 @@ func (c *contestHandler) onAPISaveContestEntryMedia() gin.HandlerFunc {
 		if contest.MediaTypes != "" {
 			mimeType, errMimeType := mimetype.DetectReader(mediaFile)
 			if errMimeType != nil {
-				httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+				httphelper.HandleErrInternal(ctx)
+				slog.Error("Failed to detect mime type", log.ErrAttr(errMimeType))
 
 				return
 			}
 
 			if !slices.Contains(strings.Split(strings.ToLower(contest.MediaTypes), ","), strings.ToLower(mimeType.String())) {
 				httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrMimeTypeNotAllowed)
+				slog.Warn("User tried to upload file with disallowed mime type", slog.String("mime", strings.ToLower(mimeType.String())))
 
 				return
 			}
@@ -274,14 +269,15 @@ func (c *contestHandler) onAPISaveContestEntryVote() gin.HandlerFunc {
 		contestID, contestIDErr := c.getContestID(ctx)
 		if contestIDErr != nil {
 			httphelper.ErrorHandled(ctx, contestIDErr)
+			slog.Warn("Got invalid contest id")
 
 			return
 		}
 
 		contestEntryID, errContestEntryID := httphelper.GetUUIDParam(ctx, "contest_entry_id")
 		if errContestEntryID != nil {
-			ctx.JSON(http.StatusNotFound, domain.ErrNotFound)
-			slog.Error("Invalid contest entry id option")
+			httphelper.HandleErrNotFound(ctx)
+			slog.Error("Unknown contest entry id")
 
 			return
 		}
@@ -301,7 +297,7 @@ func (c *contestHandler) onAPISaveContestEntryVote() gin.HandlerFunc {
 				return
 			}
 
-			ctx.JSON(http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
 
 			return
 		}

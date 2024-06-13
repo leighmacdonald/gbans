@@ -17,51 +17,51 @@ import (
 )
 
 type srcdsHandler struct {
-	srcdsUsecase     domain.SRCDSUsecase
-	serverUsecase    domain.ServersUsecase
-	personUsecase    domain.PersonUsecase
-	stateUsecase     domain.StateUsecase
-	discordUsecase   domain.DiscordUsecase
-	configUsecase    domain.ConfigUsecase
-	reportUsecase    domain.ReportUsecase
-	assetUsecase     domain.AssetUsecase
-	banUsecase       domain.BanSteamUsecase
-	banGroupUsecase  domain.BanGroupUsecase
-	banASNUsecase    domain.BanASNUsecase
-	banNetUsecase    domain.BanNetUsecase
-	networkUsecase   domain.NetworkUsecase
-	demoUsecase      domain.DemoUsecase
-	blocklistUsecase domain.BlocklistUsecase
+	srcds     domain.SRCDSUsecase
+	servers   domain.ServersUsecase
+	persons   domain.PersonUsecase
+	state     domain.StateUsecase
+	discord   domain.DiscordUsecase
+	config    domain.ConfigUsecase
+	reports   domain.ReportUsecase
+	assets    domain.AssetUsecase
+	bans      domain.BanSteamUsecase
+	bansGroup domain.BanGroupUsecase
+	bansASN   domain.BanASNUsecase
+	bansNet   domain.BanNetUsecase
+	network   domain.NetworkUsecase
+	demos     domain.DemoUsecase
+	blocklist domain.BlocklistUsecase
 }
 
-func NewSRCDSHandler(engine *gin.Engine, srcdsUsecase domain.SRCDSUsecase, serversUsecase domain.ServersUsecase,
-	personUsecase domain.PersonUsecase, assetUsecase domain.AssetUsecase, reportUsecase domain.ReportUsecase,
-	banUsecase domain.BanSteamUsecase, networkUsecase domain.NetworkUsecase, banGroupUsecase domain.BanGroupUsecase,
-	demoUsecase domain.DemoUsecase, authUsecase domain.AuthUsecase, banASNUsecase domain.BanASNUsecase, banNetUsecase domain.BanNetUsecase,
-	configUsecase domain.ConfigUsecase, discordUsecase domain.DiscordUsecase, stateUsecase domain.StateUsecase,
-	blocklistUsecase domain.BlocklistUsecase,
+func NewSRCDSHandler(engine *gin.Engine, srcds domain.SRCDSUsecase, servers domain.ServersUsecase,
+	persons domain.PersonUsecase, assets domain.AssetUsecase, reports domain.ReportUsecase,
+	bans domain.BanSteamUsecase, network domain.NetworkUsecase, bansGroup domain.BanGroupUsecase,
+	demos domain.DemoUsecase, auth domain.AuthUsecase, bansASNU domain.BanASNUsecase, bansNet domain.BanNetUsecase,
+	config domain.ConfigUsecase, discord domain.DiscordUsecase, state domain.StateUsecase,
+	blocklist domain.BlocklistUsecase,
 ) {
 	handler := srcdsHandler{
-		srcdsUsecase:     srcdsUsecase,
-		serverUsecase:    serversUsecase,
-		personUsecase:    personUsecase,
-		reportUsecase:    reportUsecase,
-		banUsecase:       banUsecase,
-		assetUsecase:     assetUsecase,
-		networkUsecase:   networkUsecase,
-		banGroupUsecase:  banGroupUsecase,
-		demoUsecase:      demoUsecase,
-		banASNUsecase:    banASNUsecase,
-		banNetUsecase:    banNetUsecase,
-		configUsecase:    configUsecase,
-		discordUsecase:   discordUsecase,
-		stateUsecase:     stateUsecase,
-		blocklistUsecase: blocklistUsecase,
+		srcds:     srcds,
+		servers:   servers,
+		persons:   persons,
+		reports:   reports,
+		bans:      bans,
+		assets:    assets,
+		network:   network,
+		bansGroup: bansGroup,
+		demos:     demos,
+		bansASN:   bansASNU,
+		bansNet:   bansNet,
+		config:    config,
+		discord:   discord,
+		state:     state,
+		blocklist: blocklist,
 	}
 
 	adminGroup := engine.Group("/")
 	{
-		admin := adminGroup.Use(authUsecase.AuthMiddleware(domain.PAdmin))
+		admin := adminGroup.Use(auth.AuthMiddleware(domain.PAdmin))
 		// Groups
 		admin.GET("/api/smadmin/groups", handler.onAPISMGroups())
 		admin.POST("/api/smadmin/groups", handler.onCreateSMGroup())
@@ -95,7 +95,7 @@ func NewSRCDSHandler(engine *gin.Engine, srcdsUsecase domain.SRCDSUsecase, serve
 	// Endpoints called by sourcemod plugin
 	srcdsGroup := engine.Group("/")
 	{
-		server := srcdsGroup.Use(authUsecase.AuthServerMiddleWare())
+		server := srcdsGroup.Use(auth.AuthServerMiddleWare())
 		server.POST("/api/sm/check", handler.onAPICheckPlayer())
 		server.GET("/api/sm/overrides", handler.onAPIGetServerOverrides())
 		server.GET("/api/sm/users", handler.onAPIGetServerUsers())
@@ -149,13 +149,12 @@ func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
 		steamID, valid := req.SteamID(ctx)
 		if !valid {
 			ctx.JSON(http.StatusOK, defaultValue)
-
 			slog.Error("Did not receive valid steamid for check response", log.ErrAttr(domain.ErrInvalidSID))
 
 			return
 		}
 
-		banState, msg, errBS := s.srcdsUsecase.GetBanState(ctx, steamID, req.IP)
+		banState, msg, errBS := s.srcds.GetBanState(ctx, steamID, req.IP)
 		if errBS != nil {
 			slog.Error("failed to get ban state", log.ErrAttr(errBS))
 
@@ -167,7 +166,7 @@ func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
 
 		if banState.BanID != 0 {
 			if banState.SteamID != steamID && !banState.EvadeOK {
-				evadeBanned, err := s.banUsecase.CheckEvadeStatus(ctx, currentUser, steamID, req.IP)
+				evadeBanned, err := s.bans.CheckEvadeStatus(ctx, currentUser, steamID, req.IP)
 				if err != nil {
 					ctx.JSON(http.StatusOK, defaultValue)
 
@@ -208,9 +207,10 @@ func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
 
 func (s *srcdsHandler) onGetGroupImmunities() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		immunities, errImmunities := s.srcdsUsecase.GetGroupImmunities(ctx)
+		immunities, errImmunities := s.srcds.GetGroupImmunities(ctx)
 		if errImmunities != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to get group immunities", log.ErrAttr(errImmunities))
 
 			return
 		}
@@ -235,9 +235,10 @@ func (s *srcdsHandler) onCreateGroupImmunity() gin.HandlerFunc {
 			return
 		}
 
-		immunity, errImmunity := s.srcdsUsecase.AddGroupImmunity(ctx, req.GroupID, req.OtherID)
+		immunity, errImmunity := s.srcds.AddGroupImmunity(ctx, req.GroupID, req.OtherID)
 		if errImmunity != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to add group immunity", log.ErrAttr(errImmunity))
 
 			return
 		}
@@ -250,13 +251,15 @@ func (s *srcdsHandler) onDeleteGroupImmunity() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		groupImmunityID, errID := httphelper.GetIntParam(ctx, "group_immunity_id")
 		if errID != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Warn("Failed to get group_immunity_id", log.ErrAttr(errID))
 
 			return
 		}
 
-		if err := s.srcdsUsecase.DelGroupImmunity(ctx, groupImmunityID); err != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+		if err := s.srcds.DelGroupImmunity(ctx, groupImmunityID); err != nil {
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to delete group immunity", log.ErrAttr(err), slog.Int("group_immunity_id", groupImmunityID))
 
 			return
 		}
@@ -273,14 +276,16 @@ func (s *srcdsHandler) onGroupOverrides() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		groupID, errGroupID := httphelper.GetIntParam(ctx, "group_id")
 		if errGroupID != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Warn("Got invalid group_id", log.ErrAttr(errGroupID))
 
 			return
 		}
 
-		overrides, errOverrides := s.srcdsUsecase.GroupOverrides(ctx, groupID)
+		overrides, errOverrides := s.srcds.GroupOverrides(ctx, groupID)
 		if errOverrides != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to get group overrides", log.ErrAttr(errOverrides))
 
 			return
 		}
@@ -303,7 +308,8 @@ func (s *srcdsHandler) onCreateGroupOverride() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		groupID, errGroupID := httphelper.GetIntParam(ctx, "group_id")
 		if errGroupID != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Warn("Failed to get group_id", log.ErrAttr(errGroupID))
 
 			return
 		}
@@ -313,9 +319,10 @@ func (s *srcdsHandler) onCreateGroupOverride() gin.HandlerFunc {
 			return
 		}
 
-		override, errOverride := s.srcdsUsecase.AddGroupOverride(ctx, groupID, req.Name, req.Type, req.Access)
+		override, errOverride := s.srcds.AddGroupOverride(ctx, groupID, req.Name, req.Type, req.Access)
 		if errOverride != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to add group override", log.ErrAttr(errOverride))
 
 			return
 		}
@@ -328,7 +335,8 @@ func (s *srcdsHandler) onSaveGroupOverride() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		groupOverrideID, errGroupID := httphelper.GetIntParam(ctx, "group_override_id")
 		if errGroupID != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Warn("Failed to get group_override_id", log.ErrAttr(errGroupID))
 
 			return
 		}
@@ -338,15 +346,16 @@ func (s *srcdsHandler) onSaveGroupOverride() gin.HandlerFunc {
 			return
 		}
 
-		override, errOverride := s.srcdsUsecase.GetGroupOverride(ctx, groupOverrideID)
+		override, errOverride := s.srcds.GetGroupOverride(ctx, groupOverrideID)
 		if errOverride != nil {
 			if errors.Is(errOverride, domain.ErrNoResult) {
-				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
+				httphelper.HandleErrNotFound(ctx)
 
 				return
 			}
 
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to get group override", log.ErrAttr(errOverride))
 
 			return
 		}
@@ -355,9 +364,10 @@ func (s *srcdsHandler) onSaveGroupOverride() gin.HandlerFunc {
 		override.Name = req.Name
 		override.Access = req.Access
 
-		edited, errSave := s.srcdsUsecase.SaveGroupOverride(ctx, override)
+		edited, errSave := s.srcds.SaveGroupOverride(ctx, override)
 		if errSave != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to save group override", log.ErrAttr(errSave))
 
 			return
 		}
@@ -370,19 +380,21 @@ func (s *srcdsHandler) onDeleteGroupOverride() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		groupOverrideID, errGroupID := httphelper.GetIntParam(ctx, "group_override_id")
 		if errGroupID != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Warn("Got invalid group_override_id", log.ErrAttr(errGroupID))
 
 			return
 		}
 
-		if err := s.srcdsUsecase.DelGroupOverride(ctx, groupOverrideID); err != nil {
+		if err := s.srcds.DelGroupOverride(ctx, groupOverrideID); err != nil {
 			if errors.Is(err, domain.ErrNoResult) {
 				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
 
 				return
 			}
 
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to delete group override", log.ErrAttr(err))
 
 			return
 		}
@@ -401,7 +413,8 @@ func (s *srcdsHandler) onSaveOverrides() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		overrideID, errOverrideID := httphelper.GetIntParam(ctx, "override_id")
 		if errOverrideID != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Warn("Failed to ver override_id", log.ErrAttr(errOverrideID))
 
 			return
 		}
@@ -411,15 +424,16 @@ func (s *srcdsHandler) onSaveOverrides() gin.HandlerFunc {
 			return
 		}
 
-		override, errOverride := s.srcdsUsecase.GetOverride(ctx, overrideID)
+		override, errOverride := s.srcds.GetOverride(ctx, overrideID)
 		if errOverride != nil {
 			if errors.Is(errOverride, domain.ErrNoResult) {
-				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
+				httphelper.HandleErrNotFound(ctx)
 
 				return
 			}
 
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to get override", log.ErrAttr(errOverride))
 
 			return
 		}
@@ -428,9 +442,10 @@ func (s *srcdsHandler) onSaveOverrides() gin.HandlerFunc {
 		override.Name = req.Name
 		override.Flags = req.Flags
 
-		edited, errSave := s.srcdsUsecase.SaveOverride(ctx, override)
+		edited, errSave := s.srcds.SaveOverride(ctx, override)
 		if errSave != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Error("Failed to save override", log.ErrAttr(errSave))
 
 			return
 		}
@@ -446,9 +461,10 @@ func (s *srcdsHandler) onCreateOverrides() gin.HandlerFunc {
 			return
 		}
 
-		override, errCreate := s.srcdsUsecase.AddOverride(ctx, req.Name, req.Type, req.Flags)
+		override, errCreate := s.srcds.AddOverride(ctx, req.Name, req.Type, req.Flags)
 		if errCreate != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to add override", log.ErrAttr(errCreate))
 
 			return
 		}
@@ -461,13 +477,15 @@ func (s *srcdsHandler) onDeleteOverrides() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		override, errOverride := httphelper.GetIntParam(ctx, "override_id")
 		if errOverride != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Warn("Failed to get override_id", log.ErrAttr(errOverride))
 
 			return
 		}
 
-		if errCreate := s.srcdsUsecase.DelOverride(ctx, override); errCreate != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+		if errCreate := s.srcds.DelOverride(ctx, override); errCreate != nil {
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to delete override", log.ErrAttr(errCreate))
 
 			return
 		}
@@ -478,9 +496,10 @@ func (s *srcdsHandler) onDeleteOverrides() gin.HandlerFunc {
 
 func (s *srcdsHandler) onGetOverrides() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		overrides, errOverrides := s.srcdsUsecase.Overrides(ctx)
+		overrides, errOverrides := s.srcds.Overrides(ctx)
 		if errOverrides != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to get overrides", log.ErrAttr(errOverrides))
 
 			return
 		}
@@ -497,7 +516,8 @@ func (s *srcdsHandler) onAddAdminGroup() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		adminID, errAdminID := httphelper.GetIntParam(ctx, "admin_id")
 		if errAdminID != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Warn("Failed to get admin_id", log.ErrAttr(errAdminID))
 
 			return
 		}
@@ -507,9 +527,9 @@ func (s *srcdsHandler) onAddAdminGroup() gin.HandlerFunc {
 			return
 		}
 
-		admin, err := s.srcdsUsecase.AddAdminGroup(ctx, adminID, req.GroupID)
+		admin, err := s.srcds.AddAdminGroup(ctx, adminID, req.GroupID)
 		if err != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
 
 			return
 		}
@@ -522,21 +542,24 @@ func (s *srcdsHandler) onDeleteAdminGroup() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		adminID, errAdminID := httphelper.GetIntParam(ctx, "admin_id")
 		if errAdminID != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Warn("Failed to get admin_id", log.ErrAttr(errAdminID))
 
 			return
 		}
 
 		groupID, errGroupID := httphelper.GetIntParam(ctx, "group_id")
 		if errGroupID != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Warn("Failed to get group_id", log.ErrAttr(errGroupID))
 
 			return
 		}
 
-		admin, errDel := s.srcdsUsecase.DelAdminGroup(ctx, adminID, groupID)
+		admin, errDel := s.srcds.DelAdminGroup(ctx, adminID, groupID)
 		if errDel != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to delete admin group", log.ErrAttr(errDel))
 
 			return
 		}
@@ -549,20 +572,22 @@ func (s *srcdsHandler) onSaveSMAdmin() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		adminID, errAdminID := httphelper.GetIntParam(ctx, "admin_id")
 		if errAdminID != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Warn("Failed to get admin_id", log.ErrAttr(errAdminID))
 
 			return
 		}
 
-		admin, errAdmin := s.srcdsUsecase.GetAdminByID(ctx, adminID)
+		admin, errAdmin := s.srcds.GetAdminByID(ctx, adminID)
 		if errAdmin != nil {
 			if errors.Is(errAdmin, domain.ErrNoResult) {
-				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
+				httphelper.HandleErrNotFound(ctx)
 
 				return
 			}
 
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to get admin by id", log.ErrAttr(errAdmin))
 
 			return
 		}
@@ -579,9 +604,10 @@ func (s *srcdsHandler) onSaveSMAdmin() gin.HandlerFunc {
 		admin.Identity = req.Identity
 		admin.Password = req.Password
 
-		editedGroup, errSave := s.srcdsUsecase.SaveAdmin(ctx, admin)
+		editedGroup, errSave := s.srcds.SaveAdmin(ctx, admin)
 		if errSave != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to save admin", log.ErrAttr(errSave))
 
 			return
 		}
@@ -594,13 +620,15 @@ func (s *srcdsHandler) onDeleteSMAdmin() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		adminID, errAdminID := httphelper.GetIntParam(ctx, "admin_id")
 		if errAdminID != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Warn("Failed to get admin_id", log.ErrAttr(errAdminID))
 
 			return
 		}
 
-		if err := s.srcdsUsecase.DelAdmin(ctx, adminID); err != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+		if err := s.srcds.DelAdmin(ctx, adminID); err != nil {
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to delete admin", log.ErrAttr(err))
 
 			return
 		}
@@ -625,9 +653,10 @@ func (s *srcdsHandler) onCreateSMAdmin() gin.HandlerFunc {
 			return
 		}
 
-		admin, errAdmin := s.srcdsUsecase.AddAdmin(ctx, req.Name, req.AuthType, req.Identity, req.Flags, req.Immunity, req.Password)
+		admin, errAdmin := s.srcds.AddAdmin(ctx, req.Name, req.AuthType, req.Identity, req.Flags, req.Immunity, req.Password)
 		if errAdmin != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Error("Failed to add admin", log.ErrAttr(errAdmin))
 
 			return
 		}
@@ -640,19 +669,21 @@ func (s *srcdsHandler) onDeleteSMGroup() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		groupID, errGroupID := httphelper.GetIntParam(ctx, "group_id")
 		if errGroupID != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Warn("Failed to get group_id", log.ErrAttr(errGroupID))
 
 			return
 		}
 
-		if err := s.srcdsUsecase.DelGroup(ctx, groupID); err != nil {
+		if err := s.srcds.DelGroup(ctx, groupID); err != nil {
 			if errors.Is(err, domain.ErrNoResult) {
-				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
+				httphelper.HandleErrNotFound(ctx)
 
 				return
 			}
 
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to delete group", log.ErrAttr(err))
 
 			return
 		}
@@ -671,20 +702,22 @@ func (s *srcdsHandler) onSaveSMGroup() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		groupID, errGroupID := httphelper.GetIntParam(ctx, "group_id")
 		if errGroupID != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Warn("Failed to get group_id", log.ErrAttr(errGroupID))
 
 			return
 		}
 
-		group, errGroup := s.srcdsUsecase.GetGroupByID(ctx, groupID)
+		group, errGroup := s.srcds.GetGroupByID(ctx, groupID)
 		if errGroup != nil {
 			if errors.Is(errGroup, domain.ErrNoResult) {
-				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
+				httphelper.HandleErrNotFound(ctx)
 
 				return
 			}
 
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to get group by id", log.ErrAttr(errGroup))
 
 			return
 		}
@@ -698,9 +731,10 @@ func (s *srcdsHandler) onSaveSMGroup() gin.HandlerFunc {
 		group.Flags = req.Flags
 		group.ImmunityLevel = req.Immunity
 
-		editedGroup, errSave := s.srcdsUsecase.SaveGroup(ctx, group)
+		editedGroup, errSave := s.srcds.SaveGroup(ctx, group)
 		if errSave != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to save group", log.ErrAttr(errSave))
 
 			return
 		}
@@ -716,9 +750,10 @@ func (s *srcdsHandler) onCreateSMGroup() gin.HandlerFunc {
 			return
 		}
 
-		group, errGroup := s.srcdsUsecase.AddGroup(ctx, req.Name, req.Flags, req.Immunity)
+		group, errGroup := s.srcds.AddGroup(ctx, req.Name, req.Flags, req.Immunity)
 		if errGroup != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to add group", log.ErrAttr(errGroup))
 
 			return
 		}
@@ -729,9 +764,10 @@ func (s *srcdsHandler) onCreateSMGroup() gin.HandlerFunc {
 
 func (s *srcdsHandler) onAPISMGroups() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		groups, errGroups := s.srcdsUsecase.Groups(ctx)
+		groups, errGroups := s.srcds.Groups(ctx)
 		if errGroups != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to get groups", log.ErrAttr(errGroups))
 
 			return
 		}
@@ -742,9 +778,10 @@ func (s *srcdsHandler) onAPISMGroups() gin.HandlerFunc {
 
 func (s *srcdsHandler) onGetSMAdmins() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		admins, errAdmins := s.srcdsUsecase.Admins(ctx)
+		admins, errAdmins := s.srcds.Admins(ctx)
 		if errAdmins != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to get admins", log.ErrAttr(errAdmins))
 
 			return
 		}
@@ -764,15 +801,17 @@ func (s *srcdsHandler) onAPIPostServerState() gin.HandlerFunc {
 			return
 		}
 
-		serverID := httphelper.ServerIDFromCtx(ctx) // TODO use generic func for int
-		if serverID == 0 {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrParamInvalid)
+		serverID, err := httphelper.GetIntParam(ctx, "server_id")
+		if err != nil {
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Warn("Failed to get server_id", log.ErrAttr(err))
 
 			return
 		}
 
-		if errUpdate := s.stateUsecase.Update(serverID, req); errUpdate != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+		if errUpdate := s.state.Update(serverID, req); errUpdate != nil {
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to update server", log.ErrAttr(errUpdate))
 
 			return
 		}
@@ -790,9 +829,9 @@ func (s *srcdsHandler) onAPIPostReportCreate() gin.HandlerFunc {
 			return
 		}
 
-		report, errReport := s.srcdsUsecase.Report(ctx, currentUser, req)
+		report, errReport := s.srcds.Report(ctx, currentUser, req)
 		if errReport != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, errReport)
+			httphelper.HandleErrInternal(ctx)
 			slog.Error("Failed to create report", log.ErrAttr(errReport))
 
 			return
@@ -834,12 +873,12 @@ func (s *srcdsHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 		if sid, valid := req.SourceSteamID(ctx); valid {
 			sourceID = sid
 		} else {
-			sourceID = steamid.New(s.configUsecase.Config().Owner)
+			sourceID = steamid.New(s.config.Config().Owner)
 		}
 
 		targetID, valid := req.TargetSteamID(ctx)
 		if !valid {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.HandleErrBadRequest(ctx)
 			slog.Error("SM sent invalid target ID", slog.String("target_id", req.TargetID))
 
 			return
@@ -853,15 +892,13 @@ func (s *srcdsHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 		var banSteam domain.BanSteam
 		if errBanSteam := domain.NewBanSteam(sourceID, targetID, duration, req.Reason, req.ReasonText, req.Note, origin,
 			req.ReportID, req.BanType, req.IncludeFriends, false, &banSteam); errBanSteam != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Error("Failed to create new ban", log.ErrAttr(errBanSteam))
 
 			return
 		}
 
-		if errBan := s.banUsecase.Ban(ctx, curUser, &banSteam); errBan != nil {
-			slog.Error("Failed to ban steam profile",
-				log.ErrAttr(errBan), slog.Int64("target_id", banSteam.TargetID.Int64()))
-
+		if errBan := s.bans.Ban(ctx, curUser, &banSteam); errBan != nil {
 			if errors.Is(errBan, domain.ErrDuplicate) {
 				httphelper.ResponseErr(ctx, http.StatusConflict, domain.ErrDuplicate)
 
@@ -886,9 +923,10 @@ func (s *srcdsHandler) onAPIGetServerOverrides() gin.HandlerFunc {
 	}
 
 	return func(ctx *gin.Context) {
-		overrides, errOverrides := s.srcdsUsecase.Overrides(ctx)
+		overrides, errOverrides := s.srcds.Overrides(ctx)
 		if errOverrides != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to get overrides", log.ErrAttr(errOverrides))
 
 			return
 		}
@@ -925,16 +963,18 @@ func (s *srcdsHandler) onAPIGetServerGroups() gin.HandlerFunc {
 	}
 
 	return func(ctx *gin.Context) {
-		groups, errGroups := s.srcdsUsecase.Groups(ctx)
+		groups, errGroups := s.srcds.Groups(ctx)
 		if errGroups != nil && !errors.Is(errGroups, domain.ErrNoResult) {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to get groups", log.ErrAttr(errGroups))
 
 			return
 		}
 
-		immunities, errImmunities := s.srcdsUsecase.GetGroupImmunities(ctx)
+		immunities, errImmunities := s.srcds.GetGroupImmunities(ctx)
 		if errImmunities != nil && !errors.Is(errImmunities, domain.ErrNoResult) {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to get group immunities", log.ErrAttr(errImmunities))
 
 			return
 		}
@@ -987,9 +1027,10 @@ func (s *srcdsHandler) onAPIGetServerUsers() gin.HandlerFunc {
 	}
 
 	return func(ctx *gin.Context) {
-		users, errUsers := s.srcdsUsecase.Admins(ctx)
+		users, errUsers := s.srcds.Admins(ctx)
 		if errUsers != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to get admins", log.ErrAttr(errUsers))
 
 			return
 		}
@@ -1037,26 +1078,26 @@ func (s *srcdsHandler) onAPIPostPingMod() gin.HandlerFunc {
 			return
 		}
 
-		conf := s.configUsecase.Config()
-		players := s.stateUsecase.FindBySteamID(req.SteamID)
+		conf := s.config.Config()
+		players := s.state.FindBySteamID(req.SteamID)
 
 		if len(players) == 0 && conf.General.Mode != domain.TestMode {
+			httphelper.HandleErrInternal(ctx)
 			slog.Error("Failed to find player on /mod call")
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
 
 		ctx.JSON(http.StatusOK, gin.H{"client": req.Client, "message": "Moderators have been notified"})
 
-		author, err := s.personUsecase.GetOrCreatePersonBySteamID(ctx, req.SteamID)
+		author, err := s.persons.GetOrCreatePersonBySteamID(ctx, req.SteamID)
 		if err != nil {
 			slog.Error("Failed to load user", log.ErrAttr(err))
 
 			return
 		}
 
-		server, errServer := s.serverUsecase.GetServer(ctx, players[0].ServerID)
+		server, errServer := s.servers.GetServer(ctx, players[0].ServerID)
 		if errServer != nil {
 			slog.Error("Failed to load server", log.ErrAttr(errServer))
 
@@ -1071,10 +1112,10 @@ func (s *srcdsHandler) onAPIPostPingMod() gin.HandlerFunc {
 			connect = fmt.Sprintf("steam://connect/%s:%d", addr.String(), server.Port)
 		}
 
-		s.discordUsecase.SendPayload(domain.ChannelMod,
+		s.discord.SendPayload(domain.ChannelMod,
 			discord.PingModMessage(author, conf.ExtURL(author), req.Reason, server, conf.Discord.ModPingRoleID, connect))
 
-		if errSay := s.stateUsecase.PSay(ctx, author.SteamID, "Moderators have been notified"); errSay != nil {
+		if errSay := s.state.PSay(ctx, author.SteamID, "Moderators have been notified"); errSay != nil {
 			slog.Error("Failed to reply to user", log.ErrAttr(errSay))
 		}
 	}

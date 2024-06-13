@@ -12,21 +12,21 @@ import (
 )
 
 type notificationUsecase struct {
-	nr domain.NotificationRepository
-	pu domain.PersonUsecase
+	repository domain.NotificationRepository
+	persons    domain.PersonUsecase
 }
 
 func NewNotificationUsecase(repository domain.NotificationRepository,
 	personUsecase domain.PersonUsecase,
 ) domain.NotificationUsecase {
-	return &notificationUsecase{nr: repository, pu: personUsecase}
+	return &notificationUsecase{repository: repository, persons: personUsecase}
 }
 
 func (n notificationUsecase) SendNotification(ctx context.Context, targetID steamid.SteamID, severity domain.NotificationSeverity, message string, link string) error {
 	notification := domain.NotificationPayload{}
 	// Collect all required ids
 	if notification.MinPerms >= domain.PUser {
-		sids, errIDs := n.pu.GetSteamIDsAbove(ctx, notification.MinPerms)
+		sids, errIDs := n.persons.GetSteamIDsAbove(ctx, notification.MinPerms)
 		if errIDs != nil {
 			return errors.Join(errIDs, domain.ErrNotificationSteamIDs)
 		}
@@ -36,7 +36,7 @@ func (n notificationUsecase) SendNotification(ctx context.Context, targetID stea
 
 	uniqueIDs := fp.Uniq[steamid.SteamID](notification.Sids)
 
-	people, errPeople := n.pu.GetPeopleBySteamID(ctx, uniqueIDs)
+	people, errPeople := n.persons.GetPeopleBySteamID(ctx, uniqueIDs)
 	if errPeople != nil && !errors.Is(errPeople, domain.ErrNoResult) {
 		return errors.Join(errPeople, domain.ErrNotificationPeople)
 	}
@@ -51,7 +51,7 @@ func (n notificationUsecase) SendNotification(ctx context.Context, targetID stea
 
 	go func(_ []domain.Person, _ domain.NotificationPayload) {
 		for _, discordPerson := range discordPeople {
-			if err := n.nr.SendNotification(ctx, discordPerson.SteamID, notification.Severity, notification.Message, notification.Link); err != nil {
+			if err := n.repository.SendNotification(ctx, discordPerson.SteamID, notification.Severity, notification.Message, notification.Link); err != nil {
 				slog.Error("Failed to send discord notification", log.ErrAttr(err))
 			}
 		}
@@ -59,7 +59,7 @@ func (n notificationUsecase) SendNotification(ctx context.Context, targetID stea
 
 	for _, sid := range uniqueIDs {
 		// Todo, prep stmt at least.
-		if errSend := n.nr.SendNotification(ctx, sid, notification.Severity,
+		if errSend := n.repository.SendNotification(ctx, sid, notification.Severity,
 			notification.Message, notification.Link); errSend != nil {
 			slog.Error("Failed to send notification", log.ErrAttr(errSend))
 
@@ -67,9 +67,9 @@ func (n notificationUsecase) SendNotification(ctx context.Context, targetID stea
 		}
 	}
 
-	return n.nr.SendNotification(ctx, targetID, severity, message, link)
+	return n.repository.SendNotification(ctx, targetID, severity, message, link)
 }
 
 func (n notificationUsecase) GetPersonNotifications(ctx context.Context, filters domain.NotificationQuery) ([]domain.UserNotification, int64, error) {
-	return n.nr.GetPersonNotifications(ctx, filters)
+	return n.repository.GetPersonNotifications(ctx, filters)
 }

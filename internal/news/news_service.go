@@ -38,7 +38,8 @@ func (h newsHandler) onAPIGetNewsLatest() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		newsLatest, errGetNewsLatest := h.news.GetNewsLatest(ctx, 50, false)
 		if errGetNewsLatest != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to load news", log.ErrAttr(errGetNewsLatest))
 
 			return
 		}
@@ -69,7 +70,8 @@ func (h newsHandler) onAPIPostNewsCreate() gin.HandlerFunc {
 		}
 
 		if errSave := h.news.SaveNewsArticle(ctx, &entry); errSave != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to save news article", log.ErrAttr(errSave))
 
 			return
 		}
@@ -84,7 +86,8 @@ func (h newsHandler) onAPIPostNewsUpdate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		newsID, errID := httphelper.GetIntParam(ctx, "news_id")
 		if errID != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Warn("Failed to get news_id", log.ErrAttr(errID))
 
 			return
 		}
@@ -92,12 +95,14 @@ func (h newsHandler) onAPIPostNewsUpdate() gin.HandlerFunc {
 		var entry domain.NewsEntry
 		if errGet := h.news.GetNewsByID(ctx, newsID, &entry); errGet != nil {
 			if errors.Is(errGet, domain.ErrNoResult) {
-				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
+				httphelper.HandleErrNotFound(ctx)
+				slog.Warn("Failed to get news by id. Not found.", log.ErrAttr(errGet))
 
 				return
 			}
 
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Warn("Failed to get news by id. Not found.", log.ErrAttr(errGet))
 
 			return
 		}
@@ -113,7 +118,8 @@ func (h newsHandler) onAPIPostNewsUpdate() gin.HandlerFunc {
 		entry.UpdatedOn = time.Now()
 
 		if errSave := h.news.SaveNewsArticle(ctx, &entry); errSave != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to save news article", log.ErrAttr(errSave))
 
 			return
 		}
@@ -128,7 +134,8 @@ func (h newsHandler) onAPIGetNewsAll() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		newsLatest, errGetNewsLatest := h.news.GetNewsLatest(ctx, 100, true)
 		if errGetNewsLatest != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to get latest news", log.ErrAttr(errGetNewsLatest))
 
 			return
 		}
@@ -141,7 +148,8 @@ func (h newsHandler) onAPIPostNewsDelete() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		newsID, errID := httphelper.GetIntParam(ctx, "news_id")
 		if errID != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Warn("Failed to get news_id", log.ErrAttr(errID))
 
 			return
 		}
@@ -149,18 +157,19 @@ func (h newsHandler) onAPIPostNewsDelete() gin.HandlerFunc {
 		var entry domain.NewsEntry
 		if errGet := h.news.GetNewsByID(ctx, newsID, &entry); errGet != nil {
 			if errors.Is(errGet, domain.ErrNoResult) {
-				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
+				httphelper.HandleErrNotFound(ctx)
 
 				return
 			}
 
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to get news by ID", log.ErrAttr(errGet))
 
 			return
 		}
 
 		if err := h.news.DropNewsArticle(ctx, newsID); err != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
 			slog.Error("Failed to delete news entry", log.ErrAttr(err))
 
 			return

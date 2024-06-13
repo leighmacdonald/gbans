@@ -17,12 +17,12 @@ import (
 )
 
 type banSteamUsecase struct {
-	banRepo        domain.BanSteamRepository
-	personUsecase  domain.PersonUsecase
-	configUsecase  domain.ConfigUsecase
-	discordUsecase domain.DiscordUsecase
-	stateUsecase   domain.StateUsecase
-	reportUsecase  domain.ReportUsecase
+	banRepo domain.BanSteamRepository
+	persons domain.PersonUsecase
+	config  domain.ConfigUsecase
+	discord domain.DiscordUsecase
+	state   domain.StateUsecase
+	reports domain.ReportUsecase
 }
 
 func NewBanSteamUsecase(repository domain.BanSteamRepository, personUsecase domain.PersonUsecase,
@@ -30,12 +30,12 @@ func NewBanSteamUsecase(repository domain.BanSteamRepository, personUsecase doma
 	reportUsecase domain.ReportUsecase, stateUsecase domain.StateUsecase,
 ) domain.BanSteamUsecase {
 	return &banSteamUsecase{
-		banRepo:        repository,
-		personUsecase:  personUsecase,
-		configUsecase:  configUsecase,
-		discordUsecase: discordUsecase,
-		reportUsecase:  reportUsecase,
-		stateUsecase:   stateUsecase,
+		banRepo: repository,
+		persons: personUsecase,
+		config:  configUsecase,
+		discord: discordUsecase,
+		reports: reportUsecase,
+		state:   stateUsecase,
 	}
 }
 
@@ -113,16 +113,16 @@ func (s banSteamUsecase) Ban(ctx context.Context, curUser domain.PersonInfo, ban
 		return errors.Join(errSave, domain.ErrSaveBan)
 	}
 
-	s.discordUsecase.SendPayload(domain.ChannelBanLog, discord.BanSteamResponse(*banSteam, curUser))
+	s.discord.SendPayload(domain.ChannelBanLog, discord.BanSteamResponse(*banSteam, curUser))
 
 	updateAppealState := func(reportId int64) error {
-		report, errReport := s.reportUsecase.GetReport(ctx, curUser, reportId)
+		report, errReport := s.reports.GetReport(ctx, curUser, reportId)
 		if errReport != nil {
 			return errors.Join(errReport, domain.ErrGetBanReport)
 		}
 
 		report.ReportStatus = domain.ClosedWithAction
-		if errSaveReport := s.reportUsecase.SaveReport(ctx, &report.Report); errSaveReport != nil {
+		if errSaveReport := s.reports.SaveReport(ctx, &report.Report); errSaveReport != nil {
 			return errors.Join(errSaveReport, domain.ErrReportStateUpdate)
 		}
 
@@ -136,26 +136,26 @@ func (s banSteamUsecase) Ban(ctx context.Context, curUser domain.PersonInfo, ban
 		}
 	}
 
-	target, err := s.personUsecase.GetOrCreatePersonBySteamID(ctx, banSteam.TargetID)
+	target, err := s.persons.GetOrCreatePersonBySteamID(ctx, banSteam.TargetID)
 	if err != nil {
 		return errors.Join(err, domain.ErrFetchPerson)
 	}
 
 	// TODO mute player currently in-game w/o kicking
 	if banSteam.BanType == domain.Banned {
-		if errKick := s.stateUsecase.Kick(ctx, banSteam.TargetID, banSteam.Reason); errKick != nil && !errors.Is(errKick, domain.ErrPlayerNotFound) {
+		if errKick := s.state.Kick(ctx, banSteam.TargetID, banSteam.Reason); errKick != nil && !errors.Is(errKick, domain.ErrPlayerNotFound) {
 			slog.Error("Failed to kick player", log.ErrAttr(errKick),
 				slog.Int64("sid64", banSteam.TargetID.Int64()))
 		}
 
-		s.discordUsecase.SendPayload(domain.ChannelModLog, discord.KickPlayerEmbed(target))
+		s.discord.SendPayload(domain.ChannelModLog, discord.KickPlayerEmbed(target))
 	} else if banSteam.BanType == domain.NoComm {
-		if errSilence := s.stateUsecase.Silence(ctx, banSteam.TargetID, banSteam.Reason); errSilence != nil && !errors.Is(errSilence, domain.ErrPlayerNotFound) {
+		if errSilence := s.state.Silence(ctx, banSteam.TargetID, banSteam.Reason); errSilence != nil && !errors.Is(errSilence, domain.ErrPlayerNotFound) {
 			slog.Error("Failed to silence player", log.ErrAttr(errSilence),
 				slog.Int64("sid64", banSteam.TargetID.Int64()))
 		}
 
-		s.discordUsecase.SendPayload(domain.ChannelModLog, discord.SilenceEmbed(target))
+		s.discord.SendPayload(domain.ChannelModLog, discord.SilenceEmbed(target))
 	}
 
 	return nil
@@ -182,12 +182,12 @@ func (s banSteamUsecase) Unban(ctx context.Context, targetSID steamid.SteamID, r
 		return false, errors.Join(errSave, domain.ErrSaveBan)
 	}
 
-	person, err := s.personUsecase.GetPersonBySteamID(ctx, targetSID)
+	person, err := s.persons.GetPersonBySteamID(ctx, targetSID)
 	if err != nil {
 		return false, errors.Join(err, domain.ErrFetchPerson)
 	}
 
-	s.discordUsecase.SendPayload(domain.ChannelModLog, discord.UnbanMessage(s.configUsecase, person))
+	s.discord.SendPayload(domain.ChannelModLog, discord.UnbanMessage(s.config, person))
 
 	return true, nil
 }
@@ -239,7 +239,7 @@ func (s banSteamUsecase) CheckEvadeStatus(ctx context.Context, curUser domain.Pe
 	}
 
 	var newBan domain.BanSteam
-	if errNewBan := domain.NewBanSteam(steamid.New(s.configUsecase.Config().Owner),
+	if errNewBan := domain.NewBanSteam(steamid.New(s.config.Config().Owner),
 		steamID, duration, domain.Evading, domain.Evading.String(),
 		"Connecting from same IP as banned player. ", domain.System,
 		0, domain.Banned, false, false, &newBan); errNewBan != nil {
@@ -248,7 +248,7 @@ func (s banSteamUsecase) CheckEvadeStatus(ctx context.Context, curUser domain.Pe
 		return false, errNewBan
 	}
 
-	config := s.configUsecase.Config()
+	config := s.config.Config()
 
 	newBan.Note += fmt.Sprintf("\nEvasion of: [#%d](%s)", existing.BanID, config.ExtURL(existing))
 

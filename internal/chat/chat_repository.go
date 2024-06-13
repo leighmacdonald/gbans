@@ -20,12 +20,12 @@ import (
 )
 
 type chatRepository struct {
-	db                database.Database
-	personUsecase     domain.PersonUsecase
-	wordFilterUsecase domain.WordFilterUsecase
-	matchUsecase      domain.MatchUsecase
-	broadcaster       *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
-	WarningChan       chan domain.NewUserWarning
+	db          database.Database
+	persons     domain.PersonUsecase
+	wordFilters domain.WordFilterUsecase
+	matches     domain.MatchUsecase
+	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
+	WarningChan chan domain.NewUserWarning
 }
 
 func NewChatRepository(database database.Database, personUsecase domain.PersonUsecase, wordFilterUsecase domain.WordFilterUsecase,
@@ -33,12 +33,12 @@ func NewChatRepository(database database.Database, personUsecase domain.PersonUs
 	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
 ) domain.ChatRepository {
 	return &chatRepository{
-		db:                database,
-		personUsecase:     personUsecase,
-		wordFilterUsecase: wordFilterUsecase,
-		matchUsecase:      matchUsecase,
-		broadcaster:       broadcaster,
-		WarningChan:       make(chan domain.NewUserWarning),
+		db:          database,
+		persons:     personUsecase,
+		wordFilters: wordFilterUsecase,
+		matches:     matchUsecase,
+		broadcaster: broadcaster,
+		WarningChan: make(chan domain.NewUserWarning),
 	}
 }
 
@@ -49,14 +49,14 @@ func (r chatRepository) handleMessage(ctx context.Context, evt logparse.ServerEv
 		return
 	}
 
-	_, errPerson := r.personUsecase.GetOrCreatePersonBySteamID(ctx, person.SID)
+	_, errPerson := r.persons.GetOrCreatePersonBySteamID(ctx, person.SID)
 	if errPerson != nil {
 		slog.Error("Failed to handle message, could not get author", log.ErrAttr(errPerson), slog.String("message", msg))
 
 		return
 	}
 
-	matchID, _ := r.matchUsecase.GetMatchIDFromServerID(evt.ServerID)
+	matchID, _ := r.matches.GetMatchIDFromServerID(evt.ServerID)
 
 	personMsg := domain.PersonMessage{
 		SteamID:     person.SID,
@@ -76,9 +76,9 @@ func (r chatRepository) handleMessage(ctx context.Context, evt logparse.ServerEv
 	}
 
 	go func(userMsg domain.PersonMessage) {
-		matchedFilter := r.wordFilterUsecase.Check(userMsg.Body)
+		matchedFilter := r.wordFilters.Check(userMsg.Body)
 		if len(matchedFilter) > 0 {
-			if errSaveMatch := r.wordFilterUsecase.AddMessageFilterMatch(ctx, userMsg.PersonMessageID, matchedFilter[0].FilterID); errSaveMatch != nil {
+			if errSaveMatch := r.wordFilters.AddMessageFilterMatch(ctx, userMsg.PersonMessageID, matchedFilter[0].FilterID); errSaveMatch != nil {
 				slog.Error("Failed to save message findMatch status", log.ErrAttr(errSaveMatch))
 			}
 

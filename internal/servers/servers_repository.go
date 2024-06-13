@@ -308,11 +308,3 @@ func (r *serversRepository) updateServer(ctx context.Context, server *domain.Ser
 		Set("enable_stats", server.EnableStats).
 		Where(sq.Eq{"server_id": server.ServerID})))
 }
-
-func (r *serversRepository) DropServer(ctx context.Context, serverID int) error {
-	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, r.db.
-		Builder().
-		Update("server").
-		Set("deleted", true).
-		Where(sq.Eq{"server_id": serverID})))
-}

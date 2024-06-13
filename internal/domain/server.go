@@ -19,7 +19,6 @@ type ServersUsecase interface {
 	GetServerByName(ctx context.Context, serverName string, server *Server, disabledOk bool, deletedOk bool) error
 	GetServerByPassword(ctx context.Context, serverPassword string, server *Server, disabledOk bool, deletedOk bool) error
 	SaveServer(ctx context.Context, server *Server) error
-	DropServer(ctx context.Context, serverID int) error
 }
 
 type ServersRepository interface {
@@ -29,7 +28,6 @@ type ServersRepository interface {
 	GetServerByName(ctx context.Context, serverName string, server *Server, disabledOk bool, deletedOk bool) error
 	GetServerByPassword(ctx context.Context, serverPassword string, server *Server, disabledOk bool, deletedOk bool) error
 	SaveServer(ctx context.Context, server *Server) error
-	DropServer(ctx context.Context, serverID int) error
 }
 
 var ErrResolveIP = errors.New("failed to resolve address")

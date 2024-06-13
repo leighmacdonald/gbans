@@ -17,12 +17,12 @@ import (
 )
 
 type banNetHandler struct {
-	banNetUsecase domain.BanNetUsecase
+	bansNet domain.BanNetUsecase
 }
 
 func NewBanNetHandler(engine *gin.Engine, banNetUsecase domain.BanNetUsecase, ath domain.AuthUsecase) {
 	handler := banNetHandler{
-		banNetUsecase: banNetUsecase,
+		bansNet: banNetUsecase,
 	}
 	// mod
 	modGrp := engine.Group("/")
@@ -38,7 +38,7 @@ func NewBanNetHandler(engine *gin.Engine, banNetUsecase domain.BanNetUsecase, at
 
 func (h banNetHandler) onAPIExportBansValveIP() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		bans, errBans := h.banNetUsecase.Get(ctx, domain.CIDRBansQueryFilter{})
+		bans, errBans := h.bansNet.Get(ctx, domain.CIDRBansQueryFilter{})
 		if errBans != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
@@ -103,7 +103,7 @@ func (h banNetHandler) onAPIPostBansCIDRCreate() gin.HandlerFunc {
 			return
 		}
 
-		if errBan := h.banNetUsecase.Ban(ctx, &banCIDR); errBan != nil {
+		if errBan := h.bansNet.Ban(ctx, &banCIDR); errBan != nil {
 			if errors.Is(errBan, domain.ErrDuplicate) {
 				httphelper.ResponseErr(ctx, http.StatusConflict, domain.ErrDuplicate)
 
@@ -127,7 +127,7 @@ func (h banNetHandler) onAPIGetBansCIDR() gin.HandlerFunc {
 			return
 		}
 
-		bans, errBans := h.banNetUsecase.Get(ctx, req)
+		bans, errBans := h.bansNet.Get(ctx, req)
 		if errBans != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			slog.Error("Failed to fetch cidr bans", log.ErrAttr(errBans))
@@ -154,7 +154,7 @@ func (h banNetHandler) onAPIDeleteBansCIDR() gin.HandlerFunc {
 		}
 
 		var banCidr domain.BanCIDR
-		if errFetch := h.banNetUsecase.GetByID(ctx, netID, &banCidr); errFetch != nil {
+		if errFetch := h.bansNet.GetByID(ctx, netID, &banCidr); errFetch != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
@@ -163,7 +163,7 @@ func (h banNetHandler) onAPIDeleteBansCIDR() gin.HandlerFunc {
 		banCidr.UnbanReasonText = req.UnbanReasonText
 		banCidr.Deleted = true
 
-		if errSave := h.banNetUsecase.Save(ctx, &banCidr); errSave != nil {
+		if errSave := h.bansNet.Save(ctx, &banCidr); errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			slog.Error("Failed to delete cidr ban", log.ErrAttr(errSave))
 
@@ -196,7 +196,7 @@ func (h banNetHandler) onAPIPostBansCIDRUpdate() gin.HandlerFunc {
 
 		var ban domain.BanCIDR
 
-		if errBan := h.banNetUsecase.GetByID(ctx, netID, &ban); errBan != nil {
+		if errBan := h.bansNet.GetByID(ctx, netID, &ban); errBan != nil {
 			if errors.Is(errBan, domain.ErrNoResult) {
 				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
 			}
@@ -237,7 +237,7 @@ func (h banNetHandler) onAPIPostBansCIDRUpdate() gin.HandlerFunc {
 		ban.ValidUntil = req.ValidUntil
 		ban.TargetID = req.TargetID
 
-		if errSave := h.banNetUsecase.Save(ctx, &ban); errSave != nil {
+		if errSave := h.bansNet.Save(ctx, &ban); errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
