@@ -11,21 +11,21 @@ import (
 )
 
 type appeals struct {
-	appealRepository domain.AppealRepository
-	banUsecase       domain.BanSteamUsecase
-	personUsecase    domain.PersonUsecase
-	discordUsecase   domain.DiscordUsecase
-	configUsecase    domain.ConfigUsecase
+	repository domain.AppealRepository
+	bans       domain.BanSteamUsecase
+	persons    domain.PersonUsecase
+	discord    domain.DiscordUsecase
+	config     domain.ConfigUsecase
 }
 
-func NewAppealUsecase(ar domain.AppealRepository, banUsecase domain.BanSteamUsecase, personUsecase domain.PersonUsecase,
-	discordUsecase domain.DiscordUsecase, configUsecase domain.ConfigUsecase,
+func NewAppealUsecase(ar domain.AppealRepository, bans domain.BanSteamUsecase, persons domain.PersonUsecase,
+	discord domain.DiscordUsecase, config domain.ConfigUsecase,
 ) domain.AppealUsecase {
-	return &appeals{appealRepository: ar, banUsecase: banUsecase, personUsecase: personUsecase, discordUsecase: discordUsecase, configUsecase: configUsecase}
+	return &appeals{repository: ar, bans: bans, persons: persons, discord: discord, config: config}
 }
 
 func (u *appeals) GetAppealsByActivity(ctx context.Context, opts domain.AppealQueryFilter) ([]domain.AppealOverview, error) {
-	return u.appealRepository.GetAppealsByActivity(ctx, opts)
+	return u.repository.GetAppealsByActivity(ctx, opts)
 }
 
 func (u *appeals) EditBanMessage(ctx context.Context, curUser domain.UserProfile, reportID int64, newMsg string) (domain.BanAppealMessage, error) {
@@ -34,7 +34,7 @@ func (u *appeals) EditBanMessage(ctx context.Context, curUser domain.UserProfile
 		return domain.BanAppealMessage{}, err
 	}
 
-	bannedPerson, errReport := u.banUsecase.GetByBanID(ctx, existing.BanID, true, true)
+	bannedPerson, errReport := u.bans.GetByBanID(ctx, existing.BanID, true, true)
 	if errReport != nil {
 		return existing, errReport
 	}
@@ -53,13 +53,13 @@ func (u *appeals) EditBanMessage(ctx context.Context, curUser domain.UserProfile
 
 	existing.MessageMD = newMsg
 
-	if errSave := u.appealRepository.SaveBanMessage(ctx, &existing); errSave != nil {
+	if errSave := u.repository.SaveBanMessage(ctx, &existing); errSave != nil {
 		return existing, errSave
 	}
 
-	conf := u.configUsecase.Config()
+	conf := u.config.Config()
 
-	u.discordUsecase.SendPayload(domain.ChannelModAppealLog, discord.NewAppealMessage(existing.MessageMD,
+	u.discord.SendPayload(domain.ChannelModAppealLog, discord.NewAppealMessage(existing.MessageMD,
 		conf.ExtURL(bannedPerson.BanSteam), curUser, conf.ExtURL(curUser)))
 
 	return existing, nil
@@ -74,7 +74,7 @@ func (u *appeals) CreateBanMessage(ctx context.Context, curUser domain.UserProfi
 		return domain.BanAppealMessage{}, domain.ErrBadRequest
 	}
 
-	bannedPerson, errReport := u.banUsecase.GetByBanID(ctx, banID, true, true)
+	bannedPerson, errReport := u.bans.GetByBanID(ctx, banID, true, true)
 	if errReport != nil {
 		return domain.BanAppealMessage{}, errReport
 	}
@@ -83,12 +83,12 @@ func (u *appeals) CreateBanMessage(ctx context.Context, curUser domain.UserProfi
 		return domain.BanAppealMessage{}, domain.ErrPermissionDenied
 	}
 
-	_, errTarget := u.personUsecase.GetOrCreatePersonBySteamID(ctx, bannedPerson.TargetID)
+	_, errTarget := u.persons.GetOrCreatePersonBySteamID(ctx, bannedPerson.TargetID)
 	if errTarget != nil {
 		return domain.BanAppealMessage{}, errTarget
 	}
 
-	_, errSource := u.personUsecase.GetOrCreatePersonBySteamID(ctx, bannedPerson.SourceID)
+	_, errSource := u.persons.GetOrCreatePersonBySteamID(ctx, bannedPerson.SourceID)
 	if errSource != nil {
 		return domain.BanAppealMessage{}, errSource
 	}
@@ -98,18 +98,18 @@ func (u *appeals) CreateBanMessage(ctx context.Context, curUser domain.UserProfi
 	msg.Personaname = curUser.Name
 	msg.Avatarhash = curUser.Avatarhash
 
-	if errSave := u.appealRepository.SaveBanMessage(ctx, &msg); errSave != nil {
+	if errSave := u.repository.SaveBanMessage(ctx, &msg); errSave != nil {
 		return domain.BanAppealMessage{}, errSave
 	}
 
-	conf := u.configUsecase.Config()
+	conf := u.config.Config()
 
-	u.discordUsecase.SendPayload(domain.ChannelModAppealLog, discord.NewAppealMessage(msg.MessageMD,
+	u.discord.SendPayload(domain.ChannelModAppealLog, discord.NewAppealMessage(msg.MessageMD,
 		conf.ExtURL(bannedPerson.BanSteam), curUser, conf.ExtURL(curUser)))
 
 	bannedPerson.UpdatedOn = time.Now()
 
-	if errUpdate := u.banUsecase.Save(ctx, &bannedPerson.BanSteam); errUpdate != nil {
+	if errUpdate := u.bans.Save(ctx, &bannedPerson.BanSteam); errUpdate != nil {
 		return domain.BanAppealMessage{}, errUpdate
 	}
 
@@ -117,7 +117,7 @@ func (u *appeals) CreateBanMessage(ctx context.Context, curUser domain.UserProfi
 }
 
 func (u *appeals) GetBanMessages(ctx context.Context, userProfile domain.UserProfile, banID int64) ([]domain.BanAppealMessage, error) {
-	banPerson, errGetBan := u.banUsecase.GetByBanID(ctx, banID, true, true)
+	banPerson, errGetBan := u.bans.GetByBanID(ctx, banID, true, true)
 	if errGetBan != nil {
 		return nil, errGetBan
 	}
@@ -126,11 +126,11 @@ func (u *appeals) GetBanMessages(ctx context.Context, userProfile domain.UserPro
 		return nil, domain.ErrPermissionDenied
 	}
 
-	return u.appealRepository.GetBanMessages(ctx, banID)
+	return u.repository.GetBanMessages(ctx, banID)
 }
 
 func (u *appeals) GetBanMessageByID(ctx context.Context, banMessageID int64) (domain.BanAppealMessage, error) {
-	return u.appealRepository.GetBanMessageByID(ctx, banMessageID)
+	return u.repository.GetBanMessageByID(ctx, banMessageID)
 }
 
 func (u *appeals) DropBanMessage(ctx context.Context, curUser domain.UserProfile, banMessageID int64) error {
@@ -143,11 +143,11 @@ func (u *appeals) DropBanMessage(ctx context.Context, curUser domain.UserProfile
 		return domain.ErrPermissionDenied
 	}
 
-	if errDrop := u.appealRepository.DropBanMessage(ctx, &existing); errDrop != nil {
+	if errDrop := u.repository.DropBanMessage(ctx, &existing); errDrop != nil {
 		return errDrop
 	}
 
-	u.discordUsecase.SendPayload(domain.ChannelModAppealLog, discord.DeleteAppealMessage(&existing, curUser, u.configUsecase.ExtURL(curUser)))
+	u.discord.SendPayload(domain.ChannelModAppealLog, discord.DeleteAppealMessage(&existing, curUser, u.config.ExtURL(curUser)))
 
 	return nil
 }

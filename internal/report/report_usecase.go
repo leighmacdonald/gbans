@@ -15,22 +15,22 @@ import (
 )
 
 type reportUsecase struct {
-	rr          domain.ReportRepository
-	du          domain.DiscordUsecase
-	cu          domain.ConfigUsecase
-	pu          domain.PersonUsecase
-	demoUsecase domain.DemoUsecase
+	repository domain.ReportRepository
+	discord    domain.DiscordUsecase
+	config     domain.ConfigUsecase
+	persons    domain.PersonUsecase
+	demos      domain.DemoUsecase
 }
 
-func NewReportUsecase(repository domain.ReportRepository, discordUsecase domain.DiscordUsecase,
-	configUsecase domain.ConfigUsecase, personUsecase domain.PersonUsecase, demoUsecase domain.DemoUsecase,
+func NewReportUsecase(repository domain.ReportRepository, discord domain.DiscordUsecase,
+	config domain.ConfigUsecase, persons domain.PersonUsecase, demos domain.DemoUsecase,
 ) domain.ReportUsecase {
 	return &reportUsecase{
-		du:          discordUsecase,
-		rr:          repository,
-		cu:          configUsecase,
-		pu:          personUsecase,
-		demoUsecase: demoUsecase,
+		discord:    discord,
+		repository: repository,
+		config:     config,
+		persons:    persons,
+		demos:      demos,
 	}
 }
 
@@ -87,7 +87,7 @@ func (r reportUsecase) Start(ctx context.Context) {
 				}
 			}
 
-			r.du.SendPayload(domain.ChannelMod, discord.ReportStatsMessage(meta, r.cu.ExtURLRaw("/admin/reports")))
+			r.discord.SendPayload(domain.ChannelMod, discord.ReportStatsMessage(meta, r.config.ExtURLRaw("/admin/reports")))
 		case <-ctx.Done():
 			slog.Debug("showReportMeta shutting down")
 
@@ -102,7 +102,7 @@ func (r reportUsecase) addAuthorsToReports(ctx context.Context, reports []domain
 		peopleIDs = append(peopleIDs, report.SourceID, report.TargetID)
 	}
 
-	people, errAuthors := r.pu.GetPeopleBySteamID(ctx, fp.Uniq(peopleIDs))
+	people, errAuthors := r.persons.GetPeopleBySteamID(ctx, fp.Uniq(peopleIDs))
 	if errAuthors != nil {
 		return nil, errAuthors
 	}
@@ -127,7 +127,7 @@ func (r reportUsecase) GetReportsBySteamID(ctx context.Context, steamID steamid.
 		return nil, domain.ErrInvalidSID
 	}
 
-	reports, errReports := r.rr.GetReports(ctx, steamID)
+	reports, errReports := r.repository.GetReports(ctx, steamID)
 	if errReports != nil {
 		if errors.Is(errReports, domain.ErrNoResult) {
 			return nil, nil
@@ -140,7 +140,7 @@ func (r reportUsecase) GetReportsBySteamID(ctx context.Context, steamID steamid.
 }
 
 func (r reportUsecase) GetReports(ctx context.Context) ([]domain.ReportWithAuthor, error) {
-	reports, errReports := r.rr.GetReports(ctx, steamid.SteamID{})
+	reports, errReports := r.repository.GetReports(ctx, steamid.SteamID{})
 	if errReports != nil {
 		if errors.Is(errReports, domain.ErrNoResult) {
 			return nil, nil
@@ -153,12 +153,12 @@ func (r reportUsecase) GetReports(ctx context.Context) ([]domain.ReportWithAutho
 }
 
 func (r reportUsecase) GetReport(ctx context.Context, curUser domain.PersonInfo, reportID int64) (domain.ReportWithAuthor, error) {
-	report, err := r.rr.GetReport(ctx, reportID)
+	report, err := r.repository.GetReport(ctx, reportID)
 	if err != nil {
 		return domain.ReportWithAuthor{}, err
 	}
 
-	author, errAuthor := r.pu.GetPersonBySteamID(ctx, report.SourceID)
+	author, errAuthor := r.persons.GetPersonBySteamID(ctx, report.SourceID)
 	if errAuthor != nil {
 		return domain.ReportWithAuthor{}, errAuthor
 	}
@@ -167,14 +167,14 @@ func (r reportUsecase) GetReport(ctx context.Context, curUser domain.PersonInfo,
 		return domain.ReportWithAuthor{}, domain.ErrPermissionDenied
 	}
 
-	target, errTarget := r.pu.GetPersonBySteamID(ctx, report.TargetID)
+	target, errTarget := r.persons.GetPersonBySteamID(ctx, report.TargetID)
 	if errTarget != nil {
 		return domain.ReportWithAuthor{}, errTarget
 	}
 
 	var demo domain.DemoFile
 	if report.DemoID > 0 {
-		if errDemo := r.demoUsecase.GetDemoByID(ctx, report.DemoID, &demo); errDemo != nil {
+		if errDemo := r.demos.GetDemoByID(ctx, report.DemoID, &demo); errDemo != nil {
 			slog.Error("Failed to load report demo", slog.Int64("report_id", report.ReportID))
 		}
 	}
@@ -188,23 +188,23 @@ func (r reportUsecase) GetReport(ctx context.Context, curUser domain.PersonInfo,
 }
 
 func (r reportUsecase) GetReportMessages(ctx context.Context, reportID int64) ([]domain.ReportMessage, error) {
-	return r.rr.GetReportMessages(ctx, reportID)
+	return r.repository.GetReportMessages(ctx, reportID)
 }
 
 func (r reportUsecase) GetReportMessageByID(ctx context.Context, reportMessageID int64) (domain.ReportMessage, error) {
-	return r.rr.GetReportMessageByID(ctx, reportMessageID)
+	return r.repository.GetReportMessageByID(ctx, reportMessageID)
 }
 
 func (r reportUsecase) DropReportMessage(ctx context.Context, message *domain.ReportMessage) error {
-	return r.rr.DropReportMessage(ctx, message)
+	return r.repository.DropReportMessage(ctx, message)
 }
 
 func (r reportUsecase) DropReport(ctx context.Context, report *domain.Report) error {
-	return r.rr.DropReport(ctx, report)
+	return r.repository.DropReport(ctx, report)
 }
 
 func (r reportUsecase) SaveReport(ctx context.Context, report *domain.Report) error {
-	if err := r.rr.SaveReport(ctx, report); err != nil {
+	if err := r.repository.SaveReport(ctx, report); err != nil {
 		return err
 	}
 
@@ -214,5 +214,5 @@ func (r reportUsecase) SaveReport(ctx context.Context, report *domain.Report) er
 }
 
 func (r reportUsecase) SaveReportMessage(ctx context.Context, message *domain.ReportMessage) error {
-	return r.rr.SaveReportMessage(ctx, message)
+	return r.repository.SaveReportMessage(ctx, message)
 }

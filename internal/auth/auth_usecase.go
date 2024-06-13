@@ -23,22 +23,22 @@ import (
 const ctxKeyUserProfile = "user_profile"
 
 type auth struct {
-	authRepository domain.AuthRepository
-	configUsecase  domain.ConfigUsecase
-	personUsecase  domain.PersonUsecase
-	banUsecase     domain.BanSteamUsecase
-	serverUsecase  domain.ServersUsecase
+	auth    domain.AuthRepository
+	config  domain.ConfigUsecase
+	persons domain.PersonUsecase
+	bans    domain.BanSteamUsecase
+	servers domain.ServersUsecase
 }
 
-func NewAuthUsecase(authRepository domain.AuthRepository, configUsecase domain.ConfigUsecase, personUsecase domain.PersonUsecase,
-	banUsecase domain.BanSteamUsecase, serversUsecase domain.ServersUsecase,
+func NewAuthUsecase(repository domain.AuthRepository, config domain.ConfigUsecase, persons domain.PersonUsecase,
+	bans domain.BanSteamUsecase, servers domain.ServersUsecase,
 ) domain.AuthUsecase {
 	return &auth{
-		authRepository: authRepository,
-		configUsecase:  configUsecase,
-		personUsecase:  personUsecase,
-		banUsecase:     banUsecase,
-		serverUsecase:  serversUsecase,
+		auth:    repository,
+		config:  config,
+		persons: persons,
+		bans:    bans,
+		servers: servers,
 	}
 }
 
@@ -48,7 +48,7 @@ func (u *auth) Start(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			if err := u.authRepository.PrunePersonAuth(ctx); err != nil && !errors.Is(err, domain.ErrNoResult) {
+			if err := u.auth.PrunePersonAuth(ctx); err != nil && !errors.Is(err, domain.ErrNoResult) {
 				slog.Error("Error pruning expired refresh tokens", log.ErrAttr(err))
 			}
 		case <-ctx.Done():
@@ -60,11 +60,11 @@ func (u *auth) Start(ctx context.Context) {
 }
 
 func (u *auth) DeletePersonAuth(ctx context.Context, authID int64) error {
-	return u.authRepository.DeletePersonAuth(ctx, authID)
+	return u.auth.DeletePersonAuth(ctx, authID)
 }
 
 func (u *auth) GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *domain.PersonAuth) error {
-	return u.authRepository.GetPersonAuthByFingerprint(ctx, token, auth)
+	return u.auth.GetPersonAuthByFingerprint(ctx, token, auth)
 }
 
 // MakeToken generates new jwt auth tokens
@@ -88,7 +88,7 @@ func (u *auth) MakeToken(ctx *gin.Context, cookieKey string, sid steamid.SteamID
 
 	personAuth := domain.NewPersonAuth(sid, ipAddr, accessToken)
 
-	if saveErr := u.authRepository.SavePersonAuth(ctx, &personAuth); saveErr != nil {
+	if saveErr := u.auth.SavePersonAuth(ctx, &personAuth); saveErr != nil {
 		return domain.UserTokens{}, errors.Join(saveErr, domain.ErrSaveToken)
 	}
 
@@ -96,7 +96,7 @@ func (u *auth) MakeToken(ctx *gin.Context, cookieKey string, sid steamid.SteamID
 }
 
 func (u *auth) AuthMiddleware(level domain.Privilege) gin.HandlerFunc {
-	cookieKey := u.configUsecase.Config().HTTPCookieKey
+	cookieKey := u.config.Config().HTTPCookieKey
 
 	return func(ctx *gin.Context) {
 		var token string
@@ -130,7 +130,7 @@ func (u *auth) AuthMiddleware(level domain.Privilege) gin.HandlerFunc {
 					return
 				}
 
-				loggedInPerson, errGetPerson := u.personUsecase.GetOrCreatePersonBySteamID(ctx, sid)
+				loggedInPerson, errGetPerson := u.persons.GetOrCreatePersonBySteamID(ctx, sid)
 				if errGetPerson != nil {
 					slog.Error("Failed to load person during auth", log.ErrAttr(errGetPerson))
 					ctx.AbortWithStatus(http.StatusForbidden)
@@ -144,7 +144,7 @@ func (u *auth) AuthMiddleware(level domain.Privilege) gin.HandlerFunc {
 					return
 				}
 
-				bannedPerson, errBan := u.banUsecase.GetBySteamID(ctx, sid, false, true)
+				bannedPerson, errBan := u.bans.GetBySteamID(ctx, sid, false, true)
 				if errBan != nil {
 					if !errors.Is(errBan, domain.ErrNoResult) {
 						slog.Error("Failed to fetch authed user ban", log.ErrAttr(errBan))
@@ -166,7 +166,7 @@ func (u *auth) AuthMiddleware(level domain.Privilege) gin.HandlerFunc {
 
 				ctx.Set(ctxKeyUserProfile, profile)
 
-				if u.configUsecase.Config().Sentry.SentryDSN != "" {
+				if u.config.Config().Sentry.SentryDSN != "" {
 					if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
 						hub.WithScope(func(scope *sentry.Scope) {
 							scope.SetUser(sentry.User{
@@ -213,7 +213,7 @@ func (u *auth) AuthServerMiddleWare() gin.HandlerFunc {
 		}
 
 		var server domain.Server
-		if errServer := u.serverUsecase.GetServerByPassword(ctx, reqAuthHeader, &server, false, false); errServer != nil {
+		if errServer := u.servers.GetServerByPassword(ctx, reqAuthHeader, &server, false, false); errServer != nil {
 			slog.Error("Failed to load server during auth", log.ErrAttr(errServer), slog.String("token", reqAuthHeader), slog.String("IP", ctx.ClientIP()))
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 
@@ -222,7 +222,7 @@ func (u *auth) AuthServerMiddleWare() gin.HandlerFunc {
 
 		ctx.Set("server_id", server.ServerID)
 
-		if u.configUsecase.Config().Sentry.SentryDSN != "" {
+		if u.config.Config().Sentry.SentryDSN != "" {
 			if hub := sentrygin.GetHubFromContext(ctx); hub != nil {
 				hub.WithScope(func(scope *sentry.Scope) {
 					scope.SetUser(sentry.User{
@@ -240,7 +240,7 @@ func (u *auth) AuthServerMiddleWare() gin.HandlerFunc {
 
 func (u *auth) NewUserToken(steamID steamid.SteamID, cookieKey string, fingerPrint string, validDuration time.Duration) (string, error) {
 	nowTime := time.Now()
-	conf := u.configUsecase.Config()
+	conf := u.config.Config()
 	claims := domain.UserAuthClaims{
 		Fingerprint: FingerprintHash(fingerPrint),
 		RegisteredClaims: jwt.RegisteredClaims{

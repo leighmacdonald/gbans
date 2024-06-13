@@ -10,18 +10,18 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
-func NewVoteHandler(engine *gin.Engine, voteUsecase domain.VoteUsecase, authUsecase domain.AuthUsecase) {
-	handler := voteHandler{votes: voteUsecase}
+type voteHandler struct {
+	votes domain.VoteUsecase
+}
+
+func NewVoteHandler(engine *gin.Engine, votes domain.VoteUsecase, auth domain.AuthUsecase) {
+	handler := voteHandler{votes: votes}
 
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(authUsecase.AuthMiddleware(domain.PModerator))
+		mod := modGrp.Use(auth.AuthMiddleware(domain.PModerator))
 		mod.POST("/api/votes", handler.onVotes())
 	}
-}
-
-type voteHandler struct {
-	votes domain.VoteUsecase
 }
 
 func (h voteHandler) onVotes() gin.HandlerFunc {

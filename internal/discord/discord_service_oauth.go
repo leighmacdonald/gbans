@@ -12,21 +12,21 @@ import (
 )
 
 type discordOAuthHandler struct {
-	authUsecase    domain.AuthUsecase
-	configUsecase  domain.ConfigUsecase
-	personUsecase  domain.PersonUsecase
-	discordUsecase domain.DiscordOAuthUsecase
+	auth    domain.AuthUsecase
+	config  domain.ConfigUsecase
+	persons domain.PersonUsecase
+	discord domain.DiscordOAuthUsecase
 }
 
 // NewDiscordOAuthHandler provides handlers for authentication with discord connect.
-func NewDiscordOAuthHandler(engine *gin.Engine, authUsecase domain.AuthUsecase, configUsecase domain.ConfigUsecase,
-	personUsecase domain.PersonUsecase, discordUsecase domain.DiscordOAuthUsecase,
+func NewDiscordOAuthHandler(engine *gin.Engine, auth domain.AuthUsecase, config domain.ConfigUsecase,
+	persons domain.PersonUsecase, discord domain.DiscordOAuthUsecase,
 ) {
 	handler := discordOAuthHandler{
-		authUsecase:    authUsecase,
-		configUsecase:  configUsecase,
-		personUsecase:  personUsecase,
-		discordUsecase: discordUsecase,
+		auth:    auth,
+		config:  config,
+		persons: persons,
+		discord: discord,
 	}
 
 	engine.GET("/discord/oauth", handler.onOAuthDiscordCallback())
@@ -34,10 +34,10 @@ func NewDiscordOAuthHandler(engine *gin.Engine, authUsecase domain.AuthUsecase, 
 	authGrp := engine.Group("/")
 	{
 		// authed
-		auth := authGrp.Use(authUsecase.AuthMiddleware(domain.PUser))
-		auth.GET("/api/discord/login", handler.onLogin())
-		auth.GET("/api/discord/logout", handler.onLogout())
-		auth.GET("/api/discord/user", handler.onGetDiscordUser())
+		authed := authGrp.Use(auth.AuthMiddleware(domain.PUser))
+		authed.GET("/api/discord/login", handler.onLogin())
+		authed.GET("/api/discord/logout", handler.onLogout())
+		authed.GET("/api/discord/user", handler.onGetDiscordUser())
 	}
 }
 
@@ -45,7 +45,7 @@ func (h discordOAuthHandler) onLogin() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		currentUser := httphelper.CurrentUserProfile(ctx)
 
-		loginURL, errURL := h.discordUsecase.CreateStatefulLoginURL(currentUser.SteamID)
+		loginURL, errURL := h.discord.CreateStatefulLoginURL(currentUser.SteamID)
 		if errURL != nil {
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, nil)
 			slog.Error("Failed to get state from query")
@@ -63,7 +63,7 @@ func (h discordOAuthHandler) onOAuthDiscordCallback() gin.HandlerFunc {
 		code := ctx.Query("code")
 		if code == "" {
 			slog.Error("Failed to get code from query")
-			ctx.Redirect(http.StatusTemporaryRedirect, h.configUsecase.ExtURLRaw("/settings?section=connections"))
+			ctx.Redirect(http.StatusTemporaryRedirect, h.config.ExtURLRaw("/settings?section=connections"))
 
 			return
 		}
@@ -71,16 +71,16 @@ func (h discordOAuthHandler) onOAuthDiscordCallback() gin.HandlerFunc {
 		state := ctx.Query("state")
 		if state == "" {
 			slog.Error("Failed to get state from query")
-			ctx.Redirect(http.StatusTemporaryRedirect, h.configUsecase.ExtURLRaw("/settings?section=connections"))
+			ctx.Redirect(http.StatusTemporaryRedirect, h.config.ExtURLRaw("/settings?section=connections"))
 
 			return
 		}
 
-		if err := h.discordUsecase.HandleOAuthCode(ctx, code, state); err != nil {
+		if err := h.discord.HandleOAuthCode(ctx, code, state); err != nil {
 			slog.Error("Failed to get access token", log.ErrAttr(err))
 		}
 
-		ctx.Redirect(http.StatusTemporaryRedirect, h.configUsecase.ExtURLRaw("/settings?section=connections"))
+		ctx.Redirect(http.StatusTemporaryRedirect, h.config.ExtURLRaw("/settings?section=connections"))
 	}
 }
 
@@ -88,7 +88,7 @@ func (h discordOAuthHandler) onGetDiscordUser() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		user := httphelper.CurrentUserProfile(ctx)
 
-		discord, errUser := h.discordUsecase.GetUserDetail(ctx, user.SteamID)
+		discord, errUser := h.discord.GetUserDetail(ctx, user.SteamID)
 		if errUser != nil {
 			if errors.Is(errUser, domain.ErrNoResult) {
 				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
@@ -110,7 +110,7 @@ func (h discordOAuthHandler) onLogout() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		user := httphelper.CurrentUserProfile(ctx)
 
-		errUser := h.discordUsecase.Logout(ctx, user.SteamID)
+		errUser := h.discord.Logout(ctx, user.SteamID)
 		if errUser != nil {
 			if errors.Is(errUser, domain.ErrNoResult) {
 				ctx.JSON(http.StatusOK, gin.H{})

@@ -31,13 +31,13 @@ type stateUsecase struct {
 // NewStateUsecase created a interface to interact with server state and exec rcon commands
 // TODO ensure started.
 func NewStateUsecase(broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
-	repository domain.StateRepository, configUsecase domain.ConfigUsecase, serversUsecase domain.ServersUsecase,
+	repository domain.StateRepository, config domain.ConfigUsecase, servers domain.ServersUsecase,
 ) domain.StateUsecase {
 	return &stateUsecase{
 		state:       repository,
-		config:      configUsecase,
+		config:      config,
 		broadcaster: broadcaster,
-		servers:     serversUsecase,
+		servers:     servers,
 		logFileChan: make(chan domain.LogFilePayload),
 	}
 }

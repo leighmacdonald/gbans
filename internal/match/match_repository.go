@@ -16,32 +16,32 @@ import (
 )
 
 type matchRepository struct {
-	database       database.Database
-	personUsecase  domain.PersonUsecase
-	discordUsecase domain.DiscordUsecase
-	serversUsecase domain.ServersUsecase
-	stateUsecase   domain.StateUsecase
-	summarizer     *Summarizer
-	wm             fp.MutexMap[logparse.Weapon, int]
-	events         chan logparse.ServerEvent
-	broadcaster    *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
-	matchUUIDMap   fp.MutexMap[int, uuid.UUID]
+	database     database.Database
+	persons      domain.PersonUsecase
+	discord      domain.DiscordUsecase
+	servers      domain.ServersUsecase
+	state        domain.StateUsecase
+	summarizer   *Summarizer
+	wm           fp.MutexMap[logparse.Weapon, int]
+	events       chan logparse.ServerEvent
+	broadcaster  *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
+	matchUUIDMap fp.MutexMap[int, uuid.UUID]
 }
 
 func NewMatchRepository(broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
-	database database.Database, personUsecase domain.PersonUsecase, serversUsecase domain.ServersUsecase, discordUsecase domain.DiscordUsecase,
-	stu domain.StateUsecase, weaponMap fp.MutexMap[logparse.Weapon, int],
+	database database.Database, personUsecase domain.PersonUsecase, servers domain.ServersUsecase, discord domain.DiscordUsecase,
+	state domain.StateUsecase, weaponMap fp.MutexMap[logparse.Weapon, int],
 ) domain.MatchRepository {
 	matchRepo := &matchRepository{
-		database:       database,
-		personUsecase:  personUsecase,
-		serversUsecase: serversUsecase,
-		discordUsecase: discordUsecase,
-		stateUsecase:   stu,
-		wm:             weaponMap,
-		broadcaster:    broadcaster,
-		matchUUIDMap:   fp.NewMutexMap[int, uuid.UUID](),
-		events:         make(chan logparse.ServerEvent),
+		database:     database,
+		persons:      personUsecase,
+		servers:      servers,
+		discord:      discord,
+		state:        state,
+		wm:           weaponMap,
+		broadcaster:  broadcaster,
+		matchUUIDMap: fp.NewMutexMap[int, uuid.UUID](),
+		events:       make(chan logparse.ServerEvent),
 	}
 
 	matchRepo.summarizer = newMatchSummarizer(matchRepo.events, matchRepo.onMatchComplete)
@@ -60,13 +60,13 @@ func (r *matchRepository) EndMatch(endTrigger domain.MatchTrigger) {
 func (r *matchRepository) onMatchComplete(ctx context.Context, matchContext *activeMatchContext) error {
 	const minPlayers = 6
 
-	server, found := r.stateUsecase.ByServerID(matchContext.server.ServerID)
+	server, found := r.state.ByServerID(matchContext.server.ServerID)
 
 	if found && server.Name != "" {
 		matchContext.match.Title = server.Name
 	}
 
-	fullServer, err := r.serversUsecase.GetServer(ctx, server.ServerID)
+	fullServer, err := r.servers.GetServer(ctx, server.ServerID)
 	if err != nil {
 		return errors.Join(err, domain.ErrLoadServer)
 	}
@@ -96,7 +96,7 @@ func (r *matchRepository) onMatchComplete(ctx context.Context, matchContext *act
 		return errors.Join(errResult, domain.ErrLoadMatch)
 	}
 
-	go r.discordUsecase.SendPayload(domain.ChannelPublicMatchLog, discord.MatchMessage(result, ""))
+	go r.discord.SendPayload(domain.ChannelPublicMatchLog, discord.MatchMessage(result, ""))
 
 	return nil
 }
@@ -652,7 +652,7 @@ func (r *matchRepository) MatchSave(ctx context.Context, match *logparse.Match, 
 			continue
 		}
 
-		_, errPlayer := r.personUsecase.GetOrCreatePersonBySteamID(ctx, player.SteamID)
+		_, errPlayer := r.persons.GetOrCreatePersonBySteamID(ctx, player.SteamID)
 		if errPlayer != nil {
 			if errRollback := transaction.Rollback(ctx); errRollback != nil {
 				return errors.Join(errRollback, domain.ErrTxRollback)
