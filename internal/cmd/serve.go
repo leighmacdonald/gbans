@@ -134,17 +134,6 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			defer discordUsecase.Shutdown(conf.Discord.GuildID)
 
-			// // Initialize minio client object.
-			// minioClient, errMinio := minio.New(conf.S3Store.Endpoint, &minio.Options{
-			//	Creds:  credentials.NewStaticV4(conf.S3Store.AccessKey, conf.S3Store.SecretKey, ""),
-			//	Secure: conf.S3Store.SSL,
-			// })
-			// if errMinio != nil {
-			//	slog.Error("Cannot initialize minio", log.ErrAttr(errDR))
-			//
-			//	return
-			// }
-
 			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(conf, dbUsecase), configUsecase)
 
 			networkUsecase := network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(dbUsecase), personUsecase, configUsecase)

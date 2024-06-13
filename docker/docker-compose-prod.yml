@@ -42,26 +42,9 @@ services:
       timeout: 5s
       retries: 10
 
-  minio:
-    # Files are currently designed to be served from
-    image: docker.io/bitnami/minio:2023
-    restart: always
-    environment:
-      # *must* be >= 8 chars or minio will not start
-      - MINIO_ROOT_USER=gbansgbans
-      - MINIO_ROOT_PASSWORD=gbansgbans
-    ports:
-      - '127.0.0.1:9000:9000'
-      - '127.0.0.1:9001:9001'
-    volumes:
-      - 'minio_data:/bitnami/minio/data'
-    networks:
-      - prod_network
-
 volumes:
   dl_cache:
   gbans_db:
-  minio_data:
 
 networks:
   prod_network:

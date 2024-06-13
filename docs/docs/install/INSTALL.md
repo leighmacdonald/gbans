@@ -30,8 +30,6 @@ Precompiled binaries will be provided once the project is in a more stable state
 images as they are currently the only tested usecase.
 
 - [make](https://www.gnu.org/software/make/) Not strictly required but provides predefined build commands
-- [minio](https://min.io/) You will need to have set up minio access/secret keys. Other s3 compatible options should
-  work but are untested
 - [golang 1.22+](https://golang.org/) Version >=1.22 is required.
 - [PostgreSQL](https://www.postgresql.org/) Version 15 is the only version currently tested against. However, anything
   10 and up should work, ymmv.

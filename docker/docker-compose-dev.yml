@@ -40,25 +40,8 @@ services:
       timeout: 5s
       retries: 10
 
-  minio:
-    image: docker.io/bitnami/minio:2024
-    restart: always
-    environment:
-      # *must* be >= 8 chars or minio will not start
-      - MINIO_ROOT_USER=gbansgbans
-      - MINIO_ROOT_PASSWORD=gbansgbans
-    ports:
-      - '0.0.0.0:9000:9000'
-      - '0.0.0.0:9001:9001'
-    volumes:
-      - 'minio_data:/bitnami/minio/data'
-    networks:
-      - prod_network
-
 volumes:
   dl_cache:
-  minio_data:
-    driver: local
 
 networks:
   prod_network:
