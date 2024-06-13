@@ -17,24 +17,24 @@ import (
 )
 
 type contestHandler struct {
-	contestUsecase domain.ContestUsecase
-	configUsecase  domain.ConfigUsecase
-	assetUsecase   domain.AssetUsecase
+	contests domain.ContestUsecase
+	config   domain.ConfigUsecase
+	assets   domain.AssetUsecase
 }
 
-func NewContestHandler(engine *gin.Engine, cu domain.ContestUsecase,
-	configUsecase domain.ConfigUsecase, assetUsecase domain.AssetUsecase, ath domain.AuthUsecase,
+func NewContestHandler(engine *gin.Engine, contests domain.ContestUsecase,
+	config domain.ConfigUsecase, assets domain.AssetUsecase, auth domain.AuthUsecase,
 ) {
 	handler := &contestHandler{
-		contestUsecase: cu,
-		configUsecase:  configUsecase,
-		assetUsecase:   assetUsecase,
+		contests: contests,
+		config:   config,
+		assets:   assets,
 	}
 
 	// opt
 	optGrp := engine.Group("/")
 	{
-		opt := optGrp.Use(ath.AuthMiddleware(domain.PGuest))
+		opt := optGrp.Use(auth.AuthMiddleware(domain.PGuest))
 		opt.GET("/api/contests", handler.onAPIGetContests())
 		opt.GET("/api/contests/:contest_id", handler.onAPIGetContest())
 		opt.GET("/api/contests/:contest_id/entries", handler.onAPIGetContestEntries())
@@ -43,7 +43,7 @@ func NewContestHandler(engine *gin.Engine, cu domain.ContestUsecase,
 	// auth
 	authGrp := engine.Group("/")
 	{
-		authed := authGrp.Use(ath.AuthMiddleware(domain.PUser))
+		authed := authGrp.Use(auth.AuthMiddleware(domain.PUser))
 		authed.POST("/api/contests/:contest_id/upload", handler.onAPISaveContestEntryMedia())
 		authed.GET("/api/contests/:contest_id/vote/:contest_entry_id/:direction", handler.onAPISaveContestEntryVote())
 		authed.POST("/api/contests/:contest_id/submit", handler.onAPISaveContestEntrySubmit())
@@ -53,7 +53,7 @@ func NewContestHandler(engine *gin.Engine, cu domain.ContestUsecase,
 	// mods
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(ath.AuthMiddleware(domain.PModerator))
+		mod := modGrp.Use(auth.AuthMiddleware(domain.PModerator))
 		mod.POST("/api/contests", handler.onAPIPostContest())
 		mod.DELETE("/api/contests/:contest_id", handler.onAPIDeleteContest())
 		mod.PUT("/api/contests/:contest_id", handler.onAPIUpdateContest())
@@ -69,7 +69,7 @@ func (c *contestHandler) contestFromCtx(ctx *gin.Context) (domain.Contest, bool)
 	}
 
 	var contest domain.Contest
-	if errContests := c.contestUsecase.ContestByID(ctx, contestID, &contest); errContests != nil {
+	if errContests := c.contests.ContestByID(ctx, contestID, &contest); errContests != nil {
 		httphelper.HandleErrInternal(ctx)
 
 		return domain.Contest{}, false
@@ -86,7 +86,7 @@ func (c *contestHandler) contestFromCtx(ctx *gin.Context) (domain.Contest, bool)
 
 func (c *contestHandler) onAPIGetContests() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		contests, errContests := c.contestUsecase.Contests(ctx, httphelper.CurrentUserProfile(ctx))
+		contests, errContests := c.contests.Contests(ctx, httphelper.CurrentUserProfile(ctx))
 
 		if errContests != nil {
 			httphelper.HandleErrInternal(ctx)
@@ -117,7 +117,7 @@ func (c *contestHandler) onAPIGetContestEntries() gin.HandlerFunc {
 			return
 		}
 
-		entries, errEntries := c.contestUsecase.ContestEntries(ctx, contest.ContestID)
+		entries, errEntries := c.contests.ContestEntries(ctx, contest.ContestID)
 		if errEntries != nil {
 			httphelper.HandleErrInternal(ctx)
 			slog.Error("Failed to fetch contest entries", log.ErrAttr(errEntries))
@@ -136,7 +136,7 @@ func (c *contestHandler) onAPIPostContest() gin.HandlerFunc {
 			return
 		}
 
-		contest, errSave := c.contestUsecase.ContestSave(ctx, newContest)
+		contest, errSave := c.contests.ContestSave(ctx, newContest)
 		if errSave != nil {
 			httphelper.ErrorHandled(ctx, errSave)
 
@@ -159,7 +159,7 @@ func (c *contestHandler) onAPIDeleteContest() gin.HandlerFunc {
 
 		var contest domain.Contest
 
-		if errContest := c.contestUsecase.ContestByID(ctx, contestID, &contest); errContest != nil {
+		if errContest := c.contests.ContestByID(ctx, contestID, &contest); errContest != nil {
 			if errors.Is(errContest, domain.ErrNoResult) {
 				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrUnknownID)
 
@@ -172,7 +172,7 @@ func (c *contestHandler) onAPIDeleteContest() gin.HandlerFunc {
 			return
 		}
 
-		if errDelete := c.contestUsecase.ContestDelete(ctx, contest.ContestID); errDelete != nil {
+		if errDelete := c.contests.ContestDelete(ctx, contest.ContestID); errDelete != nil {
 			httphelper.HandleErrInternal(ctx)
 			slog.Error("Error deleting contest", log.ErrAttr(errDelete))
 
@@ -194,7 +194,7 @@ func (c *contestHandler) onAPIUpdateContest() gin.HandlerFunc {
 			return
 		}
 
-		contest, errSave := c.contestUsecase.ContestSave(ctx, req)
+		contest, errSave := c.contests.ContestSave(ctx, req)
 		if errSave != nil {
 			httphelper.ErrorHandled(ctx, errSave)
 			slog.Error("Error updating contest", log.ErrAttr(errSave))
@@ -245,7 +245,7 @@ func (c *contestHandler) onAPISaveContestEntryMedia() gin.HandlerFunc {
 
 		authorID := httphelper.CurrentUserProfile(ctx).SteamID
 
-		asset, errCreate := c.assetUsecase.Create(ctx, authorID, "media", req.Name, mediaFile)
+		asset, errCreate := c.assets.Create(ctx, authorID, "media", req.Name, mediaFile)
 		if errHandle := httphelper.ErrorHandledWithReturn(ctx, errCreate); errHandle != nil {
 			slog.Error("Failed to save user contest media", log.ErrAttr(errHandle))
 
@@ -290,7 +290,7 @@ func (c *contestHandler) onAPISaveContestEntryVote() gin.HandlerFunc {
 			return
 		}
 
-		if errVote := c.contestUsecase.ContestEntryVote(ctx, contestID, contestEntryID, httphelper.CurrentUserProfile(ctx), direction == "up"); errVote != nil {
+		if errVote := c.contests.ContestEntryVote(ctx, contestID, contestEntryID, httphelper.CurrentUserProfile(ctx), direction == "up"); errVote != nil {
 			if errors.Is(errVote, domain.ErrVoteDeleted) {
 				ctx.JSON(http.StatusOK, voteResult{""})
 
@@ -325,7 +325,7 @@ func (c *contestHandler) onAPISaveContestEntrySubmit() gin.HandlerFunc {
 			return
 		}
 
-		existingEntries, errEntries := c.contestUsecase.ContestEntries(ctx, contest.ContestID)
+		existingEntries, errEntries := c.contests.ContestEntries(ctx, contest.ContestID)
 		if errEntries != nil && !errors.Is(errEntries, domain.ErrNoResult) {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrContestLoadEntries)
 
@@ -348,7 +348,7 @@ func (c *contestHandler) onAPISaveContestEntrySubmit() gin.HandlerFunc {
 
 		steamID := httphelper.CurrentUserProfile(ctx).SteamID
 
-		asset, _, errAsset := c.assetUsecase.Get(ctx, req.AssetID)
+		asset, _, errAsset := c.assets.Get(ctx, req.AssetID)
 		if errAsset != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrEntryCreate)
 
@@ -368,7 +368,7 @@ func (c *contestHandler) onAPISaveContestEntrySubmit() gin.HandlerFunc {
 			return
 		}
 
-		if errSave := c.contestUsecase.ContestEntrySave(ctx, entry); errSave != nil {
+		if errSave := c.contests.ContestEntrySave(ctx, entry); errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrEntrySave)
 
 			return
@@ -393,7 +393,7 @@ func (c *contestHandler) onAPIDeleteContestEntry() gin.HandlerFunc {
 
 		var entry domain.ContestEntry
 
-		if errContest := c.contestUsecase.ContestEntry(ctx, contestEntryID, &entry); errContest != nil {
+		if errContest := c.contests.ContestEntry(ctx, contestEntryID, &entry); errContest != nil {
 			if errors.Is(errContest, domain.ErrNoResult) {
 				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrUnknownID)
 
@@ -416,7 +416,7 @@ func (c *contestHandler) onAPIDeleteContestEntry() gin.HandlerFunc {
 
 		var contest domain.Contest
 
-		if errContest := c.contestUsecase.ContestByID(ctx, entry.ContestID, &contest); errContest != nil {
+		if errContest := c.contests.ContestByID(ctx, entry.ContestID, &contest); errContest != nil {
 			if errors.Is(errContest, domain.ErrNoResult) {
 				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrUnknownID)
 
@@ -439,7 +439,7 @@ func (c *contestHandler) onAPIDeleteContestEntry() gin.HandlerFunc {
 			return
 		}
 
-		if errDelete := c.contestUsecase.ContestEntryDelete(ctx, entry.ContestEntryID); errDelete != nil {
+		if errDelete := c.contests.ContestEntryDelete(ctx, entry.ContestEntryID); errDelete != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			slog.Error("Error deleting contest entry", log.ErrAttr(errDelete))

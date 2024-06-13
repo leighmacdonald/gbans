@@ -21,12 +21,12 @@ type banNet struct {
 	state      domain.StateUsecase
 }
 
-func NewBanNetUsecase(repository domain.BanNetRepository, personUsecase domain.PersonUsecase,
-	configUsecase domain.ConfigUsecase, discordUsecase domain.DiscordUsecase, stateUsecase domain.StateUsecase,
+func NewBanNetUsecase(repository domain.BanNetRepository, persons domain.PersonUsecase,
+	config domain.ConfigUsecase, discord domain.DiscordUsecase, state domain.StateUsecase,
 ) domain.BanNetUsecase {
 	return &banNet{
-		repository: repository, persons: personUsecase, config: configUsecase,
-		discord: discordUsecase, state: stateUsecase,
+		repository: repository, persons: persons, config: config,
+		discord: discord, state: state,
 	}
 }
 

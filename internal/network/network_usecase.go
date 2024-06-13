@@ -19,20 +19,20 @@ import (
 )
 
 type networkUsecase struct {
-	nr     domain.NetworkRepository
-	pu     domain.PersonUsecase
-	config domain.ConfigUsecase
-	eb     *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
+	repository domain.NetworkRepository
+	persons    domain.PersonUsecase
+	config     domain.ConfigUsecase
+	eb         *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 }
 
 func NewNetworkUsecase(broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
-	repository domain.NetworkRepository, personUsecase domain.PersonUsecase, config domain.ConfigUsecase,
+	repository domain.NetworkRepository, persons domain.PersonUsecase, config domain.ConfigUsecase,
 ) domain.NetworkUsecase {
 	return networkUsecase{
-		nr:     repository,
-		eb:     broadcaster,
-		pu:     personUsecase,
-		config: config,
+		repository: repository,
+		eb:         broadcaster,
+		persons:    persons,
+		config:     config,
 	}
 }
 
@@ -68,7 +68,7 @@ func (u networkUsecase) Start(ctx context.Context) {
 			}
 
 			// Maybe ignore these and wait for connect call to create?
-			_, errPerson := u.pu.GetOrCreatePersonBySteamID(ctx, newServerEvent.SID)
+			_, errPerson := u.persons.GetOrCreatePersonBySteamID(ctx, newServerEvent.SID)
 			if errPerson != nil && !errors.Is(errPerson, domain.ErrDuplicate) {
 				slog.Error("Failed to fetch connecting person", slog.String("steam_id", newServerEvent.SID.String()), log.ErrAttr(errPerson))
 
@@ -84,7 +84,7 @@ func (u networkUsecase) Start(ctx context.Context) {
 			}
 
 			lCtx, cancel := context.WithTimeout(ctx, time.Second*5)
-			if errChat := u.nr.AddConnectionHistory(lCtx, &conn); errChat != nil {
+			if errChat := u.repository.AddConnectionHistory(lCtx, &conn); errChat != nil {
 				slog.Error("Failed to add connection history", log.ErrAttr(errChat))
 			}
 
@@ -94,11 +94,11 @@ func (u networkUsecase) Start(ctx context.Context) {
 }
 
 func (u networkUsecase) AddConnectionHistory(ctx context.Context, conn *domain.PersonConnection) error {
-	return u.nr.AddConnectionHistory(ctx, conn)
+	return u.repository.AddConnectionHistory(ctx, conn)
 }
 
 func (u networkUsecase) GetASNRecordsByNum(ctx context.Context, asNum int64) ([]domain.NetworkASN, error) {
-	return u.nr.GetASNRecordsByNum(ctx, asNum)
+	return u.repository.GetASNRecordsByNum(ctx, asNum)
 }
 
 func (u networkUsecase) importDatabase(ctx context.Context, dbName ip2location.DatabaseFile) error {
@@ -107,11 +107,11 @@ func (u networkUsecase) importDatabase(ctx context.Context, dbName ip2location.D
 
 	switch dbName {
 	case ip2location.GeoDatabaseLocationFile4:
-		return ip2location.ReadLocationRecords(ctx, filePath, false, u.nr.LoadLocation)
+		return ip2location.ReadLocationRecords(ctx, filePath, false, u.repository.LoadLocation)
 	case ip2location.GeoDatabaseASNFile4:
-		return ip2location.ReadASNRecords(ctx, filePath, false, u.nr.LoadASN)
+		return ip2location.ReadASNRecords(ctx, filePath, false, u.repository.LoadASN)
 	case ip2location.GeoDatabaseProxyFile:
-		return ip2location.ReadProxyRecords(ctx, filePath, u.nr.LoadProxies)
+		return ip2location.ReadProxyRecords(ctx, filePath, u.repository.LoadProxies)
 	default:
 		return domain.ErrNetworkLocationUnknown
 	}
@@ -134,11 +134,11 @@ func (u networkUsecase) RefreshLocationData(ctx context.Context) error {
 }
 
 func (u networkUsecase) GetPersonIPHistory(ctx context.Context, sid64 steamid.SteamID, limit uint64) (domain.PersonConnections, error) {
-	return u.nr.GetPersonIPHistory(ctx, sid64, limit)
+	return u.repository.GetPersonIPHistory(ctx, sid64, limit)
 }
 
 func (u networkUsecase) GetPlayerMostRecentIP(ctx context.Context, steamID steamid.SteamID) net.IP {
-	return u.nr.GetPlayerMostRecentIP(ctx, steamID)
+	return u.repository.GetPlayerMostRecentIP(ctx, steamID)
 }
 
 func (u networkUsecase) QueryConnectionHistory(ctx context.Context, opts domain.ConnectionHistoryQuery) ([]domain.PersonConnection, int64, error) {
@@ -169,7 +169,7 @@ func (u networkUsecase) QueryConnectionHistory(ctx context.Context, opts domain.
 		return nil, 0, domain.ErrMissingParam
 	}
 
-	return u.nr.QueryConnections(ctx, opts)
+	return u.repository.QueryConnections(ctx, opts)
 }
 
 func (u networkUsecase) QueryNetwork(ctx context.Context, address netip.Addr) (domain.NetworkDetails, error) {
@@ -179,21 +179,21 @@ func (u networkUsecase) QueryNetwork(ctx context.Context, address netip.Addr) (d
 		return details, domain.ErrNetworkInvalidIP
 	}
 
-	location, errLocation := u.nr.GetLocationRecord(ctx, address)
+	location, errLocation := u.repository.GetLocationRecord(ctx, address)
 	if errLocation != nil {
 		return details, errors.Join(errLocation, domain.ErrNetworkLocationUnknown)
 	}
 
 	details.Location = location
 
-	asn, errASN := u.nr.GetASNRecordByIP(ctx, address)
+	asn, errASN := u.repository.GetASNRecordByIP(ctx, address)
 	if errASN != nil {
 		return details, errors.Join(errASN, domain.ErrNetworkASNUnknown)
 	}
 
 	details.Asn = asn
 
-	proxy, errProxy := u.nr.GetProxyRecord(ctx, address)
+	proxy, errProxy := u.repository.GetProxyRecord(ctx, address)
 	if errProxy != nil && !errors.Is(errProxy, domain.ErrNoResult) {
 		return details, errors.Join(errProxy, domain.ErrNetworkProxyUnknown)
 	}

@@ -12,16 +12,16 @@ import (
 )
 
 type wordFilterUsecase struct {
-	filterRepository domain.WordFilterRepository
-	wordFilters      *WordFilters
+	repository  domain.WordFilterRepository
+	wordFilters *WordFilters
 }
 
-func NewWordFilterUsecase(filterRepository domain.WordFilterRepository) domain.WordFilterUsecase {
-	return &wordFilterUsecase{filterRepository: filterRepository, wordFilters: NewWordFilters()}
+func NewWordFilterUsecase(repository domain.WordFilterRepository) domain.WordFilterUsecase {
+	return &wordFilterUsecase{repository: repository, wordFilters: NewWordFilters()}
 }
 
 func (w *wordFilterUsecase) Import(ctx context.Context) error {
-	filters, errFilters := w.filterRepository.GetFilters(ctx)
+	filters, errFilters := w.repository.GetFilters(ctx)
 	if errFilters != nil && !errors.Is(errFilters, domain.ErrNoResult) {
 		return errFilters
 	}
@@ -36,7 +36,7 @@ func (w *wordFilterUsecase) Check(query string) []domain.Filter {
 }
 
 func (w *wordFilterUsecase) Edit(ctx context.Context, user domain.PersonInfo, filterID int64, filter domain.Filter) (domain.Filter, error) {
-	existingFilter, errGet := w.filterRepository.GetFilterByID(ctx, filterID)
+	existingFilter, errGet := w.repository.GetFilterByID(ctx, filterID)
 	if errGet != nil {
 		return domain.Filter{}, errGet
 	}
@@ -50,7 +50,7 @@ func (w *wordFilterUsecase) Edit(ctx context.Context, user domain.PersonInfo, fi
 	existingFilter.Duration = filter.Duration
 	existingFilter.Weight = filter.Weight
 
-	if errSave := w.filterRepository.SaveFilter(ctx, &existingFilter); errSave != nil {
+	if errSave := w.repository.SaveFilter(ctx, &existingFilter); errSave != nil {
 		return domain.Filter{}, errSave
 	}
 
@@ -94,7 +94,7 @@ func (w *wordFilterUsecase) Create(ctx context.Context, user domain.PersonInfo, 
 		Weight:    opts.Weight,
 	}
 
-	if errSave := w.filterRepository.SaveFilter(ctx, &newFilter); errSave != nil {
+	if errSave := w.repository.SaveFilter(ctx, &newFilter); errSave != nil {
 		if errors.Is(errSave, domain.ErrDuplicate) {
 			return domain.Filter{}, domain.ErrDuplicate
 		}
@@ -112,7 +112,7 @@ func (w *wordFilterUsecase) Create(ctx context.Context, user domain.PersonInfo, 
 }
 
 func (w *wordFilterUsecase) DropFilter(ctx context.Context, filter domain.Filter) error {
-	if err := w.filterRepository.DropFilter(ctx, filter); err != nil {
+	if err := w.repository.DropFilter(ctx, filter); err != nil {
 		return err
 	}
 
@@ -122,13 +122,13 @@ func (w *wordFilterUsecase) DropFilter(ctx context.Context, filter domain.Filter
 }
 
 func (w *wordFilterUsecase) GetFilterByID(ctx context.Context, filterID int64) (domain.Filter, error) {
-	return w.filterRepository.GetFilterByID(ctx, filterID)
+	return w.repository.GetFilterByID(ctx, filterID)
 }
 
 func (w *wordFilterUsecase) GetFilters(ctx context.Context) ([]domain.Filter, error) {
-	return w.filterRepository.GetFilters(ctx)
+	return w.repository.GetFilters(ctx)
 }
 
 func (w *wordFilterUsecase) AddMessageFilterMatch(ctx context.Context, messageID int64, filterID int64) error {
-	return w.filterRepository.AddMessageFilterMatch(ctx, messageID, filterID)
+	return w.repository.AddMessageFilterMatch(ctx, messageID, filterID)
 }

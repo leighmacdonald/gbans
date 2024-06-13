@@ -18,11 +18,11 @@ import (
 )
 
 type assets struct {
-	assetRepository domain.AssetRepository
+	repository domain.AssetRepository
 }
 
 func NewAssetUsecase(assetRepository domain.AssetRepository) domain.AssetUsecase {
-	return &assets{assetRepository: assetRepository}
+	return &assets{repository: assetRepository}
 }
 
 func (s assets) Create(ctx context.Context, author steamid.SteamID, bucket domain.Bucket, fileName string, content io.ReadSeeker) (domain.Asset, error) {
@@ -44,7 +44,7 @@ func (s assets) Create(ctx context.Context, author steamid.SteamID, bucket domai
 		return domain.Asset{}, errAsset
 	}
 
-	newAsset, errPut := s.assetRepository.Put(ctx, asset, content)
+	newAsset, errPut := s.repository.Put(ctx, asset, content)
 	if errPut != nil {
 		return domain.Asset{}, errPut
 	}
@@ -60,7 +60,7 @@ func (s assets) Get(ctx context.Context, uuid uuid.UUID) (domain.Asset, io.ReadS
 		return domain.Asset{}, nil, domain.ErrUUIDInvalid
 	}
 
-	asset, reader, errAsset := s.assetRepository.Get(ctx, uuid)
+	asset, reader, errAsset := s.repository.Get(ctx, uuid)
 	if errAsset != nil {
 		return asset, nil, errAsset
 	}
@@ -73,7 +73,7 @@ func (s assets) Delete(ctx context.Context, assetID uuid.UUID) (int64, error) {
 		return 0, domain.ErrUUIDInvalid
 	}
 
-	size, err := s.assetRepository.Delete(ctx, assetID)
+	size, err := s.repository.Delete(ctx, assetID)
 	if err != nil {
 		return 0, err
 	}

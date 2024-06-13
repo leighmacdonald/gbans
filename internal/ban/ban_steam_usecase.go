@@ -25,17 +25,16 @@ type banSteamUsecase struct {
 	reports domain.ReportUsecase
 }
 
-func NewBanSteamUsecase(repository domain.BanSteamRepository, personUsecase domain.PersonUsecase,
-	configUsecase domain.ConfigUsecase, discordUsecase domain.DiscordUsecase,
-	reportUsecase domain.ReportUsecase, stateUsecase domain.StateUsecase,
+func NewBanSteamUsecase(repository domain.BanSteamRepository, person domain.PersonUsecase,
+	config domain.ConfigUsecase, discord domain.DiscordUsecase, reports domain.ReportUsecase, state domain.StateUsecase,
 ) domain.BanSteamUsecase {
 	return &banSteamUsecase{
 		banRepo: repository,
-		persons: personUsecase,
-		config:  configUsecase,
-		discord: discordUsecase,
-		reports: reportUsecase,
-		state:   stateUsecase,
+		persons: person,
+		config:  config,
+		discord: discord,
+		reports: reports,
+		state:   state,
 	}
 }
 

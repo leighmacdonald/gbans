@@ -13,27 +13,27 @@ import (
 )
 
 type voteUsecase struct {
-	votes       domain.VoteRepository
+	repository  domain.VoteRepository
 	persons     domain.PersonUsecase
 	matches     domain.MatchUsecase
 	discord     domain.DiscordUsecase
 	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 }
 
-func NewVoteUsecase(voteRepository domain.VoteRepository, personUsecase domain.PersonUsecase, matchUsecase domain.MatchUsecase,
-	discordUsecase domain.DiscordUsecase, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
+func NewVoteUsecase(repository domain.VoteRepository, persons domain.PersonUsecase, matched domain.MatchUsecase,
+	discord domain.DiscordUsecase, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
 ) domain.VoteUsecase {
 	return &voteUsecase{
-		votes:       voteRepository,
-		persons:     personUsecase,
-		matches:     matchUsecase,
-		discord:     discordUsecase,
+		repository:  repository,
+		persons:     persons,
+		matches:     matched,
+		discord:     discord,
 		broadcaster: broadcaster,
 	}
 }
 
 func (u voteUsecase) Query(ctx context.Context, filter domain.VoteQueryFilter) ([]domain.VoteResult, int64, error) {
-	return u.votes.Query(ctx, filter)
+	return u.repository.Query(ctx, filter)
 }
 
 // Start will begin ingesting vote events and record them to the database.
@@ -149,7 +149,7 @@ func (u voteUsecase) Start(ctx context.Context) {
 					continue
 				}
 
-				if err := u.votes.AddResult(ctx, result); err != nil {
+				if err := u.repository.AddResult(ctx, result); err != nil {
 					slog.Error("Failed to add vote result", log.ErrAttr(err))
 				}
 

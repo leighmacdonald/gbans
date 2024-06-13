@@ -17,17 +17,17 @@ type wordFilterHandler struct {
 	config  domain.ConfigUsecase
 }
 
-func NewWordFilterHandler(engine *gin.Engine, confUsecase domain.ConfigUsecase, wfu domain.WordFilterUsecase, cu domain.ChatUsecase, ath domain.AuthUsecase) {
+func NewWordFilterHandler(engine *gin.Engine, config domain.ConfigUsecase, wordFilters domain.WordFilterUsecase, chat domain.ChatUsecase, auth domain.AuthUsecase) {
 	handler := wordFilterHandler{
-		config:  confUsecase,
-		filters: wfu,
-		chat:    cu,
+		config:  config,
+		filters: wordFilters,
+		chat:    chat,
 	}
 
 	// editor
 	modGroup := engine.Group("/")
 	{
-		mod := modGroup.Use(ath.AuthMiddleware(domain.PModerator))
+		mod := modGroup.Use(auth.AuthMiddleware(domain.PModerator))
 		mod.POST("/api/filters/query", handler.queryFilters())
 		mod.GET("/api/filters/state", handler.filterStates())
 		mod.POST("/api/filters", handler.createFilter())

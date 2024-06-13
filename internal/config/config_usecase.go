@@ -21,22 +21,22 @@ import (
 )
 
 type configUsecase struct {
-	configRepo    domain.ConfigRepository
+	repository    domain.ConfigRepository
 	static        domain.StaticConfig
 	configMu      sync.RWMutex
 	currentConfig domain.Config
 }
 
 func NewConfigUsecase(static domain.StaticConfig, repository domain.ConfigRepository) domain.ConfigUsecase {
-	return &configUsecase{static: static, configRepo: repository}
+	return &configUsecase{static: static, repository: repository}
 }
 
 func (c *configUsecase) Init(ctx context.Context) error {
-	return c.configRepo.Init(ctx)
+	return c.repository.Init(ctx)
 }
 
 func (c *configUsecase) Write(ctx context.Context, config domain.Config) error {
-	if err := c.configRepo.Write(ctx, config); err != nil {
+	if err := c.repository.Write(ctx, config); err != nil {
 		slog.Error("Failed to write new config", log.ErrAttr(err))
 
 		return err
@@ -69,7 +69,7 @@ func (c *configUsecase) Config() domain.Config {
 }
 
 func (c *configUsecase) Reload(ctx context.Context) error {
-	config, errConfig := c.configRepo.Read(ctx)
+	config, errConfig := c.repository.Read(ctx)
 	if errConfig != nil {
 		return errConfig
 	}

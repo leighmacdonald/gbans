@@ -8,11 +8,11 @@ import (
 )
 
 type serversUsecase struct {
-	serversRepo domain.ServersRepository
+	servers domain.ServersRepository
 }
 
 func NewServersUsecase(repository domain.ServersRepository) domain.ServersUsecase {
-	return &serversUsecase{serversRepo: repository}
+	return &serversUsecase{servers: repository}
 }
 
 func (s *serversUsecase) GetServer(ctx context.Context, serverID int) (domain.Server, error) {
@@ -20,29 +20,29 @@ func (s *serversUsecase) GetServer(ctx context.Context, serverID int) (domain.Se
 		return domain.Server{}, domain.ErrGetServer
 	}
 
-	return s.serversRepo.GetServer(ctx, serverID)
+	return s.servers.GetServer(ctx, serverID)
 }
 
 func (s *serversUsecase) GetServerPermissions(ctx context.Context) ([]domain.ServerPermission, error) {
-	return s.serversRepo.GetServerPermissions(ctx)
+	return s.servers.GetServerPermissions(ctx)
 }
 
 func (s *serversUsecase) GetServers(ctx context.Context, filter domain.ServerQueryFilter) ([]domain.Server, int64, error) {
-	return s.serversRepo.GetServers(ctx, filter)
+	return s.servers.GetServers(ctx, filter)
 }
 
 func (s *serversUsecase) GetServerByName(ctx context.Context, serverName string, server *domain.Server, disabledOk bool, deletedOk bool) error {
-	return s.serversRepo.GetServerByName(ctx, serverName, server, disabledOk, deletedOk)
+	return s.servers.GetServerByName(ctx, serverName, server, disabledOk, deletedOk)
 }
 
 func (s *serversUsecase) GetServerByPassword(ctx context.Context, serverPassword string, server *domain.Server, disabledOk bool, deletedOk bool) error {
-	return s.serversRepo.GetServerByPassword(ctx, serverPassword, server, disabledOk, deletedOk)
+	return s.servers.GetServerByPassword(ctx, serverPassword, server, disabledOk, deletedOk)
 }
 
 func (s *serversUsecase) SaveServer(ctx context.Context, server *domain.Server) error {
 	isNew := server.ServerID == 0
 
-	if err := s.serversRepo.SaveServer(ctx, server); err != nil {
+	if err := s.servers.SaveServer(ctx, server); err != nil {
 		return err
 	}
 

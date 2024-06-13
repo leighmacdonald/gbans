@@ -245,7 +245,7 @@ func (h reportHandler) onAPIGetReport() gin.HandlerFunc {
 }
 
 func (r reportUsecase) GetReportBySteamID(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID) (domain.Report, error) {
-	return r.rr.GetReportBySteamID(ctx, authorID, steamID)
+	return r.repository.GetReportBySteamID(ctx, authorID, steamID)
 }
 
 func (h reportHandler) onAPIGetUserReports() gin.HandlerFunc {

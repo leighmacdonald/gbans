@@ -11,28 +11,28 @@ import (
 )
 
 type discordUsecase struct {
-	dr  domain.DiscordRepository
-	wfu domain.WordFilterUsecase
+	repository  domain.DiscordRepository
+	wordFilters domain.WordFilterUsecase
 }
 
-func NewDiscordUsecase(repository domain.DiscordRepository, wfu domain.WordFilterUsecase) domain.DiscordUsecase {
-	return &discordUsecase{dr: repository, wfu: wfu}
+func NewDiscordUsecase(repository domain.DiscordRepository, wordFilters domain.WordFilterUsecase) domain.DiscordUsecase {
+	return &discordUsecase{repository: repository, wordFilters: wordFilters}
 }
 
 func (d discordUsecase) Shutdown(guildID string) {
-	d.dr.Shutdown(guildID)
+	d.repository.Shutdown(guildID)
 }
 
 func (d discordUsecase) RegisterHandler(cmd domain.Cmd, handler domain.SlashCommandHandler) error {
-	return d.dr.RegisterHandler(cmd, handler)
+	return d.repository.RegisterHandler(cmd, handler)
 }
 
 func (d discordUsecase) Start() error {
-	return d.dr.Start()
+	return d.repository.Start()
 }
 
 func (d discordUsecase) SendPayload(channelID domain.DiscordChannel, embed *discordgo.MessageEmbed) {
-	d.dr.SendPayload(channelID, embed)
+	d.repository.SendPayload(channelID, embed)
 }
 
 func (d discordUsecase) FilterAdd(ctx context.Context, user domain.PersonInfo, pattern string, isRegex bool) (*discordgo.MessageEmbed, error) {
@@ -52,7 +52,7 @@ func (d discordUsecase) FilterAdd(ctx context.Context, user domain.PersonInfo, p
 		UpdatedOn: time.Now(),
 	}
 
-	filter, errFilterAdd := d.wfu.Create(ctx, user, newFilter)
+	filter, errFilterAdd := d.wordFilters.Create(ctx, user, newFilter)
 
 	if errFilterAdd != nil {
 		return nil, domain.ErrCommandFailed

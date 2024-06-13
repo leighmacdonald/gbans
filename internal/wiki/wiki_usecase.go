@@ -10,11 +10,11 @@ import (
 )
 
 type wikiUsecase struct {
-	wikiRepo domain.WikiRepository
+	repository domain.WikiRepository
 }
 
 func NewWikiUsecase(repository domain.WikiRepository) domain.WikiUsecase {
-	return &wikiUsecase{wikiRepo: repository}
+	return &wikiUsecase{repository: repository}
 }
 
 func (w *wikiUsecase) GetWikiPageBySlug(ctx context.Context, user domain.PersonInfo, slug string) (domain.WikiPage, error) {
@@ -23,7 +23,7 @@ func (w *wikiUsecase) GetWikiPageBySlug(ctx context.Context, user domain.PersonI
 		slug = slug[1:]
 	}
 
-	page, errGetWikiSlug := w.wikiRepo.GetWikiPageBySlug(ctx, slug)
+	page, errGetWikiSlug := w.repository.GetWikiPageBySlug(ctx, slug)
 	if errGetWikiSlug != nil {
 		return page, errGetWikiSlug
 	}
@@ -36,7 +36,7 @@ func (w *wikiUsecase) GetWikiPageBySlug(ctx context.Context, user domain.PersonI
 }
 
 func (w *wikiUsecase) DeleteWikiPageBySlug(ctx context.Context, slug string) error {
-	return w.wikiRepo.DeleteWikiPageBySlug(ctx, slug)
+	return w.repository.DeleteWikiPageBySlug(ctx, slug)
 }
 
 func (w *wikiUsecase) SaveWikiPage(ctx context.Context, user domain.PersonInfo, slug string, body string, level domain.Privilege) (domain.WikiPage, error) {
@@ -60,7 +60,7 @@ func (w *wikiUsecase) SaveWikiPage(ctx context.Context, user domain.PersonInfo, 
 	page.PermissionLevel = level
 	page.BodyMD = body
 
-	if errSave := w.wikiRepo.SaveWikiPage(ctx, &page); errSave != nil {
+	if errSave := w.repository.SaveWikiPage(ctx, &page); errSave != nil {
 		return page, errSave
 	}
 

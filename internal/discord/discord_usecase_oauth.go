@@ -17,16 +17,16 @@ import (
 )
 
 type discordOAuthUsecase struct {
-	configUsecase domain.ConfigUsecase
-	stateTracker  *util.LoginStateTracker
-	repository    domain.DiscordOAuthRepository
+	config     domain.ConfigUsecase
+	state      *util.LoginStateTracker
+	repository domain.DiscordOAuthRepository
 }
 
-func NewDiscordOAuthUsecase(repository domain.DiscordOAuthRepository, configUsecase domain.ConfigUsecase) domain.DiscordOAuthUsecase {
+func NewDiscordOAuthUsecase(repository domain.DiscordOAuthRepository, config domain.ConfigUsecase) domain.DiscordOAuthUsecase {
 	return &discordOAuthUsecase{
-		repository:    repository,
-		configUsecase: configUsecase,
-		stateTracker:  util.NewLoginStateTracker(),
+		repository: repository,
+		config:     config,
+		state:      util.NewLoginStateTracker(),
 	}
 }
 
@@ -78,7 +78,7 @@ func (d discordOAuthUsecase) RefreshOldTokens(ctx context.Context) {
 }
 
 func (d discordOAuthUsecase) fetchRefresh(ctx context.Context, credentials domain.DiscordCredential) (domain.DiscordCredential, error) {
-	conf := d.configUsecase.Config()
+	conf := d.config.Config()
 
 	form := url.Values{}
 	form.Set("client_id", conf.Discord.AppID)
@@ -145,7 +145,7 @@ func (d discordOAuthUsecase) Logout(ctx context.Context, steamID steamid.SteamID
 		return nil
 	}
 
-	conf := d.configUsecase.Config()
+	conf := d.config.Config()
 
 	form := url.Values{}
 	form.Set("client_id", conf.Discord.AppID)
@@ -173,7 +173,7 @@ func (d discordOAuthUsecase) Logout(ctx context.Context, steamID steamid.SteamID
 }
 
 func (d discordOAuthUsecase) CreateStatefulLoginURL(steamID steamid.SteamID) (string, error) {
-	config := d.configUsecase.Config()
+	config := d.config.Config()
 
 	inviteLink, errParse := url.Parse("https://discord.com/oauth2/authorize")
 	if errParse != nil {
@@ -183,7 +183,7 @@ func (d discordOAuthUsecase) CreateStatefulLoginURL(steamID steamid.SteamID) (st
 	values := inviteLink.Query()
 	values.Set("client_id", config.Discord.AppID)
 	values.Set("scope", "identify")
-	values.Set("state", d.stateTracker.Create(steamID))
+	values.Set("state", d.state.Create(steamID))
 	values.Set("redirect_uri", config.ExtURLRaw("/discord/oauth"))
 	values.Set("response_type", "code")
 
@@ -195,7 +195,7 @@ func (d discordOAuthUsecase) CreateStatefulLoginURL(steamID steamid.SteamID) (st
 func (d discordOAuthUsecase) HandleOAuthCode(ctx context.Context, code string, state string) error {
 	client := util.NewHTTPClient()
 
-	steamID, found := d.stateTracker.Get(state)
+	steamID, found := d.state.Get(state)
 	if !found {
 		return domain.ErrNotFound
 	}
@@ -262,7 +262,7 @@ func (d discordOAuthUsecase) fetchDiscordUser(ctx context.Context, client *http.
 }
 
 func (d discordOAuthUsecase) fetchToken(ctx context.Context, client *http.Client, code string) (domain.DiscordCredential, error) {
-	conf := d.configUsecase.Config()
+	conf := d.config.Config()
 
 	form := url.Values{}
 	form.Set("client_id", conf.Discord.AppID)

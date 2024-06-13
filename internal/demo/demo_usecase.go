@@ -25,15 +25,15 @@ type demoUsecase struct {
 	cleanupChan chan any
 }
 
-func NewDemoUsecase(bucket domain.Bucket, demoRepository domain.DemoRepository, assetUsecase domain.AssetUsecase,
-	configUsecase domain.ConfigUsecase, serversUsecase domain.ServersUsecase,
+func NewDemoUsecase(bucket domain.Bucket, repository domain.DemoRepository, assets domain.AssetUsecase,
+	config domain.ConfigUsecase, servers domain.ServersUsecase,
 ) domain.DemoUsecase {
 	return &demoUsecase{
 		bucket:      bucket,
-		repository:  demoRepository,
-		asset:       assetUsecase,
-		config:      configUsecase,
-		servers:     serversUsecase,
+		repository:  repository,
+		asset:       assets,
+		config:      config,
+		servers:     servers,
 		cleanupChan: make(chan any),
 	}
 }

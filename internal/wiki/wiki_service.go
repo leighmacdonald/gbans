@@ -9,11 +9,11 @@ import (
 )
 
 type wikiHandler struct {
-	wikiUsecase domain.WikiUsecase
+	wiki domain.WikiUsecase
 }
 
-func NewWIkiHandler(engine *gin.Engine, wikiUsecase domain.WikiUsecase, ath domain.AuthUsecase) {
-	handler := &wikiHandler{wikiUsecase: wikiUsecase}
+func NewWIkiHandler(engine *gin.Engine, wiki domain.WikiUsecase, ath domain.AuthUsecase) {
+	handler := &wikiHandler{wiki: wiki}
 
 	// optional
 	optGrp := engine.Group("/")
@@ -32,7 +32,7 @@ func NewWIkiHandler(engine *gin.Engine, wikiUsecase domain.WikiUsecase, ath doma
 
 func (w *wikiHandler) onAPIGetWikiSlug() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		page, err := w.wikiUsecase.GetWikiPageBySlug(ctx, httphelper.CurrentUserProfile(ctx), ctx.Param("slug"))
+		page, err := w.wiki.GetWikiPageBySlug(ctx, httphelper.CurrentUserProfile(ctx), ctx.Param("slug"))
 		if err != nil {
 			httphelper.ErrorHandled(ctx, err)
 
@@ -50,7 +50,7 @@ func (w *wikiHandler) onAPISaveWikiSlug() gin.HandlerFunc {
 			return
 		}
 
-		page, err := w.wikiUsecase.SaveWikiPage(ctx, httphelper.CurrentUserProfile(ctx), req.Slug, req.BodyMD, req.PermissionLevel)
+		page, err := w.wiki.SaveWikiPage(ctx, httphelper.CurrentUserProfile(ctx), req.Slug, req.BodyMD, req.PermissionLevel)
 		if err != nil {
 			httphelper.ErrorHandled(ctx, err)
 

@@ -15,21 +15,20 @@ import (
 )
 
 type banGroupUsecase struct {
-	banGroupRepository domain.BanGroupRepository
-	personUsecase      domain.PersonUsecase
-	discord            domain.DiscordUsecase
-	config             domain.ConfigUsecase
+	repository domain.BanGroupRepository
+	persons    domain.PersonUsecase
+	discord    domain.DiscordUsecase
+	config     domain.ConfigUsecase
 }
 
-func NewBanGroupUsecase(banGroupRepository domain.BanGroupRepository, personUsecase domain.PersonUsecase,
-	discord domain.DiscordUsecase,
-	config domain.ConfigUsecase,
+func NewBanGroupUsecase(repository domain.BanGroupRepository, persons domain.PersonUsecase,
+	discord domain.DiscordUsecase, config domain.ConfigUsecase,
 ) domain.BanGroupUsecase {
 	return &banGroupUsecase{
-		banGroupRepository: banGroupRepository,
-		personUsecase:      personUsecase,
-		discord:            discord,
-		config:             config,
+		repository: repository,
+		persons:    persons,
+		discord:    discord,
+		config:     config,
 	}
 }
 
@@ -39,7 +38,7 @@ func (s banGroupUsecase) UpdateCache(ctx context.Context) error {
 		return errGroups
 	}
 
-	if err := s.banGroupRepository.TruncateCache(ctx); err != nil {
+	if err := s.repository.TruncateCache(ctx); err != nil {
 		return err
 	}
 
@@ -81,13 +80,13 @@ func (s banGroupUsecase) UpdateCache(ctx context.Context) error {
 			}
 
 			// Statisfy FK
-			_, errCreate := s.personUsecase.GetOrCreatePersonBySteamID(ctx, steamID)
+			_, errCreate := s.persons.GetOrCreatePersonBySteamID(ctx, steamID)
 			if errCreate != nil {
 				return errCreate
 			}
 		}
 
-		if err := s.banGroupRepository.InsertCache(ctx, groupID, list.Members.SteamID64); err != nil {
+		if err := s.repository.InsertCache(ctx, groupID, list.Members.SteamID64); err != nil {
 			return err
 		}
 	}
@@ -96,31 +95,31 @@ func (s banGroupUsecase) UpdateCache(ctx context.Context) error {
 }
 
 func (s banGroupUsecase) Save(ctx context.Context, banGroup *domain.BanGroup) error {
-	return s.banGroupRepository.Save(ctx, banGroup)
+	return s.repository.Save(ctx, banGroup)
 }
 
 func (s banGroupUsecase) GetByGID(ctx context.Context, groupID steamid.SteamID, banGroup *domain.BanGroup) error {
-	return s.banGroupRepository.GetByGID(ctx, groupID, banGroup)
+	return s.repository.GetByGID(ctx, groupID, banGroup)
 }
 
 func (s banGroupUsecase) GetByID(ctx context.Context, banGroupID int64, banGroup *domain.BanGroup) error {
-	return s.banGroupRepository.GetByID(ctx, banGroupID, banGroup)
+	return s.repository.GetByID(ctx, banGroupID, banGroup)
 }
 
 func (s banGroupUsecase) Get(ctx context.Context, filter domain.GroupBansQueryFilter) ([]domain.BannedGroupPerson, error) {
-	return s.banGroupRepository.Get(ctx, filter)
+	return s.repository.Get(ctx, filter)
 }
 
 func (s banGroupUsecase) Delete(ctx context.Context, banGroup *domain.BanGroup) error {
-	return s.banGroupRepository.Delete(ctx, banGroup)
+	return s.repository.Delete(ctx, banGroup)
 }
 
 func (s banGroupUsecase) GetMembersList(ctx context.Context, parentID int64, list *domain.MembersList) error {
-	return s.banGroupRepository.GetMembersList(ctx, parentID, list)
+	return s.repository.GetMembersList(ctx, parentID, list)
 }
 
 func (s banGroupUsecase) SaveMembersList(ctx context.Context, list *domain.MembersList) error {
-	return s.banGroupRepository.SaveMembersList(ctx, list)
+	return s.repository.SaveMembersList(ctx, list)
 }
 
 func (s banGroupUsecase) Ban(ctx context.Context, banGroup *domain.BanGroup) error {
@@ -129,12 +128,12 @@ func (s banGroupUsecase) Ban(ctx context.Context, banGroup *domain.BanGroup) err
 		return errors.Join(membersErr, domain.ErrGroupValidate)
 	}
 
-	author, errAuthor := s.personUsecase.GetPersonBySteamID(ctx, banGroup.SourceID)
+	author, errAuthor := s.persons.GetPersonBySteamID(ctx, banGroup.SourceID)
 	if errAuthor != nil {
 		return errors.Join(membersErr, domain.ErrGetPerson)
 	}
 
-	if err := s.banGroupRepository.Ban(ctx, banGroup); err != nil {
+	if err := s.repository.Ban(ctx, banGroup); err != nil {
 		return errors.Join(err, domain.ErrSaveBan)
 	}
 
