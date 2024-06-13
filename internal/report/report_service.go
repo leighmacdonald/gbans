@@ -18,28 +18,28 @@ import (
 )
 
 type reportHandler struct {
-	reportUsecase  domain.ReportUsecase
-	configUsecase  domain.ConfigUsecase
-	discordUsecase domain.DiscordUsecase
-	personUsecase  domain.PersonUsecase
-	demoUsecase    domain.DemoUsecase
+	reports domain.ReportUsecase
+	config  domain.ConfigUsecase
+	discord domain.DiscordUsecase
+	persons domain.PersonUsecase
+	demos   domain.DemoUsecase
 }
 
-func NewReportHandler(engine *gin.Engine, reportUsecase domain.ReportUsecase, configUsecase domain.ConfigUsecase,
-	discordUsecase domain.DiscordUsecase, personUsecase domain.PersonUsecase, authUsecase domain.AuthUsecase, demoUsecase domain.DemoUsecase,
+func NewReportHandler(engine *gin.Engine, reports domain.ReportUsecase, config domain.ConfigUsecase,
+	discord domain.DiscordUsecase, person domain.PersonUsecase, auth domain.AuthUsecase, demos domain.DemoUsecase,
 ) {
 	handler := reportHandler{
-		reportUsecase:  reportUsecase,
-		configUsecase:  configUsecase,
-		discordUsecase: discordUsecase,
-		personUsecase:  personUsecase,
-		demoUsecase:    demoUsecase,
+		reports: reports,
+		config:  config,
+		discord: discord,
+		persons: person,
+		demos:   demos,
 	}
 
 	// auth
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(authUsecase.AuthMiddleware(domain.PUser))
+		authed := authedGrp.Use(auth.AuthMiddleware(domain.PUser))
 		authed.POST("/api/report", handler.onAPIPostReportCreate())
 		authed.GET("/api/report/:report_id", handler.onAPIGetReport())
 		authed.POST("/api/report_status/:report_id", handler.onAPISetReportStatus())
@@ -52,7 +52,7 @@ func NewReportHandler(engine *gin.Engine, reportUsecase domain.ReportUsecase, co
 	// mod
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(authUsecase.AuthMiddleware(domain.PModerator))
+		mod := modGrp.Use(auth.AuthMiddleware(domain.PModerator))
 		mod.POST("/api/report/:report_id/state", handler.onAPIPostBanState())
 		mod.POST("/api/reports", handler.onAPIGetAllReports())
 	}
@@ -63,21 +63,25 @@ func (h reportHandler) onAPIPostBanState() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		reportID, errID := httphelper.GetInt64Param(ctx, "report_id")
 		if errID != nil || reportID <= 0 {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.HandleErrBadRequest(ctx)
+			if errID != nil {
+				slog.Warn("Failed to get report_id", log.ErrAttr(errID))
+			}
 
 			return
 		}
 
-		report, errReport := h.reportUsecase.GetReport(ctx, httphelper.CurrentUserProfile(ctx), reportID)
+		report, errReport := h.reports.GetReport(ctx, httphelper.CurrentUserProfile(ctx), reportID)
 		if errReport != nil {
 			httphelper.ErrorHandled(ctx, errReport)
+			slog.Error("Failed to get user report", log.ErrAttr(errReport))
 
 			return
 		}
 
 		ctx.JSON(http.StatusOK, report)
 
-		h.discordUsecase.SendPayload(domain.ChannelModLog, discord.EditBanAppealStatusMessage())
+		h.discord.SendPayload(domain.ChannelModLog, discord.EditBanAppealStatusMessage())
 	}
 }
 
@@ -104,14 +108,14 @@ func (h reportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 		}
 
 		if !req.SourceID.Valid() {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrSourceID)
+			httphelper.HandleErrBadRequest(ctx)
 			slog.Error("Invalid steam_id", slog.String("steamid", req.SourceID.String()))
 
 			return
 		}
 
 		if !req.TargetID.Valid() {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrTargetID)
+			httphelper.HandleErrBadRequest(ctx)
 			slog.Error("Invalid target_id", slog.String("steamid", req.TargetID.String()))
 
 			return
@@ -123,17 +127,17 @@ func (h reportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 			return
 		}
 
-		personSource, errSource := h.personUsecase.GetPersonBySteamID(ctx, req.SourceID)
+		personSource, errSource := h.persons.GetPersonBySteamID(ctx, req.SourceID)
 		if errSource != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
 			slog.Error("Could not load player profile", log.ErrAttr(errSource))
 
 			return
 		}
 
-		personTarget, errTarget := h.personUsecase.GetOrCreatePersonBySteamID(ctx, req.TargetID)
+		personTarget, errTarget := h.persons.GetOrCreatePersonBySteamID(ctx, req.TargetID)
 		if errTarget != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
 			slog.Error("Could not load player profile", log.ErrAttr(errTarget))
 
 			return
@@ -143,18 +147,18 @@ func (h reportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 			if err := thirdparty.UpdatePlayerSummary(ctx, &personTarget); err != nil {
 				slog.Error("Failed to update target player", log.ErrAttr(err))
 			} else {
-				if errSave := h.personUsecase.SavePerson(ctx, &personTarget); errSave != nil {
+				if errSave := h.persons.SavePerson(ctx, &personTarget); errSave != nil {
 					slog.Error("Failed to save target player update", log.ErrAttr(err))
 				}
 			}
 		}
 
 		// Ensure the user doesn't already have an open report against the user
-		existing, errReports := h.reportUsecase.GetReportBySteamID(ctx, personSource.SteamID, req.TargetID)
+		existing, errReports := h.reports.GetReportBySteamID(ctx, personSource.SteamID, req.TargetID)
 		if errReports != nil {
 			if !errors.Is(errReports, domain.ErrNoResult) {
+				httphelper.HandleErrInternal(ctx)
 				slog.Error("Failed to query reports by steam id", log.ErrAttr(errReports))
-				httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 				return
 			}
@@ -169,8 +173,8 @@ func (h reportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 		var demo domain.DemoFile
 
 		if req.DemoID > 0 {
-			if errDemo := h.demoUsecase.GetDemoByID(ctx, req.DemoID, &demo); errDemo != nil {
-				httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			if errDemo := h.demos.GetDemoByID(ctx, req.DemoID, &demo); errDemo != nil {
+				httphelper.HandleErrBadRequest(ctx)
 				slog.Error("Failed to load demo for report", slog.Int64("demo_id", req.DemoID))
 
 				return
@@ -189,8 +193,8 @@ func (h reportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 		report.DemoTick = req.DemoTick
 		report.PersonMessageID = req.PersonMessageID
 
-		if errReportSave := h.reportUsecase.SaveReport(ctx, &report); errReportSave != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+		if errReportSave := h.reports.SaveReport(ctx, &report); errReportSave != nil {
+			httphelper.HandleErrInternal(ctx)
 			slog.Error("Failed to save report", log.ErrAttr(errReportSave))
 
 			return
@@ -199,14 +203,12 @@ func (h reportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 		ctx.JSON(http.StatusCreated, report)
 
 		if demo.DemoID > 0 && !demo.Archive {
-			if errMark := h.demoUsecase.MarkArchived(ctx, &demo); errMark != nil {
+			if errMark := h.demos.MarkArchived(ctx, &demo); errMark != nil {
 				slog.Error("Failed to mark demo as archived", log.ErrAttr(errMark))
 			}
 		}
 
-		slog.Info("New report created successfully", slog.Int64("report_id", report.ReportID))
-
-		conf := h.configUsecase.Config()
+		conf := h.config.Config()
 
 		demoURL := ""
 
@@ -216,7 +218,7 @@ func (h reportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 
 		msg := discord.NewInGameReportResponse(report, conf.ExtURL(report), currentUser, conf.ExtURL(currentUser), demoURL)
 
-		h.discordUsecase.SendPayload(domain.ChannelModLog, msg)
+		h.discord.SendPayload(domain.ChannelModLog, msg)
 	}
 }
 
@@ -224,14 +226,16 @@ func (h reportHandler) onAPIGetReport() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		reportID, errParam := httphelper.GetInt64Param(ctx, "report_id")
 		if errParam != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Warn("Failed to get report_id", log.ErrAttr(errParam))
 
 			return
 		}
 
-		report, errReport := h.reportUsecase.GetReport(ctx, httphelper.CurrentUserProfile(ctx), reportID)
+		report, errReport := h.reports.GetReport(ctx, httphelper.CurrentUserProfile(ctx), reportID)
 		if errReport != nil {
 			httphelper.ErrorHandled(ctx, errReport)
+			slog.Error("failed to get report", log.ErrAttr(errReport))
 
 			return
 		}
@@ -248,9 +252,10 @@ func (h reportHandler) onAPIGetUserReports() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		user := httphelper.CurrentUserProfile(ctx)
 
-		reports, errReports := h.reportUsecase.GetReportsBySteamID(ctx, user.SteamID)
+		reports, errReports := h.reports.GetReportsBySteamID(ctx, user.SteamID)
 		if errReports != nil {
 			httphelper.ErrorHandled(ctx, errReports)
+			slog.Error("Failed to get reports by steam id", log.ErrAttr(errReports))
 
 			return
 		}
@@ -266,9 +271,10 @@ func (h reportHandler) onAPIGetAllReports() gin.HandlerFunc {
 			return
 		}
 
-		reports, errReports := h.reportUsecase.GetReports(ctx)
+		reports, errReports := h.reports.GetReports(ctx)
 		if errReports != nil {
 			httphelper.ErrorHandled(ctx, errReports)
+			slog.Error("Failed to get reports", log.ErrAttr(errReports))
 
 			return
 		}
@@ -285,7 +291,8 @@ func (h reportHandler) onAPISetReportStatus() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		reportID, errParam := httphelper.GetInt64Param(ctx, "report_id")
 		if errParam != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Error("Failed to get report_id", log.ErrAttr(errParam))
 
 			return
 		}
@@ -295,9 +302,9 @@ func (h reportHandler) onAPISetReportStatus() gin.HandlerFunc {
 			return
 		}
 
-		report, errGet := h.reportUsecase.GetReport(ctx, httphelper.CurrentUserProfile(ctx), reportID)
+		report, errGet := h.reports.GetReport(ctx, httphelper.CurrentUserProfile(ctx), reportID)
 		if errGet != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
 			slog.Error("Failed to get report to set state", log.ErrAttr(errGet))
 
 			return
@@ -312,8 +319,8 @@ func (h reportHandler) onAPISetReportStatus() gin.HandlerFunc {
 		original := report.ReportStatus
 
 		report.ReportStatus = req.Status
-		if errSave := h.reportUsecase.SaveReport(ctx, &report.Report); errSave != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+		if errSave := h.reports.SaveReport(ctx, &report.Report); errSave != nil {
+			httphelper.HandleErrInternal(ctx)
 			slog.Error("Failed to save report state", log.ErrAttr(errSave))
 
 			return
@@ -337,14 +344,16 @@ func (h reportHandler) onAPIGetReportMessages() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		reportID, errParam := httphelper.GetInt64Param(ctx, "report_id")
 		if errParam != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Warn("Got invalid report_id", log.ErrAttr(errParam))
 
 			return
 		}
 
-		report, errGetReport := h.reportUsecase.GetReport(ctx, httphelper.CurrentUserProfile(ctx), reportID)
+		report, errGetReport := h.reports.GetReport(ctx, httphelper.CurrentUserProfile(ctx), reportID)
 		if errGetReport != nil {
-			httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
+			httphelper.HandleErrNotFound(ctx)
+			slog.Error("Failed to get report. Not found.", log.ErrAttr(errGetReport))
 
 			return
 		}
@@ -353,9 +362,10 @@ func (h reportHandler) onAPIGetReportMessages() gin.HandlerFunc {
 			return
 		}
 
-		reportMessages, errGetReportMessages := h.reportUsecase.GetReportMessages(ctx, reportID)
+		reportMessages, errGetReportMessages := h.reports.GetReportMessages(ctx, reportID)
 		if errGetReportMessages != nil {
-			httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrPlayerNotFound)
+			httphelper.HandleErrNotFound(ctx)
+			slog.Error("Failed to get report messages", log.ErrAttr(errGetReportMessages))
 
 			return
 		}
@@ -376,7 +386,11 @@ func (h reportHandler) onAPIPostReportMessage() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		reportID, errID := httphelper.GetInt64Param(ctx, "report_id")
 		if errID != nil || reportID == 0 {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.HandleErrBadRequest(ctx)
+
+			if errID != nil {
+				slog.Warn("Failed to get report_id", log.ErrAttr(errID))
+			}
 
 			return
 		}
@@ -387,20 +401,20 @@ func (h reportHandler) onAPIPostReportMessage() gin.HandlerFunc {
 		}
 
 		if req.Message == "" {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.HandleErrBadRequest(ctx)
 
 			return
 		}
 
-		report, errReport := h.reportUsecase.GetReport(ctx, httphelper.CurrentUserProfile(ctx), reportID)
+		report, errReport := h.reports.GetReport(ctx, httphelper.CurrentUserProfile(ctx), reportID)
 		if errReport != nil {
 			if errors.Is(errReport, domain.ErrNoResult) {
-				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
+				httphelper.HandleErrNotFound(ctx)
 
 				return
 			}
 
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
 			slog.Error("Failed to load report", log.ErrAttr(errReport))
 
 			return
@@ -409,7 +423,7 @@ func (h reportHandler) onAPIPostReportMessage() gin.HandlerFunc {
 		person := httphelper.CurrentUserProfile(ctx)
 		msg := domain.NewReportMessage(reportID, person.SteamID, req.Message)
 
-		if errSave := h.reportUsecase.SaveReportMessage(ctx, &msg); errSave != nil {
+		if errSave := h.reports.SaveReportMessage(ctx, &msg); errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			slog.Error("Failed to save report message", log.ErrAttr(errSave))
 
@@ -418,8 +432,8 @@ func (h reportHandler) onAPIPostReportMessage() gin.HandlerFunc {
 
 		report.UpdatedOn = time.Now()
 
-		if errSave := h.reportUsecase.SaveReport(ctx, &report.Report); errSave != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+		if errSave := h.reports.SaveReport(ctx, &report.Report); errSave != nil {
+			httphelper.HandleErrInternal(ctx)
 			slog.Error("Failed to update report activity", log.ErrAttr(errSave))
 
 			return
@@ -427,9 +441,9 @@ func (h reportHandler) onAPIPostReportMessage() gin.HandlerFunc {
 
 		ctx.JSON(http.StatusCreated, msg)
 
-		conf := h.configUsecase.Config()
+		conf := h.config.Config()
 
-		h.discordUsecase.SendPayload(domain.ChannelModLog,
+		h.discord.SendPayload(domain.ChannelModLog,
 			discord.NewReportMessageResponse(msg.MessageMD, conf.ExtURL(report), person, conf.ExtURL(person)))
 	}
 }
@@ -442,20 +456,25 @@ func (h reportHandler) onAPIEditReportMessage() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		reportMessageID, errID := httphelper.GetInt64Param(ctx, "report_message_id")
 		if errID != nil || reportMessageID == 0 {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.HandleErrBadRequest(ctx)
+
+			if errID != nil {
+				slog.Warn("Failed to get report_message_id", log.ErrAttr(errID))
+			}
 
 			return
 		}
 
-		existing, errExist := h.reportUsecase.GetReportMessageByID(ctx, reportMessageID)
+		existing, errExist := h.reports.GetReportMessageByID(ctx, reportMessageID)
 		if errExist != nil {
 			if errors.Is(errExist, domain.ErrNoResult) {
-				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrPlayerNotFound)
+				httphelper.HandleErrNotFound(ctx)
 
 				return
 			}
 
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to get report message by id", log.ErrAttr(errExist))
 
 			return
 		}
@@ -471,7 +490,7 @@ func (h reportHandler) onAPIEditReportMessage() gin.HandlerFunc {
 		}
 
 		if req.BodyMD == "" {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.HandleErrBadRequest(ctx)
 
 			return
 		}
@@ -483,8 +502,8 @@ func (h reportHandler) onAPIEditReportMessage() gin.HandlerFunc {
 		}
 
 		existing.MessageMD = req.BodyMD
-		if errSave := h.reportUsecase.SaveReportMessage(ctx, &existing); errSave != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+		if errSave := h.reports.SaveReportMessage(ctx, &existing); errSave != nil {
+			httphelper.HandleErrInternal(ctx)
 			slog.Error("Failed to save report message", log.ErrAttr(errSave))
 
 			return
@@ -492,12 +511,12 @@ func (h reportHandler) onAPIEditReportMessage() gin.HandlerFunc {
 
 		ctx.JSON(http.StatusCreated, existing)
 
-		conf := h.configUsecase.Config()
+		conf := h.config.Config()
 
 		msg := discord.EditReportMessageResponse(req.BodyMD, existing.MessageMD,
 			conf.ExtURLRaw("/report/%d", existing.ReportID), curUser, conf.ExtURL(curUser))
 
-		h.discordUsecase.SendPayload(domain.ChannelModLog, msg)
+		h.discord.SendPayload(domain.ChannelModLog, msg)
 	}
 }
 
@@ -505,20 +524,22 @@ func (h reportHandler) onAPIDeleteReportMessage() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		reportMessageID, errID := httphelper.GetInt64Param(ctx, "report_message_id")
 		if errID != nil || reportMessageID == 0 {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Warn("Failed to get report_message_id", log.ErrAttr(errID))
 
 			return
 		}
 
-		existing, errExist := h.reportUsecase.GetReportMessageByID(ctx, reportMessageID)
+		existing, errExist := h.reports.GetReportMessageByID(ctx, reportMessageID)
 		if errExist != nil {
 			if errors.Is(errExist, domain.ErrNoResult) {
-				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
+				httphelper.HandleErrNotFound(ctx)
 
 				return
 			}
 
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to get report message by id", log.ErrAttr(errExist))
 
 			return
 		}
@@ -529,8 +550,8 @@ func (h reportHandler) onAPIDeleteReportMessage() gin.HandlerFunc {
 		}
 
 		existing.Deleted = true
-		if errSave := h.reportUsecase.SaveReportMessage(ctx, &existing); errSave != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+		if errSave := h.reports.SaveReportMessage(ctx, &existing); errSave != nil {
+			httphelper.HandleErrInternal(ctx)
 			slog.Error("Failed to save report message", log.ErrAttr(errSave))
 
 			return
@@ -538,8 +559,8 @@ func (h reportHandler) onAPIDeleteReportMessage() gin.HandlerFunc {
 
 		ctx.JSON(http.StatusNoContent, nil)
 
-		conf := h.configUsecase.Config()
+		conf := h.config.Config()
 
-		h.discordUsecase.SendPayload(domain.ChannelModLog, discord.DeleteReportMessage(existing, curUser, conf.ExtURL(curUser)))
+		h.discord.SendPayload(domain.ChannelModLog, discord.DeleteReportMessage(existing, curUser, conf.ExtURL(curUser)))
 	}
 }

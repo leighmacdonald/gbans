@@ -3,6 +3,7 @@ package contest
 import (
 	"context"
 	"errors"
+	"log/slog"
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -31,6 +32,10 @@ func (c *contestUsecase) ContestSave(ctx context.Context, contest domain.Contest
 		return contest, errSave
 	}
 
+	slog.Info("Contest updated",
+		slog.String("contest_id", contest.ContestID.String()),
+		slog.String("title", contest.Title))
+
 	return contest, nil
 }
 
@@ -39,7 +44,13 @@ func (c *contestUsecase) ContestByID(ctx context.Context, contestID uuid.UUID, c
 }
 
 func (c *contestUsecase) ContestDelete(ctx context.Context, contestID uuid.UUID) error {
-	return c.contestRepo.ContestDelete(ctx, contestID)
+	if err := c.contestRepo.ContestDelete(ctx, contestID); err != nil {
+		return err
+	}
+
+	slog.Info("Contest deleted", slog.String("contest_id", contestID.String()))
+
+	return nil
 }
 
 func (c *contestUsecase) ContestEntryDelete(ctx context.Context, contestEntryID uuid.UUID) error {
@@ -80,7 +91,15 @@ func (c *contestUsecase) ContestEntryVote(ctx context.Context, contestID uuid.UU
 		return domain.ErrBadRequest
 	}
 
-	return c.contestRepo.ContestEntryVote(ctx, contestEntryID, user.GetSteamID(), vote)
+	if err := c.contestRepo.ContestEntryVote(ctx, contestEntryID, user.GetSteamID(), vote); err != nil {
+		return err
+	}
+
+	sid := user.GetSteamID()
+
+	slog.Info("Entry vote registered", slog.String("contest_id", contest.ContestID.String()), slog.Bool("vote", vote), slog.String("steam_id", sid.String()))
+
+	return nil
 }
 
 func (c *contestUsecase) ContestEntryVoteDelete(ctx context.Context, contestEntryVoteID int64) error {

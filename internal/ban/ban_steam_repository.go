@@ -16,13 +16,13 @@ import (
 )
 
 type banSteamRepository struct {
-	db database.Database
-	pu domain.PersonUsecase
-	nu domain.NetworkUsecase
+	db      database.Database
+	persons domain.PersonUsecase
+	network domain.NetworkUsecase
 }
 
-func NewBanSteamRepository(database database.Database, pu domain.PersonUsecase, nu domain.NetworkUsecase) domain.BanSteamRepository {
-	return &banSteamRepository{db: database, pu: pu, nu: nu}
+func NewBanSteamRepository(database database.Database, persons domain.PersonUsecase, network domain.NetworkUsecase) domain.BanSteamRepository {
+	return &banSteamRepository{db: database, persons: persons, network: network}
 }
 
 func (r banSteamRepository) TruncateCache(ctx context.Context) error {
@@ -36,7 +36,7 @@ func (r banSteamRepository) InsertCache(ctx context.Context, steamID steamid.Ste
 	now := time.Now()
 
 	for _, entrySteamID := range entries {
-		_, errPerson := r.pu.GetOrCreatePersonBySteamID(ctx, steamid.New(entrySteamID))
+		_, errPerson := r.persons.GetOrCreatePersonBySteamID(ctx, steamid.New(entrySteamID))
 		if errPerson != nil {
 			slog.Error("Failed to validate person for friend insertion", log.ErrAttr(errPerson))
 
@@ -170,12 +170,12 @@ func (r banSteamRepository) GetByLastIP(ctx context.Context, lastIP netip.Addr, 
 // New records will have the Ban.BanID set automatically.
 func (r banSteamRepository) Save(ctx context.Context, ban *domain.BanSteam) error {
 	// Ensure the foreign keys are satisfied
-	_, errGetPerson := r.pu.GetOrCreatePersonBySteamID(ctx, ban.TargetID)
+	_, errGetPerson := r.persons.GetOrCreatePersonBySteamID(ctx, ban.TargetID)
 	if errGetPerson != nil {
 		return errors.Join(errGetPerson, domain.ErrPersonTarget)
 	}
 
-	_, errGetAuthor := r.pu.GetPersonBySteamID(ctx, ban.SourceID)
+	_, errGetAuthor := r.persons.GetPersonBySteamID(ctx, ban.SourceID)
 	if errGetAuthor != nil {
 		return errors.Join(errGetAuthor, domain.ErrPersonSource)
 	}
@@ -198,7 +198,7 @@ func (r banSteamRepository) Save(ctx context.Context, ban *domain.BanSteam) erro
 		}
 	}
 
-	ban.LastIP = r.nu.GetPlayerMostRecentIP(ctx, ban.TargetID)
+	ban.LastIP = r.network.GetPlayerMostRecentIP(ctx, ban.TargetID)
 
 	return r.insertBan(ctx, ban)
 }

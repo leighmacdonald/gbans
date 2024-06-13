@@ -22,7 +22,6 @@ type ReportRepository interface {
 
 type ReportUsecase interface {
 	GetReportsBySteamID(ctx context.Context, steamID steamid.SteamID) ([]ReportWithAuthor, error)
-	// GetReportBySteamID(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID) (Report, error)
 	GetReports(ctx context.Context) ([]ReportWithAuthor, error)
 	GetReport(ctx context.Context, curUser PersonInfo, reportID int64) (ReportWithAuthor, error)
 	GetReportMessages(ctx context.Context, reportID int64) ([]ReportMessage, error)

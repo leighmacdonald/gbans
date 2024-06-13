@@ -17,12 +17,12 @@ import (
 )
 
 type chatUsecase struct {
-	cr           domain.ChatRepository
-	wfu          domain.WordFilterUsecase
-	bu           domain.BanSteamUsecase
-	pu           domain.PersonUsecase
-	du           domain.DiscordUsecase
-	st           domain.StateUsecase
+	repository   domain.ChatRepository
+	wordFilters  domain.WordFilterUsecase
+	bansSteam    domain.BanSteamUsecase
+	persons      domain.PersonUsecase
+	discord      domain.DiscordUsecase
+	state        domain.StateUsecase
 	warningMu    *sync.RWMutex
 	dry          bool
 	maxWeight    int
@@ -41,12 +41,12 @@ func NewChatUsecase(configUsecase domain.ConfigUsecase, chatRepository domain.Ch
 	conf := configUsecase.Config()
 
 	return &chatUsecase{
-		cr:           chatRepository,
-		wfu:          filterUsecase,
-		bu:           banUsecase,
-		pu:           personUsecase,
-		du:           discordUsecase,
-		st:           stateUsecase,
+		repository:   chatRepository,
+		wordFilters:  filterUsecase,
+		bansSteam:    banUsecase,
+		persons:      personUsecase,
+		discord:      discordUsecase,
+		state:        stateUsecase,
 		pingDiscord:  conf.Filters.PingDiscord,
 		warnings:     make(map[steamid.SteamID][]domain.UserWarning),
 		warningMu:    &sync.RWMutex{},
@@ -77,7 +77,7 @@ func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.Ne
 		}
 	}
 
-	admin, errAdmin := u.pu.GetPersonBySteamID(ctx, u.owner)
+	admin, errAdmin := u.persons.GetPersonBySteamID(ctx, u.owner)
 	if errAdmin != nil {
 		return errAdmin
 	}
@@ -85,30 +85,30 @@ func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.Ne
 	switch newWarning.MatchedFilter.Action {
 	case domain.Mute:
 		banSteam.BanType = domain.NoComm
-		errBan = u.bu.Ban(ctx, admin, &banSteam)
+		errBan = u.bansSteam.Ban(ctx, admin, &banSteam)
 	case domain.Ban:
 		banSteam.BanType = domain.Banned
-		errBan = u.bu.Ban(ctx, admin, &banSteam)
+		errBan = u.bansSteam.Ban(ctx, admin, &banSteam)
 	case domain.Kick:
 		// Kicks are temporary, so should be done by Player ID to avoid
 		// missing players who weren't in the latest state update
 		// (otherwise, kicking players very shortly after they connect
 		// will usually fail).
-		errBan = u.st.KickPlayerID(ctx, newWarning.PlayerID, newWarning.ServerID, newWarning.WarnReason)
+		errBan = u.state.KickPlayerID(ctx, newWarning.PlayerID, newWarning.ServerID, newWarning.WarnReason)
 	}
 
 	if errBan != nil {
 		return errors.Join(errBan, domain.ErrWarnActionApply)
 	}
 
-	person, personErr := u.pu.GetPersonBySteamID(ctx, newWarning.UserMessage.SteamID)
+	person, personErr := u.persons.GetPersonBySteamID(ctx, newWarning.UserMessage.SteamID)
 	if personErr != nil {
 		return personErr
 	}
 
 	newWarning.MatchedFilter.TriggerCount++
 
-	_, errSave := u.wfu.Edit(ctx, admin, newWarning.MatchedFilter.FilterID, newWarning.MatchedFilter)
+	_, errSave := u.wordFilters.Edit(ctx, admin, newWarning.MatchedFilter.FilterID, newWarning.MatchedFilter)
 	if errSave != nil {
 		return errSave
 	}
@@ -117,7 +117,7 @@ func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.Ne
 		return nil
 	}
 
-	u.du.SendPayload(domain.ChannelWordFilterLog, discord.WarningMessage(newWarning, banSteam, person))
+	u.discord.SendPayload(domain.ChannelWordFilterLog, discord.WarningMessage(newWarning, banSteam, person))
 
 	return nil
 }
@@ -128,12 +128,12 @@ func (u chatUsecase) onWarningHandler(ctx context.Context, newWarning domain.New
 
 	newWarning.MatchedFilter.TriggerCount++
 
-	admin, errAdmin := u.pu.GetPersonBySteamID(ctx, u.owner)
+	admin, errAdmin := u.persons.GetPersonBySteamID(ctx, u.owner)
 	if errAdmin != nil {
 		return errAdmin
 	}
 
-	_, errSave := u.wfu.Edit(ctx, admin, newWarning.MatchedFilter.FilterID, newWarning.MatchedFilter)
+	_, errSave := u.wordFilters.Edit(ctx, admin, newWarning.MatchedFilter.FilterID, newWarning.MatchedFilter)
 	if errSave != nil {
 		return errSave
 	}
@@ -142,7 +142,7 @@ func (u chatUsecase) onWarningHandler(ctx context.Context, newWarning domain.New
 		return nil
 	}
 
-	if errPSay := u.st.PSay(ctx, newWarning.UserMessage.SteamID, msg); errPSay != nil {
+	if errPSay := u.state.PSay(ctx, newWarning.UserMessage.SteamID, msg); errPSay != nil {
 		return errors.Join(errPSay, state.ErrRCONCommand)
 	}
 
@@ -246,7 +246,7 @@ func (u chatUsecase) Start(ctx context.Context) {
 		case now := <-ticker.C:
 			u.check(now)
 			ticker.Reset(u.checkTimeout)
-		case newWarn := <-u.cr.GetWarningChan():
+		case newWarn := <-u.repository.GetWarningChan():
 			u.trigger(ctx, newWarn)
 		case <-ctx.Done():
 			return
@@ -259,11 +259,11 @@ func (u chatUsecase) WarningState() map[string][]domain.UserWarning {
 }
 
 func (u chatUsecase) GetPersonMessage(ctx context.Context, messageID int64) (domain.QueryChatHistoryResult, error) {
-	return u.cr.GetPersonMessage(ctx, messageID)
+	return u.repository.GetPersonMessage(ctx, messageID)
 }
 
 func (u chatUsecase) AddChatHistory(ctx context.Context, message *domain.PersonMessage) error {
-	return u.cr.AddChatHistory(ctx, message)
+	return u.repository.AddChatHistory(ctx, message)
 }
 
 func (u chatUsecase) QueryChatHistory(ctx context.Context, user domain.PersonInfo, req domain.ChatHistoryQueryFilter) ([]domain.QueryChatHistoryResult, error) {
@@ -277,7 +277,7 @@ func (u chatUsecase) QueryChatHistory(ctx context.Context, user domain.PersonInf
 		req.Unrestricted = true
 	}
 
-	return u.cr.QueryChatHistory(ctx, req)
+	return u.repository.QueryChatHistory(ctx, req)
 }
 
 func (u chatUsecase) GetPersonMessageContext(ctx context.Context, messageID int64, paddedMessageCount int) ([]domain.QueryChatHistoryResult, error) {
@@ -290,9 +290,9 @@ func (u chatUsecase) GetPersonMessageContext(ctx context.Context, messageID int6
 		return nil, errMsg
 	}
 
-	return u.cr.GetPersonMessageContext(ctx, msg.ServerID, messageID, paddedMessageCount)
+	return u.repository.GetPersonMessageContext(ctx, msg.ServerID, messageID, paddedMessageCount)
 }
 
 func (u chatUsecase) TopChatters(ctx context.Context, count uint64) ([]domain.TopChatterResult, error) {
-	return u.cr.TopChatters(ctx, count)
+	return u.repository.TopChatters(ctx, count)
 }

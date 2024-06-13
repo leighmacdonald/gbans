@@ -22,7 +22,7 @@ import (
 
 const ctxKeyUserProfile = "user_profile"
 
-type authUsecase struct {
+type auth struct {
 	authRepository domain.AuthRepository
 	configUsecase  domain.ConfigUsecase
 	personUsecase  domain.PersonUsecase
@@ -33,7 +33,7 @@ type authUsecase struct {
 func NewAuthUsecase(authRepository domain.AuthRepository, configUsecase domain.ConfigUsecase, personUsecase domain.PersonUsecase,
 	banUsecase domain.BanSteamUsecase, serversUsecase domain.ServersUsecase,
 ) domain.AuthUsecase {
-	return &authUsecase{
+	return &auth{
 		authRepository: authRepository,
 		configUsecase:  configUsecase,
 		personUsecase:  personUsecase,
@@ -42,7 +42,7 @@ func NewAuthUsecase(authRepository domain.AuthRepository, configUsecase domain.C
 	}
 }
 
-func (u *authUsecase) Start(ctx context.Context) {
+func (u *auth) Start(ctx context.Context) {
 	ticker := time.NewTicker(time.Hour * 24)
 
 	for {
@@ -59,17 +59,17 @@ func (u *authUsecase) Start(ctx context.Context) {
 	}
 }
 
-func (u *authUsecase) DeletePersonAuth(ctx context.Context, authID int64) error {
+func (u *auth) DeletePersonAuth(ctx context.Context, authID int64) error {
 	return u.authRepository.DeletePersonAuth(ctx, authID)
 }
 
-func (u *authUsecase) GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *domain.PersonAuth) error {
+func (u *auth) GetPersonAuthByRefreshToken(ctx context.Context, token string, auth *domain.PersonAuth) error {
 	return u.authRepository.GetPersonAuthByFingerprint(ctx, token, auth)
 }
 
 // MakeToken generates new jwt auth tokens
 // fingerprint is a random string used to prevent side-jacking.
-func (u *authUsecase) MakeToken(ctx *gin.Context, cookieKey string, sid steamid.SteamID) (domain.UserTokens, error) {
+func (u *auth) MakeToken(ctx *gin.Context, cookieKey string, sid steamid.SteamID) (domain.UserTokens, error) {
 	if cookieKey == "" {
 		return domain.UserTokens{}, domain.ErrCookieKeyMissing
 	}
@@ -95,7 +95,7 @@ func (u *authUsecase) MakeToken(ctx *gin.Context, cookieKey string, sid steamid.
 	return domain.UserTokens{Access: accessToken, Fingerprint: fingerprint}, nil
 }
 
-func (u *authUsecase) AuthMiddleware(level domain.Privilege) gin.HandlerFunc {
+func (u *auth) AuthMiddleware(level domain.Privilege) gin.HandlerFunc {
 	cookieKey := u.configUsecase.Config().HTTPCookieKey
 
 	return func(ctx *gin.Context) {
@@ -186,13 +186,13 @@ func (u *authUsecase) AuthMiddleware(level domain.Privilege) gin.HandlerFunc {
 	}
 }
 
-func (u *authUsecase) MakeGetTokenKey(cookieKey string) func(_ *jwt.Token) (any, error) {
+func (u *auth) MakeGetTokenKey(cookieKey string) func(_ *jwt.Token) (any, error) {
 	return func(_ *jwt.Token) (any, error) {
 		return []byte(cookieKey), nil
 	}
 }
 
-func (u *authUsecase) AuthServerMiddleWare() gin.HandlerFunc {
+func (u *auth) AuthServerMiddleWare() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		reqAuthHeader := ctx.GetHeader("Authorization")
 		if reqAuthHeader == "" {
@@ -238,7 +238,7 @@ func (u *authUsecase) AuthServerMiddleWare() gin.HandlerFunc {
 	}
 }
 
-func (u *authUsecase) NewUserToken(steamID steamid.SteamID, cookieKey string, fingerPrint string, validDuration time.Duration) (string, error) {
+func (u *auth) NewUserToken(steamID steamid.SteamID, cookieKey string, fingerPrint string, validDuration time.Duration) (string, error) {
 	nowTime := time.Now()
 	conf := u.configUsecase.Config()
 	claims := domain.UserAuthClaims{
@@ -265,7 +265,7 @@ type authHeader struct {
 	Authorization string `header:"Authorization"`
 }
 
-func (u *authUsecase) TokenFromHeader(ctx *gin.Context, emptyOK bool) (string, error) {
+func (u *auth) TokenFromHeader(ctx *gin.Context, emptyOK bool) (string, error) {
 	hdr := authHeader{}
 	if errBind := ctx.ShouldBindHeader(&hdr); errBind != nil {
 		return "", errors.Join(errBind, domain.ErrAuthHeader)
@@ -285,7 +285,7 @@ func (u *authUsecase) TokenFromHeader(ctx *gin.Context, emptyOK bool) (string, e
 	return pcs[1], nil
 }
 
-func (u *authUsecase) Sid64FromJWTToken(token string, cookieKey string, fingerprint string) (steamid.SteamID, error) {
+func (u *auth) Sid64FromJWTToken(token string, cookieKey string, fingerprint string) (steamid.SteamID, error) {
 	claims := &domain.UserAuthClaims{}
 
 	tkn, errParseClaims := jwt.ParseWithClaims(token, claims, u.MakeGetTokenKey(cookieKey))

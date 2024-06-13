@@ -13,22 +13,22 @@ import (
 )
 
 type networkHandler struct {
-	nu domain.NetworkUsecase
+	networks domain.NetworkUsecase
 }
 
-func NewNetworkHandler(engine *gin.Engine, nu domain.NetworkUsecase, ath domain.AuthUsecase) {
-	handler := networkHandler{nu: nu}
+func NewNetworkHandler(engine *gin.Engine, networks domain.NetworkUsecase, auth domain.AuthUsecase) {
+	handler := networkHandler{networks: networks}
 
 	modGrp := engine.Group("/")
 	{
-		mod := modGrp.Use(ath.AuthMiddleware(domain.PModerator))
+		mod := modGrp.Use(auth.AuthMiddleware(domain.PModerator))
 		mod.POST("/api/connections", handler.onAPIQueryConnections())
 		mod.POST("/api/network", handler.onAPIQueryNetwork())
 	}
 
 	adminGrp := engine.Group("/")
 	{
-		admin := adminGrp.Use(ath.AuthMiddleware(domain.PAdmin))
+		admin := adminGrp.Use(auth.AuthMiddleware(domain.PAdmin))
 		admin.GET("/api/network/update_db", handler.onAPIGetUpdateDB())
 	}
 }
@@ -41,7 +41,7 @@ func (h networkHandler) onAPIGetUpdateDB() gin.HandlerFunc {
 			go func() {
 				updateInProgress.Store(true)
 
-				if err := h.nu.RefreshLocationData(ctx); err != nil {
+				if err := h.networks.RefreshLocationData(ctx); err != nil {
 					slog.Error("Failed to update location data", log.ErrAttr(err))
 				}
 
@@ -62,7 +62,7 @@ func (h networkHandler) onAPIQueryNetwork() gin.HandlerFunc {
 			return
 		}
 
-		details, err := h.nu.QueryNetwork(ctx, req.IP)
+		details, err := h.networks.QueryNetwork(ctx, req.IP)
 		if err != nil {
 			slog.Error("Failed to query connection history", log.ErrAttr(err))
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
@@ -81,10 +81,10 @@ func (h networkHandler) onAPIQueryConnections() gin.HandlerFunc {
 			return
 		}
 
-		ipHist, totalCount, errIPHist := h.nu.QueryConnectionHistory(ctx, req)
+		ipHist, totalCount, errIPHist := h.networks.QueryConnectionHistory(ctx, req)
 		if errIPHist != nil && !errors.Is(errIPHist, domain.ErrNoResult) {
 			slog.Error("Failed to query connection history", log.ErrAttr(errIPHist))
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
 
 			return
 		}

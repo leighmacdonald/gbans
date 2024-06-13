@@ -22,18 +22,18 @@ import (
 )
 
 type blocklistUsecase struct {
-	blocklistRepo   domain.BlocklistRepository
-	banUsecase      domain.BanSteamUsecase
-	banGroupUsecase domain.BanGroupUsecase
-	cidrRx          *regexp.Regexp
+	blocklistRepo domain.BlocklistRepository
+	bansSteam     domain.BanSteamUsecase
+	bansGroup     domain.BanGroupUsecase
+	cidrRx        *regexp.Regexp
 }
 
 func NewBlocklistUsecase(br domain.BlocklistRepository, banUsecase domain.BanSteamUsecase, banGroupUsecase domain.BanGroupUsecase) domain.BlocklistUsecase {
 	return &blocklistUsecase{
-		blocklistRepo:   br,
-		banUsecase:      banUsecase,
-		banGroupUsecase: banGroupUsecase,
-		cidrRx:          regexp.MustCompile(`^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(/(3[0-2]|2[0-9]|1[0-9]|[0-9]))?$`),
+		blocklistRepo: br,
+		bansSteam:     banUsecase,
+		bansGroup:     banGroupUsecase,
+		cidrRx:        regexp.MustCompile(`^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(/(3[0-2]|2[0-9]|1[0-9]|[0-9]))?$`),
 	}
 }
 
@@ -64,7 +64,7 @@ func (b blocklistUsecase) syncBlocklists(ctx context.Context) {
 	go func() {
 		defer waitGroup.Done()
 
-		if err := b.banGroupUsecase.UpdateCache(ctx); err != nil {
+		if err := b.bansGroup.UpdateCache(ctx); err != nil {
 			slog.Error("failed to update banned group members", log.ErrAttr(err))
 
 			return
@@ -78,7 +78,7 @@ func (b blocklistUsecase) syncBlocklists(ctx context.Context) {
 	go func() {
 		defer waitGroup.Done()
 
-		if err := b.banUsecase.UpdateCache(ctx); err != nil {
+		if err := b.bansSteam.UpdateCache(ctx); err != nil {
 			slog.Error("failed to update banned friends", log.ErrAttr(err))
 
 			return
@@ -175,7 +175,14 @@ func (b blocklistUsecase) updateSource(ctx context.Context, list domain.CIDRBloc
 }
 
 func (b blocklistUsecase) CreateSteamBlockWhitelists(ctx context.Context, steamID steamid.SteamID) (domain.WhitelistSteam, error) {
-	return b.blocklistRepo.CreateSteamBlockWhitelists(ctx, steamID)
+	whitelist, err := b.blocklistRepo.CreateSteamBlockWhitelists(ctx, steamID)
+	if err != nil {
+		return domain.WhitelistSteam{}, err
+	}
+
+	slog.Info("Created steam block whitelist", slog.String("steam_id", steamID.String()))
+
+	return whitelist, nil
 }
 
 func (b blocklistUsecase) GetSteamBlockWhitelists(ctx context.Context) ([]domain.WhitelistSteam, error) {
@@ -183,7 +190,13 @@ func (b blocklistUsecase) GetSteamBlockWhitelists(ctx context.Context) ([]domain
 }
 
 func (b blocklistUsecase) DeleteSteamBlockWhitelists(ctx context.Context, steamID steamid.SteamID) error {
-	return b.blocklistRepo.DeleteSteamBlockWhitelists(ctx, steamID)
+	if err := b.blocklistRepo.DeleteSteamBlockWhitelists(ctx, steamID); err != nil {
+		return err
+	}
+
+	slog.Info("Deleted steam whitelist", slog.String("steam_id", steamID.String()))
+
+	return nil
 }
 
 func (b blocklistUsecase) GetCIDRBlockSources(ctx context.Context) ([]domain.CIDRBlockSource, error) {
@@ -215,6 +228,8 @@ func (b blocklistUsecase) CreateCIDRBlockSources(ctx context.Context, name strin
 		return domain.CIDRBlockSource{}, domain.ErrInternal
 	}
 
+	slog.Info("Created blocklist", slog.String("name", blockList.Name))
+
 	return blockList, nil
 }
 
@@ -237,11 +252,19 @@ func (b blocklistUsecase) UpdateCIDRBlockSource(ctx context.Context, sourceID in
 		return blockSource, err
 	}
 
+	slog.Info("Updated blocklist", slog.String("name", blockSource.Name))
+
 	return blockSource, nil
 }
 
 func (b blocklistUsecase) DeleteCIDRBlockSources(ctx context.Context, blockSourceID int) error {
-	return b.blocklistRepo.DeleteCIDRBlockSources(ctx, blockSourceID)
+	if err := b.blocklistRepo.DeleteCIDRBlockSources(ctx, blockSourceID); err != nil {
+		return err
+	}
+
+	slog.Info("Deleted blocklist", slog.Int("cidr_block_source_id", blockSourceID))
+
+	return nil
 }
 
 func (b blocklistUsecase) GetCIDRBlockWhitelists(ctx context.Context) ([]domain.WhitelistIP, error) {
@@ -271,6 +294,8 @@ func (b blocklistUsecase) CreateCIDRBlockWhitelist(ctx context.Context, address 
 		return domain.WhitelistIP{}, errSave
 	}
 
+	slog.Info("Created ip whitelist", slog.String("addr", address))
+
 	return whitelist, nil
 }
 
@@ -291,9 +316,17 @@ func (b blocklistUsecase) UpdateCIDRBlockWhitelist(ctx context.Context, whitelis
 		return domain.WhitelistIP{}, errSave
 	}
 
+	slog.Info("Updated ip whitelist", slog.String("addr", address), slog.Int("whitelist_id", whitelistID))
+
 	return whitelist, nil
 }
 
 func (b blocklistUsecase) DeleteCIDRBlockWhitelist(ctx context.Context, whitelistID int) error {
-	return b.blocklistRepo.DeleteCIDRBlockWhitelist(ctx, whitelistID)
+	if err := b.blocklistRepo.DeleteCIDRBlockWhitelist(ctx, whitelistID); err != nil {
+		return err
+	}
+
+	slog.Info("Blocklist deleted", slog.Int("cidr_block_source_id", whitelistID))
+
+	return nil
 }

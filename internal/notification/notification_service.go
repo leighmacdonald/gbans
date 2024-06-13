@@ -2,26 +2,28 @@ package notification
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 type notificationHandler struct {
-	nu domain.NotificationUsecase
+	notifications domain.NotificationUsecase
 }
 
-func NewNotificationHandler(engine *gin.Engine, nu domain.NotificationUsecase, ath domain.AuthUsecase) {
+func NewNotificationHandler(engine *gin.Engine, notifications domain.NotificationUsecase, auth domain.AuthUsecase) {
 	handler := notificationHandler{
-		nu: nu,
+		notifications: notifications,
 	}
 
 	// authed
 	authedGrp := engine.Group("/")
 	{
-		authed := authedGrp.Use(ath.AuthMiddleware(domain.PUser))
+		authed := authedGrp.Use(auth.AuthMiddleware(domain.PUser))
 		authed.POST("/api/current_profile/notifications", handler.onAPICurrentProfileNotifications())
 	}
 }
@@ -37,7 +39,7 @@ func (h notificationHandler) onAPICurrentProfileNotifications() gin.HandlerFunc 
 
 		req.SteamID = currentProfile.SteamID.String()
 
-		notifications, count, errNot := h.nu.GetPersonNotifications(ctx, req)
+		notifications, count, errNot := h.notifications.GetPersonNotifications(ctx, req)
 		if errNot != nil {
 			if errors.Is(errNot, domain.ErrNoResult) {
 				ctx.JSON(http.StatusOK, []domain.UserNotification{})
@@ -45,7 +47,8 @@ func (h notificationHandler) onAPICurrentProfileNotifications() gin.HandlerFunc 
 				return
 			}
 
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to get personal notifications", log.ErrAttr(errNot))
 
 			return
 		}

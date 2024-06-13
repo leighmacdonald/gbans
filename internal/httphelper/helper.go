@@ -32,8 +32,8 @@ func ResponseErr(ctx *gin.Context, statusCode int, err error) {
 
 func Bind(ctx *gin.Context, target any) bool {
 	if errBind := ctx.BindJSON(&target); errBind != nil {
-		ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
-		slog.Error("Failed to bind request", log.ErrAttr(errBind))
+		HandleErrBadRequest(ctx)
+		slog.Error("Failed to bind request", log.ErrAttr(errBind), log.HandlerName(3))
 
 		return false
 	}
@@ -48,7 +48,7 @@ var decoder = schema.NewDecoder() //nolint:gochecknoglobals
 func BindQuery(ctx *gin.Context, target any) bool {
 	if errBind := decoder.Decode(target, ctx.Request.URL.Query()); errBind != nil {
 		ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
-		slog.Error("Failed to bind query request", log.ErrAttr(errBind))
+		slog.Error("Failed to bind query request", log.ErrAttr(errBind), log.HandlerName(3))
 
 		return false
 	}
@@ -151,20 +151,6 @@ func GetDefaultFloat64(s string, def float64) float64 {
 	}
 
 	return def
-}
-
-func ServerIDFromCtx(ctx *gin.Context) int {
-	serverIDUntyped, ok := ctx.Get("server_id")
-	if !ok {
-		return 0
-	}
-
-	serverID, castOk := serverIDUntyped.(int)
-	if !castOk {
-		return 0
-	}
-
-	return serverID
 }
 
 // HasPrivilege first checks if the steamId matches one of the provided allowedSteamIds, otherwise it will check

@@ -53,6 +53,7 @@ func (h *appealHandler) onAPIGetBanMessages() gin.HandlerFunc {
 		banID, errParam := httphelper.GetInt64Param(ctx, "ban_id")
 		if errParam != nil {
 			httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrInvalidParameter)
+			slog.Warn("Got invalid ban_id parameter", log.ErrAttr(errParam), log.HandlerName(2))
 
 			return
 		}
@@ -60,6 +61,7 @@ func (h *appealHandler) onAPIGetBanMessages() gin.HandlerFunc {
 		banMessages, errGetBanMessages := h.appealUsecase.GetBanMessages(ctx, httphelper.CurrentUserProfile(ctx), banID)
 		if errGetBanMessages != nil {
 			_ = httphelper.ErrorHandledWithReturn(ctx, errGetBanMessages)
+			slog.Error("Failed to load ban messages", log.ErrAttr(errGetBanMessages), log.HandlerName(2))
 
 			return
 		}
@@ -73,6 +75,7 @@ func (h *appealHandler) createBanMessage() gin.HandlerFunc {
 		banID, errID := httphelper.GetInt64Param(ctx, "ban_id")
 		if errID != nil || banID == 0 {
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			slog.Warn("Got invalid ban_id parameter", log.ErrAttr(errID), log.HandlerName(2))
 
 			return
 		}
@@ -100,6 +103,7 @@ func (h *appealHandler) editBanMessage() gin.HandlerFunc {
 		reportMessageID, errID := httphelper.GetInt64Param(ctx, "ban_message_id")
 		if errID != nil || reportMessageID == 0 {
 			httphelper.HandleErrBadRequest(ctx)
+			slog.Error("Failed to get ban_message_id", log.ErrAttr(errID), log.HandlerName(2))
 
 			return
 		}
@@ -112,10 +116,9 @@ func (h *appealHandler) editBanMessage() gin.HandlerFunc {
 		curUser := httphelper.CurrentUserProfile(ctx)
 
 		msg, errSave := h.appealUsecase.EditBanMessage(ctx, curUser, reportMessageID, req.BodyMD)
-
 		if errSave != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			slog.Error("Failed to save ban appeal message", log.ErrAttr(errSave))
+			slog.Error("Failed to save ban appeal message", log.ErrAttr(errSave), log.HandlerName(2))
 
 			return
 		}
@@ -130,6 +133,9 @@ func (h *appealHandler) onAPIDeleteBanMessage() gin.HandlerFunc {
 
 		banMessageID, errID := httphelper.GetInt64Param(ctx, "ban_message_id")
 		if errID != nil || banMessageID == 0 {
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Error("Failed to get ban_message_id", log.ErrAttr(errID), log.HandlerName(2))
+
 			return
 		}
 
@@ -138,7 +144,7 @@ func (h *appealHandler) onAPIDeleteBanMessage() gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusNoContent, nil)
-		slog.Info("appeal message deleted")
+		slog.Info("Appeal message deleted", slog.Int64("ban_message_id", banMessageID))
 	}
 }
 

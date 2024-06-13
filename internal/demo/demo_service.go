@@ -20,7 +20,6 @@ func NewDemoHandler(engine *gin.Engine, du domain.DemoUsecase) {
 	}
 
 	engine.POST("/api/demos", handler.onAPIPostDemosQuery())
-
 	engine.GET("/api/demos/cleanup", handler.onAPIGetCleanup())
 }
 

@@ -8,19 +8,20 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 type wordFilterHandler struct {
-	filterUsecase domain.WordFilterUsecase
-	chatUsecase   domain.ChatUsecase
-	confUsecase   domain.ConfigUsecase
+	filters domain.WordFilterUsecase
+	chat    domain.ChatUsecase
+	config  domain.ConfigUsecase
 }
 
 func NewWordFilterHandler(engine *gin.Engine, confUsecase domain.ConfigUsecase, wfu domain.WordFilterUsecase, cu domain.ChatUsecase, ath domain.AuthUsecase) {
 	handler := wordFilterHandler{
-		confUsecase:   confUsecase,
-		filterUsecase: wfu,
-		chatUsecase:   cu,
+		config:  confUsecase,
+		filters: wfu,
+		chat:    cu,
 	}
 
 	// editor
@@ -38,9 +39,10 @@ func NewWordFilterHandler(engine *gin.Engine, confUsecase domain.ConfigUsecase, 
 
 func (h *wordFilterHandler) queryFilters() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		words, errGetFilters := h.filterUsecase.GetFilters(ctx)
+		words, errGetFilters := h.filters.GetFilters(ctx)
 		if errGetFilters != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to get query filters", log.ErrAttr(errGetFilters))
 
 			return
 		}
@@ -53,7 +55,8 @@ func (h *wordFilterHandler) editFilter() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		filterID, wordIDErr := httphelper.GetInt64Param(ctx, "filter_id")
 		if wordIDErr != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.HandleErrBadRequest(ctx)
+			slog.Warn("Got invalid filter_id", log.ErrAttr(wordIDErr))
 
 			return
 		}
@@ -63,14 +66,13 @@ func (h *wordFilterHandler) editFilter() gin.HandlerFunc {
 			return
 		}
 
-		wordFilter, errEdit := h.filterUsecase.Edit(ctx, httphelper.CurrentUserProfile(ctx), filterID, req)
+		wordFilter, errEdit := h.filters.Edit(ctx, httphelper.CurrentUserProfile(ctx), filterID, req)
 		if errEdit != nil {
 			httphelper.ErrorHandled(ctx, errEdit)
+			slog.Error("Failed to edit word filter", log.ErrAttr(errEdit))
 
 			return
 		}
-
-		slog.Info("Edited filter", slog.Int64("filter_id", wordFilter.FilterID))
 
 		ctx.JSON(http.StatusOK, wordFilter)
 	}
@@ -83,14 +85,13 @@ func (h *wordFilterHandler) createFilter() gin.HandlerFunc {
 			return
 		}
 
-		wordFilter, errCreate := h.filterUsecase.Create(ctx, httphelper.CurrentUserProfile(ctx), req)
+		wordFilter, errCreate := h.filters.Create(ctx, httphelper.CurrentUserProfile(ctx), req)
 		if errCreate != nil {
 			httphelper.ErrorHandled(ctx, errCreate)
+			slog.Error("Failed to create word filter", log.ErrAttr(errCreate))
 
 			return
 		}
-
-		slog.Info("Created filter", slog.Int64("filter_id", wordFilter.FilterID))
 
 		ctx.JSON(http.StatusOK, wordFilter)
 	}
@@ -101,30 +102,31 @@ func (h *wordFilterHandler) deleteFilter() gin.HandlerFunc {
 		filterID, filterIDErr := httphelper.GetInt64Param(ctx, "filter_id")
 		if filterIDErr != nil {
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			slog.Warn("Failed to get filter_id", log.ErrAttr(filterIDErr))
 
 			return
 		}
 
-		filter, errGet := h.filterUsecase.GetFilterByID(ctx, filterID)
+		filter, errGet := h.filters.GetFilterByID(ctx, filterID)
 		if errGet != nil {
 			if errors.Is(errGet, domain.ErrNoResult) {
-				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
+				httphelper.HandleErrNotFound(ctx)
 
 				return
 			}
 
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to get filter", log.ErrAttr(errGet))
 
 			return
 		}
 
-		if errDrop := h.filterUsecase.DropFilter(ctx, filter); errDrop != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+		if errDrop := h.filters.DropFilter(ctx, filter); errDrop != nil {
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to drop filter", log.ErrAttr(errDrop))
 
 			return
 		}
-
-		slog.Info("Deleted filter", slog.Int64("id", filter.FilterID))
 
 		ctx.JSON(http.StatusOK, gin.H{})
 	}
@@ -141,9 +143,10 @@ func (h *wordFilterHandler) checkFilter() gin.HandlerFunc {
 			return
 		}
 
-		words, errGetFilters := h.filterUsecase.GetFilters(ctx)
+		words, errGetFilters := h.filters.GetFilters(ctx)
 		if errGetFilters != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to get filters", log.ErrAttr(errGetFilters))
 
 			return
 		}
@@ -166,10 +169,10 @@ func (h *wordFilterHandler) filterStates() gin.HandlerFunc {
 		Current   []domain.UserWarning `json:"current"`
 	}
 
-	maxWeight := h.confUsecase.Config().Filters.MaxWeight
+	maxWeight := h.config.Config().Filters.MaxWeight
 
 	return func(ctx *gin.Context) {
-		state := h.chatUsecase.WarningState()
+		state := h.chat.WarningState()
 
 		outputState := warningState{MaxWeight: maxWeight}
 

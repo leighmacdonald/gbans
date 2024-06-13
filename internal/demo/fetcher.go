@@ -53,7 +53,7 @@ func (d Fetcher) Start(ctx context.Context) {
 }
 
 func (d Fetcher) onDemoReceived(ctx context.Context, demo demoUpdate) error {
-	slog.Info("Got new demo",
+	slog.Debug("Got new demo",
 		slog.String("server", demo.server.ShortName),
 		slog.String("name", demo.name))
 
@@ -103,7 +103,7 @@ func (d Fetcher) OnClientConnect(ctx context.Context, client storage.Storager, s
 
 			demoPath := path.Join(demoDir, file.Name())
 
-			slog.Info("Downloading demo", slog.String("name", file.Name()))
+			slog.Debug("Downloading demo", slog.String("name", file.Name()))
 
 			reader, err := client.Open(ctx, demoPath)
 			if err != nil {
@@ -134,7 +134,7 @@ func (d Fetcher) OnClientConnect(ctx context.Context, client storage.Storager, s
 				slog.Error("Failed to cleanup demo", log.ErrAttr(errDelete), slog.String("path", demoPath))
 			}
 
-			slog.Info("Deleted demo on remote host", slog.String("path", demoPath))
+			slog.Debug("Deleted demo on remote host", slog.String("path", demoPath))
 		}
 	}
 

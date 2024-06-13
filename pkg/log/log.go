@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"runtime"
 
 	"github.com/dotse/slug"
 )
@@ -57,4 +58,12 @@ func MustCreateLogger(debugLogPath string, levelString string) func() {
 
 func ErrAttr(err error) slog.Attr {
 	return slog.Any("error", err)
+}
+
+func HandlerName(skip int) slog.Attr {
+	if pc, _, _, ok := runtime.Caller(skip); ok {
+		return slog.String("func", runtime.FuncForPC(pc).Name())
+	}
+
+	return slog.String("func", "unknown")
 }

@@ -3,6 +3,7 @@ package wordfilter
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"regexp"
 	"time"
 
@@ -52,6 +53,8 @@ func (w *wordFilterUsecase) Edit(ctx context.Context, user domain.PersonInfo, fi
 	if errSave := w.filterRepository.SaveFilter(ctx, &existingFilter); errSave != nil {
 		return domain.Filter{}, errSave
 	}
+
+	slog.Info("Edited filter", slog.Int64("filter_id", filterID))
 
 	return existingFilter, nil
 }
@@ -103,11 +106,19 @@ func (w *wordFilterUsecase) Create(ctx context.Context, user domain.PersonInfo, 
 
 	w.wordFilters.Add(&newFilter)
 
+	slog.Info("Created filter", slog.Int64("filter_id", newFilter.FilterID))
+
 	return newFilter, nil
 }
 
 func (w *wordFilterUsecase) DropFilter(ctx context.Context, filter domain.Filter) error {
-	return w.filterRepository.DropFilter(ctx, filter)
+	if err := w.filterRepository.DropFilter(ctx, filter); err != nil {
+		return err
+	}
+
+	slog.Info("Deleted filter", slog.Int64("id", filter.FilterID))
+
+	return nil
 }
 
 func (w *wordFilterUsecase) GetFilterByID(ctx context.Context, filterID int64) (domain.Filter, error) {

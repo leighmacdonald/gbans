@@ -12,11 +12,11 @@ import (
 )
 
 type chatHandler struct {
-	cu domain.ChatUsecase
+	chat domain.ChatUsecase
 }
 
-func NewChatHandler(engine *gin.Engine, usecase domain.ChatUsecase, authUsecase domain.AuthUsecase) {
-	handler := chatHandler{cu: usecase}
+func NewChatHandler(engine *gin.Engine, chat domain.ChatUsecase, authUsecase domain.AuthUsecase) {
+	handler := chatHandler{chat: chat}
 
 	// authed
 	authedGrp := engine.Group("/")
@@ -40,7 +40,7 @@ func (h chatHandler) onAPIQueryMessages() gin.HandlerFunc {
 			return
 		}
 
-		messages, errChat := h.cu.QueryChatHistory(ctx, httphelper.CurrentUserProfile(ctx), req)
+		messages, errChat := h.chat.QueryChatHistory(ctx, httphelper.CurrentUserProfile(ctx), req)
 		if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
 			slog.Error("Failed to query messages history",
 				log.ErrAttr(errChat), slog.String("sid", req.SourceID))
@@ -71,7 +71,7 @@ func (h chatHandler) onAPIQueryMessageContext() gin.HandlerFunc {
 			return
 		}
 
-		messages, errQuery := h.cu.GetPersonMessageContext(ctx, messageID, padding)
+		messages, errQuery := h.chat.GetPersonMessageContext(ctx, messageID, padding)
 		if errQuery != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 

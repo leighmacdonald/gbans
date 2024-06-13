@@ -9,7 +9,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 )
 
-type banASNUsecase struct {
+type banASN struct {
 	repository     domain.BanASNRepository
 	discordUsecase domain.DiscordUsecase
 	networkUsecase domain.NetworkUsecase
@@ -20,7 +20,7 @@ type banASNUsecase struct {
 func NewBanASNUsecase(repository domain.BanASNRepository, discordUsecase domain.DiscordUsecase,
 	networkUsecase domain.NetworkUsecase, config domain.ConfigUsecase, person domain.PersonUsecase,
 ) domain.BanASNUsecase {
-	return banASNUsecase{
+	return banASN{
 		repository:     repository,
 		discordUsecase: discordUsecase,
 		networkUsecase: networkUsecase,
@@ -29,11 +29,11 @@ func NewBanASNUsecase(repository domain.BanASNRepository, discordUsecase domain.
 	}
 }
 
-func (s banASNUsecase) Expired(ctx context.Context) ([]domain.BanASN, error) {
+func (s banASN) Expired(ctx context.Context) ([]domain.BanASN, error) {
 	return s.repository.Expired(ctx)
 }
 
-func (s banASNUsecase) Ban(ctx context.Context, banASN *domain.BanASN) error {
+func (s banASN) Ban(ctx context.Context, banASN *domain.BanASN) error {
 	var existing domain.BanASN
 	if errGetExistingBan := s.repository.GetByASN(ctx, banASN.ASNum, &existing); errGetExistingBan != nil {
 		if !errors.Is(errGetExistingBan, domain.ErrNoResult) {
@@ -55,7 +55,7 @@ func (s banASNUsecase) Ban(ctx context.Context, banASN *domain.BanASN) error {
 	return nil
 }
 
-func (s banASNUsecase) Unban(ctx context.Context, asnNum string) (bool, error) {
+func (s banASN) Unban(ctx context.Context, asnNum string) (bool, error) {
 	asNum, errConv := strconv.ParseInt(asnNum, 10, 64)
 	if errConv != nil {
 		return false, errors.Join(errConv, domain.ErrParseASN)
@@ -75,22 +75,22 @@ func (s banASNUsecase) Unban(ctx context.Context, asnNum string) (bool, error) {
 	return true, nil
 }
 
-func (s banASNUsecase) GetByID(ctx context.Context, banID int64, banASN *domain.BanASN) error {
+func (s banASN) GetByID(ctx context.Context, banID int64, banASN *domain.BanASN) error {
 	return s.repository.GetByID(ctx, banID, banASN)
 }
 
-func (s banASNUsecase) GetByASN(ctx context.Context, asNum int64, banASN *domain.BanASN) error {
+func (s banASN) GetByASN(ctx context.Context, asNum int64, banASN *domain.BanASN) error {
 	return s.repository.GetByASN(ctx, asNum, banASN)
 }
 
-func (s banASNUsecase) Get(ctx context.Context, filter domain.ASNBansQueryFilter) ([]domain.BannedASNPerson, error) {
+func (s banASN) Get(ctx context.Context, filter domain.ASNBansQueryFilter) ([]domain.BannedASNPerson, error) {
 	return s.repository.Get(ctx, filter)
 }
 
-func (s banASNUsecase) Save(ctx context.Context, banASN *domain.BanASN) error {
+func (s banASN) Save(ctx context.Context, banASN *domain.BanASN) error {
 	return s.repository.Save(ctx, banASN)
 }
 
-func (s banASNUsecase) Delete(ctx context.Context, banASN *domain.BanASN) error {
+func (s banASN) Delete(ctx context.Context, banASN *domain.BanASN) error {
 	return s.repository.Delete(ctx, banASN)
 }

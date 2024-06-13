@@ -42,9 +42,12 @@ func NewAuthHandler(engine *gin.Engine, authUsecase domain.AuthUsecase, configUs
 }
 
 func (h authHandler) onSteamOIDCCallback() gin.HandlerFunc {
-	nonceStore := openid.NewSimpleNonceStore()
-	discoveryCache := &noOpDiscoveryCache{}
-	oidRx := regexp.MustCompile(`^https://steamcommunity\.com/openid/id/(\d+)$`)
+	var (
+		handlerName    = log.HandlerName(1)
+		nonceStore     = openid.NewSimpleNonceStore()
+		discoveryCache = &noOpDiscoveryCache{}
+		oidRx          = regexp.MustCompile(`^https://steamcommunity\.com/openid/id/(\d+)$`)
+	)
 
 	return func(ctx *gin.Context) {
 		var idStr string
@@ -57,8 +60,8 @@ func (h authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 			// Pull the sid out of the query without doing a signature check
 			values, errParse := url.Parse(fullURL)
 			if errParse != nil {
-				slog.Error("Failed to parse url", log.ErrAttr(errParse))
 				ctx.Redirect(302, referralURL)
+				slog.Error("Failed to parse url", log.ErrAttr(errParse), handlerName)
 
 				return
 			}
@@ -67,8 +70,8 @@ func (h authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 		} else {
 			openID, errVerify := openid.Verify(fullURL, discoveryCache, nonceStore)
 			if errVerify != nil {
-				slog.Error("Error verifying openid auth response", log.ErrAttr(errVerify))
 				ctx.Redirect(302, referralURL)
+				slog.Error("Error verifying openid auth response", log.ErrAttr(errVerify), handlerName)
 
 				return
 			}
@@ -78,32 +81,32 @@ func (h authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 
 		match := oidRx.FindStringSubmatch(idStr)
 		if match == nil || len(match) != 2 {
-			slog.Error("Failed to match oid format provided")
 			ctx.Redirect(302, referralURL)
+			slog.Error("Failed to match oid format provided", handlerName)
 
 			return
 		}
 
 		sid := steamid.New(match[1])
 		if !sid.Valid() {
-			slog.Error("Received invalid steamid")
 			ctx.Redirect(302, referralURL)
+			slog.Error("Received invalid steamid", handlerName)
 
 			return
 		}
 
 		person, errPerson := h.personUsecase.GetOrCreatePersonBySteamID(ctx, sid)
 		if errPerson != nil {
-			slog.Error("Failed to create or load user profile", log.ErrAttr(errPerson))
 			ctx.Redirect(302, referralURL)
+			slog.Error("Failed to create or load user profile", log.ErrAttr(errPerson), handlerName)
 		}
 
 		if person.Expired() {
 			if errGetProfile := thirdparty.UpdatePlayerSummary(ctx, &person); errGetProfile != nil {
-				slog.Error("Failed to fetch user profile on login", log.ErrAttr(errGetProfile))
+				slog.Error("Failed to fetch user profile on login", log.ErrAttr(errGetProfile), handlerName)
 			} else {
 				if errSave := h.personUsecase.SavePerson(ctx, &person); errSave != nil {
-					slog.Error("Failed to save summary update", log.ErrAttr(errSave))
+					slog.Error("Failed to save summary update", log.ErrAttr(errSave), handlerName)
 				}
 			}
 		}
@@ -111,7 +114,7 @@ func (h authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 		token, errToken := h.authUsecase.MakeToken(ctx, conf.HTTPCookieKey, sid)
 		if errToken != nil {
 			ctx.Redirect(302, referralURL)
-			slog.Error("Failed to create access token pair", log.ErrAttr(errToken))
+			slog.Error("Failed to create access token pair", log.ErrAttr(errToken), handlerName)
 
 			return
 		}
@@ -131,7 +134,7 @@ func (h authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 		parsedExternal, errExternal := url.Parse(conf.ExternalURL)
 		if errExternal != nil {
 			ctx.Redirect(302, referralURL)
-			slog.Error("Failed to parse ext url", log.ErrAttr(errExternal))
+			slog.Error("Failed to parse ext url", log.ErrAttr(errExternal), handlerName)
 
 			return
 		}
@@ -151,19 +154,21 @@ func (h authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 		slog.Info("User logged in",
 			slog.String("sid64", sid.String()),
 			slog.String("name", person.PersonaName),
-			slog.Int("permission_level", int(person.PermissionLevel)))
+			slog.Int("permission_level", int(person.PermissionLevel)), handlerName)
 	}
 }
 
 const fingerprintCookieName = "fingerprint"
 
 func (h authHandler) onAPILogout() gin.HandlerFunc {
+	handlerName := log.HandlerName(1)
 	conf := h.configUsecase.Config()
 
 	return func(ctx *gin.Context) {
 		fingerprint, errCookie := ctx.Cookie(fingerprintCookieName)
 		if errCookie != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, nil)
+			slog.Warn("Failed to get fingerprint", handlerName)
 
 			return
 		}
@@ -171,7 +176,7 @@ func (h authHandler) onAPILogout() gin.HandlerFunc {
 		parsedExternal, errExternal := url.Parse(conf.ExternalURL)
 		if errExternal != nil {
 			ctx.Status(http.StatusInternalServerError)
-			slog.Error("Failed to parse ext url", log.ErrAttr(errExternal))
+			slog.Error("Failed to parse ext url", log.ErrAttr(errExternal), handlerName)
 
 			return
 		}
@@ -182,14 +187,14 @@ func (h authHandler) onAPILogout() gin.HandlerFunc {
 		personAuth := domain.PersonAuth{}
 		if errGet := h.authUsecase.GetPersonAuthByRefreshToken(ctx, fingerprint, &personAuth); errGet != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, nil)
-			slog.Warn("Failed to load person via fingerprint")
+			slog.Warn("Failed to load person via fingerprint", handlerName)
 
 			return
 		}
 
 		if errDelete := h.authUsecase.DeletePersonAuth(ctx, personAuth.PersonAuthID); errDelete != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, nil)
-			slog.Error("Failed to delete person auth on logout", log.ErrAttr(errDelete))
+			slog.Error("Failed to delete person auth on logout", log.ErrAttr(errDelete), handlerName)
 
 			return
 		}

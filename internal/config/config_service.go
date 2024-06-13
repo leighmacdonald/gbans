@@ -43,7 +43,7 @@ func (c configHandler) onAPIPutConfig() gin.HandlerFunc {
 
 		if errSave := c.config.Write(ctx, req); errSave != nil {
 			slog.Error("Failed to save new config", log.ErrAttr(errSave))
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.HandleErrBadRequest(ctx)
 
 			return
 		}
@@ -106,8 +106,8 @@ func (c configHandler) onChangelog() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		releases, err := getGithubReleases(ctx)
 		if err != nil {
-			slog.Error("Failed to fetch github releases")
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to fetch github releases", log.ErrAttr(err))
 
 			return
 		}

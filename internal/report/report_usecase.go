@@ -204,7 +204,13 @@ func (r reportUsecase) DropReport(ctx context.Context, report *domain.Report) er
 }
 
 func (r reportUsecase) SaveReport(ctx context.Context, report *domain.Report) error {
-	return r.rr.SaveReport(ctx, report)
+	if err := r.rr.SaveReport(ctx, report); err != nil {
+		return err
+	}
+
+	slog.Info("New report created", slog.Int64("report_id", report.ReportID))
+
+	return nil
 }
 
 func (r reportUsecase) SaveReportMessage(ctx context.Context, message *domain.ReportMessage) error {
