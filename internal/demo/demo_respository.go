@@ -24,7 +24,7 @@ func (r *demoRepository) ExpiredDemos(ctx context.Context, limit uint64) ([]doma
 		Select("d.demo_id", "d.title", "d.asset_id").
 		From("demo d").
 		LeftJoin("report r on d.demo_id = r.demo_id").
-		Where("coalesce(r.demo_id > 0, false) = false").
+		Where("r.demo_id > 0").
 		OrderBy("d.demo_id").
 		Offset(limit))
 	if errRow != nil {
