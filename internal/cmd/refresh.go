@@ -87,14 +87,14 @@ func refreshFiltersCmd() *cobra.Command {
 			stateUsecase := state.NewStateUsecase(eventBroadcaster,
 				state.NewStateRepository(state.NewCollector(serversUsecase)), configUsecase, serversUsecase)
 
-			wordFilterUsecase := wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(dbUsecase))
+			discordRepository, _ := discord.NewDiscordRepository(conf)
+
+			discordUsecase := discord.NewDiscordUsecase(discordRepository, configUsecase)
+
+			wordFilterUsecase := wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(dbUsecase), discordUsecase)
 			if errImport := wordFilterUsecase.Import(ctx); errImport != nil {
 				slog.Error("Failed to load filters")
 			}
-
-			discordRepository, _ := discord.NewDiscordRepository(conf)
-
-			discordUsecase := discord.NewDiscordUsecase(discordRepository, wordFilterUsecase)
 
 			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(conf, dbUsecase), configUsecase)
 			reportUsecase := report.NewReportUsecase(report.NewReportRepository(dbUsecase), discordUsecase, configUsecase, personUsecase, nil)

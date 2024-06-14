@@ -60,7 +60,7 @@ type DiscordRepository interface {
 	RegisterHandler(cmd Cmd, handler SlashCommandHandler) error
 	Shutdown(guildID string)
 	Start() error
-	SendPayload(channelID DiscordChannel, payload *discordgo.MessageEmbed)
+	SendPayload(channelID string, payload *discordgo.MessageEmbed)
 }
 
 type DiscordChannel int
@@ -82,7 +82,6 @@ type DiscordUsecase interface {
 	Shutdown(guildID string)
 	SendPayload(channelID DiscordChannel, embed *discordgo.MessageEmbed)
 	RegisterHandler(cmd Cmd, handler SlashCommandHandler) error
-	FilterAdd(ctx context.Context, user PersonInfo, pattern string, isRegex bool) (*discordgo.MessageEmbed, error)
 }
 
 type FoundPlayer struct {

@@ -3,6 +3,7 @@ package wordfilter
 import (
 	"context"
 	"errors"
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"log/slog"
 	"regexp"
 	"time"
@@ -14,10 +15,11 @@ import (
 type wordFilterUsecase struct {
 	repository  domain.WordFilterRepository
 	wordFilters *WordFilters
+	discord     domain.DiscordUsecase
 }
 
-func NewWordFilterUsecase(repository domain.WordFilterRepository) domain.WordFilterUsecase {
-	return &wordFilterUsecase{repository: repository, wordFilters: NewWordFilters()}
+func NewWordFilterUsecase(repository domain.WordFilterRepository, discord domain.DiscordUsecase) domain.WordFilterUsecase {
+	return &wordFilterUsecase{repository: repository, wordFilters: NewWordFilters(), discord: discord}
 }
 
 func (w *wordFilterUsecase) Import(ctx context.Context) error {
@@ -108,6 +110,8 @@ func (w *wordFilterUsecase) Create(ctx context.Context, user domain.PersonInfo, 
 
 	slog.Info("Created filter", slog.Int64("filter_id", newFilter.FilterID))
 
+	w.discord.SendPayload(domain.ChannelWordFilterLog, discord.FilterAddMessage(newFilter))
+
 	return newFilter, nil
 }
 
@@ -117,6 +121,8 @@ func (w *wordFilterUsecase) DropFilter(ctx context.Context, filter domain.Filter
 	}
 
 	slog.Info("Deleted filter", slog.Int64("id", filter.FilterID))
+
+	w.discord.SendPayload(domain.ChannelWordFilterLog, discord.FilterDelMessage(filter))
 
 	return nil
 }

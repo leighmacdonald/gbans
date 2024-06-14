@@ -26,7 +26,7 @@ func (bot *nullDiscordRepository) Start() error {
 	return nil
 }
 
-func (bot *nullDiscordRepository) SendPayload(_ domain.DiscordChannel, _ *discordgo.MessageEmbed) {
+func (bot *nullDiscordRepository) SendPayload(_ string, _ *discordgo.MessageEmbed) {
 }
 
 type discordRepository struct {
@@ -231,31 +231,9 @@ func (bot *discordRepository) sendInteractionResponse(session *discordgo.Session
 	return nil
 }
 
-func (bot *discordRepository) SendPayload(channel domain.DiscordChannel, payload *discordgo.MessageEmbed) {
+func (bot *discordRepository) SendPayload(channelID string, payload *discordgo.MessageEmbed) {
 	if !bot.isReady.Load() {
 		return
-	}
-
-	var channelID string
-
-	switch channel {
-	case domain.ChannelMod:
-		channelID = bot.conf.Discord.LogChannelID
-	case domain.ChannelModLog:
-		channelID = bot.conf.Discord.LogChannelID
-	case domain.ChannelPublicLog:
-		channelID = bot.conf.Discord.PublicLogChannelID
-	case domain.ChannelPublicMatchLog:
-		channelID = bot.conf.Discord.PublicMatchLogChannelID
-	case domain.ChannelModAppealLog:
-	case domain.ChannelModVoteLog:
-	case domain.ChannelBanLog:
-	case domain.ChannelForumLog:
-	case domain.ChannelWordFilterLog:
-	}
-
-	if channelID == "" {
-		channelID = bot.conf.Discord.LogChannelID
 	}
 
 	if _, errSend := bot.session.ChannelMessageSendEmbed(channelID, payload); errSend != nil {
