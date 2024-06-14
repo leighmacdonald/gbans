@@ -2,7 +2,7 @@
 sidebar_position: 2
 ---
 
-# Config
+# Base Configuration
 
 ## Server
 
@@ -64,13 +64,6 @@ This config file should be places in `tf/addons/sourcemod/configs/gbans.cfg`.
 
 The server gbans server is running you should now be able to see the `[GB]` message logs in the
 console. With a message like below on successful authentication with the server.
-
-```
-[GB] Using config file: addons/sourcemod/configs/gbans.cfg
-[GB] Request to https://gbans.example.com/v1/auth finished with status code 200 in 0.01 seconds
-[GB] Successfully authenticated with gbans server
-
-```
 
 ## Discord
 

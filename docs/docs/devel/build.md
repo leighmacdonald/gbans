@@ -14,9 +14,7 @@ the project into distinct sentry projects.
 
 ### Backend
 
-After creating your backend project you can copy and paste the url shown into `gbans.yml`
-under the `logging.sentry_dsn` key. No further configuration should be required.
-
+TODO
 
 ### Frontend
 
