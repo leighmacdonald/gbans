@@ -66,14 +66,14 @@ currently incomplete [docs](https://leighmacdonald.github.io/gbans/docs/INTRO).
     - [ ] `/gb_unban` Unban a previously banned user
     - [ ] `/gb_kick` Kick a user
     - [x] `/gb_mod or /mod <message>` Call for a mod on discord
-- [ ] Markdown formatting support for all multiline inputs with image uploading
+- [x] Markdown formatting support for all multiline inputs with image uploading
 - [x] Community Forum System
   - [x] Categories
   - [x] Forums
   - [x] Private / Restricted forums
   - [x] Signatures
   - [x] Active user display
-  - [ ] Advanced markdown editor interface
+  - [x] Advanced markdown editor interface
 - [ ] User Interfaces
     - [ ] CLI
     - [x] Discord
@@ -120,7 +120,7 @@ There is also a docker-compose config you can use which provides the database as
 
 ## Documentation
 
-For installation, configuration and usage instruction, developer notes, please see the [docs](docs) directory.
+For installation, configuration and usage instruction, developer notes, please see the [docs](https://leighmacdonald.github.io/gbans/docs/INTRO).
 
 ## Contributors
 
