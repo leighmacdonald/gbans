@@ -1149,14 +1149,35 @@ func NotificationMessage(message string, link string) *discordgo.MessageEmbed {
 	return msgEmbed.Embed().Truncate().MessageEmbed
 }
 
-func VoteResultMessage(result domain.VoteResult) *discordgo.MessageEmbed {
+func VoteResultMessage(conf domain.Config, result domain.VoteResult, source domain.Person, target domain.Person) *discordgo.MessageEmbed {
+	avatarSource := domain.NewAvatarLinks(source.AvatarHash)
+	avatarTarget := domain.NewAvatarLinks(target.AvatarHash)
+
 	msgEmbed := NewEmbed("Vote Result")
+	if result.Success {
+		msgEmbed.emb.Color = ColourSuccess
+	} else {
+		msgEmbed.emb.Color = ColourWarn
+	}
+
+	msgEmbed.emb.Thumbnail = &discordgo.MessageEmbedThumbnail{
+		URL: avatarTarget.Full(),
+	}
+
+	msgEmbed.emb.Author = &discordgo.MessageEmbedAuthor{
+		URL:     conf.ExtURL(source),
+		Name:    source.PersonaName,
+		IconURL: avatarSource.Full(),
+	}
+
 	msgEmbed.Embed().
-		AddField("Initiator", result.SourceID.String()).
-		AddField("Target", result.TargetID.String()).
+		AddField("Caller SID", result.SourceID.String()).
+		AddField("Target", target.PersonaName).
+		AddField("Target SID", result.TargetID.String()).
 		AddField("Code", fmt.Sprintf("%d", result.Code)).
 		AddField("Success", strconv.FormatBool(result.Success)).
-		AddField("Server", strconv.FormatInt(int64(result.ServerID), 10))
+		AddField("Server", strconv.FormatInt(int64(result.ServerID), 10)).
+		InlineAllFields()
 
 	return msgEmbed.Embed().Truncate().MessageEmbed
 }

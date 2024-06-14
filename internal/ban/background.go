@@ -55,7 +55,7 @@ func Start(ctx context.Context, banUsecase domain.BanSteamUsecase, banNetUsecase
 						name = person.SteamID.String()
 					}
 
-					discordUsecase.SendPayload(domain.ChannelModLog, discord.BanExpiresMessage(ban, person, configUsecase.ExtURL(ban)))
+					discordUsecase.SendPayload(domain.ChannelBanLog, discord.BanExpiresMessage(ban, person, configUsecase.ExtURL(ban)))
 
 					slog.Info("Ban expired",
 						slog.String("reason", ban.Reason.String()),

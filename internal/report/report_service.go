@@ -81,7 +81,7 @@ func (h reportHandler) onAPIPostBanState() gin.HandlerFunc {
 
 		ctx.JSON(http.StatusOK, report)
 
-		h.discord.SendPayload(domain.ChannelModLog, discord.EditBanAppealStatusMessage())
+		h.discord.SendPayload(domain.ChannelModAppealLog, discord.EditBanAppealStatusMessage())
 	}
 }
 
@@ -218,7 +218,7 @@ func (h reportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 
 		msg := discord.NewInGameReportResponse(report, conf.ExtURL(report), currentUser, conf.ExtURL(currentUser), demoURL)
 
-		h.discord.SendPayload(domain.ChannelModLog, msg)
+		h.discord.SendPayload(domain.ChannelModAppealLog, msg)
 	}
 }
 
@@ -443,7 +443,7 @@ func (h reportHandler) onAPIPostReportMessage() gin.HandlerFunc {
 
 		conf := h.config.Config()
 
-		h.discord.SendPayload(domain.ChannelModLog,
+		h.discord.SendPayload(domain.ChannelModAppealLog,
 			discord.NewReportMessageResponse(msg.MessageMD, conf.ExtURL(report), person, conf.ExtURL(person)))
 	}
 }
@@ -516,7 +516,7 @@ func (h reportHandler) onAPIEditReportMessage() gin.HandlerFunc {
 		msg := discord.EditReportMessageResponse(req.BodyMD, existing.MessageMD,
 			conf.ExtURLRaw("/report/%d", existing.ReportID), curUser, conf.ExtURL(curUser))
 
-		h.discord.SendPayload(domain.ChannelModLog, msg)
+		h.discord.SendPayload(domain.ChannelModAppealLog, msg)
 	}
 }
 
@@ -561,6 +561,6 @@ func (h reportHandler) onAPIDeleteReportMessage() gin.HandlerFunc {
 
 		conf := h.config.Config()
 
-		h.discord.SendPayload(domain.ChannelModLog, discord.DeleteReportMessage(existing, curUser, conf.ExtURL(curUser)))
+		h.discord.SendPayload(domain.ChannelModAppealLog, discord.DeleteReportMessage(existing, curUser, conf.ExtURL(curUser)))
 	}
 }

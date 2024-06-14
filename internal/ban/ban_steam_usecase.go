@@ -147,14 +147,14 @@ func (s banSteamUsecase) Ban(ctx context.Context, curUser domain.PersonInfo, ban
 				slog.Int64("sid64", banSteam.TargetID.Int64()))
 		}
 
-		s.discord.SendPayload(domain.ChannelModLog, discord.KickPlayerEmbed(target))
+		s.discord.SendPayload(domain.ChannelBanLog, discord.KickPlayerEmbed(target))
 	} else if banSteam.BanType == domain.NoComm {
 		if errSilence := s.state.Silence(ctx, banSteam.TargetID, banSteam.Reason); errSilence != nil && !errors.Is(errSilence, domain.ErrPlayerNotFound) {
 			slog.Error("Failed to silence player", log.ErrAttr(errSilence),
 				slog.Int64("sid64", banSteam.TargetID.Int64()))
 		}
 
-		s.discord.SendPayload(domain.ChannelModLog, discord.SilenceEmbed(target))
+		s.discord.SendPayload(domain.ChannelBanLog, discord.SilenceEmbed(target))
 	}
 
 	return nil
@@ -186,7 +186,7 @@ func (s banSteamUsecase) Unban(ctx context.Context, targetSID steamid.SteamID, r
 		return false, errors.Join(err, domain.ErrFetchPerson)
 	}
 
-	s.discord.SendPayload(domain.ChannelModLog, discord.UnbanMessage(s.config, person))
+	s.discord.SendPayload(domain.ChannelBanLog, discord.UnbanMessage(s.config, person))
 
 	return true, nil
 }
