@@ -1,22 +1,17 @@
 package discord
 
 import (
-	"context"
-	"errors"
-	"regexp"
-	"time"
-
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/domain"
 )
 
 type discordUsecase struct {
-	repository  domain.DiscordRepository
-	wordFilters domain.WordFilterUsecase
+	repository domain.DiscordRepository
+	config     domain.ConfigUsecase
 }
 
-func NewDiscordUsecase(repository domain.DiscordRepository, wordFilters domain.WordFilterUsecase) domain.DiscordUsecase {
-	return &discordUsecase{repository: repository, wordFilters: wordFilters}
+func NewDiscordUsecase(repository domain.DiscordRepository, config domain.ConfigUsecase) domain.DiscordUsecase {
+	return &discordUsecase{repository: repository, config: config}
 }
 
 func (d discordUsecase) Shutdown(guildID string) {
@@ -31,32 +26,35 @@ func (d discordUsecase) Start() error {
 	return d.repository.Start()
 }
 
-func (d discordUsecase) SendPayload(channelID domain.DiscordChannel, embed *discordgo.MessageEmbed) {
+func (d discordUsecase) SendPayload(channel domain.DiscordChannel, embed *discordgo.MessageEmbed) {
+	conf := d.config.Config()
+
+	var channelID string
+
+	switch channel {
+	case domain.ChannelMod:
+		channelID = conf.Discord.LogChannelID
+	case domain.ChannelModLog:
+		channelID = conf.Discord.LogChannelID
+	case domain.ChannelPublicLog:
+		channelID = conf.Discord.PublicLogChannelID
+	case domain.ChannelPublicMatchLog:
+		channelID = conf.Discord.PublicMatchLogChannelID
+	case domain.ChannelModAppealLog:
+		channelID = conf.Discord.AppealLogChannelID
+	case domain.ChannelModVoteLog:
+		channelID = conf.Discord.VoteLogChannelID
+	case domain.ChannelBanLog:
+		channelID = conf.Discord.BanLogChannelID
+	case domain.ChannelForumLog:
+		channelID = conf.Discord.ForumLogChannelID
+	case domain.ChannelWordFilterLog:
+		channelID = conf.Discord.WordFilterLogChannelID
+	}
+
+	if channelID == "" {
+		channelID = conf.Discord.LogChannelID
+	}
+
 	d.repository.SendPayload(channelID, embed)
-}
-
-func (d discordUsecase) FilterAdd(ctx context.Context, user domain.PersonInfo, pattern string, isRegex bool) (*discordgo.MessageEmbed, error) {
-	if isRegex {
-		_, rxErr := regexp.Compile(pattern)
-		if rxErr != nil {
-			return nil, errors.Join(rxErr, domain.ErrInvalidFilterRegex)
-		}
-	}
-
-	newFilter := domain.Filter{
-		AuthorID:  user.GetSteamID(),
-		Pattern:   pattern,
-		IsRegex:   isRegex,
-		IsEnabled: true,
-		CreatedOn: time.Now(),
-		UpdatedOn: time.Now(),
-	}
-
-	filter, errFilterAdd := d.wordFilters.Create(ctx, user, newFilter)
-
-	if errFilterAdd != nil {
-		return nil, domain.ErrCommandFailed
-	}
-
-	return FilterAddMessage(filter), nil
 }

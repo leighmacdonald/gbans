@@ -153,7 +153,7 @@ func (h personHandler) onAPICurrentProfile() gin.HandlerFunc {
 
 func (h personHandler) onAPIProfile() gin.HandlerFunc {
 	type profileQuery struct {
-		Query string `form:"query"`
+		Query string `url:"query"`
 	}
 
 	return func(ctx *gin.Context) {
@@ -161,7 +161,7 @@ func (h personHandler) onAPIProfile() gin.HandlerFunc {
 		defer cancelRequest()
 
 		var req profileQuery
-		if !httphelper.Bind(ctx, &req) {
+		if !httphelper.BindQuery(ctx, &req) {
 			return
 		}
 

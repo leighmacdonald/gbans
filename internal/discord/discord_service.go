@@ -121,10 +121,6 @@ func (h discordService) makeOnUnban() func(_ context.Context, _ *discordgo.Sessi
 func (h discordService) makeOnFilter() func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) { //nolint:maintidx
 	return func(ctx context.Context, session *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 		switch interaction.ApplicationCommandData().Options[0].Name {
-		case "add":
-			return h.onFilterAdd(ctx, session, interaction)
-		case "del":
-			return h.onFilterDel(ctx, session, interaction)
 		case "check":
 			return h.onFilterCheck(ctx, session, interaction)
 		default:
@@ -499,40 +495,6 @@ func (h discordService) makeOnPlayers() func(context.Context, *discordgo.Session
 
 		return PlayersMessage(rows, serverState.MaxPlayers, serverState.Name), nil
 	}
-}
-
-func (h discordService) onFilterAdd(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate,
-) (*discordgo.MessageEmbed, error) {
-	opts := domain.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
-	pattern := opts[domain.OptPattern].StringValue()
-	isRegex := opts[domain.OptIsRegex].BoolValue()
-
-	author, errAuthor := h.getDiscordAuthor(ctx, interaction)
-	if errAuthor != nil {
-		return nil, errAuthor
-	}
-
-	return h.discord.FilterAdd(ctx, author, pattern, isRegex)
-}
-
-func (h discordService) onFilterDel(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-	opts := domain.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
-	wordID := opts["filter"].IntValue()
-
-	if wordID <= 0 {
-		return nil, domain.ErrInvalidFilterID
-	}
-
-	filter, errGetFilter := h.wordFilters.GetFilterByID(ctx, wordID)
-	if errGetFilter != nil {
-		return nil, domain.ErrCommandFailed
-	}
-
-	if errDropFilter := h.wordFilters.DropFilter(ctx, filter); errDropFilter != nil {
-		return nil, domain.ErrCommandFailed
-	}
-
-	return FilterDelMessage(filter), nil
 }
 
 func (h discordService) onFilterCheck(_ context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
