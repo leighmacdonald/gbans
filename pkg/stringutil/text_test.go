@@ -1,9 +1,9 @@
-package util_test
+package stringutil_test
 
 import (
 	"testing"
 
-	"github.com/leighmacdonald/gbans/pkg/util"
+	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/stretchr/testify/require"
 )
 
@@ -13,6 +13,6 @@ bbbbbbbbbb
 cccccccccc
 dddddddddd
 `
-	v := util.StringChunkDelimited(s, 30, "\n")
+	v := stringutil.StringChunkDelimited(s, 30, "\n")
 	require.Len(t, v, 2)
 }

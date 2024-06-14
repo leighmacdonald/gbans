@@ -12,7 +12,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
-	"github.com/leighmacdonald/gbans/pkg/util"
+	"github.com/leighmacdonald/gbans/pkg/datetime"
+	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/olekukonko/tablewriter"
 )
@@ -248,8 +249,8 @@ func BanSteamResponse(banSteam domain.BanSteam, author domain.PersonInfo) *disco
 	expAt := "Permanent"
 
 	if banSteam.ValidUntil.Year()-time.Now().Year() < 5 {
-		expIn = util.FmtDuration(banSteam.ValidUntil)
-		expAt = util.FmtTimeShort(banSteam.ValidUntil)
+		expIn = datetime.FmtDuration(banSteam.ValidUntil)
+		expAt = datetime.FmtTimeShort(banSteam.ValidUntil)
 	}
 
 	msgEmbed.
@@ -361,7 +362,7 @@ func EditAppealMessage(existing domain.BanAppealMessage, body string, author dom
 	msgEmbed := NewEmbed("Ban appeal message edited")
 	msgEmbed.
 		Embed().
-		SetDescription(util.DiffString(existing.MessageMD, body)).
+		SetDescription(stringutil.DiffString(existing.MessageMD, body)).
 		SetColor(ColourWarn)
 
 	return msgEmbed.
@@ -466,8 +467,8 @@ func WarningMessage(newWarning domain.NewUserWarning, banSteam domain.BanSteam, 
 	)
 
 	if banSteam.ValidUntil.Year()-time.Now().Year() < 5 {
-		expIn = util.FmtDuration(banSteam.ValidUntil)
-		expAt = util.FmtTimeShort(banSteam.ValidUntil)
+		expIn = datetime.FmtDuration(banSteam.ValidUntil)
+		expAt = datetime.FmtTimeShort(banSteam.ValidUntil)
 	}
 
 	return msgEmbed.
@@ -501,7 +502,7 @@ func CheckMessage(player domain.Person, ban domain.BannedSteamPerson, banURL str
 	}
 
 	cd := time.Unix(int64(player.TimeCreated), 0)
-	msgEmbed.Embed().AddField("Age", util.FmtDuration(cd))
+	msgEmbed.Embed().AddField("Age", datetime.FmtDuration(cd))
 	msgEmbed.Embed().AddField("Private", strconv.FormatBool(player.CommunityVisibilityState == 1))
 	msgEmbed.AddFieldsSteamID(player.SteamID)
 
@@ -562,12 +563,12 @@ func CheckMessage(player domain.Person, ban domain.BannedSteamPerson, banURL str
 
 		msgEmbed.Embed().SetURL(banURL)
 		msgEmbed.Embed().AddField("Reason", reason)
-		msgEmbed.Embed().AddField("Created", util.FmtTimeShort(ban.CreatedOn)).MakeFieldInline()
+		msgEmbed.Embed().AddField("Created", datetime.FmtTimeShort(ban.CreatedOn)).MakeFieldInline()
 
 		if time.Until(expiry) > time.Hour*24*365*5 {
 			msgEmbed.Embed().AddField("Expires", "Permanent").MakeFieldInline()
 		} else {
-			msgEmbed.Embed().AddField("Expires", util.FmtDuration(expiry)).MakeFieldInline()
+			msgEmbed.Embed().AddField("Expires", datetime.FmtDuration(expiry)).MakeFieldInline()
 		}
 
 		msgEmbed.Embed().AddField("Author", fmt.Sprintf("<@%s>", author.DiscordID)).MakeFieldInline()
@@ -585,7 +586,7 @@ func CheckMessage(player domain.Person, ban domain.BannedSteamPerson, banURL str
 		netExpiry := bannedNets[0].ValidUntil
 		msgEmbed.Embed().AddField("Network Bans", strconv.Itoa(len(bannedNets)))
 		msgEmbed.Embed().AddField("Network Reason", netReason)
-		msgEmbed.Embed().AddField("Network Expires", util.FmtDuration(netExpiry)).MakeFieldInline()
+		msgEmbed.Embed().AddField("Network Expires", datetime.FmtDuration(netExpiry)).MakeFieldInline()
 	}
 
 	banStateStr := "no"

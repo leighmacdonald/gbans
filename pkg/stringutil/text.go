@@ -1,5 +1,5 @@
 // Package util provides some useful functions that don't fit anywhere else.
-package util
+package stringutil
 
 import (
 	"crypto/rand"

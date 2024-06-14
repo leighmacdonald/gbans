@@ -1,9 +1,9 @@
-package util_test
+package datetime_test
 
 import (
 	"testing"
 
-	"github.com/leighmacdonald/gbans/pkg/util"
+	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/stretchr/testify/require"
 )
 
@@ -42,7 +42,7 @@ func TestParseDuration(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		d, errParseDuration := util.ParseUserStringDuration(test.input)
+		d, errParseDuration := datetime.ParseUserStringDuration(test.input)
 		require.NoError(t, errParseDuration, "Failed to parse: %s", test.input)
 		require.Equal(t, test.expected, d.String(), "Failed to parse: %s", test.input)
 	}

@@ -1,9 +1,10 @@
-package util
+package oauth
 
 import (
 	"sync"
 	"time"
 
+	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -46,7 +47,7 @@ func (t LoginStateTracker) Get(state string) (steamid.SteamID, bool) {
 }
 
 func (t LoginStateTracker) Create(steamID steamid.SteamID) string {
-	state := SecureRandomString(24)
+	state := stringutil.SecureRandomString(24)
 
 	t.stateMapMu.Lock()
 	t.stateMap[steamID] = activeState{

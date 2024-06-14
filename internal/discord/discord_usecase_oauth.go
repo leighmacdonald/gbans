@@ -11,14 +11,15 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/log"
-	"github.com/leighmacdonald/gbans/pkg/util"
+	"github.com/leighmacdonald/gbans/pkg/oauth"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type discordOAuthUsecase struct {
 	config     domain.ConfigUsecase
-	state      *util.LoginStateTracker
+	state      *oauth.LoginStateTracker
 	repository domain.DiscordOAuthRepository
 }
 
@@ -26,7 +27,7 @@ func NewDiscordOAuthUsecase(repository domain.DiscordOAuthRepository, config dom
 	return &discordOAuthUsecase{
 		repository: repository,
 		config:     config,
-		state:      util.NewLoginStateTracker(),
+		state:      oauth.NewLoginStateTracker(),
 	}
 }
 
@@ -95,7 +96,7 @@ func (d discordOAuthUsecase) fetchRefresh(ctx context.Context, credentials domai
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, errResp := util.NewHTTPClient().Do(req)
+	resp, errResp := httphelper.NewHTTPClient().Do(req)
 	if errResp != nil {
 		return domain.DiscordCredential{}, errors.Join(errResp, domain.ErrRequestPerform)
 	}
@@ -160,7 +161,7 @@ func (d discordOAuthUsecase) Logout(ctx context.Context, steamID steamid.SteamID
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, errResp := util.NewHTTPClient().Do(req)
+	resp, errResp := httphelper.NewHTTPClient().Do(req)
 	if errResp != nil {
 		return errors.Join(errResp, domain.ErrRequestPerform)
 	}
@@ -193,7 +194,7 @@ func (d discordOAuthUsecase) CreateStatefulLoginURL(steamID steamid.SteamID) (st
 }
 
 func (d discordOAuthUsecase) HandleOAuthCode(ctx context.Context, code string, state string) error {
-	client := util.NewHTTPClient()
+	client := httphelper.NewHTTPClient()
 
 	steamID, found := d.state.Get(state)
 	if !found {

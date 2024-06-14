@@ -2,6 +2,7 @@ package log
 
 import (
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 	"runtime"
@@ -66,4 +67,10 @@ func HandlerName(skip int) slog.Attr {
 	}
 
 	return slog.String("func", "unknown")
+}
+
+func Closer(closer io.Closer) {
+	if errClose := closer.Close(); errClose != nil {
+		slog.Error("Failed to close", ErrAttr(errClose))
+	}
 }

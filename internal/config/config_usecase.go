@@ -12,8 +12,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/log"
-	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/mitchellh/mapstructure"
@@ -207,7 +207,7 @@ func getGithubReleases(ctx context.Context) ([]GithubRelease, error) {
 	req.Header.Add("Accept", "application/vnd.github+json")
 	req.Header.Add("X-GitHub-Api-Version", "2022-11-28")
 
-	client := util.NewHTTPClient()
+	client := httphelper.NewHTTPClient()
 
 	resp, errResp := client.Do(req)
 	if errResp != nil {

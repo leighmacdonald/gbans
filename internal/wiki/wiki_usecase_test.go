@@ -7,7 +7,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/domain/mocks"
 	"github.com/leighmacdonald/gbans/internal/wiki"
-	"github.com/leighmacdonald/gbans/pkg/util"
+	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +17,7 @@ func TestGetWikiPageBySlugSuccess(t *testing.T) {
 		PermissionLevel: domain.PGuest,
 	}
 
-	mockPage := domain.NewWikiPage("test", util.SecureRandomString(100))
+	mockPage := domain.NewWikiPage("test", stringutil.SecureRandomString(100))
 	mockRepo := new(mocks.MockWikiRepository)
 	mockRepo.
 		On("GetWikiPageBySlug", mock.Anything, mock.AnythingOfType("string")).

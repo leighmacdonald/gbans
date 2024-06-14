@@ -11,7 +11,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/log"
-	"github.com/leighmacdonald/gbans/pkg/util"
+	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -95,8 +95,8 @@ func (f *forumHandler) onAPICreateForumCategory() gin.HandlerFunc {
 		}
 
 		category := domain.ForumCategory{
-			Title:       util.SanitizeUGC(req.Title),
-			Description: util.SanitizeUGC(req.Description),
+			Title:       stringutil.SanitizeUGC(req.Title),
+			Description: stringutil.SanitizeUGC(req.Description),
 			Ordering:    req.Ordering,
 			TimeStamped: domain.NewTimeStamped(),
 		}
@@ -158,8 +158,8 @@ func (f *forumHandler) onAPIUpdateForumCategory() gin.HandlerFunc {
 			return
 		}
 
-		category.Title = util.SanitizeUGC(req.Title)
-		category.Description = util.SanitizeUGC(req.Description)
+		category.Title = stringutil.SanitizeUGC(req.Title)
+		category.Description = stringutil.SanitizeUGC(req.Description)
 		category.Ordering = req.Ordering
 
 		if errSave := f.forums.ForumCategorySave(ctx, &category); errSave != nil {
@@ -188,8 +188,8 @@ func (f *forumHandler) onAPICreateForumForum() gin.HandlerFunc {
 
 		forum := domain.Forum{
 			ForumCategoryID: req.ForumCategoryID,
-			Title:           util.SanitizeUGC(req.Title),
-			Description:     util.SanitizeUGC(req.Description),
+			Title:           stringutil.SanitizeUGC(req.Title),
+			Description:     stringutil.SanitizeUGC(req.Description),
 			Ordering:        req.Ordering,
 			PermissionLevel: req.PermissionLevel,
 			TimeStamped:     domain.NewTimeStamped(),
@@ -230,8 +230,8 @@ func (f *forumHandler) onAPIUpdateForumForum() gin.HandlerFunc {
 		}
 
 		forum.ForumCategoryID = req.ForumCategoryID
-		forum.Title = util.SanitizeUGC(req.Title)
-		forum.Description = util.SanitizeUGC(req.Description)
+		forum.Title = stringutil.SanitizeUGC(req.Title)
+		forum.Description = stringutil.SanitizeUGC(req.Description)
 		forum.Ordering = req.Ordering
 		forum.PermissionLevel = req.PermissionLevel
 
@@ -362,7 +362,7 @@ func (f *forumHandler) onAPIThreadUpdate() gin.HandlerFunc {
 			return
 		}
 
-		req.Title = util.SanitizeUGC(req.Title)
+		req.Title = stringutil.SanitizeUGC(req.Title)
 
 		if len(req.Title) < 2 {
 			httphelper.HandleErrBadRequest(ctx)
@@ -492,7 +492,7 @@ func (f *forumHandler) onAPIThreadMessageUpdate() gin.HandlerFunc {
 			return
 		}
 
-		req.BodyMD = util.SanitizeUGC(req.BodyMD)
+		req.BodyMD = stringutil.SanitizeUGC(req.BodyMD)
 
 		if len(req.BodyMD) < 10 {
 			httphelper.HandleErrBadRequest(ctx)
@@ -642,7 +642,7 @@ func (f *forumHandler) onAPIThreadCreateReply() gin.HandlerFunc {
 			return
 		}
 
-		req.BodyMD = util.SanitizeUGC(req.BodyMD)
+		req.BodyMD = stringutil.SanitizeUGC(req.BodyMD)
 
 		if len(req.BodyMD) < 3 {
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, fmt.Errorf("body: %w", domain.ErrTooShort))

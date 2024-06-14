@@ -12,15 +12,16 @@ import (
 
 	"github.com/austinbspencer/patreon-go-wrapper"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/log"
-	"github.com/leighmacdonald/gbans/pkg/util"
+	"github.com/leighmacdonald/gbans/pkg/oauth"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type patreonUsecase struct {
 	repository   domain.PatreonRepository
 	manager      *Manager
-	stateTracker *util.LoginStateTracker
+	stateTracker *oauth.LoginStateTracker
 	cu           domain.ConfigUsecase
 }
 
@@ -29,7 +30,7 @@ func NewPatreonUsecase(repository domain.PatreonRepository, configUsecase domain
 		repository:   repository,
 		cu:           configUsecase,
 		manager:      NewPatreonManager(configUsecase),
-		stateTracker: util.NewLoginStateTracker(),
+		stateTracker: oauth.NewLoginStateTracker(),
 	}
 }
 
@@ -85,7 +86,7 @@ func (p patreonUsecase) refreshToken(ctx context.Context, auth domain.PatreonCre
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
-	httpClient := util.NewHTTPClient()
+	httpClient := httphelper.NewHTTPClient()
 
 	resp, errResp := httpClient.Do(req)
 	if errResp != nil {
@@ -172,7 +173,7 @@ func (p patreonUsecase) OnOauthLogin(ctx context.Context, state string, code str
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
-	httpClient := util.NewHTTPClient()
+	httpClient := httphelper.NewHTTPClient()
 
 	resp, errResp := httpClient.Do(req)
 	if errResp != nil {

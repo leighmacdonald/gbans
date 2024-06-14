@@ -12,10 +12,10 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
-	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -238,7 +238,7 @@ func (r chatRepository) QueryChatHistory(ctx context.Context, filters domain.Cha
 	if !filters.Unrestricted {
 		unrTime := now.AddDate(0, 0, -30)
 		if filters.DateStart != nil && filters.DateStart.Before(unrTime) {
-			return nil, util.ErrInvalidDuration
+			return nil, datetime.ErrInvalidDuration
 		}
 	}
 

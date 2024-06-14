@@ -1,46 +1,17 @@
-package util
+package datetime
 
 import (
 	"errors"
 	"fmt"
-	"math"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 )
 
-var ErrInvalidDuration = errors.New("invalid duration string")
-
-// StringToFloat64 converts a string to a float64, returning a default values on
-// conversion error.
-func StringToFloat64(numericString string, defaultValue float64) float64 {
-	value, errParseFloat := strconv.ParseFloat(numericString, 64)
-	if errParseFloat != nil {
-		return defaultValue
-	}
-
-	return value
-}
-
-const DefaultIntAllocate int = 0
-
-func StringToInt(desired string) int {
-	parsed, err := strconv.Atoi(desired)
-	if err != nil {
-		return DefaultIntAllocate
-	}
-
-	if parsed > 0 && parsed <= math.MaxInt32 {
-		return parsed
-	}
-
-	return DefaultIntAllocate
-}
-
 var (
 	reDuration         = regexp.MustCompile(`^(\d+)([smhdwMy])$`)
-	errInvalidDuration = errors.New("invalid duration")
+	ErrInvalidDuration = errors.New("invalid duration")
 )
 
 // FmtTimeShort returns a common format for time display.
@@ -150,12 +121,12 @@ func ParseUserStringDuration(durationString string) (time.Duration, error) {
 
 	matchDuration := reDuration.FindStringSubmatch(durationString)
 	if matchDuration == nil {
-		return 0, errInvalidDuration
+		return 0, ErrInvalidDuration
 	}
 
 	valueInt, errParseInt := strconv.ParseInt(matchDuration[1], 10, 64)
 	if errParseInt != nil {
-		return 0, errInvalidDuration
+		return 0, ErrInvalidDuration
 	}
 
 	var (
@@ -180,7 +151,7 @@ func ParseUserStringDuration(durationString string) (time.Duration, error) {
 		return day * 365 * value, nil
 	}
 
-	return 0, errInvalidDuration
+	return 0, ErrInvalidDuration
 }
 
 func ParseDuration(value string) (time.Duration, error) {
@@ -204,7 +175,7 @@ func CalcDuration(durationString string, validUntil time.Time) (time.Duration, e
 	if durationString == "custom" {
 		dur := time.Until(validUntil)
 		if dur < 0 {
-			return 0, errInvalidDuration
+			return 0, ErrInvalidDuration
 		}
 
 		return dur, nil
