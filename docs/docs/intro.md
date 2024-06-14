@@ -26,12 +26,12 @@ in golang, typescript and sourcepawn and consists of 3 major components:
 - Flagging and automatic action for flagged words
 - Sourcemod SQL Admins compatibility
 
-Most of these features have some level of being toggled on/off.
+Most of these features have some level of being toggled on/off so you can choose what features suits your setup best.
 
 ## Installation Guide
 
-To get started with installation, please see the [installation guide](./install)
+To get started with installation, please see the [installation](./install) guide.
 
 ## Development Guide
 
-If you want to hack on gbans, please see the [devel](./devel) section to get started.
+If you want to hack on gbans, please see the [develelopment](./devel) guide to get started.
