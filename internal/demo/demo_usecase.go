@@ -38,7 +38,7 @@ func NewDemoUsecase(bucket domain.Bucket, repository domain.DemoRepository, asse
 	}
 }
 
-func (d demoUsecase) OldestDemo(ctx context.Context) (domain.DemoInfo, error) {
+func (d demoUsecase) oldest(ctx context.Context) (domain.DemoInfo, error) {
 	demos, errDemos := d.repository.ExpiredDemos(ctx, 1)
 	if errDemos != nil {
 		return domain.DemoInfo{}, errDemos
@@ -86,7 +86,7 @@ func (d demoUsecase) truncateBySpace(ctx context.Context, root string, maxAllowe
 			return count, size, nil
 		}
 
-		oldestDemo, errOldest := d.OldestDemo(ctx)
+		oldestDemo, errOldest := d.oldest(ctx)
 		if errOldest != nil {
 			if errors.Is(errOldest, domain.ErrNoResult) {
 				return count, size, nil
