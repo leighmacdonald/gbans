@@ -23,8 +23,9 @@ func (r *demoRepository) ExpiredDemos(ctx context.Context, limit uint64) ([]doma
 		Builder().
 		Select("d.demo_id", "d.title", "d.asset_id").
 		From("demo d").
-		Where(sq.Eq{"d.archive": false}).
-		OrderBy("d.demo_id DESC").
+		LeftJoin("report r on d.demo_id = r.demo_id").
+		Where("coalesce(r.demo_id > 0, false) = false").
+		OrderBy("d.demo_id").
 		Offset(limit))
 	if errRow != nil {
 		return nil, r.db.DBErr(errRow)
@@ -154,28 +155,6 @@ func (r *demoRepository) GetDemos(ctx context.Context) ([]domain.DemoFile, error
 }
 
 func (r *demoRepository) SaveDemo(ctx context.Context, demoFile *domain.DemoFile) error {
-	// Find open reports and if any are returned, mark the demo as archived so that it does not get auto
-	// deleted during cleanup.
-	// Reports can happen mid-game which is why this is checked when the demo is saved and not during the report where
-	// we have no completed demo instance/id yet.
-	reportRow, reportRowErr := r.db.QueryRowBuilder(ctx, r.db.
-		Builder().
-		Select("count(report_id)").
-		From("report").
-		Where(sq.Eq{"demo_id": demoFile.DemoID}))
-	if reportRowErr != nil {
-		return errors.Join(reportRowErr, domain.ErrReportCountQuery)
-	}
-
-	var count int
-	if errScan := reportRow.Scan(&count); errScan != nil && !errors.Is(errScan, domain.ErrNoResult) {
-		return r.db.DBErr(errScan)
-	}
-
-	if count > 0 {
-		demoFile.Archive = true
-	}
-
 	var err error
 	if demoFile.DemoID > 0 {
 		err = r.updateDemo(ctx, demoFile)
