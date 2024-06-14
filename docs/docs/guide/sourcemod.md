@@ -33,18 +33,38 @@ This covers functionality available through the gbans plugin as well as some rec
 
 ## Creating a sourcemod database user
 
-It's recommended to create a secondary less-privileged user, especially when using servers remote of the
+It's recommended, but not required, to create a secondary less-privileged user, especially when using servers remote to the
 gbans instance. Below is an example of creating a restricted user that only has access to the tables, and functions, required
 for operation.
 
-```postgresql
-CREATE ROLE sourcemod WITH LOGIN PASSWORD '<new-password>';
+```sql
+CREATE ROLE sourcemod WITH LOGIN PASSWORD '<your-password>';
 GRANT CONNECT ON DATABASE gbans TO sourcemod;
-GRANT USAGE ON SCHEMA public TO sourcemod ;
-GRANT SELECT ON 
+GRANT USAGE ON SCHEMA public TO sourcemod;
+GRANT SELECT ON
     sm_config, sm_overrides, sm_group_overrides, sm_group_immunity, sm_groups,
-    sm_admins_groups, sm_admins TO sourcemod;
+    sm_admins_groups, sm_admins, 
+    cidr_block_whitelist, cidr_block_entries,
+    person_whitelist,
+    ban, ban_asn, ban_net, ban_group,
+    steam_friends, steam_group_members,
+    net_asn TO sourcemod;
 GRANT SELECT, INSERT, UPDATE, DELETE ON sm_cookie_cache, sm_cookies TO sourcemod;
 GRANT EXECUTE ON FUNCTION check_ban TO sourcemod;
-
 ```
+
+Now you can setup your sourcemod databases.cfg with this user.
+
+    "Databases"
+    {
+    	"default"
+        {
+            "driver"			"pgsql"
+            "host"				"localhost"
+            "database"			"gbans"
+            "user"				"sourcemod"
+            "pass"				"<your-password>"
+            "timeout"			"60"
+            "port"			    "5432"
+        }
+    }   
