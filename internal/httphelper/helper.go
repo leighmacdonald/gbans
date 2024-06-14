@@ -12,8 +12,8 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/gorilla/schema"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/pkg/convert"
 	"github.com/leighmacdonald/gbans/pkg/log"
-	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -114,7 +114,7 @@ func GetIntParam(ctx *gin.Context, key string) (int, error) {
 		return 0, fmt.Errorf("%w: %s", domain.ErrParamKeyMissing, key)
 	}
 
-	return util.StringToInt(valueStr), nil
+	return convert.StringToInt(valueStr), nil
 }
 
 func GetStringParam(ctx *gin.Context, key string) (string, error) {

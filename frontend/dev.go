@@ -11,8 +11,8 @@ import (
 
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/pkg/fs"
 	"github.com/leighmacdonald/gbans/pkg/log"
-	"github.com/leighmacdonald/gbans/pkg/util"
 )
 
 func AddRoutes(engine *gin.Engine, root string) error {
@@ -20,7 +20,7 @@ func AddRoutes(engine *gin.Engine, root string) error {
 		root = "frontend/dist"
 	}
 
-	if !util.Exists(filepath.Join(root, "index.html")) {
+	if !fs.Exists(filepath.Join(root, "index.html")) {
 		return ErrContentRoot
 	}
 

@@ -9,7 +9,7 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/pkg/util"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 )
@@ -42,7 +42,7 @@ func (s banGroupUsecase) UpdateCache(ctx context.Context) error {
 		return err
 	}
 
-	client := util.NewHTTPClient()
+	client := httphelper.NewHTTPClient()
 
 	for _, group := range groups {
 		listURL := fmt.Sprintf("https://steamcommunity.com/gid/%d/memberslistxml/?xml=1", group.GroupID.Int64())

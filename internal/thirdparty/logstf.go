@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/leighmacdonald/gbans/pkg/util"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -45,7 +45,7 @@ type LogsTFResult struct {
 // LogsTFOverview queries the logstf api for metadata about a players logs
 // http://logs.tf/api/v1/log?title=X&uploader=Y&player=Z&limit=N&offset=N
 func LogsTFOverview(ctx context.Context, sid steamid.SteamID) (*LogsTFResult, error) {
-	httpClient := util.NewHTTPClient()
+	httpClient := httphelper.NewHTTPClient()
 
 	localCtx, cancel := context.WithTimeout(ctx, time.Second*15)
 	defer cancel()

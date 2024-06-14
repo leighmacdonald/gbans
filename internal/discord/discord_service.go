@@ -16,8 +16,8 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
+	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/gbans/pkg/log"
-	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -764,9 +764,9 @@ func (h discordService) makeOnMute() func(context.Context, *discordgo.Session, *
 
 		reason = domain.Reason(reasonValueOpt.IntValue())
 
-		duration, errDuration := util.ParseDuration(opts[domain.OptDuration].StringValue())
+		duration, errDuration := datetime.ParseDuration(opts[domain.OptDuration].StringValue())
 		if errDuration != nil {
-			return nil, util.ErrInvalidDuration
+			return nil, datetime.ErrInvalidDuration
 		}
 
 		modNote := opts[domain.OptNote].StringValue()
@@ -805,9 +805,9 @@ func (h discordService) onBanASN(ctx context.Context, _ *discordgo.Session,
 		return nil, domain.ErrInvalidSID
 	}
 
-	duration, errDuration := util.ParseDuration(opts[domain.OptDuration].StringValue())
+	duration, errDuration := datetime.ParseDuration(opts[domain.OptDuration].StringValue())
 	if errDuration != nil {
-		return nil, util.ErrInvalidDuration
+		return nil, datetime.ErrInvalidDuration
 	}
 
 	author, errGetPersonByDiscordID := h.persons.GetPersonByDiscordID(ctx, interaction.Interaction.Member.User.ID)
@@ -858,7 +858,7 @@ func (h discordService) onBanIP(ctx context.Context, _ *discordgo.Session,
 		return nil, errors.Join(errParseCIDR, domain.ErrNetworkInvalidIP)
 	}
 
-	duration, errDuration := util.ParseDuration(opts[domain.OptDuration].StringValue())
+	duration, errDuration := datetime.ParseDuration(opts[domain.OptDuration].StringValue())
 	if errDuration != nil {
 		return nil, errDuration
 	}
@@ -914,9 +914,9 @@ func (h discordService) onBanSteam(ctx context.Context, _ *discordgo.Session,
 		return nil, domain.ErrInvalidSID
 	}
 
-	duration, errDuration := util.ParseDuration(opts[domain.OptDuration].StringValue())
+	duration, errDuration := datetime.ParseDuration(opts[domain.OptDuration].StringValue())
 	if errDuration != nil {
-		return nil, util.ErrInvalidDuration
+		return nil, datetime.ErrInvalidDuration
 	}
 
 	author, errAuthor := h.getDiscordAuthor(ctx, interaction)

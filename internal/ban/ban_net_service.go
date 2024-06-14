@@ -11,8 +11,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/gbans/pkg/log"
-	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -82,7 +82,7 @@ func (h banNetHandler) onAPIPostBansCIDRCreate() gin.HandlerFunc {
 			sid     = httphelper.CurrentUserProfile(ctx).SteamID
 		)
 
-		duration, errDuration := util.CalcDuration(req.Duration, req.ValidUntil)
+		duration, errDuration := datetime.CalcDuration(req.Duration, req.ValidUntil)
 		if errDuration != nil {
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 

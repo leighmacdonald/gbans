@@ -23,8 +23,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/leighmacdonald/gbans/pkg/convert"
 	"github.com/leighmacdonald/gbans/pkg/log"
-	"github.com/leighmacdonald/gbans/pkg/util"
 )
 
 const downloadURL = "https://www.ip2location.com/download/?token=%s&file=%s"
@@ -188,7 +188,7 @@ type ASNRecords []ASNRecord
 func (r ASNRecords) Hosts() uint32 {
 	total := uint32(0)
 	for _, n := range r {
-		total += util.IP2Int(*n.IPTo) - util.IP2Int(*n.IPFrom)
+		total += convert.IP2Int(*n.IPTo) - convert.IP2Int(*n.IPFrom)
 	}
 
 	return total
@@ -466,8 +466,8 @@ func ReadLocationRecords(ctx context.Context, path string, ipv6 bool, onRecords 
 			RegionName:  recordLine[4],
 			CityName:    recordLine[5],
 			LatLong: LatLong{
-				util.StringToFloat64(recordLine[6], 0),
-				util.StringToFloat64(recordLine[7], 0),
+				convert.StringToFloat64(recordLine[6], 0),
+				convert.StringToFloat64(recordLine[7], 0),
 			},
 		}
 

@@ -16,8 +16,8 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/log"
-	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -125,7 +125,7 @@ func (b blocklistUsecase) updateSource(ctx context.Context, list domain.CIDRBloc
 		return errors.Join(errReq, domain.ErrRequestCreate)
 	}
 
-	client := util.NewHTTPClient()
+	client := httphelper.NewHTTPClient()
 
 	resp, errResp := client.Do(req)
 	if errResp != nil {

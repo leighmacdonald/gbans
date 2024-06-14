@@ -11,8 +11,8 @@ import (
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/state"
+	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/gbans/pkg/log"
-	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -65,7 +65,7 @@ func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.Ne
 	)
 
 	if newWarning.MatchedFilter.Action == domain.Ban || newWarning.MatchedFilter.Action == domain.Mute {
-		duration, errDuration := util.ParseDuration(newWarning.MatchedFilter.Duration)
+		duration, errDuration := datetime.ParseDuration(newWarning.MatchedFilter.Duration)
 		if errDuration != nil {
 			return fmt.Errorf("invalid duration: %w", errDuration)
 		}

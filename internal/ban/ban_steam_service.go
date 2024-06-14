@@ -13,8 +13,8 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
+	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/gbans/pkg/log"
-	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"golang.org/x/exp/slices"
 )
@@ -146,7 +146,7 @@ func (h banHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 			sid = sourceID
 		}
 
-		duration, errDuration := util.CalcDuration(req.Duration, req.ValidUntil)
+		duration, errDuration := datetime.CalcDuration(req.Duration, req.ValidUntil)
 		if errDuration != nil {
 			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 

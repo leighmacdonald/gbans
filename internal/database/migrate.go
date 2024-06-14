@@ -8,7 +8,7 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	pgxMigrate "github.com/golang-migrate/migrate/v4/database/pgx"
 	"github.com/golang-migrate/migrate/v4/source/httpfs"
-	"github.com/leighmacdonald/gbans/pkg/util"
+	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 // MigrationAction is the type of migration to perform.
@@ -58,7 +58,7 @@ func (db *postgresStore) migrate(action MigrationAction, dsn string) error {
 		return errors.Join(errMigrate, ErrMigrationDriver)
 	}
 
-	defer util.LogCloser(driver)
+	defer log.Closer(driver)
 
 	source, errHTTPFS := httpfs.New(http.FS(migrations), "migrations")
 	if errHTTPFS != nil {

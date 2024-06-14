@@ -7,7 +7,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/leighmacdonald/gbans/pkg/util"
+	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/extra"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -43,9 +43,9 @@ func NewServer(shortName string, address string, port int) Server {
 		ShortName:      shortName,
 		Address:        address,
 		Port:           port,
-		RCON:           util.SecureRandomString(10),
+		RCON:           stringutil.SecureRandomString(10),
 		ReservedSlots:  0,
-		Password:       util.SecureRandomString(10),
+		Password:       stringutil.SecureRandomString(10),
 		IsEnabled:      true,
 		EnableStats:    true,
 		TokenCreatedOn: time.Unix(0, 0),

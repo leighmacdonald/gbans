@@ -10,7 +10,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/log"
-	"github.com/leighmacdonald/gbans/pkg/util"
+	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 	"golang.org/x/sync/errgroup"
@@ -273,7 +273,7 @@ func (u personUsecase) SavePersonSettings(ctx context.Context, user domain.Perso
 
 	settings.ForumProfileMessages = update.ForumProfileMessages
 	settings.StatsHidden = update.StatsHidden
-	settings.ForumSignature = util.SanitizeUGC(update.ForumSignature)
+	settings.ForumSignature = stringutil.SanitizeUGC(update.ForumSignature)
 	settings.CenterProjectiles = update.CenterProjectiles
 
 	if errSave := u.persons.SavePersonSettings(ctx, &settings); errSave != nil {

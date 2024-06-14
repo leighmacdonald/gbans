@@ -16,7 +16,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
-	"github.com/leighmacdonald/gbans/pkg/util"
+	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -74,7 +74,7 @@ func (u *auth) MakeToken(ctx *gin.Context, cookieKey string, sid steamid.SteamID
 		return domain.UserTokens{}, domain.ErrCookieKeyMissing
 	}
 
-	fingerprint := util.SecureRandomString(40)
+	fingerprint := stringutil.SecureRandomString(40)
 
 	accessToken, errAccess := u.NewUserToken(sid, cookieKey, fingerprint, domain.AuthTokenDuration)
 	if errAccess != nil {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/leighmacdonald/gbans/pkg/util"
+	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
@@ -135,7 +135,7 @@ func (thread ForumThread) NewMessage(sourceID steamid.SteamID, body string) Foru
 		ForumMessageID: 0,
 		ForumThreadID:  thread.ForumThreadID,
 		SourceID:       sourceID,
-		BodyMD:         util.SanitizeUGC(body),
+		BodyMD:         stringutil.SanitizeUGC(body),
 		TimeStamped:    NewTimeStamped(),
 	}
 }

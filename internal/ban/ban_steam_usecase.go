@@ -10,8 +10,8 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/gbans/pkg/log"
-	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 )
@@ -223,7 +223,7 @@ func (s banSteamUsecase) CheckEvadeStatus(ctx context.Context, curUser domain.Pe
 		return false, errMatch
 	}
 
-	duration, errDuration := util.ParseUserStringDuration("10y")
+	duration, errDuration := datetime.ParseUserStringDuration("10y")
 	if errDuration != nil {
 		return false, errDuration
 	}

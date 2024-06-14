@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/leighmacdonald/gbans/pkg/fs"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
-	"github.com/leighmacdonald/gbans/pkg/util"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/stretchr/testify/require"
 )
@@ -35,7 +35,7 @@ func TestParseSourcePlayer(t *testing.T) {
 func TestParseFile(t *testing.T) {
 	t.Parallel()
 
-	logFilePath := util.FindFile(path.Join("testdata", "log_1.log"), "gbans")
+	logFilePath := fs.FindFile(path.Join("testdata", "log_1.log"), "gbans")
 
 	openFile, e := os.ReadFile(logFilePath)
 	if e != nil {

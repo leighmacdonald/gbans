@@ -7,7 +7,8 @@ import (
 	"strings"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/pkg/util"
+	"github.com/leighmacdonald/gbans/pkg/datetime"
+	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/mitchellh/go-homedir"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
@@ -25,7 +26,7 @@ func decodeDuration() mapstructure.DecodeHookFuncType {
 			return data, nil
 		}
 
-		duration, errDuration := util.ParseUserStringDuration(data.(string))
+		duration, errDuration := datetime.ParseUserStringDuration(data.(string))
 		if errDuration != nil {
 			return nil, errors.Join(errDuration, fmt.Errorf("%w: %s", domain.ErrDecodeDuration, target.String()))
 		}
@@ -52,7 +53,7 @@ func setDefaultConfigValues() {
 		"http_host":             "127.0.0.1",
 		"http_port":             6006,
 		"http_static_path":      "frontend/dist",
-		"http_cookie_key":       util.SecureRandomString(32),
+		"http_cookie_key":       stringutil.SecureRandomString(32),
 		"http_client_timeout":   "10s",
 		"http_cors_origins":     []string{"http://gbans.localhost"},
 		"database_dsn":          "postgresql://gbans:gbans@localhost/gbans",

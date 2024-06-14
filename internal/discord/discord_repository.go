@@ -11,7 +11,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
-	"github.com/leighmacdonald/gbans/pkg/util"
 )
 
 type nullDiscordRepository struct{}
@@ -82,7 +81,7 @@ func (bot *discordRepository) RegisterHandler(cmd domain.Cmd, handler domain.Sla
 
 func (bot *discordRepository) Shutdown(guildID string) {
 	if bot.session != nil {
-		defer util.LogCloser(bot.session)
+		defer log.Closer(bot.session)
 		bot.botUnregisterSlashCommands(guildID)
 	}
 }

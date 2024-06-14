@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/pkg/util"
+	"github.com/leighmacdonald/gbans/pkg/datetime"
 )
 
 type wordFilterUsecase struct {
@@ -64,9 +64,9 @@ func (w *wordFilterUsecase) Create(ctx context.Context, user domain.PersonInfo, 
 		return domain.Filter{}, domain.ErrInvalidPattern
 	}
 
-	_, errDur := util.ParseDuration(opts.Duration)
+	_, errDur := datetime.ParseDuration(opts.Duration)
 	if errDur != nil {
-		return domain.Filter{}, util.ErrInvalidDuration
+		return domain.Filter{}, datetime.ErrInvalidDuration
 	}
 
 	if opts.IsRegex {
