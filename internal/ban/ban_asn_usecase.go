@@ -70,7 +70,7 @@ func (s banASN) Unban(ctx context.Context, asnNum string) (bool, error) {
 		return false, errors.Join(errDrop, domain.ErrDropASNBan)
 	}
 
-	s.discord.SendPayload(domain.ChannelModLog, discord.UnbanASNMessage(asNum))
+	s.discord.SendPayload(domain.ChannelBanLog, discord.UnbanASNMessage(asNum))
 
 	return true, nil
 }

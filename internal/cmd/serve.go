@@ -202,7 +202,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			authUsecase := auth.NewAuthUsecase(auth.NewAuthRepository(db), configUsecase, personUsecase, banUsecase, serversUsecase)
 			go authUsecase.Start(ctx)
 
-			voteUsecase := votes.NewVoteUsecase(votes.NewVoteRepository(db), personUsecase, matchUsecase, discordUsecase, eventBroadcaster)
+			voteUsecase := votes.NewVoteUsecase(votes.NewVoteRepository(db), personUsecase, matchUsecase, discordUsecase, configUsecase, eventBroadcaster)
 			go voteUsecase.Start(ctx)
 
 			contestUsecase := contest.NewContestUsecase(contest.NewContestRepository(db))

@@ -76,7 +76,7 @@ func (h newsHandler) onAPIPostNewsCreate() gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, req)
+		ctx.JSON(http.StatusCreated, entry)
 
 		go h.discord.SendPayload(domain.ChannelModLog, discord.NewNewsMessage(req.BodyMD, req.Title))
 	}

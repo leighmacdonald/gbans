@@ -13,21 +13,24 @@ import (
 )
 
 type voteUsecase struct {
-	repository  domain.VoteRepository
-	persons     domain.PersonUsecase
-	matches     domain.MatchUsecase
-	discord     domain.DiscordUsecase
+	repository domain.VoteRepository
+	persons    domain.PersonUsecase
+	matches    domain.MatchUsecase
+	discord    domain.DiscordUsecase
+	config     domain.ConfigUsecase
+
 	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 }
 
 func NewVoteUsecase(repository domain.VoteRepository, persons domain.PersonUsecase, matched domain.MatchUsecase,
-	discord domain.DiscordUsecase, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
+	discord domain.DiscordUsecase, config domain.ConfigUsecase, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
 ) domain.VoteUsecase {
 	return &voteUsecase{
 		repository:  repository,
 		persons:     persons,
 		matches:     matched,
 		discord:     discord,
+		config:      config,
 		broadcaster: broadcaster,
 	}
 }
@@ -153,11 +156,22 @@ func (u voteUsecase) Start(ctx context.Context) {
 					slog.Error("Failed to add vote result", log.ErrAttr(err))
 				}
 
-				u.discord.SendPayload(domain.ChannelModVoteLog, discord.VoteResultMessage(result))
-
 				recent = append(recent, result)
 
 				delete(active, evt.ServerID)
+
+				source, errSource := u.persons.GetOrCreatePersonBySteamID(ctx, result.SourceID)
+				if errSource != nil {
+					slog.Error("Failed to load vote source", log.ErrAttr(errSource), slog.String("steam_id", result.SourceID.String()))
+				}
+
+				target, errTarget := u.persons.GetOrCreatePersonBySteamID(ctx, result.SourceID)
+				if errTarget != nil {
+					slog.Error("Failed to load vote target", log.ErrAttr(errSource), slog.String("steam_id", result.TargetID.String()))
+				}
+
+				u.discord.SendPayload(domain.ChannelModVoteLog, discord.VoteResultMessage(u.config.Config(), result, source, target))
+
 			}
 		}
 	}
