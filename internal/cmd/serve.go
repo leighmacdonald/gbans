@@ -68,20 +68,20 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				panic(fmt.Sprintf("Failed to read static config: %v", errStatic))
 			}
 
-			db := database.New(staticConfig.DatabaseDSN, staticConfig.DatabaseAutoMigrate, staticConfig.DatabaseLogQueries)
-			if errConnect := db.Connect(ctx); errConnect != nil {
+			dbConn := database.New(staticConfig.DatabaseDSN, staticConfig.DatabaseAutoMigrate, staticConfig.DatabaseLogQueries)
+			if errConnect := dbConn.Connect(ctx); errConnect != nil {
 				slog.Error("Cannot initialize database", log.ErrAttr(errConnect))
 
 				return
 			}
 
 			defer func() {
-				if errClose := db.Close(); errClose != nil {
+				if errClose := dbConn.Close(); errClose != nil {
 					slog.Error("Failed to close database cleanly")
 				}
 			}()
 
-			configUsecase := config.NewConfigUsecase(staticConfig, config.NewConfigRepository(db))
+			configUsecase := config.NewConfigUsecase(staticConfig, config.NewConfigRepository(dbConn))
 			if err := configUsecase.Init(ctx); err != nil {
 				panic(fmt.Sprintf("Failed to init config: %v", err))
 			}
@@ -122,7 +122,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				return
 			}
 
-			wordFilterUsecase := wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(db), discordUsecase)
+			wordFilterUsecase := wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(dbConn), discordUsecase)
 			if err := wordFilterUsecase.Import(ctx); err != nil {
 				slog.Error("Failed to load word filters", log.ErrAttr(err))
 
@@ -131,12 +131,12 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			defer discordUsecase.Shutdown(conf.Discord.GuildID)
 
-			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(conf, db), configUsecase)
+			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(conf, dbConn), configUsecase)
 
-			networkUsecase := network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(db), personUsecase, configUsecase)
+			networkUsecase := network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(dbConn), personUsecase, configUsecase)
 			go networkUsecase.Start(ctx)
 
-			assetRepository := asset.NewLocalRepository(db, configUsecase)
+			assetRepository := asset.NewLocalRepository(dbConn, configUsecase)
 			if errInitAssets := assetRepository.Init(ctx); errInitAssets != nil {
 				slog.Error("Failed to init local asset repo", log.ErrAttr(errInitAssets))
 
@@ -144,18 +144,18 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			}
 
 			assetUsecase := asset.NewAssetUsecase(assetRepository)
-			serversUsecase := servers.NewServersUsecase(servers.NewServersRepository(db))
-			demoUsecase := demo.NewDemoUsecase(domain.BucketDemo, demo.NewDemoRepository(db), assetUsecase, configUsecase, serversUsecase)
+			serversUsecase := servers.NewServersUsecase(servers.NewServersRepository(dbConn))
+			demoUsecase := demo.NewDemoUsecase(domain.BucketDemo, demo.NewDemoRepository(dbConn), assetUsecase, configUsecase, serversUsecase)
 			go demoUsecase.Start(ctx)
-			reportUsecase := report.NewReportUsecase(report.NewReportRepository(db), discordUsecase, configUsecase, personUsecase, demoUsecase)
+			reportUsecase := report.NewReportUsecase(report.NewReportRepository(dbConn), discordUsecase, configUsecase, personUsecase, demoUsecase)
 
 			stateUsecase := state.NewStateUsecase(eventBroadcaster,
 				state.NewStateRepository(state.NewCollector(serversUsecase)), configUsecase, serversUsecase)
-			banUsecase := ban.NewBanSteamUsecase(ban.NewBanSteamRepository(db, personUsecase, networkUsecase), personUsecase, configUsecase, discordUsecase, reportUsecase, stateUsecase)
+			banUsecase := ban.NewBanSteamUsecase(ban.NewBanSteamRepository(dbConn, personUsecase, networkUsecase), personUsecase, configUsecase, discordUsecase, reportUsecase, stateUsecase)
 
-			banGroupUsecase := steamgroup.NewBanGroupUsecase(steamgroup.NewSteamGroupRepository(db), personUsecase, discordUsecase, configUsecase)
+			banGroupUsecase := steamgroup.NewBanGroupUsecase(steamgroup.NewSteamGroupRepository(dbConn), personUsecase, discordUsecase, configUsecase)
 
-			blocklistUsecase := blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(db), banUsecase, banGroupUsecase)
+			blocklistUsecase := blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(dbConn), banUsecase, banGroupUsecase)
 			go blocklistUsecase.Start(ctx)
 
 			go func() {
@@ -164,48 +164,48 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				}
 			}()
 
-			banASNUsecase := ban.NewBanASNUsecase(ban.NewBanASNRepository(db), discordUsecase, networkUsecase, configUsecase, personUsecase)
-			banNetUsecase := ban.NewBanNetUsecase(ban.NewBanNetRepository(db), personUsecase, configUsecase, discordUsecase, stateUsecase)
+			banASNUsecase := ban.NewBanASNUsecase(ban.NewBanASNRepository(dbConn), discordUsecase, networkUsecase, configUsecase, personUsecase)
+			banNetUsecase := ban.NewBanNetUsecase(ban.NewBanNetRepository(dbConn), personUsecase, configUsecase, discordUsecase, stateUsecase)
 
-			discordOAuthUsecase := discord.NewDiscordOAuthUsecase(discord.NewDiscordOAuthRepository(db), configUsecase)
+			discordOAuthUsecase := discord.NewDiscordOAuthUsecase(discord.NewDiscordOAuthRepository(dbConn), configUsecase)
 			go discordOAuthUsecase.Start(ctx)
 
-			apu := appeal.NewAppealUsecase(appeal.NewAppealRepository(db), banUsecase, personUsecase, discordUsecase, configUsecase)
+			apu := appeal.NewAppealUsecase(appeal.NewAppealRepository(dbConn), banUsecase, personUsecase, discordUsecase, configUsecase)
 
-			matchRepo := match.NewMatchRepository(eventBroadcaster, db, personUsecase, serversUsecase, discordUsecase, stateUsecase, weaponsMap)
+			matchRepo := match.NewMatchRepository(eventBroadcaster, dbConn, personUsecase, serversUsecase, discordUsecase, stateUsecase, weaponsMap)
 			go matchRepo.Start(ctx)
 
 			matchUsecase := match.NewMatchUsecase(matchRepo, stateUsecase, serversUsecase, discordUsecase)
 
-			chatRepository := chat.NewChatRepository(db, personUsecase, wordFilterUsecase, matchUsecase, eventBroadcaster)
+			chatRepository := chat.NewChatRepository(dbConn, personUsecase, wordFilterUsecase, matchUsecase, eventBroadcaster)
 			go chatRepository.Start(ctx)
 
 			chatUsecase := chat.NewChatUsecase(configUsecase, chatRepository, wordFilterUsecase, stateUsecase, banUsecase, personUsecase, discordUsecase)
 			go chatUsecase.Start(ctx)
 
-			forumUsecase := forum.NewForumUsecase(forum.NewForumRepository(db), discordUsecase)
+			forumUsecase := forum.NewForumUsecase(forum.NewForumRepository(dbConn), discordUsecase)
 
 			metricsUsecase := metrics.NewMetricsUsecase(eventBroadcaster)
 			go metricsUsecase.Start(ctx)
 
 			go forumUsecase.Start(ctx)
 
-			newsUsecase := news.NewNewsUsecase(news.NewNewsRepository(db))
-			notificationUsecase := notification.NewNotificationUsecase(notification.NewNotificationRepository(db), personUsecase)
-			patreonUsecase := patreon.NewPatreonUsecase(patreon.NewPatreonRepository(db), configUsecase)
+			newsUsecase := news.NewNewsUsecase(news.NewNewsRepository(dbConn))
+			notificationUsecase := notification.NewNotificationUsecase(notification.NewNotificationRepository(dbConn), personUsecase)
+			patreonUsecase := patreon.NewPatreonUsecase(patreon.NewPatreonRepository(dbConn), configUsecase)
 			go patreonUsecase.Start(ctx)
 
-			srcdsUsecase := srcds.NewSrcdsUsecase(srcds.NewRepository(db), configUsecase, serversUsecase, personUsecase, reportUsecase, discordUsecase, banUsecase)
+			srcdsUsecase := srcds.NewSrcdsUsecase(srcds.NewRepository(dbConn), configUsecase, serversUsecase, personUsecase, reportUsecase, discordUsecase, banUsecase)
 
-			wikiUsecase := wiki.NewWikiUsecase(wiki.NewWikiRepository(db))
+			wikiUsecase := wiki.NewWikiUsecase(wiki.NewWikiRepository(dbConn))
 
-			authUsecase := auth.NewAuthUsecase(auth.NewAuthRepository(db), configUsecase, personUsecase, banUsecase, serversUsecase)
+			authUsecase := auth.NewAuthUsecase(auth.NewAuthRepository(dbConn), configUsecase, personUsecase, banUsecase, serversUsecase)
 			go authUsecase.Start(ctx)
 
-			voteUsecase := votes.NewVoteUsecase(votes.NewVoteRepository(db), personUsecase, matchUsecase, discordUsecase, configUsecase, eventBroadcaster)
+			voteUsecase := votes.NewVoteUsecase(votes.NewVoteRepository(dbConn), personUsecase, matchUsecase, discordUsecase, configUsecase, eventBroadcaster)
 			go voteUsecase.Start(ctx)
 
-			contestUsecase := contest.NewContestUsecase(contest.NewContestRepository(db))
+			contestUsecase := contest.NewContestUsecase(contest.NewContestRepository(dbConn))
 
 			// start workers
 			if conf.General.Mode == domain.ReleaseMode {
@@ -262,7 +262,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			}
 
 			if conf.SSH.Enabled {
-				demoFetcher := demo.NewFetcher(db, configUsecase, serversUsecase, assetUsecase, demoUsecase)
+				demoFetcher := demo.NewFetcher(dbConn, configUsecase, serversUsecase, assetUsecase, demoUsecase)
 				go demoFetcher.Start(ctx)
 			}
 

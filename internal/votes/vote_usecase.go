@@ -171,7 +171,6 @@ func (u voteUsecase) Start(ctx context.Context) {
 				}
 
 				u.discord.SendPayload(domain.ChannelModVoteLog, discord.VoteResultMessage(u.config.Config(), result, source, target))
-
 			}
 		}
 	}
