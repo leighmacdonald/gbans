@@ -19,7 +19,8 @@ While we currently are [dogfooding](https://en.wikipedia.org/wiki/Eating_your_ow
 community with around 50 servers, I would not recommend non-developers use the project yet. It's still in fairly
 major development mode and large sections are still incomplete or function but very rough.
 
-Before we tag a 1.0.0 release, we will write some proper user-facing documentation.
+Before we tag a 1.0.0 release, we will write some proper user-facing documentation. You can however look at the 
+currently incomplete [docs](https://leighmacdonald.github.io/gbans/docs/INTRO).
 
 ## Features
 
