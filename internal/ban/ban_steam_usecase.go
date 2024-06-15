@@ -140,21 +140,18 @@ func (s banSteamUsecase) Ban(ctx context.Context, curUser domain.PersonInfo, ban
 		return errors.Join(err, domain.ErrFetchPerson)
 	}
 
-	// TODO mute player currently in-game w/o kicking
 	if banSteam.BanType == domain.Banned {
 		if errKick := s.state.Kick(ctx, banSteam.TargetID, banSteam.Reason); errKick != nil && !errors.Is(errKick, domain.ErrPlayerNotFound) {
 			slog.Error("Failed to kick player", log.ErrAttr(errKick),
 				slog.Int64("sid64", banSteam.TargetID.Int64()))
 		}
 
-		s.discord.SendPayload(domain.ChannelBanLog, discord.KickPlayerEmbed(target))
+		s.discord.SendPayload(domain.ChannelKickLog, discord.KickPlayerEmbed(target))
 	} else if banSteam.BanType == domain.NoComm {
 		if errSilence := s.state.Silence(ctx, banSteam.TargetID, banSteam.Reason); errSilence != nil && !errors.Is(errSilence, domain.ErrPlayerNotFound) {
 			slog.Error("Failed to silence player", log.ErrAttr(errSilence),
 				slog.Int64("sid64", banSteam.TargetID.Int64()))
 		}
-
-		s.discord.SendPayload(domain.ChannelBanLog, discord.SilenceEmbed(target))
 	}
 
 	return nil

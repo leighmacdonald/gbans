@@ -277,7 +277,6 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
         defaultValues: {
             srcds_log_addr: settings.general.srcds_log_addr,
             file_serve_mode: settings.general.file_serve_mode,
-            steam_key: settings.general.steam_key,
             mode: settings.general.mode,
             site_name: settings.general.site_name,
             asset_url: settings.general.asset_url,
@@ -322,28 +321,6 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <SubHeading>
                             This name is displayed in various places throughout the app such as the title bar and site
                             heading. It should be short and simple.
-                        </SubHeading>
-                    </Grid>
-                    <Grid xs={12}>
-                        <Field
-                            name={'steam_key'}
-                            validators={{
-                                onChange: z.string().refine(
-                                    (arg) => {
-                                        return arg.length == 0 || arg.length == 32;
-                                    },
-                                    {
-                                        message: 'Steam API key must be 32 characters'
-                                    }
-                                )
-                            }}
-                            children={(props) => {
-                                return <TextFieldSimple {...props} label={'Steam API Key'} />;
-                            }}
-                        />
-                        <SubHeading>
-                            You can create or retrieve your API key{' '}
-                            <Link href={'https://steamcommunity.com/dev/apikey'}>here</Link>
                         </SubHeading>
                     </Grid>
                     <Grid xs={12}>
@@ -973,7 +950,8 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
             appeal_log_channel_id: settings.discord.appeal_log_channel_id,
             ban_log_channel_id: settings.discord.ban_log_channel_id,
             forum_log_channel_id: settings.discord.forum_log_channel_id,
-            word_filter_log_channel_id: settings.discord.word_filter_log_channel_id
+            word_filter_log_channel_id: settings.discord.word_filter_log_channel_id,
+            kick_log_channel_id: settings.discord.kick_log_channel_id
         }
     });
 
@@ -1231,6 +1209,21 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                         <SubHeading>A channel to send notices to when a user triggers a word filter.</SubHeading>
+                    </Grid>
+                    <Grid xs={12}>
+                        <Field
+                            name={'kick_log_channel_id'}
+                            validators={{
+                                onChange: z.string()
+                            }}
+                            children={(props) => {
+                                return <TextFieldSimple {...props} label={'Kick log channel ID'} />;
+                            }}
+                        />
+                        <SubHeading>
+                            A channel to send notices to when a user is kicked either from being banned or denied entry
+                            while already in a banned state.
+                        </SubHeading>
                     </Grid>
                     <Grid xs={12}>
                         <Field
