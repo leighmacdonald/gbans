@@ -55,16 +55,18 @@ GRANT EXECUTE ON FUNCTION check_ban TO sourcemod;
 
 Now you can setup your sourcemod databases.cfg with this user.
 
+```
     "Databases"
     {
     	"default"
         {
-            "driver"			"pgsql"
-            "host"				"localhost"
-            "database"			"gbans"
-            "user"				"sourcemod"
-            "pass"				"<your-password>"
-            "timeout"			"60"
-            "port"			    "5432"
+            "driver"        "pgsql"
+            "host"          "localhost"
+            "database"      "gbans"
+            "user"          "sourcemod"
+            "pass"          "<your-password>"
+            "timeout"       "60"
+            "port"          "5432"
         }
     }   
+```
