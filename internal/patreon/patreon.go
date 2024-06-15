@@ -68,6 +68,9 @@ func (p *Manager) loadUser(client *patreon.Client) (*patreon.UserResponse, error
 
 func (p *Manager) sync(ctx context.Context) {
 	conf := p.configUsecase.Config()
+	if !conf.Patreon.Enabled {
+		return
+	}
 
 	client := p.createClient(ctx, conf.Patreon.CreatorAccessToken, conf.Patreon.CreatorRefreshToken)
 

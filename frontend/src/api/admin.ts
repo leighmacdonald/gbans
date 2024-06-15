@@ -25,7 +25,6 @@ export type Config = {
 
 type General = {
     site_name: string;
-    steam_key: string;
     mode: 'release' | 'debug' | 'test';
     file_serve_mode: 'local';
     srcds_log_addr: string;
@@ -89,6 +88,7 @@ type Discord = {
     appeal_log_channel_id: string;
     ban_log_channel_id: string;
     forum_log_channel_id: string;
+    kick_log_channel_id: string;
     word_filter_log_channel_id: string;
 };
 

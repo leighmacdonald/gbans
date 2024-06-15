@@ -29,22 +29,23 @@ type ConfigUsecase interface {
 
 // StaticConfig defines non-dynamic config values that cannot be changed during runtime.
 type StaticConfig struct {
-	Owner               string   `mapstructure:"owner" json:"owner,omitempty"`
-	ExternalURL         string   `mapstructure:"external_url" json:"external_url,omitempty"`
-	HTTPHost            string   `mapstructure:"http_host" json:"http_host,omitempty"`
-	HTTPPort            int      `mapstructure:"http_port" json:"http_port,omitempty"`
-	HTTPStaticPath      string   `mapstructure:"http_static_path" json:"http_static_path,omitempty"`
+	Owner               string   `mapstructure:"owner" json:"-"`
+	SteamKey            string   `mapstructure:"steam_key" json:"-"`
+	ExternalURL         string   `mapstructure:"external_url" json:"-"`
+	HTTPHost            string   `mapstructure:"http_host" json:"-"`
+	HTTPPort            uint16   `mapstructure:"http_port" json:"-"`
+	HTTPStaticPath      string   `mapstructure:"http_static_path" json:"-"`
 	HTTPCookieKey       string   `mapstructure:"http_cookie_key" json:"-"`
-	HTTPClientTimeout   int      `mapstructure:"http_client_timeout" json:"http_client_timeout,omitempty"`
-	HTTPCorsOrigins     []string `mapstructure:"http_cors_origins" json:"http_cors_origins,omitempty"`
+	HTTPClientTimeout   int      `mapstructure:"http_client_timeout" json:"-"`
+	HTTPCorsOrigins     []string `mapstructure:"http_cors_origins" json:"-"`
 	DatabaseDSN         string   `mapstructure:"database_dsn" json:"-"`
-	DatabaseAutoMigrate bool     `mapstructure:"database_auto_migrate" json:"database_auto_migrate,omitempty"`
-	DatabaseLogQueries  bool     `mapstructure:"database_log_queries" json:"database_log_queries,omitempty"`
+	DatabaseAutoMigrate bool     `mapstructure:"database_auto_migrate" json:"-"`
+	DatabaseLogQueries  bool     `mapstructure:"database_log_queries" json:"-"`
 }
 
 // Addr returns the address in host:port format.
 func (s StaticConfig) Addr() string {
-	return net.JoinHostPort(s.HTTPHost, strconv.Itoa(s.HTTPPort))
+	return net.JoinHostPort(s.HTTPHost, strconv.Itoa(int(s.HTTPPort)))
 }
 
 // Config is the root config container
@@ -168,7 +169,6 @@ const (
 
 type ConfigGeneral struct {
 	SiteName        string        `json:"site_name"`
-	SteamKey        string        `json:"steam_key"`
 	Mode            RunMode       `json:"mode"`
 	FileServeMode   FileServeMode `json:"file_serve_mode"`
 	SrcdsLogAddr    string        `json:"srcds_log_addr"`
@@ -211,6 +211,7 @@ type ConfigDiscord struct {
 	BanLogChannelID         string `json:"ban_log_channel_id"`
 	ForumLogChannelID       string `json:"forum_log_channel_id"`
 	WordFilterLogChannelID  string `json:"word_filter_log_channel_id"`
+	KickLogChannelID        string `json:"kick_log_channel_id"`
 	ModPingRoleID           string `json:"mod_ping_role_id"`
 	UnregisterOnStart       bool   `json:"unregister_on_start"`
 }

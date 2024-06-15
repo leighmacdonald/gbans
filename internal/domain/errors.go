@@ -130,6 +130,7 @@ var (
 	ErrAuthentication           = errors.New("auth invalid")
 	ErrExpired                  = errors.New("expired")
 	ErrInvalidSID               = errors.New("invalid steamid")
+	ErrInvalidConfig            = errors.New("invalid config value")
 	ErrSourceID                 = errors.New("invalid source steam id")
 	ErrTargetID                 = errors.New("invalid target steam id")
 	ErrPlayerNotFound           = errors.New("could not find player")

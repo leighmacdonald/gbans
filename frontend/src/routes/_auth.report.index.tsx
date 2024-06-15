@@ -276,7 +276,7 @@ export const ReportCreateForm = (): JSX.Element => {
     const navigate = useNavigate();
 
     const form = useForm({
-        onSubmit: async ({ value }) => {
+        onSubmit: ({ value }) => {
             mutation.mutate({
                 demo_id: value.demo_id ?? 0,
                 target_id: steam_id ?? validatedProfile?.player.steam_id ?? '',
@@ -447,7 +447,7 @@ export const ReportCreateForm = (): JSX.Element => {
                             <PlayerMessageContext playerMessageId={person_message_id} padding={5} />
                         </Grid>
                     )}
-                    <Grid md={12}>
+                    <Grid xs={12}>
                         <form.Field
                             name={'body_md'}
                             validators={{

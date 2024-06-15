@@ -44,6 +44,10 @@ func (h newsHandler) onAPIGetNewsLatest() gin.HandlerFunc {
 			return
 		}
 
+		if newsLatest == nil {
+			newsLatest = []domain.NewsEntry{}
+		}
+
 		ctx.JSON(http.StatusOK, newsLatest)
 	}
 }
