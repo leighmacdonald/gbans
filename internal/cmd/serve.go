@@ -3,7 +3,7 @@ package cmd
 import (
 	"context"
 	"errors"
-	"fmt"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 	"log/slog"
 	"net/http"
 	"os"
@@ -48,13 +48,58 @@ import (
 	"github.com/spf13/cobra"
 )
 
+func firstTimeSetup(ctx context.Context, persons domain.PersonUsecase, news domain.NewsUsecase,
+	wiki domain.WikiUsecase, conf domain.Config) error {
+	_, errRootUser := persons.GetPersonBySteamID(ctx, steamid.New(conf.Owner))
+	if errRootUser == nil {
+		return nil
+	}
+
+	if !errors.Is(errRootUser, domain.ErrNoResult) {
+		return errRootUser
+	}
+
+	newOwner := domain.NewPerson(steamid.New(conf.Owner))
+	newOwner.PermissionLevel = domain.PAdmin
+
+	if errSave := persons.SavePerson(ctx, &newOwner); errSave != nil {
+		slog.Error("Failed create new owner", log.ErrAttr(errSave))
+	}
+
+	newsEntry := domain.NewsEntry{
+		Title:       "Welcome to gbans",
+		BodyMD:      "This is an *example* **news** entry.",
+		IsPublished: true,
+		CreatedOn:   time.Now(),
+		UpdatedOn:   time.Now(),
+	}
+
+	if errSave := news.SaveNewsArticle(ctx, &newsEntry); errSave != nil {
+		return errSave
+	}
+
+	page := domain.WikiPage{
+		Slug:      domain.RootSlug,
+		BodyMD:    "# Welcome to the wiki",
+		Revision:  1,
+		CreatedOn: time.Now(),
+		UpdatedOn: time.Now(),
+	}
+
+	_, errSave := wiki.SaveWikiPage(ctx, newOwner, page.Slug, page.BodyMD, page.PermissionLevel)
+	if errSave != nil {
+		slog.Error("Failed save example wiki entry", log.ErrAttr(errSave))
+	}
+
+	return nil
+}
+
 // serveCmd represents the serve command.
 func serveCmd() *cobra.Command { //nolint:maintidx
 	return &cobra.Command{
 		Use:   "serve",
-		Short: "Starts the gbans service",
-		Long:  `Starts the main gbans application`,
-		Run: func(_ *cobra.Command, _ []string) {
+		Short: "Starts the gbans web app",
+		RunE: func(_ *cobra.Command, _ []string) error {
 			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 			defer stop()
 
@@ -65,14 +110,16 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			staticConfig, errStatic := config.ReadStaticConfig()
 			if errStatic != nil {
-				panic(fmt.Sprintf("Failed to read static config: %v", errStatic))
+				slog.Error("Failed to read static config", log.ErrAttr(errStatic))
+
+				return errStatic
 			}
 
 			dbConn := database.New(staticConfig.DatabaseDSN, staticConfig.DatabaseAutoMigrate, staticConfig.DatabaseLogQueries)
 			if errConnect := dbConn.Connect(ctx); errConnect != nil {
 				slog.Error("Cannot initialize database", log.ErrAttr(errConnect))
 
-				return
+				return errConnect
 			}
 
 			defer func() {
@@ -83,18 +130,22 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			configUsecase := config.NewConfigUsecase(staticConfig, config.NewConfigRepository(dbConn))
 			if err := configUsecase.Init(ctx); err != nil {
-				panic(fmt.Sprintf("Failed to init config: %v", err))
+				slog.Error("Failed to init config", log.ErrAttr(err))
+
+				return err
 			}
 
 			if errConfig := configUsecase.Reload(ctx); errConfig != nil {
-				panic(fmt.Sprintf("Failed to read config: %v", errConfig))
+				slog.Error("Failed to read config", log.ErrAttr(errConfig))
+
+				return errConfig
 			}
 
 			conf := configUsecase.Config()
 
 			if conf.Sentry.SentryDSN != "" {
-				sentryClient, errSentry := log.NewSentryClient(conf.Sentry.SentryDSN, conf.Sentry.SentryTrace, conf.Sentry.SentrySampleRate, app.BuildVersion)
-				if errSentry != nil {
+				sentryClient, err := log.NewSentryClient(conf.Sentry.SentryDSN, conf.Sentry.SentryTrace, conf.Sentry.SentrySampleRate, app.BuildVersion)
+				if err != nil {
 					slog.Error("Failed to setup sentry client")
 				} else {
 					defer sentryClient.Flush(2 * time.Second)
@@ -111,7 +162,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			if errDR != nil {
 				slog.Error("Cannot initialize discord", log.ErrAttr(errDR))
 
-				return
+				return errDR
 			}
 
 			discordUsecase := discord.NewDiscordUsecase(discordRepository, configUsecase)
@@ -119,14 +170,14 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			if err := discordUsecase.Start(); err != nil {
 				slog.Error("Failed to start discord", log.ErrAttr(err))
 
-				return
+				return err
 			}
 
 			wordFilterUsecase := wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(dbConn), discordUsecase)
 			if err := wordFilterUsecase.Import(ctx); err != nil {
 				slog.Error("Failed to load word filters", log.ErrAttr(err))
 
-				return
+				return err
 			}
 
 			defer discordUsecase.Shutdown(conf.Discord.GuildID)
@@ -137,10 +188,10 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			go networkUsecase.Start(ctx)
 
 			assetRepository := asset.NewLocalRepository(dbConn, configUsecase)
-			if errInitAssets := assetRepository.Init(ctx); errInitAssets != nil {
-				slog.Error("Failed to init local asset repo", log.ErrAttr(errInitAssets))
+			if err := assetRepository.Init(ctx); err != nil {
+				slog.Error("Failed to init local asset repo", log.ErrAttr(err))
 
-				return
+				return err
 			}
 
 			assetUsecase := asset.NewAssetUsecase(assetRepository)
@@ -177,6 +228,10 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			matchUsecase := match.NewMatchUsecase(matchRepo, stateUsecase, serversUsecase, discordUsecase)
 
+			if errWeapons := matchUsecase.LoadWeapons(ctx, weaponsMap); errWeapons != nil {
+				slog.Error("Failed to import weapons", log.ErrAttr(errWeapons))
+			}
+
 			chatRepository := chat.NewChatRepository(dbConn, personUsecase, wordFilterUsecase, matchUsecase, eventBroadcaster)
 			go chatRepository.Start(ctx)
 
@@ -207,6 +262,12 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			contestUsecase := contest.NewContestUsecase(contest.NewContestRepository(dbConn))
 
+			if err := firstTimeSetup(ctx, personUsecase, newsUsecase, wikiUsecase, conf); err != nil {
+				slog.Error("Failed to run first time setup", log.ErrAttr(err))
+
+				return err
+			}
+
 			// start workers
 			if conf.General.Mode == domain.ReleaseMode {
 				gin.SetMode(gin.ReleaseMode)
@@ -216,11 +277,11 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			go ban.Start(ctx, banUsecase, banNetUsecase, banASNUsecase, personUsecase, discordUsecase, configUsecase)
 
-			router, errRouter := httphelper.CreateRouter(conf, app.Version())
-			if errRouter != nil {
-				slog.Error("Could not setup router", log.ErrAttr(errRouter))
+			router, err := httphelper.CreateRouter(conf, app.Version())
+			if err != nil {
+				slog.Error("Could not setup router", log.ErrAttr(err))
 
-				return
+				return err
 			}
 
 			discordHandler := discord.NewDiscordHandler(discordUsecase, personUsecase, banUsecase,
@@ -274,7 +335,6 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				slog.Info("Shutting down HTTP service")
 
 				shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-
 				defer cancel()
 
 				if errShutdown := httpServer.Shutdown(shutdownCtx); errShutdown != nil { //nolint:contextcheck
@@ -290,6 +350,8 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			<-ctx.Done()
 
 			slog.Info("Exiting...")
+
+			return nil
 		},
 	}
 }
