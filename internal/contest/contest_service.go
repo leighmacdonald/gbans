@@ -95,6 +95,10 @@ func (c *contestHandler) onAPIGetContests() gin.HandlerFunc {
 			return
 		}
 
+		if contests == nil {
+			contests = []domain.Contest{}
+		}
+
 		ctx.JSON(http.StatusOK, contests)
 	}
 }

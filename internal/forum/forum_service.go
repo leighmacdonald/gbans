@@ -722,6 +722,10 @@ func (f *forumHandler) onAPIForumOverview() gin.HandlerFunc {
 			}
 		}
 
+		if categories == nil {
+			categories = []domain.ForumCategory{}
+		}
+
 		ctx.JSON(http.StatusOK, Overview{Categories: categories})
 	}
 }

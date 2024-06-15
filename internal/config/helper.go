@@ -48,13 +48,13 @@ func setDefaultConfigValues() {
 	viper.AutomaticEnv()
 
 	defaultConfig := map[string]any{
-		"owner":                 "76561198044052046",
-		"external_url":          "http://gbans.localhost",
+		"owner":                 "",
+		"external_url":          "",
 		"http_host":             "127.0.0.1",
 		"http_port":             6006,
 		"http_static_path":      "frontend/dist",
 		"http_cookie_key":       stringutil.SecureRandomString(32),
-		"http_client_timeout":   "10s",
+		"http_client_timeout":   "10",
 		"http_cors_origins":     []string{"http://gbans.localhost"},
 		"database_dsn":          "postgresql://gbans:gbans@localhost/gbans",
 		"database_auto_migrate": true,

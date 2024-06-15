@@ -14,7 +14,6 @@ import { tf2Fonts } from '../theme';
 import { logErr } from '../util/errors';
 import { DataTable } from './DataTable.tsx';
 import { Flag } from './Flag';
-import { LoadingSpinner } from './LoadingSpinner';
 import { TableHeadingCell } from './TableHeadingCell.tsx';
 
 type ServerRow = BaseServer & { copy: string; connect: string };
@@ -114,7 +113,7 @@ export const ServerList = () => {
     const table = useReactTable(opts);
 
     if (selectedServers.length === 0) {
-        return <LoadingSpinner />;
+        return <Typography textAlign={'center'}>No Servers Matched</Typography>;
     }
 
     return <DataTable table={table} isLoading={false} />;

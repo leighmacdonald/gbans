@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -18,6 +20,7 @@ import (
 	"github.com/leighmacdonald/steamweb/v2"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
+	"golang.org/x/exp/slices"
 )
 
 type configUsecase struct {
@@ -74,15 +77,15 @@ func (c *configUsecase) Reload(ctx context.Context) error {
 		return errConfig
 	}
 
-	if err := applyGlobalConfig(config); err != nil {
-		return err
-	}
-
 	config.StaticConfig = c.static
 
 	c.configMu.Lock()
 	c.currentConfig = config
 	c.configMu.Unlock()
+
+	if err := applyGlobalConfig(config); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -103,9 +106,33 @@ func ReadStaticConfig() (domain.StaticConfig, error) {
 		config.DatabaseDSN = strings.Replace(config.DatabaseDSN, "pgx://", "postgres://", 1)
 	}
 
+	if _, errParse := url.Parse(config.DatabaseDSN); errParse != nil {
+		return config, fmt.Errorf("%w: %s", domain.ErrInvalidConfig, "database_dsn")
+	}
+
+	if len(config.SteamKey) == 32 {
+		return config, fmt.Errorf("%w: %s", domain.ErrInvalidConfig, "steam_key")
+	}
+
 	ownerSID := steamid.New(config.Owner)
 	if !ownerSID.Valid() {
-		return config, domain.ErrInvalidSID
+		return config, fmt.Errorf("%w: %s", domain.ErrInvalidConfig, "owner")
+	}
+
+	if config.ExternalURL == "" {
+		return config, fmt.Errorf("%w: %s", domain.ErrInvalidConfig, "external_url")
+	}
+
+	if parsed, errParse := url.Parse(config.ExternalURL); errParse != nil || parsed.Host == "" {
+		return config, fmt.Errorf("%w: %s", domain.ErrInvalidConfig, "external_url")
+	}
+
+	if !slices.Contains(config.HTTPCorsOrigins, config.ExternalURL) {
+		config.HTTPCorsOrigins = append(config.HTTPCorsOrigins, config.ExternalURL)
+	}
+
+	if len(config.HTTPCookieKey) < 10 {
+		return config, fmt.Errorf("%w: %s", domain.ErrInvalidConfig, "http_cookie_key")
 	}
 
 	return config, nil
@@ -114,11 +141,11 @@ func ReadStaticConfig() (domain.StaticConfig, error) {
 func applyGlobalConfig(config domain.Config) error {
 	gin.SetMode(config.General.Mode.String())
 
-	if errSteam := steamid.SetKey(config.General.SteamKey); errSteam != nil {
+	if errSteam := steamid.SetKey(config.SteamKey); errSteam != nil {
 		return errors.Join(errSteam, domain.ErrSteamAPIKey)
 	}
 
-	if errSteamWeb := steamweb.SetKey(config.General.SteamKey); errSteamWeb != nil {
+	if errSteamWeb := steamweb.SetKey(config.SteamKey); errSteamWeb != nil {
 		return errors.Join(errSteamWeb, domain.ErrSteamAPIKey)
 	}
 

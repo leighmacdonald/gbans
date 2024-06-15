@@ -2,7 +2,6 @@
 //
 // net update - Download and import the latest ip2location databases
 // serve - The main application service entry point
-// setup - Perform an initial setup task, needs to be ran once.
 package cmd
 
 import (
@@ -45,7 +44,6 @@ func setupRootCmd() *cobra.Command {
 	netCommands := netCmd()
 	netCommands.AddCommand(netUpdateCmd())
 
-	root.AddCommand(setupCmd())
 	root.AddCommand(netCommands)
 	root.AddCommand(serveCmd())
 	root.AddCommand(refreshCommands)

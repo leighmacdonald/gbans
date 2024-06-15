@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"errors"
-	"github.com/leighmacdonald/steamid/v4/steamid"
 	"log/slog"
 	"net/http"
 	"os"
@@ -45,11 +44,13 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/spf13/cobra"
 )
 
 func firstTimeSetup(ctx context.Context, persons domain.PersonUsecase, news domain.NewsUsecase,
-	wiki domain.WikiUsecase, conf domain.Config) error {
+	wiki domain.WikiUsecase, conf domain.Config,
+) error {
 	_, errRootUser := persons.GetPersonBySteamID(ctx, steamid.New(conf.Owner))
 	if errRootUser == nil {
 		return nil

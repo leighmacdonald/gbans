@@ -192,6 +192,17 @@ func KickPlayerEmbed(target domain.PersonInfo) *discordgo.MessageEmbed {
 	return msgEmbed.AddTargetPerson(target).Embed().MessageEmbed
 }
 
+func KickPlayerOnConnectEmbed(steamID steamid.SteamID, name string, target domain.PersonInfo, banSource domain.BanSource) *discordgo.MessageEmbed {
+	msgEmbed := NewEmbed("User Kicked Successfully")
+	msgEmbed.Embed().SetColor(ColourWarn)
+	msgEmbed.AddTargetPerson(target)
+	msgEmbed.Embed().
+		AddField("Connecting As", name).
+		AddField("Ban Source", string(banSource))
+
+	return msgEmbed.AddFieldsSteamID(steamID).Embed().MessageEmbed
+}
+
 func SilenceEmbed(target domain.PersonInfo) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed("User Silenced Successfully")
 	msgEmbed.Embed().SetColor(ColourSuccess)

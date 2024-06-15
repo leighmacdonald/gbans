@@ -50,6 +50,8 @@ func (d discordUsecase) SendPayload(channel domain.DiscordChannel, embed *discor
 		channelID = conf.Discord.ForumLogChannelID
 	case domain.ChannelWordFilterLog:
 		channelID = conf.Discord.WordFilterLogChannelID
+	case domain.ChannelKickLog:
+		channelID = conf.Discord.KickLogChannelID
 	}
 
 	if channelID == "" {

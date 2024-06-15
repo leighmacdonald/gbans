@@ -165,6 +165,14 @@ func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
 		}
 
 		if banState.BanID != 0 {
+			player, errPlayer := s.persons.GetOrCreatePersonBySteamID(ctx, steamID)
+			if errPlayer != nil {
+				slog.Error("Failed to load or create player on connect")
+				ctx.JSON(http.StatusOK, defaultValue)
+
+				return
+			}
+
 			if banState.SteamID != steamID && !banState.EvadeOK {
 				evadeBanned, err := s.bans.CheckEvadeStatus(ctx, currentUser, steamID, req.IP)
 				if err != nil {
@@ -181,6 +189,9 @@ func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
 					}
 
 					ctx.JSON(http.StatusOK, defaultValue)
+
+					s.discord.SendPayload(domain.ChannelKickLog,
+						discord.KickPlayerOnConnectEmbed(steamID, req.Name, player, banState.BanSource))
 
 					return
 				}

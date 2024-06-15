@@ -184,6 +184,10 @@ func (h *serversHandler) onAPIGetServerStates() gin.HandlerFunc {
 			return servers[i].Name < servers[j].Name
 		})
 
+		if servers == nil {
+			servers = []domain.SafeServer{}
+		}
+
 		ctx.JSON(http.StatusOK, UserServers{
 			Servers: servers,
 			LatLong: ip2location.LatLong{
@@ -303,6 +307,10 @@ func (h *serversHandler) onAPIGetServersAdmin() gin.HandlerFunc {
 			slog.Error("Failed to get servers", log.ErrAttr(errServers))
 
 			return
+		}
+
+		if servers == nil {
+			servers = []domain.Server{}
 		}
 
 		ctx.JSON(http.StatusOK, servers)

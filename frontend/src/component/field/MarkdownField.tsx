@@ -55,6 +55,8 @@ export const mdEditorRef = createRef<MDXEditorMethods>();
 /**
  * Uses MDXEditor for markdown formatting wysiwyg editing. https://mdxeditor.dev/editor/docs/getting-started
  *
+ * To clear it after a successful submission: mdEditorRef.current?.setMarkdown('');
+ *
  * @param state
  * @param handleChange
  * @constructor

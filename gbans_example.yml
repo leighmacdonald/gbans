@@ -1,25 +1,47 @@
 # The (decimal) SteamID64 for the primary admin. Use https://www.steamidfinder.com/ if you don't know it.
-owner: 00000000000000000
+#
+# eg: 76561199093644872
+owner:
+
+# Your steam API key
+#
+steam_key:
 
 # The URL people will use to access the site. Be sure to check the schema!
 external_url: "http://gbans.localhost:6006"
 
 # Listen on this IP address. 0.0.0.0 will bind to all available interfaces. 127.0.0.1 can be used if using a reverse
-# proxy, or a specific IP can be assigned if you have failover IPs.
-http_host: 0.0.0.0
-# Listen on this port
-http_port: 6006
+# proxy, or a specific IP can be assigned if you have fail-over IPs.
+#
+#http_host: 127.0.0.1
+
+# Listen on this
+#
+# http_port: 6006
+
 # The path the frontend files are in. DO NOT change if using the official Docker image.
-http_static_path:
-# Default timeout when making outboung http calls
-client_timeout: 20s
+#
+# http_static_path:
+
+# Default timeout when making outbound http calls
+#
+# client_timeout: 10
+
 # Encryption key for JWT. https://numbergenerator.org/random-64-digit-hex-codes-generator is a good option.
+#
+# Minimum length of 10 characters
 http_cookie_key: change_me
 
-http_cors_origins:
-  - "https://gbans.localhost"
-  - "http://gbans.localhost:5173"
-  - "https://gbans.localhost:6006"
+# Optional extra cors origins to allow. The external_url value is automatically
+# added.
+#http_cors_origins:
+#  - "https://gbans.localhost"
+#  - "http://gbans.localhost:5173"
+#  - "https://gbans.localhost:6006"
 
+# Database connection string
+# Format: postgresql://<user>:<pass>@<host>:<port>/<database>
 database_dsn: "postgresql://gbans:gbans@localhost:5432/gbans"
-database_log_queries: false
+
+# Show all database queries
+#database_log_queries: false
