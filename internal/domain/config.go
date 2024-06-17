@@ -6,9 +6,12 @@ import (
 	"net"
 	"strconv"
 	"strings"
+
+	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 type LinkablePath interface {
+	// Path returns the HTTP path that is represented by the instance.
 	Path() string
 }
 
@@ -27,7 +30,8 @@ type ConfigUsecase interface {
 	Init(ctx context.Context) error
 }
 
-// StaticConfig defines non-dynamic config values that cannot be changed during runtime.
+// StaticConfig defines non-dynamic config values that cannot be changed during runtime. These
+// are loaded via the config file.
 type StaticConfig struct {
 	Owner               string   `mapstructure:"owner" json:"-"`
 	SteamKey            string   `mapstructure:"steam_key" json:"-"`
@@ -37,10 +41,13 @@ type StaticConfig struct {
 	HTTPStaticPath      string   `mapstructure:"http_static_path" json:"-"`
 	HTTPCookieKey       string   `mapstructure:"http_cookie_key" json:"-"`
 	HTTPClientTimeout   int      `mapstructure:"http_client_timeout" json:"-"`
+	HTTPCORSEnabled     bool     `mapstructure:"http_cors_enabled"`
 	HTTPCorsOrigins     []string `mapstructure:"http_cors_origins" json:"-"`
 	DatabaseDSN         string   `mapstructure:"database_dsn" json:"-"`
 	DatabaseAutoMigrate bool     `mapstructure:"database_auto_migrate" json:"-"`
 	DatabaseLogQueries  bool     `mapstructure:"database_log_queries" json:"-"`
+	PrometheusEnabled   bool     `mapstructure:"prometheus_enabled"`
+	PProfEnabled        bool     `mapstructure:"pprof_enabled"`
 }
 
 // Addr returns the address in host:port format.
@@ -48,11 +55,7 @@ func (s StaticConfig) Addr() string {
 	return net.JoinHostPort(s.HTTPHost, strconv.Itoa(int(s.HTTPPort)))
 }
 
-// Config is the root config container
-//
-//	export discord.token=TOKEN_TOKEN_TOKEN_TOKEN_TOKEN
-//	export general.steam_key=STEAM_KEY_STEAM_KEY_STEAM_KEY
-//	./gbans serve
+// Config is the root config container.
 type Config struct {
 	StaticConfig
 	General     ConfigGeneral     `json:"general"`
@@ -224,13 +227,22 @@ type ConfigSentry struct {
 }
 
 type ConfigLog struct {
-	Level string `json:"level"`
-	File  string `json:"file"`
+	Level log.Level `json:"level"`
+	// If set to a non-empty path, logs will also be written to the log file.
+	File string `json:"file"`
+	// Enable using the sloggin library for logging HTTP requests
+	HTTPEnabled bool `json:"http_enabled"`
+	// Enable support for OpenTelemetry by adding span/trace IDs
+	HTTPOtelEnabled bool `json:"http_otel_enabled"`
+	// Log level to use for http requests
+	HTTPLevel log.Level `json:"http_level"`
 }
 
 type ConfigDebug struct {
-	SkipOpenIDValidation bool   `json:"skip_open_id_validation"`
-	AddRCONLogAddress    string `json:"add_rcon_log_address"`
+	SkipOpenIDValidation bool `json:"skip_open_id_validation"`
+	// Will send the `logaddress_add <ip>:<port>` rcon command to all enabled servers so that
+	// you can forward them to yourself for testing. This does not remove any existing entries.
+	AddRCONLogAddress string `json:"add_rcon_log_address"`
 }
 
 type ConfigIP2Location struct {

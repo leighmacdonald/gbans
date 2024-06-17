@@ -92,11 +92,14 @@ type Discord = {
     word_filter_log_channel_id: string;
 };
 
+type LogLevels = 'debug' | 'info' | 'warn' | 'error';
+
 type Logging = {
-    level: 'debug' | 'info' | 'warn' | 'error';
+    level: LogLevels;
     file: string;
-    report_caller: boolean;
-    full_timestamp: boolean;
+    http_enabled: boolean;
+    http_otel_enabled: boolean;
+    http_level: LogLevels;
 };
 
 type Sentry = {

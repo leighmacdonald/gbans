@@ -8,7 +8,7 @@ owner:
 steam_key:
 
 # The URL people will use to access the site. Be sure to check the schema!
-external_url: "http://gbans.localhost:6006"
+external_url: "https://example.com"
 
 # Listen on this IP address. 0.0.0.0 will bind to all available interfaces. 127.0.0.1 can be used if using a reverse
 # proxy, or a specific IP can be assigned if you have fail-over IPs.
@@ -32,6 +32,10 @@ external_url: "http://gbans.localhost:6006"
 # Minimum length of 10 characters
 http_cookie_key: change_me
 
+# Enable support for CORS. See: https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
+# You should keep this enabled
+# http_cors_enabled: true
+
 # Optional extra cors origins to allow. The external_url value is automatically
 # added.
 #http_cors_origins:
@@ -41,7 +45,13 @@ http_cookie_key: change_me
 
 # Database connection string
 # Format: postgresql://<user>:<pass>@<host>:<port>/<database>
-database_dsn: "postgresql://gbans:gbans@localhost:5432/gbans"
+# database_dsn: "postgresql://gbans:gbans@localhost:5432/gbans"
 
 # Show all database queries
 #database_log_queries: false
+
+# Enabled prometheus exports at /metrics
+# prometheus_enabled: false
+
+# Enabled pprof support. See: https://pkg.go.dev/net/http/pprof#Handler
+# pprof_enabled: false
