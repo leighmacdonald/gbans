@@ -14,6 +14,7 @@ import (
 	"github.com/leighmacdonald/gbans/frontend"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
+	sloggin "github.com/samber/slog-gin"
 	"github.com/unrolled/secure"
 	"github.com/unrolled/secure/cspbuilder"
 )
@@ -69,22 +70,6 @@ func useSecure(mode domain.RunMode, cspOrigin string) gin.HandlerFunc {
 
 	return secureFunc
 }
-
-//
-// jsConfig contains all the variables that we inject into the frontend at runtime.
-// type jsConfig struct {
-//	SiteName        string `json:"site_name"`
-//	DiscordClientID string `json:"discord_client_id"`
-//	DiscordLinkID   string `json:"discord_link_id"`
-//	// External URL used to access S3Store assets. media:// links are replaces with this url
-//	AssetURL     string `json:"asset_url"`
-//	BucketDemo   string `json:"bucket_demo"`
-//	BucketMedia  string `json:"bucket_media"`
-//	BuildVersion string `json:"build_version"`
-//	BuildCommit  string `json:"build_commit"`
-//	BuildDate    string `json:"build_date"`
-//	SentryDSN    string `json:"sentry_dsn"`
-// }
 
 func ErrorHandledWithReturn(ctx *gin.Context, err error) error {
 	ErrorHandled(ctx, err)
@@ -198,25 +183,55 @@ func useFrontend(engine *gin.Engine, conf domain.Config) error {
 	return nil
 }
 
+func useSloggin(engine *gin.Engine, config domain.Config) {
+	logLevel := slog.LevelError
+	switch config.Log.Level {
+	case "error":
+		logLevel = slog.LevelError
+	case "debug":
+		logLevel = slog.LevelDebug
+	case "warn":
+		logLevel = slog.LevelWarn
+	case "info":
+		logLevel = slog.LevelInfo
+	}
+
+	logConfig := sloggin.Config{
+		DefaultLevel: logLevel,
+	}
+
+	if config.Log.HTTPOtelEnabled {
+		logConfig.WithSpanID = true
+		logConfig.WithTraceID = true
+	}
+
+	engine.Use(sloggin.NewWithConfig(slog.Default(), logConfig))
+}
+
 func CreateRouter(conf domain.Config, version domain.BuildInfo) (*gin.Engine, error) {
 	engine := gin.New()
 	engine.MaxMultipartMemory = 8 << 24
 	engine.Use(gin.Recovery())
 
+	if conf.Log.HTTPEnabled {
+		useSloggin(engine, conf)
+	}
+
 	if conf.Sentry.SentryDSN != "" {
 		useSentry(engine, version.BuildVersion)
 	}
 
-	if conf.General.Mode != domain.ReleaseMode {
+	if conf.PProfEnabled {
 		pprof.Register(engine)
 	}
 
-	if conf.General.Mode != domain.TestMode {
+	if conf.HTTPCORSEnabled && conf.General.Mode != domain.TestMode {
 		useCors(engine, conf)
 	}
 
-	// TODO add config toggle
-	usePrometheus(engine)
+	if conf.PrometheusEnabled {
+		usePrometheus(engine)
+	}
 
 	if err := useFrontend(engine, conf); err != nil {
 		return nil, err

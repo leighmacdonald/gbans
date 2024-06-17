@@ -1269,8 +1269,9 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
         defaultValues: {
             level: settings.log.level,
             file: settings.log.file,
-            report_caller: settings.log.report_caller,
-            full_timestamp: settings.log.full_timestamp
+            http_enabled: settings.log.http_enabled,
+            http_otel_enabled: settings.log.http_otel_enabled,
+            http_level: settings.log.http_level
         }
     });
 
@@ -1321,30 +1322,58 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         />
                         <SubHeading>If supplied, save log output to this file as well as stdout.</SubHeading>
                     </Grid>
+
                     <Grid xs={12}>
                         <Field
-                            name={'report_caller'}
+                            name={'http_enabled'}
                             validators={{
                                 onChange: z.boolean()
                             }}
                             children={(props) => {
-                                return <CheckboxSimple {...props} label={'Report caller'} />;
+                                return <CheckboxSimple {...props} label={'Enable HTTP request logs'} />;
                             }}
                         />
-                        <SubHeading>Enable/Disable logging of the function caller.</SubHeading>
+                        <SubHeading>Enables logging for incoming HTTP requests.</SubHeading>
+                    </Grid>
+                    <Grid xs={12}>
+                        <Field
+                            name={'http_otel_enabled'}
+                            validators={{
+                                onChange: z.boolean()
+                            }}
+                            children={(props) => {
+                                return <CheckboxSimple {...props} label={'Enable OpenTelemetry Support'} />;
+                            }}
+                        />
+                        <SubHeading>Enables OpenTelemetry support (span id/trace id).</SubHeading>
                     </Grid>
 
                     <Grid xs={12}>
                         <Field
-                            name={'full_timestamp'}
-                            validators={{
-                                onChange: z.boolean()
-                            }}
+                            name={'http_level'}
+                            validators={
+                                {
+                                    //onChange: z.string()
+                                }
+                            }
                             children={(props) => {
-                                return <CheckboxSimple {...props} label={'Use full timestamp'} />;
+                                return (
+                                    <SelectFieldSimple
+                                        {...props}
+                                        label={'HTTP Log Level'}
+                                        items={['debug', 'info', 'warn', 'error']}
+                                        renderMenu={(item) => {
+                                            return (
+                                                <MenuItem key={item} value={item}>
+                                                    {item}
+                                                </MenuItem>
+                                            );
+                                        }}
+                                    />
+                                );
                             }}
                         />
-                        <SubHeading>Use full timestamps in the log output.</SubHeading>
+                        <SubHeading>What logging level to use for HTTP requests.</SubHeading>
                     </Grid>
 
                     <Grid xs={12}>

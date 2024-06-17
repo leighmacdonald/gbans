@@ -43,7 +43,7 @@ func (c *configRepository) Read(ctx context.Context) (domain.Config, error) {
 		       discord_unregister_on_start, discord_bot_enabled, discord_integrations_enabled, discord_vote_log_channel_id ,discord_appeal_log_channel_id,
 		       discord_ban_log_channel_id, discord_forum_log_channel_id, discord_word_filter_log_channel_id, discord_kick_log_channel_id,
 		       
-		       logging_level, logging_file,
+		       logging_level, logging_file, logging_http_enabled, logging_http_otel_enabled, logging_http_level,
 		       
 		       sentry_sentry_dsn, sentry_sentry_dsn_web, sentry_sentry_trace, sentry_sentry_sample_rate,
 		       
@@ -71,7 +71,7 @@ func (c *configRepository) Read(ctx context.Context) (domain.Config, error) {
 			&cfg.Discord.PublicLogChannelEnable, &cfg.Discord.PublicLogChannelID, &cfg.Discord.PublicMatchLogChannelID, &cfg.Discord.ModPingRoleID,
 			&cfg.Discord.UnregisterOnStart, &cfg.Discord.BotEnabled, &cfg.Discord.IntegrationsEnabled, &cfg.Discord.VoteLogChannelID, &cfg.Discord.AppealLogChannelID,
 			&cfg.Discord.BanLogChannelID, &cfg.Discord.ForumLogChannelID, &cfg.Discord.WordFilterLogChannelID, &cfg.Discord.KickLogChannelID,
-			&cfg.Log.Level, &cfg.Log.File,
+			&cfg.Log.Level, &cfg.Log.File, &cfg.Log.HTTPEnabled, &cfg.Log.HTTPOtelEnabled, &cfg.Log.HTTPLevel,
 			&cfg.Sentry.SentryDSN, &cfg.Sentry.SentryDSNWeb, &cfg.Sentry.SentryTrace, &cfg.Sentry.SentrySampleRate,
 			&cfg.GeoLocation.Enabled, &cfg.GeoLocation.CachePath, &cfg.GeoLocation.Token,
 			&cfg.Debug.SkipOpenIDValidation, &cfg.Debug.AddRCONLogAddress,
@@ -166,6 +166,9 @@ func (c *configRepository) Write(ctx context.Context, config domain.Config) erro
 			"discord_unregister_on_start":         config.Discord.UnregisterOnStart,
 			"logging_level":                       config.Log.Level,
 			"logging_file":                        config.Log.File,
+			"logging_http_enabled":                config.Log.HTTPEnabled,
+			"logging_http_otel_enabled":           config.Log.HTTPOtelEnabled,
+			"logging_http_level":                  config.Log.HTTPLevel,
 			"sentry_sentry_dsn":                   config.Sentry.SentryDSN,
 			"sentry_sentry_dsn_web":               config.Sentry.SentryDSNWeb,
 			"sentry_sentry_trace":                 config.Sentry.SentryTrace,

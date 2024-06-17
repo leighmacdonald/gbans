@@ -10,28 +10,36 @@ import (
 	"github.com/dotse/slug"
 )
 
-func MustCreateLogger(debugLogPath string, levelString string) func() {
-	var (
-		logHandler slog.Handler
-		level      slog.Level
-	)
+type Level string
 
-	switch levelString {
-	case "debug":
-		level = slog.LevelDebug
-	case "info":
-		level = slog.LevelInfo
-	case "warn":
-		level = slog.LevelWarn
+const (
+	Debug Level = "debug"
+	Info  Level = "info"
+	Warn  Level = "warn"
+	Error Level = "error"
+)
+
+func ToSlogLevel(level Level) slog.Level {
+	switch level {
+	case Debug:
+		return slog.LevelDebug
+	case Info:
+		return slog.LevelInfo
+	case Warn:
+		return slog.LevelWarn
 	default:
-		level = slog.LevelError
+		return slog.LevelError
 	}
+}
+
+func MustCreateLogger(debugLogPath string, level Level) func() {
+	var logHandler slog.Handler
 
 	closer := func() {}
 
 	opts := slug.HandlerOptions{
 		HandlerOptions: slog.HandlerOptions{
-			Level: level,
+			Level: ToSlogLevel(level),
 		},
 	}
 

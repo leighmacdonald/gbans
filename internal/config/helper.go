@@ -55,10 +55,13 @@ func setDefaultConfigValues() {
 		"http_static_path":      "frontend/dist",
 		"http_cookie_key":       stringutil.SecureRandomString(32),
 		"http_client_timeout":   "10",
+		"http_cors_enabled":     true,
 		"http_cors_origins":     []string{"http://gbans.localhost"},
 		"database_dsn":          "postgresql://gbans:gbans@localhost/gbans",
 		"database_auto_migrate": true,
 		"database_log_queries":  false,
+		"prometheus_enabled":    false,
+		"pprof_enabled":         false,
 	}
 
 	for configKey, value := range defaultConfig {
