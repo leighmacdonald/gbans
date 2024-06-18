@@ -62,7 +62,6 @@ test-go:
 	@go test $(GO_FLAGS) -race -cover . ./...
 
 install_deps:
-	go install github.com/vektra/mockery/v2@v2.43.2
 	go install github.com/daixiang0/gci@v0.13.4
 	go install mvdan.cc/gofumpt@v0.6.0
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.59.1
@@ -105,10 +104,6 @@ docker_dump:
 
 docker_restore:
 	cat gbans.sql | docker exec -i docker-postgres-1 psql -U gbans
-
-gen_mocks:
-	rm -f internal/domain/mocks/*
-	mockery
 
 run_docker_snapshot: builds
 	docker build . --no-cache -t gbans:snapshot
