@@ -58,6 +58,7 @@ type ServerConfig struct {
 	DefaultHostname string
 	Host            string
 	Port            int
+	Enabled         bool
 	RconPassword    string
 	ReservedSlots   int
 	CC              string

@@ -110,7 +110,7 @@ func ReadStaticConfig() (domain.StaticConfig, error) {
 		return config, fmt.Errorf("%w: %s", domain.ErrInvalidConfig, "database_dsn")
 	}
 
-	if len(config.SteamKey) == 32 {
+	if len(config.SteamKey) != 32 {
 		return config, fmt.Errorf("%w: %s", domain.ErrInvalidConfig, "steam_key")
 	}
 

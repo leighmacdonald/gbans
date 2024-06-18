@@ -303,7 +303,8 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 
 	reasonCollection := []domain.Reason{
 		domain.External, domain.Cheating, domain.Racism, domain.Harassment, domain.Exploiting,
-		domain.WarningsExceeded, domain.Spam, domain.Language, domain.Profile, domain.ItemDescriptions, domain.BotHost, domain.Custom,
+		domain.WarningsExceeded, domain.Spam, domain.Language, domain.Profile, domain.ItemDescriptions,
+		domain.BotHost, domain.Evading, domain.Username, domain.Custom,
 	}
 
 	reasons := make([]*discordgo.ApplicationCommandOptionChoice, len(reasonCollection))

@@ -50,6 +50,7 @@ func setDefaultConfigValues() {
 	defaultConfig := map[string]any{
 		"owner":                 "",
 		"external_url":          "",
+		"steam_key":             "",
 		"http_host":             "127.0.0.1",
 		"http_port":             6006,
 		"http_static_path":      "frontend/dist",

@@ -785,6 +785,10 @@ func ServersMessage(currentStateRegion map[string][]domain.ServerState, serversU
 		var counts []string
 
 		for _, curState := range currentStateRegion[region] {
+			if !curState.Enabled {
+				continue
+			}
+
 			_, ok := stats[region]
 			if !ok {
 				stats[region] = 0

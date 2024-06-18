@@ -175,6 +175,10 @@ func (c *Collector) setServerConfigs(configs []domain.ServerConfig) {
 
 	for _, cfg := range configs {
 		if _, found := c.serverState[cfg.ServerID]; !found {
+			if !cfg.Enabled {
+				continue
+			}
+
 			addr, errResolve := ResolveIP(cfg.Host)
 			if errResolve != nil {
 				slog.Warn("Failed to resolve server ip", slog.String("addr", addr), log.ErrAttr(errResolve))
@@ -187,6 +191,7 @@ func (c *Collector) setServerConfigs(configs []domain.ServerConfig) {
 				NameShort:     cfg.Tag,
 				Host:          cfg.Host,
 				Port:          cfg.Port,
+				Enabled:       cfg.Enabled,
 				RconPassword:  cfg.RconPassword,
 				ReservedSlots: cfg.ReservedSlots,
 				CC:            cfg.CC,
@@ -335,51 +340,51 @@ func (c *Collector) startStatus(ctx context.Context) {
 	}
 }
 
+func (c *Collector) updateServerConfigs(ctx context.Context) {
+	servers, _, errServers := c.serverUsecase.GetServers(ctx, domain.ServerQueryFilter{
+		QueryFilter:     domain.QueryFilter{Deleted: false},
+		IncludeDisabled: false,
+	})
+
+	if errServers != nil && !errors.Is(errServers, domain.ErrNoResult) {
+		slog.Error("Failed to fetch servers, cannot update State", log.ErrAttr(errServers))
+
+		return
+	}
+
+	configs := make([]domain.ServerConfig, len(servers))
+
+	for i, server := range servers {
+		configs[i] = newServerConfig(
+			server.ServerID,
+			server.ShortName,
+			server.Name,
+			server.Address,
+			server.Port,
+			server.RCON,
+			server.ReservedSlots,
+			server.CC,
+			server.Region,
+			server.Latitude,
+			server.Longitude,
+			server.IsEnabled,
+		)
+	}
+
+	c.setServerConfigs(configs)
+}
+
 func (c *Collector) Start(ctx context.Context) {
-	var (
-		trigger      = make(chan any)
-		updateTicker = time.NewTicker(time.Minute * 30)
-	)
+	updateTicker := time.NewTicker(time.Minute * 30)
+
+	c.updateServerConfigs(ctx)
 
 	go c.startStatus(ctx)
-
-	go func() {
-		trigger <- true
-	}()
 
 	for {
 		select {
 		case <-updateTicker.C:
-			trigger <- true
-		case <-trigger:
-			servers, _, errServers := c.serverUsecase.GetServers(ctx, domain.ServerQueryFilter{
-				QueryFilter:     domain.QueryFilter{Deleted: false},
-				IncludeDisabled: false,
-			})
-			if errServers != nil && !errors.Is(errServers, domain.ErrNoResult) {
-				slog.Error("Failed to fetch servers, cannot update State", log.ErrAttr(errServers))
-
-				continue
-			}
-
-			var configs []domain.ServerConfig
-			for _, server := range servers {
-				configs = append(configs, newServerConfig(
-					server.ServerID,
-					server.ShortName,
-					server.Name,
-					server.Address,
-					server.Port,
-					server.RCON,
-					server.ReservedSlots,
-					server.CC,
-					server.Region,
-					server.Latitude,
-					server.Longitude,
-				))
-			}
-
-			c.setServerConfigs(configs)
+			c.updateServerConfigs(ctx)
 		case <-ctx.Done():
 			return
 		}
@@ -388,6 +393,7 @@ func (c *Collector) Start(ctx context.Context) {
 
 func newServerConfig(serverID int, name string, defaultHostname string, address string,
 	port int, rconPassword string, reserved int, countryCode string, region string, lat float64, long float64,
+	enabled bool,
 ) domain.ServerConfig {
 	return domain.ServerConfig{
 		ServerID:        serverID,
@@ -395,6 +401,7 @@ func newServerConfig(serverID int, name string, defaultHostname string, address 
 		DefaultHostname: defaultHostname,
 		Host:            address,
 		Port:            port,
+		Enabled:         enabled,
 		RconPassword:    rconPassword,
 		ReservedSlots:   reserved,
 		CC:              countryCode,
