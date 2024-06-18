@@ -70,13 +70,12 @@ func (h discordService) Start(_ context.Context) {
 		domain.CmdLogs:    h.makeOnLogs(),
 		domain.CmdMute:    h.makeOnMute(),
 		// domain.CmdCheckIP:  h.onCheckIp,
-		domain.CmdPlayers:  h.makeOnPlayers(),
-		domain.CmdPSay:     h.makeOnPSay(),
-		domain.CmdSay:      h.makeOnSay(),
-		domain.CmdServers:  h.makeOnServers(),
-		domain.CmdSetSteam: h.makeOnSetSteam(),
-		domain.CmdUnban:    h.makeOnUnban(),
-		domain.CmdStats:    h.makeOnStats(),
+		domain.CmdPlayers: h.makeOnPlayers(),
+		domain.CmdPSay:    h.makeOnPSay(),
+		domain.CmdSay:     h.makeOnSay(),
+		domain.CmdServers: h.makeOnServers(),
+		domain.CmdUnban:   h.makeOnUnban(),
+		domain.CmdStats:   h.makeOnStats(),
 	}
 
 	for k, v := range cmdMap {
@@ -263,26 +262,6 @@ func (h discordService) onHistoryIP(ctx context.Context, _ *discordgo.Session, i
 //	embed.Description = strings.Join(lines, "\n")
 //	return nil
 // }
-
-func (h discordService) makeOnSetSteam() func(_ context.Context, _ *discordgo.Session, _ *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
-	return func(ctx context.Context, _ *discordgo.Session,
-		interaction *discordgo.InteractionCreate,
-	) (*discordgo.MessageEmbed, error) {
-		opts := domain.OptionMap(interaction.ApplicationCommandData().Options)
-
-		steamID, errResolveSID := steamid.Resolve(ctx, opts[domain.OptUserIdentifier].StringValue())
-		if errResolveSID != nil || !steamID.Valid() {
-			return nil, domain.ErrInvalidSID
-		}
-
-		errSetSteam := h.persons.SetSteam(ctx, steamID, interaction.Member.User.ID)
-		if errSetSteam != nil {
-			return nil, errSetSteam
-		}
-
-		return SetSteamMessage(), nil
-	}
-}
 
 func (h discordService) onUnbanSteam(ctx context.Context, _ *discordgo.Session, interaction *discordgo.InteractionCreate) (*discordgo.MessageEmbed, error) {
 	opts := domain.OptionMap(interaction.ApplicationCommandData().Options[0].Options)

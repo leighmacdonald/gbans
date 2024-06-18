@@ -450,16 +450,6 @@ func (bot *discordRepository) botRegisterSlashCommands(appID string) error {
 		},
 		{
 			ApplicationID:            appID,
-			Name:                     string(domain.CmdSetSteam),
-			DMPermission:             &dmPerms,
-			DefaultMemberPermissions: &modPerms,
-			Description:              "Set your steam ID so gbans can link your account to discord",
-			Options: []*discordgo.ApplicationCommandOption{
-				optUserID,
-			},
-		},
-		{
-			ApplicationID:            appID,
 			Name:                     string(domain.CmdHistory),
 			DMPermission:             &dmPerms,
 			DefaultMemberPermissions: &modPerms,
