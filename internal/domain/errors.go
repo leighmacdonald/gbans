@@ -47,7 +47,7 @@ var (
 	ErrLoadServer               = errors.New("failed to load match server")
 	ErrMissingParam             = errors.New("failed to request at least one required parameter")
 	ErrBanDoesNotExist          = errors.New("ban does not exist")
-	ErrSteamUnset               = errors.New("must set steam id. see /set_steam command")
+	ErrSteamUnset               = errors.New("must connect discord, see connections in your settings page to connect it")
 	ErrFetchClassStats          = errors.New("failed to fetch class stats")
 	ErrFetchWeaponStats         = errors.New("failed to fetch weapon stats")
 	ErrFetchKillstreakStats     = errors.New("failed to fetch killstreak stats")

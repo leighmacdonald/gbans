@@ -105,7 +105,6 @@ const (
 	CmdCSay        Cmd = "csay"
 	CmdSay         Cmd = "say"
 	CmdServers     Cmd = "servers"
-	CmdSetSteam    Cmd = "set_steam"
 	CmdStats       Cmd = "stats"
 	CmdStatsGlobal Cmd = "global"
 	CmdStatsPlayer Cmd = "player"
