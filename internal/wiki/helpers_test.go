@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestWiki(t *testing.T) {
+func TestRender(t *testing.T) {
 	root := domain.WikiPage{Slug: domain.RootSlug}
 	root.BodyMD = `
 # Title
