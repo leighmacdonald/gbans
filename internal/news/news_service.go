@@ -26,7 +26,7 @@ func NewNewsHandler(engine *gin.Engine, news domain.NewsUsecase, discord domain.
 	// editor
 	editorGrp := engine.Group("/")
 	{
-		editor := editorGrp.Use(auth.AuthMiddleware(domain.PUser))
+		editor := editorGrp.Use(auth.AuthMiddleware(domain.PEditor))
 		editor.POST("/api/news", handler.onAPIPostNewsCreate())
 		editor.POST("/api/news/:news_id", handler.onAPIPostNewsUpdate())
 		editor.DELETE("/api/news/:news_id", handler.onAPIPostNewsDelete())
@@ -142,6 +142,10 @@ func (h newsHandler) onAPIGetNewsAll() gin.HandlerFunc {
 			slog.Error("Failed to get latest news", log.ErrAttr(errGetNewsLatest))
 
 			return
+		}
+
+		if newsLatest == nil {
+			newsLatest = []domain.NewsEntry{}
 		}
 
 		ctx.JSON(http.StatusOK, newsLatest)
