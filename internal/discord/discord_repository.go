@@ -29,6 +29,10 @@ func (bot *nullDiscordRepository) Start() error {
 func (bot *nullDiscordRepository) SendPayload(_ string, _ *discordgo.MessageEmbed) {
 }
 
+func NewNullDiscordRepository() domain.DiscordRepository {
+	return &nullDiscordRepository{}
+}
+
 type discordRepository struct {
 	session           *discordgo.Session
 	isReady           atomic.Bool

@@ -142,7 +142,7 @@ func (h authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 		// TODO max age checks
 		ctx.SetSameSite(http.SameSiteStrictMode)
 		ctx.SetCookie(
-			fingerprintCookieName,
+			domain.FingerprintCookieName,
 			token.Fingerprint,
 			int(domain.AuthTokenDuration.Seconds()),
 			"/api",
@@ -158,14 +158,12 @@ func (h authHandler) onSteamOIDCCallback() gin.HandlerFunc {
 	}
 }
 
-const fingerprintCookieName = "fingerprint"
-
 func (h authHandler) onAPILogout() gin.HandlerFunc {
 	handlerName := log.HandlerName(1)
 	conf := h.configUsecase.Config()
 
 	return func(ctx *gin.Context) {
-		fingerprint, errCookie := ctx.Cookie(fingerprintCookieName)
+		fingerprint, errCookie := ctx.Cookie(domain.FingerprintCookieName)
 		if errCookie != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, nil)
 			slog.Warn("Failed to get fingerprint", handlerName)
@@ -181,7 +179,7 @@ func (h authHandler) onAPILogout() gin.HandlerFunc {
 			return
 		}
 
-		ctx.SetCookie(fingerprintCookieName, "", -1, "/api",
+		ctx.SetCookie(domain.FingerprintCookieName, "", -1, "/api",
 			parsedExternal.Hostname(), conf.General.Mode == domain.ReleaseMode, true)
 
 		personAuth := domain.PersonAuth{}

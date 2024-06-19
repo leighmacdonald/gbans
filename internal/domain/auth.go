@@ -10,7 +10,8 @@ import (
 )
 
 const (
-	AuthTokenDuration = time.Hour * 24 * 31
+	AuthTokenDuration     = time.Hour * 24 * 31
+	FingerprintCookieName = "fingerprint"
 )
 
 type AuthRepository interface {
