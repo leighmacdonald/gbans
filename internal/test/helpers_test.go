@@ -78,21 +78,21 @@ type MockConfigRepository struct {
 }
 
 func newConfigRepo(config domain.Config) domain.ConfigRepository {
-	return MockConfigRepository{
+	return &MockConfigRepository{
 		config: config,
 	}
 }
 
-func (m MockConfigRepository) Read(_ context.Context) (domain.Config, error) {
+func (m *MockConfigRepository) Read(_ context.Context) (domain.Config, error) {
 	return m.config, nil
 }
 
-func (m MockConfigRepository) Write(_ context.Context, config domain.Config) error {
+func (m *MockConfigRepository) Write(_ context.Context, config domain.Config) error {
 	m.config = config
 
 	return nil
 }
 
-func (m MockConfigRepository) Init(_ context.Context) error {
+func (m *MockConfigRepository) Init(_ context.Context) error {
 	return nil
 }
