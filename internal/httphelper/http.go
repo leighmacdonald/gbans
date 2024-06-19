@@ -96,12 +96,6 @@ func ErrorHandled(ctx *gin.Context, err error) {
 	default:
 		HandleErrInternal(ctx)
 	}
-
-	slog.Error("Error performing request",
-		log.ErrAttr(err),
-		slog.String("path", ctx.Request.RequestURI),
-		slog.String("method", ctx.Request.Method),
-		slog.String("agent", ctx.Request.UserAgent()))
 }
 
 func HandleErrPermissionDenied(ctx *gin.Context) {
@@ -233,8 +227,10 @@ func CreateRouter(conf domain.Config, version domain.BuildInfo) (*gin.Engine, er
 		usePrometheus(engine)
 	}
 
-	if err := useFrontend(engine, conf); err != nil {
-		return nil, err
+	if conf.General.Mode != domain.TestMode {
+		if err := useFrontend(engine, conf); err != nil {
+			return nil, err
+		}
 	}
 
 	return engine, nil

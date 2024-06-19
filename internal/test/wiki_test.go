@@ -1,7 +1,49 @@
-package test
+//nolint:testpackage
+package test_test
 
-import "testing"
+import (
+	"net/http"
+	"testing"
+
+	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/wiki"
+	"github.com/leighmacdonald/gbans/pkg/stringutil"
+	"github.com/stretchr/testify/require"
+)
 
 func TestGetWikiPageBySlugMissing(t *testing.T) {
-	t.Fatalf("ahh")
+	t.Parallel()
+
+	router := testRouter()
+	wiki.NewWIkiHandler(router, wikiUC, authUC)
+
+	testEndpoint(t, router, http.MethodGet, "/api/wiki/slug/home", nil, http.StatusNotFound, nil)
+}
+
+func TestSaveWikiPageBySlugUnauthed(t *testing.T) {
+	t.Parallel()
+
+	router := testRouter()
+	wiki.NewWIkiHandler(router, wikiUC, authUC)
+
+	page := domain.NewWikiPage(stringutil.SecureRandomString(10), stringutil.SecureRandomString(500))
+
+	testEndpoint(t, router, http.MethodPost, "/api/wiki/slug", page, http.StatusForbidden, nil)
+}
+
+func TestSaveWikiPageBySlugAuthed(t *testing.T) {
+	t.Parallel()
+
+	router := testRouter()
+	wiki.NewWIkiHandler(router, wikiUC, authUC)
+	tokens := loginUser(getModerator())
+
+	page := domain.NewWikiPage(stringutil.SecureRandomString(10), stringutil.SecureRandomString(500))
+
+	var createdPage domain.WikiPage
+	testEndpointWithReceiver(t, router, http.MethodPost, "/api/wiki/slug", page, http.StatusCreated, tokens, &createdPage)
+
+	var receivedPage domain.WikiPage
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/wiki/slug/"+page.Slug, page, http.StatusOK, tokens, &receivedPage)
+	require.Equal(t, page.BodyMD, receivedPage.BodyMD)
 }

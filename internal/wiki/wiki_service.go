@@ -26,6 +26,7 @@ func NewWIkiHandler(engine *gin.Engine, wiki domain.WikiUsecase, ath domain.Auth
 	editorGrp := engine.Group("/")
 	{
 		editor := editorGrp.Use(ath.AuthMiddleware(domain.PEditor))
+		// TODO use PUT and slug param
 		editor.POST("/api/wiki/slug", handler.onAPISaveWikiSlug())
 	}
 }
