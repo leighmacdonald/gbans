@@ -73,8 +73,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Build the docker-compose stack
-        run: make docker_test
+      - name: Backend tests
+        run: make test-go
+
+      - name: Frontend tests
+        run: make test-ts
 
 #  release:
 #    needs: [docker-test]
