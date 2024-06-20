@@ -12,6 +12,8 @@ require (
 	github.com/docker/docker v25.0.5+incompatible
 	github.com/dotse/slug v0.1.0
 	github.com/dustin/go-humanize v1.0.1
+	github.com/emersion/go-imap/v2 v2.0.0-beta.3
+	github.com/emersion/go-message v0.18.1
 	github.com/gabriel-vasile/mimetype v1.4.4
 	github.com/getsentry/sentry-go v0.28.1
 	github.com/gin-contrib/cors v1.7.2
@@ -75,6 +77,7 @@ require (
 	github.com/distribution/reference v0.5.0 // indirect
 	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
+	github.com/emersion/go-sasl v0.0.0-20231106173351-e73c9f7bad43 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect

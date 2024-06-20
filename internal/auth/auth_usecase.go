@@ -242,7 +242,7 @@ func (u *auth) NewUserToken(steamID steamid.SteamID, cookieKey string, fingerPri
 	nowTime := time.Now()
 	conf := u.config.Config()
 	claims := domain.UserAuthClaims{
-		Fingerprint: FingerprintHash(fingerPrint),
+		Fingerprint: fingerprintHash(fingerPrint),
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    conf.General.SiteName,
 			Subject:   steamID.String(),
@@ -305,7 +305,7 @@ func (u *auth) Sid64FromJWTToken(token string, cookieKey string, fingerprint str
 		return steamid.SteamID{}, domain.ErrAuthentication
 	}
 
-	if claims.Fingerprint != FingerprintHash(fingerprint) {
+	if claims.Fingerprint != fingerprintHash(fingerprint) {
 		slog.Error("Invalid cookie fingerprint, token rejected")
 
 		return steamid.SteamID{}, domain.ErrAuthentication
