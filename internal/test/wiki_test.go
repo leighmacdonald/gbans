@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/wiki"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/stretchr/testify/require"
 )
@@ -15,7 +14,6 @@ func TestGetWikiPageBySlugMissing(t *testing.T) {
 	t.Parallel()
 
 	router := testRouter()
-	wiki.NewWIkiHandler(router, wikiUC, authUC)
 
 	testEndpoint(t, router, http.MethodGet, "/api/wiki/slug/home", nil, http.StatusNotFound, nil)
 }
@@ -24,7 +22,6 @@ func TestSaveWikiPageBySlugUnauthed(t *testing.T) {
 	t.Parallel()
 
 	router := testRouter()
-	wiki.NewWIkiHandler(router, wikiUC, authUC)
 
 	page := domain.NewWikiPage(stringutil.SecureRandomString(10), stringutil.SecureRandomString(500))
 
@@ -35,7 +32,6 @@ func TestSaveWikiPageBySlugAuthed(t *testing.T) {
 	t.Parallel()
 
 	router := testRouter()
-	wiki.NewWIkiHandler(router, wikiUC, authUC)
 	tokens := loginUser(getModerator())
 
 	page := domain.NewWikiPage(stringutil.SecureRandomString(10), stringutil.SecureRandomString(500))
