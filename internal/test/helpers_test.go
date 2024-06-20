@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"testing"
 
+	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/fs"
 	"github.com/testcontainers/testcontainers-go"
@@ -95,4 +97,42 @@ func (m *MockConfigRepository) Write(_ context.Context, config domain.Config) er
 
 func (m *MockConfigRepository) Init(_ context.Context) error {
 	return nil
+}
+
+type permTestValues struct {
+	method string
+	code   int
+	path   string
+	levels []domain.Privilege
+}
+
+// func adminRequired() []domain.Privilege {
+//	return []domain.Privilege{domain.PGuest, domain.PUser, domain.PModerator}
+// }
+
+func modRequired() []domain.Privilege {
+	return []domain.Privilege{domain.PGuest, domain.PUser}
+}
+
+func authedRequired() []domain.Privilege {
+	return []domain.Privilege{domain.PGuest}
+}
+
+func testPermissions(t *testing.T, router *gin.Engine, testCases []permTestValues) {
+	t.Helper()
+
+	for _, testCase := range testCases {
+		for _, level := range testCase.levels {
+			var tokens *domain.UserTokens
+
+			switch level {
+			case domain.PUser:
+				tokens = loginUser(getUser())
+			case domain.PModerator:
+				tokens = loginUser(getModerator())
+			}
+
+			testEndpoint(t, router, testCase.method, testCase.path, nil, testCase.code, tokens)
+		}
+	}
 }

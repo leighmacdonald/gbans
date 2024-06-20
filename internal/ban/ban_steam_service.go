@@ -31,8 +31,6 @@ func NewBanHandler(engine *gin.Engine, bu domain.BanSteamUsecase, du domain.Disc
 ) {
 	handler := banHandler{bansSteam: bu, discord: du, persons: pu, config: configUsecase}
 
-	engine.GET("/api/stats", handler.onAPIGetStats())
-
 	if configUsecase.Config().Exports.BDEnabled {
 		engine.GET("/export/bans/tf2bd", handler.onAPIExportBansTF2BD())
 	}
@@ -54,6 +52,7 @@ func NewBanHandler(engine *gin.Engine, bu domain.BanSteamUsecase, du domain.Disc
 	{
 		mod := modGrp.Use(ath.AuthMiddleware(domain.PModerator))
 
+		mod.GET("/api/stats", handler.onAPIGetStats())
 		mod.GET("/api/bans/steam", handler.onAPIGetBansSteam())
 		mod.GET("/api/bans/steamid/:steam_id", handler.onAPIGetBanBySteam())
 		mod.POST("/api/bans/steam/create", handler.onAPIPostBanSteamCreate())
@@ -112,7 +111,7 @@ func (h banHandler) onAPIPostSetBanAppealStatus() gin.HandlerFunc {
 	}
 }
 
-type apiBanRequest struct {
+type RequestBanSteam struct {
 	domain.SourceIDField
 	domain.TargetIDField
 	Duration       string         `json:"duration"`
@@ -130,7 +129,7 @@ type apiBanRequest struct {
 
 func (h banHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req apiBanRequest
+		var req RequestBanSteam
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
@@ -221,7 +220,13 @@ func (h banHandler) onAPIGetBanByID() gin.HandlerFunc {
 
 		bannedPerson, errGet := h.bansSteam.GetByBanID(ctx, banID, deletedOk, true)
 		if errGet != nil {
-			httphelper.ErrorHandled(ctx, errGet)
+			if errors.Is(errGet, domain.ErrNoResult) {
+				httphelper.HandleErrNotFound(ctx)
+
+				return
+			}
+
+			httphelper.HandleErrInternal(ctx)
 
 			return
 		}
@@ -401,40 +406,46 @@ func (h banHandler) onAPIPostBanDelete() gin.HandlerFunc {
 
 		bannedPerson, banErr := h.bansSteam.GetByBanID(ctx, banID, false, true)
 		if banErr != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			if errors.Is(banErr, domain.ErrNoResult) {
+				httphelper.HandleErrNotFound(ctx)
+
+				return
+			}
+
+			httphelper.HandleErrInternal(ctx)
 
 			return
 		}
 
 		changed, errSave := h.bansSteam.Unban(ctx, bannedPerson.TargetID, req.UnbanReasonText)
 		if errSave != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
 
 			return
 		}
 
 		if !changed {
-			httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrUnbanFailed)
+			httphelper.ResponseErr(ctx, http.StatusOK, domain.ErrUnbanFailed)
 
 			return
 		}
 
-		ctx.JSON(http.StatusAccepted, gin.H{})
+		ctx.JSON(http.StatusOK, gin.H{})
 	}
 }
 
-func (h banHandler) onAPIPostBanUpdate() gin.HandlerFunc {
-	type updateBanRequest struct {
-		TargetID       steamid.SteamID `json:"target_id"`
-		BanType        domain.BanType  `json:"ban_type"`
-		Reason         domain.Reason   `json:"reason"`
-		ReasonText     string          `json:"reason_text"`
-		Note           string          `json:"note"`
-		IncludeFriends bool            `json:"include_friends"`
-		EvadeOk        bool            `json:"evade_ok"`
-		ValidUntil     time.Time       `json:"valid_until"`
-	}
+type RequestBanSteamUpdate struct {
+	TargetID       steamid.SteamID `json:"target_id"`
+	BanType        domain.BanType  `json:"ban_type"`
+	Reason         domain.Reason   `json:"reason"`
+	ReasonText     string          `json:"reason_text"`
+	Note           string          `json:"note"`
+	IncludeFriends bool            `json:"include_friends"`
+	EvadeOk        bool            `json:"evade_ok"`
+	ValidUntil     time.Time       `json:"valid_until"`
+}
 
+func (h banHandler) onAPIPostBanUpdate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		banID, banIDErr := httphelper.GetInt64Param(ctx, "ban_id")
 		if banIDErr != nil {
@@ -443,7 +454,7 @@ func (h banHandler) onAPIPostBanUpdate() gin.HandlerFunc {
 			return
 		}
 
-		var req updateBanRequest
+		var req RequestBanSteamUpdate
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
@@ -487,7 +498,7 @@ func (h banHandler) onAPIPostBanUpdate() gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusAccepted, bannedPerson)
+		ctx.JSON(http.StatusOK, bannedPerson)
 	}
 }
 
