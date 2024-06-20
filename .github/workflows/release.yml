@@ -7,6 +7,10 @@ on:
         description: 'New version'
         required: true
 
+#env:
+#  REGISTRY: ghcr.io
+#  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
   release:
     name: "release"

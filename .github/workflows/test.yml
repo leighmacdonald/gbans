@@ -4,10 +4,6 @@ on:
   push:
   pull_request:
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-
 permissions: write-all
 
 jobs:
@@ -65,21 +61,39 @@ jobs:
       - run: go install honnef.co/go/tools/cmd/staticcheck@latest
       - run: make static
 
-  docker-test:
-    needs: [lint-ts, lint-golangci, staticcheck]
+  backend-test:
+    needs: [lint-golangci, staticcheck]
     runs-on: ubuntu-latest
     env:
       GBANS_GENERAL_STEAM_KEY: ${{ secrets.GBANS_GENERAL_STEAM_KEY }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Backend tests
         run: make test-go
 
+  frontend-test:
+    needs: [lint-ts]
+    runs-on: ubuntu-latest
+    env:
+      GBANS_GENERAL_STEAM_KEY: ${{ secrets.GBANS_GENERAL_STEAM_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+          run_install: false
+
+      - name: Setup nodejs
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'pnpm'
+          cache-dependency-path: 'frontend/pnpm-lock.yaml'
+
+      - name: Install modules
+        working-directory: ./frontend
+        run: pnpm install --frozen-lockfile --strict-peer-dependencies
       - name: Frontend tests
         run: make test-ts
-
-#  release:
-#    needs: [docker-test]
-#    if: success() && startsWith(github.event.ref, 'refs/tags/v')
-#    uses: ./.github/workflows/release.yml
