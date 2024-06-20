@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -106,29 +107,35 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 
-	wikiUC = wiki.NewWikiUsecase(wiki.NewWikiRepository(databaseConn))
-	personUC = person.NewPersonUsecase(person.NewPersonRepository(conf, databaseConn), configUC)
-	networkUC = network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(databaseConn), personUC, configUC)
-	banSteamUC = ban.NewBanSteamUsecase(ban.NewBanSteamRepository(databaseConn, personUC, networkUC), personUC, configUC, discordUC, reportUC, stateUC)
 	authRepo = auth.NewAuthRepository(databaseConn)
+
+	discordUC = discord.NewDiscordUsecase(discord.NewNullDiscordRepository(), configUC)
+
+	assetUC = asset.NewAssetUsecase(asset.NewLocalRepository(databaseConn, configUC))
+	newsUC = news.NewNewsUsecase(news.NewNewsRepository(databaseConn))
+	serversUC = servers.NewServersUsecase(servers.NewServersRepository(databaseConn))
+	wikiUC = wiki.NewWikiUsecase(wiki.NewWikiRepository(databaseConn))
+
+	patreonUC = patreon.NewPatreonUsecase(patreon.NewPatreonRepository(databaseConn), configUC)
+	personUC = person.NewPersonUsecase(person.NewPersonRepository(conf, databaseConn), configUC)
+	wordFilterUC = wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(databaseConn), discordUC)
+	forumUC = forum.NewForumUsecase(forum.NewForumRepository(databaseConn), discordUC)
+
+	notificationUC = notification.NewNotificationUsecase(notification.NewNotificationRepository(databaseConn), personUC)
+	stateUC = state.NewStateUsecase(eventBroadcaster, state.NewStateRepository(state.NewCollector(serversUC)), configUC, serversUC)
+
+	networkUC = network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(databaseConn), personUC, configUC)
+	demoUC = demo.NewDemoUsecase("demos", demo.NewDemoRepository(databaseConn), assetUC, configUC, serversUC)
+	reportUC = report.NewReportUsecase(report.NewReportRepository(databaseConn), discordUC, configUC, personUC, demoUC)
+	banSteamUC = ban.NewBanSteamUsecase(ban.NewBanSteamRepository(databaseConn, personUC, networkUC), personUC, configUC, discordUC, reportUC, stateUC)
 	authUC = auth.NewAuthUsecase(authRepo, configUC, personUC, banSteamUC, serversUC)
 	banASNUC = ban.NewBanASNUsecase(ban.NewBanASNRepository(databaseConn), discordUC, networkUC, configUC, personUC)
 	banGroupUC = steamgroup.NewBanGroupUsecase(steamgroup.NewSteamGroupRepository(databaseConn), personUC, discordUC, configUC)
 	banNetUC = ban.NewBanNetUsecase(ban.NewBanNetRepository(databaseConn), personUC, configUC, discordUC, stateUC)
-	assetUC = asset.NewAssetUsecase(asset.NewLocalRepository(databaseConn, configUC))
-	chatUC = chat.NewChatUsecase(configUC, chat.NewChatRepository(databaseConn, personUC, wordFilterUC, matchUC, eventBroadcaster), wordFilterUC, stateUC, banSteamUC, personUC, discordUC)
-	demoUC = demo.NewDemoUsecase("demos", demo.NewDemoRepository(databaseConn), assetUC, configUC, serversUC)
-	discordUC = discord.NewDiscordUsecase(discord.NewNullDiscordRepository(), configUC)
-	forumUC = forum.NewForumUsecase(forum.NewForumRepository(databaseConn), discordUC)
+
 	matchUC = match.NewMatchUsecase(match.NewMatchRepository(eventBroadcaster, databaseConn, personUC, serversUC, discordUC, stateUC, weaponsMap), stateUC, serversUC, discordUC)
-	newsUC = news.NewNewsUsecase(news.NewNewsRepository(databaseConn))
-	notificationUC = notification.NewNotificationUsecase(notification.NewNotificationRepository(databaseConn), personUC)
-	patreonUC = patreon.NewPatreonUsecase(patreon.NewPatreonRepository(databaseConn), configUC)
-	reportUC = report.NewReportUsecase(report.NewReportRepository(databaseConn), discordUC, configUC, personUC, demoUC)
-	serversUC = servers.NewServersUsecase(servers.NewServersRepository(databaseConn))
-	stateUC = state.NewStateUsecase(eventBroadcaster, state.NewStateRepository(state.NewCollector(serversUC)), configUC, serversUC)
+	chatUC = chat.NewChatUsecase(configUC, chat.NewChatRepository(databaseConn, personUC, wordFilterUC, matchUC, eventBroadcaster), wordFilterUC, stateUC, banSteamUC, personUC, discordUC)
 	votesUC = votes.NewVoteUsecase(votes.NewVoteRepository(databaseConn), personUC, matchUC, discordUC, configUC, eventBroadcaster)
-	wordFilterUC = wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(databaseConn), discordUC)
 
 	container = dbContainer
 
@@ -145,7 +152,9 @@ func testRouter() *gin.Engine {
 	if errRouter != nil {
 		panic(errRouter)
 	}
-
+	ban.NewBanHandler(router, banSteamUC, discordUC, personUC, configUC, authUC)
+	ban.NewBanNetHandler(router, banNetUC, authUC)
+	ban.NewBanASNHandler(router, banASNUC, authUC)
 	news.NewNewsHandler(router, newsUC, discordUC, authUC)
 	wiki.NewWIkiHandler(router, wikiUC, authUC)
 
@@ -229,8 +238,10 @@ func getOwner() domain.Person {
 	return createTestPerson(steamid.New(configUC.Config().Owner), domain.PAdmin)
 }
 
+var curUserID atomic.Int32
+
 func getUser() domain.Person {
-	return createTestPerson(steamid.New(76561198004429398), domain.PUser)
+	return createTestPerson(steamid.New(76561198004429398+int64(curUserID.Add(1))), domain.PUser)
 }
 
 func getModerator() domain.Person {
