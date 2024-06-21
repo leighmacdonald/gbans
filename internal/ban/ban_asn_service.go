@@ -2,15 +2,12 @@ package ban
 
 import (
 	"errors"
-	"log/slog"
-	"net/http"
-	"time"
-
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/gbans/pkg/log"
+	"log/slog"
+	"net/http"
 )
 
 type banASNHandler struct {
@@ -33,63 +30,27 @@ func NewBanASNHandler(engine *gin.Engine, banASNUsecase domain.BanASNUsecase, at
 }
 
 func (h banASNHandler) onAPIPostBansASNCreate() gin.HandlerFunc {
-	type apiBanRequest struct {
-		domain.TargetIDField
-		Note       string        `json:"note"`
-		Reason     domain.Reason `json:"reason"`
-		ReasonText string        `json:"reason_text"`
-		ASNum      int64         `json:"as_num"`
-		Duration   string        `json:"duration"`
-		ValidUntil time.Time     `json:"valid_until"`
-	}
-
 	return func(ctx *gin.Context) {
-		var req apiBanRequest
+		var req domain.RequestBanASNCreate
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
-		var (
-			banASN domain.BanASN
-			sid    = httphelper.CurrentUserProfile(ctx).SteamID
-		)
-
-		duration, errDuration := datetime.CalcDuration(req.Duration, req.ValidUntil)
-		if errDuration != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
-
-			return
-		}
-
-		targetID, targetIDOk := req.TargetSteamID(ctx)
-		if !targetIDOk {
-			httphelper.ErrorHandled(ctx, domain.ErrTargetID)
-
-			return
-		}
-
-		if errBanSteamGroup := domain.NewBanASN(sid, targetID, duration, req.Reason, req.ReasonText, req.Note, domain.Web,
-			req.ASNum, domain.Banned, &banASN); errBanSteamGroup != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
-
-			return
-		}
-
-		if errBan := h.banASN.Ban(ctx, &banASN); errBan != nil {
+		bannedPerson, errBan := h.banASN.Ban(ctx, req)
+		if errBan != nil {
 			if errors.Is(errBan, domain.ErrDuplicate) {
-				httphelper.ResponseErr(ctx, http.StatusConflict, domain.ErrDuplicate)
+				httphelper.HandleErrDuplicate(ctx)
 
 				return
 			}
 
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-
+			httphelper.HandleErrInternal(ctx)
 			slog.Error("Failed to save asn ban", log.ErrAttr(errBan))
 
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, banASN)
+		ctx.JSON(http.StatusCreated, bannedPerson)
 	}
 }
 
@@ -121,44 +82,23 @@ func (h banASNHandler) onAPIDeleteBansASN() gin.HandlerFunc {
 			return
 		}
 
-		var req domain.UnbanRequest
+		var req domain.RequestUnban
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
-		var banAsn domain.BanASN
-		if errFetch := h.banASN.GetByID(ctx, asnID, &banAsn); errFetch != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-
-			return
-		}
-
-		banAsn.UnbanReasonText = req.UnbanReasonText
-		banAsn.Deleted = true
-
-		if errSave := h.banASN.Save(ctx, &banAsn); errSave != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+		if errSave := h.banASN.Delete(ctx, asnID, req); errSave != nil {
+			httphelper.HandleErrs(ctx, errSave)
 			slog.Error("Failed to delete asn ban", log.ErrAttr(errSave))
 
 			return
 		}
 
-		banAsn.BanASNId = 0
-
-		ctx.JSON(http.StatusOK, banAsn)
+		ctx.JSON(http.StatusOK, gin.H{})
 	}
 }
 
 func (h banASNHandler) onAPIPostBansASNUpdate() gin.HandlerFunc {
-	type apiBanRequest struct {
-		domain.TargetIDField
-		ASNum      int64         `json:"as_num"`
-		Note       string        `json:"note"`
-		Reason     domain.Reason `json:"reason"`
-		ReasonText string        `json:"reason_text"`
-		ValidUntil time.Time     `json:"valid_until"`
-	}
-
 	return func(ctx *gin.Context) {
 		asnID, asnIDErr := httphelper.GetInt64Param(ctx, "asn_id")
 		if asnIDErr != nil {
@@ -167,46 +107,15 @@ func (h banASNHandler) onAPIPostBansASNUpdate() gin.HandlerFunc {
 			return
 		}
 
-		var ban domain.BanASN
-		if errBan := h.banASN.GetByID(ctx, asnID, &ban); errBan != nil {
-			if errors.Is(errBan, domain.ErrNoResult) {
-				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
-
-				return
-			}
-
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-
-			return
-		}
-
-		var req apiBanRequest
+		var req domain.RequestBanASNUpdate
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
-		if ban.Reason == domain.Custom && req.ReasonText == "" {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
-
-			return
-		}
-
-		targetID, targetIDOK := req.TargetSteamID(ctx)
-		if !targetIDOK {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
-
-			return
-		}
-
-		ban.Note = req.Note
-		ban.ASNum = req.ASNum
-		ban.ValidUntil = req.ValidUntil
-		ban.TargetID = targetID
-		ban.Reason = req.Reason
-		ban.ReasonText = req.ReasonText
-
-		if errSave := h.banASN.Save(ctx, &ban); errSave != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+		ban, errSave := h.banASN.Update(ctx, asnID, req)
+		if errSave != nil {
+			httphelper.HandleErrs(ctx, errSave)
+			slog.Error("Failed to update ASN ban", log.ErrAttr(errSave))
 
 			return
 		}

@@ -60,7 +60,7 @@ func (h *appealHandler) onAPIGetBanMessages() gin.HandlerFunc {
 
 		banMessages, errGetBanMessages := h.appealUsecase.GetBanMessages(ctx, httphelper.CurrentUserProfile(ctx), banID)
 		if errGetBanMessages != nil {
-			_ = httphelper.ErrorHandledWithReturn(ctx, errGetBanMessages)
+			_ = httphelper.HandleErrsReturn(ctx, errGetBanMessages)
 			slog.Error("Failed to load ban messages", log.ErrAttr(errGetBanMessages), log.HandlerName(2))
 
 			return
@@ -86,7 +86,7 @@ func (h *appealHandler) createBanMessage() gin.HandlerFunc {
 		}
 
 		msg, errSave := h.appealUsecase.CreateBanMessage(ctx, httphelper.CurrentUserProfile(ctx), banID, req.Message)
-		if err := httphelper.ErrorHandledWithReturn(ctx, errSave); err != nil {
+		if err := httphelper.HandleErrsReturn(ctx, errSave); err != nil {
 			return
 		}
 
@@ -139,7 +139,7 @@ func (h *appealHandler) onAPIDeleteBanMessage() gin.HandlerFunc {
 			return
 		}
 
-		if err := httphelper.ErrorHandledWithReturn(ctx, h.appealUsecase.DropBanMessage(ctx, curUser, banMessageID)); err != nil {
+		if err := httphelper.HandleErrsReturn(ctx, h.appealUsecase.DropBanMessage(ctx, curUser, banMessageID)); err != nil {
 			return
 		}
 

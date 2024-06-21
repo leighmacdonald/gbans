@@ -93,26 +93,64 @@ func (s banSteamUsecase) Save(ctx context.Context, ban *domain.BanSteam) error {
 
 // Ban will ban the steam id from all servers. Players are immediately kicked from servers
 // once executed. If duration is 0, the value of Config.DefaultExpiration() will be used.
-func (s banSteamUsecase) Ban(ctx context.Context, curUser domain.PersonInfo, banSteam *domain.BanSteam) error {
+func (s banSteamUsecase) Ban(ctx context.Context, curUser domain.PersonInfo, origin domain.Origin, req domain.RequestBanSteamCreate) (domain.BannedSteamPerson, error) {
+	var (
+		ban domain.BannedSteamPerson
+		sid = curUser.GetSteamID()
+	)
+
+	// srcds sourced bans provide a source_id to id the admin
+	if sourceID, ok := req.SourceSteamID(ctx); ok {
+		origin = domain.InGame
+		sid = sourceID
+	}
+
+	duration, errDuration := datetime.CalcDuration(req.Duration, req.ValidUntil)
+	if errDuration != nil {
+		return ban, errDuration
+	}
+
+	author, errAuthor := s.persons.GetPersonBySteamID(ctx, sid)
+	if errAuthor != nil {
+		return ban, errAuthor
+	}
+
+	targetID, targetIDOk := req.TargetSteamID(ctx)
+	if !targetIDOk {
+		return ban, domain.ErrTargetID
+	}
+
+	var banSteam domain.BanSteam
+	if errBanSteam := domain.NewBanSteam(author.SteamID, targetID, duration, req.Reason, req.ReasonText, req.Note,
+		origin, req.ReportID, req.BanType, req.IncludeFriends, req.EvadeOk, &banSteam,
+	); errBanSteam != nil {
+		return ban, errBanSteam
+	}
+
 	if !banSteam.TargetID.Valid() {
-		return errors.Join(domain.ErrInvalidSID, domain.ErrTargetID)
+		return ban, errors.Join(domain.ErrInvalidSID, domain.ErrTargetID)
 	}
 
 	existing, errGetExistingBan := s.banRepo.GetBySteamID(ctx, banSteam.TargetID, false, true)
 
 	if existing.BanID > 0 {
-		return domain.ErrDuplicate
+		return ban, domain.ErrDuplicate
 	}
 
 	if errGetExistingBan != nil && !errors.Is(errGetExistingBan, domain.ErrNoResult) {
-		return errors.Join(errGetExistingBan, domain.ErrFailedFetchBan)
+		return ban, errors.Join(errGetExistingBan, domain.ErrFailedFetchBan)
 	}
 
-	if errSave := s.banRepo.Save(ctx, banSteam); errSave != nil {
-		return errors.Join(errSave, domain.ErrSaveBan)
+	if errSave := s.banRepo.Save(ctx, &banSteam); errSave != nil {
+		return ban, errors.Join(errSave, domain.ErrSaveBan)
 	}
 
-	s.discord.SendPayload(domain.ChannelBanLog, discord.BanSteamResponse(*banSteam, curUser))
+	bannedPerson, errBannedPerson := s.banRepo.GetByBanID(ctx, banSteam.BanID, false, true)
+	if errBannedPerson != nil {
+		return ban, errors.Join(errBannedPerson, domain.ErrSaveBan)
+	}
+
+	s.discord.SendPayload(domain.ChannelBanLog, discord.BanSteamResponse(bannedPerson))
 
 	updateAppealState := func(reportId int64) error {
 		report, errReport := s.reports.GetReport(ctx, curUser, reportId)
@@ -131,13 +169,13 @@ func (s banSteamUsecase) Ban(ctx context.Context, curUser domain.PersonInfo, ban
 	// Close the report if the ban was attached to one
 	if banSteam.ReportID > 0 {
 		if errRep := updateAppealState(banSteam.ReportID); errRep != nil {
-			return errRep
+			return ban, errRep
 		}
 	}
 
 	target, err := s.persons.GetOrCreatePersonBySteamID(ctx, banSteam.TargetID)
 	if err != nil {
-		return errors.Join(err, domain.ErrFetchPerson)
+		return ban, errors.Join(err, domain.ErrFetchPerson)
 	}
 
 	if banSteam.BanType == domain.Banned {
@@ -154,7 +192,7 @@ func (s banSteamUsecase) Ban(ctx context.Context, curUser domain.PersonInfo, ban
 		}
 	}
 
-	return nil
+	return s.GetByBanID(ctx, banSteam.BanID, false, true)
 }
 
 // Unban will set the Current ban to now, making it expired.
@@ -217,6 +255,8 @@ func (s banSteamUsecase) CheckEvadeStatus(ctx context.Context, curUser domain.Pe
 	}
 
 	if existing.BanType == domain.NoComm {
+		// Currently we do not ban for mute evasion.
+		// TODO make this configurable
 		return false, errMatch
 	}
 
@@ -234,21 +274,22 @@ func (s banSteamUsecase) CheckEvadeStatus(ctx context.Context, curUser domain.Pe
 		return false, errSave
 	}
 
-	var newBan domain.BanSteam
-	if errNewBan := domain.NewBanSteam(steamid.New(s.config.Config().Owner),
-		steamID, duration, domain.Evading, domain.Evading.String(),
-		"Connecting from same IP as banned player. ", domain.System,
-		0, domain.Banned, false, false, &newBan); errNewBan != nil {
-		slog.Error("Could not create evade ban", log.ErrAttr(errNewBan))
+	config := s.config.Config()
+	owner := steamid.New(config.Owner)
 
-		return false, errNewBan
+	req := domain.RequestBanSteamCreate{
+		SourceIDField:  domain.SourceIDField{SourceID: owner.String()},
+		TargetIDField:  domain.TargetIDField{TargetID: steamID.String()},
+		Duration:       "10y",
+		BanType:        domain.Banned,
+		Reason:         domain.Evading,
+		Note:           fmt.Sprintf("Connecting from same IP as banned player.\n\nEvasion of: [#%d](%s)", existing.BanID, config.ExtURL(existing)),
+		IncludeFriends: false,
+		EvadeOk:        false,
 	}
 
-	config := s.config.Config()
-
-	newBan.Note += fmt.Sprintf("\nEvasion of: [#%d](%s)", existing.BanID, config.ExtURL(existing))
-
-	if errSave := s.Ban(ctx, curUser, &newBan); errSave != nil {
+	_, errSave := s.Ban(ctx, curUser, domain.System, req)
+	if errSave != nil {
 		if errors.Is(errSave, domain.ErrDuplicate) {
 			// Already banned
 			return true, nil

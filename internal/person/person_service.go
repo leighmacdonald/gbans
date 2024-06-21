@@ -124,7 +124,7 @@ func (h personHandler) onAPIPostPersonSettings() gin.HandlerFunc {
 
 		settings, err := h.persons.SavePersonSettings(ctx, httphelper.CurrentUserProfile(ctx), req)
 		if err != nil {
-			httphelper.ErrorHandled(ctx, err)
+			httphelper.HandleErrs(ctx, err)
 			slog.Error("Failed to save person settings", log.ErrAttr(err))
 
 			return
@@ -167,7 +167,7 @@ func (h personHandler) onAPIProfile() gin.HandlerFunc {
 
 		response, err := h.persons.QueryProfile(requestCtx, req.Query)
 		if err != nil {
-			httphelper.ErrorHandled(ctx, err)
+			httphelper.HandleErrs(ctx, err)
 			slog.Error("Failed to query profile", log.ErrAttr(err))
 
 			return
@@ -186,7 +186,7 @@ func (h personHandler) searchPlayers() gin.HandlerFunc {
 
 		people, count, errGetPeople := h.persons.GetPeople(ctx, query)
 		if errGetPeople != nil {
-			httphelper.ErrorHandled(ctx, errGetPeople)
+			httphelper.HandleErrs(ctx, errGetPeople)
 			slog.Error("Failed to query players", log.ErrAttr(errGetPeople))
 
 			return

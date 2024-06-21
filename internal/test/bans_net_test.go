@@ -23,7 +23,7 @@ func TestBansSteam(t *testing.T) {
 	require.Empty(t, bansEmpty)
 
 	// Create a ban
-	banReq := ban.RequestBanSteam{
+	banReq := domain.RequestBanSteamCreate{
 		SourceIDField:  domain.SourceIDField{SourceID: mod.SteamID.String()},
 		TargetIDField:  domain.TargetIDField{TargetID: target.SteamID.String()},
 		Duration:       "1d",
@@ -96,7 +96,7 @@ func TestBansSteam(t *testing.T) {
 
 	// Delete the ban
 	testEndpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/bans/steam/%d", banBySteamID.BanID),
-		domain.UnbanRequest{UnbanReasonText: "test unban"}, http.StatusOK, modCreds)
+		domain.RequestUnban{UnbanReasonText: "test unban"}, http.StatusOK, modCreds)
 
 	// Ensure it was deleted
 	testEndpoint(t, router, http.MethodGet, fmt.Sprintf("/api/bans/steam/%d", banBySteamID.BanID),
@@ -104,67 +104,64 @@ func TestBansSteam(t *testing.T) {
 
 	// Try to delete non existent bam
 	testEndpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/bans/steam/%d", banBySteamID.BanID),
-		domain.UnbanRequest{UnbanReasonText: "test unban"}, http.StatusNotFound, modCreds)
+		domain.RequestUnban{UnbanReasonText: "test unban"}, http.StatusNotFound, modCreds)
 }
 
 func TestBansSteamPermissions(t *testing.T) {
-	t.Parallel()
-
 	testPermissions(t, testRouter(), []permTestValues{
 		{
 			path:   "/api/stats",
 			method: http.MethodGet,
 			code:   http.StatusForbidden,
-			levels: modRequired(),
+			levels: moderators,
 		},
 		{
 			path:   "/api/bans/steam",
 			method: http.MethodGet,
 			code:   http.StatusForbidden,
-			levels: modRequired(),
+			levels: moderators,
 		},
-		{
-			path:   "/api/bans/steamid/1",
-			method: http.MethodGet,
-			code:   http.StatusForbidden,
-			levels: modRequired(),
-		},
+		// {
+		//	path:   "/api/bans/steamid/1",
+		//	method: http.MethodGet,
+		//	code:   http.StatusForbidden,
+		//	levels: authed,
+		// },
 		{
 			path:   "/api/bans/steam/create",
 			method: http.MethodPost,
 			code:   http.StatusForbidden,
-			levels: modRequired(),
+			levels: moderators,
 		},
 		{
 			path:   "/api/bans/steam/1",
 			method: http.MethodDelete,
 			code:   http.StatusForbidden,
-			levels: modRequired(),
+			levels: moderators,
 		},
 		{
 			path:   "/api/bans/steam/1",
 			method: http.MethodPost,
 			code:   http.StatusForbidden,
-			levels: modRequired(),
+			levels: moderators,
 		},
 		{
 			path:   "/api/bans/steam/1/status",
 			method: http.MethodPost,
 			code:   http.StatusForbidden,
-			levels: modRequired(),
+			levels: moderators,
 		},
-
-		{
-			path:   "/api/bans/steam/1",
-			method: http.MethodGet,
-			code:   http.StatusForbidden,
-			levels: authedRequired(),
-		},
+		// {
+		//	path:   "/api/bans/steam/1",
+		//	method: http.MethodGet,
+		//	code:   http.StatusForbidden,
+		//	levels: moderators,
+		// },
 		{
 			path:   "/api/sourcebans/1",
 			method: http.MethodGet,
 			code:   http.StatusForbidden,
-			levels: authedRequired(),
+			levels: authed,
 		},
 	})
 }

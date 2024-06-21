@@ -99,12 +99,58 @@ func (s *banNet) Get(ctx context.Context, filter domain.CIDRBansQueryFilter) ([]
 	return s.repository.Get(ctx, filter)
 }
 
-func (s *banNet) Save(ctx context.Context, banNet *domain.BanCIDR) error {
-	return s.repository.Save(ctx, banNet)
+func (s *banNet) Update(ctx context.Context, netID int64, req domain.RequestBanCIDRUpdate) (domain.BanCIDR, error) {
+	var ban domain.BanCIDR
+
+	if netID <= 0 {
+		return ban, domain.ErrInvalidParameter
+	}
+
+	if errBan := s.GetByID(ctx, netID, &ban); errBan != nil {
+		return ban, errBan
+	}
+
+	if !req.TargetID.Valid() {
+		return ban, domain.ErrInvalidParameter
+	}
+
+	if req.Reason == domain.Custom && req.ReasonText == "" {
+		return ban, domain.ErrInvalidParameter
+	}
+
+	_, ipNet, errParseCIDR := net.ParseCIDR(req.CIDR)
+	if errParseCIDR != nil {
+		return ban, domain.ErrInvalidParameter
+	}
+
+	ban.Reason = req.Reason
+	ban.ReasonText = req.ReasonText
+	ban.CIDR = ipNet.String()
+	ban.Note = req.Note
+	ban.ValidUntil = req.ValidUntil
+	ban.TargetID = req.TargetID
+
+	if errBan := s.repository.Save(ctx, &ban); errBan != nil {
+		return ban, errBan
+	}
+
+	return ban, nil
 }
 
-func (s *banNet) Delete(ctx context.Context, banNet *domain.BanCIDR) error {
-	return s.repository.Delete(ctx, banNet)
+func (s *banNet) Delete(ctx context.Context, netID int64, req domain.RequestUnban, hard bool) error {
+	var banCidr domain.BanCIDR
+	if errFetch := s.GetByID(ctx, netID, &banCidr); errFetch != nil {
+		return errFetch
+	}
+
+	if hard {
+		return s.repository.Delete(ctx, &banCidr)
+	}
+
+	banCidr.UnbanReasonText = req.UnbanReasonText
+	banCidr.Deleted = true
+
+	return s.repository.Save(ctx, &banCidr)
 }
 
 func (s *banNet) Expired(ctx context.Context) ([]domain.BanCIDR, error) {

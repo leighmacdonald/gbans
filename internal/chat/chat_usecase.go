@@ -3,7 +3,6 @@ package chat
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"sync"
 	"time"
@@ -11,7 +10,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/state"
-	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
@@ -60,20 +58,19 @@ func NewChatUsecase(configUsecase domain.ConfigUsecase, chatRepository domain.Ch
 
 func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.NewUserWarning) error {
 	var (
-		errBan   error
-		banSteam domain.BanSteam
+		ban    domain.BannedSteamPerson
+		errBan error
+		req    domain.RequestBanSteamCreate
 	)
 
 	if newWarning.MatchedFilter.Action == domain.Ban || newWarning.MatchedFilter.Action == domain.Mute {
-		duration, errDuration := datetime.ParseDuration(newWarning.MatchedFilter.Duration)
-		if errDuration != nil {
-			return fmt.Errorf("invalid duration: %w", errDuration)
-		}
-
-		if errNewBan := domain.NewBanSteam(u.owner, newWarning.UserMessage.SteamID, duration, newWarning.WarnReason, "",
-			"Automatic warning ban", domain.System, 0, domain.NoComm, false,
-			false, &banSteam); errNewBan != nil {
-			return errors.Join(errNewBan, domain.ErrFailedToBan)
+		req = domain.RequestBanSteamCreate{
+			SourceIDField: domain.SourceIDField{},
+			TargetIDField: domain.TargetIDField{TargetID: newWarning.UserMessage.SteamID.String()},
+			Duration:      newWarning.MatchedFilter.Duration,
+			Reason:        newWarning.WarnReason,
+			ReasonText:    "",
+			Note:          "Automatic warning ban",
 		}
 	}
 
@@ -84,11 +81,11 @@ func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.Ne
 
 	switch newWarning.MatchedFilter.Action {
 	case domain.Mute:
-		banSteam.BanType = domain.NoComm
-		errBan = u.bansSteam.Ban(ctx, admin, &banSteam)
+		req.BanType = domain.NoComm
+		ban, errBan = u.bansSteam.Ban(ctx, admin, domain.System, req)
 	case domain.Ban:
-		banSteam.BanType = domain.Banned
-		errBan = u.bansSteam.Ban(ctx, admin, &banSteam)
+		req.BanType = domain.Banned
+		ban, errBan = u.bansSteam.Ban(ctx, admin, domain.System, req)
 	case domain.Kick:
 		// Kicks are temporary, so should be done by Player ID to avoid
 		// missing players who weren't in the latest state update
@@ -99,11 +96,6 @@ func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.Ne
 
 	if errBan != nil {
 		return errors.Join(errBan, domain.ErrWarnActionApply)
-	}
-
-	person, personErr := u.persons.GetPersonBySteamID(ctx, newWarning.UserMessage.SteamID)
-	if personErr != nil {
-		return personErr
 	}
 
 	newWarning.MatchedFilter.TriggerCount++
@@ -117,7 +109,7 @@ func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.Ne
 		return nil
 	}
 
-	u.discord.SendPayload(domain.ChannelWordFilterLog, discord.WarningMessage(newWarning, banSteam, person))
+	u.discord.SendPayload(domain.ChannelWordFilterLog, discord.WarningMessage(newWarning, ban))
 
 	return nil
 }

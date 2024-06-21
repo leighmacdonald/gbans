@@ -3,19 +3,19 @@ package ban
 import (
 	"context"
 	"errors"
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"log/slog"
 	"sync"
 	"time"
 
-	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
 // Start periodically will query the database for expired bans and remove them.
-func Start(ctx context.Context, banUsecase domain.BanSteamUsecase, banNetUsecase domain.BanNetUsecase,
-	banASNUsecase domain.BanASNUsecase, personUsecase domain.PersonUsecase, discordUsecase domain.DiscordUsecase,
-	configUsecase domain.ConfigUsecase,
+func Start(ctx context.Context, bansSteam domain.BanSteamUsecase, bansNet domain.BanNetUsecase,
+	bansASN domain.BanASNUsecase, bansPerson domain.PersonUsecase, discordClient domain.DiscordUsecase,
+	config domain.ConfigUsecase,
 ) {
 	ticker := time.NewTicker(time.Minute)
 
@@ -28,7 +28,7 @@ func Start(ctx context.Context, banUsecase domain.BanSteamUsecase, banNetUsecase
 			go func() {
 				defer waitGroup.Done()
 
-				expiredBans, errExpiredBans := banUsecase.Expired(ctx)
+				expiredBans, errExpiredBans := bansSteam.Expired(ctx)
 				if errExpiredBans != nil && !errors.Is(errExpiredBans, domain.ErrNoResult) {
 					slog.Error("Failed to get expired expiredBans", log.ErrAttr(errExpiredBans))
 
@@ -37,13 +37,13 @@ func Start(ctx context.Context, banUsecase domain.BanSteamUsecase, banNetUsecase
 
 				for _, expiredBan := range expiredBans {
 					ban := expiredBan
-					if errDrop := banUsecase.Delete(ctx, &ban, false); errDrop != nil {
+					if errDrop := bansSteam.Delete(ctx, &ban, false); errDrop != nil {
 						slog.Error("Failed to drop expired expiredBan", log.ErrAttr(errDrop))
 
 						continue
 					}
 
-					person, errPerson := personUsecase.GetPersonBySteamID(ctx, ban.TargetID)
+					person, errPerson := bansPerson.GetPersonBySteamID(ctx, ban.TargetID)
 					if errPerson != nil {
 						slog.Error("Failed to get expired Person", log.ErrAttr(errPerson))
 
@@ -55,7 +55,7 @@ func Start(ctx context.Context, banUsecase domain.BanSteamUsecase, banNetUsecase
 						name = person.SteamID.String()
 					}
 
-					discordUsecase.SendPayload(domain.ChannelBanLog, discord.BanExpiresMessage(ban, person, configUsecase.ExtURL(ban)))
+					discordClient.SendPayload(domain.ChannelBanLog, discord.BanExpiresMessage(ban, person, config.ExtURL(ban)))
 
 					slog.Info("Ban expired",
 						slog.String("reason", ban.Reason.String()),
@@ -66,16 +66,16 @@ func Start(ctx context.Context, banUsecase domain.BanSteamUsecase, banNetUsecase
 			go func() {
 				defer waitGroup.Done()
 
-				expiredNetBans, errExpiredNetBans := banNetUsecase.Expired(ctx)
+				expiredNetBans, errExpiredNetBans := bansNet.Expired(ctx)
 				if errExpiredNetBans != nil && !errors.Is(errExpiredNetBans, domain.ErrNoResult) {
 					slog.Warn("Failed to get expired network bans", log.ErrAttr(errExpiredNetBans))
 				} else {
 					for _, expiredNetBan := range expiredNetBans {
 						expiredBan := expiredNetBan
-						if errDropBanNet := banNetUsecase.Delete(ctx, &expiredBan); errDropBanNet != nil {
+						if errDropBanNet := bansNet.Delete(ctx, expiredNetBan.NetID, domain.RequestUnban{UnbanReasonText: "Expired"}, false); errDropBanNet != nil {
 							slog.Error("Failed to drop expired network expiredNetBan", log.ErrAttr(errDropBanNet))
 						} else {
-							slog.Info("IP ban expired", slog.String("cidr", expiredBan.String()))
+							slog.Info("IP ban expired", slog.String("cidr", expiredBan.String()), slog.Int64("net_id", expiredNetBan.NetID))
 						}
 					}
 				}
@@ -84,13 +84,12 @@ func Start(ctx context.Context, banUsecase domain.BanSteamUsecase, banNetUsecase
 			go func() {
 				defer waitGroup.Done()
 
-				expiredASNBans, errExpiredASNBans := banASNUsecase.Expired(ctx)
+				expiredASNBans, errExpiredASNBans := bansASN.Expired(ctx)
 				if errExpiredASNBans != nil && !errors.Is(errExpiredASNBans, domain.ErrNoResult) {
 					slog.Error("Failed to get expired asn bans", log.ErrAttr(errExpiredASNBans))
 				} else {
-					for _, expiredASNBan := range expiredASNBans {
-						expired := expiredASNBan
-						if errDropASN := banASNUsecase.Delete(ctx, &expired); errDropASN != nil {
+					for _, expired := range expiredASNBans {
+						if errDropASN := bansASN.Delete(ctx, expired.BanASNId, domain.RequestUnban{UnbanReasonText: "Expired"}); errDropASN != nil {
 							slog.Error("Failed to drop expired asn ban", log.ErrAttr(errDropASN))
 						} else {
 							slog.Info("ASN ban expired", slog.Int64("ban_id", expired.BanASNId))
@@ -101,8 +100,6 @@ func Start(ctx context.Context, banUsecase domain.BanSteamUsecase, banNetUsecase
 
 			waitGroup.Wait()
 		case <-ctx.Done():
-			slog.Debug("banSweeper shutting down")
-
 			return
 		}
 	}

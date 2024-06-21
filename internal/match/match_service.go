@@ -360,7 +360,7 @@ func (h matchHandler) onAPIGetMatches() gin.HandlerFunc {
 
 		matches, totalCount, errMatches := h.matches.Matches(ctx, req)
 		if errMatches != nil {
-			httphelper.ErrorHandled(ctx, errMatches)
+			httphelper.HandleErrs(ctx, errMatches)
 			slog.Error("Failed to get matches", log.ErrAttr(errMatches))
 
 			return
