@@ -3,11 +3,11 @@ package ban
 import (
 	"context"
 	"errors"
-	"github.com/leighmacdonald/gbans/internal/discord"
 	"log/slog"
 	"sync"
 	"time"
 
+	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
 )

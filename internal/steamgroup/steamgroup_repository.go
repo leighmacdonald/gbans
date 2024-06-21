@@ -132,15 +132,19 @@ func (r *steamGroupRepository) GetByGID(ctx context.Context, groupID steamid.Ste
 	return nil
 }
 
-func (r *steamGroupRepository) GetByID(ctx context.Context, banGroupID int64, banGroup *domain.BanGroup) error {
+func (r *steamGroupRepository) GetByID(ctx context.Context, banGroupID int64) (domain.BannedGroupPerson, error) {
 	query := r.db.
 		Builder().
-		Select("ban_group_id", "source_id", "target_id", "group_name", "is_enabled", "deleted",
-			"note", "unban_reason_text", "origin", "created_on", "updated_on", "valid_until", "appeal_state", "group_id").
-		From("ban_group").
-		Where(sq.And{sq.Eq{"ban_group_id": banGroupID}, sq.Eq{"is_enabled": true}, sq.Eq{"deleted": false}})
+		Select("b.ban_group_id", "b.source_id", "b.target_id", "b.group_name", "b.is_enabled", "b.deleted",
+			"b.note", "b.unban_reason_text", "b.origin", "b.created_on", "b.updated_on", "b.valid_until", "b.appeal_state", "b.group_id",
+			"s.personaname", "s.avatarhash", "t.personaname", "t.avatarhash").
+		From("ban_group b").
+		LeftJoin("person s ON b.source_id = s.steam_id").
+		LeftJoin("person t ON b.target_id = t.steam_id").
+		Where(sq.And{sq.Eq{"b.ban_group_id": banGroupID}, sq.Eq{"b.is_enabled": true}, sq.Eq{"b.deleted": false}})
 
 	var (
+		banGroup domain.BannedGroupPerson
 		groupID  int64
 		sourceID int64
 		targetID int64
@@ -148,7 +152,7 @@ func (r *steamGroupRepository) GetByID(ctx context.Context, banGroupID int64, ba
 
 	row, errQuery := r.db.QueryRowBuilder(ctx, query)
 	if errQuery != nil {
-		return r.db.DBErr(errQuery)
+		return banGroup, r.db.DBErr(errQuery)
 	}
 
 	if errScan := row.Scan(
@@ -165,15 +169,19 @@ func (r *steamGroupRepository) GetByID(ctx context.Context, banGroupID int64, ba
 		&banGroup.UpdatedOn,
 		&banGroup.ValidUntil,
 		&banGroup.AppealState,
-		&groupID); errScan != nil {
-		return r.db.DBErr(errScan)
+		&groupID,
+		&banGroup.SourcePersonaname,
+		&banGroup.SourceAvatarhash,
+		&banGroup.TargetPersonaname,
+		&banGroup.TargetAvatarhash); errScan != nil {
+		return banGroup, r.db.DBErr(errScan)
 	}
 
 	banGroup.SourceID = steamid.New(sourceID)
 	banGroup.TargetID = steamid.New(targetID)
 	banGroup.GroupID = steamid.New(groupID)
 
-	return nil
+	return banGroup, nil
 }
 
 func (r *steamGroupRepository) Get(ctx context.Context, filter domain.GroupBansQueryFilter) ([]domain.BannedGroupPerson, error) {

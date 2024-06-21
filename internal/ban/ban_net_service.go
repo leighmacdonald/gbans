@@ -2,14 +2,15 @@ package ban
 
 import (
 	"errors"
+	"log/slog"
+	"net/http"
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/gbans/pkg/log"
-	"log/slog"
-	"net/http"
-	"strings"
 )
 
 type banNetHandler struct {

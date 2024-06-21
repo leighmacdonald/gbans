@@ -10,6 +10,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 )
@@ -94,24 +95,50 @@ func (s banGroupUsecase) UpdateCache(ctx context.Context) error {
 	return nil
 }
 
-func (s banGroupUsecase) Save(ctx context.Context, banGroup *domain.BanGroup) error {
-	return s.repository.Save(ctx, banGroup)
+func (s banGroupUsecase) Save(ctx context.Context, banID int64, req domain.RequestBanGroupUpdate) (domain.BannedGroupPerson, error) {
+	targetSID, sidValid := req.TargetSteamID(ctx)
+	if !sidValid {
+		return domain.BannedGroupPerson{}, domain.ErrInvalidParameter
+	}
+
+	ban, errBan := s.GetByID(ctx, banID)
+	if errBan != nil {
+		return domain.BannedGroupPerson{}, errBan
+	}
+
+	ban.Note = req.Note
+	ban.ValidUntil = req.ValidUntil
+	ban.TargetID = targetSID
+
+	if err := s.repository.Save(ctx, &ban.BanGroup); err != nil {
+		return domain.BannedGroupPerson{}, err
+	}
+
+	return ban, nil
 }
 
 func (s banGroupUsecase) GetByGID(ctx context.Context, groupID steamid.SteamID, banGroup *domain.BanGroup) error {
 	return s.repository.GetByGID(ctx, groupID, banGroup)
 }
 
-func (s banGroupUsecase) GetByID(ctx context.Context, banGroupID int64, banGroup *domain.BanGroup) error {
-	return s.repository.GetByID(ctx, banGroupID, banGroup)
+func (s banGroupUsecase) GetByID(ctx context.Context, banGroupID int64) (domain.BannedGroupPerson, error) {
+	return s.repository.GetByID(ctx, banGroupID)
 }
 
 func (s banGroupUsecase) Get(ctx context.Context, filter domain.GroupBansQueryFilter) ([]domain.BannedGroupPerson, error) {
 	return s.repository.Get(ctx, filter)
 }
 
-func (s banGroupUsecase) Delete(ctx context.Context, banGroup *domain.BanGroup) error {
-	return s.repository.Delete(ctx, banGroup)
+func (s banGroupUsecase) Delete(ctx context.Context, banID int64, req domain.RequestUnban) error {
+	ban, errFetch := s.GetByID(ctx, banID)
+	if errFetch != nil {
+		return errFetch
+	}
+
+	ban.UnbanReasonText = req.UnbanReasonText
+	ban.Deleted = true
+
+	return s.repository.Delete(ctx, &ban.BanGroup)
 }
 
 func (s banGroupUsecase) GetMembersList(ctx context.Context, parentID int64, list *domain.MembersList) error {
@@ -122,22 +149,53 @@ func (s banGroupUsecase) SaveMembersList(ctx context.Context, list *domain.Membe
 	return s.repository.SaveMembersList(ctx, list)
 }
 
-func (s banGroupUsecase) Ban(ctx context.Context, banGroup *domain.BanGroup) error {
-	members, membersErr := steamweb.GetGroupMembers(ctx, banGroup.GroupID)
+func (s banGroupUsecase) Ban(ctx context.Context, req domain.RequestBanGroupCreate) (domain.BannedGroupPerson, error) {
+	gid, valid := req.TargetGroupID(ctx)
+	if !valid {
+		return domain.BannedGroupPerson{}, domain.ErrInvalidParameter
+	}
+
+	sid, validSID := req.SourceSteamID(ctx)
+	if !validSID {
+		return domain.BannedGroupPerson{}, domain.ErrInvalidParameter
+	}
+
+	targetID, validTargetID := req.TargetSteamID(ctx)
+	if !validTargetID {
+		return domain.BannedGroupPerson{}, domain.ErrInvalidParameter
+	}
+
+	duration, errDuration := datetime.CalcDuration(req.Duration, req.ValidUntil)
+	if errDuration != nil {
+		return domain.BannedGroupPerson{}, errDuration
+	}
+
+	members, membersErr := steamweb.GetGroupMembers(ctx, gid)
 	if membersErr != nil || len(members) == 0 {
-		return errors.Join(membersErr, domain.ErrGroupValidate)
+		return domain.BannedGroupPerson{}, errors.Join(membersErr, domain.ErrGroupValidate)
 	}
 
-	author, errAuthor := s.persons.GetPersonBySteamID(ctx, banGroup.SourceID)
+	author, errAuthor := s.persons.GetPersonBySteamID(ctx, sid)
 	if errAuthor != nil {
-		return errors.Join(membersErr, domain.ErrGetPerson)
+		return domain.BannedGroupPerson{}, errors.Join(membersErr, domain.ErrGetPerson)
 	}
 
-	if err := s.repository.Ban(ctx, banGroup); err != nil {
-		return errors.Join(err, domain.ErrSaveBan)
+	_, errTarget := s.persons.GetPersonBySteamID(ctx, targetID)
+	if errTarget != nil {
+		return domain.BannedGroupPerson{}, errors.Join(membersErr, domain.ErrGetPerson)
 	}
 
-	s.discord.SendPayload(domain.ChannelBanLog, discord.BanGroupMessage(*banGroup, author, s.config.Config()))
+	var banGroup domain.BanGroup
+	if err := domain.NewBanSteamGroup(sid, targetID, duration, req.Note, domain.System, gid, "",
+		domain.Banned, &banGroup); err != nil {
+		return domain.BannedGroupPerson{}, err
+	}
 
-	return nil
+	if err := s.repository.Ban(ctx, &banGroup); err != nil {
+		return domain.BannedGroupPerson{}, errors.Join(err, domain.ErrSaveBan)
+	}
+
+	s.discord.SendPayload(domain.ChannelBanLog, discord.BanGroupMessage(banGroup, author, s.config.Config()))
+
+	return s.GetByID(ctx, banGroup.BanGroupID)
 }

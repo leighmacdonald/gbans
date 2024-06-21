@@ -107,9 +107,9 @@ type permTestValues struct {
 }
 
 var (
-	authed     = []domain.Privilege{domain.PGuest}
-	moderators = []domain.Privilege{domain.PGuest, domain.PUser}
-	admin      = []domain.Privilege{domain.PGuest, domain.PUser, domain.PModerator}
+	authed     = []domain.Privilege{domain.PGuest}                                  //nolint:gochecknoglobals
+	moderators = []domain.Privilege{domain.PGuest, domain.PUser}                    //nolint:gochecknoglobals
+	admin      = []domain.Privilege{domain.PGuest, domain.PUser, domain.PModerator} //nolint:gochecknoglobals
 )
 
 func testPermissions(t *testing.T, router *gin.Engine, testCases []permTestValues) {

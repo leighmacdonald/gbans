@@ -57,11 +57,26 @@ type RequestBanSteamCreate struct {
 	EvadeOk        bool      `json:"evade_ok"`
 }
 
+type RequestBanGroupCreate struct {
+	SourceIDField
+	TargetIDField
+	TargetGIDField
+	Duration   string    `json:"duration"`
+	Note       string    `json:"note"`
+	ValidUntil time.Time `json:"valid_until"`
+}
+
+type RequestBanGroupUpdate struct {
+	TargetIDField
+	Note       string    `json:"note"`
+	ValidUntil time.Time `json:"valid_until"`
+}
+
 type BanGroupRepository interface {
 	Save(ctx context.Context, banGroup *BanGroup) error
 	Ban(ctx context.Context, banGroup *BanGroup) error
 	GetByGID(ctx context.Context, groupID steamid.SteamID, banGroup *BanGroup) error
-	GetByID(ctx context.Context, banGroupID int64, banGroup *BanGroup) error
+	GetByID(ctx context.Context, banGroupID int64) (BannedGroupPerson, error)
 	Get(ctx context.Context, filter GroupBansQueryFilter) ([]BannedGroupPerson, error)
 	GetMembersList(ctx context.Context, parentID int64, list *MembersList) error
 	SaveMembersList(ctx context.Context, list *MembersList) error
@@ -71,14 +86,14 @@ type BanGroupRepository interface {
 }
 
 type BanGroupUsecase interface {
-	Save(ctx context.Context, banGroup *BanGroup) error
-	Ban(ctx context.Context, banGroup *BanGroup) error
+	Save(ctx context.Context, banID int64, req RequestBanGroupUpdate) (BannedGroupPerson, error)
+	Ban(ctx context.Context, req RequestBanGroupCreate) (BannedGroupPerson, error)
 	GetByGID(ctx context.Context, groupID steamid.SteamID, banGroup *BanGroup) error
-	GetByID(ctx context.Context, banGroupID int64, banGroup *BanGroup) error
+	GetByID(ctx context.Context, banGroupID int64) (BannedGroupPerson, error)
 	Get(ctx context.Context, filter GroupBansQueryFilter) ([]BannedGroupPerson, error)
 	GetMembersList(ctx context.Context, parentID int64, list *MembersList) error
 	SaveMembersList(ctx context.Context, list *MembersList) error
-	Delete(ctx context.Context, banGroup *BanGroup) error
+	Delete(ctx context.Context, banID int64, req RequestUnban) error
 	UpdateCache(ctx context.Context) error
 }
 
