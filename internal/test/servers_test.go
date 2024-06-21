@@ -17,11 +17,11 @@ func TestServers(t *testing.T) {
 
 	var servers []domain.Server
 	testEndpointWithReceiver(t, router, http.MethodGet, "/api/servers_admin", nil, http.StatusOK, owner, &servers)
-	require.Empty(t, servers)
+	require.Len(t, servers, 1)
 
 	var safeServers []domain.ServerInfoSafe
 	testEndpointWithReceiver(t, router, http.MethodGet, "/api/servers", nil, http.StatusOK, user, &safeServers)
-	require.Empty(t, servers)
+	require.Len(t, safeServers, 1)
 
 	newServer := domain.RequestServerUpdate{
 		ServerName:      "test-1 long",
@@ -59,10 +59,10 @@ func TestServers(t *testing.T) {
 	require.Equal(t, newServer.LogSecret, server.LogSecret)
 
 	testEndpointWithReceiver(t, router, http.MethodGet, "/api/servers_admin", nil, http.StatusOK, owner, &servers)
-	require.NotEmpty(t, servers)
+	require.Len(t, servers, 2)
 
 	testEndpointWithReceiver(t, router, http.MethodGet, "/api/servers", nil, http.StatusOK, user, &safeServers)
-	require.NotEmpty(t, servers)
+	require.Len(t, safeServers, 2)
 
 	update := domain.RequestServerUpdate{
 		ServerName:      "test-2 long",
@@ -119,14 +119,14 @@ func TestServersPermissions(t *testing.T) {
 			levels: admin,
 		},
 		{
-			path:   "/api/servers/:server_id",
+			path:   "/api/servers/1",
 			method: http.MethodDelete,
 			code:   http.StatusForbidden,
 			levels: admin,
 		},
 		{
 			path:   "/api/servers_admin",
-			method: http.MethodPost,
+			method: http.MethodGet,
 			code:   http.StatusForbidden,
 			levels: admin,
 		},
