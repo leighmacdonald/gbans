@@ -49,6 +49,7 @@ import (
 
 var (
 	container      *postgresContainer
+	testServer     domain.Server
 	configUC       domain.ConfigUsecase
 	wikiUC         domain.WikiUsecase
 	personUC       domain.PersonUsecase
@@ -72,6 +73,7 @@ var (
 	serversUC      domain.ServersUsecase
 	stateUC        domain.StateUsecase
 	votesUC        domain.VoteUsecase
+	votesRepo      domain.VoteRepository
 	wordFilterUC   domain.WordFilterUsecase
 )
 
@@ -135,9 +137,33 @@ func TestMain(m *testing.M) {
 
 	matchUC = match.NewMatchUsecase(match.NewMatchRepository(eventBroadcaster, databaseConn, personUC, serversUC, discordUC, stateUC, weaponsMap), stateUC, serversUC, discordUC)
 	chatUC = chat.NewChatUsecase(configUC, chat.NewChatRepository(databaseConn, personUC, wordFilterUC, matchUC, eventBroadcaster), wordFilterUC, stateUC, banSteamUC, personUC, discordUC)
-	votesUC = votes.NewVoteUsecase(votes.NewVoteRepository(databaseConn), personUC, matchUC, discordUC, configUC, eventBroadcaster)
+	votesRepo = votes.NewVoteRepository(databaseConn)
+	votesUC = votes.NewVoteUsecase(votesRepo, personUC, matchUC, discordUC, configUC, eventBroadcaster)
 
 	container = dbContainer
+
+	server, errServer := serversUC.Save(context.Background(), domain.RequestServerUpdate{
+		ServerName:      stringutil.SecureRandomString(20),
+		ServerNameShort: stringutil.SecureRandomString(5),
+		Host:            "1.2.3.4",
+		Port:            27015,
+		ReservedSlots:   8,
+		Password:        stringutil.SecureRandomString(8),
+		RCON:            stringutil.SecureRandomString(8),
+		Lat:             10,
+		Lon:             10,
+		CC:              "de",
+		Region:          "eu",
+		IsEnabled:       true,
+		EnableStats:     false,
+		LogSecret:       23456789,
+	})
+
+	if errServer != nil {
+		panic(errStore)
+	}
+
+	testServer = server
 
 	m.Run()
 }
@@ -159,6 +185,7 @@ func testRouter() *gin.Engine {
 	steamgroup.NewSteamgroupHandler(router, banGroupUC, authUC)
 	news.NewNewsHandler(router, newsUC, discordUC, authUC)
 	wiki.NewWIkiHandler(router, wikiUC, authUC)
+	votes.NewVoteHandler(router, votesUC, authUC)
 
 	return router
 }
