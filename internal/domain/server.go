@@ -12,13 +12,40 @@ import (
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
+type RequestServerUpdate struct {
+	ServerID        int     `json:"server_id"`
+	ServerName      string  `json:"server_name"`
+	ServerNameShort string  `json:"server_name_short"`
+	Host            string  `json:"host"`
+	Port            int     `json:"port"`
+	ReservedSlots   int     `json:"reserved_slots"`
+	Password        string  `json:"password"`
+	RCON            string  `json:"rcon"`
+	Lat             float64 `json:"lat"`
+	Lon             float64 `json:"lon"`
+	CC              string  `json:"cc"`
+	DefaultMap      string  `json:"default_map"`
+	Region          string  `json:"region"`
+	IsEnabled       bool    `json:"is_enabled"`
+	EnableStats     bool    `json:"enable_stats"`
+	LogSecret       int     `json:"log_secret"`
+}
+
+type ServerInfoSafe struct {
+	ServerNameLong string `json:"server_name_long"`
+	ServerName     string `json:"server_name"`
+	ServerID       int    `json:"server_id"`
+	Colour         string `json:"colour"`
+}
+
 type ServersUsecase interface {
-	GetServer(ctx context.Context, serverID int) (Server, error)
-	GetServerPermissions(ctx context.Context) ([]ServerPermission, error)
-	GetServers(ctx context.Context, filter ServerQueryFilter) ([]Server, int64, error)
-	GetServerByName(ctx context.Context, serverName string, server *Server, disabledOk bool, deletedOk bool) error
-	GetServerByPassword(ctx context.Context, serverPassword string, server *Server, disabledOk bool, deletedOk bool) error
-	SaveServer(ctx context.Context, server *Server) error
+	Server(ctx context.Context, serverID int) (Server, error)
+	ServerPermissions(ctx context.Context) ([]ServerPermission, error)
+	Servers(ctx context.Context, filter ServerQueryFilter) ([]Server, int64, error)
+	GetByName(ctx context.Context, serverName string, server *Server, disabledOk bool, deletedOk bool) error
+	GetByPassword(ctx context.Context, serverPassword string, server *Server, disabledOk bool, deletedOk bool) error
+	Save(ctx context.Context, req RequestServerUpdate) (Server, error)
+	Delete(ctx context.Context, serverID int) error
 }
 
 type ServersRepository interface {

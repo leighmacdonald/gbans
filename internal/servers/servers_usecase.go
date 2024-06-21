@@ -2,55 +2,90 @@ package servers
 
 import (
 	"context"
-	"log/slog"
+	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
 )
 
 type serversUsecase struct {
-	servers domain.ServersRepository
+	repository domain.ServersRepository
+}
+
+func (s *serversUsecase) Delete(ctx context.Context, serverID int) error {
+	if serverID <= 0 {
+		return domain.ErrInvalidParameter
+	}
+
+	server, errServer := s.Server(ctx, serverID)
+	if errServer != nil {
+		return errServer
+	}
+
+	server.Deleted = true
+
+	return s.repository.SaveServer(ctx, &server)
 }
 
 func NewServersUsecase(repository domain.ServersRepository) domain.ServersUsecase {
-	return &serversUsecase{servers: repository}
+	return &serversUsecase{repository: repository}
 }
 
-func (s *serversUsecase) GetServer(ctx context.Context, serverID int) (domain.Server, error) {
+func (s *serversUsecase) Server(ctx context.Context, serverID int) (domain.Server, error) {
 	if serverID <= 0 {
 		return domain.Server{}, domain.ErrGetServer
 	}
 
-	return s.servers.GetServer(ctx, serverID)
+	return s.repository.GetServer(ctx, serverID)
 }
 
-func (s *serversUsecase) GetServerPermissions(ctx context.Context) ([]domain.ServerPermission, error) {
-	return s.servers.GetServerPermissions(ctx)
+func (s *serversUsecase) ServerPermissions(ctx context.Context) ([]domain.ServerPermission, error) {
+	return s.repository.GetServerPermissions(ctx)
 }
 
-func (s *serversUsecase) GetServers(ctx context.Context, filter domain.ServerQueryFilter) ([]domain.Server, int64, error) {
-	return s.servers.GetServers(ctx, filter)
+func (s *serversUsecase) Servers(ctx context.Context, filter domain.ServerQueryFilter) ([]domain.Server, int64, error) {
+	return s.repository.GetServers(ctx, filter)
 }
 
-func (s *serversUsecase) GetServerByName(ctx context.Context, serverName string, server *domain.Server, disabledOk bool, deletedOk bool) error {
-	return s.servers.GetServerByName(ctx, serverName, server, disabledOk, deletedOk)
+func (s *serversUsecase) GetByName(ctx context.Context, serverName string, server *domain.Server, disabledOk bool, deletedOk bool) error {
+	return s.repository.GetServerByName(ctx, serverName, server, disabledOk, deletedOk)
 }
 
-func (s *serversUsecase) GetServerByPassword(ctx context.Context, serverPassword string, server *domain.Server, disabledOk bool, deletedOk bool) error {
-	return s.servers.GetServerByPassword(ctx, serverPassword, server, disabledOk, deletedOk)
+func (s *serversUsecase) GetByPassword(ctx context.Context, serverPassword string, server *domain.Server, disabledOk bool, deletedOk bool) error {
+	return s.repository.GetServerByPassword(ctx, serverPassword, server, disabledOk, deletedOk)
 }
 
-func (s *serversUsecase) SaveServer(ctx context.Context, server *domain.Server) error {
-	isNew := server.ServerID == 0
+func (s *serversUsecase) Save(ctx context.Context, req domain.RequestServerUpdate) (domain.Server, error) {
+	var server domain.Server
 
-	if err := s.servers.SaveServer(ctx, server); err != nil {
-		return err
-	}
-
-	if isNew {
-		slog.Info("Server config created", slog.Int("server_id", server.ServerID), slog.String("name", server.ShortName))
+	if req.ServerID > 0 {
+		existingServer, errServer := s.Server(ctx, req.ServerID)
+		if errServer != nil {
+			return domain.Server{}, errServer
+		}
+		server = existingServer
+		server.UpdatedOn = time.Now()
 	} else {
-		slog.Info("Server config updated", slog.Int("server_id", server.ServerID), slog.String("name", server.ShortName), slog.Bool("deleted", server.Deleted))
+		server = domain.NewServer(req.ServerNameShort, req.Host, req.Port)
 	}
 
-	return nil
+	server.ShortName = req.ServerNameShort
+	server.Name = req.ServerName
+	server.Address = req.Host
+	server.Port = req.Port
+	server.ReservedSlots = req.ReservedSlots
+	server.RCON = req.RCON
+	server.Password = req.Password
+	server.Latitude = req.Lat
+	server.Longitude = req.Lon
+	server.CC = req.CC
+	server.Region = req.Region
+	server.IsEnabled = req.IsEnabled
+	server.LogSecret = req.LogSecret
+	server.EnableStats = req.EnableStats
+
+	if err := s.repository.SaveServer(ctx, &server); err != nil {
+		return domain.Server{}, err
+	}
+
+	return s.Server(ctx, server.ServerID)
 }

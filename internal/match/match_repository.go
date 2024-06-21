@@ -66,7 +66,7 @@ func (r *matchRepository) onMatchComplete(ctx context.Context, matchContext *act
 		matchContext.match.Title = server.Name
 	}
 
-	fullServer, err := r.servers.GetServer(ctx, server.ServerID)
+	fullServer, err := r.servers.Server(ctx, server.ServerID)
 	if err != nil {
 		return errors.Join(err, domain.ErrLoadServer)
 	}

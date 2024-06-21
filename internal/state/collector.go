@@ -341,7 +341,7 @@ func (c *Collector) startStatus(ctx context.Context) {
 }
 
 func (c *Collector) updateServerConfigs(ctx context.Context) {
-	servers, _, errServers := c.serverUsecase.GetServers(ctx, domain.ServerQueryFilter{
+	servers, _, errServers := c.serverUsecase.Servers(ctx, domain.ServerQueryFilter{
 		QueryFilter:     domain.QueryFilter{Deleted: false},
 		IncludeDisabled: false,
 	})

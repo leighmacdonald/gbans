@@ -252,12 +252,9 @@ func (r *serversRepository) GetServerByPassword(ctx context.Context, serverPassw
 
 // SaveServer updates or creates the server data in the database.
 func (r *serversRepository) SaveServer(ctx context.Context, server *domain.Server) error {
-	server.UpdatedOn = time.Now()
 	if server.ServerID > 0 {
 		return r.updateServer(ctx, server)
 	}
-
-	server.CreatedOn = time.Now()
 
 	return r.insertServer(ctx, server)
 }

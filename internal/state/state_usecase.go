@@ -74,7 +74,7 @@ func (s *stateUsecase) updateSrcdsLogSecrets(ctx context.Context) {
 
 	defer cancelServers()
 
-	servers, _, errServers := s.servers.GetServers(serversCtx, domain.ServerQueryFilter{
+	servers, _, errServers := s.servers.Servers(serversCtx, domain.ServerQueryFilter{
 		IncludeDisabled: false,
 		QueryFilter:     domain.QueryFilter{Deleted: false},
 	})

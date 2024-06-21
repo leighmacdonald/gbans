@@ -210,7 +210,7 @@ func (d demoUsecase) GetDemos(ctx context.Context) ([]domain.DemoFile, error) {
 }
 
 func (d demoUsecase) CreateFromAsset(ctx context.Context, asset domain.Asset, serverID int) (*domain.DemoFile, error) {
-	_, errGetServer := d.servers.GetServer(ctx, serverID)
+	_, errGetServer := d.servers.Server(ctx, serverID)
 	if errGetServer != nil {
 		return nil, domain.ErrGetServer
 	}

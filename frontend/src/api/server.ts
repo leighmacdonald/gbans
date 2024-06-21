@@ -106,7 +106,7 @@ export const apiSaveServer = async (server_id: number, opts: SaveServerOpts) => 
 };
 
 export const apiGetServersAdmin = async (abortController?: AbortController) => {
-    const resp = await apiCall<Server[]>(`/api/servers_admin`, 'POST', undefined, abortController);
+    const resp = await apiCall<Server[]>(`/api/servers_admin`, 'GET', undefined, abortController);
     return resp.map(transformTimeStampedDates).map((s) => {
         s.token_created_on = parseDateTime(s.token_created_on as unknown as string);
         return s;

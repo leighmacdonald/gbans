@@ -366,7 +366,7 @@ func (h discordService) makeOnSay() func(context.Context, *discordgo.Session, *d
 		msg := opts[domain.OptMessage].StringValue()
 
 		var server domain.Server
-		if err := h.servers.GetServerByName(ctx, serverName, &server, false, false); err != nil {
+		if err := h.servers.GetByName(ctx, serverName, &server, false, false); err != nil {
 			return nil, domain.ErrUnknownServer
 		}
 
@@ -386,7 +386,7 @@ func (h discordService) makeOnCSay() func(_ context.Context, _ *discordgo.Sessio
 		msg := opts[domain.OptMessage].StringValue()
 
 		var server domain.Server
-		if err := h.servers.GetServerByName(ctx, serverName, &server, false, false); err != nil {
+		if err := h.servers.GetByName(ctx, serverName, &server, false, false); err != nil {
 			return nil, domain.ErrUnknownServer
 		}
 
@@ -665,7 +665,7 @@ func (h discordService) makeOnFind() func(context.Context, *discordgo.Session, *
 		var found []domain.FoundPlayer
 
 		for _, player := range players {
-			server, errServer := h.servers.GetServer(ctx, player.ServerID)
+			server, errServer := h.servers.Server(ctx, player.ServerID)
 			if errServer != nil {
 				return nil, errors.Join(errServer, domain.ErrGetServer)
 			}
