@@ -71,13 +71,13 @@ func useSecure(mode domain.RunMode, cspOrigin string) gin.HandlerFunc {
 	return secureFunc
 }
 
-func ErrorHandledWithReturn(ctx *gin.Context, err error) error {
-	ErrorHandled(ctx, err)
+func HandleErrsReturn(ctx *gin.Context, err error) error {
+	HandleErrs(ctx, err)
 
 	return err
 }
 
-func ErrorHandled(ctx *gin.Context, err error) {
+func HandleErrs(ctx *gin.Context, err error) {
 	if err == nil {
 		return
 	}

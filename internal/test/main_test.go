@@ -214,7 +214,7 @@ func testEndpoint(t *testing.T, router *gin.Engine, method string, path string, 
 
 	router.ServeHTTP(recorder, request)
 
-	require.Equal(t, expectedStatus, recorder.Code, "Received invalid response code")
+	require.Equal(t, expectedStatus, recorder.Code, "Received invalid response code. method: %s path: %s", method, path)
 
 	return recorder
 }

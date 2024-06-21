@@ -13,7 +13,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
-	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"golang.org/x/exp/slices"
@@ -111,87 +110,23 @@ func (h banHandler) onAPIPostSetBanAppealStatus() gin.HandlerFunc {
 	}
 }
 
-type RequestBanSteam struct {
-	domain.SourceIDField
-	domain.TargetIDField
-	Duration       string         `json:"duration"`
-	ValidUntil     time.Time      `json:"valid_until"`
-	BanType        domain.BanType `json:"ban_type"`
-	Reason         domain.Reason  `json:"reason"`
-	ReasonText     string         `json:"reason_text"`
-	Note           string         `json:"note"`
-	ReportID       int64          `json:"report_id"`
-	DemoName       string         `json:"demo_name"`
-	DemoTick       int            `json:"demo_tick"`
-	IncludeFriends bool           `json:"include_friends"`
-	EvadeOk        bool           `json:"evade_ok"`
-}
-
 func (h banHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req RequestBanSteam
+		var req domain.RequestBanSteamCreate
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
-		var (
-			origin = domain.Web
-			sid    = httphelper.CurrentUserProfile(ctx).SteamID
-		)
-
-		// srcds sourced bans provide a source_id to id the admin
-		if sourceID, ok := req.SourceSteamID(ctx); ok {
-			origin = domain.InGame
-			sid = sourceID
-		}
-
-		duration, errDuration := datetime.CalcDuration(req.Duration, req.ValidUntil)
-		if errDuration != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+		ban, errBan := h.bansSteam.Ban(ctx, httphelper.CurrentUserProfile(ctx), domain.Web, req)
+		if errBan != nil {
+			httphelper.HandleErrs(ctx, errBan)
+			slog.Error("Failed to save new steam ban", log.ErrAttr(errBan), slog.String("steam_id", req.TargetID))
 
 			return
 		}
 
-		author, errAuthor := h.persons.GetPersonBySteamID(ctx, sid)
-		if errAuthor != nil {
-			httphelper.ErrorHandled(ctx, errAuthor)
-
-			return
-		}
-
-		targetID, targetIDOk := req.TargetSteamID(ctx)
-		if !targetIDOk {
-			httphelper.ErrorHandled(ctx, domain.ErrTargetID)
-
-			return
-		}
-
-		var banSteam domain.BanSteam
-		if errBanSteam := domain.NewBanSteam(author.SteamID, targetID, duration, req.Reason, req.ReasonText, req.Note,
-			origin, req.ReportID, req.BanType, req.IncludeFriends, req.EvadeOk, &banSteam,
-		); errBanSteam != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
-
-			return
-		}
-
-		if errBan := h.bansSteam.Ban(ctx, author, &banSteam); errBan != nil {
-			slog.Error("Failed to ban steam profile",
-				log.ErrAttr(errBan), slog.Int64("target_id", banSteam.TargetID.Int64()))
-
-			if errors.Is(errBan, domain.ErrDuplicate) {
-				httphelper.ResponseErr(ctx, http.StatusConflict, domain.ErrDuplicate)
-
-				return
-			}
-
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
-			slog.Error("Failed to save new steam ban", log.ErrAttr(errBan))
-
-			return
-		}
-
-		ctx.JSON(http.StatusCreated, banSteam)
+		ctx.JSON(http.StatusCreated, ban)
+		slog.Info("New steam ban created", slog.Int64("ban_id", ban.BanID), slog.String("steam_id", ban.TargetID.String()))
 	}
 }
 
@@ -227,6 +162,7 @@ func (h banHandler) onAPIGetBanByID() gin.HandlerFunc {
 			}
 
 			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to get requested ban", log.ErrAttr(errGet))
 
 			return
 		}
@@ -250,7 +186,8 @@ func (h banHandler) onAPIGetSourceBans() gin.HandlerFunc {
 
 		records, errRecords := thirdparty.BDSourceBans(ctx, steamID)
 		if errRecords != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Error querying bdapi sourcebans", log.ErrAttr(errRecords), slog.String("steam_id", steamID.String()))
 
 			return
 		}
@@ -263,7 +200,8 @@ func (h banHandler) onAPIGetStats() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var stats domain.Stats
 		if errGetStats := h.bansSteam.Stats(ctx, &stats); errGetStats != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to fetch ban stats", log.ErrAttr(errGetStats))
 
 			return
 		}
@@ -399,7 +337,7 @@ func (h banHandler) onAPIPostBanDelete() gin.HandlerFunc {
 			return
 		}
 
-		var req domain.UnbanRequest
+		var req domain.RequestUnban
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}

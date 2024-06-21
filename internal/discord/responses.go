@@ -234,7 +234,7 @@ func BanExpiresMessage(ban domain.BanSteam, person domain.PersonInfo, banURL str
 	return msgEmbed.Embed().Truncate().MessageEmbed
 }
 
-func BanSteamResponse(banSteam domain.BanSteam, author domain.PersonInfo) *discordgo.MessageEmbed {
+func BanSteamResponse(banSteam domain.BannedSteamPerson) *discordgo.MessageEmbed {
 	var (
 		title  string
 		colour int
@@ -254,7 +254,8 @@ func BanSteamResponse(banSteam domain.BanSteam, author domain.PersonInfo) *disco
 		SetURL("https://steamcommunity.com/profiles/" + banSteam.TargetID.String())
 
 	msgEmbed.AddFieldsSteamID(banSteam.TargetID)
-	msgEmbed.AddAuthorPersonInfo(author, "https://steamcommunity.com/profiles/"+banSteam.SourceID.String())
+
+	msgEmbed.Embed().SetAuthor(banSteam.SourcePersonaname, domain.NewAvatarLinks(banSteam.SourceAvatarhash).Full(), "https://steamcommunity.com/profiles/"+banSteam.SourceID.String())
 
 	expIn := "Permanent"
 	expAt := "Permanent"
@@ -457,7 +458,7 @@ func ReportStatsMessage(meta domain.ReportMeta, url string) *discordgo.MessageEm
 		MessageEmbed
 }
 
-func WarningMessage(newWarning domain.NewUserWarning, banSteam domain.BanSteam, person domain.PersonInfo) *discordgo.MessageEmbed {
+func WarningMessage(newWarning domain.NewUserWarning, banSteam domain.BannedSteamPerson) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed("Language Warning")
 	msgEmbed.Embed().
 		SetDescription(newWarning.UserWarning.Message).
@@ -470,7 +471,7 @@ func WarningMessage(newWarning domain.NewUserWarning, banSteam domain.BanSteam, 
 	msgEmbed.
 		AddFieldsSteamID(newWarning.UserMessage.SteamID).
 		Embed().
-		AddField("Name", person.GetName())
+		AddField("Name", banSteam.SourcePersonaname)
 
 	var (
 		expIn = "Permanent"
@@ -1091,10 +1092,11 @@ func matchASCIITable(match domain.MatchResult) string {
 	return resp
 }
 
-func MuteMessage(banSteam domain.BanSteam) *discordgo.MessageEmbed {
-	return NewEmbed("Player muted successfully").
-		AddFieldsSteamID(banSteam.TargetID).
-		Embed().Truncate().MessageEmbed
+func MuteMessage(banSteam domain.BannedSteamPerson) *discordgo.MessageEmbed {
+	embed := NewEmbed("Player muted successfully")
+	embed.AddFieldsSteamID(banSteam.TargetID)
+
+	return embed.Embed().SetColor(ColourSuccess).Truncate().MessageEmbed
 }
 
 func BanGroupMessage(ban domain.BanGroup, author domain.PersonInfo, config domain.Config) *discordgo.MessageEmbed {
@@ -1119,7 +1121,7 @@ func BanGroupMessage(ban domain.BanGroup, author domain.PersonInfo, config domai
 	return embed.Embed().MessageEmbed
 }
 
-func BanASNMessage(ban domain.BanASN, author domain.PersonInfo, config domain.Config) *discordgo.MessageEmbed {
+func BanASNMessage(ban domain.BannedASNPerson, config domain.Config) *discordgo.MessageEmbed {
 	embed := NewEmbed("ASN Ban Created Successfully")
 	embed.Embed().
 		SetColor(ColourSuccess).
@@ -1134,7 +1136,8 @@ func BanASNMessage(ban domain.BanASN, author domain.PersonInfo, config domain.Co
 		embed.emb.Description = ban.Note
 	}
 
-	embed.AddAuthorPersonInfo(author, config.ExtURL(author))
+	embed.Embed().SetAuthor(ban.SourcePersonaname, domain.NewAvatarLinks(ban.SourceAvatarhash).Full(),
+		config.ExtURLRaw("/profiles/"+ban.SourceID.String()))
 
 	return embed.Embed().MessageEmbed
 }

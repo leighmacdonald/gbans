@@ -68,7 +68,7 @@ func (h *wordFilterHandler) editFilter() gin.HandlerFunc {
 
 		wordFilter, errEdit := h.filters.Edit(ctx, httphelper.CurrentUserProfile(ctx), filterID, req)
 		if errEdit != nil {
-			httphelper.ErrorHandled(ctx, errEdit)
+			httphelper.HandleErrs(ctx, errEdit)
 			slog.Error("Failed to edit word filter", log.ErrAttr(errEdit))
 
 			return
@@ -87,7 +87,7 @@ func (h *wordFilterHandler) createFilter() gin.HandlerFunc {
 
 		wordFilter, errCreate := h.filters.Create(ctx, httphelper.CurrentUserProfile(ctx), req)
 		if errCreate != nil {
-			httphelper.ErrorHandled(ctx, errCreate)
+			httphelper.HandleErrs(ctx, errCreate)
 			slog.Error("Failed to create word filter", log.ErrAttr(errCreate))
 
 			return

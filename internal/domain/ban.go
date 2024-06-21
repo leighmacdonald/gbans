@@ -31,7 +31,7 @@ type BanSteamUsecase interface {
 	GetByBanID(ctx context.Context, banID int64, deletedOk bool, evadeOK bool) (BannedSteamPerson, error)
 	GetByLastIP(ctx context.Context, lastIP netip.Addr, deletedOk bool, evadeOK bool) (BannedSteamPerson, error)
 	Save(ctx context.Context, ban *BanSteam) error
-	Ban(ctx context.Context, curUser PersonInfo, banSteam *BanSteam) error
+	Ban(ctx context.Context, curUser PersonInfo, origin Origin, req RequestBanSteamCreate) (BannedSteamPerson, error)
 	Unban(ctx context.Context, targetSID steamid.SteamID, reason string) (bool, error)
 	Delete(ctx context.Context, ban *BanSteam, hardDelete bool) error
 	Get(ctx context.Context, filter SteamBansQueryFilter) ([]BannedSteamPerson, error)
@@ -39,6 +39,22 @@ type BanSteamUsecase interface {
 	GetOlderThan(ctx context.Context, filter QueryFilter, since time.Time) ([]BanSteam, error)
 	Stats(ctx context.Context, stats *Stats) error
 	UpdateCache(ctx context.Context) error
+}
+
+type RequestBanSteamCreate struct {
+	SourceIDField
+	TargetIDField
+	Duration       string    `json:"duration"`
+	ValidUntil     time.Time `json:"valid_until"`
+	BanType        BanType   `json:"ban_type"`
+	Reason         Reason    `json:"reason"`
+	ReasonText     string    `json:"reason_text"`
+	Note           string    `json:"note"`
+	ReportID       int64     `json:"report_id"`
+	DemoName       string    `json:"demo_name"`
+	DemoTick       int       `json:"demo_tick"`
+	IncludeFriends bool      `json:"include_friends"`
+	EvadeOk        bool      `json:"evade_ok"`
 }
 
 type BanGroupRepository interface {
@@ -80,32 +96,53 @@ type BanNetUsecase interface {
 	GetByAddress(ctx context.Context, ipAddr netip.Addr) ([]BanCIDR, error)
 	GetByID(ctx context.Context, netID int64, banNet *BanCIDR) error
 	Get(ctx context.Context, filter CIDRBansQueryFilter) ([]BannedCIDRPerson, error)
-	Save(ctx context.Context, banNet *BanCIDR) error
-	Delete(ctx context.Context, banNet *BanCIDR) error
+	Update(ctx context.Context, netID int64, req RequestBanCIDRUpdate) (BanCIDR, error)
+	Delete(ctx context.Context, netID int64, req RequestUnban, hard bool) error
 	Expired(ctx context.Context) ([]BanCIDR, error)
 }
 
+type RequestBanASNCreate struct {
+	SourceIDField
+	TargetIDField
+	Note       string    `json:"note"`
+	Reason     Reason    `json:"reason"`
+	ReasonText string    `json:"reason_text"`
+	ASNum      int64     `json:"as_num"`
+	Duration   string    `json:"duration"`
+	ValidUntil time.Time `json:"valid_until"`
+}
+
+type RequestBanASNUpdate struct {
+	SourceIDField
+	TargetIDField
+	ASNum      int64     `json:"as_num"`
+	Note       string    `json:"note"`
+	Reason     Reason    `json:"reason"`
+	ReasonText string    `json:"reason_text"`
+	ValidUntil time.Time `json:"valid_until"`
+}
+
 type BanASNRepository interface {
-	Save(ctx context.Context, banASN *BanASN) error
+	Save(ctx context.Context, banASN *BanASN) (BannedASNPerson, error)
 	GetByASN(ctx context.Context, asNum int64, banASN *BanASN) error
-	GetByID(ctx context.Context, banID int64, banASN *BanASN) error
+	GetByID(ctx context.Context, banID int64) (BannedASNPerson, error)
 	Get(ctx context.Context, filter ASNBansQueryFilter) ([]BannedASNPerson, error)
-	Delete(ctx context.Context, banASN *BanASN) error
+	Delete(ctx context.Context, banASN BanASN) error
 	Expired(ctx context.Context) ([]BanASN, error)
 }
 
 type BanASNUsecase interface {
-	Ban(ctx context.Context, banASN *BanASN) error
+	Ban(ctx context.Context, req RequestBanASNCreate) (BannedASNPerson, error)
 	GetByASN(ctx context.Context, asNum int64, banASN *BanASN) error
-	GetByID(ctx context.Context, banID int64, banASN *BanASN) error
+	GetByID(ctx context.Context, banID int64) (BannedASNPerson, error)
 	Get(ctx context.Context, filter ASNBansQueryFilter) ([]BannedASNPerson, error)
-	Save(ctx context.Context, banASN *BanASN) error
-	Delete(ctx context.Context, banASN *BanASN) error
+	Update(ctx context.Context, asnID int64, req RequestBanASNUpdate) (BannedASNPerson, error)
+	Delete(ctx context.Context, banID int64, req RequestUnban) error
 	Expired(ctx context.Context) ([]BanASN, error)
-	Unban(ctx context.Context, asnNum string) (bool, error)
+	Unban(ctx context.Context, asnNum string, reasonText string) (bool, error)
 }
 
-type UnbanRequest struct {
+type RequestUnban struct {
 	UnbanReasonText string `json:"unban_reason_text"`
 }
 
@@ -283,6 +320,25 @@ func (banASN *BanASN) Apply(opts BanASNOpts) error {
 	banASN.ASNum = opts.ASNum
 
 	return nil
+}
+
+type RequestBanCIDRCreate struct {
+	TargetIDField
+	Duration   string    `json:"duration"`
+	Note       string    `json:"note"`
+	Reason     Reason    `json:"reason"`
+	ReasonText string    `json:"reason_text"`
+	CIDR       string    `json:"cidr"`
+	ValidUntil time.Time `json:"valid_until"`
+}
+
+type RequestBanCIDRUpdate struct {
+	TargetID   steamid.SteamID `json:"target_id"`
+	Note       string          `json:"note"`
+	Reason     Reason          `json:"reason"`
+	ReasonText string          `json:"reason_text"`
+	CIDR       string          `json:"cidr"`
+	ValidUntil time.Time       `json:"valid_until"`
 }
 
 type BanCIDR struct {

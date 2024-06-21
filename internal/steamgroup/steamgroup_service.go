@@ -81,7 +81,7 @@ func (h steamgroupHandler) onAPIPostBansGroupCreate() gin.HandlerFunc {
 
 		targetID, targetIDOk := req.TargetSteamID(ctx)
 		if !targetIDOk {
-			httphelper.ErrorHandled(ctx, domain.ErrTargetID)
+			httphelper.HandleErrs(ctx, domain.ErrTargetID)
 			slog.Warn("Got invalid target id", slog.String("target_id", req.TargetID))
 
 			return
@@ -89,7 +89,7 @@ func (h steamgroupHandler) onAPIPostBansGroupCreate() gin.HandlerFunc {
 
 		groupID, groupIDOk := req.TargetGroupID(ctx)
 		if !groupIDOk {
-			httphelper.ErrorHandled(ctx, domain.ErrTargetID)
+			httphelper.HandleErrs(ctx, domain.ErrTargetID)
 			slog.Warn("Got invalid group id", slog.String("group_id", req.GroupID))
 
 			return
@@ -149,7 +149,7 @@ func (h steamgroupHandler) onAPIDeleteBansGroup() gin.HandlerFunc {
 			return
 		}
 
-		var req domain.UnbanRequest
+		var req domain.RequestUnban
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}

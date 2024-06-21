@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -46,8 +48,13 @@ func BDSourceBans(ctx context.Context, steamID steamid.SteamID) (map[int64][]BDS
 		_ = resp.Body.Close()
 	}()
 
+	body, _ := io.ReadAll(resp.Body)
+
+	slog.Info(string(body))
+
 	var records map[int64][]BDSourceBansRecord
-	if errJSON := json.NewDecoder(resp.Body).Decode(&records); errJSON != nil {
+
+	if errJSON := json.Unmarshal(body, &records); errJSON != nil {
 		return nil, errors.Join(errJSON, domain.ErrRequestDecode)
 	}
 

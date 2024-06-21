@@ -73,7 +73,7 @@ func (h reportHandler) onAPIPostBanState() gin.HandlerFunc {
 
 		report, errReport := h.reports.GetReport(ctx, httphelper.CurrentUserProfile(ctx), reportID)
 		if errReport != nil {
-			httphelper.ErrorHandled(ctx, errReport)
+			httphelper.HandleErrs(ctx, errReport)
 			slog.Error("Failed to get user report", log.ErrAttr(errReport))
 
 			return
@@ -234,7 +234,7 @@ func (h reportHandler) onAPIGetReport() gin.HandlerFunc {
 
 		report, errReport := h.reports.GetReport(ctx, httphelper.CurrentUserProfile(ctx), reportID)
 		if errReport != nil {
-			httphelper.ErrorHandled(ctx, errReport)
+			httphelper.HandleErrs(ctx, errReport)
 			slog.Error("failed to get report", log.ErrAttr(errReport))
 
 			return
@@ -254,7 +254,7 @@ func (h reportHandler) onAPIGetUserReports() gin.HandlerFunc {
 
 		reports, errReports := h.reports.GetReportsBySteamID(ctx, user.SteamID)
 		if errReports != nil {
-			httphelper.ErrorHandled(ctx, errReports)
+			httphelper.HandleErrs(ctx, errReports)
 			slog.Error("Failed to get reports by steam id", log.ErrAttr(errReports))
 
 			return
@@ -273,7 +273,7 @@ func (h reportHandler) onAPIGetAllReports() gin.HandlerFunc {
 
 		reports, errReports := h.reports.GetReports(ctx)
 		if errReports != nil {
-			httphelper.ErrorHandled(ctx, errReports)
+			httphelper.HandleErrs(ctx, errReports)
 			slog.Error("Failed to get reports", log.ErrAttr(errReports))
 
 			return

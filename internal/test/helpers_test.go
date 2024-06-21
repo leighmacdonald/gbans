@@ -106,17 +106,11 @@ type permTestValues struct {
 	levels []domain.Privilege
 }
 
-// func adminRequired() []domain.Privilege {
-//	return []domain.Privilege{domain.PGuest, domain.PUser, domain.PModerator}
-// }
-
-func modRequired() []domain.Privilege {
-	return []domain.Privilege{domain.PGuest, domain.PUser}
-}
-
-func authedRequired() []domain.Privilege {
-	return []domain.Privilege{domain.PGuest}
-}
+var (
+	authed     = []domain.Privilege{domain.PGuest}
+	moderators = []domain.Privilege{domain.PGuest, domain.PUser}
+	admin      = []domain.Privilege{domain.PGuest, domain.PUser, domain.PModerator}
+)
 
 func testPermissions(t *testing.T, router *gin.Engine, testCases []permTestValues) {
 	t.Helper()

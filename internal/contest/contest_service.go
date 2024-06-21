@@ -142,7 +142,7 @@ func (c *contestHandler) onAPIPostContest() gin.HandlerFunc {
 
 		contest, errSave := c.contests.ContestSave(ctx, newContest)
 		if errSave != nil {
-			httphelper.ErrorHandled(ctx, errSave)
+			httphelper.HandleErrs(ctx, errSave)
 
 			return
 		}
@@ -200,7 +200,7 @@ func (c *contestHandler) onAPIUpdateContest() gin.HandlerFunc {
 
 		contest, errSave := c.contests.ContestSave(ctx, req)
 		if errSave != nil {
-			httphelper.ErrorHandled(ctx, errSave)
+			httphelper.HandleErrs(ctx, errSave)
 			slog.Error("Error updating contest", log.ErrAttr(errSave))
 
 			return
@@ -250,7 +250,7 @@ func (c *contestHandler) onAPISaveContestEntryMedia() gin.HandlerFunc {
 		authorID := httphelper.CurrentUserProfile(ctx).SteamID
 
 		asset, errCreate := c.assets.Create(ctx, authorID, "media", req.Name, mediaFile)
-		if errHandle := httphelper.ErrorHandledWithReturn(ctx, errCreate); errHandle != nil {
+		if errHandle := httphelper.HandleErrsReturn(ctx, errCreate); errHandle != nil {
 			slog.Error("Failed to save user contest media", log.ErrAttr(errHandle))
 
 			return
@@ -272,7 +272,7 @@ func (c *contestHandler) onAPISaveContestEntryVote() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		contestID, contestIDErr := c.getContestID(ctx)
 		if contestIDErr != nil {
-			httphelper.ErrorHandled(ctx, contestIDErr)
+			httphelper.HandleErrs(ctx, contestIDErr)
 			slog.Warn("Got invalid contest id")
 
 			return
