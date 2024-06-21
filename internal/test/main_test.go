@@ -155,6 +155,7 @@ func testRouter() *gin.Engine {
 	ban.NewBanHandler(router, banSteamUC, discordUC, personUC, configUC, authUC)
 	ban.NewBanNetHandler(router, banNetUC, authUC)
 	ban.NewBanASNHandler(router, banASNUC, authUC)
+	steamgroup.NewSteamgroupHandler(router, banGroupUC, authUC)
 	news.NewNewsHandler(router, newsUC, discordUC, authUC)
 	wiki.NewWIkiHandler(router, wikiUC, authUC)
 

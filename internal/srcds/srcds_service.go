@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"net/http"
 	"net/netip"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/discord"
@@ -852,64 +851,15 @@ func (s *srcdsHandler) onAPIPostReportCreate() gin.HandlerFunc {
 	}
 }
 
-type apiSMBanRequest struct {
-	domain.SourceIDField
-	domain.TargetIDField
-	Duration       int            `json:"duration"`
-	ValidUntil     time.Time      `json:"valid_until"`
-	BanType        domain.BanType `json:"ban_type"`
-	Reason         domain.Reason  `json:"reason"`
-	ReasonText     string         `json:"reason_text"`
-	Note           string         `json:"note"`
-	ReportID       int64          `json:"report_id"`
-	DemoName       string         `json:"demo_name"`
-	DemoTick       int            `json:"demo_tick"`
-	IncludeFriends bool           `json:"include_friends"`
-}
-
 func (s *srcdsHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req apiSMBanRequest
+		var req domain.RequestBanSteamCreate
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
-		var (
-			origin   = domain.InGame
-			curUser  = httphelper.CurrentUserProfile(ctx)
-			sourceID steamid.SteamID
-		)
-
-		// srcds sourced bans provide a source_id to id the admin
-		if sid, valid := req.SourceSteamID(ctx); valid {
-			sourceID = sid
-		} else {
-			sourceID = steamid.New(s.config.Config().Owner)
-		}
-
-		targetID, valid := req.TargetSteamID(ctx)
-		if !valid {
-			httphelper.HandleErrBadRequest(ctx)
-			slog.Error("SM sent invalid target ID", slog.String("target_id", req.TargetID))
-
-			return
-		}
-
-		duration := time.Hour * 24 * 365 * 10
-		if req.Duration > 0 {
-			duration = time.Duration(req.Duration) * time.Second
-		}
-
-		var banSteam domain.BanSteam
-		if errBanSteam := domain.NewBanSteam(sourceID, targetID, duration, req.Reason, req.ReasonText, req.Note, origin,
-			req.ReportID, req.BanType, req.IncludeFriends, false, &banSteam); errBanSteam != nil {
-			httphelper.HandleErrBadRequest(ctx)
-			slog.Error("Failed to create new ban", log.ErrAttr(errBanSteam))
-
-			return
-		}
-
-		if errBan := s.bans.Ban(ctx, curUser, &banSteam); errBan != nil {
+		ban, errBan := s.bans.Ban(ctx, httphelper.CurrentUserProfile(ctx), domain.InGame, req)
+		if errBan != nil {
 			if errors.Is(errBan, domain.ErrDuplicate) {
 				httphelper.ResponseErr(ctx, http.StatusConflict, domain.ErrDuplicate)
 
@@ -922,7 +872,8 @@ func (s *srcdsHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, banSteam)
+		ctx.JSON(http.StatusCreated, ban)
+		slog.Info("Created new ban successfully", slog.Int64("ban_id", ban.BanID))
 	}
 }
 

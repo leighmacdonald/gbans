@@ -2,12 +2,13 @@ package ban
 
 import (
 	"errors"
+	"log/slog"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/log"
-	"log/slog"
-	"net/http"
 )
 
 type banASNHandler struct {

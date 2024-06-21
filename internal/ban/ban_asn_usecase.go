@@ -3,10 +3,11 @@ package ban
 import (
 	"context"
 	"errors"
+	"strconv"
+
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
-	"strconv"
 )
 
 type banASN struct {
