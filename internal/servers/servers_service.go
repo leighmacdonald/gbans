@@ -1,12 +1,10 @@
 package servers
 
 import (
-	"fmt"
 	"log/slog"
 	"math"
 	"net/http"
 	"sort"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -30,7 +28,6 @@ func NewServerHandler(engine *gin.Engine, serversUsecase domain.ServersUsecase,
 		persons: personUsecase,
 	}
 
-	engine.GET("/export/sourcemod/admins_simple.ini", handler.onAPIExportSourcemodSimpleAdmins())
 	engine.GET("/api/servers/state", handler.onAPIGetServerStates())
 	engine.GET("/api/servers", handler.onAPIGetServers())
 
@@ -41,69 +38,13 @@ func NewServerHandler(engine *gin.Engine, serversUsecase domain.ServersUsecase,
 		admin.POST("/api/servers", handler.onAPIPostServer())
 		admin.POST("/api/servers/:server_id", handler.onAPIPostServerUpdate())
 		admin.DELETE("/api/servers/:server_id", handler.onAPIPostServerDelete())
-		admin.POST("/api/servers_admin", handler.onAPIGetServersAdmin())
-	}
-}
-
-type serverInfoSafe struct {
-	ServerNameLong string `json:"server_name_long"`
-	ServerName     string `json:"server_name"`
-	ServerID       int    `json:"server_id"`
-	Colour         string `json:"colour"`
-}
-
-func (h *serversHandler) onAPIExportSourcemodSimpleAdmins() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		privilegedIDs, errPrivilegedIDs := h.persons.GetSteamIDsAbove(ctx, domain.PReserved)
-		if errPrivilegedIDs != nil {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to get steam ids", log.ErrAttr(errPrivilegedIDs))
-
-			return
-		}
-
-		players, errPlayers := h.persons.GetPeopleBySteamID(ctx, privilegedIDs)
-		if errPlayers != nil {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to get people by steamid", log.ErrAttr(errPlayers))
-
-			return
-		}
-
-		sort.Slice(players, func(i, j int) bool {
-			return players[i].PermissionLevel > players[j].PermissionLevel
-		})
-
-		bld := strings.Builder{}
-
-		for _, player := range players {
-			var perms string
-
-			switch player.PermissionLevel {
-			case domain.PAdmin:
-				perms = "z"
-			case domain.PModerator:
-				perms = "abcdefgjk"
-			case domain.PEditor:
-				perms = "ak"
-			case domain.PReserved:
-				perms = "a"
-			}
-
-			if perms == "" {
-				slog.Warn("User has no perm string", slog.Int64("sid", player.SteamID.Int64()))
-			} else {
-				bld.WriteString(fmt.Sprintf("\"%s\" \"%s\"\n", player.SteamID.Steam3(), perms))
-			}
-		}
-
-		ctx.String(http.StatusOK, bld.String())
+		admin.GET("/api/servers_admin", handler.onAPIGetServersAdmin())
 	}
 }
 
 func (h *serversHandler) onAPIGetServers() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		fullServers, _, errServers := h.servers.GetServers(ctx, domain.ServerQueryFilter{})
+		fullServers, _, errServers := h.servers.Servers(ctx, domain.ServerQueryFilter{})
 		if errServers != nil {
 			httphelper.HandleErrInternal(ctx)
 			slog.Error("Failed to get servers", log.ErrAttr(errServers))
@@ -111,9 +52,9 @@ func (h *serversHandler) onAPIGetServers() gin.HandlerFunc {
 			return
 		}
 
-		var servers []serverInfoSafe
+		var servers []domain.ServerInfoSafe
 		for _, server := range fullServers {
-			servers = append(servers, serverInfoSafe{
+			servers = append(servers, domain.ServerInfoSafe{
 				ServerNameLong: server.Name,
 				ServerName:     server.ShortName,
 				ServerID:       server.ServerID,
@@ -200,50 +141,22 @@ func (h *serversHandler) onAPIGetServerStates() gin.HandlerFunc {
 
 func (h *serversHandler) onAPIPostServer() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var req serverUpdateRequest
+		var req domain.RequestServerUpdate
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
-		server := domain.NewServer(req.ServerNameShort, req.Host, req.Port)
-		server.Name = req.ServerName
-		server.Password = req.Password
-		server.ReservedSlots = req.ReservedSlots
-		server.RCON = req.RCON
-		server.Latitude = req.Lat
-		server.Longitude = req.Lon
-		server.CC = req.CC
-		server.Region = req.Region
-		server.IsEnabled = req.IsEnabled
-		server.LogSecret = req.LogSecret
-
-		if errSave := h.servers.SaveServer(ctx, &server); errSave != nil {
-			httphelper.HandleErrInternal(ctx)
+		server, errSave := h.servers.Save(ctx, req)
+		if errSave != nil {
+			httphelper.HandleErrs(ctx, errSave)
 			slog.Error("Failed to save new server", log.ErrAttr(errSave))
 
 			return
 		}
 
 		ctx.JSON(http.StatusOK, server)
+		slog.Info("Created new server", slog.String("name", server.ShortName), slog.Int("server_id", server.ServerID))
 	}
-}
-
-type serverUpdateRequest struct {
-	ServerName      string  `json:"server_name"`
-	ServerNameShort string  `json:"server_name_short"`
-	Host            string  `json:"host"`
-	Port            int     `json:"port"`
-	ReservedSlots   int     `json:"reserved_slots"`
-	Password        string  `json:"password"`
-	RCON            string  `json:"rcon"`
-	Lat             float64 `json:"lat"`
-	Lon             float64 `json:"lon"`
-	CC              string  `json:"cc"`
-	DefaultMap      string  `json:"default_map"`
-	Region          string  `json:"region"`
-	IsEnabled       bool    `json:"is_enabled"`
-	EnableStats     bool    `json:"enable_stats"`
-	LogSecret       int     `json:"log_secret"`
 }
 
 func (h *serversHandler) onAPIPostServerUpdate() gin.HandlerFunc {
@@ -256,42 +169,23 @@ func (h *serversHandler) onAPIPostServerUpdate() gin.HandlerFunc {
 			return
 		}
 
-		server, errServer := h.servers.GetServer(ctx, serverID)
-		if errServer != nil {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to get server", log.ErrAttr(errServer))
-
-			return
-		}
-
-		var req serverUpdateRequest
+		var req domain.RequestServerUpdate
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
-		server.ShortName = req.ServerNameShort
-		server.Name = req.ServerName
-		server.Address = req.Host
-		server.Port = req.Port
-		server.ReservedSlots = req.ReservedSlots
-		server.RCON = req.RCON
-		server.Password = req.Password
-		server.Latitude = req.Lat
-		server.Longitude = req.Lon
-		server.CC = req.CC
-		server.Region = req.Region
-		server.IsEnabled = req.IsEnabled
-		server.LogSecret = req.LogSecret
-		server.EnableStats = req.EnableStats
+		req.ServerID = serverID
 
-		if errSave := h.servers.SaveServer(ctx, &server); errSave != nil {
-			httphelper.HandleErrInternal(ctx)
+		server, errSave := h.servers.Save(ctx, req)
+		if errSave != nil {
+			httphelper.HandleErrs(ctx, errServerID)
 			slog.Error("Failed to update server", log.ErrAttr(errSave))
 
 			return
 		}
 
 		ctx.JSON(http.StatusOK, server)
+		slog.Info("Updated server successfully", slog.String("name", server.ShortName))
 	}
 }
 
@@ -301,7 +195,7 @@ func (h *serversHandler) onAPIGetServersAdmin() gin.HandlerFunc {
 			IncludeDisabled: true,
 		}
 
-		servers, _, errServers := h.servers.GetServers(ctx, filter)
+		servers, _, errServers := h.servers.Servers(ctx, filter)
 		if errServers != nil {
 			httphelper.HandleErrInternal(ctx)
 			slog.Error("Failed to get servers", log.ErrAttr(errServers))
@@ -321,29 +215,20 @@ func (h *serversHandler) onAPIPostServerDelete() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		serverID, errID := httphelper.GetIntParam(ctx, "server_id")
 		if errID != nil {
-			httphelper.HandleErrBadRequest(ctx)
+			httphelper.HandleErrs(ctx, errID)
 			slog.Error("Failed to get server_id", log.ErrAttr(errID))
 
 			return
 		}
 
-		server, errServer := h.servers.GetServer(ctx, serverID)
-		if errServer != nil {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to get server", log.ErrAttr(errServer))
+		if err := h.servers.Delete(ctx, serverID); err != nil {
+			httphelper.HandleErrs(ctx, err)
+			slog.Error("Failed to delete server", log.ErrAttr(err))
 
 			return
 		}
 
-		server.Deleted = true
-
-		if errSave := h.servers.SaveServer(ctx, &server); errSave != nil {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to delete server", log.ErrAttr(errSave))
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, server)
+		ctx.JSON(http.StatusOK, gin.H{})
+		slog.Info("Deleted server", slog.Int("server_id", serverID))
 	}
 }

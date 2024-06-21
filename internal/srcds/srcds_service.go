@@ -1059,7 +1059,7 @@ func (s *srcdsHandler) onAPIPostPingMod() gin.HandlerFunc {
 			return
 		}
 
-		server, errServer := s.servers.GetServer(ctx, players[0].ServerID)
+		server, errServer := s.servers.Server(ctx, players[0].ServerID)
 		if errServer != nil {
 			slog.Error("Failed to load server", log.ErrAttr(errServer))
 

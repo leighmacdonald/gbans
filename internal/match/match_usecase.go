@@ -54,7 +54,7 @@ func (m matchUsecase) EndMatch(ctx context.Context, serverID int) (uuid.UUID, er
 		return matchID, domain.ErrLoadMatch
 	}
 
-	server, errServer := m.servers.GetServer(ctx, serverID)
+	server, errServer := m.servers.Server(ctx, serverID)
 	if errServer != nil {
 		return matchID, errors.Join(errServer, domain.ErrUnknownServer)
 	}

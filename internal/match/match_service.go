@@ -96,7 +96,7 @@ func (h matchHandler) onAPIPostMatchStart() gin.HandlerFunc {
 			return
 		}
 
-		server, errServer := h.servers.GetServer(ctx, serverID)
+		server, errServer := h.servers.Server(ctx, serverID)
 		if errServer != nil {
 			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrUnknownServerID)
 			slog.Error("Failed to get server", log.ErrAttr(errServer))

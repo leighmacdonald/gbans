@@ -85,8 +85,8 @@ func TestMain(m *testing.M) {
 	}
 
 	defer func() {
-		termCtx, cancel := context.WithTimeout(context.Background(), time.Second*30)
-		defer cancel()
+		termCtx, termCancel := context.WithTimeout(context.Background(), time.Second*30)
+		defer termCancel()
 
 		if errTerm := container.Terminate(termCtx); errTerm != nil {
 			panic(fmt.Sprintf("Failed to terminate test container: %v", errTerm))
@@ -155,6 +155,7 @@ func testRouter() *gin.Engine {
 	ban.NewBanHandler(router, banSteamUC, discordUC, personUC, configUC, authUC)
 	ban.NewBanNetHandler(router, banNetUC, authUC)
 	ban.NewBanASNHandler(router, banASNUC, authUC)
+	servers.NewServerHandler(router, serversUC, stateUC, authUC, personUC)
 	steamgroup.NewSteamgroupHandler(router, banGroupUC, authUC)
 	news.NewNewsHandler(router, newsUC, discordUC, authUC)
 	wiki.NewWIkiHandler(router, wikiUC, authUC)

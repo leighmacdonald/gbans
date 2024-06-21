@@ -213,7 +213,7 @@ func (u *auth) AuthServerMiddleWare() gin.HandlerFunc {
 		}
 
 		var server domain.Server
-		if errServer := u.servers.GetServerByPassword(ctx, reqAuthHeader, &server, false, false); errServer != nil {
+		if errServer := u.servers.GetByPassword(ctx, reqAuthHeader, &server, false, false); errServer != nil {
 			slog.Error("Failed to load server during auth", log.ErrAttr(errServer), slog.String("token", reqAuthHeader), slog.String("IP", ctx.ClientIP()))
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 

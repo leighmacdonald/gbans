@@ -87,6 +87,10 @@ func HandleErrs(ctx *gin.Context, err error) {
 		HandleErrPermissionDenied(ctx)
 	case errors.Is(err, domain.ErrNoResult):
 		HandleErrNotFound(ctx)
+	case errors.Is(err, domain.ErrParamKeyMissing):
+		HandleErrBadRequest(ctx)
+	case errors.Is(err, domain.ErrInvalidParameter):
+		HandleErrBadRequest(ctx)
 	case errors.Is(err, domain.ErrBadRequest):
 		HandleErrBadRequest(ctx)
 	case errors.Is(err, domain.ErrDuplicate):
