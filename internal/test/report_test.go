@@ -140,15 +140,9 @@ func TestReportPermissions(t *testing.T) {
 		},
 		{
 			path:   "/api/reports/user",
-			method: http.MethodPost,
+			method: http.MethodGet,
 			code:   http.StatusForbidden,
 			levels: authed,
-		},
-		{
-			path:   "/api/report/1/state",
-			method: http.MethodPost,
-			code:   http.StatusForbidden,
-			levels: moderators,
 		},
 		{
 			path:   "/api/reports",

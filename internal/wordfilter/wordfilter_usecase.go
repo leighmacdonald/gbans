@@ -58,6 +58,9 @@ func (w *wordFilterUsecase) Edit(ctx context.Context, user domain.PersonInfo, fi
 
 	slog.Info("Edited filter", slog.Int64("filter_id", filterID))
 
+	w.wordFilters.Remove(filterID)
+	w.wordFilters.Add(existingFilter)
+
 	return existingFilter, nil
 }
 
@@ -106,23 +109,26 @@ func (w *wordFilterUsecase) Create(ctx context.Context, user domain.PersonInfo, 
 
 	newFilter.Init()
 
-	w.wordFilters.Add(&newFilter)
+	w.wordFilters.Add(newFilter)
 
-	slog.Info("Created filter", slog.Int64("filter_id", newFilter.FilterID))
-
-	w.discord.SendPayload(domain.ChannelWordFilterLog, discord.FilterAddMessage(newFilter))
+	go w.discord.SendPayload(domain.ChannelWordFilterLog, discord.FilterAddMessage(newFilter))
 
 	return newFilter, nil
 }
 
-func (w *wordFilterUsecase) DropFilter(ctx context.Context, filter domain.Filter) error {
+func (w *wordFilterUsecase) DropFilter(ctx context.Context, filterID int64) error {
+	filter, errGet := w.GetFilterByID(ctx, filterID)
+	if errGet != nil {
+		return errGet
+	}
+
 	if err := w.repository.DropFilter(ctx, filter); err != nil {
 		return err
 	}
 
-	slog.Info("Deleted filter", slog.Int64("id", filter.FilterID))
+	w.wordFilters.Remove(filterID)
 
-	w.discord.SendPayload(domain.ChannelWordFilterLog, discord.FilterDelMessage(filter))
+	go w.discord.SendPayload(domain.ChannelWordFilterLog, discord.FilterDelMessage(filter))
 
 	return nil
 }

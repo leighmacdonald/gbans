@@ -59,7 +59,11 @@ test-ts:
 	@cd frontend && pnpm run test
 
 test-go:
-	@go test $(GO_FLAGS) -race -cover . ./...
+	@go test $(GO_FLAGS) -race ./...
+
+test-go-cover:
+	@go test $(GO_FLAGS) -race -coverprofile coverage.out ./...
+	@go tool cover -html=coverage.out
 
 install_deps:
 	go install github.com/daixiang0/gci@v0.13.4
