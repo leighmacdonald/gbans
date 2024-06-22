@@ -113,12 +113,6 @@ type ConfigLocalStore struct {
 	PathRoot string `json:"path_root"`
 }
 
-type ConfigDB struct {
-	DSN         string `mapstructure:"dsn"`
-	AutoMigrate bool   `mapstructure:"auto_migrate"`
-	LogQueries  bool   `mapstructure:"log_queries"`
-}
-
 type ConfigClientprefs struct {
 	CenterProjectiles bool `mapstructure:"center_projectiles"`
 }

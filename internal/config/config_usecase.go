@@ -51,8 +51,6 @@ func (c *configUsecase) Write(ctx context.Context, config domain.Config) error {
 		return errReload
 	}
 
-	slog.Info("Wrote new config")
-
 	return nil
 }
 
