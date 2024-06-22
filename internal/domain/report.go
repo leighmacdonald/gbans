@@ -26,14 +26,24 @@ type ReportUsecase interface {
 	GetReport(ctx context.Context, curUser PersonInfo, reportID int64) (ReportWithAuthor, error)
 	GetReportMessages(ctx context.Context, reportID int64) ([]ReportMessage, error)
 	GetReportMessageByID(ctx context.Context, reportMessageID int64) (ReportMessage, error)
-	DropReportMessage(ctx context.Context, message *ReportMessage) error
+	DropReportMessage(ctx context.Context, curUser PersonInfo, reportMessageID int64) error
 	DropReport(ctx context.Context, report *Report) error
-	SaveReport(ctx context.Context, report *Report) error
-	SaveReportMessage(ctx context.Context, message *ReportMessage) error
+	SaveReport(ctx context.Context, currentUser UserProfile, req RequestReportCreate) (ReportWithAuthor, error)
+	CreateReportMessage(ctx context.Context, reportID int64, curUser PersonInfo, req RequestMessageBodyMD) (ReportMessage, error)
+	EditReportMessage(ctx context.Context, reportMessageID int64, curUser PersonInfo, req RequestMessageBodyMD) (ReportMessage, error)
 	GetReportBySteamID(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID) (Report, error)
+	SetReportStatus(ctx context.Context, reportID int64, user PersonInfo, status ReportStatus) (ReportWithAuthor, error)
 }
 
-type CreateReportReq struct {
+type RequestMessageBodyMD struct {
+	BodyMD string `json:"body_md"`
+}
+
+type RequestReportStatusUpdate struct {
+	Status ReportStatus `json:"status"`
+}
+
+type RequestReportCreate struct {
 	SourceID        steamid.SteamID `json:"source_id"`
 	TargetID        steamid.SteamID `json:"target_id"`
 	Description     string          `json:"description"`

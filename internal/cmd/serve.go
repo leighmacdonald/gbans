@@ -310,7 +310,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			notification.NewNotificationHandler(router, notificationUsecase, authUsecase)
 			patreon.NewPatreonHandler(router, patreonUsecase, authUsecase, configUsecase)
 			person.NewPersonHandler(router, configUsecase, personUsecase, authUsecase)
-			report.NewReportHandler(router, reportUsecase, configUsecase, discordUsecase, personUsecase, authUsecase, demoUsecase)
+			report.NewReportHandler(router, reportUsecase, authUsecase)
 			servers.NewServerHandler(router, serversUsecase, stateUsecase, authUsecase, personUsecase)
 			srcds.NewSRCDSHandler(router, srcdsUsecase, serversUsecase, personUsecase, assetUsecase,
 				reportUsecase, banUsecase, networkUsecase, banGroupUsecase, demoUsecase, authUsecase, banASNUsecase, banNetUsecase,

@@ -55,7 +55,7 @@ type SRCDSRepository interface { //nolint:interfacebloat
 
 type SRCDSUsecase interface { //nolint:interfacebloat
 	GetBanState(ctx context.Context, steamID steamid.SteamID, ip netip.Addr) (PlayerBanState, string, error)
-	Report(ctx context.Context, currentUser UserProfile, req CreateReportReq) (*Report, error)
+	Report(ctx context.Context, currentUser UserProfile, req RequestReportCreate) (ReportWithAuthor, error)
 	GetAdminByID(ctx context.Context, adminID int) (SMAdmin, error)
 	AddAdmin(ctx context.Context, alias string, authType AuthType, identity string, flags string, immunity int, password string) (SMAdmin, error)
 	DelAdmin(ctx context.Context, adminID int) error

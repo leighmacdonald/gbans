@@ -17,6 +17,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/app"
+	"github.com/leighmacdonald/gbans/internal/appeal"
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/ban"
@@ -49,7 +50,7 @@ import (
 )
 
 var (
-	container      *postgresContainer
+	dbContainer    *postgresContainer
 	testServer     domain.Server
 	configUC       domain.ConfigUsecase
 	wikiUC         domain.WikiUsecase
@@ -76,13 +77,14 @@ var (
 	votesUC        domain.VoteUsecase
 	votesRepo      domain.VoteRepository
 	wordFilterUC   domain.WordFilterUsecase
+	appealUC       domain.AppealUsecase
 )
 
 func TestMain(m *testing.M) {
 	testCtx, cancel := context.WithTimeout(context.Background(), time.Minute*2)
 	defer cancel()
 
-	dbContainer, errStore := newDB(testCtx)
+	testDB, errStore := newDB(testCtx)
 	if errStore != nil {
 		panic(errStore)
 	}
@@ -91,17 +93,17 @@ func TestMain(m *testing.M) {
 		termCtx, termCancel := context.WithTimeout(context.Background(), time.Second*30)
 		defer termCancel()
 
-		if errTerm := container.Terminate(termCtx); errTerm != nil {
+		if errTerm := testDB.Terminate(termCtx); errTerm != nil {
 			panic(fmt.Sprintf("Failed to terminate test container: %v", errTerm))
 		}
 	}()
 
-	databaseConn := database.New(dbContainer.dsn, true, false)
+	databaseConn := database.New(testDB.dsn, true, false)
 	if err := databaseConn.Connect(testCtx); err != nil {
 		panic(err)
 	}
 
-	conf := makeTestConfig(dbContainer.dsn)
+	conf := makeTestConfig(testDB.dsn)
 	eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
 	weaponsMap := fp.NewMutexMap[logparse.Weapon, int]()
 
@@ -144,8 +146,8 @@ func TestMain(m *testing.M) {
 	chatUC = chat.NewChatUsecase(configUC, chat.NewChatRepository(databaseConn, personUC, wordFilterUC, matchUC, eventBroadcaster), wordFilterUC, stateUC, banSteamUC, personUC, discordUC)
 	votesRepo = votes.NewVoteRepository(databaseConn)
 	votesUC = votes.NewVoteUsecase(votesRepo, personUC, matchUC, discordUC, configUC, eventBroadcaster)
-
-	container = dbContainer
+	appealUC = appeal.NewAppealUsecase(appeal.NewAppealRepository(databaseConn), banSteamUC, personUC, discordUC, configUC)
+	dbContainer = testDB
 
 	server, errServer := serversUC.Save(context.Background(), domain.RequestServerUpdate{
 		ServerName:      stringutil.SecureRandomString(20),
@@ -192,6 +194,8 @@ func testRouter() *gin.Engine {
 	wiki.NewWIkiHandler(router, wikiUC, authUC)
 	votes.NewVoteHandler(router, votesUC, authUC)
 	config.NewConfigHandler(router, configUC, authUC, app.Version())
+	report.NewReportHandler(router, reportUC, authUC)
+	appeal.NewAppealHandler(router, appealUC, banSteamUC, configUC, personUC, discordUC, authUC)
 
 	return router
 }

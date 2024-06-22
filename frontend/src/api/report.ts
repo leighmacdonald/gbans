@@ -118,7 +118,12 @@ export const apiGetReports = async (opts?: ReportQueryFilter, abortController?: 
 };
 
 export const apiGetUserReports = async (abortController?: AbortController) => {
-    const resp = await apiCall<ReportWithAuthor[], ReportQueryFilter>(`/api/reports/user`, 'POST', {}, abortController);
+    const resp = await apiCall<ReportWithAuthor[], ReportQueryFilter>(
+        `/api/reports/user`,
+        'GET',
+        undefined,
+        abortController
+    );
     return resp.map(transformTimeStampedDates);
 };
 
@@ -133,7 +138,7 @@ export const apiGetReportMessages = async (report_id: number, abortController?: 
     );
 
 export interface CreateReportMessage {
-    message: string;
+    body_md: string;
 }
 
 export const apiCreateReportMessage = async (report_id: number, message: string) =>

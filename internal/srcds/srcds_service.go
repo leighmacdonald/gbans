@@ -834,7 +834,7 @@ func (s *srcdsHandler) onAPIPostReportCreate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		currentUser := httphelper.CurrentUserProfile(ctx)
 
-		var req domain.CreateReportReq
+		var req domain.RequestReportCreate
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
@@ -842,12 +842,13 @@ func (s *srcdsHandler) onAPIPostReportCreate() gin.HandlerFunc {
 		report, errReport := s.srcds.Report(ctx, currentUser, req)
 		if errReport != nil {
 			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to create report", log.ErrAttr(errReport))
+			slog.Error("Failed to create report", log.ErrAttr(errReport), slog.String("method", "in-game"))
 
 			return
 		}
 
 		ctx.JSON(http.StatusCreated, report)
+		slog.Info("New report created successfully", slog.Int64("report_id", report.ReportID), slog.String("method", "in-game"))
 	}
 }
 

@@ -300,9 +300,9 @@ func (h srcds) GetAdminGroups(ctx context.Context, admin domain.SMAdmin) ([]doma
 	return h.repository.GetAdminGroups(ctx, admin)
 }
 
-func (h srcds) Report(ctx context.Context, currentUser domain.UserProfile, req domain.CreateReportReq) (*domain.Report, error) {
+func (h srcds) Report(ctx context.Context, currentUser domain.UserProfile, req domain.RequestReportCreate) (domain.ReportWithAuthor, error) {
 	if req.Description == "" || len(req.Description) < 10 {
-		return nil, fmt.Errorf("%w: description", domain.ErrParamInvalid)
+		return domain.ReportWithAuthor{}, fmt.Errorf("%w: description", domain.ErrParamInvalid)
 	}
 
 	// ServerStore initiated requests will have a sourceID set by the server
@@ -313,25 +313,25 @@ func (h srcds) Report(ctx context.Context, currentUser domain.UserProfile, req d
 	}
 
 	if !req.SourceID.Valid() {
-		return nil, domain.ErrSourceID
+		return domain.ReportWithAuthor{}, domain.ErrSourceID
 	}
 
 	if !req.TargetID.Valid() {
-		return nil, domain.ErrTargetID
+		return domain.ReportWithAuthor{}, domain.ErrTargetID
 	}
 
 	if req.SourceID.Int64() == req.TargetID.Int64() {
-		return nil, domain.ErrSelfReport
+		return domain.ReportWithAuthor{}, domain.ErrSelfReport
 	}
 
-	personSource, errCreatePerson := h.persons.GetPersonBySteamID(ctx, req.SourceID)
-	if errCreatePerson != nil {
-		return nil, domain.ErrInternal
+	personSource, errCreateSource := h.persons.GetPersonBySteamID(ctx, req.SourceID)
+	if errCreateSource != nil {
+		return domain.ReportWithAuthor{}, errCreateSource
 	}
 
-	personTarget, errCreatePerson := h.persons.GetOrCreatePersonBySteamID(ctx, req.TargetID)
-	if errCreatePerson != nil {
-		return nil, domain.ErrInternal
+	personTarget, errCreateTarget := h.persons.GetOrCreatePersonBySteamID(ctx, req.TargetID)
+	if errCreateTarget != nil {
+		return domain.ReportWithAuthor{}, errCreateTarget
 	}
 
 	if personTarget.Expired() {
@@ -348,40 +348,28 @@ func (h srcds) Report(ctx context.Context, currentUser domain.UserProfile, req d
 	existing, errReports := h.reports.GetReportBySteamID(ctx, personSource.SteamID, req.TargetID)
 	if errReports != nil {
 		if !errors.Is(errReports, domain.ErrNoResult) {
-			return nil, errReports
+			return domain.ReportWithAuthor{}, errReports
 		}
 	}
 
 	if existing.ReportID > 0 {
-		return nil, domain.ErrReportExists
+		return domain.ReportWithAuthor{}, domain.ErrReportExists
 	}
 
-	// TODO encapsulate all operations in single tx
-	report := domain.NewReport()
-	report.SourceID = req.SourceID
-	report.ReportStatus = domain.Opened
-	report.Description = req.Description
-	report.TargetID = req.TargetID
-	report.Reason = req.Reason
-	report.ReasonText = req.ReasonText
-	report.DemoTick = req.DemoTick
-	report.PersonMessageID = req.PersonMessageID
-
-	if errReportSave := h.reports.SaveReport(ctx, &report); errReportSave != nil {
-		return nil, errReportSave
+	savedReport, errReportSave := h.reports.SaveReport(ctx, currentUser, req)
+	if errReportSave != nil {
+		return domain.ReportWithAuthor{}, errReportSave
 	}
-
-	slog.Info("New report created successfully", slog.Int64("report_id", report.ReportID))
 
 	conf := h.config.Config()
 
 	demoURL := ""
 
-	msg := discord.NewInGameReportResponse(report, conf.ExtURL(report), currentUser, conf.ExtURL(currentUser), demoURL)
+	msg := discord.NewInGameReportResponse(savedReport, conf.ExtURL(savedReport), currentUser, conf.ExtURL(currentUser), demoURL)
 
-	h.discord.SendPayload(domain.ChannelModLog, msg)
+	go h.discord.SendPayload(domain.ChannelModLog, msg)
 
-	return &report, nil
+	return savedReport, nil
 }
 
 func (h srcds) SetAdminGroups(ctx context.Context, authType domain.AuthType, identity string, groups ...domain.SMGroups) error {

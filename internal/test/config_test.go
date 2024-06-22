@@ -19,7 +19,7 @@ func TestConfig(t *testing.T) {
 	require.EqualValues(t, configUC.Config(), config)
 
 	config.General.SiteName += "x"
-	config.General.Mode = domain.DebugMode
+	config.General.Mode = domain.TestMode
 	config.General.FileServeMode = "local"
 	config.General.SrcdsLogAddr += "x"
 	config.General.AssetURL += "x"
