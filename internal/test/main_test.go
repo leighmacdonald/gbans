@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/ban"
@@ -109,6 +110,10 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 
+	if err := configUC.Write(testCtx, configUC.Config()); err != nil {
+		panic(err)
+	}
+
 	authRepo = auth.NewAuthRepository(databaseConn)
 
 	discordUC = discord.NewDiscordUsecase(discord.NewNullDiscordRepository(), configUC)
@@ -186,6 +191,7 @@ func testRouter() *gin.Engine {
 	news.NewNewsHandler(router, newsUC, discordUC, authUC)
 	wiki.NewWIkiHandler(router, wikiUC, authUC)
 	votes.NewVoteHandler(router, votesUC, authUC)
+	config.NewConfigHandler(router, configUC, authUC, app.Version())
 
 	return router
 }

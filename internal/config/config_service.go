@@ -42,13 +42,14 @@ func (c configHandler) onAPIPutConfig() gin.HandlerFunc {
 		}
 
 		if errSave := c.config.Write(ctx, req); errSave != nil {
+			httphelper.HandleErrs(ctx, errSave)
 			slog.Error("Failed to save new config", log.ErrAttr(errSave))
-			httphelper.HandleErrBadRequest(ctx)
 
 			return
 		}
 
 		ctx.JSON(http.StatusOK, req)
+		slog.Info("Wrote new config")
 	}
 }
 
