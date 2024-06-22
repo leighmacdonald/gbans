@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/docker/docker/api/types/container"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/fs"
@@ -26,8 +27,8 @@ type postgresContainer struct {
 }
 
 func newDB(ctx context.Context) (*postgresContainer, error) {
-	if container != nil {
-		return container, nil
+	if dbContainer != nil {
+		return dbContainer, nil
 	}
 
 	const testInfo = "gbans-test"
@@ -45,6 +46,9 @@ func newDB(ctx context.Context) (*postgresContainer, error) {
 	cont, errContainer := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: testcontainers.ContainerRequest{
 			FromDockerfile: fromDockerfile,
+			HostConfigModifier: func(config *container.HostConfig) {
+				config.AutoRemove = false
+			},
 			Env: map[string]string{
 				"POSTGRES_DB":       dbName,
 				"POSTGRES_USER":     username,

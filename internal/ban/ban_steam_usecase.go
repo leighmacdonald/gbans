@@ -150,26 +150,12 @@ func (s banSteamUsecase) Ban(ctx context.Context, curUser domain.PersonInfo, ori
 		return ban, errors.Join(errBannedPerson, domain.ErrSaveBan)
 	}
 
-	s.discord.SendPayload(domain.ChannelBanLog, discord.BanSteamResponse(bannedPerson))
-
-	updateAppealState := func(reportId int64) error {
-		report, errReport := s.reports.GetReport(ctx, curUser, reportId)
-		if errReport != nil {
-			return errors.Join(errReport, domain.ErrGetBanReport)
-		}
-
-		report.ReportStatus = domain.ClosedWithAction
-		if errSaveReport := s.reports.SaveReport(ctx, &report.Report); errSaveReport != nil {
-			return errors.Join(errSaveReport, domain.ErrReportStateUpdate)
-		}
-
-		return nil
-	}
+	go s.discord.SendPayload(domain.ChannelBanLog, discord.BanSteamResponse(bannedPerson))
 
 	// Close the report if the ban was attached to one
 	if banSteam.ReportID > 0 {
-		if errRep := updateAppealState(banSteam.ReportID); errRep != nil {
-			return ban, errRep
+		if _, errSaveReport := s.reports.SetReportStatus(ctx, banSteam.ReportID, curUser, domain.ClosedWithAction); errSaveReport != nil {
+			return ban, errors.Join(errSaveReport, domain.ErrReportStateUpdate)
 		}
 	}
 

@@ -307,7 +307,7 @@ func DeleteReportMessage(existing domain.ReportMessage, user domain.PersonInfo, 
 	return msgEmbed.AddAuthorPersonInfo(user, userURL).Embed().Truncate().MessageEmbed
 }
 
-func NewInGameReportResponse(report domain.Report, reportURL string, author domain.PersonInfo, authorURL string, _ string) *discordgo.MessageEmbed {
+func NewInGameReportResponse(report domain.ReportWithAuthor, reportURL string, author domain.PersonInfo, authorURL string, _ string) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed("New User Report Created")
 	msgEmbed.
 		Embed().
@@ -1149,20 +1149,25 @@ func BanIPMessage() *discordgo.MessageEmbed {
 		MessageEmbed
 }
 
-func SetSteamMessage() *discordgo.MessageEmbed {
-	return NewEmbed().Embed().
-		SetTitle("Steam Account Linked").
-		SetDescription("Your steam and discord accounts are now linked").
-		SetColor(ColourSuccess).
-		Truncate().
-		MessageEmbed
-}
-
 func NotificationMessage(message string, link string) *discordgo.MessageEmbed {
 	msgEmbed := NewEmbed("Notification", message)
 	if link != "" {
 		msgEmbed.Embed().SetURL(link)
 	}
+
+	return msgEmbed.Embed().Truncate().MessageEmbed
+}
+
+func ReportStatusChangeMessage(report domain.ReportWithAuthor, fromStatus domain.ReportStatus, link string) *discordgo.MessageEmbed {
+	msgEmbed := NewEmbed(
+		"Report status changed",
+		fmt.Sprintf("Changed from %s to %s", fromStatus.String(), report.ReportStatus.String()),
+		link)
+
+	msgEmbed.Embed().
+		AddField("report_id", strconv.FormatInt(report.ReportID, 10))
+	msgEmbed.AddAuthorPersonInfo(report.Author, link)
+	msgEmbed.AddTargetPerson(report.Subject)
 
 	return msgEmbed.Embed().Truncate().MessageEmbed
 }
