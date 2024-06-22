@@ -48,10 +48,6 @@ func NewPersonHandler(engine *gin.Engine, config domain.ConfigUsecase, persons d
 }
 
 func (h personHandler) onAPIPutPlayerPermission() gin.HandlerFunc {
-	type updatePermissionLevel struct {
-		PermissionLevel domain.Privilege `json:"permission_level"`
-	}
-
 	return func(ctx *gin.Context) {
 		steamID, errParam := httphelper.GetSID64Param(ctx, "steam_id")
 		if errParam != nil {
@@ -61,7 +57,7 @@ func (h personHandler) onAPIPutPlayerPermission() gin.HandlerFunc {
 			return
 		}
 
-		var req updatePermissionLevel
+		var req domain.RequestPermissionLevelUpdate
 		if !httphelper.Bind(ctx, &req) {
 			return
 		}
@@ -152,15 +148,11 @@ func (h personHandler) onAPICurrentProfile() gin.HandlerFunc {
 }
 
 func (h personHandler) onAPIProfile() gin.HandlerFunc {
-	type profileQuery struct {
-		Query string `url:"query"`
-	}
-
 	return func(ctx *gin.Context) {
 		requestCtx, cancelRequest := context.WithTimeout(ctx, time.Second*15)
 		defer cancelRequest()
 
-		var req profileQuery
+		var req domain.RequestQuery
 		if !httphelper.BindQuery(ctx, &req) {
 			return
 		}

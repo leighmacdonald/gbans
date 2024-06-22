@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/go-querystring/query"
 	"github.com/leighmacdonald/gbans/internal/app"
 	"github.com/leighmacdonald/gbans/internal/appeal"
 	"github.com/leighmacdonald/gbans/internal/asset"
@@ -188,6 +189,7 @@ func testRouter() *gin.Engine {
 	if errRouter != nil {
 		panic(errRouter)
 	}
+
 	ban.NewBanHandler(router, banSteamUC, discordUC, personUC, configUC, authUC)
 	ban.NewBanNetHandler(router, banNetUC, authUC)
 	ban.NewBanASNHandler(router, banASNUC, authUC)
@@ -200,6 +202,7 @@ func testRouter() *gin.Engine {
 	report.NewReportHandler(router, reportUC, authUC)
 	appeal.NewAppealHandler(router, appealUC, banSteamUC, configUC, personUC, discordUC, authUC)
 	wordfilter.NewWordFilterHandler(router, configUC, wordFilterUC, chatUC, authUC)
+	person.NewPersonHandler(router, configUC, personUC, authUC)
 
 	return router
 }
@@ -233,6 +236,15 @@ func testEndpoint(t *testing.T, router *gin.Engine, method string, path string, 
 		}
 
 		bodyReader = bytes.NewReader(bodyJSON)
+	}
+
+	if body != nil && method == http.MethodGet {
+		values, err := query.Values(body)
+		if err != nil {
+			t.Fatalf("failed to encode values: %v", err)
+		}
+
+		path += "?" + values.Encode()
 	}
 
 	request, errRequest := http.NewRequestWithContext(reqCtx, method, path, bodyReader)

@@ -50,6 +50,10 @@ type PersonRepository interface {
 	SavePersonSettings(ctx context.Context, settings *PersonSettings) error
 }
 
+type RequestPermissionLevelUpdate struct {
+	PermissionLevel Privilege `json:"permission_level"`
+}
+
 type PersonInfo interface {
 	GetDiscordID() string
 	GetName() string
