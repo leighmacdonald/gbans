@@ -30,7 +30,7 @@ type WordFilterUsecase interface {
 }
 
 type RequestQuery struct {
-	Query string
+	Query string `json:"query" url:"query"`
 }
 
 type FilterAction int

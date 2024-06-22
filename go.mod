@@ -9,6 +9,7 @@ require (
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/austinbspencer/patreon-go-wrapper v1.0.2
 	github.com/bwmarrin/discordgo v0.28.1
+	github.com/docker/docker v25.0.5+incompatible
 	github.com/dotse/slug v0.1.0
 	github.com/dustin/go-humanize v1.0.1
 	github.com/gabriel-vasile/mimetype v1.4.4
@@ -21,6 +22,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/golang-migrate/migrate/v4 v4.17.1
 	github.com/gomarkdown/markdown v0.0.0-20240419095408-642f0ee99ae2
+	github.com/google/go-querystring v1.1.0
 	github.com/gorilla/schema v1.4.0
 	github.com/jackc/pgerrcode v0.0.0-20240316143900-6e2875d9b438
 	github.com/jackc/pgtype v1.14.3
@@ -44,7 +46,6 @@ require (
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
 	github.com/testcontainers/testcontainers-go v0.31.0
-	github.com/testcontainers/testcontainers-go/modules/postgres v0.31.0
 	github.com/unrolled/secure v1.14.0
 	github.com/viant/afs v1.25.1
 	github.com/yohcop/openid-go v1.0.1
@@ -72,7 +73,6 @@ require (
 	github.com/cpuguy83/dockercfg v0.3.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/distribution/reference v0.5.0 // indirect
-	github.com/docker/docker v25.0.5+incompatible // indirect
 	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
@@ -142,7 +142,6 @@ require (
 	github.com/spf13/afero v1.11.0 // indirect
 	github.com/spf13/cast v1.6.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
