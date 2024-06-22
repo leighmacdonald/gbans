@@ -26,17 +26,17 @@ func (f *WordFilters) Import(filters []domain.Filter) {
 	f.wordFilters = filters
 }
 
-func (f *WordFilters) Add(filter *domain.Filter) {
+func (f *WordFilters) Add(filter domain.Filter) {
 	f.Lock()
-	f.wordFilters = append(f.wordFilters, *filter)
+	f.wordFilters = append(f.wordFilters, filter)
 	f.Unlock()
 }
 
 // Match checks to see if the body of text contains a known filtered word
 // It will only return the first matched filter found.
-func (f *WordFilters) Match(body string) (string, *domain.Filter) {
+func (f *WordFilters) Match(body string) (string, domain.Filter, bool) {
 	if body == "" {
-		return "", nil
+		return "", domain.Filter{}, false
 	}
 
 	words := strings.Split(strings.ToLower(body), " ")
@@ -47,12 +47,12 @@ func (f *WordFilters) Match(body string) (string, *domain.Filter) {
 	for _, filter := range f.wordFilters {
 		for _, word := range words {
 			if filter.IsEnabled && filter.Match(word) {
-				return word, &filter
+				return word, filter, true
 			}
 		}
 	}
 
-	return "", nil
+	return "", domain.Filter{}, false
 }
 
 func (f *WordFilters) Remove(filterID int64) {

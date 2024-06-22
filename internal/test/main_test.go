@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -81,6 +82,8 @@ var (
 )
 
 func TestMain(m *testing.M) {
+	slog.SetDefault(slog.New(slog.NewTextHandler(io.Discard, nil)))
+
 	testCtx, cancel := context.WithTimeout(context.Background(), time.Minute*2)
 	defer cancel()
 
@@ -196,6 +199,7 @@ func testRouter() *gin.Engine {
 	config.NewConfigHandler(router, configUC, authUC, app.Version())
 	report.NewReportHandler(router, reportUC, authUC)
 	appeal.NewAppealHandler(router, appealUC, banSteamUC, configUC, personUC, discordUC, authUC)
+	wordfilter.NewWordFilterHandler(router, configUC, wordFilterUC, chatUC, authUC)
 
 	return router
 }

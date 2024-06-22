@@ -35,7 +35,7 @@ export interface Filter {
 }
 
 export const apiGetFilters = async (abortController?: AbortController) =>
-    await apiCall<Filter[]>(`/api/filters/query`, 'POST', abortController);
+    await apiCall<Filter[]>(`/api/filters`, 'GET', abortController);
 
 export const apiCreateFilter = async (filter: Filter) => await apiCall<Filter>(`/api/filters`, 'POST', filter);
 
