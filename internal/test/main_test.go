@@ -200,7 +200,7 @@ func testRouter() *gin.Engine {
 	votes.NewVoteHandler(router, votesUC, authUC)
 	config.NewConfigHandler(router, configUC, authUC, app.Version())
 	report.NewReportHandler(router, reportUC, authUC)
-	appeal.NewAppealHandler(router, appealUC, banSteamUC, configUC, personUC, discordUC, authUC)
+	appeal.NewAppealHandler(router, appealUC, authUC)
 	wordfilter.NewWordFilterHandler(router, configUC, wordFilterUC, chatUC, authUC)
 	person.NewPersonHandler(router, configUC, personUC, authUC)
 
@@ -305,7 +305,6 @@ func getModerator() domain.Person {
 
 func loginUser(person domain.Person) *domain.UserTokens {
 	conf := configUC.Config()
-
 	fingerprint := stringutil.SecureRandomString(40)
 
 	accessToken, errAccess := authUC.NewUserToken(person.SteamID, conf.HTTPCookieKey, fingerprint, domain.AuthTokenDuration)
@@ -319,7 +318,6 @@ func loginUser(person domain.Person) *domain.UserTokens {
 	}
 
 	personAuth := domain.NewPersonAuth(person.SteamID, ipAddr, accessToken)
-
 	if saveErr := authRepo.SavePersonAuth(context.Background(), &personAuth); saveErr != nil {
 		panic(saveErr)
 	}
