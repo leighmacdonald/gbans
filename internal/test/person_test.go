@@ -21,9 +21,9 @@ func TestPerson(t *testing.T) {
 	require.Equal(t, source.SteamID, prof.Player.SteamID)
 	require.NotEmpty(t, prof.Player.AvatarHash)
 
-	var up domain.UserProfile
-	testEndpointWithReceiver(t, router, http.MethodGet, "/api/current_profile", nil, http.StatusOK, sourceAuth, &up)
-	require.Equal(t, source.SteamID, up.SteamID)
+	var profile domain.UserProfile
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/current_profile", nil, http.StatusOK, sourceAuth, &profile)
+	require.Equal(t, source.SteamID, profile.SteamID)
 
 	var settings domain.PersonSettings
 	testEndpointWithReceiver(t, router, http.MethodGet, "/api/current_profile/settings", nil, http.StatusOK, sourceAuth, &settings)
@@ -49,7 +49,7 @@ func TestPerson(t *testing.T) {
 
 	newPerms := domain.RequestPermissionLevelUpdate{PermissionLevel: domain.PModerator}
 	var newMod domain.Person
-	testEndpointWithReceiver(t, router, http.MethodPut, fmt.Sprintf("/api/player/%s/permissions", up.SteamID.String()), newPerms, http.StatusOK, adminAuth, &newMod)
+	testEndpointWithReceiver(t, router, http.MethodPut, fmt.Sprintf("/api/player/%s/permissions", profile.SteamID.String()), newPerms, http.StatusOK, adminAuth, &newMod)
 	require.Equal(t, newPerms.PermissionLevel, newMod.PermissionLevel)
 }
 

@@ -222,7 +222,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			discordOAuthUsecase := discord.NewDiscordOAuthUsecase(discord.NewDiscordOAuthRepository(dbConn), configUsecase)
 			go discordOAuthUsecase.Start(ctx)
 
-			apu := appeal.NewAppealUsecase(appeal.NewAppealRepository(dbConn), banUsecase, personUsecase, discordUsecase, configUsecase)
+			appeals := appeal.NewAppealUsecase(appeal.NewAppealRepository(dbConn), banUsecase, personUsecase, discordUsecase, configUsecase)
 
 			matchRepo := match.NewMatchRepository(eventBroadcaster, dbConn, personUsecase, serversUsecase, discordUsecase, stateUsecase, weaponsMap)
 			go matchRepo.Start(ctx)
@@ -289,7 +289,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				stateUsecase, serversUsecase, configUsecase, networkUsecase, wordFilterUsecase, matchUsecase, banNetUsecase, banASNUsecase)
 			discordHandler.Start(ctx)
 
-			appeal.NewAppealHandler(router, apu, banUsecase, configUsecase, personUsecase, discordUsecase, authUsecase)
+			appeal.NewAppealHandler(router, appeals, authUsecase)
 			auth.NewAuthHandler(router, authUsecase, configUsecase, personUsecase)
 			ban.NewBanHandler(router, banUsecase, discordUsecase, personUsecase, configUsecase, authUsecase)
 			ban.NewBanNetHandler(router, banNetUsecase, authUsecase)

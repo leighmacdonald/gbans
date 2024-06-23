@@ -66,12 +66,16 @@ func (u *appeals) EditBanMessage(ctx context.Context, curUser domain.UserProfile
 }
 
 func (u *appeals) CreateBanMessage(ctx context.Context, curUser domain.UserProfile, banID int64, newMsg string) (domain.BanAppealMessage, error) {
+	if banID <= 0 {
+		return domain.BanAppealMessage{}, domain.ErrInvalidParameter
+	}
+
 	if !httphelper.HasPrivilege(curUser, steamid.Collection{curUser.GetSteamID()}, domain.PModerator) {
 		return domain.BanAppealMessage{}, domain.ErrPermissionDenied
 	}
 
 	if newMsg == "" {
-		return domain.BanAppealMessage{}, domain.ErrBadRequest
+		return domain.BanAppealMessage{}, domain.ErrInvalidParameter
 	}
 
 	bannedPerson, errReport := u.bans.GetByBanID(ctx, banID, true, true)
