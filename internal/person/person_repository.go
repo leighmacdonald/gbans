@@ -168,7 +168,9 @@ func (r *personRepository) GetPersonBySteamID(ctx context.Context, sid64 steamid
 	}
 
 	person.IsNew = false
-	person.PlayerSummary = &steamweb.PlayerSummary{}
+	person.PlayerSummary = &steamweb.PlayerSummary{
+		SteamID: sid64,
+	}
 	person.SteamID = sid64
 
 	if err := r.db.DBErr(row.Scan(&person.CreatedOn,

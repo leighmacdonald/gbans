@@ -2,7 +2,6 @@ package person
 
 import (
 	"context"
-	"errors"
 	"log/slog"
 	"net/http"
 	"time"
@@ -62,26 +61,19 @@ func (h personHandler) onAPIPutPlayerPermission() gin.HandlerFunc {
 			return
 		}
 
-		person, errPerson := h.persons.GetPersonBySteamID(ctx, steamID)
-		if errPerson != nil {
-			if errors.Is(errPerson, domain.ErrNoResult) {
-				httphelper.HandleErrNotFound(ctx)
-
-				return
-			}
-
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to load person by steam id", log.ErrAttr(errPerson))
+		if err := h.persons.SetPermissionLevel(ctx, steamID, req.PermissionLevel); err != nil {
+			httphelper.HandleErrs(ctx, err)
+			slog.Error("Failed to set permission level", log.ErrAttr(err),
+				slog.Int("level", int(req.PermissionLevel)), slog.String("steam_id", steamID.String()))
 
 			return
 		}
 
-		// todo move logic to usecase
-		person.PermissionLevel = req.PermissionLevel
-
-		if errSave := h.persons.SavePerson(ctx, &person); errSave != nil {
-			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to save person", log.ErrAttr(errSave))
+		person, errPerson := h.persons.GetPersonBySteamID(ctx, steamID)
+		if errPerson != nil {
+			httphelper.HandleErrs(ctx, errParam)
+			slog.Error("Failed to load new person", log.ErrAttr(errParam),
+				slog.Int("level", int(req.PermissionLevel)), slog.String("steam_id", steamID.String()))
 
 			return
 		}
