@@ -1,7 +1,6 @@
 package test_test
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"testing"
@@ -13,38 +12,21 @@ import (
 
 func TestAppeal(t *testing.T) {
 	router := testRouter()
-	target := getUser()
-	targetAuth := loginUser(target)
+
+	targetAuth := loginUser(testTarget)
 
 	mod := getModerator()
 	modAuth := loginUser(mod)
 
-	// Create a valid ban_id
-	bannedPerson, errBan := banSteamUC.Ban(context.Background(), mod, domain.System, domain.RequestBanSteamCreate{
-		SourceIDField:  domain.SourceIDField{SourceID: mod.SteamID.String()},
-		TargetIDField:  domain.TargetIDField{TargetID: target.SteamID.String()},
-		Duration:       "1d",
-		BanType:        domain.Banned,
-		Reason:         domain.Cheating,
-		ReasonText:     "",
-		Note:           "notes",
-		ReportID:       0,
-		DemoName:       "demo-test.dem",
-		DemoTick:       100,
-		IncludeFriends: true,
-		EvadeOk:        true,
-	})
-	require.NoError(t, errBan)
-
 	// Check for no messages
 	var banMessages []domain.BanAppealMessage
-	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/bans/%d/messages", bannedPerson.BanID), nil, http.StatusOK, targetAuth, &banMessages)
+	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/bans/%d/messages", testBan.BanID), nil, http.StatusOK, targetAuth, &banMessages)
 	require.Empty(t, banMessages)
 
 	// Create a message
 	newMessage := domain.RequestMessageBodyMD{BodyMD: stringutil.SecureRandomString(100)}
 	var createdMessage domain.BanAppealMessage
-	testEndpointWithReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/bans/%d/messages", bannedPerson.BanID), newMessage, http.StatusCreated, targetAuth, &createdMessage)
+	testEndpointWithReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/bans/%d/messages", testBan.BanID), newMessage, http.StatusCreated, targetAuth, &createdMessage)
 	require.Equal(t, newMessage.BodyMD, createdMessage.MessageMD)
 
 	// Try and create a message as non target user or mod
@@ -57,7 +39,7 @@ func TestAppeal(t *testing.T) {
 	require.NotEmpty(t, appeals)
 
 	// Get messages
-	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/bans/%d/messages", bannedPerson.BanID), nil, http.StatusOK, modAuth, &banMessages)
+	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/bans/%d/messages", testBan.BanID), nil, http.StatusOK, modAuth, &banMessages)
 	require.NotEmpty(t, banMessages)
 
 	// Edit the message
@@ -70,7 +52,7 @@ func TestAppeal(t *testing.T) {
 	testEndpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/bans/message/%d", createdMessage.BanMessageID), nil, http.StatusOK, modAuth)
 
 	// Confirm delete
-	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/bans/%d/messages", bannedPerson.BanID), nil, http.StatusOK, modAuth, &banMessages)
+	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/bans/%d/messages", testBan.BanID), nil, http.StatusOK, modAuth, &banMessages)
 	require.Empty(t, banMessages)
 }
 

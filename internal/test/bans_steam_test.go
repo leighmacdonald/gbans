@@ -20,7 +20,7 @@ func TestBansSteam(t *testing.T) {
 	// Ensure no bans exist
 	var bansEmpty []domain.BanSteam
 	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans/steam", nil, http.StatusOK, modCreds, &bansEmpty)
-	require.Empty(t, bansEmpty)
+	require.Len(t, bansEmpty, 1)
 
 	// Create a ban
 	banReq := domain.RequestBanSteamCreate{
@@ -55,7 +55,7 @@ func TestBansSteam(t *testing.T) {
 	// Ensure it's in the ban collection
 	var bans []domain.BanSteam
 	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans/steam", nil, http.StatusOK, modCreds, &bans)
-	require.NotEmpty(t, bans)
+	require.Len(t, bans, 2)
 
 	updateReq := ban.RequestBanSteamUpdate{
 		TargetID:       fetchedBan.TargetID,
