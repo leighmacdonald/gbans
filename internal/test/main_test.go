@@ -54,6 +54,8 @@ import (
 var (
 	dbContainer    *postgresContainer
 	testServer     domain.Server
+	testBan        domain.BannedSteamPerson
+	testTarget     domain.Person
 	configUC       domain.ConfigUsecase
 	wikiUC         domain.WikiUsecase
 	personUC       domain.PersonUsecase
@@ -175,6 +177,32 @@ func TestMain(m *testing.M) {
 	}
 
 	testServer = server
+
+	mod := getModerator()
+	target := getUser()
+
+	// Create a valid ban_id
+	bannedPerson, errBan := banSteamUC.Ban(context.Background(), mod, domain.System, domain.RequestBanSteamCreate{
+		SourceIDField:  domain.SourceIDField{SourceID: mod.SteamID.String()},
+		TargetIDField:  domain.TargetIDField{TargetID: target.SteamID.String()},
+		Duration:       "1d",
+		BanType:        domain.Banned,
+		Reason:         domain.Cheating,
+		ReasonText:     "",
+		Note:           "notes",
+		ReportID:       0,
+		DemoName:       "demo-test.dem",
+		DemoTick:       100,
+		IncludeFriends: true,
+		EvadeOk:        true,
+	})
+
+	if errBan != nil {
+		panic(errBan)
+	}
+
+	testBan = bannedPerson
+	testTarget = target
 
 	m.Run()
 }
