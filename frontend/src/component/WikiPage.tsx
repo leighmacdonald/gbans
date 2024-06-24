@@ -70,6 +70,9 @@ export const WikiPage = ({ slug = 'home', path }: { slug: string; path: '/_guest
             setEditMode(false);
             mdEditorRef.current?.setMarkdown('');
             sendFlash('success', `Updated ${slug} successfully. Revision: ${savedPage.revision}`);
+        },
+        onError: (error) => {
+            sendFlash('error', `Error trying to save: ${error.message}`);
         }
     });
 
@@ -85,6 +88,7 @@ export const WikiPage = ({ slug = 'home', path }: { slug: string; path: '/_guest
     });
 
     if (editMode) {
+        console.log(page);
         return (
             <ContainerWithHeaderAndButtons title={`Editing: ${slug}`} iconLeft={<EditIcon />}>
                 <form
@@ -134,12 +138,10 @@ export const WikiPage = ({ slug = 'home', path }: { slug: string; path: '/_guest
                         </Grid>
                         <Grid xs={12}>
                             <Subscribe
-                                key={'edit-form-buttons'}
                                 selector={(state) => [state.canSubmit, state.isSubmitting]}
                                 children={([canSubmit, isSubmitting]) => {
                                     return (
                                         <Buttons
-                                            key={'edit-buttons'}
                                             reset={reset}
                                             canSubmit={canSubmit}
                                             isSubmitting={isSubmitting}
