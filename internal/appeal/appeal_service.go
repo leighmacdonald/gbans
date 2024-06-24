@@ -41,7 +41,7 @@ func (h *appealHandler) onAPIGetBanMessages() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		banID, errParam := httphelper.GetInt64Param(ctx, "ban_id")
 		if errParam != nil {
-			httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrInvalidParameter)
+			httphelper.ResponseApiErr(ctx, http.StatusNotFound, domain.ErrInvalidParameter)
 			slog.Warn("Got invalid ban_id parameter", log.ErrAttr(errParam), log.HandlerName(2))
 
 			return
@@ -102,7 +102,7 @@ func (h *appealHandler) editBanMessage() gin.HandlerFunc {
 
 		msg, errSave := h.appealUsecase.EditBanMessage(ctx, curUser, reportMessageID, req.BodyMD)
 		if errSave != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			slog.Error("Failed to save ban appeal message", log.ErrAttr(errSave), log.HandlerName(2))
 
 			return
@@ -143,7 +143,7 @@ func (h *appealHandler) onAPIGetAppeals() gin.HandlerFunc {
 
 		bans, errBans := h.appealUsecase.GetAppealsByActivity(ctx, req)
 		if errBans != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			slog.Error("Failed to fetch appeals", log.ErrAttr(errBans))
 
 			return

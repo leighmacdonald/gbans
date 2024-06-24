@@ -65,7 +65,7 @@ func (h networkHandler) onAPIQueryNetwork() gin.HandlerFunc {
 		details, err := h.networks.QueryNetwork(ctx, req.IP)
 		if err != nil {
 			slog.Error("Failed to query connection history", log.ErrAttr(err))
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}

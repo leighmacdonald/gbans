@@ -86,7 +86,7 @@ func (b *blocklistHandler) onAPICreateWhitelistSteam() gin.HandlerFunc {
 
 		steamID, ok := req.SteamID(ctx)
 		if !ok {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidSID)
+			httphelper.ResponseApiErr(ctx, http.StatusBadRequest, domain.ErrInvalidSID)
 			slog.Warn("Got invalid steamid", slog.String("steam_id", req.SteamIDValue))
 
 			return
@@ -232,7 +232,7 @@ func (b *blocklistHandler) onAPIPostBlockListUpdate() gin.HandlerFunc {
 
 		blockSource, errUpdate := b.blocklists.UpdateCIDRBlockSource(ctx, sourceID, req.Name, req.URL, req.Enabled)
 		if errUpdate != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}

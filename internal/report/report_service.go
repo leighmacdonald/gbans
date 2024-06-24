@@ -1,6 +1,7 @@
 package report
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 
@@ -57,6 +58,12 @@ func (h reportHandler) onAPIPostReportCreate() gin.HandlerFunc {
 
 		report, errReportSave := h.reports.SaveReport(ctx, currentUser, req)
 		if errReportSave != nil {
+			if errors.Is(errReportSave, domain.ErrReportExists) {
+				httphelper.ResponseApiErr(ctx, http.StatusConflict, domain.ErrReportExists)
+
+				return
+			}
+
 			httphelper.HandleErrs(ctx, errReportSave)
 			slog.Error("Failed to save report", log.ErrAttr(errReportSave))
 

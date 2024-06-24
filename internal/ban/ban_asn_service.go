@@ -64,7 +64,7 @@ func (h banASNHandler) onAPIGetBansASN() gin.HandlerFunc {
 
 		bansASN, errBans := h.banASN.Get(ctx, req)
 		if errBans != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			slog.Error("Failed to fetch banASN", log.ErrAttr(errBans))
 
 			return
@@ -78,7 +78,7 @@ func (h banASNHandler) onAPIDeleteBansASN() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		asnID, asnIDErr := httphelper.GetInt64Param(ctx, "asn_id")
 		if asnIDErr != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.ResponseApiErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
 
 			return
 		}
@@ -103,7 +103,7 @@ func (h banASNHandler) onAPIPostBansASNUpdate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		asnID, asnIDErr := httphelper.GetInt64Param(ctx, "asn_id")
 		if asnIDErr != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.ResponseApiErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
 
 			return
 		}
