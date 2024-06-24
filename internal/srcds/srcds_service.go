@@ -398,7 +398,7 @@ func (s *srcdsHandler) onDeleteGroupOverride() gin.HandlerFunc {
 
 		if err := s.srcds.DelGroupOverride(ctx, groupOverrideID); err != nil {
 			if errors.Is(err, domain.ErrNoResult) {
-				httphelper.ResponseErr(ctx, http.StatusNotFound, domain.ErrNotFound)
+				httphelper.ResponseApiErr(ctx, http.StatusNotFound, domain.ErrNotFound)
 
 				return
 			}
@@ -862,12 +862,12 @@ func (s *srcdsHandler) onAPIPostBanSteamCreate() gin.HandlerFunc {
 		ban, errBan := s.bans.Ban(ctx, httphelper.CurrentUserProfile(ctx), domain.InGame, req)
 		if errBan != nil {
 			if errors.Is(errBan, domain.ErrDuplicate) {
-				httphelper.ResponseErr(ctx, http.StatusConflict, domain.ErrDuplicate)
+				httphelper.ResponseApiErr(ctx, http.StatusConflict, domain.ErrDuplicate)
 
 				return
 			}
 
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			slog.Error("Failed to save new steam ban", log.ErrAttr(errBan))
 
 			return

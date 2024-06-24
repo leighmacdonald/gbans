@@ -37,7 +37,7 @@ func (h banNetHandler) onAPIExportBansValveIP() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		bans, errBans := h.bans.Get(ctx, domain.CIDRBansQueryFilter{})
 		if errBans != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
@@ -87,7 +87,7 @@ func (h banNetHandler) onAPIPostBansCIDRCreate() gin.HandlerFunc {
 
 		if errBanCIDR := domain.NewBanCIDR(sid, targetID, duration, req.Reason, req.ReasonText, req.Note, domain.Web,
 			req.CIDR, domain.Banned, &banCIDR); errBanCIDR != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.ResponseApiErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 			slog.Warn("Failed to create new ban cidr", log.ErrAttr(errBanCIDR))
 
 			return
@@ -95,12 +95,12 @@ func (h banNetHandler) onAPIPostBansCIDRCreate() gin.HandlerFunc {
 
 		if errBan := h.bans.Ban(ctx, &banCIDR); errBan != nil {
 			if errors.Is(errBan, domain.ErrDuplicate) {
-				httphelper.ResponseErr(ctx, http.StatusConflict, domain.ErrDuplicate)
+				httphelper.ResponseApiErr(ctx, http.StatusConflict, domain.ErrDuplicate)
 
 				return
 			}
 
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			slog.Error("Failed to save cidr ban", log.ErrAttr(errBan))
 
 			return
@@ -124,7 +124,7 @@ func (h banNetHandler) onAPIGetBansCIDR() gin.HandlerFunc {
 
 		bans, errBans := h.bans.Get(ctx, req)
 		if errBans != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			slog.Error("Failed to fetch cidr bans", log.ErrAttr(errBans))
 
 			return
@@ -138,7 +138,7 @@ func (h banNetHandler) onAPIDeleteBansCIDR() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		netID, netIDErr := httphelper.GetInt64Param(ctx, "net_id")
 		if netIDErr != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.ResponseApiErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
 
 			return
 		}
@@ -164,7 +164,7 @@ func (h banNetHandler) onAPIPostBansCIDRUpdate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		netID, banIDErr := httphelper.GetInt64Param(ctx, "net_id")
 		if banIDErr != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.ResponseApiErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
 
 			return
 		}

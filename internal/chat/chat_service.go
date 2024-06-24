@@ -44,7 +44,7 @@ func (h chatHandler) onAPIQueryMessages() gin.HandlerFunc {
 		if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
 			slog.Error("Failed to query messages history",
 				log.ErrAttr(errChat), slog.String("sid", req.SourceID))
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
@@ -57,7 +57,7 @@ func (h chatHandler) onAPIQueryMessageContext() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		messageID, errMessageID := httphelper.GetInt64Param(ctx, "person_message_id")
 		if errMessageID != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.ResponseApiErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
 			slog.Debug("Got invalid person_message_id", log.ErrAttr(errMessageID))
 
 			return
@@ -65,7 +65,7 @@ func (h chatHandler) onAPIQueryMessageContext() gin.HandlerFunc {
 
 		padding, errPadding := httphelper.GetIntParam(ctx, "padding")
 		if errPadding != nil {
-			httphelper.ResponseErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.ResponseApiErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 			slog.Debug("Got invalid padding", log.ErrAttr(errPadding))
 
 			return
@@ -73,7 +73,7 @@ func (h chatHandler) onAPIQueryMessageContext() gin.HandlerFunc {
 
 		messages, errQuery := h.chat.GetPersonMessageContext(ctx, messageID, padding)
 		if errQuery != nil {
-			httphelper.ResponseErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
