@@ -36,7 +36,7 @@ function Index() {
                 </Grid>
                 <Grid xs={12} sm={12} md={3}>
                     <Stack spacing={3}>
-                        {profile.ban_id == 0 && appInfo.servers_enabled && (
+                        {profile && profile.ban_id == 0 && appInfo.servers_enabled && (
                             <Button
                                 startIcon={<StorageIcon />}
                                 fullWidth
@@ -49,7 +49,7 @@ function Index() {
                                 Play Now!
                             </Button>
                         )}
-                        {profile.ban_id != 0 && appInfo.reports_enabled && (
+                        {profile && profile.ban_id != 0 && appInfo.reports_enabled && (
                             <Button
                                 startIcon={<SupportIcon />}
                                 fullWidth
