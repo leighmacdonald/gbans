@@ -77,7 +77,7 @@ var (
 	ErrSelfReport               = errors.New("cannot self report")
 	ErrUUIDCreate               = errors.New("failed to generate new uuid")
 	ErrUUIDInvalid              = errors.New("invalid uuid")
-	ErrReportExists             = errors.New("cannot create report while existing report open")
+	ErrReportExists             = errors.New("cannot create report while existing report open against player")
 	ErrInvalidFormat            = errors.New("invalid format")
 	ErrEmptyToken               = errors.New("invalid Access token decoded")
 	ErrContestLoadEntries       = errors.New("failed to load existing contest entries")
