@@ -41,7 +41,6 @@ import {
     banReasonsCollection,
     CreateReportRequest,
     PlayerProfile,
-    ReportStatus,
     reportStatusString,
     ReportWithAuthor
 } from '../api';
@@ -58,6 +57,7 @@ import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { MarkdownField, mdEditorRef } from '../component/field/MarkdownField.tsx';
 import { SteamIDField } from '../component/field/SteamIDField.tsx';
+import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { commonTableSearchSchema, initPagination, RowsPerPage } from '../util/table.ts';
 import { makeSteamidValidators } from '../util/validator/makeSteamidValidators.ts';
 
@@ -65,7 +65,6 @@ const reportSchema = z.object({
     ...commonTableSearchSchema,
     rows: z.number().optional(),
     sortColumn: z.enum(['report_status', 'created_on']).optional(),
-    report_status: z.nativeEnum(ReportStatus).optional(),
     steam_id: z.string().optional(),
     demo_id: z.number({ coerce: true }).optional(),
     person_message_id: z.number().optional()
@@ -262,6 +261,7 @@ const validationSchema = z.object({
 export const ReportCreateForm = (): JSX.Element => {
     const { demo_id, steam_id, person_message_id } = Route.useSearch();
     const [validatedProfile, setValidatedProfile] = useState<PlayerProfile>();
+    const { sendFlash } = useUserFlashCtx();
 
     const mutation = useMutation({
         mutationFn: async (variables: CreateReportRequest) => {
@@ -270,6 +270,10 @@ export const ReportCreateForm = (): JSX.Element => {
         onSuccess: async (data) => {
             mdEditorRef.current?.setMarkdown('');
             await navigate({ to: '/report/$reportId', params: { reportId: String(data.report_id) } });
+            sendFlash('success', 'Created report successfully');
+        },
+        onError: (error) => {
+            sendFlash('error', `Error trying to create report: ${error.message}`);
         }
     });
 
@@ -407,6 +411,7 @@ export const ReportCreateForm = (): JSX.Element => {
                             <Grid md={6}>
                                 <form.Field
                                     name={'demo_id'}
+                                    validators={{ onChange: z.number({ coerce: true }).optional() }}
                                     children={({ state, handleChange, handleBlur }) => {
                                         return (
                                             <TextField
@@ -450,9 +455,6 @@ export const ReportCreateForm = (): JSX.Element => {
                     <Grid xs={12}>
                         <form.Field
                             name={'body_md'}
-                            validators={{
-                                onChange: z.string().min(4, 'Body must contain at least 4 characters')
-                            }}
                             children={(props) => {
                                 return <MarkdownField {...props} label={'Message (Markdown)'} />;
                             }}
