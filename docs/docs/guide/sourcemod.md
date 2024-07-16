@@ -37,6 +37,27 @@ It's recommended, but not required, to create a secondary less-privileged user, 
 gbans instance. Below is an example of creating a restricted user that only has access to the tables, and functions, required
 for operation.
 
+If you are using the official docker images, you must ensure that you enable the md5 authentication method when creating
+the image. This can be achieved by defining the env var `POSTGRES_HOST_AUTH_METHOD=md5` when building your image. This
+will automatically apply the following values under your `pg_hba.conf`.
+
+```
+host all all all md5
+```
+
+If you are not using docker, you can of course just manually edit this file. Its usually located at `/var/lib/postgresql/data/pg_hba.conf`.
+
+Note that this is only the default method and you should consider a more restrictive set of parameters, such as limiting the database, role and hosts
+that are allowed to connect. For example, we could restrict access like so:
+
+```
+host gbans sourcemod 10.20.30.0/24 md5
+```
+
+See the postgres docs on [pg_hba.conf](https://www.postgresql.org/docs/current/auth-pg-hba-conf.html) for more details.
+
+With md5 auth setup, you can now create a role for sourcemod:
+
 ```sql
 CREATE ROLE sourcemod WITH LOGIN PASSWORD '<your-password>';
 GRANT CONNECT ON DATABASE gbans TO sourcemod;
@@ -53,7 +74,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON sm_cookie_cache, sm_cookies TO sourcemod
 GRANT EXECUTE ON FUNCTION check_ban TO sourcemod;
 ```
 
-Now you can setup your sourcemod databases.cfg with this user.
+Next you can setup your sourcemod databases.cfg with this user.
 
 ```
     "Databases"
