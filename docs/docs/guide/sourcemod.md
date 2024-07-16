@@ -31,7 +31,7 @@ This covers functionality available through the gbans plugin as well as some rec
 | gb_stv_path          | stv_demos/active   | Path to store currently recording demos                 |
 | gb_stv_path_complete | stv_demos/complete | Path to store complete demos                            |
 
-## Creating a sourcemod database user
+## Creating a sourcemod database user for clientprefs
 
 It's recommended, but not required, to create a secondary less-privileged user, especially when using servers remote to the
 gbans instance. Below is an example of creating a restricted user that only has access to the tables, and functions, required
@@ -71,6 +71,8 @@ GRANT SELECT ON
     steam_friends, steam_group_members,
     net_asn TO sourcemod;
 GRANT SELECT, INSERT, UPDATE, DELETE ON sm_cookie_cache, sm_cookies TO sourcemod;
+GRANT CREATE ON SCHEMA public TO sourcemod; -- extension will bail if not set it seems :(.
+GRANT USAGE, SELECT ON SEQUENCE sm_cookies_id_seq TO sourcemod;
 GRANT EXECUTE ON FUNCTION check_ban TO sourcemod;
 ```
 
