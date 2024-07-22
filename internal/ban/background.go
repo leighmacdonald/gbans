@@ -73,7 +73,9 @@ func Start(ctx context.Context, bansSteam domain.BanSteamUsecase, bansNet domain
 					for _, expiredNetBan := range expiredNetBans {
 						expiredBan := expiredNetBan
 						if errDropBanNet := bansNet.Delete(ctx, expiredNetBan.NetID, domain.RequestUnban{UnbanReasonText: "Expired"}, false); errDropBanNet != nil {
-							slog.Error("Failed to drop expired network expiredNetBan", log.ErrAttr(errDropBanNet))
+							if !errors.Is(errDropBanNet, domain.ErrNoResult) {
+								slog.Error("Failed to drop expired network expiredNetBan", log.ErrAttr(errDropBanNet))
+							}
 						} else {
 							slog.Info("IP ban expired", slog.String("cidr", expiredBan.String()), slog.Int64("net_id", expiredNetBan.NetID))
 						}

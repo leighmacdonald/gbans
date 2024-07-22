@@ -189,6 +189,7 @@ type GroupBansQueryFilter struct {
 }
 
 type SteamBansQueryFilter struct {
+	TargetIDField
 	Deleted bool `schema:"deleted"`
 }
 
@@ -202,7 +203,7 @@ type AppealQueryFilter struct {
 }
 
 type SteamIDField struct {
-	SteamIDValue string `json:"steam_id"` //nolint:tagliatelle
+	SteamIDValue string `json:"steam_id"  url:"steam_id"` //nolint:tagliatelle
 }
 
 func (f SteamIDField) SteamID(ctx context.Context) (steamid.SteamID, bool) {
@@ -219,7 +220,7 @@ func (f SteamIDField) SteamID(ctx context.Context) (steamid.SteamID, bool) {
 }
 
 type SourceIDField struct {
-	SourceID string `json:"source_id"`
+	SourceID string `json:"source_id"  url:"source_id"`
 }
 
 func (f SourceIDField) SourceSteamID(ctx context.Context) (steamid.SteamID, bool) {
@@ -236,7 +237,7 @@ func (f SourceIDField) SourceSteamID(ctx context.Context) (steamid.SteamID, bool
 }
 
 type TargetIDField struct {
-	TargetID string `json:"target_id"`
+	TargetID string `json:"target_id" url:"target_id"`
 }
 
 func (f TargetIDField) TargetSteamID(ctx context.Context) (steamid.SteamID, bool) {
@@ -253,7 +254,7 @@ func (f TargetIDField) TargetSteamID(ctx context.Context) (steamid.SteamID, bool
 }
 
 type TargetGIDField struct {
-	GroupID string `json:"group_id"`
+	GroupID string `json:"group_id"  url:"group_id"`
 }
 
 func (f TargetGIDField) TargetGroupID(ctx context.Context) (steamid.SteamID, bool) {

@@ -21,7 +21,7 @@ type APIError struct {
 	Message string `json:"message"`
 }
 
-func ResponseApiErr(ctx *gin.Context, statusCode int, err error) {
+func ResponseAPIErr(ctx *gin.Context, statusCode int, err error) {
 	userErr := "API Error"
 	if err != nil {
 		userErr = err.Error()
@@ -47,8 +47,8 @@ var decoder = schema.NewDecoder() //nolint:gochecknoglobals
 
 func BindQuery(ctx *gin.Context, target any) bool {
 	if errBind := decoder.Decode(target, ctx.Request.URL.Query()); errBind != nil {
-		ResponseApiErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
-		slog.Error("Failed to bind query request", log.ErrAttr(errBind), log.HandlerName(3))
+		HandleErrs(ctx, domain.ErrBadRequest)
+		slog.Error("Failed to bind query request", log.ErrAttr(errBind), log.HandlerName(2))
 
 		return false
 	}

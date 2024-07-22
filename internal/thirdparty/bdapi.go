@@ -4,10 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"io"
-	"log/slog"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -30,9 +28,13 @@ type BDSourceBansRecord struct {
 
 func BDSourceBans(ctx context.Context, steamID steamid.SteamID) (map[int64][]BDSourceBansRecord, error) {
 	client := &http.Client{Timeout: time.Second * 10}
-	url := fmt.Sprintf(bdAPIURL, steamID.String())
+	queryURL, _ := url.Parse(bdAPIURL)
+	query := queryURL.Query()
+	query.Set("steamids", steamID.String())
+	queryURL.RawQuery = query.Encode()
+	fullURL := queryURL.String()
 
-	req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, fullURL, nil)
 	if errReq != nil {
 		return nil, errors.Join(errReq, domain.ErrRequestCreate)
 	}
@@ -48,13 +50,9 @@ func BDSourceBans(ctx context.Context, steamID steamid.SteamID) (map[int64][]BDS
 		_ = resp.Body.Close()
 	}()
 
-	body, _ := io.ReadAll(resp.Body)
+	records := map[int64][]BDSourceBansRecord{}
 
-	slog.Info(string(body))
-
-	var records map[int64][]BDSourceBansRecord
-
-	if errJSON := json.Unmarshal(body, &records); errJSON != nil {
+	if errJSON := json.NewDecoder(resp.Body).Decode(&records); errJSON != nil {
 		return nil, errors.Join(errJSON, domain.ErrRequestDecode)
 	}
 

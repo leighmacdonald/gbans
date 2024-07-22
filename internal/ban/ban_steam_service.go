@@ -70,7 +70,7 @@ func (h banHandler) onAPIPostSetBanAppealStatus() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		banID, banIDErr := httphelper.GetInt64Param(ctx, "ban_id")
 		if banIDErr != nil {
-			httphelper.ResponseApiErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.ResponseAPIErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
 
 			return
 		}
@@ -82,13 +82,13 @@ func (h banHandler) onAPIPostSetBanAppealStatus() gin.HandlerFunc {
 
 		bannedPerson, banErr := h.bansSteam.GetByBanID(ctx, banID, false, true)
 		if banErr != nil {
-			httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
 
 		if bannedPerson.AppealState == req.AppealState {
-			httphelper.ResponseApiErr(ctx, http.StatusConflict, domain.ErrStateUnchanged)
+			httphelper.ResponseAPIErr(ctx, http.StatusConflict, domain.ErrStateUnchanged)
 
 			return
 		}
@@ -97,7 +97,7 @@ func (h banHandler) onAPIPostSetBanAppealStatus() gin.HandlerFunc {
 		bannedPerson.AppealState = req.AppealState
 
 		if errSave := h.bansSteam.Save(ctx, &bannedPerson.BanSteam); errSave != nil {
-			httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
@@ -137,7 +137,7 @@ func (h banHandler) onAPIGetBanByID() gin.HandlerFunc {
 
 		banID, errID := httphelper.GetInt64Param(ctx, "ban_id")
 		if errID != nil || banID == 0 {
-			httphelper.ResponseApiErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.ResponseAPIErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
 
 			return
 		}
@@ -180,7 +180,7 @@ func (h banHandler) onAPIGetSourceBans() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		steamID, errID := httphelper.GetSID64Param(ctx, "steam_id")
 		if errID != nil {
-			httphelper.ResponseApiErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.ResponseAPIErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
 
 			return
 		}
@@ -193,7 +193,14 @@ func (h banHandler) onAPIGetSourceBans() gin.HandlerFunc {
 			return
 		}
 
-		ctx.JSON(http.StatusOK, records)
+		userRecords, found := records[steamID.Int64()]
+		if !found {
+			ctx.JSON(http.StatusOK, []thirdparty.BDSourceBansRecord{})
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, userRecords)
 	}
 }
 
@@ -220,7 +227,7 @@ func (h banHandler) onAPIExportBansValveSteamID() gin.HandlerFunc {
 		if len(authorizedKeys) > 0 {
 			key, ok := ctx.GetQuery("key")
 			if !ok || !slices.Contains(authorizedKeys, key) {
-				httphelper.ResponseApiErr(ctx, http.StatusForbidden, domain.ErrPermissionDenied)
+				httphelper.ResponseAPIErr(ctx, http.StatusForbidden, domain.ErrPermissionDenied)
 
 				return
 			}
@@ -229,7 +236,7 @@ func (h banHandler) onAPIExportBansValveSteamID() gin.HandlerFunc {
 		// TODO limit to perm?
 		bans, errBans := h.bansSteam.Get(ctx, domain.SteamBansQueryFilter{})
 		if errBans != nil {
-			httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
@@ -256,7 +263,7 @@ func (h banHandler) onAPIExportBansTF2BD() gin.HandlerFunc {
 		if len(authorizedKeys) > 0 {
 			key, ok := ctx.GetQuery("key")
 			if !ok || !slices.Contains(authorizedKeys, key) {
-				httphelper.ResponseApiErr(ctx, http.StatusForbidden, domain.ErrPermissionDenied)
+				httphelper.ResponseAPIErr(ctx, http.StatusForbidden, domain.ErrPermissionDenied)
 
 				return
 			}
@@ -265,7 +272,7 @@ func (h banHandler) onAPIExportBansTF2BD() gin.HandlerFunc {
 		bans, errBans := h.bansSteam.Get(ctx, domain.SteamBansQueryFilter{})
 
 		if errBans != nil {
-			httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			return
 		}
@@ -319,7 +326,7 @@ func (h banHandler) onAPIGetBansSteam() gin.HandlerFunc {
 
 		bans, errBans := h.bansSteam.Get(ctx, params)
 		if errBans != nil {
-			httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			slog.Error("Failed to fetch steam bans", log.ErrAttr(errBans))
 
 			return
@@ -345,7 +352,7 @@ func (h banHandler) onAPIGetBansSteamBySteamID() gin.HandlerFunc {
 		}
 		bans, errBans := h.bansSteam.Get(ctx, params)
 		if errBans != nil {
-			httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			slog.Error("Failed to fetch steam bans", log.ErrAttr(errBans))
 
 			return
@@ -359,7 +366,7 @@ func (h banHandler) onAPIPostBanDelete() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		banID, banIDErr := httphelper.GetInt64Param(ctx, "ban_id")
 		if banIDErr != nil {
-			httphelper.ResponseApiErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.ResponseAPIErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
 
 			return
 		}
@@ -390,7 +397,7 @@ func (h banHandler) onAPIPostBanDelete() gin.HandlerFunc {
 		}
 
 		if !changed {
-			httphelper.ResponseApiErr(ctx, http.StatusOK, domain.ErrUnbanFailed)
+			httphelper.ResponseAPIErr(ctx, http.StatusOK, domain.ErrUnbanFailed)
 
 			return
 		}
@@ -414,7 +421,7 @@ func (h banHandler) onAPIPostBanUpdate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		banID, banIDErr := httphelper.GetInt64Param(ctx, "ban_id")
 		if banIDErr != nil {
-			httphelper.ResponseApiErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.ResponseAPIErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
 
 			return
 		}
@@ -425,21 +432,21 @@ func (h banHandler) onAPIPostBanUpdate() gin.HandlerFunc {
 		}
 
 		if time.Since(req.ValidUntil) > 0 {
-			httphelper.ResponseApiErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.ResponseAPIErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 
 			return
 		}
 
 		bannedPerson, banErr := h.bansSteam.GetByBanID(ctx, banID, false, true)
 		if banErr != nil {
-			httphelper.ResponseApiErr(ctx, http.StatusNotFound, domain.ErrNotFound)
+			httphelper.ResponseAPIErr(ctx, http.StatusNotFound, domain.ErrNotFound)
 
 			return
 		}
 
 		if req.Reason == domain.Custom {
 			if req.ReasonText == "" {
-				httphelper.ResponseApiErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+				httphelper.ResponseAPIErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 
 				return
 			}
@@ -457,7 +464,7 @@ func (h banHandler) onAPIPostBanUpdate() gin.HandlerFunc {
 		bannedPerson.ValidUntil = req.ValidUntil
 
 		if errSave := h.bansSteam.Save(ctx, &bannedPerson.BanSteam); errSave != nil {
-			httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			slog.Error("Failed to save updated ban", log.ErrAttr(errSave))
 
 			return
@@ -471,7 +478,7 @@ func (h banHandler) onAPIGetBanBySteam() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		steamID, err := httphelper.GetSID64Param(ctx, "steam_id")
 		if err != nil {
-			httphelper.ResponseApiErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.ResponseAPIErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 			slog.Error("Failed to get steamid", log.ErrAttr(err))
 
 			return
@@ -479,7 +486,7 @@ func (h banHandler) onAPIGetBanBySteam() gin.HandlerFunc {
 
 		ban, errBans := h.bansSteam.GetBySteamID(ctx, steamID, false, false)
 		if errBans != nil && !errors.Is(errBans, domain.ErrNoResult) {
-			httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			slog.Error("Failed to get ban record for steamid", log.ErrAttr(errBans))
 
 			return
