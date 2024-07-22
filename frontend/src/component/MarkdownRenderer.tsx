@@ -66,6 +66,7 @@ export const MarkDownRenderer = ({ body_md, minHeight }: { body_md: string; minH
         <Box padding={2} maxWidth={'100%'} minHeight={minHeight}>
             <MuiMarkdown
                 options={{
+                    disableParsingRawHTML: true,
                     overrides: {
                         ...getOverrides({
                             Highlight,
