@@ -165,7 +165,7 @@ func (h authHandler) onAPILogout() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		fingerprint, errCookie := ctx.Cookie(domain.FingerprintCookieName)
 		if errCookie != nil {
-			httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, nil)
+			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, nil)
 			slog.Warn("Failed to get fingerprint", handlerName)
 
 			return
@@ -184,14 +184,14 @@ func (h authHandler) onAPILogout() gin.HandlerFunc {
 
 		personAuth := domain.PersonAuth{}
 		if errGet := h.authUsecase.GetPersonAuthByRefreshToken(ctx, fingerprint, &personAuth); errGet != nil {
-			httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, nil)
+			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, nil)
 			slog.Warn("Failed to load person via fingerprint", handlerName)
 
 			return
 		}
 
 		if errDelete := h.authUsecase.DeletePersonAuth(ctx, personAuth.PersonAuthID); errDelete != nil {
-			httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, nil)
+			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, nil)
 			slog.Error("Failed to delete person auth on logout", log.ErrAttr(errDelete), handlerName)
 
 			return

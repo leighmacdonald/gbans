@@ -48,7 +48,7 @@ func (h mediaHandler) onAPISaveMedia() gin.HandlerFunc {
 
 		mediaFile, errOpen := req.File.Open()
 		if errOpen != nil {
-			httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			slog.Error("Failed to open form file", log.ErrAttr(errOpen), handlerName)
 
 			return
@@ -60,7 +60,7 @@ func (h mediaHandler) onAPISaveMedia() gin.HandlerFunc {
 
 		media, errMedia := h.assets.Create(ctx, httphelper.CurrentUserProfile(ctx).SteamID, "media", req.Name, mediaFile)
 		if errMedia != nil {
-			httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, errMedia)
+			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, errMedia)
 			slog.Error("Failed to create new asset", log.ErrAttr(errMedia), handlerName)
 
 			return
@@ -76,7 +76,7 @@ func (h mediaHandler) onGetByUUID() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		mediaID, idErr := httphelper.GetUUIDParam(ctx, "asset_id")
 		if idErr != nil {
-			httphelper.ResponseApiErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.ResponseAPIErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
 			slog.Error("Got invalid asset_id", handlerName)
 
 			return
@@ -84,7 +84,7 @@ func (h mediaHandler) onGetByUUID() gin.HandlerFunc {
 
 		asset, reader, errGet := h.assets.Get(ctx, mediaID)
 		if errGet != nil {
-			httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, errGet)
+			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, errGet)
 			slog.Error("Failed to load asset", slog.String("asset_id", mediaID.String()), handlerName)
 
 			return
@@ -93,7 +93,7 @@ func (h mediaHandler) onGetByUUID() gin.HandlerFunc {
 		if asset.IsPrivate {
 			user := httphelper.CurrentUserProfile(ctx)
 			if !user.SteamID.Valid() && (user.SteamID == asset.AuthorID || user.HasPermission(domain.PModerator)) {
-				httphelper.ResponseApiErr(ctx, http.StatusForbidden, domain.ErrPermissionDenied)
+				httphelper.ResponseAPIErr(ctx, http.StatusForbidden, domain.ErrPermissionDenied)
 				slog.Warn("Tried to access private asset", slog.String("asset_id", mediaID.String()), handlerName)
 
 				return

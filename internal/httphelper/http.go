@@ -103,27 +103,27 @@ func HandleErrs(ctx *gin.Context, err error) {
 }
 
 func HandleErrPermissionDenied(ctx *gin.Context) {
-	ResponseApiErr(ctx, http.StatusForbidden, domain.ErrPermissionDenied)
+	ResponseAPIErr(ctx, http.StatusForbidden, domain.ErrPermissionDenied)
 }
 
 func HandleErrNotFound(ctx *gin.Context) {
-	ResponseApiErr(ctx, http.StatusNotFound, domain.ErrNotFound)
+	ResponseAPIErr(ctx, http.StatusNotFound, domain.ErrNotFound)
 }
 
 func HandleErrBadRequest(ctx *gin.Context) {
-	ResponseApiErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+	ResponseAPIErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 }
 
 func HandleErrInternal(ctx *gin.Context) {
-	ResponseApiErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+	ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 }
 
 func HandleErrDuplicate(ctx *gin.Context) {
-	ResponseApiErr(ctx, http.StatusConflict, domain.ErrDuplicate)
+	ResponseAPIErr(ctx, http.StatusConflict, domain.ErrDuplicate)
 }
 
 func HandleErrInvalidFormat(ctx *gin.Context) {
-	ResponseApiErr(ctx, http.StatusUnsupportedMediaType, domain.ErrInvalidFormat)
+	ResponseAPIErr(ctx, http.StatusUnsupportedMediaType, domain.ErrInvalidFormat)
 }
 
 func useSentry(engine *gin.Engine, version string) {

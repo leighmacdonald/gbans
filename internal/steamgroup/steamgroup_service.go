@@ -102,7 +102,7 @@ func (h steamgroupHandler) onAPIPostBansGroupUpdate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		banGroupID, banIDErr := httphelper.GetInt64Param(ctx, "ban_group_id")
 		if banIDErr != nil {
-			httphelper.ResponseApiErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
+			httphelper.ResponseAPIErr(ctx, http.StatusBadRequest, domain.ErrInvalidParameter)
 			slog.Warn("Failed to get ban_group_id", log.ErrAttr(banIDErr))
 
 			return
