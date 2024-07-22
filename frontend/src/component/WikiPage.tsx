@@ -43,7 +43,7 @@ export const WikiPage = ({ slug = 'home', path }: { slug: string; path: '/_guest
                     variant={'contained'}
                     color={'warning'}
                     onClick={() => {
-                        setEditMode((prev) => !prev);
+                        setEditMode(true);
                     }}
                 >
                     Edit
@@ -88,7 +88,6 @@ export const WikiPage = ({ slug = 'home', path }: { slug: string; path: '/_guest
     });
 
     if (editMode) {
-        console.log(page);
         return (
             <ContainerWithHeaderAndButtons title={`Editing: ${slug}`} iconLeft={<EditIcon />}>
                 <form
@@ -128,9 +127,6 @@ export const WikiPage = ({ slug = 'home', path }: { slug: string; path: '/_guest
                         <Grid xs={12}>
                             <Field
                                 name={'body_md'}
-                                validators={{
-                                    onChange: z.string().min(5)
-                                }}
                                 children={(props) => {
                                     return <MarkdownField {...props} label={'Region'} />;
                                 }}

@@ -25,7 +25,7 @@ import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import {
     apiCreateReportMessage,
-    apiGetBansSteam,
+    apiGetBansSteamBySteamID,
     apiGetConnections,
     apiGetMessages,
     PermissionLevel,
@@ -99,7 +99,7 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
     const { data: bans, isLoading: isLoadingBans } = useQuery({
         queryKey: ['reportBanHistory', { steamId: report.target_id }],
         queryFn: async () => {
-            const bans = await apiGetBansSteam({ target_id: report.target_id });
+            const bans = await apiGetBansSteamBySteamID(report.target_id);
 
             return bans.filter((b) => b.target_id == report.target_id);
         }

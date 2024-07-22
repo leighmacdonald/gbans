@@ -97,7 +97,6 @@ func (r banSteamRepository) getBanByColumn(ctx context.Context, column string, i
 
 	whereClauses := sq.And{
 		sq.Eq{"b." + column: identifier}, // valid columns are immutable
-		sq.Gt{"b.valid_until": time.Now()},
 	}
 
 	if !deletedOk {
