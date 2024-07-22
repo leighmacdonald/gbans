@@ -141,9 +141,9 @@ export interface CreateReportMessage {
     body_md: string;
 }
 
-export const apiCreateReportMessage = async (report_id: number, message: string) =>
+export const apiCreateReportMessage = async (report_id: number, body_md: string) =>
     transformTimeStampedDates(
-        await apiCall<ReportMessage, CreateReportMessage>(`/api/report/${report_id}/messages`, 'POST', { message })
+        await apiCall<ReportMessage, CreateReportMessage>(`/api/report/${report_id}/messages`, 'POST', { body_md })
     );
 
 export const apiReportSetState = async (report_id: number, stateAction: ReportStatus) =>

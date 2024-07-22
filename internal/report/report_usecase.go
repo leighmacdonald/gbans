@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/discord"
@@ -367,6 +368,8 @@ func (r reportUsecase) EditReportMessage(ctx context.Context, reportMessageID in
 		return domain.ReportMessage{}, domain.ErrPermissionDenied
 	}
 
+	req.BodyMD = strings.TrimSpace(req.BodyMD)
+
 	if req.BodyMD == "" {
 		return domain.ReportMessage{}, domain.ErrInvalidParameter
 	}
@@ -392,6 +395,8 @@ func (r reportUsecase) EditReportMessage(ctx context.Context, reportMessageID in
 }
 
 func (r reportUsecase) CreateReportMessage(ctx context.Context, reportID int64, curUser domain.PersonInfo, req domain.RequestMessageBodyMD) (domain.ReportMessage, error) {
+	req.BodyMD = strings.TrimSpace(req.BodyMD)
+
 	if req.BodyMD == "" {
 		return domain.ReportMessage{}, domain.ErrParamInvalid
 	}
