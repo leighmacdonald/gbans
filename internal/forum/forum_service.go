@@ -278,13 +278,13 @@ func (f *forumHandler) onAPIThreadCreate() gin.HandlerFunc {
 		}
 
 		if len(req.BodyMD) <= 1 {
-			httphelper.ResponseApiErr(ctx, http.StatusBadRequest, fmt.Errorf("body: %w", domain.ErrTooShort))
+			httphelper.ResponseAPIErr(ctx, http.StatusBadRequest, fmt.Errorf("body: %w", domain.ErrTooShort))
 
 			return
 		}
 
 		if len(req.Title) <= 4 {
-			httphelper.ResponseApiErr(ctx, http.StatusBadRequest, fmt.Errorf("title: %w", domain.ErrTooShort))
+			httphelper.ResponseAPIErr(ctx, http.StatusBadRequest, fmt.Errorf("title: %w", domain.ErrTooShort))
 
 			return
 		}
@@ -317,7 +317,7 @@ func (f *forumHandler) onAPIThreadCreate() gin.HandlerFunc {
 				slog.Error("Failed to rollback new thread", log.ErrAttr(errRollback))
 			}
 
-			httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			slog.Error("Failed to save new forum message", log.ErrAttr(errSaveMessage))
 
@@ -325,7 +325,7 @@ func (f *forumHandler) onAPIThreadCreate() gin.HandlerFunc {
 		}
 
 		if errIncr := f.forums.ForumIncrMessageCount(ctx, forum.ForumID, true); errIncr != nil {
-			httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 
 			slog.Error("Failed to increment message count", log.ErrAttr(errIncr))
 
@@ -373,7 +373,7 @@ func (f *forumHandler) onAPIThreadUpdate() gin.HandlerFunc {
 		var thread domain.ForumThread
 		if errGet := f.forums.ForumThread(ctx, forumThreadID, &thread); errGet != nil {
 			if errors.Is(errGet, domain.ErrNoResult) {
-				httphelper.ResponseApiErr(ctx, http.StatusNotFound, domain.ErrNotFound)
+				httphelper.ResponseAPIErr(ctx, http.StatusNotFound, domain.ErrNotFound)
 				slog.Warn("Requested unknown forum thread", log.ErrAttr(errGet))
 			} else {
 				httphelper.HandleErrInternal(ctx)
@@ -394,7 +394,7 @@ func (f *forumHandler) onAPIThreadUpdate() gin.HandlerFunc {
 		thread.Locked = req.Locked
 
 		if errDelete := f.forums.ForumThreadSave(ctx, &thread); errDelete != nil {
-			httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			slog.Error("Failed to update thread", log.ErrAttr(errDelete))
 
 			return
@@ -467,7 +467,7 @@ func (f *forumHandler) onAPIThreadMessageUpdate() gin.HandlerFunc {
 
 		forumMessageID, errForumMessageID := httphelper.GetInt64Param(ctx, "forum_message_id")
 		if errForumMessageID != nil {
-			httphelper.ResponseApiErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
+			httphelper.ResponseAPIErr(ctx, http.StatusBadRequest, domain.ErrBadRequest)
 			slog.Warn("Failed to get forum_message_id", log.ErrAttr(errForumMessageID))
 
 			return
@@ -550,7 +550,7 @@ func (f *forumHandler) onAPIMessageDelete() gin.HandlerFunc {
 		}
 
 		if thread.Locked {
-			httphelper.ResponseApiErr(ctx, http.StatusForbidden, domain.ErrThreadLocked)
+			httphelper.ResponseAPIErr(ctx, http.StatusForbidden, domain.ErrThreadLocked)
 
 			return
 		}
@@ -632,7 +632,7 @@ func (f *forumHandler) onAPIThreadCreateReply() gin.HandlerFunc {
 		}
 
 		if thread.Locked && currentUser.PermissionLevel < domain.PEditor {
-			httphelper.ResponseApiErr(ctx, http.StatusForbidden, domain.ErrThreadLocked)
+			httphelper.ResponseAPIErr(ctx, http.StatusForbidden, domain.ErrThreadLocked)
 
 			return
 		}
@@ -645,7 +645,7 @@ func (f *forumHandler) onAPIThreadCreateReply() gin.HandlerFunc {
 		req.BodyMD = stringutil.SanitizeUGC(req.BodyMD)
 
 		if len(req.BodyMD) < 3 {
-			httphelper.ResponseApiErr(ctx, http.StatusBadRequest, fmt.Errorf("body: %w", domain.ErrTooShort))
+			httphelper.ResponseAPIErr(ctx, http.StatusBadRequest, fmt.Errorf("body: %w", domain.ErrTooShort))
 
 			return
 		}
@@ -700,7 +700,7 @@ func (f *forumHandler) onAPIForumOverview() gin.HandlerFunc {
 
 		currentForums, errForums := f.forums.Forums(ctx)
 		if errForums != nil {
-			httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 			slog.Error("Could not load forums", log.ErrAttr(errForums))
 
 			return
@@ -787,7 +787,7 @@ func (f *forumHandler) onAPIForumThread() gin.HandlerFunc {
 			if errors.Is(errThreads, domain.ErrNoResult) {
 				httphelper.HandleErrNotFound(ctx)
 			} else {
-				httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+				httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
 				slog.Error("Could not load threads", log.ErrAttr(errThreads), slog.Int64("forum_thread_id", forumThreadID))
 			}
 
