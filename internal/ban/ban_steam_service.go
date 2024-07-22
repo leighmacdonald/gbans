@@ -43,7 +43,6 @@ func NewBanHandler(engine *gin.Engine, bu domain.BanSteamUsecase, du domain.Disc
 	{
 		authed := authedGrp.Use(ath.AuthMiddleware(domain.PUser))
 		authed.GET("/api/bans/steam/:ban_id", handler.onAPIGetBanByID())
-		authed.GET("/api/sourcebans/:steam_id", handler.onAPIGetSourceBans())
 	}
 
 	// mod
@@ -51,8 +50,10 @@ func NewBanHandler(engine *gin.Engine, bu domain.BanSteamUsecase, du domain.Disc
 	{
 		mod := modGrp.Use(ath.AuthMiddleware(domain.PModerator))
 
+		mod.GET("/api/sourcebans/:steam_id", handler.onAPIGetSourceBans())
 		mod.GET("/api/stats", handler.onAPIGetStats())
 		mod.GET("/api/bans/steam", handler.onAPIGetBansSteam())
+		mod.GET("/api/bans/steam_all/:steam_id", handler.onAPIGetBansSteamBySteamID())
 		mod.GET("/api/bans/steamid/:steam_id", handler.onAPIGetBanBySteam())
 		mod.POST("/api/bans/steam/create", handler.onAPIPostBanSteamCreate())
 		mod.DELETE("/api/bans/steam/:ban_id", handler.onAPIPostBanDelete())
@@ -316,6 +317,32 @@ func (h banHandler) onAPIGetBansSteam() gin.HandlerFunc {
 			return
 		}
 
+		bans, errBans := h.bansSteam.Get(ctx, params)
+		if errBans != nil {
+			httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+			slog.Error("Failed to fetch steam bans", log.ErrAttr(errBans))
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, bans)
+	}
+}
+
+func (h banHandler) onAPIGetBansSteamBySteamID() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		sid, errSID := httphelper.GetSID64Param(ctx, "steam_id")
+		if errSID != nil {
+			httphelper.HandleErrs(ctx, errSID)
+			slog.Warn("Got invalid steam_id param", log.ErrAttr(errSID))
+
+			return
+		}
+
+		params := domain.SteamBansQueryFilter{
+			TargetIDField: domain.TargetIDField{TargetID: sid.String()},
+			Deleted:       true,
+		}
 		bans, errBans := h.bansSteam.Get(ctx, params)
 		if errBans != nil {
 			httphelper.ResponseApiErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
