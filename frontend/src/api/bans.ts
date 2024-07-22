@@ -241,6 +241,16 @@ export const apiGetBansSteam = async (opts: BanSteamQueryFilter, abortController
     return resp.map(transformTimeStampedDates);
 };
 
+export const apiGetBansSteamBySteamID = async (steam_id: string, abortController?: AbortController) => {
+    const resp = await apiCall<SteamBanRecord[], BanSteamQueryFilter>(
+        `/api/bans/steam_all/${steam_id}`,
+        'GET',
+        undefined,
+        abortController
+    );
+    return resp.map(transformTimeStampedDates);
+};
+
 export const apiGetBanBySteam = async (steamID: string, abortController?: AbortController) =>
     transformTimeStampedDates(
         await apiCall<SteamBanRecord>(`/api/bans/steamid/${steamID}`, 'GET', undefined, abortController)
@@ -352,12 +362,12 @@ export const apiGetBanMessages = async (ban_id: number) => {
     return transformTimeStampedDatesList(resp);
 };
 
-export interface CreateBanMessage {
-    message: string;
+export interface BodyMDMessage {
+    body_md: string;
 }
 
-export const apiCreateBanMessage = async (ban_id: number, message: string) => {
-    const resp = await apiCall<BanAppealMessage, CreateBanMessage>(`/api/bans/${ban_id}/messages`, 'POST', { message });
+export const apiCreateBanMessage = async (ban_id: number, body_md: string) => {
+    const resp = await apiCall<BanAppealMessage, BodyMDMessage>(`/api/bans/${ban_id}/messages`, 'POST', { body_md });
 
     return transformTimeStampedDates(resp);
 };
