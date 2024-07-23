@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 )
 
-func FingerprintHash(fingerprint string) string {
+func fingerprintHash(fingerprint string) string {
 	hasher := sha256.New()
 
 	return hex.EncodeToString(hasher.Sum([]byte(fingerprint)))
