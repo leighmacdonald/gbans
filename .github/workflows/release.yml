@@ -55,6 +55,15 @@ jobs:
         working-directory: ./frontend
         run: pnpm build
 
+      - name: Setup SourcePawn Compiler
+        uses: rumblefrog/setup-sp@master
+        with:
+          version: "1.12.x"
+
+      - name: Ensure plugin builds
+        working-directory: ./sourcemod/scripting
+        run: spcomp -i"./include/" gbans.sp -o ../plugins/gbans.smx
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
