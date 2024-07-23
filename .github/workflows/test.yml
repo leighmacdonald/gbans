@@ -7,6 +7,20 @@ on:
 permissions: write-all
 
 jobs:
+  sourcemod-plugin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup SourcePawn Compiler
+        uses: rumblefrog/setup-sp@master
+        with:
+          version: "1.12.x"
+
+      - name: Ensure plugin builds
+        working-directory: ./sourcemod/scripting
+        run: spcomp -i"./include/" gbans.sp -o ../plugins/gbans.smx
+
   lint-ts:
     runs-on: ubuntu-latest
     env:
