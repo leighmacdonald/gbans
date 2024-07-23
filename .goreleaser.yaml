@@ -41,6 +41,7 @@ archives:
       - LICENSE.md
       - README.md
       - gbans_example.yml
+      - sourcemod/plugins/gbans.smx
     format_overrides:
       - goos: windows
         format: zip
