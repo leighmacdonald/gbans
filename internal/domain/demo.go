@@ -25,6 +25,7 @@ type DemoRepository interface {
 	GetDemoByName(ctx context.Context, demoName string, demoFile *DemoFile) error
 	GetDemos(ctx context.Context) ([]DemoFile, error)
 	SaveDemo(ctx context.Context, demoFile *DemoFile) error
+	Delete(ctx context.Context, demoID int64) error
 }
 
 type DemoPlayerStats struct {

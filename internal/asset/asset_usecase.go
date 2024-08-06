@@ -83,6 +83,10 @@ func (s assets) Delete(ctx context.Context, assetID uuid.UUID) (int64, error) {
 	return size, nil
 }
 
+func (s assets) GenAssetPath(hash string) (string, error) {
+	return s.repository.GenAssetPath(hash)
+}
+
 func generateFileHash(file io.Reader) ([]byte, error) {
 	hasher := sha256.New()
 	if _, err := io.Copy(hasher, file); err != nil {
