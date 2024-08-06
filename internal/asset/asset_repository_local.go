@@ -36,7 +36,7 @@ func (l localRepository) Put(ctx context.Context, asset domain.Asset, body io.Re
 		return domain.Asset{}, errExisting
 	}
 
-	outPath, errOutPath := l.genAssetPath(asset.HashString())
+	outPath, errOutPath := l.GenAssetPath(asset.HashString())
 	if errOutPath != nil {
 		return domain.Asset{}, errOutPath
 	}
@@ -84,7 +84,7 @@ func (l localRepository) Delete(ctx context.Context, assetID uuid.UUID) (int64, 
 		return 0, l.db.DBErr(errExec)
 	}
 
-	assetPath, errAssetPath := l.genAssetPath(asset.HashString())
+	assetPath, errAssetPath := l.GenAssetPath(asset.HashString())
 	if errAssetPath != nil {
 		return 0, errAssetPath
 	}
@@ -115,7 +115,7 @@ func (l localRepository) Get(ctx context.Context, assetID uuid.UUID) (domain.Ass
 		return domain.Asset{}, nil, errAsset
 	}
 
-	assetPath, errAssetPath := l.genAssetPath(asset.HashString())
+	assetPath, errAssetPath := l.GenAssetPath(asset.HashString())
 	if errAssetPath != nil {
 		return domain.Asset{}, nil, errAssetPath
 	}
@@ -128,7 +128,7 @@ func (l localRepository) Get(ctx context.Context, assetID uuid.UUID) (domain.Ass
 	return asset, reader, nil
 }
 
-func (l localRepository) genAssetPath(hash string) (string, error) {
+func (l localRepository) GenAssetPath(hash string) (string, error) {
 	if len(hash) < 2 {
 		return "", domain.ErrInvalidParameter
 	}
@@ -169,7 +169,7 @@ func (l localRepository) getAssetByUUID(ctx context.Context, assetID uuid.UUID) 
 
 	asset.AuthorID = steamid.New(authorID)
 
-	assetPath, errAssetPath := l.genAssetPath(asset.HashString())
+	assetPath, errAssetPath := l.GenAssetPath(asset.HashString())
 	if errAssetPath != nil {
 		return domain.Asset{}, errAssetPath
 	}
@@ -202,7 +202,7 @@ func (l localRepository) getAssetByHash(ctx context.Context, hash []byte) (domai
 
 	asset.AuthorID = steamid.New(authorID)
 
-	assetPath, errAssetPath := l.genAssetPath(asset.HashString())
+	assetPath, errAssetPath := l.GenAssetPath(asset.HashString())
 	if errAssetPath != nil {
 		return domain.Asset{}, errAssetPath
 	}

@@ -53,6 +53,7 @@ import (
 
 var (
 	dbContainer    *postgresContainer
+	tempDB         database.Database
 	testServer     domain.Server
 	testBan        domain.BannedSteamPerson
 	testTarget     domain.Person
@@ -178,6 +179,8 @@ func TestMain(m *testing.M) {
 
 	testServer = server
 
+	getOwner()
+
 	mod := getModerator()
 	target := getUser()
 
@@ -203,6 +206,7 @@ func TestMain(m *testing.M) {
 
 	testBan = bannedPerson
 	testTarget = target
+	tempDB = databaseConn
 
 	m.Run()
 }

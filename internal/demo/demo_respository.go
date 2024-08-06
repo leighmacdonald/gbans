@@ -24,7 +24,7 @@ func (r *demoRepository) ExpiredDemos(ctx context.Context, limit uint64) ([]doma
 		Select("d.demo_id", "d.title", "d.asset_id").
 		From("demo d").
 		LeftJoin("report r on d.demo_id = r.demo_id").
-		Where("r.demo_id > 0").
+		Where("d.archive = false").
 		OrderBy("d.demo_id").
 		Offset(limit))
 	if errRow != nil {
@@ -200,6 +200,15 @@ func (r *demoRepository) updateDemo(ctx context.Context, demoFile *domain.DemoFi
 
 	if errExec := r.db.ExecUpdateBuilder(ctx, query); errExec != nil {
 		return r.db.DBErr(errExec)
+	}
+
+	return nil
+}
+
+func (r *demoRepository) Delete(ctx context.Context, demoID int64) error {
+	const query = `DELETE FROM demo WHERE demo_id = $1`
+	if err := r.db.Exec(ctx, query, demoID); err != nil {
+		return r.db.DBErr(err)
 	}
 
 	return nil

@@ -19,10 +19,10 @@ import (
 	"github.com/viant/afs/storage"
 )
 
-type demoUpdate struct {
-	name    string
-	server  domain.Server
-	content []byte
+type UploadedDemo struct {
+	Name    string
+	Server  domain.Server
+	Content []byte
 }
 
 type Fetcher struct {
@@ -31,7 +31,7 @@ type Fetcher struct {
 	configUsecase  domain.ConfigUsecase
 	assetUsecase   domain.AssetUsecase
 	demoUsecase    domain.DemoUsecase
-	demoChan       chan demoUpdate
+	demoChan       chan UploadedDemo
 }
 
 func NewFetcher(database database.Database, configUsecase domain.ConfigUsecase, serversUsecase domain.ServersUsecase,
@@ -43,7 +43,7 @@ func NewFetcher(database database.Database, configUsecase domain.ConfigUsecase, 
 		serversUsecase: serversUsecase,
 		assetUsecase:   assetUsecase,
 		demoUsecase:    demoUsecase,
-		demoChan:       make(chan demoUpdate),
+		demoChan:       make(chan UploadedDemo),
 	}
 }
 
@@ -52,18 +52,18 @@ func (d Fetcher) Start(ctx context.Context) {
 	sshExec.Start(ctx)
 }
 
-func (d Fetcher) onDemoReceived(ctx context.Context, demo demoUpdate) error {
+func (d Fetcher) OnDemoReceived(ctx context.Context, demo UploadedDemo) error {
 	slog.Debug("Got new demo",
-		slog.String("server", demo.server.ShortName),
-		slog.String("name", demo.name))
+		slog.String("server", demo.Server.ShortName),
+		slog.String("name", demo.Name))
 
-	demoAsset, errNewAsset := d.assetUsecase.Create(ctx, steamid.SteamID{},
-		domain.BucketDemo, demo.name, bytes.NewReader(demo.content))
+	demoAsset, errNewAsset := d.assetUsecase.Create(ctx, steamid.New(d.configUsecase.Config().Owner),
+		domain.BucketDemo, demo.Name, bytes.NewReader(demo.Content))
 	if errNewAsset != nil {
 		return errNewAsset
 	}
 
-	_, errDemo := d.demoUsecase.CreateFromAsset(ctx, demoAsset, demo.server.ServerID)
+	_, errDemo := d.demoUsecase.CreateFromAsset(ctx, demoAsset, demo.Server.ServerID)
 	if errDemo != nil {
 		// Cleanup the asset not attached to a demo
 		if _, errDelete := d.assetUsecase.Delete(ctx, demoAsset.AssetID); errDelete != nil {
@@ -120,9 +120,9 @@ func (d Fetcher) OnClientConnect(ctx context.Context, client storage.Storager, s
 			_ = reader.Close()
 
 			// need Seeker, but afs does not provide
-			demo := demoUpdate{name: file.Name(), server: server, content: data}
+			demo := UploadedDemo{Name: file.Name(), Server: server, Content: data}
 
-			if errDemo := d.onDemoReceived(ctx, demo); errDemo != nil {
+			if errDemo := d.OnDemoReceived(ctx, demo); errDemo != nil {
 				if !errors.Is(errDemo, domain.ErrAssetTooLarge) {
 					slog.Error("Failed to create new demo asset", log.ErrAttr(errDemo))
 

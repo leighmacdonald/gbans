@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/demoparser"
+	"github.com/leighmacdonald/gbans/pkg/fs"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/ricochet2200/go-disk-usage/du"
 )
@@ -69,7 +70,7 @@ func diskPercentageUsed(path string) float32 {
 	return info.Usage() * 100
 }
 
-func (d demoUsecase) truncateBySpace(ctx context.Context, root string, maxAllowedPctUsed float32) (int, int64, error) {
+func (d demoUsecase) TruncateBySpace(ctx context.Context, root string, maxAllowedPctUsed float32) (int, int64, error) {
 	var (
 		count int
 		size  int64
@@ -105,7 +106,7 @@ func (d demoUsecase) truncateBySpace(ctx context.Context, root string, maxAllowe
 	}
 }
 
-func (d demoUsecase) truncateByCount(ctx context.Context, maxCount uint64) (int, int64, error) {
+func (d demoUsecase) TruncateByCount(ctx context.Context, maxCount uint64) (int, int64, error) {
 	var (
 		count int
 		size  int64
@@ -125,13 +126,20 @@ func (d demoUsecase) truncateByCount(ctx context.Context, maxCount uint64) (int,
 	}
 
 	for _, demo := range expired {
-		// Dropping asset will cascade to demo
+		// FIXME cascade delete does not work????
 		demoSize, errDrop := d.asset.Delete(ctx, demo.AssetID)
 		if errDrop != nil {
 			slog.Error("Failed to remove demo asset", log.ErrAttr(errDrop),
 				slog.String("bucket", string(d.bucket)), slog.String("name", demo.Title))
 
 			continue
+		}
+
+		if err := d.repository.Delete(ctx, demo.DemoID); err != nil {
+			slog.Error("Failed to remove demo entry",
+				slog.Int64("demo_id", demo.DemoID),
+				slog.String("asset_id", demo.AssetID.String()),
+				log.ErrAttr(err))
 		}
 
 		size += demoSize
@@ -160,9 +168,9 @@ func (d demoUsecase) executeCleanup(ctx context.Context) {
 
 	switch conf.Demo.DemoCleanupStrategy {
 	case domain.DemoStrategyPctFree:
-		count, size, err = d.truncateBySpace(ctx, conf.Demo.DemoCleanupMount, conf.Demo.DemoCleanupMinPct)
+		count, size, err = d.TruncateBySpace(ctx, conf.Demo.DemoCleanupMount, conf.Demo.DemoCleanupMinPct)
 	case domain.DemoStrategyCount:
-		count, size, err = d.truncateByCount(ctx, conf.Demo.DemoCountLimit)
+		count, size, err = d.TruncateByCount(ctx, conf.Demo.DemoCountLimit)
 	}
 
 	if err != nil {
@@ -178,8 +186,13 @@ func (d demoUsecase) TriggerCleanup() {
 
 func (d demoUsecase) Start(ctx context.Context) {
 	ticker := time.NewTicker(time.Hour)
+	tickerOrphans := time.NewTicker(time.Hour * 24)
 
 	d.executeCleanup(ctx)
+
+	if err := d.RemoveOrphans(ctx); err != nil {
+		slog.Error("Failed to execute orphans", log.ErrAttr(err))
+	}
 
 	for {
 		select {
@@ -187,6 +200,10 @@ func (d demoUsecase) Start(ctx context.Context) {
 			d.cleanupChan <- true
 		case <-d.cleanupChan:
 			d.executeCleanup(ctx)
+		case <-tickerOrphans.C:
+			if err := d.RemoveOrphans(ctx); err != nil {
+				slog.Error("Failed to execute orphans", log.ErrAttr(err))
+			}
 		case <-ctx.Done():
 			return
 		}
@@ -228,15 +245,20 @@ func (d demoUsecase) CreateFromAsset(ctx context.Context, asset domain.Asset, se
 		mapName = nameParts[0]
 	}
 
-	var demoInfo demoparser.DemoInfo
-	if errParse := demoparser.Parse(ctx, asset.LocalPath, &demoInfo); errParse != nil {
-		return nil, errParse
-	}
-
 	intStats := map[string]gin.H{}
 
-	for _, steamID := range demoInfo.SteamIDs() {
-		intStats[steamID.String()] = gin.H{}
+	// temp thing until proper demo parsing is implemented
+	if d.config.Config().General.Mode != domain.TestMode {
+		var demoInfo demoparser.DemoInfo
+		if errParse := demoparser.Parse(ctx, asset.LocalPath, &demoInfo); errParse != nil {
+			return nil, errParse
+		}
+
+		for _, steamID := range demoInfo.SteamIDs() {
+			intStats[steamID.String()] = gin.H{}
+		}
+	} else {
+		intStats[d.config.Config().Owner] = gin.H{}
 	}
 
 	timeStr := fmt.Sprintf("%s-%s", namePartsAll[0], namePartsAll[1])
@@ -264,4 +286,46 @@ func (d demoUsecase) CreateFromAsset(ctx context.Context, asset domain.Asset, se
 	slog.Debug("Created demo from asset successfully", slog.Int64("demo_id", newDemo.DemoID), slog.String("title", newDemo.Title))
 
 	return &newDemo, nil
+}
+
+func (d demoUsecase) RemoveOrphans(ctx context.Context) error {
+	demos, errDemos := d.GetDemos(ctx)
+	if errDemos != nil {
+		return errDemos
+	}
+
+	for _, demo := range demos {
+		var remove bool
+		asset, _, errAsset := d.asset.Get(ctx, demo.AssetID)
+		if errAsset != nil {
+			if errors.Is(errAsset, domain.ErrNoResult) {
+				remove = true
+			} else {
+				return errAsset
+			}
+		} else {
+			localPath, errPath := d.asset.GenAssetPath(asset.HashString())
+			if errPath != nil {
+				return errPath
+			}
+
+			remove = !fs.Exists(localPath)
+		}
+
+		if !remove {
+			continue
+		}
+
+		if _, err := d.asset.Delete(ctx, asset.AssetID); err != nil {
+			slog.Error("Failed to remove orphan demo asset", log.ErrAttr(err))
+		}
+
+		if err := d.repository.Delete(ctx, demo.DemoID); err != nil {
+			slog.Error("Failed to remove orphan demo entry", log.ErrAttr(err))
+		}
+
+		slog.Info("Removed orphan demo file", slog.String("filename", demo.Title))
+	}
+
+	return nil
 }
