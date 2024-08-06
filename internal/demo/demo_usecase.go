@@ -128,7 +128,7 @@ func (d demoUsecase) TruncateByCount(ctx context.Context, maxCount uint64) (int,
 	for _, demo := range expired {
 		// FIXME cascade delete does not work????
 		demoSize, errDrop := d.asset.Delete(ctx, demo.AssetID)
-		if errDrop != nil {
+		if errDrop != nil && !errors.Is(errDrop, domain.ErrDeleteAssetFile) {
 			slog.Error("Failed to remove demo asset", log.ErrAttr(errDrop),
 				slog.String("bucket", string(d.bucket)), slog.String("name", demo.Title))
 
