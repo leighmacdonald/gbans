@@ -59,8 +59,8 @@ export const ForumForumEditorModal = NiceModal.create(
         });
 
         const defaultCategory = forum?.forum_category_id
-            ? categories.find((value) => value.forum_category_id == forum.forum_category_id)?.forum_category_id ??
-              categories[0].forum_category_id
+            ? (categories.find((value) => value.forum_category_id == forum.forum_category_id)?.forum_category_id ??
+              categories[0].forum_category_id)
             : categories[0].forum_category_id;
 
         const { Field, Subscribe, handleSubmit, reset } = useForm({
