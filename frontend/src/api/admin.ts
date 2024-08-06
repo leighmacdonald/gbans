@@ -138,5 +138,5 @@ type SSH = {
 type Exports = {
     bd_enabled: boolean;
     valve_enabled: boolean;
-    // authorized_keys: string[];
+    authorized_keys: string;
 };

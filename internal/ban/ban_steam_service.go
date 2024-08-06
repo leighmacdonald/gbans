@@ -221,9 +221,9 @@ func (h banHandler) onAPIGetStats() gin.HandlerFunc {
 }
 
 func (h banHandler) onAPIExportBansValveSteamID() gin.HandlerFunc {
-	authorizedKeys := h.config.Config().Exports.AuthorizedKeys
-
 	return func(ctx *gin.Context) {
+		authorizedKeys := strings.Split(h.config.Config().Exports.AuthorizedKeys, ",")
+
 		if len(authorizedKeys) > 0 {
 			key, ok := ctx.GetQuery("key")
 			if !ok || !slices.Contains(authorizedKeys, key) {
@@ -257,9 +257,9 @@ func (h banHandler) onAPIExportBansValveSteamID() gin.HandlerFunc {
 }
 
 func (h banHandler) onAPIExportBansTF2BD() gin.HandlerFunc {
-	authorizedKeys := h.config.Config().Exports.AuthorizedKeys
-
 	return func(ctx *gin.Context) {
+		authorizedKeys := strings.Split(h.config.Config().Exports.AuthorizedKeys, ",")
+
 		if len(authorizedKeys) > 0 {
 			key, ok := ctx.GetQuery("key")
 			if !ok || !slices.Contains(authorizedKeys, key) {

@@ -93,9 +93,9 @@ type ConfigSSH struct {
 }
 
 type ConfigExports struct {
-	BDEnabled      bool     `json:"bd_enabled"`
-	ValveEnabled   bool     `json:"valve_enabled"`
-	AuthorizedKeys []string `json:"authorized_keys"`
+	BDEnabled      bool   `json:"bd_enabled"`
+	ValveEnabled   bool   `json:"valve_enabled"`
+	AuthorizedKeys string `json:"authorized_keys"`
 }
 
 type ConfigFilter struct {

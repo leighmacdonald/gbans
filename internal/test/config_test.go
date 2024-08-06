@@ -99,7 +99,7 @@ func TestConfig(t *testing.T) {
 
 	config.LocalStore.PathRoot += "/x"
 
-	config.Exports.AuthorizedKeys = append(config.Exports.AuthorizedKeys, "test-key")
+	config.Exports.AuthorizedKeys += ",test-key"
 	config.Exports.BDEnabled = !config.Exports.BDEnabled
 	config.Exports.ValveEnabled = !config.Exports.ValveEnabled
 
