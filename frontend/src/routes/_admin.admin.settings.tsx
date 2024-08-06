@@ -1910,7 +1910,8 @@ const ExportsSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
         validatorAdapter: zodValidator,
         defaultValues: {
             bd_enabled: settings.exports.bd_enabled,
-            valve_enabled: settings.exports.valve_enabled
+            valve_enabled: settings.exports.valve_enabled,
+            authorized_keys: settings.exports.authorized_keys
         }
     });
 
@@ -1929,6 +1930,22 @@ const ExportsSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                 }}
             >
                 <Grid container spacing={2}>
+                    <Grid xs={12}>
+                        <Field
+                            name={'authorized_keys'}
+                            validators={{
+                                onChange: z.string()
+                            }}
+                            children={(props) => {
+                                return <TextFieldSimple {...props} label={'Authorized Keys (comma separated).'} />;
+                            }}
+                        />
+                        <SubHeading>
+                            Comma separated list of authorized keys which can access these resources. If no keys are
+                            specified, access will be granted to everyone. Append key to query with{' '}
+                            <kbd>&key=value</kbd>
+                        </SubHeading>
+                    </Grid>
                     <Grid xs={12}>
                         <Field
                             name={'bd_enabled'}
@@ -1950,7 +1967,7 @@ const ExportsSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         <Field
                             name={'valve_enabled'}
                             validators={{
-                                onChange: z.string()
+                                onChange: z.boolean()
                             }}
                             children={(props) => {
                                 return <CheckboxSimple {...props} label={'Enable srcds formatted ban list'} />;

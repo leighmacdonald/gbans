@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"errors"
+	"strings"
 	"sync"
 
 	"github.com/leighmacdonald/gbans/internal/database"
@@ -58,7 +59,10 @@ func (c *configRepository) Read(ctx context.Context) (domain.Config, error) {
 		       exports_bd_enabled, exports_valve_enabled, exports_authorized_keys
 		 FROM config`
 
-	var cfg domain.Config
+	var (
+		cfg            domain.Config
+		authorizedKeys []string
+	)
 
 	err := c.db.QueryRow(ctx, query).
 		Scan(&cfg.General.SiteName, &cfg.General.Mode, &cfg.General.FileServeMode, &cfg.General.SrcdsLogAddr, &cfg.General.AssetURL,
@@ -78,10 +82,12 @@ func (c *configRepository) Read(ctx context.Context) (domain.Config, error) {
 			&cfg.LocalStore.PathRoot,
 			&cfg.SSH.Enabled, &cfg.SSH.Username, &cfg.SSH.Password, &cfg.SSH.Port, &cfg.SSH.PrivateKeyPath, &cfg.SSH.UpdateInterval,
 			&cfg.SSH.Timeout, &cfg.SSH.DemoPathFmt,
-			&cfg.Exports.BDEnabled, &cfg.Exports.ValveEnabled, &cfg.Exports.AuthorizedKeys)
+			&cfg.Exports.BDEnabled, &cfg.Exports.ValveEnabled, &authorizedKeys)
 	if err != nil {
 		return cfg, c.db.DBErr(err)
 	}
+
+	cfg.Exports.AuthorizedKeys = strings.Join(authorizedKeys, ",")
 
 	return cfg, nil
 }
@@ -189,6 +195,6 @@ func (c *configRepository) Write(ctx context.Context, config domain.Config) erro
 			"ssh_demo_path_fmt":                   config.SSH.DemoPathFmt,
 			"exports_bd_enabled":                  config.Exports.BDEnabled,
 			"exports_valve_enabled":               config.Exports.ValveEnabled,
-			"exports_authorized_keys":             config.Exports.AuthorizedKeys,
+			"exports_authorized_keys":             strings.Split(config.Exports.AuthorizedKeys, ","),
 		})))
 }
