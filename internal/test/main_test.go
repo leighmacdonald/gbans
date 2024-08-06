@@ -69,6 +69,7 @@ var (
 	banNetUC       domain.BanNetUsecase
 	assetUC        domain.AssetUsecase
 	chatUC         domain.ChatUsecase
+	demoRepository domain.DemoRepository
 	demoUC         domain.DemoUsecase
 	discordUC      domain.DiscordUsecase
 	forumUC        domain.ForumUsecase
@@ -141,7 +142,8 @@ func TestMain(m *testing.M) {
 	stateUC = state.NewStateUsecase(eventBroadcaster, state.NewStateRepository(state.NewCollector(serversUC)), configUC, serversUC)
 
 	networkUC = network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(databaseConn), personUC, configUC)
-	demoUC = demo.NewDemoUsecase("demos", demo.NewDemoRepository(databaseConn), assetUC, configUC, serversUC)
+	demoRepository = demo.NewDemoRepository(databaseConn)
+	demoUC = demo.NewDemoUsecase("demos", demoRepository, assetUC, configUC, serversUC)
 	reportUC = report.NewReportUsecase(report.NewReportRepository(databaseConn), discordUC, configUC, personUC, demoUC)
 	banSteamUC = ban.NewBanSteamUsecase(ban.NewBanSteamRepository(databaseConn, personUC, networkUC), personUC, configUC, discordUC, reportUC, stateUC)
 	authUC = auth.NewAuthUsecase(authRepo, configUC, personUC, banSteamUC, serversUC)

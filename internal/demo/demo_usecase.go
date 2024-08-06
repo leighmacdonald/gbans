@@ -151,7 +151,7 @@ func (d demoUsecase) TruncateByCount(ctx context.Context, maxCount uint64) (int,
 	return count, size, nil
 }
 
-func (d demoUsecase) executeCleanup(ctx context.Context) {
+func (d demoUsecase) Cleanup(ctx context.Context) {
 	conf := d.config.Config()
 
 	if !conf.Demo.DemoCleanupEnabled {
@@ -188,7 +188,7 @@ func (d demoUsecase) Start(ctx context.Context) {
 	ticker := time.NewTicker(time.Hour)
 	tickerOrphans := time.NewTicker(time.Hour * 24)
 
-	d.executeCleanup(ctx)
+	d.Cleanup(ctx)
 
 	if err := d.RemoveOrphans(ctx); err != nil {
 		slog.Error("Failed to execute orphans", log.ErrAttr(err))
@@ -199,7 +199,7 @@ func (d demoUsecase) Start(ctx context.Context) {
 		case <-ticker.C:
 			d.cleanupChan <- true
 		case <-d.cleanupChan:
-			d.executeCleanup(ctx)
+			d.Cleanup(ctx)
 		case <-tickerOrphans.C:
 			if err := d.RemoveOrphans(ctx); err != nil {
 				slog.Error("Failed to execute orphans", log.ErrAttr(err))
