@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/leighmacdonald/gbans/internal/demo"
@@ -13,8 +14,19 @@ import (
 
 func TestDemosCleanup(t *testing.T) {
 	ctx := context.Background()
+
+	tempDir, errDir := os.MkdirTemp("", "test-assets")
+	require.NoError(t, errDir)
+
+	conf := configUC.Config()
+	conf.LocalStore.PathRoot = tempDir
+	conf.Demo.DemoCleanupEnabled = true
+	conf.Demo.DemoCleanupStrategy = domain.DemoStrategyCount
+	conf.Demo.DemoCountLimit = 5
+
+	require.NoError(t, configUC.Write(ctx, conf))
+
 	fetcher := demo.NewFetcher(tempDB, configUC, serversUC, assetUC, demoUC)
-	go demoUC.Start(ctx)
 
 	for demoNum := range 10 {
 		content := make([]byte, 100000)
@@ -28,16 +40,15 @@ func TestDemosCleanup(t *testing.T) {
 		}))
 	}
 
-	conf := configUC.Config()
-	conf.Demo.DemoCleanupEnabled = true
-	conf.Demo.DemoCleanupStrategy = domain.DemoStrategyCount
-	conf.Demo.DemoCountLimit = 5
+	expired, errExpired := demoRepository.ExpiredDemos(ctx, 5)
+	require.NoError(t, errExpired)
+	for _, expiredDemo := range expired {
+		require.Less(t, expiredDemo.DemoID, int64(6))
+	}
 
-	require.NoError(t, configUC.Write(ctx, conf))
-
-	demoUC.TriggerCleanup()
+	demoUC.Cleanup(ctx)
 
 	allDemos, err := demoUC.GetDemos(ctx)
 	require.NoError(t, err)
-	require.Len(t, len(allDemos), 5)
+	require.Len(t, allDemos, 5)
 }

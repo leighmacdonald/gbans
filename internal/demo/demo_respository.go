@@ -26,7 +26,7 @@ func (r *demoRepository) ExpiredDemos(ctx context.Context, limit uint64) ([]doma
 		LeftJoin("report r on d.demo_id = r.demo_id").
 		Where("d.archive = false").
 		OrderBy("d.demo_id").
-		Offset(limit))
+		Limit(limit))
 	if errRow != nil {
 		return nil, r.db.DBErr(errRow)
 	}
