@@ -13,13 +13,13 @@ import (
 )
 
 type wordFilterUsecase struct {
-	repository  domain.WordFilterRepository
-	wordFilters *WordFilters
-	discord     domain.DiscordUsecase
+	repository    domain.WordFilterRepository
+	wordFilters   *WordFilters
+	notifications domain.NotificationUsecase
 }
 
-func NewWordFilterUsecase(repository domain.WordFilterRepository, discord domain.DiscordUsecase) domain.WordFilterUsecase {
-	return &wordFilterUsecase{repository: repository, wordFilters: NewWordFilters(), discord: discord}
+func NewWordFilterUsecase(repository domain.WordFilterRepository, notifications domain.NotificationUsecase) domain.WordFilterUsecase {
+	return &wordFilterUsecase{repository: repository, wordFilters: NewWordFilters(), notifications: notifications}
 }
 
 func (w *wordFilterUsecase) Import(ctx context.Context) error {
@@ -111,7 +111,7 @@ func (w *wordFilterUsecase) Create(ctx context.Context, user domain.PersonInfo, 
 
 	w.wordFilters.Add(newFilter)
 
-	go w.discord.SendPayload(domain.ChannelWordFilterLog, discord.FilterAddMessage(newFilter))
+	w.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelWordFilterLog, discord.FilterAddMessage(newFilter)))
 
 	return newFilter, nil
 }
@@ -128,7 +128,7 @@ func (w *wordFilterUsecase) DropFilter(ctx context.Context, filterID int64) erro
 
 	w.wordFilters.Remove(filterID)
 
-	go w.discord.SendPayload(domain.ChannelWordFilterLog, discord.FilterDelMessage(filter))
+	w.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelWordFilterLog, discord.FilterDelMessage(filter)))
 
 	return nil
 }

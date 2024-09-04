@@ -16,32 +16,32 @@ import (
 )
 
 type matchRepository struct {
-	database     database.Database
-	persons      domain.PersonUsecase
-	discord      domain.DiscordUsecase
-	servers      domain.ServersUsecase
-	state        domain.StateUsecase
-	summarizer   *Summarizer
-	wm           fp.MutexMap[logparse.Weapon, int]
-	events       chan logparse.ServerEvent
-	broadcaster  *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
-	matchUUIDMap fp.MutexMap[int, uuid.UUID]
+	database      database.Database
+	persons       domain.PersonUsecase
+	notifications domain.NotificationUsecase
+	servers       domain.ServersUsecase
+	state         domain.StateUsecase
+	summarizer    *Summarizer
+	wm            fp.MutexMap[logparse.Weapon, int]
+	events        chan logparse.ServerEvent
+	broadcaster   *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
+	matchUUIDMap  fp.MutexMap[int, uuid.UUID]
 }
 
 func NewMatchRepository(broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
-	database database.Database, personUsecase domain.PersonUsecase, servers domain.ServersUsecase, discord domain.DiscordUsecase,
+	database database.Database, persons domain.PersonUsecase, servers domain.ServersUsecase, notifications domain.NotificationUsecase,
 	state domain.StateUsecase, weaponMap fp.MutexMap[logparse.Weapon, int],
 ) domain.MatchRepository {
 	matchRepo := &matchRepository{
-		database:     database,
-		persons:      personUsecase,
-		servers:      servers,
-		discord:      discord,
-		state:        state,
-		wm:           weaponMap,
-		broadcaster:  broadcaster,
-		matchUUIDMap: fp.NewMutexMap[int, uuid.UUID](),
-		events:       make(chan logparse.ServerEvent),
+		database:      database,
+		persons:       persons,
+		servers:       servers,
+		notifications: notifications,
+		state:         state,
+		wm:            weaponMap,
+		broadcaster:   broadcaster,
+		matchUUIDMap:  fp.NewMutexMap[int, uuid.UUID](),
+		events:        make(chan logparse.ServerEvent),
 	}
 
 	matchRepo.summarizer = newMatchSummarizer(matchRepo.events, matchRepo.onMatchComplete)
@@ -96,7 +96,9 @@ func (r *matchRepository) onMatchComplete(ctx context.Context, matchContext *act
 		return errors.Join(errResult, domain.ErrLoadMatch)
 	}
 
-	go r.discord.SendPayload(domain.ChannelPublicMatchLog, discord.MatchMessage(result, ""))
+	r.notifications.Enqueue(ctx, domain.NewDiscordNotification(
+		domain.ChannelPublicMatchLog,
+		discord.MatchMessage(result, "")))
 
 	return nil
 }

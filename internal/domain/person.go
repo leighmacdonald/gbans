@@ -29,6 +29,7 @@ type PersonUsecase interface {
 	GetExpiredProfiles(ctx context.Context, limit uint64) ([]Person, error)
 	GetPersonMessageByID(ctx context.Context, personMessageID int64) (PersonMessage, error)
 	GetSteamIDsAbove(ctx context.Context, privilege Privilege) (steamid.Collection, error)
+	GetSteamIDsByGroups(ctx context.Context, privileges []Privilege) (steamid.Collection, error)
 	GetPersonSettings(ctx context.Context, steamID steamid.SteamID) (PersonSettings, error)
 	SavePersonSettings(ctx context.Context, user PersonInfo, req PersonSettingsUpdate) (PersonSettings, error)
 	SetSteam(ctx context.Context, sid64 steamid.SteamID, discordID string) error
@@ -41,6 +42,7 @@ type PersonRepository interface {
 	GetPersonBySteamID(ctx context.Context, sid64 steamid.SteamID) (Person, error)
 	GetPeopleBySteamID(ctx context.Context, steamIDs steamid.Collection) (People, error)
 	GetSteamsAtAddress(ctx context.Context, addr net.IP) (steamid.Collection, error)
+	GetSteamIDsByGroups(ctx context.Context, privileges []Privilege) (steamid.Collection, error)
 	GetPeople(ctx context.Context, filter PlayerQuery) (People, int64, error)
 	GetPersonByDiscordID(ctx context.Context, discordID string) (Person, error)
 	GetExpiredProfiles(ctx context.Context, limit uint64) ([]Person, error)

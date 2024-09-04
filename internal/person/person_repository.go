@@ -516,6 +516,32 @@ func (r *personRepository) GetSteamIDsAbove(ctx context.Context, privilege domai
 	return ids, nil
 }
 
+func (r *personRepository) GetSteamIDsByGroups(ctx context.Context, privileges []domain.Privilege) (steamid.Collection, error) {
+	rows, errRows := r.db.QueryBuilder(ctx, r.db.
+		Builder().
+		Select("steam_id").
+		From("person").
+		Where(sq.Eq{"permission_level": privileges}))
+	if errRows != nil {
+		return nil, r.db.DBErr(errRows)
+	}
+
+	defer rows.Close()
+
+	var ids steamid.Collection
+
+	for rows.Next() {
+		var sid int64
+		if errScan := rows.Scan(&sid); errScan != nil {
+			return nil, errors.Join(errScan, domain.ErrScanResult)
+		}
+
+		ids = append(ids, steamid.New(sid))
+	}
+
+	return ids, nil
+}
+
 func (r *personRepository) GetPersonSettings(ctx context.Context, steamID steamid.SteamID) (domain.PersonSettings, error) {
 	var settings domain.PersonSettings
 

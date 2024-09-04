@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 )
@@ -114,7 +115,7 @@ func (g *Memberships) updateGroupBanMembers(ctx context.Context) (map[steamid.St
 	}
 
 	for _, group := range groups {
-		members, errMembers := steamweb.GetGroupMembers(localCtx, group.GroupID)
+		members, errMembers := steamweb.GetGroupMembers(localCtx, httphelper.NewHTTPClient(), group.GroupID)
 		if errMembers != nil {
 			return nil, errors.Join(errMembers, errFetchGroupBanMembersAPI)
 		}

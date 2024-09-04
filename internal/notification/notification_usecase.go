@@ -2,74 +2,50 @@ package notification
 
 import (
 	"context"
-	"errors"
-	"log/slog"
-
+	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/queue"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+	"github.com/riverqueue/river"
+	"log/slog"
+	"net/url"
 )
 
+func NewNotificationUsecase(repository domain.NotificationRepository, discord domain.DiscordUsecase) domain.NotificationUsecase {
+	return &notificationUsecase{repository: repository, discord: discord}
+}
+
 type notificationUsecase struct {
-	repository domain.NotificationRepository
-	persons    domain.PersonUsecase
+	repository  domain.NotificationRepository
+	discord     domain.DiscordUsecase
+	queueClient *river.Client[pgx.Tx]
 }
 
-func NewNotificationUsecase(repository domain.NotificationRepository,
-	personUsecase domain.PersonUsecase,
-) domain.NotificationUsecase {
-	return &notificationUsecase{repository: repository, persons: personUsecase}
+func (n *notificationUsecase) Enqueue(ctx context.Context, payload domain.NotificationPayload) {
+	if n.queueClient == nil {
+		return
+	}
+
+	_, err := n.queueClient.Insert(ctx, SenderArgs{Payload: payload}, &river.InsertOpts{Queue: string(queue.Default)})
+	if err != nil {
+		slog.Error("Failed to queue notification", log.ErrAttr(err))
+	}
 }
 
-func (n notificationUsecase) SendNotification(ctx context.Context, targetID steamid.SteamID, severity domain.NotificationSeverity, message string, link string) error {
-	notification := domain.NotificationPayload{}
-	// Collect all required ids
-	if notification.MinPerms >= domain.PUser {
-		sids, errIDs := n.persons.GetSteamIDsAbove(ctx, notification.MinPerms)
-		if errIDs != nil {
-			return errors.Join(errIDs, domain.ErrNotificationSteamIDs)
-		}
-
-		notification.Sids = append(notification.Sids, sids...)
-	}
-
-	uniqueIDs := fp.Uniq[steamid.SteamID](notification.Sids)
-
-	people, errPeople := n.persons.GetPeopleBySteamID(ctx, uniqueIDs)
-	if errPeople != nil && !errors.Is(errPeople, domain.ErrNoResult) {
-		return errors.Join(errPeople, domain.ErrNotificationPeople)
-	}
-
-	var discordPeople []domain.Person
-
-	for _, p := range people {
-		if p.DiscordID != "" {
-			discordPeople = append(discordPeople, p)
-		}
-	}
-
-	go func(_ []domain.Person, _ domain.NotificationPayload) {
-		for _, discordPerson := range discordPeople {
-			if err := n.repository.SendNotification(ctx, discordPerson.SteamID, notification.Severity, notification.Message, notification.Link); err != nil {
-				slog.Error("Failed to send discord notification", log.ErrAttr(err))
-			}
-		}
-	}(discordPeople, notification)
-
-	for _, sid := range uniqueIDs {
-		// Todo, prep stmt at least.
-		if errSend := n.repository.SendNotification(ctx, sid, notification.Severity,
-			notification.Message, notification.Link); errSend != nil {
-			slog.Error("Failed to send notification", log.ErrAttr(errSend))
-
-			break
-		}
-	}
-
-	return n.repository.SendNotification(ctx, targetID, severity, message, link)
+func (n *notificationUsecase) SendSite(ctx context.Context, targetIDs steamid.Collection, severity domain.NotificationSeverity, message string, link *url.URL) error {
+	return n.repository.SendSite(ctx, fp.Uniq(targetIDs), severity, message, link)
 }
 
-func (n notificationUsecase) GetPersonNotifications(ctx context.Context, filters domain.NotificationQuery) ([]domain.UserNotification, int64, error) {
+func (n *notificationUsecase) SetQueueClient(queueClient *river.Client[pgx.Tx]) {
+	n.queueClient = queueClient
+}
+
+func (n *notificationUsecase) GetPersonNotifications(ctx context.Context, filters domain.NotificationQuery) ([]domain.UserNotification, int64, error) {
 	return n.repository.GetPersonNotifications(ctx, filters)
+}
+
+func (n *notificationUsecase) RegisterWorkers(workers *river.Workers) {
+	river.AddWorker[SenderArgs](workers, &SenderWorker{notifications: n})
 }

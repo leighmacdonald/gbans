@@ -11,22 +11,22 @@ import (
 )
 
 type banASN struct {
-	repository domain.BanASNRepository
-	discord    domain.DiscordUsecase
-	networks   domain.NetworkUsecase
-	config     domain.ConfigUsecase
-	person     domain.PersonUsecase
+	repository    domain.BanASNRepository
+	notifications domain.NotificationUsecase
+	networks      domain.NetworkUsecase
+	config        domain.ConfigUsecase
+	person        domain.PersonUsecase
 }
 
-func NewBanASNUsecase(repository domain.BanASNRepository, discord domain.DiscordUsecase,
+func NewBanASNUsecase(repository domain.BanASNRepository, notifications domain.NotificationUsecase,
 	network domain.NetworkUsecase, config domain.ConfigUsecase, person domain.PersonUsecase,
 ) domain.BanASNUsecase {
 	return banASN{
-		repository: repository,
-		discord:    discord,
-		networks:   network,
-		config:     config,
-		person:     person,
+		repository:    repository,
+		notifications: notifications,
+		networks:      network,
+		config:        config,
+		person:        person,
 	}
 }
 
@@ -79,7 +79,9 @@ func (s banASN) Ban(ctx context.Context, req domain.RequestBanASNCreate) (domain
 		return ban, errors.Join(errSave, domain.ErrSaveBan)
 	}
 
-	s.discord.SendPayload(domain.ChannelBanLog, discord.BanASNMessage(bannedPerson, s.config.Config()))
+	s.notifications.Enqueue(ctx, domain.NewDiscordNotification(
+		domain.ChannelBanLog,
+		discord.BanASNMessage(bannedPerson, s.config.Config())))
 
 	return bannedPerson, nil
 }
@@ -99,7 +101,9 @@ func (s banASN) Unban(ctx context.Context, asnNum string, reasonText string) (bo
 		return false, errors.Join(errDrop, domain.ErrDropASNBan)
 	}
 
-	s.discord.SendPayload(domain.ChannelBanLog, discord.UnbanASNMessage(asNum))
+	s.notifications.Enqueue(ctx, domain.NewDiscordNotification(
+		domain.ChannelBanLog,
+		discord.UnbanASNMessage(asNum)))
 
 	return true, nil
 }

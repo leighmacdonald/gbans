@@ -87,3 +87,13 @@ func SecureRandomString(n int) string {
 
 	return string(ret)
 }
+
+func ToLowerSlice(stringSlice []string) []string {
+	lowerSlice := make([]string, len(stringSlice))
+
+	for i := range stringSlice {
+		lowerSlice[i] = strings.ToLower(stringSlice[i])
+	}
+
+	return lowerSlice
+}

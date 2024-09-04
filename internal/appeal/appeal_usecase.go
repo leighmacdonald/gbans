@@ -11,17 +11,17 @@ import (
 )
 
 type appeals struct {
-	repository domain.AppealRepository
-	bans       domain.BanSteamUsecase
-	persons    domain.PersonUsecase
-	discord    domain.DiscordUsecase
-	config     domain.ConfigUsecase
+	repository    domain.AppealRepository
+	bans          domain.BanSteamUsecase
+	persons       domain.PersonUsecase
+	notifications domain.NotificationUsecase
+	config        domain.ConfigUsecase
 }
 
 func NewAppealUsecase(ar domain.AppealRepository, bans domain.BanSteamUsecase, persons domain.PersonUsecase,
-	discord domain.DiscordUsecase, config domain.ConfigUsecase,
+	notifications domain.NotificationUsecase, config domain.ConfigUsecase,
 ) domain.AppealUsecase {
-	return &appeals{repository: ar, bans: bans, persons: persons, discord: discord, config: config}
+	return &appeals{repository: ar, bans: bans, persons: persons, notifications: notifications, config: config}
 }
 
 func (u *appeals) GetAppealsByActivity(ctx context.Context, opts domain.AppealQueryFilter) ([]domain.AppealOverview, error) {
@@ -59,8 +59,8 @@ func (u *appeals) EditBanMessage(ctx context.Context, curUser domain.UserProfile
 
 	conf := u.config.Config()
 
-	u.discord.SendPayload(domain.ChannelModAppealLog, discord.NewAppealMessage(existing.MessageMD,
-		conf.ExtURL(bannedPerson.BanSteam), curUser, conf.ExtURL(curUser)))
+	u.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelModAppealLog, discord.NewAppealMessage(existing.MessageMD,
+		conf.ExtURL(bannedPerson.BanSteam), curUser, conf.ExtURL(curUser))))
 
 	return existing, nil
 }
@@ -108,8 +108,8 @@ func (u *appeals) CreateBanMessage(ctx context.Context, curUser domain.UserProfi
 
 	conf := u.config.Config()
 
-	u.discord.SendPayload(domain.ChannelModAppealLog, discord.NewAppealMessage(msg.MessageMD,
-		conf.ExtURL(bannedPerson.BanSteam), curUser, conf.ExtURL(curUser)))
+	u.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelModAppealLog, discord.NewAppealMessage(msg.MessageMD,
+		conf.ExtURL(bannedPerson.BanSteam), curUser, conf.ExtURL(curUser))))
 
 	bannedPerson.UpdatedOn = time.Now()
 
@@ -151,7 +151,9 @@ func (u *appeals) DropBanMessage(ctx context.Context, curUser domain.UserProfile
 		return errDrop
 	}
 
-	u.discord.SendPayload(domain.ChannelModAppealLog, discord.DeleteAppealMessage(&existing, curUser, u.config.ExtURL(curUser)))
+	u.notifications.Enqueue(ctx, domain.NewDiscordNotification(
+		domain.ChannelModAppealLog,
+		discord.DeleteAppealMessage(&existing, curUser, u.config.ExtURL(curUser))))
 
 	return nil
 }

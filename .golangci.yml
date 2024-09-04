@@ -134,6 +134,7 @@ linters-settings:
       - .WithMessage(
       - .WithMessagef(
       - .WithStack(
+      - river.JobCancel(
     # An array of strings that specify regular expressions of signatures to ignore.
     # Default: []
     #ignoreSigRegexps:

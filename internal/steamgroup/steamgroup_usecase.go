@@ -16,20 +16,20 @@ import (
 )
 
 type banGroupUsecase struct {
-	repository domain.BanGroupRepository
-	persons    domain.PersonUsecase
-	discord    domain.DiscordUsecase
-	config     domain.ConfigUsecase
+	repository    domain.BanGroupRepository
+	persons       domain.PersonUsecase
+	notifications domain.NotificationUsecase
+	config        domain.ConfigUsecase
 }
 
 func NewBanGroupUsecase(repository domain.BanGroupRepository, persons domain.PersonUsecase,
-	discord domain.DiscordUsecase, config domain.ConfigUsecase,
+	notifications domain.NotificationUsecase, config domain.ConfigUsecase,
 ) domain.BanGroupUsecase {
 	return &banGroupUsecase{
-		repository: repository,
-		persons:    persons,
-		discord:    discord,
-		config:     config,
+		repository:    repository,
+		persons:       persons,
+		notifications: notifications,
+		config:        config,
 	}
 }
 
@@ -170,7 +170,7 @@ func (s banGroupUsecase) Ban(ctx context.Context, req domain.RequestBanGroupCrea
 		return domain.BannedGroupPerson{}, errDuration
 	}
 
-	members, membersErr := steamweb.GetGroupMembers(ctx, gid)
+	members, membersErr := steamweb.GetGroupMembers(ctx, httphelper.NewHTTPClient(), gid)
 	if membersErr != nil || len(members) == 0 {
 		return domain.BannedGroupPerson{}, errors.Join(membersErr, domain.ErrGroupValidate)
 	}
@@ -195,7 +195,9 @@ func (s banGroupUsecase) Ban(ctx context.Context, req domain.RequestBanGroupCrea
 		return domain.BannedGroupPerson{}, errors.Join(err, domain.ErrSaveBan)
 	}
 
-	s.discord.SendPayload(domain.ChannelBanLog, discord.BanGroupMessage(banGroup, author, s.config.Config()))
+	s.notifications.Enqueue(ctx, domain.NewDiscordNotification(
+		domain.ChannelBanLog,
+		discord.BanGroupMessage(banGroup, author, s.config.Config())))
 
 	return s.GetByID(ctx, banGroup.BanGroupID)
 }

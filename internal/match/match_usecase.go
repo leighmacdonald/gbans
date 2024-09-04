@@ -12,20 +12,20 @@ import (
 )
 
 type matchUsecase struct {
-	repository domain.MatchRepository
-	state      domain.StateUsecase
-	servers    domain.ServersUsecase
-	discord    domain.DiscordUsecase
+	repository    domain.MatchRepository
+	state         domain.StateUsecase
+	servers       domain.ServersUsecase
+	notifications domain.NotificationUsecase
 }
 
 func NewMatchUsecase(repository domain.MatchRepository, state domain.StateUsecase, servers domain.ServersUsecase,
-	discord domain.DiscordUsecase,
+	notifications domain.NotificationUsecase,
 ) domain.MatchUsecase {
 	return &matchUsecase{
-		repository: repository,
-		state:      state,
-		servers:    servers,
-		discord:    discord,
+		repository:    repository,
+		state:         state,
+		servers:       servers,
+		notifications: notifications,
 	}
 }
 
