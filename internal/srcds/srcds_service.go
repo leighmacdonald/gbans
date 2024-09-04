@@ -16,46 +16,46 @@ import (
 )
 
 type srcdsHandler struct {
-	srcds     domain.SRCDSUsecase
-	servers   domain.ServersUsecase
-	persons   domain.PersonUsecase
-	state     domain.StateUsecase
-	discord   domain.DiscordUsecase
-	config    domain.ConfigUsecase
-	reports   domain.ReportUsecase
-	assets    domain.AssetUsecase
-	bans      domain.BanSteamUsecase
-	bansGroup domain.BanGroupUsecase
-	bansASN   domain.BanASNUsecase
-	bansNet   domain.BanNetUsecase
-	network   domain.NetworkUsecase
-	demos     domain.DemoUsecase
-	blocklist domain.BlocklistUsecase
+	srcds         domain.SRCDSUsecase
+	servers       domain.ServersUsecase
+	persons       domain.PersonUsecase
+	state         domain.StateUsecase
+	notifications domain.NotificationUsecase
+	config        domain.ConfigUsecase
+	reports       domain.ReportUsecase
+	assets        domain.AssetUsecase
+	bans          domain.BanSteamUsecase
+	bansGroup     domain.BanGroupUsecase
+	bansASN       domain.BanASNUsecase
+	bansNet       domain.BanNetUsecase
+	network       domain.NetworkUsecase
+	demos         domain.DemoUsecase
+	blocklist     domain.BlocklistUsecase
 }
 
 func NewSRCDSHandler(engine *gin.Engine, srcds domain.SRCDSUsecase, servers domain.ServersUsecase,
 	persons domain.PersonUsecase, assets domain.AssetUsecase, reports domain.ReportUsecase,
 	bans domain.BanSteamUsecase, network domain.NetworkUsecase, bansGroup domain.BanGroupUsecase,
 	demos domain.DemoUsecase, auth domain.AuthUsecase, bansASNU domain.BanASNUsecase, bansNet domain.BanNetUsecase,
-	config domain.ConfigUsecase, discord domain.DiscordUsecase, state domain.StateUsecase,
+	config domain.ConfigUsecase, notifications domain.NotificationUsecase, state domain.StateUsecase,
 	blocklist domain.BlocklistUsecase,
 ) {
 	handler := srcdsHandler{
-		srcds:     srcds,
-		servers:   servers,
-		persons:   persons,
-		reports:   reports,
-		bans:      bans,
-		assets:    assets,
-		network:   network,
-		bansGroup: bansGroup,
-		demos:     demos,
-		bansASN:   bansASNU,
-		bansNet:   bansNet,
-		config:    config,
-		discord:   discord,
-		state:     state,
-		blocklist: blocklist,
+		srcds:         srcds,
+		servers:       servers,
+		persons:       persons,
+		reports:       reports,
+		bans:          bans,
+		assets:        assets,
+		network:       network,
+		bansGroup:     bansGroup,
+		demos:         demos,
+		bansASN:       bansASNU,
+		bansNet:       bansNet,
+		config:        config,
+		notifications: notifications,
+		state:         state,
+		blocklist:     blocklist,
 	}
 
 	adminGroup := engine.Group("/")
@@ -189,8 +189,9 @@ func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
 
 					ctx.JSON(http.StatusOK, defaultValue)
 
-					s.discord.SendPayload(domain.ChannelKickLog,
-						discord.KickPlayerOnConnectEmbed(steamID, req.Name, player, banState.BanSource))
+					s.notifications.Enqueue(ctx, domain.NewDiscordNotification(
+						domain.ChannelKickLog,
+						discord.KickPlayerOnConnectEmbed(steamID, req.Name, player, banState.BanSource)))
 
 					return
 				}
@@ -1075,8 +1076,9 @@ func (s *srcdsHandler) onAPIPostPingMod() gin.HandlerFunc {
 			connect = fmt.Sprintf("steam://connect/%s:%d", addr.String(), server.Port)
 		}
 
-		s.discord.SendPayload(domain.ChannelMod,
-			discord.PingModMessage(author, conf.ExtURL(author), req.Reason, server, conf.Discord.ModPingRoleID, connect))
+		s.notifications.Enqueue(ctx, domain.NewDiscordNotification(
+			domain.ChannelMod,
+			discord.PingModMessage(author, conf.ExtURL(author), req.Reason, server, conf.Discord.ModPingRoleID, connect)))
 
 		if errSay := s.state.PSay(ctx, author.SteamID, "Moderators have been notified"); errSay != nil {
 			slog.Error("Failed to reply to user", log.ErrAttr(errSay))

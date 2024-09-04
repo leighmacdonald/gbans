@@ -15,44 +15,44 @@ import (
 )
 
 type chatUsecase struct {
-	repository   domain.ChatRepository
-	wordFilters  domain.WordFilterUsecase
-	bansSteam    domain.BanSteamUsecase
-	persons      domain.PersonUsecase
-	discord      domain.DiscordUsecase
-	state        domain.StateUsecase
-	warningMu    *sync.RWMutex
-	dry          bool
-	maxWeight    int
-	warnings     map[steamid.SteamID][]domain.UserWarning
-	owner        steamid.SteamID
-	matchTimeout time.Duration
-	checkTimeout time.Duration
+	repository    domain.ChatRepository
+	wordFilters   domain.WordFilterUsecase
+	bansSteam     domain.BanSteamUsecase
+	persons       domain.PersonUsecase
+	notifications domain.NotificationUsecase
+	state         domain.StateUsecase
+	warningMu     *sync.RWMutex
+	dry           bool
+	maxWeight     int
+	warnings      map[steamid.SteamID][]domain.UserWarning
+	owner         steamid.SteamID
+	matchTimeout  time.Duration
+	checkTimeout  time.Duration
 
 	pingDiscord bool
 }
 
-func NewChatUsecase(configUsecase domain.ConfigUsecase, chatRepository domain.ChatRepository,
-	filterUsecase domain.WordFilterUsecase, stateUsecase domain.StateUsecase, banUsecase domain.BanSteamUsecase,
-	personUsecase domain.PersonUsecase, discordUsecase domain.DiscordUsecase,
+func NewChatUsecase(config domain.ConfigUsecase, chatRepository domain.ChatRepository,
+	filters domain.WordFilterUsecase, stateUsecase domain.StateUsecase, bans domain.BanSteamUsecase,
+	persons domain.PersonUsecase, notifications domain.NotificationUsecase,
 ) domain.ChatUsecase {
-	conf := configUsecase.Config()
+	conf := config.Config()
 
 	return &chatUsecase{
-		repository:   chatRepository,
-		wordFilters:  filterUsecase,
-		bansSteam:    banUsecase,
-		persons:      personUsecase,
-		discord:      discordUsecase,
-		state:        stateUsecase,
-		pingDiscord:  conf.Filters.PingDiscord,
-		warnings:     make(map[steamid.SteamID][]domain.UserWarning),
-		warningMu:    &sync.RWMutex{},
-		matchTimeout: time.Duration(conf.Filters.MatchTimeout) * time.Second,
-		dry:          conf.Filters.Dry,
-		maxWeight:    conf.Filters.MaxWeight,
-		owner:        steamid.New(conf.Owner),
-		checkTimeout: time.Duration(conf.Filters.CheckTimeout) * time.Second,
+		repository:    chatRepository,
+		wordFilters:   filters,
+		bansSteam:     bans,
+		persons:       persons,
+		notifications: notifications,
+		state:         stateUsecase,
+		pingDiscord:   conf.Filters.PingDiscord,
+		warnings:      make(map[steamid.SteamID][]domain.UserWarning),
+		warningMu:     &sync.RWMutex{},
+		matchTimeout:  time.Duration(conf.Filters.MatchTimeout) * time.Second,
+		dry:           conf.Filters.Dry,
+		maxWeight:     conf.Filters.MaxWeight,
+		owner:         steamid.New(conf.Owner),
+		checkTimeout:  time.Duration(conf.Filters.CheckTimeout) * time.Second,
 	}
 }
 
@@ -109,7 +109,9 @@ func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.Ne
 		return nil
 	}
 
-	u.discord.SendPayload(domain.ChannelWordFilterLog, discord.WarningMessage(newWarning, ban))
+	u.notifications.Enqueue(ctx, domain.NewDiscordNotification(
+		domain.ChannelWordFilterLog,
+		discord.WarningMessage(newWarning, ban)))
 
 	return nil
 }

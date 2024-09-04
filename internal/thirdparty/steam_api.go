@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 )
@@ -36,7 +37,7 @@ func FetchPlayerBans(ctx context.Context, steamIDs []steamid.SteamID) ([]steamwe
 				ids        = steamIDs[index : index+int(maxResults)]
 			)
 
-			bans, errGetPlayerBans := steamweb.GetPlayerBans(ctx, ids)
+			bans, errGetPlayerBans := steamweb.GetPlayerBans(ctx, httphelper.NewHTTPClient(), ids)
 			if errGetPlayerBans != nil {
 				atomic.AddInt32(&hasErr, 1)
 			}
@@ -61,7 +62,7 @@ var (
 )
 
 func UpdatePlayerSummary(ctx context.Context, person *domain.Person) error {
-	summaries, errSummaries := steamweb.PlayerSummaries(ctx, steamid.Collection{person.SteamID})
+	summaries, errSummaries := steamweb.PlayerSummaries(ctx, httphelper.NewHTTPClient(), steamid.Collection{person.SteamID})
 	if errSummaries != nil {
 		return errors.Join(errSummaries, ErrPlayerAPIFailed)
 	}

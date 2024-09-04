@@ -14,19 +14,22 @@ import (
 )
 
 type banNet struct {
-	repository domain.BanNetRepository
-	persons    domain.PersonUsecase
-	config     domain.ConfigUsecase
-	discord    domain.DiscordUsecase
-	state      domain.StateUsecase
+	repository    domain.BanNetRepository
+	persons       domain.PersonUsecase
+	config        domain.ConfigUsecase
+	notifications domain.NotificationUsecase
+	state         domain.StateUsecase
 }
 
 func NewBanNetUsecase(repository domain.BanNetRepository, persons domain.PersonUsecase,
-	config domain.ConfigUsecase, discord domain.DiscordUsecase, state domain.StateUsecase,
+	config domain.ConfigUsecase, notifications domain.NotificationUsecase, state domain.StateUsecase,
 ) domain.BanNetUsecase {
 	return &banNet{
-		repository: repository, persons: persons, config: config,
-		discord: discord, state: state,
+		repository:    repository,
+		persons:       persons,
+		config:        config,
+		notifications: notifications,
+		state:         state,
 	}
 }
 
@@ -68,7 +71,9 @@ func (s *banNet) Ban(ctx context.Context, banNet *domain.BanCIDR) error {
 
 	conf := s.config.Config()
 
-	s.discord.SendPayload(domain.ChannelBanLog, discord.BanCIDRResponse(realCIDR, author, conf.ExtURL(author), target, banNet))
+	s.notifications.Enqueue(ctx, domain.NewDiscordNotification(
+		domain.ChannelBanLog,
+		discord.BanCIDRResponse(realCIDR, author, conf.ExtURL(author), target, banNet)))
 
 	go func(_ *net.IPNet, reason domain.Reason) {
 		foundPlayers := s.state.Find("", steamid.SteamID{}, nil, realCIDR)

@@ -12,13 +12,15 @@ require (
 	github.com/docker/docker v25.0.5+incompatible
 	github.com/dotse/slug v0.1.0
 	github.com/dustin/go-humanize v1.0.1
+	github.com/emersion/go-imap/v2 v2.0.0-beta.3
+	github.com/emersion/go-message v0.18.1
 	github.com/gabriel-vasile/mimetype v1.4.5
 	github.com/getsentry/sentry-go v0.28.1
 	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-contrib/pprof v1.5.0
 	github.com/gin-contrib/static v1.1.2
 	github.com/gin-gonic/gin v1.10.0
-	github.com/gofrs/uuid/v5 v5.2.0
+	github.com/gofrs/uuid/v5 v5.3.0
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/golang-migrate/migrate/v4 v4.17.1
 	github.com/gomarkdown/markdown v0.0.0-20240730141124-034f12af3bf6
@@ -31,16 +33,20 @@ require (
 	github.com/leighmacdonald/discordgo-embed v0.0.0-20230818080156-2fb99fe03f89
 	github.com/leighmacdonald/rcon v1.0.10
 	github.com/leighmacdonald/steamid/v4 v4.0.4
-	github.com/leighmacdonald/steamweb/v2 v2.2.1
+	github.com/leighmacdonald/steamweb/v2 v2.3.1
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.19.1
+	github.com/prometheus/client_golang v1.20.2
 	github.com/ricochet2200/go-disk-usage/du v0.0.0-20210707232629-ac9918953285
+	github.com/riverqueue/river v0.11.4
+	github.com/riverqueue/river/riverdriver/riverpgxv5 v0.11.4
+	github.com/riverqueue/river/rivershared v0.11.4
+	github.com/riverqueue/river/rivertype v0.11.4
 	github.com/ryanuber/go-glob v1.0.0
-	github.com/samber/slog-gin v1.13.3
+	github.com/samber/slog-gin v1.13.4
 	github.com/sergi/go-diff v1.3.1
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0
@@ -49,8 +55,8 @@ require (
 	github.com/unrolled/secure v1.15.0
 	github.com/viant/afs v1.25.1
 	github.com/yohcop/openid-go v1.0.1
-	golang.org/x/crypto v0.25.0
-	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
+	golang.org/x/crypto v0.26.0
+	golang.org/x/exp v0.0.0-20240823005443-9b4947da3948
 	golang.org/x/oauth2 v0.22.0
 	golang.org/x/sync v0.8.0
 )
@@ -62,7 +68,7 @@ require (
 	github.com/Microsoft/hcsshim v0.11.4 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/bytedance/sonic v1.12.0 // indirect
+	github.com/bytedance/sonic v1.12.2 // indirect
 	github.com/bytedance/sonic/loader v0.2.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -75,6 +81,7 @@ require (
 	github.com/distribution/reference v0.5.0 // indirect
 	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
+	github.com/emersion/go-sasl v0.0.0-20231106173351-e73c9f7bad43 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
@@ -105,7 +112,7 @@ require (
 	github.com/jackc/pgx/v4 v4.18.3 // indirect
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/klauspost/compress v1.17.7 // indirect
+	github.com/klauspost/compress v1.17.9 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.8 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
@@ -127,12 +134,13 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0 // indirect
-	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
+	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
-	github.com/prometheus/common v0.55.0 // indirect
+	github.com/prometheus/common v0.57.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
+	github.com/riverqueue/river/riverdriver v0.11.4 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/sagikazarmark/locafero v0.6.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
@@ -141,7 +149,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
-	github.com/spf13/cast v1.6.0 // indirect
+	github.com/spf13/cast v1.7.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
@@ -150,17 +158,18 @@ require (
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.49.0 // indirect
-	go.opentelemetry.io/otel v1.28.0 // indirect
-	go.opentelemetry.io/otel/metric v1.28.0 // indirect
-	go.opentelemetry.io/otel/trace v1.28.0 // indirect
+	go.opentelemetry.io/otel v1.29.0 // indirect
+	go.opentelemetry.io/otel/metric v1.29.0 // indirect
+	go.opentelemetry.io/otel/trace v1.29.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
+	go.uber.org/goleak v1.3.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/arch v0.9.0 // indirect
-	golang.org/x/mod v0.19.0 // indirect
-	golang.org/x/net v0.27.0 // indirect
-	golang.org/x/sys v0.23.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
-	golang.org/x/tools v0.23.0 // indirect
+	golang.org/x/mod v0.20.0 // indirect
+	golang.org/x/net v0.28.0 // indirect
+	golang.org/x/sys v0.24.0 // indirect
+	golang.org/x/text v0.17.0 // indirect
+	golang.org/x/tools v0.24.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240314234333-6e1732d8331c // indirect
 	google.golang.org/grpc v1.62.1 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect

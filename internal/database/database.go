@@ -27,6 +27,7 @@ var migrations embed.FS
 // Database is the common database interface. All errors from callers should be wrapped in errs.DBErr as they
 // are not automatically wrapped.
 type Database interface {
+	Pool() *pgxpool.Pool
 	Connect(ctx context.Context) error
 	Close() error
 	Begin(ctx context.Context) (pgx.Tx, error)
@@ -46,6 +47,21 @@ type Database interface {
 	TruncateTable(ctx context.Context, table string) error
 }
 
+type dbQueryTracer struct{}
+
+func (tracer *dbQueryTracer) TraceQueryStart(
+	ctx context.Context,
+	_ *pgx.Conn,
+	data pgx.TraceQueryStartData,
+) context.Context {
+	slog.Info("Executing command", slog.String("sql", data.SQL), slog.Any("args", data.Args))
+
+	return ctx
+}
+
+func (tracer *dbQueryTracer) TraceQueryEnd(_ context.Context, _ *pgx.Conn, _ pgx.TraceQueryEndData) {
+}
+
 type postgresStore struct {
 	conn *pgxpool.Pool
 	// Use $ for pg based queries.
@@ -63,21 +79,6 @@ func New(dsn string, autoMigrate bool, logQueries bool) Database {
 		autoMigrate: autoMigrate,
 		logQueries:  logQueries,
 	}
-}
-
-type dbQueryTracer struct{}
-
-func (tracer *dbQueryTracer) TraceQueryStart(
-	ctx context.Context,
-	_ *pgx.Conn,
-	data pgx.TraceQueryStartData,
-) context.Context {
-	slog.Info("Executing command", slog.String("sql", data.SQL), slog.Any("args", data.Args))
-
-	return ctx
-}
-
-func (tracer *dbQueryTracer) TraceQueryEnd(_ context.Context, _ *pgx.Conn, _ pgx.TraceQueryEndData) {
 }
 
 // DBErr is used to wrap common database errors in owr own error types.
@@ -102,6 +103,10 @@ func (db *postgresStore) DBErr(rootError error) error {
 	}
 
 	return rootError
+}
+
+func (db *postgresStore) Pool() *pgxpool.Pool {
+	return db.conn
 }
 
 // Connect sets up underlying required services.

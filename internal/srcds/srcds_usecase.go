@@ -19,28 +19,28 @@ import (
 )
 
 type srcds struct {
-	repository domain.SRCDSRepository
-	bans       domain.BanSteamUsecase
-	config     domain.ConfigUsecase
-	servers    domain.ServersUsecase
-	persons    domain.PersonUsecase
-	reports    domain.ReportUsecase
-	discord    domain.DiscordUsecase
-	cookie     string
+	repository    domain.SRCDSRepository
+	bans          domain.BanSteamUsecase
+	config        domain.ConfigUsecase
+	servers       domain.ServersUsecase
+	persons       domain.PersonUsecase
+	reports       domain.ReportUsecase
+	notifications domain.NotificationUsecase
+	cookie        string
 }
 
 func NewSrcdsUsecase(repository domain.SRCDSRepository, config domain.ConfigUsecase, servers domain.ServersUsecase,
-	persons domain.PersonUsecase, reports domain.ReportUsecase, discord domain.DiscordUsecase, bans domain.BanSteamUsecase,
+	persons domain.PersonUsecase, reports domain.ReportUsecase, notifications domain.NotificationUsecase, bans domain.BanSteamUsecase,
 ) domain.SRCDSUsecase {
 	return &srcds{
-		config:     config,
-		servers:    servers,
-		persons:    persons,
-		reports:    reports,
-		discord:    discord,
-		bans:       bans,
-		repository: repository,
-		cookie:     config.Config().HTTPCookieKey,
+		config:        config,
+		servers:       servers,
+		persons:       persons,
+		reports:       reports,
+		notifications: notifications,
+		bans:          bans,
+		repository:    repository,
+		cookie:        config.Config().HTTPCookieKey,
 	}
 }
 
@@ -365,9 +365,9 @@ func (h srcds) Report(ctx context.Context, currentUser domain.UserProfile, req d
 
 	demoURL := ""
 
-	msg := discord.NewInGameReportResponse(savedReport, conf.ExtURL(savedReport), currentUser, conf.ExtURL(currentUser), demoURL)
-
-	go h.discord.SendPayload(domain.ChannelModLog, msg)
+	h.notifications.Enqueue(ctx, domain.NewDiscordNotification(
+		domain.ChannelModLog,
+		discord.NewInGameReportResponse(savedReport, conf.ExtURL(savedReport), currentUser, conf.ExtURL(currentUser), demoURL)))
 
 	return savedReport, nil
 }

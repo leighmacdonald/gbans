@@ -14,12 +14,12 @@ import (
 )
 
 type newsHandler struct {
-	news    domain.NewsUsecase
-	discord domain.DiscordUsecase
+	news          domain.NewsUsecase
+	notifications domain.NotificationUsecase
 }
 
-func NewNewsHandler(engine *gin.Engine, news domain.NewsUsecase, discord domain.DiscordUsecase, auth domain.AuthUsecase) {
-	handler := newsHandler{news: news, discord: discord}
+func NewNewsHandler(engine *gin.Engine, news domain.NewsUsecase, notifications domain.NotificationUsecase, auth domain.AuthUsecase) {
+	handler := newsHandler{news: news, notifications: notifications}
 
 	engine.POST("/api/news_latest", handler.onAPIGetNewsLatest())
 
@@ -82,7 +82,9 @@ func (h newsHandler) onAPIPostNewsCreate() gin.HandlerFunc {
 
 		ctx.JSON(http.StatusCreated, entry)
 
-		go h.discord.SendPayload(domain.ChannelModLog, discord.NewNewsMessage(req.BodyMD, req.Title))
+		h.notifications.Enqueue(ctx, domain.NewDiscordNotification(
+			domain.ChannelModLog,
+			discord.NewNewsMessage(req.BodyMD, req.Title)))
 	}
 }
 
@@ -130,7 +132,9 @@ func (h newsHandler) onAPIPostNewsUpdate() gin.HandlerFunc {
 
 		ctx.JSON(http.StatusAccepted, entry)
 
-		h.discord.SendPayload(domain.ChannelModLog, discord.EditNewsMessages(entry.Title, entry.BodyMD))
+		h.notifications.Enqueue(ctx, domain.NewDiscordNotification(
+			domain.ChannelModLog,
+			discord.EditNewsMessages(entry.Title, entry.BodyMD)))
 	}
 }
 

@@ -10,7 +10,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/network"
 	"github.com/leighmacdonald/gbans/internal/person"
@@ -87,26 +86,24 @@ func refreshFiltersCmd() *cobra.Command {
 			stateUsecase := state.NewStateUsecase(eventBroadcaster,
 				state.NewStateRepository(state.NewCollector(serversUsecase)), configUsecase, serversUsecase)
 
-			discordRepository, _ := discord.NewDiscordRepository(conf)
+			// discordUsecase := discord.NewDiscordUsecase(discord.NewDiscordRepository(conf), configUsecase)
 
-			discordUsecase := discord.NewDiscordUsecase(discordRepository, configUsecase)
-
-			wordFilterUsecase := wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(dbUsecase), discordUsecase)
+			wordFilterUsecase := wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(dbUsecase), nil)
 			if errImport := wordFilterUsecase.Import(ctx); errImport != nil {
 				slog.Error("Failed to load filters")
 			}
 
 			personUsecase := person.NewPersonUsecase(person.NewPersonRepository(conf, dbUsecase), configUsecase)
-			reportUsecase := report.NewReportUsecase(report.NewReportRepository(dbUsecase), discordUsecase, configUsecase, personUsecase, nil)
+			reportUsecase := report.NewReportUsecase(report.NewReportRepository(dbUsecase), nil, configUsecase, personUsecase, nil)
 			// banGroupUsecase := steamgroup.NewBanGroupUsecase(steamgroup.NewSteamGroupRepository(dbUsecase), personUsecase)
 			networkUsecase := network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(dbUsecase), personUsecase, configUsecase)
-			banUsecase := ban.NewBanSteamUsecase(ban.NewBanSteamRepository(dbUsecase, personUsecase, networkUsecase), personUsecase, configUsecase, discordUsecase, reportUsecase, stateUsecase)
+			banUsecase := ban.NewBanSteamUsecase(ban.NewBanSteamRepository(dbUsecase, personUsecase, networkUsecase), personUsecase, configUsecase, nil, reportUsecase, stateUsecase)
 
 			// blocklistUsecase := blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(dbUsecase), banUsecase)
 
 			chatRepository := chat.NewChatRepository(dbUsecase, personUsecase, wordFilterUsecase, nil, eventBroadcaster)
 			chatUsecase := chat.NewChatUsecase(configUsecase, chatRepository, wordFilterUsecase, stateUsecase, banUsecase,
-				personUsecase, discordUsecase)
+				personUsecase, nil)
 
 			var query domain.ChatHistoryQueryFilter
 			query.DontCalcTotal = true

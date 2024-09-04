@@ -10,6 +10,7 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/pkg/datetime"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
@@ -17,24 +18,24 @@ import (
 )
 
 type banSteamUsecase struct {
-	banRepo domain.BanSteamRepository
-	persons domain.PersonUsecase
-	config  domain.ConfigUsecase
-	discord domain.DiscordUsecase
-	state   domain.StateUsecase
-	reports domain.ReportUsecase
+	banRepo       domain.BanSteamRepository
+	persons       domain.PersonUsecase
+	config        domain.ConfigUsecase
+	notifications domain.NotificationUsecase
+	state         domain.StateUsecase
+	reports       domain.ReportUsecase
 }
 
 func NewBanSteamUsecase(repository domain.BanSteamRepository, person domain.PersonUsecase,
-	config domain.ConfigUsecase, discord domain.DiscordUsecase, reports domain.ReportUsecase, state domain.StateUsecase,
+	config domain.ConfigUsecase, notifications domain.NotificationUsecase, reports domain.ReportUsecase, state domain.StateUsecase,
 ) domain.BanSteamUsecase {
 	return &banSteamUsecase{
-		banRepo: repository,
-		persons: person,
-		config:  config,
-		discord: discord,
-		reports: reports,
-		state:   state,
+		banRepo:       repository,
+		persons:       person,
+		config:        config,
+		notifications: notifications,
+		reports:       reports,
+		state:         state,
 	}
 }
 
@@ -53,7 +54,7 @@ func (s banSteamUsecase) UpdateCache(ctx context.Context) error {
 			continue
 		}
 
-		friends, errFriends := steamweb.GetFriendList(ctx, ban.TargetID)
+		friends, errFriends := steamweb.GetFriendList(ctx, httphelper.NewHTTPClient(), ban.TargetID)
 		if errFriends != nil {
 			continue
 		}
@@ -150,7 +151,7 @@ func (s banSteamUsecase) Ban(ctx context.Context, curUser domain.PersonInfo, ori
 		return ban, errors.Join(errBannedPerson, domain.ErrSaveBan)
 	}
 
-	go s.discord.SendPayload(domain.ChannelBanLog, discord.BanSteamResponse(bannedPerson))
+	s.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelBanLog, discord.BanSteamResponse(bannedPerson)))
 
 	// Close the report if the ban was attached to one
 	if banSteam.ReportID > 0 {
@@ -170,7 +171,8 @@ func (s banSteamUsecase) Ban(ctx context.Context, curUser domain.PersonInfo, ori
 				slog.Int64("sid64", banSteam.TargetID.Int64()))
 		}
 
-		s.discord.SendPayload(domain.ChannelKickLog, discord.KickPlayerEmbed(target))
+		s.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelKickLog, discord.KickPlayerEmbed(target)))
+
 	} else if banSteam.BanType == domain.NoComm {
 		if errSilence := s.state.Silence(ctx, banSteam.TargetID, banSteam.Reason); errSilence != nil && !errors.Is(errSilence, domain.ErrPlayerNotFound) {
 			slog.Error("Failed to silence player", log.ErrAttr(errSilence),
@@ -207,7 +209,7 @@ func (s banSteamUsecase) Unban(ctx context.Context, targetSID steamid.SteamID, r
 		return false, errors.Join(err, domain.ErrFetchPerson)
 	}
 
-	s.discord.SendPayload(domain.ChannelBanLog, discord.UnbanMessage(s.config, person))
+	s.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelBanLog, discord.UnbanMessage(s.config, person)))
 
 	return true, nil
 }

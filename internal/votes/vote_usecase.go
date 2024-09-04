@@ -13,25 +13,25 @@ import (
 )
 
 type voteUsecase struct {
-	repository domain.VoteRepository
-	persons    domain.PersonUsecase
-	matches    domain.MatchUsecase
-	discord    domain.DiscordUsecase
-	config     domain.ConfigUsecase
+	repository    domain.VoteRepository
+	persons       domain.PersonUsecase
+	matches       domain.MatchUsecase
+	notifications domain.NotificationUsecase
+	config        domain.ConfigUsecase
 
 	broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
 }
 
 func NewVoteUsecase(repository domain.VoteRepository, persons domain.PersonUsecase, matched domain.MatchUsecase,
-	discord domain.DiscordUsecase, config domain.ConfigUsecase, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
+	notifications domain.NotificationUsecase, config domain.ConfigUsecase, broadcaster *fp.Broadcaster[logparse.EventType, logparse.ServerEvent],
 ) domain.VoteUsecase {
 	return &voteUsecase{
-		repository:  repository,
-		persons:     persons,
-		matches:     matched,
-		discord:     discord,
-		config:      config,
-		broadcaster: broadcaster,
+		repository:    repository,
+		persons:       persons,
+		matches:       matched,
+		notifications: notifications,
+		config:        config,
+		broadcaster:   broadcaster,
 	}
 }
 
@@ -170,7 +170,9 @@ func (u voteUsecase) Start(ctx context.Context) {
 					slog.Error("Failed to load vote target", log.ErrAttr(errSource), slog.String("steam_id", result.TargetID.String()))
 				}
 
-				u.discord.SendPayload(domain.ChannelModVoteLog, discord.VoteResultMessage(u.config.Config(), result, source, target))
+				u.notifications.Enqueue(ctx, domain.NewDiscordNotification(
+					domain.ChannelModVoteLog,
+					discord.VoteResultMessage(u.config.Config(), result, source, target)))
 			}
 		}
 	}

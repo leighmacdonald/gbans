@@ -18,22 +18,22 @@ import (
 )
 
 type reportUsecase struct {
-	repository domain.ReportRepository
-	discord    domain.DiscordUsecase
-	config     domain.ConfigUsecase
-	persons    domain.PersonUsecase
-	demos      domain.DemoUsecase
+	repository    domain.ReportRepository
+	notifications domain.NotificationUsecase
+	config        domain.ConfigUsecase
+	persons       domain.PersonUsecase
+	demos         domain.DemoUsecase
 }
 
-func NewReportUsecase(repository domain.ReportRepository, discord domain.DiscordUsecase,
+func NewReportUsecase(repository domain.ReportRepository, notifications domain.NotificationUsecase,
 	config domain.ConfigUsecase, persons domain.PersonUsecase, demos domain.DemoUsecase,
 ) domain.ReportUsecase {
 	return &reportUsecase{
-		discord:    discord,
-		repository: repository,
-		config:     config,
-		persons:    persons,
-		demos:      demos,
+		notifications: notifications,
+		repository:    repository,
+		config:        config,
+		persons:       persons,
+		demos:         demos,
 	}
 }
 
@@ -90,7 +90,9 @@ func (r reportUsecase) Start(ctx context.Context) {
 				}
 			}
 
-			r.discord.SendPayload(domain.ChannelMod, discord.ReportStatsMessage(meta, r.config.ExtURLRaw("/admin/reports")))
+			r.notifications.Enqueue(ctx, domain.NewDiscordNotification(
+				domain.ChannelMod,
+				discord.ReportStatsMessage(meta, r.config.ExtURLRaw("/admin/reports"))))
 		case <-ctx.Done():
 			slog.Debug("showReportMeta shutting down")
 
@@ -143,7 +145,9 @@ func (r reportUsecase) SetReportStatus(ctx context.Context, reportID int64, user
 		return report, errSave
 	}
 
-	go r.discord.SendPayload(domain.ChannelMod, discord.ReportStatusChangeMessage(report, fromStatus, r.config.ExtURL(report)))
+	r.notifications.Enqueue(ctx, domain.NewDiscordNotification(
+		domain.ChannelMod,
+		discord.ReportStatusChangeMessage(report, fromStatus, r.config.ExtURL(report))))
 
 	return report, nil
 }
@@ -239,7 +243,9 @@ func (r reportUsecase) DropReportMessage(ctx context.Context, curUser domain.Per
 		return err
 	}
 
-	go r.discord.SendPayload(domain.ChannelModAppealLog, discord.DeleteReportMessage(existing, curUser, r.config.ExtURL(curUser)))
+	r.notifications.Enqueue(ctx, domain.NewDiscordNotification(
+		domain.ChannelModAppealLog,
+		discord.DeleteReportMessage(existing, curUser, r.config.ExtURL(curUser))))
 
 	return nil
 }
@@ -347,9 +353,9 @@ func (r reportUsecase) SaveReport(ctx context.Context, currentUser domain.UserPr
 		return domain.ReportWithAuthor{}, errReport
 	}
 
-	go r.discord.SendPayload(
+	r.notifications.Enqueue(ctx, domain.NewDiscordNotification(
 		domain.ChannelModAppealLog,
-		discord.NewInGameReportResponse(newReport, conf.ExtURL(report), currentUser, conf.ExtURL(currentUser), demoURL))
+		discord.NewInGameReportResponse(newReport, conf.ExtURL(report), currentUser, conf.ExtURL(currentUser), demoURL)))
 
 	return newReport, nil
 }
@@ -386,10 +392,10 @@ func (r reportUsecase) EditReportMessage(ctx context.Context, reportMessageID in
 
 	conf := r.config.Config()
 
-	msg := discord.EditReportMessageResponse(req.BodyMD, existing.MessageMD,
-		conf.ExtURLRaw("/report/%d", existing.ReportID), curUser, conf.ExtURL(curUser))
-
-	go r.discord.SendPayload(domain.ChannelModAppealLog, msg)
+	r.notifications.Enqueue(ctx, domain.NewDiscordNotification(
+		domain.ChannelModAppealLog,
+		discord.EditReportMessageResponse(req.BodyMD, existing.MessageMD,
+			conf.ExtURLRaw("/report/%d", existing.ReportID), curUser, conf.ExtURL(curUser))))
 
 	return r.GetReportMessageByID(ctx, reportMessageID)
 }
@@ -419,8 +425,9 @@ func (r reportUsecase) CreateReportMessage(ctx context.Context, reportID int64, 
 
 	conf := r.config.Config()
 
-	go r.discord.SendPayload(domain.ChannelModAppealLog,
-		discord.NewReportMessageResponse(msg.MessageMD, conf.ExtURL(report), curUser, conf.ExtURL(curUser)))
+	r.notifications.Enqueue(ctx, domain.NewDiscordNotification(
+		domain.ChannelModAppealLog,
+		discord.NewReportMessageResponse(msg.MessageMD, conf.ExtURL(report), curUser, conf.ExtURL(curUser))))
 
 	return msg, nil
 }

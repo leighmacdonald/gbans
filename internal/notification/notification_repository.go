@@ -3,6 +3,8 @@ package notification
 import (
 	"context"
 	"errors"
+	"github.com/jackc/pgx/v5"
+	"net/url"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -19,12 +21,17 @@ func NewNotificationRepository(db database.Database) domain.NotificationReposito
 	return &notificationRepository{db: db}
 }
 
-func (r *notificationRepository) SendNotification(ctx context.Context, targetID steamid.SteamID, severity domain.NotificationSeverity, message string, link string) error {
-	return r.db.DBErr(r.db.ExecInsertBuilder(ctx, r.db.
-		Builder().
-		Insert("person_notification").
-		Columns("steam_id", "severity", "message", "link", "created_on").
-		Values(targetID.Int64(), severity, message, link, time.Now())))
+func (r *notificationRepository) SendSite(ctx context.Context, targetIDs steamid.Collection, severity domain.NotificationSeverity, message string, link *url.URL) error {
+	const query = `
+		INSERT INTO person_notification (steam_id, severity, message, link, created_on) 
+		VALUES ($1, $2, $3, $4)`
+
+	batch := &pgx.Batch{}
+	for _, sid := range targetIDs {
+		batch.Queue(query, sid.Int64(), severity, message, link, time.Now())
+	}
+
+	return r.db.DBErr(r.db.SendBatch(ctx, batch).Close())
 }
 
 func (r *notificationRepository) GetPersonNotifications(ctx context.Context, filters domain.NotificationQuery) ([]domain.UserNotification, int64, error) {

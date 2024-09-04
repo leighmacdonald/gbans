@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"errors"
+	"github.com/riverqueue/river"
 	"log/slog"
 	"net/http"
 	"os"
@@ -33,6 +34,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/patreon"
 	"github.com/leighmacdonald/gbans/internal/person"
+	"github.com/leighmacdonald/gbans/internal/queue"
 	"github.com/leighmacdonald/gbans/internal/report"
 	"github.com/leighmacdonald/gbans/internal/servers"
 	"github.com/leighmacdonald/gbans/internal/srcds"
@@ -95,6 +97,18 @@ func firstTimeSetup(ctx context.Context, persons domain.PersonUsecase, news doma
 	return nil
 }
 
+func createQueueWorkers(people domain.PersonUsecase, notifications domain.NotificationUsecase, discord domain.DiscordUsecase) *river.Workers {
+	workers := river.NewWorkers()
+
+	river.AddWorker[notification.SenderArgs](workers, notification.NewSenderWorker(people, notifications, discord))
+
+	return workers
+}
+
+func createPeriodicJobs() []*river.PeriodicJob {
+	return nil
+}
+
 // serveCmd represents the serve command.
 func serveCmd() *cobra.Command { //nolint:maintidx
 	return &cobra.Command{
@@ -129,6 +143,13 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				}
 			}()
 
+			if err := queue.Init(ctx, dbConn.Pool()); err != nil {
+				slog.Error("Failed to initialize queue", log.ErrAttr(err))
+
+				return err
+			}
+
+			// Config
 			configUsecase := config.NewConfigUsecase(staticConfig, config.NewConfigRepository(dbConn))
 			if err := configUsecase.Init(ctx); err != nil {
 				slog.Error("Failed to init config", log.ErrAttr(err))
@@ -174,7 +195,9 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				return err
 			}
 
-			wordFilterUsecase := wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(dbConn), discordUsecase)
+			notificationUsecase := notification.NewNotificationUsecase(notification.NewNotificationRepository(dbConn), discordUsecase)
+
+			wordFilterUsecase := wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(dbConn), notificationUsecase)
 			if err := wordFilterUsecase.Import(ctx); err != nil {
 				slog.Error("Failed to load word filters", log.ErrAttr(err))
 
@@ -199,13 +222,14 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			serversUsecase := servers.NewServersUsecase(servers.NewServersRepository(dbConn))
 			demoUsecase := demo.NewDemoUsecase(domain.BucketDemo, demo.NewDemoRepository(dbConn), assetUsecase, configUsecase, serversUsecase)
 			go demoUsecase.Start(ctx)
-			reportUsecase := report.NewReportUsecase(report.NewReportRepository(dbConn), discordUsecase, configUsecase, personUsecase, demoUsecase)
+			reportUsecase := report.NewReportUsecase(report.NewReportRepository(dbConn), notificationUsecase, configUsecase, personUsecase, demoUsecase)
 
 			stateUsecase := state.NewStateUsecase(eventBroadcaster,
 				state.NewStateRepository(state.NewCollector(serversUsecase)), configUsecase, serversUsecase)
-			banUsecase := ban.NewBanSteamUsecase(ban.NewBanSteamRepository(dbConn, personUsecase, networkUsecase), personUsecase, configUsecase, discordUsecase, reportUsecase, stateUsecase)
 
-			banGroupUsecase := steamgroup.NewBanGroupUsecase(steamgroup.NewSteamGroupRepository(dbConn), personUsecase, discordUsecase, configUsecase)
+			banUsecase := ban.NewBanSteamUsecase(ban.NewBanSteamRepository(dbConn, personUsecase, networkUsecase), personUsecase, configUsecase, notificationUsecase, reportUsecase, stateUsecase)
+
+			banGroupUsecase := steamgroup.NewBanGroupUsecase(steamgroup.NewSteamGroupRepository(dbConn), personUsecase, notificationUsecase, configUsecase)
 
 			blocklistUsecase := blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(dbConn), banUsecase, banGroupUsecase)
 			go blocklistUsecase.Start(ctx)
@@ -216,18 +240,18 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				}
 			}()
 
-			banASNUsecase := ban.NewBanASNUsecase(ban.NewBanASNRepository(dbConn), discordUsecase, networkUsecase, configUsecase, personUsecase)
-			banNetUsecase := ban.NewBanNetUsecase(ban.NewBanNetRepository(dbConn), personUsecase, configUsecase, discordUsecase, stateUsecase)
+			banASNUsecase := ban.NewBanASNUsecase(ban.NewBanASNRepository(dbConn), notificationUsecase, networkUsecase, configUsecase, personUsecase)
+			banNetUsecase := ban.NewBanNetUsecase(ban.NewBanNetRepository(dbConn), personUsecase, configUsecase, notificationUsecase, stateUsecase)
 
 			discordOAuthUsecase := discord.NewDiscordOAuthUsecase(discord.NewDiscordOAuthRepository(dbConn), configUsecase)
 			go discordOAuthUsecase.Start(ctx)
 
-			appeals := appeal.NewAppealUsecase(appeal.NewAppealRepository(dbConn), banUsecase, personUsecase, discordUsecase, configUsecase)
+			appeals := appeal.NewAppealUsecase(appeal.NewAppealRepository(dbConn), banUsecase, personUsecase, notificationUsecase, configUsecase)
 
-			matchRepo := match.NewMatchRepository(eventBroadcaster, dbConn, personUsecase, serversUsecase, discordUsecase, stateUsecase, weaponsMap)
+			matchRepo := match.NewMatchRepository(eventBroadcaster, dbConn, personUsecase, serversUsecase, notificationUsecase, stateUsecase, weaponsMap)
 			go matchRepo.Start(ctx)
 
-			matchUsecase := match.NewMatchUsecase(matchRepo, stateUsecase, serversUsecase, discordUsecase)
+			matchUsecase := match.NewMatchUsecase(matchRepo, stateUsecase, serversUsecase, notificationUsecase)
 
 			if errWeapons := matchUsecase.LoadWeapons(ctx, weaponsMap); errWeapons != nil {
 				slog.Error("Failed to import weapons", log.ErrAttr(errWeapons))
@@ -236,10 +260,10 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			chatRepository := chat.NewChatRepository(dbConn, personUsecase, wordFilterUsecase, matchUsecase, eventBroadcaster)
 			go chatRepository.Start(ctx)
 
-			chatUsecase := chat.NewChatUsecase(configUsecase, chatRepository, wordFilterUsecase, stateUsecase, banUsecase, personUsecase, discordUsecase)
+			chatUsecase := chat.NewChatUsecase(configUsecase, chatRepository, wordFilterUsecase, stateUsecase, banUsecase, personUsecase, notificationUsecase)
 			go chatUsecase.Start(ctx)
 
-			forumUsecase := forum.NewForumUsecase(forum.NewForumRepository(dbConn), discordUsecase)
+			forumUsecase := forum.NewForumUsecase(forum.NewForumRepository(dbConn), notificationUsecase)
 
 			metricsUsecase := metrics.NewMetricsUsecase(eventBroadcaster)
 			go metricsUsecase.Start(ctx)
@@ -247,18 +271,18 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			go forumUsecase.Start(ctx)
 
 			newsUsecase := news.NewNewsUsecase(news.NewNewsRepository(dbConn))
-			notificationUsecase := notification.NewNotificationUsecase(notification.NewNotificationRepository(dbConn), personUsecase)
+
 			patreonUsecase := patreon.NewPatreonUsecase(patreon.NewPatreonRepository(dbConn), configUsecase)
 			go patreonUsecase.Start(ctx)
 
-			srcdsUsecase := srcds.NewSrcdsUsecase(srcds.NewRepository(dbConn), configUsecase, serversUsecase, personUsecase, reportUsecase, discordUsecase, banUsecase)
+			srcdsUsecase := srcds.NewSrcdsUsecase(srcds.NewRepository(dbConn), configUsecase, serversUsecase, personUsecase, reportUsecase, notificationUsecase, banUsecase)
 
 			wikiUsecase := wiki.NewWikiUsecase(wiki.NewWikiRepository(dbConn))
 
 			authUsecase := auth.NewAuthUsecase(auth.NewAuthRepository(dbConn), configUsecase, personUsecase, banUsecase, serversUsecase)
 			go authUsecase.Start(ctx)
 
-			voteUsecase := votes.NewVoteUsecase(votes.NewVoteRepository(dbConn), personUsecase, matchUsecase, discordUsecase, configUsecase, eventBroadcaster)
+			voteUsecase := votes.NewVoteUsecase(votes.NewVoteRepository(dbConn), personUsecase, matchUsecase, notificationUsecase, configUsecase, eventBroadcaster)
 			go voteUsecase.Start(ctx)
 
 			contestUsecase := contest.NewContestUsecase(contest.NewContestRepository(dbConn))
@@ -306,7 +330,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			asset.NewAssetHandler(router, configUsecase, assetUsecase, authUsecase)
 			metrics.NewMetricsHandler(router)
 			network.NewNetworkHandler(router, networkUsecase, authUsecase)
-			news.NewNewsHandler(router, newsUsecase, discordUsecase, authUsecase)
+			news.NewNewsHandler(router, newsUsecase, notificationUsecase, authUsecase)
 			notification.NewNotificationHandler(router, notificationUsecase, authUsecase)
 			patreon.NewPatreonHandler(router, patreonUsecase, authUsecase, configUsecase)
 			person.NewPersonHandler(router, configUsecase, personUsecase, authUsecase)
@@ -314,7 +338,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			servers.NewServerHandler(router, serversUsecase, stateUsecase, authUsecase, personUsecase)
 			srcds.NewSRCDSHandler(router, srcdsUsecase, serversUsecase, personUsecase, assetUsecase,
 				reportUsecase, banUsecase, networkUsecase, banGroupUsecase, demoUsecase, authUsecase, banASNUsecase, banNetUsecase,
-				configUsecase, discordUsecase, stateUsecase, blocklistUsecase)
+				configUsecase, notificationUsecase, stateUsecase, blocklistUsecase)
 			votes.NewVoteHandler(router, voteUsecase, authUsecase)
 			wiki.NewWIkiHandler(router, wikiUsecase, authUsecase)
 			wordfilter.NewWordFilterHandler(router, configUsecase, wordFilterUsecase, chatUsecase, authUsecase)
@@ -327,6 +351,24 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				demoFetcher := demo.NewFetcher(dbConn, configUsecase, serversUsecase, assetUsecase, demoUsecase)
 				go demoFetcher.Start(ctx)
 			}
+
+			// River Queue
+			workers := createQueueWorkers(personUsecase, notificationUsecase, discordUsecase)
+			periodicJons := createPeriodicJobs()
+			queueClient, errClient := queue.Client(dbConn.Pool(), workers, periodicJons)
+			if errClient != nil {
+				slog.Error("Failed to setup job queue", log.ErrAttr(errClient))
+
+				return errClient
+			}
+
+			if errClientStart := queueClient.Start(ctx); errClientStart != nil {
+				slog.Error("Failed to start job client", log.ErrAttr(errClientStart))
+
+				return errors.Join(errClientStart, queue.ErrStartQueue)
+			}
+
+			notificationUsecase.SetQueueClient(queueClient)
 
 			httpServer := httphelper.NewHTTPServer(conf.Addr(), router)
 

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/httphelper"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
@@ -51,7 +52,7 @@ func (u personUsecase) QueryProfile(ctx context.Context, query string) (domain.P
 		}
 	}
 
-	friendList, errFetchFriends := steamweb.GetFriendList(ctx, person.SteamID)
+	friendList, errFetchFriends := steamweb.GetFriendList(ctx, httphelper.NewHTTPClient(), person.SteamID)
 	if errFetchFriends == nil {
 		resp.Friends = friendList
 	}
@@ -92,7 +93,7 @@ func (u personUsecase) updateProfiles(ctx context.Context, people domain.People)
 	})
 
 	errGroup.Go(func() error {
-		newSummaries, errSummaries := steamweb.PlayerSummaries(cancelCtx, steamIDs)
+		newSummaries, errSummaries := steamweb.PlayerSummaries(cancelCtx, httphelper.NewHTTPClient(), steamIDs)
 		if errSummaries != nil {
 			return errors.Join(errSummaries, domain.ErrSteamAPISummaries)
 		}
@@ -259,6 +260,10 @@ func (u personUsecase) GetPersonMessageByID(ctx context.Context, personMessageID
 
 func (u personUsecase) GetSteamIDsAbove(ctx context.Context, privilege domain.Privilege) (steamid.Collection, error) {
 	return u.persons.GetSteamIDsAbove(ctx, privilege)
+}
+
+func (u personUsecase) GetSteamIDsByGroups(ctx context.Context, privileges []domain.Privilege) (steamid.Collection, error) {
+	return u.persons.GetSteamIDsByGroups(ctx, privileges)
 }
 
 func (u personUsecase) GetPersonSettings(ctx context.Context, steamID steamid.SteamID) (domain.PersonSettings, error) {
