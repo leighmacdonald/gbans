@@ -3,7 +3,9 @@ package domain
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -24,6 +26,7 @@ type ConfigRepository interface {
 type ConfigUsecase interface {
 	Config() Config
 	ExtURL(obj LinkablePath) string
+	ExtURLInstance(obj LinkablePath) *url.URL
 	ExtURLRaw(path string, args ...any) string
 	Reload(ctx context.Context) error
 	Write(ctx context.Context, config Config) error
@@ -71,6 +74,15 @@ type Config struct {
 	LocalStore  ConfigLocalStore  `json:"local_store"`
 	Exports     ConfigExports     `json:"exports"`
 	Sentry      ConfigSentry      `json:"sentry"`
+}
+
+func (c Config) ExtURLInstance(obj LinkablePath) *url.URL {
+	urlObj, err := url.Parse(c.ExtURLRaw(obj.Path()))
+	if err != nil {
+		slog.Error("Failed to parse URL", slog.String("url", c.ExtURLRaw(obj.Path())), log.ErrAttr(err))
+	}
+
+	return urlObj
 }
 
 func (c Config) ExtURL(obj LinkablePath) string {

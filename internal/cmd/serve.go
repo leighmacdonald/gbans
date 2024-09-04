@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"errors"
-	"github.com/riverqueue/river"
 	"log/slog"
 	"net/http"
 	"os"
@@ -47,6 +46,7 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+	"github.com/riverqueue/river"
 	"github.com/spf13/cobra"
 )
 

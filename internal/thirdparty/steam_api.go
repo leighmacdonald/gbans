@@ -34,7 +34,7 @@ func FetchPlayerBans(ctx context.Context, steamIDs []steamid.SteamID) ([]steamwe
 			var (
 				total      = uint64(len(steamIDs) - index)
 				maxResults = min(steamQueryMaxResults, total)
-				ids        = steamIDs[index : index+int(maxResults)]
+				ids        = steamIDs[index : index+int(maxResults)] // nolint:gosec
 			)
 
 			bans, errGetPlayerBans := steamweb.GetPlayerBans(ctx, httphelper.NewHTTPClient(), ids)

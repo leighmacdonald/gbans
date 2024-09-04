@@ -170,6 +170,21 @@ func (p Person) Path() string {
 	return fmt.Sprintf("/profile/%d", p.SteamID.Int64())
 }
 
+func (p Person) ToUserProfile() UserProfile {
+	return UserProfile{
+		SteamID:         p.SteamID,
+		CreatedOn:       p.CreatedOn,
+		UpdatedOn:       p.UpdatedOn,
+		PermissionLevel: p.PermissionLevel,
+		DiscordID:       p.DiscordID,
+		PatreonID:       p.PatreonID,
+		Name:            p.PersonaName,
+		Avatarhash:      p.AvatarHash,
+		BanID:           0,
+		Muted:           p.Muted,
+	}
+}
+
 // LoggedIn checks for a valid steamID.
 func (p Person) LoggedIn() bool {
 	return p.SteamID.Valid() && p.SteamID.Int64() > 0

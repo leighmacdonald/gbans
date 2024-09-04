@@ -3,11 +3,12 @@ package notification
 import (
 	"context"
 	"errors"
+	"log/slog"
+
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/queue"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/riverqueue/river"
-	"log/slog"
 )
 
 type SenderArgs struct {
