@@ -86,7 +86,7 @@ typecheck_ts:
 	cd frontend && pnpm run typecheck
 
 static:
-	staticcheck -go 1.22 ./...
+	staticcheck -go 1.23 ./...
 
 clean:
 	@go clean $(GO_FLAGS) -i

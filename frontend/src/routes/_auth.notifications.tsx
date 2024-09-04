@@ -1,114 +1,353 @@
-import { useState } from 'react';
-import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
+import { useMemo, useState } from 'react';
+import ClearAllIcon from '@mui/icons-material/ClearAll';
+import DoneIcon from '@mui/icons-material/Done';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import EmailIcon from '@mui/icons-material/Email';
-import Box from '@mui/material/Box';
+import MarkChatReadIcon from '@mui/icons-material/MarkChatRead';
+import RemoveIcon from '@mui/icons-material/Remove';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
-import Checkbox from '@mui/material/Checkbox';
-import Pagination from '@mui/material/Pagination';
-import Paper from '@mui/material/Paper';
-import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Grid2 from '@mui/material/Unstable_Grid2';
+import { useTheme } from '@mui/material/styles';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { parseISO } from 'date-fns';
-import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
-import { Title } from '../component/Title';
-import { useNotifications } from '../hooks/useNotifications.ts';
-import { useNotificationsCtx } from '../hooks/useNotificationsCtx.ts';
+import {
+    ColumnDef,
+    getCoreRowModel,
+    getPaginationRowModel,
+    OnChangeFn,
+    PaginationState,
+    RowSelectionState,
+    useReactTable
+} from '@tanstack/react-table';
+import {
+    apiGetNotifications,
+    apiNotificationsDelete,
+    apiNotificationsDeleteAll,
+    apiNotificationsMarkAllRead,
+    apiNotificationsMarkRead,
+    NotificationSeverity,
+    UserNotification
+} from '../api';
+import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
+import { DataTable } from '../component/DataTable.tsx';
+import { IndeterminateCheckbox } from '../component/IndeterminateCheckbox.tsx';
+import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
+import { TableCellBool } from '../component/TableCellBool.tsx';
+import { TableCellLink } from '../component/TableCellLink.tsx';
+import { TableCellRelativeDateField } from '../component/TableCellRelativeDateField.tsx';
+import { TableCellString } from '../component/TableCellString.tsx';
+import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { RowsPerPage } from '../util/table.ts';
-import { renderDateTime } from '../util/text.tsx';
 
 export const Route = createFileRoute('/_auth/notifications')({
     component: NotificationsPage
 });
 
-interface CBProps {
-    id: number;
-}
-
-const CB = ({ id }: CBProps) => {
-    const [checked, setChecked] = useState(false);
-    const { setSelectedIds } = useNotificationsCtx();
-    return (
-        <Checkbox
-            checked={checked}
-            onChange={(_, checked) => {
-                setChecked(checked);
-                setSelectedIds((prevState) => {
-                    if (checked && !prevState.includes(id)) {
-                        prevState.push(id);
-                    } else {
-                        const index = prevState.indexOf(id, 0);
-                        if (index > -1) {
-                            prevState.splice(index, 1);
-                        }
-                    }
-                    return prevState;
-                });
-            }}
-        />
-    );
-};
-
 function NotificationsPage() {
-    const [page, setPage] = useState<number>(0);
+    const queryClient = useQueryClient();
+    const { sendFlash } = useUserFlashCtx();
+    const [rowSelection, setRowSelection] = useState({});
 
-    const { data, count } = useNotifications({
-        limit: RowsPerPage.TwentyFive,
-        desc: true,
-        deleted: false,
-        offset: page * RowsPerPage.TwentyFive
+    // const { page, rows, sortOrder, sortColumn } = Route.useSearch();
+    const [pagination, setPagination] = useState({
+        pageIndex: 0, //initial page index
+        pageSize: RowsPerPage.TwentyFive //default page size
     });
 
+    const { data: notifications, isLoading } = useQuery({
+        queryKey: ['notifications'],
+        queryFn: async () => {
+            return await apiGetNotifications();
+        }
+    });
+
+    const selectedToIds = () => {
+        if (!notifications) {
+            return [];
+        }
+
+        return Object.keys(rowSelection).map((s) => notifications[Number(s)].person_notification_id);
+    };
+
+    const onMarkAllRead = useMutation({
+        mutationKey: ['notifications'],
+        mutationFn: async () => {
+            await apiNotificationsMarkAllRead();
+        },
+        onSuccess: () => {
+            queryClient.setQueryData(['notifications'], (prev: UserNotification[]) => {
+                return prev?.map((n) => {
+                    return { ...n, read: true };
+                });
+            });
+            sendFlash('success', `Successfully marked ${notifications?.length} as read`);
+            setRowSelection({});
+        },
+        onError: (error) => {
+            sendFlash('error', `Failed to mark all messages read: ${error}`);
+        }
+    });
+
+    const onMarkSelected = useMutation({
+        mutationKey: ['notifications'],
+        mutationFn: async (selectedIds: number[]) => {
+            await apiNotificationsMarkRead(selectedIds);
+        },
+        onSuccess: (_, ids) => {
+            queryClient.setQueryData(['notifications'], (prev: UserNotification[]) => {
+                return prev?.map((n) => {
+                    return ids.includes(n.person_notification_id) ? { ...n, read: true } : n;
+                });
+            });
+            sendFlash('success', `Successfully marked ${ids?.length} as read`);
+            setRowSelection({});
+        },
+        onError: (error) => {
+            sendFlash('error', `Failed to mark all messages read: ${error}`);
+        }
+    });
+
+    const onDeleteAll = useMutation({
+        mutationKey: ['notifications'],
+        mutationFn: async () => {
+            await apiNotificationsDeleteAll();
+        },
+        onSuccess: () => {
+            queryClient.setQueryData(['notifications'], []);
+            sendFlash('success', `Successfully deleted ${notifications?.length} messages`);
+            setRowSelection({});
+        },
+        onError: (error) => {
+            sendFlash('error', `Failed to delete all messages: ${error}`);
+        }
+    });
+
+    const onDeleteSelected = useMutation({
+        mutationKey: ['notifications'],
+        mutationFn: async (selectedIds: number[]) => {
+            await apiNotificationsDelete(selectedIds);
+        },
+        onSuccess: (_, ids) => {
+            queryClient.setQueryData(['notifications'], (prev: UserNotification[]) => {
+                return prev?.filter((n) => {
+                    return !ids.includes(n.person_notification_id);
+                });
+            });
+            sendFlash('success', `Successfully deleted ${ids?.length} messages`);
+            setRowSelection({});
+        },
+        onError: (error) => {
+            sendFlash('error', `Failed to delete all messages: ${error}`);
+        }
+    });
     return (
         <Grid2 container spacing={2}>
-            <Title>Notifications</Title>
-            <Grid2 xs={3}>
-                <ContainerWithHeader title={'Manage'}>
-                    <ButtonGroup orientation={'vertical'} variant="contained">
-                        <Button startIcon={<DoneAllIcon />} color={'primary'}>
-                            Mark All Read
-                        </Button>
-                        <Button startIcon={<DeleteSweepIcon />} color={'error'}>
-                            Delete Selected
-                        </Button>
-                    </ButtonGroup>
-                </ContainerWithHeader>
-            </Grid2>
-            <Grid2 xs={9}>
-                <ContainerWithHeader iconLeft={<EmailIcon />} title={`Notifications (${count})`} marginTop={0}>
-                    <Box>
-                        {data.map((n) => {
-                            return (
-                                <Paper elevation={1} key={n.person_notification_id}>
-                                    <Stack direction={'row'} justifyContent="left" alignItems="center" spacing={1}>
-                                        <CB id={n.person_notification_id} />
-
-                                        <Typography variant={'button'}>
-                                            {renderDateTime(parseISO(n.created_on))}
-                                        </Typography>
-
-                                        <Typography variant={'body1'} textOverflow={'ellipsis'}>
-                                            {n.message.substring(0, 200)}
-                                        </Typography>
-                                    </Stack>
-                                </Paper>
-                            );
-                        })}
-                    </Box>
-                    <Box paddingTop={0} marginTop={0} paddingBottom={2}>
-                        <Pagination
-                            count={count > 0 ? Math.ceil(count / RowsPerPage.TwentyFive) : 0}
-                            page={page}
-                            onChange={(_, newPage) => {
-                                setPage(newPage);
-                            }}
-                        />
-                    </Box>
-                </ContainerWithHeader>
+            <Grid2 xs={12}>
+                <ContainerWithHeaderAndButtons
+                    iconLeft={<EmailIcon />}
+                    title={`Notifications  ${Object.values(rowSelection).length ? `(Selected: ${Object.values(rowSelection).length})` : ''}`}
+                    buttons={[
+                        <ButtonGroup variant="contained" key={'hdr-buttons'}>
+                            <Button
+                                startIcon={<DoneIcon />}
+                                color={'success'}
+                                key={'mark-selected'}
+                                onClick={() => {
+                                    const ids = selectedToIds();
+                                    if (ids?.length == 0) {
+                                        return;
+                                    }
+                                    onMarkSelected.mutate(ids);
+                                }}
+                                disabled={Object.values(rowSelection).length == 0}
+                            >
+                                Mark Selected Read
+                            </Button>
+                            <Button
+                                startIcon={<DoneAllIcon />}
+                                color={'success'}
+                                key={'mark-all'}
+                                onClick={() => onMarkAllRead.mutate()}
+                                disabled={(notifications ?? [])?.length == 0}
+                            >
+                                Mark All Read
+                            </Button>
+                            <Button
+                                startIcon={<RemoveIcon />}
+                                color={'error'}
+                                key={'delete-selected'}
+                                onClick={() => {
+                                    const ids = selectedToIds();
+                                    if (ids?.length == 0) {
+                                        return;
+                                    }
+                                    onDeleteSelected.mutate(ids);
+                                }}
+                                disabled={Object.values(rowSelection).length == 0}
+                            >
+                                Delete Selected
+                            </Button>
+                            <Button
+                                startIcon={<ClearAllIcon />}
+                                color={'error'}
+                                key={'delete-all'}
+                                onClick={() => onDeleteAll.mutate()}
+                                disabled={(notifications ?? [])?.length == 0}
+                            >
+                                Delete All
+                            </Button>
+                        </ButtonGroup>
+                    ]}
+                >
+                    <NotificationsTable
+                        notifications={notifications ?? []}
+                        isLoading={isLoading}
+                        rowSelection={rowSelection}
+                        setRowSelection={setRowSelection}
+                        pagination={pagination}
+                        setPagination={setPagination}
+                    />
+                    <PaginatorLocal
+                        onRowsChange={(rows) => {
+                            setPagination((prev) => {
+                                return { ...prev, pageSize: rows };
+                            });
+                        }}
+                        onPageChange={(page) => {
+                            setPagination((prev) => {
+                                return { ...prev, pageIndex: page };
+                            });
+                        }}
+                        count={notifications?.length ?? 0}
+                        rows={pagination.pageSize}
+                        page={pagination.pageIndex}
+                    />
+                </ContainerWithHeaderAndButtons>
             </Grid2>
         </Grid2>
     );
 }
+
+const TableCellSeverity = ({ severity }: { severity: NotificationSeverity }) => {
+    const theme = useTheme();
+
+    switch (severity) {
+        case NotificationSeverity.SeverityError:
+            return <Typography style={{ color: theme.palette.error.main }}>ERROR</Typography>;
+        case NotificationSeverity.SeverityWarn:
+            return <Typography style={{ color: theme.palette.warning.main }}>WARN</Typography>;
+        default:
+            return <Typography style={{ color: theme.palette.info.main }}>INFO</Typography>;
+    }
+};
+
+const NotificationsTable = ({
+    notifications,
+    isLoading,
+    rowSelection,
+    setRowSelection,
+    pagination,
+    setPagination
+}: {
+    notifications: UserNotification[];
+    isLoading: boolean;
+    rowSelection: RowSelectionState;
+    setRowSelection: OnChangeFn<RowSelectionState>;
+    pagination: PaginationState;
+    setPagination: OnChangeFn<PaginationState>;
+}) => {
+    // const columnHelper = createColumnHelper<Filter>();
+    const columns = useMemo<ColumnDef<UserNotification>[]>(
+        () => [
+            {
+                id: 'select',
+                header: ({ table }) => (
+                    <IndeterminateCheckbox
+                        {...{
+                            checked: table.getIsAllRowsSelected(),
+                            indeterminate: table.getIsSomeRowsSelected(),
+                            onChange: table.getToggleAllRowsSelectedHandler()
+                        }}
+                    />
+                ),
+                cell: ({ row }) => (
+                    <div className="px-1">
+                        <IndeterminateCheckbox
+                            {...{
+                                checked: row.getIsSelected(),
+                                disabled: !row.getCanSelect(),
+                                indeterminate: row.getIsSomeSelected(),
+                                onChange: row.getToggleSelectedHandler()
+                            }}
+                        />
+                    </div>
+                ),
+                size: 30
+            },
+            {
+                accessorKey: 'read',
+                header: () => <MarkChatReadIcon />,
+                cell: (info) => <TableCellBool enabled={info.getValue() as boolean} />,
+                size: 30,
+                enableResizing: false
+            },
+            {
+                accessorKey: 'created_on',
+                header: () => 'Created',
+                cell: (info) => <TableCellRelativeDateField date={info.row.original.created_on} suffix={true} />,
+                size: 125,
+                enableResizing: false
+            },
+            {
+                accessorKey: 'severity',
+                header: () => 'level',
+                cell: (info) => <TableCellSeverity severity={info.getValue() as NotificationSeverity} />,
+                size: 55,
+                enableResizing: false
+            },
+            {
+                accessorKey: 'message',
+                cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>
+            },
+            // {
+            //     accessorKey: 'author',
+            //     accessorFn: (originalRow) => originalRow.author,
+            //     cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>,
+            //     header: () => <'Duration'
+            // },
+            {
+                accessorKey: 'link',
+                cell: (info) => {
+                    return info.getValue() ? <TableCellLink label={'link'} to={info.getValue() as string} /> : '';
+                },
+                size: 75
+            }
+        ],
+        []
+    );
+
+    const table = useReactTable({
+        data: notifications,
+        columns: columns,
+        getCoreRowModel: getCoreRowModel(),
+        defaultColumn: {
+            minSize: 0,
+            size: Number.MAX_SAFE_INTEGER,
+            maxSize: Number.MAX_SAFE_INTEGER
+        },
+        manualPagination: false,
+        autoResetPageIndex: true,
+        enableRowSelection: true,
+        onRowSelectionChange: setRowSelection,
+        onPaginationChange: setPagination,
+        getPaginationRowModel: getPaginationRowModel(),
+        state: {
+            rowSelection,
+            pagination
+        }
+    });
+
+    return <DataTable table={table} isLoading={isLoading} />;
+};

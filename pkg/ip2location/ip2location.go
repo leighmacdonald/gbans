@@ -595,7 +595,7 @@ func parseIpv4Int(s string) (net.IP, error) {
 		return nil, errors.Join(errParseInt, ErrParseIP)
 	}
 
-	nn := uint32(n)
+	nn := uint32(n) // nolint:gosec
 	ip := make(net.IP, 4)
 	binary.BigEndian.PutUint32(ip, nn)
 

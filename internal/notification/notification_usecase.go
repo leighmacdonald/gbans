@@ -2,6 +2,9 @@ package notification
 
 import (
 	"context"
+	"log/slog"
+	"net/url"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/queue"
@@ -9,8 +12,6 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/riverqueue/river"
-	"log/slog"
-	"net/url"
 )
 
 func NewNotificationUsecase(repository domain.NotificationRepository, discord domain.DiscordUsecase) domain.NotificationUsecase {
@@ -42,10 +43,34 @@ func (n *notificationUsecase) SetQueueClient(queueClient *river.Client[pgx.Tx]) 
 	n.queueClient = queueClient
 }
 
-func (n *notificationUsecase) GetPersonNotifications(ctx context.Context, filters domain.NotificationQuery) ([]domain.UserNotification, int64, error) {
-	return n.repository.GetPersonNotifications(ctx, filters)
+func (n *notificationUsecase) GetPersonNotifications(ctx context.Context, steamID steamid.SteamID) ([]domain.UserNotification, error) {
+	return n.repository.GetPersonNotifications(ctx, steamID)
 }
 
 func (n *notificationUsecase) RegisterWorkers(workers *river.Workers) {
 	river.AddWorker[SenderArgs](workers, &SenderWorker{notifications: n})
+}
+
+func (n *notificationUsecase) MarkMessagesRead(ctx context.Context, steamID steamid.SteamID, ids []int) error {
+	if len(ids) == 0 {
+		return nil
+	}
+
+	return n.repository.MarkMessagesRead(ctx, steamID, ids)
+}
+
+func (n *notificationUsecase) MarkAllRead(ctx context.Context, steamID steamid.SteamID) error {
+	return n.repository.MarkAllRead(ctx, steamID)
+}
+
+func (n *notificationUsecase) DeleteMessages(ctx context.Context, steamID steamid.SteamID, ids []int) error {
+	if len(ids) == 0 {
+		return nil
+	}
+
+	return n.repository.DeleteMessages(ctx, steamID, ids)
+}
+
+func (n *notificationUsecase) DeleteAll(ctx context.Context, steamID steamid.SteamID) error {
+	return n.repository.DeleteAll(ctx, steamID)
 }

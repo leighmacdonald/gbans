@@ -3,26 +3,34 @@ package domain
 import (
 	"context"
 	"errors"
-	"github.com/bwmarrin/discordgo"
-	"github.com/jackc/pgx/v5"
-	"github.com/riverqueue/river"
-	"golang.org/x/exp/slices"
 	"net/url"
 
+	"github.com/bwmarrin/discordgo"
+	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+	"github.com/riverqueue/river"
+	"golang.org/x/exp/slices"
 )
 
 type NotificationRepository interface {
 	SendSite(ctx context.Context, targetID steamid.Collection, severity NotificationSeverity, message string, link *url.URL) error
-	GetPersonNotifications(ctx context.Context, filters NotificationQuery) ([]UserNotification, int64, error)
+	GetPersonNotifications(ctx context.Context, steamID steamid.SteamID) ([]UserNotification, error)
+	MarkMessagesRead(ctx context.Context, steamID steamid.SteamID, ids []int) error
+	MarkAllRead(ctx context.Context, steamID steamid.SteamID) error
+	DeleteMessages(ctx context.Context, steamID steamid.SteamID, ids []int) error
+	DeleteAll(ctx context.Context, steamID steamid.SteamID) error
 }
 
 type NotificationUsecase interface {
 	Enqueue(ctx context.Context, payload NotificationPayload)
-	GetPersonNotifications(ctx context.Context, filters NotificationQuery) ([]UserNotification, int64, error)
+	GetPersonNotifications(ctx context.Context, steamID steamid.SteamID) ([]UserNotification, error)
 	SendSite(ctx context.Context, recipients steamid.Collection, severity NotificationSeverity, message string, link *url.URL) error
 	RegisterWorkers(workers *river.Workers)
 	SetQueueClient(queueClient *river.Client[pgx.Tx])
+	MarkMessagesRead(ctx context.Context, steamID steamid.SteamID, ids []int) error
+	MarkAllRead(ctx context.Context, steamID steamid.SteamID) error
+	DeleteMessages(ctx context.Context, steamID steamid.SteamID, ids []int) error
+	DeleteAll(ctx context.Context, steamID steamid.SteamID) error
 }
 
 type MessageType int
@@ -47,6 +55,7 @@ type NotificationPayload struct {
 	Message         string
 	DiscordEmbed    *discordgo.MessageEmbed
 	Link            *url.URL
+	Author          *UserProfile
 }
 
 func (payload NotificationPayload) ValidationError() error {
@@ -58,7 +67,7 @@ func (payload NotificationPayload) ValidationError() error {
 		return ErrDiscordEmbedNil
 	}
 
-	if slices.Contains(payload.Types, User) && len(payload.Sids) == 0 {
+	if slices.Contains(payload.Types, User) && len(payload.Sids) == 0 && len(payload.Groups) == 0 {
 		return ErrUserSteamIDsEmpty
 	}
 
@@ -84,11 +93,18 @@ func NewSiteUserNotification(recipients steamid.Collection, severity Notificatio
 		Sids:            recipients,
 		Groups:          nil,
 		DiscordChannels: nil,
-		Severity:        0,
+		Severity:        severity,
 		Message:         message,
 		DiscordEmbed:    nil,
 		Link:            link,
 	}
+}
+
+func NewSiteUserNotificationWithAuthor(groups []Privilege, severity NotificationSeverity, message string, link *url.URL, author UserProfile) NotificationPayload {
+	payload := NewSiteGroupNotification(groups, severity, message, link)
+	payload.Author = &author
+
+	return payload
 }
 
 func NewSiteGroupNotification(groups []Privilege, severity NotificationSeverity, message string, link *url.URL) NotificationPayload {
@@ -102,4 +118,11 @@ func NewSiteGroupNotification(groups []Privilege, severity NotificationSeverity,
 		DiscordEmbed:    nil,
 		Link:            link,
 	}
+}
+
+func NewSiteGroupNotificationWithAuthor(groups []Privilege, severity NotificationSeverity, message string, link *url.URL, author UserProfile) NotificationPayload {
+	payload := NewSiteGroupNotification(groups, severity, message, link)
+	payload.Author = &author
+
+	return payload
 }

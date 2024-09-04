@@ -118,7 +118,7 @@ func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 				case s2aLogString:
 					if insecureCount%10000 == 0 {
 						slog.Error("Using unsupported log packet type 0x52",
-							slog.Int64("count", int64(insecureCount+1)))
+							slog.Int64("count", int64(insecureCount+1))) // nolint:gosec
 					}
 
 					insecureCount++

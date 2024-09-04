@@ -3,12 +3,12 @@ package emailer
 import (
 	"errors"
 	"fmt"
-	"github.com/emersion/go-imap/v2"
 	"io"
 	"log/slog"
 	"strings"
 	"time"
 
+	"github.com/emersion/go-imap/v2"
 	"github.com/emersion/go-imap/v2/imapclient"
 	"github.com/emersion/go-message/mail"
 	"github.com/leighmacdonald/gbans/pkg/log"

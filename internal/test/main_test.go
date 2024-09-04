@@ -135,27 +135,27 @@ func TestMain(m *testing.M) {
 
 	patreonUC = patreon.NewPatreonUsecase(patreon.NewPatreonRepository(databaseConn), configUC)
 	personUC = person.NewPersonUsecase(person.NewPersonRepository(conf, databaseConn), configUC)
-	wordFilterUC = wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(databaseConn), discordUC)
-	forumUC = forum.NewForumUsecase(forum.NewForumRepository(databaseConn), discordUC)
+	wordFilterUC = wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(databaseConn), nil)
+	forumUC = forum.NewForumUsecase(forum.NewForumRepository(databaseConn), nil)
 
-	notificationUC = notification.NewNotificationUsecase(notification.NewNotificationRepository(databaseConn), personUC)
+	notificationUC = notification.NewNotificationUsecase(notification.NewNotificationRepository(databaseConn), discordUC)
 	stateUC = state.NewStateUsecase(eventBroadcaster, state.NewStateRepository(state.NewCollector(serversUC)), configUC, serversUC)
 
 	networkUC = network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(databaseConn), personUC, configUC)
 	demoRepository = demo.NewDemoRepository(databaseConn)
 	demoUC = demo.NewDemoUsecase("demos", demoRepository, assetUC, configUC, serversUC)
-	reportUC = report.NewReportUsecase(report.NewReportRepository(databaseConn), discordUC, configUC, personUC, demoUC)
-	banSteamUC = ban.NewBanSteamUsecase(ban.NewBanSteamRepository(databaseConn, personUC, networkUC), personUC, configUC, discordUC, reportUC, stateUC)
+	reportUC = report.NewReportUsecase(report.NewReportRepository(databaseConn), notificationUC, configUC, personUC, demoUC)
+	banSteamUC = ban.NewBanSteamUsecase(ban.NewBanSteamRepository(databaseConn, personUC, networkUC), personUC, configUC, notificationUC, reportUC, stateUC)
 	authUC = auth.NewAuthUsecase(authRepo, configUC, personUC, banSteamUC, serversUC)
-	banASNUC = ban.NewBanASNUsecase(ban.NewBanASNRepository(databaseConn), discordUC, networkUC, configUC, personUC)
-	banGroupUC = steamgroup.NewBanGroupUsecase(steamgroup.NewSteamGroupRepository(databaseConn), personUC, discordUC, configUC)
-	banNetUC = ban.NewBanNetUsecase(ban.NewBanNetRepository(databaseConn), personUC, configUC, discordUC, stateUC)
+	banASNUC = ban.NewBanASNUsecase(ban.NewBanASNRepository(databaseConn), notificationUC, networkUC, configUC, personUC)
+	banGroupUC = steamgroup.NewBanGroupUsecase(steamgroup.NewSteamGroupRepository(databaseConn), personUC, notificationUC, configUC)
+	banNetUC = ban.NewBanNetUsecase(ban.NewBanNetRepository(databaseConn), personUC, configUC, notificationUC, stateUC)
 
-	matchUC = match.NewMatchUsecase(match.NewMatchRepository(eventBroadcaster, databaseConn, personUC, serversUC, discordUC, stateUC, weaponsMap), stateUC, serversUC, discordUC)
-	chatUC = chat.NewChatUsecase(configUC, chat.NewChatRepository(databaseConn, personUC, wordFilterUC, matchUC, eventBroadcaster), wordFilterUC, stateUC, banSteamUC, personUC, discordUC)
+	matchUC = match.NewMatchUsecase(match.NewMatchRepository(eventBroadcaster, databaseConn, personUC, serversUC, notificationUC, stateUC, weaponsMap), stateUC, serversUC, notificationUC)
+	chatUC = chat.NewChatUsecase(configUC, chat.NewChatRepository(databaseConn, personUC, wordFilterUC, matchUC, eventBroadcaster), wordFilterUC, stateUC, banSteamUC, personUC, notificationUC)
 	votesRepo = votes.NewVoteRepository(databaseConn)
-	votesUC = votes.NewVoteUsecase(votesRepo, personUC, matchUC, discordUC, configUC, eventBroadcaster)
-	appealUC = appeal.NewAppealUsecase(appeal.NewAppealRepository(databaseConn), banSteamUC, personUC, discordUC, configUC)
+	votesUC = votes.NewVoteUsecase(votesRepo, personUC, matchUC, notificationUC, configUC, eventBroadcaster)
+	appealUC = appeal.NewAppealUsecase(appeal.NewAppealRepository(databaseConn), banSteamUC, personUC, notificationUC, configUC)
 	dbContainer = testDB
 
 	server, errServer := serversUC.Save(context.Background(), domain.RequestServerUpdate{
@@ -229,7 +229,7 @@ func testRouter() *gin.Engine {
 	ban.NewBanASNHandler(router, banASNUC, authUC)
 	servers.NewServerHandler(router, serversUC, stateUC, authUC, personUC)
 	steamgroup.NewSteamgroupHandler(router, banGroupUC, authUC)
-	news.NewNewsHandler(router, newsUC, discordUC, authUC)
+	news.NewNewsHandler(router, newsUC, notificationUC, authUC)
 	wiki.NewWIkiHandler(router, wikiUC, authUC)
 	votes.NewVoteHandler(router, votesUC, authUC)
 	config.NewConfigHandler(router, configUC, authUC, app.Version())

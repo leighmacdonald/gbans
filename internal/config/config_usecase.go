@@ -54,6 +54,10 @@ func (c *configUsecase) Write(ctx context.Context, config domain.Config) error {
 	return nil
 }
 
+func (c *configUsecase) ExtURLInstance(obj domain.LinkablePath) *url.URL {
+	return c.Config().ExtURLInstance(obj)
+}
+
 func (c *configUsecase) ExtURL(obj domain.LinkablePath) string {
 	return c.Config().ExtURL(obj)
 }

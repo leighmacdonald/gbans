@@ -11,6 +11,10 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/log"
 )
 
+type messagesRequest struct {
+	MessageIDs []int `json:"message_ids"` //nolint:tagliatelle
+}
+
 type notificationHandler struct {
 	notifications domain.NotificationUsecase
 }
@@ -24,38 +28,104 @@ func NewNotificationHandler(engine *gin.Engine, notifications domain.Notificatio
 	authedGrp := engine.Group("/")
 	{
 		authed := authedGrp.Use(auth.AuthMiddleware(domain.PUser))
-		authed.POST("/api/current_profile/notifications", handler.onAPICurrentProfileNotifications())
+		authed.GET("/api/notifications", handler.onNotifications())
+		authed.POST("/api/notifications/all", handler.onMarkAllRead())
+		authed.POST("/api/notifications", handler.onMarkRead())
+		authed.DELETE("/api/notifications/all", handler.onDeleteAll())
+		authed.DELETE("/api/notifications", handler.onDelete())
 	}
 }
 
-func (h notificationHandler) onAPICurrentProfileNotifications() gin.HandlerFunc {
+func (h notificationHandler) onMarkAllRead() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		currentProfile := httphelper.CurrentUserProfile(ctx)
+		if err := h.notifications.MarkAllRead(ctx, httphelper.CurrentUserProfile(ctx).SteamID); err != nil && !errors.Is(err, domain.ErrNoResult) {
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to mark all notifications read", log.ErrAttr(err))
 
-		var req domain.NotificationQuery
-		if !httphelper.Bind(ctx, &req) {
 			return
 		}
 
-		req.SteamID = currentProfile.SteamID.String()
+		ctx.JSON(http.StatusOK, gin.H{})
+	}
+}
 
-		notifications, count, errNot := h.notifications.GetPersonNotifications(ctx, req)
-		if errNot != nil {
-			if errors.Is(errNot, domain.ErrNoResult) {
+func (h notificationHandler) onMarkRead() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var request messagesRequest
+		if !httphelper.Bind(ctx, &request) {
+			return
+		}
+
+		if len(request.MessageIDs) == 0 {
+			httphelper.HandleErrs(ctx, domain.ErrBadRequest)
+
+			return
+		}
+
+		if err := h.notifications.MarkMessagesRead(ctx, httphelper.CurrentUserProfile(ctx).SteamID, request.MessageIDs); err != nil && !errors.Is(err, domain.ErrNoResult) {
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to mark all notifications read", log.ErrAttr(err))
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{})
+	}
+}
+
+func (h notificationHandler) onDeleteAll() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		if err := h.notifications.DeleteAll(ctx, httphelper.CurrentUserProfile(ctx).SteamID); err != nil && !errors.Is(err, domain.ErrNoResult) {
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to delete all notifications", log.ErrAttr(err))
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{})
+	}
+}
+
+func (h notificationHandler) onDelete() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var request messagesRequest
+		if !httphelper.Bind(ctx, &request) {
+			return
+		}
+
+		if len(request.MessageIDs) == 0 {
+			httphelper.HandleErrs(ctx, domain.ErrBadRequest)
+
+			return
+		}
+
+		if err := h.notifications.DeleteMessages(ctx, httphelper.CurrentUserProfile(ctx).SteamID, request.MessageIDs); err != nil && !errors.Is(err, domain.ErrNoResult) {
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to delete notifications", log.ErrAttr(err))
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{})
+	}
+}
+
+func (h notificationHandler) onNotifications() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		notifications, err := h.notifications.GetPersonNotifications(ctx, httphelper.CurrentUserProfile(ctx).SteamID)
+		if err != nil {
+			if errors.Is(err, domain.ErrNoResult) {
 				ctx.JSON(http.StatusOK, []domain.UserNotification{})
 
 				return
 			}
 
 			httphelper.HandleErrInternal(ctx)
-			slog.Error("Failed to get personal notifications", log.ErrAttr(errNot))
+			slog.Error("Failed to get personal notifications", log.ErrAttr(err))
 
 			return
 		}
 
-		ctx.JSON(http.StatusOK, domain.LazyResult{
-			Count: count,
-			Data:  notifications,
-		})
+		ctx.JSON(http.StatusOK, notifications)
 	}
 }

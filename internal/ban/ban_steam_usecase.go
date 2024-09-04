@@ -8,6 +8,7 @@ import (
 	"net/netip"
 	"time"
 
+	"github.com/dustin/go-humanize"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
@@ -153,6 +154,15 @@ func (s banSteamUsecase) Ban(ctx context.Context, curUser domain.PersonInfo, ori
 
 	s.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelBanLog, discord.BanSteamResponse(bannedPerson)))
 
+	s.notifications.Enqueue(ctx, domain.NewSiteUserNotificationWithAuthor(
+		[]domain.Privilege{domain.PModerator, domain.PAdmin},
+		domain.SeverityInfo,
+		fmt.Sprintf("User banned (steam): %s Duration: %s Author: %s",
+			bannedPerson.TargetPersonaname, humanize.Time(req.ValidUntil), bannedPerson.TargetPersonaname),
+		s.config.ExtURLInstance(ban),
+		author.ToUserProfile(),
+	))
+
 	// Close the report if the ban was attached to one
 	if banSteam.ReportID > 0 {
 		if _, errSaveReport := s.reports.SetReportStatus(ctx, banSteam.ReportID, curUser, domain.ClosedWithAction); errSaveReport != nil {
@@ -169,14 +179,15 @@ func (s banSteamUsecase) Ban(ctx context.Context, curUser domain.PersonInfo, ori
 		if errKick := s.state.Kick(ctx, banSteam.TargetID, banSteam.Reason); errKick != nil && !errors.Is(errKick, domain.ErrPlayerNotFound) {
 			slog.Error("Failed to kick player", log.ErrAttr(errKick),
 				slog.Int64("sid64", banSteam.TargetID.Int64()))
+		} else {
+			s.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelKickLog, discord.KickPlayerEmbed(target)))
 		}
-
-		s.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelKickLog, discord.KickPlayerEmbed(target)))
-
 	} else if banSteam.BanType == domain.NoComm {
 		if errSilence := s.state.Silence(ctx, banSteam.TargetID, banSteam.Reason); errSilence != nil && !errors.Is(errSilence, domain.ErrPlayerNotFound) {
 			slog.Error("Failed to silence player", log.ErrAttr(errSilence),
 				slog.Int64("sid64", banSteam.TargetID.Int64()))
+		} else {
+			s.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelKickLog, discord.MuteMessage(bannedPerson)))
 		}
 	}
 
