@@ -22,7 +22,6 @@ import { apiGetDemos, apiGetServers, DemoFile, ServerSimple } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { FullTable } from '../component/FullTable.tsx';
 import RouterLink from '../component/RouterLink.tsx';
-import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Title } from '../component/Title.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
@@ -114,16 +113,18 @@ function STV() {
     const columns = useMemo(() => {
         return [
             columnHelper.accessor('demo_id', {
-                header: () => <TableHeadingCell name={'ID'} />,
+                header: 'ID',
+                size: 40,
                 cell: (info) => <Typography>#{info.getValue()}</Typography>
             }),
             columnHelper.accessor('server_id', {
                 filterFn: (row, _, filterValue) => {
                     return filterValue == 0 || row.original.server_id == filterValue;
                 },
+                size: 75,
                 enableSorting: true,
                 enableColumnFilter: true,
-                header: () => <TableHeadingCell name={'Server'} />,
+                header: 'Server',
                 cell: (info) => {
                     return (
                         <Button
@@ -143,16 +144,19 @@ function STV() {
                 }
             }),
             columnHelper.accessor('created_on', {
-                header: () => <TableHeadingCell name={'Created'} />,
+                header: 'Created',
+                size: 140,
                 cell: (info) => <Typography>{renderDateTime(info.getValue() as Date)}</Typography>
             }),
             columnHelper.accessor('map_name', {
                 enableColumnFilter: true,
-                header: () => <TableHeadingCell name={'Map Name'} />,
+                header: 'Map Name',
+                size: 450,
                 cell: (info) => <Typography>{info.getValue() as string}</Typography>
             }),
             columnHelper.accessor('size', {
-                header: () => <TableHeadingCell name={'Size'} />,
+                header: 'Size',
+                size: 60,
                 cell: (info) => <Typography>{humanFileSize(info.getValue() as number)}</Typography>
             }),
             columnHelper.accessor('stats', {
@@ -160,18 +164,21 @@ function STV() {
                 filterFn: (row, _, filterValue) => {
                     return filterValue == '' || Object.keys(row.original.stats).includes(filterValue);
                 },
-                header: () => <TableHeadingCell name={'Players'} />,
+                header: 'Players',
+                size: 60,
                 cell: (info) => <Typography>{Object.keys(Object(info.getValue())).length}</Typography>
             }),
 
             columnHelper.display({
                 id: 'report',
+                size: 60,
                 cell: (info) => (
                     <Button
                         disabled={!isAuthenticated()}
                         color={'error'}
                         startIcon={<FlagIcon />}
                         component={RouterLink}
+                        variant={'contained'}
                         to={'/report'}
                         search={{ demo_id: info.row.original.demo_id }}
                     >
@@ -181,10 +188,12 @@ function STV() {
             }),
             columnHelper.display({
                 id: 'download',
+                size: 60,
                 cell: (info) => (
                     <Button
                         color={'success'}
                         component={Link}
+                        variant={'contained'}
                         href={`/asset/${info.row.original.asset_id}`}
                         startIcon={<CloudDownload />}
                     >

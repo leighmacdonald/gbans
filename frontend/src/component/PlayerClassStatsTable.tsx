@@ -8,7 +8,6 @@ import { DataTable } from './DataTable.tsx';
 import FmtWhenGt from './FmtWhenGT.tsx';
 import { PlayerClassImg } from './PlayerClassImg';
 import { TableCellSmall } from './TableCellSmall.tsx';
-import { TableHeadingCell } from './TableHeadingCell.tsx';
 
 interface PlayerClassStatsContainerProps {
     steam_id: string;
@@ -26,7 +25,7 @@ export const PlayerClassStatsTable = ({ steam_id }: PlayerClassStatsContainerPro
 
     const columns = [
         columnHelper.accessor('player_class_id', {
-            header: () => <TableHeadingCell name={'Class'} />,
+            header: 'Class',
             cell: (info) => (
                 <TableCellSmall>
                     <PlayerClassImg cls={info.getValue()} />
@@ -34,7 +33,7 @@ export const PlayerClassStatsTable = ({ steam_id }: PlayerClassStatsContainerPro
             )
         }),
         columnHelper.accessor('playtime', {
-            header: () => <TableHeadingCell name={'Playtime'} />,
+            header: 'Playtime',
             cell: (info) => (
                 <TableCellSmall>
                     {formatDistance(0, info.getValue() * 1000, {
@@ -44,7 +43,7 @@ export const PlayerClassStatsTable = ({ steam_id }: PlayerClassStatsContainerPro
             )
         }),
         columnHelper.accessor('ka', {
-            header: () => <TableHeadingCell name={'KA'} />,
+            header: 'KA',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -52,7 +51,7 @@ export const PlayerClassStatsTable = ({ steam_id }: PlayerClassStatsContainerPro
             )
         }),
         columnHelper.accessor('kills', {
-            header: () => <TableHeadingCell name={'K'} />,
+            header: 'K',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -60,7 +59,7 @@ export const PlayerClassStatsTable = ({ steam_id }: PlayerClassStatsContainerPro
             )
         }),
         columnHelper.accessor('assists', {
-            header: () => <TableHeadingCell name={'A'} />,
+            header: 'A',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -68,7 +67,7 @@ export const PlayerClassStatsTable = ({ steam_id }: PlayerClassStatsContainerPro
             )
         }),
         columnHelper.accessor('deaths', {
-            header: () => <TableHeadingCell name={'D'} />,
+            header: 'D',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -76,7 +75,7 @@ export const PlayerClassStatsTable = ({ steam_id }: PlayerClassStatsContainerPro
             )
         }),
         columnHelper.accessor('kad', {
-            header: () => <TableHeadingCell name={'KAD'} />,
+            header: 'KAD',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmt)}</Typography>
@@ -84,7 +83,7 @@ export const PlayerClassStatsTable = ({ steam_id }: PlayerClassStatsContainerPro
             )
         }),
         columnHelper.accessor('damage', {
-            header: () => <TableHeadingCell name={'Dmg'} />,
+            header: 'Dmg',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -92,7 +91,7 @@ export const PlayerClassStatsTable = ({ steam_id }: PlayerClassStatsContainerPro
             )
         }),
         columnHelper.accessor('dpm', {
-            header: () => <TableHeadingCell name={'Dpm'} />,
+            header: 'Dpm',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmt)}</Typography>
@@ -100,7 +99,7 @@ export const PlayerClassStatsTable = ({ steam_id }: PlayerClassStatsContainerPro
             )
         }),
         columnHelper.accessor('damage_taken', {
-            header: () => <TableHeadingCell name={'DT'} />,
+            header: 'DT',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -108,7 +107,7 @@ export const PlayerClassStatsTable = ({ steam_id }: PlayerClassStatsContainerPro
             )
         }),
         columnHelper.accessor('dominations', {
-            header: () => <TableHeadingCell name={'DM'} />,
+            header: 'DM',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -116,7 +115,7 @@ export const PlayerClassStatsTable = ({ steam_id }: PlayerClassStatsContainerPro
             )
         }),
         columnHelper.accessor('dominated', {
-            header: () => <TableHeadingCell name={'DD'} />,
+            header: 'DD',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -124,7 +123,7 @@ export const PlayerClassStatsTable = ({ steam_id }: PlayerClassStatsContainerPro
             )
         }),
         columnHelper.accessor('revenges', {
-            header: () => <TableHeadingCell name={'Rv'} />,
+            header: 'Rv',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -132,7 +131,7 @@ export const PlayerClassStatsTable = ({ steam_id }: PlayerClassStatsContainerPro
             )
         }),
         columnHelper.accessor('captures', {
-            header: () => <TableHeadingCell name={'CP'} />,
+            header: 'CP',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>

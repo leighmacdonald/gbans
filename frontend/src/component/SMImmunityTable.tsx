@@ -16,7 +16,6 @@ import { renderDateTime } from '../util/text.tsx';
 import { ContainerWithHeaderAndButtons } from './ContainerWithHeaderAndButtons.tsx';
 import { FullTable } from './FullTable.tsx';
 import { TableCellString } from './TableCellString.tsx';
-import { TableHeadingCell } from './TableHeadingCell.tsx';
 import { ModalConfirm, ModalSMGroupImmunityEditor } from './modal';
 
 export const SMImmunityTable = ({
@@ -113,20 +112,23 @@ const groupImmunityColumnHelper = createColumnHelper<SMGroupImmunity>();
 
 const makeGroupImmunityColumns = (onDelete: (immunity: SMGroupImmunity) => Promise<void>) => [
     groupImmunityColumnHelper.accessor('group.name', {
-        header: () => <TableHeadingCell name={'Group'} />,
+        header: 'Group',
+        size: 500,
         cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
     }),
     groupImmunityColumnHelper.accessor('other.name', {
-        header: () => <TableHeadingCell name={'Immunity From'} />,
+        header: 'Immunity From',
+        size: 200,
         cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
     }),
     groupImmunityColumnHelper.accessor('created_on', {
-        header: () => <TableHeadingCell name={'Created On'} />,
+        header: 'Created On',
+        size: 140,
         cell: (info) => <TableCellString>{renderDateTime(info.getValue())}</TableCellString>
     }),
     groupImmunityColumnHelper.display({
         id: 'delete',
-        maxSize: 10,
+        maxSize: 30,
         cell: (info) => (
             <Tooltip title={'Delete override'}>
                 <IconButton

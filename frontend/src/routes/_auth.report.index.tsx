@@ -52,7 +52,6 @@ import { PersonCell } from '../component/PersonCell.tsx';
 import { PlayerMessageContext } from '../component/PlayerMessageContext.tsx';
 import { ReportStatusIcon } from '../component/ReportStatusIcon.tsx';
 import RouterLink from '../component/RouterLink.tsx';
-import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { MarkdownField, mdEditorRef } from '../component/field/MarkdownField.tsx';
@@ -171,7 +170,8 @@ const UserReportHistory = ({ history, isLoading }: { history: ReportWithAuthor[]
 
     const columns = [
         columnHelper.accessor('report_status', {
-            header: () => <TableHeadingCell name={'Status'} />,
+            header: 'Status',
+            size: 150,
             cell: (info) => {
                 return (
                     <Stack direction={'row'} spacing={1}>
@@ -182,7 +182,7 @@ const UserReportHistory = ({ history, isLoading }: { history: ReportWithAuthor[]
             }
         }),
         columnHelper.accessor('subject', {
-            header: () => <TableHeadingCell name={'Player'} />,
+            header: 'Player',
             cell: (info) => (
                 <PersonCell
                     steam_id={info.row.original.subject.steam_id}
@@ -192,7 +192,8 @@ const UserReportHistory = ({ history, isLoading }: { history: ReportWithAuthor[]
             )
         }),
         columnHelper.accessor('report_id', {
-            header: () => <TableHeadingCell name={'View'} />,
+            header: 'View',
+            size: 30,
             cell: (info) => (
                 <ButtonGroup>
                     <IconButton

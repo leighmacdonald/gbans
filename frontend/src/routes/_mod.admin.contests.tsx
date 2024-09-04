@@ -22,7 +22,6 @@ import { DataTable } from '../component/DataTable.tsx';
 import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import { TableCellBool } from '../component/TableCellBool.tsx';
 import { TableCellString } from '../component/TableCellString.tsx';
-import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Title } from '../component/Title.tsx';
 import { ModalContestEditor } from '../component/modal';
 import { logErr } from '../util/errors.ts';
@@ -132,70 +131,77 @@ const ContestTable = ({
         () => [
             {
                 accessorKey: 'title',
-                header: () => <TableHeadingCell name={'Title'} />,
+                header: 'Title',
+                size: 200,
                 cell: (info) => <TableCellString>{String(info.getValue())}</TableCellString>
             },
             {
                 accessorKey: 'public',
-                header: () => <TableHeadingCell name={'Public'} tooltip={'Is this visible to regular users'} />,
+                meta: { tooltip: 'Is this visible to regular users' },
+                header: 'Public',
+                size: 30,
                 cell: (info) => <TableCellBool enabled={Boolean(info.getValue())} />
             },
             {
                 accessorKey: 'hide_submissions',
-                header: () => <TableHeadingCell name={'Hide Sub.'} tooltip={'Are submissions hidden from public'} />,
+                meta: { tooltip: 'Are submissions hidden from public' },
+                header: 'Hide Sub.',
+                size: 70,
                 cell: (info) => <TableCellBool enabled={Boolean(info.getValue())} />
             },
             {
                 accessorKey: 'voting',
-                header: () => <TableHeadingCell name={'Voting'} tooltip={'Is voting enabled on submissions'} />,
+                meta: { tooltip: 'Is voting enabled on submissions' },
+                header: 'Voting',
+                size: 70,
                 cell: (info) => <TableCellBool enabled={Boolean(info.getValue())} />
             },
             {
                 accessorKey: 'down_votes',
-                header: () => (
-                    <TableHeadingCell
-                        name={'Down Votes'}
-                        tooltip={'Is down voting enabled. Required voting to be enabled'}
-                    />
-                ),
+                meta: { tooltip: 'Is down voting enabled. Required voting to be enabled' },
+                header: 'Down Votes',
+                size: 110,
                 cell: (info) => <TableCellBool enabled={Boolean(info.getValue())} />
             },
             {
                 accessorKey: 'max_submissions',
-                header: () => (
-                    <TableHeadingCell name={'Max Subs.'} tooltip={'Max number of submissions a single user can make'} />
-                ),
+                meta: { tooltip: 'Max number of submissions a single user can make' },
+                header: 'Max Subs.',
+                size: 100,
                 cell: (info) => <TableCellString>{String(info.getValue())}</TableCellString>
             },
             {
                 accessorKey: 'min_permission_level',
-                header: () => (
-                    <TableHeadingCell
-                        name={'Min. Perms'}
-                        tooltip={'Minimum permission level required to participate'}
-                    />
-                ),
+                meta: { tooltip: 'Minimum permission level required to participate' },
+                header: 'Min. Perms',
+                size: 100,
                 cell: (info) => (
                     <TableCellString>{permissionLevelString(info.getValue() as PermissionLevel)}</TableCellString>
                 )
             },
             {
                 accessorKey: 'date_start',
-                header: () => <TableHeadingCell name={'Starts'} tooltip={'Start date'} />,
+                meta: { tooltip: 'Start date' },
+                header: 'Starts',
+                size: 150,
                 cell: (info) => <TableCellString>{renderDateTime(info.getValue() as Date)}</TableCellString>
             },
             {
                 accessorKey: 'date_end',
-                header: () => <TableHeadingCell name={'Ends'} tooltip={'End date'} />,
+                meta: { tooltip: 'End date' },
+                header: 'Ends',
+                size: 150,
                 cell: (info) => <TableCellString>{renderDateTime(info.getValue() as Date)}</TableCellString>
             },
             {
                 accessorKey: 'updated_on',
-                header: () => <TableHeadingCell name={'Updated'} />,
+                header: 'Updated',
+                size: 150,
                 cell: (info) => <TableCellString>{renderDateTime(info.getValue() as Date)}</TableCellString>
             },
             {
                 id: 'actions',
+                size: 30,
                 cell: (info) => {
                     return (
                         <IconButton color={'warning'} onClick={() => onEdit(info.row.original)}>

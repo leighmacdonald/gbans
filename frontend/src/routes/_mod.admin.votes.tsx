@@ -15,7 +15,6 @@ import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderA
 import { FullTable } from '../component/FullTable.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { TableCellBool } from '../component/TableCellBool.tsx';
-import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
@@ -157,7 +156,7 @@ const columnHelper = createColumnHelper<VoteResult>();
 const makeVoteColumns = () => {
     return [
         columnHelper.accessor('source_id', {
-            header: () => <TableHeadingCell name={'Initiator'} />,
+            header: 'Initiator',
             cell: (info) => (
                 <PersonCell
                     showCopy={true}
@@ -168,7 +167,7 @@ const makeVoteColumns = () => {
             )
         }),
         columnHelper.accessor('target_id', {
-            header: () => <TableHeadingCell name={'Subject'} />,
+            header: 'Subject',
             cell: (info) => {
                 return (
                     <PersonCell
@@ -181,15 +180,18 @@ const makeVoteColumns = () => {
             }
         }),
         columnHelper.accessor('success', {
-            header: () => <TableHeadingCell name={'Success'} />,
+            header: 'Passed',
+            size: 50,
             cell: (info) => <TableCellBool enabled={info.getValue()} />
         }),
         columnHelper.accessor('server_name', {
-            header: () => <TableHeadingCell name={'Server'} />,
+            header: 'Server',
+            size: 75,
             cell: (info) => <Typography>{info.getValue()}</Typography>
         }),
         columnHelper.accessor('created_on', {
-            header: () => <TableHeadingCell name={'Created'} />,
+            header: 'Created',
+            size: 120,
             cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>
         })
     ];

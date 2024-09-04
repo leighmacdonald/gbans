@@ -12,7 +12,6 @@ import FmtWhenGt from '../component/FmtWhenGT.tsx';
 import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import { PersonCell } from '../component/PersonCell';
 import { TableCellSmall } from '../component/TableCellSmall.tsx';
-import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Title } from '../component/Title';
 import { RowsPerPage } from '../util/table.ts';
 import { defaultFloatFmtPct, humanCount } from '../util/text.tsx';
@@ -56,7 +55,8 @@ const StatsWeapons = ({ stats, isLoading }: { stats: PlayerWeaponStatsResponse; 
 
     const columns = [
         columnHelper.accessor('rank', {
-            header: () => <TableHeadingCell name={'#'} />,
+            header: '#',
+            size: 40,
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{info.getValue()}</Typography>
@@ -64,7 +64,8 @@ const StatsWeapons = ({ stats, isLoading }: { stats: PlayerWeaponStatsResponse; 
             )
         }),
         columnHelper.accessor('steam_id', {
-            header: () => <TableHeadingCell name={'Name'} />,
+            header: 'Name',
+            size: 400,
             cell: (info) => (
                 <TableCellSmall>
                     <PersonCell
@@ -76,7 +77,7 @@ const StatsWeapons = ({ stats, isLoading }: { stats: PlayerWeaponStatsResponse; 
             )
         }),
         columnHelper.accessor('kills', {
-            header: () => <TableHeadingCell name={'Kills'} />,
+            header: 'Kills',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -85,7 +86,7 @@ const StatsWeapons = ({ stats, isLoading }: { stats: PlayerWeaponStatsResponse; 
         }),
 
         columnHelper.accessor('damage', {
-            header: () => <TableHeadingCell name={'Kills%'} />,
+            header: 'Kills%',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmtPct)}</Typography>
@@ -93,7 +94,7 @@ const StatsWeapons = ({ stats, isLoading }: { stats: PlayerWeaponStatsResponse; 
             )
         }),
         columnHelper.accessor('shots', {
-            header: () => <TableHeadingCell name={'Shots'} />,
+            header: 'Shots',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -101,7 +102,7 @@ const StatsWeapons = ({ stats, isLoading }: { stats: PlayerWeaponStatsResponse; 
             )
         }),
         columnHelper.accessor('hits', {
-            header: () => <TableHeadingCell name={'Hits'} />,
+            header: 'Hits',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -110,7 +111,7 @@ const StatsWeapons = ({ stats, isLoading }: { stats: PlayerWeaponStatsResponse; 
         }),
 
         columnHelper.accessor('accuracy', {
-            header: () => <TableHeadingCell name={'Acc%'} />,
+            header: 'Acc%',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), () => defaultFloatFmtPct(info.getValue()))}</Typography>
@@ -118,7 +119,7 @@ const StatsWeapons = ({ stats, isLoading }: { stats: PlayerWeaponStatsResponse; 
             )
         }),
         columnHelper.accessor('airshots', {
-            header: () => <TableHeadingCell name={'As'} />,
+            header: 'As',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -127,7 +128,7 @@ const StatsWeapons = ({ stats, isLoading }: { stats: PlayerWeaponStatsResponse; 
         }),
 
         columnHelper.accessor('backstabs', {
-            header: () => <TableHeadingCell name={'Bs'} />,
+            header: 'Bs',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -136,7 +137,7 @@ const StatsWeapons = ({ stats, isLoading }: { stats: PlayerWeaponStatsResponse; 
         }),
 
         columnHelper.accessor('headshots', {
-            header: () => <TableHeadingCell name={'Hs'} />,
+            header: 'Hs',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>

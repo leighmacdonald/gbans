@@ -18,7 +18,6 @@ import { renderDateTime } from '../util/text.tsx';
 import { ContainerWithHeaderAndButtons } from './ContainerWithHeaderAndButtons.tsx';
 import { FullTable } from './FullTable.tsx';
 import { TableCellString } from './TableCellString.tsx';
-import { TableHeadingCell } from './TableHeadingCell.tsx';
 import { ModalConfirm, ModalSMGroupEditor, ModalSMGroupOverrides } from './modal';
 
 export const SMGroupsTable = ({ groups, isLoading }: { groups: SMGroups[]; isLoading: boolean }) => {
@@ -122,27 +121,33 @@ const makeGroupColumns = (
     onOverride: (group: SMGroups) => Promise<void>
 ) => [
     groupColumnHelper.accessor('name', {
-        header: () => <TableHeadingCell name={'Name'} />,
+        header: 'Name',
+        size: 700,
         cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
     }),
     groupColumnHelper.accessor('flags', {
-        header: () => <TableHeadingCell name={'Flags'} />,
+        header: 'Flags',
+        size: 75,
         cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
     }),
     groupColumnHelper.accessor('immunity_level', {
-        header: () => <TableHeadingCell name={'Immunity'} />,
+        header: 'Immunity',
+        size: 75,
         cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
     }),
     groupColumnHelper.accessor('created_on', {
-        header: () => <TableHeadingCell name={'Created On'} />,
+        header: 'Created On',
+        size: 140,
         cell: (info) => <TableCellString>{renderDateTime(info.getValue())}</TableCellString>
     }),
     groupColumnHelper.accessor('updated_on', {
-        header: () => <TableHeadingCell name={'Updated On'} />,
+        header: 'Updated On',
+        size: 140,
         cell: (info) => <TableCellString>{renderDateTime(info.getValue())}</TableCellString>
     }),
     groupColumnHelper.display({
         id: 'overrides',
+        size: 30,
         cell: (info) => (
             <Tooltip title={'Edit group overrides'}>
                 <IconButton
@@ -158,7 +163,7 @@ const makeGroupColumns = (
     }),
     groupColumnHelper.display({
         id: 'edit',
-        maxSize: 10,
+        size: 30,
         cell: (info) => (
             <IconButton
                 color={'warning'}
@@ -172,7 +177,7 @@ const makeGroupColumns = (
     }),
     groupColumnHelper.display({
         id: 'delete',
-        maxSize: 10,
+        size: 30,
         cell: (info) => (
             <IconButton
                 color={'error'}

@@ -16,7 +16,6 @@ import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderA
 import { FullTable } from '../component/FullTable.tsx';
 import { TableCellBool } from '../component/TableCellBool.tsx';
 import { TableCellString } from '../component/TableCellString.tsx';
-import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Title } from '../component/Title';
 import { ModalConfirm, ModalNewsEditor } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
@@ -109,37 +108,44 @@ function AdminNews() {
 
         return [
             columnHelper.accessor('news_id', {
-                header: () => <TableHeadingCell name={'ID'} />,
+                header: 'ID',
+                size: 30,
                 cell: (info) => {
                     return <TableCellString>{info.getValue()}</TableCellString>;
                 }
             }),
             columnHelper.accessor('title', {
-                header: () => <TableHeadingCell name={'Title'} />,
+                header: 'Title',
+                size: 400,
                 cell: (info) => {
                     return <TableCellString>{info.getValue()}</TableCellString>;
                 }
             }),
             columnHelper.accessor('created_on', {
-                header: () => <TableHeadingCell name={'Created'} />,
+                header: 'Created',
+                size: 120,
                 cell: (info) => {
                     return <TableCellString>{renderDateTime(info.getValue())}</TableCellString>;
                 }
             }),
             columnHelper.accessor('updated_on', {
-                header: () => <TableHeadingCell name={'Updated'} />,
+                header: 'Updated',
+                size: 120,
                 cell: (info) => {
                     return <TableCellString>{renderDateTime(info.getValue())}</TableCellString>;
                 }
             }),
             columnHelper.accessor('is_published', {
-                header: () => <TableHeadingCell name={'Published'} />,
+                meta: { tooltip: 'Published' },
+                header: 'Pub',
+                size: 30,
                 cell: (info) => {
                     return <TableCellBool enabled={info.getValue()} />;
                 }
             }),
             columnHelper.display({
                 id: 'edit',
+                size: 50,
                 cell: (info) => {
                     return (
                         <ButtonGroup fullWidth>

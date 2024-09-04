@@ -22,7 +22,7 @@ export enum communityVisibilityState {
     Public = 3
 }
 
-enum NotificationSeverity {
+export enum NotificationSeverity {
     SeverityInfo,
     SeverityWarn,
     SeverityError
@@ -37,7 +37,7 @@ export interface UserNotification {
     message: string;
     link: string;
     count: number;
-    created_on: string;
+    created_on: Date;
 }
 
 export interface UserProfile extends TimeStamped {
@@ -187,15 +187,27 @@ export const apiGetMessages = async (opts: MessageQuery, abortController?: Abort
     });
 };
 
-export type NotificationsQuery = QueryFilter;
+export const apiGetNotifications = async (abortController?: AbortController) => {
+    const resp = await apiCall<UserNotification[]>(`/api/notifications`, 'GET', undefined, abortController);
+    return resp.map((msg) => {
+        return { ...msg, created_on: parseDateTime(msg.created_on as unknown as string) };
+    });
+};
 
-export const apiGetNotifications = async (opts: NotificationsQuery, abortController: AbortController) => {
-    return await apiCall<LazyResult<UserNotification>>(
-        `/api/current_profile/notifications`,
-        'POST',
-        opts,
-        abortController
-    );
+export const apiNotificationsMarkAllRead = async () => {
+    return await apiCall(`/api/notifications/all`, 'POST', undefined);
+};
+
+export const apiNotificationsMarkRead = async (message_ids: number[]) => {
+    return await apiCall(`/api/notifications`, 'POST', { message_ids });
+};
+
+export const apiNotificationsDeleteAll = async () => {
+    return await apiCall(`/api/notifications/all`, 'DELETE', undefined);
+};
+
+export const apiNotificationsDelete = async (message_ids: number[]) => {
+    return await apiCall(`/api/notifications`, 'DELETE', { message_ids });
 };
 
 export type ConnectionQuery = {

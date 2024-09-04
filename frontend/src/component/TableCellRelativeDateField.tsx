@@ -9,15 +9,24 @@ interface DataTableRelativeDateFieldProps {
     suffix?: boolean;
 }
 
-export const TableCellRelativeDateField = ({ date, compareDate, suffix = false }: DataTableRelativeDateFieldProps) => {
+export const TableCellRelativeDateField = ({
+    date,
+    compareDate,
+
+    suffix = false
+}: DataTableRelativeDateFieldProps) => {
     const opts = {
         addSuffix: suffix
     };
     return (
-        <Tooltip title={date.toUTCString()}>
-            <Typography variant={'body1'}>
-                {compareDate ? formatDistanceStrict(date, compareDate, opts) : formatDistanceToNowStrict(date, opts)}
-            </Typography>
-        </Tooltip>
+        <div>
+            <Tooltip title={date.toUTCString()}>
+                <Typography variant={'body1'}>
+                    {compareDate
+                        ? formatDistanceStrict(date, compareDate, opts)
+                        : formatDistanceToNowStrict(date, opts)}
+                </Typography>
+            </Tooltip>
+        </div>
     );
 };

@@ -12,7 +12,6 @@ import FmtWhenGt from './FmtWhenGT.tsx';
 import { PaginatorLocal } from './PaginatorLocal.tsx';
 import { PersonCell } from './PersonCell.tsx';
 import { TableCellSmall } from './TableCellSmall.tsx';
-import { TableHeadingCell } from './TableHeadingCell.tsx';
 
 export const PlayersOverallContainer = () => {
     const { data, isLoading } = useQuery({
@@ -39,7 +38,7 @@ const StatsKillsOverall = ({ stats, isLoading }: { stats: LazyResult<PlayerWeapo
 
     const columns = [
         columnHelper.accessor('rank', {
-            header: () => <TableHeadingCell name={'#'} />,
+            header: '#',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{info.getValue()}</Typography>
@@ -47,7 +46,7 @@ const StatsKillsOverall = ({ stats, isLoading }: { stats: LazyResult<PlayerWeapo
             )
         }),
         columnHelper.accessor('personaname', {
-            header: () => <TableHeadingCell name={'Name'} />,
+            header: 'Name',
             cell: (info) => (
                 <TableCellSmall>
                     <PersonCell
@@ -59,7 +58,7 @@ const StatsKillsOverall = ({ stats, isLoading }: { stats: LazyResult<PlayerWeapo
             )
         }),
         columnHelper.accessor('ka', {
-            header: () => <TableHeadingCell name={'KA'} />,
+            header: 'KA',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -67,7 +66,7 @@ const StatsKillsOverall = ({ stats, isLoading }: { stats: LazyResult<PlayerWeapo
             )
         }),
         columnHelper.accessor('kills', {
-            header: () => <TableHeadingCell name={'K'} />,
+            header: 'K',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -75,7 +74,7 @@ const StatsKillsOverall = ({ stats, isLoading }: { stats: LazyResult<PlayerWeapo
             )
         }),
         columnHelper.accessor('assists', {
-            header: () => <TableHeadingCell name={'A'} />,
+            header: 'A',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -83,7 +82,7 @@ const StatsKillsOverall = ({ stats, isLoading }: { stats: LazyResult<PlayerWeapo
             )
         }),
         columnHelper.accessor('deaths', {
-            header: () => <TableHeadingCell name={'D'} />,
+            header: 'D',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -91,7 +90,7 @@ const StatsKillsOverall = ({ stats, isLoading }: { stats: LazyResult<PlayerWeapo
             )
         }),
         columnHelper.accessor('kad', {
-            header: () => <TableHeadingCell name={'KAD'} />,
+            header: 'KAD',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmt)}</Typography>
@@ -99,7 +98,7 @@ const StatsKillsOverall = ({ stats, isLoading }: { stats: LazyResult<PlayerWeapo
             )
         }),
         columnHelper.accessor('shots', {
-            header: () => <TableHeadingCell name={'SHT'} />,
+            header: 'SHT',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -107,7 +106,7 @@ const StatsKillsOverall = ({ stats, isLoading }: { stats: LazyResult<PlayerWeapo
             )
         }),
         columnHelper.accessor('hits', {
-            header: () => <TableHeadingCell name={'HIT'} />,
+            header: 'HIT',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -115,7 +114,7 @@ const StatsKillsOverall = ({ stats, isLoading }: { stats: LazyResult<PlayerWeapo
             )
         }),
         columnHelper.accessor('accuracy', {
-            header: () => <TableHeadingCell name={'Acc%'} />,
+            header: 'Acc%',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>
@@ -125,7 +124,7 @@ const StatsKillsOverall = ({ stats, isLoading }: { stats: LazyResult<PlayerWeapo
             )
         }),
         columnHelper.accessor('airshots', {
-            header: () => <TableHeadingCell name={'AS'} />,
+            header: 'AS',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -133,7 +132,7 @@ const StatsKillsOverall = ({ stats, isLoading }: { stats: LazyResult<PlayerWeapo
             )
         }),
         columnHelper.accessor('backstabs', {
-            header: () => <TableHeadingCell name={'BS'} />,
+            header: 'BS',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -141,7 +140,7 @@ const StatsKillsOverall = ({ stats, isLoading }: { stats: LazyResult<PlayerWeapo
             )
         }),
         columnHelper.accessor('headshots', {
-            header: () => <TableHeadingCell name={'HS'} />,
+            header: 'HS',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -149,7 +148,7 @@ const StatsKillsOverall = ({ stats, isLoading }: { stats: LazyResult<PlayerWeapo
             )
         }),
         columnHelper.accessor('damage', {
-            header: () => <TableHeadingCell name={'DMG'} />,
+            header: 'DMG',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -157,7 +156,7 @@ const StatsKillsOverall = ({ stats, isLoading }: { stats: LazyResult<PlayerWeapo
             )
         }),
         columnHelper.accessor('dpm', {
-            header: () => <TableHeadingCell name={'DPM'} />,
+            header: 'DPM',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>
@@ -167,7 +166,7 @@ const StatsKillsOverall = ({ stats, isLoading }: { stats: LazyResult<PlayerWeapo
             )
         }),
         columnHelper.accessor('damage_taken', {
-            header: () => <TableHeadingCell name={'DT'} />,
+            header: 'DT',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -175,7 +174,7 @@ const StatsKillsOverall = ({ stats, isLoading }: { stats: LazyResult<PlayerWeapo
             )
         }),
         columnHelper.accessor('dominations', {
-            header: () => <TableHeadingCell name={'DOM'} />,
+            header: 'DOM',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -183,7 +182,7 @@ const StatsKillsOverall = ({ stats, isLoading }: { stats: LazyResult<PlayerWeapo
             )
         }),
         columnHelper.accessor('captures', {
-            header: () => <TableHeadingCell name={'CAP'} />,
+            header: 'CAP',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>

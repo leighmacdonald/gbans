@@ -22,7 +22,6 @@ import { renderDateTime } from '../util/text.tsx';
 import { DataTable } from './DataTable.tsx';
 import { PersonCell } from './PersonCell.tsx';
 import RouterLink from './RouterLink.tsx';
-import { TableHeadingCell } from './TableHeadingCell.tsx';
 
 export const ChatTable = ({
     messages,
@@ -44,7 +43,8 @@ export const ChatTable = ({
         () => [
             {
                 accessorKey: 'server_id',
-                header: () => <TableHeadingCell name={'Server'} />,
+                header: 'Server',
+                size: 40,
                 cell: (info) => {
                     return (
                         <Button
@@ -65,12 +65,13 @@ export const ChatTable = ({
             },
             {
                 accessorKey: 'created_on',
-                header: () => <TableHeadingCell name={'Created'} />,
+                header: 'Created',
+                size: 80,
                 cell: (info) => <Typography align={'center'}>{renderDateTime(info.getValue() as Date)}</Typography>
             },
             {
                 accessorKey: 'persona_name',
-                header: () => <TableHeadingCell name={'Name'} />,
+                header: 'Name',
                 cell: (info) => (
                     <PersonCell
                         showCopy={true}
@@ -82,7 +83,8 @@ export const ChatTable = ({
             },
             {
                 accessorKey: 'body',
-                header: () => <TableHeadingCell name={'Message'} />,
+                header: 'Message',
+                size: 400,
                 cell: (info) => (
                     <Typography padding={0} variant={'body1'}>
                         {info.getValue() as string}
@@ -91,7 +93,8 @@ export const ChatTable = ({
             },
             {
                 accessorKey: 'auto_filter_flagged',
-                header: () => <TableHeadingCell name={''} />,
+                size: 30,
+                header: '',
                 cell: (info) =>
                     (info.getValue() as number) > 0 ? (
                         <Tooltip title={'Message already flagged'}>
@@ -103,7 +106,7 @@ export const ChatTable = ({
             },
             {
                 id: 'actions',
-                header: () => <TableHeadingCell name={''} />,
+                size: 30,
                 cell: (info) => (
                     <Tooltip title={'Create Report'}>
                         <IconButton

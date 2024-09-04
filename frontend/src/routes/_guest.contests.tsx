@@ -18,7 +18,6 @@ import { DataTable } from '../component/DataTable.tsx';
 import RouterLink from '../component/RouterLink.tsx';
 import { TableCellSmall } from '../component/TableCellSmall.tsx';
 import { TableCellString } from '../component/TableCellString.tsx';
-import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Title } from '../component/Title.tsx';
 import { checkFeatureEnabled } from '../util/features.ts';
 import { RowsPerPage } from '../util/table.ts';
@@ -84,13 +83,14 @@ const ContestsTable = ({
 }) => {
     const columns = [
         columnHelper.accessor('title', {
-            header: () => <TableHeadingCell name={'Server'} />,
+            header: 'Title',
+            size: 700,
             cell: (info) => {
                 return (
                     <TableCellSmall>
                         <Link
                             component={RouterLink}
-                            to={`/contests/$contest_id}`}
+                            to={`/contests/$contest_id`}
                             // variant={'button'}
                             params={{ contest_id: info.row.original.contest_id }}
                         >
@@ -101,15 +101,18 @@ const ContestsTable = ({
             }
         }),
         columnHelper.accessor('num_entries', {
-            header: () => <TableHeadingCell name={'Entries'} />,
+            header: 'Entries',
+            size: 75,
             cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
         }),
         columnHelper.accessor('date_start', {
-            header: () => <TableHeadingCell name={'Stared On'} />,
+            header: 'Stared On',
+            size: 140,
             cell: (info) => <TableCellString>{renderDateTime(info.getValue())}</TableCellString>
         }),
         columnHelper.accessor('date_end', {
-            header: () => <TableHeadingCell name={'Ends On'} />,
+            header: 'Ends On',
+            size: 140,
             cell: (info) => <TableCellString>{renderDateTime(info.getValue())}</TableCellString>
         })
     ];

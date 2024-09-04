@@ -47,14 +47,14 @@ import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { MenuItemData, NestedDropdown } from 'mui-nested-menu';
-import { PermissionLevel, UserNotification } from '../api';
+import { apiGetNotifications, PermissionLevel, UserNotification } from '../api';
 import { useAppInfoCtx } from '../contexts/AppInfoCtx.ts';
 import { NotificationsProvider } from '../contexts/NotificationsCtx';
 import { useAuth } from '../hooks/useAuth.ts';
 import { useColourModeCtx } from '../hooks/useColourModeCtx.ts';
-import { useNotificationsCtx } from '../hooks/useNotificationsCtx.ts';
 import steamLogo from '../icons/steam_login_sm.png';
 import { tf2Fonts } from '../theme';
 import { generateOIDCLink } from '../util/auth/generateOIDCLink.ts';
@@ -70,7 +70,14 @@ interface menuRoute {
 export const TopBar = () => {
     const { profile, hasPermission, isAuthenticated } = useAuth();
     const { appInfo } = useAppInfoCtx();
-    const { notifications } = useNotificationsCtx();
+
+    const { data: notifications, isLoading } = useQuery({
+        queryKey: ['notifications'],
+        queryFn: async () => {
+            return await apiGetNotifications();
+        }
+    });
+
     const theme = useTheme();
     const colourMode = useColourModeCtx();
     const navigate = useNavigate();
@@ -416,7 +423,10 @@ export const TopBar = () => {
                                     <IconButton component={RouterLink} to={'/notifications'} color={'inherit'}>
                                         <Badge
                                             badgeContent={
-                                                (notifications ?? []).filter((n: UserNotification) => !n.read).length
+                                                isLoading
+                                                    ? '...'
+                                                    : (notifications ?? []).filter((n: UserNotification) => !n.read)
+                                                          .length
                                             }
                                         >
                                             <MailIcon />

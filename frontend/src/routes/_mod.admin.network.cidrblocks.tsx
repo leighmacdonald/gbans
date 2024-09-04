@@ -31,7 +31,6 @@ import {
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { DataTable } from '../component/DataTable.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
-import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Title } from '../component/Title';
 import { VCenterBox } from '../component/VCenterBox.tsx';
 import {
@@ -390,11 +389,13 @@ const IPWhitelistTable = ({
     const columns = useMemo(
         () => [
             columnHelper.accessor('cidr_block_whitelist_id', {
-                header: () => <TableHeadingCell name={'ID'} />,
+                header: 'ID',
+                size: 30,
                 cell: (info) => <Typography>{info.getValue() as number}</Typography>
             }),
             columnHelper.accessor('address', {
-                header: () => <TableHeadingCell name={'Address'} />,
+                header: 'Address',
+                size: 100,
                 cell: (info) => (
                     <TableCell>
                         <Typography>{info.getValue()}</Typography>
@@ -402,7 +403,7 @@ const IPWhitelistTable = ({
                 )
             }),
             columnHelper.accessor('created_on', {
-                header: () => <TableHeadingCell name={'IP Address'} />,
+                header: 'IP Address',
                 cell: (info) => (
                     <TableCell>
                         <Typography>{renderDate(info.getValue() as Date)}</Typography>
@@ -410,7 +411,8 @@ const IPWhitelistTable = ({
                 )
             }),
             columnHelper.accessor('updated_on', {
-                header: () => <TableHeadingCell name={'Updated'} />,
+                header: 'Updated',
+                size: 500,
                 cell: (info) => (
                     <TableCell>
                         <Typography>{renderDate(info.getValue() as Date)}</Typography>
@@ -419,7 +421,8 @@ const IPWhitelistTable = ({
             }),
             columnHelper.display({
                 id: 'actions',
-                header: () => <TableHeadingCell name={'Actions'} />,
+                header: 'Actions',
+                size: 150,
                 cell: (info) => (
                     <ButtonGroup variant={'contained'}>
                         <Button
@@ -473,7 +476,8 @@ const SteamWhitelistTable = ({
     const columns = useMemo(
         () => [
             columnHelper.accessor('steam_id', {
-                header: () => <TableHeadingCell name={'Steam ID'} />,
+                header: 'Steam ID',
+                size: 600,
                 cell: (info) => (
                     <PersonCell
                         steam_id={info.row.original.steam_id}
@@ -483,7 +487,8 @@ const SteamWhitelistTable = ({
                 )
             }),
             columnHelper.accessor('created_on', {
-                header: () => <TableHeadingCell name={'Updated'} />,
+                header: 'Updated',
+                size: 120,
                 cell: (info) => (
                     <TableCell>
                         <Typography>{renderDate(info.getValue())}</Typography>
@@ -491,7 +496,8 @@ const SteamWhitelistTable = ({
                 )
             }),
             columnHelper.accessor('updated_on', {
-                header: () => <TableHeadingCell name={'Updated'} />,
+                header: 'Updated',
+                size: 120,
                 cell: (info) => (
                     <TableCell>
                         <Typography>{renderDate(info.getValue())}</Typography>
@@ -500,10 +506,13 @@ const SteamWhitelistTable = ({
             }),
             columnHelper.display({
                 id: 'actions',
-                header: () => <TableHeadingCell name={'Actions'} />,
+                size: 100,
+                header: 'Actions',
                 cell: (info) => (
-                    <ButtonGroup variant={'contained'}>
+                    <ButtonGroup variant={'contained'} fullWidth>
                         <Button
+                            fullWidth
+                            startIcon={<DeleteIcon />}
                             onClick={async () => {
                                 await onDelete(info.row.original);
                             }}

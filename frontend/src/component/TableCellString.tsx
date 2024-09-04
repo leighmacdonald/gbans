@@ -11,8 +11,10 @@ interface TextProps {
 
 export const TableCellString = ({ children, variant = 'body1', component = 'p' }: PropsWithChildren<TextProps>) => {
     return (
-        <Typography variant={variant} component={component}>
-            {children}
-        </Typography>
+        <div>
+            <Typography variant={variant} component={component}>
+                {children}
+            </Typography>
+        </div>
     );
 };

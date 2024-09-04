@@ -26,7 +26,6 @@ import { PersonCell } from '../component/PersonCell.tsx';
 import RouterLink from '../component/RouterLink.tsx';
 import { TableCellBool } from '../component/TableCellBool.tsx';
 import { TableCellRelativeDateField } from '../component/TableCellRelativeDateField.tsx';
-import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
@@ -280,7 +279,8 @@ const makeColumns = (
 ) => [
     columnHelper.accessor('ban_id', {
         enableColumnFilter: false,
-        header: () => <TableHeadingCell name={'Ban ID'} />,
+        size: 50,
+        header: 'Ban ID',
         cell: (info) => (
             <Link component={RouterLink} to={`/ban/$ban_id`} params={{ ban_id: String(info.getValue()) }}>
                 {`#${info.getValue()}`}
@@ -288,7 +288,7 @@ const makeColumns = (
         )
     }),
     columnHelper.accessor('source_id', {
-        header: () => <TableHeadingCell name={'Author'} />,
+        header: 'Author',
         cell: (info) => {
             return typeof info.row.original === 'undefined' ? (
                 ''
@@ -302,7 +302,7 @@ const makeColumns = (
         }
     }),
     columnHelper.accessor('target_id', {
-        header: () => <TableHeadingCell name={'Subject'} />,
+        header: 'Subject',
         cell: (info) => {
             return typeof info.row.original === 'undefined' ? (
                 ''
@@ -318,18 +318,21 @@ const makeColumns = (
     }),
     columnHelper.accessor('reason', {
         enableColumnFilter: true,
+        size: 150,
         filterFn: (row, _, filterValue) => {
             return filterValue == BanReason.Any || row.original.reason == filterValue;
         },
-        header: () => <TableHeadingCell name={'Reason'} />,
+        header: 'Reason',
         cell: (info) => <Typography>{BanReasons[info.getValue() as BanReason]}</Typography>
     }),
     columnHelper.accessor('created_on', {
-        header: () => <TableHeadingCell name={'Created'} />,
+        header: 'Created',
+        size: 100,
         cell: (info) => <Typography>{renderDate(info.getValue() as Date)}</Typography>
     }),
     columnHelper.accessor('valid_until', {
-        header: () => <TableHeadingCell name={'Duration'} />,
+        header: 'Duration',
+        size: 100,
         cell: (info) => {
             return typeof info.row.original === 'undefined' ? (
                 ''
@@ -344,27 +347,30 @@ const makeColumns = (
         }
     }),
     columnHelper.accessor('include_friends', {
-        header: () => <TableHeadingCell name={'F'} tooltip={'Friends list also banned'} />,
+        meta: { tooltip: 'Friends list also banned' },
+        size: 30,
+        header: 'F',
         cell: (info) => <TableCellBool enabled={info.getValue()} />
     }),
     columnHelper.accessor('evade_ok', {
-        header: () => (
-            <TableHeadingCell
-                name={'E'}
-                tooltip={'Evasion OK. Players connecting from the same ip will not be banned.'}
-            />
-        ),
+        meta: { tooltip: 'Evasion OK. Players connecting from the same ip will not be banned.' },
+        size: 30,
+        header: 'E',
         cell: (info) => <TableCellBool enabled={info.getValue()} />
     }),
     columnHelper.accessor('deleted', {
+        size: 30,
+        meta: { tooltip: 'Deleted / Expired Bans' },
         filterFn: (row, _, filterValue) => {
             return filterValue ? true : !row.original.deleted;
         },
-        header: () => <TableHeadingCell name={'D'} tooltip={'Deleted / Expired Bans'} />,
+        header: 'D',
         cell: (info) => <TableCellBool enabled={info.getValue()} />
     }),
     columnHelper.accessor('report_id', {
-        header: () => <TableHeadingCell name={'Rep.'} />,
+        header: 'Rep.',
+        size: 60,
+        meta: { tooltip: 'Linked report' },
         cell: (info) =>
             Boolean(info.getValue()) && (
                 <Link component={RouterLink} to={`/report/$reportId`} params={{ reportId: String(info.getValue()) }}>
@@ -374,6 +380,7 @@ const makeColumns = (
     }),
     columnHelper.display({
         id: 'edit',
+        size: 30,
         cell: (info) => (
             <IconButton
                 color={'warning'}
@@ -389,6 +396,7 @@ const makeColumns = (
     }),
     columnHelper.display({
         id: 'unban',
+        size: 30,
         cell: (info) => (
             <IconButton
                 color={'success'}

@@ -14,7 +14,6 @@ import { tf2Fonts } from '../theme';
 import { logErr } from '../util/errors';
 import { DataTable } from './DataTable.tsx';
 import { Flag } from './Flag';
-import { TableHeadingCell } from './TableHeadingCell.tsx';
 
 type ServerRow = BaseServer & { copy: string; connect: string };
 
@@ -26,11 +25,13 @@ export const ServerList = () => {
 
     const columns = [
         columnHelper.accessor('cc', {
-            header: () => <TableHeadingCell name={'CC'} />,
+            header: 'CC',
+            size: 40,
             cell: (info) => <Flag countryCode={info.getValue()} />
         }),
         columnHelper.accessor('name', {
-            header: () => <TableHeadingCell name={'Server'} />,
+            header: 'Server',
+            size: 450,
             cell: (info) => (
                 <Typography variant={'button'} fontFamily={tf2Fonts}>
                     {info.getValue()}
@@ -38,11 +39,13 @@ export const ServerList = () => {
             )
         }),
         columnHelper.accessor('map', {
-            header: () => <TableHeadingCell name={'Map'} />,
+            header: 'Map',
+            size: 150,
             cell: (info) => <Typography variant={'body2'}>{cleanMapName(info.getValue())}</Typography>
         }),
         columnHelper.accessor('players', {
-            header: () => <TableHeadingCell name={'Players'} />,
+            header: 'Players',
+            size: 50,
             cell: (info) => (
                 <Typography
                     variant={'body2'}
@@ -50,7 +53,11 @@ export const ServerList = () => {
             )
         }),
         columnHelper.accessor('distance', {
-            header: () => <TableHeadingCell name={'Dist'} />,
+            header: 'Dist',
+            size: 60,
+            meta: {
+                tooltip: 'Approximate distance from you'
+            },
             cell: (info) => (
                 <Tooltip title={`Distance in hammer units: ${Math.round((info.getValue() ?? 1) * 52.49)} khu`}>
                     <Typography variant={'caption'}>{`${info.getValue().toFixed(0)}km`}</Typography>
@@ -58,7 +65,11 @@ export const ServerList = () => {
             )
         }),
         columnHelper.accessor('copy', {
-            header: () => <TableHeadingCell name={'Cp'} />,
+            header: 'Cp',
+            size: 30,
+            meta: {
+                tooltip: 'Copy to clipboard'
+            },
             cell: (info) => (
                 <IconButton
                     color={'primary'}
@@ -82,7 +93,8 @@ export const ServerList = () => {
             )
         }),
         columnHelper.accessor('connect', {
-            header: () => <TableHeadingCell name={'Connect'} />,
+            header: 'Connect',
+            size: 100,
             cell: (info) => (
                 <Button
                     fullWidth
