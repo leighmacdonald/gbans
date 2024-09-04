@@ -27,7 +27,6 @@ import { LoadingSpinner } from '../component/LoadingSpinner.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { PlayerClassImg } from '../component/PlayerClassImg.tsx';
 import { TableCellSmall } from '../component/TableCellSmall.tsx';
-import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Title } from '../component/Title';
 import bluLogoImg from '../icons/blu_logo.png';
 import redLogoImg from '../icons/red_logo.png';
@@ -368,7 +367,8 @@ const MatchPlayersTable = ({ players, isLoading }: { players: MatchPlayer[]; isL
     const columnHelper = createColumnHelper<MatchPlayer>();
     const columns = [
         columnHelper.accessor('team', {
-            header: () => <TableHeadingCell name={'Team'} />,
+            header: 'Team',
+            size: 80,
             cell: (info) => (
                 <Typography color={players[info.row.index].team == Team.BLU ? blu : red} textAlign={'center'}>
                     {info.getValue() == Team.RED ? 'RED' : 'BLU'}
@@ -376,7 +376,8 @@ const MatchPlayersTable = ({ players, isLoading }: { players: MatchPlayer[]; isL
             )
         }),
         columnHelper.accessor('name', {
-            header: () => <TableHeadingCell name={'Name'} />,
+            header: 'Name',
+            size: 400,
             cell: (info) => (
                 <PersonCell
                     steam_id={players[info.row.index].steam_id}
@@ -386,18 +387,19 @@ const MatchPlayersTable = ({ players, isLoading }: { players: MatchPlayer[]; isL
             )
         }),
         columnHelper.accessor('classes', {
-            header: () => <TableHeadingCell name={'Classes'} />,
+            header: 'Classes',
+            size: 250,
             cell: (info) => (
                 <TableCellSmall>
                     {info.getValue() ? (
-                        info
-                            .getValue()
-                            .map((pc) => (
+                        info.getValue().map((pc) => (
+                            <div style={{ display: 'inline-block', padding: 0 }}>
                                 <PlayerClassHoverStats
                                     key={`pc-${players[info.row.index].steam_id}-${pc.player_class}`}
                                     stats={pc}
                                 />
-                            ))
+                            </div>
+                        ))
                     ) : (
                         <></>
                     )}
@@ -405,7 +407,9 @@ const MatchPlayersTable = ({ players, isLoading }: { players: MatchPlayer[]; isL
             )
         }),
         columnHelper.accessor('weapons', {
-            header: () => <TableHeadingCell name={'W'} />,
+            header: 'W',
+
+            size: 30,
             cell: (info) => (
                 <TableCellSmall>
                     <PlayerWeaponHoverStats stats={info.getValue()} />
@@ -414,43 +418,53 @@ const MatchPlayersTable = ({ players, isLoading }: { players: MatchPlayer[]; isL
         }),
 
         columnHelper.accessor('kills', {
-            header: () => <TableHeadingCell name={'K'} />,
+            header: 'K',
+            size: 40,
             cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
         }),
         columnHelper.accessor('assists', {
-            header: () => <TableHeadingCell name={'A'} />,
+            header: 'A',
+            size: 40,
             cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
         }),
         columnHelper.accessor('deaths', {
-            header: () => <TableHeadingCell name={'D'} />,
+            header: 'D',
+            size: 40,
             cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
         }),
         columnHelper.accessor('damage', {
-            header: () => <TableHeadingCell name={'Dmg'} />,
+            header: 'Dmg',
+            size: 50,
             cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
         }),
         columnHelper.accessor('damage_taken', {
-            header: () => <TableHeadingCell name={'DT'} />,
+            header: 'DT',
+            size: 50,
             cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
         }),
         columnHelper.accessor('health_packs', {
-            header: () => <TableHeadingCell name={'HP'} />,
+            header: 'HP',
+            size: 40,
             cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
         }),
         columnHelper.accessor('backstabs', {
-            header: () => <TableHeadingCell name={'BS'} />,
+            header: 'BS',
+            size: 40,
             cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
         }),
         columnHelper.accessor('headshots', {
-            header: () => <TableHeadingCell name={'HS'} />,
+            header: 'HS',
+            size: 40,
             cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
         }),
         columnHelper.accessor('airshots', {
-            header: () => <TableHeadingCell name={'AS'} />,
+            header: 'AS',
+            size: 40,
             cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
         }),
         columnHelper.accessor('captures', {
-            header: () => <TableHeadingCell name={'CP'} />,
+            header: 'CP',
+            size: 40,
             cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
         })
     ];
@@ -506,7 +520,8 @@ const MatchHealersTable = ({ players, isLoading }: { players: MatchPlayer[]; isL
     const columnHelper = createColumnHelper<MedicRow>();
     const columns = [
         columnHelper.accessor('team', {
-            header: () => <TableHeadingCell name={'Team'} />,
+            header: 'Team',
+            size: 80,
             cell: (info) => (
                 <Typography color={players[info.row.index].team == Team.BLU ? blu : red} textAlign={'center'}>
                     {info.getValue() == Team.RED ? 'RED' : 'BLU'}
@@ -514,7 +529,8 @@ const MatchHealersTable = ({ players, isLoading }: { players: MatchPlayer[]; isL
             )
         }),
         columnHelper.accessor('name', {
-            header: () => <TableHeadingCell name={'Name'} />,
+            header: 'Name',
+            size: 500,
             cell: (info) => (
                 <PersonCell
                     steam_id={players[info.row.index].steam_id}
@@ -525,32 +541,39 @@ const MatchHealersTable = ({ players, isLoading }: { players: MatchPlayer[]; isL
         }),
 
         columnHelper.accessor('healing', {
-            header: () => <TableHeadingCell name={'Healing'} />,
+            header: 'Healing',
+            size: 70,
             cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
         }),
 
         columnHelper.accessor('charges_uber', {
-            header: () => <TableHeadingCell name={'Uber'} />,
+            header: 'Uber',
+            size: 70,
             cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
         }),
         columnHelper.accessor('charges_kritz', {
-            header: () => <TableHeadingCell name={'Kritz'} />,
+            header: 'Kritz',
+            size: 70,
             cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
         }),
         columnHelper.accessor('charges_vacc', {
-            header: () => <TableHeadingCell name={'Vacc'} />,
+            header: 'Vacc',
+            size: 70,
             cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
         }),
         columnHelper.accessor('charges_quickfix', {
-            header: () => <TableHeadingCell name={'Quickfix'} />,
+            header: 'Quickfix',
+            size: 70,
             cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
         }),
         columnHelper.accessor('drops', {
-            header: () => <TableHeadingCell name={'Drops'} />,
+            header: 'Drops',
+            size: 70,
             cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
         }),
         columnHelper.accessor('avg_uber_length', {
-            header: () => <TableHeadingCell name={'Avg. Len'} />,
+            header: 'Avg. Len',
+            size: 70,
             cell: (info) => <TableCellSmall>{info.getValue()}</TableCellSmall>
         })
     ];

@@ -17,7 +17,6 @@ import { DataTable } from './DataTable.tsx';
 import { LoadingSpinner } from './LoadingSpinner';
 import { PaginatorLocal } from './PaginatorLocal.tsx';
 import { TableCellSmall } from './TableCellSmall.tsx';
-import { TableHeadingCell } from './TableHeadingCell.tsx';
 
 interface MapUseChartProps {
     details: SeriesData[];
@@ -160,7 +159,7 @@ const SeriesTable = ({ stats, isLoading }: { stats: SeriesData[]; isLoading: boo
 
     const columns = [
         columnHelper.accessor('label', {
-            header: () => <TableHeadingCell name={'Name'} />,
+            header: 'Name',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{info.getValue()}</Typography>
@@ -169,7 +168,8 @@ const SeriesTable = ({ stats, isLoading }: { stats: SeriesData[]; isLoading: boo
         }),
 
         columnHelper.accessor('value', {
-            header: () => <TableHeadingCell name={'Value'} />,
+            header: 'Value',
+            size: 30,
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{info.getValue().toFixed(2)} %</Typography>

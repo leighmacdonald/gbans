@@ -33,7 +33,6 @@ import { DataTable } from '../component/DataTable.tsx';
 import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import RouterLink from '../component/RouterLink.tsx';
-import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { SelectFieldSimple } from '../component/field/SelectFieldSimple.tsx';
@@ -220,7 +219,8 @@ const AppealsTable = ({
 }: { appeals: SteamBanRecord[]; isLoading: boolean } & TablePropsAll) => {
     const columns = [
         columnHelper.accessor('ban_id', {
-            header: () => <TableHeadingCell name={'ID'} />,
+            header: 'ID',
+            size: 30,
             cell: (info) => (
                 <Link
                     color={'primary'}
@@ -241,7 +241,8 @@ const AppealsTable = ({
                 }
                 return row.original.appeal_state == value;
             },
-            header: () => <TableHeadingCell name={'Status'} />,
+            header: 'Status',
+            size: 85,
             cell: (info) => {
                 return (
                     <TableCell>
@@ -252,7 +253,8 @@ const AppealsTable = ({
         }),
         columnHelper.accessor('source_id', {
             enableColumnFilter: true,
-            header: () => <TableHeadingCell name={'Author'} />,
+            header: 'Author',
+            size: 100,
             cell: (info) => (
                 <PersonCell
                     showCopy={true}
@@ -264,7 +266,8 @@ const AppealsTable = ({
         }),
         columnHelper.accessor('target_id', {
             enableColumnFilter: true,
-            header: () => <TableHeadingCell name={'Subject'} />,
+            header: 'Subject',
+            size: 100,
             cell: (info) => (
                 <PersonCell
                     showCopy={true}
@@ -275,19 +278,23 @@ const AppealsTable = ({
             )
         }),
         columnHelper.accessor('reason', {
-            header: () => <TableHeadingCell name={'Reason'} />,
+            header: 'Reason',
+            size: 100,
             cell: (info) => <Typography>{BanReasons[info.getValue()]}</Typography>
         }),
         columnHelper.accessor('reason_text', {
-            header: () => <TableHeadingCell name={'Custom Reason'} />,
+            header: 'Custom',
+            size: 150,
             cell: (info) => <Typography>{info.getValue()}</Typography>
         }),
         columnHelper.accessor('created_on', {
-            header: () => <TableHeadingCell name={'Created'} />,
+            header: 'Created',
+            size: 120,
             cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>
         }),
         columnHelper.accessor('updated_on', {
-            header: () => <TableHeadingCell name={'Last Active'} />,
+            header: 'Last Active',
+            size: 120,
             cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>
         })
     ];

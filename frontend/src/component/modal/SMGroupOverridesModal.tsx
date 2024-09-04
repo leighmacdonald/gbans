@@ -20,7 +20,6 @@ import { renderDateTime } from '../../util/text.tsx';
 import { FullTable } from '../FullTable.tsx';
 import { Heading } from '../Heading';
 import { TableCellString } from '../TableCellString.tsx';
-import { TableHeadingCell } from '../TableHeadingCell.tsx';
 import { ModalConfirm, ModalSMGroupOverridesEditor } from './index.ts';
 
 const overrideColumnHelper = createColumnHelper<SMGroupOverrides>();
@@ -30,27 +29,31 @@ const makeColumns = (
     onDelete: (override: SMGroupOverrides) => Promise<void>
 ) => [
     overrideColumnHelper.accessor('name', {
-        header: () => <TableHeadingCell name={'Name'} />,
+        header: 'Name',
+        size: 100,
         cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
     }),
     overrideColumnHelper.accessor('type', {
-        header: () => <TableHeadingCell name={'Type'} />,
+        header: 'Type',
         cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
     }),
     overrideColumnHelper.accessor('access', {
-        header: () => <TableHeadingCell name={'Access'} />,
+        header: 'Access',
         cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
     }),
     overrideColumnHelper.accessor('created_on', {
-        header: () => <TableHeadingCell name={'Created'} />,
+        header: 'Created',
+        size: 120,
         cell: (info) => <TableCellString>{renderDateTime(info.getValue())}</TableCellString>
     }),
     overrideColumnHelper.accessor('updated_on', {
-        header: () => <TableHeadingCell name={'Updated'} />,
+        header: 'Updated',
+        size: 120,
         cell: (info) => <TableCellString>{renderDateTime(info.getValue())}</TableCellString>
     }),
     overrideColumnHelper.display({
         id: 'edit',
+        size: 30,
         cell: (info) => (
             <IconButton
                 color={'warning'}
@@ -64,6 +67,7 @@ const makeColumns = (
     }),
     overrideColumnHelper.display({
         id: 'delete',
+        size: 30,
         cell: (info) => (
             <IconButton
                 color={'error'}

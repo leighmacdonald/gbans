@@ -42,7 +42,6 @@ import { PersonCell } from '../component/PersonCell.tsx';
 import { TableCellBool } from '../component/TableCellBool.tsx';
 import { TableCellSmall } from '../component/TableCellSmall.tsx';
 import { TableCellString } from '../component/TableCellString.tsx';
-import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Title } from '../component/Title';
 import { ModalConfirm, ModalFilterEditor } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
@@ -253,6 +252,7 @@ const FiltersTable = ({
         () => [
             {
                 id: 'select',
+                size: 30,
                 header: ({ table }) => (
                     <IndeterminateCheckbox
                         {...{
@@ -278,17 +278,21 @@ const FiltersTable = ({
 
             {
                 accessorKey: 'pattern',
+                size: 600,
+                header: 'Pattern',
                 cell: (info) => info.getValue()
             },
             {
                 accessorKey: 'is_regex',
-                accessorFn: (originalRow) => originalRow.is_regex,
+                size: 30,
+                meta: { tooltip: 'Is this a regular expression' },
                 cell: (info) => <TableCellBool enabled={info.getValue() as boolean} />,
-                header: () => <TableHeadingCell name={'Rx'} />
+                header: 'Rx'
             },
             {
                 accessorKey: 'action',
-                accessorFn: (originalRow) => originalRow.action,
+                size: 50,
+                meta: { tooltip: 'What action to take' },
                 cell: (info) => {
                     return (
                         <TableCellString>
@@ -298,25 +302,27 @@ const FiltersTable = ({
                         </TableCellString>
                     );
                 },
-                header: () => <TableHeadingCell name={'Action'} />
+                header: 'Action'
             },
             {
                 accessorKey: 'duration',
-                accessorFn: (originalRow) => originalRow.duration,
+                size: 50,
+                meta: { tooltip: 'Duration of the punishment when triggered' },
                 cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>,
-                header: () => <TableHeadingCell name={'Duration'} />
+                header: 'Duration'
             },
             {
                 accessorKey: 'weight',
-                accessorFn: (originalRow) => originalRow.weight,
+                size: 50,
                 cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>,
-                header: () => <TableHeadingCell name={'Weight'} />
+                header: 'Weight'
             },
             {
                 accessorKey: 'trigger_count',
-                accessorFn: (originalRow) => originalRow.trigger_count,
+                size: 40,
+                meta: { tooltip: 'Number of times the filter has been triggered' },
                 cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>,
-                header: () => <TableHeadingCell name={'Enabled'} />
+                header: 'Trig #'
             }
         ],
         [filters]
@@ -363,7 +369,7 @@ export const WarningStateTable = ({ warnings, isLoading }: { warnings: UserWarni
 
     const columns = [
         columnHelper.accessor('steam_id', {
-            header: () => <TableHeadingCell name={'Pattern'} />,
+            header: 'Pattern',
             cell: (info) => (
                 <TableCellSmall>
                     <PersonCell
@@ -375,19 +381,26 @@ export const WarningStateTable = ({ warnings, isLoading }: { warnings: UserWarni
             )
         }),
         columnHelper.accessor('created_on', {
-            header: () => <TableHeadingCell name={'Rx'} />,
+            header: 'Created',
+            size: 100,
             cell: (info) => <TableCellString>{renderDateTime(info.getValue())}</TableCellString>
         }),
-        columnHelper.accessor('server_name', {
-            header: () => <TableHeadingCell name={'Action'} />,
+        columnHelper.accessor('matched_filter.action', {
+            header: 'Action',
+            size: 100,
             cell: (info) => (
                 <TableCellSmall>
-                    <Typography>{info.getValue()}</Typography>
+                    <Typography>
+                        {typeof info.row.original.matched_filter.action === 'undefined'
+                            ? ''
+                            : filterActionString(info.row.original.matched_filter.action)}
+                    </Typography>
                 </TableCellSmall>
             )
         }),
         columnHelper.accessor('matched', {
-            header: () => <TableHeadingCell name={'Duration'} />,
+            header: 'Duration',
+            size: 100,
             cell: (info) => (
                 <TableCell>
                     <Tooltip title={renderFilter(warnings[info.row.index].matched_filter)}>
@@ -397,11 +410,13 @@ export const WarningStateTable = ({ warnings, isLoading }: { warnings: UserWarni
             )
         }),
         columnHelper.accessor('current_total', {
-            header: () => <TableHeadingCell name={'Weight'} />,
+            header: 'Weight',
+            size: 30,
             cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
         }),
         columnHelper.accessor('message', {
-            header: () => <TableHeadingCell name={'Triggered'} />,
+            header: 'Triggered',
+            size: 400,
             cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
         })
     ];

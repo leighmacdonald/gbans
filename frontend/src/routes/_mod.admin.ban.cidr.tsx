@@ -22,7 +22,6 @@ import { FullTable } from '../component/FullTable.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { TableCellRelativeDateField } from '../component/TableCellRelativeDateField.tsx';
 import { TableCellString } from '../component/TableCellString.tsx';
-import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
@@ -223,11 +222,12 @@ const columnHelper = createColumnHelper<CIDRBanRecord>();
 
 const makeColumns = (onEdit: (ban: CIDRBanRecord) => Promise<void>, onUnban: (ban: CIDRBanRecord) => Promise<void>) => [
     columnHelper.accessor('net_id', {
-        header: () => <TableHeadingCell name={'Ban ID'} />,
+        header: 'Ban ID',
+        size: 50,
         cell: (info) => <TableCellString>{`#${info.getValue()}`}</TableCellString>
     }),
     columnHelper.accessor('source_id', {
-        header: () => <TableHeadingCell name={'Author'} />,
+        header: 'Author',
         cell: (info) => {
             return typeof info.row.original === 'undefined' ? (
                 ''
@@ -241,7 +241,7 @@ const makeColumns = (onEdit: (ban: CIDRBanRecord) => Promise<void>, onUnban: (ba
         }
     }),
     columnHelper.accessor('target_id', {
-        header: () => <TableHeadingCell name={'Subject'} />,
+        header: 'Subject',
         cell: (info) => {
             return typeof info.row.original === 'undefined' ? (
                 ''
@@ -256,19 +256,23 @@ const makeColumns = (onEdit: (ban: CIDRBanRecord) => Promise<void>, onUnban: (ba
         }
     }),
     columnHelper.accessor('cidr', {
-        header: () => <TableHeadingCell name={'CIDR (hosts)'} />,
+        header: 'CIDR (hosts)',
+        size: 150,
         cell: (info) => <Typography>{`${info.getValue()}`}</Typography>
     }),
     columnHelper.accessor('reason', {
-        header: () => <TableHeadingCell name={'Reason'} />,
+        header: 'Reason',
+        size: 150,
         cell: (info) => <Typography>{BanReasons[info.getValue() as BanReason]}</Typography>
     }),
     columnHelper.accessor('created_on', {
-        header: () => <TableHeadingCell name={'Created'} />,
+        header: 'Created',
+        size: 100,
         cell: (info) => <Typography>{renderDate(info.getValue() as Date)}</Typography>
     }),
     columnHelper.accessor('valid_until', {
-        header: () => <TableHeadingCell name={'Expires'} />,
+        header: 'Expires',
+        size: 100,
         cell: (info) => {
             return typeof info.row.original === 'undefined' ? (
                 ''
@@ -284,6 +288,7 @@ const makeColumns = (onEdit: (ban: CIDRBanRecord) => Promise<void>, onUnban: (ba
     }),
     columnHelper.display({
         id: 'edit',
+        size: 30,
         cell: (info) => (
             <IconButton
                 color={'warning'}
@@ -299,6 +304,7 @@ const makeColumns = (onEdit: (ban: CIDRBanRecord) => Promise<void>, onUnban: (ba
     }),
     columnHelper.display({
         id: 'unban',
+        size: 30,
         cell: (info) => (
             <IconButton
                 color={'success'}

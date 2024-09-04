@@ -19,7 +19,6 @@ import { renderDateTime } from '../util/text.tsx';
 import { ContainerWithHeaderAndButtons } from './ContainerWithHeaderAndButtons.tsx';
 import { FullTable } from './FullTable.tsx';
 import { TableCellString } from './TableCellString.tsx';
-import { TableHeadingCell } from './TableHeadingCell.tsx';
 import { ModalConfirm, ModalSMAdminEditor, ModalSMGroupSelect } from './modal';
 
 export const SMAdminsTable = ({
@@ -191,43 +190,48 @@ const makeAdminColumns = (
     onDelGroup: (admin: SMAdmin) => Promise<void>
 ) => [
     adminColumnHelper.accessor('name', {
-        header: () => <TableHeadingCell name={'Name'} />,
+        header: 'Name',
         cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
     }),
     adminColumnHelper.accessor('auth_type', {
-        header: () => <TableHeadingCell name={'Auth Type'} />,
+        header: 'Auth Type',
         cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
     }),
     adminColumnHelper.accessor('identity', {
-        header: () => <TableHeadingCell name={'Identity'} />,
+        header: 'Identity',
         cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
     }),
     adminColumnHelper.accessor('steam_id', {
-        header: () => <TableHeadingCell name={'SteamID'} />,
+        header: 'SteamID',
         cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
     }),
     adminColumnHelper.accessor('password', {
-        header: () => <TableHeadingCell name={'Password'} />,
+        header: 'Password',
         cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
     }),
     adminColumnHelper.accessor('flags', {
-        header: () => <TableHeadingCell name={'Flags'} />,
+        header: 'Flags',
+        size: 75,
         cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
     }),
     adminColumnHelper.accessor('immunity', {
-        header: () => <TableHeadingCell name={'Immunity'} />,
+        header: 'Immunity',
+        size: 75,
         cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
     }),
     adminColumnHelper.accessor('created_on', {
-        header: () => <TableHeadingCell name={'Created On'} />,
+        header: 'Created On',
+        size: 180,
         cell: (info) => <TableCellString>{renderDateTime(info.getValue())}</TableCellString>
     }),
     adminColumnHelper.accessor('updated_on', {
-        header: () => <TableHeadingCell name={'Updated On'} />,
+        header: 'Updated On',
+        size: 180,
         cell: (info) => <TableCellString>{renderDateTime(info.getValue())}</TableCellString>
     }),
     adminColumnHelper.display({
         id: 'add_group',
+        size: 30,
         cell: (info) => (
             <Tooltip title={'Add user to group'}>
                 <span>
@@ -246,6 +250,7 @@ const makeAdminColumns = (
     }),
     adminColumnHelper.display({
         id: 'del_group',
+        size: 30,
         cell: (info) => (
             <Tooltip title={'Remove user from group'}>
                 <span>
@@ -264,7 +269,7 @@ const makeAdminColumns = (
     }),
     adminColumnHelper.display({
         id: 'edit',
-        maxSize: 10,
+        size: 30,
         cell: (info) => (
             <Tooltip title={'Edit admin'}>
                 <IconButton
@@ -280,7 +285,7 @@ const makeAdminColumns = (
     }),
     adminColumnHelper.display({
         id: 'delete',
-        maxSize: 10,
+        size: 30,
         cell: (info) => (
             <Tooltip title={'Remove admin'}>
                 <IconButton

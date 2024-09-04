@@ -12,7 +12,6 @@ import FmtWhenGt from './FmtWhenGT.tsx';
 import { PaginatorLocal } from './PaginatorLocal.tsx';
 import { PersonCell } from './PersonCell';
 import { TableCellSmall } from './TableCellSmall.tsx';
-import { TableHeadingCell } from './TableHeadingCell.tsx';
 
 export const HealersOverallContainer = () => {
     const { data, isLoading } = useQuery({
@@ -39,7 +38,7 @@ const StatsHealingOverall = ({ stats, isLoading }: { stats: LazyResult<HealingOv
 
     const columns = [
         columnHelper.accessor('rank', {
-            header: () => <TableHeadingCell name={'#'} />,
+            header: '#',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{info.getValue()}</Typography>
@@ -47,7 +46,7 @@ const StatsHealingOverall = ({ stats, isLoading }: { stats: LazyResult<HealingOv
             )
         }),
         columnHelper.accessor('personaname', {
-            header: () => <TableHeadingCell name={'Name'} />,
+            header: 'Name',
             cell: (info) => (
                 <TableCellSmall>
                     <PersonCell
@@ -59,7 +58,7 @@ const StatsHealingOverall = ({ stats, isLoading }: { stats: LazyResult<HealingOv
             )
         }),
         columnHelper.accessor('healing', {
-            header: () => <TableHeadingCell name={'Healing'} />,
+            header: 'Healing',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -68,7 +67,7 @@ const StatsHealingOverall = ({ stats, isLoading }: { stats: LazyResult<HealingOv
         }),
 
         columnHelper.accessor('assists', {
-            header: () => <TableHeadingCell name={'A'} />,
+            header: 'A',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -76,7 +75,7 @@ const StatsHealingOverall = ({ stats, isLoading }: { stats: LazyResult<HealingOv
             )
         }),
         columnHelper.accessor('deaths', {
-            header: () => <TableHeadingCell name={'D'} />,
+            header: 'D',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -84,7 +83,7 @@ const StatsHealingOverall = ({ stats, isLoading }: { stats: LazyResult<HealingOv
             )
         }),
         columnHelper.accessor('kad', {
-            header: () => <TableHeadingCell name={'KAD'} />,
+            header: 'KAD',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmt)}</Typography>
@@ -92,7 +91,7 @@ const StatsHealingOverall = ({ stats, isLoading }: { stats: LazyResult<HealingOv
             )
         }),
         columnHelper.accessor('hpm', {
-            header: () => <TableHeadingCell name={'HPM'} />,
+            header: 'HPM',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), () => defaultFloatFmt(info.getValue()))}</Typography>
@@ -100,7 +99,7 @@ const StatsHealingOverall = ({ stats, isLoading }: { stats: LazyResult<HealingOv
             )
         }),
         columnHelper.accessor('damage_taken', {
-            header: () => <TableHeadingCell name={'DT'} />,
+            header: 'DT',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -108,7 +107,7 @@ const StatsHealingOverall = ({ stats, isLoading }: { stats: LazyResult<HealingOv
             )
         }),
         columnHelper.accessor('dtm', {
-            header: () => <TableHeadingCell name={'DTM%'} />,
+            header: 'DTM%',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), () => defaultFloatFmtPct(info.getValue()))}</Typography>
@@ -116,7 +115,7 @@ const StatsHealingOverall = ({ stats, isLoading }: { stats: LazyResult<HealingOv
             )
         }),
         columnHelper.accessor('dominations', {
-            header: () => <TableHeadingCell name={'DM'} />,
+            header: 'DM',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -124,7 +123,7 @@ const StatsHealingOverall = ({ stats, isLoading }: { stats: LazyResult<HealingOv
             )
         }),
         columnHelper.accessor('drops', {
-            header: () => <TableHeadingCell name={'Dr'} />,
+            header: 'Dr',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -132,7 +131,7 @@ const StatsHealingOverall = ({ stats, isLoading }: { stats: LazyResult<HealingOv
             )
         }),
         columnHelper.accessor('charges_uber', {
-            header: () => <TableHeadingCell name={'Ub'} />,
+            header: 'Ub',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -140,7 +139,7 @@ const StatsHealingOverall = ({ stats, isLoading }: { stats: LazyResult<HealingOv
             )
         }),
         columnHelper.accessor('charges_kritz', {
-            header: () => <TableHeadingCell name={'Kr'} />,
+            header: 'Kr',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -148,7 +147,7 @@ const StatsHealingOverall = ({ stats, isLoading }: { stats: LazyResult<HealingOv
             )
         }),
         columnHelper.accessor('charges_quickfix', {
-            header: () => <TableHeadingCell name={'Qf'} />,
+            header: 'Qf',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -156,7 +155,7 @@ const StatsHealingOverall = ({ stats, isLoading }: { stats: LazyResult<HealingOv
             )
         }),
         columnHelper.accessor('charges_vacc', {
-            header: () => <TableHeadingCell name={'Va'} />,
+            header: 'Va',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -164,7 +163,7 @@ const StatsHealingOverall = ({ stats, isLoading }: { stats: LazyResult<HealingOv
             )
         }),
         columnHelper.accessor('win_rate', {
-            header: () => <TableHeadingCell name={'WR%'} />,
+            header: 'WR%',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmtPct)}</Typography>

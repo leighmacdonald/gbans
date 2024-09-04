@@ -16,7 +16,6 @@ import { renderDateTime } from '../util/text.tsx';
 import { ContainerWithHeaderAndButtons } from './ContainerWithHeaderAndButtons.tsx';
 import { FullTable } from './FullTable.tsx';
 import { TableCellString } from './TableCellString.tsx';
-import { TableHeadingCell } from './TableHeadingCell.tsx';
 import { ModalConfirm, ModalSMOverridesEditor } from './modal';
 
 export const SMOverridesTable = ({ overrides, isLoading }: { overrides: SMOverrides[]; isLoading: boolean }) => {
@@ -117,28 +116,33 @@ const makeOverridesColumns = (
     onDelete: (override: SMOverrides) => Promise<void>
 ) => [
     overrideColumnHelper.accessor('name', {
-        header: () => <TableHeadingCell name={'Name'} />,
+        header: 'Name',
+        size: 500,
         cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
     }),
     overrideColumnHelper.accessor('type', {
-        header: () => <TableHeadingCell name={'Type'} />,
+        header: 'Type',
+        size: 75,
         cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
     }),
     overrideColumnHelper.accessor('flags', {
-        header: () => <TableHeadingCell name={'Flags'} />,
+        header: 'Flags',
+        size: 75,
         cell: (info) => <TableCellString>{info.getValue()}</TableCellString>
     }),
     overrideColumnHelper.accessor('created_on', {
-        header: () => <TableHeadingCell name={'Created On'} />,
+        header: 'Created On',
+        size: 140,
         cell: (info) => <TableCellString>{renderDateTime(info.getValue())}</TableCellString>
     }),
     overrideColumnHelper.accessor('updated_on', {
-        header: () => <TableHeadingCell name={'Updated On'} />,
+        header: 'Updated On',
+        size: 140,
         cell: (info) => <TableCellString>{renderDateTime(info.getValue())}</TableCellString>
     }),
     overrideColumnHelper.display({
         id: 'edit',
-        maxSize: 10,
+        maxSize: 30,
         cell: (info) => (
             <Tooltip title={'Edit Override'}>
                 <IconButton
@@ -154,7 +158,7 @@ const makeOverridesColumns = (
     }),
     overrideColumnHelper.display({
         id: 'delete',
-        maxSize: 10,
+        maxSize: 30,
         cell: (info) => (
             <Tooltip title={'Delete override'}>
                 <IconButton

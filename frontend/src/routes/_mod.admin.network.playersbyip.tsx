@@ -15,7 +15,6 @@ import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { DataTable } from '../component/DataTable.tsx';
 import { Paginator } from '../component/Paginator.tsx';
 import RouterLink from '../component/RouterLink.tsx';
-import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
@@ -162,11 +161,12 @@ const PayersByIPTable = ({
 }) => {
     const columns = [
         columnHelper.accessor('created_on', {
-            header: () => <TableHeadingCell name={'Created'} />,
+            size: 120,
+            header: 'Created',
             cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>
         }),
         columnHelper.accessor('persona_name', {
-            header: () => <TableHeadingCell name={'Name'} />,
+            header: 'Name',
             cell: (info) => (
                 <TableCell>
                     <Typography>{info.getValue()}</Typography>
@@ -174,7 +174,8 @@ const PayersByIPTable = ({
             )
         }),
         columnHelper.accessor('steam_id', {
-            header: () => <TableHeadingCell name={'Steam ID'} />,
+            size: 150,
+            header: 'Steam ID',
             cell: (info) => (
                 <TableCell>
                     <Link component={RouterLink} to={'/profile/$steamId'} params={{ steamId: info.getValue() }}>
@@ -184,15 +185,18 @@ const PayersByIPTable = ({
             )
         }),
         columnHelper.accessor('ip_addr', {
-            header: () => <TableHeadingCell name={'IP Address'} />,
+            size: 120,
+            header: 'IP Address',
             cell: (info) => (
                 <TableCell>
                     <Typography>{info.getValue()}</Typography>
                 </TableCell>
             )
         }),
+
         columnHelper.accessor('server_id', {
-            header: () => <TableHeadingCell name={'Server'} />,
+            header: 'Server',
+            size: 75,
             cell: (info) => (
                 <TableCell>
                     <Typography>{connections.data[info.row.index].server_name_short}</Typography>

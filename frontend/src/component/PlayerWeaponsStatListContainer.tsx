@@ -11,7 +11,6 @@ import FmtWhenGt from './FmtWhenGT.tsx';
 import { PaginatorLocal } from './PaginatorLocal.tsx';
 import RouterLink from './RouterLink.tsx';
 import { TableCellSmall } from './TableCellSmall.tsx';
-import { TableHeadingCell } from './TableHeadingCell.tsx';
 
 const columnHelper = createColumnHelper<WeaponsOverallResult>();
 
@@ -30,7 +29,8 @@ export const PlayerWeaponsStatListContainer = ({ steamId }: { steamId: string })
 
     const columns = [
         columnHelper.accessor('name', {
-            header: () => <TableHeadingCell name={'Weapon'} />,
+            header: 'Weapon',
+            size: 350,
             cell: (info) => (
                 <TableCellSmall>
                     <Link component={RouterLink} to={`/stats/weapon/${info.row.original.weapon_id}`}>
@@ -40,7 +40,7 @@ export const PlayerWeaponsStatListContainer = ({ steamId }: { steamId: string })
             )
         }),
         columnHelper.accessor('kills', {
-            header: () => <TableHeadingCell name={'Kills'} />,
+            header: 'Kills',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -48,7 +48,7 @@ export const PlayerWeaponsStatListContainer = ({ steamId }: { steamId: string })
             )
         }),
         columnHelper.accessor('kills_pct', {
-            header: () => <TableHeadingCell name={'Kills%'} />,
+            header: 'Kills%',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmtPct)}</Typography>
@@ -57,7 +57,7 @@ export const PlayerWeaponsStatListContainer = ({ steamId }: { steamId: string })
         }),
 
         columnHelper.accessor('shots', {
-            header: () => <TableHeadingCell name={'Shots'} />,
+            header: 'Shots',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -65,7 +65,7 @@ export const PlayerWeaponsStatListContainer = ({ steamId }: { steamId: string })
             )
         }),
         columnHelper.accessor('shots_pct', {
-            header: () => <TableHeadingCell name={'Shot%'} />,
+            header: 'Shot%',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmtPct)}</Typography>
@@ -73,7 +73,7 @@ export const PlayerWeaponsStatListContainer = ({ steamId }: { steamId: string })
             )
         }),
         columnHelper.accessor('hits', {
-            header: () => <TableHeadingCell name={'Hits'} />,
+            header: 'Hits',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmt)}</Typography>
@@ -81,7 +81,7 @@ export const PlayerWeaponsStatListContainer = ({ steamId }: { steamId: string })
             )
         }),
         columnHelper.accessor('hits_pct', {
-            header: () => <TableHeadingCell name={'Hits%'} />,
+            header: 'Hits%',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmtPct)}</Typography>
@@ -89,7 +89,7 @@ export const PlayerWeaponsStatListContainer = ({ steamId }: { steamId: string })
             )
         }),
         columnHelper.accessor('accuracy', {
-            header: () => <TableHeadingCell name={'Acc%'} />,
+            header: 'Acc%',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>
@@ -99,7 +99,7 @@ export const PlayerWeaponsStatListContainer = ({ steamId }: { steamId: string })
             )
         }),
         columnHelper.accessor('airshots', {
-            header: () => <TableHeadingCell name={'As'} />,
+            header: 'As',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -107,7 +107,7 @@ export const PlayerWeaponsStatListContainer = ({ steamId }: { steamId: string })
             )
         }),
         columnHelper.accessor('airshots_pct', {
-            header: () => <TableHeadingCell name={'As%'} />,
+            header: 'As%',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmtPct)}</Typography>
@@ -115,7 +115,7 @@ export const PlayerWeaponsStatListContainer = ({ steamId }: { steamId: string })
             )
         }),
         columnHelper.accessor('backstabs', {
-            header: () => <TableHeadingCell name={'Bs'} />,
+            header: 'Bs',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -123,7 +123,7 @@ export const PlayerWeaponsStatListContainer = ({ steamId }: { steamId: string })
             )
         }),
         columnHelper.accessor('backstabs_pct', {
-            header: () => <TableHeadingCell name={'Bs%'} />,
+            header: 'Bs%',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmtPct)}</Typography>
@@ -131,7 +131,7 @@ export const PlayerWeaponsStatListContainer = ({ steamId }: { steamId: string })
             )
         }),
         columnHelper.accessor('headshots', {
-            header: () => <TableHeadingCell name={'Hs'} />,
+            header: 'Hs',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -139,7 +139,7 @@ export const PlayerWeaponsStatListContainer = ({ steamId }: { steamId: string })
             )
         }),
         columnHelper.accessor('headshots_pct', {
-            header: () => <TableHeadingCell name={'Hs%'} />,
+            header: 'Hs%',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmtPct)}</Typography>
@@ -147,7 +147,7 @@ export const PlayerWeaponsStatListContainer = ({ steamId }: { steamId: string })
             )
         }),
         columnHelper.accessor('damage', {
-            header: () => <TableHeadingCell name={'Dmg'} />,
+            header: 'Dmg',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), humanCount)}</Typography>
@@ -155,7 +155,7 @@ export const PlayerWeaponsStatListContainer = ({ steamId }: { steamId: string })
             )
         }),
         columnHelper.accessor('damage_pct', {
-            header: () => <TableHeadingCell name={'Dmg%'} />,
+            header: 'Dmg%',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{FmtWhenGt(info.getValue(), defaultFloatFmtPct)}</Typography>

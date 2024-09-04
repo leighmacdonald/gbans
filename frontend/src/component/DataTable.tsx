@@ -5,10 +5,21 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { flexRender, Table as TSTable } from '@tanstack/react-table';
 import { LoadingPlaceholder } from './LoadingPlaceholder.tsx';
 import { TableCellSmall } from './TableCellSmall.tsx';
+
+/**
+ * This does not work properly, not sure why. Unable to satisfy types.
+ * https://tanstack.com/table/v8/docs/api/core/column-def#meta
+ *
+ * As a workaround its just cast
+ */
+export type TableMetaOpts = {
+    tooltip?: string;
+};
 
 export const DataTable = <T,>({
     table,
@@ -30,18 +41,30 @@ export const DataTable = <T,>({
                     {table.getHeaderGroups().map((headerGroup) => (
                         <TableRow key={headerGroup.id}>
                             {headerGroup.headers.map((header) => (
-                                <TableCellSmall key={header.id}>
-                                    <Typography
-                                        padding={0}
-                                        sx={{
-                                            fontWeight: 'bold'
-                                        }}
-                                        variant={'button'}
+                                <TableCellSmall
+                                    key={header.id}
+                                    style={{
+                                        width: header.getSize() == Number.MAX_SAFE_INTEGER ? 'auto' : header.getSize()
+                                    }}
+                                >
+                                    <Tooltip
+                                        title={
+                                            (header.column.columnDef?.meta as TableMetaOpts)?.tooltip ??
+                                            (header.column.columnDef.header as string)
+                                        }
                                     >
-                                        {header.isPlaceholder
-                                            ? null
-                                            : flexRender(header.column.columnDef.header, header.getContext())}
-                                    </Typography>
+                                        <Typography
+                                            padding={0}
+                                            sx={{
+                                                fontWeight: 'bold'
+                                            }}
+                                            variant={'button'}
+                                        >
+                                            {header.isPlaceholder
+                                                ? null
+                                                : flexRender(header.column.columnDef.header, header.getContext())}
+                                        </Typography>
+                                    </Tooltip>
                                 </TableCellSmall>
                             ))}
                         </TableRow>

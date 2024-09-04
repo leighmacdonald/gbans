@@ -23,7 +23,6 @@ import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { FullTable } from '../component/FullTable.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import RouterLink from '../component/RouterLink.tsx';
-import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { SelectFieldSimple } from '../component/field/SelectFieldSimple.tsx';
@@ -207,7 +206,8 @@ const makeColumns = () => {
     return [
         columnHelper.accessor('report_id', {
             enableColumnFilter: false,
-            header: () => <TableHeadingCell name={'ID'} />,
+            header: 'ID',
+            size: 30,
             cell: (info) => (
                 <Link
                     color={'primary'}
@@ -221,13 +221,14 @@ const makeColumns = () => {
             )
         }),
         columnHelper.accessor('report_status', {
+            size: 30,
             filterFn: (row, _, value: ReportStatus) => {
                 if (value == ReportStatus.Any) {
                     return true;
                 }
                 return row.original.report_status == value;
             },
-            header: () => <TableHeadingCell name={'Status'} />,
+            header: 'Status',
             cell: (info) => {
                 return (
                     <Stack direction={'row'} spacing={1}>
@@ -238,7 +239,7 @@ const makeColumns = () => {
         }),
         columnHelper.accessor('source_id', {
             enableColumnFilter: true,
-            header: () => <TableHeadingCell name={'Reporter'} />,
+            header: 'Reporter',
             cell: (info) => (
                 <PersonCell
                     showCopy={true}
@@ -250,7 +251,7 @@ const makeColumns = () => {
         }),
         columnHelper.accessor('target_id', {
             enableColumnFilter: true,
-            header: () => <TableHeadingCell name={'Subject'} />,
+            header: 'Subject',
             cell: (info) => (
                 <PersonCell
                     showCopy={true}
@@ -262,17 +263,20 @@ const makeColumns = () => {
         }),
         columnHelper.accessor('reason', {
             enableColumnFilter: false,
-            header: () => <TableHeadingCell name={'Reason'} />,
+            header: 'Reason',
+            size: 100,
             cell: (info) => <Typography>{BanReasons[info.getValue()]}</Typography>
         }),
         columnHelper.accessor('created_on', {
             enableColumnFilter: false,
-            header: () => <TableHeadingCell name={'Created'} />,
+            size: 100,
+            header: 'Created',
             cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>
         }),
         columnHelper.accessor('updated_on', {
             enableColumnFilter: false,
-            header: () => <TableHeadingCell name={'Updated'} />,
+            size: 100,
+            header: 'Updated',
             cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>
         })
     ];

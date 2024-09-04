@@ -14,7 +14,6 @@ import { apiGetMatches, MatchSummary } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { DataTable } from '../component/DataTable.tsx';
 import RouterLink from '../component/RouterLink.tsx';
-import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Title } from '../component/Title';
 import { checkFeatureEnabled } from '../util/features.ts';
 import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
@@ -78,7 +77,8 @@ const MatchSummaryTable = ({
 
     const columns = [
         columnHelper.accessor('title', {
-            header: () => <TableHeadingCell name={'Server'} />,
+            header: 'Server',
+            size: 500,
             cell: (info) => {
                 return (
                     <Link
@@ -93,25 +93,30 @@ const MatchSummaryTable = ({
             }
         }),
         columnHelper.accessor('map_name', {
-            header: () => <TableHeadingCell name={'Map'} />,
+            header: 'Map',
+            size: 300,
             cell: (info) => <Typography>{info.getValue()}</Typography>
         }),
         columnHelper.accessor('score_red', {
-            header: () => <TableHeadingCell name={'RED'} />,
+            header: 'RED',
+            size: 40,
             cell: (info) => <Typography>{info.getValue()}</Typography>
         }),
         columnHelper.accessor('score_blu', {
-            header: () => <TableHeadingCell name={'BLU'} />,
+            header: 'BLU',
+            size: 40,
             cell: (info) => <Typography>{info.getValue()}</Typography>
         }),
         columnHelper.accessor('is_winner', {
-            header: () => <TableHeadingCell name={'W'} />,
+            header: 'W',
+            size: 40,
             cell: (info) => {
                 return info.getValue() ? <CheckIcon color={'success'} /> : <CloseIcon color={'error'} />;
             }
         }),
         columnHelper.accessor('time_end', {
-            header: () => <TableHeadingCell name={'Created'} />,
+            header: 'Created',
+            size: 140,
             cell: (info) => <Typography>{renderDateTime(info.getValue())}</Typography>
         })
     ];

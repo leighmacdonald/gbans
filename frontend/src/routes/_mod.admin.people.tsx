@@ -18,7 +18,6 @@ import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { DataTable } from '../component/DataTable.tsx';
 import { Paginator } from '../component/Paginator.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
-import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
@@ -191,7 +190,7 @@ const PeopleTable = ({
         () => [
             {
                 accessorKey: 'source_id',
-                header: () => <TableHeadingCell name={'Profile'} />,
+                header: 'Profile',
                 cell: (info) => {
                     return typeof people.data[info.row.index] === 'undefined' ? (
                         ''
@@ -207,7 +206,8 @@ const PeopleTable = ({
             },
             {
                 accessorKey: 'communityvisibilitystate',
-                header: () => <TableHeadingCell name={'Visibility'} />,
+                header: 'Visibility',
+                size: 50,
                 cell: (info) => (
                     <Typography variant={'body1'}>
                         {info.getValue() == communityVisibilityState.Public ? 'Public' : 'Private'}
@@ -216,27 +216,32 @@ const PeopleTable = ({
             },
             {
                 accessorKey: 'vac_bans',
-                header: () => <TableHeadingCell name={'Vac Ban'} />,
+                header: 'Vac Ban',
+                size: 50,
                 cell: (info) => <Typography variant={'body1'}>{info.getValue() ? 'Yes' : 'No'}</Typography>
             },
             {
                 accessorKey: 'community_banned',
-                header: () => <TableHeadingCell name={'Comm. Ban'} />,
+                header: 'Comm. Ban',
+                size: 50,
                 cell: (info) => <Typography variant={'body1'}>{info.getValue() ? 'Yes' : 'No'}</Typography>
             },
             {
                 accessorKey: 'timecreated',
-                header: () => <TableHeadingCell name={'Account Created'} />,
+                header: 'Account Created',
+                size: 100,
                 cell: (info) => <Typography>{renderDate(fromUnixTime(info.getValue() as number))}</Typography>
             },
             {
                 accessorKey: 'created_on',
-                header: () => <TableHeadingCell name={'First Seen'} />,
+                header: 'First Seen',
+                size: 100,
                 cell: (info) => <Typography>{renderDateTime(info.getValue() as Date)}</Typography>
             },
             {
                 accessorKey: 'permission_level',
-                header: () => <TableHeadingCell name={'First Seen'} />,
+                header: 'Perms',
+                size: 80,
                 cell: (info) => (
                     <Typography>
                         {permissionLevelString(
@@ -249,7 +254,8 @@ const PeopleTable = ({
             },
             {
                 id: 'actions',
-                header: () => <TableHeadingCell name={'Edit'} />,
+                header: 'Edit',
+                size: 30,
                 cell: (info) => {
                     return isAdmin ? (
                         <IconButton color={'warning'} onClick={() => onEditPerson(info.row.original)}>

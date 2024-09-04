@@ -23,7 +23,6 @@ import { FullTable } from '../component/FullTable.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { TableCellRelativeDateField } from '../component/TableCellRelativeDateField.tsx';
 import { TableCellString } from '../component/TableCellString.tsx';
-import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Title } from '../component/Title.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
@@ -245,11 +244,12 @@ const columnHelper = createColumnHelper<ASNBanRecord>();
 
 const makeColumns = (onEdit: (ban: ASNBanRecord) => Promise<void>, onUnban: (ban: ASNBanRecord) => Promise<void>) => [
     columnHelper.accessor('ban_asn_id', {
-        header: () => <TableHeadingCell name={'Ban ID'} />,
+        header: () => 'Ban ID',
+        size: 50,
         cell: (info) => <TableCellString>{`#${info.getValue()}`}</TableCellString>
     }),
     columnHelper.accessor('source_id', {
-        header: () => <TableHeadingCell name={'Author'} />,
+        header: 'Author',
         cell: (info) => {
             return typeof info.row.original === 'undefined' ? (
                 ''
@@ -264,7 +264,7 @@ const makeColumns = (onEdit: (ban: ASNBanRecord) => Promise<void>, onUnban: (ban
         }
     }),
     columnHelper.accessor('target_id', {
-        header: () => <TableHeadingCell name={'Subject'} />,
+        header: 'Subject',
         cell: (info) => {
             return typeof info.row.original === 'undefined' ? (
                 ''
@@ -279,19 +279,23 @@ const makeColumns = (onEdit: (ban: ASNBanRecord) => Promise<void>, onUnban: (ban
         }
     }),
     columnHelper.accessor('as_num', {
-        header: () => <TableHeadingCell name={'AS Number'} />,
+        size: 100,
+        header: 'AS Number',
         cell: (info) => <Typography>{`${info.getValue()}`}</Typography>
     }),
     columnHelper.accessor('reason', {
-        header: () => <TableHeadingCell name={'Reason'} />,
+        size: 100,
+        header: () => 'Reason',
         cell: (info) => <Typography>{BanReasons[info.getValue() as BanReason]}</Typography>
     }),
     columnHelper.accessor('created_on', {
-        header: () => <TableHeadingCell name={'Created'} />,
+        size: 100,
+        header: () => 'Created',
         cell: (info) => <Typography>{renderDate(info.getValue() as Date)}</Typography>
     }),
     columnHelper.accessor('valid_until', {
-        header: () => <TableHeadingCell name={'Expires'} />,
+        header: 'Expires',
+        size: 100,
         cell: (info) => {
             return typeof info.row.original === 'undefined' ? (
                 ''
@@ -307,6 +311,7 @@ const makeColumns = (onEdit: (ban: ASNBanRecord) => Promise<void>, onUnban: (ban
     }),
     columnHelper.display({
         id: 'edit',
+        size: 30,
         cell: (info) => (
             <IconButton
                 color={'warning'}
@@ -322,6 +327,7 @@ const makeColumns = (onEdit: (ban: ASNBanRecord) => Promise<void>, onUnban: (ban
     }),
     columnHelper.display({
         id: 'unban',
+        size: 30,
         cell: (info) => (
             <IconButton
                 color={'success'}

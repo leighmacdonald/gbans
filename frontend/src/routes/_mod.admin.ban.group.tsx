@@ -23,7 +23,6 @@ import { FullTable } from '../component/FullTable.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
 import { TableCellRelativeDateField } from '../component/TableCellRelativeDateField.tsx';
 import { TableCellString } from '../component/TableCellString.tsx';
-import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
@@ -240,11 +239,12 @@ const makeColumns = (
     onUnban: (ban: GroupBanRecord) => Promise<void>
 ) => [
     columnHelper.accessor('ban_group_id', {
-        header: () => <TableHeadingCell name={'Ban ID'} />,
+        header: 'Ban ID',
+        size: 50,
         cell: (info) => <TableCellString>{`#${info.getValue()}`}</TableCellString>
     }),
     columnHelper.accessor('source_id', {
-        header: () => <TableHeadingCell name={'Author'} />,
+        header: 'Author',
         cell: (info) => {
             return typeof info.row.original === 'undefined' ? (
                 ''
@@ -259,7 +259,7 @@ const makeColumns = (
         }
     }),
     columnHelper.accessor('target_id', {
-        header: () => <TableHeadingCell name={'Subject'} />,
+        header: 'Subject',
         cell: (info) => {
             return typeof info.row.original === 'undefined' ? (
                 ''
@@ -273,19 +273,22 @@ const makeColumns = (
         }
     }),
     columnHelper.accessor('group_id', {
-        header: () => <TableHeadingCell name={'Group ID'} />,
+        header: () => 'Group ID',
         cell: (info) => <Typography>{`${info.getValue()}`}</Typography>
     }),
     columnHelper.accessor('reason', {
-        header: () => <TableHeadingCell name={'Reason'} />,
+        header: 'Reason',
+        size: 100,
         cell: (info) => <Typography>{BanReasons[info.getValue() as BanReason]}</Typography>
     }),
     columnHelper.accessor('created_on', {
-        header: () => <TableHeadingCell name={'Created'} />,
+        header: 'Created',
+        size: 100,
         cell: (info) => <Typography>{renderDate(info.getValue() as Date)}</Typography>
     }),
     columnHelper.accessor('valid_until', {
-        header: () => <TableHeadingCell name={'Expires'} />,
+        size: 100,
+        header: 'Expires',
         cell: (info) => {
             return typeof info.row.original === 'undefined' ? (
                 ''
@@ -301,9 +304,8 @@ const makeColumns = (
     }),
     columnHelper.display({
         id: 'edit',
-        header: () => {
-            return <TableHeadingCell name={'Actions'} />;
-        },
+        size: 30,
+
         cell: (info) => {
             return (
                 <IconButton
@@ -321,9 +323,7 @@ const makeColumns = (
     }),
     columnHelper.display({
         id: 'unban',
-        header: () => {
-            return <TableHeadingCell name={'Actions'} />;
-        },
+        size: 30,
         cell: (info) => {
             return (
                 <IconButton

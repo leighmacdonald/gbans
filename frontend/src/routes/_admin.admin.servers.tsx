@@ -26,7 +26,6 @@ import { DataTable } from '../component/DataTable.tsx';
 import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import { TableCellBool } from '../component/TableCellBool.tsx';
 import { TableCellString } from '../component/TableCellString.tsx';
-import { TableHeadingCell } from '../component/TableHeadingCell.tsx';
 import { Title } from '../component/Title';
 import { TableCellStringHidden } from '../component/field/TableCellStringHidden.tsx';
 import { ModalServerEditor } from '../component/modal';
@@ -154,85 +153,120 @@ const AdminServersTable = ({
         () => [
             {
                 accessorKey: 'server_id',
-                header: () => <TableHeadingCell name={'ID'} />,
+                size: 40,
+                header: 'ID',
                 cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>
             },
             {
                 accessorKey: 'short_name',
-                header: () => <TableHeadingCell name={'Name'} tooltip={'Short unique server identifier'} />,
+                size: 60,
+                meta: {
+                    tooltip: 'Short unique server identifier'
+                },
+                header: 'Name',
                 cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>
             },
             {
                 accessorKey: 'name',
-                header: () => (
-                    <TableHeadingCell name={'Name Long'} tooltip={'Full name of the server, AKA srcds hostname'} />
-                ),
+                size: 300,
+                meta: {
+                    tooltip: 'Full name of the server, AKA srcds hostname'
+                },
+                header: 'Name Long',
                 cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>
             },
             {
                 accessorKey: 'address',
-                header: () => <TableHeadingCell name={'Address'} tooltip={'IP or DNS/Hostname of the server'} />,
+                meta: {
+                    tooltip: 'IP or DNS/Hostname of the server'
+                },
+                header: 'Address',
                 cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>
             },
             {
                 accessorKey: 'port',
-                header: () => <TableHeadingCell name={'Port'} />,
+                size: 50,
+                header: 'Port',
                 cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>
             },
             {
                 accessorKey: 'rcon',
-                header: () => <TableHeadingCell name={'RCON'} tooltip={'Standard RCON password'} />,
+                meta: {
+                    tooltip: 'Standard RCON password'
+                },
+                header: () => 'RCON',
                 cell: (info) => <TableCellStringHidden>{info.getValue() as string}</TableCellStringHidden>
             },
             {
                 accessorKey: 'password',
-                header: () => (
-                    <TableHeadingCell
-                        name={'Auth Key'}
-                        tooltip={'A password that the server uses to authenticate with the central gbans server'}
-                    />
-                ),
+                meta: {
+                    tooltip: 'A password that the server uses to authenticate with the central gbans server'
+                },
+                header: () => 'Auth Key',
                 cell: (info) => <TableCellStringHidden>{info.getValue() as string}</TableCellStringHidden>
             },
             {
                 accessorKey: 'region',
-                header: () => <TableHeadingCell name={'Region'} />,
+                size: 75,
+                header: 'Region',
                 cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>
             },
-            {
-                accessorKey: 'cc',
-                header: () => <TableHeadingCell name={'CC'} tooltip={'2 character country code'} />,
-                cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>
-            },
-            {
-                accessorKey: 'latitude',
-                header: () => <TableHeadingCell name={'Lat'} tooltip={'Latitude'} />,
-                cell: (info) => <TableCellString>{Number(info.getValue()).toFixed(2)}</TableCellString>
-            },
-            {
-                accessorKey: 'longitude',
-                header: () => <TableHeadingCell name={'Lon'} tooltip={'Longitude'} />,
-                cell: (info) => <TableCellString>{Number(info.getValue()).toFixed(2)}</TableCellString>
-            },
+            // {
+            //     accessorKey: 'cc',
+            //     size: 30,
+            //     meta: {
+            //         tooltip: '2 character country code'
+            //     },
+            //     header: 'CC',
+            //     cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>
+            // },
+            // {
+            //     accessorKey: 'latitude',
+            //     size: 60,
+            //     meta: {
+            //         tooltip: 'Latitude'
+            //     },
+            //     header: 'Lat',
+            //     cell: (info) => <TableCellString>{Number(info.getValue()).toFixed(2)}</TableCellString>
+            // },
+            // {
+            //     accessorKey: 'longitude',
+            //     size: 60,
+            //     meta: {
+            //         tooltip: 'Longitude'
+            //     },
+            //     header: 'Lon',
+            //     cell: (info) => <TableCellString>{Number(info.getValue()).toFixed(2)}</TableCellString>
+            // },
             {
                 accessorKey: 'token_created_on',
-                header: () => (
-                    <TableHeadingCell name={'Last Auth'} tooltip={'Last time the server authenticated itself'} />
-                ),
+                meta: {
+                    tooltip: 'Last time the server authenticated itself'
+                },
+                header: 'Last Auth',
                 cell: (info) => <TableCellString>{renderDateTime(info.getValue() as Date)}</TableCellString>
             },
             {
                 accessorKey: 'enable_stats',
-                header: () => <TableHeadingCell name={'St'} tooltip={'Stat Tracking Enabled'} />,
+                size: 30,
+                meta: {
+                    tooltip: 'Stat Tracking Enabled'
+                },
+                header: 'St',
                 cell: (info) => <TableCellBool enabled={info.getValue() as boolean} />
             },
             {
                 accessorKey: 'is_enabled',
-                header: () => <TableHeadingCell name={'En.'} tooltip={'Enabled'} />,
+                size: 30,
+                meta: {
+                    tooltip: 'Enabled'
+                },
+                header: 'En.',
                 cell: (info) => <TableCellBool enabled={info.getValue() as boolean} />
             },
             {
                 id: 'actions',
+                size: 30,
                 cell: (info) => {
                     return (
                         <ButtonGroup fullWidth>

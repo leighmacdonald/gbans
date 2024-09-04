@@ -13,7 +13,6 @@ import { LazyResult } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 import { DataTable } from './DataTable.tsx';
 import { TableCellSmall } from './TableCellSmall.tsx';
-import { TableHeadingCell } from './TableHeadingCell.tsx';
 
 const columnHelper = createColumnHelper<PersonConnection>();
 
@@ -32,7 +31,8 @@ export const IPHistoryTable = ({
 }) => {
     const columns = [
         columnHelper.accessor('created_on', {
-            header: () => <TableHeadingCell name={'Created'} />,
+            header: 'Created',
+            size: 120,
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{renderDateTime(info.getValue())}</Typography>
@@ -40,7 +40,7 @@ export const IPHistoryTable = ({
             )
         }),
         columnHelper.accessor('persona_name', {
-            header: () => <TableHeadingCell name={'Name'} />,
+            header: 'Name',
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{info.getValue()}</Typography>
@@ -48,7 +48,8 @@ export const IPHistoryTable = ({
             )
         }),
         columnHelper.accessor('ip_addr', {
-            header: () => <TableHeadingCell name={'IP Address'} />,
+            header: 'IP Address',
+            size: 120,
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{info.getValue()}</Typography>
@@ -56,7 +57,8 @@ export const IPHistoryTable = ({
             )
         }),
         columnHelper.accessor('server_id', {
-            header: () => <TableHeadingCell name={'Server'} />,
+            header: 'Server',
+            size: 120,
             cell: (info) => (
                 <TableCellSmall>
                     <Typography>{connections.data[info.row.index].server_name_short}</Typography>
