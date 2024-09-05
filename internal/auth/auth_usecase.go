@@ -3,6 +3,8 @@ package auth
 import (
 	"context"
 	"errors"
+	"github.com/leighmacdonald/gbans/internal/queue"
+	"github.com/riverqueue/river"
 	"log/slog"
 	"net"
 	"net/http"
@@ -39,23 +41,6 @@ func NewAuthUsecase(repository domain.AuthRepository, config domain.ConfigUsecas
 		persons: persons,
 		bans:    bans,
 		servers: servers,
-	}
-}
-
-func (u *auth) Start(ctx context.Context) {
-	ticker := time.NewTicker(time.Hour * 24)
-
-	for {
-		select {
-		case <-ticker.C:
-			if err := u.auth.PrunePersonAuth(ctx); err != nil && !errors.Is(err, domain.ErrNoResult) {
-				slog.Error("Error pruning expired refresh tokens", log.ErrAttr(err))
-			}
-		case <-ctx.Done():
-			slog.Debug("cleanupTasks shutting down")
-
-			return
-		}
 	}
 }
 
@@ -317,4 +302,33 @@ func (u *auth) Sid64FromJWTToken(token string, cookieKey string, fingerprint str
 	}
 
 	return sid, nil
+}
+
+type CleanupArgs struct{}
+
+func (args CleanupArgs) Kind() string {
+	return "auth_cleanup"
+}
+
+func (args CleanupArgs) InsertOpts() river.InsertOpts {
+	return river.InsertOpts{Queue: string(queue.Default), UniqueOpts: river.UniqueOpts{ByPeriod: time.Hour * 24}}
+}
+
+func NewCleanupWorker(auth domain.AuthRepository) *CleanupWorker {
+	return &CleanupWorker{auth: auth}
+}
+
+type CleanupWorker struct {
+	river.WorkerDefaults[CleanupArgs]
+	auth domain.AuthRepository
+}
+
+func (worker *CleanupWorker) Work(ctx context.Context, _ *river.Job[CleanupArgs]) error {
+	if err := worker.auth.PrunePersonAuth(ctx); err != nil && !errors.Is(err, domain.ErrNoResult) {
+		slog.Error("Error pruning expired refresh tokens", log.ErrAttr(err))
+
+		return err
+	}
+
+	return nil
 }

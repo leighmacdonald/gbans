@@ -97,16 +97,26 @@ func firstTimeSetup(ctx context.Context, persons domain.PersonUsecase, news doma
 	return nil
 }
 
-func createQueueWorkers(people domain.PersonUsecase, notifications domain.NotificationUsecase, discord domain.DiscordUsecase) *river.Workers {
+func createQueueWorkers(people domain.PersonUsecase, notifications domain.NotificationUsecase, discord domain.DiscordUsecase, authRepo domain.AuthRepository) *river.Workers {
 	workers := river.NewWorkers()
 
 	river.AddWorker[notification.SenderArgs](workers, notification.NewSenderWorker(people, notifications, discord))
+	river.AddWorker[auth.CleanupArgs](workers, auth.NewCleanupWorker(authRepo))
 
 	return workers
 }
 
 func createPeriodicJobs() []*river.PeriodicJob {
-	return nil
+	jobs := []*river.PeriodicJob{
+		river.NewPeriodicJob(
+			river.PeriodicInterval(24*time.Hour),
+			func() (river.JobArgs, *river.InsertOpts) {
+				return auth.CleanupArgs{}, nil
+			},
+			&river.PeriodicJobOpts{RunOnStart: true}),
+	}
+
+	return jobs
 }
 
 // serveCmd represents the serve command.
@@ -279,8 +289,8 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			wikiUsecase := wiki.NewWikiUsecase(wiki.NewWikiRepository(dbConn))
 
-			authUsecase := auth.NewAuthUsecase(auth.NewAuthRepository(dbConn), configUsecase, personUsecase, banUsecase, serversUsecase)
-			go authUsecase.Start(ctx)
+			authRepo := auth.NewAuthRepository(dbConn)
+			authUsecase := auth.NewAuthUsecase(authRepo, configUsecase, personUsecase, banUsecase, serversUsecase)
 
 			voteUsecase := votes.NewVoteUsecase(votes.NewVoteRepository(dbConn), personUsecase, matchUsecase, notificationUsecase, configUsecase, eventBroadcaster)
 			go voteUsecase.Start(ctx)
@@ -353,7 +363,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			}
 
 			// River Queue
-			workers := createQueueWorkers(personUsecase, notificationUsecase, discordUsecase)
+			workers := createQueueWorkers(personUsecase, notificationUsecase, discordUsecase, authRepo)
 			periodicJons := createPeriodicJobs()
 			queueClient, errClient := queue.Client(dbConn.Pool(), workers, periodicJons)
 			if errClient != nil {

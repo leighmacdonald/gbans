@@ -21,7 +21,6 @@ type AuthRepository interface {
 	GetPersonAuthByFingerprint(ctx context.Context, fingerprint string, auth *PersonAuth) error
 }
 type AuthUsecase interface {
-	Start(ctx context.Context)
 	DeletePersonAuth(ctx context.Context, authID int64) error
 	NewUserToken(steamID steamid.SteamID, cookieKey string, userContext string, validDuration time.Duration) (string, error)
 	Sid64FromJWTToken(token string, cookieKey string, fingerprint string) (steamid.SteamID, error)
