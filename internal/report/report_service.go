@@ -13,13 +13,14 @@ import (
 )
 
 type reportHandler struct {
-	reports domain.ReportUsecase
+	reports       domain.ReportUsecase
+	notifications domain.NotificationUsecase
 }
 
-func NewReportHandler(engine *gin.Engine, reports domain.ReportUsecase, auth domain.AuthUsecase,
-) {
+func NewReportHandler(engine *gin.Engine, reports domain.ReportUsecase, auth domain.AuthUsecase, notifications domain.NotificationUsecase) {
 	handler := reportHandler{
-		reports: reports,
+		reports:       reports,
+		notifications: notifications,
 	}
 
 	// auth
@@ -230,6 +231,7 @@ func (h reportHandler) onAPIPostReportMessage() gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusCreated, msg)
+
 		slog.Info("New report message created",
 			slog.Int64("report_id", reportID), slog.String("steam_id", curUser.SteamID.String()))
 	}

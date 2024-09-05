@@ -267,12 +267,17 @@ func (h discordService) onUnbanSteam(ctx context.Context, _ *discordgo.Session, 
 	opts := domain.OptionMap(interaction.ApplicationCommandData().Options[0].Options)
 	reason := opts[domain.OptUnbanReason].StringValue()
 
+	author, err := h.getDiscordAuthor(ctx, interaction)
+	if err != nil {
+		return nil, err
+	}
+
 	steamID, errResolveSID := steamid.Resolve(ctx, opts[domain.OptUserIdentifier].StringValue())
 	if errResolveSID != nil || !steamID.Valid() {
 		return nil, domain.ErrInvalidSID
 	}
 
-	found, errUnban := h.bansSteam.Unban(ctx, steamID, reason)
+	found, errUnban := h.bansSteam.Unban(ctx, steamID, reason, author.ToUserProfile())
 	if errUnban != nil {
 		return nil, errUnban
 	}
@@ -705,7 +710,7 @@ func (h discordService) makeOnMute() func(context.Context, *discordgo.Session, *
 			return nil, errAuthor
 		}
 
-		banSteam, errBan := h.bansSteam.Ban(ctx, author, domain.Bot, domain.RequestBanSteamCreate{
+		banSteam, errBan := h.bansSteam.Ban(ctx, author.ToUserProfile(), domain.Bot, domain.RequestBanSteamCreate{
 			SourceIDField: domain.SourceIDField{SourceID: author.SteamID.String()},
 			TargetIDField: domain.TargetIDField{TargetID: opts.String(domain.OptUserIdentifier)},
 			Duration:      opts[domain.OptDuration].StringValue(),
@@ -827,7 +832,7 @@ func (h discordService) onBanSteam(ctx context.Context, _ *discordgo.Session,
 		return nil, errAuthor
 	}
 
-	banSteam, errBan := h.bansSteam.Ban(ctx, author, domain.Bot, domain.RequestBanSteamCreate{
+	banSteam, errBan := h.bansSteam.Ban(ctx, author.ToUserProfile(), domain.Bot, domain.RequestBanSteamCreate{
 		SourceIDField: domain.SourceIDField{SourceID: author.SteamID.String()},
 		TargetIDField: domain.TargetIDField{TargetID: opts[domain.OptUserIdentifier].StringValue()},
 		Duration:      opts[domain.OptDuration].StringValue(),

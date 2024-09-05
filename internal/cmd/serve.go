@@ -300,7 +300,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				gin.SetMode(gin.DebugMode)
 			}
 
-			go ban.Start(ctx, banUsecase, banNetUsecase, banASNUsecase, personUsecase, discordUsecase, configUsecase)
+			go ban.Start(ctx, banUsecase, banNetUsecase, banASNUsecase, personUsecase, notificationUsecase, configUsecase)
 
 			router, err := httphelper.CreateRouter(conf, app.Version())
 			if err != nil {
@@ -334,7 +334,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			notification.NewNotificationHandler(router, notificationUsecase, authUsecase)
 			patreon.NewPatreonHandler(router, patreonUsecase, authUsecase, configUsecase)
 			person.NewPersonHandler(router, configUsecase, personUsecase, authUsecase)
-			report.NewReportHandler(router, reportUsecase, authUsecase)
+			report.NewReportHandler(router, reportUsecase, authUsecase, notificationUsecase)
 			servers.NewServerHandler(router, serversUsecase, stateUsecase, authUsecase, personUsecase)
 			srcds.NewSRCDSHandler(router, srcdsUsecase, serversUsecase, personUsecase, assetUsecase,
 				reportUsecase, banUsecase, networkUsecase, banGroupUsecase, demoUsecase, authUsecase, banASNUsecase, banNetUsecase,

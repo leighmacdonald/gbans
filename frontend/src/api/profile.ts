@@ -37,6 +37,7 @@ export interface UserNotification {
     message: string;
     link: string;
     count: number;
+    author?: UserProfile;
     created_on: Date;
 }
 

@@ -106,6 +106,12 @@ func (u *appeals) CreateBanMessage(ctx context.Context, curUser domain.UserProfi
 		return domain.BanAppealMessage{}, errSave
 	}
 
+	bannedPerson.UpdatedOn = time.Now()
+
+	if errUpdate := u.bans.Save(ctx, &bannedPerson.BanSteam); errUpdate != nil {
+		return domain.BanAppealMessage{}, errUpdate
+	}
+
 	conf := u.config.Config()
 
 	u.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelModAppealLog, discord.NewAppealMessage(msg.MessageMD,
@@ -114,14 +120,16 @@ func (u *appeals) CreateBanMessage(ctx context.Context, curUser domain.UserProfi
 	u.notifications.Enqueue(ctx, domain.NewSiteGroupNotificationWithAuthor(
 		[]domain.Privilege{domain.PModerator, domain.PAdmin},
 		domain.SeverityInfo,
-		msg.MessageMD,
-		conf.ExtURLInstance(curUser),
+		"A new ban appeal message",
+		bannedPerson.Path(),
 		curUser))
 
-	bannedPerson.UpdatedOn = time.Now()
-
-	if errUpdate := u.bans.Save(ctx, &bannedPerson.BanSteam); errUpdate != nil {
-		return domain.BanAppealMessage{}, errUpdate
+	if curUser.SteamID != bannedPerson.TargetID {
+		u.notifications.Enqueue(ctx, domain.NewSiteUserNotification(
+			[]steamid.SteamID{bannedPerson.TargetID},
+			domain.SeverityInfo,
+			"A new ban appeal message",
+			bannedPerson.Path()))
 	}
 
 	return msg, nil

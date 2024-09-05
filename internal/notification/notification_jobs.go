@@ -21,9 +21,9 @@ func (args SenderArgs) Kind() string {
 
 func (args SenderArgs) InsertOpts() river.InsertOpts {
 	return river.InsertOpts{
-		Queue:      string(queue.Default),
-		Priority:   int(queue.High),
-		UniqueOpts: river.UniqueOpts{ByArgs: true},
+		Queue:    string(queue.Default),
+		Priority: int(queue.High),
+		// UniqueOpts: river.UniqueOpts{ByArgs: true},
 	}
 }
 
@@ -79,7 +79,7 @@ func (worker *SenderWorker) sendMessages(ctx context.Context, payload domain.Not
 	}
 
 	if len(recipients) > 0 {
-		if errSend := worker.notifications.SendSite(ctx, recipients, payload.Severity, payload.Message, payload.Link); errSend != nil {
+		if errSend := worker.notifications.SendSite(ctx, recipients, payload.Severity, payload.Message, payload.Link, payload.Author); errSend != nil {
 			slog.Error("Failed to send notification", log.ErrAttr(errSend))
 
 			return errSend

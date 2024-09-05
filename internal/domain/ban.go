@@ -26,13 +26,13 @@ type BanSteamRepository interface {
 }
 
 type BanSteamUsecase interface {
-	CheckEvadeStatus(ctx context.Context, curUser PersonInfo, steamID steamid.SteamID, address netip.Addr) (bool, error)
+	CheckEvadeStatus(ctx context.Context, curUser UserProfile, steamID steamid.SteamID, address netip.Addr) (bool, error)
 	GetBySteamID(ctx context.Context, sid64 steamid.SteamID, deletedOk bool, evadeOK bool) (BannedSteamPerson, error)
 	GetByBanID(ctx context.Context, banID int64, deletedOk bool, evadeOK bool) (BannedSteamPerson, error)
 	GetByLastIP(ctx context.Context, lastIP netip.Addr, deletedOk bool, evadeOK bool) (BannedSteamPerson, error)
 	Save(ctx context.Context, ban *BanSteam) error
-	Ban(ctx context.Context, curUser PersonInfo, origin Origin, req RequestBanSteamCreate) (BannedSteamPerson, error)
-	Unban(ctx context.Context, targetSID steamid.SteamID, reason string) (bool, error)
+	Ban(ctx context.Context, curUser UserProfile, origin Origin, req RequestBanSteamCreate) (BannedSteamPerson, error)
+	Unban(ctx context.Context, targetSID steamid.SteamID, reason string, author UserProfile) (bool, error)
 	Delete(ctx context.Context, ban *BanSteam, hardDelete bool) error
 	Get(ctx context.Context, filter SteamBansQueryFilter) ([]BannedSteamPerson, error)
 	Expired(ctx context.Context) ([]BanSteam, error)

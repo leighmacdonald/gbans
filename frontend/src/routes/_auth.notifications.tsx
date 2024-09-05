@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
+import NiceModal from '@ebay/nice-modal-react';
 import ClearAllIcon from '@mui/icons-material/ClearAll';
 import DoneIcon from '@mui/icons-material/Done';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import EmailIcon from '@mui/icons-material/Email';
+import LinkIcon from '@mui/icons-material/Link';
 import MarkChatReadIcon from '@mui/icons-material/MarkChatRead';
 import RemoveIcon from '@mui/icons-material/Remove';
 import Button from '@mui/material/Button';
@@ -11,7 +13,7 @@ import Typography from '@mui/material/Typography';
 import Grid2 from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createFileRoute } from '@tanstack/react-router';
+import { Link, createFileRoute } from '@tanstack/react-router';
 import {
     ColumnDef,
     getCoreRowModel,
@@ -34,10 +36,12 @@ import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderA
 import { DataTable } from '../component/DataTable.tsx';
 import { IndeterminateCheckbox } from '../component/IndeterminateCheckbox.tsx';
 import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
+import { PersonCell } from '../component/PersonCell.tsx';
 import { TableCellBool } from '../component/TableCellBool.tsx';
-import { TableCellLink } from '../component/TableCellLink.tsx';
 import { TableCellRelativeDateField } from '../component/TableCellRelativeDateField.tsx';
 import { TableCellString } from '../component/TableCellString.tsx';
+import { Title } from '../component/Title.tsx';
+import { ModalConfirm } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { RowsPerPage } from '../util/table.ts';
 
@@ -142,91 +146,121 @@ function NotificationsPage() {
             sendFlash('error', `Failed to delete all messages: ${error}`);
         }
     });
+
+    const onConfirmDeleteSelected = async () => {
+        const ids = selectedToIds();
+        if (ids?.length == 0) {
+            return;
+        }
+        const confirmed = await NiceModal.show<boolean>(ModalConfirm, {
+            title: `Delete ${ids.length} notifications?`,
+            children: 'This cannot be undone'
+        });
+        if (!confirmed) {
+            return;
+        }
+        onDeleteSelected.mutate(ids);
+    };
+
+    const onConfirmDeleteAll = async () => {
+        if (!notifications) {
+            return;
+        }
+        const confirmed = await NiceModal.show<boolean>(ModalConfirm, {
+            title: `Delete all ${notifications.length} notifications?`,
+            children: 'This cannot be undone'
+        });
+        if (!confirmed) {
+            return;
+        }
+        onDeleteAll.mutate();
+    };
+    const newMessages = useMemo(() => {
+        return notifications?.filter((n) => !n.read).length;
+    }, [notifications]);
+
     return (
-        <Grid2 container spacing={2}>
-            <Grid2 xs={12}>
-                <ContainerWithHeaderAndButtons
-                    iconLeft={<EmailIcon />}
-                    title={`Notifications  ${Object.values(rowSelection).length ? `(Selected: ${Object.values(rowSelection).length})` : ''}`}
-                    buttons={[
-                        <ButtonGroup variant="contained" key={'hdr-buttons'}>
-                            <Button
-                                startIcon={<DoneIcon />}
-                                color={'success'}
-                                key={'mark-selected'}
-                                onClick={() => {
-                                    const ids = selectedToIds();
-                                    if (ids?.length == 0) {
-                                        return;
-                                    }
-                                    onMarkSelected.mutate(ids);
-                                }}
-                                disabled={Object.values(rowSelection).length == 0}
-                            >
-                                Mark Selected Read
-                            </Button>
-                            <Button
-                                startIcon={<DoneAllIcon />}
-                                color={'success'}
-                                key={'mark-all'}
-                                onClick={() => onMarkAllRead.mutate()}
-                                disabled={(notifications ?? [])?.length == 0}
-                            >
-                                Mark All Read
-                            </Button>
-                            <Button
-                                startIcon={<RemoveIcon />}
-                                color={'error'}
-                                key={'delete-selected'}
-                                onClick={() => {
-                                    const ids = selectedToIds();
-                                    if (ids?.length == 0) {
-                                        return;
-                                    }
-                                    onDeleteSelected.mutate(ids);
-                                }}
-                                disabled={Object.values(rowSelection).length == 0}
-                            >
-                                Delete Selected
-                            </Button>
-                            <Button
-                                startIcon={<ClearAllIcon />}
-                                color={'error'}
-                                key={'delete-all'}
-                                onClick={() => onDeleteAll.mutate()}
-                                disabled={(notifications ?? [])?.length == 0}
-                            >
-                                Delete All
-                            </Button>
-                        </ButtonGroup>
-                    ]}
-                >
-                    <NotificationsTable
-                        notifications={notifications ?? []}
-                        isLoading={isLoading}
-                        rowSelection={rowSelection}
-                        setRowSelection={setRowSelection}
-                        pagination={pagination}
-                        setPagination={setPagination}
-                    />
-                    <PaginatorLocal
-                        onRowsChange={(rows) => {
-                            setPagination((prev) => {
-                                return { ...prev, pageSize: rows };
-                            });
-                        }}
-                        onPageChange={(page) => {
-                            setPagination((prev) => {
-                                return { ...prev, pageIndex: page };
-                            });
-                        }}
-                        count={notifications?.length ?? 0}
-                        rows={pagination.pageSize}
-                        page={pagination.pageIndex}
-                    />
-                </ContainerWithHeaderAndButtons>
+        <>
+            <Title>{`Notifications (${newMessages})`}</Title>
+            <Grid2 container spacing={2}>
+                <Grid2 xs={12}>
+                    <ContainerWithHeaderAndButtons
+                        iconLeft={<EmailIcon />}
+                        title={`Notifications  ${Object.values(rowSelection).length ? `(Selected: ${Object.values(rowSelection).length})` : ''}`}
+                        buttons={[
+                            <ButtonGroup variant="contained" key={'hdr-buttons'}>
+                                <Button
+                                    startIcon={<DoneIcon />}
+                                    color={'success'}
+                                    key={'mark-selected'}
+                                    onClick={() => {
+                                        const ids = selectedToIds();
+                                        if (ids?.length == 0) {
+                                            return;
+                                        }
+                                        onMarkSelected.mutate(ids);
+                                    }}
+                                    disabled={Object.values(rowSelection).length == 0}
+                                >
+                                    Mark Selected Read
+                                </Button>
+                                <Button
+                                    startIcon={<DoneAllIcon />}
+                                    color={'success'}
+                                    key={'mark-all'}
+                                    onClick={() => onMarkAllRead.mutate()}
+                                    disabled={(notifications ?? [])?.length == 0}
+                                >
+                                    Mark All Read
+                                </Button>
+                                <Button
+                                    startIcon={<RemoveIcon />}
+                                    color={'error'}
+                                    key={'delete-selected'}
+                                    onClick={onConfirmDeleteSelected}
+                                    disabled={Object.values(rowSelection).length == 0}
+                                >
+                                    Delete Selected
+                                </Button>
+                                <Button
+                                    startIcon={<ClearAllIcon />}
+                                    color={'error'}
+                                    key={'delete-all'}
+                                    onClick={onConfirmDeleteAll}
+                                    disabled={(notifications ?? [])?.length == 0}
+                                >
+                                    Delete All
+                                </Button>
+                            </ButtonGroup>
+                        ]}
+                    >
+                        <NotificationsTable
+                            notifications={notifications ?? []}
+                            isLoading={isLoading}
+                            rowSelection={rowSelection}
+                            setRowSelection={setRowSelection}
+                            pagination={pagination}
+                            setPagination={setPagination}
+                        />
+                        <PaginatorLocal
+                            onRowsChange={(rows) => {
+                                setPagination((prev) => {
+                                    return { ...prev, pageSize: rows };
+                                });
+                            }}
+                            onPageChange={(page) => {
+                                setPagination((prev) => {
+                                    return { ...prev, pageIndex: page };
+                                });
+                            }}
+                            count={notifications?.length ?? 0}
+                            rows={pagination.pageSize}
+                            page={pagination.pageIndex}
+                        />
+                    </ContainerWithHeaderAndButtons>
+                </Grid2>
             </Grid2>
-        </Grid2>
+        </>
     );
 }
 
@@ -311,18 +345,33 @@ const NotificationsTable = ({
                 accessorKey: 'message',
                 cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>
             },
-            // {
-            //     accessorKey: 'author',
-            //     accessorFn: (originalRow) => originalRow.author,
-            //     cell: (info) => <TableCellString>{info.getValue() as string}</TableCellString>,
-            //     header: () => <'Duration'
-            // },
+            {
+                accessorKey: 'author',
+                cell: (info) =>
+                    info.row.original.author != null ? (
+                        <PersonCell
+                            steam_id={info.row.original.author.steam_id}
+                            personaname={info.row.original.author?.name}
+                            avatar_hash={info.row.original.author?.avatarhash}
+                        />
+                    ) : (
+                        ''
+                    ),
+                header: () => 'Author'
+            },
             {
                 accessorKey: 'link',
+                size: 20,
+                header: '',
                 cell: (info) => {
-                    return info.getValue() ? <TableCellLink label={'link'} to={info.getValue() as string} /> : '';
-                },
-                size: 75
+                    return info.getValue() ? (
+                        <Link to={info.getValue() as string}>
+                            <LinkIcon color={'primary'} />
+                        </Link>
+                    ) : (
+                        ''
+                    );
+                }
             }
         ],
         []

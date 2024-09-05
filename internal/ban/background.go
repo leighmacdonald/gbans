@@ -10,11 +10,12 @@ import (
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/log"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 // Start periodically will query the database for expired bans and remove them.
 func Start(ctx context.Context, bansSteam domain.BanSteamUsecase, bansNet domain.BanNetUsecase,
-	bansASN domain.BanASNUsecase, bansPerson domain.PersonUsecase, discordClient domain.DiscordUsecase,
+	bansASN domain.BanASNUsecase, bansPerson domain.PersonUsecase, notifications domain.NotificationUsecase,
 	config domain.ConfigUsecase,
 ) {
 	ticker := time.NewTicker(time.Minute)
@@ -55,7 +56,13 @@ func Start(ctx context.Context, bansSteam domain.BanSteamUsecase, bansNet domain
 						name = person.SteamID.String()
 					}
 
-					discordClient.SendPayload(domain.ChannelBanLog, discord.BanExpiresMessage(ban, person, config.ExtURL(ban)))
+					notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelBanLog, discord.BanExpiresMessage(ban, person, config.ExtURL(ban))))
+
+					notifications.Enqueue(ctx, domain.NewSiteUserNotification(
+						[]steamid.SteamID{person.SteamID},
+						domain.SeverityInfo,
+						"Your mute/ban period has expired",
+						ban.Path()))
 
 					slog.Info("Ban expired",
 						slog.String("reason", ban.Reason.String()),

@@ -29,10 +29,10 @@ type ReportUsecase interface {
 	DropReportMessage(ctx context.Context, curUser PersonInfo, reportMessageID int64) error
 	DropReport(ctx context.Context, report *Report) error
 	SaveReport(ctx context.Context, currentUser UserProfile, req RequestReportCreate) (ReportWithAuthor, error)
-	CreateReportMessage(ctx context.Context, reportID int64, curUser PersonInfo, req RequestMessageBodyMD) (ReportMessage, error)
+	CreateReportMessage(ctx context.Context, reportID int64, curUser UserProfile, req RequestMessageBodyMD) (ReportMessage, error)
 	EditReportMessage(ctx context.Context, reportMessageID int64, curUser PersonInfo, req RequestMessageBodyMD) (ReportMessage, error)
 	GetReportBySteamID(ctx context.Context, authorID steamid.SteamID, steamID steamid.SteamID) (Report, error)
-	SetReportStatus(ctx context.Context, reportID int64, user PersonInfo, status ReportStatus) (ReportWithAuthor, error)
+	SetReportStatus(ctx context.Context, reportID int64, user UserProfile, status ReportStatus) (ReportWithAuthor, error)
 }
 
 type RequestMessageBodyMD struct {
