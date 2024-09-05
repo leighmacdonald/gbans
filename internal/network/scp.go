@@ -53,26 +53,7 @@ func NewSCPExecer(database database.Database, configUsecase domain.ConfigUsecase
 	}
 }
 
-func (f SCPExecer) Start(ctx context.Context) {
-	updateTimer := time.NewTimer(time.Minute * 5)
-
-	if errUpdate := f.update(ctx); errUpdate != nil {
-		slog.Error("Error querying ssh demo", log.ErrAttr(errUpdate))
-	}
-
-	for {
-		select {
-		case <-updateTimer.C:
-			if errUpdate := f.update(ctx); errUpdate != nil {
-				slog.Error("Error querying ssh demo", log.ErrAttr(errUpdate))
-			}
-		case <-ctx.Done():
-			return
-		}
-	}
-}
-
-func (f SCPExecer) update(ctx context.Context) error {
+func (f SCPExecer) Update(ctx context.Context) error {
 	servers, _, errServers := f.serversUsecase.Servers(ctx, domain.ServerQueryFilter{})
 	if errServers != nil {
 		return errServers

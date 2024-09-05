@@ -100,7 +100,7 @@ func firstTimeSetup(ctx context.Context, persons domain.PersonUsecase, news doma
 func createQueueWorkers(people domain.PersonUsecase, notifications domain.NotificationUsecase,
 	discord domain.DiscordUsecase, authRepo domain.AuthRepository, memberships *steamgroup.Memberships,
 	patreonUC domain.PatreonUsecase, bansSteam domain.BanSteamUsecase, bansNet domain.BanNetUsecase, bansASN domain.BanASNUsecase,
-	configUC domain.ConfigUsecase,
+	configUC domain.ConfigUsecase, fetcher *demo.Fetcher,
 ) *river.Workers {
 	workers := river.NewWorkers()
 
@@ -109,6 +109,7 @@ func createQueueWorkers(people domain.PersonUsecase, notifications domain.Notifi
 	river.AddWorker[steamgroup.MembershipArgs](workers, steamgroup.NewMembershipWorker(memberships))
 	river.AddWorker[patreon.AuthUpdateArgs](workers, patreon.NewSyncWorker(patreonUC))
 	river.AddWorker[ban.ExpirationArgs](workers, ban.NewExpirationWorker(bansSteam, bansNet, bansASN, people, notifications, configUC))
+	river.AddWorker[demo.FetcherArgs](workers, demo.NewFetcherWorker(fetcher, configUC))
 
 	return workers
 }
@@ -140,6 +141,13 @@ func createPeriodicJobs() []*river.PeriodicJob {
 			river.PeriodicInterval(time.Minute),
 			func() (river.JobArgs, *river.InsertOpts) {
 				return ban.ExpirationArgs{}, nil
+			},
+			&river.PeriodicJobOpts{RunOnStart: true}),
+
+		river.NewPeriodicJob(
+			river.PeriodicInterval(time.Minute*5),
+			func() (river.JobArgs, *river.InsertOpts) {
+				return demo.FetcherArgs{}, nil
 			},
 			&river.PeriodicJobOpts{RunOnStart: true}),
 	}
@@ -383,10 +391,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				go stateUsecase.LogAddressAdd(ctx, conf.Debug.AddRCONLogAddress)
 			}
 
-			if conf.SSH.Enabled {
-				demoFetcher := demo.NewFetcher(dbConn, configUsecase, serversUsecase, assetUsecase, demoUsecase)
-				go demoFetcher.Start(ctx)
-			}
+			demoFetcher := demo.NewFetcher(dbConn, configUsecase, serversUsecase, assetUsecase, demoUsecase)
 
 			// River Queue
 			workers := createQueueWorkers(
@@ -399,7 +404,8 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				banUsecase,
 				banNetUsecase,
 				banASNUsecase,
-				configUsecase)
+				configUsecase,
+				demoFetcher)
 
 			periodicJons := createPeriodicJobs()
 			queueClient, errClient := queue.Client(dbConn.Pool(), workers, periodicJons)

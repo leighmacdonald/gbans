@@ -9,12 +9,16 @@ import (
 	"log/slog"
 	"path"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/network"
+	"github.com/leighmacdonald/gbans/internal/queue"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+	"github.com/riverqueue/river"
 	"github.com/viant/afs/option"
 	"github.com/viant/afs/storage"
 )
@@ -32,24 +36,21 @@ type Fetcher struct {
 	assetUsecase   domain.AssetUsecase
 	demoUsecase    domain.DemoUsecase
 	demoChan       chan UploadedDemo
+	parserMu       *sync.Mutex
 }
 
 func NewFetcher(database database.Database, configUsecase domain.ConfigUsecase, serversUsecase domain.ServersUsecase,
 	assetUsecase domain.AssetUsecase, demoUsecase domain.DemoUsecase,
-) Fetcher {
-	return Fetcher{
+) *Fetcher {
+	return &Fetcher{
 		database:       database,
 		configUsecase:  configUsecase,
 		serversUsecase: serversUsecase,
 		assetUsecase:   assetUsecase,
 		demoUsecase:    demoUsecase,
 		demoChan:       make(chan UploadedDemo),
+		parserMu:       &sync.Mutex{},
 	}
-}
-
-func (d Fetcher) Start(ctx context.Context) {
-	sshExec := network.NewSCPExecer(d.database, d.configUsecase, d.serversUsecase, d.OnClientConnect)
-	sshExec.Start(ctx)
 }
 
 func (d Fetcher) OnDemoReceived(ctx context.Context, demo UploadedDemo) error {
@@ -62,6 +63,9 @@ func (d Fetcher) OnDemoReceived(ctx context.Context, demo UploadedDemo) error {
 	if errNewAsset != nil {
 		return errNewAsset
 	}
+
+	d.parserMu.Lock()
+	defer d.parserMu.Unlock()
 
 	_, errDemo := d.demoUsecase.CreateFromAsset(ctx, demoAsset, demo.Server.ServerID)
 	if errDemo != nil {
@@ -136,6 +140,43 @@ func (d Fetcher) OnClientConnect(ctx context.Context, client storage.Storager, s
 
 			slog.Debug("Deleted demo on remote host", slog.String("path", demoPath))
 		}
+	}
+
+	return nil
+}
+
+type FetcherArgs struct{}
+
+func (args FetcherArgs) Kind() string {
+	return "demo_fetch"
+}
+
+func (args FetcherArgs) InsertOpts() river.InsertOpts {
+	return river.InsertOpts{Queue: string(queue.Default), UniqueOpts: river.UniqueOpts{ByPeriod: time.Minute * 5}}
+}
+
+func NewFetcherWorker(fetcher *Fetcher, config domain.ConfigUsecase) *FetcherWorker {
+	return &FetcherWorker{
+		scpExec: network.NewSCPExecer(fetcher.database, fetcher.configUsecase, fetcher.serversUsecase, fetcher.OnClientConnect),
+		config:  config,
+	}
+}
+
+type FetcherWorker struct {
+	river.WorkerDefaults[FetcherArgs]
+	scpExec network.SCPExecer
+	config  domain.ConfigUsecase
+}
+
+func (worker *FetcherWorker) Work(ctx context.Context, _ *river.Job[FetcherArgs]) error {
+	if !worker.config.Config().SSH.Enabled {
+		return nil
+	}
+
+	if err := worker.scpExec.Update(ctx); err != nil {
+		slog.Error("Failed to execute demo fetcher", log.ErrAttr(err))
+
+		return err
 	}
 
 	return nil
