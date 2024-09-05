@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { TableFooter } from '@mui/material';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -18,7 +19,7 @@ import { TableCellSmall } from './TableCellSmall.tsx';
  * As a workaround its just cast
  */
 export type TableMetaOpts = {
-    tooltip?: string;
+    tooltip?: ReactNode;
 };
 
 export const DataTable = <T,>({
@@ -49,8 +50,12 @@ export const DataTable = <T,>({
                                 >
                                     <Tooltip
                                         title={
-                                            (header.column.columnDef?.meta as TableMetaOpts)?.tooltip ??
-                                            (header.column.columnDef.header as string)
+                                            <Typography>
+                                                {String(
+                                                    (header.column.columnDef?.meta as TableMetaOpts)?.tooltip ??
+                                                        (header.id as string)
+                                                )}
+                                            </Typography>
                                         }
                                     >
                                         <Typography
