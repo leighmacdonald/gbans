@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/leighmacdonald/gbans/internal/notification"
 	"io"
 	"log/slog"
 	"net"
@@ -34,7 +35,6 @@ import (
 	"github.com/leighmacdonald/gbans/internal/match"
 	"github.com/leighmacdonald/gbans/internal/network"
 	"github.com/leighmacdonald/gbans/internal/news"
-	"github.com/leighmacdonald/gbans/internal/notification"
 	"github.com/leighmacdonald/gbans/internal/patreon"
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/report"
@@ -132,13 +132,12 @@ func TestMain(m *testing.M) {
 	newsUC = news.NewNewsUsecase(news.NewNewsRepository(databaseConn))
 	serversUC = servers.NewServersUsecase(servers.NewServersRepository(databaseConn))
 	wikiUC = wiki.NewWikiUsecase(wiki.NewWikiRepository(databaseConn))
-
+	notificationUC = notification.NewNotificationUsecase(notification.NewNotificationRepository(databaseConn), discordUC)
 	patreonUC = patreon.NewPatreonUsecase(patreon.NewPatreonRepository(databaseConn), configUC)
 	personUC = person.NewPersonUsecase(person.NewPersonRepository(conf, databaseConn), configUC)
-	wordFilterUC = wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(databaseConn), nil)
-	forumUC = forum.NewForumUsecase(forum.NewForumRepository(databaseConn), nil)
+	wordFilterUC = wordfilter.NewWordFilterUsecase(wordfilter.NewWordFilterRepository(databaseConn), notificationUC)
+	forumUC = forum.NewForumUsecase(forum.NewForumRepository(databaseConn), notificationUC)
 
-	notificationUC = notification.NewNotificationUsecase(notification.NewNotificationRepository(databaseConn), discordUC)
 	stateUC = state.NewStateUsecase(eventBroadcaster, state.NewStateRepository(state.NewCollector(serversUC)), configUC, serversUC)
 
 	networkUC = network.NewNetworkUsecase(eventBroadcaster, network.NewNetworkRepository(databaseConn), personUC, configUC)
