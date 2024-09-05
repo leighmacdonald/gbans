@@ -9,7 +9,7 @@ import (
 )
 
 type PatreonUsecase interface {
-	Start(ctx context.Context)
+	Sync(ctx context.Context)
 	Campaign() patreon.Campaign
 	OnOauthLogin(ctx context.Context, state string, code string) error
 	CreateOAuthRedirect(steamID steamid.SteamID) string

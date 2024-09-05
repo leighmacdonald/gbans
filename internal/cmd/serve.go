@@ -98,12 +98,14 @@ func firstTimeSetup(ctx context.Context, persons domain.PersonUsecase, news doma
 }
 
 func createQueueWorkers(people domain.PersonUsecase, notifications domain.NotificationUsecase,
-	discord domain.DiscordUsecase, authRepo domain.AuthRepository, memberships *steamgroup.Memberships) *river.Workers {
+	discord domain.DiscordUsecase, authRepo domain.AuthRepository, memberships *steamgroup.Memberships,
+	patreonUC domain.PatreonUsecase) *river.Workers {
 	workers := river.NewWorkers()
 
 	river.AddWorker[notification.SenderArgs](workers, notification.NewSenderWorker(people, notifications, discord))
 	river.AddWorker[auth.CleanupArgs](workers, auth.NewCleanupWorker(authRepo))
 	river.AddWorker[steamgroup.MembershipArgs](workers, steamgroup.NewMembershipWorker(memberships))
+	river.AddWorker[patreon.AuthUpdateArgs](workers, patreon.NewSyncWorker(patreonUC))
 
 	return workers
 }
@@ -121,6 +123,13 @@ func createPeriodicJobs() []*river.PeriodicJob {
 			river.PeriodicInterval(6*time.Hour),
 			func() (river.JobArgs, *river.InsertOpts) {
 				return steamgroup.MembershipArgs{}, nil
+			},
+			&river.PeriodicJobOpts{RunOnStart: true}),
+
+		river.NewPeriodicJob(
+			river.PeriodicInterval(time.Hour),
+			func() (river.JobArgs, *river.InsertOpts) {
+				return patreon.AuthUpdateArgs{}, nil
 			},
 			&river.PeriodicJobOpts{RunOnStart: true}),
 	}
@@ -293,7 +302,6 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			newsUsecase := news.NewNewsUsecase(news.NewNewsRepository(dbConn))
 
 			patreonUsecase := patreon.NewPatreonUsecase(patreon.NewPatreonRepository(dbConn), configUsecase)
-			go patreonUsecase.Start(ctx)
 
 			srcdsUsecase := srcds.NewSrcdsUsecase(srcds.NewRepository(dbConn), configUsecase, serversUsecase, personUsecase, reportUsecase, notificationUsecase, banUsecase)
 
@@ -378,7 +386,8 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				notificationUsecase,
 				discordUsecase,
 				authRepo,
-				steamgroup.NewMemberships(banGroupRepo))
+				steamgroup.NewMemberships(banGroupRepo),
+				patreonUsecase)
 
 			periodicJons := createPeriodicJobs()
 			queueClient, errClient := queue.Client(dbConn.Pool(), workers, periodicJons)

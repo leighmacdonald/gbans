@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/leighmacdonald/gbans/internal/queue"
+	"github.com/riverqueue/river"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -38,21 +40,9 @@ func (p patreonUsecase) Forget(ctx context.Context, steamID steamid.SteamID) err
 	return p.repository.DeleteTokens(ctx, steamID)
 }
 
-func (p patreonUsecase) Start(ctx context.Context) {
-	go p.manager.Start(ctx)
-
+func (p patreonUsecase) Sync(ctx context.Context) {
+	p.manager.sync(ctx)
 	p.checkAuths(ctx)
-
-	ticker := time.NewTicker(time.Hour)
-
-	for {
-		select {
-		case <-ticker.C:
-			p.checkAuths(ctx)
-		case <-ctx.Done():
-			return
-		}
-	}
 }
 
 func (p patreonUsecase) checkAuths(ctx context.Context) {
@@ -212,6 +202,31 @@ func (p patreonUsecase) OnOauthLogin(ctx context.Context, state string, code str
 	if errSave := p.repository.SaveTokens(ctx, creds); errSave != nil {
 		return errSave
 	}
+
+	return nil
+}
+
+type AuthUpdateArgs struct{}
+
+func (args AuthUpdateArgs) Kind() string {
+	return "patreon_auth"
+}
+
+func (args AuthUpdateArgs) InsertOpts() river.InsertOpts {
+	return river.InsertOpts{Queue: string(queue.Default), UniqueOpts: river.UniqueOpts{ByPeriod: time.Hour}}
+}
+
+func NewSyncWorker(patreon domain.PatreonUsecase) *SyncWorker {
+	return &SyncWorker{patreon: patreon}
+}
+
+type SyncWorker struct {
+	river.WorkerDefaults[AuthUpdateArgs]
+	patreon domain.PatreonUsecase
+}
+
+func (worker *SyncWorker) Work(ctx context.Context, _ *river.Job[AuthUpdateArgs]) error {
+	worker.patreon.Sync(ctx)
 
 	return nil
 }
