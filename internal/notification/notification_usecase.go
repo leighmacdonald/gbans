@@ -3,7 +3,6 @@ package notification
 import (
 	"context"
 	"log/slog"
-	"net/url"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -29,14 +28,22 @@ func (n *notificationUsecase) Enqueue(ctx context.Context, payload domain.Notifi
 		return
 	}
 
-	_, err := n.queueClient.Insert(ctx, SenderArgs{Payload: payload}, &river.InsertOpts{Queue: string(queue.Default)})
+	res, err := n.queueClient.Insert(ctx, SenderArgs{Payload: payload}, &river.InsertOpts{Queue: string(queue.Default)})
 	if err != nil {
 		slog.Error("Failed to queue notification", log.ErrAttr(err))
 	}
+
+	slog.Debug("Job inserted", slog.Int64("id", res.Job.ID), slog.Bool("unique", res.UniqueSkippedAsDuplicate))
 }
 
-func (n *notificationUsecase) SendSite(ctx context.Context, targetIDs steamid.Collection, severity domain.NotificationSeverity, message string, link *url.URL) error {
-	return n.repository.SendSite(ctx, fp.Uniq(targetIDs), severity, message, link)
+func (n *notificationUsecase) SendSite(ctx context.Context, targetIDs steamid.Collection, severity domain.NotificationSeverity, message string, link string, author *domain.UserProfile) error {
+	var authorID *int64
+	if author != nil {
+		sid64 := author.SteamID.Int64()
+		authorID = &sid64
+	}
+
+	return n.repository.SendSite(ctx, fp.Uniq(targetIDs), severity, message, link, authorID)
 }
 
 func (n *notificationUsecase) SetQueueClient(queueClient *river.Client[pgx.Tx]) {

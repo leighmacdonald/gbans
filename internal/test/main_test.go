@@ -187,7 +187,7 @@ func TestMain(m *testing.M) {
 	target := getUser()
 
 	// Create a valid ban_id
-	bannedPerson, errBan := banSteamUC.Ban(context.Background(), mod, domain.System, domain.RequestBanSteamCreate{
+	bannedPerson, errBan := banSteamUC.Ban(context.Background(), mod.ToUserProfile(), domain.System, domain.RequestBanSteamCreate{
 		SourceIDField:  domain.SourceIDField{SourceID: mod.SteamID.String()},
 		TargetIDField:  domain.TargetIDField{TargetID: target.SteamID.String()},
 		Duration:       "1d",
@@ -233,7 +233,7 @@ func testRouter() *gin.Engine {
 	wiki.NewWIkiHandler(router, wikiUC, authUC)
 	votes.NewVoteHandler(router, votesUC, authUC)
 	config.NewConfigHandler(router, configUC, authUC, app.Version())
-	report.NewReportHandler(router, reportUC, authUC)
+	report.NewReportHandler(router, reportUC, authUC, notificationUC)
 	appeal.NewAppealHandler(router, appealUC, authUC)
 	wordfilter.NewWordFilterHandler(router, configUC, wordFilterUC, chatUC, authUC)
 	person.NewPersonHandler(router, configUC, personUC, authUC)

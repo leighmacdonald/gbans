@@ -82,10 +82,10 @@ func (u chatUsecase) onWarningExceeded(ctx context.Context, newWarning domain.Ne
 	switch newWarning.MatchedFilter.Action {
 	case domain.Mute:
 		req.BanType = domain.NoComm
-		ban, errBan = u.bansSteam.Ban(ctx, admin, domain.System, req)
+		ban, errBan = u.bansSteam.Ban(ctx, admin.ToUserProfile(), domain.System, req)
 	case domain.Ban:
 		req.BanType = domain.Banned
-		ban, errBan = u.bansSteam.Ban(ctx, admin, domain.System, req)
+		ban, errBan = u.bansSteam.Ban(ctx, admin.ToUserProfile(), domain.System, req)
 	case domain.Kick:
 		// Kicks are temporary, so should be done by Player ID to avoid
 		// missing players who weren't in the latest state update

@@ -3,7 +3,6 @@ package domain
 import (
 	"context"
 	"errors"
-	"net/url"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/jackc/pgx/v5"
@@ -13,7 +12,7 @@ import (
 )
 
 type NotificationRepository interface {
-	SendSite(ctx context.Context, targetID steamid.Collection, severity NotificationSeverity, message string, link *url.URL) error
+	SendSite(ctx context.Context, targetID steamid.Collection, severity NotificationSeverity, message string, link string, authorID *int64) error
 	GetPersonNotifications(ctx context.Context, steamID steamid.SteamID) ([]UserNotification, error)
 	MarkMessagesRead(ctx context.Context, steamID steamid.SteamID, ids []int) error
 	MarkAllRead(ctx context.Context, steamID steamid.SteamID) error
@@ -24,7 +23,7 @@ type NotificationRepository interface {
 type NotificationUsecase interface {
 	Enqueue(ctx context.Context, payload NotificationPayload)
 	GetPersonNotifications(ctx context.Context, steamID steamid.SteamID) ([]UserNotification, error)
-	SendSite(ctx context.Context, recipients steamid.Collection, severity NotificationSeverity, message string, link *url.URL) error
+	SendSite(ctx context.Context, recipients steamid.Collection, severity NotificationSeverity, message string, link string, author *UserProfile) error
 	RegisterWorkers(workers *river.Workers)
 	SetQueueClient(queueClient *river.Client[pgx.Tx])
 	MarkMessagesRead(ctx context.Context, steamID steamid.SteamID, ids []int) error
@@ -54,7 +53,7 @@ type NotificationPayload struct {
 	Severity        NotificationSeverity
 	Message         string
 	DiscordEmbed    *discordgo.MessageEmbed
-	Link            *url.URL
+	Link            string
 	Author          *UserProfile
 }
 
@@ -83,11 +82,11 @@ func NewDiscordNotification(channel DiscordChannel, embed *discordgo.MessageEmbe
 		Severity:        SeverityInfo,
 		Message:         "",
 		DiscordEmbed:    embed,
-		Link:            nil,
+		Link:            "",
 	}
 }
 
-func NewSiteUserNotification(recipients steamid.Collection, severity NotificationSeverity, message string, link *url.URL) NotificationPayload {
+func NewSiteUserNotification(recipients steamid.Collection, severity NotificationSeverity, message string, link string) NotificationPayload {
 	return NotificationPayload{
 		Types:           []MessageType{User},
 		Sids:            recipients,
@@ -100,14 +99,14 @@ func NewSiteUserNotification(recipients steamid.Collection, severity Notificatio
 	}
 }
 
-func NewSiteUserNotificationWithAuthor(groups []Privilege, severity NotificationSeverity, message string, link *url.URL, author UserProfile) NotificationPayload {
+func NewSiteUserNotificationWithAuthor(groups []Privilege, severity NotificationSeverity, message string, link string, author UserProfile) NotificationPayload {
 	payload := NewSiteGroupNotification(groups, severity, message, link)
 	payload.Author = &author
 
 	return payload
 }
 
-func NewSiteGroupNotification(groups []Privilege, severity NotificationSeverity, message string, link *url.URL) NotificationPayload {
+func NewSiteGroupNotification(groups []Privilege, severity NotificationSeverity, message string, link string) NotificationPayload {
 	return NotificationPayload{
 		Types:           []MessageType{User},
 		Sids:            nil,
@@ -120,7 +119,7 @@ func NewSiteGroupNotification(groups []Privilege, severity NotificationSeverity,
 	}
 }
 
-func NewSiteGroupNotificationWithAuthor(groups []Privilege, severity NotificationSeverity, message string, link *url.URL, author UserProfile) NotificationPayload {
+func NewSiteGroupNotificationWithAuthor(groups []Privilege, severity NotificationSeverity, message string, link string, author UserProfile) NotificationPayload {
 	payload := NewSiteGroupNotification(groups, severity, message, link)
 	payload.Author = &author
 

@@ -75,7 +75,9 @@ export const TopBar = () => {
         queryKey: ['notifications'],
         queryFn: async () => {
             return await apiGetNotifications();
-        }
+        },
+        refetchInterval: 60 * 1000,
+        refetchOnWindowFocus: true
     });
 
     const theme = useTheme();
@@ -418,22 +420,22 @@ export const TopBar = () => {
                             <Tooltip title="Toggle BLU/RED mode">
                                 <IconButton onClick={colourMode.toggleColorMode}>{themeIcon}</IconButton>
                             </Tooltip>
-                            {hasPermission(PermissionLevel.Admin) && (
-                                <NotificationsProvider>
-                                    <IconButton component={RouterLink} to={'/notifications'} color={'inherit'}>
-                                        <Badge
-                                            badgeContent={
-                                                isLoading
-                                                    ? '...'
-                                                    : (notifications ?? []).filter((n: UserNotification) => !n.read)
-                                                          .length
-                                            }
-                                        >
-                                            <MailIcon />
-                                        </Badge>
-                                    </IconButton>
-                                </NotificationsProvider>
-                            )}
+
+                            <NotificationsProvider>
+                                <IconButton component={RouterLink} to={'/notifications'} color={'inherit'}>
+                                    <Badge
+                                        color={'success'}
+                                        badgeContent={
+                                            isLoading
+                                                ? '...'
+                                                : (notifications ?? []).filter((n: UserNotification) => !n.read).length
+                                        }
+                                    >
+                                        <MailIcon />
+                                    </Badge>
+                                </IconButton>
+                            </NotificationsProvider>
+
                             {!isAuthenticated() && (
                                 <Tooltip title="Steam Login">
                                     <Button component={Link} href={generateOIDCLink(window.location.pathname)}>

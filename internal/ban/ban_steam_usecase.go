@@ -8,7 +8,6 @@ import (
 	"net/netip"
 	"time"
 
-	"github.com/dustin/go-humanize"
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
@@ -90,12 +89,42 @@ func (s banSteamUsecase) GetByLastIP(ctx context.Context, lastIP netip.Addr, del
 }
 
 func (s banSteamUsecase) Save(ctx context.Context, ban *domain.BanSteam) error {
-	return s.banRepo.Save(ctx, ban)
+	oldState := domain.Open
+	if ban.BanID > 0 {
+		existing, errExisting := s.GetByBanID(ctx, ban.BanID, false, false)
+		if errExisting != nil {
+			slog.Error("Failed to get existing ban", log.ErrAttr(errExisting))
+
+			return errExisting
+		}
+
+		oldState = existing.AppealState
+	}
+
+	if err := s.banRepo.Save(ctx, ban); err != nil {
+		return err
+	}
+
+	if oldState != ban.AppealState {
+		s.notifications.Enqueue(ctx, domain.NewSiteGroupNotification(
+			[]domain.Privilege{domain.PModerator, domain.PAdmin},
+			domain.SeverityInfo,
+			fmt.Sprintf("Ban appeal state changed: %s -> %s", oldState, ban.AppealState),
+			ban.Path()))
+
+		s.notifications.Enqueue(ctx, domain.NewSiteUserNotification(
+			[]steamid.SteamID{ban.TargetID},
+			domain.SeverityInfo,
+			fmt.Sprintf("Your mute/ban appeal status has changed: %s -> %s", oldState, ban.AppealState),
+			ban.Path()))
+	}
+
+	return nil
 }
 
 // Ban will ban the steam id from all servers. Players are immediately kicked from servers
 // once executed. If duration is 0, the value of Config.DefaultExpiration() will be used.
-func (s banSteamUsecase) Ban(ctx context.Context, curUser domain.PersonInfo, origin domain.Origin, req domain.RequestBanSteamCreate) (domain.BannedSteamPerson, error) {
+func (s banSteamUsecase) Ban(ctx context.Context, curUser domain.UserProfile, origin domain.Origin, req domain.RequestBanSteamCreate) (domain.BannedSteamPerson, error) {
 	var (
 		ban domain.BannedSteamPerson
 		sid = curUser.GetSteamID()
@@ -152,15 +181,32 @@ func (s banSteamUsecase) Ban(ctx context.Context, curUser domain.PersonInfo, ori
 		return ban, errors.Join(errBannedPerson, domain.ErrSaveBan)
 	}
 
+	expIn := "Permanent"
+	expAt := "Permanent"
+
+	if banSteam.ValidUntil.Year()-time.Now().Year() < 5 {
+		expIn = datetime.FmtDuration(banSteam.ValidUntil)
+		expAt = datetime.FmtTimeShort(banSteam.ValidUntil)
+	}
+
 	s.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelBanLog, discord.BanSteamResponse(bannedPerson)))
 
-	s.notifications.Enqueue(ctx, domain.NewSiteUserNotificationWithAuthor(
+	siteMsg := domain.NewSiteUserNotificationWithAuthor(
 		[]domain.Privilege{domain.PModerator, domain.PAdmin},
 		domain.SeverityInfo,
 		fmt.Sprintf("User banned (steam): %s Duration: %s Author: %s",
-			bannedPerson.TargetPersonaname, humanize.Time(req.ValidUntil), bannedPerson.TargetPersonaname),
-		s.config.ExtURLInstance(ban),
+			bannedPerson.TargetPersonaname, expIn, bannedPerson.SourcePersonaname),
+		banSteam.Path(),
 		author.ToUserProfile(),
+	)
+
+	s.notifications.Enqueue(ctx, siteMsg)
+
+	s.notifications.Enqueue(ctx, domain.NewSiteUserNotification(
+		[]steamid.SteamID{bannedPerson.TargetID},
+		domain.SeverityWarn,
+		fmt.Sprintf("You have been %s, Reason: %s, Duration: %s, Ends: %s", bannedPerson.BanType, bannedPerson.Reason.String(), expIn, expAt),
+		banSteam.Path(),
 	))
 
 	// Close the report if the ban was attached to one
@@ -197,7 +243,7 @@ func (s banSteamUsecase) Ban(ctx context.Context, curUser domain.PersonInfo, ori
 // Unban will set the Current ban to now, making it expired.
 // Returns true, nil if the ban exists, and was successfully banned.
 // Returns false, nil if the ban does not exist.
-func (s banSteamUsecase) Unban(ctx context.Context, targetSID steamid.SteamID, reason string) (bool, error) {
+func (s banSteamUsecase) Unban(ctx context.Context, targetSID steamid.SteamID, reason string, author domain.UserProfile) (bool, error) {
 	bannedPerson, errGetBan := s.banRepo.GetBySteamID(ctx, targetSID, false, true)
 
 	if errGetBan != nil {
@@ -222,6 +268,21 @@ func (s banSteamUsecase) Unban(ctx context.Context, targetSID steamid.SteamID, r
 
 	s.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelBanLog, discord.UnbanMessage(s.config, person)))
 
+	s.notifications.Enqueue(ctx, domain.NewSiteGroupNotificationWithAuthor(
+		[]domain.Privilege{domain.PModerator, domain.PAdmin},
+		domain.SeverityInfo,
+		fmt.Sprintf("A user has been unbanned: %s, Reason: %s", bannedPerson.TargetPersonaname, reason),
+		bannedPerson.Path(),
+		author,
+	))
+
+	s.notifications.Enqueue(ctx, domain.NewSiteUserNotification(
+		[]steamid.SteamID{bannedPerson.TargetID},
+		domain.SeverityInfo,
+		"You have been unmuted/unbanned",
+		bannedPerson.Path(),
+	))
+
 	return true, nil
 }
 
@@ -243,7 +304,7 @@ func (s banSteamUsecase) GetOlderThan(ctx context.Context, filter domain.QueryFi
 
 // CheckEvadeStatus checks if the address matches an existing user who is currently banned already. This
 // function will always fail-open and allow players in if an error occurs.
-func (s banSteamUsecase) CheckEvadeStatus(ctx context.Context, curUser domain.PersonInfo, steamID steamid.SteamID, address netip.Addr) (bool, error) {
+func (s banSteamUsecase) CheckEvadeStatus(ctx context.Context, curUser domain.UserProfile, steamID steamid.SteamID, address netip.Addr) (bool, error) {
 	existing, errMatch := s.GetByLastIP(ctx, address, false, false)
 	if errMatch != nil {
 		if errors.Is(errMatch, domain.ErrNoResult) {

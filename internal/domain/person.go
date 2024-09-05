@@ -250,6 +250,7 @@ type UserNotification struct {
 	Message              string               `json:"message"`
 	Link                 string               `json:"link"`
 	Count                int                  `json:"count"`
+	Author               *UserProfile         `json:"author"`
 	CreatedOn            time.Time            `json:"created_on"`
 }
 

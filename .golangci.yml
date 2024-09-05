@@ -32,7 +32,7 @@ linters:
     - errorlint
     #- exhaustive
     #- exhaustruct
-    - exportloopref
+    #- exportloopref
     - forbidigo
     - forcetypeassert
     #- funlen

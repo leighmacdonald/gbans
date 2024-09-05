@@ -102,6 +102,15 @@ func (h banHandler) onAPIPostSetBanAppealStatus() gin.HandlerFunc {
 			return
 		}
 
+		if req.AppealState == domain.Accepted {
+			if _, err := h.bansSteam.Unban(ctx, bannedPerson.TargetID, "Appeal accepted", httphelper.CurrentUserProfile(ctx)); err != nil {
+				httphelper.ResponseAPIErr(ctx, http.StatusInternalServerError, domain.ErrInternal)
+				slog.Error("Error trying to unban user on appeal state change to accepted", log.ErrAttr(err))
+
+				return
+			}
+		}
+
 		ctx.JSON(http.StatusAccepted, gin.H{})
 
 		slog.Info("Updated ban appeal state",
@@ -389,7 +398,7 @@ func (h banHandler) onAPIPostBanDelete() gin.HandlerFunc {
 			return
 		}
 
-		changed, errSave := h.bansSteam.Unban(ctx, bannedPerson.TargetID, req.UnbanReasonText)
+		changed, errSave := h.bansSteam.Unban(ctx, bannedPerson.TargetID, req.UnbanReasonText, httphelper.CurrentUserProfile(ctx))
 		if errSave != nil {
 			httphelper.HandleErrInternal(ctx)
 

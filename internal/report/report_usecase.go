@@ -127,7 +127,7 @@ func (r reportUsecase) addAuthorsToReports(ctx context.Context, reports []domain
 	return userReports, nil
 }
 
-func (r reportUsecase) SetReportStatus(ctx context.Context, reportID int64, user domain.PersonInfo, status domain.ReportStatus) (domain.ReportWithAuthor, error) {
+func (r reportUsecase) SetReportStatus(ctx context.Context, reportID int64, user domain.UserProfile, status domain.ReportStatus) (domain.ReportWithAuthor, error) {
 	report, errGet := r.GetReport(ctx, user, reportID)
 	if errGet != nil {
 		return report, errGet
@@ -148,6 +148,21 @@ func (r reportUsecase) SetReportStatus(ctx context.Context, reportID int64, user
 	r.notifications.Enqueue(ctx, domain.NewDiscordNotification(
 		domain.ChannelMod,
 		discord.ReportStatusChangeMessage(report, fromStatus, r.config.ExtURL(report))))
+
+	r.notifications.Enqueue(ctx, domain.NewSiteGroupNotificationWithAuthor(
+		[]domain.Privilege{domain.PModerator, domain.PAdmin},
+		domain.SeverityInfo,
+		fmt.Sprintf("A report status has changed: %s -> %s", fromStatus, status),
+		report.Path(),
+		user,
+	))
+
+	r.notifications.Enqueue(ctx, domain.NewSiteUserNotification(
+		[]steamid.SteamID{report.Author.SteamID},
+		domain.SeverityInfo,
+		fmt.Sprintf("Your report status has changed: %s -> %s", fromStatus, status),
+		report.Path(),
+	))
 
 	return report, nil
 }
@@ -357,6 +372,14 @@ func (r reportUsecase) SaveReport(ctx context.Context, currentUser domain.UserPr
 		domain.ChannelModAppealLog,
 		discord.NewInGameReportResponse(newReport, conf.ExtURL(report), currentUser, conf.ExtURL(currentUser), demoURL)))
 
+	r.notifications.Enqueue(ctx, domain.NewSiteGroupNotificationWithAuthor(
+		[]domain.Privilege{domain.PModerator, domain.PAdmin},
+		domain.SeverityInfo,
+		fmt.Sprintf("A new report was created. Author: %s, Target: %s", currentUser.GetName(), personTarget.PersonaName),
+		newReport.Path(),
+		currentUser,
+	))
+
 	return newReport, nil
 }
 
@@ -400,7 +423,7 @@ func (r reportUsecase) EditReportMessage(ctx context.Context, reportMessageID in
 	return r.GetReportMessageByID(ctx, reportMessageID)
 }
 
-func (r reportUsecase) CreateReportMessage(ctx context.Context, reportID int64, curUser domain.PersonInfo, req domain.RequestMessageBodyMD) (domain.ReportMessage, error) {
+func (r reportUsecase) CreateReportMessage(ctx context.Context, reportID int64, curUser domain.UserProfile, req domain.RequestMessageBodyMD) (domain.ReportMessage, error) {
 	req.BodyMD = strings.TrimSpace(req.BodyMD)
 
 	if req.BodyMD == "" {
@@ -428,6 +451,25 @@ func (r reportUsecase) CreateReportMessage(ctx context.Context, reportID int64, 
 	r.notifications.Enqueue(ctx, domain.NewDiscordNotification(
 		domain.ChannelModAppealLog,
 		discord.NewReportMessageResponse(msg.MessageMD, conf.ExtURL(report), curUser, conf.ExtURL(curUser))))
+
+	path := fmt.Sprintf("/report/%d", reportID)
+
+	r.notifications.Enqueue(ctx, domain.NewSiteGroupNotificationWithAuthor(
+		[]domain.Privilege{domain.PModerator, domain.PAdmin},
+		domain.SeverityInfo,
+		"A new report reply has been posted. Author: "+curUser.GetName(),
+		path,
+		curUser,
+	))
+
+	if report.Author.SteamID != curUser.SteamID {
+		r.notifications.Enqueue(ctx, domain.NewSiteUserNotification(
+			[]steamid.SteamID{report.Author.SteamID},
+			domain.SeverityInfo,
+			"A new report reply has been posted",
+			path,
+		))
+	}
 
 	return msg, nil
 }
