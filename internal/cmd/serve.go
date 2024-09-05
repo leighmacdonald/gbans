@@ -99,13 +99,16 @@ func firstTimeSetup(ctx context.Context, persons domain.PersonUsecase, news doma
 
 func createQueueWorkers(people domain.PersonUsecase, notifications domain.NotificationUsecase,
 	discord domain.DiscordUsecase, authRepo domain.AuthRepository, memberships *steamgroup.Memberships,
-	patreonUC domain.PatreonUsecase) *river.Workers {
+	patreonUC domain.PatreonUsecase, bansSteam domain.BanSteamUsecase, bansNet domain.BanNetUsecase, bansASN domain.BanASNUsecase,
+	configUC domain.ConfigUsecase,
+) *river.Workers {
 	workers := river.NewWorkers()
 
 	river.AddWorker[notification.SenderArgs](workers, notification.NewSenderWorker(people, notifications, discord))
 	river.AddWorker[auth.CleanupArgs](workers, auth.NewCleanupWorker(authRepo))
 	river.AddWorker[steamgroup.MembershipArgs](workers, steamgroup.NewMembershipWorker(memberships))
 	river.AddWorker[patreon.AuthUpdateArgs](workers, patreon.NewSyncWorker(patreonUC))
+	river.AddWorker[ban.ExpirationArgs](workers, ban.NewExpirationWorker(bansSteam, bansNet, bansASN, people, notifications, configUC))
 
 	return workers
 }
@@ -130,6 +133,13 @@ func createPeriodicJobs() []*river.PeriodicJob {
 			river.PeriodicInterval(time.Hour),
 			func() (river.JobArgs, *river.InsertOpts) {
 				return patreon.AuthUpdateArgs{}, nil
+			},
+			&river.PeriodicJobOpts{RunOnStart: true}),
+
+		river.NewPeriodicJob(
+			river.PeriodicInterval(time.Minute),
+			func() (river.JobArgs, *river.InsertOpts) {
+				return ban.ExpirationArgs{}, nil
 			},
 			&river.PeriodicJobOpts{RunOnStart: true}),
 	}
@@ -328,8 +338,6 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				gin.SetMode(gin.DebugMode)
 			}
 
-			go ban.Start(ctx, banUsecase, banNetUsecase, banASNUsecase, personUsecase, notificationUsecase, configUsecase)
-
 			router, err := httphelper.CreateRouter(conf, app.Version())
 			if err != nil {
 				slog.Error("Could not setup router", log.ErrAttr(err))
@@ -387,7 +395,11 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				discordUsecase,
 				authRepo,
 				steamgroup.NewMemberships(banGroupRepo),
-				patreonUsecase)
+				patreonUsecase,
+				banUsecase,
+				banNetUsecase,
+				banASNUsecase,
+				configUsecase)
 
 			periodicJons := createPeriodicJobs()
 			queueClient, errClient := queue.Client(dbConn.Pool(), workers, periodicJons)

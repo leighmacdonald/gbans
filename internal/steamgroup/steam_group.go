@@ -3,16 +3,16 @@ package steamgroup
 import (
 	"context"
 	"errors"
-	"github.com/leighmacdonald/gbans/internal/queue"
-	"github.com/riverqueue/river"
 	"log/slog"
 	"sync"
 	"time"
 
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/queue"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
+	"github.com/riverqueue/river"
 )
 
 var (
@@ -132,7 +132,7 @@ func (args MembershipArgs) Kind() string {
 }
 
 func (args MembershipArgs) InsertOpts() river.InsertOpts {
-	return river.InsertOpts{Queue: string(queue.Default), UniqueOpts: river.UniqueOpts{ByPeriod: time.Hour * 24}}
+	return river.InsertOpts{Queue: string(queue.Default), UniqueOpts: river.UniqueOpts{ByPeriod: time.Hour * 6}}
 }
 
 func NewMembershipWorker(memberships *Memberships) *MembershipWorker {

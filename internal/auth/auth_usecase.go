@@ -3,8 +3,6 @@ package auth
 import (
 	"context"
 	"errors"
-	"github.com/leighmacdonald/gbans/internal/queue"
-	"github.com/riverqueue/river"
 	"log/slog"
 	"net"
 	"net/http"
@@ -17,9 +15,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/queue"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+	"github.com/riverqueue/river"
 )
 
 const ctxKeyUserProfile = "user_profile"

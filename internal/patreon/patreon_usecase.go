@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/leighmacdonald/gbans/internal/queue"
-	"github.com/riverqueue/river"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -15,9 +13,11 @@ import (
 	"github.com/austinbspencer/patreon-go-wrapper"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/queue"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/oauth"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+	"github.com/riverqueue/river"
 )
 
 type patreonUsecase struct {
