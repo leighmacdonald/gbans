@@ -3,6 +3,8 @@ package steamgroup
 import (
 	"context"
 	"errors"
+	"github.com/leighmacdonald/gbans/internal/queue"
+	"github.com/riverqueue/river"
 	"log/slog"
 	"sync"
 	"time"
@@ -33,29 +35,6 @@ func NewMemberships(db domain.BanGroupRepository) *Memberships {
 		store:      db,
 		members:    map[steamid.SteamID]steamid.Collection{},
 		updateFreq: time.Minute * 60,
-	}
-}
-
-func (g *Memberships) Start(ctx context.Context) {
-	ticker := time.NewTicker(g.updateFreq)
-	updateChan := make(chan any)
-
-	go func() {
-		updateChan <- true
-	}()
-
-	for {
-		select {
-		case <-ticker.C:
-			updateChan <- true
-		case <-updateChan:
-			g.update(ctx)
-			ticker.Reset(g.updateFreq)
-		case <-ctx.Done():
-			slog.Debug("Memberships shutting down")
-
-			return
-		}
 	}
 }
 
@@ -140,8 +119,33 @@ func (g *Memberships) updateGroupBanMembers(ctx context.Context) (map[steamid.St
 		// Group info doesn't use the steam api so its *heavily* rate limited. Let's try to minimize the ability to
 		// get banned incase there is a lot of banned groups. This probably need to be increased if you are blocking a
 		// large amount of groups.
-		time.Sleep(time.Second * 5)
+		time.Sleep(time.Second * 15)
 	}
 
 	return newMap, nil
+}
+
+type MembershipArgs struct{}
+
+func (args MembershipArgs) Kind() string {
+	return "group_members_update"
+}
+
+func (args MembershipArgs) InsertOpts() river.InsertOpts {
+	return river.InsertOpts{Queue: string(queue.Default), UniqueOpts: river.UniqueOpts{ByPeriod: time.Hour * 24}}
+}
+
+func NewMembershipWorker(memberships *Memberships) *MembershipWorker {
+	return &MembershipWorker{memberships: memberships}
+}
+
+type MembershipWorker struct {
+	river.WorkerDefaults[MembershipArgs]
+	memberships *Memberships
+}
+
+func (worker *MembershipWorker) Work(ctx context.Context, _ *river.Job[MembershipArgs]) error {
+	worker.memberships.update(ctx)
+
+	return nil
 }

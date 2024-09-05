@@ -97,11 +97,13 @@ func firstTimeSetup(ctx context.Context, persons domain.PersonUsecase, news doma
 	return nil
 }
 
-func createQueueWorkers(people domain.PersonUsecase, notifications domain.NotificationUsecase, discord domain.DiscordUsecase, authRepo domain.AuthRepository) *river.Workers {
+func createQueueWorkers(people domain.PersonUsecase, notifications domain.NotificationUsecase,
+	discord domain.DiscordUsecase, authRepo domain.AuthRepository, memberships *steamgroup.Memberships) *river.Workers {
 	workers := river.NewWorkers()
 
 	river.AddWorker[notification.SenderArgs](workers, notification.NewSenderWorker(people, notifications, discord))
 	river.AddWorker[auth.CleanupArgs](workers, auth.NewCleanupWorker(authRepo))
+	river.AddWorker[steamgroup.MembershipArgs](workers, steamgroup.NewMembershipWorker(memberships))
 
 	return workers
 }
@@ -112,6 +114,13 @@ func createPeriodicJobs() []*river.PeriodicJob {
 			river.PeriodicInterval(24*time.Hour),
 			func() (river.JobArgs, *river.InsertOpts) {
 				return auth.CleanupArgs{}, nil
+			},
+			&river.PeriodicJobOpts{RunOnStart: true}),
+
+		river.NewPeriodicJob(
+			river.PeriodicInterval(6*time.Hour),
+			func() (river.JobArgs, *river.InsertOpts) {
+				return steamgroup.MembershipArgs{}, nil
 			},
 			&river.PeriodicJobOpts{RunOnStart: true}),
 	}
@@ -239,7 +248,8 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			banUsecase := ban.NewBanSteamUsecase(ban.NewBanSteamRepository(dbConn, personUsecase, networkUsecase), personUsecase, configUsecase, notificationUsecase, reportUsecase, stateUsecase)
 
-			banGroupUsecase := steamgroup.NewBanGroupUsecase(steamgroup.NewSteamGroupRepository(dbConn), personUsecase, notificationUsecase, configUsecase)
+			banGroupRepo := steamgroup.NewSteamGroupRepository(dbConn)
+			banGroupUsecase := steamgroup.NewBanGroupUsecase(banGroupRepo, personUsecase, notificationUsecase, configUsecase)
 
 			blocklistUsecase := blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(dbConn), banUsecase, banGroupUsecase)
 			go blocklistUsecase.Start(ctx)
@@ -363,7 +373,13 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			}
 
 			// River Queue
-			workers := createQueueWorkers(personUsecase, notificationUsecase, discordUsecase, authRepo)
+			workers := createQueueWorkers(
+				personUsecase,
+				notificationUsecase,
+				discordUsecase,
+				authRepo,
+				steamgroup.NewMemberships(banGroupRepo))
+
 			periodicJons := createPeriodicJobs()
 			queueClient, errClient := queue.Client(dbConn.Pool(), workers, periodicJons)
 			if errClient != nil {
