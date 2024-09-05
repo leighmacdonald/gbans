@@ -91,7 +91,7 @@ func (s banSteamUsecase) GetByLastIP(ctx context.Context, lastIP netip.Addr, del
 func (s banSteamUsecase) Save(ctx context.Context, ban *domain.BanSteam) error {
 	oldState := domain.Open
 	if ban.BanID > 0 {
-		existing, errExisting := s.GetByBanID(ctx, ban.BanID, false, false)
+		existing, errExisting := s.GetByBanID(ctx, ban.BanID, true, true)
 		if errExisting != nil {
 			slog.Error("Failed to get existing ban", log.ErrAttr(errExisting))
 
