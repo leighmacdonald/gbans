@@ -1,4 +1,4 @@
-import { JSX, useMemo, useState, MouseEvent } from 'react';
+import { JSX, MouseEvent, useMemo, useState } from 'react';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import AddModeratorIcon from '@mui/icons-material/AddModerator';
 import ArticleIcon from '@mui/icons-material/Article';
@@ -423,20 +423,23 @@ export const TopBar = () => {
                                 <IconButton onClick={colourMode.toggleColorMode}>{themeIcon}</IconButton>
                             </Tooltip>
 
-                            <NotificationsProvider>
-                                <IconButton component={RouterLink} to={'/notifications'} color={'inherit'}>
-                                    <Badge
-                                        color={'success'}
-                                        badgeContent={
-                                            isLoading
-                                                ? '...'
-                                                : (notifications ?? []).filter((n: UserNotification) => !n.read).length
-                                        }
-                                    >
-                                        <MailIcon />
-                                    </Badge>
-                                </IconButton>
-                            </NotificationsProvider>
+                            {hasPermission(PermissionLevel.User) && (
+                                <NotificationsProvider>
+                                    <IconButton component={RouterLink} to={'/notifications'} color={'inherit'}>
+                                        <Badge
+                                            color={'success'}
+                                            badgeContent={
+                                                isLoading
+                                                    ? '...'
+                                                    : (notifications ?? []).filter((n: UserNotification) => !n.read)
+                                                          .length
+                                            }
+                                        >
+                                            <MailIcon />
+                                        </Badge>
+                                    </IconButton>
+                                </NotificationsProvider>
+                            )}
 
                             {!isAuthenticated() && (
                                 <Tooltip title="Steam Login">
