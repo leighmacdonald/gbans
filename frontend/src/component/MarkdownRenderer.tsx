@@ -79,11 +79,11 @@ export const MarkDownRenderer = ({ body_md, minHeight }: { body_md: string; minH
                         img: {
                             component: MDImg
                         },
-                        // p: {
-                        //     props: {
-                        //         gutterBottom: true
-                        //     }
-                        // },
+                        p: {
+                            props: {
+                                gutterBottom: true
+                            }
+                        },
                         h1: {
                             props: {
                                 variant: 'h3'
