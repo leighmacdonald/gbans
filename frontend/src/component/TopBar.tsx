@@ -58,6 +58,7 @@ import { useColourModeCtx } from '../hooks/useColourModeCtx.ts';
 import steamLogo from '../icons/steam_login_sm.png';
 import { tf2Fonts } from '../theme';
 import { generateOIDCLink } from '../util/auth/generateOIDCLink.ts';
+import { DesktopNotifications } from './DesktopNotifications.tsx';
 import RouterLink from './RouterLink.tsx';
 import { VCenterBox } from './VCenterBox.tsx';
 
@@ -74,9 +75,10 @@ export const TopBar = () => {
     const { data: notifications, isLoading } = useQuery({
         queryKey: ['notifications'],
         queryFn: async () => {
-            return await apiGetNotifications();
+            return (await apiGetNotifications()) ?? [];
         },
         refetchInterval: 60 * 1000,
+        refetchIntervalInBackground: true,
         refetchOnWindowFocus: true
     });
 
@@ -491,6 +493,7 @@ export const TopBar = () => {
                     </Box>
                 </Toolbar>
             </Container>
+            <DesktopNotifications notifications={notifications} isLoading={isLoading} />
         </AppBar>
     );
 };
