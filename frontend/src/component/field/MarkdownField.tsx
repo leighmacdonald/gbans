@@ -27,6 +27,7 @@ import { headingsPlugin } from '@mdxeditor/editor';
 import '@mdxeditor/editor/style.css';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import { apiSaveAsset, assetURL } from '../../api/media.ts';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
@@ -76,6 +77,16 @@ export const MarkdownField = ({ state, handleChange }: MDBodyFieldProps) => {
         }
     }, [theme.mode]);
 
+    const errInfo = useMemo(() => {
+        return state.meta.touchedErrors.length > 0 ? (
+            <Typography padding={1} color={theme.palette.error.main}>
+                {state.meta.touchedErrors}
+            </Typography>
+        ) : (
+            <></>
+        );
+    }, [state.meta.touchedErrors, theme.palette.error.main]);
+
     return (
         <Paper>
             <MDXEditor
@@ -83,6 +94,7 @@ export const MarkdownField = ({ state, handleChange }: MDBodyFieldProps) => {
                 className={classes}
                 autoFocus={true}
                 markdown={state.value.trimEnd()}
+                placeholder={'Message (Min length: 10 characters)'}
                 plugins={[
                     toolbarPlugin({
                         toolbarContents: () => (
@@ -116,6 +128,7 @@ export const MarkdownField = ({ state, handleChange }: MDBodyFieldProps) => {
                 onChange={handleChange}
                 ref={mdEditorRef}
             />
+            {errInfo}
         </Paper>
     );
 };

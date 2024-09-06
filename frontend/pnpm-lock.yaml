@@ -110,6 +110,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.0
         version: 18.3.0
+      '@types/react-modal-image':
+        specifier: ^2.6.3
+        version: 2.6.3
       '@types/steamid':
         specifier: ^2.0.3
         version: 2.0.3
@@ -212,6 +215,9 @@ importers:
       react-leaflet:
         specifier: ^4.2.1
         version: 4.2.1(leaflet@1.9.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react-modal-image:
+        specifier: ^2.6.0
+        version: 2.6.0
       react-timer-hook:
         specifier: ^3.0.7
         version: 3.0.7(react@18.3.1)
@@ -1971,6 +1977,9 @@ packages:
   '@types/react-dom@18.3.0':
     resolution: {integrity: sha512-EhwApuTmMBmXuFOikhQLIBUn6uFg81SwLMOAUgodJF14SOBOCMdU04gDoYi0WOJJHD144TL32z4yDqCW3dnkQg==}
 
+  '@types/react-modal-image@2.6.3':
+    resolution: {integrity: sha512-Uh4joinWiyRD2e4Q+MRiMiQfz7K7W16peF2xfEx821t7p6O6sG4xi42uuN5tsYhx1mTOsagUPqIQiWcYgKtkww==}
+
   '@types/react-transition-group@4.4.10':
     resolution: {integrity: sha512-hT/+s0VQs2ojCX823m60m5f0sL5idt9SO6Tj6Dg+rdphGPIeJbJ6CxvBYkgkGKrYeDjvIpKTR38UzmtHJOGW3Q==}
 
@@ -3714,6 +3723,9 @@ packages:
       leaflet: ^1.9.0
       react: ^18.0.0
       react-dom: ^18.0.0
+
+  react-modal-image@2.6.0:
+    resolution: {integrity: sha512-NNc1xPKzFAn0VsNMdJ8NXt6c54aL/z0fcoYmw9qn4SBUONdGl+8LOQ0sTfo0wtdzcjLiby/ncloHcAL+UI+wIA==}
 
   react-remove-scroll-bar@2.3.6:
     resolution: {integrity: sha512-DtSYaao4mBmX+HDo5YWYdBWQwYIQQshUV/dVxFxK+KM26Wjwp1gZ6rv6OC3oujI6Bfu6Xyg3TwK533AQutsn/g==}
@@ -6448,6 +6460,10 @@ snapshots:
     dependencies:
       '@types/react': 18.3.5
 
+  '@types/react-modal-image@2.6.3':
+    dependencies:
+      '@types/react': 18.3.5
+
   '@types/react-transition-group@4.4.10':
     dependencies:
       '@types/react': 18.3.5
@@ -8628,6 +8644,8 @@ snapshots:
       leaflet: 1.9.4
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
+
+  react-modal-image@2.6.0: {}
 
   react-remove-scroll-bar@2.3.6(@types/react@18.3.5)(react@18.3.1):
     dependencies:

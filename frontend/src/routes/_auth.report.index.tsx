@@ -308,12 +308,7 @@ export const ReportCreateForm = (): JSX.Element => {
     });
 
     return (
-        <ContainerWithHeader
-            title={'Create a New Report'}
-            iconLeft={<EditNotificationsIcon />}
-            spacing={2}
-            marginTop={3}
-        >
+        <ContainerWithHeader title={'Create New Report'} iconLeft={<EditNotificationsIcon />} spacing={2} marginTop={3}>
             <form
                 id={'reportForm'}
                 onSubmit={async (e) => {
@@ -353,6 +348,7 @@ export const ReportCreateForm = (): JSX.Element => {
                                         <FormControl fullWidth>
                                             <InputLabel id="serverSelectLabel">Reason</InputLabel>
                                             <Select
+                                                variant={'outlined'}
                                                 fullWidth
                                                 value={state.value}
                                                 label="Servers"
@@ -430,6 +426,7 @@ export const ReportCreateForm = (): JSX.Element => {
                             </Grid>
                             <Grid md={6}>
                                 <form.Field
+                                    validators={{ onChange: z.string().min(10) }}
                                     name={'demo_tick'}
                                     children={({ state, handleChange, handleBlur }) => {
                                         return (

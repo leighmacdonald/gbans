@@ -1,4 +1,5 @@
 import { JSX, useMemo } from 'react';
+import ModalImage from 'react-modal-image';
 import { PaletteMode } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -21,12 +22,8 @@ interface MDImgProps {
     title: string;
 }
 
-const MDImg = ({ src, alt, title }: MDImgProps) => {
-    return (
-        <a href={src}>
-            <img src={src} alt={alt} title={title} className={'img_media'} />
-        </a>
-    );
+const MDImg = ({ src, alt }: MDImgProps) => {
+    return <ModalImage small={src} large={src} alt={alt} />;
 };
 
 interface MDLnkProps {
@@ -66,7 +63,7 @@ export const MarkDownRenderer = ({ body_md, minHeight }: { body_md: string; minH
         <Box padding={2} maxWidth={'100%'} minHeight={minHeight}>
             <MuiMarkdown
                 options={{
-                    disableParsingRawHTML: true,
+                    disableParsingRawHTML: false,
                     overrides: {
                         ...getOverrides({
                             Highlight,
