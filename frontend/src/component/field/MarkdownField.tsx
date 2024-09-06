@@ -79,6 +79,7 @@ export const MarkdownField = ({ state, handleChange }: MDBodyFieldProps) => {
     return (
         <Paper>
             <MDXEditor
+                contentEditableClassName={'md-content-editable'}
                 className={classes}
                 autoFocus={true}
                 markdown={state.value.trimEnd()}
@@ -115,11 +116,6 @@ export const MarkdownField = ({ state, handleChange }: MDBodyFieldProps) => {
                 onChange={handleChange}
                 ref={mdEditorRef}
             />
-            {/*{state.meta.touchedErrors.length > 0 && (*/}
-            {/*    <Typography padding={1} color={theme.palette.error.main}>*/}
-            {/*        {state.meta.touchedErrors}*/}
-            {/*    </Typography>*/}
-            {/*)}*/}
         </Paper>
     );
 };

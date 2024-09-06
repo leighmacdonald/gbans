@@ -30,7 +30,7 @@
 
     color: #111;
     --basePageBg: #dabdab;
-    line-height: 0.7;
+    line-height: 1;
 }
 
 .dark-editor {
@@ -62,7 +62,7 @@
 
     color: #f5e7de;
     --basePageBg: #452c22;
-    line-height: 0.7;
+    line-height: 1;
 }
 
 .mdxeditor-root-contenteditable-dark {
@@ -73,4 +73,11 @@
 }
 .mdxeditor-popup-container {
     z-index: 1600;
+}
+
+.md-content-editable {
+    line-height: 20px;
+    min-height: 500px;
+    overflow: scroll;
+
 }
