@@ -28,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v3
+      - uses: pnpm/action-setup@v4
         with:
           version: 9
           run_install: false
@@ -60,7 +60,7 @@ jobs:
           go-version: 'stable'
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@v6
         with:
           version: 'latest'
           args: --timeout=10m
@@ -94,7 +94,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v3
+      - uses: pnpm/action-setup@v4
         with:
           version: 9
           run_install: false
@@ -109,5 +109,6 @@ jobs:
       - name: Install modules
         working-directory: ./frontend
         run: pnpm install --frozen-lockfile --strict-peer-dependencies
+
       - name: Frontend tests
         run: make test-ts
