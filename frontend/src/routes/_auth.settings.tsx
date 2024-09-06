@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useModal } from '@ebay/nice-modal-react';
 import CableIcon from '@mui/icons-material/Cable';
 import ConstructionIcon from '@mui/icons-material/Construction';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ForumIcon from '@mui/icons-material/Forum';
 import LoginIcon from '@mui/icons-material/Login';
+import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import SettingsIcon from '@mui/icons-material/Settings';
 import SettingsInputComponentIcon from '@mui/icons-material/SettingsInputComponent';
 import SportsEsportsIcon from '@mui/icons-material/SportsEsports';
@@ -12,7 +13,10 @@ import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
+import List from '@mui/material/List';
+import ListItemText from '@mui/material/ListItemText';
 import Stack from '@mui/material/Stack';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
@@ -167,6 +171,12 @@ const GeneralSection = ({
     settings: PersonSettings;
     mutate: (s: PersonSettings) => void;
 }) => {
+    const [notifPerms, setNotifPerms] = useState(Notification.permission);
+
+    const notificationsSupported = useMemo(() => {
+        return 'Notification' in window;
+    }, []);
+
     const { Field, Subscribe, handleSubmit, reset } = useForm({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, ...value });
@@ -176,6 +186,10 @@ const GeneralSection = ({
             stats_hidden: settings.stats_hidden
         }
     });
+
+    const togglePerms = async () => {
+        setNotifPerms(await Notification.requestPermission());
+    };
 
     return (
         <TabSection
@@ -192,6 +206,70 @@ const GeneralSection = ({
                 }}
             >
                 <Grid container spacing={2}>
+                    {notificationsSupported && (
+                        <Grid xs={12}>
+                            <div>
+                                <Grid container spacing={1}>
+                                    <Grid md={6} xs={12}>
+                                        <Stack spacing={1}>
+                                            <Typography>Show desktop notifications?</Typography>
+                                            {notifPerms != 'granted' ? (
+                                                <Button
+                                                    variant={'contained'}
+                                                    color={'success'}
+                                                    onClick={togglePerms}
+                                                    startIcon={<NotificationsActiveIcon />}
+                                                >
+                                                    Enable Desktop Notifications
+                                                </Button>
+                                            ) : (
+                                                <Tooltip
+                                                    title={
+                                                        'Please see the links to the right for instructions on how to disable'
+                                                    }
+                                                >
+                                                    <span>
+                                                        <Button
+                                                            disabled={true}
+                                                            variant={'contained'}
+                                                            color={'success'}
+                                                            onClick={togglePerms}
+                                                            startIcon={<NotificationsActiveIcon />}
+                                                        >
+                                                            Desktop Notifications Enabled
+                                                        </Button>
+                                                    </span>
+                                                </Tooltip>
+                                            )}
+                                        </Stack>
+                                    </Grid>
+                                    <Grid md={6} xs={12}>
+                                        <Typography>How to disable notifications: </Typography>
+                                        <List>
+                                            <ListItemText>
+                                                <Link
+                                                    href={
+                                                        'https://support.google.com/chrome/answer/114662?sjid=2540186662959230327-NC&visit_id=638611827496769425-656746251&rd=1'
+                                                    }
+                                                >
+                                                    Google Chrome
+                                                </Link>
+                                            </ListItemText>
+                                            <ListItemText>
+                                                <Link
+                                                    href={
+                                                        'https://support.mozilla.org/en-US/kb/push-notifications-firefox'
+                                                    }
+                                                >
+                                                    Mozilla Firefox
+                                                </Link>
+                                            </ListItemText>
+                                        </List>
+                                    </Grid>
+                                </Grid>
+                            </div>
+                        </Grid>
+                    )}
                     <Grid xs={12}>
                         <Field
                             name={'stats_hidden'}
