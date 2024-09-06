@@ -34,6 +34,7 @@ type PersonUsecase interface {
 	SavePersonSettings(ctx context.Context, user PersonInfo, req PersonSettingsUpdate) (PersonSettings, error)
 	SetSteam(ctx context.Context, sid64 steamid.SteamID, discordID string) error
 	SetPermissionLevel(ctx context.Context, steamID steamid.SteamID, level Privilege) error
+	UpdateProfiles(ctx context.Context, people People) (int, error)
 }
 
 type PersonRepository interface {

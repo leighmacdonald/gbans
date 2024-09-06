@@ -40,8 +40,8 @@ type DiscordOAuthUsecase interface {
 	CreateStatefulLoginURL(steamID steamid.SteamID) (string, error)
 	HandleOAuthCode(ctx context.Context, code string, state string) error
 	Logout(ctx context.Context, steamID steamid.SteamID) error
-	Start(ctx context.Context)
 	GetUserDetail(ctx context.Context, steamID steamid.SteamID) (DiscordUserDetail, error)
+	RefreshTokens(ctx context.Context) error
 }
 
 type DiscordOAuthRepository interface {

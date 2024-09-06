@@ -11,10 +11,12 @@ import (
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/queue"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+	"github.com/riverqueue/river"
 )
 
 type reportUsecase struct {
@@ -37,68 +39,51 @@ func NewReportUsecase(repository domain.ReportRepository, notifications domain.N
 	}
 }
 
-func (r reportUsecase) Start(ctx context.Context) {
-	ticker := time.NewTicker(time.Hour * 24)
-	updateChan := make(chan any)
+func (r reportUsecase) GenerateMetaStats(ctx context.Context) error {
+	reports, errReports := r.GetReports(ctx)
+	if errReports != nil {
+		slog.Error("failed to fetch reports for report metadata", log.ErrAttr(errReports))
 
-	go func() {
-		time.Sleep(time.Second * 5)
-		updateChan <- true
-	}()
+		return errReports
+	}
 
-	for {
-		select {
-		case <-ticker.C:
-			updateChan <- true
-		case <-updateChan:
-			reports, errReports := r.GetReports(ctx)
-			if errReports != nil {
-				slog.Error("failed to fetch reports for report metadata", log.ErrAttr(errReports))
+	var (
+		now  = time.Now()
+		meta domain.ReportMeta
+	)
 
-				continue
-			}
+	for _, report := range reports {
+		if report.ReportStatus == domain.ClosedWithAction || report.ReportStatus == domain.ClosedWithoutAction {
+			meta.TotalClosed++
 
-			var (
-				now  = time.Now()
-				meta domain.ReportMeta
-			)
+			continue
+		}
 
-			for _, report := range reports {
-				if report.ReportStatus == domain.ClosedWithAction || report.ReportStatus == domain.ClosedWithoutAction {
-					meta.TotalClosed++
+		meta.TotalOpen++
 
-					continue
-				}
+		if report.ReportStatus == domain.NeedMoreInfo {
+			meta.NeedInfo++
+		} else {
+			meta.Open++
+		}
 
-				meta.TotalOpen++
-
-				if report.ReportStatus == domain.NeedMoreInfo {
-					meta.NeedInfo++
-				} else {
-					meta.Open++
-				}
-
-				switch {
-				case now.Sub(report.CreatedOn) > time.Hour*24*7:
-					meta.OpenWeek++
-				case now.Sub(report.CreatedOn) > time.Hour*24*3:
-					meta.Open3Days++
-				case now.Sub(report.CreatedOn) > time.Hour*24:
-					meta.Open1Day++
-				default:
-					meta.OpenNew++
-				}
-			}
-
-			r.notifications.Enqueue(ctx, domain.NewDiscordNotification(
-				domain.ChannelMod,
-				discord.ReportStatsMessage(meta, r.config.ExtURLRaw("/admin/reports"))))
-		case <-ctx.Done():
-			slog.Debug("showReportMeta shutting down")
-
-			return
+		switch {
+		case now.Sub(report.CreatedOn) > time.Hour*24*7:
+			meta.OpenWeek++
+		case now.Sub(report.CreatedOn) > time.Hour*24*3:
+			meta.Open3Days++
+		case now.Sub(report.CreatedOn) > time.Hour*24:
+			meta.Open1Day++
+		default:
+			meta.OpenNew++
 		}
 	}
+
+	r.notifications.Enqueue(ctx, domain.NewDiscordNotification(
+		domain.ChannelMod,
+		discord.ReportStatsMessage(meta, r.config.ExtURLRaw("/admin/reports"))))
+
+	return nil
 }
 
 func (r reportUsecase) addAuthorsToReports(ctx context.Context, reports []domain.Report) ([]domain.ReportWithAuthor, error) {
@@ -472,4 +457,27 @@ func (r reportUsecase) CreateReportMessage(ctx context.Context, reportID int64, 
 	}
 
 	return msg, nil
+}
+
+type MetaInfoArgs struct{}
+
+func (args MetaInfoArgs) Kind() string {
+	return "reports_meta"
+}
+
+func (args MetaInfoArgs) InsertOpts() river.InsertOpts {
+	return river.InsertOpts{Queue: string(queue.Default), UniqueOpts: river.UniqueOpts{ByPeriod: time.Hour * 24}}
+}
+
+func NewMetaInfoWorker(reports domain.ReportUsecase) *MetaInfoWorker {
+	return &MetaInfoWorker{reports: reports}
+}
+
+type MetaInfoWorker struct {
+	river.WorkerDefaults[MetaInfoArgs]
+	reports domain.ReportUsecase
+}
+
+func (worker *MetaInfoWorker) Work(ctx context.Context, _ *river.Job[MetaInfoArgs]) error {
+	return worker.reports.GenerateMetaStats(ctx)
 }

@@ -25,7 +25,7 @@ func NewDemoHandler(engine *gin.Engine, du domain.DemoUsecase) {
 
 func (h demoHandler) onAPIGetCleanup() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		h.demos.TriggerCleanup()
+		h.demos.Cleanup(ctx)
 
 		ctx.JSON(http.StatusOK, gin.H{})
 	}

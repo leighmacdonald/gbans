@@ -22,7 +22,7 @@ type BlocklistUsecase interface {
 	CreateSteamBlockWhitelists(ctx context.Context, steamID steamid.SteamID) (WhitelistSteam, error)
 	GetSteamBlockWhitelists(ctx context.Context) ([]WhitelistSteam, error)
 	DeleteSteamBlockWhitelists(ctx context.Context, steamID steamid.SteamID) error
-	Start(ctx context.Context)
+	Sync(ctx context.Context)
 }
 
 type BlocklistRepository interface {

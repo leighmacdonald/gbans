@@ -17,8 +17,10 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/queue"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+	"github.com/riverqueue/river"
 )
 
 type blocklistUsecase struct {
@@ -37,26 +39,7 @@ func NewBlocklistUsecase(br domain.BlocklistRepository, banUsecase domain.BanSte
 	}
 }
 
-func (b blocklistUsecase) Start(ctx context.Context) {
-	ticker := time.NewTicker(time.Hour * 12)
-
-	update := func() {
-		b.syncBlocklists(ctx)
-	}
-
-	update()
-
-	for {
-		select {
-		case <-ticker.C:
-			update()
-		case <-ctx.Done():
-			return
-		}
-	}
-}
-
-func (b blocklistUsecase) syncBlocklists(ctx context.Context) {
+func (b blocklistUsecase) Sync(ctx context.Context) {
 	waitGroup := &sync.WaitGroup{}
 
 	waitGroup.Add(1)
@@ -327,6 +310,31 @@ func (b blocklistUsecase) DeleteCIDRBlockWhitelist(ctx context.Context, whitelis
 	}
 
 	slog.Info("Blocklist deleted", slog.Int("cidr_block_source_id", whitelistID))
+
+	return nil
+}
+
+type ListUpdaterArgs struct{}
+
+func (args ListUpdaterArgs) Kind() string {
+	return "blocklist_update"
+}
+
+func (args ListUpdaterArgs) InsertOpts() river.InsertOpts {
+	return river.InsertOpts{Queue: string(queue.Default), UniqueOpts: river.UniqueOpts{ByPeriod: time.Hour * 24}}
+}
+
+func NewListUpdaterWorker(lists domain.BlocklistUsecase) *ListUpdaterWorker {
+	return &ListUpdaterWorker{lists: lists}
+}
+
+type ListUpdaterWorker struct {
+	river.WorkerDefaults[ListUpdaterArgs]
+	lists domain.BlocklistUsecase
+}
+
+func (worker *ListUpdaterWorker) Work(ctx context.Context, _ *river.Job[ListUpdaterArgs]) error {
+	worker.lists.Sync(ctx)
 
 	return nil
 }

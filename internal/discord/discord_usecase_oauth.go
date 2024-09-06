@@ -12,9 +12,11 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/queue"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/oauth"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+	"github.com/riverqueue/river"
 )
 
 type discordOAuthUsecase struct {
@@ -31,35 +33,20 @@ func NewDiscordOAuthUsecase(repository domain.DiscordOAuthRepository, config dom
 	}
 }
 
-func (d discordOAuthUsecase) Start(ctx context.Context) {
-	ticker := time.NewTicker(time.Hour)
-
-	d.RefreshOldTokens(ctx)
-
-	for {
-		select {
-		case <-ticker.C:
-			d.RefreshOldTokens(ctx)
-		case <-ctx.Done():
-			return
-		}
-	}
-}
-
 func (d discordOAuthUsecase) GetUserDetail(ctx context.Context, steamID steamid.SteamID) (domain.DiscordUserDetail, error) {
 	return d.repository.GetUserDetail(ctx, steamID)
 }
 
-func (d discordOAuthUsecase) RefreshOldTokens(ctx context.Context) {
+func (d discordOAuthUsecase) RefreshTokens(ctx context.Context) error {
 	entries, errOld := d.repository.OldAuths(ctx)
 	if errOld != nil {
 		if errors.Is(errOld, domain.ErrNoResult) {
-			return
+			return nil
 		}
 
 		slog.Error("Failed to fetch old discord auth tokens", log.ErrAttr(errOld))
 
-		return
+		return errOld
 	}
 
 	for _, old := range entries {
@@ -72,10 +59,14 @@ func (d discordOAuthUsecase) RefreshOldTokens(ctx context.Context) {
 
 		if err := d.repository.SaveTokens(ctx, newCreds); err != nil {
 			slog.Error("Failed to save refresh tokens", log.ErrAttr(err))
+
+			return err
 		}
 
 		slog.Debug("Updated discord tokens", slog.String("steam_id", newCreds.SteamID.String()))
 	}
+
+	return nil
 }
 
 func (d discordOAuthUsecase) fetchRefresh(ctx context.Context, credentials domain.DiscordCredential) (domain.DiscordCredential, error) {
@@ -300,4 +291,27 @@ func (d discordOAuthUsecase) fetchToken(ctx context.Context, client *http.Client
 	}
 
 	return atr, nil
+}
+
+type TokenRefreshArgs struct{}
+
+func (args TokenRefreshArgs) Kind() string {
+	return "discord_token_refresh"
+}
+
+func (args TokenRefreshArgs) InsertOpts() river.InsertOpts {
+	return river.InsertOpts{Queue: string(queue.Default), UniqueOpts: river.UniqueOpts{ByPeriod: time.Hour * 12}}
+}
+
+func NewTokenRefreshWorker(discordOAuth domain.DiscordOAuthUsecase) *TokenRefreshWorker {
+	return &TokenRefreshWorker{discordOAuth: discordOAuth}
+}
+
+type TokenRefreshWorker struct {
+	river.WorkerDefaults[TokenRefreshArgs]
+	discordOAuth domain.DiscordOAuthUsecase
+}
+
+func (worker *TokenRefreshWorker) Work(ctx context.Context, _ *river.Job[TokenRefreshArgs]) error {
+	return worker.discordOAuth.RefreshTokens(ctx)
 }

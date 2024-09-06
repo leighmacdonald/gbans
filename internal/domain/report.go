@@ -21,6 +21,7 @@ type ReportRepository interface {
 }
 
 type ReportUsecase interface {
+	GenerateMetaStats(ctx context.Context) error
 	GetReportsBySteamID(ctx context.Context, steamID steamid.SteamID) ([]ReportWithAuthor, error)
 	GetReports(ctx context.Context) ([]ReportWithAuthor, error)
 	GetReport(ctx context.Context, curUser PersonInfo, reportID int64) (ReportWithAuthor, error)

@@ -9,11 +9,13 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
+	"github.com/leighmacdonald/gbans/internal/queue"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
+	"github.com/riverqueue/river"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -69,7 +71,7 @@ func (u personUsecase) QueryProfile(ctx context.Context, query string) (domain.P
 	return resp, nil
 }
 
-func (u personUsecase) updateProfiles(ctx context.Context, people domain.People) (int, error) {
+func (u personUsecase) UpdateProfiles(ctx context.Context, people domain.People) (int, error) {
 	if len(people) > 100 {
 		return 0, domain.ErrSteamAPIArgLimit
 	}
@@ -142,48 +144,6 @@ func (u personUsecase) updateProfiles(ctx context.Context, people domain.People)
 	}
 
 	return len(people), nil
-}
-
-// Start takes care of periodically querying the steam api for updates player summaries.
-// The 100 oldest profiles are updated on each execution.
-func (u personUsecase) Start(ctx context.Context) {
-	var (
-		run    = make(chan any)
-		ticker = time.NewTicker(time.Second * 300)
-	)
-
-	go func() {
-		run <- true
-	}()
-
-	for {
-		select {
-		case <-ticker.C:
-			run <- true
-		case <-run:
-			localCtx, cancel := context.WithTimeout(ctx, time.Second*10)
-			people, errGetExpired := u.persons.GetExpiredProfiles(localCtx, 100)
-
-			if errGetExpired != nil || len(people) == 0 {
-				cancel()
-
-				continue
-			}
-
-			count, errUpdate := u.updateProfiles(localCtx, people)
-			if errUpdate != nil {
-				slog.Error("Failed to update profiles", log.ErrAttr(errUpdate))
-			}
-
-			slog.Debug("Updated steam profiles and vac data", slog.Int("count", count))
-
-			cancel()
-		case <-ctx.Done():
-			slog.Debug("profileUpdater shutting down")
-
-			return
-		}
-	}
 }
 
 // SetSteam is used to associate a discord user with either steam id. This is used
@@ -306,4 +266,47 @@ func (u personUsecase) SetPermissionLevel(ctx context.Context, steamID steamid.S
 	}
 
 	return u.persons.SavePerson(ctx, &person)
+}
+
+type ExpiredArgs struct{}
+
+func (args ExpiredArgs) Kind() string {
+	return "update_expired_profiles"
+}
+
+func (args ExpiredArgs) InsertOpts() river.InsertOpts {
+	return river.InsertOpts{Queue: string(queue.Default), UniqueOpts: river.UniqueOpts{ByPeriod: time.Minute * 5}}
+}
+
+func NewExpiredWorker(persons domain.PersonUsecase) *ExpiredWorker {
+	return &ExpiredWorker{persons: persons}
+}
+
+type ExpiredWorker struct {
+	river.WorkerDefaults[ExpiredArgs]
+	persons domain.PersonUsecase
+}
+
+func (worker *ExpiredWorker) Work(ctx context.Context, _ *river.Job[ExpiredArgs]) error {
+	people, errGetExpired := worker.persons.GetExpiredProfiles(ctx, 100)
+	if errGetExpired != nil {
+		if !errors.Is(errGetExpired, domain.ErrNoResult) {
+			return nil
+		}
+
+		return errGetExpired
+	}
+
+	if len(people) == 0 {
+		return nil
+	}
+
+	_, errUpdate := worker.persons.UpdateProfiles(ctx, people)
+	if errUpdate != nil {
+		slog.Error("Failed to update profiles", log.ErrAttr(errUpdate))
+
+		return errUpdate
+	}
+
+	return nil
 }

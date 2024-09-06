@@ -11,10 +11,12 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/internal/queue"
 	"github.com/leighmacdonald/gbans/pkg/demoparser"
 	"github.com/leighmacdonald/gbans/pkg/fs"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/ricochet2200/go-disk-usage/du"
+	"github.com/riverqueue/river"
 )
 
 type demoUsecase struct {
@@ -178,35 +180,9 @@ func (d demoUsecase) Cleanup(ctx context.Context) {
 	}
 
 	slog.Debug("Old demos flushed", slog.Int("count", count), slog.String("size", humanize.Bytes(uint64(size))))
-}
 
-func (d demoUsecase) TriggerCleanup() {
-	d.cleanupChan <- true
-}
-
-func (d demoUsecase) Start(ctx context.Context) {
-	ticker := time.NewTicker(time.Hour)
-	tickerOrphans := time.NewTicker(time.Hour * 24)
-
-	d.Cleanup(ctx)
-
-	if err := d.RemoveOrphans(ctx); err != nil {
-		slog.Error("Failed to execute orphans", log.ErrAttr(err))
-	}
-
-	for {
-		select {
-		case <-ticker.C:
-			d.cleanupChan <- true
-		case <-d.cleanupChan:
-			d.Cleanup(ctx)
-		case <-tickerOrphans.C:
-			if err := d.RemoveOrphans(ctx); err != nil {
-				slog.Error("Failed to execute orphans", log.ErrAttr(err))
-			}
-		case <-ctx.Done():
-			return
-		}
+	if errOrphans := d.RemoveOrphans(ctx); errOrphans != nil {
+		slog.Error("Failed to execute orphans", log.ErrAttr(errOrphans))
 	}
 }
 
@@ -326,6 +302,31 @@ func (d demoUsecase) RemoveOrphans(ctx context.Context) error {
 
 		slog.Info("Removed orphan demo file", slog.String("filename", demo.Title))
 	}
+
+	return nil
+}
+
+type CleanupArgs struct{}
+
+func (args CleanupArgs) Kind() string {
+	return "demo_cleanup"
+}
+
+func (args CleanupArgs) InsertOpts() river.InsertOpts {
+	return river.InsertOpts{Queue: string(queue.Default), UniqueOpts: river.UniqueOpts{ByPeriod: time.Hour * 24}}
+}
+
+func NewCleanupWorker(demos domain.DemoUsecase) *CleanupWorker {
+	return &CleanupWorker{demos: demos}
+}
+
+type CleanupWorker struct {
+	river.WorkerDefaults[CleanupArgs]
+	demos domain.DemoUsecase
+}
+
+func (worker *CleanupWorker) Work(ctx context.Context, _ *river.Job[CleanupArgs]) error {
+	worker.demos.Cleanup(ctx)
 
 	return nil
 }
