@@ -152,7 +152,7 @@ func (args FetcherArgs) Kind() string {
 }
 
 func (args FetcherArgs) InsertOpts() river.InsertOpts {
-	return river.InsertOpts{Queue: string(queue.Default), UniqueOpts: river.UniqueOpts{ByPeriod: time.Minute * 10}}
+	return river.InsertOpts{Queue: string(queue.Demo), UniqueOpts: river.UniqueOpts{ByPeriod: time.Minute * 10}}
 }
 
 func NewFetcherWorker(fetcher *Fetcher, config domain.ConfigUsecase) *FetcherWorker {
