@@ -23,8 +23,8 @@
     "prettier:base": "prettier --parser typescript --single-quote",
     "prettier:check": "pnpm run prettier:base -- --list-different \"src/**/*.{ts,tsx}\"",
     "prettier:fix": "pnpm run prettier:base -- --write \"src/**/*.{ts,tsx}\"",
-    "eslint:check": "eslint . --ext .ts,.tsx",
-    "eslint:fix": "eslint . --ext .ts,.tsx --fix",
+    "eslint:check": "eslint .",
+    "eslint:fix": "eslint . --fix",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
