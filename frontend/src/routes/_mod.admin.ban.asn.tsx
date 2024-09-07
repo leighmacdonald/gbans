@@ -233,6 +233,7 @@ function AdminBanASN() {
                         pagination={pagination}
                         setPagination={setPagination}
                         columnFilters={columnFilters}
+                        toOptions={{ from: Route.fullPath }}
                     />
                 </ContainerWithHeaderAndButtons>
             </Grid>

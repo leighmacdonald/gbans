@@ -202,6 +202,7 @@ function AdminNews() {
                         pagination={pagination}
                         setPagination={setPagination}
                         sorting={sorting}
+                        toOptions={{ from: Route.fullPath }}
                     />
                 </ContainerWithHeaderAndButtons>
             </Grid>

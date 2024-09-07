@@ -13,6 +13,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createColumnHelper } from '@tanstack/react-table';
 import { apiDeleteSMGroup, SMAdmin, SMGroups } from '../api';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import { Route } from '../routes/_admin.admin.game-admins.tsx';
 import { initPagination, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 import { ContainerWithHeaderAndButtons } from './ContainerWithHeaderAndButtons.tsx';
@@ -108,6 +109,7 @@ export const SMGroupsTable = ({ groups, isLoading }: { groups: SMGroups[]; isLoa
                 columns={groupColumns}
                 pagination={pagination}
                 setPagination={setPagination}
+                toOptions={{ from: Route.fullPath }}
             />
         </ContainerWithHeaderAndButtons>
     );

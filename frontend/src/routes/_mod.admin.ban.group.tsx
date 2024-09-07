@@ -225,6 +225,7 @@ function AdminBanGroup() {
                         isLoading={isLoading}
                         columns={columns}
                         sorting={sorting}
+                        toOptions={{ from: Route.fullPath }}
                     />
                 </ContainerWithHeaderAndButtons>
             </Grid>

@@ -261,6 +261,7 @@ function AdminBanSteam() {
                                 isLoading={isLoading}
                                 columns={columns}
                                 sorting={sorting}
+                                toOptions={{ from: Route.fullPath }}
                             />
                         </Grid>
                     </Grid>

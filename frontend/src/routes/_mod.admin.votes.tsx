@@ -144,6 +144,7 @@ function AdminVotes() {
                         infinitePage={true}
                         pagination={pagination}
                         setPagination={setPagination}
+                        toOptions={{ from: Route.fullPath }}
                     />
                 </ContainerWithHeaderAndButtons>
             </Grid>

@@ -192,6 +192,7 @@ function AdminReports() {
                         pagination={pagination}
                         setPagination={setPagination}
                         columnFilters={columnFilters}
+                        toOptions={{ from: Route.fullPath }}
                     />
                 </ContainerWithHeader>
             </Grid>
