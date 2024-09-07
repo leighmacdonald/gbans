@@ -242,17 +242,6 @@ const UserReportHistory = ({ history, isLoading }: { history: ReportWithAuthor[]
     );
 };
 
-const validationSchema = z.object({
-    steam_id: z.string(),
-    body_md: z.string().min(10, 'Message too short (min 10)'),
-    reason: z.nativeEnum(BanReason),
-    reason_text: z.string().optional(),
-
-    //person_message_id: yup.number().min(1, 'Invalid message id').optional()
-    demo_id: z.number().optional(),
-    demo_tick: z.number().min(0, 'invalid demo tick value').optional()
-});
-
 export const ReportCreateForm = (): JSX.Element => {
     const { demo_id, steam_id, person_message_id } = Route.useSearch();
     const [validatedProfile, setValidatedProfile] = useState<PlayerProfile>();
@@ -287,9 +276,9 @@ export const ReportCreateForm = (): JSX.Element => {
             });
         },
         validatorAdapter: zodValidator,
-        validators: {
-            onChange: validationSchema
-        },
+        // validators: {
+        //     onChange: validationSchema
+        // },
         defaultValues: {
             body_md: '',
             demo_id: demo_id ?? undefined,
@@ -420,7 +409,7 @@ export const ReportCreateForm = (): JSX.Element => {
                             </Grid>
                             <Grid md={6}>
                                 <form.Field
-                                    validators={{ onChange: z.string().min(10) }}
+                                    validators={{ onChange: z.number({ coerce: true }).min(0).optional() }}
                                     name={'demo_tick'}
                                     children={({ state, handleChange, handleBlur }) => {
                                         return (
@@ -447,6 +436,7 @@ export const ReportCreateForm = (): JSX.Element => {
                     <Grid xs={12}>
                         <form.Field
                             name={'body_md'}
+                            validators={{ onChange: z.string().min(10, 'Message must be at least 10 characters.') }}
                             children={(props) => {
                                 return <MarkdownField {...props} label={'Message (Markdown)'} />;
                             }}
@@ -455,9 +445,16 @@ export const ReportCreateForm = (): JSX.Element => {
                     <Grid xs={12}>
                         <form.Subscribe
                             selector={(state) => [state.canSubmit, state.isSubmitting]}
-                            children={([canSubmit, isSubmitting]) => (
-                                <Buttons canSubmit={canSubmit} isSubmitting={isSubmitting} reset={form.reset} />
-                            )}
+                            children={([canSubmit, isSubmitting]) => {
+                                console.log(canSubmit, isSubmitting);
+                                return (
+                                    <Buttons
+                                        /*canSubmit={canSubmit}*/ canSubmit={true}
+                                        isSubmitting={isSubmitting}
+                                        reset={form.reset}
+                                    />
+                                );
+                            }}
                         />
                     </Grid>
                 </Grid>
