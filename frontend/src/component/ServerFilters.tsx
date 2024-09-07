@@ -11,6 +11,7 @@ import Switch from '@mui/material/Switch';
 import Grid from '@mui/material/Unstable_Grid2';
 import { styled } from '@mui/material/styles';
 import { useMapStateCtx } from '../hooks/useMapStateCtx.ts';
+import { logErr } from '../util/errors.ts';
 import { uniqCI } from '../util/lists.ts';
 import { ContainerWithHeader } from './ContainerWithHeader';
 
@@ -56,6 +57,7 @@ export const ServerFilters = () => {
                 state = JSON.parse(val);
             }
         } catch (e) {
+            logErr(e);
             return;
         }
         setShowOpenOnly(state?.showOpenOnly || defaultState.showOpenOnly);

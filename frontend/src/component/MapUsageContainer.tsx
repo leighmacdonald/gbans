@@ -30,7 +30,6 @@ const MapUseChart = ({ details }: MapUseChartProps) => {
         const small: SeriesData = { value: 0, label: 'other', id: 'other' };
         const large: SeriesData[] = [];
 
-        // eslint-disable-next-line no-loops/no-loops
         for (let i = 0; i < details.length; i++) {
             if (details[i].value < 1) {
                 small.value += details[i].value;
@@ -107,7 +106,6 @@ export const MapUsageContainer = () => {
 
             const mapsRecords: Record<string, number> = {};
 
-            // eslint-disable-next-line no-loops/no-loops
             for (let i = 0; i < resp.length; i++) {
                 const key = resp[i].map.replace('workshop/', '').split('_')[0];
                 if (!mapsRecords[key]) {
@@ -116,7 +114,7 @@ export const MapUsageContainer = () => {
                 mapsRecords[key] += resp[i].percent;
             }
             const modes: SeriesData[] = [];
-            // eslint-disable-next-line no-loops/no-loops
+
             for (const mapsKey in mapsRecords) {
                 modes.push({
                     label: mapsKey,

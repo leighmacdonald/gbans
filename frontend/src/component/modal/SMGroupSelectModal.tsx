@@ -17,7 +17,11 @@ export const SMGroupSelectModal = NiceModal.create(({ groups }: { groups: SMGrou
         onSubmit: async ({ value }) => {
             // TODO fix typing for select field and objects
             const group = groups.find((v) => v.group_id == (value.group as unknown as number));
-            group ? modal.resolve(group) : modal.reject('Invalid group selected');
+            if (group) {
+                modal.resolve(group);
+            } else {
+                modal.reject('Invalid group selected');
+            }
             await modal.hide();
         },
         defaultValues: {

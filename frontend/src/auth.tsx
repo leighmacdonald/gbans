@@ -2,6 +2,7 @@ import { createContext, ReactNode, useCallback, useEffect } from 'react';
 import { apiGetCurrentProfile, defaultAvatarHash, PermissionLevel, UserProfile } from './api';
 import { logoutFn } from './util/auth/logoutFn.ts';
 import { readAccessToken } from './util/auth/readAccessToken.ts';
+import { logErr } from './util/errors.ts';
 import { emptyOrNullString } from './util/types.ts';
 
 export const accessTokenKey = 'token';
@@ -31,7 +32,7 @@ export function AuthProvider({
         try {
             await logoutFn();
         } catch (e) {
-            console.log(`error logging out: ${e}`);
+            logErr(`error logging out: ${e}`);
         } finally {
             setProfile({
                 steam_id: '',
@@ -69,6 +70,7 @@ export function AuthProvider({
                     await login(await apiGetCurrentProfile());
                 }
             } catch (e) {
+                logErr(e);
                 await logout();
             }
         };

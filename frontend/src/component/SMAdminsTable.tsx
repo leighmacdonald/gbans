@@ -15,6 +15,7 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { apiAddAdminToGroup, apiDelAdminFromGroup, apiDeleteSMAdmin, SMAdmin, SMGroups } from '../api';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { Route } from '../routes/_admin.admin.game-admins.tsx';
+import { logErr } from '../util/errors.ts';
 import { initPagination, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 import { ContainerWithHeaderAndButtons } from './ContainerWithHeaderAndButtons.tsx';
@@ -41,6 +42,7 @@ export const SMAdminsTable = ({
             queryClient.setQueryData(['serverAdmins'], [...(admins ?? []), admin]);
             sendFlash('success', `Admin created successfully: ${admin.name}`);
         } catch (e) {
+            logErr(e);
             sendFlash('error', 'Error trying to add admin');
         }
     };
@@ -108,6 +110,7 @@ export const SMAdminsTable = ({
                 );
                 sendFlash('success', `Admin updated successfully: ${admin.name}`);
             } catch (e) {
+                logErr(e);
                 sendFlash('error', 'Error trying to update admin');
             }
         };
@@ -146,6 +149,7 @@ export const SMAdminsTable = ({
                 });
                 delGroupMutation.mutate({ admin, group });
             } catch (e) {
+                logErr(e);
                 sendFlash('error', 'Error trying to add group');
             }
         };

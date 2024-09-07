@@ -34,6 +34,7 @@ import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
 import { SelectFieldSimple } from '../component/field/SelectFieldSimple.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import { logErr } from '../util/errors.ts';
 import { numberStringValidator } from '../util/validator/numberStringValidator.ts';
 
 const settingsSchema = z.object({
@@ -684,6 +685,7 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
             await queryClient.fetchQuery({ queryKey: ['demoCleanup'], queryFn: apiGetDemoCleanup });
             sendFlash('success', 'Cleanup started');
         } catch (e) {
+            logErr(e);
             sendFlash('error', 'Cleanup failed to start');
         }
     };
@@ -1541,6 +1543,7 @@ const GeoLocationSection = ({
             await apiGetNetworkUpdateDB();
             sendFlash('success', 'Started database update');
         } catch (e) {
+            logErr(e);
             sendFlash('error', 'Update already running');
         }
     }, [sendFlash]);

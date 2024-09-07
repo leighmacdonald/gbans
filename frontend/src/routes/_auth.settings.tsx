@@ -43,6 +43,7 @@ import { MarkdownField, mdEditorRef } from '../component/field/MarkdownField.tsx
 import { ModalConfirm } from '../component/modal';
 import { useAppInfoCtx } from '../contexts/AppInfoCtx.ts';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
+import { logErr } from '../util/errors.ts';
 import { SubHeading, TabButton, TabSection } from './_admin.admin.settings.tsx';
 
 const settingsSchema = z.object({
@@ -473,6 +474,7 @@ const ConnectionsSection = ({
 
             sendFlash('success', 'Logged out successfully');
         } catch (e) {
+            logErr(e);
             sendFlash('error', 'Could not logout fully');
         }
     };
@@ -493,6 +495,7 @@ const ConnectionsSection = ({
             login({ ...profile, discord_id: '' });
             sendFlash('success', 'Logged out successfully');
         } catch (e) {
+            logErr(e);
             sendFlash('error', 'Could not logout fully');
         }
     };

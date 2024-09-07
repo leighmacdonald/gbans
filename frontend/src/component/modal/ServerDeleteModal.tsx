@@ -16,7 +16,9 @@ export const ServerDeleteModal = ({ onSuccess, server }: DeleteServerModalProps)
         apiDeleteServer(server.server_id)
             .then(() => {
                 sendFlash('success', `Deleted successfully`);
-                onSuccess && onSuccess(server);
+                if (onSuccess) {
+                    onSuccess(server);
+                }
             })
             .catch((err) => {
                 sendFlash('error', `Failed to unban: ${err}`);

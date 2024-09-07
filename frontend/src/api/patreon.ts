@@ -1,6 +1,6 @@
 import { apiCall, CallbackLink } from './common.ts';
 
-export interface Relationships {}
+// export interface Relationships {}
 
 export interface PatreonCampaign {
     type: string;

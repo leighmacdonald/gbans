@@ -12,6 +12,7 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { apiDeleteSMGroupImmunity, SMGroupImmunity, SMGroups } from '../api';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { Route } from '../routes/_admin.admin.game-admins.tsx';
+import { logErr } from '../util/errors.ts';
 import { initPagination, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 import { ContainerWithHeaderAndButtons } from './ContainerWithHeaderAndButtons.tsx';
@@ -38,6 +39,7 @@ export const SMImmunityTable = ({
             queryClient.setQueryData(['serverImmunities'], [...(immunities ?? []), immunity]);
             sendFlash('success', `Group immunity created successfully: ${immunity.group_immunity_id}`);
         } catch (e) {
+            logErr(e);
             sendFlash('error', 'Error trying to add group immunity');
         }
     };
