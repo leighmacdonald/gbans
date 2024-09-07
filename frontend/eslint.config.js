@@ -12,7 +12,7 @@ export default [
     },
     {
         rules: {
-            "@typescript-eslint/no-explicit-any": "error",
+            '@typescript-eslint/no-explicit-any': 'error',
             'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
             'no-loop-func': ['error'],
             'no-console': ['error'],
