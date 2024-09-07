@@ -446,14 +446,7 @@ export const ReportCreateForm = (): JSX.Element => {
                         <form.Subscribe
                             selector={(state) => [state.canSubmit, state.isSubmitting]}
                             children={([canSubmit, isSubmitting]) => {
-                                console.log(canSubmit, isSubmitting);
-                                return (
-                                    <Buttons
-                                        /*canSubmit={canSubmit}*/ canSubmit={true}
-                                        isSubmitting={isSubmitting}
-                                        reset={form.reset}
-                                    />
-                                );
+                                return <Buttons canSubmit={canSubmit} isSubmitting={isSubmitting} reset={form.reset} />;
                             }}
                         />
                     </Grid>
