@@ -21,7 +21,9 @@ export const CheckboxSimple = ({
                         onBlur={handleBlur}
                         onChange={(_, v) => {
                             handleChange(v);
-                            onChange && onChange(v);
+                            if (onChange) {
+                                onChange(v);
+                            }
                         }}
                     />
                 }

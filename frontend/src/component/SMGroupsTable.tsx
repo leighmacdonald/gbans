@@ -14,6 +14,7 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { apiDeleteSMGroup, SMAdmin, SMGroups } from '../api';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { Route } from '../routes/_admin.admin.game-admins.tsx';
+import { logErr } from '../util/errors.ts';
 import { initPagination, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 import { ContainerWithHeaderAndButtons } from './ContainerWithHeaderAndButtons.tsx';
@@ -32,6 +33,7 @@ export const SMGroupsTable = ({ groups, isLoading }: { groups: SMGroups[]; isLoa
             queryClient.setQueryData(['serverGroups'], [...(groups ?? []), group]);
             sendFlash('success', `Group created successfully: ${group.name}`);
         } catch (e) {
+            logErr(e);
             sendFlash('error', 'Error trying to add group');
         }
     };
@@ -84,6 +86,7 @@ export const SMGroupsTable = ({ groups, isLoading }: { groups: SMGroups[]; isLoa
                 );
                 sendFlash('success', `Group created successfully: ${group.name}`);
             } catch (e) {
+                logErr(e);
                 sendFlash('error', 'Error trying to add group');
             }
         };

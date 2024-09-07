@@ -96,8 +96,6 @@ export interface MatchPlayer {
     weapons: MatchPlayerWeapon[];
 }
 
-export interface PersonMessages {}
-
 export interface MatchResult extends MatchTimes {
     match_id: string;
     server_id: number;
@@ -105,7 +103,6 @@ export interface MatchResult extends MatchTimes {
     map_name: string;
     team_scores: TeamScores;
     players: MatchPlayer[];
-    chat: PersonMessages[];
 }
 
 export const apiGetMatch = async (match_id: string) => {

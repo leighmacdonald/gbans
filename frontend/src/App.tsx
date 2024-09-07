@@ -11,6 +11,7 @@ import { UseAppInfoCtx } from './contexts/AppInfoCtx.ts';
 import { AppError, ErrorCode } from './error.tsx';
 import { useAuth } from './hooks/useAuth.ts';
 import { routeTree } from './routeTree.gen.ts';
+import { logErr } from './util/errors.ts';
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,7 @@ const loadProfile = () => {
 
         return JSON.parse(userData);
     } catch (e) {
+        logErr(e);
         return defaultProfile;
     }
 };
@@ -122,7 +124,7 @@ const AppInfoProvider = ({ children }: PropsWithChildren) => {
                         return cached;
                     }
                 } catch (e) {
-                    console.log(`Failed to parse appInfo: ${e}`);
+                    logErr(`Failed to parse appInfo: ${e}`);
                 }
             }
 

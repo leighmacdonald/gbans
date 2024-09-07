@@ -39,7 +39,7 @@ export const steamIDOrEmptyString = async (input: string, individualOnly: boolea
         if (individualOnly ? sid.isValidIndividual() : sid.isValid()) {
             return sid.getSteamID64();
         }
-    } catch (_) {
+    } catch {
         // ignored
     }
 

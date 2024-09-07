@@ -16,6 +16,7 @@ import 'video-react/dist/video-react.css';
 import { apiDeleteSMGroupOverride, apiGetSMGroupOverrides, SMGroupOverrides, SMGroups } from '../../api';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Route } from '../../routes/_admin.admin.game-admins.tsx';
+import { logErr } from '../../util/errors.ts';
 import { initPagination, RowsPerPage } from '../../util/table.ts';
 import { renderDateTime } from '../../util/text.tsx';
 import { FullTable } from '../FullTable.tsx';
@@ -104,6 +105,7 @@ export const SMGroupOverridesModal = NiceModal.create(({ group }: { group: SMGro
             );
             sendFlash('success', `Group override created successfully: ${created.name}`);
         } catch (e) {
+            logErr(e);
             sendFlash('error', 'Error trying to add group override');
         }
     };
@@ -138,6 +140,7 @@ export const SMGroupOverridesModal = NiceModal.create(({ group }: { group: SMGro
                 );
                 sendFlash('success', `Group override updated successfully: ${override.name}`);
             } catch (e) {
+                logErr(e);
                 sendFlash('error', 'Error trying to edit group override');
             }
         };

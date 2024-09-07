@@ -52,7 +52,6 @@ const humanize = (count: number, thresh: number, dp = 1, units: string[]) => {
     let u = -1;
     const r = 10 ** dp;
 
-    // eslint-disable-next-line no-loops/no-loops
     do {
         count /= thresh;
         ++u;

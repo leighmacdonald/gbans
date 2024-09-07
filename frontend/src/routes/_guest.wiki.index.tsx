@@ -4,6 +4,7 @@ import { PermissionLevel } from '../api';
 import { apiGetWikiPage, Page } from '../api/wiki.ts';
 import { Title } from '../component/Title.tsx';
 import { WikiPage } from '../component/WikiPage.tsx';
+import { logErr } from '../util/errors.ts';
 
 export const Route = createFileRoute('/_guest/wiki/')({
     component: Wiki,
@@ -14,6 +15,7 @@ export const Route = createFileRoute('/_guest/wiki/')({
                 try {
                     return await apiGetWikiPage('home', abortController);
                 } catch (e) {
+                    logErr(e);
                     return {
                         revision: 0,
                         body_md: '',

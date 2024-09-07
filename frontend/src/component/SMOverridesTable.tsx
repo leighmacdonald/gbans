@@ -12,6 +12,7 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { apiDeleteSMOverride, SMOverrides } from '../api';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { Route } from '../routes/_admin.admin.game-admins.tsx';
+import { logErr } from '../util/errors.ts';
 import { initPagination, RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 import { ContainerWithHeaderAndButtons } from './ContainerWithHeaderAndButtons.tsx';
@@ -30,6 +31,7 @@ export const SMOverridesTable = ({ overrides, isLoading }: { overrides: SMOverri
             queryClient.setQueryData(['serverOverrides'], [...(overrides ?? []), override]);
             sendFlash('success', `Group created successfully: ${override.name}`);
         } catch (e) {
+            logErr(e);
             sendFlash('error', 'Error trying to add group');
         }
     };
@@ -66,6 +68,7 @@ export const SMOverridesTable = ({ overrides, isLoading }: { overrides: SMOverri
                 );
                 sendFlash('success', `Admin updated successfully: ${override.name}`);
             } catch (e) {
+                logErr(e);
                 sendFlash('error', 'Error trying to update admin');
             }
         };

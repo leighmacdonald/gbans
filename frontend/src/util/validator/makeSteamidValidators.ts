@@ -13,7 +13,9 @@ export const makeSteamidValidators = (onSuccess?: (profile: PlayerProfile) => vo
                     return false;
                 }
                 //TODO should this be done differently?
-                onSuccess && onSuccess(profile);
+                if (onSuccess) {
+                    onSuccess(profile);
+                }
                 return true;
             },
             {

@@ -1,5 +1,6 @@
 import { AppError, ErrorCode } from '../error.tsx';
 import { readAccessToken } from '../util/auth/readAccessToken.ts';
+import { logErr } from '../util/errors.ts';
 import { parseDateTime } from '../util/text.tsx';
 import { emptyOrNullString } from '../util/types';
 import { AppealState } from './bans';
@@ -52,16 +53,6 @@ export interface DataCount {
 
 export class EmptyBody {}
 
-// isRefresh is to track if the token is being used as an auth refresh token. In that
-// case its returned instead of the standard access token.
-const getAccessToken = async () => {
-    try {
-        return readAccessToken();
-    } catch (e) {
-        return '';
-    }
-};
-
 interface errorMessage {
     message: string;
     code?: number;
@@ -99,7 +90,7 @@ export const apiCall = async <TResponse = EmptyBody | null, TRequestBody = Recor
         method: method.toUpperCase()
     };
 
-    const accessToken = await getAccessToken();
+    const accessToken = readAccessToken();
 
     if (!emptyOrNullString(accessToken)) {
         headers['Authorization'] = `Bearer ${accessToken}`;
@@ -147,6 +138,7 @@ export const apiCall = async <TResponse = EmptyBody | null, TRequestBody = Recor
         try {
             err = (await response.json()) as errorMessage;
         } catch (e) {
+            logErr(e);
             throw new AppError(ErrorCode.Unknown);
         }
         throw new AppError(err.code ?? ErrorCode.Unknown, err.message);
