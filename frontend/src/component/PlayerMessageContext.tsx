@@ -1,6 +1,5 @@
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
-import Link from '@mui/material/Link';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -11,7 +10,7 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useQuery } from '@tanstack/react-query';
 import { apiGetMessageContext } from '../api';
-import RouterLink from './RouterLink.tsx';
+import { TextLink } from './TextLink.tsx';
 
 interface PlayerMessageContextProps {
     playerMessageId: number;
@@ -59,13 +58,12 @@ export const PlayerMessageContext = ({ playerMessageId, padding = 3 }: PlayerMes
                                                         <Typography variant={'body2'}>{m.server_name}</Typography>
                                                     </TableCell>
                                                     <TableCell>
-                                                        <Link
-                                                            component={RouterLink}
+                                                        <TextLink
                                                             to={`/profile/$steamId`}
                                                             params={{ steamId: m.steam_id }}
                                                         >
                                                             {m.persona_name}
-                                                        </Link>
+                                                        </TextLink>
                                                     </TableCell>
                                                     <TableCell>
                                                         <Typography variant={'body1'}>{m.body}</Typography>

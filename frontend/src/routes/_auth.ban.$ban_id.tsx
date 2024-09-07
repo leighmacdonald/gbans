@@ -36,11 +36,11 @@ import {
     PermissionLevel
 } from '../api';
 import { AppealMessageView } from '../component/AppealMessageView.tsx';
+import { ButtonLink } from '../component/ButtonLink.tsx';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ErrorDetails } from '../component/ErrorDetails.tsx';
 import { MarkDownRenderer } from '../component/MarkdownRenderer.tsx';
 import { ProfileInfoBox } from '../component/ProfileInfoBox.tsx';
-import RouterLink from '../component/RouterLink.tsx';
 import { SourceBansList } from '../component/SourceBansList.tsx';
 import { SteamIDList } from '../component/SteamIDList.tsx';
 import { Title } from '../component/Title';
@@ -155,6 +155,7 @@ function BanPage() {
                                 <FormControl fullWidth>
                                     <InputLabel id="appeal-status-label">Appeal Status</InputLabel>
                                     <Select<AppealState>
+                                        variant={'outlined'}
                                         value={ban?.appeal_state}
                                         labelId={'appeal-status-label'}
                                         id={'appeal-status'}
@@ -198,15 +199,15 @@ function BanPage() {
                             View Report #{ban?.report_id}
                         </Button>
                     )}
-                    <Button
+                    <ButtonLink
                         variant={'contained'}
                         color={'secondary'}
-                        component={RouterLink}
+                        from={Route.fullPath}
                         to={'/chatlogs'}
                         search={{ steam_id: ban.target_id }}
                     >
                         Chat Logs
-                    </Button>
+                    </ButtonLink>
                     <ButtonGroup fullWidth variant={'contained'}>
                         <Button color={'warning'} onClick={onEditBan} startIcon={<EditIcon />}>
                             Edit Ban

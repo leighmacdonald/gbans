@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import ReportIcon from '@mui/icons-material/Report';
-import Link from '@mui/material/Link';
 import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
@@ -22,7 +21,7 @@ import {
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { FullTable } from '../component/FullTable.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
-import RouterLink from '../component/RouterLink.tsx';
+import { TextLink } from '../component/TextLink.tsx';
 import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { SelectFieldSimple } from '../component/field/SelectFieldSimple.tsx';
@@ -209,15 +208,14 @@ const makeColumns = () => {
             header: 'ID',
             size: 30,
             cell: (info) => (
-                <Link
+                <TextLink
                     color={'primary'}
-                    component={RouterLink}
                     to={`/report/$reportId`}
                     params={{ reportId: String(info.getValue()) }}
                     marginRight={2}
                 >
                     #{info.getValue()}
-                </Link>
+                </TextLink>
             )
         }),
         columnHelper.accessor('report_status', {

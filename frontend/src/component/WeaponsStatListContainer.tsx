@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import InsightsIcon from '@mui/icons-material/Insights';
-import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import { useQuery } from '@tanstack/react-query';
 import { createColumnHelper, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
@@ -11,8 +10,8 @@ import { ContainerWithHeader } from './ContainerWithHeader';
 import { DataTable } from './DataTable.tsx';
 import FmtWhenGt from './FmtWhenGT.tsx';
 import { PaginatorLocal } from './PaginatorLocal.tsx';
-import RouterLink from './RouterLink.tsx';
 import { TableCellSmall } from './TableCellSmall.tsx';
+import { TextLink } from './TextLink.tsx';
 
 export const WeaponsStatListContainer = () => {
     const { data, isLoading } = useQuery({
@@ -41,13 +40,9 @@ const StatsWeaponsOverall = ({ stats, isLoading }: { stats: LazyResult<WeaponsOv
             size: 350,
             cell: (info) => (
                 <TableCellSmall>
-                    <Link
-                        component={RouterLink}
-                        to={'/stats/weapon/$weapon_id'}
-                        params={{ weapon_id: String(info.getValue()) }}
-                    >
+                    <TextLink to={'/stats/weapon/$weapon_id'} params={{ weapon_id: String(info.getValue()) }}>
                         {stats.data[info.row.index].name}
-                    </Link>
+                    </TextLink>
                 </TableCellSmall>
             )
         }),

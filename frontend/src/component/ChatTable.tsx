@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import FlagIcon from '@mui/icons-material/Flag';
 import ReportIcon from '@mui/icons-material/Report';
 import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
@@ -20,8 +19,8 @@ import { PersonMessage } from '../api';
 import { stringToColour } from '../util/colours.ts';
 import { renderDateTime } from '../util/text.tsx';
 import { DataTable } from './DataTable.tsx';
+import { IconButtonLink } from './IconButtonLink.tsx';
 import { PersonCell } from './PersonCell.tsx';
-import RouterLink from './RouterLink.tsx';
 
 export const ChatTable = ({
     messages,
@@ -109,10 +108,9 @@ export const ChatTable = ({
                 size: 30,
                 cell: (info) => (
                     <Tooltip title={'Create Report'}>
-                        <IconButton
+                        <IconButtonLink
                             color={'error'}
                             disabled={info.row.original.auto_filter_flagged > 0}
-                            component={RouterLink}
                             to={'/report'}
                             search={{
                                 person_message_id: info.row.original.person_message_id,
@@ -120,7 +118,7 @@ export const ChatTable = ({
                             }}
                         >
                             <ReportIcon />
-                        </IconButton>
+                        </IconButtonLink>
                     </Tooltip>
                 )
             }

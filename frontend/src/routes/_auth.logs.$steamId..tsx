@@ -3,7 +3,6 @@ import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import { TablePagination } from '@mui/material';
-import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useQuery } from '@tanstack/react-query';
@@ -13,14 +12,16 @@ import { z } from 'zod';
 import { apiGetMatches, MatchSummary } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { DataTable } from '../component/DataTable.tsx';
-import RouterLink from '../component/RouterLink.tsx';
+import { TextLink } from '../component/TextLink.tsx';
 import { Title } from '../component/Title';
 import { checkFeatureEnabled } from '../util/features.ts';
-import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
+import { RowsPerPage } from '../util/table.ts';
 import { renderDateTime } from '../util/text.tsx';
 
 const matchSummarySchema = z.object({
-    ...commonTableSearchSchema,
+    pageIndex: z.number().optional().catch(0),
+    pageSize: z.number().optional().catch(RowsPerPage.TwentyFive),
+    sortOrder: z.enum(['desc', 'asc']).optional().catch('desc'),
     sortColumn: z.enum(['match_id', 'map_name']).catch('match_id'),
     map: z.string().catch('')
 });
@@ -30,6 +31,7 @@ export const Route = createFileRoute('/_auth/logs/$steamId/')({
     beforeLoad: () => {
         checkFeatureEnabled('stats_enabled');
     },
+
     validateSearch: (search) => matchSummarySchema.parse(search)
 });
 
@@ -81,14 +83,14 @@ const MatchSummaryTable = ({
             size: 500,
             cell: (info) => {
                 return (
-                    <Link
-                        component={RouterLink}
+                    <TextLink
                         variant={'button'}
                         to={'/match/$matchId'}
-                        params={{ matchId: matches[info.row.index].match_id }}
+                        from={Route.fullPath}
+                        params={{ matchId: info.row.original.match_id }}
                     >
                         {info.getValue()}
-                    </Link>
+                    </TextLink>
                 );
             }
         }),
@@ -146,10 +148,16 @@ const MatchSummaryTable = ({
                     showLastButton
                     rowsPerPage={Number(pageSize ?? RowsPerPage.Ten)}
                     onRowsPerPageChange={async (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-                        await navigate({ search: (prev) => ({ ...prev, rows: Number(event.target.value), page: 0 }) });
+                        await navigate({
+                            from: Route.fullPath,
+                            search: (prev) => ({ ...prev, rows: Number(event.target.value), page: 0 })
+                        });
                     }}
                     onPageChange={async (_, newPage) => {
-                        await navigate({ search: (prev) => ({ ...prev, page: newPage }) });
+                        await navigate({
+                            from: Route.fullPath,
+                            search: (prev) => ({ ...prev, page: newPage })
+                        });
                     }}
                 />
             </Grid>

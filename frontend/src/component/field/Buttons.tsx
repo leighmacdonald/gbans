@@ -4,7 +4,8 @@ import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SendIcon from '@mui/icons-material/Send';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
-import { useNavigate } from '@tanstack/react-router';
+import { ToOptions } from '@tanstack/react-router';
+import { ButtonLink } from '../ButtonLink.tsx';
 
 type ButtonProps = {
     canSubmit: boolean;
@@ -19,6 +20,7 @@ type ButtonProps = {
     onClear?: () => Promise<void>;
     onClose?: () => Promise<void>;
     fullWidth?: boolean;
+    navigateOpts?: ToOptions;
 };
 
 export const Buttons = ({
@@ -33,10 +35,9 @@ export const Buttons = ({
     showClear = false,
     showReset = true,
     fullWidth = false,
-    onClose
+    onClose,
+    navigateOpts
 }: ButtonProps) => {
-    const navigate = useNavigate();
-
     return (
         <ButtonGroup fullWidth={fullWidth}>
             <Button
@@ -63,34 +64,36 @@ export const Buttons = ({
             )}
             {showClear ||
                 (onClear && (
-                    <Button
+                    <ButtonLink
+                        {...navigateOpts}
                         key={'clear-button'}
                         type="button"
-                        onClick={async () => {
-                            if (onClear) {
-                                return await onClear();
-                            }
-                            await navigate({
-                                search: (prev) => {
-                                    return {
-                                        ...prev,
-                                        page: 0,
-                                        steam_id: '',
-                                        body: '',
-                                        persona_name: '',
-                                        server_id: 0
-                                    };
-                                }
-                            });
-                            // TODO fix this hackjob
-                            window.location.reload();
-                        }}
+                        // onClick={async () => {
+                        //     if (onClear) {
+                        //         return await onClear();
+                        //     }
+                        //     await navigate({
+                        //         ...navigateOpts,
+                        //         search: (prev) => {
+                        //             return {
+                        //                 ...prev,
+                        //                 page: 0,
+                        //                 steam_id: '',
+                        //                 body: '',
+                        //                 persona_name: '',
+                        //                 server_id: 0
+                        //             };
+                        //         }
+                        //     });
+                        //     // TODO fix this hackjob
+                        //     window.location.reload();
+                        // }}
                         variant={'contained'}
                         color={'error'}
                         startIcon={<ClearIcon />}
                     >
                         {clearLabel}
-                    </Button>
+                    </ButtonLink>
                 ))}
             {onClose && (
                 <Button

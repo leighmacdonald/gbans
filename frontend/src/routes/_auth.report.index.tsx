@@ -3,11 +3,9 @@ import EditNotificationsIcon from '@mui/icons-material/EditNotifications';
 import HistoryIcon from '@mui/icons-material/History';
 import InfoIcon from '@mui/icons-material/Info';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import FormControl from '@mui/material/FormControl';
 import FormHelperText from '@mui/material/FormHelperText';
-import IconButton from '@mui/material/IconButton';
 import InputLabel from '@mui/material/InputLabel';
 import Link from '@mui/material/Link';
 import List from '@mui/material/List';
@@ -44,8 +42,10 @@ import {
     reportStatusString,
     ReportWithAuthor
 } from '../api';
+import { ButtonLink } from '../component/ButtonLink.tsx';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { DataTable } from '../component/DataTable.tsx';
+import { IconButtonLink } from '../component/IconButtonLink.tsx';
 import { LoadingPlaceholder } from '../component/LoadingPlaceholder.tsx';
 import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
@@ -100,14 +100,9 @@ function ReportCreate() {
                                 You are unable to report players while you are currently banned/muted.
                             </Typography>
                             <ButtonGroup sx={{ padding: 2 }}>
-                                <Button
-                                    component={RouterLink}
-                                    variant={'contained'}
-                                    color={'primary'}
-                                    to={`/ban/${profile.ban_id}`}
-                                >
+                                <ButtonLink variant={'contained'} color={'primary'} to={`/ban/${profile.ban_id}`}>
                                     Appeal Ban
-                                </Button>
+                                </ButtonLink>
                             </ButtonGroup>
                         </ContainerWithHeader>
                     )}
@@ -196,16 +191,15 @@ const UserReportHistory = ({ history, isLoading }: { history: ReportWithAuthor[]
             size: 30,
             cell: (info) => (
                 <ButtonGroup>
-                    <IconButton
+                    <IconButtonLink
                         color={'primary'}
-                        component={RouterLink}
                         to={`/report/$reportId`}
                         params={{ reportId: String(info.getValue()) }}
                     >
                         <Tooltip title={'View'}>
                             <VisibilityIcon />
                         </Tooltip>
-                    </IconButton>
+                    </IconButtonLink>
                 </ButtonGroup>
             )
         })

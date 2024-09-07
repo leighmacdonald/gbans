@@ -1,4 +1,4 @@
-import { useNavigate } from '@tanstack/react-router';
+import { ToOptions, useNavigate } from '@tanstack/react-router';
 import {
     ColumnDef,
     ColumnFiltersState,
@@ -24,6 +24,7 @@ type FullTableProps<T> = {
     setPagination: OnChangeFn<PaginationState>;
     sorting?: SortingState;
     infinitePage?: boolean;
+    toOptions: ToOptions;
 };
 
 // Higher level table component. Most/all tables with client side data should use this eventually.
@@ -35,7 +36,8 @@ export const FullTable = <T,>({
     setPagination,
     infinitePage = false,
     sorting = undefined,
-    columnFilters = undefined
+    columnFilters = undefined,
+    toOptions
 }: FullTableProps<T>) => {
     const navigate = useNavigate();
 
@@ -63,13 +65,13 @@ export const FullTable = <T,>({
                         setPagination((prev) => {
                             return { ...prev, pageSize: rows };
                         });
-                        await navigate({ search: (search) => ({ ...search, pageSize: rows }) });
+                        await navigate({ ...toOptions, search: (search) => ({ ...search, pageSize: rows }) });
                     }}
                     onPageChange={async (page) => {
                         setPagination((prev) => {
                             return { ...prev, pageIndex: page };
                         });
-                        await navigate({ search: (search) => ({ ...search, pageIndex: page }) });
+                        await navigate({ ...toOptions, search: (search) => ({ ...search, pageIndex: page }) });
                     }}
                     count={infinitePage ? -1 : table.getRowCount()}
                     rows={pagination.pageSize}

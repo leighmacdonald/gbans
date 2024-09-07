@@ -1,6 +1,5 @@
 import FilterListIcon from '@mui/icons-material/FilterList';
 import WifiFindIcon from '@mui/icons-material/WifiFind';
-import Link from '@mui/material/Link';
 import TableCell from '@mui/material/TableCell';
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
@@ -14,7 +13,7 @@ import { apiGetConnections, PersonConnection } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { DataTable } from '../component/DataTable.tsx';
 import { Paginator } from '../component/Paginator.tsx';
-import RouterLink from '../component/RouterLink.tsx';
+import { TextLink } from '../component/TextLink.tsx';
 import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
@@ -178,9 +177,9 @@ const PayersByIPTable = ({
             header: 'Steam ID',
             cell: (info) => (
                 <TableCell>
-                    <Link component={RouterLink} to={'/profile/$steamId'} params={{ steamId: info.getValue() }}>
+                    <TextLink to={'/profile/$steamId'} params={{ steamId: info.getValue() }}>
                         {info.getValue()}
-                    </Link>
+                    </TextLink>
                 </TableCell>
             )
         }),

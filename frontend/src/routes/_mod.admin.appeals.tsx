@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import FilterListIcon from '@mui/icons-material/FilterList';
-import Link from '@mui/material/Link';
 import MenuItem from '@mui/material/MenuItem';
 import TableCell from '@mui/material/TableCell';
 import Typography from '@mui/material/Typography';
@@ -32,7 +31,7 @@ import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { DataTable } from '../component/DataTable.tsx';
 import { PaginatorLocal } from '../component/PaginatorLocal.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
-import RouterLink from '../component/RouterLink.tsx';
+import { TextLink } from '../component/TextLink.tsx';
 import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { SelectFieldSimple } from '../component/field/SelectFieldSimple.tsx';
@@ -222,15 +221,14 @@ const AppealsTable = ({
             header: 'ID',
             size: 30,
             cell: (info) => (
-                <Link
+                <TextLink
                     color={'primary'}
-                    component={RouterLink}
                     to={`/ban/$ban_id`}
                     params={{ ban_id: String(info.getValue()) }}
                     marginRight={2}
                 >
                     #{info.getValue()}
-                </Link>
+                </TextLink>
             )
         }),
         columnHelper.accessor('appeal_state', {

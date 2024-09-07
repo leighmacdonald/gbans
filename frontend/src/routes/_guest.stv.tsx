@@ -19,9 +19,9 @@ import { ColumnFiltersState, createColumnHelper, SortingState } from '@tanstack/
 import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiGetDemos, apiGetServers, DemoFile, ServerSimple } from '../api';
+import { ButtonLink } from '../component/ButtonLink.tsx';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { FullTable } from '../component/FullTable.tsx';
-import RouterLink from '../component/RouterLink.tsx';
 import { Title } from '../component/Title.tsx';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
@@ -173,17 +173,16 @@ function STV() {
                 id: 'report',
                 size: 60,
                 cell: (info) => (
-                    <Button
+                    <ButtonLink
                         disabled={!isAuthenticated()}
                         color={'error'}
                         startIcon={<FlagIcon />}
-                        component={RouterLink}
                         variant={'contained'}
                         to={'/report'}
                         search={{ demo_id: info.row.original.demo_id }}
                     >
                         Report
-                    </Button>
+                    </ButtonLink>
                 )
             }),
             columnHelper.display({
@@ -228,6 +227,7 @@ function STV() {
                                                     <Select
                                                         fullWidth
                                                         value={state.value}
+                                                        variant={'outlined'}
                                                         label="Servers"
                                                         onChange={(e) => {
                                                             handleChange(Number(e.target.value));
@@ -305,6 +305,7 @@ function STV() {
                         isLoading={isLoading}
                         columns={columns}
                         sorting={sorting}
+                        toOptions={{ to: Route.fullPath }}
                     />
                 </ContainerWithHeader>
             </Grid>

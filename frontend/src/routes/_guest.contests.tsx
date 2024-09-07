@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import InsightsIcon from '@mui/icons-material/Insights';
-import Link from '@mui/material/Link';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
@@ -15,9 +14,9 @@ import {
 import { apiContests, Contest } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
 import { DataTable } from '../component/DataTable.tsx';
-import RouterLink from '../component/RouterLink.tsx';
 import { TableCellSmall } from '../component/TableCellSmall.tsx';
 import { TableCellString } from '../component/TableCellString.tsx';
+import { TextLink } from '../component/TextLink.tsx';
 import { Title } from '../component/Title.tsx';
 import { checkFeatureEnabled } from '../util/features.ts';
 import { RowsPerPage } from '../util/table.ts';
@@ -88,14 +87,12 @@ const ContestsTable = ({
             cell: (info) => {
                 return (
                     <TableCellSmall>
-                        <Link
-                            component={RouterLink}
+                        <TextLink
                             to={`/contests/$contest_id`}
-                            // variant={'button'}
-                            params={{ contest_id: info.row.original.contest_id }}
+                            params={{ contest_id: info.row.original.contest_id as string }}
                         >
                             {info.getValue()}
-                        </Link>
+                        </TextLink>
                     </TableCellSmall>
                 );
             }

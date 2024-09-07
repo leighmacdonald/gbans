@@ -7,7 +7,6 @@ import GavelIcon from '@mui/icons-material/Gavel';
 import UndoIcon from '@mui/icons-material/Undo';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
-import Link from '@mui/material/Link';
 import MenuItem from '@mui/material/MenuItem';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
@@ -23,9 +22,9 @@ import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { ContainerWithHeaderAndButtons } from '../component/ContainerWithHeaderAndButtons.tsx';
 import { FullTable } from '../component/FullTable.tsx';
 import { PersonCell } from '../component/PersonCell.tsx';
-import RouterLink from '../component/RouterLink.tsx';
 import { TableCellBool } from '../component/TableCellBool.tsx';
 import { TableCellRelativeDateField } from '../component/TableCellRelativeDateField.tsx';
+import { TextLink } from '../component/TextLink.tsx';
 import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
@@ -282,9 +281,9 @@ const makeColumns = (
         size: 50,
         header: 'Ban ID',
         cell: (info) => (
-            <Link component={RouterLink} to={`/ban/$ban_id`} params={{ ban_id: String(info.getValue()) }}>
+            <TextLink to={`/ban/$ban_id`} params={{ ban_id: String(info.getValue()) }}>
                 {`#${info.getValue()}`}
-            </Link>
+            </TextLink>
         )
     }),
     columnHelper.accessor('source_id', {
@@ -373,9 +372,9 @@ const makeColumns = (
         meta: { tooltip: 'Linked report' },
         cell: (info) =>
             Boolean(info.getValue()) && (
-                <Link component={RouterLink} to={`/report/$reportId`} params={{ reportId: String(info.getValue()) }}>
+                <TextLink to={`/report/$reportId`} params={{ reportId: String(info.getValue()) }}>
                     {`#${info.getValue()}`}
-                </Link>
+                </TextLink>
             )
     }),
     columnHelper.display({
