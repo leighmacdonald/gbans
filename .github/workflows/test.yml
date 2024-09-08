@@ -21,6 +21,20 @@ jobs:
         working-directory: ./sourcemod/scripting
         run: spcomp -i"./include/" gbans.sp -o ../plugins/gbans.smx
 
+  build-plugin:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup SourcePawn Compiler
+        uses: rumblefrog/setup-sp@master
+        with:
+          version: "1.12.x"
+
+      - name: Ensure sourcemod plugin builds
+        working-directory: ./sourcemod/scripting
+        run : |
+          spcomp -i"./include/" gbans.sp -o ../plugins/gbans.smx
+          ls -la ../plugins
+
   lint-ts:
     runs-on: ubuntu-latest
     env:
