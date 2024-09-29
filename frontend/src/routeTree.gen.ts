@@ -18,6 +18,7 @@ import { Route as AdminImport } from './routes/_admin'
 import { Route as GuestIndexImport } from './routes/_guest.index'
 import { Route as GuestWikiImport } from './routes/_guest.wiki'
 import { Route as GuestStvImport } from './routes/_guest.stv'
+import { Route as GuestSpeedrunsImport } from './routes/_guest.speedruns'
 import { Route as GuestServersImport } from './routes/_guest.servers'
 import { Route as GuestPrivacyPolicyImport } from './routes/_guest.privacy-policy'
 import { Route as GuestPatreonImport } from './routes/_guest.patreon'
@@ -102,6 +103,11 @@ const GuestWikiRoute = GuestWikiImport.update({
 
 const GuestStvRoute = GuestStvImport.update({
   path: '/stv',
+  getParentRoute: () => GuestRoute,
+} as any)
+
+const GuestSpeedrunsRoute = GuestSpeedrunsImport.update({
+  path: '/speedruns',
   getParentRoute: () => GuestRoute,
 } as any)
 
@@ -481,6 +487,13 @@ declare module '@tanstack/react-router' {
       path: '/servers'
       fullPath: '/servers'
       preLoaderRoute: typeof GuestServersImport
+      parentRoute: typeof GuestImport
+    }
+    '/_guest/speedruns': {
+      id: '/_guest/speedruns'
+      path: '/speedruns'
+      fullPath: '/speedruns'
+      preLoaderRoute: typeof GuestSpeedrunsImport
       parentRoute: typeof GuestImport
     }
     '/_guest/stv': {
@@ -866,6 +879,7 @@ interface GuestRouteChildren {
   GuestPatreonRoute: typeof GuestPatreonRoute
   GuestPrivacyPolicyRoute: typeof GuestPrivacyPolicyRoute
   GuestServersRoute: typeof GuestServersRoute
+  GuestSpeedrunsRoute: typeof GuestSpeedrunsRoute
   GuestStvRoute: typeof GuestStvRoute
   GuestWikiRoute: typeof GuestWikiRouteWithChildren
   GuestIndexRoute: typeof GuestIndexRoute
@@ -880,6 +894,7 @@ const GuestRouteChildren: GuestRouteChildren = {
   GuestPatreonRoute: GuestPatreonRoute,
   GuestPrivacyPolicyRoute: GuestPrivacyPolicyRoute,
   GuestServersRoute: GuestServersRoute,
+  GuestSpeedrunsRoute: GuestSpeedrunsRoute,
   GuestStvRoute: GuestStvRoute,
   GuestWikiRoute: GuestWikiRouteWithChildren,
   GuestIndexRoute: GuestIndexRoute,
@@ -946,6 +961,7 @@ interface FileRoutesByFullPath {
   '/patreon': typeof GuestPatreonRoute
   '/privacy-policy': typeof GuestPrivacyPolicyRoute
   '/servers': typeof GuestServersRoute
+  '/speedruns': typeof GuestSpeedrunsRoute
   '/stv': typeof GuestStvRoute
   '/wiki': typeof GuestWikiRouteWithChildren
   '/': typeof GuestIndexRoute
@@ -999,6 +1015,7 @@ interface FileRoutesByTo {
   '/patreon': typeof GuestPatreonRoute
   '/privacy-policy': typeof GuestPrivacyPolicyRoute
   '/servers': typeof GuestServersRoute
+  '/speedruns': typeof GuestSpeedrunsRoute
   '/stv': typeof GuestStvRoute
   '/': typeof GuestIndexRoute
   '/admin/game-admins': typeof AdminAdminGameAdminsRoute
@@ -1057,6 +1074,7 @@ interface FileRoutesById {
   '/_guest/patreon': typeof GuestPatreonRoute
   '/_guest/privacy-policy': typeof GuestPrivacyPolicyRoute
   '/_guest/servers': typeof GuestServersRoute
+  '/_guest/speedruns': typeof GuestSpeedrunsRoute
   '/_guest/stv': typeof GuestStvRoute
   '/_guest/wiki': typeof GuestWikiRouteWithChildren
   '/_guest/': typeof GuestIndexRoute
@@ -1115,6 +1133,7 @@ interface FileRouteTypes {
     | '/patreon'
     | '/privacy-policy'
     | '/servers'
+    | '/speedruns'
     | '/stv'
     | '/wiki'
     | '/'
@@ -1167,6 +1186,7 @@ interface FileRouteTypes {
     | '/patreon'
     | '/privacy-policy'
     | '/servers'
+    | '/speedruns'
     | '/stv'
     | '/'
     | '/admin/game-admins'
@@ -1223,6 +1243,7 @@ interface FileRouteTypes {
     | '/_guest/patreon'
     | '/_guest/privacy-policy'
     | '/_guest/servers'
+    | '/_guest/speedruns'
     | '/_guest/stv'
     | '/_guest/wiki'
     | '/_guest/'
@@ -1330,6 +1351,7 @@ export const routeTree = rootRoute
         "/_guest/patreon",
         "/_guest/privacy-policy",
         "/_guest/servers",
+        "/_guest/speedruns",
         "/_guest/stv",
         "/_guest/wiki",
         "/_guest/",
@@ -1426,6 +1448,10 @@ export const routeTree = rootRoute
     },
     "/_guest/servers": {
       "filePath": "_guest.servers.tsx",
+      "parent": "/_guest"
+    },
+    "/_guest/speedruns": {
+      "filePath": "_guest.speedruns.tsx",
       "parent": "/_guest"
     },
     "/_guest/stv": {
