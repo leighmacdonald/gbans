@@ -1,13 +1,15 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
-import Typography from '@mui/material/Typography';
 import { logErr } from '../util/errors';
+import { ErrorNotice } from './ErrorNotice.tsx';
 
 interface BoundaryState {
     hasError: boolean;
+    error?: Error;
 }
 
 interface BoundaryProps {
-    children: ReactNode;
+    children?: ReactNode;
+    fallback?: ReactNode;
 }
 
 export class ErrorBoundary extends Component<BoundaryProps, BoundaryState> {
@@ -16,24 +18,29 @@ export class ErrorBoundary extends Component<BoundaryProps, BoundaryState> {
         this.state = { hasError: false };
     }
 
-    static getDerivedStateFromError() {
-        return { hasError: true };
+    static getDerivedStateFromError(error: Error) {
+        // Update state so the next render will show the fallback UI.
+        return { hasError: true, error: error };
     }
 
-    componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-        // TODO record somewhere, sentry?
-        logErr(error);
-        logErr(errorInfo);
-    }
-
-    render(): ReactNode {
-        if (this.state.hasError) {
-            return (
-                <Typography marginTop={3} variant={'h2'} color={'error'} textAlign={'center'}>
-                    🤯 🤯 🤯 Something went wrong 🤯 🤯 🤯
-                </Typography>
-            );
+    componentDidCatch(error: Error, info: ErrorInfo) {
+        if (error) {
+            logErr(error);
         }
+        if (info.componentStack) {
+            logErr(info.componentStack);
+        }
+    }
+
+    render() {
+        if (this.state.hasError) {
+            if (this.props.fallback) {
+                // You can render any custom fallback UI
+                return this.props.fallback;
+            }
+            return <ErrorNotice {...this.props} error={this.state.error} />;
+        }
+
         return this.props.children;
     }
 }

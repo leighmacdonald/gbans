@@ -45,6 +45,7 @@ type Database interface {
 	GetCount(ctx context.Context, builder sq.SelectBuilder) (int64, error)
 	DBErr(rootError error) error
 	TruncateTable(ctx context.Context, table string) error
+	WrapTx(ctx context.Context, fn func(pgx.Tx) error) error
 }
 
 type dbQueryTracer struct{}
@@ -70,6 +71,25 @@ type postgresStore struct {
 	autoMigrate bool
 	migrated    bool
 	logQueries  bool
+}
+
+func (db *postgresStore) WrapTx(ctx context.Context, fn func(pgx.Tx) error) error {
+	transaction, errTx := db.Begin(ctx)
+	if errTx != nil {
+		return db.DBErr(errTx)
+	}
+
+	if err := fn(transaction); err != nil {
+		if errRollback := transaction.Rollback(ctx); errRollback != nil {
+			return db.DBErr(errRollback)
+		}
+	}
+
+	if err := transaction.Commit(ctx); err != nil {
+		return db.DBErr(err)
+	}
+
+	return nil
 }
 
 func New(dsn string, autoMigrate bool, logQueries bool) Database {
