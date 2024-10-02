@@ -6,6 +6,7 @@ import Typography from '@mui/material/Typography';
 import { AppError, ErrorCode } from '../error.tsx';
 import steamLogo from '../icons/steam_login_lg.png';
 import { generateOIDCLink } from '../util/auth/generateOIDCLink.ts';
+import { logErr } from '../util/errors.ts';
 import { ContainerWithHeader } from './ContainerWithHeader.tsx';
 
 const ErrorBox = ({ error }: { error: string }) => {
@@ -17,6 +18,7 @@ const ErrorBox = ({ error }: { error: string }) => {
 };
 
 export const ErrorDetails = ({ error }: { error: AppError | unknown }) => {
+    logErr(error);
     if (error instanceof AppError) {
         return (
             <ContainerWithHeader title={error.name} iconLeft={<ErrorIcon />}>

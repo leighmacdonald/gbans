@@ -23,14 +23,14 @@ func (u *speedrunUsecase) RoundStart() (uuid.UUID, error) {
 	return id, nil
 }
 
-func (u *speedrunUsecase) RoundFinish(details domain.SpeedrunDetails) error {
+func (u *speedrunUsecase) RoundFinish(details domain.Speedrun) error {
 	if len(details.Rounds) == 0 {
 		return domain.ErrInsufficientDetails
 	}
 
-	var validPlayers []domain.SpeedrunPlayer
+	var validPlayers []domain.SpeedrunRunner
 	for _, player := range details.Players {
-		if details.Time/2 > player.Time {
+		if details.Duration/2 > player.Duration {
 			continue
 		}
 
@@ -42,6 +42,6 @@ func (u *speedrunUsecase) RoundFinish(details domain.SpeedrunDetails) error {
 	return u.repo.Save(details)
 }
 
-func (u *speedrunUsecase) Query(query domain.SpeedrunQuery) ([]domain.SpeedrunDetails, error) {
+func (u *speedrunUsecase) Query(query domain.SpeedrunQuery) ([]domain.Speedrun, error) {
 	return nil, errors.New("error")
 }
