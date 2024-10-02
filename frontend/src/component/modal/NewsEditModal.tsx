@@ -5,7 +5,10 @@ import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { zodValidator } from '@tanstack/zod-form-adapter';
+import { z } from 'zod';
 import { apiNewsCreate, apiNewsSave, NewsEntry } from '../../api/news.ts';
+import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+import { logErr } from '../../util/errors.ts';
 import { Heading } from '../Heading';
 import { Buttons } from '../field/Buttons.tsx';
 import { CheckboxSimple } from '../field/CheckboxSimple.tsx';
@@ -14,20 +17,24 @@ import { TextFieldSimple } from '../field/TextFieldSimple.tsx';
 
 export const NewsEditModal = NiceModal.create(({ entry }: { entry?: NewsEntry }) => {
     const modal = useModal();
+    const { sendFlash } = useUserFlashCtx();
 
     const mutation = useMutation({
         mutationKey: ['newsEdit'],
         mutationFn: async (values: { title: string; body_md: string; is_published: boolean }) => {
-            try {
-                if (entry?.news_id) {
-                    modal.resolve(await apiNewsSave({ ...entry, ...values }));
-                } else {
-                    modal.resolve(await apiNewsCreate(values.title, values.body_md, values.is_published));
-                }
-            } catch (e) {
-                modal.reject(e);
+            if (entry?.news_id) {
+                return await apiNewsSave({ ...entry, ...values });
+            } else {
+                return await apiNewsCreate(values.title, values.body_md, values.is_published);
             }
+        },
+        onSuccess: async (entry) => {
+            modal.resolve(entry);
             await modal.hide();
+        },
+        onError: (err) => {
+            logErr(err);
+            sendFlash('error', 'Error sending edit request');
         }
     });
 
@@ -68,6 +75,9 @@ export const NewsEditModal = NiceModal.create(({ entry }: { entry?: NewsEntry })
                         <Grid xs={12}>
                             <Field
                                 name={'body_md'}
+                                validators={{
+                                    onChange: z.string().min(10).default('')
+                                }}
                                 children={(props) => {
                                     return <MarkdownField {...props} label={'Body'} />;
                                 }}

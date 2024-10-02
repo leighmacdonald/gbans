@@ -1,18 +1,19 @@
 package domain
 
 import (
+	"context"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"time"
 )
 
 type SpeedrunRepository interface {
-	Query(query SpeedrunQuery) ([]SpeedrunDetails, error)
-	Save(details SpeedrunDetails) error
+	Query(ctx context.Context, query SpeedrunQuery) ([]Speedrun, error)
+	Save(ctx context.Context, details *Speedrun) error
 }
 
 type SpeedrunUsecase interface {
-	RoundFinish(details SpeedrunDetails) error
-	Query(query SpeedrunQuery) ([]SpeedrunDetails, error)
+	Save(ctx context.Context, details Speedrun) (Speedrun, error)
+	Query(ctx context.Context, query SpeedrunQuery) ([]Speedrun, error)
 }
 
 type SpeedrunInterval int
@@ -32,25 +33,28 @@ type SpeedrunQuery struct {
 }
 
 type SpeedrunRound struct {
-	Players []SpeedrunPlayer `json:"players"`
+	RoundID  int              `json:"round_id"`
+	Players  []SpeedrunRunner `json:"players"`
+	Duration time.Duration    `json:"duration"`
 }
 
-type SpeedrunDetails struct {
-	Rounds  []SpeedrunRound  `json:"rounds"`
-	Players []SpeedrunPlayer `json:"players"`
-	Time    int              `json:"time"`
+type Speedrun struct {
+	SpeedrunID  int              `json:"speedrun_id"`
+	MapName     string           `json:"map_name"`
+	Rounds      []SpeedrunRound  `json:"rounds"`
+	Players     []SpeedrunRunner `json:"players"`
+	Duration    time.Duration    `json:"duration"`
+	Category    string           `json:"category"`
+	PlayerCount int              `json:"player_count"`
+	BotCount    int              `json:"bot_count"`
+	CreatedOn   time.Time        `json:"created_on"`
 }
 
-func (sr SpeedrunDetails) Duration() time.Duration {
-	return time.Duration(sr.Time) * time.Second
+func (sr Speedrun) AsDuration() time.Duration {
+	return time.Duration(sr.Duration) * time.Second
 }
 
-type SpeedrunPlayer struct {
-	SteamID steamid.SteamID
-	Time    int
-}
-
-type SpeedrunResult struct {
-	MapName string
-	Players UserProfile
+type SpeedrunRunner struct {
+	SteamID  steamid.SteamID `json:"steam_id"`
+	Duration time.Duration   `json:"duration"`
 }

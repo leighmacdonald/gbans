@@ -31,6 +31,8 @@ import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import { apiSaveAsset, assetURL } from '../../api/media.ts';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
+import { logErr } from '../../util/errors.ts';
+import { ErrorBoundary } from '../ErrorBoundary.tsx';
 import './MarkdownField.css';
 import { FieldProps } from './common.ts';
 
@@ -66,6 +68,7 @@ export const MarkdownField = ({ state, handleChange }: MDBodyFieldProps) => {
     const theme = useTheme();
 
     const onError = (payload: { error: string; source: string }) => {
+        logErr(payload);
         sendFlash('error', payload.error);
     };
 
@@ -89,46 +92,48 @@ export const MarkdownField = ({ state, handleChange }: MDBodyFieldProps) => {
 
     return (
         <Paper>
-            <MDXEditor
-                contentEditableClassName={'md-content-editable'}
-                className={classes}
-                autoFocus={true}
-                markdown={state.value.trimEnd()}
-                placeholder={'Message (Min length: 10 characters)'}
-                plugins={[
-                    toolbarPlugin({
-                        toolbarContents: () => (
-                            <Stack direction={'row'}>
-                                <UndoRedo />
-                                <BoldItalicUnderlineToggles />
-                                <CodeToggle />
-                                <InsertImage />
-                                <InsertTable />
-                                <InsertThematicBreak />
-                                <ListsToggle />
-                            </Stack>
-                        )
-                    }),
-                    listsPlugin(),
-                    quotePlugin(),
-                    headingsPlugin(),
-                    linkPlugin(),
-                    linkDialogPlugin(),
-                    imagePlugin({ imageUploadHandler }),
-                    tablePlugin(),
-                    thematicBreakPlugin(),
-                    frontmatterPlugin(),
-                    codeBlockPlugin({ defaultCodeBlockLanguage: 'txt' }),
-                    directivesPlugin({
-                        directiveDescriptors: [AdmonitionDirectiveDescriptor]
-                    }),
-                    markdownShortcutPlugin()
-                ]}
-                onError={onError}
-                onChange={handleChange}
-                ref={mdEditorRef}
-            />
-            {errInfo}
+            <ErrorBoundary>
+                <MDXEditor
+                    contentEditableClassName={'md-content-editable'}
+                    className={classes}
+                    autoFocus={true}
+                    markdown={state.value}
+                    placeholder={'Message (Min length: 10 characters)'}
+                    plugins={[
+                        toolbarPlugin({
+                            toolbarContents: () => (
+                                <Stack direction={'row'}>
+                                    <UndoRedo />
+                                    <BoldItalicUnderlineToggles />
+                                    <CodeToggle />
+                                    <InsertImage />
+                                    <InsertTable />
+                                    <InsertThematicBreak />
+                                    <ListsToggle />
+                                </Stack>
+                            )
+                        }),
+                        listsPlugin(),
+                        quotePlugin(),
+                        headingsPlugin(),
+                        linkPlugin(),
+                        linkDialogPlugin(),
+                        imagePlugin({ imageUploadHandler }),
+                        tablePlugin(),
+                        thematicBreakPlugin(),
+                        frontmatterPlugin(),
+                        codeBlockPlugin({ defaultCodeBlockLanguage: 'txt' }),
+                        directivesPlugin({
+                            directiveDescriptors: [AdmonitionDirectiveDescriptor]
+                        }),
+                        markdownShortcutPlugin()
+                    ]}
+                    onError={onError}
+                    onChange={handleChange}
+                    ref={mdEditorRef}
+                />
+                {errInfo}
+            </ErrorBoundary>
         </Paper>
     );
 };
