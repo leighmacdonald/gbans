@@ -1,5 +1,6 @@
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import ChatIcon from '@mui/icons-material/Chat';
+import ElectricBoltIcon from '@mui/icons-material/ElectricBolt';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import EventIcon from '@mui/icons-material/Event';
 import GavelIcon from '@mui/icons-material/Gavel';
@@ -149,6 +150,18 @@ function Index() {
                                 Stats (Beta)
                             </Button>
                         )}
+
+                        <Button
+                            component={RouterLink}
+                            startIcon={<ElectricBoltIcon />}
+                            fullWidth
+                            color={'primary'}
+                            variant={'contained'}
+                            to={'/speedruns'}
+                        >
+                            Speedruns
+                        </Button>
+
                         {appInfo.discord_enabled && appInfo.link_id != '' && (
                             <Button
                                 component={Link}
