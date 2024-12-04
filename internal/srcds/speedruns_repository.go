@@ -38,7 +38,7 @@ func (r *speedrunRepository) Save(ctx context.Context, details *domain.Speedrun)
 			return r.db.DBErr(errScan)
 		}
 
-		if errRounds := r.insertRounds(ctx, tx, details.SpeedrunID, details.Rounds); errRounds != nil {
+		if errRounds := r.insertRounds(ctx, tx, details.SpeedrunID, details.PointCaptures); errRounds != nil {
 			return errRounds
 		}
 
@@ -50,7 +50,7 @@ func (r *speedrunRepository) Save(ctx context.Context, details *domain.Speedrun)
 	})
 }
 
-func (r *speedrunRepository) insertPlayers(ctx context.Context, tx pgx.Tx, speedrunID int, players []domain.SpeedrunRunner) error {
+func (r *speedrunRepository) insertPlayers(ctx context.Context, tx pgx.Tx, speedrunID int, players []domain.SpeedrunParticipant) error {
 	for _, runner := range players {
 		query, args, errQuery := r.db.Builder().
 			Insert("speedrun_runners").
@@ -72,7 +72,7 @@ func (r *speedrunRepository) insertPlayers(ctx context.Context, tx pgx.Tx, speed
 	return nil
 }
 
-func (r *speedrunRepository) insertRounds(ctx context.Context, tx pgx.Tx, speedrunID int, rounds []domain.SpeedrunRound) error {
+func (r *speedrunRepository) insertRounds(ctx context.Context, tx pgx.Tx, speedrunID int, rounds []domain.SpeedrunPointCaptures) error {
 	for roundNum, round := range rounds {
 		query, args, errQuery := r.db.Builder().
 			Insert("speedrun_rounds").
@@ -99,7 +99,7 @@ func (r *speedrunRepository) insertRounds(ctx context.Context, tx pgx.Tx, speedr
 	return nil
 }
 
-func (r *speedrunRepository) insertRoundPlayers(ctx context.Context, tx pgx.Tx, roundID int, players []domain.SpeedrunRunner) error {
+func (r *speedrunRepository) insertRoundPlayers(ctx context.Context, tx pgx.Tx, roundID int, players []domain.SpeedrunParticipant) error {
 	for _, runner := range players {
 		query, args, errQuery := r.db.Builder().
 			Insert("speedrun_rounds_runners").

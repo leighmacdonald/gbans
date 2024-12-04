@@ -1,6 +1,7 @@
 package srcds
 
 import (
+	"context"
 	"errors"
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -14,21 +15,12 @@ type speedrunUsecase struct {
 	repo domain.SpeedrunRepository
 }
 
-func (u *speedrunUsecase) RoundStart() (uuid.UUID, error) {
-	id, errID := uuid.NewV4()
-	if errID != nil {
-		return id, errID
+func (u *speedrunUsecase) Save(ctx context.Context, details domain.Speedrun) (domain.Speedrun, error) {
+	if len(details.PointCaptures) == 0 {
+		return details, domain.ErrInsufficientDetails
 	}
 
-	return id, nil
-}
-
-func (u *speedrunUsecase) RoundFinish(details domain.Speedrun) error {
-	if len(details.Rounds) == 0 {
-		return domain.ErrInsufficientDetails
-	}
-
-	var validPlayers []domain.SpeedrunRunner
+	var validPlayers []domain.SpeedrunParticipant //nolint:prealloc
 	for _, player := range details.Players {
 		if details.Duration/2 > player.Duration {
 			continue
@@ -39,9 +31,22 @@ func (u *speedrunUsecase) RoundFinish(details domain.Speedrun) error {
 
 	details.Players = validPlayers
 
-	return u.repo.Save(details)
+	if err := u.repo.Save(ctx, &details); err != nil {
+		return domain.Speedrun{}, err
+	}
+
+	return details, nil
 }
 
-func (u *speedrunUsecase) Query(query domain.SpeedrunQuery) ([]domain.Speedrun, error) {
-	return nil, errors.New("error")
+func (u *speedrunUsecase) Query(_ context.Context, _ domain.SpeedrunQuery) ([]domain.Speedrun, error) {
+	return nil, errors.New("implement me")
+}
+
+func (u *speedrunUsecase) RoundStart() (uuid.UUID, error) {
+	id, errID := uuid.NewV4()
+	if errID != nil {
+		return id, errID
+	}
+
+	return id, nil
 }
