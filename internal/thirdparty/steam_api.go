@@ -32,7 +32,7 @@ func FetchPlayerBans(ctx context.Context, steamIDs []steamid.SteamID) ([]steamwe
 			defer waitGroup.Done()
 
 			var (
-				total      = uint64(len(steamIDs) - index)
+				total      = uint64(len(steamIDs) - index) //nolint:gosec
 				maxResults = min(steamQueryMaxResults, total)
 				ids        = steamIDs[index : index+int(maxResults)] // nolint:gosec
 			)

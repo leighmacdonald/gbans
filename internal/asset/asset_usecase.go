@@ -78,7 +78,7 @@ func (s assets) Delete(ctx context.Context, assetID uuid.UUID) (int64, error) {
 		return 0, err
 	}
 
-	slog.Debug("Removed demo asset", slog.String("asset_id", assetID.String()), slog.String("size", humanize.Bytes(uint64(size))))
+	slog.Debug("Removed demo asset", slog.String("asset_id", assetID.String()), slog.String("size", humanize.Bytes(uint64(size)))) //nolint:gosec
 
 	return size, nil
 }

@@ -24,7 +24,7 @@ func (r newsRepository) GetNewsLatest(ctx context.Context, limit int, includeUnp
 		Select("news_id", "title", "body_md", "is_published", "created_on", "updated_on").
 		From("news").
 		OrderBy("created_on DESC").
-		Limit(uint64(limit))
+		Limit(uint64(limit)) //nolint:gosec
 
 	if !includeUnpublished {
 		builder = builder.Where(sq.Eq{"is_published": true})

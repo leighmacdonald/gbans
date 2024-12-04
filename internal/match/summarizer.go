@@ -17,7 +17,6 @@ import (
 type activeMatchContext struct {
 	match       logparse.Match
 	cancel      context.CancelFunc
-	log         *slog.Logger
 	finalScores int
 	server      domain.Server
 }
@@ -34,7 +33,6 @@ type Summarizer struct {
 
 func newMatchSummarizer(eventChan chan logparse.ServerEvent, onComplete OnCompleteFn) *Summarizer {
 	return &Summarizer{
-		log:        slog.With("matchSum"),
 		uuidMap:    fp.NewMutexMap[int, uuid.UUID](),
 		triggers:   make(chan domain.MatchTrigger),
 		eventChan:  eventChan,
@@ -65,7 +63,6 @@ func (mh *Summarizer) Start(ctx context.Context) {
 
 				matchContext := &activeMatchContext{
 					match:  match,
-					log:    mh.log.With(slog.String("server", trigger.Server.ShortName)),
 					server: trigger.Server,
 				}
 
@@ -98,7 +95,7 @@ func (mh *Summarizer) Start(ctx context.Context) {
 			}
 
 			if errApply := matchContext.match.Apply(evt.Results); errApply != nil && !errors.Is(errApply, logparse.ErrIgnored) {
-				matchContext.log.Error("Error applying event",
+				slog.Error("Error applying event",
 					slog.String("server", evt.ServerName),
 					log.ErrAttr(errApply))
 			}

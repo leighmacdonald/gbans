@@ -79,7 +79,7 @@ func (d demoUsecase) TruncateBySpace(ctx context.Context, root string, maxAllowe
 	)
 
 	defer func() {
-		slog.Debug("Truncate by space completed", slog.Int("count", count), slog.String("total_size", humanize.Bytes(uint64(size))))
+		slog.Debug("Truncate by space completed", slog.Int("count", count), slog.String("total_size", humanize.Bytes(uint64(size)))) //nolint:gosec
 	}()
 
 	for {
@@ -148,7 +148,7 @@ func (d demoUsecase) TruncateByCount(ctx context.Context, maxCount uint64) (int,
 		count++
 	}
 
-	slog.Debug("Truncate by count completed", slog.Int("count", count), slog.String("total_size", humanize.Bytes(uint64(size))))
+	slog.Debug("Truncate by count completed", slog.Int("count", count), slog.String("total_size", humanize.Bytes(uint64(size)))) //nolint:gosec
 
 	return count, size, nil
 }
@@ -179,7 +179,7 @@ func (d demoUsecase) Cleanup(ctx context.Context) {
 		slog.Error("Error executing demo cleanup", slog.String("strategy", string(conf.Demo.DemoCleanupStrategy)))
 	}
 
-	slog.Debug("Old demos flushed", slog.Int("count", count), slog.String("size", humanize.Bytes(uint64(size))))
+	slog.Debug("Old demos flushed", slog.Int("count", count), slog.String("size", humanize.Bytes(uint64(size)))) //nolint:gosec
 
 	if errOrphans := d.RemoveOrphans(ctx); errOrphans != nil {
 		slog.Error("Failed to execute orphans", log.ErrAttr(errOrphans))
