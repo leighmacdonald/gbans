@@ -35,7 +35,7 @@ func TestConfig(t *testing.T) {
 	config.General.DemosEnabled = !config.General.DemosEnabled
 
 	config.Debug.SkipOpenIDValidation = !config.Debug.SkipOpenIDValidation
-	config.Debug.AddRCONLogAddress = "1.2.3.4:27115"
+	config.Debug.AddRCONLogAddress = "1.2.3.4:27715"
 
 	config.Log.Level = log.Warn
 	config.Log.File += "x"

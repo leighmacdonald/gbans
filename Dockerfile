@@ -2,7 +2,7 @@
 FROM alpine:latest
 
 EXPOSE 6006
-EXPOSE 27115/udp
+EXPOSE 27715/udp
 
 RUN apk add --no-cache dumb-init
 WORKDIR /app

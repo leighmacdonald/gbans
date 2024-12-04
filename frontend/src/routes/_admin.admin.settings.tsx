@@ -1677,7 +1677,7 @@ const DebugSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                                     <TextFieldSimple
                                         {...props}
                                         label={'Extra log_address'}
-                                        placeholder={'127.0.0.1:27115'}
+                                        placeholder={'127.0.0.1:27715'}
                                     />
                                 );
                             }}
