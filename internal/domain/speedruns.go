@@ -32,29 +32,30 @@ type SpeedrunQuery struct {
 	Count    int              `json:"count"`
 }
 
-type SpeedrunRound struct {
-	RoundID  int              `json:"round_id"`
-	Players  []SpeedrunRunner `json:"players"`
-	Duration time.Duration    `json:"duration"`
+type SpeedrunPointCaptures struct {
+	RoundID  int                   `json:"round_id"`
+	Players  []SpeedrunParticipant `json:"players"`
+	Duration time.Duration         `json:"duration"`
 }
 
 type Speedrun struct {
-	SpeedrunID  int              `json:"speedrun_id"`
-	MapName     string           `json:"map_name"`
-	Rounds      []SpeedrunRound  `json:"rounds"`
-	Players     []SpeedrunRunner `json:"players"`
-	Duration    time.Duration    `json:"duration"`
-	Category    string           `json:"category"`
-	PlayerCount int              `json:"player_count"`
-	BotCount    int              `json:"bot_count"`
-	CreatedOn   time.Time        `json:"created_on"`
+	SpeedrunID    int                     `json:"speedrun_id"`
+	MapName       string                  `json:"map_name"`
+	PointCaptures []SpeedrunPointCaptures `json:"point_captures"`
+	Players       []SpeedrunParticipant   `json:"players"`
+	Duration      time.Duration           `json:"duration"`
+	PlayerCount   int                     `json:"player_count"`
+	HostAddr      string                  `json:"host_addr"`
+	BotCount      int                     `json:"bot_count"`
+	CreatedOn     time.Time               `json:"created_on"`
+	Category      string                  `json:"category"`
 }
 
 func (sr Speedrun) AsDuration() time.Duration {
 	return time.Duration(sr.Duration) * time.Second
 }
 
-type SpeedrunRunner struct {
+type SpeedrunParticipant struct {
 	SteamID  steamid.SteamID `json:"steam_id"`
 	Duration time.Duration   `json:"duration"`
 }

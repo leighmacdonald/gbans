@@ -29,9 +29,9 @@ func NewSpeedrunHandler(engine *gin.Engine, speedruns domain.SpeedrunUsecase, au
 
 func (s *speedrunHandler) getOverall() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var results []domain.SpeedrunResult
+		var results []domain.Speedrun
 		for range 100 {
-			sr := domain.SpeedrunResult{}
+			sr := domain.Speedrun{}
 			results = append(results, sr)
 		}
 
