@@ -73,13 +73,13 @@ type postgresStore struct {
 	logQueries  bool
 }
 
-func (db *postgresStore) WrapTx(ctx context.Context, fn func(pgx.Tx) error) error {
+func (db *postgresStore) WrapTx(ctx context.Context, txFunc func(pgx.Tx) error) error {
 	transaction, errTx := db.Begin(ctx)
 	if errTx != nil {
 		return db.DBErr(errTx)
 	}
 
-	if err := fn(transaction); err != nil {
+	if err := txFunc(transaction); err != nil {
 		if errRollback := transaction.Rollback(ctx); errRollback != nil {
 			return db.DBErr(errRollback)
 		}
