@@ -2,8 +2,9 @@ package domain
 
 import (
 	"context"
-	"github.com/leighmacdonald/steamid/v4/steamid"
 	"time"
+
+	"github.com/leighmacdonald/steamid/v4/steamid"
 )
 
 type SpeedrunRepository interface {
