@@ -43,7 +43,7 @@ type Speedrun struct {
 	MapName       string                  `json:"map_name"`
 	PointCaptures []SpeedrunPointCaptures `json:"point_captures"`
 	Players       []SpeedrunParticipant   `json:"players"`
-	Duration      time.Duration           `json:"duration"`
+	Duration      int                     `json:"duration"`
 	PlayerCount   int                     `json:"player_count"`
 	HostAddr      string                  `json:"host_addr"`
 	BotCount      int                     `json:"bot_count"`
@@ -52,7 +52,7 @@ type Speedrun struct {
 }
 
 func (sr Speedrun) AsDuration() time.Duration {
-	return time.Duration(sr.Duration) * time.Second
+	return time.Duration(sr.Duration) * time.Millisecond
 }
 
 type SpeedrunParticipant struct {

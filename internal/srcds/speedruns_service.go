@@ -1,9 +1,10 @@
 package srcds
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"net/http"
 )
 
 type speedrunHandler struct {
@@ -23,7 +24,6 @@ func NewSpeedrunHandler(engine *gin.Engine, speedruns domain.SpeedrunUsecase, au
 		// Groups
 		guest.GET("/overall", handler.getOverall())
 		guest.GET("/map", handler.getLeaders())
-
 	}
 }
 
