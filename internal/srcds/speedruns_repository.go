@@ -2,7 +2,7 @@ package srcds
 
 import (
 	"context"
-	"errors"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -17,7 +17,7 @@ type speedrunRepository struct {
 }
 
 func (r *speedrunRepository) Save(ctx context.Context, details *domain.Speedrun) error {
-	return r.db.WrapTx(ctx, func(tx pgx.Tx) error {
+	return r.db.WrapTx(ctx, func(txFunc pgx.Tx) error {
 		query, args, errQuery := r.db.Builder().
 			Insert("speedrun").
 			SetMap(map[string]interface{}{
@@ -34,15 +34,15 @@ func (r *speedrunRepository) Save(ctx context.Context, details *domain.Speedrun)
 			return r.db.DBErr(errQuery)
 		}
 
-		if errScan := tx.QueryRow(ctx, query, args...).Scan(&details.SpeedrunID); errScan != nil {
+		if errScan := txFunc.QueryRow(ctx, query, args...).Scan(&details.SpeedrunID); errScan != nil {
 			return r.db.DBErr(errScan)
 		}
 
-		if errRounds := r.insertRounds(ctx, tx, details.SpeedrunID, details.PointCaptures); errRounds != nil {
+		if errRounds := r.insertRounds(ctx, txFunc, details.SpeedrunID, details.PointCaptures); errRounds != nil {
 			return errRounds
 		}
 
-		if errPlayers := r.insertPlayers(ctx, tx, details.SpeedrunID, details.Players); errPlayers != nil {
+		if errPlayers := r.insertPlayers(ctx, txFunc, details.SpeedrunID, details.Players); errPlayers != nil {
 			return errPlayers
 		}
 
@@ -50,7 +50,7 @@ func (r *speedrunRepository) Save(ctx context.Context, details *domain.Speedrun)
 	})
 }
 
-func (r *speedrunRepository) insertPlayers(ctx context.Context, tx pgx.Tx, speedrunID int, players []domain.SpeedrunParticipant) error {
+func (r *speedrunRepository) insertPlayers(ctx context.Context, transaction pgx.Tx, speedrunID int, players []domain.SpeedrunParticipant) error {
 	for _, runner := range players {
 		query, args, errQuery := r.db.Builder().
 			Insert("speedrun_runners").
@@ -64,7 +64,7 @@ func (r *speedrunRepository) insertPlayers(ctx context.Context, tx pgx.Tx, speed
 			return r.db.DBErr(errQuery)
 		}
 
-		if _, errExec := tx.Exec(ctx, query, args...); errExec != nil {
+		if _, errExec := transaction.Exec(ctx, query, args...); errExec != nil {
 			return r.db.DBErr(errExec)
 		}
 	}
@@ -72,7 +72,7 @@ func (r *speedrunRepository) insertPlayers(ctx context.Context, tx pgx.Tx, speed
 	return nil
 }
 
-func (r *speedrunRepository) insertRounds(ctx context.Context, tx pgx.Tx, speedrunID int, rounds []domain.SpeedrunPointCaptures) error {
+func (r *speedrunRepository) insertRounds(ctx context.Context, transaction pgx.Tx, speedrunID int, rounds []domain.SpeedrunPointCaptures) error {
 	for roundNum, round := range rounds {
 		query, args, errQuery := r.db.Builder().
 			Insert("speedrun_rounds").
@@ -87,11 +87,11 @@ func (r *speedrunRepository) insertRounds(ctx context.Context, tx pgx.Tx, speedr
 			return r.db.DBErr(errQuery)
 		}
 
-		if errExec := tx.QueryRow(ctx, query, args...).Scan(&round.RoundID); errExec != nil {
+		if errExec := transaction.QueryRow(ctx, query, args...).Scan(&round.RoundID); errExec != nil {
 			return r.db.DBErr(errExec)
 		}
 
-		if errPlayers := r.insertRoundPlayers(ctx, tx, round.RoundID, round.Players); errPlayers != nil {
+		if errPlayers := r.insertRoundPlayers(ctx, transaction, round.RoundID, round.Players); errPlayers != nil {
 			return errPlayers
 		}
 	}
@@ -99,7 +99,7 @@ func (r *speedrunRepository) insertRounds(ctx context.Context, tx pgx.Tx, speedr
 	return nil
 }
 
-func (r *speedrunRepository) insertRoundPlayers(ctx context.Context, tx pgx.Tx, roundID int, players []domain.SpeedrunParticipant) error {
+func (r *speedrunRepository) insertRoundPlayers(ctx context.Context, transaction pgx.Tx, roundID int, players []domain.SpeedrunParticipant) error {
 	for _, runner := range players {
 		query, args, errQuery := r.db.Builder().
 			Insert("speedrun_rounds_runners").
@@ -113,7 +113,7 @@ func (r *speedrunRepository) insertRoundPlayers(ctx context.Context, tx pgx.Tx, 
 			return r.db.DBErr(errQuery)
 		}
 
-		if _, errExec := tx.Exec(ctx, query, args...); errExec != nil {
+		if _, errExec := transaction.Exec(ctx, query, args...); errExec != nil {
 			return r.db.DBErr(errExec)
 		}
 	}
@@ -121,6 +121,6 @@ func (r *speedrunRepository) insertRoundPlayers(ctx context.Context, tx pgx.Tx, 
 	return nil
 }
 
-func (r *speedrunRepository) Query(ctx context.Context, query domain.SpeedrunQuery) ([]domain.Speedrun, error) {
-	return nil, errors.New("error")
+func (r *speedrunRepository) Query(_ context.Context, _ domain.SpeedrunQuery) ([]domain.Speedrun, error) {
+	return []domain.Speedrun{}, nil
 }
