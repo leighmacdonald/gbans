@@ -10,11 +10,12 @@ all: frontend sourcemod buildp
 fmt:
 	gci write . --skip-generated -s standard -s default
 	gofumpt -l -w .
-	cd frontend && pnpm prettier src/ --write
+	make -C frontend fmt
+	# cd frontend && pnpm prettier src/ --write
 
 bump_deps:
 	go get -u ./...
-	cd frontend && pnpm update -i
+	make -C frontend update
 
 buildp: frontend
 	goreleaser release --clean
@@ -23,13 +24,13 @@ builds: frontend
 	goreleaser release --clean --snapshot
 
 watch:
-	cd frontend && pnpm run watch
+	make -C frontend watch
 
 serve:
-	cd frontend && pnpm run serve
+	make -C frontend serve
 
 frontend:
-	cd frontend && pnpm install --frozen-lockfile && pnpm run build
+	make -C frontend
 
 dist: frontend build
 	zip -j gbans-`git describe --abbrev=0`-win64.zip build/win64/gbans.exe LICENSE README.md gbans_example.yml
@@ -56,7 +57,7 @@ sourcemod_devel: sourcemod
 test: test-go test-ts
 
 test-ts:
-	@cd frontend && pnpm run test
+	make -C frontend test
 
 test-go:
 	@go test $(GO_FLAGS) -race ./...
@@ -80,10 +81,10 @@ fix: fmt
 	golangci-lint run --fix
 
 lint_ts:
-	cd frontend && pnpm run eslint:check && pnpm prettier src/ --check
+	make -C frontend lint
 
 typecheck_ts:
-	cd frontend && pnpm run typecheck
+	make -C frontend typecheck
 
 static:
 	staticcheck -go 1.23 ./...
@@ -91,8 +92,7 @@ static:
 clean:
 	@go clean $(GO_FLAGS) -i
 	rm -rf ./build/
-	rm -rf ./frontend/dist
-	rm -rf ./frontend/node_modules
+	make -C frontend clean
 	rm -rf ./sourcemod/plugins/gbans.smx
 
 docker_test:
@@ -111,16 +111,16 @@ docker_restore:
 
 run_docker_snapshot: builds
 	docker build . --no-cache -t gbans:snapshot
-	docker run -it -v ./gbans.yml:/app/gbans.yml -p 6006:6006  gbans:snapshot
+	docker run -it -v ./gbans.yml:/app/gbans.yml -v ./.cache:/app/.cache -p 6006:6006  gbans:snapshot
 
-docs_setup:
-	cd docs && pnpm i
+docs_install:
+	make -C docs install
 
 docs_start:
-	cd docs && pnpm start
+	make -C docs start
 
 docs_deploy:
-	cd docs && pnpm deploy
+	make -C docs deploy
 
 docs_build:
-	cd docs && pnpm build
+	make -C docs build

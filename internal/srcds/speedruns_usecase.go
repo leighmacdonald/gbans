@@ -23,7 +23,7 @@ func (u *speedrunUsecase) Save(ctx context.Context, details domain.Speedrun) (do
 
 	var validPlayers []domain.SpeedrunParticipant //nolint:prealloc
 	for _, player := range details.Players {
-		if details.Duration/2 > player.Duration {
+		if int64(details.Duration)/2 > int64(player.Duration) {
 			continue
 		}
 
@@ -40,13 +40,13 @@ func (u *speedrunUsecase) Save(ctx context.Context, details domain.Speedrun) (do
 }
 
 func (u *speedrunUsecase) Query(_ context.Context, _ domain.SpeedrunQuery) ([]domain.Speedrun, error) {
-	return nil, errors.New("implement me")
+	return nil, nil
 }
 
 func (u *speedrunUsecase) RoundStart() (uuid.UUID, error) {
 	id, errID := uuid.NewV4()
 	if errID != nil {
-		return id, errID
+		return id, errors.Join(errID, domain.ErrUUIDCreate)
 	}
 
 	return id, nil
