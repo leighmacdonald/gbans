@@ -1,19 +1,19 @@
-* text=auto
-docs/*              linguist-documentation
-go.sum              linguist-generated merge=ours
-go.mod              linguist-generated
+* text=auto eol=lf
+docs/*              linguist-documentation eol=lf
+go.sum              linguist-generated merge=ours eol=lf
+go.mod              linguist-generated eol=lf
 
-/.github            export-ignore
-.gitattributes      export-ignore
-.gitignore          export-ignore
+/.github            export-ignore eol=lf
+.gitattributes      export-ignore eol=lf
+.gitignore          export-ignore eol=lf
 
 /frontend/src/icons/* binary
 /frontend/src/fonts/* binary
-*.js text
-*.json text
-*.ts text
-*.md text
-*.yml text
+*.js text eol=lf
+*.json text eol=lf
+*.ts text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
 
 *.dem binary
 *.png binary
