@@ -34,6 +34,7 @@ require (
 	github.com/leighmacdonald/rcon v1.0.10
 	github.com/leighmacdonald/steamid/v4 v4.0.4
 	github.com/leighmacdonald/steamweb/v2 v2.3.1
+	github.com/maruel/natural v1.1.1
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.5.0
