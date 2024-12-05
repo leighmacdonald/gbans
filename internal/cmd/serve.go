@@ -431,6 +431,7 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 
 			if conf.Debug.AddRCONLogAddress != "" {
 				go stateUsecase.LogAddressAdd(ctx, conf.Debug.AddRCONLogAddress)
+				defer stateUsecase.LogAddressAdd(ctx, conf.Debug.AddRCONLogAddress)
 			}
 
 			demoFetcher := demo.NewFetcher(dbConn, configUsecase, serversUsecase, assetUsecase, demoUsecase)
