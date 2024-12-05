@@ -3,6 +3,7 @@ package srcds
 import (
 	"context"
 	"errors"
+
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
 )
