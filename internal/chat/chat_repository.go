@@ -50,7 +50,7 @@ func (r chatRepository) handleMessage(ctx context.Context, evt logparse.ServerEv
 	}
 
 	_, errPerson := r.persons.GetOrCreatePersonBySteamID(ctx, person.SID)
-	if errPerson != nil {
+	if errPerson != nil && !errors.Is(errPerson, domain.ErrDuplicate) {
 		slog.Error("Failed to handle message, could not get author", log.ErrAttr(errPerson), slog.String("message", msg))
 
 		return
