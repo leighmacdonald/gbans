@@ -40,7 +40,10 @@ const (
 )
 
 func Init(ctx context.Context, dbPool *pgxpool.Pool) error {
-	migrator := rivermigrate.New[pgx.Tx](riverpgxv5.New(dbPool), nil)
+	migrator, errCreate := rivermigrate.New[pgx.Tx](riverpgxv5.New(dbPool), nil)
+	if errCreate != nil {
+		return errors.Join(errCreate, ErrMigrateQueue)
+	}
 
 	res, err := migrator.Migrate(ctx, rivermigrate.DirectionUp, nil)
 	if err != nil {

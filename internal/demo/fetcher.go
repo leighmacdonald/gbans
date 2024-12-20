@@ -168,6 +168,10 @@ type FetcherWorker struct {
 	config  domain.ConfigUsecase
 }
 
+func (worker *FetcherWorker) Timeout(_ *river.Job[FetcherArgs]) time.Duration {
+	return time.Minute * 10
+}
+
 func (worker *FetcherWorker) Work(ctx context.Context, _ *river.Job[FetcherArgs]) error {
 	if !worker.config.Config().SSH.Enabled {
 		return nil

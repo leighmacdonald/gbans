@@ -95,7 +95,7 @@ function AdminNews() {
 
         const onEdit = async (entry: NewsEntry) => {
             try {
-                const editedEntry = await NiceModal.show<NewsEntry>(ModalNewsEditor, { entry });
+                const editedEntry = await NiceModal.show<NewsEntry>(ModalNewsEditor, { entry: entry });
                 queryClient.setQueryData(
                     ['newsList'],
                     news?.map((e) => (e.news_id == editedEntry.news_id ? editedEntry : e))
