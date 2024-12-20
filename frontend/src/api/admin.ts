@@ -39,6 +39,7 @@ type General = {
     reports_enabled: boolean;
     chatlogs_enabled: boolean;
     demos_enabled: boolean;
+    speedruns_enabled: boolean;
 };
 
 type Filters = {

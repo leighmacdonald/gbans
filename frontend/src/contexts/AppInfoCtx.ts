@@ -28,7 +28,8 @@ export const UseAppInfoCtx = createContext<AppInfoCtx>({
         reports_enabled: false,
         servers_enabled: true,
         stats_enabled: false,
-        wiki_enabled: false
+        wiki_enabled: false,
+        speedruns_enabled: false
     }
 });
 

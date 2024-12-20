@@ -95,6 +95,7 @@ export interface appInfoDetail {
     reports_enabled: boolean;
     chatlogs_enabled: boolean;
     demos_enabled: boolean;
+    speedruns_enabled: boolean;
 }
 
 export const getAppInfo = async () => apiCall<appInfoDetail>('/api/info');
