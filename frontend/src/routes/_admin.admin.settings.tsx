@@ -290,7 +290,8 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
             servers_enabled: settings.general.servers_enabled,
             reports_enabled: settings.general.reports_enabled,
             chatlogs_enabled: settings.general.chatlogs_enabled,
-            demos_enabled: settings.general.demos_enabled
+            demos_enabled: settings.general.demos_enabled,
+            speedruns_enabled: settings.general.speedruns_enabled
         }
     });
 
@@ -490,6 +491,19 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                         <SubHeading>Enable showing the searchable chatlogs.</SubHeading>
+                    </Grid>
+
+                    <Grid xs={12}>
+                        <Field
+                            name={'speedruns_enabled'}
+                            validators={{
+                                onChange: z.boolean()
+                            }}
+                            children={(props) => {
+                                return <CheckboxSimple {...props} label={'Enable Speedruns support'} />;
+                            }}
+                        />
+                        <SubHeading>Enables the 1000 uncles speedruns tracking support.</SubHeading>
                     </Grid>
 
                     <Grid xs={12}>

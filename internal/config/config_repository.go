@@ -31,7 +31,7 @@ func (c *configRepository) Read(ctx context.Context) (domain.Config, error) {
 	const query = `
 		SELECT general_site_name, general_mode, general_file_serve_mode, general_srcds_log_addr, general_asset_url,
 		       general_default_route, general_news_enabled, general_forums_enabled, general_contests_enabled, general_wiki_enabled, 
-		       general_stats_enabled, general_servers_enabled, general_reports_enabled,general_chatlogs_enabled, general_demos_enabled,
+		       general_stats_enabled, general_servers_enabled, general_reports_enabled,general_chatlogs_enabled, general_demos_enabled, general_speedruns_enabled,
 		       
 		       filters_enabled, filters_dry, filters_ping_discord, filters_max_weight, filters_warning_timeout, filters_check_timeout, filters_match_timeout,
 		       
@@ -67,7 +67,7 @@ func (c *configRepository) Read(ctx context.Context) (domain.Config, error) {
 	err := c.db.QueryRow(ctx, query).
 		Scan(&cfg.General.SiteName, &cfg.General.Mode, &cfg.General.FileServeMode, &cfg.General.SrcdsLogAddr, &cfg.General.AssetURL,
 			&cfg.General.DefaultRoute, &cfg.General.NewsEnabled, &cfg.General.ForumsEnabled, &cfg.General.ContestsEnabled, &cfg.General.WikiEnabled,
-			&cfg.General.StatsEnabled, &cfg.General.ServersEnabled, &cfg.General.ReportsEnabled, &cfg.General.ChatlogsEnabled, &cfg.General.DemosEnabled,
+			&cfg.General.StatsEnabled, &cfg.General.ServersEnabled, &cfg.General.ReportsEnabled, &cfg.General.ChatlogsEnabled, &cfg.General.DemosEnabled, &cfg.General.SpeedrunsEnabled,
 			&cfg.Filters.Enabled, &cfg.Filters.Dry, &cfg.Filters.PingDiscord, &cfg.Filters.MaxWeight, &cfg.Filters.WarningTimeout, &cfg.Filters.CheckTimeout, &cfg.Filters.MatchTimeout,
 			&cfg.Demo.DemoCleanupEnabled, &cfg.Demo.DemoCleanupStrategy, &cfg.Demo.DemoCleanupMinPct, &cfg.Demo.DemoCleanupMount, &cfg.Demo.DemoCountLimit, &cfg.Demo.DemoParserURL,
 			&cfg.Patreon.Enabled, &cfg.Patreon.ClientID, &cfg.Patreon.ClientSecret, &cfg.Patreon.CreatorAccessToken, &cfg.Patreon.CreatorRefreshToken, &cfg.Patreon.IntegrationsEnabled,
@@ -132,6 +132,7 @@ func (c *configRepository) Write(ctx context.Context, config domain.Config) erro
 			"general_reports_enabled":             config.General.ReportsEnabled,
 			"general_chatlogs_enabled":            config.General.ChatlogsEnabled,
 			"general_demos_enabled":               config.General.DemosEnabled,
+			"general_speedruns_enabled":           config.General.SpeedrunsEnabled,
 			"filters_enabled":                     config.Filters.Enabled,
 			"filters_dry":                         config.Filters.Dry,
 			"filters_ping_discord":                config.Filters.PingDiscord,

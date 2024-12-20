@@ -197,6 +197,10 @@ func (remoteSrc *UDPLogListener) Start(ctx context.Context) {
 				continue
 			}
 
+			if event.EventType == Say || event.EventType == SayTeam {
+				slog.Info("Got chat message", slog.String("body", logPayload.body), slog.String("server", server.ServerName))
+			}
+
 			remoteSrc.onEvent(event.EventType, event)
 		}
 	}

@@ -2,6 +2,7 @@ package srcds
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -30,8 +31,19 @@ func NewSpeedrunHandler(engine *gin.Engine, speedruns domain.SpeedrunUsecase, au
 func (s *speedrunHandler) getOverall() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var results []domain.Speedrun
-		for range 100 {
-			sr := domain.Speedrun{}
+		for i := range 100 {
+			sr := domain.Speedrun{
+				SpeedrunID:    i + 1,
+				MapName:       "",
+				PointCaptures: nil,
+				Players:       nil,
+				Duration:      0,
+				PlayerCount:   0,
+				HostAddr:      "",
+				BotCount:      0,
+				CreatedOn:     time.Time{},
+				Category:      "",
+			}
 			results = append(results, sr)
 		}
 
