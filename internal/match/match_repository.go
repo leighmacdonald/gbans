@@ -1333,7 +1333,7 @@ func (r *matchRepository) HealersOverallByHealing(ctx context.Context, count int
             coalesce(c.assists, 0) as assists,
             coalesce(c.kills, 0) + coalesce(c.assists, 0)  as ka,
             coalesce(c.deaths, 0) as deaths,
-            case c.playtime WHEN 0 THEN 0 ELSE h.healing::float / (c.playtime::float / 60) END as hpm,
+            case c.playtime WHEN 0 THEN 0 ELSE coalesce(h.healing::float / (c.playtime::float / 60), 0) END as hpm,
             case c.deaths WHEN 0 THEN -1 ELSE ((c.assists::float + c.kills::float) / c.deaths::float) END kad,
             coalesce(c.playtime, 0) as playtime,
             coalesce(c.dominations, 0) as dominations,

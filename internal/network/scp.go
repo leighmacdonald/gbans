@@ -38,23 +38,23 @@ type OnClientConnect func(ctx context.Context, client storage.Storager, server [
 // to implement this function and handle any required functionality within it. Caller does not need to close the
 // connection.
 type SCPExecer struct {
-	serversUsecase domain.ServersUsecase
-	database       database.Database
-	configUsecase  domain.ConfigUsecase
-	onConnect      OnClientConnect
+	servers   domain.ServersUsecase
+	database  database.Database
+	config    domain.ConfigUsecase
+	onConnect OnClientConnect
 }
 
-func NewSCPExecer(database database.Database, configUsecase domain.ConfigUsecase, serversUsecase domain.ServersUsecase, onConnect OnClientConnect) SCPExecer {
+func NewSCPExecer(database database.Database, config domain.ConfigUsecase, servers domain.ServersUsecase, onConnect OnClientConnect) SCPExecer {
 	return SCPExecer{
-		database:       database,
-		configUsecase:  configUsecase,
-		serversUsecase: serversUsecase,
-		onConnect:      onConnect,
+		database:  database,
+		config:    config,
+		servers:   servers,
+		onConnect: onConnect,
 	}
 }
 
 func (f SCPExecer) Update(ctx context.Context) error {
-	servers, _, errServers := f.serversUsecase.Servers(ctx, domain.ServerQueryFilter{})
+	servers, _, errServers := f.servers.Servers(ctx, domain.ServerQueryFilter{})
 	if errServers != nil {
 		return errServers
 	}
@@ -72,7 +72,7 @@ func (f SCPExecer) Update(ctx context.Context) error {
 		mappedServers[server.Address] = append(mappedServers[server.Address], server)
 	}
 
-	sshConfig := f.configUsecase.Config().SSH
+	sshConfig := f.config.Config().SSH
 
 	waitGroup := &sync.WaitGroup{}
 

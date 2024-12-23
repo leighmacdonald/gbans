@@ -102,6 +102,7 @@ type ConfigSSH struct {
 	UpdateInterval int    `json:"update_interval,string"`
 	Timeout        int    `json:"timeout,string"`
 	DemoPathFmt    string `json:"demo_path_fmt"`
+	// TODO configurable handling of host keys
 }
 
 type ConfigExports struct {

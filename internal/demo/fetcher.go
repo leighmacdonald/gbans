@@ -15,10 +15,8 @@ import (
 	"github.com/leighmacdonald/gbans/internal/database"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/network"
-	"github.com/leighmacdonald/gbans/internal/queue"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
-	"github.com/riverqueue/river"
 	"github.com/viant/afs/option"
 	"github.com/viant/afs/storage"
 )
@@ -145,39 +143,36 @@ func (d Fetcher) OnClientConnect(ctx context.Context, client storage.Storager, s
 	return nil
 }
 
-type FetcherArgs struct{}
+func NewDownloader(config domain.ConfigUsecase, dbConn database.Database, servers domain.ServersUsecase, assets domain.AssetUsecase, demos domain.DemoUsecase) Downloader {
+	fetcher := NewFetcher(dbConn, config, servers, assets, demos)
 
-func (args FetcherArgs) Kind() string {
-	return "demo_fetch"
-}
-
-func (args FetcherArgs) InsertOpts() river.InsertOpts {
-	return river.InsertOpts{Queue: string(queue.Demo), UniqueOpts: river.UniqueOpts{ByPeriod: time.Minute * 10}}
-}
-
-func NewFetcherWorker(fetcher *Fetcher, config domain.ConfigUsecase) *FetcherWorker {
-	return &FetcherWorker{
-		scpExec: network.NewSCPExecer(fetcher.database, fetcher.configUsecase, fetcher.serversUsecase, fetcher.OnClientConnect),
+	return Downloader{
+		fetcher: fetcher,
+		scpExec: network.NewSCPExecer(dbConn, config, servers, fetcher.OnClientConnect),
 		config:  config,
 	}
 }
 
-type FetcherWorker struct {
-	river.WorkerDefaults[FetcherArgs]
+type Downloader struct {
+	fetcher *Fetcher
 	scpExec network.SCPExecer
 	config  domain.ConfigUsecase
 }
 
-func (worker *FetcherWorker) Work(ctx context.Context, _ *river.Job[FetcherArgs]) error {
-	if !worker.config.Config().SSH.Enabled {
-		return nil
+func (d Downloader) Start(ctx context.Context) {
+	ticker := time.NewTicker(time.Second * 5)
+	for {
+		select {
+		case <-ticker.C:
+			if !d.config.Config().SSH.Enabled {
+				continue
+			}
+
+			if err := d.scpExec.Update(ctx); err != nil {
+				slog.Error("Error trying to download demos", log.ErrAttr(err))
+			}
+		case <-ctx.Done():
+			return
+		}
 	}
-
-	if err := worker.scpExec.Update(ctx); err != nil {
-		slog.Error("Failed to execute demo fetcher", log.ErrAttr(err))
-
-		return err
-	}
-
-	return nil
 }
