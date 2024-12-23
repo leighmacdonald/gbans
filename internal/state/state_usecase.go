@@ -309,7 +309,8 @@ func (s *stateUsecase) Broadcast(ctx context.Context, serverIDs []int, cmd strin
 
 			resp, errExec := s.state.ExecRaw(egCtx, serverConf.Addr(), serverConf.RconPassword, cmd)
 			if errExec != nil {
-				slog.Error("Failed to exec server command", slog.Int("server_id", sid), log.ErrAttr(errExec))
+				slog.Error("Failed to exec server command", slog.String("name", serverConf.DefaultHostname),
+					slog.Int("server_id", sid), log.ErrAttr(errExec))
 
 				// Don't error out since we don't want a single servers potentially temporary issue to prevent the rest
 				// from executing.

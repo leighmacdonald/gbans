@@ -1,10 +1,16 @@
 package demo
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
+	"mime/multipart"
+	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -12,7 +18,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/queue"
-	"github.com/leighmacdonald/gbans/pkg/demoparser"
 	"github.com/leighmacdonald/gbans/pkg/fs"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/ricochet2200/go-disk-usage/du"
@@ -202,6 +207,60 @@ func (d demoUsecase) GetDemos(ctx context.Context) ([]domain.DemoFile, error) {
 	return d.repository.GetDemos(ctx)
 }
 
+func (d demoUsecase) SendAndParseDemo(ctx context.Context, path string) (*domain.DemoDetails, error) {
+	df, errDF := os.Open(path)
+	if errDF != nil {
+		return nil, errors.Join(errDF, domain.ErrDemoLoad)
+	}
+
+	content, errContent := io.ReadAll(df)
+	if errContent != nil {
+		return nil, errors.Join(errDF, domain.ErrDemoLoad)
+	}
+
+	info, errInfo := df.Stat()
+	if errInfo != nil {
+		return nil, errors.Join(errInfo, domain.ErrDemoLoad)
+	}
+
+	log.Closer(df)
+
+	body := new(bytes.Buffer)
+	writer := multipart.NewWriter(body)
+
+	part, errCreate := writer.CreateFormFile("file", info.Name())
+	if errCreate != nil {
+		return nil, errors.Join(errCreate, domain.ErrDemoLoad)
+	}
+
+	if _, err := part.Write(content); err != nil {
+		return nil, errors.Join(errCreate, domain.ErrDemoLoad)
+	}
+
+	if errClose := writer.Close(); errClose != nil {
+		return nil, errors.Join(errClose, domain.ErrDemoLoad)
+	}
+
+	req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, "http://localhost:8811/", body)
+	if errReq != nil {
+		return nil, errors.Join(errReq, domain.ErrDemoLoad)
+	}
+
+	client := &http.Client{}
+	resp, errSend := client.Do(req)
+	if errSend != nil {
+		return nil, errors.Join(errSend, domain.ErrDemoLoad)
+	}
+
+	var demo domain.DemoDetails
+
+	if errDecode := json.NewDecoder(resp.Body).Decode(&demo); errDecode != nil {
+		return nil, errors.Join(errDecode, domain.ErrDemoLoad)
+	}
+
+	return &demo, nil
+}
+
 func (d demoUsecase) CreateFromAsset(ctx context.Context, asset domain.Asset, serverID int) (*domain.DemoFile, error) {
 	_, errGetServer := d.servers.Server(ctx, serverID)
 	if errGetServer != nil {
@@ -221,20 +280,16 @@ func (d demoUsecase) CreateFromAsset(ctx context.Context, asset domain.Asset, se
 		mapName = nameParts[0]
 	}
 
+	// TODO change this data shape as we have not needed this in a long time. Only keys the are used.
 	intStats := map[string]gin.H{}
 
-	// temp thing until proper demo parsing is implemented
-	if d.config.Config().General.Mode != domain.TestMode {
-		var demoInfo demoparser.DemoInfo
-		if errParse := demoparser.Parse(ctx, asset.LocalPath, &demoInfo); errParse != nil {
-			return nil, errParse
-		}
+	demoDetail, errDetail := d.SendAndParseDemo(ctx, asset.LocalPath)
+	if errDetail != nil {
+		return nil, errDetail
+	}
 
-		for _, steamID := range demoInfo.SteamIDs() {
-			intStats[steamID.String()] = gin.H{}
-		}
-	} else {
-		intStats[d.config.Config().Owner] = gin.H{}
+	for key := range demoDetail.State.Users {
+		intStats[key] = gin.H{}
 	}
 
 	timeStr := fmt.Sprintf("%s-%s", namePartsAll[0], namePartsAll[1])

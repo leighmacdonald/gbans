@@ -52,3 +52,9 @@ func TestDemosCleanup(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, allDemos, 5)
 }
+
+func TestDemoUpload(t *testing.T) {
+	detail, err := demoUC.SendAndParseDemo(context.Background(), "test_data/test.dem")
+	require.NoError(t, err)
+	require.True(t, len(detail.State.Users) == 10)
+}
