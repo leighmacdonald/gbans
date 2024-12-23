@@ -59,5 +59,5 @@ func TestDemoUpload(t *testing.T) {
 	demoPath := fs.FindFile(path.Join("testdata", "test.dem"), "gbans")
 	detail, err := demoUC.SendAndParseDemo(context.Background(), demoPath)
 	require.NoError(t, err)
-	require.Len(t, len(detail.State.Users), 46)
+	require.Len(t, detail.State.Users, 46)
 }
