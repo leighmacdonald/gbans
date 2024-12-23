@@ -61,12 +61,11 @@ type DemoInfo struct {
 }
 
 type DemoPlayer struct {
-	Classes struct {
-	} `json:"classes"`
-	Name    string `json:"name"`
-	UserID  int    `json:"userId"`
-	SteamID string `json:"steamId"`
-	Team    string `json:"team"`
+	Classes struct{} `json:"classes"`
+	Name    string   `json:"name"`
+	UserID  int      `json:"userId"`  //nolint:tagliatelle
+	SteamID string   `json:"steamId"` //nolint:tagliatelle
+	Team    string   `json:"team"`
 }
 
 type DemoHeader struct {
@@ -85,9 +84,8 @@ type DemoHeader struct {
 
 type DemoDetails struct {
 	State struct {
-		PlayerSummaries struct {
-		} `json:"player_summaries"`
-		Users map[string]DemoPlayer `json:"users"`
+		PlayerSummaries struct{}              `json:"player_summaries"`
+		Users           map[string]DemoPlayer `json:"users"`
 	} `json:"state"`
 	Header DemoHeader `json:"header"`
 }
