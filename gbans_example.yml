@@ -27,6 +27,9 @@ external_url: "https://example.com"
 #
 # client_timeout: 10
 
+# UDP Port to receive srcds log messages (logaddress_add)
+udp_port: 27715
+
 # Encryption key for JWT. https://numbergenerator.org/random-64-digit-hex-codes-generator is a good option.
 #
 # Minimum length of 10 characters
