@@ -208,22 +208,22 @@ func (d demoUsecase) GetDemos(ctx context.Context) ([]domain.DemoFile, error) {
 }
 
 func (d demoUsecase) SendAndParseDemo(ctx context.Context, path string) (*domain.DemoDetails, error) {
-	df, errDF := os.Open(path)
+	fileHandle, errDF := os.Open(path)
 	if errDF != nil {
 		return nil, errors.Join(errDF, domain.ErrDemoLoad)
 	}
 
-	content, errContent := io.ReadAll(df)
+	content, errContent := io.ReadAll(fileHandle)
 	if errContent != nil {
 		return nil, errors.Join(errDF, domain.ErrDemoLoad)
 	}
 
-	info, errInfo := df.Stat()
+	info, errInfo := fileHandle.Stat()
 	if errInfo != nil {
 		return nil, errors.Join(errInfo, domain.ErrDemoLoad)
 	}
 
-	log.Closer(df)
+	log.Closer(fileHandle)
 
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
@@ -241,10 +241,11 @@ func (d demoUsecase) SendAndParseDemo(ctx context.Context, path string) (*domain
 		return nil, errors.Join(errClose, domain.ErrDemoLoad)
 	}
 
-	req, errReq := http.NewRequestWithContext(ctx, http.MethodGet, "http://localhost:8811/", body)
+	req, errReq := http.NewRequestWithContext(ctx, http.MethodPost, "http://localhost:8811/", body)
 	if errReq != nil {
 		return nil, errors.Join(errReq, domain.ErrDemoLoad)
 	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
 
 	client := &http.Client{}
 	resp, errSend := client.Do(req)
@@ -252,9 +253,17 @@ func (d demoUsecase) SendAndParseDemo(ctx context.Context, path string) (*domain
 		return nil, errors.Join(errSend, domain.ErrDemoLoad)
 	}
 
+	defer resp.Body.Close()
+
 	var demo domain.DemoDetails
 
-	if errDecode := json.NewDecoder(resp.Body).Decode(&demo); errDecode != nil {
+	// TODO remove this extra copy once this feature doesnt have much need for debugging/inspection.
+	rawBody, errRead := io.ReadAll(resp.Body)
+	if errRead != nil {
+		return nil, errors.Join(errRead, domain.ErrDemoLoad)
+	}
+
+	if errDecode := json.NewDecoder(bytes.NewReader(rawBody)).Decode(&demo); errDecode != nil {
 		return nil, errors.Join(errDecode, domain.ErrDemoLoad)
 	}
 

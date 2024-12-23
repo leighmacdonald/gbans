@@ -5,10 +5,12 @@ import (
 	"crypto/rand"
 	"fmt"
 	"os"
+	"path"
 	"testing"
 
 	"github.com/leighmacdonald/gbans/internal/demo"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/pkg/fs"
 	"github.com/stretchr/testify/require"
 )
 
@@ -54,7 +56,8 @@ func TestDemosCleanup(t *testing.T) {
 }
 
 func TestDemoUpload(t *testing.T) {
-	detail, err := demoUC.SendAndParseDemo(context.Background(), "test_data/test.dem")
+	demoPath := fs.FindFile(path.Join("testdata", "test.dem"), "gbans")
+	detail, err := demoUC.SendAndParseDemo(context.Background(), demoPath)
 	require.NoError(t, err)
-	require.True(t, len(detail.State.Users) == 10)
+	require.Len(t, len(detail.State.Users), 46)
 }
