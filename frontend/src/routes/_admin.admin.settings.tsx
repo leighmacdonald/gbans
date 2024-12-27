@@ -676,7 +676,8 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
             demo_cleanup_strategy: settings.demo.demo_cleanup_strategy,
             demo_cleanup_min_pct: settings.demo.demo_cleanup_min_pct,
             demo_cleanup_mount: settings.demo.demo_cleanup_mount,
-            demo_count_limit: settings.demo.demo_count_limit
+            demo_count_limit: settings.demo.demo_count_limit,
+            demo_parser_url: settings.demo.demo_parser_url
         }
     });
 
@@ -794,6 +795,22 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                         />
                         <SubHeading>
                             When using the count deletion strategy, this is the maximum number of demos to keep.
+                        </SubHeading>
+                    </Grid>
+
+                    <Grid xs={12}>
+                        <Field
+                            name={'demo_parser_url'}
+                            validators={{
+                                onChange: z.string()
+                            }}
+                            children={(props) => {
+                                return <TextFieldSimple {...props} label={'URL for demo parsing submissions'} />;
+                            }}
+                        />
+                        <SubHeading>
+                            This url should point to an instance of https://github.com/leighmacdonald/tf2_demostats.
+                            This is used to pull stats & player steamids out of demos that are fetched.
                         </SubHeading>
                     </Grid>
 

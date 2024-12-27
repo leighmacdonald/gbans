@@ -58,6 +58,7 @@ type Demos = {
     demo_cleanup_min_pct: string;
     demo_cleanup_mount: string;
     demo_count_limit: string;
+    demo_parser_url: string;
 };
 
 type Patreon = {

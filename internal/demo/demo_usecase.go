@@ -241,7 +241,7 @@ func (d demoUsecase) SendAndParseDemo(ctx context.Context, path string) (*domain
 		return nil, errors.Join(errClose, domain.ErrDemoLoad)
 	}
 
-	req, errReq := http.NewRequestWithContext(ctx, http.MethodPost, "http://localhost:8811/", body)
+	req, errReq := http.NewRequestWithContext(ctx, http.MethodPost, d.config.Config().Demo.DemoParserURL, body)
 	if errReq != nil {
 		return nil, errors.Join(errReq, domain.ErrDemoLoad)
 	}

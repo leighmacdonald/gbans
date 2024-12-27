@@ -201,6 +201,7 @@ type ConfigDemo struct {
 	DemoCleanupMinPct   float32      `json:"demo_cleanup_min_pct,string"`
 	DemoCleanupMount    string       `json:"demo_cleanup_mount"`
 	DemoCountLimit      uint64       `json:"demo_count_limit,string"`
+	DemoParserURL       string       `json:"demo_parser_url"`
 }
 
 type ConfigDiscord struct {
