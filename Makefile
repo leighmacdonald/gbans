@@ -68,7 +68,7 @@ test-go-cover:
 install_deps:
 	go install github.com/daixiang0/gci@v0.13.4
 	go install mvdan.cc/gofumpt@v0.7.0
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.60.3
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.62.2
 	go install honnef.co/go/tools/cmd/staticcheck@v0.5.1
 
 check: lint_golangci static lint_ts typecheck_ts
