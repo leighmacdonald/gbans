@@ -34,12 +34,13 @@ func TestDemosCleanup(t *testing.T) {
 		content := make([]byte, 100000)
 		_, err := rand.Read(content)
 		require.NoError(t, err)
-
-		require.NoError(t, fetcher.OnDemoReceived(ctx, demo.UploadedDemo{
-			Name:    fmt.Sprintf("2023111%d-063943-koth_harvest_final.dem", demoNum),
-			Server:  testServer,
-			Content: content,
-		}))
+		if configUC.Config().Demo.DemoParserURL != "" {
+			require.NoError(t, fetcher.OnDemoReceived(ctx, demo.UploadedDemo{
+				Name:    fmt.Sprintf("2023111%d-063943-koth_harvest_final.dem", demoNum),
+				Server:  testServer,
+				Content: content,
+			}))
+		}
 	}
 
 	expired, errExpired := demoRepository.ExpiredDemos(ctx, 5)
@@ -52,10 +53,15 @@ func TestDemosCleanup(t *testing.T) {
 
 	allDemos, err := demoUC.GetDemos(ctx)
 	require.NoError(t, err)
-	require.Len(t, allDemos, 5)
+	if configUC.Config().Demo.DemoParserURL != "" {
+		require.Len(t, allDemos, 5)
+	}
 }
 
 func TestDemoUpload(t *testing.T) {
+	if configUC.Config().Demo.DemoParserURL == "" {
+		t.Skip("Parser url undefined")
+	}
 	demoPath := fs.FindFile(path.Join("testdata", "test.dem"), "gbans")
 	detail, err := demoUC.SendAndParseDemo(context.Background(), demoPath)
 	require.NoError(t, err)
