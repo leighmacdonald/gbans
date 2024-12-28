@@ -296,7 +296,7 @@ func (d demoUsecase) CreateFromAsset(ctx context.Context, asset domain.Asset, se
 	}
 
 	for key := range demoDetail.State.Users {
-		intStats[key] = gin.H{}
+		intStats[fmt.Sprintf("%d", key)] = gin.H{}
 	}
 
 	timeStr := fmt.Sprintf("%s-%s", namePartsAll[0], namePartsAll[1])

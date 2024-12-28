@@ -3,6 +3,9 @@ package match
 import (
 	"context"
 	"errors"
+	"math"
+	"strings"
+	"time"
 
 	"github.com/gofrs/uuid/v5"
 	"github.com/leighmacdonald/gbans/internal/domain"
@@ -10,6 +13,15 @@ import (
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 )
+
+func parseMapName(name string) string {
+	if strings.HasPrefix(name, "workshop/") {
+		parts := strings.Split(strings.TrimPrefix(name, "workshop/"), ".ugc")
+		name = parts[0]
+	}
+
+	return name
+}
 
 type matchUsecase struct {
 	repository    domain.MatchRepository
@@ -29,43 +41,32 @@ func NewMatchUsecase(repository domain.MatchRepository, state domain.StateUsecas
 	}
 }
 
-func (m matchUsecase) StartMatch(server domain.Server, mapName string, demoName string) (uuid.UUID, error) {
-	matchUUID, errUUID := uuid.NewV4()
-	if errUUID != nil {
-		return uuid.UUID{}, errors.Join(errUUID, domain.ErrUUIDCreate)
-	}
-
-	trigger := domain.MatchTrigger{
-		Type:     domain.MatchTriggerStart,
-		UUID:     matchUUID,
-		Server:   server,
-		MapName:  mapName,
-		DemoName: demoName,
-	}
-
-	m.repository.StartMatch(trigger)
-
-	return matchUUID, nil
-}
-
-func (m matchUsecase) EndMatch(ctx context.Context, serverID int) (uuid.UUID, error) {
-	matchID, found := m.repository.GetMatchIDFromServerID(serverID)
-	if !found {
-		return matchID, domain.ErrLoadMatch
-	}
-
-	server, errServer := m.servers.Server(ctx, serverID)
+func (m matchUsecase) CreateFromDemo(ctx context.Context, serverID int, details domain.DemoDetails) (domain.MatchSummary, error) {
+	server, errServer := m.servers.Server(context.Background(), serverID)
 	if errServer != nil {
-		return matchID, errors.Join(errServer, domain.ErrUnknownServer)
+		return domain.MatchSummary{}, errServer
+	}
+	newID, errID := uuid.NewV4()
+	if errID != nil {
+		return domain.MatchSummary{}, errors.Join(errID, domain.ErrUUIDCreate)
 	}
 
-	m.repository.EndMatch(domain.MatchTrigger{
-		Type:   domain.MatchTriggerEnd,
-		UUID:   matchID,
-		Server: server,
-	})
+	endTime := time.Now()
+	startTime := endTime.Add(-time.Duration(int(math.Ceil(details.Header.Duration))))
+	s := domain.MatchSummary{
+		MatchID:   newID,
+		ServerID:  server.ServerID,
+		IsWinner:  false,
+		ShortName: server.ShortName,
+		Title:     details.Header.Server,
+		MapName:   details.Header.Map,
+		ScoreBlu:  0,
+		ScoreRed:  0,
+		TimeStart: startTime,
+		TimeEnd:   endTime,
+	}
 
-	return matchID, nil
+	return s, nil
 }
 
 func (m matchUsecase) GetMatchIDFromServerID(serverID int) (uuid.UUID, bool) {
