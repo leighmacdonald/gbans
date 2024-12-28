@@ -154,14 +154,14 @@ type PlayerClass int
 const (
 	Spectator PlayerClass = iota
 	Scout
-	Soldier
-	Pyro
-	Demo
-	Heavy
-	Engineer
-	Medic
 	Sniper
+	Soldier
+	Demo
+	Medic
+	Heavy
+	Pyro
 	Spy
+	Engineer
 	Multi
 )
 
