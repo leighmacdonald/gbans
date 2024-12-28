@@ -13,25 +13,7 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-type MatchTriggerType int
-
-const (
-	MatchTriggerStart MatchTriggerType = 1
-	MatchTriggerEnd   MatchTriggerType = 2
-)
-
-type MatchTrigger struct {
-	Type     MatchTriggerType
-	UUID     uuid.UUID
-	Server   Server
-	MapName  string
-	DemoName string
-}
-
 type MatchRepository interface {
-	Start(ctx context.Context)
-	StartMatch(startTrigger MatchTrigger)
-	EndMatch(endTrigger MatchTrigger)
 	Matches(ctx context.Context, opts MatchesQueryOpts) ([]MatchSummary, int64, error)
 	MatchGetByID(ctx context.Context, matchID uuid.UUID, match *MatchResult) error
 	MatchSave(ctx context.Context, match *logparse.Match, weaponMap fp.MutexMap[logparse.Weapon, int]) error
@@ -56,8 +38,7 @@ type MatchRepository interface {
 	GetMatchIDFromServerID(serverID int) (uuid.UUID, bool)
 }
 type MatchUsecase interface {
-	StartMatch(server Server, mapName string, demoName string) (uuid.UUID, error)
-	EndMatch(ctx context.Context, serverID int) (uuid.UUID, error)
+	CreateFromDemo(ctx context.Context, serverID int, details DemoDetails) (MatchSummary, error)
 	GetMatchIDFromServerID(serverID int) (uuid.UUID, bool)
 	Matches(ctx context.Context, opts MatchesQueryOpts) ([]MatchSummary, int64, error)
 	MatchGetByID(ctx context.Context, matchID uuid.UUID, match *MatchResult) error
@@ -443,7 +424,7 @@ type PlayerMedicStats struct {
 type CommonPlayerStats struct {
 	SteamID           steamid.SteamID `json:"steam_id"`
 	Name              string          `json:"name"`
-	AvatarHash        string          `json:"avatar_hash"`
+	AvatarHash        string          `json:"avatar_hash"` //todo make
 	Kills             int             `json:"kills"`
 	Assists           int             `json:"assists"`
 	Deaths            int             `json:"deaths"`
