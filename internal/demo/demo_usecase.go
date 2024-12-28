@@ -17,11 +17,9 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/queue"
 	"github.com/leighmacdonald/gbans/pkg/fs"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/ricochet2200/go-disk-usage/du"
-	"github.com/riverqueue/river"
 )
 
 type demoUsecase struct {
@@ -366,31 +364,6 @@ func (d demoUsecase) RemoveOrphans(ctx context.Context) error {
 
 		slog.Info("Removed orphan demo file", slog.String("filename", demo.Title))
 	}
-
-	return nil
-}
-
-type CleanupArgs struct{}
-
-func (args CleanupArgs) Kind() string {
-	return "demo_cleanup"
-}
-
-func (args CleanupArgs) InsertOpts() river.InsertOpts {
-	return river.InsertOpts{Queue: string(queue.Default), UniqueOpts: river.UniqueOpts{ByPeriod: time.Hour * 24}}
-}
-
-func NewCleanupWorker(demos domain.DemoUsecase) *CleanupWorker {
-	return &CleanupWorker{demos: demos}
-}
-
-type CleanupWorker struct {
-	river.WorkerDefaults[CleanupArgs]
-	demos domain.DemoUsecase
-}
-
-func (worker *CleanupWorker) Work(ctx context.Context, _ *river.Job[CleanupArgs]) error {
-	worker.demos.Cleanup(ctx)
 
 	return nil
 }

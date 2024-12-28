@@ -3,59 +3,44 @@ package ban
 import (
 	"context"
 	"errors"
-	"log/slog"
-	"sync"
-	"time"
-
 	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
-	"github.com/leighmacdonald/gbans/internal/queue"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/steamid/v4/steamid"
-	"github.com/riverqueue/river"
+	"log/slog"
+	"sync"
 )
 
-type ExpirationArgs struct{}
-
-func (args ExpirationArgs) Kind() string {
-	return "bans_expired"
-}
-
-func (args ExpirationArgs) InsertOpts() river.InsertOpts {
-	return river.InsertOpts{Queue: string(queue.Default), UniqueOpts: river.UniqueOpts{ByPeriod: time.Minute}}
-}
-
-func NewExpirationWorker(bansSteam domain.BanSteamUsecase, bansNet domain.BanNetUsecase, bansASN domain.BanASNUsecase,
-	bansPerson domain.PersonUsecase, notifications domain.NotificationUsecase, config domain.ConfigUsecase,
-) *ExpirationWorker {
-	return &ExpirationWorker{
-		bansSteam:     bansSteam,
-		bansNet:       bansNet,
-		bansASN:       bansASN,
-		bansPerson:    bansPerson,
+func NewExpirationMonitor(steam domain.BanSteamUsecase, net domain.BanNetUsecase, asn domain.BanASNUsecase,
+	person domain.PersonUsecase, notifications domain.NotificationUsecase, config domain.ConfigUsecase,
+) *ExpirationMonitor {
+	return &ExpirationMonitor{
+		steam:         steam,
+		net:           net,
+		asn:           asn,
+		person:        person,
 		notifications: notifications,
 		config:        config,
 	}
 }
 
-type ExpirationWorker struct {
-	river.WorkerDefaults[ExpirationArgs]
-	bansSteam     domain.BanSteamUsecase
-	bansNet       domain.BanNetUsecase
-	bansASN       domain.BanASNUsecase
-	bansPerson    domain.PersonUsecase
+type ExpirationMonitor struct {
+	steam         domain.BanSteamUsecase
+	net           domain.BanNetUsecase
+	asn           domain.BanASNUsecase
+	person        domain.PersonUsecase
 	notifications domain.NotificationUsecase
 	config        domain.ConfigUsecase
 }
 
-func (worker *ExpirationWorker) Work(ctx context.Context, _ *river.Job[ExpirationArgs]) error {
+func (monitor *ExpirationMonitor) Update(ctx context.Context) {
 	waitGroup := &sync.WaitGroup{}
 	waitGroup.Add(3)
 
 	go func() {
 		defer waitGroup.Done()
 
-		expiredBans, errExpiredBans := worker.bansSteam.Expired(ctx)
+		expiredBans, errExpiredBans := monitor.steam.Expired(ctx)
 		if errExpiredBans != nil && !errors.Is(errExpiredBans, domain.ErrNoResult) {
 			slog.Error("Failed to get expired expiredBans", log.ErrAttr(errExpiredBans))
 
@@ -64,13 +49,13 @@ func (worker *ExpirationWorker) Work(ctx context.Context, _ *river.Job[Expiratio
 
 		for _, expiredBan := range expiredBans {
 			ban := expiredBan
-			if errDrop := worker.bansSteam.Delete(ctx, &ban, false); errDrop != nil {
+			if errDrop := monitor.steam.Delete(ctx, &ban, false); errDrop != nil {
 				slog.Error("Failed to drop expired expiredBan", log.ErrAttr(errDrop))
 
 				continue
 			}
 
-			person, errPerson := worker.bansPerson.GetPersonBySteamID(ctx, ban.TargetID)
+			person, errPerson := monitor.person.GetPersonBySteamID(ctx, ban.TargetID)
 			if errPerson != nil {
 				slog.Error("Failed to get expired Person", log.ErrAttr(errPerson))
 
@@ -82,9 +67,9 @@ func (worker *ExpirationWorker) Work(ctx context.Context, _ *river.Job[Expiratio
 				name = person.SteamID.String()
 			}
 
-			worker.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelBanLog, discord.BanExpiresMessage(ban, person, worker.config.ExtURL(ban))))
+			monitor.notifications.Enqueue(ctx, domain.NewDiscordNotification(domain.ChannelBanLog, discord.BanExpiresMessage(ban, person, monitor.config.ExtURL(ban))))
 
-			worker.notifications.Enqueue(ctx, domain.NewSiteUserNotification(
+			monitor.notifications.Enqueue(ctx, domain.NewSiteUserNotification(
 				[]steamid.SteamID{person.SteamID},
 				domain.SeverityInfo,
 				"Your mute/ban period has expired",
@@ -99,13 +84,13 @@ func (worker *ExpirationWorker) Work(ctx context.Context, _ *river.Job[Expiratio
 	go func() {
 		defer waitGroup.Done()
 
-		expiredNetBans, errExpiredNetBans := worker.bansNet.Expired(ctx)
+		expiredNetBans, errExpiredNetBans := monitor.net.Expired(ctx)
 		if errExpiredNetBans != nil && !errors.Is(errExpiredNetBans, domain.ErrNoResult) {
 			slog.Warn("Failed to get expired network bans", log.ErrAttr(errExpiredNetBans))
 		} else {
 			for _, expiredNetBan := range expiredNetBans {
 				expiredBan := expiredNetBan
-				if errDropBanNet := worker.bansNet.Delete(ctx, expiredNetBan.NetID, domain.RequestUnban{UnbanReasonText: "Expired"}, false); errDropBanNet != nil {
+				if errDropBanNet := monitor.net.Delete(ctx, expiredNetBan.NetID, domain.RequestUnban{UnbanReasonText: "Expired"}, false); errDropBanNet != nil {
 					if !errors.Is(errDropBanNet, domain.ErrNoResult) {
 						slog.Error("Failed to drop expired network expiredNetBan", log.ErrAttr(errDropBanNet))
 					}
@@ -119,12 +104,12 @@ func (worker *ExpirationWorker) Work(ctx context.Context, _ *river.Job[Expiratio
 	go func() {
 		defer waitGroup.Done()
 
-		expiredASNBans, errExpiredASNBans := worker.bansASN.Expired(ctx)
+		expiredASNBans, errExpiredASNBans := monitor.asn.Expired(ctx)
 		if errExpiredASNBans != nil && !errors.Is(errExpiredASNBans, domain.ErrNoResult) {
 			slog.Error("Failed to get expired asn bans", log.ErrAttr(errExpiredASNBans))
 		} else {
 			for _, expired := range expiredASNBans {
-				if errDropASN := worker.bansASN.Delete(ctx, expired.BanASNId, domain.RequestUnban{UnbanReasonText: "Expired"}); errDropASN != nil {
+				if errDropASN := monitor.asn.Delete(ctx, expired.BanASNId, domain.RequestUnban{UnbanReasonText: "Expired"}); errDropASN != nil {
 					slog.Error("Failed to drop expired asn ban", log.ErrAttr(errDropASN))
 				} else {
 					slog.Info("ASN ban expired", slog.Int64("ban_id", expired.BanASNId))
@@ -135,5 +120,5 @@ func (worker *ExpirationWorker) Work(ctx context.Context, _ *river.Job[Expiratio
 
 	waitGroup.Wait()
 
-	return nil
+	return
 }

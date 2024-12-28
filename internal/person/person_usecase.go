@@ -9,13 +9,11 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/queue"
 	"github.com/leighmacdonald/gbans/internal/thirdparty"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
-	"github.com/riverqueue/river"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -266,47 +264,4 @@ func (u personUsecase) SetPermissionLevel(ctx context.Context, steamID steamid.S
 	}
 
 	return u.persons.SavePerson(ctx, &person)
-}
-
-type ExpiredArgs struct{}
-
-func (args ExpiredArgs) Kind() string {
-	return "update_expired_profiles"
-}
-
-func (args ExpiredArgs) InsertOpts() river.InsertOpts {
-	return river.InsertOpts{Queue: string(queue.Default), UniqueOpts: river.UniqueOpts{ByPeriod: time.Minute * 5}}
-}
-
-func NewExpiredWorker(persons domain.PersonUsecase) *ExpiredWorker {
-	return &ExpiredWorker{persons: persons}
-}
-
-type ExpiredWorker struct {
-	river.WorkerDefaults[ExpiredArgs]
-	persons domain.PersonUsecase
-}
-
-func (worker *ExpiredWorker) Work(ctx context.Context, _ *river.Job[ExpiredArgs]) error {
-	people, errGetExpired := worker.persons.GetExpiredProfiles(ctx, 100)
-	if errGetExpired != nil {
-		if !errors.Is(errGetExpired, domain.ErrNoResult) {
-			return nil
-		}
-
-		return errGetExpired
-	}
-
-	if len(people) == 0 {
-		return nil
-	}
-
-	_, errUpdate := worker.persons.UpdateProfiles(ctx, people)
-	if errUpdate != nil {
-		slog.Error("Failed to update profiles", log.ErrAttr(errUpdate))
-
-		return errUpdate
-	}
-
-	return nil
 }

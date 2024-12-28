@@ -98,22 +98,15 @@ func firstTimeSetup(ctx context.Context, persons domain.PersonUsecase, news doma
 }
 
 func createQueueWorkers(people domain.PersonUsecase, notifications domain.NotificationUsecase,
-	discordUC domain.DiscordUsecase, authRepo domain.AuthRepository, memberships *steamgroup.Memberships,
-	patreonUC domain.PatreonUsecase, bansSteam domain.BanSteamUsecase, bansNet domain.BanNetUsecase, bansASN domain.BanASNUsecase,
-	configUC domain.ConfigUsecase, demos domain.DemoUsecase, reports domain.ReportUsecase,
-	blocklists domain.BlocklistUsecase, discordOAuth domain.DiscordOAuthUsecase,
+	discordUC domain.DiscordUsecase, authRepo domain.AuthRepository,
+	patreonUC domain.PatreonUsecase, reports domain.ReportUsecase, discordOAuth domain.DiscordOAuthUsecase,
 ) *river.Workers {
 	workers := river.NewWorkers()
 
 	river.AddWorker[notification.SenderArgs](workers, notification.NewSenderWorker(people, notifications, discordUC))
 	river.AddWorker[auth.CleanupArgs](workers, auth.NewCleanupWorker(authRepo))
-	river.AddWorker[steamgroup.MembershipArgs](workers, steamgroup.NewMembershipWorker(memberships))
 	river.AddWorker[patreon.AuthUpdateArgs](workers, patreon.NewSyncWorker(patreonUC))
-	river.AddWorker[ban.ExpirationArgs](workers, ban.NewExpirationWorker(bansSteam, bansNet, bansASN, people, notifications, configUC))
-	river.AddWorker[demo.CleanupArgs](workers, demo.NewCleanupWorker(demos))
 	river.AddWorker[report.MetaInfoArgs](workers, report.NewMetaInfoWorker(reports))
-	river.AddWorker[blocklist.ListUpdaterArgs](workers, blocklist.NewListUpdaterWorker(blocklists))
-	river.AddWorker[person.ExpiredArgs](workers, person.NewExpiredWorker(people))
 	river.AddWorker[discord.TokenRefreshArgs](workers, discord.NewTokenRefreshWorker(discordOAuth))
 
 	return workers
@@ -129,13 +122,6 @@ func createPeriodicJobs() []*river.PeriodicJob {
 			&river.PeriodicJobOpts{RunOnStart: true}),
 
 		river.NewPeriodicJob(
-			river.PeriodicInterval(6*time.Hour),
-			func() (river.JobArgs, *river.InsertOpts) {
-				return steamgroup.MembershipArgs{}, nil
-			},
-			&river.PeriodicJobOpts{RunOnStart: true}),
-
-		river.NewPeriodicJob(
 			river.PeriodicInterval(time.Hour),
 			func() (river.JobArgs, *river.InsertOpts) {
 				return patreon.AuthUpdateArgs{}, nil
@@ -143,37 +129,9 @@ func createPeriodicJobs() []*river.PeriodicJob {
 			&river.PeriodicJobOpts{RunOnStart: true}),
 
 		river.NewPeriodicJob(
-			river.PeriodicInterval(time.Minute),
-			func() (river.JobArgs, *river.InsertOpts) {
-				return ban.ExpirationArgs{}, nil
-			},
-			&river.PeriodicJobOpts{RunOnStart: true}),
-
-		river.NewPeriodicJob(
-			river.PeriodicInterval(time.Hour*24),
-			func() (river.JobArgs, *river.InsertOpts) {
-				return demo.CleanupArgs{}, nil
-			},
-			&river.PeriodicJobOpts{RunOnStart: true}),
-
-		river.NewPeriodicJob(
 			river.PeriodicInterval(24*time.Hour),
 			func() (river.JobArgs, *river.InsertOpts) {
 				return report.MetaInfoArgs{}, nil
-			},
-			&river.PeriodicJobOpts{RunOnStart: true}),
-
-		river.NewPeriodicJob(
-			river.PeriodicInterval(24*time.Hour),
-			func() (river.JobArgs, *river.InsertOpts) {
-				return blocklist.ListUpdaterArgs{}, nil
-			},
-			&river.PeriodicJobOpts{RunOnStart: true}),
-
-		river.NewPeriodicJob(
-			river.PeriodicInterval(time.Minute*5),
-			func() (river.JobArgs, *river.InsertOpts) {
-				return person.ExpiredArgs{}, nil
 			},
 			&river.PeriodicJobOpts{RunOnStart: true}),
 
@@ -342,20 +300,15 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 			go chatUsecase.Start(ctx)
 
 			forumUsecase := forum.NewForumUsecase(forum.NewForumRepository(dbConn), notificationUsecase)
+			go forumUsecase.Start(ctx)
 
 			metricsUsecase := metrics.NewMetricsUsecase(eventBroadcaster)
 			go metricsUsecase.Start(ctx)
 
-			go forumUsecase.Start(ctx)
-
 			newsUsecase := news.NewNewsUsecase(news.NewNewsRepository(dbConn))
-
 			patreonUsecase := patreon.NewPatreonUsecase(patreon.NewPatreonRepository(dbConn), configUsecase)
-
 			srcdsUsecase := srcds.NewSrcdsUsecase(srcds.NewRepository(dbConn), configUsecase, serversUC, personUsecase, reportUsecase, notificationUsecase, banUsecase)
-
 			wikiUsecase := wiki.NewWikiUsecase(wiki.NewWikiRepository(dbConn))
-
 			authRepo := auth.NewAuthRepository(dbConn)
 			authUsecase := auth.NewAuthUsecase(authRepo, configUsecase, personUsecase, banUsecase, serversUC)
 
@@ -428,16 +381,44 @@ func serveCmd() *cobra.Command { //nolint:maintidx
 				notificationUsecase,
 				discordUsecase,
 				authRepo,
-				steamgroup.NewMemberships(banGroupRepo),
 				patreonUsecase,
-				banUsecase,
-				banNetUsecase,
-				banASNUsecase,
-				configUsecase,
-				demos,
 				reportUsecase,
-				blocklistUsecase,
 				discordOAuthUsecase)
+
+			memberships := steamgroup.NewMemberships(banGroupRepo)
+			banExpirations := ban.NewExpirationMonitor(banUsecase, banNetUsecase, banASNUsecase, personUsecase, notificationUsecase, configUsecase)
+
+			go func() {
+				go memberships.Update(ctx)
+				go banExpirations.Update(ctx)
+				go blocklistUsecase.Sync(ctx)
+				go demos.Cleanup(ctx)
+
+				membershipsTicker := time.NewTicker(12 * time.Hour)
+				expirationsTicker := time.NewTicker(60 * time.Second)
+				reportIntoTicker := time.NewTicker(24 * time.Hour)
+				blocklistTicker := time.NewTicker(6 * time.Hour)
+				demoTicker := time.NewTicker(5 * time.Minute)
+
+				select {
+				case <-ctx.Done():
+					return
+				case <-membershipsTicker.C:
+					go memberships.Update(ctx)
+				case <-expirationsTicker.C:
+					go banExpirations.Update(ctx)
+				case <-reportIntoTicker.C:
+					go func() {
+						if errMeta := reportUsecase.GenerateMetaStats(ctx); errMeta != nil {
+							slog.Error("Failed to generate meta stats", log.ErrAttr(errMeta))
+						}
+					}()
+				case <-blocklistTicker.C:
+					go blocklistUsecase.Sync(ctx)
+				case <-demoTicker.C:
+					go demos.Cleanup(ctx)
+				}
+			}()
 
 			periodicJons := createPeriodicJobs()
 			queueClient, errClient := queue.Client(dbConn.Pool(), workers, periodicJons)
