@@ -2,6 +2,8 @@ package domain
 
 import (
 	"context"
+	"github.com/leighmacdonald/gbans/pkg/logparse"
+	"github.com/leighmacdonald/steamid/v4/steamid"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -54,6 +56,8 @@ type DemoFile struct {
 	AssetID         uuid.UUID        `json:"asset_id"`
 }
 
+const DemoType = "HL2DEMO"
+
 type DemoInfo struct {
 	DemoID  int64
 	Title   string
@@ -61,11 +65,11 @@ type DemoInfo struct {
 }
 
 type DemoPlayer struct {
-	Classes struct{} `json:"classes"`
-	Name    string   `json:"name"`
-	UserID  int      `json:"userId"`  //nolint:tagliatelle
-	SteamID string   `json:"steamId"` //nolint:tagliatelle
-	Team    string   `json:"team"`
+	Classes map[logparse.PlayerClass]int `json:"classes"`
+	Name    string                       `json:"name"`
+	UserID  int                          `json:"userId"`  //nolint:tagliatelle
+	SteamID steamid.SteamID              `json:"steamId"` //nolint:tagliatelle
+	Team    logparse.Team                `json:"team"`
 }
 
 type DemoHeader struct {
@@ -82,10 +86,57 @@ type DemoHeader struct {
 	Signon   int     `json:"signon"`
 }
 
+type DemoWeaponDetail struct {
+	Kills     int `json:"kills"`
+	Damage    int `json:"damage"`
+	Shots     int `json:"shots"`
+	Hits      int `json:"hits"`
+	Backstabs int `json:"backstabs,`
+	Headshots int `json:"headshots"`
+	Airshots  int `json:"airshots"`
+}
+
+type DemoPlayerSummaries struct {
+	Points             int                                  `json:"points"`
+	Kills              int                                  `json:"kills"`
+	Assists            int                                  `json:"assists"`
+	Deaths             int                                  `json:"deaths"`
+	BuildingsDestroyed int                                  `json:"buildings_destroyed"`
+	Captures           int                                  `json:"captures"`
+	Defenses           int                                  `json:"defenses"`
+	Dominations        int                                  `json:"dominations"`
+	Revenges           int                                  `json:"revenges"`
+	Ubercharges        int                                  `json:"ubercharges"`
+	Headshots          int                                  `json:"headshots"`
+	Teleports          int                                  `json:"teleports"`
+	Healing            int                                  `json:"healing"`
+	Backstabs          int                                  `json:"backstabs"`
+	BonusPoints        int                                  `json:"bonus_points"`
+	Support            int                                  `json:"support"`
+	DamgageDealt       int                                  `json:"damgage_dealt"`
+	WeaponMap          map[logparse.Weapon]DemoWeaponDetail `json:"weapon_map"`
+}
+
+type DemoChatMessage struct {
+}
+
+type DemoMatchSummary struct {
+	ScoreBlu int               `json:"score_blu"`
+	ScoreRed int               `json:"score_red"`
+	Chat     []DemoChatMessage `json:"chat"`
+}
+
+type DemoRoundSummary struct {
+}
+
+type DemoState struct {
+	DemoPlayerSummaries map[int]DemoPlayerSummaries `json:"player_summaries"` //nolint:tagliatelle
+	Users               map[int]DemoPlayer          `json:"users"`
+	DemoMatchSummary    DemoMatchSummary            `json:"match_summary"` //nolint:tagliatelle
+	DemoRoundSummary    DemoRoundSummary            `json:"round_summary"`
+}
+
 type DemoDetails struct {
-	State struct {
-		PlayerSummaries struct{}              `json:"player_summaries"`
-		Users           map[string]DemoPlayer `json:"users"`
-	} `json:"state"`
+	State  DemoState  `json:"state"`
 	Header DemoHeader `json:"header"`
 }
