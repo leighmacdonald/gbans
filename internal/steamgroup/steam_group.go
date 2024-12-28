@@ -9,10 +9,8 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/internal/httphelper"
-	"github.com/leighmacdonald/gbans/internal/queue"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
-	"github.com/riverqueue/river"
 )
 
 var (
@@ -54,7 +52,7 @@ func (g *Memberships) IsMember(steamID steamid.SteamID) (steamid.SteamID, bool) 
 	return steamid.SteamID{}, false
 }
 
-func (g *Memberships) update(ctx context.Context) {
+func (g *Memberships) Update(ctx context.Context) {
 	newMap := map[steamid.SteamID]steamid.Collection{}
 
 	var total int
@@ -123,29 +121,4 @@ func (g *Memberships) updateGroupBanMembers(ctx context.Context) (map[steamid.St
 	}
 
 	return newMap, nil
-}
-
-type MembershipArgs struct{}
-
-func (args MembershipArgs) Kind() string {
-	return "group_members_update"
-}
-
-func (args MembershipArgs) InsertOpts() river.InsertOpts {
-	return river.InsertOpts{Queue: string(queue.Default), UniqueOpts: river.UniqueOpts{ByPeriod: time.Hour * 6}}
-}
-
-func NewMembershipWorker(memberships *Memberships) *MembershipWorker {
-	return &MembershipWorker{memberships: memberships}
-}
-
-type MembershipWorker struct {
-	river.WorkerDefaults[MembershipArgs]
-	memberships *Memberships
-}
-
-func (worker *MembershipWorker) Work(ctx context.Context, _ *river.Job[MembershipArgs]) error {
-	worker.memberships.update(ctx)
-
-	return nil
 }
