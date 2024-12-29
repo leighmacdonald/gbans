@@ -100,7 +100,12 @@ function ReportCreate() {
                                 You are unable to report players while you are currently banned/muted.
                             </Typography>
                             <ButtonGroup sx={{ padding: 2 }}>
-                                <ButtonLink variant={'contained'} color={'primary'} to={`/ban/${profile.ban_id}`}>
+                                <ButtonLink
+                                    variant={'contained'}
+                                    color={'primary'}
+                                    to={'/ban/$ban_id'}
+                                    params={{ ban_id: profile.ban_id.toString() }}
+                                >
                                     Appeal Ban
                                 </ButtonLink>
                             </ButtonGroup>
