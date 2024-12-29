@@ -75,13 +75,11 @@ export const ForumRecentMessageActivity = () => {
                                         <VCenterBox>
                                             <Typography
                                                 overflow={'hidden'}
-                                                color={(theme) => {
-                                                    return theme.palette.text.secondary;
-                                                }}
                                                 component={RouterLink}
                                                 to={`/profile/${m.source_id}`}
                                                 variant={'body2'}
                                                 sx={{
+                                                    color: (theme) => theme.palette.text.secondary,
                                                     textDecoration: 'none',
                                                     '&:hover': {
                                                         textDecoration: 'underline'

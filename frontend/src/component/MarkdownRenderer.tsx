@@ -41,10 +41,10 @@ const MDLink = ({ children, href, title }: MDLnkProps) => {
             title={title}
             fontWeight={700}
             sx={{
+                color: (theme) => theme.palette.text.primary,
                 textDecoration: 'none',
                 '&:hover': { textDecoration: 'underline' }
             }}
-            color={(theme) => theme.palette.text.primary}
         >
             {children}
         </Typography>

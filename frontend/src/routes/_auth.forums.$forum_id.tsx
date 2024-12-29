@@ -198,8 +198,8 @@ const ForumThreadRow = ({ thread }: { thread: ForumThread }) => {
                                 variant={'body2'}
                                 component={RouterLink}
                                 to={`/profile/${thread.source_id}`}
-                                color={(theme) => theme.palette.text.secondary}
                                 sx={{
+                                    color: (theme) => theme.palette.text.secondary,
                                     textDecoration: 'none',
                                     '&:hover': { textDecoration: 'underline' }
                                 }}
@@ -240,8 +240,7 @@ const ForumThreadRow = ({ thread }: { thread: ForumThread }) => {
                                 variant={'body2'}
                                 align={'right'}
                                 fontWeight={700}
-                                sx={{ textDecoration: 'none' }}
-                                color={(theme) => theme.palette.text.primary}
+                                sx={{ color: (theme) => theme.palette.text.primary, textDecoration: 'none' }}
                                 component={RouterLink}
                                 to={`/forums/thread/${thread.forum_thread_id}#${thread.recent_forum_message_id}`}
                             >
@@ -249,9 +248,8 @@ const ForumThreadRow = ({ thread }: { thread: ForumThread }) => {
                             </Typography>
                             <Typography
                                 align={'right'}
-                                color={(theme) => theme.palette.text.secondary}
                                 variant={'body2'}
-                                sx={{ textDecoration: 'none' }}
+                                sx={{ color: (theme) => theme.palette.text.secondary, textDecoration: 'none' }}
                                 component={RouterLink}
                                 to={`/profile/${thread.recent_steam_id}`}
                             >

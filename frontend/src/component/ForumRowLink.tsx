@@ -12,7 +12,7 @@ export const ForumRowLink = ({ to, label, align, variant = 'h6' }: ForumRowLinkP
     return (
         <Typography
             noWrap
-            sx={{ textDecoration: 'none' }}
+            sx={{ color: (theme) => theme.palette.text.primary, textDecoration: 'none' }}
             fontWeight={700}
             width={'100%'}
             component={RouterLink}
@@ -20,9 +20,6 @@ export const ForumRowLink = ({ to, label, align, variant = 'h6' }: ForumRowLinkP
             variant={variant}
             to={to}
             align={align}
-            color={(theme) => {
-                return theme.palette.text.primary;
-            }}
         >
             {label}
         </Typography>
