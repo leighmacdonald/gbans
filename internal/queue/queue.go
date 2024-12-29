@@ -20,7 +20,6 @@ var (
 	ErrMigrateQueue = errors.New("failed to migrate queue database tables")
 	ErrSetupQueue   = errors.New("failed to setup queue client")
 	ErrStartQueue   = errors.New("failed to start job client")
-	ErrInsertQueue  = errors.New("failed to insert new job")
 )
 
 type JobPriority int
@@ -40,7 +39,10 @@ const (
 )
 
 func Init(ctx context.Context, dbPool *pgxpool.Pool) error {
-	migrator := rivermigrate.New[pgx.Tx](riverpgxv5.New(dbPool), nil)
+	migrator, errNew := rivermigrate.New[pgx.Tx](riverpgxv5.New(dbPool), nil)
+	if errNew != nil {
+		return errors.Join(errNew, ErrMigrateQueue)
+	}
 
 	res, err := migrator.Migrate(ctx, rivermigrate.DirectionUp, nil)
 	if err != nil {
