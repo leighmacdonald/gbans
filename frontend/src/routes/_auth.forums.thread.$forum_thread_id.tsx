@@ -4,7 +4,7 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ConstructionIcon from '@mui/icons-material/Construction';
 import LockIcon from '@mui/icons-material/Lock';
 import Person2Icon from '@mui/icons-material/Person2';
-import { IconButton, Theme } from '@mui/material';
+import { IconButton } from '@mui/material';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid2';
 import Paper from '@mui/material/Paper';
@@ -254,7 +254,7 @@ function ForumThreadPage() {
                     <Typography
                         variant={'body2'}
                         component={RouterLink}
-                        color={(theme: Theme) => theme.palette.text.primary}
+                        sx={{ color: (theme) => theme.palette.text.primary }}
                         to={`/profile/${thread?.source_id}`}
                     >
                         {thread?.personaname ?? ''}
