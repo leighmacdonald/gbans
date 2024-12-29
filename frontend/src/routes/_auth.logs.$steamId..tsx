@@ -3,8 +3,8 @@ import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import { TablePagination } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
@@ -56,7 +56,7 @@ function MatchListPage() {
     return (
         <Grid container>
             <Title>Match History</Title>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <MatchSummaryTable matches={matches?.data ?? []} count={matches?.count ?? 0} isLoading={isLoading} />
             </Grid>
         </Grid>
@@ -133,12 +133,12 @@ const MatchSummaryTable = ({
 
     return (
         <Grid>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <ContainerWithHeader title={'Match History'} iconLeft={<TimelineIcon />}>
                     <DataTable table={table} isLoading={isLoading} />
                 </ContainerWithHeader>
             </Grid>
-            <Grid xs={'auto'}>
+            <Grid size={{ xs: 'auto' }}>
                 <TablePagination
                     component="div"
                     variant={'head'}

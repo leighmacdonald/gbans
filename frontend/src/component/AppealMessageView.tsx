@@ -4,11 +4,11 @@ import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardHeader from '@mui/material/CardHeader';
+import Grid from '@mui/material/Grid2';
 import IconButton from '@mui/material/IconButton';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -80,7 +80,7 @@ export const AppealMessageView = ({ message, onDelete }: AppealMessageViewProps)
                     }}
                 >
                     <Grid container spacing={2} padding={1}>
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Field
                                 validators={{
                                     onChange: z.string().min(4)
@@ -91,7 +91,7 @@ export const AppealMessageView = ({ message, onDelete }: AppealMessageViewProps)
                                 }}
                             />
                         </Grid>
-                        <Grid xs={12} mdOffset="auto">
+                        <Grid size={{ xs: 12 }}>
                             <Subscribe
                                 selector={(state) => [state.canSubmit, state.isSubmitting]}
                                 children={([canSubmit, isSubmitting]) => {

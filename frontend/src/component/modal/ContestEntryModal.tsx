@@ -6,8 +6,8 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
+import Grid from '@mui/material/Grid2';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useQuery } from '@tanstack/react-query';
 import { apiContest } from '../../api';
 import { apiSaveContestEntryMedia, UserUploadedFile } from '../../api/media';
@@ -157,8 +157,8 @@ export const ContestEntryModal = NiceModal.create(({ contest_id }: { contest_id:
                     <LoadingSpinner />
                 ) : (
                     <Grid container spacing={2}>
-                        <Grid xs={12}>{/*<MDBodyField fileUpload={false} />*/}</Grid>
-                        <Grid xs={4}>
+                        <Grid size={{ xs: 12 }}>{/*<MDBodyField fileUpload={false} />*/}</Grid>
+                        <Grid size={{ xs: 4 }}>
                             <label htmlFor="contained-button-file">
                                 <input
                                     id="contained-button-file"
@@ -189,7 +189,7 @@ export const ContestEntryModal = NiceModal.create(({ contest_id }: { contest_id:
                                 </Button>
                             </label>
                         </Grid>
-                        <Grid xs={8}>
+                        <Grid size={{ xs: 8 }}>
                             {uploadInProgress ? (
                                 <LinearProgressWithLabel value={(progress / progressTotal) * 100} />
                             ) : (
@@ -199,14 +199,14 @@ export const ContestEntryModal = NiceModal.create(({ contest_id }: { contest_id:
                             )}
                         </Grid>
                         {assetError != '' && (
-                            <Grid xs={12}>
+                            <Grid size={{ xs: 12 }}>
                                 <Typography variant={'body2'} color={'error'}>
                                     {assetError}
                                 </Typography>
                             </Grid>
                         )}
                         {submittedOnce && assetID == '' && (
-                            <Grid xs={12}>
+                            <Grid size={{ xs: 12 }}>
                                 <Box display="flex" alignItems="center">
                                     <Typography variant={'body1'} color={'error'} fontSize={'smaller'}>
                                         Must upload file

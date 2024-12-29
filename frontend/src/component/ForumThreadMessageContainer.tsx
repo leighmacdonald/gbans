@@ -3,10 +3,10 @@ import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import EditIcon from '@mui/icons-material/Edit';
 import { Divider, IconButton, Theme } from '@mui/material';
 import Box from '@mui/material/Box';
+import Grid from '@mui/material/Grid2';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
@@ -70,7 +70,7 @@ export const ThreadMessageContainer = ({
     return (
         <Paper elevation={1} id={`${message.forum_message_id}`}>
             <Grid container>
-                <Grid xs={2} padding={2} sx={{ backgroundColor: theme.palette.background.paper }}>
+                <Grid size={{ xs: 2 }} padding={2} sx={{ backgroundColor: theme.palette.background.paper }}>
                     <Stack alignItems={'center'}>
                         <ForumAvatar
                             alt={message.personaname}
@@ -88,7 +88,7 @@ export const ThreadMessageContainer = ({
                         </Typography>
                     </Stack>
                 </Grid>
-                <Grid xs={10}>
+                <Grid size={{ xs: 10 }}>
                     {edit ? (
                         <form
                             onSubmit={async (e) => {
@@ -118,7 +118,7 @@ export const ThreadMessageContainer = ({
                     ) : (
                         <Box>
                             <Grid container direction="row" borderBottom={(theme) => theme.palette.divider}>
-                                <Grid xs={6}>
+                                <Grid size={{ xs: 6 }}>
                                     <Stack direction={'row'}>
                                         <Typography variant={'body2'} padding={1}>
                                             {renderDateTime(message.created_on)}
@@ -130,7 +130,7 @@ export const ThreadMessageContainer = ({
                                         )}
                                     </Stack>
                                 </Grid>
-                                <Grid xs={6}>
+                                <Grid size={{ xs: 6 }}>
                                     <Stack direction="row" justifyContent="end">
                                         <IconButton
                                             color={'error'}
@@ -167,7 +167,7 @@ export const ThreadMessageContainer = ({
                                     </Stack>
                                 </Grid>
                             </Grid>
-                            <Grid xs={12} padding={1}>
+                            <Grid size={{ xs: 12 }} padding={1}>
                                 <MarkDownRenderer body_md={message.body_md} />
 
                                 {message.signature != '' && (

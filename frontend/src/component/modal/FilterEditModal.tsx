@@ -1,8 +1,8 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import MenuItem from '@mui/material/MenuItem';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
@@ -110,7 +110,7 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
                 </DialogTitle>
                 <DialogContent>
                     <Grid container spacing={2}>
-                        <Grid xs={8}>
+                        <Grid size={{ xs: 8 }}>
                             <Field
                                 name={'pattern'}
                                 validators={{
@@ -121,7 +121,7 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
                                 }}
                             />
                         </Grid>
-                        <Grid xs={4}>
+                        <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'is_regex'}
                                 validators={{
@@ -139,7 +139,7 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
                                 }}
                             />
                         </Grid>
-                        <Grid xs={4}>
+                        <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'action'}
                                 validators={{
@@ -163,7 +163,7 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
                                 }}
                             />
                         </Grid>
-                        <Grid xs={4}>
+                        <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'duration'}
                                 validators={{
@@ -174,7 +174,7 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
                                 }}
                             />
                         </Grid>
-                        <Grid xs={4}>
+                        <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'weight'}
                                 children={(props) => {
@@ -183,7 +183,7 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
                             />
                         </Grid>
 
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'is_enabled'}
                                 validators={{
@@ -205,7 +205,7 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
                 </DialogContent>
                 <DialogActions>
                     <Grid container>
-                        <Grid xs={12} mdOffset="auto">
+                        <Grid size={{ xs: 12 }}>
                             <Subscribe
                                 selector={(state) => [state.canSubmit, state.isSubmitting]}
                                 children={([canSubmit, isSubmitting]) => {

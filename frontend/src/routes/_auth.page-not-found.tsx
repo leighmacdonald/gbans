@@ -1,5 +1,5 @@
+import Grid from '@mui/material/Grid2';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/_auth/page-not-found')({
@@ -16,8 +16,8 @@ export function PageNotFound() {
     // const error = null;
 
     return (
-        <Grid container xs={12} padding={2}>
-            <Grid xs={12} alignContent={'center'}>
+        <Grid container size={{ xs: 12 }} padding={2}>
+            <Grid size={{ xs: 12 }} alignContent={'center'}>
                 <Typography align={'center'} variant={'h1'}>
                     {heading}
                 </Typography>

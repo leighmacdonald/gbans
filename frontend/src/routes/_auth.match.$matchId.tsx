@@ -5,6 +5,7 @@ import MasksIcon from '@mui/icons-material/Masks';
 import SportsIcon from '@mui/icons-material/Sports';
 import { Popover } from '@mui/material';
 import Box from '@mui/material/Box';
+import Grid from '@mui/material/Grid2';
 import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -13,7 +14,6 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
@@ -295,12 +295,12 @@ function MatchPage() {
         <ContainerWithHeader title={'Match Results'} iconLeft={<SportsIcon />}>
             <Title>{match.title}</Title>
             <Grid container spacing={2}>
-                <Grid xs={8}>
+                <Grid size={{ xs: 8 }}>
                     <Stack>
                         <Typography variant={'h1'}>{match.title}</Typography>
                     </Stack>
                 </Grid>
-                <Grid xs={4}>
+                <Grid size={{ xs: 4 }}>
                     <Stack>
                         <Typography variant={'h6'} textAlign={'right'}>
                             {match.map_name}
@@ -312,16 +312,16 @@ function MatchPage() {
                         </Typography>
                     </Stack>
                 </Grid>
-                <Grid xs={5} bgcolor={blu} display="flex" justifyContent="left" alignItems="center">
+                <Grid size={{ xs: 5 }} bgcolor={blu} display="flex" justifyContent="left" alignItems="center">
                     <img src={bluLogoImg} alt={'BLU Team'} />
                 </Grid>
-                <Grid xs={1} bgcolor={blu} display="flex" justifyContent="right" alignItems="center">
+                <Grid size={{ xs: 1 }} bgcolor={blu} display="flex" justifyContent="right" alignItems="center">
                     <Typography variant={'h1'} textAlign={'right'} color={headerColour} sx={{ fontWeight: 900 }}>
                         {match.team_scores.blu}
                     </Typography>
                 </Grid>
                 <Grid
-                    xs={1}
+                    size={{ xs: 1 }}
                     bgcolor={red}
                     color={headerColour}
                     display="flex"
@@ -333,7 +333,7 @@ function MatchPage() {
                     </Typography>
                 </Grid>
                 <Grid
-                    xs={5}
+                    size={{ xs: 5 }}
                     bgcolor={red}
                     color={headerColour}
                     display="flex"
@@ -342,20 +342,20 @@ function MatchPage() {
                 >
                     <img src={redLogoImg} alt={'RED Team'} />
                 </Grid>
-                <Grid xs={12} padding={0} paddingTop={1}>
+                <Grid size={{ xs: 12 }} padding={0} paddingTop={1}>
                     <Heading align={'center'} iconLeft={<GpsFixedIcon />}>
                         Players
                     </Heading>
                 </Grid>
-                <Grid xs={12} padding={0} paddingTop={1}>
+                <Grid size={{ xs: 12 }} padding={0} paddingTop={1}>
                     <MatchPlayersTable players={match.players} isLoading={isLoading} />
                 </Grid>
-                <Grid xs={12} padding={0} paddingTop={1}>
+                <Grid size={{ xs: 12 }} padding={0} paddingTop={1}>
                     <Heading align={'center'} iconLeft={<MasksIcon />}>
                         Healers
                     </Heading>
                 </Grid>
-                <Grid xs={12} padding={0} paddingTop={1}>
+                <Grid size={{ xs: 12 }} padding={0} paddingTop={1}>
                     <MatchHealersTable players={match.players} isLoading={isLoading} />
                 </Grid>
             </Grid>

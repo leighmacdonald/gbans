@@ -1,9 +1,9 @@
 import { JSX, useMemo } from 'react';
 import Box from '@mui/material/Box';
+import Grid from '@mui/material/Grid2';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import { useAppInfoCtx } from '../contexts/AppInfoCtx.ts';
 import RouterLink from './RouterLink.tsx';
@@ -32,7 +32,7 @@ export const Footer = (): JSX.Element => {
             }}
         >
             <Grid container spacing={0} direction="column" alignItems="center" justifyContent="center">
-                <Grid xs={3}>
+                <Grid size={{ xs: 3 }}>
                     <Typography variant={'subtitle2'} color={'text'}>
                         Copyright &copy; {appInfo.site_name} {new Date().getFullYear()}{' '}
                     </Typography>

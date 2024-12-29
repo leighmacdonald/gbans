@@ -4,9 +4,9 @@ import TabContext from '@mui/lab/TabContext';
 import TabList from '@mui/lab/TabList';
 import TabPanel from '@mui/lab/TabPanel';
 import Box from '@mui/material/Box';
+import Grid from '@mui/material/Grid2';
 import Tab from '@mui/material/Tab';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { PieChart } from '@mui/x-charts';
 import { useQuery } from '@tanstack/react-query';
 import { createColumnHelper, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
@@ -73,12 +73,12 @@ interface BarChartWithTableProps {
 const BarChartWithTable = ({ isLoading, data }: BarChartWithTableProps) => {
     return (
         <Grid container>
-            <Grid md={6} xs={12}>
+            <Grid size={{ xs: 12, md: 6 }}>
                 <Box paddingLeft={10} display="flex" justifyContent="center" alignItems="center">
                     {isLoading ? <LoadingSpinner /> : <MapUseChart details={data} />}
                 </Box>
             </Grid>
-            <Grid md={6} xs={12}>
+            <Grid size={{ xs: 12, md: 6 }}>
                 <SeriesTable stats={data} isLoading={isLoading} />
             </Grid>
         </Grid>

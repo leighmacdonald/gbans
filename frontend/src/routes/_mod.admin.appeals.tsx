@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import FilterListIcon from '@mui/icons-material/FilterList';
+import Grid from '@mui/material/Grid2';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
@@ -114,7 +114,7 @@ function AdminAppeals() {
     return (
         <Grid container spacing={2}>
             <Title>Appeals</Title>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <ContainerWithHeader title={'Filters'} iconLeft={<FilterListIcon />} marginTop={2}>
                     <form
                         onSubmit={async (e) => {
@@ -124,7 +124,7 @@ function AdminAppeals() {
                         }}
                     >
                         <Grid container spacing={2}>
-                            <Grid xs={6} md={4}>
+                            <Grid size={{ xs: 6, md: 4 }}>
                                 <Field
                                     name={'source_id'}
                                     children={(props) => {
@@ -135,7 +135,7 @@ function AdminAppeals() {
                                 />
                             </Grid>
 
-                            <Grid xs={6} md={4}>
+                            <Grid size={{ xs: 6, md: 4 }}>
                                 <Field
                                     name={'target_id'}
                                     children={(props) => {
@@ -146,7 +146,7 @@ function AdminAppeals() {
                                 />
                             </Grid>
 
-                            <Grid xs={6} md={4}>
+                            <Grid size={{ xs: 6, md: 4 }}>
                                 <Field
                                     name={'appeal_state'}
                                     children={(props) => {
@@ -169,7 +169,7 @@ function AdminAppeals() {
                                     }}
                                 />
                             </Grid>
-                            <Grid xs={12} mdOffset="auto">
+                            <Grid size={{ xs: 12 }}>
                                 <Subscribe
                                     selector={(state) => [state.canSubmit, state.isSubmitting]}
                                     children={([canSubmit, isSubmitting]) => (
@@ -187,7 +187,7 @@ function AdminAppeals() {
                 </ContainerWithHeader>
             </Grid>
 
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <ContainerWithHeader title={'Recent Open Appeal Activity'}>
                     <AppealsTable
                         appeals={appeals ?? []}

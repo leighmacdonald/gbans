@@ -11,12 +11,12 @@ import TabContext from '@mui/lab/TabContext';
 import TabList from '@mui/lab/TabList';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Grid from '@mui/material/Grid2';
 import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Tab from '@mui/material/Tab';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -140,7 +140,7 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
 
     return (
         <Grid container>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <TabContext value={value}>
                     <Stack spacing={2}>
                         <ContainerWithHeader title={'Report Overview'} iconLeft={<ReportIcon />}>
@@ -268,16 +268,16 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
                                 ]}
                             >
                                 <Grid container padding={2}>
-                                    <Grid xs={4}>
+                                    <Grid size={{ xs: 4 }}>
                                         <Typography>Map:&nbsp;{report.demo.map_name}</Typography>
                                     </Grid>
-                                    <Grid xs={4}>
+                                    <Grid size={{ xs: 4 }}>
                                         <Typography>Server:&nbsp;{report.demo.server_name_short}</Typography>
                                     </Grid>
-                                    <Grid xs={2}>
+                                    <Grid size={{ xs: 2 }}>
                                         <Typography>Tick:&nbsp;{report.demo_tick}</Typography>
                                     </Grid>
-                                    <Grid xs={2}>
+                                    <Grid size={{ xs: 2 }}>
                                         <Typography>ID:&nbsp;{report.demo_id}</Typography>
                                     </Grid>
                                 </Grid>
@@ -312,7 +312,7 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
                                 }}
                             >
                                 <Grid container spacing={2} padding={1}>
-                                    <Grid xs={12}>
+                                    <Grid size={{ xs: 12 }}>
                                         <Field
                                             name={'body_md'}
                                             children={(props) => {
@@ -320,7 +320,7 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
                                             }}
                                         />
                                     </Grid>
-                                    <Grid xs={12} mdOffset="auto">
+                                    <Grid size={{ xs: 12 }}>
                                         <Subscribe
                                             selector={(state) => [state.canSubmit, state.isSubmitting]}
                                             children={([canSubmit, isSubmitting]) => (

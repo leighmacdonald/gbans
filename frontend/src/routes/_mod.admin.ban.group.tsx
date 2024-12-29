@@ -6,10 +6,10 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import GavelIcon from '@mui/icons-material/Gavel';
 import UndoIcon from '@mui/icons-material/Undo';
 import Button from '@mui/material/Button';
+import Grid from '@mui/material/Grid2';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
@@ -132,7 +132,7 @@ function AdminBanGroup() {
     return (
         <Grid container spacing={2}>
             <Title>Ban Group</Title>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <ContainerWithHeader title={'Filters'} iconLeft={<FilterListIcon />}>
                     <form
                         onSubmit={async (e) => {
@@ -142,8 +142,8 @@ function AdminBanGroup() {
                         }}
                     >
                         <Grid container spacing={2}>
-                            <Grid xs={4}>
-                                <Grid xs={6} md={3}>
+                            <Grid size={{ xs: 4 }}>
+                                <Grid size={{ xs: 6, md: 3 }}>
                                     <Field
                                         name={'source_id'}
                                         children={(props) => {
@@ -158,7 +158,7 @@ function AdminBanGroup() {
                                     />
                                 </Grid>
                             </Grid>
-                            <Grid xs={6} md={3}>
+                            <Grid size={{ xs: 6, md: 3 }}>
                                 <Field
                                     name={'target_id'}
                                     children={(props) => {
@@ -169,7 +169,7 @@ function AdminBanGroup() {
                                 />
                             </Grid>
 
-                            <Grid xs={6} md={3}>
+                            <Grid size={{ xs: 6, md: 3 }}>
                                 <Field
                                     name={'group_id'}
                                     children={(props) => {
@@ -178,7 +178,7 @@ function AdminBanGroup() {
                                 />
                             </Grid>
 
-                            <Grid xs="auto">
+                            <Grid>
                                 <Field
                                     name={'deleted'}
                                     children={({ handleChange, handleBlur, state }) => {
@@ -194,7 +194,7 @@ function AdminBanGroup() {
                                 />
                             </Grid>
 
-                            <Grid xs={12} mdOffset="auto">
+                            <Grid size={{ xs: 12 }}>
                                 <Subscribe
                                     selector={(state) => [state.canSubmit, state.isSubmitting]}
                                     children={([canSubmit, isSubmitting]) => (
@@ -211,7 +211,7 @@ function AdminBanGroup() {
                     </form>
                 </ContainerWithHeader>
             </Grid>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <ContainerWithHeaderAndButtons
                     title={'Steam Group Ban History'}
                     marginTop={0}

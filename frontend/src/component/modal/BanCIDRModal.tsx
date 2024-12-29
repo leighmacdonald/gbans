@@ -1,8 +1,8 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import RouterIcon from '@mui/icons-material/Router';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import MenuItem from '@mui/material/MenuItem';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { parseISO } from 'date-fns';
@@ -123,7 +123,7 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
 
                 <DialogContent>
                     <Grid container spacing={2}>
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'target_id'}
                                 children={(props) => {
@@ -139,7 +139,7 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                                 }}
                             />
                         </Grid>
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'cidr'}
                                 children={(props) => {
@@ -149,7 +149,7 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                                 }}
                             />
                         </Grid>
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'reason'}
                                 children={(props) => {
@@ -172,7 +172,7 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                                 }}
                             />
                         </Grid>
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'reason_text'}
                                 children={(props) => {
@@ -186,7 +186,7 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'duration'}
                                 children={(props) => {
@@ -210,7 +210,7 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                             />
                         </Grid>
 
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'duration_custom'}
                                 children={(props) => {
@@ -225,7 +225,7 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                             />
                         </Grid>
 
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'note'}
                                 children={(props) => {
@@ -245,7 +245,7 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                 </DialogContent>
                 <DialogActions>
                     <Grid container>
-                        <Grid xs={12} mdOffset="auto">
+                        <Grid size={{ xs: 12 }}>
                             <Subscribe
                                 selector={(state) => [state.canSubmit, state.isSubmitting]}
                                 children={([canSubmit, isSubmitting]) => {

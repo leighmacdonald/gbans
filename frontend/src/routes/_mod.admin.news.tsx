@@ -6,7 +6,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import NewspaperIcon from '@mui/icons-material/Newspaper';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
-import Grid from '@mui/material/Unstable_Grid2';
+import Grid from '@mui/material/Grid2';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { createColumnHelper, SortingState } from '@tanstack/react-table';
@@ -177,7 +177,7 @@ function AdminNews() {
     return (
         <Grid container spacing={2}>
             <Title>News</Title>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <ContainerWithHeaderAndButtons
                     title={'News Entries'}
                     iconLeft={<NewspaperIcon />}

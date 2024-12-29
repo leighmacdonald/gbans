@@ -2,6 +2,7 @@ import { ReactNode, useMemo } from 'react';
 import { MapContainer, Marker, TileLayer } from 'react-leaflet';
 import CellTowerIcon from '@mui/icons-material/CellTower';
 import FilterListIcon from '@mui/icons-material/FilterList';
+import Grid from '@mui/material/Grid2';
 import Link from '@mui/material/Link';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -9,7 +10,6 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
@@ -92,7 +92,7 @@ function AdminNetworkInfo() {
     return (
         <Grid container spacing={2}>
             <Title>IP Info</Title>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <ContainerWithHeader title={'Filters'} iconLeft={<FilterListIcon />} marginTop={2}>
                     <form
                         onSubmit={async (e) => {
@@ -102,7 +102,7 @@ function AdminNetworkInfo() {
                         }}
                     >
                         <Grid container spacing={2}>
-                            <Grid xs={12}>
+                            <Grid size={{ xs: 12 }}>
                                 <Field
                                     name={'ip'}
                                     children={(props) => {
@@ -111,7 +111,7 @@ function AdminNetworkInfo() {
                                 />
                             </Grid>
 
-                            <Grid xs={12} mdOffset="auto">
+                            <Grid size={{ xs: 12 }}>
                                 <Subscribe
                                     selector={(state) => [state.canSubmit, state.isSubmitting]}
                                     children={([canSubmit, isSubmitting]) => (
@@ -128,17 +128,17 @@ function AdminNetworkInfo() {
                     </form>
                 </ContainerWithHeader>
             </Grid>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <ContainerWithHeader title="Network Info" iconLeft={<CellTowerIcon />}>
                     <>
                         <Grid container spacing={2}>
-                            <Grid xs={12}>
+                            <Grid size={{ xs: 12 }}>
                                 {/*<Formik onSubmit={onSubmit} initialValues={{ ip: '' }}>*/}
                                 <Grid container direction="row" alignItems="top" justifyContent="center" spacing={2}>
                                     {/*<Grid xs>*/}
                                     {/*    <IPField />*/}
                                     {/*</Grid>*/}
-                                    {/*<Grid xs={2}>*/}
+                                    {/*<Grid size={{xs: 2}}>*/}
                                     {/*    <SubmitButton*/}
                                     {/*        label={'Submit'}*/}
                                     {/*        fullWidth*/}
@@ -151,13 +151,13 @@ function AdminNetworkInfo() {
                             </Grid>
                         </Grid>
                         <Grid container spacing={2}>
-                            <Grid xs={12}>
+                            <Grid size={{ xs: 12 }}>
                                 {isLoading ? (
                                     <LoadingPlaceholder />
                                 ) : (
                                     <div>
                                         <Grid container spacing={2}>
-                                            <Grid xs={12} md={6}>
+                                            <Grid size={{ xs: 12, md: 6 }}>
                                                 <Typography variant={'h4'} padding={2}>
                                                     Location
                                                 </Typography>
@@ -190,7 +190,7 @@ function AdminNetworkInfo() {
                                                     </Table>
                                                 </TableContainer>
                                             </Grid>
-                                            <Grid xs={12} md={6} padding={2}>
+                                            <Grid size={{ xs: 12, md: 6 }} padding={2}>
                                                 <MapContainer
                                                     zoom={3}
                                                     scrollWheelZoom={true}
@@ -213,7 +213,7 @@ function AdminNetworkInfo() {
                                                     )}
                                                 </MapContainer>
                                             </Grid>
-                                            <Grid xs={12} md={6}>
+                                            <Grid size={{ xs: 12, md: 6 }}>
                                                 <Typography variant={'h4'} padding={2}>
                                                     ASN
                                                 </Typography>
@@ -233,7 +233,7 @@ function AdminNetworkInfo() {
                                                     </Table>
                                                 </TableContainer>
                                             </Grid>
-                                            <Grid xs={12} md={6}>
+                                            <Grid size={{ xs: 12, md: 6 }}>
                                                 <Typography variant={'h4'} padding={2}>
                                                     Proxy Info
                                                 </Typography>

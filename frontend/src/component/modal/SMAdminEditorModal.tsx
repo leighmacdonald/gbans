@@ -1,9 +1,9 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import GroupsIcon from '@mui/icons-material/Groups';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import Link from '@mui/material/Link';
 import MenuItem from '@mui/material/MenuItem';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import 'video-react/dist/video-react.css';
@@ -132,7 +132,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
 
                 <DialogContent>
                     <Grid container spacing={2}>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'name'}
                                 children={(props) => {
@@ -140,7 +140,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'password'}
                                 children={(props) => {
@@ -148,7 +148,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'auth_type'}
                                 children={(props) => {
@@ -170,7 +170,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'identity'}
                                 children={(props) => {
@@ -179,7 +179,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                             />
                         </Grid>
 
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'immunity'}
                                 children={(props) => {
@@ -188,7 +188,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                             />
                         </Grid>
 
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'z'}
                                 children={({ state, handleBlur, handleChange }) => {
@@ -203,7 +203,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'a'}
                                 children={({ state, handleBlur, handleChange }) => {
@@ -218,7 +218,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'b'}
                                 children={({ state, handleBlur, handleChange }) => {
@@ -233,7 +233,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'c'}
                                 children={({ state, handleBlur, handleChange }) => {
@@ -248,7 +248,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'d'}
                                 children={({ state, handleBlur, handleChange }) => {
@@ -263,7 +263,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'e'}
                                 children={({ state, handleBlur, handleChange }) => {
@@ -278,7 +278,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'f'}
                                 children={({ state, handleBlur, handleChange }) => {
@@ -293,7 +293,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'g'}
                                 children={({ state, handleBlur, handleChange }) => {
@@ -308,7 +308,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'h'}
                                 children={({ state, handleBlur, handleChange }) => {
@@ -323,7 +323,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'i'}
                                 children={({ state, handleBlur, handleChange }) => {
@@ -338,7 +338,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'j'}
                                 children={({ state, handleBlur, handleChange }) => {
@@ -353,7 +353,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'k'}
                                 children={({ state, handleBlur, handleChange }) => {
@@ -368,7 +368,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'l'}
                                 children={({ state, handleBlur, handleChange }) => {
@@ -383,7 +383,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'m'}
                                 children={({ state, handleBlur, handleChange }) => {
@@ -398,7 +398,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'n'}
                                 children={({ state, handleBlur, handleChange }) => {
@@ -413,7 +413,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'o'}
                                 children={({ state, handleBlur, handleChange }) => {
@@ -428,7 +428,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'p'}
                                 children={({ state, handleBlur, handleChange }) => {
@@ -443,7 +443,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'q'}
                                 children={({ state, handleBlur, handleChange }) => {
@@ -458,7 +458,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'r'}
                                 children={({ state, handleBlur, handleChange }) => {
@@ -473,7 +473,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'s'}
                                 children={({ state, handleBlur, handleChange }) => {
@@ -488,7 +488,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'t'}
                                 children={({ state, handleBlur, handleChange }) => {
@@ -503,7 +503,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                                 }}
                             />
                         </Grid>
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Link target={'_blank'} href={'https://wiki.alliedmods.net/Adding_Admins_(SourceMod)'}>
                                 Additional Sourcemod Admin Info
                             </Link>
@@ -513,7 +513,7 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
 
                 <DialogActions>
                     <Grid container>
-                        <Grid xs={12} mdOffset="auto">
+                        <Grid size={{ xs: 12 }}>
                             <Subscribe
                                 selector={(state) => [state.canSubmit, state.isSubmitting]}
                                 children={([canSubmit, isSubmitting]) => {

@@ -5,12 +5,12 @@ import FlagIcon from '@mui/icons-material/Flag';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import Button from '@mui/material/Button';
 import FormControl from '@mui/material/FormControl';
+import Grid from '@mui/material/Grid2';
 import InputLabel from '@mui/material/InputLabel';
 import Link from '@mui/material/Link';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
@@ -215,7 +215,7 @@ function STV() {
     return (
         <Grid container spacing={2}>
             <Title>SourceTV</Title>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <ContainerWithHeader title={'Filters'} iconLeft={<FilterListIcon />} marginTop={2}>
                     <form
                         onSubmit={async (e) => {
@@ -225,7 +225,7 @@ function STV() {
                         }}
                     >
                         <Grid container spacing={2}>
-                            <Grid xs={6} md={3}>
+                            <Grid size={{ xs: 6, md: 3 }}>
                                 <Field
                                     name={'server_id'}
                                     children={({ state, handleChange, handleBlur }) => {
@@ -256,7 +256,7 @@ function STV() {
                                     }}
                                 />
                             </Grid>
-                            <Grid xs={6} md={3}>
+                            <Grid size={{ xs: 6, md: 3 }}>
                                 <Field
                                     name={'map_name'}
                                     children={(props) => {
@@ -264,7 +264,7 @@ function STV() {
                                     }}
                                 />
                             </Grid>
-                            <Grid xs={6} md={3}>
+                            <Grid size={{ xs: 6, md: 3 }}>
                                 <Field
                                     name={'stats'}
                                     children={(props) => {
@@ -272,7 +272,7 @@ function STV() {
                                     }}
                                 />
                             </Grid>
-                            <Grid xs={6} md={3} padding={2}>
+                            <Grid size={{ xs: 6, md: 3 }} padding={2}>
                                 <Button
                                     fullWidth
                                     disabled={!isAuthenticated()}
@@ -286,7 +286,7 @@ function STV() {
                                     My SteamID
                                 </Button>
                             </Grid>
-                            <Grid xs={12}>
+                            <Grid size={{ xs: 12 }}>
                                 <Subscribe
                                     selector={(state) => [state.canSubmit, state.isSubmitting]}
                                     children={([canSubmit, isSubmitting]) => (
@@ -303,7 +303,7 @@ function STV() {
                     </form>
                 </ContainerWithHeader>
             </Grid>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <ContainerWithHeader title={'SourceTV Recordings'} iconLeft={<VideocamIcon />}>
                     <FullTable
                         columnFilters={columnFilters}

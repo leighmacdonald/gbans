@@ -1,8 +1,8 @@
 import FilterListIcon from '@mui/icons-material/FilterList';
 import WifiFindIcon from '@mui/icons-material/WifiFind';
+import Grid from '@mui/material/Grid2';
 import TableCell from '@mui/material/TableCell';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
@@ -75,7 +75,7 @@ function AdminNetworkPlayersByCIDR() {
     return (
         <Grid container spacing={2}>
             <Title>Players by IP</Title>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <ContainerWithHeader title={'Filters'} iconLeft={<FilterListIcon />} marginTop={2}>
                     <form
                         onSubmit={async (e) => {
@@ -85,7 +85,7 @@ function AdminNetworkPlayersByCIDR() {
                         }}
                     >
                         <Grid container spacing={2}>
-                            <Grid xs={12}>
+                            <Grid size={{ xs: 12 }}>
                                 <Field
                                     name={'cidr'}
                                     children={(props) => {
@@ -94,7 +94,7 @@ function AdminNetworkPlayersByCIDR() {
                                 />
                             </Grid>
 
-                            <Grid xs={12} mdOffset="auto">
+                            <Grid size={{ xs: 12 }}>
                                 <Subscribe
                                     selector={(state) => [state.canSubmit, state.isSubmitting]}
                                     children={([canSubmit, isSubmitting]) => (
@@ -111,7 +111,7 @@ function AdminNetworkPlayersByCIDR() {
                     </form>
                 </ContainerWithHeader>
             </Grid>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <ContainerWithHeader title={'Find Players By IP/CIDR'} iconLeft={<WifiFindIcon />}>
                     <PayersByIPTable connections={connections ?? { data: [], count: 0 }} isLoading={isLoading} />
                     <Paginator

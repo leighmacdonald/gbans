@@ -1,7 +1,7 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import BlockIcon from '@mui/icons-material/Block';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import Grid from '@mui/material/Unstable_Grid2';
+import Grid from '@mui/material/Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { z } from 'zod';
@@ -82,14 +82,14 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
                 </DialogTitle>
                 <DialogContent>
                     <Grid container spacing={2}>
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'name'}
                                 children={(props) => {
                                     return <TextFieldSimple {...props} label={'Source Name'} />;
                                 }}
                             />
-                            <Grid xs={12}>
+                            <Grid size={{ xs: 12 }}>
                                 <Field
                                     name={'url'}
                                     children={(props) => {
@@ -97,7 +97,7 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
                                     }}
                                 />
                             </Grid>
-                            <Grid xs={12}>
+                            <Grid size={{ xs: 12 }}>
                                 <Field
                                     name={'enabled'}
                                     children={({ state, handleBlur, handleChange }) => {
@@ -117,7 +117,7 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
                 </DialogContent>
                 <DialogActions>
                     <Grid container>
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Subscribe
                                 selector={(state) => [state.canSubmit, state.isSubmitting]}
                                 children={([canSubmit, isSubmitting]) => {
