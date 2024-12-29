@@ -148,13 +148,13 @@ export const ServerFilters = () => {
                     // justifyContent: 'center'
                 }}
             >
-                <Grid size={{ xs: 'auto' }}>
+                <Grid size={{ xs: 2 }}>
                     <FormControlLabel
                         control={<Switch checked={showOpenOnly} onChange={onShowOpenOnlyChanged} name="checkedA" />}
                         label="Open Slots"
                     />
                 </Grid>
-                <Grid size={{ xs: 'auto' }}>
+                <Grid size={{ xs: 2 }}>
                     <FormControl>
                         <InputLabel id="region-selector-label">Region</InputLabel>
                         <Select<string>
@@ -174,7 +174,7 @@ export const ServerFilters = () => {
                         </Select>
                     </FormControl>
                 </Grid>
-                <Grid size={{ xs: 'auto' }}>
+                <Grid size={{ xs: 2 }}>
                     <FormControlLabel
                         control={
                             <Switch
@@ -186,7 +186,7 @@ export const ServerFilters = () => {
                         label="By Range"
                     />
                 </Grid>
-                <Grid size={{ xs: 'auto' }} style={{ paddingRight: '2rem' }}>
+                <Grid size={{ xs: 6 }} style={{ paddingRight: '2rem' }}>
                     <RangeSlider
                         style={{
                             zIndex: 1000
