@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import EditIcon from '@mui/icons-material/Edit';
-import { Divider, IconButton, Theme } from '@mui/material';
+import { Divider, IconButton } from '@mui/material';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid2';
 import Paper from '@mui/material/Paper';
@@ -158,9 +158,7 @@ export const ThreadMessageContainer = ({
                                             variant={'body2'}
                                             to={`#${message.forum_message_id}`}
                                             textAlign={'right'}
-                                            color={(theme: Theme) => {
-                                                return theme.palette.text.primary;
-                                            }}
+                                            sx={{ color: (theme) => theme.palette.text.primary }}
                                         >
                                             {`#${message.forum_message_id}`}
                                         </Typography>
