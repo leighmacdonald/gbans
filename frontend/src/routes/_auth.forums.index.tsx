@@ -152,9 +152,7 @@ const CategoryBlock = ({ category }: { category: ForumCategory }) => {
                                                 <Person2 />
                                                 <VCenterBox>
                                                     <Typography
-                                                        color={(theme) => {
-                                                            return theme.palette.text.secondary;
-                                                        }}
+                                                        sx={{ color: (theme) => theme.palette.text.secondary }}
                                                         component={RouterLink}
                                                         to={`/profile/${f.recent_source_id}`}
                                                         variant={'body2'}
