@@ -10,6 +10,7 @@ import (
 
 	"github.com/leighmacdonald/gbans/internal/demo"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/pkg/demoparse"
 	"github.com/leighmacdonald/gbans/pkg/fs"
 	"github.com/stretchr/testify/require"
 )
@@ -63,7 +64,7 @@ func TestDemoUpload(t *testing.T) {
 		t.Skip("Parser url undefined")
 	}
 	demoPath := fs.FindFile(path.Join("testdata", "test.dem"), "gbans")
-	detail, err := demoUC.SendAndParseDemo(context.Background(), demoPath)
+	detail, err := demoparse.Submit(context.Background(), configUC.Config().Demo.DemoParserURL, demoPath)
 	require.NoError(t, err)
 	require.Len(t, detail.State.Users, 46)
 }

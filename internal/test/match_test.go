@@ -1,47 +1,72 @@
-package test
+package test_test
 
 import (
-	"fmt"
+	"context"
+	"testing"
+
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/pkg/demoparse"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
 	"github.com/leighmacdonald/gbans/pkg/stringutil"
 	"github.com/leighmacdonald/steamid/v4/steamid"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/rand"
 )
 
-func genMatch(players int) domain.DemoDetails {
-	s := domain.DemoState{
-		DemoPlayerSummaries: make(map[int]domain.DemoPlayerSummaries),
-		Users:               make(map[int]domain.DemoPlayer),
+func generateDemoDetails(players int) demoparse.Demo {
+	demo := demoparse.Demo{
+		Header: demoparse.Header{
+			DemoType: domain.DemoType,
+			Version:  3,
+			Protocol: 24,
+			Server:   "Test server: " + stringutil.SecureRandomString(5),
+			Nick:     "SourceTV Demo",
+			Map:      "pl_test",
+			Game:     "tf",
+			Duration: float64(rand.Int31n(5000)),
+			Ticks:    int(rand.Int31n(250000)),
+			Frames:   int(rand.Int31n(25000)),
+			Signon:   int(rand.Int31n(1000000)),
+		},
+		State: demoparse.GameState{
+			Users:   make(map[int]demoparse.Player),
+			Players: make(map[int]demoparse.PlayerSummary),
+			Results: demoparse.Results{},
+			Rounds:  make([]demoparse.DemoRoundSummary, 0),
+			Chat:    make([]demoparse.ChatMessage, 0),
+		},
 	}
 	weaponIdx := 1
-	for i := range players {
+	for playerIdx := range players {
 		team := logparse.BLU
-		if i%2 == 0 {
+		if playerIdx%2 == 0 {
 			team = logparse.RED
 		}
 
-		s.Users[i+1] = domain.DemoPlayer{
+		demo.State.Users[playerIdx+1] = demoparse.Player{
 			Classes: nil,
 			Name:    stringutil.SecureRandomString(10),
-			UserID:  i,
+			UserID:  playerIdx,
 			SteamID: steamid.RandSID64(),
 			Team:    team,
 		}
 
-		w := make(map[logparse.Weapon]domain.DemoWeaponDetail)
+		weaponSum := make(map[demoparse.WeaponID]demoparse.WeaponSummary)
 
 		for range int(rand.Int31n(5) + 1) {
 			weaponIdx++
-			w[logparse.Weapon(rune(weaponIdx))] = domain.DemoWeaponDetail{
-				Kills:  int(rand.Int31n(200)),
-				Hits:   int(rand.Int31n(200)),
-				Damage: int(rand.Int31n(30000)),
-				Shots:  int(rand.Int31n(500)),
+			weaponSum[demoparse.WeaponID(rune(weaponIdx))] = demoparse.WeaponSummary{
+				Kills:     int(rand.Int31n(200)),
+				Damage:    int(rand.Int31n(30000)),
+				Shots:     int(rand.Int31n(500)),
+				Hits:      int(rand.Int31n(200)),
+				Backstabs: int(rand.Int31n(20)),
+				Headshots: int(rand.Int31n(20)),
+				Airshots:  int(rand.Int31n(20)),
 			}
 		}
 
-		s.DemoPlayerSummaries[i+1] = domain.DemoPlayerSummaries{
+		demo.State.Players[playerIdx+1] = demoparse.PlayerSummary{
 			Points:             int(rand.Int31n(200)),
 			Kills:              int(rand.Int31n(200)),
 			Assists:            int(rand.Int31n(200)),
@@ -58,27 +83,29 @@ func genMatch(players int) domain.DemoDetails {
 			Backstabs:          int(rand.Int31n(50000)),
 			BonusPoints:        int(rand.Int31n(2000)),
 			Support:            int(rand.Int31n(20000)),
-			DamgageDealt:       int(rand.Int31n(50000)),
-			WeaponMap:          w,
+			DamageDealt:        int(rand.Int31n(50000)),
+			DamageTaken:        int(rand.Int31n(200)),
+			HealingTaken:       int(rand.Int31n(200)),
+			HealthPacks:        int(rand.Int31n(200)),
+			HealingPacks:       int(rand.Int31n(200)),
+			Extinguishes:       int(rand.Int31n(200)),
+			BuildingBuilt:      int(rand.Int31n(200)),
+			BuildingDestroyed:  int(rand.Int31n(200)),
+			Airshots:           int(rand.Int31n(200)),
+			Shots:              int(rand.Int31n(200)),
+			Hits:               int(rand.Int31n(200)),
+			WeaponMap:          weaponSum,
 		}
 	}
 
-	d := domain.DemoDetails{
-		State: s,
-		Header: domain.DemoHeader{
-			DemoType: domain.DemoType,
-			Version:  3,
-			Protocol: 24,
-			Server:   fmt.Sprintf("Test server: %s", stringutil.SecureRandomString(5)),
-			Nick:     "SourceTV Demo",
-			Map:      "pl_test",
-			Game:     "tf",
-			Duration: float64(rand.Int31n(5000)),
-			Ticks:    int(rand.Int31n(250000)),
-			Frames:   int(rand.Int31n(25000)),
-			Signon:   int(rand.Int31n(1000000)),
-		},
-	}
+	return demo
+}
 
-	return d
+func TestMatchFromDemo(t *testing.T) {
+	demoDetails := generateDemoDetails(24)
+
+	match, errMatch := matchUC.CreateFromDemo(context.Background(), testServer.ServerID, demoDetails)
+	require.NoError(t, errMatch)
+
+	require.Equal(t, match.MapName, demoDetails.Header.Map)
 }
