@@ -8,6 +8,7 @@ import UndoIcon from '@mui/icons-material/Undo';
 import { FormControl, Select } from '@mui/material';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
+import Grid from '@mui/material/Grid2';
 import InputLabel from '@mui/material/InputLabel';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
@@ -16,7 +17,6 @@ import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
@@ -253,7 +253,7 @@ function BanPage() {
 
     return (
         <Grid container spacing={2}>
-            <Grid xs={8}>
+            <Grid size={{ xs: 8 }}>
                 <Stack spacing={2}>
                     {canPost && (messages ?? []).length == 0 && (
                         <ContainerWithHeader title={`Ban Appeal #${ban.ban_id}`}>
@@ -284,7 +284,7 @@ function BanPage() {
                                 }}
                             >
                                 <Grid container spacing={2} padding={1}>
-                                    <Grid xs={12}>
+                                    <Grid size={{ xs: 12 }}>
                                         <Field
                                             name={'body_md'}
                                             children={(props) => {
@@ -292,7 +292,7 @@ function BanPage() {
                                             }}
                                         />
                                     </Grid>
-                                    <Grid xs={12} mdOffset="auto">
+                                    <Grid size={{ xs: 12 }}>
                                         <Subscribe
                                             selector={(state) => [state.canSubmit, state.isSubmitting]}
                                             children={([canSubmit, isSubmitting]) => {
@@ -319,7 +319,7 @@ function BanPage() {
                     )}
                 </Stack>
             </Grid>
-            <Grid xs={4}>
+            <Grid size={{ xs: 4 }}>
                 <Stack spacing={2}>
                     <ProfileInfoBox steam_id={ban.target_id} />
 

@@ -1,8 +1,8 @@
 import { PropsWithChildren } from 'react';
 import PolicyIcon from '@mui/icons-material/Policy';
+import Grid from '@mui/material/Grid2';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { createFileRoute } from '@tanstack/react-router';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { Title } from '../component/Title.tsx';
@@ -14,7 +14,7 @@ export const Route = createFileRoute('/_guest/privacy-policy')({
 
 const PPBox = ({ heading, children }: { heading: string } & PropsWithChildren) => {
     return (
-        <Grid md={6} xs={12} padding={2}>
+        <Grid size={{ xs: 12, md: 6 }} padding={2}>
             <Typography variant={'h3'} paddingBottom={3} paddingTop={2} sx={{ textTransform: 'capitalize' }}>
                 {heading}
             </Typography>

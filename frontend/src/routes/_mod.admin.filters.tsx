@@ -8,10 +8,10 @@ import InfoIcon from '@mui/icons-material/Info';
 import WarningIcon from '@mui/icons-material/Warning';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
+import Grid from '@mui/material/Grid2';
 import TableCell from '@mui/material/TableCell';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import {
@@ -153,7 +153,7 @@ function AdminFilters() {
     return (
         <Grid container spacing={2}>
             <Title>Filtered Words</Title>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <ContainerWithHeaderAndButtons
                     title={`Word Filters ${Object.values(rowSelection).length ? `Selected: ${Object.values(rowSelection).length}` : ''}`}
                     iconLeft={<FilterAltIcon />}
@@ -210,7 +210,7 @@ function AdminFilters() {
                     />
                 </ContainerWithHeaderAndButtons>
             </Grid>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <ContainerWithHeader
                     title={`Current Warning State (Max Weight: ${warnings?.max_weight ?? '...'})`}
                     iconLeft={<WarningIcon />}
@@ -218,7 +218,7 @@ function AdminFilters() {
                     <WarningStateTable warnings={warnings?.current ?? []} isLoading={isLoadingWarnings} />
                 </ContainerWithHeader>
             </Grid>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <ContainerWithHeader title={'How it works'} iconLeft={<InfoIcon />}>
                     <Typography variant={'body1'}>
                         The way the warning tracking works is that each time a user triggers a match, it gets a entry in

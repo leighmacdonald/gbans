@@ -1,6 +1,6 @@
 import FilterListIcon from '@mui/icons-material/FilterList';
 import SensorOccupiedIcon from '@mui/icons-material/SensorOccupied';
-import Grid from '@mui/material/Unstable_Grid2';
+import Grid from '@mui/material/Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
@@ -66,7 +66,7 @@ function AdminNetworkPlayerIPHistory() {
     return (
         <Grid container spacing={2}>
             <Title>Player IP History</Title>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <ContainerWithHeader title={'Filters'} iconLeft={<FilterListIcon />} marginTop={2}>
                     <form
                         onSubmit={async (e) => {
@@ -76,7 +76,7 @@ function AdminNetworkPlayerIPHistory() {
                         }}
                     >
                         <Grid container spacing={2}>
-                            <Grid xs={12}>
+                            <Grid size={{ xs: 12 }}>
                                 <Field
                                     name={'steam_id'}
                                     children={(props) => {
@@ -85,7 +85,7 @@ function AdminNetworkPlayerIPHistory() {
                                 />
                             </Grid>
 
-                            <Grid xs={12} mdOffset="auto">
+                            <Grid size={{ xs: 12 }}>
                                 <Subscribe
                                     selector={(state) => [state.canSubmit, state.isSubmitting]}
                                     children={([canSubmit, isSubmitting]) => (
@@ -102,7 +102,7 @@ function AdminNetworkPlayerIPHistory() {
                     </form>
                 </ContainerWithHeader>
             </Grid>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <ContainerWithHeader title="Player IP History" iconLeft={<SensorOccupiedIcon />}>
                     <IPHistoryTable connections={connections ?? { data: [], count: 0 }} isLoading={isLoading} />
                     <Paginator

@@ -6,10 +6,10 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import GavelIcon from '@mui/icons-material/Gavel';
 import UndoIcon from '@mui/icons-material/Undo';
 import Button from '@mui/material/Button';
+import Grid from '@mui/material/Grid2';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
@@ -129,7 +129,7 @@ function AdminBanCIDR() {
     return (
         <Grid container>
             <Title>Ban CIDR</Title>
-            <Grid xs={12} marginBottom={2}>
+            <Grid size={{ xs: 12 }} marginBottom={2}>
                 <ContainerWithHeader title={'Filters'} iconLeft={<FilterListIcon />} marginTop={2}>
                     <form
                         onSubmit={async (e) => {
@@ -139,7 +139,7 @@ function AdminBanCIDR() {
                         }}
                     >
                         <Grid container spacing={2}>
-                            <Grid xs={6} md={3}>
+                            <Grid size={{ xs: 6, md: 3 }}>
                                 <Field
                                     name={'source_id'}
                                     children={(props) => {
@@ -149,7 +149,7 @@ function AdminBanCIDR() {
                                     }}
                                 />
                             </Grid>
-                            <Grid xs={6} md={3}>
+                            <Grid size={{ xs: 6, md: 3 }}>
                                 <Field
                                     name={'target_id'}
                                     children={(props) => {
@@ -160,7 +160,7 @@ function AdminBanCIDR() {
                                 />
                             </Grid>
 
-                            <Grid xs={6} md={3}>
+                            <Grid size={{ xs: 6, md: 3 }}>
                                 <Field
                                     name={'cidr'}
                                     children={(props) => {
@@ -169,7 +169,7 @@ function AdminBanCIDR() {
                                 />
                             </Grid>
 
-                            <Grid xs={6} md={3}>
+                            <Grid size={{ xs: 6, md: 3 }}>
                                 <Field
                                     name={'deleted'}
                                     children={({ state, handleBlur, handleChange }) => {
@@ -185,7 +185,7 @@ function AdminBanCIDR() {
                                 />
                             </Grid>
 
-                            <Grid xs={12} mdOffset="auto">
+                            <Grid size={{ xs: 12 }}>
                                 <Subscribe
                                     selector={(state) => [state.canSubmit, state.isSubmitting]}
                                     children={([canSubmit, isSubmitting]) => (
@@ -202,7 +202,7 @@ function AdminBanCIDR() {
                     </form>
                 </ContainerWithHeader>
             </Grid>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <ContainerWithHeaderAndButtons
                     title={'CIDR Ban History'}
                     marginTop={0}

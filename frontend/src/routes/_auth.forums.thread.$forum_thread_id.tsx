@@ -6,10 +6,10 @@ import LockIcon from '@mui/icons-material/Lock';
 import Person2Icon from '@mui/icons-material/Person2';
 import { IconButton, Theme } from '@mui/material';
 import Box from '@mui/material/Box';
+import Grid from '@mui/material/Grid2';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -198,7 +198,7 @@ function ForumThreadPage() {
                             }}
                         >
                             <Grid container spacing={2} justifyItems={'flex-end'}>
-                                <Grid xs={12}>
+                                <Grid size={{ xs: 12 }}>
                                     <Field
                                         name={'body_md'}
                                         children={(props) => {
@@ -213,7 +213,7 @@ function ForumThreadPage() {
                                         }}
                                     />
                                 </Grid>
-                                <Grid xs={4}>
+                                <Grid size={{ xs: 4 }}>
                                     <Subscribe
                                         selector={(state) => [state.canSubmit, state.isSubmitting]}
                                         children={([canSubmit, isSubmitting]) => (

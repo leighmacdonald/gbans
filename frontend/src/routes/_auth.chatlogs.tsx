@@ -5,10 +5,10 @@ import Checkbox from '@mui/material/Checkbox';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
+import Grid from '@mui/material/Grid2';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useLoaderData, useNavigate, useRouteContext } from '@tanstack/react-router';
@@ -142,7 +142,7 @@ function ChatLogs() {
             <Title>Chat Logs</Title>
 
             <Grid container spacing={2}>
-                <Grid xs={12}>
+                <Grid size={{ xs: 12 }}>
                     <ContainerWithHeader title={'Chat Filters'} iconLeft={<FilterAltIcon />}>
                         <form
                             onSubmit={async (e) => {
@@ -152,7 +152,7 @@ function ChatLogs() {
                             }}
                         >
                             <Grid container padding={2} spacing={2} justifyContent={'center'} alignItems={'center'}>
-                                <Grid xs={6} md={3}>
+                                <Grid size={{ xs: 6, md: 3 }}>
                                     <Field
                                         name={'persona_name'}
                                         children={(props) => {
@@ -160,7 +160,7 @@ function ChatLogs() {
                                         }}
                                     />
                                 </Grid>
-                                <Grid xs={6} md={3}>
+                                <Grid size={{ xs: 6, md: 3 }}>
                                     <Field
                                         name={'steam_id'}
                                         children={(props) => {
@@ -168,7 +168,7 @@ function ChatLogs() {
                                         }}
                                     />
                                 </Grid>
-                                <Grid xs={6} md={3}>
+                                <Grid size={{ xs: 6, md: 3 }}>
                                     <Field
                                         name={'body'}
                                         children={(props) => {
@@ -177,7 +177,7 @@ function ChatLogs() {
                                     />
                                 </Grid>
 
-                                <Grid xs={6} md={3}>
+                                <Grid size={{ xs: 6, md: 3 }}>
                                     <Field
                                         name={'server_id'}
                                         children={({ state, handleChange, handleBlur }) => {
@@ -209,7 +209,7 @@ function ChatLogs() {
                                 </Grid>
                                 {hasPermission(PermissionLevel.Moderator) && (
                                     <>
-                                        <Grid xs={'auto'}>
+                                        <Grid size={{ xs: 'auto' }}>
                                             <Field
                                                 name={'flagged_only'}
                                                 children={({ state, handleChange, handleBlur }) => {
@@ -234,7 +234,7 @@ function ChatLogs() {
                                                 }}
                                             />
                                         </Grid>
-                                        <Grid xs>
+                                        <Grid size={{ xs: 'auto' }}>
                                             <Field
                                                 name={'auto_refresh'}
                                                 children={({ state, handleChange, handleBlur }) => {
@@ -266,7 +266,7 @@ function ChatLogs() {
                                     </>
                                 )}
 
-                                <Grid xs={12} mdOffset="auto">
+                                <Grid size={{ xs: 12 }}>
                                     <Subscribe
                                         selector={(state) => [state.canSubmit, state.isSubmitting]}
                                         children={([canSubmit, isSubmitting]) => (
@@ -283,7 +283,7 @@ function ChatLogs() {
                         </form>
                     </ContainerWithHeader>
                 </Grid>
-                <Grid xs={12}>
+                <Grid size={{ xs: 12 }}>
                     <ContainerWithHeader iconLeft={<ChatIcon />} title={'Chat Logs'}>
                         <ChatTable messages={messages ?? []} isLoading={isLoading} />
                         <Paginator

@@ -4,8 +4,8 @@ import BuildIcon from '@mui/icons-material/Build';
 import EditIcon from '@mui/icons-material/Edit';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
+import Grid from '@mui/material/Grid2';
 import MenuItem from '@mui/material/MenuItem';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLoaderData, useRouteContext } from '@tanstack/react-router';
@@ -94,7 +94,7 @@ export const WikiPage = ({ slug = 'home', path }: { slug: string; path: '/_guest
                     }}
                 >
                     <Grid container spacing={2}>
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'permission_level'}
                                 validators={{
@@ -120,7 +120,7 @@ export const WikiPage = ({ slug = 'home', path }: { slug: string; path: '/_guest
                             />
                         </Grid>
 
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'body_md'}
                                 children={(props) => {
@@ -128,7 +128,7 @@ export const WikiPage = ({ slug = 'home', path }: { slug: string; path: '/_guest
                                 }}
                             />
                         </Grid>
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Subscribe
                                 selector={(state) => [state.canSubmit, state.isSubmitting]}
                                 children={([canSubmit, isSubmitting]) => {
@@ -153,7 +153,7 @@ export const WikiPage = ({ slug = 'home', path }: { slug: string; path: '/_guest
     }
     return (
         <Grid container spacing={2}>
-            <Grid xs={editMode ? 6 : 12}>
+            <Grid size={{ xs: editMode ? 6 : 12 }}>
                 <ContainerWithHeaderAndButtons title={page?.slug ?? ''} iconLeft={<ArticleIcon />} buttons={buttons}>
                     <MarkDownRenderer body_md={page?.body_md ?? ''} />
                 </ContainerWithHeaderAndButtons>

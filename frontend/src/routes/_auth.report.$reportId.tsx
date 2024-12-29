@@ -10,6 +10,7 @@ import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import FormControl from '@mui/material/FormControl';
+import Grid from '@mui/material/Grid2';
 import InputLabel from '@mui/material/InputLabel';
 import Link from '@mui/material/Link';
 import List from '@mui/material/List';
@@ -20,7 +21,6 @@ import MenuItem from '@mui/material/MenuItem';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
@@ -262,27 +262,19 @@ function ReportView() {
     return (
         <Grid container spacing={2}>
             <Title>Report</Title>
-            <Grid xs={12} md={8}>
-                {report && <ReportViewComponent report={report} />}
-            </Grid>
-            <Grid xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 8 }}>{report && <ReportViewComponent report={report} />}</Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
                 <div>
                     <Grid container spacing={2}>
-                        <Grid xs={6} md={12}>
+                        <Grid size={{ xs: 6, md: 12 }}>
                             {report?.target_id && <ProfileInfoBox steam_id={report?.target_id} />}
                         </Grid>
-                        {renderBan && (
-                            <Grid xs={6} md={12}>
-                                {renderBan}
-                            </Grid>
-                        )}
-                        <Grid xs={6} md={12}>
+                        {renderBan && <Grid size={{ xs: 6, md: 12 }}>{renderBan}</Grid>}
+                        <Grid size={{ xs: 6, md: 12 }}>
                             <SteamIDList steam_id={report?.subject.steam_id ?? ''} />
                         </Grid>
-                        <Grid xs={6} md={12}>
-                            {reportStatusView}
-                        </Grid>
-                        <Grid xs={6} md={12}>
+                        <Grid size={{ xs: 6, md: 12 }}>{reportStatusView}</Grid>
+                        <Grid size={{ xs: 6, md: 12 }}>
                             <ContainerWithHeader title={'Report Details'} iconLeft={<InfoIcon />}>
                                 <List sx={{ width: '100%' }}>
                                     <ListItem
@@ -330,9 +322,7 @@ function ReportView() {
                                 </List>
                             </ContainerWithHeader>
                         </Grid>
-                        <Grid xs={6} md={12}>
-                            {hasPermission(PermissionLevel.Moderator) && resolveView}
-                        </Grid>
+                        <Grid size={{ xs: 6, md: 12 }}>{hasPermission(PermissionLevel.Moderator) && resolveView}</Grid>
                     </Grid>
                 </div>
             </Grid>

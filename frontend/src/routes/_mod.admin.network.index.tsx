@@ -1,7 +1,7 @@
+import Grid from '@mui/material/Grid2';
 import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import Box from '@mui/system/Box';
 import { createFileRoute } from '@tanstack/react-router';
 import { Title } from '../component/Title';
@@ -14,7 +14,7 @@ function AdminNetwork() {
     return (
         <Grid container spacing={2}>
             <Title>IP History</Title>
-            <Grid xs={6} md={6}>
+            <Grid size={{ xs: 6, md: 6 }}>
                 <Link href={`/admin/network/ip_hist`}>
                     <Paper component={Box} padding={2}>
                         <Typography variant="h5">Player IP History</Typography>
@@ -22,7 +22,7 @@ function AdminNetwork() {
                     </Paper>
                 </Link>
             </Grid>
-            <Grid xs={6} md={6}>
+            <Grid size={{ xs: 6, md: 6 }}>
                 <Link href={`/admin/network/players_by_ip`}>
                     <Paper component={Box} padding={2}>
                         <Typography variant="h5">Find Players By IP</Typography>
@@ -32,7 +32,7 @@ function AdminNetwork() {
                     </Paper>
                 </Link>
             </Grid>
-            <Grid xs={6} md={6}>
+            <Grid size={{ xs: 6, md: 6 }}>
                 <Link href={`/admin/network/ip_info`}>
                     <Paper component={Box} padding={2}>
                         <Typography variant="h5">Network Info</Typography>
@@ -43,7 +43,7 @@ function AdminNetwork() {
                     </Paper>
                 </Link>
             </Grid>
-            <Grid xs={6} md={6}>
+            <Grid size={{ xs: 6, md: 6 }}>
                 <Link href={`/admin/network/cidr_blocks`}>
                     <Paper component={Box} padding={2}>
                         <Typography variant="h5">External CIDR Bans</Typography>

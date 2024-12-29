@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import ReportIcon from '@mui/icons-material/Report';
+import Grid from '@mui/material/Grid2';
 import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ColumnFiltersState, createColumnHelper, SortingState } from '@tanstack/react-table';
@@ -110,7 +110,7 @@ function AdminReports() {
     return (
         <Grid container spacing={2}>
             <Title>Reports</Title>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <ContainerWithHeader title={'Filters'} iconLeft={<FilterListIcon />} marginTop={2}>
                     <form
                         onSubmit={async (e) => {
@@ -120,7 +120,7 @@ function AdminReports() {
                         }}
                     >
                         <Grid container spacing={2}>
-                            <Grid xs={6} md={3}>
+                            <Grid size={{ xs: 6, md: 3 }}>
                                 <Field
                                     name={'source_id'}
                                     children={(props) => {
@@ -131,7 +131,7 @@ function AdminReports() {
                                 />
                             </Grid>
 
-                            <Grid xs={6} md={3}>
+                            <Grid size={{ xs: 6, md: 3 }}>
                                 <Field
                                     name={'target_id'}
                                     children={(props) => {
@@ -142,7 +142,7 @@ function AdminReports() {
                                 />
                             </Grid>
 
-                            <Grid xs={6} md={3}>
+                            <Grid size={{ xs: 6, md: 3 }}>
                                 <Field
                                     name={'report_status'}
                                     children={(props) => {
@@ -165,7 +165,7 @@ function AdminReports() {
                                     }}
                                 />
                             </Grid>
-                            <Grid xs={12} mdOffset="auto">
+                            <Grid size={{ xs: 12 }}>
                                 <Subscribe
                                     selector={(state) => [state.canSubmit, state.isSubmitting]}
                                     children={([canSubmit, isSubmitting]) => (
@@ -182,7 +182,7 @@ function AdminReports() {
                     </form>
                 </ContainerWithHeader>
             </Grid>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <ContainerWithHeader title={'Current User Reports'} iconLeft={<ReportIcon />}>
                     <FullTable
                         data={reports ?? []}

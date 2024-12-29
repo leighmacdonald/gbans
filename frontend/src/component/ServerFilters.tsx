@@ -2,13 +2,13 @@ import { ChangeEvent, useCallback, useEffect } from 'react';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import Grid from '@mui/material/Grid2';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import { SelectChangeEvent } from '@mui/material/Select';
 import Select from '@mui/material/Select';
 import Slider from '@mui/material/Slider';
 import Switch from '@mui/material/Switch';
-import Grid from '@mui/material/Unstable_Grid2';
 import { styled } from '@mui/material/styles';
 import { useMapStateCtx } from '../hooks/useMapStateCtx.ts';
 import { logErr } from '../util/errors.ts';
@@ -148,13 +148,13 @@ export const ServerFilters = () => {
                     // justifyContent: 'center'
                 }}
             >
-                <Grid xs>
+                <Grid size={{ xs: 'auto' }}>
                     <FormControlLabel
                         control={<Switch checked={showOpenOnly} onChange={onShowOpenOnlyChanged} name="checkedA" />}
                         label="Open Slots"
                     />
                 </Grid>
-                <Grid xs>
+                <Grid size={{ xs: 'auto' }}>
                     <FormControl>
                         <InputLabel id="region-selector-label">Region</InputLabel>
                         <Select<string>
@@ -174,7 +174,7 @@ export const ServerFilters = () => {
                         </Select>
                     </FormControl>
                 </Grid>
-                <Grid xs>
+                <Grid size={{ xs: 'auto' }}>
                     <FormControlLabel
                         control={
                             <Switch
@@ -186,7 +186,7 @@ export const ServerFilters = () => {
                         label="By Range"
                     />
                 </Grid>
-                <Grid xs style={{ paddingRight: '2rem' }}>
+                <Grid size={{ xs: 'auto' }} style={{ paddingRight: '2rem' }}>
                     <RangeSlider
                         style={{
                             zIndex: 1000

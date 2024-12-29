@@ -6,10 +6,10 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import GavelIcon from '@mui/icons-material/Gavel';
 import UndoIcon from '@mui/icons-material/Undo';
 import Button from '@mui/material/Button';
+import Grid from '@mui/material/Grid2';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
@@ -156,7 +156,7 @@ function AdminBanASN() {
     return (
         <Grid container spacing={2}>
             <Title>Ban ASN</Title>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <ContainerWithHeader title={'Filters'} iconLeft={<FilterListIcon />} marginTop={2}>
                     <form
                         onSubmit={async (e) => {
@@ -166,8 +166,8 @@ function AdminBanASN() {
                         }}
                     >
                         <Grid container spacing={2}>
-                            <Grid xs={4}>
-                                <Grid xs={6} md={3}>
+                            <Grid size={{ xs: 4 }}>
+                                <Grid size={{ xs: 6, md: 3 }}>
                                     <Field
                                         name={'source_id'}
                                         children={(props) => {
@@ -182,7 +182,7 @@ function AdminBanASN() {
                                     />
                                 </Grid>
                             </Grid>
-                            <Grid xs={6} md={3}>
+                            <Grid size={{ xs: 6, md: 3 }}>
                                 <Field
                                     name={'target_id'}
                                     children={(props) => {
@@ -193,7 +193,7 @@ function AdminBanASN() {
                                 />
                             </Grid>
 
-                            <Grid xs={6} md={3}>
+                            <Grid size={{ xs: 6, md: 3 }}>
                                 <Field
                                     name={'as_num'}
                                     children={(props) => {
@@ -202,7 +202,7 @@ function AdminBanASN() {
                                 />
                             </Grid>
 
-                            <Grid xs="auto">
+                            <Grid>
                                 <Field
                                     name={'deleted'}
                                     children={({ state, handleBlur, handleChange }) => {
@@ -218,7 +218,7 @@ function AdminBanASN() {
                                 />
                             </Grid>
 
-                            <Grid xs={12} mdOffset="auto">
+                            <Grid size={{ xs: 12 }}>
                                 <Subscribe
                                     selector={(state) => [state.canSubmit, state.isSubmitting]}
                                     children={([canSubmit, isSubmitting]) => (
@@ -236,7 +236,7 @@ function AdminBanASN() {
                 </ContainerWithHeader>
             </Grid>
 
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <ContainerWithHeaderAndButtons
                     title={'ASN Ban History'}
                     marginTop={0}

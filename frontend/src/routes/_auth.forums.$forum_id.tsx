@@ -8,9 +8,9 @@ import PushPinIcon from '@mui/icons-material/PushPin';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
+import Grid from '@mui/material/Grid2';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { FetchQueryOptions, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { PermissionLevel } from '../api';
@@ -174,7 +174,7 @@ const ForumThreadRow = ({ thread }: { thread: ForumThread }) => {
                 }
             }}
         >
-            <Grid md={8} xs={12}>
+            <Grid size={{ xs: 12, md: 8 }}>
                 <Stack direction={'row'} spacing={2}>
                     <VCenteredElement
                         icon={<Avatar alt={thread.personaname} src={avatarHashToURL(thread.avatarhash, 'medium')} />}
@@ -210,29 +210,29 @@ const ForumThreadRow = ({ thread }: { thread: ForumThread }) => {
                     </Stack>
                 </Stack>
             </Grid>
-            <Grid md={1} xs={6}>
+            <Grid size={{ xs: 6, md: 1 }}>
                 <Grid container justifyContent="space-between">
-                    <Grid xs={6}>
+                    <Grid size={{ xs: 6 }}>
                         <Typography variant={'body1'} align={'left'}>
                             Replies:
                         </Typography>
                     </Grid>
-                    <Grid xs={6} alignContent={'flex-end'}>
+                    <Grid size={{ xs: 6 }} alignContent={'flex-end'}>
                         <Typography variant={'body1'} align={'right'}>
                             {thread.replies}
                         </Typography>
                     </Grid>
-                    <Grid xs={6}>
+                    <Grid size={{ xs: 6 }}>
                         <Typography variant={'body2'}>Views:</Typography>
                     </Grid>
-                    <Grid xs={6} alignContent={'flex-end'}>
+                    <Grid size={{ xs: 6 }} alignContent={'flex-end'}>
                         <Typography variant={'body2'} align={'right'}>
                             {thread.views}
                         </Typography>
                     </Grid>
                 </Grid>
             </Grid>
-            <Grid md={3} xs={6}>
+            <Grid size={{ xs: 6, md: 3 }}>
                 {thread.recent_forum_message_id && thread.recent_forum_message_id > 0 ? (
                     <Stack direction={'row'} justifyContent={'end'} spacing={1}>
                         <Stack>

@@ -8,10 +8,10 @@ import ThumbDownIcon from '@mui/icons-material/ThumbDown';
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
+import Grid from '@mui/material/Grid2';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useRouteContext } from '@tanstack/react-router';
 import { format } from 'date-fns';
@@ -138,7 +138,7 @@ function Contest() {
         contest && (
             <Grid container spacing={3}>
                 <Title>{contest?.title ?? 'Contest'}</Title>
-                <Grid xs={8}>
+                <Grid size={{ xs: 8 }}>
                     <ContainerWithHeader
                         title={`Contest: ${contest?.title}`}
                         iconLeft={isLoading ? <LoadingSpinner /> : <EmojiEventsIcon />}
@@ -148,7 +148,7 @@ function Contest() {
                         ) : (
                             contest && (
                                 <Grid container>
-                                    <Grid xs={12} minHeight={400}>
+                                    <Grid size={{ xs: 12 }} minHeight={400}>
                                         <Typography variant={'body1'} padding={2}>
                                             {contest?.description}
                                         </Typography>
@@ -158,7 +158,7 @@ function Contest() {
                         )}
                     </ContainerWithHeader>
                 </Grid>
-                <Grid xs={4}>
+                <Grid size={{ xs: 4 }}>
                     <ContainerWithHeader
                         title={`Contest Details`}
                         iconLeft={isLoading ? <LoadingSpinner /> : <InfoIcon />}
@@ -209,7 +209,7 @@ function Contest() {
                 ) : (
                     <>
                         {!showEntries && (
-                            <Grid xs={12}>
+                            <Grid size={{ xs: 12 }}>
                                 <Paper>
                                     <Typography variant={'subtitle1'} align={'center'} padding={4}>
                                         Entries from other contestants are hidden.
@@ -217,7 +217,7 @@ function Contest() {
                                 </Paper>
                             </Grid>
                         )}
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Stack spacing={2}>
                                 {entries
                                     .filter((e) => showEntries || e.steam_id == profile.steam_id)
@@ -226,7 +226,7 @@ function Contest() {
                                             <Stack key={entry.contest_entry_id}>
                                                 <Paper elevation={2}>
                                                     <Grid container>
-                                                        <Grid xs={8} padding={2}>
+                                                        <Grid size={{ xs: 8 }} padding={2}>
                                                             <Typography variant={'subtitle1'}>Description</Typography>
                                                             <MarkDownRenderer
                                                                 body_md={
@@ -236,7 +236,7 @@ function Contest() {
                                                                 }
                                                             />
                                                         </Grid>
-                                                        <Grid xs={4} padding={2}>
+                                                        <Grid size={{ xs: 4 }} padding={2}>
                                                             <PersonCell
                                                                 steam_id={entry.steam_id}
                                                                 personaname={entry.personaname}

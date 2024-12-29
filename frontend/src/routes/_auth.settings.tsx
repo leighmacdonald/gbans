@@ -12,13 +12,13 @@ import SportsEsportsIcon from '@mui/icons-material/SportsEsports';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Grid from '@mui/material/Grid2';
 import Link from '@mui/material/Link';
 import List from '@mui/material/List';
 import ListItemText from '@mui/material/ListItemText';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useLoaderData, useNavigate } from '@tanstack/react-router';
@@ -107,7 +107,7 @@ function ProfileSettings() {
 
             <ContainerWithHeader title={'User Settings'} iconLeft={<ConstructionIcon />}>
                 <Grid container spacing={2}>
-                    <Grid xs={4} sm={3} md={2} padding={0}>
+                    <Grid size={{ xs: 4, sm: 3, md: 2 }} padding={0}>
                         <Stack spacing={1} padding={2}>
                             <TabButton
                                 tab={'general'}
@@ -209,10 +209,10 @@ const GeneralSection = ({
             >
                 <Grid container spacing={2}>
                     {notificationsSupported && (
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <div>
                                 <Grid container spacing={1}>
-                                    <Grid md={6} xs={12}>
+                                    <Grid size={{ xs: 12, md: 6 }}>
                                         <Stack spacing={1}>
                                             <Typography>Show desktop notifications?</Typography>
                                             {notifPerms != 'granted' ? (
@@ -245,7 +245,7 @@ const GeneralSection = ({
                                             )}
                                         </Stack>
                                     </Grid>
-                                    <Grid md={6} xs={12}>
+                                    <Grid size={{ xs: 12, md: 6 }}>
                                         <Typography>How to disable notifications: </Typography>
                                         <List>
                                             <ListItemText>
@@ -272,7 +272,7 @@ const GeneralSection = ({
                             </div>
                         </Grid>
                     )}
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <Field
                             name={'stats_hidden'}
                             validators={{
@@ -292,7 +292,7 @@ const GeneralSection = ({
                         <SubHeading>It is still viewable by yourself.</SubHeading>
                     </Grid>
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <Subscribe
                             selector={(state) => [state.canSubmit, state.isSubmitting]}
                             children={([canSubmit, isSubmitting]) => (
@@ -339,7 +339,7 @@ const GameplaySection = ({
                 }}
             >
                 <Grid container spacing={2}>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <Field
                             name={'center_projectiles'}
                             children={({ state, handleBlur, handleChange }) => {
@@ -356,7 +356,7 @@ const GameplaySection = ({
                         <SubHeading>Applies to all projectile weapons</SubHeading>
                     </Grid>
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <Subscribe
                             selector={(state) => [state.canSubmit, state.isSubmitting]}
                             children={([canSubmit, isSubmitting]) => (
@@ -405,7 +405,7 @@ const ForumSection = ({
                 }}
             >
                 <Grid container spacing={2}>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <Field
                             name={'forum_signature'}
                             validators={{
@@ -418,7 +418,7 @@ const ForumSection = ({
                         <SubHeading>It is still viewable by yourself.</SubHeading>
                     </Grid>
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <Field
                             name={'forum_profile_messages'}
                             validators={{
@@ -438,7 +438,7 @@ const ForumSection = ({
                         <SubHeading>It is still viewable by yourself.</SubHeading>
                     </Grid>
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <Subscribe
                             selector={(state) => [state.canSubmit, state.isSubmitting]}
                             children={([canSubmit, isSubmitting]) => (
@@ -538,7 +538,7 @@ const ConnectionsSection = ({
             <Grid container spacing={2} padding={0}>
                 {appInfo.patreon_enabled ? (
                     patreon_id ? (
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Typography variant={'h3'}>Patreon</Typography>
                             <Box>
                                 <SubHeading>
@@ -559,7 +559,7 @@ const ConnectionsSection = ({
                             </Button>
                         </Grid>
                     ) : (
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Button
                                 variant={'contained'}
                                 color={'success'}
@@ -575,7 +575,7 @@ const ConnectionsSection = ({
                 )}
                 {appInfo.discord_enabled ? (
                     !isLoading && user?.username ? (
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Typography>You are connected to us as: {user.username}</Typography>
                             <Button
                                 variant={'contained'}
@@ -587,7 +587,7 @@ const ConnectionsSection = ({
                             </Button>
                         </Grid>
                     ) : (
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Button
                                 variant={'contained'}
                                 color={'success'}

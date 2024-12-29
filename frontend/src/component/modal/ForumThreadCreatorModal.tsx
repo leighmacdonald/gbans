@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import Grid from '@mui/material/Unstable_Grid2';
+import Grid from '@mui/material/Grid2';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useForm } from '@tanstack/react-form';
@@ -105,7 +105,7 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
                 <DialogTitle>Create New Thread</DialogTitle>
                 <DialogContent>
                     <Grid container spacing={2}>
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'title'}
                                 children={(props) => {
@@ -113,7 +113,7 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
                                 }}
                             />
                         </Grid>
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'body_md'}
                                 children={(props) => {
@@ -121,7 +121,7 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
                                 }}
                             />
                         </Grid>
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'sticky'}
                                 children={({ state, handleBlur, handleChange }) => {
@@ -136,7 +136,7 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
                                 }}
                             />
                         </Grid>
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'locked'}
                                 children={({ state, handleBlur, handleChange }) => {
@@ -155,7 +155,7 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
                 </DialogContent>
                 <DialogActions>
                     <Grid container>
-                        <Grid xs={12} mdOffset="auto">
+                        <Grid size={{ xs: 12 }}>
                             <Subscribe
                                 selector={(state) => [state.canSubmit, state.isSubmitting]}
                                 children={([canSubmit, isSubmitting]) => {
