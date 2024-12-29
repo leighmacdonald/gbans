@@ -67,13 +67,13 @@ export const HeadingWithButtons: FC<HeadingWithButtonsProps> = ({
             }}
         >
             {iconLeft && (
-                <Grid size={{ xs: 'auto' }} paddingRight={1}>
+                <Grid size="auto" paddingRight={1}>
                     <VCenteredElement icon={iconLeft} />
                 </Grid>
             )}
 
-            <Grid size={{ xs: 12 }}>{children}</Grid>
-            {buttons && <Grid size={{ xs: 'auto' }}>{buttons}</Grid>}
+            <Grid size="auto">{children}</Grid>
+            {buttons && <Grid size="auto">{buttons}</Grid>}
         </Grid>
     );
 };
