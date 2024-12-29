@@ -8,7 +8,6 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/gbans/internal/database"
-	"github.com/leighmacdonald/gbans/internal/discord"
 	"github.com/leighmacdonald/gbans/internal/domain"
 	"github.com/leighmacdonald/gbans/pkg/fp"
 	"github.com/leighmacdonald/gbans/pkg/logparse"
@@ -21,7 +20,6 @@ type matchRepository struct {
 	notifications domain.NotificationUsecase
 	servers       domain.ServersUsecase
 	state         domain.StateUsecase
-	summarizer    *Summarizer
 	wm            fp.MutexMap[logparse.Weapon, int]
 	events        chan logparse.ServerEvent
 	broadcaster   *fp.Broadcaster[logparse.EventType, logparse.ServerEvent]
@@ -44,74 +42,14 @@ func NewMatchRepository(broadcaster *fp.Broadcaster[logparse.EventType, logparse
 		events:        make(chan logparse.ServerEvent),
 	}
 
-	matchRepo.summarizer = newMatchSummarizer(matchRepo.events, matchRepo.onMatchComplete)
-
 	return matchRepo
-}
-
-func (r *matchRepository) StartMatch(startTrigger domain.MatchTrigger) {
-	r.summarizer.triggers <- startTrigger
-}
-
-func (r *matchRepository) EndMatch(endTrigger domain.MatchTrigger) {
-	r.summarizer.triggers <- endTrigger
-}
-
-func (r *matchRepository) onMatchComplete(ctx context.Context, matchContext *activeMatchContext) error {
-	const minPlayers = 6
-
-	server, found := r.state.ByServerID(matchContext.server.ServerID)
-
-	if found && server.Name != "" {
-		matchContext.match.Title = server.Name
-	}
-
-	fullServer, err := r.servers.Server(ctx, server.ServerID)
-	if err != nil {
-		return errors.Join(err, domain.ErrLoadServer)
-	}
-
-	if !fullServer.EnableStats {
-		return nil
-	}
-
-	if len(matchContext.match.PlayerSums) < minPlayers {
-		return domain.ErrInsufficientPlayers
-	}
-
-	if matchContext.match.TimeStart == nil || matchContext.match.MapName == "" {
-		return domain.ErrIncompleteMatch
-	}
-
-	if errSave := r.MatchSave(ctx, &matchContext.match, r.wm); errSave != nil {
-		if errors.Is(errSave, domain.ErrInsufficientPlayers) {
-			return domain.ErrInsufficientPlayers
-		}
-
-		return errors.Join(errSave, domain.ErrSaveMatch)
-	}
-
-	var result domain.MatchResult
-	if errResult := r.MatchGetByID(ctx, matchContext.match.MatchID, &result); errResult != nil {
-		return errors.Join(errResult, domain.ErrLoadMatch)
-	}
-
-	r.notifications.Enqueue(ctx, domain.NewDiscordNotification(
-		domain.ChannelPublicMatchLog,
-		discord.MatchMessage(result, "")))
-
-	return nil
-}
-
-func (r *matchRepository) Start(ctx context.Context) {
-	r.summarizer.Start(ctx)
 }
 
 func (r *matchRepository) GetMatchIDFromServerID(serverID int) (uuid.UUID, bool) {
 	return r.matchUUIDMap.Get(serverID)
 }
 
-func (r *matchRepository) Matches(ctx context.Context, opts domain.MatchesQueryOpts) ([]domain.MatchSummary, int64, error) {
+func (r *matchRepository) Matches(ctx context.Context, opts domain.MatchesQueryOpts) ([]domain.MatchResult, int64, error) {
 	countBuilder := r.database.
 		Builder().
 		Select("count(m.match_id) as count").
@@ -165,12 +103,14 @@ func (r *matchRepository) Matches(ctx context.Context, opts domain.MatchesQueryO
 
 	defer rows.Close()
 
-	var matches []domain.MatchSummary
+	var matches []domain.MatchResult
 
 	for rows.Next() {
-		var summary domain.MatchSummary
-		if errScan := rows.Scan(&summary.MatchID, &summary.ServerID, &summary.IsWinner, &summary.ShortName,
-			&summary.Title, &summary.MapName, &summary.ScoreBlu, &summary.ScoreRed, &summary.TimeStart,
+		var summary domain.MatchResult
+		var winner bool
+		var shortName string
+		if errScan := rows.Scan(&summary.MatchID, &summary.ServerID, &winner, &shortName,
+			&summary.Title, &summary.MapName, &summary.TeamScores.Blu, &summary.TeamScores.Red, &summary.TimeStart,
 			&summary.TimeEnd); errScan != nil {
 			return nil, 0, errors.Join(errScan, domain.ErrScanResult)
 		}
@@ -595,15 +535,21 @@ func (r *matchRepository) MatchGetByID(ctx context.Context, matchID uuid.UUID, m
 	}
 
 	chat, errChat := r.matchGetChat(ctx, matchID)
-
 	if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
 		return errChat
 	}
 
-	match.Chat = chat
+	for _, msg := range chat {
+		match.Chat = append(match.Chat, domain.MatchChat{
+			SteamID:     msg.SteamID,
+			PersonaName: msg.PersonaName,
+			Body:        msg.Body,
+			Team:        msg.Team,
+		})
+	}
 
 	if match.Chat == nil {
-		match.Chat = domain.PersonMessages{}
+		match.Chat = []domain.MatchChat{}
 	}
 
 	for _, player := range match.Players {

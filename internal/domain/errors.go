@@ -166,5 +166,4 @@ var (
 	ErrOpenFile                 = errors.New("could not open output file")
 	ErrFrontendRoutes           = errors.New("failed to initialize frontend asset routes")
 	ErrPathInvalid              = errors.New("invalid path specified")
-	ErrDemoLoad                 = errors.New("could not load demo file")
 )
