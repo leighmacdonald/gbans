@@ -1,9 +1,9 @@
 import DoDisturbIcon from '@mui/icons-material/DoDisturb';
 import Button from '@mui/material/Button';
+import Grid from '@mui/material/Grid2';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { createFileRoute, useRouteContext } from '@tanstack/react-router';
 import { z } from 'zod';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
@@ -31,7 +31,7 @@ export function LoginPage() {
 
     return (
         <Grid container justifyContent={'center'} alignItems={'center'}>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <ContainerWithHeader title={title} iconLeft={<DoDisturbIcon />}>
                     <>
                         {isAuthenticated() && (

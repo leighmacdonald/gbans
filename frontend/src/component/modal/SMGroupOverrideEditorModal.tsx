@@ -1,8 +1,8 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import GroupsIcon from '@mui/icons-material/Groups';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import MenuItem from '@mui/material/MenuItem';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { zodValidator } from '@tanstack/zod-form-adapter';
@@ -72,7 +72,7 @@ export const SMGroupOverrideEditorModal = NiceModal.create(
 
                     <DialogContent>
                         <Grid container spacing={2}>
-                            <Grid xs={6}>
+                            <Grid size={{ xs: 6 }}>
                                 <Field
                                     name={'name'}
                                     children={(props) => {
@@ -80,7 +80,7 @@ export const SMGroupOverrideEditorModal = NiceModal.create(
                                     }}
                                 />
                             </Grid>
-                            <Grid xs={6}>
+                            <Grid size={{ xs: 6 }}>
                                 <Field
                                     name={'type'}
                                     children={(props) => {
@@ -103,7 +103,7 @@ export const SMGroupOverrideEditorModal = NiceModal.create(
                                 />
                             </Grid>
 
-                            <Grid xs={6}>
+                            <Grid size={{ xs: 6 }}>
                                 <Field
                                     name={'access'}
                                     children={(props) => {
@@ -130,7 +130,7 @@ export const SMGroupOverrideEditorModal = NiceModal.create(
 
                     <DialogActions>
                         <Grid container>
-                            <Grid xs={12} mdOffset="auto">
+                            <Grid size={{ xs: 12 }}>
                                 <Subscribe
                                     selector={(state) => [state.canSubmit, state.isSubmitting]}
                                     children={([canSubmit, isSubmitting]) => {

@@ -5,13 +5,13 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import StorageIcon from '@mui/icons-material/Storage';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
+import Grid from '@mui/material/Grid2';
 import IconButton from '@mui/material/IconButton';
 import LinearProgress, { LinearProgressProps } from '@mui/material/LinearProgress';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { createFileRoute } from '@tanstack/react-router';
 import { LatLngLiteral } from 'leaflet';
 import { apiGetServerStates, BaseServer, PermissionLevel } from '../api';
@@ -89,7 +89,7 @@ export const ServerStats = () => {
                 spacing={3}
                 padding={3}
             >
-                <Grid xs={3} xl={4}>
+                <Grid size={{ xs: 3, xl: 4 }}>
                     <Typography style={{ display: 'inline' }} variant={'subtitle1'} align={'center'}>
                         Global: {use} / {cap}
                     </Typography>
@@ -108,7 +108,7 @@ export const ServerStats = () => {
                         )
                     );
                     return (
-                        <Grid xs={3} xl={4} key={`stat-${v}`}>
+                        <Grid size={{ xs: 3, xl: 4 }} key={`stat-${v}`}>
                             <Typography style={{ display: 'inline' }} variant={'subtitle1'} align={'center'}>
                                 {v}: {pSum} / {pMax}
                             </Typography>

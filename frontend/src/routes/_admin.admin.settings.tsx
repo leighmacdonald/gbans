@@ -15,11 +15,11 @@ import TroubleshootIcon from '@mui/icons-material/Troubleshoot';
 import UpdateIcon from '@mui/icons-material/Update';
 import WebAssetIcon from '@mui/icons-material/WebAsset';
 import Button from '@mui/material/Button';
+import Grid from '@mui/material/Grid2';
 import Link from '@mui/material/Link';
 import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
@@ -114,14 +114,9 @@ export const TabSection = <Tabs,>({
     currentTab,
     label,
     description
-}: PropsWithChildren & {
-    tab: Tabs;
-    currentTab: Tabs;
-    label: string;
-    description: string;
-}) => {
+}: PropsWithChildren & { tab: Tabs; currentTab: Tabs; label: string; description: string }) => {
     return (
-        <Grid xs={8} sm={9} md={10} display={tab == currentTab ? undefined : 'none'} marginTop={1}>
+        <Grid size={{ xs: 8, sm: 9, md: 10 }} display={tab == currentTab ? undefined : 'none'} marginTop={1}>
             <Typography variant={'h1'}>{label}</Typography>
             <Typography variant={'subtitle1'} marginBottom={2}>
                 {description}
@@ -174,7 +169,7 @@ function AdminServers() {
 
             <ContainerWithHeaderAndButtons title={'System Settings'} iconLeft={<DeveloperBoardIcon />}>
                 <Grid container spacing={2}>
-                    <Grid xs={4} sm={3} md={2} padding={0}>
+                    <Grid size={{ xs: 4, sm: 3, md: 2 }} padding={0}>
                         <Stack spacing={1} padding={2}>
                             <TabButton
                                 tab={'general'}
@@ -326,7 +321,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                 }}
             >
                 <ConfigContainer>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             This name is displayed in various places throughout the app such as the title bar and site
                             heading. It should be short and simple.
@@ -341,7 +336,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>If you have a asset under a different subdir you should change this.</SubHeading>
                         <Field
                             name={'asset_url'}
@@ -354,7 +349,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         />
                     </Grid>
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             What address to listen for UDP log events. host:port format. If host is empty, it will
                             listen on all available hosts.
@@ -372,8 +367,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
 
                     <Typography variant={'h5'}>Configure Toplevel Features</Typography>
 
-                    <Grid xs={12}>
-                        {' '}
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             Sets the default page to load when a user opens the root url <kbd>example.com/</kbd>.
                         </SubHeading>
@@ -388,7 +382,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         />
                     </Grid>
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>Enable the news/blog functionality.</SubHeading>
                         <Field
                             name={'news_enabled'}
@@ -401,7 +395,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         />
                     </Grid>
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>Enabled/disable the forums functionality.</SubHeading>
                         <Field
                             name={'forums_enabled'}
@@ -414,7 +408,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         />
                     </Grid>
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             Enable contests in which users can participate. Users can submit entries and users can vote
                             on them.
@@ -430,7 +424,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         />
                     </Grid>
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             Enables a wiki section which is editable by moderators, and viewable by the public.
                         </SubHeading>
@@ -444,7 +438,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>Allows users to search and download demos.</SubHeading>
                         <Field
                             name={'demos_enabled'}
@@ -456,7 +450,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>Process demos and calculate game stats.</SubHeading>
                         <Field
                             name={'stats_enabled'}
@@ -469,8 +463,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         />
                     </Grid>
 
-                    <Grid xs={12}>
-                        {' '}
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             Enables the server status page showing the current map and player counts.
                         </SubHeading>
@@ -537,7 +530,7 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <Subscribe
                             selector={(state) => [state.canSubmit, state.isSubmitting]}
                             children={([canSubmit, isSubmitting]) => (
@@ -587,7 +580,7 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                 }}
             >
                 <ConfigContainer>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>Enable/disable the feature</SubHeading>
                         <Field
                             name={'enabled'}
@@ -599,7 +592,7 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>If a user gets a warning, it will expire after this duration of time.</SubHeading>
                         <Field
                             name={'warning_timeout'}
@@ -613,7 +606,7 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         {' '}
                         <SubHeading>
                             A hard limit to the number of warnings a user can receive before action is taken.
@@ -629,7 +622,7 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         />
                     </Grid>
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>Run the chat filters, but do not actually punish users.</SubHeading>
                         <Field
                             name={'dry'}
@@ -641,7 +634,7 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>If discord is enabled, send filter match notices to the log channel.</SubHeading>
                         <Field
                             name={'ping_discord'}
@@ -653,7 +646,7 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             When the sum of warning weights issued to a user is greater than this value, take action
                             against the user.
@@ -668,7 +661,7 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>How frequent warnings will be checked for users exceeding limits.</SubHeading>
                         <Field
                             name={'check_timeout'}
@@ -681,7 +674,7 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         />
                     </Grid>
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>How long it takes for a users warning to expire after being matched.</SubHeading>
                         <Field
                             name={'match_timeout'}
@@ -694,7 +687,7 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         />
                     </Grid>
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <Subscribe
                             selector={(state) => [state.canSubmit, state.isSubmitting]}
                             children={([canSubmit, isSubmitting]) => (
@@ -752,7 +745,7 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                 }}
             >
                 <ConfigContainer>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <Button
                             startIcon={<CleaningServicesIcon />}
                             variant={'contained'}
@@ -762,7 +755,7 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                             Start Cleanup
                         </Button>
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             Enable automatic deletion of demos. This ignores demos that have been marked as archived.
                         </SubHeading>
@@ -776,7 +769,7 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>Method used to determine what demos to delete.</SubHeading>
                         <Field
                             name={'demo_cleanup_strategy'}
@@ -801,7 +794,7 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             When using the percent free strategy, defined how much free space should be retained on the
                             demo mount/volume.
@@ -817,7 +810,7 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                         />
                     </Grid>
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>The mount point that demos are stored. Used to determine free space.</SubHeading>
                         <Field
                             name={'demo_cleanup_mount'}
@@ -829,7 +822,7 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             When using the count deletion strategy, this is the maximum number of demos to keep.
                         </SubHeading>
@@ -860,7 +853,7 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                         />
                     </Grid>
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <Subscribe
                             selector={(state) => [state.canSubmit, state.isSubmitting]}
                             children={([canSubmit, isSubmitting]) => (
@@ -900,7 +893,7 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                 }}
             >
                 <Grid container spacing={2}>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>Enabled/Disable patreon integrations</SubHeading>
                         <Field
                             name={'enabled'}
@@ -912,7 +905,7 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             Enables integration into the website. Enables: Donate button, Account Linking.
                         </SubHeading>
@@ -926,7 +919,7 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>Your patron client ID</SubHeading>
                         <Field
                             name={'client_id'}
@@ -938,7 +931,7 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>Patreon app client secret</SubHeading>
                         <Field
                             name={'client_secret'}
@@ -951,7 +944,7 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         />
                     </Grid>
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>Access token</SubHeading>
                         <Field
                             name={'creator_access_token'}
@@ -963,7 +956,7 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>Refresh token</SubHeading>
                         <Field
                             name={'creator_refresh_token'}
@@ -976,7 +969,7 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         />
                     </Grid>
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <Subscribe
                             selector={(state) => [state.canSubmit, state.isSubmitting]}
                             children={([canSubmit, isSubmitting]) => (
@@ -1031,7 +1024,7 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                 }}
             >
                 <ConfigContainer>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>Enabled or disable all discord integration.</SubHeading>
                         <Field
                             name={'enabled'}
@@ -1043,7 +1036,7 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             Enabled the discord bot integration. This is self-hosted within the app. You must can create
                             a discord application{' '}
@@ -1059,7 +1052,7 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             Enables integrations into the website. Enables: Showing Join Discord button, Account
                             Linking.
@@ -1074,7 +1067,7 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>Your discord application ID.</SubHeading>
                         <Field
                             name={'app_id'}
@@ -1086,7 +1079,7 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>Your discord app secret.</SubHeading>
                         <Field
                             name={'app_secret'}
@@ -1099,7 +1092,7 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         />
                     </Grid>
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             The unique ID for your permanent discord link. This is only the unique string at the end if
                             a invite url: https://discord.gg/&lt;XXXXXXXXX&gt;, not the entire url.
@@ -1114,7 +1107,7 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>Bot authentication token.</SubHeading>
                         <Field
                             name={'token'}
@@ -1126,7 +1119,7 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             This is the guild id of your discord server. With discoed developer mode enabled,
                             right-click on the server title and select "Copy ID" to get the guild ID.
@@ -1156,7 +1149,7 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <Field
                             name={'public_log_channel_enable'}
                             validators={{
@@ -1168,7 +1161,7 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         />
                         <SubHeading>Whether or not to enable public notices for less sensitive log events.</SubHeading>
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>What role to include when pinging for certain events being sent.</SubHeading>
                         <Field
                             name={'mod_ping_role_id'}
@@ -1180,7 +1173,7 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>Public log channel ID.</SubHeading>
                         <Field
                             name={'public_log_channel_id'}
@@ -1192,7 +1185,7 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             A channel to send match logs to. This can be very large and spammy, so its generally best to
                             use a separate channel, but not required.
@@ -1208,7 +1201,7 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         />
                     </Grid>
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             A channel to send in-game kick voting. This can be very noisy, so its generally best to use
                             a separate channel, but not required.
@@ -1223,7 +1216,7 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>New appeals and appeal messages are shown here.</SubHeading>
                         <Field
                             name={'appeal_log_channel_id'}
@@ -1235,7 +1228,7 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             A channel to send match logs to. This can be very large and spammy, so its generally best to
                             use a separate channel, but not required. This only shows steam based bans.
@@ -1264,7 +1257,7 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>A channel to send notices to when a user triggers a word filter.</SubHeading>
                         <Field
                             name={'word_filter_log_channel_id'}
@@ -1276,7 +1269,7 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             A channel to send notices to when a user is kicked either from being banned or denied entry
                             while already in a banned state.
@@ -1324,7 +1317,7 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         />
                     </Grid>
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <Subscribe
                             selector={(state) => [state.canSubmit, state.isSubmitting]}
                             children={([canSubmit, isSubmitting]) => (
@@ -1363,7 +1356,7 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                 }}
             >
                 <ConfigContainer>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>What logging level to use.</SubHeading>
                         <Field
                             name={'level'}
@@ -1388,7 +1381,7 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>If supplied, save log output to this file as well as stdout.</SubHeading>
                         <Field
                             name={'file'}
@@ -1401,7 +1394,7 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         />
                     </Grid>
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>Enables logging for incoming HTTP requests.</SubHeading>
                         <Field
                             name={'http_enabled'}
@@ -1413,7 +1406,7 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>Enables OpenTelemetry support (span id/trace id).</SubHeading>
                         <Field
                             name={'http_otel_enabled'}
@@ -1426,7 +1419,7 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         />
                     </Grid>
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>What logging level to use for HTTP requests.</SubHeading>
                         <Field
                             name={'http_level'}
@@ -1454,7 +1447,7 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                         />
                     </Grid>
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <Subscribe
                             selector={(state) => [state.canSubmit, state.isSubmitting]}
                             children={([canSubmit, isSubmitting]) => (
@@ -1492,13 +1485,13 @@ const SentrySection = ({ tab, settings, mutate }: { tab: tabs; settings: Config;
                 }}
             >
                 <Grid container spacing={2}>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         Self-hosted and cloud-based application performance monitoring & error tracking. You can create
                         a free account at <Link href={'https://sentry.io/'}>sentry.io</Link>. Otherwise you can follow
                         the guide for settings up{' '}
                         <Link href={'https://develop.sentry.dev/self-hosted/'}>self-hosted</Link> operation.
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>The URL to your backend sentry application.</SubHeading>
                         <Field
                             name={'sentry_dsn'}
@@ -1519,7 +1512,7 @@ const SentrySection = ({ tab, settings, mutate }: { tab: tabs; settings: Config;
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>The URL to your frontend sentry application.</SubHeading>
                         <Field
                             name={'sentry_dsn_web'}
@@ -1540,7 +1533,7 @@ const SentrySection = ({ tab, settings, mutate }: { tab: tabs; settings: Config;
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             Enable <Link href={'https://docs.sentry.io/concepts/key-terms/tracing/'}>tracing</Link>{' '}
                             support.
@@ -1556,7 +1549,7 @@ const SentrySection = ({ tab, settings, mutate }: { tab: tabs; settings: Config;
                         />
                     </Grid>
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             Configure the{' '}
                             <Link
@@ -1578,7 +1571,7 @@ const SentrySection = ({ tab, settings, mutate }: { tab: tabs; settings: Config;
                         />
                     </Grid>
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <Subscribe
                             selector={(state) => [state.canSubmit, state.isSubmitting]}
                             children={([canSubmit, isSubmitting]) => (
@@ -1639,18 +1632,18 @@ const GeoLocationSection = ({
                 }}
             >
                 <ConfigContainer>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         IP2Location is a 3rd party service that provides geoip databases along with some basic proxy
                         detections. gbans uses the IP2Location LITE database for{' '}
                         <Link href="https://lite.ip2location.com">IP geolocation</Link>. You must register for an
                         account to get an API key.
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <Button variant={'contained'} startIcon={<UpdateIcon />} onClick={onUpdateDB}>
                             Update Database
                         </Button>
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>Enables the download and usage of geo location tools.</SubHeading>
                         <Field
                             name={'enabled'}
@@ -1662,7 +1655,7 @@ const GeoLocationSection = ({
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>Your ip2location API key.</SubHeading>
                         <Field
                             name={'token'}
@@ -1674,7 +1667,7 @@ const GeoLocationSection = ({
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>Path to store downloaded databases.</SubHeading>
                         <Field
                             name={'cache_path'}
@@ -1686,7 +1679,7 @@ const GeoLocationSection = ({
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <Subscribe
                             selector={(state) => [state.canSubmit, state.isSubmitting]}
                             children={([canSubmit, isSubmitting]) => (
@@ -1727,7 +1720,7 @@ const DebugSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                 }}
             >
                 <ConfigContainer>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             Disable validation for OpenID responses. Do not enable this on a live site.
                         </SubHeading>
@@ -1742,7 +1735,7 @@ const DebugSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                         />
                     </Grid>
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             Add this additional address to all known servers to start receiving log events. Make sure
                             you setup port forwarding.
@@ -1764,7 +1757,7 @@ const DebugSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
                         />
                     </Grid>
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <Subscribe
                             selector={(state) => [state.canSubmit, state.isSubmitting]}
                             children={([canSubmit, isSubmitting]) => (
@@ -1804,7 +1797,7 @@ const LocalStoreSection = ({ tab, settings, mutate }: { tab: tabs; settings: Con
                 }}
             >
                 <ConfigContainer>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <Field
                             name={'path_root'}
                             validators={{
@@ -1817,7 +1810,7 @@ const LocalStoreSection = ({ tab, settings, mutate }: { tab: tabs; settings: Con
                         <SubHeading>Path to store all assets. Path is relative to gbans binary.</SubHeading>
                     </Grid>
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <Subscribe
                             selector={(state) => [state.canSubmit, state.isSubmitting]}
                             children={([canSubmit, isSubmitting]) => (
@@ -1865,7 +1858,7 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                 }}
             >
                 <ConfigContainer>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>Enable the use of SSH/SCP for downloading demos from a remote server.</SubHeading>
                         <Field
                             name={'enabled'}
@@ -1877,7 +1870,7 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>SSH username</SubHeading>
                         <Field
                             name={'username'}
@@ -1889,7 +1882,7 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             SSH port to use. This assumes all servers are configured using the same port.
                         </SubHeading>
@@ -1903,7 +1896,7 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>Path to your private key if using key based authentication.</SubHeading>
                         <Field
                             name={'private_key_path'}
@@ -1915,7 +1908,7 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             Password when using standard auth. Passphrase to unlock the private key when using key auth.
                         </SubHeading>
@@ -1929,7 +1922,7 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>How often to connect to remove systems and check for demos.</SubHeading>
                         <Field
                             name={'update_interval'}
@@ -1941,7 +1934,7 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>Connection timeout.</SubHeading>
                         <Field
                             name={'timeout'}
@@ -1953,7 +1946,7 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             Format for generating a path to look for demos. Use <kbd>%s</kbd> as a substitution for the
                             short server name.
@@ -1968,7 +1961,7 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             Format for generating a path to look for stac anticheat logs. Use <kbd>%s</kbd> as a
                             substitution for the short server name.
@@ -1983,7 +1976,7 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <Subscribe
                             selector={(state) => [state.canSubmit, state.isSubmitting]}
                             children={([canSubmit, isSubmitting]) => (
@@ -2025,7 +2018,7 @@ const ExportsSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                 }}
             >
                 <ConfigContainer>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             Comma separated list of authorized keys which can access these resources. If no keys are
                             specified, access will be granted to everyone. Append key to query with{' '}
@@ -2041,7 +2034,7 @@ const ExportsSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             Enable exporting of a TF2 Bot Detector compatible player list. Only exports users banned
                             with the cheater reason.
@@ -2058,7 +2051,7 @@ const ExportsSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SubHeading>
                             Enable exporting of a SRCDS banned_user.cfg compatible player list. Only exports users
                             banned with the cheater reason.
@@ -2073,7 +2066,7 @@ const ExportsSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                             }}
                         />
                     </Grid>
-                    {/*<Grid xs={12}>*/}
+                    {/*<Grid size={{xs: 12}}>*/}
                     {/*    <Field*/}
                     {/*        name={'authorized_keys'}*/}
                     {/*        validators={{*/}
@@ -2085,7 +2078,7 @@ const ExportsSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
                     {/*    />*/}
                     {/*</Grid>*/}
 
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <Subscribe
                             selector={(state) => [state.canSubmit, state.isSubmitting]}
                             children={([canSubmit, isSubmitting]) => (

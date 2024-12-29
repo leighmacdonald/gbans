@@ -4,7 +4,7 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
-import Grid from '@mui/material/Unstable_Grid2';
+import Grid from '@mui/material/Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { zodValidator } from '@tanstack/zod-form-adapter';
@@ -86,7 +86,7 @@ export const ForumThreadEditorModal = NiceModal.create(({ thread }: { thread: Fo
 
                 <DialogContent>
                     <Grid container spacing={2}>
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'title'}
                                 children={(props) => {
@@ -94,7 +94,7 @@ export const ForumThreadEditorModal = NiceModal.create(({ thread }: { thread: Fo
                                 }}
                             />
                         </Grid>
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'sticky'}
                                 children={(props) => {
@@ -102,7 +102,7 @@ export const ForumThreadEditorModal = NiceModal.create(({ thread }: { thread: Fo
                                 }}
                             />
                         </Grid>
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'locked'}
                                 children={(props) => {
@@ -115,7 +115,7 @@ export const ForumThreadEditorModal = NiceModal.create(({ thread }: { thread: Fo
 
                 <DialogActions>
                     <Grid container>
-                        <Grid xs={12} mdOffset="auto">
+                        <Grid size={{ xs: 12 }}>
                             <Subscribe
                                 selector={(state) => [state.canSubmit, state.isSubmitting]}
                                 children={([canSubmit, isSubmitting]) => {

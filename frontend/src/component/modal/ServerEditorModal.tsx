@@ -1,7 +1,7 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import RouterIcon from '@mui/icons-material/Router';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import Grid from '@mui/material/Unstable_Grid2';
+import Grid from '@mui/material/Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { zodValidator } from '@tanstack/zod-form-adapter';
@@ -102,7 +102,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
 
                 <DialogContent>
                     <Grid container spacing={2}>
-                        <Grid xs={4}>
+                        <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'short_name'}
                                 validators={{
@@ -113,7 +113,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                 }}
                             />
                         </Grid>
-                        <Grid xs={8}>
+                        <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'name'}
                                 validators={{
@@ -124,7 +124,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                 }}
                             />
                         </Grid>
-                        <Grid xs={8}>
+                        <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'address'}
                                 validators={{
@@ -135,7 +135,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                 }}
                             />
                         </Grid>
-                        <Grid xs={4}>
+                        <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'port'}
                                 validators={{
@@ -157,7 +157,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                 }}
                             />
                         </Grid>
-                        <Grid xs={4}>
+                        <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'password'}
                                 validators={{
@@ -168,7 +168,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                 }}
                             />
                         </Grid>
-                        <Grid xs={4}>
+                        <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'rcon'}
                                 validators={{
@@ -179,7 +179,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                 }}
                             />
                         </Grid>
-                        <Grid xs={4}>
+                        <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'log_secret'}
                                 validators={{
@@ -190,7 +190,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'region'}
                                 validators={{
@@ -201,7 +201,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'cc'}
                                 validators={{
@@ -212,7 +212,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'latitude'}
                                 validators={{
@@ -223,7 +223,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'longitude'}
                                 validators={{
@@ -234,7 +234,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                 }}
                             />
                         </Grid>
-                        <Grid xs={4}>
+                        <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'reserved_slots'}
                                 validators={{
@@ -245,7 +245,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                 }}
                             />
                         </Grid>
-                        <Grid xs={4}>
+                        <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'is_enabled'}
                                 validators={{
@@ -256,7 +256,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                                 }}
                             />
                         </Grid>
-                        <Grid xs={4}>
+                        <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'enabled_stats'}
                                 validators={{
@@ -271,7 +271,7 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
                 </DialogContent>
                 <DialogActions>
                     <Grid container>
-                        <Grid xs={12} mdOffset="auto">
+                        <Grid size={{ xs: 12 }}>
                             <Subscribe
                                 selector={(state) => [state.canSubmit, state.isSubmitting]}
                                 children={([canSubmit, isSubmitting]) => {

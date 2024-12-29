@@ -1,8 +1,8 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import MenuItem from '@mui/material/MenuItem';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { zodValidator } from '@tanstack/zod-form-adapter';
@@ -135,7 +135,7 @@ export const BanSteamModal = NiceModal.create(
 
                     <DialogContent>
                         <Grid container spacing={2}>
-                            <Grid xs={12}>
+                            <Grid size={{ xs: 12 }}>
                                 <Field
                                     name={'target_id'}
                                     validators={makeSteamidValidators()}
@@ -151,7 +151,7 @@ export const BanSteamModal = NiceModal.create(
                                     }}
                                 />
                             </Grid>
-                            <Grid xs={12}>
+                            <Grid size={{ xs: 12 }}>
                                 <Field
                                     name={'ban_type'}
                                     validators={{
@@ -176,7 +176,7 @@ export const BanSteamModal = NiceModal.create(
                                     }}
                                 />
                             </Grid>
-                            <Grid xs={12}>
+                            <Grid size={{ xs: 12 }}>
                                 <Field
                                     name={'reason'}
                                     children={(props) => {
@@ -198,7 +198,7 @@ export const BanSteamModal = NiceModal.create(
                                     }}
                                 />
                             </Grid>
-                            <Grid xs={12}>
+                            <Grid size={{ xs: 12 }}>
                                 <Field
                                     name={'reason_text'}
                                     validators={{
@@ -222,7 +222,7 @@ export const BanSteamModal = NiceModal.create(
                                     }}
                                 />
                             </Grid>
-                            <Grid xs={6}>
+                            <Grid size={{ xs: 6 }}>
                                 <Field
                                     name={'include_friends'}
                                     validators={{
@@ -233,7 +233,7 @@ export const BanSteamModal = NiceModal.create(
                                     }}
                                 />
                             </Grid>
-                            <Grid xs={6}>
+                            <Grid size={{ xs: 6 }}>
                                 <Field
                                     name={'evade_ok'}
                                     validators={{
@@ -245,7 +245,7 @@ export const BanSteamModal = NiceModal.create(
                                 />
                             </Grid>
 
-                            <Grid xs={6}>
+                            <Grid size={{ xs: 6 }}>
                                 <Field
                                     name={'duration'}
                                     validators={{
@@ -271,7 +271,7 @@ export const BanSteamModal = NiceModal.create(
                                 />
                             </Grid>
 
-                            <Grid xs={6}>
+                            <Grid size={{ xs: 6 }}>
                                 <Field
                                     name={'duration_custom'}
                                     children={(props) => {
@@ -280,7 +280,7 @@ export const BanSteamModal = NiceModal.create(
                                 />
                             </Grid>
 
-                            <Grid xs={12}>
+                            <Grid size={{ xs: 12 }}>
                                 <Field
                                     name={'note'}
                                     validators={{
@@ -297,7 +297,7 @@ export const BanSteamModal = NiceModal.create(
                     </DialogContent>
                     <DialogActions>
                         <Grid container>
-                            <Grid xs={12} mdOffset="auto">
+                            <Grid size={{ xs: 12 }}>
                                 <Subscribe
                                     selector={(state) => [state.canSubmit, state.isSubmitting]}
                                     children={([canSubmit, isSubmitting]) => {

@@ -1,5 +1,6 @@
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
+import Grid from '@mui/material/Grid2';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -7,7 +8,6 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useQuery } from '@tanstack/react-query';
 import { apiGetMessageContext } from '../api';
 import { TextLink } from './TextLink.tsx';
@@ -28,7 +28,7 @@ export const PlayerMessageContext = ({ playerMessageId, padding = 3 }: PlayerMes
     return (
         <Grid container>
             {isLoading && (
-                <Grid xs={12}>
+                <Grid size={{ xs: 12 }}>
                     <Box>
                         <CircularProgress color="secondary" />
                     </Box>
@@ -36,7 +36,7 @@ export const PlayerMessageContext = ({ playerMessageId, padding = 3 }: PlayerMes
             )}
             {!isLoading && (
                 <>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <TableContainer>
                             <Table size={'small'}>
                                 <TableHead>

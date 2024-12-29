@@ -1,7 +1,7 @@
 import NewReleasesIcon from '@mui/icons-material/NewReleases';
+import Grid from '@mui/material/Grid2';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
@@ -27,7 +27,7 @@ function Changelogs() {
         <Grid container spacing={2}>
             {!isLoading &&
                 (changelogs ?? []).map((changelog) => (
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <ContainerWithHeader
                             title={
                                 <Stack direction={'row'}>

@@ -3,9 +3,9 @@ import NiceModal from '@ebay/nice-modal-react';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
+import Grid from '@mui/material/Grid2';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
@@ -100,7 +100,7 @@ function AdminPeople() {
     return (
         <Grid container spacing={2}>
             <Title>People</Title>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <ContainerWithHeader title={'Filters'} iconLeft={<FilterListIcon />} marginTop={2}>
                     <form
                         onSubmit={async (e) => {
@@ -110,7 +110,7 @@ function AdminPeople() {
                         }}
                     >
                         <Grid container spacing={2}>
-                            <Grid xs={6} md={4}>
+                            <Grid size={{ xs: 6, md: 4 }}>
                                 <Field
                                     name={'steam_id'}
                                     validators={makeSteamidValidatorsOptional()}
@@ -120,7 +120,7 @@ function AdminPeople() {
                                 />
                             </Grid>
 
-                            <Grid xs={6} md={4}>
+                            <Grid size={{ xs: 6, md: 4 }}>
                                 <Field
                                     name={'personaname'}
                                     children={(props) => {
@@ -129,7 +129,7 @@ function AdminPeople() {
                                 />
                             </Grid>
 
-                            <Grid xs={6} md={4}>
+                            <Grid size={{ xs: 6, md: 4 }}>
                                 <Field
                                     name={'staff_only'}
                                     children={(props) => {
@@ -138,7 +138,7 @@ function AdminPeople() {
                                 />
                             </Grid>
 
-                            <Grid xs={12} mdOffset="auto">
+                            <Grid size={{ xs: 12 }}>
                                 <Subscribe
                                     selector={(state) => [state.canSubmit, state.isSubmitting]}
                                     children={([canSubmit, isSubmitting]) => (
@@ -155,7 +155,7 @@ function AdminPeople() {
                     </form>
                 </ContainerWithHeader>
             </Grid>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <ContainerWithHeader title={'Player Search'} iconLeft={<PersonSearchIcon />}>
                     <PeopleTable
                         people={people ?? { data: [], count: 0 }}

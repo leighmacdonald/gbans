@@ -8,10 +8,10 @@ import PublicOffIcon from '@mui/icons-material/PublicOff';
 import WifiOffIcon from '@mui/icons-material/WifiOff';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
+import Grid from '@mui/material/Grid2';
 import Stack from '@mui/material/Stack';
 import TableCell from '@mui/material/TableCell';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useRouteContext } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
@@ -249,7 +249,7 @@ function AdminNetworkCIDRBlocks() {
                 ]}
             >
                 <Grid container spacing={2}>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <Stack spacing={1}>
                             {!isLoadingBlockSources &&
                                 (blockSources ?? []).map((s) => {
@@ -324,7 +324,7 @@ function AdminNetworkCIDRBlocks() {
                 ]}
             >
                 <Grid container spacing={1}>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <IPWhitelistTable
                             whitelist={ipWhitelist ?? []}
                             isLoading={isLoadingIPWhitelist}
@@ -354,7 +354,7 @@ function AdminNetworkCIDRBlocks() {
                 ]}
             >
                 <Grid container spacing={1}>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <SteamWhitelistTable
                             whitelist={steamWhitelist ?? []}
                             isLoading={isLoadingSteamWhitelist}

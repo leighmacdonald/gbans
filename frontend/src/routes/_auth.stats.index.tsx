@@ -1,4 +1,4 @@
-import Grid from '@mui/material/Unstable_Grid2';
+import Grid from '@mui/material/Grid2';
 import { createFileRoute } from '@tanstack/react-router';
 import { HealersOverallContainer } from '../component/HealersOverallContainer.tsx';
 import { MapUsageContainer } from '../component/MapUsageContainer.tsx';
@@ -14,16 +14,16 @@ function Stats() {
     return (
         <Grid container spacing={2}>
             <Title>Stats</Title>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <PlayersOverallContainer />
             </Grid>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <HealersOverallContainer />
             </Grid>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <WeaponsStatListContainer />
             </Grid>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <MapUsageContainer />
             </Grid>
         </Grid>

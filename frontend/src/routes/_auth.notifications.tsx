@@ -9,8 +9,8 @@ import MarkChatReadIcon from '@mui/icons-material/MarkChatRead';
 import RemoveIcon from '@mui/icons-material/Remove';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
+import Grid2 from '@mui/material/Grid2';
 import Typography from '@mui/material/Typography';
-import Grid2 from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, createFileRoute } from '@tanstack/react-router';
@@ -175,7 +175,7 @@ function NotificationsPage() {
         <>
             <Title>{`Notifications (${newMessages})`}</Title>
             <Grid2 container spacing={2}>
-                <Grid2 xs={12}>
+                <Grid2 size={{ xs: 12 }}>
                     <ContainerWithHeaderAndButtons
                         iconLeft={<EmailIcon />}
                         title={`Notifications  ${Object.values(rowSelection).length ? `(Selected: ${Object.values(rowSelection).length})` : ''}`}

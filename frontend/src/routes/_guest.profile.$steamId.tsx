@@ -5,10 +5,10 @@ import LocalLibraryIcon from '@mui/icons-material/LocalLibrary';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
+import Grid from '@mui/material/Grid2';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { queryOptions } from '@tanstack/react-query';
 import { createFileRoute, useLoaderData, useRouteContext } from '@tanstack/react-router';
 import { format, fromUnixTime } from 'date-fns';
@@ -45,10 +45,10 @@ function ProfilePage() {
     return (
         <Grid container spacing={2}>
             {profile.player.personaname ? <Title>{profile.player.personaname}</Title> : null}
-            <Grid xs={12} md={8}>
+            <Grid size={{ xs: 12, md: 8 }}>
                 <ContainerWithHeader title={'Profile'}>
                     <Grid container spacing={2}>
-                        <Grid xs={4}>
+                        <Grid size={{ xs: 4 }}>
                             <Avatar
                                 variant={'square'}
                                 src={avatarHashToURL(profile.player.avatarhash)}
@@ -56,7 +56,7 @@ function ProfilePage() {
                                 sx={{ width: '100%', height: '100%', minHeight: 240 }}
                             />
                         </Grid>
-                        <Grid xs={8}>
+                        <Grid size={{ xs: 8 }}>
                             <Stack spacing={2}>
                                 <Typography
                                     variant={'h3'}
@@ -86,7 +86,7 @@ function ProfilePage() {
                     </Grid>
                 </ContainerWithHeader>
             </Grid>
-            <Grid xs={6} md={2}>
+            <Grid size={{ xs: 6, md: 2 }}>
                 <ContainerWithHeader title={'Status'} iconLeft={<LocalLibraryIcon />} marginTop={0}>
                     <Stack spacing={1} padding={1} justifyContent={'space-evenly'}>
                         <Chip color={profile.player.vac_bans > 0 ? 'error' : 'success'} label={'VAC'} />
@@ -99,31 +99,33 @@ function ProfilePage() {
                     </Stack>
                 </ContainerWithHeader>
             </Grid>
-            <Grid xs={6} md={2}>
+            <Grid size={{ xs: 6, md: 2 }}>
                 <SteamIDList steam_id={profile.player.steam_id} />
             </Grid>
             {isAuthenticated() &&
                 (userProfile.steam_id == profile.player.steam_id || !profile.settings.stats_hidden) && (
                     <>
-                        <Grid xs={12}>{<PlayerStatsOverallContainer steam_id={profile.player.steam_id} />}</Grid>
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
+                            {<PlayerStatsOverallContainer steam_id={profile.player.steam_id} />}
+                        </Grid>
+                        <Grid size={{ xs: 12 }}>
                             <ContainerWithHeader title={'Player Overall Stats By Class'} iconLeft={<BarChartIcon />}>
                                 <PlayerClassStatsTable steam_id={profile.player.steam_id} />
                             </ContainerWithHeader>
                         </Grid>
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <ContainerWithHeader title={'Overall Player Weapon Stats'} iconLeft={<InsightsIcon />}>
                                 <PlayerWeaponsStatListContainer steamId={profile.player.steam_id} />
                             </ContainerWithHeader>
                         </Grid>
                     </>
                 )}
-            <Grid xs={12}>
+            <Grid size={{ xs: 128 }}>
                 <ContainerWithHeader title={'External Links'} iconLeft={<LinkIcon />}>
                     <Grid container spacing={1} paddingLeft={1}>
                         {createExternalLinks(profile.player.steam_id).map((l) => {
                             return (
-                                <Grid xs={4} key={`btn-${l.url}`} padding={1}>
+                                <Grid size={{ xs: 4 }} key={`btn-${l.url}`} padding={1}>
                                     <Button
                                         fullWidth
                                         color={'secondary'}

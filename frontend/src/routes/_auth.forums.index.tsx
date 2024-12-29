@@ -7,9 +7,9 @@ import ChatIcon from '@mui/icons-material/Chat';
 import ConstructionIcon from '@mui/icons-material/Construction';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
+import Grid from '@mui/material/Grid2';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useRouteContext } from '@tanstack/react-router';
 import { PermissionLevel } from '../api';
@@ -90,7 +90,7 @@ const CategoryBlock = ({ category }: { category: ForumCategory }) => {
                                 }
                             }}
                         >
-                            <Grid xs={5} margin={0}>
+                            <Grid size={{ xs: 5 }} margin={0}>
                                 <VCenterBox justify={'left'}>
                                     <Stack direction={'row'} spacing={1}>
                                         <VCenteredElement icon={<ChatIcon />} />
@@ -106,7 +106,7 @@ const CategoryBlock = ({ category }: { category: ForumCategory }) => {
                                     </Stack>
                                 </VCenterBox>
                             </Grid>
-                            <Grid xs={2}>
+                            <Grid size={{ xs: 2 }}>
                                 <Stack direction={'row'} spacing={1}>
                                     <Stack>
                                         <Typography variant={'body2'} align={'left'}>
@@ -124,7 +124,7 @@ const CategoryBlock = ({ category }: { category: ForumCategory }) => {
                                     </Stack>
                                 </Stack>
                             </Grid>
-                            <Grid xs={5}>
+                            <Grid size={{ xs: 5 }}>
                                 {f.recent_forum_thread_id && f.recent_forum_thread_id > 0 ? (
                                     <Stack direction={'row'} spacing={2}>
                                         <VCenteredElement
@@ -208,10 +208,10 @@ function ForumOverview() {
 
     return (
         <Grid container spacing={2}>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <Typography variant={'h2'}>{appInfo.site_name} community</Typography>
             </Grid>
-            <Grid md={9} xs={12}>
+            <Grid size={{ xs: 12, md: 9 }}>
                 <Stack spacing={2}>
                     {isLoading ? (
                         <LoadingPlaceholder />
@@ -224,7 +224,7 @@ function ForumOverview() {
                     )}
                 </Stack>
             </Grid>
-            <Grid md={3} xs={12}>
+            <Grid size={{ xs: 12, md: 3 }}>
                 <Stack spacing={2}>
                     <ForumRecentMessageActivity />
                     <ForumRecentUserActivity />

@@ -1,6 +1,6 @@
 import PeopleIcon from '@mui/icons-material/People';
+import Grid from '@mui/material/Grid2';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import { useQuery } from '@tanstack/react-query';
 import { apiForumActiveUsers } from '../api/forum.ts';
@@ -26,7 +26,7 @@ export const ForumRecentUserActivity = () => {
                 ) : (
                     activity?.map((a) => {
                         return (
-                            <Grid xs={'auto'} spacing={1} key={`activity-${a.steam_id}`}>
+                            <Grid size={{ xs: 'auto' }} spacing={1} key={`activity-${a.steam_id}`}>
                                 <Typography
                                     sx={{
                                         display: 'inline',

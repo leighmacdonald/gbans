@@ -1,5 +1,6 @@
 import { useEffect, useState, JSX } from 'react';
 import BarChartIcon from '@mui/icons-material/BarChart';
+import Grid from '@mui/material/Grid2';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -7,7 +8,6 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { formatDistance } from 'date-fns';
 import { apiGetPlayerStats, PlayerOverallResult } from '../api';
 import { logErr } from '../util/errors.ts';
@@ -81,7 +81,7 @@ export const PlayerStatsOverallContainer = ({ steam_id }: PlayerStatsOverallCont
     return (
         <ContainerWithHeader title={'Player Overall Stats'} iconLeft={<BarChartIcon />}>
             <Grid container spacing={1}>
-                <Grid xs={6} md={4}>
+                <Grid size={{ xs: 6, md: 4 }}>
                     {loading || !stats ? (
                         <LoadingPlaceholder />
                     ) : (
@@ -145,7 +145,7 @@ export const PlayerStatsOverallContainer = ({ steam_id }: PlayerStatsOverallCont
                         />
                     )}
                 </Grid>
-                <Grid xs={6} md={4}>
+                <Grid size={{ xs: 6, md: 4 }}>
                     {loading || !stats ? (
                         <LoadingPlaceholder />
                     ) : (
@@ -211,7 +211,7 @@ export const PlayerStatsOverallContainer = ({ steam_id }: PlayerStatsOverallCont
                         />
                     )}
                 </Grid>
-                <Grid xs={6} md={4}>
+                <Grid size={{ xs: 6, md: 4 }}>
                     {loading || !stats ? (
                         <LoadingPlaceholder />
                     ) : (

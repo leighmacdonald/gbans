@@ -3,11 +3,11 @@ import SearchIcon from '@mui/icons-material/Search';
 import SettingsInputComponentIcon from '@mui/icons-material/SettingsInputComponent';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Grid from '@mui/material/Grid2';
 import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import { createFileRoute, Navigate } from '@tanstack/react-router';
 import Image from 'mui-image';
@@ -54,7 +54,7 @@ function Patreon() {
 
     return (
         <Grid container spacing={2}>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <ContainerWithHeaderAndButtons
                     title={`Patreon Campaign: ${campaign.attributes.creation_name}`}
                     iconLeft={<PaymentIcon />}
@@ -76,7 +76,7 @@ function Patreon() {
                     }
                 >
                     <Grid container>
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Stack spacing={1}>
                                 <Paper>
                                     <Image
@@ -92,7 +92,7 @@ function Patreon() {
                                 <MarkDownRenderer body_md={campaign.attributes.thanks_msg} />
                             </Stack>
                         </Grid>
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Box display="flex" justifyContent="center" alignItems="center" padding={2}>
                                 <Paper
                                     elevation={1}
@@ -121,7 +121,7 @@ function Patreon() {
                                 </Paper>
                             </Box>
                         </Grid>
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Box textAlign={'center'}>
                                 <Button
                                     component={Link}
