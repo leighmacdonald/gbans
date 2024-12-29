@@ -1,8 +1,8 @@
 import PregnantWomanIcon from '@mui/icons-material/PregnantWoman';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
+import Grid from '@mui/material/Grid2';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useQuery } from '@tanstack/react-query';
 import { format, fromUnixTime } from 'date-fns';
 import { apiGetProfile } from '../api';
@@ -31,7 +31,7 @@ export const ProfileInfoBox = ({ steam_id }: { steam_id: string }) => {
     return (
         <ContainerWithHeader title={'Profile'} iconLeft={<PregnantWomanIcon />} marginTop={0}>
             <Grid container spacing={1}>
-                <Grid xs={12}>
+                <Grid size={{ xs: 12 }}>
                     <Avatar
                         variant={'square'}
                         src={avatarHashToURL(profile.player.avatarhash)}
@@ -39,7 +39,7 @@ export const ProfileInfoBox = ({ steam_id }: { steam_id: string }) => {
                         sx={{ width: '100%', height: '100%' }}
                     />
                 </Grid>
-                <Grid xs={12}>
+                <Grid size={{ xs: 12 }}>
                     <Box>
                         <Typography
                             variant={'h3'}
@@ -51,13 +51,13 @@ export const ProfileInfoBox = ({ steam_id }: { steam_id: string }) => {
                     </Box>
                 </Grid>
 
-                <Grid xs={12}>
+                <Grid size={{ xs: 12 }}>
                     <Typography variant={'body1'}>First Seen: {renderDateTime(profile.player.created_on)}</Typography>
                 </Grid>
 
                 {!emptyOrNullString(profile.player.locstatecode) ||
                     (!emptyOrNullString(profile.player.loccountrycode) && (
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Typography variant={'body1'}>
                                 {[profile.player.locstatecode, profile.player.loccountrycode]
                                     .filter((x) => x)
@@ -67,7 +67,7 @@ export const ProfileInfoBox = ({ steam_id }: { steam_id: string }) => {
                     ))}
 
                 {isValidSteamDate(fromUnixTime(profile.player.timecreated)) && (
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <Typography variant={'body1'}>
                             Created: {format(fromUnixTime(profile.player.timecreated), 'yyyy-MM-dd')}
                         </Typography>

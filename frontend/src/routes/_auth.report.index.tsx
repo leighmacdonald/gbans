@@ -6,6 +6,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import FormControl from '@mui/material/FormControl';
 import FormHelperText from '@mui/material/FormHelperText';
+import Grid from '@mui/material/Grid2';
 import InputLabel from '@mui/material/InputLabel';
 import Link from '@mui/material/Link';
 import List from '@mui/material/List';
@@ -17,7 +18,6 @@ import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
@@ -91,7 +91,7 @@ function ReportCreate() {
     return (
         <Grid container spacing={3}>
             <Title>Create Report</Title>
-            <Grid xs={12} md={8}>
+            <Grid size={{ xs: 12, md: 8 }}>
                 <Stack spacing={2}>
                     {canReport && <ReportCreateForm />}
                     {!canReport && (
@@ -120,7 +120,7 @@ function ReportCreate() {
                     </ContainerWithHeader>
                 </Stack>
             </Grid>
-            <Grid xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
                 <ContainerWithHeader title={'Reporting Guide'} iconLeft={<InfoIcon />}>
                     <List>
                         <ListItem>
@@ -306,7 +306,7 @@ export const ReportCreateForm = (): JSX.Element => {
                 }}
             >
                 <Grid container spacing={2}>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <form.Field
                             name={'steam_id'}
                             validators={makeSteamidValidators(setValidatedProfile)}
@@ -324,7 +324,7 @@ export const ReportCreateForm = (): JSX.Element => {
                             }}
                         />
                     </Grid>
-                    <Grid xs={6}>
+                    <Grid size={{ xs: 6 }}>
                         <form.Field
                             name={'reason'}
                             validators={{
@@ -362,7 +362,7 @@ export const ReportCreateForm = (): JSX.Element => {
                         />
                     </Grid>
 
-                    <Grid xs={6}>
+                    <Grid size={{ xs: 6 }}>
                         <form.Field
                             name={'reason_text'}
                             validators={{
@@ -393,7 +393,7 @@ export const ReportCreateForm = (): JSX.Element => {
                     </Grid>
                     {Boolean(demo_id) && (
                         <>
-                            <Grid md={6}>
+                            <Grid size={{ xs: 6 }}>
                                 <form.Field
                                     name={'demo_id'}
                                     validators={{ onChange: z.number({ coerce: true }).optional() }}
@@ -412,7 +412,7 @@ export const ReportCreateForm = (): JSX.Element => {
                                     }}
                                 />
                             </Grid>
-                            <Grid md={6}>
+                            <Grid size={{ xs: 6 }}>
                                 <form.Field
                                     validators={{ onChange: z.number({ coerce: true }).min(0).optional() }}
                                     name={'demo_tick'}
@@ -434,11 +434,11 @@ export const ReportCreateForm = (): JSX.Element => {
                         </>
                     )}
                     {person_message_id != undefined && person_message_id > 0 && (
-                        <Grid md={12}>
+                        <Grid size={{ md: 12 }}>
                             <PlayerMessageContext playerMessageId={person_message_id} padding={5} />
                         </Grid>
                     )}
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <form.Field
                             name={'body_md'}
                             validators={{ onChange: z.string().min(10, 'Message must be at least 10 characters.') }}
@@ -447,7 +447,7 @@ export const ReportCreateForm = (): JSX.Element => {
                             }}
                         />
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <form.Subscribe
                             selector={(state) => [state.canSubmit, state.isSubmitting]}
                             children={([canSubmit, isSubmitting]) => {

@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import MenuItem from '@mui/material/MenuItem';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { zodValidator } from '@tanstack/zod-form-adapter';
@@ -94,7 +94,7 @@ export const ForumForumEditorModal = NiceModal.create(
 
                     <DialogContent>
                         <Grid container spacing={2}>
-                            <Grid xs={12}>
+                            <Grid size={{ xs: 12 }}>
                                 <Field
                                     name={'forum_category_id'}
                                     children={(props) => {
@@ -117,7 +117,7 @@ export const ForumForumEditorModal = NiceModal.create(
                                     }}
                                 />
                             </Grid>
-                            <Grid xs={12}>
+                            <Grid size={{ xs: 12 }}>
                                 <Field
                                     name={'title'}
                                     validators={{
@@ -128,7 +128,7 @@ export const ForumForumEditorModal = NiceModal.create(
                                     }}
                                 />
                             </Grid>
-                            <Grid xs={12}>
+                            <Grid size={{ xs: 12 }}>
                                 <Field
                                     name={'description'}
                                     validators={{
@@ -139,7 +139,7 @@ export const ForumForumEditorModal = NiceModal.create(
                                     }}
                                 />
                             </Grid>
-                            <Grid xs={12}>
+                            <Grid size={{ xs: 12 }}>
                                 <Field
                                     name={'ordering'}
                                     validators={{
@@ -150,7 +150,7 @@ export const ForumForumEditorModal = NiceModal.create(
                                     }}
                                 />
                             </Grid>
-                            <Grid xs={12}>
+                            <Grid size={{ xs: 12 }}>
                                 <Field
                                     name={'permission_level'}
                                     validators={{
@@ -180,7 +180,7 @@ export const ForumForumEditorModal = NiceModal.create(
 
                     <DialogActions>
                         <Grid container>
-                            <Grid xs={12} mdOffset="auto">
+                            <Grid size={{ xs: 12 }}>
                                 <Subscribe
                                     selector={(state) => [state.canSubmit, state.isSubmitting]}
                                     children={([canSubmit, isSubmitting]) => {

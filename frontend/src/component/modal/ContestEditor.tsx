@@ -1,8 +1,8 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import MenuItem from '@mui/material/MenuItem';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { zodValidator } from '@tanstack/zod-form-adapter';
@@ -128,7 +128,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
 
                 <DialogContent>
                     <Grid container spacing={2}>
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'title'}
                                 validators={{
@@ -139,7 +139,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                                 }}
                             />
                         </Grid>
-                        <Grid xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'description'}
                                 validators={{
@@ -152,7 +152,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                                 }}
                             />
                         </Grid>
-                        <Grid xs={4}>
+                        <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'public'}
                                 validators={{
@@ -163,7 +163,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                                 }}
                             />
                         </Grid>
-                        <Grid xs={4}>
+                        <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'hide_submissions'}
                                 validators={{
@@ -174,7 +174,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'max_submissions'}
                                 validators={{
@@ -185,7 +185,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'min_permission_level'}
                                 children={(props) => {
@@ -207,7 +207,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'voting'}
                                 validators={{
@@ -218,7 +218,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'down_votes'}
                                 validators={{
@@ -229,7 +229,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'date_start'}
                                 children={(props) => {
@@ -237,7 +237,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'date_end'}
                                 children={(props) => {
@@ -245,7 +245,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'media_types'}
                                 validators={{
@@ -268,7 +268,7 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
                 </DialogContent>
                 <DialogActions>
                     <Grid container>
-                        <Grid xs={12} mdOffset="auto">
+                        <Grid size={{ xs: 12 }}>
                             <Subscribe
                                 selector={(state) => [state.canSubmit, state.isSubmitting]}
                                 children={([canSubmit, isSubmitting]) => {

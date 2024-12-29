@@ -1,7 +1,7 @@
 import { FC, JSX, ReactNode } from 'react';
+import Grid from '@mui/material/Grid2';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useTheme } from '@mui/material/styles';
 import { tf2Fonts } from '../theme';
 import { VCenteredElement } from './Heading';
@@ -67,13 +67,13 @@ export const HeadingWithButtons: FC<HeadingWithButtonsProps> = ({
             }}
         >
             {iconLeft && (
-                <Grid xs={'auto'} paddingRight={1}>
+                <Grid size={{ xs: 'auto' }} paddingRight={1}>
                     <VCenteredElement icon={iconLeft} />
                 </Grid>
             )}
 
-            <Grid xs>{children}</Grid>
-            {buttons && <Grid xs={'auto'}>{buttons}</Grid>}
+            <Grid size={{ xs: 12 }}>{children}</Grid>
+            {buttons && <Grid size={{ xs: 'auto' }}>{buttons}</Grid>}
         </Grid>
     );
 };

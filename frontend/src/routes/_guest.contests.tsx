@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import InsightsIcon from '@mui/icons-material/Insights';
-import Grid from '@mui/material/Unstable_Grid2';
+import Grid from '@mui/material/Grid2';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import {
@@ -53,7 +53,7 @@ function Contests() {
     return (
         <Grid container>
             <Title>Contests</Title>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <ContainerWithHeader title={'Contests'} iconLeft={<InsightsIcon />}>
                     <ContestsTable
                         contests={contests ?? []}

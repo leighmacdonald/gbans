@@ -5,10 +5,10 @@ import EditIcon from '@mui/icons-material/Edit';
 import StorageIcon from '@mui/icons-material/Storage';
 import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
+import Grid from '@mui/material/Grid2';
 import IconButton from '@mui/material/IconButton';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import {
@@ -88,7 +88,7 @@ function AdminServers() {
     return (
         <Grid container spacing={2}>
             <Title>Edit Servers</Title>
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <Stack spacing={2}>
                     <ContainerWithHeaderAndButtons
                         title={'Servers'}

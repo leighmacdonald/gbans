@@ -1,7 +1,7 @@
 import NiceModal, { muiDialogV5, useModal } from '@ebay/nice-modal-react';
 import GroupsIcon from '@mui/icons-material/Groups';
 import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
-import Grid from '@mui/material/Unstable_Grid2';
+import Grid from '@mui/material/Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { zodValidator } from '@tanstack/zod-form-adapter';
@@ -91,7 +91,7 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
 
                 <DialogContent>
                     <Grid container spacing={2}>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'name'}
                                 validators={{
@@ -102,7 +102,7 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'immunity'}
                                 validators={{
@@ -114,7 +114,7 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                             />
                         </Grid>
 
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'z'}
                                 validators={{ onChange: z.boolean() }}
@@ -123,7 +123,7 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'a'}
                                 validators={{ onChange: z.boolean() }}
@@ -132,7 +132,7 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'b'}
                                 validators={{ onChange: z.boolean() }}
@@ -141,7 +141,7 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'c'}
                                 validators={{ onChange: z.boolean() }}
@@ -150,7 +150,7 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'d'}
                                 validators={{ onChange: z.boolean() }}
@@ -159,7 +159,7 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'e'}
                                 validators={{ onChange: z.boolean() }}
@@ -168,7 +168,7 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'f'}
                                 validators={{ onChange: z.boolean() }}
@@ -179,7 +179,7 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'g'}
                                 validators={{ onChange: z.boolean() }}
@@ -188,7 +188,7 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'h'}
                                 validators={{ onChange: z.boolean() }}
@@ -197,7 +197,7 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'i'}
                                 validators={{ onChange: z.boolean() }}
@@ -206,7 +206,7 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'j'}
                                 validators={{ onChange: z.boolean() }}
@@ -221,7 +221,7 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'k'}
                                 validators={{ onChange: z.boolean() }}
@@ -230,7 +230,7 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'l'}
                                 validators={{ onChange: z.boolean() }}
@@ -241,7 +241,7 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'m'}
                                 validators={{ onChange: z.boolean() }}
@@ -250,7 +250,7 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'n'}
                                 validators={{ onChange: z.boolean() }}
@@ -259,7 +259,7 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'o'}
                                 validators={{ onChange: z.boolean() }}
@@ -268,7 +268,7 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'p'}
                                 validators={{ onChange: z.boolean() }}
@@ -277,7 +277,7 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'q'}
                                 validators={{ onChange: z.boolean() }}
@@ -286,7 +286,7 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'r'}
                                 validators={{ onChange: z.boolean() }}
@@ -295,7 +295,7 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'s'}
                                 validators={{ onChange: z.boolean() }}
@@ -304,7 +304,7 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                                 }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'t'}
                                 validators={{ onChange: z.boolean() }}
@@ -318,7 +318,7 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
 
                 <DialogActions>
                     <Grid container>
-                        <Grid xs={12} mdOffset="auto">
+                        <Grid size={{ xs: 12 }}>
                             <Subscribe
                                 selector={(state) => [state.canSubmit, state.isSubmitting]}
                                 children={([canSubmit, isSubmitting]) => {

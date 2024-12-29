@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import InsightsIcon from '@mui/icons-material/Insights';
+import Grid from '@mui/material/Grid2';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
@@ -30,7 +30,7 @@ function StatsWeapon() {
     return (
         <Grid container spacing={2}>
             {data?.weapon?.name ? <Title>{data?.weapon?.name}</Title> : null}
-            <Grid xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <ContainerWithHeader
                     title={`Top 250 Weapon Users: ${isLoading ? 'Loading...' : data?.weapon?.name}`}
                     iconLeft={<InsightsIcon />}

@@ -10,9 +10,10 @@ import PieChartIcon from '@mui/icons-material/PieChart';
 import StorageIcon from '@mui/icons-material/Storage';
 import SupportIcon from '@mui/icons-material/Support';
 import VideocamIcon from '@mui/icons-material/Videocam';
+import Button from '@mui/material/Button';
+import Grid from '@mui/material/Grid2';
 import Link from '@mui/material/Link';
 import Stack from '@mui/material/Stack';
-import Grid from '@mui/material/Unstable_Grid2';
 import { useNavigate, useRouteContext, createFileRoute } from '@tanstack/react-router';
 import { PermissionLevel } from '../api';
 import { LeftAlignButton } from '../component/LeftAlignButton.tsx';
@@ -33,10 +34,10 @@ function Index() {
         <>
             <Title>Home</Title>
             <Grid container spacing={3}>
-                <Grid xs={12} sm={12} md={10}>
+                <Grid size={{ xs: 12, sm: 12, md: 9 }}>
                     <NewsView itemsPerPage={3} />
                 </Grid>
-                <Grid xs={12} sm={12} md={2}>
+                <Grid size={{ xs: 12, sm: 12, md: 3 }}>
                     <Stack spacing={3}>
                         {profile && profile.ban_id == 0 && appInfo.servers_enabled && (
                             <LeftAlignButton
