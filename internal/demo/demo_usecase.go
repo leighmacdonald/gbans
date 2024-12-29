@@ -1,22 +1,18 @@
 package demo
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log/slog"
-	"mime/multipart"
-	"net/http"
-	"os"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/dustin/go-humanize"
 	"github.com/gin-gonic/gin"
 	"github.com/leighmacdonald/gbans/internal/domain"
+	"github.com/leighmacdonald/gbans/pkg/demoparse"
 	"github.com/leighmacdonald/gbans/pkg/fs"
 	"github.com/leighmacdonald/gbans/pkg/log"
 	"github.com/ricochet2200/go-disk-usage/du"
@@ -290,13 +286,13 @@ func (d demoUsecase) CreateFromAsset(ctx context.Context, asset domain.Asset, se
 	// TODO change this data shape as we have not needed this in a long time. Only keys the are used.
 	intStats := map[string]gin.H{}
 
-	demoDetail, errDetail := d.SendAndParseDemo(ctx, asset.LocalPath)
+	demoDetail, errDetail := demoparse.Submit(ctx, d.config.Config().Demo.DemoParserURL, asset.LocalPath)
 	if errDetail != nil {
 		return nil, errDetail
 	}
 
 	for key := range demoDetail.State.Users {
-		intStats[fmt.Sprintf("%d", key)] = gin.H{}
+		intStats[strconv.Itoa(key)] = gin.H{}
 	}
 
 	timeStr := fmt.Sprintf("%s-%s", namePartsAll[0], namePartsAll[1])

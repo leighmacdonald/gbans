@@ -49,7 +49,7 @@ func (r *matchRepository) GetMatchIDFromServerID(serverID int) (uuid.UUID, bool)
 	return r.matchUUIDMap.Get(serverID)
 }
 
-func (r *matchRepository) Matches(ctx context.Context, opts domain.MatchesQueryOpts) ([]domain.MatchSummary, int64, error) {
+func (r *matchRepository) Matches(ctx context.Context, opts domain.MatchesQueryOpts) ([]domain.MatchResult, int64, error) {
 	countBuilder := r.database.
 		Builder().
 		Select("count(m.match_id) as count").
@@ -103,12 +103,14 @@ func (r *matchRepository) Matches(ctx context.Context, opts domain.MatchesQueryO
 
 	defer rows.Close()
 
-	var matches []domain.MatchSummary
+	var matches []domain.MatchResult
 
 	for rows.Next() {
-		var summary domain.MatchSummary
-		if errScan := rows.Scan(&summary.MatchID, &summary.ServerID, &summary.IsWinner, &summary.ShortName,
-			&summary.Title, &summary.MapName, &summary.ScoreBlu, &summary.ScoreRed, &summary.TimeStart,
+		var summary domain.MatchResult
+		var winner bool
+		var shortName string
+		if errScan := rows.Scan(&summary.MatchID, &summary.ServerID, &winner, &shortName,
+			&summary.Title, &summary.MapName, &summary.TeamScores.Blu, &summary.TeamScores.Red, &summary.TimeStart,
 			&summary.TimeEnd); errScan != nil {
 			return nil, 0, errors.Join(errScan, domain.ErrScanResult)
 		}
@@ -533,15 +535,21 @@ func (r *matchRepository) MatchGetByID(ctx context.Context, matchID uuid.UUID, m
 	}
 
 	chat, errChat := r.matchGetChat(ctx, matchID)
-
 	if errChat != nil && !errors.Is(errChat, domain.ErrNoResult) {
 		return errChat
 	}
 
-	match.Chat = chat
+	for _, msg := range chat {
+		match.Chat = append(match.Chat, domain.MatchChat{
+			SteamID:     msg.SteamID,
+			PersonaName: msg.PersonaName,
+			Body:        msg.Body,
+			Team:        msg.Team,
+		})
+	}
 
 	if match.Chat == nil {
-		match.Chat = domain.PersonMessages{}
+		match.Chat = []domain.MatchChat{}
 	}
 
 	for _, player := range match.Players {
