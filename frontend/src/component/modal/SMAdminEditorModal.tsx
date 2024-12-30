@@ -6,7 +6,6 @@ import Link from '@mui/material/Link';
 import MenuItem from '@mui/material/MenuItem';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import 'video-react/dist/video-react.css';
 import { z } from 'zod';
 import { apiCreateSMAdmin, apiSaveSMAdmin, AuthType, hasSMFlag, SMAdmin, SMGroups } from '../../api';
@@ -58,7 +57,6 @@ export const SMAdminEditorModal = NiceModal.create(({ admin }: { admin?: SMAdmin
                 }, '');
             edit.mutate({ ...value, immunity: Number(value.immunity), flags: flags });
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             auth_type: admin?.auth_type ? admin.auth_type : 'steam',
             identity: admin?.identity ? admin.identity : '',

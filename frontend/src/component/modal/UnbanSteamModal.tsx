@@ -3,7 +3,6 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material
 import Grid from '@mui/material/Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiDeleteBan } from '../../api';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
@@ -40,7 +39,6 @@ export const UnbanSteamModal = NiceModal.create(
             onSubmit: async ({ value }) => {
                 mutation.mutate(value.unban_reason);
             },
-            validatorAdapter: zodValidator,
             defaultValues: {
                 unban_reason: ''
             }

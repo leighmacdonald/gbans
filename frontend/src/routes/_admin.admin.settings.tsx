@@ -23,7 +23,6 @@ import Typography from '@mui/material/Typography';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiGetDemoCleanup, apiGetNetworkUpdateDB } from '../api';
 import { apiGetSettings, apiSaveSettings, Config } from '../api/admin.ts';
@@ -284,7 +283,6 @@ const GeneralSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
         onSubmit: async ({ value }) => {
             mutate({ ...settings, general: value });
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             srcds_log_addr: settings.general.srcds_log_addr,
             file_serve_mode: settings.general.file_serve_mode,
@@ -549,7 +547,6 @@ const FiltersSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
         onSubmit: async ({ value }) => {
             mutate({ ...settings, filters: value });
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             enabled: settings.filters.enabled,
             warning_timeout: settings.filters.warning_timeout,
@@ -709,7 +706,6 @@ const DemosSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
         onSubmit: async ({ value }) => {
             mutate({ ...settings, demo: value });
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             demo_cleanup_enabled: settings.demo.demo_cleanup_enabled,
             demo_cleanup_strategy: settings.demo.demo_cleanup_strategy,
@@ -872,7 +868,6 @@ const PatreonSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
         onSubmit: async ({ value }) => {
             mutate({ ...settings, patreon: value });
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             enabled: settings.patreon.enabled,
             integrations_enabled: settings.patreon.integrations_enabled,
@@ -988,7 +983,6 @@ const DiscordSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
         onSubmit: async ({ value }) => {
             mutate({ ...settings, discord: value });
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             enabled: settings.discord.enabled,
             bot_enabled: settings.discord.bot_enabled,
@@ -1336,7 +1330,6 @@ const LoggingSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
         onSubmit: async ({ value }) => {
             mutate({ ...settings, log: value });
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             level: settings.log.level,
             file: settings.log.file,
@@ -1466,7 +1459,6 @@ const SentrySection = ({ tab, settings, mutate }: { tab: tabs; settings: Config;
         onSubmit: async ({ value }) => {
             mutate({ ...settings, sentry: value });
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             sentry_dsn: settings.sentry.sentry_dsn,
             sentry_dsn_web: settings.sentry.sentry_dsn_web,
@@ -1599,7 +1591,6 @@ const GeoLocationSection = ({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, geo_location: value });
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             enabled: settings.geo_location.enabled,
             cache_path: settings.geo_location.cache_path,
@@ -1698,7 +1689,6 @@ const DebugSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; 
         onSubmit: async ({ value }) => {
             mutate({ ...settings, debug: value });
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             skip_open_id_validation: settings.debug.skip_open_id_validation,
             add_rcon_log_address: settings.debug.add_rcon_log_address
@@ -1776,7 +1766,6 @@ const LocalStoreSection = ({ tab, settings, mutate }: { tab: tabs; settings: Con
         onSubmit: async ({ value }) => {
             mutate({ ...settings, local_store: value });
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             path_root: settings.local_store.path_root
         }
@@ -1829,7 +1818,6 @@ const SSHSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config; mu
         onSubmit: async ({ value }) => {
             mutate({ ...settings, ssh: value });
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             enabled: settings.ssh.enabled,
             username: settings.ssh.username,
@@ -1995,7 +1983,6 @@ const ExportsSection = ({ tab, settings, mutate }: { tab: tabs; settings: Config
         onSubmit: async ({ value }) => {
             mutate({ ...settings, exports: value });
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             bd_enabled: settings.exports.bd_enabled,
             valve_enabled: settings.exports.valve_enabled,

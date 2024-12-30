@@ -4,7 +4,6 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material
 import Grid from '@mui/material/Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import 'video-react/dist/video-react.css';
 import { z } from 'zod';
 import { apiCreateSMGroup, apiSaveSMGroup, hasSMFlag, SMGroups } from '../../api';
@@ -46,7 +45,6 @@ export const SMGroupEditorModal = NiceModal.create(({ group }: { group?: SMGroup
                 }, '');
             edit.mutate({ name: value.name, immunity: Number(value.immunity), flags: flags });
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             name: group?.name ?? '',
             immunity: group?.immunity_level ? String(group.immunity_level) : '',

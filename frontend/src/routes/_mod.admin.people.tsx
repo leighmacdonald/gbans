@@ -10,7 +10,6 @@ import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { ColumnDef, getCoreRowModel, useReactTable } from '@tanstack/react-table';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { fromUnixTime } from 'date-fns';
 import { z } from 'zod';
 import { apiSearchPeople, communityVisibilityState, PermissionLevel, permissionLevelString, Person } from '../api';
@@ -79,7 +78,6 @@ function AdminPeople() {
         onSubmit: async ({ value }) => {
             await navigate({ to: '/admin/people', search: (prev) => ({ ...prev, ...value }) });
         },
-        validatorAdapter: zodValidator,
         validators: {
             onChange: peopleSearchSchema
         },

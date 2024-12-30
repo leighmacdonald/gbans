@@ -5,7 +5,6 @@ import Grid from '@mui/material/Grid2';
 import MenuItem from '@mui/material/MenuItem';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import 'video-react/dist/video-react.css';
 import {
     apiCreateSMGroupOverrides,
@@ -49,7 +48,6 @@ export const SMGroupOverrideEditorModal = NiceModal.create(
             onSubmit: async ({ value }) => {
                 mutation.mutate(value);
             },
-            validatorAdapter: zodValidator,
             defaultValues: {
                 type: override?.type ?? 'command',
                 name: override?.name ?? '',

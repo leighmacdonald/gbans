@@ -5,7 +5,6 @@ import Grid from '@mui/material/Grid2';
 import MenuItem from '@mui/material/MenuItem';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import {
     apiCreateFilter,
@@ -76,8 +75,6 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
                 is_regex: value.is_regex
             });
         },
-        validatorAdapter: zodValidator,
-
         defaultValues: {
             pattern: filter ? String(filter.pattern) : '',
             is_regex: filter?.is_regex ?? false,

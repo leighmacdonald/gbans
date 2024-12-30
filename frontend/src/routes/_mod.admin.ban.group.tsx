@@ -14,7 +14,6 @@ import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ColumnFiltersState, createColumnHelper, PaginationState, SortingState } from '@tanstack/react-table';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiGetBansGroups, BanReason, BanReasons, GroupBanRecord } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
@@ -82,7 +81,6 @@ function AdminBanGroup() {
             setColumnFilters(initColumnFilter(value));
             await navigate({ to: '/admin/ban/group', search: (prev) => ({ ...prev, ...value }) });
         },
-        validatorAdapter: zodValidator,
         validators: {
             onChange: banGroupSearchSchema
         },

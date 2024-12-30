@@ -7,7 +7,6 @@ import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiGetConnections, PersonConnection } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
@@ -79,7 +78,6 @@ function AdminNetworkPlayersByCIDR() {
         onSubmit: async ({ value }) => {
             await navigate({ to: '/admin/network/playersbyip', search: (prev) => ({ ...prev, ...value }) });
         },
-        validatorAdapter: zodValidator,
         validators: {
             onChange: playersByIPSearchSchema
         },

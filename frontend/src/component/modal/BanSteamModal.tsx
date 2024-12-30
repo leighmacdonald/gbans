@@ -5,7 +5,6 @@ import Grid from '@mui/material/Grid2';
 import MenuItem from '@mui/material/MenuItem';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { parseISO } from 'date-fns';
 import { z } from 'zod';
 import {
@@ -105,7 +104,6 @@ export const BanSteamModal = NiceModal.create(
                     report_id: value.report_id
                 });
             },
-            validatorAdapter: zodValidator,
             defaultValues: {
                 report_id: existing ? existing.report_id : 0,
                 target_id: existing ? existing.target_id : steamId,

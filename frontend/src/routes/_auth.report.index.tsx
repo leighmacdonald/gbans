@@ -29,7 +29,6 @@ import {
     SortingState,
     useReactTable
 } from '@tanstack/react-table';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import {
     apiCreateReport,
@@ -278,7 +277,6 @@ export const ReportCreateForm = (): JSX.Element => {
                 person_message_id: value.person_message_id
             });
         },
-        validatorAdapter: zodValidator,
         // validators: {
         //     onChange: validationSchema
         // },

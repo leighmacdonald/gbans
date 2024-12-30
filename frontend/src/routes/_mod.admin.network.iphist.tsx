@@ -4,7 +4,6 @@ import Grid from '@mui/material/Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiGetConnections } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader';
@@ -46,7 +45,6 @@ function AdminNetworkPlayerIPHistory() {
         onSubmit: async ({ value }) => {
             await navigate({ to: '/admin/network/iphist', search: (prev) => ({ ...prev, ...value }) });
         },
-        validatorAdapter: zodValidator,
         validators: {
             onChange: ipHistorySearchSchema
         },

@@ -4,7 +4,6 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material
 import Grid from '@mui/material/Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { apiCreateWhitelistSteam } from '../../api';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { makeSteamidValidators } from '../../util/validator/makeSteamidValidators.ts';
@@ -36,7 +35,6 @@ export const SteamWhitelistEditorModal = NiceModal.create(() => {
         onSubmit: async ({ value }) => {
             mutation.mutate(value);
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             steam_id: ''
         }

@@ -5,7 +5,6 @@ import Grid from '@mui/material/Grid2';
 import MenuItem from '@mui/material/MenuItem';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import {
     apiUpdatePlayerPermission,
     PermissionLevel,
@@ -41,7 +40,6 @@ export const PersonEditModal = NiceModal.create(({ person }: { person: Person })
                 permission_level: value.permission_level
             });
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             permission_level: person.permission_level
         }

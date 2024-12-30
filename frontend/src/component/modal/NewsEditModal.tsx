@@ -4,7 +4,6 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material
 import Grid from '@mui/material/Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiNewsCreate, apiNewsSave, NewsEntry } from '../../api/news.ts';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
@@ -39,7 +38,6 @@ export const NewsEditModal = NiceModal.create(({ entry }: { entry?: NewsEntry })
         onSubmit: async ({ value }) => {
             mutation.mutate(value);
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             title: entry?.title ?? '',
             body_md: entry?.body_md ?? '',

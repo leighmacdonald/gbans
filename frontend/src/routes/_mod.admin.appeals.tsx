@@ -17,7 +17,6 @@ import {
     SortingState,
     useReactTable
 } from '@tanstack/react-table';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import {
     apiGetAppeals,
@@ -85,7 +84,6 @@ function AdminAppeals() {
             );
             await navigate({ to: '/admin/appeals', search: (prev) => ({ ...prev, ...value }) });
         },
-        validatorAdapter: zodValidator,
         validators: {
             onChange: appealSearchSchema
         },

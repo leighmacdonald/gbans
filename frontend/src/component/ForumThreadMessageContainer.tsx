@@ -11,7 +11,6 @@ import { useTheme } from '@mui/material/styles';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import { useRouteContext } from '@tanstack/react-router';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { isAfter } from 'date-fns/fp';
 import { z } from 'zod';
 import { PermissionLevel, permissionLevelString } from '../api';
@@ -63,7 +62,6 @@ export const ThreadMessageContainer = ({
                 body_md: value.body_md ?? ''
             });
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             body_md: message.body_md
         }

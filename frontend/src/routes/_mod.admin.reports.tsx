@@ -8,7 +8,6 @@ import Typography from '@mui/material/Typography';
 import { useForm } from '@tanstack/react-form';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ColumnFiltersState, createColumnHelper, SortingState } from '@tanstack/react-table';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import {
     apiGetReports,
@@ -82,7 +81,6 @@ function AdminReports() {
             );
             await navigate({ to: '/admin/reports', replace: true, search: (prev) => ({ ...prev, ...value }) });
         },
-        validatorAdapter: zodValidator,
         validators: {
             onChange: reportsSearchSchema
         },

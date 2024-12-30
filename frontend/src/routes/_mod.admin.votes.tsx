@@ -7,7 +7,6 @@ import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { createColumnHelper, PaginationState } from '@tanstack/react-table';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiVotesQuery, VoteResult } from '../api/votes.ts';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
@@ -59,7 +58,6 @@ function AdminVotes() {
         onSubmit: async ({ value }) => {
             await navigate({ to: '/admin/votes', search: (prev) => ({ ...prev, ...value }) });
         },
-        validatorAdapter: zodValidator,
         validators: {
             onChange: votesSearchSchema
         },

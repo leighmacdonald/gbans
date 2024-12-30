@@ -7,7 +7,6 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Grid from '@mui/material/Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { apiDeleteThread, apiUpdateThread, ForumThread } from '../../api/forum';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { logErr } from '../../util/errors';
@@ -65,7 +64,6 @@ export const ForumThreadEditorModal = NiceModal.create(({ thread }: { thread: Fo
         onSubmit: async ({ value }) => {
             mutation.mutate({ ...value });
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             title: thread.title,
             sticky: thread.sticky,
