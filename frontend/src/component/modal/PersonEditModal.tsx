@@ -5,7 +5,6 @@ import Grid from '@mui/material/Grid2';
 import MenuItem from '@mui/material/MenuItem';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { z } from 'zod';
 import {
     apiUpdatePlayerPermission,
     PermissionLevel,
@@ -40,11 +39,6 @@ export const PersonEditModal = NiceModal.create(({ person }: { person: Person })
             mutation.mutate({
                 permission_level: value.permission_level
             });
-        },
-        validators: {
-            onChange: z.object({
-                permission_level: z.nativeEnum(PermissionLevel)
-            })
         },
         defaultValues: {
             permission_level: person.permission_level

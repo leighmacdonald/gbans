@@ -33,7 +33,6 @@ import { ModalBanSteam, ModalUnbanSteam } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { initColumnFilter, initPagination, isPermanentBan, makeCommonTableSearchSchema } from '../util/table.ts';
 import { renderDate } from '../util/time.ts';
-import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
 
 const banSteamSearchSchema = z.object({
     ...makeCommonTableSearchSchema([
@@ -92,15 +91,6 @@ function AdminBanSteam() {
                 to: '/admin/ban/steam',
                 search: (prev) => ({ ...prev, ...value })
             });
-        },
-        validators: {
-            onChangeAsyncDebounceMs: 500,
-            onChangeAsync: z.object({
-                source_id: makeValidateSteamIDCallback(),
-                target_id: makeValidateSteamIDCallback(),
-                reason: z.nativeEnum(BanReason),
-                deleted: z.boolean()
-            })
         },
         defaultValues: {
             source_id: search.source_id ?? '',
@@ -219,15 +209,8 @@ function AdminBanSteam() {
                             <Grid size={{ xs: 6, md: 3 }}>
                                 <Field
                                     name={'deleted'}
-                                    children={({ state, handleBlur, handleChange }) => {
-                                        return (
-                                            <CheckboxSimple
-                                                label={'Show deleted/expired'}
-                                                checked={state.value}
-                                                onChange={(_, v) => handleChange(v)}
-                                                onBlur={handleBlur}
-                                            />
-                                        );
+                                    children={(props) => {
+                                        return <CheckboxSimple {...props} label={'Show deleted/expired'} />;
                                     }}
                                 />
                             </Grid>

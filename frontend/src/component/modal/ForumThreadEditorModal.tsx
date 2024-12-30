@@ -7,7 +7,6 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Grid from '@mui/material/Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { z } from 'zod';
 import { apiDeleteThread, apiUpdateThread, ForumThread } from '../../api/forum';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { logErr } from '../../util/errors';
@@ -65,13 +64,6 @@ export const ForumThreadEditorModal = NiceModal.create(({ thread }: { thread: Fo
         onSubmit: async ({ value }) => {
             mutation.mutate({ ...value });
         },
-        validators: {
-            onChange: z.object({
-                title: z.string().min(5, 'Min length of 5'),
-                sticky: z.boolean(),
-                locked: z.boolean()
-            })
-        },
         defaultValues: {
             title: thread.title,
             sticky: thread.sticky,
@@ -103,30 +95,16 @@ export const ForumThreadEditorModal = NiceModal.create(({ thread }: { thread: Fo
                         <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'sticky'}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            checked={state.value}
-                                            onChange={(_, v) => handleChange(v)}
-                                            onBlur={handleBlur}
-                                            label={'Stickied'}
-                                        />
-                                    );
+                                children={(props) => {
+                                    return <CheckboxSimple {...props} label={'Stickied'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'locked'}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            checked={state.value}
-                                            onChange={(_, v) => handleChange(v)}
-                                            onBlur={handleBlur}
-                                            label={'Locked'}
-                                        />
-                                    );
+                                children={(props) => {
+                                    return <CheckboxSimple {...props} label={'Locked'} />;
                                 }}
                             />
                         </Grid>

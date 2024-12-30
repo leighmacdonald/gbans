@@ -70,14 +70,6 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
         onSubmit: async ({ value }) => {
             mutation.mutate({ ...value });
         },
-        validators: {
-            onChange: z.object({
-                title: z.string().min(3),
-                body_md: z.string().min(10),
-                sticky: z.boolean(),
-                locked: z.boolean()
-            })
-        },
         defaultValues: {
             title: '',
             body_md: '',
@@ -107,6 +99,9 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
                     <Grid container spacing={2}>
                         <Grid size={{ xs: 12 }}>
                             <Field
+                                validators={{
+                                    onChange: z.string().min(3)
+                                }}
                                 name={'title'}
                                 children={(props) => {
                                     return <TextFieldSimple {...props} label={'Title'} />;
@@ -115,6 +110,9 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
                         </Grid>
                         <Grid size={{ xs: 12 }}>
                             <Field
+                                validators={{
+                                    onChange: z.string().min(10)
+                                }}
                                 name={'body_md'}
                                 children={(props) => {
                                     return <MarkdownField {...props} label={'Message'} />;
@@ -124,30 +122,16 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
                         <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'sticky'}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            checked={state.value}
-                                            onChange={(_, v) => handleChange(v)}
-                                            onBlur={handleBlur}
-                                            label={'Stickied'}
-                                        />
-                                    );
+                                children={(props) => {
+                                    return <CheckboxSimple {...props} label={'Stickied'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'locked'}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            checked={state.value}
-                                            onChange={(_, v) => handleChange(v)}
-                                            onBlur={handleBlur}
-                                            label={'Locked'}
-                                        />
-                                    );
+                                children={(props) => {
+                                    return <CheckboxSimple {...props} label={'Locked'} />;
                                 }}
                             />
                         </Grid>

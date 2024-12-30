@@ -19,7 +19,7 @@ import ListItemText from '@mui/material/ListItemText';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { useForm } from '@tanstack/react-form';
+import { standardSchemaValidator, useForm } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useLoaderData, useNavigate } from '@tanstack/react-router';
 import { z } from 'zod';
@@ -179,11 +179,6 @@ const GeneralSection = ({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, ...value });
         },
-        validators: {
-            onChange: z.object({
-                stats_hidden: z.boolean()
-            })
-        },
         defaultValues: {
             stats_hidden: settings.stats_hidden
         }
@@ -280,15 +275,8 @@ const GeneralSection = ({
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={({ state, handleBlur, handleChange }) => {
-                                return (
-                                    <CheckboxSimple
-                                        label={'Hide personal stats on profile'}
-                                        checked={state.value}
-                                        onChange={(_, v) => handleChange(v)}
-                                        onBlur={handleBlur}
-                                    />
-                                );
+                            children={(props) => {
+                                return <CheckboxSimple {...props} label={'Hide personal stats on profile'} />;
                             }}
                         />
                         <SubHeading>It is still viewable by yourself.</SubHeading>
@@ -321,11 +309,6 @@ const GameplaySection = ({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, ...value });
         },
-        validators: {
-            onChange: z.object({
-                center_projectiles: z.boolean()
-            })
-        },
         defaultValues: {
             center_projectiles: settings.center_projectiles ?? false
         }
@@ -344,15 +327,11 @@ const GameplaySection = ({
                     <Grid size={{ xs: 12 }}>
                         <Field
                             name={'center_projectiles'}
-                            children={({ state, handleBlur, handleChange }) => {
-                                return (
-                                    <CheckboxSimple
-                                        label={'Use center projectiles'}
-                                        checked={state.value}
-                                        onChange={(_, v) => handleChange(v)}
-                                        onBlur={handleBlur}
-                                    />
-                                );
+                            validators={{
+                                onChange: z.boolean()
+                            }}
+                            children={(props) => {
+                                return <CheckboxSimple {...props} label={'Use center projectiles'} />;
                             }}
                         />
                         <SubHeading>Applies to all projectile weapons</SubHeading>
@@ -384,12 +363,6 @@ const ForumSection = ({
     const { Field, Subscribe, handleSubmit, reset } = useForm({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, ...value });
-        },
-        validators: {
-            onChange: z.object({
-                forum_signature: z.string(),
-                forum_profile_messages: z.boolean()
-            })
         },
         defaultValues: {
             forum_signature: settings.forum_signature,
@@ -426,15 +399,8 @@ const ForumSection = ({
                             validators={{
                                 onChange: z.boolean()
                             }}
-                            children={({ state, handleBlur, handleChange }) => {
-                                return (
-                                    <CheckboxSimple
-                                        label={'Enable people to sign your profile.'}
-                                        checked={state.value}
-                                        onChange={(_, v) => handleChange(v)}
-                                        onBlur={handleBlur}
-                                    />
-                                );
+                            children={(props) => {
+                                return <CheckboxSimple {...props} label={'Enable people to sign your profile.'} />;
                             }}
                         />
                         <SubHeading>It is still viewable by yourself.</SubHeading>

@@ -57,7 +57,7 @@ import { MarkdownField, mdEditorRef } from '../component/field/MarkdownField.tsx
 import { SteamIDField } from '../component/field/SteamIDField.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { commonTableSearchSchema, initPagination, RowsPerPage } from '../util/table.ts';
-import { makeValidateSteamIDCallback } from '../util/validator/makeValidateSteamIDCallback.ts';
+import { makeSteamidValidators } from '../util/validator/makeSteamidValidators.ts';
 
 const reportSchema = z.object({
     ...commonTableSearchSchema,
@@ -270,31 +270,19 @@ export const ReportCreateForm = (): JSX.Element => {
             mutation.mutate({
                 demo_id: value.demo_id ?? 0,
                 target_id: steam_id ?? validatedProfile?.player.steam_id ?? '',
-                demo_tick: value.demo_tick ?? 0,
+                demo_tick: value.demo_tick,
                 reason: value.reason,
                 reason_text: value.reason_text,
                 description: value.body_md,
-                person_message_id: value.person_message_id ?? 0
+                person_message_id: value.person_message_id
             });
         },
-        validators: {
-            onChangeAsyncDebounceMs: 500,
-            onChangeAsync: z.object({
-                body_md: z.string().min(10, 'Message must be at least 10 characters.'),
-                demo_id: z.number({ coerce: true }),
-                demo_tick: z.number({ coerce: true }),
-                person_message_id: z.number({ coerce: true }),
-                steam_id: makeValidateSteamIDCallback((profile: PlayerProfile) => {
-                    setValidatedProfile(profile);
-                }),
-                reason: z.nativeEnum(BanReason),
-                reason_text: z.string()
-            })
-        },
-
+        // validators: {
+        //     onChange: validationSchema
+        // },
         defaultValues: {
             body_md: '',
-            demo_id: demo_id ?? 0,
+            demo_id: demo_id ?? undefined,
             demo_tick: 0,
             person_message_id: person_message_id ?? 0,
             steam_id: steam_id ?? '',
@@ -317,19 +305,16 @@ export const ReportCreateForm = (): JSX.Element => {
                     <Grid size={{ xs: 12 }}>
                         <form.Field
                             name={'steam_id'}
+                            validators={makeSteamidValidators(setValidatedProfile)}
                             children={({ state, handleChange, handleBlur }) => {
                                 return (
                                     <SteamIDField
-                                        error={state.meta.errors.length > 0}
-                                        helperText={'Invalid steam id / profile url.'}
-                                        handleChange={handleChange}
-                                        handleBlur={handleBlur}
-                                        defaultValue={state.value}
                                         disabled={Boolean(steam_id)}
+                                        state={state}
+                                        handleBlur={handleBlur}
+                                        handleChange={handleChange}
                                         fullwidth={true}
                                         label={'SteamID'}
-                                        isValidating={state.meta.isValidating}
-                                        isTouched={state.meta.isTouched}
                                     />
                                 );
                             }}
@@ -338,6 +323,9 @@ export const ReportCreateForm = (): JSX.Element => {
                     <Grid size={{ xs: 6 }}>
                         <form.Field
                             name={'reason'}
+                            validators={{
+                                onChange: z.nativeEnum(BanReason, { message: 'Invalid ban reason' })
+                            }}
                             children={({ state, handleChange, handleBlur }) => {
                                 return (
                                     <>
@@ -346,13 +334,13 @@ export const ReportCreateForm = (): JSX.Element => {
                                             <Select
                                                 variant={'outlined'}
                                                 fullWidth
-                                                defaultValue={state.value}
+                                                value={state.value}
                                                 label="Servers"
                                                 onChange={(e) => {
                                                     handleChange(Number(e.target.value));
                                                 }}
                                                 onBlur={handleBlur}
-                                                error={state.meta.errors.length > 0}
+                                                error={state.meta.touchedErrors.length > 0}
                                             >
                                                 {banReasonsCollection.map((r) => (
                                                     <MenuItem value={r} key={`reason-${r}`}>
@@ -360,7 +348,9 @@ export const ReportCreateForm = (): JSX.Element => {
                                                     </MenuItem>
                                                 ))}
                                             </Select>
-                                            {state.meta.errors.length > 0 && <FormHelperText>Error</FormHelperText>}
+                                            {state.meta.touchedErrors.length > 0 && (
+                                                <FormHelperText>Error</FormHelperText>
+                                            )}
                                         </FormControl>
                                     </>
                                 );
@@ -371,6 +361,16 @@ export const ReportCreateForm = (): JSX.Element => {
                     <Grid size={{ xs: 6 }}>
                         <form.Field
                             name={'reason_text'}
+                            validators={{
+                                onChangeListenTo: ['reason'],
+                                onChange: ({ value, fieldApi }) => {
+                                    if (fieldApi.form.getFieldValue('reason') == BanReason.Custom) {
+                                        return z.string().min(2, { message: 'Must enter custom reason' }).parse(value);
+                                    }
+
+                                    return z.string().parse(value);
+                                }
+                            }}
                             children={({ state, handleChange, handleBlur }) => {
                                 return (
                                     <>
@@ -392,6 +392,7 @@ export const ReportCreateForm = (): JSX.Element => {
                             <Grid size={{ xs: 6 }}>
                                 <form.Field
                                     name={'demo_id'}
+                                    validators={{ onChange: z.number({ coerce: true }).optional() }}
                                     children={({ state, handleChange, handleBlur }) => {
                                         return (
                                             <TextField
@@ -409,6 +410,7 @@ export const ReportCreateForm = (): JSX.Element => {
                             </Grid>
                             <Grid size={{ xs: 6 }}>
                                 <form.Field
+                                    validators={{ onChange: z.number({ coerce: true }).min(0).optional() }}
                                     name={'demo_tick'}
                                     children={({ state, handleChange, handleBlur }) => {
                                         return (
@@ -435,6 +437,7 @@ export const ReportCreateForm = (): JSX.Element => {
                     <Grid size={{ xs: 12 }}>
                         <form.Field
                             name={'body_md'}
+                            validators={{ onChange: z.string().min(10, 'Message must be at least 10 characters.') }}
                             children={(props) => {
                                 return <MarkdownField {...props} label={'Message (Markdown)'} />;
                             }}

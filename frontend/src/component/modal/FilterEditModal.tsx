@@ -15,7 +15,6 @@ import {
     filterActionString
 } from '../../api/filters.ts';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
-import { numberStringValidator } from '../../util/validator/numberStringValidator.ts';
 import { Heading } from '../Heading';
 import { Buttons } from '../field/Buttons.tsx';
 import { CheckboxSimple } from '../field/CheckboxSimple.tsx';
@@ -76,16 +75,6 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
                 is_regex: value.is_regex
             });
         },
-        validators: {
-            onChange: z.object({
-                pattern: z.string().min(2),
-                is_regex: z.boolean(),
-                is_enabled: z.boolean(),
-                action: z.nativeEnum(FilterAction),
-                duration: z.string().min(1),
-                weight: z.string().transform(numberStringValidator(1, 100))
-            })
-        },
         defaultValues: {
             pattern: filter ? String(filter.pattern) : '',
             is_regex: filter?.is_regex ?? false,
@@ -127,15 +116,8 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
                                 validators={{
                                     onSubmit: z.boolean()
                                 }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            checked={state.value}
-                                            onChange={(_, v) => handleChange(v)}
-                                            onBlur={handleBlur}
-                                            label={'Is Regex Pattern'}
-                                        />
-                                    );
+                                children={(props) => {
+                                    return <CheckboxSimple {...props} label={'Is Regex Pattern'} />;
                                 }}
                             />
                         </Grid>
@@ -177,6 +159,9 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
                         <Grid size={{ xs: 4 }}>
                             <Field
                                 name={'weight'}
+                                validators={{
+                                    onChange: z.number({ coerce: true }).min(1).max(100)
+                                }}
                                 children={(props) => {
                                     return <TextFieldSimple {...props} label={'Weight (1-100)'} />;
                                 }}
@@ -189,15 +174,8 @@ export const FilterEditModal = NiceModal.create(({ filter }: { filter?: Filter }
                                 validators={{
                                     onSubmit: z.boolean()
                                 }}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            checked={state.value}
-                                            onChange={(_, v) => handleChange(v)}
-                                            onBlur={handleBlur}
-                                            label={'Is Enabled'}
-                                        />
-                                    );
+                                children={(props) => {
+                                    return <CheckboxSimple {...props} label={'Is Enabled'} />;
                                 }}
                             />
                         </Grid>
