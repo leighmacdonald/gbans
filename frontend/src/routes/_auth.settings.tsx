@@ -217,6 +217,7 @@ const GeneralSection = ({
                                             <Typography>Show desktop notifications?</Typography>
                                             {notifPerms != 'granted' ? (
                                                 <Button
+                                                    sx={{ width: 300 }}
                                                     variant={'contained'}
                                                     color={'success'}
                                                     onClick={togglePerms}
@@ -232,6 +233,7 @@ const GeneralSection = ({
                                                 >
                                                     <span>
                                                         <Button
+                                                            sx={{ width: 300 }}
                                                             disabled={true}
                                                             variant={'contained'}
                                                             color={'success'}
