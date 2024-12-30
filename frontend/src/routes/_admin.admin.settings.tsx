@@ -173,7 +173,7 @@ function AdminServers() {
                                 onClick={onTabClick}
                                 icon={<AddModeratorIcon />}
                                 currentTab={tab}
-                                label={'Word Filters'}
+                                label={'Filters'}
                             />
                             <TabButton
                                 tab={'demo'}
@@ -208,7 +208,7 @@ function AdminServers() {
                                 onClick={onTabClick}
                                 icon={<TravelExploreIcon />}
                                 currentTab={tab}
-                                label={'Geo Database'}
+                                label={'GeoDB'}
                             />
                             <TabButton
                                 tab={'debug'}

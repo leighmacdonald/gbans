@@ -31,7 +31,6 @@ import Typography from '@mui/material/Typography';
 import { useTheme } from '@mui/material/styles';
 import { apiSaveAsset, assetURL } from '../../api/media.ts';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
-import { logErr } from '../../util/errors.ts';
 import { ErrorBoundary } from '../ErrorBoundary.tsx';
 import './MarkdownField.css';
 import { FieldProps } from './common.ts';
@@ -68,7 +67,6 @@ export const MarkdownField = ({ state, handleChange }: MDBodyFieldProps) => {
     const theme = useTheme();
 
     const onError = (payload: { error: string; source: string }) => {
-        logErr(payload);
         sendFlash('error', payload.error);
     };
 
@@ -97,7 +95,7 @@ export const MarkdownField = ({ state, handleChange }: MDBodyFieldProps) => {
                     contentEditableClassName={'md-content-editable'}
                     className={classes}
                     autoFocus={true}
-                    markdown={state.value}
+                    markdown={(state.value ?? '').trimEnd()}
                     placeholder={'Message (Min length: 10 characters)'}
                     plugins={[
                         toolbarPlugin({
