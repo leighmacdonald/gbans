@@ -20,7 +20,6 @@ import Typography from '@mui/material/Typography';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate, useRouteContext } from '@tanstack/react-router';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import {
     apiCreateBanMessage,
@@ -242,7 +241,6 @@ function BanPage() {
                 body_md: value.body_md
             });
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             body_md: ''
         }

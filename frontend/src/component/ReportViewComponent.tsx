@@ -21,7 +21,6 @@ import { useTheme } from '@mui/material/styles';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouteContext } from '@tanstack/react-router';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import {
     apiCreateReportMessage,
@@ -131,7 +130,6 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
         onSubmit: async ({ value }) => {
             createMessageMutation.mutate(value);
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             body_md: ''
         }

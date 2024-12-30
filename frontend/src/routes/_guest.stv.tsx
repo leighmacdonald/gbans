@@ -16,7 +16,6 @@ import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useLoaderData, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { ColumnFiltersState, createColumnHelper, SortingState } from '@tanstack/react-table';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiGetDemos, apiGetServers, DemoFile, ServerSimple } from '../api';
 import { ButtonLink } from '../component/ButtonLink.tsx';
@@ -85,7 +84,6 @@ function STV() {
             setColumnFilters(initColumnFilter(value));
             await navigate({ search: (prev) => ({ ...prev, ...value }) });
         },
-        validatorAdapter: zodValidator,
         validators: {
             onChange: demosSchema
         },

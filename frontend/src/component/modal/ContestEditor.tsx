@@ -5,7 +5,6 @@ import Grid from '@mui/material/Grid2';
 import MenuItem from '@mui/material/MenuItem';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { parseISO } from 'date-fns';
 import { z } from 'zod';
 import {
@@ -93,7 +92,6 @@ export const ContestEditor = NiceModal.create(({ contest }: { contest?: Contest 
         onSubmit: async ({ value }) => {
             mutation.mutate(value);
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             date_start: contest?.date_start.toISOString() ?? '',
             date_end: contest ? contest.date_end.toISOString() : '',

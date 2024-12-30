@@ -19,10 +19,9 @@ import ListItemText from '@mui/material/ListItemText';
 import Stack from '@mui/material/Stack';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { useForm } from '@tanstack/react-form';
+import { standardSchemaValidator, useForm } from '@tanstack/react-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useLoaderData, useNavigate } from '@tanstack/react-router';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import {
     apiDiscordLogout,
@@ -182,7 +181,6 @@ const GeneralSection = ({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, ...value });
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             stats_hidden: settings.stats_hidden
         }
@@ -313,7 +311,6 @@ const GameplaySection = ({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, ...value });
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             center_projectiles: settings.center_projectiles ?? false
         }
@@ -369,7 +366,6 @@ const ForumSection = ({
         onSubmit: async ({ value }) => {
             mutate({ ...settings, ...value });
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             forum_signature: settings.forum_signature,
             forum_profile_messages: settings.forum_profile_messages

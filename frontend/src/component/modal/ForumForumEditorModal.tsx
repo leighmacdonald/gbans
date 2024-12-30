@@ -5,7 +5,6 @@ import Grid from '@mui/material/Grid2';
 import MenuItem from '@mui/material/MenuItem';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { PermissionLevel, PermissionLevelCollection, permissionLevelString } from '../../api';
 import { apiCreateForum, apiSaveForum, Forum, ForumCategory } from '../../api/forum.ts';
@@ -67,7 +66,6 @@ export const ForumForumEditorModal = NiceModal.create(
             onSubmit: async ({ value }) => {
                 mutation.mutate({ ...value });
             },
-            validatorAdapter: zodValidator,
             defaultValues: {
                 forum_category_id: defaultCategory,
                 title: forum?.title ?? '',

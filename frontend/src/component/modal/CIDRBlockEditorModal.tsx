@@ -4,7 +4,6 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material
 import Grid from '@mui/material/Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiCreateCIDRBlockSource, apiUpdateCIDRBlockSource, CIDRBlockSource } from '../../api';
 import { Heading } from '../Heading';
@@ -50,7 +49,6 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
         onSubmit: async ({ value }) => {
             mutation.mutate(value);
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             cidr_block_source_id: source?.cidr_block_source_id ?? 0,
             name: source?.name ?? '',

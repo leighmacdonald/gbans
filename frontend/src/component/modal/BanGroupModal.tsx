@@ -5,7 +5,6 @@ import Grid from '@mui/material/Grid2';
 import MenuItem from '@mui/material/MenuItem';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { parseISO } from 'date-fns';
 import { z } from 'zod';
 import { apiCreateBanGroup, apiUpdateBanGroup, Duration, DurationCollection, GroupBanRecord } from '../../api';
@@ -72,7 +71,6 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
                 note: value.note
             });
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             target_id: existing ? existing.target_id : '',
             group_id: existing ? existing.group_id : '',

@@ -4,7 +4,6 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material
 import Grid from '@mui/material/Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiCreateServer, apiSaveServer, SaveServerOpts, Server } from '../../api';
 import { numberStringValidator } from '../../util/validator/numberStringValidator.ts';
@@ -65,7 +64,6 @@ export const ServerEditorModal = NiceModal.create(({ server }: { server?: Server
         onSubmit: async ({ value }) => {
             mutation.mutate(value);
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             short_name: server ? server.short_name : '',
             name: server ? server.name : '',

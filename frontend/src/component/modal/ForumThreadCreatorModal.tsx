@@ -6,7 +6,6 @@ import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiCreateThread, Forum, ForumThread } from '../../api/forum.ts';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
@@ -73,7 +72,6 @@ export const ForumThreadCreatorModal = NiceModal.create(({ forum }: { forum: For
         onSubmit: async ({ value }) => {
             mutation.mutate({ ...value });
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             title: '',
             body_md: '',

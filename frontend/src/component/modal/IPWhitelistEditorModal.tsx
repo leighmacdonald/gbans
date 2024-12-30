@@ -4,7 +4,6 @@ import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material
 import Grid from '@mui/material/Grid2';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiCreateWhitelistIP, apiUpdateWhitelistIP, WhitelistIP } from '../../api';
 import { Heading } from '../Heading';
@@ -38,7 +37,6 @@ export const IPWhitelistEditorModal = NiceModal.create(({ source }: { source?: W
         onSubmit: async ({ value }) => {
             mutation.mutate(value);
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             address: source?.address ?? ''
         }

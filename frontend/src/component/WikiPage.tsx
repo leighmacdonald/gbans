@@ -9,7 +9,6 @@ import MenuItem from '@mui/material/MenuItem';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLoaderData, useRouteContext } from '@tanstack/react-router';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { PermissionLevel, PermissionLevelCollection, permissionLevelString } from '../api';
 import { apiSaveWikiPage, Page } from '../api/wiki.ts';
@@ -80,7 +79,6 @@ export const WikiPage = ({ slug = 'home', path }: { slug: string; path: '/_guest
         onSubmit: async ({ value }) => {
             mutation.mutate(value);
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             permission_level: page?.permission_level ?? PermissionLevel.Guest,
             body_md: page?.body_md ?? ''

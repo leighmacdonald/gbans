@@ -15,7 +15,6 @@ import { useForm } from '@tanstack/react-form';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { ColumnFiltersState, createColumnHelper, PaginationState, SortingState } from '@tanstack/react-table';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { z } from 'zod';
 import { apiGetBansSteam, BanReason, BanReasons, banReasonsCollection, SteamBanRecord } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
@@ -93,7 +92,6 @@ function AdminBanSteam() {
                 search: (prev) => ({ ...prev, ...value })
             });
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             source_id: search.source_id ?? '',
             target_id: search.target_id ?? '',

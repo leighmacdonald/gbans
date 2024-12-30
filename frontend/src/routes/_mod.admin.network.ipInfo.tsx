@@ -13,7 +13,6 @@ import Typography from '@mui/material/Typography';
 import { useForm } from '@tanstack/react-form';
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import 'leaflet/dist/leaflet.css';
 import { z } from 'zod';
 import { apiGetNetworkDetails } from '../api';
@@ -74,7 +73,6 @@ function AdminNetworkInfo() {
         onSubmit: async ({ value }) => {
             await navigate({ to: '/admin/network/ipInfo', search: (prev) => ({ ...prev, ...value }) });
         },
-        validatorAdapter: zodValidator,
         validators: {
             onChange: ipInfoSearchSchema
         },

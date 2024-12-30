@@ -11,7 +11,6 @@ import Paper from '@mui/material/Paper';
 import { useTheme } from '@mui/material/styles';
 import { useForm } from '@tanstack/react-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { zodValidator } from '@tanstack/zod-form-adapter';
 import { formatDistance } from 'date-fns';
 import { z } from 'zod';
 import { apiDeleteReportMessage, apiUpdateReportMessage, ReportMessage } from '../api';
@@ -82,7 +81,6 @@ export const ReportMessageView = ({ message }: ReportMessageViewProps) => {
                 body_md: value.body_md
             });
         },
-        validatorAdapter: zodValidator,
         defaultValues: {
             body_md: message.message_md
         }
