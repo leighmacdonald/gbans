@@ -277,7 +277,7 @@ const AppealsTable = ({
         }),
         columnHelper.accessor('reason', {
             header: 'Reason',
-            size: 100,
+            size: 150,
             cell: (info) => <Typography>{BanReasons[info.getValue()]}</Typography>
         }),
         columnHelper.accessor('reason_text', {

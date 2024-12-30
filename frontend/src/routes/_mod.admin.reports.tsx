@@ -220,7 +220,7 @@ const makeColumns = () => {
             )
         }),
         columnHelper.accessor('report_status', {
-            size: 30,
+            size: 120,
             filterFn: (row, _, value: ReportStatus) => {
                 if (value == ReportStatus.Any) {
                     return true;

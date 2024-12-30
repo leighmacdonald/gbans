@@ -72,7 +72,7 @@ export const HeadingWithButtons: FC<HeadingWithButtonsProps> = ({
                 </Grid>
             )}
 
-            <Grid size="auto">{children}</Grid>
+            <Grid size="grow">{children}</Grid>
             {buttons && <Grid size="auto">{buttons}</Grid>}
         </Grid>
     );
