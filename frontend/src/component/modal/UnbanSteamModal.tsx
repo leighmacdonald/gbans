@@ -39,11 +39,6 @@ export const UnbanSteamModal = NiceModal.create(
             onSubmit: async ({ value }) => {
                 mutation.mutate(value.unban_reason);
             },
-            validators: {
-                onChange: z.object({
-                    unban_reason: z.string().min(4, 'Min length 4')
-                })
-            },
             defaultValues: {
                 unban_reason: ''
             }
@@ -67,18 +62,11 @@ export const UnbanSteamModal = NiceModal.create(
                             <Grid size={{ xs: 12 }}>
                                 <Field
                                     name={'unban_reason'}
+                                    validators={{
+                                        onChange: z.string().min(5)
+                                    }}
                                     children={(props) => {
-                                        return (
-                                            <TextFieldSimple
-                                                {...props}
-                                                error={props.state.meta.errors.length > 0}
-                                                errorText={props.state.meta.errors
-                                                    .map((e) => (e ? e.message : null))
-                                                    .filter((f) => f)
-                                                    .join(', ')}
-                                                label={'Unban Reason'}
-                                            />
-                                        );
+                                        return <TextFieldSimple {...props} label={'Unban Reason'} />;
                                     }}
                                 />
                             </Grid>

@@ -38,13 +38,6 @@ export const NewsEditModal = NiceModal.create(({ entry }: { entry?: NewsEntry })
         onSubmit: async ({ value }) => {
             mutation.mutate(value);
         },
-        validators: {
-            onChange: z.object({
-                title: z.string().min(5, 'Min length 5'),
-                body_md: z.string().min(10, 'Min length 10'),
-                is_published: z.boolean()
-            })
-        },
         defaultValues: {
             title: entry?.title ?? '',
             body_md: entry?.body_md ?? '',
@@ -77,6 +70,9 @@ export const NewsEditModal = NiceModal.create(({ entry }: { entry?: NewsEntry })
                         <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'body_md'}
+                                validators={{
+                                    onChange: z.string().min(10).default('')
+                                }}
                                 children={(props) => {
                                     return <MarkdownField {...props} label={'Body'} />;
                                 }}
@@ -85,15 +81,8 @@ export const NewsEditModal = NiceModal.create(({ entry }: { entry?: NewsEntry })
                         <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'is_published'}
-                                children={({ state, handleBlur, handleChange }) => {
-                                    return (
-                                        <CheckboxSimple
-                                            checked={state.value}
-                                            onChange={(_, v) => handleChange(v)}
-                                            onBlur={handleBlur}
-                                            label={'Is Published'}
-                                        />
-                                    );
+                                children={(props) => {
+                                    return <CheckboxSimple {...props} label={'Is Published'} />;
                                 }}
                             />
                         </Grid>

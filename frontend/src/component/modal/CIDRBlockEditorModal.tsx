@@ -52,14 +52,6 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
         onSubmit: async ({ value }) => {
             mutation.mutate(value);
         },
-        validators: {
-            onChange: z.object({
-                cidr_block_source_id: z.number(),
-                name: z.string().min(2),
-                url: z.string().url(),
-                enabled: z.boolean()
-            })
-        },
         defaultValues: {
             cidr_block_source_id: source?.cidr_block_source_id ?? 0,
             name: source?.name ?? '',
@@ -85,6 +77,9 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
                         <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'name'}
+                                validators={{
+                                    onChange: z.string().min(2)
+                                }}
                                 children={(props) => {
                                     return <TextFieldSimple {...props} label={'Source Name'} />;
                                 }}
@@ -92,6 +87,9 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
                             <Grid size={{ xs: 12 }}>
                                 <Field
                                     name={'url'}
+                                    validators={{
+                                        onChange: z.string().url()
+                                    }}
                                     children={(props) => {
                                         return <TextFieldSimple {...props} label={'Source URL'} />;
                                     }}
@@ -100,15 +98,11 @@ export const CIDRBlockEditorModal = NiceModal.create(({ source }: { source?: CID
                             <Grid size={{ xs: 12 }}>
                                 <Field
                                     name={'enabled'}
-                                    children={({ state, handleBlur, handleChange }) => {
-                                        return (
-                                            <CheckboxSimple
-                                                checked={state.value}
-                                                onChange={(_, v) => handleChange(v)}
-                                                onBlur={handleBlur}
-                                                label={'Enabled'}
-                                            />
-                                        );
+                                    validators={{
+                                        onChange: z.boolean()
+                                    }}
+                                    children={(props) => {
+                                        return <CheckboxSimple {...props} label={'Enabled'} />;
                                     }}
                                 />
                             </Grid>

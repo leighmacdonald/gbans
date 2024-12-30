@@ -154,7 +154,7 @@ function BanPage() {
                                 <FormControl fullWidth>
                                     <InputLabel id="appeal-status-label">Appeal Status</InputLabel>
                                     <Select<AppealState>
-                                        variant={'filled'}
+                                        variant={'outlined'}
                                         value={ban?.appeal_state}
                                         labelId={'appeal-status-label'}
                                         id={'appeal-status'}
@@ -241,11 +241,6 @@ function BanPage() {
                 body_md: value.body_md
             });
         },
-        validators: {
-            onChange: z.object({
-                body_md: z.string().min(2, 'Message must be at least 2 characters.')
-            })
-        },
         defaultValues: {
             body_md: ''
         }
@@ -287,6 +282,9 @@ function BanPage() {
                                     <Grid size={{ xs: 12 }}>
                                         <Field
                                             name={'body_md'}
+                                            validators={{
+                                                onChange: z.string().min(2)
+                                            }}
                                             children={(props) => {
                                                 return <MarkdownField {...props} label={'Message'} />;
                                             }}

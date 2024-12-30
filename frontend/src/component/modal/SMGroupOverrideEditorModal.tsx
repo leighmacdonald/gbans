@@ -6,7 +6,6 @@ import MenuItem from '@mui/material/MenuItem';
 import { useForm } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import 'video-react/dist/video-react.css';
-import { z } from 'zod';
 import {
     apiCreateSMGroupOverrides,
     apiSaveSMGroupOverrides,
@@ -48,13 +47,6 @@ export const SMGroupOverrideEditorModal = NiceModal.create(
         const { Field, Subscribe, handleSubmit, reset } = useForm({
             onSubmit: async ({ value }) => {
                 mutation.mutate(value);
-            },
-            validators: {
-                onChange: z.object({
-                    type: z.enum(['command', 'group']),
-                    name: z.string().min(1, 'Must supply at least one character for name'),
-                    access: z.enum(['allow', 'deny'])
-                })
             },
             defaultValues: {
                 type: override?.type ?? 'command',

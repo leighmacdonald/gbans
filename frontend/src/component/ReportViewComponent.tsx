@@ -128,11 +128,6 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
         onSubmit: async ({ value }) => {
             createMessageMutation.mutate(value);
         },
-        validators: {
-            onChange: z.object({
-                body_md: z.string().min(2)
-            })
-        },
         defaultValues: {
             body_md: ''
         }
@@ -315,6 +310,9 @@ export const ReportViewComponent = ({ report }: { report: ReportWithAuthor }): J
                                     <Grid size={{ xs: 12 }}>
                                         <Field
                                             name={'body_md'}
+                                            validators={{
+                                                onChange: z.string().min(2)
+                                            }}
                                             children={(props) => {
                                                 return <MarkdownField {...props} label={'Message'} fullwidth={true} />;
                                             }}

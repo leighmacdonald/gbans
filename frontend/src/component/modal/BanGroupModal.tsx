@@ -9,7 +9,7 @@ import { parseISO } from 'date-fns';
 import { z } from 'zod';
 import { apiCreateBanGroup, apiUpdateBanGroup, Duration, DurationCollection, GroupBanRecord } from '../../api';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
-import { makeValidateSteamIDCallback } from '../../util/validator/makeValidateSteamIDCallback.ts';
+import { makeSteamidValidators } from '../../util/validator/makeSteamidValidators.ts';
 import { Heading } from '../Heading';
 import { Buttons } from '../field/Buttons.tsx';
 import { DateTimeSimple } from '../field/DateTimeSimple.tsx';
@@ -41,7 +41,7 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
                         target_id: values.target_id,
                         valid_until: values.duration_custom ? parseISO(values.duration_custom) : undefined
                     });
-                    sendFlash('success', 'Updated group ban successfully');
+                    sendFlash('success', 'Updated CIDR ban successfully');
                     modal.resolve(ban_record);
                 } else {
                     const ban_record = await apiCreateBanGroup({
@@ -51,7 +51,7 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
                         target_id: values.target_id,
                         group_id: values.group_id
                     });
-                    sendFlash('success', 'Created group ban successfully');
+                    sendFlash('success', 'Created CIDR ban successfully');
                     modal.resolve(ban_record);
                 }
                 await modal.hide();
@@ -70,16 +70,6 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
                 duration_custom: value.duration_custom,
                 note: value.note
             });
-        },
-        validators: {
-            onChangeAsyncDebounceMs: 500,
-            onChangeAsync: z.object({
-                target_id: makeValidateSteamIDCallback(),
-                group_id: z.string(),
-                duration: z.nativeEnum(Duration),
-                duration_custom: z.string(),
-                note: z.string()
-            })
         },
         defaultValues: {
             target_id: existing ? existing.target_id : '',
@@ -107,11 +97,11 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
                         <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'target_id'}
+                                validators={makeSteamidValidators()}
                                 children={(props) => {
                                     return (
                                         <SteamIDField
                                             {...props}
-                                            defaultValue={props.state.value}
                                             label={'Target Steam ID'}
                                             fullwidth={true}
                                             disabled={Boolean(existing?.ban_group_id)}
@@ -123,27 +113,26 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
                         <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'group_id'}
+                                validators={{
+                                    onChange: z.string()
+                                }}
                                 children={(props) => {
-                                    return (
-                                        <TextFieldSimple
-                                            {...props}
-                                            value={props.state.value}
-                                            label={'Steam Group ID'}
-                                        />
-                                    );
+                                    return <TextFieldSimple {...props} label={'Steam Group ID'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'duration'}
+                                validators={{
+                                    onChange: z.nativeEnum(Duration)
+                                }}
                                 children={(props) => {
                                     return (
                                         <SelectFieldSimple
                                             {...props}
                                             label={'Duration'}
                                             fullwidth={true}
-                                            defaultValue={props.state.value}
                                             items={DurationCollection}
                                             renderMenu={(du) => {
                                                 return (
@@ -162,13 +151,7 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
                             <Field
                                 name={'duration_custom'}
                                 children={(props) => {
-                                    return (
-                                        <DateTimeSimple
-                                            {...props}
-                                            defaultValue={props.state.value}
-                                            label={'Custom Expire Date'}
-                                        />
-                                    );
+                                    return <DateTimeSimple {...props} label={'Custom Expire Date'} />;
                                 }}
                             />
                         </Grid>
@@ -176,16 +159,11 @@ export const BanGroupModal = NiceModal.create(({ existing }: { existing?: GroupB
                         <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'note'}
+                                validators={{
+                                    onChange: z.string()
+                                }}
                                 children={(props) => {
-                                    return (
-                                        <MarkdownField
-                                            {...props}
-                                            defaultValue={props.state.value}
-                                            multiline={true}
-                                            rows={10}
-                                            label={'Mod Notes'}
-                                        />
-                                    );
+                                    return <MarkdownField {...props} multiline={true} rows={10} label={'Mod Notes'} />;
                                 }}
                             />
                         </Grid>

@@ -40,16 +40,6 @@ export const IPWhitelistEditorModal = NiceModal.create(({ source }: { source?: W
         onSubmit: async ({ value }) => {
             mutation.mutate(value);
         },
-        validators: {
-            onChange: z.object({
-                address: z.string().refine((arg) => {
-                    const pieces = arg.split('/');
-                    const addr = pieces[0];
-                    const result = z.string().ip(addr).safeParse(addr);
-                    return result.success;
-                })
-            })
-        },
         defaultValues: {
             address: source?.address ?? ''
         }
@@ -71,6 +61,14 @@ export const IPWhitelistEditorModal = NiceModal.create(({ source }: { source?: W
                         <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'address'}
+                                validators={{
+                                    onChange: z.string().refine((arg) => {
+                                        const pieces = arg.split('/');
+                                        const addr = pieces[0];
+                                        const result = z.string().ip(addr).safeParse(addr);
+                                        return result.success;
+                                    })
+                                }}
                                 children={(props) => {
                                     return <TextFieldSimple {...props} label={'IP Addr'} />;
                                 }}

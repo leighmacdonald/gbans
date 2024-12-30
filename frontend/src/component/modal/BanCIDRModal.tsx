@@ -18,7 +18,7 @@ import {
     DurationCollection
 } from '../../api';
 import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
-import { makeValidateSteamIDCallback } from '../../util/validator/makeValidateSteamIDCallback.ts';
+import { makeSteamidValidators } from '../../util/validator/makeSteamidValidators.ts';
 import { Heading } from '../Heading';
 import { Buttons } from '../field/Buttons.tsx';
 import { DateTimeSimple } from '../field/DateTimeSimple.tsx';
@@ -85,18 +85,6 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                 cidr: value.cidr
             });
         },
-        validators: {
-            onChangeAsyncDebounceMs: 500,
-            onChangeAsync: z.object({
-                target_id: makeValidateSteamIDCallback(),
-                reason: z.nativeEnum(BanReason),
-                reason_text: z.string(),
-                duration: z.nativeEnum(Duration),
-                duration_custom: z.string(),
-                note: z.string(),
-                cidr: z.string()
-            })
-        },
         defaultValues: {
             target_id: existing ? existing.target_id : '',
             reason: existing ? existing.reason : BanReason.Cheating,
@@ -126,12 +114,12 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                         <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'target_id'}
+                                validators={makeSteamidValidators()}
                                 children={(props) => {
                                     return (
                                         <SteamIDField
                                             {...props}
-                                            defaultValue={props.state.value}
-                                            placeholder={'Target Steam ID'}
+                                            label={'Target Steam ID'}
                                             fullwidth={true}
                                             disabled={Boolean(existing?.net_id)}
                                         />
@@ -142,10 +130,11 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                         <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'cidr'}
+                                validators={{
+                                    onChange: z.string()
+                                }}
                                 children={(props) => {
-                                    return (
-                                        <TextFieldSimple {...props} value={props.state.value} label={'IP/CIDR Range'} />
-                                    );
+                                    return <TextFieldSimple {...props} label={'IP/CIDR Range'} />;
                                 }}
                             />
                         </Grid>
@@ -158,7 +147,6 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                                             {...props}
                                             label={'Reason'}
                                             fullwidth={true}
-                                            defaultValue={props.state.value}
                                             items={banReasonsCollection}
                                             renderMenu={(br) => {
                                                 return (
@@ -175,25 +163,37 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                         <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'reason_text'}
+                                validators={{
+                                    onSubmit: ({ value, fieldApi }) => {
+                                        if (fieldApi.form.getFieldValue('reason') != BanReason.Custom) {
+                                            if (value.length == 0) {
+                                                return undefined;
+                                            }
+                                            return 'Must use custom ban reason';
+                                        }
+                                        const result = z.string().min(5).safeParse(value);
+                                        if (!result.success) {
+                                            return result.error.errors.map((e) => e.message).join(',');
+                                        }
+
+                                        return undefined;
+                                    }
+                                }}
                                 children={(props) => {
-                                    return (
-                                        <TextFieldSimple
-                                            {...props}
-                                            defaultValue={props.state.value}
-                                            label={'Custom Ban Reason'}
-                                        />
-                                    );
+                                    return <TextFieldSimple {...props} label={'Custom Ban Reason'} />;
                                 }}
                             />
                         </Grid>
                         <Grid size={{ xs: 6 }}>
                             <Field
                                 name={'duration'}
+                                validators={{
+                                    onChange: z.nativeEnum(Duration)
+                                }}
                                 children={(props) => {
                                     return (
                                         <SelectFieldSimple
                                             {...props}
-                                            defaultValue={props.state.value}
                                             label={'Duration'}
                                             fullwidth={true}
                                             items={DurationCollection}
@@ -214,13 +214,7 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                             <Field
                                 name={'duration_custom'}
                                 children={(props) => {
-                                    return (
-                                        <DateTimeSimple
-                                            {...props}
-                                            defaultValue={props.state.value}
-                                            label={'Custom Expire Date'}
-                                        />
-                                    );
+                                    return <DateTimeSimple {...props} label={'Custom Expire Date'} />;
                                 }}
                             />
                         </Grid>
@@ -228,16 +222,11 @@ export const BanCIDRModal = NiceModal.create(({ existing }: { existing?: CIDRBan
                         <Grid size={{ xs: 12 }}>
                             <Field
                                 name={'note'}
+                                validators={{
+                                    onChange: z.string()
+                                }}
                                 children={(props) => {
-                                    return (
-                                        <MarkdownField
-                                            {...props}
-                                            multiline={true}
-                                            rows={10}
-                                            defaultValue={props.state.value}
-                                            label={'Mod Notes'}
-                                        />
-                                    );
+                                    return <MarkdownField {...props} multiline={true} rows={10} label={'Mod Notes'} />;
                                 }}
                             />
                         </Grid>
