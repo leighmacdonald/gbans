@@ -48,7 +48,7 @@ import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { findSelectedRow } from '../util/findSelectedRow.ts';
 import { findSelectedRows } from '../util/findSelectedRows.ts';
 import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
-import { renderDateTime } from '../util/text.tsx';
+import { renderDateTime } from '../util/time.ts';
 
 const filterSearchSchema = z.object({
     ...commonTableSearchSchema,

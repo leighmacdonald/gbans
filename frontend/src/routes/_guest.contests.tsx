@@ -20,7 +20,7 @@ import { TextLink } from '../component/TextLink.tsx';
 import { Title } from '../component/Title.tsx';
 import { checkFeatureEnabled } from '../util/features.ts';
 import { RowsPerPage } from '../util/table.ts';
-import { renderDateTime } from '../util/text.tsx';
+import { renderDateTime } from '../util/time.ts';
 
 export const Route = createFileRoute('/_guest/contests')({
     component: Contests,

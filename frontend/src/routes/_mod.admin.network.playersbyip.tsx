@@ -18,7 +18,7 @@ import { Title } from '../component/Title';
 import { Buttons } from '../component/field/Buttons.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
-import { renderDateTime } from '../util/text.tsx';
+import { renderDateTime } from '../util/time.ts';
 import { emptyOrNullString } from '../util/types.ts';
 
 const playersByIPSearchSchema = z.object({

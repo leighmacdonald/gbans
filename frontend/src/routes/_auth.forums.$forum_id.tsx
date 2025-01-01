@@ -28,7 +28,8 @@ import { AppError } from '../error.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors.ts';
 import { RowsPerPage } from '../util/table.ts';
-import { avatarHashToURL, renderDateTime } from '../util/text.tsx';
+import { avatarHashToURL } from '../util/text.tsx';
+import { renderDateTime } from '../util/time.ts';
 
 const forumQueryKey = (forum_id: string | number) => {
     return ['forum', { forum_id: String(forum_id) }];

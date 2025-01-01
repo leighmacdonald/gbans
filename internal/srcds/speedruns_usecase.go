@@ -16,6 +16,14 @@ type speedrunUsecase struct {
 	repo domain.SpeedrunRepository
 }
 
+func (u *speedrunUsecase) TopNOverall(ctx context.Context, count int) (map[string][]domain.Speedrun, error) {
+	if count <= 0 || count > 1000 {
+		return nil, domain.ErrValueOutOfRange
+	}
+
+	return u.repo.TopNOverall(ctx, count)
+}
+
 func (u *speedrunUsecase) ByID(ctx context.Context, speedrunID int) (domain.Speedrun, error) {
 	if speedrunID <= 0 {
 		return domain.Speedrun{}, domain.ErrValueOutOfRange

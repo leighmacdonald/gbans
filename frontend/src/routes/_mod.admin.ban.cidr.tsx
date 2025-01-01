@@ -29,7 +29,7 @@ import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { ModalBanCIDR, ModalUnbanCIDR } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { initColumnFilter, initPagination, isPermanentBan, makeCommonTableSearchSchema } from '../util/table.ts';
-import { renderDate } from '../util/text.tsx';
+import { renderDate } from '../util/time.ts';
 
 const banCIDRSearchSchema = z.object({
     ...makeCommonTableSearchSchema([

@@ -41,7 +41,7 @@ import {
 } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors.ts';
-import { renderDate } from '../util/text.tsx';
+import { renderDate } from '../util/time.ts';
 
 const ipHistorySearchSchema = z.object({
     sortColumn: z.enum(['person_connection_id', 'steam_id', 'created_on', 'ip_addr', 'server_id']).optional()

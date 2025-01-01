@@ -18,7 +18,7 @@ import { useUserFlashCtx } from '../../hooks/useUserFlashCtx.ts';
 import { Route } from '../../routes/_admin.admin.game-admins.tsx';
 import { logErr } from '../../util/errors.ts';
 import { initPagination, RowsPerPage } from '../../util/table.ts';
-import { renderDateTime } from '../../util/text.tsx';
+import { renderDateTime } from '../../util/time.ts';
 import { FullTable } from '../FullTable.tsx';
 import { Heading } from '../Heading';
 import { TableCellString } from '../TableCellString.tsx';

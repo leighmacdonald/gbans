@@ -37,7 +37,7 @@ import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors.ts';
 import { useScrollToLocation } from '../util/history.ts';
 import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
-import { renderDateTime } from '../util/text.tsx';
+import { renderDateTime } from '../util/time.ts';
 import { LoginPage } from './_guest.login.index.tsx';
 
 const forumThreadSearchSchema = z.object({

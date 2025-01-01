@@ -6,7 +6,7 @@ import Stack from '@mui/material/Stack';
 import { apiGetNewsLatest, NewsEntry } from '../api/news';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors';
-import { renderDate } from '../util/text.tsx';
+import { renderDate } from '../util/time.ts';
 import { MarkDownRenderer } from './MarkdownRenderer';
 import { SplitHeading } from './SplitHeading';
 

@@ -1,40 +1,4 @@
-import { formatDistance, parseISO, parseJSON } from 'date-fns';
-import format from 'date-fns/format';
-import { isAfter } from 'date-fns/fp';
 import { defaultAvatarHash, Person } from '../api';
-
-export const parseDateTime = (t: string): Date => {
-    return parseISO(t);
-};
-
-export const renderDateTime = (t: Date): string => {
-    return format(t, 'yyyy-MM-dd HH:mm');
-};
-
-export const renderDate = (t: Date): string => {
-    return format(t, 'yyyy-MM-dd');
-};
-
-export const renderTime = (t: Date): string => {
-    return format(t, 'HH:mm');
-};
-
-export const isValidSteamDate = (date: Date) => isAfter(new Date(2000, 0, 0), date);
-
-export const renderTimeDistance = (t1: Date | string, t2?: Date | string): string => {
-    if (typeof t1 === 'string') {
-        t1 = parseJSON(t1);
-    }
-    if (!t2) {
-        t2 = new Date();
-    }
-    if (typeof t2 === 'string') {
-        t2 = parseJSON(t2);
-    }
-    return formatDistance(t1, t2, {
-        addSuffix: true
-    });
-};
 
 export const filterPerson = (people: Person[], query: string): Person[] => {
     return people.filter((friend) => {

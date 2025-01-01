@@ -29,7 +29,7 @@ import { CheckboxSimple } from '../component/field/CheckboxSimple.tsx';
 import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { ModalBanGroup, ModalUnbanGroup } from '../component/modal';
 import { initColumnFilter, initPagination, isPermanentBan, makeCommonTableSearchSchema } from '../util/table.ts';
-import { renderDate } from '../util/text.tsx';
+import { renderDate } from '../util/time.ts';
 import { emptyOrNullString } from '../util/types.ts';
 import { makeSteamidValidatorsOptional } from '../util/validator/makeSteamidValidatorsOptional.ts';
 

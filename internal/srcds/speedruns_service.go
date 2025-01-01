@@ -28,8 +28,9 @@ func NewSpeedrunHandler(engine *gin.Engine, speedruns domain.SpeedrunUsecase, au
 	{
 		guest := guestGroup.Use(auth.AuthMiddleware(domain.PGuest))
 		// Groups
-		guest.GET("/api/speedruns/overall", handler.getOverall())
+		// guest.GET("/api/speedruns/overall", handler.getOverall())
 		guest.GET("/api/speedruns/map", handler.getLeaders())
+		guest.GET("/api/speedruns/overall/top", handler.getOverallTopN())
 		guest.GET("/api/speedruns/byid/:speedrun_id", handler.getSpeedrun())
 	}
 
@@ -59,11 +60,19 @@ func (s *speedrunHandler) postSpeedrun() gin.HandlerFunc {
 	}
 }
 
-func (s *speedrunHandler) getOverall() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		ctx.JSON(http.StatusOK, gin.H{})
-	}
-}
+//func (s *speedrunHandler) getOverall() gin.HandlerFunc {
+//	return func(ctx *gin.Context) {
+//		top, errTop := s.speedruns.TopNOverall(ctx, 3)
+//		if errTop != nil {
+//			slog.Error("Failed to load top speedruns", errTop)
+//			httphelper.HandleErrInternal(ctx)
+//
+//			return
+//		}
+//
+//		ctx.JSON(http.StatusOK, top)
+//	}
+//}
 
 func (s *speedrunHandler) getLeaders() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
@@ -96,5 +105,33 @@ func (s *speedrunHandler) getSpeedrun() gin.HandlerFunc {
 		}
 
 		ctx.JSON(http.StatusOK, speedrun)
+	}
+}
+
+func (s *speedrunHandler) getOverallTopN() gin.HandlerFunc {
+	var query struct {
+		Count int `json:"count"`
+	}
+
+	return func(ctx *gin.Context) {
+		if !httphelper.BindQuery(ctx, &query) {
+			return
+		}
+
+		top, errTop := s.speedruns.TopNOverall(ctx, query.Count)
+		if errTop != nil {
+			if errors.Is(errTop, domain.ErrValueOutOfRange) {
+				httphelper.HandleErrBadRequest(ctx)
+				slog.Warn("Got out of bounds top n overall speedruns value", log.ErrAttr(errTop))
+
+				return
+			}
+			httphelper.HandleErrInternal(ctx)
+			slog.Error("Failed to load top n overall speedruns", log.ErrAttr(errTop))
+
+			return
+		}
+
+		ctx.JSON(http.StatusOK, top)
 	}
 }

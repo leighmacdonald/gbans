@@ -1,4 +1,5 @@
-import { apiCall, transformCreatedAtDate } from './common.ts';
+import { transformCreatedAtDate } from '../util/time.ts';
+import { apiCall } from './common.ts';
 
 export interface GithubRelease {
     url: string;

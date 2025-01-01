@@ -1,5 +1,5 @@
-import { parseDateTime } from '../util/text.tsx';
-import { apiCall, TimeStamped, transformCreatedOnDate, transformTimeStampedDates } from './common';
+import { parseDateTime, TimeStamped, transformCreatedOnDate, transformTimeStampedDates } from '../util/time.ts';
+import { apiCall } from './common';
 
 export interface BaseServer {
     server_id: number;

@@ -31,7 +31,7 @@ import { TableCellStringHidden } from '../component/field/TableCellStringHidden.
 import { ModalServerEditor } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { commonTableSearchSchema, RowsPerPage } from '../util/table.ts';
-import { renderDateTime } from '../util/text.tsx';
+import { renderDateTime } from '../util/time.ts';
 
 const serversSearchSchema = z.object({
     ...commonTableSearchSchema,

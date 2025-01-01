@@ -1,4 +1,5 @@
-import { apiCall, TimeStamped, transformTimeStampedDates, transformTimeStampedDatesList } from './common';
+import { TimeStamped, transformTimeStampedDates, transformTimeStampedDatesList } from '../util/time.ts';
+import { apiCall } from './common';
 
 export interface NewsEntry extends TimeStamped {
     news_id: number;

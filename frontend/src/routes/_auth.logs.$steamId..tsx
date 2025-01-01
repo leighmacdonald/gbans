@@ -16,7 +16,7 @@ import { TextLink } from '../component/TextLink.tsx';
 import { Title } from '../component/Title';
 import { checkFeatureEnabled } from '../util/features.ts';
 import { RowsPerPage } from '../util/table.ts';
-import { renderDateTime } from '../util/text.tsx';
+import { renderDateTime } from '../util/time.ts';
 
 const matchSummarySchema = z.object({
     pageIndex: z.number().optional().catch(0),

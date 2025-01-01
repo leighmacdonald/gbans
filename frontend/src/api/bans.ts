@@ -1,14 +1,5 @@
-import { parseDateTime } from '../util/text.tsx';
-import {
-    apiCall,
-    BanASNQueryFilter,
-    BanCIDRQueryFilter,
-    BanGroupQueryFilter,
-    BanSteamQueryFilter,
-    TimeStamped,
-    transformTimeStampedDates,
-    transformTimeStampedDatesList
-} from './common';
+import { parseDateTime, TimeStamped, transformTimeStampedDates, transformTimeStampedDatesList } from '../util/time.ts';
+import { apiCall, BanASNQueryFilter, BanCIDRQueryFilter, BanGroupQueryFilter, BanSteamQueryFilter } from './common';
 import { BanAppealMessage } from './report';
 
 export enum AppealState {
