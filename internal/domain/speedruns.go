@@ -11,12 +11,14 @@ type SpeedrunRepository interface {
 	Query(ctx context.Context, query SpeedrunQuery) ([]Speedrun, error)
 	Save(ctx context.Context, details *Speedrun) error
 	ByID(ctx context.Context, speedrunID int) (Speedrun, error)
+	TopNOverall(ctx context.Context, count int) (map[string][]Speedrun, error)
 }
 
 type SpeedrunUsecase interface {
 	Save(ctx context.Context, details Speedrun) (Speedrun, error)
 	Query(ctx context.Context, query SpeedrunQuery) ([]Speedrun, error)
 	ByID(ctx context.Context, speedrunID int) (Speedrun, error)
+	TopNOverall(ctx context.Context, count int) (map[string][]Speedrun, error)
 }
 
 type SpeedrunInterval int
@@ -58,6 +60,7 @@ type SpeedrunPointCaptures struct {
 type Speedrun struct {
 	SpeedrunID    int                     `json:"speedrun_id"`
 	ServerID      int                     `json:"server_id"`
+	Rank          int                     `json:"rank"`
 	MapDetail     MapDetail               `json:"map_detail"`
 	PointCaptures []SpeedrunPointCaptures `json:"point_captures"`
 	Players       []SpeedrunParticipant   `json:"players"`

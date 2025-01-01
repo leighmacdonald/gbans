@@ -17,7 +17,7 @@ import {
 } from '@tanstack/react-table';
 import { PersonMessage } from '../api';
 import { stringToColour } from '../util/colours.ts';
-import { renderDateTime } from '../util/text.tsx';
+import { renderDateTime } from '../util/time.ts';
 import { DataTable } from './DataTable.tsx';
 import { IconButtonLink } from './IconButtonLink.tsx';
 import { PersonCell } from './PersonCell.tsx';

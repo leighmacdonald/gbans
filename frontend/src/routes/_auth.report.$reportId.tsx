@@ -44,7 +44,8 @@ import { SteamIDList } from '../component/SteamIDList.tsx';
 import { Title } from '../component/Title';
 import { ModalBanSteam } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
-import { avatarHashToURL, renderDateTime, renderTimeDistance } from '../util/text.tsx';
+import { avatarHashToURL } from '../util/text.tsx';
+import { renderDateTime, renderTimeDistance } from '../util/time.ts';
 
 export const Route = createFileRoute('/_auth/report/$reportId')({
     component: ReportView

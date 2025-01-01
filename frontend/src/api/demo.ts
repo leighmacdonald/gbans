@@ -1,4 +1,5 @@
-import { apiCall, transformCreatedOnDate } from './common';
+import { transformCreatedOnDate } from '../util/time.ts';
+import { apiCall } from './common';
 
 export interface DemoFile {
     demo_id: number;

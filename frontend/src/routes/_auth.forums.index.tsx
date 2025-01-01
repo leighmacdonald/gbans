@@ -28,7 +28,8 @@ import { ModalForumCategoryEditor, ModalForumForumEditor } from '../component/mo
 import { useAppInfoCtx } from '../contexts/AppInfoCtx.ts';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors.ts';
-import { avatarHashToURL, humanCount, renderDateTime } from '../util/text.tsx';
+import { avatarHashToURL, humanCount } from '../util/text.tsx';
+import { renderDateTime } from '../util/time.ts';
 
 export const Route = createFileRoute('/_auth/forums/')({
     component: ForumOverview

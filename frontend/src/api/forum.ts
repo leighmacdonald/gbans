@@ -1,5 +1,5 @@
-import { parseDateTime } from '../util/text.tsx';
-import { apiCall, PermissionLevel, TimeStamped, transformCreatedOnDate, transformTimeStampedDates } from './common';
+import { parseDateTime, TimeStamped, transformCreatedOnDate, transformTimeStampedDates } from '../util/time.ts';
+import { apiCall, PermissionLevel } from './common';
 
 export interface Forum extends TimeStamped {
     forum_id: number;

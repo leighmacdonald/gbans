@@ -78,4 +78,18 @@ func TestSubmitSpeedrun(t *testing.T) {
 	}
 	require.Equal(t, result.ServerID, result2.ServerID)
 	require.Equal(t, result.SpeedrunID, result2.SpeedrunID)
+
+	for range 20 {
+		var result3 domain.Speedrun
+		sr := genSpeedrun(24, 40)
+		sr.MapDetail.MapName = speedrun.MapDetail.MapName
+
+		testEndpointWithReceiver(t, router, http.MethodPost, "/api/sm/speedruns", sr, http.StatusOK, srcdsTokens(testServer), &result3)
+		require.Equal(t, strings.ToLower(speedrun.MapDetail.MapName), result.MapDetail.MapName)
+	}
+
+	top := map[string][]domain.Speedrun{}
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/speedruns/overall/top?count=10", nil, http.StatusOK,
+		nil, &top)
+	require.Len(t, top[result.MapDetail.MapName], 10)
 }

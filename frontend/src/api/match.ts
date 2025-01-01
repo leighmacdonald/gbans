@@ -1,6 +1,6 @@
 import { LazyResult } from '../util/table.ts';
-import { parseDateTime } from '../util/text.tsx';
-import { apiCall, MatchTimes, QueryFilter, transformMatchDates } from './common';
+import { parseDateTime } from '../util/time.ts';
+import { apiCall, QueryFilter } from './common';
 import { PlayerClass, Team } from './const';
 import { TeamScores } from './stats';
 
@@ -96,6 +96,11 @@ export interface MatchPlayer {
     weapons: MatchPlayerWeapon[];
 }
 
+export interface MatchTimes {
+    time_start: Date;
+    time_end: Date;
+}
+
 export interface MatchResult extends MatchTimes {
     match_id: string;
     server_id: number;
@@ -104,6 +109,17 @@ export interface MatchResult extends MatchTimes {
     team_scores: TeamScores;
     players: MatchPlayer[];
 }
+
+export const transformMatchDates = (item: MatchResult) => {
+    item.time_start = parseDateTime(item.time_start as unknown as string);
+    item.time_end = parseDateTime(item.time_end as unknown as string);
+    item.players = item.players.map((t) => {
+        t.time_start = parseDateTime(t.time_start as unknown as string);
+        t.time_end = parseDateTime(t.time_end as unknown as string);
+        return t;
+    });
+    return item;
+};
 
 export const apiGetMatch = async (match_id: string) => {
     const match = await apiCall<MatchResult>(`/api/log/${match_id}`, 'GET');

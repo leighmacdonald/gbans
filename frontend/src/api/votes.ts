@@ -1,5 +1,6 @@
 import { LazyResult } from '../util/table.ts';
-import { apiCall, QueryFilter, transformCreatedOnDate } from './common.ts';
+import { transformCreatedOnDate } from '../util/time.ts';
+import { apiCall, QueryFilter } from './common.ts';
 
 export type VoteResult = {
     server_id: number;

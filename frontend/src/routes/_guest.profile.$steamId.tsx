@@ -20,7 +20,8 @@ import { PlayerWeaponsStatListContainer } from '../component/PlayerWeaponsStatLi
 import { SteamIDList } from '../component/SteamIDList.tsx';
 import { Title } from '../component/Title';
 import { createExternalLinks } from '../util/history.ts';
-import { avatarHashToURL, isValidSteamDate, renderDateTime } from '../util/text.tsx';
+import { avatarHashToURL } from '../util/text.tsx';
+import { isValidSteamDate, renderDateTime } from '../util/time.ts';
 import { emptyOrNullString } from '../util/types.ts';
 
 export const Route = createFileRoute('/_guest/profile/$steamId')({

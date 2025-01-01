@@ -26,7 +26,7 @@ import { Title } from '../component/Title.tsx';
 import { ModalContestEditor } from '../component/modal';
 import { logErr } from '../util/errors.ts';
 import { initPagination, makeCommonTableSearchSchema } from '../util/table.ts';
-import { renderDateTime } from '../util/text.tsx';
+import { renderDateTime } from '../util/time.ts';
 
 const contestsSearchSchema = z.object({
     ...makeCommonTableSearchSchema(['contest_id', 'deleted']),

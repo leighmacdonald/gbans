@@ -10,7 +10,7 @@ import {
 } from '@tanstack/react-table';
 import { PersonConnection } from '../api';
 import { LazyResult } from '../util/table.ts';
-import { renderDateTime } from '../util/text.tsx';
+import { renderDateTime } from '../util/time.ts';
 import { DataTable } from './DataTable.tsx';
 import { TableCellSmall } from './TableCellSmall.tsx';
 

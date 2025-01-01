@@ -180,6 +180,62 @@ func (r *speedrunRepository) Query(_ context.Context, _ domain.SpeedrunQuery) ([
 	return []domain.Speedrun{}, nil
 }
 
+func (r *speedrunRepository) TopNOverall(ctx context.Context, count int) (map[string][]domain.Speedrun, error) {
+	const q = `
+		SELECT
+			*
+		FROM
+			(SELECT
+				 s.speedrun_id, s.server_id, s.category, s.duration, s.player_count, s.bot_count, s.created_on,
+				 rank() OVER (PARTITION BY s.map_id ORDER BY duration ) as rank,
+				 m.map_id, m.map_name, m.updated_on, m.created_on
+			 FROM speedrun s
+					  LEFT JOIN map m ON m.map_id = s.map_id
+			) s
+		WHERE s.rank <= $1
+	`
+	rows, errRows := r.db.Query(ctx, nil, q, count)
+	if errRows != nil {
+		return nil, r.db.DBErr(errRows)
+	}
+	defer rows.Next()
+
+	runs := map[string][]domain.Speedrun{}
+	for rows.Next() {
+		var sr domain.Speedrun
+		if err := rows.Scan(
+			&sr.SpeedrunID, &sr.ServerID, &sr.Category, &sr.Duration, &sr.PlayerCount, &sr.BotCount, &sr.CreatedOn,
+			&sr.Rank,
+			&sr.MapDetail.MapID, &sr.MapDetail.MapName, &sr.MapDetail.UpdatedOn, &sr.MapDetail.CreatedOn); err != nil {
+			return nil, r.db.DBErr(err)
+		}
+		if _, ok := runs[sr.MapDetail.MapName]; !ok {
+			runs[sr.MapDetail.MapName] = []domain.Speedrun{}
+		}
+
+		runs[sr.MapDetail.MapName] = append(runs[sr.MapDetail.MapName], sr)
+	}
+
+	// TODO this is quite expensive, cache or change to single query
+	for _, speedruns := range runs {
+		for i := range speedruns {
+			runners, errRunners := r.getRunners(ctx, speedruns[i].SpeedrunID)
+			if errRunners != nil {
+				return nil, errRunners
+			}
+			speedruns[i].Players = runners
+
+			captures, errCaptures := r.getCaptures(ctx, speedruns[i].SpeedrunID)
+			if errCaptures != nil {
+				return nil, errCaptures
+			}
+			speedruns[i].PointCaptures = captures
+		}
+	}
+
+	return runs, nil
+}
+
 func (r *speedrunRepository) ByID(ctx context.Context, speedrunID int) (domain.Speedrun, error) {
 	const q = `
 		SELECT s.speedrun_id, s.server_id, s.category, s.duration, s.player_count, s.bot_count, s.created_on,

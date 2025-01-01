@@ -1,4 +1,5 @@
-import { apiCall, PermissionLevel, TimeStamped } from './common';
+import { TimeStamped } from '../util/time.ts';
+import { apiCall, PermissionLevel } from './common';
 
 export interface Page extends TimeStamped {
     slug: string;

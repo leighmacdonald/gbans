@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import ElectricBoltIcon from '@mui/icons-material/ElectricBolt';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import HistoryIcon from '@mui/icons-material/History';
@@ -5,9 +6,10 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { createFileRoute, useLoaderData } from '@tanstack/react-router';
 import { z } from 'zod';
-import { getSpeedrunsOverall, SpeedrunResult } from '../api';
+import { getSpeedrunsTopOverall } from '../api';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { Title } from '../component/Title';
+import { renderDateTime, durationString } from '../util/time.ts';
 
 const demosSchema = z.object({
     map_name: z.string().optional(),
@@ -22,38 +24,14 @@ export const Route = createFileRoute('/_guest/speedruns')({
     // },
     validateSearch: (search) => demosSchema.parse(search),
     loader: async ({ context }) => {
-        try {
-            return (
-                (await context.queryClient.ensureQueryData({
-                    queryKey: ['speedruns_overall'],
-                    queryFn: getSpeedrunsOverall
-                })) ?? []
-            );
-        } catch {
-            return [
-                { map_name: 'pl_basdfasdf_adfsaf' },
-                { map_name: 'pl_basdfasdf_adfsaf' },
-                { map_name: 'pl_basdfasdf_adfsaf' },
-                { map_name: 'pl_basdfasdf_adfsaf' },
-                { map_name: 'pl_basdfasdf_adfsaf' },
-                { map_name: 'pl_basdfasdf_adfsaf' },
-                { map_name: 'pl_basdfasdf_adfsaf' },
-                { map_name: 'pl_basdfasdf_adfsaf' },
-                { map_name: 'pl_basdfasdf_adfsaf' },
-                { map_name: 'pl_basdfasdf_adfsaf' },
-                { map_name: 'pl_basdfasdf_adfsaf' },
-                { map_name: 'pl_basdfasdf_adfsaf' },
-                { map_name: 'pl_basdfasdf_adfsaf' },
-                { map_name: 'pl_basdfasdf_adfsaf' },
-                { map_name: 'pl_basdfasdf_adfsaf' },
-                { map_name: 'pl_basdfasdf_adfsaf' },
-                { map_name: 'pl_basdfasdf_adfsaf' },
-                { map_name: 'pl_basdfasdf_adfsaf' },
-                { map_name: 'pl_basdfasdf_adfsaf' },
-                { map_name: 'pl_basdfasdf_adfsaf' },
-                { map_name: 'pl_basdfasdf_adfsaf' }
-            ];
-        }
+        return (
+            (await context.queryClient.ensureQueryData({
+                queryKey: ['speedruns_overall'],
+                queryFn: () => {
+                    return getSpeedrunsTopOverall(5);
+                }
+            })) ?? {}
+        );
     }
 });
 
@@ -61,7 +39,11 @@ function Speedruns() {
     // const navigate = useNavigate({ from: Route.fullPath });
     // const search = Route.useSearch();
     //
-    const speedruns = useLoaderData({ from: '/_guest/speedruns' }) as SpeedrunResult[];
+    const speedruns = useLoaderData({ from: '/_guest/speedruns' });
+
+    const keys = useMemo(() => {
+        return Object.keys(speedruns).sort();
+    }, [speedruns]);
 
     return (
         <>
@@ -83,11 +65,20 @@ function Speedruns() {
                     </ContainerWithHeader>
                 </Grid>
 
-                {speedruns.map((sr) => {
+                {keys.map((map_name) => {
                     return (
                         <Grid xs={6} md={4}>
-                            <ContainerWithHeader title={sr.map_name} iconLeft={<EmojiEventsIcon />}>
-                                {sr.map_name}
+                            <ContainerWithHeader title={map_name} iconLeft={<EmojiEventsIcon />}>
+                                {speedruns[map_name].map((sr) => {
+                                    return (
+                                        <Grid container>
+                                            <Grid xs={1}>{sr.rank}</Grid>
+                                            <Grid xs={4}>{durationString(sr.duration)}</Grid>
+                                            <Grid xs={3}>{sr.players.length}</Grid>
+                                            <Grid xs={4}>{renderDateTime(sr.created_on)}</Grid>
+                                        </Grid>
+                                    );
+                                })}
                             </ContainerWithHeader>
                         </Grid>
                     );

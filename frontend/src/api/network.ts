@@ -1,4 +1,5 @@
-import { apiCall, EmptyBody, TimeStamped, transformTimeStampedDates, transformTimeStampedDatesList } from './common';
+import { TimeStamped, transformTimeStampedDates, transformTimeStampedDatesList } from '../util/time';
+import { apiCall, EmptyBody } from './common';
 
 export interface CIDRBlockSource extends TimeStamped {
     cidr_block_source_id: number;

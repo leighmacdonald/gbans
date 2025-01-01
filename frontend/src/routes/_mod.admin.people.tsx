@@ -26,7 +26,7 @@ import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { ModalPersonEditor } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { commonTableSearchSchema, LazyResult, RowsPerPage } from '../util/table.ts';
-import { renderDate, renderDateTime } from '../util/text.tsx';
+import { renderDate, renderDateTime } from '../util/time.ts';
 import { makeSteamidValidatorsOptional } from '../util/validator/makeSteamidValidatorsOptional.ts';
 
 const peopleSearchSchema = z.object({

@@ -1,10 +1,8 @@
 import { AppError, ErrorCode } from '../error.tsx';
 import { readAccessToken } from '../util/auth/readAccessToken.ts';
 import { logErr } from '../util/errors.ts';
-import { parseDateTime } from '../util/text.tsx';
 import { emptyOrNullString } from '../util/types';
 import { AppealState } from './bans';
-import { MatchResult } from './match';
 
 export enum PermissionLevel {
     Banned = 0,
@@ -151,63 +149,6 @@ export const apiCall = async <TResponse = EmptyBody | null, TRequestBody = Recor
 };
 
 export class ValidationException extends Error {}
-
-export interface MatchTimes {
-    time_start: Date;
-    time_end: Date;
-}
-
-export interface DateRange {
-    date_start: Date;
-    date_end: Date;
-}
-
-export const transformDateRange = <T>(item: T & DateRange) => {
-    item.date_end = parseDateTime(item.date_end as unknown as string);
-    item.date_start = parseDateTime(item.date_start as unknown as string);
-
-    return item;
-};
-
-export interface TimeStamped {
-    created_on: Date;
-    updated_on: Date;
-    valid_until?: Date;
-}
-
-export const transformCreatedOnDate = <T>(item: T & { created_on: Date }) => {
-    item.created_on = parseDateTime(item.created_on as unknown as string);
-    return item;
-};
-
-export const transformCreatedAtDate = <T>(item: T & { created_at: Date }) => {
-    item.created_at = parseDateTime(item.created_at as unknown as string);
-    return item;
-};
-
-export const transformTimeStampedDates = <T>(item: T & TimeStamped) => {
-    item.created_on = parseDateTime(item.created_on as unknown as string);
-    item.updated_on = parseDateTime(item.updated_on as unknown as string);
-    if (item.valid_until != undefined) {
-        item.valid_until = parseDateTime(item.valid_until as unknown as string);
-    }
-    return item;
-};
-
-export const transformTimeStampedDatesList = <T>(items: (T & TimeStamped)[]) => {
-    return items ? items.map(transformTimeStampedDates) : items;
-};
-
-export const transformMatchDates = (item: MatchResult) => {
-    item.time_start = parseDateTime(item.time_start as unknown as string);
-    item.time_end = parseDateTime(item.time_end as unknown as string);
-    item.players = item.players.map((t) => {
-        t.time_start = parseDateTime(t.time_start as unknown as string);
-        t.time_end = parseDateTime(t.time_end as unknown as string);
-        return t;
-    });
-    return item;
-};
 
 export interface QueryFilter {
     offset?: number;

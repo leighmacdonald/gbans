@@ -107,7 +107,8 @@ const AppInfoProvider = ({ children }: PropsWithChildren) => {
         contests_enabled: false,
         chatlogs_enabled: false,
         demos_enabled: false,
-        news_enabled: false
+        news_enabled: false,
+        speedruns_enabled: false
     });
 
     useQuery({

@@ -9,7 +9,7 @@ import { getChangelogs } from '../api/app.ts';
 import { ContainerWithHeader } from '../component/ContainerWithHeader.tsx';
 import { MarkDownRenderer } from '../component/MarkdownRenderer.tsx';
 import { tf2Fonts } from '../theme.ts';
-import { renderDateTime } from '../util/text.tsx';
+import { renderDateTime } from '../util/time.ts';
 
 export const Route = createFileRoute('/_guest/changelog')({
     component: Changelogs

@@ -20,7 +20,7 @@ import { Title } from '../component/Title';
 import { ModalConfirm, ModalNewsEditor } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { initPagination, makeCommonTableSearchSchema } from '../util/table.ts';
-import { renderDateTime } from '../util/text.tsx';
+import { renderDateTime } from '../util/time.ts';
 
 const newsSchema = z.object({
     ...makeCommonTableSearchSchema(['news_id', 'title', 'created_on', 'updated_on']),

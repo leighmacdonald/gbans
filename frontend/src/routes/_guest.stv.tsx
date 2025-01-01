@@ -28,7 +28,8 @@ import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { stringToColour } from '../util/colours.ts';
 import { checkFeatureEnabled } from '../util/features.ts';
 import { initColumnFilter, initPagination, makeCommonTableSearchSchema } from '../util/table.ts';
-import { humanFileSize, renderDateTime } from '../util/text.tsx';
+import { humanFileSize } from '../util/text.tsx';
+import { renderDateTime } from '../util/time.ts';
 import { makeSteamidValidatorsOptional } from '../util/validator/makeSteamidValidatorsOptional.ts';
 
 const demosSchema = z.object({

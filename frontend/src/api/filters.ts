@@ -1,5 +1,6 @@
+import { transformCreatedOnDate } from '../util/time.ts';
 import { BanReason } from './bans';
-import { apiCall, transformCreatedOnDate } from './common';
+import { apiCall } from './common';
 
 export enum FilterAction {
     Kick,

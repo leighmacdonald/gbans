@@ -30,7 +30,7 @@ import { TextFieldSimple } from '../component/field/TextFieldSimple.tsx';
 import { ModalBanASN, ModalUnbanASN } from '../component/modal';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { initColumnFilter, initPagination, isPermanentBan, makeCommonTableSearchSchema } from '../util/table.ts';
-import { renderDate } from '../util/text.tsx';
+import { renderDate } from '../util/time.ts';
 import { makeSteamidValidatorsOptional } from '../util/validator/makeSteamidValidatorsOptional.ts';
 
 const banASNSearchSchema = z.object({

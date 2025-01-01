@@ -50,7 +50,7 @@ import { ModalBanSteam, ModalUnbanSteam } from '../component/modal';
 import { AppError, ErrorCode } from '../error.tsx';
 import { useUserFlashCtx } from '../hooks/useUserFlashCtx.ts';
 import { logErr } from '../util/errors.ts';
-import { renderDateTime, renderTimeDistance } from '../util/text.tsx';
+import { renderDateTime, renderTimeDistance } from '../util/time.ts';
 
 export const Route = createFileRoute('/_auth/ban/$ban_id')({
     component: BanPage,
