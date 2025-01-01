@@ -54,7 +54,7 @@ func (r networkRepository) QueryConnections(ctx context.Context, opts domain.Con
 
 	var messages []domain.PersonConnection
 
-	rows, errQuery := r.db.QueryBuilder(ctx, builder.Where(constraints))
+	rows, errQuery := r.db.QueryBuilder(ctx, nil, builder.Where(constraints))
 	if errQuery != nil {
 		return nil, 0, r.db.DBErr(errQuery)
 	}
@@ -96,7 +96,7 @@ func (r networkRepository) QueryConnections(ctx context.Context, opts domain.Con
 		return []domain.PersonConnection{}, 0, nil
 	}
 
-	count, errCount := r.db.GetCount(ctx, r.db.
+	count, errCount := r.db.GetCount(ctx, nil, r.db.
 		Builder().
 		Select("count(c.person_connection_id)").
 		From("person_connections c").
@@ -126,7 +126,7 @@ func (r networkRepository) GetPersonIPHistory(ctx context.Context, sid64 steamid
 		Limit(limit)
 	builder = builder.Where(sq.Eq{"pc.steam_id": sid64.Int64()})
 
-	rows, errQuery := r.db.QueryBuilder(ctx, builder)
+	rows, errQuery := r.db.QueryBuilder(ctx, nil, builder)
 	if errQuery != nil {
 		return nil, r.db.DBErr(errQuery)
 	}
@@ -161,7 +161,7 @@ func (r networkRepository) AddConnectionHistory(ctx context.Context, conn *domai
 		RETURNING person_connection_id`
 
 	if errQuery := r.db.
-		QueryRow(ctx, query, conn.SteamID.Int64(), conn.IPAddr.String(), conn.PersonaName, conn.CreatedOn, conn.ServerID).
+		QueryRow(ctx, nil, query, conn.SteamID.Int64(), conn.IPAddr.String(), conn.PersonaName, conn.CreatedOn, conn.ServerID).
 		Scan(&conn.PersonConnectionID); errQuery != nil {
 		return r.db.DBErr(errQuery)
 	}
@@ -170,7 +170,7 @@ func (r networkRepository) AddConnectionHistory(ctx context.Context, conn *domai
 }
 
 func (r networkRepository) GetPlayerMostRecentIP(ctx context.Context, steamID steamid.SteamID) net.IP {
-	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
+	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.
 		Builder().
 		Select("c.ip_addr").
 		From("person_connections c").
@@ -200,7 +200,7 @@ func (r networkRepository) GetASNRecordsByNum(ctx context.Context, asNum int64) 
 		From("net_asn").
 		Where(sq.Eq{"as_num": asNum})
 
-	rows, errQuery := r.db.QueryBuilder(ctx, query)
+	rows, errQuery := r.db.QueryBuilder(ctx, nil, query)
 	if errQuery != nil {
 		return nil, r.db.DBErr(errQuery)
 	}
@@ -232,7 +232,7 @@ func (r networkRepository) GetASNRecordByIP(ctx context.Context, ipAddr netip.Ad
 	var asnRecord domain.NetworkASN
 
 	if errQuery := r.db.
-		QueryRow(ctx, query, ipAddr.String()).
+		QueryRow(ctx, nil, query, ipAddr.String()).
 		Scan(&asnRecord.CIDR, &asnRecord.ASNum, &asnRecord.ASName); errQuery != nil {
 		return asnRecord, r.db.DBErr(errQuery)
 	}
@@ -248,7 +248,7 @@ func (r networkRepository) GetLocationRecord(ctx context.Context, ipAddr netip.A
 
 	var record domain.NetworkLocation
 
-	if errQuery := r.db.QueryRow(ctx, query, ipAddr.String()).
+	if errQuery := r.db.QueryRow(ctx, nil, query, ipAddr.String()).
 		Scan(&record.CIDR, &record.CountryCode, &record.CountryName, &record.RegionName,
 			&record.CityName, &record.LatLong.Latitude, &record.LatLong.Longitude); errQuery != nil {
 		return record, r.db.DBErr(errQuery)
@@ -266,7 +266,7 @@ func (r networkRepository) GetProxyRecord(ctx context.Context, ipAddr netip.Addr
 
 	var proxyRecord domain.NetworkProxy
 
-	if errQuery := r.db.QueryRow(ctx, query, ipAddr.String()).
+	if errQuery := r.db.QueryRow(ctx, nil, query, ipAddr.String()).
 		Scan(&proxyRecord.CIDR, &proxyRecord.ProxyType, &proxyRecord.CountryCode, &proxyRecord.CountryName, &proxyRecord.RegionName, &proxyRecord.CityName, &proxyRecord.ISP,
 			&proxyRecord.Domain, &proxyRecord.UsageType, &proxyRecord.ASN, &proxyRecord.AS, &proxyRecord.LastSeen, &proxyRecord.Threat); errQuery != nil {
 		return proxyRecord, r.db.DBErr(errQuery)
@@ -297,7 +297,7 @@ func (r networkRepository) LoadASN(ctx context.Context, truncate bool, records [
 	c, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	batchResults := r.db.SendBatch(c, &batch)
+	batchResults := r.db.SendBatch(c, nil, &batch)
 	if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
 		return errors.Join(errCloseBatch, domain.ErrCloseBatch)
 	}
@@ -327,7 +327,7 @@ func (r networkRepository) LoadLocation(ctx context.Context, truncate bool, reco
 	c, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	batchResults := r.db.SendBatch(c, &batch)
+	batchResults := r.db.SendBatch(c, nil, &batch)
 	if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
 		return errors.Join(errCloseBatch, domain.ErrCloseBatch)
 	}
@@ -359,7 +359,7 @@ func (r networkRepository) LoadProxies(ctx context.Context, truncate bool, recor
 	c, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	batchResults := r.db.SendBatch(c, &batch)
+	batchResults := r.db.SendBatch(c, nil, &batch)
 	if errCloseBatch := batchResults.Close(); errCloseBatch != nil {
 		return errors.Join(errCloseBatch, domain.ErrCloseBatch)
 	}

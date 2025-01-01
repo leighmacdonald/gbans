@@ -1,4 +1,4 @@
-package test_test
+package test
 
 import (
 	"fmt"
@@ -18,7 +18,7 @@ func TestBansCIDR(t *testing.T) {
 
 	// Ensure no bans exist
 	var bansEmpty []domain.BannedCIDRPerson
-	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans/cidr", nil, http.StatusOK, modCreds, &bansEmpty)
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans/cidr", nil, http.StatusOK, &authTokens{user: modCreds}, &bansEmpty)
 	require.Empty(t, bansEmpty)
 
 	// Create a ban
@@ -32,7 +32,7 @@ func TestBansCIDR(t *testing.T) {
 	}
 
 	var fetchedBan domain.BannedCIDRPerson
-	testEndpointWithReceiver(t, router, http.MethodPost, "/api/bans/cidr/create", banReq, http.StatusCreated, modCreds, &fetchedBan)
+	testEndpointWithReceiver(t, router, http.MethodPost, "/api/bans/cidr/create", banReq, http.StatusCreated, &authTokens{user: modCreds}, &fetchedBan)
 
 	require.Equal(t, banReq.TargetIDField.TargetID, fetchedBan.TargetID.String())
 	require.True(t, fetchedBan.ValidUntil.After(time.Now()))
@@ -43,7 +43,7 @@ func TestBansCIDR(t *testing.T) {
 
 	// Ensure it's in the ban collection
 	var bans []domain.BanCIDR
-	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans/cidr", nil, http.StatusOK, modCreds, &bans)
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans/cidr", nil, http.StatusOK, &authTokens{user: modCreds}, &bans)
 	require.NotEmpty(t, bans)
 
 	updateReq := domain.RequestBanCIDRUpdate{
@@ -58,7 +58,7 @@ func TestBansCIDR(t *testing.T) {
 	// Update the ban
 	var updatedBan domain.BannedCIDRPerson
 	testEndpointWithReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/bans/cidr/%d", fetchedBan.NetID),
-		updateReq, http.StatusOK, modCreds, &updatedBan)
+		updateReq, http.StatusOK, &authTokens{user: modCreds}, &updatedBan)
 
 	require.Equal(t, updateReq.TargetID, updatedBan.TargetID)
 	require.Equal(t, updateReq.Reason, updatedBan.Reason)
@@ -69,15 +69,15 @@ func TestBansCIDR(t *testing.T) {
 
 	// Delete the ban
 	testEndpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/bans/cidr/%d", updatedBan.NetID),
-		domain.RequestUnban{UnbanReasonText: "test unban"}, http.StatusOK, modCreds)
+		domain.RequestUnban{UnbanReasonText: "test unban"}, http.StatusOK, &authTokens{user: modCreds})
 
 	// Ensure it was deleted
-	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans/cidr", nil, http.StatusOK, modCreds, &bans)
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans/cidr", nil, http.StatusOK, &authTokens{user: modCreds}, &bans)
 	require.NotContains(t, bans, updatedBan)
 
 	// Try to delete non existent ban
 	testEndpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/bans/cidr/%d", updatedBan.NetID),
-		domain.RequestUnban{UnbanReasonText: "test unban"}, http.StatusNotFound, modCreds)
+		domain.RequestUnban{UnbanReasonText: "test unban"}, http.StatusNotFound, &authTokens{user: modCreds})
 }
 
 func TestBansCIDRPermissions(t *testing.T) {

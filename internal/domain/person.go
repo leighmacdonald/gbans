@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid/v5"
+	"github.com/jackc/pgx/v5"
 	"github.com/leighmacdonald/steamid/v4/steamid"
 	"github.com/leighmacdonald/steamweb/v2"
 )
@@ -17,14 +18,14 @@ type SteamMember interface {
 }
 
 type PersonUsecase interface {
-	DropPerson(ctx context.Context, steamID steamid.SteamID) error
-	SavePerson(ctx context.Context, person *Person) error
+	DropPerson(ctx context.Context, transaction pgx.Tx, steamID steamid.SteamID) error
+	SavePerson(ctx context.Context, transaction pgx.Tx, person *Person) error
 	QueryProfile(ctx context.Context, query string) (ProfileResponse, error)
-	GetPersonBySteamID(ctx context.Context, sid64 steamid.SteamID) (Person, error)
-	GetPeopleBySteamID(ctx context.Context, steamIDs steamid.Collection) (People, error)
+	GetPersonBySteamID(ctx context.Context, transaction pgx.Tx, sid64 steamid.SteamID) (Person, error)
+	GetPeopleBySteamID(ctx context.Context, transaction pgx.Tx, steamIDs steamid.Collection) (People, error)
 	GetSteamsAtAddress(ctx context.Context, addr net.IP) (steamid.Collection, error)
-	GetPeople(ctx context.Context, filter PlayerQuery) (People, int64, error)
-	GetOrCreatePersonBySteamID(ctx context.Context, sid64 steamid.SteamID) (Person, error)
+	GetPeople(ctx context.Context, transaction pgx.Tx, filter PlayerQuery) (People, int64, error)
+	GetOrCreatePersonBySteamID(ctx context.Context, transaction pgx.Tx, sid64 steamid.SteamID) (Person, error)
 	GetPersonByDiscordID(ctx context.Context, discordID string) (Person, error)
 	GetExpiredProfiles(ctx context.Context, limit uint64) ([]Person, error)
 	GetPersonMessageByID(ctx context.Context, personMessageID int64) (PersonMessage, error)
@@ -32,21 +33,21 @@ type PersonUsecase interface {
 	GetSteamIDsByGroups(ctx context.Context, privileges []Privilege) (steamid.Collection, error)
 	GetPersonSettings(ctx context.Context, steamID steamid.SteamID) (PersonSettings, error)
 	SavePersonSettings(ctx context.Context, user PersonInfo, req PersonSettingsUpdate) (PersonSettings, error)
-	SetSteam(ctx context.Context, sid64 steamid.SteamID, discordID string) error
-	SetPermissionLevel(ctx context.Context, steamID steamid.SteamID, level Privilege) error
-	UpdateProfiles(ctx context.Context, people People) (int, error)
+	SetSteam(ctx context.Context, transaction pgx.Tx, sid64 steamid.SteamID, discordID string) error
+	SetPermissionLevel(ctx context.Context, transaction pgx.Tx, steamID steamid.SteamID, level Privilege) error
+	UpdateProfiles(ctx context.Context, transaction pgx.Tx, people People) (int, error)
 }
 
 type PersonRepository interface {
-	DropPerson(ctx context.Context, steamID steamid.SteamID) error
-	SavePerson(ctx context.Context, person *Person) error
-	GetPersonBySteamID(ctx context.Context, sid64 steamid.SteamID) (Person, error)
-	GetPeopleBySteamID(ctx context.Context, steamIDs steamid.Collection) (People, error)
+	DropPerson(ctx context.Context, transaction pgx.Tx, steamID steamid.SteamID) error
+	SavePerson(ctx context.Context, transaction pgx.Tx, person *Person) error
+	GetPersonBySteamID(ctx context.Context, transaction pgx.Tx, sid64 steamid.SteamID) (Person, error)
+	GetPeopleBySteamID(ctx context.Context, transaction pgx.Tx, steamIDs steamid.Collection) (People, error)
 	GetSteamsAtAddress(ctx context.Context, addr net.IP) (steamid.Collection, error)
 	GetSteamIDsByGroups(ctx context.Context, privileges []Privilege) (steamid.Collection, error)
-	GetPeople(ctx context.Context, filter PlayerQuery) (People, int64, error)
+	GetPeople(ctx context.Context, transaction pgx.Tx, filter PlayerQuery) (People, int64, error)
 	GetPersonByDiscordID(ctx context.Context, discordID string) (Person, error)
-	GetExpiredProfiles(ctx context.Context, limit uint64) ([]Person, error)
+	GetExpiredProfiles(ctx context.Context, transaction pgx.Tx, limit uint64) ([]Person, error)
 	GetPersonMessageByID(ctx context.Context, personMessageID int64) (PersonMessage, error)
 	GetSteamIDsAbove(ctx context.Context, privilege Privilege) (steamid.Collection, error)
 	GetPersonSettings(ctx context.Context, steamID steamid.SteamID) (PersonSettings, error)

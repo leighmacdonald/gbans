@@ -20,7 +20,7 @@ func NewWikiRepository(database database.Database) domain.WikiRepository {
 func (r *wikiRepository) GetWikiPageBySlug(ctx context.Context, slug string) (domain.WikiPage, error) {
 	var page domain.WikiPage
 
-	row, errQuery := r.db.QueryRowBuilder(ctx, r.db.
+	row, errQuery := r.db.QueryRowBuilder(ctx, nil, r.db.
 		Builder().
 		Select("slug", "body_md", "revision", "created_on", "updated_on", "permission_level").
 		From("wiki").
@@ -39,7 +39,7 @@ func (r *wikiRepository) GetWikiPageBySlug(ctx context.Context, slug string) (do
 }
 
 func (r *wikiRepository) DeleteWikiPageBySlug(ctx context.Context, slug string) error {
-	if errExec := r.db.ExecDeleteBuilder(ctx, r.db.
+	if errExec := r.db.ExecDeleteBuilder(ctx, nil, r.db.
 		Builder().
 		Delete("wiki").
 		Where(sq.Eq{"slug": slug})); errExec != nil {
@@ -50,7 +50,7 @@ func (r *wikiRepository) DeleteWikiPageBySlug(ctx context.Context, slug string) 
 }
 
 func (r *wikiRepository) SaveWikiPage(ctx context.Context, page *domain.WikiPage) error {
-	errQueryRow := r.db.ExecInsertBuilder(ctx, r.db.
+	errQueryRow := r.db.ExecInsertBuilder(ctx, nil, r.db.
 		Builder().
 		Insert("wiki").
 		Columns("slug", "body_md", "revision", "created_on", "updated_on", "permission_level").

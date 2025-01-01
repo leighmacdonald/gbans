@@ -160,12 +160,12 @@ func (u voteUsecase) Start(ctx context.Context) {
 
 				delete(active, evt.ServerID)
 
-				source, errSource := u.persons.GetOrCreatePersonBySteamID(ctx, result.SourceID)
+				source, errSource := u.persons.GetOrCreatePersonBySteamID(ctx, nil, result.SourceID)
 				if errSource != nil {
 					slog.Error("Failed to load vote source", log.ErrAttr(errSource), slog.String("steam_id", result.SourceID.String()))
 				}
 
-				target, errTarget := u.persons.GetOrCreatePersonBySteamID(ctx, result.SourceID)
+				target, errTarget := u.persons.GetOrCreatePersonBySteamID(ctx, nil, result.SourceID)
 				if errTarget != nil {
 					slog.Error("Failed to load vote target", log.ErrAttr(errSource), slog.String("steam_id", result.TargetID.String()))
 				}

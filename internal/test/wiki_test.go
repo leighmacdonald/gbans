@@ -1,4 +1,4 @@
-package test_test
+package test
 
 import (
 	"net/http"
@@ -36,9 +36,9 @@ func TestSaveWikiPageBySlugAuthed(t *testing.T) {
 	page := domain.NewWikiPage(stringutil.SecureRandomString(10), stringutil.SecureRandomString(500))
 
 	var createdPage domain.WikiPage
-	testEndpointWithReceiver(t, router, http.MethodPost, "/api/wiki/slug", page, http.StatusCreated, tokens, &createdPage)
+	testEndpointWithReceiver(t, router, http.MethodPost, "/api/wiki/slug", page, http.StatusCreated, &authTokens{user: tokens}, &createdPage)
 
 	var receivedPage domain.WikiPage
-	testEndpointWithReceiver(t, router, http.MethodGet, "/api/wiki/slug/"+page.Slug, page, http.StatusOK, tokens, &receivedPage)
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/wiki/slug/"+page.Slug, page, http.StatusOK, &authTokens{user: tokens}, &receivedPage)
 	require.Equal(t, page.BodyMD, receivedPage.BodyMD)
 }

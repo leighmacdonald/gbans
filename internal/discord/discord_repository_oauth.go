@@ -27,13 +27,13 @@ func (d discordOAuthRepository) SaveUserDetail(ctx context.Context, detail domai
 				              publicflags = $5, mfa_enabled = $6, premium_type = $7, updated_on = $9
 				`
 
-	return d.db.DBErr(d.db.Exec(ctx, query, detail.SteamID.Int64(), detail.ID, detail.Username, detail.Avatar,
+	return d.db.DBErr(d.db.Exec(ctx, nil, query, detail.SteamID.Int64(), detail.ID, detail.Username, detail.Avatar,
 		detail.PublicFlags, detail.MfaEnabled, detail.PremiumType, detail.CreatedOn, detail.UpdatedOn,
 	))
 }
 
 func (d discordOAuthRepository) GetUserDetail(ctx context.Context, steamID steamid.SteamID) (domain.DiscordUserDetail, error) {
-	row, errRow := d.db.QueryRowBuilder(ctx, d.db.Builder().
+	row, errRow := d.db.QueryRowBuilder(ctx, nil, d.db.Builder().
 		Select("discord_id", "username", "avatar",
 			"publicflags", "mfa_enabled", "premium_type", "created_on", "updated_on").
 		From("discord_user").
@@ -55,7 +55,7 @@ func (d discordOAuthRepository) GetUserDetail(ctx context.Context, steamID steam
 }
 
 func (d discordOAuthRepository) DeleteUserDetail(ctx context.Context, steamID steamid.SteamID) error {
-	return d.db.DBErr(d.db.ExecDeleteBuilder(ctx, d.db.Builder().
+	return d.db.DBErr(d.db.ExecDeleteBuilder(ctx, nil, d.db.Builder().
 		Delete("discord_user").
 		Where(sq.Eq{"steam_id": steamID})))
 }
@@ -70,13 +70,13 @@ func (d discordOAuthRepository) SaveTokens(ctx context.Context, creds domain.Dis
 		DO UPDATE SET discord_id = $2, access_token= $3, refresh_token = $4,
 			expires_in = $5, scope = $6, token_type = $7, updated_on = $9`
 
-	return d.db.DBErr(d.db.Exec(ctx, query, creds.SteamID.Int64(), creds.DiscordID, creds.AccessToken, creds.RefreshToken,
+	return d.db.DBErr(d.db.Exec(ctx, nil, query, creds.SteamID.Int64(), creds.DiscordID, creds.AccessToken, creds.RefreshToken,
 		creds.ExpiresIn, creds.Scope, creds.TokenType, creds.CreatedOn, creds.UpdatedOn,
 	))
 }
 
 func (d discordOAuthRepository) GetTokens(ctx context.Context, steamID steamid.SteamID) (domain.DiscordCredential, error) {
-	row, errRow := d.db.QueryRowBuilder(ctx, d.db.Builder().
+	row, errRow := d.db.QueryRowBuilder(ctx, nil, d.db.Builder().
 		Select("discord_id", "access_token", "refresh_token",
 			"expires_in", "scope", "token_type", "created_on", "updated_on").
 		From("auth_discord").
@@ -106,7 +106,7 @@ func (d discordOAuthRepository) DeleteTokens(ctx context.Context, steamID steami
 		return d.db.DBErr(errQuery)
 	}
 
-	return d.db.Exec(ctx, query, vars...)
+	return d.db.Exec(ctx, nil, query, vars...)
 }
 
 func (d discordOAuthRepository) OldAuths(ctx context.Context) ([]domain.DiscordCredential, error) {
@@ -114,7 +114,7 @@ func (d discordOAuthRepository) OldAuths(ctx context.Context) ([]domain.DiscordC
                           expires_in, scope, token_type, created_on, updated_on FROM auth_discord
 					WHERE to_timestamp(extract(epoch from updated_on) + expires_in) < (now()) -- + interval '7 days');`
 
-	rows, errRows := d.db.Query(ctx, query)
+	rows, errRows := d.db.Query(ctx, nil, query)
 	if errRows != nil {
 		return nil, d.db.DBErr(errRows)
 	}

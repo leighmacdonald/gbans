@@ -1,10 +1,11 @@
 //nolint:gochecknoglobals
-package test_test
+package test
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -23,6 +24,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/asset"
 	"github.com/leighmacdonald/gbans/internal/auth"
 	"github.com/leighmacdonald/gbans/internal/ban"
+	"github.com/leighmacdonald/gbans/internal/blocklist"
 	"github.com/leighmacdonald/gbans/internal/chat"
 	"github.com/leighmacdonald/gbans/internal/config"
 	"github.com/leighmacdonald/gbans/internal/database"
@@ -39,6 +41,7 @@ import (
 	"github.com/leighmacdonald/gbans/internal/person"
 	"github.com/leighmacdonald/gbans/internal/report"
 	"github.com/leighmacdonald/gbans/internal/servers"
+	"github.com/leighmacdonald/gbans/internal/srcds"
 	"github.com/leighmacdonald/gbans/internal/state"
 	"github.com/leighmacdonald/gbans/internal/steamgroup"
 	"github.com/leighmacdonald/gbans/internal/votes"
@@ -57,6 +60,7 @@ var (
 	testServer     domain.Server
 	testBan        domain.BannedSteamPerson
 	testTarget     domain.Person
+	blocklistUC    domain.BlocklistUsecase
 	configUC       domain.ConfigUsecase
 	wikiUC         domain.WikiUsecase
 	personUC       domain.PersonUsecase
@@ -79,6 +83,8 @@ var (
 	patreonUC      domain.PatreonUsecase
 	reportUC       domain.ReportUsecase
 	serversUC      domain.ServersUsecase
+	speedrunsUC    domain.SpeedrunUsecase
+	srcdsUC        domain.SRCDSUsecase
 	stateUC        domain.StateUsecase
 	votesUC        domain.VoteUsecase
 	votesRepo      domain.VoteRepository
@@ -88,30 +94,38 @@ var (
 
 func TestMain(m *testing.M) {
 	slog.SetDefault(slog.New(slog.NewTextHandler(io.Discard, nil)))
-
+	var dsn string
 	testCtx, cancel := context.WithTimeout(context.Background(), time.Minute*2)
 	defer cancel()
 
-	testDB, errStore := newDB(testCtx)
-	if errStore != nil {
-		panic(errStore)
+	internalDB := os.Getenv("TEST_DB_DSN") == ""
+	if internalDB {
+		testDB, errStore := newDB(testCtx)
+		if errStore != nil {
+			panic(errStore)
+		}
+
+		defer func() {
+			termCtx, termCancel := context.WithTimeout(context.Background(), time.Second*30)
+			defer termCancel()
+
+			if errTerm := testDB.Terminate(termCtx); errTerm != nil {
+				panic(fmt.Sprintf("Failed to terminate test container: %v", errTerm))
+			}
+		}()
+		dsn = testDB.dsn
+		dbContainer = testDB
+	} else {
+		// assumes some data already exists
+		dsn = os.Getenv("TEST_DB_DSN")
 	}
 
-	defer func() {
-		termCtx, termCancel := context.WithTimeout(context.Background(), time.Second*30)
-		defer termCancel()
-
-		if errTerm := testDB.Terminate(termCtx); errTerm != nil {
-			panic(fmt.Sprintf("Failed to terminate test container: %v", errTerm))
-		}
-	}()
-
-	databaseConn := database.New(testDB.dsn, true, false)
+	databaseConn := database.New(dsn, true, false)
 	if err := databaseConn.Connect(testCtx); err != nil {
 		panic(err)
 	}
 
-	conf := makeTestConfig(testDB.dsn)
+	conf := makeTestConfig(dsn)
 	eventBroadcaster := fp.NewBroadcaster[logparse.EventType, logparse.ServerEvent]()
 	weaponsMap := fp.NewMutexMap[logparse.Weapon, int]()
 
@@ -155,30 +169,38 @@ func TestMain(m *testing.M) {
 	votesRepo = votes.NewVoteRepository(databaseConn)
 	votesUC = votes.NewVoteUsecase(votesRepo, personUC, matchUC, notificationUC, configUC, eventBroadcaster)
 	appealUC = appeal.NewAppealUsecase(appeal.NewAppealRepository(databaseConn), banSteamUC, personUC, notificationUC, configUC)
-	dbContainer = testDB
+	speedrunsUC = srcds.NewSpeedrunUsecase(srcds.NewSpeedrunRepository(databaseConn, personUC))
+	blocklistUC = blocklist.NewBlocklistUsecase(blocklist.NewBlocklistRepository(databaseConn), banSteamUC, banGroupUC)
 
-	server, errServer := serversUC.Save(context.Background(), domain.RequestServerUpdate{
-		ServerName:      stringutil.SecureRandomString(20),
-		ServerNameShort: stringutil.SecureRandomString(5),
-		Host:            "1.2.3.4",
-		Port:            27015,
-		ReservedSlots:   8,
-		Password:        stringutil.SecureRandomString(8),
-		RCON:            stringutil.SecureRandomString(8),
-		Lat:             10,
-		Lon:             10,
-		CC:              "de",
-		Region:          "eu",
-		IsEnabled:       true,
-		EnableStats:     false,
-		LogSecret:       23456789,
-	})
+	if internalDB {
+		server, errServer := serversUC.Save(context.Background(), domain.RequestServerUpdate{
+			ServerName:      stringutil.SecureRandomString(20),
+			ServerNameShort: stringutil.SecureRandomString(5),
+			Host:            "1.2.3.4",
+			Port:            27015,
+			ReservedSlots:   8,
+			Password:        stringutil.SecureRandomString(8),
+			RCON:            stringutil.SecureRandomString(8),
+			Lat:             10,
+			Lon:             10,
+			CC:              "de",
+			Region:          "eu",
+			IsEnabled:       true,
+			EnableStats:     false,
+			LogSecret:       23456789,
+		})
 
-	if errServer != nil {
-		panic(errStore)
+		if errServer != nil && !errors.Is(errServer, domain.ErrDuplicate) {
+			panic(errServer)
+		}
+		testServer = server
+	} else {
+		srvs, _, errServer := serversUC.Servers(context.Background(), domain.ServerQueryFilter{})
+		if len(srvs) == 0 || errServer != nil {
+			panic("no servers exist, please create at least one before testing")
+		}
+		testServer = srvs[0]
 	}
-
-	testServer = server
 
 	getOwner()
 
@@ -201,7 +223,7 @@ func TestMain(m *testing.M) {
 		EvadeOk:        true,
 	})
 
-	if errBan != nil {
+	if errBan != nil && !errors.Is(errBan, domain.ErrDuplicate) {
 		panic(errBan)
 	}
 
@@ -236,12 +258,16 @@ func testRouter() *gin.Engine {
 	appeal.NewAppealHandler(router, appealUC, authUC)
 	wordfilter.NewWordFilterHandler(router, configUC, wordFilterUC, chatUC, authUC)
 	person.NewPersonHandler(router, configUC, personUC, authUC)
+	srcds.NewSRCDSHandler(router, srcdsUC, serversUC, personUC, assetUC, reportUC, banSteamUC, networkUC, banGroupUC,
+		demoUC, authUC, banASNUC, banNetUC, configUC, notificationUC, stateUC, blocklistUC)
+	blocklist.NewBlocklistHandler(router, blocklistUC, networkUC, authUC)
+	srcds.NewSpeedrunHandler(router, speedrunsUC, authUC, configUC)
 
 	return router
 }
 
 func testEndpointWithReceiver(t *testing.T, router *gin.Engine, method string,
-	path string, body any, expectedStatus int, tokens *domain.UserTokens, receiver any,
+	path string, body any, expectedStatus int, tokens *authTokens, receiver any,
 ) {
 	t.Helper()
 
@@ -253,7 +279,12 @@ func testEndpointWithReceiver(t *testing.T, router *gin.Engine, method string,
 	}
 }
 
-func testEndpoint(t *testing.T, router *gin.Engine, method string, path string, body any, expectedStatus int, tokens *domain.UserTokens) *httptest.ResponseRecorder {
+type authTokens struct {
+	user           *domain.UserTokens
+	serverPassword string
+}
+
+func testEndpoint(t *testing.T, router *gin.Engine, method string, path string, body any, expectedStatus int, tokens *authTokens) *httptest.ResponseRecorder {
 	t.Helper()
 
 	reqCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
@@ -286,18 +317,22 @@ func testEndpoint(t *testing.T, router *gin.Engine, method string, path string, 
 	}
 
 	if tokens != nil {
-		request.AddCookie(&http.Cookie{
-			Name:     domain.FingerprintCookieName,
-			Value:    tokens.Fingerprint,
-			Path:     "/api",
-			Domain:   "example.com",
-			Expires:  time.Now().AddDate(0, 0, 1),
-			MaxAge:   0,
-			Secure:   false,
-			HttpOnly: false,
-			SameSite: http.SameSiteStrictMode,
-		})
-		request.Header.Add("Authorization", "Bearer "+tokens.Access)
+		if tokens.serverPassword != "" {
+			request.Header.Add("Authorization", tokens.serverPassword)
+		} else if tokens.user != nil {
+			request.AddCookie(&http.Cookie{
+				Name:     domain.FingerprintCookieName,
+				Value:    tokens.user.Fingerprint,
+				Path:     "/api",
+				Domain:   "example.com",
+				Expires:  time.Now().AddDate(0, 0, 1),
+				MaxAge:   0,
+				Secure:   false,
+				HttpOnly: false,
+				SameSite: http.SameSiteStrictMode,
+			})
+			request.Header.Add("Authorization", "Bearer "+tokens.user.Access)
+		}
 	}
 
 	router.ServeHTTP(recorder, request)
@@ -308,14 +343,14 @@ func testEndpoint(t *testing.T, router *gin.Engine, method string, path string, 
 }
 
 func createTestPerson(sid steamid.SteamID, level domain.Privilege) domain.Person {
-	player, err := personUC.GetOrCreatePersonBySteamID(context.Background(), sid)
+	player, err := personUC.GetOrCreatePersonBySteamID(context.Background(), nil, sid)
 	if err != nil {
 		panic(err)
 	}
 
 	player.PermissionLevel = level
 
-	if errSave := personUC.SavePerson(context.Background(), &player); errSave != nil {
+	if errSave := personUC.SavePerson(context.Background(), nil, &player); errSave != nil {
 		panic(errSave)
 	}
 

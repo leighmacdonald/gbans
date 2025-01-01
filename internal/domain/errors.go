@@ -167,4 +167,5 @@ var (
 	ErrFrontendRoutes           = errors.New("failed to initialize frontend asset routes")
 	ErrPathInvalid              = errors.New("invalid path specified")
 	ErrDemoLoad                 = errors.New("could not load demo file")
+	ErrValueOutOfRange          = errors.New("value out of range")
 )

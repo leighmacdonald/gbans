@@ -73,7 +73,7 @@ func refreshFiltersCmd() *cobra.Command {
 			defer logCloser()
 
 			if //goland:noinspection ALL
-			errDelete := dbUsecase.Exec(ctx, "DELETE FROM person_messages_filter"); errDelete != nil {
+			errDelete := dbUsecase.Exec(ctx, nil, "DELETE FROM person_messages_filter"); errDelete != nil {
 				slog.Error("Failed to delete existing", log.ErrAttr(errDelete))
 
 				return
@@ -114,7 +114,7 @@ func refreshFiltersCmd() *cobra.Command {
 
 			matches := 0
 
-			admin, errAdmin := personUsecase.GetPersonBySteamID(ctx, steamid.New(conf.Owner))
+			admin, errAdmin := personUsecase.GetPersonBySteamID(ctx, nil, steamid.New(conf.Owner))
 			if errAdmin != nil {
 				slog.Error("Failed to load admin user", log.ErrAttr(errAdmin))
 

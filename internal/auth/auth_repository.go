@@ -31,25 +31,25 @@ func (r authRepository) SavePersonAuth(ctx context.Context, auth *domain.PersonA
 		return r.db.DBErr(errQuery)
 	}
 
-	return r.db.DBErr(r.db.QueryRow(ctx, query, args...).Scan(&auth.PersonAuthID))
+	return r.db.DBErr(r.db.QueryRow(ctx, nil, query, args...).Scan(&auth.PersonAuthID))
 }
 
 func (r authRepository) DeletePersonAuth(ctx context.Context, authID int64) error {
-	return r.db.DBErr(r.db.ExecDeleteBuilder(ctx, r.db.
+	return r.db.DBErr(r.db.ExecDeleteBuilder(ctx, nil, r.db.
 		Builder().
 		Delete("person_auth").
 		Where(sq.Eq{"person_auth_id": authID})))
 }
 
 func (r authRepository) PrunePersonAuth(ctx context.Context) error {
-	return r.db.DBErr(r.db.ExecDeleteBuilder(ctx, r.db.
+	return r.db.DBErr(r.db.ExecDeleteBuilder(ctx, nil, r.db.
 		Builder().
 		Delete("person_auth").
 		Where(sq.Gt{"created_on + interval '1 month'": time.Now()})))
 }
 
 func (r authRepository) GetPersonAuthByFingerprint(ctx context.Context, fingerprint string, auth *domain.PersonAuth) error {
-	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
+	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.
 		Builder().
 		Select("person_auth_id", "steam_id", "ip_addr", "refresh_token", "created_on").
 		From("person_auth").

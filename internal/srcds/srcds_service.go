@@ -164,7 +164,7 @@ func (s *srcdsHandler) onAPICheckPlayer() gin.HandlerFunc {
 		}
 
 		if banState.BanID != 0 {
-			player, errPlayer := s.persons.GetOrCreatePersonBySteamID(ctx, steamID)
+			player, errPlayer := s.persons.GetOrCreatePersonBySteamID(ctx, nil, steamID)
 			if errPlayer != nil {
 				slog.Error("Failed to load or create player on connect")
 				ctx.JSON(http.StatusOK, defaultValue)
@@ -1054,7 +1054,7 @@ func (s *srcdsHandler) onAPIPostPingMod() gin.HandlerFunc {
 
 		ctx.JSON(http.StatusOK, gin.H{"client": req.Client, "message": "Moderators have been notified"})
 
-		author, err := s.persons.GetOrCreatePersonBySteamID(ctx, req.SteamID)
+		author, err := s.persons.GetOrCreatePersonBySteamID(ctx, nil, req.SteamID)
 		if err != nil {
 			slog.Error("Failed to load user", log.ErrAttr(err))
 

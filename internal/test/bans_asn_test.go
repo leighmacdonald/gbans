@@ -1,4 +1,4 @@
-package test_test
+package test
 
 import (
 	"fmt"
@@ -18,7 +18,7 @@ func TestBansASN(t *testing.T) {
 
 	// Ensure no bans exist
 	var bansEmpty []domain.BanASN
-	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans/asn", nil, http.StatusOK, modCreds, &bansEmpty)
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans/asn", nil, http.StatusOK, &authTokens{user: modCreds}, &bansEmpty)
 	require.Empty(t, bansEmpty)
 
 	// Create a ban
@@ -33,7 +33,7 @@ func TestBansASN(t *testing.T) {
 	}
 
 	var fetchedBan domain.BannedASNPerson
-	testEndpointWithReceiver(t, router, http.MethodPost, "/api/bans/asn/create", banReq, http.StatusCreated, modCreds, &fetchedBan)
+	testEndpointWithReceiver(t, router, http.MethodPost, "/api/bans/asn/create", banReq, http.StatusCreated, &authTokens{user: modCreds}, &fetchedBan)
 
 	require.Equal(t, banReq.SourceIDField.SourceID, fetchedBan.SourceID.String())
 	require.Equal(t, banReq.TargetIDField.TargetID, fetchedBan.TargetID.String())
@@ -45,7 +45,7 @@ func TestBansASN(t *testing.T) {
 
 	// Ensure it's in the ban collection
 	var bans []domain.BanASN
-	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans/asn", nil, http.StatusOK, modCreds, &bans)
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans/asn", nil, http.StatusOK, &authTokens{user: modCreds}, &bans)
 	require.NotEmpty(t, bans)
 
 	updateReq := domain.RequestBanASNUpdate{
@@ -61,7 +61,7 @@ func TestBansASN(t *testing.T) {
 	// Update the ban
 	var updatedBan domain.BannedASNPerson
 	testEndpointWithReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/bans/asn/%d", fetchedBan.BanASNId),
-		updateReq, http.StatusOK, modCreds, &updatedBan)
+		updateReq, http.StatusOK, &authTokens{user: modCreds}, &updatedBan)
 
 	require.Equal(t, updateReq.TargetID, updatedBan.TargetID.String())
 	require.Equal(t, updateReq.Reason, updatedBan.Reason)
@@ -72,11 +72,11 @@ func TestBansASN(t *testing.T) {
 
 	// Delete the ban
 	testEndpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/bans/asn/%d", updatedBan.BanASNId),
-		domain.RequestUnban{UnbanReasonText: "test unban"}, http.StatusOK, modCreds)
+		domain.RequestUnban{UnbanReasonText: "test unban"}, http.StatusOK, &authTokens{user: modCreds})
 
 	// Try to delete non existent bam
 	testEndpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/bans/asn/%d", updatedBan.BanASNId),
-		domain.RequestUnban{UnbanReasonText: "test unban"}, http.StatusNotFound, modCreds)
+		domain.RequestUnban{UnbanReasonText: "test unban"}, http.StatusNotFound, &authTokens{user: modCreds})
 }
 
 func TestBansASNPermissions(t *testing.T) {

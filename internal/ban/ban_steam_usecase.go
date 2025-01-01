@@ -141,7 +141,7 @@ func (s banSteamUsecase) Ban(ctx context.Context, curUser domain.UserProfile, or
 		return ban, errDuration
 	}
 
-	author, errAuthor := s.persons.GetPersonBySteamID(ctx, sid)
+	author, errAuthor := s.persons.GetPersonBySteamID(ctx, nil, sid)
 	if errAuthor != nil {
 		return ban, errAuthor
 	}
@@ -216,7 +216,7 @@ func (s banSteamUsecase) Ban(ctx context.Context, curUser domain.UserProfile, or
 		}
 	}
 
-	target, err := s.persons.GetOrCreatePersonBySteamID(ctx, banSteam.TargetID)
+	target, err := s.persons.GetOrCreatePersonBySteamID(ctx, nil, banSteam.TargetID)
 	if err != nil {
 		return ban, errors.Join(err, domain.ErrFetchPerson)
 	}
@@ -261,7 +261,7 @@ func (s banSteamUsecase) Unban(ctx context.Context, targetSID steamid.SteamID, r
 		return false, errors.Join(errSave, domain.ErrSaveBan)
 	}
 
-	person, err := s.persons.GetPersonBySteamID(ctx, targetSID)
+	person, err := s.persons.GetPersonBySteamID(ctx, nil, targetSID)
 	if err != nil {
 		return false, errors.Join(err, domain.ErrFetchPerson)
 	}

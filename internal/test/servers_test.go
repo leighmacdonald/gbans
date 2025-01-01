@@ -1,4 +1,4 @@
-package test_test
+package test
 
 import (
 	"fmt"
@@ -16,11 +16,11 @@ func TestServers(t *testing.T) {
 	user := loginUser(getUser())
 
 	var servers []domain.Server
-	testEndpointWithReceiver(t, router, http.MethodGet, "/api/servers_admin", nil, http.StatusOK, owner, &servers)
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/servers_admin", nil, http.StatusOK, &authTokens{user: owner}, &servers)
 	require.Len(t, servers, 1)
 
 	var safeServers []domain.ServerInfoSafe
-	testEndpointWithReceiver(t, router, http.MethodGet, "/api/servers", nil, http.StatusOK, user, &safeServers)
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/servers", nil, http.StatusOK, &authTokens{user: user}, &safeServers)
 	require.Len(t, safeServers, 1)
 
 	newServer := domain.RequestServerUpdate{
@@ -41,7 +41,7 @@ func TestServers(t *testing.T) {
 	}
 
 	var server domain.Server
-	testEndpointWithReceiver(t, router, http.MethodPost, "/api/servers", newServer, http.StatusOK, owner, &server)
+	testEndpointWithReceiver(t, router, http.MethodPost, "/api/servers", newServer, http.StatusOK, &authTokens{user: owner}, &server)
 
 	require.Equal(t, newServer.ServerNameShort, server.ShortName)
 	require.Equal(t, newServer.ServerName, server.Name)
@@ -58,10 +58,10 @@ func TestServers(t *testing.T) {
 	require.Equal(t, newServer.EnableStats, server.EnableStats)
 	require.Equal(t, newServer.LogSecret, server.LogSecret)
 
-	testEndpointWithReceiver(t, router, http.MethodGet, "/api/servers_admin", nil, http.StatusOK, owner, &servers)
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/servers_admin", nil, http.StatusOK, &authTokens{user: owner}, &servers)
 	require.Len(t, servers, 2)
 
-	testEndpointWithReceiver(t, router, http.MethodGet, "/api/servers", nil, http.StatusOK, user, &safeServers)
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/servers", nil, http.StatusOK, &authTokens{user: user}, &safeServers)
 	require.Len(t, safeServers, 2)
 
 	update := domain.RequestServerUpdate{
@@ -82,7 +82,7 @@ func TestServers(t *testing.T) {
 	}
 
 	var updated domain.Server
-	testEndpointWithReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/servers/%d", server.ServerID), update, http.StatusOK, owner, &updated)
+	testEndpointWithReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/servers/%d", server.ServerID), update, http.StatusOK, &authTokens{user: owner}, &updated)
 
 	require.Equal(t, update.ServerNameShort, updated.ShortName)
 	require.Equal(t, update.ServerName, updated.Name)
@@ -99,9 +99,9 @@ func TestServers(t *testing.T) {
 	require.Equal(t, update.EnableStats, updated.EnableStats)
 	require.Equal(t, update.LogSecret, updated.LogSecret)
 
-	testEndpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/servers/%d", server.ServerID), nil, http.StatusOK, owner)
-	testEndpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/servers/%d", server.ServerID), nil, http.StatusNotFound, owner)
-	testEndpoint(t, router, http.MethodDelete, "/api/servers/xx", nil, http.StatusBadRequest, owner)
+	testEndpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/servers/%d", server.ServerID), nil, http.StatusOK, &authTokens{user: owner})
+	testEndpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/servers/%d", server.ServerID), nil, http.StatusNotFound, &authTokens{user: owner})
+	testEndpoint(t, router, http.MethodDelete, "/api/servers/xx", nil, http.StatusBadRequest, &authTokens{user: owner})
 }
 
 func TestServersPermissions(t *testing.T) {

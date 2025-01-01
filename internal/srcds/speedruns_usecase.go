@@ -16,6 +16,14 @@ type speedrunUsecase struct {
 	repo domain.SpeedrunRepository
 }
 
+func (u *speedrunUsecase) ByID(ctx context.Context, speedrunID int) (domain.Speedrun, error) {
+	if speedrunID <= 0 {
+		return domain.Speedrun{}, domain.ErrValueOutOfRange
+	}
+
+	return u.repo.ByID(ctx, speedrunID)
+}
+
 func (u *speedrunUsecase) Save(ctx context.Context, details domain.Speedrun) (domain.Speedrun, error) {
 	if len(details.PointCaptures) == 0 {
 		return details, domain.ErrInsufficientDetails
@@ -23,7 +31,7 @@ func (u *speedrunUsecase) Save(ctx context.Context, details domain.Speedrun) (do
 
 	var validPlayers []domain.SpeedrunParticipant //nolint:prealloc
 	for _, player := range details.Players {
-		if int64(details.Duration)/2 > int64(player.Duration) {
+		if int64(details.Duration)/4 > int64(player.Duration) {
 			continue
 		}
 

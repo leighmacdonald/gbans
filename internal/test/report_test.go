@@ -1,4 +1,4 @@
-package test_test
+package test
 
 import (
 	"fmt"
@@ -30,7 +30,7 @@ func TestReport(t *testing.T) {
 		PersonMessageID: 0,
 	}
 	var report domain.Report
-	testEndpointWithReceiver(t, router, http.MethodPost, "/api/report", req, http.StatusCreated, sourceCreds, &report)
+	testEndpointWithReceiver(t, router, http.MethodPost, "/api/report", req, http.StatusCreated, &authTokens{user: sourceCreds}, &report)
 	require.EqualValues(t, req.SourceID, report.SourceID)
 	require.EqualValues(t, req.TargetID, report.TargetID)
 	require.EqualValues(t, req.Description, report.Description)
@@ -42,55 +42,55 @@ func TestReport(t *testing.T) {
 
 	// Make sure we can query it
 	var fetched domain.Report
-	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/report/%d", report.ReportID), nil, http.StatusOK, sourceCreds, &fetched)
+	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/report/%d", report.ReportID), nil, http.StatusOK, &authTokens{user: sourceCreds}, &fetched)
 	require.EqualValues(t, report, fetched)
 
 	// Make sure we can query all
 	var fetchedColl []domain.Report
-	testEndpointWithReceiver(t, router, http.MethodGet, "/api/reports/user", nil, http.StatusOK, sourceCreds, &fetchedColl)
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/reports/user", nil, http.StatusOK, &authTokens{user: sourceCreds}, &fetchedColl)
 	require.NotEmpty(t, fetchedColl)
 
 	var fetchedModColl []domain.Report
-	testEndpointWithReceiver(t, router, http.MethodPost, "/api/reports", domain.ReportQueryFilter{Deleted: true}, http.StatusOK, mods, &fetchedModColl)
+	testEndpointWithReceiver(t, router, http.MethodPost, "/api/reports", domain.ReportQueryFilter{Deleted: true}, http.StatusOK, &authTokens{user: mods}, &fetchedModColl)
 	require.NotEmpty(t, fetchedModColl)
 
 	// Make sure others cant query other users reports
-	testEndpointWithReceiver(t, router, http.MethodGet, "/api/reports/user", nil, http.StatusOK, otherUser, &fetchedColl)
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/reports/user", nil, http.StatusOK, &authTokens{user: otherUser}, &fetchedColl)
 	require.Empty(t, fetchedColl)
 
 	// Change the status
 	statusReq := domain.RequestReportStatusUpdate{Status: domain.ClosedWithAction}
-	testEndpoint(t, router, http.MethodPost, fmt.Sprintf("/api/report_status/%d", report.ReportID), statusReq, http.StatusOK, sourceCreds)
+	testEndpoint(t, router, http.MethodPost, fmt.Sprintf("/api/report_status/%d", report.ReportID), statusReq, http.StatusOK, &authTokens{user: sourceCreds})
 
-	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/report/%d", report.ReportID), nil, http.StatusOK, sourceCreds, &fetched)
+	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/report/%d", report.ReportID), nil, http.StatusOK, &authTokens{user: sourceCreds}, &fetched)
 	require.Equal(t, statusReq.Status, fetched.ReportStatus)
 
 	// Get empty child messages
 	var messages []domain.ReportMessage
-	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/report/%d/messages", report.ReportID), nil, http.StatusOK, sourceCreds, &messages)
+	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/report/%d/messages", report.ReportID), nil, http.StatusOK, &authTokens{user: sourceCreds}, &messages)
 	require.Empty(t, messages)
 
 	// Add a reply
 	var fetchedMsg domain.ReportMessage
 	msgReq := domain.RequestMessageBodyMD{BodyMD: stringutil.SecureRandomString(100)}
-	testEndpointWithReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/report/%d/messages", report.ReportID), msgReq, http.StatusCreated, sourceCreds, &fetchedMsg)
+	testEndpointWithReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/report/%d/messages", report.ReportID), msgReq, http.StatusCreated, &authTokens{user: sourceCreds}, &fetchedMsg)
 	require.Equal(t, msgReq.BodyMD, fetchedMsg.MessageMD)
 
 	// Get the reply
-	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/report/%d/messages", report.ReportID), nil, http.StatusOK, sourceCreds, &messages)
+	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/report/%d/messages", report.ReportID), nil, http.StatusOK, &authTokens{user: sourceCreds}, &messages)
 	require.NotEmpty(t, messages)
 
 	// Edit the reply
 	editMsgReq := domain.RequestMessageBodyMD{BodyMD: stringutil.SecureRandomString(100)}
 	var edited domain.ReportMessage
-	testEndpointWithReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/report/message/%d", report.ReportID), editMsgReq, http.StatusOK, sourceCreds, &edited)
+	testEndpointWithReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/report/message/%d", report.ReportID), editMsgReq, http.StatusOK, &authTokens{user: sourceCreds}, &edited)
 	require.Equal(t, editMsgReq.BodyMD, edited.MessageMD)
 
 	// Delete the message
-	testEndpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/report/message/%d", fetchedMsg.ReportMessageID), nil, http.StatusOK, sourceCreds)
+	testEndpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/report/message/%d", fetchedMsg.ReportMessageID), nil, http.StatusOK, &authTokens{user: sourceCreds})
 
 	// Make sure it was deleted
-	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/report/%d/messages", report.ReportID), nil, http.StatusOK, sourceCreds, &messages)
+	testEndpointWithReceiver(t, router, http.MethodGet, fmt.Sprintf("/api/report/%d/messages", report.ReportID), nil, http.StatusOK, &authTokens{user: sourceCreds}, &messages)
 	require.Empty(t, messages)
 }
 

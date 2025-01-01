@@ -31,7 +31,7 @@ func (r *wordFilterRepository) insertFilter(ctx context.Context, filter *domain.
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		RETURNING filter_id`
 
-	if errQuery := r.db.QueryRow(ctx, query, filter.AuthorID.Int64(), filter.Pattern,
+	if errQuery := r.db.QueryRow(ctx, nil, query, filter.AuthorID.Int64(), filter.Pattern,
 		filter.IsRegex, filter.IsEnabled, filter.TriggerCount, filter.CreatedOn, filter.UpdatedOn, filter.Action, filter.Duration, filter.Weight).
 		Scan(&filter.FilterID); errQuery != nil {
 		return r.db.DBErr(errQuery)
@@ -56,7 +56,7 @@ func (r *wordFilterRepository) updateFilter(ctx context.Context, filter *domain.
 		Set("updated_on", filter.UpdatedOn).
 		Where(sq.Eq{"filter_id": filter.FilterID})
 
-	if err := r.db.ExecUpdateBuilder(ctx, query); err != nil {
+	if err := r.db.ExecUpdateBuilder(ctx, nil, query); err != nil {
 		return r.db.DBErr(err)
 	}
 
@@ -68,7 +68,7 @@ func (r *wordFilterRepository) DropFilter(ctx context.Context, filter domain.Fil
 		Builder().
 		Delete("filtered_word").
 		Where(sq.Eq{"filter_id": filter.FilterID})
-	if errExec := r.db.ExecDeleteBuilder(ctx, query); errExec != nil {
+	if errExec := r.db.ExecDeleteBuilder(ctx, nil, query); errExec != nil {
 		return r.db.DBErr(errExec)
 	}
 
@@ -85,7 +85,7 @@ func (r *wordFilterRepository) GetFilterByID(ctx context.Context, filterID int64
 		From("filtered_word").
 		Where(sq.Eq{"filter_id": filterID})
 
-	row, errQuery := r.db.QueryRowBuilder(ctx, query)
+	row, errQuery := r.db.QueryRowBuilder(ctx, nil, query)
 	if errQuery != nil {
 		return filter, r.db.DBErr(errQuery)
 	}
@@ -112,7 +112,7 @@ func (r *wordFilterRepository) GetFilters(ctx context.Context) ([]domain.Filter,
 			"r.is_enabled", "r.trigger_count", "r.created_on", "r.updated_on", "r.action", "r.duration", "r.weight").
 		From("filtered_word r")
 
-	rows, errExec := r.db.QueryBuilder(ctx, builder)
+	rows, errExec := r.db.QueryBuilder(ctx, nil, builder)
 	if errExec != nil {
 		return nil, r.db.DBErr(errExec)
 	}
@@ -144,7 +144,7 @@ func (r *wordFilterRepository) GetFilters(ctx context.Context) ([]domain.Filter,
 }
 
 func (r *wordFilterRepository) AddMessageFilterMatch(ctx context.Context, messageID int64, filterID int64) error {
-	return r.db.DBErr(r.db.ExecInsertBuilder(ctx, r.db.
+	return r.db.DBErr(r.db.ExecInsertBuilder(ctx, nil, r.db.
 		Builder().
 		Insert("person_messages_filter").
 		Columns("person_message_id", "filter_id").

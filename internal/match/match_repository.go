@@ -153,12 +153,12 @@ func (r *matchRepository) Matches(ctx context.Context, opts domain.MatchesQueryO
 
 	builder = opts.ApplyLimitOffsetDefault(builder)
 
-	count, errCount := r.database.GetCount(ctx, countBuilder)
+	count, errCount := r.database.GetCount(ctx, nil, countBuilder)
 	if errCount != nil {
 		return nil, 0, errCount
 	}
 
-	rows, errQuery := r.database.QueryBuilder(ctx, builder)
+	rows, errQuery := r.database.QueryBuilder(ctx, nil, builder)
 	if errQuery != nil {
 		return nil, 0, errors.Join(errQuery, domain.ErrQueryMatch)
 	}
@@ -194,7 +194,7 @@ func (r *matchRepository) matchGetPlayerClasses(ctx context.Context, matchID uui
 		LEFT JOIN match_player mp on mp.match_player_id = c.match_player_id
 		WHERE mp.match_id = $1`
 
-	rows, errQuery := r.database.Query(ctx, query, matchID)
+	rows, errQuery := r.database.Query(ctx, nil, query, matchID)
 	if errQuery != nil {
 		return nil, r.database.DBErr(errQuery)
 	}
@@ -246,7 +246,7 @@ func (r *matchRepository) matchGetPlayerWeapons(ctx context.Context, matchID uui
 
 	results := map[steamid.SteamID][]domain.MatchPlayerWeapon{}
 
-	rows, errRows := r.database.Query(ctx, query, matchID)
+	rows, errRows := r.database.Query(ctx, nil, query, matchID)
 	if errRows != nil {
 		return nil, r.database.DBErr(errRows)
 	}
@@ -285,7 +285,7 @@ func (r *matchRepository) matchGetPlayerKillstreak(ctx context.Context, matchID 
 		LEFT JOIN match_player mp on mp.match_player_id = k.match_player_id
 		WHERE mp.match_id = $1`
 
-	rows, errRows := r.database.Query(ctx, query, matchID)
+	rows, errRows := r.database.Query(ctx, nil, query, matchID)
 	if errRows != nil {
 		return nil, r.database.DBErr(errRows)
 	}
@@ -372,7 +372,7 @@ func (r *matchRepository) matchGetPlayers(ctx context.Context, matchID uuid.UUID
 
 	var players []*domain.MatchPlayer
 
-	playerRows, errPlayer := r.database.Query(ctx, queryPlayer, matchID)
+	playerRows, errPlayer := r.database.Query(ctx, nil, queryPlayer, matchID)
 	if errPlayer != nil {
 		if errors.Is(errPlayer, domain.ErrNoResult) {
 			return []*domain.MatchPlayer{}, nil
@@ -426,7 +426,7 @@ func (r *matchRepository) matchGetMedics(ctx context.Context, matchID uuid.UUID)
 
 	medics := map[steamid.SteamID]domain.MatchHealer{}
 
-	medicRows, errMedics := r.database.Query(ctx, query, matchID)
+	medicRows, errMedics := r.database.Query(ctx, nil, query, matchID)
 	if errMedics != nil {
 		if errors.Is(errMedics, domain.ErrNoResult) {
 			return medics, nil
@@ -483,7 +483,7 @@ func (r *matchRepository) matchGetChat(ctx context.Context, matchID uuid.UUID) (
 
 	messages := domain.PersonMessages{}
 
-	chatRows, errQuery := r.database.Query(ctx, query, matchID)
+	chatRows, errQuery := r.database.Query(ctx, nil, query, matchID)
 	if errQuery != nil {
 		if errors.Is(errQuery, domain.ErrNoResult) {
 			return messages, nil
@@ -524,7 +524,7 @@ func (r *matchRepository) MatchGetByID(ctx context.Context, matchID uuid.UUID, m
 		FROM match WHERE match_id = $1`
 
 	if errMatch := r.database.
-		QueryRow(ctx, query, matchID).
+		QueryRow(ctx, nil, query, matchID).
 		Scan(&match.MatchID, &match.ServerID, &match.MapName, &match.Title,
 			&match.TeamScores.Red, &match.TeamScores.Blu, &match.TeamScores.BluTime, &match.TeamScores.BluTime,
 			&match.TimeStart, &match.TimeEnd, &match.Winner); errMatch != nil {
@@ -654,7 +654,7 @@ func (r *matchRepository) MatchSave(ctx context.Context, match *logparse.Match, 
 			continue
 		}
 
-		_, errPlayer := r.persons.GetOrCreatePersonBySteamID(ctx, player.SteamID)
+		_, errPlayer := r.persons.GetOrCreatePersonBySteamID(ctx, transaction, player.SteamID)
 		if errPlayer != nil {
 			if errRollback := transaction.Rollback(ctx); errRollback != nil {
 				return errors.Join(errRollback, domain.ErrTxRollback)
@@ -713,7 +713,7 @@ func (r *matchRepository) MatchSave(ctx context.Context, match *logparse.Match, 
 	return nil
 }
 
-func (r *matchRepository) saveMatchPlayerStats(ctx context.Context, database pgx.Tx, match *logparse.Match, stats *logparse.PlayerStats) error {
+func (r *matchRepository) saveMatchPlayerStats(ctx context.Context, transaction pgx.Tx, match *logparse.Match, stats *logparse.PlayerStats) error {
 	const playerQuery = `
 		INSERT INTO match_player (
 			match_id, steam_id, team, time_start, time_end, health_packs, extinguishes, buildings
@@ -728,7 +728,7 @@ func (r *matchRepository) saveMatchPlayerStats(ctx context.Context, database pgx
 		endTime = match.TimeEnd
 	}
 
-	if errPlayerExec := database.
+	if errPlayerExec := transaction.
 		QueryRow(ctx, playerQuery, match.MatchID, stats.SteamID.Int64(), stats.Team, stats.TimeStart,
 			endTime, stats.HealthPacks(), stats.Extinguishes(), stats.BuildingBuilt).
 		Scan(&stats.MatchPlayerID); errPlayerExec != nil {
@@ -840,7 +840,7 @@ func (r *matchRepository) StatsPlayerClass(ctx context.Context, sid64 steamid.St
 		GROUP BY p.steam_id, c.player_class_id
 		ORDER BY c.player_class_id`
 
-	rows, errQuery := r.database.Query(ctx, query, sid64.Int64())
+	rows, errQuery := r.database.Query(ctx, nil, query, sid64.Int64())
 	if errQuery != nil {
 		return nil, r.database.DBErr(errQuery)
 	}
@@ -884,7 +884,7 @@ func (r *matchRepository) StatsPlayerWeapons(ctx context.Context, sid64 steamid.
 		  AND w.weapon_id IS NOT NULL
 		GROUP BY w.weapon_id, n.weapon_id;`
 
-	rows, errQuery := r.database.Query(ctx, query, sid64.Int64())
+	rows, errQuery := r.database.Query(ctx, nil, query, sid64.Int64())
 	if errQuery != nil {
 		return nil, r.database.DBErr(errQuery)
 	}
@@ -923,7 +923,7 @@ func (r *matchRepository) StatsPlayerKillstreaks(ctx context.Context, sid64 stea
 		ORDER BY killstreak DESC
 		LIMIT 10;`
 
-	rows, errQuery := r.database.Query(ctx, query, sid64.Int64())
+	rows, errQuery := r.database.Query(ctx, nil, query, sid64.Int64())
 	if errQuery != nil {
 		return nil, r.database.DBErr(errQuery)
 	}
@@ -961,7 +961,7 @@ func (r *matchRepository) StatsPlayerMedic(ctx context.Context, sid64 steamid.St
 		WHERE p.steam_id = $1
 		GROUP BY p.steam_id`
 
-	rows, errQuery := r.database.Query(ctx, query, sid64.Int64())
+	rows, errQuery := r.database.Query(ctx, nil, query, sid64.Int64())
 	if errQuery != nil {
 		return nil, r.database.DBErr(errQuery)
 	}
@@ -1020,7 +1020,7 @@ func (r *matchRepository) PlayerStats(ctx context.Context, steamID steamid.Steam
 			  m.time_start BETWEEN LOCALTIMESTAMP - INTERVAL '1 DAY' and LOCALTIMESTAMP`
 
 	if errQuery := r.database.
-		QueryRow(ctx, query, steamID).
+		QueryRow(ctx, nil, query, steamID).
 		Scan(&stats.MatchesWon, &stats.MatchesWon, &stats.HealthPacks,
 			&stats.Extinguishes, &stats.BuildingBuilt, &stats.Kills, &stats.Assists, &stats.Damage, &stats.DamageTaken,
 			&stats.PlayTime, &stats.Captures, &stats.CapturesBlocked, &stats.Dominated, &stats.Dominations, &stats.Revenges,
@@ -1070,7 +1070,7 @@ func (r *matchRepository) WeaponsOverall(ctx context.Context) ([]domain.WeaponsO
             FROM match_weapon mw
         ) t ;`
 
-	rows, errQuery := r.database.Query(ctx, query)
+	rows, errQuery := r.database.Query(ctx, nil, query)
 	if errQuery != nil {
 		return nil, r.database.DBErr(errQuery)
 	}
@@ -1099,7 +1099,7 @@ func (r *matchRepository) WeaponsOverall(ctx context.Context) ([]domain.WeaponsO
 }
 
 func (r *matchRepository) WeaponsOverallTopPlayers(ctx context.Context, weaponID int) ([]domain.PlayerWeaponResult, error) {
-	rows, errQuery := r.database.QueryBuilder(ctx, r.database.
+	rows, errQuery := r.database.QueryBuilder(ctx, nil, r.database.
 		Builder().
 		Select("row_number() over (order by SUM(mw.kills) desc nulls last) as rank",
 			"p.steam_id", "p.personaname", "p.avatarhash",
@@ -1188,7 +1188,7 @@ func (r *matchRepository) WeaponsOverallByPlayer(ctx context.Context, steamID st
 			WHERE mp.steam_id = $1
 		) t`
 
-	rows, errQuery := r.database.Query(ctx, query, steamID.Int64())
+	rows, errQuery := r.database.Query(ctx, nil, query, steamID.Int64())
 	if errQuery != nil {
 		return nil, r.database.DBErr(errQuery)
 	}
@@ -1278,7 +1278,7 @@ func (r *matchRepository) PlayersOverallByKills(ctx context.Context, count int) 
 		ORDER BY rank
 		LIMIT $1`
 
-	rows, errQuery := r.database.Query(ctx, query, count)
+	rows, errQuery := r.database.Query(ctx, nil, query, count)
 	if errQuery != nil {
 		return nil, r.database.DBErr(errQuery)
 	}
@@ -1390,7 +1390,7 @@ func (r *matchRepository) HealersOverallByHealing(ctx context.Context, count int
 		ORDER BY rank
 		LIMIT $1`
 
-	rows, errQuery := r.database.Query(ctx, query, count)
+	rows, errQuery := r.database.Query(ctx, nil, query, count)
 	if errQuery != nil {
 		return nil, r.database.DBErr(errQuery)
 	}
@@ -1452,7 +1452,7 @@ func (r *matchRepository) PlayerOverallClassStats(ctx context.Context, steamID s
 		WHERE mp.steam_id = $1
 		GROUP BY c.player_class_id`
 
-	rows, errQuery := r.database.Query(ctx, query, steamID.Int64())
+	rows, errQuery := r.database.Query(ctx, nil, query, steamID.Int64())
 	if errQuery != nil {
 		return nil, r.database.DBErr(errQuery)
 	}
@@ -1573,7 +1573,7 @@ func (r *matchRepository) PlayerOverallStats(ctx context.Context, steamID steami
 		WHERE p.steam_id = $1`
 
 	if errQuery := r.database.
-		QueryRow(ctx, query, steamID.Int64()).Scan(
+		QueryRow(ctx, nil, query, steamID.Int64()).Scan(
 		&por.Healing, &por.Drops, &por.NearFullChargeDeath, &por.AvgUberLen, &por.MajorAdvLost, &por.BiggestAdvLost,
 		&por.ChargesUber, &por.ChargesKritz, &por.ChargesVacc, &por.ChargesQuickfix, &por.Buildings, &por.Extinguishes,
 		&por.HealthPacks, &por.KA, &por.Kills, &por.Assists, &por.Deaths, &por.KD, &por.KAD, &por.DPM, &por.Shots, &por.Hits, &por.Accuracy, &por.Airshots, &por.Backstabs,
@@ -1599,7 +1599,7 @@ func (r *matchRepository) GetMapUsageStats(ctx context.Context) ([]domain.MapUse
 
 	var details []domain.MapUseDetail
 
-	rows, errQuery := r.database.Query(ctx, query)
+	rows, errQuery := r.database.Query(ctx, nil, query)
 	if errQuery != nil {
 		return nil, r.database.DBErr(errQuery)
 	}
@@ -1651,7 +1651,7 @@ func (r *matchRepository) LoadWeapons(ctx context.Context, weaponMap fp.MutexMap
 }
 
 func (r *matchRepository) GetWeaponByKey(ctx context.Context, key logparse.Weapon, weapon *domain.Weapon) error {
-	row, errRow := r.database.QueryRowBuilder(ctx, r.database.
+	row, errRow := r.database.QueryRowBuilder(ctx, nil, r.database.
 		Builder().
 		Select("weapon_id", "key", "name").
 		From("weapon").
@@ -1664,7 +1664,7 @@ func (r *matchRepository) GetWeaponByKey(ctx context.Context, key logparse.Weapo
 }
 
 func (r *matchRepository) GetWeaponByID(ctx context.Context, weaponID int, weapon *domain.Weapon) error {
-	row, errRow := r.database.QueryRowBuilder(ctx, r.database.
+	row, errRow := r.database.QueryRowBuilder(ctx, nil, r.database.
 		Builder().
 		Select("weapon_id", "key", "name").
 		From("weapon").Where(sq.Eq{"weapon_id": weaponID}))
@@ -1677,7 +1677,7 @@ func (r *matchRepository) GetWeaponByID(ctx context.Context, weaponID int, weapo
 
 func (r *matchRepository) SaveWeapon(ctx context.Context, weapon *domain.Weapon) error {
 	if weapon.WeaponID > 0 {
-		return r.database.DBErr(r.database.ExecUpdateBuilder(ctx, r.database.
+		return r.database.DBErr(r.database.ExecUpdateBuilder(ctx, nil, r.database.
 			Builder().
 			Update("weapon").
 			Set("key", weapon.Key).
@@ -1688,7 +1688,7 @@ func (r *matchRepository) SaveWeapon(ctx context.Context, weapon *domain.Weapon)
 	const wq = `INSERT INTO weapon (key, name) VALUES ($1, $2) RETURNING weapon_id`
 
 	if errSave := r.database.
-		QueryRow(ctx, wq, weapon.Key, weapon.Name).
+		QueryRow(ctx, nil, wq, weapon.Key, weapon.Name).
 		Scan(&weapon.WeaponID); errSave != nil {
 		return errors.Join(errSave, domain.ErrFailedWeapon)
 	}
@@ -1697,7 +1697,7 @@ func (r *matchRepository) SaveWeapon(ctx context.Context, weapon *domain.Weapon)
 }
 
 func (r *matchRepository) Weapons(ctx context.Context) ([]domain.Weapon, error) {
-	rows, errRows := r.database.QueryBuilder(ctx, r.database.
+	rows, errRows := r.database.QueryBuilder(ctx, nil, r.database.
 		Builder().
 		Select("weapon_id", "key", "name").
 		From("weapon"))

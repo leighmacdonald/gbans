@@ -87,12 +87,12 @@ func (u *appeals) CreateBanMessage(ctx context.Context, curUser domain.UserProfi
 		return domain.BanAppealMessage{}, domain.ErrPermissionDenied
 	}
 
-	_, errTarget := u.persons.GetOrCreatePersonBySteamID(ctx, bannedPerson.TargetID)
+	_, errTarget := u.persons.GetOrCreatePersonBySteamID(ctx, nil, bannedPerson.TargetID)
 	if errTarget != nil {
 		return domain.BanAppealMessage{}, errTarget
 	}
 
-	_, errSource := u.persons.GetOrCreatePersonBySteamID(ctx, bannedPerson.SourceID)
+	_, errSource := u.persons.GetOrCreatePersonBySteamID(ctx, nil, bannedPerson.SourceID)
 	if errSource != nil {
 		return domain.BanAppealMessage{}, errSource
 	}

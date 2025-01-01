@@ -1,4 +1,4 @@
-package test_test
+package test
 
 import (
 	"context"
@@ -23,7 +23,7 @@ func TestVotes(t *testing.T) {
 	req := domain.VoteQueryFilter{
 		Success: -1,
 	}
-	testEndpointWithReceiver(t, router, http.MethodPost, "/api/votes", req, http.StatusOK, moderator, &results)
+	testEndpointWithReceiver(t, router, http.MethodPost, "/api/votes", req, http.StatusOK, &authTokens{user: moderator}, &results)
 	require.Empty(t, results.Data)
 
 	require.NoError(t, votesRepo.AddResult(context.Background(), domain.VoteResult{
@@ -41,7 +41,7 @@ func TestVotes(t *testing.T) {
 		CreatedOn:        time.Now(),
 	}))
 
-	testEndpointWithReceiver(t, router, http.MethodPost, "/api/votes", req, http.StatusOK, moderator, &results)
+	testEndpointWithReceiver(t, router, http.MethodPost, "/api/votes", req, http.StatusOK, &authTokens{user: moderator}, &results)
 	require.NotEmpty(t, results.Data)
 }
 

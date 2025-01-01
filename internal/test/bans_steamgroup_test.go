@@ -1,4 +1,4 @@
-package test_test
+package test
 
 import (
 	"fmt"
@@ -18,7 +18,7 @@ func TestBansSteamgroup(t *testing.T) {
 
 	// Ensure no bans exist
 	var bansEmpty []domain.BannedGroupPerson
-	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans/group", nil, http.StatusOK, modCreds, &bansEmpty)
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans/group", nil, http.StatusOK, &authTokens{user: modCreds}, &bansEmpty)
 	require.Empty(t, bansEmpty)
 
 	// Create a ban
@@ -30,7 +30,7 @@ func TestBansSteamgroup(t *testing.T) {
 	}
 
 	var fetchedBan domain.BannedGroupPerson
-	testEndpointWithReceiver(t, router, http.MethodPost, "/api/bans/group/create", banReq, http.StatusCreated, modCreds, &fetchedBan)
+	testEndpointWithReceiver(t, router, http.MethodPost, "/api/bans/group/create", banReq, http.StatusCreated, &authTokens{user: modCreds}, &fetchedBan)
 
 	require.Equal(t, banReq.TargetIDField.TargetID, fetchedBan.TargetID.String())
 	require.True(t, fetchedBan.ValidUntil.After(time.Now()))
@@ -39,7 +39,7 @@ func TestBansSteamgroup(t *testing.T) {
 
 	// Ensure it's in the ban collection
 	var bans []domain.BanCIDR
-	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans/group", nil, http.StatusOK, modCreds, &bans)
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans/group", nil, http.StatusOK, &authTokens{user: modCreds}, &bans)
 	require.NotEmpty(t, bans)
 
 	updateReq := domain.RequestBanGroupUpdate{
@@ -51,7 +51,7 @@ func TestBansSteamgroup(t *testing.T) {
 	// Update the ban
 	var updatedBan domain.BannedGroupPerson
 	testEndpointWithReceiver(t, router, http.MethodPost, fmt.Sprintf("/api/bans/group/%d", fetchedBan.BanGroupID),
-		updateReq, http.StatusOK, modCreds, &updatedBan)
+		updateReq, http.StatusOK, &authTokens{user: modCreds}, &updatedBan)
 
 	require.Equal(t, updateReq.TargetID, updatedBan.TargetID.String())
 	require.Equal(t, updateReq.Note, updatedBan.Note)
@@ -59,15 +59,15 @@ func TestBansSteamgroup(t *testing.T) {
 
 	// Delete the ban
 	testEndpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/bans/group/%d", updatedBan.BanGroupID),
-		domain.RequestUnban{UnbanReasonText: "test unban"}, http.StatusOK, modCreds)
+		domain.RequestUnban{UnbanReasonText: "test unban"}, http.StatusOK, &authTokens{user: modCreds})
 
 	// Ensure it was deleted
-	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans/group", nil, http.StatusOK, modCreds, &bans)
+	testEndpointWithReceiver(t, router, http.MethodGet, "/api/bans/group", nil, http.StatusOK, &authTokens{user: modCreds}, &bans)
 	require.NotContains(t, bans, updatedBan)
 
 	// Try to delete non existent ban
 	testEndpoint(t, router, http.MethodDelete, fmt.Sprintf("/api/bans/group/%d", updatedBan.BanGroupID),
-		domain.RequestUnban{UnbanReasonText: "test unban"}, http.StatusNotFound, modCreds)
+		domain.RequestUnban{UnbanReasonText: "test unban"}, http.StatusNotFound, &authTokens{user: modCreds})
 }
 
 func TestBansGroupPermissions(t *testing.T) {

@@ -22,7 +22,7 @@ func NewServersRepository(database database.Database) domain.ServersRepository {
 func (r *serversRepository) GetServer(ctx context.Context, serverID int) (domain.Server, error) {
 	var server domain.Server
 
-	row, rowErr := r.db.QueryRowBuilder(ctx, r.db.
+	row, rowErr := r.db.QueryRowBuilder(ctx, nil, r.db.
 		Builder().
 		Select("server_id", "short_name", "name", "address", "port", "rcon", "password",
 			"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
@@ -51,7 +51,7 @@ func (r *serversRepository) GetServer(ctx context.Context, serverID int) (domain
 }
 
 func (r *serversRepository) GetServerPermissions(ctx context.Context) ([]domain.ServerPermission, error) {
-	rows, errRows := r.db.QueryBuilder(ctx, r.db.
+	rows, errRows := r.db.QueryBuilder(ctx, nil, r.db.
 		Builder().
 		Select("steam_id", "permission_level").From("person").
 		Where(sq.GtOrEq{"permission_level": domain.PReserved}).
@@ -124,7 +124,7 @@ func (r *serversRepository) GetServers(ctx context.Context, filter domain.Server
 
 	builder = filter.ApplyLimitOffset(builder, 250).Where(constraints)
 
-	rows, errQueryExec := r.db.QueryBuilder(ctx, builder)
+	rows, errQueryExec := r.db.QueryBuilder(ctx, nil, builder)
 	if errQueryExec != nil {
 		return []domain.Server{}, 0, r.db.DBErr(errQueryExec)
 	}
@@ -158,7 +158,7 @@ func (r *serversRepository) GetServers(ctx context.Context, filter domain.Server
 		return nil, 0, r.db.DBErr(rows.Err())
 	}
 
-	count, errCount := r.db.GetCount(ctx, r.db.
+	count, errCount := r.db.GetCount(ctx, nil, r.db.
 		Builder().
 		Select("count(s.server_id)").
 		From("server s").
@@ -180,7 +180,7 @@ func (r *serversRepository) GetServerByName(ctx context.Context, serverName stri
 		and = append(and, sq.Eq{"deleted": false})
 	}
 
-	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
+	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.
 		Builder().
 		Select("server_id", "short_name", "name", "address", "port", "rcon", "password",
 			"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
@@ -223,7 +223,7 @@ func (r *serversRepository) GetServerByPassword(ctx context.Context, serverPassw
 		and = append(and, sq.Eq{"deleted": false})
 	}
 
-	row, errRow := r.db.QueryRowBuilder(ctx, r.db.
+	row, errRow := r.db.QueryRowBuilder(ctx, nil, r.db.
 		Builder().
 		Select("server_id", "short_name", "name", "address", "port", "rcon", "password",
 			"token_created_on", "created_on", "updated_on", "reserved_slots", "is_enabled", "region", "cc",
@@ -268,7 +268,7 @@ func (r *serversRepository) insertServer(ctx context.Context, server *domain.Ser
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
 		RETURNING server_id;`
 
-	err := r.db.QueryRow(ctx, query, server.ShortName, server.Name, server.Address, server.Port,
+	err := r.db.QueryRow(ctx, nil, query, server.ShortName, server.Name, server.Address, server.Port,
 		server.RCON, server.TokenCreatedOn, server.ReservedSlots, server.CreatedOn, server.UpdatedOn,
 		server.Password, server.IsEnabled, server.Region, server.CC,
 		server.Latitude, server.Longitude, server.Deleted, &server.LogSecret, &server.EnableStats).
@@ -283,7 +283,7 @@ func (r *serversRepository) insertServer(ctx context.Context, server *domain.Ser
 func (r *serversRepository) updateServer(ctx context.Context, server *domain.Server) error {
 	server.UpdatedOn = time.Now()
 
-	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, r.db.
+	return r.db.DBErr(r.db.ExecUpdateBuilder(ctx, nil, r.db.
 		Builder().
 		Update("server").
 		Set("short_name", server.ShortName).
